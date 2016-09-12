@@ -100,8 +100,8 @@ if target_os in ['android','linux']:
 	if env.get('SECURED') == '1':
 		easy_setup_env.AppendUnique(CPPPATH = [
 			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include',
-			env.get('SRC_DIR') + '/resource/csdk/connectivity/api/',
 			env.get('SRC_DIR') + '/resource/csdk/security/include/internal',
+			env.get('SRC_DIR') + '/resource/csdk/connectivity/api/',
 	                env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
 			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/oxm'])
 		if env.get('WITH_TCP') == True:

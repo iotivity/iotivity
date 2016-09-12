@@ -31,6 +31,10 @@
 #include <inttypes.h>
 #include "octypes.h"
 
+#ifdef __WITH_TLS__
+#include "securevirtualresourcetypes.h"
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -136,6 +140,12 @@ bool OCRepPayloadGetPropBool(const OCRepPayload* payload, const char* name, bool
 bool OCRepPayloadSetPropObject(OCRepPayload* payload, const char* name, const OCRepPayload* value);
 bool OCRepPayloadSetPropObjectAsOwner(OCRepPayload* payload, const char* name, OCRepPayload* value);
 bool OCRepPayloadGetPropObject(const OCRepPayload* payload, const char* name, OCRepPayload** value);
+
+#ifdef __WITH_TLS__
+bool OCRepPayloadSetPropPubDataType(OCRepPayload *payload, const char *name, const OicSecKey_t *value);
+bool OCRepPayloadSetPropPubDataTypeAsOwner(OCRepPayload *payload, const char *name, const OicSecKey_t *value);
+bool OCRepPayloadGetPropPubDataType(const OCRepPayload *payload, const char *name, OicSecKey_t *value);
+#endif
 
 /**
  * This function allocates memory for the byte string array and sets it in the payload.

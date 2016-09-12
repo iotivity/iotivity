@@ -36,6 +36,7 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../../../c_common/oic_malloc/include',
 		'include',
 		'include/internal',
+		'include/cloud',
 		'include/oxm',
 		'../../resource/csdk/security/include',
 		'../../../../extlibs/cjson/',
@@ -66,6 +67,9 @@ provisioning_env.AppendUnique(LIBPATH = [provisioning_env.get('BUILD_DIR')])
 provisioning_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'ocsrm'])
 
 provisioning_env.AppendUnique(LIBS = ['tinydtls'])
+
+if provisioning_env.get('WITH_TCP') == True:
+	provisioning_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 if provisioning_env.get('DTLS_WITH_X509') == '1':
 	provisioning_env.AppendUnique(LIBS = ['CKManager', 'asn1'])
@@ -103,6 +107,15 @@ provisioning_src = [
 	'src/oxmjustworks.c',
 	'src/oxmrandompin.c',
 	'src/provisioningdatabasemanager.c' ]
+
+if provisioning_env.get('WITH_TCP') == True:
+	provisioning_src = provisioning_src + [
+	'src/cloud/utils.c',
+	'src/cloud/crl.c',
+	'src/cloud/aclgroup.c',
+	'src/cloud/aclinvite.c',
+	'src/cloud/aclid.c',
+	'src/cloud/csr.c']
 
 if target_os not in ['tizen', 'windows', 'msys_nt']:
 	provisioning_src = provisioning_src + [root_dir+'/extlibs/sqlite3/sqlite3.c' ]

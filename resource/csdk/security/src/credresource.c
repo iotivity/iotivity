@@ -29,6 +29,7 @@
 #include <strings.h>
 #endif
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "cainterface.h"
 #include "payload_logging.h"
@@ -50,12 +51,21 @@
 #include "psinterface.h"
 #include "pinoxmcommon.h"
 
+#ifdef __unix__
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 #ifdef __WITH_DTLS__
 #include "global.h"
 #endif
 
 #define TAG  "SRM-CREDL"
 
+/** Max credential types number used for TLS */
+#define MAX_TYPE 2
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */
 static const uint16_t CBOR_SIZE = 2048;
@@ -117,6 +127,34 @@ void DeleteCredList(OicSecCred_t* cred)
             FreeCred(credTmp1);
         }
     }
+}
+
+size_t GetCredKeyDataSize(const OicSecCred_t* cred)
+{
+    size_t size = 0;
+    if (cred)
+    {
+        OicSecCred_t *credPtr = NULL, *credTmp = NULL;
+        LL_FOREACH_SAFE((OicSecCred_t*)cred, credPtr, credTmp)
+        {
+            if (credPtr->privateData.data && 0 < credPtr->privateData.len)
+            {
+                size += credPtr->privateData.len;
+            }
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+            if (credPtr->publicData.data && 0 < credPtr->publicData.len)
+            {
+                size += credPtr->publicData.len;
+            }
+            if (credPtr->optionalData.data && 0 < credPtr->optionalData.len)
+            {
+                size += credPtr->optionalData.len;
+            }
+#endif
+        }
+    }
+    OIC_LOG_V(DEBUG, TAG, "Cred Key Data Size : %d\n", size);
+    return size;
 }
 
 static size_t OicSecCredCount(const OicSecCred_t *secCred)
@@ -262,8 +300,8 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             cborEncoderResult = cbor_encode_text_string(&publicMap, OIC_JSON_ENCODING_NAME,
                 strlen(OIC_JSON_ENCODING_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Public Encoding Tag.");
-            cborEncoderResult = cbor_encode_text_string(&publicMap, OIC_SEC_ENCODING_RAW,
-                strlen(OIC_SEC_ENCODING_RAW));
+            cborEncoderResult = cbor_encode_text_string(&publicMap, OIC_SEC_ENCODING_DER,
+                strlen(OIC_SEC_ENCODING_DER));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Public Encoding Value.");
 
             cborEncoderResult = cbor_encoder_close_container(&credMap, &publicMap);
@@ -411,6 +449,22 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
                     strlen(OIC_JSON_DATA_NAME));
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Priv Tag.");
                 cborEncoderResult = cbor_encode_text_string(&privateMap, (char*)(cred->privateData.data),
+                    cred->privateData.len);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Priv Value.");
+            }
+            else if(OIC_ENCODING_DER == cred->privateData.encoding)
+            {
+                cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_JSON_ENCODING_NAME,
+                    strlen(OIC_JSON_ENCODING_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Private Encoding Tag.");
+                cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_SEC_ENCODING_DER,
+                    strlen(OIC_SEC_ENCODING_DER));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Private Encoding Value.");
+
+                cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_JSON_DATA_NAME,
+                    strlen(OIC_JSON_DATA_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Priv Tag.");
+                cborEncoderResult = cbor_encode_byte_string(&privateMap, cred->privateData.data,
                     cred->privateData.len);
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Priv Value.");
             }
@@ -994,7 +1048,9 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
     if (cred)
     {
         uint8_t *payload = NULL;
-        size_t size = 0;
+        // This added '256' is arbitrary value that is added to cover the name of the resource, map addition and ending
+        size_t size = GetCredKeyDataSize(cred);
+        size += (256 * OicSecCredCount(cred));
         int secureFlag = 0;
         OCStackResult res = CredToCBORPayload(cred, &payload, &size, secureFlag);
         if ((OC_STACK_OK == res) && payload)
@@ -1420,6 +1476,11 @@ static OCEntityHandlerResult HandleGetRequest (const OCEntityHandlerRequest * eh
     int secureFlag = 1;
 
     const OicSecCred_t *cred = gCred;
+
+    size_t credCnt = 0;
+    // This added '256' is arbitrary value that is added to cover the name of the resource, map addition and ending
+    size = GetCredKeyDataSize(cred);
+    size += (256 * OicSecCredCount(cred));
     OCStackResult res = CredToCBORPayload(cred, &payload, &size, secureFlag);
 
     // A device should always have a default cred. Therefore, payload should never be NULL.
@@ -1865,6 +1926,10 @@ OCStackResult SetCredRownerId(const OicUuid_t* newROwner)
         memcpy(prevId.id, gCred->rownerID.id, sizeof(prevId.id));
         memcpy(gCred->rownerID.id, newROwner->id, sizeof(newROwner->id));
 
+        size_t credCnt = 0;
+        // This added '256' is arbitrary value that is added to cover the name of the resource, map addition and ending
+        size = GetCredKeyDataSize(gCred);
+        size += (256 * OicSecCredCount(gCred));
         ret = CredToCBORPayload(gCred, &cborPayload, &size, secureFlag);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
@@ -1896,14 +1961,19 @@ OCStackResult GetCredRownerId(OicUuid_t *rowneruuid)
 #ifdef __WITH_TLS__
 void GetDerCaCert(ByteArray * crt)
 {
+    if (NULL == crt)
+    {
+        return;
+    }
     uint8_t *data = NULL;
+    crt->len = 0;
     OCStackResult ret = OC_STACK_ERROR;
     OicSecCred_t * cred;
     OicSecCred_t * temp = NULL;
-    OIC_LOG(DEBUG, TAG, "IN GetDerCaCert");
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
     LL_FOREACH(gCred, temp)
     {
-        if (0==memcmp((temp->credUsage), TRUST_CA, sizeof(TRUST_CA)))
+        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), TRUST_CA, sizeof(TRUST_CA)))
         {
             OIC_LOG_V(DEBUG, TAG, "len: %d, crt len: %d", temp->optionalData.len, crt->len);
             if(OIC_ENCODING_BASE64 == temp->optionalData.encoding)
@@ -1931,33 +2001,115 @@ void GetDerCaCert(ByteArray * crt)
             OIC_LOG_V(DEBUG, TAG, "Trust CA Found!! %d", crt->len);
         }
     }
-    if(!crt->len) OIC_LOG(DEBUG, TAG, "Trust CA Not Found!!");
+    if(0 == crt->len)
+    {
+        OIC_LOG(DEBUG, TAG, "Trust CA Not Found!!");
+    }
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return;
 }
 
+void GetDerOwnCert(ByteArray * crt)
+{
+    if (NULL == crt)
+    {
+        return;
+    }
+    crt->len = 0;
+    uint8_t *data = NULL;
+    OicSecCred_t * temp = NULL;
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    LL_FOREACH(gCred, temp)
+    {
+        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), PRIMARY_CERT, sizeof(PRIMARY_CERT)))
+        {
+            OIC_LOG_V(DEBUG, TAG, "len: %d, crt len: %d", temp->publicData.len, crt->len);
+            crt->data = OICRealloc(crt->data, crt->len + temp->publicData.len);
+            memcpy(crt->data + crt->len, temp->publicData.data, temp->publicData.len);
+            crt->len += temp->publicData.len;
+
+            OIC_LOG_V(DEBUG, TAG, "Trust CA Found!! %d", crt->len);
+        }
+    }
+    if(0 == crt->len)
+    {
+        OIC_LOG(DEBUG, TAG, "Trust CA Not Found!!");
+    }
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    return;
+}
 
 void GetDerKey(ByteArray * key)
 {
-    // TODO Add implementation
-    key->data = NULL;
-    key->len = 0;
-    return;
-}
+    if (NULL == key)
+    {
+        return;
+    }
 
-void GetDerOwnCert(ByteArray * cert)
-{
-    // TODO Add implementation
-    cert->data = NULL;
-    cert->len = 0;
-    return;
-}
-void GetPkixInfo(PkiInfo_t * inf)
-{
+    uint8_t *data = NULL;
+    OicSecCred_t * temp = NULL;
+    key->len = 0;
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
-    GetDerOwnCert(&inf->crt);
-    GetDerKey(&inf->key);
-    GetDerCaCert(&inf->ca);
+    LL_FOREACH(gCred, temp)
+    {
+        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), PRIMARY_CERT, sizeof(PRIMARY_CERT)))
+        {
+            OIC_LOG_V(DEBUG, TAG, "len: %d, key len: %d", temp->privateData.len, key->len);
+            key->data = OICRealloc(key->data, key->len + temp->privateData.len);
+            memcpy(key->data + key->len, temp->privateData.data, temp->privateData.len);
+            key->len += temp->privateData.len;
+
+            OIC_LOG_V(DEBUG, TAG, "Key Found!! %d", key->len);
+        }
+    }
+    if(0 == key->len) 
+    {
+        OIC_LOG(DEBUG, TAG, "Key Not Found!!");
+    }
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
 
+void InitCipherSuiteList(bool * list)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    if (NULL == list)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+        OIC_LOG(DEBUG, TAG, "NULL list param");
+        return;
+    }
+    OicSecCred_t * temp = NULL;
+    LL_FOREACH(gCred, temp)
+    {
+        switch (temp->credType)
+        {
+            case SYMMETRIC_PAIR_WISE_KEY:
+            {
+                list[0] = true;
+                OIC_LOG(DEBUG, TAG, "SYMMETRIC_PAIR_WISE_KEY found");
+                break;
+            }
+            case SIGNED_ASYMMETRIC_KEY:
+            {
+                list[1] = true;
+                OIC_LOG(DEBUG, TAG, "SIGNED_ASYMMETRIC_KEY found");
+                break;
+            }
+            case SYMMETRIC_GROUP_KEY:
+            case ASYMMETRIC_KEY:
+            case PIN_PASSWORD:
+            case ASYMMETRIC_ENCRYPTION_KEY:
+            {
+                OIC_LOG(WARNING, TAG, "Unsupported credential type for TLS.");
+                break;
+            }
+            default:
+            {
+                OIC_LOG(WARNING, TAG, "Unknow credential type for TLS.");
+                break;
+            }
+        }
+    }
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+}
 #endif

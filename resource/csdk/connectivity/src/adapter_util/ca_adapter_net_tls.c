@@ -21,6 +21,7 @@
 #define _GNU_SOURCE
 
 #include <stddef.h>
+#include <stdbool.h>
 #include "ca_adapter_net_tls.h"
 #include "cacommon.h"
 #include "caipinterface.h"
@@ -85,7 +86,7 @@
  * @def MMBED_TLS_DEBUG_LEVEL
  * @brief Logging level for mbedTLS library
  */
-#define MBED_TLS_DEBUG_LEVEL (4) // Verbose
+#define MBED_TLS_DEBUG_LEVEL (4)
 
 /**
  * @def TLS_MSG_BUF_LEN
@@ -109,30 +110,59 @@
  */
 #define MASTER_SECRET_LEN (48)
 
+/**@def TLS_CLOSE_NOTIFY(peer, ret)
+ *
+ * Notifies of existing \a peer about closing TLS connection.
+ *
+ * @param[in] peer remote peer
+ * @param[in] ret used internaly
+ */
 #define TLS_CLOSE_NOTIFY(peer, ret)                                                                \
 do                                                                                                 \
 {                                                                                                  \
     ret = mbedtls_ssl_close_notify(&peer->ssl);                                                    \
 } while (MBEDTLS_ERR_SSL_WANT_WRITE == ret)
 
+/**@def TLS_RET_HANDSHAKE_RES(peer)
+ *
+ * Sets handshake result for callback.
+ *
+ * @param[in] peer remote peer
+ */
 #define TLS_RET_HANDSHAKE_RES(peer)                                                                \
 if (g_tlsHandshakeCallback)                                                                        \
 {                                                                                                  \
     CAErrorInfo_t errorInfo = {.result = CA_STATUS_FAILED};                                        \
     g_tlsHandshakeCallback(&peer->sep.endpoint, &errorInfo);                                       \
 }
-
-#define TLS_CHECK_HANDSHAKE_FAIL(peer, ret, str, mutex, error)                                     \
+/**@def TLS_CHECK_HANDSHAKE_FAIL(peer, ret, str, mutex, error, msg)
+ *
+ * Checks handshake result and send allert if needed.
+ *
+ * @param[in] peer remote peer
+ * @param[in] ret error code
+ * @param[in] str debug string
+ * @param[in] mutex ca mutex
+ * @param[in] return error code
+ * @param[in] msg allert message
+ */
+#define TLS_CHECK_HANDSHAKE_FAIL(peer, ret, str, mutex, error, msg)                                \
 if (0 != ret && MBEDTLS_ERR_SSL_WANT_READ != ret &&  MBEDTLS_ERR_SSL_WANT_WRITE != ret)            \
 {                                                                                                  \
     OIC_LOG_V(ERROR, NET_TLS_TAG, "%s: -0x%x", str, -ret);                                         \
-    TLS_CLOSE_NOTIFY(peer, ret);                                                                   \
+    if ((int) MBEDTLS_ERR_SSL_FATAL_ALERT_MESSAGE != (int) ret &&                                  \
+        (int) MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY != (int) ret &&                                    \
+        (int) MBEDTLS_ERR_SSL_BAD_HS_CLIENT_HELLO != (int) ret)                                    \
+    {                                                                                              \
+        mbedtls_ssl_send_alert_message(&peer->ssl, MBEDTLS_SSL_ALERT_LEVEL_FATAL, msg);            \
+    }                                                                                              \
     TLS_RET_HANDSHAKE_RES(peer);                                                                   \
     removePeerFromList(&peer->sep.endpoint);                                                       \
     if (mutex)                                                                                     \
     {                                                                                              \
         ca_mutex_unlock(g_tlsContextMutex);                                                        \
     }                                                                                              \
+    OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);                                             \
     return error;                                                                                  \
 }
 
@@ -159,13 +189,57 @@ int tlsCipher[ADAPTER_CIPHER_MAX][2] =
     {MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, 0}
 };
 
+static int g_cipherSuitesList[2 + 1];
+
 mbedtls_ecp_group_id curve[ADAPTER_CURVE_MAX][2] =
 {
     {MBEDTLS_ECP_DP_SECP256R1, 0}
 };
 
-//TODO add description
 static PkiInfo_t g_pkiInfo = {{NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}};
+
+typedef struct  {
+    int code;
+    int alert;
+} CrtVerifyAlert_t;
+
+static const CrtVerifyAlert_t crtVerifyAlerts[] = {
+    {MBEDTLS_X509_BADCERT_EXPIRED,       MBEDTLS_SSL_ALERT_MSG_CERT_EXPIRED},
+    {MBEDTLS_X509_BADCERT_REVOKED,       MBEDTLS_SSL_ALERT_MSG_CERT_REVOKED},
+    {MBEDTLS_X509_BADCERT_CN_MISMATCH,   MBEDTLS_SSL_ALERT_MSG_CERT_UNKNOWN},
+    {MBEDTLS_X509_BADCERT_NOT_TRUSTED,   MBEDTLS_SSL_ALERT_MSG_UNKNOWN_CA},
+    {MBEDTLS_X509_BADCRL_NOT_TRUSTED,    MBEDTLS_SSL_ALERT_MSG_UNKNOWN_CA},
+    {MBEDTLS_X509_BADCRL_EXPIRED,        MBEDTLS_SSL_ALERT_MSG_INSUFFICIENT_SECURITY},
+    {MBEDTLS_X509_BADCERT_MISSING,       MBEDTLS_SSL_ALERT_MSG_NO_CERT},
+    {MBEDTLS_X509_BADCERT_SKIP_VERIFY,   MBEDTLS_SSL_ALERT_MSG_INSUFFICIENT_SECURITY},
+    {MBEDTLS_X509_BADCERT_OTHER,         MBEDTLS_SSL_ALERT_MSG_INTERNAL_ERROR},
+    {MBEDTLS_X509_BADCERT_FUTURE,        MBEDTLS_SSL_ALERT_MSG_BAD_CERT},
+    {MBEDTLS_X509_BADCRL_FUTURE,         MBEDTLS_SSL_ALERT_MSG_INSUFFICIENT_SECURITY},
+    {MBEDTLS_X509_BADCERT_KEY_USAGE,     MBEDTLS_SSL_ALERT_MSG_BAD_CERT},
+    {MBEDTLS_X509_BADCERT_EXT_KEY_USAGE, MBEDTLS_SSL_ALERT_MSG_BAD_CERT},
+    {MBEDTLS_X509_BADCERT_NS_CERT_TYPE,  MBEDTLS_SSL_ALERT_MSG_BAD_CERT},
+    {MBEDTLS_X509_BADCERT_BAD_MD,        MBEDTLS_SSL_ALERT_MSG_BAD_CERT},
+    {MBEDTLS_X509_BADCERT_BAD_PK,        MBEDTLS_SSL_ALERT_MSG_BAD_CERT},
+    {MBEDTLS_X509_BADCERT_BAD_KEY,       MBEDTLS_SSL_ALERT_MSG_BAD_CERT},
+    {MBEDTLS_X509_BADCRL_BAD_MD,         MBEDTLS_SSL_ALERT_MSG_BAD_CERT},
+    {MBEDTLS_X509_BADCRL_BAD_PK,         MBEDTLS_SSL_ALERT_MSG_BAD_CERT},
+    {MBEDTLS_X509_BADCRL_BAD_KEY,        MBEDTLS_SSL_ALERT_MSG_BAD_CERT},
+    {0, 0}
+};
+
+static int getAlertCode(uint32_t flags)
+{
+    const CrtVerifyAlert_t *cur;
+
+    for (cur = crtVerifyAlerts; cur->alert != 0 ; cur++)
+    {
+        if (flags & cur->code)
+        {
+            return cur->alert;
+        }
+    }
+    return 0;
+}
 
 #ifndef NDEBUG
 /**
@@ -220,6 +294,8 @@ typedef struct TlsContext
     AdapterCipher_t cipher;
     TlsCallbacks_t adapterCallbacks[MAX_SUPPORTED_ADAPTERS];
     mbedtls_x509_crl crl;
+    bool cipherFlag[2];
+    int selectedCipher;
 
 } TlsContext_t;
 
@@ -234,7 +310,11 @@ static TlsContext_t * g_caTlsContext = NULL;
  * @brief callback to get TLS credentials (same as for DTLS)
  */
 static CAGetDTLSPskCredentialsHandler g_getCredentialsCallback = NULL;
-
+/**
+ * @var g_getCerdentilTypesCallback
+ * @brief callback to get different credential types from SRM
+ */
+static CAgetCredentialTypesHandler g_getCredentialTypesCallback = NULL;
 /**
  * @var g_getPkixInfoCallback
  *
@@ -255,7 +335,7 @@ static ca_mutex g_tlsContextMutex = NULL;
 static CAErrorCallback g_tlsHandshakeCallback = NULL;
 
 /**
- * Data structure for holding the data to be rceived.
+ * Data structure for holding the data to be received.
  */
 typedef struct TlsRecBuf
 {
@@ -289,6 +369,12 @@ void CAsetPkixInfoCallback(CAgetPkixInfoHandler infoCallback)
 {
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "In %s", __func__);
     g_getPkixInfoCallback = infoCallback;
+    OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
+}
+void CAsetCredentialTypesCallback(CAgetCredentialTypesHandler credTypesCallback)
+{
+    OIC_LOG_V(DEBUG, NET_TLS_TAG, "In %s", __func__);
+    g_getCredentialTypesCallback = credTypesCallback;
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
 }
 /**
@@ -334,7 +420,6 @@ static int recvTls(void * tep, unsigned char * data, size_t dataLen)
     memcpy(data, recBuf->buff + recBuf->loaded, retLen);
     recBuf->loaded += retLen;
 
-    OIC_LOG_BUFFER(DEBUG, NET_TLS_TAG, data, retLen);
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
     return (int)retLen;
 }
@@ -405,64 +490,67 @@ static int parseChain(mbedtls_x509_crt * crt, const unsigned char * buf, int buf
     }
     return 0;
 }
-//TODO add description
+//Loads PKIX related information from SRM
 static int loadX509()
 {
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(g_getPkixInfoCallback, NET_TLS_TAG, "PKIX info callback is NULL", -1);
-
+    bool loadOwnCred = true;
     g_getPkixInfoCallback(&g_pkiInfo);
 
-    int ret = parseChain(&g_caTlsContext->ca, g_pkiInfo.ca.data, g_pkiInfo.ca.len);
+    // optional
+    int ret = parseChain(&g_caTlsContext->crt, g_pkiInfo.crt.data, g_pkiInfo.crt.len);
+    if (0 != ret)
+    {
+        OIC_LOG(WARNING, NET_TLS_TAG, "Own certificate chain parsing error");
+        goto required;
+    }
+    ret =  mbedtls_pk_parse_key(&g_caTlsContext->pkey, g_pkiInfo.key.data, g_pkiInfo.key.len,
+                                                                               NULL, 0);
+    if (0 != ret)
+    {
+        OIC_LOG(WARNING, NET_TLS_TAG, "Key parsing error");
+        goto required;
+    }
+
+    ret = mbedtls_ssl_conf_own_cert(&g_caTlsContext->serverConf, &g_caTlsContext->crt,
+                                                                 &g_caTlsContext->pkey);
+    if (0 != ret)
+    {
+        OIC_LOG(WARNING, NET_TLS_TAG, "Own certificate parsing error");
+        goto required;
+    }
+    ret = mbedtls_ssl_conf_own_cert( &g_caTlsContext->clientConf, &g_caTlsContext->crt,
+                                                                  &g_caTlsContext->pkey);
+    if(0 != ret)
+    {
+        OIC_LOG(WARNING, NET_TLS_TAG, "Own certificate configuration error");
+        goto required;
+    }
+
+    required:
+
+    ret = parseChain(&g_caTlsContext->ca, g_pkiInfo.ca.data, g_pkiInfo.ca.len);
     if(0 != ret)
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "CA chain parsing error");
         OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
         return -1;
     }
-    ret = parseChain(&g_caTlsContext->crt, g_pkiInfo.crt.data, g_pkiInfo.crt.len);
-    if(0 != ret)
-    {
-        OIC_LOG(ERROR, NET_TLS_TAG, "Own certificate chain parsing error");
-        OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
-        return -1;
-    }
 
-    ret =  mbedtls_pk_parse_key(&g_caTlsContext->pkey, g_pkiInfo.key.data, g_pkiInfo.key.len,
-                                                                                           NULL, 0);
-    if(0 != ret)
-    {
-        OIC_LOG(ERROR, NET_TLS_TAG, "Key parsing error");
-        OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
-        return -1;
-    }
     ret = mbedtls_x509_crl_parse_der(&g_caTlsContext->crl, g_pkiInfo.crl.data, g_pkiInfo.crl.len);
     if(0 != ret)
     {
-        OIC_LOG(ERROR, NET_TLS_TAG, "CRL parsing error");
-        OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
-        //TODO
-        //return -1;
+        OIC_LOG(WARNING, NET_TLS_TAG, "CRL parsing error");
+        mbedtls_ssl_conf_ca_chain(&g_caTlsContext->clientConf, &g_caTlsContext->ca, NULL);
+        mbedtls_ssl_conf_ca_chain(&g_caTlsContext->serverConf, &g_caTlsContext->ca, NULL);
     }
-
-    mbedtls_ssl_conf_ca_chain(&g_caTlsContext->clientConf, &g_caTlsContext->ca, NULL);
-    mbedtls_ssl_conf_ca_chain(&g_caTlsContext->serverConf, &g_caTlsContext->ca, NULL);
-
-    ret = mbedtls_ssl_conf_own_cert(&g_caTlsContext->serverConf, &g_caTlsContext->crt,
-                                                                             &g_caTlsContext->pkey);
-    if(0 != ret)
+    else
     {
-        OIC_LOG(ERROR, NET_TLS_TAG, "Certificate parsing error");
-        OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
-        return -1;
-    }
-    ret = mbedtls_ssl_conf_own_cert( &g_caTlsContext->clientConf, &g_caTlsContext->crt,
-                                                                             &g_caTlsContext->pkey);
-    if(0 != ret)
-    {
-        OIC_LOG(ERROR, NET_TLS_TAG, "Certificate parsing error");
-        OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
-        return -1;
+        mbedtls_ssl_conf_ca_chain(&g_caTlsContext->clientConf, &g_caTlsContext->ca,
+                                                                              &g_caTlsContext->crl);
+        mbedtls_ssl_conf_ca_chain(&g_caTlsContext->serverConf, &g_caTlsContext->ca,
+                                                                              &g_caTlsContext->crl);
     }
 
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
@@ -730,19 +818,68 @@ static TlsEndPoint_t * newTlsEndPoint(const CAEndpoint_t * endpoint, mbedtls_ssl
 static int initPskIdentity(mbedtls_ssl_config * config)
 {
     uint8_t idBuf[UUID_LENGTH] = {0};
+    OIC_LOG_V(DEBUG, NET_TLS_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(config, NET_TLS_TAG, "Param config is NULL" , -1);
 
     if (0 > g_getCredentialsCallback(CA_DTLS_PSK_IDENTITY, NULL, 0, idBuf, UUID_LENGTH))
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "Identity not found");
+        OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
         return -1;
     }
     if (0 != mbedtls_ssl_conf_psk(config, idBuf, 0, idBuf, UUID_LENGTH))
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "Identity initialization failed!");
+        OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
         return -1;
     }
+    OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
     return 0;
+}
+static void setupCipher(mbedtls_ssl_config * config)
+{
+    OIC_LOG_V(DEBUG, NET_TLS_TAG, "In %s", __func__);
+    if (NULL == g_getCredentialTypesCallback)
+    {
+        OIC_LOG(ERROR, NET_TLS_TAG, "Param callback is null");
+        return;
+    }
+
+    g_getCredentialTypesCallback(g_caTlsContext->cipherFlag);
+    // Retrieve the PSK credential from SRM
+    // PIN OTM if (true == g_caTlsContext->cipherFlag[0] && 0 != initPskIdentity(config))
+    if (0 != initPskIdentity(config))
+    {
+        OIC_LOG(ERROR, NET_TLS_TAG, "PSK identity initialization failed!");
+    }
+
+    // Retrieve the ECC credential from SRM
+    if (true == g_caTlsContext->cipherFlag[1] || ADAPTER_TLS_RSA_WITH_AES_256_CBC_SHA == g_caTlsContext->cipher)
+    {
+        int ret = loadX509();
+        if (0 != ret)
+        {
+            OIC_LOG(ERROR, NET_TLS_TAG, "Failed to init X.509");
+        }
+    }
+    if (ADAPTER_CIPHER_MAX == g_caTlsContext->cipher)
+    {
+        int index = 0;
+        memset(g_cipherSuitesList, 0, sizeof(g_cipherSuitesList));
+        if (true == g_caTlsContext->cipherFlag[1])
+        {
+            g_cipherSuitesList[index] = MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
+            index ++;
+        }
+        if (true == g_caTlsContext->cipherFlag[0])
+        {
+           g_cipherSuitesList[index] = MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256;
+        }
+
+        mbedtls_ssl_conf_ciphersuites(config, g_cipherSuitesList);
+    }
+
+    OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
 }
 /**
  * Initiate TLS handshake with endpoint.
@@ -759,13 +896,7 @@ static TlsEndPoint_t * initiateTlsHandshake(const CAEndpoint_t *endpoint)
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(endpoint, NET_TLS_TAG, "Param endpoint is NULL" , NULL);
 
-    // Retrieve the credentials blob from security module
-    if (ADAPTER_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 == g_caTlsContext->cipher &&
-            0 != initPskIdentity(&g_caTlsContext->clientConf))
-    {
-        OIC_LOG(ERROR, NET_TLS_TAG, "Client PSK identity initialization failed!");
-        return NULL;
-    }
+
 
     tep = newTlsEndPoint(endpoint, &g_caTlsContext->clientConf);
     if (NULL == tep)
@@ -774,17 +905,8 @@ static TlsEndPoint_t * initiateTlsHandshake(const CAEndpoint_t *endpoint)
         return NULL;
     }
 
-    if (ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 == g_caTlsContext->cipher ||
-        ADAPTER_TLS_RSA_WITH_AES_256_CBC_SHA == g_caTlsContext->cipher)
-    {
-        ret = loadX509();
-        if (0 != ret)
-        {
-            OIC_LOG(ERROR, NET_TLS_TAG, "Failed to init X.509");
-            deleteTlsEndPoint(tep);
-            return NULL;
-        }
-    }
+    //Load allowed SVR suites from SVR DB
+    setupCipher(&g_caTlsContext->clientConf);
 
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "Add %s:%d", tep->sep.endpoint.addr, tep->sep.endpoint.port);
     ret = u_arraylist_add(g_caTlsContext->peerList, (void *) tep);
@@ -802,7 +924,7 @@ static TlsEndPoint_t * initiateTlsHandshake(const CAEndpoint_t *endpoint)
         {
             break;
         }
-        TLS_CHECK_HANDSHAKE_FAIL(tep, ret, "Handshake error", 0, NULL);
+        TLS_CHECK_HANDSHAKE_FAIL(tep, ret, "Handshake error", 0, NULL, MBEDTLS_SSL_ALERT_MSG_HANDSHAKE_FAILURE);
     }
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
     return tep;
@@ -985,8 +1107,8 @@ CAResult_t CAinitTlsAdapter()
     mbedtls_debug_set_threshold(MBED_TLS_DEBUG_LEVEL);
 #endif
 
-    // set default cipher to PSK
-    CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256);
+    // set default cipher
+    g_caTlsContext->cipher = ADAPTER_CIPHER_MAX;
 
     // init X.509
     mbedtls_x509_crt_init(&g_caTlsContext->ca);
@@ -1235,12 +1357,6 @@ CAResult_t CAdecryptTls(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
         return CA_STATUS_FAILED;
     }
 
-    if (ADAPTER_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 == g_caTlsContext->cipher &&
-            0 != initPskIdentity(&g_caTlsContext->serverConf))
-    {
-        ca_mutex_unlock(g_tlsContextMutex);
-        return CA_STATUS_FAILED;
-    }
 
     TlsEndPoint_t * peer = getTlsPeer(&sep->endpoint);
     if (NULL == peer)
@@ -1252,19 +1368,8 @@ CAResult_t CAdecryptTls(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
             ca_mutex_unlock(g_tlsContextMutex);
             return CA_STATUS_FAILED;
         }
-
-        if (ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 == g_caTlsContext->cipher ||
-            ADAPTER_TLS_RSA_WITH_AES_256_CBC_SHA == g_caTlsContext->cipher)
-        {
-            ret = loadX509();
-            if (0 != ret)
-            {
-                OIC_LOG(ERROR, NET_TLS_TAG, "Failed to init X.509");
-                deleteTlsEndPoint(peer);
-                ca_mutex_unlock(g_tlsContextMutex);
-                return CA_STATUS_FAILED;
-            }
-        }
+        //Load allowed SVR suites from SVR DB
+        setupCipher(&g_caTlsContext->serverConf);
 
         ret = u_arraylist_add(g_caTlsContext->peerList, (void *) peer);
         if (!ret)
@@ -1275,7 +1380,7 @@ CAResult_t CAdecryptTls(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
             return CA_STATUS_FAILED;
         }
     }
-    OIC_LOG_BUFFER(DEBUG, NET_TLS_TAG, data, dataLen);
+
     peer->recBuf.buff = data;
     peer->recBuf.len = dataLen;
     peer->recBuf.loaded = 0;
@@ -1289,10 +1394,18 @@ CAResult_t CAdecryptTls(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
         {
             break;
         }
-        TLS_CHECK_HANDSHAKE_FAIL(peer, ret, "Handshake error", 1, CA_STATUS_FAILED);
+        uint32_t flags = mbedtls_ssl_get_verify_result(&peer->ssl);
+        if (0 != flags)
+        {
+            OIC_LOG_BUFFER(ERROR, NET_TLS_TAG, &flags, sizeof(flags));
+            TLS_CHECK_HANDSHAKE_FAIL(peer, flags, "Cert verification failed", 1,
+                                                     CA_STATUS_FAILED, getAlertCode(flags));
+        }
+        TLS_CHECK_HANDSHAKE_FAIL(peer, ret, "Handshake error", 1, CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_HANDSHAKE_FAILURE);
         if (MBEDTLS_SSL_CLIENT_CHANGE_CIPHER_SPEC == peer->ssl.state)
         {
             memcpy(peer->master, peer->ssl.session_negotiate->master, sizeof(peer->master));
+            g_caTlsContext->selectedCipher = peer->ssl.session_negotiate->ciphersuite;
         }
 
         if (MBEDTLS_SSL_HANDSHAKE_OVER == peer->ssl.state)
@@ -1308,29 +1421,26 @@ CAResult_t CAdecryptTls(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
             }
             else
             {
-                if (ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 == g_caTlsContext->cipher)
+                if (MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 == g_caTlsContext->selectedCipher)
                 {
                     char uuid[UUID_LENGTH * 2 + 5] = {0};
                     void * uuidPos = NULL;
                     void * userIdPos = NULL;
                     const mbedtls_x509_crt * peerCert = mbedtls_ssl_get_peer_cert(&peer->ssl);
                     ret = (NULL == peerCert ? -1 : 0);
-                    TLS_CHECK_HANDSHAKE_FAIL(peer, ret, "Failed to retrieve subject",
-                                                                               1, CA_STATUS_FAILED);
-                    ret = mbedtls_ssl_get_verify_result(&peer->ssl);
-                    TLS_CHECK_HANDSHAKE_FAIL(peer, ret, "Failed to retrieve subject",
-                                                                               1, CA_STATUS_FAILED);
+                    TLS_CHECK_HANDSHAKE_FAIL(peer, ret, "Failed to retrieve cert", 1,
+                                                CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_NO_CERT);
                     uuidPos = memmem((void *) peerCert->subject_raw.p, peerCert->subject_raw.len,
                                                      (void *) UUID_PREFIX, sizeof(UUID_PREFIX) - 1);
 
                     ret = (NULL == uuidPos ? -1 : 0);
-                    TLS_CHECK_HANDSHAKE_FAIL(peer, ret, "Failed to retrieve subject",
-                                                                               1, CA_STATUS_FAILED);
+                    TLS_CHECK_HANDSHAKE_FAIL(peer, ret, "Failed to retrieve subject", 1,
+                                        CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT);
 
                     memcpy(uuid, uuidPos + sizeof(UUID_PREFIX) - 1, UUID_LENGTH * 2 + 4);
                     ret = ConvertStrToUuid(uuid, &peer->sep.identity);
-                    TLS_CHECK_HANDSHAKE_FAIL(peer, ret, "Failed to convert subject",
-                                                                               1, CA_STATUS_FAILED);
+                    TLS_CHECK_HANDSHAKE_FAIL(peer, ret, "Failed to convert subject", 1,
+                                        CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT);
 
                     userIdPos = memmem((void *) peerCert->subject_raw.p, peerCert->subject_raw.len,
                                                  (void *) USERID_PREFIX, sizeof(USERID_PREFIX) - 1);
@@ -1338,12 +1448,12 @@ CAResult_t CAdecryptTls(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
                     {
                         memcpy(uuid, userIdPos + sizeof(USERID_PREFIX) - 1, UUID_LENGTH * 2 + 4);
                         ret = ConvertStrToUuid(uuid, &peer->sep.userId);
-                        TLS_CHECK_HANDSHAKE_FAIL(peer, ret,
-                                 "Failed to convert subject alternative name", 1, CA_STATUS_FAILED);
+                        TLS_CHECK_HANDSHAKE_FAIL(peer, ret, "Failed to convert subject alt name", 1,
+                                          CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT);
                     }
                     else
                     {
-                        OIC_LOG(DEBUG, NET_TLS_TAG, "Subject alternative name not found");
+                        OIC_LOG(WARNING, NET_TLS_TAG, "Subject alternative name not found");
                     }
                 }
             }
@@ -1418,10 +1528,13 @@ void CAsetTlsAdapterCallbacks(CAPacketReceivedCallback recvCallback,
 CAResult_t CAsetTlsCipherSuite(const uint32_t cipher)
 {
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "In %s", __func__);
+    VERIFY_NON_NULL_RET(g_getCredentialTypesCallback, NET_TLS_TAG, "Param callback is null", CA_STATUS_FAILED);
+    g_getCredentialTypesCallback(g_caTlsContext->cipherFlag);
     switch(cipher)
     {
         case MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA:
         {
+            //todo check that Cred with RSA cert exists
             mbedtls_ssl_conf_ciphersuites(&g_caTlsContext->clientConf,
                                          tlsCipher[ADAPTER_TLS_RSA_WITH_AES_256_CBC_SHA]);
             mbedtls_ssl_conf_ciphersuites(&g_caTlsContext->serverConf,
@@ -1431,6 +1544,11 @@ CAResult_t CAsetTlsCipherSuite(const uint32_t cipher)
         }
         case MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8:
         {
+            if (false == g_caTlsContext->cipherFlag[1])
+            {
+                OIC_LOG(ERROR, NET_TLS_TAG, "No Credential for ECC");
+                return CA_STATUS_FAILED;
+            }
             mbedtls_ssl_conf_ciphersuites(&g_caTlsContext->clientConf,
                                          tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8]);
             mbedtls_ssl_conf_ciphersuites(&g_caTlsContext->serverConf,
@@ -1449,6 +1567,13 @@ CAResult_t CAsetTlsCipherSuite(const uint32_t cipher)
         }
         case MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256:
         {
+#if 0 // PIN OTM
+            if (false == g_caTlsContext->cipherFlag[0])
+            {
+                OIC_LOG(ERROR, NET_TLS_TAG, "No Credential for PSK");
+                return CA_STATUS_FAILED;
+            }
+#endif
             mbedtls_ssl_conf_ciphersuites(&g_caTlsContext->clientConf,
                                           tlsCipher[ADAPTER_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256]);
             mbedtls_ssl_conf_ciphersuites(&g_caTlsContext->serverConf,

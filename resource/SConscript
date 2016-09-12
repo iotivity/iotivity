@@ -69,8 +69,9 @@ if target_os in ['linux', 'windows']:
 	SConscript('csdk/stack/test/linux/SConscript')
 	SConscript('csdk/stack/samples/linux/SimpleClientServer/SConscript')
 
-	# Build secure samples
-	SConscript('csdk/stack/samples/linux/secure/SConscript')
+        if env.get('SECURED') == '1':
+		# Build secure samples
+		SConscript('csdk/stack/samples/linux/secure/SConscript')
 
 	# Build C/C++ unit tests
 	SConscript('unit_tests.scons')

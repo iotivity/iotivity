@@ -681,6 +681,14 @@ INPUT                  = . \
                          ../../csdk/stack/include/internal/oicgroup.h \
                          ../../csdk/stack/include/internal/oickeepalive.h \
                          guides \
+                         ../../csdk/security/include \
+                         ../../csdk/security/include\internal \
+                         ../../csdk/security/provisioning/include \
+                         ../../csdk/security/provisioning/include/internal \
+                         ../../csdk/security/provisioning/include/oxm \
+                         ../../csdk/security/provisioning/include/cloud \
+                         ../../csdk/security/provisioning/sample/cloudAuth.h \
+                         ../../csdk/security/provisioning/sample/cloudWrapper.h \
                          ../../../service/easy-setup/inc \
                          ../../../service/easy-setup/enrollee/inc \
                          ../../../service/resource-directory/include \

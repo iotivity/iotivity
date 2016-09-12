@@ -120,8 +120,7 @@ if target_os in ['windows', 'msys_nt']:
 	libocsrm_src  = libocsrm_src + [OCSRM_SRC + 'strptime.c']
 
 if (env.get('DTLS_WITH_X509') == '1' or env.get('WITH_TCP') == True) and env.get('SECURED') == '1':
-	crl_src = [OCSRM_SRC + 'crlresource.c']
-	libocsrm_src  = libocsrm_src + crl_src
+	libocsrm_src  = libocsrm_src + [OCSRM_SRC + 'crlresource.c', OCSRM_SRC + 'pkix_interface.c']
 
 libocsrm_conf = Configure(libocsrm_env)
 if libocsrm_conf.CheckFunc('strptime'):

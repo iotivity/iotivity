@@ -433,6 +433,118 @@ extern "C" {
 /** To represent grant type with refresh token. */
 #define OC_RSRVD_GRANT_TYPE_REFRESH_TOKEN  "refresh_token"
 
+/** Cloud CRL */
+#define OC_RSRVD_PROV_CRL_URL              "/oic/credprov/crl"
+
+#define OC_RSRVD_LAST_UPDATE              "lu"
+
+#define OC_RSRVD_THIS_UPDATE              "tu"
+
+#define OC_RSRVD_NEXT_UPDATE              "nu"
+
+#define OC_RSRVD_SERIAL_NUMBERS           "rcsn"
+
+#define OC_RSRVD_CRL                      "crl"
+
+#define OC_RSRVD_CRL_ID                   "crlid"
+
+/** Cloud ACL */
+#define OC_RSRVD_GROUP_URL                "/oic/group"
+
+#define OC_RSRVD_ACL_GROUP_URL            "/oic/acl/group"
+
+#define OC_RSRVD_ACL_INVITE_URL           "/oic/acl/invite"
+
+#define OC_RSRVD_ACL_VERIFY_URL           "/oic/acl/verify"
+
+#define OC_RSRVD_ACL_ID_URL               "/oic/acl/id"
+
+#define OC_RSRVD_MEMBER_ID                "mid"
+
+#define OC_RSRVD_GROUP_ID                 "gid"
+
+#define OC_RSRVD_OWNER_ID                 "oid"
+
+#define OC_RSRVD_ACL_ID                   "aclid"
+
+#define OC_RSRVD_ACE_ID                   "aceid"
+
+#define OC_RSRVD_DEVICE_ID                "di"
+
+#define OC_RSRVD_SUBJECT_ID               "sid"
+
+#define OC_RSRVD_REQUEST_METHOD           "rm"
+
+#define OC_RSRVD_REQUEST_URI              "uri"
+
+#define OC_RSRVD_GROUP_MASTER_ID          "gmid"
+
+#define OC_RSRVD_GROUP_TYPE               "gtype"
+
+#define OC_RSRVD_SUBJECT_TYPE             "stype"
+
+#define OC_RSRVD_GROUP_ID_LIST            "gidlist"
+
+#define OC_RSRVD_MEMBER_ID_LIST           "midlist"
+
+#define OC_RSRVD_DEVICE_ID_LIST           "dilist"
+
+#define OC_RSRVD_ACCESS_CONTROL_LIST      "aclist"
+
+#define OC_RSRVD_RESOURCES                "resources"
+
+#define OC_RSRVD_VALIDITY                 "validity"
+
+#define OC_RSRVD_PERIOD                   "period"
+
+#define OC_RSRVD_RECURRENCE               "recurrence"
+
+#define OC_RSRVD_INVITE                   "invite"
+
+#define OC_RSRVD_INVITED                  "invited"
+
+#define OC_RSRVD_ENCODING                 "encoding"
+
+#define OC_OIC_SEC                        "oic.sec"
+
+#define OC_RSRVD_BASE64                   "base64"
+
+#define OC_RSRVD_DER                      "der"
+
+#define OC_RSRVD_PEM                      "pem"
+
+#define OC_RSRVD_RAW                      "raw"
+
+#define OC_RSRVD_UNKNOWN                  "unknown"
+
+#define OC_RSRVD_DATA                     "data"
+
+#define OC_RSRVD_RESOURCE_OWNER_UUID      "rowneruuid"
+
+#define OC_RSRVD_SUBJECT_UUID             "subjectuuid"
+
+#define OC_RSRVD_PERMISSION_MASK          "permission"
+
+#define OC_RSRVD_GROUP_PERMISSION         "gp"
+
+#define OC_RSRVD_GROUP_ACL                "gacl"
+
+/** Certificete Sign Request */
+#define OC_RSRVD_PROV_CERT_URI            "/oic/credprov/cert"
+
+#define OC_RSRVD_CSR                      "csr"
+
+#define OC_RSRVD_CERT                     "cert"
+
+#define OC_RSRVD_CACERT                   "certchain"
+
+#define OC_RSRVD_TOKEN_TYPE               "tokentype"
+
+#define OC_RSRVD_EXPIRES_IN               "expiresin"
+
+#define OC_RSRVD_REDIRECT_URI             "redirecturi"
+
+#define OC_RSRVD_CERTIFICATE              "certificate"
 /**
  * Mark a parameter as unused. Used to prevent unused variable compiler warnings.
  * Used in three cases:

@@ -74,6 +74,7 @@ if env.get('DTLS_WITH_X509') == '1':
 	env.AppendUnique(CA_SRC = pkix_src)
 
 if ((secured == '1') and (with_tcp == True)):
+	env.AppendUnique(CPPPATH = [os.path.join(src_dir, 'resource', 'csdk', 'security', 'include')])
 	env.AppendUnique(CPPDEFINES = ['__WITH_TLS__'])
 	tls_path = 'extlibs/mbedtls';
 	tls_headers_path = 'mbedtls/include';

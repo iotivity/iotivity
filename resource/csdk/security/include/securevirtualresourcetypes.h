@@ -495,7 +495,7 @@ struct OicSecCrl
 {
     uint16_t CrlId;
     ByteArray ThisUpdate;
-    ByteArray CrlData;
+    OicSecKey_t CrlData;
 };
 #endif /* __WITH_X509__ or __WITH_TLS__ */
 

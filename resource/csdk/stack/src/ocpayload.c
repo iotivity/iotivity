@@ -688,6 +688,153 @@ bool OCRepPayloadGetPropBool(const OCRepPayload* payload, const char* name, bool
     return true;
 }
 
+#ifdef __WITH_TLS__
+static char *getStringFromEncodingType(OicEncodingType_t type)
+{
+    char *str = NULL;
+    switch (type)
+    {
+        case OIC_ENCODING_BASE64: str = OC_RSRVD_BASE64; break;
+        case OIC_ENCODING_DER: str = OC_RSRVD_DER; break;
+        case OIC_ENCODING_PEM: str = OC_RSRVD_PEM; break;
+        case OIC_ENCODING_RAW: str = OC_RSRVD_RAW; break;
+        default: str = OC_RSRVD_UNKNOWN; break;
+    }
+    char encoding[32];
+    snprintf(encoding, sizeof(encoding), "%s.%s.%s", OC_OIC_SEC, OC_RSRVD_ENCODING, str);
+
+    return OICStrdup(encoding);
+}
+
+bool OCRepPayloadSetPropPubDataTypeAsOwner(OCRepPayload *payload, const char *name,
+                                           const OicSecKey_t *value)
+{
+    if (!payload || !name || !value)
+    {
+        return false;
+    }
+
+    bool binary_field = false;
+    if (OIC_ENCODING_RAW == value->encoding || OIC_ENCODING_DER == value->encoding)
+    {
+        binary_field = true;
+    }
+
+    OCRepPayload *heplerPayload = OCRepPayloadCreate();
+    if (!heplerPayload)
+    {
+        return false;
+    }
+
+    char *encoding = getStringFromEncodingType(value->encoding);
+    if (!OCRepPayloadSetPropString(heplerPayload, OC_RSRVD_ENCODING, encoding))
+    {
+        OIC_LOG_V(ERROR, TAG, "Can't set %s", OC_RSRVD_ENCODING);
+    }
+
+    OCByteString val = {.bytes = value->data, .len = value->len};
+    if (binary_field)
+    {
+        if (!OCRepPayloadSetPropByteString(heplerPayload, OC_RSRVD_DATA, val))
+        {
+            OIC_LOG_V(ERROR, TAG, "Can't set %s", OC_RSRVD_DATA);
+        }
+    }
+    else
+    {
+        if (!OCRepPayloadSetPropString(heplerPayload, OC_RSRVD_DATA, (char *)val.bytes))
+        {
+            OIC_LOG_V(ERROR, TAG, "Can't set %s", OC_RSRVD_DATA);
+        }
+    }
+
+    if (!OCRepPayloadSetPropObject(payload, name, (const OCRepPayload *)heplerPayload))
+    {
+        OIC_LOG_V(ERROR, TAG, "Can't set %s", name);
+    }
+
+    OCRepPayloadDestroy(heplerPayload);
+    OICFree(encoding);
+
+    return true;
+}
+
+bool OCRepPayloadSetPropPubDataType(OCRepPayload *payload, const char *name,
+                                    const OicSecKey_t *value)
+{
+    return OCRepPayloadSetPropPubDataTypeAsOwner(payload, name, value);
+}
+
+static OicEncodingType_t getEncodingTypeFromString(char *encoding)
+{
+    OicEncodingType_t type = OIC_ENCODING_UNKNOW;
+
+    char *str = strrchr(encoding, '.');
+    if (NULL == str)
+    {
+        OIC_LOG_V(ERROR, TAG, "Can't find . in %s", encoding);
+        return type;
+    }
+    str++; //go to encoding itself
+
+    if (0 == strcmp(str, OC_RSRVD_BASE64)) type = OIC_ENCODING_BASE64;
+    else if (0 == strcmp(str, OC_RSRVD_DER)) type = OIC_ENCODING_DER;
+    else if (0 == strcmp(str, OC_RSRVD_PEM)) type = OIC_ENCODING_PEM;
+    else if (0 == strcmp(str, OC_RSRVD_RAW)) type = OIC_ENCODING_RAW;
+
+    return type;
+}
+
+bool OCRepPayloadGetPropPubDataType(const OCRepPayload *payload, const char *name, OicSecKey_t *value)
+{
+    OCRepPayload *heplerPayload = NULL;
+    char *encoding = NULL;
+    OCByteString val;
+
+    if (!payload || !name || !value)
+    {
+        return false;
+    }
+
+    if (!OCRepPayloadGetPropObject(payload, name, &heplerPayload))
+    {
+        OIC_LOG_V(ERROR, TAG, "Can't get object with name %s", name);
+        return false;
+    }
+
+    if (!OCRepPayloadGetPropString(heplerPayload, OC_RSRVD_ENCODING, &encoding))
+    {
+        OIC_LOG_V(ERROR, TAG, "Can't get %s", OC_RSRVD_ENCODING);
+    }
+    else
+    {
+        value->encoding = getEncodingTypeFromString(encoding);
+        OICFree(encoding);
+    }
+
+    if (!OCRepPayloadGetPropByteString(heplerPayload, OC_RSRVD_DATA, &val))
+    {
+        if (!OCRepPayloadGetPropString(heplerPayload, OC_RSRVD_DATA, (char **)&val.bytes))
+        {
+            OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_DATA);
+        }
+        else
+        {
+            value->data = val.bytes;
+            value->len  = strlen(val.bytes);
+        }
+    }
+    else
+    {
+        value->data = val.bytes;
+        value->len  = val.len;
+    }
+
+    OCRepPayloadDestroy(heplerPayload);
+    return true;
+}
+#endif
+
 bool OCRepPayloadSetPropObject(OCRepPayload* payload, const char* name, const OCRepPayload* value)
 {
     OCRepPayload* temp = OCRepPayloadClone(value);
