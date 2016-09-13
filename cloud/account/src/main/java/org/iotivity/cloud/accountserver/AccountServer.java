@@ -28,6 +28,7 @@ import org.iotivity.cloud.accountserver.resources.account.AccountResource;
 import org.iotivity.cloud.accountserver.resources.account.session.SessionResource;
 import org.iotivity.cloud.accountserver.resources.account.tokenrefresh.TokenRefreshResource;
 import org.iotivity.cloud.accountserver.resources.acl.group.GroupResource;
+import org.iotivity.cloud.accountserver.resources.acl.id.AclResource;
 import org.iotivity.cloud.accountserver.resources.acl.invite.InviteResource;
 import org.iotivity.cloud.accountserver.resources.certificate.CertificateResource;
 import org.iotivity.cloud.base.ServerSystem;
@@ -60,6 +61,8 @@ public class AccountServer {
         serverSystem.addResource(new TokenRefreshResource());
 
         serverSystem.addResource(new GroupResource());
+
+        serverSystem.addResource(new AclResource());
 
         serverSystem.addResource(new CertificateResource());
 
