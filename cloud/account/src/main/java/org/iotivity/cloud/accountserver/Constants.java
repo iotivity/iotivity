@@ -74,6 +74,8 @@ public class Constants extends OICConstants {
 
     public static final String KEYFIELD_ACLID        = "aclid";
 
+    public static final String KEYFIELD_DI           = "di";
+
     public static final String KEYFIELD_GTYPE        = "gtype";
 
     public static final String KEYFIELD_GIDLIST      = "gidlist";
@@ -94,6 +96,22 @@ public class Constants extends OICConstants {
 
     public static final String KEYFIELD_INVITED_USER = "invitedUser";
 
+    public static final String KEYFIELD_ACE_SUBJECT_ID = "subjectuuid";
+
+    public static final String KEYFIELD_ACE_SUBJECT_TYPE = "stype";
+
+    public static final String KEYFIELD_ACE_RESOURCE= "resources";
+
+    public static final String KEYFIELD_ACE_VALIDITY = "validity";
+
+    public static final String KEYFIELD_ACE_PERMISSION = "permission";
+
+    public static final String KEYFIELD_ACE_RESOURCE_HREF = "href";
+
+    public static final String KEYFIELD_ACE_RESOURCE_RT = "rt";
+
+    public static final String KEYFIELD_ACE_RESOURCE_IF = "if";
+
     // Request payload key
 
     public static final String REQ_DEVICE_ID         = "di";
@@ -101,6 +119,16 @@ public class Constants extends OICConstants {
     public static final String REQ_DEVICE_ID_LIST    = "dilist";
 
     public static final String REQ_UUID_ID           = "uid";
+
+    public static final String REQ_ACE_ID            = "aceid";
+
+    public static final String REQ_ACL_ID            = "aclid";
+
+    public static final String REQ_ROWNER_ID         = "rowneruuid";
+
+    public static final String REQ_ACL_LIST          = "aclist";
+
+    public static final String REQ_OWNER_ID          = "oid";
 
     public static final String REQ_AUTH_CODE         = "authcode";
 
@@ -115,6 +143,12 @@ public class Constants extends OICConstants {
     public static final String REQ_GRANT_TYPE        = "granttype";
 
     public static final String REQ_AUTH_OPTIONS      = "options";
+
+    public static final String REQ_REQUEST_METHOD    = "rm";
+
+    public static final String REQ_REQUEST_URI       = "uri";
+
+    public static final String REQ_SEARCH_USER_ID    = "sid";
 
     public static final String REQ_SEARCH_CRITERIA   = "search";
 
@@ -187,6 +221,10 @@ public class Constants extends OICConstants {
     public static final String CERT = "cert";
 
     public static final String CERT_CHAIN = "certchain";
+
+    public static final String RESP_ACL_ALLOWED      = "Allowed";
+
+    public static final String RESP_ACL_DENIED       = "Denied";
 
     // static token type
 

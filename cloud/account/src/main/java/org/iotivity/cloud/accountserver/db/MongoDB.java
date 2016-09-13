@@ -21,6 +21,7 @@
  */
 package org.iotivity.cloud.accountserver.db;
 
+import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -252,15 +253,27 @@ public class MongoDB {
 
         while (entryIter.hasNext()) {
 
-            Map.Entry<String, Object> entry = (Map.Entry<String, Object>) entryIter
-                    .next();
+            Map.Entry<String, Object> entry = (Map.Entry<String, Object>) entryIter.next();
 
             String entryKey = entry.getKey();
 
             // remove a mongoDB index
             if (entry.getValue() != null && !entryKey.equals("_id")) {
 
-                resourceMap.put(entry.getKey(), entry.getValue());
+                // if value is Array
+                if (entry.getValue() instanceof List && !((List) entry.getValue()).isEmpty()
+                        && ((List) entry.getValue()).get(0) instanceof Document)
+
+                {
+                    List<HashMap<String, Object>> list = new ArrayList<HashMap<String, Object>>();
+
+                    for (Document document : (List<Document>) entry.getValue()) {
+                        list.add(convertDocumentToHashMap(document));
+                    }
+                    resourceMap.put(entry.getKey(), list);
+                } else {
+                    resourceMap.put(entry.getKey(), entry.getValue());
+                }
             }
         }
 
