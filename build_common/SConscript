@@ -116,6 +116,11 @@ help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK path', None, PathVariable
 help_vars.Add(PathVariable('ANDROID_HOME', 'Android SDK path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('ANDROID_GRADLE', 'Gradle binary file', None, PathVariable.PathIsFile))
 
+if target_os == 'windows':
+	# For VS2013, MSVC_VERSION is '12.0'. For VS2015, MSVC_VERSION is '14.0'.
+	# Default value is None, meaning that SCons has to choose automatically a VS version.
+	help_vars.Add(EnumVariable('MSVC_VERSION', 'MSVC compiler version - Windows', None, allowed_values=('12.0', '14.0')))
+
 AddOption('--prefix',
                   dest='prefix',
                   type='string',
