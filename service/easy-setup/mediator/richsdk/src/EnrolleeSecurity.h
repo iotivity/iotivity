@@ -80,7 +80,6 @@ namespace OIC
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError);
             void convertUUIDToString(const uint8_t uuid[UUID_SIZE],
                                                 std::string& uuidString);
-            void convertStringToUUID(OicUuid_t& uuid, const std::string uuidString);
 
 #if defined(__WITH_DTLS__) && defined(__WITH_TLS__)
         public:

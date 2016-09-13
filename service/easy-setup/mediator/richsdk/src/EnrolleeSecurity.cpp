@@ -30,6 +30,7 @@
 #include "provisioningdatabasemanager.h"
 #include "oic_string.h"
 #include "utlist.h"
+#include "srmutility.h"
 
 namespace OIC
 {
@@ -103,35 +104,6 @@ namespace OIC
             }
 
             uuidString = uuidArray;
-        }
-
-        void EnrolleeSecurity::convertStringToUUID(OicUuid_t& uuid,
-                                                              const std::string uuidString)
-        {
-            size_t outBufSize = B64DECODE_OUT_SAFESIZE((uuidString.length() + 1));
-            uint8_t* outKey = (uint8_t*)OICCalloc(1, outBufSize);
-            uint32_t outKeySize = 0;
-            if(NULL == outKey)
-            {
-                OIC_LOG (ERROR, ENROLEE_SECURITY_TAG, "Failed to memoray allocation.");
-                throw ESBadRequestException ("Failed to memoray allocation.");
-            }
-
-            if(B64_OK == b64Decode((char*)uuidString.c_str(),
-                                    uuidString.length(),
-                                    outKey,
-                                    outBufSize,
-                                    &outKeySize))
-            {
-                memcpy(uuid.id, outKey, outKeySize);
-            }
-            else
-            {
-                OIC_LOG (ERROR, ENROLEE_SECURITY_TAG, "Failed to base64 decoding.");
-                throw ESBadRequestException ("Failed to base64 decoding.");
-            }
-
-            OICFree(outKey);
         }
 
         void EnrolleeSecurity::ownershipTransferCb(OC::PMResultList_t *result, int hasError)
@@ -438,7 +410,7 @@ namespace OIC
             }
 
             OicUuid_t uuid;
-            convertStringToUUID(uuid, cloudUuid);
+            ConvertStrToUuid(cloudUuid.c_str(), &uuid);
 
             // Create Acl for Cloud Server to be provisioned to Enrollee
             OicSecAcl_t* acl = createAcl(uuid);
@@ -511,6 +483,7 @@ namespace OIC
             size_t arrLen = 1;
             rsrc->typeLen = arrLen;
             rsrc->types = (char**)OICCalloc(arrLen, sizeof(char*));
+            rsrc->interfaceLen = 1;
             rsrc->interfaces = (char**)OICCalloc(arrLen, sizeof(char*));
             rsrc->types[0] = OICStrdup("rt");   // ignore
             rsrc->interfaces[0] = OICStrdup("if");  // ignore
