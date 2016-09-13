@@ -46,6 +46,24 @@
                 android:layout_width="match_parent"
                 android:id="@+id/BtnRescan"
                 android:text="RESCAN"/>
+            <Button
+                android:layout_gravity="center_vertical|center_horizontal"
+                android:layout_height="0dp"
+                android:layout_width="match_parent"
+                android:id="@+id/BtnEnableRemoteService"
+                android:text="Enable Remote Service"/>
+            <Button
+                android:layout_gravity="center_vertical|center_horizontal"
+                android:layout_height="0dp"
+                android:layout_width="match_parent"
+                android:id="@+id/BtnGetTopicList"
+                android:text="Get TopicList"/>
+            <Button
+                android:layout_gravity="center_vertical|center_horizontal"
+                android:layout_height="0dp"
+                android:layout_width="match_parent"
+                android:id="@+id/BtnUpdateTopicList"
+                android:text="Update TopicList"/>
         </LinearLayout>
 
         <LinearLayout
