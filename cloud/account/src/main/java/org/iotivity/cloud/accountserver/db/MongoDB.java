@@ -183,7 +183,7 @@ public class MongoDB {
 
         if (collection.findOneAndReplace(filter, record) == null) {
 
-            Log.w("DB update failed due to no matched record!");
+            Log.w("DB updateX509CRL failed due to no matched record!");
             return false;
         }
 
@@ -274,7 +274,6 @@ public class MongoDB {
                 } else {
                     resourceMap.put(entry.getKey(), entry.getValue());
                 }
-
             }
         }
 
