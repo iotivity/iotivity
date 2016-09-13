@@ -25,6 +25,7 @@
 #include "logger.h"
 #include "NSCommon.h"
 #include "NSProviderListener.h"
+#include "NSProviderSystem.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 
