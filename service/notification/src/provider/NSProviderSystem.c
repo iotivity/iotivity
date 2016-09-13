@@ -28,6 +28,7 @@ static NSConnectionState NSProviderConnectionState;
 
 NSProviderInfo * providerInfo;
 bool NSPolicy = true;
+bool NSResourceSecurity = true;
 
 void NSSetProviderConnectionState(NSConnectionState state)
 {
@@ -127,6 +128,16 @@ bool NSGetPolicy()
 void NSSetPolicy(bool policy)
 {
     NSPolicy = policy;
+}
+
+bool NSGetResourceSecurity()
+{
+    return NSResourceSecurity;
+}
+
+void NSSetResourceSecurity(bool secured)
+{
+    NSResourceSecurity = secured;
 }
 
 const char * NSGetUserInfo()

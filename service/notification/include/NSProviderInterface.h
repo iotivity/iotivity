@@ -65,6 +65,8 @@ typedef struct
     bool subControllability;
     /* User Information */
     char * userInfo;
+    /* Set on/off with SECURED build option */
+    bool resourceSecurity;
 
 } NSProviderConfig;
 
