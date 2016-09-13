@@ -89,6 +89,17 @@ NSResult NSStartProvider(NSProviderConfig config)
         CARegisterNetworkMonitorHandler((CAAdapterStateChangedCB)NSProviderAdapterStateListener,
                 (CAConnectionStateChangedCB)NSProviderConnectionStateListener);
 
+        NS_LOG(DEBUG, "Check secured build option..");
+#ifdef SECURED
+        NS_LOG(DEBUG, "Built with SECURED");
+
+        if(!config.resourceSecurity)
+        {
+            NS_LOG(DEBUG, "Resource Security Off");
+        }
+        NSSetResourceSecurity(config.resourceSecurity);
+#endif
+
         NSInitialize();
         NSInitScheduler();
         NSStartScheduler();
