@@ -102,12 +102,13 @@ provisioningclient = provisioning_env.Program('provisioningclient', 'provisionin
 sampleserver_justworks = provisioning_env.Program('sampleserver_justworks', 'sampleserver_justworks.cpp')
 sampleserver_randompin = provisioning_env.Program('sampleserver_randompin', 'sampleserver_randompin.cpp')
 if provisioning_env.get('WITH_TCP') == True:
-    cloudClient_src = [
-        'cloudClient.c',
+    cloud_src = [
         'cloud/cloudAuth.c',
+        'cloud/cloudCommon.c',
         'cloud/cloudWrapper.c',
         'cloud/cloudDiscovery.c']
-    cloudClient = provisioning_env.Program('cloudClient', cloudClient_src)
+    cloudClient = provisioning_env.Program('cloudClient', cloud_src + ['cloudClient.c'])
+    cloudServer = provisioning_env.Program('cloudServer', cloud_src + ['cloudServer.c', 'cloud/cloudResource.c'])
 
 src_dir = provisioning_env.get('SRC_DIR')
 sec_provisioning_src_dir = src_dir + '/resource/csdk/security/provisioning/sample/'
@@ -127,7 +128,7 @@ if provisioning_env.get('WITH_TCP') == True:
                                         sec_provisioning_src_dir + 'cloud.dat')
     rootcert = provisioning_env.Install(sec_provisioning_build_dir,
                                         sec_provisioning_src_dir + 'rootca.crt')
-    Alias("cloud", [clouddat, rootcert, cloudClient])
+    Alias("cloud", [clouddat, rootcert, cloudClient, cloudServer])
     provisioning_env.AppendTarget("cloud")
 
 Alias("samples", [provisioningclient, sampleserver_justworks, sampleserver_randompin, clientdat, justworksdat, randompindat, randompin_with_emptyuuid_dat])

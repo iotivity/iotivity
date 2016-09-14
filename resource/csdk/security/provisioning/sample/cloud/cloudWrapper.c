@@ -160,19 +160,12 @@ static void readOptionalStringArray(stringArray_t *list, int length, const char*
     }
 }
 
-/**
- * Copies whole binary file to crl variable
- *
- * @param[in] list           array of strings structure
- * @param[out] crl           byte array to fill
- * @return                   negative error code
- * */
-static int ReadFile(const char *name, OCByteString *crl)
+bool readFile(const char *name, OCByteString *out)
 {
     FILE *file = NULL;
     int length = 0;
     uint8_t *buffer = NULL;
-    int result = 1;
+    bool result = false;
 
     //Open file
     file = fopen(name, "rb");
@@ -183,8 +176,7 @@ static int ReadFile(const char *name, OCByteString *crl)
     }
 
     //Get file length
-    result = fseek(file, 0, SEEK_END);
-    if (result)
+    if (fseek(file, 0, SEEK_END))
     {
         OIC_LOG(ERROR, TAG, "Failed to SEEK_END");
         goto exit;
@@ -197,8 +189,7 @@ static int ReadFile(const char *name, OCByteString *crl)
         goto exit;
     }
 
-    result = fseek(file, 0, SEEK_SET);
-    if (result)
+    if (fseek(file, 0, SEEK_SET))
     {
         OIC_LOG(ERROR, TAG, "Failed to SEEK_SET");
         goto exit;
@@ -220,13 +211,13 @@ static int ReadFile(const char *name, OCByteString *crl)
         goto exit;
     }
 
-    crl->bytes = buffer;
-    crl->len   = length;
+    out->bytes = buffer;
+    out->len   = length;
 
-    result = 0;
+    result = true;
 exit:
     fclose(file);
-    return 0;
+    return result;
 }
 
 /**
@@ -294,7 +285,7 @@ OCStackResult OCWrapperPostCRL(const OCDevAddr *endPoint, OCCloudResponseCB call
         readString(filename, sizeof(filename),
                    "filename from which binary Crl in DER format will be read", "crl");
 
-        if (ReadFile(filename, &crlData))
+        if (!readFile(filename, &crlData))
         {
             printf("Can't read crl from file %s\n", filename);
             goto exit;
