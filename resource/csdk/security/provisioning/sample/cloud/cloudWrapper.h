@@ -239,5 +239,13 @@ void readString(char* item, int length, const char* description, const char* exa
  */
 void readInteger(int* item, const char* description, const char* example);
 
+/**
+ * Copies whole binary file to out variable
+ *
+ * @param[in] list           array of strings structure
+ * @param[out] out           byte array to fill
+ * @return                   negative error code
+ * */
+int readFile(const char *name, OCByteString *out);
 
 #endif //OC_CLOUD_WRAPPER_H

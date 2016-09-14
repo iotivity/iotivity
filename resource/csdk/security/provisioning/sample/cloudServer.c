@@ -1,7 +1,11 @@
 #include "cloudCommon.h"
 #include "logger.h"
+#include "cloudResource.h"
 
-#define TAG "cloudClient"
+#define TAG "cloudServer"
+
+extern LEDResource LED;
+extern char *gResourceUri;
 
 int main(int argc, char *argv[])
 {
@@ -21,10 +25,20 @@ int main(int argc, char *argv[])
         return -3;
     }
 
-    OCMode mode = OC_CLIENT;
-    if (OC_STACK_OK != startRequestsThread(&mode))
+    LED.state = false;
+    LED.power = 0;
+    /*
+     * Declare and create the example resource: LED
+     */
+    if (OC_STACK_OK != createLEDResource(gResourceUri, &LED))
     {
         return -4;
+    }
+
+    OCMode mode = OC_SERVER;
+    if (OC_STACK_OK != startRequestsThread(&mode))
+    {
+        return -5;
     }
 
     startProcess();
