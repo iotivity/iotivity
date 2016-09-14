@@ -693,6 +693,8 @@ CAResult_t CASendErrorMessage(const coap_pdu_t *pdu, uint8_t status,
         case CA_MSG_ACKNOWLEDGE:
             sentMsgType = CA_MSG_CONFIRM;
             break;
+        default:
+            sentMsgType = CA_MSG_NONCONFIRM;
     }
 
     CAData_t *cloneData = NULL;
