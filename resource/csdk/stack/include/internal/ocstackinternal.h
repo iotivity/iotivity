@@ -136,33 +136,6 @@ typedef struct
 } OCServerProtocolRequest;
 
 /**
- * This structure will be created in occoap and passed up the stack on the client side.
- */
-typedef struct
-{
-    /** handle is retrieved by comparing the token-handle pair in the PDU.*/
-    ClientCB * cbNode;
-
-    /** This is how long this response is valid for (in seconds).*/
-    uint32_t maxAge;
-
-    /** This is the Uri of the resource. (ex. "coap://192.168.1.1/a/led").*/
-    char * fullUri;
-
-    /** This is the relative Uri of the resource. (ex. "/a/led").*/
-    char * rcvdUri;
-
-    /** This is the received payload.*/
-    char * bufRes;
-
-    /** This is the token received OTA.*/
-    CAToken_t rcvdToken;
-
-    /** this structure will be passed to client.*/
-    OCClientResponse * clientResponse;
-} OCResponse;
-
-/**
  * This typedef is to represent our Server Instance identification.
  */
 typedef uint8_t ServerID[16];

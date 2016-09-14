@@ -64,12 +64,6 @@ typedef struct /*CA private key, CA certificate, other CA-related info*/
     long        numberOfRevoked;
 } CKMInfo_t;
 
-typedef struct /*CA private key, CA certificate, certificate revocation/white list*/
-{
-    uint32_t    CRLsize;
-    uint8_t     *certificateRevocationList;//should be allocated dynamically
-} CRLInfo_t;
-
 //General functions
 
 /**

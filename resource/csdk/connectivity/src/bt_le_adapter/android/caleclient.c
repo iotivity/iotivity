@@ -130,8 +130,9 @@ static bool CALECheckConnectionStateValue(jint state)
         case GATT_REQUEST_NOT_SUPPORTED:
         case GATT_WRITE_NOT_PERMITTED:
             return true;
+        default:
+            return false;
     }
-    return false;
 }
 
 void CALEClientSetScanInterval(int32_t intervalTime, int32_t workingCount)
