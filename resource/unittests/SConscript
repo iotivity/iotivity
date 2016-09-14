@@ -87,9 +87,9 @@ unittests_src = [
 
 # TODO: Fix errors in the following Windows tests.
 if target_os in ['windows']:
-	unittests_src.remove('OCPlatformTest.cpp')
-	unittests_src.remove('OCRepresentationEncodingTest.cpp')
 	if '12.0' == unittests_env['MSVC_VERSION']:
+		unittests_src.remove('OCPlatformTest.cpp')
+		unittests_src.remove('OCRepresentationEncodingTest.cpp')
 		unittests_src.remove('OCRepresentationTest.cpp')
 		unittests_src.remove('OCResourceTest.cpp')
 

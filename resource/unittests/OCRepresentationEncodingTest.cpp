@@ -373,8 +373,11 @@ namespace OCRepresentationEncodingTest
                 newSubRep.getValue<std::vector<uint8_t>>("BinaryAttr"));
         OCPayloadDestroy(cparsed);
     }
-
+#if defined (_MSC_VER)
+    TEST(RepresentationEncoding, DISABLED_OneDVectors)
+#else
     TEST(RepresentationEncoding, OneDVectors)
+#endif
     {
         // Setup
         OC::OCRepresentation startRep;
@@ -451,7 +454,11 @@ namespace OCRepresentationEncodingTest
         OCPayloadDestroy(cparsed);
     }
 
+#if defined (_MSC_VER)
+    TEST(RepresentationEncoding, DISABLED_TwoDVectors)
+#else
     TEST(RepresentationEncoding, TwoDVectors)
+#endif
     {
         // Setup
         OC::OCRepresentation startRep;
@@ -544,7 +551,11 @@ namespace OCRepresentationEncodingTest
         OCPayloadDestroy(cparsed);
     }
 
+#if defined (_MSC_VER)
+    TEST(RepresentationEncoding, DISABLED_TwoDVectorsJagged)
+#else
     TEST(RepresentationEncoding, TwoDVectorsJagged)
+#endif
     {
         // Setup
         OC::OCRepresentation startRep;
@@ -652,7 +663,11 @@ namespace OCRepresentationEncodingTest
         OCPayloadDestroy(cparsed);
     }
 
+#if defined (_MSC_VER)
+    TEST(RepresentationEncoding, DISABLED_ThreeDVectors)
+#else
     TEST(RepresentationEncoding, ThreeDVectors)
+#endif
     {
         // Setup
         OC::OCRepresentation startRep;
@@ -795,7 +810,11 @@ namespace OCRepresentationEncodingTest
         OCPayloadDestroy(cparsed);
     }
 
+#if defined (_MSC_VER)
+    TEST(RepresentationEncoding, DISABLED_ThreeDVectorsJagged)
+#else
     TEST(RepresentationEncoding, ThreeDVectorsJagged)
+#endif
     {
         // Setup
         OC::OCRepresentation startRep;
