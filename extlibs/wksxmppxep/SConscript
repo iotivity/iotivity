@@ -44,23 +44,31 @@ if with_ra_ibb:
 		else:
 			print 'Download', SRC_NAME, 'library complete'
 
-	print 'Building with ' + SRC_NAME
-	os.chdir(SRC_NAME)
-	if not os.path.exists('libwksxmppxep.so') :
-		LIBSTROPHE_BASE=base_dir + '/extlibs/libstrophe/libstrophe'
-		foo=commands.getoutput('make LIBSTROPHE_BASE=' + LIBSTROPHE_BASE + ' libraries')
-		print foo
-
-	if not os.path.exists('libwksxmppxep.so') :
-		print 'Building with ' + SRC_NAME + ' failed.'
-		Exit(2)
-
-	print 'Building with ' + SRC_NAME + ' Completely.'
+	if not env.GetOption('clean'):
+		print 'Building with ' + SRC_NAME
+		os.chdir(SRC_NAME)
+		if not os.path.exists('libwksxmppxep.so') :
+			LIBSTROPHE_BASE=base_dir + '/extlibs/libstrophe/libstrophe'
+			foo=commands.getoutput('make LIBSTROPHE_BASE=' + LIBSTROPHE_BASE + ' libraries')
+			print foo
+		if not os.path.exists('libwksxmppxep.so') :
+			print 'Building with ' + SRC_NAME + ' failed.'
+			Exit(2)
+		else:
+			foo = commands.getoutput('cp libwksxmppxep.so ' + env.get('BUILD_DIR'))
+			print foo
+			foo = commands.getoutput('cp libwksxmppxep.a ' + env.get('BUILD_DIR'))
+			print foo
+	
+		print 'Building with ' + SRC_NAME + ' Completely.'
 
 	env.PrependUnique(CPPPATH = [INC_PATH], RALIBS = WJSXMPPXEP_LIBS, RALIBPATH = [LIB_PATH], RARPATH = [LIB_PATH])
-	env.PrependUnique(LIBS = WJSXMPPXEP_LIBS, LIBPATH = [LIB_PATH])
-	env.PrependUnique(LIBS = ['boost_system', 'boost_thread'])
+	env.AppendUnique(LIBS = WJSXMPPXEP_LIBS, LIBPATH = [LIB_PATH])
+	env.AppendUnique(LIBS = ['boost_system', 'boost_thread'])
 
 if env.GetOption('clean') :
 	act = env.Action(['cd ' + SRC_PATH, 'make clean'])
 	env.Execute(act)
+	if os.path.isfile(env.get('BUILD_DIR') + '/libwksxmppxep.so'):
+		act2 = env.Action(['rm ' + env.get('BUILD_DIR') + '/libwksxmppxep.*'])
+		env.Execute(act2)
