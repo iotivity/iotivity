@@ -48,6 +48,8 @@ mkdir ./tmp/extlibs/
 mkdir ./tmp/packaging
 cp -LR ./extlibs/tinycbor $sourcedir/tmp/extlibs
 rm -rf $sourcedir/tmp/extlibs/tinycbor/tinycbor/.git
+cp -Rf ./extlibs/mbedtls $sourcedir/tmp/extlibs
+rm -rf $sourcedir/tmp/extlibs/mbedtls/mbedtls/.git
 cp -R ./extlibs/cjson $sourcedir/tmp/extlibs
 cp -R ./extlibs/tinydtls $sourcedir/tmp/extlibs
 cp -R ./extlibs/timer $sourcedir/tmp/extlibs
