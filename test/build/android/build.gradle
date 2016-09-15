@@ -109,6 +109,7 @@ def rcModuleBuildFileDir = "${moduleBuildFileDir}/rc/junit/build.gradle"
 def reModuleBuildFileDir = "${moduleBuildFileDir}/re/junit/build.gradle"
 def pmModuleBuildFileDir = "${moduleBuildFileDir}/pm/junit/build.gradle"
 def caModuleBuildFileDir = "${moduleBuildFileDir}/ca/junit/build.gradle"
+def riModuleBuildFileDir = "${moduleBuildFileDir}/ri/junit/build.gradle"
 
 if(project.hasProperty('app')){
     def testAppBaseDirectory = "${secTestRootDirectoryFromBuild}/src/iBtestapp/modules"
@@ -117,6 +118,7 @@ if(project.hasProperty('app')){
     rcModuleBuildFileDir = "${testAppBaseDirectory}/rc/android/build.gradle"
     reModuleBuildFileDir = "${testAppBaseDirectory}/re/android/build.gradle"
     caModuleBuildFileDir = "${testAppBaseDirectory}/ca/android/build.gradle"
+    riModuleBuildFileDir = "${testAppBaseDirectory}/ri/android/build.gradle"
 }
 
 ext.easySetupNDkBuildDir = "${iotivityRootDirectoryFromBuild}/service/easy-setup/mediator/richsdk/android"
@@ -279,6 +281,15 @@ task performNDKBuild(type: Exec) {
 task ca(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile', 'performNDKBuild']) {
     buildFile = caModuleBuildFileDir 
     tasks = ['cabuild']
+    startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties() 
+}
+
+/*
+ * task to build ri 
+*/
+task ri(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile']) {
+    buildFile = riModuleBuildFileDir 
+    tasks = ['ribuild']
     startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties() 
 }
 
