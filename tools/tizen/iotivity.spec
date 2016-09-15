@@ -24,7 +24,7 @@ BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(sqlite3)
 Requires(postun): /sbin/ldconfig
 Requires(post): /sbin/ldconfig
-%if 0%{?speedpython}
+%if 0%{?speedpython:1} && 0%{?en_speedpython:1}
 %en_speedpython
 %endif
 
