@@ -63,7 +63,6 @@ typedef enum {
     TEST_GET_REQ_NON_WITH_VENDOR_HEADER_OPTIONS,
     TEST_DISCOVER_PLATFORM_REQ,
     TEST_DISCOVER_DEV_REQ,
-    TEST_PROXY_GET_REQ_NON,
     MAX_TESTS
 } CLIENT_TEST;
 
@@ -108,7 +107,6 @@ int InitGetRequest(OCQualityOfService qos);
 int InitDeviceDiscovery(OCQualityOfService qos);
 int InitPlatformDiscovery(OCQualityOfService qos);
 int InitDiscovery(OCQualityOfService qos);
-int InitProxyGetRequest(OCQualityOfService qos);
 
 /* Call delete operation on already deleted resource */
 void* RequestDeleteDeathResourceTask(void* myqos);

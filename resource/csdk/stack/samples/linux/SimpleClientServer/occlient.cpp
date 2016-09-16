@@ -66,10 +66,6 @@ static OCDevAddr serverAddr;
 static char discoveryAddr[100];
 static std::string coapServerResource = "/a/light";
 
-// Following resource is used to verify coap-http proxy
-static std::string coapProxyResource = OC_RSRVD_PROXY_URI;
-static std::string httpResource;    // Will be taken as user input
-
 #ifdef WITH_PRESENCE
 // The handle for observe registration
 OCDoHandle gPresenceHandle;
@@ -109,7 +105,7 @@ OCPayload* putPayload()
 
 static void PrintUsage()
 {
-    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..21> -c <0|1>");
+    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..20> -c <0|1>");
     OIC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OIC_LOG(INFO, TAG, "-c 0 : Use Default connectivity(IP)");
     OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
@@ -144,7 +140,6 @@ static void PrintUsage()
             "add  vendor specific header options");
     OIC_LOG(INFO, TAG, "-t 19 :  Discover Platform");
     OIC_LOG(INFO, TAG, "-t 20 :  Discover Devices");
-    OIC_LOG(INFO, TAG, "-t 21 -p \"http_uri\":  Discover Proxy and Initiate Nonconfirmable Get Request");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -163,8 +158,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    const char *uri = query.str().length() ? query.str().c_str() : NULL;
-    ret = OCDoResource(&handle, method, uri, remoteAddr,
+    ret = OCDoResource(&handle, method, query.str().c_str(), remoteAddr,
                        (method == OC_REST_PUT) ? putPayload() : NULL,
                        (ConnType), qos, &cbData, options, numOptions);
 
@@ -409,12 +403,9 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
 
         OCResourcePayload *resource = (OCResourcePayload*) payload->resources;
         int found = 0;
-
-        std::string resourceToFind = (TestCase == TEST_PROXY_GET_REQ_NON) ?
-                                            coapProxyResource : coapServerResource;
         while (resource)
         {
-            if(resource->uri && strcmp(resource->uri, resourceToFind.c_str()) == 0)
+            if(resource->uri && strcmp(resource->uri, coapServerResource.c_str()) == 0)
             {
                 found = 1;
                 break;
@@ -424,7 +415,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
 
         if(!found)
         {
-            OIC_LOG_V (INFO, TAG, "No %s in payload", resourceToFind.c_str());
+            OIC_LOG_V (INFO, TAG, "No %s in payload", coapServerResource.c_str());
             return OC_STACK_KEEP_TRANSACTION;
         }
 
@@ -463,9 +454,6 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
                 break;
             case TEST_OBS_REQ_CON:
                 InitObserveRequest(OC_HIGH_QOS);
-                break;
-            case TEST_PROXY_GET_REQ_NON:
-                InitProxyGetRequest(OC_LOW_QOS);
                 break;
 #ifdef WITH_PRESENCE
             case TEST_OBS_PRESENCE:
@@ -700,25 +688,6 @@ int InitDeleteRequest(OCQualityOfService qos)
     return result;
 }
 
-int InitProxyGetRequest(OCQualityOfService qos)
-{
-    OIC_LOG(INFO, TAG, "InitProxyGetRequest");
-    OCHeaderOption option;
-    memset(&option, 0, sizeof(option));
-
-    option.protocolID = OC_COAP_ID;
-    option.optionID = OC_RSRVD_PROXY_OPTION_ID;
-    memcpy(option.optionData, (uint8_t *)httpResource.c_str(), httpResource.length());
-    option.optionLength = httpResource.length();
-
-    std::ostringstream query;
-    // A request with proxy uri shall not have resource uri
-    // query << coapProxyResource;
-
-    return (InvokeOCDoResource(query, &serverAddr, OC_REST_GET,
-                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, getReqCB, &option, 1));
-}
-
 int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions,
                    bool getWithQuery)
 {
@@ -838,7 +807,7 @@ int main(int argc, char* argv[])
 {
     int opt;
 
-    while ((opt = getopt(argc, argv, "u:t:c:p:")) != -1)
+    while ((opt = getopt(argc, argv, "u:t:c:")) != -1)
     {
         switch(opt)
         {
@@ -851,12 +820,6 @@ int main(int argc, char* argv[])
             case 'c':
                 Connectivity = atoi(optarg);
                 break;
-            case 'p':
-                if(optarg)
-                {
-                    httpResource = optarg;
-                }
-                break;
             default:
                 PrintUsage();
                 return -1;
@@ -865,8 +828,7 @@ int main(int argc, char* argv[])
 
     if ((UnicastDiscovery != 0 && UnicastDiscovery != 1) ||
             (TestCase < TEST_DISCOVER_REQ || TestCase >= MAX_TESTS) ||
-            (Connectivity < CT_ADAPTER_DEFAULT || Connectivity >= MAX_CT) ||
-            (TestCase == TEST_PROXY_GET_REQ_NON && httpResource.length() == 0) )
+            (Connectivity < CT_ADAPTER_DEFAULT || Connectivity >= MAX_CT))
     {
         PrintUsage();
         return -1;
