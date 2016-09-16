@@ -370,6 +370,11 @@ public class OcResource {
     public void observe(ObserveType observeType,
                         Map<String, String> queryParamsMap,
                         OnObserveListener onObserveListener) throws OcException {
+
+        if (observeType == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "observeType cannot be null");
+        }
+
         this.observe(
                 observeType.getValue(),
                 queryParamsMap,
