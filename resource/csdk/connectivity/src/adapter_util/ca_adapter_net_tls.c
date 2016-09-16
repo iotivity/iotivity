@@ -160,7 +160,7 @@ if (0 != ret && MBEDTLS_ERR_SSL_WANT_READ != ret &&  MBEDTLS_ERR_SSL_WANT_WRITE 
     removePeerFromList(&peer->sep.endpoint);                                                       \
     if (mutex)                                                                                     \
     {                                                                                              \
-        ca_mutex_unlock(g_tlsContextMutex);                                                        \
+        oc_mutex_unlock(g_tlsContextMutex);                                                        \
     }                                                                                              \
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);                                             \
     return error;                                                                                  \
@@ -326,7 +326,7 @@ static CAgetPkixInfoHandler g_getPkixInfoCallback = NULL;
  * @var g_dtlsContextMutex
  * @brief Mutex to synchronize access to g_caTlsContext.
  */
-static ca_mutex g_tlsContextMutex = NULL;
+static oc_mutex g_tlsContextMutex = NULL;
 
 /**
  * @var g_tlsHandshakeCallback
@@ -733,18 +733,18 @@ CAResult_t CAcloseTlsConnection(const CAEndpoint_t *endpoint)
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(endpoint, NET_TLS_TAG, "Param endpoint is NULL" , CA_STATUS_INVALID_PARAM);
 
-    ca_mutex_lock(g_tlsContextMutex);
+    oc_mutex_lock(g_tlsContextMutex);
     if (NULL == g_caTlsContext)
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "Context is NULL");
-        ca_mutex_unlock(g_tlsContextMutex);
+        oc_mutex_unlock(g_tlsContextMutex);
         return CA_STATUS_FAILED;
     }
     TlsEndPoint_t * tep = getTlsPeer(endpoint);
     if (NULL == tep)
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "Session does not exist");
-        ca_mutex_unlock(g_tlsContextMutex);
+        oc_mutex_unlock(g_tlsContextMutex);
         return CA_STATUS_FAILED;
     }
     /* No error checking, the connection might be closed already */
@@ -756,7 +756,7 @@ CAResult_t CAcloseTlsConnection(const CAEndpoint_t *endpoint)
     while (MBEDTLS_ERR_SSL_WANT_WRITE == ret);
 
     removePeerFromList(&tep->sep.endpoint);
-    ca_mutex_unlock(g_tlsContextMutex);
+    oc_mutex_unlock(g_tlsContextMutex);
 
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
     return CA_STATUS_OK;
@@ -938,7 +938,7 @@ void CAdeinitTlsAdapter()
     VERIFY_NON_NULL_VOID(g_tlsContextMutex, NET_TLS_TAG, "context mutex is NULL");
 
     //Lock tlsContext mutex
-    ca_mutex_lock(g_tlsContextMutex);
+    oc_mutex_lock(g_tlsContextMutex);
 
     // Clear all lists
     deletePeerList();
@@ -956,8 +956,8 @@ void CAdeinitTlsAdapter()
     g_caTlsContext = NULL;
 
     // Unlock tlsContext mutex and de-initialize it
-    ca_mutex_unlock(g_tlsContextMutex);
-    ca_mutex_free(g_tlsContextMutex);
+    oc_mutex_unlock(g_tlsContextMutex);
+    oc_mutex_free(g_tlsContextMutex);
     g_tlsContextMutex = NULL;
 
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s ", __func__);
@@ -970,7 +970,7 @@ CAResult_t CAinitTlsAdapter()
     // Initialize mutex for tlsContext
     if (NULL == g_tlsContextMutex)
     {
-        g_tlsContextMutex = ca_mutex_new();
+        g_tlsContextMutex = oc_mutex_new();
         VERIFY_NON_NULL_RET(g_tlsContextMutex, NET_TLS_TAG, "malloc failed",
                             CA_MEMORY_ALLOC_FAILED);
     }
@@ -981,14 +981,14 @@ CAResult_t CAinitTlsAdapter()
     }
 
     // Lock tlsContext mutex and create tlsContext
-    ca_mutex_lock(g_tlsContextMutex);
+    oc_mutex_lock(g_tlsContextMutex);
     g_caTlsContext = (TlsContext_t *)OICCalloc(1, sizeof(TlsContext_t));
 
     if (NULL == g_caTlsContext)
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "Context malloc failed");
-        ca_mutex_unlock(g_tlsContextMutex);
-        ca_mutex_free(g_tlsContextMutex);
+        oc_mutex_unlock(g_tlsContextMutex);
+        oc_mutex_free(g_tlsContextMutex);
         g_tlsContextMutex = NULL;
         return CA_MEMORY_ALLOC_FAILED;
     }
@@ -1001,8 +1001,8 @@ CAResult_t CAinitTlsAdapter()
         OIC_LOG(ERROR, NET_TLS_TAG, "peerList initialization failed!");
         OICFree(g_caTlsContext);
         g_caTlsContext = NULL;
-        ca_mutex_unlock(g_tlsContextMutex);
-        ca_mutex_free(g_tlsContextMutex);
+        oc_mutex_unlock(g_tlsContextMutex);
+        oc_mutex_free(g_tlsContextMutex);
         g_tlsContextMutex = NULL;
         return CA_STATUS_FAILED;
     }
@@ -1027,7 +1027,7 @@ CAResult_t CAinitTlsAdapter()
     if(urandomFd == -1)
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "Fails open /dev/urandom!");
-        ca_mutex_unlock(g_tlsContextMutex);
+        oc_mutex_unlock(g_tlsContextMutex);
         CAdeinitTlsAdapter();
         return CA_STATUS_FAILED;
     }
@@ -1035,7 +1035,7 @@ CAResult_t CAinitTlsAdapter()
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "Fails read from /dev/urandom!");
         close(urandomFd);
-        ca_mutex_unlock(g_tlsContextMutex);
+        oc_mutex_unlock(g_tlsContextMutex);
         CAdeinitTlsAdapter();
         return CA_STATUS_FAILED;
     }
@@ -1048,7 +1048,7 @@ CAResult_t CAinitTlsAdapter()
                                   &g_caTlsContext->entropy, seed, sizeof(SEED)))
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "Seed initialization failed!");
-        ca_mutex_unlock(g_tlsContextMutex);
+        oc_mutex_unlock(g_tlsContextMutex);
         CAdeinitTlsAdapter();
         return CA_STATUS_FAILED;
     }
@@ -1061,7 +1061,7 @@ CAResult_t CAinitTlsAdapter()
                                     MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT) != 0)
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "Client config initialization failed!");
-        ca_mutex_unlock(g_tlsContextMutex);
+        oc_mutex_unlock(g_tlsContextMutex);
         CAdeinitTlsAdapter();
         return CA_STATUS_FAILED;
     }
@@ -1088,7 +1088,7 @@ CAResult_t CAinitTlsAdapter()
                                     MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT) != 0)
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "Server config initialization failed!");
-        ca_mutex_unlock(g_tlsContextMutex);
+        oc_mutex_unlock(g_tlsContextMutex);
         CAdeinitTlsAdapter();
         return CA_STATUS_FAILED;
     }
@@ -1116,7 +1116,7 @@ CAResult_t CAinitTlsAdapter()
     mbedtls_pk_init(&g_caTlsContext->pkey);
     mbedtls_x509_crl_init(&g_caTlsContext->crl);
 
-    ca_mutex_unlock(g_tlsContextMutex);
+    oc_mutex_unlock(g_tlsContextMutex);
 
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
     return CA_STATUS_OK;
@@ -1181,11 +1181,11 @@ CAResult_t CAencryptTls(const CAEndpoint_t *endpoint,
 
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "Data to be encrypted dataLen [%d]", dataLen);
 
-    ca_mutex_lock(g_tlsContextMutex);
+    oc_mutex_lock(g_tlsContextMutex);
     if(NULL == g_caTlsContext)
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "Context is NULL");
-        ca_mutex_unlock(g_tlsContextMutex);
+        oc_mutex_unlock(g_tlsContextMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -1197,7 +1197,7 @@ CAResult_t CAencryptTls(const CAEndpoint_t *endpoint,
     if (NULL == tep)
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "TLS handshake failed");
-        ca_mutex_unlock(g_tlsContextMutex);
+        oc_mutex_unlock(g_tlsContextMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -1214,7 +1214,7 @@ CAResult_t CAencryptTls(const CAEndpoint_t *endpoint,
                 g_tlsHandshakeCallback(&tep->sep.endpoint, &errorInfo);
             }
             removePeerFromList(&tep->sep.endpoint);
-            ca_mutex_unlock(g_tlsContextMutex);
+            oc_mutex_unlock(g_tlsContextMutex);
             return CA_STATUS_FAILED;
         }
     }
@@ -1224,12 +1224,12 @@ CAResult_t CAencryptTls(const CAEndpoint_t *endpoint,
         if (NULL == msg || !u_arraylist_add(tep->cacheList, (void *) msg))
         {
             OIC_LOG(ERROR, NET_TLS_TAG, "u_arraylist_add failed!");
-            ca_mutex_unlock(g_tlsContextMutex);
+            oc_mutex_unlock(g_tlsContextMutex);
             return CA_STATUS_FAILED;
         }
     }
 
-    ca_mutex_unlock(g_tlsContextMutex);
+    oc_mutex_unlock(g_tlsContextMutex);
 
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
     return CA_STATUS_OK;
@@ -1349,11 +1349,11 @@ CAResult_t CAdecryptTls(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
     VERIFY_NON_NULL_RET(sep, NET_TLS_TAG, "endpoint is NULL" , CA_STATUS_INVALID_PARAM);
     VERIFY_NON_NULL_RET(data, NET_TLS_TAG, "Param data is NULL" , CA_STATUS_INVALID_PARAM);
 
-    ca_mutex_lock(g_tlsContextMutex);
+    oc_mutex_lock(g_tlsContextMutex);
     if (NULL == g_caTlsContext)
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "Context is NULL");
-        ca_mutex_unlock(g_tlsContextMutex);
+        oc_mutex_unlock(g_tlsContextMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -1365,7 +1365,7 @@ CAResult_t CAdecryptTls(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
         if (NULL == peer)
         {
             OIC_LOG(ERROR, NET_TLS_TAG, "Malloc failed!");
-            ca_mutex_unlock(g_tlsContextMutex);
+            oc_mutex_unlock(g_tlsContextMutex);
             return CA_STATUS_FAILED;
         }
         //Load allowed SVR suites from SVR DB
@@ -1376,7 +1376,7 @@ CAResult_t CAdecryptTls(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
         {
             OIC_LOG(ERROR, NET_TLS_TAG, "u_arraylist_add failed!");
             OICFree(peer);
-            ca_mutex_unlock(g_tlsContextMutex);
+            oc_mutex_unlock(g_tlsContextMutex);
             return CA_STATUS_FAILED;
         }
     }
@@ -1457,7 +1457,7 @@ CAResult_t CAdecryptTls(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
                     }
                 }
             }
-            ca_mutex_unlock(g_tlsContextMutex);
+            oc_mutex_unlock(g_tlsContextMutex);
             OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
             return CA_STATUS_OK;
         }
@@ -1474,7 +1474,7 @@ CAResult_t CAdecryptTls(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
         {
             OIC_LOG(INFO, NET_TLS_TAG, "Connection was closed gracefully");
             removePeerFromList(&peer->sep.endpoint);
-            ca_mutex_unlock(g_tlsContextMutex);
+            oc_mutex_unlock(g_tlsContextMutex);
             return CA_STATUS_OK;
         }
 
@@ -1487,14 +1487,14 @@ CAResult_t CAdecryptTls(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
                 g_tlsHandshakeCallback(&peer->sep.endpoint, &errorInfo);
             }
             removePeerFromList(&peer->sep.endpoint);
-            ca_mutex_unlock(g_tlsContextMutex);
+            oc_mutex_unlock(g_tlsContextMutex);
             return CA_STATUS_FAILED;
         }
 
         g_caTlsContext->adapterCallbacks[0].recvCallback(&peer->sep, decryptBuffer, ret);
     }
 
-    ca_mutex_unlock(g_tlsContextMutex);
+    oc_mutex_unlock(g_tlsContextMutex);
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
     return CA_STATUS_OK;
 }
@@ -1506,11 +1506,11 @@ void CAsetTlsAdapterCallbacks(CAPacketReceivedCallback recvCallback,
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "In %s", __func__);
     VERIFY_NON_NULL_VOID(sendCallback, NET_TLS_TAG, "sendCallback is NULL");
     VERIFY_NON_NULL_VOID(recvCallback, NET_TLS_TAG, "recvCallback is NULL");
-    ca_mutex_lock(g_tlsContextMutex);
+    oc_mutex_lock(g_tlsContextMutex);
     if (NULL == g_caTlsContext)
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "Context is NULL");
-        ca_mutex_unlock(g_tlsContextMutex);
+        oc_mutex_unlock(g_tlsContextMutex);
         return;
     }
 
@@ -1521,7 +1521,7 @@ void CAsetTlsAdapterCallbacks(CAPacketReceivedCallback recvCallback,
         g_caTlsContext->adapterCallbacks[0].sendCallback = sendCallback;
     }
 
-    ca_mutex_unlock(g_tlsContextMutex);
+    oc_mutex_unlock(g_tlsContextMutex);
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
 }
 
@@ -1597,13 +1597,13 @@ CAResult_t CAinitiateTlsHandshake(const CAEndpoint_t *endpoint)
     CAResult_t res = CA_STATUS_OK;
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(endpoint, NET_TLS_TAG, "Param endpoint is NULL" , CA_STATUS_INVALID_PARAM);
-    ca_mutex_lock(g_tlsContextMutex);
+    oc_mutex_lock(g_tlsContextMutex);
     if (NULL == initiateTlsHandshake(endpoint))
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "TLS handshake failed");
         res = CA_STATUS_FAILED;
     }
-    ca_mutex_unlock(g_tlsContextMutex);
+    oc_mutex_unlock(g_tlsContextMutex);
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
     return res;
 }
@@ -1617,11 +1617,11 @@ CAResult_t CAtlsGenerateOwnerPSK(const CAEndpoint_t *endpoint,
     VERIFY_NON_NULL_RET(ownerPSK, NET_TLS_TAG, "ownerPSK is NULL", CA_STATUS_INVALID_PARAM);
     VERIFY_NON_NULL_RET(deviceID, NET_TLS_TAG, "rsrcID is NULL", CA_STATUS_INVALID_PARAM);
 
-    ca_mutex_lock(g_tlsContextMutex);
+    oc_mutex_lock(g_tlsContextMutex);
     if (NULL == g_caTlsContext)
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "Context is NULL");
-        ca_mutex_unlock(g_tlsContextMutex);
+        oc_mutex_unlock(g_tlsContextMutex);
         OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
         return CA_STATUS_FAILED;
     }
@@ -1629,7 +1629,7 @@ CAResult_t CAtlsGenerateOwnerPSK(const CAEndpoint_t *endpoint,
     if (NULL == tep)
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "Session does not exist");
-        ca_mutex_unlock(g_tlsContextMutex);
+        oc_mutex_unlock(g_tlsContextMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -1639,13 +1639,13 @@ CAResult_t CAtlsGenerateOwnerPSK(const CAEndpoint_t *endpoint,
                                        MBEDTLS_MD_SHA1, MBEDTLS_PKCS12_DERIVE_KEY, 1))
     {
         OIC_LOG(ERROR, NET_TLS_TAG, "Failed to generate key");
-        ca_mutex_unlock(g_tlsContextMutex);
+        oc_mutex_unlock(g_tlsContextMutex);
         OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
         return CA_STATUS_FAILED;
     }
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "PSK: ");
     OIC_LOG_BUFFER(DEBUG, NET_TLS_TAG, tep->master, sizeof(tep->master));
-    ca_mutex_unlock(g_tlsContextMutex);
+    oc_mutex_unlock(g_tlsContextMutex);
 
     OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
     return CA_STATUS_OK;

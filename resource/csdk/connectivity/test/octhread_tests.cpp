@@ -102,18 +102,18 @@ uint64_t getAbsTime()
 
 TEST(MutexTests, TC_01_CREATE)
 {
-    ca_mutex mymutex = ca_mutex_new();
+    oc_mutex mymutex = oc_mutex_new();
 
     EXPECT_TRUE(mymutex != NULL);
     if (mymutex != NULL)
     {
-        ca_mutex_free(mymutex);
+        oc_mutex_free(mymutex);
     }
 }
 
 typedef struct _tagFunc1
 {
-    ca_mutex mutex;
+    oc_mutex mutex;
     volatile bool thread_up;
     volatile bool finished;
 } _func1_struct;
@@ -127,7 +127,7 @@ void mutexFunc(void *context)
     // setting the flag must be done before lock attempt, as the test
     // thread starts off with the mutex locked
     pData->thread_up = true;
-    ca_mutex_lock(pData->mutex);
+    oc_mutex_lock(pData->mutex);
 
     DBG_printf("Thread: got lock\n");
     usleep(MINIMAL_LOOP_SLEEP * USECS_PER_MSEC);
@@ -135,7 +135,7 @@ void mutexFunc(void *context)
 
     pData->finished = true; // assignment guarded by lock
 
-    ca_mutex_unlock(pData->mutex);
+    oc_mutex_unlock(pData->mutex);
 }
 
 TEST(MutexTests, TC_03_THREAD_LOCKING)
@@ -146,13 +146,13 @@ TEST(MutexTests, TC_03_THREAD_LOCKING)
 
     _func1_struct pData = {0, false, false};
 
-    pData.mutex = ca_mutex_new();
+    pData.mutex = oc_mutex_new();
 
     EXPECT_TRUE(pData.mutex != NULL);
     if (pData.mutex != NULL)
     {
         DBG_printf("test: Holding mutex in test\n");
-        ca_mutex_lock(pData.mutex);
+        oc_mutex_lock(pData.mutex);
 
         DBG_printf("test: starting thread\n");
         //start thread
@@ -172,7 +172,7 @@ TEST(MutexTests, TC_03_THREAD_LOCKING)
 
         DBG_printf("test: unlocking\n");
 
-        ca_mutex_unlock(pData.mutex);
+        oc_mutex_unlock(pData.mutex);
 
         DBG_printf("test: waiting for thread to release\n");
         while (!pData.finished)
@@ -180,12 +180,12 @@ TEST(MutexTests, TC_03_THREAD_LOCKING)
             usleep(MINIMAL_LOOP_SLEEP * USECS_PER_MSEC);
         }
 
-        ca_mutex_lock(pData.mutex);
+        oc_mutex_lock(pData.mutex);
 
         // Cleanup Everything
 
-        ca_mutex_unlock(pData.mutex);
-        ca_mutex_free(pData.mutex);
+        oc_mutex_unlock(pData.mutex);
+        oc_mutex_free(pData.mutex);
     }
 
     ca_thread_pool_free(mythreadpool);
@@ -193,23 +193,23 @@ TEST(MutexTests, TC_03_THREAD_LOCKING)
 
 TEST(ConditionTests, TC_01_CREATE)
 {
-    ca_cond mycond = ca_cond_new();
+    oc_cond mycond = oc_cond_new();
 
     EXPECT_TRUE(mycond != NULL);
     if (mycond != NULL)
     {
-        ca_cond_free(mycond);
+        oc_cond_free(mycond);
     }
 }
 
 // Normally we would use one pair of mutex/cond-var communicating to the
 // worker threads and one pair back to the main thread. However since
-// testing the ca_cond itself is the point, only one pair is used here.
+// testing the oc_cond itself is the point, only one pair is used here.
 typedef struct _tagFunc2
 {
     int id;
-    ca_mutex mutex;
-    ca_cond condition;
+    oc_mutex mutex;
+    oc_cond condition;
     volatile bool thread_up;
     volatile bool finished;
 } _func2_struct;
@@ -220,15 +220,15 @@ void condFunc(void *context)
 
     DBG_printf("Thread_%d: waiting on condition\n", pData->id);
 
-    ca_mutex_lock(pData->mutex);
+    oc_mutex_lock(pData->mutex);
 
     pData->thread_up = true;
 
-    ca_cond_wait(pData->condition, pData->mutex);
+    oc_cond_wait(pData->condition, pData->mutex);
 
     pData->finished = true; // assignment guarded by lock
 
-    ca_mutex_unlock(pData->mutex);
+    oc_mutex_unlock(pData->mutex);
 
     DBG_printf("Thread_%d: completed.\n", pData->id);
 }
@@ -245,8 +245,8 @@ TEST(ConditionTests, TC_02_SIGNAL)
 
     EXPECT_EQ(CA_STATUS_OK, ca_thread_pool_init(3, &mythreadpool));
 
-    ca_mutex sharedMutex = ca_mutex_new();
-    ca_cond sharedCond = ca_cond_new();
+    oc_mutex sharedMutex = oc_mutex_new();
+    oc_cond sharedCond = oc_cond_new();
 
     _func2_struct pData1 =
     { 1, sharedMutex, sharedCond, false, false };
@@ -275,11 +275,11 @@ TEST(ConditionTests, TC_02_SIGNAL)
         // has already started waiting on the condition and the other is at
         // least close.
 
-        ca_mutex_lock(sharedMutex);
+        oc_mutex_lock(sharedMutex);
         // once the lock is acquired it means both threads were waiting.
         DBG_printf("test    : signaling first thread\n");
-        ca_cond_signal(sharedCond);
-        ca_mutex_unlock(sharedMutex);
+        oc_cond_signal(sharedCond);
+        oc_mutex_unlock(sharedMutex);
 
         // At this point either of the child threads might lock the mutex in
         // their cond_wait call, or this test thread might lock it again if
@@ -303,15 +303,15 @@ TEST(ConditionTests, TC_02_SIGNAL)
         usleep(MINIMAL_EXTRA_SLEEP);
 
         // only one should be finished
-        ca_mutex_lock(sharedMutex);
+        oc_mutex_lock(sharedMutex);
         EXPECT_NE(pData1.finished, pData2.finished);
-        ca_mutex_unlock(sharedMutex);
+        oc_mutex_unlock(sharedMutex);
 
         DBG_printf("test    : signaling another thread\n");
 
-        ca_mutex_lock(sharedMutex);
-        ca_cond_signal(sharedCond);
-        ca_mutex_unlock(sharedMutex);
+        oc_mutex_lock(sharedMutex);
+        oc_cond_signal(sharedCond);
+        oc_mutex_unlock(sharedMutex);
 
         waitCount = 0;
         while ((!pData1.finished || !pData2.finished)
@@ -327,10 +327,10 @@ TEST(ConditionTests, TC_02_SIGNAL)
 
         // Cleanup Everything
 
-        ca_mutex_free(pData1.mutex);
+        oc_mutex_free(pData1.mutex);
     }
 
-    ca_cond_free(pData1.condition);
+    oc_cond_free(pData1.condition);
 
     ca_thread_pool_free(mythreadpool);
 }
@@ -342,8 +342,8 @@ TEST(ConditionTests, TC_03_BROADCAST)
 
     EXPECT_EQ(CA_STATUS_OK, ca_thread_pool_init(3, &mythreadpool));
 
-    ca_mutex sharedMutex = ca_mutex_new();
-    ca_cond sharedCond = ca_cond_new();
+    oc_mutex sharedMutex = oc_mutex_new();
+    oc_cond sharedCond = oc_cond_new();
 
     _func2_struct pData1 =
     { 1, sharedMutex, sharedCond, false, false };
@@ -374,10 +374,10 @@ TEST(ConditionTests, TC_03_BROADCAST)
 
         DBG_printf("test    : signaling all threads\n");
 
-        ca_mutex_lock(sharedMutex);
+        oc_mutex_lock(sharedMutex);
         // once the lock is acquired it means both threads were waiting.
-        ca_cond_broadcast(sharedCond);
-        ca_mutex_unlock(sharedMutex);
+        oc_cond_broadcast(sharedCond);
+        oc_mutex_unlock(sharedMutex);
 
         int waitCount = 0;
         while ((!pData1.finished || !pData2.finished)
@@ -393,10 +393,10 @@ TEST(ConditionTests, TC_03_BROADCAST)
 
         // Cleanup Everything
 
-        ca_mutex_free(sharedMutex);
+        oc_mutex_free(sharedMutex);
     }
 
-    ca_cond_free(sharedCond);
+    oc_cond_free(sharedCond);
 
     ca_thread_pool_free(mythreadpool);
 }
@@ -423,14 +423,14 @@ void timedFunc(void *context)
 
     DBG_printf("Thread_%d: waiting for timeout \n", pData->id);
 
-    ca_mutex_lock(pData->mutex);
+    oc_mutex_lock(pData->mutex);
 
     uint64_t abs = USECS_PER_SEC / 2; // 1/2 seconds
 
     // test UTIMEDOUT
-    CAWaitResult_t ret = ca_cond_wait_for(pData->condition,
+    OCWaitResult_t ret = oc_cond_wait_for(pData->condition,
                                           pData->mutex, abs);
-    EXPECT_EQ(CA_WAIT_TIMEDOUT, ret);
+    EXPECT_EQ(OC_WAIT_TIMEDOUT, ret);
 
     pData->thread_up = true;
 
@@ -439,12 +439,12 @@ void timedFunc(void *context)
     abs = 5 * USECS_PER_SEC; // 5 seconds
 
     // test signal
-    ret = ca_cond_wait_for(pData->condition, pData->mutex, abs);
-    EXPECT_EQ(CA_WAIT_SUCCESS, ret);
+    ret = oc_cond_wait_for(pData->condition, pData->mutex, abs);
+    EXPECT_EQ(OC_WAIT_SUCCESS, ret);
 
     pData->finished = true; // assignment guarded by lock
 
-    ca_mutex_unlock(pData->mutex);
+    oc_mutex_unlock(pData->mutex);
 
     DBG_printf("Thread_%d: stopping\n", pData->id);
 }
@@ -456,8 +456,8 @@ TEST(ConditionTests, TC_05_WAIT)
 
     EXPECT_EQ(CA_STATUS_OK, ca_thread_pool_init(3, &mythreadpool));
 
-    ca_mutex sharedMutex = ca_mutex_new();
-    ca_cond sharedCond = ca_cond_new();
+    oc_mutex sharedMutex = oc_mutex_new();
+    oc_cond sharedCond = oc_cond_new();
 
     _func2_struct pData1 =
     { 1, sharedMutex, sharedCond, false, false };
@@ -482,9 +482,9 @@ TEST(ConditionTests, TC_05_WAIT)
 
         DBG_printf("test    : signaling first thread\n");
 
-        ca_mutex_lock(sharedMutex);
-        ca_cond_signal(sharedCond);
-        ca_mutex_unlock(sharedMutex);
+        oc_mutex_lock(sharedMutex);
+        oc_cond_signal(sharedCond);
+        oc_mutex_unlock(sharedMutex);
 
         int waitCount = 0;
         while (!pData1.finished
@@ -498,10 +498,10 @@ TEST(ConditionTests, TC_05_WAIT)
 
         // Cleanup Everything
 
-        ca_mutex_free(sharedMutex);
+        oc_mutex_free(sharedMutex);
     }
 
-    ca_cond_free(sharedCond);
+    oc_cond_free(sharedCond);
 
     ca_thread_pool_free(mythreadpool);
 }
@@ -510,43 +510,43 @@ TEST(ConditionTests, TC_05_WAIT)
 TEST(ConditionTests, DISABLED_TC_06_INVALIDWAIT)
 {
 
-    ca_mutex sharedMutex = ca_mutex_new();
-    ca_cond sharedCond = ca_cond_new();
+    oc_mutex sharedMutex = oc_mutex_new();
+    oc_cond sharedCond = oc_cond_new();
 
-    ca_mutex_lock(sharedMutex);
+    oc_mutex_lock(sharedMutex);
 
-    int ret = ca_cond_wait_for(NULL, sharedMutex, 5000);
-    EXPECT_EQ(CA_WAIT_INVAL,ret);
+    int ret = oc_cond_wait_for(NULL, sharedMutex, 5000);
+    EXPECT_EQ(OC_WAIT_INVAL,ret);
 
-    ret = ca_cond_wait_for(sharedCond, NULL, 5000);
-    EXPECT_EQ(CA_WAIT_INVAL,ret);
+    ret = oc_cond_wait_for(sharedCond, NULL, 5000);
+    EXPECT_EQ(OC_WAIT_INVAL,ret);
 
-    ret = ca_cond_wait_for(NULL, NULL, 5000);
-    EXPECT_EQ(CA_WAIT_INVAL,ret);
+    ret = oc_cond_wait_for(NULL, NULL, 5000);
+    EXPECT_EQ(OC_WAIT_INVAL,ret);
 
-    ca_mutex_unlock(sharedMutex);
+    oc_mutex_unlock(sharedMutex);
 
     // Cleanup Everything
 
-    ca_mutex_free(sharedMutex);
+    oc_mutex_free(sharedMutex);
 
-    ca_cond_free(sharedCond);
+    oc_cond_free(sharedCond);
 }
 
 TEST(ConditionTests, TC_07_WAITDURATION)
 {
     const double TARGET_WAIT = 1.125;
 
-    ca_mutex sharedMutex = ca_mutex_new();
-    ca_cond sharedCond = ca_cond_new();
+    oc_mutex sharedMutex = oc_mutex_new();
+    oc_cond sharedCond = oc_cond_new();
 
-    ca_mutex_lock(sharedMutex);
+    oc_mutex_lock(sharedMutex);
 
     uint64_t beg = getAbsTime();
 
-    CAWaitResult_t ret = ca_cond_wait_for(sharedCond, sharedMutex,
+    OCWaitResult_t ret = oc_cond_wait_for(sharedCond, sharedMutex,
                                           TARGET_WAIT * USECS_PER_SEC);
-    EXPECT_EQ(CA_WAIT_TIMEDOUT,ret);
+    EXPECT_EQ(OC_WAIT_TIMEDOUT,ret);
 
     uint64_t end = getAbsTime();
 
@@ -561,11 +561,11 @@ TEST(ConditionTests, TC_07_WAITDURATION)
     EXPECT_NEAR(TARGET_WAIT, secondsDiff, 0.05);
 #endif
 
-    ca_mutex_unlock(sharedMutex);
+    oc_mutex_unlock(sharedMutex);
 
     // Cleanup Everything
 
-    ca_mutex_free(sharedMutex);
+    oc_mutex_free(sharedMutex);
 
-    ca_cond_free(sharedCond);
+    oc_cond_free(sharedCond);
 }

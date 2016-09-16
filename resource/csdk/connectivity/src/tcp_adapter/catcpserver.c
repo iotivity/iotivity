@@ -66,12 +66,12 @@
 /**
  * Mutex to synchronize device object list.
  */
-static ca_mutex g_mutexObjectList = NULL;
+static oc_mutex g_mutexObjectList = NULL;
 
 /**
  * Conditional mutex to synchronize.
  */
-static ca_cond g_condObjectList = NULL;
+static oc_cond g_condObjectList = NULL;
 
 /**
  * Maintains the callback to be notified when data received from remote device.
@@ -154,7 +154,7 @@ static void CATCPDestroyMutex()
 {
     if (g_mutexObjectList)
     {
-        ca_mutex_free(g_mutexObjectList);
+        oc_mutex_free(g_mutexObjectList);
         g_mutexObjectList = NULL;
     }
 }
@@ -163,7 +163,7 @@ static CAResult_t CATCPCreateMutex()
 {
     if (!g_mutexObjectList)
     {
-        g_mutexObjectList = ca_mutex_new();
+        g_mutexObjectList = oc_mutex_new();
         if (!g_mutexObjectList)
         {
             OIC_LOG(ERROR, TAG, "Failed to created mutex!");
@@ -178,7 +178,7 @@ static void CATCPDestroyCond()
 {
     if (g_condObjectList)
     {
-        ca_cond_free(g_condObjectList);
+        oc_cond_free(g_condObjectList);
         g_condObjectList = NULL;
     }
 }
@@ -187,7 +187,7 @@ static CAResult_t CATCPCreateCond()
 {
     if (!g_condObjectList)
     {
-        g_condObjectList = ca_cond_new();
+        g_condObjectList = oc_cond_new();
         if (!g_condObjectList)
         {
             OIC_LOG(ERROR, TAG, "Failed to created cond!");
@@ -207,9 +207,9 @@ static void CAReceiveHandler(void *data)
         CAFindReadyMessage();
     }
 
-    ca_mutex_lock(g_mutexObjectList);
-    ca_cond_signal(g_condObjectList);
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
+    oc_cond_signal(g_condObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     OIC_LOG(DEBUG, TAG, "OUT - CAReceiveHandler");
 }
@@ -345,17 +345,17 @@ static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
         CAConvertAddrToName((struct sockaddr_storage *)&clientaddr, clientlen,
                             svritem->sep.endpoint.addr, &svritem->sep.endpoint.port);
 
-        ca_mutex_lock(g_mutexObjectList);
+        oc_mutex_lock(g_mutexObjectList);
         bool result = u_arraylist_add(caglobals.tcp.svrlist, svritem);
         if (!result)
         {
             OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
             close(sockfd);
             OICFree(svritem);
-            ca_mutex_unlock(g_mutexObjectList);
+            oc_mutex_unlock(g_mutexObjectList);
             return;
         }
-        ca_mutex_unlock(g_mutexObjectList);
+        oc_mutex_unlock(g_mutexObjectList);
 
         CHECKFD(sockfd);
     }
@@ -850,12 +850,12 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
         return res;
     }
 
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
     if (!caglobals.tcp.svrlist)
     {
         caglobals.tcp.svrlist = u_arraylist_create();
     }
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     if (caglobals.server)
     {
@@ -893,7 +893,7 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
 void CATCPStopServer()
 {
     // mutex lock
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
 
     // set terminate flag
     caglobals.tcp.terminate = true;
@@ -911,12 +911,12 @@ void CATCPStopServer()
 
     if (caglobals.tcp.started)
     {
-        ca_cond_wait(g_condObjectList, g_mutexObjectList);
+        oc_cond_wait(g_condObjectList, g_mutexObjectList);
     }
     caglobals.tcp.started = false;
 
     // mutex unlock
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     if (-1 != caglobals.tcp.ipv4.fd)
     {
@@ -1113,7 +1113,7 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
 
     // #3. add TCP connection info to list
     svritem->fd = fd;
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
     if (caglobals.tcp.svrlist)
     {
         bool res = u_arraylist_add(caglobals.tcp.svrlist, svritem);
@@ -1122,11 +1122,11 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
             OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
             close(svritem->fd);
             OICFree(svritem);
-            ca_mutex_unlock(g_mutexObjectList);
+            oc_mutex_unlock(g_mutexObjectList);
             return NULL;
         }
     }
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     CHECKFD(fd);
 
@@ -1143,7 +1143,7 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
 {
     VERIFY_NON_NULL(svritem, TAG, "svritem is NULL");
 
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
 
     // close the socket and remove TCP connection info in list
     if (svritem->fd >= 0)
@@ -1161,14 +1161,14 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
     }
 
     OICFree(svritem);
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     return CA_STATUS_OK;
 }
 
 void CATCPDisconnectAll()
 {
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
     uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);
 
     CATCPSessionInfo_t *svritem = NULL;
@@ -1185,7 +1185,7 @@ void CATCPDisconnectAll()
         }
     }
     u_arraylist_destroy(caglobals.tcp.svrlist);
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 }
 
 CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint, size_t *index)
@@ -1219,7 +1219,7 @@ CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint
 
 CATCPSessionInfo_t *CAGetSessionInfoFromFD(int fd, size_t *index)
 {
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
 
     // check from the last item.
     CATCPSessionInfo_t *svritem = NULL;
@@ -1231,12 +1231,12 @@ CATCPSessionInfo_t *CAGetSessionInfoFromFD(int fd, size_t *index)
         if (svritem && svritem->fd == fd)
         {
             *index = i;
-            ca_mutex_unlock(g_mutexObjectList);
+            oc_mutex_unlock(g_mutexObjectList);
             return svritem;
         }
     }
 
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     return NULL;
 }

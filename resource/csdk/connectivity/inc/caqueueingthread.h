@@ -49,9 +49,9 @@ typedef struct
     /** Thread pool of the thread started. **/
     ca_thread_pool_t threadPool;
     /** mutex for synchronization. **/
-    ca_mutex threadMutex;
+    oc_mutex threadMutex;
     /** conditional mutex for synchronization. **/
-    ca_cond threadCond;
+    oc_cond threadCond;
     /** Thread function to be invoked. **/
     CAThreadTask threadTask;
     /** Data destroy function. **/

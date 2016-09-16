@@ -68,10 +68,10 @@ typedef struct
     u_arraylist_t *dataList;
 
     /** data list mutex for synchronization. **/
-    ca_mutex blockDataListMutex;
+    oc_mutex blockDataListMutex;
 
     /** sender mutex for synchronization. **/
-    ca_mutex blockDataSenderMutex;
+    oc_mutex blockDataSenderMutex;
 } CABlockWiseContext_t;
 
 /**

@@ -840,11 +840,11 @@ void CAHandleRequestResponseCallbacks()
     // #1 parse the data
     // #2 get endpoint
 
-    ca_mutex_lock(g_receiveThread.threadMutex);
+    oc_mutex_lock(g_receiveThread.threadMutex);
 
     u_queue_message_t *item = u_queue_get_element(g_receiveThread.dataQueue);
 
-    ca_mutex_unlock(g_receiveThread.threadMutex);
+    oc_mutex_unlock(g_receiveThread.threadMutex);
 
     if (NULL == item || NULL == item->msg)
     {

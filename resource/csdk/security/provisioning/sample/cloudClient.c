@@ -59,8 +59,8 @@ static char *fname = DEFAULT_DB_FILE;
 static uint64_t timeout;
 static uint16_t g_credId = 0;
 
-ca_cond cond;
-ca_mutex mutex;
+oc_cond cond;
+oc_mutex mutex;
 
 typedef enum {
     SIGN_UP       = 1,
@@ -187,9 +187,9 @@ void unlockMenu(void *data)
 {
     OICFree(data);
 
-    ca_mutex_lock(mutex);
-    ca_cond_signal(cond);
-    ca_mutex_unlock(mutex);
+    oc_mutex_lock(mutex);
+    oc_cond_signal(cond);
+    oc_mutex_unlock(mutex);
 }
 
 /**
@@ -261,8 +261,8 @@ static void userRequests()
     strncpy(endPoint.addr, DEFAULT_HOST, sizeof(endPoint.addr));
     endPoint.port = DEFAULT_PORT;
 
-    mutex = ca_mutex_new();
-    cond = ca_cond_new();
+    mutex = oc_mutex_new();
+    cond = oc_cond_new();
 
     while (false == fExit)
     {
@@ -401,8 +401,8 @@ static void userRequests()
         }
             break;
         case EXIT:
-            ca_mutex_free(mutex);
-            ca_cond_free(cond);
+            oc_mutex_free(mutex);
+            oc_cond_free(cond);
             fExit = true;
             break;
         default:
@@ -413,9 +413,9 @@ static void userRequests()
         //if requests were sent then wait response
         if (res == OC_STACK_OK)
         {
-            ca_mutex_lock(mutex);
-            ca_cond_wait_for(cond, mutex, timeout);
-            ca_mutex_unlock(mutex);
+            oc_mutex_lock(mutex);
+            oc_cond_wait_for(cond, mutex, timeout);
+            oc_mutex_unlock(mutex);
         }
     }
 }

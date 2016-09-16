@@ -57,14 +57,14 @@ static CALEConnectionStateChangedCallback g_bleConnectionStateChangedCallback = 
  * @brief Mutex to synchronize access to the deviceStateChanged Callback when the state
  *           of the LE adapter gets change.
  */
-static ca_mutex g_bleDeviceStateChangedCbMutex = NULL;
+static oc_mutex g_bleDeviceStateChangedCbMutex = NULL;
 
 /**
  * @var g_bleConnectionStateChangedCbMutex
  * @brief Mutex to synchronize access to the LE ConnectionStateChanged Callback when the state
  *           of the LE adapter gets change.
  */
-static ca_mutex g_bleConnectionStateChangedCbMutex = NULL;
+static oc_mutex g_bleConnectionStateChangedCbMutex = NULL;
 
 //getting context
 void CALENetworkMonitorJNISetContext()
@@ -111,21 +111,21 @@ CAResult_t CAInitLENwkMonitorMutexVaraibles()
     OIC_LOG(DEBUG, TAG, "IN");
     if (NULL == g_bleDeviceStateChangedCbMutex)
     {
-        g_bleDeviceStateChangedCbMutex = ca_mutex_new();
+        g_bleDeviceStateChangedCbMutex = oc_mutex_new();
         if (NULL == g_bleDeviceStateChangedCbMutex)
         {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_bleConnectionStateChangedCbMutex)
     {
-    	g_bleConnectionStateChangedCbMutex = ca_mutex_new();
+    	g_bleConnectionStateChangedCbMutex = oc_mutex_new();
         if (NULL == g_bleConnectionStateChangedCbMutex)
         {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
-            ca_mutex_free(g_bleDeviceStateChangedCbMutex);
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
+            oc_mutex_free(g_bleDeviceStateChangedCbMutex);
             return CA_STATUS_FAILED;
         }
     }
@@ -138,10 +138,10 @@ void CATerminateLENwkMonitorMutexVaraibles()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    ca_mutex_free(g_bleDeviceStateChangedCbMutex);
+    oc_mutex_free(g_bleDeviceStateChangedCbMutex);
     g_bleDeviceStateChangedCbMutex = NULL;
 
-    ca_mutex_free(g_bleConnectionStateChangedCbMutex);
+    oc_mutex_free(g_bleConnectionStateChangedCbMutex);
     g_bleConnectionStateChangedCbMutex = NULL;
 
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -227,9 +227,9 @@ CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
 
     OIC_LOG(DEBUG, TAG, "Setting CALEDeviceStateChangedCallback");
 
-    ca_mutex_lock(g_bleDeviceStateChangedCbMutex);
+    oc_mutex_lock(g_bleDeviceStateChangedCbMutex);
     CALESetAdapterStateCallback(callback);
-    ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
+    oc_mutex_unlock(g_bleDeviceStateChangedCbMutex);
 
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
@@ -244,9 +244,9 @@ CAResult_t CAUnSetLEAdapterStateChangedCb()
 CAResult_t CASetLENWConnectionStateChangedCb(CALEConnectionStateChangedCallback callback)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    ca_mutex_lock(g_bleConnectionStateChangedCbMutex);
+    oc_mutex_lock(g_bleConnectionStateChangedCbMutex);
     g_bleConnectionStateChangedCallback = callback;
-    ca_mutex_unlock(g_bleConnectionStateChangedCbMutex);
+    oc_mutex_unlock(g_bleConnectionStateChangedCbMutex);
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -254,9 +254,9 @@ CAResult_t CASetLENWConnectionStateChangedCb(CALEConnectionStateChangedCallback 
 CAResult_t CAUnsetLENWConnectionStateChangedCb()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    ca_mutex_lock(g_bleConnectionStateChangedCbMutex);
+    oc_mutex_lock(g_bleConnectionStateChangedCbMutex);
     g_bleConnectionStateChangedCallback = NULL;
-    ca_mutex_unlock(g_bleConnectionStateChangedCbMutex);
+    oc_mutex_unlock(g_bleConnectionStateChangedCbMutex);
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }

@@ -126,20 +126,20 @@ CAResult_t CAInitBlockWiseMutexVariables()
 {
     if (!g_context.blockDataListMutex)
     {
-        g_context.blockDataListMutex = ca_mutex_new();
+        g_context.blockDataListMutex = oc_mutex_new();
         if (!g_context.blockDataListMutex)
         {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (!g_context.blockDataSenderMutex)
     {
-        g_context.blockDataSenderMutex = ca_mutex_new();
+        g_context.blockDataSenderMutex = oc_mutex_new();
         if (!g_context.blockDataSenderMutex)
         {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
             CATerminateBlockWiseMutexVariables();
             return CA_STATUS_FAILED;
         }
@@ -152,13 +152,13 @@ void CATerminateBlockWiseMutexVariables()
 {
     if (g_context.blockDataListMutex)
     {
-        ca_mutex_free(g_context.blockDataListMutex);
+        oc_mutex_free(g_context.blockDataListMutex);
         g_context.blockDataListMutex = NULL;
     }
 
     if (g_context.blockDataSenderMutex)
     {
-        ca_mutex_free(g_context.blockDataSenderMutex);
+        oc_mutex_free(g_context.blockDataSenderMutex);
         g_context.blockDataSenderMutex = NULL;
     }
 }
@@ -266,9 +266,9 @@ CAResult_t CAAddSendThreadQueue(const CAData_t *sendData, const CABlockDataID_t 
 
     if (g_context.sendThreadFunc)
     {
-        ca_mutex_lock(g_context.blockDataSenderMutex);
+        oc_mutex_lock(g_context.blockDataSenderMutex);
         g_context.sendThreadFunc(cloneData);
-        ca_mutex_unlock(g_context.blockDataSenderMutex);
+        oc_mutex_unlock(g_context.blockDataSenderMutex);
     }
     else
     {
@@ -754,9 +754,9 @@ CAResult_t CASendErrorMessage(const coap_pdu_t *pdu, uint8_t status,
     // add data to send thread
     if (g_context.sendThreadFunc)
     {
-        ca_mutex_lock(g_context.blockDataSenderMutex);
+        oc_mutex_lock(g_context.blockDataSenderMutex);
         g_context.sendThreadFunc(cloneData);
-        ca_mutex_unlock(g_context.blockDataSenderMutex);
+        oc_mutex_unlock(g_context.blockDataSenderMutex);
     }
     else
     {
@@ -2230,7 +2230,7 @@ CAResult_t CAUpdateBlockOptionType(const CABlockDataID_t *blockID, uint8_t block
     OIC_LOG(DEBUG, TAG, "IN-UpdateBlockOptionType");
     VERIFY_NON_NULL(blockID, TAG, "blockID");
 
-    ca_mutex_lock(g_context.blockDataListMutex);
+    oc_mutex_lock(g_context.blockDataListMutex);
 
     size_t len = u_arraylist_length(g_context.dataList);
     for (size_t i = 0; i < len; i++)
@@ -2239,12 +2239,12 @@ CAResult_t CAUpdateBlockOptionType(const CABlockDataID_t *blockID, uint8_t block
         if (CABlockidMatches(currData, blockID))
         {
             currData->type = blockType;
-            ca_mutex_unlock(g_context.blockDataListMutex);
+            oc_mutex_unlock(g_context.blockDataListMutex);
             OIC_LOG(DEBUG, TAG, "OUT-UpdateBlockOptionType");
             return CA_STATUS_OK;
         }
     }
-    ca_mutex_unlock(g_context.blockDataListMutex);
+    oc_mutex_unlock(g_context.blockDataListMutex);
 
     OIC_LOG(DEBUG, TAG, "OUT-UpdateBlockOptionType");
     return CA_STATUS_FAILED;
@@ -2255,7 +2255,7 @@ uint8_t CAGetBlockOptionType(const CABlockDataID_t *blockID)
     OIC_LOG(DEBUG, TAG, "IN-GetBlockOptionType");
     VERIFY_NON_NULL_RET(blockID, TAG, "blockID", 0);
 
-    ca_mutex_lock(g_context.blockDataListMutex);
+    oc_mutex_lock(g_context.blockDataListMutex);
 
     size_t len = u_arraylist_length(g_context.dataList);
     for (size_t i = 0; i < len; i++)
@@ -2263,12 +2263,12 @@ uint8_t CAGetBlockOptionType(const CABlockDataID_t *blockID)
         CABlockData_t *currData = (CABlockData_t *) u_arraylist_get(g_context.dataList, i);
         if (CABlockidMatches(currData, blockID))
         {
-            ca_mutex_unlock(g_context.blockDataListMutex);
+            oc_mutex_unlock(g_context.blockDataListMutex);
             OIC_LOG(DEBUG, TAG, "OUT-GetBlockOptionType");
             return currData->type;
         }
     }
-    ca_mutex_unlock(g_context.blockDataListMutex);
+    oc_mutex_unlock(g_context.blockDataListMutex);
 
     OIC_LOG(DEBUG, TAG, "OUT-GetBlockOptionType");
     return 0;
@@ -2278,7 +2278,7 @@ CAData_t *CAGetDataSetFromBlockDataList(const CABlockDataID_t *blockID)
 {
     VERIFY_NON_NULL_RET(blockID, TAG, "blockID", NULL);
 
-    ca_mutex_lock(g_context.blockDataListMutex);
+    oc_mutex_lock(g_context.blockDataListMutex);
 
     size_t len = u_arraylist_length(g_context.dataList);
     for (size_t i = 0; i < len; i++)
@@ -2286,11 +2286,11 @@ CAData_t *CAGetDataSetFromBlockDataList(const CABlockDataID_t *blockID)
         CABlockData_t *currData = (CABlockData_t *) u_arraylist_get(g_context.dataList, i);
         if (CABlockidMatches(currData, blockID))
         {
-            ca_mutex_unlock(g_context.blockDataListMutex);
+            oc_mutex_unlock(g_context.blockDataListMutex);
             return currData->sentData;
         }
     }
-    ca_mutex_unlock(g_context.blockDataListMutex);
+    oc_mutex_unlock(g_context.blockDataListMutex);
 
     return NULL;
 }
@@ -2303,7 +2303,7 @@ CAResult_t CAGetTokenFromBlockDataList(const coap_pdu_t *pdu, const CAEndpoint_t
     VERIFY_NON_NULL(endpoint, TAG, "endpoint");
     VERIFY_NON_NULL(responseInfo, TAG, "responseInfo");
 
-    ca_mutex_lock(g_context.blockDataListMutex);
+    oc_mutex_lock(g_context.blockDataListMutex);
 
     size_t len = u_arraylist_length(g_context.dataList);
     for (size_t i = 0; i < len; i++)
@@ -2327,13 +2327,13 @@ CAResult_t CAGetTokenFromBlockDataList(const coap_pdu_t *pdu, const CAEndpoint_t
                     if (NULL == responseInfo->info.token)
                     {
                         OIC_LOG(ERROR, TAG, "out of memory");
-                        ca_mutex_unlock(g_context.blockDataListMutex);
+                        oc_mutex_unlock(g_context.blockDataListMutex);
                         return CA_MEMORY_ALLOC_FAILED;
                     }
                     memcpy(responseInfo->info.token, currData->sentData->requestInfo->info.token,
                            responseInfo->info.tokenLength);
 
-                    ca_mutex_unlock(g_context.blockDataListMutex);
+                    oc_mutex_unlock(g_context.blockDataListMutex);
                     OIC_LOG(DEBUG, TAG, "OUT-CAGetTokenFromBlockDataList");
                     return CA_STATUS_OK;
                 }
@@ -2341,7 +2341,7 @@ CAResult_t CAGetTokenFromBlockDataList(const coap_pdu_t *pdu, const CAEndpoint_t
         }
     }
 
-    ca_mutex_unlock(g_context.blockDataListMutex);
+    oc_mutex_unlock(g_context.blockDataListMutex);
 
     OIC_LOG(DEBUG, TAG, "OUT-CAGetTokenFromBlockDataList");
     return CA_STATUS_FAILED;
@@ -2389,7 +2389,7 @@ CABlockData_t *CAGetBlockDataFromBlockDataList(const CABlockDataID_t *blockID)
 {
     VERIFY_NON_NULL_RET(blockID, TAG, "blockID", NULL);
 
-    ca_mutex_lock(g_context.blockDataListMutex);
+    oc_mutex_lock(g_context.blockDataListMutex);
 
     size_t len = u_arraylist_length(g_context.dataList);
     for (size_t i = 0; i < len; i++)
@@ -2397,11 +2397,11 @@ CABlockData_t *CAGetBlockDataFromBlockDataList(const CABlockDataID_t *blockID)
         CABlockData_t *currData = (CABlockData_t *) u_arraylist_get(g_context.dataList, i);
         if (CABlockidMatches(currData, blockID))
         {
-            ca_mutex_unlock(g_context.blockDataListMutex);
+            oc_mutex_unlock(g_context.blockDataListMutex);
             return currData;
         }
     }
-    ca_mutex_unlock(g_context.blockDataListMutex);
+    oc_mutex_unlock(g_context.blockDataListMutex);
 
     return NULL;
 }
@@ -2411,7 +2411,7 @@ coap_block_t *CAGetBlockOption(const CABlockDataID_t *blockID, uint16_t blockTyp
     OIC_LOG(DEBUG, TAG, "IN-GetBlockOption");
     VERIFY_NON_NULL_RET(blockID, TAG, "blockID", NULL);
 
-    ca_mutex_lock(g_context.blockDataListMutex);
+    oc_mutex_lock(g_context.blockDataListMutex);
 
     size_t len = u_arraylist_length(g_context.dataList);
     for (size_t i = 0; i < len; i++)
@@ -2419,7 +2419,7 @@ coap_block_t *CAGetBlockOption(const CABlockDataID_t *blockID, uint16_t blockTyp
         CABlockData_t *currData = (CABlockData_t *) u_arraylist_get(g_context.dataList, i);
         if (CABlockidMatches(currData, blockID))
         {
-            ca_mutex_unlock(g_context.blockDataListMutex);
+            oc_mutex_unlock(g_context.blockDataListMutex);
             OIC_LOG(DEBUG, TAG, "OUT-GetBlockOption");
             if (COAP_OPTION_BLOCK2 == blockType)
             {
@@ -2431,7 +2431,7 @@ coap_block_t *CAGetBlockOption(const CABlockDataID_t *blockID, uint16_t blockTyp
             }
         }
     }
-    ca_mutex_unlock(g_context.blockDataListMutex);
+    oc_mutex_unlock(g_context.blockDataListMutex);
 
     OIC_LOG(DEBUG, TAG, "OUT-GetBlockOption");
     return NULL;
@@ -2444,7 +2444,7 @@ CAPayload_t CAGetPayloadFromBlockDataList(const CABlockDataID_t *blockID,
     VERIFY_NON_NULL_RET(blockID, TAG, "blockID", NULL);
     VERIFY_NON_NULL_RET(fullPayloadLen, TAG, "fullPayloadLen", NULL);
 
-    ca_mutex_lock(g_context.blockDataListMutex);
+    oc_mutex_lock(g_context.blockDataListMutex);
 
     size_t len = u_arraylist_length(g_context.dataList);
     for (size_t i = 0; i < len; i++)
@@ -2452,13 +2452,13 @@ CAPayload_t CAGetPayloadFromBlockDataList(const CABlockDataID_t *blockID,
         CABlockData_t *currData = (CABlockData_t *) u_arraylist_get(g_context.dataList, i);
         if (CABlockidMatches(currData, blockID))
         {
-            ca_mutex_unlock(g_context.blockDataListMutex);
+            oc_mutex_unlock(g_context.blockDataListMutex);
             *fullPayloadLen = currData->receivedPayloadLen;
             OIC_LOG(DEBUG, TAG, "OUT-GetFullPayload");
             return currData->payload;
         }
     }
-    ca_mutex_unlock(g_context.blockDataListMutex);
+    oc_mutex_unlock(g_context.blockDataListMutex);
 
     OIC_LOG(DEBUG, TAG, "OUT-GetFullPayload");
     return NULL;
@@ -2521,7 +2521,7 @@ CABlockData_t *CACreateNewBlockData(const CAData_t *sendData)
     }
     data->blockDataId = blockDataID;
 
-    ca_mutex_lock(g_context.blockDataListMutex);
+    oc_mutex_lock(g_context.blockDataListMutex);
 
     bool res = u_arraylist_add(g_context.dataList, (void *) data);
     if (!res)
@@ -2530,10 +2530,10 @@ CABlockData_t *CACreateNewBlockData(const CAData_t *sendData)
         CADestroyBlockID(data->blockDataId);
         CADestroyDataSet(data->sentData);
         OICFree(data);
-        ca_mutex_unlock(g_context.blockDataListMutex);
+        oc_mutex_unlock(g_context.blockDataListMutex);
         return NULL;
     }
-    ca_mutex_unlock(g_context.blockDataListMutex);
+    oc_mutex_unlock(g_context.blockDataListMutex);
 
     OIC_LOG(DEBUG, TAG, "OUT-CreateBlockData");
     return data;
@@ -2544,7 +2544,7 @@ CAResult_t CARemoveBlockDataFromList(const CABlockDataID_t *blockID)
     OIC_LOG(DEBUG, TAG, "CARemoveBlockData");
     VERIFY_NON_NULL(blockID, TAG, "blockID");
 
-    ca_mutex_lock(g_context.blockDataListMutex);
+    oc_mutex_lock(g_context.blockDataListMutex);
 
     size_t len = u_arraylist_length(g_context.dataList);
     for (size_t i = 0; i < len; i++)
@@ -2556,7 +2556,7 @@ CAResult_t CARemoveBlockDataFromList(const CABlockDataID_t *blockID)
             if (!removedData)
             {
                 OIC_LOG(ERROR, TAG, "data is NULL");
-                ca_mutex_unlock(g_context.blockDataListMutex);
+                oc_mutex_unlock(g_context.blockDataListMutex);
                 return CA_STATUS_FAILED;
             }
 
@@ -2565,11 +2565,11 @@ CAResult_t CARemoveBlockDataFromList(const CABlockDataID_t *blockID)
             CADestroyBlockID(currData->blockDataId);
             OICFree(currData->payload);
             OICFree(currData);
-            ca_mutex_unlock(g_context.blockDataListMutex);
+            oc_mutex_unlock(g_context.blockDataListMutex);
             return CA_STATUS_OK;
         }
     }
-    ca_mutex_unlock(g_context.blockDataListMutex);
+    oc_mutex_unlock(g_context.blockDataListMutex);
 
     return CA_STATUS_OK;
 }
@@ -2578,7 +2578,7 @@ CAResult_t CARemoveAllBlockDataFromList()
 {
     OIC_LOG(DEBUG, TAG, "CARemoveAllBlockDataFromList");
 
-    ca_mutex_lock(g_context.blockDataListMutex);
+    oc_mutex_lock(g_context.blockDataListMutex);
 
     size_t len = u_arraylist_length(g_context.dataList);
     for (size_t i = len; i > 0; i--)
@@ -2596,7 +2596,7 @@ CAResult_t CARemoveAllBlockDataFromList()
             OICFree(removedData);
         }
     }
-    ca_mutex_unlock(g_context.blockDataListMutex);
+    oc_mutex_unlock(g_context.blockDataListMutex);
 
     return CA_STATUS_OK;
 }

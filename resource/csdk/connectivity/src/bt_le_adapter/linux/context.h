@@ -149,7 +149,7 @@ typedef struct _CALEContext
     CABLEErrorHandleCallback on_server_error;
 
     /// Mutex used to synchronize access to context fields.
-    ca_mutex lock;
+    oc_mutex lock;
 
     /**
      * BlueZ adapter list initialization condition variable.
@@ -163,7 +163,7 @@ typedef struct _CALEContext
      *
      * @see @c GMainLoop documentation for further details.
      */
-    ca_cond condition;
+    oc_cond condition;
 
     /**
      * Semaphore that indicates completed start of the LE transport.

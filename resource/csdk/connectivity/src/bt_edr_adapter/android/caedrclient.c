@@ -57,13 +57,13 @@ static jobject g_context;
  * @var g_mutexStateList
  * @brief Mutex to synchronize device state list
  */
-static ca_mutex g_mutexStateList = NULL;
+static oc_mutex g_mutexStateList = NULL;
 
 /**
  * @var g_mutexObjectList
  * @brief Mutex to synchronize device object list
  */
-static ca_mutex g_mutexObjectList = NULL;
+static oc_mutex g_mutexObjectList = NULL;
 
 /**
  * @var g_edrErrorHandler
@@ -281,20 +281,20 @@ static void CAEDRDestroyMutex()
 {
     if (g_mutexStateList)
     {
-        ca_mutex_free(g_mutexStateList);
+        oc_mutex_free(g_mutexStateList);
         g_mutexStateList = NULL;
     }
 
     if (g_mutexObjectList)
     {
-        ca_mutex_free(g_mutexObjectList);
+        oc_mutex_free(g_mutexObjectList);
         g_mutexObjectList = NULL;
     }
 }
 
 static CAResult_t CAEDRCreateMutex()
 {
-    g_mutexStateList = ca_mutex_new();
+    g_mutexStateList = oc_mutex_new();
     if (!g_mutexStateList)
     {
         OIC_LOG(ERROR, TAG, "Failed to created mutex!");
@@ -303,7 +303,7 @@ static CAResult_t CAEDRCreateMutex()
         return CA_STATUS_FAILED;
     }
 
-    g_mutexObjectList = ca_mutex_new();
+    g_mutexObjectList = oc_mutex_new();
     if (!g_mutexObjectList)
     {
         OIC_LOG(ERROR, TAG, "Failed to created mutex!");
@@ -355,13 +355,13 @@ CAResult_t CAEDRInitialize()
     }
     (*env)->DeleteLocalRef(env, jni_address);
 
-    ca_mutex_lock(g_mutexStateList);
+    oc_mutex_lock(g_mutexStateList);
     CAEDRNativeCreateDeviceStateList();
-    ca_mutex_unlock(g_mutexStateList);
+    oc_mutex_unlock(g_mutexStateList);
 
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
     CAEDRNativeCreateDeviceSocketList();
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     if (isAttached)
     {
@@ -1043,16 +1043,16 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
         (*env)->DeleteLocalRef(env, jni_obj_BTSocket);
         return CA_STATUS_FAILED;
     }
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
     CAEDRNativeAddDeviceSocketToList(env, jni_socket);
     (*env)->DeleteGlobalRef(env, jni_socket);
     (*env)->DeleteLocalRef(env, jni_obj_BTSocket);
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     // update state
-    ca_mutex_lock(g_mutexStateList);
+    oc_mutex_lock(g_mutexStateList);
     CAEDRUpdateDeviceState(STATE_CONNECTED, address);
-    ca_mutex_unlock(g_mutexStateList);
+    oc_mutex_unlock(g_mutexStateList);
 
     OIC_LOG(DEBUG, TAG, "successfully connected");
 
@@ -1098,9 +1098,9 @@ void CAEDRNativeSocketClose(JNIEnv *env, const char *address)
     CAEDRNativeRemoveDeviceSocket(env, jni_obj_socket);
 
     // update state
-    ca_mutex_lock(g_mutexStateList);
+    oc_mutex_lock(g_mutexStateList);
     CAEDRUpdateDeviceState(STATE_DISCONNECTED, address);
-    ca_mutex_unlock(g_mutexStateList);
+    oc_mutex_unlock(g_mutexStateList);
 
     OIC_LOG_V(DEBUG, TAG, "disconnected with [%s]", address);
 }

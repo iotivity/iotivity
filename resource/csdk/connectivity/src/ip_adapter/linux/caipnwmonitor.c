@@ -50,7 +50,7 @@
 /**
  * Mutex for synchronizing access to cached interface and IP address information.
  */
-static ca_mutex g_networkMonitorContextMutex = NULL;
+static oc_mutex g_networkMonitorContextMutex = NULL;
 
 /**
  * Used to storing network interface.
@@ -68,10 +68,10 @@ static CAResult_t CAIPInitializeNetworkMonitorList()
 {
     if (!g_networkMonitorContextMutex)
     {
-        g_networkMonitorContextMutex = ca_mutex_new();
+        g_networkMonitorContextMutex = oc_mutex_new();
         if (!g_networkMonitorContextMutex)
         {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
             return CA_STATUS_FAILED;
         }
     }
@@ -99,7 +99,7 @@ static void CAIPDestroyNetworkMonitorList()
 
     if (g_networkMonitorContextMutex)
     {
-        ca_mutex_free(g_networkMonitorContextMutex);
+        oc_mutex_free(g_networkMonitorContextMutex);
         g_networkMonitorContextMutex = NULL;
     }
 }
@@ -112,7 +112,7 @@ static bool CACmpNetworkList(uint32_t ifiindex)
         return false;
     }
 
-    ca_mutex_lock(g_networkMonitorContextMutex);
+    oc_mutex_lock(g_networkMonitorContextMutex);
 
     uint32_t list_length = u_arraylist_length(g_netInterfaceList);
     for (uint32_t list_index = 0; list_index < list_length; list_index++)
@@ -120,11 +120,11 @@ static bool CACmpNetworkList(uint32_t ifiindex)
         CAInterface_t *currItem = (CAInterface_t *) u_arraylist_get(g_netInterfaceList, list_index);
         if (currItem->index == ifiindex)
         {
-            ca_mutex_unlock(g_networkMonitorContextMutex);
+            oc_mutex_unlock(g_networkMonitorContextMutex);
             return true;
         }
     }
-    ca_mutex_unlock(g_networkMonitorContextMutex);
+    oc_mutex_unlock(g_networkMonitorContextMutex);
     return false;
 }
 
@@ -133,15 +133,15 @@ static CAResult_t CAAddNetworkMonitorList(CAInterface_t *ifitem)
     VERIFY_NON_NULL(g_netInterfaceList, TAG, "g_netInterfaceList is NULL");
     VERIFY_NON_NULL(ifitem, TAG, "ifitem is NULL");
 
-    ca_mutex_lock(g_networkMonitorContextMutex);
+    oc_mutex_lock(g_networkMonitorContextMutex);
     bool result = u_arraylist_add(g_netInterfaceList, (void *) ifitem);
     if (!result)
     {
         OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
-        ca_mutex_unlock(g_networkMonitorContextMutex);
+        oc_mutex_unlock(g_networkMonitorContextMutex);
         return CA_STATUS_FAILED;
     }
-    ca_mutex_unlock(g_networkMonitorContextMutex);
+    oc_mutex_unlock(g_networkMonitorContextMutex);
     return CA_STATUS_OK;
 }
 
@@ -149,7 +149,7 @@ static void CARemoveNetworkMonitorList(int ifiindex)
 {
     VERIFY_NON_NULL_VOID(g_netInterfaceList, TAG, "g_netInterfaceList is NULL");
 
-    ca_mutex_lock(g_networkMonitorContextMutex);
+    oc_mutex_lock(g_networkMonitorContextMutex);
 
     uint32_t list_length = u_arraylist_length(g_netInterfaceList);
     for (uint32_t list_index = 0; list_index < list_length; list_index++)
@@ -161,13 +161,13 @@ static void CARemoveNetworkMonitorList(int ifiindex)
             if (u_arraylist_remove(g_netInterfaceList, list_index))
             {
                 OICFree(removedifitem);
-                ca_mutex_unlock(g_networkMonitorContextMutex);
+                oc_mutex_unlock(g_networkMonitorContextMutex);
                 return;
             }
             continue;
         }
     }
-    ca_mutex_unlock(g_networkMonitorContextMutex);
+    oc_mutex_unlock(g_networkMonitorContextMutex);
     return;
 }
 

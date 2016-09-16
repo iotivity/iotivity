@@ -36,91 +36,91 @@
 
 typedef struct _tagMutexInfo_t
 {
-} ca_mutex_internal;
+} oc_mutex_internal;
 
 typedef struct _tagEventInfo_t
 {
-} ca_cond_internal;
+} oc_cond_internal;
 
 typedef struct _tagThreadInfo_t
 {
-} ca_thread_internal;
+} oc_thread_internal;
 
 
 /**
  * @var g_mutexInfo
- * @brief This is used to return a non NULL value for ca_mutex_new().
+ * @brief This is used to return a non NULL value for oc_mutex_new().
  */
-static ca_mutex_internal g_mutexInfo = { 0 };
+static oc_mutex_internal g_mutexInfo = { 0 };
 
 /**
  * @var g_condInfo
- * @brief This is used to return a non NULL value for ca_cond_new().
+ * @brief This is used to return a non NULL value for oc_cond_new().
  */
-static ca_cond_internal g_condInfo = { 0 };
+static oc_cond_internal g_condInfo = { 0 };
 
-CAThreadResult_t ca_thread_new(ca_thread *t, void *(*start_routine)(void *), void *arg)
+OCThreadResult_t oc_thread_new(oc_thread *t, void *(*start_routine)(void *), void *arg)
 {
-    return CA_THREAD_CREATE_FAILURE;
+    return OC_THREAD_CREATE_FAILURE;
 }
 
-CAThreadResult_t ca_thread_free(ca_thread t)
+OCThreadResult_t oc_thread_free(oc_thread t)
 {
-    return CA_THREAD_INVALID;
+    return OC_THREAD_INVALID;
 }
 
-CAThreadResult_t ca_thread_wait(ca_thread t)
+OCThreadResult_t oc_thread_wait(oc_thread t)
 {
-    return CA_THREAD_INVALID;
+    return OC_THREAD_INVALID;
 }
 
-ca_mutex ca_mutex_new(void)
+oc_mutex oc_mutex_new(void)
 {
-    return (ca_mutex)&g_mutexInfo;
+    return (oc_mutex)&g_mutexInfo;
 }
 
-bool ca_mutex_free(ca_mutex mutex)
+bool oc_mutex_free(oc_mutex mutex)
 {
     return true;
 }
 
-void ca_mutex_lock(ca_mutex mutex)
+void oc_mutex_lock(oc_mutex mutex)
 {
     return;
 }
 
-void ca_mutex_unlock(ca_mutex mutex)
+void oc_mutex_unlock(oc_mutex mutex)
 {
     return;
 }
 
-ca_cond ca_cond_new(void)
+oc_cond oc_cond_new(void)
 {
-    return (ca_cond)&g_condInfo;
+    return (oc_cond)&g_condInfo;
 }
 
-void ca_cond_free(ca_cond cond)
+void oc_cond_free(oc_cond cond)
 {
     return;
 }
 
-void ca_cond_signal(ca_cond cond)
+void oc_cond_signal(oc_cond cond)
 {
     return;
 }
 
-void ca_cond_broadcast(ca_cond cond)
+void oc_cond_broadcast(oc_cond cond)
 {
     return;
 }
 
-void ca_cond_wait(ca_cond cond, ca_mutex mutex)
+void oc_cond_wait(oc_cond cond, oc_mutex mutex)
 {
     return;
 }
 
-CAWaitResult_t ca_cond_wait_for(ca_cond cond, ca_mutex mutex, uint64_t microseconds)
+OCWaitResult_t oc_cond_wait_for(oc_cond cond, oc_mutex mutex, uint64_t microseconds)
 {
-    return CA_WAIT_SUCCESS;
+    return OC_WAIT_SUCCESS;
 }
 

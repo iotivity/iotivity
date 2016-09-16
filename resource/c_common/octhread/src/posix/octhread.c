@@ -88,52 +88,52 @@ static const uint64_t NANOSECS_PER_SEC      = 1000000000L;
 typedef struct _tagMutexInfo_t
 {
     pthread_mutex_t mutex;
-} ca_mutex_internal;
+} oc_mutex_internal;
 
 typedef struct _tagEventInfo_t
 {
     pthread_cond_t cond;
     pthread_condattr_t condattr;
-} ca_cond_internal;
+} oc_cond_internal;
 
 typedef struct _tagThreadInfo_t
 {
     pthread_t thread;
     pthread_attr_t  threadattr;
-} ca_thread_internal;
+} oc_thread_internal;
 
-CAThreadResult_t ca_thread_new(ca_thread *t, void *(*start_routine)(void *), void *arg)
+OCThreadResult_t oc_thread_new(oc_thread *t, void *(*start_routine)(void *), void *arg)
 {
-    CAThreadResult_t res = CA_THREAD_SUCCESS;
-    ca_thread_internal *threadInfo = (ca_thread_internal*)OICMalloc(sizeof(ca_thread_internal));
+    OCThreadResult_t res = OC_THREAD_SUCCESS;
+    oc_thread_internal *threadInfo = (oc_thread_internal*)OICMalloc(sizeof(oc_thread_internal));
     if (NULL != threadInfo)
     {
         int result = pthread_create(&threadInfo->thread, NULL, start_routine, arg);
         if (result != 0)
         {
-            res = CA_THREAD_CREATE_FAILURE;
+            res = OC_THREAD_CREATE_FAILURE;
             *t = NULL;
             OICFree(threadInfo);
             OIC_LOG_V(ERROR, TAG, "%s: pthread_create failed", __func__);
         }
         else
         {
-            *t = (ca_thread)threadInfo;
+            *t = (oc_thread)threadInfo;
         }
     }
     else
     {
         OIC_LOG_V(ERROR, TAG, "%s Failed to allocate thread!", __func__);
         *t = NULL;
-        res = CA_THREAD_ALLOCATION_FAILURE;
+        res = OC_THREAD_ALLOCATION_FAILURE;
     }
     return res;
 }
 
-CAThreadResult_t ca_thread_free(ca_thread t)
+OCThreadResult_t oc_thread_free(oc_thread t)
 {
-    CAThreadResult_t res = CA_THREAD_SUCCESS;
-    ca_thread_internal *threadInfo = (ca_thread_internal*) t;
+    OCThreadResult_t res = OC_THREAD_SUCCESS;
+    oc_thread_internal *threadInfo = (oc_thread_internal*) t;
     if (threadInfo)
     {
         OICFree(threadInfo);
@@ -141,36 +141,36 @@ CAThreadResult_t ca_thread_free(ca_thread t)
     else
     {
         OIC_LOG_V(ERROR, TAG, "%s Invalid thread !", __func__);
-        res = CA_THREAD_INVALID;
+        res = OC_THREAD_INVALID;
     }
     return res;
 }
 
-CAThreadResult_t ca_thread_wait(ca_thread t)
+OCThreadResult_t oc_thread_wait(oc_thread t)
 {
-    CAThreadResult_t res = CA_THREAD_SUCCESS;
-    ca_thread_internal *threadInfo = (ca_thread_internal*) t;
+    OCThreadResult_t res = OC_THREAD_SUCCESS;
+    oc_thread_internal *threadInfo = (oc_thread_internal*) t;
     int joinres = pthread_join(threadInfo->thread, NULL);
     if (0 != joinres)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to join thread with error %d", joinres);
-        res = CA_THREAD_WAIT_FAILURE;
+        res = OC_THREAD_WAIT_FAILURE;
     }
 
     return res;
 }
 
-ca_mutex ca_mutex_new(void)
+oc_mutex oc_mutex_new(void)
 {
-    ca_mutex retVal = NULL;
-    ca_mutex_internal *mutexInfo = (ca_mutex_internal*) OICMalloc(sizeof(ca_mutex_internal));
+    oc_mutex retVal = NULL;
+    oc_mutex_internal *mutexInfo = (oc_mutex_internal*) OICMalloc(sizeof(oc_mutex_internal));
     if (NULL != mutexInfo)
     {
         // create the mutex with the attributes set
         int ret=pthread_mutex_init(&(mutexInfo->mutex), PTHREAD_MUTEX_DEFAULT);
         if (0 == ret)
         {
-            retVal = (ca_mutex) mutexInfo;
+            retVal = (oc_mutex) mutexInfo;
         }
         else
         {
@@ -186,10 +186,10 @@ ca_mutex ca_mutex_new(void)
     return retVal;
 }
 
-bool ca_mutex_free(ca_mutex mutex)
+bool oc_mutex_free(oc_mutex mutex)
 {
     bool bRet=false;
-    ca_mutex_internal *mutexInfo = (ca_mutex_internal*) mutex;
+    oc_mutex_internal *mutexInfo = (oc_mutex_internal*) mutex;
     if (mutexInfo)
     {
         int ret = pthread_mutex_destroy(&mutexInfo->mutex);
@@ -211,9 +211,9 @@ bool ca_mutex_free(ca_mutex mutex)
     return bRet;
 }
 
-void ca_mutex_lock(ca_mutex mutex)
+void oc_mutex_lock(oc_mutex mutex)
 {
-    ca_mutex_internal *mutexInfo = (ca_mutex_internal*) mutex;
+    oc_mutex_internal *mutexInfo = (oc_mutex_internal*) mutex;
     if (mutexInfo)
     {
         int ret = pthread_mutex_lock(&mutexInfo->mutex);
@@ -229,9 +229,9 @@ void ca_mutex_lock(ca_mutex mutex)
     }
 }
 
-void ca_mutex_unlock(ca_mutex mutex)
+void oc_mutex_unlock(oc_mutex mutex)
 {
-    ca_mutex_internal *mutexInfo = (ca_mutex_internal*) mutex;
+    oc_mutex_internal *mutexInfo = (oc_mutex_internal*) mutex;
     if (mutexInfo)
     {
         int ret = pthread_mutex_unlock(&mutexInfo->mutex);
@@ -248,10 +248,10 @@ void ca_mutex_unlock(ca_mutex mutex)
     }
 }
 
-ca_cond ca_cond_new(void)
+oc_cond oc_cond_new(void)
 {
-    ca_cond retVal = NULL;
-    ca_cond_internal *eventInfo = (ca_cond_internal*) OICMalloc(sizeof(ca_cond_internal));
+    oc_cond retVal = NULL;
+    oc_cond_internal *eventInfo = (oc_cond_internal*) OICMalloc(sizeof(oc_cond_internal));
     if (NULL != eventInfo)
     {
         int ret = pthread_condattr_init(&(eventInfo->condattr));
@@ -285,7 +285,7 @@ ca_cond ca_cond_new(void)
         ret = pthread_cond_init(&(eventInfo->cond), &(eventInfo->condattr));
         if (0 == ret)
         {
-            retVal = (ca_cond) eventInfo;
+            retVal = (oc_cond) eventInfo;
         }
         else
         {
@@ -302,9 +302,9 @@ ca_cond ca_cond_new(void)
     return retVal;
 }
 
-void ca_cond_free(ca_cond cond)
+void oc_cond_free(oc_cond cond)
 {
-    ca_cond_internal *eventInfo = (ca_cond_internal*) cond;
+    oc_cond_internal *eventInfo = (oc_cond_internal*) cond;
     if (eventInfo != NULL)
     {
         int ret = pthread_cond_destroy(&(eventInfo->cond));
@@ -325,9 +325,9 @@ void ca_cond_free(ca_cond cond)
     }
 }
 
-void ca_cond_signal(ca_cond cond)
+void oc_cond_signal(oc_cond cond)
 {
-    ca_cond_internal *eventInfo = (ca_cond_internal*) cond;
+    oc_cond_internal *eventInfo = (oc_cond_internal*) cond;
     if (eventInfo != NULL)
     {
         int ret = pthread_cond_signal(&(eventInfo->cond));
@@ -342,9 +342,9 @@ void ca_cond_signal(ca_cond cond)
     }
 }
 
-void ca_cond_broadcast(ca_cond cond)
+void oc_cond_broadcast(oc_cond cond)
 {
-    ca_cond_internal* eventInfo = (ca_cond_internal*) cond;
+    oc_cond_internal* eventInfo = (oc_cond_internal*) cond;
     if (eventInfo != NULL)
     {
         int ret = pthread_cond_broadcast(&(eventInfo->cond));
@@ -359,9 +359,9 @@ void ca_cond_broadcast(ca_cond cond)
     }
 }
 
-void ca_cond_wait(ca_cond cond, ca_mutex mutex)
+void oc_cond_wait(oc_cond cond, oc_mutex mutex)
 {
-    ca_cond_wait_for(cond, mutex, 0L);
+    oc_cond_wait_for(cond, mutex, 0L);
 }
 
 #ifndef TIMEVAL_TO_TIMESPEC
@@ -371,7 +371,7 @@ void ca_cond_wait(ca_cond cond, ca_mutex mutex)
 }
 #endif
 
-struct timespec ca_get_current_time()
+struct timespec oc_get_current_time()
 {
 #if defined(__ANDROID__) || _POSIX_TIMERS > 0
     struct timespec ts;
@@ -386,7 +386,7 @@ struct timespec ca_get_current_time()
 #endif
 }
 
-void ca_add_microseconds_to_timespec(struct timespec* ts, uint64_t microseconds)
+void oc_add_microseconds_to_timespec(struct timespec* ts, uint64_t microseconds)
 {
     time_t secPart = microseconds/USECS_PER_SEC;
     uint64_t nsecPart = (microseconds % USECS_PER_SEC) * NANOSECS_PER_USECS;
@@ -397,23 +397,23 @@ void ca_add_microseconds_to_timespec(struct timespec* ts, uint64_t microseconds)
     ts->tv_sec += secPart + secOfNs;
 }
 
-CAWaitResult_t ca_cond_wait_for(ca_cond cond, ca_mutex mutex, uint64_t microseconds)
+OCWaitResult_t oc_cond_wait_for(oc_cond cond, oc_mutex mutex, uint64_t microseconds)
 {
-    CAWaitResult_t retVal = CA_WAIT_INVAL;
+    OCWaitResult_t retVal = OC_WAIT_INVAL;
 
-    ca_cond_internal *eventInfo = (ca_cond_internal*) cond;
-    ca_mutex_internal *mutexInfo = (ca_mutex_internal*) mutex;
+    oc_cond_internal *eventInfo = (oc_cond_internal*) cond;
+    oc_mutex_internal *mutexInfo = (oc_mutex_internal*) mutex;
 
     if (NULL == mutexInfo)
     {
         OIC_LOG_V(ERROR, TAG, "%s: Invalid mutex", __func__);
-        return CA_WAIT_INVAL;
+        return OC_WAIT_INVAL;
     }
 
     if (NULL == eventInfo)
     {
         OIC_LOG_V(ERROR, TAG, "%s: Invalid condition", __func__);
-        return CA_WAIT_INVAL;
+        return OC_WAIT_INVAL;
     }
 
     if (microseconds > 0)
@@ -431,8 +431,8 @@ CAWaitResult_t ca_cond_wait_for(ca_cond cond, ca_mutex mutex, uint64_t microseco
         } else
 #endif
         {
-             abstime = ca_get_current_time();
-            ca_add_microseconds_to_timespec(&abstime, microseconds);
+             abstime = oc_get_current_time();
+            oc_add_microseconds_to_timespec(&abstime, microseconds);
 
             //Wait for the given time
             ret = pthread_cond_timedwait(&(eventInfo->cond), &(mutexInfo->mutex), &abstime);
@@ -442,18 +442,18 @@ CAWaitResult_t ca_cond_wait_for(ca_cond cond, ca_mutex mutex, uint64_t microseco
         {
             case 0:
                 // Success
-                retVal = CA_WAIT_SUCCESS;
+                retVal = OC_WAIT_SUCCESS;
                 break;
             case ETIMEDOUT:
-                retVal = CA_WAIT_TIMEDOUT;
+                retVal = OC_WAIT_TIMEDOUT;
                 break;
             case EINVAL:
                 OIC_LOG_V(ERROR, TAG, "%s: condition, mutex, or abstime is Invalid", __func__);
-                retVal = CA_WAIT_INVAL;
+                retVal = OC_WAIT_INVAL;
                 break;
             default:
                 OIC_LOG_V(ERROR, TAG, "%s: pthread_cond_timedwait returned %d", __func__, retVal);
-                retVal = CA_WAIT_INVAL;
+                retVal = OC_WAIT_INVAL;
                 break;
         }
     }
@@ -461,7 +461,7 @@ CAWaitResult_t ca_cond_wait_for(ca_cond cond, ca_mutex mutex, uint64_t microseco
     {
         // Wait forever
         int ret = pthread_cond_wait(&eventInfo->cond, &mutexInfo->mutex);
-        retVal = ret == 0 ? CA_WAIT_SUCCESS : CA_WAIT_INVAL;
+        retVal = ret == 0 ? OC_WAIT_SUCCESS : OC_WAIT_INVAL;
     }
     return retVal;
 }

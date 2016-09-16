@@ -57,13 +57,13 @@ static CALEConnectionStateChangedCallback g_bleConnectionStateChangedCallback = 
  * Mutex to synchronize access to the deviceStateChanged Callback when the state
  *           of the LE adapter gets change.
  */
-static ca_mutex g_bleDeviceStateChangedCbMutex = NULL;
+static oc_mutex g_bleDeviceStateChangedCbMutex = NULL;
 
 /**
  * Mutex to synchronize access to the ConnectionStateChanged Callback when the state
  * of the LE adapter gets change.
  */
-static ca_mutex g_bleConnectionStateChangedCbMutex = NULL;
+static oc_mutex g_bleConnectionStateChangedCbMutex = NULL;
 
 /**
 * This is the callback which will be called when the adapter state gets changed.
@@ -96,21 +96,21 @@ CAResult_t CAInitializeLENetworkMonitor()
 
     if (NULL == g_bleDeviceStateChangedCbMutex)
     {
-        g_bleDeviceStateChangedCbMutex = ca_mutex_new();
+        g_bleDeviceStateChangedCbMutex = oc_mutex_new();
         if (NULL == g_bleDeviceStateChangedCbMutex)
         {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new failed");
+            OIC_LOG(ERROR, TAG, "oc_mutex_new failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_bleConnectionStateChangedCbMutex)
     {
-        g_bleConnectionStateChangedCbMutex = ca_mutex_new();
+        g_bleConnectionStateChangedCbMutex = oc_mutex_new();
         if (NULL == g_bleConnectionStateChangedCbMutex)
         {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new failed");
-            ca_mutex_free(g_bleDeviceStateChangedCbMutex);
+            OIC_LOG(ERROR, TAG, "oc_mutex_new failed");
+            oc_mutex_free(g_bleDeviceStateChangedCbMutex);
             return CA_STATUS_FAILED;
         }
     }
@@ -124,10 +124,10 @@ void CATerminateLENetworkMonitor()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    ca_mutex_free(g_bleDeviceStateChangedCbMutex);
+    oc_mutex_free(g_bleDeviceStateChangedCbMutex);
     g_bleDeviceStateChangedCbMutex = NULL;
 
-    ca_mutex_free(g_bleConnectionStateChangedCbMutex);
+    oc_mutex_free(g_bleConnectionStateChangedCbMutex);
     g_bleConnectionStateChangedCbMutex = NULL;
 
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -243,9 +243,9 @@ CAResult_t CAGetLEAddress(char **local_address)
 CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    ca_mutex_lock(g_bleDeviceStateChangedCbMutex);
+    oc_mutex_lock(g_bleDeviceStateChangedCbMutex);
     g_bleDeviceStateChangedCallback = callback;
-    ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
+    oc_mutex_unlock(g_bleDeviceStateChangedCbMutex);
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -253,9 +253,9 @@ CAResult_t CASetLEAdapterStateChangedCb(CALEDeviceStateChangedCallback callback)
 CAResult_t CAUnSetLEAdapterStateChangedCb()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    ca_mutex_lock(g_bleDeviceStateChangedCbMutex);
+    oc_mutex_lock(g_bleDeviceStateChangedCbMutex);
     g_bleDeviceStateChangedCallback = NULL;
-    ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
+    oc_mutex_unlock(g_bleDeviceStateChangedCbMutex);
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -263,9 +263,9 @@ CAResult_t CAUnSetLEAdapterStateChangedCb()
 CAResult_t CASetLENWConnectionStateChangedCb(CALEConnectionStateChangedCallback callback)
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    ca_mutex_lock(g_bleConnectionStateChangedCbMutex);
+    oc_mutex_lock(g_bleConnectionStateChangedCbMutex);
     g_bleConnectionStateChangedCallback = callback;
-    ca_mutex_unlock(g_bleConnectionStateChangedCbMutex);
+    oc_mutex_unlock(g_bleConnectionStateChangedCbMutex);
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -273,9 +273,9 @@ CAResult_t CASetLENWConnectionStateChangedCb(CALEConnectionStateChangedCallback 
 CAResult_t CAUnsetLENWConnectionStateChangedCb()
 {
     OIC_LOG(DEBUG, TAG, "IN");
-    ca_mutex_lock(g_bleConnectionStateChangedCbMutex);
+    oc_mutex_lock(g_bleConnectionStateChangedCbMutex);
     g_bleConnectionStateChangedCallback = NULL;
-    ca_mutex_unlock(g_bleConnectionStateChangedCbMutex);
+    oc_mutex_unlock(g_bleConnectionStateChangedCbMutex);
     OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
@@ -285,12 +285,12 @@ void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    ca_mutex_lock(g_bleDeviceStateChangedCbMutex);
+    oc_mutex_lock(g_bleDeviceStateChangedCbMutex);
 
     if (NULL == g_bleDeviceStateChangedCallback)
     {
         OIC_LOG(ERROR, TAG, "g_bleDeviceStateChangedCallback is NULL!");
-        ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
+        oc_mutex_unlock(g_bleDeviceStateChangedCbMutex);
         return;
     }
 
@@ -298,7 +298,7 @@ void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
     {
         OIC_LOG(DEBUG, TAG, "Adapter is disabled");
         g_bleDeviceStateChangedCallback(CA_ADAPTER_DISABLED);
-        ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
+        oc_mutex_unlock(g_bleDeviceStateChangedCbMutex);
         return;
     }
 
@@ -312,7 +312,7 @@ void CALEAdapterStateChangedCb(int result, bt_adapter_state_e adapter_state,
     }
 
     g_bleDeviceStateChangedCallback(CA_ADAPTER_ENABLED);
-    ca_mutex_unlock(g_bleDeviceStateChangedCbMutex);
+    oc_mutex_unlock(g_bleDeviceStateChangedCbMutex);
 
     OIC_LOG(DEBUG, TAG, "OUT");
 }
@@ -324,17 +324,17 @@ void CALENWConnectionStateChangedCb(int result, bool connected,
 
     VERIFY_NON_NULL_VOID(remoteAddress, TAG, "remote address is NULL");
 
-    ca_mutex_lock(g_bleConnectionStateChangedCbMutex);
+    oc_mutex_lock(g_bleConnectionStateChangedCbMutex);
     char *addr = OICStrdup(remoteAddress);
     if (NULL == addr)
     {
         OIC_LOG(ERROR, TAG, "addr is NULL");
-        ca_mutex_unlock(g_bleConnectionStateChangedCbMutex);
+        oc_mutex_unlock(g_bleConnectionStateChangedCbMutex);
         return;
     }
     g_bleConnectionStateChangedCallback(CA_ADAPTER_GATT_BTLE, addr, connected);
     OICFree(addr);
-    ca_mutex_unlock(g_bleConnectionStateChangedCbMutex);
+    oc_mutex_unlock(g_bleConnectionStateChangedCbMutex);
 
     OIC_LOG(DEBUG, TAG, "OUT");
 }

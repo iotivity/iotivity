@@ -20,7 +20,7 @@
 
 /**
  * @file
- * This file provides APIs related to mutex and semaphores.
+ * This file provides APIs related to mutex, semaphores, and threads.
  */
 #include "iotivity_config.h"
 #include "octhread.h"
@@ -38,56 +38,56 @@ static const uint64_t USECS_PER_MSEC = 1000;
 typedef struct _tagMutexInfo_t
 {
     CRITICAL_SECTION mutex;
-} ca_mutex_internal;
+} oc_mutex_internal;
 
 typedef struct _tagEventInfo_t
 {
     CONDITION_VARIABLE cond;
-} ca_cond_internal;
+} oc_cond_internal;
 
 typedef struct _tagThreadInfo_t
 {
     HANDLE handle;
-} ca_thread_internal;
+} oc_thread_internal;
 
-CAThreadResult_t ca_thread_new(ca_thread *t, void *(*start_routine)(void *), void *arg)
+OCThreadResult_t oc_thread_new(oc_thread *t, void *(*start_routine)(void *), void *arg)
 {
-    CAThreadResult_t res = CA_THREAD_SUCCESS;
-    ca_thread_internal *threadInfo = (ca_thread_internal*)OICMalloc(sizeof(ca_thread_internal));
+    OCThreadResult_t res = OC_THREAD_SUCCESS;
+    oc_thread_internal *threadInfo = (oc_thread_internal*)OICMalloc(sizeof(oc_thread_internal));
     if (NULL != threadInfo)
     {
         threadInfo->handle = CreateThread(NULL, 0, (PTHREAD_START_ROUTINE)start_routine, arg, 0, NULL);
         if (threadInfo->handle == NULL)
         {
-            res = CA_THREAD_CREATE_FAILURE;
+            res = OC_THREAD_CREATE_FAILURE;
             *t = NULL;
             OICFree(threadInfo);
             OIC_LOG_V(ERROR, TAG, "%s: CreateThread failed: %i", __func__, GetLastError());
         }
         else
         {
-            *t = (ca_thread)threadInfo;
+            *t = (oc_thread)threadInfo;
         }
     }
     else
     {
         OIC_LOG_V(ERROR, TAG, "%s Failed to allocate thread!", __func__);
         *t = NULL;
-        res = CA_THREAD_ALLOCATION_FAILURE;
+        res = OC_THREAD_ALLOCATION_FAILURE;
     }
 
    return res;
 }
 
-CAThreadResult_t ca_thread_free(ca_thread t)
+OCThreadResult_t oc_thread_free(oc_thread t)
 {
-    CAThreadResult_t res = CA_THREAD_INVALID_PARAMETER;
-    ca_thread_internal *threadInfo = (ca_thread_internal*) t;
+    OCThreadResult_t res = OC_THREAD_INVALID_PARAMETER;
+    oc_thread_internal *threadInfo = (oc_thread_internal*) t;
     if (threadInfo)
     {
         CloseHandle(threadInfo->handle);
         OICFree(threadInfo);
-        res = CA_THREAD_SUCCESS;
+        res = OC_THREAD_SUCCESS;
     }
     else
     {
@@ -96,15 +96,15 @@ CAThreadResult_t ca_thread_free(ca_thread t)
     return res;
 }
 
-CAThreadResult_t ca_thread_wait(ca_thread t)
+OCThreadResult_t oc_thread_wait(oc_thread t)
 {
-    CAThreadResult_t res = CA_THREAD_SUCCESS;
-    ca_thread_internal *threadInfo = (ca_thread_internal*) t;
+    OCThreadResult_t res = OC_THREAD_SUCCESS;
+    oc_thread_internal *threadInfo = (oc_thread_internal*) t;
     DWORD joinres = WaitForSingleObject(threadInfo->handle, INFINITE);
     if (WAIT_OBJECT_0 != joinres)
     {
         OIC_LOG(ERROR, TAG, "Failed to join thread");
-        res = CA_THREAD_WAIT_FAILURE;
+        res = OC_THREAD_WAIT_FAILURE;
     }
     else
     {
@@ -113,14 +113,14 @@ CAThreadResult_t ca_thread_wait(ca_thread t)
     return res;
 }
 
-ca_mutex ca_mutex_new(void)
+oc_mutex oc_mutex_new(void)
 {
-    ca_mutex retVal = NULL;
-    ca_mutex_internal *mutexInfo = (ca_mutex_internal*) OICMalloc(sizeof(ca_mutex_internal));
+    oc_mutex retVal = NULL;
+    oc_mutex_internal *mutexInfo = (oc_mutex_internal*) OICMalloc(sizeof(oc_mutex_internal));
     if (NULL != mutexInfo)
     {
         InitializeCriticalSection(&mutexInfo->mutex);
-        retVal = (ca_mutex)mutexInfo;
+        retVal = (oc_mutex)mutexInfo;
     }
     else
     {
@@ -130,10 +130,10 @@ ca_mutex ca_mutex_new(void)
     return retVal;
 }
 
-bool ca_mutex_free(ca_mutex mutex)
+bool oc_mutex_free(oc_mutex mutex)
 {
     bool bRet = false;
-    ca_mutex_internal *mutexInfo = (ca_mutex_internal*) mutex;
+    oc_mutex_internal *mutexInfo = (oc_mutex_internal*) mutex;
     if (mutexInfo)
     {
         DeleteCriticalSection(&mutexInfo->mutex);
@@ -148,9 +148,9 @@ bool ca_mutex_free(ca_mutex mutex)
     return bRet;
 }
 
-void ca_mutex_lock(ca_mutex mutex)
+void oc_mutex_lock(oc_mutex mutex)
 {
-    ca_mutex_internal *mutexInfo = (ca_mutex_internal*) mutex;
+    oc_mutex_internal *mutexInfo = (oc_mutex_internal*) mutex;
     if (mutexInfo)
     {
         EnterCriticalSection(&mutexInfo->mutex);
@@ -161,9 +161,9 @@ void ca_mutex_lock(ca_mutex mutex)
     }
 }
 
-void ca_mutex_unlock(ca_mutex mutex)
+void oc_mutex_unlock(oc_mutex mutex)
 {
-    ca_mutex_internal *mutexInfo = (ca_mutex_internal*) mutex;
+    oc_mutex_internal *mutexInfo = (oc_mutex_internal*) mutex;
     if (mutexInfo)
     {
         LeaveCriticalSection(&mutexInfo->mutex);
@@ -174,14 +174,14 @@ void ca_mutex_unlock(ca_mutex mutex)
     }
 }
 
-ca_cond ca_cond_new(void)
+oc_cond oc_cond_new(void)
 {
-    ca_cond retVal = NULL;
-    ca_cond_internal *eventInfo = (ca_cond_internal*) OICMalloc(sizeof(ca_cond_internal));
+    oc_cond retVal = NULL;
+    oc_cond_internal *eventInfo = (oc_cond_internal*) OICMalloc(sizeof(oc_cond_internal));
     if (NULL != eventInfo)
     {
         InitializeConditionVariable(&eventInfo->cond);
-        retVal = (ca_cond) eventInfo;
+        retVal = (oc_cond) eventInfo;
     }
     else
     {
@@ -191,9 +191,9 @@ ca_cond ca_cond_new(void)
     return retVal;
 }
 
-void ca_cond_free(ca_cond cond)
+void oc_cond_free(oc_cond cond)
 {
-    ca_cond_internal *eventInfo = (ca_cond_internal*) cond;
+    oc_cond_internal *eventInfo = (oc_cond_internal*) cond;
     if (eventInfo != NULL)
     {
         OICFree(cond);
@@ -204,9 +204,9 @@ void ca_cond_free(ca_cond cond)
     }
 }
 
-void ca_cond_signal(ca_cond cond)
+void oc_cond_signal(oc_cond cond)
 {
-    ca_cond_internal *eventInfo = (ca_cond_internal*) cond;
+    oc_cond_internal *eventInfo = (oc_cond_internal*) cond;
     if (eventInfo != NULL)
     {
         WakeConditionVariable(&eventInfo->cond);
@@ -217,9 +217,9 @@ void ca_cond_signal(ca_cond cond)
     }
 }
 
-void ca_cond_broadcast(ca_cond cond)
+void oc_cond_broadcast(oc_cond cond)
 {
-    ca_cond_internal* eventInfo = (ca_cond_internal*) cond;
+    oc_cond_internal* eventInfo = (oc_cond_internal*) cond;
     if (eventInfo != NULL)
     {
         WakeAllConditionVariable(&eventInfo->cond);
@@ -230,28 +230,28 @@ void ca_cond_broadcast(ca_cond cond)
     }
 }
 
-void ca_cond_wait(ca_cond cond, ca_mutex mutex)
+void oc_cond_wait(oc_cond cond, oc_mutex mutex)
 {
-    ca_cond_wait_for(cond, mutex, 0L);
+    oc_cond_wait_for(cond, mutex, 0L);
 }
 
-CAWaitResult_t ca_cond_wait_for(ca_cond cond, ca_mutex mutex, uint64_t microseconds)
+OCWaitResult_t oc_cond_wait_for(oc_cond cond, oc_mutex mutex, uint64_t microseconds)
 {
-    CAWaitResult_t retVal = CA_WAIT_INVAL;
+    OCWaitResult_t retVal = OC_WAIT_INVAL;
 
-    ca_cond_internal *eventInfo = (ca_cond_internal*) cond;
-    ca_mutex_internal *mutexInfo = (ca_mutex_internal*) mutex;
+    oc_cond_internal *eventInfo = (oc_cond_internal*) cond;
+    oc_mutex_internal *mutexInfo = (oc_mutex_internal*) mutex;
 
     if (NULL == mutexInfo)
     {
         OIC_LOG_V(ERROR, TAG, "%s: Invalid mutex", __func__);
-        return CA_WAIT_INVAL;
+        return OC_WAIT_INVAL;
     }
 
     if (NULL == eventInfo)
     {
         OIC_LOG_V(ERROR, TAG, "%s: Invalid condition", __func__);
-        return CA_WAIT_INVAL;
+        return OC_WAIT_INVAL;
     }
 
     DWORD milli = 0;
@@ -269,17 +269,17 @@ CAWaitResult_t ca_cond_wait_for(ca_cond cond, ca_mutex mutex, uint64_t microseco
     {
         if (GetLastError() == ERROR_TIMEOUT)
         {
-            retVal = CA_WAIT_TIMEDOUT;
+            retVal = OC_WAIT_TIMEDOUT;
         }
         else
         {
             OIC_LOG_V(ERROR, TAG, "SleepConditionVariableCS() failed %i", GetLastError());
-            retVal = CA_WAIT_INVAL;
+            retVal = OC_WAIT_INVAL;
         }
     }
     else
     {
-        retVal = CA_WAIT_SUCCESS;
+        retVal = OC_WAIT_SUCCESS;
     }
 
     return retVal;
