@@ -88,10 +88,10 @@ static void PrintUsage()
 {
     OIC_LOG(INFO, TAG, "Usage : proxy_client -t <1..5>");
     OIC_LOG(INFO, TAG, "-t 1  :  Discover Proxy");
-    OIC_LOG(INFO, TAG, "-t 2 -p \"http_uri\":  Discover Proxy and Initiate GET Request");
-    OIC_LOG(INFO, TAG, "-t 3 -p \"http_uri\":  Discover Proxy and Initiate POST Request");
-    OIC_LOG(INFO, TAG, "-t 4 -p \"http_uri\":  Discover Proxy and Initiate PUT Request");
-    OIC_LOG(INFO, TAG, "-t 5 -p \"http_uri\":  Discover Proxy and Initiate DELETE Request");
+    OIC_LOG(INFO, TAG, "-t 2 -p \"http_uri\":  Discover Proxy and Initiate HTTP GET Request");
+    OIC_LOG(INFO, TAG, "-t 3 -p \"http_uri\":  Discover Proxy and Initiate HTTP POST Request");
+    OIC_LOG(INFO, TAG, "-t 4 -p \"http_uri\":  Discover Proxy and Initiate HTTP PUT Request");
+    OIC_LOG(INFO, TAG, "-t 5 -p \"http_uri\":  Discover Proxy and Initiate HTTP DELETE Request");
 }
 
 OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle,
