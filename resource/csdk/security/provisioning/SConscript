@@ -128,7 +128,9 @@ if target_os in ['windows', 'msys_nt']:
 	# octbstack.dll is exporting ocpmapi APIs on Windows - there is no ocpmapi.dll.
 	provisioningserver = provisioning_env.StaticLibrary('ocpmapi', provisioning_src)
 else:
-	provisioningserver = provisioning_env.SharedLibrary('ocpmapi', provisioning_src)
+	static_provisioning_lib = provisioning_env.StaticLibrary('ocpmapi', provisioning_src)
+	shared_provisioning_lib = provisioning_env.SharedLibrary('ocpmapi', provisioning_src)
+	provisioningserver = Flatten([static_provisioning_lib, shared_provisioning_lib])
 
 provisioning_env.InstallTarget(provisioningserver, 'ocpmapi')
 provisioning_env.UserInstallTargetLib(provisioningserver, 'ocpmapi')
