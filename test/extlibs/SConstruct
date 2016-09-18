@@ -40,7 +40,7 @@ else:
     gtest = Command("Gtest", [],
 	[
 		'pwd',
-		'export https_proxy=' + https_proxy + ' && mkdir -p extlibs/tmp && wget https://googletest.googlecode.com/files/gtest-1.7.0.zip --no-check-certificate',
+		'export https_proxy=' + https_proxy + ' && mkdir -p extlibs/tmp && wget http://pkgs.fedoraproject.org/repo/pkgs/gtest/gtest-1.7.0.zip/2d6ec8ccdf5c46b05ba54a9fd1d130d7/gtest-1.7.0.zip --no-check-certificate',
 		'mv gtest-1.7.0.zip extlibs/tmp/',
 		'unzip extlibs/tmp/gtest-1.7.0.zip -d extlibs/tmp',
 		'cp -R extlibs/tmp/gtest-1.7.0/src/* extlibs/gtest-1.7.0/src/',
