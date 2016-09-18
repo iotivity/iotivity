@@ -127,6 +127,13 @@ if target_os in ['windows', 'msys_nt']:
 if (env.get('DTLS_WITH_X509') == '1' or env.get('WITH_TCP') == True) and env.get('SECURED') == '1':
 	libocsrm_src  = libocsrm_src + [OCSRM_SRC + 'crlresource.c', OCSRM_SRC + 'pkix_interface.c']
 
+libocsrm_src.extend(env['cbor_files'])
+
+# Insert a hack for Arduino, whose compiler may not support all defines expected
+# by tinycbor
+if target_os in ['arduino']:
+	libocsrm_env.AppendUnique(CPPDEFINES = ['INT64_MAX=0x7FFFFFFFFFFFFFFF'])
+
 libocsrm_conf = Configure(libocsrm_env)
 if libocsrm_conf.CheckFunc('strptime'):
 	libocsrm_conf.env.AppendUnique(CPPDEFINES = ['HAVE_STRPTIME'])

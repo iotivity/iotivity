@@ -186,13 +186,6 @@ if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
 if with_tcp == True:
 	liboctbstack_src.append(OCTBSTACK_SRC + 'oickeepalive.c')
 
-liboctbstack_src.extend(env['cbor_files'])
-
-# Insert a hack for Arduino, whose compiler may not support all defines expected
-# by tinycbor
-if target_os in ['arduino']:
-	liboctbstack_env.AppendUnique(CPPDEFINES = ['INT64_MAX=0x7FFFFFFFFFFFFFFF'])
-
 if target_os in ['windows', 'msys_nt']:
 	# Avoid a name conflict with the octbstack.lib target of the SharedLibrary.
 	static_liboctbstack = liboctbstack_env.StaticLibrary('octbstack_static', liboctbstack_src)
