@@ -756,10 +756,19 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
 
     cred->credType = SIGNED_ASYMMETRIC_KEY;
 
-    cred->optionalData.data = (uint8_t *)OICCalloc(1, chainSize);
-    VERIFY_NON_NULL(TAG, cred->optionalData.data, ERROR, OC_STACK_NO_MEMORY);
+    if (encodingType == OIC_ENCODING_PEM)
+    {
+        cred->optionalData.data = (uint8_t *)OICCalloc(1, chainSize + 1);
+        VERIFY_NON_NULL(TAG, cred->optionalData.data, ERROR, OC_STACK_NO_MEMORY);
+        cred->optionalData.len = chainSize + 1;
+    }
+    else
+    {
+        cred->optionalData.data = (uint8_t *)OICCalloc(1, chainSize);
+        VERIFY_NON_NULL(TAG, cred->optionalData.data, ERROR, OC_STACK_NO_MEMORY);
+        cred->optionalData.len = chainSize;
+    }
     memcpy(cred->optionalData.data, trustCertChain, chainSize);
-    cred->optionalData.len = chainSize;
     cred->optionalData.encoding = encodingType;
 
     res = AddCredential(cred);

@@ -224,8 +224,8 @@ static int saveTrustCert(void)
         size_t fsize;
         if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)))
         {
-            trustCertChainArray.data = OICCalloc(1, fsize+1);
-            trustCertChainArray.len = fsize+1;
+            trustCertChainArray.data = OICCalloc(1, fsize);
+            trustCertChainArray.len = fsize;
             if (NULL == trustCertChainArray.data)
             {
                 OIC_LOG(ERROR,TAG,"OICCalloc");
