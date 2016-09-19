@@ -4823,12 +4823,10 @@ bool OCResultToSuccess(OCStackResult ocResult)
     }
 }
 
-#ifdef WITH_CHPROXY
 OCStackResult OCSetProxyURI(const char *uri)
 {
     return CAResultToOCResult(CASetProxyUri(uri));
 }
-#endif
 
 #if defined(RD_CLIENT) || defined(RD_SERVER)
 OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, uint8_t ins)

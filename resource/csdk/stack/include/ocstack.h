@@ -558,14 +558,12 @@ const OCDPDev_t* OCGetDirectPairedDevices();
 OCStackResult OCDoDirectPairing(void *ctx, OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
                                 OCDirectPairingCB resultCallback);
 
-#ifdef WITH_CHPROXY
 /**
  * This function sets uri being used for proxy.
  *
  * @param uri            NULL terminated resource uri for CoAP-HTTP Proxy.
  */
 OCStackResult OCSetProxyURI(const char *uri);
-#endif
 
 #if defined(RD_CLIENT) || defined(RD_SERVER)
 /**
