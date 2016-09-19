@@ -1203,6 +1203,10 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
 
     oc_mutex_lock(g_mutexObjectList);
 
+#ifdef __WITH_TLS__
+    CAcloseTlsConnection(&svritem->sep.endpoint);
+#endif
+
     // close the socket and remove TCP connection info in list
     if (svritem->fd >= 0)
     {
