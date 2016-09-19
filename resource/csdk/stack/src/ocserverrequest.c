@@ -36,8 +36,8 @@
 #include "cacommon.h"
 #include "cainterface.h"
 
-#include "utlist.h"
-#include "pdu.h"
+#include <coap/utlist.h>
+#include <coap/pdu.h>
 
 // Module Name
 #define VERIFY_NON_NULL(arg) { if (!arg) {OIC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
@@ -643,7 +643,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                     OICFree(responseInfo.info.options);
                     return result;
                 }
-                //Add CONTENT_FORMAT OPT if payload exist
+                // Add CONTENT_FORMAT OPT if payload exist
                 if (responseInfo.info.payloadSize > 0)
                 {
                     responseInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;

@@ -47,7 +47,7 @@ Alias("test", [malloctests])
 
 malloctest_env.AppendTarget('test')
 if malloctest_env.get('TEST') == '1':
-	if target_os in ['linux']:
+	if target_os in ['linux', 'windows']:
                 from tools.scons.RunTest import *
                 run_test(malloctest_env,
                          'resource_ccommon_malloc_test.memcheck',

@@ -21,8 +21,7 @@
 #ifndef IOTVT_SRM_CRLR_H
 #define IOTVT_SRM_CRLR_H
 
-#include "octypes.h"
-#include "securevirtualresourcetypes.h"
+#include "ocpayload.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,7 +34,7 @@ extern "C" {
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult UpdateCRLResource(const OicSecCrl_t *crl);
+OCStackResult UpdateCRLResource(OicSecCrl_t *crl);
 
 /**
  * This function get encoded with base64 CRL from SRM.
@@ -60,12 +59,14 @@ void  GetDerCrl(ByteArray* crlArray);
  * will be allocated by the function and content of *crl will be ignored.
  * @param payload is the converted cbor value.
  * @param size is a pointer to length of the CRL buffer. Should be not NULL.
+ * @param lastUpdate optional field contains CRL last update time
  *
  * @note Caller responsible for crl buffer memory (use OICFree to free it).
  *
  * @return ::OC_STACK_OK if success, otherwise some error value.
  */
-OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t *size);
+OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t *size,
+                               char *lastUpdate);
 
 /**
  * This function converts CBOR to CRL
@@ -101,6 +102,23 @@ OCStackResult DeInitCRLResource();
  * @return reference to the @ref OicSecCrl_t, holding reference to CRL resource.
  */
 OicSecCrl_t *GetCRLResource();
+
+/**
+ * This function frees resources inside given OicSecCrl_t object
+ *
+ * @param crl  crl object
+ */
+void DeleteCrl(OicSecCrl_t *crl);
+
+/**
+ * This function gets time when CRL was last updated in database
+ * Function allocates memory for lastUpdate and
+ * Caller is responsible to free that memory
+ *
+ * @param lastUpdate    pointer to last update string.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult getLastUpdateFromDB(char **lastUpdate);
 
 #ifdef __cplusplus
 }

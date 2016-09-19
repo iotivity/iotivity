@@ -120,12 +120,14 @@ void NSConsumerMessageHandlerExit()
 
     NSConsumerListenerTermiate();
     NSCancelAllSubscription();
+
     NSThreadStop(*(NSGetMsgHandleThreadHandle()));
+    NSSetMsgHandleThreadHandle(NULL);
+
     NSDestroyQueue(*(NSGetMsgHandleQueue()));
     NSSetMsgHandleQueue(NULL);
 
-    NSDestroyMessageCacheList();
-    NSDestroyProviderCacheList();
+    NSDestroyInternalCachedList();
 }
 
 void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
@@ -264,29 +266,9 @@ void NSConsumerTaskProcessing(NSTask * task)
         }
         case TASK_SEND_SYNCINFO:
         case TASK_CONSUMER_REQ_TOPIC_LIST:
-        {
-            NSConsumerCommunicationTaskProcessing(task);
-            break;
-        }
-        case TASK_CONSUMER_GET_TOPIC_LIST:
         case TASK_CONSUMER_SELECT_TOPIC_LIST:
         {
-            NSProvider * provider = (NSProvider *)task->taskData;
-            NSProvider_internal * prov =
-                    NSConsumerFindNSProvider(provider->providerId);
-            NS_VERIFY_NOT_NULL_V(prov);
-            if (task->taskType == TASK_CONSUMER_SELECT_TOPIC_LIST)
-            {
-                NSRemoveTopicLL(prov->topicLL);
-                prov->topicLL = NSCopyTopicLL((NSTopicLL *)provider->topicLL);
-            }
-
-            NSTask * topTask = NSMakeTask(task->taskType, prov);
-            NS_VERIFY_NOT_NULL_V(topTask);
-            NSConsumerCommunicationTaskProcessing(topTask);
-
-            NSRemoveProvider((NSProvider *)task->taskData);
-            NSOICFree(task);
+            NSConsumerCommunicationTaskProcessing(task);
             break;
         }
         case TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL:
@@ -326,7 +308,6 @@ void NSConsumerTaskProcessing(NSTask * task)
         }
         case TASK_RECV_SYNCINFO:
         case TASK_CONSUMER_RECV_MESSAGE:
-        case TASK_CONSUMER_PROVIDER_DISCOVERED:
         case TASK_CONSUMER_SENT_REQ_OBSERVE:
         case TASK_CONSUMER_RECV_PROVIDER_CHANGED:
         case TASK_MAKE_SYNCINFO:
@@ -336,19 +317,25 @@ void NSConsumerTaskProcessing(NSTask * task)
             NSConsumerInternalTaskProcessing(task);
             break;
         }
+        case TASK_CONSUMER_PROVIDER_DISCOVERED:
+        {
+            NSTask * getTopicTask = (NSTask *)OICMalloc(sizeof(NSTask));
+            NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(getTopicTask,
+                        NSRemoveProvider_internal((NSProvider_internal *) task->taskData));
+            getTopicTask->nextTask = NULL;
+            getTopicTask->taskData =
+                    (void *) NSCopyProvider_internal((NSProvider_internal *) task->taskData);
+            getTopicTask->taskType = TASK_CONSUMER_REQ_TOPIC_LIST;
+            NSConsumerCommunicationTaskProcessing(getTopicTask);
+            NSConsumerInternalTaskProcessing(task);
+            break;
+        }
         default:
         {
             NS_LOG(ERROR, "Unknown type of task");
             break;
         }
     }
-}
-
-NSMessage * NSConsumerFindNSMessage(const char* messageId)
-{
-    NS_VERIFY_NOT_NULL(messageId, NULL);
-
-    return NSMessageCacheFind(messageId);
 }
 
 NSProvider_internal * NSConsumerFindNSProvider(const char * providerId)

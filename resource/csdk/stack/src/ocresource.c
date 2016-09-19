@@ -29,6 +29,7 @@
 #define _GNU_SOURCE
 #endif
 
+#include "iotivity_config.h"
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
@@ -1007,6 +1008,12 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
             OIC_LOG(INFO, TAG, "Added observer successfully");
             request->observeResult = OC_STACK_OK;
             ehFlag = (OCEntityHandlerFlag)(OC_REQUEST_FLAG | OC_OBSERVE_FLAG);
+        }
+        else if (result == OC_STACK_RESOURCE_ERROR)
+        {
+            OIC_LOG(INFO, TAG, "The Resource is not active, discoverable or observable");
+            request->observeResult = OC_STACK_ERROR;
+            ehFlag = OC_REQUEST_FLAG;
         }
         else
         {

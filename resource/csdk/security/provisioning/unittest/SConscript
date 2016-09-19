@@ -30,6 +30,14 @@ target_os = sptest_env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
+with_upstream_libcoap = sptest_env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
+	sptest_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+else:
+	# For bring up purposes only, the forked version will live here.
+	sptest_env.AppendUnique(CPPPATH = ['../../../connectivity/lib/libcoap-4.1.1/include'])
+
 sptest_env.PrependUnique(CPPPATH = [
 		'../include',
 		'../../include',
@@ -49,7 +57,6 @@ sptest_env.PrependUnique(CPPPATH = [
 		'../../../connectivity/inc',
 		'../../../connectivity/inc/pkix',
 		'../../../connectivity/common/inc',
-		'../../../connectivity/lib/libcoap-4.1.1',
 		'../../../connectivity/api',
 		'../../../../../extlibs/tinydtls'
 		])
@@ -77,7 +84,6 @@ if not sptest_env.get('RELEASE'):
 	sptest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if target_os in ['msys_nt', 'windows']:
-    sptest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
     sptest_env.AppendUnique(LIBS = ['ws2_32',
                                     'advapi32',
                                     'iphlpapi'])

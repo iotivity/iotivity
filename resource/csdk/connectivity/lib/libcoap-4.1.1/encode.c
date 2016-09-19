@@ -6,7 +6,7 @@
  * README for terms of use.
  */
 
-#include "config.h"
+#include "include/coap/config.h"
 
 #if defined(HAVE_ASSERT_H) && !defined(assert)
 # include <assert.h>
@@ -16,9 +16,8 @@
 #  include <stdio.h>
 #endif
 
-#include "config.h"
-#include "encode.h"
-#include "option.h"
+#include "include/coap/encode.h"
+#include "include/coap/option.h"
 
 /* Carsten suggested this when fls() is not available: */
 int coap_fls(unsigned int i)

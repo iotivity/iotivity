@@ -28,7 +28,7 @@
 extern "C"
 {
 #endif
-#include "uri.h"
+#include <coap/uri.h>
 #ifdef __cplusplus
 }
 #endif

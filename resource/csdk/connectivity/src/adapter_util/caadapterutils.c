@@ -18,6 +18,7 @@
  *
  ******************************************************************/
 
+#include "iotivity_config.h"
 #include "caadapterutils.h"
 
 #include <string.h>

@@ -242,7 +242,7 @@ OIC::Service::NSMessage *getNativeMessage(JNIEnv *env, jobject jMsg)
     LOGD("iconImage: %s\n", iconImage);
 
     OIC::Service::NSMediaContents *media = new OIC::Service::NSMediaContents(std::string(iconImage));
-    OIC::Service::NSMessage *nsMsg = OIC::Service::NSProviderService::getInstance()->CreateMessage();
+    OIC::Service::NSMessage *nsMsg = OIC::Service::NSProviderService::getInstance()->createMessage();
 
     nsMsg->setType(type);
     nsMsg->setTime(std::string(time));
@@ -284,6 +284,181 @@ OIC::Service::NSMessage *getNativeMessage(JNIEnv *env, jobject jMsg)
     LOGD("JNIProviderService: getMessage - OUT");
     return nsMsg;
 
+}
+
+jobject getJavaMessageType(JNIEnv *env, OIC::Service::NSMessage::NSMessageType type)
+{
+    LOGD ("JNIProviderService: getJavaMessageType - IN");
+    switch (type)
+    {
+        case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_ALERT:
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message_Type,
+                                          "ALERT", "Lorg/iotivity/service/ns/common/Message$MessageType;");
+                return env->GetStaticObjectField(g_cls_Message_Type, fieldID);
+            }
+        case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_NOTICE:
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message_Type,
+                                          "NOTICE", "Lorg/iotivity/service/ns/common/Message$MessageType;");
+                return env->GetStaticObjectField(g_cls_Message_Type, fieldID);
+            }
+        case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_EVENT:
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message_Type,
+                                          "EVENT", "Lorg/iotivity/service/ns/common/Message$MessageType;");
+                return env->GetStaticObjectField(g_cls_Message_Type, fieldID);
+            }
+        case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_INFO:
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message_Type,
+                                          "INFO", "Lorg/iotivity/service/ns/common/Message$MessageType;");
+                return env->GetStaticObjectField(g_cls_Message_Type, fieldID);
+            }
+        default:
+            return NULL;
+    }
+    LOGD ("JNIProviderService: getJavaMessageType - OUT");
+    return NULL;
+}
+
+jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
+{
+    LOGD ("JNIProviderService: getJavaMessage - IN");
+
+    LOGD ("id : %llu\n", message->getMessageId());
+    LOGD ("title : %s\n", message->getTitle().c_str());
+    LOGD ("content : %s\n", message->getContentText().c_str());
+    LOGD ("source : %s\n", message->getSourceName().c_str());
+
+    jlong jMessageId = (jlong) message->getMessageId();
+    jstring jProviderId = env->NewStringUTF(message->getProviderId().c_str());
+    jstring jTitle = env->NewStringUTF(message->getTitle().c_str());
+    jstring jContentText = env->NewStringUTF(message->getContentText().c_str());
+    jstring jSourceName = env->NewStringUTF(message->getSourceName().c_str());
+    jstring jTopic = env->NewStringUTF(message->getTopic().c_str());
+
+    jstring jTime = env->NewStringUTF(message->getTime().c_str());
+    jlong jTTL = (jlong) message->getTTL();
+
+    jlong pMessage = (long) message;
+
+    jclass cls_message = (jclass) (env->NewLocalRef(g_cls_Message));
+    if (!cls_message)
+    {
+        LOGE ("Failed to Get ObjectClass for Message");
+        return NULL ;
+    }
+    jmethodID mid_message = env->GetMethodID(
+                                cls_message, "<init>",
+                                "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+    if (!mid_message)
+    {
+        LOGE ("Failed to Get MethodID for Message<init>");
+        return NULL;
+    }
+    jobject obj_message = env->NewObject(cls_message, mid_message,
+                                         jTitle, jContentText, jSourceName);
+    if (!obj_message)
+    {
+        LOGE ("Failed to Get Java Object for Message");
+        return NULL;
+    }
+    jfieldID fid_nativeHandle = env->GetFieldID(cls_message, "mNativeHandle", "J");
+    if (!fid_nativeHandle)
+    {
+        LOGE("Failed to get nativeHandle for Message");
+        return NULL;
+    }
+    env->SetLongField(obj_message, fid_nativeHandle, pMessage);
+
+    jfieldID fid_messageId = env->GetFieldID(cls_message, "mMessageId", "J");
+    if (!fid_messageId)
+    {
+        LOGE("Failed to get field MessageID for Message");
+        return NULL;
+    }
+    env->SetLongField(obj_message, fid_messageId, jMessageId);
+
+    jfieldID fid_providerId = env->GetFieldID(cls_message, "mProviderId", "Ljava/lang/String;");
+    if (!fid_providerId)
+    {
+        LOGE("Failed to get field ProviderID for Message");
+        return NULL;
+    }
+    env->SetObjectField(obj_message, fid_providerId, jProviderId);
+
+    jfieldID fid_time = env->GetFieldID(cls_message, "mTime", "Ljava/lang/String;");
+    if (!fid_time)
+    {
+        LOGE("Failed to get field Time for Message");
+        return NULL;
+    }
+    env->SetObjectField(obj_message, fid_time, jTime);
+
+    jfieldID fid_ttl = env->GetFieldID(cls_message, "mTTL", "J");
+    if (!fid_ttl)
+    {
+        LOGE("Failed to get field TTL for Message");
+        return NULL;
+    }
+    env->SetLongField(obj_message, fid_ttl, jTTL);
+
+    jfieldID fid_topic = env->GetFieldID(cls_message, "mTopic", "Ljava/lang/String;");
+    if (!fid_topic)
+    {
+        LOGE("Failed to get mTopic for Message");
+        return NULL;
+    }
+    env->SetObjectField(obj_message, fid_topic, jTopic);
+
+    OIC::Service::NSMediaContents *mediaCont = message->getMediaContents();
+    if (mediaCont != nullptr)
+    {
+        jstring jIconImage = env->NewStringUTF(mediaCont->getIconImage().c_str());
+        jclass cls_mediaContents = (jclass) (env->NewLocalRef(g_cls_MediaContents));
+        if (!cls_mediaContents)
+        {
+            LOGE ("Failed to Get ObjectClass for MediaContents");
+            return NULL;
+        }
+        jmethodID mid_mediaContents = env->GetMethodID(
+                                          cls_mediaContents, "<init>", "(Ljava/lang/String;)V");
+        if (!mid_mediaContents)
+        {
+            LOGE ("Failed to Get MethodID for MediaContents<init>");
+            return NULL;
+        }
+        jobject obj_mediaContents = env->NewObject(cls_mediaContents, mid_mediaContents,
+                                    jIconImage);
+
+        jfieldID fid_mediaContents = env->GetFieldID(cls_message, "mMediaContents",
+                                     "Lorg/iotivity/service/ns/common/MediaContents;");
+        if (!fid_mediaContents)
+        {
+            LOGE("Failed to get field mediaContents for Message");
+            return NULL;
+        }
+        env->SetObjectField(obj_message, fid_mediaContents, obj_mediaContents);
+
+    }
+
+    jobject jType = getJavaMessageType(env, message->getType());
+    if (jType)
+    {
+        jfieldID fid_type = env->GetFieldID(cls_message, "mType",
+                                            "Lorg/iotivity/service/ns/common/Message$MessageType;");
+        if (!fid_type)
+        {
+            LOGE("Failed to get field Type for Message");
+            return NULL;
+        }
+        env->SetObjectField(obj_message, fid_type, jType);
+    }
+
+    env->DeleteLocalRef(cls_message);
+    LOGD ("JNIProviderService: getJavaMessage - OUT");
+    return obj_message;
 }
 
 jobject getJavaTopicState(JNIEnv *env, OIC::Service::NSTopic::NSTopicState nsState)
@@ -540,7 +715,7 @@ void onSyncInfoListenerCb(OIC::Service::NSSyncInfo *sync)
     }
     jmethodID mid = env->GetMethodID(
                         cls,
-                        "onSyncInfoReceived",
+                        "onMessageSynchronized",
                         "(Lorg/iotivity/service/ns/common/SyncInfo;)V");
     if (!mid)
     {
@@ -559,9 +734,8 @@ void onSyncInfoListenerCb(OIC::Service::NSSyncInfo *sync)
 
 }
 
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeStart(
-    JNIEnv *env, jobject jObj, jboolean jPolicy, jobject jSubscriptionListener,
-    jobject jSyncListener)
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeStart
+(JNIEnv *env, jobject jObj, jobject jSubscriptionListener, jobject jSyncListener, jboolean jPolicy, jstring jUserInfo)
 {
     LOGD("JNIProviderService: nativeStart - IN");
     if (!jSubscriptionListener || !jSyncListener)
@@ -588,9 +762,15 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nat
     OIC::Service::NSProviderService::ProviderConfig cfg;
     cfg.m_subscribeRequestCb =  onSubscribeListenerCb;
     cfg.m_syncInfoCb =  onSyncInfoListenerCb;
-    cfg.policy = (bool) jPolicy;
+    cfg.subControllability = (bool) jPolicy;
+    if (!jUserInfo)
+    {
+        const char *info = env->GetStringUTFChars( jUserInfo, NULL);
+        std::string userInfo(info);
+        cfg.userInfo = userInfo;
+    }
 
-    OIC::Service::NSResult result = OIC::Service::NSProviderService::getInstance()->Start(cfg);
+    OIC::Service::NSResult result = OIC::Service::NSProviderService::getInstance()->start(cfg);
     if (result != OIC::Service::NSResult::OK)
     {
         LOGE("Fail to start NSProviderService");
@@ -601,12 +781,12 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nat
     return (jint) result;
 }
 
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeStop(
-    JNIEnv *env, jobject jObj)
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeStop
+(JNIEnv *env, jobject jObj)
 {
     LOGD("JNIProviderService: nativeStop - IN");
 
-    OIC::Service::NSResult result = OIC::Service::NSProviderService::getInstance()->Stop();
+    OIC::Service::NSResult result = OIC::Service::NSProviderService::getInstance()->stop();
     if (result !=  OIC::Service::NSResult::OK)
     {
         LOGD("Fail to stop NSProvider service");
@@ -622,8 +802,8 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nat
     return (jint) result;
 }
 
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeSendMessage(
-    JNIEnv *env, jobject jObj, jobject jMsg)
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeSendMessage
+(JNIEnv *env, jobject jObj, jobject jMsg)
 {
     LOGD("JNIProviderService: nativeSendMessage - IN");
     if (!jMsg)
@@ -639,7 +819,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nat
         return (jint) OIC::Service::NSResult::ERROR;
     }
 
-    OIC::Service::NSResult result = OIC::Service::NSProviderService::getInstance()->SendMessage(nsMsg);
+    OIC::Service::NSResult result = OIC::Service::NSProviderService::getInstance()->sendMessage(nsMsg);
     if (result !=  OIC::Service::NSResult::OK)
     {
         LOGD("Fail to send NSProvider Message");
@@ -648,19 +828,39 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nat
     return (jint) result;
 }
 
-JNIEXPORT void JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeSendSyncInfo(
-    JNIEnv *env, jobject jObj, jlong messageId , jint syncState)
+JNIEXPORT void JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeSendSyncInfo
+(JNIEnv *env, jobject jObj, jlong messageId , jint syncState)
 {
     LOGD("JNIProviderService: nativeSendSyncInfo - IN");
-    OIC::Service::NSProviderService::getInstance()->SendSyncInfo( messageId,
+    OIC::Service::NSProviderService::getInstance()->sendSyncInfo( messageId,
             (OIC::Service::NSSyncInfo::NSSyncType) syncState);
     LOGD("JNIProviderService: nativeSendSyncInfo - OUT");
     return;
 }
 
-JNIEXPORT jint JNICALL
-Java_org_iotivity_service_ns_provider_ProviderService_nativeEnableRemoteService(JNIEnv *env,
-        jobject jObj, jstring jstr)
+JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeCreateMessage
+(JNIEnv *env, jobject jObj)
+{
+    LOGD("JNIProviderService: nativeCreateMessage - IN");
+    OIC::Service::NSMessage* message =
+                      OIC::Service::NSProviderService::getInstance()->createMessage();
+    if(message == nullptr)
+    {
+        ThrowNSException(NS_ERROR, "Couldn't get Native Message");
+        return NULL;
+    }
+    jobject jMsg =  getJavaMessage(env, message);
+    if(!jMsg)
+    {
+        ThrowNSException(NS_ERROR, "Couldn't create Java Message");
+        return NULL;
+    }
+    LOGD("JNIProviderService: nativeCreateMessage - OUT");
+    return jMsg;
+}
+
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeEnableRemoteService
+(JNIEnv *env,jobject jObj, jstring jstr)
 {
     LOGD("JNIProviderService: nativeEnableRemoteService - IN");
     if (!jstr)
@@ -672,7 +872,7 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeEnableRemoteService(
     const char *address = env->GetStringUTFChars( jstr, NULL);
     std::string servAddress(address);
     OIC::Service::NSResult result  =
-        OIC::Service::NSProviderService::getInstance()->EnableRemoteService(
+        OIC::Service::NSProviderService::getInstance()->enableRemoteService(
             servAddress);
     if (result !=  OIC::Service::NSResult::OK)
     {
@@ -683,9 +883,8 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeEnableRemoteService(
     return (jint) result;
 }
 
-JNIEXPORT jint JNICALL
-Java_org_iotivity_service_ns_provider_ProviderService_nativeDisableRemoteService(JNIEnv *env,
-        jobject jObj, jstring jstr)
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeDisableRemoteService
+(JNIEnv *env,jobject jObj, jstring jstr)
 {
     LOGD("JNIProviderService: nativeDisableRemoteService - IN");
     if (!jstr)
@@ -697,7 +896,7 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeDisableRemoteService
     const char *address = env->GetStringUTFChars( jstr, NULL);
     std::string servAddress(address);
     OIC::Service::NSResult result  =
-        OIC::Service::NSProviderService::getInstance()->DisableRemoteService(
+        OIC::Service::NSProviderService::getInstance()->disableRemoteService(
             servAddress);
     if (result !=  OIC::Service::NSResult::OK)
     {
@@ -708,10 +907,10 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeDisableRemoteService
     return (jint) result;
 }
 
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeAddTopic
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeRegisterTopic
 (JNIEnv *env, jobject jObj, jstring jTopicName)
 {
-    LOGD("JNIProviderService: nativeAddTopic - IN");
+    LOGD("JNIProviderService: nativeRegisterTopic - IN");
     if (!jTopicName)
     {
         ThrowNSException(NS_ERROR, "Topic Name Can't be NULL");
@@ -719,20 +918,20 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nat
     }
     const char *name = env->GetStringUTFChars( jTopicName, NULL);
     std::string topicName(name);
-    OIC::Service::NSResult result  = OIC::Service::NSProviderService::getInstance()->AddTopic(
+    OIC::Service::NSResult result  = OIC::Service::NSProviderService::getInstance()->registerTopic(
                                          topicName);
     if (result !=  OIC::Service::NSResult::OK)
     {
-        LOGE("Fail to Add Topic");
+        LOGE("Fail to Register Topic");
     }
     env->ReleaseStringUTFChars(jTopicName, name);
-    LOGD("JNIProviderService: nativeAddTopic - OUT");
+    LOGD("JNIProviderService: nativeRegisterTopic - OUT");
     return (jint) result;
 }
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeDeleteTopic
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeUnregisterTopic
 (JNIEnv *env, jobject jObj, jstring jTopicName)
 {
-    LOGD("JNIProviderService: nativeDeleteTopic - IN");
+    LOGD("JNIProviderService: nativeUnregisterTopic - IN");
     if (!jTopicName)
     {
         ThrowNSException(NS_ERROR, "Topic Name Can't be NULL");
@@ -740,24 +939,24 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nat
     }
     const char *name = env->GetStringUTFChars( jTopicName, NULL);
     std::string topicName(name);
-    OIC::Service::NSResult result  = OIC::Service::NSProviderService::getInstance()->DeleteTopic(
+    OIC::Service::NSResult result  = OIC::Service::NSProviderService::getInstance()->unregisterTopic(
                                          topicName);
     if (result !=  OIC::Service::NSResult::OK)
     {
-        LOGE("Fail to Add Topic");
+        LOGE("Fail to Unregister Topic");
     }
     env->ReleaseStringUTFChars(jTopicName, name);
-    LOGD("JNIProviderService: nativeDeleteTopic - OUT");
+    LOGD("JNIProviderService: nativeUnregisterTopic - OUT");
     return (jint) result;
 }
 
-JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeGetTopics
+JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeGetRegisteredTopicList
 (JNIEnv *env, jobject jObj)
 {
-    LOGD("JNIProviderService: nativeGetTopics - IN");
+    LOGD("JNIProviderService: nativeGetRegisteredTopicList - IN");
 
     OIC::Service::NSTopicsList *topicList  =
-        OIC::Service::NSProviderService::getInstance()->GetTopics();
+        OIC::Service::NSProviderService::getInstance()->getRegisteredTopicList();
     if (topicList == nullptr)
     {
         ThrowNSException(NS_ERROR, "Topic List doesn't exist");
@@ -766,56 +965,36 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_provider_ProviderService_
 
     jobject obj_topicList = getJavaTopicsList(env, topicList);
 
-    LOGD("JNIProviderService: nativeGetTopics - OUT");
+    LOGD("JNIProviderService: nativeGetRegisteredTopicList - OUT");
     return obj_topicList;
 }
 
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeAcceptSubscription(
-    JNIEnv *env,  jobject jObj, jobject jConsumer, jboolean jAccepted)
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeAcceptSubscription
+(JNIEnv *env,  jobject jObj, jstring jConsumerId, jboolean jAccepted)
 {
     LOGD("JNIProviderService: nativeAcceptSubscription - IN");
-
-    jclass consumerClass =  env->GetObjectClass( jConsumer);
-    if (!consumerClass)
+    if (!jConsumerId)
     {
-        ThrowNSException(NS_ERROR, "Failed to Get ObjectClass for Consumer");
+        ThrowNSException(NS_ERROR, "ConsumerId Can't be NULL");
         return (jint) OIC::Service::NSResult::ERROR;
     }
-
-    // Consumer ID
-    jfieldID fid_id =  env->GetFieldID(consumerClass, "mConsumerId",  "Ljava/lang/String;");
-    if (fid_id == NULL)
-    {
-        LOGE("Error: jfieldID for mConsumerId  is null");
-        ThrowNSException(NS_ERROR, "ConsumerId not found");
-        return (jint) OIC::Service::NSResult::ERROR;
-    }
-
-    jstring jconId = (jstring)env->GetObjectField( jConsumer, fid_id);
-    if (!jconId)
-    {
-        ThrowNSException(NS_ERROR, "ProviderId cannot be null");
-        return (jint) OIC::Service::NSResult::ERROR;
-    }
-    const char *conId = env->GetStringUTFChars( jconId, NULL);
-    std::string consumerId(conId);
-    env->ReleaseStringUTFChars(jconId, conId);
-
+    const char *id = env->GetStringUTFChars( jConsumerId, NULL);
+    std::string consumerId(id);
     LOGD("Consumer ID: %s\n", consumerId.c_str());
 
     OIC::Service::NSConsumer *consumer =
         OIC::Service::NSProviderService::getInstance()->getConsumer(consumerId);
     if (consumer)
-        return (jint) consumer->acceptSubscription(consumer,  (bool)jAccepted);
+        return (jint) consumer->acceptSubscription((bool)jAccepted);
 
     LOGE("Couldn't find consumer");
     LOGD("JNIProviderService: nativeAcceptSubscription - OUT");
     return (jint) OIC::Service::NSResult::ERROR;
 }
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeSelectTopic
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeSetConsumerTopic
 (JNIEnv *env, jobject jObj, jstring jConsumerId, jstring jTopicName)
 {
-    LOGD("JNIProviderService: nativeSelectTopic - IN");
+    LOGD("JNIProviderService: nativeSetConsumerTopic - IN");
     if (!jConsumerId || !jTopicName)
     {
         ThrowNSException(NS_ERROR, "Topic Name or ConsumerId Can't be NULL");
@@ -832,7 +1011,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeSele
         ThrowNSException(NS_ERROR, "Consumer does exists");
         return (jint) OIC::Service::NSResult::ERROR;
     }
-    OIC::Service::NSResult result  = nsConsumer->selectTopic(topicName);
+    OIC::Service::NSResult result  = nsConsumer->setTopic(topicName);
 
     if (result !=  OIC::Service::NSResult::OK)
     {
@@ -840,13 +1019,13 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeSele
     }
     env->ReleaseStringUTFChars(jTopicName, name);
     env->ReleaseStringUTFChars(jConsumerId, id);
-    LOGD("JNIProviderService: nativeSelectTopic - OUT");
+    LOGD("JNIProviderService: nativeSetConsumerTopic - OUT");
     return (jint) result;
 }
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeUnselectTopic
+JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeUnsetConsumerTopic
 (JNIEnv *env, jobject jObj, jstring jConsumerId, jstring jTopicName)
 {
-    LOGD("JNIProviderService: nativeUnselectTopic - IN");
+    LOGD("JNIProviderService: nativeUnsetConsumerTopic - IN");
     if (!jConsumerId || !jTopicName)
     {
         ThrowNSException(NS_ERROR, "Topic Name or ConsumerId Can't be NULL");
@@ -863,7 +1042,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeUnse
         ThrowNSException(NS_ERROR, "Consumer does exists");
         return (jint) OIC::Service::NSResult::ERROR;
     }
-    OIC::Service::NSResult result  = nsConsumer->unselectTopic(topicName);
+    OIC::Service::NSResult result  = nsConsumer->unsetTopic(topicName);
 
     if (result !=  OIC::Service::NSResult::OK)
     {
@@ -871,14 +1050,14 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeUnse
     }
     env->ReleaseStringUTFChars(jTopicName, name);
     env->ReleaseStringUTFChars(jConsumerId, id);
-    LOGD("JNIProviderService: nativeUnselectTopic - OUT");
+    LOGD("JNIProviderService: nativeUnsetConsumerTopic - OUT");
     return (jint) result;
 }
 
-JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeGetConsumerTopics
+JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeGetConsumerTopicList
 (JNIEnv *env, jobject jObj, jstring jConsumerId)
 {
-    LOGD("JNIProviderService: nativeGetConsumerTopics - IN");
+    LOGD("JNIProviderService: nativeGetConsumerTopicList - IN");
     if (!jConsumerId)
     {
         ThrowNSException(NS_ERROR, "Topic Name or ConsumerId Can't be NULL");
@@ -894,14 +1073,14 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeG
         return NULL;
     }
     env->ReleaseStringUTFChars(jConsumerId, id);
-    OIC::Service::NSTopicsList *topicList  = nsConsumer->getConsumerTopics();
+    OIC::Service::NSTopicsList *topicList  = nsConsumer->getConsumerTopicList();
     if (topicList == nullptr)
     {
         ThrowNSException(NS_ERROR, "Topic List doesn't exist");
         return NULL;
     }
     jobject obj_topicList = getJavaTopicsList(env, topicList);
-    LOGD("JNIProviderService: nativeGetConsumerTopics - OUT");
+    LOGD("JNIProviderService: nativeGetConsumerTopicList - OUT");
     return obj_topicList;
 }
 

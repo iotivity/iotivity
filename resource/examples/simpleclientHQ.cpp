@@ -20,21 +20,22 @@
 
 // OCClient.cpp : Defines the entry point for the console application.
 //
+#include "iotivity_config.h"
+
 #include <set>
 #include <string>
 #include <cstdlib>
-#ifdef HAVE_PTHREAD_H
-#include <pthread.h>
-#endif
 #include <mutex>
 #include <condition_variable>
 #include "OCPlatform.h"
 #include "OCApi.h"
 
+#if defined(HAVE_PTHREAD_H)
+#include <pthread.h>
+#endif
 #if defined(HAVE_WINDOWS_H)
 #include <windows.h>
 #endif
-#include "platform_features.h"
 
 using namespace OC;
 

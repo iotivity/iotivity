@@ -20,6 +20,7 @@
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200112L
 #endif
+#include "iotivity_config.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -253,8 +254,14 @@ bool DPGenerateQuery(bool isSecure,
 
     switch(connType & CT_MASK_ADAPTER)
     {
+// @todo: Remove this ifdef. On Arduino, CT_ADAPTER_TCP resolves to the same value
+// as CT_ADAPTER_IP, resulting in a compiler error.
+#ifdef WITH_TCP
+#ifndef WITH_ARDUINO
         case CT_ADAPTER_TCP:
             prefix = (isSecure == true) ? QPREFIX_COAPS_TCP : QPREFIX_COAP_TCP;
+#endif
+#endif
         case CT_ADAPTER_IP:
             switch(connType & CT_MASK_FLAGS & ~CT_FLAG_SECURE)
             {

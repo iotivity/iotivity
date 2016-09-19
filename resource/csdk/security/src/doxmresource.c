@@ -17,10 +17,11 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#include "iotivity_config.h"
 #include <stdlib.h>
 #include <string.h>
 
-#if HAVE_STRINGS_H
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
 
@@ -58,9 +59,6 @@ static const uint16_t CBOR_SIZE = 512;
 
 /** Max cbor size payload. */
 static const uint16_t CBOR_MAX_SIZE = 4400;
-
-/** DOXM Map size - Number of mandatory items. */
-static const uint8_t DOXM_MAP_SIZE = 9;
 
 static OicSecDoxm_t        *gDoxm = NULL;
 static OCResourceHandle    gDoxmHandle = NULL;
@@ -130,21 +128,12 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     char* strUuid = NULL;
 
     int64_t cborEncoderResult = CborNoError;
-    uint8_t mapSize = DOXM_MAP_SIZE;
-    if (doxm->oxmTypeLen > 0)
-    {
-        mapSize++;
-    }
-    if (doxm->oxmLen > 0)
-    {
-        mapSize++;
-    }
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
     VERIFY_NON_NULL(TAG, outPayload, ERROR);
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
-    cborEncoderResult = cbor_encoder_create_map(&encoder, &doxmMap, mapSize);
+    cborEncoderResult = cbor_encoder_create_map(&encoder, &doxmMap, CborIndefiniteLength);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Doxm Map.");
 
     //OxmType -- Not Mandatory
@@ -1203,6 +1192,61 @@ OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID)
         return OC_STACK_OK;
     }
     return OC_STACK_ERROR;
+}
+
+OCStackResult SetDoxmDeviceID(const OicUuid_t *deviceID)
+{
+    bool isPT = false;
+
+    if(NULL == deviceID)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    if(NULL == gDoxm)
+    {
+        OIC_LOG(ERROR, TAG, "Doxm resource is not initialized.");
+        return OC_STACK_NO_RESOURCE;
+    }
+
+    //Check the device's OTM state
+
+#ifdef __WITH_DTLS__}
+    //for normal device.
+    if(true == gDoxm->owned)
+    {
+        OIC_LOG(ERROR, TAG, "This device owned by owner's device.");
+        OIC_LOG(ERROR, TAG, "Device UUID cannot be changed to guarantee the reliability of the connection.");
+        return OC_STACK_ERROR;
+    }
+#endif //__WITH_DTLS
+
+    //Save the previous UUID
+    OicUuid_t tempUuid;
+    memcpy(tempUuid.id, gDoxm->deviceID.id, sizeof(tempUuid.id));
+
+    //Change the UUID
+    memcpy(gDoxm->deviceID.id, deviceID->id, sizeof(deviceID->id));
+    if(isPT)
+    {
+        memcpy(gDoxm->owner.id, deviceID->id, sizeof(deviceID->id));
+        memcpy(gDoxm->rownerID.id, deviceID->id, sizeof(deviceID->id));
+    }
+
+    //Update PS
+    if(!UpdatePersistentStorage(gDoxm))
+    {
+        //revert UUID in case of update error
+        memcpy(gDoxm->deviceID.id, tempUuid.id, sizeof(tempUuid.id));
+        if(isPT)
+        {
+            memcpy(gDoxm->owner.id, tempUuid.id, sizeof(tempUuid.id));
+            memcpy(gDoxm->rownerID.id, tempUuid.id, sizeof(tempUuid.id));
+        }
+
+        OIC_LOG(ERROR, TAG, "Failed to update persistent storage");
+        return OC_STACK_ERROR;
+    }
+    return OC_STACK_OK;
 }
 
 OCStackResult GetDoxmDevOwnerId(OicUuid_t *devownerid)

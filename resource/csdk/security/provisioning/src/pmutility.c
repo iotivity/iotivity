@@ -21,7 +21,8 @@
 #define _POSIX_C_SOURCE 200112L
 #endif
 
-#if HAVE_UNISTD_H
+#include "iotivity_config.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #ifdef HAVE_STRING_H

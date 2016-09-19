@@ -190,12 +190,30 @@ OCStackResult GetCredRownerId(OicUuid_t *rowneruuid);
 
 #ifdef __WITH_TLS__
 /**
- * @def CA_SUBJECT_ID
- * @brief subject uuid for credential with CA certificates
+ * Used by mbedTLS to retrieve trusted CA certificates
+ *
+ * @param[out] crt certificates to be filled.
  */
-#define CA_SUBJECT_ID ("00000000-0000-0000-0000-000000000000")
-void GetPkixInfo(PkiInfo_t * inf);
-#endif
+void GetDerCaCert(ByteArray * crt);
+/**
+ * Used by mbedTLS to retrieve own certificate chain
+ *
+ * @param[out] crt certificate chain to be filled.
+ */
+void GetDerOwnCert(ByteArray * crt);
+/**
+ * Used by mbedTLS to retrieve owm private key
+ *
+ * @param[out] key key to be filled.
+ */
+void GetDerKey(ByteArray * key);
+/**
+ * Used by CA to retrieve credential types
+ *
+ * @param[out] key key to be filled.
+ */
+void InitCipherSuiteList(bool *list);
+#endif // __WITH_TLS__
 #ifdef __cplusplus
 }
 #endif

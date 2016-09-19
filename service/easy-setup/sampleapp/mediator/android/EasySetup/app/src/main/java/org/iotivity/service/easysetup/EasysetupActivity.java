@@ -347,7 +347,7 @@ public class EasysetupActivity extends Activity
                 ModeType.CLIENT_SERVER,
                 "0.0.0.0", // bind to all available interfaces
                 0,
-                QualityOfService.LOW, filePath + OIC_CLIENT_JSON_DB_FILE);
+                QualityOfService.HIGH, filePath + OIC_CLIENT_JSON_DB_FILE);
         try {
             /*
              * Initialize DataBase

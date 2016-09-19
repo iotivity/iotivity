@@ -1,3 +1,4 @@
+#include "iotivity_config.h" 
 #include "tinydtls.h" 
 
 /* This is needed for apple */
@@ -28,7 +29,6 @@
 #endif
 #include <signal.h>
 #include <getopt.h>
-#include "platform_features.h"
 
 #include "global.h"
 #include "debug.h"

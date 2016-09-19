@@ -30,6 +30,7 @@
 #include "pthread.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
+#include "ocstack.h"
 
 #define TAG "NSProviderExample"
 
@@ -37,11 +38,11 @@
 #include "cloud_connector.h"
 
 // Input the following values to publish resource to cloud
-char REMOTE_SERVER_ADDRESS[50];
-char AUTH_PROVIDER[50];
-char AUTH_CODE[50];
-char UID[50];
-char ACCESS_TOKEN[50];
+char REMOTE_SERVER_ADDRESS[50] = {'\0',};
+char AUTH_PROVIDER[50] = {'\0',};
+char AUTH_CODE[50] = {'\0',};
+char UID[50] = {'\0',};
+char ACCESS_TOKEN[50] = {'\0',};
 #endif
 
 char mainConsumer[37] = {'\0',};
@@ -78,7 +79,7 @@ void subscribeRequestCallback(NSConsumer *consumer)
         OICStrcpy(mainConsumer, 37, consumer->consumerId);
     }
 
-    NSAcceptSubscription(consumer, true);
+    NSAcceptSubscription(consumer->consumerId, true);
 }
 
 void syncCallback(NSSyncInfo *sync)
@@ -134,6 +135,17 @@ void removeTopics(NSTopicLL * topics)
     }
 }
 
+void input(char * buffer)
+{
+    char ch;
+    int i = 0;
+
+    while( (ch = getchar()) != '\n' && i < 100)
+        buffer[i++] = ch;
+
+    buffer[i] = '\0';
+}
+
 int main()
 {
     int num;
@@ -181,10 +193,15 @@ int main()
 
         printf("input : ");
 
-        scanf("%d", &num);
-        fflush(stdin);
-        scanf("%c", &dummy);
-        fflush(stdin);
+        if(scanf("%d", &num) > 0)
+        {
+            fflush(stdin);
+            if(scanf("%c", &dummy) > 0)
+            {
+                fflush(stdin);
+                printf("\n");
+            }
+        }
 
         switch (num)
         {
@@ -192,7 +209,7 @@ int main()
             {
                 printf("NSStartProvider(Accepter: Provider)");
                 NSProviderConfig config;
-                config.policy = true;
+                config.subControllability = true;
                 config.subRequestCallback = subscribeRequestCallback;
                 config.syncInfoCallback = syncCallback;
                 config.userInfo = OICStrdup("OCF_NOTIFICATION");
@@ -204,7 +221,7 @@ int main()
             {
                 printf("NSStartProvider(Accepter: Consumer)");
                 NSProviderConfig config;
-                config.policy = false;
+                config.subControllability = false;
                 config.subRequestCallback = subscribeRequestCallback;
                 config.syncInfoCallback = syncCallback;
                 config.userInfo = OICStrdup("OCF_NOTIFICATION");
@@ -215,20 +232,19 @@ int main()
             case 3:
             {
                 printf("NSSendNotification()");
-                char title[100];
-                char body[100];
-                char topic[100];
+                char title[100] = {'\0',};
+                char body[100] = {'\0',};
+                char topic[100] = {'\0',};
 
                 printf("id : %d\n", ++id);
                 printf("title : ");
-
-                gets(title);
+                input(title);
 
                 printf("body : ");
-                gets(body);
+                input(body);
 
                 printf("topic : ");
-                gets(topic);
+                input(topic);
 
                 printf("app - mTitle : %s \n", title);
                 printf("app - mContentText : %s \n", body);
@@ -255,28 +271,28 @@ int main()
 
             case 5:
                 printf("NSProviderAddTopic\n");
-                NSProviderAddTopic("OCF_TOPIC1");
-                NSProviderAddTopic("OCF_TOPIC2");
-                NSProviderAddTopic("OCF_TOPIC3");
-                NSProviderAddTopic("OCF_TOPIC4");
+                NSProviderRegisterTopic("OCF_TOPIC1");
+                NSProviderRegisterTopic("OCF_TOPIC2");
+                NSProviderRegisterTopic("OCF_TOPIC3");
+                NSProviderRegisterTopic("OCF_TOPIC4");
                 break;
 
             case 6:
                 printf("NSProviderDeleteTopic\n");
-                NSProviderDeleteTopic("OCF_TOPIC2");
+                NSProviderUnregisterTopic("OCF_TOPIC2");
                 break;
 
             case 7:
                 printf("NSProviderSelectTopic\n");
-                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC1");
-                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC2");
-                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC3");
-                NSProviderSelectTopic(mainConsumer, "OCF_TOPIC4");
+                NSProviderSetConsumerTopic(mainConsumer, "OCF_TOPIC1");
+                NSProviderSetConsumerTopic(mainConsumer, "OCF_TOPIC2");
+                NSProviderSetConsumerTopic(mainConsumer, "OCF_TOPIC3");
+                NSProviderSetConsumerTopic(mainConsumer, "OCF_TOPIC4");
                 break;
 
             case 8:
                 printf("NSProviderUnSelectTopic\n");
-                NSProviderUnselectTopic(mainConsumer, "OCF_TOPIC1");
+                NSProviderUnsetConsumerTopic(mainConsumer, "OCF_TOPIC1");
                 break;
 
             case 9:
@@ -302,20 +318,20 @@ int main()
                 break;
 #ifdef WITH_CLOUD
             case 21:
-                printf("Enable Remote Service");
+                printf("Enable Remote Service\n");
                 if(!IsCloudLoggedin())
                 {
-                    printf("Login required");
+                    printf("Login required\n");
                     break;
                 }
-                NSProviderEnableRemoteService(REMOTE_SERVER_ADDRESS);                
+                NSProviderEnableRemoteService(REMOTE_SERVER_ADDRESS);
                 break;
 
             case 22:
-                printf("Disable Remote Service");
+                printf("Disable Remote Service\n");
                 if(!IsCloudLoggedin())
                 {
-                    printf("Login required");
+                    printf("Login required\n");
                     break;
                 }
                 NSProviderDisableRemoteService(REMOTE_SERVER_ADDRESS);
@@ -323,13 +339,13 @@ int main()
 
             case 31:
                 printf("Remote Server Address: ");
-                gets(REMOTE_SERVER_ADDRESS);
+                input(REMOTE_SERVER_ADDRESS);
 
                 printf("Auth Provider(eg. github): ");
-                gets(AUTH_PROVIDER);
+                input(AUTH_PROVIDER);
 
                 printf("Auth Code: ");
-                gets(AUTH_CODE);
+                input(AUTH_CODE);
 
                 OCCloudSignup(REMOTE_SERVER_ADDRESS, OCGetServerInstanceIDString(),
                     AUTH_PROVIDER, AUTH_CODE, CloudSignupCallback);
@@ -337,21 +353,21 @@ int main()
                 break;
             case 32:
                 printf("Remote Server Address: ");
-                gets(REMOTE_SERVER_ADDRESS);
+                input(REMOTE_SERVER_ADDRESS);
 
                 printf("UID: ");
-                gets(UID);
+                input(UID);
 
                 printf("ACCESS_TOKEN: ");
-                gets(ACCESS_TOKEN);
+                input(ACCESS_TOKEN);
 
                 OCCloudLogin(REMOTE_SERVER_ADDRESS, UID, OCGetServerInstanceIDString(),
                     ACCESS_TOKEN, CloudLoginoutCallback);
-                printf("OCCloudLogin requested");
+                printf("OCCloudLogin requested\n");
                 break;
             case 33:
                 OCCloudLogout(REMOTE_SERVER_ADDRESS, CloudLoginoutCallback);
-                printf("OCCloudLogin requested");
+                printf("OCCloudLogin requested\n");
                 break;
 #endif
             case 0:

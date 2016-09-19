@@ -22,24 +22,6 @@ if "!SECOND_ARG!"=="debug" (
   set DEBUG="%ProgramFiles(x86)%\Windows Kits\10\Debuggers\x64\cdb.exe" -2 -c "g" 
 )
 
-IF "%CURRENT_ARG%" == "build" IF "%BUILD_MSYS%" == "" (
-  IF NOT "%VS140COMNTOOLS%" == "" (
-    CALL "%VS140COMNTOOLS%"vsvars32.bat
-  ) ELSE (
-    IF NOT "%VS120COMNTOOLS%" == "" (
-      CALL "%VS120COMNTOOLS%"vsvars32.bat
-      )
-    )
-
-  IF NOT "!VSINSTALLDIR!" == "" (
-      CALL "!VSINSTALLDIR!VC\vcvarsall.bat" amd64
-  ) ELSE (
-    @ECHO WARNING: Could not find vsvarsall.bat.
-    @ECHO WARNING: VISUAL STUDIO 2013/2015 DOES NOT APPEAR TO BE INSTALLED ON THIS MACHINE
-    GOTO :EOF
-  )
-)
-
 REM We need to append the "PATH" so the octbstack.dll can be found by executables
 IF "%BUILD_MSYS%" == "" (
   set BUILD_DIR=out\windows\amd64\debug
@@ -57,8 +39,15 @@ set TEST=1
 set LOGGING=OFF
 set WITH_RD=1
 set ROUTING=EP
+set WITH_UPSTREAM_LIBCOAP=0
 
-set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=0 WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=0 BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% WITH_RD=%WITH_RD% ROUTING=%ROUTING%
+set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=0 WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=0 BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% WITH_RD=%WITH_RD% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP%
+
+REM Use MSVC_VERSION=12.0 for VS2013, or MSVC_VERSION=14.0 for VS2015.
+REM If MSVC_VERSION has not been defined here, SCons chooses automatically a VS version.
+IF NOT "%MSVC_VERSION%" == "" (
+  set BUILD_OPTIONS=%BUILD_OPTIONS% MSVC_VERSION=%MSVC_VERSION%
+)
 
 REM *** BUILD OPTIONS ***
 
@@ -101,21 +90,29 @@ if "!CURRENT_ARG!"=="server" (
   %DEBUG% %BUILD_DIR%\resource\csdk\stack\test\cbortests.exe
   %DEBUG% %BUILD_DIR%\resource\csdk\security\unittest\unittest.exe
   %DEBUG% %BUILD_DIR%\resource\csdk\security\provisioning\unittest\unittest.exe
+  %DEBUG% %BUILD_DIR%\resource\c_common\ocrandom\test\randomtests.exe
+  %DEBUG% %BUILD_DIR%\resource\c_common\oic_malloc\test\malloctests.exe
+  %DEBUG% %BUILD_DIR%\resource\c_common\oic_string\test\stringtests.exe
+  %DEBUG% %BUILD_DIR%\resource\c_common\oic_time\test\timetests.exe
+  %DEBUG% %BUILD_DIR%\resource\unittests\unittests.exe
 ) else if "!CURRENT_ARG!"=="build" (
   echo Starting IoTivity build with these options:
   echo   TARGET_OS=%TARGET_OS%
   echo   TARGET_ARCH=%TARGET_ARCH%
   echo   SECURED=%SECURED%
+  echo   TEST=%TEST%
   echo   LOGGING=%LOGGING%
   echo   WITH_RD=%WITH_RD%
   echo   ROUTING=%ROUTING%
-  CL.exe | findstr "Compiler Verison"
+  echo   WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP%
   echo.scons VERBOSE=1 %BUILD_OPTIONS%
   scons VERBOSE=1 %BUILD_OPTIONS%
 ) else if "!CURRENT_ARG!"=="clean" (
   scons VERBOSE=1 %BUILD_OPTIONS% -c clean
   rd /s /q out
   del .sconsign.dblite
+  del extlibs\gtest\gtest*.lib
+  del extlibs\gtest\gtest-1.7.0\src\gtest*.obj
 ) else if "!CURRENT_ARG!"=="cleangtest" (
   rd /s /q extlibs\gtest\gtest-1.7.0
   del extlibs\gtest\gtest-1.7.0.zip

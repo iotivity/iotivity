@@ -77,6 +77,11 @@ OCStackResult OCAccountManager::signUp(const std::string& authProvider,
                                        const QueryParamsMap& options,
                                        PostCallback cloudConnectHandler)
 {
+    if (authProvider.empty() || authCode.empty())
+    {
+        return result_guard(OC_STACK_INVALID_PARAM);
+    }
+
     std::string uri = m_host + OC_RSRVD_ACCOUNT_URI;
 
     OCRepresentation rep;
@@ -86,12 +91,10 @@ OCStackResult OCAccountManager::signUp(const std::string& authProvider,
 
     if (!options.empty())
     {
-        OCRepresentation optionsRep;
         for (auto iter : options)
         {
-            optionsRep[iter.first] = iter.second;
+            rep.setValue(iter.first, iter.second);
         }
-        rep.setValue(OC_RSRVD_OPTIONS, optionsRep);
     }
 
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PostResourceRepresentation,
@@ -103,6 +106,11 @@ OCStackResult OCAccountManager::signIn(const std::string& userUuid,
                                        const std::string& accessToken,
                                        PostCallback cloudConnectHandler)
 {
+    if (userUuid.empty() || accessToken.empty())
+    {
+        return result_guard(OC_STACK_INVALID_PARAM);
+    }
+
     return result_guard(signInOut(userUuid, accessToken, true, cloudConnectHandler));
 }
 
@@ -136,6 +144,11 @@ OCStackResult OCAccountManager::refreshAccessToken(const std::string& userUuid,
                                                    const std::string& refreshToken,
                                                    PostCallback cloudConnectHandler)
 {
+    if (userUuid.empty() || refreshToken.empty())
+    {
+        return result_guard(OC_STACK_INVALID_PARAM);
+    }
+
     std::string uri = m_host + OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI;
 
     OCRepresentation rep;
@@ -152,12 +165,22 @@ OCStackResult OCAccountManager::refreshAccessToken(const std::string& userUuid,
 OCStackResult OCAccountManager::searchUser(const std::string& userUuid,
                                            GetCallback cloudConnectHandler)
 {
+    if (userUuid.empty())
+    {
+        return result_guard(OC_STACK_INVALID_PARAM);
+    }
+
     return result_guard(searchUser(userUuid, QueryParamsMap(), cloudConnectHandler));
 }
 
 OCStackResult OCAccountManager::searchUser(const QueryParamsMap& queryParams,
                                            GetCallback cloudConnectHandler)
 {
+    if (queryParams.empty())
+    {
+        return result_guard(OC_STACK_INVALID_PARAM);
+    }
+
     return result_guard(searchUser("", queryParams, cloudConnectHandler));
 }
 
@@ -193,6 +216,11 @@ OCStackResult OCAccountManager::searchUser(const std::string& userUuid,
 OCStackResult OCAccountManager::deleteDevice(const std::string& deviceId,
                                              DeleteCallback cloudConnectHandler)
 {
+    if (deviceId.empty())
+    {
+        return result_guard(OC_STACK_INVALID_PARAM);
+    }
+
     std::string uri = m_host + OC_RSRVD_ACCOUNT_URI
                       + "?" + OC_RSRVD_DEVICE_ID + "=" + deviceId;
 
@@ -238,6 +266,11 @@ OCStackResult OCAccountManager::getGroupList(GetCallback cloudConnectHandler)
 OCStackResult OCAccountManager::deleteGroup(const std::string& groupId,
                                             DeleteCallback cloudConnectHandler)
 {
+    if (groupId.empty())
+    {
+        return result_guard(OC_STACK_INVALID_PARAM);
+    }
+
     std::string uri = m_host + OC_RSRVD_ACL_GROUP_URI
                       + "?" + OC_RSRVD_GROUP_ID + "=" + groupId;
 
@@ -249,6 +282,11 @@ OCStackResult OCAccountManager::deleteGroup(const std::string& groupId,
 OCStackResult OCAccountManager::joinGroup(const std::string& groupId,
                                           PostCallback cloudConnectHandler)
 {
+    if (groupId.empty())
+    {
+        return result_guard(OC_STACK_INVALID_PARAM);
+    }
+
     std::string uri = m_host + OC_RSRVD_ACL_GROUP_URI + "/" + groupId;
 
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PostResourceRepresentation,
@@ -260,7 +298,7 @@ OCStackResult OCAccountManager::addDeviceToGroup(const std::string& groupId,
                                                  const std::vector<std::string>& deviceId,
                                                  PostCallback cloudConnectHandler)
 {
-    if (deviceId.empty())
+    if (groupId.empty() || deviceId.empty())
     {
         return result_guard(OC_STACK_INVALID_PARAM);
     }
@@ -278,6 +316,11 @@ OCStackResult OCAccountManager::addDeviceToGroup(const std::string& groupId,
 OCStackResult OCAccountManager::getGroupInfo(const std::string& groupId,
                                              GetCallback cloudConnectHandler)
 {
+    if (groupId.empty())
+    {
+        return result_guard(OC_STACK_INVALID_PARAM);
+    }
+
     std::string uri = m_host + OC_RSRVD_ACL_GROUP_URI + "/" + groupId;
 
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetResourceRepresentation,
@@ -288,6 +331,11 @@ OCStackResult OCAccountManager::getGroupInfo(const std::string& groupId,
 OCStackResult OCAccountManager::leaveGroup(const std::string& groupId,
                                            DeleteCallback cloudConnectHandler)
 {
+    if (groupId.empty())
+    {
+        return result_guard(OC_STACK_INVALID_PARAM);
+    }
+
     std::string uri = m_host + OC_RSRVD_ACL_GROUP_URI + "/" + groupId;
 
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::DeleteResource,
@@ -299,7 +347,7 @@ OCStackResult OCAccountManager::deleteDeviceFromGroup(const std::string& groupId
                                                       const std::vector<std::string>& deviceId,
                                                       DeleteCallback cloudConnectHandler)
 {
-    if (deviceId.empty())
+    if (groupId.empty() || deviceId.empty())
     {
         return result_guard(OC_STACK_INVALID_PARAM);
     }
@@ -322,6 +370,11 @@ OCStackResult OCAccountManager::deleteDeviceFromGroup(const std::string& groupId
 OCStackResult OCAccountManager::observeGroup(const std::string& groupId,
                                              ObserveCallback cloudConnectHandler)
 {
+    if (groupId.empty())
+    {
+        return result_guard(OC_STACK_INVALID_PARAM);
+    }
+
     std::string uri = m_host + OC_RSRVD_ACL_GROUP_URI + "/" + groupId;
 
     OCDoHandle handle = nullptr;
@@ -342,6 +395,11 @@ OCStackResult OCAccountManager::observeGroup(const std::string& groupId,
 
 OCStackResult OCAccountManager::cancelObserveGroup(const std::string& groupId)
 {
+    if (groupId.empty())
+    {
+        return result_guard(OC_STACK_INVALID_PARAM);
+    }
+
     auto found = m_groupObserveHandles.find(groupId);
     if (m_groupObserveHandles.end() == found)
     {
@@ -400,6 +458,11 @@ OCStackResult OCAccountManager::sendInvitation(const std::string& groupId,
                                                const std::string& userUuid,
                                                PostCallback cloudConnectHandler)
 {
+    if (groupId.empty() || userUuid.empty())
+    {
+        return result_guard(OC_STACK_INVALID_PARAM);
+    }
+
     std::string uri = m_host + OC_RSRVD_ACL_INVITE_URI;
 
     OCRepresentation invitation;
@@ -420,6 +483,11 @@ OCStackResult OCAccountManager::cancelInvitation(const std::string& groupId,
                                                  const std::string& userUuid,
                                                  DeleteCallback cloudConnectHandler)
 {
+    if (groupId.empty() || userUuid.empty())
+    {
+        return result_guard(OC_STACK_INVALID_PARAM);
+    }
+
     std::string uri = m_host + OC_RSRVD_ACL_INVITE_URI + "?" + OC_RSRVD_GROUP_ID + "=" + groupId
                       + ";" + OC_RSRVD_MEMBER_ID + "=" + userUuid;
 
@@ -431,6 +499,11 @@ OCStackResult OCAccountManager::cancelInvitation(const std::string& groupId,
 OCStackResult OCAccountManager::deleteInvitation(const std::string& groupId,
                                                  DeleteCallback cloudConnectHandler)
 {
+    if (groupId.empty())
+    {
+        return result_guard(OC_STACK_INVALID_PARAM);
+    }
+
     std::string uri = m_host + OC_RSRVD_ACL_INVITE_URI + "?" + OC_RSRVD_GROUP_ID + "=" + groupId;
 
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::DeleteResource,

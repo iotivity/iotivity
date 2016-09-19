@@ -41,7 +41,7 @@ import org.iotivity.service.ns.common.MediaContents;
 public class MainActivity extends AppCompatActivity {
 
     private final String TAG = "NS_MAIN_ACTIVITY";
-    private static final int MESSAGE_SUBSCRIPTION = 1;
+    private static final int CONSUMER_SUBSCRIBED = 1;
     private static final int MESSAGE_SYNC = 2;
     private static final int MESSAGE_NOTIFICATION = 3;
 
@@ -68,16 +68,16 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case MESSAGE_SUBSCRIPTION:
-                    String subscriber = (String) msg.obj;
-                    if(subscriber != null)
-                        TvLog.append("Subscriber IP(" + ++subCnt + "): " + subscriber + "\n");
+                case CONSUMER_SUBSCRIBED:
+                    String ConsumerId = (String) msg.obj;
+                    if(ConsumerId != null)
+                        TvLog.append("Consumer Subscibed: " + ConsumerId + "\n");
                     break;
 
                 case MESSAGE_SYNC:
                     String sync = (String) msg.obj;
                     if(sync != null)
-                        TvLog.append("Sync-Read(Msg ID: " + sync + ")\n");
+                        TvLog.append("SyncInfo Received :" + sync + "\n");
                     break;
 
                 default:

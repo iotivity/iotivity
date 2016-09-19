@@ -22,6 +22,9 @@
     <string name="rd_view">[Resource Directory View]</string>
     <string name="mq_view">[Message Queue View]</string>
 
+    <string name="sub_presence">SUB DEVICE\nPRESENCE</string>
+    <string name="unsub_presence">UNSUBSCRIBE\nPRESENCE</string>
+
     <string name="button_A">Button A</string>
     <string name="button_B">Button B</string>
     <string name="button_C">Button C</string>

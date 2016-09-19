@@ -84,6 +84,9 @@ if target_os in ['android']:
 if target_os in ['darwin', 'ios']:
 	examples_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 
+if target_os == 'tizen':
+    examples_env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
+
 
 ######################################################################
 # Source files and Targets

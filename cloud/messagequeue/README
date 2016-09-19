@@ -6,12 +6,13 @@ Build and Run
 
     http://maven.apache.org
 
-2) Install Apache Kafka if you don't have it
+2) Install Apache Kafka ver.0.9.0.0 if you don't have it
 
     http://kafka.apache.org/downloads.html
 
-    Set 'host.name' in Kafka server configuration file to your ip address,
-      Run Zookeeper server and Kafka broker with the configuration file.
+    Set 'host.name' in Kafka server configuration file('server.properties' file in this folder)
+      to your ip address,
+    Run Zookeeper server and Kafka broker with the configuration file.
 
 3) Build a CloudStack. If you are building first time, then build the stack.
 

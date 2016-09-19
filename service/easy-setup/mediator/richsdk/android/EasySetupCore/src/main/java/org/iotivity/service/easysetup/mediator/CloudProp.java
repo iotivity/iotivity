@@ -44,6 +44,18 @@ public class CloudProp {
 
     public void setCloudProp(String authCode, String authProvider, String ciServer)
     {
+        if(authCode == null)
+        {
+            authCode = "";
+        }
+        if(authProvider == null)
+        {
+            authProvider = "";
+        }
+        if(ciServer == null)
+        {
+            ciServer = "";
+        }
         try {
             mRep.setValue(ESConstants.OC_RSRVD_ES_AUTHCODE, authCode);
             mRep.setValue(ESConstants.OC_RSRVD_ES_AUTHPROVIDER, authProvider);

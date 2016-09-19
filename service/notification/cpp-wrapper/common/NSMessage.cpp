@@ -37,7 +37,7 @@ namespace OIC
             if (msg != nullptr)
             {
                 m_messageId = msg->messageId;
-                m_providerId = msg->providerId;
+                m_providerId.assign(msg->providerId, NS_UTILS_UUID_STRING_SIZE - 1);
 
                 m_type = (NSMessageType)msg->type;
 
@@ -63,6 +63,45 @@ namespace OIC
                     m_topic.assign(msg->topic, strlen(msg->topic));
 
             }
+        }
+
+        NSMessage::NSMessage(const NSMessage &msg)
+        {
+            m_messageId = msg.getMessageId();
+            m_providerId = msg.getProviderId();
+
+            m_type = msg.getType();
+            m_time = msg.getTime();
+            m_ttl = msg.getTTL();
+            m_title = msg.getTitle();
+            m_contentText = msg.getContentText();
+            m_sourceName = msg.getSourceName();
+
+            if (msg.getMediaContents() != nullptr)
+                m_mediaContents = new NSMediaContents(msg.getMediaContents()->getIconImage());
+            else
+                m_mediaContents = new NSMediaContents();
+            m_topic = msg.getTopic();
+        }
+
+        NSMessage &NSMessage::operator=(const NSMessage &msg)
+        {
+            this->m_messageId = msg.getMessageId();
+            this->m_providerId = msg.getProviderId();
+
+            this->m_type = msg.getType();
+            this->m_time = msg.getTime();
+            this->m_ttl = msg.getTTL();
+            this->m_title = msg.getTitle();
+            this->m_contentText = msg.getContentText();
+            this->m_sourceName = msg.getSourceName();
+
+            if (msg.getMediaContents() != nullptr)
+                this->m_mediaContents = new NSMediaContents(msg.getMediaContents()->getIconImage());
+            else
+                this->m_mediaContents = new NSMediaContents();
+            this->m_topic = msg.getTopic();
+            return *this;
         }
 
         NSMessage::~NSMessage()

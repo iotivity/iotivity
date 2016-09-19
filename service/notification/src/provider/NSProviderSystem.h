@@ -36,5 +36,7 @@ void NSInitProviderInfo(const char * userInfo);
 void NSDeinitProviderInfo();
 NSProviderInfo * NSGetProviderInfo();
 const char * NSGetUserInfo();
+bool NSGetPolicy();
+void NSSetPolicy(bool policy);
 
 #endif /* _NS_PROVIDER_SYSTEM__H_ */

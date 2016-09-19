@@ -36,6 +36,7 @@
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS
 #endif
+#include "iotivity_config.h"
 #include <inttypes.h>
 #include <string.h>
 #include <ctype.h>
@@ -57,7 +58,6 @@
 #include "cainterface.h"
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
-#include "platform_features.h"
 
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
 #include "routingutility.h"
@@ -80,9 +80,7 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#include "coap_time.h"
-#include "utlist.h"
-#include "pdu.h"
+#include <coap/coap.h>
 
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
@@ -137,8 +135,8 @@ static bool gRASetInfo = false;
 #endif
 OCDeviceEntityHandler defaultDeviceHandler;
 void* defaultDeviceHandlerCallbackParameter = NULL;
-static const char COAP_TCP[] = "coap+tcp:";
-static const char COAPS_TCP[] = "coaps+tcp:";
+static const char COAP_TCP_SCHEME[] = "coap+tcp:";
+static const char COAPS_TCP_SCHEME[] = "coaps+tcp:";
 static const char CORESPEC[] = "core";
 
 //-----------------------------------------------------------------------------
@@ -418,6 +416,25 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
 //-----------------------------------------------------------------------------
 // Internal functions
 //-----------------------------------------------------------------------------
+
+bool checkProxyUri(OCHeaderOption *options, uint8_t numOptions)
+{
+    if (!options || 0 == numOptions)
+    {
+        OIC_LOG (INFO, TAG, "No options present");
+        return false;
+    }
+
+    for (uint8_t i = 0; i < numOptions; i++)
+    {
+        if (options[i].protocolID == OC_COAP_ID && options[i].optionID == OC_RSRVD_PROXY_OPTION_ID)
+        {
+            OIC_LOG(DEBUG, TAG, "Proxy URI is present");
+            return true;
+        }
+    }
+    return false;
+}
 
 uint32_t GetTicks(uint32_t afterMilliSeconds)
 {
@@ -1341,25 +1358,33 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                          cbNode->method == OC_REST_OBSERVE_ALL ||
                          cbNode->method == OC_REST_DELETE)
                 {
-                    char targetUri[MAX_URI_LENGTH];
-                    snprintf(targetUri, MAX_URI_LENGTH, "%s?rt=%s", OC_RSRVD_RD_URI,
-                            OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
-                    if (strcmp(targetUri, cbNode->requestUri) == 0)
+                    if (cbNode->requestUri)
                     {
-                        type = PAYLOAD_TYPE_RD;
+                        char targetUri[MAX_URI_LENGTH];
+                        snprintf(targetUri, MAX_URI_LENGTH, "%s?rt=%s", OC_RSRVD_RD_URI,
+                                OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
+                        if (strcmp(targetUri, cbNode->requestUri) == 0)
+                        {
+                            type = PAYLOAD_TYPE_RD;
+                        }
+                        else if (strcmp(OC_RSRVD_PLATFORM_URI, cbNode->requestUri) == 0)
+                        {
+                            type = PAYLOAD_TYPE_PLATFORM;
+                        }
+                        else if (strcmp(OC_RSRVD_DEVICE_URI, cbNode->requestUri) == 0)
+                        {
+                            type = PAYLOAD_TYPE_DEVICE;
+                        }
+                        if (type == PAYLOAD_TYPE_INVALID)
+                        {
+                            OIC_LOG_V(INFO, TAG, "Assuming PAYLOAD_TYPE_REPRESENTATION: %d %s",
+                                    cbNode->method, cbNode->requestUri);
+                            type = PAYLOAD_TYPE_REPRESENTATION;
+                        }
                     }
-                    else if (strcmp(OC_RSRVD_PLATFORM_URI, cbNode->requestUri) == 0)
+                    else
                     {
-                        type = PAYLOAD_TYPE_PLATFORM;
-                    }
-                    else if (strcmp(OC_RSRVD_DEVICE_URI, cbNode->requestUri) == 0)
-                    {
-                        type = PAYLOAD_TYPE_DEVICE;
-                    }
-                    if (type == PAYLOAD_TYPE_INVALID)
-                    {
-                        OIC_LOG_V(INFO, TAG, "Assuming PAYLOAD_TYPE_REPRESENTATION: %d %s",
-                                cbNode->method, cbNode->requestUri);
+                        OIC_LOG(INFO, TAG, "No Request URI, PROXY URI");
                         type = PAYLOAD_TYPE_REPRESENTATION;
                     }
                 }
@@ -1971,6 +1996,11 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
                                     CA_RESPONSE_DATA);
         }
     }
+    if (requestResult == OC_STACK_RESOURCE_ERROR
+            && serverRequest.observationOption == OC_OBSERVE_REGISTER)
+    {
+        OIC_LOG_V(ERROR, TAG, "Observe Registration failed due to resource error");
+    }
     else if(!OCResultToSuccess(requestResult))
     {
         OIC_LOG_V(ERROR, TAG, "HandleStackRequests failed. error: %d", requestResult);
@@ -2421,8 +2451,8 @@ static OCStackResult ParseRequestUri(const char *fullUri,
     bool istcp = false;
     if (prefixLen)
     {
-        if (((prefixLen == sizeof(COAP_TCP) - 1) && (!strncmp(fullUri, COAP_TCP, prefixLen)))
-        || ((prefixLen == sizeof(COAPS_TCP) - 1) && (!strncmp(fullUri, COAPS_TCP, prefixLen))))
+        if (((prefixLen == sizeof(COAP_TCP_SCHEME) - 1) && (!strncmp(fullUri, COAP_TCP_SCHEME, prefixLen)))
+        || ((prefixLen == sizeof(COAPS_TCP_SCHEME) - 1) && (!strncmp(fullUri, COAPS_TCP_SCHEME, prefixLen))))
         {
             istcp = true;
         }
@@ -2619,7 +2649,6 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     // Validate input parameters
     VERIFY_NON_NULL(cbData, FATAL, OC_STACK_INVALID_CALLBACK);
     VERIFY_NON_NULL(cbData->cb, FATAL, OC_STACK_INVALID_CALLBACK);
-    VERIFY_NON_NULL(requestUri , FATAL, OC_STACK_INVALID_URI);
 
     OCStackResult result = OC_STACK_ERROR;
     CAResult_t caResult;
@@ -2645,10 +2674,18 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     adapter = (OCTransportAdapter)(connectivityType >> CT_ADAPTER_SHIFT);
     flags = (OCTransportFlags)(connectivityType & CT_MASK_FLAGS);
 
-    result = ParseRequestUri(requestUri, adapter, flags, &devAddr, &resourceUri, &resourceType);
-    if (result != OC_STACK_OK)
+    if (requestUri)
     {
-        OIC_LOG_V(DEBUG, TAG, "Unable to parse uri: %s", requestUri);
+        result = ParseRequestUri(requestUri, adapter, flags, &devAddr, &resourceUri, &resourceType);
+        if (result != OC_STACK_OK)
+        {
+            OIC_LOG_V(DEBUG, TAG, "Unable to parse uri: %s", requestUri);
+            goto exit;
+        }
+    }
+    else if (!checkProxyUri(options, numOptions))
+    {
+        OIC_LOG(ERROR, TAG, "Request doesn't contain RequestURI/Proxy URI");
         goto exit;
     }
 
@@ -4781,6 +4818,13 @@ bool OCResultToSuccess(OCStackResult ocResult)
             return false;
     }
 }
+
+#ifdef WITH_CHPROXY
+OCStackResult OCSetProxyURI(const char *uri)
+{
+    return CAResultToOCResult(CASetProxyUri(uri));
+}
+#endif
 
 #if defined(RD_CLIENT) || defined(RD_SERVER)
 OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, uint8_t ins)

@@ -30,6 +30,7 @@
 #include "provisioningdatabasemanager.h"
 #include "oic_string.h"
 #include "utlist.h"
+#include "srmutility.h"
 
 namespace OIC
 {
@@ -103,35 +104,6 @@ namespace OIC
             }
 
             uuidString = uuidArray;
-        }
-
-        void EnrolleeSecurity::convertStringToUUID(OicUuid_t& uuid,
-                                                              const std::string uuidString)
-        {
-            size_t outBufSize = B64DECODE_OUT_SAFESIZE((uuidString.length() + 1));
-            uint8_t* outKey = (uint8_t*)OICCalloc(1, outBufSize);
-            uint32_t outKeySize = 0;
-            if(NULL == outKey)
-            {
-                OIC_LOG (ERROR, ENROLEE_SECURITY_TAG, "Failed to memoray allocation.");
-                throw ESBadRequestException ("Failed to memoray allocation.");
-            }
-
-            if(B64_OK == b64Decode((char*)uuidString.c_str(),
-                                    uuidString.length(),
-                                    outKey,
-                                    outBufSize,
-                                    &outKeySize))
-            {
-                memcpy(uuid.id, outKey, outKeySize);
-            }
-            else
-            {
-                OIC_LOG (ERROR, ENROLEE_SECURITY_TAG, "Failed to base64 decoding.");
-                throw ESBadRequestException ("Failed to base64 decoding.");
-            }
-
-            OICFree(outKey);
         }
 
         void EnrolleeSecurity::ownershipTransferCb(OC::PMResultList_t *result, int hasError)
@@ -329,6 +301,13 @@ namespace OIC
             return false;
         }
 
+
+        std::string EnrolleeSecurity::getUUID() const
+        {
+            return m_ocResource->sid();
+        };
+
+#if defined(__WITH_DTLS__) && defined(__WITH_TLS__)
         void EnrolleeSecurity::provisionSecurityForCloudServer(
             std::string cloudUuid, int credId)
         {
@@ -366,13 +345,15 @@ namespace OIC
                 throw ESException("Not found owned devices.");
             }
 
-            if(performACLProvisioningForCloudServer(ownedDevice, cloudUuid) != ESResult::ES_OK)
+            if(!cloudUuid.empty()
+                && performACLProvisioningForCloudServer(ownedDevice, cloudUuid) != ESResult::ES_OK)
             {
                 OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "error performACLProvisioningForCloudServer");
                 throw ESException("error performACLProvisioningForCloudServer");
             }
 
-            if(performCertProvisioningForCloudServer(ownedDevice, credId) != ESResult::ES_OK)
+            if(credId != -1
+                && performCertProvisioningForCloudServer(ownedDevice, credId) != ESResult::ES_OK)
             {
                 OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "error performCertProvisioningForCloudServer");
                 throw ESException("error performCertProvisioningForCloudServer");
@@ -429,7 +410,7 @@ namespace OIC
             }
 
             OicUuid_t uuid;
-            convertStringToUUID(uuid, cloudUuid);
+            ConvertStrToUuid(cloudUuid.c_str(), &uuid);
 
             // Create Acl for Cloud Server to be provisioned to Enrollee
             OicSecAcl_t* acl = createAcl(uuid);
@@ -460,11 +441,6 @@ namespace OIC
 
             return res;
         }
-
-        std::string EnrolleeSecurity::getUUID() const
-        {
-            return m_ocResource->sid();
-        };
 
         OicSecAcl_t* EnrolleeSecurity::createAcl(const OicUuid_t cloudUuid)
         {
@@ -507,6 +483,7 @@ namespace OIC
             size_t arrLen = 1;
             rsrc->typeLen = arrLen;
             rsrc->types = (char**)OICCalloc(arrLen, sizeof(char*));
+            rsrc->interfaceLen = 1;
             rsrc->interfaces = (char**)OICCalloc(arrLen, sizeof(char*));
             rsrc->types[0] = OICStrdup("rt");   // ignore
             rsrc->interfaces[0] = OICStrdup("if");  // ignore
@@ -522,12 +499,12 @@ namespace OIC
         {
             if (hasError)
             {
-               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Error in provisioning operation!");
+               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Error in ACL provisioning operation!");
                aclResult = false;
             }
             else
             {
-               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Received provisioning results: ");
+               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Received ACL provisioning results: ");
 
                std::string devUuid;
                for (unsigned int i = 0; i < result->size(); i++)
@@ -546,12 +523,12 @@ namespace OIC
         {
             if (hasError)
             {
-               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Error in provisioning operation!");
+               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Error in Cert. provisioning operation!");
                aclResult = false;
             }
             else
             {
-               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Received provisioning results: ");
+               OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Received Cert. provisioning results: ");
 
                std::string devUuid;
                for (unsigned int i = 0; i < result->size(); i++)
@@ -565,5 +542,6 @@ namespace OIC
             }
             m_cond.notify_all();
         }
+#endif //defined(__WITH_DTLS__) && defined(__WITH_TLS__)
     }
 }

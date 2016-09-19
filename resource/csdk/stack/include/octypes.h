@@ -28,7 +28,7 @@
 #ifndef OCTYPES_H_
 #define OCTYPES_H_
 
-#include "platform_features.h"
+#include "iotivity_config.h"
 #include "ocstackconfig.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -329,6 +329,12 @@ extern "C" {
 /** RD Discovery bias factor type. */
 #define OC_RSRVD_RD_DISCOVERY_SEL        "sel"
 
+/** Resource URI used to discover Proxy */
+#define OC_RSRVD_PROXY_URI "/oic/chp"
+
+/** Resource URI used to discover Proxy */
+#define OC_RSRVD_PROXY_OPTION_ID 35
+
 /** Base URI. */
 #define OC_RSRVD_BASE_URI                "baseURI"
 
@@ -421,15 +427,124 @@ extern "C" {
 /** Defines private. */
 #define OC_RSRVD_PRIVATE                   "Private"
 
-/** Defines options. */
+/** Defines invite. */
 #define OC_RSRVD_INVITE                    "invite"
-
-/** Defines options. */
-#define OC_RSRVD_OPTIONS                   "options"
 
 /** To represent grant type with refresh token. */
 #define OC_RSRVD_GRANT_TYPE_REFRESH_TOKEN  "refresh_token"
 
+/** Cloud CRL */
+#define OC_RSRVD_PROV_CRL_URL              "/oic/credprov/crl"
+
+#define OC_RSRVD_LAST_UPDATE              "lu"
+
+#define OC_RSRVD_THIS_UPDATE              "tu"
+
+#define OC_RSRVD_NEXT_UPDATE              "nu"
+
+#define OC_RSRVD_SERIAL_NUMBERS           "rcsn"
+
+#define OC_RSRVD_CRL                      "crl"
+
+#define OC_RSRVD_CRL_ID                   "crlid"
+
+/** Cloud ACL */
+#define OC_RSRVD_GROUP_URL                "/oic/group"
+
+#define OC_RSRVD_ACL_GROUP_URL            "/oic/acl/group"
+
+#define OC_RSRVD_ACL_INVITE_URL           "/oic/acl/invite"
+
+#define OC_RSRVD_ACL_VERIFY_URL           "/oic/acl/verify"
+
+#define OC_RSRVD_ACL_ID_URL               "/oic/acl/id"
+
+#define OC_RSRVD_MEMBER_ID                "mid"
+
+#define OC_RSRVD_GROUP_ID                 "gid"
+
+#define OC_RSRVD_OWNER_ID                 "oid"
+
+#define OC_RSRVD_ACL_ID                   "aclid"
+
+#define OC_RSRVD_ACE_ID                   "aceid"
+
+#define OC_RSRVD_DEVICE_ID                "di"
+
+#define OC_RSRVD_SUBJECT_ID               "sid"
+
+#define OC_RSRVD_REQUEST_METHOD           "rm"
+
+#define OC_RSRVD_REQUEST_URI              "uri"
+
+#define OC_RSRVD_GROUP_MASTER_ID          "gmid"
+
+#define OC_RSRVD_GROUP_TYPE               "gtype"
+
+#define OC_RSRVD_SUBJECT_TYPE             "stype"
+
+#define OC_RSRVD_GROUP_ID_LIST            "gidlist"
+
+#define OC_RSRVD_MEMBER_ID_LIST           "midlist"
+
+#define OC_RSRVD_DEVICE_ID_LIST           "dilist"
+
+#define OC_RSRVD_ACCESS_CONTROL_LIST      "aclist"
+
+#define OC_RSRVD_RESOURCES                "resources"
+
+#define OC_RSRVD_VALIDITY                 "validity"
+
+#define OC_RSRVD_PERIOD                   "period"
+
+#define OC_RSRVD_RECURRENCE               "recurrence"
+
+#define OC_RSRVD_INVITE                   "invite"
+
+#define OC_RSRVD_INVITED                  "invited"
+
+#define OC_RSRVD_ENCODING                 "encoding"
+
+#define OC_OIC_SEC                        "oic.sec"
+
+#define OC_RSRVD_BASE64                   "base64"
+
+#define OC_RSRVD_DER                      "der"
+
+#define OC_RSRVD_PEM                      "pem"
+
+#define OC_RSRVD_RAW                      "raw"
+
+#define OC_RSRVD_UNKNOWN                  "unknown"
+
+#define OC_RSRVD_DATA                     "data"
+
+#define OC_RSRVD_RESOURCE_OWNER_UUID      "rowneruuid"
+
+#define OC_RSRVD_SUBJECT_UUID             "subjectuuid"
+
+#define OC_RSRVD_PERMISSION_MASK          "permission"
+
+#define OC_RSRVD_GROUP_PERMISSION         "gp"
+
+#define OC_RSRVD_GROUP_ACL                "gacl"
+
+/** Certificete Sign Request */
+#define OC_RSRVD_PROV_CERT_URI            "/oic/credprov/cert"
+
+#define OC_RSRVD_CSR                      "csr"
+
+#define OC_RSRVD_CERT                     "cert"
+
+#define OC_RSRVD_CACERT                   "certchain"
+
+#define OC_RSRVD_TOKEN_TYPE               "tokentype"
+
+#define OC_RSRVD_EXPIRES_IN               "expiresin"
+
+#define OC_RSRVD_REDIRECT_URI             "redirecturi"
+
+#define OC_RSRVD_CERTIFICATE              "certificate"
 /**
  * Mark a parameter as unused. Used to prevent unused variable compiler warnings.
  * Used in three cases:
@@ -700,6 +815,7 @@ typedef enum
 typedef enum
 {
     OC_FORMAT_CBOR,
+    OC_FORMAT_JSON,
     OC_FORMAT_UNDEFINED,
     OC_FORMAT_UNSUPPORTED,
 } OCPayloadFormat;
@@ -960,21 +1076,25 @@ typedef enum
 {
     OC_EH_OK = 0,
     OC_EH_ERROR,
-    OC_EH_RESOURCE_CREATED, // 2.01
-    OC_EH_RESOURCE_DELETED, // 2.02
-    OC_EH_SLOW, // 2.05
-    OC_EH_FORBIDDEN, // 4.03
-    OC_EH_RESOURCE_NOT_FOUND, // 4.04
-    OC_EH_VALID,   // 2.03
-    OC_EH_CHANGED, // 2.04
-    OC_EH_CONTENT, // 2.05
-    OC_EH_BAD_REQ, // 4.00
-    OC_EH_UNAUTHORIZED_REQ, // 4.01
-    OC_EH_BAD_OPT, // 4.02
-    OC_EH_METHOD_NOT_ALLOWED, // 4.05
-    OC_EH_NOT_ACCEPTABLE, // 4.06
-    OC_EH_INTERNAL_SERVER_ERROR, // 5.00
-    OC_EH_RETRANSMIT_TIMEOUT // 5.04
+    OC_EH_SLOW,
+    OC_EH_RESOURCE_CREATED = 201,
+    OC_EH_RESOURCE_DELETED = 202,
+    OC_EH_VALID = 203,
+    OC_EH_CHANGED = 204,
+    OC_EH_CONTENT = 205,
+    OC_EH_BAD_REQ = 400,
+    OC_EH_UNAUTHORIZED_REQ = 401,
+    OC_EH_BAD_OPT = 402,
+    OC_EH_FORBIDDEN = 403,
+    OC_EH_RESOURCE_NOT_FOUND = 404,
+    OC_EH_METHOD_NOT_ALLOWED = 405,
+    OC_EH_NOT_ACCEPTABLE = 406,
+    OC_EH_TOO_LARGE = 413,
+    OC_EH_UNSUPPORTED_MEDIA_TYPE = 415,
+    OC_EH_INTERNAL_SERVER_ERROR = 500,
+    OC_EH_BAD_GATEWAY = 502,
+    OC_EH_SERVICE_UNAVAILABLE = 503,
+    OC_EH_RETRANSMIT_TIMEOUT = 504
 } OCEntityHandlerResult;
 
 /**
@@ -1116,7 +1236,7 @@ typedef enum
     /** The payload is an OCPresencePayload */
     PAYLOAD_TYPE_PRESENCE,
     /** The payload is an OCRDPayload */
-    PAYLOAD_TYPE_RD
+    PAYLOAD_TYPE_RD,
 } OCPayloadType;
 
 /**
@@ -1645,7 +1765,7 @@ typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
  *
  * @param[OUT] ctx - user context returned in the callback.
  * @param[OUT] peer - pairing device info.
- * @param[OUT} result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK'
+ * @param[OUT] result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK'
  *                                   if D2D pairing is success without error
  */
 typedef void (*OCDirectPairingCB)(void *ctx, OCDPDev_t *peer, OCStackResult result);

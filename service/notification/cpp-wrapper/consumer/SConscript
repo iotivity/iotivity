@@ -79,13 +79,18 @@ if env.get('WITH_CLOUD') == True:
 ######################################################################
 # Source files and Targets
 ######################################################################
+Import('notificationCommonStaticObjs')
+Import('notificationCommonSharedObjs')
 
 notification_consumer_src = [
-	env.Glob('src/*.cpp'),env.Glob('../common/*.cpp')]
+	env.Glob('src/*.cpp'),notificationCommonSharedObjs]
 
 consumersdk = notification_env.SharedLibrary('notification_consumer_wrapper', notification_consumer_src)
 notification_env.InstallTarget(consumersdk, 'libnotification_consumer_wrapper')
 notification_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer_wrapper')
+
+notification_consumer_src = [
+	env.Glob('src/*.cpp'),notificationCommonStaticObjs]
 
 consumersdk = notification_env.StaticLibrary('notification_consumer_wrapper', notification_consumer_src)
 notification_env.InstallTarget(consumersdk, 'libnotification_consumer_wrapper')

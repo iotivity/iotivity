@@ -20,17 +20,6 @@
 
 #include "NSProviderNotification.h"
 
-NSResult NSInitMessageList()
-{
-    NS_LOG(DEBUG, "NSInitMessageList - IN");
-
-    messageList = NSStorageCreate();
-    messageList->cacheType = NS_PROVIDER_CACHE_MESSAGE;
-
-    NS_LOG(DEBUG, "NSInitMessageList - OUT");
-    return NS_OK;
-}
-
 NSResult NSSetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
 {
     NS_LOG(DEBUG, "NSSetMessagePayload - IN");
@@ -54,6 +43,11 @@ NSResult NSSetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TEXT, msg->contentText);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_SOURCE, msg->sourceName);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TOPIC_NAME, msg->topic);
+    if(msg->mediaContents)
+    {
+        NSDuplicateSetPropertyString(msgPayload,
+                NS_ATTRIBUTE_ICON_IMAGE, msg->mediaContents->iconImage);
+    }
 
     NS_LOG(DEBUG, "NSSetMessagePayload - OUT");
     return NS_OK;
@@ -125,7 +119,7 @@ NSResult NSSendNotification(NSMessage *msg)
         {
             if(subData->messageObId != 0)
             {
-                if(msg->topic)
+                if(msg->topic && (msg->topic)[0] != '\0')
                 {
                     NS_LOG_V(DEBUG, "this is topic message: %s", msg->topic);
 
@@ -140,10 +134,10 @@ NSResult NSSendNotification(NSMessage *msg)
                 }
             }
 
-#ifdef RD_CLIENT
+#if(defined WITH_CLOUD && defined RD_CLIENT)
             if(subData->remote_messageObId != 0)
             {
-                if(msg->topic)
+                if(msg->topic && (msg->topic)[0] != '\0')
                 {
                     NS_LOG_V(DEBUG, "this is topic message via remote server: %s", msg->topic);
                     if(NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
@@ -228,7 +222,7 @@ NSResult NSSendSync(NSSyncInfo *sync)
                 obArray[obCount++] = subData->syncObId;
             }
 
-#ifdef RD_CLIENT
+#if(defined WITH_CLOUD && defined RD_CLIENT)
             if(subData->remote_syncObId != 0)
             {
                 obArray[obCount++] = subData->remote_syncObId;

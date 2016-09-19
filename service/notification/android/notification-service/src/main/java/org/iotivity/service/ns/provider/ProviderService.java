@@ -47,75 +47,84 @@ public class ProviderService
     {
         instance = new ProviderService();
     }
-    public interface OnSubscriptionListener
-    {
-        public void onConsumerSubscribed(Consumer consumer);
-    }
-    public interface OnSyncInfoListener
-    {
-        public void onMessageSynchronized(SyncInfo syncInfo);
-    }
 
     public static ProviderService getInstance()
     {
         return instance;
     }
-    public int Start(boolean policy,
-                     OnSubscriptionListener  subscriptionListener,
-                     OnSyncInfoListener  syncInfoListener) throws NSException
-    {
 
-        return nativeStart(policy, subscriptionListener, syncInfoListener);
+    public int start(OnConsumerSubscribedListener  subscribedListener,
+                     OnMessageSynchronizedListener  messageSynchronized,
+                     boolean subControllability, String userInfo) throws NSException
+    {
+        return nativeStart(subscribedListener, messageSynchronized,subControllability,userInfo);
     }
 
-    public int Stop() throws NSException
+    public int stop() throws NSException
     {
         return nativeStop();
     }
 
-    public int   SendMessage(Message message) throws NSException
+    public int   sendMessage(Message message) throws NSException
     {
         return nativeSendMessage(message);
     }
 
-    public void SendSyncInfo ( long messageId , SyncInfo.SyncType syncType) throws NSException
+    public void sendSyncInfo ( long messageId , SyncInfo.SyncType syncType) throws NSException
     {
         nativeSendSyncInfo(messageId, syncType.ordinal());
-        return;
     }
 
-    public int   EnableRemoteService(String servAdd) throws NSException
+    public Message createMessage () throws NSException
+    {
+        return nativeCreateMessage();
+    }
+
+    public int   enableRemoteService(String servAdd) throws NSException
     {
         return nativeEnableRemoteService(servAdd);
     }
 
-    public int  DisableRemoteService(String servAdd) throws NSException
+    public int  disableRemoteService(String servAdd) throws NSException
     {
         return nativeDisableRemoteService(servAdd);
     }
 
-    public int AddTopic(String topicName) throws NSException
+    public int registerTopic(String topicName) throws NSException
     {
-        return nativeAddTopic(topicName);
-    }
-    public int DeleteTopic(String topicName) throws NSException
-    {
-        return nativeDeleteTopic(topicName);
-    }
-    public TopicsList GetTopics() throws NSException
-    {
-        return nativeGetTopics();
+        return nativeRegisterTopic(topicName);
     }
 
-    public native int  nativeStart(boolean policy,
-                               OnSubscriptionListener   subscriptionListener,
-                               OnSyncInfoListener   syncInfoListener);
-    public native int  nativeStop();
-    public native int  nativeSendMessage(Message message);
-    public native void  nativeSendSyncInfo( long messageId , int type);
-    public native int  nativeEnableRemoteService(String servAdd);
-    public native int  nativeDisableRemoteService(String servAdd);
-    public native int  nativeAddTopic(String topicName);
-    public native int  nativeDeleteTopic(String topicName);
-    public native TopicsList  nativeGetTopics();
+    public int unregisterTopic(String topicName) throws NSException
+    {
+        return nativeUnregisterTopic(topicName);
+    }
+
+    public TopicsList getRegisteredTopicList() throws NSException
+    {
+        return nativeGetRegisteredTopicList();
+    }
+
+    public interface OnConsumerSubscribedListener
+    {
+        public void onConsumerSubscribed(Consumer consumer);
+    }
+
+    public interface OnMessageSynchronizedListener
+    {
+        public void onMessageSynchronized(SyncInfo syncInfo);
+    }
+
+    public native int  nativeStart(OnConsumerSubscribedListener    subscribedListener,
+                                                 OnMessageSynchronizedListener   messageSynchronized,
+                                                 boolean subControllability, String userInfo) throws NSException;
+    public native int  nativeStop() throws NSException;
+    public native int  nativeSendMessage(Message message) throws NSException;
+    public native void  nativeSendSyncInfo( long messageId , int type) throws NSException;
+    public native Message nativeCreateMessage() throws NSException;
+    public native int  nativeEnableRemoteService(String servAdd) throws NSException;
+    public native int  nativeDisableRemoteService(String servAdd) throws NSException;
+    public native int  nativeRegisterTopic(String topicName) throws NSException;
+    public native int  nativeUnregisterTopic(String topicName) throws NSException;
+    public native TopicsList  nativeGetRegisteredTopicList() throws NSException;
 }

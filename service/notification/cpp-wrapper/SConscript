@@ -18,6 +18,9 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+Import('env')
+target_os = env.get('TARGET_OS')
+
 # build producer notification wrapper
 SConscript('provider/SConscript')
 
@@ -27,5 +30,3 @@ SConscript('consumer/SConscript')
 # Go to build sample apps using wrapper
 SConscript('examples/linux/SConscript')
 
-# Go to build Unit test
-#SConscript('unittest/SConscript')

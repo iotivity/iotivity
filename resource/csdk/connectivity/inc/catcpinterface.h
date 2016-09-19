@@ -94,7 +94,7 @@ void CATCPPullData();
  * @param[out]   transport    TCP Server address.
  * @param[out]   headerlen    TCP Server port.
  */
-void CAGetTCPHeaderDetails(unsigned char *recvBuffer, coap_transport_type *transport,
+void CAGetTCPHeaderDetails(unsigned char *recvBuffer, coap_transport_t *transport,
                            size_t *headerlen);
 
 /**

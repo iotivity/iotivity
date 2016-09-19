@@ -18,13 +18,14 @@
  *
  *****************************************************************/
 
+#include "iotivity_config.h"
+
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
-#include "platform_features.h"
 #include "utlist.h"
 #include "logger.h"
 #include "oic_malloc.h"
@@ -596,7 +597,7 @@ static int provisionCred(void)
 
     // display the CRED-provisioned result
     printf("   > Provisioned Selected Pairwise Crendentials\n");
-    printf("   > Please Check Device's Status for the Linked Result, with [33] Menu\n");
+    printf("   > Please Check Device's Status for the Linked Result, with [34] Menu\n");
 
     return 0;
 }

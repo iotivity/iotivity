@@ -56,12 +56,12 @@ static void CASetBits(uint8_t *x, unsigned p, unsigned n, unsigned v)
         OIC_LOG(ERROR, TAG, "set bits - lower err");
         return;
     }
-    else if(~(unsigned)(~0<<n) < v)
+    else if(~(unsigned)(~0u<<n) < v)
     {
         OIC_LOG(ERROR, TAG, "set bits - upper err");
         return;
     }
-    *x = (*x & (~(~0 << (p-n+1)))) | (*x & (~0 << (p+1))) | ((v & ~(~0 << n)) << (p-n+1));
+    *x = (*x & (~(~0u << (p-n+1)))) | (*x & (~0u << (p+1))) | ((v & ~(~0u << n)) << (p-n+1));
 }
 
 /**
@@ -76,7 +76,7 @@ static void CASetBits(uint8_t *x, unsigned p, unsigned n, unsigned v)
  */
 static uint8_t CAGetBits(uint8_t x, unsigned p, unsigned n)
 {
-    return (x >> (p + 1 - n)) & ~(~0 << n);
+    return (x >> (p + 1 - n)) & ~(~0u << n);
 }
 
 CAResult_t CAGenerateVariableForFragmentation(size_t dataLength,
@@ -127,8 +127,7 @@ CAResult_t CAGenerateHeader(uint8_t *header,
 
     if (sourcePort > CA_SUPPORTED_BLE_MAX_PORT ||
         sourcePort < CA_SUPPORTED_BLE_MIN_PORT ||
-        destPort > CA_SUPPORTED_BLE_MAX_PORT ||
-        destPort < CA_BLE_MULTICAST_PORT)
+        destPort > CA_SUPPORTED_BLE_MAX_PORT)
     {
         OIC_LOG_V(ERROR, TAG, "source port(%d) or destination port(%d) is invalid number!!",
                 sourcePort, destPort);
@@ -196,10 +195,10 @@ CAResult_t CAMakeRemainDataSegment(uint8_t *dataSegment,
     VERIFY_NON_NULL(dataSegment, TAG, "dataSegment is NULL");
     VERIFY_NON_NULL(dataHeader, TAG, "dataHeader is NULL");
 
-    uint8_t *cur_pos = data +
+    const uint8_t *cur_pos = data +
         (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE - CA_BLE_LENGTH_HEADER_SIZE +
          (index * (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE)));
-    if (cur_pos == NULL)
+    if (NULL == cur_pos)
     {
         OIC_LOG(ERROR, TAG, "data is NULL");
         return CA_STATUS_FAILED;

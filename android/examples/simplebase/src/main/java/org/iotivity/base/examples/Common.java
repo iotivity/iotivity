@@ -40,10 +40,11 @@ import java.util.Locale;
 public class Common {
 
     public static final int    DATA_SIZE          = 3000;
-    public static String       HOST               = "coap+tcp://192.168.0.1:8000";
+    public static String       HOST               = "coap+tcp://192.168.0.1:5683";
     public static final String COAP_TCP           = "coap+tcp://";
+    public static final String COAPS_TCP          = "coaps+tcp://";
     public static String       TCP_ADDRESS        = "192.168.0.1";
-    public static String       TCP_PORT           = "8000";
+    public static String       TCP_PORT           = "5683";
     public static final String PORT_SEPARATOR     = ":";
     public static final String IP_ADDRESS         = "0.0.0.0";
     public static final int    IP_PORT            = 0;

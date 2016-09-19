@@ -63,6 +63,8 @@ public class AccountServer {
 
         serverSystem.addResource(new GroupResource());
 
+        serverSystem.addResource(new AclResource());
+
         serverSystem.addResource(new CertificateResource());
 
         serverSystem.addResource(new CrlResource());

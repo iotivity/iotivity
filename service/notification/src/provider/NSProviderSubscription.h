@@ -32,12 +32,12 @@
 #include "NSProviderSystem.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
+#include <stdbool.h>
 
 NSCacheList * consumerSubList;
 
 NSResult NSInitSubscriptionList();
 NSResult NSSetSubscriptionAccessPolicy(bool policy);
-bool NSGetPolicy();
 NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest);
 void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResourceType resourceType);
 void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest);

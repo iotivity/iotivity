@@ -29,7 +29,7 @@
 #include <boards.h>
 #include <RBL_nRF8001.h>
 
-#include "pdu.h"
+#include <coap/pdu.h>
 #include "caleinterface.h"
 #include "oic_malloc.h"
 #include "caadapterutils.h"
@@ -68,7 +68,7 @@ static size_t g_packetDataLen = 0;
 
 void CAGetTCPHeaderDetails(unsigned char* recvBuffer, size_t *headerlen)
 {
-    coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+    coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(
         ((unsigned char *)recvBuffer)[0] >> 4);
     *headerlen = coap_get_tcp_header_length_for_transport(transport);
 }
@@ -90,7 +90,7 @@ void CACheckLEDataInternal()
                 return;
             }
 
-            while (CAIsLEDataAvailable())
+            while (CAIsLEDataAvailable() && g_receivedDataLen <= bufSize)
             {
                 g_coapBuffer[g_receivedDataLen++] = CALEReadData();
             }

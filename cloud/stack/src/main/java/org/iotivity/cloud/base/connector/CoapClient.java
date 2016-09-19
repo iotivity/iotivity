@@ -83,17 +83,17 @@ public class CoapClient implements IRequestChannel, IResponseEventHandler {
 
             switch (request.getObserve()) {
                 case UNSUBSCRIBE:
-                    newToken = mSubscription.remove(Bytes.bytesToLong(token));
+                    newToken = removeObserve(Bytes.bytesToLong(token));
                     break;
 
                 case SUBSCRIBE:
-                    mSubscription.put(Bytes.bytesToLong(token), newToken);
+                    addObserve(Bytes.bytesToLong(token), newToken);
                 default:
                     // We create temp token
                     // TODO: temporal handling
                     if (request.getUriPath()
                             .equals(OICConstants.RESOURCE_PRESENCE_FULL_URI)) {
-                        mSubscription.put(Bytes.bytesToLong(token), newToken);
+                        addObserve(Bytes.bytesToLong(token), newToken);
                         observe = Observe.SUBSCRIBE;
                     }
                     synchronized (mToken) {
@@ -133,9 +133,31 @@ public class CoapClient implements IRequestChannel, IResponseEventHandler {
         // Subscription response should stored
         if (reqInfo.observe != Observe.SUBSCRIBE) {
             mTokenExchanger.remove(Bytes.bytesToLong(coapResponse.getToken()));
+            if (reqInfo.observe == Observe.UNSUBSCRIBE && mSubscription
+                    .containsKey(Bytes.bytesToLong(reqInfo.originToken))) {
+                mSubscription.remove(Bytes.bytesToLong(reqInfo.originToken));
+            }
         }
 
         coapResponse.setToken(reqInfo.originToken);
         reqInfo.responseHandler.onResponseReceived(response);
+    }
+
+    private void addObserve(long token, long newtoken) {
+
+        mSubscription.put(token, newtoken);
+    }
+
+    private Long removeObserve(long token) {
+
+        Long getToken = mSubscription.remove(token);
+        return getToken;
+    }
+
+    public Long isObserveRequest(Long token) {
+        Long getToken = null;
+        getToken = mSubscription.get(token);
+
+        return getToken;
     }
 }

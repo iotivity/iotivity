@@ -119,7 +119,11 @@ namespace OCResourceResponseTest
         EXPECT_EQ(NULL, response.getRequestHandle());
     }
 
+#ifdef _MSC_VER
+    TEST(ResourceHandleTest, DISABLED_SetGetResourceHandleValidHandle)
+#else
     TEST(ResourceHandleTest, SetGetResourceHandleValidHandle)
+#endif
     {
         OCResourceResponse response;
         OCResourceHandle resHandle;

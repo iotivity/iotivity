@@ -46,24 +46,6 @@ public class ConsumerService
         System.loadLibrary("notification_consumer_jni");
     }
 
-    public enum Response
-    {
-        ALLOW(1),
-        DENY(2),
-        TOPIC(3);
-        private int type;
-
-        private Response(int type)
-        {
-            this.type = type;
-        }
-
-        public int getResponseType()
-        {
-            return this.type;
-        }
-    };
-
     private static ConsumerService instance;
     static
     {
@@ -74,62 +56,38 @@ public class ConsumerService
         return instance;
     }
 
-    public ConsumerService()
-    {
-        Log.i (LOG_TAG, "ConsumerService()");
-    }
-
-    public void Start(
-        OnProviderDiscoveredListner onProviderDiscoveredListner,
-        OnProviderChangedListener onProviderChangedListener
+    public void start(
+        OnProviderDiscoveredListener onProviderDiscoveredListener
     ) throws NSException
     {
-        nativeStart(onProviderDiscoveredListner, onProviderChangedListener);
+        nativeStart(onProviderDiscoveredListener);
     }
 
-    public void Stop() throws NSException
+    public void stop() throws NSException
     {
         nativeStop();
     }
 
-    public void EnableRemoteService(String serverAddress) throws NSException
+    public void enableRemoteService(String serverAddress) throws NSException
     {
         nativeEnableRemoteService(serverAddress);
     }
 
-    public void RescanProvider() throws NSException
+    public void rescanProvider() throws NSException
     {
         nativeRescanProvider();
     }
 
-    public Provider GetProvider(String providerId) throws NSException
-    {
-        return nativeGetProvider(providerId);
-    }
-
-    public Message GetMessage(long  messageId) throws NSException
-    {
-        return nativeGetMessage(messageId);
-    }
-
-    public interface OnProviderDiscoveredListner
+    public interface OnProviderDiscoveredListener
     {
         public void onProviderDiscovered(Provider provider);
     }
 
-    public interface OnProviderChangedListener
-    {
-        public void onProviderChanged(Provider provider , Response response);
-    }
-
     private native void nativeStart (
-        OnProviderDiscoveredListner onProviderDiscoveredListner,
-        OnProviderChangedListener onProviderChangedListener
+        OnProviderDiscoveredListener onProviderDiscoveredListener
     ) throws NSException;
 
     private native void nativeStop() throws NSException;
     private native void nativeEnableRemoteService(String serverAddress) throws NSException;
     private native void nativeRescanProvider() throws NSException;
-    private native Provider nativeGetProvider(String providerId) throws NSException;
-    private native Message nativeGetMessage(long messageId) throws NSException;
 }

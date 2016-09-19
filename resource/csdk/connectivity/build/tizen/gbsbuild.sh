@@ -42,19 +42,21 @@ echo `pwd`
 rm -rf ./tmp
 mkdir ./tmp
 mkdir ./tmp/con/
+mkdir -p $sourcedir/tmp/con/extlibs/
+
 cp -R $cur_dir/* $sourcedir/tmp/con
 cp -R $cur_dir/SConscript $sourcedir/tmp/con
 cp -R $cur_dir/src/ip_adapter/SConscript $sourcedir/tmp/con/src/ip_adapter/
 cp -R $cur_dir/src/bt_le_adapter/SConscript $sourcedir/tmp/con/src/bt_le_adapter/
 cp -R $cur_dir/src/bt_edr_adapter/SConscript $sourcedir/tmp/con/src/bt_edr_adapter/
 cp -R $cur_dir/common/SConscript $sourcedir/tmp/con/common/
-cp -R $cur_dir/lib/libcoap-4.1.1/SConscript $sourcedir/tmp/con/lib/libcoap-4.1.1/
 cp -R $cur_dir/samples/tizen/ $sourcedir/tmp/con/sample/
 mkdir -p $sourcedir/tmp/con/sample/external/inc
 cp -R $cur_dir/external/inc/* $sourcedir/tmp/con/sample/external/inc/
-mkdir -p $sourcedir/tmp/con/extlibs/
+
 cp -R ./extlibs/tinydtls/ $sourcedir/tmp/con/extlibs/
 cp -R ./extlibs/timer/ $sourcedir/tmp/con/extlibs/
+cp -R ./extlibs/libcoap/ $sourcedir/tmp/con/extlibs/
 mkdir -p $sourcedir/tmp/con/c_common
 cp -R ./resource/c_common/* $sourcedir/tmp/con/c_common/
 cp -R ./resource/csdk/logger/include/* $sourcedir/tmp/con/common/inc/

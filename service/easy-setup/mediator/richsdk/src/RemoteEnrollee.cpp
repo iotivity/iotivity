@@ -345,11 +345,6 @@ namespace OIC
         {
             ESResult result = ES_ERROR;
 
-            if (m_cloudResource != nullptr)
-            {
-                throw ESBadRequestException ("Already created");
-            }
-
             result = discoverResource();
 
             if (result == ES_ERROR)
@@ -414,15 +409,13 @@ namespace OIC
 #if defined(__WITH_DTLS__) && defined(__WITH_TLS__)
             try
             {
-                m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
-
-                if(cloudProp.getCloudID().empty())
+                if(!(cloudProp.getCloudID().empty() && cloudProp.getCredID() == -1))
                 {
-                    throw ESInvalidParameterException("Invalid Cloud Server UUID.");
-                }
+                    m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
 
-                m_enrolleeSecurity->provisionSecurityForCloudServer(cloudProp.getCloudID(),
-                                                                    cloudProp.getCredID());
+                    m_enrolleeSecurity->provisionSecurityForCloudServer(cloudProp.getCloudID(),
+                                                                        cloudProp.getCredID());
+                }
             }
 
             catch (const std::exception& e)
@@ -437,7 +430,7 @@ namespace OIC
                 m_cloudPropProvStatusCb(provStatus);
                 return;
             }
-#endif
+#endif //defined(__WITH_DTLS__) && defined(__WITH_TLS__)
 
             if (m_cloudResource == nullptr)
             {

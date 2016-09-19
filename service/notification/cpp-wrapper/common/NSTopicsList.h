@@ -56,6 +56,21 @@ namespace OIC
                 NSTopicsList(::NSTopicLL *topics);
 
                 /**
+                     * Copy Constructor of NSTopicsList.
+                     *
+                     * @param topicsList - NSTopicsList to initialize.
+                     */
+                NSTopicsList(const NSTopicsList &topicsList);
+
+                /**
+                     * Copy assignment operator of NSTopicsList.
+                     *
+                     * @param topicsList -  NSTopicsList to initialize.
+                     * @return NSTopicsList object reference
+                     */
+                NSTopicsList &operator=(const NSTopicsList &topicsList);
+
+                /**
                      * Destructor of NSTopicsList.
                      */
                 ~NSTopicsList();
@@ -80,7 +95,7 @@ namespace OIC
                      *
                      * @return topic as NSTopics Linked list.
                      */
-                std::list<NSTopic *> getTopicsList();
+                std::list<NSTopic *> getTopicsList() const;
 
             private:
                 std::list<NSTopic *> m_topicsList;

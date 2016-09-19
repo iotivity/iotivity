@@ -46,7 +46,7 @@
 /**
  * Unique gateway ID generated before hosting a gateway resource.
  */
-uint32_t g_GatewayID = 0;
+static uint32_t g_GatewayID = 0;
 
 /**
  * Used for assigning unique ID.to endpoint's connected to this gateway

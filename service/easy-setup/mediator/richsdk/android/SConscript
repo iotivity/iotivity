@@ -77,3 +77,4 @@ cmdBuildEasysetup=jdk_env.Gradle(target="EasySetupCore/objs",
 
 Depends(cmdBuildEasysetup, env.get('baseAAR'))
 
+env.AppendUnique(easysetupAAR = cmdBuildEasysetup)

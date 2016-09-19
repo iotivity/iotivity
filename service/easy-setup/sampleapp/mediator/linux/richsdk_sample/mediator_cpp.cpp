@@ -244,6 +244,7 @@ void provisionCloudProperty()
     CloudProp cloudProp;
     cloudProp.setCloudProp("authCode", "authProvider", "ciServer");
     cloudProp.setCloudID("f002ae8b-c42c-40d3-8b8d-1927c17bd1b3");
+    cloudProp.setCredID(1);
 
     try
     {

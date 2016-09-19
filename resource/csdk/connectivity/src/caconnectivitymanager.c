@@ -65,6 +65,7 @@ extern void CADTLSSetCrlCallback(CAGetDTLSCrlHandler crlCallback);
 #ifdef __WITH_TLS__
 extern void CAsetPkixInfoCallback(CAgetPkixInfoHandler infCallback);
 extern void CAsetTlsCredentialsCallback(CAGetDTLSPskCredentialsHandler credCallback);
+extern void CAsetCredentialTypesCallback(CAgetCredentialTypesHandler credCallback);
 #endif
 
 
@@ -219,6 +220,19 @@ CAResult_t CAregisterPkixInfoHandler(CAgetPkixInfoHandler getPkixInfoHandler)
         return CA_STATUS_NOT_INITIALIZED;
     }
     CAsetPkixInfoCallback(getPkixInfoHandler);
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAregisterGetCredentialTypesHandler(CAgetCredentialTypesHandler getCredTypesHandler)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    if (!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+    CAsetCredentialTypesCallback(getCredTypesHandler);
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return CA_STATUS_OK;
 }

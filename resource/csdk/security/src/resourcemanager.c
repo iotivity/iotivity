@@ -40,9 +40,9 @@
 
 #define TAG "SRM-RM"
 
-#ifdef __WITH_X509__
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
 #include "crlresource.h"
-#endif // __WITH_X509__
+#endif // __WITH_X509__ || __WITH_TLS__
 
 OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         OCEntityHandlerResult ehRet, uint8_t *cborPayload, size_t size)
@@ -92,12 +92,12 @@ OCStackResult InitSecureResources( )
     {
         ret = InitCredResource();
     }
-#ifdef __WITH_X509__
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
     if(OC_STACK_OK == ret)
     {
         ret = InitCRLResource();
     }
-#endif // __WITH_X509__
+#endif // __WITH_X509__ || __WITH_TLS__
     if(OC_STACK_OK == ret)
     {
         ret = InitSVCResource();
@@ -134,9 +134,9 @@ OCStackResult DestroySecureResources( )
     DeInitCredResource();
     DeInitDoxmResource();
     DeInitPstatResource();
-#ifdef __WITH_X509__
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
     DeInitCRLResource();
-#endif // __WITH_X509__
+#endif // __WITH_X509__ || __WITH_TLS__
     DeInitSVCResource();
     DeInitAmaclResource();
 //#ifdef DIRECT_PAIRING

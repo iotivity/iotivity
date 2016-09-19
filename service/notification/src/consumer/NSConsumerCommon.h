@@ -81,6 +81,7 @@ typedef struct
     char * topicUri;
 
     NSSelector accessPolicy;
+    NSProviderState state;
 
     NSProviderConnectionInfo * connection;
 
@@ -96,21 +97,11 @@ typedef struct
 
 } NSSyncInfo_internal;
 
-typedef struct
-{
-    NSSyncType status;
-    NSMessage * msg;
-
-} NSStoreMessage;
-
 bool NSIsStartedConsumer();
 void NSSetIsStartedConsumer(bool setValue);
 
-void NSSetDiscoverProviderCb(NSProviderDiscoveredCallback cb);
-void NSDiscoveredProvider(NSProvider * provider);
-
-void NSSetProviderChangedCb(NSProviderChangedCallback cb);
-void NSProviderChanged(NSProvider * provider, NSResponse response);
+void NSSetProviderChangedCb(NSProviderStateCallback cb);
+void NSProviderChanged(NSProvider * provider, NSProviderState response);
 
 void NSSetMessagePostedCb(NSMessageReceivedCallback  cb);
 void NSMessagePost(NSMessage * obj);
@@ -138,9 +129,6 @@ NSProvider_internal * NSCopyProvider_internal(NSProvider_internal *);
 NSProvider * NSCopyProvider(NSProvider_internal *);
 void NSRemoveProvider_internal(NSProvider_internal *);
 void NSRemoveProvider(NSProvider *);
-
-NSSyncInfo_internal * NSCopySyncInfo(NSSyncInfo_internal *);
-void NSRemoveSyncInfo(NSSyncInfo_internal *);
 
 NSTopicLL * NSCopyTopicNode(NSTopicLL *);
 void NSRemoveTopicNode(NSTopicLL *);

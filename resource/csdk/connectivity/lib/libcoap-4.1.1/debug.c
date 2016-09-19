@@ -6,7 +6,7 @@
  * README for terms of use.
  */
 
-#include "config.h"
+#include "include/coap/config.h"
 
 #if defined(HAVE_ASSERT_H) && !defined(assert)
 # include <assert.h>
@@ -25,8 +25,8 @@
 #include <time.h>
 #endif
 
-#include "debug.h"
-#include "net.h"
+#include "include/coap/debug.h"
+#include "include/coap/net.h"
 
 #ifdef WITH_CONTIKI
 # ifndef DEBUG
@@ -37,24 +37,25 @@
 
 static coap_log_t maxlog = LOG_WARNING; /* default maximum log level */
 
-coap_log_t coap_get_log_level()
-{
+coap_log_t
+coap_get_log_level() {
     return maxlog;
 }
 
-void coap_set_log_level(coap_log_t level)
-{
+void
+coap_set_log_level(coap_log_t level) {
     maxlog = level;
 }
 
 /* this array has the same order as the type log_t */
-static char *loglevels[] =
-{ "EMRG", "ALRT", "CRIT", "ERR", "WARN", "NOTE", "INFO", "DEBG" };
+static char *loglevels[] = {
+ "EMRG", "ALRT", "CRIT", "ERR", "WARN", "NOTE", "INFO", "DEBG"
+};
 
 #ifdef HAVE_TIME_H
 
-INLINE_API size_t print_timestamp(char *s, size_t len, coap_tick_t t)
-{
+INLINE_API size_t
+print_timestamp(char *s, size_t len, coap_tick_t t) {
     struct tm *tmp;
     time_t now = clock_offset + (t / COAP_TICKS_PER_SECOND);
     tmp = localtime(&now);
@@ -64,8 +65,7 @@ INLINE_API size_t print_timestamp(char *s, size_t len, coap_tick_t t)
 #else /* alternative implementation: just print the timestamp */
 
 INLINE_API size_t
-print_timestamp(char *s, size_t len, coap_tick_t t)
-{
+print_timestamp(char *s, size_t len, coap_tick_t t) {
 #ifdef HAVE_SNPRINTF
     return snprintf(s, len, "%u.%03u",
             (unsigned int)(clock_offset + (t / COAP_TICKS_PER_SECOND)),
@@ -90,8 +90,7 @@ print_timestamp(char *s, size_t len, coap_tick_t t)
  * @return The length of @p s.
  */
 INLINE_API size_t
-strnlen(const char *s, size_t maxlen)
-{
+strnlen(const char *s, size_t maxlen) {
     size_t n = 0;
     while(*s++ && n < maxlen)
     ++n;
@@ -99,9 +98,9 @@ strnlen(const char *s, size_t maxlen)
 }
 #endif /* HAVE_STRNLEN */
 
-unsigned int print_readable(const unsigned char *data, unsigned int len, unsigned char *result,
-        unsigned int buflen, int encode_always)
-{
+unsigned int
+print_readable(const unsigned char *data, unsigned int len, unsigned char *result,
+        unsigned int buflen, int encode_always) {
     const unsigned char hex[] = "0123456789ABCDEF";
     unsigned int cnt = 0;
     assert(data || len == 0);
@@ -109,19 +108,14 @@ unsigned int print_readable(const unsigned char *data, unsigned int len, unsigne
     if (buflen == 0 || len == 0)
         return 0;
 
-    while (len)
-    {
-        if (!encode_always && isprint(*data))
-        {
+    while (len) {
+        if (!encode_always && isprint(*data)) {
             if (cnt == buflen)
                 break;
             *result++ = *data;
             ++cnt;
-        }
-        else
-        {
-            if (cnt + 4 < buflen)
-            {
+        } else {
+            if (cnt + 4 < buflen) {
                 *result++ = '\\';
                 *result++ = 'x';
                 *result++ = hex[(*data & 0xf0) >> 4];
@@ -144,8 +138,8 @@ unsigned int print_readable(const unsigned char *data, unsigned int len, unsigne
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
-size_t coap_print_addr(const struct coap_address_t *addr, unsigned char *buf, size_t len)
-{
+size_t
+coap_print_addr(const struct coap_address_t *addr, unsigned char *buf, size_t len) {
 #if defined(HAVE_ARPA_INET_H) || defined(_WIN32)
     const void *addrptr = NULL;
 #if defined(__ANDROID__)
@@ -157,8 +151,7 @@ size_t coap_print_addr(const struct coap_address_t *addr, unsigned char *buf, si
 #endif
     unsigned char *p = buf;
 
-    switch (addr->addr.sa.sa_family)
-    {
+    switch (addr->addr.sa.sa_family) {
         case AF_INET:
             addrptr = &addr->addr.sin.sin_addr;
             port = ntohs(addr->addr.sin.sin_port);
@@ -178,18 +171,15 @@ size_t coap_print_addr(const struct coap_address_t *addr, unsigned char *buf, si
             return min(22, len);
     }
 
-    if (inet_ntop(addr->addr.sa.sa_family, addrptr, (char *) p, len) == 0)
-    {
+    if (inet_ntop(addr->addr.sa.sa_family, addrptr, (char *) p, len) == 0) {
         perror("coap_print_addr");
         return 0;
     }
 
     p += strnlen((char *) p, len);
 
-    if (addr->addr.sa.sa_family == AF_INET6)
-    {
-        if (p < buf + len)
-        {
+    if (addr->addr.sa.sa_family == AF_INET6) {
+        if (p < buf + len) {
             *p++ = ']';
         }
         else
@@ -215,10 +205,8 @@ size_t coap_print_addr(const struct coap_address_t *addr, unsigned char *buf, si
 
     *p++ = '[';
 
-    for (i=0; i < 16; i += 2)
-    {
-        if (i)
-        {
+    for (i=0; i < 16; i += 2) {
+        if (i) {
             *p++ = ':';
         }
         *p++ = hex[(addr->addr.u8[i] & 0xf0) >> 4];
@@ -252,8 +240,8 @@ size_t coap_print_addr(const struct coap_address_t *addr, unsigned char *buf, si
 }
 
 #ifndef WITH_CONTIKI
-void coap_show_pdu(const coap_pdu_t *pdu)
-{
+void
+coap_show_pdu(const coap_pdu_t *pdu) {
 #ifndef WITH_TCP
     unsigned char buf[COAP_MAX_PDU_SIZE]; /* need some space for output creation */
 #else
@@ -263,22 +251,18 @@ void coap_show_pdu(const coap_pdu_t *pdu)
     coap_opt_iterator_t opt_iter;
     coap_opt_t *option;
 
-    fprintf(COAP_DEBUG_FD, "v:%d t:%d tkl:%d c:%d id:%u", pdu->hdr->coap_hdr_udp_t.version,
-            pdu->hdr->coap_hdr_udp_t.type, pdu->hdr->coap_hdr_udp_t.token_length,
-            pdu->hdr->coap_hdr_udp_t.code, ntohs(pdu->hdr->coap_hdr_udp_t.id));
+    fprintf(COAP_DEBUG_FD, "v:%d t:%d tkl:%d c:%d id:%u", pdu->transport_hdr->udp.version,
+            pdu->transport_hdr->udp.type, pdu->transport_hdr->udp.token_length,
+            pdu->transport_hdr->udp.code, ntohs(pdu->transport_hdr->udp.id));
 
     /* show options, if any */
-    coap_option_iterator_init((coap_pdu_t *) pdu, &opt_iter, COAP_OPT_ALL, coap_udp);
+    coap_option_iterator_init((coap_pdu_t *) pdu, &opt_iter, COAP_OPT_ALL);
 
-    while ((option = coap_option_next(&opt_iter)))
-    {
-        if (!have_options)
-        {
+    while ((option = coap_option_next(&opt_iter))) {
+        if (!have_options) {
             have_options = 1;
             fprintf(COAP_DEBUG_FD, " o: [");
-        }
-        else
-        {
+        } else {
             fprintf(COAP_DEBUG_FD, ",");
         }
 
@@ -286,12 +270,9 @@ void coap_show_pdu(const coap_pdu_t *pdu)
                 || opt_iter.type == COAP_OPTION_URI_HOST
                 || opt_iter.type == COAP_OPTION_LOCATION_PATH
                 || opt_iter.type == COAP_OPTION_LOCATION_QUERY
-                || opt_iter.type == COAP_OPTION_URI_PATH || opt_iter.type == COAP_OPTION_URI_QUERY)
-        {
+                || opt_iter.type == COAP_OPTION_URI_PATH || opt_iter.type == COAP_OPTION_URI_QUERY) {
             encode = 0;
-        }
-        else
-        {
+        } else {
             encode = 1;
         }
 
@@ -303,8 +284,7 @@ void coap_show_pdu(const coap_pdu_t *pdu)
     if (have_options)
         fprintf(COAP_DEBUG_FD, " ]");
 
-    if (pdu->data)
-    {
+    if (pdu->data) {
         assert(pdu->data < (unsigned char *) pdu->hdr + pdu->length);
         print_readable(pdu->data, (unsigned char *) pdu->hdr + pdu->length - pdu->data, buf,
                 sizeof(buf), 0);
@@ -317,25 +297,22 @@ void coap_show_pdu(const coap_pdu_t *pdu)
 #else /* WITH_CONTIKI */
 
 void
-coap_show_pdu(const coap_pdu_t *pdu)
-{
+coap_show_pdu(const coap_pdu_t *pdu) {
     unsigned char buf[80]; /* need some space for output creation */
 
     PRINTF("v:%d t:%d oc:%d c:%d id:%u",
-            pdu->hdr->coap_hdr_udp_t.version, pdu->hdr->coap_hdr_udp_t.type,
-            pdu->hdr->coap_hdr_udp_t.optcnt, pdu->hdr->coap_hdr_udp_t.code,
-            uip_ntohs(pdu->hdr->coap_hdr_udp_t.id));
+            pdu->transport_hdr->udp.version, pdu->transport_hdr->udp.type,
+            pdu->transport_hdr->udp.optcnt, pdu->transport_hdr->udp.code,
+            uip_ntohs(pdu->transport_hdr->udp.id));
 
     /* show options, if any */
-    if (pdu->hdr->coap_hdr_udp_t.optcnt)
-    {
+    if (pdu->transport_hdr->udp.optcnt) {
         coap_opt_iterator_t opt_iter;
         coap_opt_t *option;
-        coap_option_iterator_init((coap_pdu_t *)pdu, &opt_iter, COAP_OPT_ALL, coap_udp);
+        coap_option_iterator_init((coap_pdu_t *)pdu, &opt_iter, COAP_OPT_ALL);
 
         PRINTF(" o:");
-        while ((option = coap_option_next(&opt_iter)))
-        {
+        while ((option = coap_option_next(&opt_iter))) {
 
             if (print_readable(COAP_OPT_VALUE(option),
                             COAP_OPT_LENGTH(option),
@@ -344,8 +321,7 @@ coap_show_pdu(const coap_pdu_t *pdu)
         }
     }
 
-    if (pdu->data < (unsigned char *)pdu->hdr + pdu->length)
-    {
+    if (pdu->data < (unsigned char *)pdu->hdr + pdu->length) {
         print_readable(pdu->data,
                 (unsigned char *)pdu->hdr + pdu->length - pdu->data,
                 buf, sizeof(buf), 0 );
@@ -358,16 +334,16 @@ coap_show_pdu(const coap_pdu_t *pdu)
 #endif /* NDEBUG */
 
 #ifdef WITH_ARDUINO
-void coap_log_impl(coap_log_t level, const char *format, ...)
-{
+void
+coap_log_impl(coap_log_t level, const char *format, ...) {
     //TODO: Implement logging functionalities for Arduino
 }
 #endif
 
 #ifndef WITH_ARDUINO
 #ifndef WITH_CONTIKI
-void coap_log_impl(coap_log_t level, const char *format, ...)
-{
+void
+coap_log_impl(coap_log_t level, const char *format, ...) {
     char timebuf[32];
     coap_tick_t now;
     va_list ap;
@@ -392,8 +368,7 @@ void coap_log_impl(coap_log_t level, const char *format, ...)
 }
 #else /* WITH_CONTIKI */
 void
-coap_log_impl(coap_log_t level, const char *format, ...)
-{
+coap_log_impl(coap_log_t level, const char *format, ...) {
     char timebuf[32];
     coap_tick_t now;
     va_list ap;

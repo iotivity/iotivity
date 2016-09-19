@@ -29,9 +29,9 @@
 
 #include "catcpadapterutils_eth.h"
 #include "catcpinterface.h"
-#include "pdu.h"
+#include <coap/pdu.h>
 #include "caadapterutils.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 
@@ -212,7 +212,7 @@ void CATCPReadDataInternal()
 
             if (!isHeaderChecked && totalReceivedLen)
             {
-                coap_transport_type transport;
+                coap_transport_t transport;
                 size_t headerLen;
                 CAGetTCPHeaderDetails(recvBuffer, &transport, &headerLen);
                 if (totalReceivedLen >= headerLen)

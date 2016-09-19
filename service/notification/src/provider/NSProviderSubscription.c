@@ -81,7 +81,8 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
 
     OCRepPayloadSetUri(payload, NS_ROOT_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
-    OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_POLICY, NSGetPolicy());
+    OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_VERSION, VERSION);
+    OCRepPayloadSetPropBool(payload, NS_ATTRIBUTE_POLICY, NSGetPolicy());
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_MESSAGE, NS_COLLECTION_MESSAGE_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_SYNC, NS_COLLECTION_SYNC_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_TOPIC, NS_COLLECTION_TOPIC_URI);
@@ -134,7 +135,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 
         bool iSRemoteServer = false;
 
-#ifdef RD_CLIEND
+#if(defined WITH_CLOUD && defined RD_CLIENT)
         iSRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
         if(iSRemoteServer)
         {
@@ -190,7 +191,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         subData->remote_syncObId = subData->syncObId = 0;
         bool isRemoteServer = false;
 
-#ifdef RD_CLIENT
+#if(defined WITH_CLOUD && defined RD_CLIENT)
         isRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
         if(isRemoteServer)
         {
@@ -231,7 +232,7 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
 
     consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER_OBSERVE_ID;
 
-    while(NSStorageDelete(consumerSubList, (unsigned char *)
+    while(NSStorageDelete(consumerSubList, (char *)
             &(entityHandlerRequest->obsInfo.obsId)) != NS_FAIL);
     consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER;
 
@@ -359,21 +360,21 @@ void * NSSubScriptionSchedule(void *ptr)
                 case TASK_SEND_ALLOW:
                 {
                     NS_LOG(DEBUG, "CASE TASK_SEND_ALLOW : ");
-                    NSConsumer * consumer = (NSConsumer *) node->taskData;
+                    char * consumerId = (char *) node->taskData;
 
-                    NSCacheUpdateSubScriptionState(consumerSubList, consumer->consumerId, true);
-                    NSSendResponse(consumer->consumerId, true);
-                    NSFreeConsumer(consumer);
+                    NSCacheUpdateSubScriptionState(consumerSubList, consumerId, true);
+                    NSSendResponse(consumerId, true);
+                    OICFree(consumerId);
                     break;
                 }
                 case TASK_SEND_DENY:
                 {
                     NS_LOG(DEBUG, "CASE TASK_SEND_DENY : ");
-                    NSConsumer * consumer = (NSConsumer *) node->taskData;
+                    char * consumerId = (char *) node->taskData;
 
-                    NSCacheUpdateSubScriptionState(consumerSubList, consumer->consumerId, false);
-                    NSSendResponse(consumer->consumerId, false);
-                    NSFreeConsumer(consumer);
+                    NSCacheUpdateSubScriptionState(consumerSubList, consumerId, false);
+                    NSSendResponse(consumerId, false);
+                    OICFree(consumerId);
 
                     break;
                 }

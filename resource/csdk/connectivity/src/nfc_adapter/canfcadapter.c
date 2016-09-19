@@ -19,7 +19,7 @@
 #include "canfcinterface.h"
 #include "caqueueingthread.h"
 #include "caadapterutils.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "caremotehandler.h"
 #include "logger.h"

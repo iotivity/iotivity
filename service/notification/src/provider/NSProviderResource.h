@@ -28,6 +28,26 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 
+#define NS_CREATE_RESOURCE(func, obj) \
+    { \
+        NSResult _ret = (func); \
+        if ( _ret != NS_OK) \
+        { \
+            NS_LOG_V(ERROR, "%s : %s", __func__, #obj); \
+            return (NS_ERROR); \
+        } \
+    }
+
+#define NS_DELETE_RESOURCE(func, obj) \
+    { \
+        OCStackResult _ret = (func); \
+        if ( _ret != OC_STACK_OK) \
+        { \
+            NS_LOG_V(ERROR, "%s : %s", __func__, #obj); \
+            return (NS_ERROR); \
+        } \
+    }
+
 NSResult NSCreateResource(char *uri);
 
 NSResult NSPublishResourceToCloud(char *host);
@@ -36,7 +56,7 @@ NSResult NSRegisterResource();
 
 NSResult NSUnRegisterResource();
 
-NSResult NSPutNotificationResource(int accepter, OCResourceHandle * handle);
+NSResult NSPutNotificationResource(bool policy, OCResourceHandle * handle);
 
 NSResult NSPutMessageResource(NSMessage *msg, OCResourceHandle * handle);
 

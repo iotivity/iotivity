@@ -209,6 +209,22 @@ OCStackResult JniOcSecureResource::provisionCredentials(JNIEnv* env, jint type, 
             resultCallback);
 }
 
+#if defined(__WITH_TLS__)
+OCStackResult JniOcSecureResource::provisionTrustCertChain(JNIEnv* env, jint type, jint credId,
+        jobject jListener)
+{
+    JniProvisionResultListner *resultListener = AddProvisionResultListener(env, jListener);
+
+    ResultCallBack resultCallback = [resultListener](PMResultList_t *result, int hasError)
+    {
+        resultListener->ProvisionResultCallback(result, hasError, ListenerFunc::PROVISIONTRUSTCERTCHAIN);
+    };
+
+    return m_sharedSecureResource->provisionTrustCertChain((OicSecCredType_t)type, credId,
+            resultCallback);
+}
+#endif
+
 OCStackResult JniOcSecureResource::provisionACL(JNIEnv* env, jobject _acl, jobject jListener)
 {
     OCStackResult ret;
@@ -327,7 +343,10 @@ OCStackResult JniOcSecureResource::provisionPairwiseDevices(JNIEnv* env, jint ty
         jobject _acl1, jobject _device2, jobject _acl2, jobject jListener)
 {
     OCStackResult ret;
-
+    if(!jListener)
+    {
+        return OC_STACK_INVALID_CALLBACK;
+    }
     JniProvisionResultListner *resultListener = AddProvisionResultListener(env, jListener);
     JniOcSecureResource *device2 = JniOcSecureResource::getJniOcSecureResourcePtr(env, _device2);
     if (!device2)
@@ -402,13 +421,14 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_doOwnershipTransf
     LOGD("OcSecureResource_doOwnershipTransfer");
     if (!jListener)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "provisionResultListener cannot be null");
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "provisionResultListener cannot be null");
         return;
     }
 
     JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
     if (!secureResource)
     {
+        ThrowOcException(OC_STACK_ERROR, "getJniOcSecureResourcePtr failed");
         return;
     }
 
@@ -445,13 +465,14 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_removeDevice
 
     if (!jListener)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "provisionResultListener cannot be null");
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "provisionResultListener cannot be null");
         return;
     }
 
     JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
     if (!secureResource)
     {
+        ThrowOcException(OC_STACK_ERROR, "getJniOcSecureResourcePtr failed");
         return;
     }
 
@@ -480,15 +501,21 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_unlinkDevices
 (JNIEnv *env, jobject thiz, jobject device2, jobject jListener)
 {
     LOGD("OcSecureResource_unlinkDevices");
-    if (!jListener || !device2)
+    if (!jListener)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "provisionResultListener or device2 cannot be null");
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "provisionResultListener cannot be null");
+        return;
+    }
+    if (!device2)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "device2 cannot be null");
         return;
     }
 
     JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
     if (!secureResource)
     {
+        ThrowOcException(OC_STACK_ERROR, "getJniOcSecureResourcePtr failed");
         return;
     }
 
@@ -513,19 +540,25 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_unlinkDevices
  * Method:    provisionCredentials1
  * Signature: (Lorg/iotivity/base/OcSecureResource/provisionCredentials;)V
  */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionCredentials1
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionCredentials1
 (JNIEnv *env, jobject thiz, jint type, jint keySize, jobject device2, jobject jListener)
 {
     LOGD("OcSecureResource_provisionCredentials");
-    if (!jListener || !device2)
+    if (!jListener)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "provisionResultListener or device2 cannot be null");
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "provisionResultListener cannot be null");
+        return;
+    }
+    if (!device2)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "device2 cannot be null");
         return;
     }
 
     JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
     if (!secureResource)
     {
+        ThrowOcException(OC_STACK_ERROR, "getJniOcSecureResourcePtr failed");
         return;
     }
 
@@ -548,6 +581,49 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionCredenti
 
 /*
  * Class:     org_iotivity_base_OcSecureResource
+ * Method:    provisionTrustCertChain1
+ * Signature: (Lorg/iotivity/base/OcSecureResource/provisionTrustCertChain1;)V
+ */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionTrustCertChain1
+(JNIEnv *env, jobject thiz, jint type, jint credId, jobject jListener)
+{
+    LOGD("OcSecureResource_provisionTrustCertChain1");
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "provisionTrustCertChainListener cannot be null");
+        return;
+    }
+
+    JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
+    if (!secureResource)
+    {
+        return;
+    }
+
+    try
+    {
+        OCStackResult result = secureResource->provisionTrustCertChain(env, type, credId,
+                jListener);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcSecureResource_provisionTrustCertChain1");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+#else
+    ThrowOcException(OC_STACK_INVALID_PARAM, "WITH_TLS not enabled");
+    return;
+#endif // __WITH_X509__ || __WITH_TLS__
+}
+
+/*
+ * Class:     org_iotivity_base_OcSecureResource
  * Method:    provisionACL
  * Signature: (Lorg/iotivity/base/OcSecureResource/provisionACL;)V
  */
@@ -555,15 +631,21 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionACL
 (JNIEnv *env, jobject thiz, jobject acl, jobject jListener)
 {
     LOGD("OcSecureResource_provisionACL");
-    if (!jListener || !acl)
+    if (!jListener)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "provisionResultListener or acl cannot be null");
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "provisionResultListener cannot be null");
+        return;
+    }
+    if (!acl)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "acl cannot be null");
         return;
     }
 
     JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
     if (!secureResource)
     {
+        ThrowOcException(OC_STACK_ERROR, "getJniOcSecureResourcePtr failed");
         return;
     }
 
@@ -593,15 +675,21 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionPairwise
         jobject acl2, jobject jListener)
 {
     LOGD("OcSecureResource_provisionPairwiseDevices");
-    if (!jListener || !device2)
+    if (!jListener)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "Invalid Parameters");
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Invalid Callback");
+        return;
+    }
+    if (!device2)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "device2 cannot be null");
         return;
     }
 
     JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
     if (!secureResource)
     {
+        ThrowOcException(OC_STACK_ERROR, "getJniOcSecureResourcePtr failed");
         return;
     }
 
@@ -632,7 +720,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionDirectPa
     jint jedp, jobject jListener)
 {
     LOGD("OcSecureResource_provisionDirectPairing");
-    if (!jListener || !pdacls || !jpin || ! jprmType)
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Invalid Callback");
+        return;
+    }
+    if (!pdacls || !jpin || ! jprmType)
     {
         ThrowOcException(OC_STACK_INVALID_PARAM, "Invalid Parameters");
         return;
@@ -642,6 +735,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionDirectPa
     JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
     if (!secureResource)
     {
+        ThrowOcException(OC_STACK_ERROR, "getJniOcSecureResourcePtr failed");
         return;
     }
 
@@ -685,6 +779,7 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcSecureResource_getLinkedDevic
     JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
     if (!secureResource)
     {
+        ThrowOcException(OC_STACK_ERROR, "getJniOcSecureResourcePtr failed");
         return nullptr;
     }
 
@@ -718,6 +813,7 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcSecureResource_getIpAddr
     JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
     if (!secureResource)
     {
+        LOGD("getJniOcSecureResourcePtr failed");
         return nullptr;
     }
 
@@ -736,6 +832,7 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcSecureResource_getDeviceID
     JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
     if (!secureResource)
     {
+        LOGD("getJniOcSecureResourcePtr failed");
         return nullptr;
     }
 
@@ -754,6 +851,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcSecureResource_deviceStatus
     JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
     if (!secureResource)
     {
+        LOGD("getJniOcSecureResourcePtr failed");
         return -1;
     }
 
@@ -772,6 +870,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcSecureResource_ownedStatus
     JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
     if (!secureResource)
     {
+        LOGD("getJniOcSecureResourcePtr failed");
         return -1;
     }
 

@@ -35,6 +35,7 @@ private:
 
     std::shared_ptr<OC::OCResource> m_syncResource;
     std::shared_ptr<OC::OCResource> m_msgResource;
+    std::shared_ptr<OC::OCResource> m_topicResource;
 
 public:
     NSConsumerSimulator()
@@ -103,8 +104,8 @@ private:
         {
             resource->get(OC::QueryParamsMap(),
                     std::bind(&NSConsumerSimulator::onGet, this,
-                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, resource),
-                    OC::QualityOfService::LowQos);
+                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                            resource), OC::QualityOfService::LowQos);
         }
     }
     void onGet(const OC::HeaderOptions &/*headerOption*/,
@@ -114,15 +115,19 @@ private:
         std::cout << __func__ << " " << rep.getHost() << " result : " << eCode << std::endl;
 
         OC::QueryParamsMap map;
-        map.insert(std::pair<std::string,std::string>(std::string("consumerid"), std::string("123456789012345678901234567890123456")));
+        map.insert(std::pair<std::string,std::string>(std::string("consumerid"),
+                std::string("123456789012345678901234567890123456")));
 
         try
         {
             std::cout << "resourc : host " << resource->host() << std::endl;
             std::cout << "resourc : uri " << resource->uri() << std::endl;
-            std::cout << " resource->connectivityType() " <<  resource->connectivityType() << std::endl;
-            std::cout << "resourc : getResourceInterfaces " << resource->getResourceInterfaces()[0] << std::endl;
-            std::cout << "resourc : getResourceTypes " << resource->getResourceTypes()[0] << std::endl;
+            std::cout << " resource->connectivityType() "
+                    <<  resource->connectivityType() << std::endl;
+            std::cout << "resourc : getResourceInterfaces "
+                    << resource->getResourceInterfaces()[0] << std::endl;
+            std::cout << "resourc : getResourceTypes "
+                    << resource->getResourceTypes()[0] << std::endl;
 
             std::vector<std::string> rts{"oic.r.notification"};
 
@@ -153,6 +158,12 @@ private:
                         std::placeholders::_3, std::placeholders::_4, resource),
                 OC::QualityOfService::LowQos);
 
+
+        m_topicResource
+            = OC::OCPlatform::constructResourceObject(resource->host(), resource->uri() + "/topic",
+                    resource->connectivityType(), true, resource->getResourceTypes(),
+                    resource->getResourceInterfaces());
+
     }
     void onObserve(const OC::HeaderOptions &/*headerOption*/,
             const OC::OCRepresentation &rep , const int &eCode, const int &,
@@ -171,12 +182,31 @@ private:
                           std::string(rep.getValueToString("TITLE")),
                           std::string(rep.getValueToString("CONTENT")),
                           std::string(rep.getValueToString("SOURCE")));
+
+            if(rep.getValue<int>("MESSAGE_ID") == 3)
+            {
+                m_topicResource->get(OC::QueryParamsMap(),
+                        std::bind(&NSConsumerSimulator::onTopicGet, this, std::placeholders::_1,
+                                std::placeholders::_2, std::placeholders::_3, m_topicResource),
+                                OC::QualityOfService::LowQos);
+            }
         }
         else if (rep.getUri() == "/notification/sync")
         {
             std::cout << "else if (rep.getUri() == sync) " << std::endl;
             m_syncFunc(int(rep.getValue<int>("STATE")), int(rep.getValue<int>("ID")));
         }
+    }
+
+    void onTopicGet(const OC::HeaderOptions &/*headerOption*/,
+            const OC::OCRepresentation & rep , const int eCode,
+            std::shared_ptr<OC::OCResource> resource)
+    {
+        //TO-DO using this function.
+        (void) rep;
+        (void) eCode;
+        (void) resource;
+        std::cout << "onTopicGet()" << std::endl;
     }
 
     OCStackResult msgResourceCancelObserve(OC::QualityOfService qos)

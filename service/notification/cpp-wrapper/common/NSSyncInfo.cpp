@@ -33,7 +33,7 @@ namespace OIC
             if (syncInfo != nullptr)
             {
                 m_messageId = syncInfo->messageId;
-                m_providerId = syncInfo->providerId;
+                m_providerId.assign(syncInfo->providerId, NS_UTILS_UUID_STRING_SIZE - 1);
                 m_state = (NSSyncType) syncInfo->state;
             }
         }

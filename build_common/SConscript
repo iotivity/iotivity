@@ -6,6 +6,8 @@
 import os
 import platform
 
+project_version = '1.2.0'
+
 # Map of host os and allowed target os (host: allowed target os)
 host_target_map = {
 		'linux': ['linux', 'android', 'arduino', 'yocto', 'tizen'],
@@ -24,7 +26,7 @@ os_arch_map = {
 		'darwin': ['i386', 'x86_64'],
 		'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
 		'arduino': ['avr', 'arm'],
-		'yocto': ['i586', 'x86_64', 'arm', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
+		'yocto': ['i586', 'i686', 'x86_64', 'arm', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
 		}
 
 host = platform.system().lower()
@@ -64,6 +66,8 @@ require_upload = ARGUMENTS.get('UPLOAD', False)
 # Get the device name. This name can be used as network display name wherever possible
 device_name = ARGUMENTS.get('DEVICE_NAME', "OIC-DEVICE")
 
+default_with_upstream_libcoap = 0
+
 if ARGUMENTS.get('TEST'):
 	logging_default = False
 else:
@@ -71,7 +75,6 @@ else:
 	if ARGUMENTS.get('RELEASE', True) in ['y', 'yes', 'true', 't', '1', 'on', 'all', True]:
 		release_mode = True
 	logging_default = (release_mode == False)
-
 
 
 ######################################################################
@@ -87,6 +90,7 @@ help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map
 
 help_vars.Add(BoolVariable('WITH_RA', 'Build with Remote Access module', False))
 help_vars.Add(BoolVariable('WITH_TCP', 'Build with TCP adapter', False))
+help_vars.Add(BoolVariable('WITH_PROXY', 'Build with CoAP-HTTP Proxy', False))
 help_vars.Add(ListVariable('WITH_MQ', 'Build with MQ publisher/broker', 'OFF', ['OFF', 'SUB', 'PUB', 'BROKER']))
 help_vars.Add(BoolVariable('WITH_CLOUD', 'Build including AccountManager class and Cloud Client sample', False))
 help_vars.Add(ListVariable('RD_MODE', 'Resource Directory build mode', 'CLIENT', ['CLIENT', 'SERVER']))
@@ -113,6 +117,12 @@ help_vars.AddVariables(('DEVICE_NAME', 'Network display name for device (For Ard
 help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('ANDROID_HOME', 'Android SDK path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('ANDROID_GRADLE', 'Gradle binary file', None, PathVariable.PathIsFile))
+help_vars.Add(EnumVariable('WITH_UPSTREAM_LIBCOAP', 'Use latest stable version of LibCoAP downloaded from github', default_with_upstream_libcoap, allowed_values=('0','1')))
+
+if target_os == 'windows':
+	# For VS2013, MSVC_VERSION is '12.0'. For VS2015, MSVC_VERSION is '14.0'.
+	# Default value is None, meaning that SCons has to choose automatically a VS version.
+	help_vars.Add(EnumVariable('MSVC_VERSION', 'MSVC compiler version - Windows', None, allowed_values=('12.0', '14.0')))
 
 AddOption('--prefix',
                   dest='prefix',
@@ -307,30 +317,31 @@ Export('env')
 ######################################################################
 pc_file = env.get('SRC_DIR') + '/iotivity.pc.in'
 
-if env.get('ROUTING') == 'GW':
-	routing_define = 'ROUTING_GATEWAY'
-elif env.get('ROUTING') == 'EP':
-	routing_define = 'ROUTING_EP'
-
 user_prefix = env.get('PREFIX')
 user_lib = env.get('LIB_INSTALL_DIR')
-if not user_lib:
-	user_lib = '$${prefix}/lib'
 
-if user_prefix:
-	pc_vars = {'\@PREFIX\@': user_prefix,
-				'\@EXEC_PREFIX\@':user_prefix,
-				'\@VERSION\@': '1.1.1',
-				'\@LIB_INSTALL_DIR\@': user_lib,
-				'\@ROUTING_DEFINE\@': routing_define
-				}
-else:
-	pc_vars = {'\@PREFIX\@': env.get('BUILD_DIR').encode('string_escape'),
-				'\@EXEC_PREFIX\@': env.get('BUILD_DIR').encode('string_escape'),
-				'\@VERSION\@': '1.1.1',
-				'\@LIB_INSTALL_DIR\@': user_lib,
-				'\@ROUTING_DEFINE\@': routing_define
-				}
+if not user_prefix:
+    user_prefix = env.get('BUILD_DIR').encode('string_escape')
+
+if not user_lib:
+    user_lib = '$${prefix}/lib'
+
+defines = []
+if env.get('LOGGING'):
+    defines.append('-DTB_LOG=1')
+
+if env.get('ROUTING') == 'GW':
+    defines.append('-DROUTING_GATEWAY=1')
+elif env.get('ROUTING') == 'EP':
+    defines.append('-DROUTING_EP=1')
+
+pc_vars = {
+    '\@VERSION\@': project_version,
+    '\@PREFIX\@': user_prefix,
+    '\@EXEC_PREFIX\@': user_prefix,
+    '\@LIB_INSTALL_DIR\@': user_lib,
+    '\@DEFINES\@': " ".join(defines)
+}
 
 env.Substfile(pc_file, SUBST_DICT = pc_vars)
 
@@ -430,52 +441,6 @@ conf = Configure(env,
 # threading and mutexes.  This will set the environment variable
 # POSIX_SUPPORTED, 1 if it is supported, 0 otherwise
 conf.CheckPThreadsSupport()
-
-######################################################################
-# Generate macros for presence of headers
-######################################################################
-cxx_headers = ['arpa/inet.h',
-               'fcntl.h',
-               'grp.h',
-               'in6addr.h',
-               'linux/limits.h',
-               'memory.h',
-               'netdb.h',
-               'netinet/in.h',
-               'pthread.h',
-               'pwd.h',
-               'stdlib.h',
-               'string.h',
-               'strings.h',
-               'sys/socket.h',
-               'sys/stat.h',
-               'sys/time.h',
-               'sys/timeb.h',
-               'sys/types.h',
-               'sys/unistd.h',
-               'syslog.h',
-               'time.h',
-               'unistd.h',
-               'uuid/uuid.h',
-               'windows.h',
-               'winsock2.h',
-               'ws2tcpip.h']
-
-if target_os == 'arduino':
-	# Detection of headers on the Arduino platform is currently broken.
-	cxx_headers = []
-
-if target_os == 'msys_nt':
-	# WinPThread provides a pthread.h, but we want to use native threads.
-	cxx_headers.remove('pthread.h')
-
-def get_define_from_header_file(header_file):
-	header_file_converted = header_file.replace("/","_").replace(".","_").upper()
-	return "HAVE_" + header_file_converted
-
-for header_file_name in cxx_headers:
-	if conf.CheckCXXHeader(header_file_name):
-		conf.env.AppendUnique(CPPDEFINES = [get_define_from_header_file(header_file_name)])
 
 env = conf.Finish()
 ######################################################################

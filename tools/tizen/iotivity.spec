@@ -1,7 +1,7 @@
 Name: iotivity
-Version: 1.1.1
+Version: 1.2.0
 Release: 0
-Summary: IoT Connectivity sponsored by the OIC
+Summary: IoT Connectivity sponsored by the OCF
 Group: Network & Connectivity/Other
 License: Apache-2.0
 URL: https://www.iotivity.org/
@@ -38,6 +38,8 @@ Requires(post): /sbin/ldconfig
 %{!?SECURED: %define SECURED 1}
 %{!?LOGGING: %define LOGGING True}
 %{!?ROUTING: %define ROUTING EP}
+%{!?WITH_TCP: %define WITH_TCP true}
+%{!?WITH_PROXY: %define WITH_PROXY False}
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
 %{!?VERBOSE: %define VERBOSE 1}
 
@@ -109,7 +111,8 @@ scons -j2 --prefix=%{_prefix} \
 	VERBOSE=%{VERBOSE} \
 	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
 	RELEASE=%{RELEASE} SECURED=%{SECURED} WITH_TCP=%{WITH_TCP} WITH_CLOUD=%{WITH_CLOUD} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
-	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir}
+	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir} WITH_PROXY=%{WITH_PROXY}
+
 
 
 %install
@@ -118,7 +121,8 @@ CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ;
 scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
 	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
 	RELEASE=%{RELEASE} SECURED=%{SECURED} WITH_TCP=%{WITH_TCP} WITH_CLOUD=%{WITH_CLOUD} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
-	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir}
+	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir} WITH_PROXY=%{WITH_PROXY}
+
 
 
 # For Example

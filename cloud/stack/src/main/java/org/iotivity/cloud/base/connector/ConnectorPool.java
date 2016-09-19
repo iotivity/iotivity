@@ -22,6 +22,7 @@
 package org.iotivity.cloud.base.connector;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.iotivity.cloud.base.device.IRequestChannel;
@@ -43,5 +44,9 @@ public class ConnectorPool {
 
     public static IRequestChannel getConnection(String name) {
         return mConnection.get(name);
+    }
+
+    public static ArrayList<IRequestChannel> getConnectionList() {
+        return new ArrayList<IRequestChannel>(mConnection.values());
     }
 }

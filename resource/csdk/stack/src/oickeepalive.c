@@ -579,8 +579,14 @@ OCStackResult SendPingMessage(KeepAliveEntry_t *entry)
     payload->base.type = PAYLOAD_TYPE_REPRESENTATION;
     OCRepPayloadSetPropInt(payload, INTERVAL, entry->interval);
 
-    OCDoResource(NULL, OC_REST_PUT, KEEPALIVE_RESOURCE_URI, &devAddr,
-                 (OCPayload *) payload, CT_ADAPTER_TCP, OC_LOW_QOS, &pingData, NULL, 0);
+    OCStackResult result = OCDoResource(NULL, OC_REST_PUT, KEEPALIVE_RESOURCE_URI, &devAddr,
+                                        (OCPayload *) payload, CT_ADAPTER_TCP, OC_LOW_QOS,
+                                        &pingData, NULL, 0);
+    if (OC_STACK_OK != result)
+    {
+        OIC_LOG(ERROR, TAG, "OCDoResource has failed");
+        return result;
+    }
 
     // Update timeStamp with time sent ping message for next ping message.
     entry->timeStamp = OICGetCurrentTime(TIME_IN_US);
@@ -741,8 +747,14 @@ void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint, bool isConnected)
         OCDevAddr devAddr = { .adapter = OC_ADAPTER_TCP };
         CopyEndpointToDevAddr(endpoint, &devAddr);
 
-        OCDoResource(NULL, OC_REST_DISCOVER, KEEPALIVE_RESOURCE_URI, &devAddr, NULL,
-                     CT_ADAPTER_TCP, OC_HIGH_QOS, &pingData, NULL, 0);
+        OCStackResult result = OCDoResource(NULL, OC_REST_DISCOVER, KEEPALIVE_RESOURCE_URI,
+                                            &devAddr, NULL, CT_ADAPTER_TCP, OC_HIGH_QOS,
+                                            &pingData, NULL, 0);
+        if (OC_STACK_OK != result)
+        {
+            OIC_LOG(ERROR, TAG, "OCDoResource has failed");
+            return;
+        }
     }
     else
     {

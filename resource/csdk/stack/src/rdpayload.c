@@ -17,6 +17,10 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#ifdef ARDUINO
+#define __STDC_LIMIT_MACROS
+#endif
+
 #include "rdpayload.h"
 
 #include "oic_malloc.h"

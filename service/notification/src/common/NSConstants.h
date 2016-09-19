@@ -21,6 +21,7 @@
 #ifndef _NS_CONSTANTS_H_
 #define _NS_CONSTANTS_H_
 
+#define __PRINTLOG 0
 #define __NS_FILE__ ( strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__ )
 
 #ifdef TB_LOG
@@ -28,6 +29,7 @@
 #define NS_LOG_V(level, format, ...) (OIC_LOG_V((level), __NS_FILE__, (format), __VA_ARGS__))
 #define NS_LOG(level, msg) (OIC_LOG((level), __NS_FILE__, (msg)))
 #else
+#if (__PRINTLOG == 1)
 #include "logger.h"
 #define NS_CONVERT_LEVEL(level) ( \
         ((level) == 0) ? "DEBUG" : \
@@ -46,6 +48,11 @@
         printf((msg)); \
         printf("\n"); \
     }
+#else
+#define NS_CONVERT_LEVEL(level)
+#define NS_LOG(level, msg)
+#define NS_LOG_V(level, format, ...) NS_LOG((level), ((format), __VA_ARGS__))
+#endif
 #endif
 
 #define NS_TAG                     "IOT_NOTI"
@@ -173,6 +180,28 @@
         } \
     }
 
+#define VERSION        "1.2.0"
+
+#define NS_ATTRIBUTE_VERSION "VERSION"
+#define NS_ATTRIBUTE_POLICY "ACCEPTER"
+#define NS_ATTRIBUTE_MESSAGE "MESSAGE_URI"
+#define NS_ATTRIBUTE_SYNC "SYNC_URI"
+#define NS_ATTRIBUTE_TOPIC "TOPIC_URI"
+#define NS_ATTRIBUTE_MESSAGE_ID "MESSAGE_ID"
+#define NS_ATTRIBUTE_PROVIDER_ID "PROVIDER_ID"
+#define NS_ATTRIBUTE_CONSUMER_ID "CONSUMER_ID"
+#define NS_ATTRIBUTE_TOPIC_LIST "TOPIC_LIST"
+#define NS_ATTRIBUTE_TOPIC_NAME "TOPIC_NAME"
+#define NS_ATTRIBUTE_TOPIC_SELECTION "TOPIC_STATE"
+#define NS_ATTRIBUTE_TITLE "TITLE"
+#define NS_ATTRIBUTE_TEXT "CONTENTTEXT"
+#define NS_ATTRIBUTE_SOURCE "SOURCE"
+#define NS_ATTRIBUTE_STATE "STATE"
+#define NS_ATTRIBUTE_DEVICE "DEVICE"
+#define NS_ATTRIBUTE_TYPE "TYPE"
+#define NS_ATTRIBUTE_DATETIME "DATE_TIME"
+#define NS_ATTRIBUTE_TTL "TTL"
+#define NS_ATTRIBUTE_ICON_IMAGE "ICON_IMAGE"
 
 typedef enum eConnectionState
 {
@@ -230,7 +259,6 @@ typedef enum eTaskType
     TASK_CONSUMER_REQ_TOPIC_URI = 8299,
     TASK_CONSUMER_REQ_TOPIC_LIST = 8300,
     TASK_CONSUMER_RECV_TOPIC_LIST = 8031,
-    TASK_CONSUMER_GET_TOPIC_LIST = 8302,
     TASK_CONSUMER_SELECT_TOPIC_LIST = 8303,
 
     TASK_EVENT_CONNECTED = 9000,
@@ -245,7 +273,9 @@ typedef enum eTaskType
     TASK_DELETE_TOPIC = 11002,
     TASK_SUBSCRIBE_TOPIC = 11003,
     TASK_UNSUBSCRIBE_TOPIC = 11004,
-    TASK_POST_TOPIC = 11005
+    TASK_POST_TOPIC = 11005,
+    TASK_GET_TOPICS = 11006,
+    TAST_GET_CONSUMER_TOPICS = 11007
 
 } NSTaskType;
 

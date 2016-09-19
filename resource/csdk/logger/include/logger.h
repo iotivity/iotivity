@@ -21,7 +21,7 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
-#define IOTIVITY_VERSION "1.1.1"
+#define IOTIVITY_VERSION "1.2.0"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -41,6 +41,11 @@
 extern "C"
 {
 #endif
+
+/**
+* Helper for unused warning.
+*/
+#define UNUSED(x) (void)(x)
 
 // Use the PCF macro to wrap strings stored in FLASH on the Arduino
 // Example:  OIC_LOG(INFO, TAG, PCF("Entering function"));

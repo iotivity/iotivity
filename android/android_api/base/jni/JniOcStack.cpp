@@ -39,6 +39,9 @@
 
 JavaVM* g_jvm = nullptr;
 
+jclass g_cls_byte1DArray = nullptr;
+jclass g_cls_byte2DArray = nullptr;
+jclass g_cls_byte3DArray = nullptr;
 jclass g_cls_Integer = nullptr;
 jclass g_cls_int1DArray = nullptr;
 jclass g_cls_int2DArray = nullptr;
@@ -192,6 +195,22 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
     VERIFY_VARIABLE_NULL(env);
 
     jclass clazz = nullptr;
+
+    //byte
+    clazz = env->FindClass("[B");
+    VERIFY_VARIABLE_NULL(clazz);
+    g_cls_byte1DArray = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    clazz = env->FindClass("[[B");
+    VERIFY_VARIABLE_NULL(clazz);
+    g_cls_byte2DArray = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    clazz = env->FindClass("[[[B");
+    VERIFY_VARIABLE_NULL(clazz);
+    g_cls_byte3DArray = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
 
     //Integer
     clazz = env->FindClass("java/lang/Integer");
@@ -638,6 +657,9 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
         env->DeleteGlobalRef(g_cls_OcSecureResource);
         env->DeleteGlobalRef(g_cls_OcProvisionResult);
         env->DeleteGlobalRef(g_cls_OcDirectPairDevice);
+        env->DeleteGlobalRef(g_cls_byte1DArray);
+        env->DeleteGlobalRef(g_cls_byte2DArray);
+        env->DeleteGlobalRef(g_cls_byte3DArray);
 #ifdef WITH_CLOUD
         env->DeleteGlobalRef(g_cls_OcAccountManager);
 #endif

@@ -200,7 +200,7 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
     if (OCDoResponse(&response) != OC_STACK_OK)
     {
         NS_LOG(ERROR, "Fail to AccessPolicy send response");
-        return NS_ERROR;
+        return OC_EH_ERROR;
     }
 
     NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OUT");
@@ -247,11 +247,28 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
             ehResult = OC_EH_ERROR;
 
             // Accepter is consumer. our service is support sendtopiclist from OC_REST_POST
-            if(!NSGetPolicy())
+            if(NSGetPolicy() == false)
             {
                 NSPushQueue(TOPIC_SCHEDULER, TASK_POST_TOPIC,
                         NSCopyOCEntityHandlerRequest(entityHandlerRequest));
                 ehResult = OC_EH_OK;
+                OCEntityHandlerResponse response;
+                response.numSendVendorSpecificHeaderOptions = 0;
+                memset(response.sendVendorSpecificHeaderOptions, 0,
+                        sizeof response.sendVendorSpecificHeaderOptions);
+                memset(response.resourceUri, 0, sizeof response.resourceUri);
+
+                response.requestHandle = entityHandlerRequest->requestHandle;
+                response.resourceHandle = entityHandlerRequest->resource;
+                response.persistentBufferFlag = 0;
+                response.ehResult = ehResult;
+                response.payload = (OCPayload *) NULL;
+
+                if (OCDoResponse(&response) != OC_STACK_OK)
+                {
+                    NS_LOG(ERROR, "Fail to AccessPolicy send response");
+                    return OC_EH_ERROR;
+                }
             }
         }
         else
