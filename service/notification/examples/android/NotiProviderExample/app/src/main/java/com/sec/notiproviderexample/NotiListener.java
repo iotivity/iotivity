@@ -23,7 +23,6 @@
 package com.sec.notiproviderexample;
 
 import android.app.Notification;
-import android.content.SyncInfo;
 import android.os.Bundle;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
@@ -35,7 +34,7 @@ import java.util.ArrayList;
 public class NotiListener extends NotificationListenerService {
 
     private final String TAG = "NS_JNI_NOTI_LISTENER";
-    private static ProviderProxy mProviderProxy = null;
+    private static ProviderSample mProviderSample = null;
     private MainActivity mActivity = null;
     ArrayList mBlackSourceList = new ArrayList<String>();
 
@@ -49,11 +48,11 @@ public class NotiListener extends NotificationListenerService {
         Log.i(TAG, "Create NotiListener with MainActivity");
 
         this.mActivity = activity;
-        this.mProviderProxy = mActivity.getProviderProxy();
+        this.mProviderSample = mActivity.getProviderSample();
 
         setBlackSourceList();
 
-        if(mProviderProxy == null) {
+        if(mProviderSample == null) {
             Log.i(TAG, "Fail to get providerProxy instance");
         }
     }
@@ -111,8 +110,8 @@ public class NotiListener extends NotificationListenerService {
         notiMessage.setTime("12:10");
         MediaContents media = new MediaContents("daasd");
         notiMessage.setMediaContents(media);
-        if (mProviderProxy != null) {
-            mProviderProxy.SendMessage(notiMessage);
+        if (mProviderSample != null) {
+            mProviderSample.SendMessage(notiMessage);
         } else {
             Log.i(TAG, "providerExample is NULL");
         }
@@ -130,12 +129,12 @@ public class NotiListener extends NotificationListenerService {
         Log.i(TAG, "Noti. Package Name : " + sbn.getPackageName());
         Log.i(TAG, "Noti. ID : " + sbn.getId());
 
-        if(mProviderProxy.getMsgMap().containsKey(sbn.getId()))
+        if(mProviderSample.getMsgMap().containsKey(sbn.getId()))
         {
-            if(mProviderProxy.getMsgMap().get(sbn.getId()) == 2)
+            if(mProviderSample.getMsgMap().get(sbn.getId()) == 2)
             {
                 org.iotivity.service.ns.common.SyncInfo.SyncType type = org.iotivity.service.ns.common.SyncInfo.SyncType.READ;
-                mProviderProxy.SendSyncInfo(1,type);
+                mProviderSample.SendSyncInfo(1,type);
             }
         }
     }
