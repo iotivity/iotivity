@@ -235,9 +235,9 @@ NSResult NSAcceptSubscription(const char * consumerId, bool accepted)
     NS_LOG(DEBUG, "NSAccept - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!consumerId)
+    if(!consumerId || consumerId[0] == '\0' || NSGetPolicy() == NS_POLICY_CONSUMER)
     {
-        NS_LOG(ERROR, "consumerId is NULL");
+        NS_LOG(ERROR, "consumerId is NULL or NS Policy is Consumer");
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
