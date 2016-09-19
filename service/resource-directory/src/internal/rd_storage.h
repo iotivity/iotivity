@@ -46,6 +46,18 @@ typedef struct OCRDStorePublishResources
  */
 OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *payload, const OCDevAddr *address);
 
+/**
+ * Initializes the publish resources.
+ *
+ * @return ::OC_STACK_OK upon success, ::OC_STACK_ERROR in case of error.
+ */
+OCStackResult OCRDInitializeStorage();
+
+/**
+ * Cleans up the publish resources.
+ */
+void OCRDTerminateStorage();
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
