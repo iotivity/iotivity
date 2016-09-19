@@ -12,34 +12,30 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp"
+        android:paddingLeft="1dp"
+        android:paddingRight="1dp"
         android:orientation="vertical" >
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_alignParentBottom="true"
-            android:background="@android:color/darker_gray"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="10dp">
-        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingLeft="5dp"
             android:paddingRight="5dp"
-            android:orientation="horizontal" >
+            android:orientation="horizontal"
+            android:weightSum="1">
 
             <Button
-                android:layout_gravity="center_vertical|center_horizontal"
-                android:layout_height="60dp"
-                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_width="150dp"
                 android:id="@+id/BtnStart"
                 android:text="START"/>
+
+            <Button
+                android:layout_height="wrap_content"
+                android:layout_width="150dp"
+                android:id="@+id/BtnStop"
+                android:text="STOP" />
         </LinearLayout>
 
         <LinearLayout
@@ -47,21 +43,57 @@
             android:layout_height="wrap_content"
             android:paddingLeft="5dp"
             android:paddingRight="5dp"
-            android:orientation="horizontal" >
+            android:orientation="horizontal"
+            android:weightSum="1">
+
+            <RadioGroup
+                android:id="@+id/RadioGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:orientation='horizontal'>
+                    <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ACCEPTOR: "
+                    android:id="@+id/textview"
+                    android:checked="false" />
+                    <RadioButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Provider"
+                        android:id="@+id/RadioProvider"
+                        android:checked="true" />
+
+                    <RadioButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Consumer"
+                        android:id="@+id/RadioConsumer"
+                        android:checked="false" />
+
+            </RadioGroup>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:orientation="horizontal"
+            android:weightSum="1">
 
             <Button
-
                 android:layout_height="wrap_content"
                 android:layout_width="150dp"
-                android:id="@+id/BtnAccept"
-                android:text="ACCEPT"/>
+                android:id="@+id/BtnRegister"
+                android:text="@string/btn_reg"/>
 
             <Button
-
                 android:layout_height="wrap_content"
                 android:layout_width="150dp"
-                android:id="@+id/BtnSync"
-                android:text="SYNC"/>
+                android:id="@+id/BtnSet"
+                android:text="@string/btn_set" />
         </LinearLayout>
 
         <LinearLayout
@@ -83,7 +115,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:windowSoftInputMode="stateHidden"
-                android:hint="글자를 입력하세요" />
+                android:hint="Add Message Title" />
         </LinearLayout>
 
         <LinearLayout
@@ -106,17 +138,47 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:windowSoftInputMode="stateHidden"
-                android:hint="글자를 입력하세요" />
+                android:hint="Add Message Body" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/Topic"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:orientation="horizontal" >
+
+            <Button
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:id="@+id/BtnTopic"
+                android:text="@string/btn_topic"
+                android:onClick="selfDestruct" />
+
+            <EditText
+                android:id="@+id/EditTextTopic"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:windowSoftInputMode="stateHidden"
+                android:hint="OCF_TOPIC1 (1-4)" />
         </LinearLayout>
 
         <Button
             android:layout_gravity="center_vertical|center_horizontal"
-            android:layout_height="60dp"
+            android:layout_height="wrap_content"
             android:layout_width="match_parent"
             android:id="@+id/BtnCreateNoti"
             android:text="@string/btn_create_noti"
             />
-
+        <Button
+            android:layout_gravity="center_vertical|center_horizontal"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:id="@+id/BtnLog"
+            android:text="@string/btn_log"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true" />
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="10dp">
@@ -129,14 +191,14 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="150dp"
+                android:layout_height="250dp"
                 android:paddingLeft="5dp"
                 android:paddingRight="5dp"
                 android:orientation="horizontal" >
 
                 <TextView
                     android:layout_gravity="center_vertical|center_horizontal"
-                    android:layout_height="150dp"
+                    android:layout_height="1000dp"
                     android:layout_width="match_parent"
                     android:scrollbars="vertical"
                     android:id="@+id/TvLog"
@@ -145,33 +207,6 @@
 
         </ScrollView>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingLeft="5dp"
-            android:paddingRight="5dp"
-            android:orientation="horizontal" >
-
-            <Button
-                android:layout_gravity="center_vertical|center_horizontal"
-                android:layout_height="60dp"
-                android:layout_width="match_parent"
-                android:id="@+id/BtnStop"
-                android:text="STOP"/>
-        </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_alignParentBottom="true"
-            android:background="@android:color/darker_gray"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="20dp">
-        </LinearLayout>
-
     </LinearLayout>
-
 
 </RelativeLayout>
