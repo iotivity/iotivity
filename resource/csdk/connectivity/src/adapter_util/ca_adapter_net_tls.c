@@ -27,7 +27,7 @@
 #include "caipinterface.h"
 #include "oic_malloc.h"
 #include "pkix/byte_array.h"
-#include "camutex.h"
+#include "octhread.h"
 
 // headers required for mbed TLS
 #include "mbedtls/platform.h"

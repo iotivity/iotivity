@@ -23,7 +23,7 @@
 
 #include "ocstack.h"
 #include "logger.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "cathreadpool.h"
 #include "ocpayload.h"
 #include "payload_logging.h"
