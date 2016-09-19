@@ -124,7 +124,7 @@ namespace OIC
             CloudProp()
             {
                 m_cloudID = "";
-                m_credID = -1;
+                m_credID = 0;
             }
 
             CloudProp(const CloudProp& cloudProp) :
@@ -148,6 +148,7 @@ namespace OIC
             {
                 m_rep = rep;
                 m_cloudID = "";
+                m_credID = 0;
             }
 
             /**

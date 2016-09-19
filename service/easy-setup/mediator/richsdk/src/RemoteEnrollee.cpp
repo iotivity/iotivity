@@ -409,12 +409,16 @@ namespace OIC
 #if defined(__WITH_DTLS__) && defined(__WITH_TLS__)
             try
             {
-                if(!(cloudProp.getCloudID().empty() && cloudProp.getCredID() == -1))
+                if(!(cloudProp.getCloudID().empty() && cloudProp.getCredID() <= 0))
                 {
                     m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
 
                     m_enrolleeSecurity->provisionSecurityForCloudServer(cloudProp.getCloudID(),
                                                                         cloudProp.getCredID());
+                }
+                else
+                {
+                    OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "ACL and Cert. provisioning are skipped.");
                 }
             }
 
