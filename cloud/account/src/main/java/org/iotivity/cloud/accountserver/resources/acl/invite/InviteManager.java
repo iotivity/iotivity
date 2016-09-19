@@ -37,6 +37,12 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.util.Cbor;
 
+/**
+ *
+ * This class provides a set of APIs to invite a user to a group
+ *
+ */
+
 public class InviteManager {
 
     private TypeCastingManager<InviteTable> mTypeInvite = new TypeCastingManager<>();
@@ -55,6 +61,7 @@ public class InviteManager {
 
     public void addInvitation(String uid, String gid, String mid) {
 
+        // create invitation table
         InviteTable newInviteTable = new InviteTable(uid, gid, mid);
 
         HashMap<String, Object> condition = new HashMap<>();

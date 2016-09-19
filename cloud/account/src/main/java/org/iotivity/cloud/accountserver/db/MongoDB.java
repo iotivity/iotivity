@@ -117,6 +117,15 @@ public class MongoDB {
         return db;
     }
 
+    /**
+     * API for inserting a record into DB table. the record will not be inserted
+     * if duplicated one.
+     * 
+     * @param tableName
+     *            table name to be inserted
+     * @param doc
+     *            document to be inserted
+     */
     public Boolean insertRecord(String tableName, Document doc) {
 
         if (tableName == null || doc == null)
@@ -147,6 +156,19 @@ public class MongoDB {
         return true;
     }
 
+    /**
+     * API for inserting a record into DB table. the record will be replaced if
+     * duplicated one.
+     * 
+     * @param tableName
+     *            table name to be inserted
+     * @param filter
+     *            document filter
+     * @param doc
+     *            document to be inserted
+     * @return returns true if the record is inserted and replaced successfully,
+     *         or returns false
+     */
     public Boolean insertAndReplaceRecord(String tableName, Document filter,
             Document doc) {
 
@@ -173,6 +195,18 @@ public class MongoDB {
         return true;
     }
 
+    /**
+     * API for updating a record into DB table.
+     * 
+     * @param tableName
+     *            table name to be updated
+     * @param filter
+     *            document filter
+     * @param record
+     *            record to be updated
+     * @return returns true if the record is updated successfully, or returns
+     *         false
+     */
     public Boolean updateRecord(String tableName, Document filter,
             Document record) {
 
@@ -183,7 +217,7 @@ public class MongoDB {
 
         if (collection.findOneAndReplace(filter, record) == null) {
 
-            Log.w("DB update failed due to no matched record!");
+            Log.w("DB updateX509CRL failed due to no matched record!");
             return false;
         }
 
@@ -192,6 +226,16 @@ public class MongoDB {
         return true;
     }
 
+    /**
+     * API for deleting records from DB table.
+     * 
+     * @param tableName
+     *            table name for the record to be deleted
+     * @param record
+     *            record filter to be deleted
+     * @return returns true if the record is deleted successfully, or returns
+     *         false
+     */
     public Boolean deleteRecord(String tableName, Document record) {
 
         if (tableName == null || record == null)
@@ -219,6 +263,15 @@ public class MongoDB {
         return true;
     }
 
+    /**
+     * API for selecting records from DB table.
+     * 
+     * @param tableName
+     *            table name for the record to be selected
+     * @param doc
+     *            document filter to be selected
+     * @return record list according to the filter document
+     */
     public ArrayList<HashMap<String, Object>> selectRecord(String tableName,
             Document doc) {
 
@@ -274,7 +327,6 @@ public class MongoDB {
                 } else {
                     resourceMap.put(entry.getKey(), entry.getValue());
                 }
-
             }
         }
 

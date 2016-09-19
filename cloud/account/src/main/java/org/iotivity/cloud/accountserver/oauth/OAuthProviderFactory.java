@@ -42,10 +42,19 @@ public class OAuthProviderFactory {
     private Class<?> authProviderClass = null;
     private Object   authProviderObj   = null;
 
+    /**
+     * API to get token table which includes access token, refresh token, and
+     * token expiration time
+     * 
+     * @param authCode:
+     *            authorization code
+     * @param options:
+     *            authserver url and apiserver url option
+     * @return : token table which includes access token, refresh token, and
+     *         token expiration time
+     */
     public TokenTable requestAccessTokenInfo(String authCode, Object options) {
-
         TokenTable tokenInfo = null;
-
         try {
             Method method = authProviderClass.getMethod(
                     "requestAccessTokenInfo",
@@ -61,6 +70,16 @@ public class OAuthProviderFactory {
         return tokenInfo;
     }
 
+    /**
+     * API to get renewed token table which includes new access token, new
+     * refresh token, and new token expiration time
+     * 
+     * @param refreshToken:
+     *            Refresh token used to refresh the access token in cloud before
+     *            getting expired
+     * @return: token table which includes new access token, new refresh token,
+     *          and new token expiration time
+     */
     public TokenTable requestRefreshTokenInfo(String refreshToken) {
 
         TokenTable tokenInfo = null;
@@ -79,6 +98,16 @@ public class OAuthProviderFactory {
         return tokenInfo;
     }
 
+    /**
+     * API to get user information table
+     * 
+     * @param accessToken:
+     *            Access token used for communication with cloud after account
+     *            creation
+     * @param options:
+     *            authserver url and apiserver url option
+     * @return: user information table
+     */
     public UserTable requestGetUserInfo(String accessToken, Object options) {
 
         UserTable userInfo = null;

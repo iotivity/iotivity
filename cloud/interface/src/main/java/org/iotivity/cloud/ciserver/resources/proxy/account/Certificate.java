@@ -35,8 +35,8 @@ public class Certificate extends Resource {
     IRequestChannel mAuthServer = null;
 
     public Certificate() {
-        super(Arrays.asList(Constants.PREFIX_OIC, Constants.CREDPROV_URI,
-                Constants.CERT_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC,
+                Constants.CREDPROV_URI, Constants.CERT_URI));
         mAuthServer = ConnectorPool.getConnection("account");
     }
 

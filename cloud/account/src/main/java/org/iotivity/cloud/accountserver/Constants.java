@@ -23,13 +23,22 @@ package org.iotivity.cloud.accountserver;
 
 import org.iotivity.cloud.base.OICConstants;
 
+import java.io.File;
+
 public class Constants extends OICConstants {
+
+    public static final String PROPERTIES_FILE_NAME  = "properties"
+            + File.separator + "config.properties";
 
     // Database name
 
     public static final String DB_NAME               = "ACCOUNTSERVER_DB";
 
     // Database table
+
+    public static final String CRL_TABLE             = "CRL_TABLE";
+
+    public static final String CERTIFICATE_TABLE     = "CERTIFICATE_TABLE";
 
     public static final String USER_TABLE            = "USER_TABLE";
 
@@ -46,6 +55,14 @@ public class Constants extends OICConstants {
     public static final String ACLTEMPLATE_TABLE     = "ACLTEMPLATE_TABLE";
 
     // Database table key
+
+    public static final String KEYFIELD_SN           = "serialNumber";
+
+    public static final String KEYFIELD_NA           = "notAfter";
+
+    public static final String KEYFIELD_NB           = "notBefore";
+
+    public static final String KEYFIELD_REVOKED      = "revoked";
 
     public static final String KEYFIELD_UUID         = "uuid";
 
@@ -143,6 +160,16 @@ public class Constants extends OICConstants {
 
     public static final String REQ_MEMBER            = "mid";
 
+    public static final String REQ_LAST_UPDATE       = "lu";
+
+    public static final String REQ_THIS_UPDATE       = "tu";
+
+    public static final String REQ_NEXT_UPDATE       = "nu";
+
+    public static final String REQ_CRL               = "crl";
+
+    public static final String REQ_SERIAL_NUMBER     = "rcsn";
+
     public static final String REQ_MEMBER_LIST       = "midlist";
 
     public static final String REQ_GTYPE_PRIVATE     = "Private";
@@ -187,6 +214,14 @@ public class Constants extends OICConstants {
 
     public static final String RESP_INVITED          = "invited";
 
+    public static final String ENCODING = "encoding";
+
+    public static final String DATA = "data";
+
+    public static final String CERT = "cert";
+
+    public static final String CERT_CHAIN = "certchain";
+
     public static final String RESP_ACL_ALLOWED      = "Allowed";
 
     public static final String RESP_ACL_DENIED       = "Denied";
@@ -202,4 +237,6 @@ public class Constants extends OICConstants {
     public static final String GITHUB                = "Github";
 
     public static final String SAMSUNG               = "Samsung";
+
+    public static final String GOOGLE                = "Google";
 }
