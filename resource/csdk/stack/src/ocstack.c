@@ -59,6 +59,7 @@
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
 #include "cautilinterface.h"
+#include "oicgroup.h"
 
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
 #include "routingutility.h"
@@ -2243,6 +2244,9 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     defaultDeviceHandler = NULL;
     defaultDeviceHandlerCallbackParameter = NULL;
 
+    result = InitializeScheduleResourceList();
+    VERIFY_SUCCESS(result, OC_STACK_OK);
+
     result = CAResultToOCResult(CAInitialize());
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
@@ -2323,6 +2327,7 @@ exit:
         OIC_LOG(ERROR, TAG, "Stack initialization error");
         deleteAllResources();
         CATerminate();
+        TerminateScheduleResourceList();
         stackState = OC_STACK_UNINITIALIZED;
     }
     return result;
@@ -2367,6 +2372,7 @@ OCStackResult OCStop()
     DeleteDeviceInfo();
     DeletePlatformInfo();
     CATerminate();
+    TerminateScheduleResourceList();
     // Remove all observers
     DeleteObserverList();
     // Remove all the client callbacks

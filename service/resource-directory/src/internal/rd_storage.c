@@ -39,22 +39,37 @@
 #if defined(HAVE_PTHREAD_H)
 
 #include <pthread.h>
-pthread_mutex_t storageMutex;
-#define MUTEX_LOCK(ARG_NAME)    { pthread_mutex_lock(ARG_NAME); }
-#define MUTEX_UNLOCK(ARG_NAME)  { pthread_mutex_unlock(ARG_NAME); }
+pthread_mutex_t g_storageMutex;
+#define MUTEX_LOCK(ARG_NAME)       { pthread_mutex_lock(ARG_NAME); }
+#define MUTEX_UNLOCK(ARG_NAME)     { pthread_mutex_unlock(ARG_NAME); }
+#define MUTEX_INITIALIZE(ARG_NAME) { }
+#define MUTEX_TERMINATE(ARG_NAME)  { }
 
 #elif defined(HAVE_WINDOWS_H)
 
 #include <windows.h>
-CRITICAL_SECTION storageMutex;
+CRITICAL_SECTION g_storageMutex;
+bool g_initializedStorageMutex = false;
 #define MUTEX_LOCK(ARG_NAME)   { EnterCriticalSection(ARG_NAME); }
 #define MUTEX_UNLOCK(ARG_NAME) { LeaveCriticalSection(ARG_NAME); }
+ #define MUTEX_INITIALIZE(ARG_NAME) { assert(!g_initializedStorageMutex); \
+                                      InitializeCriticalSection(ARG_NAME); \
+                                      g_initializedStorageMutex = true; \
+                                    }
+ #define MUTEX_TERMINATE(ARG_NAME)  { if (g_initializedStorageMutex) \
+                                      { \
+                                          DeleteCriticalSection(ARG_NAME); \
+                                          g_initializedStorageMutex = false; \
+                                      } \
+                                    }
 
 #else
 
 ERROR Need mutex implementation for this platform
-#define MUTEX_LOCK(ARG_NAME)   {  }
-#define MUTEX_UNLOCK(ARG_NAME) {  }
+#define MUTEX_LOCK(ARG_NAME)       { }
+#define MUTEX_UNLOCK(ARG_NAME)     { }
+#define MUTEX_INITIALIZE(ARG_NAME) { }
+#define MUTEX_TERMINATE(ARG_NAME)  { }
 
 #endif
 
@@ -136,7 +151,7 @@ OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *pay
     resources->publishedResource = storeResource;
     resources->devAddr = *address;
 
-    MUTEX_LOCK(&storageMutex);
+    MUTEX_LOCK(&g_storageMutex);
     if (g_rdStorage)
     {
         OCRDStorePublishResources *temp = g_rdStorage;
@@ -150,7 +165,7 @@ OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *pay
     {
         g_rdStorage = resources;
     }
-    MUTEX_UNLOCK(&storageMutex);
+    MUTEX_UNLOCK(&g_storageMutex);
 
     printStoragedResources(g_rdStorage);
     return OC_STACK_OK;
@@ -258,4 +273,27 @@ OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *
         }
     }
     return OC_STACK_ERROR;
+}
+
+/**
+ * Initializes the publish resources.
+ *
+ * @return ::OC_STACK_OK upon success, ::OC_STACK_ERROR in case of error.
+ */
+OCStackResult OCRDInitializeStorage()
+{
+    MUTEX_INITIALIZE(&g_storageMutex);
+
+    g_rdStorage = NULL;
+    return OC_STACK_OK;
+}
+
+/**
+ * Cleans up the publish resources.
+ */
+void OCRDTerminateStorage()
+{
+    assert(g_rdStorage == NULL);
+
+    MUTEX_TERMINATE(&g_storageMutex);
 }
