@@ -44,8 +44,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.iotivity.base.AclGroupType;
+import org.iotivity.base.EntityHandlerResult;
 import org.iotivity.base.ErrorCode;
 import org.iotivity.base.ModeType;
+import org.iotivity.base.ObserveType;
 import org.iotivity.base.OcAccountManager;
 import org.iotivity.base.OcConnectivityType;
 import org.iotivity.base.OcException;
@@ -55,8 +57,12 @@ import org.iotivity.base.OcPresenceHandle;
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.OcResource;
 import org.iotivity.base.OcResourceHandle;
+import org.iotivity.base.OcResourceRequest;
+import org.iotivity.base.OcResourceResponse;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
+import org.iotivity.base.RequestHandlerFlag;
+import org.iotivity.base.RequestType;
 import org.iotivity.base.ResourceProperty;
 import org.iotivity.base.ServiceType;
 
@@ -76,7 +82,8 @@ public class CloudFragment extends Fragment implements
         View.OnClickListener, CompoundButton.OnCheckedChangeListener,
         OcResource.OnObserveListener,
         OcResource.OnMQTopicFoundListener, OcResource.OnMQTopicCreatedListener,
-        OcResource.OnMQTopicSubscribeListener {
+        OcResource.OnMQTopicSubscribeListener,
+        OcPlatform.EntityHandler {
 
     private static final String TAG = "OIC_SIMPLE_CLOUD";
     private final String EOL = System.getProperties().getProperty("line.separator");
@@ -115,6 +122,7 @@ public class CloudFragment extends Fragment implements
     private String mInviteeUuid;
     private final int REQUEST_LOGIN = 1;
 
+    private OcResource mFoundResource = null;
     private OcResourceHandle localLightResourceHandle = null;
     private List<OcResourceHandle> mResourceHandleList = new LinkedList<>();
     private OcPresenceHandle mOcPresenceHandle = null;
@@ -128,6 +136,9 @@ public class CloudFragment extends Fragment implements
 
     // variables related observer
     private int maxSequenceNumber = 0xFFFFFF;
+    private Thread mObserverNotifier;
+    private int mPower = 0; // light power
+    private boolean mState = false; // light state
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -685,6 +696,194 @@ public class CloudFragment extends Fragment implements
                 }
             };
 
+    OcPlatform.OnResourceFoundListener resourceFoundListener =
+            new OcPlatform.OnResourceFoundListener() {
+                @Override
+                public void onResourceFound(OcResource ocResource) {
+                    synchronized (mActivity) {
+                        final String resourceUri = ocResource.getUri();
+
+                        if (mFoundResource == null) {
+                            if (resourceUri.contains(Common.RESOURCE_URI)) {
+                                msg("onResourceFound : " + ocResource.getUri());
+                                mFoundResource = ocResource;
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void onFindResourceFailed(Throwable throwable, String uri) {
+                    synchronized (mActivity) {
+                        msg("findResource request has failed");
+                    }
+                }
+            };
+
+    @Override
+    public synchronized EntityHandlerResult handleEntity(final OcResourceRequest request) {
+        EntityHandlerResult ehResult = EntityHandlerResult.ERROR;
+        if (null == request) {
+            msg("Server request is invalid");
+            return ehResult;
+        }
+        // Get the request flags
+        EnumSet<RequestHandlerFlag> requestFlags = request.getRequestHandlerFlagSet();
+        if (requestFlags.contains(RequestHandlerFlag.INIT)) {
+            msg("\t\tRequest Flag: Init");
+            ehResult = EntityHandlerResult.OK;
+        }
+        if (requestFlags.contains(RequestHandlerFlag.REQUEST)) {
+            msg("\t\tRequest Flag: Request");
+            ehResult = handleRequest(request);
+        }
+        if (requestFlags.contains(RequestHandlerFlag.OBSERVER)) {
+            msg("\t\tRequest Flag: Observer");
+            ehResult = handleObserver(request);
+        }
+
+        return ehResult;
+    }
+
+    private EntityHandlerResult handleRequest(OcResourceRequest request) {
+        EntityHandlerResult ehResult = EntityHandlerResult.ERROR;
+        // Check for query params (if any)
+        Map<String, String> queries = request.getQueryParameters();
+        if (!queries.isEmpty()) {
+            msg("Query processing is up to entityHandler");
+        } else {
+            msg("No query parameters in this request");
+        }
+
+        for (Map.Entry<String, String> entry : queries.entrySet()) {
+            msg("Query key: " + entry.getKey() + " value: " + entry.getValue());
+        }
+
+        //Get the request type
+        RequestType requestType = request.getRequestType();
+        switch (requestType) {
+            case GET:
+                msg("\t\t\tRequest Type is GET");
+                ehResult = handleGetRequest(request);
+                break;
+            case PUT:
+                msg("\t\t\tRequest Type is PUT");
+                ehResult = handlePutRequest(request);
+                break;
+            case POST:
+                msg("\t\t\tRequest Type is POST");
+                break;
+            case DELETE:
+                msg("\t\t\tRequest Type is DELETE");
+                break;
+        }
+        return ehResult;
+    }
+
+    private EntityHandlerResult handleGetRequest(final OcResourceRequest request) {
+        EntityHandlerResult ehResult;
+        OcResourceResponse response = new OcResourceResponse();
+        response.setRequestHandle(request.getRequestHandle());
+        response.setResourceHandle(request.getResourceHandle());
+        response.setErrorCode(Common.SUCCESS);
+        response.setResponseResult(EntityHandlerResult.OK);
+        response.setResourceRepresentation(getOcRepresentation());
+        return sendResponse(response);
+    }
+
+    private EntityHandlerResult handlePutRequest(OcResourceRequest request) {
+        OcResourceResponse response = new OcResourceResponse();
+        response.setRequestHandle(request.getRequestHandle());
+        response.setResourceHandle(request.getResourceHandle());
+
+        setOcRepresentation(request.getResourceRepresentation());
+        response.setResourceRepresentation(getOcRepresentation());
+        response.setResponseResult(EntityHandlerResult.OK);
+        response.setErrorCode(Common.SUCCESS);
+        return sendResponse(response);
+    }
+
+    public void setOcRepresentation(OcRepresentation rep) {
+        try {
+            if (rep.hasAttribute(Common.LIGHT_STATE_KEY)) {
+                mState = rep.getValue(Common.LIGHT_STATE_KEY);
+            }
+            if (rep.hasAttribute(Common.LIGHT_POWER_KEY)) {
+                mPower = rep.getValue(Common.LIGHT_POWER_KEY);
+            }
+        } catch (OcException e) {
+            Log.e(TAG, e.toString());
+            msg("Failed to get representation values");
+        }
+    }
+
+    public OcRepresentation getOcRepresentation() {
+        OcRepresentation rep = new OcRepresentation();
+        try {
+            rep.setValue(Common.LIGHT_STATE_KEY, mState);
+            rep.setValue(Common.LIGHT_POWER_KEY, mPower);
+        } catch (OcException e) {
+            Log.e(TAG, e.toString());
+            msg("Failed to set representation values");
+        }
+        return rep;
+    }
+
+    private EntityHandlerResult handleObserver(final OcResourceRequest request) {
+        // Observation happens on a different thread in notifyObservers method.
+        // If we have not created the thread already, we will create one here.
+        if (null == mObserverNotifier) {
+            mObserverNotifier = new Thread(new Runnable() {
+                public void run() {
+                    notifyObservers(request);
+                }
+            });
+            mObserverNotifier.start();
+        }
+        return EntityHandlerResult.OK;
+    }
+
+    private void sleep(int seconds) {
+        try {
+            Thread.sleep(seconds * 1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Log.e(TAG, e.toString());
+        }
+    }
+
+    private void notifyObservers(OcResourceRequest request) {
+        while (true) {
+            // increment current power value by 10 every 2 seconds
+            mPower += 10;
+            sleep(2);
+
+            msg("Notifying observers...");
+            msg(this.toString());
+            try {
+                OcPlatform.notifyAllObservers(localLightResourceHandle);
+            } catch (OcException e) {
+                ErrorCode errorCode = e.getErrorCode();
+                if (ErrorCode.NO_OBSERVERS == errorCode) {
+                    msg("No more observers, stopping notifications");
+                    mObserverNotifier = null;
+                }
+                return;
+            }
+        }
+    }
+
+    private EntityHandlerResult sendResponse(OcResourceResponse response) {
+        try {
+            OcPlatform.sendResponse(response);
+            return EntityHandlerResult.OK;
+        } catch (OcException e) {
+            Log.e(TAG, e.toString());
+            msg("Failed to send response");
+            return EntityHandlerResult.ERROR;
+        }
+    }
+
     private void createResource() {
         if (localLightResourceHandle == null) {
             try {
@@ -692,8 +891,8 @@ public class CloudFragment extends Fragment implements
                         Common.RESOURCE_URI,            //resource URI
                         Common.RESOURCE_TYPE,           //resource type name
                         Common.RESOURCE_INTERFACE,      //using default interface
-                        null,                           //use default entity handler
-                        EnumSet.of(ResourceProperty.DISCOVERABLE)
+                        this,                           //use default entity handler
+                        EnumSet.of(ResourceProperty.DISCOVERABLE, ResourceProperty.OBSERVABLE)
                 );
                 mResourceHandleList.add(localLightResourceHandle);
                 msg("Create Local Resource is success.");
@@ -784,6 +983,45 @@ public class CloudFragment extends Fragment implements
     @Override
     public void onObserveFailed(Throwable throwable) {
 
+    }
+
+    private void findResourceFromRD() {
+        try {
+            // Find Resource from Resource-Directory.
+            Log.d(TAG, "Find Resource from Resource-Directory.");
+            OcPlatform.findResource(
+                    Common.HOST,
+                    OcPlatform.WELL_KNOWN_QUERY,
+                    EnumSet.of(OcConnectivityType.CT_ADAPTER_IP),
+                    resourceFoundListener, mQos
+            );
+        } catch (OcException e) {
+            Log.e(TAG, e.toString());
+        }
+    }
+
+    private void registerObserveToRS() {
+        try {
+            // Register Observe to Resource-Server.
+            Log.d(TAG, "Register Observe to Resource-Server.");
+            if (mFoundResource != null) {
+                mFoundResource.observe(ObserveType.OBSERVE, new HashMap<String, String>(), this);
+            }
+        } catch (OcException e) {
+            Log.e(TAG, e.toString());
+        }
+    }
+
+    private void deregisterObserveToRS() {
+        try {
+            // Deregister Observe to Resource-Server.
+            Log.d(TAG, "Deregister Observe to Resource-Server.");
+            if (mFoundResource != null) {
+                mFoundResource.cancelObserve();
+            }
+        } catch (OcException e) {
+            Log.e(TAG, e.toString());
+        }
     }
 
     // ******************************************************************************
@@ -1302,6 +1540,18 @@ public class CloudFragment extends Fragment implements
                 mActionLog.append("Subscribe Device Presence" + EOL);
                 subscribeDevicePresence();
                 break;
+            case R.id.findresource_button:
+                mActionLog.append("Find Resource From RD" + EOL);
+                findResourceFromRD();
+                break;
+            case R.id.registerobserve_button:
+                mActionLog.append("Register Observe to RS" + EOL);
+                registerObserveToRS();
+                break;
+            case R.id.deregisterobserve_button:
+                mActionLog.append("Deregister Observe to RS" + EOL);
+                deregisterObserveToRS();
+                break;
 
             // MQ
             case R.id.mqget_button:
@@ -1375,6 +1625,13 @@ public class CloudFragment extends Fragment implements
         rdPubButton.setOnClickListener(this);
         rdDelButton.setOnClickListener(this);
         mDevicePresenceButton.setOnClickListener(this);
+
+        Button mfindResButton = (Button) rootView.findViewById(R.id.findresource_button);
+        Button mRegObsButton = (Button) rootView.findViewById(R.id.registerobserve_button);
+        Button mDeRegObsButton = (Button) rootView.findViewById(R.id.deregisterobserve_button);
+        mfindResButton.setOnClickListener(this);
+        mRegObsButton.setOnClickListener(this);
+        mDeRegObsButton.setOnClickListener(this);
 
         Button mqBrokerButton = (Button) rootView.findViewById(R.id.mqget_button);
         Button createTopicButton = (Button) rootView.findViewById(R.id.mqcreate_button);
