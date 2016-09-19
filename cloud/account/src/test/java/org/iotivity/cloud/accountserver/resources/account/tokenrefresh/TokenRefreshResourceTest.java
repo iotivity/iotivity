@@ -1,5 +1,6 @@
 package org.iotivity.cloud.accountserver.resources.account.tokenrefresh;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.text.DateFormat;
@@ -15,10 +16,12 @@ import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.protocols.IRequest;
+import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
+import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,16 +33,18 @@ import org.mockito.stubbing.Answer;
 public class TokenRefreshResourceTest {
     private static final String            REFRESH_TOKEN_URI         = Constants.ACCOUNT_TOKENREFRESH_FULL_URI;
     private static final String            DEVICE_ID                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
-    private String                         mAuthProvider             = "Samsung";
-    private String                         mRefreshToken             = "rt0001";
-    private String                         mUuid                     = "u0001";
+    private String                         mAuthProvider             = "Google";
+    private String                         mAccessToken              = "ya29.Ci9VA06h_WhVG0lV3nU-kXMPSmisPJ6sM5iqMuoaNz0YYCO2lkXo5TGGy7wiol6Rdw";
+    private String                         mRefreshToken             = "1/UKLrjrMWErlq8has8XcpPg_riBcHcehKFUdoPoX9k0E";
+    private String                         mUuid                     = "3ff62bac-c7cb-46f5-bb9b-c0f2f75f8c1d";
     private String                         mUserId                   = "userId";
-    private Cbor<HashMap<String, String>>  mCbor                     = new Cbor<HashMap<String, String>>();
-    private CoapDevice                     mockDevice                = mock(
+    private Cbor<HashMap<String, Object>>  mCbor                     = new Cbor<>();
+    private CoapDevice                     mMockDevice               = mock(
             CoapDevice.class);
     private TypeCastingManager<UserTable>  mUserTableCastingManager  = new TypeCastingManager<>();
     private TypeCastingManager<TokenTable> mTokenTableCastingManager = new TypeCastingManager<>();
     private TokenRefreshResource           mTokenRefreshResource     = new TokenRefreshResource();
+    private IResponse                      mResponse                 = null;
 
     @Before
     public void setUp() throws Exception {
@@ -55,9 +60,22 @@ public class TokenRefreshResourceTest {
                         .println("\t----payload : " + resp.getPayloadString());
                 System.out
                         .println("\t----responsestatus : " + resp.getStatus());
+                mResponse = resp;
                 return resp;
             }
-        }).when(mockDevice).sendResponse(Mockito.anyObject());
+        }).when(mMockDevice).sendResponse(Mockito.anyObject());
+    }
+
+    @Test
+    public void testRefreshTokenonDefaultRequestReceived() throws Exception {
+        String uuid = this.mUuid;
+        RegisterTokenInfo(uuid, mUserId, mAccessToken, mRefreshToken);
+        TokenRefresh(RequestMethod.POST, mMockDevice, uuid, DEVICE_ID,
+                mRefreshToken);
+        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
+        assertTrue(hashmapCheck(mResponse, "accesstoken"));
+        assertTrue(hashmapCheck(mResponse, "refreshtoken"));
+        assertTrue(hashmapCheck(mResponse, "expiresin"));
     }
 
     @Test(expected = ServerException.NotFoundException.class)
@@ -65,7 +83,7 @@ public class TokenRefreshResourceTest {
             throws Exception {
         String uuid = this.mUuid + "WrongRefreshTokenCase";
         RegisterTokenInfo(uuid, mUserId, mAuthProvider, mRefreshToken);
-        TokenRefresh(RequestMethod.POST, mockDevice, uuid, DEVICE_ID,
+        TokenRefresh(RequestMethod.POST, mMockDevice, uuid, DEVICE_ID,
                 mRefreshToken + "NotExist");
     }
 
@@ -74,7 +92,7 @@ public class TokenRefreshResourceTest {
             throws Exception {
         String uuid = this.mUuid + "InvalidRequestMethod (GET)";
         RegisterTokenInfo(uuid, mUserId, mAuthProvider, mRefreshToken);
-        TokenRefresh(RequestMethod.GET, mockDevice, uuid, DEVICE_ID,
+        TokenRefresh(RequestMethod.GET, mMockDevice, uuid, DEVICE_ID,
                 mRefreshToken + "InvalidMethod");
     }
 
@@ -82,7 +100,7 @@ public class TokenRefreshResourceTest {
     public void testRefreshTokenonRequestReceivedNullUuid() throws Exception {
         String uuid = this.mUuid + "NullUuid";
         RegisterTokenInfo(uuid, mUserId, mAuthProvider, mRefreshToken);
-        TokenRefresh(RequestMethod.POST, mockDevice, null, DEVICE_ID,
+        TokenRefresh(RequestMethod.POST, mMockDevice, null, DEVICE_ID,
                 mRefreshToken + "InvalidMethod");
     }
 
@@ -90,7 +108,7 @@ public class TokenRefreshResourceTest {
     public void testRefreshTokenonRequestReceivedNullDi() throws Exception {
         String uuid = this.mUuid + "NullDi";
         RegisterTokenInfo(uuid, mUserId, mAuthProvider, mRefreshToken);
-        TokenRefresh(RequestMethod.POST, mockDevice, uuid, null,
+        TokenRefresh(RequestMethod.POST, mMockDevice, uuid, null,
                 mRefreshToken + "InvalidMethod");
     }
 
@@ -99,7 +117,7 @@ public class TokenRefreshResourceTest {
             throws Exception {
         String uuid = this.mUuid + "NullRefreshToken";
         RegisterTokenInfo(uuid, mUserId, mAuthProvider, mRefreshToken);
-        TokenRefresh(RequestMethod.POST, mockDevice, uuid, DEVICE_ID, null);
+        TokenRefresh(RequestMethod.POST, mMockDevice, uuid, DEVICE_ID, null);
     }
 
     public void TokenRefresh(RequestMethod method, CoapDevice device,
@@ -159,5 +177,22 @@ public class TokenRefreshResourceTest {
         userInfo.setProvider(mAuthProvider);
         userInfo.setUserid(userId);
         return userInfo;
+    }
+
+    private boolean methodCheck(IResponse response,
+            ResponseStatus responseStatus) {
+        if (responseStatus == response.getStatus())
+            return true;
+        else
+            return false;
+    }
+
+    private boolean hashmapCheck(IResponse response, String propertyName) {
+        HashMap<String, Object> payloadData = mCbor
+                .parsePayloadFromCbor(response.getPayload(), HashMap.class);
+        if (payloadData.containsKey(propertyName))
+            return true;
+        else
+            return false;
     }
 }

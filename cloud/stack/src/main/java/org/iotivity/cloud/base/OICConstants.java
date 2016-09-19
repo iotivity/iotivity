@@ -120,4 +120,7 @@ public class OICConstants {
 
     public static final String DEVICE_PRESENCE_FULL_URI      = "/"
             + OICConstants.PREFIX_OIC + "/" + OICConstants.DEVICE_PRESENCE_URI;
+
+    public static final String CREDPROV_CERT_FULL_URI        = "/" + PREFIX_OIC
+            + "/" + CREDPROV_URI + "/" + CERT_URI;
 }
