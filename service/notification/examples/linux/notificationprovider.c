@@ -305,7 +305,7 @@ int main()
                 break;
 
             case 10:
-                printf("NSProviderGetConsumerTopics\n");
+                printf("NSProviderGetTopics\n");
                 {
                     NSTopicLL * topics = NSProviderGetTopics();
                     printTopics(topics);

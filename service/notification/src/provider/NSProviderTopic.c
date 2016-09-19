@@ -198,13 +198,12 @@ NSResult NSSendTopicUpdationToConsumer(char *consumerId)
 
     NSCacheSubData * subData = (NSCacheSubData*) element->data;
 
-    if (OCNotifyListOfObservers(rHandle, (OCObservationId*)&subData->messageObId, 1, payload, OC_HIGH_QOS)
-            != OC_STACK_OK)
+    if (OCNotifyListOfObservers(rHandle, (OCObservationId*)&subData->messageObId, 1, payload,
+            OC_HIGH_QOS) != OC_STACK_OK)
     {
         NS_LOG(ERROR, "fail to send topic updation");
         OCRepPayloadDestroy(payload);
         return NS_ERROR;
-
     }
 
     OCRepPayloadDestroy(payload);
@@ -342,7 +341,7 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
     payloadValue = NSPayloadFindValue(payload, NS_ATTRIBUTE_TOPIC_LIST);
     size_t dimensionSize = calcDimTotal(payloadValue->arr.dimensions);
     size_t dimensions[3] = {dimensionSize, 0, 0};
-    OCRepPayloadGetPropObjectArray(payload, NS_ATTRIBUTE_TOPIC_LIST, & topicListPayload, dimensions);
+    OCRepPayloadGetPropObjectArray(payload, NS_ATTRIBUTE_TOPIC_LIST, &topicListPayload, dimensions);
 
     for(int i = 0; i <(int)dimensionSize; i++)
     {
@@ -399,6 +398,7 @@ void * NSTopicSchedule(void * ptr)
                     NSFreeOCEntityHandlerRequest((OCEntityHandlerRequest*) node->taskData);
                     break;
                 case TASK_SUBSCRIBE_TOPIC:
+                {
                     NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPIC : ");
                     NSCacheElement * newObj = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
                     newObj->data = node->taskData;
@@ -406,12 +406,18 @@ void * NSTopicSchedule(void * ptr)
                     NSStorageWrite(consumerTopicList, newObj);
                     NSCacheTopicSubData * topicSubData = (NSCacheTopicSubData *) node->taskData;
                     NSSendTopicUpdationToConsumer(topicSubData->id);
+                }
                     break;
                 case TASK_UNSUBSCRIBE_TOPIC:
+                {
                     NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPIC : ");
                     NSProviderDeleteConsumerTopic(consumerTopicList,
                             (NSCacheTopicSubData *) node->taskData);
-                    NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPIC AFter: ");
+                    NSCacheTopicSubData * topicSubData = (NSCacheTopicSubData *) node->taskData;
+                    NSSendTopicUpdationToConsumer(topicSubData->id);
+                    OICFree(topicSubData->topicName);
+                    OICFree(topicSubData);
+                }
                     break;
                 case TASK_ADD_TOPIC:
                 {
