@@ -345,15 +345,23 @@ namespace OIC
                 throw ESException("Not found owned devices.");
             }
 
-            if(!cloudUuid.empty()
-                && performACLProvisioningForCloudServer(ownedDevice, cloudUuid) != ESResult::ES_OK)
+            if(cloudUuid.empty())
+            {
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
+                         "ACL provisioning is skipped due to empty UUID of cloud server");
+            }
+            else if(performACLProvisioningForCloudServer(ownedDevice, cloudUuid) != ESResult::ES_OK)
             {
                 OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "error performACLProvisioningForCloudServer");
                 throw ESException("error performACLProvisioningForCloudServer");
             }
 
-            if(credId != -1
-                && performCertProvisioningForCloudServer(ownedDevice, credId) != ESResult::ES_OK)
+            if(credId < 1)
+            {
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
+                         "Cert. provisioning is skipped due to wrong cred ID (<1)");
+            }
+            else if(performCertProvisioningForCloudServer(ownedDevice, credId) != ESResult::ES_OK)
             {
                 OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "error performCertProvisioningForCloudServer");
                 throw ESException("error performCertProvisioningForCloudServer");
