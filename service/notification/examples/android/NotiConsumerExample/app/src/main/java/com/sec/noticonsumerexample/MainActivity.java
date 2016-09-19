@@ -18,9 +18,6 @@
 
 package com.sec.noticonsumerexample;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -28,11 +25,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.iotivity.service.ns.common.TopicsList;
+import org.iotivity.service.ns.common.Topic;
 
 public class MainActivity extends AppCompatActivity
 {
@@ -44,12 +41,12 @@ public class MainActivity extends AppCompatActivity
     private Button btnEnableRemoteService;
     private Button btnGetTopicList;
     private Button btnUpdateTopicList;
+    private Button btnClearLog;
     private static TextView TvLog;
 
     private boolean isStarted = false;
-    private String consumerId;
 
-    private ConsumerProxy mConsumerProxy = null;
+    private ConsumerSample mConsumerSample = null;
 
     private static final int PROVIDER_DISCOVERED = 1;
     private static final int STATE_CHANGED = 2;
@@ -100,6 +97,15 @@ public class MainActivity extends AppCompatActivity
                         }
                         break;
                     }
+                case TOPICS_RECEIVED:
+                    {
+                        String topicList = (String) msg.obj;
+                        if (topicList != null)
+                        {
+                            TvLog.append( topicList + "\n");
+                        }
+                        break;
+                    }
                 default:
                     break;
             }
@@ -130,6 +136,7 @@ public class MainActivity extends AppCompatActivity
         btnEnableRemoteService = (Button) findViewById(R.id.BtnEnableRemoteService);
         btnGetTopicList = (Button) findViewById(R.id.BtnGetTopicList);
         btnUpdateTopicList = (Button) findViewById(R.id.BtnUpdateTopicList);
+        btnClearLog = (Button) findViewById(R.id.BtnClearLog);
 
         TvLog = (TextView) findViewById(R.id.TvLog);
 
@@ -139,22 +146,18 @@ public class MainActivity extends AppCompatActivity
         btnEnableRemoteService.setOnClickListener(mClickListener);
         btnGetTopicList.setOnClickListener(mClickListener);
         btnUpdateTopicList.setOnClickListener(mClickListener);
+        btnClearLog.setOnClickListener(mClickListener);
 
-        mConsumerProxy = new ConsumerProxy(getApplicationContext());
-        mConsumerProxy.setHandler(mHandler);
+        mConsumerSample = new ConsumerSample(getApplicationContext());
+        mConsumerSample.setHandler(mHandler);
     }
 
     @Override
     protected void onDestroy()
     {
         if (isStarted)
-            mConsumerProxy.stopNotificationConsumer();
+            mConsumerSample.stopNotificationConsumer();
         super.onDestroy();
-    }
-
-    public ConsumerProxy getProviderProxy()
-    {
-        return mConsumerProxy;
     }
 
     Button.OnClickListener mClickListener = new View.OnClickListener()
@@ -165,84 +168,103 @@ public class MainActivity extends AppCompatActivity
             {
                 case R.id.BtnStart:
                     {
-                        if (isStarted == false)
+                        if (!isStarted)
                         {
                             Log.i(TAG, "Start NS Consumer Service");
 
                             TvLog.setText("Start NS-Consumer\n");
-                            mConsumerProxy.startNotificationConsumer();
+                            mConsumerSample.startNotificationConsumer();
                             isStarted = true;
                         }
                         else
                         {
-                            Log.e(TAG, "NS Consumer Service had already started");
+                            Log.e(TAG, "NS Consumer Service has already started");
+                            showToast("Error : Service has already started");
                         }
                     }
                     break;
 
                 case R.id.BtnStop:
                     {
-                        if (isStarted == false)
+                        if (!isStarted)
                         {
                             Log.e(TAG, "Fail to stop service. Service has not been started");
+                            showToast("Error : Service has not been started");
                             break;
                         }
                         TvLog.append("Stop NS-Consumer\n");
-                        mConsumerProxy.stopNotificationConsumer();
+                        mConsumerSample.stopNotificationConsumer();
                         isStarted = false;
                     }
                     break;
                 case R.id.BtnRescan:
                     {
-                        if (isStarted == false)
+                        if (!isStarted)
                         {
                             Log.e(TAG, "Fail to rescan. Service has not been started");
+                            showToast("Error : Service has not been started");
                             break;
                         }
-
                         TvLog.append("Rescan NS-Consumer\n");
-                        mConsumerProxy.rescanProvider();
+                        mConsumerSample.rescanProvider();
                     }
                     break;
                 case R.id.BtnEnableRemoteService:
                     {
-                        if (isStarted == false)
+                        if (!isStarted)
                         {
                             Log.e(TAG, "Fail to Enable RemoteService. Service has not been started");
+                            showToast("Error : Service has not been started");
                             break;
                         }
                         TvLog.append("EnableRemoteService NS-Consumer\n");
 
                         //TODO: Update to read the serverAddress from UI
                         String serverAddress = new String();
-                        mConsumerProxy.enableRemoteService(serverAddress);
+                        mConsumerSample.enableRemoteService(serverAddress);
                     }
                     break;
                 case R.id.BtnGetTopicList:
                     {
-                        if (isStarted == false)
+                        if (!isStarted)
                         {
                             Log.e(TAG, "Fail to GetTopicList. Service has not been started");
+                            showToast("Error : Service has not been started");
                             break;
                         }
                         TvLog.append("GetTopicList NS-Consumer\n");
-                        mConsumerProxy.getTopicsList();
+                        mConsumerSample.getTopicsList();
                     }
                     break;
                 case R.id.BtnUpdateTopicList:
                     {
-                        if (isStarted == false)
+                        if (!isStarted)
                         {
                             Log.e(TAG, "Fail to UpdateTopicList. Service has not been started");
+                            showToast("Error : Service has not been started");
+                            break;
+                        }
+                        if(mConsumerSample.getAcceptor())
+                        {
+                            Log.e(TAG, "Operation Not Allowed. ProviderService Acceptor is not Consumer");
+                            showToast("Operation Not Allowed. ProviderService Acceptor is not Consumer");
                             break;
                         }
                         TvLog.append("UpdateTopicList NS-Consumer\n");
 
-                        //TODO: Update to read the TopicsList from UI
-                        TopicsList topicsList = new TopicsList();
-                        mConsumerProxy.updateTopicList(topicsList);
+                        TopicsList topicList = new TopicsList();
+                        topicList.addTopic("OCF_TOPIC1", Topic.TopicState.SUBSCRIBED);
+                        topicList.addTopic("OCF_TOPIC2", Topic.TopicState.SUBSCRIBED);
+                        topicList.addTopic("OCF_TOPIC3", Topic.TopicState.UNSUBSCRIBED);
+
+                        mConsumerSample.updateTopicList(topicList);
                     }
                     break;
+                case R.id.BtnClearLog:
+                {
+                    TvLog.setText("");
+                }
+                break;
             }
         }
     };
