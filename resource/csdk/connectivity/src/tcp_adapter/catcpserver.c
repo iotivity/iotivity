@@ -38,10 +38,12 @@
 #endif
 
 #include "catcpinterface.h"
+#include "caipinterface.h"
 #include <coap/pdu.h>
 #include "caadapterutils.h"
 #include "octhread.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 #ifdef __WITH_TLS__
 #include "ca_adapter_net_tls.h"
@@ -1082,7 +1084,58 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     VERIFY_NON_NULL(info, TAG, "info is NULL");
     VERIFY_NON_NULL(size, TAG, "size is NULL");
 
-    return CA_NOT_SUPPORTED;
+    u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
+    if (!iflist)
+    {
+        OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));
+        return CA_STATUS_FAILED;
+    }
+
+    uint32_t len = u_arraylist_length(iflist);
+
+    CAEndpoint_t *ep = (CAEndpoint_t *)OICCalloc(len, sizeof (CAEndpoint_t));
+    if (!ep)
+    {
+        OIC_LOG(ERROR, TAG, "Malloc Failed");
+        u_arraylist_destroy(iflist);
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
+    for (uint32_t i = 0, j = 0; i < len; i++)
+    {
+        CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+        if (!ifitem)
+        {
+            continue;
+        }
+
+        ep[j].adapter = CA_ADAPTER_TCP;
+        ep[j].ifindex = 0;
+
+        if (ifitem->family == AF_INET6)
+        {
+            ep[j].flags = CA_IPV6;
+            ep[j].port = caglobals.tcp.ipv6.port;
+        }
+        else if (ifitem->family == AF_INET)
+        {
+            ep[j].flags = CA_IPV4;
+            ep[j].port = caglobals.tcp.ipv4.port;
+        }
+        else
+        {
+            continue;
+        }
+        OICStrcpy(ep[j].addr, sizeof(ep[j].addr), ifitem->addr);
+        j++;
+    }
+
+    *info = ep;
+    *size = len;
+
+    u_arraylist_destroy(iflist);
+
+    return CA_STATUS_OK;
 }
 
 CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
