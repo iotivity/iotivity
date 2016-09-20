@@ -178,7 +178,7 @@ namespace OIC
                         const OCRepresentation& rep, const int eCode) >(
                                 std::bind(&EnrolleeResource::onGetStatusResponse, this,
                                         std::placeholders::_1, std::placeholders::_2,
-                                        std::placeholders::_3)));
+                                        std::placeholders::_3)), OC::QualityOfService::HighQos);
             };
 
             OCStackResult result = getStatus();
@@ -212,7 +212,7 @@ namespace OIC
                         const OCRepresentation& rep, const int eCode) >(
                                 std::bind(&EnrolleeResource::onGetConfigurationResponse, this,
                                         std::placeholders::_1, std::placeholders::_2,
-                                        std::placeholders::_3)));
+                                        std::placeholders::_3)), OC::QualityOfService::HighQos);
             };
 
             OCStackResult result = getConfigurationStatus();
@@ -244,7 +244,7 @@ namespace OIC
                                     const OCRepresentation& rep, const int eCode) >(
                     std::bind(&EnrolleeResource::onProvisioningResponse, this,
                     std::placeholders::_1, std::placeholders::_2,
-                    std::placeholders::_3)));
+                    std::placeholders::_3)), OC::QualityOfService::HighQos);
         }
     }
 }
