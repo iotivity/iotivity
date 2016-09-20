@@ -24,7 +24,7 @@ NSResult NSSetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
 {
     NS_LOG(DEBUG, "NSSetMessagePayload - IN");
 
-    *msgPayload = OCRepPayloadCreate();
+    *msgPayload = msg->extraInfo != NULL ? msg->extraInfo : OCRepPayloadCreate();
 
     if (!*msgPayload)
     {
@@ -43,10 +43,11 @@ NSResult NSSetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TEXT, msg->contentText);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_SOURCE, msg->sourceName);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TOPIC_NAME, msg->topic);
-    if(msg->mediaContents)
+
+    if (msg->mediaContents)
     {
-        NSDuplicateSetPropertyString(msgPayload,
-                NS_ATTRIBUTE_ICON_IMAGE, msg->mediaContents->iconImage);
+        NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_ICON_IMAGE,
+                msg->mediaContents->iconImage);
     }
 
     NS_LOG(DEBUG, "NSSetMessagePayload - OUT");
@@ -178,13 +179,14 @@ NSResult NSSendNotification(NSMessage *msg)
     {
         NS_LOG(ERROR, "fail to send message");
         OCRepPayloadDestroy(payload);
+        msg->extraInfo = NULL;
         return NS_ERROR;
     }
 
     OCRepPayloadDestroy(payload);
+    msg->extraInfo = NULL;
 
     NS_LOG(DEBUG, "NSSendMessage - OUT");
-
     return NS_OK;
 }
 

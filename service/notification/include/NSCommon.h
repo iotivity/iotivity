@@ -28,6 +28,7 @@
 #define _NS_COMMON_H_
 
 #include <stdint.h>
+#include <octypes.h>
 
 #define NS_UUID_STRING_SIZE 37
 
@@ -148,6 +149,7 @@ typedef struct
     char * sourceName;
     NSMediaContents * mediaContents;
     char * topic;
+    OCRepPayload * extraInfo;
 
 } NSMessage;
 
