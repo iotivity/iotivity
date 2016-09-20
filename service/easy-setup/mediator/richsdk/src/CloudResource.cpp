@@ -53,7 +53,7 @@ namespace OIC
                                         const OCRepresentation& rep, const int eCode) >(
                         std::bind(&CloudResource::onCloudProvResponse, this,
                         std::placeholders::_1, std::placeholders::_2,
-                        std::placeholders::_3)));
+                        std::placeholders::_3)), OC::QualityOfService::HighQos);
         }
 
         void CloudResource::onCloudProvResponse(const HeaderOptions& /*headerOptions*/,
