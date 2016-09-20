@@ -67,6 +67,16 @@ void SetGeneratePinCB(GeneratePinCallback pinCB)
     gGenPinCallback = pinCB;
 }
 
+void UnsetInputPinCB()
+{
+    gInputPinCallback = NULL;
+}
+
+void UnsetGeneratePinCB()
+{
+    gGenPinCallback = NULL;
+}
+
 OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize)
 {
     if(!pinBuffer)

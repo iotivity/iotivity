@@ -66,6 +66,18 @@ void SetGetPreconfigPinCB(InputPinCallback pinCB);
 #endif //_ENABLE_MULTIPLE_OWNER_
 
 /**
+ * Function to unset the input PIN callback.
+ * NOTE : Do not call this function while PIN based ownership transfer.
+ */
+void UnsetInputPinCB();
+
+/**
+ * Function to unset the PIN generation callback.
+ * NOTE : Do not call this function while PIN based ownership transfer.
+ */
+void UnsetGeneratePinCB();
+
+/**
  * Function to generate random PIN.
  * This function will send generated PIN to user via callback.
  *
