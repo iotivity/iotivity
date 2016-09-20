@@ -97,7 +97,7 @@ NSResult NSFreeMessage(NSMessage * obj)
     NSFreeMalloc(&(obj->sourceName));
     NSFreeMalloc(&(obj->topic));
     NSFreeMediaContents(obj->mediaContents);
-
+    OCRepPayloadDestroy(obj->extraInfo);
     OICFree(obj);
 
     return NS_OK;
@@ -148,6 +148,11 @@ NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
     if (copyMsg->topic)
     {
         newMsg->topic = OICStrdup(copyMsg->topic);
+    }
+
+    if (copyMsg->extraInfo)
+    {
+        newMsg->extraInfo = OCRepPayloadClone(copyMsg->extraInfo);
     }
 
     return newMsg;
@@ -429,6 +434,7 @@ NSMessage * NSInitializeMessage()
     msg->sourceName = NULL;
     msg->mediaContents = NULL;
     msg->topic = NULL;
+    msg->extraInfo = NULL;
 
     return msg;
 }
