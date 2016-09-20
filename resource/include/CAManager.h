@@ -51,6 +51,12 @@ namespace OC
                                                ConnectionChangedCallback connectionHandler);
 
         /**
+        * Unset network monitoring handler.
+        * @return Returns ::OC_STACK_OK if success.
+        */
+        OCStackResult unsetNetworkMonitorHandler();
+
+        /**
         * Set port number to use.
         * @param adapter transport adapter type to assign the specified port number.
         * @param flag transport flag information.

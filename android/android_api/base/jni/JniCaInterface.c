@@ -222,8 +222,12 @@ Java_org_iotivity_ca_CaInterface_caManagerInitialize(JNIEnv *env, jclass clazz,
                                                    "(I)Lorg/iotivity/base/OcConnectivityType;");
         }
     }
-    CARegisterNetworkMonitorHandler(CAManagerAdapterStateChangedCB,
-                                    CAManagerConnectionStateChangedCB);
+    CAResult_t res = CARegisterNetworkMonitorHandler(CAManagerAdapterStateChangedCB,
+                                                     CAManagerConnectionStateChangedCB);
+    if (CA_STATUS_OK != res)
+    {
+        LOGE("CARegisterNetworkMonitorHandler has failed");
+    }
 }
 
 JNIEXPORT void JNICALL
@@ -243,6 +247,13 @@ Java_org_iotivity_ca_CaInterface_caManagerTerminate(JNIEnv *env, jclass clazz)
     {
         (*env)->DeleteGlobalRef(env, g_jni_cls_enum);
         g_jni_cls_enum = NULL;
+    }
+
+    CAResult_t res = CAUnregisterNetworkMonitorHandler(CAManagerAdapterStateChangedCB,
+                                                       CAManagerConnectionStateChangedCB);
+    if (CA_STATUS_OK != res)
+    {
+        LOGE("CAUnregisterNetworkMonitorHandler has failed");
     }
 }
 

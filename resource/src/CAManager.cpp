@@ -103,6 +103,17 @@ OCStackResult CAManager::setNetworkMonitorHandler(AdapterChangedCallback adapter
     return convertCAResultToOCResult(ret);
 }
 
+OCStackResult CAManager::unsetNetworkMonitorHandler()
+{
+    g_adapterHandler = nullptr;
+    g_connectionHandler = nullptr;
+
+    CAResult_t ret = CAUnregisterNetworkMonitorHandler(DefaultAdapterStateChangedHandler,
+                                                       DefaultConnectionStateChangedHandler);
+
+    return convertCAResultToOCResult(ret);
+}
+
 OCStackResult CAManager::setPortNumberToAssign(OCTransportAdapter adapter,
                                                OCTransportFlags flag, uint16_t port)
 {

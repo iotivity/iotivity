@@ -2362,6 +2362,14 @@ OCStackResult OCStop()
     TerminateKeepAlive(myStackMode);
 #endif
 
+    OCStackResult result = CAResultToOCResult(
+            CAUnregisterNetworkMonitorHandler(OCDefaultAdapterStateChangedHandler,
+                                              OCDefaultConnectionStateChangedHandler));
+    if (OC_STACK_OK != result)
+    {
+        OIC_LOG(ERROR, TAG, "CAUnregisterNetworkMonitorHandler has failed");
+    }
+
     // Free memory dynamically allocated for resources
     deleteAllResources();
     DeleteDeviceInfo();
