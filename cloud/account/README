@@ -31,3 +31,6 @@ Build and Run
 	- Before you run a Accout server, You need to set up following steps.
           1) Install MongoDB
           2) Install Github certificates for github.com and *.github.com.
+5) Please download: file from http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html: Java Cryptography Extension
+         1.Extract files from zip. 
+         2.Place local_policy.jar and US_export_policy.jar files in/usr/lib/jvm/PATH_TO_JDK/jre/lib/security 

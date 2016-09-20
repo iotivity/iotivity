@@ -30,7 +30,7 @@ import org.iotivity.cloud.accountserver.resources.account.tokenrefresh.TokenRefr
 import org.iotivity.cloud.accountserver.resources.acl.group.GroupResource;
 import org.iotivity.cloud.accountserver.resources.acl.id.AclResource;
 import org.iotivity.cloud.accountserver.resources.acl.invite.InviteResource;
-import org.iotivity.cloud.accountserver.resources.certificate.CertificateResource;
+import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateResource;
 import org.iotivity.cloud.base.ServerSystem;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.util.Log;

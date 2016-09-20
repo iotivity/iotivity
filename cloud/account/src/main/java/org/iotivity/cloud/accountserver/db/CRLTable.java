@@ -19,25 +19,47 @@
  * //
  * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
-package org.iotivity.cloud.accountserver.x509.cert;
+package org.iotivity.cloud.accountserver.db;
 
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
+import org.bson.types.Binary;
 
-public class CertificatePrivateKeyPair {
-    private X509Certificate mCertificate = null;
-    private PrivateKey mKey = null;
+import java.util.Date;
 
-    public CertificatePrivateKeyPair(X509Certificate cert, PrivateKey k) {
-        mCertificate = cert;
-        mKey = k;
+public class CRLTable {
+
+    private Date thisUpdate;
+
+    private Binary binaryData;
+
+    public CRLTable() {
     }
 
-    public X509Certificate getCertificate() {
-        return mCertificate;
+    public CRLTable(Date thisUpdate, Binary binaryData) {
+        this.thisUpdate = thisUpdate;
+        this.binaryData = binaryData;
     }
 
-    public PrivateKey getKey() {
-        return mKey;
+    public Date getThisUpdate() {
+        return thisUpdate;
+    }
+
+    public void setThisUpdate(Date thisUpdate) {
+        this.thisUpdate = thisUpdate;
+    }
+
+    public Binary getBinaryData() {
+        return binaryData;
+    }
+
+    public void setBinaryData(Binary binaryData) {
+        this.binaryData = binaryData;
+    }
+
+    @Override
+    public String toString() {
+        return "CRLTable{" +
+                "thisUpdate=" + thisUpdate +
+                ", binaryData=" + binaryData +
+                '}';
     }
 }

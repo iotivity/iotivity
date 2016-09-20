@@ -73,6 +73,8 @@ public class AccountDBManager {
         mongoDB.createTable(Constants.DEVICE_TABLE);
         mongoDB.createTable(Constants.ACL_TABLE);
         mongoDB.createTable(Constants.ACLTEMPLATE_TABLE);
+        mongoDB.createTable(Constants.CERTIFICATE_TABLE);
+        mongoDB.createTable(Constants.CRL_TABLE);
     }
 
     private void createIndexes() {
@@ -122,6 +124,16 @@ public class AccountDBManager {
 
         mongoDB.createIndex(Constants.ACLTEMPLATE_TABLE, keys);
         keyField.put(Constants.ACLTEMPLATE_TABLE, keys);
+
+        keys = new ArrayList<>();
+        keys.add(Constants.KEYFIELD_SN);
+        mongoDB.createIndex(Constants.CERTIFICATE_TABLE, keys);
+        keyField.put(Constants.CERTIFICATE_TABLE, keys);
+
+        keys = new ArrayList<>();
+        keys.add(Constants.REQ_THIS_UPDATE);
+        mongoDB.createIndex(Constants.CRL_TABLE, keys);
+        keyField.put(Constants.CRL_TABLE, keys);
 
     }
 
