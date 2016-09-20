@@ -148,8 +148,8 @@ print "Files path is %s" % env.get('es_src')
 ######################################################################
 # Generate RichSDK Mediator AAR
 ################################################ ######################
-if target_os in ['android']:
-	SConscript('android/SConscript')
+#if target_os in ['android']:
+#	SConscript('android/SConscript')
 
 ######################################################################
 # Build RichSDK Mediator Sample App
@@ -157,8 +157,8 @@ if target_os in ['android']:
 if target_os in ['linux']:
 	SConscript('../../sampleapp/mediator/linux/richsdk_sample/SConscript')
 
-if target_os in ['android']:
-	SConscript('../../sampleapp/mediator/android/SConscript')
+#if target_os in ['android']:
+#	SConscript('../../sampleapp/mediator/android/SConscript')
 
 
 ######################################################################

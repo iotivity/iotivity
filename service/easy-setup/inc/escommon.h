@@ -130,37 +130,49 @@ typedef enum
     ES_OK = 0,
 
     /**
-     * Successfully found Enrollee in a given network. This will be given in Cloud provisioning step.
+     * Enrollee discovery fails in cloud provisioning
      */
-    ES_FOUND_ENROLLEE = 1,
+    ES_ENROLLEE_DISCOVERY_FAILURE = 11,
 
     /**
-     * Not found Enrollee in a give network. This will be given in Cloud provisioning step.
+     * Valid GET or POST request fails for some reason.
+     * This failure may happen when it failed to receive any response from Enrollee by a timeout threshold
      */
-    ES_NOT_FOUND_ENROLLEE = 11,
+    ES_COMMUNICATION_ERROR,
 
     /**
-     * Security opertion is not supported because it is built as unsecured mode.
+     * Security opertion is not supported because Mediator is built as unsecured mode.
      */
     ES_SEC_OPERATION_IS_NOT_SUPPORTED = 20,
 
     /**
-     * A previous request is denied due to its unauthority. It means, Mediator is not unauthroized
-     * to Enrollee for some reaons.
+     * Security resource discovery fails due to loss of discovery packet or absence of the resource in a network
      */
-    ES_UNAUTHORIZED_REQ = 21,
+    ES_SECURE_RESOURCE_DISCOVERY_FAILURE,
 
     /**
-     * Security provisioning fails. The reasons would be: a packet loss for unowned/owned device
-     * discovery request or ownership transfer request, or a denial to ownership transfer by Enrollee
-     * for some reason.
+     * Ownership transfer fails because DTLS handshake failure happens
      */
-    ES_SEC_PROVISION_FAILS = 22,
+    ES_OWNERSHIP_TRANSFER_FAILURE,
+
+    /**
+     * ACL provisioning fails in cloud provisioning.
+     * It could be that UUID format of cloud server is wrong.
+     * Or any response for the provisioning request is not arrived at Mediator
+     */
+    ES_ACL_PROVISIONING_FAILURE,
+
+    /**
+     * Cert. provisioning fails in cloud provisioning.
+     * It could be that you put a wrong cred ID of which the corresponding certificate does not exist in SVR DB.
+     * Or any response for the provisioning request is not arrived at Mediator
+     */
+    ES_CERT_PROVISIONING_FAILURE,
 
     /**
      * Provisioning fails for some reason.
      */
-    ES_ERROR = 255,
+    ES_ERROR = 255
 } ESResult;
 
 /**

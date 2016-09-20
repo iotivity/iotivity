@@ -46,10 +46,20 @@ namespace OIC
 
             if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
             {
+                ESResult result = ESResult::ES_ERROR;
+
                 OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                        "onProvisioningResponse : Provisioning is failed ");
+                            "onProvisioningResponse : Provisioning is failed ");
+
+                if(eCode == OCStackResult::OC_STACK_COMM_ERROR)
+                {
+                    OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                        "can't receive any response from Enrollee by a timeout threshold.");
+                    result = ESResult::ES_COMMUNICATION_ERROR;
+                }
+
                 std::shared_ptr< DevicePropProvisioningStatus > provStatus = std::make_shared<
-                        DevicePropProvisioningStatus >(ESResult::ES_ERROR);
+                        DevicePropProvisioningStatus >(result);
                 m_devicePropProvStatusCb(provStatus);
                 return;
             }
@@ -75,11 +85,11 @@ namespace OIC
                 OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                             "onGetStatusResponse : onGetStatusResponse is failed ");
 
-                if (eCode == OCStackResult::OC_STACK_UNAUTHORIZED_REQ)
+                if(eCode == OCStackResult::OC_STACK_COMM_ERROR)
                 {
                     OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                        "Mediator is unauthorized from Enrollee.");
-                    result = ESResult::ES_UNAUTHORIZED_REQ;
+                        "can't receive any response from Enrollee by a timeout threshold.");
+                    result = ESResult::ES_COMMUNICATION_ERROR;
                 }
 
                 EnrolleeStatus enrolleeStatus(rep);
@@ -106,16 +116,16 @@ namespace OIC
 
             if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
             {
-                ESResult result  = ESResult::ES_ERROR;
+                ESResult result = ESResult::ES_ERROR;
 
                 OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                             "onGetConfigurationResponse : onGetConfigurationResponse is failed ");
 
-                if (eCode == OCStackResult::OC_STACK_UNAUTHORIZED_REQ)
+                if(eCode == OCStackResult::OC_STACK_COMM_ERROR)
                 {
                     OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                        "Mediator is unauthorized from Enrollee.");
-                    result = ESResult::ES_UNAUTHORIZED_REQ;
+                        "can't receive any response from Enrollee by a timeout threshold.");
+                    result = ESResult::ES_COMMUNICATION_ERROR;
                 }
 
                 EnrolleeConf enrolleeConf(rep);
