@@ -57,7 +57,8 @@ public class InviteManager {
         public IRequest mRequest;
     }
 
-    private HashMap<String, InviteSubscriber> mSubscribers = new HashMap<>();
+    // <uid, subscriber list>
+    private HashMap<String, ArrayList<InviteSubscriber>> mSubscribers = new HashMap<>();
 
     public void addInvitation(String uid, String gid, String mid) {
 
@@ -162,15 +163,30 @@ public class InviteManager {
 
         InviteSubscriber newSubscriber = new InviteSubscriber(subscriber,
                 request);
-        mSubscribers.put(uid, newSubscriber);
+
+        synchronized (mSubscribers) {
+            ArrayList<InviteSubscriber> subscriberList = mSubscribers.get(uid);
+
+            if (subscriberList == null) {
+                subscriberList = new ArrayList<>();
+            }
+
+            subscriberList.add(newSubscriber);
+            mSubscribers.put(uid, subscriberList);
+        }
 
         return getInvitationInfo(uid);
     }
 
-    public HashMap<String, Object> removeSubscriber(String uid) {
+    public HashMap<String, Object> removeSubscriber(String uid, IRequest request) {
 
-        if (mSubscribers.containsKey(uid)) {
-            mSubscribers.remove(uid);
+        synchronized (mSubscribers) {
+            if (mSubscribers.containsKey(uid)) {
+
+                mSubscribers.get(uid).removeIf(
+                        subscriber -> subscriber.mRequest.getRequestId()
+                                .equals(request.getRequestId()));
+            }
         }
 
         return getInvitationInfo(uid);
@@ -182,12 +198,17 @@ public class InviteManager {
             if (!mSubscribers.containsKey(id)) {
                 return;
             }
+
             Cbor<HashMap<String, Object>> cbor = new Cbor<>();
-            mSubscribers.get(id).mSubscriber.sendResponse(
-                    MessageBuilder.createResponse(mSubscribers.get(id).mRequest,
-                            ResponseStatus.CONTENT,
-                            ContentFormat.APPLICATION_CBOR,
-                            cbor.encodingPayloadToCbor(getInvitationInfo(id))));
+            byte[] payload = cbor.encodingPayloadToCbor(getInvitationInfo(id));
+
+            for (InviteSubscriber subscriber : mSubscribers.get(id)) {
+
+                subscriber.mSubscriber.sendResponse(MessageBuilder
+                        .createResponse(subscriber.mRequest,
+                                ResponseStatus.CONTENT,
+                                ContentFormat.APPLICATION_CBOR, payload));
+            }
         }
     }
 
