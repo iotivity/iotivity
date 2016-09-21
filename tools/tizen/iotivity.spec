@@ -35,7 +35,7 @@ Requires(post): /sbin/ldconfig
 %endif
 
 %{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
-%{!?SECURED: %define SECURED 1}
+%{!?SECURED: %define SECURED 0}
 %{!?LOGGING: %define LOGGING 1}
 %{!?ROUTING: %define ROUTING EP}
 %{!?WITH_TCP: %define WITH_TCP 1}
