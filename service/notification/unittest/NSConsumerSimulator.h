@@ -61,7 +61,6 @@ public:
     {
         if (m_syncResource == nullptr)
         {
-            std::cout << "m_syncResource is null" << std::endl;
             return;
         }
 
@@ -91,15 +90,11 @@ public:
 
 private:
     static void onPost(const OC::HeaderOptions &/*headerOption*/,
-                const OC::OCRepresentation & /*rep*/ , const int eCode)
+                const OC::OCRepresentation & /*rep*/ , const int /*eCode*/)
     {
-        std::cout << __func__ << " result : " << eCode << std::endl;
     }
     void findResultCallback(std::shared_ptr<OC::OCResource> resource)
     {
-
-        std::cout << __func__ << " " << resource->host() << std::endl;
-
         if(resource->uri() == "/notification")
         {
             resource->get(OC::QueryParamsMap(),
@@ -109,26 +104,15 @@ private:
         }
     }
     void onGet(const OC::HeaderOptions &/*headerOption*/,
-            const OC::OCRepresentation & rep , const int eCode,
+            const OC::OCRepresentation & /*rep*/ , const int /*eCode*/,
             std::shared_ptr<OC::OCResource> resource)
     {
-        std::cout << __func__ << " " << rep.getHost() << " result : " << eCode << std::endl;
-
         OC::QueryParamsMap map;
         map.insert(std::pair<std::string,std::string>(std::string("consumerid"),
                 std::string("123456789012345678901234567890123456")));
 
         try
         {
-            std::cout << "resourc : host " << resource->host() << std::endl;
-            std::cout << "resourc : uri " << resource->uri() << std::endl;
-            std::cout << " resource->connectivityType() "
-                    <<  resource->connectivityType() << std::endl;
-            std::cout << "resourc : getResourceInterfaces "
-                    << resource->getResourceInterfaces()[0] << std::endl;
-            std::cout << "resourc : getResourceTypes "
-                    << resource->getResourceTypes()[0] << std::endl;
-
             std::vector<std::string> rts{"oic.r.notification"};
 
             m_msgResource
@@ -166,18 +150,12 @@ private:
 
     }
     void onObserve(const OC::HeaderOptions &/*headerOption*/,
-            const OC::OCRepresentation &rep , const int &eCode, const int &,
+            const OC::OCRepresentation &rep , const int & /*eCode*/, const int &,
             std::shared_ptr<OC::OCResource> )
     {
-        std::cout << __func__ << " " << rep.getHost() << " result : " << eCode;
-        std::cout << " uri : " << rep.getUri() << std::endl;
-
         if (rep.getUri() == "/notification/message" && rep.hasAttribute("MESSAGE_ID")
                 && rep.getValue<int>("MESSAGE_ID") != 1)
         {
-            std::cout << "ID : " << rep.getValue<int>("ID") << std::endl;
-            std::cout << "TITLE : " << rep.getValueToString("TITLE") << std::endl;
-            std::cout << "CONTENT : " << rep.getValueToString("CONTENT") << std::endl;
             m_messageFunc(int(rep.getValue<int>("MESSAGE_ID")),
                           std::string(rep.getValueToString("TITLE")),
                           std::string(rep.getValueToString("CONTENT")),
@@ -193,20 +171,14 @@ private:
         }
         else if (rep.getUri() == "/notification/sync")
         {
-            std::cout << "else if (rep.getUri() == sync) " << std::endl;
             m_syncFunc(int(rep.getValue<int>("STATE")), int(rep.getValue<int>("ID")));
         }
     }
 
     void onTopicGet(const OC::HeaderOptions &/*headerOption*/,
-            const OC::OCRepresentation & rep , const int eCode,
-            std::shared_ptr<OC::OCResource> resource)
+            const OC::OCRepresentation & /*rep*/ , const int /*eCode*/,
+            std::shared_ptr<OC::OCResource> /*resource*/)
     {
-        //TO-DO using this function.
-        (void) rep;
-        (void) eCode;
-        (void) resource;
-        std::cout << "onTopicGet()" << std::endl;
     }
 
     OCStackResult msgResourceCancelObserve(OC::QualityOfService qos)
