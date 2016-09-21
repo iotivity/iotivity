@@ -67,9 +67,9 @@ bool CHPIsInitialized()
     return g_isCHProxyInitialized;
 }
 
-OCStackResult CHPInitialize()
+OCStackResult CHPInitialize(bool secure)
 {
-    OIC_LOG(DEBUG, TAG, "CHPInitialize IN");
+    OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
     if (g_isCHProxyInitialized)
     {
         OIC_LOG(DEBUG, TAG, "CH Proxy already initialized");
@@ -91,13 +91,18 @@ OCStackResult CHPInitialize()
         return result;
     }
 
+    uint8_t prop = OC_ACTIVE | OC_DISCOVERABLE | OC_SLOW;
+    if(secure)
+    {
+        prop |= OC_SECURE;
+    }
     result = OCCreateResource(&g_proxyHandle,
                                CHP_RESOURCE_TYPE_NAME,
                                CHP_RESOURCE_INTF_NAME,
                                OC_RSRVD_PROXY_URI,
                                CHPEntityHandler,
                                NULL,
-                               OC_ACTIVE | OC_DISCOVERABLE | OC_SLOW);
+                               prop);
 
     if (OC_STACK_OK != result)
     {
@@ -107,13 +112,13 @@ OCStackResult CHPInitialize()
     }
 
     g_isCHProxyInitialized = true;
-    OIC_LOG(DEBUG, TAG, "CHPInitialize OUT");
+    OIC_LOG_V(DEBUG, TAG, "%s OUT", __func__);
     return OC_STACK_OK;
 }
 
 OCStackResult CHPTerminate()
 {
-    OIC_LOG(DEBUG, TAG, "CHPTerminate IN");
+    OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
     OCStackResult result = CHPParserTerminate();
     if (OC_STACK_OK != result)
     {
@@ -129,13 +134,13 @@ OCStackResult CHPTerminate()
     g_proxyHandle = NULL;
     g_isCHProxyInitialized = false;
     return result;
-    OIC_LOG(DEBUG, TAG, "CHPTerminate OUT");
+    OIC_LOG_V(DEBUG, TAG, "%s OUT", __func__);
 }
 
 static void CHPGetProxyURI(OCHeaderOption* options, uint8_t *numOptions, char* uri,
                            size_t uriLength)
 {
-    OIC_LOG(DEBUG, TAG, "CHPGetProxyURI IN");
+    OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
     if (!uri || uriLength <= 0)
     {
         OIC_LOG (INFO, TAG, "Invalid uri buffer");
@@ -165,7 +170,7 @@ static void CHPGetProxyURI(OCHeaderOption* options, uint8_t *numOptions, char* u
         }
     }
 
-    OIC_LOG(DEBUG, TAG, "CHPGetProxyURI OUT");
+    OIC_LOG_V(DEBUG, TAG, "%s OUT", __func__);
     return;
 }
 
@@ -188,7 +193,7 @@ OCEntityHandlerResult CHPEntityHandler(OCEntityHandlerFlag flag,
                                        OCEntityHandlerRequest* entityHandlerRequest,
                                        void* callbackParam)
 {
-    OIC_LOG_V(INFO, TAG, "Proxy request received");
+    OIC_LOG(INFO, TAG, "Proxy request received");
     UNUSED(callbackParam);
 
     if (!g_isCHProxyInitialized)
@@ -274,7 +279,7 @@ OCEntityHandlerResult CHPEntityHandler(OCEntityHandlerFlag flag,
 
 void CHPHandleHttpResponse(const HttpResponse_t *httpResponse, void *context)
 {
-    OIC_LOG(DEBUG, TAG, "CHPHandleHttpResponse IN");
+    OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
     if (!httpResponse || !context)
     {
         OIC_LOG(ERROR, TAG, "Invalid arguements");
@@ -390,7 +395,7 @@ void CHPHandleHttpResponse(const HttpResponse_t *httpResponse, void *context)
     }
 
     //OICFree(coapResponseInfo.info.payload);
-    OIC_LOG(DEBUG, TAG, "CHPHandleHttpResponse OUT");
+    OIC_LOG_V(DEBUG, TAG, "%s OUT", __func__);
 }
 
 OCStackResult CHPHandleOCFRequest(const OCEntityHandlerRequest* requestInfo,

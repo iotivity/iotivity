@@ -35,9 +35,10 @@ extern "C"
 
 /**
  * Initialize the CoAP HTTP Proxy.
+ * @param[in]   secure      Set to advertise proxy as secured resource.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-OCStackResult CHPInitialize();
+OCStackResult CHPInitialize(bool secure);
 
 /**
  * Terminate the CoAP HTTP Proxy.
