@@ -322,7 +322,7 @@ NSResult NSProviderRegisterTopic(const char * topicName)
     NS_LOG(DEBUG, "NSProviderAddTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!topicName || topicName == '\0')
+    if(!topicName || topicName[0] == '\0')
     {
         pthread_mutex_unlock(&nsInitMutex);
         NS_LOG(DEBUG, "topic Name should be set");
