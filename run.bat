@@ -113,6 +113,10 @@ if "!CURRENT_ARG!"=="server" (
   del .sconsign.dblite
   del extlibs\gtest\gtest*.lib
   del extlibs\gtest\gtest-1.7.0\src\gtest*.obj
+  erase /s *.obj
+  erase resource\c_common\iotivity_config.h
+  erase extlibs\libcoap\coap.lib
+  erase extlibs\libcoap\libcoap\include\coap\coap_config.h
 ) else if "!CURRENT_ARG!"=="cleangtest" (
   rd /s /q extlibs\gtest\gtest-1.7.0
   del extlibs\gtest\gtest-1.7.0.zip
