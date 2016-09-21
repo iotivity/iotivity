@@ -92,7 +92,7 @@ public class InviteResource extends Resource {
                         request);
                 break;
             case UNSUBSCRIBE:
-                responsePayload = mInviteManager.removeSubscriber(uid);
+                responsePayload = mInviteManager.removeSubscriber(uid, request);
                 break;
             default:
                 break;
