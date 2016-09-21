@@ -240,81 +240,6 @@ TEST_F(CALeClientTest_stc, LeSelectNetworkForOutgoingMessages_P)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Check the functionality of CASelectNetwork to send request message when unavailable network is selected
- * @target   CAResult_t CASelectNetwork(const CATransportAdapter_t interestedNetwork)
- * @test_data Request Messages
- * @pre_condition  1. [Server] Initialize CA by CAInitialize
- *                 2. [Server] Register the handlers by CARegisterHandler
- *                 3. [Server] Select BLE network
- *                 4. [Server] Start Server
- *                 5. [Client] Initialize CA by CAInitialize
- *                 6. [Client] Register the handlers by CARegisterHandler
- *                 7. [Client] Select BLE network
- *                 8. [Client] Start Client
- *                 9. [Client] Send multicast request to find server
- *                10. [Server] server will receive the multicast request and return a response to client
- *                11. [Client] Create endpoint for server to send unicast request to server
- *                12. [Client] Generate a token and set this token in request message
- * @procedure  1. [Client] A client sends a request to server
- *             2. [Server] Server receives the request and return a response message to client
- *             3. [Client] Client receive the server's response
- * @post_condition  1. [Client] Destroy token
- *                  2. [Client] Destroy endpoint
- *                  3. [Client]Terminate CA
- * @expected The number of acknowledgments should be equal to zero
- */
-#if defined(__TIZEN__) && defined(__BLE__)
-TEST_F(CALeClientTest_stc, LeSelectUnAvailableNetworkForOutgoingMessages_N)
-{
-    m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
-
-    if (!m_caHelper.initClientNetwork(false))
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_caHelper.selectNetwork(m_caHelper.m_unAvailableNetwork, CA_NOT_SUPPORTED))
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-        CATerminate();
-        return;
-    }
-
-    if (!m_caHelper.sendRequest((char*) m_caHelper.m_simulatorResAckUri.c_str(), m_caHelper.s_tcInfo.identifier,
-                    CA_PUT, CA_MSG_NONCONFIRM, TOTAL_MESSAGE, CA_STATUS_FAILED))
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-        CATerminate();
-        return;
-    }
-
-    if(!m_caHelper.selectNetwork())
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-        CATerminate();
-        return;
-    }
-
-    if (!m_caHelper.countReceiveMessage(REC_ACK, 0))
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-    }
-
-    CATerminate();
-}
-#endif
-
-/**
- * @since 2015-09-08
- * @see  CAResult_t CAInitialize()
- * @see  void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
- * @see  CAResult_t CACreateEndpoint(const CAURI_t uri, const CAConnectivityType_t connectivityType, CAEndpoint_t **object)
- * @see  CAResult_t CAGenerateToken(CAToken_t *token)
- * @see  void CADestroyEndpoint(CAEndpoint_t *object)
- * @see  void CADestroyToken(CAToken_t token)
- * @see  CAResult_t CAHandleRequestResponse()
- * @see  void CATerminate()
  * @objective Test the effect of select/unselect network on incoming unicast messages in a loop
  * @target    CAResult_t CASelectNetwork(const CATransportAdapter_t interestedNetwork)
  * @test_data Response Messages
@@ -467,66 +392,6 @@ TEST_F(CALeClientTest_stc, LeSelectNetworkMultipleTimesForIncomingMessages_P)
 #endif
 
 /**
- * @since 2015-09-08
- * @see  CAResult_t CAInitialize()
- * @see  void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
- * @see  CAResult_t CACreateEndpoint(const CAURI_t uri, const CAConnectivityType_t connectivityType, CAEndpoint_t **object)
- * @see  CAResult_t CAGenerateToken(CAToken_t *token)
- * @see  void CADestroyEndpoint(CAEndpoint_t *object)
- * @see  void CADestroyToken(CAToken_t token)
- * @see  CAResult_t CAHandleRequestResponse()
- * @see  void CATerminate()
- * @objective Test unicast message receiving functionality by receiving response messages
- * @target CAResult_t CASendRequest(const CAEndpoint_t *object, CARequestInfo_t *requestInfo)
- * @test_data Response Messages
- * @pre_condition  1. [Server] Initialize CA by CAInitialize
- *                 2. [Server] Register the handlers by CARegisterHandler
- *                 3. [Server] Select BLE network
- *                 4. [Server] Start Server
- *                 5. [Client] Initialize CA by CAInitialize
- *                 6. [Client] Register the handlers by CARegisterHandler
- *                 7. [Client] Select BLE network
- *                 8. [Client] Start Client
- *                 9. [Client] Send multicast request to find server
- *                10. [Server] server will receive the multicast request and return a response to client
- *                11. [Client] Create endpoint for server to send unicast request to server
- *                12. [Client] Generate a token and set this token in request message
- * @procedure  1. [Client] A client sends a request to server
- *             2. [Server] Server receives the request and return a response message to client
- *             3. [Client] Client receive the server's response
- * @post_condition  1. [Client] Destroy token
- *                  2. [Client] Destroy endpoint
- *                  3. [Client]Terminate CA
- * @expected  The requested amount of response messages should be received
- */
-#if defined(__TIZEN__) && defined(__BLE__)
-TEST_F(CALeClientTest_stc, LeReceiveResponse_P)
-{
-    m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
-
-    if (!m_caHelper.establishConnectionWithServer())
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_caHelper.sendConfigurationRequest(SEND_MESSAGE, MESSAGE_RESPONSE, CA_PUT))
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-        CATerminate();
-        return;
-    }
-
-    if (!m_caHelper.countReceiveMessage(REC_NOR))
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-    }
-
-    CATerminate();
-}
-#endif
-
-/**
  * @since 2015-09-18
  * @see  CAResult_t CAInitialize()
  * @see  void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
@@ -540,7 +405,7 @@ TEST_F(CALeClientTest_stc, LeReceiveResponse_P)
  * @target CAResult_t CASendRequest(const CAEndpoint_t *object, CARequestInfo_t *requestInfo)
  * @test_data Request Messages
  * @pre_condition  none
- * 
+ *
  * @pre_condition  1. [Server] Initialize CA by CAInitialize
  *                 2. [Server] Register the handlers by CARegisterHandler
  * @procedure  1. [Server] Select BLE network
@@ -1038,75 +903,10 @@ TEST_F(CALeClientTest_stc, LeSendRequestWithWrongEndpoint_N)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test unicast message sending functionality using invalid method
- * @target CAResult_t CASendRequest(const CAEndpoint_t *object, CARequestInfo_t *requestInfo)
- * @test_data Invalid method code in CAMethod_t
- * @pre_condition  1. [Server] Initialize CA by CAInitialize
- *                 2. [Server] Register the handlers by CARegisterHandler
- *                 3. [Server] Select BLE network
- *                 4. [Server] Start Server
- *                 5. [Client] Initialize CA by CAInitialize
- *                 6. [Client] Register the handlers by CARegisterHandler
- *                 7. [Client] Select BLE network
- *                 8. [Client] Start Client
- *                 9. [Client] Send multicast request to find server
- *                10. [Server] server will receive the multicast request and return a response to client
- *                11. [Client] Create endpoint for server to send unicast request to server
- *                12. [Client] Generate a token and set this token in request message
- * @procedure  1. [Client] A client sends a request to server
- *             2. [Server] Server receives the request and return a response message to client
- *             3. [Client] Client receive the server's response
- * @post_condition  1. [Client] Destroy token
- *                  2. [Client] Destroy endpoint
- *                  3. [Client]Terminate CA
- * @expected  The received amount should be zero
- */
-#if defined(__TIZEN__) && defined(__BLE__)
-TEST_F(CALeClientTest_stc, LeSendRequestWithInvalidMethod_N)
-{
-    m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
-
-    if (!m_caHelper.establishConnectionWithServer())
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-        return;
-    }
-
-    CAMethod_t invalidMethod = -1;
-
-    char* uri = (char*) m_caHelper.m_simulatorReqAckUri.c_str();
-    char* payload = m_caHelper.s_tcInfo.identifier;
-
-    if (!m_caHelper.sendRequest(uri, payload, invalidMethod, CA_MSG_NONCONFIRM, TOTAL_MESSAGE, CA_MEMORY_ALLOC_FAILED))
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-        CATerminate();
-        return;
-    }
-
-    if (!m_caHelper.countReceiveMessage(REC_ACK, 0))
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-    }
-
-    CATerminate();
-}
-#endif
-
-/**
- * @since 2015-09-08
- * @see  CAResult_t CAInitialize()
- * @see  void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
- * @see  CAResult_t CACreateEndpoint(const CAURI_t uri, const CAConnectivityType_t connectivityType, CAEndpoint_t **object)
- * @see  CAResult_t CAGenerateToken(CAToken_t *token)
- * @see  void CADestroyEndpoint(CAEndpoint_t *object)
- * @see  void CADestroyToken(CAToken_t token)
- * @see  CAResult_t CAHandleRequestResponse()
- * @see  void CATerminate()
  * @objective Test unicast message sending functionality by sending out GET request messages
  * @target CAResult_t CASendRequest(const CAEndpoint_t *object, CARequestInfo_t *requestInfo)
  * @test_data Request messages with method GET
- * 
+ *
  * * @pre_condition  1. [Server] Initialize CA by CAInitialize
  *                   2. [Server] Register the handlers by CARegisterHandler
  *                   3. [Server] Select BLE network
@@ -1245,7 +1045,7 @@ TEST_F(CALeClientTest_stc, LeSendPutRequest_P)
  * @post_condition  1. [Client] Destroy token
  *                  2. [Client] Destroy endpoint
  *                  3. [Client]Terminate CA
- * @expected  The number of acknowledgments should be equal to the amount of sent messages 
+ * @expected  The number of acknowledgments should be equal to the amount of sent messages
  */
 #if defined(__TIZEN__) && defined(__BLE__)
 TEST_F(CALeClientTest_stc, LeSendPostRequest_P)
@@ -1372,7 +1172,7 @@ TEST_F(CALeClientTest_stc, LeReceiveWithNullResponseHandler_N)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -1411,7 +1211,7 @@ TEST_F(CALeClientTest_stc, LeReceiveWithNullResponseHandler_N)
  *                2. [Server] Register the handlers by CARegisterHandler
  *                3. [Server] Select BLE network
  *                4. [Server] Start Server
- *                5. [Client] Initialize CA by CAInitialize           
+ *                5. [Client] Initialize CA by CAInitialize
  *                6. [Client] Select BLE network
  *                7. [Client] Start Client
  *                8. [Client] Send multicast request to find server
@@ -1431,7 +1231,7 @@ TEST_F(CALeClientTest_stc, LeReceiveResponseWithoutCallingCARegisterHandler_N)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
@@ -1491,22 +1291,13 @@ TEST_F(CALeClientTest_stc, LeReceiveWithSecondResponseHandler_P)
 {
     m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
 
-    if (!m_caHelper.initNetwork())
+    if (!m_caHelper.establishConnectionWithServer())
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
         return;
     }
-
-    CARegisterHandler(CAHelper::requestHandler, CAHelper::responseHandler, CAHelper::errorHandler);
 
     CARegisterHandler(CAHelper::requestHandler, CAHelper::responseHandlerSecond, CAHelper::errorHandler);
-
-    if (!m_caHelper.startDiscoveryServer())
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-        CATerminate();
-        return;
-    }
 
     if (!m_caHelper.sendConfigurationRequest(SEND_MESSAGE, MESSAGE_RESPONSE, CA_PUT))
     {
@@ -1583,194 +1374,6 @@ TEST_F(CALeClientTest_stc, LeReceiveAfterRegisteringWithValidFollowedByNullRespo
     }
 
     if (!m_caHelper.countReceiveMessage(REC_NOR, 0))
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-    }
-
-    CATerminate();
-}
-#endif
-
-/**
- * @since 2016-02-23
- * @see  CAResult_t CAInitialize()
- * @see  CAResult_t CASelectNetwork(const CATransportAdapter_t interestedNetwork)
- * @see  void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
- * @see  CAResult_t CACreateEndpoint(const CAURI_t uri, const CAConnectivityType_t connectivityType, CAEndpoint_t **object)
- * @see  CAResult_t CAGenerateToken(CAToken_t *token)
- * @see  void CADestroyEndpoint(CAEndpoint_t *object)
- * @see  void CADestroyToken(CAToken_t token)
- * @see  CAResult_t CAHandleRequestResponse()
- * @see  void CATerminate()
- * @objective Receive request message when unavailable network is selected
- * @target    CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork)
- * @test_data Request Messages
- * @pre_condition  1. [Server] Initialize CA by CAInitialize
- *                 2. [Server] Register the handlers by CARegisterHandler
- *                 3. [Server] Select BLE network
- *                 4. [Server] Start Server
- *                 5. [Client] Initialize CA by CAInitialize
- *                 6. [Client] Register the handlers by CARegisterHandler
- *                 7. [Client] Select BLE network
- *                 8. [Client] Start Client
- *                 9. [Client] Send multicast request to find server
- *                10. [Server] server will receive the multicast request and return a response to client
- *                11. [Client] Create endpoint for server to send unicast request to server
- *                12. [Client] Generate a token and set this token in request message
- * @procedure  1. [Client] Stop listening server
- *             2. [Client] Call CAUnselectNetwork
- *             3. [Client] A client sends a request to server
- *             4. [Server] Server receives the request and return a response message to client
- *             5. [Client] Client receive the server's response
- * @post_condition  1. [Client] Destroy token
- *                  2. [Client] Destroy endpoint
- *                  3. [Client]Terminate CA
- * @expected  The requested amount of request messages should be received
- */
-#if defined(__TIZEN__) && defined(__BLE__)
-TEST_F(CALeClientTest_stc, LeUnSelectNetworkAndSendMessage_STLSEC_N)
-{
-    m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
-
-    if (!m_caHelper.establishConnectionWithServer())
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_caHelper.stopListeningServer())
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-        CATerminate();
-        return;
-    }
-
-    if (!m_caHelper.unselectNetwork())
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-    }
-
-    if (m_caHelper.sendConfigurationRequest(SEND_MESSAGE, MESSAGE_RESPONSE, CA_PUT))
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-    }
-
-    m_caHelper.destroyEndpoint();
-    m_caHelper.destroyToken();
-    CATerminate();
-}
-#endif
-
-/**
- * @since 2015-09-08
- * @see  CAResult_t CAInitialize()
- * @see  CAResult_t CACreateEndpoint(const CAURI_t uri, const CAConnectivityType_t connectivityType, CAEndpoint_t **object)
- * @see  CAResult_t CAGenerateToken(CAToken_t *token)
- * @see  void CADestroyEndpoint(CAEndpoint_t *object)
- * @see  void CADestroyToken(CAToken_t token)
- * @see  CAResult_t CAHandleRequestResponse()
- * @see  void CATerminate()
- * @objective Test 'CARegisterHandler' effectiveness in sending request by without calling it.
- * @target CAResult_t CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
- * @test_data none
- * @pre_condition  1. [Server] Initialize CA by CAInitialize
- *                 2. [Server] Register the handlers by CARegisterHandler
- *                 3. [Server] Select BLE network
- *                 4. [Server] Start Server
- *                 5. [Client] Initialize CA by CAInitialize
- *                 6. [Client] Select BLE network
- *                 7. [Client] Start Client
- *                 8. [Client] Send multicast request to find server
- *                 9. [Server] server will receive the multicast request and return a response to client
- *                10. [Client] Create endpoint for server to send unicast request to server
- *                11. [Client] Generate a token and set this token in request message
- * @procedure  1. [Client] A client sends a request to server
- *             2. [Server] Server receives the request and return a response message to client
- *             3. [Client] Client receive the server's response
- * @post_condition  1. [Client] Destroy token
- *                  2. [Client] Destroy endpoint
- *                  3. [Client]Terminate CA
- * @expected No request messages should be received
- */
-#if defined(__TIZEN__) && defined(__BLE__)
-TEST_F(CALeClientTest_stc, LeReceiveRequestWithoutCallingRegisterHandler_N)
-{
-    m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
-
-    if (!m_caHelper.initNetwork())
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_caHelper.sendConfigurationRequest(SEND_MESSAGE, MESSAGE_REQUEST, CA_PUT))
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-        CATerminate();
-        return;
-    }
-
-    if (!m_caHelper.countReceiveMessage(REC_NOR, 0))
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-    }
-
-    CATerminate();
-}
-#endif
-
-/**
- * @since 2015-09-08
- * @see  CAResult_t CAInitialize()
- * @see  void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHandler)
- * @see  CAResult_t CACreateEndpoint(const CAURI_t uri, const CAConnectivityType_t connectivityType, CAEndpoint_t **object)
- * @see  CAResult_t CAGenerateToken(CAToken_t *token)
- * @see  void CADestroyEndpoint(CAEndpoint_t *object)
- * @see  void CADestroyToken(CAToken_t token)
- * @see  CAResult_t CAHandleRequestResponse()
- * @see  void CATerminate()
- * @objective Test unicast message receiving request messages
- * @target CAResult_t CAInitialize()
- * @test_data Request Messages
- * @pre_condition  1. [Server] Initialize CA by CAInitialize
- *                 2. [Server] Register the handlers by CARegisterHandler
- *                 3. [Server] Select BLE network
- *                 4. [Server] Start Server
- *                 5. [Client] Initialize CA by CAInitialize
- *                 6. [Client] Register the handlers by CARegisterHandler
- *                 7. [Client] Select BLE network
- *                 8. [Client] Start Client
- *                 9. [Client] Send multicast request to find server
- *                10. [Server] server will receive the multicast request and return a response to client
- *                11. [Client] Create endpoint for server to send unicast request to server
- *                12. [Client] Generate a token and set this token in request message
- * @procedure  1. [Client] A client sends a request to server
- *             2. [Server] Server receives the request and return a response message to client
- *             3. [Client] Client receive the server's response
- * @post_condition  1. [Client] Destroy token
- *                  2. [Client] Destroy endpoint
- *                  3. [Client]Terminate CA
- * @expected  The requested amount of request messages should be received by the simulator
- */
-#if defined(__TIZEN__) && defined(__BLE__)
-TEST_F(CALeClientTest_stc, LeReceiveRequest_P)
-{
-    m_caHelper.setupTestCase(MESSAGE_INCOMING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
-
-    if (!m_caHelper.initClientNetwork())
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_caHelper.sendConfigurationRequest(SEND_MESSAGE, MESSAGE_REQUEST, CA_PUT))
-    {
-        SET_FAILURE(m_caHelper.getFailureMessage());
-        CATerminate();
-        return;
-    }
-
-    if (!m_caHelper.countReceiveMessage(REC_NOR))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
     }

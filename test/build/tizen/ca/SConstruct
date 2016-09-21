@@ -29,6 +29,11 @@ TARGET_TRANSPORT = ARGUMENTS.get('TARGET_TRANSPORT')
 
 print 'SECURED: ' + str(SECURED)
 
+if env_linux.get('SECURED') == '1':
+    SECURED = True
+else:
+    SECURED = False
+
 if TARGET_TRANSPORT:
     print 'TARGET_TRANSPORT: ' + TARGET_TRANSPORT
 else:

@@ -88,17 +88,9 @@ static const uint16_t COAPS_TCP_PREFIX_LEN = sizeof(COAPS_TCP_PREFIX) - 1;
 #define CONFIG "config.ini"
 #endif
 
-#ifdef __TIZEN_BLE__
-#define CONFIG "config.ini"
-#endif
-
-#define MAX_OPT_LEN 16
-
 #define SLEEP_TIME 3
 #define WAIT_SIM_CALLBACK 2000000         //waiting for given for simulators callback to be invoked (seconds)
 #define WAIT_SIM_DIRECT 2000000           //waiting time between data receive callbacks when simulator sends all at once. (microseconds)
-
-#define QUERY_SECURE_PORT "What is the secure port?"
 
 #define SIM_REQ_CONFIG "Configure"
 #define SIM_REQ_ACK "SendReqAck"
@@ -107,14 +99,8 @@ static const uint16_t COAPS_TCP_PREFIX_LEN = sizeof(COAPS_TCP_PREFIX) - 1;
 
 #define MAX_BUF_LEN 2048
 #define MAX_OPT_LEN 16
-#define MAX_SLEEP_TIME 1
-
-#define CH_ZERO '0'
 
 #define SIM_REQ_ACK_WRONG_EP_URI "107.109.214.101:5283/" SIM_REQ_ACK
-#define SIM_RES_ACK_WRONG_EP_URI "107.109.214.101:5283/" SIM_RES_ACK
-
-#define SIM_NOTIFICATION_DATA "Temp Notification Data"
 
 #define REC_NOR 0
 #define REC_ACK 1
@@ -182,7 +168,7 @@ typedef enum
 
 typedef struct
 {
-    char ipAddress[CA_IPADDR_SIZE];
+    char ipAddress[CA_MACADDR_SIZE];
     uint16_t port;
 } addressSet_t;
 
@@ -238,15 +224,8 @@ public:
     CAResponseResult_t m_responseResult;
 
 #ifdef __WITH_DTLS__
-
     bool setDtls();
-    bool isPortSecure();
-    int getSecurePort();
-
-    static CADtlsPskCredType_t pskCredsBlob;
-
     static int32_t getDtlsPskCredentials( CADtlsPskCredType_t type, const unsigned char *desc, size_t desc_len, unsigned char *result, size_t result_length);
-
 #endif
 
 #ifdef TCP_ADAPTER
@@ -324,11 +303,8 @@ public:
             const CAResponseInfo_t* responseInfo);
     static void requestHandler(const CAEndpoint_t* endpoint,
             const CARequestInfo_t* requestInfo);
-
     static void responseHandlerSecond(const CAEndpoint_t* endpoint,
             const CAResponseInfo_t* responseInfo);
-    static void requestHandlerSecond(const CAEndpoint_t* endpoint,
-            const CARequestInfo_t* requestInfo);
 
     static int get_secure_information(CAPayload_t payLoad);
 
@@ -396,12 +372,12 @@ public:
     bool stopListeningServer();
     bool stopListeningServer(CAResult_t expectedResult);
     bool setAvailableNetwork(CATransportAdapter_t interestedNetwork);
-    bool establishConnectionWithServer(); 
+    bool establishConnectionWithServer();
 
 #ifdef TCP_ADAPTER
     static void keepAliveHandler(const CAEndpoint_t *endpoint, bool isConnected);
     int getKeepAliveCount();
 #endif
-    
+
 };
 #endif

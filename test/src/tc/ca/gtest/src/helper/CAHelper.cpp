@@ -32,10 +32,6 @@ TestCaseInfo CAHelper::s_tcInfo;
 int CAHelper::keepAliveCount;
 #endif
 
-#ifdef __WITH_DTLS__
-CADtlsPskCredType_t CAHelper::pskCredsBlob = NULL;
-#endif
-
 #ifdef __TIZEN__
 static GMainLoop *g_mainloop = NULL;
 pthread_t thread;
@@ -734,94 +730,31 @@ bool CAHelper::showNetworkInfo()
 
 void CAHelper::requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* requestInfo)
 {
-    IOTIVITYTEST_LOG(DEBUG, "[handleServerRequest] IN");
+    IOTIVITYTEST_LOG(DEBUG, "[requestHandler] IN");
 
-    if (!checkRequestResponseHandler(endpoint, requestInfo))
+    IOTIVITYTEST_LOG(DEBUG, "Something Wrong!!! Request Handler shouldn't be called for CA testcases\n");
+    IOTIVITYTEST_LOG(DEBUG, "Check whether message comes from CA simulator or somewhere else\n");
+
+    if (!endpoint)
     {
+        IOTIVITYTEST_LOG(DEBUG, "endpoint is NULL\n");
         return;
     }
 
-    s_bufferEmpty = false;
-
-    if (s_tcInfo.messageType == CA_MSG_RESET || s_tcInfo.messageType == CA_MSG_CONFIRM)
+    if (!requestInfo)
     {
-        int port = endpoint->port;
-        std::string ipAddress = endpoint->addr;
-        if (port == s_simulatorPort || port == s_simulatorSecurePort)
-        {
-            s_mapReceiveCount[ipAddress][s_simulatorPort][REC_ACK]++;
-        }
-        else
-        {
-            IOTIVITYTEST_LOG(DEBUG, "Unexpected path");
-        }
+        IOTIVITYTEST_LOG(DEBUG, "requestInfo is NULL\n");
         return;
     }
 
-    if (s_tcInfo.validationMethod == MESSAGE_URI && s_tcInfo.communicationType == MESSAGE_MULTICAST)
-    {
-        if (s_tcInfo.inOutType == MESSAGE_INCOMING)
-        {
-            comparePrefixAndIncrement(endpoint, requestInfo->info.resourceUri, s_tcInfo.identifier,
-                    REC_NOR);
-            return;
-        }
-        else if (s_tcInfo.inOutType == MESSAGE_OUTGOING)
-        {
-            comparePrefixAndIncrement(endpoint, requestInfo->info.resourceUri, s_tcInfo.identifier,
-                    REC_ACK);
-            return;
-        }
-    }
+    IOTIVITYTEST_LOG(DEBUG, "IP %s, Port %d\n", endpoint->addr, endpoint->port);
 
-    if (s_tcInfo.inOutType == MESSAGE_OUTGOING && s_tcInfo.validationMethod == MESSAGE_URI
-            && s_tcInfo.communicationType == MESSAGE_UNICAST)
-    {
-        comparePrefixAndIncrement(endpoint, requestInfo->info.resourceUri, SIM_RES_ACK, REC_ACK);
-        return;
-    }
-
-    if (s_tcInfo.validationMethod == MESSAGE_PAYLOAD)
-    {
-        int ret = compareAndIncrement(requestInfo->info.resourceUri, SIM_RES_ACK,
-                requestInfo->info.payload, REC_ACK);
-
-        if (!ret)
-        {
-            if (requestInfo->method == s_tcInfo.caMethod)
-            {
-                ret = compareAndIncrement(requestInfo->info.resourceUri, SIM_REQ_CONFIG,
-                        requestInfo->info.payload, REC_NOR);
-            }
-            else
-            {
-                IOTIVITYTEST_LOG(ERROR, "Invalid Method for SIM_REQ_CONFIG");
-            }
-        }
-
-        if (!ret)
-        {
-            IOTIVITYTEST_LOG(ERROR, "Data mismatch!");
-        }
-    }
-
-    if (s_tcInfo.validationMethod == MESSAGE_HEADER)
-    {
-        IOTIVITYTEST_LOG(DEBUG, "[handleServerRequest] MESSAGE_HEADER");
-
-        if (checkHeader(requestInfo->info.options, requestInfo->info.numOptions))
-        {
-            comparePrefixAndIncrement(endpoint, requestInfo->info.resourceUri, SIM_RES_ACK,
-                    REC_ACK);
-        }
-    }
-
-    IOTIVITYTEST_LOG(DEBUG, "[handleServerRequest] OUT");
+    IOTIVITYTEST_LOG(DEBUG, "[requestHandler] OUT");
 }
 
 void CAHelper::responseHandler(const CAEndpoint_t* endpoint, const CAResponseInfo_t* responseInfo)
 {
-    IOTIVITYTEST_LOG(DEBUG, "[handleClientResponse] IN");
+    IOTIVITYTEST_LOG(DEBUG, "[responseHandler] IN");
 
     if (!checkRequestResponseHandler(endpoint, responseInfo))
     {
@@ -832,17 +765,8 @@ void CAHelper::responseHandler(const CAEndpoint_t* endpoint, const CAResponseInf
 
     if (s_tcInfo.messageType == CA_MSG_RESET || s_tcInfo.messageType == CA_MSG_CONFIRM)
     {
-        int port = endpoint->port;
         std::string ipAddress = endpoint->addr;
-
-        if (port == s_simulatorPort || port == s_simulatorSecurePort)
-        {
-            s_mapReceiveCount[ipAddress][s_simulatorPort][REC_ACK]++;
-        }
-        else
-        {
-            IOTIVITYTEST_LOG(DEBUG, "Unexpected path");
-        }
+        s_mapReceiveCount[ipAddress][s_simulatorPort][REC_ACK]++;
         return;
     }
 
@@ -888,13 +812,13 @@ void CAHelper::responseHandler(const CAEndpoint_t* endpoint, const CAResponseInf
         }
     }
 
-    IOTIVITYTEST_LOG(DEBUG, "[handleClientResponse] OUT");
+    IOTIVITYTEST_LOG(DEBUG, "[responseHandler] OUT");
 }
 
 void CAHelper::responseHandlerSecond(const CAEndpoint_t* endpoint,
         const CAResponseInfo_t* responseInfo)
 {
-    IOTIVITYTEST_LOG(DEBUG, "[handleClientResponseSecond] IN");
+    IOTIVITYTEST_LOG(DEBUG, "[responseHandlerSecond] IN");
 
     if (!checkRequestResponseHandler(endpoint, responseInfo))
     {
@@ -904,28 +828,7 @@ void CAHelper::responseHandlerSecond(const CAEndpoint_t* endpoint,
     compareAndIncrement(responseInfo->info.resourceUri, SIM_REQ_CONFIG, responseInfo->info.payload,
             REC_SECOND_NOR);
 
-    IOTIVITYTEST_LOG(DEBUG, "[handleClientResponseSecond] OUT");
-}
-
-void CAHelper::requestHandlerSecond(const CAEndpoint_t* endpoint,
-        const CARequestInfo_t* requestInfo)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[handleServerRequestSecond]");
-
-    if (!CAHelper::CheckRemoteEndpointAttributes(endpoint, requestInfo->info.resourceUri))
-    {
-        return;
-    }
-
-    if (CAHelper::isHostUnknown(endpoint))
-    {
-        return;
-    }
-
-    compareAndIncrement(requestInfo->info.resourceUri, SIM_REQ_CONFIG, requestInfo->info.payload,
-            REC_SECOND_NOR);
-
-    IOTIVITYTEST_LOG(DEBUG, "[handleServerRequestSecond] OUT");
+    IOTIVITYTEST_LOG(DEBUG, "[responseHandlerSecond] OUT");
 }
 
 int CAHelper::compareAndIncrement(const char* endpointResourceUri, const char *otherResourceUri,
@@ -1043,7 +946,7 @@ void CAHelper::comparePrefixAndIncrement(const CAEndpoint_t* endpoint, const cha
         int port = endpoint->port;
         std::string ipAddress = endpoint->addr;
         IOTIVITYTEST_LOG(DEBUG, "IP: %s, port: %d, index: %d", ipAddress.c_str(), port, index);
-        s_mapReceiveCount[ipAddress][port][index]++;
+        s_mapReceiveCount[ipAddress][s_simulatorPort][index]++;
         IOTIVITYTEST_LOG(DEBUG, "count: %d", s_mapReceiveCount[ipAddress][port][index]);
     }
     else
@@ -1058,10 +961,17 @@ bool CAHelper::isHostUnknown(const CAEndpoint_t* endpoint)
 {
     IOTIVITYTEST_LOG(DEBUG, "[isHostUnknown] IN");
 
+    IOTIVITYTEST_LOG(DEBUG, "Address: %s Port: %d", endpoint->addr, endpoint->port);
+
     if (setIp.find(endpoint->addr) == setIp.end())
     {
-        IOTIVITYTEST_LOG(WARNING, "IP mismatch: %s", endpoint->addr);
+        IOTIVITYTEST_LOG(DEBUG, "Address mismatch");
+        return true;
+    }
 
+    if (endpoint->port != s_simulatorPort && endpoint->port != s_simulatorSecurePort)
+    {
+        IOTIVITYTEST_LOG(DEBUG, "Port mismatch");
         return true;
     }
 
@@ -1080,8 +990,8 @@ bool CAHelper::CheckRemoteEndpointAttributes(const CAEndpoint_t* endpoint, char*
         return false;
     }
 
-    IOTIVITYTEST_LOG(INFO, "address : %s", endpoint->addr);
-    IOTIVITYTEST_LOG(INFO, "port : %d", endpoint->port);
+    IOTIVITYTEST_LOG(INFO, "address: %s", endpoint->addr);
+    IOTIVITYTEST_LOG(INFO, "port: %d", endpoint->port);
 
     if (s_tcInfo.messageType == CA_MSG_NONCONFIRM)
     {
@@ -1411,7 +1321,7 @@ bool CAHelper::sendConfigurationRequest(SimulatorTask taskType, MessageCommandTy
             break;
     }
 
-#ifdef __LINUX__
+#if defined(__LINUX__) || defined(__ANDROID_NATIVE__)
     char buffer[4];
     sprintf(buffer, "%04d", totalMessage);
     payload += buffer;
@@ -1626,53 +1536,6 @@ bool CAHelper::setDtls()
     }
 
     return true;
-}
-
-bool CAHelper::isPortSecure()
-{
-    IOTIVITYTEST_LOG(DEBUG, "[clearBuffer] IN");
-
-    char* uri = (char*)m_simulatorReqAckUri.c_str();
-
-    IOTIVITYTEST_LOG(DEBUG, "Port Request Uri: %s\n", uri);
-
-    if(!sendRequest(QUERY_SECURE_PORT, s_tcInfo.identifier, CA_PUT, CA_MSG_NONCONFIRM, 1))
-    {
-        return false;
-    }
-
-    getNumber(s_simulatorSecurePort, s_tcInfo.identifier);
-
-    return countReceiveMessage(REC_ACK, 1);
-}
-
-int CAHelper::getSecurePort()
-{
-    IOTIVITYTEST_LOG(DEBUG, "[getSecurePort] IN");
-
-    CAEndpoint_t *tempInfo = NULL;
-    int tempSize = 0;
-
-    CAGetNetworkInformation(&tempInfo, &tempSize);
-
-    for (int index = 0; index < tempSize; index++)
-    {
-        if (tempInfo == NULL)
-        {
-            break;
-        }
-
-        if(tempInfo[index].flags & CA_SECURE)
-        {
-            return tempInfo[index].port;
-        }
-
-        tempInfo++;
-    }
-
-    IOTIVITYTEST_LOG(DEBUG, "[getSecurePort] OUT");
-
-    return 0;
 }
 
 int32_t CAHelper::getDtlsPskCredentials( CADtlsPskCredType_t type,
@@ -2081,7 +1944,7 @@ void CAHelper::keepAliveHandler(const CAEndpoint_t *endpoint, bool isConnected)
     IOTIVITYTEST_LOG(DEBUG, "KeepAliveHandler in");
     IOTIVITYTEST_LOG(DEBUG, "endpoint address %s   port %d", endpoint->addr, endpoint->port);
     IOTIVITYTEST_LOG(DEBUG, "isConnected %d", isConnected);
-    IOTIVITYTEST_LOG(DEBUG, "KeepAliveHandler out");    
+    IOTIVITYTEST_LOG(DEBUG, "KeepAliveHandler out");
 }
 
 int CAHelper::getKeepAliveCount()
@@ -2107,6 +1970,7 @@ int CAHelper::getAddressSet(const char *uri, addressSet_t* outAddress)
 
     int32_t isIp = 0;
     int32_t ipLen = 0;
+
     for (int i = 0; i < len; i++)
     {
         if (uri[i] == '.')
@@ -2462,25 +2326,19 @@ bool CAHelper::setAvailableNetwork(CATransportAdapter_t interestedNetwork)
 
 bool CAHelper::establishConnectionWithServer()
 {
-    int result;
-    result = initClientNetwork();
-    if (result == 0)
+    if (!initClientNetwork())
     {
-        IOTIVITYTEST_LOG(DEBUG, "initClientNetwork PROBLEM %d\n", result);
         return false;
     }
 
-    result = sendRequestToAll(CA_GET, CA_MSG_NONCONFIRM, 1);
-    if (result == 0)
+    if (!sendRequestToAll(CA_GET, CA_MSG_NONCONFIRM, 1))
     {
-        IOTIVITYTEST_LOG(DEBUG, "sendRequestToAll PROBLEM %d\n", result);
         return false;
     }
 
-    result = countMulticastReceiveMessage(REC_ACK);
-    if (result == 0)
+    if (!countMulticastReceiveMessage(REC_ACK))
     {
-        IOTIVITYTEST_LOG(DEBUG, "countMulticastReceiveMessage PROBLEM %d\n", result);
+        IOTIVITYTEST_LOG(DEBUG, "No response found for multicast request");
         return false;
     }
 

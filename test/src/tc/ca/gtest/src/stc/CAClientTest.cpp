@@ -1330,7 +1330,7 @@ TEST_F(CAClientTest_stc, ReceiveWithSecondResponseHandler_P)
 
     CARegisterHandler(CAHelper::requestHandler, CAHelper::responseHandler, CAHelper::errorHandler);
 
-    CARegisterHandler(CAHelper::requestHandler, CAHelper::requestHandlerSecond, CAHelper::errorHandler);
+    CARegisterHandler(CAHelper::requestHandler, CAHelper::responseHandlerSecond, CAHelper::errorHandler);
 
     if (!m_caHelper.startDiscoveryServer())
     {
@@ -3187,7 +3187,7 @@ TEST_F(CAClientTest_stc, SendSecureConDeleteRequestWithLargePayload_P)
  * @see  void CATerminate()
  * @objective Test CARegisterKeepAliveHandler functionality by sending message
  * @target void CARegisterKeepAliveHandler(CAKeepAliveConnectionCallback ConnHandler)
- * @test_data keepAliveHandler callback function 
+ * @test_data keepAliveHandler callback function
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
  *                 2. [Server] Select Network by CASelectNetwork API
  *                 3. [Server] Call CARegisterHandler to register handler
@@ -3207,7 +3207,7 @@ TEST_F(CAClientTest_stc, SendSecureConDeleteRequestWithLargePayload_P)
  *                  3. [CLient] Terminate CA
  * @expected  keepAliveCount should be greater than zero
  */
-#if (defined(__LINUX__) || defined(__ANDROID__)) && defined(__TCP__)
+#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__)) && defined(__TCP__)
 TEST_F(CAClientTest_stc, CACheckKeepAliveHandler_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -3219,7 +3219,7 @@ TEST_F(CAClientTest_stc, CACheckKeepAliveHandler_P)
     }
 
     CARegisterKeepAliveHandler(CAHelper::keepAliveHandler);
-    
+
     if (!m_caHelper.sendRequest(CA_GET, CA_MSG_NONCONFIRM, TOTAL_MESSAGE))
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
@@ -3227,13 +3227,18 @@ TEST_F(CAClientTest_stc, CACheckKeepAliveHandler_P)
         return;
     }
 
+    if (!m_caHelper.countReceiveMessage(REC_ACK))
+    {
+        SET_FAILURE(m_caHelper.getFailureMessage());
+    }
+
     CommonUtil::waitInSecond(2);
-        
+
     if (m_caHelper.getKeepAliveCount()==0)
     {
         SET_FAILURE(m_caHelper.getFailureMessage());
     }
-        
-    CATerminate();    
+
+    CATerminate();
 }
 #endif
