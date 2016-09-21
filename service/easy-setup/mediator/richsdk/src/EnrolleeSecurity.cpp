@@ -154,7 +154,16 @@ namespace OIC
 
                 if (ownedDevice)
                 {
-                    res = ESResult::ES_OK;
+                    if (isOwnedDeviceRegisteredInSVRDB())
+                    {
+                        res = ESResult::ES_OK;
+                    }
+                    else
+                    {
+                        OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,
+                                "The found owned device is not in Mediator's PDM.");
+                        res = ESResult::ES_ERROR;
+                    }
                     return res;
                 }
             }
