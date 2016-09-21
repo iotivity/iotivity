@@ -45,7 +45,7 @@ examples_env.AppendUnique(CPPPATH = [
         '../../csdk/connectivity/api',
         '../../csdk/connectivity/inc/pkix',
         '../../csdk/connectivity/common/inc',
-        '../../csdk/connectivity/lib/libcoap-4.1.1',
+        '../../csdk/connectivity/lib/libcoap-4.1.1/include',
         '../../csdk/security/include',
         '../../csdk/security/include/internal',
         '../../csdk/security/provisioning/include',

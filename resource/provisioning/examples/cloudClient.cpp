@@ -23,7 +23,7 @@
 
 #include "ocstack.h"
 #include "logger.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "cathreadpool.h"
 #include "ocpayload.h"
 #include "payload_logging.h"
@@ -61,8 +61,8 @@ static char *fname = DEFAULT_DB_FILE;
 static uint64_t timeout;
 static uint16_t g_credId = 0;
 
-ca_cond cond;
-ca_mutex mutex;
+oc_cond cond;
+oc_mutex mutex;
 std::string ip("");
 OCCloudProvisioning g_cloudProv(ip, 0);
 
@@ -190,9 +190,9 @@ void handleCB(void* ctx, OCStackResult result, void* data)
     OC_UNUSED(result);
     OC_UNUSED(data);
 
-    ca_mutex_lock(mutex);
-    ca_cond_signal(cond);
-    ca_mutex_unlock(mutex);
+    oc_mutex_lock(mutex);
+    oc_cond_signal(cond);
+    oc_mutex_unlock(mutex);
 }
 
 void handleCB1(OCStackResult result, void *data)
@@ -200,9 +200,9 @@ void handleCB1(OCStackResult result, void *data)
     OC_UNUSED(result);
     OC_UNUSED(data);
 
-    ca_mutex_lock(mutex);
-    ca_cond_signal(cond);
-    ca_mutex_unlock(mutex);
+    oc_mutex_lock(mutex);
+    oc_cond_signal(cond);
+    oc_mutex_unlock(mutex);
 }
 
 void handleCB2(OCStackResult result, std::string data)
@@ -210,9 +210,9 @@ void handleCB2(OCStackResult result, std::string data)
     OC_UNUSED(result);
     OC_UNUSED(data);
 
-    ca_mutex_lock(mutex);
-    ca_cond_signal(cond);
-    ca_mutex_unlock(mutex);
+    oc_mutex_lock(mutex);
+    oc_cond_signal(cond);
+    oc_mutex_unlock(mutex);
 }
 
 static int saveTrustCert(void)
@@ -267,8 +267,8 @@ static void userRequests(void *data)
     strncpy(endPoint.addr, DEFAULT_HOST, sizeof(endPoint.addr));
     endPoint.port = DEFAULT_PORT;
 
-    mutex = ca_mutex_new();
-    cond = ca_cond_new();
+    mutex = oc_mutex_new();
+    cond = oc_cond_new();
 
     while (false == fExit)
     {
@@ -400,8 +400,8 @@ static void userRequests(void *data)
         }
             break;
         case EXIT:
-            ca_mutex_free(mutex);
-            ca_cond_free(cond);
+            oc_mutex_free(mutex);
+            oc_cond_free(cond);
             fExit = true;
             break;
         default:
@@ -412,9 +412,9 @@ static void userRequests(void *data)
         //if requests were sent then wait response
         if (res == OC_STACK_OK)
         {
-            ca_mutex_lock(mutex);
-            ca_cond_wait_for(cond, mutex, timeout);
-            ca_mutex_unlock(mutex);
+            oc_mutex_lock(mutex);
+            oc_cond_wait_for(cond, mutex, timeout);
+            oc_mutex_unlock(mutex);
         }
     }
 

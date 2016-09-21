@@ -418,10 +418,10 @@ exit:
                     OicSecRsrc_t *res = &ace->resources[l];
                     OICFree(res->href);
 
-                    stringArray_t rt = {.array = res->types, .length = res->typeLen};
+                    stringArray_t rt = {res->types, res->typeLen};
                     clearStringArray(&rt);
 
-                    stringArray_t _if = {.array = res->interfaces, .length = res->interfaceLen};
+                    stringArray_t _if = {res->interfaces, res->interfaceLen};
                     clearStringArray(&_if);
                 }
             }
