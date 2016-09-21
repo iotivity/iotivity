@@ -39,7 +39,7 @@ Requires(post): /sbin/ldconfig
 %{!?LOGGING: %define LOGGING 1}
 %{!?ROUTING: %define ROUTING EP}
 %{!?WITH_CLOUD: %define WITH_CLOUD 0}
-%{!?WITH_TCP: %define WITH_TCP 1}
+%{!?WITH_TCP: %define WITH_TCP 0}
 %{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?WITH_MQ: %define WITH_MQ OFF}
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
