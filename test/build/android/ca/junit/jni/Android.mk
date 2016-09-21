@@ -1,39 +1,36 @@
 APP_PATH := $(call my-dir)
-PROJECT_ROOT_PATH	= $(OICTEST_PATH)/resource/csdk/connectivity
 CURRENT_PATH = $(SECTEST_PATH)/build/android/ca/junit
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#include $(OICTEST_REPO)/IotivityOrgSource/$(IOTIVITY_BRANCH)/iotivity/resource/csdk/connectivity/build/android/jni/Android.mk
-include $(SECTEST_PATH)/build/android/ca/gtest/jni/external/Android.mk
-
+LOCAL_PATH := $(call my-dir)
+include $(CLEAR_VARS)
+LOCAL_MODULE := connectivity_abstraction
+LOCAL_SRC_FILES := $(IOTIVITY_PATH)/out/android/armeabi/release/libconnectivity_abstraction.so
+include $(PREBUILT_SHARED_LIBRARY)
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 include $(CLEAR_VARS)
 LOCAL_PATH := $(APP_PATH)
-LOCAL_MODULE := RMInterface
-LOCAL_STATIC_LIBRARIES := CA
-LOCAL_C_INCLUDES := $(PROJECT_ROOT_PATH)/api 
-LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/inc 
-LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/common/inc 
-LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/external/inc 
-LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../c_common/oic_malloc/include
-LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../c_common/oic_string/include
-LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../c_common/ocrandom/include
-LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/../../csdk/logger/include 
-LOCAL_C_INCLUDES += $(CURRENT_PATH)
-LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/src/bt_le_adapter/android/
-LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/util/inc/
-LOCAL_C_INCLUDES += $(PROJECT_ROOT_PATH)/util/src/camanager/android/
+LOCAL_MODULE := CAJni
+LOCAL_SHARED_LIBRARIES := connectivity_abstraction
+LOCAL_C_INCLUDES := $(CURRENT_PATH)
+LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/csdk/connectivity/api 
+LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/csdk/connectivity/inc 
+LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/csdk/connectivity/common/inc 
+LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/c_common/
+LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/c_common/oic_malloc/include
+LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/c_common/oic_string/include
+LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/c_common/ocrandom/include
+LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/csdk/logger/include 
+LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/csdk/connectivity/lib/libcoap-4.1.1
+LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/csdk/connectivity/src/bt_le_adapter/android/
+LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/csdk/connectivity/util/inc/
+LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/csdk/connectivity/util/src/camanager/android/
 
-LOCAL_SRC_FILES := $(CURRENT_PATH)/jni/ResourceModel.c \
-				$(PROJECT_ROOT_PATH)/util/src/cautilinterface.c \
-                $(PROJECT_ROOT_PATH)/util/src/camanager/android/caleautoconnector.c \
-                $(PROJECT_ROOT_PATH)/util/src/camanager/android/caleconnectionmanager.c \
-                $(PROJECT_ROOT_PATH)/util/src/camanager/android/camanagerdevice.c \
-                $(PROJECT_ROOT_PATH)/util/src/camanager/android/camanagerleutil.c
+LOCAL_SRC_FILES := $(CURRENT_PATH)/jni/CAJni.c
 
 LOCAL_LDLIBS := -llog
-LOCAL_CFLAGS := -D__WITH_DTLS__ -std=c99 -D__CA__
+LOCAL_CFLAGS := -std=c99 -D__CA__
 LOCAL_CPPFLAGS := -pthread -frtti -fexceptions
 include $(BUILD_SHARED_LIBRARY)
 

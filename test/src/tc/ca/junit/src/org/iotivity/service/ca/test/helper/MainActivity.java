@@ -30,28 +30,25 @@ import android.app.Activity;
 
 public class MainActivity extends Activity {
 
-	private static Context context = null;
-	private static Activity activity = null;
+    private static Context context = null;
+    private static Activity activity = null;
 
-	public static RMInterface RM = new RMInterface();
+    public void onCreate() {
+        MainActivity.context = getApplicationContext();
+    }
 
-	public void onCreate() {
-		MainActivity.context = getApplicationContext();
-		RM.setResponseListener(this);
-	}
+    public static Context getAppContext() {
+        return MainActivity.context;
+    }
 
-	public static Context getAppContext() {
-		return MainActivity.context;
-	}
+    public static Activity getActivity() {
+        if (activity == null) {
+            activity = new MainActivity();
+        }
+        return activity;
+    }
 
-	public static Activity getActivity() {
-		if (activity == null) {
-			activity = new MainActivity();
-		}
-		return activity;
-	}
-
-	public void OnResponseReceived(String subject, String receivedData) {
-		String callbackData = subject + receivedData;
-	}
+    public void OnResponseReceived(String subject, String receivedData) {
+        String callbackData = subject + receivedData;
+    }
 }

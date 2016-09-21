@@ -37,6 +37,7 @@ def rootDirectory = project.projectDir
 def moduleName = project.gradle.startParameter.taskNames[0]
 def caModuleArgs= []
 ext.buildmode="release"
+ext.gradleAbsolutePath=""
 ext.iotivityRootDirectoryFromModules = "../../../../.."
 ext.iotivityRootDirectoryFromBuild = "../../.."
 ext.secTestRootDirectoryFromBuild = "../.."
@@ -77,6 +78,11 @@ if(project.hasProperty('c')){
         caModuleArgs.add(tempArg)
     }
 }  
+
+if(project.hasProperty('p')){
+    println("P arguments: ${p}")
+    gradleAbsolutePath="${p}"
+}
 
 /*
  *JUnit common libraries path definition
@@ -142,7 +148,7 @@ task checkCommonLibFiles(type:Download) {
         mkdir(androidLibFileDirFromMainBuild)
         src (downLoadLinks)
         overwrite false
-        dest androidLibFileDirFromMainBuild
+        dest gradleAbsolutePath + androidLibFileDirFromMainBuild
     }
 
 }

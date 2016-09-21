@@ -1,21 +1,101 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+/******************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
+
 buildscript {
     repositories {
         jcenter()
-		{
-			url "http://jcenter.bintray.com"
-		}
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:1.3.0'
     }
 }
 
-allprojects {
-    repositories {
-        jcenter()
-		{
-			url "http://jcenter.bintray.com"
-		}
+apply plugin: 'com.android.application'
+
+android {
+    signingConfigs {
+        config {
+        }
     }
+    compileSdkVersion 21
+    buildToolsVersion "21.0.0"
+    defaultConfig {
+        applicationId "org.iotivity.ca.simulator"
+        minSdkVersion 21
+        targetSdkVersion 21
+        ndk {
+            moduleName "CAJni"
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+    lintOptions {
+        abortOnError false
+    }
+    sourceSets {
+        main {
+            manifest.srcFile 'src/main/AndroidManifest.xml'
+            jniLibs.srcDir 'libs'
+            jni.srcDirs = [] //disable automatic ndk-build call            
+        }
+    }
+    productFlavors {
+    }
+}
+
+repositories {
+    flatDir {
+        dirs "../../../../../../android/android_api/base/build/outputs/aar/"
+    }
+}
+
+try {
+    dependencies {
+        compile ":iotivity-base-${TARGET_ARCH}-${RELEASE}@aar"
+    }
+} catch (all) {
+    print "${ERROR_MSG}"
+    assert all
+}
+
+task copyNativeLibs(type: Copy, dependsOn: 'buildNative') {
+    dependsOn 'buildNative'
+    from(new File('src/main/libs')) { include "**/*.so" }
+    into new File(buildDir, 'native-libs')
+}
+
+tasks.withType(JavaCompile) { compileTask -> compileTask.dependsOn copyNativeLibs }
+
+clean.dependsOn 'cleanCopyNativeLibs'
+
+tasks.withType(com.android.build.gradle.tasks.PackageApplication) { pkgTask ->
+    pkgTask.jniFolders = new HashSet<File>()
+    pkgTask.jniFolders.add(new File(buildDir, 'native-libs'))
+}
+
+task buildNative(type: Exec) {
+        def ndkBuild = new File("${ANDROID_NDK}", 'ndk-build')
+        commandLine ndkBuild, "-C", file("src/main"), "-B", "-j", Runtime.runtime.availableProcessors(),
+                              "APP_ABI=${TARGET_ARCH}", "APP_OPTIM=${RELEASE}"
 }

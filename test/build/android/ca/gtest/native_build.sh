@@ -2,19 +2,23 @@
 
 # Run Command
 
-# ./native_build.sh push=true clean=true android_ndk=ndk-absolute_path 
+# ./native_build.sh push=true clean=true android_ndk=ndk-absolute_path android_home=sdk_absolute_path
 
-push="false"
-clean="true"
+push='true'
+clean='true'
+release='release'
 total_device=1
 red=`tput setaf 1`
 green=`tput setaf 2`
 reset=`tput sgr0`
-    
+stand_alone='true'
+android_home=${ANDROID_HOME}
+android_ndk=${ANDROID_NDK}
+
 for i in `seq 1 $#` 
 do
-	eval arg=\$$i
-	arg=${arg// /+}
+    eval arg=\$$i
+    arg=${arg// /+}
     args+=$arg" "
 done
 
@@ -35,28 +39,48 @@ while [ $i -lt $len ]; do
         push=${arg}
     elif [[ "${arg_parts[i]}" = "clean" ]]; then
         clean=${arg}
+    elif [[ "${arg_parts[i]}" = "release" ]]; then
+        release=${arg}
+    elif [[ "${arg_parts[i]}" = "android_home" ]]; then
+        android_home=${arg}
     elif [[ "${arg_parts[i]}" = "android_ndk" ]]; then
-        ANDROID_NDK=${arg}        
+        android_ndk=${arg}
+    elif [[ "${arg_parts[i]}" = "stand_alone" ]]; then
+        stand_alone=${arg}
     fi
     let i=i+2
 done
 
-if [[ "${ANDROID_NDK}" = "" ]]; then
-    echo ${red}'ANDROID_NDK NOT DEFINED'${reset}
+if [[ "${android_home}" = "" ]]; then
+    echo ${red}'android_home NOT DEFINED'${reset}
     echo ${red}'Script Exiting...'${reset}
     exit 127
 fi
 
-ndk_file=${ANDROID_NDK}"/ndk-build"
+adb_path=${android_home}'/platform-tools/adb'
+
+if [ ! -f "$adb_path" ]; then
+    echo ${red}'Invalid android_home. No android_home found'${reset}
+    echo ${red}'Script Exiting...'${reset}
+    exit 127
+fi
+
+if [[ "${android_ndk}" = "" ]]; then
+    echo ${red}'android_ndk NOT DEFINED'${reset}
+    echo ${red}'Script Exiting...'${reset}
+    exit 127
+fi
+
+ndk_file=${android_ndk}"/ndk-build"
 if [ ! -f "$ndk_file" ]; then
-    echo ${red}'Invalid ANDROID_NDK. No ndk-build found'${reset}
+    echo ${red}'Invalid android_ndk. No ndk-build found'${reset}
     echo ${red}'Script Exiting...'${reset}
     exit 127
 fi
 
-if [[ "${push}" = "true" || "${push}" = "1" ]]; then
+if [[ "${push}" = "1" ]]; then
 
-    device_ids=$(adb devices | grep -o '\b[a-f0-9]\+\b')
+    device_ids=$(${adb_path} devices | grep -o '\b[a-f0-9]\+\b')
     
     device_list=(${device_ids})
     total_device=${#device_list[@]}
@@ -68,6 +92,10 @@ if [[ "${push}" = "true" || "${push}" = "1" ]]; then
     echo 'total_device: '${total_device}    
 fi
 
+if [[ "${stand_alone}" = "false" ]]; then
+    cd build/android/ca/gtest
+fi
+
 current_path=`pwd`
 cd ../../../../
 current_oictest_path=`pwd`
@@ -75,8 +103,8 @@ cd $current_path
 current_path=`pwd`
 echo "pwd: "$current_path
 cd ../../../../../
-	
-current_iotivity_path=`pwd`	
+    
+current_iotivity_path=`pwd`    
 
 cd $current_path
 
@@ -86,25 +114,19 @@ if [[ "${clean}" = "true" || "${clean}" = "1" ]]; then
     rm -rf obj
 fi
 
-export IP_ADAPTER_FLAG=IP_ADAPTER
-export EDR_ADAPTER_FLAG=NO_EDR_ADAPTER
-export LE_ADAPTER_FLAG=NO_LE_ADAPTER
+echo '-----------------------Environment Variable-----------------------'
+export RELEASE_DIR=$release
 export SECTEST_PATH=$current_oictest_path
 export IOTIVITY_PATH=$current_iotivity_path
-
-echo '-----------------------Environment Variable-----------------------'
 echo $OICTEST_PATH
 echo $IOTIVITY_PATH
-echo $LE_ADAPTER_FLAG
-echo $IP_ADAPTER_FLAG
-echo $EDR_ADAPTER_FLAG
 echo '-----------------------End-----------------------'
 
 rm -rf libs
 
-${ANDROID_NDK}/ndk-build
+${android_ndk}/ndk-build
 
-file_list=(libHelperInterface.so libTcpHelperInterface.so libTinyDtls.so libgnustl_shared.so iotivity_ca_test iotivity_ca_ip_test iotivity_ca_tcp_test iotivity_ca_simulator)
+file_list=(libconnectivity_abstraction.so libgnustl_shared.so iotivity_ca_test iotivity_ca_ip_test iotivity_ca_tcp_test iotivity_ca_simulator)
 
 total_file=${#file_list[@]}
 
@@ -126,24 +148,28 @@ while [ $i -lt $total_file ]; do
 done
 
 
-if [[ "${push}" = "true" || "${push}" = "1" ]]; then
-    
+if [[ "${push}" = "1" ]]; then
     i=0
     while [ $i -lt $total_device ]; do
     
         device_id='-s '${device_list[i]}
         echo 'device_id: '${device_id}
         
-        adb $device_id push ../../../../res/ca_resource/runner.sh /data/local/tmp/
-        adb $device_id push ../../../../bin/linux/config.ini /data/local/tmp/
+        ${adb_path} $device_id push ../../../../res/ca_resource/runner.sh /data/local/tmp/
+        ${adb_path} $device_id push ../../../../res/ca_resource/config.ini /data/local/tmp/
             
+        echo 'total_file: '$total_file
         j=0    
         while [ $j -lt $total_file ]; do
-            adb $device_id push libs/armeabi/${file_list[j]} /data/local/tmp/    
+            ${adb_path} $device_id push libs/armeabi/${file_list[j]} /data/local/tmp/    
             echo ${green}${file_list[j]}' pushed /data/local/tmp folder in device '${device_id}${reset}
             let j=j+1
         done    
         
         let i=i+1
     done    
+fi
+
+if [[ "${stand_alone}" = "false" ]]; then
+    cd ../../../../
 fi
