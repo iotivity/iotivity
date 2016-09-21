@@ -43,7 +43,7 @@ src_dir = env.get('SRC_DIR')
 local_env.AppendUnique(CPPPATH = ['include',
                         os.path.join(src_dir, 'resource/csdk/stack/include'),
                         os.path.join(src_dir, 'resource/csdk/connectivity/common/inc/'),
-                        os.path.join(src_dir, 'resource/csdk/connectivity/lib/libcoap-4.1.1/include/coap/'),
+                        os.path.join(src_dir, 'resource/csdk/connectivity/lib/libcoap-4.1.1/include'),
                         os.path.join(src_dir, 'extlibs/cjson'),
 		])
 local_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])

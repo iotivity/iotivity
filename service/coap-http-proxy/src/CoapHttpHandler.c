@@ -22,7 +22,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "logger.h"
-#include "pdu.h"
+#include <coap/pdu.h>
 #include "ocpayload.h"
 #include "uarraylist.h"
 #include "CoapHttpParser.h"
