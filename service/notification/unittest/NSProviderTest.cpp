@@ -75,23 +75,19 @@ public:
 
     static void NSRequestedSubscribeCallbackEmpty(NSConsumer *)
     {
-        std::cout << __func__ << std::endl;
     }
 
     static void NSSyncCallbackEmpty(NSSyncInfo *)
     {
-        std::cout << __func__ << std::endl;
     }
 
     static void NSMessageCallbackFromConsumerEmpty(
             const int &, const std::string &, const std::string &, const std::string &)
     {
-        std::cout << __func__ << std::endl;
     }
 
     static void NSSyncCallbackFromConsumerEmpty(int, int)
     {
-        std::cout << __func__ << std::endl;
     }
 
 protected:
@@ -188,7 +184,6 @@ TEST_F(NotificationProviderTest, ExpectCallbackWhenReceiveSubscribeRequestWithAc
     mocks.OnCallFunc(NSRequestedSubscribeCallbackEmpty).Do(
             [](NSConsumer * consumer)
             {
-                std::cout << "NSRequestedSubscribeCallback" << std::endl;
                 g_consumerID = strdup(consumer->consumerId);
                 responseCon.notify_all();
             });
@@ -226,7 +221,6 @@ TEST_F(NotificationProviderTest, NeverCallNotifyOnConsumerByAcceptIsFalse)
             {
                 if (id == msgID)
                 {
-                    std::cout << "This function never call" << std::endl;
                     expectTrue = false;
                 }
             });
@@ -260,10 +254,8 @@ TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
     mocks.ExpectCallFunc(NSMessageCallbackFromConsumerEmpty).Do(
             [&msgID](const int &id, const std::string&, const std::string&, const std::string&)
             {
-                std::cout << "id : " << id << std::endl;
                 if (id == msgID)
                 {
-                    std::cout << "ExpectCallNotifyOnConsumerByAcceptIsTrue" << std::endl;
                     responseCon.notify_all();
                 }
             });
@@ -288,11 +280,8 @@ TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadToConsumer)
     mocks.ExpectCallFunc(NSSyncCallbackFromConsumerEmpty).Do(
             [& id](int & type, int &syncId)
             {
-        std::cout << "NSSyncCallbackEmpty" << std::endl;
-                if (syncId == id &&
-                        type == NS_SYNC_READ)
+                if (syncId == id && type == NS_SYNC_READ)
                 {
-                    std::cout << "ExpectCallbackSyncOnReadFromConsumer" << std::endl;
                     responseCon.notify_all();
                 }
             });
@@ -315,10 +304,8 @@ TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadFromConsumer)
     mocks.ExpectCallFunc(NSSyncCallbackEmpty).Do(
             [& id](NSSyncInfo * sync)
             {
-                std::cout << "NSSyncCallbackEmpty" << std::endl;
                 if ((int)sync->messageId == id && sync->state == NS_SYNC_READ)
                 {
-                    std::cout << "ExpectCallbackSyncOnReadFromConsumer" << std::endl;
                     responseCon.notify_all();
                 }
             });
@@ -351,7 +338,6 @@ TEST_F(NotificationProviderTest, ExpectEqualAddedTopicsAndRegisteredTopics)
 
     if(!topics)
     {
-        printf("topic is NULL\n");
         isSame = false;
     }
     else
@@ -359,9 +345,6 @@ TEST_F(NotificationProviderTest, ExpectEqualAddedTopicsAndRegisteredTopics)
         NSTopicLL * iter = topics;
         std::string compStr(iter->topicName);
         std::string compStr2(iter->next->topicName);
-
-        printf("str = %s, compStr = %s\n", str.c_str(), iter->topicName);
-        printf("str2 = %s, compStr2 = %s\n", str2.c_str(), iter->next->topicName);
 
         if(str.compare(compStr) == 0 && str2.compare(compStr2) == 0)
         {
@@ -393,15 +376,12 @@ TEST_F(NotificationProviderTest, ExpectEqualUnregisteredTopicsAndRegisteredTopic
 
     if(!topics)
     {
-        printf("topic is NULL\n");
         isSame = false;
     }
     else
     {
         NSTopicLL * iter = topics;
         std::string compStr(iter->topicName);
-
-        printf("str = %s, compStr = %s\n", str.c_str(), iter->topicName);
 
         if(str.compare(compStr) == 0)
         {
@@ -432,19 +412,12 @@ TEST_F(NotificationProviderTest, ExpectEqualSetConsumerTopicsAndGetConsumerTopic
 
     if(!topics)
     {
-        printf("topic is NULL\n");
         isSame = false;
     }
     else
     {
         NSTopicLL * firstData = topics;
         NSTopicLL * secondData = firstData->next;
-
-        printf("str = %s, compStr = %s, state = %d\n", str.c_str(), firstData->topicName,
-                (int)firstData->state);
-
-        printf("str2 = %s, compStr = %s, state = %d\n", str2.c_str(), secondData->topicName,
-                (int)secondData->state);
 
         if(str.compare(firstData->topicName) == 0 && str2.compare(secondData->topicName) == 0
                 && ((int)firstData->state) == 1 && ((int)secondData->state) == 0)
@@ -479,19 +452,12 @@ TEST_F(NotificationProviderTest, ExpectEqualUnSetConsumerTopicsAndGetConsumerTop
 
     if(!topics)
     {
-        printf("topic is NULL\n");
         isSame = false;
     }
     else
     {
         NSTopicLL * firstData = topics;
         NSTopicLL * secondData = firstData->next;
-
-        printf("str = %s, compStr = %s, state = %d\n", str.c_str(), firstData->topicName,
-                (int)firstData->state);
-
-        printf("str2 = %s, compStr = %s, state = %d\n", str2.c_str(), secondData->topicName,
-                (int)secondData->state);
 
         if(str.compare(firstData->topicName) == 0 && str2.compare(secondData->topicName) == 0
                 && ((int)firstData->state) == 0 && ((int)secondData->state) == 1)
@@ -506,6 +472,88 @@ TEST_F(NotificationProviderTest, ExpectEqualUnSetConsumerTopicsAndGetConsumerTop
     NSProviderUnregisterTopic(str2.c_str());
 
     responseCon.wait_for(lock, std::chrono::milliseconds(500));
+}
+
+TEST_F(NotificationProviderTest, ExpectFailAcceptSubscription)
+{
+    NSResult result;
+    result = NS_SUCCESS;
+    result = NSAcceptSubscription(NULL, true);
+    result = NSAcceptSubscription("\0", true);
+
+    EXPECT_EQ(result, NS_FAIL);
+}
+
+TEST_F(NotificationProviderTest, ExpectFailSendMessage)
+{
+    NSResult result;
+    result = NS_SUCCESS;
+    result = NSSendMessage(NULL);
+
+    EXPECT_EQ(result, NS_FAIL);
+}
+
+TEST_F(NotificationProviderTest, ExpectFailRegisterTopic)
+{
+    NSResult result;
+    result = NS_SUCCESS;
+    result = NSProviderRegisterTopic(NULL);
+    result = NSProviderRegisterTopic("\0");
+
+    EXPECT_EQ(result, NS_FAIL);
+}
+
+TEST_F(NotificationProviderTest, ExpectFailUnregisterTopic)
+{
+    NSResult result;
+    result = NS_SUCCESS;
+    result = NSProviderUnregisterTopic(NULL);
+    result = NSProviderUnregisterTopic("\0");
+
+    EXPECT_EQ(result, NS_FAIL);
+}
+
+TEST_F(NotificationProviderTest, ExpectFailGetConsumerTopics)
+{
+    NSTopicLL topic;
+    NSTopicLL * topicLL = &topic;
+
+    topicLL = NSProviderGetConsumerTopics(NULL);
+    topicLL = NSProviderGetConsumerTopics("\0");
+
+    EXPECT_EQ(topicLL, (NSTopicLL *)NULL);
+}
+
+TEST_F(NotificationProviderTest, ExpectFailSetConsumerTopics)
+{
+    NSResult result;
+    result = NS_SUCCESS;
+    result = NSProviderSetConsumerTopic(NULL, NULL);
+    result = NSProviderSetConsumerTopic(NULL, "\0");
+    result = NSProviderSetConsumerTopic("\0", NULL);
+    result = NSProviderSetConsumerTopic("\0", "\0");
+    result = NSProviderSetConsumerTopic("abc", NULL);
+    result = NSProviderSetConsumerTopic(NULL, "abc");
+    result = NSProviderSetConsumerTopic("abc", "\0");
+    result = NSProviderSetConsumerTopic("\0", "abc");
+
+    EXPECT_EQ(result, NS_FAIL);
+}
+
+TEST_F(NotificationProviderTest, ExpectFailUnsetConsumerTopics)
+{
+    NSResult result;
+    result = NS_SUCCESS;
+    result = NSProviderUnsetConsumerTopic(NULL, NULL);
+    result = NSProviderUnsetConsumerTopic(NULL, "\0");
+    result = NSProviderUnsetConsumerTopic("\0", NULL);
+    result = NSProviderUnsetConsumerTopic("\0", "\0");
+    result = NSProviderUnsetConsumerTopic("abc", NULL);
+    result = NSProviderUnsetConsumerTopic(NULL, "abc");
+    result = NSProviderUnsetConsumerTopic("abc", "\0");
+    result = NSProviderUnsetConsumerTopic("\0", "abc");
+
+    EXPECT_EQ(result, NS_FAIL);
 }
 
 TEST_F(NotificationProviderTest, CancelObserves)
