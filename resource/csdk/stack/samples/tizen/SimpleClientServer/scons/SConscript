@@ -24,10 +24,13 @@ target_os = env.get('TARGET_OS')
 transport = env.get('TARGET_TRANSPORT')
 secured = env.get('SECURED')
 routing = env.get('ROUTING')
+with_mq = env.get('WITH_MQ')
 OIC_LIB = 'oic'
 root_dir = env.get('ROOT_DIR')
 build_dir = env.get('BUILD_DIR')
 sample_dir = build_dir
+
+print "MQ flag is %s" % with_mq
 
 env.AppendUnique(CPPFLAGS = ['-std=c++0x', '-fPIC', '-D__TIZEN__','-DWITH_POSIX', '-Wall', '-DSLP_SDK_LOG', '-g','-D_GNU_SOURCE','-DTIZEN_DEBUG_ENABLE', '-DTB_LOG','`pkg-config', '--cflags', '--libs','dlog', 'com.oic.ri', 'capi-network-wifi',
 				'gobject-2.0','glib-2.0`'])
@@ -75,6 +78,18 @@ else:
 		env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER', 'WITH_TCP'])
 	else:
 		env.AppendUnique(CPPDEFINES = ['NO_TCP_ADAPTER'])
+
+if 'SUB' in with_mq:
+	env.AppendUnique(CPPDEFINES = ['MQ_SUBSCRIBER', 'WITH_MQ'])
+	print "MQ SUB support"
+
+if 'PUB' in with_mq:
+	env.AppendUnique(CPPDEFINES = ['MQ_PUBLISHER', 'WITH_MQ'])
+	print "MQ PUB support"
+
+if 'BROKER' in with_mq:
+	env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
+	print "MQ Broker support"
 
 #ri_sample_src = [sample_dir + '/occlient.cpp']
 
