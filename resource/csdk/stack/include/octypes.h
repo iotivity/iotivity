@@ -1017,6 +1017,12 @@ typedef void * OCRequestHandle;
 typedef uint8_t OCObservationId;
 
 /**
+ * Sequence number is a 24 bit field,
+ * per https://tools.ietf.org/html/rfc7641.
+ */
+#define MAX_SEQUENCE_NUMBER              (0xFFFFFF)
+
+/**
  * Action associated with observation.
  */
 typedef enum
