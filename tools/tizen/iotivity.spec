@@ -36,10 +36,10 @@ Requires(post): /sbin/ldconfig
 
 %{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
 %{!?SECURED: %define SECURED 1}
-%{!?LOGGING: %define LOGGING True}
+%{!?LOGGING: %define LOGGING 1}
 %{!?ROUTING: %define ROUTING EP}
-%{!?WITH_TCP: %define WITH_TCP true}
-%{!?WITH_PROXY: %define WITH_PROXY False}
+%{!?WITH_TCP: %define WITH_TCP 1}
+%{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
 %{!?VERBOSE: %define VERBOSE 1}
 
