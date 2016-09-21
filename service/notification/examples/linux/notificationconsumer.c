@@ -167,9 +167,16 @@ int main(void)
 
         printf("Input: ");
 
-        scanf("%d", &num);
+        if(scanf("%d", &num) == EOF)
+        {
+            printf("Fail to input num\n");
+        }
         fflush(stdin);
-        scanf("%c", &dummy);
+
+        if(scanf("%c", &dummy) == EOF)
+        {
+            printf("Fail to input dummy\n");
+        }
         fflush(stdin);
 
         switch (num)
