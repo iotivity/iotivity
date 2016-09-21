@@ -29,9 +29,6 @@
 #ifndef OC_OBSERVE_H
 #define OC_OBSERVE_H
 
-/** Sequence number is a 24 bit field, per https://tools.ietf.org/html/draft-ietf-core-observe-16.*/
-#define MAX_SEQUENCE_NUMBER              (0xFFFFFF)
-
 /** Maximum number of observers to reach */
 
 #define MAX_OBSERVER_FAILED_COMM         (2)
