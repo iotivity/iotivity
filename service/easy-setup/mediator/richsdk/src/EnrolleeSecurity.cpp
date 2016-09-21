@@ -203,7 +203,7 @@ namespace OIC
                         }
 
                         std::unique_lock<std::mutex> lck(m_mtx);
-                        m_cond.wait_for(lck, std::chrono::seconds(ES_SEC_DISCOVERY_TIMEOUT));
+                        m_cond.wait(lck);
 
                         if(!removeDeviceResult)
                         {
@@ -222,7 +222,7 @@ namespace OIC
                     }
 
                     std::unique_lock<std::mutex> lck(m_mtx);
-                    m_cond.wait_for(lck, std::chrono::seconds(ES_SEC_DISCOVERY_TIMEOUT));
+                    m_cond.wait(lck);
 
                     if(!OTMResult)
                     {
@@ -432,7 +432,7 @@ namespace OIC
             }
 
             std::unique_lock<std::mutex> lck(m_mtx);
-            m_cond.wait_for(lck, std::chrono::seconds(ES_SEC_DISCOVERY_TIMEOUT));
+            m_cond.wait(lck);
 
             if(certResult)
             {
@@ -476,7 +476,7 @@ namespace OIC
             }
 
             std::unique_lock<std::mutex> lck(m_mtx);
-            m_cond.wait_for(lck, std::chrono::seconds(ES_SEC_DISCOVERY_TIMEOUT));
+            m_cond.wait(lck);
 
             if(aclResult)
             {
