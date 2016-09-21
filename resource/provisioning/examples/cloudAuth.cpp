@@ -47,7 +47,7 @@ typedef struct
     char *accesstoken;
     char *refreshtoken;
     char *tokentype;
-    long  expiresin;
+    int64_t expiresin;
     char *uid;
     char *redirecturi;
     char *certificate;
