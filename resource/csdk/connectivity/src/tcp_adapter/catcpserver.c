@@ -659,6 +659,11 @@ static CAResult_t CATCPConvertNameToAddr(int family, const char *host, uint16_t 
 
 static int CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
 {
+    VERIFY_NON_NULL_RET(svritem, TAG, "svritem", -1);
+
+    OIC_LOG_V(DEBUG, TAG, "try to connect with [%s:%u]",
+              svritem->sep.endpoint.addr, svritem->sep.endpoint.port);
+
     // #1. create tcp socket.
     int fd = socket(family, SOCK_STREAM, IPPROTO_TCP);
     if (-1 == fd)
