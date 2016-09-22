@@ -1066,7 +1066,7 @@ static int removeDeviceWithUuid(void)
     printf("Input the UUID : ");
     for(int ret=0; 1!=ret; )
     {
-        ret = scanf("%64s", strUuid);
+        ret = scanf("%63s", strUuid);
         for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                     // '0x20<=code' is character region
     }
