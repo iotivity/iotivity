@@ -391,26 +391,26 @@ namespace OIC
                 return;
             }
 #if defined(__WITH_DTLS__) && defined(__WITH_TLS__)
-            ESResult res = ESResult::ES_ERROR;
             if(!(cloudProp.getCloudID().empty() && cloudProp.getCredID() <= 0))
             {
+                ESResult res = ESResult::ES_ERROR;
                 m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
 
                 res = m_enrolleeSecurity->provisionSecurityForCloudServer(cloudProp.getCloudID(),
                                                                           cloudProp.getCredID());
+
+                if(res != ESResult::ES_OK)
+                {
+                    m_cloudResource = nullptr;
+                    std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
+                            CloudPropProvisioningStatus >(res);
+                    m_cloudPropProvStatusCb(provStatus);
+                    return;
+                }
             }
             else
             {
                 OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "ACL and Cert. provisioning are skipped.");
-            }
-
-            if(res != ESResult::ES_OK)
-            {
-                m_cloudResource = nullptr;
-                std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
-                        CloudPropProvisioningStatus >(res);
-                m_cloudPropProvStatusCb(provStatus);
-                return;
             }
 #endif //defined(__WITH_DTLS__) && defined(__WITH_TLS__)
 
