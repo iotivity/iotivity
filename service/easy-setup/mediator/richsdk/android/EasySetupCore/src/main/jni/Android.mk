@@ -79,6 +79,9 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH) \
 					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/stack/include \
 					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/logger/include \
 					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/security/include \
+					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/security/provisioning/include \
+					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/security/provisioning/include/cloud \
+					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/security/provisioning/include/oxm \
 					$(LOCAL_PATH)/../../../../../../../../../extlibs/cjson \
 					$(LOCAL_PATH)/../../../../../../../../../extlibs/boost/boost_1_58_0 \
 					$(LOCAL_PATH)/../../../../../../../../../extlibs/timer \
