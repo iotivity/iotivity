@@ -95,8 +95,7 @@ if target_os in ['android','linux']:
 		env.get('SRC_DIR') + '/resource/csdk/security/include',
 		env.get('SRC_DIR') + '/extlibs/cjson',
 		env.get('SRC_DIR') + '/extlibs/sqlite3',
-		env.get('SRC_DIR') + '/service/easy-setup/inc',
-		'inc'])
+		env.get('SRC_DIR') + '/service/easy-setup/inc'])
 	if env.get('SECURED') == '1':
 		with_upstream_libcoap = easy_setup_env.get('WITH_UPSTREAM_LIBCOAP')
 		if with_upstream_libcoap == '1':
@@ -109,8 +108,8 @@ if target_os in ['android','linux']:
 			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include',
 			env.get('SRC_DIR') + '/resource/csdk/security/include/internal',
 			env.get('SRC_DIR') + '/resource/csdk/connectivity/api/',
-            env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
-            env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/cloud',
+			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
+			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/cloud',
 			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/oxm'])
 		if env.get('WITH_TCP') == True:
 			easy_setup_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
@@ -148,8 +147,8 @@ print "Files path is %s" % env.get('es_src')
 ######################################################################
 # Generate RichSDK Mediator AAR
 ################################################ ######################
-#if target_os in ['android']:
-#	SConscript('android/SConscript')
+if target_os in ['android']:
+	SConscript('android/SConscript')
 
 ######################################################################
 # Build RichSDK Mediator Sample App
@@ -157,8 +156,8 @@ print "Files path is %s" % env.get('es_src')
 if target_os in ['linux']:
 	SConscript('../../sampleapp/mediator/linux/richsdk_sample/SConscript')
 
-#if target_os in ['android']:
-#	SConscript('../../sampleapp/mediator/android/SConscript')
+if target_os in ['android']:
+	SConscript('../../sampleapp/mediator/android/SConscript')
 
 
 ######################################################################

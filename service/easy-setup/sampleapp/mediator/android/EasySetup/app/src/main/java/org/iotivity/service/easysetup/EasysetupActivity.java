@@ -510,6 +510,26 @@ public class EasysetupActivity extends Activity
                                             }
                                         });
                                     }
+                                    else if(securityProvisioningStatus.getESResult()
+                                            == ESResult.ES_SECURE_RESOURCE_DISCOVERY_FAILURE) {
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                mSecStateText.setText("Not found Secure Resource");
+                                                mStartConfigureSec.setEnabled(true);
+                                            }
+                                        });
+                                    }
+                                    else if(securityProvisioningStatus.getESResult()
+                                            == ESResult.ES_OWNERSHIP_TRANSFER_FAILURE) {
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                mSecStateText.setText("Ownership transfer failed");
+                                                mStartConfigureSec.setEnabled(true);
+                                            }
+                                        });
+                                    }
                                     else {
                                         runOnUiThread(new Runnable() {
                                             @Override
@@ -558,7 +578,6 @@ public class EasysetupActivity extends Activity
                                 @Override
                                 public void onProgress(GetConfigurationStatus getConfigurationStatus) {
                                     if(getConfigurationStatus.getESResult() == ESResult.ES_OK) {
-
                                         final EnrolleeConf enrolleeConf = getConfigurationStatus.getEnrolleeConf();
                                         runOnUiThread(new Runnable() {
                                             @Override
@@ -577,7 +596,16 @@ public class EasysetupActivity extends Activity
                                                 }
                                             }
                                         });
-
+                                    }
+                                    else if(getConfigurationStatus.getESResult() == ESResult.ES_COMMUNICATION_ERROR)
+                                    {
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                mGetconfigurationStateText.setText("Communication Error");
+                                                mStartGetConfiguration.setEnabled(true);
+                                            }
+                                        });
                                     }
                                     else {
                                         runOnUiThread(new Runnable() {
@@ -651,8 +679,8 @@ public class EasysetupActivity extends Activity
                                             else if(result.equals(ESResult.ES_ERROR)) {
                                                 mProvisionDevPropState.setText("Failed");
                                             }
-                                            else if(result.equals(ESResult.ES_UNAUTHORIZED_REQ)) {
-                                                mProvisionDevPropState.setText("Failed. Need SecProv");
+                                            else if(result.equals(ESResult.ES_COMMUNICATION_ERROR)) {
+                                                mProvisionDevPropState.setText("Communication Error");
                                             }
                                             mStartProvisionDevProp.setEnabled(true);
                                         }
@@ -709,14 +737,20 @@ public class EasysetupActivity extends Activity
                                     runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            if(result.equals(ESResult.ES_FOUND_ENROLLEE)) {
-                                                mProvisionCloudPropState.setText("Found Resource");
-                                            }
-                                            else if(result.equals(ESResult.ES_NOT_FOUND_ENROLLEE)) {
+                                            if(result.equals(ESResult.ES_ENROLLEE_DISCOVERY_FAILURE)) {
                                                 mProvisionCloudPropState.setText("Not Found Resource");
                                             }
                                             else if(result.equals(ESResult.ES_OK)) {
                                                 mProvisionCloudPropState.setText("Cloud Provisioning succeeds");
+                                            }
+                                            else if(result.equals(ESResult.ES_ACL_PROVISIONING_FAILURE)){
+                                                mProvisionCloudPropState.setText("ACL-provisioning fails");
+                                            }
+                                            else if(result.equals(ESResult.ES_CERT_PROVISIONING_FAILURE)){
+                                                mProvisionCloudPropState.setText("CERT-provisioning fails");
+                                            }
+                                            else if(result.equals(ESResult.ES_COMMUNICATION_ERROR)){
+                                                mProvisionCloudPropState.setText("Communication Error");
                                             }
                                             else {
                                                 mProvisionCloudPropState.setText("Cloud Provisioning fails");
