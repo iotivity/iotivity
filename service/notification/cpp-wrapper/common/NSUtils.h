@@ -53,7 +53,7 @@ namespace OIC
             TOPIC = 3,
             STOPPED = 12
         };
-        
+
         /**
              * NSProviderSubscribedState of notification service
              */

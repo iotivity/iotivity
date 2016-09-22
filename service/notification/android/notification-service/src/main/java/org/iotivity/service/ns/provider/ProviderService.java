@@ -55,9 +55,11 @@ public class ProviderService
 
     public int start(OnConsumerSubscribedListener  subscribedListener,
                      OnMessageSynchronizedListener  messageSynchronized,
-                     boolean subControllability, String userInfo) throws NSException
+                     boolean subControllability, String userInfo, 
+                     boolean resourceSecurity) throws NSException
     {
-        return nativeStart(subscribedListener, messageSynchronized,subControllability,userInfo);
+        return nativeStart(subscribedListener, messageSynchronized,
+                            subControllability, userInfo, resourceSecurity);
     }
 
     public int stop() throws NSException
@@ -115,9 +117,10 @@ public class ProviderService
         public void onMessageSynchronized(SyncInfo syncInfo);
     }
 
-    public native int  nativeStart(OnConsumerSubscribedListener    subscribedListener,
-                                                 OnMessageSynchronizedListener   messageSynchronized,
-                                                 boolean subControllability, String userInfo) throws NSException;
+    public native int  nativeStart(OnConsumerSubscribedListener subscribedListener,
+                                                 OnMessageSynchronizedListener messageSynchronized,
+                                                 boolean subControllability, String userInfo, 
+                                                 boolean resourceSecurity) throws NSException;
     public native int  nativeStop() throws NSException;
     public native int  nativeSendMessage(Message message) throws NSException;
     public native void  nativeSendSyncInfo( long messageId , int type) throws NSException;

@@ -21,6 +21,7 @@
 package org.iotivity.service.ns.common;
 
 import android.util.Log;
+import org.iotivity.base.OcRepresentation;
 
 /**
   * @class   Message
@@ -58,7 +59,8 @@ public class Message
     public String mTitle                       = null;
     public String mContentText                 = null;
     public MediaContents mMediaContents        = null;
-    public String mTopic                  = null;
+    public String mTopic                       = null;
+    public OcRepresentation mExtraInfo         = null;
 
     private long mNativeHandle                 = 0;
 
@@ -120,6 +122,12 @@ public class Message
     {
         return mTopic;
     }
+
+    public OcRepresentation getExtraInfo()
+    {
+        return mExtraInfo;
+    }
+
     public void setSourceName (String sourceName)
     {
         mSourceName = sourceName;
@@ -158,5 +166,10 @@ public class Message
     public void setTopic(String topic)
     {
         mTopic = topic;
+    }
+
+    public void setExtraInfo(OCRepresentation extraInfo)
+    {
+        mExtraInfo = extraInfo;
     }
 }

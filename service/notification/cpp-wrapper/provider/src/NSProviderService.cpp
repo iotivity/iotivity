@@ -26,6 +26,7 @@
 #include "NSConsumer.h"
 #include "NSSyncInfo.h"
 #include "NSConstants.h"
+#include "OCRepresentation.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
 
@@ -77,6 +78,7 @@ namespace OIC
                 nsMsg->mediaContents->iconImage = OICStrdup(msg->getMediaContents()->getIconImage().c_str());
             else
                 nsMsg->mediaContents->iconImage = nullptr;
+            nsMsg->extraInfo = msg->getExtraInfo().getPayload();
             return nsMsg;
         }
 
@@ -105,6 +107,7 @@ namespace OIC
             nsConfig.syncInfoCallback = onMessageSynchronizedCallback;
             nsConfig.subControllability = config.subControllability;
             nsConfig.userInfo = OICStrdup(config.userInfo.c_str());
+            nsConfig.resourceSecurity = config.resourceSecurity;
 
             NSResult result = (NSResult) NSStartProvider(nsConfig);
             NS_LOG(DEBUG, "start - OUT");

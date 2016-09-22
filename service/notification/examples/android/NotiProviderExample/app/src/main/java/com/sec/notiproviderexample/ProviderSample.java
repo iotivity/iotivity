@@ -101,7 +101,7 @@ public class ProviderSample
         configurePlatform();
         gAcceptor = policy;
         try{
-            int result =  ioTNotification.start(this, this, policy, "Info");
+            int result =  ioTNotification.start(this, this, policy, "Info", false);
             Log.i(TAG, "Notification Start: " + result);
         }
         catch(Exception e){
