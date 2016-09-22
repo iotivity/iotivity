@@ -300,12 +300,10 @@ static void CopyParamsToContext(PEContext_t     *context,
     memcpy(&context->subject, subjectId, sizeof(OicUuid_t));
 
     // Copy the resource string into context.
-    length = strlen(resource) + 1;
-    if (0 < length)
-    {
-        strncpy(context->resource, resource, length);
-        context->resource[length - 1] = '\0';
-    }
+    length = sizeof(context->resource) - 1;
+    strncpy(context->resource, resource, length);
+    context->resource[length] = '\0';
+
 
     // Assign the permission field.
     context->permission = requestedPermission;
