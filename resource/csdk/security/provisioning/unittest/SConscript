@@ -63,8 +63,8 @@ sptest_env.PrependUnique(CPPPATH = [
 sptest_env.AppendUnique(LIBPATH = [sptest_env.get('BUILD_DIR')])
 sptest_env.PrependUnique(LIBS = [   'ocpmapi',
                                     'oc',
+                                    'octbstack_test',
                                     'ocsrm',
-                                    'octbstack',
                                     'oc_logger',
                                     'connectivity_abstraction',
                                     'coap'])

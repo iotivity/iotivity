@@ -2,7 +2,7 @@ LIBRARY octbstack
 
 EXPORTS
 
-; Windows octbstack.dll exports that are required for both products and tests.
+; Windows octbstack.dll exports that are required for products.
 
 _cbor_value_decode_int64_internal
 _cbor_value_dup_string

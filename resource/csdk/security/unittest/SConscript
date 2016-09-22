@@ -56,7 +56,7 @@ srmtest_env.PrependUnique(CPPPATH = [
 
 srmtest_env.AppendUnique(LIBPATH = [srmtest_env.get('BUILD_DIR')])
 srmtest_env.PrependUnique(LIBS = ['ocsrm',
-                                    'octbstack',
+                                    'octbstack_test',
                                     'oc_logger',
                                     'connectivity_abstraction',
                                     'coap'])
@@ -130,6 +130,5 @@ if srmtest_env.get('TEST') == '1':
 			os.makedirs(result_dir)
 		srmtest_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
 		srmtest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
-		srmtest_env.AppendENVPath('PATH', [os.path.join(out_dir, 'resource', 'csdk')])
 		from tools.scons.RunTest import *
 		run_test(srmtest_env,'ut','resource/csdk/security/unittest/unittest')

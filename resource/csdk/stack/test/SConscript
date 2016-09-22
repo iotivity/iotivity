@@ -44,7 +44,7 @@ stacktest_env.PrependUnique(CPPPATH = [
 		])
 
 stacktest_env.AppendUnique(LIBPATH = [stacktest_env.get('BUILD_DIR')])
-stacktest_env.PrependUnique(LIBS = ['octbstack',
+stacktest_env.PrependUnique(LIBS = ['octbstack_test',
                                     'ocsrm',
                                     'connectivity_abstraction',
                                     'coap'])
@@ -60,7 +60,7 @@ if stacktest_env.get('LOGGING'):
 	stacktest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if target_os in ['msys_nt', 'windows']:
-	stacktest_env.AppendUnique(LIBS = ['ws2_32', 'iphlpapi', 'kernel32'])
+	stacktest_env.AppendUnique(LIBS = ['ws2_32', 'iphlpapi', 'kernel32', 'advapi32'])
 else:
 	stacktest_env.PrependUnique(LIBS = ['m'])
 
@@ -75,8 +75,6 @@ Alias("test", [stacktests, cbortests])
 
 stacktest_env.AppendTarget('test')
 if stacktest_env.get('TEST') == '1':
-	if target_os in ['windows']:
-		stacktest_env.AppendENVPath('PATH', [os.path.join(stacktest_env.get('BUILD_DIR'), 'resource', 'csdk')])
 	if target_os in ['linux', 'windows']:
                 from tools.scons.RunTest import *
                 run_test(stacktest_env,

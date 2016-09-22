@@ -29,23 +29,13 @@ target_os = randomtest_env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
-randomtest_env.PrependUnique(CPPPATH = [
-        '../include',
-		'../../logger/include',
-		'../../../oc_logger/include',
-		])
+randomtest_env.PrependUnique(CPPPATH = ['../include'])
 
-randomtest_env.AppendUnique(LIBPATH = [randomtest_env.get('BUILD_DIR')])
-randomtest_env.PrependUnique(LIBS = ['octbstack',
-                                     'connectivity_abstraction',
-                                     'uuid'])
+randomtest_env.AppendUnique(LIBPATH = [os.path.join(randomtest_env.get('BUILD_DIR'), 'resource', 'c_common')])
+randomtest_env.PrependUnique(LIBS = ['c_common'])
 
 if target_os in ['linux']:
     randomtest_env.AppendUnique(LIBS = ['m'])
-
-if randomtest_env.get('SECURED') == '1':
-	if randomtest_env.get('WITH_TCP') == True:
-		randomtest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 if randomtest_env.get('LOGGING'):
 	randomtest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])

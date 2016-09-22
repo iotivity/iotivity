@@ -38,8 +38,7 @@ catest_env.PrependUnique(CPPPATH = [
                ])
 
 catest_env.AppendUnique(LIBPATH = [catest_env.get('BUILD_DIR')])
-catest_env.PrependUnique(LIBS = ['gtest', 'gtest_main'])
-catest_env.PrependUnique(LIBS = ['octbstack',
+catest_env.PrependUnique(LIBS = ['octbstack_test',
                                     'connectivity_abstraction',
                                     'coap'])
 
