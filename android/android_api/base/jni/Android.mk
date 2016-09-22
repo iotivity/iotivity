@@ -158,11 +158,12 @@ LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/../extlibs/boost/boost_1_58_0
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/../extlibs/cjson
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/../build_common/android/compatibility
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/provisioning/include
-LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/provisioning/include/oxm/
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/provisioning/include/cloud
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/provisioning/include/oxm
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/provisioning/include/internal
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/include/internal
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/connectivity/api
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/connectivity/inc/pkix
-LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/connectivity/lib/libcoap-4.1.1
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/connectivity/lib/libcoap-4.1.1/include
 include $(BUILD_SHARED_LIBRARY)
