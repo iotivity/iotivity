@@ -292,7 +292,7 @@ NSTopicLL * NSProviderGetConsumerTopics(const char * consumerId)
         return NULL;
     }
 
-    NSTopicSynchronization topics;
+    NSTopicSync topics;
     topics.consumerId = OICStrdup(consumerId);
     topics.topics = NULL;
     topics.condition = nstopicCond;
@@ -318,7 +318,7 @@ NSTopicLL * NSProviderGetTopics()
         return NULL;
     }
 
-    NSTopicSynchronization topics;
+    NSTopicSync topics;
     topics.consumerId = NULL;
     topics.topics = NULL;
     topics.condition = nstopicCond;
@@ -343,7 +343,18 @@ NSResult NSProviderRegisterTopic(const char * topicName)
         return NS_FAIL;
     }
 
-    NSPushQueue(TOPIC_SCHEDULER, TASK_ADD_TOPIC, OICStrdup(topicName));
+    NSTopicSyncResult topics;
+    topics.topicName = OICStrdup(topicName);
+    topics.condition = nstopicCond;
+    topics.result = NS_OK;
+
+    NSPushQueue(TOPIC_SCHEDULER, TASK_REGISTER_TOPIC, &topics);
+    pthread_cond_wait(&topics.condition, &nsInitMutex);
+    if(topics.result != NS_OK)
+    {
+        pthread_mutex_unlock(&nsInitMutex);
+        return NS_FAIL;
+    }
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderAddTopics - OUT");
@@ -362,7 +373,19 @@ NSResult NSProviderUnregisterTopic(const char * topicName)
         return NS_FAIL;
     }
 
-    NSPushQueue(TOPIC_SCHEDULER, TASK_DELETE_TOPIC, (void *) topicName);
+    NSTopicSyncResult topics;
+    topics.topicName = OICStrdup(topicName);
+    topics.condition = nstopicCond;
+    topics.result = NS_OK;
+
+    NSPushQueue(TOPIC_SCHEDULER, TASK_UNREGISTER_TOPIC, &topics);
+    pthread_cond_wait(&topics.condition, &nsInitMutex);
+    if(topics.result != NS_OK)
+    {
+        pthread_mutex_unlock(&nsInitMutex);
+        return NS_FAIL;
+    }
+    OICFree(topics.topicName);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderDeleteTopics - OUT");

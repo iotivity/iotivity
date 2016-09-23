@@ -32,7 +32,13 @@ typedef struct {
     pthread_cond_t condition;
     char * consumerId;
     NSTopicLL * topics;
-} NSTopicSynchronization;
+} NSTopicSync;
+
+typedef struct {
+    pthread_cond_t condition;
+    char * topicName;
+    NSResult result;
+} NSTopicSyncResult;
 
 NSCacheList * consumerTopicList;
 NSCacheList * registeredTopicList;

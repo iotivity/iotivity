@@ -58,7 +58,7 @@ size_t NSProviderGetTopicListSize(NSTopicLL * firstElement)
     return cnt;
 }
 
-NSResult NSAddTopics(const char * topicName)
+NSResult NSRegisterTopic(const char * topicName)
 {
     NS_LOG(DEBUG, "NSWriteTopicsToStorage()");
 
@@ -81,9 +81,10 @@ NSResult NSAddTopics(const char * topicName)
     return NS_OK;
 }
 
-NSResult NSDeleteTopics(const char * topicName)
+NSResult NSUnregisterTopic(const char * topicName)
 {
     NS_LOG(DEBUG, "NSDeleteTopics()");
+    NSResult result = NS_OK;
 
     if(!topicName)
     {
@@ -91,9 +92,15 @@ NSResult NSDeleteTopics(const char * topicName)
         return NS_ERROR;
     }
 
-    NSStorageDelete(registeredTopicList, topicName);
+    result = NSStorageDelete(registeredTopicList, topicName);
     while(NSStorageDelete(consumerTopicList, topicName) != NS_FAIL);
-    return NS_OK;
+
+    if(result == NS_OK)
+    {
+        NSSendTopicUpdation();
+    }
+
+    return result;
 }
 
 NSResult NSSendTopicUpdation()
@@ -403,32 +410,42 @@ void * NSTopicSchedule(void * ptr)
                     NSCacheElement * newObj = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
                     newObj->data = node->taskData;
                     newObj->next = NULL;
-                    NSStorageWrite(consumerTopicList, newObj);
-                    NSCacheTopicSubData * topicSubData = (NSCacheTopicSubData *) node->taskData;
-                    NSSendTopicUpdationToConsumer(topicSubData->id);
+                    if(NSStorageWrite(consumerTopicList, newObj) == NS_OK)
+                    {
+                        NSCacheTopicSubData * topicSubData = (NSCacheTopicSubData *) node->taskData;
+                        NSSendTopicUpdationToConsumer(topicSubData->id);
+                    }
                 }
                     break;
                 case TASK_UNSUBSCRIBE_TOPIC:
                 {
                     NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPIC : ");
-                    NSProviderDeleteConsumerTopic(consumerTopicList,
-                            (NSCacheTopicSubData *) node->taskData);
                     NSCacheTopicSubData * topicSubData = (NSCacheTopicSubData *) node->taskData;
-                    NSSendTopicUpdationToConsumer(topicSubData->id);
+                    if(NSProviderDeleteConsumerTopic(consumerTopicList,
+                            (NSCacheTopicSubData *) node->taskData) == NS_OK)
+                    {
+                        NSSendTopicUpdationToConsumer(topicSubData->id);
+                    }
                     OICFree(topicSubData->topicName);
                     OICFree(topicSubData);
                 }
                     break;
-                case TASK_ADD_TOPIC:
+                case TASK_REGISTER_TOPIC:
                 {
                     NS_LOG(DEBUG, "CASE TASK_ADD_TOPIC : ");
-                    NSAddTopics((const char *) node->taskData);
+                    NSTopicSyncResult * topicData =
+                            (NSTopicSyncResult *) node->taskData;
+                    topicData->result = NSRegisterTopic((const char *) topicData->topicName);
+                    pthread_cond_signal(&topicData->condition);
                 }
                     break;
-                case TASK_DELETE_TOPIC:
+                case TASK_UNREGISTER_TOPIC:
                 {
                     NS_LOG(DEBUG, "CASE_TASK_DELETE_TOPIC : ");
-                    NSDeleteTopics((const char *) node->taskData);
+                    NSTopicSyncResult * topicData =
+                            (NSTopicSyncResult *) node->taskData;
+                    topicData->result = NSUnregisterTopic((const char *) topicData->topicName);
+                    pthread_cond_signal(&topicData->condition);
                 }
                     break;
                 case TASK_POST_TOPIC:
@@ -441,7 +458,7 @@ void * NSTopicSchedule(void * ptr)
                 case TASK_GET_TOPICS:
                 {
                     NS_LOG(DEBUG, "TASK_GET_TOPICS : ");
-                    NSTopicSynchronization * topicData = (NSTopicSynchronization *) node->taskData;
+                    NSTopicSync * topicData = (NSTopicSync *) node->taskData;
                     NSTopicLL * topics = NSProviderGetTopicsCacheData(registeredTopicList);
                     topicData->topics = topics;
                     pthread_cond_signal(&topicData->condition);
@@ -450,7 +467,7 @@ void * NSTopicSchedule(void * ptr)
                 case TAST_GET_CONSUMER_TOPICS:
                 {
                     NS_LOG(DEBUG, "TASK_GET_CONSUMER_TOPICS : ");
-                    NSTopicSynchronization * topicData = (NSTopicSynchronization *) node->taskData;
+                    NSTopicSync * topicData = (NSTopicSync *) node->taskData;
                     NSTopicLL * topics = NSProviderGetConsumerTopicsCacheData(registeredTopicList,
                                 consumerTopicList, topicData->consumerId);
                     topicData->topics = topics;
