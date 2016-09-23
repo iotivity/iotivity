@@ -413,6 +413,17 @@ void NSConsumerHandleRecvTopicLL(NSProvider_internal * provider)
     NSRemoveConnections(provider->connection);
     provider->connection = NULL;
 
+    NSProvider_internal * cachedProvider = NSProviderCacheFind(provider->providerId);
+    NS_VERIFY_NOT_NULL_V(cachedProvider);
+
+    if (!cachedProvider->topicLL && !provider->topicLL)
+    {
+        NS_LOG(DEBUG, "topic is null and previous status is same.");
+        NSRemoveProvider_internal(cachedProvider);
+        return;
+    }
+    NSRemoveProvider_internal(cachedProvider);
+
     NSResult ret = NSProviderCacheUpdate(provider);
     NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
 

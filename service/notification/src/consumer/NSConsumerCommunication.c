@@ -824,8 +824,6 @@ OCStackApplicationResult NSIntrospectTopic(
             clientResponse->devAddr.adapter);
 
     NSTopicLL * newTopicLL = NSGetTopicLL(clientResponse);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicLL, OC_STACK_KEEP_TRANSACTION,
-          NSRemoveProvider_internal((NSProvider_internal *) ctx));
 
     NSProvider_internal * provider = (NSProvider_internal *) ctx;
     provider->topicLL = NSCopyTopicLL(newTopicLL);
