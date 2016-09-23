@@ -2740,7 +2740,6 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         requestInfo.method = CA_DELETE;
         break;
     case OC_REST_DISCOVER:
-        qos = OC_LOW_QOS;
 #ifdef WITH_PRESENCE
     case OC_REST_PRESENCE:
 #endif
@@ -2754,6 +2753,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
             tmpDevAddr.flags = flags;
             destination = &tmpDevAddr;
             requestInfo.isMulticast = true;
+            qos = OC_LOW_QOS;
         }
         // OC_REST_DISCOVER: CA_DISCOVER will become GET and isMulticast.
         // OC_REST_PRESENCE: Since "presence" is a stack layer only implementation.
