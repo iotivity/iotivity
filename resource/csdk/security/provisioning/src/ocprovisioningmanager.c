@@ -356,12 +356,11 @@ static OCStackResult RemoveDeviceInfoFromLocal(const OCProvisionDev_t* pTargetDe
 
     // TODO: We need to add new mechanism to clean up the stale state of the device.
 
-    //Close the DTLS session of the removed device.
-    CAEndpoint_t* endpoint = (CAEndpoint_t *)&pTargetDev->endpoint;
+    // Close the DTLS session of the removed device.
+    CAEndpoint_t *endpoint = (CAEndpoint_t *)&pTargetDev->endpoint;
     endpoint->port = pTargetDev->securePort;
     CAResult_t caResult = CACloseDtlsSession(endpoint);
-    if(CA_STATUS_OK != caResult)
-    {
+    if (CA_STATUS_OK != caResult) {
         OIC_LOG_V(WARNING, TAG, "OCRemoveDevice : Failed to close DTLS session : %d", caResult);
     }
 
