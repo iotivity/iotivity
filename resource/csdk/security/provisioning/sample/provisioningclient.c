@@ -92,7 +92,7 @@ static int g_unown_cnt;
 static bool g_doneCB;
 #ifdef __WITH_TLS__
 static int secure_protocol = 1;
-static void setDevProtocol(const OCProvisionDev_t* dev_lst);
+static void setDevProtocol(OCProvisionDev_t* dev_lst);
 #endif
 // function declaration(s) for calling them before implementing
 static OicSecAcl_t* createAcl(const int);
@@ -1588,15 +1588,13 @@ static int selectTwoDiffNum(int* a, int* b, const int max, const char* str)
 
 #ifdef __WITH_TLS__
 
-static void setDevProtocol(const OCProvisionDev_t* dev_lst)
+static void setDevProtocol(OCProvisionDev_t* lst)
 {
-    if(!dev_lst)
+    if(!lst)
     {
         printf("     Device List is Empty..\n\n");
         return;
     }
-
-    OCProvisionDev_t* lst = (OCProvisionDev_t*) dev_lst;
 
     for( ; lst; )
     {

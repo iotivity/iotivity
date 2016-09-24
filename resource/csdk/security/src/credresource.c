@@ -1921,12 +1921,6 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                 }
             }
             break;
-
-        default:
-            {
-                OIC_LOG (ERROR, TAG, "Wrong value passed for CADtlsPskCredType_t.");
-            }
-            break;
     }
 
     return ret;
@@ -2132,7 +2126,7 @@ void GetDerCaCert(ByteArray * crt)
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
     LL_FOREACH(gCred, temp)
     {
-        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), TRUST_CA, sizeof(TRUST_CA)))
+        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), TRUST_CA, strlen(TRUST_CA) + 1))
         {
             OIC_LOG_V(DEBUG, TAG, "len: %d, crt len: %d", temp->optionalData.len, crt->len);
             if(OIC_ENCODING_BASE64 == temp->optionalData.encoding)
@@ -2185,7 +2179,7 @@ void GetDerOwnCert(ByteArray * crt)
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
     LL_FOREACH(gCred, temp)
     {
-        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), PRIMARY_CERT, sizeof(PRIMARY_CERT)))
+        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), PRIMARY_CERT, strlen(PRIMARY_CERT) + 1))
         {
             OIC_LOG_V(DEBUG, TAG, "len: %d, crt len: %d", temp->publicData.len, crt->len);
             crt->data = OICRealloc(crt->data, crt->len + temp->publicData.len);
@@ -2216,7 +2210,7 @@ void GetDerKey(ByteArray * key)
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
     LL_FOREACH(gCred, temp)
     {
-        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), PRIMARY_CERT, sizeof(PRIMARY_CERT)))
+        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), PRIMARY_CERT, strlen(PRIMARY_CERT) + 1))
         {
             OIC_LOG_V(DEBUG, TAG, "len: %d, key len: %d", temp->privateData.len, key->len);
             key->data = OICRealloc(key->data, key->len + temp->privateData.len);
