@@ -24,6 +24,7 @@
 #include "oic_string.h"
 #include "oic_malloc.h"
 #include "payload_logging.h"
+#include "platform_features.h"
 
 #include "rdpayload.h"
 #include "ocpayload.h"
@@ -52,30 +53,30 @@ static OCStackResult sendRequest(OCMethod method, char *uri, OCDevAddr *addr,
 
     if (result == OC_STACK_OK)
     {
-        OC_LOG(DEBUG, TAG, "Resource Directory send successful...");
+        OIC_LOG(DEBUG, TAG, "Resource Directory send successful...");
     }
     else
     {
-        OC_LOG(ERROR, TAG, "Resource Directory send failed...");
+        OIC_LOG(ERROR, TAG, "Resource Directory send failed...");
     }
 
     return result;
 }
 
-static OCStackApplicationResult handlePublishCB(__attribute__((unused))void *ctx,
-        __attribute__((unused)) OCDoHandle handle,
-        __attribute__((unused)) OCClientResponse *clientResponse)
+static OCStackApplicationResult handlePublishCB(OC_ANNOTATE_UNUSED void *ctx,
+        OC_ANNOTATE_UNUSED OCDoHandle handle,
+        OC_ANNOTATE_UNUSED OCClientResponse *clientResponse)
 {
     OCStackApplicationResult ret = OC_STACK_DELETE_TRANSACTION;
-    OC_LOG(DEBUG, TAG, "Successfully published resources.");
+    OIC_LOG(DEBUG, TAG, "Successfully published resources.");
 
     if (OC_STACK_OK == OCStopMulticastServer())
     {
-        OC_LOG_V(DEBUG, TAG, "Stopped receiving the multicast traffic.");
+        OIC_LOG_V(DEBUG, TAG, "Stopped receiving the multicast traffic.");
     }
     else
     {
-        OC_LOG_V(DEBUG, TAG, "Failed stopping the multicast traffic.");
+        OIC_LOG_V(DEBUG, TAG, "Failed stopping the multicast traffic.");
     }
 
     return ret;
@@ -83,10 +84,10 @@ static OCStackApplicationResult handlePublishCB(__attribute__((unused))void *ctx
 
 static void retreiveRDDetails(OCClientResponse *clientResponse, OCRDBiasFactorCB clientCB)
 {
-    OC_LOG_V(DEBUG, TAG, "\tAddress of the RD: %s:%d", clientResponse->devAddr.addr,
+    OIC_LOG_V(DEBUG, TAG, "\tAddress of the RD: %s:%d", clientResponse->devAddr.addr,
             clientResponse->devAddr.port);
 
-    OC_LOG_PAYLOAD(DEBUG, clientResponse->payload);
+    OIC_LOG_PAYLOAD(DEBUG, clientResponse->payload);
 
     // TODO: Multiple Resource Directory will have different biasFactor,
     // needs to cache here detail
@@ -99,39 +100,39 @@ static void retreiveRDDetails(OCClientResponse *clientResponse, OCRDBiasFactorCB
 }
 
 static OCStackApplicationResult handleDiscoverCB(void *ctx,
-        __attribute__((unused)) OCDoHandle handle, OCClientResponse *clientResponse)
+        OC_ANNOTATE_UNUSED OCDoHandle handle, OCClientResponse *clientResponse)
 {
-    OC_LOG(DEBUG, TAG, "Found Resource Directory");
+    OIC_LOG(DEBUG, TAG, "Found Resource Directory");
     OCStackApplicationResult ret = OC_STACK_DELETE_TRANSACTION;
 
     OCRDClientContextCB *cb = (OCRDClientContextCB *)ctx;
     if (!cb)
     {
-        OC_LOG(ERROR, TAG, "RD Context Invalid Parameters.");
+        OIC_LOG(ERROR, TAG, "RD Context Invalid Parameters.");
         return ret;
     }
 
     if (cb->context != (void *) DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG(ERROR, TAG, "RD Context Invalid Context Value Parameters.");
+        OIC_LOG(ERROR, TAG, "RD Context Invalid Context Value Parameters.");
         return ret;
     }
 
     if (clientResponse)
     {
-        OC_LOG_V(DEBUG, TAG, "Callback Context for DISCOVER query received successfully :%d.", clientResponse->result);
+        OIC_LOG_V(DEBUG, TAG, "Callback Context for DISCOVER query received successfully :%d.", clientResponse->result);
         if (clientResponse->result == OC_STACK_OK)
         {
             retreiveRDDetails(clientResponse, cb->cbFunc);
         }
         else
         {
-            OC_LOG(ERROR, TAG, "Discovery of RD Failed");
+            OIC_LOG(ERROR, TAG, "Discovery of RD Failed");
         }
     }
     else
     {
-        OC_LOG(ERROR, TAG, "No client response.");
+        OIC_LOG(ERROR, TAG, "No client response.");
     }
 
     OICFree(cb);
@@ -143,7 +144,7 @@ OCStackResult OCRDDiscover(OCRDBiasFactorCB cbBiasFactor)
 {
     if (!cbBiasFactor)
     {
-        OC_LOG(DEBUG, TAG, "No callback function specified.");
+        OIC_LOG(DEBUG, TAG, "No callback function specified.");
         return OC_STACK_INVALID_CALLBACK;
     }
 
@@ -151,12 +152,12 @@ OCStackResult OCRDDiscover(OCRDBiasFactorCB cbBiasFactor)
     char queryUri[MAX_URI_LENGTH] = { '\0' };
     snprintf(queryUri, MAX_URI_LENGTH, "coap://%s%s", OC_MULTICAST_PREFIX, OC_RSRVD_RD_URI);
 
-    OC_LOG_V(DEBUG, TAG, "Querying RD: %s\n", queryUri);
+    OIC_LOG_V(DEBUG, TAG, "Querying RD: %s\n", queryUri);
 
     OCRDClientContextCB *cbContext = (OCRDClientContextCB *)OICCalloc(1, sizeof(OCRDClientContextCB));
     if (!cbContext)
     {
-        OC_LOG(ERROR, TAG, "Failed allocating memory.");
+        OIC_LOG(ERROR, TAG, "Failed allocating memory.");
         return OC_STACK_NO_MEMORY;
     }
 
@@ -182,13 +183,13 @@ static OCStackResult createStringLL(uint8_t numElements, OCResourceHandle handle
             *stringLL = (OCStringLL *)OICCalloc(1, sizeof(OCStringLL));
             if (!*stringLL)
             {
-                OC_LOG(ERROR, TAG, "Failed allocating memory.");
+                OIC_LOG(ERROR, TAG, "Failed allocating memory.");
                 return OC_STACK_NO_MEMORY;
             }
             (*stringLL)->value = OICStrdup(value);
             if (!(*stringLL)->value)
             {
-                OC_LOG(ERROR, TAG, "Failed copying to OCStringLL.");
+                OIC_LOG(ERROR, TAG, "Failed copying to OCStringLL.");
                 return OC_STACK_NO_MEMORY;
             }
         }
@@ -202,13 +203,13 @@ static OCStackResult createStringLL(uint8_t numElements, OCResourceHandle handle
             cur->next = (OCStringLL *)OICCalloc(1, sizeof(OCStringLL));
             if (!cur->next)
             {
-                OC_LOG(ERROR, TAG, "Failed allocating memory.");
+                OIC_LOG(ERROR, TAG, "Failed allocating memory.");
                 return OC_STACK_NO_MEMORY;
             }
             cur->next->value = OICStrdup(value);
             if (!cur->next->value)
             {
-                OC_LOG(ERROR, TAG, "Failed copying to OCStringLL.");
+                OIC_LOG(ERROR, TAG, "Failed copying to OCStringLL.");
                 return OC_STACK_NO_MEMORY;
             }
         }
@@ -220,14 +221,14 @@ OCStackResult OCRDPublish(char *addr, uint16_t port, int numArg, ... )
 {
     if (!addr)
     {
-        OC_LOG(ERROR, TAG, "RD address not specified.");
+        OIC_LOG(ERROR, TAG, "RD address not specified.");
         return OC_STACK_INVALID_PARAM;
     }
 
     char targetUri[MAX_URI_LENGTH];
     snprintf(targetUri, MAX_URI_LENGTH, "coap://%s:%d%s?rt=%s", addr, port,
             OC_RSRVD_RD_URI, OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
-    OC_LOG_V(DEBUG, TAG, "Target URI : %s", targetUri);
+    OIC_LOG_V(DEBUG, TAG, "Target URI : %s", targetUri);
 
     // Gather all resources locally and do publish
     OCCallbackData cbData = { 0 };
@@ -338,12 +339,12 @@ OCStackResult OCRDPublish(char *addr, uint16_t port, int numArg, ... )
     OICStrcpy(rdAddr.addr, MAX_ADDR_STR_SIZE, addr);
     rdAddr.port = port;
 
-    OC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
+    OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
 
     return sendRequest(OC_REST_POST, targetUri, &rdAddr, (OCPayload *)rdPayload, cbData);
 
 no_memory:
-    OC_LOG(ERROR, TAG, "Failed allocating memory.");
+    OIC_LOG(ERROR, TAG, "Failed allocating memory.");
     va_end(arguments);
     if (rt)
     {

@@ -23,7 +23,7 @@
 #include "jni_sharedobject_holder.h"
 #include "jni_vector.h"
 
-jobject createSingleResource(JNIEnv *env, SimulatorResourceSP singleResource)
+jobject CreateSingleResource(JNIEnv *env, SimulatorResourceSP singleResource)
 {
     if (!singleResource)
         return nullptr;
@@ -46,7 +46,7 @@ jobject createSingleResource(JNIEnv *env, SimulatorResourceSP singleResource)
     return resource;
 }
 
-jobject createCollectionResource(JNIEnv *env, SimulatorResourceSP collectionResource)
+jobject CreateCollectionResource(JNIEnv *env, SimulatorResourceSP collectionResource)
 {
     if (!collectionResource)
         return nullptr;
@@ -68,17 +68,17 @@ jobject createCollectionResource(JNIEnv *env, SimulatorResourceSP collectionReso
     return resource;
 }
 
-jobject createSimulatorResource(JNIEnv *env, SimulatorResourceSP resource)
+jobject CreateSimulatorResource(JNIEnv *env, SimulatorResourceSP resource)
 {
     if (!resource)
         return nullptr;
 
     if (SimulatorResource::Type::COLLECTION_RESOURCE == resource->getType())
-        return createCollectionResource(env, resource);
-    return createSingleResource(env, resource);
+        return CreateCollectionResource(env, resource);
+    return CreateSingleResource(env, resource);
 }
 
-jobject createSimulatorResourceVector(JNIEnv *env, std::vector<SimulatorResourceSP> &resources)
+jobject CreateSimulatorResourceVector(JNIEnv *env, std::vector<SimulatorResourceSP> &resources)
 {
     if (!resources.size())
         return nullptr;
@@ -91,12 +91,12 @@ jobject createSimulatorResourceVector(JNIEnv *env, std::vector<SimulatorResource
                                  "add", "(Ljava/lang/Object;)Z");
 
     for (auto &resource : resources)
-        env->CallBooleanMethod(vectorObject, addMethod, createSimulatorResource(env, resource));
+        env->CallBooleanMethod(vectorObject, addMethod, CreateSimulatorResource(env, resource));
 
     return vectorObject;
 }
 
-jobject createSimulatorRemoteResource(JNIEnv *env, SimulatorRemoteResourceSP &remoteResource)
+jobject CreateSimulatorRemoteResource(JNIEnv *env, SimulatorRemoteResourceSP &remoteResource)
 {
     if (!remoteResource)
         return nullptr;
@@ -148,7 +148,7 @@ jobject createSimulatorRemoteResource(JNIEnv *env, SimulatorRemoteResourceSP &re
     jobject ResTypes = JniVector(env).toJava(resourceTypes);
     env->SetObjectField(resource, resTypesID, ResTypes);
 
-    std::vector<std::string> interfaceTypes = remoteResource->getResourceInterfaces();
+    std::vector<std::string> interfaceTypes = remoteResource->getInterface();
     jobject resInterfaces = JniVector(env).toJava(interfaceTypes);
     env->SetObjectField(resource, interfacesID, resInterfaces);
 

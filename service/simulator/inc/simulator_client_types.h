@@ -34,6 +34,7 @@ enum class ObserveType
 
 enum class RequestType
 {
+    RQ_TYPE_UNKNOWN,
     RQ_TYPE_GET,
     RQ_TYPE_PUT,
     RQ_TYPE_POST,

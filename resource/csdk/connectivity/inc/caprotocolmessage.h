@@ -26,8 +26,10 @@
 #define CA_PROTOCOL_MESSAGE_H_
 
 #include "cacommon.h"
-#include "config.h"
-#include "coap.h"
+#ifndef WITH_UPSTREAM_LIBCOAP
+#include "coap/config.h"
+#endif
+#include <coap/coap.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -58,7 +60,7 @@ static const uint8_t PAYLOAD_MARKER = 1;
  * @return  generated pdu.
  */
 coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_t *endpoint,
-                          coap_list_t **optlist, coap_transport_type *transport);
+                          coap_list_t **optlist, coap_transport_t *transport);
 
 /**
  * extracts request information from received pdu.
@@ -100,7 +102,7 @@ CAResult_t CAGetErrorInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endp
  */
 coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
                               const CAEndpoint_t *endpoint, coap_list_t *options,
-                              coap_transport_type *transport);
+                              coap_transport_t *transport);
 
 /**
  * parse the URI and creates the options.
@@ -199,7 +201,8 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
  * @param[in]    endpoint            endpoint information.
  * @return  CA_STATUS_OK or ERROR CODES (CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetTokenFromPDU(const coap_hdr_t *pdu_hdr, CAInfo_t *outInfo,
+CAResult_t CAGetTokenFromPDU(const coap_hdr_transport_t *pdu_hdr,
+                             CAInfo_t *outInfo,
                              const CAEndpoint_t *endpoint);
 
 /**
@@ -215,12 +218,6 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token, uint8_t tokenLength);
  * @param[in]   token           generated token.
  */
 void CADestroyTokenInternal(CAToken_t token);
-
-/**
- * destroy the ca info structure.
- * @param[in]   info            info structure  created from received  packet.
- */
-void CADestroyInfo(CAInfo_t *info);
 
 /**
  * gets message type from PDU binary data.
@@ -252,6 +249,24 @@ CAResponseResult_t CAGetCodeFromPduBinaryData(const void *pdu, uint32_t size);
  * @return format.
  */
 CAPayloadFormat_t CAConvertFormat(uint8_t format);
+
+#ifdef WITH_TCP
+/**
+ * check whether CoAP over TCP is supported or not.
+ * @param[in]   adapter             transport adapter type.
+ * @return true or false.
+ */
+bool CAIsSupportedCoAPOverTCP(CATransportAdapter_t adapter);
+#endif
+
+#ifdef WITH_BWT
+/**
+ * check whether blockwise transfer is supported or not.
+ * @param[in]   adapter             transport adapter type.
+ * @return true or false.
+ */
+bool CAIsSupportedBlockwiseTransfer(CATransportAdapter_t adapter);
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */

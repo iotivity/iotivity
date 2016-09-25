@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "ocrandom.h"
 #include "cainterface.h"
 #include "caremotehandler.h"
 #include "camessagehandler.h"
@@ -36,14 +37,15 @@
 
 #ifdef TCP_ADAPTER
 #include "catcpadapter.h"
+#ifdef __WITH_TLS__
+#include "ca_adapter_net_tls.h"
+#endif
 #endif
 
-#include "ocrandom.h"
+CAGlobals_t caglobals = { .clientFlags = 0,
+                          .serverFlags = 0, };
 
-
-CAGlobals_t caglobals = { 0 };
-
-#define TAG "CA_CONN_MGR"
+#define TAG "OIC_CA_CONN_MGR"
 
 static bool g_isInitialized = false;
 
@@ -60,8 +62,16 @@ extern void CADTLSSetX509CredentialsCallback(CAGetDTLSX509CredentialsHandler cre
 extern void CADTLSSetCrlCallback(CAGetDTLSCrlHandler crlCallback);
 #endif
 
+#ifdef __WITH_TLS__
+extern void CAsetPkixInfoCallback(CAgetPkixInfoHandler infCallback);
+extern void CAsetTlsCredentialsCallback(CAGetDTLSPskCredentialsHandler credCallback);
+extern void CAsetCredentialTypesCallback(CAgetCredentialTypesHandler credCallback);
+#endif
+
+
 CAResult_t CAInitialize()
 {
+    OIC_LOG_V(DEBUG, TAG, "IoTivity version is v%s", IOTIVITY_VERSION);
     OIC_LOG(DEBUG, TAG, "CAInitialize");
 
     if (!g_isInitialized)
@@ -100,7 +110,7 @@ CAResult_t CAStartListeningServer()
 {
     OIC_LOG(DEBUG, TAG, "CAStartListeningServer");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -112,7 +122,7 @@ CAResult_t CAStopListeningServer()
 {
     OIC_LOG(DEBUG, TAG, "CAStopListeningServer");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -124,7 +134,7 @@ CAResult_t CAStartDiscoveryServer()
 {
     OIC_LOG(DEBUG, TAG, "CAStartDiscoveryServer");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -137,7 +147,7 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
 {
     OIC_LOG(DEBUG, TAG, "CARegisterHandler");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         OIC_LOG(DEBUG, TAG, "CA is not initialized");
         return;
@@ -151,7 +161,7 @@ CAResult_t CARegisterDTLSHandshakeCallback(CAErrorCallback dtlsHandshakeCallback
 {
     OIC_LOG(DEBUG, TAG, "CARegisterDTLSHandshakeCallback");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -165,7 +175,7 @@ CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDT
 {
     OIC_LOG(DEBUG, TAG, "CARegisterDTLSCredentialsHandler");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -174,13 +184,66 @@ CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDT
     return CA_STATUS_OK;
 }
 #endif //__WITH_DTLS__
+#ifdef __WITH_TLS__
+CAResult_t CAregisterTlsHandshakeCallback(CAErrorCallback tlsHandshakeCallback)
+{
+    OIC_LOG(DEBUG, TAG, "CARegisterTlsHandshakeCallback");
+
+    if(!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+
+    CAsetTlsHandshakeCallback(tlsHandshakeCallback);
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAregisterTlsCredentialsHandler(CAGetDTLSPskCredentialsHandler getTlsCredentialsHandler)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    if (!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+    CAsetTlsCredentialsCallback(getTlsCredentialsHandler);
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAregisterPkixInfoHandler(CAgetPkixInfoHandler getPkixInfoHandler)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    if (!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+    CAsetPkixInfoCallback(getPkixInfoHandler);
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAregisterGetCredentialTypesHandler(CAgetCredentialTypesHandler getCredTypesHandler)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    if (!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+    CAsetCredentialTypesCallback(getCredTypesHandler);
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    return CA_STATUS_OK;
+}
+#endif
 
 #ifdef __WITH_X509__
 CAResult_t CARegisterDTLSX509CredentialsHandler(CAGetDTLSX509CredentialsHandler GetDTLSX509CredentialsHandler)
 {
     OIC_LOG(DEBUG, TAG, "CARegisterDTLSX509CredentialsHandler");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -193,7 +256,7 @@ CAResult_t CARegisterDTLSCrlHandler(CAGetDTLSCrlHandler GetDTLSCrlHandler)
 {
     OIC_LOG(DEBUG, TAG, "CARegisterDTLSCrlHandler");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -251,7 +314,7 @@ CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size)
 {
     OIC_LOG(DEBUG, TAG, "CAGetNetworkInformation");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -259,35 +322,99 @@ CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size)
     return CAGetNetworkInformationInternal(info, size);
 }
 
-CAResult_t CASendRequest(const CAEndpoint_t *object,const CARequestInfo_t *requestInfo)
+static CAResult_t CASendMessageMultiAdapter(const CAEndpoint_t *object, const void *sendMsg,
+                                            CADataType_t dataType)
 {
-    OIC_LOG(DEBUG, TAG, "CASendGetRequest");
+    OIC_LOG(DEBUG, TAG, "CASendMessageMultipleAdapter");
 
-    if(!g_isInitialized)
+    CATransportAdapter_t connTypes[] = {
+            CA_ADAPTER_IP
+#ifdef LE_ADAPTER
+            ,CA_ADAPTER_GATT_BTLE
+#endif
+#ifdef EDR_ADAPTER
+            ,CA_ADAPTER_RFCOMM_BTEDR
+#endif
+#ifdef NFC_ADAPTER
+            ,CA_ADAPTER_NFC
+#endif
+#ifdef RA_ADAPTER
+            ,CA_ADAPTER_REMOTE_ACCESS
+#endif
+#ifdef TCP_ADAPTER
+            ,CA_ADAPTER_TCP
+#endif
+        };
+
+    CAEndpoint_t *cloneEp = CACloneEndpoint(object);
+    if (!cloneEp)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to clone CAEndpoint");
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
+    CAResult_t ret = CA_STATUS_OK;
+    size_t numConnTypes = sizeof(connTypes) / sizeof(connTypes[0]);
+
+    for (size_t i = 0; i < numConnTypes && ret == CA_STATUS_OK; i++)
+    {
+        cloneEp->adapter = connTypes[i];
+        ret = CADetachSendMessage(cloneEp, sendMsg, dataType);
+    }
+    CAFreeEndpoint(cloneEp);
+    return ret;
+}
+
+CAResult_t CASendRequest(const CAEndpoint_t *object, const CARequestInfo_t *requestInfo)
+{
+    OIC_LOG(DEBUG, TAG, "CASendRequest");
+
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
 
-    return CADetachRequestMessage(object, requestInfo);
+    if (requestInfo && requestInfo->isMulticast &&
+            (object->adapter == CA_DEFAULT_ADAPTER || object->adapter == CA_ALL_ADAPTERS))
+    {
+        return CASendMessageMultiAdapter(object, requestInfo, CA_REQUEST_DATA);
+    }
+    else
+    {
+        return CADetachSendMessage(object, requestInfo, CA_REQUEST_DATA);
+    }
 }
 
 CAResult_t CASendResponse(const CAEndpoint_t *object, const CAResponseInfo_t *responseInfo)
 {
     OIC_LOG(DEBUG, TAG, "CASendResponse");
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
 
-    return CADetachResponseMessage(object, responseInfo);
+    if (!responseInfo || !object)
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    if (responseInfo->isMulticast &&
+            (object->adapter == CA_DEFAULT_ADAPTER || object->adapter == CA_ALL_ADAPTERS))
+    {
+        return CASendMessageMultiAdapter(object, responseInfo, responseInfo->info.dataType);
+    }
+    else
+    {
+        return CADetachSendMessage(object, responseInfo, responseInfo->info.dataType);
+    }
 }
 
 CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
 {
     OIC_LOG_V(DEBUG, TAG, "Selected network : %d", interestedNetwork);
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -327,7 +454,11 @@ CAResult_t CASelectNetwork(CATransportAdapter_t interestedNetwork)
                   "CAAddNetworkType(CA_ADAPTER_TCP) function returns result : %d", res);
     }
 #endif
-
+    else if (interestedNetwork & CA_ADAPTER_NFC)
+    {
+        res = CAAddNetworkType(CA_ADAPTER_NFC);
+        OIC_LOG_V(DEBUG, TAG, "CAAddNetworkType(CA_ADAPTER_NFC) function returns result : %d", res);
+    }
     else
     {
         res = CA_NOT_SUPPORTED;
@@ -339,7 +470,7 @@ CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork)
 {
     OIC_LOG_V(DEBUG, TAG, "unselected network : %d", nonInterestedNetwork);
 
-    if(!g_isInitialized)
+    if (!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;
     }
@@ -400,19 +531,48 @@ CAResult_t CAHandleRequestResponse()
     return CA_STATUS_OK;
 }
 
-#ifdef __WITH_DTLS__
-CAResult_t CASelectCipherSuite(const uint16_t cipher)
+#if defined (__WITH_DTLS__) || defined(__WITH_TLS__)
+CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
 {
     OIC_LOG_V(DEBUG, TAG, "CASelectCipherSuite");
-
-    return CADtlsSelectCipherSuite(cipher);
+    if(CA_ADAPTER_IP == adapter)
+    {
+        if (CA_STATUS_OK != CADtlsSelectCipherSuite(cipher))
+        {
+            return CA_STATUS_FAILED;
+        }
+    }
+#ifdef __WITH_TLS__
+    else if(CA_ADAPTER_TCP == adapter)
+    {
+        if (CA_STATUS_OK != CAsetTlsCipherSuite(cipher))
+        {
+            return CA_STATUS_FAILED;
+        }
+    }
+#endif
+    return CA_STATUS_OK;
 }
 
 CAResult_t CAEnableAnonECDHCipherSuite(const bool enable)
 {
     OIC_LOG_V(DEBUG, TAG, "CAEnableAnonECDHCipherSuite");
 
-    return CADtlsEnableAnonECDHCipherSuite(enable);
+#ifdef __WITH_DTLS__
+    if (CA_STATUS_OK != CADtlsEnableAnonECDHCipherSuite(enable))
+    {
+        return CA_STATUS_FAILED;
+    }
+#endif
+#ifdef __WITH_TLS__
+    // TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256    0xFF00 replaces 0xC018
+    // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256    0xC037
+    if (CA_STATUS_OK != CAsetTlsCipherSuite(enable ? 0xFF00 : 0xC037))
+    {
+        return CA_STATUS_FAILED;
+    }
+#endif
+    return CA_STATUS_OK;
 }
 
 CAResult_t CAGenerateOwnerPSK(const CAEndpoint_t* endpoint,
@@ -431,10 +591,20 @@ CAResult_t CAGenerateOwnerPSK(const CAEndpoint_t* endpoint,
         return CA_STATUS_INVALID_PARAM;
     }
 
-    res = CADtlsGenerateOwnerPSK(endpoint, label, labelLen,
-                                  rsrcServerDeviceID, rsrcServerDeviceIDLen,
-                                  provServerDeviceID, provServerDeviceIDLen,
-                                  ownerPSK, ownerPSKSize);
+    if(CA_ADAPTER_IP == endpoint->adapter)
+    {
+        res = CADtlsGenerateOwnerPSK(endpoint, label, labelLen,
+                                      rsrcServerDeviceID, rsrcServerDeviceIDLen,
+                                      provServerDeviceID, provServerDeviceIDLen,
+                                      ownerPSK, ownerPSKSize);
+    }
+#ifdef __WITH_TLS__
+    else
+    {
+        res = CAtlsGenerateOwnerPSK(endpoint, ownerPSK, ownerPSKSize,
+                rsrcServerDeviceID, rsrcServerDeviceIDLen);
+    }
+#endif
     if (CA_STATUS_OK != res)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to CAGenerateOwnerPSK : %d", res);
@@ -488,3 +658,10 @@ CAResult_t CACloseDtlsSession(const CAEndpoint_t *endpoint)
 }
 
 #endif /* __WITH_DTLS__ */
+
+#ifdef TCP_ADAPTER
+void CARegisterKeepAliveHandler(CAKeepAliveConnectionCallback ConnHandler)
+{
+    CATCPSetKeepAliveCallbacks(ConnHandler);
+}
+#endif

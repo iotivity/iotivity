@@ -43,4 +43,3 @@ std::string JniString::get()
 {
     return std::string(m_cStr);
 }
-

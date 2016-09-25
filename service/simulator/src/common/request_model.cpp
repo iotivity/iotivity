@@ -21,9 +21,10 @@
 #include "request_model.h"
 #include "logger.h"
 
-RequestModel::RequestModel(RequestType type) : m_type(type) {}
+RequestModel::RequestModel(const std::string &type)
+    : m_type(type) {}
 
-RequestType RequestModel::type() const
+std::string RequestModel::getType() const
 {
     return m_type;
 }
@@ -43,13 +44,25 @@ std::vector<std::string> RequestModel::getQueryParams(const std::string &key)
     return std::vector<std::string>();
 }
 
-void RequestModel::setQueryParams(
-    const SupportedQueryParams &queryParams)
+std::shared_ptr<SimulatorResourceModelSchema> RequestModel::getRequestRepSchema()
 {
-    m_queryParams = queryParams;
+    return m_repSchema;
 }
 
-void RequestModel::addQueryParams(const std::string &key,
+ResponseModelSP RequestModel::getResponseModel(int code)
+{
+    if (m_responseList.end() != m_responseList.find(code))
+        return m_responseList[code];
+
+    return nullptr;
+}
+
+void RequestModel::setType(const std::string &type)
+{
+    m_type = type;
+}
+
+void RequestModel::setQueryParams(const std::string &key,
                                   const std::vector<std::string> &values)
 {
     if (0 != values.size())
@@ -61,29 +74,25 @@ void RequestModel::addQueryParam(const std::string &key, const std::string &valu
     m_queryParams[key].push_back(value);
 }
 
-void RequestModel::addResponseModel(int code, ResponseModelSP &responseModel)
+void RequestModel::setResponseModel(int code, ResponseModelSP &responseModel)
 {
-    if (!responseModel)
+    if (responseModel)
         m_responseList[code] = responseModel;
 }
 
-void RequestModel::setRepSchema(SimulatorResourceModelSP &repSchema)
+void RequestModel::setRequestBodyModel(const std::shared_ptr<SimulatorResourceModelSchema>
+                                       &repSchema)
 {
     m_repSchema = repSchema;
 }
 
-SimulatorResourceModelSP RequestModel::getRepSchema()
+SimulatorResult RequestModel::validateResponse(int code, const SimulatorResourceModel &resModel)
 {
-    return m_repSchema;
-}
-
-SimulatorResult RequestModel::validateResponse(int responseCode, const OC::OCRepresentation &rep)
-{
-    if (m_responseList.end() == m_responseList.find(responseCode))
+    if (m_responseList.end() == m_responseList.find(code))
     {
         return SIMULATOR_INVALID_RESPONSE_CODE;
     }
 
-    return m_responseList[responseCode]->verifyResponse(rep);
+    return m_responseList[code]->verifyResponse(resModel);
 }
 

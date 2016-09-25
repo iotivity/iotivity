@@ -183,6 +183,13 @@ typedef struct resourceinterface_t {
     /** Future placeholder for access control and policy.*/
 } OCResourceInterface;
 
+/**
+ * Data structure for holding child resources associated with a collection
+ */
+typedef struct OCChildResource {
+    struct OCResource *rsrcResource;
+    struct OCChildResource *next;
+} OCChildResource;
 
 /**
  * Data structure for holding data type and definition for OIC resource.
@@ -207,7 +214,8 @@ typedef struct OCResource {
     /** Array of pointers to resources; can be used to represent a container of resources.
      * (i.e. hierarchies of resources) or for reference resources (i.e. for a resource collection).*/
 
-    struct OCResource *rsrcResources[MAX_CONTAINED_RESOURCES];
+    /** Child resource(s); linked list.*/
+    OCChildResource *rsrcChildResourcesHead;
 
     /** Pointer to function that handles the entity bound to the resource.
      *  This handler has to be explicitly defined by the programmer.*/
@@ -232,6 +240,17 @@ typedef struct OCResource {
 
     /** Pointer of ActionSet which to support group action.*/
     OCActionSet *actionsetHead;
+
+    /** The instance identifier for this web link in an array of web links - used in links. */
+    union
+    {
+        /** An ordinal number that is not repeated - must be unique in the collection context. */
+        uint8_t ins;
+        /** Any unique string including a URI. */
+        char *uniqueStr;
+        /** Use UUID for universal uniqueness - used in /oic/res to identify the device. */
+        OCIdentity uniqueUUID;
+    };
 } OCResource;
 
 

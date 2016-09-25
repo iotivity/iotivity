@@ -264,7 +264,7 @@ void InitializeContext(TWContext* context)
 /*****************************************************************************/
 OCStackResult TWInitialize(PIPlugin_Zigbee* plugin, const char* deviceDevPath)
 {
-    OC_LOG(INFO, TAG, "Enter TWInitialize()");
+    OIC_LOG(INFO, TAG, "Enter TWInitialize()");
 
     TWResultCode twCode = TW_RESULT_ERROR;
 
@@ -296,12 +296,12 @@ OCStackResult TWInitialize(PIPlugin_Zigbee* plugin, const char* deviceDevPath)
     ctx->g_plugin = plugin;
     ctx->g_port = deviceDevPath;
 
-    OC_LOG_V(INFO, TAG, "Attempt to open %s", deviceDevPath);
+    OIC_LOG_V(INFO, TAG, "Attempt to open %s", deviceDevPath);
 
     twCode = TWStartSock(ctx->g_plugin, deviceDevPath);  //TODO:
     if (twCode != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to open %s because of error: %d", deviceDevPath, twCode);
+        OIC_LOG_V(ERROR, TAG, "Failed to open %s because of error: %d", deviceDevPath, twCode);
         OICFree(ctx);
         return OC_STACK_ERROR;
     }
@@ -310,12 +310,12 @@ OCStackResult TWInitialize(PIPlugin_Zigbee* plugin, const char* deviceDevPath)
     twCode = TWGetEUI(ctx->g_plugin, &eui);
     if (twCode != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to get EUI because of error: %d", twCode);
+        OIC_LOG_V(ERROR, TAG, "Failed to get EUI because of error: %d", twCode);
         OICFree(ctx);
         return OC_STACK_ERROR;
     }
     OICStrcpy(ctx->g_LocalEUI, sizeof(ctx->g_LocalEUI), eui);
-    OC_LOG_V(INFO, TAG, "LocalEUI=%s", ctx->g_LocalEUI);
+    OIC_LOG_V(INFO, TAG, "LocalEUI=%s", ctx->g_LocalEUI);
     OICFree(eui);
 
     bool wantReset = false;     //TODO:
@@ -324,7 +324,7 @@ OCStackResult TWInitialize(PIPlugin_Zigbee* plugin, const char* deviceDevPath)
         twCode = Reset(ctx);
         if (twCode != TW_RESULT_OK)
         {
-            OC_LOG(ERROR, TAG, "ZigBee Initialization - Reset");
+            OIC_LOG(ERROR, TAG, "ZigBee Initialization - Reset");
             OICFree(ctx);
             return OC_STACK_ERROR;
         }
@@ -333,16 +333,16 @@ OCStackResult TWInitialize(PIPlugin_Zigbee* plugin, const char* deviceDevPath)
     twCode = CreatePAN(ctx);
     if (twCode != TW_RESULT_OK)
     {
-        OC_LOG(ERROR, TAG, "CreatePan Failed");
-        OC_LOG(ERROR, TAG, "TWInitialize() - MUST STOP NOW");
+        OIC_LOG(ERROR, TAG, "CreatePan Failed");
+        OIC_LOG(ERROR, TAG, "TWInitialize() - MUST STOP NOW");
         ctx->g_ZigBeeStatus.state = ZB_STATE_UNKNOWN;
         OICFree(ctx);
         return OC_STACK_ERROR;
     }
     else
     {
-        OC_LOG(INFO, TAG, "CreatePan Succeed");
-        OC_LOG(INFO, TAG, "TWInitialize() Succeed");
+        OIC_LOG(INFO, TAG, "CreatePan Succeed");
+        OIC_LOG(INFO, TAG, "TWInitialize() Succeed");
         ctx->g_ZigBeeStatus.state = ZB_STATE_INIT;
         LL_APPEND(g_twContextList, ctx);
         return OC_STACK_OK;
@@ -351,7 +351,7 @@ OCStackResult TWInitialize(PIPlugin_Zigbee* plugin, const char* deviceDevPath)
 
 OCStackResult TWDiscover(PIPlugin_Zigbee* plugin)
 {
-    OC_LOG(INFO, TAG, "Enter TWDiscover()");
+    OIC_LOG(INFO, TAG, "Enter TWDiscover()");
 
     OCStackResult ret = OC_STACK_ERROR;
     TWResultCode twRet = TW_RESULT_ERROR;
@@ -359,36 +359,36 @@ OCStackResult TWDiscover(PIPlugin_Zigbee* plugin)
     TWContext* ctx = GetTWContext(plugin);
     if (ctx == NULL)
     {
-        OC_LOG(ERROR, TAG, "Invalid Param");
+        OIC_LOG(ERROR, TAG, "Invalid Param");
         return OC_STACK_INVALID_PARAM;
     }
 
     if (ctx->g_DeviceFoundCallback == NULL)
     {
-        OC_LOG(INFO, TAG, "Required TWDeviceFoundCallback.");
+        OIC_LOG(INFO, TAG, "Required TWDeviceFoundCallback.");
         return OC_STACK_ERROR;
     }
 
     twRet = EnableJoin(false, ctx);
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG(ERROR, TAG, "EnableJoin");
+        OIC_LOG(ERROR, TAG, "EnableJoin");
         return OC_STACK_ERROR;
     }
 
     twRet = FindMatchNodes(ctx);
     if (twRet == TW_RESULT_OK)
     {
-        OC_LOG(INFO, TAG, "FindMatchNodes");
+        OIC_LOG(INFO, TAG, "FindMatchNodes");
         ret = OC_STACK_OK;
     }
     else
     {
-        OC_LOG(ERROR, TAG, "FindMatchNodes");
+        OIC_LOG(ERROR, TAG, "FindMatchNodes");
         ret = OC_STACK_ERROR;
     }
 
-    OC_LOG_V(INFO, TAG, "Leave TWDiscover() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TWDiscover() with ret=%d", ret);
     return ret;
 }
 
@@ -398,12 +398,12 @@ OCStackResult TWSetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
 {
     //Ask:  AT+WRITEATR:5DA7,01,0,0003,0000,21,01
 
-    OC_LOG(INFO, TAG, "Enter TWSetAttribute()");
+    OIC_LOG(INFO, TAG, "Enter TWSetAttribute()");
 
     TWContext* ctx = GetTWContext(plugin);
     if (ctx == NULL)
     {
-        OC_LOG(ERROR, TAG, "Invalid Param");
+        OIC_LOG(ERROR, TAG, "Invalid Param");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -420,10 +420,12 @@ OCStackResult TWSetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
                 SEPARATOR_LENGTH + strlen(attributeType) +
                 SEPARATOR_LENGTH + strlen(newValue) + 1;
 
+    TWEntry* entry = NULL;
+
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
     {
-        OC_LOG(ERROR, TAG, "No Memory");
+        OIC_LOG(ERROR, TAG, "No Memory");
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -434,23 +436,22 @@ OCStackResult TWSetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
     twRet = TWIssueATCommand(ctx->g_plugin, cmdString);
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Write %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "Write %s", cmdString);
         ret = OC_STACK_ERROR;
         goto exit;
     }
-    OC_LOG_V(INFO, TAG, "Write %s", cmdString);
+    OIC_LOG_V(INFO, TAG, "Write %s", cmdString);
 
-    TWEntry* entry = NULL;
     twRet = TWDequeueEntry(ctx->g_plugin, &entry, TW_WRITEATTR);
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG(ERROR, TAG, "TWDequeueEntry");
+        OIC_LOG(ERROR, TAG, "TWDequeueEntry");
         ret = OC_STACK_ERROR;
         goto exit;
     }
     if (entry == NULL)
     {
-        OC_LOG(INFO, TAG, "TWEntry is NULL.");
+        OIC_LOG(INFO, TAG, "TWEntry is NULL.");
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -458,13 +459,13 @@ OCStackResult TWSetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
     twRet = processEntry(entry, ctx);
     if (twRet == TW_RESULT_ERROR_INVALID_OP)
     {
-        OC_LOG_V(INFO, TAG, "Write %s - Invalid Operation", cmdString);
+        OIC_LOG_V(INFO, TAG, "Write %s - Invalid Operation", cmdString);
         ret = OC_STACK_INVALID_OPTION;
         goto exit;
     }
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG(ERROR, TAG, "processEntry");
+        OIC_LOG(ERROR, TAG, "processEntry");
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -472,9 +473,12 @@ OCStackResult TWSetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
     ret = OC_STACK_OK;
 
 exit:
-    TWDeleteEntry(ctx->g_plugin, entry);
+    if (entry != NULL)
+    {
+        TWDeleteEntry(ctx->g_plugin, entry);
+    }
     OICFree(cmdString);
-    OC_LOG_V(INFO, TAG, "Leave TWSetAttribute() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TWSetAttribute() with ret=%d", ret);
     return ret;
 }
 
@@ -485,7 +489,7 @@ OCStackResult TWGetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
 {
     //Ask:  AT+READATR:FE5A,01,0,0402,0002
 
-    OC_LOG(INFO, TAG, "Enter TWGetAttribute()");
+    OIC_LOG(INFO, TAG, "Enter TWGetAttribute()");
 
     TWContext* ctx = GetTWContext(plugin);
     if (ctx == NULL)
@@ -504,10 +508,12 @@ OCStackResult TWGetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
                 SEPARATOR_LENGTH + strlen(clusterId) +
                 SEPARATOR_LENGTH + strlen(attributeId) + 1;
 
+    TWEntry* entry = NULL;
+
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
     {
-        OC_LOG(ERROR, TAG, "No Memory");
+        OIC_LOG(ERROR, TAG, "No Memory");
         ret = OC_STACK_NO_MEMORY;
         goto exit;
     }
@@ -519,30 +525,29 @@ OCStackResult TWGetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
                              SEPARATOR, attributeId);
     if(stringRet <= 0)
     {
-        OC_LOG(ERROR, TAG, "Build command error.");
+        OIC_LOG(ERROR, TAG, "Build command error.");
         ret = OC_STACK_ERROR;
         goto exit;
     }
     twRet = TWIssueATCommand(ctx->g_plugin, cmdString);
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Write %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "Write %s", cmdString);
         ret = OC_STACK_ERROR;
         goto exit;
     }
-    OC_LOG_V(INFO, TAG, "Write %s", cmdString);
+    OIC_LOG_V(INFO, TAG, "Write %s", cmdString);
 
-    TWEntry* entry = NULL;
     twRet = TWDequeueEntry(ctx->g_plugin, &entry, TW_RESPATTR);
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG(ERROR, TAG, "TWDequeueEntry");
+        OIC_LOG(ERROR, TAG, "TWDequeueEntry");
         ret = OC_STACK_ERROR;
         goto exit;
     }
     if (entry == NULL)
     {
-        OC_LOG(INFO, TAG, "TWEntry is NULL");
+        OIC_LOG(INFO, TAG, "TWEntry is NULL");
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -550,7 +555,7 @@ OCStackResult TWGetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
     twRet = processEntry(entry, ctx);
     if (twRet != TW_RESULT_REMOTE_ATTR_HAS_VALUE)
     {
-        OC_LOG(ERROR, TAG, "processEntry.");
+        OIC_LOG(ERROR, TAG, "processEntry.");
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -559,7 +564,7 @@ OCStackResult TWGetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
     *outValue = (char*)OICMalloc(sizeof(char) * size);
     if (*outValue == NULL)
     {
-        OC_LOG(ERROR, TAG, "No Memory");
+        OIC_LOG(ERROR, TAG, "No Memory");
         ret = OC_STACK_NO_MEMORY;
         goto exit;
     }
@@ -569,13 +574,16 @@ OCStackResult TWGetAttribute(char* extendedUniqueId, char* nodeId, char* endpoin
     OICFree(ctx->g_ZigBeeStatus.remoteAttributeValueRead);
     ctx->g_ZigBeeStatus.remoteAttributeValueRead = NULL;
     ctx->g_ZigBeeStatus.remoteAtrributeValueReadLength = 0;
-    OC_LOG(INFO, TAG, "TWGetAttribute() gets an attribute value.");
+    OIC_LOG(INFO, TAG, "TWGetAttribute() gets an attribute value.");
     ret = OC_STACK_OK;
 
 exit:
-    TWDeleteEntry(ctx->g_plugin, entry);
+    if (entry != NULL)
+    {
+        TWDeleteEntry(ctx->g_plugin, entry);
+    }
     OICFree(cmdString);
-    OC_LOG_V(INFO, TAG, "Leave TWGetAttribute() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TWGetAttribute() with ret=%d", ret);
     return ret;
 }
 
@@ -587,12 +595,12 @@ OCStackResult TWSwitchOnOff(char* nodeId, char* endpointId, char* newState,
     //      OK
     //      DFTREP:9E2B,01,0006,01,00
 
-    OC_LOG(INFO, TAG, "Enter TWSwitchOnOff()");
+    OIC_LOG(INFO, TAG, "Enter TWSwitchOnOff()");
 
     TWContext* ctx = GetTWContext(plugin);
     if (ctx == NULL)
     {
-        OC_LOG(ERROR, TAG, "Invalid Param");
+        OIC_LOG(ERROR, TAG, "Invalid Param");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -614,10 +622,12 @@ OCStackResult TWSwitchOnOff(char* nodeId, char* endpointId, char* newState,
                 SEPARATOR_LENGTH + strlen(newState) + 1;
     }
 
+    TWEntry* entry = NULL;
+
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
     {
-        OC_LOG(ERROR, TAG, "No Memory");
+        OIC_LOG(ERROR, TAG, "No Memory");
         ret = OC_STACK_NO_MEMORY;
         goto exit;
     }
@@ -627,7 +637,7 @@ OCStackResult TWSwitchOnOff(char* nodeId, char* endpointId, char* newState,
                              endpointId, SEPARATOR, SENDMODE);
     if(stringRet <= 0)
     {
-        OC_LOG(ERROR, TAG, "Build command error.");
+        OIC_LOG(ERROR, TAG, "Build command error.");
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -640,23 +650,22 @@ OCStackResult TWSwitchOnOff(char* nodeId, char* endpointId, char* newState,
     twRet = TWIssueATCommand(ctx->g_plugin, cmdString);
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Write %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "Write %s", cmdString);
         ret = OC_STACK_ERROR;
         goto exit;
     }
-    OC_LOG_V(INFO, TAG, "Write %s", cmdString);
+    OIC_LOG_V(INFO, TAG, "Write %s", cmdString);
 
-    TWEntry* entry = NULL;
     twRet = TWDequeueEntry(ctx->g_plugin, &entry, TW_DFTREP);
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG(ERROR, TAG, "TWDequeueEntry");
+        OIC_LOG(ERROR, TAG, "TWDequeueEntry");
         ret = OC_STACK_ERROR;
         goto exit;
     }
     if (entry == NULL)
     {
-        OC_LOG(ERROR, TAG, "TWEntry is NULL");
+        OIC_LOG(ERROR, TAG, "TWEntry is NULL");
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -664,7 +673,7 @@ OCStackResult TWSwitchOnOff(char* nodeId, char* endpointId, char* newState,
     twRet = processEntry(entry, ctx);
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "processEntry - %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "processEntry - %s", cmdString);
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -672,9 +681,12 @@ OCStackResult TWSwitchOnOff(char* nodeId, char* endpointId, char* newState,
     ret = OC_STACK_OK;
 
 exit:
-    TWDeleteEntry(ctx->g_plugin, entry);
+    if (entry != NULL)
+    {
+        TWDeleteEntry(ctx->g_plugin, entry);
+    }
     OICFree(cmdString);
-    OC_LOG_V(INFO, TAG, "Leave TWSwitchOnOff() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TWSwitchOnOff() with ret=%d", ret);
     return ret;
 }
 
@@ -684,12 +696,12 @@ OCStackResult TWMoveToLevel(char* nodeId, char* endpointId,
 {
     //AT+LCMVTOLEV:<Address>,<EP>,<SendMode>,<ON/OFF>,<LevelValue>,<TransTime>
 
-    OC_LOG(INFO, TAG, "Enter TWMoveToLevel()");
+    OIC_LOG(INFO, TAG, "Enter TWMoveToLevel()");
 
     TWContext* ctx = GetTWContext(plugin);
     if (ctx == NULL)
     {
-        OC_LOG(ERROR, TAG, "Invalid Param");
+        OIC_LOG(ERROR, TAG, "Invalid Param");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -704,10 +716,12 @@ OCStackResult TWMoveToLevel(char* nodeId, char* endpointId,
             SEPARATOR_LENGTH + strlen(level) +
             SEPARATOR_LENGTH + strlen(transTime) + 1;
 
+    TWEntry* entry = NULL;
+
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
     {
-        OC_LOG(ERROR, TAG, "No Memory");
+        OIC_LOG(ERROR, TAG, "No Memory");
         ret = OC_STACK_NO_MEMORY;
         goto exit;
     }
@@ -721,7 +735,7 @@ OCStackResult TWMoveToLevel(char* nodeId, char* endpointId,
                              SEPARATOR, transTime);
     if(stringRet <= 0)
     {
-        OC_LOG(ERROR, TAG, "Build command error.");
+        OIC_LOG(ERROR, TAG, "Build command error.");
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -729,24 +743,23 @@ OCStackResult TWMoveToLevel(char* nodeId, char* endpointId,
     twRet = TWIssueATCommand(ctx->g_plugin, cmdString);
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Write %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "Write %s", cmdString);
         ret = OC_STACK_ERROR;
         goto exit;
     }
 
-    OC_LOG_V(INFO, TAG, "Write %s", cmdString);
+    OIC_LOG_V(INFO, TAG, "Write %s", cmdString);
 
-    TWEntry* entry = NULL;
     twRet = TWDequeueEntry(ctx->g_plugin, &entry, TW_DFTREP);
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG(ERROR, TAG, "TWDequeueEntry");
+        OIC_LOG(ERROR, TAG, "TWDequeueEntry");
         ret = OC_STACK_ERROR;
         goto exit;
     }
     if (entry == NULL)
     {
-        OC_LOG(ERROR, TAG, "TWEntry is NULL");
+        OIC_LOG(ERROR, TAG, "TWEntry is NULL");
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -754,7 +767,7 @@ OCStackResult TWMoveToLevel(char* nodeId, char* endpointId,
     twRet = processEntry(entry, ctx);
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "processEntry - %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "processEntry - %s", cmdString);
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -762,9 +775,12 @@ OCStackResult TWMoveToLevel(char* nodeId, char* endpointId,
     ret = OC_STACK_OK;
 
 exit:
-    TWDeleteEntry(ctx->g_plugin, entry);
+    if (entry != NULL)
+    {
+        TWDeleteEntry(ctx->g_plugin, entry);
+    }
     OICFree(cmdString);
-    OC_LOG_V(INFO, TAG, "Leave TWMoveToLevel() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TWMoveToLevel() with ret=%d", ret);
     return ret;
 }
 
@@ -773,12 +789,12 @@ OCStackResult TWSwitchDoorLockState(char* nodeId, char* endpointId, char* newSta
 {
     //AT+DRLOCK:<Address>,<EP>,<SendMode>,<Lock/Unlock>
 
-    OC_LOG(INFO, TAG, "Enter TWSwitchDoorLockState()");
+    OIC_LOG(INFO, TAG, "Enter TWSwitchDoorLockState()");
 
     TWContext* ctx = GetTWContext(plugin);
     if (ctx == NULL)
     {
-        OC_LOG(ERROR, TAG, "Invalid Param");
+        OIC_LOG(ERROR, TAG, "Invalid Param");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -791,10 +807,12 @@ OCStackResult TWSwitchDoorLockState(char* nodeId, char* endpointId, char* newSta
             SEPARATOR_LENGTH + strlen(SENDMODE) +
             SEPARATOR_LENGTH + strlen(newState) + 1;
 
+    TWEntry* entry = NULL;
+
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
     {
-        OC_LOG(ERROR, TAG, "No Memory");
+        OIC_LOG(ERROR, TAG, "No Memory");
         ret = OC_STACK_NO_MEMORY;
         goto exit;
     }
@@ -806,7 +824,7 @@ OCStackResult TWSwitchDoorLockState(char* nodeId, char* endpointId, char* newSta
                              SEPARATOR, newState);
     if(stringRet <= 0)
     {
-        OC_LOG(ERROR, TAG, "Build command error.");
+        OIC_LOG(ERROR, TAG, "Build command error.");
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -814,25 +832,24 @@ OCStackResult TWSwitchDoorLockState(char* nodeId, char* endpointId, char* newSta
     twRet = TWIssueATCommand(ctx->g_plugin, cmdString);
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Write %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "Write %s", cmdString);
         ret = OC_STACK_ERROR;
         goto exit;
     }
 
-    OC_LOG_V(INFO, TAG, "Write %s", cmdString);
+    OIC_LOG_V(INFO, TAG, "Write %s", cmdString);
 
-    TWEntry* entry = NULL;
     twRet = TWDequeueEntry(ctx->g_plugin, &entry, TW_DFTREP);
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG(ERROR, TAG, "TWDequeueEntry");
+        OIC_LOG(ERROR, TAG, "TWDequeueEntry");
         ret = OC_STACK_ERROR;
         goto exit;
     }
 
     if (entry == NULL)
     {
-        OC_LOG(ERROR, TAG, "TWEntry is NULL");
+        OIC_LOG(ERROR, TAG, "TWEntry is NULL");
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -840,7 +857,7 @@ OCStackResult TWSwitchDoorLockState(char* nodeId, char* endpointId, char* newSta
     twRet = processEntry(entry, ctx);
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "processEntry - %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "processEntry - %s", cmdString);
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -848,9 +865,12 @@ OCStackResult TWSwitchDoorLockState(char* nodeId, char* endpointId, char* newSta
     ret = OC_STACK_OK;
 
 exit:
-    TWDeleteEntry(ctx->g_plugin, entry);
+    if (entry != NULL)
+    {
+        TWDeleteEntry(ctx->g_plugin, entry);
+    }
     OICFree(cmdString);
-    OC_LOG_V(INFO, TAG, "Leave TWSwitchDoorLockState() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TWSwitchDoorLockState() with ret=%d", ret);
     return ret;
 }
 
@@ -863,12 +883,12 @@ OCStackResult TWColorMoveToColorTemperature(char* nodeId, char* endpointId,
     //  OK
     //  ERROR:<errorcode>
 
-    OC_LOG(INFO, TAG, "Enter TWColorMoveToColorTemperature()");
+    OIC_LOG(INFO, TAG, "Enter TWColorMoveToColorTemperature()");
 
     TWContext* ctx = GetTWContext(plugin);
     if (ctx == NULL)
     {
-        OC_LOG(ERROR, TAG, "Invalid Param");
+        OIC_LOG(ERROR, TAG, "Invalid Param");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -882,10 +902,12 @@ OCStackResult TWColorMoveToColorTemperature(char* nodeId, char* endpointId,
             SEPARATOR_LENGTH + strlen(colorTemperature) +
             SEPARATOR_LENGTH + strlen(transTime) + 1;
 
+    TWEntry* entry = NULL;
+
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
     {
-        OC_LOG(ERROR, TAG, "No Memory");
+        OIC_LOG(ERROR, TAG, "No Memory");
         ret = OC_STACK_NO_MEMORY;
         goto exit;
     }
@@ -898,30 +920,29 @@ OCStackResult TWColorMoveToColorTemperature(char* nodeId, char* endpointId,
                              SEPARATOR, transTime);
     if(stringRet <= 0)
     {
-        OC_LOG(ERROR, TAG, "Build command error.");
+        OIC_LOG(ERROR, TAG, "Build command error.");
         ret = OC_STACK_ERROR;
         goto exit;
     }
     twRet = TWIssueATCommand(ctx->g_plugin, cmdString);
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Write %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "Write %s", cmdString);
         ret = OC_STACK_ERROR;
         goto exit;
     }
-    OC_LOG_V(INFO, TAG, "Write %s", cmdString);
+    OIC_LOG_V(INFO, TAG, "Write %s", cmdString);
 
-    TWEntry* entry = NULL;
     twRet = TWDequeueEntry(ctx->g_plugin, &entry, TW_DFTREP);
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "TWDequeueEntry - %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "TWDequeueEntry - %s", cmdString);
         ret = OC_STACK_ERROR;
         goto exit;
     }
     if (entry == NULL)
     {
-        OC_LOG_V(ERROR, TAG, "TWEntry is NULL - %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "TWEntry is NULL - %s", cmdString);
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -929,7 +950,7 @@ OCStackResult TWColorMoveToColorTemperature(char* nodeId, char* endpointId,
     twRet = processEntry(entry, ctx);
     if (twRet != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "processEntry - %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "processEntry - %s", cmdString);
         ret = OC_STACK_ERROR;
         goto exit;
     }
@@ -937,15 +958,18 @@ OCStackResult TWColorMoveToColorTemperature(char* nodeId, char* endpointId,
     ret = OC_STACK_OK;
 
 exit:
-    TWDeleteEntry(ctx->g_plugin, entry);
+    if (entry != NULL)
+    {
+        TWDeleteEntry(ctx->g_plugin, entry);
+    }
     OICFree(cmdString);
-    OC_LOG_V(INFO, TAG, "Leave TWColorMoveToColorTemperature() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TWColorMoveToColorTemperature() with ret=%d", ret);
     return ret;
 }
 
 OCStackResult TWSetDiscoveryCallback(const TWDeviceFoundCallback callback, PIPlugin_Zigbee* plugin)
 {
-    OC_LOG(INFO, TAG, "Enter TWSetDiscoveryCallback()");
+    OIC_LOG(INFO, TAG, "Enter TWSetDiscoveryCallback()");
 
     OCStackResult ret = OC_STACK_OK;
 
@@ -966,14 +990,14 @@ OCStackResult TWSetDiscoveryCallback(const TWDeviceFoundCallback callback, PIPlu
         }
     }
 
-    OC_LOG_V(INFO, TAG, "Leave TWSetDiscoveryCallback() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TWSetDiscoveryCallback() with ret=%d", ret);
     return ret;
 }
 
 OCStackResult TWSetEndDeviceNodeIdChangedCallback(TWDeviceNodeIdChangedCallback callback,
                                                   PIPlugin_Zigbee* plugin)
 {
-    OC_LOG(INFO, TAG, "Enter TWSetEndDeviceNodeIdChangedCallback()");
+    OIC_LOG(INFO, TAG, "Enter TWSetEndDeviceNodeIdChangedCallback()");
 
     OCStackResult ret = OC_STACK_OK;
 
@@ -993,14 +1017,14 @@ OCStackResult TWSetEndDeviceNodeIdChangedCallback(TWDeviceNodeIdChangedCallback 
             ctx->g_EndDeviceNodeIdChangedCallback = NULL;
         }
     }
-    OC_LOG_V(INFO, TAG, "Leave TWSetEndDeviceNodeIdChangedCallback() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TWSetEndDeviceNodeIdChangedCallback() with ret=%d", ret);
     return ret;
 }
 
 OCStackResult TWSetStatusUpdateCallback(TWDeviceStatusUpdateCallback callback,
                                         PIPlugin_Zigbee* plugin)
 {
-    OC_LOG(INFO, TAG, "Enter TWSetStatusUpdateCallback()");
+    OIC_LOG(INFO, TAG, "Enter TWSetStatusUpdateCallback()");
 
     OCStackResult ret = OC_STACK_OK;
 
@@ -1021,13 +1045,13 @@ OCStackResult TWSetStatusUpdateCallback(TWDeviceStatusUpdateCallback callback,
         }
     }
 
-    OC_LOG_V(INFO, TAG, "Leave TWSetStatusUpdateCallback() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TWSetStatusUpdateCallback() with ret=%d", ret);
     return ret;
 }
 
 OCStackResult TWListenForStatusUpdates(char* nodeId, char* endpointId, PIPlugin_Zigbee* plugin)
 {
-    OC_LOG(INFO, TAG, "Enter TWListenForStatusUpdates()");
+    OIC_LOG(INFO, TAG, "Enter TWListenForStatusUpdates()");
 
     OCStackResult ret = OC_STACK_OK;
 
@@ -1048,11 +1072,11 @@ OCStackResult TWListenForStatusUpdates(char* nodeId, char* endpointId, PIPlugin_
 
         if (ret == OC_STACK_INVALID_OPTION)
         {
-            OC_LOG(INFO, TAG, "Already registered for ZoneStatusUpdate");
+            OIC_LOG(INFO, TAG, "Already registered for ZoneStatusUpdate");
             ret = OC_STACK_OK;
         }
     }
-    OC_LOG_V(INFO, TAG, "Leave TWListenForStatusUpdates() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TWListenForStatusUpdates() with ret=%d", ret);
     return ret;
 }
 
@@ -1076,7 +1100,7 @@ OCStackResult TWProcess(PIPlugin_Zigbee* plugin)
         ret = TWDequeueEntry(ctx->g_plugin, &entry, TW_NONE);
         if (ret != TW_RESULT_OK)
         {
-            OC_LOG(ERROR, TAG, "TWDequeueEntry");
+            OIC_LOG(ERROR, TAG, "TWDequeueEntry");
             ret = OC_STACK_ERROR;
             break;
         }
@@ -1089,22 +1113,22 @@ OCStackResult TWProcess(PIPlugin_Zigbee* plugin)
         ret = processEntry(entry, ctx);
         if (ret != TW_RESULT_OK)
         {
-            OC_LOG(ERROR, TAG, "processEntry");
+            OIC_LOG(ERROR, TAG, "processEntry");
             ret = TWDeleteEntry(ctx->g_plugin, entry);
             if(ret != TW_RESULT_OK)
             {
-                OC_LOG(ERROR, TAG, "Failed to delete entry.");
+                OIC_LOG(ERROR, TAG, "Failed to delete entry.");
                 ret = OC_STACK_ERROR;
                 break;
             }
         }
         else
         {
-            OC_LOG(INFO, TAG, "processEntry");
+            OIC_LOG(INFO, TAG, "processEntry");
             ret = TWDeleteEntry(ctx->g_plugin, entry);
             if(ret != TW_RESULT_OK)
             {
-                OC_LOG(ERROR, TAG, "Failed to delete entry.");
+                OIC_LOG(ERROR, TAG, "Failed to delete entry.");
                 ret = OC_STACK_ERROR;
                 break;
             }
@@ -1116,7 +1140,7 @@ OCStackResult TWProcess(PIPlugin_Zigbee* plugin)
 
 OCStackResult TWUninitialize(PIPlugin_Zigbee* plugin)
 {
-    OC_LOG(INFO, TAG, "Enter TWUninitializeZigBee()");
+    OIC_LOG(INFO, TAG, "Enter TWUninitializeZigBee()");
     OCStackResult ret = OC_STACK_ERROR;
 
     TWContext* ctx = GetTWContext(plugin);
@@ -1129,12 +1153,12 @@ OCStackResult TWUninitialize(PIPlugin_Zigbee* plugin)
         TWResultCode twRet = TWStopSock(ctx->g_plugin);
         if (twRet == TW_RESULT_OK)
         {
-            OC_LOG(INFO, TAG, "TWStopSock");
+            OIC_LOG(INFO, TAG, "TWStopSock");
             ret = OC_STACK_OK;
         }
         else
         {
-            OC_LOG(ERROR, TAG, "TWStopSock");
+            OIC_LOG(ERROR, TAG, "TWStopSock");
             ret = OC_STACK_ERROR;
         }
         DeallocateTWDeviceList(ctx);
@@ -1143,7 +1167,7 @@ OCStackResult TWUninitialize(PIPlugin_Zigbee* plugin)
         OICFree(ctx);
     }
 
-    OC_LOG_V(INFO, TAG, "Leave TWUninitializeZigBee() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TWUninitializeZigBee() with ret=%d", ret);
     return ret;
 }
 
@@ -1153,7 +1177,7 @@ OCStackResult TWUninitialize(PIPlugin_Zigbee* plugin)
 
 TWResultCode processEntry(TWEntry *entry, TWContext* ctx)
 {
-    OC_LOG(INFO, TAG, "Enter processEntry()");
+    OIC_LOG(INFO, TAG, "Enter processEntry()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
     switch(entry->type)
@@ -1163,139 +1187,139 @@ TWResultCode processEntry(TWEntry *entry, TWContext* ctx)
             if ((ret != TW_RESULT_NO_LOCAL_PAN) &&
                 (ret != TW_RESULT_HAS_LOCAL_PAN))
             {
-                OC_LOG(ERROR, TAG, "processEntryNETWORK_INFO.");
+                OIC_LOG(ERROR, TAG, "processEntryNETWORK_INFO.");
             }
             break;
         case TW_JPAN:
             ret = processEntryJPAN(entry, ctx);
             if (ret != TW_RESULT_OK)
             {
-                OC_LOG(ERROR, TAG, "processEntryJPAN.");
+                OIC_LOG(ERROR, TAG, "processEntryJPAN.");
             }
             break;
         case TW_SED:
             ret = processEntryEndDevice(entry, ctx);
             if (ret != TW_RESULT_OK)
             {
-                OC_LOG(ERROR, TAG, "processEntrySED.");
+                OIC_LOG(ERROR, TAG, "processEntrySED.");
             }
             break;
         case TW_RFD:
             ret = processEntryEndDevice(entry, ctx);
             if (ret != TW_RESULT_OK)
             {
-                OC_LOG(ERROR, TAG, "processEntryRFD.");
+                OIC_LOG(ERROR, TAG, "processEntryRFD.");
             }
             break;
         case TW_FFD:
             ret = processEntryEndDevice(entry, ctx);
             if (ret != TW_RESULT_OK)
             {
-                OC_LOG(ERROR, TAG, "processEntryFFD.");
+                OIC_LOG(ERROR, TAG, "processEntryFFD.");
             }
             break;
         case TW_ZED:
             ret = processEntryEndDevice(entry, ctx);
             if (ret != TW_RESULT_OK)
             {
-                OC_LOG(ERROR, TAG, "processEntryZED.");
+                OIC_LOG(ERROR, TAG, "processEntryZED.");
             }
             break;
         case TW_MATCHDESC:
             ret = processEntryMatchDesc(entry, ctx);
             if (ret != TW_RESULT_OK)
             {
-                OC_LOG(ERROR, TAG, "processEntryMatchDesc.");
+                OIC_LOG(ERROR, TAG, "processEntryMatchDesc.");
             }
             break;
         case TW_SIMPLEDESC:
             ret = processEntrySimpleDesc(entry, ctx);
             if (ret != TW_RESULT_OK)
             {
-                OC_LOG(ERROR, TAG, "processEntrySimpleDesc.");
+                OIC_LOG(ERROR, TAG, "processEntrySimpleDesc.");
             }
             break;
         case TW_WRITEATTR:
             ret = processEntryWriteAttr(entry, ctx);
             if (ret == TW_RESULT_ERROR_INVALID_OP)
             {
-               OC_LOG_V(INFO, TAG, "processEntryWriteAttr - ret=%d", TW_RESULT_ERROR_INVALID_OP);
+               OIC_LOG_V(INFO, TAG, "processEntryWriteAttr - ret=%d", TW_RESULT_ERROR_INVALID_OP);
             }
             else if (ret != TW_RESULT_OK)
             {
-                OC_LOG(ERROR, TAG, "processEntryWriteAttr.");
+                OIC_LOG(ERROR, TAG, "processEntryWriteAttr.");
             }
             break;
         case TW_RESPATTR:
             ret = processEntryReadAttr(entry, ctx);
             if (ret != TW_RESULT_REMOTE_ATTR_HAS_VALUE)
             {
-                OC_LOG(ERROR, TAG, "processEntryReadAttr.");
+                OIC_LOG(ERROR, TAG, "processEntryReadAttr.");
             }
             break;
         case TW_TEMPERATURE:
             ret = processEntryTemperature(entry, ctx);
             if (ret != TW_RESULT_REMOTE_ATTR_HAS_VALUE)
             {
-                OC_LOG(ERROR, TAG, "processEntryTemperature.");
+                OIC_LOG(ERROR, TAG, "processEntryTemperature.");
             }
             break;
         case TW_DRLOCRSP:
             ret = processEntrySwitchDoorLockState(entry, ctx);
             if (ret != TW_RESULT_OK)
             {
-                OC_LOG(ERROR, TAG, "processEntrySwitchDoorLockState.");
+                OIC_LOG(ERROR, TAG, "processEntrySwitchDoorLockState.");
             }
             break;
         case TW_DRUNLOCKRSP:
             ret = processEntrySwitchDoorLockState(entry, ctx);
             if (ret != TW_RESULT_OK)
             {
-                OC_LOG(ERROR, TAG, "processEntrySwitchDoorLockState.");
+                OIC_LOG(ERROR, TAG, "processEntrySwitchDoorLockState.");
             }
             break;
         case TW_DFTREP:
             ret = processEntryZCLDefaultResponse(entry, ctx);
             if (ret != TW_RESULT_OK)
             {
-                OC_LOG(ERROR, TAG, "processEntryZCLDefaultResponse.");
+                OIC_LOG(ERROR, TAG, "processEntryZCLDefaultResponse.");
             }
             break;
         case TW_ZENROLLREQ:
             ret = processEntryZoneEnrollRequest(entry, ctx);
             if (ret != TW_RESULT_OK)
             {
-                OC_LOG(ERROR, TAG, "processEntryZoneEnrollRequest.");
+                OIC_LOG(ERROR, TAG, "processEntryZoneEnrollRequest.");
             }
             break;
         case TW_ENROLLED:
             ret = processEntryEnrolled(entry, ctx);
             if (ret != TW_RESULT_OK)
             {
-                OC_LOG(ERROR, TAG, "processEntryEnrolled.");
+                OIC_LOG(ERROR, TAG, "processEntryEnrolled.");
             }
             break;
         case TW_ZONESTATUS:
             ret = processEntryZoneStatus(entry, ctx);
             if (ret != TW_RESULT_OK)
             {
-                OC_LOG(ERROR, TAG, "processEntryZoneStatus.");
+                OIC_LOG(ERROR, TAG, "processEntryZoneStatus.");
             }
             break;
         case TW_ADDRESS_RESPONSE:
             ret = processEntryAddressResponse(entry, ctx);
             if (ret != TW_RESULT_OK)
             {
-                OC_LOG(ERROR, TAG, "processEntryAddressResponse.");
+                OIC_LOG(ERROR, TAG, "processEntryAddressResponse.");
             }
             break;
         default:
-            OC_LOG(ERROR, TAG, "processEntry() doesn't receive an valid entry.");
+            OIC_LOG(ERROR, TAG, "processEntry() doesn't receive an valid entry.");
             ret = TW_RESULT_ERROR;
             break;
     }
 
-    OC_LOG_V(INFO, TAG, "Leave processEntry() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave processEntry() with ret=%d", ret);
     return ret;
 }
 
@@ -1311,13 +1335,13 @@ TWResultCode processEntryNETWORK_INFO(TWEntry* entry, TWContext* ctx)
     //      OK
     */
 
-    OC_LOG(INFO, TAG, "Enter processEntryNETWORK_INFO()");
+    OIC_LOG(INFO, TAG, "Enter processEntryNETWORK_INFO()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
     if (strcmp(entry->atErrorCode, AT_STR_ERROR_EVERYTHING_OK) != 0)
     {
-        OC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR: %s", entry->atErrorCode);
+        OIC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR: %s", entry->atErrorCode);
         ret = TW_RESULT_ERROR;
         goto exit;
     }
@@ -1325,7 +1349,7 @@ TWResultCode processEntryNETWORK_INFO(TWEntry* entry, TWContext* ctx)
     ret = HandleATResponse(entry,ctx);
 
 exit:
-    OC_LOG_V(INFO, TAG, "Leave processEntryNETWORK_INFO() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave processEntryNETWORK_INFO() with ret=%d", ret);
     return ret;
 }
 
@@ -1340,7 +1364,7 @@ TWResultCode processEntryJPAN(TWEntry* entry, TWContext* ctx)
     //      ERROR:28
     */
 
-    OC_LOG(INFO, TAG, "Enter processEntryJPAN()");
+    OIC_LOG(INFO, TAG, "Enter processEntryJPAN()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
     if (strcmp(entry->atErrorCode, AT_STR_ERROR_EVERYTHING_OK) == 0)
@@ -1348,7 +1372,7 @@ TWResultCode processEntryJPAN(TWEntry* entry, TWContext* ctx)
         ret = HandleATResponse(entry,ctx);
         if (ret == TW_RESULT_NEW_LOCAL_PAN_ESTABLISHED)
         {
-            OC_LOG(INFO, TAG, "New Local PAN established.");
+            OIC_LOG(INFO, TAG, "New Local PAN established.");
             ret =  TW_RESULT_OK;
         }
         else
@@ -1358,31 +1382,31 @@ TWResultCode processEntryJPAN(TWEntry* entry, TWContext* ctx)
     }
     else if (strcmp(entry->atErrorCode, AT_STR_ERROR_NODE_IS_PART_OF_PAN) == 0)
     {
-        OC_LOG(INFO, TAG, "Already Established PAN.");
+        OIC_LOG(INFO, TAG, "Already Established PAN.");
         ret = TW_RESULT_OK;
     }
     else
     {
-        OC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR: %s", entry->atErrorCode);
+        OIC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR: %s", entry->atErrorCode);
         ret = TW_RESULT_ERROR;
     }
 
-    OC_LOG_V(INFO, TAG, "Leave processEntryJPAN() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave processEntryJPAN() with ret=%d", ret);
     return ret;
 }
 
 TWResultCode processEntryEndDevice(TWEntry* entry, TWContext* ctx)
 {
-    OC_LOG(INFO, TAG, "Enter processEntryEndDevice()");
+    OIC_LOG(INFO, TAG, "Enter processEntryEndDevice()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
     ret = HandleATResponse(entry,ctx);
     if (ret != TW_RESULT_OK)
     {
-        OC_LOG(ERROR, TAG, "HandleATResponse");
+        OIC_LOG(ERROR, TAG, "HandleATResponse");
     }
 
-    OC_LOG_V(INFO, TAG, "Leave processEntryEndDevice() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave processEntryEndDevice() with ret=%d", ret);
     return ret;
 }
 
@@ -1390,12 +1414,12 @@ TWResultCode processEntryMatchDesc(TWEntry* entry, TWContext* ctx)
 {
     //MatchDesc:0B4A,00,01
 
-    OC_LOG(INFO, TAG, "Enter processEntryMatchDesc()");
+    OIC_LOG(INFO, TAG, "Enter processEntryMatchDesc()");
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
     if (strcmp(entry->atErrorCode, AT_STR_ERROR_EVERYTHING_OK) != 0)
     {
-        OC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR = %s", entry->atErrorCode);
+        OIC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR = %s", entry->atErrorCode);
         ret = TW_RESULT_ERROR;
     }
     else
@@ -1403,36 +1427,36 @@ TWResultCode processEntryMatchDesc(TWEntry* entry, TWContext* ctx)
         ret = HandleATResponse(entry,ctx);
         if (ret == TW_RESULT_OK)
         {
-            OC_LOG(INFO, TAG, "HandleATResponse");
+            OIC_LOG(INFO, TAG, "HandleATResponse");
             ret = FindClusters(ctx->g_WIPDevice->nodeId,
                                ctx->g_WIPDevice->endpointOfInterest->endpointId,
                                ctx);
             if (ret == TW_RESULT_OK)
             {
-                OC_LOG(INFO, TAG, "FindClusters - Found a match node");
+                OIC_LOG(INFO, TAG, "FindClusters - Found a match node");
                 if (ctx->g_DeviceFoundCallback != NULL)
                 {
-                    OC_LOG(INFO, TAG, "Found a match node -- invoke callback");
+                    OIC_LOG(INFO, TAG, "Found a match node -- invoke callback");
                     ctx->g_DeviceFoundCallback(ctx->g_WIPDevice, ctx->g_plugin);
                 }
                 ret =  TW_RESULT_OK;
             }
             else
             {
-                OC_LOG(ERROR, TAG, "FindClusters");
+                OIC_LOG(ERROR, TAG, "FindClusters");
                 ret = TW_RESULT_ERROR;
             }
         }
         else
         {
-            OC_LOG(ERROR, TAG, "HandleATResponse");
+            OIC_LOG(ERROR, TAG, "HandleATResponse");
             ret = TW_RESULT_ERROR;
         }
 
         ctx->g_WIPDevice = NULL; //reset and do not deallocate it
     }
 
-    OC_LOG_V(INFO, TAG, "Leave processEntryMatchDesc() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave processEntryMatchDesc() with ret=%d", ret);
     return ret;
 }
 
@@ -1452,13 +1476,13 @@ TWResultCode processEntrySimpleDesc(TWEntry* entry, TWContext* ctx)
     //
     //      ACK:97
     */
-    OC_LOG(INFO, TAG, "Enter processEntrySimpleDesc()");
+    OIC_LOG(INFO, TAG, "Enter processEntrySimpleDesc()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
     if (strcmp((entry->atErrorCode), AT_STR_ERROR_EVERYTHING_OK) != 0)
     {
-        OC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR = %s", (entry->atErrorCode));
+        OIC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR = %s", (entry->atErrorCode));
         ret = TW_RESULT_ERROR;
     }
     else
@@ -1468,18 +1492,18 @@ TWResultCode processEntrySimpleDesc(TWEntry* entry, TWContext* ctx)
             ret = HandleATResponse(entry,ctx);
             if (ret == TW_RESULT_HAS_CLUSTERS)
             {
-                OC_LOG(INFO, TAG, "has clusters.");
+                OIC_LOG(INFO, TAG, "has clusters.");
                 ret = TW_RESULT_OK;
             }
         }
         else
         {
-            OC_LOG(INFO, TAG, "Received an invalid Simple Descriptor.");
+            OIC_LOG(INFO, TAG, "Received an invalid Simple Descriptor.");
             ret = TW_RESULT_ERROR;
         }
     }
 
-    OC_LOG_V(INFO, TAG, "Leave processEntrySimpleDesc() returns with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave processEntrySimpleDesc() returns with ret=%d", ret);
     return ret;
 }
 
@@ -1489,13 +1513,13 @@ TWResultCode processEntryWriteAttr(TWEntry* entry, TWContext* ctx)
     //      OK
     //      WRITEATTR:3A3D,01,0003,,00
 
-    OC_LOG(INFO, TAG, "Enter processEntryWriteAttr()");
+    OIC_LOG(INFO, TAG, "Enter processEntryWriteAttr()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
     if (strcmp((entry->atErrorCode), AT_STR_ERROR_EVERYTHING_OK) != 0)
     {
-        OC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR = %s", entry->atErrorCode);
+        OIC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR = %s", entry->atErrorCode);
         ret = TW_RESULT_ERROR;
     }
     else
@@ -1503,19 +1527,19 @@ TWResultCode processEntryWriteAttr(TWEntry* entry, TWContext* ctx)
         ret = HandleATResponse(entry,ctx);
     }
 
-    OC_LOG_V(INFO, TAG, "Leave processEntryWriteAttr() returns with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave processEntryWriteAttr() returns with ret=%d", ret);
     return ret;
 }
 
 TWResultCode processEntryReadAttr(TWEntry* entry, TWContext* ctx)
 {
-    OC_LOG(INFO, TAG, "Enter processEntryReadAttr()");
+    OIC_LOG(INFO, TAG, "Enter processEntryReadAttr()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
     if (strcmp((entry->atErrorCode), AT_STR_ERROR_EVERYTHING_OK) != 0)
     {
-        OC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR = %s", entry->atErrorCode);
+        OIC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR = %s", entry->atErrorCode);
         ret = TW_RESULT_ERROR;
     }
     else
@@ -1523,19 +1547,19 @@ TWResultCode processEntryReadAttr(TWEntry* entry, TWContext* ctx)
         ret = HandleATResponse(entry,ctx);
     }
 
-    OC_LOG_V(INFO, TAG, "Leave processEntryReadAttr() returns with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave processEntryReadAttr() returns with ret=%d", ret);
     return ret;
 }
 
 TWResultCode processEntryTemperature(TWEntry* entry, TWContext* ctx)
 {
-    OC_LOG(INFO, TAG, "Enter processEntryTemperature()");
+    OIC_LOG(INFO, TAG, "Enter processEntryTemperature()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
     if (strcmp((entry->atErrorCode), AT_STR_ERROR_EVERYTHING_OK) != 0)
     {
-        OC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR = %s", entry->atErrorCode);
+        OIC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR = %s", entry->atErrorCode);
         ret = TW_RESULT_ERROR;
     }
     else
@@ -1543,19 +1567,19 @@ TWResultCode processEntryTemperature(TWEntry* entry, TWContext* ctx)
         ret = HandleATResponse(entry,ctx);
     }
 
-    OC_LOG_V(INFO, TAG, "Leave processEntryTemperature() returns with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave processEntryTemperature() returns with ret=%d", ret);
     return ret;
 }
 
 TWResultCode processEntrySwitchDoorLockState(TWEntry* entry, TWContext* ctx)
 {
-    OC_LOG(INFO, TAG, "Enter processEntrySwitchDoorLockState()");
+    OIC_LOG(INFO, TAG, "Enter processEntrySwitchDoorLockState()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
     if (strcmp((entry->atErrorCode), AT_STR_ERROR_EVERYTHING_OK) != 0)
     {
-        OC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR = %s", entry->atErrorCode);
+        OIC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR = %s", entry->atErrorCode);
         ret = TW_RESULT_ERROR;
     }
     else
@@ -1563,13 +1587,13 @@ TWResultCode processEntrySwitchDoorLockState(TWEntry* entry, TWContext* ctx)
         ret = HandleATResponse(entry,ctx);
     }
 
-    OC_LOG_V(INFO, TAG, "Leave processEntrySwitchDoorLockState() returns with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave processEntrySwitchDoorLockState() returns with ret=%d", ret);
     return ret;
 }
 
 TWResultCode processEntryZCLDefaultResponse(TWEntry* entry, TWContext* ctx)
 {
-    OC_LOG(INFO, TAG, "Enter processEntryZCLDefaultResponse()");
+    OIC_LOG(INFO, TAG, "Enter processEntryZCLDefaultResponse()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
@@ -1577,12 +1601,12 @@ TWResultCode processEntryZCLDefaultResponse(TWEntry* entry, TWContext* ctx)
     {
         if (strcmp(entry->atErrorCode, AT_STR_ERROR_MESSAGE_NOT_SENT_TO_TARGET_SUCCESSFULLY) == 0)
         {
-            OC_LOG(ERROR, TAG, "Send to the target not succeed.");
+            OIC_LOG(ERROR, TAG, "Send to the target not succeed.");
             ret = TW_RESULT_ERROR;
         }
         else
         {
-            OC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR = %s", entry->atErrorCode);
+            OIC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR = %s", entry->atErrorCode);
             ret = TW_RESULT_ERROR;
         }
     }
@@ -1591,18 +1615,18 @@ TWResultCode processEntryZCLDefaultResponse(TWEntry* entry, TWContext* ctx)
         ret = HandleATResponse(entry,ctx);
     }
 
-    OC_LOG_V(INFO, TAG, "Leave processEntryZCLDefaultResponse() returns with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave processEntryZCLDefaultResponse() returns with ret=%d", ret);
     return ret;
 }
 
 TWResultCode processEntryZoneEnrollRequest(TWEntry* entry, TWContext* ctx)
 {
-    OC_LOG(INFO, TAG, "Enter processEntryZoneEnrollRequest()");
+    OIC_LOG(INFO, TAG, "Enter processEntryZoneEnrollRequest()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
     if (strcmp(entry->atErrorCode, AT_STR_ERROR_EVERYTHING_OK) != 0)
     {
-        OC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR: %s", entry->atErrorCode);
+        OIC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR: %s", entry->atErrorCode);
         ret = TW_RESULT_ERROR;
     }
     else
@@ -1610,18 +1634,18 @@ TWResultCode processEntryZoneEnrollRequest(TWEntry* entry, TWContext* ctx)
         ret = HandleATResponse(entry,ctx);
     }
 
-    OC_LOG_V(INFO, TAG, "Leave processEntryZoneEnrollRequest() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave processEntryZoneEnrollRequest() with ret=%d", ret);
     return ret;
 }
 
 TWResultCode processEntryEnrolled(TWEntry* entry, TWContext* ctx)
 {
-    OC_LOG(INFO, TAG, "Enter processEntryEnrolled()");
+    OIC_LOG(INFO, TAG, "Enter processEntryEnrolled()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
     if (strcmp(entry->atErrorCode, AT_STR_ERROR_EVERYTHING_OK) != 0)
     {
-        OC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR: %s", entry->atErrorCode);
+        OIC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR: %s", entry->atErrorCode);
         ret = TW_RESULT_ERROR;
     }
     else
@@ -1629,18 +1653,18 @@ TWResultCode processEntryEnrolled(TWEntry* entry, TWContext* ctx)
         ret = HandleATResponse(entry,ctx);
     }
 
-    OC_LOG_V(INFO, TAG, "Leave processEntryEnrolled() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave processEntryEnrolled() with ret=%d", ret);
     return ret;
 }
 
 TWResultCode processEntryZoneStatus(TWEntry* entry, TWContext* ctx)
 {
-    OC_LOG(INFO, TAG, "Enter processEntryZoneStatus()");
+    OIC_LOG(INFO, TAG, "Enter processEntryZoneStatus()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
     if (strcmp(entry->atErrorCode, AT_STR_ERROR_EVERYTHING_OK) != 0)
     {
-        OC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR: %s", entry->atErrorCode);
+        OIC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR: %s", entry->atErrorCode);
         ret = TW_RESULT_ERROR;
     }
     else
@@ -1648,18 +1672,18 @@ TWResultCode processEntryZoneStatus(TWEntry* entry, TWContext* ctx)
         ret = HandleATResponse(entry,ctx);
     }
 
-    OC_LOG_V(INFO, TAG, "Leave processEntryZoneStatus() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave processEntryZoneStatus() with ret=%d", ret);
     return ret;
 }
 
 TWResultCode processEntryAddressResponse(TWEntry* entry, TWContext* ctx)
 {
-    OC_LOG(INFO, TAG, "Enter processEntryAddressResponse()");
+    OIC_LOG(INFO, TAG, "Enter processEntryAddressResponse()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
     if (strcmp(entry->atErrorCode, AT_STR_ERROR_EVERYTHING_OK) != 0)
     {
-        OC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR: %s", entry->atErrorCode);
+        OIC_LOG_V(ERROR, TAG, "TWEntry contains AT_ERROR: %s", entry->atErrorCode);
         ret = TW_RESULT_ERROR;
     }
     else
@@ -1667,25 +1691,25 @@ TWResultCode processEntryAddressResponse(TWEntry* entry, TWContext* ctx)
         ret = HandleATResponse(entry,ctx);
     }
 
-    OC_LOG_V(INFO, TAG, "Leave processEntryAddressResponse() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave processEntryAddressResponse() with ret=%d", ret);
     return ret;
 }
 
 TWResultCode Reset(TWContext* ctx)
 {
-    OC_LOG(INFO, TAG, "Enter Reset()");
+    OIC_LOG(INFO, TAG, "Enter Reset()");
 
     TWResultCode ret = TW_RESULT_ERROR;
     ret = TWIssueATCommand(ctx->g_plugin, AT_CMD_RESET);
     if (ret == TW_RESULT_OK)
     {
-        OC_LOG_V(INFO, TAG, "Write %s", AT_CMD_RESET);
+        OIC_LOG_V(INFO, TAG, "Write %s", AT_CMD_RESET);
     }
     else
     {
-        OC_LOG_V(ERROR, TAG, "Write %s", AT_CMD_RESET);
+        OIC_LOG_V(ERROR, TAG, "Write %s", AT_CMD_RESET);
     }
-    OC_LOG_V(INFO, TAG, "Leave Reset() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave Reset() with ret=%d", ret);
     return ret;
 }
 
@@ -1708,86 +1732,86 @@ TWResultCode CreatePAN(TWContext* ctx)
     //      ERROR:28
     */
 
-    OC_LOG(INFO, TAG, "Enter CreatePAN()");
+    OIC_LOG(INFO, TAG, "Enter CreatePAN()");
 
+    TWEntry* entry = NULL;
+    TWEntry* entry2 = NULL;
     TWResultCode twRet1 = TW_RESULT_UNKNOWN;
     TWResultCode twRet2 = TW_RESULT_UNKNOWN;
     TWResultCode ret = TW_RESULT_UNKNOWN;
     ret = TWIssueATCommand(ctx->g_plugin, AT_CMD_GET_NETWORK_INFO);
     if (ret != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Write %s", AT_CMD_GET_NETWORK_INFO);
+        OIC_LOG_V(ERROR, TAG, "Write %s", AT_CMD_GET_NETWORK_INFO);
         goto exit;
     }
-    OC_LOG_V(INFO, TAG, "Write %s", AT_CMD_GET_NETWORK_INFO);
-    TWEntry* entry = NULL;
-    TWEntry* entry2 = NULL;
+    OIC_LOG_V(INFO, TAG, "Write %s", AT_CMD_GET_NETWORK_INFO);
     ret = TWDequeueEntry(ctx->g_plugin, &entry, TW_NETWORK_INFO);
     if (ret != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "TWDequeueEntry - %s", AT_CMD_GET_NETWORK_INFO);
+        OIC_LOG_V(ERROR, TAG, "TWDequeueEntry - %s", AT_CMD_GET_NETWORK_INFO);
         goto exit;
     }
     if (entry == NULL)
     {
-        OC_LOG_V(ERROR, TAG, "TWEntry is NULL - %s", AT_CMD_GET_NETWORK_INFO);
+        OIC_LOG_V(ERROR, TAG, "TWEntry is NULL - %s", AT_CMD_GET_NETWORK_INFO);
         ret = TW_RESULT_ERROR;
         goto exit;
     }
     ret = processEntry(entry, ctx);
     if (ret == TW_RESULT_HAS_LOCAL_PAN)
     {
-        OC_LOG(INFO, TAG, "Has local PAN.");
+        OIC_LOG(INFO, TAG, "Has local PAN.");
         ret = TW_RESULT_OK;
     }
     else if (ret == TW_RESULT_NO_LOCAL_PAN)
     {
-        OC_LOG(INFO, TAG, "Has no local PAN.");
+        OIC_LOG(INFO, TAG, "Has no local PAN.");
         ret = TWIssueATCommand(ctx->g_plugin, AT_CMD_ESTABLISH_NETWORK);
         if (ret != TW_RESULT_OK)
         {
-            OC_LOG_V(ERROR, TAG, "Write %s", AT_CMD_ESTABLISH_NETWORK);
+            OIC_LOG_V(ERROR, TAG, "Write %s", AT_CMD_ESTABLISH_NETWORK);
             goto exit;
         }
-        OC_LOG_V(INFO, TAG, "Write %s", AT_CMD_ESTABLISH_NETWORK);
+        OIC_LOG_V(INFO, TAG, "Write %s", AT_CMD_ESTABLISH_NETWORK);
 
         ret = TWDequeueEntry(ctx->g_plugin, &entry2, TW_JPAN);
         if (ret != TW_RESULT_OK)
         {
-            OC_LOG_V(ERROR, TAG, "TWDequeueEntry - %s", AT_CMD_ESTABLISH_NETWORK);
+            OIC_LOG_V(ERROR, TAG, "TWDequeueEntry - %s", AT_CMD_ESTABLISH_NETWORK);
             goto exit;
         }
         if (entry2 == NULL)
         {
-            OC_LOG_V(ERROR, TAG, "TWEntry is NULL - %s", AT_CMD_ESTABLISH_NETWORK);
+            OIC_LOG_V(ERROR, TAG, "TWEntry is NULL - %s", AT_CMD_ESTABLISH_NETWORK);
             ret = TW_RESULT_ERROR;
             goto exit;
         }
         ret = processEntry(entry2, ctx);
         if (ret == TW_RESULT_OK)
         {
-            OC_LOG_V(INFO, TAG, "processEntry - %s", AT_CMD_ESTABLISH_NETWORK);
+            OIC_LOG_V(INFO, TAG, "processEntry - %s", AT_CMD_ESTABLISH_NETWORK);
             ret = TW_RESULT_OK;
         }
         else
         {
-            OC_LOG_V(ERROR, TAG, "processEntry - %s", AT_CMD_ESTABLISH_NETWORK);
+            OIC_LOG_V(ERROR, TAG, "processEntry - %s", AT_CMD_ESTABLISH_NETWORK);
             ret = TW_RESULT_ERROR;
         }
     }
     else
     {
-        OC_LOG_V(ERROR, TAG, "processEntry - unexpected return code: %d", ret);
+        OIC_LOG_V(ERROR, TAG, "processEntry - unexpected return code: %d", ret);
         ret = TW_RESULT_ERROR;
     }
 
 exit:
-    if (entry)
+    if (entry != NULL)
     {
         twRet1 = TWDeleteEntry(ctx->g_plugin, entry);
         if(twRet1 != TW_RESULT_OK)
         {
-            OC_LOG_V(ERROR, TAG, "TWDeleteEntry 1 - ret=%d", twRet1);
+            OIC_LOG_V(ERROR, TAG, "TWDeleteEntry 1 - ret=%d", twRet1);
         }
     }
     if (entry2)
@@ -1795,11 +1819,11 @@ exit:
         twRet2 = TWDeleteEntry(ctx->g_plugin, entry2);
         if(twRet2 != TW_RESULT_OK)
         {
-            OC_LOG_V(ERROR, TAG, "TWDeleteEntry 2 - ret=%d", twRet2);
+            OIC_LOG_V(ERROR, TAG, "TWDeleteEntry 2 - ret=%d", twRet2);
         }
     }
 
-    OC_LOG_V(INFO, TAG, "Leave CreatePan with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave CreatePan with ret=%d", ret);
     return ret;
 }
 
@@ -1841,7 +1865,7 @@ TWResultCode EnableJoin(bool isKeyEncrypted, TWContext* ctx)
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
     {
-        OC_LOG(ERROR, TAG, "No Memory");
+        OIC_LOG(ERROR, TAG, "No Memory");
         ret = TW_RESULT_ERROR_NO_MEMORY;
         goto exit;
     }
@@ -1850,17 +1874,17 @@ TWResultCode EnableJoin(bool isKeyEncrypted, TWContext* ctx)
     ret = TWIssueATCommand(ctx->g_plugin, cmdString);
     if (ret != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Write %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "Write %s", cmdString);
         ret = TW_RESULT_ERROR;
         goto exit;
     }
-    OC_LOG_V(INFO, TAG, "Write %s", cmdString);
+    OIC_LOG_V(INFO, TAG, "Write %s", cmdString);
 
     sleep(15);  //must sleep here to permit joining for 15 seconds
 
 exit:
     OICFree(cmdString);
-    OC_LOG_V(INFO, TAG, "Leave EnableJoin() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave EnableJoin() with ret=%d", ret);
     return ret;
 }
 
@@ -1873,7 +1897,7 @@ TWResultCode FindMatchNodes(TWContext* ctx)
     //AT+MATCHREQ:0104,03,0999,0999,0999,00
     //      OK
 
-    OC_LOG(INFO, TAG, "Enter FindMatchNodes()");
+    OIC_LOG(INFO, TAG, "Enter FindMatchNodes()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
@@ -1891,7 +1915,7 @@ TWResultCode FindMatchNodes(TWContext* ctx)
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
     {
-        OC_LOG(ERROR, TAG, "No Memory");
+        OIC_LOG(ERROR, TAG, "No Memory");
         ret = TW_RESULT_ERROR_NO_MEMORY;
         goto exit;
     }
@@ -1907,21 +1931,21 @@ TWResultCode FindMatchNodes(TWContext* ctx)
                              SEPARATOR, OUT_CLUSTER_COUNT_STRING);
     if(stringRet <= 0)
     {
-        OC_LOG(ERROR, TAG, "Build command error.");
+        OIC_LOG(ERROR, TAG, "Build command error.");
         ret = OC_STACK_ERROR;
         goto exit;
     }
     ret = TWIssueATCommand(ctx->g_plugin, cmdString);
     if (ret != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Write %s.", cmdString);
+        OIC_LOG_V(ERROR, TAG, "Write %s.", cmdString);
         goto exit;
     }
-    OC_LOG_V(INFO, TAG, "Write %s.", cmdString);
+    OIC_LOG_V(INFO, TAG, "Write %s.", cmdString);
 
 exit:
     OICFree(cmdString);
-    OC_LOG_V(INFO, TAG, "Leave FindMatchNodes() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave FindMatchNodes() with ret=%d", ret);
     return ret;
 }
 
@@ -1942,7 +1966,7 @@ TWResultCode FindClusters(char nodeId[], char endpoint[], TWContext* ctx)
     //      ACK:97
     */
 
-    OC_LOG(INFO, TAG, "Enter FindClusters()");
+    OIC_LOG(INFO, TAG, "Enter FindClusters()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
@@ -1950,10 +1974,12 @@ TWResultCode FindClusters(char nodeId[], char endpoint[], TWContext* ctx)
                SEPARATOR_LENGTH + strlen(nodeId) +
                SEPARATOR_LENGTH + strlen(endpoint) + 1;
 
+    TWEntry* entry = NULL;
+
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
     {
-        OC_LOG(ERROR, TAG, "No Memory");
+        OIC_LOG(ERROR, TAG, "No Memory");
         ret = TW_RESULT_ERROR_NO_MEMORY;
         goto exit;
     }
@@ -1964,29 +1990,28 @@ TWResultCode FindClusters(char nodeId[], char endpoint[], TWContext* ctx)
                              SEPARATOR, endpoint);
     if(stringRet <= 0)
     {
-        OC_LOG(ERROR, TAG, "Build command error.");
+        OIC_LOG(ERROR, TAG, "Build command error.");
         ret = OC_STACK_ERROR;
         goto exit;
     }
     ret = TWIssueATCommand(ctx->g_plugin, cmdString);
     if (ret != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Write %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "Write %s", cmdString);
         ret = TW_RESULT_ERROR;
         goto exit;
     }
-    OC_LOG_V(INFO, TAG, "Write %s", cmdString);
+    OIC_LOG_V(INFO, TAG, "Write %s", cmdString);
 
-    TWEntry* entry = NULL;
     ret = TWDequeueEntry(ctx->g_plugin, &entry, TW_SIMPLEDESC);
     if (ret != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "TWDequeueEntry - %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "TWDequeueEntry - %s", cmdString);
         goto exit;
     }
     if (entry == NULL)
     {
-        OC_LOG_V(ERROR, TAG, "TWEntry is NULL - %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "TWEntry is NULL - %s", cmdString);
         ret = TW_RESULT_ERROR;
         goto exit;
     }
@@ -1994,17 +2019,20 @@ TWResultCode FindClusters(char nodeId[], char endpoint[], TWContext* ctx)
     ret = processEntry(entry, ctx);
     if (ret == TW_RESULT_OK)
     {
-        OC_LOG_V(INFO, TAG, "processEntry - %s", cmdString);
+        OIC_LOG_V(INFO, TAG, "processEntry - %s", cmdString);
     }
     else
     {
-        OC_LOG_V(ERROR, TAG, "processEntry - %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "processEntry - %s", cmdString);
     }
 
 exit:
-    TWDeleteEntry(ctx->g_plugin, entry);
+    if (entry != NULL)
+    {
+        TWDeleteEntry(ctx->g_plugin, entry);
+    }
     OICFree(cmdString);
-    OC_LOG_V(INFO, TAG, "Leave FindClusters() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave FindClusters() with ret=%d", ret);
     return ret;
 }
 
@@ -2014,15 +2042,17 @@ TWResultCode GetRemoteEUI(char *nodeId, char* outRemoteEUI, TWContext* ctx)
     //  AddrResp:<errorcode>[,<NodeID>,<EUI64>]
     //  AddrResp:00,15ED,000D6F00040574B8
 
-    OC_LOG(INFO, TAG, "Enter GetRemoteEUI()");
+    OIC_LOG(INFO, TAG, "Enter GetRemoteEUI()");
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
     int size = strlen(AT_CMD_REMOTE_EUI_REQUEST) + strlen(nodeId) +
                SEPARATOR_LENGTH + strlen(nodeId) + 1;
+    TWEntry* entry = NULL;
+
     char* cmdString = (char*)OICMalloc(size * sizeof(char));
     if (cmdString == NULL)
     {
-        OC_LOG(ERROR, TAG, "No Memory");
+        OIC_LOG(ERROR, TAG, "No Memory");
         ret = TW_RESULT_ERROR_NO_MEMORY;
         goto exit;
     }
@@ -2032,30 +2062,29 @@ TWResultCode GetRemoteEUI(char *nodeId, char* outRemoteEUI, TWContext* ctx)
                          SEPARATOR, nodeId);
     if(stringRet <= 0)
     {
-        OC_LOG(ERROR, TAG, "Build command error.");
+        OIC_LOG(ERROR, TAG, "Build command error.");
         ret = OC_STACK_ERROR;
         goto exit;
     }
     ret = TWIssueATCommand(ctx->g_plugin, cmdString);
     if (ret != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Write %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "Write %s", cmdString);
         ret = TW_RESULT_ERROR;
         goto exit;
     }
-    OC_LOG_V(INFO, TAG, "Write %s", cmdString);
+    OIC_LOG_V(INFO, TAG, "Write %s", cmdString);
 
-    TWEntry* entry = NULL;
     ret = TWDequeueEntry(ctx->g_plugin, &entry, TW_ADDRESS_RESPONSE);
     if (ret != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "TWDequeueEntry - %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "TWDequeueEntry - %s", cmdString);
         ret = TW_RESULT_ERROR;
         goto exit;
     }
     if (entry == NULL)
     {
-        OC_LOG_V(ERROR, TAG, "TWEntry is NULL - %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "TWEntry is NULL - %s", cmdString);
         ret = TW_RESULT_ERROR;
         goto exit;
     }
@@ -2063,20 +2092,20 @@ TWResultCode GetRemoteEUI(char *nodeId, char* outRemoteEUI, TWContext* ctx)
     ret = processEntry(entry, ctx);
     if (ret != TW_RESULT_OK)
     {
-        OC_LOG_V(ERROR, TAG, "processEntry - %s", cmdString);
+        OIC_LOG_V(ERROR, TAG, "processEntry - %s", cmdString);
         ret = TW_RESULT_ERROR;
         goto exit;
     }
-    OC_LOG_V(INFO, TAG, "Wanted   eui of NodeID=%s ", nodeId);
-    OC_LOG_V(INFO, TAG, "Received eui of g_WIPRemoteNodeId=%s ", ctx->g_WIPRemoteNodeId);
+    OIC_LOG_V(INFO, TAG, "Wanted   eui of NodeID=%s ", nodeId);
+    OIC_LOG_V(INFO, TAG, "Received eui of g_WIPRemoteNodeId=%s ", ctx->g_WIPRemoteNodeId);
     if (strcmp(nodeId, ctx->g_WIPRemoteNodeId) != 0)
     {
-        OC_LOG(ERROR, TAG, "Received eui for an unexpected remote node id.");
+        OIC_LOG(ERROR, TAG, "Received eui for an unexpected remote node id.");
         ret = TW_RESULT_ERROR;
         goto exit;
     }
 
-    OC_LOG_V(INFO, TAG, "Remote NodeId:%s has EUI: %s \n",
+    OIC_LOG_V(INFO, TAG, "Remote NodeId:%s has EUI: %s \n",
                         ctx->g_WIPRemoteNodeId, ctx->g_WIPRemoteEUI);
     OICStrcpy(outRemoteEUI, sizeof(ctx->g_WIPRemoteEUI), ctx->g_WIPRemoteEUI);
 
@@ -2085,15 +2114,18 @@ TWResultCode GetRemoteEUI(char *nodeId, char* outRemoteEUI, TWContext* ctx)
 exit:
     memset(ctx->g_WIPRemoteEUI, '\0', sizeof(ctx->g_WIPRemoteEUI));
     memset(ctx->g_WIPRemoteNodeId, '\0', sizeof(ctx->g_WIPRemoteNodeId));
-    TWDeleteEntry(ctx->g_plugin, entry);
+    if (entry != NULL)
+    {
+        TWDeleteEntry(ctx->g_plugin, entry);
+    }
     OICFree(cmdString);
-    OC_LOG_V(INFO, TAG, "Leave GetRemoteEUI() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave GetRemoteEUI() with ret=%d", ret);
     return ret;
 }
 
 TWResultCode HandleATResponse(TWEntry* entry, TWContext* ctx)
 {
-    OC_LOG(INFO, TAG, "Enter HandleATResponse()");
+    OIC_LOG(INFO, TAG, "Enter HandleATResponse()");
 
     TWResultCode ret = TW_RESULT_ERROR;
 
@@ -2130,7 +2162,7 @@ TWResultCode HandleATResponse(TWEntry* entry, TWContext* ctx)
         }
     }
 
-    OC_LOG_V(INFO, TAG, "Leave HandleATResponse() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave HandleATResponse() with ret=%d", ret);
     return ret;
 }
 
@@ -2144,7 +2176,7 @@ TWResultCode TelAddressResponseHandler(int count, char* tokens[], TWContext* ctx
     //  AddrResp:<errorcode>[,<NodeID>,<EUI64>]
     //  AddrResp:00,15ED,000D6F00040574B8
 
-    OC_LOG(INFO, TAG, "Enter TelAddressResponseHandler()");
+    OIC_LOG(INFO, TAG, "Enter TelAddressResponseHandler()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
@@ -2156,21 +2188,21 @@ TWResultCode TelAddressResponseHandler(int count, char* tokens[], TWContext* ctx
     {
         if (strcmp(tokens[TOKEN_ADDRRESP_STATUS_CODE], AT_STR_ERROR_OK) != 0)
         {
-            OC_LOG(ERROR, TAG, "AddrResp prompt contained error status.");
+            OIC_LOG(ERROR, TAG, "AddrResp prompt contained error status.");
             ret = TW_RESULT_ERROR;
         }
         else
         {
             OICStrcpy(ctx->g_WIPRemoteNodeId, SIZE_NODEID, tokens[TOKEN_ADDRRESP_NODEID]);
             OICStrcpy(ctx->g_WIPRemoteEUI, SIZE_EUI, tokens[TOKEN_ADDRRESP_EUI]);
-            OC_LOG_V(INFO, TAG, "Received eui %s for g_WIPRemoteNodeId=%s ",
+            OIC_LOG_V(INFO, TAG, "Received eui %s for g_WIPRemoteNodeId=%s ",
                      ctx->g_WIPRemoteEUI,
                      ctx->g_WIPRemoteNodeId);
             ret = TW_RESULT_OK;
         }
     }
 
-    OC_LOG_V(INFO, TAG, "Leave TelAddressResponseHandler() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TelAddressResponseHandler() with ret=%d", ret);
     return ret;
 }
 
@@ -2183,7 +2215,7 @@ TWResultCode TelNetworkInfoHandler(int count, char* tokens[], TWContext* ctx)
     //
     //              +N=<devicetype>,<channel>,<power>,<PANID>,<EPANID>
 
-    OC_LOG(INFO, TAG, "Enter TelNetworkInfoHandler()");
+    OIC_LOG(INFO, TAG, "Enter TelNetworkInfoHandler()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
@@ -2200,25 +2232,25 @@ TWResultCode TelNetworkInfoHandler(int count, char* tokens[], TWContext* ctx)
     {
         if (tokens[i] != NULL)
         {
-            OC_LOG_V(INFO, TAG, "Token[%d] = %s", i, tokens[i]);
+            OIC_LOG_V(INFO, TAG, "Token[%d] = %s", i, tokens[i]);
         }
     }
 
     char* temp = tokens[TOKEN_PLUS_N_DEVICE_TYPE];
     if (strcmp(temp, "NoPAN") == 0)
     {
-        OC_LOG(INFO, TAG, "It is NoPan.");
+        OIC_LOG(INFO, TAG, "It is NoPan.");
         ret = TW_RESULT_NO_LOCAL_PAN;
         goto exit;
     }
 
-    OC_LOG(INFO, TAG, "Already have an established network.");
+    OIC_LOG(INFO, TAG, "Already have an established network.");
     ret = AsciiHexToValue(tokens[TOKEN_PLUS_N_PANID],
                           strlen(tokens[TOKEN_PLUS_N_PANID]),
                           &(ctx->g_ZigBeeStatus.panId));
     if(ret != TW_RESULT_OK)
     {
-        OC_LOG(ERROR, TAG, "AsciiHexToValue - panId");
+        OIC_LOG(ERROR, TAG, "AsciiHexToValue - panId");
         goto exit;
     }
 
@@ -2227,22 +2259,22 @@ TWResultCode TelNetworkInfoHandler(int count, char* tokens[], TWContext* ctx)
                           &(ctx->g_ZigBeeStatus.extPanId));
     if(ret != TW_RESULT_OK)
     {
-        OC_LOG(ERROR, TAG, "AsciiHexToValue - extPanId");
+        OIC_LOG(ERROR, TAG, "AsciiHexToValue - extPanId");
         goto exit;
     }
-    OC_LOG_V(INFO, TAG, "PanId=%" PRId64 , ctx->g_ZigBeeStatus.panId);
-    OC_LOG_V(INFO, TAG, "ExtPanId=%" PRId64 , ctx->g_ZigBeeStatus.extPanId);
-    OC_LOG_V(INFO, TAG, "PanId=%s", tokens[TOKEN_PLUS_N_PANID]);
-    OC_LOG_V(INFO, TAG, "ExtPanId=%s", tokens[TOKEN_PLUS_N_PANID_EXTENDED]);
+    OIC_LOG_V(INFO, TAG, "PanId=%" PRId64 , ctx->g_ZigBeeStatus.panId);
+    OIC_LOG_V(INFO, TAG, "ExtPanId=%" PRId64 , ctx->g_ZigBeeStatus.extPanId);
+    OIC_LOG_V(INFO, TAG, "PanId=%s", tokens[TOKEN_PLUS_N_PANID]);
+    OIC_LOG_V(INFO, TAG, "ExtPanId=%s", tokens[TOKEN_PLUS_N_PANID_EXTENDED]);
 
-    OC_LOG_V(INFO, TAG, "TelNetworkInfoHandler set ExtPanId to %08X%08X",
+    OIC_LOG_V(INFO, TAG, "TelNetworkInfoHandler set ExtPanId to %08X%08X",
              (unsigned int)(ctx->g_ZigBeeStatus.extPanId >> 32),
              (unsigned int)(ctx->g_ZigBeeStatus.extPanId & 0xFFFFFFFF));
 
     ret = TW_RESULT_HAS_LOCAL_PAN;
 
 exit:
-    OC_LOG_V(INFO, TAG, "Leave TelNetworkInfoHandler() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TelNetworkInfoHandler() with ret=%d", ret);
     return ret;
 }
 
@@ -2251,7 +2283,7 @@ TWResultCode TelJpanHandler(int count, char* tokens[], TWContext* ctx)
     //Ask:        AT+EN:[<channel>],[<POWER>],[<PANID>]
     //Response:   JPAN:<channel>,<PANID>,<EPANID>
 
-    OC_LOG(INFO, TAG, "Enter TelJpanHandler()");
+    OIC_LOG(INFO, TAG, "Enter TelJpanHandler()");
 
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
@@ -2267,7 +2299,7 @@ TWResultCode TelJpanHandler(int count, char* tokens[], TWContext* ctx)
 
     if(ret != TW_RESULT_OK)
     {
-        OC_LOG(ERROR, TAG, "AsciiHexToValue - panId");
+        OIC_LOG(ERROR, TAG, "AsciiHexToValue - panId");
         goto exit;
     }
 
@@ -2276,15 +2308,15 @@ TWResultCode TelJpanHandler(int count, char* tokens[], TWContext* ctx)
                           &(ctx->g_ZigBeeStatus.extPanId));
     if(ret != TW_RESULT_OK)
     {
-        OC_LOG(ERROR, TAG, "AsciiHexToValue - extPanId");
+        OIC_LOG(ERROR, TAG, "AsciiHexToValue - extPanId");
         goto exit;
     }
-    OC_LOG_V(INFO, TAG, "PanId = %" PRId64 "\n", ctx->g_ZigBeeStatus.panId);
-    OC_LOG_V(INFO, TAG, "ExtPanId = %" PRId64 "\n", ctx->g_ZigBeeStatus.extPanId);
+    OIC_LOG_V(INFO, TAG, "PanId = %" PRId64 "\n", ctx->g_ZigBeeStatus.panId);
+    OIC_LOG_V(INFO, TAG, "ExtPanId = %" PRId64 "\n", ctx->g_ZigBeeStatus.extPanId);
     ret = TW_RESULT_NEW_LOCAL_PAN_ESTABLISHED;
 
 exit:
-    OC_LOG_V(INFO, TAG, "Leave TelJpanHandler() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TelJpanHandler() with ret=%d", ret);
     return ret;
 }
 
@@ -2297,7 +2329,7 @@ TWResultCode TelEndDeviceJoinHandler(int count, char* tokens[], TWContext* ctx)
     //Prompt:   SED:<IEEE Address>,<NodeID>
     //Prompt:   ZED:<IEEE Address>,<NodeID>
 
-    OC_LOG(INFO, TAG, "Enter TelEndDeviceJoinHandler()");
+    OIC_LOG(INFO, TAG, "Enter TelEndDeviceJoinHandler()");
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
     if(!tokens || count != RESPONSE_PARAMS_COUNT_DEVICE_JOINED)
@@ -2307,7 +2339,7 @@ TWResultCode TelEndDeviceJoinHandler(int count, char* tokens[], TWContext* ctx)
     }
 
     //TODO: Might need to add into the list if needed - log it for now.
-    OC_LOG_V(INFO, TAG, "Received RFD/FFD/SED/ZED - EUI:%s; NodeID:%s.\n",
+    OIC_LOG_V(INFO, TAG, "Received RFD/FFD/SED/ZED - EUI:%s; NodeID:%s.\n",
             tokens[TOKEN_PJOIN_RESPONSE_IEEE_ADDRESS],
             tokens[TOKEN_PJOIN_RESPONSE_NODEID]);
 
@@ -2321,7 +2353,7 @@ TWResultCode TelEndDeviceJoinHandler(int count, char* tokens[], TWContext* ctx)
     ret = TW_RESULT_OK;
 
 exit:
-    OC_LOG_V(INFO, TAG, "Leave TelEndDeviceJoinHandler() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TelEndDeviceJoinHandler() with ret=%d", ret);
     return ret;
 }
 
@@ -2329,7 +2361,7 @@ TWResultCode TelMatchDescHandler(int count, char* tokens[], TWContext* ctx)
 {
     //Prompt:       MatchDesc:0B4A,00,01
 
-    OC_LOG(INFO, TAG, "Enter TelMatchDescHandler()");
+    OIC_LOG(INFO, TAG, "Enter TelMatchDescHandler()");
     TWResultCode ret = TW_RESULT_ERROR;
 
     if(!tokens || count != RESPONSE_PARAMS_COUNT_MATCH_DESC)
@@ -2340,7 +2372,7 @@ TWResultCode TelMatchDescHandler(int count, char* tokens[], TWContext* ctx)
 
     if (strcmp(tokens[TOKEN_MATCHDESC_STATUS_CODE], AT_STR_ERROR_OK) != 0)
     {
-        OC_LOG(INFO, TAG, "MatchDesc prompt contained error status.");
+        OIC_LOG(INFO, TAG, "MatchDesc prompt contained error status.");
         ret = TW_RESULT_ERROR;
         goto exit;
     }
@@ -2350,7 +2382,7 @@ TWResultCode TelMatchDescHandler(int count, char* tokens[], TWContext* ctx)
         ret = GetRemoteEUI(tokens[TOKEN_MATCHDESC_NODEID], remoteEUI, ctx);
         if (ret != TW_RESULT_OK)
         {
-            OC_LOG(ERROR, TAG, "GetRemoteEUI()");
+            OIC_LOG(ERROR, TAG, "GetRemoteEUI()");
             goto exit;
         }
         else
@@ -2446,7 +2478,7 @@ TWResultCode TelMatchDescHandler(int count, char* tokens[], TWContext* ctx)
     }
 
 exit:
-    OC_LOG_V(INFO, TAG, "Leave TelMatchDescHandler() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TelMatchDescHandler() with ret=%d", ret);
     return ret;
 }
 
@@ -2464,7 +2496,7 @@ TWResultCode TelSimpleDescHandler(int count, char* tokens[], TWContext* ctx)
     //      OutCluster:0019
     //      ACK:97
 
-    OC_LOG(INFO, TAG, "Enter TelSimpleDescHandler().");
+    OIC_LOG(INFO, TAG, "Enter TelSimpleDescHandler().");
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
     if(!tokens || count != RESPONSE_PARAMS_COUNT_SIMPLE_DESC)
@@ -2475,7 +2507,7 @@ TWResultCode TelSimpleDescHandler(int count, char* tokens[], TWContext* ctx)
 
     if (ctx->g_WIPDevice == NULL)
     {
-        OC_LOG_V(ERROR, TAG,
+        OIC_LOG_V(ERROR, TAG,
                  "Receive simple descriptor unexpectedly - %s",
                  tokens[TOKEN_SIMPLEDESC_SIMPLEDESC_NODEID]);
         ret = TW_RESULT_ERROR;
@@ -2484,7 +2516,7 @@ TWResultCode TelSimpleDescHandler(int count, char* tokens[], TWContext* ctx)
 
     if (strcmp(tokens[TOKEN_SIMPLEDESC_SIMPLEDESC_STATUS_CODE], AT_STR_ERROR_OK) != 0)
     {
-        OC_LOG_V(ERROR,
+        OIC_LOG_V(ERROR,
                  TAG,
                  "SimpleDesc: prompt contained error status %s.",
                  tokens[TOKEN_SIMPLEDESC_SIMPLEDESC_STATUS_CODE]);
@@ -2495,7 +2527,7 @@ TWResultCode TelSimpleDescHandler(int count, char* tokens[], TWContext* ctx)
         if (strcmp(tokens[TOKEN_SIMPLEDESC_SIMPLEDESC_NODEID],
                    ctx->g_WIPDevice->nodeId) == 0)
         {
-            OC_LOG_V(INFO,
+            OIC_LOG_V(INFO,
                      TAG,
                      "Got simple descriptor for nodeid %s",
                      tokens[TOKEN_SIMPLEDESC_SIMPLEDESC_NODEID]);
@@ -2503,7 +2535,7 @@ TWResultCode TelSimpleDescHandler(int count, char* tokens[], TWContext* ctx)
         }
         else
         {
-            OC_LOG_V(ERROR,
+            OIC_LOG_V(ERROR,
                      TAG,
                      "Finding simple descriptor for non existing nodeid %s.",
                      tokens[TOKEN_SIMPLEDESC_SIMPLEDESC_NODEID]);
@@ -2512,7 +2544,7 @@ TWResultCode TelSimpleDescHandler(int count, char* tokens[], TWContext* ctx)
     }
 
 exit:
-    OC_LOG_V(INFO, TAG, "Leave TelSimpleDescHandler() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TelSimpleDescHandler() with ret=%d", ret);
     return ret;
 }
 
@@ -2530,19 +2562,19 @@ TWResultCode TelSimpleDescInClusterHandler(int count, char* tokens[], TWContext*
     //      OutCluster:0019
     //      ACK:97
 
-    OC_LOG(INFO, TAG, "Enter TelSimpleDescInClusterHandler()");
+    OIC_LOG(INFO, TAG, "Enter TelSimpleDescInClusterHandler()");
     TWResultCode ret = TW_RESULT_ERROR;
 
     if (!tokens || count < RESPONSE_PARAMS_COUNT_SIMPLE_DESC_IN_CLUSTER_MIN )
     {
-        OC_LOG(ERROR, TAG, "Invalid Params");
+        OIC_LOG(ERROR, TAG, "Invalid Params");
         ret = TW_RESULT_ERROR_INVALID_PARAMS;
-	        goto exit;
+        goto exit;
     }
 
     if (ctx->g_WIPDevice == NULL)
     {
-        OC_LOG_V(ERROR, TAG,
+        OIC_LOG_V(ERROR, TAG,
                  "Receive simple descriptor unexpectedly - %s",
                  tokens[TOKEN_SIMPLEDESC_INCLUSTER_STRING]);
         ret = TW_RESULT_ERROR;
@@ -2551,7 +2583,7 @@ TWResultCode TelSimpleDescInClusterHandler(int count, char* tokens[], TWContext*
 
     if (ctx->g_WIPDevice->endpointOfInterest->clusterList != NULL)
     {
-        OC_LOG(ERROR, TAG, "Expected an empty cluster list.");
+        OIC_LOG(ERROR, TAG, "Expected an empty cluster list.");
         ret = TW_RESULT_ERROR;
         goto exit;
     }
@@ -2561,7 +2593,7 @@ TWResultCode TelSimpleDescInClusterHandler(int count, char* tokens[], TWContext*
             (TWClusterList*)OICMalloc(sizeof(TWClusterList));
     if (ctx->g_WIPDevice->endpointOfInterest->clusterList == NULL)
     {
-        OC_LOG(ERROR, TAG, "No Memory - clusterList");
+        OIC_LOG(ERROR, TAG, "No Memory - clusterList");
         ret = TW_RESULT_ERROR_NO_MEMORY;
         goto exit;
     }
@@ -2571,7 +2603,7 @@ TWResultCode TelSimpleDescInClusterHandler(int count, char* tokens[], TWContext*
     if (ctx->g_WIPDevice->endpointOfInterest->clusterList->clusterIds == NULL)
     {
         OICFree(ctx->g_WIPDevice->endpointOfInterest->clusterList);
-        OC_LOG(ERROR, TAG, "No Memory - clusterIds");
+        OIC_LOG(ERROR, TAG, "No Memory - clusterIds");
         ret = TW_RESULT_ERROR_NO_MEMORY;
         goto exit;
     }
@@ -2583,7 +2615,7 @@ TWResultCode TelSimpleDescInClusterHandler(int count, char* tokens[], TWContext*
                   SIZE_CLUSTERID,
                   tokens[i]);
 
-        OC_LOG_V(INFO, TAG, "ClusterIds[%d]=%s",
+        OIC_LOG_V(INFO, TAG, "ClusterIds[%d]=%s",
                  i,
                  ctx->g_WIPDevice->endpointOfInterest->clusterList->clusterIds[i].clusterId);
     }
@@ -2591,7 +2623,7 @@ TWResultCode TelSimpleDescInClusterHandler(int count, char* tokens[], TWContext*
     ret = TW_RESULT_HAS_CLUSTERS;
 
 exit:
-    OC_LOG_V(INFO, TAG, "Leave TelSimpleDescInClusterHandler() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TelSimpleDescInClusterHandler() with ret=%d", ret);
     return ret;
 }
 
@@ -2605,7 +2637,7 @@ TWResultCode TelWriteAttrHandler(int count, char* tokens[], TWContext* ctx)
     //      OK
     //      WRITEATTR:B826,01,0500,0010,70
 
-    OC_LOG(INFO, TAG, "Enter TelWriteAttrHandler()");
+    OIC_LOG(INFO, TAG, "Enter TelWriteAttrHandler()");
     (void)ctx;
 
     TWResultCode ret = TW_RESULT_ERROR;
@@ -2643,7 +2675,7 @@ TWResultCode TelWriteAttrHandler(int count, char* tokens[], TWContext* ctx)
     }
 
 exit:
-    OC_LOG_V(INFO, TAG, "Leave TelWriteAttrHandler() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TelWriteAttrHandler() with ret=%d", ret);
     return ret;
 }
 
@@ -2657,19 +2689,19 @@ TWResultCode TelReadAttrHandlerTemperature(int count, char* tokens[], TWContext*
     //      OK
     //      ERROR:66
 
-    OC_LOG(INFO, TAG, "Enter TelReadAttrHandlerTemperature().");
+    OIC_LOG(INFO, TAG, "Enter TelReadAttrHandlerTemperature().");
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
     if(!tokens || count != RESPONSE_PARAMS_COUNT_TEMPERATURE)
     {
-        OC_LOG(ERROR, TAG, "Invalid Params");
+        OIC_LOG(ERROR, TAG, "Invalid Params");
         ret = TW_RESULT_ERROR_INVALID_PARAMS;
         goto exit;
     }
 
     if (strcmp(tokens[TOKEN_TEMPERATURE_STATUS_CODE], AT_STR_ERROR_OK) != 0)
     {
-        OC_LOG(ERROR, TAG, "TEMPERATURE prompt contained error status.");
+        OIC_LOG(ERROR, TAG, "TEMPERATURE prompt contained error status.");
         ret = TW_RESULT_ERROR;
         goto exit;
     }
@@ -2681,12 +2713,12 @@ TWResultCode TelReadAttrHandlerTemperature(int count, char* tokens[], TWContext*
         OICFree(ctx->g_ZigBeeStatus.remoteAttributeValueRead);
         ctx->g_ZigBeeStatus.remoteAttributeValueRead = NULL;
     }
-    OC_LOG_V(INFO, TAG, "Read Attribute Value: %s", tokens[TOKEN_TEMPERATURE_VALUE]);
+    OIC_LOG_V(INFO, TAG, "Read Attribute Value: %s", tokens[TOKEN_TEMPERATURE_VALUE]);
     ctx->g_ZigBeeStatus.remoteAttributeValueRead =
             (char*)OICMalloc(sizeof(char) * strlen(tokens[TOKEN_TEMPERATURE_VALUE]));
     if (ctx->g_ZigBeeStatus.remoteAttributeValueRead == NULL)
     {
-        OC_LOG_V(ERROR, TAG, "No Memory");
+        OIC_LOG_V(ERROR, TAG, "No Memory");
         ret = TW_RESULT_ERROR_NO_MEMORY;
     }
     else
@@ -2699,7 +2731,7 @@ TWResultCode TelReadAttrHandlerTemperature(int count, char* tokens[], TWContext*
     }
 
 exit:
-    OC_LOG_V(INFO, TAG, "Leave TelReadAttrHandlerTemperature() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TelReadAttrHandlerTemperature() with ret=%d", ret);
     return ret;
 }
 
@@ -2713,19 +2745,19 @@ TWResultCode TelReadAttrHandler(int count, char* tokens[], TWContext* ctx)
     //      OK
     //      ERROR:66
 
-    OC_LOG(INFO, TAG, "Enter TelReadAttrHandler()");
+    OIC_LOG(INFO, TAG, "Enter TelReadAttrHandler()");
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
     if(!tokens || count != RESPONSE_PARAMS_COUNT_RESPATTR)
     {
-        OC_LOG(ERROR, TAG, "Invalid Params");
+        OIC_LOG(ERROR, TAG, "Invalid Params");
         ret = TW_RESULT_ERROR_INVALID_PARAMS;
         goto exit;
     }
 
     if (strcmp(tokens[TOKEN_RESPATTR_STATUS_CODE], AT_STR_ERROR_OK) != 0)
     {
-        OC_LOG(INFO, TAG, "READATTR prompt contained error status.");
+        OIC_LOG(INFO, TAG, "READATTR prompt contained error status.");
         ret = TW_RESULT_ERROR;
         goto exit;
     }
@@ -2734,7 +2766,7 @@ TWResultCode TelReadAttrHandler(int count, char* tokens[], TWContext* ctx)
     {
         OICFree(ctx->g_ZigBeeStatus.remoteAttributeValueRead);
     }
-    OC_LOG_V(INFO, TAG, "Read Attribute Value: %s.", tokens[TOKEN_RESPATTR_ATTRIBUTE_VALUE]);
+    OIC_LOG_V(INFO, TAG, "Read Attribute Value: %s.", tokens[TOKEN_RESPATTR_ATTRIBUTE_VALUE]);
     ctx->g_ZigBeeStatus.remoteAttributeValueRead =
             (char*)OICMalloc(sizeof(char) * strlen(tokens[TOKEN_RESPATTR_ATTRIBUTE_VALUE]));
     if (ctx->g_ZigBeeStatus.remoteAttributeValueRead != NULL)
@@ -2747,12 +2779,12 @@ TWResultCode TelReadAttrHandler(int count, char* tokens[], TWContext* ctx)
     }
     else
     {
-        OC_LOG(ERROR, TAG, "No Memory");
+        OIC_LOG(ERROR, TAG, "No Memory");
         ret = TW_RESULT_ERROR_NO_MEMORY;
     }
 
 exit:
-    OC_LOG(INFO, TAG, "Leave TelReadAttrHandler()");
+    OIC_LOG(INFO, TAG, "Leave TelReadAttrHandler()");
     return ret;
 }
 
@@ -2767,18 +2799,18 @@ TWResultCode TelZCLDefaultResponseHandler(int count, char* tokens[], TWContext* 
     //AT+LCMVTOLEV:<Address>,<EP>,<SendMode>,<ON/OFF>,<LevelValue>,<TransTime>
     //      DFTREP:<NodeID>,<EP>,<ClusterID>,<CMD>,<Status>
 
-    OC_LOG(INFO, TAG, "Enter TelZCLDefaultResponseHandler()");
+    OIC_LOG(INFO, TAG, "Enter TelZCLDefaultResponseHandler()");
     (void)ctx;
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
     if(!tokens || count != RESPONSE_PARAMS_COUNT_DFTREP)
     {
-        OC_LOG(ERROR, TAG, "Invalid Params");
+        OIC_LOG(ERROR, TAG, "Invalid Params");
         ret = TW_RESULT_ERROR_INVALID_PARAMS;
         goto exit;
     }
 
-    OC_LOG_V(INFO, TAG,
+    OIC_LOG_V(INFO, TAG,
              "DFTREP prompt succeed for NodeId:%s, EP:%s, ClusterId:%s, CMD:%s.\n",
              tokens[TOKEN_DFTREP_NODEID],
              tokens[TOKEN_DFTREP_ENDPOINTID],
@@ -2795,7 +2827,7 @@ TWResultCode TelZCLDefaultResponseHandler(int count, char* tokens[], TWContext* 
     }
 
 exit:
-    OC_LOG(INFO, TAG, "Leave TelZCLDefaultResponseHandler()");
+    OIC_LOG(INFO, TAG, "Leave TelZCLDefaultResponseHandler()");
     return ret;
 }
 
@@ -2806,20 +2838,20 @@ TWResultCode TelSwitchDoorLockStateHandler(int count, char* tokens[], TWContext*
     //      or
     //      DRUNLOCKRSP:<nodeID>,<ep>,<status>
 
-    OC_LOG(INFO, TAG, "Enter TelSwitchDoorLockStateHandler()");
+    OIC_LOG(INFO, TAG, "Enter TelSwitchDoorLockStateHandler()");
     (void)ctx;
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
     if(!tokens || count != RESPONSE_PARAMS_COUNT_DRLOCKUNLOCKRSP)
     {
-        OC_LOG(ERROR, TAG, "Invalid Params");
+        OIC_LOG(ERROR, TAG, "Invalid Params");
         ret = TW_RESULT_ERROR_INVALID_PARAMS;
         goto exit;
     }
 
     if (strcmp(tokens[TOKEN_DRLOCKRSP_STATUS_CODE], AT_STR_ERROR_OK) != 0)
     {
-        OC_LOG_V(INFO,
+        OIC_LOG_V(INFO,
                  TAG,
                  "DRLOCRSP/DRUNLOCKRSP prompt contained error status %s.",
                  tokens[TOKEN_DRLOCKRSP_STATUS_CODE]);
@@ -2827,14 +2859,14 @@ TWResultCode TelSwitchDoorLockStateHandler(int count, char* tokens[], TWContext*
     }
     else
     {
-        OC_LOG_V(INFO, TAG, "DRLOCRSP/DRUNLOCKRSP prompt succeed for nodeId:%s, ep:%s.",
+        OIC_LOG_V(INFO, TAG, "DRLOCRSP/DRUNLOCKRSP prompt succeed for nodeId:%s, ep:%s.",
                  tokens[TOKEN_DRLOCKRSP_NODEID],
                  tokens[TOKEN_DRLOCKRSP_ENDPOINTID]);
         ret = TW_RESULT_OK;
     }
 
 exit:
-    OC_LOG_V(INFO, TAG, "Leave TelSwitchDoorLockStateHandler() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TelSwitchDoorLockStateHandler() with ret=%d", ret);
     return ret;
 }
 
@@ -2842,26 +2874,26 @@ TWResultCode TelZoneEnrollRequestHandler(int count, char* tokens[], TWContext* c
 {
     //ZENROLLREQ:<NodeID>,<EndPoint>,<ZoneType>,<ManufactureCode>
 
-    OC_LOG(INFO, TAG, "Enter TelZoneEnrollRequestHandler()");
+    OIC_LOG(INFO, TAG, "Enter TelZoneEnrollRequestHandler()");
     (void)ctx;
     TWResultCode ret = TW_RESULT_UNKNOWN;
 
     if(!tokens || count != RESPONSE_PARAMS_COUNT_ZENROLLREQ)
     {
-        OC_LOG(ERROR, TAG, "Invalid Params");
+        OIC_LOG(ERROR, TAG, "Invalid Params");
         ret = TW_RESULT_ERROR_INVALID_PARAMS;
         goto exit;
     }
 
-    OC_LOG(INFO, TAG, "Received zone request from:");
-    OC_LOG_V(INFO, TAG, "Node:%s", tokens[TOKEN_ZENROLLREQ_NODEID]);
-    OC_LOG_V(INFO, TAG, "EP:%s", tokens[TOKEN_ZENROLLREQ_ENDPOINTID]);
-    OC_LOG_V(INFO, TAG, "ZoneType:%s", tokens[TOKEN_ZENROLLREQ_ZONETYPE]);
-    OC_LOG_V(INFO, TAG, "ManufactureCode:%s", tokens[TOKEN_ZENROLLREQ_MANUFACTURE_CODE]);
+    OIC_LOG(INFO, TAG, "Received zone request from:");
+    OIC_LOG_V(INFO, TAG, "Node:%s", tokens[TOKEN_ZENROLLREQ_NODEID]);
+    OIC_LOG_V(INFO, TAG, "EP:%s", tokens[TOKEN_ZENROLLREQ_ENDPOINTID]);
+    OIC_LOG_V(INFO, TAG, "ZoneType:%s", tokens[TOKEN_ZENROLLREQ_ZONETYPE]);
+    OIC_LOG_V(INFO, TAG, "ManufactureCode:%s", tokens[TOKEN_ZENROLLREQ_MANUFACTURE_CODE]);
     ret = TW_RESULT_OK;
 
 exit:
-    OC_LOG_V(INFO, TAG, "Leave TelZoneEnrollRequestHandler() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TelZoneEnrollRequestHandler() with ret=%d", ret);
     return ret;
 }
 
@@ -2869,20 +2901,20 @@ TWResultCode TelEnrolledHandler(int count, char* tokens[], TWContext* ctx)
 {
     //ENROLLED:<ZID>,<ZoneType>,<EUI>
 
-    OC_LOG(INFO, TAG, "Enter TelEnrolledHandler()");
+    OIC_LOG(INFO, TAG, "Enter TelEnrolledHandler()");
     TWResultCode ret = TW_RESULT_OK;
 
     if(!tokens || count != RESPONSE_PARAMS_COUNT_ENROLLED)
     {
-        OC_LOG(ERROR, TAG, "Invalid Params");
+        OIC_LOG(ERROR, TAG, "Invalid Params");
         ret = TW_RESULT_ERROR_INVALID_PARAMS;
         goto exit;
     }
 
-    OC_LOG(INFO, TAG, "Received zone enrollment for:");
-    OC_LOG_V(INFO, TAG, "ZID:%s", tokens[TOKEN_ENROLLED_ZONEID]);
-    OC_LOG_V(INFO, TAG, "ZoneType:%s", tokens[TOKEN_ENROLLED_ZONETYPE]);
-    OC_LOG_V(INFO, TAG, "EUI:%s", tokens[TOKEN_ENROLLED_EUI]);
+    OIC_LOG(INFO, TAG, "Received zone enrollment for:");
+    OIC_LOG_V(INFO, TAG, "ZID:%s", tokens[TOKEN_ENROLLED_ZONEID]);
+    OIC_LOG_V(INFO, TAG, "ZoneType:%s", tokens[TOKEN_ENROLLED_ZONETYPE]);
+    OIC_LOG_V(INFO, TAG, "EUI:%s", tokens[TOKEN_ENROLLED_EUI]);
 
     TWEnrollee enrollee;
     OICStrcpy(enrollee.zoneId, SIZE_ZONEID, tokens[TOKEN_ENROLLED_ZONEID]);
@@ -2891,13 +2923,13 @@ TWResultCode TelEnrolledHandler(int count, char* tokens[], TWContext* ctx)
 
     if (ctx->g_EnrollmentSucceedCallback != NULL)
     {
-        OC_LOG_V(INFO, TAG, "Enrolled - Invoke callback");
+        OIC_LOG_V(INFO, TAG, "Enrolled - Invoke callback");
         ctx->g_EnrollmentSucceedCallback(&enrollee, ctx->g_plugin);
     }
     ret = TW_RESULT_OK;
 
 exit:
-    OC_LOG_V(INFO, TAG, "Leave TelEnrolledHandler() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TelEnrolledHandler() with ret=%d", ret);
     return ret;
 }
 
@@ -2906,13 +2938,13 @@ TWResultCode TelZoneStatusHandler(int count, char* tokens[], TWContext* ctx)
     //ZONESTATUS:<NodeID>,<EP>,<ZoneStatus>,<ExtendStatus>[,<ZoneID>,<Delay>]
     //ZONESTATUS:5FBA,01,0021,00,01,00AF
 
-    OC_LOG(INFO, TAG, "Enter TelZoneStatusHandler()");
+    OIC_LOG(INFO, TAG, "Enter TelZoneStatusHandler()");
     TWResultCode ret = TW_RESULT_UNKNOWN;
     if(!tokens ||
        ((count != RESPONSE_PARAMS_COUNT_ZONESTATUS_4) &&
         (count != RESPONSE_PARAMS_COUNT_ZONESTATUS_6)))
     {
-        OC_LOG(ERROR, TAG, "Invalid Params");
+        OIC_LOG(ERROR, TAG, "Invalid Params");
         ret = TW_RESULT_ERROR_INVALID_PARAMS;
         goto exit;
     }
@@ -2931,14 +2963,14 @@ TWResultCode TelZoneStatusHandler(int count, char* tokens[], TWContext* ctx)
 
     if (ctx->g_DeviceStatusUpdateCallback != NULL)
     {
-        OC_LOG(INFO, TAG, "device status update - invoke callback");
+        OIC_LOG(INFO, TAG, "device status update - invoke callback");
         ctx->g_DeviceStatusUpdateCallback(&update, ctx->g_plugin);
-        OC_LOG(INFO, TAG, "device status update - callback done");
+        OIC_LOG(INFO, TAG, "device status update - callback done");
     }
     ret = TW_RESULT_OK;
 
 exit:
-    OC_LOG_V(INFO, TAG, "Leave TelZoneStatusHandler() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave TelZoneStatusHandler() with ret=%d", ret);
     return ret;
 }
 
@@ -2953,11 +2985,11 @@ exit:
  */
 int Tokenize(const char *input, const char* delimiters, char* output[])
 {
-    OC_LOG_V(INFO, TAG, "Enter Tokenize() - %s", input);
+    OIC_LOG_V(INFO, TAG, "Enter Tokenize() - %s", input);
 
     if (output == NULL)
     {
-        OC_LOG(INFO, TAG, "Invalid parameter.");
+        OIC_LOG(INFO, TAG, "Invalid parameter.");
         return -1;
     }
 
@@ -2973,13 +3005,13 @@ int Tokenize(const char *input, const char* delimiters, char* output[])
         int size = strlen(p) + 1;   //for null char
         output[index] = (char*)OICCalloc(size, sizeof(char));
         OICStrcpy(output[index], size, p);
-        OC_LOG_V(INFO, TAG, "Token[%d]=%s", index, output[index]);
+        OIC_LOG_V(INFO, TAG, "Token[%d]=%s", index, output[index]);
         p = strtok_r (NULL, delimiters, &savePtr);
         index++;
     }
 
     OICFree(str);
-    OC_LOG(INFO, TAG, "Leave Tokenize()");
+    OIC_LOG(INFO, TAG, "Leave Tokenize()");
     return index;
 }
 
@@ -3007,7 +3039,7 @@ TWResultCode AsciiHexToValue(char* hexString, int length, uint64_t* value)
     int retVal = AsciiToHex(hexString[0]);
     if(retVal == -1)
     {
-        OC_LOG(ERROR, TAG, "Bad conversion from ASCII To Hex.");
+        OIC_LOG(ERROR, TAG, "Bad conversion from ASCII To Hex.");
         return TW_RESULT_ERROR;
     }
     *value = (uint64_t)retVal;
@@ -3019,7 +3051,7 @@ TWResultCode AsciiHexToValue(char* hexString, int length, uint64_t* value)
             retVal = AsciiToHex(hexString[i]);
             if(retVal == -1)
             {
-                OC_LOG(ERROR, TAG, "Bad conversion from ASCII To Hex.");
+                OIC_LOG(ERROR, TAG, "Bad conversion from ASCII To Hex.");
                 return TW_RESULT_ERROR;
             }
             *value |= (uint64_t)retVal;

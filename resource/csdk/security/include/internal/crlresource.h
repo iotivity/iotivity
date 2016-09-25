@@ -21,68 +21,107 @@
 #ifndef IOTVT_SRM_CRLR_H
 #define IOTVT_SRM_CRLR_H
 
-#include "octypes.h"
-#include "securevirtualresourcetypes.h"
+#include "ocpayload.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * This function stores CRL in SRM
- * @param crl - CRL
+ * This function stores CRL in SRM.
  *
- * @returns OC_STACK_OK for Success, otherwise some error value
+ * @param crl to be stored in SRM.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-OCStackResult UpdateCRLResource(const OicSecCrl_t *crl);
+OCStackResult UpdateCRLResource(OicSecCrl_t *crl);
 
 /**
- * This function get encoded with base64 CRL from SRM
+ * This function get encoded with base64 CRL from SRM.
  *
- * @returns encoded CRL with base64 format. NULL if error occured (e.g. CRL did not set)
- * @note Caller responsible for resulting string memory (use OICFree to remove it)
- */
-char* GetBase64CRL();
-/**
- * This function get encoded with DER CRL from SRM
+ * @note Caller responsible for resulting string memory (use OICFree to remove it).
  *
- * @returns encoded CRL with DER format. array len is 0 if error occured (e.g. CRL did not set)
+ * @return NULL if error occured (e.g. CRL did not set).
  */
-void  GetDerCrl(ByteArray crlArray);
+uint8_t* GetCrl();
 
 /**
- * This function get CRL from SRM
+ * This function get encoded with DER CRL from SRM.
  *
- * @param crl [out] - pointer to buffer that contains crl. Shoul be not NULL. Buffer
+ * @return encoded CRL with DER format. array len is 0 if error occured (e.g. CRL did not set).
+ */
+void  GetDerCrl(ByteArray* crlArray);
+
+/**
+ * This function converts CRL to CBOR
+ *
+ * @param crl is a pointer to buffer that contains crl. Shoul be not NULL. Buffer
  * will be allocated by the function and content of *crl will be ignored.
- * @param outlen [out] - pointer to length of the CRL buffer. Shoul be not NULL.
+ * @param payload is the converted cbor value.
+ * @param size is a pointer to length of the CRL buffer. Should be not NULL.
+ * @param lastUpdate optional field contains CRL last update time
  *
- * @returns OC_STACK_OK if success and errorcode otherwise.
- * @note Caller responsible for crl buffer memory (use OICFree to free it)
+ * @note Caller responsible for crl buffer memory (use OICFree to free it).
+ *
+ * @return ::OC_STACK_OK if success, otherwise some error value.
  */
-OicSecCrl_t * JSONToCrlBin(const char * jsonStr);
+OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t *size,
+                               char *lastUpdate);
 
 /**
- * Initialize CLR resource by loading data from persistent storage.
+ * This function converts CBOR to CRL
  *
- * @returns OC_STACK_OK for Success, otherwise some error value
+ * will be allocated by the function and content of *crl will be ignored.
+ * @param cborPayload is the cbor vlaue
+ * @param size is a pointer to length of the CRL buffer. Should be not NULL.
+ * @param crl is a pointer to buffer that contains crl. Shoul be not NULL. Buffer
+ *
+ * @note Caller responsible for crl buffer memory (use OICFree to free it).
+ *
+ * @return ::OC_STACK_OK if success, otherwise some error value.
+ */
+OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
+                               OicSecCrl_t **secCrl);
+/**
+ * Initialize CRL resource by loading data from persistent storage.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult InitCRLResource();
 
 /**
  * Perform cleanup for CRL resources.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
-void DeInitCRLResource();
+OCStackResult DeInitCRLResource();
 
+/**
+ * Get an instance of CRL resource.
+ *
+ * @return reference to the @ref OicSecCrl_t, holding reference to CRL resource.
+ */
 OicSecCrl_t *GetCRLResource();
 
-OCEntityHandlerResult CRLEntityHandler(OCEntityHandlerFlag flag,
-                                        OCEntityHandlerRequest * ehRequest,
-                                        void* callbackParameter);
+/**
+ * This function frees resources inside given OicSecCrl_t object
+ *
+ * @param crl  crl object
+ */
+void DeleteCrl(OicSecCrl_t *crl);
+
+/**
+ * This function gets time when CRL was last updated in database
+ * Function allocates memory for lastUpdate and
+ * Caller is responsible to free that memory
+ *
+ * @param lastUpdate    pointer to last update string.
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult getLastUpdateFromDB(char **lastUpdate);
+
 #ifdef __cplusplus
 }
 #endif
 
 #endif //IOTVT_SRM_CRLR_H
-
-

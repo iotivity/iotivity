@@ -27,16 +27,26 @@
 using namespace OC;
 
 class JniOcResource;
+#ifdef WITH_CLOUD
+class JniOcAccountManager;
+#endif
 
 class JniOnGetListener
 {
 public:
     JniOnGetListener(JNIEnv *env, jobject listener, JniOcResource* resource);
+#ifdef WITH_CLOUD
+    JniOnGetListener(JNIEnv *env, jobject listener, JniOcAccountManager* resource);
+#endif
     ~JniOnGetListener();
     void onGetCallback(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode);
+
 private:
     jweak m_jwListener;
     JniOcResource* m_ownerResource;
+#ifdef WITH_CLOUD
+    JniOcAccountManager* m_ownerAccountManager;
+#endif
     void checkExAndRemoveListener(JNIEnv *env);
 };
 

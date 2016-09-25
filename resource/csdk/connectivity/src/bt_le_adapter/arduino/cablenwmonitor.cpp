@@ -77,6 +77,13 @@ CAResult_t CAStartLEAdapter()
     return CA_STATUS_OK;
 }
 
+CAResult_t CAStopLEAdapter()
+{
+    // Nothing to do.
+
+    return CA_STATUS_OK;
+}
+
 CAResult_t CAGetLEAdapterState()
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -125,3 +132,8 @@ CAResult_t CAUnSetLEAdapterStateChangedCb()
 }
 
 
+CAResult_t CASetLENWConnectionStateChangedCb(CALEConnectionStateChangedCallback callback)
+{
+    //TODO
+    return CA_STATUS_OK;
+}

@@ -35,9 +35,15 @@ public:
 
 struct JObjectConverter : boost::static_visitor < jobject >
 {
-    JObjectConverter(JNIEnv *env) : env(env){}
+    JObjectConverter(JNIEnv *env) : env(env)
+    {
+    }
 
-    jobject operator()(const NullType&) const { return nullptr; }
+    jobject operator()(const NullType&) const
+    {
+        return nullptr;
+    }
+
     jobject operator()(const int& val) const
     {
         jobject jobj = env->NewObject(
@@ -87,7 +93,10 @@ struct JObjectConverter : boost::static_visitor < jobject >
     {
         size_t len = val.size();
         jintArray jIntArray = env->NewIntArray(len);
-        if (!jIntArray) return nullptr;
+        if (!jIntArray)
+        {
+            return nullptr;
+        }
         const int* ints = &val[0];
         env->SetIntArrayRegion(jIntArray, 0, len, reinterpret_cast<const jint*>(ints));
         return jIntArray;
@@ -96,7 +105,10 @@ struct JObjectConverter : boost::static_visitor < jobject >
     {
         size_t len = val.size();
         jdoubleArray jDoubleArray = env->NewDoubleArray(len);
-        if (!jDoubleArray) return nullptr;
+        if (!jDoubleArray)
+        {
+            return nullptr;
+        }
         const double* doubles = &val[0];
         env->SetDoubleArrayRegion(jDoubleArray, 0, len, reinterpret_cast<const jdouble*>(doubles));
         return jDoubleArray;
@@ -105,13 +117,20 @@ struct JObjectConverter : boost::static_visitor < jobject >
     {
         size_t len = val.size();
         jbooleanArray jBooleanArray = env->NewBooleanArray(len);
-        if (!jBooleanArray) return nullptr;
+        if (!jBooleanArray)
+        {
+            return nullptr;
+        }
         jboolean* booleans = new jboolean[len];
-        for (size_t i = 0; i < len; ++i) {
+        for (size_t i = 0; i < len; ++i)
+        {
             booleans[i] = static_cast<jboolean>(val[i]);
         }
         env->SetBooleanArrayRegion(jBooleanArray, 0, len, booleans);
-        if (env->ExceptionCheck()) return nullptr;
+        if (env->ExceptionCheck())
+        {
+            return nullptr;
+        }
         env->ReleaseBooleanArrayElements(jBooleanArray, booleans, 0);
         return jBooleanArray;
     }
@@ -119,21 +138,127 @@ struct JObjectConverter : boost::static_visitor < jobject >
     {
         size_t len = val.size();
         jobjectArray strArr = env->NewObjectArray(len, g_cls_String, nullptr);
-        if (!strArr) return nullptr;
+        if (!strArr)
+        {
+            return nullptr;
+        }
         for (size_t i = 0; i < len; ++i)
         {
             jstring jString = env->NewStringUTF(val[i].c_str());
             env->SetObjectArrayElement(strArr, static_cast<jsize>(i), jString);
-            if (env->ExceptionCheck()) return nullptr;
+            if (env->ExceptionCheck())
+            {
+                return nullptr;
+            }
             env->DeleteLocalRef(jString);
         }
         return strArr;
+    }
+    // OCByteString and arrays:
+    jobject operator()(const OCByteString &val) const
+    {
+        jbyteArray jByteArray = env->NewByteArray(val.len);
+        if (!jByteArray)
+        {
+            return nullptr;
+        }
+        env->SetByteArrayRegion(jByteArray, 0, val.len, reinterpret_cast<const jbyte *>(val.bytes));
+        if (env->ExceptionCheck())
+        {
+            env->DeleteLocalRef(jByteArray);
+            return nullptr;
+        }
+        return jByteArray;
+    }
+    jobject operator()(const std::vector<OCByteString> &val) const
+    {
+        jsize lenOuter = static_cast<jsize>(val.size());
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_byte1DArray, nullptr);
+        if (!jOuterArr)
+        {
+            return nullptr;
+        }
+        for (jsize i = 0; i < lenOuter; ++i)
+        {
+            jbyteArray jByteArray = (jbyteArray) operator()(val[i]);
+            if (!jByteArray)
+            {
+                env->DeleteLocalRef(jOuterArr);
+                return nullptr;
+            }
+            env->SetObjectArrayElement(jOuterArr, i, static_cast<jobject>(jByteArray));
+            if (env->ExceptionCheck())
+            {
+                env->DeleteLocalRef(jByteArray);
+                env->DeleteLocalRef(jOuterArr);
+                return nullptr;
+            }
+            env->DeleteLocalRef(jByteArray);
+        }
+        return jOuterArr;
+    }
+    jobject operator()(const std::vector<std::vector<OCByteString>> &val) const
+    {
+        jsize lenOuter = static_cast<jsize>(val.size());
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_byte2DArray, nullptr);
+        if (!jOuterArr)
+        {
+            return nullptr;
+        }
+        for (jsize i = 0; i < lenOuter; ++i)
+        {
+            jobjectArray jMiddleArr = (jobjectArray) operator()(val[i]);
+            if (!jMiddleArr)
+            {
+                env->DeleteLocalRef(jOuterArr);
+                return nullptr;
+            }
+            env->SetObjectArrayElement(jOuterArr, i, jMiddleArr);
+            if (env->ExceptionCheck())
+            {
+                env->DeleteLocalRef(jMiddleArr);
+                env->DeleteLocalRef(jOuterArr);
+                return nullptr;
+            }
+            env->DeleteLocalRef(jMiddleArr);
+        }
+        return jOuterArr;
+     }
+     jobject operator()(const std::vector<std::vector<std::vector<OCByteString>>> &val) const
+     {
+        jsize lenOuter = static_cast<jsize>(val.size());
+        jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_byte3DArray, nullptr);
+        if (!jOuterArr)
+        {
+            return nullptr;
+        }
+        for (jsize i = 0; i < lenOuter; ++i)
+        {
+            jobjectArray jMiddleArr = (jobjectArray) operator()(val[i]);
+            if (!jMiddleArr)
+            {
+                env->DeleteLocalRef(jOuterArr);
+                return nullptr;
+            }
+            env->SetObjectArrayElement(jOuterArr, i, jMiddleArr);
+            if (env->ExceptionCheck())
+            {
+                env->DeleteLocalRef(jMiddleArr);
+                env->DeleteLocalRef(jOuterArr);
+                return nullptr;
+            }
+            env->DeleteLocalRef(jMiddleArr);
+        }
+        return jOuterArr;
     }
     jobject operator()(const std::vector<OC::OCRepresentation>& val) const
     {
         jsize len = static_cast<jsize>(val.size());
         jobjectArray repArr = env->NewObjectArray(len, g_cls_OcRepresentation, nullptr);
-        if (!repArr) return nullptr;
+        if (!repArr)
+        {
+            return nullptr;
+        }
         for (jsize i = 0; i < len; ++i)
         {
             OCRepresentation* rep = new OCRepresentation(val[i]);
@@ -155,6 +280,18 @@ struct JObjectConverter : boost::static_visitor < jobject >
         }
         return repArr;
     }
+    jobject operator()(const std::vector<uint8_t>& val) const
+    {
+        size_t len = val.size();
+        jbyteArray jByteArray = env->NewByteArray(len);
+        if (!jByteArray)
+        {
+            return nullptr;
+        }
+        const uint8_t* bytes = &val[0];
+        env->SetByteArrayRegion(jByteArray, 0, len, reinterpret_cast<const jbyte*>(bytes));
+        return jByteArray;
+    }
 
     // Nested sequences:
     jobject operator()(const std::vector<std::vector<int>>& val) const
@@ -169,12 +306,21 @@ struct JObjectConverter : boost::static_visitor < jobject >
         {
             size_t lenInner = val[i].size();
             jintArray jIntArray = env->NewIntArray(lenInner);
-            if (!jIntArray) return nullptr;
+            if (!jIntArray)
+            {
+                return nullptr;
+            }
             const int* ints = &val[i][0];
             env->SetIntArrayRegion(jIntArray, 0, lenInner, reinterpret_cast<const jint*>(ints));
-            if (env->ExceptionCheck()) return nullptr;
+            if (env->ExceptionCheck())
+            {
+                return nullptr;
+            }
             env->SetObjectArrayElement(jOuterArr, i, static_cast<jobject>(jIntArray));
-            if (env->ExceptionCheck()) return nullptr;
+            if (env->ExceptionCheck())
+            {
+                return nullptr;
+            }
             env->DeleteLocalRef(jIntArray);
         }
         return jOuterArr;
@@ -183,26 +329,46 @@ struct JObjectConverter : boost::static_visitor < jobject >
     {
         jsize lenOuter = static_cast<jsize>(val.size());
         jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_int2DArray, nullptr);
-        if (!jOuterArr) return nullptr;
+        if (!jOuterArr)
+        {
+            return nullptr;
+        }
+
         for (jsize k = 0; k < lenOuter; ++k)
         {
             jsize lenMiddle = static_cast<jsize>(val[k].size());
             jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_int1DArray, nullptr);
-            if (!jMiddleArr) return nullptr;
+            if (!jMiddleArr)
+            {
+                return nullptr;
+            }
+
             for (jsize i = 0; i < lenMiddle; ++i)
             {
                 jsize lenInner = static_cast<jsize>(val[k][i].size());
                 jintArray jIntArray = env->NewIntArray(lenInner);
-                if (!jIntArray) return nullptr;
+                if (!jIntArray)
+                {
+                    return nullptr;
+                }
                 const int* ints = &val[k][i][0];
                 env->SetIntArrayRegion(jIntArray, 0, lenInner, reinterpret_cast<const jint*>(ints));
-                if (env->ExceptionCheck()) return nullptr;
+                if (env->ExceptionCheck())
+                {
+                    return nullptr;
+                }
                 env->SetObjectArrayElement(jMiddleArr, i, jIntArray);
-                if (env->ExceptionCheck()) return nullptr;
+                if (env->ExceptionCheck())
+                {
+                    return nullptr;
+                }
                 env->DeleteLocalRef(jIntArray);
             }
             env->SetObjectArrayElement(jOuterArr, k, jMiddleArr);
-            if (env->ExceptionCheck()) return nullptr;
+            if (env->ExceptionCheck())
+            {
+                return nullptr;
+            }
             env->DeleteLocalRef(jMiddleArr);
         }
         return jOuterArr;
@@ -212,17 +378,31 @@ struct JObjectConverter : boost::static_visitor < jobject >
     {
         jsize lenOuter = static_cast<jsize>(val.size());
         jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_double1DArray, nullptr);
-        if (!jOuterArr) return nullptr;
+        if (!jOuterArr)
+        {
+            return nullptr;
+        }
+
         for (jsize i = 0; i < lenOuter; ++i)
         {
             size_t lenInner = val[i].size();
             jdoubleArray jDoubleArray = env->NewDoubleArray(lenInner);
-            if (!jDoubleArray) return nullptr;
+            if (!jDoubleArray)
+            {
+                return nullptr;
+            }
+
             const double* doubles = &val[i][0];
             env->SetDoubleArrayRegion(jDoubleArray, 0, lenInner, reinterpret_cast<const jdouble*>(doubles));
-            if (env->ExceptionCheck()) return nullptr;
+            if (env->ExceptionCheck())
+            {
+                return nullptr;
+            }
             env->SetObjectArrayElement(jOuterArr, i, jDoubleArray);
-            if (env->ExceptionCheck()) return nullptr;
+            if (env->ExceptionCheck())
+            {
+                return nullptr;
+            }
             env->DeleteLocalRef(jDoubleArray);
         }
 
@@ -232,26 +412,44 @@ struct JObjectConverter : boost::static_visitor < jobject >
     {
         jsize lenOuter = static_cast<jsize>(val.size());
         jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_double2DArray, nullptr);
-        if (!jOuterArr) return nullptr;
+        if (!jOuterArr)
+        {
+            return nullptr;
+        }
         for (jsize k = 0; k < lenOuter; ++k)
         {
             jsize lenMiddle = static_cast<jsize>(val[k].size());
             jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_double1DArray, nullptr);
-            if (!jMiddleArr) return nullptr;
+            if (!jMiddleArr)
+            {
+                return nullptr;
+            }
             for (jsize i = 0; i < lenMiddle; ++i)
             {
                 jsize lenInner = static_cast<jsize>(val[k][i].size());
                 jdoubleArray jDoubleArray = env->NewDoubleArray(lenInner);
-                if (!jDoubleArray) return nullptr;
+                if (!jDoubleArray)
+                {
+                    return nullptr;
+                }
                 const double* doubles = &val[k][i][0];
                 env->SetDoubleArrayRegion(jDoubleArray, 0, lenInner, reinterpret_cast<const jdouble*>(doubles));
-                if (env->ExceptionCheck()) return nullptr;
+                if (env->ExceptionCheck())
+                {
+                    return nullptr;
+                }
                 env->SetObjectArrayElement(jMiddleArr, i, jDoubleArray);
-                if (env->ExceptionCheck()) return nullptr;
+                if (env->ExceptionCheck())
+                {
+                    return nullptr;
+                }
                 env->DeleteLocalRef(jDoubleArray);
             }
             env->SetObjectArrayElement(jOuterArr, k, jMiddleArr);
-            if (env->ExceptionCheck()) return nullptr;
+            if (env->ExceptionCheck())
+            {
+                return nullptr;
+            }
             env->DeleteLocalRef(jMiddleArr);
         }
         return jOuterArr;
@@ -261,22 +459,38 @@ struct JObjectConverter : boost::static_visitor < jobject >
     {
         jsize lenOuter = static_cast<jsize>(val.size());
         jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_boolean1DArray, 0);
-        if (!jOuterArr) return nullptr;
+        if (!jOuterArr)
+        {
+            return nullptr;
+        }
         for (jsize i = 0; i < lenOuter; ++i)
         {
             size_t lenInner = val[i].size();
             jbooleanArray jBooleanArray = env->NewBooleanArray(lenInner);
-            if (!jBooleanArray) return nullptr;
+            if (!jBooleanArray)
+            {
+                return nullptr;
+            }
             jboolean* booleans = new jboolean[lenInner];
-            for (size_t j = 0; j < lenInner; ++j) {
+            for (size_t j = 0; j < lenInner; ++j)
+            {
                 booleans[j] = static_cast<jboolean>(val[i][j]);
             }
             env->SetBooleanArrayRegion(jBooleanArray, 0, lenInner, booleans);
-            if (env->ExceptionCheck()) return nullptr;
+            if (env->ExceptionCheck())
+            {
+                return nullptr;
+            }
             env->SetObjectArrayElement(jOuterArr, i, jBooleanArray);
-            if (env->ExceptionCheck()) return nullptr;
+            if (env->ExceptionCheck())
+            {
+                return nullptr;
+            }
             env->ReleaseBooleanArrayElements(jBooleanArray, booleans, 0);
-            if (env->ExceptionCheck()) return nullptr;
+            if (env->ExceptionCheck())
+            {
+                return nullptr;
+            }
             env->DeleteLocalRef(jBooleanArray);
         }
         return jOuterArr;
@@ -285,31 +499,49 @@ struct JObjectConverter : boost::static_visitor < jobject >
     {
         jsize lenOuter = static_cast<jsize>(val.size());
         jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_boolean2DArray, nullptr);
-        if (!jOuterArr) return nullptr;
+        if (!jOuterArr)
+        {
+            return nullptr;
+        }
         for (jsize k = 0; k < lenOuter; ++k)
         {
             jsize lenMiddle = static_cast<jsize>(val[k].size());
             jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_boolean1DArray, nullptr);
-            if (!jMiddleArr) return nullptr;
+            if (!jMiddleArr)
+            {
+                return nullptr;
+            }
             for (jsize i = 0; i < lenMiddle; ++i)
             {
                 size_t lenInner = val[k][i].size();
                 jbooleanArray jBooleanArray = env->NewBooleanArray(lenInner);
                 jboolean* booleans = new jboolean[lenInner];
-                for (size_t j = 0; j < lenInner; ++j) {
+                for (size_t j = 0; j < lenInner; ++j)
+                {
                     booleans[j] = val[k][i][j];
                 }
                 env->SetBooleanArrayRegion(jBooleanArray, 0, lenInner, booleans);
-                if (env->ExceptionCheck()) return nullptr;
+                if (env->ExceptionCheck())
+                {
+                    return nullptr;
+                }
                 env->SetObjectArrayElement(jMiddleArr, i, jBooleanArray);
-                if (env->ExceptionCheck()) return nullptr;
+                if (env->ExceptionCheck())
+                {
+                    return nullptr;
+                }
                 env->ReleaseBooleanArrayElements(jBooleanArray, booleans, 0);
-                if (env->ExceptionCheck()) return nullptr;
+                if (env->ExceptionCheck())
+                {
+                    return nullptr;
+                }
                 env->DeleteLocalRef(jBooleanArray);
             }
             env->SetObjectArrayElement(jOuterArr, k, jMiddleArr);
-            if (env->ExceptionCheck()) return nullptr;
-            env->DeleteLocalRef(jMiddleArr);
+            if (env->ExceptionCheck())
+            {
+                return nullptr;
+            }            env->DeleteLocalRef(jMiddleArr);
         }
         return jOuterArr;
     }
@@ -318,21 +550,33 @@ struct JObjectConverter : boost::static_visitor < jobject >
     {
         jsize lenOuter = static_cast<jsize>(val.size());
         jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_String1DArray, nullptr);
-        if (!jOuterArr) return nullptr;
+        if (!jOuterArr)
+        {
+            return nullptr;
+        }
         for (jsize i = 0; i < lenOuter; ++i)
         {
             jsize lenInner = static_cast<jsize>(val[i].size());
             jobjectArray strArr = env->NewObjectArray(lenInner, g_cls_String, nullptr);
-            if (!strArr) return nullptr;
+            if (!strArr)
+            {
+                return nullptr;
+            }
             for (jsize j = 0; j < lenInner; ++j)
             {
                 jstring jString = env->NewStringUTF(val[i][j].c_str());
                 env->SetObjectArrayElement(strArr, j, jString);
-                if (env->ExceptionCheck()) return nullptr;
+                if (env->ExceptionCheck())
+                {
+                    return nullptr;
+                }
                 env->DeleteLocalRef(jString);
             }
             env->SetObjectArrayElement(jOuterArr, i, strArr);
-            if (env->ExceptionCheck()) return nullptr;
+            if (env->ExceptionCheck())
+            {
+                return nullptr;
+            }
             env->DeleteLocalRef(strArr);
         }
 
@@ -342,30 +586,48 @@ struct JObjectConverter : boost::static_visitor < jobject >
     {
         jsize lenOuter = static_cast<jsize>(val.size());
         jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_String2DArray, nullptr);
-        if (!jOuterArr) return nullptr;
+        if (!jOuterArr)
+        {
+            return nullptr;
+        }
         for (jsize k = 0; k < lenOuter; ++k)
         {
             jsize lenMiddle = static_cast<jsize>(val[k].size());
             jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_String1DArray, nullptr);
-            if (!jMiddleArr) return nullptr;
+            if (!jMiddleArr)
+            {
+                return nullptr;
+            }
             for (jsize i = 0; i < lenMiddle; ++i)
             {
                 jsize lenInner = static_cast<jsize>(val[k][i].size());
                 jobjectArray strArr = env->NewObjectArray(lenInner, g_cls_String, nullptr);
-                if (!strArr) return nullptr;
+                if (!strArr)
+                {
+                    return nullptr;
+                }
                 for (jsize j = 0; j < lenInner; ++j)
                 {
                     jstring jString = env->NewStringUTF(val[k][i][j].c_str());
                     env->SetObjectArrayElement(strArr, j, jString);
-                    if (env->ExceptionCheck()) return nullptr;
+                    if (env->ExceptionCheck())
+                    {
+                        return nullptr;
+                    }
                     env->DeleteLocalRef(jString);
                 }
                 env->SetObjectArrayElement(jMiddleArr, i, strArr);
-                if (env->ExceptionCheck()) return nullptr;
+                if (env->ExceptionCheck())
+                {
+                    return nullptr;
+                }
                 env->DeleteLocalRef(strArr);
             }
             env->SetObjectArrayElement(jOuterArr, k, jMiddleArr);
-            if (env->ExceptionCheck()) return nullptr;
+            if (env->ExceptionCheck())
+            {
+                return nullptr;
+            }
             env->DeleteLocalRef(jMiddleArr);
         }
         return jOuterArr;
@@ -375,12 +637,18 @@ struct JObjectConverter : boost::static_visitor < jobject >
     {
         jsize lenOuter = static_cast<jsize>(val.size());
         jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_OcRepresentation1DArray, nullptr);
-        if (!jOuterArr) return nullptr;
+        if (!jOuterArr)
+        {
+            return nullptr;
+        }
         for (jsize i = 0; i < lenOuter; ++i)
         {
             jsize lenInner = static_cast<jsize>(val[i].size());
             jobjectArray repArr = env->NewObjectArray(lenInner, g_cls_OcRepresentation, nullptr);
-            if (!repArr) return nullptr;
+            if (!repArr)
+            {
+                return nullptr;
+            }
             for (jsize j = 0; j < lenInner; ++j)
             {
                 OCRepresentation* rep = new OCRepresentation(val[i][j]);
@@ -393,11 +661,17 @@ struct JObjectConverter : boost::static_visitor < jobject >
                     return nullptr;
                 }
                 env->SetObjectArrayElement(repArr, j, jRepresentation);
-                if (env->ExceptionCheck()) return nullptr;
+                if (env->ExceptionCheck())
+                {
+                    return nullptr;
+                }
                 env->DeleteLocalRef(jRepresentation);
             }
             env->SetObjectArrayElement(jOuterArr, i, repArr);
-            if (env->ExceptionCheck()) return nullptr;
+            if (env->ExceptionCheck())
+            {
+                return nullptr;
+            }
             env->DeleteLocalRef(repArr);
         }
         return jOuterArr;
@@ -406,17 +680,26 @@ struct JObjectConverter : boost::static_visitor < jobject >
     {
         jsize lenOuter = static_cast<jsize>(val.size());
         jobjectArray jOuterArr = env->NewObjectArray(lenOuter, g_cls_OcRepresentation2DArray, nullptr);
-        if (!jOuterArr) return nullptr;
+        if (!jOuterArr)
+        {
+            return nullptr;
+        }
         for (jsize k = 0; k < lenOuter; ++k)
         {
             jsize lenMiddle = static_cast<jsize>(val[k].size());
             jobjectArray jMiddleArr = env->NewObjectArray(lenMiddle, g_cls_OcRepresentation1DArray, nullptr);
-            if (!jMiddleArr) return nullptr;
+            if (!jMiddleArr)
+            {
+                return nullptr;
+            }
             for (jsize i = 0; i < lenMiddle; ++i)
             {
                 jsize lenInner = static_cast<jsize>(val[k][i].size());
                 jobjectArray repArr = env->NewObjectArray(lenInner, g_cls_OcRepresentation, nullptr);
-                if (!repArr) return nullptr;
+                if (!repArr)
+                {
+                    return nullptr;
+                }
                 for (jsize j = 0; j < lenInner; ++j)
                 {
                     OCRepresentation* rep = new OCRepresentation(val[k][i][j]);
@@ -429,15 +712,24 @@ struct JObjectConverter : boost::static_visitor < jobject >
                         return nullptr;
                     }
                     env->SetObjectArrayElement(repArr, j, jRepresentation);
-                    if (env->ExceptionCheck()) return nullptr;
+                    if (env->ExceptionCheck())
+                    {
+                        return nullptr;
+                    }
                     env->DeleteLocalRef(jRepresentation);
                 }
                 env->SetObjectArrayElement(jMiddleArr, i, repArr);
-                if (env->ExceptionCheck()) return nullptr;
+                if (env->ExceptionCheck())
+                {
+                    return nullptr;
+                }
                 env->DeleteLocalRef(repArr);
             }
             env->SetObjectArrayElement(jOuterArr, k, jMiddleArr);
-            if (env->ExceptionCheck()) return nullptr;
+            if (env->ExceptionCheck())
+            {
+                return nullptr;
+            }
             env->DeleteLocalRef(jMiddleArr);
         }
         return jOuterArr;
@@ -450,6 +742,14 @@ private:
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    getValues
+    * Signature: ()Ljava/util/Map;
+    */
+    JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcRepresentation_getValues
+        (JNIEnv *, jobject);
 
     /*
     * Class:     org_iotivity_base_OcRepresentation
@@ -618,6 +918,14 @@ extern "C" {
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresentation3DArray
         (JNIEnv *, jobject, jstring, jobjectArray);
+
+    /*
+    * Class:     org_iotivity_base_OcRepresentation
+    * Method:    setValueByteArray
+    * Signature: (Ljava/lang/String;[B)V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueByteArray
+        (JNIEnv *, jobject, jstring, jbyteArray);
 
     /*
     * Class:     org_iotivity_base_OcRepresentation

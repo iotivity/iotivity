@@ -40,6 +40,7 @@
 #define DEFAULT_CONTEXT_VALUE 0x99
 #define STATE "state"
 #define OPEN_DURATION "openDuration"
+#define OPEN_DURATION_TIME "10min"
 #define OPEN_ALARM "openAlarm"
 
 static const char MULTICAST_DISCOVERY_QUERY[] = "/oic/res";
@@ -59,7 +60,7 @@ static std::string address;
 
 static int coapSecureResource;
 
-static const char CRED_FILE[] = "oic_svr_db_door.json";
+static const char CRED_FILE[] = "oic_svr_db_door.dat";
 
 CAEndpoint_t endpoint = {CA_DEFAULT_ADAPTER, CA_DEFAULT_FLAGS, 0, {0}, 0};
 
@@ -98,7 +99,7 @@ int parseClientResponse(OCClientResponse * clientResponse)
     while (res)
     {
         coapServerResource.assign(res->uri);
-        OC_LOG_V(INFO, TAG, "Uri -- %s", coapServerResource.c_str());
+        OIC_LOG_V(INFO, TAG, "Uri -- %s", coapServerResource.c_str());
 
         if (res->secure)
         {
@@ -106,7 +107,7 @@ int parseClientResponse(OCClientResponse * clientResponse)
             coapSecureResource = 1;
         }
 
-        OC_LOG_V(INFO, TAG, "Secure -- %s", coapSecureResource == 1 ? "YES" : "NO");
+        OIC_LOG_V(INFO, TAG, "Secure -- %s", coapSecureResource == 1 ? "YES" : "NO");
 
         // If we discovered a secure resource, exit from here
         if (coapSecureResource)
@@ -125,7 +126,7 @@ OCRepPayload* getPayload(const char* uri, int64_t state, char* openDuration, boo
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
     {
-        OC_LOG(ERROR, TAG, PCF("Failed to allocate Payload"));
+        OIC_LOG(ERROR, TAG, PCF("Failed to allocate Payload"));
         return nullptr;
     }
 
@@ -142,7 +143,7 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
 {
     if(ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
-        OC_LOG(ERROR, TAG, PCF("Incoming payload not a representation"));
+        OIC_LOG(ERROR, TAG, PCF("Incoming payload not a representation"));
         return nullptr;
     }
 
@@ -171,7 +172,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
                                         OCEntityHandlerRequest *entityHandlerRequest,
                                         void* /*callbackParam*/)
 {
-    OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
+    OIC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
 
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     OCEntityHandlerResponse response;
@@ -179,7 +180,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
     // Validate pointer
     if (!entityHandlerRequest)
     {
-        OC_LOG (ERROR, TAG, "Invalid request pointer");
+        OIC_LOG (ERROR, TAG, "Invalid request pointer");
         return OC_EH_ERROR;
     }
 
@@ -187,7 +188,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
+        OIC_LOG (INFO, TAG, "Flag includes OC_REQUEST_FLAG");
 
         if (entityHandlerRequest)
         {
@@ -195,13 +196,13 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
             {
             case OC_REST_GET:
             {
-                OC_LOG (INFO, TAG, "Received OC_REST_GET from client");
+                OIC_LOG (INFO, TAG, "Received OC_REST_GET from client");
                 ehResult = ProcessGetRequest (entityHandlerRequest, &payload);
             }
             break;
             default:
             {
-                OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
+                OIC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
                         entityHandlerRequest->method);
                 ehResult = OC_EH_ERROR;
             }
@@ -224,7 +225,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
                 // Send the response
                 if (OCDoResponse(&response) != OC_STACK_OK)
                 {
-                    OC_LOG(ERROR, TAG, "Error sending response");
+                    OIC_LOG(ERROR, TAG, "Error sending response");
                     ehResult = OC_EH_ERROR;
                 }
             }
@@ -331,13 +332,12 @@ int  createDoorResource (const char *uri, DoorResource *doorResource)
 {
     if (!uri)
     {
-        OC_LOG(ERROR, TAG, "Resource URI cannot be NULL");
+        OIC_LOG(ERROR, TAG, "Resource URI cannot be NULL");
 
     }
 
     doorResource->state = STATE_CLOSED; //1:closed , 0: open
-    char str[] = "10min";
-    doorResource->openDuration = str;
+    doorResource->openDuration = OPEN_DURATION_TIME;
     doorResource->openAlarm = false;
     OCStackResult res = OCCreateResource(&(doorResource->handle),
                                          "core.door",
@@ -347,7 +347,7 @@ int  createDoorResource (const char *uri, DoorResource *doorResource)
                                          NULL,
                                          OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
 
-    OC_LOG_V(INFO, TAG, "Created Door resource with result: %s", getResult(res));
+    OIC_LOG_V(INFO, TAG, "Created Door resource with result: %s", getResult(res));
     return 0;
 }
 
@@ -355,17 +355,17 @@ OCStackApplicationResult putReqCB(void * ctx, OCDoHandle /*handle*/, OCClientRes
 {
     if (ctx == (void *)DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG(INFO, TAG, "Callback Context for PUT recvd successfully");
+        OIC_LOG(INFO, TAG, "Callback Context for PUT recvd successfully");
     }
 
     if (clientResponse)
     {
-        OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
+        OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
+        OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
         if ((OCSecurityPayload*)clientResponse->payload)
         {
-            OC_LOG_V(INFO, TAG, "=============> Put Response",
+            OIC_LOG_V(INFO, TAG, "=============> Put Response",
                     ((OCSecurityPayload*)clientResponse->payload)->securityData);
         }
     }
@@ -374,16 +374,16 @@ OCStackApplicationResult putReqCB(void * ctx, OCDoHandle /*handle*/, OCClientRes
 
 OCStackApplicationResult getReqCB(void * /*ctx*/, OCDoHandle /*handle*/, OCClientResponse *clientResponse)
 {
-    OC_LOG(INFO, TAG, "Callback Context for GET query recvd successfully");
+    OIC_LOG(INFO, TAG, "Callback Context for GET query recvd successfully");
 
     if (clientResponse)
     {
-        OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+        OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
+        OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
+        OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
         if ((OCSecurityPayload*)clientResponse->payload)
         {
-            OC_LOG(INFO, TAG, PCF("=============> Get Response"));
+            OIC_LOG(INFO, TAG, PCF("=============> Get Response"));
         }
     }
     return OC_STACK_DELETE_TRANSACTION;
@@ -393,19 +393,19 @@ OCStackApplicationResult getReqCB(void * /*ctx*/, OCDoHandle /*handle*/, OCClien
 OCStackApplicationResult discoveryReqCB(void* /*ctx*/, OCDoHandle /*handle*/,
         OCClientResponse * clientResponse)
 {
-    OC_LOG(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
+    OIC_LOG(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
 
     if (clientResponse)
     {
-        OC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
-        OC_LOG_V(INFO, TAG,
+        OIC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
+        OIC_LOG_V(INFO, TAG,
                 "Device =============> Discovered @ %s:%d",
                 clientResponse->devAddr.addr,
                 clientResponse->devAddr.port);
 
         if (clientResponse->result == OC_STACK_OK)
         {
-            OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+            OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
             ocConnType = clientResponse->connType;
             parseClientResponse(clientResponse);
         }
@@ -422,9 +422,9 @@ void initAddress()
     static bool initFlag = false;
     if (!initFlag)
     {
-        OC_LOG(INFO, TAG, "Enter IP address (with optional port) of the Server hosting resource\n");
-        OC_LOG(INFO, TAG, "IPv4: 192.168.0.15:45454\n");
-        OC_LOG(INFO, TAG, "IPv6: [fe80::20c:29ff:fe1b:9c5]:45454\n");
+        OIC_LOG(INFO, TAG, "Enter IP address (with optional port) of the Server hosting resource\n");
+        OIC_LOG(INFO, TAG, "IPv4: 192.168.0.15:45454\n");
+        OIC_LOG(INFO, TAG, "IPv6: [fe80::20c:29ff:fe1b:9c5]:45454\n");
 
         std::cin >> address;
     }
@@ -435,23 +435,26 @@ void initAddress()
 void SendGetRequest()
 {
     OCStackResult ret;
-    OC_LOG(INFO, TAG, "Send Get REQ to Light server");
+    OIC_LOG(INFO, TAG, "Send Get REQ to Light server");
+
+    //select ciphersuite for certificates
+    CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8, CA_ADAPTER_IP);
 
     initAddress();
 
-    char szQueryUri[64] = { '\0'};
+    char szQueryUri[MAX_QUERY_LENGTH] = { '\0'};
     OCDoHandle handle;
     OCCallbackData cbData;
     cbData.cb = getReqCB;
     cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    OC_LOG_V(INFO, TAG, "Get payload from Door sample = /a/light ");
+    OIC_LOG_V(INFO, TAG, "Get payload from Door sample = /a/light ");
     snprintf(szQueryUri,  sizeof(szQueryUri), "coaps://%s/a/light", const_cast<char*> (address.c_str())); // lightPortNu);
     ret = OCDoResource(&handle, OC_REST_GET, szQueryUri, 0, NULL, ocConnType, OC_LOW_QOS,
                  &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack resource error");
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
 }
 
@@ -459,14 +462,14 @@ void SendGetRequest()
 void *input_function(void * /*data*/)
 {
     char input;
-    char szQueryUri[64] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
     OCDoHandle handle;
     OCCallbackData cbData;
     cbData.cb = discoveryReqCB;
     cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    strcpy(szQueryUri, MULTICAST_DISCOVERY_QUERY);
+    strncpy(szQueryUri, MULTICAST_DISCOVERY_QUERY, sizeof(szQueryUri));
 
     while (1)
     {
@@ -477,8 +480,12 @@ void *input_function(void * /*data*/)
             case 'd':
                 if (isUpdated == false)
                 {
-                    OC_LOG(INFO, TAG, "isUpdated is false...");
-                    OCDoResource(&handle, OC_REST_DISCOVER, szQueryUri, 0, 0, CT_DEFAULT, OC_LOW_QOS, &cbData, NULL, 0);
+                    OIC_LOG(INFO, TAG, "isUpdated is false...");
+                    if (OCDoResource(&handle, OC_REST_DISCOVER, szQueryUri, 0, 0, CT_DEFAULT,
+                                     OC_LOW_QOS, &cbData, NULL, 0) != OC_STACK_OK)
+                    {
+                        OIC_LOG(ERROR, TAG, "OCDoResource error");
+                    }
 
                 }
                 break;
@@ -487,7 +494,7 @@ void *input_function(void * /*data*/)
                 isUpdated = true;
                 if (isUpdated == true)
                 {
-                    OC_LOG(INFO, TAG, "isUpdated is true...");
+                    OIC_LOG(INFO, TAG, "isUpdated is true...");
                     SendGetRequest();
                 }
                 break;
@@ -503,22 +510,22 @@ void *input_function(void * /*data*/)
 
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "*******************************************");
-    OC_LOG(INFO, TAG, "Input D or d to discover Resources");
-    OC_LOG(INFO, TAG, "Input G or g to initiate Get Request");
-    OC_LOG(INFO, TAG, "Input Q or q to exit");
-    OC_LOG(INFO, TAG, "*******************************************");
+    OIC_LOG(INFO, TAG, "*******************************************");
+    OIC_LOG(INFO, TAG, "Input D or d to discover Resources");
+    OIC_LOG(INFO, TAG, "Input G or g to initiate Get Request");
+    OIC_LOG(INFO, TAG, "Input Q or q to exit");
+    OIC_LOG(INFO, TAG, "*******************************************");
 }
 
 int main()
 {
 
-    OC_LOG(INFO, TAG, "OCServer is starting...");
+    OIC_LOG(INFO, TAG, "OCServer is starting...");
     SetPersistentHandler(&ps);
     //PrintUsage();
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack init error");
+        OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
 
@@ -529,21 +536,21 @@ int main()
     PrintUsage();
 
     //select ciphersuite for certificates
-    CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+    CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8, CA_ADAPTER_IP);
 
     struct timespec timeout;
     timeout.tv_sec  = 0;
     timeout.tv_nsec = 100000000L;
 
     // Break from loop with Ctrl-C
-    OC_LOG(INFO, TAG, "Entering ocserver main loop...");
+    OIC_LOG(INFO, TAG, "Entering ocserver main loop...");
     signal(SIGINT, handleSigInt);
     int thr_id;
     pthread_t p_thread;
     thr_id = pthread_create(&p_thread, NULL, input_function, (void *)NULL);
     if (thr_id < 0)
     {
-        OC_LOG(ERROR, TAG, "create thread error");
+        OIC_LOG(ERROR, TAG, "create thread error");
         return 0;
     }
 
@@ -552,7 +559,7 @@ int main()
 
         if (OCProcess() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
 
@@ -562,11 +569,11 @@ int main()
 
     pthread_join(p_thread, NULL);
 
-    OC_LOG(INFO, TAG, "Exiting ocserver main loop...");
+    OIC_LOG(INFO, TAG, "Exiting ocserver main loop...");
 
     if (OCStop() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack process error");
+        OIC_LOG(ERROR, TAG, "OCStack process error");
     }
 
     return 0;

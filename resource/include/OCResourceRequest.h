@@ -47,20 +47,53 @@ namespace OC
         typedef std::shared_ptr<OCResourceRequest> Ptr;
 
         OCResourceRequest():
-            m_requestType{},
-            m_resourceUri{},
-            m_queryParameters{},
-            m_requestHandlerFlag{},
-            m_representation{},
-            m_observationInfo{},
-            m_headerOptions{},
-            m_requestHandle{nullptr},
-            m_resourceHandle{nullptr}
+            m_requestType(""),
+            m_resourceUri(""),
+            m_queryParameters(QueryParamsMap()),
+            m_requestHandlerFlag(0),
+            m_messageID(0),
+            m_representation(OCRepresentation()),
+            m_headerOptions(HeaderOptions()),
+            m_requestHandle(nullptr),
+            m_resourceHandle(nullptr)
         {
+            m_observationInfo.action = ObserveAction::ObserveRegister;
+            m_observationInfo.obsId = 0;
+            m_observationInfo.connectivityType = OCConnectivityType::CT_DEFAULT;
+            m_observationInfo.address = "";
+            m_observationInfo.port = 0;
         }
 
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+        OCResourceRequest(OCResourceRequest&& o):
+            m_requestType(std::move(o.m_requestType)),
+            m_resourceUri(std::move(o.m_resourceUri)),
+            m_queryParameters(std::move(o.m_queryParameters)),
+            m_requestHandlerFlag(o.m_requestHandlerFlag),
+            m_representation(std::move(o.m_representation)),
+            m_observationInfo(std::move(o.m_observationInfo)),
+            m_headerOptions(std::move(o.m_headerOptions)),
+            m_requestHandle(std::move(o.m_requestHandle)),
+            m_resourceHandle(std::move(o.m_resourceHandle))
+        {
+        }
+        OCResourceRequest& operator=(OCResourceRequest&& o)
+        {
+            m_requestType = std::move(o.m_requestType);
+            m_resourceUri = std::move(o.m_resourceUri);
+            m_queryParameters = std::move(o.m_queryParameters);
+            m_requestHandlerFlag = o.m_requestHandlerFlag;
+            m_representation = std::move(o.m_representation);
+            m_observationInfo = std::move(o.m_observationInfo);
+            m_headerOptions = std::move(o.m_headerOptions);
+            m_requestHandle = std::move(o.m_requestHandle);
+            m_resourceHandle = std::move(o.m_resourceHandle);
+        }
+#else
         OCResourceRequest(OCResourceRequest&&) = default;
         OCResourceRequest& operator=(OCResourceRequest&&) = default;
+#endif
+
         /**
         *  Virtual destructor
         */
@@ -154,11 +187,19 @@ namespace OC
             return m_resourceHandle;
         }
 
+        /**
+        * This API retrieves the request message ID
+        *
+        * @return int16_t value of message ID
+        */
+        int16_t getMessageID() const {return m_messageID;}
+
     private:
         std::string m_requestType;
         std::string m_resourceUri;
         QueryParamsMap m_queryParameters;
         int m_requestHandlerFlag;
+        int16_t m_messageID;
         OCRepresentation m_representation;
         ObservationInfo m_observationInfo;
         HeaderOptions m_headerOptions;
@@ -184,6 +225,11 @@ namespace OC
         void setRequestHandlerFlag(int requestHandlerFlag)
         {
             m_requestHandlerFlag = requestHandlerFlag;
+        }
+
+        void setMessageID(int16_t messageID)
+        {
+            m_messageID = messageID;
         }
 
         void setObservationInfo(const ObservationInfo& observationInfo)

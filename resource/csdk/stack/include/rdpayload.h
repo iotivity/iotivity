@@ -29,6 +29,12 @@
 extern "C" {
 #endif // __cplusplus
 
+#define OIC_RD_PUBLISH_TTL 86400
+
+#define OIC_RD_DEFAULT_RESOURCE 2
+
+#define DEFAULT_MESSAGE_TYPE "application/json"
+
 /**
  * Converts RD payload from structure to CBOR format. It creates the outPayload
  * which is then transmitted over the wire.
@@ -38,32 +44,10 @@ extern "C" {
  * structure.
  * @param size Length of the payload.
  *
- * @return ::OC_STACK_OK returns if successful and OC_STACK_ERROR returns if
+ * @return ::CborNoError returns if successful and other Cbor error in  case of error.
  * failed in creating CBOR.
  */
 int64_t OCRDPayloadToCbor(const OCRDPayload *rdPayload, uint8_t *outPayload, size_t *size);
-
-/**
- * Converts tags structure to the tags cbor payload.
- *
- * @param tags Allocated Tag structure
- * @param setMap The cbor map where result will be stored.
- *
- * @return ::OC_STACK_OK returns if successful and OC_STACK_ERROR returns if
- * failed in creating CBOR.
- */
-OCStackResult OCTagsPayloadToCbor(OCTagsPayload *tags, CborEncoder *setMap);
-
-/**
- * Converts links structure to cbor map structure
- *
- * @param links Allocated links structure.
- * @param setMap The cbor map where result will be stored.
- *
- * @return ::OC_STACK_OK returns if successful and OC_STACK_ERROR returns if
- * failed in creating CBOR.
- */
-OCStackResult OCLinksPayloadToCbor(OCLinksPayload *rtPtr, CborEncoder *setMap);
 
 /**
  * Converts CBOR to OCRDPayload.
@@ -77,28 +61,6 @@ OCStackResult OCLinksPayloadToCbor(OCLinksPayload *rtPtr, CborEncoder *setMap);
 OCStackResult OCRDCborToPayload(const CborValue *cborPayload, OCPayload **outPayload);
 
 /**
- * Converts cbor map payload to OCTags payload.
- *
- * @param tagstMap CborValue holding tags structure.
- * @param tagsPayload Allocated tags payload.
- *
- * @return ::OC_STACK_OK returns if successful and OC_STACK_ERROR returns if
- * failed in creating CBOR.
- */
-OCStackResult OCTagsCborToPayload(CborValue *tagsMap, OCTagsPayload **tagsPayload);
-
-/**
- * Converts cbor map payload to OCLinks payload.
- *
- * @param tagstMap CborValue holding links structure.
- * @param tagsPayload Allocated links payload.
- *
- * @return ::OC_STACK_OK returns if successful and OC_STACK_ERROR returns if
- * failed in creating CBOR.
- */
-OCStackResult OCLinksCborToPayload(CborValue *linksArray, OCLinksPayload **linksPayload);
-
-/**
  * Initializes RD payload structure.
  *
  * @param payloadType Defines whether payload is RD_PAYLOAD_TYPE_DISCOVERY or
@@ -108,6 +70,23 @@ OCStackResult OCLinksCborToPayload(CborValue *linksArray, OCLinksPayload **links
  * allocate memory
  */
 OCRDPayload *OCRDPayloadCreate();
+
+#ifdef RD_CLIENT
+/**
+ * Initializes RD Publish payload structure.
+ *
+ * @param id An unique identifier of publishing device.
+ * @param resourceHandles The handle of registered resource.
+ * @param nHandles The number of registered resource handles.
+ * @param ttl Time to live of the published resource.
+ *
+ * @return Allocated memory for the OCRDPayload and NULL in case if
+ * failed to allocate memory.
+ */
+OCRDPayload *OCRDPublishPayloadCreate(const unsigned char *id,
+                                      OCResourceHandle *resourceHandles, uint8_t nHandles,
+                                      uint64_t ttl);
+#endif
 
 /**
  * Initializes RD Discovery payload structure and sets the bias factor.
@@ -133,37 +112,33 @@ void OCRDPayloadDestroy(OCRDPayload *payload);
  * Copies tag paramter to creates OCTagsPayload.
  *
  * @param deviceName The device name as set during enrollment.
- * @param id The device UUID
- * @param baseURI baseURI pointing to the resource directory location.
- * @param bitmap The bitmap value include observe, discovery and secure bit set.
- * @param port The secure port in case above bitmap is set to secure.
- * @param ins Unique value per collection.
- * @param rts Defines allowed resource types.
- * @param drel Defines defaultr relationship.
+ * @param id The device UUID.
  * @param ttl Time to leave for the . Used only in resource directory.
  *
  * @retun Allocated memory for OCTagsPayload or else NULL in case of error.
  */
-OCTagsPayload* OCCopyTagsResources(const char *deviceName, const unsigned char *id,
-    const char *baseURI, uint8_t bitmap, uint16_t port, uint8_t ins, const char *rts, const char *drel, uint32_t ttl);
+OCTagsPayload* OCCopyTagsResources(const char *deviceName, const unsigned char *id, uint64_t ttl);
 
 /**
  * Copies link resource to create LinksPayload.
  *
  * @param href URI of the resource
+ * @param rel Relation
  * @param rt Array of String pointing to resource types.
  * @param itf Array of String pointing to interface
- * @param rel Relation
- * @param obs Whether to observe or not.
+ * @param p Whether to observe or not.
  * @param title Title
- * @param uri URI
+ * @param anchor URI
  * @param ins Unique value per link.
+ * @param ttl Time to live for this link.
  * @param mt Media Type
 
- * @retun Allocated memory for OCLinksPayload or else NULL in case of error.
+ * @retun Allocated memory for OCLinksResource or else NULL in case of error.
  */
-OCLinksPayload* OCCopyLinksResources(const char *href, OCStringLL *rt, OCStringLL *itf,
-    const char *rel, bool obs, const char *title, const char *uri, uint8_t ins, OCStringLL *mt);
+OCLinksPayload* OCCopyLinksResources(const char *href, const char *rel, OCStringLL *rt,
+                                     OCStringLL *itf, uint8_t p, const char *title,
+                                     const char *anchor, uint8_t ins, uint64_t ttl,
+                                     OCStringLL *mt);
 
 /**
  * Creates a resource collection object.
@@ -174,20 +149,6 @@ OCLinksPayload* OCCopyLinksResources(const char *href, OCStringLL *rt, OCStringL
  * @return Memory allocation for OCResourceCollectionPayload, else NULL.
  */
 OCResourceCollectionPayload* OCCopyCollectionResource(OCTagsPayload *tags, OCLinksPayload *links);
-
-/**
- * Adds discocvery collection in discovery payload.
- *
- * @param payload Pointer to the discovery payload. It adds allocated collection resource.
- * @param tags Pointer to the tags payload.
- * @param links Pointer to the links payload.
- *
- * @return ::OC_STACK_OK returns if successful and OC_STACK_ERROR returns if
- * failed in creating CBOR.
- */
-
-OCStackResult OCDiscoveryCollectionPayloadAddResource(OCDiscoveryPayload *payload,  OCTagsPayload *tags,
-    OCLinksPayload *links);
 
 /**
  * Destroys tags payload including internal structure allocated
@@ -216,22 +177,6 @@ void OCFreeCollectionResource(OCResourceCollectionPayload *payload);
  * @param payload Pointer pointing to allocated memory of OCDiscoveryPayload.
  */
 void OCDiscoveryCollectionPayloadDestroy(OCDiscoveryPayload* payload);
-
-/**
- * Prints tags payload.
- *
- * @param level LogLevel for the print.
- * @param tags Structure of the tags payload.
- */
-void OCTagsLog(const LogLevel level, const OCTagsPayload *tags);
-
-/**
- * Prints links payload.
- *
- * @param level LogLevel for the print.
- * @param tags Structure of the links payload.
- */
-void OCLinksLog(const LogLevel level, const OCLinksPayload *links);
 
 #ifdef __cplusplus
 }

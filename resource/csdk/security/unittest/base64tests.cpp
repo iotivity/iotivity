@@ -186,7 +186,7 @@ TEST(B64DeodeTest, ValidInputForDecoding)
 // Tests for base64 decode function
 TEST(B64DeodeTest, InvalidInputForDecoding)
 {
-    uint8_t buf[128];
+    uint8_t buf[128] = {0,};
     uint32_t outputLength;
     uint32_t i=0;
 

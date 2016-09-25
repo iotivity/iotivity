@@ -16,24 +16,23 @@
 
 package oic.simulator.serviceprovider.manager;
 
+import org.eclipse.jface.resource.ImageRegistry;
+import org.eclipse.swt.graphics.Image;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
+
+import org.oic.simulator.ILogger;
+import org.oic.simulator.ILogger.Level;
+import org.oic.simulator.SimulatorManager;
 
 import oic.simulator.logger.LogEntry;
 import oic.simulator.logger.LoggerCallback;
 import oic.simulator.serviceprovider.Activator;
 import oic.simulator.serviceprovider.listener.ILogListener;
 import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.utils.Utility;
-
-import org.eclipse.jface.resource.ImageRegistry;
-import org.eclipse.swt.graphics.Image;
-import org.oic.simulator.ILogger;
-import org.oic.simulator.ILogger.Level;
-import org.oic.simulator.SimulatorException;
-import org.oic.simulator.SimulatorManager;
 
 /**
  * Class which handles the native logs, maintains log entries and updates the
@@ -57,14 +56,7 @@ public class LogManager {
 
         // Set the logger callback with the native layer
         logger = new LoggerCallback();
-        try {
-            SimulatorManager.setLogger(logger);
-        } catch (SimulatorException e) {
-            log(Level.ERROR.ordinal(),
-                    new Date(),
-                    "Failed to register the logger.\n"
-                            + Utility.getSimulatorErrorString(e, null));
-        }
+        SimulatorManager.setLogger(logger);
     }
 
     private static class LogManagerSynchronizerThread implements Runnable {

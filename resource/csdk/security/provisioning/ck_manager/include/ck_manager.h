@@ -135,7 +135,7 @@ PKIError CKMIssueDeviceCertificate (const uint8_t *uint8SubjectName,
  * @param[in] certFileName pointer to null-terminated string with file name
  * @return PKI_SUCCESS if success, error code otherwise
  */
-PKIError GenerateDERCertificateFile (const ByteArray *certificate, const char *certFileName);
+PKIError GenerateDERCertificateFile (const ByteArray *certificate, const char * const certFileName);
 
 /**
  * Issues certificate signing request with specified parameters.

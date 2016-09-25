@@ -37,7 +37,7 @@ env.AddMethod(filtered_glob, "FilteredGlob");
 
 # Add third party libraries
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', exports = 'lib_env')
+SConscript('#service/third_party_libs.scons', exports = 'lib_env')
 
 resource_container_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
@@ -83,12 +83,12 @@ if int(containerJavaSupport):
         print ''
 
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
     resource_container_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
     if target_os != 'android':
         resource_container_env.AppendUnique(CXXFLAGS = ['-pthread'])
 
-if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
+if target_os not in ['darwin', 'ios', 'windows']:
     resource_container_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 
 if target_os == 'android':
@@ -100,9 +100,22 @@ try:
 except KeyError:
     print ''
 
+resource_container_env.PrependUnique(LIBS = ['coap'])
+resource_container_env.AppendUnique(LIBS = ['connectivity_abstraction'])
+resource_container_env.AppendUnique(LIBS = ['oc_logger'])
+resource_container_env.AppendUnique(LIBS = ['octbstack'])
+resource_container_env.AppendUnique(LIBS = ['oc'])
+resource_container_env.AppendUnique(LIBS = ['rcs_client'])
+resource_container_env.AppendUnique(LIBS = ['rcs_server'])
+resource_container_env.AppendUnique(LIBS = ['rcs_common'])
+resource_container_env.AppendUnique(LIBS = ['dl'])
+resource_container_env.AppendUnique(LIBS = ['boost_system'])
+resource_container_env.AppendUnique(LIBS = ['boost_date_time'])
+resource_container_env.AppendUnique(LIBS = ['boost_thread'])
 
-resource_container_env.PrependUnique(LIBS = ['rcs_client', 'rcs_server', 'rcs_common', 'oc','octbstack', 'oc_logger', 'connectivity_abstraction'])
-resource_container_env.AppendUnique(LIBS = ['dl', 'boost_system', 'boost_date_time', 'boost_thread'])
+if resource_container_env.get('SECURED') == '1':
+	if resource_container_env.get('WITH_TCP') == True:
+		resource_container_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if int(containerJavaSupport):
     try:
@@ -120,6 +133,7 @@ res_container_static = resource_container_env.StaticLibrary('rcs_container', res
 res_container_shared = resource_container_env.SharedLibrary('rcs_container', res_container_src)
 
 resource_container_env.InstallTarget([res_container_static,res_container_shared], 'libResContainer')
+resource_container_env.UserInstallTargetLib([res_container_static,res_container_shared], 'libResContainer')
 
 resource_container_env.UserInstallTargetHeader('include/RCSBundleInfo.h', 'service/resource-container', 'RCSBundleInfo.h')
 resource_container_env.UserInstallTargetHeader('include/RCSResourceContainer.h', 'service/resource-container', 'RCSResourceContainer.h')
@@ -140,8 +154,9 @@ if target_os in ['linux', 'tizen', 'android']:
 
     DISensorBundle = DI_sensor_bundle_env.SharedLibrary('DISensorBundle', DI_sensor_bundle_src)
     DI_sensor_bundle_env.InstallTarget(DISensorBundle, 'libDISensorBundle')
+    DI_sensor_bundle_env.UserInstallTargetLib(DISensorBundle, 'libDISensorBundle')
 
-    if target_os == 'linux' :
+    if target_os in ['linux']:
         SConscript(DI_SENSOR_BUNDLE_DIR + 'src/inputSensors/SConscript')
         Command("THSensorApp", DI_SENSOR_BUNDLE_DIR + "src/inputSensors/THSensorApp/THSensorApp", Copy("$TARGET", "$SOURCE"))
         Command("THSensorApp1", DI_SENSOR_BUNDLE_DIR + "src/inputSensors/THSensorApp1/THSensorApp1", Copy("$TARGET", "$SOURCE"))
@@ -162,8 +177,9 @@ if target_os in ['linux', 'tizen', 'android']:
 
     BMISensorBundle = BMI_sensor_bundle_env.SharedLibrary('BMISensorBundle', BMI_sensor_bundle_src)
     BMI_sensor_bundle_env.InstallTarget(BMISensorBundle, 'libBMISensorBundle')
+    BMI_sensor_bundle_env.UserInstallTargetLib(BMISensorBundle, 'libBMISensorBundle')
 
-    if target_os == 'linux' :
+    if target_os in ['linux']:
         SConscript(BMI_SENSOR_BUNDLE_DIR + 'src/inputSensors/SConscript')
         Command("HeightSensorApp", BMI_SENSOR_BUNDLE_DIR + "src/inputSensors/HeightSensorApp/HeightSensorApp", Copy("$TARGET", "$SOURCE"))
         Command("WeightSensorApp", BMI_SENSOR_BUNDLE_DIR + "src/inputSensors/WeightSensorApp/WeightSensorApp", Copy("$TARGET", "$SOURCE"))
@@ -200,12 +216,13 @@ else:
 
     HueBundle = hue_resource_bundle_env.SharedLibrary('HueBundle', hue_resource_bundle_src)
     hue_resource_bundle_env.InstallTarget(HueBundle, 'libHueBundle')
+    hue_resource_bundle_env.UserInstallTargetLib(HueBundle, 'libHueBundle')
 lib_env = conf2.Finish()
 
 ######################################################################
 # build resource container unit tests
 ######################################################################
-if target_os == 'linux':
+if target_os in ['linux']:
     SConscript('unittests/SConscript')
 
 ######################################################################

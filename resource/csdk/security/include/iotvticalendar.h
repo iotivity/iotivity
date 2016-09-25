@@ -43,8 +43,8 @@ extern "C"
 typedef struct IotvtICalRecur IotvtICalRecur_t;
 typedef struct IotvtICalPeriod IotvtICalPeriod_t;
 
-/*
- *  date-time  = date "T" time
+/**
+ *  date-time  = date "T" time.
  *
  *  date               = date-value
  *  date-value         = date-fullyear date-month date-mday
@@ -65,8 +65,8 @@ typedef struct IotvtICalPeriod IotvtICalPeriod_t;
  */
 typedef struct tm IotvtICalDateTime_t; //c-lang tm date-time struct
 
-/*
- * Bit mask for weekdays
+/**
+ * Bit mask for weekdays.
  */
 typedef enum
 {
@@ -78,24 +78,24 @@ typedef enum
     THURSDAY    = (0x1 << 4),
     FRIDAY      = (0x1 << 5),
     SATURDAY    = (0x1 << 6)
-}IotvtICalWeekdayBM_t;
+} IotvtICalWeekdayBM_t;
 
-/*
- * Result code for IotvtICalendar
+/**
+ * Result code for IotvtICalendar.
  */
 typedef enum
 {
-    IOTVTICAL_SUCCESS = 0,       //successfully completed operation
-    IOTVTICAL_VALID_ACCESS,      //access is within allowable time
-    IOTVTICAL_INVALID_ACCESS,    //access is not within allowable time
-    IOTVTICAL_INVALID_PARAMETER, //invalid method parameter
-    IOTVTICAL_INVALID_RRULE,     //rrule is not well form, missing FREQ
-    IOTVTICAL_INVALID_PERIOD,    //period is not well form, start-datetime is after end-datetime
-    IOTVTICAL_ERROR              //encounter error
-}IotvtICalResult_t;
+    IOTVTICAL_SUCCESS = 0,       /**< successfully completed operation. */
+    IOTVTICAL_VALID_ACCESS,      /**< access is within allowable time. */
+    IOTVTICAL_INVALID_ACCESS,    /**< access is not within allowable time. */
+    IOTVTICAL_INVALID_PARAMETER, /**< invalid method parameter. */
+    IOTVTICAL_INVALID_RRULE,     /**< rrule is not well form, missing FREQ. */
+    IOTVTICAL_INVALID_PERIOD,    /**< period is not well form, start-datetime is after end-datetime. */
+    IOTVTICAL_ERROR              /**< encounter error. */
+} IotvtICalResult_t;
 
-/*
- *  Grammar for iCalendar data type PERIOD
+/**
+ *  Grammar for iCalendar data type PERIOD.
  *
  *  period = date-time "/" date-time  ; start-time / end-time.
  *                                    ;The start-time MUST be before the end-time.
@@ -108,7 +108,7 @@ struct IotvtICalPeriod
 };
 
 /*
- * Grammar for iCalendar data type RECUR
+ * Grammar for iCalendar data type RECUR.
  *
  * recur      = "FREQ"=freq *(
  *            ( ";" "UNTIL" "=" enddate ) /
@@ -143,11 +143,11 @@ struct IotvtICalRecur
  * @param period string representing period.
  * @param recur string representing recurrence rule
  *
- * @return  IOTVTICAL_VALID_ACCESS      -- if the request is within valid time period
- *          IOTVTICAL_INVALID_ACCESS    -- if the request is not within valid time period
- *          IOTVTICAL_INVALID_PARAMETER -- if parameter are invalid
- *          IOTVTICAL_INVALID_PERIOD    -- if period string has invalid format
- *          IOTVTICAL_INVALID_RRULE     -- if rrule string has invalid format
+ * @return ::IOTVTICAL_VALID_ACCESS, if the request is within valid time period
+ * ::IOTVTICAL_INVALID_ACCESS, if the request is not within valid time period
+ * ::IOTVTICAL_INVALID_PARAMETER, if parameter are invalid
+ * ::IOTVTICAL_INVALID_PERIOD, if period string has invalid format
+ * ::IOTVTICAL_INVALID_RRULE, if rrule string has invalid format.
  *
  *Eg: if(IOTVTICAL_VALID_ACCESS == IsRequestWithinValidTime(period, recur))
  *    {
@@ -158,29 +158,31 @@ struct IotvtICalRecur
  *      //Access is not within allowable time.
  *    }
  */
-IotvtICalResult_t IsRequestWithinValidTime(char *period, char *recur);
+IotvtICalResult_t IsRequestWithinValidTime(const char *period, const char *recur);
 
 /**
- * Parses periodStr and populate struct IotvtICalPeriod_t
+ * Parses periodStr and populate struct IotvtICalPeriod_t.
  *
  * @param periodStr string to be parsed.
- * @param period    IotvtICalPeriod_t struct to be populated.
+ * @param period IotvtICalPeriod_t struct to be populated.
  *
- * @return  IOTVTICAL_INVALID_PARAMETER -- if parameter are invalid
- *          IOTVTICAL_INVALID_PERIOD    -- if period string has invalid format
- *          IOTVTICAL_INVALID_SUCCESS   -- if no error while parsing
+ * @return ::IOTVTICAL_VALID_ACCESS, if the request is within valid time period
+ * ::IOTVTICAL_INVALID_PARAMETER, if parameter are invalid
+ * ::IOTVTICAL_INVALID_PERIOD, if period string has invalid format
+ * ::IOTVTICAL_INVALID_SUCCESS, if no error while parsing.
  */
 IotvtICalResult_t ParsePeriod(const char *periodStr, IotvtICalPeriod_t *period);
 
 /**
- * Parses recurStr and populate struct IotvtICalRecur_t
+ * Parses recurStr and populate struct IotvtICalRecur_t.
  *
  * @param recurStr string to be parsed.
- * @param recur    IotvtICalPeriod_t struct to be populated.
+ * @param recur is the IotvtICalPeriod_t struct to be populated.
  *
- * @return  IOTVTICAL_INVALID_PARAMETER -- if parameter are invalid
- *          IOTVTICAL_INVALID_PERIOD    -- if period string has invalid format
- *          IOTVTICAL_INVALID_RRULE     -- if rrule string has invalid format
+ * @return ::IOTVTICAL_VALID_ACCESS, if the request is within valid time period
+ * ::IOTVTICAL_INVALID_PARAMETER, if parameter are invalid
+ * ::IOTVTICAL_INVALID_PERIOD, if period string has invalid format
+ * ::IOTVTICAL_INVALID_RRULE, if rrule string has invalid format.
  */
 IotvtICalResult_t ParseRecur(const char *recurStr, IotvtICalRecur_t *recur);
 

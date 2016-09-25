@@ -63,6 +63,7 @@ public class ResourceClientActivity extends Activity
     private static final int MSG_ID_ATTRIBUTE_RECEIVED  = 1;
     private static final int MSG_ID_PRINT_LOG           = 2;
 
+    private static final String RESOURCE_TYPE = "oic.r.temperature.sensor";
     private static final String ATTR_KEY_TEMPERATURE = "Temperature";
 
     private TextView mLogView;
@@ -287,7 +288,7 @@ public class ResourceClientActivity extends Activity
         if (mDiscoveryTask == null) {
             try {
                 mDiscoveryTask = RcsDiscoveryManager.getInstance()
-                        .discoverResource(RcsAddress.multicast(),
+                        .discoverResourceByType(RcsAddress.multicast(), RESOURCE_TYPE,
                                 mOnResourceDiscoveredListener);
                 mDiscoveryBtn.setText(R.string.cancel_discovery);
 

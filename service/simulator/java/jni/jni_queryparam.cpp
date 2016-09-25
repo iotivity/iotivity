@@ -55,7 +55,7 @@ std::map<std::string, std::string> JniQueryParameter::toCpp(jobject jQueryParams
         jstring value = (jstring) m_env->CallObjectMethod(entry, getValueMethodID);
 
         JniString jniKey(m_env, key);
-        JniString jniValue(m_env, key);
+        JniString jniValue(m_env, value);
 
         result[jniKey.get()] = jniValue.get();
 

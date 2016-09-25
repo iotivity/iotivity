@@ -18,68 +18,85 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-Import('env')
 import os
 import os.path
-catest_env = env.Clone()
 
-src_dir = catest_env.get('SRC_DIR')
+# SConscript file for Local PKI google tests
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+catest_env = gtest_env.Clone()
+target_os = catest_env.get('TARGET_OS')
+target_transport = catest_env.get('TARGET_TRANSPORT')
 
 ######################################################################
 # Build flags
 ######################################################################
 catest_env.PrependUnique(CPPPATH = [
-                '../../ocsocket/include',
                 '../../logger/include',
                 '../../stack/include',
                 '../../extlibs/cjson',
                 '../../../oc_logger/include',
-                '../../../../extlibs/gtest/gtest-1.7.0/include'
                ])
 
-tmplist = catest_env['LINKFLAGS'][:]
-if '-lpthread' in tmplist:
-    tmplist.remove('-lpthread')
-    catest_env.Replace(LINKFLAGS = tmplist)
-
-catest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-catest_env.AppendUnique(LIBS = ['pthread'])
-catest_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-catest_env.AppendUnique(LIBPATH = [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
-catest_env.PrependUnique(LIBS = ['m',
-                                    'octbstack',
+catest_env.AppendUnique(LIBPATH = [catest_env.get('BUILD_DIR')])
+catest_env.PrependUnique(LIBS = ['gtest', 'gtest_main'])
+catest_env.PrependUnique(LIBS = ['octbstack',
                                     'connectivity_abstraction',
-                                    'coap',
-                                    'gtest',
-                                    'gtest_main'])
+                                    'coap'])
 
-target_os = env.get('TARGET_OS')
-
-if target_os not in ['arduino', 'darwin', 'ios']:
+if target_os not in ['arduino', 'darwin', 'ios', 'msys_nt', 'windows']:
 	catest_env.AppendUnique(LIBS=['rt'])
 
-if env.get('SECURED') == '1':
-    catest_env.AppendUnique(LIBS = ['tinydtls'])
+if catest_env.get('SECURED') == '1':
+	catest_env.AppendUnique(LIBS = ['tinydtls'])
+	catest_env.AppendUnique(LIBS = ['timer'])
+	if catest_env.get('WITH_TCP') == True:
+		catest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
-if env.get('LOGGING'):
+if catest_env.get('WITH_RD') == '1':
+	catest_env.PrependUnique(LIBS = ['resource_directory'])
+
+if catest_env.get('LOGGING'):
 	catest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+if target_os in ['msys_nt', 'windows']:
+	catest_env.AppendUnique(LIBS = ['ws2_32',
+                                        'advapi32',
+                                        'iphlpapi'])
+else:
+	catest_env.AppendUnique(LIBS = ['m'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-catests = catest_env.Program('catests', ['catests.cpp',
-                                         'caprotocolmessagetest.cpp',
-                                               'ca_api_unittest.cpp',
-                                               'camutex_tests.cpp',
-                                               'uarraylist_test.cpp'
-                                               ])
+
+if (('IP' in target_transport) or ('ALL' in target_transport)):
+	if target_os != 'arduino':
+		catests = catest_env.Program('catests', ['catests.cpp',
+		                                         'caprotocolmessagetest.cpp',
+		                                         'cablocktransfertest.cpp',
+		                                         'ca_api_unittest.cpp',
+		                                         'octhread_tests.cpp',
+		                                         'uarraylist_test.cpp',
+		                                         'ulinklist_test.cpp',
+		                                         'uqueue_test.cpp'
+		                                               ])
+else:
+	# Include all unit test files
+		catests = catest_env.Program('catests', ['catests.cpp',
+		                                         'caprotocolmessagetest.cpp',
+		                                         'ca_api_unittest.cpp',
+		                                         'octhread_tests.cpp',
+		                                         'uarraylist_test.cpp',
+		                                         'ulinklist_test.cpp',
+		                                         'uqueue_test.cpp'
+		                                               ])
 
 Alias("test", [catests])
 
-env.AppendTarget('test')
-if env.get('TEST') == '1':
-        target_os = env.get('TARGET_OS')
-        if target_os == 'linux':
+catest_env.AppendTarget('test')
+if catest_env.get('TEST') == '1':
+        if target_os in ['linux', 'windows']:
+                catest_env.AppendENVPath('PATH', catest_env.get('BUILD_DIR'))
                 from tools.scons.RunTest import *
                 run_test(catest_env,
                          'resource_csdk_connectivity_test.memcheck',

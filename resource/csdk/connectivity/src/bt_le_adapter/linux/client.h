@@ -23,69 +23,52 @@
 
 
 /**
- * Information needed to when sending a request through a GATT
- * client.
+ * Initialize the GATT client.
+ *
+ * @param[in] context
+ *
+ * @return @c CA_STATUS_OK on success, @c CA_STATUS_FAILED otherwise.
  */
-typedef struct _CAGattRequestInfo
-{
-    /**
-     * Proxy or list of proxies to @c org.bluez.GattCharacteristic1
-     * object(s) through which request data will be sent to the GATT
-     * server.
-     *
-     * In the case of a unicast-style send, @c info will be a
-     * @c GDBusProxy* to an @c org.bluez.GattCharacteristic1 object.
-     * For a multicast-style send, @c info will be a * @c GList* of
-     * @c GDBusProxy* to @c GattCharacterstic1 objects on all GATT
-     * servers to which a connection exists.
-     */
-    void * const characteristic_info;
+CAResult_t CAGattClientInitialize(CALEContext * context);
 
-    /**
-     * Context containing additional information that may be needed
-     * when sending a request.
-     */
-    CALEContext * const context;
-
-} CAGattRequestInfo;
+/**
+ * Destroy the GATT client.
+ */
+void CAGattClientDestroy();
 
 /**
  * Send request data through a single user-specified BLE connection.
  *
- * @param[in] method_info Information necessary to send request.
- * @param[in] data        Octet array of request data to be sent.
- * @param[in] length      Length of the @a data octet array.
+ * @param[in] address  MAC address of the BLE peripheral running the
+ *                     OIC Transport Profile GATT server to which the
+ *                     data will be sent.
+ * @param[in] data     Octet array of request data to be sent.
+ * @param[in] length   Length of the @a data octet array.
+ * @param[in] context  Object containing mutexes and error reporting
+ *                     callback used on failure to send.
  *
- * @see @c CAGattSendMethod() for further details.
+ * @return @c CA_STATUS_OK on success, @c CA_STATUS_FAILED otherwise.
  */
-bool CAGattSendRequest(void const * method_info,
-                       uint8_t const * data,
-                       size_t length);
+CAResult_t CAGattClientSendData(char const * address,
+                                uint8_t const * data,
+                                size_t length,
+                                CALEContext * context);
 
-// ---------------------------------------------------------------
-//                   Multicast-style Request Send
-// ---------------------------------------------------------------
 /**
  * Send request data through all BLE connections.
  *
  * Send the @a data to the GATT server found in all discovered LE
  * peripherals.
  *
- * @param[in] method_info Information necessary to send request.
- * @param[in] data        Octet array of request data to be sent.
- * @param[in] length      Length of the @a data octet array.
-
- * @note Since a multicast-like operation is being performed, an
- *       assumption is made that a GATT client is sending data to a
- *       server.  It makes no sense to multicast a response from a
- *       single GATT server to multiple GATT clients in IoTivity's
- *       case.
+ * @param[in] data    Octet array of request data to be sent.
+ * @param[in] length  Length of the @a data octet array.
+ * @param[in] context Object GATT request characteristic map.
  *
  * @return @c CA_STATUS_OK on success, @c CA_STATUS_FAILED otherwise.
  */
-CAResult_t CAGattClientSendDataToAll(void const * method_info,
-                                     uint8_t const * data,
-                                     size_t length);
+CAResult_t CAGattClientSendDataToAll(uint8_t const * data,
+                                     size_t length,
+                                     CALEContext * context);
 
 
 #endif  /* CA_BLE_LINUX_CLIENT_H */

@@ -20,63 +20,61 @@
 
 #include "RequestObject.h"
 
+#include "RCSResourceObject.h"
+#include "RCSSeparateResponse.h"
+
 namespace OIC
 {
-namespace Service
-{
-
-RequestObject::RequestObject()
-: pSetRequestCB(nullptr)
-{
-}
-
-RequestObject::RequestObject(SetRequestCallback cb)
-: pSetRequestCB(cb)
-{
-}
-
-RequestObject::~RequestObject()
-{
-    pSetRequestCB = {};
-}
-
-void RequestObject::invokeRequest(RemoteObjectPtr remoteObject, RequestMethod method,
-        const RCSResourceAttributes & resourceAttibutes)
-{
-    switch (method)
+    namespace Service
     {
-    case RequestMethod::Set:
-    {
-        if(pSetRequestCB == nullptr)
+        void RequestObject::invokeRequest(RCSRemoteResourceObject::Ptr remoteObject,
+                const RCSRequest & request, RequestMethod method,
+                const RCSResourceAttributes & resourceAttibutes, SetRequestCallback setCB)
         {
-            remoteObject->setRemoteAttributes(resourceAttibutes,
-                    std::bind(&RequestObject::setRequestCB, this,
-                            std::placeholders::_1, resourceAttibutes));
+            RequestObject::Ptr createdRequestObject = std::make_shared<RequestObject>();
+
+            RCSRequest req(request.getResourceObject().lock(), request.getOCRequest());
+            switch (method)
+            {
+            case RequestMethod::Set:
+            {
+                if (!setCB)
+                {
+                    remoteObject->setRemoteAttributes(resourceAttibutes,
+                            std::bind(&RequestObject::setRequestCB, createdRequestObject,
+                                    std::placeholders::_1, std::placeholders::_2,
+                                    req, createdRequestObject));
+                }
+                else
+                {
+                    remoteObject->setRemoteAttributes(resourceAttibutes,
+                            std::bind(std::move(setCB),
+                                    std::placeholders::_1, std::placeholders::_2,
+                                    req, createdRequestObject));
+                }
+            }
+                break;
+            case RequestMethod::Get:
+            case RequestMethod::Delete:
+            default:
+                // unknown type of method.
+                break;
+            }
         }
-        else
+
+        void RequestObject::setRequestCB(
+                const RCSResourceAttributes & returnedAttributes, int /*eCode*/,
+                const RCSRequest & request, RequestObject::Ptr /*this_ptr*/)
         {
-            remoteObject->setRemoteAttributes(resourceAttibutes,
-                    std::bind(pSetRequestCB,
-                            std::placeholders::_1, resourceAttibutes));
+            auto server = request.getResourceObject().lock();
+            if (!server) return;
+
+            RCSResourceObject::LockGuard guard(server);
+            server->getAttributes() = RCSResourceAttributes(returnedAttributes);
+
+            // TODO need to set error code.
+            RCSSeparateResponse(request).set();
         }
-    }
-        break;
-    case RequestMethod::Get:
-    case RequestMethod::Delete:
-    default:
-        // unknown type of method.
-        break;
-    }
-}
 
-void RequestObject::setRequestCB(const RCSResourceAttributes & returnedAttributes,
-        const RCSResourceAttributes & putAttibutes)
-{
-    if(putAttibutes != returnedAttributes)
-    {
-        // TODO fail set attributes
-    }
-}
-
-} /* namespace Service */
+    } /* namespace Service */
 } /* namespace OIC */

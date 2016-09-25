@@ -38,7 +38,7 @@ const int SUCCESS_RESPONSE = OC_STACK_OK;
 
 #define OBSERVE 1
 #define GET     2
-#define PUT     3
+#define POST    3
 #define DELETE  4
 
 std::shared_ptr< OCResource > g_curResource;
@@ -49,7 +49,7 @@ OCStackResult nmfindResource(const std::string &host , const std::string &resour
 void onObserve(const HeaderOptions &headerOption , const OCRepresentation &rep , const int &eCode,
                const int &sequenceNumber);
 
-void onPut(const HeaderOptions &headerOption, const OCRepresentation &rep, const int eCode);
+void onPost(const HeaderOptions &headerOption, const OCRepresentation &rep, const int eCode);
 void onGet(const HeaderOptions &headerOption , const OCRepresentation &rep , const int eCode);
 void onDelete(const HeaderOptions &headerOption , const int eCode);
 
@@ -113,7 +113,7 @@ void startGet(std::shared_ptr< OCResource > resource)
         std::cout << "To Fail resource get() process" << std::endl;
 }
 
-void startPut(std::shared_ptr< OCResource > resource)
+void startPost(std::shared_ptr< OCResource > resource)
 {
     if (resource == NULL)
     {
@@ -127,8 +127,8 @@ void startPut(std::shared_ptr< OCResource > resource)
     rep.setValue("humidity", 10);
 
     QueryParamsMap test;
-    if (OC_STACK_OK != resource->put(rep, test, &onPut))
-        std::cout << "To Fail resource put() process" << std::endl;
+    if (OC_STACK_OK != resource->post(rep, test, &onPost))
+        std::cout << "To Fail resource post() process" << std::endl;
 }
 
 void startDelete(std::shared_ptr< OCResource > resource)
@@ -236,13 +236,13 @@ void getRepresentation(std::shared_ptr< OCResource > resource)
     }
 }
 
-void onPut(const HeaderOptions &/*headerOption*/, const OCRepresentation &rep, const int eCode)
+void onPost(const HeaderOptions &/*headerOption*/, const OCRepresentation &rep, const int eCode)
 {
     try
     {
         if (eCode == OC_STACK_OK)
         {
-            std::cout << "PUT request was successful" << std::endl;
+            std::cout << "POST request was successful" << std::endl;
             int humidity;
             int temperature;
             rep.getValue("temperature", temperature);
@@ -254,13 +254,13 @@ void onPut(const HeaderOptions &/*headerOption*/, const OCRepresentation &rep, c
         }
         else
         {
-            std::cout << "onPut Response error: " << eCode << std::endl;
+            std::cout << "onPost Response error: " << eCode << std::endl;
             std::exit(-1);
         }
     }
     catch (std::exception &e)
     {
-        std::cout << "Exception: " << e.what() << " in onPut" << std::endl;
+        std::cout << "Exception: " << e.what() << " in onPost" << std::endl;
     }
 }
 
@@ -328,7 +328,7 @@ void PRINT()
     std::cout << "********************************************" << std::endl;
     std::cout << "*  method Type : 1 - Observe               *" << std::endl;
     std::cout << "*  method Type : 2 - Get                   *" << std::endl;
-    std::cout << "*  method Type : 3 - Put                   *" << std::endl;
+    std::cout << "*  method Type : 3 - Post                  *" << std::endl;
     std::cout << "********************************************" << std::endl;
     std::cout << std::endl;
 }
@@ -377,8 +377,8 @@ int main()
                 case GET:
                     startGet(g_curResource);
                     break;
-                case PUT:
-                    startPut(g_curResource);
+                case POST:
+                    startPost(g_curResource);
                     break;
                 default:
                     std::cout << "Invalid input, please try again" << std::endl;

@@ -64,12 +64,6 @@ typedef struct /*CA private key, CA certificate, other CA-related info*/
     long        numberOfRevoked;
 } CKMInfo_t;
 
-typedef struct /*CA private key, CA certificate, certificate revocation/white list*/
-{
-    uint32_t    CRLsize;
-    uint8_t     *certificateRevocationList;//should be allocated dynamically
-} CRLInfo_t;
-
 //General functions
 
 /**
@@ -96,9 +90,9 @@ PKIError CloseCKMInfo(void);
 /**
  * Sets CKM Info.
  *
- * @param[in] nextSN pointer to the next serial number to set
+ * @param[in] nextSN next serial number to set
  *                   or 0 to skip this parameter
- * @param[in] CRLSerialNumber pointer to the next CRL serial number to set
+ * @param[in] CRLSerialNumber next CRL serial number to set
  *                   or 0 to skip this parameter
  * @param[in] CAPrivateKey pointer to the CA's private key to set
  *                   or 0 to skip this parameter
@@ -108,7 +102,7 @@ PKIError CloseCKMInfo(void);
  *                   or 0 to skip this parameter
  * @return PKI_SUCCESS if success, error code otherwise
  */
-PKIError SetCKMInfo (const long *nextSN, const long *CRLSerialNumber,
+PKIError SetCKMInfo (long nextSN, long CRLSerialNumber,
                      const ByteArray *CAPrivateKey, const ByteArray *CAPublicKey,
                      const ByteArray *CAName);
 
@@ -206,10 +200,10 @@ PKIError SaveCRT(void);
 /**
  * Sets next serial number for certificate issuer.
  *
- * @param[in] nextSN pointer to the next serial number to set
+ * @param[in] nextSN next serial number to set
  * @return PKI_SUCCESS if success, error code otherwise
  */
-PKIError SetNextSerialNumber (const long *nextSN);
+PKIError SetNextSerialNumber (const long nextSN);
 
 /**
  * Gets next serial number for certificate issuer.
@@ -273,10 +267,10 @@ PKIError SaveCRL(void);
 /**
  * Sets next CRL serial number for certificate issuer.
  *
- * @param[in] CRLSerialNumber pointer to the next CRL serial number to set
+ * @param[in] CRLSerialNumber next CRL serial number to set
  * @return PKI_SUCCESS if success, error code otherwise
  */
-PKIError SetCRLSerialNumber (const long *CRLSerialNumber);
+PKIError SetCRLSerialNumber (const long CRLSerialNumber);
 
 /**
  * Gets next CRL serial number for certificate issuer.
@@ -307,10 +301,10 @@ PKIError GetCertificateRevocationList (ByteArray *certificateRevocationList);
 /**
  * Sets number of revoked certificates.
  *
- * @param[in] numberOfRevoked pointer to number of revoked certificates to set
+ * @param[in] numberOfRevoked number of revoked certificates to set
  * @return PKI_SUCCESS if success, error code otherwise
  */
-PKIError SetNumberOfRevoked (const long *numberOfRevoked);
+PKIError SetNumberOfRevoked (const long numberOfRevoked);
 
 /**
  * Gets number of revoked certificates.

@@ -22,13 +22,14 @@
 #define COMMON_INTERNAL_ASSERTUTILS_H
 
 #include <cstdint>
+#include <cstdlib>
 
 #include <memory>
 
-#include <octypes.h>
-#include <OCException.h>
+#include "octypes.h"
+#include "OCException.h"
 
-#include <RCSException.h>
+#include "RCSException.h"
 
 namespace OIC
 {
@@ -36,6 +37,47 @@ namespace OIC
     {
         namespace Detail
         {
+
+            // This is a helper class to avoid calling the base layer during terminating the process.
+            // The reason why you should not call the base layer in this situation is that
+            // OC apis are singletons or internally implemented as singleton.
+            // Singleton implemented with a static variable is initialized
+            // in the first call to the function.
+            // It means you can not guarantee the order of initialization of the singletons,
+            // which is the reverse order of destruction.
+            // Some of RE classes are also implemented as singletons.
+            // Now we have a problem if RE tries to call one of OC apis
+            // after OC classes are destroyed first.
+            // To solve this issue, it registers exit handler to catch the termination event.
+            // Keep this information with a bool flag dynamically allocated to
+            // make sure it is not destroyed during the destruction of the static objects.
+            class TerminationChecker
+            {
+            private:
+                static bool& getExited()
+                {
+                    static bool* flag = new bool{ false };
+                    return *flag;
+                }
+
+                static void atExitHandler()
+                {
+                    getExited() = true;
+                }
+
+                TerminationChecker()
+                {
+                    std::atexit(atExitHandler);
+                }
+
+            public:
+                static bool isInTermination()
+                {
+                    static TerminationChecker once;
+                    return getExited();
+                }
+            };
+
             struct NotOCStackResult;
 
             template <typename FUNC, typename ...PARAMS>
@@ -105,6 +147,8 @@ namespace OIC
         invokeOCFuncWithResultExpect(std::initializer_list<OCStackResult> allowed,
                 FUNC&& fn, PARAMS&& ...params)
         {
+            if (Detail::TerminationChecker::isInTermination()) return;
+
             try
             {
                 expectOCStackResult(fn(std::forward< PARAMS >(params)...), std::move(allowed));
@@ -121,6 +165,8 @@ namespace OIC
                 OCStackResult >::type
         invokeOCFunc(FUNC&& fn, PARAMS&& ...params)
         {
+            if (Detail::TerminationChecker::isInTermination()) return;
+
             try
             {
                 expectOCStackResultOK(fn(std::forward< PARAMS >(params)...));
@@ -136,6 +182,8 @@ namespace OIC
                         Detail::NotOCStackResult >::type
         invokeOCFunc(FUNC* fn, PARAMS&& ...params)
         {
+            if (Detail::TerminationChecker::isInTermination()) return;
+
             try
             {
                 return fn(std::forward< PARAMS >(params)...);
@@ -153,6 +201,8 @@ namespace OIC
                 decltype((obj->*fn)(std::forward< PARAMS >(params)...)), OCStackResult>::
                 type
         {
+            if (Detail::TerminationChecker::isInTermination()) return;
+
             try
             {
                 expectOCStackResultOK(obj->*fn(std::forward< PARAMS >(params)...));
@@ -171,6 +221,8 @@ namespace OIC
                     Detail::NotOCStackResult>::
                     type
         {
+            if (Detail::TerminationChecker::isInTermination()) return;
+
             try
             {
                 obj->*fn(std::forward< PARAMS >(params)...);
@@ -188,6 +240,8 @@ namespace OIC
                     decltype((obj.get()->*fn)(std::forward< PARAMS >(params)...)), OCStackResult>::
                     type
         {
+            if (Detail::TerminationChecker::isInTermination()) return;
+
             try
             {
                 expectOCStackResultOK((obj.get()->*fn)(std::forward< PARAMS >(params)...));
@@ -206,6 +260,8 @@ namespace OIC
                    Detail::NotOCStackResult>::
                    type
         {
+            if (Detail::TerminationChecker::isInTermination()) return { };
+
             try
             {
                 return (obj.get()->*fn)(std::forward< PARAMS >(params)...);

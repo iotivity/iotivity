@@ -27,172 +27,129 @@
 
 #include "OCPlatform.h"
 
-#include <condition_variable>
-#include <mutex>
-
 using namespace OIC::Service;
+using namespace OC;
 using namespace OC::OCPlatform;
 
-constexpr char RESOURCEURI[]{ "/a/TemperatureSensor" };
-constexpr char RESOURCETYPE[]{ "resource.type" };
-constexpr char RESOURCEINTERFACE[]{ "oic.if.baseline" };
-constexpr int DEFAULT_DISCOVERYTASK_DELAYTIME = 3000;
+typedef std::unique_ptr< RCSDiscoveryManager::DiscoveryTask > DiscoveryTaskPtr;
 
-void resourceDiscoveredForCall(RCSRemoteResourceObject::Ptr) {}
-void resourceDiscoveredForNeverCall(RCSRemoteResourceObject::Ptr) {}
+typedef OCStackResult (*OCFindResource)(const std::string&, const std::string&,
+            OCConnectivityType, FindCallback);
 
-class DiscoveryManagerTest: public TestWithMock
+constexpr char RESOURCE_URI[]{ "/a/TemperatureSensor" };
+constexpr char RESOURCE_TYPE[]{ "resource.type" };
+constexpr char SECOND_RESOURCETYPE[]{ "resource.type.second" };
+
+void onResourceDiscovered(RCSRemoteResourceObject::Ptr) {}
+
+class ScopedTask
 {
 public:
-
-    typedef std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> DiscoveryTaskPtr;
-    typedef std::function< void(std::shared_ptr< RCSRemoteResourceObject >) >
-                                       ResourceDiscoveredCallback;
-public:
-
-    static DiscoveryTaskPtr discoverResource(ResourceDiscoveredCallback cb)
+    ScopedTask(DiscoveryTaskPtr&& task) :
+        m_task{ std::move(task) }
     {
-        const std::string uri  = "/oic/res";
-        return RCSDiscoveryManager::getInstance()->discoverResourceByType(RCSAddress::multicast(),
-                 uri, RESOURCETYPE, cb);
     }
 
-    void startDiscovery()
+    ~ScopedTask()
     {
-        discoveryTask = discoverResource(resourceDiscoveredForCall);
+        if (m_task) m_task->cancel();
     }
 
-    void cancelDiscovery()
+    RCSDiscoveryManager::DiscoveryTask* operator->()
     {
-        discoveryTask->cancel();
+        return m_task.get();
     }
 
-    bool isCanceled()
-    {
-        return discoveryTask->isCanceled();
-    }
-
-    void createResource()
-    {
-        server = RCSResourceObject::Builder(RESOURCEURI, RESOURCETYPE, RESOURCEINTERFACE).build();
-    }
-
-    void proceed()
-    {
-        cond.notify_all();
-    }
-
-    void waitForDiscoveryTask(int waitingTime = DEFAULT_DISCOVERYTASK_DELAYTIME)
-    {
-        std::unique_lock< std::mutex > lock{ mutex };
-        cond.wait_for(lock, std::chrono::milliseconds{ waitingTime });
-    }
+    ScopedTask(ScopedTask&&) = default;
+    ScopedTask& operator=(ScopedTask&&) = default;
 
 private:
-
-    std::condition_variable cond;
-    std::mutex mutex;
-    RCSResourceObject::Ptr server;
-    RCSRemoteResourceObject::Ptr object;
-    DiscoveryTaskPtr discoveryTask;
+    DiscoveryTaskPtr m_task;
 };
 
-TEST_F(DiscoveryManagerTest, resourceIsNotSupportedPresenceBeforeDiscovering)
+TEST(DiscoveryManagerTest, ThrowIfDiscoverWithEmptyCallback)
 {
-    createResource();
-
-    mocks.ExpectCallFunc(resourceDiscoveredForCall).Do(
-        [this](RCSRemoteResourceObject::Ptr){ proceed();});
-
-    startDiscovery();
-    waitForDiscoveryTask();
+    EXPECT_THROW(RCSDiscoveryManager::getInstance()->discoverResource(RCSAddress::multicast(), { }),
+            RCSInvalidParameterException);
 }
 
-TEST_F(DiscoveryManagerTest, resourceIsSupportedPresenceBeforeDiscovering)
+TEST(DiscoveryManagerTest, ThrowIfDiscoverWithMultipleTypesThatContainEmptyString)
 {
-    startPresence(10);
-    createResource();
-
-    mocks.ExpectCallFunc(resourceDiscoveredForCall).Do(
-        [this](RCSRemoteResourceObject::Ptr){ proceed();});
-
-    startDiscovery();
-    waitForDiscoveryTask();
-    stopPresence();
+    EXPECT_THROW(RCSDiscoveryManager::getInstance()->discoverResourceByTypes(
+            RCSAddress::multicast(), { "a", "" }, onResourceDiscovered), RCSBadRequestException);
 }
 
-TEST_F(DiscoveryManagerTest, resourceIsNotSupportedPresenceAfterDiscovering)
+TEST(DiscoveryManagerTest, DiscoverInvokesFindResource)
 {
-    mocks.ExpectCallFunc(resourceDiscoveredForCall).Do(
-        [this](RCSRemoteResourceObject::Ptr){ proceed();});
+    MockRepository mocks;
+    mocks.ExpectCallFuncOverload(static_cast<OCFindResource>(findResource)).Match(
+        [](const std::string& host, const std::string& resourceURI, OCConnectivityType, FindCallback)
+        {
+            return host.empty() && resourceURI == (std::string(RESOURCE_URI) + "?rt=" + RESOURCE_TYPE);
+        }
+    ).Return(OC_STACK_OK);
 
-    startDiscovery();
-    createResource();
-    waitForDiscoveryTask();
+    ScopedTask task {RCSDiscoveryManager::getInstance()->discoverResourceByType(
+            RCSAddress::multicast(), RESOURCE_URI, RESOURCE_TYPE, onResourceDiscovered)};
 }
 
-TEST_F(DiscoveryManagerTest, resourceIsSupportedPresenceAndAfterDiscovering)
+TEST(DiscoveryManagerTest, DiscoverWithMultipleTypesInvokesFindResourceMultipleTimes)
 {
-    mocks.ExpectCallFunc(resourceDiscoveredForCall).Do(
-        [this](RCSRemoteResourceObject::Ptr){ proceed();});
+    MockRepository mocks;
+    const std::vector< std::string > resourceTypes{ RESOURCE_TYPE, SECOND_RESOURCETYPE };
+    size_t counter = 0;
 
-    startPresence(10);
-    startDiscovery();
-    createResource();
-    waitForDiscoveryTask();
-    stopPresence();
+    mocks.OnCallFuncOverload(static_cast<OCFindResource>(findResource)).Do(
+        [&counter](const std::string&, const std::string&, OCConnectivityType, FindCallback)
+        {
+            ++counter;
+            return OC_STACK_OK;
+        }
+    ).Return(OC_STACK_OK);
+
+    ScopedTask task {RCSDiscoveryManager::getInstance()->discoverResourceByTypes(
+            RCSAddress::multicast(), resourceTypes, onResourceDiscovered)};
+
+    EXPECT_EQ(counter, resourceTypes.size());
 }
 
-TEST_F(DiscoveryManagerTest, cancelDiscoveryTaskAfterDiscoveryResource)
+TEST(DiscoveryManagerTest, TaskCanBeCanceled)
 {
-    startDiscovery();
-    cancelDiscovery();
+    ScopedTask aTask {RCSDiscoveryManager::getInstance()->discoverResource(RCSAddress::multicast(),
+            onResourceDiscovered)};
+    ScopedTask aTaskToBeCanceled {RCSDiscoveryManager::getInstance()->discoverResource(
+            RCSAddress::multicast(), onResourceDiscovered)};
 
-    mocks.NeverCallFunc(resourceDiscoveredForCall);
+    aTaskToBeCanceled->cancel();
 
-    waitForDiscoveryTask();
-    createResource();
+    ASSERT_FALSE(aTask->isCanceled());
+    ASSERT_TRUE(aTaskToBeCanceled->isCanceled());
 }
 
-TEST_F(DiscoveryManagerTest, cancelDiscoveryTaskNotStartDiscoveryResource)
-{
-    startDiscovery();
-    cancelDiscovery();
-    cancelDiscovery();
-}
+TEST(DiscoveryManagerTest, CallbackWouldNotBeCalledForSameRemoteResource) {
+    FindCallback callback;
 
-TEST_F(DiscoveryManagerTest, isCanceledAfterCancelDiscoveryTask)
-{
-    startDiscovery();
-    cancelDiscovery();
+    MockRepository mocks;
+    mocks.OnCallFuncOverload(static_cast<OCFindResource>(findResource)).Do(
+       [&callback](const std::string&, const std::string&, OCConnectivityType, FindCallback cb)
+       {
+           callback = cb;
+           return OC_STACK_OK;
+       }
+   ).Return(OC_STACK_OK);
 
-    ASSERT_TRUE(isCanceled());
-}
+    ScopedTask aTask {RCSDiscoveryManager::getInstance()->discoverResource(RCSAddress::multicast(),
+            onResourceDiscovered)};
 
-TEST_F(DiscoveryManagerTest, multipleDiscoveryRequestAndCancelJustOneDiscoveryRequest)
-{
-    DiscoveryTaskPtr canceledTask = discoverResource(resourceDiscoveredForCall);
-    DiscoveryTaskPtr notCanceledTask_1 = discoverResource(resourceDiscoveredForCall);
-    DiscoveryTaskPtr notCanceledTask_2 = discoverResource(resourceDiscoveredForCall);
+    std::vector< std::string > interfaces{ "interface" };
+    std::vector< std::string > resourceTypes{ "resource.type" };
+    constexpr char fakeHost[] { "coap://127.0.0.1:1" };
 
-    canceledTask->cancel();
+    mocks.ExpectCallFunc(onResourceDiscovered);
+    callback(OCPlatform::constructResourceObject(fakeHost, "/uri", OCConnectivityType::CT_ADAPTER_IP,
+            true, interfaces, resourceTypes));
 
-    ASSERT_TRUE(canceledTask->isCanceled());
-    ASSERT_FALSE(notCanceledTask_1->isCanceled());
-    ASSERT_FALSE(notCanceledTask_2->isCanceled());
-}
-
-TEST_F(DiscoveryManagerTest, equalDiscoveryRequestsAndCancelJustOneRequest)
-{
-    mocks.ExpectCallFunc(resourceDiscoveredForCall).Do(
-        [this](RCSRemoteResourceObject::Ptr){ proceed();});
-
-    mocks.NeverCallFunc(resourceDiscoveredForNeverCall);
-
-    DiscoveryTaskPtr notCanceledTask = discoverResource(resourceDiscoveredForCall);
-    DiscoveryTaskPtr canceledTask = discoverResource(resourceDiscoveredForNeverCall);
-    canceledTask->cancel();
-
-    createResource();
-    waitForDiscoveryTask();
+    mocks.NeverCallFunc(onResourceDiscovered);
+    callback(OCPlatform::constructResourceObject(fakeHost, "/uri", OCConnectivityType::CT_ADAPTER_IP,
+            true, interfaces, resourceTypes));
 }

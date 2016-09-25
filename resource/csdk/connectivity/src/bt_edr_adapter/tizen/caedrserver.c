@@ -31,7 +31,7 @@
 #include "caadapterutils.h"
 #include "caedrutils.h"
 #include "logger.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "cacommon.h"
 #include "caedrdevicelist.h"
 
@@ -42,9 +42,15 @@ static int32_t g_maxPendingConnections = 10;
  */
 static int g_serverFD = -1;
 
-CAResult_t CAEDRServerStart(ca_thread_pool_t handle)
+CAResult_t CAEDRServerStart()
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
+
+    if(-1 != g_serverFD)
+    {
+        OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "%s Already running", __func__);
+        return CA_STATUS_OK;
+    }
 
     bool isRunning = false;
     bt_error_e err = bt_adapter_is_service_used(OIC_EDR_SERVICE_ID, &isRunning);
@@ -103,6 +109,12 @@ CAResult_t CAEDRServerStop()
     }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAEDRServerInitialize(ca_thread_pool_t handle)
+{
+    OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "CAEDRServerInitialize");
     return CA_STATUS_OK;
 }
 

@@ -19,9 +19,14 @@
  ******************************************************************/
 
 #include "JniRcsResourceContainer.h"
+#include "JniRcsResourceAttributes.h"
 #include "JavaClasses.h"
 #include "JNIEnvWrapper.h"
 #include "Log.h"
+#include "JniRcsValue.h"
+#include "JavaExceptions.h"
+#include "JniRcsValue.h"
+#include  "JniBundleResource.h"
 
 #define LOG_TAG "JNI-Main"
 
@@ -46,7 +51,11 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     try
     {
         initJavaClasses(&envWrapper);
+        initJavaExceptions(&envWrapper);
+        initRCSValue(&envWrapper);
         initRCSResourceContainer(&envWrapper);
+        initRCSResourceAttributes(&envWrapper);
+        initRCSJniBundleResource(&envWrapper);
     }
     catch (const JavaException &)
     {

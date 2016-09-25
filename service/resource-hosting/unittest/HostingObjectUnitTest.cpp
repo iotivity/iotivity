@@ -30,56 +30,70 @@ using namespace OIC::Service;
 
 namespace
 {
-    std::string HOSTING_INTERFACETYPE = "oic.r.resourcehosting";
-    std::string TEST_ATT_KEY = "Temperature";
-    bool isDeleted = false;
-    void onDestroy()
-    {
-        isDeleted = true;
-    }
-    void onDiscoveryResource(RCSRemoteResourceObject::Ptr){ }
+    const std::string HOSTING_RESOURCE_TYPE = "oic.r.resourcehosting";
+    const std::string TEST_ATT_KEY = "Temperature";
 
+    bool isStarted = false;
+    bool isFinished = false;
+
+    ResourceEncapsulationTestSimulator testObject;
+    RCSRemoteResourceObject::Ptr remoteObject;
+
+    HostingObject::Ptr instance;
+    RCSRemoteResourceObject::Ptr discoveredResource;
+
+    std::condition_variable responseCon;
+
+    void onDestroy() { }
+    void onDiscoveryResource(RCSRemoteResourceObject::Ptr){ }
     void onUpdatedCache(const RCSResourceAttributes &) { }
+    void onSetAttributes(const RCSResourceAttributes &, int) { }
+
+    void setup()
+    {
+        if(!isStarted)
+        {
+            testObject.defaultRunSimulator();
+            remoteObject = testObject.getRemoteResource();
+
+            instance = HostingObject::createHostingObject(
+                        remoteObject, &onDestroy);
+
+            testObject.getResourceServer()->setAttribute(
+                    "Temperature", RCSResourceAttributes::Value((int)0));
+
+            isStarted = true;
+        }
+    }
+
+    void tearDown()
+    {
+        if(isFinished)
+        {
+            testObject.destroy();
+            instance.reset();
+            isStarted = false;
+        }
+    }
 }
 
 class HostingObjectTest : public TestWithMock
 {
 public:
-    ResourceEncapsulationTestSimulator::Ptr testObject;
-    RCSRemoteResourceObject::Ptr remoteObject;
-
     std::mutex mutexForCondition;
-    std::condition_variable responseCon;
 
 protected:
 
     void SetUp()
     {
         TestWithMock::SetUp();
-
-        testObject = std::make_shared<ResourceEncapsulationTestSimulator>();
-        testObject->defaultRunSimulator();
-        remoteObject = testObject->getRemoteResource();
-
-        isDeleted = false;
+        setup();
     }
 
     void TearDown()
     {
         TestWithMock::TearDown();
-
-        if(remoteObject.use_count() > 0)
-        {
-            if(remoteObject->isCaching())
-            {
-                remoteObject->stopCaching();
-            }
-            if(remoteObject->isMonitoring())
-            {
-                remoteObject->stopMonitoring();
-            }
-        }
-        testObject->destroy();
+        tearDown();
     }
 
 public:
@@ -98,83 +112,52 @@ public:
 
 TEST_F(HostingObjectTest, startCachingAtInitialize)
 {
-    HostingObject::Ptr instance = HostingObject::createHostingObject(
-            remoteObject, &onDestroy);
-
     EXPECT_TRUE(remoteObject->isCaching());
 }
 
 TEST_F(HostingObjectTest, startMonitoringAtInitialize)
 {
-    HostingObject::Ptr instance = HostingObject::createHostingObject(
-            remoteObject, onDestroy);
-
     ASSERT_TRUE(remoteObject->isMonitoring());
 }
 
 TEST_F(HostingObjectTest, getRemoteResourceisValid)
 {
-    HostingObject::Ptr instance = HostingObject::createHostingObject(
-            remoteObject, onDestroy);
-
     ASSERT_EQ(remoteObject->getUri(), instance->getRemoteResource()->getUri());
 }
 
 TEST_F(HostingObjectTest, createMirroredServer)
 {
-    int waitForResponse = 2000;
+    int waitForResponse = 1000;
     std::string uri = "";
 
-    HostingObject::Ptr instance = HostingObject::createHostingObject(remoteObject, onDestroy);
-    waitForCondition();
-    testObject->getResourceServer()->
-            setAttribute(TEST_ATT_KEY, RCSResourceAttributes::Value(int(10)));
-
     std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask = { };
 
+    waitForCondition(waitForResponse);
     mocks.OnCallFunc(onDiscoveryResource).Do(
-            [this, &uri, &discoveryTask](RCSRemoteResourceObject::Ptr ptr)
+            [this, &uri, &discoveryTask]
+             (RCSRemoteResourceObject::Ptr ptr)
             {
-                if(ptr->getUri() == testObject->getHostedServerUri())
+                if(ptr->getUri() == testObject.getHostedServerUri())
                 {
                     uri = ptr->getUri();
-                    discoveryTask->cancel();
-                    notifyCondition();
-                }
-            });
-
-    discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
-            RCSAddress::multicast(), HOSTING_INTERFACETYPE, onDiscoveryResource);
-    waitForCondition(waitForResponse);
-
-    EXPECT_EQ(testObject->getHostedServerUri(), uri);
-}
-
-TEST_F(HostingObjectTest, UpdateCachedDataWhenChangedOriginResource)
-{
-    int waitForResponse = 1000;
-    HostingObject::Ptr instance = HostingObject::createHostingObject(remoteObject, onDestroy);
-    std::this_thread::sleep_for(std::chrono::milliseconds {waitForResponse});
-
-    std::unique_ptr<RCSDiscoveryManager::DiscoveryTask> discoveryTask = { };
-    RCSRemoteResourceObject::Ptr discoveredResource = { };
-
-    mocks.OnCallFunc(onDiscoveryResource).Do(
-            [this, &discoveredResource, &discoveryTask](RCSRemoteResourceObject::Ptr ptr)
-            {
-                if(ptr->getUri() == testObject->getHostedServerUri())
-                {
                     discoveredResource = ptr;
                     discoveryTask->cancel();
                     notifyCondition();
                 }
             });
 
-    discoveryTask =  RCSDiscoveryManager::getInstance()->discoverResourceByType(
-            RCSAddress::multicast(), HOSTING_INTERFACETYPE, onDiscoveryResource);
+    discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
+            RCSAddress::multicast(), "/oic/res", HOSTING_RESOURCE_TYPE, onDiscoveryResource);
     waitForCondition(waitForResponse);
 
+    EXPECT_EQ(testObject.getHostedServerUri(), uri);
+}
+
+TEST_F(HostingObjectTest, UpdateCachedDataWhenChangedOriginResource)
+{
+    int waitForResponse = 1000;
     RCSResourceAttributes::Value result = { };
+
     mocks.OnCallFunc(onUpdatedCache).Do(
             [this, &result](const RCSResourceAttributes & att)
             {
@@ -186,9 +169,46 @@ TEST_F(HostingObjectTest, UpdateCachedDataWhenChangedOriginResource)
     std::this_thread::sleep_for(std::chrono::milliseconds {waitForResponse});
 
     RCSResourceAttributes::Value settingValue = 10;
-    testObject->getResourceServer()->setAttribute(TEST_ATT_KEY, settingValue);
+    testObject.getResourceServer()->setAttribute(TEST_ATT_KEY, settingValue);
     waitForCondition(waitForResponse);
+
+    isFinished = true;
 
     EXPECT_EQ(result.toString(), settingValue.toString());
 
+}
+
+TEST_F(HostingObjectTest, SetDataToMirroredResource)
+{
+    int waitForResponse = 1000;
+    RCSResourceAttributes::Value result = { };
+
+    mocks.ExpectCallFunc(onSetAttributes).Do(
+            [this, & result](const RCSResourceAttributes &att, int)
+            {
+                result = att.at(TEST_ATT_KEY);
+                notifyCondition();
+            });
+    RCSResourceAttributes setAttrs;
+    RCSResourceAttributes::Value settingValue = 20;
+    setAttrs[TEST_ATT_KEY] = settingValue;
+    discoveredResource->setRemoteAttributes(setAttrs, onSetAttributes);
+    waitForCondition(waitForResponse);
+
+    EXPECT_EQ(result.toString(), settingValue.toString());
+}
+
+TEST_F(HostingObjectTest, ExpectCallOnDestroyWhenStopHostingObject)
+{
+    int waitForResponse = 1000;
+
+    mocks.ExpectCallFunc(onDestroy).Do(
+            []()
+            {
+                responseCon.notify_all();
+            });
+
+    testObject.destroy();
+    instance.reset();
+    waitForCondition(waitForResponse);
 }

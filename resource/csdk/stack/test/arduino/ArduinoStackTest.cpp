@@ -45,17 +45,17 @@ PROGMEM const char multiLineMsg[] = "this is a DEBUG message\non multiple\nlines
 
 void EXPECT_EQ(int a, int b)  {
   if (a == b) {
-    OC_LOG(INFO, TAG, ("PASS"));
+    OIC_LOG(INFO, TAG, ("PASS"));
   } else {
-    OC_LOG(ERROR, TAG, ("FAIL"));
+    OIC_LOG(ERROR, TAG, ("FAIL"));
   }
 }
 
 void EXPECT_STREQ(const char *a, const char *b)  {
   if (strcmp(a, b) == 0) {
-    OC_LOG(INFO, TAG, ("PASS"));
+    OIC_LOG(INFO, TAG, ("PASS"));
   } else {
-    OC_LOG(ERROR, TAG, ("FAIL"));
+    OIC_LOG(ERROR, TAG, ("FAIL"));
   }
 }
 //-----------------------------------------------------------------------------
@@ -63,31 +63,31 @@ void EXPECT_STREQ(const char *a, const char *b)  {
 //-----------------------------------------------------------------------------
 #if 0  // Turn off logger tests
 void test0() {
-    OC_LOG(INFO, tag, msg);
+    OIC_LOG(INFO, tag, msg);
 }
 
 void test1() {
-    OC_LOG(INFO, 0, msg);
+    OIC_LOG(INFO, 0, msg);
 }
 
 void test2() {
-    OC_LOG(INFO, tag, 0);
+    OIC_LOG(INFO, tag, 0);
 }
 
 void test3() {
-    OC_LOG(INFO, 0, 0);
+    OIC_LOG(INFO, 0, 0);
 }
 
 void test4() {
-    OC_LOG(DEBUG, tag, debugMsg);
-    OC_LOG(INFO, tag, infoMsg);
-    OC_LOG(WARNING, tag, warningMsg);
-    OC_LOG(ERROR, tag, errorMsg);
-    OC_LOG(FATAL, tag, fatalMsg);
+    OIC_LOG(DEBUG, tag, debugMsg);
+    OIC_LOG(INFO, tag, infoMsg);
+    OIC_LOG(WARNING, tag, warningMsg);
+    OIC_LOG(ERROR, tag, errorMsg);
+    OIC_LOG(FATAL, tag, fatalMsg);
 }
 
 void test5() {
-    OC_LOG(DEBUG, tag, multiLineMsg);
+    OIC_LOG(DEBUG, tag, multiLineMsg);
 }
 
 
@@ -97,69 +97,69 @@ void test6() {
     for (int i = 0; i < (int)(sizeof buffer); i++) {
         buffer[i] = i;
     }
-    OC_LOG_BUFFER(DEBUG, tag, buffer, sizeof buffer);
+    OIC_LOG_BUFFER(DEBUG, tag, buffer, sizeof buffer);
 
     // Log buffer, 128 bytes is a good boundary (8 rows of 16 values)
     uint8_t buffer1[128];
     for (int i = 0; i < (int)(sizeof buffer1); i++) {
         buffer1[i] = i;
     }
-    OC_LOG_BUFFER(DEBUG, tag, buffer1, sizeof buffer1);
+    OIC_LOG_BUFFER(DEBUG, tag, buffer1, sizeof buffer1);
 
     // 1 below 128 byte boundary
     uint8_t buffer2[127];
     for (int i = 0; i < (int)(sizeof buffer2); i++) {
         buffer2[i] = i;
     }
-    OC_LOG_BUFFER(DEBUG, tag, buffer2, sizeof buffer2);
+    OIC_LOG_BUFFER(DEBUG, tag, buffer2, sizeof buffer2);
 
     // 1 above 128 byte boundary
     uint8_t buffer3[129];
     for (int i = 0; i < (int)(sizeof buffer3); i++) {
         buffer3[i] = i;
     }
-    OC_LOG_BUFFER(DEBUG, tag, buffer3, sizeof buffer3);
+    OIC_LOG_BUFFER(DEBUG, tag, buffer3, sizeof buffer3);
 }
 #endif
 
 extern "C" void asyncDoResourcesCallback(OCStackResult result, OCRepresentationHandle representation) {
-    OC_LOG(INFO, TAG, ("Entering asyncDoResourcesCallback"));
+    OIC_LOG(INFO, TAG, ("Entering asyncDoResourcesCallback"));
 
     EXPECT_EQ(OC_STACK_OK, result);
     OCResource *resource = (OCResource *)representation;
-    OC_LOG_V(INFO, TAG, "URI = %s", resource->uri);
+    OIC_LOG_V(INFO, TAG, "URI = %s", resource->uri);
     EXPECT_STREQ(SERVICE_URI, resource->uri);
 }
 
 void test0() {
-    OC_LOG(INFO, TAG, ("test0"));
+    OIC_LOG(INFO, TAG, ("test0"));
     EXPECT_EQ(OC_STACK_OK, OCInit(0, 5683, OC_SERVER));
 }
 
 void test1() {
-    OC_LOG(INFO, TAG, ("test1"));
+    OIC_LOG(INFO, TAG, ("test1"));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 0, OC_SERVER));
 }
 
 void test2() {
-    OC_LOG(INFO, TAG, ("test2"));
+    OIC_LOG(INFO, TAG, ("test2"));
     EXPECT_EQ(OC_STACK_OK, OCInit(0, 0, OC_SERVER));
 }
 
 void test3() {
-    OC_LOG(INFO, TAG, ("test3"));
+    OIC_LOG(INFO, TAG, ("test3"));
     EXPECT_EQ(OC_STACK_ERROR, OCInit(0, 0, (OCMode)10));
 }
 
 void test4() {
-    OC_LOG(INFO, TAG, ("test4"));
+    OIC_LOG(INFO, TAG, ("test4"));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT_SERVER));
 }
 
 void test5() {
-    OC_LOG(INFO, TAG, ("test5"));
+    OIC_LOG(INFO, TAG, ("test5"));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
     EXPECT_EQ(OC_STACK_OK, OCDoResource(OC_REST_GET, OC_EXPLICIT_DEVICE_DISCOVERY_URI, 0, 0, asyncDoResourcesCallback), NULL, 0);
     EXPECT_EQ(OC_STACK_OK, OCUpdateResources(SERVICE_URI));
@@ -167,14 +167,14 @@ void test5() {
 }
 
 void test6() {
-    OC_LOG(INFO, TAG, ("test6"));
+    OIC_LOG(INFO, TAG, ("test6"));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
     EXPECT_EQ(OC_STACK_OK, OCStop());
     EXPECT_EQ(OC_STACK_ERROR, OCStop());
 }
 
 void test7() {
-    OC_LOG(INFO, TAG, ("test7"));
+    OIC_LOG(INFO, TAG, ("test7"));
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT));
     EXPECT_EQ(OC_STACK_OK, OCDoResource(OC_REST_GET, OC_EXPLICIT_DEVICE_DISCOVERY_URI, 0, 0, asyncDoResourcesCallback), NULL, 0);
     EXPECT_EQ(OC_STACK_INVALID_URI, OCUpdateResources(0));
@@ -187,7 +187,7 @@ void test7() {
 void setup()
 {
     // Add your initialization code here
-    OC_LOG_INIT();
+    OIC_LOG_INIT();
 
     test0();
     delay(2000);

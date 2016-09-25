@@ -19,10 +19,9 @@
 # *****************************************************************/
 
 Import('env')
-env.AppendUnique(TIMER_SRC = 'timer.c')
 
-libtimer = env.StaticLibrary('libtimer', env.get('TIMER_SRC'), OBJPREFIX='libtimer_')
-env.InstallTarget(libtimer, 'libtimer');
+timer_src = [ 'timer.c' ]
 
-
+libtimer = env.StaticLibrary('timer', timer_src, OBJPREFIX='libtimer_')
+env.InstallTarget(libtimer, 'timer');
 

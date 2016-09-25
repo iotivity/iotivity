@@ -36,13 +36,15 @@
 #include "oic_string.h"
 #include "org_iotivity_ca_CaIpInterface.h"
 
-#define TAG "IP_MONITOR"
+#define TAG "OIC_CA_IP_MONITOR"
+
+static CAIPConnectionStateChangeCallback g_networkChangeCallback;
 
 static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family,
-                                         uint32_t addr, int flags);
+                                         const char *addr, int flags);
 
 static CAResult_t CAAddInterfaceItem(u_arraylist_t *iflist, int index,
-                            const char *name, int family, uint32_t addr, int flags);
+                                     const char *name, int family, const char *addr, int flags);
 
 CAResult_t CAIPJniInit();
 
@@ -67,6 +69,11 @@ CAResult_t CAIPStopNetworkMonitor()
 int CAGetPollingInterval(int interval)
 {
     return interval;
+}
+
+void CAIPSetNetworkMonitorCallback(CAIPConnectionStateChangeCallback callback)
+{
+    g_networkChangeCallback = callback;
 }
 
 CAInterface_t *CAFindInterfaceChange()
@@ -116,8 +123,6 @@ CAInterface_t *CAFindInterfaceChange()
     {
         struct ifreq* item = &ifr[i];
         char *name = item->ifr_name;
-        struct sockaddr_in *sa4 = (struct sockaddr_in *)&item->ifr_addr;
-        uint32_t ipv4addr = sa4->sin_addr.s_addr;
 
         if (ioctl(s, SIOCGIFFLAGS, item) < 0)
         {
@@ -160,7 +165,12 @@ CAInterface_t *CAFindInterfaceChange()
             continue;
         }
 
-        foundNewInterface = CANewInterfaceItem(ifIndex, name, AF_INET, ipv4addr, flags);
+        // Get address of network interface.
+        char addr[MAX_ADDR_STR_SIZE_CA] = { 0 };
+        struct sockaddr_in *sa = (struct sockaddr_in *)&item->ifr_addr;
+        inet_ntop(AF_INET, (void *)&(sa->sin_addr), addr, sizeof(addr));
+
+        foundNewInterface = CANewInterfaceItem(ifIndex, name, AF_INET, addr, flags);
     }
 
     OICFree(previous);
@@ -206,11 +216,8 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
     caglobals.ip.nm.numIfItems = 0;
     for (size_t i = 0; i < interfaces; i++)
     {
-        CAResult_t result = CA_STATUS_OK;
         struct ifreq* item = &ifr[i];
         char *name = item->ifr_name;
-        struct sockaddr_in *sa4 = (struct sockaddr_in *)&item->ifr_addr;
-        uint32_t ipv4addr = sa4->sin_addr.s_addr;
 
         if (ioctl(s, SIOCGIFFLAGS, item) < 0)
         {
@@ -237,15 +244,20 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
             continue;
         }
 
+        // Get address of network interface.
+        char addr[MAX_ADDR_STR_SIZE_CA] = { 0 };
+        struct sockaddr_in *sa = (struct sockaddr_in *)&item->ifr_addr;
+        inet_ntop(AF_INET, (void *)&(sa->sin_addr), addr, sizeof(addr));
+
         // Add IPv4 interface
-        result = CAAddInterfaceItem(iflist, ifindex, name, AF_INET, ipv4addr, flags);
+        CAResult_t result = CAAddInterfaceItem(iflist, ifindex, name, AF_INET, addr, flags);
         if (CA_STATUS_OK != result)
         {
             goto exit;
         }
 
         // Add IPv6 interface
-        result = CAAddInterfaceItem(iflist, ifindex, name, AF_INET6, ipv4addr, flags);
+        result = CAAddInterfaceItem(iflist, ifindex, name, AF_INET6, addr, flags);
         if (CA_STATUS_OK != result)
         {
             goto exit;
@@ -259,7 +271,7 @@ exit:
 }
 
 static CAResult_t CAAddInterfaceItem(u_arraylist_t *iflist, int index,
-                            const char *name, int family, uint32_t addr, int flags)
+                                     const char *name, int family, const char *addr, int flags)
 {
     CAInterface_t *ifitem = CANewInterfaceItem(index, name, family, addr, flags);
     if (!ifitem)
@@ -278,7 +290,7 @@ static CAResult_t CAAddInterfaceItem(u_arraylist_t *iflist, int index,
 }
 
 static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family,
-                                         uint32_t addr, int flags)
+                                         const char *addr, int flags)
 {
     CAInterface_t *ifitem = (CAInterface_t *)OICCalloc(1, sizeof (CAInterface_t));
     if (!ifitem)
@@ -290,7 +302,7 @@ static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family
     OICStrcpy(ifitem->name, sizeof (ifitem->name), name);
     ifitem->index = index;
     ifitem->family = family;
-    ifitem->ipv4addr = addr;
+    OICStrcpy(ifitem->addr, sizeof (ifitem->addr), addr);
     ifitem->flags = flags;
 
     return ifitem;
@@ -314,23 +326,17 @@ CAResult_t CAIPJniInit()
         return CA_STATUS_FAILED;
     }
 
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     if ((*jvm)->GetEnv(jvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
     {
         OIC_LOG(ERROR, TAG, "Could not get JNIEnv pointer");
         return CA_STATUS_FAILED;
     }
 
-    jclass cls_Context = (*env)->FindClass(env, "android/content/Context");
-    if (!cls_Context)
-    {
-        OIC_LOG(ERROR, TAG, "Could not get context object class");
-        return CA_STATUS_FAILED;
-    }
+    jmethodID mid_getApplicationContext = CAGetJNIMethodID(env, "android/content/Context",
+                                                           "getApplicationContext",
+                                                           "()Landroid/content/Context;");
 
-    jmethodID mid_getApplicationContext = (*env)->GetMethodID(env, cls_Context,
-                                                                "getApplicationContext",
-                                                                "()Landroid/content/Context;");
     if (!mid_getApplicationContext)
     {
         OIC_LOG(ERROR, TAG, "Could not get getApplicationContext method");
@@ -379,7 +385,7 @@ static CAResult_t CAIPDestroyJniInterface()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*jvm)->GetEnv(jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -444,9 +450,9 @@ Java_org_iotivity_ca_CaIpInterface_caIpStateEnabled(JNIEnv *env, jclass class)
 {
     (void)env;
     (void)class;
-    OIC_LOG(DEBUG, TAG, "caIpStateEnabled");
 
-    CAWakeUpForChange();
+    OIC_LOG(DEBUG, TAG, "Wifi is in Activated State");
+    g_networkChangeCallback(CA_ADAPTER_IP, CA_INTERFACE_UP);
 }
 
 JNIEXPORT void JNICALL
@@ -454,13 +460,7 @@ Java_org_iotivity_ca_CaIpInterface_caIpStateDisabled(JNIEnv *env, jclass class)
 {
     (void)env;
     (void)class;
-    OIC_LOG(DEBUG, TAG, "caIpStateDisabled");
 
-    u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
-    if (!iflist)
-    {
-        OIC_LOG_V(ERROR, TAG, "get interface info failed");
-        return;
-    }
-    u_arraylist_destroy(iflist);
+    OIC_LOG(DEBUG, TAG, "Wifi is in Deactivated State");
+    g_networkChangeCallback(CA_ADAPTER_IP, CA_INTERFACE_DOWN);
 }

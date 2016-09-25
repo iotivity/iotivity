@@ -22,6 +22,9 @@
 
 #include <list>
 #include <string.h>
+#include <iostream>
+#include <boost/thread.hpp>
+#include "NotificationReceiver.h"
 
 #include "InternalTypes.h"
 
@@ -29,9 +32,9 @@ namespace OIC
 {
     namespace Service
     {
-        BundleResource::BundleResource()
+        BundleResource::BundleResource() : m_pNotiReceiver(nullptr), m_resourceAttributes_mutex()
         {
-            m_pNotiReceiver = nullptr;
+
         }
 
         BundleResource::~BundleResource()
@@ -47,57 +50,98 @@ namespace OIC
         std::list< std::string > BundleResource::getAttributeNames()
         {
             std::list< std::string > ret;
-            for (RCSResourceAttributes::iterator it = m_resourceAttributes.begin();
-                 it != m_resourceAttributes.end(); ++it)
-            {
-                ret.push_back(it->key());
+
+            for (auto &it : m_resourceAttributes){
+                ret.push_back(it.key());
             }
+
             return ret;
         }
 
-        RCSResourceAttributes &BundleResource::getAttributes()
+        const RCSResourceAttributes BundleResource::getAttributes()
         {
-            return m_resourceAttributes;
+            std::lock_guard<std::mutex> lock(m_resourceAttributes_mutex);
+            return RCSResourceAttributes(m_resourceAttributes);
         }
 
-        void BundleResource::setAttributes(RCSResourceAttributes &attrs)
+        void BundleResource::setAttributes(const RCSResourceAttributes &attrs)
         {
-            for (RCSResourceAttributes::iterator it = attrs.begin(); it != attrs.end(); ++it)
-            {
-                OC_LOG_V(INFO, CONTAINER_TAG, "set attribute \(%s)'",
-                         std::string(it->key() + "\', with " + it->value().toString()).c_str());
+            setAttributes(attrs, true);
+        }
 
-                m_resourceAttributes[it->key()] = it->value();
+        void BundleResource::setAttributes(const RCSResourceAttributes &attrs, bool notify)
+        {
+            std::lock_guard<std::mutex> lock(m_resourceAttributes_mutex);
+
+            for (auto &it : attrs)
+            {
+                OIC_LOG_V(INFO, CONTAINER_TAG, "set attribute \(%s)'",
+                           std::string(it.key() + "\', with " + it.value().toString()).c_str());
+
+                m_resourceAttributes[it.key()] = it.value();
             }
+
+            if(notify){
+                // asynchronous notification
+                auto notifyFunc = [](NotificationReceiver *notificationReceiver,
+                                        std::string uri)
+                {
+                    if (notificationReceiver){
+                        notificationReceiver->onNotificationReceived(uri);
+                    }
+                };
+                auto f = std::bind(notifyFunc, m_pNotiReceiver, m_uri);
+                boost::thread notifyThread(f);
+            }
+
         }
 
         void BundleResource::setAttribute(const std::string &key,
                                           RCSResourceAttributes::Value &&value, bool notify)
         {
-            OC_LOG_V(INFO, CONTAINER_TAG, "set attribute \(%s)'", std::string(key + "\', with " +
+            OIC_LOG_V(INFO, CONTAINER_TAG, "set attribute \(%s)'", std::string(key + "\', with " +
                      value.toString()).c_str());
+            std::lock_guard<std::mutex> lock(m_resourceAttributes_mutex);
+            m_resourceAttributes[key] = std::move(value);
 
-            m_resourceAttributes[key] = value;
+            if(notify){
+                // asynchronous notification
+                auto notifyFunc = [](NotificationReceiver *notificationReceiver,
+                                        std::string uri)
+                {
+                    if (notificationReceiver){
+                        notificationReceiver->onNotificationReceived(uri);
+                    }
+                };
+                auto f = std::bind(notifyFunc, m_pNotiReceiver, m_uri);
+                boost::thread notifyThread(f);
+            }
 
-            sendNotification();
         }
 
-        void BundleResource::setAttribute(const std::string &key, RCSResourceAttributes::Value &&value)
+        void BundleResource::setAttribute(const std::string &key,
+                                                 RCSResourceAttributes::Value &value, bool notify)
+        {
+            setAttribute(key, RCSResourceAttributes::Value(value), notify);
+        }
+
+        void BundleResource::setAttribute(const std::string &key,
+                RCSResourceAttributes::Value &&value)
         {
             setAttribute(key, std::move(value), true);
         }
 
-        RCSResourceAttributes::Value BundleResource::getAttribute(const std::string &key)
+        void BundleResource::setAttribute(const std::string &key,
+                        RCSResourceAttributes::Value &value)
         {
-            OC_LOG_V(INFO, CONTAINER_TAG, "get attribute \'(%s)" , std::string(key + "\'").c_str());
-
-            return m_resourceAttributes.at(key);
+            setAttribute(key, value, true);
         }
 
-        void BundleResource::sendNotification()
+        RCSResourceAttributes::Value BundleResource::getAttribute(const std::string &key)
         {
-            if (m_pNotiReceiver)
-                m_pNotiReceiver->onNotificationReceived(m_uri);
+            OIC_LOG_V(INFO, CONTAINER_TAG, "get attribute \'(%s)" , std::string(key + "\'").c_str());
+            std::lock_guard<std::mutex> lock(m_resourceAttributes_mutex);
+            return m_resourceAttributes.at(key);
         }
     }
 }

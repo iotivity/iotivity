@@ -18,19 +18,27 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <iostream>
 #include <sstream>
+#include <getopt.h>
 #include "ocstack.h"
 #include "logger.h"
 #include "occlientslow.h"
 #include "oic_string.h"
 #include "ocpayload.h"
 #include "payload_logging.h"
+#include "common.h"
 
 // Tracking user input
 static int UnicastDiscovery = 0;
@@ -41,10 +49,9 @@ static std::string coapServerResource = "/a/led";
 
 //The following variable determines the interface protocol (IP, etc)
 //to be used for sending unicast messages. Default set to IP.
-static OCConnectivityType AdapterType = CT_ADAPTER_IP;
+static OCConnectivityType adapterType = CT_ADAPTER_IP;
 static OCDevAddr endpoint;
 static const char *RESOURCE_DISCOVERY_QUERY = "%s/oic/res";
-void StripNewLineChar(char* str);
 
 int gQuitFlag = 0;
 
@@ -59,15 +66,15 @@ void handleSigInt(int signum)
 
 static void PrintUsage()
 {
-    OC_LOG(INFO, TAG, "Usage : occlient -c <0|1> -u <0|1> -t <1|2|3>");
-    OC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
-    OC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
-    OC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
-    OC_LOG(INFO, TAG, "-t 1 : Discover Resources");
-    OC_LOG(INFO, TAG, "-t 2 : Discover Resources and Initiate Nonconfirmable Get Request");
-    OC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Confirmable Get Request");
-    OC_LOG(INFO, TAG, "-t 4 : Discover Resources and Initiate NonConfirmable Put Request");
-    OC_LOG(INFO, TAG, "-t 5 : Discover Resources and Initiate Confirmable Put Request");
+    OIC_LOG(INFO, TAG, "Usage : occlient -c <0|1> -u <0|1> -t <1|2|3>");
+    OIC_LOG(INFO, TAG, "-c 0 : Default auto-selection");
+    OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
+    OIC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
+    OIC_LOG(INFO, TAG, "-t 1 : Discover Resources");
+    OIC_LOG(INFO, TAG, "-t 2 : Discover Resources and Initiate Nonconfirmable Get Request");
+    OIC_LOG(INFO, TAG, "-t 3 : Discover Resources and Initiate Confirmable Get Request");
+    OIC_LOG(INFO, TAG, "-t 4 : Discover Resources and Initiate NonConfirmable Put Request");
+    OIC_LOG(INFO, TAG, "-t 5 : Discover Resources and Initiate Confirmable Put Request");
 }
 
 OCPayload* putPayload()
@@ -99,11 +106,11 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
 
     ret = OCDoResource(NULL, method, query.str().c_str(), dest,
             (method == OC_REST_PUT) ? putPayload() : NULL,
-            AdapterType, qos, &cbData, options, numOptions);
+            adapterType, qos, &cbData, options, numOptions);
 
     if (ret != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "OCDoResource returns error %d with method %d", ret, method);
+        OIC_LOG_V(ERROR, TAG, "OCDoResource returns error %d with method %d", ret, method);
     }
 
     return ret;
@@ -114,33 +121,33 @@ OCStackApplicationResult getReqCB(void* ctx,
 {
     if(clientResponse == NULL)
     {
-        OC_LOG(INFO, TAG, "The clientResponse is NULL");
+        OIC_LOG(INFO, TAG, "The clientResponse is NULL");
         return   OC_STACK_DELETE_TRANSACTION;
     }
     if(ctx == (void*)DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG(INFO, TAG, "Callback Context for GET query recvd successfully");
+        OIC_LOG(INFO, TAG, "Callback Context for GET query recvd successfully");
     }
 
-    OC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-    OC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-    OC_LOG(INFO, TAG, "Get Response =============> ");
-    OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+    OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
+    OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
+    OIC_LOG(INFO, TAG, "Get Response =============> ");
+    OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
 
     if(clientResponse->rcvdVendorSpecificHeaderOptions &&
             clientResponse->numRcvdVendorSpecificHeaderOptions)
     {
-        OC_LOG (INFO, TAG, "Received vendor specific options");
+        OIC_LOG (INFO, TAG, "Received vendor specific options");
         uint8_t i = 0;
         OCHeaderOption * rcvdOptions = clientResponse->rcvdVendorSpecificHeaderOptions;
         for( i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
         {
             if(((OCHeaderOption)rcvdOptions[i]).protocolID == OC_COAP_ID)
             {
-                OC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
+                OIC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
                         ((OCHeaderOption)rcvdOptions[i]).optionID );
 
-                OC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
+                OIC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption)rcvdOptions[i]).optionData,
                     MAX_HEADER_OPTION_DATA_LENGTH);
             }
         }
@@ -154,16 +161,16 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
 {
     if (ctx == (void*) DEFAULT_CONTEXT_VALUE)
     {
-        OC_LOG(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
+        OIC_LOG(INFO, TAG, "Callback Context for DISCOVER query recvd successfully");
     }
 
     if (clientResponse)
     {
-        OC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
+        OIC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
 
-        OC_LOG_V(INFO, TAG, "Discovered @ %s:%u =============> ",
+        OIC_LOG_V(INFO, TAG, "Discovered @ %s:%u =============> ",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
-        OC_LOG_PAYLOAD (INFO, clientResponse->payload);
+        OIC_LOG_PAYLOAD (INFO, clientResponse->payload);
 
         endpoint = clientResponse->devAddr;
 
@@ -193,10 +200,10 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
 
 int InitGetRequest(OCQualityOfService qos)
 {
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+    OIC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
-    OC_LOG_V (INFO, TAG, "Performing GET with query : %s", query.str().c_str());
+    OIC_LOG_V (INFO, TAG, "Performing GET with query : %s", query.str().c_str());
     return (InvokeOCDoResource(query, OC_REST_GET, &endpoint,
                                (qos == OC_HIGH_QOS)? OC_HIGH_QOS : OC_LOW_QOS,
                                getReqCB, NULL, 0));
@@ -204,10 +211,10 @@ int InitGetRequest(OCQualityOfService qos)
 
 int InitPutRequest(OCQualityOfService qos)
 {
-    OC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+    OIC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
-    OC_LOG_V (INFO, TAG, "Performing PUT with query : %s", query.str().c_str());
+    OIC_LOG_V (INFO, TAG, "Performing PUT with query : %s", query.str().c_str());
     return (InvokeOCDoResource(query, OC_REST_PUT, &endpoint,
                                (qos == OC_HIGH_QOS)?  OC_HIGH_QOS:OC_LOW_QOS,
                                getReqCB, NULL, 0));
@@ -222,9 +229,9 @@ int InitDiscovery()
 
     if (UnicastDiscovery)
     {
-        OC_LOG(INFO, TAG, "Enter IP address (with optional port) of the Server hosting resource\n");
-        OC_LOG(INFO, TAG, "IPv4: 192.168.0.15:45454\n");
-        OC_LOG(INFO, TAG, "IPv6: [fe80::20c:29ff:fe1b:9c5]:45454\n");
+        OIC_LOG(INFO, TAG, "Enter IP address (with optional port) of the Server hosting resource\n");
+        OIC_LOG(INFO, TAG, "IPv4: 192.168.0.15:45454\n");
+        OIC_LOG(INFO, TAG, "IPv6: [fe80::20c:29ff:fe1b:9c5]:45454\n");
 
         if (fgets(ipaddr, sizeof (ipaddr), stdin))
         {
@@ -232,7 +239,7 @@ int InitDiscovery()
         }
         else
         {
-            OC_LOG(ERROR, TAG, "!! Bad input for IP address. !!");
+            OIC_LOG(ERROR, TAG, "!! Bad input for IP address. !!");
             return OC_STACK_INVALID_PARAM;
         }
     }
@@ -247,7 +254,7 @@ int InitDiscovery()
                        OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack resource error");
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
     return ret;
 }
@@ -286,40 +293,40 @@ int main(int argc, char* argv[])
     /* Initialize OCStack*/
     if (OCInit(NULL, 0, OC_CLIENT) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack init error");
+        OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
 
     if(ConnectivityType == CT_ADAPTER_DEFAULT || ConnectivityType == CT_IP)
     {
-        AdapterType = CT_ADAPTER_IP;
+        adapterType = CT_ADAPTER_IP;
     }
     else
     {
-        OC_LOG(INFO, TAG, "Default Connectivity type selected...");
-        AdapterType = CT_ADAPTER_IP;
+        OIC_LOG(INFO, TAG, "Default Connectivity type selected...");
+        adapterType = CT_ADAPTER_IP;
     }
 
     InitDiscovery();
 
     // Break from loop with Ctrl+C
-    OC_LOG(INFO, TAG, "Entering occlient main loop...");
+    OIC_LOG(INFO, TAG, "Entering occlient main loop...");
     signal(SIGINT, handleSigInt);
     while (!gQuitFlag)
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
 
         sleep(2);
     }
-    OC_LOG(INFO, TAG, "Exiting occlient main loop...");
+    OIC_LOG(INFO, TAG, "Exiting occlient main loop...");
 
     if (OCStop() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack stop error");
+        OIC_LOG(ERROR, TAG, "OCStack stop error");
     }
 
     return 0;

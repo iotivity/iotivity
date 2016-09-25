@@ -22,91 +22,94 @@
 #define SIMULATOR_SINGLE_RESOURCE_IMPL_H_
 
 #include "simulator_single_resource.h"
+#include "simulator_resource_model_schema.h"
+#include "request_model.h"
 #include "resource_update_automation_mngr.h"
 #include "RamlParser.h"
 
 class SimulatorResourceFactory;
-class SimulatorSingleResourceImpl : public SimulatorSingleResource
+class SimulatorSingleResourceImpl : public SimulatorSingleResource,
+    public std::enable_shared_from_this<SimulatorSingleResourceImpl>
 {
     public:
         friend class SimulatorResourceFactory;
 
-        std::string getName() const;
-        SimulatorResource::Type getType() const;
-        std::string getURI() const;
-        std::string getResourceType() const;
-        std::vector<std::string> getInterface() const;
-        void setInterface(const std::vector<std::string> &interfaces);
         void setName(const std::string &name);
         void setURI(const std::string &uri);
         void setResourceType(const std::string &resourceType);
-        void addInterface(std::string interfaceType);
+        void setInterface(const std::string &interfaceType);
+        void setInterface(const std::vector<std::string> &interfaceTypes);
+        void addInterface(const std::string &interfaceType);
         void setObservable(bool state);
+        void setDiscoverable(bool state);
         void setObserverCallback(ObserverCallback callback);
-        bool isObservable();
-        bool isStarted();
+        void setModelChangeCallback(ResourceModelUpdateCallback callback);
+        bool isObservable() const;
+        bool isDiscoverable() const;
+        bool isStarted() const;
         void start();
         void stop();
-        std::vector<ObserverInfo> getObserversList();
-        void notify(int id);
+        SimulatorResourceModel getResourceModel();
+        std::vector<ObserverInfo> getObservers() const;
+        void notify(int observerID);
         void notifyAll();
-        void notify(int id, SimulatorResourceModel &resModel);
-        void notifyAll(SimulatorResourceModel &resModel);
 
-        bool getAttribute(const std::string &attrName,
-                          SimulatorResourceModel::Attribute &attribute);
-        void addAttribute(const SimulatorResourceModel::Attribute &attribute, bool notify = true);
-        bool getAttributeProperty(const std::string &attrName,
-                                  SimulatorResourceModel::AttributeProperty &property);
-        bool setAttributeProperty(const std::string &attrName,
-                                  const SimulatorResourceModel::AttributeProperty &property);
-        bool updateAttributeValue(const SimulatorResourceModel::Attribute &attribute,
+        bool getAttribute(const std::string &attrName, SimulatorResourceAttribute &attribute);
+        std::map<std::string, SimulatorResourceAttribute> getAttributes();
+        bool addAttribute(const SimulatorResourceAttribute &attribute, bool notify = true);
+        bool updateAttributeValue(const SimulatorResourceAttribute &attribute,
                                   bool notify = true);
         bool removeAttribute(const std::string &attrName, bool notify = true);
-        SimulatorResourceModel getResourceModel();
-        void setModelChangeCallback(ResourceModelChangedCallback callback);
-        int startResourceUpdation(AutomationType type, int updateInterval,
-                                  updateCompleteCallback callback);
-        int startAttributeUpdation(const std::string &attrName, AutomationType type,
-                                   int updateInterval, updateCompleteCallback callback);
-        std::vector<int> getResourceUpdationIds();
-        std::vector<int> getAttributeUpdationIds();
+        int startResourceUpdation(AutoUpdateType type, int updateInterval,
+                                  AutoUpdateCompleteCallback callback);
+        int startAttributeUpdation(const std::string &attrName, AutoUpdateType type,
+                                   int updateInterval, AutoUpdateCompleteCallback callback);
+        std::vector<int> getResourceUpdations();
+        std::vector<int> getAttributeUpdations();
         void stopUpdation(const int id);
-        void setResourceModel(const SimulatorResourceModel &resModel);
-        void setPutErrorResponseModel(const SimulatorResourceModel &resModel);
-        void setPostErrorResponseModel(const SimulatorResourceModel &resModel);
-        void setActionType(std::map<RAML::ActionType, RAML::ActionPtr> &actionType);
-        RAML::ActionType getActionType(std::string requestType);
+
+        bool updateResourceModel(const SimulatorResourceModel &reqResModel,
+                                 SimulatorResourceModel &updatedResModel, bool overwrite = false,
+                                 bool notify = true);
         void notifyApp();
-        void notifyApp(SimulatorResourceModel &resModel);
+        void notifyApp(const SimulatorResourceModel &resModel);
 
     private:
         SimulatorSingleResourceImpl();
-        OCEntityHandlerResult handleRequests(std::shared_ptr<OC::OCResourceRequest> request);
-        std::shared_ptr<OC::OCResourceResponse> requestOnBaseLineInterface(
-            std::shared_ptr<OC::OCResourceRequest> request);
-        void resourceModified();
-        bool updateResourceModel(OC::OCRepresentation &ocRep, SimulatorResourceModel &resModel);
-        void addObserver(OC::ObservationInfo ocObserverInfo);
-        void removeObserver(OC::ObservationInfo ocObserverInfo);
+        void setResourceModel(const SimulatorResourceModel &resModel);
+        void setResourceModelSchema(
+            const std::shared_ptr<SimulatorResourceModelSchema> &resModelSchema);
+        void setRequestModel(
+            const std::unordered_map<std::string, std::shared_ptr<RequestModel>> &requestModels);
+        void notify(int observerID, const SimulatorResourceModel &resModel);
+        void notifyAll(const SimulatorResourceModel &resModel);
+        void addObserver(const OC::ObservationInfo &ocObserverInfo);
+        void removeObserver(const OC::ObservationInfo &ocObserverInfo);
         void removeAllObservers();
-
-        SimulatorResource::Type m_type;
-        std::string m_name;
-        std::string m_uri;
-        std::string m_resourceType;
-        std::vector<std::string> m_interfaces;
+        void setCommonProperties(OC::OCRepresentation &ocResRep);
+        OCEntityHandlerResult handleRequests(std::shared_ptr<OC::OCResourceRequest> request);
+        OCEntityHandlerResult handleGET(const std::shared_ptr<OC::OCResourceRequest> &request);
+        OCEntityHandlerResult handlePOST(const std::shared_ptr<OC::OCResourceRequest> &request);
+        OCEntityHandlerResult handlePUT(const std::shared_ptr<OC::OCResourceRequest> &request);
+        OCEntityHandlerResult handleDELETE(const std::shared_ptr<OC::OCResourceRequest> &request);
+        bool isValidInterface(const std::string &interfaceType, const std::string &requestType);
+        OCEntityHandlerResult sendResponse(const std::shared_ptr<OC::OCResourceRequest> &request,
+                                           const int errorCode, OCEntityHandlerResult responseResult);
+        OCEntityHandlerResult sendResponse(const std::shared_ptr<OC::OCResourceRequest> &request,
+                                           const int errorCode, OCEntityHandlerResult responseResult, OC::OCRepresentation &Payload,
+                                           const std::string &interfaceType);
 
         std::recursive_mutex m_objectLock;
-        std::mutex m_modelLock;
+        std::recursive_mutex m_modelLock;
+        std::mutex m_modelSchemaLock;
         SimulatorResourceModel m_resModel;
-        SimulatorResourceModel m_putErrorResModel;
-        SimulatorResourceModel m_postErrorResModel;
-        ResourceModelChangedCallback m_modelCallback;
-        ObserverCallback m_observeCallback;
+        std::shared_ptr<SimulatorResourceModelSchema> m_resModelSchema;
+        std::unordered_map<std::string, std::shared_ptr<RequestModel>> m_requestModels;
         UpdateAutomationMngr m_updateAutomationMgr;
         std::vector<ObserverInfo> m_observersList;
-        std::map<RAML::ActionType , RAML::ActionPtr> m_actionTypes;
+
+        ResourceModelUpdateCallback m_modelCallback;
+        ObserverCallback m_observeCallback;
 
         OCResourceProperty m_property;
         OCResourceHandle m_resourceHandle;

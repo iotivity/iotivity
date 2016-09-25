@@ -31,6 +31,8 @@
 #include "RCSResourceAttributes.h"
 #include "ExpiryTimer.h"
 
+#include "ocrandom.h"
+
 namespace OIC
 {
     namespace Service
@@ -42,10 +44,10 @@ namespace OIC
                 const HeaderOptions &_hos, const ResponseStatement &_rep,
                 int _result, unsigned int _seq, std::weak_ptr<DataCache> rpPtr)
             {
-                std::shared_ptr<DataCache> Ptr = rpPtr.lock();
-                if (Ptr)
+                std::shared_ptr<DataCache> ptr = rpPtr.lock();
+                if (ptr)
                 {
-                    Ptr->onObserve(_hos, _rep, _result, _seq);
+                    ptr->onObserve(_hos, _rep, _result, _seq);
                 }
             }
 
@@ -100,7 +102,7 @@ namespace OIC
                 subscriberList.release();
             }
 
-            if (mode == CACHE_MODE::OBSERVE)
+            if (sResource->isObservable())
             {
                 try
                 {
@@ -184,7 +186,7 @@ namespace OIC
 
         const PrimitiveResourcePtr DataCache::getPrimitiveResource() const
         {
-            return (sResource != nullptr) ? sResource : nullptr;
+            return sResource;
         }
 
         const RCSResourceAttributes DataCache::getCachedData() const
@@ -314,17 +316,15 @@ namespace OIC
         CacheID DataCache::generateCacheID()
         {
             CacheID retID = 0;
-            srand(time(NULL));
-
             while (1)
             {
                 if (findSubscriber(retID).first == 0 && retID != 0)
                 {
                     break;
                 }
-                retID = rand();
-            }
 
+                retID = OCGetRandom();
+            }
             return retID;
         }
 

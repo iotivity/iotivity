@@ -20,6 +20,7 @@
 * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */
 #include "JniOcStack.h"
+#include "JniOnObserveListener.h"
 #include "JniOnPresenceListener.h"
 #include "OCPlatform.h"
 
@@ -33,6 +34,7 @@ class JniOcPresenceHandle
 public:
 
     JniOcPresenceHandle(JniOnPresenceListener* jniListener, OCPresenceHandle presenceHandle);
+    JniOcPresenceHandle(JniOnObserveListener* jniListener, OCPresenceHandle presenceHandle);
     ~JniOcPresenceHandle();
     JniOcPresenceHandle(const JniOcPresenceHandle &) = delete;
     void operator=(const JniOcPresenceHandle &) = delete;
@@ -41,9 +43,11 @@ public:
 
     OCPresenceHandle getOCPresenceHandle();
     JniOnPresenceListener* getJniOnPresenceListener();
+    JniOnObserveListener* getJniOnObserveListener();
 
 private:
     JniOnPresenceListener* m_jniListener;
+    JniOnObserveListener* m_jniObserveListener;
     OCPresenceHandle m_presenceHandle;
 };
 

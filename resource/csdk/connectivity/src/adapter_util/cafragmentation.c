@@ -1,6 +1,6 @@
 /******************************************************************
  *
- * Copyright 2014 Samsung Electronics All Rights Reserved.
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
  *
  *
  *
@@ -28,59 +28,228 @@
 /**
  * Debugging tag for fragmentation module.
  */
-#define CA_FRAGMENTATION_TAG "CA_FRAGMENTATION"
+#define TAG "OIC_CA_FRAG"
 
-CAResult_t CAGenerateHeader(uint8_t *header,
-                            size_t headerLength,
-                            size_t dataLength)
+//packet format define value
+#define CA_BLE_START_POS 7
+#define CA_BLE_START_LEN 1
+#define CA_BLE_SOURCE_PORT_POS 6
+#define CA_BLE_SOURCE_PORT_LEN 7
+#define CA_BLE_SECURE_POS 7
+#define CA_BLE_SECURE_LEN 1
+#define CA_BLE_DESTINATION_PORT_POS 6
+#define CA_BLE_DESTINATION_PORT_LEN 7
+
+/**
+ * This function is used to set value in specific bit position.
+ *
+ * @param[out]  x  Pointer to the octet variable that will contain
+ *                 value in specific bit position.
+ * @param[in]   p  Position which need to embed specific bits(0~7).
+ * @param[in]   n  Length to fill several bits from the position.
+ * @param[in]   v  Value to contain in specific bit position.
+ */
+static void CASetBits(uint8_t *x, unsigned p, unsigned n, unsigned v)
 {
-    OIC_LOG(DEBUG, CA_FRAGMENTATION_TAG, "IN");
-
-    VERIFY_NON_NULL(header, CA_FRAGMENTATION_TAG, "header is NULL");
-
-    if (headerLength < CA_HEADER_LENGTH)
+    if ((p+1) < n)
     {
+        OIC_LOG(ERROR, TAG, "set bits - lower err");
+        return;
+    }
+    else if(~(unsigned)(~0u<<n) < v)
+    {
+        OIC_LOG(ERROR, TAG, "set bits - upper err");
+        return;
+    }
+    *x = (*x & (~(~0u << (p-n+1)))) | (*x & (~0u << (p+1))) | ((v & ~(~0u << n)) << (p-n+1));
+}
+
+/**
+ * This function is used to get value in specific bit position.
+ *
+ * @param[in]   x  Pointer to the octet variable that have infomation
+ *                 to be extracted.
+ * @param[in]   p  Position which need to get specific bits(0~7).
+ * @param[in]   n  Length to get several bits from the position.
+ *
+ * @return @c Extracted value from specific position.
+ */
+static uint8_t CAGetBits(uint8_t x, unsigned p, unsigned n)
+{
+    return (x >> (p + 1 - n)) & ~(~0u << n);
+}
+
+CAResult_t CAGenerateVariableForFragmentation(size_t dataLength,
+                                              uint32_t *midPacketCount,
+                                              size_t *remainingLen,
+                                              size_t *totalLength)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN, dataLength = %d", dataLength);
+
+    size_t remainDataSize = 0;
+    size_t dataOnlyLen =
+        CA_SUPPORTED_BLE_MTU_SIZE - (CA_BLE_HEADER_SIZE + CA_BLE_LENGTH_HEADER_SIZE);
+    //total data size is smaller than 14 byte case.
+    if (dataLength < dataOnlyLen)
+    {
+        remainDataSize = 0;
+    }
+    else
+    {
+        remainDataSize = dataLength - dataOnlyLen;
+    }
+
+    if (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE <= 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "BLE header size shouldn't be bigger than BLE MTU size.");
         return CA_STATUS_FAILED;
     }
 
-    if (dataLength > MAX_DATA_LENGTH_SUPPORTED)
-    {
-        OIC_LOG_V(WARNING,
-                  CA_FRAGMENTATION_TAG,
-                  "Given length is more than %d.  It will be truncated.",
-                  MAX_DATA_LENGTH_SUPPORTED);
-    }
+    *midPacketCount = (uint32_t)remainDataSize / (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE);
+    *remainingLen = (uint32_t)remainDataSize % (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE);
+    uint32_t remainHeaderSize = CA_BLE_HEADER_SIZE * (*midPacketCount + (*remainingLen == 0 ? 0:1));
+    *totalLength = dataLength + (CA_BLE_HEADER_SIZE + CA_BLE_LENGTH_HEADER_SIZE) + remainHeaderSize;
 
-    // Only bother initializing the header section of the buffer.  It
-    // is up to the caller to handle the data section.
-    memset(header, 0, CA_HEADER_LENGTH);
-
-    // If length is more than 4095 then it will be truncated.
-    header[1] = dataLength & 0xFF;
-    dataLength >>= 8;
-    header[0] = dataLength & 0x0F;
-    header[0] = header[0] | 0x40; // Adding version 0100.
-                                  // (Not used. Future use)
-
-    OIC_LOG(DEBUG, CA_FRAGMENTATION_TAG, "OUT");
+    OIC_LOG(DEBUG, TAG, "OUT");
 
     return CA_STATUS_OK;
 }
 
-uint32_t CAParseHeader(const uint8_t *header, size_t length)
+CAResult_t CAGenerateHeader(uint8_t *header,
+                            CABLEPacketStart_t type,
+                            const uint8_t sourcePort,
+                            CABLEPacketSecure_t secure,
+                            const uint8_t destPort)
 {
-    OIC_LOG(DEBUG, CA_FRAGMENTATION_TAG, "IN");
+    OIC_LOG(DEBUG, TAG, "IN");
 
-    VERIFY_NON_NULL_RET(header, CA_FRAGMENTATION_TAG, "header is NULL", 0);
+    VERIFY_NON_NULL(header, TAG, "header is NULL");
 
-    uint32_t dataLen = 0;
-
-    if (length >= CA_HEADER_LENGTH)
+    if (sourcePort > CA_SUPPORTED_BLE_MAX_PORT ||
+        sourcePort < CA_SUPPORTED_BLE_MIN_PORT ||
+        destPort > CA_SUPPORTED_BLE_MAX_PORT)
     {
-        dataLen = ((header[0] & 0x0F) << 8) | (header[1] & 0xFF);
+        OIC_LOG_V(ERROR, TAG, "source port(%d) or destination port(%d) is invalid number!!",
+                sourcePort, destPort);
+        return CA_STATUS_FAILED;
     }
 
-    OIC_LOG(DEBUG, CA_FRAGMENTATION_TAG, "OUT");
+    CASetBits(&header[0], CA_BLE_START_POS, CA_BLE_START_LEN, type);
+    CASetBits(&header[0], CA_BLE_SOURCE_PORT_POS, CA_BLE_SOURCE_PORT_LEN, sourcePort);
+    CASetBits(&header[1], CA_BLE_SECURE_POS, CA_BLE_SECURE_LEN, secure);
+    CASetBits(&header[1], CA_BLE_DESTINATION_PORT_POS, CA_BLE_DESTINATION_PORT_LEN, destPort);
 
-    return dataLen;
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAGenerateHeaderPayloadLength(uint8_t *header,
+                                         size_t headerLength,
+                                         size_t dataLength)
+{
+    VERIFY_NON_NULL(header, TAG, "header is NULL");
+
+    if (headerLength != CA_BLE_LENGTH_HEADER_SIZE)
+    {
+        return CA_STATUS_FAILED;
+    }
+
+    for(size_t idx = 1; idx < CA_BLE_LENGTH_HEADER_SIZE; idx++)
+    {
+        header[CA_BLE_LENGTH_HEADER_SIZE - idx] = dataLength & 0xFF;
+        dataLength >>= 8;
+    }
+    header[0] = dataLength & 0xFF;
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAMakeFirstDataSegment(uint8_t *dataSegment,
+                                  const uint8_t *data,
+                                  const uint32_t dataLength,
+                                  const uint8_t *dataHeader,
+                                  const uint8_t *lengthHeader)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    VERIFY_NON_NULL(dataSegment, TAG, "dataSegment is NULL");
+    VERIFY_NON_NULL(dataHeader, TAG, "dataHeader is NULL");
+    VERIFY_NON_NULL(lengthHeader, TAG, "lengthHeader is NULL");
+
+    memcpy(dataSegment, dataHeader, CA_BLE_HEADER_SIZE);
+    memcpy(dataSegment + CA_BLE_HEADER_SIZE, lengthHeader, CA_BLE_LENGTH_HEADER_SIZE);
+    memcpy(dataSegment + CA_BLE_HEADER_SIZE + CA_BLE_LENGTH_HEADER_SIZE, data, dataLength);
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAMakeRemainDataSegment(uint8_t *dataSegment,
+                                   const uint8_t *data,
+                                   const uint32_t dataLength,
+                                   const uint32_t index,
+                                   const uint8_t *dataHeader)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    VERIFY_NON_NULL(dataSegment, TAG, "dataSegment is NULL");
+    VERIFY_NON_NULL(dataHeader, TAG, "dataHeader is NULL");
+
+    const uint8_t *cur_pos = data +
+        (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE - CA_BLE_LENGTH_HEADER_SIZE +
+         (index * (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE)));
+    if (NULL == cur_pos)
+    {
+        OIC_LOG(ERROR, TAG, "data is NULL");
+        return CA_STATUS_FAILED;
+    }
+
+    memcpy(dataSegment, dataHeader, CA_BLE_HEADER_SIZE);
+    memcpy(dataSegment + CA_BLE_HEADER_SIZE, cur_pos, dataLength);
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAParseHeader(const uint8_t *header,
+                         CABLEPacketStart_t *startFlag,
+                         uint16_t *sourcePort,
+                         CABLEPacketSecure_t *secureFlag,
+                         uint16_t *destPort)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+
+    VERIFY_NON_NULL(header, TAG, "header is NULL");
+
+    *startFlag = CAGetBits(header[0], CA_BLE_START_POS, CA_BLE_START_LEN);
+    *sourcePort = CAGetBits(header[0], CA_BLE_SOURCE_PORT_POS, CA_BLE_SOURCE_PORT_LEN);
+    *secureFlag = CAGetBits(header[1], CA_BLE_SECURE_POS, CA_BLE_SECURE_LEN);
+    *destPort = CAGetBits(header[1], CA_BLE_DESTINATION_PORT_POS, CA_BLE_DESTINATION_PORT_LEN);
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAParseHeaderPayloadLength(uint8_t *header,
+                                      size_t headerLength,
+                                      uint32_t *dataLength)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    VERIFY_NON_NULL(header, TAG, "header is NULL");
+
+    if (headerLength != CA_BLE_LENGTH_HEADER_SIZE)
+    {
+        return CA_STATUS_FAILED;
+    }
+
+    for(size_t idx = 0; idx < headerLength; idx++)
+    {
+        *dataLength <<= 8;
+        *dataLength |= header[CA_BLE_HEADER_SIZE+idx];
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return CA_STATUS_OK;
 }

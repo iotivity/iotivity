@@ -1,0 +1,34 @@
+<resources>
+    <string name="app_name">Simple Base</string>
+
+    <string name="title_message">Message</string>
+    <string name="title_bluetooth">Bluetooth</string>
+    <string name="title_cloud">Cloud</string>
+    <string name="title_template">Template</string>
+
+    <string name="resource_view">[Resource View]</string>
+    <string name="action_log_view">[Action Log View]</string>
+    <string name="result_log_view">[Result Log View]</string>
+
+    <string name="bt_scan">BT SCAN</string>
+    <string name="le_scan">LE SCAN</string>
+    <string name="stop_scan">STOP SCAN</string>
+
+    <string name="action_onadapterstatechanged">onAdapterStateChanged : </string>
+    <string name="action_onconnectionstatechanged">onConnectionStateChanged : </string>
+    <string name="action_onclick">onClick : </string>
+
+    <string name="account_view">[Account View]</string>
+    <string name="rd_view">[Resource Directory View]</string>
+    <string name="mq_view">[Message Queue View]</string>
+
+    <string name="sub_presence">SUB DEVICE\nPRESENCE</string>
+    <string name="unsub_presence">UNSUBSCRIBE\nPRESENCE</string>
+
+    <string name="button_A">Button A</string>
+    <string name="button_B">Button B</string>
+    <string name="button_C">Button C</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+</resources>

@@ -23,7 +23,6 @@
 
 #include <memory>
 #include <string>
-
 #include <OCApi.h>
 
 namespace OC
@@ -46,6 +45,13 @@ namespace OC
                         FindCallback& callback,
                         QualityOfService QoS) = 0;
 
+        virtual OCStackResult ListenErrorForResource(const std::string& serviceUrl,
+                        const std::string& resourceType,
+                        OCConnectivityType connectivityType,
+                        FindCallback& callback,
+                        FindErrorCallback& errorCallback,
+                        QualityOfService QoS) = 0;
+
         virtual OCStackResult ListenForDevice(const std::string& serviceUrl,
                         const std::string& deviceURI,
                         OCConnectivityType connectivityType,
@@ -57,6 +63,7 @@ namespace OC
                         const std::string& uri,
                         const QueryParamsMap& queryParams,
                         const HeaderOptions& headerOptions,
+                        OCConnectivityType connectivityType,
                         GetCallback& callback, QualityOfService QoS)=0;
 
         virtual OCStackResult PutResourceRepresentation(
@@ -71,12 +78,14 @@ namespace OC
                         const std::string& uri,
                         const OCRepresentation& rep, const QueryParamsMap& queryParams,
                         const HeaderOptions& headerOptions,
+                        OCConnectivityType connectivityType,
                         PostCallback& callback, QualityOfService QoS) = 0;
 
         virtual OCStackResult DeleteResource(
                         const OCDevAddr& devAddr,
                         const std::string& uri,
                         const HeaderOptions& headerOptions,
+                        OCConnectivityType connectivityType,
                         DeleteCallback& callback, QualityOfService QoS) = 0;
 
         virtual OCStackResult ObserveResource(
@@ -102,8 +111,39 @@ namespace OC
 
         virtual OCStackResult UnsubscribePresence(OCDoHandle handle) =0;
 
+#ifdef WITH_CLOUD
+        virtual OCStackResult SubscribeDevicePresence(OCDoHandle* handle,
+                                                      const std::string& host,
+                                                      const std::vector<std::string>& di,
+                                                      OCConnectivityType connectivityType,
+                                                      ObserveCallback& callback) = 0;
+#endif
+
         virtual OCStackResult GetDefaultQos(QualityOfService& qos) = 0;
 
+        virtual OCStackResult FindDirectPairingDevices(unsigned short waittime,
+                        GetDirectPairedCallback& callback) = 0;
+
+        virtual OCStackResult GetDirectPairedDevices(GetDirectPairedCallback& callback) = 0;
+
+        virtual OCStackResult DoDirectPairing(std::shared_ptr< OCDirectPairing > peer,
+                                              const OCPrm_t& pmSel, const std::string& pinNumber,
+                                              DirectPairingCallback& resultCallback) = 0;
+
+#ifdef WITH_MQ
+        virtual OCStackResult ListenForMQTopic(
+            const OCDevAddr& devAddr,
+            const std::string& resourceUri,
+            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+            MQTopicCallback& callback, QualityOfService QoS) = 0;
+
+        virtual OCStackResult PutMQTopicRepresentation(
+            const OCDevAddr& devAddr,
+            const std::string& uri,
+            const OCRepresentation& rep,
+            const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
+            MQTopicCallback& callback, QualityOfService QoS) = 0;
+#endif
         virtual ~IClientWrapper(){}
     };
 }

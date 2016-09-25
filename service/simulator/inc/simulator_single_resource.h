@@ -21,14 +21,20 @@
 /**
  * @file   simulator_single_resource.h
  *
- * @brief   This file contains a class which represents a simulator resource that provides a set
- *             of functions for operating a resource and performing automation on attribute values.
+ * @brief   This file provides a class and API to access simulated resource and to perfrom auto
+ * update operations on simulated resource.
  */
 
 #ifndef SIMULATOR_SINGLE_RESOURCE_H_
 #define SIMULATOR_SINGLE_RESOURCE_H_
 
 #include "simulator_resource.h"
+
+enum class AutoUpdateType
+{
+    ONE_TIME,
+    REPEAT
+};
 
 /**
  * @class   SimulatorSingleResource
@@ -39,6 +45,16 @@ class SimulatorSingleResource : public SimulatorResource
     public:
 
         /**
+         * Callback method for receiving notifications when resource/attribute value updation
+         * completes.
+         *
+         * @param uri - URI of resource.
+         * @param id - Update automation identifier.
+         */
+        typedef std::function<void (const std::string &uri, const int id)>
+        AutoUpdateCompleteCallback;
+
+        /**
          * API to get attribute from resource's resource model.
          *
          * @param attrName - Attribute's name.
@@ -47,7 +63,17 @@ class SimulatorSingleResource : public SimulatorResource
          * @return bool - true on success, otherwise false.
          */
         virtual bool getAttribute(const std::string &attrName,
-                                  SimulatorResourceModel::Attribute &attribute) = 0;
+                                  SimulatorResourceAttribute &attribute) = 0;
+
+        /**
+         * API to get attribute from resource's resource model.
+         *
+         * @param attrName - Attribute's name.
+         * @param attribute - A attribute of resource's resource model.
+         *
+         * @return bool - true on success, otherwise false.
+         */
+        virtual std::map<std::string, SimulatorResourceAttribute> getAttributes() = 0;
 
         /**
          * API to add a new attribute to the resource model.
@@ -58,30 +84,8 @@ class SimulatorSingleResource : public SimulatorResource
          *
          * NOTE: API throws @SimulatorException exceptions on failure.
          */
-        virtual void addAttribute(const SimulatorResourceModel::Attribute &attribute,
+        virtual bool addAttribute(const SimulatorResourceAttribute &attribute,
                                   bool notify = true) = 0;
-
-        /**
-         * API to get property of attribute's value.
-         *
-         * @param attrName - Attribute's name.
-         * @param property - Property which was set to attribute's value.
-         *
-         * @return bool - true on success, otherwise false.
-         */
-        virtual bool getAttributeProperty(const std::string &attrName,
-                                          SimulatorResourceModel::AttributeProperty &property) = 0;
-
-        /**
-         * API to set property of attribute's value.
-         *
-         * @param attrName - Attribute's name.
-         * @param property - Property to be set for attribute's value.
-         *
-         * @return bool - true on success, otherwise false.
-         */
-        virtual bool setAttributeProperty(const std::string &attrName,
-                                          const SimulatorResourceModel::AttributeProperty &property) = 0;
 
         /**
          * API to remove an attribute from the resource model.
@@ -105,7 +109,7 @@ class SimulatorSingleResource : public SimulatorResource
         template <typename T>
         bool updateAttributeValue(const std::string &attrName, const T &value, bool notify = true)
         {
-            SimulatorResourceModel::Attribute attribute(attrName);
+            SimulatorResourceAttribute attribute(attrName);
             attribute.setValue(value);
             return updateAttributeValue(attribute, notify);
         }
@@ -119,7 +123,7 @@ class SimulatorSingleResource : public SimulatorResource
          *
          * @return bool - true on success, otherwise false.
          */
-        virtual bool updateAttributeValue(const SimulatorResourceModel::Attribute &attribute,
+        virtual bool updateAttributeValue(const SimulatorResourceAttribute &attribute,
                                           bool notify = true) = 0;
 
         /**
@@ -135,8 +139,8 @@ class SimulatorSingleResource : public SimulatorResource
          * @return ID representing update automation session.
          * NOTE: API throws @InvalidArgsException, @SimulatorException exceptions.
          */
-        virtual int startResourceUpdation(AutomationType type, int updateInterval,
-                                          updateCompleteCallback callback) = 0;
+        virtual int startResourceUpdation(AutoUpdateType type, int updateInterval,
+                                          AutoUpdateCompleteCallback callback) = 0;
 
         /**
          * This method is used to start the attribute value update automation for
@@ -152,22 +156,22 @@ class SimulatorSingleResource : public SimulatorResource
          * @return ID representing update automation session.
          * NOTE: API throws @InvalidArgsException, @SimulatorException exceptions.
          */
-        virtual int startAttributeUpdation(const std::string &attrName, AutomationType type,
-                                           int updateInterval, updateCompleteCallback callback) = 0;
+        virtual int startAttributeUpdation(const std::string &attrName, AutoUpdateType type,
+                                           int updateInterval, AutoUpdateCompleteCallback callback) = 0;
 
         /**
          * API to get the Ids of all ongoing resource update automation .
          *
          * @return vector of resource automation ids.
          */
-        virtual std::vector<int> getResourceUpdationIds() = 0;
+        virtual std::vector<int> getResourceUpdations() = 0;
 
         /**
          * API to get the Ids of all ongoing attribute update automation .
          *
          * @return vector of attribute automation ids.
          */
-        virtual std::vector<int> getAttributeUpdationIds() = 0;
+        virtual std::vector<int> getAttributeUpdations() = 0;
 
         /**
          * API to stop the resource/attribute automation.

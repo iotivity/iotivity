@@ -921,6 +921,11 @@ void foundResources(std::vector< std::shared_ptr< OC::OCResource > > listOfResou
 {
     for (auto rsrc = listOfResource.begin(); rsrc != listOfResource.end(); ++rsrc)
     {
+        if(((*rsrc)->connectivityType() & CT_ADAPTER_TCP) == CT_ADAPTER_TCP)
+        {
+            continue;
+        }
+
         std::string resourceURI = (*rsrc)->uri();
         std::string hostAddress = (*rsrc)->host();
 
@@ -939,10 +944,12 @@ void foundResources(std::vector< std::shared_ptr< OC::OCResource > > listOfResou
             lights.push_back((hostAddress + resourceURI));
 
             g_light = (*rsrc);
+            cv2.notify_all();
         }
         else
         {
             configurationResource = (*rsrc);
+            cv2.notify_all();
         }
     }
     cv2.notify_all();
@@ -950,6 +957,11 @@ void foundResources(std::vector< std::shared_ptr< OC::OCResource > > listOfResou
 
 void foundGroupResource(std::shared_ptr< OCResource > resource)
 {
+    if((resource->connectivityType() & CT_ADAPTER_TCP) == CT_ADAPTER_TCP)
+    {
+        return ;
+    }
+
     std::string resourceURI;
     resourceURI = resource->uri();
     if (resourceURI == "/core/a/collection")
@@ -1591,7 +1603,7 @@ TEST_F(ThingsManagerTest, testGetConfigurations)
     vector<string> types;
     types.push_back("oic.wk.con");
 
-    result = groupMgr->findCandidateResources(types, &foundResources);
+    result = groupMgr->findCandidateResources(types, &foundResources, 3);
 
     std::mutex blocker;
     std::unique_lock < std::mutex > lock(blocker);
@@ -1615,7 +1627,7 @@ TEST_F(ThingsManagerTest, testGetConfigurationsEmptyConfiguration)
     vector<string> types;
     types.push_back("oic.wk.con");
 
-    result = groupMgr->findCandidateResources(types, &foundResources);
+    result = groupMgr->findCandidateResources(types, &foundResources, 3);
 
     std::mutex blocker;
     std::unique_lock < std::mutex > lock(blocker);
@@ -1694,7 +1706,7 @@ TEST_F(ThingsManagerTest, testUpdateConfiguration)
 
     vector<string> types;
     types.push_back("oic.wk.con");
-    result = groupMgr->findCandidateResources(types, &foundResources);
+    result = groupMgr->findCandidateResources(types, &foundResources, 3);
 
     std::mutex blocker2;
     std::unique_lock < std::mutex > lock2(blocker2);
@@ -1718,7 +1730,7 @@ TEST_F(ThingsManagerTest, testUpdateConfigurationEmptyConfiguration)
 
     vector<string> types;
     types.push_back("oic.wk.con");
-    result = groupMgr->findCandidateResources(types, &foundResources);
+    result = groupMgr->findCandidateResources(types, &foundResources, 3);
 
     std::mutex blocker2;
     std::unique_lock < std::mutex > lock2(blocker2);
@@ -1762,7 +1774,7 @@ TEST_F(ThingsManagerTest, testReboot)
 
     vector<string> types;
     types.push_back("oic.wk.mnt");
-    result = groupMgr->findCandidateResources(types, &foundResources);
+    result = groupMgr->findCandidateResources(types, &foundResources, 3);
 
     std::mutex blocker;
     std::unique_lock < std::mutex > lock(blocker);
@@ -1799,7 +1811,7 @@ TEST_F(ThingsManagerTest, testFactoryReset)
 
     vector<string> types;
     types.push_back("oic.wk.mnt");
-    result = groupMgr->findCandidateResources(types, &foundResources);
+    result = groupMgr->findCandidateResources(types, &foundResources, 3);
 
     std::mutex blocker;
     std::unique_lock < std::mutex > lock(blocker);

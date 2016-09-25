@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.oic.simulator.SimulatorResourceAttribute;
 import org.oic.simulator.SimulatorResourceModel;
 import org.oic.simulator.server.Observer;
 import org.oic.simulator.server.SimulatorResource;
@@ -38,6 +39,7 @@ public abstract class Resource {
     private Set<String>                  resourceInterfaces;
     private boolean                      started;
     private boolean                      observable;
+    private boolean                      discoverable;
 
     private Map<Integer, ObserverDetail> observers;
 
@@ -113,6 +115,14 @@ public abstract class Resource {
         this.observable = observable;
     }
 
+    public boolean isDiscoverable() {
+        return discoverable;
+    }
+
+    public void setDiscoverable(boolean discoverable) {
+        this.discoverable = discoverable;
+    }
+
     public void addInterfaceType(String ifType) {
         if (null == ifType) {
             return;
@@ -160,12 +170,16 @@ public abstract class Resource {
         observers.remove(observer.getId());
     }
 
-    public void setResourceRepresentation(SimulatorResourceModel resModel)
+    public void createResourceRepresentation(
+            Map<String, SimulatorResourceAttribute> attributes)
             throws NullPointerException {
         if (mResourceRepresentation == null)
-            mResourceRepresentation = new ResourceRepresentation(resModel);
-        else
-            mResourceRepresentation.update(resModel);
+            mResourceRepresentation = new ResourceRepresentation(attributes);
+    }
+
+    public void updateResourceRepresentation(SimulatorResourceModel model)
+            throws NullPointerException {
+        mResourceRepresentation.update(model);
     }
 
     public ResourceRepresentation getResourceRepresentation() {

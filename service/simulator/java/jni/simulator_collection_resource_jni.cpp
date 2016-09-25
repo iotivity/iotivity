@@ -27,15 +27,15 @@
 
 #include "simulator_collection_resource.h"
 
-#define VALIDATE_OBJECT(ENV, OBJECT) if (!OBJECT){throwBadObjectException(ENV, "No corresponsing native object!"); return;}
-#define VALIDATE_OBJECT_RET(ENV, OBJECT, RET) if (!OBJECT){throwBadObjectException(ENV, "No corresponsing native object!"); return RET;}
+#define VALIDATE_OBJECT(ENV, OBJECT) if (!OBJECT){ThrowBadObjectException(ENV, "No corresponsing native object!"); return;}
+#define VALIDATE_OBJECT_RET(ENV, OBJECT, RET) if (!OBJECT){ThrowBadObjectException(ENV, "No corresponsing native object!"); return RET;}
 
 extern SimulatorResourceSP SimulatorResourceToCpp(JNIEnv *env, jobject object);
 
-SimulatorCollectionResourceSP SimulatorCollectionResourceToCpp(JNIEnv *env, jobject object)
+static SimulatorCollectionResourceSP simulatorCollectionResourceToCpp(JNIEnv *env, jobject object)
 {
     JniSharedObjectHolder<SimulatorCollectionResource> *jniResource =
-        GetHandle<JniSharedObjectHolder<SimulatorCollectionResource>>(env, object);
+        getHandle<JniSharedObjectHolder<SimulatorCollectionResource>>(env, object);
     if (jniResource)
         return jniResource->get();
     return nullptr;
@@ -46,10 +46,10 @@ extern "C" {
 #endif
 
 JNIEXPORT jobject JNICALL
-Java_org_oic_simulator_server_SimulatorCollectionResource_getSupportedResources
+Java_org_oic_simulator_server_SimulatorCollectionResource_nativeGetSupportedResources
 (JNIEnv *env, jobject object)
 {
-    SimulatorCollectionResourceSP collectionResource = SimulatorCollectionResourceToCpp(env, object);
+    auto collectionResource = simulatorCollectionResourceToCpp(env, object);
     VALIDATE_OBJECT_RET(env, collectionResource, nullptr)
 
     std::vector<std::string> supportedTypes = collectionResource->getSupportedResources();
@@ -57,15 +57,15 @@ Java_org_oic_simulator_server_SimulatorCollectionResource_getSupportedResources
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorCollectionResource_addChildResource
+Java_org_oic_simulator_server_SimulatorCollectionResource_nativeAddChildResource
 (JNIEnv *env, jobject object, jobject resource)
 {
     VALIDATE_INPUT(env, !resource, "Child resource is null!")
 
-    SimulatorResourceSP childResource = SimulatorResourceToCpp(env, resource);
+    auto childResource = SimulatorResourceToCpp(env, resource);
     VALIDATE_INPUT(env, !childResource, "No corresponding native object of child resource!")
 
-    SimulatorCollectionResourceSP collectionResource = SimulatorCollectionResourceToCpp(env, object);
+    auto collectionResource = simulatorCollectionResourceToCpp(env, object);
     VALIDATE_OBJECT(env, collectionResource)
 
     try
@@ -74,24 +74,24 @@ Java_org_oic_simulator_server_SimulatorCollectionResource_addChildResource
     }
     catch (InvalidArgsException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        ThrowInvalidArgsException(env, e.code(), e.what());
     }
     catch (SimulatorException &e)
     {
-        throwSimulatorException(env, e.code(), e.what());
+        ThrowSimulatorException(env, e.code(), e.what());
     }
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorCollectionResource_removeChildResource
+Java_org_oic_simulator_server_SimulatorCollectionResource_nativeRemoveChildResource
 (JNIEnv *env, jobject object, jobject resource)
 {
     VALIDATE_INPUT(env, !resource, "Child resource is null!")
 
-    SimulatorResourceSP childResource = SimulatorResourceToCpp(env, resource);
+    auto childResource = SimulatorResourceToCpp(env, resource);
     VALIDATE_INPUT(env, !childResource, "No corresponding native object of child resource!")
 
-    SimulatorCollectionResourceSP collectionResource = SimulatorCollectionResourceToCpp(env, object);
+    auto collectionResource = simulatorCollectionResourceToCpp(env, object);
     VALIDATE_OBJECT(env, collectionResource)
 
     try
@@ -100,19 +100,19 @@ Java_org_oic_simulator_server_SimulatorCollectionResource_removeChildResource
     }
     catch (InvalidArgsException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        ThrowInvalidArgsException(env, e.code(), e.what());
     }
     catch (SimulatorException &e)
     {
-        throwSimulatorException(env, e.code(), e.what());
+        ThrowSimulatorException(env, e.code(), e.what());
     }
 }
 
 JNIEXPORT void JNICALL
-Java_org_oic_simulator_server_SimulatorCollectionResource_removeChildResourceByUri
+Java_org_oic_simulator_server_SimulatorCollectionResource_nativeRemoveChildResourceByUri
 (JNIEnv *env, jobject object, jstring uri)
 {
-    SimulatorCollectionResourceSP collectionResource = SimulatorCollectionResourceToCpp(env, object);
+    auto collectionResource = simulatorCollectionResourceToCpp(env, object);
     VALIDATE_OBJECT(env, collectionResource)
 
     try
@@ -122,30 +122,30 @@ Java_org_oic_simulator_server_SimulatorCollectionResource_removeChildResourceByU
     }
     catch (InvalidArgsException &e)
     {
-        throwInvalidArgsException(env, e.code(), e.what());
+        ThrowInvalidArgsException(env, e.code(), e.what());
     }
     catch (SimulatorException &e)
     {
-        throwSimulatorException(env, e.code(), e.what());
+        ThrowSimulatorException(env, e.code(), e.what());
     }
 }
 
 JNIEXPORT jobject JNICALL
-Java_org_oic_simulator_server_SimulatorCollectionResource_getChildResource
+Java_org_oic_simulator_server_SimulatorCollectionResource_nativeGetChildResources
 (JNIEnv *env, jobject object)
 {
-    SimulatorCollectionResourceSP collectionResource = SimulatorCollectionResourceToCpp(env, object);
+    auto collectionResource = simulatorCollectionResourceToCpp(env, object);
     VALIDATE_OBJECT_RET(env, collectionResource, nullptr)
 
     std::vector<SimulatorResourceSP> childResources = collectionResource->getChildResources();
-    return createSimulatorResourceVector(env,  childResources);
+    return CreateSimulatorResourceVector(env,  childResources);
 }
 
-JNIEXPORT void JNICALL Java_org_oic_simulator_server_SimulatorCollectionResource_dispose
+JNIEXPORT void JNICALL Java_org_oic_simulator_server_SimulatorCollectionResource_nativeDispose
 (JNIEnv *env, jobject object)
 {
     JniSharedObjectHolder<SimulatorCollectionResource> *resource =
-        GetHandle<JniSharedObjectHolder<SimulatorCollectionResource>>(env, object);
+        getHandle<JniSharedObjectHolder<SimulatorCollectionResource>>(env, object);
     delete resource;
 }
 

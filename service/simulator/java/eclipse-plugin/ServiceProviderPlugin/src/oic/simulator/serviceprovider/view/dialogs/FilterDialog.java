@@ -16,12 +16,6 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Map;
-
-import oic.simulator.serviceprovider.manager.LogManager;
-
 import org.eclipse.jface.dialogs.TrayDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -33,6 +27,12 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Shell;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
+
+import oic.simulator.serviceprovider.manager.LogManager;
 
 /**
  * This class shows a dialog for filtering logs based on severity levels.

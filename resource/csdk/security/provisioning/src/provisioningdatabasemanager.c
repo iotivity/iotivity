@@ -56,7 +56,7 @@
  * eg: VERIFY_NON_NULL(TAG, ptrData, ERROR,OC_STACK_ERROR);
  */
 #define PDM_VERIFY_SQLITE_OK(tag, arg, logLevel, retValue) do{ if (SQLITE_OK != (arg)) \
-            { OC_LOG_V((logLevel), tag, "Error in " #arg ", Error Message: %s", \
+            { OIC_LOG_V((logLevel), tag, "Error in " #arg ", Error Message: %s", \
                sqlite3_errmsg(g_db)); return retValue; }}while(0)
 
 #define PDM_SQLITE_TRANSACTION_BEGIN "BEGIN TRANSACTION;"
@@ -85,7 +85,7 @@
   { int temp; temp = id1; id1 = id2; id2 = temp; }}while(0)
 
 #define CHECK_PDM_INIT(tag) do{if(true != gInit)\
-  { OC_LOG(ERROR, (tag), "PDB is not initialized"); \
+  { OIC_LOG(ERROR, (tag), "PDB is not initialized"); \
     return OC_STACK_PDM_IS_NOT_INITIALIZED; }}while(0)
 
 static sqlite3 *g_db = NULL;
@@ -104,11 +104,11 @@ static OCStackResult createDB(const char* path)
     result = sqlite3_exec(g_db, PDM_CREATE_T_DEVICE_LIST, NULL, NULL, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, result, ERROR, OC_STACK_ERROR);
 
-    OC_LOG(INFO, TAG, "Created T_DEVICE_LIST");
+    OIC_LOG(INFO, TAG, "Created T_DEVICE_LIST");
     result = sqlite3_exec(g_db, PDM_CREATE_T_DEVICE_LINK, NULL, NULL, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, result, ERROR, OC_STACK_ERROR);
 
-    OC_LOG(INFO, TAG, "Created T_DEVICE_LINK_STATE");
+    OIC_LOG(INFO, TAG, "Created T_DEVICE_LINK_STATE");
     gInit = true;
     return OC_STACK_OK;
 }
@@ -155,7 +155,7 @@ void errLogCallback(void *pArg, int iErrCode, const char *zMsg)
     (void) pArg;
     (void) iErrCode;
     (void) zMsg;
-    OC_LOG_V(DEBUG,TAG, "(%d) %s", iErrCode, zMsg);
+    OIC_LOG_V(DEBUG,TAG, "(%d) %s", iErrCode, zMsg);
 }
 
 OCStackResult PDMInit(const char *path)
@@ -164,7 +164,7 @@ OCStackResult PDMInit(const char *path)
     const char *dbPath = NULL;
     if (SQLITE_OK !=  sqlite3_config(SQLITE_CONFIG_LOG, errLogCallback, NULL))
     {
-        OC_LOG(INFO, TAG, "Unable to enable debug log of sqlite");
+        OIC_LOG(INFO, TAG, "Unable to enable debug log of sqlite");
     }
 
     if (NULL == path || !*path)
@@ -178,7 +178,7 @@ OCStackResult PDMInit(const char *path)
     rc = sqlite3_open_v2(dbPath, &g_db, SQLITE_OPEN_READWRITE, NULL);
     if (SQLITE_OK != rc)
     {
-        OC_LOG_V(INFO, TAG, "ERROR: Can't open database: %s", sqlite3_errmsg(g_db));
+        OIC_LOG_V(INFO, TAG, "ERROR: Can't open database: %s", sqlite3_errmsg(g_db));
         return createDB(dbPath);
     }
     gInit = true;
@@ -212,11 +212,11 @@ OCStackResult PDMAddDevice(const OicUuid_t *UUID)
         if (SQLITE_CONSTRAINT == res)
         {
             //new OCStack result code
-            OC_LOG_V(ERROR, TAG, "Error Occured: %s",sqlite3_errmsg(g_db));
+            OIC_LOG_V(ERROR, TAG, "Error Occured: %s",sqlite3_errmsg(g_db));
             sqlite3_finalize(stmt);
             return OC_STACK_DUPLICATE_UUID;
         }
-        OC_LOG_V(ERROR, TAG, "Error Occured: %s",sqlite3_errmsg(g_db));
+        OIC_LOG_V(ERROR, TAG, "Error Occured: %s",sqlite3_errmsg(g_db));
         sqlite3_finalize(stmt);
         return OC_STACK_ERROR;
     }
@@ -227,11 +227,11 @@ OCStackResult PDMAddDevice(const OicUuid_t *UUID)
 /**
  * Function to check whether device is stale or not
  */
-static OCStackResult isDeviceStale(const OicUuid_t *uuid, bool *result)
+OCStackResult PDMIsDeviceStale(const OicUuid_t *uuid, bool *result)
 {
     if (NULL == uuid || NULL == result)
     {
-        OC_LOG(ERROR, TAG, "UUID or result is NULL");
+        OIC_LOG(ERROR, TAG, "UUID or result is NULL");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -248,10 +248,10 @@ static OCStackResult isDeviceStale(const OicUuid_t *uuid, bool *result)
     while(SQLITE_ROW == sqlite3_step(stmt))
     {
         int tempStaleStateFromDb = sqlite3_column_int(stmt, PDM_FIRST_INDEX);
-        OC_LOG_V(DEBUG, TAG, "Stale state is %d", tempStaleStateFromDb);
+        OIC_LOG_V(DEBUG, TAG, "Stale state is %d", tempStaleStateFromDb);
         if (PDM_STALE_STATE == tempStaleStateFromDb)
         {
-            OC_LOG(INFO, TAG, "Device is stale");
+            OIC_LOG(INFO, TAG, "Device is stale");
             retValue = true;
         }
     }
@@ -273,11 +273,11 @@ static OCStackResult getIdForUUID(const OicUuid_t *UUID , int *id)
     res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_FIRST, UUID, UUID_LENGTH, SQLITE_STATIC);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
-    OC_LOG(DEBUG, TAG, "Binding Done");
+    OIC_LOG(DEBUG, TAG, "Binding Done");
     while (SQLITE_ROW == sqlite3_step(stmt))
     {
         int tempId = sqlite3_column_int(stmt, PDM_FIRST_INDEX);
-        OC_LOG_V(DEBUG, TAG, "ID is %d", tempId);
+        OIC_LOG_V(DEBUG, TAG, "ID is %d", tempId);
         *id = tempId;
         sqlite3_finalize(stmt);
         return OC_STACK_OK;
@@ -295,7 +295,7 @@ OCStackResult PDMIsDuplicateDevice(const OicUuid_t* UUID, bool *result)
     CHECK_PDM_INIT(TAG);
     if (NULL == UUID || NULL == result)
     {
-        OC_LOG(ERROR, TAG, "UUID or result is NULL");
+        OIC_LOG(ERROR, TAG, "UUID or result is NULL");
         return OC_STACK_INVALID_PARAM;
     }
     sqlite3_stmt *stmt = 0;
@@ -306,11 +306,11 @@ OCStackResult PDMIsDuplicateDevice(const OicUuid_t* UUID, bool *result)
     res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_FIRST, UUID, UUID_LENGTH, SQLITE_STATIC);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
-    OC_LOG(DEBUG, TAG, "Binding Done");
+    OIC_LOG(DEBUG, TAG, "Binding Done");
     bool retValue = false;
     while(SQLITE_ROW == sqlite3_step(stmt))
     {
-        OC_LOG(INFO, TAG, "Duplicated UUID");
+        OIC_LOG(INFO, TAG, "Duplicated UUID");
         retValue = true;
     }
 
@@ -341,7 +341,7 @@ static OCStackResult addlink(int id1, int id2)
 
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
-        OC_LOG_V(ERROR, TAG, "Error Occured: %s",sqlite3_errmsg(g_db));
+        OIC_LOG_V(ERROR, TAG, "Error Occured: %s",sqlite3_errmsg(g_db));
         sqlite3_finalize(stmt);
         return OC_STACK_ERROR;
     }
@@ -354,43 +354,43 @@ OCStackResult PDMLinkDevices(const OicUuid_t *UUID1, const OicUuid_t *UUID2)
     CHECK_PDM_INIT(TAG);
     if (NULL == UUID1 || NULL == UUID2)
     {
-        OC_LOG(ERROR, TAG, "Invalid PARAM");
+        OIC_LOG(ERROR, TAG, "Invalid PARAM");
         return  OC_STACK_INVALID_PARAM;
     }
 
     bool result = false;
-    if (OC_STACK_OK != isDeviceStale(UUID1, &result))
+    if (OC_STACK_OK != PDMIsDeviceStale(UUID1, &result))
     {
-        OC_LOG(ERROR, TAG, "Internal error occured");
+        OIC_LOG(ERROR, TAG, "Internal error occured");
         return OC_STACK_ERROR;
     }
     if (result)
     {
-        OC_LOG(ERROR, TAG, "UUID1:Stale device");
+        OIC_LOG(ERROR, TAG, "UUID1:Stale device");
         return OC_STACK_INVALID_PARAM;
     }
     result = false;
-    if (OC_STACK_OK != isDeviceStale(UUID2, &result))
+    if (OC_STACK_OK != PDMIsDeviceStale(UUID2, &result))
     {
-        OC_LOG(ERROR, TAG, "Internal error occured");
+        OIC_LOG(ERROR, TAG, "Internal error occured");
         return OC_STACK_ERROR;
     }
     if (result)
     {
-        OC_LOG(ERROR, TAG, "UUID2:Stale device");
+        OIC_LOG(ERROR, TAG, "UUID2:Stale device");
         return OC_STACK_INVALID_PARAM;
     }
 
     int id1 = 0;
     if (OC_STACK_OK != getIdForUUID(UUID1, &id1))
     {
-        OC_LOG(ERROR, TAG, "Requested value not found");
+        OIC_LOG(ERROR, TAG, "Requested value not found");
         return OC_STACK_INVALID_PARAM;
     }
     int id2 = 0;
     if (OC_STACK_OK != getIdForUUID(UUID2, &id2))
     {
-        OC_LOG(ERROR, TAG, "Requested value not found");
+        OIC_LOG(ERROR, TAG, "Requested value not found");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -416,7 +416,7 @@ static OCStackResult removeLink(int id1, int id2)
 
     if (SQLITE_DONE != sqlite3_step(stmt))
     {
-        OC_LOG_V(ERROR, TAG, "Error message: %s", sqlite3_errmsg(g_db));
+        OIC_LOG_V(ERROR, TAG, "Error message: %s", sqlite3_errmsg(g_db));
         sqlite3_finalize(stmt);
         return OC_STACK_ERROR;
     }
@@ -429,21 +429,21 @@ OCStackResult PDMUnlinkDevices(const OicUuid_t *UUID1, const OicUuid_t *UUID2)
     CHECK_PDM_INIT(TAG);
     if (NULL == UUID1 || NULL == UUID2)
     {
-        OC_LOG(ERROR, TAG, "Invalid PARAM");
+        OIC_LOG(ERROR, TAG, "Invalid PARAM");
         return  OC_STACK_INVALID_PARAM;
     }
 
     int id1 = 0;
     if (OC_STACK_OK != getIdForUUID(UUID1, &id1))
     {
-        OC_LOG(ERROR, TAG, "Requested value not found");
+        OIC_LOG(ERROR, TAG, "Requested value not found");
         return OC_STACK_INVALID_PARAM;
     }
 
     int id2 = 0;
     if (OC_STACK_OK != getIdForUUID(UUID2, &id2))
     {
-        OC_LOG(ERROR, TAG, "Requested value not found");
+        OIC_LOG(ERROR, TAG, "Requested value not found");
         return OC_STACK_INVALID_PARAM;
     }
     ASCENDING_ORDER(id1, id2);
@@ -463,7 +463,7 @@ static OCStackResult removeFromDeviceList(int id)
 
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
-        OC_LOG_V(ERROR, TAG, "Error message: %s", sqlite3_errmsg(g_db));
+        OIC_LOG_V(ERROR, TAG, "Error message: %s", sqlite3_errmsg(g_db));
         sqlite3_finalize(stmt);
         return OC_STACK_ERROR;
     }
@@ -481,14 +481,14 @@ OCStackResult PDMDeleteDevice(const OicUuid_t *UUID)
     int id = 0;
     if (OC_STACK_OK != getIdForUUID(UUID, &id))
     {
-        OC_LOG(ERROR, TAG, "Requested value not found");
+        OIC_LOG(ERROR, TAG, "Requested value not found");
         return OC_STACK_INVALID_PARAM;
     }
     begin();
     if(OC_STACK_OK != removeFromDeviceList(id))
     {
         rollback();
-        OC_LOG(ERROR, TAG, "Requested value not found");
+        OIC_LOG(ERROR, TAG, "Requested value not found");
         return OC_STACK_ERROR;
     }
     commit();
@@ -515,7 +515,7 @@ static OCStackResult updateLinkState(int id1, int id2, int state)
 
     if (SQLITE_DONE != sqlite3_step(stmt))
     {
-        OC_LOG_V(ERROR, TAG, "Error message: %s", sqlite3_errmsg(g_db));
+        OIC_LOG_V(ERROR, TAG, "Error message: %s", sqlite3_errmsg(g_db));
         sqlite3_finalize(stmt);
         return OC_STACK_ERROR;
     }
@@ -528,21 +528,21 @@ OCStackResult PDMSetLinkStale(const OicUuid_t* uuidOfDevice1, const OicUuid_t* u
     CHECK_PDM_INIT(TAG);
     if (NULL == uuidOfDevice1 || NULL == uuidOfDevice2)
     {
-        OC_LOG(ERROR, TAG, "Invalid PARAM");
+        OIC_LOG(ERROR, TAG, "Invalid PARAM");
         return  OC_STACK_INVALID_PARAM;
     }
 
     int id1 = 0;
     if (OC_STACK_OK != getIdForUUID(uuidOfDevice1, &id1))
     {
-        OC_LOG(ERROR, TAG, "Requested value not found");
+        OIC_LOG(ERROR, TAG, "Requested value not found");
         return OC_STACK_INVALID_PARAM;
     }
 
     int id2 = 0;
     if (OC_STACK_OK != getIdForUUID(uuidOfDevice2, &id2))
     {
-        OC_LOG(ERROR, TAG, "Requested value not found");
+        OIC_LOG(ERROR, TAG, "Requested value not found");
         return OC_STACK_INVALID_PARAM;
     }
     ASCENDING_ORDER(id1, id2);
@@ -555,7 +555,7 @@ OCStackResult PDMGetOwnedDevices(OCUuidList_t **uuidList, size_t *numOfDevices)
     CHECK_PDM_INIT(TAG);
     if (NULL != *uuidList)
     {
-        OC_LOG(ERROR, TAG, "Not null list will cause memory leak");
+        OIC_LOG(ERROR, TAG, "Not null list will cause memory leak");
         return OC_STACK_INVALID_PARAM;
     }
     sqlite3_stmt *stmt = 0;
@@ -564,7 +564,7 @@ OCStackResult PDMGetOwnedDevices(OCUuidList_t **uuidList, size_t *numOfDevices)
                               strlen(PDM_SQLITE_LIST_ALL_UUID) + 1, &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
-    int counter  = 0;
+    size_t counter  = 0;
     while (SQLITE_ROW == sqlite3_step(stmt))
     {
         const void *ptr = sqlite3_column_blob(stmt, PDM_FIRST_INDEX);
@@ -572,7 +572,7 @@ OCStackResult PDMGetOwnedDevices(OCUuidList_t **uuidList, size_t *numOfDevices)
         OCUuidList_t *temp = (OCUuidList_t *) OICCalloc(1,sizeof(OCUuidList_t));
         if (NULL == temp)
         {
-            OC_LOG_V(ERROR, TAG, "Memory allocation problem");
+            OIC_LOG_V(ERROR, TAG, "Memory allocation problem");
             sqlite3_finalize(stmt);
             return OC_STACK_NO_MEMORY;
         }
@@ -626,31 +626,31 @@ static OCStackResult getUUIDforId(int id, OicUuid_t *uid, bool *result)
 OCStackResult PDMGetLinkedDevices(const OicUuid_t *UUID, OCUuidList_t **UUIDLIST, size_t *numOfDevices)
 {
     CHECK_PDM_INIT(TAG);
-    if (NULL != *UUIDLIST)
+    if (NULL == UUID || NULL == numOfDevices || !UUIDLIST)
     {
-        OC_LOG(ERROR, TAG, "Not null list will cause memory leak");
         return OC_STACK_INVALID_PARAM;
     }
-    if (NULL == UUID)
+    if (NULL != *UUIDLIST )
     {
+        OIC_LOG(ERROR, TAG, "Not null list will cause memory leak");
         return OC_STACK_INVALID_PARAM;
     }
     bool result = false;
-    OCStackResult ret = isDeviceStale(UUID, &result);
+    OCStackResult ret = PDMIsDeviceStale(UUID, &result);
     if (OC_STACK_OK != ret)
     {
-        OC_LOG(ERROR, TAG, "Internal error occured");
+        OIC_LOG(ERROR, TAG, "Internal error occured");
         return OC_STACK_ERROR;
     }
     if (result)
     {
-        OC_LOG(ERROR, TAG, "Device is stale");
+        OIC_LOG(ERROR, TAG, "Device is stale");
         return OC_STACK_INVALID_PARAM;
     }
     int id = 0;
     if (OC_STACK_OK != getIdForUUID(UUID, &id))
     {
-        OC_LOG(ERROR, TAG, "Requested value not found");
+        OIC_LOG(ERROR, TAG, "Requested value not found");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -667,7 +667,7 @@ OCStackResult PDMGetLinkedDevices(const OicUuid_t *UUID, OCUuidList_t **UUIDLIST
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_SECOND, id);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
-    int counter  = 0;
+    size_t counter  = 0;
     while (SQLITE_ROW == sqlite3_step(stmt))
     {
         int i1 = sqlite3_column_int(stmt, PDM_FIRST_INDEX);
@@ -686,7 +686,7 @@ OCStackResult PDMGetLinkedDevices(const OicUuid_t *UUID, OCUuidList_t **UUIDLIST
         OCUuidList_t *tempNode = (OCUuidList_t *) OICCalloc(1,sizeof(OCUuidList_t));
         if (NULL == tempNode)
         {
-            OC_LOG(ERROR, TAG, "No Memory");
+            OIC_LOG(ERROR, TAG, "No Memory");
             sqlite3_finalize(stmt);
             return OC_STACK_NO_MEMORY;
         }
@@ -704,7 +704,7 @@ OCStackResult PDMGetToBeUnlinkedDevices(OCPairList_t **staleDevList, size_t *num
     CHECK_PDM_INIT(TAG);
     if (NULL != *staleDevList)
     {
-        OC_LOG(ERROR, TAG, "Not null list will cause memory leak");
+        OIC_LOG(ERROR, TAG, "Not null list will cause memory leak");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -717,7 +717,7 @@ OCStackResult PDMGetToBeUnlinkedDevices(OCPairList_t **staleDevList, size_t *num
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, PDM_STALE_STATE);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
-    int counter  = 0;
+    size_t counter  = 0;
     while (SQLITE_ROW == sqlite3_step(stmt))
     {
         int i1 = sqlite3_column_int(stmt, PDM_FIRST_INDEX);
@@ -730,7 +730,7 @@ OCStackResult PDMGetToBeUnlinkedDevices(OCPairList_t **staleDevList, size_t *num
         OCPairList_t *tempNode = (OCPairList_t *) OICCalloc(1, sizeof(OCPairList_t));
         if (NULL == tempNode)
         {
-            OC_LOG(ERROR, TAG, "No Memory");
+            OIC_LOG(ERROR, TAG, "No Memory");
             sqlite3_finalize(stmt);
             return OC_STACK_NO_MEMORY;
         }
@@ -791,37 +791,37 @@ OCStackResult PDMIsLinkExists(const OicUuid_t* uuidOfDevice1, const OicUuid_t* u
     int id2 = 0;
     if (OC_STACK_OK != getIdForUUID(uuidOfDevice1, &id1))
     {
-        OC_LOG(ERROR, TAG, "Requested value not found");
+        OIC_LOG(ERROR, TAG, "Requested value not found");
         return OC_STACK_INVALID_PARAM;
     }
 
     if (OC_STACK_OK != getIdForUUID(uuidOfDevice2, &id2))
     {
-        OC_LOG(ERROR, TAG, "Requested value not found");
+        OIC_LOG(ERROR, TAG, "Requested value not found");
         return OC_STACK_INVALID_PARAM;
     }
 
     bool isStale = false;
-    if (OC_STACK_OK != isDeviceStale(uuidOfDevice1, &isStale))
+    if (OC_STACK_OK != PDMIsDeviceStale(uuidOfDevice1, &isStale))
     {
-        OC_LOG(ERROR, TAG, "uuidOfDevice1:Internal error occured");
+        OIC_LOG(ERROR, TAG, "uuidOfDevice1:Internal error occured");
         return OC_STACK_ERROR;
     }
     if (isStale)
     {
-        OC_LOG(ERROR, TAG, "uuidOfDevice1:Device is stale");
+        OIC_LOG(ERROR, TAG, "uuidOfDevice1:Device is stale");
         return OC_STACK_INVALID_PARAM;
     }
 
     isStale = false;
-    if (OC_STACK_OK != isDeviceStale(uuidOfDevice2, &isStale))
+    if (OC_STACK_OK != PDMIsDeviceStale(uuidOfDevice2, &isStale))
     {
-        OC_LOG(ERROR, TAG, "uuidOfDevice2:Internal error occured");
+        OIC_LOG(ERROR, TAG, "uuidOfDevice2:Internal error occured");
         return OC_STACK_ERROR;
     }
     if (isStale)
     {
-        OC_LOG(ERROR, TAG, "uuidOfDevice2:Device is stale");
+        OIC_LOG(ERROR, TAG, "uuidOfDevice2:Device is stale");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -842,7 +842,7 @@ OCStackResult PDMIsLinkExists(const OicUuid_t* uuidOfDevice1, const OicUuid_t* u
     bool ret = false;
     while(SQLITE_ROW == sqlite3_step(stmt))
     {
-        OC_LOG(INFO, TAG, "Link already exists between devices");
+        OIC_LOG(INFO, TAG, "Link already exists between devices");
         ret = true;
     }
     sqlite3_finalize(stmt);
@@ -866,7 +866,7 @@ static OCStackResult updateDeviceState(const OicUuid_t *uuid, int state)
 
     if (SQLITE_DONE != sqlite3_step(stmt))
     {
-        OC_LOG_V(ERROR, TAG, "Error message: %s", sqlite3_errmsg(g_db));
+        OIC_LOG_V(ERROR, TAG, "Error message: %s", sqlite3_errmsg(g_db));
         sqlite3_finalize(stmt);
         return OC_STACK_ERROR;
     }
@@ -882,7 +882,7 @@ static OCStackResult updateLinkForStaleDevice(const OicUuid_t *devUuid)
     int id = 0;
     if (OC_STACK_OK != getIdForUUID(devUuid, &id))
     {
-        OC_LOG(ERROR, TAG, "Requested value not found");
+        OIC_LOG(ERROR, TAG, "Requested value not found");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -899,7 +899,7 @@ static OCStackResult updateLinkForStaleDevice(const OicUuid_t *devUuid)
 
     if (SQLITE_DONE != sqlite3_step(stmt))
     {
-        OC_LOG_V(ERROR, TAG, "Error message: %s", sqlite3_errmsg(g_db));
+        OIC_LOG_V(ERROR, TAG, "Error message: %s", sqlite3_errmsg(g_db));
         sqlite3_finalize(stmt);
         return OC_STACK_ERROR;
     }
@@ -912,7 +912,7 @@ OCStackResult PDMSetDeviceStale(const OicUuid_t* uuidOfDevice)
     CHECK_PDM_INIT(TAG);
     if (NULL == uuidOfDevice)
     {
-        OC_LOG(ERROR, TAG, "Invalid PARAM");
+        OIC_LOG(ERROR, TAG, "Invalid PARAM");
         return  OC_STACK_INVALID_PARAM;
     }
     begin();
@@ -920,14 +920,14 @@ OCStackResult PDMSetDeviceStale(const OicUuid_t* uuidOfDevice)
     if (OC_STACK_OK != res)
     {
         rollback();
-        OC_LOG(ERROR, TAG, "unable to update links");
+        OIC_LOG(ERROR, TAG, "unable to update links");
         return res;
     }
     res = updateDeviceState(uuidOfDevice, PDM_STALE_STATE);
     if (OC_STACK_OK != res)
     {
         rollback();
-        OC_LOG(ERROR, TAG, "unable to update device state");
+        OIC_LOG(ERROR, TAG, "unable to update device state");
         return res;
     }
     commit();

@@ -60,7 +60,10 @@ namespace OIC
              * The attributes of the RCSResourceObject will be set as the result attributes.
              *
              * @param errorCode The error code to set in response.
-             *
+             * @see create(const RCSResourceAttributes&)
+             * @see create(RCSResourceAttributes&&)
+             * @see create(const RCSResourceAttributes&, int)
+             * @see create(RCSResourceAttributes&&, int)
              */
             static RCSGetResponse create(int errorCode);
 
@@ -69,15 +72,27 @@ namespace OIC
              * This sends the passed attributes as the result attributes
              * instead of the one the RCSResourceObject holds.
              *
+             * @overload
              * @param attrs The attributes to set.
              *
              * @see RCSResourceAttributes
+             * @see create(int)
+             * @see create(RCSResourceAttributes&&)
+             * @see create(const RCSResourceAttributes&, int)
+             * @see create(RCSResourceAttributes&&, int)
              *
              */
             static RCSGetResponse create(const RCSResourceAttributes& attrs);
 
             /**
-             * @override
+             * @overload
+             * @param attrs The attributes to set.
+             *
+             * @see RCSResourceAttributes
+             * @see create(int)
+             * @see create(const RCSResourceAttributes&)
+             * @see create(const RCSResourceAttributes&, int)
+             * @see create(RCSResourceAttributes&&, int)
              */
             static RCSGetResponse create(RCSResourceAttributes&& attrs);
 
@@ -86,24 +101,56 @@ namespace OIC
              * This sends the passed attributes as the result attributes
              * instead of the one the RCSResourceObject holds.
              *
+             * @overload
              * @param attrs The attributes to set.
              * @param errorCode The error code for response.
              *
              * @see RCSResourceAttributes
-             *
+             * @see create(int)
+             * @see create(const RCSResourceAttributes&)
+             * @see create(RCSResourceAttributes&&)
+             * @see create(const RCSResourceAttributes&, int)
+             * @see create(RCSResourceAttributes&&, int)
              */
             static RCSGetResponse create(const RCSResourceAttributes& attrs, int errorCode);
 
             /**
-             * @override
+             * @overload
+             * @param attrs The attributes to set.
+             * @param errorCode The error code for response.
+             *
+             * @see RCSResourceAttributes
+             * @see create(int)
+             * @see create(const RCSResourceAttributes&)
+             * @see create(RCSResourceAttributes&&)
+             * @see create(const RCSResourceAttributes&, int)
              */
             static RCSGetResponse create(RCSResourceAttributes&& attrs, int errorCode);
+
+            /**
+             * Creates a RCSGetResponse for the separate response.
+             * The separate response is to delay sending actual response to the client.
+             *
+             * @note A separate response needs to be set with RCSSeparateResponse
+             * to send the result of the request.
+             *
+             * @see RCSSeparateResponse
+             */
+            static RCSGetResponse separate();
+
+            /**
+             * Returns whether it is a separate response.
+             *
+             * @see separate()
+             */
+            bool isSeparate() const;
 
             //! @cond
             RequestHandler* getHandler() const;
             //! @endcond
 
         private:
+            RCSGetResponse();
             RCSGetResponse(std::shared_ptr< RequestHandler >&&);
 
         private:
@@ -160,6 +207,7 @@ namespace OIC
              * The response will have 200 for the errorCode.
              * The attributes of RCSResourceObject will be set as the result attributes.
              *
+             * @see accept(int)
              */
             static RCSSetResponse accept();
 
@@ -167,8 +215,10 @@ namespace OIC
              * Creates a RCSSetResponse that has AcceptanceMethod::ACCEPT and error code passed.
              * The attributes of the RCSResourceObject will be set as the result attributes.
              *
+             * @overload
              * @param errorCode The error code to set in response.
              *
+             * @see accept()
              */
             static RCSSetResponse accept(int errorCode);
 
@@ -193,8 +243,12 @@ namespace OIC
              * Creates a RCSSetResponse that has AcceptanceMethod::DEFAULT and error code passed.
              * The attributes of the RCSResourceObject will be set as the result attributes.
              *
+             * @overload
              * @param errorCode The error code to set in response.
-             *
+             * @see create(const RCSResourceAttributes&)
+             * @see create(RCSResourceAttributes&&)
+             * @see create(const RCSResourceAttributes&, int)
+             * @see create(RCSResourceAttributes&&, int)
              */
             static RCSSetResponse create(int errorCode);
 
@@ -203,15 +257,25 @@ namespace OIC
              * This sends the passed attributes as the result attributes
              * instead of the one the RCSResourceObject holds.
              *
+             * @overload
              * @param attrs The attributes to set.
              *
              * @see RCSResourceAttributes
-             *
+             * @see create(int)
+             * @see create(RCSResourceAttributes&&)
+             * @see create(const RCSResourceAttributes&, int)
+             * @see create(RCSResourceAttributes&&, int)
              */
             static RCSSetResponse create(const RCSResourceAttributes& attrs);
 
             /**
-             * @override
+             * @overload
+             * @param attrs The attributes to set.
+             * @see RCSResourceAttributes
+             * @see create(int)
+             * @see create(const RCSResourceAttributes&)
+             * @see create(const RCSResourceAttributes&, int)
+             * @see create(RCSResourceAttributes&&, int)
              */
             static RCSSetResponse create(RCSResourceAttributes&& attrs);
 
@@ -220,19 +284,47 @@ namespace OIC
              * This sends the passed attributes as the result attributes
              * instead of the one the RCSResourceObject holds.
              *
+             * @overload
              * @param attrs The attributes to set.
              * @param errorCode The error code for response.
              *
              * @see RCSResourceAttributes
-             *
+             * @see create(int)
+             * @see create(const RCSResourceAttributes&)
+             * @see create(RCSResourceAttributes&&)
+             * @see create(RCSResourceAttributes&&, int)
              */
             static RCSSetResponse create(const RCSResourceAttributes& attrs, int errorCode);
 
             /**
-             * @override
+             * @overload
+             * @param attrs The attributes to set.
+             * @param errorCode The error code for response.
+             * @see RCSResourceAttributes
+             * @see create(int)
+             * @see create(const RCSResourceAttributes&)
+             * @see create(RCSResourceAttributes&&)
+             * @see create(const RCSResourceAttributes&, int)
              */
             static RCSSetResponse create(RCSResourceAttributes&& attrs, int errorCode);
 
+            /**
+             * Creates a RCSSetResponse for a separate response.
+             * The separate response is to delay sending actual response to the client.
+             *
+             * @note A separate response needs to be set with RCSSeparateResponse
+             * to send the result of the request.
+             *
+             * @see RCSSeparateResponse
+             */
+            static RCSSetResponse separate();
+
+            /**
+             * Returns whether it is a separate response.
+             *
+             * @see separate()
+             */
+            bool isSeparate() const;
 
             //! @cond
             SetRequestHandler* getHandler() const;
@@ -257,6 +349,7 @@ namespace OIC
             RCSSetResponse& setAcceptanceMethod(AcceptanceMethod method);
 
         private:
+            RCSSetResponse();
             RCSSetResponse(std::shared_ptr< SetRequestHandler >&&);
             RCSSetResponse(std::shared_ptr< SetRequestHandler >&&, AcceptanceMethod);
 

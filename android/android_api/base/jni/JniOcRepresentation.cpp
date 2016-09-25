@@ -19,6 +19,9 @@
 * //
 * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */
+
+#include <map>
+
 #include "JniOcRepresentation.h"
 #include "JniUtils.h"
 
@@ -40,6 +43,37 @@ OCRepresentation* JniOcRepresentation::getOCRepresentationPtr(JNIEnv *env, jobje
 
 /*
 * Class:     org_iotivity_base_OcRepresentation
+* Method:    getValues
+* Signature: ()Ljava/util/Map;
+*/
+JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcRepresentation_getValues
+(JNIEnv *env, jobject thiz)
+{
+    LOGD("OcRepresentation_getValues");
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    if (!rep)
+    {
+        return nullptr;
+    }
+
+    std::map<std::string, AttributeValue> values = rep->getValues();
+    jobject jHashMap = env->NewObject(g_cls_HashMap, g_mid_HashMap_ctor);
+    if (!jHashMap)
+    {
+        return nullptr;
+    }
+
+    for (std::map<std::string, AttributeValue>::const_iterator it = values.begin(); it != values.end(); it++)
+    {
+        jobject key = static_cast<jobject>(env->NewStringUTF(it->first.c_str()));
+        jobject val = boost::apply_visitor(JObjectConverter(env), it->second);
+        env->CallObjectMethod(jHashMap, g_mid_HashMap_put, key, val);
+    }
+    return jHashMap;
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
 * Method:    getValueN
 * Signature: (Ljava/lang/String;)Ljava/lang/Object;
 */
@@ -53,7 +87,10 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcRepresentation_getValueN
         return nullptr;
     }
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return nullptr;
+    if (!rep)
+    {
+        return nullptr;
+    }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
 
@@ -81,7 +118,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueInteger
         return;
     }
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string str = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(str, static_cast<int>(jValue));
@@ -102,7 +142,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueDouble
         return;
     }
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string str = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(str, static_cast<double>(jValue));
@@ -123,7 +166,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBoolean
         return;
     }
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string str = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(str, static_cast<bool>(jValue));
@@ -144,7 +190,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueStringN
         return;
     }
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
     std::string value = env->GetStringUTFChars(jValue, nullptr);
@@ -167,14 +216,20 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresent
         return;
     }
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
 
     if (jValue)
     {
         OCRepresentation *value = JniOcRepresentation::getOCRepresentationPtr(env, jValue);
-        if (!value) return;
+        if (!value)
+        {
+            return;
+        }
         rep->setValue(key, *value);
     }
     else
@@ -209,7 +264,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueIntegerAr
     env->ReleaseIntArrayElements(jValue, ints, JNI_ABORT);
 
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(key, value);
@@ -247,7 +305,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueInteger2D
     }
 
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(key, value);
@@ -293,7 +354,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueInteger3D
     }
 
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(key, value);
@@ -325,7 +389,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueDoubleArr
     env->ReleaseDoubleArrayElements(jValue, doubles, JNI_ABORT);
 
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(key, value);
@@ -363,7 +430,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueDouble2DA
     }
 
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(key, value);
@@ -409,7 +479,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueDouble3DA
     }
 
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(key, value);
@@ -441,7 +514,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBooleanAr
     env->ReleaseBooleanArrayElements(jValue, booleans, JNI_ABORT);
 
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(key, value);
@@ -480,7 +556,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBoolean2D
     }
 
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(key, value);
@@ -527,7 +606,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueBoolean3D
     }
 
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(key, value);
@@ -552,7 +634,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueStringArr
     JniUtils::convertJavaStrArrToStrVector(env, jValue, value);
 
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(key, value);
@@ -584,7 +669,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueString2DA
     }
 
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(key, value);
@@ -624,8 +712,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueString3DA
     }
 
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
-
+    if (!rep)
+    {
+        return;
+    }
     std::string key = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(key, value);
 }
@@ -649,7 +739,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresent
     JniUtils::convertJavaRepresentationArrToVector(env, jValue, value);
 
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(key, value);
@@ -681,7 +774,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresent
     }
 
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(key, value);
@@ -721,7 +817,45 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueRepresent
     }
 
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
+
+    std::string key = env->GetStringUTFChars(jKey, nullptr);
+    rep->setValue(key, value);
+}
+
+/*
+* Class:     org_iotivity_base_OcRepresentation
+* Method:    setValueByteArray
+* Signature: (Ljava/lang/String;[B)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setValueByteArray
+(JNIEnv *env, jobject thiz, jstring jKey, jbyteArray jValue)
+{
+    LOGD("OcRepresentation_setValueByteArray");
+    if (!jKey)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "key cannot be null");
+        return;
+    }
+
+    const jsize len = env->GetArrayLength(jValue);
+    jbyte* bytes = env->GetByteArrayElements(jValue, nullptr);
+
+    std::vector<uint8_t> value;
+    for (jsize i = 0; i < len; ++i)
+    {
+        value.push_back(static_cast<uint8_t>(bytes[i]));
+    }
+    env->ReleaseByteArrayElements(jValue, bytes, JNI_ABORT);
+
+    OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
+    if (!rep)
+    {
+        return;
+    }
 
     std::string key = env->GetStringUTFChars(jKey, nullptr);
     rep->setValue(key, value);
@@ -737,10 +871,16 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_addChild
 {
     LOGD("OcRepresentation_addChild");
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     OCRepresentation *child = JniOcRepresentation::getOCRepresentationPtr(env, jOcRepresentation);
-    if (!child) return;
+    if (!child)
+    {
+        return;
+    }
 
     rep->addChild(*child);
 }
@@ -755,7 +895,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_clearChildren
 {
     LOGD("OcRepresentation_clearChildren");
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     rep->clearChildren();
 }
@@ -770,7 +913,10 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcRepresentation_getChildr
 {
     LOGD("OcRepresentation_getChildrenArray");
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return nullptr;
+    if (!rep)
+    {
+        return nullptr;
+    }
 
     return JniUtils::convertRepresentationVectorToJavaArray(env, rep->getChildren());
 }
@@ -785,7 +931,10 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcRepresentation_getUri
 {
     LOGD("OcRepresentation_getUri");
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return nullptr;
+    if (!rep)
+    {
+        return nullptr;
+    }
 
     std::string uri(rep->getUri());
     return env->NewStringUTF(uri.c_str());
@@ -801,7 +950,10 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcRepresentation_getHost
 {
     LOGD("OcRepresentation_getHost");
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return nullptr;
+    if (!rep)
+    {
+        return nullptr;
+    }
 
     std::string uri(rep->getHost());
     return env->NewStringUTF(uri.c_str());
@@ -822,7 +974,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setUri
         return;
     }
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     rep->setUri(env->GetStringUTFChars(jUri, nullptr));
 }
@@ -837,7 +992,10 @@ JNIEXPORT jboolean JNICALL Java_org_iotivity_base_OcRepresentation_hasAttribute
         return false;
     }
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return false;
+    if (!rep)
+    {
+        return false;
+    }
 
     std::string str = env->GetStringUTFChars(jstr, nullptr);
     return rep->hasAttribute(str);
@@ -853,7 +1011,10 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcRepresentation_getResourceTyp
 {
     LOGD("OcRepresentation_getResourceTypes");
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return nullptr;
+    if (!rep)
+    {
+        return nullptr;
+    }
 
     std::vector<std::string> resourceTypes = rep->getResourceTypes();
     return JniUtils::convertStrVectorToJavaStrList(env, resourceTypes);
@@ -874,7 +1035,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setResourceTypeAr
         return;
     }
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::vector<std::string> resourceTypes;
     JniUtils::convertJavaStrArrToStrVector(env, jResourceTypeArray, resourceTypes);
@@ -890,7 +1054,10 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcRepresentation_getResourceInt
 {
     LOGD("OcRepresentation_getResourceInterfaces");
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return nullptr;
+    if (!rep)
+    {
+        return nullptr;
+    }
 
     std::vector<std::string> resourceInterfaces = rep->getResourceInterfaces();
     return JniUtils::convertStrVectorToJavaStrList(env, resourceInterfaces);
@@ -911,7 +1078,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setResourceInterf
         return;
     }
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::vector<std::string> resourceInterfaces;
     JniUtils::convertJavaStrArrToStrVector(env, jResourceInterfaceArray, resourceInterfaces);
@@ -928,7 +1098,10 @@ JNIEXPORT jboolean JNICALL Java_org_iotivity_base_OcRepresentation_isEmpty
 {
     LOGD("OcRepresentation_isEmpty");
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return false;
+    if (!rep)
+    {
+        return false;
+    }
 
     return static_cast<jboolean>(rep->empty());
 }
@@ -943,7 +1116,10 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcRepresentation_size
 {
     LOGD("OcRepresentation_size");
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return -1;
+    if (!rep)
+    {
+        return -1;
+    }
 
     return static_cast<jint>(rep->numberOfAttributes());
 }
@@ -963,7 +1139,10 @@ JNIEXPORT jboolean JNICALL Java_org_iotivity_base_OcRepresentation_remove
         return false;
     }
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return false;
+    if (!rep)
+    {
+        return false;
+    }
 
     std::string attributeKey = env->GetStringUTFChars(jAttributeKey, nullptr);
     return static_cast<jboolean>(rep->erase(attributeKey));
@@ -984,7 +1163,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcRepresentation_setNull
         return;
     }
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return;
+    if (!rep)
+    {
+        return;
+    }
 
     std::string attributeKey = env->GetStringUTFChars(jAttributeKey, nullptr);
     rep->setNULL(attributeKey);
@@ -1005,7 +1187,10 @@ JNIEXPORT jboolean JNICALL Java_org_iotivity_base_OcRepresentation_isNull
         return false;
     }
     OCRepresentation *rep = JniOcRepresentation::getOCRepresentationPtr(env, thiz);
-    if (!rep) return false;
+    if (!rep)
+    {
+        return false;
+    }
 
     std::string attributeKey = env->GetStringUTFChars(jAttributeKey, nullptr);
     return static_cast<jboolean>(rep->isNULL(attributeKey));

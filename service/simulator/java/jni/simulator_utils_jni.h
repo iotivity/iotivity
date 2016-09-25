@@ -38,23 +38,37 @@ typedef struct
     jclass setCls;
     jclass iteratorCls;
 
-    jclass interfaceTypeCls;
     jclass simulatorResourceCls;
     jclass simulatorResourceTypeCls;
     jclass simulatorSingleResourceCls;
     jclass simulatorCollectionResourceCls;
     jclass simulatorResourceModelCls;
     jclass simulatorResourceAttributeCls;
-    jclass automationTypeCls;
     jclass attributeValueCls;
     jclass attributeValueTypeCls;
     jclass attributeTypeInfoCls;
     jclass attributePropertyCls;
     jclass attributePropertyTypeCls;
+    jclass integerPropertyCls;
+    jclass integerPropertyBuilderCls;
+    jclass doublePropertyCls;
+    jclass doublePropertyBuilderCls;
+    jclass booleanPropertyCls;
+    jclass booleanPropertyBuilderCls;
+    jclass stringPropertyCls;
+    jclass stringPropertyBuilderCls;
+    jclass arrayPropertyCls;
+    jclass arrayPropertyBuilderCls;
+    jclass modelPropertyCls;
+    jclass autoUpdateTypeCls;
+
     jclass simulatorRemoteResourceCls;
+    jclass requestTypeCls;
     jclass observerCls;
     jclass deviceInfoCls;
     jclass platformInfoCls;
+    jclass simulatorRequestModelCls;
+
     jclass simulatorExceptionCls;
     jclass invalidArgsExceptionCls;
     jclass noSupportExceptionCls;
@@ -78,36 +92,36 @@ typedef struct
     jclass simulatorResModel3DArrayCls;
 } SimulatorClassRefs;
 
-#define VALIDATE_INPUT(ENV, CONDITION, MSG) if (CONDITION) {throwInvalidArgsException(ENV, SIMULATOR_INVALID_PARAM, MSG); return;}
-#define VALIDATE_INPUT_RET(ENV, CONDITION, MSG, RET) if (CONDITION) {throwInvalidArgsException(ENV, SIMULATOR_INVALID_PARAM, MSG); return RET;}
+#define VALIDATE_INPUT(ENV, CONDITION, MSG) if (CONDITION) {ThrowInvalidArgsException(ENV, SIMULATOR_INVALID_PARAM, MSG); return;}
+#define VALIDATE_INPUT_RET(ENV, CONDITION, MSG, RET) if (CONDITION) {ThrowInvalidArgsException(ENV, SIMULATOR_INVALID_PARAM, MSG); return RET;}
 
-#define VALIDATE_CALLBACK(ENV, CALLBACK) if (!CALLBACK){throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK, "Invalid callback!"); return;}
-#define VALIDATE_CALLBACK_RET(ENV, CALLBACK, RET) if (!CALLBACK){throwInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK, "Invalid callback!"); return RET;}
+#define VALIDATE_CALLBACK(ENV, CALLBACK) if (!CALLBACK){ThrowInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK, "Invalid callback!"); return;}
+#define VALIDATE_CALLBACK_RET(ENV, CALLBACK, RET) if (!CALLBACK){ThrowInvalidArgsException(env, SIMULATOR_INVALID_CALLBACK, "Invalid callback!"); return RET;}
 
-static jfieldID GetHandleField(JNIEnv *env, jobject jobj)
+static jfieldID getHandleField(JNIEnv *env, jobject jobj)
 {
     jclass cls = env->GetObjectClass(jobj);
     return env->GetFieldID(cls, "mNativeHandle", "J");
 }
 
 template <typename T>
-static T *GetHandle(JNIEnv *env, jobject jobj)
+static T *getHandle(JNIEnv *env, jobject jobj)
 {
-    jlong handle = env->GetLongField(jobj, GetHandleField(env, jobj));
+    jlong handle = env->GetLongField(jobj, getHandleField(env, jobj));
     return reinterpret_cast<T *>(handle);
 }
 
 template <typename T>
-static void SetHandle(JNIEnv *env, jobject jobj, T *type)
+static void setHandle(JNIEnv *env, jobject jobj, T *type)
 {
     jlong handle = reinterpret_cast<jlong>(type);
-    env->SetLongField(jobj, GetHandleField(env, jobj), handle);
+    env->SetLongField(jobj, getHandleField(env, jobj), handle);
 }
 
-extern JNIEnv *getEnv();
-extern void releaseEnv();
+extern JNIEnv *GetEnv();
+extern void ReleaseEnv();
 extern SimulatorClassRefs gSimulatorClassRefs;
 
-jobject simulatorResultToJava(JNIEnv *env, SimulatorResult errorCode);
+jobject SimulatorResultToJava(JNIEnv *env, SimulatorResult errorCode);
 
 #endif

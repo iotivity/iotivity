@@ -23,10 +23,27 @@ package org.oic.simulator;
 @SuppressWarnings("serial")
 public class OperationInProgressException extends SimulatorException {
 
+    /**
+     * Constructs {@link OperationInProgressException} with the given error
+     * message.
+     *
+     * @param message
+     *            Error description.
+     */
     public OperationInProgressException(String message) {
         super(SimulatorResult.SIMULATOR_OPERATION_IN_PROGRESS, message);
     }
 
+    /**
+     * Constructs {@link OperationInProgressException} with the given error code
+     * and description.
+     *
+     * @param code
+     *            {@link SimulatorResult} enum constant representing the error
+     *            code.
+     * @param message
+     *            Error description.
+     */
     public OperationInProgressException(SimulatorResult code, String message) {
         super(code, message);
     }

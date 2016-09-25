@@ -43,7 +43,11 @@ def run_test(env, xml_file, test):
 
     test_cmd = os.path.join(build_dir, test)
 
-    if xml_file:
+    have_valgrind = False
+    if env.get('TARGET_OS') not in ['windows']:
+        have_valgrind = True
+
+    if xml_file and have_valgrind:
         # Environment variables to be made available during the
         # Valgrind run.
         valgrind_environment = ''
@@ -59,5 +63,5 @@ def run_test(env, xml_file, test):
         # Set up to run the test under Valgrind.
         test_cmd = '%s valgrind --leak-check=full --suppressions=%s --xml=yes --xml-file=%s %s' % (valgrind_environment, suppression_file, xml_file, test_cmd)
 
-    ut = env.Command('ut', None, test_cmd)
-    env.AlwaysBuild('ut')
+    ut = env.Command('ut' + test, None, test_cmd)
+    env.AlwaysBuild('ut' + test)

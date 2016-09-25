@@ -1,23 +1,23 @@
 /*
- * //******************************************************************
- * //
- * // Copyright 2015 Intel Corporation.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //      http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *******************************************************************
+ *
+ * Copyright 2015 Intel Corporation.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 
 package org.iotivity.base;
@@ -28,6 +28,7 @@ public enum ErrorCode {
     RESOURCE_CREATED("RESOURCE_CREATED", ""),
     RESOURCE_DELETED("RESOURCE_DELETED", ""),
     CONTINUE("CONTINUE", ""),
+    RESOURCE_CHANGED("RESOURCE_CHANGED", ""),
     /** Success status code - END HERE.*/
     /* Error status code - START HERE */
     INVALID_URI("INVALID_URI", ""),
@@ -61,6 +62,9 @@ public enum ErrorCode {
     PDM_IS_NOT_INITIALIZED("PDM_IS_NOT_INITIALIZED", ""),
     DUPLICATE_UUID("DUPLICATE_UUID", ""),
     INCONSISTENT_DB("INCONSISTENT_DB", ""),
+    /** Error code from OTM */
+    AUTHENTICATION_FAILURE("AUTHENTICATION_FAILURE",
+        "This error is pushed from DTLS interface when handshake failure happens"),
     /** Insert all new error codes here!.*/
     PRESENCE_STOPPED("PRESENCE_STOPPED", ""),
     PRESENCE_TIMEOUT("PRESENCE_TIMEOUT", ""),

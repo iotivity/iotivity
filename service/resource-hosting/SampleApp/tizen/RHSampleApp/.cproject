@@ -101,14 +101,14 @@
                                     <listOptionValue builtIn="false" value="../../../../../../extlibs/cjson"/>
                                     <listOptionValue builtIn="false" value="../../../../include"/>
                                     <listOptionValue builtIn="false" value="../../../../src"/>
-                                    <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\include&quot;"/>
-                                    <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\c_common&quot;"/>
-                                    <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\stack\include&quot;"/>
-                                    <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\logger\include&quot;"/>
-                                    <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\occoap\include&quot;"/>
-                                    <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\ocrandom\include&quot;"/>
-                                    <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\csdk\ocsocket\include&quot;"/>
-                                    <listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\resource\oc_logger\include&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;../../../../../../resource/include&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;../../../../../../resource/c_common&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;../../../../../../resource/csdk/stack/include&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;../../../../../../resource/csdk/logger/include&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;../../../../../../resource/csdk/occoap/include&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;../../../../../../resource/csdk/ocrandom/include&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;../../../../../../resource/csdk/ocsocket/include&quot;"/>
+                                    <listOptionValue builtIn="false" value="&quot;../../../../../../resource/oc_logger/include&quot;"/>
                                 </option>
                                 <option id="sbi.gnu.cpp.compiler.option.frameworks.core.856851155" name="Tizen-Frameworks" superClass="sbi.gnu.cpp.compiler.option.frameworks.core" valueType="userObjs">
                                     <listOptionValue builtIn="false" value="Native_API"/>

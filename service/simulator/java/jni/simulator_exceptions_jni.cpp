@@ -23,7 +23,7 @@
 
 extern SimulatorClassRefs gSimulatorClassRefs;
 
-void throwSimulatorException(JNIEnv *env, SimulatorResult code, const char *message)
+void ThrowSimulatorException(JNIEnv *env, SimulatorResult code, const char *message)
 {
     static jmethodID simulatorExceptionCtor = env->GetMethodID(
                 gSimulatorClassRefs.simulatorExceptionCls, "<init>", "(ILjava/lang/String;)V");
@@ -36,7 +36,7 @@ void throwSimulatorException(JNIEnv *env, SimulatorResult code, const char *mess
     }
 }
 
-void throwInvalidArgsException(JNIEnv *env, SimulatorResult code, const char *message)
+void ThrowInvalidArgsException(JNIEnv *env, SimulatorResult code, const char *message)
 {
     static jmethodID invalidArgsExceptionCtor = env->GetMethodID(
                 gSimulatorClassRefs.invalidArgsExceptionCls, "<init>", "(ILjava/lang/String;)V");
@@ -49,7 +49,7 @@ void throwInvalidArgsException(JNIEnv *env, SimulatorResult code, const char *me
     }
 }
 
-void throwNoSupportException(JNIEnv *env, const char *message)
+void ThrowNoSupportException(JNIEnv *env, const char *message)
 {
     static jmethodID noSupportExceptionCtor = env->GetMethodID(
                 gSimulatorClassRefs.noSupportExceptionCls, "<init>", "(Ljava/lang/String;)V");
@@ -62,7 +62,7 @@ void throwNoSupportException(JNIEnv *env, const char *message)
     }
 }
 
-void throwOperationInProgressException(JNIEnv *env, const char *message)
+void ThrowOperationInProgressException(JNIEnv *env, const char *message)
 {
     static jmethodID operationInProgressExceptionCtor = env->GetMethodID(
                 gSimulatorClassRefs.operationInProgressExceptionCls, "<init>", "(Ljava/lang/String;)V");
@@ -75,7 +75,7 @@ void throwOperationInProgressException(JNIEnv *env, const char *message)
     }
 }
 
-void throwBadObjectException(JNIEnv *env, const char *message)
+void ThrowBadObjectException(JNIEnv *env, const char *message)
 {
     static jmethodID simulatorExceptionCtor = env->GetMethodID(
                 gSimulatorClassRefs.simulatorExceptionCls, "<init>", "(ILjava/lang/String;)V");

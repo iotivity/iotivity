@@ -21,8 +21,9 @@
 #ifndef SIMULATOR_DEVICE_INFO_JNI_H_
 #define SIMULATOR_DEVICE_INFO_JNI_H_
 
-#include "simulator_device_info.h"
 #include <jni.h>
+
+#include "simulator_device_info.h"
 
 class JniDeviceInfo
 {
@@ -40,7 +41,5 @@ class JniDeviceInfo
 
         JNIEnv *m_env;
 };
-
-void onDeviceInfoReceived(jobject listener, const std::string &host, DeviceInfo &deviceInfo);
 
 #endif

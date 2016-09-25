@@ -26,6 +26,7 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include <algorithm>
 
 #include <UnitTestHelper.h>
 
@@ -42,6 +43,7 @@
 
 #include "RCSResourceObject.h"
 #include "RCSRemoteResourceObject.h"
+#include "SoftSensorResource.h"
 
 #include "ResourceContainerTestSimulator.h"
 
@@ -98,14 +100,76 @@ class TestBundleResource: public BundleResource
     public:
         virtual void initAttributes() { }
 
-        virtual void handleSetAttributesRequest(RCSResourceAttributes &attr)
+        virtual void handleSetAttributesRequest(const RCSResourceAttributes &attr,
+                                                const std::map< std::string, std::string > &queryParams)
         {
+            (void)queryParams;
             BundleResource::setAttributes(attr);
         }
 
-        virtual RCSResourceAttributes &handleGetAttributesRequest()
+        virtual RCSResourceAttributes handleGetAttributesRequest(const
+                std::map< std::string, std::string > &queryParams)
         {
+            (void)queryParams;
             return BundleResource::getAttributes();
+        }
+};
+
+/*Fake bundle resource class for testing*/
+class TestBundleResourceWithAttrs: public BundleResource
+{
+    public:
+        virtual void initAttributes() {
+            setAttribute("attrib1", RCSResourceAttributes::Value("test"));
+            setAttribute("attrib2", RCSResourceAttributes::Value(1));
+            setAttribute("attrib3", RCSResourceAttributes::Value(true));
+        }
+
+        virtual void handleSetAttributesRequest(const RCSResourceAttributes &attr,
+                                                const std::map< std::string, std::string > &queryParams)
+        {
+            (void)queryParams;
+            BundleResource::setAttributes(attr);
+        }
+
+        virtual RCSResourceAttributes handleGetAttributesRequest(const
+                std::map< std::string, std::string > &queryParams)
+        {
+            (void)queryParams;
+            return BundleResource::getAttributes();
+        }
+};
+
+
+/*Fake bundle resource class for testing*/
+class TestSoftSensorResource: public SoftSensorResource
+{
+    public:
+        virtual void initAttributes() {
+            SoftSensorResource::initAttributes();
+        }
+
+        virtual void handleSetAttributesRequest(const RCSResourceAttributes &attr,
+                                                const std::map< std::string, std::string > &queryParams)
+        {
+            (void)queryParams;
+            BundleResource::setAttributes(attr);
+        }
+
+        virtual RCSResourceAttributes handleGetAttributesRequest(const
+                 std::map< std::string, std::string > &queryParams)
+        {
+            (void)queryParams;
+            return BundleResource::getAttributes();
+        }
+
+        virtual void executeLogic(){
+
+        }
+
+        virtual void onUpdatedInputResource(
+                std::string, std::vector<OIC::Service::RCSResourceAttributes::Value>){
+
         }
 };
 
@@ -127,18 +191,71 @@ class ResourceContainerTest: public TestWithMock
         }
 };
 
+TEST_F(ResourceContainerTest, TestBundleResource)
+{
+    TestBundleResourceWithAttrs testResource;
+    testResource.initAttributes();
+
+    // check if initAttributes worked
+    EXPECT_STREQ("\"test\"", testResource.getAttribute("attrib1").toString().c_str());
+
+    std::list<string> attrNames = testResource.getAttributeNames();
+    ASSERT_TRUE(std::find(attrNames.begin(), attrNames.end(), "attrib1") != attrNames.end());
+
+    ASSERT_FALSE(testResource.getAttributes().contains("attrib4"));
+
+    testResource.getAttributeNames();
+
+    RCSResourceAttributes fullAttributes;
+    const std::map< std::string, std::string > queryParams = {};
+
+    fullAttributes["attrib1"] = "test";
+    fullAttributes["attrib2"] = 1;
+    fullAttributes["attrib3"] = true;
+
+    testResource.setAttributes(fullAttributes);
+
+    ASSERT_TRUE(testResource.getAttributes().contains("attrib1"));
+
+    fullAttributes["attrib1"] = "test2";
+    fullAttributes["attrib2"] = 2;
+    fullAttributes["attrib3"] = false;
+
+    testResource.handleSetAttributesRequest(fullAttributes, queryParams);
+
+    EXPECT_EQ((unsigned int) 3, testResource.getAttributeNames().size());
+
+    EXPECT_EQ((unsigned int) 3, testResource.handleGetAttributesRequest(queryParams).size());
+    std::string testString = "test";
+    testResource.setAttribute("attrib1", RCSResourceAttributes::Value(testString), false);
+
+    testResource.setAttributes(fullAttributes, false);
+
+    EXPECT_STREQ("\"test2\"", testResource.getAttribute("attrib1").toString().c_str());
+    EXPECT_EQ(2, testResource.getAttribute("attrib2"));
+
+    testResource.setAttribute("attrib1", RCSResourceAttributes::Value("test"));
+    EXPECT_STREQ("\"test\"", testResource.getAttribute("attrib1").toString().c_str());
+    EXPECT_EQ(2, testResource.getAttribute("attrib2"));
+}
+
+TEST_F(ResourceContainerTest, TestSoftSensorResource)
+{
+    TestSoftSensorResource softSensorResource;
+    softSensorResource.initAttributes();
+    EXPECT_EQ((unsigned int) 0, softSensorResource.getAttributeNames().size());
+}
+
+
 TEST_F(ResourceContainerTest, BundleRegisteredWhenContainerStartedWithValidConfigFile)
 {
     m_pResourceContainer->startContainer(m_strConfigPath);
     EXPECT_GT(m_pResourceContainer->listBundles().size(), (unsigned int) 0);
-    cout << "now checking for bunlde ids " << endl;
     EXPECT_STREQ("oic.bundle.test",
                  (*m_pResourceContainer->listBundles().begin())->getID().c_str());
     EXPECT_STREQ("libTestBundle.so",
                  (*m_pResourceContainer->listBundles().begin())->getPath().c_str());
     EXPECT_STREQ("1.0.0", (*m_pResourceContainer->listBundles().begin())->getVersion().c_str());
-
-    cout << "Now stopping container." << endl;
     m_pResourceContainer->stopContainer();
 }
 
@@ -148,7 +265,7 @@ TEST_F(ResourceContainerTest, BundleLoadedWhenContainerStartedWithValidConfigFil
 
     EXPECT_GT(m_pResourceContainer->listBundles().size(), (unsigned int) 0);
     unique_ptr<RCSBundleInfo> first = std::move(*m_pResourceContainer->listBundles().begin());
-    unique_ptr<BundleInfoInternal> firstInternal(static_cast<BundleInfoInternal*>(first.release()));
+    unique_ptr<BundleInfoInternal> firstInternal((BundleInfoInternal*)first.release());
     EXPECT_TRUE( firstInternal->isLoaded() );
     EXPECT_NE(nullptr,
     		firstInternal->getBundleHandle());
@@ -162,7 +279,7 @@ TEST_F(ResourceContainerTest, BundleActivatedWhenContainerStartedWithValidConfig
 
     EXPECT_GT(m_pResourceContainer->listBundles().size(), (unsigned int) 0);
     unique_ptr<RCSBundleInfo> first = std::move(*m_pResourceContainer->listBundles().begin());
-    unique_ptr<BundleInfoInternal> firstInternal(static_cast<BundleInfoInternal*>(first.release()));
+    unique_ptr<BundleInfoInternal> firstInternal((BundleInfoInternal*)first.release());
     EXPECT_TRUE(firstInternal->isActivated());
     EXPECT_NE(nullptr,firstInternal->getBundleActivator());
 
@@ -197,7 +314,7 @@ TEST_F(ResourceContainerTest, BundleStoppedWithStartBundleAPI)
     m_pResourceContainer->stopBundle("oic.bundle.test");
 
     unique_ptr<RCSBundleInfo> first = std::move(*m_pResourceContainer->listBundles().begin());
-    unique_ptr<BundleInfoInternal> firstInternal(static_cast<BundleInfoInternal*>(first.release()));
+    unique_ptr<BundleInfoInternal> firstInternal((BundleInfoInternal*)first.release());
     EXPECT_FALSE(firstInternal->isActivated());
 
     m_pResourceContainer->stopContainer();
@@ -209,7 +326,7 @@ TEST_F(ResourceContainerTest, BundleStartedWithStartBundleAPI)
     m_pResourceContainer->stopBundle("oic.bundle.test");
     m_pResourceContainer->startBundle("oic.bundle.test");
     unique_ptr<RCSBundleInfo> first = std::move(*m_pResourceContainer->listBundles().begin());
-    unique_ptr<BundleInfoInternal> firstInternal(static_cast<BundleInfoInternal*>(first.release()));
+    unique_ptr<BundleInfoInternal> firstInternal((BundleInfoInternal*)first.release());
     EXPECT_TRUE(firstInternal->isActivated());
 
     m_pResourceContainer->stopContainer();
@@ -225,7 +342,7 @@ TEST_F(ResourceContainerTest, AddNewSoBundleToContainer)
 
     EXPECT_EQ(bundles.size() + 1, m_pResourceContainer->listBundles().size());
     unique_ptr<RCSBundleInfo> first = std::move(*m_pResourceContainer->listBundles().begin());
-    unique_ptr<BundleInfoInternal> firstInternal(static_cast<BundleInfoInternal*>(first.release()));
+    unique_ptr<BundleInfoInternal> firstInternal((BundleInfoInternal*)first.release());
     EXPECT_TRUE(firstInternal->isLoaded());
 }
 
@@ -306,6 +423,7 @@ class ResourceContainerBundleAPITest: public TestWithMock
             m_pBundleResource->m_bundleId = "oic.bundle.test";
             m_pBundleResource->m_uri = "/test_resource";
             m_pBundleResource->m_resourceType = "container.test";
+            m_pBundleResource->m_interface = "oic.if.baseline";
         }
 };
 
@@ -315,6 +433,7 @@ TEST_F(ResourceContainerBundleAPITest, ResourceServerCreatedWhenRegisterResource
     m_pBundleResource->m_bundleId = "oic.bundle.test";
     m_pBundleResource->m_uri = "/test_resource/test";
     m_pBundleResource->m_resourceType = "container.test";
+    m_pBundleResource->m_interface = "oic.if.baseline";
 
     mocks.ExpectCallFunc(ResourceContainerImpl::buildResourceObject).With(m_pBundleResource->m_uri,
             m_pBundleResource->m_resourceType, m_pBundleResource->m_interface).Return(nullptr);
@@ -410,167 +529,21 @@ class ResourceContainerImplTest: public TestWithMock
 
     public:
         ResourceContainerImpl *m_pResourceContainer;
-        BundleInfoInternal *m_pBundleInfo;
+        shared_ptr<BundleInfoInternal> m_pBundleInfo;
 
     protected:
         void SetUp()
         {
             TestWithMock::SetUp();
             m_pResourceContainer = ResourceContainerImpl::getImplInstance();
-            m_pBundleInfo = new BundleInfoInternal();
+            m_pBundleInfo = std::make_shared<BundleInfoInternal>();
         }
 
         void TearDown()
         {
-            delete m_pBundleInfo;
+            m_pBundleInfo.reset();
         }
 };
-
-TEST_F(ResourceContainerImplTest, SoBundleLoadedWhenRegisteredWithRegisterBundleAPI)
-{
-    m_pBundleInfo->setPath("libTestBundle.so");
-    m_pBundleInfo->setActivatorName("test");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setLibraryPath(".");
-    m_pBundleInfo->setID("oic.bundle.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-
-    EXPECT_NE(nullptr, ((BundleInfoInternal *)m_pBundleInfo)->getBundleHandle());
-}
-
-#if (JAVA_SUPPORT_TEST)
-TEST_F(ResourceContainerImplTest, JavaBundleLoadedWhenRegisteredWithRegisterBundleAPIWrongPath)
-{
-    m_pBundleInfo->setPath("wrong_path.jar");
-    m_pBundleInfo->setActivatorName("org/iotivity/bundle/hue/HueBundleActivator");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setID("oic.bundle.java.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-    EXPECT_FALSE(((BundleInfoInternal *)m_pBundleInfo)->isLoaded());
-}
-
-TEST_F(ResourceContainerImplTest, JavaBundleTest)
-{
-    m_pBundleInfo->setPath("TestBundleJava/hue-0.1-jar-with-dependencies.jar");
-    m_pBundleInfo->setActivatorName("org/iotivity/bundle/hue/HueBundleActivator");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setID("oic.bundle.java.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-    EXPECT_TRUE(((BundleInfoInternal *)m_pBundleInfo)->isLoaded());
-
-    m_pResourceContainer->activateBundle(m_pBundleInfo);
-    EXPECT_TRUE(((BundleInfoInternal *) m_pBundleInfo)->isActivated());
-
-    m_pResourceContainer->deactivateBundle(m_pBundleInfo);
-    EXPECT_FALSE(((BundleInfoInternal *) m_pBundleInfo)->isActivated());
-}
-#endif
-
-TEST_F(ResourceContainerImplTest, BundleNotRegisteredIfBundlePathIsInvalid)
-{
-    m_pBundleInfo->setPath("");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setID("oic.bundle.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-
-    EXPECT_EQ(nullptr, ((BundleInfoInternal *)m_pBundleInfo)->getBundleHandle());
-
-}
-
-TEST_F(ResourceContainerImplTest, SoBundleActivatedWithValidBundleInfo)
-{
-    m_pBundleInfo->setPath("libTestBundle.so");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setActivatorName("test");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setID("oic.bundle.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-    m_pResourceContainer->activateBundle(m_pBundleInfo);
-
-    EXPECT_NE(nullptr, ((BundleInfoInternal *)m_pBundleInfo)->getBundleActivator());
-}
-
-TEST_F(ResourceContainerImplTest, BundleNotActivatedWhenNotRegistered)
-{
-    m_pBundleInfo->setPath("libTestBundle.so");
-    m_pBundleInfo->setActivatorName("test");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setID("oic.bundle.test");
-
-    m_pResourceContainer->activateBundle(m_pBundleInfo);
-
-    EXPECT_EQ(nullptr, ((BundleInfoInternal *)m_pBundleInfo)->getBundleActivator());
-}
-
-TEST_F(ResourceContainerImplTest, SoBundleActivatedWithBundleID)
-{
-    m_pBundleInfo->setPath("libTestBundle.so");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setActivatorName("test");
-    m_pBundleInfo->setID("oic.bundle.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-    m_pResourceContainer->activateBundle(m_pBundleInfo->getID());
-
-    EXPECT_NE(nullptr, ((BundleInfoInternal *)m_pBundleInfo)->getBundleActivator());
-    EXPECT_TRUE(((BundleInfoInternal *)m_pBundleInfo)->isActivated());
-}
-
-TEST_F(ResourceContainerImplTest, BundleDeactivatedWithBundleInfo)
-{
-    m_pBundleInfo->setPath("libTestBundle.so");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setActivatorName("test");
-    m_pBundleInfo->setID("oic.bundle.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-    m_pResourceContainer->activateBundle(m_pBundleInfo);
-    m_pResourceContainer->deactivateBundle(m_pBundleInfo);
-
-    EXPECT_NE(nullptr, ((BundleInfoInternal *)m_pBundleInfo)->getBundleDeactivator());
-    EXPECT_FALSE(((BundleInfoInternal *)m_pBundleInfo)->isActivated());
-}
-
-TEST_F(ResourceContainerImplTest, BundleDeactivatedWithBundleInfoJava)
-{
-    m_pBundleInfo->setPath("TestBundle/hue-0.1-jar-with-dependencies.jar");
-    m_pBundleInfo->setActivatorName("org/iotivity/bundle/hue/HueBundleActivator");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setID("oic.bundle.java.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-    m_pResourceContainer->activateBundle(m_pBundleInfo);
-    m_pResourceContainer->deactivateBundle(m_pBundleInfo);
-    EXPECT_FALSE(((BundleInfoInternal *) m_pBundleInfo)->isActivated());
-}
-
-TEST_F(ResourceContainerImplTest, SoBundleDeactivatedWithBundleID)
-{
-    m_pBundleInfo->setPath("libTestBundle.so");
-    m_pBundleInfo->setVersion("1.0");
-    m_pBundleInfo->setLibraryPath("../.");
-    m_pBundleInfo->setActivatorName("test");
-    m_pBundleInfo->setID("oic.bundle.test");
-
-    m_pResourceContainer->registerBundle(m_pBundleInfo);
-    m_pResourceContainer->activateBundle(m_pBundleInfo);
-
-    m_pResourceContainer->deactivateBundle(m_pBundleInfo->getID());
-
-    EXPECT_FALSE(((BundleInfoInternal *)m_pBundleInfo)->isActivated());
-}
 
 
 /* Test for Configuration */
@@ -734,29 +707,28 @@ class DiscoverResourceUnitTest: public TestWithMock
 
 TEST_F(DiscoverResourceUnitTest, startDiscover)
 {
-    std::string type = "Resource.Container";
+    std::string type = "resource.container";
     std::string attributeName = "TestResourceContainer";
 
     m_pDiscoverResourceUnit->startDiscover(
         DiscoverResourceUnit::DiscoverResourceInfo("", type, attributeName), m_updatedCB);
 
-    std::chrono::milliseconds interval(400);
+    std::chrono::milliseconds interval(ResourceContainerTestSimulator::DEFAULT_WAITTIME);
     std::this_thread::sleep_for(interval);
 }
 
 TEST_F(DiscoverResourceUnitTest, onUpdateCalled)
 {
-    std::string type = "Resource.Container";
+    std::string type = "resource.container";
     std::string attributeName = "TestResourceContainer";
 
     m_pDiscoverResourceUnit->startDiscover(
         DiscoverResourceUnit::DiscoverResourceInfo("", type, attributeName), m_updatedCB);
 
-    std::chrono::milliseconds interval(400);
+    std::chrono::milliseconds interval(ResourceContainerTestSimulator::DEFAULT_WAITTIME);
     std::this_thread::sleep_for(interval);
 
     testObject->ChangeAttributeValue();
-
 }
 
 namespace
@@ -780,7 +752,6 @@ class RemoteResourceUnitTest: public TestWithMock
         void SetUp()
         {
             TestWithMock::SetUp();
-
             testObject = std::make_shared<ResourceContainerTestSimulator>();
             testObject->defaultRunSimulator();
             m_pRCSRemoteResourceObject = testObject->getRemoteResource();

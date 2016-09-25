@@ -127,7 +127,11 @@ CAResult_t CAIPStartMulticastServer(const char *localAddress, const char *multic
     // wifi shield does not support multicast
     OIC_LOG(DEBUG, TAG, "IN");
     OIC_LOG(DEBUG, TAG, "OUT");
-    return CA_NOT_SUPPORTED;
+    //Arduino wifi shiled does not support multicast.
+    //OCInit() is failing if an error code is returned here,
+    //hence blocking even uni-cast operations.
+    //So default return value is changed to CA_STATUS_OK.
+    return CA_STATUS_OK;
 }
 
 CAResult_t CAIPStartServer()
@@ -253,12 +257,7 @@ void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback)
     OIC_LOG(DEBUG, TAG, "OUT");
 }
 
-void CAIPSetExceptionCallback(CAIPExceptionCallback callback)
-{
-    // TODO
-}
-
-void CAIPSetErrorHandleCallback(CAIPErrorHandleCallback ipErrorCallback)
+void CAIPSetErrorHandler(CAIPErrorHandleCallback errorHandleCallback)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     OIC_LOG(DEBUG, TAG, "OUT");
@@ -300,12 +299,10 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         {
             continue;
         }
-        unsigned char *addr=  (unsigned char *) &(ifitem->ipv4addr);
-        snprintf(eps[j].addr, MAX_ADDR_STR_SIZE_CA, "%d.%d.%d.%d", addr[0], addr[1], addr[2], addr[3]);
-
+        OICStrcpy(eps[j].addr, MAX_ADDR_STR_SIZE_CA, ifitem->addr);
         eps[j].flags = CA_IPV4;
         eps[j].adapter = CA_ADAPTER_IP;
-        eps[j].interface = 0;
+        eps[j].ifindex = 0;
         eps[j].port = caglobals.ip.u4.port;
         j++;
     }

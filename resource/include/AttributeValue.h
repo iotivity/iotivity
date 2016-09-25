@@ -54,6 +54,7 @@ namespace OC
         bool,
         std::string,
         OC::OCRepresentation,
+        OCByteString,
 
         // Sequences:
         std::vector<int>,
@@ -61,6 +62,7 @@ namespace OC
         std::vector<bool>,
         std::vector<std::string>,
         std::vector<OC::OCRepresentation>,
+        std::vector<OCByteString>,
 
         // Nested sequences:
         std::vector<std::vector<int>>,
@@ -76,7 +78,13 @@ namespace OC
         std::vector<std::vector<std::vector<std::string>>>,
 
         std::vector<std::vector<OC::OCRepresentation>>,
-        std::vector<std::vector<std::vector<OC::OCRepresentation>>>
+        std::vector<std::vector<std::vector<OC::OCRepresentation>>>,
+
+        std::vector<std::vector<OCByteString>>,
+        std::vector<std::vector<std::vector<OCByteString>>>,
+
+        // used for binary data type
+        std::vector<uint8_t>
     > AttributeValue;
 
     enum class AttributeType
@@ -87,7 +95,9 @@ namespace OC
         Boolean,
         String,
         OCRepresentation,
-        Vector
+        Vector,
+        Binary,
+        OCByteString
     };
 
     template<typename T>
@@ -96,37 +106,49 @@ namespace OC
     template<>
     struct AttributeTypeConvert<NullType>
     {
-        constexpr static AttributeType type = AttributeType::Null;
+        BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::Null;
     };
 
     template<>
     struct AttributeTypeConvert<int>
     {
-        constexpr static AttributeType type = AttributeType::Integer;
+        BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::Integer;
     };
 
     template<>
     struct AttributeTypeConvert<double>
     {
-        constexpr static AttributeType type = AttributeType::Double;
+        BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::Double;
     };
 
     template<>
     struct AttributeTypeConvert<bool>
     {
-        constexpr static AttributeType type = AttributeType::Boolean;
+        BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::Boolean;
     };
 
     template<>
     struct AttributeTypeConvert<std::string>
     {
-        constexpr static AttributeType type = AttributeType::String;
+        BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::String;
     };
 
     template<>
     struct AttributeTypeConvert<OCRepresentation>
     {
-        constexpr static AttributeType type = AttributeType::OCRepresentation;
+        BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::OCRepresentation;
+    };
+
+    template<>
+    struct AttributeTypeConvert<OCByteString>
+    {
+       BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::OCByteString;
+    };
+
+    template<>
+    struct AttributeTypeConvert<std::vector<uint8_t>>
+    {
+        BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::Binary;
     };
 
     std::ostream& operator << (std::ostream& os, const AttributeType at);

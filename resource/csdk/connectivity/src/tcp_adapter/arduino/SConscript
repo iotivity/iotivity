@@ -1,0 +1,14 @@
+#######################################################
+#       Build TCP adapter for Ardunino
+#######################################################
+
+Import('env', 'src_dir')
+import os.path
+
+env.AppendUnique(CPPPATH = [ os.path.join(src_dir, 'arduino') ])
+
+if env.get('SHIELD') == 'ETH':
+    src_files = [ 'catcpserver_eth.cpp' ,
+                  'catcpadapterutils_eth.cpp']
+
+Return('src_files')

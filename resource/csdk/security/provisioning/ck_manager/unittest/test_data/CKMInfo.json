@@ -1,48 +1,85 @@
 {
-    "acl": [
-        {
-            "sub": "Kg==",
-            "rsrc": [
-                "/oic/res",
-                "/oic/d",
-                "/oic/p",
-                "/oic/res/types/d",
-                "/oic/ad"
-            ],
-            "perms": 2,
-            "ownrs" : ["YWRtaW5EZXZpY2VVVUlE"]
+    "acl": {
+        "aclist": {
+            "aces": [
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/res",
+                            "rel": "",
+                            "rt": ["oic.wk.res"],
+                            "if": ["oic.if.ll"]
+                        },{
+                            "href": "/oic/d",
+                            "rel": "",
+                            "rt": ["oic.wk.d"],
+                            "if": ["oic.if.baseline", "oic.if.r"]
+                        },{
+                            "href": "/oic/p",
+                            "rel": "",
+                            "rt": ["oic.wk.p"],
+                            "if": ["oic.if.baseline", "oic.if.r"]
+                        }
+                    ],
+                    "permission": 2
+                },
+                {
+                    "subjectuuid": "*",
+                    "resources": [
+                        {
+                            "href": "/oic/sec/doxm",
+                            "rel": "",
+                            "rt": ["oic.r.doxm"],
+                            "if": ["oic.if.baseline"]
+                        },
+                        {
+                            "href": "/oic/sec/pstat",
+                            "rel": "",
+                            "rt": ["oic.r.pstat"],
+                            "if": ["oic.if.baseline"]
+                        },
+                        {
+                            "href": "/oic/sec/acl",
+                            "rel": "",
+                            "rt": ["oic.r.acl"],
+                            "if": ["oic.if.baseline"]
+                        },
+                        {
+                            "href": "/oic/sec/cred",
+                            "rel": "",
+                            "rt": ["oic.r.cred"],
+                            "if": ["oic.if.baseline"]
+                        }
+                    ],
+                    "permission": 7
+                }
+            ]
         },
-        {
-            "sub": "Kg==",
-            "rsrc": [
-                "/oic/sec/doxm",
-                "/oic/sec/pstat",
-                "/oic/sec/acl",
-                "/oic/sec/cred"
-             ],
-             "perms": 7,
-             "ownrs" : ["YWRtaW5EZXZpY2VVVUlE"]
-        }
-    ],
+        "rowneruuid" : "61646d69-6e44-6576-6963-655555494430"
+    },
     "crl": {
         "CRLId": 1,
-        "ThisUpdate": "MTUwMTAxMDAwMDAwWg==",
-        "CRLData": "LQ=="
+        "ThisUpdate": "150101000000Z",
+        "CRLData": "-"
     },
     "pstat": {
         "isop": true,
-        "deviceid": "YWRtaW5EZXZpY2VVVUlE",
-        "ch": 0,
-        "cm":   0,
-        "tm":   0,
-        "om":   3,
-        "sm":   [3]
-    },
+        "deviceuuid": "61646d69-6e44-6576-6963-655555494430",
+        "rowneruuid": "61646d69-6e44-6576-6963-655555494430",
+        "cm": 0,
+        "tm": 0,
+        "om": 3,
+        "sm": 3
+        },
     "doxm": {
-        "oxm":  [0],
+        "oxms": [0],
         "oxmsel": 0,
+        "sct": 1,
         "owned": true,
-        "deviceid": "YWRtaW5EZXZpY2VVVUlE",
-        "ownr": "YWRtaW5EZXZpY2VVVUlE"
+        "deviceuuid": "61646d69-6e44-6576-6963-655555494430",
+        "devowneruuid": "61646d69-6e44-6576-6963-655555494430",
+        "rowneruuid": "61646d69-6e44-6576-6963-655555494430",
+        "x.org.iotivity.dpc": false
     }
 }

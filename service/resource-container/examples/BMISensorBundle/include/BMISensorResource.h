@@ -35,9 +35,11 @@ class BMISensorResource : public SoftSensorResource
         BMISensorResource& operator=( const BMISensorResource& rhs )=delete;
         ~BMISensorResource();
 
-        virtual void handleSetAttributesRequest(RCSResourceAttributes &attrs);
+        virtual void handleSetAttributesRequest(const RCSResourceAttributes &attrs,
+                                                const std::map< std::string, std::string > &queryParams);
 
-        virtual RCSResourceAttributes &handleGetAttributesRequest();
+        virtual RCSResourceAttributes handleGetAttributesRequest(const
+                std::map< std::string, std::string > &queryParams);
 
         virtual void executeLogic();
 

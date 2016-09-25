@@ -27,7 +27,7 @@
 #define CA_MESSAGE_HANDLER_H_
 
 #include "cacommon.h"
-#include "coap.h"
+#include <coap/coap.h>
 
 #define CA_MEMORY_ALLOC_CHECK(arg) { if (NULL == arg) {OIC_LOG(ERROR, TAG, "Out of memory"); \
 goto memory_error_exit;} }
@@ -37,13 +37,6 @@ typedef enum
     SEND_TYPE_MULTICAST = 0,
     SEND_TYPE_UNICAST
 } CASendDataType_t;
-
-typedef enum
-{
-    CA_REQUEST_DATA = 1,
-    CA_RESPONSE_DATA = 2,
-    CA_ERROR_DATA = 3,
-} CADataType_t;
 
 typedef struct
 {
@@ -61,44 +54,15 @@ extern "C"
 #endif
 
 /**
- * Detaches control from the caller for sending unicast request.
+ * Detaches control from the caller for sending message.
  * @param[in] endpoint    endpoint information where the data has to be sent.
- * @param[in] request     request that needs to be sent.
+ * @param[in] sendMsg     message that needs to be sent.
+ * @param[in] dataType    type of the message(request/response).
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CADetachRequestMessage(const CAEndpoint_t *endpoint,
-                                  const CARequestInfo_t *request);
-
-/**
- * Detaches control from the caller for sending multicast request.
- * @param[in] object     Group endpoint information where the data has to be sent.
- * @param[in] request    request that needs to be sent.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CADetachRequestToAllMessage(const CAEndpoint_t *object,
-                                       const CARequestInfo_t *request);
-
-/**
- * Detaches control from the caller for sending response.
- * @param[in] endpoint    endpoint information where the data has to be sent.
- * @param[in] response    response that needs to be sent.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CADetachResponseMessage(const CAEndpoint_t *endpoint,
-                                   const CAResponseInfo_t *response);
-
-/**
- * Detaches control from the caller for sending request.
- * @param[in] resourceUri    resource uri that needs to  be sent in the request.
- * @param[in] token          token information of the request.
- * @param[in] tokenLength    length of the token.
- * @param[in] options        header options that need to be append in the request.
- * @param[in] numOptions     number of options be appended.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CADetachMessageResourceUri(const CAURI_t resourceUri, const CAToken_t token,
-                                      uint8_t tokenLength, const CAHeaderOption_t *options,
-                                      uint8_t numOptions);
+CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint,
+                               const void *sendMsg,
+                               CADataType_t dataType);
 
 /**
  * Setting the request and response callbacks for network packets.
@@ -125,6 +89,12 @@ void CATerminateMessageHandler();
  * Handler for receiving request and response callback in single thread model.
  */
 void CAHandleRequestResponseCallbacks();
+
+/**
+ * Setting the Callback funtion for network state change callback.
+ * @param[in] nwMonitorHandler    callback for network state change.
+ */
+void CASetNetworkMonitorCallback(CANetworkMonitorCallback nwMonitorHandler);
 
 /**
  * To log the PDU data.

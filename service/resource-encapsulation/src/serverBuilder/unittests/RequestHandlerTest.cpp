@@ -18,12 +18,13 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include <UnitTestHelper.h>
+#include "UnitTestHelper.h"
 
-#include <RequestHandler.h>
-#include <RCSResourceObject.h>
+#include "RequestHandler.h"
+#include "RCSResourceObject.h"
+#include "ResourceAttributesConverter.h"
 
-#include <OCPlatform.h>
+#include "OCPlatform.h"
 
 using namespace std;
 
@@ -37,10 +38,36 @@ constexpr int NEW_VALUE{ 1 };
 typedef OCStackResult (*RegisterResource)(OCResourceHandle&, std::string&,
         const std::string&, const std::string&, OC::EntityHandler, uint8_t);
 
-class RequestHandlerTest: public TestWithMock
+TEST(RequestHandlerTest, DefaultHasNoCustomRepresntation)
+{
+    ASSERT_FALSE(RequestHandler().hasCustomRepresentation());
+}
+
+TEST(RequestHandlerTest, HasCustomRepresentationIfConstructedWithAttributes)
+{
+    ASSERT_TRUE(RequestHandler(RCSResourceAttributes{ }).hasCustomRepresentation());
+}
+
+TEST(RequestHandlerTest, CustomRepresentationContainsSameAttributesPassedToConstructor)
+{
+    RCSResourceAttributes attrs;
+    attrs[EXISTING] = ORIGIN_VALUE;
+
+    RequestHandler handler(attrs);
+
+    auto converted = ResourceAttributesConverter::fromOCRepresentation(handler.getRepresentation());
+    ASSERT_EQ(attrs, converted);
+}
+
+
+class SetRequestHandlerAcceptanceTest: public TestWithMock
 {
 public:
     RCSResourceObject::Ptr server;
+
+    std::shared_ptr< SetRequestHandler > setRequestHandler;
+
+    RCSResourceAttributes requestAttrs;
 
 protected:
     void SetUp()
@@ -56,54 +83,6 @@ protected:
 
         server->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::NEVER);
         server->setAttribute(EXISTING, ORIGIN_VALUE);
-    }
-};
-
-TEST_F(RequestHandlerTest, ResponseHasSameValuesPassedToHandlerConstructor)
-{
-    RequestHandler handler{ -1000 };
-
-    auto response = handler.buildResponse(*server);
-
-    ASSERT_EQ(-1000, response->getErrorCode());
-}
-
-TEST_F(RequestHandlerTest, ResponseHasSameAttrsWithServerAttrs)
-{
-    RequestHandler handler{};
-
-    auto response = handler.buildResponse(*server);
-
-    ASSERT_EQ(ORIGIN_VALUE, response->getResourceRepresentation()[EXISTING].getValue<int>());
-}
-
-TEST_F(RequestHandlerTest, ResponseHasAttrsSetByCustomAttrRequestHandler)
-{
-    constexpr char key[] { "key" };
-    constexpr int newValue{ 100 };
-
-    RCSResourceAttributes attrs;
-    attrs[key] = newValue;
-    RequestHandler handler{ attrs };
-
-    auto response = handler.buildResponse(*server);
-
-    ASSERT_EQ(ORIGIN_VALUE, response->getResourceRepresentation()[key].getValue<int>());
-}
-
-
-
-class SetRequestHandlerAcceptanceTest: public RequestHandlerTest
-{
-public:
-    SetRequestHandler::Ptr setRequestHandler;
-
-    RCSResourceAttributes requestAttrs;
-
-protected:
-    void SetUp()
-    {
-        RequestHandlerTest::SetUp();
 
         setRequestHandler = make_shared< SetRequestHandler >();
 

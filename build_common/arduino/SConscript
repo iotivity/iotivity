@@ -259,6 +259,9 @@ if env.get('RELEASE'):
 else:
 	env.AppendUnique(CCFLAGS = ['-g'])
 
+# Force header presence defines
+env.AppendUnique(CPPDEFINES = ['HAVE_ARDUINO_TIME_H'])
+
 # BOARD / CPU option
 
 # Get IDE version

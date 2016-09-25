@@ -20,12 +20,14 @@
 
 #include <OCPlatform.h>
 #include <OCApi.h>
+#include <oic_malloc.h>
 #include <gtest/gtest.h>
 
 namespace OCPlatformTest
 {
     using namespace OC;
 
+    static const char* SVR_DB_FILE_NAME = "./oic_svr_db_server.dat";
     const OCResourceHandle HANDLE_ZERO = 0;
     const std::string gResourceTypeName = "core.res";
     const std::string gResourceInterface = DEFAULT_INTERFACE;
@@ -35,9 +37,9 @@ namespace OCPlatformTest
     //OCPersistent Storage Handlers
     static FILE* client_open(const char * /*path*/, const char *mode)
     {
-        std::cout << "<===Opening SVR DB file = './oic_svr_db_client.json' with mode = '" << mode
+        std::cout << "<===Opening SVR DB file = './oic_svr_db_client.dat' with mode = '" << mode
                 << "' " << std::endl;
-        return fopen("./oic_svr_db_client.json", mode);
+        return fopen(SVR_DB_FILE_NAME, mode);
     }
     OCPersistentStorage gps {client_open, fread, fwrite, fclose, unlink };
 
@@ -60,17 +62,69 @@ namespace OCPlatformTest
     {
     }
 
+#ifdef WITH_CLOUD
+    void onObserve(const HeaderOptions, const OCRepresentation&, const int&, const int&)
+    {
+    }
+#endif
+
+    void directPairHandler(std::shared_ptr<OCDirectPairing> /*dev*/, OCStackResult /*res*/)
+    {
+    }
+
+    void pairedHandler(const PairedDevices& /*list*/)
+    {
+    }
+
     //Helper methods
+    void DeleteStringLL(OCStringLL* ll)
+    {
+        if (!ll)
+        {
+            return;
+        }
+
+        DeleteStringLL(ll->next);
+        delete[] ll->value;
+        OICFree(ll);
+    }
+
     void DeleteDeviceInfo(OCDeviceInfo deviceInfo)
     {
         delete[] deviceInfo.deviceName;
-
+        DeleteStringLL(deviceInfo.types);
+        delete[] deviceInfo.specVersion;
+        DeleteStringLL(deviceInfo.dataModelVersions);
     }
 
     void DuplicateString(char ** targetString, std::string sourceString)
     {
         *targetString = new char[sourceString.length() + 1];
         strncpy(*targetString, sourceString.c_str(), (sourceString.length() + 1));
+    }
+
+    bool OCResourcePayloadAddStringLL(OCStringLL **stringLL, std::string value)
+    {
+        char *dup = NULL;
+        DuplicateString(&dup, value);
+        if (!*stringLL)
+        {
+            *stringLL = (OCStringLL *)OICCalloc(1, sizeof(OCStringLL));
+            (*stringLL)->value = dup;
+            return true;
+        }
+        else
+        {
+            OCStringLL *temp = *stringLL;
+            while(temp->next)
+            {
+                temp = temp->next;
+            }
+            temp->next = (OCStringLL *)OICCalloc(1, sizeof(OCStringLL));
+            temp->next->value = dup;
+            return true;
+        }
+        return false;
     }
 
     OCResourceHandle RegisterResource(std::string uri, std::string type, std::string iface)
@@ -122,7 +176,7 @@ namespace OCPlatformTest
              OC::QualityOfService::LowQos
          };
          OCPlatform::Configure(cfg);
-         EXPECT_ANY_THROW(OCPlatform::setDefaultDeviceEntityHandler(NULL));
+         EXPECT_ANY_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
      }
 
     // Enable it when the stack throw an exception
@@ -137,7 +191,7 @@ namespace OCPlatformTest
              OC::QualityOfService::LowQos
          };
          OCPlatform::Configure(cfg);
-         EXPECT_ANY_THROW(OCPlatform::setDefaultDeviceEntityHandler(NULL));
+         EXPECT_ANY_THROW(OCPlatform::setDefaultDeviceEntityHandler(nullptr));
      }
 
     // Enable it when the stack throw an exception
@@ -384,8 +438,12 @@ namespace OCPlatformTest
             BATCH_INTERFACE);
         EXPECT_EQ(OC_STACK_OK, result);
     }
-
+    
+#if defined (_MSC_VER)
+    TEST(BindInterfaceToResourceTest, DISABLED_BindZeroResourceInterface)
+#else
     TEST(BindInterfaceToResourceTest, BindZeroResourceInterface)
+#endif
     {
         OCResourceHandle resourceHandle = RegisterResource(std::string("/a/light1"),
             std::string("core.light"));
@@ -401,8 +459,12 @@ namespace OCPlatformTest
             "core.brightlight");
         EXPECT_EQ(OC_STACK_OK, result);
     }
-
+    
+#if defined (_MSC_VER)
+    TEST(BindTypeToResourceTest, DISABLED_BindZeroResourceType)
+#else
     TEST(BindTypeToResourceTest, BindZeroResourceType)
+#endif
     {
         OCResourceHandle resourceHandle = RegisterResource(std::string("/a/light4"),
             std::string("core.light"));
@@ -475,7 +537,11 @@ namespace OCPlatformTest
                 OC::QualityOfService::HighQos));
     }
 
+#if defined (_MSC_VER)
+    TEST(NotifyAllObserverTest, DISABLED_NotifyListOfObservers)
+#else
     TEST(NotifyAllObserverTest, NotifyListOfObservers)
+#endif
     {
         OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs6"),
             std::string("core.obs"));
@@ -486,7 +552,11 @@ namespace OCPlatformTest
             interestedObservers, resourceResponse));
     }
 
+#if defined (_MSC_VER)
+    TEST(NotifyAllObserverTest, DISABLED_NotifyListOfObserversWithLowQos)
+#else
     TEST(NotifyAllObserverTest, NotifyListOfObserversWithLowQos)
+#endif
     {
         OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs7"),
             std::string("core.obs"));
@@ -497,7 +567,11 @@ namespace OCPlatformTest
             interestedObservers, resourceResponse,OC::QualityOfService::LowQos));
     }
 
+#if defined (_MSC_VER)
+    TEST(NotifyAllObserverTest, DISABLED_NotifyListOfObserversWithMidQos)
+#else
     TEST(NotifyAllObserverTest, NotifyListOfObserversWithMidQos)
+#endif
     {
         OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs8"),
             std::string("core.obs"));
@@ -508,7 +582,11 @@ namespace OCPlatformTest
             interestedObservers, resourceResponse,OC::QualityOfService::MidQos));
     }
 
+#if defined (_MSC_VER)
+    TEST(NotifyAllObserverTest, DISABLED_NotifyListOfObserversWithNaQos)
+#else
     TEST(NotifyAllObserverTest, NotifyListOfObserversWithNaQos)
+#endif
     {
         OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs9"),
             std::string("core.obs"));
@@ -519,7 +597,11 @@ namespace OCPlatformTest
             interestedObservers, resourceResponse,OC::QualityOfService::NaQos));
     }
 
+#if defined (_MSC_VER)
+    TEST(NotifyAllObserverTest, DISABLED_NotifyListOfObserversWithHighQos)
+#else
     TEST(NotifyAllObserverTest, NotifyListOfObserversWithHighQos)
+#endif
     {
         OCResourceHandle resourceHome = RegisterResource(std::string("/a/obs10"),
             std::string("core.obs"));
@@ -534,7 +616,7 @@ namespace OCPlatformTest
     TEST(DeviceEntityHandlerTest, SetDefaultDeviceEntityHandler)
     {
         EXPECT_EQ(OC_STACK_OK, OCPlatform::setDefaultDeviceEntityHandler(entityHandler));
-        EXPECT_EQ(OC_STACK_OK, OCPlatform::setDefaultDeviceEntityHandler(NULL));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::setDefaultDeviceEntityHandler(nullptr));
     }
 
 
@@ -547,13 +629,22 @@ namespace OCPlatformTest
               CT_DEFAULT, &foundResource));
     }
 
+#if defined (_MSC_VER)
+    TEST(FindResourceTest, DISABLED_FindResourceNullResourceURI)
+#else
     TEST(FindResourceTest, FindResourceNullResourceURI)
+#endif
     {
       EXPECT_ANY_THROW(OCPlatform::findResource("", nullptr,
               CT_DEFAULT, &foundResource));
     }
 
+
+#if defined (_MSC_VER)
+    TEST(FindResourceTest, DISABLED_FindResourceNullResourceURI1)
+#else
     TEST(FindResourceTest, FindResourceNullResourceURI1)
+#endif
     {
       std::ostringstream requestURI;
       requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
@@ -561,7 +652,11 @@ namespace OCPlatformTest
               CT_DEFAULT, &foundResource));
     }
 
+#if defined (_MSC_VER)
+    TEST(FindResourceTest, DISABLED_FindResourceNullHost)
+#else
     TEST(FindResourceTest, FindResourceNullHost)
+#endif
     {
       std::ostringstream requestURI;
       requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
@@ -574,7 +669,7 @@ namespace OCPlatformTest
       std::ostringstream requestURI;
       requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=core.light";
       EXPECT_THROW(OCPlatform::findResource("", requestURI.str(),
-              CT_DEFAULT, NULL), OC::OCException);
+              CT_DEFAULT, nullptr), OC::OCException);
     }
 
     TEST(FindResourceTest, DISABLED_FindResourceWithLowQoS)
@@ -625,7 +720,11 @@ namespace OCPlatformTest
                 OCPlatform::getDeviceInfo("", requestURI.str(), CT_DEFAULT, &receivedDeviceInfo));
     }
 
+#if defined (_MSC_VER)
+    TEST(GetDeviceInfoTest, DISABLED_GetDeviceInfoNullDeviceURI)
+#else
     TEST(GetDeviceInfoTest, GetDeviceInfoNullDeviceURI)
+#endif
     {
         PlatformConfig cfg;
         OCPlatform::Configure(cfg);
@@ -641,7 +740,7 @@ namespace OCPlatformTest
         std::ostringstream requestURI;
         requestURI << OC_MULTICAST_PREFIX << deviceDiscoveryURI;
         EXPECT_THROW(
-                OCPlatform::getDeviceInfo("", requestURI.str(), CT_DEFAULT, NULL),
+                OCPlatform::getDeviceInfo("", requestURI.str(), CT_DEFAULT, nullptr),
                 OC::OCException);
     }
 
@@ -697,15 +796,20 @@ namespace OCPlatformTest
     TEST(RegisterDeviceInfoTest, RegisterDeviceInfoWithValidParameters)
     {
         OCDeviceInfo deviceInfo;
-
         DuplicateString(&deviceInfo.deviceName, "myDeviceName");
+        deviceInfo.types = NULL;
+        OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.wk.d");
+        OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.d.tv");
+        DuplicateString(&deviceInfo.specVersion, "mySpecVersion");
+        deviceInfo.dataModelVersions = nullptr;
+        OCResourcePayloadAddStringLL(&deviceInfo.dataModelVersions, "myDataModelVersions");
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerDeviceInfo(deviceInfo));
         EXPECT_NO_THROW(DeleteDeviceInfo(deviceInfo));
     }
 
     TEST(RegisterDeviceInfoTest, RegisterDeviceInfoWithEmptyObject)
     {
-        OCDeviceInfo di = {0};
+        OCDeviceInfo di = {0, 0, 0, 0};
         EXPECT_ANY_THROW(OCPlatform::registerDeviceInfo(di));
     }
 
@@ -719,7 +823,11 @@ namespace OCPlatformTest
                  CT_DEFAULT, &presenceHandler));
     }
 
+#if defined (_MSC_VER)
+    TEST(SubscribePresenceTest, DISABLED_SubscribePresenceWithNullHost)
+#else
     TEST(SubscribePresenceTest, SubscribePresenceWithNullHost)
+#endif
     {
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
@@ -727,12 +835,16 @@ namespace OCPlatformTest
                  CT_DEFAULT, &presenceHandler));
     }
 
+#if defined (_MSC_VER)
+    TEST(SubscribePresenceTest, DISABLED_SubscribePresenceWithNullPresenceHandler)
+#else
     TEST(SubscribePresenceTest, SubscribePresenceWithNullPresenceHandler)
+#endif
     {
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
         EXPECT_ANY_THROW(OCPlatform::subscribePresence(presenceHandle, nullptr,
-                 CT_DEFAULT, NULL));
+                 CT_DEFAULT, nullptr));
     }
 
     TEST(SubscribePresenceTest, DISABLED_SubscribePresenceWithResourceType)
@@ -743,7 +855,11 @@ namespace OCPlatformTest
                 OC_MULTICAST_IP, "core.light", CT_DEFAULT, &presenceHandler));
     }
 
+#if defined (_MSC_VER)
+    TEST(SubscribePresenceTest, DISABLED_SubscribePresenceWithNullResourceType)
+#else
     TEST(SubscribePresenceTest, SubscribePresenceWithNullResourceType)
+#endif
     {
         OCPlatform::OCPresenceHandle presenceHandle = nullptr;
 
@@ -773,5 +889,90 @@ namespace OCPlatformTest
         EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribePresence(presenceHandle,
                 OC_MULTICAST_IP, CT_DEFAULT, &presenceHandler));
         EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
+    }
+
+#ifdef WITH_CLOUD
+    // SubscribeDevicePresence Test
+    TEST(SubscribeDevicePresenceTest, DISABLED_SubscribeDevicePresenceWithValidParameters)
+    {
+        std::string hostAddress = "192.168.1.2:5000";
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        std::vector<std::string> di;
+
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribeDevicePresence(presenceHandle,
+                hostAddress, di, CT_DEFAULT, &onObserve));
+    }
+
+    TEST(SubscribeDevicePresenceTest, SubscribeDevicePresenceWithNullHost)
+    {
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        std::vector<std::string> di;
+
+        EXPECT_ANY_THROW(OCPlatform::subscribeDevicePresence(presenceHandle,
+                        nullptr, di, CT_DEFAULT, &onObserve));
+    }
+
+    TEST(SubscribeDevicePresenceTest, SubscribeDevicePresenceWithNullOnObserve)
+    {
+        std::string hostAddress = "192.168.1.2:5000";
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        std::vector<std::string> di;
+
+        EXPECT_ANY_THROW(OCPlatform::subscribeDevicePresence(presenceHandle,
+                        hostAddress, di, CT_DEFAULT, nullptr));
+    }
+
+    TEST(SubscribeDevicePresenceTest, DISABLED_UnsubscribePresenceWithValidHandle)
+    {
+        std::string hostAddress = "192.168.1.2:5000";
+        OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+        std::vector<std::string> di;
+
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::subscribeDevicePresence(presenceHandle,
+                hostAddress, di, CT_DEFAULT, &onObserve));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
+    }
+#endif
+
+    TEST(FindDirectPairingTest, FindDirectPairingNullCallback)
+    {
+        EXPECT_ANY_THROW(OCPlatform::findDirectPairingDevices(1, nullptr));
+    }
+
+    TEST(FindDirectPairingTest, FindDirectPairingZeroTimeout)
+    {
+        EXPECT_ANY_THROW(OCPlatform::findDirectPairingDevices(0, &pairedHandler));
+    }
+
+    TEST(GetDirectPairedTest, GetDirectPairedNullCallback)
+    {
+        EXPECT_ANY_THROW(OCPlatform::getDirectPairedDevices(nullptr));
+    }
+
+    TEST(DoDirectPairingTest, DoDirectPairingNullCallback)
+    {
+        OCDPDev_t peer;
+        OCPrm_t pmSel = DP_PRE_CONFIGURED;
+        std::string pin("");
+        std::shared_ptr<OCDirectPairing> s_dp(new OCDirectPairing(&peer));
+        EXPECT_ANY_THROW(OCPlatform::doDirectPairing(s_dp, pmSel, pin, nullptr));
+    }
+
+    TEST(DoDirectPairingTest, DoDirectPairingNullPeer)
+    {
+        OCDPDev_t peer;
+        OCPrm_t pmSel = DP_PRE_CONFIGURED;
+        std::string pin("");
+        std::shared_ptr<OCDirectPairing> s_dp(new OCDirectPairing(&peer));
+        EXPECT_ANY_THROW(OCPlatform::doDirectPairing(nullptr, pmSel, pin, &directPairHandler));
+    }
+
+    TEST(DoDirectPairingTest, DoDirectPairingNullPeerNullCallback)
+    {
+        OCDPDev_t peer;
+        OCPrm_t pmSel = DP_PRE_CONFIGURED;
+        std::string pin("");
+        std::shared_ptr<OCDirectPairing> s_dp(new OCDirectPairing(&peer));
+        EXPECT_ANY_THROW(OCPlatform::doDirectPairing(nullptr, pmSel, pin, nullptr));
     }
 }

@@ -17,14 +17,14 @@
 package org.oic.simulator;
 
 /**
- * Listener for getting device information.
+ * Interface for receiving device information.
  */
 public interface DeviceListener {
     /**
      * Method which provides remote device information.
      *
      * @param hostUri
-     *            Holds the address and port information.
+     *            Holds the address detail.
      * @param devInfo
      *            {@link DeviceInfo} object holding the device information.
      */

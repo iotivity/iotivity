@@ -29,10 +29,11 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+#include "ocpayload.h"
 
 using namespace OC;
 
-//Set of strings for each of deviceInfo fields
+//Set of strings for each of platform Info fields
 std::string dateOfManufacture = "myDateOfManufacture";
 std::string firmwareVersion = "my.Firmware.Version";
 std::string manufacturerName = "myName";
@@ -45,8 +46,10 @@ std::string platformVersion = "platformVersion";
 std::string supportUrl = "www.mysupporturl.com";
 std::string systemTime = "mySystemTime";
 
-//Set of strings for each of platform info fields
+//Set of strings for each of device info fields
 std::string deviceName = "Bill's Battlestar";
+std::string specVersion = "myDeviceSpecVersion";
+std::string dataModelVersions = "myDeviceModelVersion";
 
 //OCPlatformInfo Contains all the platform info to be stored
 OCPlatformInfo platformInfo;
@@ -73,6 +76,8 @@ void DeletePlatformInfo()
 void DeleteDeviceInfo()
 {
     delete[] deviceInfo.deviceName;
+    delete[] deviceInfo.specVersion;
+    OCFreeOCStringLL(deviceInfo.dataModelVersions);
 }
 
 void DuplicateString(char ** targetString, std::string sourceString)
@@ -101,9 +106,16 @@ OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerNa
 }
 
 
-OCStackResult SetDeviceInfo(std::string deviceName)
+OCStackResult SetDeviceInfo(std::string deviceName, std::string specVersion, std::string dataModelVersions)
 {
     DuplicateString(&deviceInfo.deviceName, deviceName);
+
+    if (!specVersion.empty())
+        DuplicateString(&deviceInfo.specVersion, specVersion);
+
+    if (!dataModelVersions.empty())
+        OCResourcePayloadAddStringLL(&deviceInfo.dataModelVersions, dataModelVersions.c_str());
+
     return OC_STACK_OK;
 }
 
@@ -136,7 +148,9 @@ int main()
     }
 
 
-    result = SetDeviceInfo(deviceName);
+    result = SetDeviceInfo(deviceName, specVersion, dataModelVersions);
+    OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.wk.d");
+    OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.d.tv");
 
     result = OCPlatform::registerDeviceInfo(deviceInfo);
 
@@ -164,7 +178,3 @@ int main()
     return 0;
 
 }
-
-
-
-

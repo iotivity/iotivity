@@ -24,7 +24,7 @@
 #include <string.h>
 
 #include "zigbee_wrapper.h"
-#include "utlist.h"
+#include <coap/utlist.h>
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocstack.h"
@@ -121,15 +121,15 @@ OCStackResult GetResourceFromZigBeeNodeId(PIPluginBase * plugin,
                                           const char * endpointId,
                                           const char * clusterId)
 {
-    OC_LOG(INFO, TAG, "Entered GetResourceFromZigBeeNodeId().");
+    OIC_LOG(INFO, TAG, "Entered GetResourceFromZigBeeNodeId().");
     if(!plugin || !piResource || !nodeId || !clusterId || !endpointId)
     {
-        OC_LOG(ERROR, TAG, "Invalid param.");
+        OIC_LOG(ERROR, TAG, "Invalid param.");
         return OC_STACK_INVALID_PARAM;
     }
     if(plugin->type != PLUGIN_ZIGBEE)
     {
-        OC_LOG(ERROR, TAG, "Plugin Type is not Zigbee.");
+        OIC_LOG(ERROR, TAG, "Plugin Type is not Zigbee.");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -165,7 +165,7 @@ OCStackResult GetResourceFromZigBeeNodeId(PIPluginBase * plugin,
         {
             continue;
         }
-        OC_LOG_V(INFO, TAG, "Found a match! URI = %s", out->piResource.uri);
+        OIC_LOG_V(INFO, TAG, "Found a match! URI = %s", out->piResource.uri);
         *piResource = (PIResource_Zigbee *) out;
         return OC_STACK_OK;
     }
@@ -227,7 +227,7 @@ OCStackResult DeleteResource(PIPluginBase * plugin, PIResourceBase * resource)
     OCStackResult result = OCDeleteResource(resource->piResource.resourceHandle);
     if(result != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to delete resource with error: %d", result);
+        OIC_LOG_V(ERROR, TAG, "Failed to delete resource with error: %d", result);
         return result;
     }
 

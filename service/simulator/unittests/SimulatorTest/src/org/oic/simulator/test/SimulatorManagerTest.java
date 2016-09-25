@@ -42,14 +42,6 @@ public class SimulatorManagerTest extends TestCase {
     private static final String SINGLE_RES_RAML     = "./ramls/oic.r.light.raml";
     private static final String COLLECTION_RES_RAML = "./ramls/oic.d.airconditioner.raml";
 
-    static {
-        System.loadLibrary("SimulatorManager");
-        System.loadLibrary("RamlParser");
-        System.loadLibrary("oc");
-        System.loadLibrary("oc_logger");
-        System.loadLibrary("octbstack");
-    }
-
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -99,8 +91,7 @@ public class SimulatorManagerTest extends TestCase {
 
         try {
             String configPath = "";
-            SimulatorResource resource = SimulatorManager
-                    .createResource(configPath);
+            SimulatorManager.createResource(configPath);
         } catch (InvalidArgsException e) {
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
@@ -114,7 +105,7 @@ public class SimulatorManagerTest extends TestCase {
         ExceptionType exType = ExceptionType.UNKNOWN;
 
         try {
-            SimulatorResource resource = SimulatorManager.createResource(null);
+            SimulatorManager.createResource(null);
         } catch (InvalidArgsException e) {
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
@@ -165,8 +156,7 @@ public class SimulatorManagerTest extends TestCase {
 
         try {
             String configPath = "";
-            Vector<SimulatorResource> resource = SimulatorManager
-                    .createResource(configPath, 1);
+            SimulatorManager.createResource(configPath, 1);
         } catch (InvalidArgsException e) {
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
@@ -180,8 +170,7 @@ public class SimulatorManagerTest extends TestCase {
         ExceptionType exType = ExceptionType.UNKNOWN;
 
         try {
-            Vector<SimulatorResource> resource = SimulatorManager
-                    .createResource(null, 1);
+            SimulatorManager.createResource(null, 1);
         } catch (InvalidArgsException e) {
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
@@ -195,8 +184,7 @@ public class SimulatorManagerTest extends TestCase {
         ExceptionType exType = ExceptionType.UNKNOWN;
 
         try {
-            Vector<SimulatorResource> resource = SimulatorManager
-                    .createResource(SINGLE_RES_RAML, 0);
+            SimulatorManager.createResource(SINGLE_RES_RAML, 0);
         } catch (InvalidArgsException e) {
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
@@ -210,8 +198,7 @@ public class SimulatorManagerTest extends TestCase {
         ExceptionType exType = ExceptionType.UNKNOWN;
 
         try {
-            Vector<SimulatorResource> resource = SimulatorManager
-                    .createResource(SINGLE_RES_RAML, -1);
+            SimulatorManager.createResource(SINGLE_RES_RAML, -1);
         } catch (InvalidArgsException e) {
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
@@ -273,8 +260,8 @@ public class SimulatorManagerTest extends TestCase {
             String uri = "/test/resource";
             String resourceType = "test.resource";
 
-            SimulatorResource resource = SimulatorManager.createResource(
-                    SimulatorResource.Type.SINGLE, name, uri, resourceType);
+            SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
+                    name, uri, resourceType);
         } catch (InvalidArgsException e) {
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
@@ -292,8 +279,8 @@ public class SimulatorManagerTest extends TestCase {
             String uri = "/test/resource";
             String resourceType = "test.resource";
 
-            SimulatorResource resource = SimulatorManager.createResource(
-                    SimulatorResource.Type.SINGLE, name, uri, resourceType);
+            SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
+                    name, uri, resourceType);
         } catch (InvalidArgsException e) {
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
@@ -311,8 +298,8 @@ public class SimulatorManagerTest extends TestCase {
             String uri = "";
             String resourceType = "test.resource";
 
-            SimulatorResource resource = SimulatorManager.createResource(
-                    SimulatorResource.Type.SINGLE, name, uri, resourceType);
+            SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
+                    name, uri, resourceType);
         } catch (InvalidArgsException e) {
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
@@ -330,8 +317,8 @@ public class SimulatorManagerTest extends TestCase {
             String uri = null;
             String resourceType = "test.resource";
 
-            SimulatorResource resource = SimulatorManager.createResource(
-                    SimulatorResource.Type.SINGLE, name, uri, resourceType);
+            SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
+                    name, uri, resourceType);
         } catch (InvalidArgsException e) {
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
@@ -349,8 +336,8 @@ public class SimulatorManagerTest extends TestCase {
             String uri = "/test/resource";;
             String resourceType = "";
 
-            SimulatorResource resource = SimulatorManager.createResource(
-                    SimulatorResource.Type.SINGLE, name, uri, resourceType);
+            SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
+                    name, uri, resourceType);
         } catch (InvalidArgsException e) {
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
@@ -368,8 +355,8 @@ public class SimulatorManagerTest extends TestCase {
             String uri = "/test/resource";;
             String resourceType = null;
 
-            SimulatorResource resource = SimulatorManager.createResource(
-                    SimulatorResource.Type.SINGLE, name, uri, resourceType);
+            SimulatorManager.createResource(SimulatorResource.Type.SINGLE,
+                    name, uri, resourceType);
         } catch (InvalidArgsException e) {
             exType = ExceptionType.INVALID_ARGS;
         } catch (SimulatorException e) {
@@ -714,7 +701,7 @@ class DeviceInfoListener implements DeviceListener {
     }
 
     @Override
-    public void onDeviceFound(DeviceInfo devInfo) {
+    public void onDeviceFound(String hostUri, DeviceInfo devInfo) {
         mInfoHolder.set(devInfo);
         mLockObject.countDown();
     }
@@ -732,7 +719,7 @@ class PlatformInfoListener implements PlatformListener {
     }
 
     @Override
-    public void onPlatformFound(PlatformInfo platformInfo) {
+    public void onPlatformFound(String hostUri, PlatformInfo platformInfo) {
         mInfoHolder.set(platformInfo);
         mLockObject.countDown();
     }

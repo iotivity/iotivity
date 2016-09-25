@@ -40,8 +40,9 @@ if target_os == 'darwin':
 
 # External library include files are in <src_dir>/deps/<target_os>/include
 # the library binaries are in <src_dir>/deps/<target_os>/lib/<arch>
-env.AppendUnique(CPPPATH = [os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'include')])
-env.AppendUnique(LIBPATH = [os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'lib', target_arch)])
+if target_os not in ['windows']:
+	env.AppendUnique(CPPPATH = [os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'include')])
+	env.AppendUnique(LIBPATH = [os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'lib', target_arch)])
 
 # Check whether a library exists, if not, notify user to install it or try to
 # download the source code and build it
@@ -139,5 +140,5 @@ env.AddMethod(__download, "Download")
 env.AddMethod(__install_head_file, "InstallHeadFile")
 env.AddMethod(__install_lib, "InstallLib")
 
-if env.get('SECURED') == '1':
+if env.get('SECURED') == '1' and target_os != 'tizen':
 	SConscript(os.path.join(env.get('SRC_DIR'), 'extlibs', 'sqlite3', 'SConscript'))

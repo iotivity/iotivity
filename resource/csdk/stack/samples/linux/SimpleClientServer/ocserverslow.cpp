@@ -18,13 +18,24 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <signal.h>
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+#include <boost/config.hpp>
 #include <list>
 #include "ocstack.h"
 #include "oic_malloc.h"
@@ -38,11 +49,11 @@
 volatile sig_atomic_t gQuitFlag = 0;
 
 static std::list<OCEntityHandlerRequest *> gRequestList;
-static constexpr unsigned int SLOW_RESPONSE_DELAY_SEC = 5;
+BOOST_STATIC_CONSTEXPR unsigned int SLOW_RESPONSE_DELAY_SEC = 5;
 
 static LEDResource LED;
 
-static constexpr unsigned int SAMPLE_MAX_NUM_POST_INSTANCE = 2;
+BOOST_STATIC_CONSTEXPR unsigned int SAMPLE_MAX_NUM_POST_INSTANCE = 2;
 static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
 
 //char *gResourceUri= const_cast<char *>("/a/led");
@@ -54,17 +65,17 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
 {
     LEDResource *currLEDResource = &LED;
 
-    OC_LOG(INFO, TAG, "Entering constructResponse");
+    OIC_LOG(INFO, TAG, "Entering constructResponse");
 
     if (ehRequest->resource == gLedInstance[0].handle)
     {
-        OC_LOG(INFO, TAG, "handle 0");
+        OIC_LOG(INFO, TAG, "handle 0");
         currLEDResource = &gLedInstance[0];
         gResourceUri = const_cast<char *>("a/led/0");
     }
     else if (ehRequest->resource == gLedInstance[1].handle)
     {
-        OC_LOG(INFO, TAG, "handle 1");
+        OIC_LOG(INFO, TAG, "handle 1");
         currLEDResource = &gLedInstance[1];
         gResourceUri = const_cast<char *>("a/led/1");
     }
@@ -73,7 +84,7 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
     {
         if(ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
         {
-            OC_LOG(ERROR, TAG, ("Incoming payload not a representation"));
+            OIC_LOG(ERROR, TAG, ("Incoming payload not a representation"));
             return nullptr;
         }
 
@@ -96,7 +107,7 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
 
     if (!response)
     {
-        OC_LOG_V(ERROR, TAG, "Memory allocation for response payload failed.");
+        OIC_LOG_V(ERROR, TAG, "Memory allocation for response payload failed.");
     }
 
     OCRepPayloadSetUri (response, gResourceUri);
@@ -108,13 +119,13 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
 
 void ProcessGetPutRequest (OCEntityHandlerRequest *ehRequest)
 {
-    OC_LOG(INFO, TAG, "Entering ProcessGetPutRequest");
+    OIC_LOG(INFO, TAG, "Entering ProcessGetPutRequest");
 
     OCRepPayload *getResp = constructResponse(ehRequest);
 
     if(!getResp)
     {
-        OC_LOG(ERROR, TAG, "Failed to construct response");
+        OIC_LOG(ERROR, TAG, "Failed to construct response");
         return;
     }
 
@@ -135,7 +146,7 @@ void ProcessGetPutRequest (OCEntityHandlerRequest *ehRequest)
     // Send the response
     if (OCDoResponse(&response) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "Error sending response");
+        OIC_LOG(ERROR, TAG, "Error sending response");
     }
 
     free(getResp);
@@ -143,7 +154,7 @@ void ProcessGetPutRequest (OCEntityHandlerRequest *ehRequest)
 
 OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest)
 {
-    OC_LOG(INFO, TAG, "Copying received request for slow response");
+    OIC_LOG(INFO, TAG, "Copying received request for slow response");
 
     OCEntityHandlerRequest *copyOfRequest =
             (OCEntityHandlerRequest *)OICMalloc(sizeof(OCEntityHandlerRequest));
@@ -159,7 +170,7 @@ OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest
             copyOfRequest->query = OICStrdup(entityHandlerRequest->query);
             if(!copyOfRequest->query)
             {
-                OC_LOG(ERROR, TAG, "Copy failed due to allocation failure");
+                OIC_LOG(ERROR, TAG, "Copy failed due to allocation failure");
                 OICFree(copyOfRequest);
                 return NULL;
             }
@@ -178,14 +189,29 @@ OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest
 
     if (copyOfRequest)
     {
-        OC_LOG(INFO, TAG, "Copied client request");
+        OIC_LOG(INFO, TAG, "Copied client request");
     }
     else
     {
-        OC_LOG(ERROR, TAG, "Error copying client request");
+        OIC_LOG(ERROR, TAG, "Error copying client request");
     }
     return copyOfRequest;
 }
+
+#if !defined(SIGALRM)
+void AlarmHandler(int sig);
+int WINAPI AlarmThread(void *seconds)
+{
+    sleep((unsigned int)seconds);
+    AlarmHandler(0);
+    return 0;
+}
+
+void alarm(unsigned int seconds)
+{
+    CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AlarmThread, (void*)seconds, 0, NULL);
+}
+#endif
 
 OCEntityHandlerResult OCEntityHandlerCb (OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, void* /*callbackParam*/)
@@ -193,16 +219,16 @@ OCEntityHandlerResult OCEntityHandlerCb (OCEntityHandlerFlag flag,
     OCEntityHandlerResult result = OC_EH_ERROR;
     OCEntityHandlerRequest *request = NULL;
 
-    OC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
+    OIC_LOG_V (INFO, TAG, "Inside entity handler - flags: 0x%x", flag);
 
     if (flag & OC_REQUEST_FLAG)
     {
-        OC_LOG(INFO, TAG, "Flag includes OC_REQUEST_FLAG");
+        OIC_LOG(INFO, TAG, "Flag includes OC_REQUEST_FLAG");
         if (entityHandlerRequest)
         {
-            OC_LOG_V (INFO, TAG, "request query %s from client",
+            OIC_LOG_V (INFO, TAG, "request query %s from client",
                                         entityHandlerRequest->query);
-            OC_LOG_PAYLOAD (INFO, entityHandlerRequest->payload);
+            OIC_LOG_PAYLOAD (INFO, entityHandlerRequest->payload);
 
             // Make deep copy of received request and queue it for slow processing
             request = CopyRequest(entityHandlerRequest);
@@ -210,7 +236,7 @@ OCEntityHandlerResult OCEntityHandlerCb (OCEntityHandlerFlag flag,
             if (request)
             {
 
-                OC_LOG(INFO, TAG, "Scheduling slow response for received request");
+                OIC_LOG(INFO, TAG, "Scheduling slow response for received request");
                 gRequestList.push_back(request);
                 // Indicate to the stack that this is a slow response
                 result = OC_EH_SLOW;
@@ -219,14 +245,14 @@ OCEntityHandlerResult OCEntityHandlerCb (OCEntityHandlerFlag flag,
             }
             else
             {
-                OC_LOG(ERROR, TAG, "Error queuing request for slow response");
+                OIC_LOG(ERROR, TAG, "Error queuing request for slow response");
                 // Indicate to the stack that this is a slow response
                 result = OC_EH_ERROR;
             }
         }
         else
         {
-            OC_LOG(ERROR, TAG, "Invalid request");
+            OIC_LOG(ERROR, TAG, "Invalid request");
             result = OC_EH_ERROR;
         }
     }
@@ -246,12 +272,14 @@ void handleSigInt(int signum)
 // slow response when fired
 void AlarmHandler(int sig)
 {
+#ifdef SIGALRM
     if (sig == SIGALRM)
+#endif
     {
-        OC_LOG (INFO, TAG, "Server starting slow response");
+        OIC_LOG (INFO, TAG, "Server starting slow response");
         if (gRequestList.empty())
         {
-            OC_LOG (INFO, TAG, "No requests to service");
+            OIC_LOG (INFO, TAG, "No requests to service");
             return;
         }
 
@@ -260,17 +288,17 @@ void AlarmHandler(int sig)
         gRequestList.pop_front();
         if (entityHandlerRequest->method == OC_REST_GET)
         {
-            OC_LOG (INFO, TAG, "Received OC_REST_GET from client");
+            OIC_LOG (INFO, TAG, "Received OC_REST_GET from client");
             ProcessGetPutRequest (entityHandlerRequest);
         }
         else if (entityHandlerRequest->method == OC_REST_PUT)
         {
-            OC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
+            OIC_LOG (INFO, TAG, "Received OC_REST_PUT from client");
             ProcessGetPutRequest (entityHandlerRequest);
         }
         else
         {
-            OC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
+            OIC_LOG_V (INFO, TAG, "Received unsupported method %d from client",
                     entityHandlerRequest->method);
         }
         // Free the request
@@ -288,35 +316,37 @@ void AlarmHandler(int sig)
 
 int main(int /*argc*/, char** /*argv[]*/)
 {
-    OC_LOG(DEBUG, TAG, "OCServer is starting...");
+    OIC_LOG(DEBUG, TAG, "OCServer is starting...");
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack init error");
+        OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
 
     // Declare and create the example resource: LED
     createLEDResource(gResourceUri, &LED, false, 42);
 
+#ifdef SIGALRM
     // Initialize slow response alarm
     signal(SIGALRM, AlarmHandler);
+#endif
 
     // Break from loop with Ctrl-C
-    OC_LOG(INFO, TAG, "Entering ocserver main loop...");
+    OIC_LOG(INFO, TAG, "Entering ocserver main loop...");
     signal(SIGINT, handleSigInt);
 
     while (!gQuitFlag)
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
         sleep(2);
     }
 
-    OC_LOG(INFO, TAG, "Exiting ocserver main loop...");
+    OIC_LOG(INFO, TAG, "Exiting ocserver main loop...");
 
     // Free requests
     if (!gRequestList.empty())
@@ -332,7 +362,7 @@ int main(int /*argc*/, char** /*argv[]*/)
 
     if (OCStop() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack process error");
+        OIC_LOG(ERROR, TAG, "OCStack process error");
     }
 
     return 0;
@@ -342,7 +372,7 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
 {
     if (!uri)
     {
-        OC_LOG(ERROR, TAG, "Resource URI cannot be NULL");
+        OIC_LOG(ERROR, TAG, "Resource URI cannot be NULL");
         return -1;
     }
 
@@ -355,7 +385,7 @@ int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, 
             OCEntityHandlerCb,
             NULL,
             OC_DISCOVERABLE|OC_OBSERVABLE);
-    OC_LOG_V(INFO, TAG, "Created LED resource with result: %s", getResult(res));
+    OIC_LOG_V(INFO, TAG, "Created LED resource with result: %s", getResult(res));
 
     return 0;
 }

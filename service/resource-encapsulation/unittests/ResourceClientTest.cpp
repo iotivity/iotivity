@@ -20,10 +20,13 @@
 
 #include "UnitTestHelper.h"
 
+#include "OCResource.h"
+
 #include "RCSRemoteResourceObject.h"
 #include "RCSDiscoveryManager.h"
 #include "RCSResourceObject.h"
 #include "RCSAddress.h"
+#include "RCSRequest.h"
 
 #include <condition_variable>
 #include <mutex>
@@ -42,6 +45,7 @@ constexpr int DEFAULT_WAITING_TIME_IN_MILLIS = 3000;
 
 void getRemoteAttributesCallback(const RCSResourceAttributes&, int) {}
 void setRemoteAttributesCallback(const RCSResourceAttributes&, int) {}
+void setRemoteRepresentationCallback(const HeaderOpts&, const RCSRepresentation&, int) {}
 void resourceStateChanged(ResourceState) { }
 void cacheUpdatedCallback(const RCSResourceAttributes&) {}
 
@@ -94,12 +98,12 @@ private:
     {
         for (int i=0; i<10 && !object; ++i)
         {
-            const std::string uri  = "/oic/res";
             auto discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
-                    RCSAddress::multicast(), uri, RESOURCETYPE,
+                    RCSAddress::multicast(), RESOURCETYPE,
                     std::bind(&RemoteResourceObjectTest::resourceDiscovered, this,
                             std::placeholders::_1));
             Wait(1000);
+            discoveryTask->cancel();
         }
     }
 
@@ -161,6 +165,70 @@ TEST_F(RemoteResourceObjectTest, SetRemoteAttributesSetsAttributesOfServer)
     Wait();
 
     ASSERT_EQ(newValue, server->getAttributeValue(ATTR_KEY));
+}
+
+TEST_F(RemoteResourceObjectTest, SetRemoteRepresentationDoesNotAllowEmptyFunction)
+{
+    RCSQueryParams queryParams;
+    RCSRepresentation rcsRep;
+    ASSERT_THROW(object->set(queryParams, rcsRep, {}), RCSInvalidParameterException);
+}
+
+TEST_F(RemoteResourceObjectTest, SetRemoteRepresentationSetsRepresentationOfServer)
+{
+    RCSRepresentation rcsRep;
+    RCSQueryParams queryParams;
+    constexpr int newValue = ATTR_VALUE + 1;
+    RCSResourceAttributes newAttrs;
+    newAttrs[ATTR_KEY] = newValue;
+
+    rcsRep.setAttributes(newAttrs);
+
+    mocks.ExpectCallFunc(setRemoteRepresentationCallback).
+            Do([this](const HeaderOpts&, const RCSRepresentation&, int){ Proceed(); });
+
+    object->set(queryParams, rcsRep, setRemoteRepresentationCallback);
+    Wait();
+
+    ASSERT_EQ(newValue, server->getAttributeValue(ATTR_KEY));
+}
+
+TEST_F(RemoteResourceObjectTest, QueryParamsForGetWillBePassedToBase)
+{
+    class CustomHandler
+    {
+    public:
+        virtual RCSGetResponse handle(const RCSRequest&, RCSResourceAttributes&) = 0;
+        virtual ~CustomHandler() {}
+    };
+
+    constexpr char PARAM_KEY[] { "aKey" };
+    constexpr char VALUE[] { "value" };
+
+    object->get(RCSQueryParams().setResourceInterface(RESOURCEINTERFACE).setResourceType(RESOURCETYPE).
+            put(PARAM_KEY, VALUE),
+            [](const HeaderOpts&, const RCSRepresentation&, int){});
+
+    auto mockHandler = mocks.Mock< CustomHandler >();
+
+    mocks.ExpectCall(mockHandler, CustomHandler::handle).
+            Match([](const RCSRequest& request, RCSResourceAttributes&)
+            {
+                return request.getInterface() == RESOURCEINTERFACE &&
+                        request.getQueryParams().at(PARAM_KEY) == VALUE;
+            }
+    ).
+            Do([this](const RCSRequest&, RCSResourceAttributes&)
+            {
+                Proceed();
+                return RCSGetResponse::defaultAction();
+            }
+    );
+
+    server->setGetRequestHandler(std::bind(&CustomHandler::handle, mockHandler,
+            std::placeholders::_1, std::placeholders::_2));
+
+    Wait();
 }
 
 TEST_F(RemoteResourceObjectTest, MonitoringIsNotStartedByDefault)
@@ -325,5 +393,14 @@ TEST_F(RemoteResourceObjectTest, HasSameTypeWithServer)
 TEST_F(RemoteResourceObjectTest, HasSameInterfaceWithServer)
 {
     EXPECT_EQ(RESOURCEINTERFACE, object->getInterfaces()[0]);
+}
+
+TEST_F(RemoteResourceObjectTest, GetValidOCResourceTest)
+{
+    std::shared_ptr<OC::OCResource> ocRes = RCSRemoteResourceObject::toOCResource(object);
+
+    EXPECT_NE(nullptr, ocRes);
+
+    EXPECT_EQ(RESOURCEURI, ocRes->uri());
 }
 

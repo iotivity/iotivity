@@ -40,11 +40,17 @@ namespace OC
         *            After creating instances of OCHeaderOptions, use setHeaderOptions API
         *            (in OCResource.h) to set header Options.
         *            NOTE: HeaderOptionID  is an unsigned integer value which MUST be within
-        *            range of 2048 to 3000 inclusive of lower and upper bound.
+        *            range of 2048 to 3000 inclusive of lower and upper bound
+        *            except for If-Match with empty(num : 1), If-None-Match(num : 5),
+        *            Location-Path(num : 8), Location-Query(num : 20) option.
         *            HeaderOptions instance creation fails if above condition is not satisfied.
         */
         const uint16_t MIN_HEADER_OPTIONID = 2048;
         const uint16_t MAX_HEADER_OPTIONID = 3000;
+        const uint16_t IF_MATCH_OPTION_ID = 1;
+        const uint16_t IF_NONE_MATCH_OPTION_ID = 5;
+        const uint16_t LOCATION_PATH_OPTION_ID = 8;
+        const uint16_t LOCATION_QUERY_OPTION_ID = 20;
 
         class OCHeaderOption
         {
@@ -60,7 +66,11 @@ namespace OC
                 m_optionID(optionID),
                 m_optionData(optionData)
             {
-                if(!(optionID >= MIN_HEADER_OPTIONID && optionID <= MAX_HEADER_OPTIONID))
+                if (!(optionID >= MIN_HEADER_OPTIONID && optionID <= MAX_HEADER_OPTIONID)
+                        && optionID != IF_MATCH_OPTION_ID
+                        && optionID != IF_NONE_MATCH_OPTION_ID
+                        && optionID != LOCATION_PATH_OPTION_ID
+                        && optionID != LOCATION_QUERY_OPTION_ID)
                 {
                     throw OCException(OC::Exception::OPTION_ID_RANGE_INVALID);
                 }
@@ -70,11 +80,25 @@ namespace OC
 
             OCHeaderOption(const OCHeaderOption&) = default;
 
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+            OCHeaderOption(OCHeaderOption&& o)
+            {
+                std::memmove(this, &o, sizeof(o));
+            }
+#else
             OCHeaderOption(OCHeaderOption&&) = default;
+#endif
 
             OCHeaderOption& operator=(const OCHeaderOption&) = default;
 
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+            OCHeaderOption& operator=(OCHeaderOption&& o)
+            {
+                std::memmove(this, &o, sizeof(o));
+            }
+#else
             OCHeaderOption& operator=(OCHeaderOption&&) = default;
+#endif
 
             /**
             * API to get Option ID

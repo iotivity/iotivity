@@ -25,8 +25,10 @@
 
 #include "UnitTestHelper.h"
 
+#include "OCPlatform.h"
 #include "RCSDiscoveryManager.h"
 #include "RCSRemoteResourceObject.h"
+#include "RCSResourceObject.h"
 #include "RCSResourceAttributes.h"
 #include "RCSAddress.h"
 
@@ -36,11 +38,8 @@ using namespace testing;
 using namespace OIC::Service;
 
 class ResourceEncapsulationTestSimulator
-        : public std::enable_shared_from_this<ResourceEncapsulationTestSimulator>
 {
 public:
-    typedef std::shared_ptr<ResourceEncapsulationTestSimulator> Ptr;
-
     RCSResourceObject::Ptr server;
     RCSRemoteResourceObject::Ptr remoteResource;
 
@@ -72,7 +71,7 @@ public:
     { }
 
 private:
-    void onDiscoveryResource_Impl(RCSRemoteResourceObject::Ptr resourceObject)
+    void onDiscoveryResource(RCSRemoteResourceObject::Ptr resourceObject)
     {
         if (remoteResource != nullptr)
         {
@@ -85,18 +84,10 @@ private:
         }
 
         remoteResource = resourceObject;
+        discoveryTask->cancel();
         mutexForDiscovery.unlock();
     }
 
-    static void onDiscoveryResource(RCSRemoteResourceObject::Ptr resourceObject,
-            std::weak_ptr<ResourceEncapsulationTestSimulator> rPtr)
-    {
-        std::shared_ptr<ResourceEncapsulationTestSimulator> ptr = rPtr.lock();
-        if (ptr != nullptr)
-        {
-            ptr->onDiscoveryResource_Impl(resourceObject);
-        }
-    }
     void waitForDiscovery()
     {
         std::chrono::milliseconds interval(100);
@@ -114,7 +105,7 @@ private:
     {
         while((remoteResource && !remoteResource.unique()) || (server && !server.unique()))
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds{ 100 });
+            std::this_thread::sleep_for(std::chrono::milliseconds{ 1000 });
         }
     }
 
@@ -132,11 +123,13 @@ public:
         waitForDiscovery();
     }
 
-    void createResource()
+    void createResource(std::string postUri = "")
     {
-        server = RCSResourceObject::Builder(RESOURCEURI, RESOURCETYPE, RESOURCEINTERFACE)
-                .setDiscoverable(true).setObservable(true).build();
-        server->setAttribute(ATTR_KEY, ATTR_VALUE);
+        HOSTED_RESOURCEURI = HOSTED_RESOURCEURI + postUri;
+        server = RCSResourceObject::Builder(HOSTED_RESOURCEURI +  "/hosting",
+                RESOURCETYPE, RESOURCEINTERFACE).
+                setDiscoverable(true).setObservable(true).build();
+        server->setAttribute(ATTR_KEY, RCSResourceAttributes::Value(ATTR_VALUE));
     }
 
     void discoveryResource()
@@ -150,8 +143,9 @@ public:
         {
             discoveryTask = RCSDiscoveryManager::getInstance()->discoverResourceByType(
                     RCSAddress::multicast(), MULTICASTURI, resourceType,
-                    std::bind(onDiscoveryResource, std::placeholders::_1,
-                        std::weak_ptr<ResourceEncapsulationTestSimulator>(shared_from_this())));
+                    std::bind(
+                            &ResourceEncapsulationTestSimulator::onDiscoveryResource,
+                            this, std::placeholders::_1));
             mutexForDiscovery.lock();
         }
         catch(std::exception & e)
@@ -178,21 +172,5 @@ public:
     RCSRemoteResourceObject::Ptr getRemoteResource() const
     {
         return remoteResource;
-    }
-
-    void ChangeAttributeValue()
-    {
-        std::chrono::milliseconds interval(100);
-        if (server != nullptr)
-            server->setAttribute(ATTR_KEY, ATTR_VALUE + 10);
-        std::this_thread::sleep_for(interval);
-    }
-
-    void ChangeResourceState()
-    {
-        std::chrono::milliseconds interval(400);
-        if (server != nullptr)
-            server = nullptr;
-        std::this_thread::sleep_for(interval);
     }
 };

@@ -95,14 +95,16 @@ uint16_t RMGetMcastSeqNumber();
  * On reception of request from CA, RI sends to this function.
  * This checks if the route option is present and adds routing information to
  * to the route option data.
- * @param[in,out]   message      Received coap packet.
+ * @param[in,out]  message       Received coap packet.
  * @param[in]      sender        RemoteEndpoint which sent the packet.
  * @param[out]     destination   Populated by RM by parsing message, CA then forwards packet to
  *                               "destination".
+ * @param[out]     isEmptyMsg    Populated by RM by parsing the RouteOption.  If the MSGType is ACK
+ *                               in route option and is for self, then this flag is set.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
 OCStackResult RMHandleRequest(CARequestInfo_t *message, const CAEndpoint_t *sender,
-                              bool *selfDestination);
+                              bool *selfDestination, bool *isEmptyMsg);
 
 /**
  * On reception of response from CA, RI sends to this function.

@@ -23,7 +23,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <ocstack.h>
 #include <logger.h>
 
@@ -41,9 +46,10 @@ void handleSigInt(int signum) {
 // This is a function called back when a device is discovered
 OCStackApplicationResult applicationDiscoverCB(
         OCClientResponse * clientResponse) {
-    OC_LOG(INFO, TAG, "Entering applicationDiscoverCB (Application Layer CB)");
-    OC_LOG_V(INFO, TAG, "Device =============> Discovered %s @ %s:%d",
-                                    clientResponse->resJSONPayload,
+    (void)clientResponse;
+    OIC_LOG(INFO, TAG, "Entering applicationDiscoverCB (Application Layer CB)");
+    OIC_LOG_V(INFO, TAG, "Device =============> Discovered %s @ %s:%d",
+                                    clientResponse->resourceUri,
                                     clientResponse->devAddr.addr,
                                     clientResponse->devAddr.port);
     //return OC_STACK_DELETE_TRANSACTION;
@@ -51,38 +57,40 @@ OCStackApplicationResult applicationDiscoverCB(
 }
 
 int main() {
-    OC_LOG_V(INFO, TAG, "Starting occlient on address %s",addr);
+    OIC_LOG_V(INFO, TAG, "Starting occlient");
 
     /* Initialize OCStack*/
     if (OCInit(NULL, 0, OC_CLIENT) != OC_STACK_OK) {
-        OC_LOG(ERROR, TAG, "OCStack init error");
+        OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
 
     /* Start a discovery query*/
-    char szQueryUri[64] = { 0 };
-    strcpy(szQueryUri, OC_EXPLICIT_DEVICE_DISCOVERY_URI);
-    if (OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, OC_LOW_QOS,
-            0, 0, 0) != OC_STACK_OK) {
-        OC_LOG(ERROR, TAG, "OCStack resource error");
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
+    strcpy(szQueryUri, OC_MULTICAST_DISCOVERY_URI);
+    if (OCDoResource(NULL, OC_REST_GET, szQueryUri, 0, 0, 
+            CT_DEFAULT, OC_LOW_QOS, 0, 0, 0) != OC_STACK_OK) {
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
         return 0;
     }
 
     // Break from loop with Ctrl+C
-    OC_LOG(INFO, TAG, "Entering occlient main loop...");
+    OIC_LOG(INFO, TAG, "Entering occlient main loop...");
     signal(SIGINT, handleSigInt);
     while (!gQuitFlag) {
 
         if (OCProcess() != OC_STACK_OK) {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
 
         sleep(1);
-    }OC_LOG(INFO, TAG, "Exiting occlient main loop...");
+    }
+
+    OIC_LOG(INFO, TAG, "Exiting occlient main loop...");
 
     if (OCStop() != OC_STACK_OK) {
-        OC_LOG(ERROR, TAG, "OCStack stop error");
+        OIC_LOG(ERROR, TAG, "OCStack stop error");
     }
 
     return 0;

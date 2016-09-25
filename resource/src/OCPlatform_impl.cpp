@@ -156,10 +156,15 @@ namespace OC
             return std::shared_ptr<OCResource>();
         }
 
+        uint8_t resourceProperty = 0;
+        if (isObservable)
+        {
+            resourceProperty = (resourceProperty | OC_OBSERVABLE);
+        }
         return std::shared_ptr<OCResource>(new OCResource(m_client,
                                             host,
                                             uri, "", connectivityType,
-                                            isObservable,
+                                            resourceProperty,
                                             resourceTypes,
                                             interfaces));
     }
@@ -180,6 +185,28 @@ namespace OC
     {
         return checked_guard(m_client, &IClientWrapper::ListenForResource,
                              host, resourceName, connectivityType, resourceHandler, QoS);
+    }
+
+    OCStackResult OCPlatform_impl::findResource(const std::string& host,
+                                            const std::string& resourceName,
+                                            OCConnectivityType connectivityType,
+                                            FindCallback resourceHandler,
+                                            FindErrorCallback errorHandler)
+    {
+        return findResource(host, resourceName, connectivityType, resourceHandler,
+                            errorHandler, m_cfg.QoS);
+    }
+
+    OCStackResult OCPlatform_impl::findResource(const std::string& host,
+                                            const std::string& resourceName,
+                                            OCConnectivityType connectivityType,
+                                            FindCallback resourceHandler,
+                                            FindErrorCallback errorHandler,
+                                            QualityOfService QoS)
+    {
+        return checked_guard(m_client, &IClientWrapper::ListenErrorForResource,
+                             host, resourceName, connectivityType, resourceHandler,
+                             errorHandler, QoS);
     }
 
     OCStackResult OCPlatform_impl::getDeviceInfo(const std::string& host,
@@ -355,15 +382,106 @@ namespace OC
                              std::ref(presenceHandle));
     }
 
+#ifdef WITH_CLOUD
+    OCStackResult OCPlatform_impl::subscribeDevicePresence(OCPresenceHandle& presenceHandle,
+                                                           const std::string& host,
+                                                           const std::vector<std::string>& di,
+                                                           OCConnectivityType connectivityType,
+                                                           ObserveCallback callback)
+    {
+        return checked_guard(m_client, &IClientWrapper::SubscribeDevicePresence,
+                             &presenceHandle, host, di, connectivityType, callback);
+    }
+#endif
+
     OCStackResult OCPlatform_impl::sendResponse(const std::shared_ptr<OCResourceResponse> pResponse)
     {
         return checked_guard(m_server, &IServerWrapper::sendResponse,
                              pResponse);
     }
+#ifdef RD_CLIENT
+    OCStackResult OCPlatform_impl::publishResourceToRD(const std::string& host,
+                                                       OCConnectivityType connectivityType,
+                                                       ResourceHandles& resourceHandles,
+                                                       PublishResourceCallback callback)
+    {
+        return publishResourceToRD(host, connectivityType, resourceHandles,
+                                   callback, m_cfg.QoS);
+    }
 
+    OCStackResult OCPlatform_impl::publishResourceToRD(const std::string& host,
+                                                       OCConnectivityType connectivityType,
+                                                       ResourceHandles& resourceHandles,
+                                                       PublishResourceCallback callback,
+                                                       QualityOfService qos)
+    {
+        return checked_guard(m_server, &IServerWrapper::publishResourceToRD,
+                             host, connectivityType, resourceHandles, callback,
+                             static_cast<OCQualityOfService>(qos));
+    }
+
+    OCStackResult OCPlatform_impl::deleteResourceFromRD(const std::string& host,
+                                                        OCConnectivityType connectivityType,
+                                                        ResourceHandles& resourceHandles,
+                                                        DeleteResourceCallback callback)
+    {
+        return deleteResourceFromRD(host, connectivityType, resourceHandles, callback,
+                                    m_cfg.QoS);
+    }
+
+    OCStackResult OCPlatform_impl::deleteResourceFromRD(const std::string& host,
+                                                        OCConnectivityType connectivityType,
+                                                        ResourceHandles& resourceHandles,
+                                                        DeleteResourceCallback callback,
+                                                        QualityOfService qos)
+    {
+        return checked_guard(m_server, &IServerWrapper::deleteResourceFromRD,
+                             host, connectivityType, resourceHandles, callback,
+                             static_cast<OCQualityOfService>(qos));
+    }
+#endif
     std::weak_ptr<std::recursive_mutex> OCPlatform_impl::csdkLock()
     {
         return m_csdkLock;
     }
+
+    OCStackResult OCPlatform_impl::findDirectPairingDevices(unsigned short waittime,
+                             GetDirectPairedCallback directPairingHandler)
+    {
+        return checked_guard(m_client, &IClientWrapper::FindDirectPairingDevices,
+                             waittime, directPairingHandler);
+
+    }
+
+    OCStackResult OCPlatform_impl::getDirectPairedDevices(
+                             GetDirectPairedCallback directPairingHandler)
+    {
+
+        return checked_guard(m_client, &IClientWrapper::GetDirectPairedDevices,
+                             directPairingHandler);
+    }
+
+    OCStackResult OCPlatform_impl::doDirectPairing(std::shared_ptr<OCDirectPairing> peer,
+                             OCPrm_t pmSel,
+                             const std::string& pinNumber,
+                             DirectPairingCallback resultCallback)
+    {
+        return checked_guard(m_client, &IClientWrapper::DoDirectPairing,
+                             peer, pmSel, pinNumber, resultCallback);
+    }
+#ifdef WITH_CLOUD
+    OCAccountManager::Ptr OCPlatform_impl::constructAccountManagerObject(const std::string& host,
+                                                            OCConnectivityType connectivityType)
+    {
+        if (!m_client)
+        {
+            return std::shared_ptr<OCAccountManager>();
+        }
+
+        return std::shared_ptr<OCAccountManager>(new OCAccountManager(m_client,
+                                                                      host,
+                                                                      connectivityType));
+    }
+#endif // WITH_CLOUD
 } //namespace OC
 

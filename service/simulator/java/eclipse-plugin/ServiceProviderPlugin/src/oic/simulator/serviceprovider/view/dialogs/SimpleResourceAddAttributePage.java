@@ -16,16 +16,6 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
-import oic.simulator.serviceprovider.model.AttributeHelper;
-import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.utils.Utility;
-
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
@@ -47,7 +37,17 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
-import org.oic.simulator.AttributeProperty.Type;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
+import oic.simulator.serviceprovider.model.AttributeHelper;
+import oic.simulator.serviceprovider.model.AttributeHelper.ValidValuesType;
+import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
 
 public class SimpleResourceAddAttributePage extends WizardPage {
 
@@ -153,7 +153,7 @@ public class SimpleResourceAddAttributePage extends WizardPage {
                     return;
                 }
                 AttributeHelper att = (AttributeHelper) e;
-                if (att.getValidValuesType() != Type.RANGE) {
+                if (att.getValidValuesType() != ValidValuesType.RANGE) {
                     cell.setText("Nil");
                 } else {
                     String min = att.getMin();
@@ -180,7 +180,7 @@ public class SimpleResourceAddAttributePage extends WizardPage {
                     return;
                 }
                 AttributeHelper att = (AttributeHelper) e;
-                if (att.getValidValuesType() != Type.VALUESET) {
+                if (att.getValidValuesType() != ValidValuesType.VALUESET) {
                     cell.setText("Nil");
                 } else {
                     cell.setText(att.getAllowedValues().toString());
@@ -280,13 +280,15 @@ public class SimpleResourceAddAttributePage extends WizardPage {
                         .getDefault().getActiveShell(), att, rTypes, attributes);
                 if (dialog.open() != Window.OK) {
                     AttributeHelper newAtt = dialog.getAttClone();
-                    att.setAttributeName(newAtt.getAttributeName());
-                    att.setAttributeType(newAtt.getAttributeType());
-                    att.setAttributeDflValue(newAtt.getAttributeDflValue());
-                    att.setValidValuesType(newAtt.getValidValuesType());
-                    att.setMin(newAtt.getMin());
-                    att.setMax(newAtt.getMax());
-                    att.setAllowedValues(newAtt.getAllowedValues());
+                    if (null != newAtt) {
+                        att.setAttributeName(newAtt.getAttributeName());
+                        att.setAttributeType(newAtt.getAttributeType());
+                        att.setAttributeDflValue(newAtt.getAttributeDflValue());
+                        att.setValidValuesType(newAtt.getValidValuesType());
+                        att.setMin(newAtt.getMin());
+                        att.setMax(newAtt.getMax());
+                        att.setAllowedValues(newAtt.getAllowedValues());
+                    }
                 }
                 attTblViewer.update(att, null);
             }
@@ -335,7 +337,8 @@ public class SimpleResourceAddAttributePage extends WizardPage {
                 });
     }
 
-    class AttributeContentProvider implements ITreeContentProvider {
+    private static class AttributeContentProvider implements
+            ITreeContentProvider {
 
         List<AttributeHelper> attList = new ArrayList<AttributeHelper>();
 

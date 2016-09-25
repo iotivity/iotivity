@@ -57,7 +57,7 @@ namespace OIC
             {
                 m_sceneCollectionResource->addSceneMember(sceneMemberResObj);
             }
-            catch(std::exception& e)
+            catch(RCSBadRequestException& e)
             {
                 auto sceneMemberRes = m_sceneCollectionResource->findSceneMembers(m_name);
 
@@ -70,7 +70,7 @@ namespace OIC
 
                 if(it != sceneMemberRes.end())
                 {
-                    throw InvalidAddMemberRequestException(
+                    throw RCSBadRequestException(
                             "It is already registered member. Please set Execution Parameter!");
                 }
 
@@ -118,11 +118,11 @@ namespace OIC
             std::vector<SceneAction::Ptr> actions;
             auto sceneMemberRes = m_sceneCollectionResource->findSceneMembers(m_name);
 
-/*
             std::for_each(sceneMemberRes.begin(), sceneMemberRes.end(),
-                [&actions, &m_name](const SceneMemberResource::Ptr& member)
+                [&](const SceneMemberResource::Ptr& member)
                 {
                     RCSResourceAttributes actionParam;
+
                     for(const auto &it : member->findMappingInfos(m_name))
                     {
                         actionParam[it.key] = it.value;
@@ -132,7 +132,6 @@ namespace OIC
                 }
             );
 
-*/
             return actions;
          }
 

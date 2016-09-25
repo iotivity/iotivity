@@ -32,40 +32,57 @@ JniPinCheckListener::~JniPinCheckListener()
     LOGI("~JniPinCheckListener()");
     if (m_jListener)
     {
-        jint ret;
+        jint ret = JNI_ERR;
         JNIEnv *env = GetJNIEnv(ret);
-        if (NULL == env) return;
+        if (nullptr == env)
+        {
+            return;
+        }
         env->DeleteGlobalRef(m_jListener);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
     }
 }
 
 void JniPinCheckListener::PinCallback(char *pinBuf, size_t bufSize)
 {
-    jint ret;
-
+    jint ret = JNI_ERR;
     JNIEnv *env = GetJNIEnv(ret);
-    if (NULL == env) return;
+    if (nullptr == env)
+    {
+        return;
+    }
 
     jclass clsL = env->GetObjectClass(m_jListener);
 
     if (!clsL)
     {
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
     jmethodID midL = env->GetMethodID(clsL, "pinCallbackListener", "()Ljava/lang/String;");
     if (!midL)
     {
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
     jstring jpin = (jstring)env->CallObjectMethod(m_jListener, midL);
     if (env->ExceptionCheck())
     {
         LOGE("Java exception is thrown");
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
@@ -73,5 +90,8 @@ void JniPinCheckListener::PinCallback(char *pinBuf, size_t bufSize)
     OICStrcpy(pinBuf, bufSize, str);
     env->ReleaseStringUTFChars(jpin, str);
 
-    if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+    if (JNI_EDETACHED == ret)
+    {
+        g_jvm->DetachCurrentThread();
+    }
 }

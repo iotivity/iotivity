@@ -35,18 +35,18 @@
 /**
  * Logging tag for module name.
  */
-#define TAG "RM"
+#define TAG "OIC_RM"
 
 /**
  * Tag for printing the logs of forwarding the packet.
  */
-#define RM_TAG "RAP"
+#define RM_TAG "OIC_RM_RAP"
 
 
 /**
  * Unique gateway ID generated before hosting a gateway resource.
  */
-uint32_t g_GatewayID = 0;
+static uint32_t g_GatewayID = 0;
 
 /**
  * Used for assigning unique ID.to endpoint's connected to this gateway
@@ -143,16 +143,16 @@ void RMSendDeleteToNeighbourNodes();
 
 void RMGenerateGatewayID(uint8_t *id, size_t idLen)
 {
-    OC_LOG(DEBUG, TAG, "RMGenerateGatewayID IN");
+    OIC_LOG(DEBUG, TAG, "RMGenerateGatewayID IN");
     OCFillRandomMem(id, idLen);
-    OC_LOG(DEBUG, TAG, "RMGenerateGatewayID OUT");
+    OIC_LOG(DEBUG, TAG, "RMGenerateGatewayID OUT");
 }
 OCStackResult RMInitialize()
 {
-    OC_LOG(DEBUG, TAG, "RMInitialize IN");
+    OIC_LOG(DEBUG, TAG, "RMInitialize IN");
     if (g_isRMInitialized)
     {
-        OC_LOG(DEBUG, TAG, "RM already initialized");
+        OIC_LOG(DEBUG, TAG, "RM already initialized");
         return OC_STACK_OK;
     }
 
@@ -160,20 +160,20 @@ OCStackResult RMInitialize()
     OCStackResult result = RMInitGatewayResource();
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(ERROR, TAG, "RMInitGatewayResource failed[%d]", result);
+        OIC_LOG_V(ERROR, TAG, "RMInitGatewayResource failed[%d]", result);
         return result;
     }
 
     // Generates a 4 byte Gateway ID.
     RMGenerateGatewayID((uint8_t *)&g_GatewayID, sizeof(g_GatewayID));
 
-    OC_LOG_V(INFO, RM_TAG, "Gateway ID: %u", g_GatewayID);
+    OIC_LOG_V(INFO, RM_TAG, "Gateway ID: %u", g_GatewayID);
 
     // Initialize the Routing table manager.
     result = RTMInitialize(&g_routingGatewayTable, &g_routingEndpointTable);
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(ERROR, TAG, "RTMInitialize failed[%d]", result);
+        OIC_LOG_V(ERROR, TAG, "RTMInitialize failed[%d]", result);
         return result;
     }
 
@@ -183,7 +183,7 @@ OCStackResult RMInitialize()
     result = RMDiscoverGatewayResource();
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(ERROR, TAG, "RMDiscoverGatewayResource failed[%d]", result);
+        OIC_LOG_V(ERROR, TAG, "RMDiscoverGatewayResource failed[%d]", result);
         RTMTerminate(&g_routingGatewayTable, &g_routingEndpointTable);
         return result;
     }
@@ -192,16 +192,16 @@ OCStackResult RMInitialize()
     g_aliveTime = RTMGetCurrentTime();
     g_refreshTableTime = g_aliveTime;
 
-    OC_LOG(DEBUG, TAG, "RMInitialize OUT");
+    OIC_LOG(DEBUG, TAG, "RMInitialize OUT");
     return result;
 }
 
 OCStackResult RMTerminate()
 {
-    OC_LOG(DEBUG, TAG, "RMTerminate IN");
+    OIC_LOG(DEBUG, TAG, "RMTerminate IN");
     if (!g_isRMInitialized)
     {
-        OC_LOG(ERROR, TAG, "RM not initialized");
+        OIC_LOG(ERROR, TAG, "RM not initialized");
         return OC_STACK_ERROR;
     }
     // Send DELETE request to neighbour nodes
@@ -210,96 +210,96 @@ OCStackResult RMTerminate()
     OCStackResult result = RTMTerminate(&g_routingGatewayTable, &g_routingEndpointTable);
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(ERROR, TAG, "CARegisterRoutingMessageHandler failed[%d]", result);
+        OIC_LOG_V(ERROR, TAG, "CARegisterRoutingMessageHandler failed[%d]", result);
         return result;
     }
     g_isRMInitialized = false;
-    OC_LOG(DEBUG, TAG, "RMTerminate OUT");
+    OIC_LOG(DEBUG, TAG, "RMTerminate OUT");
     return result;
 }
 
 OCStackResult RMHandleGatewayRequest(OCServerRequest *request, const OCResource *resource)
 {
-    OC_LOG(DEBUG, TAG, "RMHandleGatewayRequest IN");
+    OIC_LOG(DEBUG, TAG, "RMHandleGatewayRequest IN");
 
     if (!g_isRMInitialized)
     {
-        OC_LOG(ERROR, TAG, "RM not initialized");
+        OIC_LOG(ERROR, TAG, "RM not initialized");
         return OC_STACK_ERROR;
     }
 
     RM_NULL_CHECK_WITH_RET(request, TAG, "request");
     RM_NULL_CHECK_WITH_RET(resource, TAG, "resource");
 
-    OC_LOG_V(DEBUG, TAG, "Received request of method: %d", request->method);
+    OIC_LOG_V(DEBUG, TAG, "Received request of method: %d", request->method);
 
     if (OC_REST_GET == request->method)
     {
         switch((OCObserveAction)request->observationOption)
         {
             case OC_OBSERVE_REGISTER:
-                OC_LOG(DEBUG, TAG, "Received OBSERVE request");
+                OIC_LOG(DEBUG, TAG, "Received OBSERVE request");
                 RMHandleOBSERVERequest(request, resource);
                 break;
             case OC_OBSERVE_DEREGISTER:
                 //TODO: Handle this case
-                OC_LOG(DEBUG, TAG, "Received OBSERVE deregister");
+                OIC_LOG(DEBUG, TAG, "Received OBSERVE deregister");
                 break;
             case OC_OBSERVE_NO_OPTION:
-                OC_LOG(DEBUG, TAG, "Received GET request");
+                OIC_LOG(DEBUG, TAG, "Received GET request");
                 RMHandleGETRequest(request, resource);
                 break;
             default:
-                OC_LOG(DEBUG, TAG, "Not Supported by Routing Manager");
+                OIC_LOG(DEBUG, TAG, "Not Supported by Routing Manager");
         }
     }
     else if (OC_REST_DELETE == request->method)
     {
-        OC_LOG(DEBUG, TAG, "Received a Delete request");
+        OIC_LOG(DEBUG, TAG, "Received a Delete request");
         RMHandleDELETERequest(request, resource);
     }
-    OC_LOG(DEBUG, TAG, "RMHandleGatewayRequest OUT");
+    OIC_LOG(DEBUG, TAG, "RMHandleGatewayRequest OUT");
     return OC_STACK_OK;
 }
 
 OCStackResult RMHandleRequestPayload(OCDevAddr devAddr, const uint8_t *reqPayload,
                                      size_t payloadSize)
 {
-    OC_LOG(DEBUG, TAG, "RMHandleRequestPayload IN");
+    OIC_LOG(DEBUG, TAG, "RMHandleRequestPayload IN");
     RM_NULL_CHECK_WITH_RET(reqPayload, TAG, "reqPayload");
 
     uint32_t gatewayId = 0;
 
     OCStackResult result = RMPParseRequestPayload(reqPayload, payloadSize, &gatewayId);
     RM_VERIFY_SUCCESS(result, OC_STACK_OK);
-    OC_LOG(INFO, TAG, "RMPParseRequestPayload is success");
+    OIC_LOG(INFO, TAG, "RMPParseRequestPayload is success");
     // Check if the entry is its own.
     if (gatewayId == g_GatewayID)
     {
-        OC_LOG(INFO, TAG, "Own Request Received!!");
+        OIC_LOG(INFO, TAG, "Own Request Received!!");
         return OC_STACK_CONTINUE;
     }
 
     CAEndpoint_t endpoint = {.adapter = CA_DEFAULT_ADAPTER};
     CopyDevAddrToEndpoint(&devAddr, &endpoint);
 
-    OC_LOG_V(INFO, TAG, "Add the gateway ID: %u", gatewayId);
+    OIC_LOG_V(INFO, TAG, "Add the gateway ID: %u", gatewayId);
     RTMDestIntfInfo_t destInterfaces = {.observerId = 0};
     destInterfaces.destIntfAddr = endpoint;
     result = RTMAddGatewayEntry(gatewayId, 0, 1, &destInterfaces, &g_routingGatewayTable);
 
     if (OC_STACK_OK != result)
     {
-        OC_LOG(DEBUG, TAG, "Gateway was not added to the routing table");
+        OIC_LOG(DEBUG, TAG, "Gateway was not added to the routing table");
         return result;
     }
 
-    OC_LOG(INFO, TAG, "Gateway was added");
+    OIC_LOG(INFO, TAG, "Gateway was added");
     // Create a list to add the updated entries and notify the observers
     u_linklist_t *updatedTableList = u_linklist_create();
     if(!updatedTableList)
     {
-        OC_LOG(DEBUG, TAG, "Failure to notify");
+        OIC_LOG(DEBUG, TAG, "Failure to notify");
         return OC_STACK_NO_MEMORY;
     }
 
@@ -318,7 +318,7 @@ OCStackResult RMHandleRequestPayload(OCDevAddr devAddr, const uint8_t *reqPayloa
                                            &updatedPayload);
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(ERROR, TAG, "RMPConstructObserveResPayload failed[%d]", result);
+        OIC_LOG_V(ERROR, TAG, "RMPConstructObserveResPayload failed[%d]", result);
         RMPFreePayload(updatedPayload);
         goto exit;
     }
@@ -329,13 +329,13 @@ OCStackResult RMHandleRequestPayload(OCDevAddr devAddr, const uint8_t *reqPayloa
 
 exit:
     u_linklist_free(&updatedTableList);
-    OC_LOG(DEBUG, TAG, "RMHandleRequestPayload OUT");
+    OIC_LOG(DEBUG, TAG, "RMHandleRequestPayload OUT");
     return result;
 }
 
 OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPayload *respPayload)
 {
-    OC_LOG(DEBUG, TAG, "RMHandleResponsePayload IN");
+    OIC_LOG(DEBUG, TAG, "RMHandleResponsePayload IN");
     RM_NULL_CHECK_WITH_RET(respPayload, TAG, "respPayload");
 
     // Parse the Payload to get the Gateway ID of neighbouring node.
@@ -350,7 +350,7 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
     // Check if the entry is its own.
     if (gatewayId == g_GatewayID)
     {
-        OC_LOG(INFO, TAG, "-------------->Own entry, continue!!");
+        OIC_LOG(INFO, TAG, "-------------->Own entry, continue!!");
         RTMFreeGatewayRouteTable(&gatewayTableList);
         return OC_STACK_ERROR;
     }
@@ -361,13 +361,13 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
     destInterfaces.destIntfAddr = endpoint;
     if (0 < seqNum)
     {
-        OC_LOG_V(DEBUG, TAG, "Sequence Number of Resp payload is %d, Forceupdate: %d",
+        OIC_LOG_V(DEBUG, TAG, "Sequence Number of Resp payload is %d, Forceupdate: %d",
                  seqNum, isUpdateSeqNum);
         result = RTMUpdateEntryParameters(gatewayId, seqNum, &destInterfaces,
                                           &g_routingGatewayTable, isUpdateSeqNum);
         if (OC_STACK_COMM_ERROR == result)
         {
-            OC_LOG(ERROR, TAG, "Few packet drops are found, sequence number is not matching");
+            OIC_LOG(ERROR, TAG, "Few packet drops are found, sequence number is not matching");
             // Send a observe request to the gateway.
             RMSendObserveRequest(devAddr, NULL);
             RTMFreeGatewayRouteTable(&gatewayTableList);
@@ -375,7 +375,7 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
         }
         else if (OC_STACK_DUPLICATE_REQUEST == result)
         {
-            OC_LOG(ERROR, TAG, "Same sequence number is received");
+            OIC_LOG(ERROR, TAG, "Same sequence number is received");
             RTMFreeGatewayRouteTable(&gatewayTableList);
             return result;
         }
@@ -389,7 +389,7 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
         RTMGatewayEntry_t *headPtr = u_linklist_get_data(gatewayTableList->list);
         if (headPtr && 0 == headPtr->routeCost)
         {
-            OC_LOG(INFO, TAG, "Remove entry is called");
+            OIC_LOG(INFO, TAG, "Remove entry is called");
             doRemoveEntry = true;
         }
     }
@@ -398,25 +398,25 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
     u_linklist_t *updatedTableList = u_linklist_create();
     if(!updatedTableList)
     {
-        OC_LOG(DEBUG, TAG, "Failed to allocate memory");
+        OIC_LOG(DEBUG, TAG, "Failed to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
 
     u_linklist_t *alternativeRouteList = u_linklist_create();
     if(!alternativeRouteList)
     {
-        OC_LOG(DEBUG, TAG, "Failed to allocate memory");
+        OIC_LOG(DEBUG, TAG, "Failed to allocate memory");
         return OC_STACK_NO_MEMORY;
     }
 
     OCRepPayload *updatedPayload = NULL;
     if (false == doRemoveEntry)
     {
-        OC_LOG_V(INFO, TAG, "Add the gateway ID: %u", gatewayId);
+        OIC_LOG_V(INFO, TAG, "Add the gateway ID: %u", gatewayId);
         result = RTMAddGatewayEntry(gatewayId, 0, 1, &destInterfaces, &g_routingGatewayTable);
         if (OC_STACK_OK == result)
         {
-            OC_LOG(INFO, TAG, "Node was added");
+            OIC_LOG(INFO, TAG, "Node was added");
             RTMGatewayId_t gwId = {.gatewayId = gatewayId};
             RTMGatewayEntry_t newNode;
             newNode.destination = &gwId;
@@ -426,7 +426,7 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
 
             if (NULL == gatewayTableList)
             {
-                OC_LOG(INFO, TAG, "Received a Discover Payload");
+                OIC_LOG(INFO, TAG, "Received a Discover Payload");
                 g_sequenceNumber++;
                 result = RMPConstructObserveResPayload(g_GatewayID, g_sequenceNumber,
                                                        updatedTableList, false,
@@ -447,12 +447,12 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
         // Check if the entry is its own.
         if (!entry || entry->destination->gatewayId == g_GatewayID)
         {
-            OC_LOG(INFO, TAG, "Ignore entry, continue!!");
+            OIC_LOG(INFO, TAG, "Ignore entry, continue!!");
             u_linklist_get_next(&iterTable);
             continue;
         }
 
-        OC_LOG_V(INFO, TAG, "Gateway ID: %u", entry->destination->gatewayId);
+        OIC_LOG_V(INFO, TAG, "Gateway ID: %u", entry->destination->gatewayId);
         if (true == doRemoveEntry)
         {
             // Remove the entry from RTM.
@@ -475,7 +475,7 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
 
         if (OC_STACK_OK == result)
         {
-            OC_LOG(INFO, TAG, "Gateway was added/removed");
+            OIC_LOG(INFO, TAG, "Gateway was added/removed");
             u_linklist_add(updatedTableList, (void *)entry);
             RTMPrintTable(g_routingGatewayTable, g_routingEndpointTable);
         }
@@ -484,7 +484,7 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
 
     if ( 0 < u_linklist_length(alternativeRouteList))
     {
-        OC_LOG(DEBUG, TAG, "Alternative routing found");
+        OIC_LOG(DEBUG, TAG, "Alternative routing found");
         // Send the notification.
         OCRepPayload *removeTablePayload = NULL;
         g_sequenceNumber++;
@@ -493,7 +493,7 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
                                                &removeTablePayload);
         if (OC_STACK_OK != result)
         {
-            OC_LOG_V(ERROR, TAG, "RMPConstructObserveResPayload failed[%d]", result);
+            OIC_LOG_V(ERROR, TAG, "RMPConstructObserveResPayload failed[%d]", result);
             RMPFreePayload(removeTablePayload);
             goto exit;
         }
@@ -504,7 +504,7 @@ OCStackResult RMHandleResponsePayload(const OCDevAddr *devAddr, const OCRepPaylo
 
     if ( 0 >= u_linklist_length(updatedTableList))
     {
-        OC_LOG_V(DEBUG, TAG, "No updation is needed, Length is %d",
+        OIC_LOG_V(DEBUG, TAG, "No updation is needed, Length is %d",
                  u_linklist_length(updatedTableList));
         goto exit;
     }
@@ -532,13 +532,13 @@ exit:
     RTMFreeGatewayRouteTable(&gatewayTableList);
     u_linklist_free(&updatedTableList);
     u_linklist_free(&alternativeRouteList);
-    OC_LOG(DEBUG, TAG, "RMHandleResponsePayload OUT");
+    OIC_LOG(DEBUG, TAG, "RMHandleResponsePayload OUT");
     return OC_STACK_OK;
 }
 
 OCStackResult RMHandleGETRequest(const OCServerRequest *request, const OCResource *resource)
 {
-    OC_LOG(DEBUG, TAG, "RMHandleGETRequest IN");
+    OIC_LOG(DEBUG, TAG, "RMHandleGETRequest IN");
     RM_NULL_CHECK_WITH_RET(request, TAG, "request");
     RM_NULL_CHECK_WITH_RET(resource, TAG, "resource");
 
@@ -546,7 +546,7 @@ OCStackResult RMHandleGETRequest(const OCServerRequest *request, const OCResourc
     OCStackResult result = RMPConstructGatewayPayload(g_GatewayID, &payload);
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(DEBUG, TAG, "RMPConstructDiscoverPayload failed[%d]", result);
+        OIC_LOG_V(DEBUG, TAG, "RMPConstructDiscoverPayload failed[%d]", result);
         return result;
     }
 
@@ -554,7 +554,7 @@ OCStackResult RMHandleGETRequest(const OCServerRequest *request, const OCResourc
     result = RMSendResponse(request, resource, payload);
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(DEBUG, TAG, "Send response failed[%d]", result);
+        OIC_LOG_V(DEBUG, TAG, "Send response failed[%d]", result);
         RMPFreePayload(payload);
         return result;
     }
@@ -564,15 +564,15 @@ OCStackResult RMHandleGETRequest(const OCServerRequest *request, const OCResourc
     result = RMSendObserveRequest(&(request->devAddr), NULL);
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(DEBUG, TAG, "Send response failed[%d]", result);
+        OIC_LOG_V(DEBUG, TAG, "Send response failed[%d]", result);
     }
-    OC_LOG(DEBUG, TAG, "RMHandleGETRequest OUT");
+    OIC_LOG(DEBUG, TAG, "RMHandleGETRequest OUT");
     return result;
 }
 
 OCStackResult RMHandleOBSERVERequest(OCServerRequest *request, const OCResource *resource)
 {
-    OC_LOG(DEBUG, TAG, "RMHandleOBSERVERequest IN");
+    OIC_LOG(DEBUG, TAG, "RMHandleOBSERVERequest IN");
     RM_NULL_CHECK_WITH_RET(request, TAG, "request");
     RM_NULL_CHECK_WITH_RET(resource, TAG, "resource");
 
@@ -586,19 +586,19 @@ OCStackResult RMHandleOBSERVERequest(OCServerRequest *request, const OCResource 
     OCObservationId obsID = 0;
     OCStackResult result = RMAddObserver(request, &obsID);
     RM_VERIFY_SUCCESS(result, OC_STACK_OK);
-    OC_LOG_V(DEBUG, TAG, "Observer ID is %d", obsID);
+    OIC_LOG_V(DEBUG, TAG, "Observer ID is %d", obsID);
 
 
     // Get the Routing table from RTM
     OCRepPayload *payload = NULL;
     RTMPrintTable(g_routingGatewayTable, g_routingEndpointTable);
-    OC_LOG(DEBUG, TAG, "Construct Routing table payload");
+    OIC_LOG(DEBUG, TAG, "Construct Routing table payload");
     result = RMPConstructObserveResPayload(g_GatewayID, g_sequenceNumber,
                                            g_routingGatewayTable, true,
                                            &payload);
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(ERROR, TAG, "RMPConstructObserveResPayload failed[%d]", result);
+        OIC_LOG_V(ERROR, TAG, "RMPConstructObserveResPayload failed[%d]", result);
         RMPFreePayload(payload);
         goto exit;
     }
@@ -607,13 +607,13 @@ OCStackResult RMHandleOBSERVERequest(OCServerRequest *request, const OCResource 
     RMPFreePayload(payload);
     RM_VERIFY_SUCCESS(result, OC_STACK_OK);
 exit:
-    OC_LOG(DEBUG, TAG, "RMHandleOBSERVERequest OUT");
+    OIC_LOG(DEBUG, TAG, "RMHandleOBSERVERequest OUT");
     return result;
 }
 
 OCStackResult RMHandleDELETERequest(const OCServerRequest *request, const OCResource *resource)
 {
-    OC_LOG(DEBUG, TAG, "RMHandleDELETERequest IN");
+    OIC_LOG(DEBUG, TAG, "RMHandleDELETERequest IN");
     RM_NULL_CHECK_WITH_RET(request, TAG, "request");
     RM_NULL_CHECK_WITH_RET(resource, TAG, "resource");
 
@@ -621,9 +621,9 @@ OCStackResult RMHandleDELETERequest(const OCServerRequest *request, const OCReso
     OCStackResult result = RMPParseRequestPayload(request->payload, request->payloadSize,
                                                   &gatewayId);
     RM_VERIFY_SUCCESS(result, OC_STACK_OK);
-    OC_LOG(INFO, TAG, "RMPParseRequestPayload is success");
+    OIC_LOG(INFO, TAG, "RMPParseRequestPayload is success");
 
-    OC_LOG_V(INFO, TAG, "Remove the gateway ID: %u", gatewayId);
+    OIC_LOG_V(INFO, TAG, "Remove the gateway ID: %u", gatewayId);
 
     u_linklist_t *removedGatewayNodes = NULL;
     result = RTMRemoveGatewayEntry(gatewayId, &removedGatewayNodes, &g_routingGatewayTable);
@@ -637,7 +637,7 @@ OCStackResult RMHandleDELETERequest(const OCServerRequest *request, const OCReso
                                             false, &resPayloads);
         if (OC_STACK_OK != result)
         {
-            OC_LOG_V(ERROR, TAG, "RMPConstructRemovalPayload failed[%d]", result);
+            OIC_LOG_V(ERROR, TAG, "RMPConstructRemovalPayload failed[%d]", result);
             RMPFreePayload(resPayloads);
             goto exit;
         }
@@ -649,13 +649,13 @@ OCStackResult RMHandleDELETERequest(const OCServerRequest *request, const OCReso
 
 exit:
     RTMFreeGatewayRouteTable(&removedGatewayNodes);
-    OC_LOG(DEBUG, TAG, "RMHandleDELETERequest OUT");
+    OIC_LOG(DEBUG, TAG, "RMHandleDELETERequest OUT");
     return result;
 }
 
 OCStackResult RMAddObserver(OCServerRequest *request, OCObservationId *obsID)
 {
-    OC_LOG(DEBUG, TAG, "RMAddObserverForGateway OUT");
+    OIC_LOG(DEBUG, TAG, "RMAddObserverForGateway OUT");
     RM_NULL_CHECK_WITH_RET(request, TAG, "request");
     RM_NULL_CHECK_WITH_RET(obsID, TAG, "obsID");
 
@@ -666,7 +666,7 @@ OCStackResult RMAddObserver(OCServerRequest *request, OCObservationId *obsID)
     // Check if observer is already added.
     if (true == RTMIsObserverPresent(endpoint, obsID, g_routingGatewayTable))
     {
-        OC_LOG(DEBUG, TAG, "Observer is present");
+        OIC_LOG(DEBUG, TAG, "Observer is present");
         request->observeResult = OC_STACK_OK;
         return OC_STACK_OK;
     }
@@ -675,22 +675,22 @@ OCStackResult RMAddObserver(OCServerRequest *request, OCObservationId *obsID)
     request->observeResult = result;
     if (OC_STACK_OK == result)
     {
-        OC_LOG(DEBUG, TAG, "Added observer successfully");
+        OIC_LOG(DEBUG, TAG, "Added observer successfully");
 
         // Add the observer to the list.
         result = RTMAddObserver(*obsID, endpoint, &g_routingGatewayTable);
         if (OC_STACK_OK != result)
         {
-            OC_LOG_V(DEBUG, TAG, "RMAddObserver failed[%d]", result);
+            OIC_LOG_V(DEBUG, TAG, "RMAddObserver failed[%d]", result);
         }
     }
-    OC_LOG(DEBUG, TAG, "RMAddObserverForGateway OUT");
+    OIC_LOG(DEBUG, TAG, "RMAddObserverForGateway OUT");
     return result;
 }
 
 OCStackResult RMSendNotificationToAll(const OCRepPayload *payload)
 {
-    OC_LOG(DEBUG, TAG, "RMSendNotificationToAll IN");
+    OIC_LOG(DEBUG, TAG, "RMSendNotificationToAll IN");
     RM_NULL_CHECK_WITH_RET(payload, TAG, "payload");
 
     OCObservationId *obsList = NULL;
@@ -698,11 +698,11 @@ OCStackResult RMSendNotificationToAll(const OCRepPayload *payload)
     // Get the complete observer list.
     RTMGetObserverList(&obsList, &obsLen, g_routingGatewayTable);
     OCStackResult result = OC_STACK_OK;
-    OC_LOG_V(DEBUG, TAG, "Number of observers is %d", obsLen);
+    OIC_LOG_V(DEBUG, TAG, "Number of observers is %d", obsLen);
     if (0 < obsLen)
     {
         // Send notification to the list of observers.
-        OC_LOG_V(DEBUG, TAG, "Sending notification with Sequence Number: %d", g_sequenceNumber);
+        OIC_LOG_V(DEBUG, TAG, "Sending notification with Sequence Number: %d", g_sequenceNumber);
         result = RMSendNotificationForListofObservers(obsList, obsLen, payload);
         RM_VERIFY_SUCCESS(result, OC_STACK_OK);
         g_aliveTime = RTMGetCurrentTime();
@@ -710,7 +710,7 @@ OCStackResult RMSendNotificationToAll(const OCRepPayload *payload)
 
 exit:
     OICFree(obsList);
-    OC_LOG(DEBUG, TAG, "RMSendNotificationToAll OUT");
+    OIC_LOG(DEBUG, TAG, "RMSendNotificationToAll OUT");
     return result;
 }
 
@@ -732,11 +732,11 @@ void RMProcess()
                                                false, &payload);
         if (OC_STACK_OK != result)
         {
-            OC_LOG_V(ERROR, TAG, "RMPConstructObserveResPayload failed[%d]", result);
+            OIC_LOG_V(ERROR, TAG, "RMPConstructObserveResPayload failed[%d]", result);
             RMPFreePayload(payload);
             goto exit;
         }
-        OC_LOG(DEBUG, TAG, "Sending the alive notification to all");
+        OIC_LOG(DEBUG, TAG, "Sending the alive notification to all");
         // Send notification for every 15s to all the neighbours.
         result = RMSendNotificationToAll(payload);
         RMPFreePayload(payload);
@@ -745,7 +745,7 @@ void RMProcess()
 
     if (ROUTINGTABLE_VALIDATION_TIMEOUT <= currentTime - g_refreshTableTime)
     {
-        OC_LOG(DEBUG, TAG, "Validating the routing table");
+        OIC_LOG(DEBUG, TAG, "Validating the routing table");
         u_linklist_t *removedEntries = NULL;
         // Remove the invalid gateway entries.
         RTMRemoveInvalidGateways(&removedEntries, &g_routingGatewayTable);
@@ -758,7 +758,7 @@ void RMProcess()
             RTMFreeGatewayRouteTable(&removedEntries);
             if (OC_STACK_OK != result)
             {
-                OC_LOG_V(ERROR, TAG, "RMPConstructRemovalPayload failed[%d]", result);
+                OIC_LOG_V(ERROR, TAG, "RMPConstructRemovalPayload failed[%d]", result);
                 RMPFreePayload(resPayloads);
                 goto exit;
             }
@@ -775,7 +775,7 @@ void RMProcess()
 
     if (!g_isValidated && ROUTINGTABLE_REFRESH_TIMEOUT <= (currentTime - g_refreshTableTime))
     {
-        OC_LOG_V(DEBUG, TAG, "Refreshing the routing table: %llu", currentTime);
+        OIC_LOG_V(DEBUG, TAG, "Refreshing the routing table: %llu", currentTime);
         u_linklist_t* invalidInterfaces = NULL;
         RTMUpdateDestAddrValidity(&invalidInterfaces, &g_routingGatewayTable);
         if (0 < u_linklist_length(invalidInterfaces))
@@ -807,22 +807,22 @@ exit:
 
 OCStackResult RMGetGatewayPayload(OCRepPayload **payload)
 {
-    OC_LOG(DEBUG, TAG, "RMGetGatewayPayload IN");
+    OIC_LOG(DEBUG, TAG, "RMGetGatewayPayload IN");
     OCStackResult result = RMPConstructGatewayPayload(g_GatewayID, payload);
-    OC_LOG_V(DEBUG, TAG, "RMPConstructDiscoverPayload result is %d", result);
-    OC_LOG(DEBUG, TAG, "RMGetGatewayPayload OUT");
+    OIC_LOG_V(DEBUG, TAG, "RMPConstructDiscoverPayload result is %d", result);
+    OIC_LOG(DEBUG, TAG, "RMGetGatewayPayload OUT");
     return result;
 }
 
 void RMSendDeleteToNeighbourNodes()
 {
-    OC_LOG(DEBUG, TAG, "RMSendDeleteToNeighbourNodes IN");
+    OIC_LOG(DEBUG, TAG, "RMSendDeleteToNeighbourNodes IN");
     u_linklist_t *neighbourNodes = NULL;
     RTMGetNeighbours(&neighbourNodes, g_routingGatewayTable);
 
     if (0 >= u_linklist_length(neighbourNodes))
     {
-        OC_LOG(DEBUG, TAG, "No neighbour nodes present");
+        OIC_LOG(DEBUG, TAG, "No neighbour nodes present");
         return;
     }
 
@@ -836,7 +836,7 @@ void RMSendDeleteToNeighbourNodes()
         OCStackResult result = RMPConstructGatewayPayload(g_GatewayID, &payload);
         if (OC_STACK_OK != result)
         {
-            OC_LOG_V(DEBUG, TAG, "RMPConstructGatewayPayload failed[%d]", result);
+            OIC_LOG_V(DEBUG, TAG, "RMPConstructGatewayPayload failed[%d]", result);
             RMPFreePayload(payload);
             u_linklist_free(&neighbourNodes);
             return;
@@ -850,12 +850,12 @@ void RMSendDeleteToNeighbourNodes()
                 RTMDestIntfInfo_t *dest = u_arraylist_get(entry->destination->destIntfAddr, i);
                 if (!dest)
                 {
-                    OC_LOG(ERROR, RM_TAG, "Failed to get dest address");
+                    OIC_LOG(ERROR, RM_TAG, "Failed to get dest address");
                     continue;
                 }
                 OCDevAddr devAddr = {.adapter = OC_DEFAULT_ADAPTER};
                 CopyEndpointToDevAddr(&(dest->destIntfAddr), &devAddr);
-                OC_LOG_V(DEBUG, TAG, "\nDestination interface addresses: %s[%d], OCDevAddr: %s[%d]",
+                OIC_LOG_V(DEBUG, TAG, "\nDestination interface addresses: %s[%d], OCDevAddr: %s[%d]",
                          dest->destIntfAddr.addr, dest->destIntfAddr.port, devAddr.addr, devAddr.port);
                 RMSendDeleteRequest(&devAddr, payload);
             }
@@ -865,14 +865,14 @@ void RMSendDeleteToNeighbourNodes()
     }
 
     u_linklist_free(&neighbourNodes);
-    OC_LOG(DEBUG, TAG, "RMSendDeleteToNeighbourNodes OUT");
+    OIC_LOG(DEBUG, TAG, "RMSendDeleteToNeighbourNodes OUT");
 }
 
 uint32_t RMGetGatewayId()
 {
     if (!g_isRMInitialized)
     {
-        OC_LOG(ERROR, TAG, "RM not initialized");
+        OIC_LOG(ERROR, TAG, "RM not initialized");
         return 0;
     }
     return g_GatewayID;
@@ -882,7 +882,7 @@ uint16_t RMGetMcastSeqNumber()
 {
     if (!g_isRMInitialized)
     {
-        OC_LOG(DEBUG, TAG, "RM not initialized");
+        OIC_LOG(DEBUG, TAG, "RM not initialized");
         return 0;
     }
     return ++g_mcastsequenceNumber;
@@ -906,13 +906,14 @@ uint16_t RMGetMcastSeqNumber()
  */
 
 OCStackResult RMHandlePacket(bool isRequest, void *message, const CAEndpoint_t *sender,
-                             bool *selfDestination)
+                             bool *selfDestination, bool *isEmptyMsg)
 {
     RM_NULL_CHECK_WITH_RET(message, RM_TAG, "message");
     RM_NULL_CHECK_WITH_RET(sender, RM_TAG, "sender");
     RM_NULL_CHECK_WITH_RET(selfDestination, RM_TAG, "selfDestination");
 
     bool forward = false;
+    bool isEMPTYPacket = false;
     CAEndpoint_t nextHop = {.adapter = CA_DEFAULT_ADAPTER};
     CAInfo_t *info = NULL;
     if (isRequest)
@@ -933,7 +934,7 @@ OCStackResult RMHandlePacket(bool isRequest, void *message, const CAEndpoint_t *
     RMGetRouteOptionIndex(info->options, info->numOptions, &routeIndex);
     if (-1 >= routeIndex)
     {
-        OC_LOG(ERROR, RM_TAG, "No route option present. Let RI Handle");
+        OIC_LOG(ERROR, RM_TAG, "No route option present. Let RI Handle");
         // Let RI handle this packet.
         *selfDestination = true;
         return OC_STACK_OK;
@@ -944,7 +945,7 @@ OCStackResult RMHandlePacket(bool isRequest, void *message, const CAEndpoint_t *
     OCStackResult res = RMParseRouteOption(&info->options[routeIndex], &routeOption);
     if (OC_STACK_OK != res)
     {
-        OC_LOG_V(ERROR, RM_TAG, "RMParseRouteOption failed");
+        OIC_LOG_V(ERROR, RM_TAG, "RMParseRouteOption failed");
         return OC_STACK_ERROR;
     }
 
@@ -954,7 +955,7 @@ OCStackResult RMHandlePacket(bool isRequest, void *message, const CAEndpoint_t *
      */
     if (g_GatewayID == routeOption.srcGw)
     {
-        OC_LOG_V(ERROR, RM_TAG, "Packet is of its own");
+        OIC_LOG_V(ERROR, RM_TAG, "Packet is of its own");
         if (0 == routeOption.destGw && g_mcastsequenceNumber < routeOption.mSeqNum)
         {
             g_mcastsequenceNumber = routeOption.mSeqNum;
@@ -964,29 +965,29 @@ OCStackResult RMHandlePacket(bool isRequest, void *message, const CAEndpoint_t *
     }
     else if (0 == routeOption.srcGw)
     {
-        OC_LOG(INFO, RM_TAG, "Source missing in option");
+        OIC_LOG(INFO, RM_TAG, "Source missing in option");
         // Packet from end device as Gateway will add source in option.
         uint16_t endpointId = g_EndpointCount + 1;
         OCStackResult res = RTMAddEndpointEntry(&endpointId, sender, &g_routingEndpointTable);
         if (OC_STACK_OK == res)
         {
             g_EndpointCount = endpointId;
-            OC_LOG_V(INFO, RM_TAG, "New endpoint added [%d]:[%s]", g_EndpointCount, sender->addr);
+            OIC_LOG_V(INFO, RM_TAG, "New endpoint added [%d]:[%s]", g_EndpointCount, sender->addr);
         }
         else if (OC_STACK_DUPLICATE_REQUEST == res)
         {
-            OC_LOG_V(INFO, RM_TAG, "Endpoint exist [%d]", endpointId);
+            OIC_LOG_V(INFO, RM_TAG, "Endpoint exist [%d]", endpointId);
         }
         else
         {
-            OC_LOG(ERROR, RM_TAG, "Add Endpoint failed");
+            OIC_LOG(ERROR, RM_TAG, "Add Endpoint failed");
             return OC_STACK_ERROR;
         }
 
         // add source option.
         routeOption.srcGw = g_GatewayID;
         routeOption.srcEp = endpointId;
-        OC_LOG_V(INFO, RM_TAG, "Added source: [%u:%u]", g_GatewayID, endpointId);
+        OIC_LOG_V(INFO, RM_TAG, "Added source: [%u:%u]", g_GatewayID, endpointId);
     }
 
     /*
@@ -996,7 +997,7 @@ OCStackResult RMHandlePacket(bool isRequest, void *message, const CAEndpoint_t *
      */
     if (0 == routeOption.destGw)
     {
-        OC_LOG(INFO, RM_TAG, "Destination missing in option");
+        OIC_LOG(INFO, RM_TAG, "Destination missing in option");
         // This is a multicast packet.
         if (g_GatewayID == routeOption.srcGw)
         {
@@ -1009,7 +1010,7 @@ OCStackResult RMHandlePacket(bool isRequest, void *message, const CAEndpoint_t *
             if (OC_STACK_OK != update)
             {
                 // this shouldnt have been forwarded. ignore.
-                OC_LOG_V(ERROR, RM_TAG, "Multicast Sequence number not proper: %d",
+                OIC_LOG_V(ERROR, RM_TAG, "Multicast Sequence number not proper: %d",
                          routeOption.mSeqNum);
                 return OC_STACK_ERROR;
             }
@@ -1047,7 +1048,14 @@ OCStackResult RMHandlePacket(bool isRequest, void *message, const CAEndpoint_t *
     }
     else if (g_GatewayID == routeOption.destGw)
     {
-        OC_LOG(INFO, RM_TAG, "GatewayId found in destination");
+        OIC_LOG(INFO, RM_TAG, "GatewayId found in destination");
+
+        // Check the MSGType of RouteOption to find if the packet is EMPTY packet.
+        if (ACK == routeOption.msgType || RST == routeOption.msgType)
+        {
+            isEMPTYPacket = true;
+        }
+
         /*
          * This unicast packet either belongs to us or any of our connected end devices
          * check if packet belongs to end device.
@@ -1055,12 +1063,12 @@ OCStackResult RMHandlePacket(bool isRequest, void *message, const CAEndpoint_t *
         if (0 != routeOption.destEp)
         {
             // forward packet to the client.
-            OC_LOG_V(INFO, RM_TAG, "Forwarding packet to client id [%u]", routeOption.destEp);
+            OIC_LOG_V(INFO, RM_TAG, "Forwarding packet to client id [%u]", routeOption.destEp);
             CAEndpoint_t *clientInfo = RTMGetEndpointEntry(routeOption.destEp,
                                                            g_routingEndpointTable);
             if(!clientInfo)
             {
-                OC_LOG(ERROR, RM_TAG, "Failed to get Client info");
+                OIC_LOG(ERROR, RM_TAG, "Failed to get Client info");
                 return OC_STACK_ERROR;
             }
 
@@ -1072,7 +1080,7 @@ OCStackResult RMHandlePacket(bool isRequest, void *message, const CAEndpoint_t *
         else
         {
             // packet is for us.
-            OC_LOG(INFO, RM_TAG, "Received packet for self");
+            OIC_LOG(INFO, RM_TAG, "Received packet for self");
             forward = false;
             *selfDestination = true;
             goto rewriteandexit;
@@ -1084,11 +1092,11 @@ OCStackResult RMHandlePacket(bool isRequest, void *message, const CAEndpoint_t *
          * This unicast packet belongs to other gateway.
          * we only want to print first 4 bytes of packet as readable GatewayId.
          */
-        OC_LOG_V(INFO, RM_TAG, "Forwarding packet to Gateway: %u", routeOption.destGw);
+        OIC_LOG_V(INFO, RM_TAG, "Forwarding packet to Gateway: %u", routeOption.destGw);
         RTMGatewayId_t *nextHopGw = RTMGetNextHop(routeOption.destGw, g_routingGatewayTable);
         if(!nextHopGw)
         {
-            OC_LOG(ERROR, RM_TAG, "Failed to get next hop");
+            OIC_LOG(ERROR, RM_TAG, "Failed to get next hop");
             return OC_STACK_ERROR;
         }
 
@@ -1096,7 +1104,7 @@ OCStackResult RMHandlePacket(bool isRequest, void *message, const CAEndpoint_t *
         RTMDestIntfInfo_t *address = u_arraylist_get(nextHopGw->destIntfAddr, 0);
         if (!address)
         {
-            OC_LOG(ERROR, RM_TAG, "Failed to get address for next hop");
+            OIC_LOG(ERROR, RM_TAG, "Failed to get address for next hop");
             return OC_STACK_ERROR;
         }
 
@@ -1111,14 +1119,40 @@ rewriteandexit:
     if (forward)
     {
         // Don't forward any packet meant for gateway resource.
-        if (info->resourceUri && (0 == strcmp(info->resourceUri, OC_RSRVD_GATEWAY_URI)))
+        if (info->resourceUri && (0 == strcmp(info->resourceUri, OC_RSRVD_GATEWAY_URI)) &&
+            (ACK != routeOption.msgType))
         {
-            OC_LOG(ERROR, RM_TAG, "Not forwarding gateway resource packet");
+            OIC_LOG(ERROR, RM_TAG, "Not forwarding gateway resource packet");
         }
         else if (sender->flags & CA_SECURE)
         {
-            OC_LOG(ERROR, RM_TAG, "This is secured request. Not supported by routing manager");
+            OIC_LOG(ERROR, RM_TAG, "This is secured request. Not supported by routing manager");
             return OC_STACK_ERROR;
+        }
+        else if (isEMPTYPacket)
+        {
+            OIC_LOG(DEBUG, TAG, "The message to be Forwarded is a EMPTY message");
+            CAResponseInfo_t responseMessage = {.result = CA_EMPTY};
+            if (ACK == routeOption.msgType)
+            {
+                responseMessage.info.type = CA_MSG_ACKNOWLEDGE;
+            }
+            else
+            {
+                responseMessage.info.type = CA_MSG_RESET;
+            }
+
+            responseMessage.info.messageId = info->messageId;
+            responseMessage.info.dataType = CA_RESPONSE_DATA;
+
+            CAResult_t caRes = CASendResponse(&nextHop, &responseMessage);
+            if (CA_STATUS_OK != caRes)
+            {
+                OIC_LOG_V(ERROR, RM_TAG, "Failed to forward response to next hop [%d][%s]",
+                         caRes, nextHop.addr);
+                // Since a response is always unicast, return error here.
+                return OC_STACK_ERROR;
+            }
         }
         else
         {
@@ -1126,7 +1160,7 @@ rewriteandexit:
             res = RMCreateRouteOption(&routeOption, &info->options[routeIndex]);
             if (OC_STACK_OK != res)
             {
-                OC_LOG_V(ERROR, RM_TAG, "Rewriting RM option failed");
+                OIC_LOG_V(ERROR, RM_TAG, "Rewriting RM option failed");
                 return res;
             }
             /*
@@ -1140,7 +1174,7 @@ rewriteandexit:
                 CAResult_t caRes = CASendRequest(&nextHop, msg);
                 if (CA_STATUS_OK != caRes)
                 {
-                    OC_LOG_V(ERROR, RM_TAG, "Failed to forward request to next hop [%d][%s]", caRes,
+                    OIC_LOG_V(ERROR, RM_TAG, "Failed to forward request to next hop [%d][%s]", caRes,
                              nextHop.addr);
                     if(0 == routeOption.destGw)
                     {
@@ -1159,7 +1193,7 @@ rewriteandexit:
                 CAResult_t caRes = CASendResponse(&nextHop, msg);
                 if (CA_STATUS_OK != caRes)
                 {
-                    OC_LOG_V(ERROR, RM_TAG, "Failed to forward response to next hop [%d][%s]",
+                    OIC_LOG_V(ERROR, RM_TAG, "Failed to forward response to next hop [%d][%s]",
                              caRes, nextHop.addr);
                     // Since a response is always unicast, return error here.
                     return OC_STACK_ERROR;
@@ -1167,21 +1201,52 @@ rewriteandexit:
             }
         }
     }
+    else
+    {
+        if (isEMPTYPacket)
+        {
+            if (isRequest)
+            {
+                OIC_LOG(DEBUG, TAG, "POST message with type ACK in Route Option");
+                if (NULL != isEmptyMsg)
+                {
+                    *isEmptyMsg = true;
+                }
+            }
+            else
+            {
+                OIC_LOG(DEBUG, TAG, "Response for EMPTY message is received");
+                CAResponseInfo_t *msg = message;
+                if (ACK == (MSGType)routeOption.msgType)
+                {
+                    msg->info.type = CA_MSG_ACKNOWLEDGE;
+                }
+                else
+                {
+                    msg->info.type = CA_MSG_RESET;
+                }
+                msg->result = CA_EMPTY;
+                OICFree(msg->info.token);
+                msg->info.token = NULL;
+                msg->info.tokenLength = 0;
+            }
+        }
+    }
 
-    OC_LOG_V(INFO, RM_TAG, "Sender: [%u] Destination: [%u]", routeOption.srcGw, routeOption.destGw);
+    OIC_LOG_V(INFO, RM_TAG, "Sender: [%u] Destination: [%u]", routeOption.srcGw, routeOption.destGw);
     return OC_STACK_OK;
 }
 
 OCStackResult RMHandleRequest(CARequestInfo_t *message, const CAEndpoint_t *sender,
-                              bool *selfDestination)
+                              bool *selfDestination, bool *isEmptyMsg)
 {
     if (!g_isRMInitialized)
     {
-        OC_LOG(ERROR, TAG, "RM not initialized");
+        OIC_LOG(ERROR, TAG, "RM not initialized");
         *selfDestination = true;
         return OC_STACK_OK;
     }
-    OCStackResult res = RMHandlePacket(true, message, sender, selfDestination);
+    OCStackResult res = RMHandlePacket(true, message, sender, selfDestination, isEmptyMsg);
     return res;
 }
 
@@ -1190,10 +1255,10 @@ OCStackResult RMHandleResponse(CAResponseInfo_t *message, const CAEndpoint_t *se
 {
     if (!g_isRMInitialized)
     {
-        OC_LOG(ERROR, TAG, "RM not initialized");
+        OIC_LOG(ERROR, TAG, "RM not initialized");
         *selfDestination = true;
         return OC_STACK_OK;
     }
-    OCStackResult res = RMHandlePacket(false, message, sender, selfDestination);
+    OCStackResult res = RMHandlePacket(false, message, sender, selfDestination, NULL);
     return res;
 }

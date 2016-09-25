@@ -220,7 +220,7 @@ const char * getResourceTypeForIASZoneType(TWDevice *device, PIPluginBase* plugi
 
     if (ret != OC_STACK_OK || !IASZoneType)
     {
-        OC_LOG_V(ERROR, TAG, "Error %u getting IAS Zone Type", ret);
+        OIC_LOG_V(ERROR, TAG, "Error %u getting IAS Zone Type", ret);
         return NULL;
     }
 
@@ -238,7 +238,7 @@ const char * getResourceTypeForIASZoneType(TWDevice *device, PIPluginBase* plugi
     }
     else
     {
-        OC_LOG_V(ERROR, TAG, "Unsupported Zone Type %s", IASZoneType);
+        OIC_LOG_V(ERROR, TAG, "Unsupported Zone Type %s", IASZoneType);
         resourceType = NULL;
     }
 
@@ -268,7 +268,7 @@ OCStackResult buildURI(char ** output,
 
     if (!*output)
     {
-        OC_LOG(ERROR, TAG, "Out of memory");
+        OIC_LOG(ERROR, TAG, "Out of memory");
         return OC_STACK_NO_MEMORY;
     }
 
@@ -320,7 +320,7 @@ void foundZigbeeCallback(TWDevice *device, PIPlugin_Zigbee* plugin)
 {
     if (!device)
     {
-        OC_LOG(ERROR, TAG, "foundZigbeeCallback: Invalid parameter.");
+        OIC_LOG(ERROR, TAG, "foundZigbeeCallback: Invalid parameter.");
         return;
     }
     int count = device->endpointOfInterest->clusterList->count;
@@ -329,7 +329,7 @@ void foundZigbeeCallback(TWDevice *device, PIPlugin_Zigbee* plugin)
         PIResource_Zigbee *piResource = (PIResource_Zigbee *) OICMalloc(sizeof(*piResource));
         if (!piResource)
         {
-            OC_LOG(ERROR, TAG, "Out of memory");
+            OIC_LOG(ERROR, TAG, "Out of memory");
             return;
         }
         piResource->header.plugin = (PIPluginBase *)plugin;
@@ -362,7 +362,7 @@ void foundZigbeeCallback(TWDevice *device, PIPlugin_Zigbee* plugin)
             {
                 // Just log it and move on if this fails?
                 // or not create this resource at all?
-                OC_LOG(ERROR, TAG, "Command to listen for status updates failed");
+                OIC_LOG(ERROR, TAG, "Command to listen for status updates failed");
             }
         }
         else
@@ -373,7 +373,7 @@ void foundZigbeeCallback(TWDevice *device, PIPlugin_Zigbee* plugin)
 
         if (piResource->header.piResource.resourceTypeName == NULL)
         {
-            OC_LOG_V(ERROR, TAG, "unsupported clusterId : %s",
+            OIC_LOG_V(ERROR, TAG, "unsupported clusterId : %s",
                 device->endpointOfInterest->clusterList->clusterIds[i].clusterId);
             OICFree(piResource->header.piResource.uri);
             OICFree(piResource);
@@ -408,7 +408,7 @@ void zigbeeZoneStatusUpdate(TWUpdate * update, PIPlugin_Zigbee* plugin)
                                                     ZB_IAS_ZONE_CLUSTER);
     if (result != OC_STACK_OK || !piResource)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to retrieve resource handle with result: %d", result);
+        OIC_LOG_V(ERROR, TAG, "Failed to retrieve resource handle with result: %d", result);
         return;
     }
 
@@ -427,7 +427,7 @@ void deviceNodeIdChanged(const char * eui, const char * nodeId, PIPlugin_Zigbee*
                                                   nodeId);
     if(result != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to update Zigbee Resource NodeId due to result: %s", result);
+        OIC_LOG_V(ERROR, TAG, "Failed to update Zigbee Resource NodeId due to result: %u", result);
     }
 }
 
@@ -470,7 +470,7 @@ OCStackResult ZigbeeDiscover(PIPlugin_Zigbee * plugin)
     OCStackResult result = OC_STACK_ERROR;
     TWSetDiscoveryCallback(foundZigbeeCallback, plugin);
     result = TWDiscover(plugin);
-    OC_LOG_V(DEBUG, TAG, "ZigbeeDiscover : Status = %d\n", result);
+    OIC_LOG_V(DEBUG, TAG, "ZigbeeDiscover : Status = %d\n", result);
 
     return result;
 }
@@ -823,14 +823,14 @@ OCEntityHandlerResult processGetRequest(PIPluginBase * plugin,
                         ehRequest->resource);
     if (stackResult != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "Failed to get resource from handle");
+        OIC_LOG(ERROR, TAG, "Failed to get resource from handle");
         return OC_EH_ERROR;
     }
     stackResult = getZigBeeAttributesForOICResource(
         piResource->header.piResource.resourceTypeName, &attributeList);
     if (stackResult != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to fetch attributes for %s",
+        OIC_LOG_V(ERROR, TAG, "Failed to fetch attributes for %s",
             piResource->header.piResource.resourceTypeName);
         return OC_EH_ERROR;
     }
@@ -838,7 +838,7 @@ OCEntityHandlerResult processGetRequest(PIPluginBase * plugin,
     *payload = OCRepPayloadCreate();
     if (!payload)
     {
-        OC_LOG(ERROR, TAG, PCF("Failed to allocate Payload"));
+        OIC_LOG(ERROR, TAG, PCF("Failed to allocate Payload"));
         return OC_EH_ERROR;
     }
     bool boolRes = OCRepPayloadSetUri(*payload, piResource->header.piResource.uri);
@@ -1006,7 +1006,7 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
                                         ehRequest->resource);
     if (stackResult != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "Failed to get resource from handle");
+        OIC_LOG(ERROR, TAG, "Failed to get resource from handle");
         return OC_EH_ERROR;
     }
 
@@ -1015,7 +1015,7 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
                         &attributeList, *payload);
     if (boolRes == false)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to fetch attributes for %s",
+        OIC_LOG_V(ERROR, TAG, "Failed to fetch attributes for %s",
             piResource->header.piResource.resourceTypeName);
         return OC_EH_ERROR;
     }
@@ -1046,7 +1046,7 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
                     int strRet = snprintf(value, sizeof(value), "%02x", (unsigned int) rangeDiff);
                     if (strRet <= 0)
                     {
-                        OC_LOG_V(ERROR, TAG, "Failed to parse string due to errno: %d", errno);
+                        OIC_LOG_V(ERROR, TAG, "Failed to parse string due to errno: %d", errno);
                         return OC_EH_ERROR;
                     }
                 }
@@ -1063,7 +1063,7 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
                                       attributeList.list[i].val.i);
                 if (strRet <= 0)
                 {
-                    OC_LOG_V(ERROR, TAG, "Failed to parse string due to errno: %d", errno);
+                    OIC_LOG_V(ERROR, TAG, "Failed to parse string due to errno: %d", errno);
                     return OC_EH_ERROR;
                 }
                 stackResult = TWSetAttribute(piResource->eui,
@@ -1084,7 +1084,7 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
             int strRet = snprintf(value, sizeof(value), "%f", attributeList.list[i].val.d);
             if (strRet <= 0)
             {
-                OC_LOG_V(ERROR, TAG, "Failed to parse string due to errno: %d", errno);
+                OIC_LOG_V(ERROR, TAG, "Failed to parse string due to errno: %d", errno);
                 return OC_EH_ERROR;
             }
             stackResult = TWSetAttribute(piResource->eui,
@@ -1105,7 +1105,7 @@ OCEntityHandlerResult processPutRequest(PIPluginBase * plugin,
                 int strRet = snprintf(value, sizeof(value), "%04x", zbVal);
                 if (strRet <= 0)
                 {
-                    OC_LOG_V(ERROR, TAG, "Failed to parse string due to errno: %d", errno);
+                    OIC_LOG_V(ERROR, TAG, "Failed to parse string due to errno: %d", errno);
                     return OC_EH_ERROR;
                 }
                 stackResult =

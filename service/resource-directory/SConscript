@@ -23,33 +23,26 @@
 ##
 
 Import('env')
+rd_env = env.Clone()
 
-if env.get('RELEASE'):
-    env.AppendUnique(CCFLAGS = ['-Os'])
-    env.AppendUnique(CPPDEFINES = ['NDEBUG'])
-else:
-    env.AppendUnique(CCFLAGS = ['-g'])
-
-if env.get('LOGGING'):
-    env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
-
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
-rd_env = lib_env.Clone()
+if rd_env.get('LOGGING'):
+    rd_env.AppendUnique(CPPDEFINES = ['-DTB_LOG'])
 
 target_os = env.get('TARGET_OS')
+src_dir = env.get('SRC_DIR')
+
 ######################################################################
 # Build flags
 ######################################################################
 rd_env.AppendUnique(CPPPATH = ['include'])
 rd_env.AppendUnique(CPPPATH = ['src/internal'])
-rd_env.AppendUnique(CPPPATH = ['../../resource/csdk/logger/include'])
-rd_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'libcoap'])
+rd_env.AppendUnique(CPPPATH = ['../../resource/csdk/stack/include'])
+rd_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
     rd_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra'])
 
-if target_os == 'linux':
+if target_os in ['linux']:
     rd_env.AppendUnique(LIBS = ['pthread'])
 
 if target_os == 'android':
@@ -64,7 +57,7 @@ if target_os == 'android':
 ######################################################################
 RD_SRC_DIR = 'src/'
 rd_src = [
-        RD_SRC_DIR + '/internal/rd_storage.c',
+        RD_SRC_DIR + 'internal/rd_storage.c',
         RD_SRC_DIR + 'rd_server.c',
         RD_SRC_DIR + 'rd_client.c',
          ]
@@ -74,9 +67,13 @@ if target_os in ['tizen'] :
 else :
     rdsdk = rd_env.StaticLibrary('resource_directory', rd_src)
 
-rd_env.InstallTarget(rdsdk, 'libresource_directory')
+rd_env.InstallTarget(rdsdk, 'resource_directory')
+rd_env.UserInstallTargetLib(rdsdk, 'resource_directory')
+rd_env.UserInstallTargetHeader('include/rd_client.h', 'service/resource-directory', 'rd_client.h')
+rd_env.UserInstallTargetHeader('include/rd_server.h', 'service/resource-directory', 'rd_server.h')
 
 ######################################################################
 # Samples for the resource directory
 ######################################################################
-SConscript('samples/SConscript')
+if target_os not in ['windows']:
+    SConscript('samples/SConscript')

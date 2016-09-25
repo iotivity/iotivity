@@ -52,6 +52,9 @@ public class CaLeServerInterface {
     private native static void caLeGattServerConnectionStateChangeCallback(
             BluetoothDevice device, int status, int newState);
 
+    private native static void caLeGattServerNWConnectionStateChangeCallback(
+            BluetoothDevice device, int status, int newState);
+
     private native static void caLeGattServerServiceAddedCallback(int status,
                                                                   BluetoothGattService service);
 
@@ -79,6 +82,7 @@ public class CaLeServerInterface {
             super.onConnectionStateChange(device, status, newState);
 
             caLeGattServerConnectionStateChangeCallback(device, status, newState);
+            caLeGattServerNWConnectionStateChangeCallback(device, status, newState);
         }
 
         @Override

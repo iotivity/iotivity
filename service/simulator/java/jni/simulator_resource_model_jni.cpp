@@ -19,10 +19,9 @@
  ******************************************************************/
 
 #include "simulator_resource_model_jni.h"
-#include "simulator_error_codes.h"
-#include "simulator_exceptions_jni.h"
 #include "simulator_utils_jni.h"
 #include "jni_string.h"
+#include "jni_map.h"
 
 class JniTypeInfo
 {
@@ -50,13 +49,13 @@ class JniTypeInfo
         }
 
     private:
-        SimulatorResourceModel::ValueType getValueType(jobject jValueType)
+        AttributeValueType getValueType(jobject jValueType)
         {
             static jmethodID ordinalMID = m_env->GetMethodID(
                                               gSimulatorClassRefs.attributeValueTypeCls, "ordinal", "()I");
 
             int ordinal = m_env->CallIntMethod(jValueType, ordinalMID);
-            return SimulatorResourceModel::ValueType(ordinal);
+            return AttributeValueType(ordinal);
         }
 
         JNIEnv *m_env;
@@ -99,7 +98,7 @@ class ValueConverterJava : public boost::static_visitor<jobject>
 
         jobject operator ()(const SimulatorResourceModel &value)
         {
-            return simulatorResourceModelToJava(m_env, const_cast<SimulatorResourceModel &>(value));
+            return SimulatorResourceModelToJava(m_env, const_cast<SimulatorResourceModel &>(value));
         }
 
         template <typename T>
@@ -239,23 +238,23 @@ class ValueConverterCpp
         {
             switch (m_typeInfo.baseType())
             {
-                case SimulatorResourceModel::ValueType::INTEGER:
+                case AttributeValueType::INTEGER:
                     return handleByDepth<int>();
-                case SimulatorResourceModel::ValueType::DOUBLE:
+                case AttributeValueType::DOUBLE:
                     return handleByDepth<double>();
-                case SimulatorResourceModel::ValueType::BOOLEAN:
+                case AttributeValueType::BOOLEAN:
                     return handleByDepth<bool>();
-                case SimulatorResourceModel::ValueType::STRING:
+                case AttributeValueType::STRING:
                     return handleByDepth<std::string>();
-                case SimulatorResourceModel::ValueType::RESOURCE_MODEL:
+                case AttributeValueType::RESOURCE_MODEL:
                     return handleByDepth<SimulatorResourceModel>();
-                case SimulatorResourceModel::ValueType::VECTOR:
-                case SimulatorResourceModel::ValueType::UNKNOWN:
+                case AttributeValueType::VECTOR:
+                case AttributeValueType::UNKNOWN:
                     break;
             }
         }
 
-        SimulatorResourceModel::ValueVariant get()
+        AttributeValueVariant get()
         {
             return std::move(m_result);
         }
@@ -492,7 +491,7 @@ class ValueConverterCpp
 
         void getValue(jobject &jValue, SimulatorResourceModel &value)
         {
-            simulatorResourceModelToCpp(m_env, jValue, value);
+            SimulatorResourceModelToCpp(m_env, jValue, value);
         }
 
         void getValue(jobject &jValue, std::vector<SimulatorResourceModel> &value)
@@ -549,19 +548,18 @@ class ValueConverterCpp
         JNIEnv *m_env;
         SimulatorResourceModel::TypeInfo &m_typeInfo;
         jobject &m_value;
-        SimulatorResourceModel::ValueVariant m_result;
+        AttributeValueVariant m_result;
 };
 
 class JniAttributeValue
 {
     public:
-        static jobject toJava(JNIEnv *env, SimulatorResourceModel::Attribute &attribute)
+        static jobject toJava(JNIEnv *env, const SimulatorResourceAttribute &attribute)
         {
-            auto value = attribute.getValue();
-            return toJava(env, value);
+            return toJava(env, attribute.getValue());
         }
 
-        static jobject toJava(JNIEnv *env, SimulatorResourceModel::ValueVariant &value)
+        static jobject toJava(JNIEnv *env, const AttributeValueVariant &value)
         {
             ValueConverterJava converter(env);
             jobject jValue =  boost::apply_visitor(converter, value);
@@ -572,7 +570,7 @@ class JniAttributeValue
             return env->NewObject(gSimulatorClassRefs.attributeValueCls, attrValueCtor, jValue);
         }
 
-        static SimulatorResourceModel::ValueVariant toCpp(JNIEnv *env, jobject &jAttributeValue)
+        static AttributeValueVariant toCpp(JNIEnv *env, jobject &jAttributeValue)
         {
             static jmethodID getMID = env->GetMethodID(gSimulatorClassRefs.attributeValueCls,
                                       "get", "()Ljava/lang/Object;");
@@ -586,182 +584,34 @@ class JniAttributeValue
         }
 };
 
-class JniAttributeProperty
+jobject SimulatorResourceModelToJava(JNIEnv *env, const SimulatorResourceModel &resModel)
 {
-    public:
-        static jobject toJava(JNIEnv *env,
-                              SimulatorResourceModel::AttributeProperty &property)
-        {
-            jobject jAttributeProperty = nullptr;
-            if (SimulatorResourceModel::AttributeProperty::Type::RANGE == property.type())
-            {
-                static jmethodID propertyCtor = env->GetMethodID(
-                                                    gSimulatorClassRefs.attributePropertyCls, "<init>", "(DD)V");
+    JniMap jAttributesMap(env);
 
-                jAttributeProperty = env->NewObject(gSimulatorClassRefs.attributePropertyCls, propertyCtor,
-                                                    property.min(), property.max());
-            }
-            else if (SimulatorResourceModel::AttributeProperty::Type::VALUE_SET == property.type())
-            {
-                static jmethodID propertyCtor = env->GetMethodID(
-                                                    gSimulatorClassRefs.attributePropertyCls, "<init>", "([Lorg/oic/simulator/AttributeValue;)V");
-
-                jobjectArray jValueSet = env->NewObjectArray(property.valueSetSize(),
-                                         gSimulatorClassRefs.attributeValueCls, nullptr);
-                int index = 0;
-                for (auto &value : property.valueSet())
-                {
-                    jobject jValue = JniAttributeValue::toJava(env, value);
-                    env->SetObjectArrayElement(jValueSet, index++, jValue);
-                }
-
-                jAttributeProperty = env->NewObject(gSimulatorClassRefs.attributePropertyCls, propertyCtor,
-                                                    jValueSet);
-            }
-            else
-            {
-                return jAttributeProperty;
-            }
-
-            // Add child property
-            if (jAttributeProperty && property.getChildProperty())
-            {
-                SimulatorResourceModel::AttributeProperty childProperty = *(property.getChildProperty());
-                jobject jChildProperty = JniAttributeProperty::toJava(env,  property);
-                if (jChildProperty)
-                {
-                    static jfieldID childPropFID = env->GetFieldID(gSimulatorClassRefs.attributePropertyCls,
-                                                   "mChildProperty", "Lorg/oic/simulator/AttributeProperty;");
-                    env->SetObjectField(jAttributeProperty, childPropFID, jChildProperty);
-                }
-            }
-
-            return jAttributeProperty;
-        }
-
-        static SimulatorResourceModel::AttributeProperty toCpp(JNIEnv *env, jobject jAttributeProperty)
-        {
-            static jfieldID typeFID = env->GetFieldID(gSimulatorClassRefs.attributePropertyCls,
-                                      "mType", "Lorg/oic/simulator/AttributeProperty$Type;");
-            static jfieldID minFID = env->GetFieldID(gSimulatorClassRefs.attributePropertyCls,
-                                     "mMin", "D");
-            static jfieldID maxFID = env->GetFieldID(gSimulatorClassRefs.attributePropertyCls,
-                                     "mMax", "D");
-            static jfieldID valueSetFID = env->GetFieldID(gSimulatorClassRefs.attributePropertyCls,
-                                          "mValueSet", "[Lorg/oic/simulator/AttributeValue;");
-            static jfieldID childPropFID = env->GetFieldID(gSimulatorClassRefs.attributePropertyCls,
-                                           "mChildProperty", "Lorg/oic/simulator/AttributeProperty;");
-            static jmethodID ordinalMID = env->GetMethodID(
-                                              gSimulatorClassRefs.attributePropertyTypeCls, "ordinal", "()I");
-
-            SimulatorResourceModel::AttributeProperty attributeProperty;
-            jobject jType = env->GetObjectField(jAttributeProperty, typeFID);
-            jdouble jMin = env->GetDoubleField(jAttributeProperty, minFID);
-            jdouble jMax = env->GetDoubleField(jAttributeProperty, maxFID);
-            jobjectArray jValueSet = (jobjectArray) env->GetObjectField(jAttributeProperty, valueSetFID);
-            jobject jChildProperty = env->GetObjectField(jAttributeProperty, childPropFID);
-
-            int ordinal = env->CallIntMethod(jType, ordinalMID);
-            switch (SimulatorResourceModel::AttributeProperty::Type(ordinal))
-            {
-                case SimulatorResourceModel::AttributeProperty::Type::RANGE:
-                    {
-                        attributeProperty = SimulatorResourceModel::AttributeProperty(jMin, jMax);
-                    }
-                    break;
-
-                case SimulatorResourceModel::AttributeProperty::Type::VALUE_SET:
-                    {
-                        std::vector<SimulatorResourceModel::ValueVariant> valueSet;
-                        size_t length = env->GetArrayLength(jValueSet);
-                        for (size_t i = 0; i < length; i++)
-                        {
-                            jobject jAttributeValue = env->GetObjectArrayElement(jValueSet, i);
-                            valueSet.push_back(JniAttributeValue::toCpp(env, jAttributeValue));
-                        }
-
-                        attributeProperty = SimulatorResourceModel::AttributeProperty(valueSet);
-                    }
-                    break;
-            }
-
-            // Set child property
-            if (jChildProperty)
-            {
-                SimulatorResourceModel::AttributeProperty childProperty =
-                    JniAttributeProperty::toCpp(env, jAttributeProperty);
-                attributeProperty.setChildProperty(childProperty);
-            }
-
-            return attributeProperty;
-        }
-};
-
-static jobject createHashMap(JNIEnv *env)
-{
-    static jmethodID hashMapCtor = env->GetMethodID(
-                                       gSimulatorClassRefs.hashMapCls, "<init>", "()V");
-    return env->NewObject(gSimulatorClassRefs.hashMapCls, hashMapCtor);
-}
-
-static void addEntryToHashMap(JNIEnv *env, jobject mapobj, jobject key, jobject value)
-{
-    if (!mapobj || !key || !value)
-        return;
-
-    static jmethodID hashMapPutMethod = env->GetMethodID(gSimulatorClassRefs.hashMapCls,
-                                        "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-    env->CallObjectMethod(mapobj, hashMapPutMethod, key, value);
-}
-
-jobject simulatorResourceModelToJava(JNIEnv *env, SimulatorResourceModel &resModel)
-{
-    jobject attributesMap = createHashMap(env);
-    jobject propertiesMap = createHashMap(env);
-    if (!attributesMap || !propertiesMap)
-        return nullptr;
-
-    for (auto &attributeEntry : resModel.getAttributes())
+    // Add attribute values for HashMap
+    for (auto &attributeEntry : resModel.getAttributeValues())
     {
         jstring jAttrName = env->NewStringUTF((attributeEntry.first).c_str());
         jobject jAttributeValue = JniAttributeValue::toJava(env, attributeEntry.second);
-        addEntryToHashMap(env, attributesMap, jAttrName, jAttributeValue);
 
-        jobject jAttributeProperty = JniAttributeProperty::toJava(env, attributeEntry.second.getProperty());
-        if (jAttributeProperty)
-            addEntryToHashMap(env, propertiesMap, jAttrName, jAttributeProperty);
+        jAttributesMap.put(jAttrName, jAttributeValue);
     }
 
+    // Create Java SimulatorResourceModel object
     static jmethodID simulatorResourceModelCtor = env->GetMethodID(
-                gSimulatorClassRefs.simulatorResourceModelCls, "<init>", "(Ljava/util/Map;Ljava/util/Map;)V");
+                gSimulatorClassRefs.simulatorResourceModelCls, "<init>", "(Ljava/util/Map;)V");
 
     return env->NewObject(gSimulatorClassRefs.simulatorResourceModelCls,
-                          simulatorResourceModelCtor, attributesMap, propertiesMap);
+                          simulatorResourceModelCtor, jAttributesMap.get());
 }
 
-jobject simulatorResourceAttributeToJava(JNIEnv *env, SimulatorResourceModel::Attribute &attribute)
-{
-    static jmethodID simulatorResAttributeCtor = env->GetMethodID(
-                gSimulatorClassRefs.simulatorResourceAttributeCls, "<init>",
-                "(Ljava/lang/String;Lorg/oic/simulator/AttributeValue;Lorg/oic/simulator/AttributeProperty;)V");
-
-    jstring jAttrName = env->NewStringUTF(attribute.getName().c_str());
-    jobject jAttributeValue = JniAttributeValue::toJava(env, attribute);
-    jobject jAttributeProperty = JniAttributeProperty::toJava(env, attribute.getProperty());
-
-    return env->NewObject(gSimulatorClassRefs.simulatorResourceAttributeCls,
-                          simulatorResAttributeCtor, jAttrName, jAttributeValue, jAttributeProperty);
-}
-
-bool simulatorResourceModelToCpp(JNIEnv *env, jobject jResModel, SimulatorResourceModel &resModel)
+bool SimulatorResourceModelToCpp(JNIEnv *env, jobject jResModel, SimulatorResourceModel &resModel)
 {
     if (!jResModel)
         return false;
 
     static jfieldID valuesFID = env->GetFieldID(gSimulatorClassRefs.simulatorResourceModelCls,
                                 "mValues", "Ljava/util/Map;");
-    static jfieldID propertiesFID = env->GetFieldID(gSimulatorClassRefs.simulatorResourceModelCls,
-                                    "mProperties", "Ljava/util/Map;");
     static jmethodID entrySetMID = env->GetMethodID(gSimulatorClassRefs.mapCls, "entrySet",
                                    "()Ljava/util/Set;");
     static jmethodID iteratorMID = env->GetMethodID(gSimulatorClassRefs.setCls, "iterator",
@@ -776,8 +626,6 @@ bool simulatorResourceModelToCpp(JNIEnv *env, jobject jResModel, SimulatorResour
                                    "()Ljava/lang/Object;");
 
     jobject jValues = env->GetObjectField(jResModel, valuesFID);
-    jobject jProperties = env->GetObjectField(jResModel, propertiesFID);
-
     if (jValues)
     {
         jobject entrySet = env->CallObjectMethod(jValues, entrySetMID);
@@ -798,72 +646,22 @@ bool simulatorResourceModelToCpp(JNIEnv *env, jobject jResModel, SimulatorResour
         }
     }
 
-    if (jProperties)
-    {
-        jobject entrySet = env->CallObjectMethod(jProperties, entrySetMID);
-        jobject iterator = env->CallObjectMethod(entrySet, iteratorMID);
-        if (entrySet && iterator)
-        {
-            while (env->CallBooleanMethod(iterator, hasNextMID))
-            {
-                jobject entry = env->CallObjectMethod(iterator, nextMID);
-                jstring key = (jstring) env->CallObjectMethod(entry, getKeyMID);
-                jobject value = env->CallObjectMethod(entry, getValueMID);
-                resModel.setAttributeProperty(JniString(env, key).get(),
-                                              JniAttributeProperty::toCpp(env, value));
-
-                env->DeleteLocalRef(entry);
-                env->DeleteLocalRef(key);
-                env->DeleteLocalRef(value);
-            }
-        }
-    }
-
     return true;
 }
 
-bool simulatorResourceAttributeToCpp(JNIEnv *env, jobject jAttribute,
-                                     SimulatorResourceModel::Attribute &attribute)
+jobject AttributeValueToJava(JNIEnv *env,
+                             const AttributeValueVariant &value)
 {
-    if (!jAttribute)
-        return false;
-
-    static jfieldID nameFID = env->GetFieldID(gSimulatorClassRefs.simulatorResourceAttributeCls,
-                              "mName", "Ljava/lang/String;");
-    static jfieldID valueFID = env->GetFieldID(gSimulatorClassRefs.simulatorResourceAttributeCls,
-                               "mValue", "Lorg/oic/simulator/AttributeValue;");
-    static jfieldID propertyFID = env->GetFieldID(gSimulatorClassRefs.simulatorResourceAttributeCls,
-                                  "mProperty", "Lorg/oic/simulator/AttributeProperty;");
-
-    jstring jAttributeName = (jstring) env->GetObjectField(jAttribute, nameFID);
-    jobject jAttributeValue = env->GetObjectField(jAttribute, valueFID);
-    jobject jAttributeProperty = env->GetObjectField(jAttribute, propertyFID);
-
-    if (!jAttributeName || !jAttributeValue)
-        return false;
-
-    JniString attrName(env, jAttributeName);
-    SimulatorResourceModel::ValueVariant value = JniAttributeValue::toCpp(env, jAttributeValue);
-
-    attribute.setName(attrName.get());
-    attribute.setValue(value);
-    if (jAttributeProperty)
-    {
-        SimulatorResourceModel::AttributeProperty property = JniAttributeProperty::toCpp(env,
-                jAttributeProperty);
-        attribute.setProperty(property);
-    }
-
-    return true;
+    return JniAttributeValue::toJava(env, value);
 }
 
 bool AttributeValueToCpp(JNIEnv *env, jobject jAttributeValue,
-                         SimulatorResourceModel::ValueVariant &value)
+                         AttributeValueVariant &jValue)
 {
     if (!jAttributeValue)
         return false;
 
-    value = JniAttributeValue::toCpp(env, jAttributeValue);
+    jValue = JniAttributeValue::toCpp(env, jAttributeValue);
     return true;
 }
 

@@ -26,10 +26,10 @@
 #include "simulator_collection_resource.h"
 #include "simulator_remote_resource.h"
 
-jobject createSingleResource(JNIEnv *env, SimulatorResourceSP singleResource);
-jobject createCollectionResource(JNIEnv *env, SimulatorResourceSP collectionResource);
-jobject createSimulatorResource(JNIEnv *env, SimulatorResourceSP resource);
-jobject createSimulatorResourceVector(JNIEnv *env, std::vector<SimulatorResourceSP> &resources);
-jobject createSimulatorRemoteResource(JNIEnv *env, SimulatorRemoteResourceSP &remoteResource);
+jobject CreateSingleResource(JNIEnv *env, SimulatorResourceSP singleResource);
+jobject CreateCollectionResource(JNIEnv *env, SimulatorResourceSP collectionResource);
+jobject CreateSimulatorResource(JNIEnv *env, SimulatorResourceSP resource);
+jobject CreateSimulatorResourceVector(JNIEnv *env, std::vector<SimulatorResourceSP> &resources);
+jobject CreateSimulatorRemoteResource(JNIEnv *env, SimulatorRemoteResourceSP &remoteResource);
 
 #endif

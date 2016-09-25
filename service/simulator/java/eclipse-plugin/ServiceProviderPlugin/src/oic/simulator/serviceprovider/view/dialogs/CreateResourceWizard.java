@@ -16,23 +16,6 @@
 
 package oic.simulator.serviceprovider.view.dialogs;
 
-import java.io.FileInputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-
-import oic.simulator.serviceprovider.Activator;
-import oic.simulator.serviceprovider.model.AttributeHelper;
-import oic.simulator.serviceprovider.model.Resource;
-import oic.simulator.serviceprovider.model.SingleResource;
-import oic.simulator.serviceprovider.utils.Constants;
-import oic.simulator.serviceprovider.utils.Utility;
-import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
-
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -44,28 +27,49 @@ import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
+
+import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 import org.oic.simulator.ILogger.Level;
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.SimulatorResourceAttribute;
+
+import oic.simulator.serviceprovider.Activator;
+import oic.simulator.serviceprovider.manager.UiListenerHandler;
+import oic.simulator.serviceprovider.model.AttributeHelper;
+import oic.simulator.serviceprovider.model.Resource;
+import oic.simulator.serviceprovider.model.ResourceType;
+import oic.simulator.serviceprovider.model.SingleResource;
+import oic.simulator.serviceprovider.utils.Constants;
+import oic.simulator.serviceprovider.utils.Utility;
+import oic.simulator.serviceprovider.view.dialogs.MainPage.Option;
 
 /**
  * This class creates a UI wizard for create resource operation.
  */
 public class CreateResourceWizard extends Wizard {
 
-    private MainPage                       mainPage;
-    private SimpleResourceBasicDetailsPage simpleResourceBasicDetailsPage;
-    private SimpleResourceAddAttributePage simpleResourceAddAttributePage;
-    private SimpleResourceOtherDetailsPage simpleResourceOtherDetailsPage;
-    private LoadRamlPage                   loadRamlPage;
-    private UpdatePropertiesPage           updatePropPage;
+    private MainPage                                  mainPage;
+    private SimpleResourceBasicDetailsPage            simpleResourceBasicDetailsPage;
+    private SimpleResourceAddAttributePage            simpleResourceAddAttributePage;
+    private SimpleResourceOtherDetailsPage            simpleResourceOtherDetailsPage;
+    private LoadRamlPage                              loadRamlPage;
+    private UpdatePropertiesPage                      updatePropPage;
+    private UpdateMultiInstanceCreationPropertiesPage updateMultiInstanceCreationPropPage;
 
-    private String                         status;
+    private String                                    status;
 
-    private WizardDialog                   wizDialog;
-    private boolean                        dlgForceClosed;
+    private WizardDialog                              wizDialog;
+    private boolean                                   dlgForceClosed;
 
-    private Resource                       createdResource;
+    private Resource                                  createdResource;
+    private Set<SingleResource>                       multiInstanceResourceSet;
 
     public CreateResourceWizard() {
         setWindowTitle("Create resources");
@@ -85,6 +89,7 @@ public class CreateResourceWizard extends Wizard {
         simpleResourceOtherDetailsPage = new SimpleResourceOtherDetailsPage();
         loadRamlPage = new LoadRamlPage();
         updatePropPage = new UpdatePropertiesPage();
+        updateMultiInstanceCreationPropPage = new UpdateMultiInstanceCreationPropertiesPage();
 
         addPage(mainPage);
         addPage(simpleResourceBasicDetailsPage);
@@ -92,6 +97,7 @@ public class CreateResourceWizard extends Wizard {
         addPage(simpleResourceOtherDetailsPage);
         addPage(loadRamlPage);
         addPage(updatePropPage);
+        addPage(updateMultiInstanceCreationPropPage);
     }
 
     public void setWizardDialog(WizardDialog dlg) {
@@ -128,14 +134,17 @@ public class CreateResourceWizard extends Wizard {
         return createdResource;
     }
 
+    public Set<SingleResource> getCreatedMultiInstanceResourceSet() {
+        return multiInstanceResourceSet;
+    }
+
     @Override
     public boolean canFinish() {
         IWizardPage curPage = this.getContainer().getCurrentPage();
-        if ((curPage == updatePropPage && ((mainPage.getOption() == Option.SIMPLE_FROM_RAML) || !Activator
-                .getDefault().getResourceManager().isAnyResourceExist()))
-                || curPage == simpleResourceAddAttributePage
-                || (curPage == loadRamlPage && loadRamlPage.isSelectionDone() && loadRamlPage
-                .isMultiResourceCreation())) {
+        if ((curPage == updateMultiInstanceCreationPropPage || curPage == updatePropPage
+                && ((mainPage.getOption() == Option.SIMPLE_FROM_RAML) || !Activator
+                        .getDefault().getResourceManager().isAnyResourceExist()))
+                || curPage == simpleResourceAddAttributePage) {
             return true;
         }
         return false;
@@ -165,87 +174,62 @@ public class CreateResourceWizard extends Wizard {
                 });
             } catch (InvocationTargetException e) {
                 Activator.getDefault().getLogManager()
-                .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+                        .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
                 e.printStackTrace();
             } catch (InterruptedException e) {
                 Activator.getDefault().getLogManager()
-                .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+                        .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
                 e.printStackTrace();
             }
-        } else if (curPage == loadRamlPage) {
-            // Validate the file path.
-            try {
-                new FileInputStream(loadRamlPage.getConfigFilePath());
-            } catch (Exception e) {
-                MessageDialog
-                .openError(getShell(), "Invalid File",
-                        "File doesn't exist. Either the file path or file name is invalid.");
-                // TODO: Instead of MessageDialog, errors may be shown on wizard
-                // itself.
-                return false;
+        } else if (curPage == updatePropPage
+                || curPage == updateMultiInstanceCreationPropPage) {
+            multiInstanceResourceSet = loadRamlPage
+                    .getMultiInstanceResourceSet();
+            createdResource = loadRamlPage.getResource();
+
+            String resName;
+            String resURI;
+            String resType;
+            boolean multiInstanceCreation = loadRamlPage
+                    .isMultiResourceCreation();
+
+            if (curPage == updatePropPage) {
+                resName = updatePropPage.getResName();
+                resURI = updatePropPage.getResURI();
+                resType = updatePropPage.getResType();
+            } else {
+                resName = updateMultiInstanceCreationPropPage.getResName();
+                resURI = "";
+                resType = updateMultiInstanceCreationPropPage.getResType();
             }
 
-            // Handling multiple instance creation of simple resource with RAML
-            if ((loadRamlPage.getResourceCount() + Activator.getDefault()
-                    .getResourceManager().getResourceCount()) > Constants.MAX_RESOURCE_COUNT) {
-                MessageDialog
-                .openInformation(Display.getDefault().getActiveShell(),
-                        "Resource limit exceeded",
-                        "Exceeded the limit of resources that can exist in the server.");
-                return false;
-            }
-
-            try {
-                getContainer().run(true, false, new IRunnableWithProgress() {
-
-                    @Override
-                    public void run(IProgressMonitor monitor)
-                            throws InvocationTargetException,
-                            InterruptedException {
-                        try {
-                            monitor.beginTask(
-                                    "Single Resource Creation(multi-instance) With RAML",
-                                    3);
-                            monitor.worked(1);
-                            createMultiInstanceSingleResourceWithoutRAML();
-                            monitor.worked(2);
-                        } finally {
-                            monitor.done();
-                        }
-                    }
-                });
-            } catch (InvocationTargetException e) {
-                Activator.getDefault().getLogManager()
-                .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                Activator.getDefault().getLogManager()
-                .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
-                e.printStackTrace();
-            }
-        } else if (curPage == updatePropPage) {
-            // Handling the single instance
-            String resName = updatePropPage.getResName();
-            String resURI = updatePropPage.getResURI();
             if (null == resName || resName.trim().length() < 1) {
                 MessageDialog.openError(Display.getDefault().getActiveShell(),
                         "Invalid Resource Name.", "Resource name is invalid");
                 return false;
             }
-            if (!Utility.isUriValid(resURI)) {
+
+            if (!multiInstanceCreation && !Utility.isUriValid(resURI)) {
                 MessageDialog.openError(Display.getDefault().getActiveShell(),
                         "Invalid Resource URI.", Constants.INVALID_URI_MESSAGE);
                 return false;
             }
+
             // Creation of simple resource with RAML
             // Checking whether the URI is used by any other resource.
-            if (Activator.getDefault().getResourceManager()
-                    .isResourceExist(updatePropPage.getResURI())) {
+            if (!multiInstanceCreation
+                    && Activator.getDefault().getResourceManager()
+                            .isResourceExist(resURI)) {
                 MessageDialog
-                .openError(getShell(), "Resource URI in use",
-                        "Entered resource URI is in use. Please try a different one.");
-                // TODO: Instead of MessageDialog, errors may be shown on wizard
-                // itself.
+                        .openError(getShell(), "Resource URI in use",
+                                "Entered resource URI is in use. Please try a different one.");
+                return false;
+            }
+
+            if (!Utility.isResourceTypeValid(resType)) {
+                MessageDialog.openError(Display.getDefault().getActiveShell(),
+                        "Invalid Resource Type.",
+                        Constants.INVALID_RESOURCE_TYPE_MESSAGE);
                 return false;
             }
 
@@ -259,7 +243,11 @@ public class CreateResourceWizard extends Wizard {
                         try {
                             monitor.beginTask("Completing Resource Creation", 2);
                             monitor.worked(1);
-                            completeResourceCreationWithRAML();
+                            if (loadRamlPage.isMultiResourceCreation()) {
+                                completeMultiInstanceResourceCreationWithRAML();
+                            } else {
+                                completeSingleInstanceResourceCreationWithRAML();
+                            }
                             monitor.worked(1);
                         } finally {
                             monitor.done();
@@ -268,11 +256,11 @@ public class CreateResourceWizard extends Wizard {
                 });
             } catch (InvocationTargetException e) {
                 Activator.getDefault().getLogManager()
-                .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+                        .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
                 e.printStackTrace();
             } catch (InterruptedException e) {
                 Activator.getDefault().getLogManager()
-                .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
+                        .log(Level.ERROR.ordinal(), new Date(), e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -303,6 +291,15 @@ public class CreateResourceWizard extends Wizard {
         return updatePropPage;
     }
 
+    public UpdateMultiInstanceCreationPropertiesPage getUpdateMultiInstanceCreationPropPage() {
+        return updateMultiInstanceCreationPropPage;
+    }
+
+    public void setUpdateMultiInstanceCreationPropPage(
+            UpdateMultiInstanceCreationPropertiesPage updateMultiInstanceCreationPropPage) {
+        this.updateMultiInstanceCreationPropPage = updateMultiInstanceCreationPropPage;
+    }
+
     public void setStatus(String status) {
         this.status = status;
     }
@@ -318,6 +315,10 @@ public class CreateResourceWizard extends Wizard {
         resource.setResourceName(simpleResourceBasicDetailsPage.getResName());
         resource.setResourceType(simpleResourceBasicDetailsPage.getResType());
         resource.setObservable(simpleResourceBasicDetailsPage.isObservable());
+        resource.setDiscoverable(simpleResourceBasicDetailsPage
+                .isDiscoverable());
+        resource.setResourceInterfaces(simpleResourceBasicDetailsPage
+                .getInterfaceTypes());
 
         // Resource Attributes
         Map<String, SimulatorResourceAttribute> attributes = new HashMap<String, SimulatorResourceAttribute>();
@@ -360,22 +361,23 @@ public class CreateResourceWizard extends Wizard {
         }
     }
 
-    private void completeResourceCreationWithRAML() {
+    private void completeSingleInstanceResourceCreationWithRAML() {
+        String resName = updatePropPage.getResName();
+        String resURI = updatePropPage.getResURI();
+        String resType = updatePropPage.getResType();
+
         try {
             boolean result = false;
-            Resource res = loadRamlPage.getResource();
-            if (res instanceof SingleResource) {
+            if (createdResource instanceof SingleResource) {
                 result = Activator
                         .getDefault()
                         .getResourceManager()
-                        .completeSingleResourceCreationByRAML(res,
-                                updatePropPage.getResURI(),
-                                updatePropPage.getResName(), false);
+                        .completeSingleResourceCreationByRAML(createdResource,
+                                resURI, resName, resType, false);
             }
 
             if (result) {
                 status = "Resource created.";
-                createdResource = res;
             } else {
                 status = "Failed to create resource.";
                 createdResource = null;
@@ -387,25 +389,43 @@ public class CreateResourceWizard extends Wizard {
         }
     }
 
-    private void createMultiInstanceSingleResourceWithoutRAML() {
-        try {
-            int toCreateCount = loadRamlPage.getResourceCount();
-            int resCreatedCount = Activator
-                    .getDefault()
-                    .getResourceManager()
-                    .createSingleResourceMultiInstances(
-                            loadRamlPage.getConfigFilePath(), toCreateCount);
-            if (resCreatedCount > 0) {
-                status = "[" + resCreatedCount + " out of " + toCreateCount
-                        + "]";
-                status += ((resCreatedCount == 1) ? "resource" : "resources")
-                        + " created successfully.";
-            } else {
-                status = "Failed to create resources.";
+    private void completeMultiInstanceResourceCreationWithRAML() {
+        String resName = updateMultiInstanceCreationPropPage.getResName();
+        String resType = updateMultiInstanceCreationPropPage.getResType();
+
+        if (null == multiInstanceResourceSet)
+            return;
+
+        boolean result = false;
+        int count = loadRamlPage.getResourceCount();
+        int successCount = 0;
+        SingleResource resource;
+        Iterator<SingleResource> itr = multiInstanceResourceSet.iterator();
+        while (itr.hasNext()) {
+            resource = itr.next();
+            try {
+                result = Activator
+                        .getDefault()
+                        .getResourceManager()
+                        .completeSingleResourceCreationByRAML(resource, null,
+                                resName, resType, true);
+                if (result) {
+                    successCount++;
+                }
+
+            } catch (SimulatorException e) {
+                // Do Nothing.
             }
-        } catch (SimulatorException e) {
-            status = "Failed to create resource.\n"
-                    + Utility.getSimulatorErrorString(e, null);
+        }
+        if (successCount > 0) {
+            UiListenerHandler.getInstance().resourceCreatedUINotification(
+                    ResourceType.SINGLE);
+
+            status = "[" + successCount + " out of " + count + "]";
+            status += ((successCount == 1) ? "resource" : "resources")
+                    + " created successfully.";
+        } else {
+            status = "Failed to create resources.";
         }
     }
 }

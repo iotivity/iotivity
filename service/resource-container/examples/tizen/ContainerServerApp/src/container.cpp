@@ -528,18 +528,6 @@ void *showContainerAPIs(void *data)
         elm_list_item_append(listnew, "4. Remove HUE Bundle Resource", NULL, NULL,
                              removeHueResourceConfig, NULL);
 
-        elm_list_item_append(listnew, "5. Add BMI Bundle", NULL, NULL,
-                             addBMIBundle, NULL);
-
-        elm_list_item_append(listnew, "6. Start BMI Bundle", NULL, NULL,
-                             startBMIBundle, NULL);
-
-        elm_list_item_append(listnew, "7. Remove BMI Bundle", NULL, NULL,
-                             removeBMIBundle, NULL);
-
-        elm_list_item_append(listnew, "8. Stop BMI Bundle", NULL, NULL,
-                             stopBMIBundle, NULL);
-
         elm_list_go(listnew);
     }
     return NULL;
@@ -593,8 +581,8 @@ static void stopContainer(void *data, Evas_Object *obj, void *event_info)
     if (checkContainer)
     {
         s_containerFlag = false;
-        removeHueBundle(NULL, NULL, NULL);
         stopHueBundle(NULL, NULL, NULL);
+        removeHueBundle(NULL, NULL, NULL);
 
         container->stopContainer();
         logMessage += "CONTAINER STOPPED<br>";

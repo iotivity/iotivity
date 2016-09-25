@@ -16,19 +16,6 @@
 
 package oic.simulator.clientcontroller.view;
 
-import java.util.List;
-import java.util.Set;
-
-import oic.simulator.clientcontroller.Activator;
-import oic.simulator.clientcontroller.listener.IFindResourceUIListener;
-import oic.simulator.clientcontroller.manager.ResourceManager;
-import oic.simulator.clientcontroller.manager.UiListenerHandler;
-import oic.simulator.clientcontroller.remoteresource.RemoteResource;
-import oic.simulator.clientcontroller.utils.Constants;
-import oic.simulator.clientcontroller.view.dialogs.FindResourceWizard;
-import oic.simulator.clientcontroller.view.dialogs.LoadRAMLDialog;
-import oic.simulator.clientcontroller.view.dialogs.ResourceWizardDialog;
-
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -61,7 +48,21 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.FilteredTree;
 import org.eclipse.ui.dialogs.PatternFilter;
 import org.eclipse.ui.part.ViewPart;
+
+import java.util.List;
+import java.util.Set;
+
 import org.oic.simulator.SimulatorException;
+
+import oic.simulator.clientcontroller.Activator;
+import oic.simulator.clientcontroller.listener.IFindResourceUIListener;
+import oic.simulator.clientcontroller.manager.ResourceManager;
+import oic.simulator.clientcontroller.manager.UiListenerHandler;
+import oic.simulator.clientcontroller.remoteresource.RemoteResource;
+import oic.simulator.clientcontroller.utils.Constants;
+import oic.simulator.clientcontroller.view.dialogs.FindResourceWizard;
+import oic.simulator.clientcontroller.view.dialogs.LoadRAMLDialog;
+import oic.simulator.clientcontroller.view.dialogs.ResourceWizardDialog;
 
 /**
  * This class manages and shows the resource manager view in the perspective.
@@ -658,8 +659,6 @@ public class ResourceManagerView extends ViewPart {
 
     @Override
     public void setFocus() {
-        // TODO Auto-generated method stub
-
     }
 
     public synchronized void setFoundResource(boolean value) {

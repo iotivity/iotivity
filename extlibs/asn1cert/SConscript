@@ -51,6 +51,7 @@ if target_os in targets_need_asn1:
 	asn1_env.Configure(src_dir + '/extlibs/asn1cert', 'rm converter-sample.c')
 
 	#Build asn1 as static library
+	asn1_env.Append(CPPPATH=[src_dir + '/extlibs/asn1cert'])
 	asn1_src = Glob('*.c')
 	asn1_lib = asn1_env.StaticLibrary('asn1', asn1_src)
 	asn1_env.InstallTarget(asn1_lib, 'libasn1')

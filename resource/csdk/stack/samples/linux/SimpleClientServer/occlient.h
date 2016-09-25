@@ -94,9 +94,6 @@ std::string getIPAddrTBServer(OCClientResponse * clientResponse);
 /* Get the port number the server is listening on */
 std::string getPortTBServer(OCClientResponse * clientResponse);
 
-/* Returns the query string for GET and PUT operations */
-std::string getQueryStrForGetPut(OCClientResponse * clientResponse);
-
 /* Following are initialization functions for GET, Observe, PUT
  * POST, Delete & Discovery operations
  */
@@ -110,11 +107,6 @@ int InitGetRequest(OCQualityOfService qos);
 int InitDeviceDiscovery(OCQualityOfService qos);
 int InitPlatformDiscovery(OCQualityOfService qos);
 int InitDiscovery(OCQualityOfService qos);
-
-/* Function to retrieve ip address, port no. of the server
- *  and query for the operations to be performed.
- */
-void parseClientResponse(OCClientResponse * clientResponse);
 
 /* Call delete operation on already deleted resource */
 void* RequestDeleteDeathResourceTask(void* myqos);

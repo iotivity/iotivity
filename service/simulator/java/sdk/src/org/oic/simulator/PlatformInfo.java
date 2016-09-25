@@ -17,8 +17,8 @@
 package org.oic.simulator;
 
 /**
- * This class contains remote device platform information and provide APIs
- * access it.
+ * This class contains remote device platform information and provide APIs to
+ * access and update it.
  */
 public class PlatformInfo {
     private String mPlatformId;

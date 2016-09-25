@@ -41,8 +41,7 @@ if not os.path.exists(android_home + '/platforms/android-21') or not os.path.exi
 ...Opening Android SDK Manager now. Once you are finished, the build will continue.
 '''
     os.system(android_home + '/tools/android')
-
-
+    
 def ensure_libs(target, source, env):
     return target, [source, env.get('BUILD_DIR') + 'librcs_container.so']
 

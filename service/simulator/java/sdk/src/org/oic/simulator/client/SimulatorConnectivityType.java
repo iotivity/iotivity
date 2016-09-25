@@ -17,7 +17,7 @@
 package org.oic.simulator.client;
 
 /**
- * Supported connectivity types.
+ * Enum to represent the supported connectivity types.
  */
 public enum SimulatorConnectivityType {
     SIMULATOR_CT_DEFAULT(0),

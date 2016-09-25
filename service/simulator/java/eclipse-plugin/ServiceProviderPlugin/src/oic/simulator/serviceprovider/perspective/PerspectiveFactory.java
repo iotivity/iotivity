@@ -16,16 +16,16 @@
 
 package oic.simulator.serviceprovider.perspective;
 
-import oic.simulator.serviceprovider.view.AttributeView;
-import oic.simulator.serviceprovider.view.LogView;
-import oic.simulator.serviceprovider.view.MetaPropertiesView;
-import oic.simulator.serviceprovider.view.DevicePlatformInfoView;
-import oic.simulator.serviceprovider.view.ResourceManagerView;
-import oic.simulator.serviceprovider.view.ResourceObserverView;
-
 import org.eclipse.ui.IFolderLayout;
 import org.eclipse.ui.IPageLayout;
 import org.eclipse.ui.IPerspectiveFactory;
+
+import oic.simulator.serviceprovider.view.AttributeView;
+import oic.simulator.serviceprovider.view.DevicePlatformInfoView;
+import oic.simulator.serviceprovider.view.LogView;
+import oic.simulator.serviceprovider.view.MetaPropertiesView;
+import oic.simulator.serviceprovider.view.ResourceManagerView;
+import oic.simulator.serviceprovider.view.ResourceObserverView;
 
 /**
  * This class creates a new eclipse perspective for service provider and

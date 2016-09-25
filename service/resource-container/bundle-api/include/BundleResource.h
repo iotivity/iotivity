@@ -26,9 +26,12 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include <mutex>
+
 
 #include "NotificationReceiver.h"
 #include "RCSResourceAttributes.h"
+#include "RCSRequest.h"
 
 namespace OIC
 {
@@ -79,14 +82,14 @@ namespace OIC
                 *
                 * @return void
                 */
-                void registerObserver(NotificationReceiver *pNotiReceiver);
+                void registerObserver(NotificationReceiver* pNotiReceiver);
 
                 /**
                 * Return all attributes of the resource
                 *
                 * @return Attributes of the resource
                 */
-                RCSResourceAttributes &getAttributes();
+                const RCSResourceAttributes getAttributes();
 
                 /**
                 * Set attributes of the resource
@@ -95,7 +98,9 @@ namespace OIC
                 *
                 * @return void
                 */
-                void setAttributes(RCSResourceAttributes &attrs);
+                void setAttributes(const RCSResourceAttributes &attrs);
+
+                void setAttributes(const RCSResourceAttributes &attrs, bool notify);
 
                 /**
                 * Return the value of an attribute
@@ -127,19 +132,34 @@ namespace OIC
                 *
                 * @param value Value of attribute to set
                 *
+                * @param notify Flag to indicate if OIC clients should be notified about an update
+                *
+                * @return void
+                */
+                void setAttribute(const std::string &key, RCSResourceAttributes::Value &value,
+                                  bool notify);
+
+                /**
+                * Sets the value of an attribute
+                *
+                * @param key Name of attribute to set
+                *
+                * @param value Value of attribute to set
+                *
                 * @return void
                 */
                 void setAttribute(const std::string &key, RCSResourceAttributes::Value &&value);
 
                 /**
-                * Sends a notification to all observers.
+                * Sets the value of an attribute
                 *
-                * Calling this is not needed when setAttribute() was called
-                * with notify == true.
+                * @param key Name of attribute to set
+                *
+                * @param value Value of attribute to set
                 *
                 * @return void
                 */
-                void sendNotification();
+                void setAttribute(const std::string &key, RCSResourceAttributes::Value &value);
 
                 /**
                 * This function should be implemented by the according bundle resource
@@ -149,9 +169,12 @@ namespace OIC
                 * The implementor of the function can decide weather to notify OIC clients
                 * about the changed state or not.
                 *
+                * @param queryParams Request parameters
+                *
                 * @return All attributes
                 */
-                virtual RCSResourceAttributes &handleGetAttributesRequest() = 0;
+                virtual RCSResourceAttributes handleGetAttributesRequest(const
+                        std::map< std::string, std::string > &queryParams) = 0;
 
                 /**
                 * This function should be implemented by the according bundle resource
@@ -166,21 +189,26 @@ namespace OIC
                 * about the changed state or not.
                 *
                 * @param attrs Attributes to set
+                * @param queryParams Request parameters
                 *
                 * @return void
                 */
-                virtual void handleSetAttributesRequest(RCSResourceAttributes &attrs) = 0;
+                virtual void handleSetAttributesRequest(const RCSResourceAttributes &attrs,
+                                                        const std::map< std::string, std::string > &queryParams) = 0;
+            private:
 
+                void sendNotification(NotificationReceiver *notficiationRecevier, std::string uri);
 
             public:
                 std::string m_bundleId;
                 std::string m_name, m_uri, m_resourceType, m_interface, m_address;
                 std::map< std::string,
-                    std::vector< std::map< std::string, std::string > > > m_mapResourceProperty;
+                std::vector< std::map< std::string, std::string > > > m_mapResourceProperty;
 
             private:
-                NotificationReceiver *m_pNotiReceiver;
+                NotificationReceiver* m_pNotiReceiver;
                 RCSResourceAttributes m_resourceAttributes;
+                std::mutex m_resourceAttributes_mutex;
         };
     }
 }

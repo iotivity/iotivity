@@ -43,7 +43,7 @@ namespace OIC
                 {
                     static constexpr char DEFAULT_ENTER_STR[]{ "IN" };
 
-                    OC_LOG_V(m_level, m_tag, "%s %s", m_scopeName, DEFAULT_ENTER_STR);
+                    OIC_LOG_V(m_level, m_tag, "%s %s", m_scopeName, DEFAULT_ENTER_STR);
                 }
 
                 ~ScopeLogger()
@@ -52,12 +52,12 @@ namespace OIC
 
                     if (std::uncaught_exception())
                     {
-                        OC_LOG_V(m_level, m_tag, "%s %s by stack unwinding (uncaught exception)",
+                        OIC_LOG_V(m_level, m_tag, "%s %s by stack unwinding (uncaught exception)",
                                 m_scopeName, DEFAULT_EXIT_STR);
                     }
                     else
                     {
-                        OC_LOG_V(m_level, m_tag, "%s %s", m_scopeName, DEFAULT_EXIT_STR);
+                        OIC_LOG_V(m_level, m_tag, "%s %s", m_scopeName, DEFAULT_EXIT_STR);
                     }
                 }
 

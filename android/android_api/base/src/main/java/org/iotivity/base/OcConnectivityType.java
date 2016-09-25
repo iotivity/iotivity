@@ -1,23 +1,23 @@
 /*
- * //******************************************************************
- * //
- * // Copyright 2015 Intel Corporation.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //      http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *******************************************************************
+ *
+ * Copyright 2015 Intel Corporation.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 
 package org.iotivity.base;
@@ -43,6 +43,9 @@ public enum OcConnectivityType {
 
     /** CoAP over TCP.*/
     CT_ADAPTER_TCP(1 << 20),
+
+    /** NFC Transport.*/
+    CT_ADAPTER_NFC(1 << 21),
 
     /** Insecure transport is the default (subject to change).*/
 
@@ -110,5 +113,22 @@ public enum OcConnectivityType {
         }
 
         return typeSet;
+    }
+
+    public static OcConnectivityType getInstance(int caTransportAdapter) {
+        switch (caTransportAdapter) {
+            case (1 << 0):
+                return CT_ADAPTER_IP;
+            case (1 << 1):
+                return CT_ADAPTER_GATT_BTLE;
+            case (1 << 2):
+                return CT_ADAPTER_RFCOMM_BTEDR;
+            case (1 << 3):
+                return CT_ADAPTER_REMOTE_ACCESS;
+            case (1 << 4):
+                return CT_ADAPTER_TCP;
+            default:
+                return CT_DEFAULT;
+        }
     }
 }

@@ -16,16 +16,16 @@
 
 package oic.simulator.clientcontroller.view.dialogs;
 
-import java.net.URL;
-import java.util.Set;
-
-import oic.simulator.clientcontroller.Activator;
-
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.Wizard;
+
+import java.net.URL;
+import java.util.Set;
+
+import oic.simulator.clientcontroller.Activator;
 
 /**
  * This class creates a UI wizard for find resource operation.

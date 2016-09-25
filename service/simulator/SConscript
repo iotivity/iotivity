@@ -26,7 +26,8 @@ import os, sys
 Import('env')
 
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+src_dir = env.get('SRC_DIR')
+SConscript(src_dir + '/service/third_party_libs.scons', 'lib_env')
 simulator_env = lib_env.Clone()
 
 #Raml Parser
@@ -40,7 +41,7 @@ simulator_env.AppendUnique(CPPPATH = ['inc', 'src/client', 'src/server', 'src/co
 simulator_env.AppendUnique(CPPPATH = [
 		'../../resource/include/',
 		'../../resource/csdk/stack/include',
-		'../../resource/csdk/ocrandom/include',
+		'../../resource/c_common/ocrandom/include',
 		'../../resource/csdk/logger/include',
 		'../../resource/oc_logger/include',
 		'./ramlparser/raml',
@@ -67,11 +68,13 @@ java_headers.append(os.path.join(java_headers[0], 'linux'))
 java_headers.append(os.path.join(java_headers[0], 'solaris'))
 simulator_env.AppendUnique(CPPPATH = java_headers)
 
+simulator_env.Append( RPATH = env.Literal('\\$$ORIGIN'))
+
 simulator_env.AppendUnique(CPPPATH = ['../../extlibs/cjson'])
-simulator_env.PrependUnique(LIBS = ['oc', 'RamlParser'])
+simulator_env.PrependUnique(LIBS = ['oc', 'octbstack', 'RamlParser'])
 simulator_env.AppendUnique(LIBS = ['pthread'])
 
-simulator_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+simulator_env.AppendUnique(CXXFLAGS = ['-O2', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 ######################################################################
 # Source files and Targets
@@ -82,7 +85,7 @@ simulator_src = [env.Glob('src/*.cpp')
                 ]
 simulatorsdk = simulator_env.SharedLibrary('SimulatorManager', simulator_src)
 
-simulator_env.InstallTarget(simulatorsdk, 'libSimulator')
+simulator_env.InstallTarget(simulatorsdk, 'libSimulatorManager')
 
 #Build sample application
 SConscript('examples/server/SConscript')

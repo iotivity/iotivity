@@ -42,12 +42,12 @@
 #ifndef WITH_CONTIKI
 #include <stdlib.h>
 
-static inline dtls_hmac_context_t *
+INLINE_API dtls_hmac_context_t *
 dtls_hmac_context_new() {
   return (dtls_hmac_context_t *)malloc(sizeof(dtls_hmac_context_t));
 }
 
-static inline void
+INLINE_API void
 dtls_hmac_context_free(dtls_hmac_context_t *ctx) {
   free(ctx);
 }
@@ -56,12 +56,12 @@ dtls_hmac_context_free(dtls_hmac_context_t *ctx) {
 #include "memb.h"
 MEMB(hmac_context_storage, dtls_hmac_context_t, DTLS_HASH_MAX);
 
-static inline dtls_hmac_context_t *
+INLINE_API dtls_hmac_context_t *
 dtls_hmac_context_new() {
   return (dtls_hmac_context_t *)memb_alloc(&hmac_context_storage);
 }
 
-static inline void
+INLINE_API void
 dtls_hmac_context_free(dtls_hmac_context_t *ctx) {
   memb_free(&hmac_context_storage, ctx);
 }

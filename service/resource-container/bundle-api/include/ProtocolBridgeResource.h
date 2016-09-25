@@ -65,9 +65,12 @@ namespace OIC
                 * The implementor of the function can decide weather to notify OIC clients
                 * about the changed state or not.
                 *
+                * @param queryParams Request parameters
+                *
                 * @return Value of all attributes
                 */
-                virtual RCSResourceAttributes &handleGetAttributesRequest() = 0;
+                virtual RCSResourceAttributes handleGetAttributesRequest(const
+                        std::map< std::string, std::string > &queryParams) = 0;
 
                 /**
                 * This function should be implemented by the according bundle resource
@@ -82,10 +85,12 @@ namespace OIC
                 * about the changed state or not.
                 *
                 * @param attrs Attributes to set
+                * @param queryParams Request parameters
                 *
                 * @return void
                 */
-                virtual void handleSetAttributesRequest(RCSResourceAttributes &attrs) = 0;
+                virtual void handleSetAttributesRequest(const RCSResourceAttributes &attrs,
+                                                        const std::map< std::string, std::string > &queryParams) = 0;
         };
     }
 }

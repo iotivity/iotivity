@@ -28,12 +28,18 @@
 
 #include <stdint.h>
 
-#include "coap.h"
+#include <coap/coap.h>
 #include "cathreadpool.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "cacommon.h"
 #include "caprotocolmessage.h"
+#include "camessagehandler.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /**
  * Callback to send block data.
@@ -62,10 +68,10 @@ typedef struct
     u_arraylist_t *dataList;
 
     /** data list mutex for synchronization. **/
-    ca_mutex blockDataListMutex;
+    oc_mutex blockDataListMutex;
 
     /** sender mutex for synchronization. **/
-    ca_mutex blockDataSenderMutex;
+    oc_mutex blockDataSenderMutex;
 } CABlockWiseContext_t;
 
 /**
@@ -98,24 +104,17 @@ typedef struct
 typedef enum
 {
     CA_BLOCK_UNKNOWN = 0,
-    CA_OPTION1_ACK,
-    CA_OPTION1_NO_ACK_LAST_BLOCK,
-    CA_OPTION1_NO_ACK_BLOCK,
+    CA_OPTION1_RESPONSE,
+    CA_OPTION1_REQUEST_LAST_BLOCK,
+    CA_OPTION1_REQUEST_BLOCK,
     CA_OPTION2_FIRST_BLOCK,
     CA_OPTION2_LAST_BLOCK,
-    CA_OPTION2_ACK,
-    CA_OPTION2_NON,
-    CA_OPTION2_CON,
-    CA_SENT_PREVIOUS_NON_MSG,
+    CA_OPTION2_RESPONSE,
+    CA_OPTION2_REQUEST,
     CA_BLOCK_INCOMPLETE,
     CA_BLOCK_TOO_LARGE,
     CA_BLOCK_RECEIVED_ALREADY
 } CABlockState_t;
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 /**
  * Initializes the block-wise transfer context.
@@ -193,12 +192,11 @@ CAResult_t CAProcessNextStep(const coap_pdu_t *pdu, const CAData_t *receivedData
  * send block message to remote device.
  * @param[in]   pdu    received pdu binary data.
  * @param[in]   msgType    the message type of the block.
- * @param[in]   status    block-wise state to move next step.
  * @param[in]   blockID     ID set of CABlockData.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CASendBlockMessage(const coap_pdu_t *pdu, CAMessageType_t msgType,
-                              uint8_t status, const CABlockDataID_t *blockID);
+                              const CABlockDataID_t *blockID);
 
 /**
  * send error message to remote device.
@@ -256,7 +254,7 @@ CAResult_t CASetNextBlockOption2(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CANegotiateBlockSize(CABlockData_t *currData, coap_block_t *block,
-                                CAMessageType_t msgType, uint16_t blockType);
+                                const coap_pdu_t *pdu, uint16_t blockType);
 
 /**
  * Update the block option in block-wise transfer list.
@@ -294,7 +292,7 @@ CAResult_t CAUpdateBlockOptionItems(CABlockData_t *currData, const coap_pdu_t *p
  * @param[out]  block   block option.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAGetMoreBitFromBlock(size_t payloadLen, coap_block_t *block);
+CAResult_t CASetMoreBitFromBlock(size_t payloadLen, coap_block_t *block);
 
 /**
  * check the block option what kind of option have to set.
@@ -553,12 +551,20 @@ CABlockData_t *CACreateNewBlockData(const CAData_t *sendData);
 CAResult_t CARemoveBlockDataFromList(const CABlockDataID_t *blockID);
 
 /**
- * Check if data exist in block-wise transfer list.
- * @param[in]   blockID     ID set of CABlockData.
- * @return true or false.
+ * Remove all block data in block-wise transfer list.
+ * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-bool CAIsBlockDataInList(const CABlockDataID_t *blockID);
+CAResult_t CARemoveAllBlockDataFromList();
 
+/**
+ * Find the block data with seed info and remove it from block-wise transfer list.
+ * @param[in]   token         token of the message.
+ * @param[in]   tokenLength   token length of the message.
+ * @param[in]   portNumber    port.
+ * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CARemoveBlockDataFromListWithSeed(const CAToken_t token, uint8_t tokenLength,
+                                             uint16_t portNumber);
 
 #ifdef __cplusplus
 } /* extern "C" */

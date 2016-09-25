@@ -23,6 +23,12 @@
 #include "crlresource.h"
 #include "oic_malloc.h"
 
+#ifdef __unix__
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#endif // __unix__
+
 /* The first octet of the OCTET STRING indicates whether the key is
 compressed or uncompressed.  The uncompressed form is indicated by 0x04
 and the compressed form is indicated by either 0x02 or 0x03 (RFC 5480)*/
@@ -197,7 +203,6 @@ PKIError CKMIssueDeviceCertificate (const uint8_t *uint8SubjectName,
     uint8_t caPrivateKey[PRIVATE_KEY_SIZE];
     uint8_t uint8caName[ISSUER_MAX_NAME_SIZE];
 
-    CHECK_NULL(uint8SubjectPublicKey, ISSUER_NULL_PASSED);
     CHECK_NULL(issuedCertificate, ISSUER_NULL_PASSED);
     CHECK_NULL(issuedCertificate->data, ISSUER_NULL_PASSED);
     CHECK_LESS_EQUAL(ISSUER_MAX_CERT_SIZE, issuedCertificate->len, ISSUER_WRONG_BYTE_ARRAY_LEN);
@@ -311,14 +316,37 @@ PKIError CKMIssueDeviceCertificate (const uint8_t *uint8SubjectName,
     );
 }
 
-PKIError GenerateDERCertificateFile (const ByteArray *certificate, const char *certFileName)
+PKIError GenerateDERCertificateFile (const ByteArray *certificate, const char * const certFileName)
 {
     FUNCTION_INIT();
+
+#ifdef __unix__
+    struct stat st;
+    int fd = -1;
+#else
     FILE *filePointer = NULL;
+#endif
 
     CHECK_NULL(certFileName, ISSUER_NULL_PASSED);
     CHECK_NULL(certificate, ISSUER_NULL_PASSED);
     CHECK_NULL(certificate->data, ISSUER_NULL_PASSED);
+
+#ifdef __unix__
+    fd = open(certFileName, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+    CHECK_NOT_EQUAL(fd, -1, ISSUER_NULL_PASSED);
+    CHECK_EQUAL(fstat(fd, &st), 0, ISSUER_NULL_PASSED);
+    CHECK_COND(S_ISREG(st.st_mode), ISSUER_FILE_WRITE_ERROR);
+    CHECK_COND(!S_ISLNK(st.st_mode), ISSUER_FILE_WRITE_ERROR);
+    CHECK_EQUAL(write(fd, certificate->data, certificate->len), (ssize_t) certificate->len,
+            ISSUER_FILE_WRITE_ERROR);
+
+    FUNCTION_CLEAR(
+        if(-1 != fd)
+        {
+            close(fd);
+        }
+    );
+#else
     filePointer = fopen(certFileName, "wb");
     CHECK_NULL(filePointer, ISSUER_FILE_WRITE_ERROR);
     CHECK_EQUAL(fwrite(certificate->data, 1, certificate->len, filePointer), certificate->len,
@@ -326,11 +354,13 @@ PKIError GenerateDERCertificateFile (const ByteArray *certificate, const char *c
 
     FUNCTION_CLEAR(
         if(filePointer)
-            {
-                fclose(filePointer);
-            }
+        {
+            fclose(filePointer);
+        }
         filePointer = NULL;
     );
+#endif
+
 }
 
 PKIError SetSerialNumber (const long serNum)
@@ -339,7 +369,7 @@ PKIError SetSerialNumber (const long serNum)
 
     CHECK_LESS_EQUAL(0, serNum, ISSUER_WRONG_SERIAL_NUMBER);
     CHECK_CALL(InitCKMInfo);
-    CHECK_CALL(SetNextSerialNumber, &serNum);
+    CHECK_CALL(SetNextSerialNumber, serNum);
     CHECK_CALL(SaveCKMInfo);
 
     FUNCTION_CLEAR();
@@ -426,8 +456,11 @@ PKIError GenerateCSR (const uint8_t *uint8SubjectName,
     FUNCTION_CLEAR(
         OICFree(subjectName);
         OICFree(subjectPublicKey);
-        OICFree(subjectPrivateKey->buf);
-        OICFree(subjectPrivateKey);
+        if (subjectPrivateKey)
+        {
+            OICFree(subjectPrivateKey->buf);
+            OICFree(subjectPrivateKey);
+        }
     );
 }
 
@@ -582,7 +615,7 @@ PKIError CKMRevocateCertificate (const uint8_t *uint8ThisUpdateTime, const long 
     CHECK_CALL(InitCKMInfo);
     CHECK_CALL(GetNumberOfRevoked, &numberOfRevoked);
 
-    crlMaxSize = (CRL_MIN_SIZE +
+    crlMaxSize = (uint32_t)(CRL_MIN_SIZE +
             (numberOfRevoked + 1) * (sizeof(CertificateRevocationInfo_t) + 4));
 
     CHECK_NULL(encodedCRL, ISSUER_NULL_PASSED);
@@ -643,9 +676,9 @@ PKIError CKMRevocateCertificate (const uint8_t *uint8ThisUpdateTime, const long 
     CHECK_CALL(InitCKMInfo);
     CHECK_CALL(GetCRLSerialNumber, &serialNumber);
     serialNumber++;
-    CHECK_CALL(SetCRLSerialNumber, &serialNumber);
+    CHECK_CALL(SetCRLSerialNumber, serialNumber);
     numberOfRevoked++;
-    CHECK_CALL(SetNumberOfRevoked, &numberOfRevoked);
+    CHECK_CALL(SetNumberOfRevoked, numberOfRevoked);
     CHECK_CALL(SetCertificateRevocationList, encodedCRL);
     CHECK_CALL(SaveCKMInfo);
 

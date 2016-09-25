@@ -20,22 +20,35 @@
 
 // OCClient.cpp : Defines the entry point for the console application.
 //
+#include "iotivity_config.h"
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <Windows.h>
+#endif
 #include <string>
 #include <map>
 #include <cstdlib>
-#include <pthread.h>
 #include <mutex>
 #include <condition_variable>
 #include "OCPlatform.h"
 #include "OCApi.h"
 
+#define maxSequenceNumber 0xFFFFFF
+
 using namespace OC;
 
+static const char* SVR_DB_FILE_NAME = "./oic_svr_db_client.dat";
 typedef std::map<OCResourceIdentifier, std::shared_ptr<OCResource>> DiscoveredResourceMap;
 
 DiscoveredResourceMap discoveredResources;
 std::shared_ptr<OCResource> curResource;
 static ObserveType OBSERVE_TYPE_TO_USE = ObserveType::Observe;
+static OCConnectivityType TRANSPORT_TYPE_TO_USE = OCConnectivityType::CT_ADAPTER_IP;
 std::mutex curResourceLock;
 
 class Light
@@ -64,15 +77,11 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& re
 {
     try
     {
-        if(eCode == OC_STACK_OK && sequenceNumber != OC_OBSERVE_NO_OPTION)
+        if(eCode == OC_STACK_OK && sequenceNumber != maxSequenceNumber + 1)
         {
             if(sequenceNumber == OC_OBSERVE_REGISTER)
             {
                 std::cout << "Observe registration action is successful" << std::endl;
-            }
-            else if(sequenceNumber == OC_OBSERVE_DEREGISTER)
-            {
-                std::cout << "Observe De-registration action is successful" << std::endl;
             }
 
             std::cout << "OBSERVE RESULT:"<<std::endl;
@@ -98,9 +107,9 @@ void onObserve(const HeaderOptions /*headerOptions*/, const OCRepresentation& re
         }
         else
         {
-            if(sequenceNumber == OC_OBSERVE_NO_OPTION)
+            if(eCode == OC_STACK_OK)
             {
-                std::cout << "Observe registration or de-registration action is failed" << std::endl;
+                std::cout << "Observe registration failed or de-registration action failed/succeeded" << std::endl;
             }
             else
             {
@@ -121,7 +130,8 @@ void onPost2(const HeaderOptions& /*headerOptions*/,
 {
     try
     {
-        if(eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED)
+        if(eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED
+                || eCode == OC_STACK_RESOURCE_CHANGED)
         {
             std::cout << "POST request was successful" << std::endl;
 
@@ -167,7 +177,8 @@ void onPost(const HeaderOptions& /*headerOptions*/,
 {
     try
     {
-        if(eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED)
+        if(eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED
+                || eCode == OC_STACK_RESOURCE_CHANGED)
         {
             std::cout << "POST request was successful" << std::endl;
 
@@ -236,7 +247,7 @@ void onPut(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, 
 {
     try
     {
-        if(eCode == OC_STACK_OK)
+        if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
         {
             std::cout << "PUT request was successful" << std::endl;
 
@@ -383,9 +394,15 @@ void foundResource(std::shared_ptr<OCResource> resource)
 
             if(resourceURI == "/a/light")
             {
-                curResource = resource;
-                // Call a local function which will internally invoke get API on the resource pointer
-                getLightRepresentation(resource);
+                if (resource->connectivityType() & TRANSPORT_TYPE_TO_USE)
+                {
+                    curResource = resource;
+                    // Get the resource host address
+                    std::cout << "\tAddress of selected resource: " << resource->host() << std::endl;
+
+                    // Call a local function which will internally invoke get API on the resource pointer
+                    getLightRepresentation(resource);
+                }
             }
         }
         else
@@ -405,9 +422,11 @@ void printUsage()
 {
     std::cout << std::endl;
     std::cout << "---------------------------------------------------------------------\n";
-    std::cout << "Usage : simpleclient <ObserveType>" << std::endl;
+    std::cout << "Usage : simpleclient <ObserveType> <TransportType>" << std::endl;
     std::cout << "   ObserveType : 1 - Observe" << std::endl;
     std::cout << "   ObserveType : 2 - ObserveAll" << std::endl;
+    std::cout << "   TransportType : 1 - IP" << std::endl;
+    std::cout << "   TransportType : 2 - TCP" << std::endl;
     std::cout << "---------------------------------------------------------------------\n\n";
 }
 
@@ -430,9 +449,28 @@ void checkObserverValue(int value)
     }
 }
 
+void checkTransportValue(int value)
+{
+    if (1 == value)
+    {
+        TRANSPORT_TYPE_TO_USE = OCConnectivityType::CT_ADAPTER_IP;
+        std::cout << "<===Setting TransportType to IP===>\n\n";
+    }
+    else if (2 == value)
+    {
+        TRANSPORT_TYPE_TO_USE = OCConnectivityType::CT_ADAPTER_TCP;
+        std::cout << "<===Setting TransportType to TCP===>\n\n";
+    }
+    else
+    {
+        std::cout << "<===Invalid TransportType selected."
+                  <<" Setting TransportType to IP===>\n\n";
+    }
+}
+
 static FILE* client_open(const char* /*path*/, const char *mode)
 {
-    return fopen("./oic_svr_db_client.json", mode);
+    return fopen(SVR_DB_FILE_NAME, mode);
 }
 
 int main(int argc, char* argv[]) {
@@ -449,6 +487,11 @@ int main(int argc, char* argv[]) {
         else if (argc == 2)
         {
             checkObserverValue(std::stoi(argv[1]));
+        }
+        else if (argc == 3)
+        {
+            checkObserverValue(std::stoi(argv[1]));
+            checkTransportValue(std::stoi(argv[2]));
         }
         else
         {
@@ -468,7 +511,7 @@ int main(int argc, char* argv[]) {
         OC::ModeType::Both,
         "0.0.0.0",
         0,
-        OC::QualityOfService::LowQos,
+        OC::QualityOfService::HighQos,
         &ps
     };
 

@@ -75,6 +75,7 @@ typedef enum
     SIMULATOR_TYPE_MISMATCH,
     SIMULATOR_BAD_VALUE,
     SIMULATOR_BAD_OBJECT,
+    SIMULATOR_BAD_SCHEMA,
     /** Simulator specific error codes - END */
 
     SIMULATOR_ERROR = 255

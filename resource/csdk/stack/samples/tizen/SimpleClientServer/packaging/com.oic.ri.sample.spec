@@ -1,9 +1,10 @@
 %define PREFIX /usr/apps/com.oic.ri.sample
 %define ROOTDIR  %{_builddir}/%{name}-%{version}
+%{!?VERBOSE: %define VERBOSE 1}
 
 Name: com-oic-ri-sample
-Version:    0.1
-Release:    1
+Version:    1.2.0
+Release:    0
 Summary: Tizen adapter interfacesample application
 URL: http://slp-source.sec.samsung.net
 Source: %{name}-%{version}.tar.gz
@@ -30,7 +31,7 @@ OIC RIsample application
 %build
 
 scons TARGET_OS=tizen -c
-scons TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT} SECURED=%{SECURED} RELEASE=%{RELEASE} ROUTING=%{ROUTING}
+scons TARGET_OS=tizen TARGET_TRANSPORT=%{TARGET_TRANSPORT} SECURED=%{SECURED} RELEASE=%{RELEASE} ROUTING=%{ROUTING} WITH_TCP=%{WITH_TCP} WITH_PROXY=%{WITH_PROXY} 
 
 %install
 

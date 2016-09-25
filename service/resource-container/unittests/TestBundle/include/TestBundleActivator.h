@@ -52,14 +52,18 @@ class TestBundleResource : public BundleResource
     public:
         void initAttributes() { };
 
-        RCSResourceAttributes &handleGetAttributesRequest()
+        RCSResourceAttributes handleGetAttributesRequest(
+            const std::map< std::string, std::string > &queryParams)
         {
+            (void)queryParams;
             return BundleResource::getAttributes();
         }
 
         void handleSetAttributesRequest(
-            RCSResourceAttributes &value)
+            const RCSResourceAttributes &value,
+            const std::map< std::string, std::string > &queryParams)
         {
+            (void)queryParams;
             BundleResource::setAttributes(value);
         }
 };

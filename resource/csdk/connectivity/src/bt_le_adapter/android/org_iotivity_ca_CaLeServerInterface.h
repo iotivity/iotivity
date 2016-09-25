@@ -34,7 +34,6 @@ extern "C"
  * Signature: (Landroid/bluetooth/BluetoothGattServerCallback;)V
  */
 JNIEXPORT void JNICALL
-
 Java_org_iotivity_ca_caLeServerInterface_caLeRegisterGattServerCallback
 (JNIEnv *, jobject, jobject);
 
@@ -58,6 +57,15 @@ Java_org_iotivity_ca_caLeServerInterface_caLeGattServerConnectionStateChangeCall
 
 /*
  * Class:     org_iotivity_ca_caLeServerInterface
+ * Method:    caLeGattServerNWConnectionStateChangeCallback
+ * Signature: (Landroid/bluetooth/BluetoothDevice;II)V
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_caLeServerInterface_caLeGattServerNWConnectionStateChangeCallback
+(JNIEnv *, jobject, jobject, jint, jint);
+
+/*
+ * Class:     org_iotivity_ca_caLeServerInterface
  * Method:    caLeGattServerServiceAddedCallback
  * Signature: (ILandroid/bluetooth/BluetoothGattService;)V
  */
@@ -68,8 +76,7 @@ Java_org_iotivity_ca_caLeServerInterface_caLeGattServerServiceAddedCallback
 /*
  * Class:     org_iotivity_ca_caLeServerInterface
  * Method:    caLeGattServerCharacteristicReadRequestCallback
- * Signature: (Landroid/bluetooth/BluetoothDevice;IILandroid/
- * bluetooth/BluetoothGattCharacteristic;)V
+ * Signature: (Landroid/bluetooth/BluetoothDevice;[B)V
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_caLeServerInterface_caLeGattServerCharacteristicReadRequestCallback
@@ -78,8 +85,7 @@ Java_org_iotivity_ca_caLeServerInterface_caLeGattServerCharacteristicReadRequest
 /*
  * Class:     org_iotivity_ca_caLeServerInterface
  * Method:    caLeGattServerCharacteristicWriteRequestCallback
- * Signature: (Landroid/bluetooth/BluetoothDevice;ILandroid/bluetooth/
- * BluetoothGattCharacteristic;ZZI[B)V
+ * Signature: (Landroid/bluetooth/BluetoothDevice;[B)V
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_caLeServerInterface_caLeGattServerCharacteristicWriteRequestCallback

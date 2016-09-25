@@ -31,6 +31,7 @@
 
 #include <memory>
 #include <functional>
+#include <vector>
 
 namespace OIC
 {
@@ -56,7 +57,7 @@ namespace OIC
             public:
                 typedef std::unique_ptr< DiscoveryTask > Ptr;
 
-                ~DiscoveryTask() = default;
+                ~DiscoveryTask();
 
                 DiscoveryTask(const DiscoveryTask&) = delete;
                 DiscoveryTask(DiscoveryTask&&) = delete;
@@ -64,7 +65,7 @@ namespace OIC
                 DiscoveryTask& operator =(DiscoveryTask&&) const = delete;
 
                 /**
-                 * It is cancelling the task of discovery.
+                 * It cancels the task of discovery.
                  * If it is already canceled, the operation is ignored.
                  */
                 void cancel();
@@ -90,8 +91,8 @@ namespace OIC
              *
              * @see discoverResource
              */
-            typedef std::function< void(std::shared_ptr< RCSRemoteResourceObject >)
-                    > ResourceDiscoveredCallback;
+            typedef std::function< void(std::shared_ptr< RCSRemoteResourceObject >) >
+                        ResourceDiscoveredCallback;
 
             /**
              * @return RCSDiscoveryManager instance.
@@ -101,7 +102,7 @@ namespace OIC
 
             /**
              * Discovers resources of interest, regardless of uri and resource type.
-             * It is Consistently discovering resources until the discovery task is canceled.
+             * It will consistently discover resources until the discovery task is canceled.
              *
              * @param address         A RCSAddress object
              * @param cb              A callback to obtain discovered resource
@@ -116,7 +117,7 @@ namespace OIC
 
             /**
              * Discovers resources of interest, regardless of resource type.
-             * It is Consistently discovering resources until the discovery task is canceled.
+             * It will consistently discover resources until the discovery task is canceled.
              *
              * @param address          A RCSAddress object
              * @param relativeUri      The relative uri of resource to be searched
@@ -132,7 +133,7 @@ namespace OIC
 
             /**
              * Discovers resources of interest by resource type.
-             * It is Consistently discovering resources until the discovery task is canceled.
+             * It will consistently discover resources until the discovery task is canceled.
              *
              * @param address          A RCSAddress object
              * @param resourceType     Resource Type
@@ -147,8 +148,28 @@ namespace OIC
                     const std::string& resourceType, ResourceDiscoveredCallback cb);
 
             /**
-             * Discovers resources of interest by resource type with provided relativeUri.
-             * It is Consistently discovering resources until the discovery task is canceled.
+             * Discovers resources of interest by resource types.
+             * It will consistently discover resources until the discovery task is canceled.
+             *
+             * @param address          A RCSAddress object
+             * @param resourceTypes    List of Resource Types
+             * @param cb               A callback to obtain discovered resource
+             *
+             * @throws InvalidParameterException If cb is empty.
+             * @throws RCSBadRequestException If resourceTypes contain more than one element and
+             * any of them is empty.
+             *
+             * @note The callback will be invoked in an internal thread.
+             * @note If resourceTypes is empty, discovers resource by all resource types.
+             *
+             */
+            DiscoveryTask::Ptr discoverResourceByTypes(const RCSAddress& address,
+                    const std::vector< std::string >& resourceTypes,
+                    ResourceDiscoveredCallback cb);
+
+            /**
+             * Discovers resources of interest by a resource type with provided relativeUri.
+             * It will consistently discover resources until the discovery task is canceled.
              *
              * @param address          A RCSAddress object
              * @param relativeUri      The relative uri of resource to be searched
@@ -164,7 +185,30 @@ namespace OIC
                     const std::string& relativeUri, const std::string& resourceType,
                     ResourceDiscoveredCallback cb);
 
+            /**
+             * Discovers resources of interest by resource types with provided relativeUri.
+             * It will consistently discover resources until the discovery task is canceled.
+             *
+             * @param address          A RCSAddress object
+             * @param relativeUri      The relative uri of resource to be searched
+             * @param resourceTypes     List of Resource Types
+             * @param cb               A callback to obtain discovered resource
+             *
+             * @throws InvalidParameterException If cb is empty.
+             * @throws RCSBadRequestException If resourceTypes contain more than one element and
+             * any of them is empty.
+             *
+             * @note The callback will be invoked in an internal thread.
+             * @note If resourceTypes is empty, discovers resource by all resource types.
+             *
+             */
+            DiscoveryTask::Ptr discoverResourceByTypes(const RCSAddress& address,
+                    const std::string& relativeUri,
+                    const std::vector< std::string >& resourceTypes,
+                    ResourceDiscoveredCallback cb);
+
         private:
+
             RCSDiscoveryManager() = default;
             ~RCSDiscoveryManager() = default;
         };

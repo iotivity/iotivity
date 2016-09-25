@@ -37,6 +37,7 @@ namespace OC
                 OC_STACK_RESOURCE_CREATED,
                 OC_STACK_RESOURCE_DELETED,
                 OC_STACK_CONTINUE,
+                OC_STACK_RESOURCE_CHANGED,
                 OC_STACK_INVALID_URI,
                 OC_STACK_INVALID_QUERY,
                 OC_STACK_INVALID_IP,
@@ -64,13 +65,15 @@ namespace OC
                 OC_STACK_INVALID_DEVICE_INFO,
                 OC_STACK_INVALID_JSON,
                 OC_STACK_UNAUTHORIZED_REQ,
+                OC_STACK_TOO_LARGE_REQ,
                 OC_STACK_PRESENCE_STOPPED,
                 OC_STACK_PRESENCE_TIMEOUT,
                 OC_STACK_PRESENCE_DO_NOT_HANDLE,
                 OC_STACK_ERROR,
                 OC_STACK_PDM_IS_NOT_INITIALIZED,
                 OC_STACK_DUPLICATE_UUID,
-                OC_STACK_INCONSISTENT_DB
+                OC_STACK_INCONSISTENT_DB,
+                OC_STACK_AUTHENTICATION_FAILURE
             };
 
             std::string resultMessages[]=
@@ -79,6 +82,7 @@ namespace OC
                 OC::Exception::RESOURCE_CREATED,
                 OC::Exception::RESOURCE_DELETED,
                 OC::Exception::STACK_CONTINUE,
+                OC::Exception::RESOURCE_CHANGED,
                 OC::Exception::INVALID_URI,
                 OC::Exception::INVALID_QUERY,
                 OC::Exception::INVALID_IP,
@@ -106,13 +110,15 @@ namespace OC
                 OC::Exception::INVALID_DEVICE_INFO,
                 OC::Exception::INVALID_REPRESENTATION,
                 OC::Exception::UNAUTHORIZED_REQUEST,
+                OC::Exception::TOO_LARGE_REQ,
                 OC::Exception::PRESENCE_STOPPED,
                 OC::Exception::PRESENCE_TIMEOUT,
                 OC::Exception::PRESENCE_NOT_HANDLED,
                 OC::Exception::GENERAL_FAULT,
                 OC::Exception::PDM_DB_NOT_INITIALIZED,
                 OC::Exception::DUPLICATE_UUID,
-                OC::Exception::INCONSISTENT_DB
+                OC::Exception::INCONSISTENT_DB,
+                OC::Exception::AUTHENTICATION_FAILURE
             };
             TEST(OCExceptionTest, ReasonCodeMatches)
             {

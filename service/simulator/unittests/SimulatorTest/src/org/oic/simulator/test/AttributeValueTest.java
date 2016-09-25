@@ -50,8 +50,10 @@ public class AttributeValueTest extends TestCase {
         AttributeValue attribute = new AttributeValue(new Integer(5));
         assertNotNull(attribute);
         assertTrue(attribute.typeInfo() != null
-                && attribute.typeInfo().mType == AttributeValue.ValueType.INTEGER
-                && attribute.typeInfo().mBaseType == AttributeValue.ValueType.INTEGER
+                && attribute
+                        .typeInfo().mType == AttributeValue.ValueType.INTEGER
+                && attribute
+                        .typeInfo().mBaseType == AttributeValue.ValueType.INTEGER
                 && attribute.typeInfo().mDepth == 0);
     }
 
@@ -118,10 +120,10 @@ public class AttributeValueTest extends TestCase {
     public void testAttributeValueSimulatorResourceModel() {
         SimulatorResourceModel model = new SimulatorResourceModel();
         try {
-            model.addAttribute(INT_KEY, new AttributeValue(1));
-            model.addAttribute(DOUBLE_KEY, new AttributeValue(1.00));
-            model.addAttribute(BOOL_KEY, new AttributeValue(true));
-            model.addAttribute(STRING_KEY, new AttributeValue("string"));
+            model.set(INT_KEY, new AttributeValue(1));
+            model.set(DOUBLE_KEY, new AttributeValue(1.00));
+            model.set(BOOL_KEY, new AttributeValue(true));
+            model.set(STRING_KEY, new AttributeValue("string"));
         } catch (InvalidArgsException e) {
             e.printStackTrace();
         }
@@ -171,7 +173,8 @@ public class AttributeValueTest extends TestCase {
     }
 
     public void testAttributeValueDoubleArray_P02() {
-        Double[] array = { new Double(1.00), new Double(2.00), new Double(3.00) };
+        Double[] array = { new Double(1.00), new Double(2.00),
+                new Double(3.00) };
         AttributeValue value = new AttributeValue(array);
 
         assertNotNull(value);
@@ -228,10 +231,10 @@ public class AttributeValueTest extends TestCase {
     public void testAttributeValueSimulatorResourceModelArray() {
         SimulatorResourceModel childModel = new SimulatorResourceModel();
         try {
-            childModel.addAttribute(INT_KEY, new AttributeValue(1));
-            childModel.addAttribute(DOUBLE_KEY, new AttributeValue(1.00));
-            childModel.addAttribute(BOOL_KEY, new AttributeValue(true));
-            childModel.addAttribute(STRING_KEY, new AttributeValue("string"));
+            childModel.set(INT_KEY, new AttributeValue(1));
+            childModel.set(DOUBLE_KEY, new AttributeValue(1.00));
+            childModel.set(BOOL_KEY, new AttributeValue(true));
+            childModel.set(STRING_KEY, new AttributeValue("string"));
         } catch (InvalidArgsException e) {
             e.printStackTrace();
         }
@@ -261,7 +264,8 @@ public class AttributeValueTest extends TestCase {
     }
 
     public void testAttributeValueIntArrayArray_P02() {
-        Integer[][] array = { { new Integer(1), new Integer(2), new Integer(3) } };
+        Integer[][] array = {
+                { new Integer(1), new Integer(2), new Integer(3) } };
         AttributeValue value = new AttributeValue(array);
 
         assertNotNull(value);
@@ -283,8 +287,8 @@ public class AttributeValueTest extends TestCase {
     }
 
     public void testAttributeValueDoubleArrayArray_P02() {
-        Double[][] array = { { new Double(1.00), new Double(2.00),
-                new Double(3.00) } };
+        Double[][] array = {
+                { new Double(1.00), new Double(2.00), new Double(3.00) } };
         AttributeValue value = new AttributeValue(array);
 
         assertNotNull(value);
@@ -341,10 +345,10 @@ public class AttributeValueTest extends TestCase {
     public void testAttributeValueSimulatorResourceModelArrayArray() {
         SimulatorResourceModel childModel = new SimulatorResourceModel();
         try {
-            childModel.addAttribute(INT_KEY, new AttributeValue(1));
-            childModel.addAttribute(DOUBLE_KEY, new AttributeValue(1.00));
-            childModel.addAttribute(BOOL_KEY, new AttributeValue(true));
-            childModel.addAttribute(STRING_KEY, new AttributeValue("string"));
+            childModel.set(INT_KEY, new AttributeValue(1));
+            childModel.set(DOUBLE_KEY, new AttributeValue(1.00));
+            childModel.set(BOOL_KEY, new AttributeValue(true));
+            childModel.set(STRING_KEY, new AttributeValue("string"));
         } catch (InvalidArgsException e) {
             e.printStackTrace();
         }
@@ -374,8 +378,8 @@ public class AttributeValueTest extends TestCase {
     }
 
     public void testAttributeValueIntArrayArrayArray_P02() {
-        Integer[][][] array = { { { new Integer(1), new Integer(2),
-                new Integer(3) } } };
+        Integer[][][] array = {
+                { { new Integer(1), new Integer(2), new Integer(3) } } };
         AttributeValue value = new AttributeValue(array);
 
         assertNotNull(value);
@@ -397,8 +401,8 @@ public class AttributeValueTest extends TestCase {
     }
 
     public void testAttributeValueDoubleArrayArrayArray_P02() {
-        Double[][][] array = { { { new Double(1.00), new Double(2.00),
-                new Double(3.00) } } };
+        Double[][][] array = {
+                { { new Double(1.00), new Double(2.00), new Double(3.00) } } };
         AttributeValue value = new AttributeValue(array);
 
         assertNotNull(value);
@@ -455,10 +459,10 @@ public class AttributeValueTest extends TestCase {
     public void testAttributeValueSimulatorResourceModelArrayArrayArray() {
         SimulatorResourceModel childModel = new SimulatorResourceModel();
         try {
-            childModel.addAttribute(INT_KEY, new AttributeValue(1));
-            childModel.addAttribute(DOUBLE_KEY, new AttributeValue(1.00));
-            childModel.addAttribute(BOOL_KEY, new AttributeValue(true));
-            childModel.addAttribute(STRING_KEY, new AttributeValue("string"));
+            childModel.set(INT_KEY, new AttributeValue(1));
+            childModel.set(DOUBLE_KEY, new AttributeValue(1.00));
+            childModel.set(BOOL_KEY, new AttributeValue(true));
+            childModel.set(STRING_KEY, new AttributeValue("string"));
         } catch (InvalidArgsException e) {
             e.printStackTrace();
         }

@@ -28,18 +28,40 @@ using namespace OIC::Service;
 
 namespace
 {
-    void setRequestCB(const RCSResourceAttributes &, const RCSResourceAttributes & ) { }
+    bool isStarted = false;
+    bool isFinished = false;
+
+    ResourceEncapsulationTestSimulator testObject;
+    RCSRemoteResourceObject::Ptr remoteObject;
+
+    void setRequestCB(const RCSResourceAttributes &, int, const RCSRequest &, RequestObject::Ptr)
+    {
+    }
+
+    void setup()
+    {
+        if(!isStarted)
+        {
+            testObject.defaultRunSimulator();
+            remoteObject = testObject.getRemoteResource();
+
+            isStarted = true;
+        }
+    }
+
+    void tearDown()
+    {
+        if(isFinished)
+        {
+            testObject.destroy();
+            isStarted = false;
+        }
+    }
 }
 
 class RequestObjectTest : public TestWithMock
 {
 public:
-    ResourceEncapsulationTestSimulator::Ptr testObject;
-    RCSResourceObject::Ptr server;
-    RCSRemoteResourceObject::Ptr remoteObject;
-
-    RCSResourceAttributes attr;
-
     std::mutex mutexForCondition;
     std::condition_variable responseCon;
 
@@ -48,27 +70,13 @@ protected:
     void SetUp()
     {
         TestWithMock::SetUp();
-
-        testObject = std::make_shared<ResourceEncapsulationTestSimulator>();
-        testObject->defaultRunSimulator();
-        remoteObject = testObject->getRemoteResource();
+        setup();
     }
 
     void TearDown()
     {
         TestWithMock::TearDown();
-        if(remoteObject)
-        {
-            if(remoteObject->isCaching())
-            {
-                remoteObject->stopCaching();
-            }
-            if(remoteObject->isMonitoring())
-            {
-                remoteObject->stopMonitoring();
-            }
-        }
-        testObject->destroy();
+        tearDown();
     }
 
 public:
@@ -87,17 +95,19 @@ public:
 TEST_F(RequestObjectTest, invokeRequestExpectCallwithSetter)
 {
    bool isCalled = false;
-   RequestObject::Ptr instance = std::make_shared<RequestObject>(setRequestCB);
 
    mocks.ExpectCallFunc(setRequestCB).Do(
-           [this, &isCalled](const RCSResourceAttributes &, const RCSResourceAttributes &)
+           [this, &isCalled](const RCSResourceAttributes &, int,
+                   const RCSRequest &, RequestObject::Ptr)
            {
                isCalled = true;
                notifyCondition();
            });
 
    RCSResourceAttributes att;
-   instance->invokeRequest(remoteObject, RequestObject::RequestMethod::Set, att);
+   std::shared_ptr<OC::OCResourceRequest> request;
+   RequestObject::invokeRequest(remoteObject, RCSRequest(testObject.getResourceServer(), request),
+           RequestObject::RequestMethod::Set, att, setRequestCB);
 
    waitForCondition();
 

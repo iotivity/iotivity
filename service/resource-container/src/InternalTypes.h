@@ -28,6 +28,7 @@ namespace OIC
     namespace Service
     {
         constexpr char CONTAINER_TAG[] = "RESOURCE_CONTAINER";
+        constexpr char DISCOVER_TAG[] = "DISCOVER_RESOURCE_UNIT";
 
         constexpr char BUNDLE_TAG[] = "bundle";
         constexpr char BUNDLE_ID[] = "id";

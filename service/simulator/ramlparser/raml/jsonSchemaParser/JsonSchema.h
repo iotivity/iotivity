@@ -31,11 +31,8 @@
 #include <vector>
 #include <map>
 #include "Properties.h"
-#include "Items.h"
 #include "Definitions.h"
 #include "cJSON.h"
-#include "Helpers.h"
-#include "AllowedValues.h"
 #include <memory>
 
 #include "IncludeResolver.h"
@@ -52,14 +49,15 @@ namespace RAML
             /**
                   * Constructor of JsonSchema.
                   */
-            JsonSchema() : m_cjson(NULL), m_includeResolver(NULL)  {}
+            JsonSchema() : m_additionalProperties(cJSON_True), m_cjson(NULL), m_includeResolver(NULL)  {}
 
             /**
                   * Constructor of JsonSchema.
                   *
                   * @param includeResolver - Reference to IncludeResolver for reading external files
                   */
-            JsonSchema(const IncludeResolverPtr &includeResolver) : m_cjson(NULL),
+            JsonSchema(const IncludeResolverPtr &includeResolver) : m_additionalProperties(cJSON_True),
+                m_cjson(NULL),
                 m_includeResolver(includeResolver) {}
 
             /**
@@ -68,7 +66,8 @@ namespace RAML
                   * @param cjson - pointer to cjson
                   * @param includeResolver - Reference to IncludeResolver for reading external files
                   */
-            JsonSchema(cJSON *cjson , const IncludeResolverPtr &includeResolver) : m_cjson(cjson),
+            JsonSchema(cJSON *cjson , const IncludeResolverPtr &includeResolver) : m_additionalProperties(
+                    cJSON_True), m_cjson(cjson),
                 m_includeResolver(includeResolver)  { readJson(); }
 
 
@@ -96,7 +95,7 @@ namespace RAML
                  *
                  * @return pointer to Properties
                  */
-            inline PropertiesPtr getProperty(const std::string &name)
+            PropertiesPtr getProperty(const std::string &name)
             {
                 if (m_properties.end() != m_properties.find(name))
                 {
@@ -110,7 +109,7 @@ namespace RAML
                  *
                  * @return map of Properties name and pointer to Properties
                  */
-            inline std::map<std::string, PropertiesPtr > const &getProperties()
+            std::map<std::string, PropertiesPtr > const &getProperties()
             {
                 return m_properties;
             }
@@ -120,7 +119,7 @@ namespace RAML
                  *
                  * @return map of Definitions name and pointer to Definitions
                  */
-            inline std::map<std::string, DefinitionsPtr > const &getDefinitions()
+            std::map<std::string, DefinitionsPtr > const &getDefinitions()
             {
                 return m_definition;
             }
@@ -252,46 +251,56 @@ namespace RAML
                 return  m_additionalProperties;
             }
 
-            /**
-                 * This method is for setting Items to JsonSchema.
-                 *
-                 * @param item -pointer to Items
-                 */
-            void setItem(const ItemsPtr &item)
-            {
-                m_items.push_back(item);
-            }
-
-            /**
-                 * This method is for getting Items from JsonSchema.
-                 *
-                 * @return vector of Items
-                 */
-            std::vector<ItemsPtr> const &getItems()
-            {
-                return m_items;
-            }
-
         private:
+            class JsonParameters
+            {
+                public:
+                    std::map<std::string, PropertiesPtr > getProperties() const { return m_properties; }
+                    void addProperties(const std::string &name, const PropertiesPtr &prop) { m_properties[name] = prop; }
+                    void addProperties(const std::map<std::string, PropertiesPtr > &properties)
+                    {
+                        for (auto prop : properties)
+                            m_properties[prop.first] = prop.second;
+                    }
+                    std::vector<std::string> getRequired() const { return m_required; }
+                    void addRequired(const std::string &req) { m_required.push_back(req); }
+                    void addRequired(const std::vector<std::string> &required)
+                    {
+                        for (auto req : required)
+                            m_required.push_back(req);
+                    }
+                    std::string getType() const { return m_type; }
+                    void setType(const std::string &type)
+                    {
+                        if (m_type.empty())
+                            m_type = type;
+                    }
+
+                private:
+                    std::map<std::string, PropertiesPtr > m_properties;
+                    std::vector<std::string> m_required;
+                    std::string m_type;
+            };
+
             void readJson();
             DefinitionsPtr readDef(cJSON *childDefinitions, const std::string &defName);
             PropertiesPtr readProp(cJSON *childProperties, const std::string &attName );
-            void readValues( cJSON *childProperties,  PropertiesPtr property ,
+            void readDefaultValue(cJSON *defaultValue,  PropertiesPtr &property, const std::string &attType);
+            void readAllowedValues(cJSON *allowedvalues,  PropertiesPtr &property, std::string &attType);
+            void readValues( cJSON *childProperties,  PropertiesPtr &property ,
                              const std::string &attType);
-            void readString( cJSON *childProperties, PropertiesPtr property);
-            void readArray( cJSON *childProperties,  PropertiesPtr property);
-            void readInteger( cJSON *childProperties,  PropertiesPtr property);
-            void readDouble( cJSON *childProperties,  PropertiesPtr property);
-            DefinitionsPtr readRef(std::string m_ref);
+            void readString( cJSON *childProperties, PropertiesPtr &property);
+            void readInteger( cJSON *childProperties,  PropertiesPtr &property);
+            void readDouble( cJSON *childProperties,  PropertiesPtr &property);
+            void readArray( cJSON *childProperties,  PropertiesPtr &property);
+            void readItems(cJSON *item, PropertiesPtr &property);
+            void readObject(cJSON *childProperties,  PropertiesPtr &property);
 
-
-            void readJsonRef(cJSON *jsonReference);
-            void readDefRef(cJSON *defReference, DefinitionsPtr definition);
-            void readAllOf(cJSON *allofValues);
-            void readDefAllOf(cJSON *allofValues, DefinitionsPtr definition);
-            ItemsPtr readItems(cJSON *item);
-            void readItemRef(cJSON *itemReference, ItemsPtr item);
-            void readItemAllOf(cJSON *allofValues,  ItemsPtr item);
+            void readFile(std::string &fileName , JsonParameters &param);
+            void readFile(std::string &fileName , std::string &defName , JsonParameters &param);
+            void readRef(std::string ref , JsonParameters &param);
+            void readJsonRef(cJSON *jsonReference , JsonParameters &param);
+            void readAllOf(cJSON *allofValues ,  JsonParameters &allParams);
 
         private:
             std::map<std::string, PropertiesPtr > m_properties;
@@ -304,8 +313,9 @@ namespace RAML
             std::string m_type;
             cJSON *m_cjson;
             std::vector<std::string>  m_required;
-            std::vector<ItemsPtr > m_items;
+            PropertiesPtr m_property;
             IncludeResolverPtr m_includeResolver;
+
     };
 
     /** JsonSchemaPtr - shared Ptr to JsonSchema.*/

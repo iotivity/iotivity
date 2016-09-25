@@ -60,7 +60,7 @@
 #include "netq.h"
 #include "hmac.h"
 
-#ifndef WITH_CONTIKI
+#if !defined(WITH_CONTIKI) && !defined(_WIN32)
 #include <pthread.h>
 #endif
 
@@ -68,13 +68,13 @@
   if (Seed) dtls_hmac_update(Context, (Seed), (Length))
 
 static struct dtls_cipher_context_t cipher_context;
-#ifndef WITH_CONTIKI
+#if !defined(WITH_CONTIKI) && !defined(_WIN32)
 static pthread_mutex_t cipher_context_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 static struct dtls_cipher_context_t *dtls_cipher_context_get(void)
 {
-#ifndef WITH_CONTIKI
+#if !defined(WITH_CONTIKI) && !defined(_WIN32)
   pthread_mutex_lock(&cipher_context_mutex);
 #endif
   return &cipher_context;
@@ -82,7 +82,7 @@ static struct dtls_cipher_context_t *dtls_cipher_context_get(void)
 
 static void dtls_cipher_context_release(void)
 {
-#ifndef WITH_CONTIKI
+#if !defined(WITH_CONTIKI) && !defined(_WIN32)
   pthread_mutex_unlock(&cipher_context_mutex);
 #endif
 }
@@ -592,9 +592,9 @@ dtls_ecdsa_create_sig_hash(const unsigned char *priv_key, size_t key_size,
 
     // Check the buffers
     if (priv_key == NULL || key_size < 32)
-        return 0;
+        return;
     if (sign_hash == NULL || sign_hash_size < 32)
-        return 0;
+        return;
 
     uECC_sign(priv_key, sign_hash, sign);
 

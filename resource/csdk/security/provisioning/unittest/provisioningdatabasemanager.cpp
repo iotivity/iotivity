@@ -17,9 +17,11 @@
  * limitations under the License.
  *
  * *****************************************************************/
+#include "iotivity_config.h"
 #include "gtest/gtest.h"
 #include "provisioningdatabasemanager.h"
 
+#define DB_FILE "PDM.db"
 const char ID_1 [] = "1111111111111111";
 const char ID_2 [] = "2111111111111111";
 const char ID_3 [] = "3111111111111111";
@@ -37,6 +39,10 @@ const char ID_13[] = "4222222222222222";
 
 TEST(CallPDMAPIbeforeInit, BeforeInit)
 {
+    if (0 == access(DB_FILE, F_OK))
+    {
+        EXPECT_EQ(0, unlink(DB_FILE));
+    }
     EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMAddDevice(NULL));
     EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMIsDuplicateDevice(NULL,NULL));
     EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMLinkDevices(NULL, NULL));

@@ -32,6 +32,7 @@
 
 #include "cacommon.h"
 #include "oic_malloc.h"
+#include "caedrinterface.h"
 
 /**
  * Logging tag for module name.
@@ -57,6 +58,21 @@ extern "C"
  */
 bool CAEDRIsServiceSupported(const char **serviceUUID, int32_t serviceCount,
                             const char *matchService);
+
+/**
+ * Get device information from list.
+ * @param[in]   remoteAddress   remote address.
+ * @return  Device information object or NULL.
+ */
+CAConnectedDeviceInfo_t *CAEDRGetDeviceInfoFromAddress(const char *remoteAddress);
+
+/**
+ * Add device information to list.
+ * @param[in]   remoteAddress   remote address.
+ * @param[in]   deviceInfo      device information.
+ * @return ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CAEDRAddDeviceInfoToList(const char *remoteAddress, CAConnectedDeviceInfo_t *deviceInfo);
 
 #ifdef __cplusplus
 } /* extern "C" */

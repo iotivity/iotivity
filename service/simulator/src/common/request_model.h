@@ -21,10 +21,8 @@
 #ifndef REQUEST_MODEL_H_
 #define REQUEST_MODEL_H_
 
-#include "simulator_client_types.h"
-#include "simulator_resource_model.h"
+#include "simulator_resource_model_schema.h"
 #include "response_model.h"
-#include "Raml.h"
 
 typedef std::map<std::string, std::vector<std::string>> SupportedQueryParams;
 
@@ -34,24 +32,26 @@ class RequestModel
     public:
         friend class RequestModelBuilder;
 
-        RequestType type() const;
+        std::string getType() const;
         SupportedQueryParams getQueryParams();
         std::vector<std::string> getQueryParams(const std::string &key);
-        SimulatorResourceModelSP getRepSchema();
-        SimulatorResult validateResponse(int responseCode, const OC::OCRepresentation &rep);
+        std::shared_ptr<SimulatorResourceModelSchema> getRequestRepSchema();
+        ResponseModelSP getResponseModel(int code);
+        SimulatorResult validateResponse(int code, const SimulatorResourceModel &resModel);
 
     private:
-        RequestModel(RequestType type);
-        void setQueryParams(const SupportedQueryParams &queryParams);
-        void addQueryParams(const std::string &key, const std::vector<std::string> &values);
+        RequestModel() = default;
+        RequestModel(const std::string &type);
+        void setType(const std::string &type);
+        void setQueryParams(const std::string &key, const std::vector<std::string> &values);
         void addQueryParam(const std::string &key, const std::string &value);
-        void addResponseModel(int code, ResponseModelSP &responseModel);
-        void setRepSchema(SimulatorResourceModelSP &repSchema);
+        void setResponseModel(int code, ResponseModelSP &responseModel);
+        void setRequestBodyModel(const std::shared_ptr<SimulatorResourceModelSchema> &repSchema);
 
-        RequestType m_type;
+        std::string m_type;
         SupportedQueryParams m_queryParams;
         std::map<int, ResponseModelSP> m_responseList;
-        SimulatorResourceModelSP m_repSchema;
+        std::shared_ptr<SimulatorResourceModelSchema> m_repSchema;
 };
 
 typedef std::shared_ptr<RequestModel> RequestModelSP;

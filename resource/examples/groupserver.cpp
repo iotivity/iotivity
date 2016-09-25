@@ -60,7 +60,7 @@ void foundResource(std::shared_ptr< OCResource > resource)
             cout << "\tResource Type : " << resource->getResourceTypes().front() << endl;
             if (resourceURI == "/a/light" || resourceURI == "/a/fan")
             {
-                OCResourceHandle foundResourceHandle;
+                OCResourceHandle foundResourceHandle = nullptr;
                 OCStackResult result = OCPlatform::registerResource(foundResourceHandle, resource);
                 cout << "\tresource registed!" << endl;
                 if (result == OC_STACK_OK)

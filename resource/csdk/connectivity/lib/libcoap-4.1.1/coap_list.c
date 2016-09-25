@@ -6,14 +6,14 @@
  * README for terms of use.
  */
 
-#include "config.h"
+#include "include/coap/config.h"
 
 #include <stdio.h>
 #include <string.h>
 
-#include "debug.h"
-#include "mem.h"
-#include "coap_list.h"
+#include "include/coap/debug.h"
+#include "include/coap/mem.h"
+#include "include/coap/coap_list.h"
 
 int coap_insert(coap_list_t **queue, coap_list_t *node, int (*order)(void *, void *node))
 {

@@ -40,7 +40,7 @@ extern "C" {
 
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeStartContainer
-(JNIEnv *, jobject, jstring configFile);
+(JNIEnv *, jobject, jstring);
 
 JNIEXPORT void JNICALL
 Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeStopContainer
@@ -78,6 +78,20 @@ Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeRemoveRes
 JNIEXPORT jobject JNICALL
 Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeListBundleResources
 (JNIEnv *, jobject, jstring bundleId);
+
+JNIEXPORT void JNICALL Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeRegisterBundleResource
+  (JNIEnv *, jobject, jobject, jobjectArray, jstring, jstring, jstring, jstring);
+
+JNIEXPORT void JNICALL Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeUnregisterBundleResource
+  (JNIEnv *, jobject, jobject, jstring);
+
+JNIEXPORT jint JNICALL Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeGetNumberOfConfiguredResources
+  (JNIEnv *, jobject,  jstring);
+
+JNIEXPORT jobjectArray JNICALL Java_org_iotivity_service_resourcecontainer_RcsResourceContainer_nativeGetConfiguredResourceParams
+  (JNIEnv *, jobject, jstring, jint);
+
+
 
 #ifdef __cplusplus
 }

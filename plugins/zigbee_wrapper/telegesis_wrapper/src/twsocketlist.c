@@ -80,7 +80,7 @@ TWResultCode TWAddTWSock(TWSock * sock, PIPlugin_Zigbee * plugin, const char * f
     sock->fd = open(fileLoc, O_RDWR | O_NOCTTY | O_SYNC);
     if(sock->fd <= 0)
     {
-        OC_LOG_V(INFO, TAG, "Could not open port. Errno is: %d\n", errno);
+        OIC_LOG_V(INFO, TAG, "Could not open port. Errno is: %d\n", errno);
         return TW_RESULT_ERROR;
     }
 
@@ -137,7 +137,7 @@ TWResultCode TWCloseTWSock(TWSock * sock)
     int ret = close(sock->fd);
     if(ret != 0)
     {
-        OC_LOG_V(ERROR, TAG, "Could not close port. Errno is: %d", errno);
+        OIC_LOG_V(ERROR, TAG, "Could not close port. Errno is: %d", errno);
         return TW_RESULT_ERROR;
     }
     return TW_RESULT_OK;
@@ -166,7 +166,7 @@ TWResultCode TWDeleteTWSock(TWSock * sock)
     int mutexRet = pthread_mutex_destroy(&(sock->mutex));
     if(mutexRet != 0)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to destroy mutex. Error: %d", mutexRet);
+        OIC_LOG_V(ERROR, TAG, "Failed to destroy mutex. Error: %d", mutexRet);
         return TW_RESULT_ERROR;
     }
     TWResultCode result = TWCloseTWSock(sock);
@@ -192,7 +192,7 @@ TWResultCode TWDeleteAllTWSock()
  */
 int SetTerminalInfo(int fd, int speed, int parity, int shouldBlock)
 {
-    OC_LOG(INFO, TAG, "Enter SetTerminalInfo()");
+    OIC_LOG(INFO, TAG, "Enter SetTerminalInfo()");
 
     int ret = 0;
     struct termios terminalInfo = {
@@ -203,7 +203,7 @@ int SetTerminalInfo(int fd, int speed, int parity, int shouldBlock)
     ret = tcgetattr(fd, &terminalInfo);
     if (ret != 0)
     {
-        OC_LOG_V(ERROR, TAG, "tcgetattr() - ret=%d errno=%d", ret, errno);
+        OIC_LOG_V(ERROR, TAG, "tcgetattr() - ret=%d errno=%d", ret, errno);
         ret = -1;
         goto exit;
     }
@@ -212,7 +212,7 @@ int SetTerminalInfo(int fd, int speed, int parity, int shouldBlock)
     ret = cfsetispeed (&terminalInfo, speed);
     if (ret != 0)
     {
-        OC_LOG_V(ERROR, TAG, "cfsetispeed() - ret=%d errno=%d", ret, errno);
+        OIC_LOG_V(ERROR, TAG, "cfsetispeed() - ret=%d errno=%d", ret, errno);
         ret = -1;
         goto exit;
     }
@@ -221,7 +221,7 @@ int SetTerminalInfo(int fd, int speed, int parity, int shouldBlock)
     ret = cfsetospeed (&terminalInfo, speed);
     if (ret != 0)
     {
-        OC_LOG_V(ERROR, TAG, "cfsetospeed() - ret=%d errno=%d", ret, errno);
+        OIC_LOG_V(ERROR, TAG, "cfsetospeed() - ret=%d errno=%d", ret, errno);
         ret = -1;
         goto exit;
     }
@@ -253,11 +253,11 @@ int SetTerminalInfo(int fd, int speed, int parity, int shouldBlock)
     ret = tcsetattr (fd, TCSANOW, &terminalInfo);
     if (ret != 0)
     {
-        OC_LOG_V(ERROR, TAG, "tcsetattr - ret=%d errno=%d", ret, errno);
+        OIC_LOG_V(ERROR, TAG, "tcsetattr - ret=%d errno=%d", ret, errno);
         ret = -1;
     }
 
 exit:
-    OC_LOG_V(INFO, TAG, "Leave SetTerminalInfo() with ret=%d", ret);
+    OIC_LOG_V(INFO, TAG, "Leave SetTerminalInfo() with ret=%d", ret);
     return ret;
 }

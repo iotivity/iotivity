@@ -85,7 +85,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_ownershipTransferCB
                 delete jniPinListener;
                 jniPinListener = new JniPinCheckListener(env, jListener);
                 CBData.loadSecretCB = InputPinCodeCallback;
-                CBData.createSecureSessionCB = CreateSecureSessionRandomPinCallbak;
+                CBData.createSecureSessionCB = CreateSecureSessionRandomPinCallback;
                 CBData.createSelectOxmPayloadCB = CreatePinBasedSelectOxmPayload;
                 CBData.createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload;
                 result = OCSecure::setOwnerTransferCallbackData((OicSecOxm_t)OxmType,
@@ -93,7 +93,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_ownershipTransferCB
             }
             else
             {
-                result = OC_STACK_ERROR;
+                result = OC_STACK_INVALID_CALLBACK;
             }
         }
 
@@ -123,6 +123,11 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverUno
 
     try
     {
+        if (timeout < 0)
+        {
+            ThrowOcException(OC_STACK_INVALID_PARAM, "Timeout value cannot be negative");
+            return nullptr;
+        }
         OCStackResult result = OCSecure::discoverUnownedDevices((unsigned short)timeout, list);
 
         if (OC_STACK_OK != result)
@@ -191,6 +196,11 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_discoverOwn
 
     try
     {
+        if (timeout < 0)
+        {
+            ThrowOcException(OC_STACK_INVALID_PARAM, "Timeout value cannot be negative");
+            return nullptr;
+        }
         OCStackResult result = OCSecure::discoverOwnedDevices((unsigned short)timeout, list);
         if (OC_STACK_OK != result)
         {
@@ -221,6 +231,11 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_getDeviceSt
 
     try
     {
+        if (timeout < 0)
+        {
+            ThrowOcException(OC_STACK_INVALID_PARAM, "Timeout value cannot be negative");
+            return nullptr;
+        }
         OCStackResult result = OCSecure::getDevInfoFromNetwork((unsigned short)timeout,
                 ownedDevList, unownedDevList);
         if (OC_STACK_OK != result)
@@ -252,7 +267,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListen
 
     if (!jListener)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "displayPinListener can't be null");
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "displayPinListener can't be null");
         return;
     }
     delete jniDisplayPinListener;
@@ -272,4 +287,40 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListen
         LOGE("%s", e.reason().c_str());
         ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
     }
+}
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    saveTrustCertChain1
+ * Signature: (Lorg/iotivity/base/OcProvisioning/provisionTrustCertChain1;)V
+ */
+    JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_saveTrustCertChain1
+(JNIEnv *env, jobject thiz, jbyteArray trustCertChain, jint encodingType)
+{
+    LOGD("OcProvisioning_saveTrustCertChain1");
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+    jbyte* trustCertChainBytes = env->GetByteArrayElements(trustCertChain, 0);
+    jsize arrayLength = env->GetArrayLength(trustCertChain);
+    uint16_t credId;
+    unsigned char* trustedCertChar = new unsigned char[arrayLength];
+    try
+    {
+        env->GetByteArrayRegion (trustCertChain, 0, arrayLength, reinterpret_cast<jbyte*>(trustedCertChar));
+        OCStackResult result = OCSecure::saveTrustCertChain((uint8_t*)trustedCertChar, arrayLength,
+                (OicEncodingType_t)encodingType, &credId);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcProvisioning_saveTrustCertChain1");
+            return -1;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+    return (jint)credId;
+#else
+    ThrowOcException(OC_STACK_INVALID_PARAM, "WITH_TLS not enabled");
+    return -1;
+#endif // __WITH_X509__ || __WITH_TLS__
 }

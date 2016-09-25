@@ -1,3 +1,4 @@
+#include "iotivity_config.h" 
 #include "tinydtls.h" 
 
 /* This is needed for apple */
@@ -6,15 +7,28 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <ctype.h>
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 #include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
 #include <signal.h>
+#include <getopt.h>
 
 #include "global.h"
 #include "debug.h"
@@ -471,7 +485,11 @@ static void dtls_handle_signal(int sig)
   dtls_free_context(dtls_context);
   dtls_free_context(orig_dtls_context);
   signal(sig, SIG_DFL);
+#ifdef _WIN32
+  exit(sig);
+#else
   kill(getpid(), sig);
+#endif
 }
 
 /* stolen from libcoap: */
@@ -778,7 +796,7 @@ main(int argc, char **argv) {
     return 0;
   }
 
-  if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on) ) < 0) {
+  if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, OPTVAL_T(&on), sizeof(on) ) < 0) {
     dtls_alert("setsockopt SO_REUSEADDR: %s\n", strerror(errno));
   }
 #if 0
@@ -790,9 +808,9 @@ main(int argc, char **argv) {
 #endif
   on = 1;
 #ifdef IPV6_RECVPKTINFO
-  if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on, sizeof(on) ) < 0) {
+  if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, OPTVAL_T(&on), sizeof(on) ) < 0) {
 #else /* IPV6_RECVPKTINFO */
-  if (setsockopt(fd, IPPROTO_IPV6, IPV6_PKTINFO, &on, sizeof(on) ) < 0) {
+  if (setsockopt(fd, IPPROTO_IPV6, IPV6_PKTINFO, OPTVAL_T(&on), sizeof(on) ) < 0) {
 #endif /* IPV6_RECVPKTINFO */
     dtls_alert("setsockopt IPV6_PKTINFO: %s\n", strerror(errno));
   }

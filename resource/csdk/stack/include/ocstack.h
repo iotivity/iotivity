@@ -134,7 +134,9 @@ OCStackResult OCProcess();
  *                          well-known multicast IP address, the qos will be forced to ::OC_LOW_QOS
  *                          since it is impractical to send other QOS levels on such addresses.
  * @param cbData            Asynchronous callback function that is invoked by the stack when
- *                          discovery or resource interaction is complete.
+ *                          discovery or resource interaction is received. The discovery could be
+ *                          related to filtered/scoped/particular resource. The callback is
+ *                          generated for each response received.
  * @param options           The address of an array containing the vendor specific header options
  *                          to be sent with the request.
  * @param numOptions        Number of header options to be included.
@@ -146,15 +148,15 @@ OCStackResult OCProcess();
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCDoResource(OCDoHandle *handle,
-                            OCMethod method,
-                            const char *requestUri,
-                            const OCDevAddr *destination,
-                            OCPayload* payload,
-                            OCConnectivityType connectivityType,
-                            OCQualityOfService qos,
-                            OCCallbackData *cbData,
-                            OCHeaderOption *options,
-                            uint8_t numOptions);
+                           OCMethod method,
+                           const char *requestUri,
+                           const OCDevAddr *destination,
+                           OCPayload* payload,
+                           OCConnectivityType connectivityType,
+                           OCQualityOfService qos,
+                           OCCallbackData *cbData,
+                           OCHeaderOption *options,
+                           uint8_t numOptions);
 /**
  * This function cancels a request associated with a specific @ref OCDoResource invocation.
  *
@@ -166,8 +168,10 @@ OCStackResult OCDoResource(OCDoHandle *handle,
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption * options,
-        uint8_t numOptions);
+OCStackResult OCCancel(OCDoHandle handle,
+                       OCQualityOfService qos,
+                       OCHeaderOption * options,
+                       uint8_t numOptions);
 
 /**
  * Register Persistent storage callback.
@@ -229,7 +233,13 @@ OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandle
 /**
  * This function sets device information.
  *
- * @param deviceInfo   Structure passed by the server application containing the device information.
+ * Upon call to OCInit, the default Device Type (i.e. "rt") has already been set to the default
+ * Device Type "oic.wk.d". You do not have to specify "oic.wk.d" in the OCDeviceInfo.types linked
+ * list. The default Device Type is mandatory and always specified by this Device as the first
+ * Device Type.
+ *
+ * @param deviceInfo   Structure passed by the server application containing the device
+ *                     information.
  *
  * @return
  *     ::OC_STACK_OK               no errors.
@@ -276,7 +286,6 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
                                OCEntityHandler entityHandler,
                                void* callbackParam,
                                uint8_t resourceProperties);
-
 
 /**
  * This function adds a resource to a collection resource.
@@ -328,8 +337,9 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCBindResourceHandler(OCResourceHandle handle, OCEntityHandler entityHandler,
-                                        void *callbackParameter);
+OCStackResult OCBindResourceHandler(OCResourceHandle handle,
+                                    OCEntityHandler entityHandler,
+                                    void *callbackParameter);
 
 /**
  * This function gets the number of resources that have been created in the stack.
@@ -497,10 +507,10 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
  */
 OCStackResult
 OCNotifyListOfObservers (OCResourceHandle handle,
-                            OCObservationId  *obsIdList,
-                            uint8_t          numberOfIds,
-                            const OCRepPayload *payload,
-                            OCQualityOfService qos);
+                         OCObservationId  *obsIdList,
+                         uint8_t          numberOfIds,
+                         const OCRepPayload *payload,
+                         OCQualityOfService qos);
 
 
 /**
@@ -513,6 +523,79 @@ OCNotifyListOfObservers (OCResourceHandle handle,
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCDoResponse(OCEntityHandlerResponse *response);
+
+//#ifdef DIRECT_PAIRING
+/**
+ * The function is responsible for discovery of direct-pairing device is current subnet. It will list
+ * all the device in subnet which support direct-pairing.
+ * Caller must NOT free returned constant pointer
+ *
+ * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
+ *                    client before returning the list of devices.
+ * @return OCDirectPairingDev_t pointer in case of success and NULL otherwise.
+ */
+const OCDPDev_t* OCDiscoverDirectPairingDevices(unsigned short waittime);
+
+/**
+ * The function is responsible for return of paired device list via direct-pairing. It will list
+ * all the device which is previousely paired with client.
+ * Caller must NOT free returned constant pointer
+ *
+ * @return OCDirectPairingDev_t pointer in case of success and NULL otherwise.
+ */
+const OCDPDev_t* OCGetDirectPairedDevices();
+
+/**
+ * The function is responsible for establishment of direct-pairing. It will proceed mode negotiation
+ * and connect PIN based dtls session.
+ *
+ * @param[in] peer Target device to establish direct-pairing.
+ * @param[in] pmSel Selected mode of pairing.
+ * @param[in] pinNumber PIN number for authentication, pin lenght is defined DP_PIN_LENGTH(8).
+ * @param[in] resultCallback Callback fucntion to event status of process.
+ * @return OTM_SUCCESS in case of success and other value otherwise.
+ */
+OCStackResult OCDoDirectPairing(void *ctx, OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
+                                OCDirectPairingCB resultCallback);
+
+/**
+ * This function sets uri being used for proxy.
+ *
+ * @param uri            NULL terminated resource uri for CoAP-HTTP Proxy.
+ */
+OCStackResult OCSetProxyURI(const char *uri);
+
+#if defined(RD_CLIENT) || defined(RD_SERVER)
+/**
+ * This function binds an resource unique id to the resource.
+ *
+ * @param handle            Handle to the resource that the contained resource is to be bound.
+ * @param ins               Unique ID for resource.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, uint8_t ins);
+
+/**
+ * This function gets the resource unique id for a resource.
+ *
+ * @param handle            Handle of resource.
+ * @param ins               Unique ID for resource.
+ *
+ * @return Ins if resource found or 0 resource not found.
+ */
+OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins);
+
+/**
+ * This function gets a resource handle by resource uri.
+ *
+ * @param uri   Uri of Resource to get Resource handle.
+ *
+ * @return Found  resource handle or NULL if not found.
+ */
+OCResourceHandle OCGetResourceHandleAtUri(const char *uri);
+#endif
+//#endif // DIRECT_PAIRING
 
 #ifdef __cplusplus
 }

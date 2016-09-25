@@ -18,23 +18,20 @@
  *
  ******************************************************************/
 
-#ifndef PUT_REQUEST_GEN_H_
-#define PUT_REQUEST_GEN_H_
+#ifndef SIMULATOR_PUT_REQUEST_GEN_H_
+#define SIMULATOR_PUT_REQUEST_GEN_H_
 
-#include "auto_request_gen.h"
+#include "request_generation.h"
 #include "query_param_generator.h"
 #include "attribute_generator.h"
+#include "request_sender.h"
 
-class PUTRequestGenerator : public AutoRequestGeneration
+class RequestModel;
+class PUTRequestGenerator : public RequestGeneration
 {
     public:
-        PUTRequestGenerator(int id, RequestSenderSP &requestSender,
-                            SimulatorResourceModelSP &representation,
-                            ProgressStateCallback callback);
-
-        PUTRequestGenerator(int id, RequestSenderSP &requestSender,
-                            const std::map<std::string, std::vector<std::string>> &queryParams,
-                            SimulatorResourceModelSP &representation,
+        PUTRequestGenerator(int id, const std::shared_ptr<OC::OCResource> &ocResource,
+                            const std::shared_ptr<RequestModel> &requestModel,
                             ProgressStateCallback callback);
 
         void startSending();
@@ -42,15 +39,14 @@ class PUTRequestGenerator : public AutoRequestGeneration
 
     private:
         void SendAllRequests();
-        void onResponseReceived(SimulatorResult result, SimulatorResourceModelSP repModel);
+        void onResponseReceived(SimulatorResult result,
+                                const SimulatorResourceModel &repModel, const RequestInfo &reqInfo);
         void completed();
 
-        QPGenerator m_queryParamGen;
-        SimulatorResourceModelSP m_rep;
-        std::mutex m_statusLock;
-        bool m_status;
         bool m_stopRequested;
-        std::shared_ptr<std::thread> m_thread;
+        std::unique_ptr<std::thread> m_thread;
+        std::shared_ptr<RequestModel> m_requestSchema;
+        PUTRequestSender m_requestSender;
 };
 
 typedef std::shared_ptr<PUTRequestGenerator> PUTRequestGeneratorSP;

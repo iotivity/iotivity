@@ -22,7 +22,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <signal.h>
 #include <stdbool.h>
 #include <ocstack.h>
@@ -48,9 +53,9 @@ void handleSigInt(int signum) {
 }
 
 int main() {
-    OC_LOG_V(INFO, TAG, "Starting ocserver on address %s:%d",addr,port);
+    OIC_LOG_V(INFO, TAG, "Starting ocserver");
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK) {
-        OC_LOG(ERROR, TAG, "OCStack init error");
+        OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
     }
 
@@ -59,26 +64,26 @@ int main() {
      */
     if(createLightResource() != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack cannot create resource...");
+        OIC_LOG(ERROR, TAG, "OCStack cannot create resource...");
     }
 
     // Break from loop with Ctrl-C
-    OC_LOG(INFO, TAG, "Entering ocserver main loop...");
+    OIC_LOG(INFO, TAG, "Entering ocserver main loop...");
     signal(SIGINT, handleSigInt);
     while (!gQuitFlag) {
 
         if (OCProcess() != OC_STACK_OK) {
-            OC_LOG(ERROR, TAG, "OCStack process error");
+            OIC_LOG(ERROR, TAG, "OCStack process error");
             return 0;
         }
 
         sleep(1);
     }
 
-    OC_LOG(INFO, TAG, "Exiting ocserver main loop...");
+    OIC_LOG(INFO, TAG, "Exiting ocserver main loop...");
 
     if (OCStop() != OC_STACK_OK) {
-        OC_LOG(ERROR, TAG, "OCStack process error");
+        OIC_LOG(ERROR, TAG, "OCStack process error");
     }
 
     return 0;
@@ -91,6 +96,7 @@ OCStackResult createLightResource() {
                     "core.rw",
                     "/a/light",
                     0,
+                    NULL,
                     OC_DISCOVERABLE|OC_OBSERVABLE);
     return res;
 }

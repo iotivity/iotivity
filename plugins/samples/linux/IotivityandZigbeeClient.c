@@ -92,7 +92,7 @@ void rememberDiscoveredResources(OCClientResponse *clientResponse)
     OCResourcePayload* itr = NULL;
     if (!(OCDiscoveryPayload*)clientResponse->payload)
     {
-        OC_LOG(INFO, TAG, "No resources discovered.");
+        OIC_LOG(INFO, TAG, "No resources discovered.");
         return;
     }
 
@@ -102,7 +102,7 @@ void rememberDiscoveredResources(OCClientResponse *clientResponse)
     {
         if (countDiscoveredResources == MAX_RESOURCES_REMEMBERED)
         {
-            OC_LOG_V(INFO, TAG, "Only remembering %u resources. Ignoring rest.",
+            OIC_LOG_V(INFO, TAG, "Only remembering %u resources. Ignoring rest.",
                 MAX_RESOURCES_REMEMBERED);
             break;
         }
@@ -133,7 +133,7 @@ OCStackResult InvokeOCDoResource(const char *query,
     if (ret != OC_STACK_OK)
     {
         promptUser = true;
-        OC_LOG_V(ERROR, TAG, "OCDoResource returns error %d with method %d", ret, method);
+        OIC_LOG_V(ERROR, TAG, "OCDoResource returns error %d with method %d", ret, method);
     }
     return ret;
 }
@@ -146,30 +146,30 @@ OCStackApplicationResult responseCallbacks(void* ctx,
     (void) ctx;
     if (clientResponse == NULL)
     {
-        OC_LOG(INFO, TAG, "responseCallbacks received NULL clientResponse");
+        OIC_LOG(INFO, TAG, "responseCallbacks received NULL clientResponse");
         return   OC_STACK_DELETE_TRANSACTION;
     }
 
-    OC_LOG_PAYLOAD(INFO, clientResponse->payload);
+    OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
     promptUser = true;
     return OC_STACK_KEEP_TRANSACTION;
 }
 
 int InitGetRequest(const char *resourceUri)
 {
-    OC_LOG_V(INFO, TAG, "Executing %s for resource: %s", __func__, resourceUri);
+    OIC_LOG_V(INFO, TAG, "Executing %s for resource: %s", __func__, resourceUri);
     return (InvokeOCDoResource(resourceUri, NULL, OC_REST_GET, responseCallbacks));
 }
 
 int InitPutRequest(const char *resourceUri, OCPayload* payload)
 {
-    OC_LOG_V(INFO, TAG, "Executing %s for resource: %s", __func__, resourceUri);
+    OIC_LOG_V(INFO, TAG, "Executing %s for resource: %s", __func__, resourceUri);
     return (InvokeOCDoResource(resourceUri, payload, OC_REST_PUT, responseCallbacks));
 }
 
 int InitObserveRequest(const char *resourceUri)
 {
-    OC_LOG_V(INFO, TAG, "Executing %s for resource: %s", __func__, resourceUri);
+    OIC_LOG_V(INFO, TAG, "Executing %s for resource: %s", __func__, resourceUri);
     return (InvokeOCDoResource(resourceUri, NULL, OC_REST_OBSERVE, responseCallbacks));
 }
 
@@ -178,7 +178,7 @@ OCPayload * getSwitchStatePayload(bool state)
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
     {
-       OC_LOG(ERROR, TAG, "Failed to create payload object");
+       OIC_LOG(ERROR, TAG, "Failed to create payload object");
        exit(1);
     }
     OCRepPayloadSetPropBool(payload, "value", state);
@@ -190,18 +190,19 @@ OCPayload* getChangeBulbTempLevelPayload(uint32_t level)
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
     {
-        OC_LOG(ERROR, TAG, "Failed to create payload object");
+        OIC_LOG(ERROR, TAG, "Failed to create payload object");
         exit(1);
     }
 
-    OC_LOG_V(INFO, TAG, "Setting level to : %u", level);
+    OIC_LOG_V(INFO, TAG, "Setting level to : %u", level);
     char value[4] = "";
     errno = 0;
     size_t sizeValue = sizeof(value);
     int strRet = snprintf(value, sizeValue, "%d", level);
-    if (strRet < 0 || strRet >= sizeValue)
+
+    if (strRet < 0 || strRet >= (int)sizeValue)
     {
-        OC_LOG_V(ERROR, TAG, "Failed to parse string due to errno: %d", errno);
+        OIC_LOG_V(ERROR, TAG, "Failed to parse string due to errno: %d", errno);
         exit(1);
     }
     OCRepPayloadSetPropString(payload, "colourspacevalue", value);
@@ -213,11 +214,11 @@ OCPayload* getChangeDimLevelPayload(uint32_t level)
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
     {
-        OC_LOG(ERROR, TAG, "Failed to create payload object");
+        OIC_LOG(ERROR, TAG, "Failed to create payload object");
         exit(1);
     }
 
-    OC_LOG_V(INFO, TAG, "Setting level to : %u", level);
+    OIC_LOG_V(INFO, TAG, "Setting level to : %u", level);
     OCRepPayloadSetPropInt(payload, "dimmingSetting", level);
     return (OCPayload*) payload;
 }
@@ -229,12 +230,12 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle handle,
     (void) ctx;
     if (!clientResponse)
     {
-        OC_LOG(INFO, TAG, "Discovery response is NULL");
+        OIC_LOG(INFO, TAG, "Discovery response is NULL");
         return OC_STACK_KEEP_TRANSACTION;
     }
 
-    OC_LOG_PAYLOAD(INFO, clientResponse->payload);
-    OC_LOG_V(INFO, TAG, "Discovered @ %s:%d", clientResponse->devAddr.addr,
+    OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
+    OIC_LOG_V(INFO, TAG, "Discovered @ %s:%d", clientResponse->devAddr.addr,
                                 clientResponse->devAddr.port);
 
     destinationAddress = clientResponse->devAddr;
@@ -251,7 +252,7 @@ OCPayload* getCustomPutPayload()
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
     {
-        OC_LOG(ERROR, TAG, "Failed to create payload object");
+        OIC_LOG(ERROR, TAG, "Failed to create payload object");
         exit(1);
     }
 
@@ -306,7 +307,7 @@ OCPayload* getCustomPutPayload()
         }
         else
         {
-            OC_LOG(ERROR, TAG, "Invalid entry. Stopping accepting key-values");
+            OIC_LOG(ERROR, TAG, "Invalid entry. Stopping accepting key-values");
             OCRepPayloadDestroy(payload);
             promptUser = true;
             return NULL;
@@ -349,7 +350,7 @@ void processUserInput(int resourceNo, int testCase)
             }
             else
             {
-                OC_LOG(ERROR, TAG, "Error creating payload. Not sending PUT request");
+                OIC_LOG(ERROR, TAG, "Error creating payload. Not sending PUT request");
                 promptUser = true;
             }
             break;
@@ -406,7 +407,7 @@ void processUserInput(int resourceNo, int testCase)
 
         default:
             promptUser = true;
-            OC_LOG(INFO, TAG, "Invalid test case");
+            OIC_LOG(INFO, TAG, "Invalid test case");
     }
 }
 
@@ -451,7 +452,7 @@ OCStackResult DiscoverResources()
 
     if (ret != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCDoResource error");
+        OIC_LOG(ERROR, TAG, "OCDoResource error");
     }
     return ret;
 }
@@ -479,12 +480,12 @@ int main(int argc, char* argv[])
     (void) argc;
     (void) argv;
     OCStackResult result;
-    OC_LOG(INFO, TAG, "Initializing IoTivity...");
+    OIC_LOG(INFO, TAG, "Initializing IoTivity...");
 
     result = OCInit(NULL, 0, OC_CLIENT);
     if (result != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "OCInit Failed %d", result);
+        OIC_LOG_V(ERROR, TAG, "OCInit Failed %d", result);
         return -1;
     }
 
@@ -492,18 +493,18 @@ int main(int argc, char* argv[])
 
     if (signal(SIGINT, processCancel) == SIG_ERR)
     {
-        OC_LOG(ERROR, TAG, "Unable to catch SIGINT, terminating...");
+        OIC_LOG(ERROR, TAG, "Unable to catch SIGINT, terminating...");
     }
     else
     {
-        OC_LOG(INFO, TAG, "Press Ctrl-C to terminate");
+        OIC_LOG(INFO, TAG, "Press Ctrl-C to terminate");
         // Loop until sigint
         while (!processSignal(false) && result == OC_STACK_OK)
         {
             result = OCProcess();
             if (result != OC_STACK_OK)
             {
-                OC_LOG_V(ERROR, TAG, "OCProcess Failed: %d", result);
+                OIC_LOG_V(ERROR, TAG, "OCProcess Failed: %d", result);
                 break;
             }
 
@@ -515,11 +516,11 @@ int main(int argc, char* argv[])
         }
     }
 
-    OC_LOG(INFO, TAG, "Stopping IoTivity...");
+    OIC_LOG(INFO, TAG, "Stopping IoTivity...");
     result = OCStop();
     if (result != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "OCStop Failed: %d", result);
+        OIC_LOG_V(ERROR, TAG, "OCStop Failed: %d", result);
     }
 
     return 0;

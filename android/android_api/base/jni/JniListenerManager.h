@@ -27,6 +27,9 @@
 #define _JniListenerManager
 
 class JniOcResource;
+#ifdef WITH_CLOUD
+class JniOcAccountManager;
+#endif
 
 template <class T>
 class JniListenerManager
@@ -51,6 +54,7 @@ public:
                 break;
             }
         }
+
         if (!onEventListener)
         {
             onEventListener = new T(env, jListener, owner);
@@ -66,12 +70,62 @@ public:
             {
                 LOGD("OnEventListener: Failed to create global listener ref.");
                 delete onEventListener;
+                m_mapMutex.unlock();
+                return nullptr;
             }
             LOGD("OnEventListener: new listener");
         }
+
         m_mapMutex.unlock();
         return onEventListener;
     }
+
+#ifdef WITH_CLOUD
+    T* addListener(JNIEnv* env, jobject jListener, JniOcAccountManager* owner)
+    {
+        T *onEventListener = nullptr;
+
+        m_mapMutex.lock();
+
+        for (auto it = m_listenerMap.begin(); it != m_listenerMap.end(); ++it)
+        {
+            if (env->IsSameObject(jListener, it->first))
+            {
+                auto refPair = it->second;
+                onEventListener = refPair.first;
+                refPair.second++;
+                it->second = refPair;
+                m_listenerMap.insert(*it);
+                LOGD("OnEventListener: ref. count is incremented");
+                break;
+            }
+        }
+
+        if (!onEventListener)
+        {
+            onEventListener = new T(env, jListener, owner);
+            jobject jgListener = env->NewGlobalRef(jListener);
+
+            if (jgListener)
+            {
+                m_listenerMap.insert(
+                        std::pair<jobject,
+                        std::pair<T*, int>>(jgListener, std::pair<T*, int>(onEventListener, 1)));
+            }
+            else
+            {
+                LOGD("OnEventListener: Failed to create global listener ref.");
+                delete onEventListener;
+                m_mapMutex.unlock();
+                return nullptr;
+            }
+            LOGD("OnEventListener: new listener");
+        }
+
+        m_mapMutex.unlock();
+        return onEventListener;
+    }
+#endif
 
     void removeListener(JNIEnv* env, jobject jListener)
     {
@@ -94,7 +148,6 @@ public:
                     T* listener = refPair.first;
                     delete listener;
                     m_listenerMap.erase(it);
-
                     LOGI("OnEventListener is removed");
                 }
                 break;
@@ -106,6 +159,7 @@ public:
     void removeAllListeners(JNIEnv* env)
     {
         m_mapMutex.lock();
+        LOGI("All listeners are removed");
 
         for (auto& pair : m_listenerMap)
         {

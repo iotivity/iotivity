@@ -33,13 +33,21 @@
  * Maximum length of the URI supported by client/server while processing
  * REST requests/responses.
  */
+#ifdef ARDUINO
 #define MAX_URI_LENGTH (64)
+#else
+#define MAX_URI_LENGTH (256)
+#endif
 
 /**
  * Maximum length of the query supported by client/server while processing
  * REST requests/responses.
  */
+#ifdef ARDUINO
 #define MAX_QUERY_LENGTH (64)
+#else
+#define MAX_QUERY_LENGTH (256)
+#endif
 
 /**
  * Maximum length of the Manufacturer name supported by the server
@@ -63,12 +71,20 @@
  *  Maximum number of vendor specific header options an application can set or receive
  *  in PDU
  */
+#ifdef ARDUINO
 #define MAX_HEADER_OPTIONS (2)
+#else
+#define MAX_HEADER_OPTIONS (50)
+#endif
 
 /**
  *  Maximum Length of the vendor specific header option
  */
+#ifdef ARDUINO
 #define MAX_HEADER_OPTION_DATA_LENGTH (20)
+#else
+#define MAX_HEADER_OPTION_DATA_LENGTH (1024)
+#endif
 
 /**
  * Sets the time to live (TTL) for response callback(s).

@@ -22,83 +22,69 @@
 # ThingsManager Unit Test build script
 ##
 import os
-Import('env')
 
-if env.get('RELEASE'):
-        env.AppendUnique(CCFLAGS = ['-Os'])
-        env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+# SConscript file for Local PKI google tests
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+lib_env = gtest_env.Clone()
+target_os = lib_env.get('TARGET_OS')
+
+if lib_env.get('RELEASE'):
+    lib_env.AppendUnique(CCFLAGS = ['-Os'])
+    lib_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
-        env.AppendUnique(CCFLAGS = ['-g'])
+    lib_env.AppendUnique(CCFLAGS = ['-g'])
 
-if env.get('LOGGING'):
-        env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+if lib_env.get('LOGGING'):
+    lib_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 # Add third party libraries
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 
-target_os = env.get('TARGET_OS')
-if target_os == 'linux':
-        # Verify that 'google unit test' library is installed.  If not,
-        # get it and install it
-        SConscript(env.get('SRC_DIR') + '/extlibs/gtest/SConscript')
-
-        # Verify that 'hippomocks' mocking code is installed.  If not,
-        # get it and install it
-        SConscript(env.get('SRC_DIR') + '/extlibs/hippomocks.scons')
+if target_os in ['linux']:
+    # Verify that 'hippomocks' mocking code is installed.
+    # If not, get it and install it
+    SConscript('#extlibs/hippomocks.scons')
 
 ThingsManager_gtest_env = lib_env.Clone()
 
 ######################################################################
 #unit test setting
 ######################################################################
-src_dir = lib_env.get('SRC_DIR')
-gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
+src_dir = ThingsManager_gtest_env.get('SRC_DIR')
 
 ######################################################################
 # Build flags
 ######################################################################
-gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
-gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
-
 ThingsManager_gtest_env.AppendUnique(
         CPPPATH = [
                 src_dir + '/extlibs/hippomocks-master',
-                src_dir + '/extlibs/gtest/gtest-1.7.0/include',
                 '../sdk/inc',
                 '../../../extlibs/timer'
         ])
 
-if target_os not in ['windows', 'winrt']:
-        ThingsManager_gtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
-        if target_os != 'android':
-                ThingsManager_gtest_env.AppendUnique(CXXFLAGS = ['-pthread'])
-                ThingsManager_gtest_env.AppendUnique(LIBS = ['pthread'])
-
 ThingsManager_gtest_env.PrependUnique(LIBS = [
     'libTGMSDKLibrary',
-    'oc',
-    'octbstack',
+    'coap',
+    'connectivity_abstraction',
     'oc_logger',
     'oc_logger_core',
-    'connectivity_abstraction',
-    gtest,
-    gtest_main])
+    'oc',
+    'octbstack'])
 
-ThingsManager_gtest_env.AppendUnique(LIBS = ['dl'])
-
+if ThingsManager_gtest_env.get('SECURED') == '1':
+	if ThingsManager_gtest_env.get('WITH_TCP') == True:
+		ThingsManager_gtest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 ######################################################################
 # Build Test
 ######################################################################
-ThingsManager_gtest_src = env.Glob('./*.cpp')
+ThingsManager_gtest_src = ThingsManager_gtest_env.Glob('./*.cpp')
 
 ThingsManagerTest = ThingsManager_gtest_env.Program('ThingsManagerTest', ThingsManager_gtest_src)
 Alias("ThingsManagerTest", ThingsManagerTest)
-env.AppendTarget('ThingsManagerTest')
+ThingsManager_gtest_env.AppendTarget('ThingsManagerTest')
 
-if env.get('TEST') == '1':
-    target_os = env.get('TARGET_OS')
-    if target_os == 'linux':
+if ThingsManager_gtest_env.get('TEST') == '1':
+    if target_os in ['linux']:
         from tools.scons.RunTest import *
         run_test(ThingsManager_gtest_env, '',
                 'service/things-manager/unittests/ThingsManagerTest')

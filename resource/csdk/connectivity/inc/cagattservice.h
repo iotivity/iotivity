@@ -46,7 +46,7 @@
  * OIC Transport Profile GATT request characteristic user description
  * descriptor value.
  */
-#define CA_GATT_REQUEST_USER_DESCRIPTION "OIC Node Request"
+#define CA_GATT_REQUEST_USER_DESCRIPTION "OCF Node Request"
 
 /// OIC Transport Profile GATT response characteristic UUID.
 #define CA_GATT_RESPONSE_CHRC_UUID "E9241982-4580-42C4-8831-95048216B256"
@@ -55,7 +55,7 @@
  * OIC Transport Profile GATT response characteristic user description
  * descriptor value.
  */
-#define CA_GATT_RESPONSE_USER_DESCRIPTION "OIC Node Response"
+#define CA_GATT_RESPONSE_USER_DESCRIPTION "OCF Node Response"
 
 /**
  * Standard Bluetooth GATT client characteristic configuration

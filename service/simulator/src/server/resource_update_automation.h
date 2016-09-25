@@ -21,36 +21,41 @@
 #ifndef RESOURCE_UPDATE_AUTOMATION_H_
 #define RESOURCE_UPDATE_AUTOMATION_H_
 
-#include "simulator_single_resource.h"
-#include "attribute_generator.h"
 #include <thread>
+#include <condition_variable>
+#include <atomic>
 
+#include "attribute_generator.h"
+#include "simulator_single_resource.h"
+
+class SimulatorSingleResourceImpl;
 class AttributeUpdateAutomation
 {
     public:
-        AttributeUpdateAutomation(int id, SimulatorSingleResource *resource,
-                                  const SimulatorResourceModel::Attribute &attribute,
-                                  AutomationType type, int interval,
-                                  updateCompleteCallback callback,
+        AttributeUpdateAutomation(int id, std::shared_ptr<SimulatorSingleResourceImpl> resource,
+                                  const std::string &name, AutoUpdateType type, int interval,
+                                  const SimulatorSingleResource::AutoUpdateCompleteCallback &callback,
                                   std::function<void (const int)> finishedCallback);
 
+        ~AttributeUpdateAutomation();
         void start();
-
         void stop();
 
     private:
-        void updateAttribute();
+        void updateAttribute(SimulatorResourceAttribute attribute);
 
-        SimulatorSingleResource *m_resource;
-        std::string m_attrName;
-        AutomationType m_type;
         int m_id;
-        bool m_stopRequested;
+        std::string m_attrName;
+        AutoUpdateType m_type;
         int m_updateInterval;
-        AttributeGenerator m_attributeGen;
-        updateCompleteCallback m_callback;
+        bool m_stopRequested;
+        std::shared_ptr<SimulatorSingleResourceImpl> m_resource;
+        SimulatorSingleResource::AutoUpdateCompleteCallback m_callback;
         std::function<void (const int)> m_finishedCallback;
-        std::thread *m_thread;
+        std::unique_ptr<std::thread> m_thread;
+
+        std::mutex m_lock;
+        std::condition_variable m_condVariable;
 };
 
 typedef std::shared_ptr<AttributeUpdateAutomation> AttributeUpdateAutomationSP;
@@ -58,26 +63,29 @@ typedef std::shared_ptr<AttributeUpdateAutomation> AttributeUpdateAutomationSP;
 class ResourceUpdateAutomation
 {
     public:
-        ResourceUpdateAutomation(int id, SimulatorSingleResource *resource,
-                                 AutomationType type, int interval,
-                                 updateCompleteCallback callback,
+        ResourceUpdateAutomation(int id, std::shared_ptr<SimulatorSingleResourceImpl> resource,
+                                 AutoUpdateType type, int interval,
+                                 const SimulatorSingleResource::AutoUpdateCompleteCallback &callback,
                                  std::function<void (const int)> finishedCallback);
 
+        ~ResourceUpdateAutomation();
         void start();
-
         void stop();
 
     private:
-        void updateAttributes(std::vector<SimulatorResourceModel::Attribute> attributes);
+        void updateAttributes(std::vector<SimulatorResourceAttribute> attributes);
 
-        SimulatorSingleResource *m_resource;
-        AutomationType m_type;
         int m_id;
-        bool m_stopRequested;
+        AutoUpdateType m_type;
         int m_updateInterval;
-        updateCompleteCallback m_callback;
+        bool m_stopRequested;
+        std::shared_ptr<SimulatorSingleResourceImpl> m_resource;
+        SimulatorSingleResource::AutoUpdateCompleteCallback m_callback;
         std::function<void (const int)> m_finishedCallback;
-        std::thread *m_thread;
+        std::unique_ptr<std::thread> m_thread;
+
+        std::mutex m_lock;
+        std::condition_variable m_condVariable;
 };
 
 typedef std::shared_ptr<ResourceUpdateAutomation> ResourceUpdateAutomationSP;

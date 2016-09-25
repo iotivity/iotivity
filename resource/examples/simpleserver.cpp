@@ -22,20 +22,29 @@
 /// This sample provides steps to define an interface for a resource
 /// (properties and methods) and host this resource on the server.
 ///
+#include "iotivity_config.h"
 
 #include <functional>
-
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include <mutex>
 #include <condition_variable>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 
 using namespace OC;
 using namespace std;
 namespace PH = std::placeholders;
 
+static const char* SVR_DB_FILE_NAME = "./oic_svr_db_server.dat";
 int gObservation = 0;
 void * ChangeLightRepresentation (void *param);
 void * handleSlowResponse (void *param, std::shared_ptr<OCResourceRequest> pRequest);
@@ -240,9 +249,9 @@ public:
         }
     }
 
-    void addInterface(const std::string& interface) const
+    void addInterface(const std::string& iface) const
     {
-        OCStackResult result = OCPlatform::bindInterfaceToResource(m_resourceHandle, interface);
+        OCStackResult result = OCPlatform::bindInterfaceToResource(m_resourceHandle, iface);
         if (OC_STACK_OK != result)
         {
             cout << "Binding TypeName to Resource was unsuccessful\n";
@@ -371,7 +380,12 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
                                                             m_interestedObservers.end());
             }
 
+#if defined(_WIN32)
+            DWORD threadId = 0;
+            HANDLE threadHandle = INVALID_HANDLE_VALUE;
+#else
             pthread_t threadId;
+#endif
 
             cout << "\t\trequestFlag : Observer\n";
             gObservation = 1;
@@ -381,7 +395,11 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
             // If we have not created the thread already, we will create one here.
             if(!startedThread)
             {
+#if defined(_WIN32)
+                threadHandle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ChangeLightRepresentation, (void*)this, 0, &threadId);
+#else
                 pthread_create (&threadId, NULL, ChangeLightRepresentation, (void *)this);
+#endif
                 startedThread = 1;
             }
             ehResult = OC_EH_OK;
@@ -484,7 +502,7 @@ void PrintUsage()
 
 static FILE* client_open(const char* /*path*/, const char *mode)
 {
-    return fopen("./oic_svr_db_server.json", mode);
+    return fopen(SVR_DB_FILE_NAME, mode);
 }
 
 int main(int argc, char* argv[])

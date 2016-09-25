@@ -11,7 +11,53 @@ diff -rupN ./libraries/Ethernet/src/Ethernet.cpp ./arduino-1.5.8/libraries/Ether
  {
 -  static DhcpClass s_dhcp;
    _dhcp = &s_dhcp;
+   
+
+diff -rupN ./libraries/Ethernet/src/EthernetClient.cpp ./arduino-1.5.8/libraries/Ethernet/src/EthernetClient.cpp
+--- ./libraries/Ethernet/src/EthernetClient.cpp	2014-10-01 20:45:35.000000000 +0530
++++ ./arduino-1.5.8/libraries/Ethernet/src/EthernetClient.cpp	2015-02-05 15:51:09.000000000 +0530
+@@ -92,6 +92,16 @@ int EthernetClient::available() {
+   return 0;
+ }
  
++void EthernetClient::getTCPClientIP(uint8_t *addr) {
++  if (_sock != MAX_SOCK_NUM)
++    W5100.readSnDIPR(_sock, addr);
++}
++
++void EthernetClient::getTCPClientPort(uint16_t *port) {
++  if (_sock != MAX_SOCK_NUM)
++    W5100.readSnDPORT(_sock);
++}
++
+ int EthernetClient::read() {
+   uint8_t b;
+   if ( recv(_sock, &b, 1) > 0 )
+diff -rupN ./libraries/Ethernet/src/EthernetClient.h ./arduino-1.5.8/libraries/Ethernet/src/EthernetClient.h
+--- ./libraries/Ethernet/src/EthernetClient.h	2014-10-01 20:45:35.000000000 +0530
++++ ./arduino-1.5.8/libraries/Ethernet/src/EthernetClient.h	2015-02-05 15:51:09.000000000 +0530
+@@ -1,6 +1,6 @@
+ #ifndef ethernetclient_h
+ #define ethernetclient_h
+-#include "Arduino.h"	
++#include "Arduino.h"
+ #include "Print.h"
+ #include "Client.h"
+ #include "IPAddress.h"
+@@ -26,9 +26,11 @@ public:
+   virtual operator bool();
+   virtual bool operator==(const EthernetClient&);
+   virtual bool operator!=(const EthernetClient& rhs) { return !this->operator==(rhs); };
++  virtual void getTCPClientIP(uint8_t *addr);
++  virtual void getTCPClientPort(uint16_t *port);
+ 
+   friend class EthernetServer;
+-  
++
+   using Print::write;
+
+ private:
+
  
 diff -rupN ./libraries/Ethernet/src/utility/socket.cpp ./arduino-1.5.8/libraries/Ethernet/src/utility/socket.cpp
 --- ./libraries/Ethernet/src/utility/socket.cpp	2014-10-01 20:45:35.000000000 +0530

@@ -19,7 +19,12 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "rd_storage.h"
 
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <string.h>
 
 #include "payload_logging.h"
@@ -30,13 +35,35 @@
 
 #define TAG  PCF("RDStorage")
 
-pthread_mutex_t storageMutex = PTHREAD_MUTEX_INITIALIZER;
-// This variable holds the published resources on the RD.
+// Mutex implementation macros
+#if defined(HAVE_PTHREAD_H)
+
+#include <pthread.h>
+pthread_mutex_t storageMutex;
+#define MUTEX_LOCK(ARG_NAME)    { pthread_mutex_lock(ARG_NAME); }
+#define MUTEX_UNLOCK(ARG_NAME)  { pthread_mutex_unlock(ARG_NAME); }
+
+#elif defined(HAVE_WINDOWS_H)
+
+#include <windows.h>
+CRITICAL_SECTION storageMutex;
+#define MUTEX_LOCK(ARG_NAME)   { EnterCriticalSection(ARG_NAME); }
+#define MUTEX_UNLOCK(ARG_NAME) { LeaveCriticalSection(ARG_NAME); }
+
+#else
+
+ERROR Need mutex implementation for this platform
+#define MUTEX_LOCK(ARG_NAME)   {  }
+#define MUTEX_UNLOCK(ARG_NAME) {  }
+
+#endif
+
+
 static OCRDStorePublishResources *g_rdStorage = NULL;
 
 static void printStoragedResources(OCRDStorePublishResources *payload)
 {
-    OC_LOG(DEBUG, TAG, "Print Storage Resources ... ");
+    OIC_LOG(DEBUG, TAG, "Print Storage Resources ... ");
     for (OCRDStorePublishResources *temp = payload; temp; temp = temp->next)
     {
         if (temp->publishedResource)
@@ -52,18 +79,18 @@ OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *pay
     OCResourceCollectionPayload *storeResource = (OCResourceCollectionPayload *)OICCalloc(1, sizeof(OCResourceCollectionPayload));
     if (!storeResource)
     {
-        OC_LOG(ERROR, TAG, "Failed allocating memory for OCRDStorePublishResources.");
+        OIC_LOG(ERROR, TAG, "Failed allocating memory for OCRDStorePublishResources.");
         return OC_STACK_NO_MEMORY;
     }
 
-    OC_LOG_V(DEBUG, TAG, "Storing Resources for %s:%u", address->addr, address->port);
+    OIC_LOG_V(DEBUG, TAG, "Storing Resources for %s:%u", address->addr, address->port);
 
     OCTagsPayload *tags = payload->tags;
     storeResource->tags = OCCopyTagsResources(tags->n.deviceName, tags->di.id, tags->baseURI,
         tags->bitmap, address->port, tags->ins, tags->rts, tags->drel, tags->ttl);
     if (!storeResource->tags)
     {
-        OC_LOG(ERROR, TAG, "Failed allocating memory for tags.");
+        OIC_LOG(ERROR, TAG, "Failed allocating memory for tags.");
         OCFreeCollectionResource(storeResource);
         return OC_STACK_NO_MEMORY;
     }
@@ -76,7 +103,7 @@ OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *pay
                 links->rel, links->obs, links->title, links->uri, links->ins, links->mt);
             if (!storeResource->setLinks)
             {
-                OC_LOG(ERROR, TAG, "Failed allocating memory for links.");
+                OIC_LOG(ERROR, TAG, "Failed allocating memory for links.");
                 OCFreeCollectionResource(storeResource);
                 return OC_STACK_NO_MEMORY;
             }
@@ -92,7 +119,7 @@ OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *pay
                 links->obs, links->title, links->uri, links->ins, links->mt);
             if (!temp->next)
             {
-                OC_LOG(ERROR, TAG, "Failed allocating memory for links.");
+                OIC_LOG(ERROR, TAG, "Failed allocating memory for links.");
                 OCFreeCollectionResource(storeResource);
                 return OC_STACK_NO_MEMORY;
             }
@@ -109,7 +136,7 @@ OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *pay
     resources->publishedResource = storeResource;
     resources->devAddr = *address;
 
-    pthread_mutex_lock(&storageMutex);
+    MUTEX_LOCK(&storageMutex);
     if (g_rdStorage)
     {
         OCRDStorePublishResources *temp = g_rdStorage;
@@ -123,7 +150,7 @@ OCStackResult OCRDStorePublishedResources(const OCResourceCollectionPayload *pay
     {
         g_rdStorage = resources;
     }
-    pthread_mutex_unlock(&storageMutex);
+    MUTEX_UNLOCK(&storageMutex);
 
     printStoragedResources(g_rdStorage);
     return OC_STACK_OK;
@@ -136,11 +163,11 @@ OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *
     // not null it will continue execution.
     if (!resourceType && !interfaceType)
     {
-        OC_LOG(DEBUG, TAG, "Missing resource type or interace type.");
+        OIC_LOG(DEBUG, TAG, "Missing resource type or interace type.");
         return OC_STACK_INVALID_PARAM;
     }
 
-    OC_LOG(DEBUG, TAG, "Check Resource in RD");
+    OIC_LOG(DEBUG, TAG, "Check Resource in RD");
     if (g_rdStorage && g_rdStorage->publishedResource)
     {
         for (OCRDStorePublishResources *pResource = g_rdStorage;
@@ -153,7 +180,7 @@ OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *
                     // If either rt or itf are NULL, it should skip remaining code execution.
                     if (!tLinks->rt || !tLinks->itf)
                     {
-                        OC_LOG(DEBUG, TAG, "Either resource type or interface type is missing.");
+                        OIC_LOG(DEBUG, TAG, "Either resource type or interface type is missing.");
                         continue;
                     }
                     if (resourceType)
@@ -161,7 +188,7 @@ OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *
                         OCStringLL *temp = tLinks->rt;
                         while(temp)
                         {
-                            OC_LOG_V(DEBUG, TAG, "Resource Type: %s %s", resourceType, temp->value);
+                            OIC_LOG_V(DEBUG, TAG, "Resource Type: %s %s", resourceType, temp->value);
                             if (strcmp(resourceType, temp->value) == 0)
                             {
                                 OCTagsPayload *tag = pResource->publishedResource->tags;
@@ -196,7 +223,7 @@ OCStackResult OCRDCheckPublishedResource(const char *interfaceType, const char *
                         OCStringLL *temp = tLinks->itf;
                         while (temp)
                         {
-                            OC_LOG_V(DEBUG, TAG, "Interface Type: %s %s", interfaceType, temp->value);
+                            OIC_LOG_V(DEBUG, TAG, "Interface Type: %s %s", interfaceType, temp->value);
                             if (strcmp(interfaceType, temp->value) == 0)
                             {
                                 OCTagsPayload *tag = pResource->publishedResource->tags;

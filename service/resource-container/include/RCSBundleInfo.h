@@ -82,8 +82,16 @@ namespace OIC
                 */
                 virtual const std::string &getVersion() = 0;
 
-                RCSBundleInfo() { };
-                virtual ~RCSBundleInfo() { };
+                /**
+                * API for getting the activation status of the bundle
+                *
+                * @return activation status of the bundle
+                *
+                */
+                virtual bool isActivated() = 0;
+
+                RCSBundleInfo(){};
+                virtual ~RCSBundleInfo(){};
             protected:
                 std::string m_ID, m_path, m_version;
 

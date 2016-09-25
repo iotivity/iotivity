@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "RCSDiscoveryManager.h"
+
 #include "RCSDiscoveryManagerImpl.h"
 
 namespace OIC
@@ -25,18 +26,22 @@ namespace OIC
     namespace Service
     {
         RCSDiscoveryManager::DiscoveryTask::DiscoveryTask(unsigned int id) :
-                m_id { id }
-        {
-        }
+                m_id { id } {}
+
+        RCSDiscoveryManager::DiscoveryTask::~DiscoveryTask() = default;
 
         bool RCSDiscoveryManager::DiscoveryTask::isCanceled()
         {
-            return RCSDiscoveryManagerImpl::getInstance()->isCanceled(m_id);
+            return m_id == RCSDiscoveryManagerImpl::INVALID_ID;
         }
 
         void RCSDiscoveryManager::DiscoveryTask::cancel()
         {
+            if (isCanceled())
+                return;
+
             RCSDiscoveryManagerImpl::getInstance()->cancel(m_id);
+            m_id = RCSDiscoveryManagerImpl::INVALID_ID;
         }
 
         RCSDiscoveryManager* RCSDiscoveryManager::getInstance()
@@ -48,14 +53,16 @@ namespace OIC
         RCSDiscoveryManager::DiscoveryTask::Ptr RCSDiscoveryManager::discoverResource(
                 const RCSAddress& address, ResourceDiscoveredCallback cb)
         {
-            return discoverResourceByType(address, OC_RSRVD_WELL_KNOWN_URI, "", std::move(cb));
+            return discoverResourceByType(address, OC_RSRVD_WELL_KNOWN_URI,
+                    RCSDiscoveryManagerImpl::ALL_RESOURCE_TYPE, std::move(cb));
         }
 
         RCSDiscoveryManager::DiscoveryTask::Ptr RCSDiscoveryManager::discoverResource(
                 const RCSAddress& address, const std::string& relativeUri,
                 ResourceDiscoveredCallback cb)
         {
-            return discoverResourceByType(address, relativeUri, "", std::move(cb));
+            return discoverResourceByType(address, relativeUri,
+                    RCSDiscoveryManagerImpl::ALL_RESOURCE_TYPE, std::move(cb));
         }
 
         RCSDiscoveryManager::DiscoveryTask::Ptr RCSDiscoveryManager::discoverResourceByType(
@@ -66,12 +73,30 @@ namespace OIC
                     std::move(cb));
         }
 
+        RCSDiscoveryManager::DiscoveryTask::Ptr RCSDiscoveryManager::discoverResourceByTypes(
+                const RCSAddress& address, const std::vector< std::string >& resourceTypes,
+                ResourceDiscoveredCallback cb)
+        {
+            return discoverResourceByTypes(address, OC_RSRVD_WELL_KNOWN_URI, resourceTypes,
+                    std::move(cb));
+        }
+
         RCSDiscoveryManager::DiscoveryTask::Ptr RCSDiscoveryManager::discoverResourceByType(
                 const RCSAddress& address, const std::string& relativeUri,
                 const std::string& resourceType, ResourceDiscoveredCallback cb)
         {
+            return discoverResourceByTypes(address, relativeUri,
+                    std::vector< std::string >{ resourceType }, std::move(cb));
+        }
+
+        RCSDiscoveryManager::DiscoveryTask::Ptr RCSDiscoveryManager::discoverResourceByTypes(
+                const RCSAddress& address, const std::string& relativeUri,
+                const std::vector< std::string >& resourceTypes, ResourceDiscoveredCallback cb)
+        {
             return RCSDiscoveryManagerImpl::getInstance()->startDiscovery(address,
-                    relativeUri.empty() ? OC_RSRVD_WELL_KNOWN_URI : relativeUri, resourceType,
+                    relativeUri.empty() ? OC_RSRVD_WELL_KNOWN_URI : relativeUri,
+                    resourceTypes.empty() ? std::vector< std::string >{
+                            RCSDiscoveryManagerImpl::ALL_RESOURCE_TYPE } : resourceTypes,
                     std::move(cb));
         }
     }

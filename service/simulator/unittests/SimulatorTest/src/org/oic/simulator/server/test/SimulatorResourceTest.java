@@ -21,11 +21,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.oic.simulator.InvalidArgsException;
+import org.oic.simulator.NoSupportException;
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.SimulatorManager;
+import org.oic.simulator.SimulatorResourceModel;
 import org.oic.simulator.client.FindResourceListener;
 import org.oic.simulator.client.SimulatorRemoteResource;
 import org.oic.simulator.server.SimulatorResource;
+import org.oic.simulator.server.SimulatorSingleResource;
 import org.oic.simulator.test.ExceptionType;
 import org.oic.simulator.utils.ObjectHolder;
 
@@ -40,14 +43,6 @@ public class SimulatorResourceTest extends TestCase {
     private static final String RES_TYPE = "test.resource";
     private SimulatorResource   resource = null;
 
-    static {
-        System.loadLibrary("SimulatorManager");
-        System.loadLibrary("RamlParser");
-        System.loadLibrary("oc");
-        System.loadLibrary("oc_logger");
-        System.loadLibrary("octbstack");
-    }
-
     protected void setUp() throws Exception {
         super.setUp();
         resource = SimulatorManager.createResource(
@@ -57,6 +52,27 @@ public class SimulatorResourceTest extends TestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
         resource = null;
+    }
+
+    public void testIsCollection_P01() {
+        boolean isCollection = false;
+        isCollection = resource.isCollection();
+        assertFalse(isCollection);
+    }
+
+    public void testIsCollection_P02() {
+        boolean isCollection = true;
+
+        try {
+            SimulatorResource res = SimulatorManager.createResource(
+                    SimulatorResource.Type.COLLECTION, RES_NAME, RES_URI,
+                    RES_TYPE);
+            isCollection = res.isCollection();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
+        }
+
+        assertTrue(isCollection);
     }
 
     public void testGetName_P01() {
@@ -73,13 +89,7 @@ public class SimulatorResourceTest extends TestCase {
 
     public void testGetType_P01() {
         SimulatorResource.Type type = SimulatorResource.Type.SINGLE;
-
-        try {
-            type = resource.getType();
-        } catch (SimulatorException e) {
-            e.printStackTrace();
-        }
-
+        type = resource.getType();
         assertEquals(SimulatorResource.Type.SINGLE, type);
     }
 
@@ -258,6 +268,226 @@ public class SimulatorResourceTest extends TestCase {
         assertEquals(ExceptionType.INVALID_ARGS, exType);
     }
 
+    public void testSetInterface_P01() {
+        String newInterface = "oic.if.r";
+        Vector<String> interfaces = null;
+
+        try {
+            resource.setInterface(newInterface);
+            interfaces = resource.getInterface();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
+        }
+
+        assertNotNull(interfaces);
+        assertTrue(interfaces.size() == 1
+                && interfaces.get(0).equals(newInterface));
+    }
+
+    public void testSetInterface_N01() {
+        String newInterface = "";
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            resource.setInterface(newInterface);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
+
+        assertEquals(ExceptionType.INVALID_ARGS, exType);
+    }
+
+    public void testSetInterface_N02() {
+        String newInterface = null;
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            resource.setInterface(newInterface);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
+
+        assertEquals(ExceptionType.INVALID_ARGS, exType);
+    }
+
+    public void testSetInterface_N03() {
+        String newInterface = "oic.if.s";
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            resource.start();
+            resource.setInterface(newInterface);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
+
+        try {
+            resource.stop();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
+        }
+
+        assertEquals(ExceptionType.SIMULATOR, exType);
+    }
+
+    public void testSetInterfaces_P01() {
+        String interface1 = "oic.if.s";
+        String interface2 = "oic.if.a";
+        Vector<String> interfaces = null;
+        Vector<String> newInterfaces = new Vector<String>();
+        newInterfaces.add(interface1);
+        newInterfaces.add(interface2);
+        try {
+            resource.setInterface(newInterfaces);
+            interfaces = resource.getInterface();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
+        }
+
+        assertNotNull(interfaces);
+        assertTrue(interfaces.size() == 2 && interfaces.contains(interface1)
+                && interfaces.contains(interface2));
+    }
+
+    public void testSetInterfaces_N01() {
+        Vector<String> newInterfaces = new Vector<String>();
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            resource.setInterface(newInterfaces);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
+
+        assertEquals(ExceptionType.INVALID_ARGS, exType);
+    }
+
+    public void testSetInterfaces_N02() {
+        Vector<String> newInterfaces = null;
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            resource.setInterface(newInterfaces);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
+
+        assertEquals(ExceptionType.INVALID_ARGS, exType);
+    }
+
+    public void testSetInterfaces_N03() {
+        String interface1 = "oic.if.s";
+        String interface2 = "oic.if.a";
+        ExceptionType exType = ExceptionType.UNKNOWN;
+        Vector<String> newInterfaces = new Vector<String>();
+        newInterfaces.add(interface1);
+        newInterfaces.add(interface2);
+
+        try {
+            resource.start();
+            resource.setInterface(newInterfaces);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
+
+        try {
+            resource.stop();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
+        }
+
+        assertEquals(ExceptionType.SIMULATOR, exType);
+    }
+
+    public void testAddInterface_P01() {
+        String newInterface = "oic.if.rw";
+        Vector<String> interfaces = null;
+
+        try {
+            resource.addInterface(newInterface);
+            interfaces = resource.getInterface();
+        } catch (InvalidArgsException e) {
+            e.printStackTrace();
+        } catch (NoSupportException e) {
+            e.printStackTrace();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
+        }
+
+        assertNotNull(interfaces);
+        assertTrue(interfaces.contains(newInterface));
+    }
+
+    public void testAddInterface_N01() {
+        String newInterface = "";
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            resource.addInterface(newInterface);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (NoSupportException e) {
+            exType = ExceptionType.NOT_SUPPORTED;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
+
+        assertEquals(ExceptionType.INVALID_ARGS, exType);
+    }
+
+    public void testAddInterface_N02() {
+        String newInterface = null;
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            resource.addInterface(newInterface);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (NoSupportException e) {
+            exType = ExceptionType.NOT_SUPPORTED;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
+
+        assertEquals(ExceptionType.INVALID_ARGS, exType);
+    }
+
+    public void testAddInterface_N03() {
+        String newInterface = "oic.if.a";
+        ExceptionType exType = ExceptionType.UNKNOWN;
+
+        try {
+            SimulatorResource res = SimulatorManager.createResource(
+                    SimulatorResource.Type.COLLECTION, RES_NAME, RES_URI,
+                    RES_TYPE);
+            res.addInterface(newInterface);
+        } catch (InvalidArgsException e) {
+            exType = ExceptionType.INVALID_ARGS;
+        } catch (NoSupportException e) {
+            exType = ExceptionType.NOT_SUPPORTED;
+        } catch (SimulatorException e) {
+            exType = ExceptionType.SIMULATOR;
+        }
+
+        assertEquals(ExceptionType.NOT_SUPPORTED, exType);
+    }
+
     public void testSetObservable_P01() {
         boolean newState = true;
         boolean state = false;
@@ -284,6 +514,32 @@ public class SimulatorResourceTest extends TestCase {
         assertEquals(newState, state);
     }
 
+    public void testSetDiscoverable_P01() {
+        boolean newState = true;
+        boolean state = false;
+        try {
+            resource.setDiscoverable(newState);
+            state = resource.isDiscoverable();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
+        }
+
+        assertEquals(newState, state);
+    }
+
+    public void testSetDiscoverable_P02() {
+        boolean newState = false;
+        boolean state = true;
+        try {
+            resource.setDiscoverable(newState);
+            state = resource.isDiscoverable();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
+        }
+
+        assertEquals(newState, state);
+    }
+
     public void testIsObservable_P01() {
         boolean state = false;
 
@@ -294,6 +550,33 @@ public class SimulatorResourceTest extends TestCase {
         }
 
         assertEquals(true, state);
+    }
+
+    public void testIsDiscoverable_P01() {
+        boolean state = false;
+
+        try {
+            state = resource.isDiscoverable();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
+        }
+
+        assertEquals(true, state);
+    }
+
+    public void testGetResourceModel_P01() {
+        SimulatorResourceModel resModel = null;
+        String singleResourceRaml = "./ramls/oic.r.light.raml";
+        try {
+            SimulatorSingleResource resource = (SimulatorSingleResource) SimulatorManager
+                    .createResource(singleResourceRaml);
+            resModel = resource.getResourceModel();
+        } catch (SimulatorException e) {
+            e.printStackTrace();
+        }
+
+        assertNotNull(resModel);
+        assertTrue(resModel.size() > 0);
     }
 
     public void testIsStarted_P01() {

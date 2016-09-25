@@ -18,17 +18,29 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include "OCResource.h"
 #include "OCUtilities.h"
 
 #include <boost/lexical_cast.hpp>
 #include <sstream>
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif
+#ifdef HAVE_IN6ADDR_H
+#include <in6addr.h>
+#endif
 
 namespace OC {
 
 static const char COAP[] = "coap://";
 static const char COAPS[] = "coaps://";
 static const char COAP_TCP[] = "coap+tcp://";
+static const char COAP_GATT[] = "coap+gatt://";
+static const char COAP_RFCOMM[] = "coap+rfcomm://";
 
 using OC::nil_guard;
 using OC::result_guard;
@@ -36,12 +48,12 @@ using OC::checked_guard;
 
 OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                         const OCDevAddr& devAddr, const std::string& uri,
-                        const std::string& serverId, bool observable,
+                        const std::string& serverId, uint8_t property,
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri),
     m_resourceId(serverId, m_uri), m_devAddr(devAddr),
-    m_isObservable(observable), m_isCollection(false),
+    m_isCollection(false), m_property(property),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
 {
@@ -61,20 +73,20 @@ OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
 OCResource::OCResource(std::weak_ptr<IClientWrapper> clientWrapper,
                         const std::string& host, const std::string& uri,
                         const std::string& serverId,
-                        OCConnectivityType connectivityType, bool observable,
+                        OCConnectivityType connectivityType, uint8_t property,
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces)
  :  m_clientWrapper(clientWrapper), m_uri(uri),
     m_resourceId(serverId, m_uri),
-    m_devAddr{ OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0
-#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
-    , {0}
-#endif
-    },
-    m_isObservable(observable), m_isCollection(false),
+    m_isCollection(false), m_property(property),
     m_resourceTypes(resourceTypes), m_interfaces(interfaces),
     m_observeHandle(nullptr)
 {
+    m_devAddr = OCDevAddr{OC_DEFAULT_ADAPTER, OC_DEFAULT_FLAGS, 0, {0}, 0,
+#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+                          {0}
+#endif
+                        };
     m_isCollection = std::find(m_interfaces.begin(), m_interfaces.end(), LINK_INTERFACE)
                         != m_interfaces.end();
 
@@ -114,19 +126,26 @@ void OCResource::setHost(const std::string& host)
 {
     size_t prefix_len;
 
-    if(host.compare(0, sizeof(COAP) - 1, COAP) == 0)
+    if (host.compare(0, sizeof(COAP) - 1, COAP) == 0)
     {
         prefix_len = sizeof(COAP) - 1;
     }
-    else if(host.compare(0, sizeof(COAPS) - 1, COAPS) == 0)
+    else if (host.compare(0, sizeof(COAPS) - 1, COAPS) == 0)
     {
         prefix_len = sizeof(COAPS) - 1;
-        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags & OC_SECURE);
+        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags | OC_SECURE);
     }
     else if (host.compare(0, sizeof(COAP_TCP) - 1, COAP_TCP) == 0)
     {
         prefix_len = sizeof(COAP_TCP) - 1;
-        m_devAddr.adapter = static_cast<OCTransportAdapter>(m_devAddr.adapter & OC_ADAPTER_TCP);
+    }
+    else if (host.compare(0, sizeof(COAP_GATT) - 1, COAP_GATT) == 0)
+    {
+        prefix_len = sizeof(COAP_GATT) - 1;
+    }
+    else if (host.compare(0, sizeof(COAP_RFCOMM) - 1, COAP_RFCOMM) == 0)
+    {
+        prefix_len = sizeof(COAP_RFCOMM) - 1;
     }
     else
     {
@@ -134,66 +153,132 @@ void OCResource::setHost(const std::string& host)
             m_interfaces.empty(), m_clientWrapper.expired(), false, false);
     }
 
-    // removed coap:// or coaps:// or coap+tcp://
+    // remove 'coap://' or 'coaps://' or 'coap+tcp://' or 'coap+gatt://' or 'coap+rfcomm://'
     std::string host_token = host.substr(prefix_len);
 
-    if(host_token[0] == '[')
+    if (host_token[0] == '[') // IPv6
     {
-        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags & OC_IP_USE_V6);
+        size_t bracket = host_token.find(']');
 
-        size_t found = host_token.find(']');
-
-        if(found == std::string::npos || found == 0)
+        if (std::string::npos == bracket || 0 == bracket)
         {
             throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
                 m_interfaces.empty(), m_clientWrapper.expired(), false, false);
         }
-        // extract the ipaddress
-        std::string ip6Addr = host_token.substr(1, found-1);
+        // extract the ipv6 address
+        std::string ip6Addr = host_token.substr(1, bracket - 1);
 
-        if (ip6Addr.length() >= MAX_ADDR_STR_SIZE)
+        // address validity check
+        std::string ip6AddrToValidityCheck(ip6Addr);
+        size_t percent = ip6AddrToValidityCheck.find('%');
+        if (std::string::npos != percent)
         {
-            throw std::length_error("host address is too long.");
+            ip6AddrToValidityCheck.resize(percent);
+        }
+        struct in6_addr buf;
+        const char *cAddr = ip6AddrToValidityCheck.c_str();
+        if (0 == inet_pton(AF_INET6, cAddr, &buf))
+        {
+            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+        }
+
+        //skip ']' and ':' characters in host string
+        host_token = host_token.substr(bracket + 2);
+        int port = std::stoi(host_token);
+
+        if (0 > port || UINT16_MAX < port)
+        {
+            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                m_interfaces.empty(), m_clientWrapper.expired(), false, false);
         }
 
         ip6Addr.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
         m_devAddr.addr[ip6Addr.length()] = '\0';
-        //skip ']' and ':' characters in host string
-        host_token = host_token.substr(found + 2);
+        m_devAddr.port = static_cast<uint16_t>(port);
+        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags & OC_IP_USE_V6);
     }
-    else
-    {
-        size_t found = host_token.find(':');
-
-        if(found == std::string::npos || found == 0)
-        {
-            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
-                m_interfaces.empty(), m_clientWrapper.expired(), false, false);
-        }
-
-        std::string addrPart = host_token.substr(0, found);
-
-        if (addrPart.length() >= MAX_ADDR_STR_SIZE)
-        {
-            throw std::length_error("host address is too long.");
-        }
-
-        addrPart.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
-        m_devAddr.addr[addrPart.length()] = '\0';
-        //skip ':' character in host string
-        host_token = host_token.substr(found + 1);
-    }
-
-    int port = std::stoi(host_token);
-
-    if( port < 0 || port > UINT16_MAX )
+    else if (host_token[0] == ':')
     {
         throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
             m_interfaces.empty(), m_clientWrapper.expired(), false, false);
     }
+    else
+    {
+        size_t dot = host_token.find('.');
+        if (std::string::npos == dot) // MAC
+        {
+            std::string macAddr = host_token;
 
-    m_devAddr.port = static_cast<uint16_t>(port);
+            // address validity check
+            if (MAC_ADDR_STR_SIZE != macAddr.length())
+            {
+                throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                    m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+            }
 
+            for (size_t blockCnt = 0; blockCnt < MAC_ADDR_BLOCKS; blockCnt++)
+            {
+                std::string block = macAddr.substr(blockCnt * 3, 2);
+
+                if (std::string::npos != block.find_first_not_of("0123456789ABCDEFabcdef"))
+                {
+                    throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                        m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+                }
+
+                if (MAC_ADDR_BLOCKS - 1 > blockCnt)
+                {
+                    char delimiter = macAddr[blockCnt * 3 + 2];
+
+                    if (':' != delimiter)
+                    {
+                        throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                            m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+                    }
+                }
+            }
+
+            macAddr.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
+            m_devAddr.addr[MAC_ADDR_STR_SIZE] = '\0';
+        }
+        else // IPv4
+        {
+            size_t colon = host_token.find(':');
+
+            if (colon == std::string::npos || colon == 0)
+            {
+                throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                    m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+            }
+
+            // extract the ipv4 address
+            std::string ip4Addr = host_token.substr(0, colon);
+
+            // address validity check
+            struct in_addr buf;
+            const char *cAddr = ip4Addr.c_str();
+            if (0 == inet_pton(AF_INET, cAddr, &buf))
+            {
+                throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                    m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+            }
+
+            //skip ':' characters in host string
+            host_token = host_token.substr(colon + 1);
+            int port = std::stoi(host_token);
+
+            if (0 > port || UINT16_MAX < port)
+            {
+                throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                    m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+            }
+
+            ip4Addr.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
+            m_devAddr.addr[ip4Addr.length()] = '\0';
+            m_devAddr.port = static_cast<uint16_t>(port);
+        }
+    }
 }
 
 OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap,
@@ -202,7 +287,7 @@ OCStackResult OCResource::get(const QueryParamsMap& queryParametersMap,
     return checked_guard(m_clientWrapper.lock(),
                             &IClientWrapper::GetResourceRepresentation,
                             m_devAddr, m_uri,
-                            queryParametersMap, m_headerOptions,
+                            queryParametersMap, m_headerOptions, CT_DEFAULT,
                             attributeHandler, QoS);
 }
 
@@ -229,12 +314,12 @@ OCStackResult OCResource::get(const std::string& resourceType, const std::string
 {
     QueryParamsMap mapCpy(queryParametersMap);
 
-    if(!resourceType.empty())
+    if (!resourceType.empty())
     {
         mapCpy[OC::Key::RESOURCETYPESKEY]=resourceType;
     }
 
-    if(!resourceInterface.empty())
+    if (!resourceInterface.empty())
     {
         mapCpy[OC::Key::INTERFACESKEY]= resourceInterface;
     }
@@ -279,12 +364,12 @@ OCStackResult OCResource::put(const std::string& resourceType,
 {
     QueryParamsMap mapCpy(queryParametersMap);
 
-    if(!resourceType.empty())
+    if (!resourceType.empty())
     {
         mapCpy[OC::Key::RESOURCETYPESKEY]=resourceType;
     }
 
-    if(!resourceInterface.empty())
+    if (!resourceInterface.empty())
     {
         mapCpy[OC::Key::INTERFACESKEY]=resourceInterface;
     }
@@ -298,7 +383,7 @@ OCStackResult OCResource::post(const OCRepresentation& rep,
 {
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PostResourceRepresentation,
                          m_devAddr, m_uri, rep, queryParametersMap,
-                         m_headerOptions, attributeHandler, QoS);
+                         m_headerOptions, CT_DEFAULT, attributeHandler, QoS);
 }
 
 OCStackResult OCResource::post(const OCRepresentation& rep,
@@ -329,12 +414,12 @@ OCStackResult OCResource::post(const std::string& resourceType,
 {
     QueryParamsMap mapCpy(queryParametersMap);
 
-    if(!resourceType.empty())
+    if (!resourceType.empty())
     {
         mapCpy[OC::Key::RESOURCETYPESKEY]=resourceType;
     }
 
-    if(!resourceInterface.empty())
+    if (!resourceInterface.empty())
     {
         mapCpy[OC::Key::INTERFACESKEY]=resourceInterface;
     }
@@ -345,7 +430,7 @@ OCStackResult OCResource::post(const std::string& resourceType,
 OCStackResult OCResource::deleteResource(DeleteCallback deleteHandler, QualityOfService QoS)
 {
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::DeleteResource,
-                         m_devAddr, m_uri, m_headerOptions, deleteHandler, QoS);
+                         m_devAddr, m_uri, m_headerOptions, CT_DEFAULT, deleteHandler, QoS);
 }
 
 OCStackResult OCResource::deleteResource(DeleteCallback deleteHandler)
@@ -360,11 +445,6 @@ OCStackResult OCResource::observe(ObserveType observeType,
         const QueryParamsMap& queryParametersMap, ObserveCallback observeHandler,
         QualityOfService QoS)
 {
-    if(m_observeHandle != nullptr)
-    {
-        return result_guard(OC_STACK_INVALID_PARAM);
-    }
-
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::ObserveResource,
                          observeType, &m_observeHandle, m_devAddr,
                          m_uri, queryParametersMap, m_headerOptions,
@@ -389,16 +469,16 @@ OCStackResult OCResource::cancelObserve()
 
 OCStackResult OCResource::cancelObserve(QualityOfService QoS)
 {
-    if(m_observeHandle == nullptr)
+    if (m_observeHandle == nullptr)
     {
         return result_guard(OC_STACK_INVALID_PARAM);
     }
 
     OCStackResult result =  checked_guard(m_clientWrapper.lock(),
             &IClientWrapper::CancelObserveResource,
-            m_observeHandle, "", m_uri, m_headerOptions, QoS);
+            m_observeHandle, (const char*)"", m_uri, m_headerOptions, QoS);
 
-    if(result == OC_STACK_OK)
+    if (result == OC_STACK_OK)
     {
         m_observeHandle = nullptr;
     }
@@ -419,18 +499,31 @@ void OCResource::unsetHeaderOptions()
 std::string OCResource::host() const
 {
     std::ostringstream ss;
-    if (m_devAddr.flags & OC_SECURE)
-    {
-        ss << COAPS;
-    }
-    else if (m_devAddr.adapter & OC_ADAPTER_TCP)
+
+    if (m_devAddr.adapter & OC_ADAPTER_TCP)
     {
         ss << COAP_TCP;
     }
+    else if (m_devAddr.adapter & OC_ADAPTER_GATT_BTLE)
+    {
+        ss << COAP_GATT;
+    }
+    else if (m_devAddr.adapter & OC_ADAPTER_RFCOMM_BTEDR)
+    {
+        ss << COAP_RFCOMM;
+    }
     else
     {
-        ss << COAP;
+        if (m_devAddr.flags & OC_SECURE)
+        {
+            ss << COAPS;
+        }
+        else
+        {
+            ss << COAP;
+        }
     }
+
     if (m_devAddr.flags & OC_IP_USE_V6)
     {
         ss << '[' << m_devAddr.addr << ']';
@@ -459,8 +552,15 @@ OCConnectivityType OCResource::connectivityType() const
 
 bool OCResource::isObservable() const
 {
-    return m_isObservable;
+    return (m_property & OC_OBSERVABLE) == OC_OBSERVABLE;
 }
+
+#ifdef WITH_MQ
+bool OCResource::isPublish() const
+{
+    return (m_property & OC_MQ_PUBLISHER) == OC_MQ_PUBLISHER;
+}
+#endif
 
 std::vector<std::string> OCResource::getResourceTypes() const
 {
@@ -481,6 +581,62 @@ std::string OCResource::sid() const
 {
     return this->uniqueIdentifier().m_representation;
 }
+
+#ifdef WITH_MQ
+OCStackResult OCResource::discoveryMQTopics(const QueryParamsMap& queryParametersMap,
+                                            MQTopicCallback attributeHandler,
+                                            QualityOfService qos)
+{
+    return checked_guard(m_clientWrapper.lock(),
+                            &IClientWrapper::ListenForMQTopic,
+                            m_devAddr, m_uri,
+                            queryParametersMap, m_headerOptions,
+                            attributeHandler, qos);
+}
+
+OCStackResult OCResource::createMQTopic(const OCRepresentation& rep,
+                                        const std::string& topicUri,
+                                        const QueryParamsMap& queryParametersMap,
+                                        MQTopicCallback attributeHandler,
+                                        QualityOfService qos)
+{
+    return checked_guard(m_clientWrapper.lock(), &IClientWrapper::PutMQTopicRepresentation,
+                         m_devAddr, topicUri, rep, queryParametersMap,
+                         m_headerOptions, attributeHandler, qos);
+}
+#endif
+#ifdef MQ_SUBSCRIBER
+OCStackResult OCResource::subscribeMQTopic(ObserveType observeType,
+                                           const QueryParamsMap& queryParametersMap,
+                                           ObserveCallback observeHandler,
+                                           QualityOfService qos)
+{
+    return result_guard(observe(observeType, queryParametersMap, observeHandler, qos));
+}
+
+OCStackResult OCResource::unsubscribeMQTopic(QualityOfService qos)
+{
+    return result_guard(cancelObserve(qos));
+}
+
+OCStackResult OCResource::requestMQPublish(const QueryParamsMap& queryParametersMap,
+                                           PostCallback attributeHandler,
+                                           QualityOfService qos)
+{
+    OCRepresentation rep;
+    rep.setValue(std::string("req_pub"), std::string("true"));
+    return result_guard(post(rep, queryParametersMap, attributeHandler, qos));
+}
+#endif
+#ifdef MQ_PUBLISHER
+OCStackResult OCResource::publishMQTopic(const OCRepresentation& rep,
+                                         const QueryParamsMap& queryParametersMap,
+                                         PostCallback attributeHandler,
+                                         QualityOfService qos)
+{
+    return result_guard(post(rep, queryParametersMap, attributeHandler, qos));
+}
+#endif
 
 bool OCResource::operator==(const OCResource &other) const
 {

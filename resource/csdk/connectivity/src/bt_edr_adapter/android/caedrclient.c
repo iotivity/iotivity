@@ -29,13 +29,12 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "cathreadpool.h" /* for thread pool */
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "caadapterutils.h"
 #include "caremotehandler.h"
 
-//#define DEBUG_MODE
-#define TAG PCF("CA_EDR_CLIENT")
+#define TAG PCF("OIC_CA_EDR_CLIENT")
 
 static const char METHODID_CONTEXTNONPARAM[] = "()Landroid/content/Context;";
 static const char METHODID_OBJECTNONPARAM[] = "()Landroid/bluetooth/BluetoothAdapter;";
@@ -51,79 +50,26 @@ static const char CLASSPATH_BT_UUID[] = "java/util/UUID";
 static const char CLASSPATH_CONTEXT[] = "android/content/Context";
 static const char CLASSPATH_OUTPUT[] = "java/io/OutputStream";
 
-static ca_thread_pool_t g_threadPoolHandle = NULL;
-
 static JavaVM *g_jvm;
 static jobject g_context;
-
-/**
- * @var g_mutexUnicastServer
- * @brief Mutex to synchronize unicast server
- */
-static ca_mutex g_mutexUnicastServer = NULL;
-
-/**
- * @var g_stopUnicast
- * @brief Flag to control the Receive Unicast Data Thread
- */
-static bool g_stopUnicast = false;
-
-/**
- * @var g_mutexMulticastServer
- * @brief Mutex to synchronize secure multicast server
- */
-static ca_mutex g_mutexMulticastServer = NULL;
-
-/**
- * @var g_stopMulticast
- * @brief Flag to control the Receive Multicast Data Thread
- */
-static bool g_stopMulticast = false;
-
-/**
- * @var g_stopAccept
- * @brief Flag to control the Accept Thread
- */
-static bool g_stopAccept = false;
 
 /**
  * @var g_mutexStateList
  * @brief Mutex to synchronize device state list
  */
-static ca_mutex g_mutexStateList = NULL;
+static oc_mutex g_mutexStateList = NULL;
 
 /**
  * @var g_mutexObjectList
  * @brief Mutex to synchronize device object list
  */
-static ca_mutex g_mutexObjectList = NULL;
+static oc_mutex g_mutexObjectList = NULL;
 
 /**
  * @var g_edrErrorHandler
  * @brief Error callback to update error in EDR
  */
 static CAEDRErrorHandleCallback g_edrErrorHandler = NULL;
-
-typedef struct send_data
-{
-    char* address;
-    char* data;
-    uint32_t id;
-} data_t;
-
-/**
- @brief Thread context information for unicast, multicast and secured unicast server
- */
-typedef struct
-{
-    bool *stopFlag;
-    CAAdapterServerType_t type;
-} CAAdapterReceiveThreadContext_t;
-
-typedef struct
-{
-    bool *stopFlag;
-} CAAdapterAcceptThreadContext_t;
 
 /**
  * implement for BT-EDR adapter common method
@@ -204,20 +150,16 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress, const uint8_t *
 {
     VERIFY_NON_NULL(remoteAddress, TAG, "remoteAddress is null");
     VERIFY_NON_NULL(data, TAG, "data is null");
-    OIC_LOG(DEBUG, TAG, "IN");
 
     CAResult_t result = CAEDRSendUnicastMessage(remoteAddress, data, dataLength);
-    OIC_LOG(DEBUG, TAG, "OUT");
     return result;
 }
 
 CAResult_t CAEDRClientSendMulticastData(const uint8_t *data, uint32_t dataLength)
 {
     VERIFY_NON_NULL(data, TAG, "data is null");
-    OIC_LOG(DEBUG, TAG, "IN");
 
     CAResult_t result = CAEDRSendMulticastMessage(data, dataLength);
-    OIC_LOG(DEBUG, TAG, "OUT");
     return result;
 }
 
@@ -239,14 +181,15 @@ void CAEDRClientDisconnectAll()
 
 CAResult_t CAEDRGetAdapterEnableState(bool *state)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
+    VERIFY_NON_NULL(state, TAG, "state is null");
+
     if (!g_jvm)
     {
         OIC_LOG(ERROR, TAG, "g_jvm is null");
         return CA_STATUS_INVALID_PARAM;
     }
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -260,14 +203,12 @@ CAResult_t CAEDRGetAdapterEnableState(bool *state)
         }
         isAttached = true;
     }
+
+    *state = false;
     jboolean ret = CAEDRNativeIsEnableBTAdapter(env);
     if (ret)
     {
         *state = true;
-    }
-    else
-    {
-        *state = false;
     }
 
     if (isAttached)
@@ -275,7 +216,6 @@ CAResult_t CAEDRGetAdapterEnableState(bool *state)
         (*g_jvm)->DetachCurrentThread(g_jvm);
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
@@ -288,29 +228,30 @@ void CAEDRJniInitContext()
 
 CAResult_t CAEDRCreateJNIInterfaceObject(jobject context)
 {
-    JNIEnv* env;
-    OIC_LOG(DEBUG, TAG, "[EDRCore] CAEDRCreateJNIInterfaceObject");
+    JNIEnv* env = NULL;
+    OIC_LOG(DEBUG, TAG, "CAEDRCreateJNIInterfaceObject");
 
     if ((*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
     {
-        OIC_LOG(ERROR, TAG, "[EDRCore] Could not get JNIEnv pointer");
+        OIC_LOG(ERROR, TAG, "Could not get JNIEnv pointer");
         return CA_STATUS_FAILED;
     }
 
-    //getApplicationContext
-    jclass contextClass = (*env)->FindClass(env, CLASSPATH_CONTEXT);
-    if (!contextClass)
+
+    jmethodID mid_getApplicationContext = CAGetJNIMethodID(env, CLASSPATH_CONTEXT,
+                                                           "getApplicationContext",
+                                                           METHODID_CONTEXTNONPARAM);
+    if (!mid_getApplicationContext)
     {
-        OIC_LOG(ERROR, TAG, "[EDRCore] Could not get context object class");
+        OIC_LOG(ERROR, TAG, "Could not get getApplicationContext method");
         return CA_STATUS_FAILED;
     }
 
-    jmethodID getApplicationContextMethod = (*env)->GetMethodID(env, contextClass,
-                                                                "getApplicationContext",
-                                                                METHODID_CONTEXTNONPARAM);
-    if (!getApplicationContextMethod)
+    jobject jApplicationContext = (*env)->CallObjectMethod(env, context,
+                                                           mid_getApplicationContext);
+    if (!jApplicationContext)
     {
-        OIC_LOG(ERROR, TAG, "[EDRCore] Could not get getApplicationContext method");
+        OIC_LOG(ERROR, TAG, "Could not get application context");
         return CA_STATUS_FAILED;
     }
 
@@ -318,7 +259,7 @@ CAResult_t CAEDRCreateJNIInterfaceObject(jobject context)
     jclass EDRJniInterface = (*env)->FindClass(env, CLASSPATH_BT_INTERFACE);
     if (!EDRJniInterface)
     {
-        OIC_LOG(ERROR, TAG, "[EDRCore] Could not get CaEdrInterface class");
+        OIC_LOG(ERROR, TAG, "Could not get CaEdrInterface class");
         return CA_STATUS_FAILED;
     }
 
@@ -326,68 +267,34 @@ CAResult_t CAEDRCreateJNIInterfaceObject(jobject context)
                                                                   "(Landroid/content/Context;)V");
     if (!EDRInterfaceConstructorMethod)
     {
-        OIC_LOG(ERROR, TAG, "[EDRCore] Could not get CaEdrInterface constructor method");
+        OIC_LOG(ERROR, TAG, "Could not get CaEdrInterface constructor method");
         return CA_STATUS_FAILED;
     }
 
-    (*env)->NewObject(env, EDRJniInterface, EDRInterfaceConstructorMethod, context);
-    OIC_LOG(DEBUG, TAG, "[EDRCore] NewObject Success");
+    (*env)->NewObject(env, EDRJniInterface, EDRInterfaceConstructorMethod, jApplicationContext);
+    OIC_LOG(DEBUG, TAG, "NewObject Success");
 
     return CA_STATUS_OK;
-
 }
 
 static void CAEDRDestroyMutex()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
-    if (g_mutexUnicastServer)
-    {
-        ca_mutex_free(g_mutexUnicastServer);
-        g_mutexUnicastServer = NULL;
-    }
-
-    if (g_mutexMulticastServer)
-    {
-        ca_mutex_free(g_mutexMulticastServer);
-        g_mutexMulticastServer = NULL;
-    }
-
     if (g_mutexStateList)
     {
-        ca_mutex_free(g_mutexStateList);
+        oc_mutex_free(g_mutexStateList);
         g_mutexStateList = NULL;
     }
 
     if (g_mutexObjectList)
     {
-        ca_mutex_free(g_mutexObjectList);
+        oc_mutex_free(g_mutexObjectList);
         g_mutexObjectList = NULL;
     }
-    OIC_LOG(DEBUG, TAG, "OUT");
 }
 
 static CAResult_t CAEDRCreateMutex()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
-    g_mutexUnicastServer = ca_mutex_new();
-    if (!g_mutexUnicastServer)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to created mutex!");
-        return CA_STATUS_FAILED;
-    }
-
-    g_mutexMulticastServer = ca_mutex_new();
-    if (!g_mutexMulticastServer)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to created mutex!");
-
-        CAEDRDestroyMutex();
-        return CA_STATUS_FAILED;
-    }
-
-    g_mutexStateList = ca_mutex_new();
+    g_mutexStateList = oc_mutex_new();
     if (!g_mutexStateList)
     {
         OIC_LOG(ERROR, TAG, "Failed to created mutex!");
@@ -396,7 +303,7 @@ static CAResult_t CAEDRCreateMutex()
         return CA_STATUS_FAILED;
     }
 
-    g_mutexObjectList = ca_mutex_new();
+    g_mutexObjectList = oc_mutex_new();
     if (!g_mutexObjectList)
     {
         OIC_LOG(ERROR, TAG, "Failed to created mutex!");
@@ -405,25 +312,27 @@ static CAResult_t CAEDRCreateMutex()
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG(DEBUG, TAG, "OUT");
     return CA_STATUS_OK;
 }
 
-void CAEDRInitialize(ca_thread_pool_t handle)
+CAResult_t CAEDRInitialize()
 {
     OIC_LOG(DEBUG, TAG, "CAEDRInitialize");
-
-    g_threadPoolHandle = handle;
 
     CAEDRCoreJniInit();
 
     CAEDRJniInitContext();
 
     // init mutex
-    CAEDRCreateMutex();
+    CAResult_t result = CAEDRCreateMutex();
+    if(CA_STATUS_OK != result)
+    {
+        OIC_LOG(ERROR, TAG, "CAEDRInitialize - Could not create mutex");
+        return result;
+    }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -433,7 +342,7 @@ void CAEDRInitialize(ca_thread_pool_t handle)
         if (JNI_OK != res)
         {
             OIC_LOG(ERROR, TAG, "AttachCurrentThread failed");
-            return;
+            return CA_STATUS_NOT_INITIALIZED;
         }
         isAttached = true;
     }
@@ -444,14 +353,15 @@ void CAEDRInitialize(ca_thread_pool_t handle)
         OIC_LOG_V(DEBUG, TAG, "My BT Address is %s", localAddress);
         (*env)->ReleaseStringUTFChars(env, jni_address, localAddress);
     }
+    (*env)->DeleteLocalRef(env, jni_address);
 
-    ca_mutex_lock(g_mutexStateList);
+    oc_mutex_lock(g_mutexStateList);
     CAEDRNativeCreateDeviceStateList();
-    ca_mutex_unlock(g_mutexStateList);
+    oc_mutex_unlock(g_mutexStateList);
 
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
     CAEDRNativeCreateDeviceSocketList();
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     if (isAttached)
     {
@@ -464,6 +374,8 @@ void CAEDRInitialize(ca_thread_pool_t handle)
     }
 
     OIC_LOG(DEBUG, TAG, "OUT");
+
+    return result;
 }
 
 void CAEDRTerminate()
@@ -471,7 +383,7 @@ void CAEDRTerminate()
     OIC_LOG(DEBUG, TAG, "CAEDRTerminate");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -486,10 +398,6 @@ void CAEDRTerminate()
         isAttached = true;
     }
 
-    g_stopAccept = true;
-    g_stopMulticast = true;
-    g_stopUnicast = true;
-
     if (isAttached)
     {
         (*g_jvm)->DetachCurrentThread(g_jvm);
@@ -498,6 +406,7 @@ void CAEDRTerminate()
     if (g_context)
     {
         (*env)->DeleteGlobalRef(env, g_context);
+        g_context = NULL;
     }
 
     CAEDRNativeSocketCloseToAll(env);
@@ -521,7 +430,7 @@ CAResult_t CAEDRDestroyJniInterface()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -599,10 +508,9 @@ CAResult_t CAEDRSendUnicastMessage(const char* address, const uint8_t* data, uin
 CAResult_t CAEDRSendMulticastMessage(const uint8_t* data, uint32_t dataLen)
 {
     VERIFY_NON_NULL(data, TAG, "data is null");
-    OIC_LOG_V(DEBUG, TAG, "CAEDRSendMulticastMessage(%s)", data);
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -624,8 +532,6 @@ CAResult_t CAEDRSendMulticastMessage(const uint8_t* data, uint32_t dataLen)
         return result;
     }
 
-    OIC_LOG(DEBUG, TAG, "sent data");
-
     if (isAttached)
     {
         OIC_LOG(DEBUG, TAG, "DetachCurrentThread");
@@ -645,7 +551,7 @@ CAResult_t CAEDRGetInterfaceInfo(char **address)
 void CAEDRGetLocalAddress(char **address)
 {
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -690,10 +596,9 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const uint8_t* data,
 {
     VERIFY_NON_NULL(address, TAG, "address is null");
     VERIFY_NON_NULL(data, TAG, "data is null");
-    OIC_LOG_V(DEBUG, TAG, "CAEDRSendUnicastMessageImpl, address: %s, data: %s", address, data);
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -707,13 +612,13 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const uint8_t* data,
         isAttached = true;
     }
 
-    OIC_LOG(DEBUG, TAG, "[EDR][Native] set byteArray for data");
+    OIC_LOG(DEBUG, TAG, "set byteArray for data");
 
     // get bonded device list
     jobjectArray jni_arrayPairedDevices = CAEDRNativeGetBondedDevices(env);
     if (!jni_arrayPairedDevices)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] jni_arrayPairedDevices is empty");
+        OIC_LOG(ERROR, TAG, "jni_arrayPairedDevices is empty");
         if (isAttached)
         {
             (*g_jvm)->DetachCurrentThread(g_jvm);
@@ -730,7 +635,7 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const uint8_t* data,
     jsize length = (*env)->GetArrayLength(env, jni_arrayPairedDevices);
     for (jsize i = 0; i < length; i++)
     {
-        OIC_LOG(DEBUG, TAG, "[EDR][Native] start to check device");
+        OIC_LOG(DEBUG, TAG, "start to check device");
         // get name, address from BT device
         jobject j_obj_device = (*env)->GetObjectArrayElement(env, jni_arrayPairedDevices, i);
         jstring j_str_name = (*env)->CallObjectMethod(env, j_obj_device, j_mid_getName);
@@ -738,7 +643,7 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const uint8_t* data,
         if (j_str_name)
         {
             const char * name = (*env)->GetStringUTFChars(env, j_str_name, NULL);
-            OIC_LOG_V(DEBUG, TAG, "[EDR][Native] getBondedDevices: ~~device name is %s", name);
+            OIC_LOG_V(DEBUG, TAG, "device name is %s", name);
             (*env)->ReleaseStringUTFChars(env, j_str_name, name);
             (*env)->DeleteLocalRef(env, j_str_name);
         }
@@ -748,7 +653,7 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const uint8_t* data,
         (*env)->DeleteLocalRef(env, j_obj_device);
         if (!remoteAddress)
         {
-            OIC_LOG(ERROR, TAG, "[EDR][Native] remoteAddress is null");
+            OIC_LOG(ERROR, TAG, "remoteAddress is null");
             if (isAttached)
             {
                 (*g_jvm)->DetachCurrentThread(g_jvm);
@@ -759,8 +664,7 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const uint8_t* data,
             (*env)->DeleteLocalRef(env, jni_cid_BTDevice);
             return CA_STATUS_INVALID_PARAM;
         }
-        OIC_LOG_V(DEBUG, TAG,
-                  "[EDR][Native] getBondedDevices: ~~device address is %s", remoteAddress);
+        OIC_LOG_V(DEBUG, TAG, "device address is %s", remoteAddress);
 
         // find address
         if (!strcmp(remoteAddress, address))
@@ -793,14 +697,14 @@ CAResult_t CAEDRSendUnicastMessageImpl(const char* address, const uint8_t* data,
 
 CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data, uint32_t dataLen)
 {
+    VERIFY_NON_NULL(env, TAG, "env is null");
     VERIFY_NON_NULL(data, TAG, "data is null");
-    OIC_LOG_V(DEBUG, TAG, "CASendMulticastMessageImpl, send to, data: %s, %d", data, dataLen);
 
     // get bonded device list
     jobjectArray jni_arrayPairedDevices = CAEDRNativeGetBondedDevices(env);
     if (!jni_arrayPairedDevices)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] jni_arrayPairedDevices is empty");
+        OIC_LOG(ERROR, TAG, "jni_arrayPairedDevices is empty");
         return CA_STATUS_INVALID_PARAM;
     }
     // Get information from array of devices
@@ -816,32 +720,31 @@ CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data, uint3
         // get name, address from BT device
         jobject j_obj_device = (*env)->GetObjectArrayElement(env, jni_arrayPairedDevices, i);
         jstring j_str_name = (*env)->CallObjectMethod(env, j_obj_device, j_mid_getName);
+        jstring j_str_address = (*env)->CallObjectMethod(env, j_obj_device, j_mid_getAddress);
 
-        if (j_str_name)
+        if (j_str_name && j_str_address)
         {
             const char * name = (*env)->GetStringUTFChars(env, j_str_name, NULL);
-            OIC_LOG_V(DEBUG, TAG, "[EDR][Native] getBondedDevices: ~~device name is %s", name);
+            const char * remoteAddress = (*env)->GetStringUTFChars(env, j_str_address, NULL);
+            if (name && remoteAddress)
+            {
+                OIC_LOG_V(DEBUG, TAG, "device name is %s, address is %s", name, remoteAddress);
+
+                CAResult_t res = CAEDRNativeSendData(env, remoteAddress, data, dataLen);
+                if (CA_STATUS_OK != res)
+                {
+                    OIC_LOG_V(ERROR, TAG, "Failed to send multicast message to : %s",
+                              remoteAddress);
+                    g_edrErrorHandler(remoteAddress, data, dataLen, res);
+                }
+            }
             (*env)->ReleaseStringUTFChars(env, j_str_name, name);
-            (*env)->DeleteLocalRef(env, j_str_name);
+            (*env)->ReleaseStringUTFChars(env, j_str_address, remoteAddress);
         }
 
-        jstring j_str_address = (*env)->CallObjectMethod(env, j_obj_device, j_mid_getAddress);
-        const char * remoteAddress = (*env)->GetStringUTFChars(env, j_str_address, NULL);
         (*env)->DeleteLocalRef(env, j_obj_device);
-        OIC_LOG_V(DEBUG, TAG,
-                  "[EDR][Native] getBondedDevices: ~~device address is %s", remoteAddress);
-
-        // find address
-        CAResult_t res = CAEDRNativeSendData(env, remoteAddress, data, dataLen);
-        (*env)->ReleaseStringUTFChars(env, j_str_address, remoteAddress);
+        (*env)->DeleteLocalRef(env, j_str_name);
         (*env)->DeleteLocalRef(env, j_str_address);
-        if (CA_STATUS_OK != res)
-        {
-            OIC_LOG_V(ERROR, TAG, "CASendMulticastMessageImpl, failed to send message to : %s",
-                      remoteAddress);
-            g_edrErrorHandler(remoteAddress, data, dataLen, res);
-            continue;
-        }
     }
 
     (*env)->DeleteLocalRef(env, jni_arrayPairedDevices);
@@ -850,26 +753,23 @@ CAResult_t CAEDRSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data, uint3
     return CA_STATUS_OK;
 }
 
-/**
- * EDR Method
- */
 CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *data,
                                uint32_t dataLength)
 {
+    VERIFY_NON_NULL(env, TAG, "env is null");
     VERIFY_NON_NULL(address, TAG, "address is null");
     VERIFY_NON_NULL(data, TAG, "data is null");
-    OIC_LOG_V(DEBUG, TAG, "[EDR][Native] btSendData logic start : %s, %d", data, dataLength);
 
     if (!CAEDRNativeIsEnableBTAdapter(env))
     {
-        OIC_LOG(ERROR, TAG, "BT adpater is not enable");
-        return CA_STATUS_INVALID_PARAM;
+        OIC_LOG(INFO, TAG, "BT adapter is not enabled");
+        return CA_ADAPTER_NOT_ENABLED;
     }
 
     if (STATE_DISCONNECTED == CAEDRIsConnectedDevice(address))
     {
         // connect before send data
-        OIC_LOG(DEBUG, TAG, "[EDR][Native] connect before send data");
+        OIC_LOG_V(DEBUG, TAG, "try to connect with [%s] before sending data", address);
 
         CAResult_t res = CAEDRNativeConnect(env, address);
         if (CA_STATUS_OK != res)
@@ -885,7 +785,7 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
             jclass jni_cid_BTsocket = (*env)->FindClass(env, CLASSPATH_BT_SOCKET);
             if (!jni_cid_BTsocket)
             {
-                OIC_LOG(ERROR, TAG, "[EDR][Native] btSendData: jni_cid_BTsocket is null");
+                OIC_LOG(ERROR, TAG, "jni_cid_BTsocket is null");
                 return CA_STATUS_FAILED;
             }
 
@@ -894,17 +794,17 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
                                                                     METHODID_OUTPUTNONPARAM);
             if (!jni_mid_getOutputStream)
             {
-                OIC_LOG(ERROR, TAG, "[EDR][Native] btSendData: jni_mid_getOutputStream is null");
+                OIC_LOG(ERROR, TAG, "jni_mid_getOutputStream is null");
                 (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
                 return CA_STATUS_FAILED;
             }
 
-            OIC_LOG(DEBUG, TAG, "[EDR][Native] btSendData: Get MethodID for i/o stream");
+            OIC_LOG(DEBUG, TAG, "Get MethodID for i/o stream");
 
             jobject jni_obj_socket = CAEDRNativeGetDeviceSocketBaseAddr(env, address);
             if (!jni_obj_socket)
             {
-                OIC_LOG(ERROR, TAG, "[EDR][Native] btSendData: jni_socket is not available");
+                OIC_LOG(ERROR, TAG, "jni_socket is not available");
                 (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
                 return CA_STATUS_FAILED;
             }
@@ -913,17 +813,17 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
                                                                     jni_mid_getOutputStream);
             if (!jni_obj_outputStream)
             {
-                OIC_LOG(ERROR, TAG, "[EDR][Native] btSendData: jni_obj_outputStream is null");
+                OIC_LOG(ERROR, TAG, "jni_obj_outputStream is null");
                 (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
                 return CA_STATUS_FAILED;
             }
 
-            OIC_LOG(DEBUG, TAG, "[EDR][Native] btSendData: ready outputStream..");
+            OIC_LOG(DEBUG, TAG, "ready outputStream..");
 
             jclass jni_cid_OutputStream = (*env)->FindClass(env, CLASSPATH_OUTPUT);
             if (!jni_cid_OutputStream)
             {
-                OIC_LOG(ERROR, TAG, "[EDR][Native] btSendData: jni_cid_OutputStream is null");
+                OIC_LOG(ERROR, TAG, "jni_cid_OutputStream is null");
                 (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
                 (*env)->DeleteLocalRef(env, jni_obj_outputStream);
                 return CA_STATUS_FAILED;
@@ -933,7 +833,7 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
                                                           "([BII)V");
             if (!jni_mid_write)
             {
-                OIC_LOG(ERROR, TAG, "[EDR][Native] btSendData: jni_mid_write is null");
+                OIC_LOG(ERROR, TAG, "jni_mid_write is null");
                 (*env)->DeleteLocalRef(env, jni_cid_BTsocket);
                 (*env)->DeleteLocalRef(env, jni_obj_outputStream);
                 (*env)->DeleteLocalRef(env, jni_cid_OutputStream);
@@ -953,25 +853,26 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
 
             if ((*env)->ExceptionCheck(env))
             {
-                OIC_LOG(ERROR, TAG, "[EDR][Native] btSendData: Write Error!!!");
+                OIC_LOG(ERROR, TAG, "Failed to write data in outputStram");
                 (*env)->ExceptionDescribe(env);
                 (*env)->ExceptionClear(env);
                 return CA_STATUS_FAILED;
             }
 
-            OIC_LOG(DEBUG, TAG, "[EDR][Native] btSendData: Write Success");
+            OIC_LOG_V(INFO, TAG, "EDR sendTo is successful: %u bytes, to %s",
+                      dataLength, address);
         }
         else
         {
             (*env)->ExceptionDescribe(env);
             (*env)->ExceptionClear(env);
-            OIC_LOG(ERROR, TAG, "[EDR][Native] btSendData: error!!");
+            OIC_LOG(ERROR, TAG, "error!!");
             return CA_STATUS_FAILED;
         }
     }
     else
     {
-        OIC_LOG(DEBUG, TAG, "[EDR][Native] btSendData: BT connection is not completed!!");
+        OIC_LOG(DEBUG, TAG, "BT connection is not completed!!");
     }
 
     return CA_STATUS_OK;
@@ -980,18 +881,17 @@ CAResult_t CAEDRNativeSendData(JNIEnv *env, const char *address, const uint8_t *
 CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
 {
     VERIFY_NON_NULL(address, TAG, "address is null");
-    OIC_LOG(DEBUG, TAG, "[EDR][Native] btConnect..");
 
     if (!CAEDRNativeIsEnableBTAdapter(env))
     {
-        OIC_LOG(ERROR, TAG, "BT adpater is not enable");
-        return CA_STATUS_INVALID_PARAM;
+        OIC_LOG(INFO, TAG, "BT adapter is not enabled");
+        return CA_ADAPTER_NOT_ENABLED;
     }
 
     jclass jni_cid_BTAdapter = (*env)->FindClass(env, CLASSPATH_BT_ADPATER);
     if (!jni_cid_BTAdapter)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] btConnect: jni_cid_BTAdapter is null");
+        OIC_LOG(ERROR, TAG, "jni_cid_BTAdapter is null");
         return CA_STATUS_FAILED;
     }
 
@@ -1001,7 +901,7 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
                                                                     METHODID_OBJECTNONPARAM);
     if (!jni_mid_getDefaultAdapter)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] btConnect: jni_mid_getDefaultAdapter is null");
+        OIC_LOG(ERROR, TAG, "jni_mid_getDefaultAdapter is null");
         (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
         return CA_STATUS_FAILED;
     }
@@ -1010,7 +910,7 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
                                                                jni_mid_getDefaultAdapter);
     if (!jni_obj_BTAdapter)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] btConnect: jni_obj_BTAdapter is null");
+        OIC_LOG(ERROR, TAG, "jni_obj_BTAdapter is null");
         (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
         return CA_STATUS_FAILED;
     }
@@ -1022,7 +922,7 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
     (*env)->DeleteLocalRef(env, jni_cid_BTAdapter);
     if (!jni_mid_getRemoteDevice)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] btConnect: jni_mid_getRemoteDevice is null");
+        OIC_LOG(ERROR, TAG, "jni_mid_getRemoteDevice is null");
         (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
         return CA_STATUS_FAILED;
     }
@@ -1034,7 +934,7 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
     (*env)->DeleteLocalRef(env, jni_obj_BTAdapter);
     if (!jni_obj_remoteBTDevice)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] btConnect: jni_obj_remoteBTDevice is null");
+        OIC_LOG(ERROR, TAG, "jni_obj_remoteBTDevice is null");
         return CA_STATUS_FAILED;
     }
 
@@ -1042,7 +942,7 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
     jclass jni_cid_BluetoothDevice = (*env)->FindClass(env, CLASSPATH_BT_DEVICE);
     if (!jni_cid_BluetoothDevice)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] btConnect: jni_cid_BluetoothDevice is null");
+        OIC_LOG(ERROR, TAG, "jni_cid_BluetoothDevice is null");
         (*env)->DeleteLocalRef(env, jni_obj_remoteBTDevice);
         return CA_STATUS_FAILED;
     }
@@ -1053,7 +953,7 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
     (*env)->DeleteLocalRef(env, jni_cid_BluetoothDevice);
     if (!jni_mid_createSocket)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] btConnect: jni_mid_createSocket is null");
+        OIC_LOG(ERROR, TAG, "jni_mid_createSocket is null");
         (*env)->DeleteLocalRef(env, jni_obj_remoteBTDevice);
         return CA_STATUS_FAILED;
     }
@@ -1062,7 +962,7 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
     jclass jni_cid_uuid = (*env)->FindClass(env, CLASSPATH_BT_UUID);
     if (!jni_cid_uuid)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] btConnect: jni_cid_uuid is null");
+        OIC_LOG(ERROR, TAG, "jni_cid_uuid is null");
         (*env)->DeleteLocalRef(env, jni_obj_remoteBTDevice);
         return CA_STATUS_FAILED;
     }
@@ -1071,7 +971,7 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
             env, jni_cid_uuid, "fromString", "(Ljava/lang/String;)Ljava/util/UUID;");
     if (!jni_mid_fromString)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] btConnect: jni_mid_fromString is null");
+        OIC_LOG(ERROR, TAG, "jni_mid_fromString is null");
         (*env)->DeleteLocalRef(env, jni_cid_uuid);
         (*env)->DeleteLocalRef(env, jni_obj_remoteBTDevice);
         return CA_STATUS_FAILED;
@@ -1080,7 +980,7 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
     jstring jni_uuid = (*env)->NewStringUTF(env, OIC_EDR_SERVICE_ID);
     if (!jni_uuid)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] btConnect: jni_uuid is null");
+        OIC_LOG(ERROR, TAG, "jni_uuid is null");
         (*env)->DeleteLocalRef(env, jni_cid_uuid);
         (*env)->DeleteLocalRef(env, jni_obj_remoteBTDevice);
         return CA_STATUS_FAILED;
@@ -1091,7 +991,7 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
     (*env)->DeleteLocalRef(env, jni_uuid);
     if (!jni_obj_uuid)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] btConnect: jni_obj_uuid is null");
+        OIC_LOG(ERROR, TAG, "jni_obj_uuid is null");
         (*env)->DeleteLocalRef(env, jni_obj_remoteBTDevice);
         return CA_STATUS_FAILED;
     }
@@ -1102,7 +1002,7 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
     (*env)->DeleteLocalRef(env, jni_obj_remoteBTDevice);
     if (!jni_obj_BTSocket)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] btConnect: jni_obj_BTSocket is null");
+        OIC_LOG(ERROR, TAG, "jni_obj_BTSocket is null");
         return CA_STATUS_FAILED;
     }
 
@@ -1110,7 +1010,7 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
     jclass jni_cid_BTSocket = (*env)->FindClass(env, CLASSPATH_BT_SOCKET);
     if (!jni_cid_BTSocket)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] btConnect: jni_cid_BTSocket is null");
+        OIC_LOG(ERROR, TAG, "jni_cid_BTSocket is null");
         (*env)->DeleteLocalRef(env, jni_obj_BTSocket);
         return CA_STATUS_FAILED;
     }
@@ -1119,17 +1019,17 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
     (*env)->DeleteLocalRef(env, jni_cid_BTSocket);
     if (!jni_mid_connect)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] btConnect: jni_mid_connect is null");
+        OIC_LOG(ERROR, TAG, "jni_mid_connect is null");
         (*env)->DeleteLocalRef(env, jni_obj_BTSocket);
         return CA_STATUS_FAILED;
     }
 
-    OIC_LOG(DEBUG, TAG, "[EDR][Native] btConnect: initiating connection...");
+    OIC_LOG(DEBUG, TAG, "initiating connection...");
     (*env)->CallVoidMethod(env, jni_obj_BTSocket, jni_mid_connect);
 
     if ((*env)->ExceptionCheck(env))
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] btConnect: Connect is Failed!!!");
+        OIC_LOG(ERROR, TAG, "Connect is Failed!!!");
         (*env)->ExceptionDescribe(env);
         (*env)->ExceptionClear(env);
         return CA_STATUS_FAILED;
@@ -1139,22 +1039,22 @@ CAResult_t CAEDRNativeConnect(JNIEnv *env, const char *address)
     jobject jni_socket = (*env)->NewGlobalRef(env, jni_obj_BTSocket);
     if (!jni_socket)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] btConnect: jni_socket is null");
+        OIC_LOG(ERROR, TAG, "jni_socket is null");
         (*env)->DeleteLocalRef(env, jni_obj_BTSocket);
         return CA_STATUS_FAILED;
     }
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
     CAEDRNativeAddDeviceSocketToList(env, jni_socket);
     (*env)->DeleteGlobalRef(env, jni_socket);
     (*env)->DeleteLocalRef(env, jni_obj_BTSocket);
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     // update state
-    ca_mutex_lock(g_mutexStateList);
+    oc_mutex_lock(g_mutexStateList);
     CAEDRUpdateDeviceState(STATE_CONNECTED, address);
-    ca_mutex_unlock(g_mutexStateList);
+    oc_mutex_unlock(g_mutexStateList);
 
-    OIC_LOG(DEBUG, TAG, "[EDR][Native] btConnect: connected");
+    OIC_LOG(DEBUG, TAG, "successfully connected");
 
     return CA_STATUS_OK;
 }
@@ -1166,21 +1066,21 @@ void CAEDRNativeSocketClose(JNIEnv *env, const char *address)
     jclass jni_cid_BTSocket = (*env)->FindClass(env, "android/bluetooth/BluetoothSocket");
     if (!jni_cid_BTSocket)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] close: jni_cid_BTSocket is null");
+        OIC_LOG(ERROR, TAG, "jni_cid_BTSocket is null");
         return;
     }
 
     jmethodID jni_mid_close = (*env)->GetMethodID(env, jni_cid_BTSocket, "close", "()V");
     if (!jni_mid_close)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] close: jni_mid_close is null");
+        OIC_LOG(ERROR, TAG, "jni_mid_close is null");
         return;
     }
 
     jobject jni_obj_socket = CAEDRNativeGetDeviceSocketBaseAddr(env, address);
     if (!jni_obj_socket)
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] close: jni_obj_socket is not available");
+        OIC_LOG(ERROR, TAG, "jni_obj_socket is not available");
         return;
     }
 
@@ -1188,7 +1088,7 @@ void CAEDRNativeSocketClose(JNIEnv *env, const char *address)
 
     if ((*env)->ExceptionCheck(env))
     {
-        OIC_LOG(ERROR, TAG, "[EDR][Native] close: close is Failed!!!");
+        OIC_LOG(ERROR, TAG, "close is Failed!!!");
         (*env)->ExceptionDescribe(env);
         (*env)->ExceptionClear(env);
         return;
@@ -1198,18 +1098,17 @@ void CAEDRNativeSocketClose(JNIEnv *env, const char *address)
     CAEDRNativeRemoveDeviceSocket(env, jni_obj_socket);
 
     // update state
-    ca_mutex_lock(g_mutexStateList);
+    oc_mutex_lock(g_mutexStateList);
     CAEDRUpdateDeviceState(STATE_DISCONNECTED, address);
-    ca_mutex_unlock(g_mutexStateList);
+    oc_mutex_unlock(g_mutexStateList);
 
-    OIC_LOG(DEBUG, TAG, "[EDR][Native] close: disconnected");
+    OIC_LOG_V(DEBUG, TAG, "disconnected with [%s]", address);
 }
 
-void CAEDRInitializeClient(ca_thread_pool_t handle)
+CAResult_t CAEDRClientInitialize()
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-    CAEDRInitialize(handle);
-    OIC_LOG(DEBUG, TAG, "OUT");
+    CAResult_t result = CAEDRInitialize();
+    return result;
 }
 
 void CAEDRSetErrorHandler(CAEDRErrorHandleCallback errorHandleCallback)

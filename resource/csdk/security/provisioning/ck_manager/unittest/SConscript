@@ -17,16 +17,16 @@
 # // limitations under the License.
 # //
 # //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#
-# SConscript file for Local PKI google tests
-
-Import('env')
 
 import os
 import os.path
-pki_test_env = env.Clone()
 
+# SConscript file for Local PKI google tests
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+pki_test_env = gtest_env.Clone()
 src_dir = pki_test_env.get('SRC_DIR')
+build_dir = pki_test_env.get('BUILD_DIR')
+target_os = pki_test_env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
@@ -42,59 +42,57 @@ pki_test_env.PrependUnique(CPPPATH = ['../include/',
 				'../../../../logger/include',
 				'../../../../stack/include',
 				'../../../../../oc_logger/include',
-				'../../../../../../extlibs/gtest/gtest-1.7.0/include',
 				'../../../../../../extlibs/asn1cert',
 				'../../../../../../extlibs/tinydtls',
 				'../../../../../../extlibs/tinydtls/ecc',
 				'../../../../../../extlibs/tinydtls/sha2'
 		])
-pki_test_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-pki_test_env.AppendUnique(LIBS = ['pthread'])
-pki_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-pki_test_env.AppendUnique(LIBPATH = [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
+
+pki_test_env.AppendUnique(LIBPATH = [pki_test_env.get('BUILD_DIR')])
 
 pki_test_env.AppendUnique(LIBS = ['octbstack'])
 pki_test_env.AppendUnique(LIBS = ['CKManager'])
 pki_test_env.AppendUnique(LIBS = ['asn1'])
-pki_test_env.AppendUnique(LIBS = ['gtest'])
-pki_test_env.AppendUnique(LIBS = ['gtest_main'])
 
-if env.get('SECURED') == '1':
+if pki_test_env.get('SECURED') == '1':
     pki_test_env.AppendUnique(LIBS = ['tinydtls'])
 
-if not env.get('RELEASE'):
+if not pki_test_env.get('RELEASE'):
 	pki_test_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-unittest = pki_test_env.Program('unittest', ['pki_test.cpp'])
+unittest = pki_test_env.Program('unittest', ['pki_test.cpp',
+                                            'ckm_info_test.cpp',
+                                            'crl_generator_test.cpp',
+                                            'csr_generator_test.cpp'])
 
 Alias("test", [unittest])
 
 
 
 unittest_src_dir = src_dir + '/resource/csdk/security/provisioning/ck_manager/unittest/test_data/'
-unittest_build_dir = env.get('BUILD_DIR') +'/resource/csdk/security/provisioning/ck_manager/unittest'
 
-pki_test_env.Alias("install",env.Install( unittest_build_dir, [ unittest_src_dir + '01.der',
+unittest_build_dir = os.path.join(build_dir, 'resource', 'csdk', 'security', 'provisioning', 'ck_manager', 'unittest')
+unittest_build_dir = unittest_build_dir.encode('string_escape')
+pki_test_env.AppendUnique(CPPDEFINES = ['SECURITY_BUILD_UNITTEST_DIR='+unittest_build_dir])
+pki_test_env.Alias("install", pki_test_env.Install( unittest_build_dir, [ unittest_src_dir + '01.der',
 								unittest_src_dir + 'cacert.der',
 								unittest_src_dir + 'capub.der',
 								unittest_src_dir + 'cert_chain.dat',
 								unittest_src_dir + 'chain.der',
-								unittest_src_dir + 'CKMInfo.json' ]))
+								unittest_src_dir + 'CKMInfo.dat' ]))
 
-env.AppendTarget('test')
-if env.get('TEST') == '1':
-	target_os = env.get('TARGET_OS')
-	if target_os == 'linux':
-		out_dir = env.get('BUILD_DIR')
-		result_dir = env.get('BUILD_DIR') + '/test_out/'
+pki_test_env.AppendTarget('test')
+if pki_test_env.get('TEST') == '1':
+	if target_os in ['linux']:
+		out_dir = pki_test_env.get('BUILD_DIR')
+		result_dir = os.path.join(pki_test_env.get('BUILD_DIR'), 'test_out') + os.sep
 		if not os.path.isdir(result_dir):
 			os.makedirs(result_dir)
 		pki_test_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
 		pki_test_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
-		pki_test_env.AppendENVPath('LD_LIBRARY_PATH', [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
- 		ut = pki_test_env.Command ('ut', None, out_dir + '/resource/csdk/security/unittest/unittest')
+ 		ut = pki_test_env.Command ('ut', None, out_dir + '/resource/csdk/security/provisioning/ck_manager/unittest/unittest')
 AlwaysBuild ('ut')
 

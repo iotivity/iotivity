@@ -6,19 +6,19 @@
  * README for terms of use.
  */
 
-#include "config.h"
-#include "net.h"
-#include "debug.h"
-#include "resource.h"
-#include "subscribe.h"
+#include "include/coap/config.h"
+#include "include/coap/net.h"
+#include "include/coap/debug.h"
+#include "include/coap/resource.h"
+#include "include/coap/subscribe.h"
 
 #ifdef WITH_LWIP
-#include "utlist.h"
+#include "include/coap/utlist.h"
 /* mem.h is only needed for the string free calls for
  * COAP_ATTR_FLAGS_RELEASE_NAME / COAP_ATTR_FLAGS_RELEASE_VALUE /
  * COAP_RESOURCE_FLAGS_RELEASE_URI. not sure what those lines should actually
  * do on lwip. */
-#include "mem.h"
+#include "include/coap/mem.h"
 
 #include <lwip/memp.h>
 
@@ -27,9 +27,9 @@
 #define COAP_FREE_TYPE(Type, Object) memp_free(MEMP_COAP_##Type, Object)
 
 #endif
-#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
-#include "utlist.h"
-#include "mem.h"
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO) || defined(_WIN32)
+#include "include/coap/utlist.h"
+#include "include/coap/mem.h"
 
 #define COAP_MALLOC_TYPE(Type) \
   ((coap_##Type##_t *)coap_malloc(sizeof(coap_##Type##_t)))
@@ -64,7 +64,9 @@ coap_free_subscription(coap_subscription_t *subscription)
 }
 #endif /* WITH_CONTIKI */
 
+#ifndef min
 #define min(a,b) ((a) < (b) ? (a) : (b))
+#endif
 
 /* Helper functions for conditional output of character sequences into
  * a given buffer. The first Offset characters are skipped.
@@ -339,7 +341,7 @@ coap_resource_init(const unsigned char *uri, size_t len, int flags)
 {
     coap_resource_t *r;
 
-#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO) || defined(_WIN32)
     r = (coap_resource_t *)coap_malloc(sizeof(coap_resource_t));
 #endif
 #ifdef WITH_LWIP
@@ -376,12 +378,12 @@ coap_attr_t *
 coap_add_attr(coap_resource_t *resource, const unsigned char *name, size_t nlen,
         const unsigned char *val, size_t vlen, int flags)
 {
-    coap_attr_t *attr;
+    coap_attr_t *attr = NULL;
 
     if (!resource || !name)
         return NULL;
 
-#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO) || defined(_WIN32)
     attr = (coap_attr_t *)coap_malloc(sizeof(coap_attr_t));
 #endif
 #ifdef WITH_LWIP
@@ -469,7 +471,7 @@ void coap_hash_request_uri(const coap_pdu_t *request, coap_key_t key)
     coap_option_filter_clear(filter);
     coap_option_setb(filter, COAP_OPTION_URI_PATH);
 
-    coap_option_iterator_init((coap_pdu_t *) request, &opt_iter, filter, coap_udp);
+    coap_option_iterator_init((coap_pdu_t *) request, &opt_iter, filter);
     while ((option = coap_option_next(&opt_iter)))
         coap_hash(COAP_OPT_VALUE(option), COAP_OPT_LENGTH(option), key);
 }
@@ -487,8 +489,8 @@ void coap_add_resource(coap_context_t *context, coap_resource_t *resource)
 
 int coap_delete_resource(coap_context_t *context, coap_key_t key)
 {
-    coap_resource_t *resource;
-    coap_attr_t *attr, *tmp;
+    coap_resource_t *resource = NULL;
+    coap_attr_t *attr = NULL, *tmp = NULL;
 #ifdef WITH_CONTIKI
     coap_subscription_t *obs;
 #endif
@@ -501,7 +503,7 @@ int coap_delete_resource(coap_context_t *context, coap_key_t key)
     if (!resource)
         return 0;
 
-#if defined(WITH_POSIX) || defined(WITH_LWIP) || defined(WITH_ARDUINO)
+#if defined(WITH_POSIX) || defined(WITH_LWIP) || defined(WITH_ARDUINO) || defined(_WIN32)
 #ifdef COAP_RESOURCES_NOHASH
     LL_DELETE(context->resources, resource);
 #else
@@ -514,7 +516,7 @@ int coap_delete_resource(coap_context_t *context, coap_key_t key)
     if (resource->flags & COAP_RESOURCE_FLAGS_RELEASE_URI)
         coap_free(resource->uri.s);
 
-#if defined(WITH_POSIX) || defined(WITH_ARDUINO)
+#if defined(WITH_POSIX) || defined(WITH_ARDUINO) || defined(_WIN32)
     coap_free(resource);
 #endif
 #ifdef WITH_LWIP
@@ -764,7 +766,7 @@ static void coap_notify_observers(coap_context_t *context, coap_resource_t *r)
             coap_tid_t tid = COAP_INVALID_TID;
             obs->dirty = 0;
             /* initialize response */
-            response = coap_pdu_init(COAP_MESSAGE_CON, 0, 0, COAP_MAX_PDU_SIZE, coap_udp);
+            response = coap_pdu_init(COAP_MESSAGE_CON, 0, 0, COAP_MAX_PDU_SIZE);
             if (!response)
             {
                 obs->dirty = 1;
@@ -773,7 +775,7 @@ static void coap_notify_observers(coap_context_t *context, coap_resource_t *r)
                 continue;
             }
 
-            if (!coap_add_token(response, obs->token_length, obs->token, coap_udp))
+            if (!coap_add_token(response, obs->token_length, obs->token))
             {
                 obs->dirty = 1;
                 r->partiallydirty = 1;
@@ -785,19 +787,19 @@ static void coap_notify_observers(coap_context_t *context, coap_resource_t *r)
             token.length = obs->token_length;
             token.s = obs->token;
 
-            response->hdr->coap_hdr_udp_t.id = coap_new_message_id(context);
+            response->transport_hdr->udp.id = coap_new_message_id(context);
             if (obs->non && obs->non_cnt < COAP_OBS_MAX_NON)
             {
-                response->hdr->coap_hdr_udp_t.type = COAP_MESSAGE_NON;
+                response->transport_hdr->udp.type = COAP_MESSAGE_NON;
             }
             else
             {
-                response->hdr->coap_hdr_udp_t.type = COAP_MESSAGE_CON;
+                response->transport_hdr->udp.type = COAP_MESSAGE_CON;
             }
             /* fill with observer-specific data */
             h(context, r, &obs->subscriber, NULL, &token, response);
 
-            if (response->hdr->coap_hdr_udp_t.type == COAP_MESSAGE_CON)
+            if (response->transport_hdr->udp.type == COAP_MESSAGE_CON)
             {
                 tid = coap_send_confirmed(context, &obs->subscriber, response);
                 obs->non_cnt = 0;
@@ -808,7 +810,7 @@ static void coap_notify_observers(coap_context_t *context, coap_resource_t *r)
                 obs->non_cnt++;
             }
 
-            if (COAP_INVALID_TID == tid || response->hdr->coap_hdr_udp_t.type != COAP_MESSAGE_CON)
+            if (COAP_INVALID_TID == tid || response->transport_hdr->udp.type != COAP_MESSAGE_CON)
                 coap_delete_pdu(response);
             if (COAP_INVALID_TID == tid)
             {

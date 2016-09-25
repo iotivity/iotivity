@@ -52,6 +52,8 @@ void DiscoverResourceUnit::startDiscover(DiscoverResourceInfo info, UpdatedCB up
         return;
     }
 
+    OIC_LOG_V(DEBUG, DISCOVER_TAG, "Start discover %s", info.resourceUri.c_str());
+
     m_Uri = info.resourceUri;
     m_ResourceType = info.resourceType;
     m_AttrubuteName = info.attributeName;
@@ -86,14 +88,19 @@ void DiscoverResourceUnit::discoverdCB(RCSRemoteResourceObject::Ptr remoteObject
 {
     if (remoteObject && !isAlreadyDiscoveredResource(remoteObject))
     {
-        RemoteResourceUnit::Ptr newDiscoveredResource =
-            RemoteResourceUnit::createRemoteResourceInfo(remoteObject, pUpdatedCBFromServer);
+        OIC_LOG_V(DEBUG, DISCOVER_TAG, "Discovered - uri: %s", uri.c_str());
+        if (uri.empty() || uri.compare(remoteObject->getUri()) == 0){
+            RemoteResourceUnit::Ptr newDiscoveredResource =
+                       RemoteResourceUnit::createRemoteResourceInfo(remoteObject,
+                               pUpdatedCBFromServer);
+                m_vecRemoteResource.push_back(newDiscoveredResource);
+                newDiscoveredResource->startMonitoring();
+                newDiscoveredResource->startCaching();
 
-        if (uri.empty() || uri.compare(remoteObject->getUri()) == 0)
-        {
-            m_vecRemoteResource.push_back(newDiscoveredResource);
-            newDiscoveredResource->startMonitoring();
-            newDiscoveredResource->startCaching();
+            OIC_LOG_V(DEBUG, DISCOVER_TAG, "Created remote resource unit");
+        }
+        else{
+            OIC_LOG_V(DEBUG, DISCOVER_TAG, "URI is not matching - uri: %s", uri.c_str());
         }
     }
     else

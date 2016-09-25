@@ -30,11 +30,14 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
+#include "iotivity_config.h"
 #include "oic_time.h"
 
 #include <stddef.h>        // For NULL
 
-#ifndef WITH_ARDUINO
+#if defined(HAVE_WINDOWS_H)
+# include <windows.h>
+#elif !defined(WITH_ARDUINO)
 # if _POSIX_TIMERS > 0
 #  include <time.h>        // For clock_gettime()
 # else
@@ -50,6 +53,21 @@ uint64_t OICGetCurrentTime(OICTimePrecision precision)
 
 #ifdef WITH_ARDUINO
     currentTime = (TIME_IN_MS == precision) ? millis() : micros();
+#elif defined(HAVE_QUERYPERFORMANCEFREQUENCY)
+    static LARGE_INTEGER frequency = {0};
+
+    if (!frequency.QuadPart)
+    {
+        QueryPerformanceFrequency(&frequency);
+    }
+
+    LARGE_INTEGER count = {0};
+    QueryPerformanceCounter(&count);
+
+    currentTime =
+    (TIME_IN_MS == precision)
+        ? count.QuadPart / (frequency.QuadPart / MS_PER_SEC)
+        : count.QuadPart / (frequency.QuadPart / US_PER_SEC);
 #else
 # if _POSIX_TIMERS > 0
 #   if defined(CLOCK_MONOTONIC_COARSE)

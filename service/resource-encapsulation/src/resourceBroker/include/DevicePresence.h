@@ -42,6 +42,12 @@ namespace OIC
             DevicePresence();
             ~DevicePresence();
 
+            DevicePresence(DevicePresence &&) = delete;
+            DevicePresence(const DevicePresence &) = delete;
+
+            DevicePresence & operator = (DevicePresence &&) = delete;
+            DevicePresence & operator = (const DevicePresence &) = delete;
+
             void initializeDevicePresence(PrimitiveResourcePtr pResource);
 
             void addPresenceResource(ResourcePresence * rPresence);

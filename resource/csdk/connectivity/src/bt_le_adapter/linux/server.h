@@ -19,38 +19,49 @@
 #ifndef CA_BLE_LINUX_SERVER_H
 #define CA_BLE_LINUX_SERVER_H
 
-#include "bluez-glue.h"
+#include "cacommon.h"
 
-#include <stdbool.h>
+#include <stdint.h>
 #include <sys/types.h>
 
-/**
- * Information needed to complete a GATT server response send.
- */
-typedef struct _CAGattResponseInfo
-{
-    /**
-     * The BlueZ @c org.bluez.GattCharacteristic1 skeleton object
-     * through which data will be sent.
-     */
-    GattCharacteristic1 * const characteristic;
-
-} CAGattResponseInfo;
 
 /**
- * Send response notification to the GATT client.
+ * Send response/notification to the GATT client.
  *
- * @param[in] method_info Pointer to @c GattResponseInfo object that
- *                        contains information necessary to complete
- *                        send of response.
- * @param[in] data        Octet array of response data to be sent.
- * @param[in] length      Length of the @a data octet array.
+ * Data will be sent to the client through the given response
+ * @a characteristic proxy as a GATT characteristic notification.
  *
- * @see @c CAGattSendMethod() for further details.
+ * @param[in] characteristic The D-Bus proxy for the response
+ *                           characteristic through which the
+ *                           notification will be sent.
+ * @param[in] data           The byte array to be sent.
+ * @param[in] length         The number of elements in the byte
+ *                           array.
+ *
+ * @return ::CA_STATUS_OK on success, ::CA_STATUS_FAILED otherwise.
  */
-bool CAGattServerSendResponse(void const * method_info,
-                              void const * data,
-                              size_t length);
+CAResult_t CAGattServerSendResponseNotification(
+    char const * address,
+    uint8_t const * data,
+    size_t length);
+
+
+/**
+ * Send notification to all connected GATT clients.
+ *
+ * Data will be sent to the client through the given response
+ * @a characteristic proxy as a GATT characteristic notification.
+ *
+ * @param[in] data    The byte array to be sent.
+ * @param[in] length  The number of elements in the byte array.
+ * @param[in] context Object containing mutexes and error reporting
+ *                    callback used on failure to send.
+ *
+ * @return ::CA_STATUS_OK on success, ::CA_STATUS_FAILED otherwise.
+ */
+CAResult_t CAGattServerSendResponseNotificationToAll(
+    uint8_t const * data,
+    size_t length);
 
 
 #endif  /* CA_BLE_LINUX_SERVER_H */

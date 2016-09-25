@@ -21,14 +21,18 @@
 #define _POSIX_C_SOURCE 200112L
 #endif
 
+#include "iotivity_config.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_STRING_H
 #include <string.h>
-#include <time.h>
-#include <sys/time.h>
+#endif
 
 #include "ocstack.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "oic_time.h"
 #include "logger.h"
 #include "cJSON.h"
 #include "utlist.h"
@@ -38,6 +42,7 @@
 #include "srmresourcestrings.h" //@note: SRM's internal header
 #include "doxmresource.h"       //@note: SRM's internal header
 #include "pstatresource.h"      //@note: SRM's internal header
+#include "verresource.h"      //@note: SRM's internal header
 
 #include "pmtypes.h"
 #include "pmutility.h"
@@ -49,7 +54,68 @@
 typedef struct _DiscoveryInfo{
     OCProvisionDev_t    **ppDevicesList;
     bool                isOwnedDiscovery;
+    bool                isSingleDiscovery;
+    bool                isFound;
 } DiscoveryInfo;
+
+/*
+ * Function to discover secre port information through unicast
+ *
+ * @param[in] discoveryInfo The pointer of discovery information to matain result of discovery
+ * @param[in] clientResponse  Response information(It will contain payload)
+ *
+ * @return OC_STACK_OK on success otherwise error.
+ */
+static OCStackResult SecurePortDiscovery(DiscoveryInfo* discoveryInfo,
+                                         const OCClientResponse *clientResponse);
+
+/*
+ * Function to discover security version information through unicast
+ *
+ * @param[in] discoveryInfo The pointer of discovery information to matain result of discovery
+ * @param[in] clientResponse  Response information(It will contain payload)
+ *
+ * @return OC_STACK_OK on success otherwise error.
+ */
+static OCStackResult SecurityVersionDiscovery(DiscoveryInfo* discoveryInfo,
+                                              const OCClientResponse *clientResponse);
+
+/**
+ * Callback handler for PMDeviceDiscovery API.
+ *
+ * @param[in] ctx             User context
+ * @param[in] handle          Handler for response
+ * @param[in] clientResponse  Response information (It will contain payload)
+ * @return OC_STACK_KEEP_TRANSACTION to keep transaction and
+ *         OC_STACK_DELETE_TRANSACTION to delete it.
+ */
+static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
+                                OCClientResponse *clientResponse);
+
+/**
+ * Callback handler for getting secure port information using /oic/res discovery.
+ *
+ * @param[in] ctx             user context
+ * @param[in] handle          Handle for response
+ * @param[in] clientResponse  Response information(It will contain payload)
+ *
+ * @return OC_STACK_KEEP_TRANSACTION to keep transaction and
+ *         OC_STACK_DELETE_TRANSACTION to delete it.
+ */
+static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
+                                 OCClientResponse *clientResponse);
+
+/**
+ * Callback handler for security version discovery.
+ *
+ * @param[in] ctx             User context
+ * @param[in] handle          Handler for response
+ * @param[in] clientResponse  Response information (It will contain payload)
+ * @return OC_STACK_KEEP_TRANSACTION to keep transaction and
+ *         OC_STACK_DELETE_TRANSACTION to delete it.
+ */
+static OCStackApplicationResult SecVersionDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
+                                OCClientResponse *clientResponse);
 
 /**
  * Function to search node in linked list that matches given IP and port.
@@ -64,7 +130,7 @@ OCProvisionDev_t* GetDevice(OCProvisionDev_t **ppDevicesList, const char* addr, 
 {
     if(NULL == addr || NULL == *ppDevicesList)
     {
-        OC_LOG_V(ERROR, TAG, "Invalid Input parameters in [%s]\n", __FUNCTION__);
+        OIC_LOG_V(ERROR, TAG, "Invalid Input parameters in [%s]\n", __FUNCTION__);
         return NULL;
     }
 
@@ -85,40 +151,37 @@ OCProvisionDev_t* GetDevice(OCProvisionDev_t **ppDevicesList, const char* addr, 
  * Add device information to list.
  *
  * @param[in] pList         List of OCProvisionDev_t.
- * @param[in] addr          address of target device.
- * @param[in] port          port of remote server.
- * @param[in] adapter       adapter type of endpoint.
+ * @param[in] endpoint      target device endpoint.
+ * @param[in] connType      connectivity type of endpoint
  * @param[in] doxm          pointer to doxm instance.
- * @param[in] connType  connectivity type of endpoint
  *
- * @return OC_STACK_OK for success and errorcode otherwise.
+ * @return OC_STACK_OK for success and error code otherwise.
  */
-OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, const char* addr, const uint16_t port,
-                        OCTransportAdapter adapter, OCConnectivityType connType, OicSecDoxm_t *doxm)
+OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, OCDevAddr* endpoint,
+                        OCConnectivityType connType, OicSecDoxm_t *doxm)
 {
-    if (NULL == addr)
+    if (NULL == endpoint)
     {
         return OC_STACK_INVALID_PARAM;
     }
 
-    OCProvisionDev_t *ptr = GetDevice(ppDevicesList, addr, port);
+    OCProvisionDev_t *ptr = GetDevice(ppDevicesList, endpoint->addr, endpoint->port);
     if(!ptr)
     {
         ptr = (OCProvisionDev_t *)OICCalloc(1, sizeof (OCProvisionDev_t));
         if (NULL == ptr)
         {
-            OC_LOG(ERROR, TAG, "Error while allocating memory for linkedlist node !!");
+            OIC_LOG(ERROR, TAG, "Error while allocating memory for linkedlist node !!");
             return OC_STACK_NO_MEMORY;
         }
 
-        OICStrcpy(ptr->endpoint.addr, MAX_ADDR_STR_SIZE, addr);
-        ptr->endpoint.port = port;
+        ptr->endpoint = *endpoint;
         ptr->doxm = doxm;
         ptr->securePort = DEFAULT_SECURE_PORT;
-        ptr->endpoint.adapter = adapter;
         ptr->next = NULL;
         ptr->connType = connType;
         ptr->devStatus = DEV_STATUS_ON; //AddDevice is called when discovery(=alive)
+        OICStrcpy(ptr->secVer, MAX_VERSION_LEN, DEFAULT_SEC_VERSION); // version initialization
 
         LL_PREPEND(*ppDevicesList, ptr);
     }
@@ -136,18 +199,57 @@ OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, const char* addr, cons
  *
  * @return OC_STACK_OK for success and errorcode otherwise.
  */
-OCStackResult UpdateSecurePortOfDevice(OCProvisionDev_t **ppDevicesList, const char *addr,
-                                       uint16_t port, uint16_t securePort)
+static OCStackResult UpdateSecurePortOfDevice(OCProvisionDev_t **ppDevicesList, const char *addr,
+                                       uint16_t port, uint16_t securePort
+#ifdef __WITH_TLS__
+                                       ,uint16_t tcpPort
+#endif
+                                       )
 {
     OCProvisionDev_t *ptr = GetDevice(ppDevicesList, addr, port);
 
     if(!ptr)
     {
-        OC_LOG(ERROR, TAG, "Can not find device information in the discovery device list");
+        OIC_LOG(ERROR, TAG, "Can not find device information in the discovery device list");
         return OC_STACK_ERROR;
     }
 
     ptr->securePort = securePort;
+
+#ifdef __WITH_TLS__
+    ptr->tcpPort = tcpPort;
+#endif
+
+    return OC_STACK_OK;
+}
+
+/**
+ * Function to set security version information from the given list of devices.
+ *
+ * @param[in] pList         List of OCProvisionDev_t.
+ * @param[in] addr          address of target device.
+ * @param[in] port          port of remote server.
+ * @param[in] secVer    security version information.
+ *
+ * @return OC_STACK_OK for success and errorcode otherwise.
+ */
+OCStackResult UpdateSecVersionOfDevice(OCProvisionDev_t **ppDevicesList, const char *addr,
+                                       uint16_t port, const char* secVer)
+{
+    if (NULL == secVer)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    OCProvisionDev_t *ptr = GetDevice(ppDevicesList, addr, port);
+
+    if(!ptr)
+    {
+        OIC_LOG(ERROR, TAG, "Can not find device information in the discovery device list");
+        return OC_STACK_ERROR;
+    }
+
+    OICStrcpy(ptr->secVer, MAX_VERSION_LEN, secVer);
 
     return OC_STACK_OK;
 }
@@ -175,11 +277,11 @@ void PMDeleteDeviceList(OCProvisionDev_t *pDevicesList)
 
 OCProvisionDev_t* PMCloneOCProvisionDev(const OCProvisionDev_t* src)
 {
-    OC_LOG(DEBUG, TAG, "IN PMCloneOCProvisionDev");
+    OIC_LOG(DEBUG, TAG, "IN PMCloneOCProvisionDev");
 
     if (!src)
     {
-        OC_LOG(ERROR, TAG, "PMCloneOCProvisionDev : Invalid parameter");
+        OIC_LOG(ERROR, TAG, "PMCloneOCProvisionDev : Invalid parameter");
         return NULL;
     }
 
@@ -210,17 +312,26 @@ OCProvisionDev_t* PMCloneOCProvisionDev(const OCProvisionDev_t* src)
         newDev->doxm->oxm = NULL;
     }
 
+    if (0 == strlen(src->secVer))
+    {
+        OICStrcpy(newDev->secVer, MAX_VERSION_LEN, DEFAULT_SEC_VERSION);
+    }
+    else
+    {
+        OICStrcpy(newDev->secVer, MAX_VERSION_LEN, src->secVer);
+    }
+
     newDev->securePort = src->securePort;
     newDev->devStatus = src->devStatus;
     newDev->connType = src->connType;
     newDev->next = NULL;
 
-    OC_LOG(DEBUG, TAG, "OUT PMCloneOCProvisionDev");
+    OIC_LOG(DEBUG, TAG, "OUT PMCloneOCProvisionDev");
 
     return newDev;
 
 exit:
-    OC_LOG(ERROR, TAG, "PMCloneOCProvisionDev : Failed to allocate memory");
+    OIC_LOG(ERROR, TAG, "PMCloneOCProvisionDev : Failed to allocate memory");
     if (newDev)
     {
         OICFree(newDev->pstat);
@@ -240,31 +351,14 @@ exit:
  */
 OCStackResult PMTimeout(unsigned short waittime, bool waitForStackResponse)
 {
-    struct timespec startTime = {.tv_sec=0, .tv_nsec=0};
-    struct timespec currTime  = {.tv_sec=0, .tv_nsec=0};
-
     OCStackResult res = OC_STACK_OK;
-#ifdef _POSIX_MONOTONIC_CLOCK
-    int clock_res = clock_gettime(CLOCK_MONOTONIC, &startTime);
-#else
-    int clock_res = clock_gettime(CLOCK_REALTIME, &startTime);
-#endif
-    if (0 != clock_res)
-    {
-        return OC_STACK_ERROR;
-    }
+
+    uint64_t startTime = OICGetCurrentTime(TIME_IN_MS);
     while (OC_STACK_OK == res)
     {
-#ifdef _POSIX_MONOTONIC_CLOCK
-        clock_res = clock_gettime(CLOCK_MONOTONIC, &currTime);
-#else
-        clock_res = clock_gettime(CLOCK_REALTIME, &currTime);
-#endif
-        if (0 != clock_res)
-        {
-            return OC_STACK_TIMEOUT;
-        }
-        long elapsed = (currTime.tv_sec - startTime.tv_sec);
+        uint64_t currTime = OICGetCurrentTime(TIME_IN_MS);
+
+        long elapsed = (long)((currTime - startTime) / MS_PER_SEC);
         if (elapsed > waittime)
         {
             return OC_STACK_OK;
@@ -327,13 +421,13 @@ uint16_t GetSecurePortFromJSON(char* jsonStr)
 }
 
 bool PMGenerateQuery(bool isSecure,
-                     const char* address, const uint16_t port,
-                     const OCConnectivityType connType,
+                     const char* address, uint16_t port,
+                     OCConnectivityType connType,
                      char* buffer, size_t bufferSize, const char* uri)
 {
     if(!address || !buffer || !uri)
     {
-        OC_LOG(ERROR, TAG, "PMGenerateQuery : Invalid parameters.");
+        OIC_LOG(ERROR, TAG, "PMGenerateQuery : Invalid parameters.");
         return false;
     }
 
@@ -342,6 +436,8 @@ bool PMGenerateQuery(bool isSecure,
 
     switch(connType & CT_MASK_ADAPTER)
     {
+        case CT_ADAPTER_TCP:
+            prefix = (isSecure == true) ? COAPS_TCP_PREFIX : COAP_TCP_PREFIX;
         case CT_ADAPTER_IP:
             switch(connType & CT_MASK_FLAGS & ~CT_FLAG_SECURE)
             {
@@ -354,18 +450,18 @@ bool PMGenerateQuery(bool isSecure,
                                          prefix, address, port, uri);
                     break;
                 default:
-                    OC_LOG(ERROR, TAG, "Unknown address format.");
+                    OIC_LOG(ERROR, TAG, "Unknown address format.");
                     return false;
             }
             // snprintf return value check
             if (snRet < 0)
             {
-                OC_LOG_V(ERROR, TAG, "PMGenerateQuery : Error (snprintf) %d\n", snRet);
+                OIC_LOG_V(ERROR, TAG, "PMGenerateQuery : Error (snprintf) %d\n", snRet);
                 return false;
             }
             else if ((size_t)snRet >= bufferSize)
             {
-                OC_LOG_V(ERROR, TAG, "PMGenerateQuery : Truncated (snprintf) %d\n", snRet);
+                OIC_LOG_V(ERROR, TAG, "PMGenerateQuery : Truncated (snprintf) %d\n", snRet);
                 return false;
             }
 
@@ -373,100 +469,23 @@ bool PMGenerateQuery(bool isSecure,
         // TODO: We need to verify tinyDTLS in below cases
         case CT_ADAPTER_GATT_BTLE:
         case CT_ADAPTER_RFCOMM_BTEDR:
-            OC_LOG(ERROR, TAG, "Not supported connectivity adapter.");
+            OIC_LOG(ERROR, TAG, "Not supported connectivity adapter.");
             return false;
             break;
         default:
-            OC_LOG(ERROR, TAG, "Unknown connectivity adapter.");
+            OIC_LOG(ERROR, TAG, "Unknown connectivity adapter.");
             return false;
     }
 
     return true;
 }
 
-/**
- * Callback handler for getting secure port information using /oic/res discovery.
- *
- * @param[in] ctx             user context
- * @param[in] handle          Handle for response
- * @param[in] clientResponse  Response information(It will contain payload)
- *
- * @return OC_STACK_KEEP_TRANSACTION to keep transaction and
- *         OC_STACK_DELETE_TRANSACTION to delete it.
- */
-static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
-                                 OCClientResponse *clientResponse)
-{
-    if (ctx == NULL)
-    {
-        OC_LOG(ERROR, TAG, "Lost List of device information");
-        return OC_STACK_DELETE_TRANSACTION;
-    }
-    (void)UNUSED;
-    if (clientResponse)
-    {
-        if  (NULL == clientResponse->payload)
-        {
-            OC_LOG(INFO, TAG, "Skiping Null payload");
-        }
-        else
-        {
-            if (PAYLOAD_TYPE_DISCOVERY != clientResponse->payload->type)
-            {
-                OC_LOG(INFO, TAG, "Wrong payload type");
-                return OC_STACK_DELETE_TRANSACTION;
-            }
-
-            uint16_t securePort = 0;
-            OCResourcePayload* resPayload = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
-
-            if (resPayload && resPayload->secure)
-            {
-                securePort = resPayload->port;
-            }
-            else
-            {
-                OC_LOG(INFO, TAG, "Can not find secure port information.");
-                return OC_STACK_DELETE_TRANSACTION;
-            }
-
-            DiscoveryInfo* pDInfo = (DiscoveryInfo*)ctx;
-            OCProvisionDev_t **ppDevicesList = pDInfo->ppDevicesList;
-
-            OCStackResult res = UpdateSecurePortOfDevice(ppDevicesList, clientResponse->devAddr.addr,
-                                                         clientResponse->devAddr.port, securePort);
-            if (OC_STACK_OK != res)
-            {
-                OC_LOG(ERROR, TAG, "Error while getting secure port.");
-                return OC_STACK_DELETE_TRANSACTION;
-            }
-            OC_LOG(INFO, TAG, "Exiting SecurePortDiscoveryHandler.");
-        }
-
-        return  OC_STACK_DELETE_TRANSACTION;
-    }
-    else
-    {
-        OC_LOG(INFO, TAG, "Skiping Null response");
-    }
-    return  OC_STACK_DELETE_TRANSACTION;
-}
-
-/**
- * Callback handler for PMDeviceDiscovery API.
- *
- * @param[in] ctx             User context
- * @param[in] handle          Handler for response
- * @param[in] clientResponse  Response information (It will contain payload)
- * @return OC_STACK_KEEP_TRANSACTION to keep transaction and
- *         OC_STACK_DELETE_TRANSACTION to delete it.
- */
-static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
+static OCStackApplicationResult SecurityVersionDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse)
 {
     if (ctx == NULL)
     {
-        OC_LOG(ERROR, TAG, "Lost List of device information");
+        OIC_LOG(ERROR, TAG, "Lost List of device information");
         return OC_STACK_KEEP_TRANSACTION;
     }
     (void)UNUSED;
@@ -474,31 +493,204 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
     {
         if  (NULL == clientResponse->payload)
         {
-            OC_LOG(INFO, TAG, "Skiping Null payload");
+            OIC_LOG(INFO, TAG, "Skiping Null payload");
             return OC_STACK_KEEP_TRANSACTION;
         }
         if (OC_STACK_OK != clientResponse->result)
         {
-            OC_LOG(INFO, TAG, "Error in response");
+            OIC_LOG(INFO, TAG, "Error in response");
             return OC_STACK_KEEP_TRANSACTION;
         }
         else
         {
             if (PAYLOAD_TYPE_SECURITY != clientResponse->payload->type)
             {
-                OC_LOG(INFO, TAG, "Unknown payload type");
+                OIC_LOG(INFO, TAG, "Unknown payload type");
                 return OC_STACK_KEEP_TRANSACTION;
             }
-            OicSecDoxm_t *ptrDoxm = JSONToDoxmBin(
-                            ((OCSecurityPayload*)clientResponse->payload)->securityData);
-            if (NULL == ptrDoxm)
+
+            OicSecVer_t *ptrVer = NULL;
+            uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData;
+            size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
+
+            OCStackResult res = CBORPayloadToVer(payload, size, &ptrVer);
+            if ((NULL == ptrVer) && (OC_STACK_OK != res))
             {
-                OC_LOG(INFO, TAG, "Ignoring malformed JSON");
+                OIC_LOG(INFO, TAG, "Ignoring malformed CBOR");
                 return OC_STACK_KEEP_TRANSACTION;
             }
             else
             {
-                OC_LOG(DEBUG, TAG, "Successfully converted doxm json to bin.");
+                OIC_LOG(DEBUG, TAG, "Successfully converted ver cbor to bin.");
+
+                //If this is owend device discovery we have to filter out the responses.
+                DiscoveryInfo* pDInfo = (DiscoveryInfo*)ctx;
+                res = UpdateSecVersionOfDevice(pDInfo->ppDevicesList, clientResponse->devAddr.addr,
+                                                         clientResponse->devAddr.port, ptrVer->secv);
+                if (OC_STACK_OK != res)
+                {
+                    OIC_LOG(ERROR, TAG, "Error while getting security version.");
+                    DeleteVerBinData(ptrVer);
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
+
+                OIC_LOG(INFO, TAG, "= Discovered security version =");
+                OIC_LOG_V(DEBUG, TAG, "IP %s", clientResponse->devAddr.addr);
+                OIC_LOG_V(DEBUG, TAG, "PORT %d", clientResponse->devAddr.port);
+                OIC_LOG_V(DEBUG, TAG, "VERSION %s", ptrVer->secv);
+
+                OIC_LOG(INFO, TAG, "Exiting SecVersionDiscoveryHandler.");
+                DeleteVerBinData(ptrVer);
+                if(pDInfo->isSingleDiscovery)
+                {
+                    pDInfo->isFound = true;
+                }
+            }
+        }
+    }
+    else
+    {
+        OIC_LOG(INFO, TAG, "Skiping Null response");
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    return  OC_STACK_DELETE_TRANSACTION;
+}
+
+static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
+                                 OCClientResponse *clientResponse)
+{
+    if (ctx == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Lost List of device information");
+        return OC_STACK_DELETE_TRANSACTION;
+    }
+    (void)UNUSED;
+    if (clientResponse)
+    {
+        if  (NULL == clientResponse->payload)
+        {
+            OIC_LOG(INFO, TAG, "Skiping Null payload");
+        }
+        else
+        {
+            if (PAYLOAD_TYPE_DISCOVERY != clientResponse->payload->type)
+            {
+                OIC_LOG(INFO, TAG, "Wrong payload type");
+                return OC_STACK_DELETE_TRANSACTION;
+            }
+
+            uint16_t securePort = 0;
+            OCResourcePayload* resPayload = ((OCDiscoveryPayload*)clientResponse->payload)->resources;
+
+            // Use seure port of doxm for OTM and Provision.
+            while (resPayload)
+            {
+                if (0 == strncmp(resPayload->uri, OIC_RSRC_DOXM_URI, strlen(OIC_RSRC_DOXM_URI)))
+                {
+                    OIC_LOG_V(INFO,TAG,"resPaylod->uri:%s",resPayload->uri);
+                    OIC_LOG(INFO, TAG, "Found doxm resource.");
+                    break;
+                }
+                else
+                {
+                    resPayload = resPayload->next;
+                }
+            }
+            if (NULL == resPayload)
+            {
+                OIC_LOG(ERROR, TAG, "Can not find doxm resource.");
+                return OC_STACK_DELETE_TRANSACTION;
+            }
+            if (resPayload && resPayload->secure)
+            {
+                securePort = resPayload->port;
+            }
+            else
+            {
+                OIC_LOG(INFO, TAG, "Can not find secure port information.");
+                return OC_STACK_DELETE_TRANSACTION;
+            }
+#ifdef __WITH_TLS__
+            OIC_LOG_V(DEBUG, TAG, "%s: TCP port from discovery = %d", __func__, resPayload->tcpPort);
+#endif
+            DiscoveryInfo* pDInfo = (DiscoveryInfo*)ctx;
+            OCStackResult res = UpdateSecurePortOfDevice(pDInfo->ppDevicesList,
+                                                         clientResponse->devAddr.addr,
+                                                         clientResponse->devAddr.port,
+                                                         securePort
+#ifdef __WITH_TLS__
+                                                         ,resPayload->tcpPort
+#endif
+                                                         );
+            if (OC_STACK_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "Error while getting secure port.");
+                return OC_STACK_DELETE_TRANSACTION;
+            }
+
+            res = SecurityVersionDiscovery(pDInfo, clientResponse);
+            if(OC_STACK_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "Failed to SecurityVersionDiscovery");
+                return OC_STACK_DELETE_TRANSACTION;
+            }
+
+            OIC_LOG(INFO, TAG, "Exiting SecurePortDiscoveryHandler.");
+        }
+
+        return  OC_STACK_DELETE_TRANSACTION;
+    }
+    else
+    {
+        OIC_LOG(INFO, TAG, "Skiping Null response");
+    }
+
+    return  OC_STACK_DELETE_TRANSACTION;
+}
+
+static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
+                                OCClientResponse *clientResponse)
+{
+    if (ctx == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Lost List of device information");
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+    (void)UNUSED;
+    if (clientResponse)
+    {
+        if  (NULL == clientResponse->payload)
+        {
+            OIC_LOG(INFO, TAG, "Skiping Null payload");
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+        if (OC_STACK_OK != clientResponse->result)
+        {
+            OIC_LOG(INFO, TAG, "Error in response");
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+        else
+        {
+            if (PAYLOAD_TYPE_SECURITY != clientResponse->payload->type)
+            {
+                OIC_LOG(INFO, TAG, "Unknown payload type");
+                return OC_STACK_KEEP_TRANSACTION;
+            }
+
+            OicSecDoxm_t *ptrDoxm = NULL;
+            uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData;
+            size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
+
+            OCStackResult res = CBORPayloadToDoxm(payload, size, &ptrDoxm);
+            if ((NULL == ptrDoxm) || (OC_STACK_OK != res))
+            {
+                OIC_LOG(INFO, TAG, "Ignoring malformed CBOR");
+                return OC_STACK_KEEP_TRANSACTION;
+            }
+            else
+            {
+                OIC_LOG(DEBUG, TAG, "Successfully converted doxm cbor to bin.");
 
                 //If this is owend device discovery we have to filter out the responses.
                 DiscoveryInfo* pDInfo = (DiscoveryInfo*)ctx;
@@ -510,7 +702,7 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
                 OCStackResult res = GetDoxmDevOwnerId(&myId);
                 if(OC_STACK_OK != res)
                 {
-                    OC_LOG(ERROR, TAG, "Error while getting my device ID.");
+                    OIC_LOG(ERROR, TAG, "Error while getting my device ID.");
                     DeleteDoxmBinData(ptrDoxm);
                     return OC_STACK_KEEP_TRANSACTION;
                 }
@@ -519,58 +711,49 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
                 if( (pDInfo->isOwnedDiscovery) &&
                     (0 != memcmp(&ptrDoxm->owner.id, &myId.id, sizeof(myId.id))) )
                 {
-                    OC_LOG(DEBUG, TAG, "Discovered device is not owend by me");
+                    OIC_LOG(DEBUG, TAG, "Discovered device is not owend by me");
                     DeleteDoxmBinData(ptrDoxm);
                     return OC_STACK_KEEP_TRANSACTION;
                 }
 
-                res = AddDevice(ppDevicesList, clientResponse->devAddr.addr,
-                        clientResponse->devAddr.port,
-                        clientResponse->devAddr.adapter,
+                res = GetDoxmDeviceID(&myId);
+                if(OC_STACK_OK != res)
+                {
+                    OIC_LOG(ERROR, TAG, "Error while getting my UUID.");
+                    DeleteDoxmBinData(ptrDoxm);
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
+                //if this is owned discovery and this is PT's reply, discard it
+                if(((pDInfo->isSingleDiscovery) || (pDInfo->isOwnedDiscovery)) &&
+                        (0 == memcmp(&ptrDoxm->deviceID.id, &myId.id, sizeof(myId.id))) )
+                {
+                    OIC_LOG(DEBUG, TAG, "discarding provision tool's reply");
+                    DeleteDoxmBinData(ptrDoxm);
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
+
+                res = AddDevice(ppDevicesList, &clientResponse->devAddr,
                         clientResponse->connType, ptrDoxm);
                 if (OC_STACK_OK != res)
                 {
-                    OC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
+                    OIC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
                     DeleteDoxmBinData(ptrDoxm);
                     return OC_STACK_KEEP_TRANSACTION;
                 }
-                char rsrc_uri[MAX_URI_LENGTH+1] = {0};
-                int wr_len = snprintf(rsrc_uri, sizeof(rsrc_uri), "%s?%s=%s",
-                          OC_RSRVD_WELL_KNOWN_URI, OC_RSRVD_RESOURCE_TYPE, OIC_RSRC_TYPE_SEC_DOXM);
-                if(wr_len <= 0 || (size_t)wr_len >= sizeof(rsrc_uri))
-                {
-                    OC_LOG(ERROR, TAG, "rsrc_uri_string_print failed");
-                    return OC_STACK_ERROR;
-                }
-                //Try to the unicast discovery to getting secure port
-                char query[MAX_URI_LENGTH+MAX_QUERY_LENGTH+1] = {0};
-                if(!PMGenerateQuery(false,
-                                    clientResponse->devAddr.addr, clientResponse->devAddr.port,
-                                    clientResponse->connType,
-                                    query, sizeof(query), rsrc_uri))
-                {
-                    OC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
-                    return OC_STACK_KEEP_TRANSACTION;
-                }
-                OC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
-                OCCallbackData cbData;
-                cbData.cb = &SecurePortDiscoveryHandler;
-                cbData.context = ctx;
-                cbData.cd = NULL;
-                OCStackResult ret = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
-                        clientResponse->connType, OC_LOW_QOS, &cbData, NULL, 0);
-                // TODO: Should we use the default secure port in case of error?
-                if(OC_STACK_OK != ret)
+                res = SecurePortDiscovery(pDInfo, clientResponse);
+                if(OC_STACK_OK != res)
                 {
-                    OC_LOG(ERROR, TAG, "Failed to Secure Port Discovery");
+                    OIC_LOG(ERROR, TAG, "Failed to SecurePortDiscovery");
+                    DeleteDoxmBinData(ptrDoxm);
                     return OC_STACK_KEEP_TRANSACTION;
                 }
-                else
+
+                OIC_LOG(INFO, TAG, "Exiting ProvisionDiscoveryHandler.");
+                if(pDInfo->isSingleDiscovery)
                 {
-                    OC_LOG_V(INFO, TAG, "OCDoResource with [%s] Success", query);
+                    return OC_STACK_DELETE_TRANSACTION;
                 }
-                OC_LOG(INFO, TAG, "Exiting ProvisionDiscoveryHandler.");
             }
 
             return  OC_STACK_KEEP_TRANSACTION;
@@ -578,12 +761,114 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
     }
     else
     {
-        OC_LOG(INFO, TAG, "Skiping Null response");
+        OIC_LOG(INFO, TAG, "Skiping Null response");
         return OC_STACK_KEEP_TRANSACTION;
     }
 
     return  OC_STACK_DELETE_TRANSACTION;
 }
+
+
+/**
+ * Discover owned/unowned devices in the specified endpoint.
+ * It will return when found one or more device even though timeout is not exceeded
+ *
+ * @param[in] waittime           Timeout in seconds
+ * @param[in] host               address of target endpoint
+ * @param[in] connType           connectivity type of endpoint
+ * @param[out] ppDevicesList      List of OCProvisionDev_t
+ *
+ * @return OC_STACK_OK on success otherwise error.
+ */
+OCStackResult PMSingleDeviceDiscovery(unsigned short waittime, const char* host,
+                                 OCConnectivityType connType, OCProvisionDev_t **ppDevicesList)
+{
+    OIC_LOG(DEBUG, TAG, "IN PMSingleDeviceDiscovery");
+
+    if (NULL != *ppDevicesList)
+    {
+        OIC_LOG(ERROR, TAG, "List is not null can cause memory leak");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    DiscoveryInfo *pDInfo = OICCalloc(1, sizeof(DiscoveryInfo));
+    if(NULL == pDInfo)
+    {
+        OIC_LOG(ERROR, TAG, "PMSingleDeviceDiscovery : Memory allocation failed.");
+        return OC_STACK_NO_MEMORY;
+    }
+
+    pDInfo->ppDevicesList = ppDevicesList;
+    pDInfo->isOwnedDiscovery = false;
+    pDInfo->isSingleDiscovery = true;
+    pDInfo->isFound = false;
+
+    OCCallbackData cbData;
+    cbData.cb = &DeviceDiscoveryHandler;
+    cbData.context = (void *)pDInfo;
+    cbData.cd = NULL;
+    OCStackResult res = OC_STACK_ERROR;
+
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH + 1] = { '\0' };
+    if(host == NULL)
+    {
+        host = "";
+    }
+    snprintf(query, MAX_URI_LENGTH + MAX_QUERY_LENGTH + 1, "%s/oic/sec/doxm", host);
+
+    OCDoHandle handle = NULL;
+    res = OCDoResource(&handle, OC_REST_DISCOVER, query, 0, 0,
+                                     connType, OC_HIGH_QOS, &cbData, NULL, 0);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
+        OICFree(pDInfo);
+        return res;
+    }
+
+    //Waiting for each response.
+    res = OC_STACK_OK;
+    uint64_t startTime = OICGetCurrentTime(TIME_IN_MS);
+    while (OC_STACK_OK == res && pDInfo->isFound == false)
+    {
+        uint64_t currTime = OICGetCurrentTime(TIME_IN_MS);
+
+        long elapsed = (long)((currTime - startTime) / MS_PER_SEC);
+        if (elapsed > waittime)
+        {
+            break;
+        }
+        res = OCProcess();
+    }
+
+    if(OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to wait response for secure discovery.");
+        OICFree(pDInfo);
+        OCStackResult resCancel = OCCancel(handle, OC_HIGH_QOS, NULL, 0);
+        if(OC_STACK_OK !=  resCancel)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to remove registered callback");
+        }
+        return res;
+    }
+
+    if(*ppDevicesList == NULL)
+    {
+        res = OCCancel(handle,OC_HIGH_QOS,NULL,0);
+    }
+
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to remove registered callback");
+        OICFree(pDInfo);
+        return res;
+    }
+    OIC_LOG(DEBUG, TAG, "OUT PMSingleDeviceDiscovery");
+    OICFree(pDInfo);
+    return res;
+}
+
 
 /**
  * Discover owned/unowned devices in the same IP subnet. .
@@ -596,11 +881,11 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
  */
 OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisionDev_t **ppDevicesList)
 {
-    OC_LOG(DEBUG, TAG, "IN PMDeviceDiscovery");
+    OIC_LOG(DEBUG, TAG, "IN PMDeviceDiscovery");
 
     if (NULL != *ppDevicesList)
     {
-        OC_LOG(ERROR, TAG, "List is not null can cause memory leak");
+        OIC_LOG(ERROR, TAG, "List is not null can cause memory leak");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -610,12 +895,13 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
     DiscoveryInfo *pDInfo = OICCalloc(1, sizeof(DiscoveryInfo));
     if(NULL == pDInfo)
     {
-        OC_LOG(ERROR, TAG, "PMDeviceDiscovery : Memory allocation failed.");
+        OIC_LOG(ERROR, TAG, "PMDeviceDiscovery : Memory allocation failed.");
         return OC_STACK_NO_MEMORY;
     }
 
     pDInfo->ppDevicesList = ppDevicesList;
     pDInfo->isOwnedDiscovery = isOwned;
+    pDInfo->isSingleDiscovery = false;
 
     OCCallbackData cbData;
     cbData.cb = &DeviceDiscoveryHandler;
@@ -628,10 +914,10 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
 
     OCDoHandle handle = NULL;
     res = OCDoResource(&handle, OC_REST_DISCOVER, query, 0, 0,
-                                     CT_DEFAULT, OC_LOW_QOS, &cbData, NULL, 0);
+                                     CT_DEFAULT, OC_HIGH_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
-        OC_LOG(ERROR, TAG, "OCStack resource error");
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
         OICFree(pDInfo);
         return res;
     }
@@ -640,61 +926,146 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
     res = PMTimeout(waittime, true);
     if(OC_STACK_OK != res)
     {
-        OC_LOG(ERROR, TAG, "Failed to wait response for secure discovery.");
+        OIC_LOG(ERROR, TAG, "Failed to wait response for secure discovery.");
         OICFree(pDInfo);
-        OCStackResult resCancel = OCCancel(handle, OC_LOW_QOS, NULL, 0);
+        OCStackResult resCancel = OCCancel(handle, OC_HIGH_QOS, NULL, 0);
         if(OC_STACK_OK !=  resCancel)
         {
-            OC_LOG(ERROR, TAG, "Failed to remove registered callback");
+            OIC_LOG(ERROR, TAG, "Failed to remove registered callback");
         }
         return res;
     }
-    res = OCCancel(handle,OC_LOW_QOS,NULL,0);
+    res = OCCancel(handle,OC_HIGH_QOS,NULL,0);
     if (OC_STACK_OK != res)
     {
-        OC_LOG(ERROR, TAG, "Failed to remove registered callback");
+        OIC_LOG(ERROR, TAG, "Failed to remove registered callback");
         OICFree(pDInfo);
         return res;
     }
-    OC_LOG(DEBUG, TAG, "OUT PMDeviceDiscovery");
+    OIC_LOG(DEBUG, TAG, "OUT PMDeviceDiscovery");
     OICFree(pDInfo);
     return res;
+}
+
+static OCStackResult SecurePortDiscovery(DiscoveryInfo* discoveryInfo,
+                                         const OCClientResponse *clientResponse)
+{
+    OIC_LOG(DEBUG, TAG, "IN SecurePortDiscovery");
+
+    if(NULL == discoveryInfo || NULL == clientResponse)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    //Try to the unicast discovery to getting secure port
+    char query[MAX_URI_LENGTH+MAX_QUERY_LENGTH+1] = {0};
+    if(!PMGenerateQuery(false,
+                        clientResponse->devAddr.addr, clientResponse->devAddr.port,
+                        clientResponse->connType,
+                        query, sizeof(query), OC_RSRVD_WELL_KNOWN_URI))
+    {
+        OIC_LOG(ERROR, TAG, "SecurePortDiscovery : Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
+    OCCallbackData cbData;
+    cbData.cb = &SecurePortDiscoveryHandler;
+    cbData.context = (void*)discoveryInfo;
+    cbData.cd = NULL;
+    OCStackResult ret = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
+            clientResponse->connType, OC_HIGH_QOS, &cbData, NULL, 0);
+    if(OC_STACK_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to Secure Port Discovery");
+        return ret;
+    }
+    else
+    {
+        OIC_LOG_V(INFO, TAG, "OCDoResource with [%s] Success", query);
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT SecurePortDiscovery");
+
+    return ret;
+}
+
+static OCStackResult SecurityVersionDiscovery(DiscoveryInfo* discoveryInfo,
+                                              const OCClientResponse *clientResponse)
+{
+    OIC_LOG(DEBUG, TAG, "IN SecurityVersionDiscovery");
+
+    if(NULL == discoveryInfo || NULL == clientResponse)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    //Try to the unicast discovery to getting security version
+    char query[MAX_URI_LENGTH+MAX_QUERY_LENGTH+1] = {0};
+    if(!PMGenerateQuery(false,
+                        clientResponse->devAddr.addr, clientResponse->devAddr.port,
+                        clientResponse->connType,
+                        query, sizeof(query), OIC_RSRC_VER_URI))
+    {
+        OIC_LOG(ERROR, TAG, "SecurityVersionDiscovery : Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
+    OCCallbackData cbData;
+    cbData.cb = &SecurityVersionDiscoveryHandler;
+    cbData.context = (void*)discoveryInfo;
+    cbData.cd = NULL;
+    OCStackResult ret = OCDoResource(NULL, OC_REST_DISCOVER, query, 0, 0,
+            clientResponse->connType, OC_HIGH_QOS, &cbData, NULL, 0);
+    if(OC_STACK_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to Security Version Discovery");
+        return ret;
+    }
+    else
+    {
+        OIC_LOG_V(INFO, TAG, "OCDoResource with [%s] Success", query);
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT SecurityVersionDiscovery");
+
+    return ret;
 }
 
 /**
  * Function to print OCProvisionDev_t for debug purpose.
  *
- * @param[in] pDev Pointer to OCProvisionDev_t. It's information will be printed by OC_LOG_XX
+ * @param[in] pDev Pointer to OCProvisionDev_t. It's information will be printed by OIC_LOG_XX
  *
  */
 void PMPrintOCProvisionDev(const OCProvisionDev_t* pDev)
 {
     if (pDev)
     {
-        OC_LOG(DEBUG, TAG, "+++++ OCProvisionDev_t Information +++++");
-        OC_LOG_V(DEBUG, TAG, "IP %s", pDev->endpoint.addr);
-        OC_LOG_V(DEBUG, TAG, "PORT %d", pDev->endpoint.port);
-        OC_LOG_V(DEBUG, TAG, "S-PORT %d", pDev->securePort);
-        OC_LOG(DEBUG, TAG, "++++++++++++++++++++++++++++++++++++++++");
+        OIC_LOG(DEBUG, TAG, "+++++ OCProvisionDev_t Information +++++");
+        OIC_LOG_V(DEBUG, TAG, "IP %s", pDev->endpoint.addr);
+        OIC_LOG_V(DEBUG, TAG, "PORT %d", pDev->endpoint.port);
+        OIC_LOG_V(DEBUG, TAG, "S-PORT %d", pDev->securePort);
+        OIC_LOG(DEBUG, TAG, "++++++++++++++++++++++++++++++++++++++++");
     }
     else
     {
-        OC_LOG(DEBUG, TAG, "+++++ OCProvisionDev_t is NULL +++++");
+        OIC_LOG(DEBUG, TAG, "+++++ OCProvisionDev_t is NULL +++++");
     }
 }
 
-bool PMDeleteFromUUIDList(OCUuidList_t *pUuidList, OicUuid_t *targetId)
+bool PMDeleteFromUUIDList(OCUuidList_t **pUuidList, OicUuid_t *targetId)
 {
-    if(pUuidList == NULL || targetId == NULL)
+    if(*pUuidList == NULL || targetId == NULL)
     {
         return false;
     }
     OCUuidList_t *tmp1 = NULL,*tmp2=NULL;
-    LL_FOREACH_SAFE(pUuidList, tmp1, tmp2)
+    LL_FOREACH_SAFE(*pUuidList, tmp1, tmp2)
     {
         if(0 == memcmp(tmp1->dev.id, targetId->id, sizeof(targetId->id)))
         {
-            LL_DELETE(pUuidList, tmp1);
+            LL_DELETE(*pUuidList, tmp1);
             OICFree(tmp1);
             return true;
         }

@@ -18,4 +18,17 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "ocapi.h"
+#include "OCApi.h"
+
+#if defined(_MSC_VER)
+
+#include <iostream>
+
+namespace OC
+{
+    std::ostream& oclog()
+    {
+        return std::cout;
+    }
+}
+#endif

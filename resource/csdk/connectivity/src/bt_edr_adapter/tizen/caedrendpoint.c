@@ -47,6 +47,11 @@ CAResult_t CAEDRSendData(int serverFD, const void *data, uint32_t dataLength)
         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "sending data failed!, soketid [%d]", serverFD);
         return CA_SOCKET_OPERATION_FAILED;
     }
+    else if (dataLen == 0)
+    {
+        OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "soketid [%d] may be disconnected?", serverFD);
+        return CA_SOCKET_OPERATION_FAILED;
+    }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
     return CA_STATUS_OK;

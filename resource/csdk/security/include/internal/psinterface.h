@@ -21,6 +21,8 @@
 #ifndef IOTVT_SRM_PSI_H
 #define IOTVT_SRM_PSI_H
 
+#include "cJSON.h"
+
 /**
  * Reads the Secure Virtual Database from PS into dynamically allocated
  * memory buffer.
@@ -28,7 +30,7 @@
  * @note Caller of this method MUST use OCFree() method to release memory
  *       referenced by return value.
  *
- * @retval  reference to memory buffer containing SVR database.
+ * @return char * reference to memory buffer containing SVR database.
  */
 char * GetSVRDatabase();
 
@@ -39,8 +41,51 @@ char * GetSVRDatabase();
  * @param rsrcName string denoting the SVR name ("acl", "cred", "pstat" etc).
  * @param jsonObj JSON object containing the SVR contents.
  *
- * @retval  OC_STACK_OK for Success, otherwise some error value
+ * @return ::OC_STACK_OK for Success, otherwise some error value
  */
 OCStackResult UpdateSVRDatabase(const char* rsrcName, cJSON* jsonObj);
+
+/**
+ * Reads the Secure Virtual Database from PS
+ *
+ * @note Caller of this method MUST use OCFree() method to release memory
+ *       referenced by return value.
+ *
+ * @param rsrcName is the name of the field for which file content are read.
+                   if the value is NULL it will send the content of the whole file.
+ * @param data is the pointer to the file contents read from the database.
+ * @param size is the size to the file contents read.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **data, size_t *size);
+
+/**
+ * This method converts updates the persistent storage.
+ *
+ * @param rsrcName is the name of the secure resource that will be updated.
+ * @param cborPayload is the pointer holding cbor payload.
+ * @param cborPayload is the size of the cbor payload.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult UpdateSecureResourceInPS(const char* rsrcName, uint8_t* cborPayload, size_t size);
+
+/**
+ * This method resets the secure resources according to the reset profile.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult ResetSecureResourceInPS(void);
+
+/**
+ * This method creates the reset profile from the persistent storage.
+ * The reset profile is the copy of the initial state of SVR resources
+ * when secure resources are initiated at first.
+ * In remote reset, the SVR will be reset according to the reset profile.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult CreateResetProfile(void);
 
 #endif //IOTVT_SRM_PSI_H

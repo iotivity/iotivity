@@ -1,28 +1,30 @@
 /*
- * //******************************************************************
- * //
- * // Copyright 2015 Intel Corporation.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //      http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *******************************************************************
+ *
+ * Copyright 2015 Intel Corporation.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 package org.iotivity.base.examples;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -68,14 +70,22 @@ public class SimpleClient extends Activity implements
     private OcResource mFoundLightResource = null;
     //local representation of a server's light resource
     private Light mLight = new Light();
+    //variables related observer
+    private int maxSequenceNumber = 0xFFFFFF;
+    private OcConnectivityType adapterFlag = OcConnectivityType.CT_ADAPTER_IP;
+    //flags related TCP transport test
+    private boolean isRequestFlag = false;
+    private boolean isTCPContained = false;
 
     /**
      * A local method to configure and initialize platform, and then search for the light resources.
      */
-    private void startSimpleClient() {
+    private void startSimpleClient(OcConnectivityType type) {
         Context context = this;
+        adapterFlag = type;
 
         PlatformConfig platformConfig = new PlatformConfig(
+                this,
                 context,
                 ServiceType.IN_PROC,
                 ModeType.CLIENT,
@@ -83,7 +93,6 @@ public class SimpleClient extends Activity implements
                 0,         // Uses randomly available port
                 QualityOfService.LOW
         );
-
         msg("Configuring platform.");
         OcPlatform.Configure(platformConfig);
 
@@ -136,8 +145,19 @@ public class SimpleClient extends Activity implements
         }
 
         if (null != mFoundLightResource) {
+            if (ocResource.getUri().equals("/a/light")) {
+                if (ocResource.getConnectivityTypeSet().contains(OcConnectivityType.CT_ADAPTER_TCP)) {
+                    msg("Found resource which has TCP transport");
+                    if (isTCPContained == false)
+                    {
+                        isTCPContained = true;
+                        return;
+                    }
+                }
+            }
             msg("Found another resource, ignoring");
             return;
+
         }
         // Get the resource URI
         String resourceUri = ocResource.getUri();
@@ -164,11 +184,31 @@ public class SimpleClient extends Activity implements
         if (resourceUri.equals("/a/light")) {
             //Assign resource reference to a global variable to keep it from being
             //destroyed by the GC when it is out of scope.
-            mFoundLightResource = ocResource;
-
-            // Call a local method which will internally invoke "get" API on the foundLightResource
-            getLightResourceRepresentation();
+            if (OcConnectivityType.CT_ADAPTER_TCP == adapterFlag)
+            {
+                if (ocResource.getConnectivityTypeSet().contains(OcConnectivityType.CT_ADAPTER_TCP))
+                {
+                    msg("set mFoundLightResource which has TCP transport");
+                    mFoundLightResource = ocResource;
+                    // Call a local method which will internally invoke "get" API
+                    getLightResourceRepresentation();
+                    return;
+                }
+            }
+            else
+            {
+                msg("set mFoundLightResource which has UDP transport");
+                mFoundLightResource = ocResource;
+                // Call a local method which will internally invoke "get" API on the foundLightResource
+                getLightResourceRepresentation();
+            }
         }
+    }
+
+    @Override
+    public synchronized void onFindResourceFailed(Throwable throwable, String uri) {
+        msg("findResource request has failed");
+        Log.e(TAG, throwable.toString());
     }
 
     /**
@@ -470,37 +510,46 @@ public class SimpleClient extends Activity implements
     public synchronized void onObserveCompleted(List<OcHeaderOption> list,
                                                 OcRepresentation ocRepresentation,
                                                 int sequenceNumber) {
-        if (OcResource.OnObserveListener.REGISTER == sequenceNumber) {
-            msg("Observe registration action is successful:");
-        } else if (OcResource.OnObserveListener.DEREGISTER == sequenceNumber) {
-            msg("Observe De-registration action is successful");
-        } else if (OcResource.OnObserveListener.NO_OPTION == sequenceNumber) {
-            msg("Observe registration or de-registration action is failed");
-        }
 
-        msg("OBSERVE Result:");
-        msg("\tSequenceNumber:" + sequenceNumber);
-        try {
-            mLight.setOcRepresentation(ocRepresentation);
-        } catch (OcException e) {
-            Log.e(TAG, e.toString());
-            msg("Failed to get the attribute values");
-        }
-        msg(mLight.toString());
-
-        if ((++mObserveCount) == 11) {
-            msg("Cancelling Observe...");
+        if (sequenceNumber != maxSequenceNumber + 1)
+        {
+            msg("OBSERVE Result:");
+            msg("\tSequenceNumber:" + sequenceNumber);
             try {
-                mFoundLightResource.cancelObserve();
+                mLight.setOcRepresentation(ocRepresentation);
             } catch (OcException e) {
                 Log.e(TAG, e.toString());
-                msg("Error occurred while invoking \"cancelObserve\" API");
+                msg("Failed to get the attribute values");
             }
-            msg("DONE");
+            msg(mLight.toString());
 
-            //prepare for the next restart of the SimpleClient
-            resetGlobals();
-            enableStartButton();
+            if ((++mObserveCount) == 11) {
+                msg("Cancelling Observe...");
+                try {
+                    mFoundLightResource.cancelObserve(QualityOfService.HIGH);
+                } catch (OcException e) {
+                    Log.e(TAG, e.toString());
+                    msg("Error occurred while invoking \"cancelObserve\" API");
+                }
+
+                sleep(10);
+                resetGlobals();
+                if (true == isTCPContained && false == isRequestFlag)
+                {
+                    msg("Start TCP test...");
+                    startSimpleClient(OcConnectivityType.CT_ADAPTER_TCP);
+                    isRequestFlag = true;
+                    return;
+                } else if (true == isRequestFlag)
+                {
+                    msg("End TCP test...");
+                    isRequestFlag = false;
+                }
+
+                msg("DONE");
+                //prepare for the next restart of the SimpleClient
+                enableStartButton();
+            }
         }
     }
 
@@ -547,7 +596,8 @@ public class SimpleClient extends Activity implements
                     button.setEnabled(false);
                     new Thread(new Runnable() {
                         public void run() {
-                            startSimpleClient();
+                            isTCPContained = false;
+                            startSimpleClient(OcConnectivityType.CT_ADAPTER_IP);
                         }
                     }).start();
                 }
@@ -611,4 +661,18 @@ public class SimpleClient extends Activity implements
         mLight = new Light();
         mObserveCount = 0;
     }
+
+    @Override
+    public void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Log.d(TAG, "onNewIntent with changes sending broadcast IN ");
+
+        Intent i = new Intent();
+        i.setAction(intent.getAction());
+        i.putExtra(NfcAdapter.EXTRA_NDEF_MESSAGES,
+                intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES));
+        sendBroadcast(i);
+        Log.d(TAG, "Initialize Context again resetting");
+    }
+
 }

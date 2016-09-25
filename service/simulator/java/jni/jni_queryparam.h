@@ -29,7 +29,7 @@ class JniQueryParameter
 {
     public:
         JniQueryParameter(JNIEnv *env);
-        std::map<std::string, std::string> toCpp(jobject queryParams);
+        std::map<std::string, std::string> toCpp(jobject jQueryParams);
 
     private:
         JNIEnv *m_env;

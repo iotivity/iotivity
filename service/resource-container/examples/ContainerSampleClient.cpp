@@ -53,6 +53,18 @@ class Light
         }
 };
 
+class LightSensor
+{
+public:
+        int m_intensity;
+
+        std::string m_name;
+
+        LightSensor() : m_intensity(0), m_name("")
+        {
+        }
+};
+
 Light mylight;
 
 int observe_count()
@@ -79,6 +91,45 @@ void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep,
             std::cout << "\ton-off: " << mylight.m_on_off << std::endl;
             std::cout << "\tcolor: " << mylight.m_color << std::endl;
             std::cout << "\tdim: " << mylight.m_dim << std::endl;
+
+            if (observe_count() > 10)
+            {
+                std::cout << "Cancelling Observe..." << std::endl;
+                OCStackResult result = curResource->cancelObserve();
+
+                std::cout << "Cancel result: " << result << std::endl;
+                sleep(10);
+                std::cout << "DONE" << std::endl;
+                std::exit(0);
+            }
+        }
+        else
+        {
+            std::cout << "onObserve Response error: " << eCode << std::endl;
+        }
+    }
+    catch (std::exception &e)
+    {
+        std::cout << "Exception: " << e.what() << " in onObserve" << std::endl;
+    }
+
+}
+
+
+void onLightIntensityObserve(const HeaderOptions headerOptions, const OCRepresentation &rep,
+               const int &eCode, const int &sequenceNumber)
+{
+    (void)headerOptions;
+    try
+    {
+        if (eCode == OC_STACK_OK)
+        {
+            std::cout << "OBSERVE RESULT:" << std::endl;
+            std::cout << "\tSequenceNumber: " << sequenceNumber << std::endl;
+
+
+            std::cout << "\tintensity: " << rep.getValue<int>("intensity") << std::endl;
+
 
             if (observe_count() > 10)
             {
@@ -194,7 +245,7 @@ void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, con
     }
 }
 
-// Local function to put a different state for this resource
+// Local function to put a different state for this re<< std::endlsource
 void postLightRepresentation(std::shared_ptr<OCResource> resource)
 {
     if (resource)
@@ -289,7 +340,7 @@ void putLightRepresentation(std::shared_ptr<OCResource> resource)
 
         // Invoke resource's put API with rep, query map and the callback parameter
 
-        resource->put(rep, QueryParamsMap(), &onPut);
+        resource->post(rep, QueryParamsMap(), &onPut);
     }
 }
 
@@ -305,16 +356,13 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
             std::cout << "Resource URI: " << rep.getUri() << std::endl;
 
             std::cout << "Payload: " << rep.getPayload() << std::endl;
+            std::cout << "On-off: " << rep.getValueToString("on-off") << std::endl;
 
             rep.getValue("on-off", mylight.m_on_off);
-            rep.getValue("dim", mylight.m_dim);
-            rep.getValue("color", mylight.m_color);
 
             std::cout << "\ton-off: " << mylight.m_on_off << std::endl;
-            std::cout << "\tcolor: " << mylight.m_color << std::endl;
-            std::cout << "\tdim: " << mylight.m_dim << std::endl;
 
-            putLightRepresentation(curResource);
+            postLightRepresentation(curResource);
         }
         else
         {
@@ -353,6 +401,45 @@ void onGetForDISensor(const HeaderOptions &headerOptions, const OCRepresentation
     }
 }
 
+
+void onGetForLightIntensitySensor(const HeaderOptions &headerOptions, const OCRepresentation &rep,
+                      const int eCode)
+{
+    (void)headerOptions;
+    try
+    {
+        if (eCode == OC_STACK_OK)
+        {
+            std::cout << "GET request was successful" << std::endl;
+            //std::cout << "Resource URI: " << DISensorResource->uri() << std::endl;
+
+            std::cout << "Payload: " << rep.getPayload() << std::endl;
+
+            std::cout << "\tlightIntensity: " << rep.getValue<int>("intensity") << std::endl;
+
+            // iterating over all elements
+            OCRepresentation::const_iterator itr = rep.begin();
+            OCRepresentation::const_iterator endItr = rep.end();
+
+            for(;itr!=endItr;++itr)
+            {
+                std::cout << itr->attrname() << " ";
+                std::cout << itr->getValue<int>() << std::endl;
+            }
+
+            curResource->observe(OBSERVE_TYPE_TO_USE, QueryParamsMap(), &onLightIntensityObserve);
+        }
+        else
+        {
+            std::cout << "onGET Response error: " << eCode << std::endl;
+        }
+    }
+    catch (std::exception &e)
+    {
+        std::cout << "Exception: " << e.what() << " in onPut" << std::endl;
+    }
+}
+
 // Local function to get representation of light resource
 void getLightRepresentation(std::shared_ptr<OCResource> resource)
 {
@@ -367,6 +454,99 @@ void getLightRepresentation(std::shared_ptr<OCResource> resource)
     }
 }
 
+void onGetDiscomfortIndex(const HeaderOptions &headerOptions, const OCRepresentation &rep,
+                      const int eCode)
+{
+    (void)headerOptions;
+    std::cout << "onGetDiscomfortIndex" << std::endl;
+    try
+    {
+        if (eCode == OC_STACK_OK)
+        {
+            std::cout << "GET request was successful" << std::endl;
+
+            std::cout << "Payload: " << rep.getPayload() << std::endl;
+
+            std::cout << "\tdiscomfortIndex: " << rep.getValue<double>("discomfortIndex") << std::endl;
+        }
+        else
+        {
+            std::cout << "onGET Response error: " << eCode << std::endl;
+        }
+    }
+    catch (std::exception &e)
+    {
+        std::cout << "Exception: " << e.what() << " in onPut" << std::endl;
+    }
+}
+
+void onObserveDiscomfort(const HeaderOptions headerOptions, const OCRepresentation &rep,
+               const int &eCode, const int &sequenceNumber)
+{
+    (void)headerOptions;
+    try
+    {
+        if (eCode == OC_STACK_OK)
+        {
+            std::cout << "OBSERVE RESULT:" << std::endl;
+            std::cout << "\tSequenceNumber: " << sequenceNumber << std::endl;
+            std::cout << "\tdiscomfortIndex: " << rep.getValue<double>("discomfortIndex") << std::endl;
+
+            if (observe_count() > 10)
+            {
+                std::cout << "Cancelling Observe..." << std::endl;
+                OCStackResult result = curResource->cancelObserve();
+
+                std::cout << "Cancel result: " << result << std::endl;
+                sleep(10);
+                std::cout << "DONE" << std::endl;
+                std::exit(0);
+            }
+        }
+        else
+        {
+            std::cout << "onObserve Response error: " << eCode << std::endl;
+        }
+    }
+    catch (std::exception &e)
+    {
+        std::cout << "Exception: " << e.what() << " in onObserve" << std::endl;
+    }
+
+}
+
+// Local function to get representation of light resource
+void getDiscomfortRepresentation(std::shared_ptr<OCResource> resource)
+{
+    if (resource)
+    {
+        std::cout << "Getting Discomfort Representation..." << std::endl;
+        // Invoke resource's get API with the callback parameter
+
+        QueryParamsMap test;
+        std::cout << "Sending request to: " << resource->uri() << std::endl;
+        resource->get(test, &onGetDiscomfortIndex);
+        //resource->observe(ObserveType::Observe, QueryParamsMap(), &onObserve);
+    }
+}
+
+
+
+
+// Local function to get representation of light resource
+void getLightIntensityRepresentation(std::shared_ptr<OCResource> resource)
+{
+    if (resource)
+    {
+        std::cout << "Getting Light Representation..." << std::endl;
+        // Invoke resource's get API with the callback parameter
+
+        QueryParamsMap test;
+        std::cout << "Sending request to: " << resource->uri() << std::endl;
+        resource->get(test, &onGetForLightIntensitySensor);
+    }
+}
+
 // Callback to found resources
 void foundResource(std::shared_ptr<OCResource> resource)
 {
@@ -375,39 +555,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
     std::string hostAddress;
     try
     {
-        {
-            std::lock_guard<std::mutex> lock(curResourceLock);
-            if (discoveredResources.find(resource->uniqueIdentifier()) == discoveredResources.end())
-            {
-                std::cout << "Found resource " << resource->uniqueIdentifier() <<
-                          " for the first time on server with ID: " << resource->sid() << std::endl;
-                discoveredResources[resource->uniqueIdentifier()] = resource;
 
-                if (resourceURI.find("/discomfortIndex") != std::string::npos)
-                {
-                    std::cout << "discomfortIndex found !!! " << std::endl;
-
-                    DISensorResource = resource;
-
-                    OCRepresentation rep;
-
-                    rep.setValue("humidity", std::string("30"));
-                    rep.setValue("temperature", std::string("27"));
-
-                    resource->put(rep, QueryParamsMap(), &onPutForDISensor);
-                }
-            }
-            else
-            {
-                std::cout << "Found resource " << resource->uniqueIdentifier() << " again!" << std::endl;
-            }
-
-            if (curResource)
-            {
-                std::cout << "Found another resource, ignoring" << std::endl;
-                return;
-            }
-        }
 
         // Do some operations with resource object.
         if (resource)
@@ -426,12 +574,18 @@ void foundResource(std::shared_ptr<OCResource> resource)
             for (auto &resourceTypes : resource->getResourceTypes())
             {
                 std::cout << "\t\t" << resourceTypes << std::endl;
-
-                if (resourceTypes == "oic.r.light")
+                /*if (resourceTypes == "oic.r.light")
                 {
                     curResource = resource;
                     // Call a local function which will internally invoke get API on the resource pointer
                     getLightRepresentation(resource);
+                }*/
+                if (resourceTypes == "oic.r.discomfortindex")
+                {
+                    curResource = resource;
+                    std::cout << "\t\tGet discomfort representation " << std::endl;
+                    // Call a local function which will internally invoke get API on the resource pointer
+                    getDiscomfortRepresentation(resource);
                 }
             }
 

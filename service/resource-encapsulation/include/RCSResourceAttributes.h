@@ -109,19 +109,27 @@ namespace OIC
                 typedef V type;
             };
 
-            template< typename VISITOR >
+            template< typename VISITOR, typename MOVE = std::false_type >
             class KeyValueVisitorHelper: public boost::static_visitor< >
             {
             public:
-                KeyValueVisitorHelper(VISITOR& visitor) noexcept :
+                KeyValueVisitorHelper(VISITOR& visitor) BOOST_NOEXCEPT :
                         m_visitor( visitor )
                 {
                 }
 
-                template< typename T >
-                void operator()(const std::string& key, const T& value) const
+                template< typename T, typename M = MOVE >
+                typename std::enable_if< std::is_same< M, std::false_type >::value >::type
+                operator()(const std::string& key, const T& value) const
                 {
                     m_visitor(key, value);
+                }
+
+                template< typename T, typename M = MOVE >
+                typename std::enable_if< std::is_same< M, std::true_type >::value >::type
+                operator()(const std::string& key, T& value)
+                {
+                    m_visitor(key, std::move(value));
                 }
 
             private:
@@ -178,7 +186,7 @@ namespace OIC
                  *
                  * @see getBaseTypeId
                  */
-                TypeId getId() const noexcept;
+                TypeId getId() const BOOST_NOEXCEPT;
 
                 /**
                  * Returns the type identifier of a base type of sequence.
@@ -190,7 +198,7 @@ namespace OIC
                  * @see getDepth
                  * @see getId
                  */
-                static TypeId getBaseTypeId(const Type& t) noexcept;
+                static TypeId getBaseTypeId(const Type& t) BOOST_NOEXCEPT;
 
                 /**
                  * Returns the depth of a type.
@@ -199,7 +207,7 @@ namespace OIC
                  *
                  * @see getBaseTypeId
                  */
-                static size_t getDepth(const Type& t) noexcept;
+                static size_t getDepth(const Type& t) BOOST_NOEXCEPT;
 
                 /**
                  * Factory method to create Type instance from T.
@@ -211,7 +219,7 @@ namespace OIC
                  * @see is_supported_type
                  */
                 template < typename T >
-                constexpr static Type typeOf(const T&) noexcept
+                constexpr static Type typeOf(const T&) BOOST_NOEXCEPT
                 {
                     return Type{ IndexOfType< T >::value };
                 }
@@ -226,17 +234,17 @@ namespace OIC
                  * @see is_supported_type
                  */
                 template < typename T >
-                constexpr static Type typeOf() noexcept
+                constexpr static Type typeOf() BOOST_NOEXCEPT
                 {
                     return Type{ IndexOfType< T >::value };
                 }
 
                 //! @cond
-                friend bool operator==(const Type&, const Type&) noexcept;
+                friend bool operator==(const Type&, const Type&) BOOST_NOEXCEPT;
                 //! @endcond
 
             private:
-                constexpr explicit Type(int which) noexcept :
+                constexpr explicit Type(int which) BOOST_NOEXCEPT :
                     m_which{ which }
                 {
                 }
@@ -291,7 +299,7 @@ namespace OIC
 
                 Value();
                 Value(const Value&);
-                Value(Value&&) noexcept;
+                Value(Value&&) BOOST_NOEXCEPT;
 
                 /**
                  * Constructs a Value if T is a supported type.<br/>
@@ -360,7 +368,7 @@ namespace OIC
                 /**
                  * Exchanges the content of the object by the content of the parameter.
                  */
-                void swap(Value&) noexcept;
+                void swap(Value&) BOOST_NOEXCEPT;
 
                 //! @cond
                 friend class RCSResourceAttributes;
@@ -412,32 +420,32 @@ namespace OIC
             /**
              * Returns an {@link iterator} referring to the first element.
              */
-            iterator begin() noexcept;
+            iterator begin() BOOST_NOEXCEPT;
 
             /**
              * Returns an {@link iterator} referring to the <i>past-the-end element</i>.
              */
-            iterator end() noexcept;
+            iterator end() BOOST_NOEXCEPT;
 
             /**
              * @copydoc cbegin()
              */
-            const_iterator begin() const noexcept;
+            const_iterator begin() const BOOST_NOEXCEPT;
 
             /**
              * @copydoc cend()
              */
-            const_iterator end() const noexcept;
+            const_iterator end() const BOOST_NOEXCEPT;
 
             /**
              * Returns a const_iterator referring to the first element.
              */
-            const_iterator cbegin() const noexcept;
+            const_iterator cbegin() const BOOST_NOEXCEPT;
 
             /**
              * Returns a const_iterator referring to the <i>past-the-end element</i>.
              */
-            const_iterator cend() const noexcept;
+            const_iterator cend() const BOOST_NOEXCEPT;
 
             /**
              * Accesses a value.
@@ -511,7 +519,7 @@ namespace OIC
             /**
              * Removes all elements.
              */
-            void clear() noexcept;
+            void clear() BOOST_NOEXCEPT;
 
             /**
              * Removes a single element.
@@ -521,6 +529,15 @@ namespace OIC
              * @return true if an element is erased, false otherwise.
              */
             bool erase(const std::string& key);
+
+            /**
+             * Removes a single element.
+             *
+             * @param pos Iterator to the element to remove.
+             *
+             * @return Iterator following the last removed element.
+             */
+            iterator erase(const_iterator pos);
 
             /**
              * Checks this contains an element for the specified key.
@@ -536,14 +553,14 @@ namespace OIC
              *
              * @see size
              */
-            bool empty() const noexcept;
+            bool empty() const BOOST_NOEXCEPT;
 
             /**
              * Returns the number of elements.
              *
              * @see empty
              */
-            size_t size() const noexcept;
+            size_t size() const BOOST_NOEXCEPT;
 
         private:
             template< typename VISITOR >
@@ -552,6 +569,18 @@ namespace OIC
                 KeyValueVisitorHelper< VISITOR > helper{ visitor };
 
                 for (const auto& i : m_values)
+                {
+                    boost::variant< const std::string& > key{ i.first };
+                    boost::apply_visitor(helper, key, *i.second.m_data);
+                }
+            }
+
+            template< typename VISITOR >
+            void visitToMove(VISITOR& visitor)
+            {
+                KeyValueVisitorHelper< VISITOR, std::true_type > helper{ visitor };
+
+                for (auto& i : m_values)
                 {
                     boost::variant< const std::string& > key{ i.first };
                     boost::apply_visitor(helper, key, *i.second.m_data);
@@ -633,7 +662,7 @@ namespace OIC
          * @return true if the objects are equal, false otherwise.
          */
         bool operator==(const RCSResourceAttributes::Type&, const RCSResourceAttributes::Type&)
-                noexcept;
+                BOOST_NOEXCEPT;
 
         /**
          * @relates RCSResourceAttributes::Type
@@ -643,7 +672,7 @@ namespace OIC
          * @return true if the objects are not equal, false otherwise.
          */
         bool operator!=(const RCSResourceAttributes::Type&, const RCSResourceAttributes::Type&)
-                noexcept;
+                BOOST_NOEXCEPT;
 
         /**
          * @relates RCSResourceAttributes::Value
@@ -734,32 +763,32 @@ namespace OIC
             class KeyVisitor: public boost::static_visitor< const std::string& >
             {
             public:
-                result_type operator()(iterator*) const noexcept;
-                result_type operator()(const_iterator*) const noexcept;
+                result_type operator()(iterator*) const BOOST_NOEXCEPT;
+                result_type operator()(const_iterator*) const BOOST_NOEXCEPT;
             };
 
             class ValueVisitor: public boost::static_visitor< Value& >
             {
             public:
-                result_type operator()(iterator*) noexcept;
+                result_type operator()(iterator*) BOOST_NOEXCEPT;
                 result_type operator()(const_iterator*);
             };
 
             class ConstValueVisitor: public boost::static_visitor< const Value& >
             {
             public:
-                result_type operator()(iterator*) const noexcept;
-                result_type operator()(const_iterator*) const noexcept;
+                result_type operator()(iterator*) const BOOST_NOEXCEPT;
+                result_type operator()(const_iterator*) const BOOST_NOEXCEPT;
             };
 
         public:
-            const std::string& key() const noexcept;
-            const RCSResourceAttributes::Value& value() const noexcept;
+            const std::string& key() const BOOST_NOEXCEPT;
+            const RCSResourceAttributes::Value& value() const BOOST_NOEXCEPT;
             RCSResourceAttributes::Value& value();
 
         private:
             KeyValuePair(const KeyValuePair&) = default;
-            KeyValuePair(boost::variant< iterator*, const_iterator* >&&) noexcept;
+            KeyValuePair(boost::variant< iterator*, const_iterator* >&&) BOOST_NOEXCEPT;
 
             KeyValuePair& operator=(const KeyValuePair&) = default;
 
@@ -791,9 +820,9 @@ namespace OIC
 
         public:
             iterator();
-            iterator(const iterator&) = default;
+            iterator(const iterator&);
 
-            iterator& operator=(const iterator&) = default;
+            iterator& operator=(const iterator&);
 
             reference operator*();
             pointer operator->();
@@ -825,7 +854,7 @@ namespace OIC
          * @see iterator
          */
         class RCSResourceAttributes::const_iterator:
-                public std::iterator < std::forward_iterator_tag,
+                public std::iterator< std::forward_iterator_tag,
                                        const RCSResourceAttributes::KeyValuePair >
         {
         private:
@@ -833,10 +862,10 @@ namespace OIC
 
         public:
             const_iterator();
-            const_iterator(const const_iterator&) = default;
+            const_iterator(const const_iterator&);
             const_iterator(const RCSResourceAttributes::iterator&);
 
-            const_iterator& operator=(const const_iterator&) = default;
+            const_iterator& operator=(const const_iterator&);
             const_iterator& operator=(const RCSResourceAttributes::iterator&);
 
             reference operator*() const;

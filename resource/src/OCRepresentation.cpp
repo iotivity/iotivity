@@ -30,6 +30,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <algorithm>
+#include <iomanip>
 #include "ocpayload.h"
 #include "ocrandom.h"
 #include "oic_malloc.h"
@@ -43,6 +44,11 @@ namespace OC
 
     void MessageContainer::setPayload(const OCPayload* rep)
     {
+        if (rep == nullptr)
+        {
+            return;
+        }
+
         switch(rep->type)
         {
             case PAYLOAD_TYPE_REPRESENTATION:
@@ -54,6 +60,11 @@ namespace OC
             case PAYLOAD_TYPE_PLATFORM:
                 setPayload(reinterpret_cast<const OCPlatformPayload*>(rep));
                 break;
+#ifdef RD_CLIENT
+            case PAYLOAD_TYPE_RD:
+                setPayload(reinterpret_cast<const OCRDPayload*>(rep));
+                break;
+#endif
             default:
                 throw OC::OCException("Invalid Payload type in setPayload");
                 break;
@@ -62,30 +73,39 @@ namespace OC
 
     void MessageContainer::setPayload(const OCDevicePayload* payload)
     {
+        if (payload == nullptr)
+        {
+            return;
+        }
+
         OCRepresentation rep;
-        char uuidString[UUID_STRING_SIZE];
-        if(payload->sid && RAND_UUID_OK == OCConvertUuidToString(payload->sid, uuidString))
-        {
-            rep[OC_RSRVD_DEVICE_ID] = std::string(uuidString);
-        }
-        else
-        {
-            rep[OC_RSRVD_DEVICE_ID] = std::string();
-        }
+        rep[OC_RSRVD_DEVICE_ID] = (payload->sid) ?
+            std::string(payload->sid) :
+            std::string();
         rep[OC_RSRVD_DEVICE_NAME] = payload->deviceName ?
             std::string(payload->deviceName) :
             std::string();
         rep[OC_RSRVD_SPEC_VERSION] = payload->specVersion ?
             std::string(payload->specVersion) :
             std::string();
-        rep[OC_RSRVD_DATA_MODEL_VERSION] = payload->dataModelVersion ?
-            std::string(payload->dataModelVersion) :
-            std::string();
+        for (OCStringLL *strll = payload->dataModelVersions; strll; strll = strll->next)
+        {
+            rep.addDataModelVersion(strll->value);
+        }
+        for (OCStringLL *strll = payload->types; strll; strll = strll->next)
+        {
+           rep.addResourceType(strll->value);
+        }
         m_reps.push_back(std::move(rep));
     }
 
     void MessageContainer::setPayload(const OCPlatformPayload* payload)
     {
+        if (payload == nullptr)
+        {
+            return;
+        }
+
         OCRepresentation rep;
         rep[OC_RSRVD_PLATFORM_ID] = payload->info.platformID ?
             std::string(payload->info.platformID) :
@@ -121,13 +141,22 @@ namespace OC
             std::string(payload->info.systemTime) :
             std::string();
 
+        for (OCStringLL *strll = payload->rt; strll; strll = strll->next)
+        {
+            rep.addResourceType(strll->value);
+        }
+        for (OCStringLL *strll = payload->interfaces; strll; strll = strll->next)
+        {
+            rep.addResourceInterface(strll->value);
+        }
+
         m_reps.push_back(std::move(rep));
     }
 
     void MessageContainer::setPayload(const OCRepPayload* payload)
     {
         const OCRepPayload* pl = payload;
-        while(pl)
+        while (pl)
         {
             OCRepresentation cur;
             cur.setPayload(pl);
@@ -136,13 +165,35 @@ namespace OC
             this->addRepresentation(cur);
         }
     }
+#ifdef RD_CLIENT
+    void MessageContainer::setPayload(const OCRDPayload* payload)
+    {
+        OCRepresentation rep;
+        rep[OC_RSRVD_DEVICE_ID] = (payload->rdPublish->tags->di.id) ?
+            std::string(reinterpret_cast<const char*>(payload->rdPublish->tags->di.id)) :
+            std::string();
+        rep[OC_RSRVD_DEVICE_NAME] = (payload->rdPublish->tags->n.deviceName) ?
+            std::string(payload->rdPublish->tags->n.deviceName) :
+            std::string();
+        this->addRepresentation(rep);
 
+        const OCLinksPayload* pl = payload->rdPublish->setLinks;
+        while (pl)
+        {
+            OCRepresentation cur;
+            cur.setPayload(pl);
+
+            pl = pl->next;
+            this->addRepresentation(cur);
+        }
+    }
+#endif
     OCRepPayload* MessageContainer::getPayload() const
     {
         OCRepPayload* root = nullptr;
         for(const auto& r : representations())
         {
-            if(!root)
+            if (!root)
             {
                 root = r.getPayload();
             }
@@ -292,11 +343,13 @@ namespace OC
         ((int64_t*)array)[pos] = item;
     }
 
+#if !defined(_MSC_VER)
     template<>
     void get_payload_array::copy_to_array(std::_Bit_reference br, void* array, size_t pos)
     {
         ((bool*)array)[pos] = static_cast<bool>(br);
     }
+#endif
 
     template<>
     void get_payload_array::copy_to_array(std::string item, void* array, size_t pos)
@@ -314,6 +367,24 @@ namespace OC
     void get_payload_array::copy_to_array(const std::string& item, void* array, size_t pos)
     {
         ((char**)array)[pos] = OICStrdup(item.c_str());
+    }
+
+    template<>
+    void get_payload_array::copy_to_array(OCByteString item, void *array, size_t pos)
+    {
+        ((OCByteString *)array)[pos] = item;
+    }
+
+    template<>
+    void get_payload_array::copy_to_array(OCByteString &item, void *array, size_t pos)
+    {
+        ((OCByteString *)array)[pos] = item;
+    }
+
+    template<>
+    void get_payload_array::copy_to_array(const OCByteString &item, void *array, size_t pos)
+    {
+        ((OCByteString *)array)[pos] = item;
     }
 
     template<>
@@ -351,6 +422,10 @@ namespace OC
                         (char**)vis.array,
                         vis.dimensions);
                 break;
+            case AttributeType::OCByteString:
+                OCRepPayloadSetByteStringArrayAsOwner(payload, item.attrname().c_str(),
+                                                      (OCByteString *)vis.array, vis.dimensions);
+                break;
             case AttributeType::OCRepresentation:
                 OCRepPayloadSetPropObjectArrayAsOwner(payload, item.attrname().c_str(),
                         (OCRepPayload**)vis.array, vis.dimensions);
@@ -364,7 +439,7 @@ namespace OC
     OCRepPayload* OCRepresentation::getPayload() const
     {
         OCRepPayload* root = OCRepPayloadCreate();
-        if(!root)
+        if (!root)
         {
             throw std::bad_alloc();
         }
@@ -402,12 +477,20 @@ namespace OC
                     OCRepPayloadSetPropString(root, val.attrname().c_str(),
                             static_cast<std::string>(val).c_str());
                     break;
+                case AttributeType::OCByteString:
+                    OCRepPayloadSetPropByteString(root, val.attrname().c_str(), val.getValue<OCByteString>());
+                    break;
                 case AttributeType::OCRepresentation:
                     OCRepPayloadSetPropObjectAsOwner(root, val.attrname().c_str(),
                             static_cast<OCRepresentation>(val).getPayload());
                     break;
                 case AttributeType::Vector:
                     getPayloadArray(root, val);
+                    break;
+                case AttributeType::Binary:
+                    OCRepPayloadSetPropByteString(root, val.attrname().c_str(),
+                            OCByteString{const_cast<uint8_t*>(val.getValue<std::vector<uint8_t>>().data()),
+                            val.getValue<std::vector<uint8_t>>().size()});
                     break;
                 default:
                     throw std::logic_error(std::string("Getpayload: Not Implemented") +
@@ -421,11 +504,11 @@ namespace OC
 
     size_t calcArrayDepth(const size_t dimensions[MAX_REP_ARRAY_DEPTH])
     {
-        if(dimensions[0] == 0)
+        if (dimensions[0] == 0)
         {
             throw std::logic_error("invalid calcArrayDepth");
         }
-        else if(dimensions[1] == 0)
+        else if (dimensions[1] == 0)
         {
             return 1;
         }
@@ -472,6 +555,19 @@ namespace OC
             return std::string{};
         }
     }
+
+    template<>
+    OCByteString OCRepresentation::payload_array_helper_copy<OCByteString>(
+        size_t index, const OCRepPayloadValue *pl)
+    {
+        OCByteString result {NULL, 0};
+        if (pl->arr.ocByteStrArray[index].len)
+        {
+            result = (pl->arr.ocByteStrArray[index]);
+        }
+        return result;
+    }
+
     template<>
     OCRepresentation OCRepresentation::payload_array_helper_copy<OCRepresentation>(
             size_t index, const OCRepPayloadValue* pl)
@@ -487,7 +583,7 @@ namespace OC
     template<typename T>
     void OCRepresentation::payload_array_helper(const OCRepPayloadValue* pl, size_t depth)
     {
-        if(depth == 1)
+        if (depth == 1)
         {
             std::vector<T> val(pl->arr.dimensions[0]);
 
@@ -555,6 +651,9 @@ namespace OC
             case OCREP_PROP_STRING:
                 payload_array_helper<std::string>(pl, calcArrayDepth(pl->arr.dimensions));
                 break;
+            case OCREP_PROP_BYTE_STRING:
+                payload_array_helper<OCByteString>(pl, calcArrayDepth(pl->arr.dimensions));
+                break;
             case OCREP_PROP_OBJECT:
                 payload_array_helper<OCRepresentation>(pl, calcArrayDepth(pl->arr.dimensions));
                 break;
@@ -613,6 +712,12 @@ namespace OC
                 case OCREP_PROP_ARRAY:
                     setPayloadArray(val);
                     break;
+                case OCREP_PROP_BYTE_STRING:
+                    setValue(val->name,
+                            std::vector<uint8_t>
+                            (val->ocByteStr.bytes, val->ocByteStr.bytes + val->ocByteStr.len)
+                            );
+                    break;
                 default:
                     throw std::logic_error(std::string("Not Implemented!") +
                             std::to_string((int)val->type));
@@ -621,7 +726,43 @@ namespace OC
             val = val->next;
         }
     }
+#ifdef RD_CLIENT
+    void OCRepresentation::setPayload(const OCLinksPayload* pl)
+    {
+        if (pl->href)
+        {
+            setValue<std::string>(OC_RSRVD_HREF, pl->href);
+        }
+        if (pl->rel)
+        {
+            setValue<std::string>(OC_RSRVD_REL, pl->rel);
+        }
+        OCStringLL* ll = pl->rt;
+        while (ll)
+        {
+            addResourceType(ll->value);
+            ll = ll->next;
+        }
+        ll = pl->itf;
+        while (ll)
+        {
+            addResourceInterface(ll->value);
+            ll = ll->next;
+        }
 
+        setValue<int>(OC_RSRVD_POLICY, pl->p);
+        setValue<int>(OC_RSRVD_INS, pl->ins);
+        setValue<int>(OC_RSRVD_TTL, pl->ttl);
+        if (pl->title)
+        {
+            setValue<std::string>(OC_RSRVD_TITLE, pl->title);
+        }
+        if (pl->anchor)
+        {
+            setValue<std::string>(OC_RSRVD_URI, pl->anchor);
+        }
+    }
+#endif
     void OCRepresentation::addChild(const OCRepresentation& rep)
     {
         m_children.push_back(rep);
@@ -722,6 +863,16 @@ namespace OC
         m_interfaces = resourceInterfaces;
     }
 
+    const std::vector<std::string>& OCRepresentation::getDataModelVersions() const
+    {
+        return m_dataModelVersions;
+    }
+
+    void OCRepresentation::addDataModelVersion(const std::string& str)
+    {
+        m_dataModelVersions.push_back(str);
+    }
+
     bool OCRepresentation::hasAttribute(const std::string& str) const
     {
         return m_values.find(str) != m_values.end();
@@ -735,18 +886,19 @@ namespace OC
         // child of a default or link item.
         // Our values array is only printed in the if we are the child of a Batch resource,
         // the parent in a 'default' situation, or not in a child/parent relationship.
-        if(!m_uri.empty())
+        if (!m_uri.empty())
         {
             return false;
         }
         else if ((m_interfaceType == InterfaceType::None
                         || m_interfaceType==InterfaceType::DefaultChild
                         || m_interfaceType==InterfaceType::LinkChild)
-                    && (m_resourceTypes.size()>0 || m_interfaces.size()>0))
+                    && (m_resourceTypes.size()>0 || m_interfaces.size()>0
+                        || m_dataModelVersions.size()>0))
         {
             return false;
         }
-        else if((m_interfaceType == InterfaceType::None
+        else if ((m_interfaceType == InterfaceType::None
                         || m_interfaceType == InterfaceType::BatchChild
                         || m_interfaceType == InterfaceType::DefaultParent)
                     && m_values.size()>0)
@@ -754,7 +906,7 @@ namespace OC
             return false;
         }
 
-        if(m_children.size() > 0)
+        if (m_children.size() > 0)
         {
             return false;
         }
@@ -781,7 +933,7 @@ namespace OC
     {
         auto x = m_values.find(str);
 
-        if(m_values.end() != x)
+        if (m_values.end() != x)
         {
             return x->second.which() == AttributeValueNullIndex;
         }
@@ -813,12 +965,17 @@ namespace OC
             case AttributeType::String:
                 os << "String";
                 break;
+            case AttributeType::OCByteString:
+                os << "OCByteString";
+                break;
             case AttributeType::OCRepresentation:
                 os << "OCRepresentation";
                 break;
             case AttributeType::Vector:
                 os << "Vector";
                 break;
+            case AttributeType::Binary:
+                os<< "Binary";
         }
         return os;
     }
@@ -856,26 +1013,44 @@ namespace OC
         // contains the inner most vector-type
         typedef T base_type;
         // contains the AttributeType for this item
-        constexpr static AttributeType enum_type =
+        BOOST_STATIC_CONSTEXPR AttributeType enum_type =
             AttributeTypeConvert<T>::type;
         // contains the AttributeType for this base-type
-        constexpr static AttributeType enum_base_type =
+        BOOST_STATIC_CONSTEXPR AttributeType enum_base_type =
             AttributeTypeConvert<T>::type;
         // depth of the vector
-        constexpr static size_t depth = 0;
+        BOOST_STATIC_CONSTEXPR size_t depth = 0;
     };
 
     template<typename T>
-    struct type_info<T, typename std::enable_if<is_vector<T>::value>::type>
+    struct type_info<
+        T,
+        typename std::enable_if<
+            is_vector<T>::value &&
+            !std::is_same<uint8_t, typename T::value_type>::value
+        >::type
+    >
     {
         typedef T type;
         typedef typename type_info<typename T::value_type>::base_type base_type;
-        constexpr static AttributeType enum_type = AttributeType::Vector;
-        constexpr static AttributeType enum_base_type =
+        BOOST_STATIC_CONSTEXPR AttributeType enum_type = AttributeType::Vector;
+        BOOST_STATIC_CONSTEXPR AttributeType enum_base_type =
             type_info<typename T::value_type>::enum_base_type;
-        constexpr static size_t depth = 1 +
+        BOOST_STATIC_CONSTEXPR size_t depth = 1 +
             type_info<typename T::value_type>::depth;
     };
+
+    // special case for binary data, which is a std::vector<uint8_t>
+    template<>
+    struct type_info<std::vector<uint8_t>, void>
+    {
+        typedef std::vector<uint8_t> type;
+        typedef std::vector<uint8_t> base_type;
+        BOOST_STATIC_CONSTEXPR AttributeType enum_type = AttributeType::Binary;
+        BOOST_STATIC_CONSTEXPR AttributeType enum_base_type = AttributeType::Binary;
+        BOOST_STATIC_CONSTEXPR size_t depth = 0;
+    };
+
 
     struct type_introspection_visitor : boost::static_visitor<>
     {
@@ -1003,7 +1178,7 @@ namespace OC
     OCRepresentation::iterator& OCRepresentation::iterator::operator++()
     {
         m_iterator++;
-        if(m_iterator != m_item.m_values.end())
+        if (m_iterator != m_item.m_values.end())
         {
             m_item.m_attrName = m_iterator->first;
         }
@@ -1017,7 +1192,7 @@ namespace OC
     OCRepresentation::const_iterator& OCRepresentation::const_iterator::operator++()
     {
         m_iterator++;
-        if(m_iterator != m_item.m_values.end())
+        if (m_iterator != m_item.m_values.end())
         {
             m_item.m_attrName = m_iterator->first;
         }
@@ -1086,6 +1261,24 @@ namespace OC
         str = "(null)";
     }
 
+    template <>
+    void to_string_visitor::operator()(std::vector<uint8_t> const &item)
+    {
+        std::ostringstream stream;
+        for (size_t i = 0; i < item.size(); i++ )
+        {
+            stream << "\\x" << std::hex << (int) item[i];
+        }
+        str = stream.str();
+    }
+
+    template<>
+    void to_string_visitor::operator()(OCByteString const &item)
+    {
+        std::vector<uint8_t> v(item.bytes, item.bytes + item.len);
+        operator()(v);
+    }
+
     template<>
     void to_string_visitor::operator()(OCRepresentation const& /*item*/)
     {
@@ -1095,7 +1288,7 @@ namespace OC
     std::string OCRepresentation::getValueToString(const std::string& key) const
     {
         auto x = m_values.find(key);
-        if(x != m_values.end())
+        if (x != m_values.end())
         {
             to_string_visitor vis;
             boost::apply_visitor(vis, x->second);
@@ -1118,4 +1311,3 @@ namespace OC
         return os;
     }
 }
-

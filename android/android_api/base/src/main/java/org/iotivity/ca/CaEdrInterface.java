@@ -26,12 +26,15 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.util.Log;
 
 public class CaEdrInterface {
     private static Context mContext;
 
     private CaEdrInterface(Context context) {
-        mContext = context;
+        synchronized(CaEdrInterface.class) {
+            mContext = context;
+        }
         registerIntentFilter();
     }
 
@@ -39,6 +42,7 @@ public class CaEdrInterface {
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         mContext.registerReceiver(mReceiver, filter);
         return filter;
     }
@@ -51,6 +55,8 @@ public class CaEdrInterface {
     private native static void caEdrStateChangedCallback(int state);
 
     private native static void caEdrBondStateChangedCallback(String addr);
+
+    private native static void caEdrConnectionStateChangedCallback(String addr, int isConnected);
 
     private static final BroadcastReceiver mReceiver = new BroadcastReceiver() {
 
@@ -85,6 +91,15 @@ public class CaEdrInterface {
 
                         caEdrBondStateChangedCallback(device.getAddress());
                     }
+                }
+            }
+
+            if (action != null && action.equals(BluetoothDevice.ACTION_ACL_DISCONNECTED)) {
+                BluetoothDevice device
+                    = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                if (BluetoothDevice.DEVICE_TYPE_CLASSIC == device.getType())
+                {
+                    caEdrConnectionStateChangedCallback(device.getAddress(), 0);
                 }
             }
         }

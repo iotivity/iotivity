@@ -16,11 +16,11 @@
 
 package oic.simulator.logger;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Maintains simulator log entries and provides content to the log view.

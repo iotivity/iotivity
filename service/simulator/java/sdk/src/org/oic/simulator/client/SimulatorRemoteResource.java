@@ -32,7 +32,6 @@ import org.oic.simulator.SimulatorResult;
  * perform different operations or subscribe for event notifications.
  */
 public final class SimulatorRemoteResource {
-
     private long           mNativeHandle;
     private String         mUri;
     private int            mConnType;
@@ -42,16 +41,10 @@ public final class SimulatorRemoteResource {
     private Vector<String> mResInterfaces;
     private boolean        mIsObservable;
 
-    private native void dispose();
-
-    private SimulatorRemoteResource(long nativeHandle) {
-        mNativeHandle = nativeHandle;
-    }
-
     @Override
     protected void finalize() throws Throwable {
         try {
-            dispose();
+            nativeDispose();
         } catch (Throwable t) {
             throw t;
         } finally {
@@ -59,17 +52,39 @@ public final class SimulatorRemoteResource {
         }
     }
 
-    public enum VerificationType {
-        GET, PUT, POST, DELETE;
+    /**
+     * Enum to represent the verification types which can be used by the client
+     * to verify the resource model of the remote resource.
+     */
+    public enum RequestType {
+        UKNOWN, GET, PUT, POST, DELETE;
     }
 
     /**
      * API to get the URI for this resource.
      *
-     * @return Resource URI
+     * @return Resource URI.
      */
     public String getURI() {
         return mUri;
+    }
+
+    /**
+     * API to get the address detail of the resource.
+     *
+     * @return Host address.
+     */
+    public String getHost() {
+        return mHost;
+    }
+
+    /**
+     * API to get a unique Id of the resource.
+     *
+     * @return Unique ID.
+     */
+    public String getId() {
+        return mId;
     }
 
     /**
@@ -84,7 +99,7 @@ public final class SimulatorRemoteResource {
     /**
      * API to get the list of resource types.
      *
-     * @return Array of resource types.
+     * @return Resource types.
      */
     public Vector<String> getResourceTypes() {
         return mResTypes;
@@ -93,28 +108,10 @@ public final class SimulatorRemoteResource {
     /**
      * API to get the list of resource interfaces.
      *
-     * @return Array of resource interfaces.
+     * @return Resource interfaces.
      */
     public Vector<String> getResourceInterfaces() {
         return mResInterfaces;
-    }
-
-    /**
-     * API to get host address and port information of the resource.
-     *
-     * @return Host address.
-     */
-    public String getHost() {
-        return mHost;
-    }
-
-    /**
-     * API to get a unique Id of the resource .
-     *
-     * @return Unique ID.
-     */
-    public String getId() {
-        return mId;
     }
 
     /**
@@ -128,7 +125,7 @@ public final class SimulatorRemoteResource {
 
     /**
      * API to send GET request to the resource. Response will be notified
-     * asynchronously via callback set for {@link IGetListener}.
+     * asynchronously via callback set for {@link GetResponseListener}.
      *
      * @param queryParams
      *            Map which can have the query parameter name and value.
@@ -150,7 +147,7 @@ public final class SimulatorRemoteResource {
 
     /**
      * API to send GET request to the resource. Response will be notified
-     * asynchronously via callback set for {@link IGetListener}.
+     * asynchronously via callback set for {@link GetResponseListener}.
      *
      * @param resourceInterface
      *            Interface type of the resource to operate on.
@@ -178,7 +175,7 @@ public final class SimulatorRemoteResource {
 
     /**
      * API to send PUT request to the resource. Response will be notified
-     * asynchronously via callback set for {@link IPutListener}.
+     * asynchronously via callback set for {@link PutResponseListener}.
      *
      * @param queryParams
      *            Map which can have the query parameter name and value.
@@ -204,7 +201,7 @@ public final class SimulatorRemoteResource {
 
     /**
      * API to send PUT request to the resource. Response will be notified
-     * asynchronously via callback set for {@link IPutListener}.
+     * asynchronously via callback set for {@link PutResponseListener}.
      *
      * @param resourceInterface
      *            Interface type of the resource to operate on.
@@ -236,7 +233,7 @@ public final class SimulatorRemoteResource {
 
     /**
      * API to send POST request to the resource. Response will be notified
-     * asynchronously via callback set for {@link IPostListener}.
+     * asynchronously via callback set for {@link PostResponseListener}.
      *
      * @param queryParams
      *            Map which can have the query parameter name and value.
@@ -262,7 +259,7 @@ public final class SimulatorRemoteResource {
 
     /**
      * API to send POST request to the resource. Response will be notified
-     * asynchronously via callback set for {@link IPostListener}.
+     * asynchronously via callback set for {@link PostResponseListener}.
      *
      * @param resourceInterface
      *            Interface type of the resource to operate on.
@@ -296,6 +293,25 @@ public final class SimulatorRemoteResource {
     /**
      * API to start observing the resource.
      *
+     * @param onObserveListener
+     *            The handler method which will be invoked with a map of
+     *            attribute names and values whenever there is a change in
+     *            resource model of the remote resource.
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown if any parameter has invalid
+     *             values.
+     * @throws SimulatorException
+     *             This exception will be thrown for other errors.
+     */
+    public void observe(ObserveNotificationListener onObserveListener)
+            throws InvalidArgsException, SimulatorException {
+        nativeStartObserve(null, onObserveListener);
+    }
+
+    /**
+     * API to start observing the resource.
+     *
      * @param queryParams
      *            Map which can have the query parameter names and values.
      * @param onObserveListener
@@ -309,9 +325,15 @@ public final class SimulatorRemoteResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native void startObserve(Map<String, String> queryParams,
+    public void observe(Map<String, String> queryParams,
             ObserveNotificationListener onObserveListener)
-            throws InvalidArgsException, SimulatorException;
+            throws InvalidArgsException, SimulatorException {
+        if (null == queryParams)
+            throw new InvalidArgsException(
+                    SimulatorResult.SIMULATOR_INVALID_PARAM,
+                    "Invalid Query Parameters!");
+        nativeStartObserve(queryParams, onObserveListener);
+    }
 
     /**
      * API to stop observing the resource.
@@ -322,8 +344,9 @@ public final class SimulatorRemoteResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native void stopObserve() throws InvalidArgsException,
-            SimulatorException;
+    public void stopObserve() throws InvalidArgsException, SimulatorException {
+        nativeStopObserve();
+    }
 
     /**
      * API to provide remote resource configure information, which is required
@@ -332,7 +355,7 @@ public final class SimulatorRemoteResource {
      * @param path
      *            Path to RAML file.
      *
-     * @return representation {@link SimulatorResourceModel} holding the
+     * @return Representation {@link SimulatorResourceModel} holding the
      *         representation of the remote resource.
      *
      * @throws InvalidArgsException
@@ -340,8 +363,10 @@ public final class SimulatorRemoteResource {
      * @throws SimulatorException
      *             Thrown for other errors.
      */
-    public native SimulatorResourceModel setConfigInfo(String path)
-            throws InvalidArgsException, SimulatorException;
+    public Map<RequestType, SimulatorRequestModel> setConfigInfo(String path)
+            throws InvalidArgsException, SimulatorException {
+        return nativeSetConfigInfo(path);
+    }
 
     /**
      * API to send multiple requests for the resource, based on the configure
@@ -368,16 +393,16 @@ public final class SimulatorRemoteResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public int startVerification(VerificationType type,
+    public int startVerification(RequestType type,
             VerificationListener onVerifyListener) throws InvalidArgsException,
             NoSupportException, OperationInProgressException,
             SimulatorException {
-        return startVerification(type.ordinal(), onVerifyListener);
+        return nativeStartAutoRequesting(type, onVerifyListener);
     }
 
     /**
      * API to stop sending requests which has been started using
-     * {@link setConfigInfo}.
+     * {@link startVerification}.
      *
      * @param id
      *            Automation ID.
@@ -387,8 +412,10 @@ public final class SimulatorRemoteResource {
      * @throws SimulatorException
      *             Thrown for other errors.
      */
-    public native void stopVerification(int id) throws InvalidArgsException,
-            SimulatorException;
+    public void stopVerification(int id) throws InvalidArgsException,
+            SimulatorException {
+        nativeStopAutoRequesting(id);
+    }
 
     /**
      * Listener for receiving asynchronous response for GET request.
@@ -500,6 +527,10 @@ public final class SimulatorRemoteResource {
         public void onVerificationCompleted(String uid, int id);
     }
 
+    private SimulatorRemoteResource(long nativeHandle) {
+        mNativeHandle = nativeHandle;
+    }
+
     private native void nativeGet(String resourceInterface,
             Map<String, String> queryParamsMap,
             GetResponseListener onGetListener);
@@ -514,6 +545,18 @@ public final class SimulatorRemoteResource {
             SimulatorResourceModel representation,
             PostResponseListener onPostListener);
 
-    private native int startVerification(int type,
+    private native void nativeStartObserve(Map<String, String> queryParams,
+            ObserveNotificationListener onObserveListener);
+
+    private native void nativeStopObserve();
+
+    private native Map<RequestType, SimulatorRequestModel> nativeSetConfigInfo(
+            String path);
+
+    private native int nativeStartAutoRequesting(RequestType type,
             VerificationListener onVerifyListener);
+
+    private native void nativeStopAutoRequesting(int id);
+
+    private native void nativeDispose();
 }

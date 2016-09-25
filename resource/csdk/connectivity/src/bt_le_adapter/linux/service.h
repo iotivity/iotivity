@@ -56,15 +56,40 @@ typedef struct CAGattService
 } CAGattService;
 
 /**
+ * Make the pseudo-address for the peer connected to the service.
+ *
+ * @param[in] c Information about GATT service for which the
+ *              peer (client) address is being created.
+ *
+ * @return @c String containing an encoded address associated with the
+ *         peer connected to the peripheral on which the service
+ *         implementation resides, or @c NULL on error.
+ */
+char * CAGattServiceMakePeerAddress(CAGattService * s);
+
+/**
+ * Decode @c CAGattService pointer from peer @c address.
+ *
+ * @param[in] address String containing a client/peer pseudo-address
+ *                    corresponding to the GATT service through which
+ *                    communication is performed.
+ *
+ * @return Pointer to ::CAGattService object corresponding to the
+ *         given address.
+ */
+CAGattService * CAGattServiceDecodeAddress(char const * address);
+
+/**
  * Initialize GATT service fields.
  *
  * This function initializes the @c CAGattService object fields.
  *
  * @param[out] service  GATT service information to be initialized.
- * @param[in]  context  Object containing the D-Bus connection to the
- *                      bus on which the service will be exported.
  * @param[in]  hci_name Name of the bluetooth adapter installed on the
  *                      system, e.g. @c "hci0".
+ * @param[in]  context  Object containing the D-Bus connection to the
+ *                      bus on which the service will be exported, as
+ *                      well as an address-to-characteristic map.
  *
  * @return @c true on success, @c false otherwise.
  *
@@ -73,8 +98,8 @@ typedef struct CAGattService
  *       memory.
  */
 bool CAGattServiceInitialize(CAGattService * service,
-                             CALEContext * context,
-                             char const * hci_name);
+                             char const * hci_name,
+                             CALEContext * context);
 
 /**
  * Destroy GATT service fields.
@@ -88,6 +113,5 @@ bool CAGattServiceInitialize(CAGattService * service,
  *       memory.
  */
 void CAGattServiceDestroy(CAGattService * service);
-
 
 #endif  // CA_BLE_LINUX_SERVICE_H

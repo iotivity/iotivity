@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">DirectPairingClient</string>
+    <string name="discover_items">Discover Resources</string>
+    <string name="paired_items">Paired Resources</string>
+    <string name="paired_list">Direct Paired Resources</string>
+    <string name="action_settings">Settings</string>
+
+</resources>

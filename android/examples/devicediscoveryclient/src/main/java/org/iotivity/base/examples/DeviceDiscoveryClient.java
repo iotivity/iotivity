@@ -1,23 +1,23 @@
 /*
- * //******************************************************************
- * //
- * // Copyright 2015 Intel Corporation.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //      http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *******************************************************************
+ *
+ * Copyright 2015 Intel Corporation.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 package org.iotivity.base.examples;
 
@@ -127,7 +127,7 @@ public class DeviceDiscoveryClient extends Activity implements
     private final static Map<String, String> DEVICE_INFO_KEYS = new HashMap<String, String>() {{
         put("di", "Device ID: ");
         put("n", "Device name: ");
-        put("lcv", "Spec version url: ");
+        put("icv", "Spec version url: ");
         put("dmv", "Data Model: ");
     }};
 
@@ -137,6 +137,12 @@ public class DeviceDiscoveryClient extends Activity implements
         try {
             for (String key : DEVICE_INFO_KEYS.keySet()) {
                 msg("\t" + DEVICE_INFO_KEYS.get(key) + ocRepresentation.getValue(key));
+            }
+
+            msg("\tDevice types:");
+
+            for (String type : ocRepresentation.getResourceTypes()) {
+                msg("\t\t" + type);
             }
         } catch (OcException e) {
             Log.e(TAG, e.toString());

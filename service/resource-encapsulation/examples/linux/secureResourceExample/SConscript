@@ -25,22 +25,26 @@ Import('env')
 
 # Add third party libraries
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 
 sample_env = lib_env.Clone()
 
 sample_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
 sample_env.AppendUnique(LIBS = [
-    'rcs_common',
-    'oc',
-    'octbstack',
-    'oc_logger',
-    'connectivity_abstraction',
     'coap',
+    'connectivity_abstraction',
+    'oc_logger',
+    'octbstack',
+    'oc',
+    'rcs_common',
     'pthread',
     'tinydtls'
     ])
 sample_env.AppendUnique(CPPPATH = ['../../../include'])
+
+if env.get('SECURED') == '1':
+	if env.get('WITH_TCP') == True:
+		sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if 'rt' in sample_env.get('LIBS'):
     sample_env.Append(LIBS = ['rt'])

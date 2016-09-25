@@ -28,11 +28,52 @@
 #ifndef SIMULATOR_RESOURCE_MODEL_H_
 #define SIMULATOR_RESOURCE_MODEL_H_
 
-#include "OCPlatform.h"
 #include <map>
+#include <set>
+
+#include "OCPlatform.h"
+
+class SimulatorResourceModel;
+typedef boost::variant <
+int,
+double,
+bool,
+std::string,
+SimulatorResourceModel,
+
+std::vector<int>,
+std::vector<double>,
+std::vector<bool>,
+std::vector<std::string>,
+std::vector<SimulatorResourceModel>,
+
+std::vector<std::vector<int>>,
+std::vector<std::vector<double>>,
+std::vector<std::vector<bool>>,
+std::vector<std::vector<std::string>>,
+std::vector<std::vector<SimulatorResourceModel>>,
+
+std::vector<std::vector<std::vector<int>>>,
+std::vector<std::vector<std::vector<double>>>,
+std::vector<std::vector<std::vector<bool>>>,
+std::vector<std::vector<std::vector<std::string>>>,
+std::vector<std::vector<std::vector<SimulatorResourceModel>>>
+> AttributeValueVariant;
+
+enum class AttributeValueType
+{
+    UNKNOWN,
+    INTEGER,
+    DOUBLE,
+    BOOLEAN,
+    STRING,
+    RESOURCE_MODEL,
+    VECTOR
+};
 
 class OCRepresentationBuilder;
 class ToStringConverter;
+class AttributeProperty;
 
 /**
  * @class   SimulatorResourceModel
@@ -44,210 +85,114 @@ class SimulatorResourceModel
         friend class OCRepresentationBuilder;
         friend class ToStringConverter;
 
-        typedef boost::variant <
-        int,
-        double,
-        bool,
-        std::string,
-        SimulatorResourceModel,
-
-        std::vector<int>,
-        std::vector<double>,
-        std::vector<bool>,
-        std::vector<std::string>,
-        std::vector<SimulatorResourceModel>,
-
-        std::vector<std::vector<int>>,
-        std::vector<std::vector<double>>,
-        std::vector<std::vector<bool>>,
-        std::vector<std::vector<std::string>>,
-        std::vector<std::vector<SimulatorResourceModel>>,
-
-        std::vector<std::vector<std::vector<int>>>,
-        std::vector<std::vector<std::vector<double>>>,
-        std::vector<std::vector<std::vector<bool>>>,
-        std::vector<std::vector<std::vector<std::string>>>,
-        std::vector<std::vector<std::vector<SimulatorResourceModel>>>
-        > ValueVariant;
-
-        enum class ValueType
-        {
-            UNKNOWN,
-            INTEGER,
-            DOUBLE,
-            BOOLEAN,
-            STRING,
-            RESOURCE_MODEL,
-            VECTOR
-        };
-
         class TypeInfo
         {
             public:
-                TypeInfo(ValueType, ValueType, int);
-                TypeInfo(const TypeInfo &) = default;
-                TypeInfo &operator=(const TypeInfo &) = default;
-                TypeInfo(TypeInfo &&) = default;
-                TypeInfo &operator=(TypeInfo &&) = default;
-
-                ValueType type() const;
-                ValueType baseType() const;
+                TypeInfo(AttributeValueType type = AttributeValueType::UNKNOWN,
+                         AttributeValueType baseType = AttributeValueType::UNKNOWN, int depth = 0);
+                AttributeValueType type() const;
+                AttributeValueType baseType() const;
                 int depth() const;
-                bool operator ==(const TypeInfo &) const;
-                bool operator !=(const TypeInfo &) const;
+                bool operator ==(const TypeInfo &rhs) const;
 
             private:
-                ValueType m_type;
-                ValueType m_baseType;
+                AttributeValueType m_type;
+                AttributeValueType m_baseType;
                 int m_depth;
         };
 
-        class AttributeProperty
-        {
-            public:
-                enum class Type
-                {
-                    UNKNOWN,
-                    RANGE,
-                    VALUE_SET
-                };
-
-                AttributeProperty();
-                AttributeProperty(const AttributeProperty &) = default;
-                AttributeProperty &operator=(const AttributeProperty &) = default;
-                AttributeProperty(AttributeProperty &&) = default;
-                AttributeProperty &operator=(AttributeProperty &&) = default;
-
-                explicit AttributeProperty(double min, double max);
-                explicit AttributeProperty(const std::vector<int> &valueSet);
-                explicit AttributeProperty(const std::vector<double> &valueSet);
-                explicit AttributeProperty(const std::vector<bool> &valueSet);
-                explicit AttributeProperty(const std::vector<std::string> &valueSet);
-                explicit AttributeProperty(const std::vector<ValueVariant> &valueSet);
-
-                Type type() const;
-                double min() const;
-                double max() const;
-                int valueSetSize() const;
-                std::vector<ValueVariant> valueSet() const;
-                std::string valueSetToString() const;
-                void setChildProperty(AttributeProperty &childProperty);
-                std::shared_ptr<AttributeProperty> getChildProperty();
-
-            private:
-                Type m_type;
-                double m_min;
-                double m_max;
-                std::vector<ValueVariant> m_valueSet;
-                std::shared_ptr<AttributeProperty> m_childProperty;
-        };
-
-        class Attribute
-        {
-            public:
-                Attribute(const std::string &name) : m_name(name) {}
-                Attribute() = default;
-                Attribute(const Attribute &) = default;
-                Attribute &operator=(const Attribute &) = default;
-                Attribute(Attribute &&) = default;
-                Attribute &operator=(Attribute &&) = default;
-
-                std::string getName() const;
-                TypeInfo getType() const;
-                const AttributeProperty &getProperty() const;
-                AttributeProperty &getProperty();
-
-                void setName(const std::string &);
-                void setProperty(const AttributeProperty &);
-
-                template <typename T>
-                void setValue(const T &value)
-                {
-                    m_value = std::make_shared<ValueVariant>(value);
-                }
-
-                ValueVariant getValue() const { return *m_value; }
-
-                std::string toString() const;
-
-            private:
-                std::string m_name;
-                std::shared_ptr<ValueVariant> m_value;
-                AttributeProperty m_property;
-        };
-
-        SimulatorResourceModel() = default;
-        SimulatorResourceModel(const SimulatorResourceModel &) = default;
-        SimulatorResourceModel &operator=(const SimulatorResourceModel &) = default;
-        SimulatorResourceModel(SimulatorResourceModel &&) = default;
-        SimulatorResourceModel &operator=(SimulatorResourceModel && ) = default;
-
         template <typename T>
-        bool add(const std::string &key, T value)
+        bool add(const std::string &name, T value)
         {
-            ValueVariant newValue = value;
-            return setAttributeValue(key, newValue, true, false);
+            if (!name.empty() && m_attributes.end() == m_attributes.find(name))
+            {
+                AttributeValueVariant newValue = value;
+                m_attributes[name] = value;
+                return true;
+            }
+            return false;
         }
 
-        bool add(const Attribute &attribute);
-
         template <typename T>
-        T get(const std::string &key) const
+        T get(const std::string &name) const
         {
             T val = T();
-            auto x = m_attributes.find(key);
+            auto x = m_attributes.find(name);
             if (x != m_attributes.end())
             {
-                val = boost::get<T>(x->second);
+                try
+                {
+                    val = boost::get<T>(x->second);
+                }
+                catch (boost::bad_get &e)
+                {
+                    return val;
+                }
             }
             return val;
         }
 
         template <typename T>
-        bool updateValue(const std::string &key, T value, bool forcewrite = false)
+        bool update(const std::string &name, T value)
         {
-            ValueVariant newValue = value;
-            return setAttributeValue(key, newValue, false, forcewrite);
+            AttributeValueVariant newValue = value;
+            return updateValue(name, newValue);
         }
 
-        bool updateValue(const Attribute &attribute, bool forcewrite = false);
+        bool remove(const std::string &name);
 
-        bool containsAttribute(const std::string &key);
+        bool contains(const std::string &name) const;
 
-        bool setAttributeProperty(const std::string &key, const AttributeProperty &property);
+        size_t size() const;
 
-        bool getAttributeProperty(const std::string &key, AttributeProperty &property);
+        TypeInfo getType(const std::string &name) const;
 
-        int size() const;
+        std::map<std::string, AttributeValueVariant> getAttributeValues() const;
 
-        TypeInfo getType(const std::string &key);
+        AttributeValueVariant getAttributeValue(const std::string &name) const;
 
-        std::map<std::string, Attribute> getAttributes();
+        std::set<std::string> getAttributeNameSet() const;
 
-        bool getAttribute(const std::string &key, Attribute &attribute);
+        OC::OCRepresentation asOCRepresentation() const;
 
-        bool removeAttribute(const std::string &key);
-
-        bool update(OC::OCRepresentation &ocRep);
-
-        OC::OCRepresentation getOCRepresentation();
-
-        bool match(const SimulatorResourceModel &resModel, bool strict = false);
-
-        std::string toString() const;
+        std::string asString() const;
 
         static SimulatorResourceModel build(const OC::OCRepresentation &ocRep);
 
     private:
-        TypeInfo getTypeInfo(const ValueVariant &value) const;
-        bool setAttributeValue(const std::string &key, const ValueVariant &newValue,
-                               bool create, bool overwrite);
-        bool match(const std::string &key, const ValueVariant &newValue);
-        bool update(SimulatorResourceModel &resModel);
-        std::map<std::string, ValueVariant> getValues() const;
+        TypeInfo getTypeInfo(const AttributeValueVariant &value) const;
+        bool updateValue(const std::string &name, const AttributeValueVariant &value);
 
-        std::map<std::string, ValueVariant> m_attributes;
-        std::map<std::string, AttributeProperty> m_attrProperties;
+        std::map<std::string, AttributeValueVariant> m_attributes;
+};
+
+class SimulatorResourceAttribute
+{
+    public:
+        SimulatorResourceAttribute() = default;
+        SimulatorResourceAttribute(const std::string &name);
+        SimulatorResourceAttribute(const std::string &name, const AttributeValueVariant &value);
+
+        std::string getName() const;
+        const SimulatorResourceModel::TypeInfo getType() const;
+        std::shared_ptr<AttributeProperty> getProperty() const;
+        AttributeValueVariant getValue() const;
+
+        void setName(const std::string &name);
+        void setProperty(const std::shared_ptr<AttributeProperty> &property);
+
+        template <typename T>
+        void setValue(const T &value)
+        {
+            m_value = std::make_shared<AttributeValueVariant>(value);
+        }
+
+        std::string asString() const;
+
+    private:
+        std::string m_name;
+        std::shared_ptr<AttributeValueVariant> m_value;
+        std::shared_ptr<AttributeProperty> m_property;
 };
 
 typedef std::shared_ptr<SimulatorResourceModel> SimulatorResourceModelSP;

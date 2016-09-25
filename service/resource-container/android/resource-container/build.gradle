@@ -20,6 +20,10 @@
 
 apply plugin: 'com.android.library'
 
+task jar(type: Jar) {
+    from fileTree(dir: 'build/intermediates/classes/release')
+}
+
 android {
     compileSdkVersion 21
     buildToolsVersion "20.0.0"
@@ -97,7 +101,7 @@ task buildNative(type: Exec) {
         //for windows use 'ndk-build.cmd'
         //def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build.cmd')
         def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build')
-        commandLine ndkBuild, "APP_ABI=$TARGET_ARCH", "APP_OPTIM=$RELEASE", '-C', file('src/main').absolutePath
+        commandLine ndkBuild, "V=1", "APP_ABI=$TARGET_ARCH", "APP_OPTIM=$RELEASE", '-C', file('src/main').absolutePath
     } else {
         println '##################'
         println 'Skipping NDK build'

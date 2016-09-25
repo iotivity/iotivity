@@ -26,11 +26,11 @@ class JniListenerHolder
     public:
         ~JniListenerHolder()
         {
-            JNIEnv *env = getEnv();
+            JNIEnv *env = GetEnv();
             if (!env)
                 return;
             env->DeleteGlobalRef(m_listener);
-            releaseEnv();
+            ReleaseEnv();
         }
 
         jobject get()
@@ -51,4 +51,3 @@ class JniListenerHolder
 };
 
 #endif
-

@@ -54,7 +54,7 @@ the Edit Configuration window.
 
 From Run/Debug settings, Choose a launch configuration and press Edit -> select 'Environment' tab
 -> Click on 'Select' -> check LD_LIBRARY_PATH option -> OK. Edit the LD_LIBRARY_PATH and add the
-complete path upto the libs folder of the plug-in project
+complete path up to the libs folder of the plug-in project
 ( ~/iotivity/service/simulator/java/eclipse-plugin/ClientControllerPlugin/libs)
 -> Apply -> OK. Then Apply -> OK to close the properties window.
 

@@ -16,9 +16,6 @@
 
 package oic.simulator.clientcontroller.view.dialogs;
 
-import java.text.DateFormat;
-import java.util.Date;
-
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
@@ -33,6 +30,9 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+
+import java.text.DateFormat;
+import java.util.Date;
 
 /**
  * This class shows detailed information about a log. The dialog will be opened
@@ -108,7 +108,8 @@ public class LogDetailsDialog extends Dialog {
         gd.grabExcessHorizontalSpace = true;
         l5.setLayoutData(gd);
 
-        new Label(container, SWT.NONE); // separator
+        Label seperator = new Label(container, SWT.NONE); // separator
+        seperator.setText("");
 
         Label l6 = new Label(container, SWT.NONE);
         l6.setText("Message details");

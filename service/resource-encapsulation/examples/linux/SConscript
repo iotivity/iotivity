@@ -25,24 +25,26 @@ Import('env')
 
 # Add third party libraries
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 
 sample_env = lib_env.Clone()
 
 sample_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
 sample_env.AppendUnique(LIBS = [
-    'rcs_common',
-    'oc',
-    'octbstack',
-    'oc_logger',
-    'connectivity_abstraction',
     'coap',
+    'connectivity_abstraction',
+    'oc_logger',
+    'octbstack',
+    'oc',
+    'rcs_common',
     'pthread'
     ])
 sample_env.AppendUnique(CPPPATH = ['../../include'])
 
 if env.get('SECURED') == '1':
     sample_env.AppendUnique(LIBS = ['tinydtls'])
+    if env.get('WITH_TCP') == True:
+    	sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if 'rt' in sample_env.get('LIBS'):
     sample_env.Append(LIBS = ['rt'])
@@ -56,9 +58,6 @@ client_env.AppendUnique(LIBS = 'rcs_client')
 sampleResourceClient = client_env.Program('sampleResourceClient', 'SampleResourceClient.cpp')
 nestedAttributesClient = client_env.Program('nestedAttributesClient', 'NestedAttributesClient.cpp')
 
-client_env.InstallTarget(sampleResourceClient, 'sampleResourceClient')
-client_env.InstallTarget(nestedAttributesClient, 'nestedAttributesClient')
-
 ######################################################################
 # ##### Server #####
 ######################################################################
@@ -66,10 +65,8 @@ server_env = sample_env.Clone()
 server_env.AppendUnique(LIBS = 'rcs_server')
 
 sampleResourceServer = server_env.Program('sampleResourceServer', 'SampleResourceServer.cpp')
+separateResponseServer = server_env.Program('separateResponseServer', 'SeparateResponseServer.cpp')
 nestedAttributesServer = server_env.Program('nestedAttributesServer', 'NestedAttributesServer.cpp')
-
-server_env.InstallTarget(sampleResourceServer, 'sampleResourceServer')
-server_env.InstallTarget(nestedAttributesServer, 'nestedAttributesServer')
 
 ######################################################################
 # ##### Build the RE Secure Resource Example #####

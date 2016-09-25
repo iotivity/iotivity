@@ -31,7 +31,7 @@
 /**
  * Logging tag for module name.
  */
-#define TAG "RM_INTERFACE"
+#define TAG "OIC_RM_INTERFACE"
 
 /**
  * Name of resource type.
@@ -83,14 +83,14 @@ OCConnectivityType RMGetConnectivityType(OCTransportAdapter adapter)
         case OC_DEFAULT_ADAPTER:
             break;
         default:
-            OC_LOG(DEBUG, TAG, "Default option will be selected");
+            OIC_LOG(DEBUG, TAG, "Default option will be selected");
     }
     return CT_DEFAULT;
 }
 
 OCStackResult RMInitGatewayResource()
 {
-    OC_LOG(DEBUG, TAG, "RMInitGatewayResource IN");
+    OIC_LOG(DEBUG, TAG, "RMInitGatewayResource IN");
 
     // Create a Gateway resource
     OCStackResult result = OCCreateResource(&g_gateWayHandle,
@@ -103,16 +103,16 @@ OCStackResult RMInitGatewayResource()
 
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(ERROR, TAG, "Create resource for gateway failed[%d]", result);
+        OIC_LOG_V(ERROR, TAG, "Create resource for gateway failed[%d]", result);
     }
 
-    OC_LOG(DEBUG, TAG, "RMInitGatewayResource OUT");
+    OIC_LOG(DEBUG, TAG, "RMInitGatewayResource OUT");
     return result;
 }
 
 OCStackResult RMDiscoverGatewayResource()
 {
-    OC_LOG(DEBUG, TAG, "RMDiscoverGatewayResource IN");
+    OIC_LOG(DEBUG, TAG, "RMDiscoverGatewayResource IN");
     OCCallbackData discoverData = {.cb = RMDiscoverGatewayCallback};
     OCStackResult result = OC_STACK_OK;
 
@@ -127,19 +127,19 @@ OCStackResult RMDiscoverGatewayResource()
                               CT_ADAPTER_IP, OC_LOW_QOS, &discoverData, NULL, 0);
         usleep(100000);
     }
-    OC_LOG(DEBUG, TAG, "RMDiscoverGatewayResource OUT");
+    OIC_LOG(DEBUG, TAG, "RMDiscoverGatewayResource OUT");
     return result;
 }
 
 OCStackApplicationResult RMDiscoverGatewayCallback(void* ctx, OCDoHandle handle,
                                                    OCClientResponse * clientResponse)
 {
-    OC_LOG(DEBUG, TAG, "RMDiscoverGatewayCallback IN");
+    OIC_LOG(DEBUG, TAG, "RMDiscoverGatewayCallback IN");
     (void)ctx;
     (void)handle;
     if (NULL == clientResponse)
     {
-        OC_LOG(DEBUG, TAG, "clientResponse is NULL");
+        OIC_LOG(DEBUG, TAG, "clientResponse is NULL");
         return OC_STACK_KEEP_TRANSACTION;
     }
 
@@ -147,7 +147,7 @@ OCStackApplicationResult RMDiscoverGatewayCallback(void* ctx, OCDoHandle handle,
                                                    (OCRepPayload *)clientResponse->payload);
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(ERROR, TAG, "RMHandleResponsePayload Failed[%d]", result);
+        OIC_LOG_V(ERROR, TAG, "RMHandleResponsePayload Failed[%d]", result);
     }
 
     OCRepPayload *payload = NULL;
@@ -155,21 +155,21 @@ OCStackApplicationResult RMDiscoverGatewayCallback(void* ctx, OCDoHandle handle,
     result= RMGetGatewayPayload(&payload);
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(ERROR, TAG, "RMGetGatewayPayload Failed[%d]", result);
+        OIC_LOG_V(ERROR, TAG, "RMGetGatewayPayload Failed[%d]", result);
     }
 
     RMSendObserveRequest(&(clientResponse->devAddr), payload);
 
-    OC_LOG(DEBUG, TAG, "RMDiscoverGatewayCallback OUT");
+    OIC_LOG(DEBUG, TAG, "RMDiscoverGatewayCallback OUT");
     return OC_STACK_KEEP_TRANSACTION;
 }
 
 OCStackResult RMSendObserveRequest(const OCDevAddr *devAddr, OCRepPayload *payload)
 {
-    OC_LOG(DEBUG, TAG, "RMSendObserveRequest IN");
-    OC_LOG_V(DEBUG, TAG, "Destination address is %s:%d", devAddr->addr, devAddr->port);
+    OIC_LOG(DEBUG, TAG, "RMSendObserveRequest IN");
+    OIC_LOG_V(DEBUG, TAG, "Destination address is %s:%d", devAddr->addr, devAddr->port);
     OCCallbackData observeData = {.cb = RMObserveRequestCallback};
-    OC_LOG(DEBUG, TAG, "RMSendObserveRequest OUT");
+    OIC_LOG(DEBUG, TAG, "RMSendObserveRequest OUT");
 
     return OCDoResource(NULL, OC_REST_OBSERVE, GW_RESOURCE_URI, devAddr, (OCPayload *)payload,
                         RMGetConnectivityType(devAddr->adapter), OC_HIGH_QOS,
@@ -178,12 +178,12 @@ OCStackResult RMSendObserveRequest(const OCDevAddr *devAddr, OCRepPayload *paylo
 
 OCStackResult RMSendDeleteRequest(const OCDevAddr *devAddr, OCRepPayload *payload)
 {
-    OC_LOG(DEBUG, TAG, "RMSendDeleteRequest IN");
+    OIC_LOG(DEBUG, TAG, "RMSendDeleteRequest IN");
     RM_NULL_CHECK_WITH_RET(payload, TAG, "payload");
-    OC_LOG_V(DEBUG, TAG, "Destination address is %s:%d", devAddr->addr, devAddr->port);
+    OIC_LOG_V(DEBUG, TAG, "Destination address is %s:%d", devAddr->addr, devAddr->port);
 
     OCCallbackData deleteCb = {.cb = RMDiscoverGatewayCallback};
-    OC_LOG(DEBUG, TAG, "RMSendDeleteRequest OUT");
+    OIC_LOG(DEBUG, TAG, "RMSendDeleteRequest OUT");
     return OCDoResource(NULL, OC_REST_DELETE, GW_RESOURCE_URI, devAddr, (OCPayload *)payload,
                     RMGetConnectivityType(devAddr->adapter), OC_LOW_QOS,
                     &deleteCb, NULL, 0);
@@ -192,14 +192,14 @@ OCStackResult RMSendDeleteRequest(const OCDevAddr *devAddr, OCRepPayload *payloa
 OCStackResult RMSendResponse(const OCServerRequest *request, const OCResource *resource,
                              const OCRepPayload *payload)
 {
-    OC_LOG(DEBUG, TAG, "RMSendResponse IN");
+    OIC_LOG(DEBUG, TAG, "RMSendResponse IN");
     OCEntityHandlerResponse response = {.ehResult = OC_EH_OK,
                                         .payload = (OCPayload *)payload,
                                         .persistentBufferFlag = 0,
                                         .requestHandle = (OCRequestHandle) request,
                                         .resourceHandle = (OCResourceHandle) resource
                                         };
-    OC_LOG(DEBUG, TAG, "RMSendResponse OUT");
+    OIC_LOG(DEBUG, TAG, "RMSendResponse OUT");
 
     return OCDoResponse(&response);
 }
@@ -207,31 +207,31 @@ OCStackResult RMSendResponse(const OCServerRequest *request, const OCResource *r
 OCStackResult RMSendNotificationForListofObservers(OCObservationId *obsId, uint8_t obsLen,
                                                    const OCRepPayload *payload)
 {
-    OC_LOG(DEBUG, TAG, "RMSendNotificationForListofObservers IN");
+    OIC_LOG(DEBUG, TAG, "RMSendNotificationForListofObservers IN");
     RM_NULL_CHECK_WITH_RET(obsId, TAG, "obsId");
     RM_NULL_CHECK_WITH_RET(payload, TAG, "payload");
     OCStackResult result = OCNotifyListOfObservers(g_gateWayHandle, obsId, obsLen,
                                                    payload, OC_LOW_QOS);
-    OC_LOG_V(DEBUG, TAG, "Result is %d", result);
-    OC_LOG(DEBUG, TAG, "RMSendNotificationForListofObservers OUT");
+    OIC_LOG_V(DEBUG, TAG, "Result is %d", result);
+    OIC_LOG(DEBUG, TAG, "RMSendNotificationForListofObservers OUT");
     return result;
 }
 
 OCStackApplicationResult RMObserveRequestCallback(void* ctx, OCDoHandle handle,
                                                   OCClientResponse *clientResponse)
 {
-    OC_LOG(DEBUG, TAG, "RMObserveRequestCallback IN");
+    OIC_LOG(DEBUG, TAG, "RMObserveRequestCallback IN");
     (void)ctx;
     (void)handle;
     if (NULL == clientResponse)
     {
-        OC_LOG(DEBUG, TAG, "clientResponse is NULL");
+        OIC_LOG(DEBUG, TAG, "clientResponse is NULL");
         return OC_STACK_KEEP_TRANSACTION;
     }
 
     if (OC_STACK_COMM_ERROR == clientResponse->result)
     {
-        OC_LOG(DEBUG, TAG, "Received TIMEOUT ERROR");
+        OIC_LOG(DEBUG, TAG, "Received TIMEOUT ERROR");
         return OC_STACK_KEEP_TRANSACTION;
     }
 
@@ -239,16 +239,16 @@ OCStackApplicationResult RMObserveRequestCallback(void* ctx, OCDoHandle handle,
                                                    (OCRepPayload *)clientResponse->payload);
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(ERROR, TAG, "RMHandleResponsePayload Failed[%d]", result);
+        OIC_LOG_V(ERROR, TAG, "RMHandleResponsePayload Failed[%d]", result);
     }
 
-    OC_LOG(DEBUG, TAG, "RMObserveRequestCallback OUT");
+    OIC_LOG(DEBUG, TAG, "RMObserveRequestCallback OUT");
     return OC_STACK_KEEP_TRANSACTION;
 }
 
 OCStackResult RMAddObserverToStack(const OCServerRequest *request, OCObservationId *obsID)
 {
-    OC_LOG(DEBUG, TAG, "RMAddObserverToStack IN");
+    OIC_LOG(DEBUG, TAG, "RMAddObserverToStack IN");
     RM_NULL_CHECK_WITH_RET(request, TAG, "request");
     RM_NULL_CHECK_WITH_RET(obsID, TAG, "obsID");
 
@@ -259,17 +259,17 @@ OCStackResult RMAddObserverToStack(const OCServerRequest *request, OCObservation
     }
     if (OC_STACK_OK != result)
     {
-        OC_LOG_V(DEBUG, TAG, "GenerateObserverId failed[%d]", result);
+        OIC_LOG_V(DEBUG, TAG, "GenerateObserverId failed[%d]", result);
         return result;
     }
 
-    OC_LOG_V(DEBUG, TAG, "Observer ID is %d", *obsID);
+    OIC_LOG_V(DEBUG, TAG, "Observer ID is %d", *obsID);
     // Add the observer
     result = AddObserver((const char*)(request->resourceUrl),
                 (const char *)(request->query),
                 *obsID, request->requestToken, request->tokenLength,
                 (OCResource *)g_gateWayHandle, request->qos, OC_FORMAT_CBOR,
                 &request->devAddr);
-    OC_LOG(DEBUG, TAG, "RMAddObserverToStack OUT");
+    OIC_LOG(DEBUG, TAG, "RMAddObserverToStack OUT");
     return result;
 }

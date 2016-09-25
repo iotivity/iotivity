@@ -39,31 +39,31 @@ static const char multiLineMsg[] = "this is a DEBUG message\non multiple\nlines"
 //  Tests
 //-----------------------------------------------------------------------------
 static void test0() {
-  OC_LOG(INFO, tag, msg);
+  OIC_LOG(INFO, tag, msg);
 }
 
 static void test1() {
-  OC_LOG(INFO, 0, msg);
+  OIC_LOG(INFO, 0, msg);
 }
 
 static void test2() {
-  OC_LOG(INFO, tag, 0);
+  OIC_LOG(INFO, tag, 0);
 }
 
 static void test3() {
-  OC_LOG(INFO, 0, 0);
+  OIC_LOG(INFO, 0, 0);
 }
 
 static void test4() {
-  OC_LOG(DEBUG, tag, debugMsg);
-  OC_LOG(INFO, tag, infoMsg);
-  OC_LOG(WARNING, tag, warningMsg);
-  OC_LOG(ERROR, tag, errorMsg);
-  OC_LOG(FATAL, tag, fatalMsg);
+  OIC_LOG(DEBUG, tag, debugMsg);
+  OIC_LOG(INFO, tag, infoMsg);
+  OIC_LOG(WARNING, tag, warningMsg);
+  OIC_LOG(ERROR, tag, errorMsg);
+  OIC_LOG(FATAL, tag, fatalMsg);
 }
 
 static void test5() {
-  OC_LOG(DEBUG, tag, multiLineMsg);
+  OIC_LOG(DEBUG, tag, multiLineMsg);
 }
 
 
@@ -73,42 +73,42 @@ static void test6() {
     for (int i = 0; i < (int)(sizeof buffer); i++) {
         buffer[i] = i;
     }
-    OC_LOG_BUFFER(DEBUG, tag, buffer, sizeof buffer);
+    OIC_LOG_BUFFER(DEBUG, tag, buffer, sizeof buffer);
 
     // Log buffer, 128 bytes is a good boundary (8 rows of 16 values)
     uint8_t buffer1[128];
     for (int i = 0; i < (int)(sizeof buffer1); i++) {
         buffer1[i] = i;
     }
-    OC_LOG_BUFFER(DEBUG, tag, buffer1, sizeof buffer1);
+    OIC_LOG_BUFFER(DEBUG, tag, buffer1, sizeof buffer1);
 
     // 1 below 128 byte boundary
     uint8_t buffer2[127];
     for (int i = 0; i < (int)(sizeof buffer2); i++) {
         buffer2[i] = i;
     }
-    OC_LOG_BUFFER(DEBUG, tag, buffer2, sizeof buffer2);
+    OIC_LOG_BUFFER(DEBUG, tag, buffer2, sizeof buffer2);
 
     // 1 above 128 byte boundary
     uint8_t buffer3[129];
     for (int i = 0; i < (int)(sizeof buffer3); i++) {
         buffer3[i] = i;
     }
-    OC_LOG_BUFFER(DEBUG, tag, buffer3, sizeof buffer3);
+    OIC_LOG_BUFFER(DEBUG, tag, buffer3, sizeof buffer3);
 }
 
 static void test7() {
-  OC_LOG_V(DEBUG, tag, "this is a char: %c", 'A');
-  OC_LOG_V(DEBUG, tag, "this is an integer: %d", 123);
-  OC_LOG_V(DEBUG, tag, "this is a string: %s", "hello");
-  OC_LOG_V(DEBUG, tag, "this is a float: %5.2f", 123.45);
+  OIC_LOG_V(DEBUG, tag, "this is a char: %c", 'A');
+  OIC_LOG_V(DEBUG, tag, "this is an integer: %d", 123);
+  OIC_LOG_V(DEBUG, tag, "this is a string: %s", "hello");
+  OIC_LOG_V(DEBUG, tag, "this is a float: %5.2f", 123.45);
 }
 
 //-----------------------------------------------------------------------------
 //  loggertests
 //-----------------------------------------------------------------------------
 void loggertests() {
-  OC_LOG(INFO, tag, "Starting logger test");
+  OIC_LOG(INFO, tag, "Starting logger test");
 
   test0();
   test1();

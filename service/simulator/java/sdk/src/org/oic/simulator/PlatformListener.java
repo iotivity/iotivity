@@ -17,14 +17,14 @@
 package org.oic.simulator;
 
 /**
- * Listener for getting platform information.
+ * Interface for receiving platform information.
  */
 public interface PlatformListener {
     /**
      * Method which provides remote device platform information.
      *
      * @param hostUri
-     *            Holds the address and port information.
+     *            Holds the address detail.
      * @param platformInfo
      *            {@link PlatformInfo} object holding the platform information.
      */

@@ -1,3 +1,4 @@
+# -*- mode: python; python-indent-offset: 4; indent-tabs-mode: nil -*-
 ##
 # This script includes generic build options:
 #    release/debug, target os, target arch, cross toolchain, build environment etc
@@ -5,27 +6,35 @@
 import os
 import platform
 
+project_version = '1.2.0'
+
 # Map of host os and allowed target os (host: allowed target os)
 host_target_map = {
 		'linux': ['linux', 'android', 'arduino', 'yocto', 'tizen'],
-		'windows': ['windows', 'winrt', 'android', 'arduino'],
+		'windows': ['windows', 'android', 'arduino'],
 		'darwin': ['darwin', 'ios', 'android', 'arduino'],
+		'msys_nt' :['msys_nt'],
 		}
 
 # Map of os and allowed archs (os: allowed archs)
 os_arch_map = {
-		'linux': ['x86', 'x86_64', 'arm', 'arm64'],
-		'tizen': ['x86', 'x86_64', 'arm', 'arm64', 'armeabi-v7a'],
+		'linux': ['x86', 'x86_64', 'arm', 'arm-v7a', 'arm64'],
+		'tizen': ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64'],
 		'android': ['x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
 		'windows': ['x86', 'amd64', 'arm'],
-		'winrt': ['arm'],
+		'msys_nt':['x86', 'x86_64'],
 		'darwin': ['i386', 'x86_64'],
 		'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
 		'arduino': ['avr', 'arm'],
-		'yocto': ['i586', 'x86_64', 'arm', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
+		'yocto': ['i586', 'i686', 'x86_64', 'arm', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
 		}
 
 host = platform.system().lower()
+
+# the host string contains version of windows. 6.3, 6.4, 10.0 which is 8.0, 8.1, and 10 respectively.
+# Let's canonicalize the msys_nt-XX.X system name by stripping version off.
+if 'msys_nt' in host:
+	host = 'msys_nt'
 
 if not host_target_map.has_key(host):
 	print "\nError: Current system (%s) isn't supported\n" % host
@@ -57,6 +66,8 @@ require_upload = ARGUMENTS.get('UPLOAD', False)
 # Get the device name. This name can be used as network display name wherever possible
 device_name = ARGUMENTS.get('DEVICE_NAME', "OIC-DEVICE")
 
+default_with_upstream_libcoap = 0
+
 if ARGUMENTS.get('TEST'):
 	logging_default = False
 else:
@@ -64,7 +75,6 @@ else:
 	if ARGUMENTS.get('RELEASE', True) in ['y', 'yes', 'true', 't', '1', 'on', 'all', True]:
 		release_mode = True
 	logging_default = (release_mode == False)
-
 
 
 ######################################################################
@@ -80,7 +90,10 @@ help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map
 
 help_vars.Add(BoolVariable('WITH_RA', 'Build with Remote Access module', False))
 help_vars.Add(BoolVariable('WITH_TCP', 'Build with TCP adapter', False))
-help_vars.Add(EnumVariable('WITH_RD', 'Build including Resource Directory', '0', allowed_values=('0', '1')))
+help_vars.Add(BoolVariable('WITH_PROXY', 'Build with CoAP-HTTP Proxy', False))
+help_vars.Add(ListVariable('WITH_MQ', 'Build with MQ publisher/broker', 'OFF', ['OFF', 'SUB', 'PUB', 'BROKER']))
+help_vars.Add(BoolVariable('WITH_CLOUD', 'Build including AccountManager class and Cloud Client sample', False))
+help_vars.Add(ListVariable('RD_MODE', 'Resource Directory build mode', 'CLIENT', ['CLIENT', 'SERVER']))
 
 help_vars.Add(BoolVariable('SIMULATOR', 'Build with simulator module', False))
 
@@ -88,9 +101,9 @@ help_vars.Add(BoolVariable('WITH_RA_IBB', 'Build with Remote Access module(works
 
 
 if target_os in targets_disallow_multitransport:
-	help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'IP', ['BT', 'BLE', 'IP']))
+	help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'IP', ['BT', 'BLE', 'IP', 'NFC']))
 else:
-	help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ALL', ['ALL', 'BT', 'BLE', 'IP']))
+	help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ALL', ['ALL', 'BT', 'BLE', 'IP', 'NFC']))
 
 help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
 help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))
@@ -104,6 +117,12 @@ help_vars.AddVariables(('DEVICE_NAME', 'Network display name for device (For Ard
 help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('ANDROID_HOME', 'Android SDK path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('ANDROID_GRADLE', 'Gradle binary file', None, PathVariable.PathIsFile))
+help_vars.Add(EnumVariable('WITH_UPSTREAM_LIBCOAP', 'Use latest stable version of LibCoAP downloaded from github', default_with_upstream_libcoap, allowed_values=('0','1')))
+
+if target_os == 'windows':
+	# For VS2013, MSVC_VERSION is '12.0'. For VS2015, MSVC_VERSION is '14.0'.
+	# Default value is None, meaning that SCons has to choose automatically a VS version.
+	help_vars.Add(EnumVariable('MSVC_VERSION', 'MSVC compiler version - Windows', None, allowed_values=('12.0', '14.0')))
 
 AddOption('--prefix',
                   dest='prefix',
@@ -130,8 +149,11 @@ if target_os in ['android', 'arduino']: # Android/Arduino always uses GNU compil
 			tools = ['gnulink', 'gcc', 'g++', 'ar', 'as', 'textfile']
 			)
 else:
-	env = Environment(variables = help_vars, tools = ['default', 'textfile'], TARGET_ARCH = target_arch, TARGET_OS = target_os, PREFIX = GetOption('prefix'))
-
+	env = Environment(variables = help_vars, tools = ['default', 'textfile'],
+			TARGET_ARCH = target_arch, TARGET_OS = target_os,
+			PREFIX = GetOption('prefix'),
+			LIB_INSTALL_DIR = ARGUMENTS.get('LIB_INSTALL_DIR') #for 64bit build
+			)
 Help(help_vars.GenerateHelpText(env))
 
 tc_set_msg = '''
@@ -169,6 +191,20 @@ if target_os in targets_support_cc:
 
 	if prefix or tc_path:
 		print tc_set_msg
+
+# Import env variables only if reproductibility is ensured
+if target_os in ['yocto']:
+    env['CONFIG_ENVIRONMENT_IMPORT'] = True
+else:
+    env['CONFIG_ENVIRONMENT_IMPORT'] = False
+
+if env['CONFIG_ENVIRONMENT_IMPORT'] == True:
+    print "warning: importing some environment variables for OS: %s" % target_os
+    for ev in ['PATH', 'PKG_CONFIG', 'PKG_CONFIG_PATH', 'PKG_CONFIG_SYSROOT_DIR']:
+        if os.environ.get(ev) != None:
+            env['ENV'][ev] = os.environ.get(ev)
+    if os.environ['LDFLAGS'] != None:
+        env.AppendUnique(LINKFLAGS = Split(os.environ['LDFLAGS']))
 
 # Ensure scons be able to change its working directory
 env.SConscriptChdir(1)
@@ -214,8 +250,15 @@ def __install(ienv, targets, name):
 def __installlib(ienv, targets, name):
 	user_prefix = env.get('PREFIX')
 	if user_prefix:
-		i_n = ienv.Install(user_prefix + '/lib', targets)
+		user_lib = env.get('LIB_INSTALL_DIR')
+		if user_lib:
+			i_n = ienv.Install(user_lib, targets)
+		else:
+			i_n = ienv.Install(user_prefix + '/lib', targets)
 		ienv.Alias("install", i_n)
+	else:
+		i_n = ienv.Install(env.get('BUILD_DIR'), targets)
+	ienv.Alias("install", i_n)
 
 def __installbin(ienv, targets, name):
 	user_prefix = env.get('PREFIX')
@@ -227,13 +270,21 @@ def __installheader(ienv, targets, dir, name):
 	user_prefix = env.get('PREFIX')
 	if user_prefix:
 		i_n = ienv.Install(user_prefix + '/include/' + dir ,targets)
-		ienv.Alias("install", i_n)
+	else:
+		i_n = ienv.Install(os.path.join(env.get('BUILD_DIR'), 'include', dir), targets)
+	ienv.Alias("install", i_n)
 
 def __installpcfile(ienv, targets, name):
 	user_prefix = env.get('PREFIX')
 	if user_prefix:
-		i_n = ienv.Install(user_prefix + '/lib/pkgconfig', targets)
-		ienv.Alias("install", i_n)
+		user_lib = env.get('LIB_INSTALL_DIR')
+		if user_lib:
+			i_n = ienv.Install(user_lib + '/pkgconfig', targets)
+		else:
+			i_n = ienv.Install(user_prefix + '/lib/pkgconfig', targets)
+	else:
+		i_n = ienv.Install(env.get('BUILD_DIR') + 'lib/pkgconfig', targets)
+	ienv.Alias("install", i_n)
 
 def __append_target(ienv, name, targets = None):
 	if targets:
@@ -273,11 +324,30 @@ Export('env')
 pc_file = env.get('SRC_DIR') + '/iotivity.pc.in'
 
 user_prefix = env.get('PREFIX')
+user_lib = env.get('LIB_INSTALL_DIR')
 
-if user_prefix:
-	pc_vars = {'\@PREFIX\@': user_prefix, '\@EXEC_PREFIX\@':user_prefix, '\@VERSION\@':'0.9.2'}
-else:
-	pc_vars = {'\@PREFIX\@': env.get('BUILD_DIR'), '\@EXEC_PREFIX\@': env.get('BUILD_DIR'), '\@VERSION\@':'0.9.2'}
+if not user_prefix:
+    user_prefix = env.get('BUILD_DIR').encode('string_escape')
+
+if not user_lib:
+    user_lib = '$${prefix}/lib'
+
+defines = []
+if env.get('LOGGING'):
+    defines.append('-DTB_LOG=1')
+
+if env.get('ROUTING') == 'GW':
+    defines.append('-DROUTING_GATEWAY=1')
+elif env.get('ROUTING') == 'EP':
+    defines.append('-DROUTING_EP=1')
+
+pc_vars = {
+    '\@VERSION\@': project_version,
+    '\@PREFIX\@': user_prefix,
+    '\@EXEC_PREFIX\@': user_prefix,
+    '\@LIB_INSTALL_DIR\@': user_lib,
+    '\@DEFINES\@': " ".join(defines)
+}
 
 env.Substfile(pc_file, SUBST_DICT = pc_vars)
 
@@ -339,8 +409,7 @@ if target_os == "yocto":
     env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__', '_GNU_SOURCE'])
     env.AppendUnique(CFLAGS = ['-std=gnu99'])
     env.AppendUnique(CCFLAGS = ['-Wall', '-Wextra', '-fPIC'])
-    env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
-    env.AppendUnique(LIBS = ['uuid'])
+    env.AppendUnique(LIBS = ['dl', 'pthread', 'uuid'])
     Export('env')
 else:
     '''

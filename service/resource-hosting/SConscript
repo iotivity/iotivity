@@ -34,7 +34,7 @@ if env.get('LOGGING'):
 	env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 resourcehosting_env = lib_env.Clone()
 
 target_os = env.get('TARGET_OS')
@@ -56,13 +56,13 @@ resourcehosting_env.PrependUnique(LIBS = [
 	'libcoap'
 	])
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
 	resourcehosting_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
-if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
+if target_os not in ['darwin', 'ios', 'windows']:
 	resourcehosting_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 
-if target_os == 'linux':
+if target_os in ['linux']:
 	resourcehosting_env.AppendUnique(LIBS = ['pthread'])
 
 if target_os == 'android':
@@ -88,14 +88,14 @@ if target_os in ['tizen','android'] :
 else :
     resourcehostingsdk = resourcehosting_env.StaticLibrary('resource_hosting', resourcehosting_src)
 
-resourcehosting_env.InstallTarget(resourcehostingsdk, 'libresource_hosting')
-resourcehosting_env.UserInstallTargetLib(resourcehostingsdk, 'libresource_hosting')
+resourcehosting_env.InstallTarget(resourcehostingsdk, 'resource_hosting')
+resourcehosting_env.UserInstallTargetLib(resourcehostingsdk, 'resource_hosting')
 resourcehosting_env.UserInstallTargetHeader('include/Hosting.h',\
 	'service/resource-hosting', 'Hosting.h')
 
 # Go to build Unit test
-if target_os == 'linux':
-	SConscript('unittest/SConscript')
+#if target_os in ['linux']:
+#	SConscript('unittest/SConscript')
 
 # Go to build sample apps
 SConscript('SampleApp/SConscript')

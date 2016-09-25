@@ -1,9 +1,0 @@
-##########################################
-#       Build BT EDR adapter for Linux
-##########################################
-
-Import('env')
-
-src_files = [ 'caedradapter.c']
-
-Return('src_files')

@@ -27,48 +27,35 @@
 #ifndef CA_ADAPTER_UTILS_H_
 #define CA_ADAPTER_UTILS_H_
 
+#include "iotivity_config.h"
+
 #include <stdbool.h>
 #ifdef __ANDROID__
 #include <jni.h>
 #endif
 
-#ifndef WITH_ARDUINO
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+
+#if defined(HAVE_WINSOCK2_H) && defined(HAVE_WS2TCPIP_H)
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
 
 #include "cacommon.h"
 #include "logger.h"
-#include "pdu.h"
+#include <coap/pdu.h>
 #include "uarraylist.h"
+#include "cacommonutil.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-/**
- * Macro to verify the validity of input argument.
- */
-#define VERIFY_NON_NULL_RET(arg, log_tag, log_message,ret) \
-    if (NULL == arg) { \
-        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
-        return ret; \
-    } \
-
-/**
- * Macro to verify the validity of input argument.
- */
-#define VERIFY_NON_NULL(arg, log_tag, log_message) \
-    VERIFY_NON_NULL_RET((arg), (log_tag), (log_message), CA_STATUS_INVALID_PARAM)
-
-/**
- * Macro to verify the validity of input argument.
- */
-#define VERIFY_NON_NULL_VOID(arg, log_tag, log_message) \
-    if (NULL == arg) { \
-        OIC_LOG_V(ERROR, log_tag, "Invalid input:%s", log_message); \
-        return; \
-    } \
 
 /**
  * Length of network interface name.
@@ -261,6 +248,40 @@ jobject CANativeJNIGetContext();
  * @return  JVM object.
  */
 JavaVM *CANativeJNIGetJavaVM();
+
+/**
+ * To set Activity to JNI.
+ * This must be called by the Android API before CA Initialization.
+ * @param[in]   env         JNI Environment pointer.
+ * @param[in]   activity    Activity object.
+ */
+void CANativeSetActivity(JNIEnv *env, jobject activity);
+
+/**
+ * To get Activity.
+ * Called from adapters to get Activity.
+ * @return  Activity object.
+ */
+jobject *CANativeGetActivity();
+
+/**
+ * get method ID for method Name and class
+ * @param[in]   env              JNI interface pointer.
+ * @param[in]   className        android class.
+ * @param[in]   methodName       android method name.
+ * @param[in]   methodFormat     method type of methodName.
+ * @return      jmethodID        iD of the method.
+ */
+jmethodID CAGetJNIMethodID(JNIEnv *env, const char* className,
+                           const char* methodName,
+                           const char* methodFormat);
+
+/**
+ * To Delete other Global References
+ * Called during CATerminate to remove global references
+ */
+void CADeleteGlobalReferences();
+
 #endif
 
 #ifdef __cplusplus

@@ -16,14 +16,14 @@
 
 package oic.simulator.logger;
 
+import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.swt.graphics.Image;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
 import oic.simulator.clientcontroller.manager.LogManager;
-
-import org.eclipse.jface.viewers.ITableLabelProvider;
-import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.swt.graphics.Image;
 
 /**
  * Label provider which determines what data has to be shown in the log view.

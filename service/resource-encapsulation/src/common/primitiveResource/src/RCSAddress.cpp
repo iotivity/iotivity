@@ -67,5 +67,10 @@ namespace OIC
             return m_addr;
         }
 
+        bool RCSAddressDetail::isMulticast() const
+        {
+            return m_addr.empty();
+        }
+
     }
 }

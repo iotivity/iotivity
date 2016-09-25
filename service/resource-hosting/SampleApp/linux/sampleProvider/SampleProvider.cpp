@@ -273,6 +273,22 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
             else if (requestType == "POST")
             {
                 cout << "\t\t\trequestType : POST\n";
+                OCRepresentation rep = request->getResourceRepresentation();
+                myResource.put(rep);
+
+                if (pResponse)
+                {
+                    pResponse->setErrorCode(200);
+                    pResponse->setResourceRepresentation(myResource.get());
+                }
+                if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
+                {
+                    ehResult = OC_EH_OK;
+                }
+                else
+                {
+                    cout << "post request Error\n";
+                }
             }
 
             else if (requestType == "DELETE")

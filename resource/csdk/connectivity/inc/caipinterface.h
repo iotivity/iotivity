@@ -72,13 +72,6 @@ typedef void (*CAIPErrorHandleCallback)(const CAEndpoint_t *endpoint, const void
                                         uint32_t dataLength, CAResult_t result);
 
 /**
- * Callback to be notified when exception occures on multicast/unicast server.
- * @param  type   Type of server(#CAAdapterServerType_t).
- * @pre  Callback must be registered using CAIPSetExceptionCallback().
- */
-typedef void (*CAIPExceptionCallback)(CAAdapterServerType_t type);
-
-/**
  * Start IP server.
  *
  * @param   threadPool   Thread pool for managing Unicast/Multicast server threads.
@@ -92,6 +85,11 @@ CAResult_t CAIPStartServer();
 #else
 CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool);
 #endif
+
+/**
+ * Close IP socket.
+ */
+void CADeInitializeIPGlobals();
 
 /**
  * Stop IP server.
@@ -121,13 +119,6 @@ CAResult_t CAIPStopListenServer();
  * @param[in]  callback    Callback to be notified on reception of unicast/multicast data packets.
  */
 void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback);
-
-/**
- * Set this callback for receiving exception notifications.
- *
- * @param[in]  callback  Callback to be notified on exception on running servers.
- */
-void CAIPSetExceptionCallback(CAIPExceptionCallback callback);
 
 /**
  * Set socket description for sending unicast UDP data.
@@ -179,8 +170,32 @@ typedef struct
     uint32_t index;
     uint32_t flags;
     uint16_t family;
-    uint32_t ipv4addr;        /**< used for IPv4 only. */
+    char addr[MAX_ADDR_STR_SIZE_CA];
 } CAInterface_t;
+
+
+/**
+ * Callback to be notified when IP adapter connection state changes.
+ *
+ * @param[in]  adapter      Transport adapter.
+ * @param[in]  status       Connection status either ::CA_INTERFACE_UP or ::CA_INTERFACE_DOWN.
+ * @see CAIPSetConnectionStateChangeCallback() for registration.
+ */
+typedef void (*CAIPConnectionStateChangeCallback)(CATransportAdapter_t adapter, CANetworkStatus_t status);
+
+/**
+ * Set callback for receiving local IP adapter connection status.
+ *
+ * @param[in]  adapter      Callback to be notified when IP adapter connection state changes.
+ */
+void CAIPSetConnectionStateChangeCallback(CAIPConnectionStateChangeCallback callback);
+
+/**
+ * Set callback for receiving local IP adapter connection status.
+ *
+ * @param[in]  callback     Callback to be notified when IP adapter connection state changes.
+ */
+void CAIPSetNetworkMonitorCallback(CAIPConnectionStateChangeCallback callback);
 
 /**
  * Get a list of CAInterface_t items.
@@ -190,14 +205,14 @@ typedef struct
 u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex);
 
 /**
- * @brief   Find a new network interface.
+ * Find a new network interface.
  *
  * @return  Description of interface (or NULL if no change)
  */
 CAInterface_t *CAFindInterfaceChange();
 
 /**
- * @brief   Let the network monitor update the polling interval.
+ * Let the network monitor update the polling interval.
  * @param   [in] current polling interval
  *
  * @return  desired polling interval
@@ -205,7 +220,7 @@ CAInterface_t *CAFindInterfaceChange();
 int CAGetPollingInterval(int interval);
 
 /**
- * @brief   Tell the IP server an interface has been added.
+ * Tell the IP server an interface has been added.
  */
 void CAWakeUpForChange();
 
@@ -224,11 +239,11 @@ CAResult_t CAIPStartNetworkMonitor();
 CAResult_t CAIPStopNetworkMonitor();
 
 /**
- * @brief  Set callback for error handling.
+ * Set callback for error handling.
  *
- * @param[in]  ipErrorCallback  callback to notify error to the ipadapter.
+ * @param[in]  errorHandleCallback  callback to notify error to the ipadapter.
  */
-void CAIPSetErrorHandleCallback(CAIPErrorHandleCallback ipErrorCallback);
+void CAIPSetErrorHandler(CAIPErrorHandleCallback errorHandleCallback);
 
 #ifdef __cplusplus
 }

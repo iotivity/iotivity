@@ -35,6 +35,11 @@ constexpr int CUSTOM_SERVER = 2;
 constexpr int INCREASE = 1;
 constexpr int DECREASE = 2;
 
+const std::string BASELINE_INTERFACE = "oic.if.baseline";
+const std::string ACTUATOR_INTERFACE = "oic.if.a";
+const std::string SENSOR_INTERFACE = "oic.if.s";
+const std::string CUSTOM_INTERFACE = "test.custom";
+
 typedef void (*DisplayControlMenuFunc)();
 typedef std::function<void()> Run;
 
@@ -116,8 +121,13 @@ RCSSetResponse requestHandlerForSet(const RCSRequest&, RCSResourceAttributes& at
 void initServer(const std::string& resourceUri, const std::string& resourceType,
         const std::string& attrKey)
 {
-    g_resource = RCSResourceObject::Builder(resourceUri, resourceType, "oic.if.").
-            setDiscoverable(true).setObservable(true).build();
+    g_resource = RCSResourceObject::Builder(resourceUri, resourceType, ACTUATOR_INTERFACE)
+            .addInterface(CUSTOM_INTERFACE)
+            .addInterface(SENSOR_INTERFACE)
+            .setDefaultInterface(BASELINE_INTERFACE)
+            .setDiscoverable(true)
+            .setObservable(true)
+            .build();
 
     g_resource->setAutoNotifyPolicy(RCSResourceObject::AutoNotifyPolicy::UPDATED);
     g_resource->setSetRequestHandlerPolicy(RCSResourceObject::SetRequestHandlerPolicy::NEVER);

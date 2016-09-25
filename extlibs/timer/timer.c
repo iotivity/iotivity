@@ -22,14 +22,26 @@
 
 #define _BSD_SOURCE
 
-#ifndef WITH_ARDUINO
+#include "iotivity_config.h"
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_MEMORY_H
 #include <memory.h>
+#endif
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
-
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
+
 #include <stdio.h>
 
 #include "timer.h"
@@ -104,6 +116,13 @@ long int getRelativeIntervalOfWeek(struct tm* tp)
 
     time(&current_time);
     current = localtime(&current_time);
+
+    if(current == NULL)
+    {
+        printf("ERROR; Getting local time fails\n");
+        return 0;
+    }
+
     midnight = (struct tm* )malloc(sizeof(struct tm));
 
     if(midnight == NULL)
@@ -235,6 +254,7 @@ void checkTimeout()
 
 void *loop(void *threadid)
 {
+    (void)threadid;
     while (1)
     {
         sleep(SECOND);
@@ -246,10 +266,7 @@ void *loop(void *threadid)
 
 int initThread()
 {
-    int res;
-    long t = 0;
-
-    res = pthread_create(&thread_id, NULL, loop, (void *) t);
+    int res = pthread_create(&thread_id, NULL, loop, NULL);
 
     if (res)
     {

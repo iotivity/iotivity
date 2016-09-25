@@ -16,17 +16,20 @@
 
 package org.oic.simulator.server;
 
+import java.util.Map;
+
 import org.oic.simulator.AttributeValue;
 import org.oic.simulator.InvalidArgsException;
 import org.oic.simulator.SimulatorException;
 import org.oic.simulator.SimulatorResourceAttribute;
-import org.oic.simulator.SimulatorResourceModel;
 
+/**
+ * This class represents a single type resource(Non-collection resource). It
+ * provides APIs specific to single resource for manipulating the resource model
+ * by adding/removing the attributes, and updating the attribute values manually
+ * and automatically.
+ */
 public final class SimulatorSingleResource extends SimulatorResource {
-
-    private SimulatorSingleResource(long nativeHandle) {
-        mNativeHandle = nativeHandle;
-    }
 
     /**
      * API to get attribute of resource.
@@ -35,7 +38,7 @@ public final class SimulatorSingleResource extends SimulatorResource {
      *            Name of the attribute
      *
      * @return An object of {@link SimulatorResourceAttribute}, or null if
-     *         resource doest not have attribute of this name.
+     *         resource does not have attribute of this name.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown if the attribute name is
@@ -44,54 +47,87 @@ public final class SimulatorSingleResource extends SimulatorResource {
      *             This exception will be thrown either if the resource model is
      *             not found or for some general errors.
      */
-    public native SimulatorResourceAttribute getAttribute(String attrName)
-            throws InvalidArgsException, SimulatorException;
+    public SimulatorResourceAttribute getAttribute(String attrName)
+            throws InvalidArgsException, SimulatorException {
+        return nativeGetAttribute(attrName);
+    }
 
     /**
-     * API to add an attribute to resource's representation model.
+     * API to get all the attributes of the resource.
      *
-     * @param attrName
-     *            Name of the attribute.
+     * @return Map of attributes with attribute name as key and its
+     *         corresponding {@link SimulatorResourceAttribute} as value.
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown if the attribute name is
+     *             invalid.
+     * @throws SimulatorException
+     *             This exception will be thrown either if the resource model is
+     *             not found or for some general errors.
+     */
+    public Map<String, SimulatorResourceAttribute> getAttributes()
+            throws InvalidArgsException, SimulatorException {
+        return nativeGetAttributes();
+    }
+
+    /**
+     * API to add an attribute to resource's representation model. Observers
+     * will be notified on success.
+     *
      * @param attribute
      *            Attribute to be added to resource's representation model.
+     *
+     * @return True if the attribute is added properly.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown on invalid input.
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native void addAttribute(SimulatorResourceAttribute attribute)
-            throws InvalidArgsException, SimulatorException;
+    public boolean addAttribute(SimulatorResourceAttribute attribute)
+            throws InvalidArgsException, SimulatorException {
+        return nativeAddAttribute(attribute);
+    }
 
     /**
-     * API to update the value of an attribute.
+     * API to remove an attribute from the simulated resource. Observers will be
+     * notified on success.
+     *
+     * @param attrName
+     *            Name of the attribute to be deleted.
+     *
+     * @return True if the attribute is removed properly.
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown on invalid input.
+     * @throws SimulatorException
+     *             This exception will be thrown for other errors.
+     */
+    public boolean removeAttribute(String attrName)
+            throws InvalidArgsException, SimulatorException {
+        return nativeRemoveAttribute(attrName);
+    }
+
+    /**
+     * API to update the value of an attribute. Observers will be notified on
+     * success.
      *
      * @param attrName
      *            Name of the attribute.
      * @param value
      *            New value of the attribute.
      *
-     * @throws InvalidArgsException
-     *             This exception will be thrown on invalid input.
-     * @throws SimulatorException
-     *             This exception will be thrown for other errors.
-     */
-    public native void updateAttribute(String attrName, AttributeValue value)
-            throws InvalidArgsException, SimulatorException;
-
-    /**
-     * API to remove an attribute from the simulated resource.
-     *
-     * @param attrName
-     *            Name of the attribute to be deleted.
+     * @return True if the attribute's value is updated properly.
      *
      * @throws InvalidArgsException
      *             This exception will be thrown on invalid input.
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native void removeAttribute(String attrName)
-            throws InvalidArgsException, SimulatorException;
+    public boolean updateAttribute(String attrName, AttributeValue value)
+            throws InvalidArgsException, SimulatorException {
+        return nativeUpdateAttribute(attrName, value);
+    }
 
     /**
      * API to start the resource level automation. This automation involves
@@ -99,33 +135,7 @@ public final class SimulatorSingleResource extends SimulatorResource {
      * sequentially.
      *
      * @param type
-     *            {@link AutomationType} indicating whether the automation is
-     *            one-time or recursive.
-     * @param interval
-     *            Interval time in milliseconds.
-     * @param listener
-     *            Listener to be notified when value updation ends.
-     *
-     * @return Automation ID using which the automation can be stopped.
-     *
-     * @throws InvalidArgsException
-     *             This exception will be thrown on invalid input.
-     * @throws SimulatorException
-     *             This exception will be thrown for other errors.
-     */
-    public native int startResourceUpdation(AutoUpdateType type, int interval,
-            AutoUpdateListener listener) throws InvalidArgsException,
-            SimulatorException;
-
-    /**
-     * API to start the attribute level automation. This automation involves
-     * automatically updating all the possible values for a given attribute
-     * sequentially.
-     *
-     * @param attrName
-     *            Name of the attribute to be automated.
-     * @param type
-     *            {@link AutomationType} indicating whether the automation is
+     *            {@link AutoUpdateType} indicating whether the automation is
      *            one-time or recursive.
      * @param interval
      *            Interval time in milliseconds.
@@ -139,9 +149,39 @@ public final class SimulatorSingleResource extends SimulatorResource {
      * @throws SimulatorException
      *             This exception will be thrown for other errors.
      */
-    public native int startAttributeUpdation(String attrName,
-            AutoUpdateType type, int interval, AutoUpdateListener listener)
-            throws InvalidArgsException, SimulatorException;
+    public int startResourceUpdation(AutoUpdateType type, int interval,
+            AutoUpdateListener listener) throws InvalidArgsException,
+            SimulatorException {
+        return nativeStartResourceUpdation(type, interval, listener);
+    }
+
+    /**
+     * API to start the attribute level automation. This automation involves
+     * automatically updating all the possible values for a given attribute
+     * sequentially.
+     *
+     * @param attrName
+     *            Name of the attribute to be automated.
+     * @param type
+     *            {@link AutoUpdateType} indicating whether the automation is
+     *            one-time or recursive.
+     * @param interval
+     *            Interval time in milliseconds.
+     * @param listener
+     *            Listener to be notified when automation ends.
+     *
+     * @return Automation ID using which the automation can be stopped.
+     *
+     * @throws InvalidArgsException
+     *             This exception will be thrown on invalid input.
+     * @throws SimulatorException
+     *             This exception will be thrown for other errors.
+     */
+    public int startAttributeUpdation(String attrName, AutoUpdateType type,
+            int interval, AutoUpdateListener listener)
+            throws InvalidArgsException, SimulatorException {
+        return nativeStartAttributeUpdation(attrName, type, interval, listener);
+    }
 
     /**
      * API to stop the automation based on automation id.
@@ -152,5 +192,31 @@ public final class SimulatorSingleResource extends SimulatorResource {
      * @throws SimulatorException
      *             This exception will be thrown for general errors.
      */
-    public native void stopUpdation(int id) throws SimulatorException;
+    public void stopUpdation(int id) throws SimulatorException {
+        nativeStopUpdation(id);
+    }
+
+    private SimulatorSingleResource(long nativeHandle) {
+        mNativeHandle = nativeHandle;
+    }
+
+    private native SimulatorResourceAttribute nativeGetAttribute(String attrName);
+
+    private native Map<String, SimulatorResourceAttribute> nativeGetAttributes();
+
+    private native boolean nativeAddAttribute(
+            SimulatorResourceAttribute attribute);
+
+    private native boolean nativeRemoveAttribute(String attrName);
+
+    private native boolean nativeUpdateAttribute(String attrName,
+            AttributeValue value);
+
+    private native int nativeStartResourceUpdation(AutoUpdateType type,
+            int interval, AutoUpdateListener listener);
+
+    private native int nativeStartAttributeUpdation(String attrName,
+            AutoUpdateType type, int interval, AutoUpdateListener listener);
+
+    private native void nativeStopUpdation(int id);
 }

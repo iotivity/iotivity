@@ -1,23 +1,23 @@
 /*
- * //******************************************************************
- * //
- * // Copyright 2015 Intel Corporation.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
- * //
- * // Licensed under the Apache License, Version 2.0 (the "License");
- * // you may not use this file except in compliance with the License.
- * // You may obtain a copy of the License at
- * //
- * //      http://www.apache.org/licenses/LICENSE-2.0
- * //
- * // Unless required by applicable law or agreed to in writing, software
- * // distributed under the License is distributed on an "AS IS" BASIS,
- * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * // See the License for the specific language governing permissions and
- * // limitations under the License.
- * //
- * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *******************************************************************
+ *
+ * Copyright 2015 Intel Corporation.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 
 package org.iotivity.base;
@@ -25,6 +25,7 @@ package org.iotivity.base;
 import java.security.InvalidParameterException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -51,6 +52,8 @@ public class OcRepresentation {
         this.mNativeHandle = nativeHandle;
         this.mNativeNeedsDelete = nativeNeedsDelete;
     }
+
+    public native Map<String, Object> getValues();
 
     public <T> T getValue(String key) throws OcException {
         Object obj = this.getValueN(key);
@@ -141,6 +144,10 @@ public class OcRepresentation {
         this.setValueRepresentation3DArray(key, value);
     }
 
+    public void setValue(String key, byte[] value) throws OcException {
+        this.setValueByteArray(key, value);
+    }
+
     private native void setValueInteger(String key, int value) throws OcException;
 
     private native void setValueDouble(String key, double value) throws OcException;
@@ -180,6 +187,8 @@ public class OcRepresentation {
     private native void setValueRepresentation2DArray(String key, OcRepresentation[][] value) throws OcException;
 
     private native void setValueRepresentation3DArray(String key, OcRepresentation[][][] value) throws OcException;
+
+    private native void setValueByteArray(String key, byte[] value) throws OcException;
 
     /**
      * @deprecated use {@link #getValue(String key)} instead.

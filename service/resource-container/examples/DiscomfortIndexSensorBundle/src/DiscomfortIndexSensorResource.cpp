@@ -35,13 +35,17 @@ DiscomfortIndexSensorResource::~DiscomfortIndexSensorResource()
 }
 
 void DiscomfortIndexSensorResource::handleSetAttributesRequest(
-    RCSResourceAttributes &value)
+    const RCSResourceAttributes &value,
+    const std::map< std::string, std::string > &queryParams)
 {
+    (void)queryParams;
     BundleResource::setAttributes(value);
 }
 
-RCSResourceAttributes &DiscomfortIndexSensorResource::handleGetAttributesRequest()
+RCSResourceAttributes DiscomfortIndexSensorResource::handleGetAttributesRequest(
+    const std::map< std::string, std::string > &queryParams)
 {
+    (void)queryParams;
     return BundleResource::getAttributes();
 }
 
@@ -51,7 +55,7 @@ void DiscomfortIndexSensorResource::executeLogic()
 
     m_pDiscomfortIndexSensor->executeDISensorLogic(&m_mapInputData, &strDiscomfortIndex);
 
-    setAttribute("discomfortIndex", RCSResourceAttributes::Value(strDiscomfortIndex.c_str()));
+    setAttribute("discomfortIndex", RCSResourceAttributes::Value(strDiscomfortIndex.c_str()), true);
 
     for (auto it : m_mapInputData)
     {

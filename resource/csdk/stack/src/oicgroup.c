@@ -20,6 +20,8 @@
 
 #define _POSIX_C_SOURCE 200112L
 
+#include "iotivity_config.h"
+
 #include <string.h>
 
 #include "oicgroup.h"
@@ -32,11 +34,7 @@
 #include "logger.h"
 #include "timer.h"
 
-#ifndef WITH_ARDUINO
-#include <pthread.h>
-#endif
-
-#define TAG "OICGROUP"
+#define TAG "OIC_RI_GROUP"
 
 #define DESC_DELIMITER          "\""
 #define ACTION_DELIMITER        "*"
@@ -71,8 +69,30 @@
         pointer = NULL; \
     }
 
-#ifndef WITH_ARDUINO
-pthread_mutex_t lock;
+// Mutex implementation macros
+#if defined(HAVE_PTHREAD_H)
+
+ #include <pthread.h>
+ pthread_mutex_t lock;
+ #define MUTEX_LOCK(ARG_NAME)    { pthread_mutex_lock(ARG_NAME); }
+ #define MUTEX_UNLOCK(ARG_NAME)  { pthread_mutex_unlock(ARG_NAME); }
+
+#elif defined(HAVE_WINDOWS_H)
+
+ #include <windows.h>
+ CRITICAL_SECTION lock;
+ #define MUTEX_LOCK(ARG_NAME)   { EnterCriticalSection(ARG_NAME); }
+ #define MUTEX_UNLOCK(ARG_NAME) { LeaveCriticalSection(ARG_NAME); }
+
+#elif defined(WITH_ARDUINO)
+
+ #define MUTEX_LOCK(ARG_NAME)   {  }
+ #define MUTEX_UNLOCK(ARG_NAME) {  }
+
+#else
+
+ ERROR Need mutex implementation on this platform
+
 #endif
 
 enum ACTION_TYPE
@@ -98,11 +118,9 @@ ScheduledResourceInfo *scheduleResourceList = NULL;
 void AddScheduledResource(ScheduledResourceInfo **head,
         ScheduledResourceInfo* add)
 {
-    OC_LOG(INFO, TAG, "AddScheduledResource Entering...");
+    OIC_LOG(INFO, TAG, "AddScheduledResource Entering...");
 
-#ifndef WITH_ARDUINO
-    pthread_mutex_lock(&lock);
-#endif
+    MUTEX_LOCK(&lock);
     ScheduledResourceInfo *tmp = NULL;
 
     if (*head != NULL)
@@ -119,25 +137,21 @@ void AddScheduledResource(ScheduledResourceInfo **head,
     {
         *head = add;
     }
-#ifndef WITH_ARDUINO
-    pthread_mutex_unlock(&lock);
-#endif
+    MUTEX_UNLOCK(&lock);
 }
 
 ScheduledResourceInfo* GetScheduledResource(ScheduledResourceInfo *head)
 {
-    OC_LOG(INFO, TAG, "GetScheduledResource Entering...");
+    OIC_LOG(INFO, TAG, "GetScheduledResource Entering...");
 
-#ifndef WITH_ARDUINO
-    pthread_mutex_lock(&lock);
-#endif
+    MUTEX_LOCK(&lock);
 
     time_t t_now;
 
     ScheduledResourceInfo *tmp = NULL;
     tmp = head;
 
-#ifndef WITH_ARDUINO
+#if !defined(WITH_ARDUINO)
     time(&t_now);
 #else
     t_now = now();
@@ -148,15 +162,11 @@ ScheduledResourceInfo* GetScheduledResource(ScheduledResourceInfo *head)
         while (tmp)
         {
             time_t diffTm = 0;
-#ifndef WITH_ARDUINO
             diffTm = timespec_diff(tmp->time, t_now);
-#else
-            diffTm = timespec_diff(tmp->time, t_now);
-#endif
 
             if (diffTm <= (time_t) 0)
             {
-                OC_LOG(INFO, TAG, "return Call INFO.");
+                OIC_LOG(INFO, TAG, "return Call INFO.");
                 goto exit;
             }
 
@@ -165,23 +175,22 @@ ScheduledResourceInfo* GetScheduledResource(ScheduledResourceInfo *head)
     }
 
     exit:
-#ifndef WITH_ARDUINO
-    pthread_mutex_unlock(&lock);
-#endif
+
+    MUTEX_UNLOCK(&lock);
+
     if (tmp == NULL)
     {
-        OC_LOG(INFO, TAG, "Cannot Find Call Info.");
+        OIC_LOG(INFO, TAG, "Cannot Find Call Info.");
     }
     return tmp;
 }
 
 ScheduledResourceInfo* GetScheduledResourceByActionSetName(ScheduledResourceInfo *head, char *setName)
 {
-    OC_LOG(INFO, TAG, "GetScheduledResourceByActionSetName Entering...");
+    OIC_LOG(INFO, TAG, "GetScheduledResourceByActionSetName Entering...");
 
-#ifndef WITH_ARDUINO
-    pthread_mutex_lock(&lock);
-#endif
+    MUTEX_LOCK(&lock);
+
     ScheduledResourceInfo *tmp = NULL;
     tmp = head;
 
@@ -191,7 +200,7 @@ ScheduledResourceInfo* GetScheduledResourceByActionSetName(ScheduledResourceInfo
         {
             if (strcmp(tmp->actionset->actionsetName, setName) == 0)
             {
-                OC_LOG(INFO, TAG, "return Call INFO.");
+                OIC_LOG(INFO, TAG, "return Call INFO.");
                 goto exit;
             }
             tmp = tmp->next;
@@ -199,12 +208,12 @@ ScheduledResourceInfo* GetScheduledResourceByActionSetName(ScheduledResourceInfo
     }
 
 exit:
-#ifndef WITH_ARDUINO
-    pthread_mutex_unlock(&lock);
-#endif
+
+    MUTEX_UNLOCK(&lock);
+
     if (tmp == NULL)
     {
-        OC_LOG(INFO, TAG, "Cannot Find Call Info.");
+        OIC_LOG(INFO, TAG, "Cannot Find Call Info.");
     }
     return tmp;
 }
@@ -212,17 +221,17 @@ exit:
 void RemoveScheduledResource(ScheduledResourceInfo **head,
         ScheduledResourceInfo* del)
 {
-#ifndef WITH_ARDUINO
-    pthread_mutex_lock(&lock);
-#endif
-    OC_LOG(INFO, TAG, "RemoveScheduledResource Entering...");
+
+    MUTEX_LOCK(&lock);
+
+    OIC_LOG(INFO, TAG, "RemoveScheduledResource Entering...");
     ScheduledResourceInfo *tmp = NULL;
 
     if (del == NULL)
     {
-#ifndef WITH_ARDUINO
-    pthread_mutex_unlock(&lock);
-#endif
+
+        MUTEX_UNLOCK(&lock);
+
         return;
     }
 
@@ -244,9 +253,9 @@ void RemoveScheduledResource(ScheduledResourceInfo **head,
     }
 
     OCFREE(del)
-#ifndef WITH_ARDUINO
-    pthread_mutex_unlock(&lock);
-#endif
+
+    MUTEX_UNLOCK(&lock);
+
 }
 
 typedef struct aggregatehandleinfo
@@ -427,11 +436,13 @@ void DeleteAction(OCAction** action)
 
 void DeleteActionSet(OCActionSet** actionset)
 {
+    OCAction* pointer = NULL;
+    OCAction* pDel = NULL;
+
     if(*actionset == NULL)
         return;
 
-    OCAction* pointer = (*actionset)->head;
-    OCAction* pDel = NULL;
+    pointer = (*actionset)->head;
 
     while (pointer)
     {
@@ -494,24 +505,6 @@ OCStackResult FindAndDeleteActionSet(OCResource **resource,
 
     }
     return OC_STACK_ERROR;
-}
-
-OCStackResult DeleteActionSets(OCResource** resource)
-{
-    OCActionSet *pointer = (*resource)->actionsetHead;
-    OCActionSet *pDel = pointer;
-
-    while (pointer)
-    {
-        pDel = pointer;
-        pointer = pointer->next;
-
-        DeleteActionSet(&pDel);
-        pDel->next = NULL;
-    }
-
-    (*resource)->actionsetHead = NULL;
-    return OC_STACK_OK;
 }
 
 OCStackResult GetActionSet(const char *actionName, OCActionSet *head,
@@ -647,7 +640,7 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
     OCAction *action = NULL;
     OCCapability *capa = NULL;
 
-    OC_LOG(INFO, TAG, "Build ActionSet Instance.");
+    OIC_LOG(INFO, TAG, "Build ActionSet Instance.");
 
     *set = (OCActionSet*) OICMalloc(sizeof(OCActionSet));
     VARIFY_POINTER_NULL(*set, result, exit)
@@ -668,7 +661,7 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
     // yyyy-mm-dd hh:mm:ss d
     iterToken = (char *) strtok_r(NULL, ACTION_DELIMITER, &iterTokenPtr);
     VARIFY_PARAM_NULL(iterToken, result, exit)
-#ifndef WITH_ARDUINO
+#if !defined(WITH_ARDUINO)
     if( 2 != sscanf(iterToken, "%ld %u", &(*set)->timesteps, &(*set)->type) )
     {
         // If the return value should be 2, the number of items in the argument. Otherwise, it fails.
@@ -676,7 +669,7 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
     }
 #endif
 
-    OC_LOG_V(INFO, TAG, "ActionSet Name : %s", (*set)->actionsetName);
+    OIC_LOG_V(INFO, TAG, "ActionSet Name : %s", (*set)->actionsetName);
 
     iterToken = (char *) strtok_r(NULL, ACTION_DELIMITER, &iterTokenPtr);
     while (iterToken)
@@ -713,7 +706,7 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
 
             if (strcmp(key, "uri") == 0)
             {
-                OC_LOG(INFO, TAG, "Build OCAction Instance.");
+                OIC_LOG(INFO, TAG, "Build OCAction Instance.");
 
                 action = (OCAction*) OICMalloc(sizeof(OCAction));
                 VARIFY_POINTER_NULL(action, result, exit)
@@ -727,7 +720,7 @@ OCStackResult BuildActionSetFromString(OCActionSet **set, char* actiondesc)
             {
                 if ((key != NULL) && (value != NULL))
                 {
-                    OC_LOG(INFO, TAG, "Build OCCapability Instance.");
+                    OIC_LOG(INFO, TAG, "Build OCCapability Instance.");
 
                     capa = (OCCapability*) OICMalloc(sizeof(OCCapability));
                     VARIFY_POINTER_NULL(capa, result, exit)
@@ -808,11 +801,20 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
     if(actionTypeStr != NULL)
     {
         sprintf(actionTypeStr, "%ld %u", actionset->timesteps, actionset->type);
-        strncat(temp, actionTypeStr, strlen(actionTypeStr));
-        remaining -= strlen(actionTypeStr);
-        free(actionTypeStr);
-        strncat(temp, ACTION_DELIMITER, strlen(ACTION_DELIMITER));
-        remaining--;
+        if(remaining >= strlen(actionTypeStr) + strlen(ACTION_DELIMITER) + 1)
+        {
+            strncat(temp, actionTypeStr, strlen(actionTypeStr));
+            remaining -= strlen(actionTypeStr);
+            strncat(temp, ACTION_DELIMITER, strlen(ACTION_DELIMITER));
+            remaining -= strlen(ACTION_DELIMITER);
+            free(actionTypeStr);
+        }
+        else
+        {
+            free(actionTypeStr);
+            res = OC_STACK_ERROR;
+            goto exit;
+        }
     }
     else
     {
@@ -827,6 +829,7 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
             res = OC_STACK_ERROR;
             goto exit;
         }
+
         strcat(temp, "uri=");
         remaining -= strlen("uri=");
         strcat(temp, action->resourceUri);
@@ -860,6 +863,7 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
                     goto exit;
                 }
                 strcat(temp, "|");
+                remaining --;
             }
         }
 
@@ -891,7 +895,7 @@ OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
 {
     (void)context;
     (void)clientResponse;
-    OC_LOG(INFO, TAG, "Entering ActionSetCB");
+    OIC_LOG(INFO, TAG, "Entering ActionSetCB");
 
     ClientRequestInfo *info = GetClientRequestInfo(clientRequstList, handle);
 
@@ -903,7 +907,7 @@ OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
 
         if(NULL == clientResponse->payload)
         {
-            OC_LOG(ERROR, TAG, "Error sending response");
+            OIC_LOG(ERROR, TAG, "Error sending response");
             return OC_STACK_DELETE_TRANSACTION;
         }
 
@@ -921,7 +925,7 @@ OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
         // Send the response
         if (OCDoResponse(&response) != OC_STACK_OK)
         {
-            OC_LOG(ERROR, TAG, "Error sending response");
+            OIC_LOG(ERROR, TAG, "Error sending response");
             return OC_STACK_DELETE_TRANSACTION;
         }
 
@@ -947,7 +951,7 @@ OCStackResult BuildActionJSON(OCAction* action, unsigned char* bufferPtr,
     char *jsonStr;
     uint16_t jsonLen;
 
-    OC_LOG(INFO, TAG, "Entering BuildActionJSON");
+    OIC_LOG(INFO, TAG, "Entering BuildActionJSON");
     json = cJSON_CreateObject();
 
     cJSON_AddItemToObject(json, "rep", body = cJSON_CreateObject());
@@ -983,7 +987,7 @@ OCPayload* BuildActionCBOR(OCAction* action)
 
     if (!payload)
     {
-        OC_LOG(INFO, TAG, "Failed to create put payload object");
+        OIC_LOG(INFO, TAG, "Failed to create put payload object");
         return NULL;
     }
 
@@ -1080,36 +1084,36 @@ OCStackResult DoAction(OCResource* resource, OCActionSet* actionset,
 
 void DoScheduledGroupAction()
 {
-    OC_LOG(INFO, TAG, "DoScheduledGroupAction Entering...");
+    OIC_LOG(INFO, TAG, "DoScheduledGroupAction Entering...");
     ScheduledResourceInfo* info = GetScheduledResource(scheduleResourceList);
 
     if (info == NULL)
     {
-        OC_LOG(INFO, TAG, "Target resource is NULL");
+        OIC_LOG(INFO, TAG, "Target resource is NULL");
         goto exit;
     }
     else if (info->resource == NULL)
     {
-        OC_LOG(INFO, TAG, "Target resource is NULL");
+        OIC_LOG(INFO, TAG, "Target resource is NULL");
         goto exit;
     }
     else if (info->actionset == NULL)
     {
-        OC_LOG(INFO, TAG, "Target ActionSet is NULL");
+        OIC_LOG(INFO, TAG, "Target ActionSet is NULL");
         goto exit;
     }
     else if (info->ehRequest == NULL)
     {
-        OC_LOG(INFO, TAG, "Target ActionSet is NULL");
+        OIC_LOG(INFO, TAG, "Target ActionSet is NULL");
         goto exit;
     }
-#ifndef WITH_ARDUINO
-    pthread_mutex_lock(&lock);
-#endif
+
+    MUTEX_LOCK(&lock);
+
     DoAction(info->resource, info->actionset, info->ehRequest);
-#ifndef WITH_ARDUINO
-    pthread_mutex_unlock(&lock);
-#endif
+
+    MUTEX_UNLOCK(&lock);
+
 
     if (info->actionset->type == RECURSIVE)
     {
@@ -1119,14 +1123,12 @@ void DoScheduledGroupAction()
 
         if (schedule)
         {
-            OC_LOG(INFO, TAG, "Building New Call Info.");
+            OIC_LOG(INFO, TAG, "Building New Call Info.");
             memset(schedule, 0, sizeof(ScheduledResourceInfo));
 
             if (info->actionset->timesteps > 0)
             {
-#ifndef WITH_ARDUINO
-                pthread_mutex_lock(&lock);
-#endif
+                MUTEX_LOCK(&lock);
                 schedule->resource = info->resource;
                 schedule->actionset = info->actionset;
                 schedule->ehRequest = info->ehRequest;
@@ -1135,10 +1137,8 @@ void DoScheduledGroupAction()
                         &schedule->timer_id,
                         &DoScheduledGroupAction);
 
-                OC_LOG(INFO, TAG, "Reregisteration.");
-#ifndef WITH_ARDUINO
-                pthread_mutex_unlock(&lock);
-#endif
+                OIC_LOG(INFO, TAG, "Reregisteration.");
+                MUTEX_UNLOCK(&lock);
                 AddScheduledResource(&scheduleResourceList, schedule);
             }
             else
@@ -1161,16 +1161,26 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
 {
     OCStackResult stackRet = OC_STACK_ERROR;
 
-    OC_LOG(INFO, TAG, "Group Action is requested.");
+    OIC_LOG(INFO, TAG, "Group Action is requested.");
 
     char *doWhat = NULL;
     char *details = NULL;
+
+#if defined(_WIN32)
+    static bool initializedCriticalSection = false;
+
+    if(false == initializedCriticalSection) {
+        /** @todo Find a way to DeleteCriticalSection somewhere. */
+        InitializeCriticalSection(&lock);
+        initializedCriticalSection = true;
+    }
+#endif
 
     stackRet = ExtractKeyValueFromRequest(ehRequest, &doWhat, &details);
 
     if(stackRet != OC_STACK_OK)
     {
-        OC_LOG_V(ERROR, TAG, "ExtractKeyValueFromRequest failed: %d", stackRet);
+        OIC_LOG_V(ERROR, TAG, "ExtractKeyValueFromRequest failed: %d", stackRet);
         return stackRet;
     }
 
@@ -1178,7 +1188,7 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
 
     if (method == OC_REST_PUT)
     {
-        OC_LOG(INFO, TAG, "Group Action[PUT].");
+        OIC_LOG(INFO, TAG, "Group Action[PUT].");
 
         if (strcmp(doWhat, ACTIONSET) == 0)
         {
@@ -1197,7 +1207,7 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                         {
                             DeleteActionSet( &actionSet );
                         }
-                        OC_LOG(INFO, TAG, "Duplicated ActionSet ");
+                        OIC_LOG(INFO, TAG, "Duplicated ActionSet ");
                     }
                 }
                 else
@@ -1228,7 +1238,7 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
 
         if(!payload)
         {
-            OC_LOG(ERROR, TAG, "Failed to allocate Payload");
+            OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
             stackRet = OC_STACK_ERROR;
         }
         else
@@ -1255,7 +1265,7 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
             // Send the response
             if (OCDoResponse(&response) != OC_STACK_OK)
             {
-                OC_LOG(ERROR, TAG, "Error sending response");
+                OIC_LOG(ERROR, TAG, "Error sending response");
                 stackRet = OC_STACK_ERROR;
             }
         }
@@ -1291,21 +1301,21 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                 if (GetActionSet(details, resource->actionsetHead,
                         &actionset) != OC_STACK_OK)
                 {
-                    OC_LOG(INFO, TAG, "ERROR");
+                    OIC_LOG(INFO, TAG, "ERROR");
                     stackRet = OC_STACK_ERROR;
                 }
 
                 if (actionset == NULL)
                 {
-                    OC_LOG(INFO, TAG, "Cannot Find ActionSet");
+                    OIC_LOG(INFO, TAG, "Cannot Find ActionSet");
                     stackRet = OC_STACK_ERROR;
                 }
                 else
                 {
-                    OC_LOG(INFO, TAG, "Group Action[POST].");
+                    OIC_LOG(INFO, TAG, "Group Action[POST].");
                     if (actionset->type == NONE)
                     {
-                        OC_LOG_V(INFO, TAG, "Execute ActionSet : %s",
+                        OIC_LOG_V(INFO, TAG, "Execute ActionSet : %s",
                                 actionset->actionsetName);
                         unsigned int num = GetNumOfTargetResource(
                                 actionset->head);
@@ -1321,7 +1331,7 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                     }
                     else
                     {
-                        OC_LOG_V(INFO, TAG, "Execute Scheduled ActionSet : %s",
+                        OIC_LOG_V(INFO, TAG, "Execute Scheduled ActionSet : %s",
                                 actionset->actionsetName);
 
                         delay =
@@ -1333,32 +1343,24 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
 
                         if (schedule)
                         {
-                            OC_LOG(INFO, TAG, "Building New Call Info.");
+                            OIC_LOG(INFO, TAG, "Building New Call Info.");
                             memset(schedule, 0,
                                     sizeof(ScheduledResourceInfo));
-#ifndef WITH_ARDUINO
-                            pthread_mutex_lock(&lock);
-#endif
+                            MUTEX_LOCK(&lock);
                             schedule->resource = resource;
                             schedule->actionset = actionset;
                             schedule->ehRequest =
                                     (OCServerRequest*) ehRequest->requestHandle;
-#ifndef WITH_ARDUINO
-                            pthread_mutex_unlock(&lock);
-#endif
+                            MUTEX_UNLOCK(&lock);
                             if (delay > 0)
                             {
-                                OC_LOG_V(INFO, TAG, "delay_time is %ld seconds.",
+                                OIC_LOG_V(INFO, TAG, "delay_time is %ld seconds.",
                                         actionset->timesteps);
-#ifndef WITH_ARDUINO
-                                pthread_mutex_lock(&lock);
-#endif
+                                MUTEX_LOCK(&lock);
                                 schedule->time = registerTimer(delay,
                                         &schedule->timer_id,
                                         &DoScheduledGroupAction);
-#ifndef WITH_ARDUINO
-                                pthread_mutex_unlock(&lock);
-#endif
+                                MUTEX_UNLOCK(&lock);
                                 AddScheduledResource(&scheduleResourceList,
                                         schedule);
                                 stackRet = OC_STACK_OK;
@@ -1411,7 +1413,7 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
 
         if(!payload)
         {
-            OC_LOG(ERROR, TAG, "Failed to allocate Payload");
+            OIC_LOG(ERROR, TAG, "Failed to allocate Payload");
             stackRet = OC_STACK_ERROR;
         }
         else
@@ -1437,7 +1439,7 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
             // Send the response
             if (OCDoResponse(&response) != OC_STACK_OK)
             {
-                OC_LOG(ERROR, TAG, "Error sending response");
+                OIC_LOG(ERROR, TAG, "Error sending response");
                 stackRet = OC_STACK_ERROR;
             }
         }

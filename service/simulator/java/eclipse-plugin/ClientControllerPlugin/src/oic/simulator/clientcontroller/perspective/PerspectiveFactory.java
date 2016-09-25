@@ -16,14 +16,13 @@
 
 package oic.simulator.clientcontroller.perspective;
 
+import org.eclipse.ui.IPageLayout;
+import org.eclipse.ui.IPerspectiveFactory;
+
 import oic.simulator.clientcontroller.view.AttributeView;
 import oic.simulator.clientcontroller.view.LogView;
 import oic.simulator.clientcontroller.view.MetaPropertiesView;
-import oic.simulator.clientcontroller.view.MultiResourceOrchestrationView;
 import oic.simulator.clientcontroller.view.ResourceManagerView;
-
-import org.eclipse.ui.IPageLayout;
-import org.eclipse.ui.IPerspectiveFactory;
 
 /**
  * This class creates a new eclipse perspective for client controller and
@@ -43,15 +42,13 @@ public class PerspectiveFactory implements IPerspectiveFactory {
     }
 
     private void addViews() {
-        factory.addView(ResourceManagerView.VIEW_ID, IPageLayout.LEFT, 0.3f,
+        factory.addView(ResourceManagerView.VIEW_ID, IPageLayout.LEFT, 0.28f,
                 factory.getEditorArea());
-        factory.addView(MetaPropertiesView.VIEW_ID, IPageLayout.BOTTOM, 0.65f,
-                ResourceManagerView.VIEW_ID);
         factory.addView(AttributeView.VIEW_ID, IPageLayout.LEFT, 0.7f,
                 factory.getEditorArea());
         factory.addView(LogView.VIEW_ID, IPageLayout.BOTTOM, 0.65f,
                 AttributeView.VIEW_ID);
-        factory.addView(MultiResourceOrchestrationView.VIEW_ID,
-                IPageLayout.RIGHT, 0.6f, AttributeView.VIEW_ID);
+        factory.addView(MetaPropertiesView.VIEW_ID, IPageLayout.RIGHT, 0.6f,
+                AttributeView.VIEW_ID);
     }
 }
