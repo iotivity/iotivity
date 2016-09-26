@@ -24,6 +24,7 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "caipnwmonitor.h"
 #include "caipinterface.h"
 #include "caqueueingthread.h"
 #include "caadapterutils.h"
@@ -137,7 +138,7 @@ void CAIPDeinitializeQueueHandles()
 
 #endif // SINGLE_THREAD
 
-void CAIPConnectionStateCB(CATransportAdapter_t adapter, CANetworkStatus_t status)
+void CAIPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
 {
     if (g_networkChangeCallback)
     {
@@ -241,9 +242,7 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
 
     CAIPSetErrorHandler(CAIPErrorHandler);
     CAIPSetPacketReceiveCallback(CAIPPacketReceivedCB);
-#ifndef SINGLE_THREAD
-    CAIPSetConnectionStateChangeCallback(CAIPConnectionStateCB);
-#endif
+
 #ifdef __WITH_DTLS__
     CAAdapterNetDtlsInit();
 
@@ -278,7 +277,7 @@ CAResult_t CAStartIP()
     caglobals.ip.u4.port  = caglobals.ports.udp.u4;
     caglobals.ip.u4s.port = caglobals.ports.udp.u4s;
 
-    CAIPStartNetworkMonitor();
+    CAIPStartNetworkMonitor(CAIPAdapterHandler, CA_ADAPTER_IP);
 #ifdef SINGLE_THREAD
     uint16_t unicastPort = 55555;
     // Address is hardcoded as we are using Single Interface
@@ -412,7 +411,7 @@ CAResult_t CAStopIP()
     }
 #endif
 
-    CAIPStopNetworkMonitor();
+    CAIPStopNetworkMonitor(CA_ADAPTER_IP);
     CAIPStopServer();
     //Re-initializing the Globals to start them again
     CAInitializeIPGlobals();

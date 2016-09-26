@@ -162,54 +162,6 @@ void CAIPPullData();
 
 #define CA_COAP        5683
 #define CA_SECURE_COAP 5684
-#define INTERFACE_NAME_MAX 16
-
-typedef struct
-{
-    char name[INTERFACE_NAME_MAX];
-    uint32_t index;
-    uint32_t flags;
-    uint16_t family;
-    char addr[MAX_ADDR_STR_SIZE_CA];
-} CAInterface_t;
-
-
-/**
- * Callback to be notified when IP adapter connection state changes.
- *
- * @param[in]  adapter      Transport adapter.
- * @param[in]  status       Connection status either ::CA_INTERFACE_UP or ::CA_INTERFACE_DOWN.
- * @see CAIPSetConnectionStateChangeCallback() for registration.
- */
-typedef void (*CAIPConnectionStateChangeCallback)(CATransportAdapter_t adapter, CANetworkStatus_t status);
-
-/**
- * Set callback for receiving local IP adapter connection status.
- *
- * @param[in]  adapter      Callback to be notified when IP adapter connection state changes.
- */
-void CAIPSetConnectionStateChangeCallback(CAIPConnectionStateChangeCallback callback);
-
-/**
- * Set callback for receiving local IP adapter connection status.
- *
- * @param[in]  callback     Callback to be notified when IP adapter connection state changes.
- */
-void CAIPSetNetworkMonitorCallback(CAIPConnectionStateChangeCallback callback);
-
-/**
- * Get a list of CAInterface_t items.
- *
- * @return  List of CAInterface_t items.
- */
-u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex);
-
-/**
- * Find a new network interface.
- *
- * @return  Description of interface (or NULL if no change)
- */
-CAInterface_t *CAFindInterfaceChange();
 
 /**
  * Let the network monitor update the polling interval.
@@ -223,20 +175,6 @@ int CAGetPollingInterval(int interval);
  * Tell the IP server an interface has been added.
  */
 void CAWakeUpForChange();
-
-/**
- * Start network monitor.
- *
- * @return ::CA_STATUS_OK or Appropriate error code.
- */
-CAResult_t CAIPStartNetworkMonitor();
-
-/**
- * Stops network monitor.
- *
- * @return ::CA_STATUS_OK or Appropriate error code.
- */
-CAResult_t CAIPStopNetworkMonitor();
 
 /**
  * Set callback for error handling.

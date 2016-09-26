@@ -39,11 +39,13 @@
 #include <linux/rtnetlink.h>
 #endif
 
+#include "caipnwmonitor.h"
 #include "octhread.h"
 #include "caadapterutils.h"
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include <coap/utlist.h>
 
 #define TAG "OIC_CA_IP_MONITOR"
 
@@ -57,10 +59,44 @@ static oc_mutex g_networkMonitorContextMutex = NULL;
  */
 static u_arraylist_t *g_netInterfaceList = NULL;
 
-static CAIPConnectionStateChangeCallback g_networkChangeCallback = NULL;
+/**
+ * Used to storing adapter changes callback interface.
+ */
+static struct CAIPCBData_t *g_adapterCallbackList = NULL;
 
+/**
+ * Initialize the network interface monitoring list.
+ */
 static CAResult_t CAIPInitializeNetworkMonitorList();
+
+/**
+ * Destroy the network interface monitoring list.
+ */
 static void CAIPDestroyNetworkMonitorList();
+
+/**
+ * Compare the interface with the already added interface in list.
+ */
+static bool CACmpNetworkList(uint32_t ifiindex);
+
+/**
+ * Add new network interface in list.
+ */
+static CAResult_t CAAddNetworkMonitorList(CAInterface_t *ifitem);
+
+/**
+ * Remove network interace from list.
+ */
+static void CARemoveNetworkMonitorList(int ifiindex);
+
+/**
+ * Pass the changed network status through the stored callback.
+ */
+static void CAIPPassNetworkChangesToAdapter(CANetworkStatus_t status);
+
+/**
+ * Create new interface item.
+ */
 static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family,
                                          const char *addr, int flags);
 
@@ -117,7 +153,8 @@ static bool CACmpNetworkList(uint32_t ifiindex)
     uint32_t list_length = u_arraylist_length(g_netInterfaceList);
     for (uint32_t list_index = 0; list_index < list_length; list_index++)
     {
-        CAInterface_t *currItem = (CAInterface_t *) u_arraylist_get(g_netInterfaceList, list_index);
+        CAInterface_t *currItem = (CAInterface_t *) u_arraylist_get(g_netInterfaceList,
+                                                                    list_index);
         if (currItem->index == ifiindex)
         {
             oc_mutex_unlock(g_networkMonitorContextMutex);
@@ -171,15 +208,21 @@ static void CARemoveNetworkMonitorList(int ifiindex)
     return;
 }
 
-CAResult_t CAIPStartNetworkMonitor()
+CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
+                                   CATransportAdapter_t adapter)
 {
-    return CAIPInitializeNetworkMonitorList();
+    CAResult_t res = CAIPInitializeNetworkMonitorList();
+    if (CA_STATUS_OK == res)
+    {
+        return CAIPSetNetworkMonitorCallback(callback, adapter);
+    }
+    return res;
 }
 
-CAResult_t CAIPStopNetworkMonitor()
+CAResult_t CAIPStopNetworkMonitor(CATransportAdapter_t adapter)
 {
     CAIPDestroyNetworkMonitorList();
-    return CA_STATUS_OK;
+    return CAIPUnSetNetworkMonitorCallback(adapter);
 }
 
 int CAGetPollingInterval(int interval)
@@ -187,9 +230,66 @@ int CAGetPollingInterval(int interval)
     return interval;
 }
 
-void CAIPSetNetworkMonitorCallback(CAIPConnectionStateChangeCallback callback)
+static void CAIPPassNetworkChangesToAdapter(CANetworkStatus_t status)
 {
-    g_networkChangeCallback = callback;
+    CAIPCBData_t *cbitem = NULL;
+    LL_FOREACH(g_adapterCallbackList, cbitem)
+    {
+        if (cbitem && cbitem->adapter)
+        {
+            cbitem->callback(cbitem->adapter, status);
+        }
+    }
+}
+
+CAResult_t CAIPSetNetworkMonitorCallback(CAIPAdapterStateChangeCallback callback,
+                                         CATransportAdapter_t adapter)
+{
+    if (!callback)
+    {
+        OIC_LOG(ERROR, TAG, "callback is null");
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    CAIPCBData_t *cbitem = NULL;
+    LL_FOREACH(g_adapterCallbackList, cbitem)
+    {
+        if (cbitem && adapter == cbitem->adapter && callback == cbitem->callback)
+        {
+            OIC_LOG(DEBUG, TAG, "this callback is already added");
+            return CA_STATUS_OK;
+        }
+    }
+
+    cbitem = (CAIPCBData_t *)OICCalloc(1, sizeof(*cbitem));
+    if (!cbitem)
+    {
+        OIC_LOG(ERROR, TAG, "Malloc failed");
+        return CA_STATUS_FAILED;
+    }
+
+    cbitem->adapter = adapter;
+    cbitem->callback = callback;
+    LL_APPEND(g_adapterCallbackList, cbitem);
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAIPUnSetNetworkMonitorCallback(CATransportAdapter_t adapter)
+{
+    CAIPCBData_t *cbitem = NULL;
+    CAIPCBData_t *tmpCbitem = NULL;
+    LL_FOREACH_SAFE(g_adapterCallbackList, cbitem, tmpCbitem)
+    {
+        if (cbitem && adapter == cbitem->adapter)
+        {
+            OIC_LOG(DEBUG, TAG, "remove specific callback");
+            LL_DELETE(g_adapterCallbackList, cbitem);
+            OICFree(cbitem);
+            return CA_STATUS_OK;
+        }
+    }
+    return CA_STATUS_OK;
 }
 
 static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family,
@@ -245,10 +345,7 @@ CAInterface_t *CAFindInterfaceChange()
             if (isFound)
             {
                 CARemoveNetworkMonitorList(ifiIndex);
-                if (g_networkChangeCallback)
-                {
-                    g_networkChangeCallback(CA_ADAPTER_IP ,CA_INTERFACE_DOWN);
-                }
+                CAIPPassNetworkChangesToAdapter(CA_INTERFACE_DOWN);
             }
             continue;
         }
@@ -305,7 +402,6 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
         u_arraylist_destroy(iflist);
         return NULL;
     }
-    OIC_LOG(DEBUG, TAG, "Got ifaddrs");
 
     struct ifaddrs *ifa = NULL;
     for (ifa = ifp; ifa; ifa = ifa->ifa_next)
@@ -388,10 +484,7 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
                 OICFree(newifitem);
                 goto exit;
             }
-            if (g_networkChangeCallback)
-            {
-                g_networkChangeCallback(CA_ADAPTER_IP, CA_INTERFACE_UP);
-            }
+            CAIPPassNetworkChangesToAdapter(CA_INTERFACE_UP);
             OIC_LOG_V(DEBUG, TAG, "Added interface: %s (%d)", ifitem->name, ifitem->family);
         }
     }

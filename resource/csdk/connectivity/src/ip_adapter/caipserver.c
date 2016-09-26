@@ -59,6 +59,7 @@
 
 #include <coap/pdu.h>
 #include "caipinterface.h"
+#include "caipnwmonitor.h"
 #include "caadapterutils.h"
 #ifdef __WITH_DTLS__
 #include "caadapternetdtls.h"
@@ -1185,11 +1186,6 @@ static void CAProcessNewInterface(CAInterface_t *ifitem)
 void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback)
 {
     g_packetReceivedCallback = callback;
-}
-
-void CAIPSetConnectionStateChangeCallback(CAIPConnectionStateChangeCallback callback)
-{
-    CAIPSetNetworkMonitorCallback(callback);
 }
 
 static void sendData(int fd, const CAEndpoint_t *endpoint,
