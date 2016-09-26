@@ -239,11 +239,26 @@ int main(int argc, char *argv[])
             case '2':
                 cout << "Put discovered topic index to select: ";
                 cin >> cmd;
-                g_mqSelectedTopicResource = gTopicList[atoi(cmd.c_str())];
-                cout << g_mqSelectedTopicResource->uri() << " selected" << endl;
+                {
+                    int index = atoi(cmd.c_str());
+                    if(index < 0 || (unsigned int) index >= gTopicList.size())
+                    {
+                        cout << "invalid topic index selected" << endl;
+                        continue;
+                    }
+
+                    g_mqSelectedTopicResource = gTopicList[index];
+                    cout << g_mqSelectedTopicResource->uri() << " selected" << endl;
+                }
                 break;
 
             case '3':
+                if(g_mqSelectedTopicResource == nullptr)
+                {
+                    cout << "Topic is not selected." << endl;
+                    continue;
+                }
+
                 cout << "Put message to selected topic: ";
                 cin >> cmd;
                 rep["message"] = cmd;
