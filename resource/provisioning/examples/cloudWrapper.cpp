@@ -122,7 +122,7 @@ static void readStringArray(stringArray_t *list, int length, const char* descrip
 
     char **item = NULL;
 
-    if (0 == count)
+    if (0 >= count)
     {
         return;
     }
@@ -147,7 +147,7 @@ static void readStringArray(stringArray_t *list, int length, const char* descrip
         readString(item[i], length, hint, example);
     }
     list->array  = item;
-    list->length = count;
+    list->length = (size_t)count;
     return;
 
 no_memory:
@@ -238,7 +238,7 @@ static int ReadFile(const char *name, OCByteString *crl)
     }
 
     crl->bytes = buffer;
-    crl->len   = length;
+    crl->len   = (size_t)length;
 
     result = 0;
 exit:
@@ -336,14 +336,20 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
 {
     OCStackResult result = OC_STACK_NO_MEMORY;
     int i = 0, j = 0;
+    cloudAce_t *aces = NULL;
 
     char aclid[MAX_ID_LENGTH] = { 0 };
     readString(aclid, sizeof(aclid), "ace id", ACL_ID_EXAMPLE);
 
     int acllist_count = 0;
     readInteger(&acllist_count, "acl list count", "1");
+    if (0 >= acllist_count)
+    {
+        OIC_LOG(ERROR, TAG, "Wrong number of aclList");
+        goto exit;
+    }
 
-    cloudAce_t *aces = (cloudAce_t*)OICCalloc(acllist_count, sizeof(cloudAce_t));
+    aces = (cloudAce_t*)OICCalloc(acllist_count, sizeof(cloudAce_t));
     if (!aces)
     {
         OIC_LOG(ERROR, TAG, "Can't allocate memory for aces");

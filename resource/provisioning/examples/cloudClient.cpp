@@ -227,7 +227,7 @@ static int saveTrustCert(void)
     if (fp)
     {
         size_t fsize;
-        if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)))
+        if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)) > 0)
         {
             trustCertChainArray.data = (uint8_t*)OICCalloc(1, fsize+1);
             trustCertChainArray.len = fsize+1;
@@ -238,7 +238,10 @@ static int saveTrustCert(void)
                 return res;
             }
             rewind(fp);
-            fsize = fread(trustCertChainArray.data, 1, fsize, fp);
+            if (fsize != fread(trustCertChainArray.data, 1, fsize, fp))
+            {
+                OIC_LOG(ERROR, TAG, "Certiface not read completely");
+            }
             fclose(fp);
         }
     }
