@@ -137,6 +137,11 @@ public class AccountDBManager {
 
     }
 
+    /**
+     * API to implement singleton pattern based DB manager
+     * 
+     * @return account DB manager
+     */
     public static AccountDBManager getInstance() {
 
         return accoutDBManager;
