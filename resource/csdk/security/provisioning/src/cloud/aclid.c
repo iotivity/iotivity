@@ -13,14 +13,14 @@
 #define TAG "CLOUD-ACL-ID"
 
 /**
- * ACL Id create request received data handler
+ * ACL Id parse from received response
  *
  * @param[in] ctx       context
  * @param[out] data     data required to external application
  * @param[in] response  peer response
  * @return  OCStackResult application result
  */
-static OCStackResult handleAclIdCreateResponse(void *ctx, void **data, OCClientResponse *response)
+static OCStackResult getAclIdFromResponse(void *ctx, void **data, OCClientResponse *response)
 {
     OC_UNUSED(ctx);
     if (NULL == response->payload)
@@ -37,11 +37,40 @@ static OCStackResult handleAclIdCreateResponse(void *ctx, void **data, OCClientR
         return OC_STACK_MALFORMED_RESPONSE;
     }
 
+    OIC_LOG_V(INFO, TAG, "Received Acl id = %s", aclid);
+
     *data = aclid;
     return OC_STACK_OK;
 }
 
-OCStackResult OCCloudAclIdGetByDevice(void* ctx,
+/**
+ * ACL Id by device request received data handler
+ *
+ * @param[in] ctx       context
+ * @param[out] data     data required to external application
+ * @param[in] response  peer response
+ * @return  OCStackResult application result
+ */
+static OCStackResult handleGetAclIdByDeviceResponse(void *ctx, void **data,
+                                                    OCClientResponse *response)
+{
+    return getAclIdFromResponse(ctx, data, response);
+}
+
+/**
+ * ACL Id create request received data handler
+ *
+ * @param[in] ctx       context
+ * @param[out] data     data required to external application
+ * @param[in] response  peer response
+ * @return  OCStackResult application result
+ */
+static OCStackResult handleAclIdCreateResponse(void *ctx, void **data, OCClientResponse *response)
+{
+    return getAclIdFromResponse(ctx, data, response);
+}
+
+OCStackResult OCCloudGetAclIdByDevice(void* ctx,
                                       const char *deviceId,
                                       const OCDevAddr *endPoint,
                                       OCCloudResponseCB callback)
@@ -54,7 +83,7 @@ OCStackResult OCCloudAclIdGetByDevice(void* ctx,
             endPoint->addr, endPoint->port, OC_RSRVD_ACL_ID_URL, OC_RSRVD_DEVICE_ID, deviceId);
 
     OCCallbackData cbData;
-    fillCallbackData(&cbData, ctx, callback, handleAclIdCreateResponse, NULL);
+    fillCallbackData(&cbData, ctx, callback, handleGetAclIdByDeviceResponse, NULL);
 
     return OCDoResource(NULL, OC_REST_GET, uri, NULL, NULL,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);

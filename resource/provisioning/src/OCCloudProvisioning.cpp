@@ -137,7 +137,7 @@ namespace OC
             AclIdContext *context = new AclIdContext(callback);
 
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-            result = OCCloudAclIdGetByDevice(static_cast<void*>(context), deviceId.c_str(),
+            result = OCCloudGetAclIdByDevice(static_cast<void*>(context), deviceId.c_str(),
                     &m_devAddr,
                     &OCCloudProvisioning::aclIdResponseWrapper);
         }

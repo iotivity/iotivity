@@ -109,7 +109,7 @@ OCStackResult OCCloudPostCRL(void* ctx,
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-OCStackResult OCCloudAclIdGetByDevice(void* ctx,
+OCStackResult OCCloudGetAclIdByDevice(void* ctx,
                                       const char *deviceId,
                                       const OCDevAddr *endPoint,
                                       OCCloudResponseCB callback);
