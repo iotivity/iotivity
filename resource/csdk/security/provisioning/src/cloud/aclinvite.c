@@ -35,7 +35,7 @@ static OCStackResult parseInvitePayload(const OCRepPayload *payload, const char 
         return OC_STACK_MALFORMED_RESPONSE;
     }
 
-    int count = calcDimTotal(dimensions);
+    size_t count = calcDimTotal(dimensions);
 
     stringArray_t *gidlist = &out->gidlist;
     stringArray_t *midlist = &out->midlist;
