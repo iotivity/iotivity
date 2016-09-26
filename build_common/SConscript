@@ -76,6 +76,11 @@ else:
 		release_mode = True
 	logging_default = (release_mode == False)
 
+# targets that do not support the DTLS build (SECURED=1 build option)
+targets_without_dtls_support = ['arduino'];
+if ARGUMENTS.get('SECURED') == '1' and target_os in targets_without_dtls_support:
+	print "\nError: DTLS not supported on target os: %s MUST build with SECURED=0\n" % (target_os)
+	Exit(1)
 
 ######################################################################
 # Common build options (release, target os, target arch)
