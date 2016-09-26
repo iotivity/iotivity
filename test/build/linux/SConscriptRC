@@ -42,9 +42,9 @@ EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
 ORG_SRC = ''
 
 if env_linux.get('RELEASE'):
-	target_release = 'release'
+    target_release = 'release'
 else:
-	target_release = 'debug'
+    target_release = 'debug'
 
 print "target build is --------------------------------" + target_release
 
@@ -53,7 +53,7 @@ ORG_SRC_HOME = env_linux['ORG_SRC_HOME']
 
 
 target_arch = env_linux.get('TARGET_ARCH')
-ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release 
+ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release
 COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
 
 ######################################################################
@@ -133,9 +133,10 @@ COMMON_UTIL_INCLUDE_DIR = PROJECT_HOME + 'include'
 
 TESTAPP_INCLUDE_DIR = INCLUDE_DIR
 
-TARGET = env_linux['VARIANT_DIR'] 
+TARGET = env_linux['VARIANT_DIR']
 
 TESTAPP_INCLUDE_DIR = PROJECT_HOME +  TARGET + '/iBtestapp/modules/rc/c_cpp/include'
+TESTAPP_COMMON_INCLUDE_DIR = PROJECT_HOME +  TARGET + '/iBtestapp/common/include'
 
 ######################################################################
 
@@ -153,7 +154,7 @@ RC_CFLAGS = [COMMON_FLAGS]
 # Initializing Includes
 ######################################################################
 COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, LOGGER_INC_DIR]
-RC_CINCLUDE = [ RC_C_COMMON, COMMON_CINCLUDE, RC_RESOURCE_INCLUDE,TESTAPP_INCLUDE_DIR, RC_RESOURCE_STACK, RC_RESOURCE_SOCKET, RC_RESOURCE_RANDOM, RC_RESOURCE_OC_LOGGER,RC_CONNECTIVITY_LOGGER,RC_CONNECTIVITY_STRING,RC_CONNECTIVITY_MALLOC,RC_RESOURCE_ROUTING, RC_RESOURCE_CEREAL, RC_RESOURCE_TIMER, RC_INCLUDE,RCS_INCLUDE,RCS_MODULES_DIR, RC_MODULES_DIR, RC_BUNDLE_INCLUDE, RC_INCLUDE_DIR]
+RC_CINCLUDE = [ RC_C_COMMON, COMMON_CINCLUDE, RC_RESOURCE_INCLUDE,TESTAPP_INCLUDE_DIR, TESTAPP_COMMON_INCLUDE_DIR,RC_RESOURCE_STACK, RC_RESOURCE_SOCKET, RC_RESOURCE_RANDOM, RC_RESOURCE_OC_LOGGER,RC_CONNECTIVITY_LOGGER,RC_CONNECTIVITY_STRING,RC_CONNECTIVITY_MALLOC,RC_RESOURCE_ROUTING, RC_RESOURCE_CEREAL, RC_RESOURCE_TIMER, RC_INCLUDE,RCS_INCLUDE,RCS_MODULES_DIR, RC_MODULES_DIR, RC_BUNDLE_INCLUDE, RC_INCLUDE_DIR]
 
 ######################################################################
 
@@ -167,6 +168,7 @@ COMMON_STATIC_LIBS = [GTEST_LIB]
 COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboc_logger liboc_logger_core pthread libglib-2.0 uuid gcov')
 
 RC_STATIC_LIBS = [RC_RESOURCE_LIB + '/librcs_client.a', RC_RESOURCE_LIB + '/librcs_common.a', RC_RESOURCE_LIB + '/librcs_container.a', RC_RESOURCE_LIB + '/librcs_server.a', RC_RESOURCE_LIB + '/libocsrm.a']
+RC_STATIC_RESOURCE_LIBS = []
 RC_SHARED_LIBS = Split('-lHueBundle -lrcs_common -lrcs_container -lrcs_server -lrcs_client -locsrm')
 RC_LIBS = [COMMON_SHARED_LIBS, RC_SHARED_LIBS]
 
@@ -187,7 +189,7 @@ RC_TESTAPP_BIN = 'rc_testapp'
 
 COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
 
-TEST_MAIN = [TC_COMMON_DIR + '/gtest/IotivitySECTestMain.cpp'] 
+TEST_MAIN = [TC_COMMON_DIR + '/gtest/IotivitySECTestMain.cpp']
 
 RC_HELPER_CPP = Glob(TC_DIR + '/rc/gtest/src/helper/*.cpp')
 
@@ -196,8 +198,11 @@ RC_BTC_CPP = Glob(BTC_DIR + '/*.cpp')
 
 RC_CPP = [TEST_MAIN, COMMON_UTIL_CPP, RC_HELPER_CPP, CALL_GRAPH_CPP]
 
-RC_TC_SRC = [RC_CPP, RC_STC_CPP, RC_BTC_CPP, COMMON_STATIC_LIBS, RC_STATIC_LIBS]
-#RC_BTC_SRC = [RC_CPP, RC_BTC_CPP, COMMON_STATIC_LIBS, RC_STATIC_LIBS]
+RC_TC_SRC = [RC_CPP, RC_STC_CPP, RC_BTC_CPP, COMMON_STATIC_LIBS, RC_STATIC_LIBS, RC_STATIC_RESOURCE_LIBS]
+#RC_BTC_SRC = [RC_CPP, RC_BTC_CPP, COMMON_STATIC_LIBS, RC_STATIC_LIBS, RC_STATIC_RESOURCE_LIBS]
+
+TESTAPP_COMMON_CPP = PROJECT_HOME +  TARGET + '/iBtestapp/common/src/IBtestappCommonUtil.cpp'
+
 RC_TESTAPP_SRC = Glob(PROJECT_HOME +  TARGET + '/iBtestapp/modules/rc/c_cpp/src/*.cpp')
 
 ######################################################################
@@ -213,7 +218,7 @@ test_main = env_linux.Object(source = TEST_MAIN, target = TEST_MAIN_BIN, CPPPATH
 
 rc_tc = env_linux.Program(source = RC_TC_SRC , target = RC_ITC_BIN, CPPPATH = RC_CINCLUDE, LIBS = RC_LIBS, LIBPATH = RC_LIB_LOCATION, CPPFLAGS = RC_CFLAGS)
 
-rc_testapp = env_linux.Program(source = RC_TESTAPP_SRC , target = RC_TESTAPP_BIN, CPPPATH = RC_CINCLUDE, LIBS = RC_LIBS, LIBPATH = RC_LIB_LOCATION, CPPFLAGS = RC_CFLAGS)
+rc_testapp = env_linux.Program(source = (RC_TESTAPP_SRC,TESTAPP_COMMON_CPP) , target = RC_TESTAPP_BIN, CPPPATH = RC_CINCLUDE, LIBS = RC_LIBS, LIBPATH = RC_LIB_LOCATION, CPPFLAGS = RC_CFLAGS)
 
 pre_job = [create_target_dir]
 
@@ -231,6 +236,7 @@ print "target_service = " + target_service
 print "target_test = " + target_test
 print "target_transport = " + target_transport
 
+#SConscript(GTEST + '/SConscript')
 
 print "---------------service--------------" + target_service + target_test
 
@@ -250,16 +256,15 @@ if 'rc' in target_service or 'all' in target_service:
     default_targets += [copy_rc_bmi_lib]
     default_targets += [copy_rc_container_xml]
     default_targets += [copy_rc_container_empty_xml]
-
+    default_targets += [copy_rc_container_testapp_xml]
 
     if 'tc' in target_test or 'all' in target_test:
         print '---------------RC TC Build Selected---------------'
         install_targets += rc_tc
-      
+
     if 'app' in target_test or 'all' in target_test:
         print '---------------RC TESTAPP Build Selected---------------'
         install_targets += rc_testapp
-        default_targets += [copy_rc_container_testapp_xml]
 
 
 install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
