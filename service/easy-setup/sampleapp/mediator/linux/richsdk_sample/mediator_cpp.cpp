@@ -104,6 +104,12 @@ void provisionSecurityStatusCallback(std::shared_ptr<SecProvisioningStatus> secP
 
 void provisionSecurity()
 {
+    if(!remoteEnrollee)
+    {
+        std::cout << "RemoteEnrollee is null, retry Discovery EnrolleeResource." << endl;
+        return;
+    }
+
     try
     {
         remoteEnrollee->provisionSecurity(provisionSecurityStatusCallback);
@@ -134,6 +140,7 @@ void getStatus()
 {
     if(!remoteEnrollee)
     {
+        std::cout << "RemoteEnrollee is null, retry Discovery EnrolleeResource." << endl;
         return;
     }
 
@@ -166,6 +173,7 @@ void getConfiguration()
 {
     if(!remoteEnrollee)
     {
+        std::cout << "RemoteEnrollee is null, retry Discovery EnrolleeResource." << endl;
         return;
     }
 
@@ -197,6 +205,7 @@ void provisionDeviceProperty()
 {
     if(!remoteEnrollee)
     {
+        std::cout << "RemoteEnrollee is null, retry Discovery EnrolleeResource." << endl;
         return;
     }
 
@@ -241,6 +250,7 @@ void provisionCloudProperty()
 {
     if(!remoteEnrollee)
     {
+        std::cout << "RemoteEnrollee is null, retry Discovery EnrolleeResource." << endl;
         return;
     }
 
@@ -258,46 +268,6 @@ void provisionCloudProperty()
         std::cout << "Exception during provisionCloudProperties call" << e.reason();
         return;
     }
-}
-
-void DisplayMenu()
-{
-    constexpr int PROVISION_SECURITY = 1;
-    constexpr int GET_STATUS = 2;
-    constexpr int GET_CONFIGURATION = 3;
-    constexpr int PROVISION_DEVICE_PROPERTY = 4;
-    constexpr int PROVISION_CLOUD_PROPERTY = 5;
-
-    std::cout << "========================================================\n";
-    std::cout << PROVISION_SECURITY << ". Provision Security to Enrollee  \n";
-    std::cout << GET_STATUS << ". Get Status from Enrollee  \n";
-    std::cout << GET_CONFIGURATION << ". Get Configuration from Enrollee  \n";
-    std::cout << PROVISION_DEVICE_PROPERTY << ". Provision Device Property\n";
-    std::cout << PROVISION_CLOUD_PROPERTY << ". Provision Cloud Property  \n";
-    std::cout << "========================================================\n";
-
-    int selection = processUserInput(PROVISION_SECURITY, PROVISION_CLOUD_PROPERTY);
-
-    switch (selection)
-    {
-        case PROVISION_SECURITY:
-            provisionSecurity();
-            break;
-        case GET_STATUS:
-            getStatus();
-            break;
-        case GET_CONFIGURATION:
-            getConfiguration();
-            break;
-        case PROVISION_DEVICE_PROPERTY:
-            provisionDeviceProperty();
-            break;
-        case PROVISION_CLOUD_PROPERTY:
-            provisionCloudProperty();
-            break;
-        default:
-            break;
-    };
 }
 
 // Callback to found resources
@@ -357,6 +327,69 @@ void foundResource(std::shared_ptr<OC::OCResource> resource)
     }
 }
 
+void discoveryEnrolleeResource()
+{
+	try
+	{
+	    std::ostringstream requestURI;
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=" << OC_RSRVD_ES_RES_TYPE_PROV;
+        OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource);
+        std::cout<< "Finding Resource... " <<std::endl;
+
+        std::unique_lock<std::mutex> lck(g_discoverymtx);
+        g_cond.wait_for(lck, std::chrono::seconds(5));
+	}
+	catch (OCException& e)
+	{
+		std::cout << "Exception in discoveryEnrolleeResource: "<<e.what();
+	}
+}
+
+void DisplayMenu()
+{
+	constexpr int DISCOVERY_ENROLLEE = 1;
+    constexpr int PROVISION_SECURITY = 2;
+    constexpr int GET_STATUS = 3;
+    constexpr int GET_CONFIGURATION = 4;
+    constexpr int PROVISION_DEVICE_PROPERTY = 5;
+    constexpr int PROVISION_CLOUD_PROPERTY = 6;
+
+    std::cout << "========================================================\n";
+    std::cout << DISCOVERY_ENROLLEE << ". Discovery Enrollee Resource \n";
+    std::cout << PROVISION_SECURITY << ". Provision Security to Enrollee  \n";
+    std::cout << GET_STATUS << ". Get Status from Enrollee  \n";
+    std::cout << GET_CONFIGURATION << ". Get Configuration from Enrollee  \n";
+    std::cout << PROVISION_DEVICE_PROPERTY << ". Provision Device Property\n";
+    std::cout << PROVISION_CLOUD_PROPERTY << ". Provision Cloud Property  \n";
+    std::cout << "========================================================\n";
+
+    int selection = processUserInput(DISCOVERY_ENROLLEE, PROVISION_CLOUD_PROPERTY);
+
+    switch (selection)
+    {
+        case DISCOVERY_ENROLLEE:
+            discoveryEnrolleeResource();
+            break;
+        case PROVISION_SECURITY:
+            provisionSecurity();
+            break;
+        case GET_STATUS:
+            getStatus();
+            break;
+        case GET_CONFIGURATION:
+            getConfiguration();
+            break;
+        case PROVISION_DEVICE_PROPERTY:
+            provisionDeviceProperty();
+            break;
+        case PROVISION_CLOUD_PROPERTY:
+            provisionCloudProperty();
+            break;
+        default:
+            break;
+    };
+}
+
 static FILE* client_open(const char *UNUSED_PARAM, const char *mode)
 {
     (void)UNUSED_PARAM;
@@ -365,7 +398,6 @@ static FILE* client_open(const char *UNUSED_PARAM, const char *mode)
 
 int main()
 {
-    std::ostringstream requestURI;
     OCPersistentStorage ps {client_open, fread, fwrite, fclose, unlink };
 
     PlatformConfig config
@@ -386,14 +418,6 @@ int main()
             return -1;
         }
 #endif
-        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=" << OC_RSRVD_ES_RES_TYPE_PROV;
-
-        OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource);
-        std::cout<< "Finding Resource... " <<std::endl;
-
-        std::unique_lock<std::mutex> lck(g_discoverymtx);
-        g_cond.wait_for(lck, std::chrono::seconds(4));
-
     }catch(OCException& e)
     {
         std::cout << "Exception in main: "<<e.what();
