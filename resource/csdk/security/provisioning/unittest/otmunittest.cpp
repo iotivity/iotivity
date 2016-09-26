@@ -550,10 +550,6 @@ TEST(PerformLinkDevices, NullParam)
                 dev2 = tempDev;
                 break;
             }
-            else
-            {
-                break;
-            }
         }
         tempDev = tempDev->next;
     }

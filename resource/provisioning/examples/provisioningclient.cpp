@@ -427,7 +427,7 @@ static int InputACL(OicSecAcl_t *acl)
         OICFree(temp_rsc);
 
         char* rsrc_in = NULL;
-        int arrLen = 0;
+        size_t arrLen = 0;
         while(1)
         {
             printf("         Enter Number of resource type for [%s]: ", rsrc->href);
@@ -437,7 +437,7 @@ static int InputACL(OicSecAcl_t *acl)
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
-            if(0 < arrLen && ACL_RESRC_ARRAY_SIZE >= arrLen)
+            if(ACL_RESRC_ARRAY_SIZE >= arrLen)
             {
                 break;
             }
@@ -479,7 +479,7 @@ static int InputACL(OicSecAcl_t *acl)
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
-            if(0 < arrLen && ACL_RESRC_ARRAY_SIZE >= arrLen)
+            if(ACL_RESRC_ARRAY_SIZE >= arrLen)
             {
                 break;
             }
@@ -827,6 +827,10 @@ static int saveTrustCert(void)
             }
             rewind(fp);
             fsize = fread(trustCertChainArray.data, 1, fsize, fp);
+            if(0 == fsize)
+            {
+                OIC_LOG(ERROR,TAG,"Read error");
+            }
             fclose(fp);
         }
     }

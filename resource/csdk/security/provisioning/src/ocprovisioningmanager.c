@@ -460,6 +460,7 @@ OCStackResult OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedD
     OCStackResult res = OC_STACK_ERROR;
     OCProvisionDev_t* pTargetDev = NULL;
     bool discoverdFlag = false;
+    OCProvisionDev_t* pOwnedDevList = NULL;
 
     if (!pTargetUuid || 0 == waitTimeForOwnedDeviceDiscovery)
     {
@@ -479,7 +480,6 @@ OCStackResult OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedD
         goto error;
     }
 
-    OCProvisionDev_t* pOwnedDevList = NULL;
     //2. Find owned device from the network
     res = PMDeviceDiscovery(waitTimeForOwnedDeviceDiscovery, true, &pOwnedDevList);
     if (OC_STACK_OK != res)

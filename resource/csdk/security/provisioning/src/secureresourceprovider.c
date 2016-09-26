@@ -2563,14 +2563,20 @@ OCStackResult SRPResetDevice(const OCProvisionDev_t* pTargetDev,
         goto error;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
-
-    OCProvisionDev_t * targetDev = PMCloneOCProvisionDev(pTargetDev);
+    
     OCCallbackData cbData = { .context = NULL, .cb = NULL, .cd = NULL };
+    OCMethod method = OC_REST_POST;
+    OCDoHandle handle = NULL;
+    OCProvisionDev_t * targetDev = PMCloneOCProvisionDev(pTargetDev);
+    if (NULL == targetDev)
+    {
+        OIC_LOG(ERROR, TAG, "target dev is null");
+        res = OC_STACK_ERROR;
+        goto error;
+    }
     cbData.cb = &SRPResetDeviceCB;
     cbData.context = (void *) targetDev;
     cbData.cd = NULL;
-    OCMethod method = OC_REST_POST;
-    OCDoHandle handle = NULL;
     OIC_LOG(DEBUG, TAG, "Sending PSTAT info to resource server");
     res = OCDoResource(&handle, method, query,
             &targetDev->endpoint, (OCPayload *)secPayload,
