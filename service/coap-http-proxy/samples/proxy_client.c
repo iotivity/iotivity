@@ -103,7 +103,7 @@ OCStackApplicationResult putReqCB(void* ctx, OCDoHandle handle,
     {
         OIC_LOG_V(INFO, TAG, "StackResult: %u", clientResponse->result);
         OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OIC_LOG(INFO, TAG, ("=============> Put Response"));
+        OIC_LOG(INFO, TAG, "=============> Put Response");
     }
     else
     {
@@ -121,7 +121,7 @@ OCStackApplicationResult postReqCB(void* ctx, OCDoHandle handle,
     {
         OIC_LOG_V(INFO, TAG, "StackResult: %u", clientResponse->result);
         OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OIC_LOG(INFO, TAG, ("=============> Post Response"));
+        OIC_LOG(INFO, TAG, "=============> Post Response");
     }
     else
     {
@@ -140,7 +140,7 @@ OCStackApplicationResult deleteReqCB(void* ctx,
     {
         OIC_LOG_V(INFO, TAG, "StackResult: %d",  clientResponse->result);
         OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OIC_LOG(INFO, TAG, ("=============> Delete Response"));
+        OIC_LOG(INFO, TAG, "=============> Delete Response");
     }
     else
     {
@@ -163,7 +163,7 @@ OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
     OIC_LOG_V(INFO, TAG, "StackResult: %d", clientResponse->result);
     OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
     OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-    OIC_LOG(INFO, TAG, ("=============> Get Response"));
+    OIC_LOG(INFO, TAG, "=============> Get Response");
 
     if (clientResponse->numRcvdVendorSpecificHeaderOptions > 0)
     {

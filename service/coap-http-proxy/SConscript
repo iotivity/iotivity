@@ -50,7 +50,7 @@ local_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_ab
 if target_os not in ['windows']:
     local_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra'])
 
-if target_os in ['linux']:
+if target_os in ['linux', 'tizen']:
     local_env.AppendUnique(LIBS = ['pthread', 'curl'])
 
 if target_os == 'android':
@@ -82,5 +82,5 @@ local_env.UserInstallTargetHeader('include/CoapHttpHandler.h', 'service/coap-htt
 ######################################################################
 # Samples for the proxy
 ######################################################################
-if target_os in ['linux']:
+if target_os in ['linux', 'tizen']:
     SConscript('samples/SConscript')

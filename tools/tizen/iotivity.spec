@@ -156,6 +156,12 @@ cp out/tizen/*/%{build_mode}/resource/examples/threadingsample %{ex_install_dir}
 cp out/tizen/*/%{build_mode}/resource/examples/oic_svr_db_server.dat %{ex_install_dir}
 cp out/tizen/*/%{build_mode}/resource/examples/oic_svr_db_client.dat %{ex_install_dir}
 cp out/tizen/*/%{build_mode}/libcoap.a %{buildroot}%{_libdir}
+
+%if 0%{?WITH_PROXY} == 1
+mkdir -p %{ex_install_dir}/proxy-sample
+cp out/tizen/*/%{build_mode}/service/coap-http-proxy/samples/proxy_main %{ex_install_dir}/proxy-sample/
+cp out/tizen/*/%{build_mode}/service/coap-http-proxy/samples/proxy_client %{ex_install_dir}/proxy-sample/
+%endif
 %if 0%{?SECURED} == 1
 mkdir -p %{ex_install_dir}/provisioning
 mkdir -p %{ex_install_dir}/provision-sample
@@ -219,6 +225,9 @@ cp service/easy-setup/enrollee/inc/*.h %{buildroot}%{_includedir}
 %{_libdir}/librcs_container.so
 %{_libdir}/librcs_server.so
 %{_libdir}/libESEnrolleeSDK.so
+%if 0%{?WITH_PROXY} == 1
+%{_libdir}/libcoap_http_proxy.so
+%endif
 %if 0%{?SECURED} == 1
 %{_libdir}/libocpmapi.so
 %{_libdir}/libocprovision.so

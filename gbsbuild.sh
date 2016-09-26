@@ -68,15 +68,19 @@ fi
 
 withtcp=0
 withcloud=0
-if [ "WITH_TCP" = "$1" ] || [ "WITH_TCP" = "$2" ];then
+withproxy=0
+if [ "WITH_TCP" = "$1" ] || [ "WITH_TCP" = "$2" ]  || [ "WITH_TCP" = "$3" ];then
     withtcp=1
 fi
-if [ "WITH_CLOUD" = "$1" ] || [ "WITH_CLOUD" = "$2" ];then
+if [ "WITH_CLOUD" = "$1" ] || [ "WITH_CLOUD" = "$2" ] || [ "WITH_CLOUD" = "$3" ];then
     withcloud=1
+fi
+if [ "WITH_PROXY" = "$1" ] || [ "WITH_PROXY" = "$2" ] || [ "WITH_PROXY" = "$3" ];then
+    withproxy=1
 fi
 
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l --define 'WITH_TCP $withtcp' --define 'WITH_CLOUD $withcloud' -B ~/GBS-ROOT-OIC --include-all --repository ./"
+gbscommand="gbs build -A armv7l --define 'WITH_TCP $withtcp' --define 'WITH_CLOUD $withcloud' --define 'WITH_PROXY $withproxy' -B ~/GBS-ROOT-OIC --include-all --repository ./"
 echo $gbscommand
 if eval $gbscommand; then
     echo "Build is successful"
