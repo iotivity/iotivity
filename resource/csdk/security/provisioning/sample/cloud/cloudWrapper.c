@@ -279,7 +279,7 @@ OCStackResult OCWrapperAclIdGetByDevice(const OCDevAddr *endPoint, OCCloudRespon
 
     readString(di, sizeof(di), "device id", UUID_EXAMPLE_1);
 
-    return OCCloudAclIdGetByDevice(NULL, di, endPoint, callback);
+    return OCCloudGetAclIdByDevice(NULL, di, endPoint, callback);
 }
 
 OCStackResult OCWrapperAclIdCreate(const OCDevAddr *endPoint, OCCloudResponseCB callback)
