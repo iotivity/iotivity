@@ -654,11 +654,10 @@ namespace OC
                     }
 
                 }
+                OCRepresentation rep = parseRDResponseCallback(clientResponse);
+                std::thread exec(context->callback, rep, clientResponse->result);
+                exec.detach();
             }
-
-            OCRepresentation rep = parseRDResponseCallback(clientResponse);
-            std::thread exec(context->callback, rep, clientResponse->result);
-            exec.detach();
         }
         catch (OC::OCException& e)
         {
