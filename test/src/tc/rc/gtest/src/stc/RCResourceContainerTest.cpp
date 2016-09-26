@@ -23,20 +23,16 @@
 #include "gtest/gtest.h"
 
 #if defined(__LINUX__)
-#define BUNDLE_PATH "libTestBundle.so"
-#define CONFIG_FILE "./ResourceContainerConfig.xml"
+#define BUNDLE_PATH "libBMISensorBundle.so"
+#define CONFIG_FILE "ResourceContainerConfig.xml"
+#define CONFIG_EMPTY_FILE "ResourceContainerEmptyConfig.xml"
 #endif
 
 #if defined(__TIZEN__)
-#define BUNDLE_PATH "/usr/bin/rc/libTestBundle.so"
+#define BUNDLE_PATH "/usr/bin/rc/libBMISensorBundle.so"
 #define CONFIG_FILE "/usr/bin/rc/ResourceContainerConfig.xml"
+#define CONFIG_EMPTY_FILE "/usr/bin/rc/ResourceContainerEmptyConfig.xml"
 #endif
-
-#define BUNDLE_NAME "Bundle"
-#define BUNDLE_ID "oic.bundle.test"
-#define BUNDLE_URL ""
-#define BUNDLE_VERSION "0.0.1"
-#define BUNDLE_ACTIVATOR "test"
 
 #define emptyString ""
 #define nullValue "NULL"
@@ -46,8 +42,18 @@
 #define BUNDLE_BMI_SENSOR_STRING "oic.bundle.BMISensor"
 #define BUNDLE_INSERT_VERSION "Version"
 #define INVALID_PARAM "Invalid"
-#define INVALID_PATH "./invalidBundle.so"
+#define INVALID_PATH "invalidBundle.so"
 #define INVALID_BUNDLE_NAME "InvalidBundleName"
+
+
+const std::string BUNDLE_NAME                       = "Bundle";
+const std::string BUNDLE_ID                         = "oic.bundle.BMISensor";
+const std::string BUNDLE_URL                        = "/BMISensor";
+const std::string BUNDLE_VERSION                    = "1.0.0";
+const std::string BUNDLE_ACTIVATOR                  = "bmisensor";
+const std::string BUNDLE_RESOURCE_URL               = "/softsensor/BMIsensor/1";
+const std::string BUNDLE_RESOURCE_TYPE              = "oic.r.sensor";
+const std::string BUNDLE_RESOURCE_ADDRESS           = "";
 
 std::unique_ptr<RCSBundleInfo> pBundleInfo;
 std::map< string, string > params;
@@ -55,6 +61,7 @@ std::list<std::unique_ptr<RCSBundleInfo>> bundleList;
 std::string bundleID;
 std::string bundlePath;
 std::string bundleVer;
+
 
 class RCResourceContainerAPITest_stc: public ::testing::Test
 {
@@ -71,17 +78,20 @@ protected:
         CommonUtil::runCommonTCSetUpPart();
 
         m_pContainer = RCSResourceContainer::getInstance();
-        m_count = 10;
+        m_count = 1;
 
         m_errorMsg = "";
+        bundleID="";
+        bundlePath="";
+        bundleVer="";
+
+        pBundleInfo=nullptr;
     }
 
     virtual void TearDown()
     {
         CommonUtil::runCommonTCTearDownPart();
     }
-
-public:
 };
 
 /**
@@ -124,7 +134,7 @@ TEST_F(RCResourceContainerAPITest_stc, StartStopContainerMultipleTimes_SRC_P)
  * @target list<BundleInfo*> listBundles(void)
  * @test_data ResourceContainerConfig
  * @pre_condition 1. Get container instance
- * 	 	 	 	  2. Perform StartContainer() API
+ *                2. Perform StartContainer() API
  * @procedure Perform listBundles() API
  * @post_condition stopContainer
  * @expected list bundles provides bundle details
@@ -144,7 +154,7 @@ TEST_F(RCResourceContainerAPITest_stc, ListBundlesForResourceContainerConfig_SRC
 /**
  * @since 2015-09-08
  * @see ListBundle
- * @objective Test 'addBundle' function added bundle with ResourceContainerConfig 
+ * @objective Test 'addBundle' function added bundle with ResourceContainerConfig
  * @target void addBundle(string bundleId, string bundleUri, string bundlePath, std::map<string, string> params)
  * @test_data Bundle information
  * @pre_condition Get container instance
@@ -157,11 +167,23 @@ TEST_F(RCResourceContainerAPITest_stc, AddBundleWithCustomBundleInfo_SRC_P)
 {
     try
     {
+        std::map< std::string, std::string > resourceParams;
+        resourceParams.insert(std::make_pair("resourceType", BUNDLE_RESOURCE_TYPE));
+        resourceParams.insert(std::make_pair("address", BUNDLE_RESOURCE_ADDRESS));
+
+
+        m_pContainer->startContainer(CONFIG_EMPTY_FILE);
+
         bundleList = m_pContainer->listBundles();
+        cout << "Initial Bundle list : " << bundleList.size() << endl;
 
-        m_pContainer->addBundle(BUNDLE_ID, BUNDLE_URL, BUNDLE_PATH, BUNDLE_ACTIVATOR, params);
+        m_pContainer->addBundle(BUNDLE_ID, BUNDLE_URL, BUNDLE_PATH, BUNDLE_ACTIVATOR, resourceParams);
 
-        ASSERT_EQ(m_pContainer->listBundles().size(), bundleList.size() + 1);
+        cout << "After added, bundle list : " << m_pContainer->listBundles().size()<<endl;
+
+        EXPECT_EQ(bundleList.size() + 1, m_pContainer->listBundles().size());
+
+        m_pContainer->stopContainer();
     }
     catch (exception& e)
     {
@@ -192,9 +214,9 @@ TEST_F(RCResourceContainerAPITest_stc, StartAndStopBundleMultipleTimes_SRC_P)
     for (int i = loopInitVal; i < m_count; i++)
     {
         m_pContainer->startContainer(CONFIG_FILE);
-		pBundleInfo = std::move(*m_pContainer->listBundles().begin());
-        
-		try
+        pBundleInfo = std::move(*m_pContainer->listBundles().begin());
+
+        try
         {
             m_pContainer->startBundle(pBundleInfo->getID());
             IOTIVITYTEST_LOG(DEBUG, "Loop:  %d", i);
@@ -216,7 +238,7 @@ TEST_F(RCResourceContainerAPITest_stc, StartAndStopBundleMultipleTimes_SRC_P)
             SET_FAILURE("Exception occurred at stopBundle() when adding multiple times. " + std::string(e.what()));
             return;
         }
-        
+
         m_pContainer->stopContainer();
     }
 }
@@ -332,7 +354,7 @@ TEST_F(RCResourceContainerAPITest_stc, StartBundleWithInvalidBundlePath_USV_N)
 {
     try
     {
-        params.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));      
+        params.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
 
         m_pContainer->addBundle(BUNDLE_ID, BUNDLE_URL, INVALID_PATH, BUNDLE_ACTIVATOR, params);
 
@@ -350,7 +372,7 @@ TEST_F(RCResourceContainerAPITest_stc, StartBundleWithInvalidBundlePath_USV_N)
  * @see startContainer
  * @objective Test 'getID' function provides bundleID
  * @target string getID()
- * @test_data ResourceContainerConfig 
+ * @test_data ResourceContainerConfig
  * @pre_condition Perform build() API
  * @procedure Perform getID() API
  * @post_condition stopContainer
@@ -362,11 +384,11 @@ TEST_F(RCResourceContainerAPITest_stc, GetBundleId_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        
+
         bundleID = (*m_pContainer->listBundles().begin())->getID();
 
         ASSERT_FALSE(bundleID.empty());
-        
+
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -397,7 +419,7 @@ TEST_F(RCResourceContainerAPITest_stc, GetBundlePath_SRC_P)
         bundlePath = (*m_pContainer->listBundles().begin())->getPath();
 
         ASSERT_FALSE(bundlePath.empty());
-        
+
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -428,7 +450,7 @@ TEST_F(RCResourceContainerAPITest_stc, GetBundleVersion_SRC_P)
         bundleVer = (*m_pContainer->listBundles().begin())->getVersion();
 
         ASSERT_FALSE(bundleVer.empty());
-        
+
         m_pContainer->stopContainer();
    }
    catch (exception& e)
@@ -458,9 +480,12 @@ TEST_F(RCResourceContainerAPITest_stc, StopBundle_USTC_N)
         try
         {
             m_pContainer->startContainer(CONFIG_FILE);
-			pBundleInfo = std::move(*m_pContainer->listBundles().begin());
-			m_pContainer->stopBundle(pBundleInfo->getID());
+
+            pBundleInfo = std::move(*m_pContainer->listBundles().begin());
+            m_pContainer->stopBundle(pBundleInfo->getID());
             m_pContainer->startBundle(pBundleInfo->getID());
+
+            m_pContainer->stopContainer();
         }
         catch (exception& e)
         {
@@ -488,7 +513,7 @@ TEST_F(RCResourceContainerAPITest_stc, RemoveBundle_USTC_N)
     try
     {
         params.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
-		m_pContainer->removeBundle(BUNDLE_ID);
+        m_pContainer->removeBundle(BUNDLE_ID);
         m_pContainer->addBundle(BUNDLE_ID, BUNDLE_URL, BUNDLE_PATH, BUNDLE_ACTIVATOR, params);
     }
     catch (exception& e)
@@ -518,7 +543,7 @@ TEST_F(RCResourceContainerAPITest_stc, RemoveResourceConfig_USTC_N)
     try
     {
         params.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
-		m_pContainer->removeResourceConfig(BUNDLE_NAME, BUNDLE_URL);
+        m_pContainer->removeResourceConfig(BUNDLE_NAME, BUNDLE_URL);
         m_pContainer->addResourceConfig(BUNDLE_NAME, BUNDLE_URL, params);
     }
     catch (exception& e)
@@ -574,22 +599,24 @@ TEST_F(RCResourceContainerAPITest_stc, RemoveResourceConfig_SLCC_P)
 TEST_F(RCResourceContainerAPITest_stc, RemoveBundle_SLCC_P)
 {
     params.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
+
+    m_pContainer->startContainer(CONFIG_FILE);
+
     for (int i = loopInitVal; i < m_count; i++)
     {
         try
         {
-          	m_pContainer->addBundle(BUNDLE_ID, BUNDLE_URL, BUNDLE_PATH, BUNDLE_ACTIVATOR, params);
-			m_pContainer->removeBundle(BUNDLE_ID);
-			
-			
-			pBundleInfo = std::move(*m_pContainer->listBundles().begin());
-			bundleID = pBundleInfo->getID();
+            m_pContainer->addBundle(BUNDLE_ID, BUNDLE_URL, BUNDLE_PATH, BUNDLE_ACTIVATOR, params);
+            m_pContainer->removeBundle(BUNDLE_ID);
+            sleep(2);
         }
         catch (exception& e)
         {
             SET_FAILURE("Exception occurred at RemoveBundleSLCC_P " + std::string(e.what()));
         }
     }
+
+    m_pContainer->stopContainer();
 }
 #endif
 
@@ -611,8 +638,8 @@ TEST_F(RCResourceContainerAPITest_stc, RemoveBundle_DSCC_N)
     {
         try
         {
-			params.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
-			m_pContainer->removeBundle(BUNDLE_ID);
+            params.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
+            m_pContainer->removeBundle(BUNDLE_ID);
         }
         catch (exception& e)
         {
@@ -640,16 +667,16 @@ TEST_F(RCResourceContainerAPITest_stc, AddResourceConfig_VLCC_P)
 {
     for (int i = loopInitVal; i < m_count; i++)
     {
-		try
-		{
-			params.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
+        try
+        {
+            params.insert(std::make_pair(BUNDLE_INSERT_VERSION, BUNDLE_VERSION));
 
-			m_pContainer->addResourceConfig(BUNDLE_NAME, BUNDLE_URL, params);
-		}
-		catch (exception& e)
-		{
-			SET_FAILURE("Exception occurred inside AddResourceConfigVLCC_P" + std::string(e.what()));
-		}
-	}
+            m_pContainer->addResourceConfig(BUNDLE_NAME, BUNDLE_URL, params);
+        }
+        catch (exception& e)
+        {
+            SET_FAILURE("Exception occurred inside AddResourceConfigVLCC_P" + std::string(e.what()));
+        }
+    }
 }
 #endif

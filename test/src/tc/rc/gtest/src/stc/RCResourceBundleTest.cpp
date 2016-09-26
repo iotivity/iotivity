@@ -92,7 +92,7 @@ TEST_F(RCResourceBundleTest_stc, AddHueBundleFromEmptyContainer_ESV_N)
     {
         m_pContainer->startContainer(CONFIG_EMPTY_FILE);
         m_pContainer->addBundle(HUE_BUNDLE_ID, EMPTY_STRING, HUE_PATH, HUE_NAME, m_params);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle added with start container started with empty config file!";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle added with start container started with empty config file!";
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -123,7 +123,7 @@ TEST_F(RCResourceBundleTest_stc, AddDIBundleFromEmptyContainer_ESV_N)
     {
         m_pContainer->startContainer(CONFIG_EMPTY_FILE);
         m_pContainer->addBundle(DI_BUNDLE_ID, EMPTY_STRING, DI_PATH, DI_NAME, m_params);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle added with start container started with empty config file!";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle added with start container started with empty config file!";
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -154,7 +154,7 @@ TEST_F(RCResourceBundleTest_stc, AddBMIBundleFromEmptyContainer_ESV_N)
     {
         m_pContainer->startContainer(CONFIG_EMPTY_FILE);
         m_pContainer->addBundle(BMI_BUNDLE_ID, EMPTY_STRING, BMI_PATH, BMI_NAME, m_params);
-        ASSERT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle added with start container started with empty config file!";
+        ASSERT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle added with start container started with empty config file!";
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -165,7 +165,7 @@ TEST_F(RCResourceBundleTest_stc, AddBMIBundleFromEmptyContainer_ESV_N)
 #endif
 
 /**
- * @since 2015-09-22 
+ * @since 2015-09-22
  * @see Get container instance
  * @see start container
  * @see add bundle
@@ -186,7 +186,7 @@ TEST_F(RCResourceBundleTest_stc, StartHueBundleFromEmptyContainer_ESV_N)
     {
         m_pContainer->startContainer(CONFIG_EMPTY_FILE);
         m_pContainer->addBundle(HUE_BUNDLE_ID, EMPTY_STRING, HUE_PATH, HUE_NAME, m_params);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle added with start container started with empty config file!";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle added with start container started with empty config file!";
         EXPECT_TRUE(m_pRCHelper->startBundle(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle started with start container started with empty config file!";
         m_pContainer->stopContainer();
     }
@@ -219,7 +219,7 @@ TEST_F(RCResourceBundleTest_stc, StartDIBundleFromEmptyContainer_ESV_N)
     {
         m_pContainer->startContainer(CONFIG_EMPTY_FILE);
         m_pContainer->addBundle(DI_BUNDLE_ID, EMPTY_STRING, DI_PATH, DI_NAME, m_params);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle added with start container started with empty config file!";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle added with start container started with empty config file!";
         EXPECT_TRUE(m_pRCHelper->startBundle(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle started with start container started with empty config file!";
         m_pContainer->stopContainer();
     }
@@ -252,7 +252,7 @@ TEST_F(RCResourceBundleTest_stc, StartBMIBundleFromEmptyContainer_ESV_N)
     {
         m_pContainer->startContainer(CONFIG_EMPTY_FILE);
         m_pContainer->addBundle(BMI_BUNDLE_ID, EMPTY_STRING, BMI_PATH, BMI_NAME, m_params);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle added with start container started with empty config file!";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle added with start container started with empty config file!";
         EXPECT_TRUE(m_pRCHelper->startBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle started with start container started with empty config file!";
         m_pContainer->stopContainer();
     }
@@ -282,7 +282,7 @@ TEST_F(RCResourceBundleTest_stc, AddHueBundleFromXML_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle is not added";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle is not added";
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -311,7 +311,7 @@ TEST_F(RCResourceBundleTest_stc, AddDIBundleFromXML_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle is not added";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle is not added";
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -340,7 +340,7 @@ TEST_F(RCResourceBundleTest_stc, AddBMIBundleFromXML_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle is not added";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle is not added";
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -369,11 +369,11 @@ TEST_F(RCResourceBundleTest_stc, AddHueBundleFromXML_USV_N)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        if (m_pRCHelper->isAddedBundle(m_pContainer, HUE_BUNDLE_ID))
+        if (m_pRCHelper->isBundleAdded(m_pContainer, HUE_BUNDLE_ID))
         {
-            EXPECT_FALSE(m_pRCHelper->isAddedBundle(m_pContainer, EMPTY_STRING))
+            EXPECT_FALSE(m_pRCHelper->isBundleAdded(m_pContainer, EMPTY_STRING))
                     << "HUE Bundle is started with empty string";
-            EXPECT_FALSE(m_pRCHelper->isAddedBundle(m_pContainer, INVALID_INPUT))<<"HUE Bundle is started with invalid parameter";
+            EXPECT_FALSE(m_pRCHelper->isBundleAdded(m_pContainer, INVALID_INPUT))<<"HUE Bundle is started with invalid parameter";
         }
         else
         {
@@ -408,11 +408,11 @@ TEST_F(RCResourceBundleTest_stc, AddDIBundleFromXML_USV_N)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        if (m_pRCHelper->isAddedBundle(m_pContainer, DI_BUNDLE_ID))
+        if (m_pRCHelper->isBundleAdded(m_pContainer, DI_BUNDLE_ID))
         {
-            EXPECT_FALSE(m_pRCHelper->isAddedBundle(m_pContainer, EMPTY_STRING))
+            EXPECT_FALSE(m_pRCHelper->isBundleAdded(m_pContainer, EMPTY_STRING))
                     << "DI Bundle is started with empty string";
-            EXPECT_FALSE(m_pRCHelper->isAddedBundle(m_pContainer, INVALID_INPUT))<<"DI Bundle is started with invalid parameter";
+            EXPECT_FALSE(m_pRCHelper->isBundleAdded(m_pContainer, INVALID_INPUT))<<"DI Bundle is started with invalid parameter";
         }
         else
         {
@@ -446,11 +446,11 @@ TEST_F(RCResourceBundleTest_stc, AddBMIBundleFromXML_USV_N)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        if (m_pRCHelper->isAddedBundle(m_pContainer, BMI_BUNDLE_ID))
+        if (m_pRCHelper->isBundleAdded(m_pContainer, BMI_BUNDLE_ID))
         {
-            EXPECT_FALSE(m_pRCHelper->isAddedBundle(m_pContainer, EMPTY_STRING))
+            EXPECT_FALSE(m_pRCHelper->isBundleAdded(m_pContainer, EMPTY_STRING))
                     << "BMI Bundle is started with empty string";
-            EXPECT_FALSE(m_pRCHelper->isAddedBundle(m_pContainer, INVALID_INPUT))<<"BMI Bundle is started with invalid parameter";
+            EXPECT_FALSE(m_pRCHelper->isBundleAdded(m_pContainer, INVALID_INPUT))<<"BMI Bundle is started with invalid parameter";
         }
         else
         {
@@ -486,7 +486,7 @@ TEST_F(RCResourceBundleTest_stc, StartHueBundleFromXML_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle is not added";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle is not added";
         EXPECT_TRUE(m_pRCHelper->startBundle(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle is not started";
         m_pContainer->stopContainer();
     }
@@ -518,7 +518,7 @@ TEST_F(RCResourceBundleTest_stc, StartDIBundleFromXML_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle is not added";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle is not added";
         EXPECT_TRUE(m_pRCHelper->startBundle(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle is not started";
         m_pContainer->stopContainer();
     }
@@ -550,7 +550,7 @@ TEST_F(RCResourceBundleTest_stc, StartBMIBundleFromXML_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle is not added";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle is not added";
         EXPECT_TRUE(m_pRCHelper->startBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle is not started";
         m_pContainer->stopContainer();
     }
@@ -582,7 +582,7 @@ TEST_F(RCResourceBundleTest_stc, StartHueBundleFromXML_USV_N)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, HUE_BUNDLE_ID))<<"HUE bundle is not added!";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, HUE_BUNDLE_ID))<<"HUE bundle is not added!";
         if (m_pRCHelper->startBundle(m_pContainer, HUE_BUNDLE_ID))
         {
             EXPECT_FALSE(m_pRCHelper->startBundle(m_pContainer, EMPTY_STRING))
@@ -623,7 +623,7 @@ TEST_F(RCResourceBundleTest_stc, StartDIBundleFromXML_USV_N)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, DI_BUNDLE_ID))<<"DI bundle is not added!";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, DI_BUNDLE_ID))<<"DI bundle is not added!";
         if (m_pRCHelper->startBundle(m_pContainer, DI_BUNDLE_ID))
         {
             EXPECT_FALSE(m_pRCHelper->startBundle(m_pContainer, EMPTY_STRING))
@@ -664,7 +664,7 @@ TEST_F(RCResourceBundleTest_stc, StartBMIBundleFromXML_USV_N)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI bundle is not added!";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, BMI_BUNDLE_ID))<<"BMI bundle is not added!";
         if (m_pRCHelper->startBundle(m_pContainer, BMI_BUNDLE_ID))
         {
             EXPECT_FALSE(m_pRCHelper->startBundle(m_pContainer, EMPTY_STRING))
@@ -706,7 +706,7 @@ TEST_F(RCResourceBundleTest_stc, StopHueBundle_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle is not added";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle is not added";
         EXPECT_TRUE(m_pRCHelper->startBundle(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle is not started";
         EXPECT_TRUE(m_pRCHelper->stopBundle(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle is not stopped";
         m_pContainer->stopContainer();
@@ -741,7 +741,7 @@ TEST_F(RCResourceBundleTest_stc, StopDIBundle_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle is not added";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle is not added";
         EXPECT_TRUE(m_pRCHelper->startBundle(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle is not started";
         EXPECT_TRUE(m_pRCHelper->stopBundle(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle is not stopped";
         m_pContainer->stopContainer();
@@ -776,7 +776,7 @@ TEST_F(RCResourceBundleTest_stc, StopBMIBundle_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle is not added";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle is not added";
         EXPECT_TRUE(m_pRCHelper->startBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle is not started";
         EXPECT_TRUE(m_pRCHelper->stopBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle is not stopped";
         m_pContainer->stopContainer();
@@ -810,7 +810,7 @@ TEST_F(RCResourceBundleTest_stc, StopHueBundle_USV_N)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, HUE_BUNDLE_ID))<<"HUE bundle is not added!";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, HUE_BUNDLE_ID))<<"HUE bundle is not added!";
         EXPECT_TRUE(m_pRCHelper->startBundle(m_pContainer, HUE_BUNDLE_ID))<<"HUE bundle is not started!";
         if (m_pRCHelper->stopBundle(m_pContainer, HUE_BUNDLE_ID))
         {
@@ -854,7 +854,7 @@ TEST_F(RCResourceBundleTest_stc, StopDIBundle_USV_N)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, DI_BUNDLE_ID))<<"DI bundle is not added!";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, DI_BUNDLE_ID))<<"DI bundle is not added!";
         EXPECT_TRUE(m_pRCHelper->startBundle(m_pContainer, DI_BUNDLE_ID))<<"DI bundle is not started!";
         if (m_pRCHelper->stopBundle(m_pContainer, DI_BUNDLE_ID))
         {
@@ -898,7 +898,7 @@ TEST_F(RCResourceBundleTest_stc, StopBMIBundle_USV_N)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI bundle is not added!";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, BMI_BUNDLE_ID))<<"BMI bundle is not added!";
         EXPECT_TRUE(m_pRCHelper->startBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI bundle is not started!";
         if (m_pRCHelper->stopBundle(m_pContainer, BMI_BUNDLE_ID))
         {
@@ -940,7 +940,7 @@ TEST_F(RCResourceBundleTest_stc, RemoveHueBundle_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle is not added";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle is not added";
         EXPECT_TRUE(m_pRCHelper->removeBundle(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle is not removed";
         m_pContainer->stopContainer();
     }
@@ -971,7 +971,7 @@ TEST_F(RCResourceBundleTest_stc, RemoveDIBundle_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle is not added";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle is not added";
         EXPECT_TRUE(m_pRCHelper->removeBundle(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle is not removed";
         m_pContainer->stopContainer();
     }
@@ -1002,7 +1002,7 @@ TEST_F(RCResourceBundleTest_stc, RemoveBMIBundle_SRC_P)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle is not added";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle is not added";
         EXPECT_TRUE(m_pRCHelper->removeBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle is not removed";
         m_pContainer->stopContainer();
     }
@@ -1019,32 +1019,33 @@ TEST_F(RCResourceBundleTest_stc, RemoveBMIBundle_SRC_P)
  * @see start container
  * @see add bundle
  * @see start bundle
- * @objective Test stopBundle function stop hue bundle negative basic way
- * @target void stopBundle(string bundleId)
+ * @objective Test removeBundle function stop hue bundle negative basic way
+ * @target void removeBundle(string bundleId)
  * @test_data ResourceContainerConfig
  * @pre_condition 1. Get container instance
- *                2. start container
+ *                2. start container with config having targeted bundle
+ *                3. remove bundle
+ *                4. Add this bundle again
+ *                5. Now remove this bundle for the 2nd time
  * @procedure Call removeBundle API
  * @post_condition stop container
- * @expected Container can not remove hue bundle.
+ * @expected Container can remove hue bundle.
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(RCResourceBundleTest_stc, RemoveHueBundle_USV_N)
+TEST_F(RCResourceBundleTest_stc, RemoveHueBundleMultipleTimes_FSV_P)
 {
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, HUE_BUNDLE_ID))<<"HUE bundle is not added!";
-        if (m_pRCHelper->removeBundle(m_pContainer, HUE_BUNDLE_ID))
-        {
-            EXPECT_FALSE(m_pRCHelper->removeBundle(m_pContainer, EMPTY_STRING))
-                    << "Hue Bundle is removed with empty string";
-            EXPECT_FALSE(m_pRCHelper->removeBundle(m_pContainer, INVALID_INPUT))<<"Hue Bundle is removed with invalid parameter";
-        }
-        else
-        {
-            SET_FAILURE("HUE bundle is NOT remove with valid DI_BUNDLE_ID !");
-        }
+
+        ASSERT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, HUE_BUNDLE_ID))<< "HUE bundle does not exit in default config file!";
+        ASSERT_TRUE(m_pRCHelper->removeBundle(m_pContainer, HUE_BUNDLE_ID)) << "HUE bundle is NOT removed with valid HUE_BUNDLE_ID!";
+
+        m_pContainer->addBundle(HUE_BUNDLE_ID, EMPTY_STRING, HUE_PATH, HUE_NAME, m_params);
+        ASSERT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, HUE_BUNDLE_ID)) << "HUE bundle is not added!";
+
+        ASSERT_TRUE(m_pRCHelper->removeBundle(m_pContainer, HUE_BUNDLE_ID)) << "HUE bundle is NOT removed with valid HUE_BUNDLE_ID!";
+
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -1061,32 +1062,32 @@ TEST_F(RCResourceBundleTest_stc, RemoveHueBundle_USV_N)
  * @see add bundle
  * @see start bundle
  * @objective Test removeBundle function stop di bundle negative basic way
- * @target void stopBundle(string bundleId)
+ * @target void removeBundle(string bundleId)
  * @test_data ResourceContainerConfig
  * @pre_condition 1. Get container instance
- *                2. start container
- *                3. add di bundle
+ *                2. start container with config having targeted bundle
+ *                3. remove bundle
+ *                4. Add this bundle again
+ *                5. Now remove this bundle for the 2nd time
  * @procedure Call removeBundle API
  * @post_condition stop container
- * @expected Container can not remove di bundle.
+ * @expected Container can remove di bundle.
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(RCResourceBundleTest_stc, RemoveDIBundle_USV_N)
+TEST_F(RCResourceBundleTest_stc, RemoveDIBundle_MultipleTimes_FSV_P)
 {
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, DI_BUNDLE_ID))<<"DI bundle is not added!";
-        if (m_pRCHelper->removeBundle(m_pContainer, DI_BUNDLE_ID))
-        {
-            EXPECT_FALSE(m_pRCHelper->removeBundle(m_pContainer, EMPTY_STRING))
-                    << "DI Bundle is removed with empty string";
-            EXPECT_FALSE(m_pRCHelper->removeBundle(m_pContainer, INVALID_INPUT))<<"DI Bundle is removed with invalid parameter";
-        }
-        else
-        {
-            SET_FAILURE("DI bundle is NOT remove with valid DI_BUNDLE_ID !");
-        }
+
+        ASSERT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, DI_BUNDLE_ID)) <<"DI bundle does not exit in default config file";
+        ASSERT_TRUE(m_pRCHelper->removeBundle(m_pContainer, DI_BUNDLE_ID)) << "DI bundle is NOT removed with valid DI_BUNDLE_ID!";
+
+        m_pContainer->addBundle(DI_BUNDLE_ID, EMPTY_STRING, DI_PATH,DI_NAME, m_params);
+        ASSERT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, DI_BUNDLE_ID)) << "DI bundle is not added!";
+
+        ASSERT_TRUE(m_pRCHelper->removeBundle(m_pContainer, DI_BUNDLE_ID)) << "DI bundle is NOT removed with valid DI_BUNDLE_ID!";
+
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -1102,33 +1103,33 @@ TEST_F(RCResourceBundleTest_stc, RemoveDIBundle_USV_N)
  * @see start container
  * @see add bundle
  * @see start bundle
- * @objective Test stopBundle function with remove bmi bundle negative basic way
- * @target void stopBundle(string bundleId)
+ * @objective Test removeBundle function with remove bmi bundle negative basic way
+ * @target void removeBundle(string bundleId)
  * @test_data ResourceContainerConfig
  * @pre_condition 1. Get container instance
- *                2. start container
- *                3. add bmi bundle
+ *                2. start container with config having targeted bundle
+ *                3. remove bundle
+ *                4. Add this bundle again
+ *                5. Now remove this bundle for the 2nd time
  * @procedure Call removeBundle API
  * @post_condition stop container
- * @expected Container can not remove bmi bundle.
+ * @expected Container can remove bmi bundle.
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(RCResourceBundleTest_stc, RemoveBMIBundle_USV_N)
+TEST_F(RCResourceBundleTest_stc, RemoveBMIBundle_MultipleTimes_FSV_P)
 {
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI bundle is not added!";
-        if (m_pRCHelper->removeBundle(m_pContainer, BMI_BUNDLE_ID))
-        {
-            EXPECT_FALSE(m_pRCHelper->removeBundle(m_pContainer, EMPTY_STRING))
-                    << "BMI Bundle is removed with empty string";
-            EXPECT_FALSE(m_pRCHelper->removeBundle(m_pContainer, INVALID_INPUT))<<"BMI Bundle is removed with invalid parameter";
-        }
-        else
-        {
-            SET_FAILURE("BMI bundle is NOT remove with valid DI_BUNDLE_ID !");
-        }
+
+        ASSERT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, BMI_BUNDLE_ID))<<"BMI bundle does not exit in default config file";
+        ASSERT_TRUE(m_pRCHelper->removeBundle(m_pContainer, BMI_BUNDLE_ID)) << "BMI bundle is NOT removed with valid BMI_BUNDLE_ID!";
+
+        m_pContainer->addBundle(BMI_BUNDLE_ID, EMPTY_STRING, BMI_PATH,BMI_NAME, m_params);
+        ASSERT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, BMI_BUNDLE_ID)) << "BMI bundle is not added!";
+
+        ASSERT_TRUE(m_pRCHelper->removeBundle(m_pContainer, BMI_BUNDLE_ID)) << "BMI bundle is NOT removed with valid BMI_BUNDLE_ID!";
+
         m_pContainer->stopContainer();
     }
     catch (exception& e)
@@ -1160,7 +1161,7 @@ TEST_F(RCResourceBundleTest_stc, RemoveHueBundleWhileRunning_STLSEC_N)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle is not added";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle is not added";
         EXPECT_TRUE(m_pRCHelper->startBundle(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle is not started";
         EXPECT_TRUE(m_pRCHelper->removeBundle(m_pContainer, HUE_BUNDLE_ID))<<"Hue Bundle is not removed";
         m_pContainer->stopContainer();
@@ -1194,7 +1195,7 @@ TEST_F(RCResourceBundleTest_stc, RemoveDIBundleWhileRunning_STLSEC_N)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle is not added";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle is not added";
         EXPECT_TRUE(m_pRCHelper->startBundle(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle is not started";
         EXPECT_TRUE(m_pRCHelper->removeBundle(m_pContainer, DI_BUNDLE_ID))<<"DI Bundle is not removed";
         m_pContainer->stopContainer();
@@ -1228,7 +1229,7 @@ TEST_F(RCResourceBundleTest_stc, RemoveBMIBundleWhileRunning_STLSEC_N)
     try
     {
         m_pContainer->startContainer(CONFIG_FILE);
-        EXPECT_TRUE(m_pRCHelper->isAddedBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle is not added";
+        EXPECT_TRUE(m_pRCHelper->isBundleAdded(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle is not added";
         EXPECT_TRUE(m_pRCHelper->startBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle is not started";
         EXPECT_TRUE(m_pRCHelper->removeBundle(m_pContainer, BMI_BUNDLE_ID))<<"BMI Bundle is not removed";
         m_pContainer->stopContainer();
@@ -1239,4 +1240,3 @@ TEST_F(RCResourceBundleTest_stc, RemoveBMIBundleWhileRunning_STLSEC_N)
     }
 }
 #endif
-
