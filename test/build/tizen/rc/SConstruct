@@ -46,7 +46,6 @@ RAPIDXML_SUB_INCLUDE = ORG_SRC_HOME + '/extlibs/'
 RC_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
 RC_RESOURCE_INCLUDE = RC_RESOURCE_DIR + '/include'
 RC_RESOURCE_LIB = ORG_SRC_HOME + '/out/tizen/armv7l/release'
-RC_RESOURCE_CSDK_LIB = RC_RESOURCE_LIB
 RC_RESOURCE_STACK = RC_RESOURCE_DIR + '/csdk/stack/include'
 RC_RESOURCE_SOCKET = RC_RESOURCE_DIR + '/csdk/ocsocket/include'
 RC_RESOURCE_RANDOM = RC_RESOURCE_DIR + '/csdk/ocrandom/include'
@@ -54,7 +53,6 @@ RC_RESOURCE_LOGGER = RC_RESOURCE_DIR + '/csdk/logger/include'
 RC_RESOURCE_OC_LOGGER = RC_RESOURCE_DIR + '/oc_logger/include'
 RC_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
 RC_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
-RC_RESOURCE_OC_LOGGER_LIB = RC_RESOURCE_LIB
 RC_DIR = ORG_SRC_HOME + '/service/resource-container'
 RC_MODULES_DIR = RC_DIR + '/src'
 RC_INCLUDE = RC_DIR + '/include/'
@@ -62,17 +60,12 @@ RC_C_COMMON = ORG_SRC_HOME + '/resource/c_common'
 RC_COMMON_INCLUDE = RC_MODULES_DIR + '/common/primitiveResource/include/'
 RC_COMMON_TIMER_INCLUDE = RC_MODULES_DIR + '/common/expiryTimer/include/'
 RC_COMMON_INTERNAL_INCLUDE = RC_MODULES_DIR + '/common/primitiveResource/include/internal/'
-#RC_BROKER_INCLUDE = RC_MODULES_DIR + '/resourceBroker/include/'
-#RC_CACHE_INCLUDE = RC_MODULES_DIR + '/resourceCache/include/'
-#RC_CONTAINER_INCLUDE = RC_MODULES_DIR + '/resourceContainer/include/'
-#RC_CONTAINER_BUNDLE_INCLUDE = RE_MODULES_DIR + '/resourceContainer/bundle-api/include/'
-#RC_SERVER_BUILDER_INCLUDE = RE_MODULES_DIR + '/serverBuilder/include/'
-RC_LIB = RC_RESOURCE_LIB
-RC_LIB_TIMER = RC_RESOURCE_LIB + '/extlibs/timer/'
+RC_SERVICE_INCLUDE_DIR =  ORG_SRC_HOME + '/service/resource-encapsulation/include'
+
+OIC_STRING_INC_DIR = RC_C_COMMON + '/oic_string/include'
+
 
 ######################################################################
-
-
 # Initializing Gtest Dir
 ######################################################################
 
@@ -94,6 +87,11 @@ UTC_DIR = TC_DIR + '/rc/gtest/src/btc'
 TESTAPP_DIR = PROJECT_HOME + '/src/testapp'
 TESTAPP_CINCOUDE = PROJECT_HOME + '/include/testapp'
 
+TEST_APP_DIR = PROJECT_HOME + '/src/iBtestapp/modules/rc/c_cpp/src'
+
+TEST_APP_INC_DIR = PROJECT_HOME + '/src/iBtestapp/modules/rc/c_cpp/include'
+TEST_APP_COMMON_INC_DIR = PROJECT_HOME + '/src/iBtestapp/common/include'
+
 COMMON_DIR = PROJECT_HOME + '/src/common'
 COMMON_UTIL_DIR = PROJECT_HOME + '/src/common/commonutil/c_cpp'
 TC_COMMON_DIR = COMMON_DIR + '/testcase'
@@ -109,7 +107,7 @@ TESTAPP_INCLUDE_DIR = INCLUDE_DIR + '/testapp'
 TESTAPP_CA_DIR = TESTAPP_DIR + '/ca/c_cpp'
 
 TARGET = PROJECT_HOME + '/bin'
-#TARGET = env['VARIANT_DIR'] 
+#TARGET = env['VARIANT_DIR']
 
 ######################################################################
 
@@ -129,7 +127,7 @@ RC_CFLAGS = [COMMON_FLAGS]
 
 COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR]
 
-RC_CINCLUDE = [RAPIDXML_SUB_INCLUDE, RC_C_COMMON, COMMON_CINCLUDE, RC_RESOURCE_INCLUDE, RC_RESOURCE_STACK, RC_RESOURCE_SOCKET, RC_RESOURCE_RANDOM, RC_RESOURCE_OC_LOGGER, RC_RESOURCE_CEREAL, RC_RESOURCE_TIMER, RC_LIB_TIMER, RC_INCLUDE, RC_COMMON_INCLUDE, RC_COMMON_TIMER_INCLUDE, RC_COMMON_INTERNAL_INCLUDE,  RC_INCLUDE_DIR]
+RC_CINCLUDE = [RAPIDXML_SUB_INCLUDE, RC_RESOURCE_LOGGER,RC_C_COMMON, COMMON_CINCLUDE, RC_RESOURCE_INCLUDE, RC_RESOURCE_STACK, RC_RESOURCE_SOCKET, RC_RESOURCE_RANDOM, RC_RESOURCE_OC_LOGGER, RC_RESOURCE_CEREAL, RC_RESOURCE_TIMER,RC_INCLUDE, RC_COMMON_INCLUDE, RC_COMMON_TIMER_INCLUDE, RC_COMMON_INTERNAL_INCLUDE,  RC_INCLUDE_DIR, RC_SERVICE_INCLUDE_DIR,'/usr/include/dlog', OIC_STRING_INC_DIR]
 
 ######################################################################
 
@@ -137,14 +135,13 @@ RC_CINCLUDE = [RAPIDXML_SUB_INCLUDE, RC_C_COMMON, COMMON_CINCLUDE, RC_RESOURCE_I
 ######################################################################
 
 COMMON_LIB_LOCATION = [GTEST, RCSOURCE_LIB_DIR]
-RC_LIB_LOCATION = [COMMON_LIB_LOCATION, RC_RESOURCE_LIB, RC_RESOURCE_CSDK_LIB, RC_RESOURCE_OC_LOGGER_LIB, RC_LIB]
+RC_LIB_LOCATION = [COMMON_LIB_LOCATION, RC_RESOURCE_LIB]
 
 COMMON_STATIC_LIBS = [GTEST_LIB]
 COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction pthread libglib-2.0 libdlog')
 
 # liboc_logger_core  libcoap
 
-#RC_STATIC_LIBS = [RE_LIB + '/librcs_client.a', RE_LIB + '/librcs_common.a', RE_LIB + '/librcs_container.a', RE_LIB + '/librcs_server.a', RE_LIB + '/libocsrm.a']
 RC_STATIC_RESOURCE_LIBS = []
 RC_STATIC_LIBS = []
 RC_SHARED_LIBS = Split('-lHueBundle -lDISensorBundle -lBMISensorBundle -lrcs_common -lrcs_container -lrcs_server -lrcs_client')
@@ -157,7 +154,7 @@ RC_LIBS = [COMMON_SHARED_LIBS, RC_SHARED_LIBS]
 
 RC_ITC_BIN = 'iotivity_rc_test'
 RC_UTC_BIN = 'iotivity_rc_utc'
-#RC_TEST_SERVER_BIN = 'retestserver'
+RC_TEST_APP_BIN = 'rc_testApp'
 
 TEST_MAIN_BIN = 'test_main.o'
 COMMON_UTIL_BIN = 'common_util.o'
@@ -181,19 +178,24 @@ COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
 
 CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
 
-TEST_MAIN = [COMMON_DIR + '/testcase/gtest/IotivitySECTestMain.cpp'] 
+TEST_MAIN = [COMMON_DIR + '/testcase/gtest/IotivitySECTestMain.cpp']
 
 RC_ITC_CPP = Glob(ITC_DIR + '/*.cpp')
 RC_UTC_CPP = Glob(UTC_DIR + '/*.cpp')
 
+
+RC_TEST_APP_CPP = Glob(TEST_APP_DIR + '/*.cpp')
+
+RC_TEST_APP_COMMON_UTIL_CPP = [PROJECT_HOME + '/src/iBtestapp/common/src/IBtestappCommonUtil.cpp']
+
 RC_CPP = [TEST_MAIN, COMMON_UTIL_CPP, RC_HELPER_CPP, CALL_GRAPH_CPP]
 
 RC_ITC_SRC = [RC_CPP, RC_ITC_CPP, RC_UTC_CPP, COMMON_STATIC_LIBS, RC_STATIC_LIBS, RC_STATIC_RESOURCE_LIBS]
-#RC_UTC_SRC = [RC_CPP, RC_UTC_CPP, COMMON_STATIC_LIBS, RC_STATIC_LIBS, RC_STATIC_RESOURCE_LIBS]
 
-#RC_TEST_SERVER_SRC = [RC_TEST_SERVER_CPP, COMMON_UTIL_CPP, RC_HELPER_CPP, COMMON_STATIC_LIBS, RC_STATIC_LIBS, RC_STATIC_RESOURCE_LIBS]
+RC_TEST_APP_SRC = [RC_TEST_APP_CPP, COMMON_UTIL_CPP, RC_HELPER_CPP, COMMON_STATIC_LIBS, RC_STATIC_LIBS, RC_STATIC_RESOURCE_LIBS, RC_TEST_APP_COMMON_UTIL_CPP]
+
+
 ######################################################################
-
 # Initializing Build
 ######################################################################
 
@@ -203,9 +205,7 @@ test_main = env.Object(source = TEST_MAIN, target = TEST_MAIN_BIN, CPPPATH = COM
 
 rc_itc = env.Program(source = RC_ITC_SRC, target = RC_ITC_BIN, CPPPATH = RC_CINCLUDE, LIBS = RC_LIBS, LIBPATH = RC_LIB_LOCATION, CPPFLAGS = RC_CFLAGS)
 
-#rc_utc = env.Program(source = RC_UTC_SRC, target = RC_UTC_BIN, CPPPATH = RC_CINCLUDE, LIBS = RC_LIBS, LIBPATH = RC_LIB_LOCATION, CPPFLAGS = RC_CFLAGS)
-
-#re_test_server = env.Program(source = RE_TEST_SERVER_SRC, target = RE_TEST_SERVER_BIN, CPPPATH = RE_CINCLUDE, LIBS = RE_LIBS, LIBPATH = RE_LIB_LOCATION, CPPFLAGS = RE_CFLAGS)
+rc_test_app = env.Program(source = RC_TEST_APP_SRC, target = RC_TEST_APP_BIN, CPPPATH = [RC_CINCLUDE, TEST_APP_INC_DIR, TEST_APP_COMMON_INC_DIR], LIBS = RC_LIBS, LIBPATH = RC_LIB_LOCATION, CPPFLAGS = RC_CFLAGS)
 
 pre_job = [create_target_dir]
 
@@ -220,5 +220,6 @@ default_targets = []
 
 #default_targets += [rc_test_server]
 default_targets += [rc_itc]
+default_targets += [rc_test_app]
 
 env.Default(default_targets)

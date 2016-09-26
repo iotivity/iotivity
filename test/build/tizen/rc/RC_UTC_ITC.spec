@@ -40,7 +40,8 @@ scons
 mkdir -p $RPM_BUILD_ROOT/usr/bin/rc
 mkdir -p $RPM_BUILD_ROOT/usr/lib
 cp iotivity_rc_test $RPM_BUILD_ROOT/usr/bin/rc
-cp iotivity/out/tizen/armv7l/release/*.so $RPM_BUILD_ROOT/usr/lib/
+cp rc_testApp $RPM_BUILD_ROOT/usr/bin/rc
+#cp iotivity/out/tizen/armv7l/release/*.so $RPM_BUILD_ROOT/usr/lib/
 
 
 %clean
@@ -48,7 +49,7 @@ scons -c
 
 %files
 %defattr(644, root, root)
-%attr(755, root, root) 
+%attr(755, root, root)
 /usr/bin/rc
 /usr/lib
 
