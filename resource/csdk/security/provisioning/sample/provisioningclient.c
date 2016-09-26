@@ -1242,14 +1242,14 @@ static OicSecAcl_t* createAcl(const int dev_num)
         }
         size_t len = strlen(rsrc_in)+1;  // '1' for null termination
         rsrc->href = (char*) OICCalloc(len, sizeof(char));
-        if(!rsrc)
+        if(!rsrc->href)
         {
             OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
             goto CRACL_ERROR;
         }
         OICStrcpy(rsrc->href, len, rsrc_in);
 
-        int arrLen = 0;
+        size_t arrLen = 0;
         while(1)
         {
             printf("         Enter Number of resource type for [%s] : ", rsrc->href);
@@ -1259,7 +1259,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
-            if(0 < arrLen && ACL_RESRC_ARRAY_SIZE >= arrLen)
+            if(ACL_RESRC_ARRAY_SIZE >= arrLen)
             {
                 break;
             }
@@ -1300,7 +1300,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
-            if(0 < arrLen && ACL_RESRC_ARRAY_SIZE >= arrLen)
+            if(ACL_RESRC_ARRAY_SIZE >= arrLen)
             {
                 break;
             }

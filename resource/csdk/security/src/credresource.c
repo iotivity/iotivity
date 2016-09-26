@@ -2145,7 +2145,12 @@ void GetDerCaCert(ByteArray * crt)
                     return;
                 }
                 uint32_t outSize;
-                b64Decode(temp->optionalData.data, temp->optionalData.len, buf, bufSize, &outSize);
+                if(B64_OK != b64Decode(temp->optionalData.data, temp->optionalData.len, buf, bufSize, &outSize))
+                {
+                    OICFree(buf);
+                    OIC_LOG(ERROR, TAG, "Failed to decode base64 data");
+                    return;
+                }
                 crt->data = OICRealloc(crt->data, crt->len + outSize);
                 memcpy(crt->data + crt->len, buf, outSize);
                 crt->len += outSize;
