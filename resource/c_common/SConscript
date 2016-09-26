@@ -177,6 +177,8 @@ elif target_os  in ['windows']:
 else:
 	common_src.append('octhread/src/noop/octhread.c')
 
+common_env.AppendUnique(LIBS = ['logger'])
+common_env.AppendUnique(CPPPATH = ['#resource/csdk/logger/include'])
 commonlib = common_env.StaticLibrary('c_common', common_src)
 common_env.InstallTarget(commonlib, 'c_common')
 common_env.UserInstallTargetLib(commonlib, 'c_common')

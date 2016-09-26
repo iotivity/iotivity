@@ -28,6 +28,9 @@ Import('env')
 target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 
+# Build C Common dependencies
+SConscript('c_common/SConscript')
+
 # Build liblogger
 SConscript('csdk/logger/SConscript')
 
@@ -36,9 +39,6 @@ if target_os not in ['arduino', 'darwin', 'ios', 'android', 'msys_nt', 'windows'
 
 # Download (if not already present) & build libcoap
 SConscript('#extlibs/libcoap/SConscript')
-
-# Build C Common dependencies
-SConscript('c_common/SConscript')
 
 # Build connectivity
 SConscript('csdk/connectivity/SConscript')
