@@ -275,10 +275,10 @@ extern "C" {
 #define OC_RSRVD_DATA_MODEL_VERSION     "dmv"
 
 /** Device specification version.*/
-#define OC_SPEC_VERSION                 "core.1.0.0"
+#define OC_SPEC_VERSION                 "core.1.1.0"
 
 /** Device Data Model version.*/
-#define OC_DATA_MODEL_VERSION           "res.1.0.0"
+#define OC_DATA_MODEL_VERSION           "res.1.1.0"
 
 /**
  *  These provide backward compatibility - their use is deprecated.
