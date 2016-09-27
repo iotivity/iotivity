@@ -37,14 +37,14 @@ extern "C"
 #include <stdint.h>
 
 /**
- * Provider uses this callback function to receive subscription request of consumer
+ * Invoked when a consumer requests subscription.
  * @param[in] consumer        Consumer who subscribes the resource
  */
 typedef void (*NSSubscribeRequestCallback)(NSConsumer *);
 
 /**
- * Provider use this callback function to receive the status of the message
- * synchronization
+ * Invoked when synchronization data which has notification message 
+ * read/deleted event from consumer is received.
  * @param[in] sync        Synchronization information of the notification message
  */
 typedef void (*NSProviderSyncInfoCallback)(NSSyncInfo *);
@@ -59,8 +59,8 @@ typedef struct
     /* Invoked when the synchronization data, read and deleted, is sent by consumer is received */
     NSProviderSyncInfoCallback syncInfoCallback;
     /* Set the policy for notification servcie refering to following
-     * if policy is true, provider decides to allow or deny for all the subscribing consumers.
-     * Otherwise(policy is false) consumer decides to request subscription to discovered providers.
+     * if true, the controllability such as subscription request and consumer topic selection
+     * is owned by provider user. Otherwise(policy is false), consumer user has the same.
      */
     bool subControllability;
     /* User Information */
@@ -71,36 +71,36 @@ typedef struct
 } NSProviderConfig;
 
 /**
- * Initialize notification service for provider service
+ * Initialize notification service for provider
  * @param[in]  config   Refer to NSProviderConfig
- * @return ::NS_OK or result code of NSResult
+ * @return ::NS_OK if the action is requested succesfully
  */
 NSResult NSStartProvider(NSProviderConfig config);
 
 /**
  * Terminate notification service for provider
- * @return ::NS_OK or result code of NSResult
+ * @return ::NS_OK if the action is requested succesfully
  */
 NSResult NSStopProvider();
 
 /**
- * Request to publish resource to cloud server
+ * Request to publish resource using remote relay server
  * @param[in]  server address combined with IP address and port number using delimiter :
- * @return ::NS_OK or result code of NSResult
+ * @return ::NS_OK if the action is requested succesfully or NS_FAIL if wrong parameter is set.
  */
 NSResult NSProviderEnableRemoteService(char * serverAddress);
 
 /**
- * Request to cancel remote service using cloud server
+ * Request to terminate remote service from relay server
  * @param[in]  server address combined with IP address and port number using delimiter :
- * @return ::NS_OK or result code of NSResult
+ * @return ::NS_OK if the action is requested succesfully or NS_FAIL if wrong parameter is set.
  */
 NSResult NSProviderDisableRemoteService(char * serverAddress);
 
 /**
  * Send notification message to all subscribers
  * @param[in]  message  Notification message including id, title, contentText
- * @return ::NS_OK or result code of NSResult
+ * @return ::NS_OK if the action is requested succesfully or NS_FAIL if wrong parameter is set.
  */
 NSResult NSSendMessage(NSMessage * msg);
 
@@ -108,7 +108,7 @@ NSResult NSSendMessage(NSMessage * msg);
  * Send acceptance to consumer who subscribes the resource of notification message
  * @param[in]  consumer  Consumer who subscribes the resource
  * @param[in]  accepted  the result of acceptance; Allow or Deny
- * @return ::NS_OK or result code of NSResult
+ * @return ::NS_OK if the action is requested succesfully or NS_FAIL if subContollability is false.
  */
 NSResult NSAcceptSubscription(const char * consumerId, bool accepted);
 
@@ -122,14 +122,14 @@ NSResult NSAcceptSubscription(const char * consumerId, bool accepted);
 // NSResult NSGetConsumerList(uint8_t *list, uint32_t size);
 
 /**
- * Send read-check to provider in order to synchronize notification status with other consumers
+ * Send synchronizad state of notificaion message to consumers
  * @param[in]  message  Notification message to synchronize the status
- * @return ::NS_OK or result code of NSResult
+ * @return ::NS_OK if the action is requested succesfully or NS_FAIL if wrong parameter is set.
  */
 NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type);
 
 /**
- * Initialize NSMessage struct, our service set message id and provider(device) id
+ * Initialize NSMessage struct, provider service sets generated message id and provider(device) id
  * @return ::NSMessage *
  */
 NSMessage * NSCreateMessage();
@@ -137,14 +137,14 @@ NSMessage * NSCreateMessage();
 /**
  * Add topic to topic list which is located in provider service storage
  * @param[in]  topicName Topic name to add
- * @return ::NS_OK or result code of NSResult
+ * @return ::NS_OK if the action is requested succesfully or NS_FAIL if wrong parameter is set.
  */
 NSResult NSProviderRegisterTopic(const char * topicName);
 
 /**
  * Delete topic from topic list
  * @param[in]  topicName Topic name to delete
- * @return ::NS_OK or result code of NSResult
+ * @return ::NS_OK if the action is requested succesfully or NS_FAIL if wrong parameter is set.
  */
 NSResult NSProviderUnregisterTopic(const char * topicName);
 
@@ -152,7 +152,7 @@ NSResult NSProviderUnregisterTopic(const char * topicName);
  * Select a topic name for a consumer
  * @param[in]  consumerId  consumer id for which the user on provider selects a topic
  * @param[in]  topicName Topic name to select
- * @return ::NS_OK or result code of NSResult
+ * @return ::NS_OK if the action is requested succesfully or NS_FAIL if subContollability is false
  */
 NSResult NSProviderSetConsumerTopic(const char * consumerId, const char * topicName);
 
@@ -160,7 +160,7 @@ NSResult NSProviderSetConsumerTopic(const char * consumerId, const char * topicN
  * Unselect a topic from the topic list for consumer
  * @param[in]  consumerId  consumer id for which the user on provider unselects a topic
  * @param[in]  topicName Topic name to unselect
- * @return ::NS_OK or result code of NSResult
+ * @return ::NS_OK if the action is requested succesfully or NS_FAIL if subContollability is false
  */
 NSResult NSProviderUnsetConsumerTopic(const char * consumerId, const char * topicName);
 
