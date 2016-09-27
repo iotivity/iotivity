@@ -31,15 +31,41 @@
 #include "RemoteEnrollee.h"
 #include "ESRichCommon.h"
 #include "CloudResource.h"
+#include "EnrolleeSecurity.h"
 #include <escommon.h>
 #include "ESEnrolleeCommon.h"
 #include <iostream>
 #include <pthread.h>
 #include "EasySetup.h"
+#include "EnrolleeResource.h"
 #include "IotivityTest_Logger.h"
+
+#define AUTH_CODE "authCode"
+#define AUTH_PROVIDER "authProvider"
+#define CI_SERVER "ciServer"
+#define NULL_VALUE NULL
+#define SSID "Iotivity_SSID"
+#define PASSWORD "Iotivity_PWD"
+#define LANGUAGE "Bangla"
+#define COUNTRY "Bangladesh"
+#define LOCATION "Dhaka"
+#define CLOUD_ID "f002ae8b-c42c-40d3-8b8d-1927c17bd1b3"
+#define EMPTY_STRING ""
+#define PROV_RESOURCE_TYPE "ocf.wk.prov"
+#define NON_PROV_RESOURCE_TYPE "ocf.wk.notprov"
+#define PROV_URI "/oic/res?rt="
+#define NON_PROV_URI "/NotProvisioningResURI"
+#define IS_OBSERVABLE false
+#define NULL_VALUE NULL
+
 using namespace std;
 using namespace OC;
 using namespace OIC::Service;
+
+const string HOST_ADDRESS = "coap://192.168.1.2:5000";
+const string RES_ADDRESS = "/a/light";
+const string RES_TYPE = "core.light";
+const string INTERFACE_TYPE = "oic.if.baseline";
 
 class ESMediatorHelper
 {
@@ -57,12 +83,14 @@ public:
     static bool s_isGetStatusCallbackCalled;
     static bool s_isCloudPropProvCallbackCalled;
     static bool s_isProvisionCloudPropSuccess;
+    static bool s_isSecurityPropProvCallbackCalled;
+     static bool s_isProvisionSecurityPropSuccess;
 
+     static void provisionSecurityStatusCallback(
+             std::shared_ptr<SecProvisioningStatus> secProvisioningStatus);
     static void cloudProvisioningStatusCallback(
             std::shared_ptr< CloudPropProvisioningStatus > provStatus);
-
     static void getStatusCallback(std::shared_ptr< GetEnrolleeStatus > getEnrolleeStatus);
-
     static void getConfigurationCallback(
             std::shared_ptr< GetConfigurationStatus > getConfigurationStatus);
     static void deviceProvisioningStatusCallback(
@@ -76,5 +104,6 @@ public:
     void printConfiguration(EnrolleeConf conf);
     void getConfiguration();
     void provisionDeviceProperty();
-    void waitForResponse(int time);
+    void provisionSecurityProperty();
+    static void waitForResponse(int time);
 };

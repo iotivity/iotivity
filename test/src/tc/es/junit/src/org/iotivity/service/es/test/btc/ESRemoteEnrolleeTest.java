@@ -20,10 +20,12 @@
 
 package org.iotivity.service.es.test.btc;
 
+import org.iotivity.base.OcResource;
 import org.iotivity.service.es.test.helper.ESCloudPropProvCallback;
 import org.iotivity.service.es.test.helper.ESDevicePropProvCallback;
 import org.iotivity.service.es.test.helper.ESEnrolleeHelper;
 import org.iotivity.service.es.test.helper.ESPropertiesHelper;
+import org.iotivity.service.easysetup.mediator.EasySetup;
 import static org.iotivity.service.es.test.helper.ESUtility.*;
 import org.iotivity.service.easysetup.mediator.GetConfigurationCallback;
 import org.iotivity.service.easysetup.mediator.GetConfigurationStatus;
@@ -34,12 +36,12 @@ import org.iotivity.service.easysetup.mediator.SecurityProvisioningCallback;
 import org.iotivity.service.easysetup.mediator.SecurityProvisioningStatus;
 import org.iotivity.service.easysetup.mediator.CloudProp;
 import org.iotivity.service.easysetup.mediator.DeviceProp;
-import org.iotivity.service.easysetup.mediator.ESException;
 
 import android.test.AndroidTestCase;
 
 public class ESRemoteEnrolleeTest extends AndroidTestCase {
     
+    private static final String ES_EXCEPTION_SHOULD_NOT_BE_THROWN = null;
     private ESEnrolleeHelper    eSEnrolleeHelper;
 
     protected void setUp() throws Exception {
@@ -71,8 +73,14 @@ public class ESRemoteEnrolleeTest extends AndroidTestCase {
      * 
      */
     public void testESProvisionDeviceProperties_P_RSV() {
-        RemoteEnrollee remoteEnrollee = eSEnrolleeHelper
-                .createRemoteEnrollee(getContext());
+        
+        OcResource remoteEnrolleeResource = eSEnrolleeHelper
+                .findEnrolleeResource(getContext());
+        assertNotNull("Got null remote enrollee resource",
+                remoteEnrolleeResource);
+        RemoteEnrollee remoteEnrollee = EasySetup.getInstance(getContext())
+                .createRemoteEnrollee(remoteEnrolleeResource);
+        
         assertNotNull("Got null remote enrollee", remoteEnrollee);
         DeviceProp deviceProp = ESPropertiesHelper.createDeviceProperties();
         assertNotNull("Got null deviceProp", deviceProp);
@@ -82,37 +90,9 @@ public class ESRemoteEnrolleeTest extends AndroidTestCase {
         } catch (Exception ex) {
             fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
-
     }
 
-    /**
-     * @since 2016-08-19
-     * @see public synchronized static EasySetup getInstance(Context context)
-     * @see public synchronized RemoteEnrollee createRemoteEnrollee(OcResource
-     *      enrolleeResource)
-     * @objective test provisionDeviceProperties negatively
-     * @target public void provisionDeviceProperties(DeviceProp deviceProp,
-     *         DevicePropProvisioningCallback callback) throws ESException
-     * @test_data null deviceProp DevicePropProvisioningCallback
-     * @pre_condition create remote enrollee
-     * @procedure Call provisionDeviceProperties API with null deviceProp
-     * @post_condition none
-     * @expected ES Exception should be thrown
-     */
-    public void testESProvisionDevicePropertiesWithNullDeviceProp_ETC_N() {
-        RemoteEnrollee remoteEnrollee = eSEnrolleeHelper
-                .createRemoteEnrollee(getContext());
-        assertNotNull("Got null remote enrollee", remoteEnrollee);
-        try {
-            remoteEnrollee.provisionDeviceProperties(null,
-                    new ESDevicePropProvCallback());
-            fail(EXCEPTION_SHOULD_BE_THROWN);
-        } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
-        }
-    }
-
-    /**
+     /**
      * @since 2016-08-14
      * @see public void setWiFiProp(String ssid, String pwd, WIFI_AUTHTYPE
      *      authtype, WIFI_ENCTYPE enctype)
@@ -131,16 +111,20 @@ public class ESRemoteEnrolleeTest extends AndroidTestCase {
      * @expected ES Exception should be thrown
      */
     public void testESProvisionDevicePropertiesWithNullDeviceProvCallback_NV_ETC_N() {
-        RemoteEnrollee remoteEnrollee = eSEnrolleeHelper
-                .createRemoteEnrollee(getContext());
+         OcResource remoteEnrolleeResource = eSEnrolleeHelper
+                .findEnrolleeResource(getContext());
+        assertNotNull("Got null remote enrollee resource",
+                remoteEnrolleeResource);
+        RemoteEnrollee remoteEnrollee = EasySetup.getInstance(getContext())
+                .createRemoteEnrollee(remoteEnrolleeResource);
         assertNotNull("Got null remote enrollee", remoteEnrollee);
+
         DeviceProp deviceProp = ESPropertiesHelper.createDeviceProperties();
         assertNotNull("Got null remote enrollee", deviceProp);
         try {
             remoteEnrollee.provisionDeviceProperties(deviceProp, null);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            fail(ES_EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
     }
 
@@ -161,8 +145,12 @@ public class ESRemoteEnrolleeTest extends AndroidTestCase {
      * @expected provisionCloudProperties call without exception
      */
     public void testESProvisionCloudProperties_RSV_P() {
-        RemoteEnrollee remoteEnrollee = eSEnrolleeHelper
-                .createRemoteEnrollee(getContext());
+        OcResource remoteEnrolleeResource = eSEnrolleeHelper
+                .findEnrolleeResource(getContext());
+        assertNotNull("Got null remote enrollee resource",
+                remoteEnrolleeResource);
+        RemoteEnrollee remoteEnrollee = EasySetup.getInstance(getContext())
+                .createRemoteEnrollee(remoteEnrolleeResource);
         assertNotNull("Got null remote enrollee", remoteEnrollee);
         CloudProp cloudProp = ESPropertiesHelper.createCloudProperties();
         assertNotNull("Got null cloudProp", cloudProp);
@@ -174,32 +162,6 @@ public class ESRemoteEnrolleeTest extends AndroidTestCase {
         }
     }
 
-    /**
-     * @since 2016-08-19
-     * @see public synchronized static EasySetup getInstance(Context context)
-     * @see public synchronized RemoteEnrollee createRemoteEnrollee(OcResource
-     *      enrolleeResource)
-     * @objective test provisionDeviceProperties negatively
-     * @target public void provisionCloudProperties(CloudProp cloudProp,
-     *         CloudPropProvisioningCallback callback) throws ESException
-     * @test_data null cloudProp CloudPropProvisioningCallback
-     * @pre_condition create remote enrollee
-     * @procedure Call provisionCloudProperties API with null cloudProp
-     * @post_condition none
-     * @expected ES Exception should be thrown
-     */
-    public void testESProvisionCloudPropertiesWithNullCloudProp_ETC_N() {
-        RemoteEnrollee remoteEnrollee = eSEnrolleeHelper
-                .createRemoteEnrollee(getContext());
-        assertNotNull("Got null remote enrollee", remoteEnrollee);
-        try {
-            remoteEnrollee.provisionCloudProperties(null,
-                    new ESCloudPropProvCallback());
-            fail(EXCEPTION_SHOULD_BE_THROWN);
-        } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
-        }
-    }
 
     /**
      * @since 2016-08-14
@@ -220,16 +182,20 @@ public class ESRemoteEnrolleeTest extends AndroidTestCase {
      * @expected ES Exception should be thrown
      */
     public void testProvisionCloudPropertiesWithNullCloudPropProvisioningCallback_NV_ETC_N() {
-        RemoteEnrollee remoteEnrollee = eSEnrolleeHelper
-                .createRemoteEnrollee(getContext());
-        assertNotNull("Got null remote enrollee", remoteEnrollee);
+        OcResource remoteEnrolleeResource = eSEnrolleeHelper
+                .findEnrolleeResource(getContext());
+        assertNotNull("Got null remote enrollee resource",
+                remoteEnrolleeResource);
+        RemoteEnrollee remoteEnrollee = EasySetup.getInstance(getContext())
+                .createRemoteEnrollee(remoteEnrolleeResource);
+        assertNotNull("Got null remote enrollee, enrollee creation fail.", remoteEnrollee);
+
         CloudProp cloudProp = ESPropertiesHelper.createCloudProperties();
-        assertNotNull("Got null remote enrollee", cloudProp);
+        assertNotNull("Got null remote enrollee, createCloudPro got fail", cloudProp);
         try {
             remoteEnrollee.provisionCloudProperties(cloudProp, null);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            fail(ES_EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
     }
 
@@ -248,8 +214,12 @@ public class ESRemoteEnrolleeTest extends AndroidTestCase {
      * @expected getStatus API called without thrown exception
      */
     public void testESGetStatus_RSV_P() {
-        RemoteEnrollee remoteEnrollee = eSEnrolleeHelper
-                .createRemoteEnrollee(getContext());
+        OcResource remoteEnrolleeResource = eSEnrolleeHelper
+                .findEnrolleeResource(getContext());
+        assertNotNull("Got null remote enrollee resource",
+                remoteEnrolleeResource);
+        RemoteEnrollee remoteEnrollee = EasySetup.getInstance(getContext())
+                .createRemoteEnrollee(remoteEnrolleeResource);
         assertNotNull("Got null remote enrollee", remoteEnrollee);
 
         try {
@@ -278,15 +248,18 @@ public class ESRemoteEnrolleeTest extends AndroidTestCase {
      * @expected thrown ES exception
      */
     public void testESGetStatusWithNullCallback_NV_ETC_N() {
-        RemoteEnrollee remoteEnrollee = eSEnrolleeHelper
-                .createRemoteEnrollee(getContext());
+        OcResource remoteEnrolleeResource = eSEnrolleeHelper
+                .findEnrolleeResource(getContext());
+        assertNotNull("Got null remote enrollee resource",
+                remoteEnrolleeResource);
+        RemoteEnrollee remoteEnrollee = EasySetup.getInstance(getContext())
+                .createRemoteEnrollee(remoteEnrolleeResource);
         assertNotNull("Got null remote enrollee", remoteEnrollee);
 
         try {
             remoteEnrollee.getStatus(null);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            fail(ES_EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
     }
 
@@ -305,8 +278,12 @@ public class ESRemoteEnrolleeTest extends AndroidTestCase {
      * @expected getConfiguration API called without thrown exception
      */
     public void testESGetConfiguration_RSV_P() {
-        RemoteEnrollee remoteEnrollee = eSEnrolleeHelper
-                .createRemoteEnrollee(getContext());
+        OcResource remoteEnrolleeResource = eSEnrolleeHelper
+                .findEnrolleeResource(getContext());
+        assertNotNull("Got null remote enrollee resource",
+                remoteEnrolleeResource);
+        RemoteEnrollee remoteEnrollee = EasySetup.getInstance(getContext())
+                .createRemoteEnrollee(remoteEnrolleeResource);
         assertNotNull("Got null remote enrollee", remoteEnrollee);
 
         try {
@@ -336,15 +313,17 @@ public class ESRemoteEnrolleeTest extends AndroidTestCase {
      * @expected thrown ES exception
      */
     public void testESGetConfigurationWithNullCallback_NV_ETC_N() {
-        RemoteEnrollee remoteEnrollee = eSEnrolleeHelper
-                .createRemoteEnrollee(getContext());
+        OcResource remoteEnrolleeResource = eSEnrolleeHelper
+                .findEnrolleeResource(getContext());
+        assertNotNull("Got null remote enrollee resource",
+                remoteEnrolleeResource);
+        RemoteEnrollee remoteEnrollee = EasySetup.getInstance(getContext())
+                .createRemoteEnrollee(remoteEnrolleeResource);
         assertNotNull("Got null remote enrollee", remoteEnrollee);
-
         try {
             remoteEnrollee.getStatus(null);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            fail(ES_EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
     }
 
@@ -363,8 +342,12 @@ public class ESRemoteEnrolleeTest extends AndroidTestCase {
      * @expected provisionDeviceProperties call without exception
      */
     public void testESSProvisionSecurity_RSV_P() {
-        RemoteEnrollee remoteEnrollee = eSEnrolleeHelper
-                .createRemoteEnrollee(getContext());
+        OcResource remoteEnrolleeResource = eSEnrolleeHelper
+                .findEnrolleeResource(getContext());
+        assertNotNull("Got null remote enrollee resource",
+                remoteEnrolleeResource);
+        RemoteEnrollee remoteEnrollee = EasySetup.getInstance(getContext())
+                .createRemoteEnrollee(remoteEnrolleeResource);
         assertNotNull("Got null remote enrollee", remoteEnrollee);
         try {
             remoteEnrollee
@@ -397,15 +380,17 @@ public class ESRemoteEnrolleeTest extends AndroidTestCase {
      * @expected exception should be thrown
      */
     public void testESSProvisionSecurity_NV_ETC_N() {
-        RemoteEnrollee remoteEnrollee = eSEnrolleeHelper
-                .createRemoteEnrollee(getContext());
+        OcResource remoteEnrolleeResource = eSEnrolleeHelper
+                .findEnrolleeResource(getContext());
+        assertNotNull("Got null remote enrollee resource",
+                remoteEnrolleeResource);
+        RemoteEnrollee remoteEnrollee = EasySetup.getInstance(getContext())
+                .createRemoteEnrollee(remoteEnrolleeResource);
         assertNotNull("Got null remote enrollee", remoteEnrollee);
         try {
             remoteEnrollee.provisionSecurity(null);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
         } catch (Exception ex) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN,
-                    ex instanceof ESException);
+            fail(ES_EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
 
     }

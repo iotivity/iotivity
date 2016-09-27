@@ -29,29 +29,13 @@
 #include "easysetup.h"
 #include <escommon.h>
 #include "ESEnrolleeCommon.h"
-#include "EasySetup.h"
-#include "EnrolleeResource.h"
-#include "RemoteEnrollee.h"
 #include <iostream>
 #include "ESMediatorHelper.h"
-
-#define NULL_VALUE NULL
-#define SSID "Iotivity_SSID"
-#define PASSWORD "Iotivity_PWD"
-#define LANGUAGE "korean"
-#define COUNTRY "korea"
-#define LOCATION "location"
-#define EMPTY_STRING ""
 
 using namespace std;
 using namespace OC;
 using namespace OIC::Service;
 std::shared_ptr< OC::OCResource > resource;
-
-const string HOST_ADDRESS = "coap://192.168.1.2:5000";
-const string RES_ADDRESS = "/a/light";
-const string RES_TYPE = "core.light";
-const string INTERFACE_TYPE = "oic.if.baseline";
 
 class ESEnrolleeResourceTest_btc: public ::testing::Test
 {
@@ -96,7 +80,6 @@ TEST_F(ESEnrolleeResourceTest_btc, EnrolleeResourceGetStatus_SRC_P)
         EnrolleeResource rc(resource);
         rc.getStatus();
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get status: " + std::string(e.what()));
@@ -119,9 +102,7 @@ TEST_F(ESEnrolleeResourceTest_btc, EnrolleeResourceGetConfiguration_SRC_P)
     {
         EnrolleeResource rc(resource);
         rc.getConfiguration();
-//        cout<<"rc.getConfiguration();" << rc.getConfiguration();
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get Configuration: " + std::string(e.what()));
@@ -148,7 +129,6 @@ TEST_F(ESEnrolleeResourceTest_btc, EnrolleeResourceProvisionEnrollee_SRC_P)
         EnrolleeResource rc(resource);
         rc.provisionProperties(m_devProp);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get ProvisionEnrollee: " + std::string(e.what()));

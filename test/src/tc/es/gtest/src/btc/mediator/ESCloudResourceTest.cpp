@@ -32,21 +32,9 @@
 #include "ESMediatorHelper.h"
 #include <iostream>
 
-#define AUTH_CODE "authCode"
-#define AUTH_PROVIDER "authProvider"
-#define CI_SERVER "ciServer"
-#define NULL_VALUE NULL
-#define CLOUD_ID "f002ae8b-c42c-40d3-8b8d-1927c17bd1b3"
-#define EMPTY_STRING ""
-
 using namespace std;
 using namespace OC;
 using namespace OIC::Service;
-
-const string HOST_ADDRESS = "coap://192.168.1.2:5000";
-const string RES_ADDRESS = "/a/light";
-const string RES_TYPE = "core.light";
-const string INTERFACE_TYPE = "oic.if.baseline";
 
 class ESCloudResourceTest_btc: public ::testing::Test
 {
@@ -73,13 +61,11 @@ protected:
         cloudResource = new CloudResource(resource);
 
     }
-
     virtual void TearDown()
     {
         CommonUtil::runCommonTCTearDownPart();
 
     }
-
 };
 
 /**
@@ -101,7 +87,6 @@ TEST_F(ESCloudResourceTest_btc, ProvisionEnrollee_SRC_P)
         cloudProp.setCloudID(CLOUD_ID);
         cloudResource->provisionProperties(cloudProp);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in provisionProperties: " + std::string(e.what()));
@@ -116,7 +101,7 @@ TEST_F(ESCloudResourceTest_btc, ProvisionEnrollee_SRC_P)
  * @pre_condition None
  * @procedure Perform provisionProperties()
  * @post_condition None
- * @expected successfully called api
+ * @expected API should through exception
  **/
 TEST_F(ESCloudResourceTest_btc, ProvisionEnrolleeWithoutAuthCode_NV_N)
 {
@@ -129,7 +114,6 @@ TEST_F(ESCloudResourceTest_btc, ProvisionEnrolleeWithoutAuthCode_NV_N)
         cloudResource->provisionProperties(cloudProp);
         SET_FAILURE("No Exception occured");
     }
-
     catch (exception& e)
     {
         ASSERT_EQ(std::string(e.what()), "basic_string::_S_construct null not valid")<<"Exception occurred in provisionProperties but not null type";
@@ -155,7 +139,6 @@ TEST_F(ESCloudResourceTest_btc, ProvisionEnrolleeWithoutAuthProvider_NV_N)
         cloudProp.setCloudID(CLOUD_ID);
         cloudResource->provisionProperties(cloudProp);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in provisionProperties: " + std::string(e.what()));
@@ -181,7 +164,6 @@ TEST_F(ESCloudResourceTest_btc, ProvisionEnrolleeWithoutCiServer_NV_N)
         cloudProp.setCloudID(CLOUD_ID);
         cloudResource->provisionProperties(cloudProp);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in provisionProperties: " + std::string(e.what()));
@@ -207,7 +189,6 @@ TEST_F(ESCloudResourceTest_btc, ProvisionEnrolleeWithoutID_NV_N)
         cloudProp.setCloudID(EMPTY_STRING);
         cloudResource->provisionProperties(cloudProp);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in provisionProperties: " + std::string(e.what()));
@@ -231,7 +212,6 @@ TEST_F(ESCloudResourceTest_btc, ProvisionEnrolleeWithNullValue_NV_N)
         CloudProp cloudProp;
         cloudResource->provisionProperties(cloudProp);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in provisionProperties: " + std::string(e.what()));

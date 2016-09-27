@@ -22,14 +22,15 @@ package org.iotivity.service.es.test.btc;
 
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.service.easysetup.mediator.CloudProp;
-import org.iotivity.service.easysetup.mediator.ESException;
 
 import static org.iotivity.service.es.test.helper.ESUtility.*;
+import static org.iotivity.service.es.test.helper.ESPropertiesHelper.*;
 
 import android.test.AndroidTestCase;
 
 public class ESCloudPropTest extends AndroidTestCase {
 
+    private static final int DEFAULT_CRED_ID = 0;
     private CloudProp           cloudProp;
     private final static String AUTH_CODE     = "authcode";
     private final static String AUTH_PROVIDER = "authprovider";
@@ -80,28 +81,57 @@ public class ESCloudPropTest extends AndroidTestCase {
      * @pre_condition none
      * @procedure 1. Call setCloudProp API.
      * @post_condition none
-     * @expected setCloudProp set with specified values
+     * @expected should throw exception
      */
     public void testESSetCloudPropWithInvalidArguments_ESV_ETC_N() {
         try {
             cloudProp.setCloudProp(EMPTY_STRING, AUTH_PROVIDER, CI_SERVER);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
 
         try {
             cloudProp.setCloudProp(AUTH_CODE, EMPTY_STRING, CI_SERVER);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
 
         try {
             cloudProp.setCloudProp(AUTH_CODE, AUTH_PROVIDER, EMPTY_STRING);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
+        }
+
+    }
+
+    /**
+     * @since 2016-08-15
+     * @see none
+     * @objective test setCloudProp API negatively
+     * @target public void setCloudProp(String authCode, String authProvider,
+     *         String ciServer)
+     * @test_data NULL_VALUE, AUTH_PROVIDER, CI_SERVER
+     * @pre_condition none
+     * @procedure 1. Call setCloudProp API.
+     * @post_condition none
+     * @expected should throw exception
+     */
+    public void testESSetCloudPropWithNullArguments_ESV_ETC_N() {
+        try {
+            cloudProp.setCloudProp(NULL_VALUE, AUTH_PROVIDER, CI_SERVER);
+        } catch (Exception e) {
+        }
+
+        try {
+            cloudProp.setCloudProp(AUTH_CODE, NULL_VALUE, CI_SERVER);
+        } catch (Exception e) {
+            fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
+        }
+
+        try {
+            cloudProp.setCloudProp(AUTH_CODE, AUTH_PROVIDER, NULL_VALUE);
+        } catch (Exception e) {
+            fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
 
     }
@@ -116,11 +146,10 @@ public class ESCloudPropTest extends AndroidTestCase {
      * @procedure 1.Call getAuthCode API without setting auth code 2.Check
      *            return value
      * @post_condition none
-     * @expected return empty string
+     * @expected return null
      */
     public void testESGetAuthCode_SRC_DSCC_N() {
-        assertEquals("Fail to get auth code", cloudProp.getAuthCode(),
-                EMPTY_STRING);
+        assertNull("Should return null", cloudProp.getAuthCode());
     }
 
     /**
@@ -133,11 +162,10 @@ public class ESCloudPropTest extends AndroidTestCase {
      * @procedure 1.Call getAuthProvider API without setting auth provider
      *            2.Check return value
      * @post_condition none
-     * @expected return empty string
+     * @expected return null
      */
     public void testESGetAuthProvider_SRC_DSCC_N() {
-        assertEquals("Fail to get auth provider", cloudProp.getAuthProvider(),
-                EMPTY_STRING);
+        assertNull("Should return null", cloudProp.getAuthProvider());
     }
 
     /**
@@ -150,11 +178,10 @@ public class ESCloudPropTest extends AndroidTestCase {
      * @procedure 1.Call getCiServer API without setting auth code 2.Check
      *            return value
      * @post_condition none
-     * @expected return empty string
+     * @expected return null
      */
     public void testESGetCiServer_SRC_DSCC_N() {
-        assertEquals("Fail to get ci server", cloudProp.getCiServer(),
-                EMPTY_STRING);
+        assertNull("Should return null", cloudProp.getCiServer());
     }
 
     /**
@@ -172,9 +199,8 @@ public class ESCloudPropTest extends AndroidTestCase {
 
         try {
             cloudProp.setCloudID(EMPTY_STRING);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
     }
 
@@ -193,10 +219,9 @@ public class ESCloudPropTest extends AndroidTestCase {
     public void testESsetCloudIDWithNullCloudID_NV_ETC_N() {
 
         try {
-            cloudProp.setCloudID(null);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
+            cloudProp.setCloudID(NULL_VALUE);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
     }
 
@@ -212,10 +237,26 @@ public class ESCloudPropTest extends AndroidTestCase {
      * @post_condition none
      * @expected cloud id set with specified values
      */
-    public void testES_FSV_P() {
+    public void testESsetCloudID_FSV_P() {
         cloudProp.setCloudID(CLOUD_ID);
         assertEquals("Fail to set cloud id", cloudProp.getCloudID(), CLOUD_ID);
     }
+    
+    /**
+     * @since 2016-08-20
+     * @see none
+     * @objective test getCloudID API negatively
+     * @target public void setCloudID(String cloudID)
+     * @test_data none
+     * @pre_condition none
+     * @procedure 1.Call getCloudID API without setCloudId
+     * @post_condition none
+     * @expected Return empty string
+     */
+    public void testESGetCloudID_ETC_N() {
+        assertEquals("Should return empty string", EMPTY_STRING, cloudProp.getCloudID());
+    }
+
 
     /**
      * @since 2016-08-20
@@ -228,8 +269,39 @@ public class ESCloudPropTest extends AndroidTestCase {
      * @post_condition none
      * @expected return OCRepresentation instance
      */
-    public void testESGetCountry_FSV_P() {
-        assertEquals("Shoul instance of OcRepresentation",
+    public void testESToOCRepresentation_FSV_P() {
+        assertTrue("Shoul instance of OcRepresentation",
                 cloudProp.toOCRepresentation() instanceof OcRepresentation);
+    }
+
+    /**
+     * @since 2016-09-05
+     * @see none
+     * @objective test setCloudID API positively
+     * @target public void setCredID(int credID)
+     * @test_data  CRED_ID
+     * @pre_condition none
+     * @procedure 1.Call setCredID API
+     * @post_condition none
+     * @expected cred id set with specified values
+     */
+    public void testESsetCredID_FSV_P() {
+        cloudProp.setCredID(CRED_ID);
+        assertEquals("Fail to set cred id",CRED_ID, cloudProp.getCredID());
+    }
+    
+    /**
+     * @since 2016-09-05
+     * @see none
+     * @objective test getCredID API negatively
+     * @target public String getCredID()
+     * @test_data none
+     * @pre_condition none
+     * @procedure 1.Call getCredID API without setCredID
+     * @post_condition none
+     * @expected return 0
+     */
+    public void testESsetGetCredID_ETC_N() {
+        assertEquals("Fail to set cred id",DEFAULT_CRED_ID, cloudProp.getCredID());
     }
 }

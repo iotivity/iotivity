@@ -40,12 +40,12 @@ typedef void (*Runner)();
 
 Runner g_currentRun;
 ESMediatorHelper m_esMediatorHelper;
-class ProvisionDevicePropertiesTest_stc: public ::testing::Test
+class ESProvisionDevicePropertiesTest_stc: public ::testing::Test
 {
 
 public:
-    ProvisionDevicePropertiesTest_stc() = default;
-    ~ProvisionDevicePropertiesTest_stc() = default;
+    ESProvisionDevicePropertiesTest_stc() = default;
+    ~ESProvisionDevicePropertiesTest_stc() = default;
 
     ESMediatorHelper esMediatorHelper;
 
@@ -63,15 +63,17 @@ protected:
 
 /**
  * @since 2016-08-24
+ * @objective test 'provisionDeviceProperties' positively
+ * @target public void provisionDeviceProperties(DeviceProp deviceProp,
+ *         DevicePropProvisioningCallback callback) throws ESException
  * @see public void setWiFiProp(String ssid, String pwd, WIFI_AUTHTYPE
  *      authtype, WIFI_ENCTYPE enctype)
  * @see public void setDevConfProp(String language, String country)
  * @see public synchronized static EasySetup getInstance(Context context)
  * @see public synchronized RemoteEnrollee createRemoteEnrollee(OcResource
  *      enrolleeResource)
- * @objective test provisionDeviceProperties positively
- * @target public void provisionDeviceProperties(DeviceProp deviceProp,
- *         DevicePropProvisioningCallback callback) throws ESException
+ *
+ *
  * @test_data deviceProp DevicePropProvisioningCallback
  * @pre_condition 1.create remote enrollee 2.cretae deviceprop
  * @procedure 1. Call provisionDeviceProperties API.
@@ -80,7 +82,7 @@ protected:
  *
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ProvisionDevicePropertiesTest_stc, TestESProvisionDeviceProperties_P_RSV)
+TEST_F(ESProvisionDevicePropertiesTest_stc, ProvisionDeviceProperties_RSV_P)
 {
     ESMediatorHelper::s_isDevicePropProvCallbackCalled = false;
     ESMediatorHelper::s_isProvisionDevicePropSuccess = false;
@@ -113,7 +115,7 @@ TEST_F(ProvisionDevicePropertiesTest_stc, TestESProvisionDeviceProperties_P_RSV)
  *
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ProvisionDevicePropertiesTest_stc, TestESGetConfigDeviceProperties_P_RSV)
+TEST_F(ESProvisionDevicePropertiesTest_stc, GetConfigDeviceProperties_RSV_P)
 {
     ESMediatorHelper::s_isDeviceConfigCallbackCalled = false;
     ESMediatorHelper::s_isConfigDevicePropSuccess = false;
@@ -146,7 +148,7 @@ TEST_F(ProvisionDevicePropertiesTest_stc, TestESGetConfigDeviceProperties_P_RSV)
  *
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ProvisionDevicePropertiesTest_stc, TestRemoteEnrolleeStatus_P_RSV)
+TEST_F(ESProvisionDevicePropertiesTest_stc, RemoteEnrolleeStatus_RSV_P)
 {
     ESMediatorHelper::s_isGetStatusCalled = false;
     ESMediatorHelper::s_isGetStatusCallbackCalled = false;
@@ -178,7 +180,7 @@ TEST_F(ProvisionDevicePropertiesTest_stc, TestRemoteEnrolleeStatus_P_RSV)
  *
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ProvisionDevicePropertiesTest_stc, TestESProvisionCloudProperties_P_RSV)
+TEST_F(ESProvisionDevicePropertiesTest_stc, ProvisionCloudProperties_RSV_P)
 {
     ESMediatorHelper::s_isCloudPropProvCallbackCalled = false;
     ESMediatorHelper::s_isProvisionCloudPropSuccess = false;
@@ -188,6 +190,35 @@ TEST_F(ProvisionDevicePropertiesTest_stc, TestESProvisionCloudProperties_P_RSV)
 
     ASSERT_TRUE(ESMediatorHelper::s_isProvisionCloudPropSuccess)<<"s_isProvisionCloudPropSuccess Called failed";
     ASSERT_TRUE(ESMediatorHelper::s_isCloudPropProvCallbackCalled)<<"s_isCloudPropProvCallbackCalled Called failed";
+
+}
+#endif
+
+/**
+ * @since 2016-08-24
+ * @see public synchronized static EasySetup getInstance()
+ * @see public synchronized RemoteEnrollee createRemoteEnrollee(OcResource
+ *      enrolleeResource)
+ * @objective test provisionSecurity positively
+ * @target public void provisionSecurity(const SecurityProvStatusCb callback)
+ * @test_data SecurityProvStatusCb
+ * @pre_condition 1.create remote enrollee
+ * @procedure 1. Call provisionSecurity API.
+ * @post_condition none
+ * @expected provisionSecurity call without exception
+ *
+ */
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ESProvisionDevicePropertiesTest_stc, ProvisionSecurity_RSV_P)
+{
+    ESMediatorHelper::s_isSecurityPropProvCallbackCalled = false;
+    ESMediatorHelper::s_isProvisionSecurityPropSuccess = false;
+
+    m_esMediatorHelper.findEnrolleeResource();
+    m_esMediatorHelper.provisionSecurityProperty();
+
+    ASSERT_TRUE(ESMediatorHelper::s_isProvisionSecurityPropSuccess)<<"ProvisionSecurityPropSuccess Called failed";
+    ASSERT_TRUE(ESMediatorHelper::s_isSecurityPropProvCallbackCalled)<<"SecurityPropProvCallbackCalled Called failed";
 
 }
 #endif

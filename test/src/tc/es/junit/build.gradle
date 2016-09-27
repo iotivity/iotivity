@@ -70,15 +70,6 @@ android {
     println ("\nConfigured $commonText android properties")
 }
 
-/*
-android.applicationVariants.all{ variant ->
-       variant.outputs.each { output ->
-         output.processResources.manifestFile = file('AndroidManifest.xml')
-         output.processManifest.enabled=false
-       }
-}
-*/
-
 dependencies {
     compile fileTree(dir: "${androidLibFileDirFromModules}", include: ['*.jar'])
     compile(name:"${baseAARFile}", ext:'aar')

@@ -27,25 +27,32 @@ import org.iotivity.service.easysetup.mediator.enums.WIFI_ENCTYPE;
 
 public class ESPropertiesHelper {
 
-    private final static String ENROLLEE_SS_ID    = "Iotivity_SSID";
-    private final static String ENROLLEE_PASSWORD = "Iotivity_PWD";
-    private final static String LANGUAGE          = "English";
-    private final static String COUNTRY           = "America";
-    private final static String AUTH_CODE         = "12";
-    private final static String AUTH_PROVIDER     = "github";
-    private final static String CI_SERVER         = "CI Server";
+    public final static String ENROLLEE_SS_ID    = "Iotivity_SSID";
+    public final static String ENROLLEE_PASSWORD = "Iotivity_PWD";
+    public final static String LANGUAGE          = "Bangla";
+    public final static String COUNTRY           = "Bangladesh";
+    public final static String LOCATION           = "Dhaka";
+    public final static String AUTH_CODE         = "12";
+    public final static String AUTH_PROVIDER     = "github";
+    public final static String CI_SERVER         = "CI Server";
+    public final static String CLOUD_ID        = "f002ae8b-c42c-40d3-8b8d-1927c17bd1b3";
+    public final static int CRED_ID        =  1;
+
 
     public static DeviceProp createDeviceProperties() {
         DeviceProp deviceProp = new DeviceProp();
         deviceProp.setWiFiProp(ENROLLEE_SS_ID, ENROLLEE_PASSWORD,
                 WIFI_AUTHTYPE.WPA2_PSK, WIFI_ENCTYPE.TKIP_AES);
-        deviceProp.setDevConfProp(LANGUAGE, COUNTRY);
+        deviceProp.setDevConfProp(LANGUAGE, COUNTRY, LANGUAGE);
         return deviceProp;
     }
 
     public static CloudProp createCloudProperties() {
         CloudProp cloudProp = new CloudProp();
         cloudProp.setCloudProp(AUTH_CODE, AUTH_PROVIDER, CI_SERVER);
+        cloudProp.setCloudID(CLOUD_ID);
+        cloudProp.setCredID(CRED_ID);
+        
         return cloudProp;
     }
 }

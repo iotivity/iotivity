@@ -43,38 +43,19 @@ public class ESDevicePropProvCallback extends DevicePropProvisioningCallback {
             eSResult = ESResult.ES_OK;
             Log.d(TAG, eSResult.toString());
         }
-
         else if (result.equals(ESResult.ES_ERROR)) {
             eSResult = ESResult.ES_ERROR;
             Log.d(TAG, eSResult.toString());
-        } else if (result.equals(ESResult.ES_UNAUTHORIZED)) {
-            eSResult = ESResult.ES_UNAUTHORIZED;
+        } else if (result.equals(ESResult.ES_ENROLLEE_DISCOVERY_FAILURE)) {
+            eSResult = ESResult.ES_ENROLLEE_DISCOVERY_FAILURE;
+            Log.d(TAG, eSResult.toString());
+        } else if (result.equals(ESResult.ES_ENROLLEE_DISCOVERY_FAILURE)) {
+            eSResult = ESResult.ES_ENROLLEE_DISCOVERY_FAILURE;
             Log.d(TAG, eSResult.toString());
 
-        } else if (result.equals(ESResult.ES_NETWORKFOUND)) {
-            eSResult = ESResult.ES_NETWORKFOUND;
+        } else if (result.equals(ESResult.ES_SEC_OPERATION_IS_NOT_SUPPORTED)) {
+            eSResult = ESResult.ES_SEC_OPERATION_IS_NOT_SUPPORTED;
             Log.d(TAG, eSResult.toString());
-
-        } else if (result.equals(ESResult.ES_NETWORKNOTCONNECTED)) {
-            eSResult = ESResult.ES_NETWORKNOTCONNECTED;
-            Log.d(TAG, eSResult.toString());
-
-        } else if (result.equals(ESResult.ES_RESOURCECREATED)) {
-            eSResult = ESResult.ES_RESOURCECREATED;
-            Log.d(TAG, eSResult.toString());
-
-        } else if (result.equals(ESResult.ES_RECVREQOFPROVRES)) {
-            eSResult = ESResult.ES_RECVREQOFPROVRES;
-            Log.d(TAG, eSResult.toString());
-
-        } else if (result.equals(ESResult.ES_RECVUPDATEOFPROVRES)) {
-            eSResult = ESResult.ES_RECVUPDATEOFPROVRES;
-            Log.d(TAG, eSResult.toString());
-
-        } else if (result.equals(ESResult.ES_RECVTRIGGEROFPROVRES)) {
-            eSResult = ESResult.ES_RECVTRIGGEROFPROVRES;
-            Log.d(TAG, eSResult.toString());
-
         }
         isDevicePropProvCallbackCalled = true;
     }

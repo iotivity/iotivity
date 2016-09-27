@@ -63,7 +63,8 @@ public class ESProvisionSecurityTest extends AndroidTestCase {
      * @post_condition none
      * @expected can perform security provision
      */
-    public void testESProvisionDe_P_RSV() {
+    public void testESProvisionSecurity_P_RSV() {
+       // assertTrue("Should build in secured mode",ESOICStackHelper.IS_SECURED);
         ESOICStackHelper.copyJsonFromAsset(getContext());
         ESOICStackHelper.initOICStack(getContext());
         OcResource remoteEnrolleeResource = eSEnrolleeHelper

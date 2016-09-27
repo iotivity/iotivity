@@ -21,7 +21,9 @@
 package org.iotivity.service.es.test.btc;
 
 import org.iotivity.service.es.test.helper.ESEnrolleeHelper;
+import org.iotivity.service.easysetup.mediator.ESConstants;
 import org.iotivity.service.easysetup.mediator.ESException;
+import org.iotivity.service.easysetup.mediator.RemoteEnrollee;
 import org.iotivity.service.easysetup.mediator.EasySetup;
 import org.iotivity.base.OcResource;
 import org.iotivity.base.OcPlatform;
@@ -36,8 +38,8 @@ public class ESEasySetupTest extends AndroidTestCase {
     private ESEnrolleeHelper    eSEnrolleeHelper;
     private static final String RESOURCE_NAME          = "/a/light";
     private static final String PROV_RESOURCE_TYPE     = "ocf.wk.prov";
-    private static final String INVALID_RESOURCE_TYPE  = "oic.es.invalid";
-    private static final String INVALID_INTERFACE_TYPE = OcPlatform.DEFAULT_INTERFACE;
+    private static final String INVALID_RESOURCE_TYPE  = "easysetup.wk.prov";
+    private static final String INVALID_INTERFACE_TYPE = OcPlatform.GROUP_INTERFACE;
     private static final String BATCH_INTERFACE_TYPE   = OcPlatform.BATCH_INTERFACE;
 
     protected void setUp() throws Exception {
@@ -82,9 +84,8 @@ public class ESEasySetupTest extends AndroidTestCase {
     public void testESGetInstanceWithNullContext_ETC_NV_N() {
         try {
             EasySetup.getInstance(null);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
     }
 
@@ -102,11 +103,13 @@ public class ESEasySetupTest extends AndroidTestCase {
      * @expected Successful creation of remote enrollee object
      */
     public void testESCreateRemoteEnrollee_P_RSV() {
-        ocResource = eSEnrolleeHelper.createEnrolleeResource(getContext(),
-                RESOURCE_NAME, PROV_RESOURCE_TYPE, BATCH_INTERFACE_TYPE);
-        assertNotNull("Resource object should not null", ocResource);
-        assertNotNull("RemoteEnrollee should not null", EasySetup
-                .getInstance(getContext()).createRemoteEnrollee(ocResource));
+
+        OcResource remoteEnrolleeResource = eSEnrolleeHelper
+                .findEnrolleeResource(getContext());
+        assertNotNull("Got null remote enrollee resource",
+                remoteEnrolleeResource);
+        RemoteEnrollee remoteEnrollee = EasySetup.getInstance(getContext())
+                .createRemoteEnrollee(remoteEnrolleeResource);        
     }
 
     /**
@@ -123,7 +126,7 @@ public class ESEasySetupTest extends AndroidTestCase {
      * @post_condition none
      * @expected Null remote enrollee will be returned.
      */
-    public void testESCreateRemoteEnrolleeWithInvalidInterfaceType_USV_SRC_N() {
+    public void testESCreateRemoteEnrolleeWithInvalidResourceType_USV_SRC_N() {
         ocResource = eSEnrolleeHelper.createEnrolleeResource(getContext(),
                 RESOURCE_NAME, INVALID_RESOURCE_TYPE, BATCH_INTERFACE_TYPE);
         assertNotNull("Resource object should not null", ocResource);
@@ -145,7 +148,7 @@ public class ESEasySetupTest extends AndroidTestCase {
      * @post_condition none
      * @expected Null remote enrollee will be returned.
      */
-    public void testESCreateRemoteEnrolleeWithInvalidResourceType_USV_SRC_N() {
+    public void testESCreateRemoteEnrolleeWithInvalidInterfaceType_USV_SRC_N() {
         ocResource = eSEnrolleeHelper.createEnrolleeResource(getContext(),
                 RESOURCE_NAME, PROV_RESOURCE_TYPE, INVALID_INTERFACE_TYPE);
         assertNotNull("Resource object should not null", ocResource);
@@ -171,9 +174,10 @@ public class ESEasySetupTest extends AndroidTestCase {
         try {
             EasySetup.getInstance(getContext())
                     .createRemoteEnrollee(ocResource);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
+            //fail(EXCEPTION_SHOULD_BE_THROWN);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            //assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
     }
 }

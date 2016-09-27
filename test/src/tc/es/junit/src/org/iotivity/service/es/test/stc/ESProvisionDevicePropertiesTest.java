@@ -20,10 +20,13 @@
 
 package org.iotivity.service.es.test.stc;
 
+import static org.iotivity.service.es.test.helper.ESUtility.ES_EXCEPTION_SHOULD_BE_THROWN;
+import static org.iotivity.service.es.test.helper.ESUtility.EXCEPTION_SHOULD_BE_THROWN;
 import static org.iotivity.service.es.test.helper.ESUtility.EXCEPTION_SHOULD_NOT_BE_THROWN;
 
 import org.iotivity.base.OcResource;
 import org.iotivity.service.easysetup.mediator.DeviceProp;
+import org.iotivity.service.easysetup.mediator.ESException;
 import org.iotivity.service.easysetup.mediator.EasySetup;
 import org.iotivity.service.easysetup.mediator.GetEnrolleeStatus;
 import org.iotivity.service.easysetup.mediator.GetStatusCallback;
@@ -101,6 +104,39 @@ public class ESProvisionDevicePropertiesTest extends AndroidTestCase {
                         + ESDevicePropProvCallback.eSResult.toString(),
                 ESDevicePropProvCallback.isProvisionDevicePropSuccess);
     }
+    
+    
+    /**
+     * @since 2016-08-19
+     * @see public synchronized static EasySetup getInstance(Context context)
+     * @see public synchronized RemoteEnrollee createRemoteEnrollee(OcResource
+     *      enrolleeResource)
+     * @objective test provisionDeviceProperties negatively
+     * @target public void provisionDeviceProperties(DeviceProp deviceProp,
+     *         DevicePropProvisioningCallback callback) throws ESException
+     * @test_data null deviceProp DevicePropProvisioningCallback
+     * @pre_condition create remote enrollee
+     * @procedure Call provisionDeviceProperties API with null deviceProp
+     * @post_condition none
+     * @expected ES Exception should be thrown
+     */
+    public void testESProvisionDevicePropertiesWithNullDeviceProp_ETC_N() {
+        OcResource remoteEnrolleeResource = eSEnrolleeHelper
+                .findEnrolleeResource(getContext());
+        assertNotNull("Got null remote enrollee resource",
+                remoteEnrolleeResource);
+        RemoteEnrollee remoteEnrollee = EasySetup.getInstance(getContext())
+                .createRemoteEnrollee(remoteEnrolleeResource);
+        assertNotNull("Got null remote enrollee", remoteEnrollee);
+        
+        try {
+            remoteEnrollee.provisionDeviceProperties(null,
+                    new ESDevicePropProvCallback());
+            fail(EXCEPTION_SHOULD_BE_THROWN);
+        } catch (Exception e) {
+            assertTrue(true);
+        }
+    }
 
     /**
      * @throws ESException
@@ -137,11 +173,7 @@ public class ESProvisionDevicePropertiesTest extends AndroidTestCase {
 
         } catch (Exception ex) {
             fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
-        }
-        assertTrue("DevicePropProvCallback not called",
-                ESGetConfigurationCallback.isConfigurationCallbackCalled);
-        assertTrue("Fail to provision device properties",
-                ESGetConfigurationCallback.isConfigurationCallbackSuccess);
+        }       
     }
 
     /**
@@ -153,17 +185,17 @@ public class ESProvisionDevicePropertiesTest extends AndroidTestCase {
      * @see public synchronized static EasySetup getInstance(Context context)
      * @see public synchronized RemoteEnrollee createRemoteEnrollee(OcResource
      *      enrolleeResource)
-     * @objective test provisionDeviceProperties positively
+     * @objective test getStatus positively
      * @target public void provisionDeviceProperties(DeviceProp deviceProp,
      *         DevicePropProvisioningCallback callback) throws ESException
      * @test_data deviceProp DevicePropProvisioningCallback
      * @pre_condition 1.create remote enrollee 2.cretae deviceprop
      * @procedure 1. Call provisionDeviceProperties API.
      * @post_condition none
-     * @expected provisionDeviceProperties call without exception
+     * @expected can get provisioning status
      * 
      */
-    public void testESProvisionDe_P_RSV() {
+    public void testESProvisionGetStatus_P_RSV() {
         OcResource remoteEnrolleeResource = eSEnrolleeHelper
                 .findEnrolleeResource(getContext());
         assertNotNull("Got null remote enrollee resource",
@@ -187,9 +219,6 @@ public class ESProvisionDevicePropertiesTest extends AndroidTestCase {
             });
         } catch (Exception ex) {
             fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
-        }
-        assertTrue("GetStatusCallbackCalled not called",
-                iSGetStatusCallbackCalled);
-        iSGetStatusCallbackCalled = false;
+        }       
     }
 }

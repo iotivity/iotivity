@@ -29,27 +29,13 @@
 #include "easysetup.h"
 #include <escommon.h>
 #include "ESEnrolleeCommon.h"
-#include "EasySetup.h"
-#include "EnrolleeResource.h"
-#include "RemoteEnrollee.h"
-#include "ESRichCommon.h"
 #include <iostream>
 #include "ESMediatorHelper.h"
 #include "OCRepresentation.h"
 
-#define SSID "Iotivity_SSID"
-#define PASSWORD "Iotivity_PWD"
+
 #define WIFI_AUTHTYPE NONE_AUTH
 #define WIFI_ENCTYPE NONE_ENC
-#define LANGUAGE "korean"
-#define COUNTRY "korea"
-#define LOCATION "Dhaka"
-#define EMPTY_STRING ""
-#define NULL_VALUE NULL
-#define AUTH_CODE "authCode"
-#define AUTH_PROVIDER "authProvider"
-#define CI_SERVER "ciServer"
-#define CLOUD_ID "f002ae8b-c42c-40d3-8b8d-1927c17bd1b3"
 
 using namespace std;
 using namespace OC;
@@ -58,10 +44,7 @@ using namespace OIC::Service;
 class ESRichCommonTest_btc: public ::testing::Test
 {
 public:
-    ProvStatus m_provStatus = ES_STATE_INIT;
-    ESErrorCode m_eSErrorCode = ES_ERRCODE_NO_ERROR;
-    WIFI_FREQ m_WIFI_FREQ = WIFI_FREQ_NONE;
-
+    
 protected:
 
     virtual void SetUp()
@@ -94,9 +77,8 @@ TEST_F(ESRichCommonTest_btc, GetProvStatus_SRC_P)
 
         // std::shared_ptr< GetEnrolleeStatus > status;
         EnrolleeStatus enrolleeStatus(mDevConfRep);
-        ASSERT_EQ(enrolleeStatus.getProvStatus(), m_provStatus);
+        ASSERT_EQ(enrolleeStatus.getProvStatus(), ES_STATE_INIT);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get ProvStatus: " + std::string(e.what()));
@@ -120,7 +102,7 @@ TEST_F(ESRichCommonTest_btc, GetLastErrorCode_SRC_P)
         const OCRepresentation mDevConfRep;
 
         EnrolleeStatus enrolleeStatus(mDevConfRep);
-        ASSERT_EQ(enrolleeStatus.getLastErrCode(), m_eSErrorCode);
+        ASSERT_EQ(enrolleeStatus.getLastErrCode(), ES_ERRCODE_NO_ERROR);
     }
 
     catch (exception& e)
@@ -197,7 +179,6 @@ TEST_F(ESRichCommonTest_btc, SetCloudProp_NV_N)
         CloudProp cloudProp(mDevConfRep);
         cloudProp.setCloudProp(NULL_VALUE, NULL_VALUE, NULL_VALUE);
     }
-
     catch (exception& e)
     {
         ASSERT_EQ(std::string(e.what()), "basic_string::_S_construct null not valid")<<"Exception occurred in provisionProperties but not null type";
@@ -222,7 +203,6 @@ TEST_F(ESRichCommonTest_btc, setCloudID_SRC_P)
         CloudProp cloudProp(mDevConfRep);
         cloudProp.setCloudID(CLOUD_ID);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in set CloudId: " + std::string(e.what()));
@@ -247,7 +227,6 @@ TEST_F(ESRichCommonTest_btc, setCloudID_ESV_P)
         CloudProp cloudProp(mDevConfRep);
         cloudProp.setCloudID(EMPTY_STRING);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in set CloudId: " + std::string(e.what()));
@@ -272,7 +251,6 @@ TEST_F(ESRichCommonTest_btc, setCloudID_NV_P)
         CloudProp cloudProp(mDevConfRep);
         cloudProp.setCloudID(NULL_VALUE);
     }
-
     catch (exception& e)
     {
         ASSERT_EQ(std::string(e.what()), "basic_string::_S_construct null not valid")<<"Exception occurred in provisionProperties but not null type";
@@ -325,7 +303,6 @@ TEST_F(ESRichCommonTest_btc, GetAuthProvider_SRC_P)
         cloudProp.setCloudProp(AUTH_CODE, AUTH_PROVIDER, CI_SERVER);
         ASSERT_EQ(cloudProp.getAuthProvider(), AUTH_PROVIDER);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get AuthProvider: " + std::string(e.what()));
@@ -351,7 +328,6 @@ TEST_F(ESRichCommonTest_btc, GetCiServer_SRC_P)
         cloudProp.setCloudProp(AUTH_CODE, AUTH_PROVIDER, CI_SERVER);
         ASSERT_EQ(cloudProp.getCiServer(), CI_SERVER);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get CiServer: " + std::string(e.what()));
@@ -377,7 +353,6 @@ TEST_F(ESRichCommonTest_btc, GetCloudID_SRC_P)
         cloudProp.setCloudID(CLOUD_ID);
         ASSERT_EQ(cloudProp.getCloudID(), CLOUD_ID);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get CloudID: " + std::string(e.what()));
@@ -402,7 +377,6 @@ TEST_F(ESRichCommonTest_btc, SetWiFiProp_SRC_P)
         DeviceProp deviceProp(mDevConfRep);
         deviceProp.setWiFiProp(SSID, PASSWORD, WIFI_AUTHTYPE, WIFI_ENCTYPE);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in set WiFiProp: " + std::string(e.what()));
@@ -427,7 +401,6 @@ TEST_F(ESRichCommonTest_btc, SetWiFiProp_ESV_N)
         DeviceProp deviceProp(mDevConfRep);
         deviceProp.setWiFiProp(EMPTY_STRING, EMPTY_STRING, WIFI_AUTHTYPE, WIFI_ENCTYPE);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in set WiFiProp: " + std::string(e.what()));
@@ -452,7 +425,6 @@ TEST_F(ESRichCommonTest_btc, SetWiFiProp_NV_N)
         DeviceProp deviceProp(mDevConfRep);
         deviceProp.setWiFiProp(NULL_VALUE, NULL_VALUE, WIFI_AUTHTYPE, WIFI_ENCTYPE);
     }
-
     catch (exception& e)
     {
         ASSERT_EQ(std::string(e.what()), "basic_string::_S_construct null not valid")<<"Exception occurred in provisionProperties but not null type";
@@ -477,7 +449,6 @@ TEST_F(ESRichCommonTest_btc, SetDevConfProp_SRC_P)
         DeviceProp deviceProp(mDevConfRep);
         deviceProp.setDevConfProp(LANGUAGE, COUNTRY, LOCATION);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in set DevConfProp: " + std::string(e.what()));
@@ -502,7 +473,6 @@ TEST_F(ESRichCommonTest_btc, SetDevConfProp_ESV_N)
         DeviceProp deviceProp(mDevConfRep);
         deviceProp.setDevConfProp(EMPTY_STRING, EMPTY_STRING, EMPTY_STRING);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in set DevConfProp: " + std::string(e.what()));
@@ -527,7 +497,6 @@ TEST_F(ESRichCommonTest_btc, SetDevConfProp_NV_N)
         DeviceProp deviceProp(mDevConfRep);
         deviceProp.setDevConfProp(NULL_VALUE, NULL_VALUE, NULL_VALUE);
     }
-
     catch (exception& e)
     {
         ASSERT_EQ(std::string(e.what()), "basic_string::_S_construct null not valid")<<"Exception occurred in provisionProperties but not null type";
@@ -553,7 +522,6 @@ TEST_F(ESRichCommonTest_btc, GetSsid_SRC_P)
         deviceProp.setWiFiProp(SSID, PASSWORD, WIFI_AUTHTYPE, WIFI_ENCTYPE);
         ASSERT_EQ(deviceProp.getSsid(), SSID);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get Ssid: " + std::string(e.what()));
@@ -578,7 +546,6 @@ TEST_F(ESRichCommonTest_btc, GetSsid_DSCC_N)
         DeviceProp deviceProp(mDevConfRep);
         ASSERT_EQ(deviceProp.getSsid(), EMPTY_STRING);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get Ssid: " + std::string(e.what()));
@@ -604,7 +571,6 @@ TEST_F(ESRichCommonTest_btc, GetPassword_SRC_P)
         deviceProp.setWiFiProp(SSID, PASSWORD, WIFI_AUTHTYPE, WIFI_ENCTYPE);
         ASSERT_EQ(deviceProp.getPassword(), PASSWORD);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get Password: " + std::string(e.what()));
@@ -629,7 +595,6 @@ TEST_F(ESRichCommonTest_btc, GetPassword_DSCC_N)
         DeviceProp deviceProp(mDevConfRep);
         ASSERT_EQ(deviceProp.getPassword(), EMPTY_STRING);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get Password: " + std::string(e.what()));
@@ -655,7 +620,6 @@ TEST_F(ESRichCommonTest_btc, GetAuthType_SRC_P)
         deviceProp.setWiFiProp(SSID, PASSWORD, WIFI_AUTHTYPE, WIFI_ENCTYPE);
         ASSERT_EQ(deviceProp.getAuthType(), WIFI_AUTHTYPE);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get AuthType: " + std::string(e.what()));
@@ -680,7 +644,6 @@ TEST_F(ESRichCommonTest_btc, getEncType_SRC_P)
         DeviceProp deviceProp(mDevConfRep);
         ASSERT_EQ(deviceProp.getEncType(), WIFI_ENCTYPE);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get EncType: " + std::string(e.what()));
@@ -706,7 +669,6 @@ TEST_F(ESRichCommonTest_btc, GetLanguage_SRC_P)
         deviceProp.setDevConfProp(LANGUAGE, COUNTRY, LOCATION);
         ASSERT_EQ(deviceProp.getLanguage(), LANGUAGE);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get Language: " + std::string(e.what()));
@@ -731,7 +693,6 @@ TEST_F(ESRichCommonTest_btc, GetLanguage_DSCC_N)
         DeviceProp deviceProp(mDevConfRep);
         ASSERT_EQ(deviceProp.getLanguage(), EMPTY_STRING);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get Language: " + std::string(e.what()));
@@ -757,7 +718,6 @@ TEST_F(ESRichCommonTest_btc, GetCountry_SRC_P)
         deviceProp.setDevConfProp(LANGUAGE, COUNTRY, LOCATION);
         ASSERT_EQ(deviceProp.getCountry(), COUNTRY);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get Country: " + std::string(e.what()));
@@ -782,7 +742,6 @@ TEST_F(ESRichCommonTest_btc, GetCountry_DSCC_N)
         DeviceProp deviceProp(mDevConfRep);
         ASSERT_EQ(deviceProp.getCountry(), EMPTY_STRING);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get Country: " + std::string(e.what()));
@@ -793,7 +752,7 @@ TEST_F(ESRichCommonTest_btc, GetCountry_DSCC_N)
  * @since 2016-09-05
  * @objective Test 'get' API with positive basic way
  * @target std::string getLocation() const;
- * @test_data    None
+ * @test_data    set device location
  * @pre_condition None
  * @procedure Perform getLocation()
  * @post_condition None
@@ -808,7 +767,6 @@ TEST_F(ESRichCommonTest_btc, GetLocation_SRC_P)
         deviceProp.setDevConfProp(LANGUAGE, COUNTRY, LOCATION);
         ASSERT_EQ(deviceProp.getLocation(), LOCATION);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get Country: " + std::string(e.what()));
@@ -833,7 +791,6 @@ TEST_F(ESRichCommonTest_btc, GetLocation_DSCC_N)
         DeviceProp deviceProp(mDevConfRep);
         ASSERT_EQ(deviceProp.getLocation(), EMPTY_STRING);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get Country: " + std::string(e.what()));
@@ -858,7 +815,6 @@ TEST_F(ESRichCommonTest_btc, GetDeviceName_SRC_P)
         EnrolleeConf enrolleeConf(mDevConfRep);
         ASSERT_EQ(enrolleeConf.getDeviceName(), EMPTY_STRING);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get DeviceName: " + std::string(e.what()));
@@ -881,9 +837,8 @@ TEST_F(ESRichCommonTest_btc, GetWiFiFreq_SRC_P)
     {
         const OCRepresentation mDevConfRep;
         EnrolleeConf enrolleeConf(mDevConfRep);
-        ASSERT_EQ(enrolleeConf.getWiFiFreq(), m_WIFI_FREQ);
+        ASSERT_EQ(enrolleeConf.getWiFiFreq(), WIFI_FREQ_NONE);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get WiFiFreq: " + std::string(e.what()));

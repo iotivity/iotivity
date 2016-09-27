@@ -26,6 +26,7 @@ import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcException;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.ServiceType;
+import org.iotivity.service.easysetup.mediator.ESConstants;
 import org.iotivity.service.easysetup.mediator.EasySetup;
 import org.iotivity.service.easysetup.mediator.RemoteEnrollee;
 import org.iotivity.base.ModeType;
@@ -39,6 +40,7 @@ import android.util.Log;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import static org.iotivity.service.es.test.helper.ESOICStackHelper.*;
 
 import android.content.Context;
 
@@ -61,6 +63,8 @@ public class ESEnrolleeHelper {
     private static final String RESOURCE_NAME                      = "/a/light";
     private static final String PROV_RESOURCE_TYPE                 = "ocf.wk.prov";
     private static final String BATCH_INTERFACE_TYPE               = OcPlatform.BATCH_INTERFACE;
+    public static final boolean callbackcalled = false;
+    private static String filePath                 = "ocf.wk.prov";
 
     public ESEnrolleeHelper() {
         enrolleeResource = null;
@@ -68,9 +72,16 @@ public class ESEnrolleeHelper {
     }
 
     private boolean configurePlatform(Context context) {
-        PlatformConfig cfg = new PlatformConfig(context, ServiceType.IN_PROC,
-                ModeType.CLIENT_SERVER, ALL_INTERFACE_TYPE, 0,
-                QualityOfService.LOW);
+        //copyJsonFromAsset(context);
+        //initOICStack(context);
+       // filePath = context.getFilesDir().getPath() + "/";
+        PlatformConfig cfg = new PlatformConfig(
+                context,
+                ServiceType.IN_PROC,
+                ModeType.CLIENT_SERVER,
+                "0.0.0.0", // bind to all available interfaces
+                0,
+                QualityOfService.HIGH);
         OcPlatform.Configure(cfg);
         return true;
     }
@@ -110,10 +121,21 @@ public class ESEnrolleeHelper {
         public void onFindResourceFailed(Throwable throwable, String s) {
             Log.d(TAG, FAIL_TO_FIND_RESOURCE);
             isResourceFound = true;
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException ex) {
+                //Log.d(TAG, ex.getMessage());
+            }
+            Log.d("Fail string : ", s);
         }
 
         @Override
         public void onResourceFound(OcResource ocResource) {
+             try {
+                Thread.sleep(5000);
+            } catch (InterruptedException ex) {
+                //Log.d(TAG, ex.getMessage());
+            }
             if (ocResource == null) {
                 Log.d(TAG, FOUND_RESOURCE_IS_INVALID);
             } else {
@@ -121,10 +143,37 @@ public class ESEnrolleeHelper {
                 Log.d(TAG, ENROLLEEOUND);
                 Log.d(TAG, URI_OF_THE_RESOURCE + ocResource.getUri());
                 Log.d(TAG, HOST_ADDRESS_OF_THE_RESOURCE + ocResource.getHost());
-                Log.d(TAG, RESOURCE_TYPE_OF_THE_RESOURCE
-                        + ocResource.getResourceTypes().get(0));
-                Log.d(TAG, INTERFACE_TYPE_OF_THE_RESOURCE
-                        + ocResource.getResourceInterfaces().get(1));
+                while(true)
+                {
+                    boolean isResourcTypeProv= false , isInterfaceTypeBatch = false; 
+                    for(int i=0; i< ocResource.getResourceTypes().size();i++)
+                    {
+                        if(ocResource.getResourceTypes().get(i) == ESConstants.OC_RSRVD_ES_RES_TYPE_PROV)
+                            {
+                                Log.d(TAG, RESOURCE_TYPE_OF_THE_RESOURCE
+                            + ocResource.getResourceTypes().get(i));
+                                isResourcTypeProv = true;
+                                break;
+                            }
+                    }
+                                
+                    
+                    for(int i=0; i< ocResource.getResourceTypes().size();i++)
+                    {
+                        if(ocResource.getResourceInterfaces().get(i) == BATCH_INTERFACE_TYPE)
+                            {
+                                Log.d(TAG, INTERFACE_TYPE_OF_THE_RESOURCE
+                            + ocResource.getResourceInterfaces().get(i));
+                                isInterfaceTypeBatch = true;
+                                break;
+                            }
+                    }
+
+                    
+                    if(isResourcTypeProv && isInterfaceTypeBatch)
+                        break;
+                }
+                
             }
             isResourceFound = true;
         }
@@ -147,7 +196,7 @@ public class ESEnrolleeHelper {
 
     public OcResource findEnrolleeResource(Context context) {
         String requestUri = OcPlatform.WELL_KNOWN_QUERY + RT
-                + PROV_RESOURCE_TYPE;
+                + ESConstants.OC_RSRVD_ES_RES_TYPE_PROV;
         configurePlatform(context);
         try {
             OcPlatform.findResource(EMPTY_STRING, requestUri,
@@ -172,7 +221,7 @@ public class ESEnrolleeHelper {
 
     public RemoteEnrollee createRemoteEnrollee(Context context) {
         OcResource ocResource = createEnrolleeResource(context, RESOURCE_NAME,
-                PROV_RESOURCE_TYPE, BATCH_INTERFACE_TYPE);
+                ESConstants.OC_RSRVD_ES_RES_TYPE_PROV, BATCH_INTERFACE_TYPE);
         if (ocResource == null) {
             return null;
         }

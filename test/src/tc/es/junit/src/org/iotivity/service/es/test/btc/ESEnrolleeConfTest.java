@@ -23,7 +23,6 @@ package org.iotivity.service.es.test.btc;
 import static org.iotivity.service.es.test.helper.ESUtility.*;
 
 import org.iotivity.base.OcRepresentation;
-import org.iotivity.service.easysetup.mediator.ESException;
 import org.iotivity.service.easysetup.mediator.EnrolleeConf;
 import org.iotivity.service.easysetup.mediator.enums.WIFI_FREQ;
 import org.iotivity.service.easysetup.mediator.enums.WIFI_MODE;
@@ -33,7 +32,6 @@ import android.test.AndroidTestCase;
 
 public class ESEnrolleeConfTest extends AndroidTestCase {
 
-    private static final String EMPTY_STRING     = "";
     private int                 total_wifi_modes = 0;
     private EnrolleeConf        enrolleeConf;
 
@@ -48,28 +46,7 @@ public class ESEnrolleeConfTest extends AndroidTestCase {
         enrolleeConf = null;
     }
 
-    /**
-     * @since 2016-08-21
-     * @see none
-     * @objective test EnrolleeConf constructor negatively
-     * @target public EnrolleeConf(OcRepresentation rep)
-     * @test_data null
-     * @pre_condition none
-     * @procedure 1. Call EnrolleeConf with null value
-     * @post_condition none
-     * @expected ES Exception should be thrown
-     */
-    public void testESEnrolleeConf_NV_ETC_N() {
-
-        try {
-            enrolleeConf = new EnrolleeConf(null);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
-        } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
-        }
-    }
-
-    /**
+   /**
      * @since 2016-08-21
      * @see none
      * @objective test getDeviceName API positively
@@ -149,12 +126,11 @@ public class ESEnrolleeConfTest extends AndroidTestCase {
      * @pre_condition create empty oc representation
      * @procedure 1. Call getDeviceName API. 2.check device name.
      * @post_condition none
-     * @expected return empty device name
+     * @expected return null
      */
     public void testESGetDeviceName_SRC_DSCC_N() {
         enrolleeConf = new EnrolleeConf(new OcRepresentation());
-        assertEquals("Fail to get device name", EMPTY_STRING,
-                enrolleeConf.getDeviceName());
+        assertNull("Should return null", enrolleeConf.getDeviceName());
     }
 
     /**
@@ -200,12 +176,10 @@ public class ESEnrolleeConfTest extends AndroidTestCase {
      * @pre_condition create empty oc representation
      * @procedure 1. Call getWiFiFreq API. 2.check frequency type
      * @post_condition none
-     * @expected return WIFI_FREQ_NONE type WiFi frequency
+     * @expected return null
      */
     public void testESGetWiFiFreq_SRC_DSCC_N() {
         enrolleeConf = new EnrolleeConf(new OcRepresentation());
-        assertEquals("Fail to get WiFi frequency", WIFI_FREQ.WIFI_FREQ_NONE,
-                enrolleeConf.getWiFiFreq());
+        assertNull("Should return null", enrolleeConf.getWiFiFreq());
     }
-
 }

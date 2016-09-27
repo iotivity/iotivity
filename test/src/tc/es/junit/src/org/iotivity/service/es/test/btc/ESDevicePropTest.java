@@ -25,6 +25,9 @@ import org.iotivity.service.easysetup.mediator.ESException;
 import org.iotivity.service.easysetup.mediator.enums.WIFI_AUTHTYPE;
 import org.iotivity.service.easysetup.mediator.enums.WIFI_ENCTYPE;
 
+import android.util.Log;
+
+import static org.iotivity.service.es.test.helper.ESPropertiesHelper.*;
 import static org.iotivity.service.es.test.helper.ESUtility.*;
 
 import junit.framework.TestCase;
@@ -32,11 +35,7 @@ import junit.framework.TestCase;
 public class ESDevicePropTest extends TestCase {
 
     private DeviceProp          deviceProp;
-    private final static String ENROLLEE_SS_ID    = "Iotivity_SSID";
-    private final static String ENROLLEE_PASSWORD = "Iotivity_PWD";
-    private final static String LANGUAGE          = "English";
-    private final static String COUNTRY           = "America";
-
+    
     protected void setUp() throws Exception {
         super.setUp();
         deviceProp = new DeviceProp();
@@ -155,42 +154,27 @@ public class ESDevicePropTest extends TestCase {
      *         authtype, WIFI_ENCTYPE encType)
      * @test_data EMPTY_STRING, null
      * @pre_condition none
-     * @procedure Call setWiFiProp API with invalid values
+     * @procedure Call setWiFiProp API with empty string values
      * @post_condition none
      * @expected should throw exception
      */
-    public void testESSetWiFiPropWithInvalidArguments_ESV_NV_ETC_N() {
+    public void testESSetWiFiPropWithEmptyString_ESV_NV_ETC_N() {
+        
         try {
             deviceProp.setWiFiProp(EMPTY_STRING, ENROLLEE_PASSWORD,
                     WIFI_AUTHTYPE.WPA2_PSK, WIFI_ENCTYPE.TKIP_AES);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
-
+        
+        
         try {
             deviceProp.setWiFiProp(ENROLLEE_SS_ID, EMPTY_STRING,
                     WIFI_AUTHTYPE.WPA2_PSK, WIFI_ENCTYPE.TKIP_AES);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
-
-        try {
-            deviceProp.setWiFiProp(ENROLLEE_SS_ID, ENROLLEE_PASSWORD, null,
-                    WIFI_ENCTYPE.TKIP_AES);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
-        } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
-        }
-
-        try {
-            deviceProp.setWiFiProp(ENROLLEE_SS_ID, ENROLLEE_PASSWORD,
-                    WIFI_AUTHTYPE.WPA2_PSK, null);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
-        } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
-        }
+        
     }
 
     /**
@@ -202,25 +186,39 @@ public class ESDevicePropTest extends TestCase {
      * @test_data NULL_STRING, ENROLLEE_PASSWORD, WIFI_AUTHTYPE.WPA2_PSK,
      *            WIFI_ENCTYPE.TKIP_AES
      * @pre_condition none
-     * @procedure Call setWiFiProp API with invalid values
+     * @procedure Call setWiFiProp API with null values
      * @post_condition none
      * @expected should throw exception
      */
-    public void testESSetWiFiPropWithInvalidArguments_NV_ETC_N() {
+    public void testESSetWiFiPropWithNullArguments_NV_ETC_N() {
         try {
-            deviceProp.setWiFiProp(NULL_STRING, ENROLLEE_PASSWORD,
+            deviceProp.setWiFiProp(NULL_VALUE, ENROLLEE_PASSWORD,
                     WIFI_AUTHTYPE.WPA2_PSK, WIFI_ENCTYPE.TKIP_AES);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
 
         try {
-            deviceProp.setWiFiProp(ENROLLEE_SS_ID, NULL_STRING,
+            deviceProp.setWiFiProp(ENROLLEE_SS_ID, NULL_VALUE,
                     WIFI_AUTHTYPE.WPA2_PSK, WIFI_ENCTYPE.TKIP_AES);
+        } catch (Exception e) {
+            fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
+        }
+        
+        try {
+            deviceProp.setWiFiProp(ENROLLEE_SS_ID, ENROLLEE_PASSWORD, null,
+                    WIFI_ENCTYPE.TKIP_AES);
             fail(EXCEPTION_SHOULD_BE_THROWN);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            assertTrue(true);
+        }
+        
+        try {
+            deviceProp.setWiFiProp(ENROLLEE_SS_ID, ENROLLEE_PASSWORD,
+                    WIFI_AUTHTYPE.WPA2_PSK, null);
+            fail(EXCEPTION_SHOULD_BE_THROWN);
+        } catch (Exception e) {
+            assertTrue(true);
         }
     }
 
@@ -237,11 +235,13 @@ public class ESDevicePropTest extends TestCase {
      * @expected setDevConfProp with specified values
      */
     public void testESSetDevConfProp_FSV_P() {
-        deviceProp.setDevConfProp(LANGUAGE, COUNTRY);
+        deviceProp.setDevConfProp(LANGUAGE, COUNTRY, LOCATION);
         assertEquals("Fail to set WiFi ssid", deviceProp.getLanguage(),
                 LANGUAGE);
         assertEquals("Fail to set WiFi password", deviceProp.getCountry(),
                 COUNTRY);
+        assertEquals("Fail to set location", deviceProp.getLocation(),
+                LOCATION);
     }
 
     /**
@@ -256,32 +256,29 @@ public class ESDevicePropTest extends TestCase {
      * @expected setWiFiProp with specified values
      */
     public void testESSetDevConfPropWithInvalidArgument_ESV_NV_N() {
+        
         try {
-            deviceProp.setDevConfProp(EMPTY_STRING, LANGUAGE);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
+            deviceProp.setDevConfProp(EMPTY_STRING, LANGUAGE, LOCATION);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
 
         try {
-            deviceProp.setDevConfProp(LANGUAGE, EMPTY_STRING);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
+            deviceProp.setDevConfProp(LANGUAGE, EMPTY_STRING, LOCATION);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
+        }
+        
+        try {
+            deviceProp.setDevConfProp(NULL_VALUE, LANGUAGE, LOCATION);
+        } catch (Exception e) {
+            fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
 
         try {
-            deviceProp.setDevConfProp(null, LANGUAGE);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
+            deviceProp.setDevConfProp(LANGUAGE, NULL_VALUE, LOCATION);
         } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
-        }
-
-        try {
-            deviceProp.setDevConfProp(LANGUAGE, null);
-            fail(EXCEPTION_SHOULD_BE_THROWN);
-        } catch (Exception e) {
-            assertTrue(ES_EXCEPTION_SHOULD_BE_THROWN, e instanceof ESException);
+            fail(EXCEPTION_SHOULD_NOT_BE_THROWN);
         }
     }
 
@@ -297,8 +294,7 @@ public class ESDevicePropTest extends TestCase {
      * @expected return empty string
      */
     public void testESGetSsid_SRC_DSCC_N() {
-        assertEquals("Fail to get WiFi ssid", deviceProp.getSsid(),
-                EMPTY_STRING);
+        assertNull("Fail to get WiFi ssid", deviceProp.getSsid());
     }
 
     /**
@@ -314,8 +310,7 @@ public class ESDevicePropTest extends TestCase {
      * @expected return empty string
      */
     public void testESGetPassword_SRC_DSCC_N() {
-        assertEquals("Fail to get WiFi password", deviceProp.getPassword(),
-                EMPTY_STRING);
+        assertNull("Fail to get WiFi password", deviceProp.getPassword());
     }
 
     /**
@@ -365,8 +360,7 @@ public class ESDevicePropTest extends TestCase {
      * @expected return empty string value
      */
     public void testESGetCountry_SRC_DSCC_N() {
-        assertEquals("Fail to get WiFi ssid", deviceProp.getCountry(),
-                EMPTY_STRING);
+        assertNull("Fail to get WiFi ssid", deviceProp.getCountry());
     }
 
     /**
@@ -382,7 +376,6 @@ public class ESDevicePropTest extends TestCase {
      * @expected return empty string value
      */
     public void testESGetLanguage_FSV_P() {
-        assertEquals("Fail to get WiFi password", deviceProp.getLanguage(),
-                EMPTY_STRING);
+        assertNull("Fail to get WiFi password", deviceProp.getLanguage());
     }
 }

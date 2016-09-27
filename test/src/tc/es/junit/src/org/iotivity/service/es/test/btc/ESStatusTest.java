@@ -59,7 +59,7 @@ public class ESStatusTest extends AndroidTestCase {
      * @expected return result value as set
      */
     public void testESGetESProvisioningResult_SRC_P() {
-        assertEquals("Fail to get ES result", ESResult.ES_OK.getValue(),
+        assertEquals("Fail to get ES result", ESResult.ES_OK,
                 new DevicePropProvisioningStatus(ESResult.ES_OK.getValue())
                         .getESResult());
     }
@@ -78,7 +78,7 @@ public class ESStatusTest extends AndroidTestCase {
     public void testESGetESConfigurationResult_SRC_P() throws OcException {
         EnrolleeConf enrolleeConf = new EnrolleeConf(
                 ESEnrolleeConfHelper.cretaeOcRepresentation());
-        assertEquals("Fail to get ES result", ESResult.ES_OK.getValue(),
+        assertEquals("Fail to get ES result", ESResult.ES_OK,
                 new GetConfigurationStatus(ESResult.ES_OK.getValue(),
                         enrolleeConf).getESResult());
     }
@@ -103,6 +103,7 @@ public class ESStatusTest extends AndroidTestCase {
                 enrolleeConfig);
     }
 
+
     /**
      * @since 2016-08-21
      * @see none
@@ -114,14 +115,15 @@ public class ESStatusTest extends AndroidTestCase {
      * @post_condition none
      * @expected return result value as set
      */
+    /*
     public void testESGetESCloudState_SRC_P() {
         CloudPropProvisioningStatus cloudPropProvisioningStatus = new CloudPropProvisioningStatus(
-                ESResult.ES_OK.getValue(),
-                ESCloudProvState.ES_CLOUD_ENROLLEE_FOUND.getValue());
+                ES_CLOUD_PROVISIONING_SUCCESS);
         assertEquals("Enrollee configuration should same",
                 ESCloudProvState.ES_CLOUD_ENROLLEE_FOUND.getValue(),
                 cloudPropProvisioningStatus.getESCloudState());
     }
+   */
 
     /**
      * @since 2016-08-21
@@ -136,10 +138,9 @@ public class ESStatusTest extends AndroidTestCase {
      */
     public void testESGetCloudResult_SRC_P() {
         CloudPropProvisioningStatus cloudPropProvisioningStatus = new CloudPropProvisioningStatus(
-                ESResult.ES_OK.getValue(),
-                ESCloudProvState.ES_CLOUD_ENROLLEE_FOUND.getValue());
+                ESResult.ES_OK.getValue());
         assertEquals("Enrollee configuration should same",
-                ESResult.ES_OK.getValue(),
+                ESResult.ES_OK,
                 cloudPropProvisioningStatus.getESResult());
     }
 
@@ -217,8 +218,8 @@ public class ESStatusTest extends AndroidTestCase {
     public void testESGetProvStatus_SRCC_N() {
         OcRepresentation ocRepresentation = new OcRepresentation();
         EnrolleeStatus enrolleeStatus = new EnrolleeStatus(ocRepresentation);
-        assertEquals("ES_ERRCODE_SSID_NOT_FOUND error code should return",
-                ESErrorCode.ES_ERRCODE_SSID_NOT_FOUND,
+        assertEquals("ES_ERRCODE_NO_ERROR error code should return",
+                ESErrorCode.ES_ERRCODE_NO_ERROR,
                 enrolleeStatus.getLastErrCode());
     }
 }

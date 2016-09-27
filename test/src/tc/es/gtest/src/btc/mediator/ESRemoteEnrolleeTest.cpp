@@ -28,25 +28,8 @@
 #include "easysetup.h"
 #include <escommon.h>
 #include "ESEnrolleeCommon.h"
-#include "EasySetup.h"
-#include "EnrolleeResource.h"
-#include "RemoteEnrollee.h"
 #include "ESMediatorHelper.h"
 #include <iostream>
-
-#define SSID "Iotivity_SSID"
-#define PASSWORD "Iotivity_PWD"
-#define LANGUAGE "korean"
-#define COUNTRY "korea"
-#define LOCATION "location"
-#define EMPTY_STRING ""
-#define NULL_VALUE NULL
-#define AUTH_CODE "authCode"
-#define AUTH_PROVIDER "authProvider"
-#define CI_SERVER "ciServer"
-#define CLOUD_ID "f002ae8b-c42c-40d3-8b8d-1927c17bd1b3"
-#define PROV_RESOURCE_TYPE "ocf.wk.prov"
-#define JSON_DB_PATH "./oic_svr_db_client.dat"
 
 using namespace std;
 using namespace OC;
@@ -58,18 +41,16 @@ public:
     DeviceProp m_devProp;
     CloudProp m_cloudProp;
 
-    void onSecurityProvStatusCb(shared_ptr< SecProvisioningStatus >)
+    static void onSecurityProvStatusCb(shared_ptr< SecProvisioningStatus >)
     {
         IOTIVITYTEST_LOG(INFO, "provisionSecurity is success.");
     }
-
 protected:
 
     virtual void SetUp()
     {
         CommonUtil::runCommonTCSetUpPart();
     }
-
     virtual void TearDown()
     {
         CommonUtil::runCommonTCTearDownPart();
@@ -85,7 +66,7 @@ protected:
  * @pre_condition None
  * @procedure Perform getStatus
  * @post_condition None
- * @expected Get an Enrollee's status including provisioning status and last error code
+ * @expected Successfully called api
  **/
 TEST_F(ESRemoteEnrolleeTest_btc, GetStatus_SRC_P)
 {
@@ -93,9 +74,9 @@ TEST_F(ESRemoteEnrolleeTest_btc, GetStatus_SRC_P)
     {
         ESMediatorHelper esMediatorHelper;
         esMediatorHelper.findEnrolleeResource();
+        ASSERT_NE(nullptr, ESMediatorHelper::s_remoteEnrollee)<<"Remote enrolle can not be null.";
         ESMediatorHelper::s_remoteEnrollee->getStatus(ESMediatorHelper::getStatusCallback);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get status: " + std::string(e.what()));
@@ -134,10 +115,10 @@ TEST_F(ESRemoteEnrolleeTest_btc, GetConfiguration_SRC_P)
 
         ESMediatorHelper esMediatorHelper;
         esMediatorHelper.findEnrolleeResource();
+        ASSERT_NE(nullptr, ESMediatorHelper::s_remoteEnrollee)<<"Remote enrolle can not be null.";
         ESMediatorHelper::s_remoteEnrollee->getConfiguration(
                 &ESMediatorHelper::getConfigurationCallback);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in get Configuration: " + std::string(e.what()));
@@ -173,9 +154,11 @@ TEST_F(ESRemoteEnrolleeTest_btc, ProvisionSecurity_SRC_P)
 {
     try
     {
+        ESMediatorHelper esMediatorHelper;
+        esMediatorHelper.findEnrolleeResource();
+        ASSERT_NE(nullptr, ESMediatorHelper::s_remoteEnrollee)<<"Remote enrolle can not be null.";
         ESMediatorHelper::s_remoteEnrollee->provisionSecurity(
-                std::bind(&ESRemoteEnrolleeTest_btc::onSecurityProvStatusCb, this,
-                        placeholders::_1));
+                &ESRemoteEnrolleeTest_btc::onSecurityProvStatusCb);
     }
 
     catch (exception& e)
@@ -212,6 +195,9 @@ TEST_F(ESRemoteEnrolleeTest_btc, ProvisionSecurity_NV_N)
  */
 TEST_F(ESRemoteEnrolleeTest_btc, ProvisionDeviceProperies_SRC_P)
 {
+    ESMediatorHelper esMediatorHelper;
+    esMediatorHelper.findEnrolleeResource();
+    ASSERT_NE(nullptr, ESMediatorHelper::s_remoteEnrollee)<<"Remote enrolle can not be null.";
     m_devProp.setWiFiProp(SSID, PASSWORD, WPA2_PSK, TKIP_AES);
     m_devProp.setDevConfProp(LANGUAGE, COUNTRY, LOCATION);
 
@@ -279,6 +265,9 @@ TEST_F(ESRemoteEnrolleeTest_btc, ProvisionDeviceProperiesWithoutSSID_USV_N)
  */
 TEST_F(ESRemoteEnrolleeTest_btc, ProvisionCloudProperties_SRC_P)
 {
+    ESMediatorHelper esMediatorHelper;
+    esMediatorHelper.findEnrolleeResource();
+    ASSERT_NE(nullptr, ESMediatorHelper::s_remoteEnrollee)<<"Remote enrolle can not be null.";
     m_cloudProp.setCloudProp(AUTH_CODE, AUTH_PROVIDER, CI_SERVER);
     m_cloudProp.setCloudID(CLOUD_ID);
 

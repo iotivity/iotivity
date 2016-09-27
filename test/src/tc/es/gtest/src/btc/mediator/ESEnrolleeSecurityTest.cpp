@@ -29,27 +29,24 @@
 #include "easysetup.h"
 #include <escommon.h>
 #include "ESEnrolleeCommon.h"
-#include "EasySetup.h"
-#include "EnrolleeSecurity.h"
-#include "RemoteEnrollee.h"
 #include <iostream>
 #include "ESMediatorHelper.h"
 #include "OCRepresentation.h"
 
-#define EMPTY_STRING ""
-#define NULL_VALUE NULL
-#define AUTH_CODE "authCode"
-#define AUTH_PROVIDER "authProvider"
-#define CI_SERVER "ciServer"
-#define CLOUD_ID "f002ae8b-c42c-40d3-8b8d-1927c17bd1b3"
-#define PROV_RESOURCE_TYPE "ocf.wk.prov"
-#define JSON_DB_PATH "./oic_svr_db_client.dat"
+#define CBOR_DB_PATH "./oic_svr_db_client.dat"
 
 using namespace std;
 using namespace OC;
 using namespace OIC::Service;
 
+
 static std::shared_ptr< OC::OCResource > g_resource;
+
+static FILE* clientOpen(const char *UNUSED_PARAM, const char *mode)
+{
+    (void) UNUSED_PARAM;
+    return fopen(CBOR_DB_PATH, mode);
+}
 
 class ESEnrolleeSecurityTest_btc: public ::testing::Test
 {
@@ -60,6 +57,27 @@ protected:
     virtual void SetUp()
     {
         CommonUtil::runCommonTCSetUpPart();
+        vector< string > types =
+        { RES_TYPE };
+        vector< string > ifaces =
+        { INTERFACE_TYPE };
+
+        OCPersistentStorage ps
+        { clientOpen, fread, fwrite, fclose, unlink };
+
+        PlatformConfig cfg
+        { OC::ServiceType::InProc, OC::ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos,
+                &ps };
+
+        OCPlatform::Configure(cfg);
+
+        if (OCSecure::provisionInit(EMPTY_STRING) != OC_STACK_OK)
+        {
+            return false;
+        }
+
+        g_resource = OCPlatform::constructResourceObject(HOST_ADDRESS, RES_ADDRESS, CT_DEFAULT,
+        false, types, ifaces);
     }
 
     virtual void TearDown()
@@ -68,31 +86,6 @@ protected:
     }
 
 };
-
-///**
-// * @since 2016-08-16
-// * @objective Test 'performOwnershipTransfer' API with Negative basic way
-// * @target Void performOwnershipTransfer();
-// * @test_data    None
-// * @pre_condition None
-// * @procedure Perform performOwnershipTransfer()
-// * @post_condition None
-// * @expected API throw exception
-// **/
-//TEST_F(ESEnrolleeSecurityTest_btc, PerformOwnershipTransfer_ETC_N)
-//{
-//    try
-//    {
-//        std::shared_ptr < EnrolleeSecurity > m_enrolleeSecurity;
-//        m_enrolleeSecurity = std::make_shared < EnrolleeSecurity > (g_resource, "");
-//        m_enrolleeSecurity->performOwnershipTransfer();
-//    }
-//
-//    catch (exception& e)
-//    {
-//        EXPECT_EQ(e.what(),std::string("No unowned devices found."));
-//    }
-//}
 
 /**
  * @since 2016-08-16
@@ -105,6 +98,7 @@ protected:
  * @post_condition None
  * @expected successfully called api
  **/
+/*
 TEST_F(ESEnrolleeSecurityTest_btc, registerCallbackHandler_ETC_N)
 {
     try
@@ -113,63 +107,11 @@ TEST_F(ESEnrolleeSecurityTest_btc, registerCallbackHandler_ETC_N)
         m_enrolleeSecurity = std::make_shared < EnrolleeSecurity > (g_resource, "");
         m_enrolleeSecurity->registerCallbackHandler(NULL, NULL, NULL);
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in OwnershipTransfer: " + std::string(e.what()));
     }
-}
-
-///**
-// * @since 2016-08-16
-// * @objective Test 'performACLProvisioningForCloudServer' API with positive basic way
-// * @target Void performACLProvisioningForCloudServer();
-// * @test_data    None
-// * @pre_condition None
-// * @procedure Perform performACLProvisioningForCloudServer()
-// * @post_condition None
-// * @expected successfully called api
-// **/
-//TEST_F(ESEnrolleeSecurityTest_btc, PerformOwnershipTransfer_SRC_P)
-//{
-//    try
-//    {
-//        CloudProp m_cloudProp;
-//        std::shared_ptr < EnrolleeSecurity > m_enrolleeSecurity;
-//        m_enrolleeSecurity = std::make_shared < EnrolleeSecurity > (g_resource, "");
-//        m_enrolleeSecurity->performACLProvisioningForCloudServer(m_cloudProp.getCloudID());
-//    }
-//
-//    catch (exception& e)
-//    {
-//        SET_FAILURE("Exception occurred in OwnershipTransfer: " + std::string(e.what()));
-//    }
-//}
-//
-///**
-// * @since 2016-08-16
-// * @objective Test 'performACLProvisioningForCloudServer' API with negative basic way
-// * @target Void performACLProvisioningForCloudServer();
-// * @test_data    None
-// * @pre_condition None
-// * @procedure Perform performACLProvisioningForCloudServer()
-// * @post_condition None
-// * @expected successfully called api
-// **/
-//TEST_F(ESEnrolleeSecurityTest_btc, performACLProvisioningForCloudServer_ETC_N)
-//{
-//    try
-//    {
-//        CloudProp m_cloudProp;
-//        std::shared_ptr < EnrolleeSecurity > m_enrolleeSecurity;
-//        m_enrolleeSecurity = std::make_shared < EnrolleeSecurity > (g_resource, "");
-//        m_enrolleeSecurity->performACLProvisioningForCloudServer(m_cloudProp.getCloudID());
-//    }
-//    catch (exception& e)
-//    {
-//        SET_FAILURE("Exception occurred in OwnershipTransfer: " + std::string(e.what()));
-//    }
-//}
+}*/
 
 /**
  * @since 2016-08-16
@@ -194,7 +136,6 @@ TEST_F(ESEnrolleeSecurityTest_btc, getUUID_SRC_P)
             SET_FAILURE("Security Provisioning Status  is null.");
         }
     }
-
     catch (exception& e)
     {
         SET_FAILURE("Exception occurred in OwnershipTransfer: " + std::string(e.what()));
@@ -236,23 +177,16 @@ TEST_F(ESEnrolleeSecurityTest_btc, getUUID_ETC_N)
  * @pre_condition None
  * @procedure Perform provisionOwnership()
  * @post_condition None
- * @expected successfully called api
+ * @expected successfully called api.
  **/
 TEST_F(ESEnrolleeSecurityTest_btc, provisionOwnership_SRC_P)
 {
-    try
-    {
-        ESMediatorHelper esMediatorHelper;
-        esMediatorHelper.findEnrolleeResource();
-        std::shared_ptr < EnrolleeSecurity > m_enrolleeSecurity;
-        m_enrolleeSecurity = std::make_shared < EnrolleeSecurity > (g_resource, "");
-        m_enrolleeSecurity->provisionOwnership();
-    }
-
-    catch (exception& e)
-    {
-        SET_FAILURE("Exception occurred in OwnershipTransfer: " + std::string(e.what()));
-    }
+    std::shared_ptr < EnrolleeSecurity > m_enrolleeSecurity;
+    m_enrolleeSecurity = std::make_shared < EnrolleeSecurity > (g_resource, "");
+    if (m_enrolleeSecurity->provisionOwnership() == NULL)
+        {
+            SET_FAILURE("Provision Ownership is null");
+        }
 }
 
 /**
@@ -263,17 +197,18 @@ TEST_F(ESEnrolleeSecurityTest_btc, provisionOwnership_SRC_P)
  * @pre_condition None
  * @procedure Perform provisionOwnership()
  * @post_condition None
- * @expected successfully called api
+ * @expected API should through ES_SECURE_RESOURCE_DISCOVERY_FAILURE
  **/
 TEST_F(ESEnrolleeSecurityTest_btc, provisionOwnership_ETC_N)
 {
     try
     {
         std::shared_ptr < EnrolleeSecurity > m_enrolleeSecurity;
-        m_enrolleeSecurity->provisionOwnership();
+        m_enrolleeSecurity = std::make_shared < EnrolleeSecurity > (g_resource, "");
+        ASSERT_EQ(ES_SECURE_RESOURCE_DISCOVERY_FAILURE, m_enrolleeSecurity->provisionOwnership())<<"Expect result ES_SECURE_RESOURCE_DISCOVERY_FAILURE is not found.";
     }
     catch (exception& e)
     {
-        ASSERT_EQ(std::string(e.what()), "No unowned devices found.")<<"Exception occurred in OwnershipTransfer: "<<std::string(e.what());
+        SET_FAILURE("Exception occurred in provisionOwnership: " + std::string(e.what()));
     }
 }

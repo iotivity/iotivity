@@ -26,7 +26,7 @@
 #include <stdlib.h>
 
 bool ESEnrolleeHelper::isCallbackInvoked = false;
-const int g_timeout = 15;
+const int g_timeout = 30;
 ESEnrolleeHelper m_esEnrolleeHelper;
 ESEnrolleeHelper::ESEnrolleeHelper()
 {
@@ -57,6 +57,7 @@ void* ESEnrolleeHelper::listeningFunc(void *arg)
         CommonUtil::waitInSecond(1);
         if (++second == g_timeout)
         {
+            second = 0;
             IOTIVITYTEST_LOG(INFO,"\nTimeout For Response!Please Try Again\n\n");
             break;
         }

@@ -33,7 +33,7 @@ public class ESUtility {
     public static final String  EXCEPTION_SHOULD_BE_THROWN     = "Exception should be thrown";
     public static final String  EXCEPTION_SHOULD_NOT_BE_THROWN = "Exception should not be thrown";
     public final static String  EMPTY_STRING                   = "";
-    public final static String  NULL_STRING                    = null;
+    public final static String  NULL_VALUE                    = null;
 
     public static void waitUntilEnrolleeResponse(boolean callbackStatus) {
         int count = 0;

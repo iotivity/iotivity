@@ -37,6 +37,8 @@ bool ESMediatorHelper::s_isGetStatusCalled = false;
 bool ESMediatorHelper::s_isGetStatusCallbackCalled = false;
 bool ESMediatorHelper::s_isCloudPropProvCallbackCalled = false;
 bool ESMediatorHelper::s_isProvisionCloudPropSuccess = false;
+bool ESMediatorHelper::s_isSecurityPropProvCallbackCalled = false;
+bool ESMediatorHelper::s_isProvisionSecurityPropSuccess = false;
 std::shared_ptr< RemoteEnrollee > ESMediatorHelper::s_remoteEnrollee = nullptr;
 std::shared_ptr< OC::OCResource > ESMediatorHelper::s_curResource = nullptr;
 std::condition_variable ESMediatorHelper::s_cond;
@@ -59,46 +61,82 @@ void* ESMediatorHelper::listeningFunc(void *arg)
 {
     int second = 0;
     OCStackResult result = OC_STACK_ERROR;
-    IOTIVITYTEST_LOG(INFO,"Waiting For the Response...........................\n");
+    IOTIVITYTEST_LOG(INFO, "Waiting For the Response...........................\n");
 
     while (!ESMediatorHelper::s_isCallbackInvoked)
     {
         result = OCProcess();
         if (result != OC_STACK_OK)
         {
-            IOTIVITYTEST_LOG(INFO,"OCStack stop error");
+            IOTIVITYTEST_LOG(INFO, "OCStack stop error");
         }
         CommonUtil::waitInSecond(1);
         if (++second == timeout)
         {
-            IOTIVITYTEST_LOG(INFO,"\nTimeout For Response!Please Try Again\n\n");
+            IOTIVITYTEST_LOG(INFO, "\nTimeout For Response!Please Try Again\n\n");
             break;
         }
     }
 
-    IOTIVITYTEST_LOG(INFO,"Callback is successfully called");
+    IOTIVITYTEST_LOG(INFO, "Callback is successfully called");
     pthread_exit(NULL);
+}
+
+void ESMediatorHelper::provisionSecurityStatusCallback(
+        std::shared_ptr< SecProvisioningStatus > secProvisioningStatus)
+{
+    ESMediatorHelper::waitForResponse(5);
+    if (secProvisioningStatus->getESResult() != ES_OK)
+    {
+        IOTIVITYTEST_LOG(INFO, "provisionSecurity is failed.");
+    }
+    else
+    {
+        s_isSecurityPropProvCallbackCalled = true;
+        IOTIVITYTEST_LOG(INFO, "provisionSecurity is success.");
+        IOTIVITYTEST_LOG(INFO, "Device UUID : %d", secProvisioningStatus->getDeviceUUID().c_str());
+    }
+
+}
+
+void ESMediatorHelper::provisionSecurityProperty()
+{
+    try
+    {
+        s_remoteEnrollee->provisionSecurity(provisionSecurityStatusCallback);
+        s_isProvisionSecurityPropSuccess = true;
+        ESMediatorHelper::waitForResponse(5);
+    }
+    catch (OCException &e)
+    {
+        IOTIVITYTEST_LOG(INFO, "Exception during ProvisionSecurityPropSuccess call");
+        return;
+    }
+    CommonUtil::waitInSecond(5);
 }
 
 void ESMediatorHelper::cloudProvisioningStatusCallback(
         std::shared_ptr< CloudPropProvisioningStatus > provStatus)
 {
-
+    s_isCloudPropProvCallbackCalled = true;
     switch (provStatus->getESResult())
-        {
-            case ES_OK:
-                cout << "Cloud Provisioning is success." << endl;
-                break;
-            case ES_FOUND_ENROLLEE:
-                cout << "Enrollee is found in a given network." << endl;
-                break;
-            case ES_NOT_FOUND_ENROLLEE:
-                cout << "Enrollee is not found in a given network." << endl;
-                break;
-            default:
-                cout << "Cloud Provisioning is failed." << endl;
-                break;
-        }
+    {
+        case ES_OK:
+            cout << "Cloud Provisioning is success." << endl;
+            break;
+        case ES_SECURE_RESOURCE_DISCOVERY_FAILURE:
+            cout << "Enrollee is not found in a given network." << endl;
+            break;
+        case ES_ACL_PROVISIONING_FAILURE:
+            cout << "ACL provisioning is failed." << endl;
+            break;
+        case ES_CERT_PROVISIONING_FAILURE:
+            cout << "CERT provisioning is failed." << endl;
+            break;
+        default:
+            cout << "Cloud Provisioning is failed." << endl;
+            break;
+    }
 }
 
 void ESMediatorHelper::provisionCloudProperty()
@@ -116,19 +154,20 @@ void ESMediatorHelper::provisionCloudProperty()
     {
         s_remoteEnrollee->provisionCloudProperties(cloudProp, cloudProvisioningStatusCallback);
         s_isProvisionCloudPropSuccess = true;
-        ESMediatorHelper::waitForResponse(5);
+        
     }
     catch (OCException &e)
     {
-        IOTIVITYTEST_LOG(INFO,"Exception during provisionCloudProperties call");
+        IOTIVITYTEST_LOG(INFO, "Exception during provisionCloudProperties call");
         return;
     }
+    CommonUtil::waitInSecond(5);
 }
 
 void ESMediatorHelper::printStatus(EnrolleeStatus status)
 {
-    IOTIVITYTEST_LOG(INFO,"\tProvStatus : %d", status.getProvStatus());
-    IOTIVITYTEST_LOG(INFO,"\tLastErrCode : %d", status.getLastErrCode());
+    IOTIVITYTEST_LOG(INFO, "\tProvStatus : %d", status.getProvStatus());
+    IOTIVITYTEST_LOG(INFO, "\tLastErrCode : %d", status.getLastErrCode());
 }
 
 void ESMediatorHelper::getStatusCallback(std::shared_ptr< GetEnrolleeStatus > getEnrolleeStatus)
@@ -136,14 +175,14 @@ void ESMediatorHelper::getStatusCallback(std::shared_ptr< GetEnrolleeStatus > ge
 
     if (getEnrolleeStatus->getESResult() != ES_OK)
     {
-        IOTIVITYTEST_LOG(INFO,"getStatus is failed.");
+        IOTIVITYTEST_LOG(INFO, "getStatus is failed.");
         return;
     }
     else
     {
         ESMediatorHelper esMediatorHelper;
         s_isGetStatusCallbackCalled = true;
-        IOTIVITYTEST_LOG(INFO,"getStatus is success.");
+        IOTIVITYTEST_LOG(INFO, "getStatus is success.");
         esMediatorHelper.printStatus(getEnrolleeStatus->getEnrolleeStatus());
         esMediatorHelper.waitForResponse(5);
     }
@@ -164,24 +203,25 @@ void ESMediatorHelper::getStatus()
     }
     catch (OCException &e)
     {
-        IOTIVITYTEST_LOG(INFO,"Exception during getConfiguration call");
+        IOTIVITYTEST_LOG(INFO, "Exception during getConfiguration call");
         return;
     }
+    CommonUtil::waitInSecond(5);
 }
 
 void ESMediatorHelper::printConfiguration(EnrolleeConf conf)
 {
-    IOTIVITYTEST_LOG(INFO,"===========================================");
-    IOTIVITYTEST_LOG(INFO,"\tDevice Name : %s ", conf.getDeviceName().c_str());
+    IOTIVITYTEST_LOG(INFO, "===========================================");
+    IOTIVITYTEST_LOG(INFO, "\tDevice Name : %s ", conf.getDeviceName().c_str());
 
     for (auto it : conf.getWiFiModes())
     {
-        IOTIVITYTEST_LOG(INFO,"\tSupported WiFi modes : %d", it);
+        IOTIVITYTEST_LOG(INFO, "\tSupported WiFi modes : %d", it);
     }
 
-    IOTIVITYTEST_LOG(INFO,"\tSupported WiFi freq : %d ", static_cast< int >(conf.getWiFiFreq()));
-    IOTIVITYTEST_LOG(INFO,"\tCloud accessibility: %d", conf.isCloudAccessible());
-    IOTIVITYTEST_LOG(INFO,"===========================================");
+    IOTIVITYTEST_LOG(INFO, "\tSupported WiFi freq : %d ", static_cast< int >(conf.getWiFiFreq()));
+    IOTIVITYTEST_LOG(INFO, "\tCloud accessibility: %d", conf.isCloudAccessible());
+    IOTIVITYTEST_LOG(INFO, "===========================================");
 }
 
 void ESMediatorHelper::getConfigurationCallback(
@@ -191,13 +231,13 @@ void ESMediatorHelper::getConfigurationCallback(
     ESMediatorHelper esMediatorHelper;
     if (getConfigurationStatus->getESResult() != ES_OK)
     {
-        IOTIVITYTEST_LOG(INFO,"GetConfigurationStatus is failed.");
+        IOTIVITYTEST_LOG(INFO, "GetConfigurationStatus is failed.");
         return;
     }
     else
     {
         s_isDeviceConfigCallbackCalled = true;
-        IOTIVITYTEST_LOG(INFO,"GetConfigurationStatus is success.");
+        IOTIVITYTEST_LOG(INFO, "GetConfigurationStatus is success.");
         esMediatorHelper.printConfiguration(getConfigurationStatus->getEnrolleeConf());
         //ESMediatorHelper::waitForResponse(5);
     }
@@ -218,9 +258,10 @@ void ESMediatorHelper::getConfiguration()
     }
     catch (OCException &e)
     {
-        IOTIVITYTEST_LOG(INFO,"Exception during getConfiguration call");
+        IOTIVITYTEST_LOG(INFO, "Exception during getConfiguration call");
         return;
     }
+    CommonUtil::waitInSecond(5);
 }
 
 void ESMediatorHelper::deviceProvisioningStatusCallback(
@@ -229,13 +270,14 @@ void ESMediatorHelper::deviceProvisioningStatusCallback(
 
     if (provStatus->getESResult() != ES_OK)
     {
-        IOTIVITYTEST_LOG(INFO,"Device Provisioning is failed.");
+        IOTIVITYTEST_LOG(INFO, "Device Provisioning is failed.");
         return;
     }
     else
     {
         s_isDevicePropProvCallbackCalled = true;
-        IOTIVITYTEST_LOG(INFO,"Device Provisioning is success.");
+        ESMediatorHelper::waitForResponse(5);
+        IOTIVITYTEST_LOG(INFO, "Device Provisioning is success.");
     }
 }
 
@@ -248,7 +290,7 @@ void ESMediatorHelper::provisionDeviceProperty()
 
     DeviceProp devProp;
     devProp.setWiFiProp("Iotivity_SSID", "Iotivity_PWD", WPA2_PSK, TKIP_AES);
-    devProp.setDevConfProp("Bangladesh", "Bangla", "Location");
+    devProp.setDevConfProp("Bangla", "Bangladesh", "Location");
 
     try
     {
@@ -259,9 +301,10 @@ void ESMediatorHelper::provisionDeviceProperty()
     }
     catch (OCException &e)
     {
-        IOTIVITYTEST_LOG(INFO,"Exception during provisionDeviceProperties call");
+        IOTIVITYTEST_LOG(INFO, "Exception during provisionDeviceProperties call");
         return;
     }
+    CommonUtil::waitInSecond(5);
 }
 
 // Callback to found resources
@@ -272,29 +315,30 @@ void ESMediatorHelper::foundResource(std::shared_ptr< OC::OCResource > resource)
     try
     {
         // Do some operations with resource object.
-        if (resource && !s_curResource && resource->getResourceTypes().at(0) == OC_RSRVD_ES_RES_TYPE_PROV)
+        if (resource && !s_curResource
+                && resource->getResourceTypes().at(0) == OC_RSRVD_ES_RES_TYPE_PROV)
         {
-            IOTIVITYTEST_LOG(INFO,"DISCOVERED Resource:");
+            IOTIVITYTEST_LOG(INFO, "DISCOVERED Resource:");
             // Get the resource URI
             resourceURI = resource->uri();
-            IOTIVITYTEST_LOG(INFO,"\tURI of the resource: %s",resourceURI.c_str());
+            IOTIVITYTEST_LOG(INFO, "\tURI of the resource: %s", resourceURI.c_str());
 
             // Get the resource host address
             hostAddress = resource->host();
-            IOTIVITYTEST_LOG(INFO,"\tHost address of the resource:  %s", hostAddress.c_str());
+            IOTIVITYTEST_LOG(INFO, "\tHost address of the resource:  %s", hostAddress.c_str());
 
             // Get the resource types
-            IOTIVITYTEST_LOG(INFO,"\tList of resource types: ");
+            IOTIVITYTEST_LOG(INFO, "\tList of resource types: ");
             for (auto &resourceTypes : resource->getResourceTypes())
             {
-                IOTIVITYTEST_LOG(INFO,"\t\t %s", resourceTypes.c_str());
+                IOTIVITYTEST_LOG(INFO, "\t\t %s", resourceTypes.c_str());
             }
 
             // Get the resource interfaces
-            IOTIVITYTEST_LOG(INFO,"\tList of resource interfaces: ");
+            IOTIVITYTEST_LOG(INFO, "\tList of resource interfaces: ");
             for (auto &resourceInterfaces : resource->getResourceInterfaces())
             {
-                IOTIVITYTEST_LOG(INFO,"\t\t %s", resourceInterfaces.c_str());
+                IOTIVITYTEST_LOG(INFO, "\t\t %s", resourceInterfaces.c_str());
             }
 
             if (s_curResource == nullptr)
@@ -302,15 +346,16 @@ void ESMediatorHelper::foundResource(std::shared_ptr< OC::OCResource > resource)
                 s_remoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(resource);
                 if (!s_remoteEnrollee)
                 {
-                    IOTIVITYTEST_LOG(INFO,"RemoteEnrollee object is failed for some reasons!");
+                    IOTIVITYTEST_LOG(INFO, "RemoteEnrollee object is failed for some reasons!");
                 }
                 else
                 {
                     s_curResource = resource;
-                    IOTIVITYTEST_LOG(INFO,"RemoteEnrollee object is successfully created!");
+                    IOTIVITYTEST_LOG(INFO, "RemoteEnrollee object is successfully created!");
                     s_cond.notify_all();
                 }
             }
+            ESMediatorHelper::s_isCallbackInvoked = true;
         }
     }
     catch (std::exception& e)

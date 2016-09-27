@@ -22,6 +22,7 @@ package org.iotivity.service.es.test.stc;
 
 import org.iotivity.base.OcResource;
 import org.iotivity.service.easysetup.mediator.CloudProp;
+import org.iotivity.service.easysetup.mediator.ESException;
 import org.iotivity.service.easysetup.mediator.EasySetup;
 import org.iotivity.service.easysetup.mediator.RemoteEnrollee;
 import org.iotivity.service.es.test.helper.ESCloudPropProvCallback;
@@ -95,4 +96,39 @@ public class ESProvisionCloudPropertiesTest extends AndroidTestCase {
         assertTrue("Cloud provisioning fail : ",
                 ESCloudPropProvCallback.isCloudPropSuccess);
     }
+
+    /**
+     * @since 2016-08-19
+     * @see public synchronized static EasySetup getInstance(Context context)
+     * @see public synchronized RemoteEnrollee createRemoteEnrollee(OcResource
+     *      enrolleeResource)
+     * @objective test provisionDeviceProperties negatively
+     * @target public void provisionCloudProperties(CloudProp cloudProp,
+     *         CloudPropProvisioningCallback callback) throws ESException
+     * @test_data null cloudProp CloudPropProvisioningCallback
+     * @pre_condition create remote enrollee
+     * @procedure Call provisionCloudProperties API with null cloudProp
+     * @post_condition none
+     * @expected ES Exception should be thrown
+     */
+    public void testESProvisionCloudPropertiesWithNullCloudProp_ETC_N() {
+        OcResource remoteEnrolleeResource = eSEnrolleeHelper
+                .findEnrolleeResource(getContext());
+        assertNotNull("Got null remote enrollee resource",
+                remoteEnrolleeResource);
+        RemoteEnrollee remoteEnrollee = EasySetup.getInstance(getContext())
+                .createRemoteEnrollee(remoteEnrolleeResource);
+        assertNotNull("Got null remote enrollee", remoteEnrollee);
+        CloudProp cloudProp = ESPropertiesHelper.createCloudProperties();
+        assertNotNull("Got null deviceProp", cloudProp);
+
+        try {
+            remoteEnrollee.provisionCloudProperties(null,
+                    new ESCloudPropProvCallback());
+            fail(EXCEPTION_SHOULD_BE_THROWN);
+        } catch (Exception e) {
+            assertTrue(true);
+        }
+    }
+
 }

@@ -61,28 +61,20 @@ public class ESCloudPropProvCallback extends CloudPropProvisioningCallback {
     @Override
     public void onProgress(CloudPropProvisioningStatus status) {
         if (status != null) {
-            ESCloudProvState cloudProvState = status.getESCloudState();
-
-            if (cloudProvState == ESCloudProvState.ES_CLOUD_ENROLLEE_FOUND) {
-                Log.d("CloudPropProvisioningStatus : ",
-                        cloudProvState.toString());
+            ESResult result = status.getESResult();
+            if (!result.equals(ESResult.ES_ENROLLEE_DISCOVERY_FAILURE)) {
                 isEnrolleeFound = true;
-            }
+                Log.d(TAG, ESResult.ES_ENROLLEE_DISCOVERY_FAILURE.toString());
 
-            else if (cloudProvState == ESCloudProvState.ES_CLOUD_ENROLLEE_NOT_FOUND) {
-                Log.d("CloudPropProvisioningStatus : ",
-                        cloudProvState.toString());
-            }
+            } else if (result.equals(ESResult.ES_ENROLLEE_DISCOVERY_FAILURE)) {
+                Log.d(TAG, ESResult.ES_ENROLLEE_DISCOVERY_FAILURE.toString());
 
-            else if (cloudProvState == ESCloudProvState.ES_CLOUD_PROVISIONING_ERROR) {
-                Log.d("CloudPropProvisioningStatus : ",
-                        cloudProvState.toString());
-            }
-
-            else if (cloudProvState == ESCloudProvState.ES_CLOUD_PROVISIONING_SUCCESS) {
-                Log.d("CloudPropProvisioningStatus : ",
-                        cloudProvState.toString());
+            } else if (result.equals(ESResult.ES_OK)) {
                 isCloudPropSuccess = true;
+                Log.d(TAG, ESResult.ES_OK.toString());
+
+            } else {
+                Log.d(TAG, "Cloud Provisioning fails");
             }
         }
         isCloudPropProvCallbackCalled = true;

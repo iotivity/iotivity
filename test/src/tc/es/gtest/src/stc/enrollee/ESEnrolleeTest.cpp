@@ -134,7 +134,7 @@ TEST_F(ESEnrolleeTest_stc, ESInitEnrolleeResourceMaskESWIFIRESOURCESecuredSucces
         SET_FAILURE("Failed to find resources. m_result is: " + std::to_string(m_result));
         return;
     }
-
+    
     if (!ESEnrolleeHelper::isCallbackInvoked)
     {
         SET_FAILURE("Failed to invoke callback. m_result is: " + std::to_string(ESEnrolleeHelper::isCallbackInvoked));
