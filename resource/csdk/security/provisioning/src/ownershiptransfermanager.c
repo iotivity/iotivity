@@ -183,6 +183,14 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx);
 static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx);
 
 /**
+ * Function to update the owner ACL to new device.
+ *
+ * @param[in]  otmCtx  Context value of ownership transfer.
+ * @return  OC_STACK_OK on success
+ */
+static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx);
+
+/**
  * Function to send ownerShip info.
  * This function would update 'owned of doxm' as true.
  *
@@ -812,11 +820,10 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
 #ifdef __WITH_TLS__
            otmCtx->selectedDeviceInfo->connType |= CT_FLAG_SECURE;
 #endif
-            //POST /oic/sec/doxm [{ ..., "owned":"TRUE" }]
-            res = PostOwnershipInformation(otmCtx);
+            res = PostOwnerAcl(otmCtx);
             if(OC_STACK_OK != res)
             {
-                OIC_LOG(ERROR, TAG, "Failed to post ownership information to new device");
+                OIC_LOG(ERROR, TAG, "Failed to update owner ACL to new device");
                 SetResult(otmCtx, res);
                 return OC_STACK_DELETE_TRANSACTION;
             }
@@ -830,6 +837,52 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
     }
 
     OIC_LOG(DEBUG, TAG, "OUT OwnerCredentialHandler");
+
+exit:
+    return  OC_STACK_DELETE_TRANSACTION;
+}
+
+/**
+ * Response handler for update owner ACL request.
+ *
+ * @param[in] ctx             ctx value passed to callback from calling function.
+ * @param[in] UNUSED          handle to an invocation
+ * @param[in] clientResponse  Response from queries to remote servers.
+ * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
+ *          and  OC_STACK_KEEP_TRANSACTION to keep it.
+ */
+static OCStackApplicationResult OwnerAclHandler(void *ctx, OCDoHandle UNUSED,
+                                OCClientResponse *clientResponse)
+{
+    VERIFY_NON_NULL(TAG, clientResponse, WARNING);
+    VERIFY_NON_NULL(TAG, ctx, WARNING);
+
+    OIC_LOG(DEBUG, TAG, "IN OwnerAclHandler");
+    (void)UNUSED;
+    OCStackResult res = OC_STACK_OK;
+    OTMContext_t* otmCtx = (OTMContext_t*)ctx;
+
+    if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
+    {
+        if(otmCtx && otmCtx->selectedDeviceInfo)
+        {
+            //POST /oic/sec/doxm [{ ..., "owned":"TRUE" }]
+            res = PostOwnershipInformation(otmCtx);
+            if(OC_STACK_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "Failed to update ownership information to new device");
+                SetResult(otmCtx, res);
+            }
+        }
+    }
+    else
+    {
+        res = clientResponse->result;
+        OIC_LOG_V(ERROR, TAG, "OwnerAclHandler : Unexpected result %d", res);
+        SetResult(otmCtx, res);
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT OwnerAclHandler");
 
 exit:
     return  OC_STACK_DELETE_TRANSACTION;
@@ -1065,6 +1118,165 @@ static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
     }
 
     OIC_LOG(DEBUG, TAG, "OUT PostOwnerCredential");
+
+    return OC_STACK_OK;
+}
+
+static OicSecAcl_t* GenerateOwnerAcl(const OicUuid_t* owner)
+{
+    OicSecAcl_t* ownerAcl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
+    OicSecAce_t* ownerAce = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
+    OicSecRsrc_t* wildcardRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+    if(NULL == ownerAcl || NULL == ownerAce || NULL == wildcardRsrc)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+        goto error;
+    }
+    LL_APPEND(ownerAcl->aces, ownerAce);
+    LL_APPEND(ownerAce->resources, wildcardRsrc);
+
+    //Set resource owner as PT
+    memcpy(ownerAcl->rownerID.id, owner->id, sizeof(owner->id));
+
+    //PT has full permission.
+    ownerAce->permission = PERMISSION_FULL_CONTROL;
+
+    //Set subject as PT's UUID
+    memcpy(ownerAce->subjectuuid.id, owner->id, sizeof(owner->id));
+
+    wildcardRsrc->href = OICStrdup(WILDCARD_RESOURCE_URI);
+    if(NULL == wildcardRsrc->href)
+    {
+        goto error;
+    }
+
+    wildcardRsrc->interfaceLen = 1;
+    wildcardRsrc->interfaces = (char**)OICMalloc(wildcardRsrc->interfaceLen * sizeof(char*));
+    if(NULL == wildcardRsrc->interfaces)
+    {
+        goto error;
+    }
+    wildcardRsrc->interfaces[0] = OICStrdup(WILDCARD_RESOURCE_URI);
+    if(NULL == wildcardRsrc->interfaces[0])
+    {
+        goto error;
+    }
+
+    wildcardRsrc->typeLen = 1;
+    wildcardRsrc->types = (char**)OICMalloc(wildcardRsrc->typeLen * sizeof(char*));
+    if(NULL == wildcardRsrc->types)
+    {
+        goto error;
+    }
+    wildcardRsrc->types[0] = OICStrdup(WILDCARD_RESOURCE_URI);
+    if(NULL == wildcardRsrc->types[0])
+    {
+        goto error;
+    }
+
+    return ownerAcl;
+
+error:
+    //in case of memory allocation failed, each resource should be removed individually.
+    if(NULL == ownerAcl || NULL == ownerAce || NULL == wildcardRsrc)
+    {
+        OICFree(ownerAcl);
+        OICFree(ownerAce);
+        OICFree(wildcardRsrc);
+    }
+    else
+    {
+        DeleteACLList(ownerAcl);
+    }
+    return NULL;
+}
+
+/**
+ * Function to update the owner ACL to new device.
+ *
+ * @param[in]  otmCtx  Context value of ownership transfer.
+ * @return  OC_STACK_OK on success
+ */
+static OCStackResult PostOwnerAcl(OTMContext_t* otmCtx)
+{
+    OCStackResult res = OC_STACK_ERROR;
+    OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    OicSecAcl_t* ownerAcl = NULL;
+
+    OIC_LOG(DEBUG, TAG, "IN PostOwnerAcl");
+
+    if(!otmCtx || !otmCtx->selectedDeviceInfo)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid parameters");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if(!PMGenerateQuery(true,
+                        deviceInfo->endpoint.addr, deviceInfo->securePort,
+                        deviceInfo->connType,
+                        query, sizeof(query), OIC_RSRC_ACL_URI))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to generate query");
+        return OC_STACK_ERROR;
+    }
+    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
+    OicUuid_t ownerID;
+    res = GetDoxmDeviceID(&ownerID);
+    if(OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to generate owner ACL");
+        return res;
+    }
+
+    //Generate owner ACL for new device
+    ownerAcl = GenerateOwnerAcl(&ownerID);
+    if(NULL == ownerAcl)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to generate owner ACL");
+        return OC_STACK_NO_MEMORY;
+    }
+
+    //Generate ACL payload
+    OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
+    if(!secPayload)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
+        res = OC_STACK_NO_MEMORY;
+        goto error;
+    }
+
+    res = AclToCBORPayload(ownerAcl, &secPayload->securityData, &secPayload->payloadSize);
+    if (OC_STACK_OK != res)
+    {
+        OICFree(secPayload);
+        OIC_LOG(ERROR, TAG, "Error while converting bin to cbor.");
+        goto error;
+    }
+    secPayload->base.type = PAYLOAD_TYPE_SECURITY;
+
+    OIC_LOG(DEBUG, TAG, "Owner ACL Payload:");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
+
+    //Send owner ACL to new device : POST /oic/sec/cred [ owner credential ]
+    OCCallbackData cbData;
+    cbData.cb = &OwnerAclHandler;
+    cbData.context = (void *)otmCtx;
+    cbData.cd = NULL;
+    res = OCDoResource(NULL, OC_REST_POST, query,
+                                     &deviceInfo->endpoint, (OCPayload*)secPayload,
+                                     deviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
+        goto error;
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT PostOwnerAcl");
+
+error:
+    DeleteACLList(ownerAcl);
 
     return OC_STACK_OK;
 }
