@@ -139,7 +139,8 @@ if target_os in ['android','linux']:
 	env.AppendUnique(es_src = es_common_src)
 
 	es_sdk_shared = easy_setup_env.SharedLibrary('ESMediatorRich', env.get('es_src'))
-	easy_setup_env.InstallTarget(es_sdk_shared, 'libESMediatorRich')
+	es_sdk_static = easy_setup_env.StaticLibrary('ESMediatorRich', env.get('es_src'))
+	easy_setup_env.InstallTarget([es_sdk_shared, es_sdk_static], 'libESMediatorRich')
 	easy_setup_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libESMediatorRich.so'])
 
 print "Files path is %s" % env.get('es_src')
