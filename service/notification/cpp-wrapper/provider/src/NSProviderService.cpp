@@ -73,11 +73,13 @@ namespace OIC
             nsMsg->contentText = OICStrdup(msg->getContentText().c_str());
             nsMsg->topic = OICStrdup(msg->getTopic().c_str());
 
-            nsMsg->mediaContents = new ::NSMediaContents;
             if (msg->getMediaContents() != nullptr)
+            {
+                nsMsg->mediaContents = new ::NSMediaContents;
                 nsMsg->mediaContents->iconImage = OICStrdup(msg->getMediaContents()->getIconImage().c_str());
+            }
             else
-                nsMsg->mediaContents->iconImage = nullptr;
+                nsMsg->mediaContents = nullptr;
             nsMsg->extraInfo = msg->getExtraInfo().getPayload();
             return nsMsg;
         }

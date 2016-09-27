@@ -32,7 +32,7 @@ namespace OIC
             m_messageId = 0;
             m_type = NSMessage::NSMessageType::NS_MESSAGE_ALERT;
             m_ttl = 0;
-            m_mediaContents = new NSMediaContents();
+            m_mediaContents = nullptr;
 
             if (msg != nullptr)
             {
@@ -56,8 +56,11 @@ namespace OIC
                     m_sourceName.assign(msg->sourceName, strlen(msg->sourceName));
 
                 if (msg->mediaContents != nullptr)
+                {
+                    m_mediaContents = new NSMediaContents();
                     if ((msg->mediaContents->iconImage != nullptr) && strlen(msg->mediaContents->iconImage))
                         m_mediaContents->setIconImage(msg->mediaContents->iconImage);
+                }
 
                 if ((msg->topic != nullptr) && strlen(msg->topic))
                     m_topic.assign(msg->topic, strlen(msg->topic));
