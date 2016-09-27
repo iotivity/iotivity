@@ -87,6 +87,10 @@ if 'rc' in target_service or 'all' in target_service:
     gbs_script_rc = "sh build/tizen/rc/gbsbuild_rc.sh %s %s %s %s %s" % (target_arch, rpm_path, variant_dir, target_source, is_prevent_enabled)
     default_targets += [gbs_script_rc]
 
+if 'es' in target_service or 'all' in target_service:
+    gbs_script_es = "sh build/tizen/es/gbsbuild_es.sh %s %s %s %s %s" % (target_arch, rpm_path, variant_dir, target_source, is_prevent_enabled)
+    default_targets += [gbs_script_es]
+
 if 'ri' in target_service or 'ricsdk' in target_service or 'ricpp' in target_service or 'all' in target_service:
     rpms_dir = env_tizen.get('RPMS_DIR') 
     push = env_tizen.get('PUSH')     
