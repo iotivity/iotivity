@@ -1,0 +1,197 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+##
+# Build script for Tizen
+#
+##
+
+print '\n---------------Started Building IotivitySecTest for Tizen---------------\n'
+
+env = Environment(CC='g++')
+
+# Initializing Home Dir
+######################################################################
+
+ENV_HOME = ''
+PROJECT_HOME = 'test'
+EXT_LIB_HOME = 'test/extlibs'
+ORG_SRC_HOME = 'iotivity'
+SRC_HOME = ''
+
+######################################################################
+
+# Initializing ES Dir
+######################################################################
+
+ES_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+ES_C_COMMON_DIR = ES_RESOURCE_DIR + '/c_common'
+ES_RESOURCE_INCLUDE = ES_RESOURCE_DIR + '/include'
+ES_RESOURCE_LIB = ORG_SRC_HOME + '/out/tizen/armv7l/release'
+ES_RESOURCE_CSDK_LIB = ES_RESOURCE_LIB
+ES_RESOURCE_STACK = ES_RESOURCE_DIR + '/csdk/stack/include'
+ES_RESOURCE_SOCKET = ES_RESOURCE_DIR + '/csdk/ocsocket/include'
+ES_RESOURCE_RANDOM = ES_RESOURCE_DIR + '/csdk/ocrandom/include'
+ES_RESOURCE_LOGGER = ES_RESOURCE_DIR + '/csdk/logger/include'
+ES_RESOURCE_OC_LOGGER = ES_RESOURCE_DIR + '/oc_logger/include'
+ES_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
+ES_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
+ES_RESOURCE_OC_LOGGER_LIB = ES_RESOURCE_LIB
+ES_DIR = ORG_SRC_HOME + '/service/easy-setup'
+ES_INCLUDE = ES_DIR + '/inc'
+ES_SDK_INCLUDE = ES_DIR + '/sdk/src'
+ES_LIB = ES_RESOURCE_LIB
+ES_LIB_TIMER = ES_RESOURCE_LIB + '/extlibs/timer/'
+ES_ENROLLEE_INC = ORG_SRC_HOME + '/service/easy-setup/enrollee/inc'
+
+DLOG_INC = '/usr/include/dlog'
+
+######################################################################
+
+
+# Initializing Gtest Dir
+######################################################################
+
+GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
+GTEST_INCLUDE = GTEST + '/include'
+GTEST_BIN = GTEST + '/bin/tizen'
+GTEST_LIB = GTEST_BIN + '/libgtest.a'
+
+######################################################################
+
+# Initializing Project Dir
+######################################################################
+
+RESOURCE_LIB_DIR = ORG_SRC_HOME + '/out/tizen/armv7l/release'
+
+TC_DIR = PROJECT_HOME + '/src/tc'
+ITC_DIR = TC_DIR + '/es/gtest/src/stc/enrollee'
+UTC_DIR = TC_DIR + '/es/gtest/src/btc/enrollee'
+
+TESTAPP_CINCOUDE = PROJECT_HOME + '/include/testapp'
+
+COMMON_DIR = PROJECT_HOME + '/src/common'
+COMMON_UTIL_DIR =COMMON_DIR + '/commonutil/c_cpp'
+ES_COMMON_DIR = TC_DIR + '/es/gtest/src/helper/enrollee'
+
+INCLUDE_DIR = PROJECT_HOME + '/include'
+TC_INCLUDE_DIR = INCLUDE_DIR + '/testcase'
+ES_INCLUDE_DIR = TC_DIR + '/es/gtest/include/enrollee'
+COMMON_UTIL_INCLUDE_DIR = INCLUDE_DIR + '/commonutil'
+
+
+TARGET = PROJECT_HOME + '/bin'
+#TARGET = env['VARIANT_DIR'] 
+
+######################################################################
+
+# Initializing Flags
+######################################################################
+
+env['CC'] = 'g++'
+
+COMMON_FLAGS = Split('-s -pthread -std=gnu++0x -pthread -Wall -DTIZEN -fpermissive -D__TIZEN__ -finstrument-functions')
+
+ES_CFLAGS = [COMMON_FLAGS]
+
+######################################################################
+
+# Initializing Includes
+######################################################################
+
+COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR]
+
+ES_CINCLUDE = [COMMON_CINCLUDE, ES_RESOURCE_INCLUDE, ES_RESOURCE_STACK, ES_RESOURCE_SOCKET, ES_RESOURCE_RANDOM, ES_RESOURCE_OC_LOGGER, ES_INCLUDE, ES_RESOURCE_CEREAL, ES_RESOURCE_TIMER, ES_LIB_TIMER, ES_SDK_INCLUDE, ES_INCLUDE_DIR, ES_C_COMMON_DIR, ES_RESOURCE_LOGGER, DLOG_INC, ES_ENROLLEE_INC]
+
+######################################################################
+
+# Initializing Libraries
+######################################################################
+
+COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR]
+ES_LIB_LOCATION = [COMMON_LIB_LOCATION, ES_RESOURCE_LIB, ES_RESOURCE_CSDK_LIB, ES_RESOURCE_OC_LOGGER_LIB, ES_LIB]
+
+COMMON_STATIC_LIBS = [GTEST_LIB]
+COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboctbstack liboc_logger libconnectivity_abstraction pthread libglib-2.0 libdlog ESEnrolleeSDK')
+
+
+ES_STATIC_LIBS = []
+ES_STATIC_RESOURCE_LIBS = []
+
+ES_LIBS = [COMMON_SHARED_LIBS]
+
+######################################################################
+
+# Initializing Targets
+######################################################################
+
+ES_TC_BIN = 'iotivity_es_test'
+TEST_MAIN_BIN = 'test_main.o'
+
+
+TC_BINS = [ES_TC_BIN]
+
+######################################################################
+
+# Initializing Sources
+######################################################################
+
+COMMON_CPP = Glob(COMMON_UTIL_DIR + '/*.cpp')
+COMMON_TC_CPP = Glob(COMMON_DIR + '/testcase/*.cpp')
+
+ES_HELPER_CPP = Glob(ES_COMMON_DIR + '/*.cpp')
+COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
+
+
+TEST_MAIN = [COMMON_DIR + '/testcase/gtest/IotivitySECTestMain.cpp'] 
+
+ES_STC_CPP = Glob(ITC_DIR + '/*.cpp')
+ES_BTC_CPP = Glob(UTC_DIR + '/*.cpp')
+
+ES_CPP = [TEST_MAIN, COMMON_UTIL_CPP, ES_HELPER_CPP]
+
+ES_TC_SRC = [ES_CPP, ES_STC_CPP, ES_BTC_CPP, COMMON_STATIC_LIBS, ES_STATIC_LIBS, ES_STATIC_RESOURCE_LIBS]
+
+######################################################################
+
+# Initializing Build
+######################################################################
+
+create_target_dir = env.Command('target.out', [], Mkdir(TARGET))
+
+test_main = env.Object(source = TEST_MAIN, target = TEST_MAIN_BIN, CPPPATH = COMMON_CINCLUDE, CPPFLAGS = COMMON_FLAGS )
+
+es_tc = env.Program(source = ES_TC_SRC, target = ES_TC_BIN, CPPPATH = ES_CINCLUDE, LIBS = ES_LIBS, LIBPATH = ES_LIB_LOCATION, CPPFLAGS = ES_CFLAGS)
+
+
+pre_job = [create_target_dir]
+
+######################################################################
+# Define Build Targets
+######################################################################
+
+target_service = env.get('TARGET_SERVICE')
+target_tc = env.get('TARGET_TC')
+default_targets = []
+
+default_targets += [es_tc]
+
+env.Default(default_targets)
