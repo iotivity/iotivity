@@ -88,7 +88,7 @@ bool CompareResourceInterface(char *from, char *iface)
             }
         }
 
-    } while (ptr = strtok(NULL, ";"));
+    } while ((ptr = strtok(NULL, ";")));
 
     return false;
 }

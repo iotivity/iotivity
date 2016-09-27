@@ -148,7 +148,7 @@ namespace OIC
             else if (pOwnedDevList.size())
             {
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Found owned devices. Count =%d",
-                        pOwnedDevList.size());
+                        (int)pOwnedDevList.size());
                 std::shared_ptr< OC::OCSecureResource > ownedDevice =
                     findEnrolleeSecurityResource(pOwnedDevList);
 
@@ -178,7 +178,7 @@ namespace OIC
             else if (pUnownedDevList.size())
             {
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Found Unowned devices. Count =%d",
-                        pUnownedDevList.size());
+                        (int)pUnownedDevList.size());
 
                 m_unownedDevice = findEnrolleeSecurityResource(pUnownedDevList);
                 if (m_unownedDevice)
@@ -359,7 +359,7 @@ namespace OIC
             else if (pOwnedDevList.size())
             {
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Found owned devices. Count =%d",
-                        pOwnedDevList.size());
+                        (int)pOwnedDevList.size());
                 ownedDevice = findEnrolleeSecurityResource(pOwnedDevList);
 
                 if (!ownedDevice)
