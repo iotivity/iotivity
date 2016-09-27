@@ -48,6 +48,12 @@ jobject SimulatorResultToJava(JNIEnv *env, SimulatorResult errorCode)
                                           "SIMULATOR_CONTINUE", "Lorg/oic/simulator/SimulatorResult;");
                 return env->GetStaticObjectField(gSimulatorClassRefs.simulatorResultCls, fieldID);
             }
+        case SIMULATOR_RESOURCE_CHANGED:
+        {
+            static jfieldID fieldID = env->GetStaticFieldID(gSimulatorClassRefs.simulatorResultCls,
+                                      "SIMULATOR_RESOURCE_CHANGED", "Lorg/oic/simulator/SimulatorResult;");
+            return env->GetStaticObjectField(gSimulatorClassRefs.simulatorResultCls, fieldID);
+        }
         case SIMULATOR_INVALID_URI:
             {
                 static jfieldID fieldID = env->GetStaticFieldID(gSimulatorClassRefs.simulatorResultCls,
@@ -208,6 +214,36 @@ jobject SimulatorResultToJava(JNIEnv *env, SimulatorResult errorCode)
             {
                 static jfieldID fieldID = env->GetStaticFieldID(gSimulatorClassRefs.simulatorResultCls,
                                           "SIMULATOR_UNAUTHORIZED_REQ", "Lorg/oic/simulator/SimulatorResult;");
+                return env->GetStaticObjectField(gSimulatorClassRefs.simulatorResultCls, fieldID);
+            }
+        case SIMULATOR_TOO_LARGE_REQ:
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(gSimulatorClassRefs.simulatorResultCls,
+                                          "SIMULATOR_TOO_LARGE_REQ", "Lorg/oic/simulator/SimulatorResult;");
+                return env->GetStaticObjectField(gSimulatorClassRefs.simulatorResultCls, fieldID);
+            }
+        case SIMULATOR_PDM_IS_NOT_INITIALIZED:
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(gSimulatorClassRefs.simulatorResultCls,
+                                          "SIMULATOR_PDM_IS_NOT_INITIALIZED", "Lorg/oic/simulator/SimulatorResult;");
+                return env->GetStaticObjectField(gSimulatorClassRefs.simulatorResultCls, fieldID);
+            }
+        case SIMULATOR_DUPLICATE_UUID:
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(gSimulatorClassRefs.simulatorResultCls,
+                                          "SIMULATOR_DUPLICATE_UUID", "Lorg/oic/simulator/SimulatorResult;");
+                return env->GetStaticObjectField(gSimulatorClassRefs.simulatorResultCls, fieldID);
+            }
+        case SIMULATOR_INCONSISTENT_DB:
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(gSimulatorClassRefs.simulatorResultCls,
+                                          "SIMULATOR_INCONSISTENT_DB", "Lorg/oic/simulator/SimulatorResult;");
+                return env->GetStaticObjectField(gSimulatorClassRefs.simulatorResultCls, fieldID);
+            }
+        case SIMULATOR_AUTHENTICATION_FAILURE:
+            {
+                static jfieldID fieldID = env->GetStaticFieldID(gSimulatorClassRefs.simulatorResultCls,
+                                          "SIMULATOR_AUTHENTICATION_FAILURE", "Lorg/oic/simulator/SimulatorResult;");
                 return env->GetStaticObjectField(gSimulatorClassRefs.simulatorResultCls, fieldID);
             }
 #ifdef WITH_PRESENCE

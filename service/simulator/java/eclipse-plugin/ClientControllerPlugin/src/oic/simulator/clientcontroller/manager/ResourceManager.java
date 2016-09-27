@@ -320,7 +320,7 @@ public class ResourceManager {
             public void onGetResponse(final String uid,
                     final SimulatorResult result,
                     final SimulatorResourceModel resourceModelN) {
-                if (result != SimulatorResult.SIMULATOR_OK) {
+                if (result.ordinal() > SimulatorResult.SIMULATOR_RESOURCE_CHANGED.ordinal()) {
                     Activator
                             .getDefault()
                             .getLogManager()
@@ -354,7 +354,7 @@ public class ResourceManager {
             public void onPutResponse(final String uid,
                     final SimulatorResult result,
                     final SimulatorResourceModel resourceModelN) {
-                if (result != SimulatorResult.SIMULATOR_OK) {
+                if (result.ordinal() > SimulatorResult.SIMULATOR_RESOURCE_CHANGED.ordinal()) {
                     Activator
                             .getDefault()
                             .getLogManager()
@@ -387,7 +387,7 @@ public class ResourceManager {
             public void onPostResponse(final String uid,
                     final SimulatorResult result,
                     final SimulatorResourceModel resourceModelN) {
-                if (result != SimulatorResult.SIMULATOR_OK) {
+                if (result.ordinal() > SimulatorResult.SIMULATOR_RESOURCE_CHANGED.ordinal()) {
                     Activator
                             .getDefault()
                             .getLogManager()
