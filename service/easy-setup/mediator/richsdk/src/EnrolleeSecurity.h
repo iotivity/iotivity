@@ -32,7 +32,7 @@ namespace OIC
 {
     namespace Service
     {
-        #define ENROLEE_SECURITY_TAG "ENROLEE_SECURITY"
+        #define ENROLEE_SECURITY_TAG "ENROLLEE_SECURITY"
         #define UUID_SIZE (16)
         #define UUID_STRING_SIZE (37)
 
@@ -56,7 +56,7 @@ namespace OIC
                 const SecurityProvStatusCb securityProvStatusCb,
                 const SecurityPinCb securityPinCb,
                 const SecProvisioningDbPathCb secProvisioningDbPathCb);
-            void provisionOwnership();
+            ESResult provisionOwnership();
             std::string getUUID() const;
 
         private:
@@ -68,23 +68,24 @@ namespace OIC
 
             std::mutex m_mtx;
             std::condition_variable m_cond;
-            std::atomic<bool>  aclResult;
-            std::atomic<bool>  certResult;
+            std::atomic<bool> OTMResult;
+            std::atomic<bool> removeDeviceResult;
+            std::atomic<bool> aclResult;
+            std::atomic<bool> certResult;
 
             std::shared_ptr< OC::OCSecureResource > m_securedResource;
             std::shared_ptr< OC::OCSecureResource > findEnrolleeSecurityResource(
                 OC::DeviceList_t &list);
-            void performOwnershipTransfer();
+            ESResult performOwnershipTransfer();
             bool isOwnedDeviceRegisteredInSVRDB();
             void removeDeviceWithUuidCB(OC::PMResultList_t *result, int hasError);
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError);
             void convertUUIDToString(const uint8_t uuid[UUID_SIZE],
                                                 std::string& uuidString);
-            void convertStringToUUID(OicUuid_t& uuid, const std::string uuidString);
 
 #if defined(__WITH_DTLS__) && defined(__WITH_TLS__)
         public:
-            void provisionSecurityForCloudServer(
+            ESResult provisionSecurityForCloudServer(
                 std::string cloudUuid, int credId);
         private:
             ESResult performCertProvisioningForCloudServer(

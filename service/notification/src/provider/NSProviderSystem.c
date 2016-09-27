@@ -142,5 +142,5 @@ void NSSetResourceSecurity(bool secured)
 
 const char * NSGetUserInfo()
 {
-    return providerInfo->providerName;
+    return providerInfo->userInfo;
 }

@@ -123,15 +123,21 @@ namespace OIC
              */
             CloudProp()
             {
+                m_cloudID = "";
+                m_credID = 0;
             }
 
             CloudProp(const CloudProp& cloudProp) :
-                m_rep(cloudProp.toOCRepresentation()), m_cloudID(cloudProp.getCloudID())
+                                            m_rep(cloudProp.toOCRepresentation()),
+                                            m_cloudID(cloudProp.getCloudID()),
+                                            m_credID(cloudProp.getCredID())
             {
             }
 
             CloudProp(const CloudProp&& cloudProp) :
-                m_rep(std::move(cloudProp.toOCRepresentation())), m_cloudID(cloudProp.getCloudID())
+                                            m_rep(std::move(cloudProp.toOCRepresentation())),
+                                            m_cloudID(cloudProp.getCloudID()),
+                                            m_credID(cloudProp.getCredID())
             {
             }
 
@@ -142,6 +148,7 @@ namespace OIC
             {
                 m_rep = rep;
                 m_cloudID = "";
+                m_credID = 0;
             }
 
             /**
@@ -417,9 +424,9 @@ namespace OIC
              */
             std::string getLocation() const
             {
-                if(m_rep.hasAttribute(OC_RSRVD_ES_MODELNUMBER))
+                if(m_rep.hasAttribute(OC_RSRVD_ES_LOCATION))
                 {
-                    return m_rep.getValue<std::string>(OC_RSRVD_ES_MODELNUMBER);
+                    return m_rep.getValue<std::string>(OC_RSRVD_ES_LOCATION);
                 }
                 return std::string("");
             }
@@ -454,6 +461,15 @@ namespace OIC
                 return m_devUUID;
             }
 
+            /**
+             * Get a result for about security provisioning is success or not.
+             *
+             * @return ::ES_OK\n
+             *         ::ES_SEC_OPERATION_IS_NOT_SUPPORTED\n
+             *         ::ES_SECURE_RESOURCE_DISCOVERY_FAILURE\n
+             *         ::ES_OWNERSHIP_TRANSFER_FAILURE\n
+             *         ::ES_ERROR\n
+             */
             ESResult getESResult()
             {
                 return m_result;
@@ -644,8 +660,9 @@ namespace OIC
             /**
              * Get a result of getting provisioning status and last error code of Enrollee
              *
-             * @return a result of getting provisioning status and last error code of Enrollee
-             *
+             * @return ::ES_OK\n
+             *         ::ES_COMMUNICATION_ERROR\n
+             *         ::ES_ERROR\n
              * @see ESResult
              */
             ESResult getESResult()
@@ -692,7 +709,9 @@ namespace OIC
             /**
              * Get a result of getting preconfiguration of Enrollee
              *
-             * @return a result of preconfiguration of Enrollee
+             * @return ::ES_OK\n
+             *         ::ES_COMMUNICATION_ERROR\n
+             *         ::ES_ERROR\n
              *
              * @see ESResult
              */
@@ -737,7 +756,9 @@ namespace OIC
             /**
              * Get a result of Device property provisioning
              *
-             * @return a result of Device property provisioning
+             * @return ::ES_OK\n
+             *         ::ES_COMMUNICATION_ERROR\n
+             *         ::ES_ERROR\n
              *
              * @see ESResult
              */
@@ -771,7 +792,13 @@ namespace OIC
             /**
              * Get a result of Cloud property provisioning
              *
-             * @return a result of Cloud property provisioning
+             * @return ::ES_OK\n
+             *         ::ES_ENROLLEE_DISCOVERY_FAILURE\n
+             *         ::ES_SECURE_RESOURCE_DISCOVERY_FAILURE\n
+             *         ::ES_ACL_PROVISIONING_FAILURE\n
+             *         ::ES_CERT_PROVISIONING_FAILURE\n
+             *         ::ES_COMMUNICATION_ERROR\n
+             *         ::ES_ERROR\n
              *
              * @see ESResult
              */

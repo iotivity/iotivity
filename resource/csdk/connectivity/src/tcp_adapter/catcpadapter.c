@@ -33,7 +33,7 @@
 #include "catcpinterface.h"
 #include "caqueueingthread.h"
 #include "caadapterutils.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "caremotehandler.h"
 #include "logger.h"
@@ -549,7 +549,7 @@ size_t CAGetTotalLengthFromPacketHeader(const unsigned char *recvBuffer, size_t 
         return 0;
     }
 
-    coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+    coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(
             ((unsigned char *)recvBuffer)[0] >> 4);
     size_t optPaylaodLen = coap_get_length_from_header((unsigned char *)recvBuffer,
                                                         transport);
@@ -563,7 +563,7 @@ size_t CAGetTotalLengthFromPacketHeader(const unsigned char *recvBuffer, size_t 
     return headerLen + optPaylaodLen;
 }
 
-void CAGetTCPHeaderDetails(unsigned char* recvBuffer, coap_transport_type *transport,
+void CAGetTCPHeaderDetails(unsigned char* recvBuffer, coap_transport_t *transport,
                            size_t *headerlen)
 {
     if (NULL == recvBuffer)

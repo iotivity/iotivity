@@ -198,7 +198,7 @@ NSResult NSSendMessage(NSMessage * msg)
 
     pthread_mutex_lock(&nsInitMutex);
 
-    if(msg == NULL)
+    if (!initProvider || msg == NULL)
     {
         NS_LOG(ERROR, "Msg is NULL");
         pthread_mutex_unlock(&nsInitMutex);
@@ -219,6 +219,13 @@ NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type)
     NS_LOG(DEBUG, "NSProviderReadCheck - IN");
     pthread_mutex_lock(&nsInitMutex);
 
+    if (!initProvider)
+    {
+        NS_LOG(ERROR, "Provider is not started");
+        pthread_mutex_unlock(&nsInitMutex);
+        return NS_FAIL;
+    }
+
     NSSyncInfo * syncInfo = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
     OICStrcpy(syncInfo->providerId, UUID_STRING_SIZE, NSGetProviderInfo()->providerId);
     syncInfo->messageId = messageId;
@@ -235,9 +242,9 @@ NSResult NSAcceptSubscription(const char * consumerId, bool accepted)
     NS_LOG(DEBUG, "NSAccept - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!consumerId)
+    if(!initProvider || !consumerId || consumerId[0] == '\0' || NSGetPolicy() == NS_POLICY_CONSUMER)
     {
-        NS_LOG(ERROR, "consumerId is NULL");
+        NS_LOG(ERROR, "Provider is not started or consumerId is NULL or NS Policy is Consumer");
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
@@ -278,14 +285,14 @@ NSTopicLL * NSProviderGetConsumerTopics(const char * consumerId)
     NS_LOG(DEBUG, "NSProviderGetConsumerTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!consumerId || consumerId[0] == '\0')
+    if(!initProvider || !consumerId || consumerId[0] == '\0')
     {
-        NS_LOG(DEBUG, "consumer id should be set");
+        NS_LOG(DEBUG, "Provider is not started or consumer id should be set");
         pthread_mutex_unlock(&nsInitMutex);
         return NULL;
     }
 
-    NSTopicSynchronization topics;
+    NSTopicSync topics;
     topics.consumerId = OICStrdup(consumerId);
     topics.topics = NULL;
     topics.condition = nstopicCond;
@@ -304,7 +311,14 @@ NSTopicLL * NSProviderGetTopics()
     NS_LOG(DEBUG, "NSProviderGetTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    NSTopicSynchronization topics;
+    if (!initProvider)
+    {
+        NS_LOG(ERROR, "Provider is not started");
+        pthread_mutex_unlock(&nsInitMutex);
+        return NULL;
+    }
+
+    NSTopicSync topics;
     topics.consumerId = NULL;
     topics.topics = NULL;
     topics.condition = nstopicCond;
@@ -322,14 +336,25 @@ NSResult NSProviderRegisterTopic(const char * topicName)
     NS_LOG(DEBUG, "NSProviderAddTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!topicName || topicName == '\0')
+    if(!initProvider || !topicName || topicName[0] == '\0')
     {
         pthread_mutex_unlock(&nsInitMutex);
-        NS_LOG(DEBUG, "topic Name should be set");
+        NS_LOG(DEBUG, "Provider is not started or topic Name should be set");
         return NS_FAIL;
     }
 
-    NSPushQueue(TOPIC_SCHEDULER, TASK_ADD_TOPIC, OICStrdup(topicName));
+    NSTopicSyncResult topics;
+    topics.topicName = OICStrdup(topicName);
+    topics.condition = nstopicCond;
+    topics.result = NS_OK;
+
+    NSPushQueue(TOPIC_SCHEDULER, TASK_REGISTER_TOPIC, &topics);
+    pthread_cond_wait(&topics.condition, &nsInitMutex);
+    if(topics.result != NS_OK)
+    {
+        pthread_mutex_unlock(&nsInitMutex);
+        return NS_FAIL;
+    }
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderAddTopics - OUT");
@@ -341,14 +366,26 @@ NSResult NSProviderUnregisterTopic(const char * topicName)
     NS_LOG(DEBUG, "NSProviderDeleteTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!topicName || topicName[0] == '\0')
+    if(!initProvider || !topicName || topicName[0] == '\0')
     {
         pthread_mutex_unlock(&nsInitMutex);
-        NS_LOG(DEBUG, "topic Name should be set");
+        NS_LOG(DEBUG, "Provider is not started or topic Name should be set");
         return NS_FAIL;
     }
 
-    NSPushQueue(TOPIC_SCHEDULER, TASK_DELETE_TOPIC, (void *) topicName);
+    NSTopicSyncResult topics;
+    topics.topicName = OICStrdup(topicName);
+    topics.condition = nstopicCond;
+    topics.result = NS_OK;
+
+    NSPushQueue(TOPIC_SCHEDULER, TASK_UNREGISTER_TOPIC, &topics);
+    pthread_cond_wait(&topics.condition, &nsInitMutex);
+    if(topics.result != NS_OK)
+    {
+        pthread_mutex_unlock(&nsInitMutex);
+        return NS_FAIL;
+    }
+    OICFree(topics.topicName);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderDeleteTopics - OUT");
@@ -360,9 +397,11 @@ NSResult NSProviderSetConsumerTopic(const char * consumerId, const char * topicN
     NS_LOG(DEBUG, "NSProviderSelectTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!consumerId || consumerId[0] == '\0' || !topicName || topicName[0] == '\0' || !NSGetPolicy())
+    if(!initProvider || !consumerId || consumerId[0] == '\0' || !topicName || topicName[0] == '\0'
+            || !NSGetPolicy())
     {
-        NS_LOG(DEBUG, "consumer id should be set for topic subscription or "
+        NS_LOG(DEBUG, "provider is not started or "
+                "consumer id should be set for topic subscription or "
                 "Configuration must set to true.");
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
@@ -386,9 +425,11 @@ NSResult NSProviderUnsetConsumerTopic(const char * consumerId, const char * topi
     NS_LOG(DEBUG, "NSProviderUnselectTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!consumerId || consumerId[0] == '\0' || !topicName || topicName[0] == '\0' || !NSGetPolicy())
+    if(!initProvider || !consumerId || consumerId[0] == '\0' || !topicName || topicName[0] == '\0'
+            || !NSGetPolicy())
     {
-        NS_LOG(DEBUG, "consumer id should be set for topic subscription or "
+        NS_LOG(DEBUG, "provider is not started or "
+                "consumer id should be set for topic subscription or "
                 "Configuration must set to true.");
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;

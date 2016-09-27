@@ -2,5 +2,7 @@
 
 encodeAddressForRFC6874
 
+OCByteStringCopy
 OCConvertPayload
+OCDevicePayloadCreate
 OCParsePayload

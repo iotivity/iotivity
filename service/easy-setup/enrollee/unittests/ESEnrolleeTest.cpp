@@ -422,8 +422,7 @@ TEST_F(EasysetupEnrolleeTest, CloudServerProperiesProvisionedWithSuccess)
     mocks.OnCallFunc(cloudProvisioningStatusCallback).Do(
         [& cntForReceivedCallbackWithSuccess](std::shared_ptr< CloudPropProvisioningStatus > status)
         {
-            // Will called twice
-            if(status->getESResult() == ES_OK || status->getESResult() == ES_FOUND_ENROLLEE)
+            if(status->getESResult() == ES_OK)
             {
                cntForReceivedCallbackWithSuccess++;
             }
@@ -447,7 +446,7 @@ TEST_F(EasysetupEnrolleeTest, CloudServerProperiesProvisionedWithSuccess)
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_EQ(cntForReceivedCallbackWithSuccess, 3);
+    EXPECT_EQ(cntForReceivedCallbackWithSuccess, 2);
 
     ESTerminateEnrollee();
 }

@@ -104,6 +104,16 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
 OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
                                         OicEncodingType_t encodingType,uint16_t *credId);
 
+/**
+ * function to save own certificate chain into Cred of SVR.
+ *
+ * @param[in] cert own certificate chain to be saved in Cred of SVR.
+ * @param[in] key own secret key to be saved in Cred of SVR.
+ * @param[out] credId CredId of saved trust certificate chain in Cred of SVR.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPSaveOwnCertChain(OicSecCert_t * cert, OicSecKey_t * key, uint16_t *credId);
+
 #endif // __WITH_X509__ || __WITH_TLS__
 /**
  * API to send Direct-Pairing Configuration to a device.

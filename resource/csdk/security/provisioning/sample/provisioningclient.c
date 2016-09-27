@@ -18,13 +18,14 @@
  *
  *****************************************************************/
 
+#include "iotivity_config.h"
+
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
-#include "platform_features.h"
 #include "utlist.h"
 #include "logger.h"
 #include "oic_malloc.h"
@@ -1065,7 +1066,7 @@ static int removeDeviceWithUuid(void)
     printf("Input the UUID : ");
     for(int ret=0; 1!=ret; )
     {
-        ret = scanf("%64s", strUuid);
+        ret = scanf("%63s", strUuid);
         for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                     // '0x20<=code' is character region
     }

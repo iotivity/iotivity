@@ -53,7 +53,7 @@ namespace OIC
                                         const OCRepresentation& rep, const int eCode) >(
                         std::bind(&CloudResource::onCloudProvResponse, this,
                         std::placeholders::_1, std::placeholders::_2,
-                        std::placeholders::_3)));
+                        std::placeholders::_3)), OC::QualityOfService::HighQos);
         }
 
         void CloudResource::onCloudProvResponse(const HeaderOptions& /*headerOptions*/,
@@ -68,10 +68,11 @@ namespace OIC
 
                 OIC_LOG(DEBUG, ES_CLOUD_RES_TAG,"onCloudProvResponse : onCloudProvResponse is failed ");
 
-                if (eCode == OCStackResult::OC_STACK_UNAUTHORIZED_REQ)
+                if(eCode == OCStackResult::OC_STACK_COMM_ERROR)
                 {
-                    OIC_LOG(DEBUG, ES_CLOUD_RES_TAG, "Mediator is unauthorized from Enrollee.");
-                    result = ESResult::ES_UNAUTHORIZED_REQ;
+                    OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG,
+                            "can't receive any response from Enrollee by a timeout threshold.");
+                    result = ESResult::ES_COMMUNICATION_ERROR;
                 }
 
                 std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<

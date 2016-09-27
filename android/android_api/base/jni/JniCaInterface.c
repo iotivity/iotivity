@@ -1,25 +1,22 @@
-/*
-* //******************************************************************
-* //
-* // Copyright 2015 Intel Corporation.
-* //
-* //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-* //
-* // Licensed under the Apache License, Version 2.0 (the "License");
-* // you may not use this file except in compliance with the License.
-* // You may obtain a copy of the License at
-* //
-* //      http://www.apache.org/licenses/LICENSE-2.0
-* //
-* // Unless required by applicable law or agreed to in writing, software
-* // distributed under the License is distributed on an "AS IS" BASIS,
-* // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* // See the License for the specific language governing permissions and
-* // limitations under the License.
-* //
-* //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-*/
-
+//******************************************************************
+//
+// Copyright 2015 Intel Corporation.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include <jni.h>
 #include <android/log.h>
 #include <stdio.h>
@@ -247,12 +244,6 @@ Java_org_iotivity_ca_CaInterface_caManagerTerminate(JNIEnv *env, jclass clazz)
         (*env)->DeleteGlobalRef(env, g_jni_cls_enum);
         g_jni_cls_enum = NULL;
     }
-
-    if (g_jni_mid_enum)
-    {
-        (*env)->DeleteGlobalRef(env, g_jni_mid_enum);
-        g_jni_mid_enum = NULL;
-    }
 }
 
 JNIEXPORT void JNICALL
@@ -261,6 +252,11 @@ Java_org_iotivity_ca_CaInterface_caManagerSetAutoConnectionDeviceInfo(JNIEnv *en
                                                                       jstring jaddress)
 {
     LOGI("CaManager_setAutoConnectionDeviceInfo");
+    if (!jaddress)
+    {
+        LOGE("jaddress is null");
+        return;
+    }
 
     const char* address = (*env)->GetStringUTFChars(env, jaddress, NULL);
     if (!address)
@@ -280,6 +276,11 @@ Java_org_iotivity_ca_CaInterface_caManagerUnsetAutoConnectionDeviceInfo(JNIEnv *
                                                                         jstring jaddress)
 {
     LOGI("CaManager_unsetAutoConnectionDeviceInfo");
+    if (!jaddress)
+    {
+        LOGE("jaddress is null");
+        return;
+    }
 
     const char* address = (*env)->GetStringUTFChars(env, jaddress, NULL);
     if (!address)

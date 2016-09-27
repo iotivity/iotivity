@@ -60,7 +60,6 @@ if stacktest_env.get('LOGGING'):
 	stacktest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if target_os in ['msys_nt', 'windows']:
-	stacktest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
 	stacktest_env.AppendUnique(LIBS = ['ws2_32', 'iphlpapi', 'kernel32'])
 else:
 	stacktest_env.PrependUnique(LIBS = ['m'])

@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,7 +38,6 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 #include "common.h"
-#include "platform_features.h"
 
 #ifdef ROUTING_GATEWAY
 /**
@@ -105,7 +105,7 @@ OCPayload* putPayload()
 
 static void PrintUsage()
 {
-    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..17> -c <0|1>");
+    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..20> -c <0|1>");
     OIC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OIC_LOG(INFO, TAG, "-c 0 : Use Default connectivity(IP)");
     OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
@@ -415,7 +415,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
 
         if(!found)
         {
-            OIC_LOG_V (INFO, TAG, "No /a/light in payload");
+            OIC_LOG_V (INFO, TAG, "No %s in payload", coapServerResource.c_str());
             return OC_STACK_KEEP_TRANSACTION;
         }
 
@@ -561,10 +561,7 @@ int InitPresence()
     {
         if (result == OC_STACK_OK)
         {
-            std::ostringstream multicastPresenceQuery;
-            multicastPresenceQuery.str("");
-            multicastPresenceQuery << "coap://" << OC_MULTICAST_PREFIX << OC_RSRVD_PRESENCE_URI;
-            result = InvokeOCDoResource(multicastPresenceQuery, &serverAddr, OC_REST_PRESENCE, OC_LOW_QOS,
+            result = InvokeOCDoResource(query, NULL, OC_REST_PRESENCE, OC_LOW_QOS,
                     presenceCB, NULL, 0);
         }
     }
@@ -691,7 +688,8 @@ int InitDeleteRequest(OCQualityOfService qos)
     return result;
 }
 
-int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions, bool getWithQuery)
+int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions,
+                   bool getWithQuery)
 {
 
     OCHeaderOption options[MAX_HEADER_OPTIONS];
@@ -709,17 +707,25 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
 
     if (withVendorSpecificHeaderOptions)
     {
+        memset(options, 0, sizeof(OCHeaderOption)* MAX_HEADER_OPTIONS);
+        size_t numOptions = 0;
         uint8_t option0[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        uint16_t optionID = 2048;
+        size_t optionDataSize = sizeof(option0);
+        OCSetHeaderOption(options,
+                          &numOptions,
+                          optionID,
+                          option0,
+                          optionDataSize);
+
         uint8_t option1[] = { 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
-        memset(options, 0, sizeof(OCHeaderOption) * MAX_HEADER_OPTIONS);
-        options[0].protocolID = OC_COAP_ID;
-        options[0].optionID = 2048;
-        memcpy(options[0].optionData, option0, sizeof(option0));
-        options[0].optionLength = 10;
-        options[1].protocolID = OC_COAP_ID;
-        options[1].optionID = 3000;
-        memcpy(options[1].optionData, option1, sizeof(option1));
-        options[1].optionLength = 10;
+        optionID = 3000;
+        optionDataSize = sizeof(option1);
+        OCSetHeaderOption(options,
+                          &numOptions,
+                          optionID,
+                          option1,
+                          optionDataSize);
     }
     if (withVendorSpecificHeaderOptions)
     {

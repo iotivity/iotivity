@@ -44,6 +44,14 @@ public class DeviceProp {
 
     public void setWiFiProp(String ssid, String pwd, WIFI_AUTHTYPE authtype, WIFI_ENCTYPE enctype)
     {
+        if(ssid == null)
+        {
+            ssid = "";
+        }
+        if(pwd == null)
+        {
+            pwd = "";
+        }
         try
         {
             mRep.setValue(ESConstants.OC_RSRVD_ES_SSID, ssid);
@@ -57,6 +65,18 @@ public class DeviceProp {
 
     public void setDevConfProp(String language, String country, String location)
     {
+        if(language == null)
+        {
+            language = "";
+        }
+        if(country == null)
+        {
+            country = "";
+        }
+        if(location == null)
+        {
+            location = "";
+        }
         try {
             mRep.setValue(ESConstants.OC_RSRVD_ES_LANGUAGE, language);
             mRep.setValue(ESConstants.OC_RSRVD_ES_COUNTRY, country);

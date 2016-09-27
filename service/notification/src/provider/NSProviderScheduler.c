@@ -274,8 +274,8 @@ void NSFreeData(NSSchedulerType type, NSTask * task)
                 OICFree(data);
             }
                 break;
-            case TASK_ADD_TOPIC:
-            case TASK_DELETE_TOPIC:
+            case TASK_REGISTER_TOPIC:
+            case TASK_UNREGISTER_TOPIC:
             {
                 OICFree(task->taskData);
             }

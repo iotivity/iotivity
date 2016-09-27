@@ -22,6 +22,7 @@
 package org.iotivity.cloud.ciserver;
 
 import java.util.HashMap;
+import java.util.Iterator;
 
 import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.ServerSystem;
@@ -29,6 +30,7 @@ import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
+import org.iotivity.cloud.base.exception.ClientException;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.exception.ServerException.UnAuthorizedException;
@@ -41,6 +43,7 @@ import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.base.server.HttpServer;
 import org.iotivity.cloud.base.server.Server;
+import org.iotivity.cloud.util.Bytes;
 import org.iotivity.cloud.util.Cbor;
 import org.iotivity.cloud.util.Log;
 
@@ -67,12 +70,24 @@ public class DeviceServerSystem extends ServerSystem {
             }
         }
 
-        public void removeDevice(Device device) {
+        public void removeDevice(Device device) throws ClientException {
             String deviceId = ((CoapDevice) device).getDeviceId();
             synchronized (mMapDevice) {
                 if (mMapDevice.get(deviceId) == device) {
                     mMapDevice.remove(deviceId);
                 }
+            }
+            removeObserveDevice(device);
+        }
+
+        private void removeObserveDevice(Device device) throws ClientException {
+            Iterator<String> iterator = mMapDevice.keySet().iterator();
+            while (iterator.hasNext()) {
+                String deviceId = iterator.next();
+                CoapDevice getDevice = (CoapDevice) mDevicePool
+                        .queryDevice(deviceId);
+                getDevice.removeObserveChannel(
+                        ((CoapDevice) device).getRequestChannel());
             }
         }
 
@@ -101,6 +116,31 @@ public class DeviceServerSystem extends ServerSystem {
                         throw new UnAuthorizedException("token is expired");
                     }
 
+                    CoapRequest coapRequest = (CoapRequest) msg;
+                    IRequestChannel targetChannel = null;
+                    if (coapRequest.getUriPathSegments()
+                            .contains(Constants.REQ_DEVICE_ID)) {
+                        CoapDevice targetDevice = (CoapDevice) mDevicePool
+                                .queryDevice(coapRequest.getUriPathSegments()
+                                        .get(1));
+                        targetChannel = targetDevice.getRequestChannel();
+                    }
+                    switch (coapRequest.getObserve()) {
+                        case SUBSCRIBE:
+                            coapDevice.addObserveRequest(
+                                    Bytes.bytesToLong(coapRequest.getToken()),
+                                    coapRequest);
+                            coapDevice.addObserveChannel(targetChannel);
+                            break;
+                        case UNSUBSCRIBE:
+                            coapDevice.removeObserveChannel(targetChannel);
+                            coapDevice.removeObserveRequest(
+                                    Bytes.bytesToLong(coapRequest.getToken()));
+                            break;
+                        default:
+                            break;
+                    }
+
                 } catch (Throwable t) {
                     Log.f(ctx.channel(), t);
                     ResponseStatus responseStatus = t instanceof ServerException
@@ -117,27 +157,30 @@ public class DeviceServerSystem extends ServerSystem {
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) {
-
-            // Authenticated device connected
             Device device = ctx.channel().attr(keyDevice).get();
-            mDevicePool.addDevice(device);
-            device.onConnected();
+            // Authenticated device connected
 
             sendDevicePresence(device.getDeviceId(), "on");
+            mDevicePool.addDevice(device);
+
+            device.onConnected();
         }
 
         @Override
-        public void channelInactive(ChannelHandlerContext ctx) {
+        public void channelInactive(ChannelHandlerContext ctx)
+                throws ClientException {
             Device device = ctx.channel().attr(keyDevice).get();
             // Some cases, this event occurs after new device connected using
             // same di.
             // So compare actual value, and remove if same.
             if (device != null) {
-                mDevicePool.removeDevice(device);
+                sendDevicePresence(device.getDeviceId(), "off");
+
                 device.onDisconnected();
+
+                mDevicePool.removeDevice(device);
                 ctx.channel().attr(keyDevice).remove();
 
-                sendDevicePresence(device.getDeviceId(), "off");
             }
         }
 

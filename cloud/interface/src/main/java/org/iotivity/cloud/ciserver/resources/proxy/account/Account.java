@@ -67,7 +67,7 @@ public class Account extends Resource {
                     uriPath.append(Constants.PREFIX_OIC + "/");
                     uriPath.append(Constants.RD_URI);
                     mRDServer.sendRequest(
-                            MessageBuilder.createRequest(RequestMethod.POST,
+                            MessageBuilder.createRequest(RequestMethod.DELETE,
                                     uriPath.toString(), mRequest.getUriQuery()),
                             mSrcDevice);
                     break;

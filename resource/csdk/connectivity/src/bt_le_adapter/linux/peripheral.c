@@ -39,13 +39,13 @@ static CAPeripheralContext g_context = {
 
 static bool CAPeripheralCheckStarted()
 {
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
 
     bool const started =
         (g_context.event_loop != NULL
          && g_main_loop_is_running(g_context.event_loop));
 
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 
     /**
      * @todo Fix potential TOCTOU race condition.  A peripheral could
@@ -59,11 +59,11 @@ static bool CAPeripheralCheckStarted()
 static bool CAPeripheralAdaptersFound(CALEContext * context)
 {
     // Check if BlueZ detected bluetooth hardware adapters.
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
 
     bool const found = (context->adapters != NULL);
 
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 
     if (!found)
     {
@@ -162,7 +162,7 @@ static bool CAPeripheralRegisterGattServices(
 
     bool success = true;
 
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
 
     for (GList * l = context->gatt_services; l != NULL; l = l->next)
     {
@@ -209,7 +209,7 @@ static bool CAPeripheralRegisterGattServices(
         g_variant_unref(ret);
     }
 
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 
     return success;
 }
@@ -224,7 +224,7 @@ static bool CAPeripheralRegisterAdvertisements(
       LE Advertisement Manager.
     */
 
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
 
     char const * const advertisement_path =
         g_dbus_interface_skeleton_get_object_path(
@@ -310,7 +310,7 @@ static bool CAPeripheralRegisterAdvertisements(
         success = true;
     }
 
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 
     return success;
 }
@@ -383,14 +383,14 @@ static CAResult_t CAPeripheralSetDiscoverability(
       Synchronize access to the adapter information using the base
       context lock since we don't own the adapter_infos.
      */
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
 
     // Make all detected adapters discoverable.
     g_list_foreach(context->adapters,
                    discoverability_func,
                    &result);
 
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 
     return result;
 }
@@ -447,9 +447,9 @@ static void CAPeripheralOnNameLost(GDBusConnection * connection,
  */
 static gboolean CAPeripheralEventLoopStarted(gpointer user_data)
 {
-    ca_cond const condition = user_data;
+    oc_cond const condition = user_data;
 
-    ca_cond_signal(condition);  // For service registration
+    oc_cond_signal(condition);  // For service registration
 
     return G_SOURCE_REMOVE;
 }
@@ -515,7 +515,7 @@ static void CAPeripheralStartEventLoop(void * data)
                 "manager interface.");
     }
 
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
 
     assert(g_context.event_loop == NULL);
     g_context.event_loop = event_loop;
@@ -542,7 +542,7 @@ static void CAPeripheralStartEventLoop(void * data)
                                 context->connection,
                                 advertising_managers);
 
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 
     /*
       Add an idle handler that notifies a thread waiting for the
@@ -571,12 +571,12 @@ static void CAPeripheralStartEventLoop(void * data)
 
 static void CAPeripheralStopEventLoop(CAPeripheralContext * context)
 {
-    ca_mutex_lock(context->lock);
+    oc_mutex_lock(context->lock);
 
     GMainLoop * const event_loop = context->event_loop;
     context->event_loop = NULL;
 
-    ca_mutex_unlock(context->lock);
+    oc_mutex_unlock(context->lock);
 
     if (event_loop != NULL)
     {
@@ -596,14 +596,14 @@ static void CAPeripheralStopEventLoop(CAPeripheralContext * context)
 
 void CAPeripheralInitialize()
 {
-    g_context.lock      = ca_mutex_new();
-    g_context.condition = ca_cond_new();
+    g_context.lock      = oc_mutex_new();
+    g_context.condition = oc_cond_new();
 }
 
 void CAPeripheralFinalize()
 {
-    ca_cond_free(g_context.condition);
-    ca_mutex_free(g_context.lock);
+    oc_cond_free(g_context.condition);
+    oc_mutex_free(g_context.lock);
 }
 
 CAResult_t CAPeripheralStart(CALEContext * context)
@@ -653,21 +653,21 @@ CAResult_t CAPeripheralStart(CALEContext * context)
     static uint64_t const timeout =
         2 * MICROSECS_PER_SEC;  // Microseconds
 
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
 
     for (int i = 0;
          g_context.gatt_services == NULL && i < max_retries;
          ++i)
     {
-        if (ca_cond_wait_for(g_context.condition,
+        if (oc_cond_wait_for(g_context.condition,
                              g_context.lock,
-                             timeout) == CA_WAIT_SUCCESS)
+                             timeout) == OC_WAIT_SUCCESS)
         {
             result = CA_STATUS_OK;
         }
     }
 
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 
     if (result != CA_STATUS_OK)
     {
@@ -718,7 +718,7 @@ CAResult_t CAPeripheralStop()
 
     CAPeripheralStopEventLoop(&g_context);
 
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
 
     guint const owner_id = g_context.owner_id;
     g_context.owner_id = 0;
@@ -728,7 +728,7 @@ CAResult_t CAPeripheralStop()
 
     g_context.base = NULL;
 
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 
     CALEAdvertisementDestroy(&g_context.advertisement);
 
@@ -741,9 +741,9 @@ CAResult_t CAPeripheralStop()
 
 void CAPeripheralForEachService(GFunc func, void * user_data)
 {
-    ca_mutex_lock(g_context.lock);
+    oc_mutex_lock(g_context.lock);
 
     g_list_foreach(g_context.gatt_services, func, user_data);
 
-    ca_mutex_unlock(g_context.lock);
+    oc_mutex_unlock(g_context.lock);
 }

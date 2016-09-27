@@ -365,7 +365,7 @@ int main()
 
     gMainloop = g_main_loop_new (NULL, FALSE);
     if(gMainloop == NULL) {
-        cout << "Create Min Loop Error" << endl;
+        cout << "Create Main Loop Error" << endl;
         return 0;
     }
 

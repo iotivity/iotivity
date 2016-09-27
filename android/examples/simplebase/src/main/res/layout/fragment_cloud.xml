@@ -91,9 +91,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="2dp"
                 android:gravity="center_horizontal"
-                android:orientation="horizontal"
-                android:layout_marginBottom="2dp">
+                android:orientation="horizontal">
 
                 <Button
                     android:id="@+id/creategroup_button"
@@ -181,6 +181,35 @@
                     android:layout_weight="1"
                     android:text="Sub Device\nPresence" />
             </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:gravity="center_horizontal"
+                android:orientation="horizontal"
+                android:layout_marginBottom="2dp">
+
+                <Button
+                    android:id="@+id/findresource_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="FIND\nRESOURCE" />
+
+                <Button
+                    android:id="@+id/registerobserve_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="REGISTER\nOBSERVE" />
+
+                <Button
+                    android:id="@+id/deregisterobserve_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="DEREGISTER\nOBSERVE" />
+            </LinearLayout>
         </LinearLayout>
 
         <Switch
@@ -261,6 +290,15 @@
                     android:layout_gravity="center_horizontal"
                     android:layout_weight="1"
                     android:text="PUB\nTopic" />
+
+                <Button
+                    android:id="@+id/mqreq_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_weight="1"
+                    android:text="REQ\nPUB"
+                    android:visibility="gone" />
             </LinearLayout>
         </LinearLayout>
 

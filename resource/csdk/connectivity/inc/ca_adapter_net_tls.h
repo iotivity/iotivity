@@ -59,8 +59,13 @@ void CAsetTlsAdapterCallbacks(CAPacketReceivedCallback recvCallback,
                               CATransportAdapter_t type);
 
 /**
- * Register callback to get TLS PSK credentials.
- * @param[in]  credCallback    callback to get TLS PSK credentials.
+ * Register callback to get credentials types.
+ * @param[in]   credTypesCallback    callback to get credential types.
+ */
+void CAsetCredentialTypesCallback(CAgetCredentialTypesHandler credTypesCallback);
+/**
+ * Register callback to get credential types.
+ * @param[in]  typesCallback    callback to get credential types.
  */
 void CAsetTlsCredentialsCallback(CAGetDTLSPskCredentialsHandler credCallback);
 

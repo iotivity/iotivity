@@ -20,8 +20,12 @@
 
 #include "ResourcePresence.h"
 
-#include <bits/atomic_base.h>
-#include <bits/shared_ptr_base.h>
+#ifndef __APPLE__
+    #ifndef TARGET_OS_MAC
+        #include <bits/atomic_base.h>
+        #include <bits/shared_ptr_base.h>
+    #endif
+#endif
 #include <time.h>
 #include <unistd.h>
 #include <cstdbool>

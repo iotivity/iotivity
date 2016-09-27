@@ -38,10 +38,12 @@
 #endif
 
 #include "catcpinterface.h"
-#include "pdu.h"
+#include "caipinterface.h"
+#include <coap/pdu.h>
 #include "caadapterutils.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 #ifdef __WITH_TLS__
 #include "ca_adapter_net_tls.h"
@@ -66,12 +68,12 @@
 /**
  * Mutex to synchronize device object list.
  */
-static ca_mutex g_mutexObjectList = NULL;
+static oc_mutex g_mutexObjectList = NULL;
 
 /**
  * Conditional mutex to synchronize.
  */
-static ca_cond g_condObjectList = NULL;
+static oc_cond g_condObjectList = NULL;
 
 /**
  * Maintains the callback to be notified when data received from remote device.
@@ -154,7 +156,7 @@ static void CATCPDestroyMutex()
 {
     if (g_mutexObjectList)
     {
-        ca_mutex_free(g_mutexObjectList);
+        oc_mutex_free(g_mutexObjectList);
         g_mutexObjectList = NULL;
     }
 }
@@ -163,7 +165,7 @@ static CAResult_t CATCPCreateMutex()
 {
     if (!g_mutexObjectList)
     {
-        g_mutexObjectList = ca_mutex_new();
+        g_mutexObjectList = oc_mutex_new();
         if (!g_mutexObjectList)
         {
             OIC_LOG(ERROR, TAG, "Failed to created mutex!");
@@ -178,7 +180,7 @@ static void CATCPDestroyCond()
 {
     if (g_condObjectList)
     {
-        ca_cond_free(g_condObjectList);
+        oc_cond_free(g_condObjectList);
         g_condObjectList = NULL;
     }
 }
@@ -187,7 +189,7 @@ static CAResult_t CATCPCreateCond()
 {
     if (!g_condObjectList)
     {
-        g_condObjectList = ca_cond_new();
+        g_condObjectList = oc_cond_new();
         if (!g_condObjectList)
         {
             OIC_LOG(ERROR, TAG, "Failed to created cond!");
@@ -207,9 +209,9 @@ static void CAReceiveHandler(void *data)
         CAFindReadyMessage();
     }
 
-    ca_mutex_lock(g_mutexObjectList);
-    ca_cond_signal(g_condObjectList);
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
+    oc_cond_signal(g_condObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     OIC_LOG(DEBUG, TAG, "OUT - CAReceiveHandler");
 }
@@ -341,20 +343,21 @@ static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
 
         svritem->fd = sockfd;
         svritem->sep.endpoint.flags = flag;
+        svritem->sep.endpoint.adapter = CA_ADAPTER_TCP;
         CAConvertAddrToName((struct sockaddr_storage *)&clientaddr, clientlen,
                             svritem->sep.endpoint.addr, &svritem->sep.endpoint.port);
 
-        ca_mutex_lock(g_mutexObjectList);
+        oc_mutex_lock(g_mutexObjectList);
         bool result = u_arraylist_add(caglobals.tcp.svrlist, svritem);
         if (!result)
         {
             OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
             close(sockfd);
             OICFree(svritem);
-            ca_mutex_unlock(g_mutexObjectList);
+            oc_mutex_unlock(g_mutexObjectList);
             return;
         }
-        ca_mutex_unlock(g_mutexObjectList);
+        oc_mutex_unlock(g_mutexObjectList);
 
         CHECKFD(sockfd);
     }
@@ -466,7 +469,7 @@ static CAResult_t CAReadHeader(CATCPSessionInfo_t *svritem)
         svritem->protocol = COAP;
 
         //seems CoAP data received. read full coap header.
-        coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(svritem->data[0] >> 4);
+        coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(svritem->data[0] >> 4);
 
         size_t headerLen = coap_get_tcp_header_length_for_transport(transport);
 
@@ -656,6 +659,11 @@ static CAResult_t CATCPConvertNameToAddr(int family, const char *host, uint16_t 
 
 static int CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
 {
+    VERIFY_NON_NULL_RET(svritem, TAG, "svritem", -1);
+
+    OIC_LOG_V(DEBUG, TAG, "try to connect with [%s:%u]",
+              svritem->sep.endpoint.addr, svritem->sep.endpoint.port);
+
     // #1. create tcp socket.
     int fd = socket(family, SOCK_STREAM, IPPROTO_TCP);
     if (-1 == fd)
@@ -725,7 +733,7 @@ static int CACreateAcceptSocket(int family, CASocket_t *sock)
 
     if (family == AF_INET6)
     {
-        // the socket is re‐stricted to sending and receiving IPv6 packets only.
+        // the socket is restricted to sending and receiving IPv6 packets only.
         int on = 1;
         if (-1 == setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof (on)))
         {
@@ -849,12 +857,12 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
         return res;
     }
 
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
     if (!caglobals.tcp.svrlist)
     {
         caglobals.tcp.svrlist = u_arraylist_create();
     }
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     if (caglobals.server)
     {
@@ -892,7 +900,7 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
 void CATCPStopServer()
 {
     // mutex lock
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
 
     // set terminate flag
     caglobals.tcp.terminate = true;
@@ -910,12 +918,12 @@ void CATCPStopServer()
 
     if (caglobals.tcp.started)
     {
-        ca_cond_wait(g_condObjectList, g_mutexObjectList);
+        oc_cond_wait(g_condObjectList, g_mutexObjectList);
     }
     caglobals.tcp.started = false;
 
     // mutex unlock
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     if (-1 != caglobals.tcp.ipv4.fd)
     {
@@ -948,17 +956,17 @@ static size_t CACheckPayloadLength(const void *data, size_t dlen)
 {
     VERIFY_NON_NULL_RET(data, TAG, "data", -1);
 
-    coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+    coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(
             ((unsigned char *)data)[0] >> 4);
 
-    coap_pdu_t *pdu = coap_new_pdu(transport, dlen);
+    coap_pdu_t *pdu = coap_new_pdu2(transport, dlen);
     if (!pdu)
     {
         OIC_LOG(ERROR, TAG, "outpdu is null");
         return 0;
     }
 
-    int ret = coap_pdu_parse((unsigned char *) data, dlen, pdu, transport);
+    int ret = coap_pdu_parse2((unsigned char *) data, dlen, pdu, transport);
     if (0 >= ret)
     {
         OIC_LOG(ERROR, TAG, "pdu parse failed");
@@ -1081,7 +1089,58 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     VERIFY_NON_NULL(info, TAG, "info is NULL");
     VERIFY_NON_NULL(size, TAG, "size is NULL");
 
-    return CA_NOT_SUPPORTED;
+    u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
+    if (!iflist)
+    {
+        OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));
+        return CA_STATUS_FAILED;
+    }
+
+    uint32_t len = u_arraylist_length(iflist);
+
+    CAEndpoint_t *ep = (CAEndpoint_t *)OICCalloc(len, sizeof (CAEndpoint_t));
+    if (!ep)
+    {
+        OIC_LOG(ERROR, TAG, "Malloc Failed");
+        u_arraylist_destroy(iflist);
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
+    for (uint32_t i = 0, j = 0; i < len; i++)
+    {
+        CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+        if (!ifitem)
+        {
+            continue;
+        }
+
+        ep[j].adapter = CA_ADAPTER_TCP;
+        ep[j].ifindex = 0;
+
+        if (ifitem->family == AF_INET6)
+        {
+            ep[j].flags = CA_IPV6;
+            ep[j].port = caglobals.tcp.ipv6.port;
+        }
+        else if (ifitem->family == AF_INET)
+        {
+            ep[j].flags = CA_IPV4;
+            ep[j].port = caglobals.tcp.ipv4.port;
+        }
+        else
+        {
+            continue;
+        }
+        OICStrcpy(ep[j].addr, sizeof(ep[j].addr), ifitem->addr);
+        j++;
+    }
+
+    *info = ep;
+    *size = len;
+
+    u_arraylist_destroy(iflist);
+
+    return CA_STATUS_OK;
 }
 
 CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
@@ -1112,7 +1171,7 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
 
     // #3. add TCP connection info to list
     svritem->fd = fd;
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
     if (caglobals.tcp.svrlist)
     {
         bool res = u_arraylist_add(caglobals.tcp.svrlist, svritem);
@@ -1121,11 +1180,11 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
             OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
             close(svritem->fd);
             OICFree(svritem);
-            ca_mutex_unlock(g_mutexObjectList);
+            oc_mutex_unlock(g_mutexObjectList);
             return NULL;
         }
     }
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     CHECKFD(fd);
 
@@ -1142,7 +1201,7 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
 {
     VERIFY_NON_NULL(svritem, TAG, "svritem is NULL");
 
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
 
     // close the socket and remove TCP connection info in list
     if (svritem->fd >= 0)
@@ -1160,14 +1219,14 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
     }
 
     OICFree(svritem);
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     return CA_STATUS_OK;
 }
 
 void CATCPDisconnectAll()
 {
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
     uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);
 
     CATCPSessionInfo_t *svritem = NULL;
@@ -1184,7 +1243,7 @@ void CATCPDisconnectAll()
         }
     }
     u_arraylist_destroy(caglobals.tcp.svrlist);
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 }
 
 CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint, size_t *index)
@@ -1218,7 +1277,7 @@ CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint
 
 CATCPSessionInfo_t *CAGetSessionInfoFromFD(int fd, size_t *index)
 {
-    ca_mutex_lock(g_mutexObjectList);
+    oc_mutex_lock(g_mutexObjectList);
 
     // check from the last item.
     CATCPSessionInfo_t *svritem = NULL;
@@ -1230,12 +1289,12 @@ CATCPSessionInfo_t *CAGetSessionInfoFromFD(int fd, size_t *index)
         if (svritem && svritem->fd == fd)
         {
             *index = i;
-            ca_mutex_unlock(g_mutexObjectList);
+            oc_mutex_unlock(g_mutexObjectList);
             return svritem;
         }
     }
 
-    ca_mutex_unlock(g_mutexObjectList);
+    oc_mutex_unlock(g_mutexObjectList);
 
     return NULL;
 }
@@ -1244,7 +1303,7 @@ size_t CAGetTotalLengthFromHeader(const unsigned char *recvBuffer)
 {
     OIC_LOG(DEBUG, TAG, "IN - CAGetTotalLengthFromHeader");
 
-    coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+    coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(
             ((unsigned char *)recvBuffer)[0] >> 4);
     size_t optPaylaodLen = coap_get_length_from_header((unsigned char *)recvBuffer,
                                                         transport);

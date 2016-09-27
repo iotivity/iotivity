@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,6 +37,8 @@
 #include "payload_logging.h"
 #include "logger.h"
 #include "common.h"
+#include "oic_string.h"
+
 std::string getQueryStrForGetPut();
 
 #define TAG ("occlient")
@@ -358,7 +361,7 @@ int InitDiscovery()
     /* Start a discovery query*/
     char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
-    strcpy(szQueryUri, RESOURCE_DISCOVERY_QUERY);
+    OICStrcpy(szQueryUri, sizeof(RESOURCE_DISCOVERY_QUERY), RESOURCE_DISCOVERY_QUERY);
 
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;

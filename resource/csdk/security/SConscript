@@ -29,16 +29,24 @@ SConscript('#resource/third_party_libs.scons', 'lib_env')
 
 libocsrm_env = lib_env.Clone()
 
-target_os = env.get('TARGET_OS')
+target_os = libocsrm_env.get('TARGET_OS')
 # As in the source code, it includes arduino Time library (C++)
 # It requires compile the .c with g++
 if target_os == 'arduino':
-	libocsrm_env.Replace(CC = env.get('CXX'))
-	libocsrm_env.Replace(CFLAGS = env.get('CXXFLAGS'))
+	libocsrm_env.Replace(CC = libocsrm_env.get('CXX'))
+	libocsrm_env.Replace(CFLAGS = libocsrm_env.get('CXXFLAGS'))
 
 ######################################################################
 # Build flags
 ######################################################################
+with_upstream_libcoap = libocsrm_env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
+	libocsrm_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+else:
+	# For bring up purposes only, the forked version will live here.
+	libocsrm_env.AppendUnique(CPPPATH = ['../connectivity/lib/libcoap-4.1.1/include'])
+
 libocsrm_env.PrependUnique(CPPPATH = [
 		'../../../extlibs/cjson/',
 		'../../../extlibs/tinydtls/',
@@ -47,7 +55,6 @@ libocsrm_env.PrependUnique(CPPPATH = [
 		'../stack/include',
 		'../stack/include/internal',
 		'../../oc_logger/include',
-		'../connectivity/lib/libcoap-4.1.1',
 		'../connectivity/external/inc',
 		'../connectivity/common/inc',
 		'../connectivity/inc/pkix',
@@ -59,10 +66,10 @@ libocsrm_env.PrependUnique(CPPPATH = [
 		])
 
 if target_os not in ['arduino', 'windows']:
-	libocsrm_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX'])
+	libocsrm_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX', '_GNU_SOURCE'])
 	libocsrm_env.AppendUnique(CFLAGS = ['-std=c99', '-Wall'])
 
-libocsrm_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+libocsrm_env.AppendUnique(LIBPATH = [libocsrm_env.get('BUILD_DIR')])
 libocsrm_env.AppendUnique(LIBS = ['coap'])
 
 if target_os == 'arduino':
@@ -72,11 +79,11 @@ elif target_os not in ['windows', 'msys_nt']:
 	libocsrm_env.AppendUnique(LIBS = ['m'])
 
 if target_os in ['windows', 'msys_nt']:
-	libocsrm_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'oc_logger')])
+	libocsrm_env.AppendUnique(LIBPATH = [os.path.join(libocsrm_env.get('BUILD_DIR'), 'resource', 'oc_logger')])
 
 if target_os in ['darwin', 'ios']:
 	libocsrm_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
-	libocsrm_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+	libocsrm_env.AppendUnique(LIBPATH = [libocsrm_env.get('BUILD_DIR')])
 	libocsrm_env.AppendUnique(LIBS = ['coap'])
 
 if env.get('LOGGING'):
@@ -112,20 +119,13 @@ libocsrm_src = [
 	]
 
 if libocsrm_env.get('SECURED') == '1':
-	if target_os in ['tizen']:
-		libocsrm_env.ParseConfig('pkg-config --cflags --libs sqlite3')
-	else:
-		libocsrm_env.AppendUnique(CPPPATH = ['../../../extlibs/sqlite3'])
-		libocsrm_src = libocsrm_src + ['../../../extlibs/sqlite3/sqlite3.c']
-	libocsrm_src = libocsrm_src + [OCSRM_SRC + 'provisioningdatabasemanager.c']
 	libocsrm_src = libocsrm_src + [OCSRM_SRC + 'oxmpincommon.c', OCSRM_SRC + 'pbkdf2.c']
 
 if target_os in ['windows', 'msys_nt']:
 	libocsrm_src  = libocsrm_src + [OCSRM_SRC + 'strptime.c']
 
 if (env.get('DTLS_WITH_X509') == '1' or env.get('WITH_TCP') == True) and env.get('SECURED') == '1':
-	crl_src = [OCSRM_SRC + 'crlresource.c']
-	libocsrm_src  = libocsrm_src + crl_src
+	libocsrm_src  = libocsrm_src + [OCSRM_SRC + 'crlresource.c', OCSRM_SRC + 'pkix_interface.c']
 
 libocsrm_conf = Configure(libocsrm_env)
 if libocsrm_conf.CheckFunc('strptime'):
@@ -136,8 +136,8 @@ libocsrm = libocsrm_env.StaticLibrary('ocsrm', libocsrm_src)
 
 libocsrm_env.InstallTarget(libocsrm, 'ocsrm')
 
-if target_os in ['linux', 'android', 'tizen', 'msys_nt', 'windows'] and env.get('SECURED') == '1':
+if target_os in ['linux', 'android', 'tizen', 'msys_nt', 'windows'] and libocsrm_env.get('SECURED') == '1':
 	SConscript('provisioning/SConscript')
 
-if target_os in ['linux'] and env.get('SECURED') == '1':
+if target_os in ['linux'] and libocsrm_env.get('SECURED') == '1':
 	SConscript('tool/SConscript')

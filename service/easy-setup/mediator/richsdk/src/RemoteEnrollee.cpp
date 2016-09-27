@@ -224,7 +224,7 @@ namespace OIC
         void RemoteEnrollee::provisionSecurity(const SecurityProvStatusCb callback)
         {
 #ifdef __WITH_DTLS__
-            std::cout << __func__ << std::endl;
+            ESResult res = ESResult::ES_ERROR;
             if(!callback)
             {
                 throw ESInvalidParameterException("Callback is empty");
@@ -241,22 +241,11 @@ namespace OIC
             m_enrolleeSecurity->registerCallbackHandler(securityProvStatusCb, m_securityPinCb,
                                                         m_secProvisioningDbPathCb);
 
-            try
-            {
-                m_enrolleeSecurity->provisionOwnership();
-            }
-            catch (const std::exception& e)
-            {
-                OIC_LOG_V(ERROR, ES_REMOTE_ENROLLEE_TAG,
-                        "Exception for performOwnershipTransfer : %s", e.what());
+            res = m_enrolleeSecurity->provisionOwnership();
 
-                OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Fail performOwnershipTransfer");
-                std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
-                        std::make_shared< SecProvisioningStatus >
-                                                        (m_enrolleeSecurity->getUUID(), ES_ERROR);
-                    m_securityProvStatusCb(securityProvisioningStatus);
-                return ;
-            }
+            std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
+                            std::make_shared< SecProvisioningStatus >(m_enrolleeSecurity->getUUID(), res);
+            m_securityProvStatusCb(securityProvisioningStatus);
 #else
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Mediator is unsecured.");
             if(!callback)
@@ -359,11 +348,6 @@ namespace OIC
                 if(m_ocResource != nullptr)
                 {
                     m_cloudResource = std::make_shared<CloudResource>(m_ocResource);
-
-                    std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
-                        CloudPropProvisioningStatus >(ESResult::ES_FOUND_ENROLLEE);
-
-                    m_cloudPropProvStatusCb(provStatus);
                 }
                 else
                 {
@@ -402,35 +386,31 @@ namespace OIC
                     "Exception caught in provisionCloudProperties = %s", e.what());
 
                 std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
-                        CloudPropProvisioningStatus >(ESResult::ES_NOT_FOUND_ENROLLEE);
+                        CloudPropProvisioningStatus >(ESResult::ES_ENROLLEE_DISCOVERY_FAILURE);
                 m_cloudPropProvStatusCb(provStatus);
                 return;
             }
 #if defined(__WITH_DTLS__) && defined(__WITH_TLS__)
-            try
+            if(!(cloudProp.getCloudID().empty() && cloudProp.getCredID() <= 0))
             {
+                ESResult res = ESResult::ES_ERROR;
                 m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
 
-                if(cloudProp.getCloudID().empty())
+                res = m_enrolleeSecurity->provisionSecurityForCloudServer(cloudProp.getCloudID(),
+                                                                          cloudProp.getCredID());
+
+                if(res != ESResult::ES_OK)
                 {
-                    throw ESInvalidParameterException("Invalid Cloud Server UUID.");
+                    m_cloudResource = nullptr;
+                    std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
+                            CloudPropProvisioningStatus >(res);
+                    m_cloudPropProvStatusCb(provStatus);
+                    return;
                 }
-
-                m_enrolleeSecurity->provisionSecurityForCloudServer(cloudProp.getCloudID(),
-                                                                    cloudProp.getCredID());
             }
-
-            catch (const std::exception& e)
+            else
             {
-                OIC_LOG_V(ERROR, ES_REMOTE_ENROLLEE_TAG,
-                    "Exception caught in provisionCloudProperties = %s", e.what());
-
-                m_cloudResource = nullptr;
-
-                std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
-                        CloudPropProvisioningStatus >(ESResult::ES_ERROR);
-                m_cloudPropProvStatusCb(provStatus);
-                return;
+                OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "ACL and Cert. provisioning are skipped.");
             }
 #endif //defined(__WITH_DTLS__) && defined(__WITH_TLS__)
 

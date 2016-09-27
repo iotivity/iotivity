@@ -95,6 +95,14 @@ CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDT
 
 #ifdef __WITH_TLS__
 /**
+ * This internal callback is used by CA layer to
+ * retrieve all credential types from SRM
+ *
+ * @param[out]  list of enabled credential types for CA handshake
+ *
+ */
+typedef void (*CAgetCredentialTypesHandler)(bool * list);
+/**
  * Binary structure containing PKIX related info
  * own certificate chain, public key, CA's and CRL's
  */
@@ -110,6 +118,12 @@ typedef struct
     ByteArray crl;
 } PkiInfo_t;
 
+/**
+ * Register callback to receive credential types.
+ * @param[in] credTypesCallback callback to get cerdential types
+ * @return ::CA_STATUS_OK
+ */
+CAResult_t CAregisterGetCredentialTypesCallback(CAgetCredentialTypesHandler credTypesCallback);
 /**
  * Register callback to receive the result of TLS handshake.
  * @param[in] tlsHandshakeCallback callback for get tls handshake result

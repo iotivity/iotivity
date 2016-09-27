@@ -1,7 +1,6 @@
 ##
 # CA build script
 ##
-
 import os.path
 
 Import('env')
@@ -10,6 +9,7 @@ ca_os = env.get('TARGET_OS')
 ca_transport = env.get('TARGET_TRANSPORT')
 secured = env.get('SECURED')
 with_ra = env.get ('WITH_RA')
+with_ra_ibb = env.get('WITH_RA_IBB')
 with_tcp = env.get('WITH_TCP')
 src_dir = env.get('SRC_DIR')
 root_dir = os.pardir
@@ -22,8 +22,17 @@ ca_path = os.curdir
 print"Reading ca script %s"%ca_transport
 
 env.PrependUnique(CPPPATH = [ os.path.join(root_dir, 'api') ])
+
+with_upstream_libcoap = env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
+	env.AppendUnique(CPPPATH = [os.path.join('#extlibs', 'libcoap', 'libcoap', 'include')])
+	env.AppendUnique(CPPDEFINES = ['WITH_UPSTREAM_LIBCOAP'])
+else:
+	# For bring up purposes only, the forked version will live here.
+	env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'lib', 'libcoap-4.1.1', 'include')])
+
 env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'inc'),
-                             os.path.join(root_dir, 'lib', 'libcoap-4.1.1'),
                              os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
                              os.path.join(root_dir, 'common', 'inc'),
                              os.path.join(root_dir, 'util', 'inc') ])
@@ -74,6 +83,7 @@ if env.get('DTLS_WITH_X509') == '1':
 	env.AppendUnique(CA_SRC = pkix_src)
 
 if ((secured == '1') and (with_tcp == True)):
+	env.AppendUnique(CPPPATH = [os.path.join(src_dir, 'resource', 'csdk', 'security', 'include')])
 	env.AppendUnique(CPPDEFINES = ['__WITH_TLS__'])
 	tls_path = 'extlibs/mbedtls';
 	tls_headers_path = 'mbedtls/include';
@@ -87,6 +97,9 @@ if ((secured == '1') and (with_tcp == True)):
 		env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'adapter_util/ca_adapter_net_tls.c')])
 
 ca_common_src = None
+
+if with_ra_ibb:
+	env.SConscript('#extlibs/wksxmppxep/SConscript')
 
 if env.get('ROUTING') == 'GW':
 	env.AppendUnique(CPPDEFINES = ['ROUTING_GATEWAY'])
@@ -196,7 +209,7 @@ if env.get('LOGGING'):
 if ca_os == 'android':
 	lib_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libconnectivity_abstraction.so'])
 
-if ca_os in ['android', 'tizen', 'linux']:
+if ca_os in ['android', 'tizen', 'linux', 'yocto']:
 	lib_env.AppendUnique(LIBS = ['coap'])
 	if lib_env.get('SECURED') == '1':
 		lib_env.AppendUnique(LIBS = ['tinydtls'])
@@ -205,6 +218,7 @@ if ca_os in ['android', 'tizen', 'linux']:
 		lib_env.AppendUnique(LIBS = ['rt'])
 		if ((lib_env.get('SECURED') == '1') and ((lib_env.get('WITH_TCP')) or (lib_env.get('WITH_CLOUD')))):
 			lib_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
+
 	calib = lib_env.SharedLibrary('connectivity_abstraction', env.get('CA_SRC'))
 elif ca_os in ['msys_nt', 'windows']:
 	lib_env.AppendUnique(LIBS = ['coap', 'mswsock', 'ws2_32', 'iphlpapi', 'logger'])
@@ -214,5 +228,6 @@ elif ca_os in ['msys_nt', 'windows']:
 	calib = lib_env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
 else:
 	calib = lib_env.StaticLibrary('connectivity_abstraction', lib_env.get('CA_SRC'))
+
 lib_env.InstallTarget(calib, 'connectivity_abstraction')
 lib_env.UserInstallTargetLib(calib, 'connectivity_abstraction')

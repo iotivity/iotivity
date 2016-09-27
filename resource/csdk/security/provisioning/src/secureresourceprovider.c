@@ -17,6 +17,7 @@
  * limitations under the License.
  *
  * *****************************************************************/
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -472,7 +473,8 @@ OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     }
 
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    OCStackResult res = CrlToCBORPayload(crl, &secPayload->securityData, &secPayload->payloadSize);
+    OCStackResult res;
+    res = CrlToCBORPayload(crl, &secPayload->securityData, &secPayload->payloadSize, NULL);
     if((OC_STACK_OK != res) && (NULL == secPayload->securityData))
     {
         OICFree(secPayload);
@@ -754,10 +756,19 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
 
     cred->credType = SIGNED_ASYMMETRIC_KEY;
 
-    cred->optionalData.data = (uint8_t *)OICCalloc(1, chainSize);
-    VERIFY_NON_NULL(TAG, cred->optionalData.data, ERROR, OC_STACK_NO_MEMORY);
+    if (encodingType == OIC_ENCODING_PEM)
+    {
+        cred->optionalData.data = (uint8_t *)OICCalloc(1, chainSize + 1);
+        VERIFY_NON_NULL(TAG, cred->optionalData.data, ERROR, OC_STACK_NO_MEMORY);
+        cred->optionalData.len = chainSize + 1;
+    }
+    else
+    {
+        cred->optionalData.data = (uint8_t *)OICCalloc(1, chainSize);
+        VERIFY_NON_NULL(TAG, cred->optionalData.data, ERROR, OC_STACK_NO_MEMORY);
+        cred->optionalData.len = chainSize;
+    }
     memcpy(cred->optionalData.data, trustCertChain, chainSize);
-    cred->optionalData.len = chainSize;
     cred->optionalData.encoding = encodingType;
 
     res = AddCredential(cred);
@@ -769,6 +780,60 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
     *credId = cred->credId;
 
     OIC_LOG(DEBUG, TAG, "OUT SRPSaveTrustCertChain");
+
+    return res;
+}
+
+
+OCStackResult SRPSaveOwnCertChain(OicSecCert_t * cert, OicSecKey_t * key, uint16_t *credId)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    VERIFY_NON_NULL(TAG, cert, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(TAG, cert->data, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(TAG, key, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(TAG, key->data, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(TAG, credId, ERROR,  OC_STACK_INVALID_PARAM);
+
+    OCStackResult res = OC_STACK_ERROR;
+
+    OicSecCred_t *cred = (OicSecCred_t *)OICCalloc(1, sizeof(*cred));
+    VERIFY_NON_NULL(TAG, cred, ERROR, OC_STACK_NO_MEMORY);
+
+    OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
+
+    if (OC_STACK_OK != GetDoxmDeviceID(&cred->subject))
+    {
+        OIC_LOG(ERROR, TAG, "Cann't get the device id(GetDoxmDeviceID)");
+    }
+
+    cred->credUsage= (char *)OICCalloc(1, strlen(PRIMARY_CERT)+1 );
+    VERIFY_NON_NULL(TAG, cred->credUsage, ERROR, OC_STACK_NO_MEMORY);
+    OICStrcpy(cred->credUsage, strlen(PRIMARY_CERT) + 1, PRIMARY_CERT) ;
+
+    cred->credType = SIGNED_ASYMMETRIC_KEY;
+
+    OicSecCert_t *publicData = &cred->publicData;
+    publicData->data = (uint8_t *)OICCalloc(1, cert->len);
+    VERIFY_NON_NULL(TAG, publicData->data, ERROR, OC_STACK_NO_MEMORY);
+    memcpy(publicData->data, cert->data, cert->len);
+    publicData->len = cert->len;
+
+    OicSecKey_t *privateData = &cred->privateData;
+    privateData->data = (uint8_t *)OICCalloc(1, key->len);
+    VERIFY_NON_NULL(TAG, privateData->data, ERROR, OC_STACK_NO_MEMORY);
+    memcpy(privateData->data, key->data, key->len);
+    privateData->len = key->len;
+    privateData->encoding = key->encoding;
+
+    res = AddCredential(cred);
+    if(res != OC_STACK_OK)
+    {
+        DeleteCredList(cred);
+        return res;
+    }
+    *credId = cred->credId;
+
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 
     return res;
 }

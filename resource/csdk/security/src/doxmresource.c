@@ -17,10 +17,11 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#include "iotivity_config.h"
 #include <stdlib.h>
 #include <string.h>
 
-#if HAVE_STRINGS_H
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
 
@@ -49,8 +50,6 @@
 #include "credresource.h"
 #include "srmutility.h"
 #include "pinoxmcommon.h"
-#include "pmtypes.h"
-#include "provisioningdatabasemanager.h"
 
 #define TAG  "SRM-DOXM"
 
@@ -60,9 +59,6 @@ static const uint16_t CBOR_SIZE = 512;
 
 /** Max cbor size payload. */
 static const uint16_t CBOR_MAX_SIZE = 4400;
-
-/** DOXM Map size - Number of mandatory items. */
-static const uint8_t DOXM_MAP_SIZE = 9;
 
 static OicSecDoxm_t        *gDoxm = NULL;
 static OCResourceHandle    gDoxmHandle = NULL;
@@ -132,21 +128,12 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     char* strUuid = NULL;
 
     int64_t cborEncoderResult = CborNoError;
-    uint8_t mapSize = DOXM_MAP_SIZE;
-    if (doxm->oxmTypeLen > 0)
-    {
-        mapSize++;
-    }
-    if (doxm->oxmLen > 0)
-    {
-        mapSize++;
-    }
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
     VERIFY_NON_NULL(TAG, outPayload, ERROR);
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
-    cborEncoderResult = cbor_encoder_create_map(&encoder, &doxmMap, mapSize);
+    cborEncoderResult = cbor_encoder_create_map(&encoder, &doxmMap, CborIndefiniteLength);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Doxm Map.");
 
     //OxmType -- Not Mandatory
@@ -1223,36 +1210,9 @@ OCStackResult SetDoxmDeviceID(const OicUuid_t *deviceID)
 
     //Check the device's OTM state
 
-#ifdef __WITH_DTLS__
-    //for PT.
-    if(true == gDoxm->owned &&
-       memcmp(gDoxm->deviceID.id, gDoxm->owner.id, sizeof(gDoxm->owner.id)) == 0)
-    {
-        OCUuidList_t* ownedDevices = NULL;
-        size_t* ownedDevNum = 0;
-
-        if(OC_STACK_OK == PDMGetOwnedDevices(&ownedDevices, &ownedDevNum))
-        {
-            OCUuidList_t* temp1 = NULL;
-            OCUuidList_t* temp2 = NULL;
-            LL_FOREACH_SAFE(ownedDevices, temp1, temp2)
-            {
-                LL_DELETE(ownedDevices, temp1);
-                OICFree(temp1);
-            }
-
-            if(0 != ownedDevNum)
-            {
-                OIC_LOG(ERROR, TAG, "This device has ownership for other device.");
-                OIC_LOG(ERROR, TAG, "Device UUID cannot be changed to guarantee the reliability of the connection.");
-                return OC_STACK_ERROR;
-            }
-        }
-
-        isPT = true;
-    }
+#ifdef __WITH_DTLS__}
     //for normal device.
-    else if(true == gDoxm->owned)
+    if(true == gDoxm->owned)
     {
         OIC_LOG(ERROR, TAG, "This device owned by owner's device.");
         OIC_LOG(ERROR, TAG, "Device UUID cannot be changed to guarantee the reliability of the connection.");

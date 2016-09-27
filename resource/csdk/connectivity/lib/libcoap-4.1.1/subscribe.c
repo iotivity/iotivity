@@ -7,7 +7,7 @@
  * README for terms of use.
  */
 
-#include "config.h"
+#include "include/coap/config.h"
 
 #if defined(HAVE_ASSERT_H) && !defined(assert)
 # include <assert.h>
@@ -21,10 +21,10 @@
 
 /* #include "resource.h" */
 
-#include "mem.h"
-#include "encode.h"
-#include "debug.h"
-#include "subscribe.h"
+#include "include/coap/mem.h"
+#include "include/coap/encode.h"
+#include "include/coap/debug.h"
+#include "include/coap/subscribe.h"
 
 void coap_subscription_init(coap_subscription_t *s)
 {
@@ -51,9 +51,9 @@ notify(coap_context_t *context, coap_resource_t *res,
     if ( !context || !res || !sub || !(pdu = coap_new_pdu()) )
     return;
 
-    pdu->hdr->coap_hdr_udp_t.type = COAP_MESSAGE_CON;
-    pdu->hdr->coap_hdr_udp_t.id = rand(); /* use a random transaction id */
-    pdu->hdr->coap_hdr_udp_t.code = code;
+    pdu->hdr->type = COAP_MESSAGE_CON;
+    pdu->hdr->id = rand(); /* use a random transaction id */
+    pdu->hdr->code = code;
 
     /* FIXME: content-type and data (how about block?) */
     if (res->uri->host.length)

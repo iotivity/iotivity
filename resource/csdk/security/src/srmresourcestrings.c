@@ -147,6 +147,7 @@ const char * OIC_JSON_SEC_V_NAME = "secv";
 const char * OIC_JSON_EMPTY_STRING = "";
 
 const char * TRUST_CA = "trust_ca";
+const char * PRIMARY_CERT = "primary_cert";
 
 OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
 OicUuid_t WILDCARD_SUBJECT_B64_ID = { .id = {'2', '2', '2', '2', '2', '2', '2', '2',

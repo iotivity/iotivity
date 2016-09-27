@@ -28,16 +28,26 @@ target_os = provisioning_env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
+with_upstream_libcoap = provisioning_env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
+	provisioning_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+else:
+	# For bring up purposes only, the forked version will live here.
+	provisioning_env.AppendUnique(CPPPATH = ['../../../connectivity/lib/libcoap-4.1.1/include'])
+
 provisioning_env.AppendUnique(CPPPATH = [
 		'../../../stack/include',
 		'../../../ocrandom/include',
 		'../../../logger/include',
 		'../../../stack/include',
 		'../../../security/include',
+		'../../../security/include/internal',
 		'../../../security/provisioning/include/internal',
 		'../../../../oc_logger/include',
 		'../include',
 		'../include/oxm',
+		'../include/cloud',
 		'../../include',
 		'../../../../../extlibs/tinydtls',
 		'../../../../../extlibs/cjson',
@@ -45,8 +55,8 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../../../connectivity/inc',
 		'../../../connectivity/inc/pkix',
 		'../../../connectivity/common/inc',
-		'../../../connectivity/lib/libcoap-4.1.1',
-		'../../../connectivity/api'
+		'../../../connectivity/api',
+		'cloud'
 		])
 
 target_os = env.get('TARGET_OS')
@@ -91,10 +101,18 @@ if target_os == 'tizen':
 provisioningclient = provisioning_env.Program('provisioningclient', 'provisioningclient.c')
 sampleserver_justworks = provisioning_env.Program('sampleserver_justworks', 'sampleserver_justworks.cpp')
 sampleserver_randompin = provisioning_env.Program('sampleserver_randompin', 'sampleserver_randompin.cpp')
+if provisioning_env.get('WITH_TCP') == True:
+    cloudClient_src = [
+        'cloudClient.c',
+        'cloud/cloudAuth.c',
+        'cloud/cloudWrapper.c',
+        'cloud/cloudDiscovery.c']
+    cloudClient = provisioning_env.Program('cloudClient', cloudClient_src)
 
 src_dir = provisioning_env.get('SRC_DIR')
 sec_provisioning_src_dir = src_dir + '/resource/csdk/security/provisioning/sample/'
 sec_provisioning_build_dir = env.get('BUILD_DIR') +'/resource/csdk/security/provisioning/sample/'
+
 
 clientdat = provisioning_env.Install(sec_provisioning_build_dir,
                                         sec_provisioning_src_dir + 'oic_svr_db_client.dat')
@@ -104,8 +122,14 @@ randompindat = provisioning_env.Install(sec_provisioning_build_dir,
                                     sec_provisioning_src_dir+ 'oic_svr_db_server_randompin.dat')
 randompin_with_emptyuuid_dat = provisioning_env.Install(sec_provisioning_build_dir,
                                     sec_provisioning_src_dir+ 'oic_svr_db_randompin_with_empty_deviceid.dat')
+if provisioning_env.get('WITH_TCP') == True:
+    clouddat = provisioning_env.Install(sec_provisioning_build_dir,
+                                        sec_provisioning_src_dir + 'cloud.dat')
+    rootcert = provisioning_env.Install(sec_provisioning_build_dir,
+                                        sec_provisioning_src_dir + 'rootca.crt')
+    Alias("cloud", [clouddat, rootcert, cloudClient])
+    provisioning_env.AppendTarget("cloud")
 
 Alias("samples", [provisioningclient, sampleserver_justworks, sampleserver_randompin, clientdat, justworksdat, randompindat, randompin_with_emptyuuid_dat])
-
 provisioning_env.AppendTarget('samples')
 

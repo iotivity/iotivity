@@ -23,6 +23,7 @@
 #include "NSThread.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "ocpayload.h"
 
 #include <pthread.h>
 
@@ -255,11 +256,14 @@ NSMessage * NSCopyMessage(NSMessage * msg)
     newMsg->sourceName = OICStrdup(msg->sourceName);
     newMsg->dateTime = OICStrdup(msg->dateTime);
     newMsg->type = msg->type;
+
     newMsg->topic = NULL;
     if (msg->topic && strlen(msg->topic) > 0)
     {
         newMsg->topic = OICStrdup(msg->topic);
     }
+
+    newMsg->mediaContents = NULL;
     if (msg->mediaContents)
     {
         newMsg->mediaContents = (NSMediaContents *)OICMalloc(sizeof(NSMediaContents));
@@ -271,6 +275,12 @@ NSMessage * NSCopyMessage(NSMessage * msg)
                 newMsg->mediaContents->iconImage, NULL, NSRemoveMessage(newMsg));
         memcpy(newMsg->mediaContents->iconImage, msg->mediaContents->iconImage,
                strlen(msg->mediaContents->iconImage));
+    }
+
+    newMsg->extraInfo = NULL;
+    if (msg->extraInfo)
+    {
+        newMsg->extraInfo = OCRepPayloadClone(msg->extraInfo);
     }
 
     return newMsg;
@@ -291,6 +301,12 @@ void NSRemoveMessage(NSMessage * msg)
         NSOICFree(msg->mediaContents->iconImage);
     }
     NSOICFree(msg->mediaContents);
+
+    if (msg->extraInfo)
+    {
+        OCRepPayloadDestroy(msg->extraInfo);
+        msg->extraInfo = NULL;
+    }
 
     NSOICFree(msg);
 }

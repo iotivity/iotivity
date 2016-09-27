@@ -558,6 +558,13 @@ const OCDPDev_t* OCGetDirectPairedDevices();
 OCStackResult OCDoDirectPairing(void *ctx, OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
                                 OCDirectPairingCB resultCallback);
 
+/**
+ * This function sets uri being used for proxy.
+ *
+ * @param uri            NULL terminated resource uri for CoAP-HTTP Proxy.
+ */
+OCStackResult OCSetProxyURI(const char *uri);
+
 #if defined(RD_CLIENT) || defined(RD_SERVER)
 /**
  * This function binds an resource unique id to the resource.
@@ -589,6 +596,44 @@ OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins);
 OCResourceHandle OCGetResourceHandleAtUri(const char *uri);
 #endif
 //#endif // DIRECT_PAIRING
+
+/**
+ *  Add a header option to the given header option array.
+ *
+ * @param ocHdrOpt            Pointer to existing options.
+ * @param numOptions          Number of existing options.
+ * @param optionID            COAP option ID.
+ * @param optionData          Option data value.
+ * @param optionDataLength    Size of Option data value.
+ *
+ * @return ::OC_STACK_OK on success and other value otherwise.
+ */
+OCStackResult
+OCSetHeaderOption(OCHeaderOption* ocHdrOpt,
+                  size_t* numOptions,
+                  uint16_t optionID,
+                  void* optionData,
+                  size_t optionDataLength);
+
+/**
+ *  Get data value of the option with specified option ID from given header option array.
+ *
+ * @param ocHdrOpt            Pointer to existing options.
+ * @param numOptions          Number of existing options.
+ * @param optionID            COAP option ID.
+ * @param optionData          Pointer to option data.
+ * @param optionDataLength    Size of option data value.
+ * @param receivedDatalLength Pointer to the actual length of received data.
+ *
+ * @return ::OC_STACK_OK on success and other value otherwise.
+ */
+OCStackResult
+OCGetHeaderOption(OCHeaderOption* ocHdrOpt,
+                  size_t numOptions,
+                  uint16_t optionID,
+                  void* optionData,
+                  size_t optionDataLength,
+                  uint16_t* receivedDatalLength);
 
 #ifdef __cplusplus
 }

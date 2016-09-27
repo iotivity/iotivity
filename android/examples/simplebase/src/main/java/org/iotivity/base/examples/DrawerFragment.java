@@ -52,7 +52,7 @@ public class DrawerFragment extends Fragment {
     private ListView              mDrawerListView;
     private View                  mFragmentContainerView;
 
-    private int                   mCurrentSelectedPosition = 2;
+    private int                   mCurrentSelectedPosition = 0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

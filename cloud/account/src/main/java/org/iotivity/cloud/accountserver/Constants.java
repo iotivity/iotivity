@@ -23,13 +23,22 @@ package org.iotivity.cloud.accountserver;
 
 import org.iotivity.cloud.base.OICConstants;
 
+import java.io.File;
+
 public class Constants extends OICConstants {
+
+    public static final String PROPERTIES_FILE_NAME  = "properties"
+            + File.separator + "config.properties";
 
     // Database name
 
     public static final String DB_NAME               = "ACCOUNTSERVER_DB";
 
     // Database table
+
+    public static final String CRL_TABLE             = "CRL_TABLE";
+
+    public static final String CERTIFICATE_TABLE     = "CERTIFICATE_TABLE";
 
     public static final String USER_TABLE            = "USER_TABLE";
 
@@ -47,6 +56,14 @@ public class Constants extends OICConstants {
 
     // Database table key
 
+    public static final String KEYFIELD_SN           = "serialNumber";
+
+    public static final String KEYFIELD_NA           = "notAfter";
+
+    public static final String KEYFIELD_NB           = "notBefore";
+
+    public static final String KEYFIELD_REVOKED      = "revoked";
+
     public static final String KEYFIELD_UUID         = "uuid";
 
     public static final String KEYFIELD_ACCESSTOKEN  = "accesstoken";
@@ -56,6 +73,8 @@ public class Constants extends OICConstants {
     public static final String KEYFIELD_DID          = "did";
 
     public static final String KEYFIELD_ACLID        = "aclid";
+
+    public static final String KEYFIELD_DI           = "di";
 
     public static final String KEYFIELD_GTYPE        = "gtype";
 
@@ -77,6 +96,22 @@ public class Constants extends OICConstants {
 
     public static final String KEYFIELD_INVITED_USER = "invitedUser";
 
+    public static final String KEYFIELD_ACE_SUBJECT_ID = "subjectuuid";
+
+    public static final String KEYFIELD_ACE_SUBJECT_TYPE = "stype";
+
+    public static final String KEYFIELD_ACE_RESOURCE= "resources";
+
+    public static final String KEYFIELD_ACE_VALIDITY = "validity";
+
+    public static final String KEYFIELD_ACE_PERMISSION = "permission";
+
+    public static final String KEYFIELD_ACE_RESOURCE_HREF = "href";
+
+    public static final String KEYFIELD_ACE_RESOURCE_RT = "rt";
+
+    public static final String KEYFIELD_ACE_RESOURCE_IF = "if";
+
     // Request payload key
 
     public static final String REQ_DEVICE_ID         = "di";
@@ -84,6 +119,16 @@ public class Constants extends OICConstants {
     public static final String REQ_DEVICE_ID_LIST    = "dilist";
 
     public static final String REQ_UUID_ID           = "uid";
+
+    public static final String REQ_ACE_ID            = "aceid";
+
+    public static final String REQ_ACL_ID            = "aclid";
+
+    public static final String REQ_ROWNER_ID         = "rowneruuid";
+
+    public static final String REQ_ACL_LIST          = "aclist";
+
+    public static final String REQ_OWNER_ID          = "oid";
 
     public static final String REQ_AUTH_CODE         = "authcode";
 
@@ -99,6 +144,12 @@ public class Constants extends OICConstants {
 
     public static final String REQ_AUTH_OPTIONS      = "options";
 
+    public static final String REQ_REQUEST_METHOD    = "rm";
+
+    public static final String REQ_REQUEST_URI       = "uri";
+
+    public static final String REQ_SEARCH_USER_ID    = "sid";
+
     public static final String REQ_SEARCH_CRITERIA   = "search";
 
     public static final String REQ_GROUP_ID          = "gid";
@@ -108,6 +159,16 @@ public class Constants extends OICConstants {
     public static final String REQ_GROUP_TYPE        = "gtype";
 
     public static final String REQ_MEMBER            = "mid";
+
+    public static final String REQ_LAST_UPDATE       = "lu";
+
+    public static final String REQ_THIS_UPDATE       = "tu";
+
+    public static final String REQ_NEXT_UPDATE       = "nu";
+
+    public static final String REQ_CRL               = "crl";
+
+    public static final String REQ_SERIAL_NUMBER     = "rcsn";
 
     public static final String REQ_MEMBER_LIST       = "midlist";
 
@@ -153,6 +214,18 @@ public class Constants extends OICConstants {
 
     public static final String RESP_INVITED          = "invited";
 
+    public static final String ENCODING = "encoding";
+
+    public static final String DATA = "data";
+
+    public static final String CERT = "cert";
+
+    public static final String CERT_CHAIN = "certchain";
+
+    public static final String RESP_ACL_ALLOWED      = "Allowed";
+
+    public static final String RESP_ACL_DENIED       = "Denied";
+
     // static token type
 
     public static final String TOKEN_TYPE_BEARER     = "bearer";
@@ -164,4 +237,6 @@ public class Constants extends OICConstants {
     public static final String GITHUB                = "Github";
 
     public static final String SAMSUNG               = "Samsung";
+
+    public static final String GOOGLE                = "Google";
 }

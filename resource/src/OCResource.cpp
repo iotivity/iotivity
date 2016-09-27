@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include "OCResource.h"
 #include "OCUtilities.h"
 
@@ -444,11 +445,6 @@ OCStackResult OCResource::observe(ObserveType observeType,
         const QueryParamsMap& queryParametersMap, ObserveCallback observeHandler,
         QualityOfService QoS)
 {
-    if (m_observeHandle != nullptr)
-    {
-        return result_guard(OC_STACK_INVALID_PARAM);
-    }
-
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::ObserveResource,
                          observeType, &m_observeHandle, m_devAddr,
                          m_uri, queryParametersMap, m_headerOptions,

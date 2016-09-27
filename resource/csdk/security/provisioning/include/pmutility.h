@@ -38,7 +38,9 @@ extern "C"
 #define COAP_QUERY "coap://%s:%d%s"
 
 #define COAP_TCP_PREFIX "coap+tcp://"
+#define COAP_TCP_QUERY "coap+tcp://%s:%d%s"
 #define COAPS_TCP_PREFIX "coaps+tcp://"
+#define COAPS_TCP_QUERY "coaps+tcp://%s:%d%s"
 
 /**
  * Discover owned/unowned devices in the specified endpoint.

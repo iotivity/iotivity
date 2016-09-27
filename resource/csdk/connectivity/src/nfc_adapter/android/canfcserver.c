@@ -20,7 +20,7 @@
 #include "canfcinterface.h"
 
 #include "caadapterutils.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 

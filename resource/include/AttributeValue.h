@@ -54,6 +54,7 @@ namespace OC
         bool,
         std::string,
         OC::OCRepresentation,
+        OCByteString,
 
         // Sequences:
         std::vector<int>,
@@ -61,6 +62,7 @@ namespace OC
         std::vector<bool>,
         std::vector<std::string>,
         std::vector<OC::OCRepresentation>,
+        std::vector<OCByteString>,
 
         // Nested sequences:
         std::vector<std::vector<int>>,
@@ -78,6 +80,9 @@ namespace OC
         std::vector<std::vector<OC::OCRepresentation>>,
         std::vector<std::vector<std::vector<OC::OCRepresentation>>>,
 
+        std::vector<std::vector<OCByteString>>,
+        std::vector<std::vector<std::vector<OCByteString>>>,
+
         // used for binary data type
         std::vector<uint8_t>
     > AttributeValue;
@@ -91,7 +96,8 @@ namespace OC
         String,
         OCRepresentation,
         Vector,
-        Binary
+        Binary,
+        OCByteString
     };
 
     template<typename T>
@@ -131,6 +137,12 @@ namespace OC
     struct AttributeTypeConvert<OCRepresentation>
     {
         BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::OCRepresentation;
+    };
+
+    template<>
+    struct AttributeTypeConvert<OCByteString>
+    {
+       BOOST_STATIC_CONSTEXPR AttributeType type = AttributeType::OCByteString;
     };
 
     template<>

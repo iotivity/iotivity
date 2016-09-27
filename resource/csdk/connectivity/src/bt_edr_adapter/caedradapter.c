@@ -32,7 +32,7 @@
 #include "caqueueingthread.h"
 #include "oic_malloc.h"
 #include "caremotehandler.h"
-#include "pdu.h"
+#include <coap/pdu.h>
 
 /**
  * Logging tag for module name.
@@ -352,14 +352,14 @@ CAResult_t CAStopEDR()
     // Stop RFComm server if it is running
     CAEDRServerStop();
 
-    // Stop network monitor
-    CAEDRStopNetworkMonitor();
-
     // Stop the adapter
     CAEDRClientUnsetCallbacks();
 
     // Disconnect all the client connections
     CAEDRClientDisconnectAll();
+
+    // Stop network monitor
+    CAEDRStopNetworkMonitor();
 
     // Stop Send and receive Queue
     CAAdapterStopQueue();

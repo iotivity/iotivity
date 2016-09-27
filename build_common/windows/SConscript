@@ -21,15 +21,10 @@ if env['CC'] == 'cl':
 
     env.AppendUnique(CCFLAGS=['/EHsc'])
 
-    vs_version = env['MSVC_VERSION']
-
     # Set release/debug flags
     if env.get('RELEASE'):
         env.AppendUnique(CCFLAGS = ['/MD', '/O2', '/GF'])
         env.AppendUnique(CPPDEFINES = ['NDEBUG'])
-    elif env.get('TARGET_ARCH') in ['x86', 'x86_64'] or "14.0" in vs_version:
-        env.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/ZI', '/RTC1', '/Gm'])
-        env.AppendUnique(LINKFLAGS = ['/debug'])
     else:
         env.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/Zi', '/RTC1', '/Gm'])
         env.AppendUnique(LINKFLAGS = ['/debug'])

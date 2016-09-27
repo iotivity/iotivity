@@ -37,6 +37,12 @@ import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.util.Cbor;
 
+/**
+ *
+ * This class provides a set of APIs to handle sign-in/sign-out requests
+ *
+ */
+
 public class SessionResource extends Resource {
 
     private Cbor<HashMap<String, Object>> mCbor      = new Cbor<>();
@@ -64,7 +70,7 @@ public class SessionResource extends Resource {
                 throw new BadRequestException(
                         request.getMethod() + " request type is not support");
         }
-
+        // send sign-up response to the source device
         srcDevice.sendResponse(response);
     }
 
@@ -90,19 +96,24 @@ public class SessionResource extends Resource {
                     .toString();
             String accessToken = payloadData.get(Constants.REQ_ACCESS_TOKEN)
                     .toString();
+
+            // identify if the request is sign-in or sign-out
             boolean signinRequest = (boolean) payloadData
                     .get(Constants.REQ_LOGIN);
 
             if (signinRequest) {
+                // sign-in response payload
                 responsePayload = mAsManager.signInOut(uuid, deviceId,
                         accessToken);
             } else {
+                // sign-out response
                 mAsManager.signInOut(uuid, deviceId, accessToken);
                 return MessageBuilder.createResponse(request,
                         ResponseStatus.CHANGED);
             }
         }
 
+        // sign-in response
         return MessageBuilder.createResponse(request, ResponseStatus.CHANGED,
                 ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(responsePayload));

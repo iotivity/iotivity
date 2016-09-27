@@ -156,7 +156,8 @@ int main(void)
         printf("2. Stop Consumer\n");
         printf("3. Get Topics\n");
         printf("4. Select Topics\n");
-        printf("5. Exit\n");
+        printf("5. Cancel select Topics\n");
+        printf("0. Exit\n");
 #ifdef WITH_CLOUD
         printf("21. Enable Remote Service (after login)\n");
         printf("31. Cloud Signup\n");
@@ -166,9 +167,16 @@ int main(void)
 
         printf("Input: ");
 
-        scanf("%d", &num);
+        if(scanf("%d", &num) == EOF)
+        {
+            printf("Fail to input num\n");
+        }
         fflush(stdin);
-        scanf("%c", &dummy);
+
+        if(scanf("%c", &dummy) == EOF)
+        {
+            printf("Fail to input dummy\n");
+        }
         fflush(stdin);
 
         switch (num)
@@ -213,7 +221,22 @@ int main(void)
                 }
                 break;
             case 5:
-                printf("5. Exit");
+                printf("5. Cancel select Topics\n");
+                NSTopicLL * iter = g_topicLL;
+                while (iter)
+                {
+                    iter->state = NS_TOPIC_UNSUBSCRIBED;
+                    iter = iter->next;
+                }
+
+                NSResult ret = NSConsumerUpdateTopicList(g_provider->providerId, g_topicLL);
+                if (ret != NS_OK)
+                {
+                    printf("Cancel select topic fail\n");
+                }
+                break;
+            case 0:
+                printf("0. Exit");
                 isExit = true;
                 break;
 #ifdef WITH_CLOUD
@@ -265,3 +288,4 @@ int main(void)
     }
     return 0;
 }
+

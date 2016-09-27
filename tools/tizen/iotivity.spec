@@ -36,9 +36,10 @@ Requires(post): /sbin/ldconfig
 
 %{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
 %{!?SECURED: %define SECURED 1}
-%{!?LOGGING: %define LOGGING True}
+%{!?LOGGING: %define LOGGING 1}
 %{!?ROUTING: %define ROUTING EP}
-%{!?WITH_TCP: %define WITH_TCP true}
+%{!?WITH_TCP: %define WITH_TCP 1}
+%{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
 %{!?VERBOSE: %define VERBOSE 1}
 
@@ -110,7 +111,7 @@ scons -j2 --prefix=%{_prefix} \
 	VERBOSE=%{VERBOSE} \
 	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
 	RELEASE=%{RELEASE} SECURED=%{SECURED} WITH_TCP=%{WITH_TCP} WITH_CLOUD=%{WITH_CLOUD} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
-	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir}
+	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir} WITH_PROXY=%{WITH_PROXY}
 
 
 
@@ -120,7 +121,7 @@ CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ;
 scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
 	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
 	RELEASE=%{RELEASE} SECURED=%{SECURED} WITH_TCP=%{WITH_TCP} WITH_CLOUD=%{WITH_CLOUD} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
-	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir}
+	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir} WITH_PROXY=%{WITH_PROXY}
 
 
 
@@ -155,6 +156,12 @@ cp out/tizen/*/%{build_mode}/resource/examples/threadingsample %{ex_install_dir}
 cp out/tizen/*/%{build_mode}/resource/examples/oic_svr_db_server.dat %{ex_install_dir}
 cp out/tizen/*/%{build_mode}/resource/examples/oic_svr_db_client.dat %{ex_install_dir}
 cp out/tizen/*/%{build_mode}/libcoap.a %{buildroot}%{_libdir}
+
+%if 0%{?WITH_PROXY} == 1
+mkdir -p %{ex_install_dir}/proxy-sample
+cp out/tizen/*/%{build_mode}/service/coap-http-proxy/samples/proxy_main %{ex_install_dir}/proxy-sample/
+cp out/tizen/*/%{build_mode}/service/coap-http-proxy/samples/proxy_client %{ex_install_dir}/proxy-sample/
+%endif
 %if 0%{?SECURED} == 1
 mkdir -p %{ex_install_dir}/provisioning
 mkdir -p %{ex_install_dir}/provision-sample
@@ -218,6 +225,9 @@ cp service/easy-setup/enrollee/inc/*.h %{buildroot}%{_includedir}
 %{_libdir}/librcs_container.so
 %{_libdir}/librcs_server.so
 %{_libdir}/libESEnrolleeSDK.so
+%if 0%{?WITH_PROXY} == 1
+%{_libdir}/libcoap_http_proxy.so
+%endif
 %if 0%{?SECURED} == 1
 %{_libdir}/libocpmapi.so
 %{_libdir}/libocprovision.so

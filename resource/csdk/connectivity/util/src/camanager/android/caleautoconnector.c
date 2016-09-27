@@ -26,7 +26,7 @@
 #include "caleautoconnector.h"
 #include "cacommonutil.h"
 #include "logger.h"
-#include "camutex.h"
+#include "octhread.h"
 
 #define TAG "OIC_CA_LE_AUTO_CONN"
 
@@ -34,50 +34,50 @@ static const size_t MAX_RETRY_COUNT = 5;
 static const size_t TIMEOUT = 1000000;
 static const size_t WAITING_TIME = 500000;
 
-static ca_mutex g_connectRetryMutex = NULL;
-static ca_cond g_connectRetryCond = NULL;
+static oc_mutex g_connectRetryMutex = NULL;
+static oc_cond g_connectRetryCond = NULL;
 
-static ca_mutex g_recoveryMutex = NULL;
-static ca_cond g_recoveryCond = NULL;
+static oc_mutex g_recoveryMutex = NULL;
+static oc_cond g_recoveryCond = NULL;
 
 CAResult_t CAManagerInitLEAutoConnection()
 {
     if (NULL == g_connectRetryMutex)
     {
-        g_connectRetryMutex = ca_mutex_new();
+        g_connectRetryMutex = oc_mutex_new();
         if (NULL == g_connectRetryMutex)
         {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_connectRetryCond)
     {
-        g_connectRetryCond = ca_cond_new();
+        g_connectRetryCond = oc_cond_new();
         if (NULL == g_connectRetryCond)
         {
-            OIC_LOG(ERROR, TAG, "ca_cond_new has failed");
+            OIC_LOG(ERROR, TAG, "oc_cond_new has failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_recoveryMutex)
     {
-        g_recoveryMutex = ca_mutex_new();
+        g_recoveryMutex = oc_mutex_new();
         if (NULL == g_recoveryMutex)
         {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_recoveryCond)
     {
-        g_recoveryCond = ca_cond_new();
+        g_recoveryCond = oc_cond_new();
         if (NULL == g_recoveryCond)
         {
-            OIC_LOG(ERROR, TAG, "ca_cond_new has failed");
+            OIC_LOG(ERROR, TAG, "oc_cond_new has failed");
             return CA_STATUS_FAILED;
         }
     }
@@ -89,27 +89,27 @@ void CAManagerTerminateLEAutoConnection()
 {
     if (g_connectRetryCond)
     {
-        ca_cond_signal(g_connectRetryCond);
-        ca_cond_free(g_connectRetryCond);
+        oc_cond_signal(g_connectRetryCond);
+        oc_cond_free(g_connectRetryCond);
         g_connectRetryCond = NULL;
     }
 
     if (g_connectRetryMutex)
     {
-        ca_mutex_free(g_connectRetryMutex);
+        oc_mutex_free(g_connectRetryMutex);
         g_connectRetryMutex = NULL;
     }
 
     if (g_recoveryCond)
     {
-        ca_cond_signal(g_recoveryCond);
-        ca_cond_free(g_recoveryCond);
+        oc_cond_signal(g_recoveryCond);
+        oc_cond_free(g_recoveryCond);
         g_recoveryCond = NULL;
     }
 
     if (g_recoveryMutex)
     {
-        ca_mutex_free(g_recoveryMutex);
+        oc_mutex_free(g_recoveryMutex);
         g_recoveryMutex = NULL;
     }
 }
@@ -120,20 +120,20 @@ CAResult_t CAManagerStartAutoConnection(JNIEnv *env, jstring remote_le_address)
     VERIFY_NON_NULL(remote_le_address, TAG, "remote_le_address is null");
 
     OIC_LOG(DEBUG, TAG, "IN - CAManagerStartAutoConnection");
-    ca_mutex_lock(g_connectRetryMutex);
+    oc_mutex_lock(g_connectRetryMutex);
 
     bool isAutoConnecting = false;
     if (CA_STATUS_OK != CAManagerGetAutoConnectingFlag(env, remote_le_address, &isAutoConnecting))
     {
         OIC_LOG(DEBUG, TAG, "CAManagerIsAutoConnecting has failed");
-        ca_mutex_unlock(g_connectRetryMutex);
+        oc_mutex_unlock(g_connectRetryMutex);
         return CA_STATUS_FAILED;
     }
 
     if (isAutoConnecting)
     {
         OIC_LOG(INFO, TAG, "connection has been already in progress or completed");
-        ca_mutex_unlock(g_connectRetryMutex);
+        oc_mutex_unlock(g_connectRetryMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -147,9 +147,9 @@ CAResult_t CAManagerStartAutoConnection(JNIEnv *env, jstring remote_le_address)
         {
             OIC_LOG_V(INFO, TAG, "retry will be started at least %d times after delay 1sec",
                       MAX_RETRY_COUNT - retry_cnt - 1);
-            if (ca_cond_wait_for(g_connectRetryCond, g_connectRetryMutex, TIMEOUT) == 0)
+            if (oc_cond_wait_for(g_connectRetryCond, g_connectRetryMutex, TIMEOUT) == 0)
             {
-                ca_mutex_unlock(g_connectRetryMutex);
+                oc_mutex_unlock(g_connectRetryMutex);
                 OIC_LOG(INFO, TAG, "request to connect gatt was canceled");
                 return CA_STATUS_OK;
             }
@@ -161,7 +161,7 @@ CAResult_t CAManagerStartAutoConnection(JNIEnv *env, jstring remote_le_address)
             break;
         }
     }
-    ca_mutex_unlock(g_connectRetryMutex);
+    oc_mutex_unlock(g_connectRetryMutex);
     OIC_LOG(DEBUG, TAG, "OUT - CAManagerStartAutoConnection");
     return res;
 }
@@ -206,14 +206,14 @@ CAResult_t CAManagerProcessRecovery(JNIEnv *env, uint16_t adapter_state)
     VERIFY_NON_NULL(env, TAG, "env");
     OIC_LOG(DEBUG, TAG, "IN - CAManagerProcessRecovery");
 
-    ca_mutex_lock(g_recoveryMutex);
+    oc_mutex_lock(g_recoveryMutex);
     CAResult_t res = CA_STATUS_OK;
 
     switch(adapter_state)
     {
         case STATE_OFF:
             // adapter will be enabled automatically after WAITING_TIME.
-            if (ca_cond_wait_for(g_recoveryCond, g_recoveryMutex, WAITING_TIME) == 0)
+            if (oc_cond_wait_for(g_recoveryCond, g_recoveryMutex, WAITING_TIME) == 0)
             {
                 OIC_LOG(INFO, TAG, "BT recovery was canceled");
             }
@@ -240,7 +240,7 @@ CAResult_t CAManagerProcessRecovery(JNIEnv *env, uint16_t adapter_state)
             break;
     }
 
-    ca_mutex_unlock(g_recoveryMutex);
+    oc_mutex_unlock(g_recoveryMutex);
     OIC_LOG(DEBUG, TAG, "OUT - CAManagerProcessRecovery");
 
     return res;

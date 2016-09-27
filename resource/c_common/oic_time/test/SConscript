@@ -34,7 +34,6 @@ timetest_env.PrependUnique(CPPPATH = [
 
 timetest_env.AppendUnique(LIBPATH = [os.path.join(timetest_env.get('BUILD_DIR'), 'resource', 'c_common')])
 timetest_env.PrependUnique(LIBS = ['c_common'])
-timetest_env.Append(LIBS = ['rt']);
 
 if timetest_env.get('LOGGING'):
     timetest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
@@ -48,7 +47,7 @@ Alias("test", [timetests])
 
 timetest_env.AppendTarget('test')
 if timetest_env.get('TEST') == '1':
-    if target_os in ['linux']:
+    if target_os in ['linux', 'windows']:
                 from tools.scons.RunTest import *
                 run_test(timetest_env,
                          'resource_ccommon_time_test.memcheck',

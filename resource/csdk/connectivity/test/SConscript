@@ -59,7 +59,6 @@ if catest_env.get('LOGGING'):
 	catest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if target_os in ['msys_nt', 'windows']:
-	catest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
 	catest_env.AppendUnique(LIBS = ['ws2_32',
                                         'advapi32',
                                         'iphlpapi'])
@@ -76,7 +75,7 @@ if (('IP' in target_transport) or ('ALL' in target_transport)):
 		                                         'caprotocolmessagetest.cpp',
 		                                         'cablocktransfertest.cpp',
 		                                         'ca_api_unittest.cpp',
-		                                         'camutex_tests.cpp',
+		                                         'octhread_tests.cpp',
 		                                         'uarraylist_test.cpp',
 		                                         'ulinklist_test.cpp',
 		                                         'uqueue_test.cpp'
@@ -86,7 +85,7 @@ else:
 		catests = catest_env.Program('catests', ['catests.cpp',
 		                                         'caprotocolmessagetest.cpp',
 		                                         'ca_api_unittest.cpp',
-		                                         'camutex_tests.cpp',
+		                                         'octhread_tests.cpp',
 		                                         'uarraylist_test.cpp',
 		                                         'ulinklist_test.cpp',
 		                                         'uqueue_test.cpp'

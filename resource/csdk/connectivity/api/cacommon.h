@@ -26,6 +26,8 @@
 #ifndef CA_COMMON_H_
 #define CA_COMMON_H_
 
+#include "iotivity_config.h"
+
 #ifndef WITH_ARDUINO
 #ifdef TCP_ADAPTER
 #define HAVE_SYS_POLL_H
@@ -68,7 +70,11 @@ extern "C"
 /**
  * Max header options data length.
  */
+#ifdef ARDUINO
 #define CA_MAX_HEADER_OPTION_DATA_LENGTH 20
+#else
+#define CA_MAX_HEADER_OPTION_DATA_LENGTH 1024
+#endif
 
 /**
 * Max token length.
@@ -339,7 +345,9 @@ typedef enum
     CA_REQUEST_ENTITY_INCOMPLETE = 408,     /**< Request Entity Incomplete */
     CA_REQUEST_ENTITY_TOO_LARGE = 413,      /**< Request Entity Too Large */
     CA_INTERNAL_SERVER_ERROR = 500,         /**< Internal Server Error */
-    CA_RETRANSMIT_TIMEOUT = 504             /**< Retransmit timeout */
+    CA_BAD_GATEWAY = 502,
+    CA_RETRANSMIT_TIMEOUT = 504,            /**< Retransmit timeout */
+    CA_PROXY_NOT_SUPPORTED = 505            /**< Proxy not enabled to service a request */
     /* Response status code - END HERE */
 } CAResponseResult_t;
 

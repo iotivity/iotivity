@@ -90,6 +90,30 @@ public class OcSecureResource {
         throws OcException;
 
     /**
+     *  Method to provision the Trust certificate chain to secured device.
+     *
+     *  @param EnumSet<CredType>            OR'ed Cred Types
+     *  @param int                          credId
+     *  @param ProvisionTrustCertChainListener Callback function, which will be called after
+     *                                      proviosion trust certificate chain.
+     *  @throws OcException
+     */
+    public void provisionTrustCertChain(EnumSet<CredType> credTypeSet, int credId,
+            ProvisionTrustCertChainListener provisionTrustCertChainListener) throws OcException {
+        int credTypeInt = 0;
+
+        for (CredType credType : CredType.values()) {
+            if (credTypeSet.contains(credType))
+                credTypeInt |= credType.getValue();
+        }
+        this.provisionTrustCertChain1(credTypeInt, credId,
+                provisionTrustCertChainListener);
+    }
+    private native void provisionTrustCertChain1(int credType, int credId,
+            ProvisionTrustCertChainListener provisionTrustCertChainListener)
+        throws OcException;
+
+    /**
      *  Method send ACL information to resource.
      *
      *  @param jobject                      Acl
@@ -210,6 +234,16 @@ public class OcSecureResource {
                 int hasError);
     }
 
+	/**
+     * provisionTrustCertChainListener can be registered with ProvisionTrustCertChainListener
+     * call.
+     * Listener notified asynchronously.
+     */
+    public interface ProvisionTrustCertChainListener {
+        public void provisionTrustCertChainListener(List<ProvisionResult> provisionResultList,
+                int hasError);
+    }
+	
     /**
      * provisionAclListener can be registered with provisionAclListener
      * call.
