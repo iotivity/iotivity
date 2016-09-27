@@ -1171,6 +1171,7 @@ rewriteandexit:
             if(isRequest)
             {
                 CARequestInfo_t *msg = message;
+                msg->info.dataType = CA_REQUEST_DATA;
                 CAResult_t caRes = CASendRequest(&nextHop, msg);
                 if (CA_STATUS_OK != caRes)
                 {
@@ -1190,6 +1191,7 @@ rewriteandexit:
             else
             {
                 CAResponseInfo_t *msg = message;
+                msg->info.dataType = CA_RESPONSE_DATA;
                 CAResult_t caRes = CASendResponse(&nextHop, msg);
                 if (CA_STATUS_OK != caRes)
                 {
