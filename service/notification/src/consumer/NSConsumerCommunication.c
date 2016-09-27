@@ -406,7 +406,7 @@ NSMessage * NSGetMessage(OCClientResponse * clientResponse)
     char * icon = NULL;
     OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_ICON_IMAGE, &icon);
 
-    if (icon)
+    if (icon && strlen(icon))
     {
         NSMediaContents * contents = (NSMediaContents *)OICMalloc(sizeof(NSMediaContents));
         if (contents)
