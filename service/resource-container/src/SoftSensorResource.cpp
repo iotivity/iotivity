@@ -50,7 +50,9 @@ namespace OIC
             // initialize output attributes
             for (itor = m_mapResourceProperty[SS_RESOURCE_OUTPUT].begin();
                  itor != m_mapResourceProperty[SS_RESOURCE_OUTPUT].end(); itor++)
+            {
                 BundleResource::setAttribute((*itor)[SS_RESOURCE_OUTPUTNAME], nullptr);
+            }
         }
     }
 }

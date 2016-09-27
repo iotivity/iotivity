@@ -64,7 +64,8 @@ class ResourceContainerTestSimulator
               RESOURCEINTERFACE("oic.if.baseline"),
               ATTR_KEY("TestResourceContainer"),
               ATTR_VALUE(0)
-        { }
+        {
+        }
 
         ~ResourceContainerTestSimulator()
         {
@@ -184,7 +185,9 @@ class ResourceContainerTestSimulator
         {
             std::chrono::milliseconds interval(DEFAULT_WAITTIME);
             if (server != nullptr)
+            {
                 server->setAttribute(ATTR_KEY, ATTR_VALUE + 10);
+            }
             std::this_thread::sleep_for(interval);
         }
 
@@ -192,7 +195,9 @@ class ResourceContainerTestSimulator
         {
             std::chrono::milliseconds interval(DEFAULT_WAITTIME);
             if (server != nullptr)
+            {
                 server = nullptr;
+            }
             std::this_thread::sleep_for(interval);
         }
 

@@ -57,8 +57,10 @@ namespace OIC
             case RequestMethod::Get:
             case RequestMethod::Delete:
             default:
+            {
                 // unknown type of method.
                 break;
+            }
             }
         }
 
@@ -67,7 +69,10 @@ namespace OIC
                 const RCSRequest & request, RequestObject::Ptr /*this_ptr*/)
         {
             auto server = request.getResourceObject().lock();
-            if (!server) return;
+            if (!server)
+            {
+                return;
+            }
 
             RCSResourceObject::LockGuard guard(server);
             server->getAttributes() = RCSResourceAttributes(returnedAttributes);

@@ -34,9 +34,15 @@ constexpr int TOLERANCE_IN_MILLIS{ 50 };
 class FunctionObject
 {
 public:
-    virtual ~FunctionObject() { }
+    virtual ~FunctionObject()
+    {
 
-    virtual void execute(ExpiryTimerImpl::Id) { }
+    }
+
+    virtual void execute(ExpiryTimerImpl::Id)
+    {
+
+    }
 };
 
 class ExpiryTimerImplTest: public TestWithMock
@@ -61,7 +67,10 @@ private:
 
 TEST_F(ExpiryTimerImplTest, PostThrowsIfDelayIsNegative)
 {
-    ASSERT_THROW(ExpiryTimerImpl::getInstance()->post(-1, [](ExpiryTimerImpl::Id){}), RCSException);
+    ASSERT_THROW(ExpiryTimerImpl::getInstance()->post(-1,
+            [](ExpiryTimerImpl::Id)
+            {
+            }), RCSException);
 }
 
 TEST_F(ExpiryTimerImplTest, PostThrowsIfCallbackIsEmpty)
@@ -74,7 +83,8 @@ TEST_F(ExpiryTimerImplTest, CallbackBeInvokedWithinTolerance)
     FunctionObject* functor = mocks.Mock< FunctionObject >();
 
     mocks.ExpectCall(functor, FunctionObject::execute).Do(
-            [this](ExpiryTimerImpl::Id){
+            [this](ExpiryTimerImpl::Id)
+            {
                 Proceed();
             }
     );
@@ -91,11 +101,13 @@ TEST_F(ExpiryTimerImplTest, CallbackBeInvokedWithTimerId)
     FunctionObject* functor = mocks.Mock< FunctionObject >();
 
     mocks.ExpectCall(functor, FunctionObject::execute).Match(
-            [this, &returnedId](ExpiryTimerImpl::Id id){
+            [this, &returnedId](ExpiryTimerImpl::Id id)
+            {
                 return returnedId == id;
             }
     ).Do(
-            [this](ExpiryTimerImpl::Id){
+            [this](ExpiryTimerImpl::Id)
+            {
                 Proceed();
             }
     );
@@ -133,7 +145,8 @@ TEST_F(ExpiryTimerImplTest, CancelReturnsFalseIfAlreadyExecuted)
     FunctionObject* functor = mocks.Mock< FunctionObject >();
 
     mocks.ExpectCall(functor, FunctionObject::execute).Do(
-        [this](ExpiryTimerImpl::Id){
+        [this](ExpiryTimerImpl::Id)
+        {
             Proceed();
         }
     );
@@ -193,7 +206,10 @@ private:
 
 TEST_F(ExpiryTimerTest, PostThrowsIfDelayIsNegative)
 {
-    ASSERT_THROW(timer.post(-1, [](ExpiryTimer::Id){}), RCSException);
+    ASSERT_THROW(timer.post(-1,
+            [](ExpiryTimer::Id)
+            {
+            }), RCSException);
 }
 
 TEST_F(ExpiryTimerTest, PostThrowsIfCallbackIsEmpty)
@@ -206,7 +222,8 @@ TEST_F(ExpiryTimerTest, CallbackBeInvokedWithinTolerance)
     FunctionObject* functor = mocks.Mock< FunctionObject >();
 
     mocks.ExpectCall(functor, FunctionObject::execute).Do(
-            [this](ExpiryTimer::Id){
+            [this](ExpiryTimer::Id)
+            {
                 Proceed();
             }
     );
@@ -223,11 +240,13 @@ TEST_F(ExpiryTimerTest, CallbackBeInvokedWithTimerId)
     FunctionObject* functor = mocks.Mock< FunctionObject >();
 
     mocks.ExpectCall(functor, FunctionObject::execute).Match(
-            [this, &returnedId](ExpiryTimer::Id id){
+            [this, &returnedId](ExpiryTimer::Id id)
+            {
                 return returnedId == id;
             }
     ).Do(
-            [this](ExpiryTimer::Id){
+            [this](ExpiryTimer::Id)
+            {
                 Proceed();
             }
     );
@@ -262,7 +281,8 @@ TEST_F(ExpiryTimerTest, CancelReturnsFalseIfAlreadyExecuted)
     FunctionObject* functor = mocks.Mock< FunctionObject >();
 
     mocks.ExpectCall(functor, FunctionObject::execute).Do(
-        [this](ExpiryTimer::Id){
+        [this](ExpiryTimer::Id)
+        {
             Proceed();
         }
     );

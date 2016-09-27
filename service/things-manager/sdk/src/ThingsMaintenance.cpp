@@ -72,7 +72,9 @@ namespace OIC
                 { "fr", "Factory Reset", "/oic/mnt" } };
 
         for (int i = 0; i < NUMDIAGUNIT; i++)
+        {
             MaintenanceUnitTable.push_back(unit[i]);
+        }
     }
 
     ThingsMaintenance::~ThingsMaintenance()
@@ -107,7 +109,9 @@ namespace OIC
         for (auto it = MaintenanceUnitTable.begin(); MaintenanceUnitTable.end() != it; it++)
         {
             if ((*it).m_name == name)
+            {
                 return (*it).m_attribute;
+            }
         }
 
         return "";
@@ -118,7 +122,9 @@ namespace OIC
         for (auto it = MaintenanceUnitTable.begin(); MaintenanceUnitTable.end() != it; it++)
         {
             if ((*it).m_name == name)
+            {
                 return (*it).m_uri;
+            }
         }
 
         return "";
@@ -130,9 +136,13 @@ namespace OIC
                 maintenanceRequestTable.find(mnt);
 
         if (it == maintenanceRequestTable.end())
+        {
             return NULL;
+        }
         else
+        {
             return it->second.m_updateVal;
+        }
 
     }
     std::shared_ptr< OCResource > ThingsMaintenance::getResource(std::string mnt)
@@ -141,9 +151,13 @@ namespace OIC
                 maintenanceRequestTable.find(mnt);
 
         if (it == maintenanceRequestTable.end())
+        {
             return NULL;
+        }
         else
+        {
             return it->second.m_resource;
+        }
     }
 
     MaintenanceCallback ThingsMaintenance::getCallback(std::string mnt)
@@ -152,9 +166,13 @@ namespace OIC
                 maintenanceRequestTable.find(mnt);
 
         if (it == maintenanceRequestTable.end())
+        {
             return NULL;
+        }
         else
+        {
             return it->second.m_callback;
+        }
     }
 
     std::string ThingsMaintenance::getHostFromURI(std::string oldUri)
@@ -163,9 +181,13 @@ namespace OIC
         std::string newUri;
 
         if ((f = oldUri.find("/factoryset/oic/")) != string::npos)
+        {
             newUri = oldUri.replace(f, oldUri.size(), "");
+        }
         else if ((f = oldUri.find("/oic/")) != string::npos)
+        {
             newUri = oldUri.replace(f, oldUri.size(), "");
+        }
 
         return newUri;
     }
@@ -183,9 +205,13 @@ namespace OIC
             it++;
 
             if (it == MaintenanceUnitTable.end())
+            {
                 break;
+            }
             else
+            {
                 res += ",";
+            }
         }
 
         res += "]}";
@@ -220,7 +246,9 @@ namespace OIC
         std::string attrKey = mnt;
 
         if (uri == "")
+        {
             return;
+        }
 
         if (resource)
         {
@@ -348,7 +376,9 @@ namespace OIC
         for (unsigned int i = 0; i < resource->getResourceTypes().size(); ++i)
         {
             if (resource->getResourceTypes().at(0).find(".resourceset", 0) != std::string::npos)
+            {
                 return false;
+            }
         }
 
         return true;
@@ -369,7 +399,9 @@ namespace OIC
         std::map< std::string, MaintenanceRequestEntry >::iterator iter =
                 maintenanceRequestTable.find(mnt);
         if (iter != maintenanceRequestTable.end())
+        {
             maintenanceRequestTable.erase(iter);
+        }
 
         // Create new request entry stored in the queue
         MaintenanceRequestEntry newCallback(mnt, callback, resource, "true");
@@ -422,7 +454,9 @@ namespace OIC
         std::map< std::string, MaintenanceRequestEntry >::iterator iter =
                 maintenanceRequestTable.find(mnt);
         if (iter != maintenanceRequestTable.end())
+        {
             maintenanceRequestTable.erase(iter);
+        }
 
         // Create new request entry stored in the queue
         MaintenanceRequestEntry newCallback(mnt, callback, resource, "true");

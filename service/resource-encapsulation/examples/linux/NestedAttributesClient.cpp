@@ -238,7 +238,9 @@ void process()
         displayMenu();
 
         if (selectClientMenu(processUserInput()) == QUIT_INPUT)
+        {
             break;
+        }
     }
 }
 
