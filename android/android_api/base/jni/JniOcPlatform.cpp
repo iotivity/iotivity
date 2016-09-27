@@ -1441,12 +1441,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo1(
         ThrowOcException(OC_STACK_INVALID_PARAM, "onPlatformFoundListener cannot be null");
         return;
     }
-    JniOnDeviceInfoListener *onDeviceInfoListener = AddOnDeviceInfoListener(env, jListener);
+    JniOnPlatformInfoListener *onPlatformInfoListener = AddOnPlatformInfoListener(env, jListener);
 
-    FindDeviceCallback findDeviceCallback =
-        [onDeviceInfoListener](const OCRepresentation& ocRepresentation)
+    FindPlatformCallback findPlatformCallback =
+        [onPlatformInfoListener](const OCRepresentation& ocRepresentation)
         {
-            onDeviceInfoListener->foundDeviceCallback(ocRepresentation);
+            onPlatformInfoListener->foundPlatformCallback(ocRepresentation);
         };
 
     try
@@ -1455,7 +1455,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo1(
             host,
             resourceUri,
             static_cast<OCConnectivityType>(jConnectivityType),
-            findDeviceCallback,
+            findPlatformCallback,
             JniUtils::getQOS(env, static_cast<int>(jQoS)));
 
         if (OC_STACK_OK != result)
