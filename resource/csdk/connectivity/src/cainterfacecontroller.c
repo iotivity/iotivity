@@ -134,11 +134,19 @@ static CAResult_t AddNetworkStateChangedCallback(CAAdapterStateChangedCB adapter
 {
     OIC_LOG(DEBUG, TAG, "Add NetworkStateChanged Callback");
 
-    if (!adapterCB || !connCB)
+    if (!adapterCB)
     {
-        OIC_LOG(ERROR, TAG, "parameter is null");
+        OIC_LOG(ERROR, TAG, "adapterCB is null");
         return CA_STATUS_INVALID_PARAM;
     }
+
+#if defined(TCP_ADAPTER) || defined(EDR_ADAPTER) || defined(LE_ADAPTER)
+    if (!connCB)
+    {
+        OIC_LOG(ERROR, TAG, "connCB is null");
+        return CA_STATUS_INVALID_PARAM;
+    }
+#endif
 
     CANetworkCallback_t* callback = NULL;
     LL_FOREACH(g_networkChangeCallbackList, callback)
@@ -158,7 +166,10 @@ static CAResult_t AddNetworkStateChangedCallback(CAAdapterStateChangedCB adapter
     }
 
     callback->adapter = adapterCB;
+#if defined(TCP_ADAPTER) || defined(EDR_ADAPTER) || defined(LE_ADAPTER)
+    // Since IP adapter(UDP) is the Connectionless Protocol, it doesn't need.
     callback->conn = connCB;
+#endif
     LL_APPEND(g_networkChangeCallbackList, callback);
     return CA_STATUS_OK;
 }
