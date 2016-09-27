@@ -27,7 +27,7 @@
 
 #include <pthread.h>
 
-#define NS_QUERY_CONSUMER_ID "consumerid"
+#define NS_QUERY_CONSUMER_ID "consumerId"
 
 pthread_mutex_t ** NSGetStackMutex()
 {

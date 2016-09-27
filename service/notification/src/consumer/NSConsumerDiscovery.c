@@ -28,9 +28,8 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 
-#define NS_DISCOVER_QUERY "/oic/res?rt=oic.r.notification"
-#define NS_PRESENCE_SUBSCRIBE_QUERY_TCP "/oic/ad?rt=oic.r.notification"
-#define NS_GET_INFORMATION_QUERY "/notification?if=oic.if.notification"
+#define NS_DISCOVER_QUERY "/oic/res?rt=oic.wk.notification"
+#define NS_PRESENCE_SUBSCRIBE_QUERY_TCP "/oic/ad?rt=oic.wk.notification"
 
 NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse);
 
