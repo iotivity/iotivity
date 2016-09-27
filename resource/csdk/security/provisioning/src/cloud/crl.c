@@ -73,6 +73,8 @@ OCStackResult OCCloudGetCRL(void* ctx,
     char uri[MAX_URI_LENGTH] = { 0 };
     char *lastUpdate = NULL;
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+
     getLastUpdateFromDB(&lastUpdate);
 
     snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s?%s=%s", DEFAULT_PREFIX,
@@ -104,6 +106,7 @@ OCStackResult OCCloudPostCRL(void* ctx,
     size_t cbor_len = 0;
     OicSecKey_t crl1;
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(thisUpdate, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(nextUpdate, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 

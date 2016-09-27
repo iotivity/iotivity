@@ -90,6 +90,7 @@ OCStackResult OCCloudAclCreateGroup(void* ctx,
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupType, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
     snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s", DEFAULT_PREFIX,
@@ -120,6 +121,8 @@ OCStackResult OCCloudAclFindMyGroup(void* ctx,
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+
     snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s", DEFAULT_PREFIX,
             endPoint->addr, endPoint->port, OC_RSRVD_ACL_GROUP_URL);
 
@@ -144,6 +147,7 @@ OCStackResult OCCloudAclDeleteGroup(void* ctx,
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
     snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s?%s=%s", DEFAULT_PREFIX,
@@ -169,6 +173,7 @@ OCStackResult OCCloudAclJoinToInvitedGroup(void* ctx,
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
     snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s", DEFAULT_PREFIX,
@@ -188,6 +193,7 @@ OCStackResult OCCloudAclObserveGroup(void* ctx,
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
     snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s", DEFAULT_PREFIX,
@@ -210,6 +216,7 @@ OCStackResult OCCloudAclShareDeviceIntoGroup(void* ctx,
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
     char uri[MAX_URI_LENGTH] = { 0 };
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(memberIds, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(deviceIds, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
@@ -248,6 +255,7 @@ OCStackResult OCCloudAclDeleteDeviceFromGroup(void* ctx,
     char uri[MAX_URI_LENGTH * 4] = { 0 };
     int max_size = sizeof(uri);
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(memberIds, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(deviceIds, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
@@ -285,6 +293,7 @@ OCStackResult OCCloudAclGroupGetInfo(void* ctx,
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
     snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s", DEFAULT_PREFIX,

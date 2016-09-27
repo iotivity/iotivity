@@ -77,6 +77,7 @@ OCStackResult OCCloudGetAclIdByDevice(void* ctx,
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(deviceId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
     snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s?%s=%s", DEFAULT_PREFIX,
@@ -97,6 +98,7 @@ OCStackResult OCCloudAclIdCreate(void* ctx,
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(ownerId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(deviceId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
@@ -118,6 +120,7 @@ OCStackResult OCCloudAclIdDelete(void* ctx,
 {
     char uri[MAX_URI_LENGTH]  = { 0 };
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
     snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s?%s=%s", DEFAULT_PREFIX,
@@ -186,6 +189,7 @@ OCStackResult OCCloudAclIndividualGetInfo(void* ctx,
 {
     char uri[MAX_URI_LENGTH]  = { 0 };
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
     snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s", DEFAULT_PREFIX,
@@ -212,6 +216,7 @@ OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
     OCRepPayload **helperPayload  = NULL;
     OCRepPayload **helperPayload2 = NULL;
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aces, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
@@ -337,6 +342,7 @@ OCStackResult OCCloudAclIndividualDelete(void* ctx,
 {
     char uri[MAX_URI_LENGTH]  = { 0 };
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
     snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s", DEFAULT_PREFIX,
