@@ -28,10 +28,10 @@
 #include "doxmresource.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "srmutility.h"
 #include "pmutility.h"
 #include "credresource.h"
 #include "payload_logging.h"
+#include "cacommonutil.h"
 
 #include "utils.h"
 #include "cloudAuth.h"
@@ -55,7 +55,7 @@ typedef struct
     char *sid;
 } sessionObject_t;
 
-static sessionObject_t sessionObject = {0,0,0,0,0,0,0,0};
+static sessionObject_t sessionObject = {NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL};
 
 /**
  * Session free function
@@ -64,32 +64,15 @@ static sessionObject_t sessionObject = {0,0,0,0,0,0,0,0};
  */
 static void SessionFree()
 {
-    if (sessionObject.accesstoken)  OICFree(sessionObject.accesstoken);
-    if (sessionObject.refreshtoken) OICFree(sessionObject.refreshtoken);
-    if (sessionObject.tokentype)    OICFree(sessionObject.tokentype);
-    if (sessionObject.uid)          OICFree(sessionObject.uid);
-    if (sessionObject.redirecturi)  OICFree(sessionObject.redirecturi);
-    if (sessionObject.certificate)  OICFree(sessionObject.certificate);
-    if (sessionObject.sid)          OICFree(sessionObject.sid);
+    OICFree(sessionObject.accesstoken);
+    OICFree(sessionObject.refreshtoken);
+    OICFree(sessionObject.tokentype);
+    OICFree(sessionObject.uid);
+    OICFree(sessionObject.redirecturi);
+    OICFree(sessionObject.certificate);
+    OICFree(sessionObject.sid);
 
     memset(&sessionObject, 0, sizeof(sessionObject_t));
-}
-
-/**
- * Session init function
- *
- * @param[in] sessionObject session data
- * @return  OCStackResult application result
- */
-static OCStackResult SessionInit()
-{
-    OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
-
-    SessionFree(sessionObject);
-
-    OIC_LOG_V(DEBUG, TAG, "OUT: %s", __func__);
-
-    return OC_STACK_OK;
 }
 
 /**
@@ -101,55 +84,55 @@ static OCStackResult SessionInit()
  */
 static OCStackResult SessionParsePayload(OCRepPayload *payload)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
+    VERIFY_NON_NULL_RET(payload, TAG, "NULL payload", OC_STACK_ERROR);
 
-    VERIFY_NON_NULL(TAG, payload, ERROR);
-
-    SessionInit();
+    SessionFree();
 
     if (!OCRepPayloadGetPropString(payload, OC_RSRVD_ACCESS_TOKEN,
                                    &sessionObject.accesstoken))
     {
-        OIC_LOG(ERROR, TAG, "Can't get: accesstoken");
+        OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_ACCESS_TOKEN);
     }
     if (!OCRepPayloadGetPropString(payload, OC_RSRVD_REFRESH_TOKEN,
                                    &sessionObject.refreshtoken))
     {
-        OIC_LOG(ERROR, TAG, "Can't get: refreshtoken");
+        OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_REFRESH_TOKEN);
     }
     if (!OCRepPayloadGetPropString(payload, OC_RSRVD_TOKEN_TYPE,
                                    &sessionObject.tokentype))
     {
-        OIC_LOG(ERROR, TAG, "Can't get: tokentype");
+        OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_TOKEN_TYPE);
     }
-    if (!OCRepPayloadGetPropInt(payload, OC_RSRVD_EXPIRES_IN,
-                                &(sessionObject.expiresin)))
+    int64_t tmp = 0;
+    if (!OCRepPayloadGetPropInt(payload, OC_RSRVD_EXPIRES_IN, &tmp))
     {
-        OIC_LOG(ERROR, TAG, "Can't get: expiresin");
+        OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_EXPIRES_IN);
+    }
+    else
+    {
+        sessionObject.expiresin = tmp;
     }
     if (!OCRepPayloadGetPropString(payload, OC_RSRVD_USER_UUID,
                                    &sessionObject.uid))
     {
-        OIC_LOG(ERROR, TAG, "Can't get: uid");
+        OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_USER_UUID);
     }
     if (!OCRepPayloadGetPropString(payload, OC_RSRVD_REDIRECT_URI,
                                    &sessionObject.redirecturi))
     {
-        OIC_LOG(ERROR, TAG, "Can't get: redirecturi");
+        OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_REDIRECT_URI);
     }
     if (!OCRepPayloadGetPropString(payload, OC_RSRVD_CERTIFICATE,
                                    &sessionObject.certificate))
     {
-        OIC_LOG(ERROR, TAG, "Can't get: certificate");
+        OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_CERTIFICATE);
     }
     if (!OCRepPayloadGetPropString(payload, OC_RSRVD_SUBJECT_ID,
                                    &sessionObject.sid))
     {
-        OIC_LOG(ERROR, TAG, "Can't get: sid");
+        OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_SUBJECT_ID);
     }
 
-    OIC_LOG_V(DEBUG, TAG, "OUT: %s", __func__);
-exit:
     return OC_STACK_OK;
 }
 
@@ -168,15 +151,11 @@ static OCStackApplicationResult handleCloudSignUpResponse(void *ctx,
     OC_UNUSED(ctx);
     OC_UNUSED(handle);
 
-    if (!response)
-    {
-        OIC_LOG(ERROR, TAG, "Received NULL response!");
-        goto exit;
-    }
+    VERIFY_NON_NULL_RET(response, TAG, "Received NULL response", OC_STACK_DELETE_TRANSACTION);
 
     if (response->payload)
     {
-        OIC_LOG(ERROR, TAG, "Payload received");
+        OIC_LOG(INFO, TAG, "Payload received");
         OIC_LOG_PAYLOAD(DEBUG, response->payload);
     }
 
@@ -186,10 +165,10 @@ static OCStackApplicationResult handleCloudSignUpResponse(void *ctx,
     }
     else
     {
-        OIC_LOG(DEBUG, TAG, "Login successful");
         SessionParsePayload((OCRepPayload*)response->payload);
+        OIC_LOG(INFO, TAG, "Sign Up OK");
     }
-exit:
+
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -199,20 +178,12 @@ OCStackResult CloudSignUp(const OCDevAddr *endPoint,
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
-    OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
-
-    if (!endPoint || !authProvider || !authToken)
-    {
-        OIC_LOG(ERROR, TAG, "Some of the input params are NULL");
-        return OC_STACK_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endPoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(authProvider, TAG, "NULL endPoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(authToken, TAG, "NULL endPoint", OC_STACK_INVALID_PARAM);
 
     char *deviceId = getDeviceId();
-    if (!deviceId)
-    {
-        OIC_LOG(ERROR, TAG, "Can't get the device id");
-        return OC_STACK_ERROR;
-    }
+    VERIFY_NON_NULL_RET(deviceId, TAG, "Can't get the device id", OC_STACK_ERROR);
 
     snprintf(uri, MAX_URI_LENGTH, DEFAULT_QUERY,
              endPoint->addr, endPoint->port, OC_RSRVD_ACCOUNT_URI);
@@ -223,15 +194,11 @@ OCStackResult CloudSignUp(const OCDevAddr *endPoint,
     cbData.cd = unlockMenu;
 
     OCRepPayload *payload = OCRepPayloadCreate();
-    if (!payload)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
-        return OC_STACK_NO_MEMORY;
-    }
+    VERIFY_NON_NULL_RET(payload, TAG, "Failed to allocate payload", OC_STACK_NO_MEMORY);
 
     OCRepPayloadSetPropString(payload, OC_RSRVD_DEVICE_ID, deviceId);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_AUTHPROVIDER, OICStrdup(authProvider));
-    OCRepPayloadSetPropString(payload, OC_RSRVD_AUTHCODE, OICStrdup(authToken));
+    OCRepPayloadSetPropString(payload, OC_RSRVD_AUTHPROVIDER, authProvider);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_AUTHCODE, authToken);
 
     return OCDoResource(NULL, OC_REST_POST, uri, NULL, (OCPayload *)payload,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
@@ -249,195 +216,112 @@ static OCStackApplicationResult handleCloudSignInResponse(void *ctx,
                                                           OCDoHandle handle,
                                                           OCClientResponse *response)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
-
     OC_UNUSED(ctx);
     OC_UNUSED(handle);
 
-    if (!response)
-    {
-        OIC_LOG(ERROR, TAG, "Received NULL response!");
-        goto exit;
-    }
+    VERIFY_NON_NULL_RET(response, TAG, "Received NULL response", OC_STACK_DELETE_TRANSACTION);
 
     if (response->payload)
     {
-        OIC_LOG(ERROR, TAG, "Payload received");
+        OIC_LOG(INFO, TAG, "Payload received");
         OIC_LOG_PAYLOAD(DEBUG, response->payload);
     }
 
-    if (response->result < 4 && response->payload)
+    if (response->result != LOGIN_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "Sign In error: result: %d, payload exist: %s",
-                  response->result, response->payload ? "yes" : "no");
-        goto exit;
+        OIC_LOG_V(ERROR, TAG, "Sign In error: result: %d", response->result);
+        return OC_STACK_DELETE_TRANSACTION;
     }
 
-    if (!OCRepPayloadGetPropString((OCRepPayload*)response->payload, OC_RSRVD_USER_UUID,
-                                   &(sessionObject.uid)))
+    sessionObject.expiresin = 0;
+    int64_t tmp = 0;
+    if (!OCRepPayloadGetPropInt((OCRepPayload*)response->payload, OC_RSRVD_EXPIRES_IN, &tmp))
     {
-        OIC_LOG(ERROR, TAG, "Can't get: uid");
+        OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_EXPIRES_IN);
+    }
+    else
+    {
+        sessionObject.expiresin = tmp;
     }
 
-    if (!OCRepPayloadGetPropInt((OCRepPayload*)response->payload, OC_RSRVD_EXPIRES_IN,
-                                &(sessionObject.expiresin)))
-    {
-        OIC_LOG(ERROR, TAG, "Cann't get: expiresin");
-    }
+    OIC_LOG(INFO, TAG, "Sign In OK");
 
-    OIC_LOG_V(DEBUG, TAG, "OUT: %s", __func__);
-
-exit:
     return OC_STACK_DELETE_TRANSACTION;
-}
-
-OCStackResult CloudSignIn(const OCDevAddr  *endPoint)
-{
-    OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
-
-    if (!endPoint)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: endPoint is NULL",__func__);
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    if (!sessionObject.uid)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: UID is missing. Please run Sign Up first",__func__);
-        return OC_STACK_ERROR;
-    }
-
-    if (!sessionObject.accesstoken)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: accesstoken is missing. Please run Sign Up first",__func__);
-        return OC_STACK_ERROR;
-    }
-
-    char *deviceId = getDeviceId();
-    if (!deviceId)
-    {
-        OIC_LOG(ERROR, TAG, "Can't get the device id");
-        return OC_STACK_ERROR;
-    }
-
-    OCRepPayload* payload = OCRepPayloadCreate();
-    if (NULL == payload)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
-        return OC_STACK_NO_MEMORY;
-    }
-
-    OCRepPayloadSetPropString(payload, OC_RSRVD_USER_UUID, sessionObject.uid);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_DEVICE_ID, deviceId);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ACCESS_TOKEN,
-                              sessionObject.accesstoken);
-    OCRepPayloadSetPropBool(payload, OC_RSRVD_LOGIN, true);
-
-    char uri[MAX_URI_QUERY] = { 0, };
-    snprintf(uri, MAX_URI_QUERY, DEFAULT_QUERY,
-             endPoint->addr, endPoint->port,
-             OC_RSRVD_ACCOUNT_SESSION_URI);
-
-    OCCallbackData cbData;
-    memset(&cbData, 0, sizeof(OCCallbackData));
-    cbData.cb = handleCloudSignInResponse;
-    cbData.cd = unlockMenu;
-
-    return OCDoResource(NULL, OC_REST_POST, uri, NULL,
-                       (OCPayload *)payload,
-                       CT_ADAPTER_TCP,
-                       OC_LOW_QOS, &cbData, NULL, 0);
 }
 
 static OCStackApplicationResult handleCloudSignOutResponse(void *ctx,
                                                            OCDoHandle handle,
                                                            OCClientResponse *response)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
-
     OC_UNUSED(ctx);
     OC_UNUSED(handle);
 
-    if (!response)
-    {
-        OIC_LOG(ERROR, TAG, "Received NULL response!");
-        goto exit;
-    }
+    VERIFY_NON_NULL_RET(response, TAG, "Received NULL response", OC_STACK_DELETE_TRANSACTION);
 
     if (response->payload)
     {
-        OIC_LOG(ERROR, TAG, "Payload received");
+        OIC_LOG(INFO, TAG, "Payload received");
         OIC_LOG_PAYLOAD(DEBUG, response->payload);
     }
 
-    if (response->result < 4 && response->payload)
+    if (response->result != LOGIN_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "Sign Out error");
+        OIC_LOG(ERROR, TAG, "Sign Out error");
         return OC_STACK_DELETE_TRANSACTION;
     }
-    else
-    {
-        OIC_LOG_V(ERROR, TAG, "Sign Out OK");
-    }
 
-    SessionFree();
+    OIC_LOG(INFO, TAG, "Sign Out OK");
 
-    OIC_LOG_V(DEBUG, TAG, "OUT: %s", __func__);
-
-exit:
     return OC_STACK_DELETE_TRANSACTION;
 }
 
 /**
- * Sends Sign Out request to cloud
+ * Sends Sign In/Out request to cloud
  *
- * @param[in] ctx                    context
- * @param[in] handle                 handle
- * @param[in] response               response from peer
+ * @param[in] endPoint               peer endPoint
+ * @param[in] signIn                 is it Sign In or Sign Out request
  * @return  OCStackApplicationResult application result
  */
-OCStackResult CloudSignOut(const OCDevAddr *endPoint)
+static OCStackResult CloudSign(const OCDevAddr *endPoint, bool signIn)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
-
-    if (!endPoint)
-    {
-        OIC_LOG_V(ERROR, TAG, "%s: endPoint is NULL",__func__);
-        return OC_STACK_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endPoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(sessionObject.uid, TAG,
+                        "UID is missing. Please run Sign Up first", OC_STACK_ERROR);
+    VERIFY_NON_NULL_RET(sessionObject.accesstoken, TAG,
+                        "accesstoken is missing. Please run Sign Up first", OC_STACK_ERROR);
 
     char *deviceId = getDeviceId();
-    if (!deviceId)
-    {
-        OIC_LOG(ERROR, TAG, "Cann't get the device id");
-        return OC_STACK_ERROR;
-    }
+    VERIFY_NON_NULL_RET(deviceId, TAG, "Can't get the device id", OC_STACK_ERROR);
 
     OCRepPayload* payload = OCRepPayloadCreate();
-    if (!payload)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
-        return OC_STACK_NO_MEMORY;
-    }
+    VERIFY_NON_NULL_RET(payload, TAG, "Failed to allocate payload", OC_STACK_NO_MEMORY);
 
+    OCRepPayloadSetPropString(payload, OC_RSRVD_USER_UUID, sessionObject.uid);
     OCRepPayloadSetPropString(payload, OC_RSRVD_DEVICE_ID, deviceId);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ACCESS_TOKEN,
-                              sessionObject.accesstoken);
-    OCRepPayloadSetPropBool(payload, OC_RSRVD_LOGIN, false);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ACCESS_TOKEN, sessionObject.accesstoken);
+    OCRepPayloadSetPropBool(payload, OC_RSRVD_LOGIN, signIn);
 
-    char uri[MAX_URI_QUERY] = { 0, };
+    char uri[MAX_URI_QUERY] = { 0 };
     snprintf(uri, MAX_URI_QUERY, DEFAULT_QUERY,
              endPoint->addr, endPoint->port,
              OC_RSRVD_ACCOUNT_SESSION_URI);
 
     OCCallbackData cbData;
     memset(&cbData, 0, sizeof(OCCallbackData));
-    cbData.cb = handleCloudSignOutResponse;
+    cbData.cb = signIn? handleCloudSignInResponse : handleCloudSignOutResponse;
     cbData.cd = unlockMenu;
 
-    return OCDoResource(NULL, OC_REST_POST, uri, NULL,
-                       (OCPayload *)payload,
-                       CT_ADAPTER_TCP,
-                       OC_LOW_QOS, &cbData, NULL, 0);
+    return OCDoResource(NULL, OC_REST_POST, uri, NULL, (OCPayload *)payload,
+                        CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+}
+
+OCStackResult CloudSignIn(const OCDevAddr *endPoint)
+{
+    return CloudSign(endPoint, true);
+}
+
+OCStackResult CloudSignOut(const OCDevAddr *endPoint)
+{
+    return CloudSign(endPoint, false);
 }
 
