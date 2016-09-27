@@ -9,6 +9,9 @@ Source0: %{name}-%{version}.tar.bz2
 Source1001: %{name}.manifest
 Source1002: %{name}-test.manifest
 
+%if "%{profile}" == "ivi"
+%define TARGET_TRANSPORT IP
+%endif
 
 %if "%{TARGET_OS}" == "linux"
 %define TARGET_TRANSPORT IP
