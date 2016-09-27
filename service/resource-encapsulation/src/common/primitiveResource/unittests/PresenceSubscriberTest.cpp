@@ -77,7 +77,8 @@ TEST_F(PresenceSubscriberNonMemberTest, UnsubscribePresenceThrowIfResultIsNotOK)
 class PresenceSubscriberTest: public TestWithMock
 {
 protected:
-    void SetUp() {
+    void SetUp()
+    {
         mocks.OnCallFuncOverload(
                 static_cast< SubscribePresence1 >(OC::OCPlatform::subscribePresence)).Do(
 

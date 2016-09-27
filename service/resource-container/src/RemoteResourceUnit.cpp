@@ -39,19 +39,23 @@ RemoteResourceUnit::~RemoteResourceUnit()
     {
         if(remoteObject->isCaching())
         {
-            try{
+            try
+            {
                 remoteObject->stopCaching();
             }
-            catch(std::exception &e){
+            catch(std::exception &e)
+            {
                 OIC_LOG_V(ERROR, CONTAINER_TAG, "%s", e.what());
             }
         }
         if(remoteObject->isMonitoring())
         {
-            try{
+            try
+            {
                 remoteObject->stopMonitoring();
             }
-            catch(std::exception &e){
+            catch(std::exception &e)
+            {
                 OIC_LOG_V(ERROR, CONTAINER_TAG, "%s", e.what());
             }
         }

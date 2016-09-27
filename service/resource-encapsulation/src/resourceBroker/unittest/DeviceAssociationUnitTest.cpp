@@ -69,7 +69,10 @@ protected:
         TestWithMock::SetUp();
         instance = DeviceAssociation::getInstance();
         device = (DevicePresencePtr)new DevicePresence();
-        pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource*){});
+        pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(),
+                [](PrimitiveResource*)
+                {
+                });
     }
 
     void TearDown()

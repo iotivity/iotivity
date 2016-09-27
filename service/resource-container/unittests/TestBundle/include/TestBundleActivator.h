@@ -50,7 +50,10 @@ class TestBundleActivator : public BundleActivator
 class TestBundleResource : public BundleResource
 {
     public:
-        void initAttributes() { };
+        void initAttributes()
+        {
+
+        };
 
         RCSResourceAttributes handleGetAttributesRequest(
             const std::map< std::string, std::string > &queryParams)

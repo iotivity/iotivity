@@ -50,11 +50,18 @@ class DataCacheTest : public TestWithMock
         virtual void SetUp()
         {
             TestWithMock::SetUp();
-            pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource *) {});
+            pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(),
+                                               [](PrimitiveResource *)
+                                               {
+
+                                               });
 
             mocks.OnCall(pResource.get(), PrimitiveResource::isObservable).Return(false);
             cacheHandler.reset(new DataCache());
-            cb = ([](std::shared_ptr<PrimitiveResource >, const RCSResourceAttributes &)->OCStackResult {return OC_STACK_OK;});
+            cb = ([](std::shared_ptr<PrimitiveResource >, const RCSResourceAttributes &)->OCStackResult
+                    {
+                        return OC_STACK_OK;
+                    });
         }
 
         virtual void TearDown()

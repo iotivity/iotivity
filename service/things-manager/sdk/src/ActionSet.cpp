@@ -55,9 +55,13 @@ void Time::setTime(unsigned int yy, unsigned int mm, unsigned int dd,
 void Time::setDayOfWeekForRecursive(int day)
 {
     if (day != -1)
+    {
         type = RECURSIVE;
+    }
     else
+    {
         return;
+    }
 
     setTime(0, 0, 0, 0, 0, 0, day);
 }
@@ -87,8 +91,10 @@ unsigned int Time::getSec()
 }
 long int Time::getSecondsFromAbsoluteTime()
 {
-    if(mTime.tm_year > 1900)
+    if (mTime.tm_year > 1900)
+    {
         mTime.tm_year -= 1900;
+    }
 
     mTime.tm_mon -= 1;
 
@@ -100,8 +106,10 @@ long int Time::getSecAbsTime()
 }
 long int Time::getSecondsForWeeklySchedule()
 {
-    if(mTime.tm_year > 1900)
+    if (mTime.tm_year > 1900)
+    {
         mTime.tm_year -= 1900;
+    }
 
     mTime.tm_mon -= 1;
     return getRelativeIntervalOfWeek(&mTime);
@@ -109,7 +117,7 @@ long int Time::getSecondsForWeeklySchedule()
 
 void Time::setDelay(long int seconds)
 {
-    if(type != NONE)
+    if (type != NONE)
     {
         mDelay = seconds;
     }

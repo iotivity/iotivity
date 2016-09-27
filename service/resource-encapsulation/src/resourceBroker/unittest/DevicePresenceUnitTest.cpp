@@ -52,8 +52,15 @@ protected:
     {
         TestWithMock::SetUp();
         instance = (DevicePresence*)new DevicePresence();
-        pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource*){});
-        cb = ([](BROKER_STATE)->OCStackResult{return OC_STACK_OK;});
+        pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(),
+                                           [](PrimitiveResource*)
+                                           {
+
+                                           });
+        cb = ([](BROKER_STATE)->OCStackResult
+                {
+                    return OC_STACK_OK;
+                });
         id = 0;
     }
 
@@ -85,7 +92,8 @@ TEST_F(DevicePresenceTest,SubscribeCB_NormalHandlingIfMessageOC_STACK_OK)
    mocks.OnCall(pResource.get(), PrimitiveResource::getHost).Return(std::string());
    mocks.OnCallFuncOverload(static_cast< subscribePresenceSig1 >(OC::OCPlatform::subscribePresence)).Do(
             [](OC::OCPlatform::OCPresenceHandle&,
-                    const std::string&, OCConnectivityType, SubscribeCallback callback)->OCStackResult{
+                    const std::string&, OCConnectivityType, SubscribeCallback callback)->OCStackResult
+    {
 
         callback(OC_STACK_OK,0,std::string());
         return OC_STACK_OK;

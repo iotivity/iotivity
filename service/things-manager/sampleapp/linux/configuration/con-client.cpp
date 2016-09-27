@@ -114,15 +114,25 @@ void onUpdate(const HeaderOptions& /*headerOptions*/, const OCRepresentation& re
     std::cout << "\tResource URI: " << rep.getUri() << std::endl;
 
     if (rep.hasAttribute("n"))
+    {
         std::cout << "\t\tDeviceName:" << rep.getValue< std::string >("n") << std::endl;
+    }
     if (rep.hasAttribute("loc"))
+    {
         std::cout << "\t\tLocation:" << rep.getValue< std::string >("loc") << std::endl;
+    }
     if (rep.hasAttribute("locn"))
+    {
         std::cout << "\t\tLocationName:" << rep.getValue< std::string >("locn") << std::endl;
+    }
     if (rep.hasAttribute("c"))
+    {
         std::cout << "\t\tCurrency:" << rep.getValue< std::string >("c") << std::endl;
+    }
     if (rep.hasAttribute("r"))
+    {
         std::cout << "\t\tRegion:" << rep.getValue< std::string >("r") << std::endl;
+    }
 }
 
 void onGet(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
@@ -139,15 +149,25 @@ void onGet(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, 
     std::cout << "\tResource URI: " << rep.getUri() << std::endl;
 
     if (rep.hasAttribute("n"))
+    {
         std::cout << "\t\tDeviceName:" << rep.getValue< std::string >("n") << std::endl;
+    }
     if (rep.hasAttribute("loc"))
+    {
         std::cout << "\t\tLocation:" << rep.getValue< std::string >("loc") << std::endl;
+    }
     if (rep.hasAttribute("locn"))
+    {
         std::cout << "\t\tLocationName:" << rep.getValue< std::string >("locn") << std::endl;
+    }
     if (rep.hasAttribute("c"))
+    {
         std::cout << "\t\tCurrency:" << rep.getValue< std::string >("c") << std::endl;
+    }
     if (rep.hasAttribute("r"))
+    {
         std::cout << "\t\tRegion:" << rep.getValue< std::string >("r") << std::endl;
+    }
 }
 
 // Callback to found collection resource
@@ -165,11 +185,17 @@ void onFoundCollectionResource(std::vector< std::shared_ptr< OCResource > > reso
             if (resource)
             {
                 if (resource->uri() == "/core/a/configuration/resourceset")
+                {
                     g_configurationCollection = resource;
+                }
                 else if (resource->uri() == "/core/a/maintenance/resourceset")
+                {
                     g_maintenanceCollection = resource;
+                }
                 else if (resource->uri() == "/core/a/factoryset/resourceset")
+                {
                     g_setCollection = resource;
+                }
                 else
                 {
                     pthread_mutex_lock(&mutex_lock);
@@ -232,20 +258,26 @@ void onFoundCandidateResource(std::vector< std::shared_ptr< OCResource > > resou
                             OCPlatform::bindResource(configurationCollectionHandle,
                                     foundResourceHandle);
                             if (g_configurationResource == NULL)
+                            {
                                 g_configurationResource = resource;
+                            }
                         }
                         else if (resource->uri() == "/oic/mnt")
                         {
                             OCPlatform::bindResource(maintenanceCollectionHandle,
                                     foundResourceHandle);
                             if (g_maintenanceResource == NULL)
+                            {
                                 g_maintenanceResource = resource;
+                            }
                         }
                         else if (resource->uri() == "/factoryset")
                         {
                             OCPlatform::bindResource(setCollectionHandle, foundResourceHandle);
                             if (g_setResource == NULL)
+                            {
                                 g_setResource = resource;
+                            }
                         }
 
                         resourceHandleVector.push_back(foundResourceHandle);
@@ -517,7 +549,8 @@ int main()
 
             }
         }
-    }catch (OCException e)
+    }
+    catch (OCException e)
     {
         std::cout << "Exception in main: " << e.what();
     }
