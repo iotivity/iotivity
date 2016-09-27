@@ -6196,6 +6196,15 @@ void OCDefaultAdapterStateChangedHandler(CATransportAdapter_t adapter, bool enab
     {
         g_adapterHandler(adapter, enabled);
     }
+
+#ifdef WITH_PRESENCE
+    if (presenceResource.handle)
+    {
+        OCResource *resourceHandle = (OCResource *)presenceResource.handle;
+        resourceHandle->sequenceNum = OCGetRandom();
+        SendPresenceNotification(resourceHandle->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
+    }
+#endif
 }
 
 void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, bool isConnected)
@@ -6205,6 +6214,15 @@ void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, bool isCon
     {
        g_connectionHandler(info, isConnected);
     }
+
+#ifdef WITH_PRESENCE
+    if (presenceResource.handle)
+    {
+        OCResource *resourceHandle = (OCResource *)presenceResource.handle;
+        resourceHandle->sequenceNum = OCGetRandom();
+        SendPresenceNotification(resourceHandle->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
+    }
+#endif
 
     /*
      * If the client observes one or more resources over a reliable connection,
