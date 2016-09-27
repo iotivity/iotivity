@@ -232,19 +232,15 @@ TEST_F(NotificationProviderTest, NeverCallNotifyOnConsumerByAcceptIsFalse)
     msg->title = g_title;
     msg->contentText = g_body;
     msg->sourceName = g_sourceName;
-
     NSSendMessage(msg);
-    {
-        std::unique_lock< std::mutex > lock{ mutexForCondition };
-        responseCon.wait_for(lock, g_waitForResponse);
-    }
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, std::chrono::milliseconds(1000));
+    responseCon.wait_for(lock, g_waitForResponse);
 
     EXPECT_EQ(expectTrue, true);
 
     NSAcceptSubscription(g_consumerID, true);
+    responseCon.wait_for(lock, std::chrono::milliseconds(1000));
 }
 
 TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
@@ -259,8 +255,6 @@ TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
                     responseCon.notify_all();
                 }
             });
-
-    NSAcceptSubscription(g_consumerID, true);
 
     NSMessage * msg = NSCreateMessage();
     msgID = (int)msg->messageId;
@@ -294,7 +288,7 @@ TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadToConsumer)
 
     NSProviderSendSyncInfo(msg->messageId, NS_SYNC_READ);
     std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, std::chrono::milliseconds(5000));
+    responseCon.wait(lock);
 }
 
 TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadFromConsumer)
@@ -318,9 +312,7 @@ TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadFromConsumer)
 
     g_consumerSimul.syncToProvider(type, id, msg->providerId);
     std::unique_lock< std::mutex > lock{ mutexForCondition };
-
     responseCon.wait(lock);
-    //responseCon.wait_for(lock, std::chrono::milliseconds(3000));
 }
 
 TEST_F(NotificationProviderTest, ExpectEqualAddedTopicsAndRegisteredTopics)
@@ -329,9 +321,6 @@ TEST_F(NotificationProviderTest, ExpectEqualAddedTopicsAndRegisteredTopics)
     std::string str2("TEST2");
     NSProviderRegisterTopic(str.c_str());
     NSProviderRegisterTopic(str2.c_str());
-
-    std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, std::chrono::milliseconds(500));
 
     bool isSame = true;
     NSTopicLL * topics = NSProviderGetTopics();
@@ -352,12 +341,9 @@ TEST_F(NotificationProviderTest, ExpectEqualAddedTopicsAndRegisteredTopics)
         }
     }
 
-    EXPECT_EQ(isSame, true);
-
     NSProviderUnregisterTopic(str.c_str());
     NSProviderUnregisterTopic(str2.c_str());
-
-    responseCon.wait_for(lock, std::chrono::milliseconds(500));
+    EXPECT_EQ(isSame, true);
 }
 
 TEST_F(NotificationProviderTest, ExpectEqualUnregisteredTopicsAndRegisteredTopics)
@@ -367,9 +353,6 @@ TEST_F(NotificationProviderTest, ExpectEqualUnregisteredTopicsAndRegisteredTopic
     NSProviderRegisterTopic(str.c_str());
     NSProviderRegisterTopic(str2.c_str());
     NSProviderUnregisterTopic(str2.c_str());
-
-    std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, std::chrono::milliseconds(500));
 
     bool isSame = true;
     NSTopicLL * topics = NSProviderGetTopics();
@@ -389,11 +372,8 @@ TEST_F(NotificationProviderTest, ExpectEqualUnregisteredTopicsAndRegisteredTopic
         }
     }
 
-    EXPECT_EQ(isSame, true);
-
     NSProviderUnregisterTopic(str.c_str());
-
-    responseCon.wait_for(lock, std::chrono::milliseconds(500));
+    EXPECT_EQ(isSame, true);
 }
 
 TEST_F(NotificationProviderTest, ExpectEqualSetConsumerTopicsAndGetConsumerTopics)
@@ -426,12 +406,9 @@ TEST_F(NotificationProviderTest, ExpectEqualSetConsumerTopicsAndGetConsumerTopic
         }
     }
 
-    EXPECT_EQ(isSame, true);
-
     NSProviderUnregisterTopic(str.c_str());
     NSProviderUnregisterTopic(str2.c_str());
-
-    responseCon.wait_for(lock, std::chrono::milliseconds(500));
+    EXPECT_EQ(isSame, true);
 }
 
 TEST_F(NotificationProviderTest, ExpectEqualUnSetConsumerTopicsAndGetConsumerTopics)
@@ -466,12 +443,9 @@ TEST_F(NotificationProviderTest, ExpectEqualUnSetConsumerTopicsAndGetConsumerTop
         }
     }
 
-    EXPECT_EQ(isSame, true);
-
     NSProviderUnregisterTopic(str.c_str());
     NSProviderUnregisterTopic(str2.c_str());
-
-    responseCon.wait_for(lock, std::chrono::milliseconds(500));
+    EXPECT_EQ(isSame, true);
 }
 
 TEST_F(NotificationProviderTest, ExpectFailAcceptSubscription)
@@ -561,7 +535,7 @@ TEST_F(NotificationProviderTest, CancelObserves)
     bool ret = g_consumerSimul.cancelObserves();
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, std::chrono::milliseconds(5000));
+    responseCon.wait_for(lock, std::chrono::milliseconds(3000));
 
     EXPECT_EQ(ret, true);
 }

@@ -171,7 +171,7 @@ private:
         }
         else if (rep.getUri() == "/notification/sync")
         {
-            m_syncFunc(int(rep.getValue<int>("STATE")), int(rep.getValue<int>("ID")));
+            m_syncFunc(int(rep.getValue<int>("STATE")), int(rep.getValue<int>("MESSAGE_ID")));
         }
     }
 

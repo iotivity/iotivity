@@ -433,19 +433,26 @@ void * NSTopicSchedule(void * ptr)
                 case TASK_REGISTER_TOPIC:
                 {
                     NS_LOG(DEBUG, "CASE TASK_ADD_TOPIC : ");
-                    NSTopicSyncResult * topicData =
+                    NSTopicSyncResult * topicSyncResult =
                             (NSTopicSyncResult *) node->taskData;
-                    topicData->result = NSRegisterTopic((const char *) topicData->topicName);
-                    pthread_cond_signal(&topicData->condition);
+
+                    pthread_mutex_lock(topicSyncResult->mutex);
+                    topicSyncResult->result =
+                            NSRegisterTopic((const char *) topicSyncResult->topicName);
+                    pthread_cond_signal(topicSyncResult->condition);
+                    pthread_mutex_unlock(topicSyncResult->mutex);
                 }
                     break;
                 case TASK_UNREGISTER_TOPIC:
                 {
                     NS_LOG(DEBUG, "CASE_TASK_DELETE_TOPIC : ");
-                    NSTopicSyncResult * topicData =
+                    NSTopicSyncResult * topicSyncResult =
                             (NSTopicSyncResult *) node->taskData;
-                    topicData->result = NSUnregisterTopic((const char *) topicData->topicName);
-                    pthread_cond_signal(&topicData->condition);
+                    pthread_mutex_lock(topicSyncResult->mutex);
+                    topicSyncResult->result =
+                            NSUnregisterTopic((const char *) topicSyncResult->topicName);
+                    pthread_cond_signal(topicSyncResult->condition);
+                    pthread_mutex_unlock(topicSyncResult->mutex);
                 }
                     break;
                 case TASK_POST_TOPIC:
@@ -458,20 +465,24 @@ void * NSTopicSchedule(void * ptr)
                 case TASK_GET_TOPICS:
                 {
                     NS_LOG(DEBUG, "TASK_GET_TOPICS : ");
-                    NSTopicSync * topicData = (NSTopicSync *) node->taskData;
+                    NSTopicSync * topicSync = (NSTopicSync *) node->taskData;
+                    pthread_mutex_lock(topicSync->mutex);
                     NSTopicLL * topics = NSProviderGetTopicsCacheData(registeredTopicList);
-                    topicData->topics = topics;
-                    pthread_cond_signal(&topicData->condition);
+                    topicSync->topics = topics;
+                    pthread_cond_signal(topicSync->condition);
+                    pthread_mutex_unlock(topicSync->mutex);
                 }
                     break;
                 case TAST_GET_CONSUMER_TOPICS:
                 {
                     NS_LOG(DEBUG, "TASK_GET_CONSUMER_TOPICS : ");
-                    NSTopicSync * topicData = (NSTopicSync *) node->taskData;
+                    NSTopicSync * topicSync = (NSTopicSync *) node->taskData;
+                    pthread_mutex_lock(topicSync->mutex);
                     NSTopicLL * topics = NSProviderGetConsumerTopicsCacheData(registeredTopicList,
-                                consumerTopicList, topicData->consumerId);
-                    topicData->topics = topics;
-                    pthread_cond_signal(&topicData->condition);
+                                consumerTopicList, topicSync->consumerId);
+                    topicSync->topics = topics;
+                    pthread_cond_signal(topicSync->condition);
+                    pthread_mutex_unlock(topicSync->mutex);
                 }
                     break;
                 default:
