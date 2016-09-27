@@ -448,7 +448,7 @@ void CAStartTimerThread(void *data)
         }
 
         // Timed conditional wait for stopping the scan.
-        CAWaitResult_t ret = oc_cond_wait_for(g_scanningTimeCond, g_multicastDataListMutex,
+        OCWaitResult_t ret = oc_cond_wait_for(g_scanningTimeCond, g_multicastDataListMutex,
                                               TIMEOUT);
         if (OC_WAIT_TIMEDOUT == ret)
         {
