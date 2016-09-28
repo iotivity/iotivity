@@ -307,7 +307,7 @@ static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uin
     if (CAIsSupportedBlockwiseTransfer(endpoint->adapter))
     {
         res = CARemoveBlockDataFromListWithSeed(resInfo->info.token, resInfo->info.tokenLength,
-                                                endpoint->port);
+                                                endpoint->addr, endpoint->port);
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "CARemoveBlockDataFromListWithSeed failed");
