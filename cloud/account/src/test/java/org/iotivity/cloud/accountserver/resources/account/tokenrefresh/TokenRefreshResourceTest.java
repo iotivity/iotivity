@@ -9,6 +9,7 @@ import java.util.HashMap;
 
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
+import org.iotivity.cloud.accountserver.db.MongoDB;
 import org.iotivity.cloud.accountserver.db.TokenTable;
 import org.iotivity.cloud.accountserver.db.UserTable;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
@@ -20,6 +21,7 @@ import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.util.Cbor;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -58,6 +60,14 @@ public class TokenRefreshResourceTest {
                 return resp;
             }
         }).when(mockDevice).sendResponse(Mockito.anyObject());
+    }
+
+    @After
+    public void resetAccountDatabase() throws Exception {
+        MongoDB mongoDB = new MongoDB(Constants.DB_NAME);
+        mongoDB.createTable(Constants.USER_TABLE);
+        mongoDB.createTable(Constants.TOKEN_TABLE);
+        mongoDB.createTable(Constants.GROUP_TABLE);
     }
 
     @Test(expected = ServerException.NotFoundException.class)
