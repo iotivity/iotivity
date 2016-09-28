@@ -729,13 +729,12 @@ NSTopicLL * NSGetTopicLL(OCClientResponse * clientResponse)
     NS_VERIFY_NOT_NULL(clientResponse->payload, NULL);
 
     OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
-    while (payload)
+    OCRepPayloadValue * value = payload->values;
+    while (value)
     {
-        NS_LOG_V(DEBUG, "Payload Key : %s", payload->values->name);
-        payload = payload->next;
+        NS_LOG_V(DEBUG, "Payload Key : %s", value->name);
+        value = value->next;
     }
-
-    payload = (OCRepPayload *)clientResponse->payload;
 
     char * consumerId = NULL;
     OCRepPayload ** topicLLPayload = NULL;

@@ -400,7 +400,7 @@ public:
         OC::OCPlatform::startPresence(30);
 
         std::string notificationUri = m_notificationUri;
-        std::string resourceTypeName = "oic.wk.notificaion.topic";
+        std::string resourceTypeName = "oic.wk.notification.topic";
         std::string resourceInterface = OC::DEFAULT_INTERFACE;
 
         uint8_t resourceProperty = OC_OBSERVABLE;

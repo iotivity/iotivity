@@ -192,18 +192,17 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     OCRepPayloadPropType accepterType = OCREP_PROP_BOOL;
 
     OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
-    while (payload)
+    OCRepPayloadValue * value = payload->values;
+    while (value)
     {
-        NS_LOG_V(DEBUG, "Payload Key : %s", payload->values->name);
-        NS_LOG_V(DEBUG, "Payload Type : %d", (int) payload->values->type);
-        if (!strcmp(payload->values->name, NS_ATTRIBUTE_POLICY))
+        NS_LOG_V(DEBUG, "Payload Key : %s", value->name);
+        NS_LOG_V(DEBUG, "Payload Type : %d", (int) value->type);
+        if (!strcmp(value->name, NS_ATTRIBUTE_POLICY))
         {
-            accepterType = payload->values->type;
+            accepterType = value->type;
         }
-        payload = payload->next;
+        value = value->next;
     }
-
-    payload = (OCRepPayload *)clientResponse->payload;
 
     char * providerId = NULL;
     char * messageUri = NULL;
