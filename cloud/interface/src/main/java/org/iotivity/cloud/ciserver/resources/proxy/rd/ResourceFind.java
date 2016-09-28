@@ -40,6 +40,13 @@ import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.util.Cbor;
 
+/**
+ *
+ * This class provides a set of APIs to send requests about find resource to
+ * resource directory
+ *
+ */
+
 public class ResourceFind extends Resource {
     IRequestChannel                       mASServer = null;
     private Cbor<HashMap<String, Object>> mCbor     = new Cbor<>();
