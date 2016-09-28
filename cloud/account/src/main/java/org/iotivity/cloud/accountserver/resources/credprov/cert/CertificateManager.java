@@ -31,17 +31,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.iotivity.cloud.accountserver.Constants.CERTIFICATE_TABLE;
-import static org.iotivity.cloud.accountserver.Constants.KEYFIELD_DID;
-import static org.iotivity.cloud.accountserver.Constants.KEYFIELD_REVOKED;
+import static org.iotivity.cloud.accountserver.Constants.*;
 import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.ACCOUNT_DB_MANAGER;
 
 
 /**
  * This class is used as DB manager for CertificateTable.
  * With help of this class we can save certificate info to DB,
- * retrieve it from DB by specified in constructor device id,
- * updateX509CRL certificate, also it helps us get user Id from Token
+ * retrieve it from DB by specified device id,
+ * update X509 certificate, also it helps us to get user Id from Token
  * Table by specified device id.
  */
 final class CertificateManager {
@@ -63,7 +61,9 @@ final class CertificateManager {
     private final String deviceId;
 
     /**
-     * Constructs certificateMananger with specified device id.
+     * Constructs certificateMananger with specified device id. Initialize payload
+     * as new hash map instance.
+     *
      * @param deviceId specified device identifier for this CertificateManager.
      */
     CertificateManager(String deviceId) {
@@ -79,33 +79,34 @@ final class CertificateManager {
     }
 
     /**
-     * Puts for specified key, specified value to
-     * object payload;
-     * @param key specified key value
-     * @param value specified value
+     * Puts specified value for specified key to payload;
+     *
+     * @param key   specified String key value
+     * @param value specified Object value
      */
     public void put(String key, Object value) {
         payLoad.put(key, value);
     }
 
     /**
-     * Saves new certificate to DB with specified columns.
+     * Saves certificate information: serial number, not after, to DB with specified columns.
      *
      * @param serialNumber specified certificate serial number
-     * @param notAfter validation date not after
-     * @param notBefore validation date not before
+     * @param notAfter     validation date not after
+     * @param notBefore    validation date not before
      */
     void save(BigInteger serialNumber, Date notAfter, Date notBefore) {
         ACCOUNT_DB_MANAGER.insertRecord(CERTIFICATE_TABLE,
                 CERTIFICATE_TABLE_TYPE_CASTING_MANAGER.convertObjectToMap(
                         new CertificateTable(serialNumber.toString(), notAfter,
-                        notBefore, deviceId, Utility.getUserID(deviceId), false)));
+                                notBefore, deviceId, Utility.getUserID(deviceId), false)));
     }
 
     /**
-     * Updates certificate table with specified revoked column.
+     * Updates certificate table by revoked column.
+     *
      * @param certificateTable certificate to be updated.
-     * @param revoked specified value for revoke
+     * @param revoked          specified value for revoke
      */
     void update(CertificateTable certificateTable, boolean revoked) {
         certificateTable.setRevoked(revoked);
@@ -114,8 +115,8 @@ final class CertificateManager {
     }
 
     /**
-     * Returns certificate from database, according to specified
-     * device id
+     * Returns certificate from database for specified in constructor
+     * device id.
      */
     public CertificateTable getCertificate() {
         HashMap<String, Object> condition = new HashMap<>();
@@ -123,7 +124,7 @@ final class CertificateManager {
         condition.put(KEYFIELD_REVOKED, false);
         List<HashMap<String, Object>> listMap = ACCOUNT_DB_MANAGER.selectRecord(
                 CERTIFICATE_TABLE, condition);
-        if (!listMap.isEmpty()) {
+        if (listMap != null && !listMap.isEmpty()) {
             return CERTIFICATE_TABLE_TYPE_CASTING_MANAGER
                     .convertMaptoObject(
                             listMap.get(0),

@@ -40,55 +40,80 @@ import static org.iotivity.cloud.accountserver.resources.credprov.cert.Certifica
 import static org.iotivity.cloud.accountserver.x509.crl.CrlIssuer.CRL_ISSUER;
 
 /**
- * Class is used for managing CRLs(creation, revoke, update)
+ * Class is used to manage CRLs. It helps to create,
+ * update CRLS, revoke certificates.
  */
 public final class CrlManager {
 
     /**
-     * Static manager for CRLs.
-     */
-    public static CrlManager CRL_MANAGER;
-    /**
      * Casting manager for working with CRLTable in mongo db
      */
     private static TypeCastingManager<CRLTable> castingManager = new TypeCastingManager<>();
-
-    static {
-        try {
-            CRL_MANAGER = new CrlManager();
-            CRL_MANAGER.init();
-        } catch (CRLException | IOException | OperatorCreationException e) {
-            Log.e(e.getMessage());
-        }
-    }
 
     /**
      * X509 CRL presentation.
      */
     private X509CRL x509CRL;
 
-    private CrlManager() {
-    }
+    /**
+     * Static manager for CRLs.
+     */
+    public static final CrlManager CRL_MANAGER = new CrlManager();
 
     /**
-     * Revokes specified serial numbers.
-     *
-     * @param serialNumber specified var args serial numbers from 0.
+     * Private constructor to make this class non-instantiable.
      */
-    public void revoke(String... serialNumber) throws CRLException, IOException, OperatorCreationException {
-        if (x509CRL != null) {
-            update(x509CRL.getThisUpdate(),
-                    CRL_ISSUER.generate(x509CRL.getThisUpdate(), x509CRL.getNextUpdate(),
-                            x509CRL.getRevokedCertificates(), serialNumber));
+    private CrlManager() {
+        try {
+            Calendar calendar = Calendar.getInstance();
+            Date thisUpdate = calendar.getTime();
+            calendar.add(Calendar.DAY_OF_MONTH,
+                    Integer.parseInt(NEXT_UPDATE_INTERVAL));
+            byte[] data = CRL_ISSUER.generate(thisUpdate, calendar.getTime(), Collections.emptyList());
+            ACCOUNT_DB_MANAGER.insertRecord(Constants.CRL_TABLE,
+                    castingManager.convertObjectToMap(new CRLTable(thisUpdate, new Binary(data))));
+            setX509CRL(data);
+        } catch (CRLException | IOException | OperatorCreationException e) {
+            Log.e(e.getMessage());
         }
     }
 
     /**
-     * Check if last update is before CRL this update.
+     * Revokes specified serial numbers. Puts them to database.
+     *
+     * @param serialNumbers specified var args serial numbers from 0.
+     */
+    public void revoke(String... serialNumbers) throws CRLException, IOException, OperatorCreationException {
+        if (x509CRL != null) {
+            update(x509CRL.getThisUpdate(),
+                    CRL_ISSUER.generate(x509CRL.getThisUpdate(), x509CRL.getNextUpdate(),
+                            x509CRL.getRevokedCertificates(), serialNumbers));
+        }
+    }
+
+    /**
+     * Checks last update less than crl this update and returns response payload,
+     * including this update, next update, and CRL in DER encoding.
+     */
+    Map<String, Object> getPayload(String lastUpdate) throws ServerException.PreconditionFailedException, CRLException {
+        if (checkLastUpdate(lastUpdate) && x509CRL != null) {
+            Map<String, Object> responsePayload = new HashMap<>();
+            responsePayload.put(Constants.REQ_THIS_UPDATE, DATE_FORMAT.format(x509CRL.getThisUpdate()));
+            responsePayload.put(Constants.REQ_NEXT_UPDATE, DATE_FORMAT.format(x509CRL.getNextUpdate()));
+            responsePayload.put(Constants.REQ_CRL, new CRL(DER, x509CRL.getEncoded()));
+            return responsePayload;
+        }
+        return Collections.emptyMap();
+    }
+
+
+    /**
+     * Checks if last update is before CRL this update.
+     *
      * @param lastUpdate specified last update;
      * @return true if before and false - otherwise.
      */
-    boolean checkLastUpdate(String lastUpdate) {
+    private boolean checkLastUpdate(String lastUpdate) {
         boolean checkCondition = false;
         try {
             if (x509CRL != null) {
@@ -100,44 +125,20 @@ public final class CrlManager {
         return checkCondition;
     }
 
-    /**
-     * Returns response payload, including this update, next update, and CRL in DER encoding.
-     */
-    Map<String, Object> getPayload() throws ServerException.PreconditionFailedException, CRLException {
-        if (x509CRL != null) {
-            Map<String, Object> responsePayload = new HashMap<>();
-            responsePayload.put(Constants.REQ_THIS_UPDATE, DATE_FORMAT.format(x509CRL.getThisUpdate()));
-            responsePayload.put(Constants.REQ_NEXT_UPDATE, DATE_FORMAT.format(x509CRL.getNextUpdate()));
-            responsePayload.put(Constants.REQ_CRL, new CRL(DER, x509CRL.getEncoded()));
-            return responsePayload;
-        }
-        return Collections.emptyMap();
-    }
 
     /**
      * Updates CRLTable with specified this update and binary CRL data.
      */
     void update(Date thisUpdate, byte[] data) throws CRLException {
-        CRLTable crlTable = castingManager.convertMaptoObject(
-                ACCOUNT_DB_MANAGER.selectRecord(Constants.CRL_TABLE, new HashMap<>()).get(0), new CRLTable());
-        crlTable.setThisUpdate(thisUpdate);
-        crlTable.setBinaryData(new Binary(data));
-        ACCOUNT_DB_MANAGER.updateRecord(Constants.CRL_TABLE, castingManager.convertObjectToMap(crlTable));
-        setX509CRL(data);
-    }
-
-    /**
-     * Create CRL with default options;
-     */
-    private void init() throws CRLException, IOException, OperatorCreationException {
-        Calendar calendar = Calendar.getInstance();
-        Date thisUpdate = calendar.getTime();
-        calendar.add(Calendar.DAY_OF_MONTH,
-                Integer.parseInt(NEXT_UPDATE_INTERVAL));
-        byte[] data = CRL_ISSUER.generate(thisUpdate, calendar.getTime(), Collections.emptyList());
-        ACCOUNT_DB_MANAGER.insertRecord(Constants.CRL_TABLE,
-                castingManager.convertObjectToMap(new CRLTable(thisUpdate, new Binary(data))));
-        setX509CRL(data);
+        ArrayList<HashMap<String, Object>> crlList = ACCOUNT_DB_MANAGER.selectRecord(Constants.CRL_TABLE,
+                new HashMap<>());
+        if (crlList != null && !crlList.isEmpty()) {
+            CRLTable crlTable = castingManager.convertMaptoObject(crlList.get(0), new CRLTable());
+            crlTable.setThisUpdate(thisUpdate);
+            crlTable.setBinaryData(new Binary(data));
+            ACCOUNT_DB_MANAGER.updateRecord(Constants.CRL_TABLE, castingManager.convertObjectToMap(crlTable));
+            setX509CRL(data);
+        }
     }
 
     /**
@@ -148,7 +149,7 @@ public final class CrlManager {
     }
 
     /**
-     * Static inner class for CBOR Crl presentation.
+     * Utility class for CBOR Crl presentation.
      */
     private static final class CRL {
 
@@ -156,7 +157,7 @@ public final class CrlManager {
 
         private final byte[] data;
 
-        public CRL(String encoding, byte[] data) {
+        CRL(String encoding, byte[] data) {
             this.encoding = encoding;
             this.data = data;
         }
@@ -169,5 +170,4 @@ public final class CrlManager {
             return data;
         }
     }
-
 }
