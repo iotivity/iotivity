@@ -568,7 +568,7 @@ namespace OIC
             if (hasError)
             {
                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Error in Cert. provisioning operation!");
-               aclResult = false;
+               certResult = false;
             }
             else
             {
