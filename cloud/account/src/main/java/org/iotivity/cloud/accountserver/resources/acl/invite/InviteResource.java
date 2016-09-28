@@ -39,6 +39,11 @@ import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.util.Cbor;
 
+/**
+ * 
+ * This class provides a set of APIs to handle requests to Invite resource.
+ *
+ */
 public class InviteResource extends Resource {
 
     private InviteManager                 mInviteManager = new InviteManager();
