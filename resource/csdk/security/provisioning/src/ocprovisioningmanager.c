@@ -332,20 +332,18 @@ static OCStackResult RemoveDeviceInfoFromLocal(const OCProvisionDev_t* pTargetDe
     // Remove credential of revoked device from SVR database
     OCStackResult res = OC_STACK_ERROR;
     const OicSecCred_t *cred = NULL;
+
+    OIC_LOG(DEBUG, TAG, "IN RemoveDeviceInfoFromLocal");
     cred = GetCredResourceData(&pTargetDev->doxm->deviceID);
-    if (cred == NULL)
+    if (NULL != cred)
     {
-        OIC_LOG(ERROR, TAG, "RemoveDeviceInfoFromLocal : Failed to get credential of remove device.");
-        goto error;
+        res = RemoveCredential(&cred->subject);
+        if (res != OC_STACK_RESOURCE_DELETED)
+        {
+            OIC_LOG(ERROR, TAG, "RemoveDeviceInfoFromLocal : Failed to remove credential.");
+            goto error;
+        }
     }
-
-    res = RemoveCredential(&cred->subject);
-    if (res != OC_STACK_RESOURCE_DELETED)
-    {
-        OIC_LOG(ERROR, TAG, "RemoveDeviceInfoFromLocal : Failed to remove credential.");
-        goto error;
-    }
-
     /**
      * Change the device status as stale status.
      * If all request are successed, this device information will be deleted.
@@ -353,8 +351,7 @@ static OCStackResult RemoveDeviceInfoFromLocal(const OCProvisionDev_t* pTargetDe
     res = PDMSetDeviceStale(&pTargetDev->doxm->deviceID);
     if (res != OC_STACK_OK)
     {
-        OIC_LOG(ERROR, TAG, "OCRemoveDevice : Failed to set device status as stale");
-        goto error;
+        OIC_LOG(WARNING, TAG, "OCRemoveDevice : Failed to set device status as stale");
     }
 
     // TODO: We need to add new mechanism to clean up the stale state of the device.
@@ -368,6 +365,7 @@ static OCStackResult RemoveDeviceInfoFromLocal(const OCProvisionDev_t* pTargetDe
         OIC_LOG_V(WARNING, TAG, "OCRemoveDevice : Failed to close DTLS session : %d", caResult);
     }
 
+    OIC_LOG(DEBUG, TAG, "OUT RemoveDeviceInfoFromLocal");
 error:
     return res;
 }
