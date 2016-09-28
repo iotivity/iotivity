@@ -697,13 +697,12 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
     CertData_t *certData = (CertData_t *) OICCalloc(1, sizeof(CertData_t));
     if (NULL == certData)
     {
-        OICFree(trustCertChainCred);
         OIC_LOG(ERROR, TAG, "Memory allocation problem");
         return OC_STACK_NO_MEMORY;
     }
     certData->deviceInfo = selectedDeviceInfo;
     certData->resultCallback = resultCallback;
-    certData->credInfo = trustCertChainCred;
+    certData->credInfo = NULL; //credInfo not used in the response handler
     certData->numOfResults=0;
     certData->ctx = ctx;
 
@@ -711,7 +710,6 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
     certData->resArr = (OCProvisionResult_t*)OICCalloc(noOfRiCalls, sizeof(OCProvisionResult_t));
     if (certData->resArr == NULL)
     {
-        DeleteCredList(trustCertChainCred);
         OICFree(certData);
         OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Unable to allocate memory");
@@ -730,7 +728,6 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
         OICFree(certData->resArr);
         OICFree(certData);
     }
-    DeleteCredList(trustCertChainCred);
 
     VERIFY_SUCCESS(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
     return OC_STACK_OK;
