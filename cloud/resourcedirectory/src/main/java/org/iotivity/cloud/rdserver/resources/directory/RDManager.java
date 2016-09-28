@@ -206,6 +206,10 @@ public class RDManager {
 
         ArrayList<Object> response = new ArrayList<>();
 
+        if (diList == null) {
+            return response;
+        }
+
         if (rtList == null && ifList == null) {
             readResource(diList, condition, response);
         }

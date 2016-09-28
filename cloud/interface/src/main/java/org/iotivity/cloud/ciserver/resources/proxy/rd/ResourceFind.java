@@ -90,17 +90,12 @@ public class ResourceFind extends Resource {
                     } else {
                         String additionalQuery = makeAdditionalQuery(
                                 payloadData, mSrcDevice.getDeviceId());
-                        if (additionalQuery == null) {
-                            mSrcDevice.sendResponse(
-                                    MessageBuilder.createResponse(mRequest,
-                                            ResponseStatus.BAD_REQUEST));
-                            return;
-                        }
+
                         mRequest = MessageBuilder.modifyRequest(mRequest, null,
-                                additionalQuery
-                                        + (mRequest.getUriQuery() != null
-                                                ? ";" + mRequest.getUriQuery()
-                                                : ""),
+                                (mRequest.getUriQuery() != null
+                                        ? mRequest.getUriQuery() : "")
+                                        + (additionalQuery == null ? ""
+                                                : ";" + additionalQuery),
                                 null, null);
                     }
 
@@ -118,6 +113,10 @@ public class ResourceFind extends Resource {
             StringBuilder additionalQuery = new StringBuilder();
 
             List<String> deviceList = getResponseDeviceList(payloadData);
+
+            if (deviceList == null) {
+                return null;
+            }
 
             if (deviceList.isEmpty()) {
                 return null;
