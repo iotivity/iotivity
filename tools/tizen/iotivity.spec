@@ -9,6 +9,10 @@ Source0: %{name}-%{version}.tar.bz2
 Source1001: %{name}.manifest
 Source1002: %{name}-test.manifest
 
+%if "%{tizen}" == "2.3"
+%define TARGET_TRANSPORT IP
+%endif
+
 %if "%{profile}" == "ivi"
 %define TARGET_TRANSPORT IP
 %endif
