@@ -121,6 +121,14 @@ public class GroupResourceTest {
         mongoDB.createTable(Constants.ACE_TABLE);
     }
 
+    @After
+    public void resetAccountDatabase() throws Exception {
+        MongoDB mongoDB = new MongoDB(Constants.DB_NAME);
+        mongoDB.createTable(Constants.USER_TABLE);
+        mongoDB.createTable(Constants.TOKEN_TABLE);
+        mongoDB.createTable(Constants.GROUP_TABLE);
+    }
+
     @Test
     public void testCreateGroup() throws Exception {
         getTestMethodName();
