@@ -25,6 +25,7 @@ NSResult NSInitSubscriptionList()
     NS_LOG(DEBUG, "NSInitSubscriptionList - IN");
 
     consumerSubList = NSStorageCreate();
+    NS_VERIFY_NOT_NULL(consumerSubList, NS_FAIL);
     consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER;
 
     NS_LOG(DEBUG, "NSInitSubscriptionList - OUT");

@@ -114,6 +114,7 @@ NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
     }
 
     newMsg = NSInitializeMessage();
+    NS_VERIFY_NOT_NULL(newMsg, NULL);
 
     newMsg->messageId = copyMsg->messageId;
     OICStrcpy(newMsg->providerId, UUID_STRING_SIZE, copyMsg->providerId);

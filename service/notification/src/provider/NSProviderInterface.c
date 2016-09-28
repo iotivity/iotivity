@@ -219,14 +219,15 @@ NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type)
     NS_LOG(DEBUG, "NSProviderReadCheck - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if (!initProvider)
+    NSSyncInfo * syncInfo = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
+
+    if (!initProvider || !syncInfo)
     {
         NS_LOG(ERROR, "Provider is not started");
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
 
-    NSSyncInfo * syncInfo = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
     OICStrcpy(syncInfo->providerId, UUID_STRING_SIZE, NSGetProviderInfo()->providerId);
     syncInfo->messageId = messageId;
     syncInfo->state = type;
@@ -401,8 +402,11 @@ NSResult NSProviderSetConsumerTopic(const char * consumerId, const char * topicN
     NS_LOG(DEBUG, "NSProviderSelectTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
+    NSCacheTopicSubData * topicSubData =
+            (NSCacheTopicSubData *) OICMalloc(sizeof(NSCacheTopicSubData));
+
     if(!initProvider || !consumerId || consumerId[0] == '\0' || !topicName || topicName[0] == '\0'
-            || !NSGetPolicy())
+            || !NSGetPolicy() || !topicSubData)
     {
         NS_LOG(DEBUG, "provider is not started or "
                 "consumer id should be set for topic subscription or "
@@ -410,9 +414,6 @@ NSResult NSProviderSetConsumerTopic(const char * consumerId, const char * topicN
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
-
-    NSCacheTopicSubData * topicSubData =
-            (NSCacheTopicSubData *) OICMalloc(sizeof(NSCacheTopicSubData));
 
     OICStrcpy(topicSubData->id, NS_UUID_STRING_SIZE, consumerId);
     topicSubData->topicName = OICStrdup(topicName);
@@ -429,8 +430,11 @@ NSResult NSProviderUnsetConsumerTopic(const char * consumerId, const char * topi
     NS_LOG(DEBUG, "NSProviderUnselectTopics - IN");
     pthread_mutex_lock(&nsInitMutex);
 
+    NSCacheTopicSubData * topicSubData =
+            (NSCacheTopicSubData *) OICMalloc(sizeof(NSCacheTopicSubData));
+
     if(!initProvider || !consumerId || consumerId[0] == '\0' || !topicName || topicName[0] == '\0'
-            || !NSGetPolicy())
+            || !NSGetPolicy() || !topicSubData)
     {
         NS_LOG(DEBUG, "provider is not started or "
                 "consumer id should be set for topic subscription or "
@@ -438,9 +442,6 @@ NSResult NSProviderUnsetConsumerTopic(const char * consumerId, const char * topi
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
-
-    NSCacheTopicSubData * topicSubData =
-            (NSCacheTopicSubData *) OICMalloc(sizeof(NSCacheTopicSubData));
 
     OICStrcpy(topicSubData->id, NS_UUID_STRING_SIZE, consumerId);
     topicSubData->topicName = OICStrdup(topicName);

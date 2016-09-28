@@ -491,6 +491,11 @@ NSTopicLL * NSProviderGetTopicsCacheData(NSCacheList * regTopicList)
     {
         NSCacheTopicData * curr = (NSCacheTopicData *) iter->data;
         newTopic = (NSTopicLL *) OICMalloc(sizeof(NSTopicLL));
+        if(!newTopic)
+        {
+            pthread_mutex_unlock(&NSCacheMutex);
+            return NULL;
+        }
 
         newTopic->state = curr->state;
         newTopic->next = NULL;

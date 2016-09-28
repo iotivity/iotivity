@@ -228,19 +228,26 @@ TEST_F(NotificationProviderTest, NeverCallNotifyOnConsumerByAcceptIsFalse)
     NSAcceptSubscription(g_consumerID, false);
 
     NSMessage * msg = NSCreateMessage();
-    msgID = (int)msg->messageId;
-    msg->title = g_title;
-    msg->contentText = g_body;
-    msg->sourceName = g_sourceName;
-    NSSendMessage(msg);
+    if(msg)
+    {
+        msgID = (int)msg->messageId;
+        msg->title = g_title;
+        msg->contentText = g_body;
+        msg->sourceName = g_sourceName;
+        NSSendMessage(msg);
 
-    std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, g_waitForResponse);
+        std::unique_lock< std::mutex > lock{ mutexForCondition };
+        responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_EQ(expectTrue, true);
+        EXPECT_EQ(expectTrue, true);
 
-    NSAcceptSubscription(g_consumerID, true);
-    responseCon.wait_for(lock, std::chrono::milliseconds(1000));
+        NSAcceptSubscription(g_consumerID, true);
+        responseCon.wait_for(lock, std::chrono::milliseconds(1000));
+    }
+    else
+    {
+        EXPECT_EQ(expectTrue, false);
+    }
 }
 
 TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
@@ -257,14 +264,17 @@ TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
             });
 
     NSMessage * msg = NSCreateMessage();
-    msgID = (int)msg->messageId;
-    msg->title = g_title;
-    msg->contentText = g_body;
-    msg->sourceName = g_sourceName;
-    NSSendMessage(msg);
+    if(msg)
+    {
+        msgID = (int)msg->messageId;
+        msg->title = g_title;
+        msg->contentText = g_body;
+        msg->sourceName = g_sourceName;
+        NSSendMessage(msg);
 
-    std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait(lock);
+        std::unique_lock< std::mutex > lock{ mutexForCondition };
+        responseCon.wait(lock);
+    }
 }
 
 TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadToConsumer)
@@ -281,14 +291,17 @@ TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadToConsumer)
             });
 
     NSMessage * msg = NSCreateMessage();
-    id = (int)msg->messageId;
-    msg->title = g_title;
-    msg->contentText = g_body;
-    msg->sourceName = g_sourceName;
+    if(msg)
+    {
+        id = (int)msg->messageId;
+        msg->title = g_title;
+        msg->contentText = g_body;
+        msg->sourceName = g_sourceName;
 
-    NSProviderSendSyncInfo(msg->messageId, NS_SYNC_READ);
-    std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait(lock);
+        NSProviderSendSyncInfo(msg->messageId, NS_SYNC_READ);
+        std::unique_lock< std::mutex > lock{ mutexForCondition };
+        responseCon.wait(lock);
+    }
 }
 
 TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadFromConsumer)
@@ -305,14 +318,17 @@ TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadFromConsumer)
             });
 
     NSMessage * msg = NSCreateMessage();
-    id = (int)msg->messageId;
-    msg->title = g_title;
-    msg->contentText = g_body;
-    msg->sourceName = g_sourceName;
+    if(msg)
+    {
+        id = (int)msg->messageId;
+        msg->title = g_title;
+        msg->contentText = g_body;
+        msg->sourceName = g_sourceName;
 
-    g_consumerSimul.syncToProvider(type, id, msg->providerId);
-    std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait(lock);
+        g_consumerSimul.syncToProvider(type, id, msg->providerId);
+        std::unique_lock< std::mutex > lock{ mutexForCondition };
+        responseCon.wait(lock);
+    }
 }
 
 TEST_F(NotificationProviderTest, ExpectEqualAddedTopicsAndRegisteredTopics)
