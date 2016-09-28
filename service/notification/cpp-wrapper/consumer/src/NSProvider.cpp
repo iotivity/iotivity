@@ -93,7 +93,9 @@ namespace OIC
         NSProvider::~NSProvider()
         {
             if (m_topicList != nullptr)
+            {
                 delete m_topicList;
+            }
         }
 
         std::string NSProvider::getProviderId() const
@@ -111,12 +113,9 @@ namespace OIC
         {
             NS_LOG(DEBUG, "updateTopicList - IN");
             if (topicList == nullptr)
+            {
                 return NSResult::ERROR;
-//            for (auto it : topicList->getTopicsList())
-//            {
-//                NS_LOG_V(DEBUG, "Topic Name : %s", it->getTopicName().c_str());
-//                NS_LOG_V(DEBUG, "Topic State : %d", (int) it->getState());
-//            }
+            }
             NS_LOG(DEBUG, "Creating TopicLL from TopicList");
             NSTopicLL *topicLL = NULL;
             for (auto it : topicList->getTopicsList())
@@ -189,7 +188,9 @@ namespace OIC
             NS_LOG(DEBUG, "isSubscribed - IN");
             NS_LOG_V(DEBUG, "Subscribed state : %d", (int)getProviderSubscribedState());
             if (getProviderSubscribedState() == NSProviderSubscribedState::SUBSCRIBED)
+            {
                 return true;
+            }
             return false;
         }
 
@@ -230,7 +231,9 @@ namespace OIC
         void NSProvider::setTopicList(NSTopicsList *topicsList)
         {
             if (m_topicList != nullptr)
+            {
                 delete m_topicList;
+            }
             m_topicList = topicsList;
         }
 

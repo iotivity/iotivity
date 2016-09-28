@@ -79,7 +79,9 @@ namespace OIC
                 nsMsg->mediaContents->iconImage = OICStrdup(msg->getMediaContents()->getIconImage().c_str());
             }
             else
+            {
                 nsMsg->mediaContents = nullptr;
+            }
             nsMsg->extraInfo = msg->getExtraInfo().getPayload();
             return nsMsg;
         }

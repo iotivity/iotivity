@@ -55,7 +55,9 @@ namespace OIC
                         * Constructor of NSMessage.
                         */
                 NSMessage(): m_messageId(0), m_type(NSMessageType::NS_MESSAGE_ALERT), m_ttl(0),
-                    m_mediaContents(new NSMediaContents), m_extraInfo(OC::OCRepresentation()) { }
+                    m_mediaContents(new NSMediaContents), m_extraInfo(OC::OCRepresentation())
+                {
+                }
 
                 /**
                         * Constructor of NSMessage.

@@ -42,28 +42,40 @@ namespace OIC
                 m_type = (NSMessageType)msg->type;
 
                 if ((msg->dateTime != nullptr) && strlen(msg->dateTime))
+                {
                     m_time.assign(msg->dateTime, strlen(msg->dateTime));
+                }
 
                 m_ttl =  msg->ttl;
 
                 if ((msg->title != nullptr) && strlen(msg->title))
+                {
                     m_title.assign(msg->title, strlen(msg->title));
+                }
 
                 if ((msg->contentText != nullptr) && strlen(msg->contentText))
+                {
                     m_contentText.assign(msg->contentText, strlen(msg->contentText));
+                }
 
                 if ((msg->sourceName != nullptr) && strlen(msg->sourceName))
+                {
                     m_sourceName.assign(msg->sourceName, strlen(msg->sourceName));
+                }
 
                 if (msg->mediaContents != nullptr)
                 {
                     m_mediaContents = new NSMediaContents();
                     if ((msg->mediaContents->iconImage != nullptr) && strlen(msg->mediaContents->iconImage))
+                    {
                         m_mediaContents->setIconImage(msg->mediaContents->iconImage);
+                    }
                 }
 
                 if ((msg->topic != nullptr) && strlen(msg->topic))
+                {
                     m_topic.assign(msg->topic, strlen(msg->topic));
+                }
 
                 if (msg->extraInfo != nullptr)
                 {
@@ -99,9 +111,13 @@ namespace OIC
             m_sourceName = msg.getSourceName();
 
             if (msg.getMediaContents() != nullptr)
+            {
                 m_mediaContents = new NSMediaContents(msg.getMediaContents()->getIconImage());
+            }
             else
+            {
                 m_mediaContents = new NSMediaContents();
+            }
             m_topic = msg.getTopic();
             m_extraInfo = OC::OCRepresentation(msg.getExtraInfo());
         }
@@ -119,9 +135,13 @@ namespace OIC
             this->m_sourceName = msg.getSourceName();
 
             if (msg.getMediaContents() != nullptr)
+            {
                 this->m_mediaContents = new NSMediaContents(msg.getMediaContents()->getIconImage());
+            }
             else
+            {
                 this->m_mediaContents = new NSMediaContents();
+            }
             this->m_topic = msg.getTopic();
             this->m_extraInfo = OC::OCRepresentation(msg.getExtraInfo());
             return *this;
@@ -130,7 +150,9 @@ namespace OIC
         NSMessage::~NSMessage()
         {
             if (m_mediaContents != nullptr)
+            {
                 delete m_mediaContents;
+            }
         }
 
         uint64_t NSMessage::getMessageId() const
