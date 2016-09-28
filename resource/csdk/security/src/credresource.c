@@ -81,6 +81,12 @@ static const uint8_t CRED_MAP_SIZE = 3;
 static OicSecCred_t        *gCred = NULL;
 static OCResourceHandle    gCredHandle = NULL;
 
+typedef enum CredCompareResult{
+    CRED_CMP_EQUAL = 0,
+    CRED_CMP_NOT_EQUAL = 1,
+    CRED_CMP_ERROR = 2
+}CredCompareResult_t;
+
 /**
  * This function frees OicSecCred_t object's fields and object itself.
  */
@@ -1142,14 +1148,167 @@ static OicSecCred_t* GetCredDefault()
     return NULL;
 }
 
+static bool IsSameSecKey(const OicSecKey_t* sk1, const OicSecKey_t* sk2)
+{
+    VERIFY_NON_NULL(TAG, sk1, WARNING);
+    VERIFY_NON_NULL(TAG, sk2, WARNING);
+
+    VERIFY_SUCCESS(TAG, (sk1->len == sk2->len), INFO);
+    VERIFY_SUCCESS(TAG, (sk1->encoding == sk2->encoding), INFO);
+    VERIFY_SUCCESS(TAG, (0 == memcmp(sk1->data, sk2->data, sk1->len)), INFO);
+    return true;
+exit:
+    return false;
+}
+
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+static bool IsSameCert(const OicSecCert_t* cert1, const OicSecCert_t* cert2)
+{
+    VERIFY_NON_NULL(TAG, cert1, WARNING);
+    VERIFY_NON_NULL(TAG, cert2, WARNING);
+
+    VERIFY_SUCCESS(TAG, (cert1->len == cert2->len), INFO);
+    VERIFY_SUCCESS(TAG, (0 == memcmp(cert1->data, cert2->data, cert1->len)), INFO);
+    return true;
+exit:
+    return false;
+}
+#endif //#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+
+/**
+ * Compares credential
+ *
+ * @return CRED_CMP_EQUAL if credentials are equal
+ *         CRED_CMP_NOT_EQUAL if not equal
+ *         otherwise error.
+ */
+
+static CredCompareResult_t CompareCredential(const OicSecCred_t * l, const OicSecCred_t * r)
+{
+    CredCompareResult_t cmpResult = CRED_CMP_ERROR;
+    bool isCompared = false;
+    OIC_LOG(DEBUG, TAG, "IN CompareCredetial");
+
+    VERIFY_NON_NULL(TAG, l, ERROR);
+    VERIFY_NON_NULL(TAG, r, ERROR);
+
+    cmpResult = CRED_CMP_NOT_EQUAL;
+
+    VERIFY_SUCCESS(TAG, (l->credType == r->credType), INFO);
+    VERIFY_SUCCESS(TAG, (0 == memcmp(l->subject.id, r->subject.id, sizeof(l->subject.id))), INFO);
+
+    switch(l->credType)
+    {
+        case SYMMETRIC_PAIR_WISE_KEY:
+        case SYMMETRIC_GROUP_KEY:
+        case PIN_PASSWORD:
+        {
+            if(l->privateData.data && r->privateData.data)
+            {
+                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->privateData, &r->privateData), INFO);
+                isCompared = true;
+            }
+            break;
+        }
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+        case ASYMMETRIC_KEY:
+        case SIGNED_ASYMMETRIC_KEY:
+        {
+            if(l->publicData.data && r->publicData.data)
+            {
+                VERIFY_SUCCESS(TAG, IsSameCert(&l->publicData, &r->publicData), INFO);
+                isCompared = true;
+            }
+
+            if(l->optionalData.data && r->optionalData.data)
+            {
+                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->optionalData, &r->optionalData), INFO);
+                isCompared = true;
+            }
+
+            if(l->credUsage && r->credUsage)
+            {
+                VERIFY_SUCCESS(TAG, (strlen(l->credUsage) == strlen(r->credUsage)), INFO);
+                VERIFY_SUCCESS(TAG, (0 == strncmp(l->credUsage, r->credUsage, strlen(l->credUsage))), INFO);
+                isCompared = true;
+            }
+            break;
+        }
+        case ASYMMETRIC_ENCRYPTION_KEY:
+        {
+            if(l->privateData.data && r->privateData.data)
+            {
+                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->privateData, &r->privateData), INFO);
+                isCompared = true;
+            }
+
+            if(l->publicData.data && r->publicData.data)
+            {
+                VERIFY_SUCCESS(TAG, IsSameCert(&l->publicData, &r->publicData), INFO);
+                isCompared = true;
+            }
+
+            if(l->optionalData.data && r->optionalData.data)
+            {
+                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->optionalData, &r->optionalData), INFO);
+                isCompared = true;
+            }
+
+            break;
+        }
+#endif //__WITH_X509__ or __WITH_TLS__
+        default:
+        {
+            cmpResult = CRED_CMP_ERROR;
+            break;
+        }
+    }
+
+    if(isCompared)
+    {
+        OIC_LOG(DEBUG, TAG, "Same Credentials");
+        cmpResult = CRED_CMP_EQUAL;
+    }
+    else
+    {
+        OIC_LOG(DEBUG, TAG, "Can not find the key data in credential");
+        cmpResult = CRED_CMP_ERROR;
+    }
+exit:
+    OIC_LOG(DEBUG, TAG, "OUT CompareCredetial");
+
+    return cmpResult;
+}
+
 OCStackResult AddCredential(OicSecCred_t * newCred)
 {
     OCStackResult ret = OC_STACK_ERROR;
+    OicSecCred_t * temp = NULL;
     VERIFY_SUCCESS(TAG, NULL != newCred, ERROR);
 
     //Assigning credId to the newCred
     newCred->credId = GetCredId();
     VERIFY_SUCCESS(TAG, newCred->credId != 0, ERROR);
+
+    LL_FOREACH(gCred, temp)
+    {
+        CredCompareResult_t cmpRes = CompareCredential(temp, newCred);
+        if(CRED_CMP_EQUAL == cmpRes)
+        {
+            OIC_LOG_V(WARNING, TAG, "Detected same credential ID(%d)" \
+                      "new credential's ID will be replaced.", temp->credId);
+            newCred->credId = temp->credId;
+            ret = OC_STACK_OK;
+            goto exit;
+        }
+
+        if (CRED_CMP_ERROR == cmpRes)
+        {
+            OIC_LOG_V(WARNING, TAG, "Credential skipped : %d", cmpRes);
+            ret = OC_STACK_ERROR;
+            goto exit;
+        }
+    }
 
     //Append the new Cred to existing list
     LL_APPEND(gCred, newCred);
@@ -2062,7 +2221,7 @@ void GetDerKey(ByteArray * key)
             OIC_LOG_V(DEBUG, TAG, "Key Found!! %d", key->len);
         }
     }
-    if(0 == key->len) 
+    if(0 == key->len)
     {
         OIC_LOG(DEBUG, TAG, "Key Not Found!!");
     }
