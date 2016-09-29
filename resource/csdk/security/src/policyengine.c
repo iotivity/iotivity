@@ -476,9 +476,13 @@ SRMAccessResponse_t CheckPermission(PEContext_t     *context,
             CopyParamsToContext(context, subjectId, resource, requestedPermission);
         }
 
-        // Before doing any processing, check if request coming
-        // from DevOwner and if so, always GRANT.
-        if (IsRequestFromDevOwner(context))
+        // Before doing any ACL processing, check if request a) coming
+        // from DevOwner AND b) the device is not in Ready for Normal Operation
+        // state (which in IoTivity is equivalent to isOp == true) AND c)
+        // the request is for a SVR resource.  If all 3 are met, grant request.
+        if (IsRequestFromDevOwner(context) // if from DevOwner
+            && (GetPstatIsop() == false) // AND if isOp == false
+            && (context->resourceType != NOT_A_SVR_RESOURCE)) // AND if SVR type
         {
             context->retVal = ACCESS_GRANTED;
         }
