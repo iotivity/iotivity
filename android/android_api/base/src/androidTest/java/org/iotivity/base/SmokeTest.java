@@ -1335,7 +1335,12 @@ public class SmokeTest extends InstrumentationTestCase {
                         headerOptionList.add(new OcHeaderOption(2885, "OptionData1"));
                         headerOptionList.add(new OcHeaderOption(2886, "OptionData2"));
 
-                        resource.setHeaderOptions(headerOptionList);
+                        try {
+                            resource.setHeaderOptions(headerOptionList);
+                        } catch (OcException e) {
+                            Log.e(TAG, "onResourceFound, error in setHeaderOptions -- " + e.getMessage());
+                        }
+
                         resource.unsetHeaderOptions();
 
                         OcResourceIdentifier resourceIdentifier = resource.getUniqueIdentifier();

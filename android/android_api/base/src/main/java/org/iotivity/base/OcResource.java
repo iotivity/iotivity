@@ -65,6 +65,11 @@ public class OcResource {
     public void get(Map<String, String> queryParamsMap,
                     OnGetListener onGetListener,
                     QualityOfService qualityOfService) throws OcException {
+
+        if (qualityOfService == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "qualityOfService cannot be null");
+        }
+
         this.get1(queryParamsMap, onGetListener, qualityOfService.getValue());
     }
 
@@ -116,6 +121,11 @@ public class OcResource {
                     Map<String, String> queryParamsMap,
                     OnGetListener onGetListener,
                     QualityOfService qualityOfService) throws OcException {
+
+        if (qualityOfService == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "qualityOfService cannot be null");
+        }
+
         this.get3(
                 resourceType,
                 resourceInterface,
@@ -157,6 +167,11 @@ public class OcResource {
                     Map<String, String> queryParamsMap,
                     OnPutListener onPutListener,
                     QualityOfService qualityOfService) throws OcException {
+
+        if (qualityOfService == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "qualityOfService cannot be null");
+        }
+
         this.put1(
                 ocRepresentation,
                 queryParamsMap,
@@ -217,6 +232,11 @@ public class OcResource {
                     Map<String, String> queryParamsMap,
                     OnPutListener onPutListener,
                     QualityOfService qualityOfService) throws OcException {
+
+        if (qualityOfService == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "qualityOfService cannot be null");
+        }
+
         this.put3(
                 resourceType,
                 resourceInterface,
@@ -260,6 +280,11 @@ public class OcResource {
                      Map<String, String> queryParamsMap,
                      OnPostListener onPostListener,
                      QualityOfService qualityOfService) throws OcException {
+
+        if (qualityOfService == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "qualityOfService cannot be null");
+        }
+
         this.post1(
                 ocRepresentation,
                 queryParamsMap,
@@ -320,6 +345,11 @@ public class OcResource {
                      Map<String, String> queryParamsMap,
                      OnPostListener onPostListener,
                      QualityOfService qualityOfService) throws OcException {
+
+        if (qualityOfService == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "qualityOfService cannot be null");
+        }
+
         this.post3(
                 resourceType,
                 resourceInterface,
@@ -351,6 +381,11 @@ public class OcResource {
      */
     public void deleteResource(OnDeleteListener onDeleteListener,
                                QualityOfService qualityOfService) throws OcException {
+
+        if (qualityOfService == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "qualityOfService cannot be null");
+        }
+
         this.deleteResource1(onDeleteListener,
                 qualityOfService.getValue());
     }
@@ -399,6 +434,15 @@ public class OcResource {
                         Map<String, String> queryParamsMap,
                         OnObserveListener onObserveListener,
                         QualityOfService qualityOfService) throws OcException {
+
+        if (observeType == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "observeType cannot be null");
+        }
+
+        if (qualityOfService == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "qualityOfService cannot be null");
+        }
+
         this.observe1(
                 observeType.getValue(),
                 queryParamsMap,
@@ -427,6 +471,11 @@ public class OcResource {
      * @throws OcException
      */
     public void cancelObserve(QualityOfService qualityOfService) throws OcException {
+
+        if (qualityOfService == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "qualityOfService cannot be null");
+        }
+
         this.cancelObserve1(qualityOfService.getValue());
     }
 
@@ -437,8 +486,14 @@ public class OcResource {
      *
      * @param headerOptionList List<OcHeaderOption> where header information(header optionID and
      *                         optionData is passed
+     * @throws OcException
      */
-    public void setHeaderOptions(List<OcHeaderOption> headerOptionList) {
+    public void setHeaderOptions(List<OcHeaderOption> headerOptionList) throws OcException {
+
+        if (headerOptionList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "headerOptionList cannot be null");
+        }
+
         this.setHeaderOptions(headerOptionList.toArray(
                         new OcHeaderOption[headerOptionList.size()])
         );
@@ -609,6 +664,11 @@ public class OcResource {
     public void discoveryMQTopics(Map<String, String> queryParamsMap,
                                   OnMQTopicFoundListener onTopicFoundListener,
                                   QualityOfService qualityOfService) throws OcException {
+
+        if (qualityOfService == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "qualityOfService cannot be null");
+        }
+
         this.discoveryMQTopicsImpl(queryParamsMap, onTopicFoundListener,
                                    qualityOfService.getValue());
     }
@@ -634,6 +694,11 @@ public class OcResource {
                               Map<String, String> queryParamsMap,
                               OnMQTopicCreatedListener onTopicCreatedListener,
                               QualityOfService qualityOfService) throws OcException {
+
+        if (qualityOfService == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "qualityOfService cannot be null");
+        }
+
         this.createMQTopicImpl(ocRepresentation, uri, queryParamsMap,
                                onTopicCreatedListener, qualityOfService.getValue());
     }
@@ -657,6 +722,11 @@ public class OcResource {
     public void subscribeMQTopic(Map<String, String> queryParamsMap,
                                  OnObserveListener onObserveListener,
                                  QualityOfService qualityOfService) throws OcException {
+
+        if (qualityOfService == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "qualityOfService cannot be null");
+        }
+
         this.subscribeMQTopicImpl(queryParamsMap,
                                   onObserveListener,
                                   qualityOfService.getValue());
@@ -673,6 +743,11 @@ public class OcResource {
      * @throws OcException
      */
     public void unsubscribeMQTopic(QualityOfService qualityOfService) throws OcException{
+
+        if (qualityOfService == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "qualityOfService cannot be null");
+        }
+
         this.unsubscribeMQTopicImpl(qualityOfService.getValue());
     }
 
@@ -691,6 +766,11 @@ public class OcResource {
     public void requestMQPublish(Map<String, String> queryParamsMap,
                      OnPostListener onPostListener,
                      QualityOfService qualityOfService) throws OcException {
+
+        if (qualityOfService == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "qualityOfService cannot be null");
+        }
+
         this.requestMQPublishImpl(queryParamsMap,
                                   onPostListener,
                                   qualityOfService.getValue());
@@ -714,6 +794,11 @@ public class OcResource {
                      Map<String, String> queryParamsMap,
                      OnPostListener onPostListener,
                      QualityOfService qualityOfService) throws OcException {
+
+        if (qualityOfService == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "qualityOfService cannot be null");
+        }
+
         this.publishMQTopicImpl(ocRepresentation,
                                 queryParamsMap,
                                 onPostListener,
