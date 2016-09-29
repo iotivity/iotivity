@@ -170,10 +170,10 @@ TEST_F(NotificationProviderTest, StartProviderPositiveWithNSPolicyFalse)
     NSResult ret = NSStartProvider(config);
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, std::chrono::milliseconds(3000));
+    responseCon.wait_for(lock, g_waitForResponse);
     g_consumerSimul.findProvider();
 
-    responseCon.wait_for(lock, std::chrono::milliseconds(3000));
+    responseCon.wait_for(lock, g_waitForResponse);
     NSStopProvider();
     EXPECT_EQ(ret, NS_OK);
 }
@@ -206,7 +206,7 @@ TEST_F(NotificationProviderTest, ExpectCallbackWhenReceiveSubscribeRequestWithAc
     g_consumerSimul.findProvider();
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, std::chrono::milliseconds(1000));
+    responseCon.wait_for(lock, g_waitForResponse);
 
     EXPECT_NE((void*)g_consumerID, (void*)NULL);
 }
@@ -242,7 +242,7 @@ TEST_F(NotificationProviderTest, NeverCallNotifyOnConsumerByAcceptIsFalse)
         EXPECT_EQ(expectTrue, true);
 
         NSAcceptSubscription(g_consumerID, true);
-        responseCon.wait_for(lock, std::chrono::milliseconds(1000));
+        responseCon.wait_for(lock, g_waitForResponse);
     }
     else
     {
@@ -401,7 +401,7 @@ TEST_F(NotificationProviderTest, ExpectEqualSetConsumerTopicsAndGetConsumerTopic
     NSProviderSetConsumerTopic(g_consumerID, str.c_str());
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, std::chrono::milliseconds(500));
+    responseCon.wait_for(lock, g_waitForResponse);
 
     bool isSame = false;
     NSTopicLL * topics = NSProviderGetConsumerTopics(g_consumerID);
@@ -438,7 +438,7 @@ TEST_F(NotificationProviderTest, ExpectEqualUnSetConsumerTopicsAndGetConsumerTop
     NSProviderUnsetConsumerTopic(g_consumerID, str.c_str());
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, std::chrono::milliseconds(500));
+    responseCon.wait_for(lock, g_waitForResponse);
 
     bool isSame = false;
     NSTopicLL * topics = NSProviderGetConsumerTopics(g_consumerID);

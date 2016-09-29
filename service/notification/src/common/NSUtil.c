@@ -274,7 +274,8 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
     retSync->state = NS_SYNC_READ;
 
     OCRepPayload * repPayload = (OCRepPayload *)payload;
-    if (!OCRepPayloadGetPropInt(repPayload, NS_ATTRIBUTE_MESSAGE_ID, (int64_t *)&retSync->messageId))
+    if (!OCRepPayloadGetPropInt(repPayload, NS_ATTRIBUTE_MESSAGE_ID,
+            (int64_t *)&retSync->messageId))
     {
         OICFree(retSync);
         return NULL;

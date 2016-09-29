@@ -294,7 +294,8 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
 
         for (int i = 0; i < (int) dimensionSize; i++)
         {
-            NS_LOG_V(DEBUG, "topicName = %s", topics->topicName); NS_LOG_V(DEBUG, "topicState = %d",(int) topics->state);
+            NS_LOG_V(DEBUG, "topicName = %s", topics->topicName);
+            NS_LOG_V(DEBUG, "topicState = %d",(int) topics->state);
 
             payloadTopicArray[i] = OCRepPayloadCreate();
             NS_VERIFY_NOT_NULL(payloadTopicArray[i], NS_ERROR);

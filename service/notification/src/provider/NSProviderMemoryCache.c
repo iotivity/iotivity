@@ -627,7 +627,8 @@ NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,
     NS_LOG_V(DEBUG, "curr->id = %s", curr->id);
     NS_LOG_V(DEBUG, "curr->topicName = %s", curr->topicName);
 
-    if( (strncmp(curr->id, cId, NS_UUID_STRING_SIZE) == 0) && (strcmp(curr->topicName, topicName) == 0) )
+    if( (strncmp(curr->id, cId, NS_UUID_STRING_SIZE) == 0) &&
+            (strcmp(curr->topicName, topicName) == 0) )
     {
         if (del == conTopicList->head) // first object
         {
@@ -649,7 +650,8 @@ NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,
     while (del)
     {
         curr = (NSCacheTopicSubData *) del->data;
-        if( (strncmp(curr->id, cId, NS_UUID_STRING_SIZE) == 0) && (strcmp(curr->topicName, topicName) == 0) )
+        if( (strncmp(curr->id, cId, NS_UUID_STRING_SIZE) == 0) &&
+                (strcmp(curr->topicName, topicName) == 0) )
         {
             if (del == conTopicList->tail) // delete object same to last object
             {

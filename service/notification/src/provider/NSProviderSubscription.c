@@ -283,8 +283,8 @@ NSResult NSSendResponse(const char * id, bool accepted)
     }
     NSCacheSubData * subData = (NSCacheSubData*) element->data;
 
-    if (OCNotifyListOfObservers(rHandle, (OCObservationId*)&subData->messageObId, 1, payload, OC_LOW_QOS)
-            != OC_STACK_OK)
+    if (OCNotifyListOfObservers(rHandle, (OCObservationId*)&subData->messageObId, 1,
+            payload, OC_LOW_QOS) != OC_STACK_OK)
     {
         NS_LOG(ERROR, "fail to send Acceptance");
         OCRepPayloadDestroy(payload);
