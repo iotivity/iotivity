@@ -23,7 +23,6 @@
 #include "NSProviderListener.h"
 #include "NSProviderSubscription.h"
 #include "NSProviderNotification.h"
-#include "NSStorageAdapter.h"
 #include "NSProviderMemoryCache.h"
 #include "NSProviderCallbackResponse.h"
 #include "oic_malloc.h"

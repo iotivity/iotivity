@@ -35,7 +35,7 @@ pthread_mutex_t * NSGetCacheMutex()
     return g_NSCacheMutex;
 }
 
-NSCacheList * NSStorageCreate()
+NSCacheList * NSConsumerStorageCreate()
 {
     pthread_mutex_t * mutex = NSGetCacheMutex();
     pthread_mutex_lock(mutex);
@@ -51,7 +51,7 @@ NSCacheList * NSStorageCreate()
     return newList;
 }
 
-NSCacheElement * NSStorageRead(NSCacheList * list, const char * findId)
+NSCacheElement * NSConsumerStorageRead(NSCacheList * list, const char * findId)
 {
     NS_VERIFY_NOT_NULL(list, NULL);
     NS_VERIFY_NOT_NULL(findId, NULL);
@@ -115,7 +115,7 @@ NSCacheElement * NSGetProviderFromAddr(NSCacheList * list, const char * addr, ui
     return NULL;
 }
 
-NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
+NSResult NSConsumerStorageWrite(NSCacheList * list, NSCacheElement * newObj)
 {
     NS_VERIFY_NOT_NULL(list, NS_ERROR);
     NS_VERIFY_NOT_NULL(newObj, NS_ERROR);
@@ -133,7 +133,7 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
     return NS_ERROR;
 }
 
-NSResult NSStorageDelete(NSCacheList * list, const char * delId)
+NSResult NSConsumerStorageDelete(NSCacheList * list, const char * delId)
 {
     NS_VERIFY_NOT_NULL(list, NS_ERROR);
     NS_VERIFY_NOT_NULL(delId, NS_ERROR);
@@ -207,7 +207,7 @@ NSResult NSConsumerCacheWriteProvider(NSCacheList * list, NSCacheElement * newOb
 
     NSProvider_internal * newProvObj = (NSProvider_internal *) newObj->data;
 
-    NSCacheElement * it = NSStorageRead(list, newProvObj->providerId);
+    NSCacheElement * it = NSConsumerStorageRead(list, newProvObj->providerId);
 
     pthread_mutex_lock(mutex);
 
@@ -296,7 +296,7 @@ NSCacheElement * NSPopProviderCacheList(NSCacheList * list)
 }
 
 
-NSResult NSStorageDestroy(NSCacheList * list)
+NSResult NSConsumerStorageDestroy(NSCacheList * list)
 {
     NS_VERIFY_NOT_NULL(list, NS_ERROR);
 

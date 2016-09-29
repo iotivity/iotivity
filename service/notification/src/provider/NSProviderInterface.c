@@ -24,7 +24,6 @@
 #include "NSProviderSubscription.h"
 #include "NSProviderNotification.h"
 #include "NSProviderCallbackResponse.h"
-#include "NSStorageAdapter.h"
 #include "NSProviderMemoryCache.h"
 #include "NSProviderTopic.h"
 #include "oic_malloc.h"
@@ -61,9 +60,9 @@ void NSInitialize()
 
 void NSDeinitailize()
 {
-    NSStorageDestroy(consumerSubList);
-    NSStorageDestroy(consumerTopicList);
-    NSStorageDestroy(registeredTopicList);
+    NSProviderStorageDestroy(consumerSubList);
+    NSProviderStorageDestroy(consumerTopicList);
+    NSProviderStorageDestroy(registeredTopicList);
 
     pthread_mutex_destroy(&NSCacheMutex);
     pthread_mutexattr_destroy(&NSCacheMutexAttr);

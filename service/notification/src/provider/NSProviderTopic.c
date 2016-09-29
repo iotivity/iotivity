@@ -28,11 +28,12 @@ NSResult NSSendTopicUpdation();
 NSResult NSInitTopicList()
 {
     NS_LOG(DEBUG, "NSInitTopicList - IN");
-    consumerTopicList = NSStorageCreate();
+
+    consumerTopicList = NSProviderStorageCreate();
     NS_VERIFY_NOT_NULL(consumerTopicList, NS_FAIL);
     consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME;
 
-    registeredTopicList = NSStorageCreate();
+    registeredTopicList = NSProviderStorageCreate();
     NS_VERIFY_NOT_NULL(registeredTopicList, NS_FAIL);
     registeredTopicList->cacheType = NS_PROVIDER_CACHE_REGISTER_TOPIC;
 
@@ -79,7 +80,7 @@ NSResult NSRegisterTopic(const char * topicName)
     element->data = (void *) data;
     element->next = NULL;
 
-    if (NSStorageWrite(registeredTopicList, element) != NS_OK)
+    if(NSProviderStorageWrite(registeredTopicList, element) != NS_OK)
     {
         NS_LOG(DEBUG, "fail to write cache");
         return NS_FAIL;
@@ -101,8 +102,8 @@ NSResult NSUnregisterTopic(const char * topicName)
         return NS_ERROR;
     }
 
-    result = NSStorageDelete(registeredTopicList, topicName);
-    while (NSStorageDelete(consumerTopicList, topicName) != NS_FAIL)
+    result = NSProviderStorageDelete(registeredTopicList, topicName);
+    while (NSProviderStorageDelete(consumerTopicList, topicName) != NS_FAIL)
     {
     }
 
@@ -206,7 +207,7 @@ NSResult NSSendTopicUpdationToConsumer(char *consumerId)
     OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, NS_TOPIC);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
 
-    NSCacheElement * element = NSStorageRead(consumerSubList, consumerId);
+    NSCacheElement * element = NSProviderStorageRead(consumerSubList, consumerId);
 
     if (element == NULL)
     {
@@ -351,8 +352,10 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
     NS_LOG_V(DEBUG, "TOPIC consumer ID = %s", consumerId);
 
     consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_CID;
-    while (NSStorageDelete(consumerTopicList, consumerId) != NS_FAIL)
-        ;
+
+    while (NSProviderStorageDelete(consumerTopicList, consumerId) != NS_FAIL)
+    {
+    }
     consumerTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME;
 
     OCRepPayload ** topicListPayload = NULL;
@@ -392,7 +395,8 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
 
             newObj->data = (NSCacheData *) topicSubData;
             newObj->next = NULL;
-            NSStorageWrite(consumerTopicList, newObj);
+
+            NSProviderStorageWrite(consumerTopicList, newObj);
         }
     }
     NSSendTopicUpdationToConsumer(consumerId);
@@ -433,7 +437,7 @@ void * NSTopicSchedule(void * ptr)
                     {
                         newObj->data = node->taskData;
                         newObj->next = NULL;
-                        if (NSStorageWrite(consumerTopicList, newObj) == NS_OK)
+                        if (NSProviderStorageWrite(consumerTopicList, newObj) == NS_OK)
                         {
                             NSCacheTopicSubData * topicSubData =
                                     (NSCacheTopicSubData *) node->taskData;

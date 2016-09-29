@@ -21,7 +21,7 @@
 #include "NSProviderMemoryCache.h"
 #include <string.h>
 
-NSCacheList * NSStorageCreate()
+NSCacheList * NSProviderStorageCreate()
 {
     pthread_mutex_lock(&NSCacheMutex);
     NSCacheList * newList = (NSCacheList *) OICMalloc(sizeof(NSCacheList));
@@ -39,7 +39,7 @@ NSCacheList * NSStorageCreate()
     return newList;
 }
 
-NSCacheElement * NSStorageRead(NSCacheList * list, const char * findId)
+NSCacheElement * NSProviderStorageRead(NSCacheList * list, const char * findId)
 {
     pthread_mutex_lock(&NSCacheMutex);
 
@@ -85,7 +85,7 @@ NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, char * id, bool stat
         return NS_ERROR;
     }
 
-    NSCacheElement * it = NSStorageRead(list, id);
+    NSCacheElement * it = NSProviderStorageRead(list, id);
 
     if (it)
     {
@@ -120,7 +120,7 @@ NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, char * id, bool stat
     return NS_ERROR;
 }
 
-NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
+NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj)
 {
     pthread_mutex_lock(&NSCacheMutex);
 
@@ -140,7 +140,7 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
         NS_LOG(DEBUG, "Type is SUBSCRIBER");
 
         NSCacheSubData * subData = (NSCacheSubData *) newObj->data;
-        NSCacheElement * it = NSStorageRead(list, subData->id);
+        NSCacheElement * it = NSProviderStorageRead(list, subData->id);
 
         if (it)
         {
@@ -198,7 +198,7 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
         NS_LOG(DEBUG, "Type is REGITSTER TOPIC");
 
         NSCacheTopicData * topicData = (NSCacheTopicData *) newObj->data;
-        NSCacheElement * it = NSStorageRead(list, topicData->topicName);
+        NSCacheElement * it = NSProviderStorageRead(list, topicData->topicName);
 
         if (it)
         {
@@ -214,7 +214,7 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
         NS_LOG(DEBUG, "Type is REGITSTER TOPIC");
 
         NSCacheTopicSubData * topicData = (NSCacheTopicSubData *) newObj->data;
-        NSCacheElement * it = NSStorageRead(list, topicData->topicName);
+        NSCacheElement * it = NSProviderStorageRead(list, topicData->topicName);
 
         if (it)
         {
@@ -230,7 +230,7 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
         NS_LOG(DEBUG, "Type is REGITSTER TOPIC");
 
         NSCacheTopicSubData * topicData = (NSCacheTopicSubData *) newObj->data;
-        NSCacheElement * it = NSStorageRead(list, topicData->id);
+        NSCacheElement * it = NSProviderStorageRead(list, topicData->id);
 
         if (it)
         {
@@ -256,7 +256,7 @@ NSResult NSStorageWrite(NSCacheList * list, NSCacheElement * newObj)
     return NS_OK;
 }
 
-NSResult NSStorageDestroy(NSCacheList * list)
+NSResult NSProviderStorageDestroy(NSCacheList * list)
 {
     NSCacheElement * iter = list->head;
     NSCacheElement * next = NULL;
@@ -414,7 +414,7 @@ NSResult NSProviderDeleteCacheData(NSCacheType type, void * data)
     return NS_OK;
 }
 
-NSResult NSStorageDelete(NSCacheList * list, const char * delId)
+NSResult NSProviderStorageDelete(NSCacheList * list, const char * delId)
 {
     pthread_mutex_lock(&NSCacheMutex);
     NSCacheElement * prev = list->head;

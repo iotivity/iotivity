@@ -53,7 +53,7 @@ void NSDestroyQueue(NSConsumerQueue * queue)
     NSOICFree(queue);
 }
 
-bool NSPushQueue(NSConsumerQueue * queue, NSConsumerQueueObject * object)
+bool NSPushConsumerQueue(NSConsumerQueue * queue, NSConsumerQueueObject * object)
 {
     NS_VERIFY_NOT_NULL(queue, false);
     NS_VERIFY_NOT_NULL(object, false);

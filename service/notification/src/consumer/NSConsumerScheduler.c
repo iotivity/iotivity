@@ -205,7 +205,7 @@ void * NSConsumerMsgPushThreadFunc(void * data)
     }
     else
     {
-        NSPushQueue(queue, obj);
+        NSPushConsumerQueue(queue, obj);
     }
 
     NSThreadUnlock(msgHandleThread);
