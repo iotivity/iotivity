@@ -180,8 +180,8 @@ static OCStackResult handleAclGetInfoResponse(void *ctx, void **data, OCClientRe
         OIC_LOG(ERROR, TAG, "Can't update ACL resource");
     }
 
+    *data = acl;
 exit:
-    //can't delete acl because aces was added to gAcl
     OICFree(cbor);
     return result;
 }

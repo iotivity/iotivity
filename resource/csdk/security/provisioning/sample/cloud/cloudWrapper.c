@@ -3,6 +3,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "srmutility.h"
+#include "aclresource.h"
 #include "utlist.h"
 
 #include "utils.h"
@@ -158,6 +159,57 @@ static void readOptionalStringArray(stringArray_t *list, int length, const char*
     {
         readStringArray(list, length, description, example);
     }
+}
+
+void printStringArray(stringArray_t *list)
+{
+    if (NULL == list)
+    {
+        OIC_LOG(INFO, TAG, "Received NULL list");
+        return;
+    }
+
+    OIC_LOG_V(INFO, TAG, "List contains %zu items", list->length);
+
+    for (size_t i = 0; i < list->length; i++)
+    {
+        OIC_LOG_V(INFO, TAG, "item[%zu] = %s", i, list->array[i]);
+    }
+}
+
+void printInviteResponse(inviteResponse_t *in)
+{
+    if (NULL == in)
+    {
+        OIC_LOG(INFO, TAG, "Received NULL invitation response");
+        return;
+    }
+
+    OIC_LOG(INFO, TAG, "Received next invite gid list:");
+    printStringArray(&in->invite.gidlist);
+
+    OIC_LOG(INFO, TAG, "Received next invite mid list:");
+    printStringArray(&in->invite.midlist);
+
+    OIC_LOG(INFO, TAG, "Received next invited gid list:");
+    printStringArray(&in->invited.gidlist);
+
+    OIC_LOG(INFO, TAG, "Received next invited mid list:");
+    printStringArray(&in->invited.midlist);
+}
+
+void clearInviteResponse(inviteResponse_t *in)
+{
+    if (NULL == in)
+    {
+        return;
+    }
+
+    clearStringArray(&in->invite.gidlist);
+    clearStringArray(&in->invite.midlist);
+
+    clearStringArray(&in->invited.gidlist);
+    clearStringArray(&in->invited.midlist);
 }
 
 bool readFile(const char *name, OCByteString *out)

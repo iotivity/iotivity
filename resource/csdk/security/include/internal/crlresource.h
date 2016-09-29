@@ -120,6 +120,13 @@ void DeleteCrl(OicSecCrl_t *crl);
  */
 OCStackResult getLastUpdateFromDB(char **lastUpdate);
 
+/**
+ * This function prints OicSecCrl_t object
+ *
+ * @param crl  crl object
+ */
+void printCrl(OicSecCrl_t *crl);
+
 #ifdef __cplusplus
 }
 #endif

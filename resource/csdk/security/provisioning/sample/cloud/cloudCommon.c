@@ -27,6 +27,8 @@
 #include "cathreadpool.h"
 #include "ocpayload.h"
 #include "payload_logging.h"
+#include "aclresource.h"
+#include "crlresource.h"
 #include "ocprovisioningmanager.h"
 
 #include "utils.h"
@@ -49,7 +51,7 @@
 
 #define GITHUB_AUTH_LINK        "https://github.com/login?return_to=%2Flogin%2Foauth%2Fauthorize%3Fclient_id%3Dea9c18f540323b0213d0%26redirect_uri%3Dhttp%253A%252F%252Fwww.example.com%252Foauth_callback%252F"
 
-#define CLIENT_ONLY(mode)       if (OC_SERVER == mode) { wrongRequest(); break; }
+#define CLIENT_ONLY(mode)       if (OC_SERVER == (mode)) { wrongRequest(); sendDataToServer = false; break; }
 
 static bool fExit = false;
 
@@ -223,6 +225,106 @@ static void handleCB(void* ctx, OCStackResult result, void* data)
     unlockMenu(NULL);
 }
 
+/**
+ * This function prints Acl id and calls default callback function handleCB()
+ *
+ * @param[in] ctx          context
+ * @param[in] result       result
+ * @param[in] aclId        acl id
+ */
+static void handleAclIdCB(void* ctx, OCStackResult result, void* aclId)
+{
+    OIC_LOG_V(INFO, TAG, "Received Acl id = %s", (char *)aclId);
+    handleCB(ctx, result, aclId);
+    OICFree(aclId);
+}
+
+/**
+ * This function prints group id and calls default callback function handleCB()
+ *
+ * @param[in] ctx          context
+ * @param[in] result       result
+ * @param[in] groupId      group id
+ */
+static void handleAclCreateGroupCB(void* ctx, OCStackResult result, void* groupId)
+{
+    OIC_LOG_V(INFO, TAG, "Received gid = %s", (char *)groupId);
+    handleCB(ctx, result, groupId);
+    OICFree(groupId);
+}
+
+/**
+ * This function prints group policy and calls default callback function handleCB()
+ *
+ * @param[in] ctx          context
+ * @param[in] result       result
+ * @param[in] gp           group policy
+ */
+static void handleAclPolicyCheckCB(void* ctx, OCStackResult result, void* gp)
+{
+    OIC_LOG_V(INFO, TAG, "Received gp = %s", (char *)gp);
+    handleCB(ctx, result, gp);
+    OICFree(gp);
+}
+
+/**
+ * This function prints received acl and calls default callback function handleCB()
+ *
+ * @param[in] ctx          context
+ * @param[in] result       result
+ * @param[in] acl          acl
+ */
+static void handleAclIndividualGetInfoCB(void* ctx, OCStackResult result, void* acl)
+{
+    printACL((OicSecAcl_t* )acl);
+    handleCB(ctx, result, acl);
+    //can't delete acl here because its ACE's were added to gAcl
+    //TODO: changes in aclresources.c required to fix that
+}
+
+/**
+ * This function prints received group id list and calls default callback function handleCB()
+ *
+ * @param[in] ctx          context
+ * @param[in] result       result
+ * @param[in] gidList      group id list
+ */
+static void handleAclFindMyGroupCB(void* ctx, OCStackResult result, void* gidList)
+{
+    printStringArray((stringArray_t *)gidList);
+    handleCB(ctx, result, gidList);
+    clearStringArray((stringArray_t *)gidList);
+}
+
+/**
+ * This function prints received acl and calls default callback function handleCB()
+ *
+ * @param[in] ctx          context
+ * @param[in] result       result
+ * @param[in] crl          crl
+ */
+static void handleGetCrlCB(void* ctx, OCStackResult result, void* crl)
+{
+    printCrl((OicSecCrl_t *)crl);
+    handleCB(ctx, result, crl);
+    DeleteCrl((OicSecCrl_t *)crl);
+}
+
+/**
+ * This function prints received invitation response and calls default callback function handleCB()
+ *
+ * @param[in] ctx          context
+ * @param[in] result       result
+ * @param[in] invite       invitation response (it has inviteResponse_t* type)
+ */
+static void handleAclGetInvitationCB(void* ctx, OCStackResult result, void* invite)
+{
+    printInviteResponse((inviteResponse_t *)invite);
+    handleCB(ctx, result, invite);
+    clearInviteResponse((inviteResponse_t *)invite);
+    OICFree(invite);
+}
+
 static OCStackResult saveTrustCert(void)
 {
     OCStackResult res = OC_STACK_ERROR;
@@ -275,6 +377,7 @@ static void userRequests(void *data)
     while (false == fExit)
     {
         OCStackResult res = OC_STACK_ERROR;
+        bool sendDataToServer = true;
         timeout = DEFAULT_RESPONSE_WAIT_TIME;
         //startup report
         printf("-----------------------------------------------------------\n");
@@ -307,6 +410,7 @@ static void userRequests(void *data)
             break;
         case HOST:
             readString(endPoint.addr, sizeof(endPoint.addr), "host ip address", DEFAULT_HOST);
+            sendDataToServer = false;
             break;
         case PORT:
         {
@@ -315,19 +419,20 @@ static void userRequests(void *data)
             int tmp = 0;
             readInteger(&tmp, "port number", example);
             endPoint.port = tmp;
+            sendDataToServer = false;
         }
         break;
         case CRL_GET:
-            res = OCWrapperGetCRL(&endPoint, handleCB);
+            res = OCWrapperGetCRL(&endPoint, handleGetCrlCB);
             break;
         case CRL_POST:
             res = OCWrapperPostCRL(&endPoint, handleCB);
             break;
         case ACL_GROUP_CREATE:
-            res = OCWrapperAclCreateGroup(&endPoint, handleCB);
+            res = OCWrapperAclCreateGroup(&endPoint, handleAclCreateGroupCB);
             break;
         case ACL_GROUP_FIND:
-            res = OCWrapperAclFindMyGroup(&endPoint, handleCB);
+            res = OCWrapperAclFindMyGroup(&endPoint, handleAclFindMyGroupCB);
             break;
         case ACL_GROUP_DELETE:
             res = OCWrapperAclDeleteGroup(&endPoint, handleCB);
@@ -351,7 +456,7 @@ static void userRequests(void *data)
             res = OCWrapperAclInviteUser(&endPoint, handleCB);
             break;
         case ACL_GROUP_GET_INVITE:
-            res = OCWrapperAclGetInvitation(&endPoint, handleCB);
+            res = OCWrapperAclGetInvitation(&endPoint, handleAclGetInvitationCB);
             break;
         case ACL_GROUP_DELETE_INVITE:
             res = OCWrapperAclDeleteInvitation(&endPoint, handleCB);
@@ -360,19 +465,19 @@ static void userRequests(void *data)
             res = OCWrapperAclCancelInvitation(&endPoint, handleCB);
             break;
         case ACL_POLICY_CHECK_REQUEST:
-            res = OCWrapperAclPolicyCheck(&endPoint, handleCB);
+            res = OCWrapperAclPolicyCheck(&endPoint, handleAclPolicyCheckCB);
             break;
         case ACL_ID_GET_BY_DEVICE:
-            res = OCWrapperAclIdGetByDevice(&endPoint, handleCB);
+            res = OCWrapperAclIdGetByDevice(&endPoint, handleAclIdCB);
             break;
         case ACL_ID_CREATE:
-            res = OCWrapperAclIdCreate(&endPoint, handleCB);
+            res = OCWrapperAclIdCreate(&endPoint, handleAclIdCB);
             break;
         case ACL_ID_DELETE:
             res = OCWrapperAclIdDelete(&endPoint, handleCB);
             break;
         case ACL_INDIVIDUAL_GET_INFO:
-            res = OCWrapperAclIndividualGetInfo(&endPoint, handleCB);
+            res = OCWrapperAclIndividualGetInfo(&endPoint, handleAclIndividualGetInfoCB);
             break;
         case ACL_INDIVIDUAL_UPDATE_ACE:
             res = OCWrapperAclIndividualUpdateAce(&endPoint, handleCB);
@@ -401,33 +506,45 @@ static void userRequests(void *data)
             break;
         case USE_RSA:
             CASelectCipherSuite(0x35, CA_ADAPTER_TCP);
+            sendDataToServer = false;
             break;
         case SAVE_TRUST_CERT:
             saveTrustCert();
+            sendDataToServer = false;
             break;
         case USE_SECURE_CONN:
         {
             int tmp = 0;
             readInteger(&tmp, "CoAP protocol type", "0 - non-secure, 1 - secure");
             setCoapPrefix(0 == tmp ? false : true);
+            sendDataToServer = false;
         }
             break;
         case EXIT:
             oc_mutex_free(mutex);
             oc_cond_free(cond);
             fExit = true;
+            sendDataToServer = false;
             break;
         default:
             wrongRequest();
+            sendDataToServer = false;
             break;
         }
 
         //if requests were sent then wait response
-        if (res == OC_STACK_OK)
+        if (sendDataToServer)
         {
-            oc_mutex_lock(mutex);
-            oc_cond_wait_for(cond, mutex, timeout);
-            oc_mutex_unlock(mutex);
+            if (OC_STACK_OK == res)
+            {
+                oc_mutex_lock(mutex);
+                oc_cond_wait_for(cond, mutex, timeout);
+                oc_mutex_unlock(mutex);
+            }
+            else
+            {
+                OIC_LOG_V(ERROR, TAG, "Request returned an error %d", res);
+            }
         }
     }
 }
