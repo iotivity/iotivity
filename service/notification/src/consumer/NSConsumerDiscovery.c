@@ -124,7 +124,14 @@ OCStackApplicationResult NSProviderDiscoverListener(
                 type = CT_ADAPTER_TCP;
             }
 
-            NSInvokeRequest(NULL, OC_REST_GET, clientResponse->addr,
+            OCDevAddr * addr = clientResponse->addr;
+            if (resource->secure)
+            {
+                addr->port = resource->port;
+                addr->flags |= OC_FLAG_SECURE;
+            }
+
+            NSInvokeRequest(NULL, OC_REST_GET, addr,
                     resource->uri, NULL, NSIntrospectProvider, ctx,
                     type);
         }
