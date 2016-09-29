@@ -70,11 +70,14 @@ public class AclResource extends Resource {
         if (getUriPathSegments().containsAll(request.getUriPathSegments())) {
             String oid = request.getUriQueryMap().get(Constants.REQ_OWNER_ID).get(0);
             String di = request.getUriQueryMap().get(Constants.REQ_DEVICE_ID).get(0);
-
-            return MessageBuilder.createResponse(request,
-                ResponseStatus.CREATED, ContentFormat.APPLICATION_CBOR,
-                mCbor.encodingPayloadToCbor(
-                    mAclManager.createAcl(oid, di)));
+            if (mAclManager.getAclid(di) == null) {
+                return MessageBuilder.createResponse(request,
+                    ResponseStatus.CREATED, ContentFormat.APPLICATION_CBOR,
+                    mCbor.encodingPayloadToCbor(
+                        mAclManager.createAcl(oid, di)));
+            } else {
+                throw new BadRequestException("aclid already exists for the given di");
+            }
         }
 
         throw new BadRequestException("uriPath is invalid");

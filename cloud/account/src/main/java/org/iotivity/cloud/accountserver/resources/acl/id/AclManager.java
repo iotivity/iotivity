@@ -61,18 +61,22 @@ public class AclManager {
 
     public HashMap<String, Object> getAclid(String di) {
         HashMap<String, Object> responsePayload = new HashMap<>();
-        ArrayList<String> aclidList = new ArrayList<String>();
+        String aclid = null;
         HashMap<String, Object> condition = new HashMap<>();
         condition.put(Constants.KEYFIELD_DI, di);
         ArrayList<HashMap<String, Object>> result = AccountDBManager
             .getInstance().selectRecord(Constants.ACL_TABLE, condition);
-        for (HashMap<String, Object> element : result) {
-            AclTable getAclTable = new AclTable();
-            getAclTable = Acl.convertMaptoAclObject(element);
-            aclidList.add(getAclTable.getAclid());
+        if (result != null)
+        {
+            for (HashMap<String, Object> element : result) {
+                AclTable getAclTable = new AclTable();
+                getAclTable = Acl.convertMaptoAclObject(element);
+                aclid = getAclTable.getAclid();
+                responsePayload.put(Constants.KEYFIELD_ACLID, aclid);
+                return responsePayload;
+            }
         }
-        responsePayload.put(Constants.KEYFIELD_ACLID, aclidList);
-        return responsePayload;
+        return null;
     }
 
     public void deleteAcl(String aclid) {
