@@ -125,7 +125,14 @@ public class  OcCloudProvisioning {
     * @param cloudPostCRLHandler function called by the stack on completion of request.
     * @throws OcException
     */
-    public native void postCRL0(String thisUpdate, String nextUpdate, String crl, ArrayList<String> serialNumbers,
+    public void postCRL(String thisUpdate, String nextUpdate, String crl, ArrayList<String> serialNumbers,
+                                    PostCRLListener cloudPostCRLHandler) throws OcException
+    {
+        String[] serialNums = new String[serialNumbers.size()];
+        serialNums = serialNumbers.toArray(serialNums);
+        this.postCRL0(thisUpdate, nextUpdate, crl, serialNums, cloudPostCRLHandler);
+    }
+    public native void postCRL0(String thisUpdate, String nextUpdate, String crl, String[] serialNumbers,
                                     PostCRLListener cloudPostCRLHandler) throws OcException;
 }
 

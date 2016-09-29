@@ -47,9 +47,6 @@ include $(PREBUILT_SHARED_LIBRARY)
 endif
 
 include $(CLEAR_VARS)
-ifeq ($(SECURE), 1)
-    LOCAL_CFLAGS += -D__WITH_DTLS__
-endif
 OIC_SRC_PATH := ../../../resource
 LOCAL_MODULE := libca-interface
 LOCAL_SRC_FILES := JniCaInterface.c
@@ -69,12 +66,7 @@ ifeq ($(WITH_CLOUD), 1)
 endif
 
 ifeq ($(WITH_TCP), 1)
-    LOCAL_CPPFLAGS += -DWITH_TCP
     LOCAL_CPPFLAGS += -D__WITH_TLS__
-endif
-
-ifeq ($(SECURED), 1)
-    LOCAL_CPPFLAGS += -D__WITH_DTLS__
 endif
 
 MQ_FLAG = 0
@@ -137,6 +129,13 @@ ifeq ($(WITH_CLOUD), 1)
     LOCAL_SRC_FILES +=  JniOcAccountManager.cpp
 endif
 
+ifeq ($(WITH_TCP), 1)
+    LOCAL_SRC_FILES +=  JniOcCloudProvisioning.cpp \
+                        JniOcCloudResultListener.cpp \
+                        JniGetAclIdByDeviceListener.cpp
+endif
+
+
 LOCAL_LDLIBS := -llog
 LOCAL_STATIC_LIBRARIES := android-oc
 LOCAL_STATIC_LIBRARIES += android-octbstack
@@ -165,9 +164,9 @@ LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/../extlibs/boost/boost_1_58_0
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/../extlibs/cjson
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/../build_common/android/compatibility
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/provisioning/include
-LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/provisioning/include/cloud
-LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/provisioning/include/oxm
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/provisioning/include/oxm/
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/provisioning/include/internal
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/provisioning/include/cloud/
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/include/internal
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/connectivity/api
