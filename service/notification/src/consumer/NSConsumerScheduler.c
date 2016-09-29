@@ -74,14 +74,10 @@ NSResult NSConsumerMessageHandlerInit()
     NSConsumerThread * handle = NULL;
     NSConsumerQueue * queue = NULL;
 
-    uint8_t uuid[UUID_SIZE] = {0,};
-    char uuidString[UUID_STRING_SIZE] = {0,};
-    OCRandomUuidResult randomRet = OCGenerateUuid(uuid);
-    NS_VERIFY_NOT_NULL(randomRet == RAND_UUID_OK ? (void *) 1 : NULL, NS_ERROR);
-    randomRet = OCConvertUuidToString(uuid, uuidString);
-    NS_VERIFY_NOT_NULL(randomRet == RAND_UUID_OK ? (void *) 1 : NULL, NS_ERROR);
+    char * consumerUuid = (char *)OCGetServerInstanceIDString();
+    NS_VERIFY_NOT_NULL(consumerUuid, NS_ERROR);
 
-    NSSetConsumerId(uuidString);
+    NSSetConsumerId(consumerUuid);
     NS_LOG_V(DEBUG, "Consumer ID : %s", *NSGetConsumerId());
 
     NS_LOG(DEBUG, "listener init");
