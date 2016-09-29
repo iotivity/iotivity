@@ -2188,6 +2188,12 @@ void printACL(const OicSecAcl_t* acl)
 {
     OIC_LOG(INFO, TAG, "Print ACL:");
 
+    if (NULL == acl)
+    {
+        OIC_LOG(INFO, TAG, "Received NULL acl");
+        return;
+    }
+
     char *rowner = NULL;
     if (OC_STACK_OK == ConvertUuidToStr(&acl->rownerID, &rowner))
     {

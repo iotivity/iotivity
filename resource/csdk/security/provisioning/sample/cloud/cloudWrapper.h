@@ -248,4 +248,25 @@ void readInteger(int* item, const char* description, const char* example);
  * */
 int readFile(const char *name, OCByteString *out);
 
+/**
+ * Print array of strings
+ *
+ * @param[in] list           array of strings
+ */
+void printStringArray(stringArray_t *list);
+
+/**
+ * Print invitation response
+ *
+ * @param[in] in           invitation response
+ */
+void printInviteResponse(inviteResponse_t *in);
+
+/**
+ * Clear invitation response
+ *
+ * @param[in] in           invitation response
+ */
+void clearInviteResponse(inviteResponse_t *in);
+
 #endif //OC_CLOUD_WRAPPER_H

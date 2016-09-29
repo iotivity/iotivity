@@ -135,12 +135,7 @@ static OCStackResult handleAclGetInvitationResponse(void *ctx, void **data, OCCl
     }
 
     *data = answer;
-
 exit:
-    if (result != OC_STACK_OK)
-    {
-        OICFree(answer);
-    }
     return result;
 }
 

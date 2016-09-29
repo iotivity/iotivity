@@ -75,16 +75,22 @@ void DeleteCrl(OicSecCrl_t *crl)
     }
 }
 
-static void printCrl(const OicSecCrl_t *crl)
+void printCrl(OicSecCrl_t *crl)
 {
-    OIC_LOG(DEBUG, TAG, "Crl object contain:");
-    OIC_LOG_V(DEBUG, TAG, "id = %d", crl->CrlId);
-    OIC_LOG_V(DEBUG, TAG, "this update = %s", crl->ThisUpdate.data);
+    if (NULL == crl)
+    {
+        OIC_LOG(INFO, TAG, "Received NULL CRL");
+        return;
+    }
 
-    OIC_LOG(DEBUG, TAG, "crl:");
-    OIC_LOG_V(DEBUG, TAG, "encoding = %d", crl->CrlData.encoding);
-    OIC_LOG_V(DEBUG, TAG, "data (length = %zu):", crl->CrlData.len);
-    OIC_LOG_BUFFER(DEBUG, TAG, crl->CrlData.data, crl->CrlData.len);
+    OIC_LOG(INFO, TAG, "Crl object contain:");
+    OIC_LOG_V(INFO, TAG, "id = %d", crl->CrlId);
+    OIC_LOG_V(INFO, TAG, "this update = %s", crl->ThisUpdate.data);
+
+    OIC_LOG(INFO, TAG, "crl:");
+    OIC_LOG_V(INFO, TAG, "encoding = %d", crl->CrlData.encoding);
+    OIC_LOG_V(INFO, TAG, "data (length = %zu):", crl->CrlData.len);
+    OIC_LOG_BUFFER(INFO, TAG, crl->CrlData.data, crl->CrlData.len);
 }
 
 static bool copyByteArray(const uint8_t *in, size_t in_len, uint8_t **out, size_t *out_len)
