@@ -57,7 +57,6 @@ namespace OC
         memset(&m_devAddr, 0, sizeof(m_devAddr));
         memcpy(m_devAddr.addr, ipAddr.c_str(), MAX_ADDR_STR_SIZE);
         m_devAddr.port = port;
-        m_csdkLock = OCPlatform_impl::Instance().csdkLock();
     }
 
     OCCloudProvisioning::~OCCloudProvisioning(void)
@@ -73,7 +72,7 @@ namespace OC
         }
 
         OCStackResult result;
-        auto cLock = m_csdkLock.lock();
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
 
         if (cLock)
         {
@@ -101,7 +100,7 @@ namespace OC
         }
 
         OCStackResult result;
-        auto cLock = m_csdkLock.lock();
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
 
         if (cLock)
         {
@@ -130,7 +129,7 @@ namespace OC
         }
 
         OCStackResult result;
-        auto cLock = m_csdkLock.lock();
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
 
         if (cLock)
         {
@@ -158,7 +157,7 @@ namespace OC
         }
 
         OCStackResult result;
-        auto cLock = m_csdkLock.lock();
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
 
         if (cLock)
         {
@@ -189,7 +188,7 @@ namespace OC
         }
 
         OCStackResult result;
-        auto cLock = m_csdkLock.lock();
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
 
         if (cLock)
         {

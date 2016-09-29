@@ -53,7 +53,6 @@ namespace OC
 
         private:
             OCDevAddr  m_devAddr;
-            std::weak_ptr<std::recursive_mutex> m_csdkLock;
         public:
 
             /**
