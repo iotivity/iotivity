@@ -189,10 +189,8 @@ static void printMenu(OCMode mode)
     printf("** %d - ACL Cancel invitation Request\n", ACL_GROUP_CANCEL_INVITE);
 
     printf("** EXIT\n");
-    printf("** %d - Exit cloud %s\n\n", EXIT, title);
+    printf("** %d - Exit cloud %s\n", EXIT, title);
     printf("************************************************************\n");
-
-    printf(">> Enter Menu number:\n");
 }
 
 void unlockMenu(void *data)
@@ -390,7 +388,7 @@ static void userRequests(void *data)
         printMenu(mode);
 
         int request = 0;
-        scanf("%d", &request);
+        readInteger(&request, "Menu number", "see above");
 
         switch (request)
         {

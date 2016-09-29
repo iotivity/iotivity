@@ -31,6 +31,15 @@
 //in case of optional parameters absence should be sent NULL
 #define OPTIONAL(str) (str[0] ? str : NULL)
 
+/**
+ * Skip special characters from stdin
+ * */
+static void skipSpecialCharacters()
+{
+    for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                // '0x20<=code' is character region
+}
+
 static bool readOptional(const char* description)
 {
     if (NULL == description)
@@ -44,7 +53,7 @@ static bool readOptional(const char* description)
     while(1)
     {
         scanf("%c", &choice);
-        getchar();
+        skipSpecialCharacters();
 
         switch (choice)
         {
@@ -62,7 +71,7 @@ void readString(char* item, int length, const char* description, const char* exa
     char template[8] = { 0 };
     snprintf(template, sizeof(template), "%%%ds", length - 1);
     scanf(template, item);
-    getchar();
+    skipSpecialCharacters();
 }
 
 /**
@@ -85,7 +94,7 @@ void readInteger(int* item, const char* description, const char* example)
 {
     printf("Enter %s (f.e. %s):\n", description, example);
     scanf("%d", item);
-    getchar();
+    skipSpecialCharacters();
 }
 
 /**
@@ -256,10 +265,11 @@ bool readFile(const char *name, OCByteString *out)
     }
 
     //Read file contents into buffer
-    size_t realLen = fread(buffer, length, 1, file);
-    if (realLen != (size_t)length)
+    size_t count = 1;
+    size_t realCount = fread(buffer, length, count, file);
+    if (realCount != count)
     {
-        OIC_LOG_V(ERROR, TAG, "Length mismatch: read %zu instead of %d bytes", realLen, length);
+        OIC_LOG_V(ERROR, TAG, "Read %d bytes %zu times instead of %zu", length, realCount, count);
         goto exit;
     }
 
