@@ -182,7 +182,8 @@ bool AddInterfaces(PIP_ADAPTER_ADDRESSES pAdapterAddr, u_arraylist_t *iflist, in
                 OIC_LOG_V(DEBUG, TAG, "\t\tIPv6 interface %i not valid, skipping...", pCurAdapterAddr->IfIndex);
             }
         }
-        else if (pCurAdapterAddr->Flags & IP_ADAPTER_IPV4_ENABLED)
+
+        if (pCurAdapterAddr->Flags & IP_ADAPTER_IPV4_ENABLED)
         {
             // Do not add loopback, duplicate, or non-operational adapters
             if (IsValidAdapter(pCurAdapterAddr, desiredIndex, AF_INET))
