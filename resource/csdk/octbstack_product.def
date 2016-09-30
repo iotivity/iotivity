@@ -99,3 +99,4 @@ OCStopPresence
 OCUnBindResource
 OCSetHeaderOption
 OCGetHeaderOption
+FindResourceByUri
