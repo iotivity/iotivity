@@ -106,3 +106,4 @@ OCSetHeaderOption
 OCGetHeaderOption
 OCGetDeviceId
 OCSetDeviceId
+FindResourceByUri

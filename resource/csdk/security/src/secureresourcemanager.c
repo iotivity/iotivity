@@ -32,6 +32,8 @@
 #include "securevirtualresourcetypes.h"
 #include "secureresourcemanager.h"
 #include "srmresourcestrings.h"
+#include "ocresourcehandler.h"
+
 #ifdef __WITH_TLS__
 #include "pkix_interface.h"
 #endif //__WITH_TLS__
@@ -137,6 +139,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
 {
     OIC_LOG(DEBUG, TAG, "Received request from remote device");
 
+    bool isRequestOverSecureChannel = false;
     if (!endPoint || !requestInfo)
     {
         OIC_LOG(ERROR, TAG, "Invalid arguments");
@@ -145,7 +148,15 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
 
     // Copy the subjectID
     OicUuid_t subjectId = {.id = {0}};
+    OicUuid_t nullSubjectId = {.id = {0}};
     memcpy(subjectId.id, requestInfo->info.identity.id, sizeof(subjectId.id));
+
+    // if subject id is null that means request is sent thru coap.
+    if (memcmp(subjectId.id, nullSubjectId.id, sizeof(subjectId.id)) != 0)
+    {
+        OIC_LOG(INFO, TAG, "request over secure channel");
+        isRequestOverSecureChannel = true;
+    }
 
     //Check the URI has the query and skip it before checking the permission
     char *uri = strstr(requestInfo->info.resourceUri, "?");
@@ -170,6 +181,33 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
 
     SetResourceRequestType(&g_policyEngineContext, newUri);
 
+     // Form a 'Error', 'slow response' or 'access deny' response and send to peer
+    CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
+    memcpy(&responseInfo.info, &(requestInfo->info), sizeof(responseInfo.info));
+    responseInfo.info.payload = NULL;
+    responseInfo.info.dataType = CA_RESPONSE_DATA;
+
+    OCResource *resPtr = FindResourceByUri(newUri);
+    if (NULL != resPtr)
+    {
+        // check whether request is for secure resource or not and it should not be a SVR resource
+        if (((resPtr->resourceProperties) & OC_SECURE)
+                            && (g_policyEngineContext.resourceType == NOT_A_SVR_RESOURCE))
+        {
+           // if resource is secure and request is over insecure channel
+            if (!isRequestOverSecureChannel)
+            {
+                // Reject all the requests over coap for secure resource.
+                responseInfo.result = CA_FORBIDDEN_REQ;
+                if (CA_STATUS_OK != CASendResponse(endPoint, &responseInfo))
+                {
+                    OIC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
+                }
+                return;
+            }
+        }
+    }
+
     //New request are only processed if the policy engine state is AWAITING_REQUEST.
     if (AWAITING_REQUEST == g_policyEngineContext.state)
     {
@@ -189,12 +227,6 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
         gRequestHandler(endPoint, requestInfo);
         return;
     }
-
-    // Form a 'Error', 'slow response' or 'access deny' response and send to peer
-    CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
-    memcpy(&responseInfo.info, &(requestInfo->info), sizeof(responseInfo.info));
-    responseInfo.info.payload = NULL;
-    responseInfo.info.dataType = CA_RESPONSE_DATA;
 
     VERIFY_NON_NULL(TAG, gRequestHandler, ERROR);
 
