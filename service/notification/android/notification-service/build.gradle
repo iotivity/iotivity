@@ -41,6 +41,11 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    repositories {        
+        flatDir {
+            dirs '../../../../android/android_api/base/build/outputs/aar'
+        }
+    }
     buildTypes {
         release {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -64,7 +69,7 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-
+    compile ":iotivity-base-${TARGET_ARCH}-${RELEASE}@aar"
     androidTestCompile 'com.google.dexmaker:dexmaker-mockito:1.0'
     androidTestCompile 'com.google.dexmaker:dexmaker:1.0'
     androidTestCompile 'org.mockito:mockito-core:1.10.19'

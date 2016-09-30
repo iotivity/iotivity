@@ -168,7 +168,7 @@ public class Message
         mTopic = topic;
     }
 
-    public void setExtraInfo(OCRepresentation extraInfo)
+    public void setExtraInfo(OcRepresentation extraInfo)
     {
         mExtraInfo = extraInfo;
     }
