@@ -35,18 +35,13 @@ import org.iotivity.cloud.ciserver.resources.proxy.account.Acl;
 import org.iotivity.cloud.ciserver.resources.proxy.account.AclGroup;
 import org.iotivity.cloud.ciserver.resources.proxy.account.AclInvite;
 import org.iotivity.cloud.ciserver.resources.proxy.account.Certificate;
+import org.iotivity.cloud.ciserver.resources.proxy.account.Crl;
 import org.iotivity.cloud.ciserver.resources.proxy.mq.MessageQueue;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.DevicePresence;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceDirectory;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceFind;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourcePresence;
 import org.iotivity.cloud.util.Log;
-
-/**
- *
- * This class is in charge of running of cloud interface server
- *
- */
 
 public class CloudInterfaceServer {
 
@@ -86,7 +81,7 @@ public class CloudInterfaceServer {
         AclGroup aclGroupHandler = new AclGroup();
         Certificate certHandler = new Certificate();
         AclInvite aclInviteHandler = new AclInvite();
-
+	Crl crlHandler = new Crl();
         CoapDevicePool devicePool = deviceServer.getDevicePool();
 
         deviceServer.addResource(acHandler);
@@ -110,6 +105,8 @@ public class CloudInterfaceServer {
         deviceServer.addResource(certHandler);
 
         deviceServer.addResource(aclInviteHandler);
+
+	deviceServer.addResource(crlHandler);
 
         KeepAliveResource resKeepAlive = new KeepAliveResource(
                 new int[] { 1, 2, 4, 8 });
