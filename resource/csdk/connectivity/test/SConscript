@@ -62,6 +62,7 @@ if target_os in ['msys_nt', 'windows']:
 	catest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
 	catest_env.AppendUnique(LIBS = ['ws2_32',
                                         'advapi32',
+                                        'bcrypt',
                                         'iphlpapi'])
 else:
 	catest_env.AppendUnique(LIBS = ['m'])
