@@ -105,7 +105,6 @@ if target_os in ['android','linux']:
 			# For bring up purposes only, the forked version will live here.
 			easy_setup_env.AppendUnique(CPPPATH = [env.get('SRC_DIR') + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include'])
 		easy_setup_env.AppendUnique(CPPPATH = [
-                        env.get('SRC_DIR') + '/resource/csdk/connectivity/lib/libcoap-4.1.1',
 			env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include',
 			env.get('SRC_DIR') + '/resource/csdk/security/include/internal',
 			env.get('SRC_DIR') + '/resource/csdk/connectivity/api/',
