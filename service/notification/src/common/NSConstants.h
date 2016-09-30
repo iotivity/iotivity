@@ -74,11 +74,13 @@
 #define RESOURCE_TAG               "NS_PROVIDER_RESOURCE"
 #define TOPIC_TAG                  "NS_PROVIDER_TOPIC"
 
-#define NS_ROOT_TYPE               "oic.r.notification"
-#define NS_COLLECTION_MESSAGE_TYPE "oic.r.notification.message"
-#define NS_COLLECTION_SYNC_TYPE    "oic.r.notification.sync"
-#define NS_COLLECTION_TOPIC_TYPE   "oic.r.notification.topic"
+#define NS_ROOT_TYPE               "oic.wk.notification"
+#define NS_COLLECTION_MESSAGE_TYPE "oic.wk.notification.message"
+#define NS_COLLECTION_SYNC_TYPE    "oic.wk.notification.sync"
+#define NS_COLLECTION_TOPIC_TYPE   "oic.wk.notification.topic"
 
+#define NS_INTERFACE_READ          "oic.if.r"
+#define NS_INTERFACE_READWRITE     "oic.if.rw"
 #define NS_DEFAULT_INTERFACE       "oic.if.baseline"
 
 #define NS_ROOT_URI                "/notification"
@@ -89,8 +91,8 @@
 #define NS_QUERY_SEPARATOR         "&;"
 #define NS_KEY_VALUE_DELIMITER     "="
 
-#define NS_QUERY_CONSUMER_ID       "consumerid"
-#define NS_QUERY_PROVIDER_ID       "providerid"
+#define NS_QUERY_CONSUMER_ID       "consumerId"
+#define NS_QUERY_PROVIDER_ID       "providerId"
 
 #define NS_QUERY_ID_SIZE           10
 
@@ -182,26 +184,26 @@
 
 #define VERSION        "1.2.0"
 
-#define NS_ATTRIBUTE_VERSION "VERSION"
-#define NS_ATTRIBUTE_POLICY "ACCEPTER"
-#define NS_ATTRIBUTE_MESSAGE "MESSAGE_URI"
-#define NS_ATTRIBUTE_SYNC "SYNC_URI"
-#define NS_ATTRIBUTE_TOPIC "TOPIC_URI"
-#define NS_ATTRIBUTE_MESSAGE_ID "MESSAGE_ID"
-#define NS_ATTRIBUTE_PROVIDER_ID "PROVIDER_ID"
-#define NS_ATTRIBUTE_CONSUMER_ID "CONSUMER_ID"
-#define NS_ATTRIBUTE_TOPIC_LIST "TOPIC_LIST"
-#define NS_ATTRIBUTE_TOPIC_NAME "TOPIC_NAME"
-#define NS_ATTRIBUTE_TOPIC_SELECTION "TOPIC_STATE"
-#define NS_ATTRIBUTE_TITLE "TITLE"
-#define NS_ATTRIBUTE_TEXT "CONTENTTEXT"
-#define NS_ATTRIBUTE_SOURCE "SOURCE"
-#define NS_ATTRIBUTE_STATE "STATE"
-#define NS_ATTRIBUTE_DEVICE "DEVICE"
-#define NS_ATTRIBUTE_TYPE "TYPE"
-#define NS_ATTRIBUTE_DATETIME "DATE_TIME"
-#define NS_ATTRIBUTE_TTL "TTL"
-#define NS_ATTRIBUTE_ICON_IMAGE "ICON_IMAGE"
+#define NS_ATTRIBUTE_VERSION "version"
+#define NS_ATTRIBUTE_POLICY "subControllability"
+#define NS_ATTRIBUTE_MESSAGE "messageUri"
+#define NS_ATTRIBUTE_SYNC "syncUri"
+#define NS_ATTRIBUTE_TOPIC "topicUri"
+#define NS_ATTRIBUTE_MESSAGE_ID "messageId"
+#define NS_ATTRIBUTE_PROVIDER_ID "providerId"
+#define NS_ATTRIBUTE_CONSUMER_ID "consumerId"
+#define NS_ATTRIBUTE_TOPIC_LIST "topicList"
+#define NS_ATTRIBUTE_TOPIC_NAME "topicName"
+#define NS_ATTRIBUTE_TOPIC_SELECTION "topicState"
+#define NS_ATTRIBUTE_TITLE "title"
+#define NS_ATTRIBUTE_TEXT "contentText"
+#define NS_ATTRIBUTE_SOURCE "source"
+#define NS_ATTRIBUTE_STATE "state"
+#define NS_ATTRIBUTE_DEVICE "device"
+#define NS_ATTRIBUTE_TYPE "type"
+#define NS_ATTRIBUTE_DATETIME "dateTime"
+#define NS_ATTRIBUTE_TTL "ttl"
+#define NS_ATTRIBUTE_ICON_IMAGE "iconImage"
 
 typedef enum eConnectionState
 {
@@ -269,8 +271,8 @@ typedef enum eTaskType
     TASK_CB_SYNC = 10001,
 
     TASK_SEND_TOPICS = 11000,
-    TASK_ADD_TOPIC = 11001,
-    TASK_DELETE_TOPIC = 11002,
+    TASK_REGISTER_TOPIC = 11001,
+    TASK_UNREGISTER_TOPIC = 11002,
     TASK_SUBSCRIBE_TOPIC = 11003,
     TASK_UNSUBSCRIBE_TOPIC = 11004,
     TASK_POST_TOPIC = 11005,

@@ -68,7 +68,6 @@ NSResult NSPublishResourceToCloud(char *serverAddress)
 }
 #endif
 
-
 NSResult NSCreateResource(char *uri)
 {
     NS_LOG(DEBUG, "NSCreateResource - IN");
@@ -102,9 +101,17 @@ NSResult NSCreateResource(char *uri)
         }
 
         if (OCCreateResource(&NotificationResource.handle, NS_ROOT_TYPE, NS_DEFAULT_INTERFACE,
-                NS_ROOT_URI, NSEntityHandlerNotificationCb, NULL, resourceProperties) != OC_STACK_OK)
+                NS_ROOT_URI, NSEntityHandlerNotificationCb, NULL,
+                resourceProperties) != OC_STACK_OK)
         {
             NS_LOG(NS_ERROR, "Fail to Create Notification Resource");
+            return NS_ERROR;
+        }
+
+        if (OCBindResourceInterfaceToResource(NotificationResource.handle, NS_INTERFACE_READ)
+            != OC_STACK_OK)
+        {
+            NS_LOG(NS_ERROR, "Fail to bind Notification Resource Type");
             return NS_ERROR;
         }
     }
@@ -140,6 +147,13 @@ NSResult NSCreateResource(char *uri)
             NS_LOG(NS_ERROR, "Fail to Create Notification Message Resource");
             return NS_ERROR;
         }
+
+        if (OCBindResourceInterfaceToResource(NotificationMessageResource.handle, NS_INTERFACE_READ)
+            != OC_STACK_OK)
+        {
+            NS_LOG(NS_ERROR, "Fail to bind Notification Message Resource Type");
+            return NS_ERROR;
+        }
     }
     else if (strcmp(uri, NS_COLLECTION_SYNC_URI) == 0)
     {
@@ -165,6 +179,14 @@ NSResult NSCreateResource(char *uri)
             NS_LOG(NS_ERROR, "Fail to Create Notification Sync Resource");
             return NS_ERROR;
         }
+
+        if (OCBindResourceInterfaceToResource(NotificationSyncResource.handle,
+                NS_INTERFACE_READWRITE)
+            != OC_STACK_OK)
+        {
+            NS_LOG(NS_ERROR, "Fail to bind Notification Sync Resource Type");
+            return NS_ERROR;
+        }
     }
     else if (strcmp(uri, NS_COLLECTION_TOPIC_URI) == 0)
     {
@@ -188,6 +210,14 @@ NSResult NSCreateResource(char *uri)
                 resourceProperties) != OC_STACK_OK)
         {
             NS_LOG(NS_ERROR, "Fail to Create Notification Sync Resource");
+            return NS_ERROR;
+        }
+
+        if (OCBindResourceInterfaceToResource(NotificationTopicResource.handle,
+                NS_INTERFACE_READWRITE)
+            != OC_STACK_OK)
+        {
+            NS_LOG(NS_ERROR, "Fail to bind Notification Topic Resource Type");
             return NS_ERROR;
         }
     }

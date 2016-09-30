@@ -73,7 +73,7 @@ void NSDestroyInternalCachedList()
     NSCacheList * cache = *(NSGetProviderCacheList());
     if (cache)
     {
-        NSStorageDestroy(cache);
+        NSConsumerStorageDestroy(cache);
     }
 
     NSSetProviderCacheList(NULL);
@@ -91,14 +91,14 @@ NSProvider_internal * NSProviderCacheFind(const char * providerId)
     if (!ProviderCache)
     {
         NS_LOG(DEBUG, "Provider Cache Init");
-        ProviderCache = NSStorageCreate();
+        ProviderCache = NSConsumerStorageCreate();
         NS_VERIFY_NOT_NULL(ProviderCache, NULL);
 
         ProviderCache->cacheType = NS_CONSUMER_CACHE_PROVIDER;
         NSSetProviderCacheList(ProviderCache);
     }
 
-    NSCacheElement * cacheElement = NSStorageRead(ProviderCache, providerId);
+    NSCacheElement * cacheElement = NSConsumerStorageRead(ProviderCache, providerId);
     NS_VERIFY_NOT_NULL(cacheElement, NULL);
 
     return NSCopyProvider_internal((NSProvider_internal *) cacheElement->data);
@@ -129,7 +129,7 @@ NSResult NSProviderCacheUpdate(NSProvider_internal * provider)
     if (!ProviderCache)
     {
         NS_LOG(DEBUG, "Provider Cache Init");
-        ProviderCache = NSStorageCreate();
+        ProviderCache = NSConsumerStorageCreate();
         NS_VERIFY_NOT_NULL(ProviderCache, NS_ERROR);
 
         ProviderCache->cacheType = NS_CONSUMER_CACHE_PROVIDER;
@@ -145,7 +145,7 @@ NSResult NSProviderCacheUpdate(NSProvider_internal * provider)
     obj->next = NULL;
 
     NS_LOG(DEBUG, "try to write to storage");
-    NSResult ret = NSStorageWrite(ProviderCache, obj);
+    NSResult ret = NSConsumerStorageWrite(ProviderCache, obj);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *) 1 : NULL,
             NS_ERROR, NSOICFree(obj));
 
@@ -158,7 +158,7 @@ void NSCancelAllSubscription()
     if (!ProviderCache)
     {
         NS_LOG(DEBUG, "Provider Cache Init");
-        ProviderCache = NSStorageCreate();
+        ProviderCache = NSConsumerStorageCreate();
         NS_VERIFY_NOT_NULL_V(ProviderCache);
 
         ProviderCache->cacheType = NS_CONSUMER_CACHE_PROVIDER;
@@ -278,7 +278,7 @@ void NSConsumerHandleProviderDeleted(NSProvider_internal * provider)
     NSCacheList * providerCache = *(NSGetProviderCacheList());
     NS_VERIFY_NOT_NULL_V(providerCache);
 
-    NSResult ret = NSStorageDelete(providerCache, provider->providerId);
+    NSResult ret = NSConsumerStorageDelete(providerCache, provider->providerId);
     NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *)1 : NULL);
 
     NS_LOG_V(DEBUG, "Stopped Provider : %s", provider->providerId);
@@ -292,7 +292,7 @@ void NSConsumerHandleSubscribeSucceed(NSProvider_internal * provider)
 
     NSCacheList * ProviderCache = *(NSGetProviderCacheList());
 
-    NSCacheElement * cacheElement = NSStorageRead(ProviderCache, provider->providerId);
+    NSCacheElement * cacheElement = NSConsumerStorageRead(ProviderCache, provider->providerId);
     NS_VERIFY_NOT_NULL_V(cacheElement);
 
     pthread_mutex_t * mutex = NSGetCacheMutex();
@@ -318,7 +318,7 @@ void NSConsumerHandleRecvProviderChanged(NSMessage * msg)
 
     NSCacheList * ProviderCache = *(NSGetProviderCacheList());
 
-    NSCacheElement * cacheElement = NSStorageRead(ProviderCache, msg->providerId);
+    NSCacheElement * cacheElement = NSConsumerStorageRead(ProviderCache, msg->providerId);
     NS_VERIFY_NOT_NULL_V(cacheElement);
 
     pthread_mutex_t * mutex = NSGetCacheMutex();

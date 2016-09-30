@@ -114,6 +114,7 @@ NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
     }
 
     newMsg = NSInitializeMessage();
+    NS_VERIFY_NOT_NULL(newMsg, NULL);
 
     newMsg->messageId = copyMsg->messageId;
     OICStrcpy(newMsg->providerId, UUID_STRING_SIZE, copyMsg->providerId);
@@ -273,7 +274,8 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
     retSync->state = NS_SYNC_READ;
 
     OCRepPayload * repPayload = (OCRepPayload *)payload;
-    if (!OCRepPayloadGetPropInt(repPayload, NS_ATTRIBUTE_MESSAGE_ID, (int64_t *)&retSync->messageId))
+    if (!OCRepPayloadGetPropInt(repPayload, NS_ATTRIBUTE_MESSAGE_ID,
+            (int64_t *)&retSync->messageId))
     {
         OICFree(retSync);
         return NULL;

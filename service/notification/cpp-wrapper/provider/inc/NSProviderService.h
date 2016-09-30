@@ -78,6 +78,8 @@ namespace OIC
                     bool subControllability;
                     /** userInfo - user defined information */
                     std::string userInfo;
+                    /* Set on/off with SECURED build option */
+                    bool resourceSecurity;
                 } ProviderConfig;
 
                 /**

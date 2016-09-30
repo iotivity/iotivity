@@ -164,20 +164,26 @@ void NSPushQueue(NSSchedulerType schedulerType, NSTaskType taskType, void* data)
     if (NSHeadMsg[schedulerType] == NULL)
     {
         NSHeadMsg[schedulerType] = (NSTask*) OICMalloc(sizeof(NSTask));
-        NSHeadMsg[schedulerType]->taskType = taskType;
-        NSHeadMsg[schedulerType]->taskData = data;
-        NSHeadMsg[schedulerType]->nextTask = NULL;
-        NSTailMsg[schedulerType] = NSHeadMsg[schedulerType];
+        if(NSHeadMsg[schedulerType])
+        {
+            NSHeadMsg[schedulerType]->taskType = taskType;
+            NSHeadMsg[schedulerType]->taskData = data;
+            NSHeadMsg[schedulerType]->nextTask = NULL;
+            NSTailMsg[schedulerType] = NSHeadMsg[schedulerType];
+        }
     }
     else
     {
         NSTask* newNode = (NSTask*) OICMalloc(sizeof(NSTask));
-        newNode->taskType = taskType;
-        newNode->taskData = data;
-        newNode->nextTask = NULL;
+        if(newNode)
+        {
+            newNode->taskType = taskType;
+            newNode->taskData = data;
+            newNode->nextTask = NULL;
 
-        NSTailMsg[schedulerType]->nextTask = newNode;
-        NSTailMsg[schedulerType] = newNode;
+            NSTailMsg[schedulerType]->nextTask = newNode;
+            NSTailMsg[schedulerType] = newNode;
+        }
     }
 
     sem_post(&(NSSemaphore[schedulerType]));
@@ -274,8 +280,8 @@ void NSFreeData(NSSchedulerType type, NSTask * task)
                 OICFree(data);
             }
                 break;
-            case TASK_ADD_TOPIC:
-            case TASK_DELETE_TOPIC:
+            case TASK_REGISTER_TOPIC:
+            case TASK_UNREGISTER_TOPIC:
             {
                 OICFree(task->taskData);
             }

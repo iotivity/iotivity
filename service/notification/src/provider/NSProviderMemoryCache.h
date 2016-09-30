@@ -29,8 +29,13 @@
 #include "NSStructs.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "NSStorageAdapter.h"
 #include "NSUtil.h"
+
+NSCacheList * NSProviderStorageCreate();
+NSCacheElement * NSProviderStorageRead(NSCacheList * list, const char * findId);
+NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj);
+NSResult NSProviderStorageDelete(NSCacheList * list, const char * delId);
+NSResult NSProviderStorageDestroy(NSCacheList * list);
 
 NSResult NSProviderDeleteCacheData(NSCacheType, void *);
 

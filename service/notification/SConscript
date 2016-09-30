@@ -122,9 +122,5 @@ if target_os == 'linux':
 # Go to build sample apps
 SConscript('examples/SConscript')
 
-# Go to build jni
-if target_os == 'android':
-    SConscript('android/SConscript')
-
 # Go to build c++ wrapper
 SConscript('cpp-wrapper/SConscript')

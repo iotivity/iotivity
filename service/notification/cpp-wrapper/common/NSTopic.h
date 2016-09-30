@@ -54,7 +54,9 @@ namespace OIC
                 /**
                      * Constructor of NSTopic.
                      */
-                NSTopic(): m_state(NSTopicState::UNSUBSCRIBED) { }
+                NSTopic(): m_state(NSTopicState::UNSUBSCRIBED)
+                {
+                }
 
                 /**
                      * Constructor of NSTopic.
@@ -63,7 +65,9 @@ namespace OIC
                      * @param state - as NSTopicState.
                      */
                 NSTopic(const std::string &topicName, const NSTopicState state)
-                    : m_topicName(topicName) , m_state(state) {}
+                    : m_topicName(topicName) , m_state(state)
+                {
+                }
 
 
                 /**

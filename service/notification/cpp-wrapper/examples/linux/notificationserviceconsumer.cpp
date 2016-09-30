@@ -45,8 +45,10 @@ void onNotificationPostedCb(OIC::Service::NSMessage *notification)
 
     auto provider = NSConsumerService::getInstance()->getProvider(notification->getProviderId());
     if (provider != nullptr)
+    {
         provider->sendSyncInfo(notification->getMessageId(),
                                OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
+    }
 }
 
 void onNotificationSyncCb(OIC::Service::NSSyncInfo *sync)
@@ -73,11 +75,13 @@ void onProviderStateChangedCb(OIC::Service::NSProviderState state)
         {
             auto topicList = provider->getTopicList();
             if (topicList != nullptr)
+            {
                 for (auto it : topicList->getTopicsList())
                 {
                     std::cout << "Topic Name: " << it->getTopicName() << std::endl;
                     std::cout << "Topic state: " << (int) it->getState() << std::endl;
                 }
+            }
         }
     }
     else if (state == OIC::Service::NSProviderState::STOPPED)
@@ -97,7 +101,9 @@ void onDiscoverNotificationCb(OIC::Service::NSProvider *provider)
         provider->subscribe();
     }
     if (mainProvider.empty())
+    {
         mainProvider = provider->getProviderId();
+    }
 }
 
 void *OCProcessThread(void *ptr)
@@ -119,7 +125,7 @@ void *OCProcessThread(void *ptr)
 
 int main(void)
 {
-    pthread_t OCThread;
+    pthread_t OCThread = NULL;
 
     std::cout << "start Iotivity" << std::endl;
     if (OCInit1(OC_CLIENT, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS) != OC_STACK_OK)
@@ -133,7 +139,7 @@ int main(void)
     std::cout << "Start notification consumer service" << std::endl;
     while (!isExit)
     {
-        int num;
+        int num = 0;
 
         std::cout << "1. Start Consumer" << std::endl;
         std::cout << "2. Stop Consumer" << std::endl;
@@ -164,11 +170,13 @@ int main(void)
                     {
                         auto topicList = provider->getTopicList();
                         if (topicList != nullptr)
+                        {
                             for (auto it : topicList->getTopicsList())
                             {
                                 std::cout << "Topic Name: " << it->getTopicName() << std::endl;
                                 std::cout << "Topic state: " << (int) it->getState() << std::endl;
                             }
+                        }
                     }
                 }
                 break;

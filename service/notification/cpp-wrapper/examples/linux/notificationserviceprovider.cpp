@@ -66,7 +66,9 @@ void subscribeRequestCallback(OIC::Service::NSConsumer *consumer)
 
     std::cout << "Consumer Device ID: " << consumer->getConsumerId() << std::endl;
     if (mainConsumer.empty())
+    {
         mainConsumer = consumer->getConsumerId();
+    }
     consumer->acceptSubscription(true);
 }
 
@@ -79,8 +81,8 @@ void syncCallback(OIC::Service::NSSyncInfo *sync)
 
 int main()
 {
-    int num;
-    pthread_t processThread;
+    int num = 0;
+    pthread_t processThread = NULL;
 
     std::cout << "start Iotivity" << std::endl;
 

@@ -30,10 +30,10 @@ extern "C" {
 /*
  * Class:     org_iotivity_service_ns_provider_ProviderService
  * Method:    nativeStart
- * Signature: (Lorg/iotivity/service/ns/provider/ProviderService/OnConsumerSubscribedListener;Lorg/iotivity/service/ns/provider/ProviderService/OnMessageSynchronizedListener;ZLjava/lang/String;)I
+ * Signature: (Lorg/iotivity/service/ns/provider/ProviderService/OnConsumerSubscribedListener;Lorg/iotivity/service/ns/provider/ProviderService/OnMessageSynchronizedListener;ZLjava/lang/String;Z)I
  */
 JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeStart
-(JNIEnv *, jobject, jobject, jobject, jboolean, jstring);
+(JNIEnv *, jobject, jobject, jobject, jboolean, jstring, jboolean);
 
 /*
  * Class:     org_iotivity_service_ns_provider_ProviderService
@@ -72,7 +72,8 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_provider_ProviderService_
  * Method:    nativeEnableRemoteService
  * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeEnableRemoteService
+JNIEXPORT jint JNICALL
+Java_org_iotivity_service_ns_provider_ProviderService_nativeEnableRemoteService
 (JNIEnv *, jobject, jstring);
 
 /*
@@ -80,7 +81,8 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nat
  * Method:    nativeDisableRemoteService
  * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeDisableRemoteService
+JNIEXPORT jint JNICALL
+Java_org_iotivity_service_ns_provider_ProviderService_nativeDisableRemoteService
 (JNIEnv *, jobject, jstring);
 
 /*
@@ -104,7 +106,8 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nat
  * Method:    nativeGetRegisteredTopicList
  * Signature: ()Lorg/iotivity/service/ns/common/TopicsList;
  */
-JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeGetRegisteredTopicList
+JNIEXPORT jobject JNICALL
+Java_org_iotivity_service_ns_provider_ProviderService_nativeGetRegisteredTopicList
 (JNIEnv *, jobject);
 
 /*

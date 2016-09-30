@@ -71,7 +71,9 @@ namespace OIC
                       */
                 NSProvider(): m_topicList(new NSTopicsList()), m_state(NSProviderState::DENY),
                     m_subscribedState(NSProviderSubscribedState::DENY),
-                    m_stateCb(NULL), m_messageCb(NULL), m_syncInfoCb(NULL) {}
+                    m_stateCb(NULL), m_messageCb(NULL), m_syncInfoCb(NULL)
+                {
+                }
 
                 /**
                       * Constructor of NSProvider.
@@ -81,7 +83,9 @@ namespace OIC
                 NSProvider(const std::string &providerId) : m_providerId(providerId),
                     m_topicList(new NSTopicsList()), m_state(NSProviderState::DENY),
                     m_subscribedState(NSProviderSubscribedState::DENY),
-                    m_stateCb(NULL), m_messageCb(NULL), m_syncInfoCb(NULL)  {}
+                    m_stateCb(NULL), m_messageCb(NULL), m_syncInfoCb(NULL)
+                {
+                }
 
                 /**
                       * Constructor of NSProvider.
@@ -92,7 +96,9 @@ namespace OIC
                 NSProvider(const std::string &providerId, NSTopicsList *topicList) : m_providerId(
                         providerId), m_topicList(topicList), m_state(NSProviderState::DENY),
                     m_subscribedState(NSProviderSubscribedState::DENY),
-                    m_stateCb(NULL), m_messageCb(NULL), m_syncInfoCb(NULL)  {}
+                    m_stateCb(NULL), m_messageCb(NULL), m_syncInfoCb(NULL)
+                {
+                }
 
                 /**
                       * Constructor of NSProvider.

@@ -52,7 +52,9 @@ namespace OIC
                 /**
                         * Constructor of NSSyncInfo.
                         */
-                NSSyncInfo(): m_messageId(0), m_state(NSSyncType::NS_SYNC_UNREAD) { };
+                NSSyncInfo(): m_messageId(0), m_state(NSSyncType::NS_SYNC_UNREAD)
+                {
+                }
 
                 /**
                         * Constructor of NSSyncInfo.
@@ -71,7 +73,9 @@ namespace OIC
                         */
                 NSSyncInfo(const uint64_t &messageId, const std::string &providerId,
                            const NSSyncType &state)
-                    : m_messageId(messageId), m_providerId(providerId), m_state(state) {}
+                    : m_messageId(messageId), m_providerId(providerId), m_state(state)
+                {
+                }
 
                 /**
                         * Destructor of NSSyncInfo.

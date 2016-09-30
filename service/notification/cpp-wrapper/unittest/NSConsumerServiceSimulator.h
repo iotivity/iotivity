@@ -50,7 +50,7 @@ public:
 
     void findProvider()
     {
-        OC::OCPlatform::findResource("", std::string("/oic/res?rt=oic.r.notification"),
+        OC::OCPlatform::findResource("", std::string("/oic/res?rt=oic.wk.notification"),
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&NSConsumerSimulator::findResultCallback, this, std::placeholders::_1),
                 OC::QualityOfService::LowQos);
@@ -65,9 +65,9 @@ public:
         }
 
         OC::OCRepresentation rep;
-        rep.setValue("PROVIDER_ID", providerID);
-        rep.setValue("MESSAGE_ID", id);
-        rep.setValue("STATE", type);
+        rep.setValue("providerId", providerID);
+        rep.setValue("messageId", id);
+        rep.setValue("state", type);
 
         m_syncResource->post(rep, OC::QueryParamsMap(), &onPost, OC::QualityOfService::LowQos);
     }
@@ -114,7 +114,7 @@ private:
         std::cout << __func__ << " " << rep.getHost() << " result : " << eCode << std::endl;
 
         OC::QueryParamsMap map;
-        map.insert(std::pair<std::string,std::string>(std::string("consumerid"), std::string("123456789012345678901234567890123456")));
+        map.insert(std::pair<std::string,std::string>(std::string("consumerId"), std::string("123456789012345678901234567890123456")));
 
         try
         {
@@ -124,7 +124,7 @@ private:
             std::cout << "resourc : getResourceInterfaces " << resource->getResourceInterfaces()[0] << std::endl;
             std::cout << "resourc : getResourceTypes " << resource->getResourceTypes()[0] << std::endl;
 
-            std::vector<std::string> rts{"oic.r.notification"};
+            std::vector<std::string> rts{"oic.wk.notification"};
 
             m_msgResource
                 = OC::OCPlatform::constructResourceObject(
@@ -161,21 +161,21 @@ private:
         std::cout << __func__ << " " << rep.getHost() << " result : " << eCode;
         std::cout << " uri : " << rep.getUri() << std::endl;
 
-        if (rep.getUri() == "/notification/message" && rep.hasAttribute("MESSAGE_ID")
-                && rep.getValue<int>("MESSAGE_ID") != 1)
+        if (rep.getUri() == "/notification/message" && rep.hasAttribute("messageId")
+                && rep.getValue<int>("messageId") != 1)
         {
-            std::cout << "ID : " << rep.getValue<int>("ID") << std::endl;
-            std::cout << "TITLE : " << rep.getValueToString("TITLE") << std::endl;
-            std::cout << "CONTENT : " << rep.getValueToString("CONTENT") << std::endl;
-            m_messageFunc(int(rep.getValue<int>("MESSAGE_ID")),
-                          std::string(rep.getValueToString("TITLE")),
-                          std::string(rep.getValueToString("CONTENT")),
-                          std::string(rep.getValueToString("SOURCE")));
+            std::cout << "ID : " << rep.getValue<int>("messageId") << std::endl;
+            std::cout << "TITLE : " << rep.getValueToString("title") << std::endl;
+            std::cout << "CONTENT : " << rep.getValueToString("contentText") << std::endl;
+            m_messageFunc(int(rep.getValue<int>("messageId")),
+                          std::string(rep.getValueToString("title")),
+                          std::string(rep.getValueToString("contentText")),
+                          std::string(rep.getValueToString("source")));
         }
         else if (rep.getUri() == "/notification/sync")
         {
             std::cout << "else if (rep.getUri() == sync) " << std::endl;
-            m_syncFunc(int(rep.getValue<int>("STATE")), int(rep.getValue<int>("ID")));
+            m_syncFunc(int(rep.getValue<int>("state")), int(rep.getValue<int>("messageId")));
         }
     }
 

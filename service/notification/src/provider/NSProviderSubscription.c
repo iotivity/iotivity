@@ -24,7 +24,8 @@ NSResult NSInitSubscriptionList()
 {
     NS_LOG(DEBUG, "NSInitSubscriptionList - IN");
 
-    consumerSubList = NSStorageCreate();
+    consumerSubList = NSProviderStorageCreate();
+    NS_VERIFY_NOT_NULL(consumerSubList, NS_FAIL);
     consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER;
 
     NS_LOG(DEBUG, "NSInitSubscriptionList - OUT");
@@ -159,7 +160,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         element->data = (void*) subData;
         element->next = NULL;
 
-        if (NSStorageWrite(consumerSubList, element) != NS_OK)
+        if (NSProviderStorageWrite(consumerSubList, element) != NS_OK)
         {
             NS_LOG(DEBUG, "fail to write cache");
         }
@@ -215,7 +216,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         element->data = (void*) subData;
         element->next = NULL;
 
-        if (NSStorageWrite(consumerSubList, element) != NS_OK)
+        if (NSProviderStorageWrite(consumerSubList, element) != NS_OK)
         {
             NS_LOG(ERROR, "Fail to write cache");
         }
@@ -232,7 +233,7 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
 
     consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER_OBSERVE_ID;
 
-    while(NSStorageDelete(consumerSubList, (char *)
+    while(NSProviderStorageDelete(consumerSubList, (char *)
             &(entityHandlerRequest->obsInfo.obsId)) != NS_FAIL);
     consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER;
 
@@ -273,7 +274,7 @@ NSResult NSSendResponse(const char * id, bool accepted)
         : OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, NS_DENY);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
 
-    NSCacheElement * element = NSStorageRead(consumerSubList, id);
+    NSCacheElement * element = NSProviderStorageRead(consumerSubList, id);
 
     if(element == NULL)
     {
@@ -282,8 +283,8 @@ NSResult NSSendResponse(const char * id, bool accepted)
     }
     NSCacheSubData * subData = (NSCacheSubData*) element->data;
 
-    if (OCNotifyListOfObservers(rHandle, (OCObservationId*)&subData->messageObId, 1, payload, OC_LOW_QOS)
-            != OC_STACK_OK)
+    if (OCNotifyListOfObservers(rHandle, (OCObservationId*)&subData->messageObId, 1,
+            payload, OC_LOW_QOS) != OC_STACK_OK)
     {
         NS_LOG(ERROR, "fail to send Acceptance");
         OCRepPayloadDestroy(payload);

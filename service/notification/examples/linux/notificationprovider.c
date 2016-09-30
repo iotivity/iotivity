@@ -251,17 +251,20 @@ int main()
                 printf("app - topic : %s \n", topic);
 
                 NSMessage * msg = NSCreateMessage();
-
-                msg->title = OICStrdup(title);
-                msg->contentText = OICStrdup(body);
-                msg->sourceName = OICStrdup("OCF");
-
-                if(topic[0] != '\0')
+                if(msg)
                 {
-                    msg->topic = OICStrdup(topic);
-                }
 
-                NSSendMessage(msg);
+                    msg->title = OICStrdup(title);
+                    msg->contentText = OICStrdup(body);
+                    msg->sourceName = OICStrdup("OCF");
+
+                    if(topic[0] != '\0')
+                    {
+                        msg->topic = OICStrdup(topic);
+                    }
+
+                    NSSendMessage(msg);
+                }
             }
                 break;
 
