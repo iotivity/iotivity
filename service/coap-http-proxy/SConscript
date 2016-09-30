@@ -84,3 +84,6 @@ local_env.UserInstallTargetHeader('include/CoapHttpHandler.h', 'service/coap-htt
 ######################################################################
 if target_os in ['linux', 'tizen']:
     SConscript('samples/SConscript')
+
+if target_os in ['linux']:
+    SConscript('unittests/SConscript')
