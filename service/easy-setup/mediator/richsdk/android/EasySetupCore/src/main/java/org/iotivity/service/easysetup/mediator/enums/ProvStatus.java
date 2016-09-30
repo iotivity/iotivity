@@ -43,17 +43,42 @@ public enum ProvStatus {
     /**
      * Status indicating failure connection to target network
      */
-    ES_STATE_CONNECTED_FAIL_TO_ENROLLER(3),
+    ES_STATE_FAILED_TO_CONNECT_TO_ENROLLER(3),
+
+    /**
+     * Status indicating being registering to cloud
+     */
+    ES_STATE_REGISTERING_TO_CLOUD(4),
 
     /**
      * Status indicating successful registration to cloud
      */
-    ES_STATE_REGISTERED_TO_CLOUD(4),
+    ES_STATE_REGISTERED_TO_CLOUD(5),
 
     /**
-     * Status indicating failure registration to cloud
+     * Status indicating registeration failure to cloud
      */
-    ES_STATE_REGISTRRED_FAIL_TO_CLOUD(5);
+    ES_STATE_FAILED_TO_REGISTER_TO_CLOUD(6),
+
+    /**
+     * Status indicating being publishing resources to cloud
+     */
+    ES_STATE_PUBLISHING_RESOURCES_TO_CLOUD(7),
+
+    /**
+     * Status indicating successful resource publish to cloud
+     */
+    ES_STATE_PUBLISHED_RESOURCES_TO_CLOUD(8),
+
+    /**
+     * Status indicating resource publish failure to cloud
+     */
+    ES_STATE_FAILED_TO_PUBLISH_RESOURCES_TO_CLOUD(9),
+
+    /**
+     * End of Easy setup status
+     */
+    ES_STATE_EOF(255);
 
     private int value;
 
