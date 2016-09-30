@@ -789,6 +789,8 @@ CAResult_t CADtlsClose(const CAEndpoint_t *endpoint)
         return CA_STATUS_FAILED;
     }
 
+    CARemovePeerFromPeerInfoList(endpoint->addr, endpoint->port);
+
     oc_mutex_unlock(g_dtlsContextMutex);
 
     OIC_LOG(DEBUG, NET_DTLS_TAG, "OUT CADtlsDisconnect");
