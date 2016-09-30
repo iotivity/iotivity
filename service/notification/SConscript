@@ -124,3 +124,6 @@ SConscript('examples/SConscript')
 
 # Go to build c++ wrapper
 SConscript('cpp-wrapper/SConscript')
+
+if target_os == 'android':
+    SConscript('android/SConscript')
