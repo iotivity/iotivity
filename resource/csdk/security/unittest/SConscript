@@ -71,7 +71,7 @@ if srmtest_env.get('LOGGING') == '1':
 	srmtest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if target_os == 'windows':
-	srmtest_env.AppendUnique(LIBS = ['advapi32', 'kernel32', 'ws2_32', 'iphlpapi'])
+	srmtest_env.AppendUnique(LIBS = ['advapi32', 'bcrypt', 'kernel32', 'ws2_32', 'iphlpapi'])
 else:
 	# TODO: Implement feature check.
 	srmtest_env.AppendUnique(CPPDEFINES = ['HAVE_LOCALTIME_R'])

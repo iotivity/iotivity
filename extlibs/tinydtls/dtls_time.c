@@ -57,7 +57,7 @@ void
 dtls_clock_init(void) {
 #ifdef _WIN32
   /* Use clock offset in milliseconds */
-  dtls_clock_offset = GetTickCount();
+  dtls_clock_offset = GetTickCount64();
 #else
 #ifdef HAVE_TIME_H
   /* Use clock offset in seconds */
@@ -75,7 +75,7 @@ dtls_clock_init(void) {
 
 void dtls_ticks(dtls_tick_t *t) {
 #ifdef _WIN32
-  *t = ((GetTickCount() - dtls_clock_offset) * DTLS_TICKS_PER_SECOND / 1000);
+  *t = ((GetTickCount64() - dtls_clock_offset) * DTLS_TICKS_PER_SECOND / 1000);
 #else
 #ifdef HAVE_SYS_TIME_H
   struct timeval tv;

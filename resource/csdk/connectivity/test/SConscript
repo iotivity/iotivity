@@ -60,6 +60,7 @@ if catest_env.get('LOGGING'):
 if target_os in ['msys_nt', 'windows']:
 	catest_env.AppendUnique(LIBS = ['ws2_32',
                                         'advapi32',
+                                        'bcrypt',
                                         'iphlpapi'])
 else:
 	catest_env.AppendUnique(LIBS = ['m'])

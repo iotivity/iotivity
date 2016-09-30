@@ -86,6 +86,7 @@ if not sptest_env.get('RELEASE'):
 if target_os in ['msys_nt', 'windows']:
     sptest_env.AppendUnique(LIBS = ['ws2_32',
                                     'advapi32',
+                                    'bcrypt',
                                     'iphlpapi'])
 
 ######################################################################
