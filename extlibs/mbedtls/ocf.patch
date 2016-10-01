@@ -132,6 +132,47 @@ index deaaa37..4f10540 100644
  #define MBEDTLS_KEY_EXCHANGE__SOME__ECDHE_ENABLED
  #endif
  
+diff --git a/library/entropy_poll.c b/library/entropy_poll.c
+index a116e60..c022caf 100644
+--- a/library/entropy_poll.c
++++ b/library/entropy_poll.c
+@@ -54,28 +54,29 @@
+ #define _WIN32_WINNT 0x0400
+ #endif
+ #include <windows.h>
+-#include <wincrypt.h>
++#include <bcrypt.h>
+ 
+ int mbedtls_platform_entropy_poll( void *data, unsigned char *output, size_t len,
+                            size_t *olen )
+ {
+-    HCRYPTPROV provider;
+     ((void) data);
+     *olen = 0;
+ 
+-    if( CryptAcquireContext( &provider, NULL, NULL,
+-                              PROV_RSA_FULL, CRYPT_VERIFYCONTEXT ) == FALSE )
++    /*
++     * size_t may be 64 bits, but ULONG is always 32.
++     * If len is larger than the maximum for ULONG, just fail.
++     * It's unlikely anything ever will want to ask for this much randomness.
++     */
++    if ( len > 0xFFFFFFFFULL )
+     {
+         return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
+     }
+ 
+-    if( CryptGenRandom( provider, (DWORD) len, output ) == FALSE )
++    if ( !BCRYPT_SUCCESS(BCryptGenRandom(NULL, output, (ULONG) len, BCRYPT_USE_SYSTEM_PREFERRED_RNG)) )
+     {
+-        CryptReleaseContext( provider, 0 );
+         return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
+     }
+ 
+-    CryptReleaseContext( provider, 0 );
+     *olen = len;
+ 
+     return( 0 );
 diff --git a/library/ssl_ciphersuites.c b/library/ssl_ciphersuites.c
 index 3546331..74cef29 100644
 --- a/library/ssl_ciphersuites.c
