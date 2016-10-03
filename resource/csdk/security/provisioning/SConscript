@@ -70,21 +70,14 @@ if 'g++' in provisioning_env.get('CXX'):
 provisioning_env.AppendUnique(LIBPATH = [provisioning_env.get('BUILD_DIR')])
 provisioning_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'ocsrm'])
 
-provisioning_env.AppendUnique(LIBS = ['tinydtls'])
+provisioning_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
-if provisioning_env.get('WITH_TCP') == True:
-	provisioning_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
-
-if provisioning_env.get('DTLS_WITH_X509') == '1':
-	provisioning_env.AppendUnique(LIBS = ['CKManager', 'asn1'])
-if provisioning_env.get('WITH_TCP') == True:
-	provisioning_env.AppendUnique(LIBS = ['mbedtls'])
 
 if target_os not in ['msys_nt', 'windows', 'android']:
 	provisioning_env.ParseConfig('pkg-config --libs glib-2.0')
 
 if target_os in ['windows', 'msys_nt']:
-	provisioning_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi', 'timer'])
+	provisioning_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi'])
 
 if target_os in ['android']:
 	provisioning_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
@@ -110,6 +103,7 @@ provisioning_src = [
 	'src/provisioningdatabasemanager.c' ]
 
 if provisioning_env.get('WITH_TCP') == True:
+	provisioning_env.AppendUnique(CPPDEFINES= ['__WITH_TLS__'])
 	provisioning_src = provisioning_src + [
 	'src/cloud/utils.c',
 	'src/cloud/crl.c',
@@ -134,9 +128,6 @@ else:
 
 provisioning_env.InstallTarget(provisioningserver, 'ocpmapi')
 provisioning_env.UserInstallTargetLib(provisioningserver, 'ocpmapi')
-
-if provisioning_env.get('DTLS_WITH_X509') == '1':
-	SConscript('ck_manager/SConscript')
 
 if target_os in ['linux', 'msys_nt', 'windows', 'tizen']:
 	SConscript('sample/SConscript')

@@ -42,7 +42,7 @@ rd_sample_app_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 rd_sample_app_env.PrependUnique(LIBS = ['resource_directory', 'oc', 'octbstack'])
 
 if env.get('SECURED') == '1':
-    rd_sample_app_env.AppendUnique(LIBS = ['tinydtls'])
+    rd_sample_app_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if env.get('LOGGING'):
     rd_sample_app_env.AppendUnique(CPPDEFINES = ['TB_LOG'])

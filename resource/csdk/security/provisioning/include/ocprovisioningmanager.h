@@ -308,7 +308,7 @@ void OCDeleteACLList(OicSecAcl_t* pAcl);
  */
 void OCDeletePdAclList(OicSecPdAcl_t* pPdAcl);
 
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 /**
  * this function sends CRL information to resource.
  *
@@ -348,7 +348,7 @@ OCStackResult OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16
 OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
                                         OicEncodingType_t encodingType, uint16_t *credId);
 
-#endif // __WITH_X509__ || __WITH_TLS__
+#endif // __WITH_DTLS__ || __WITH_TLS__
 
 
 #ifdef __cplusplus

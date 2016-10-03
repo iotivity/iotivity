@@ -104,13 +104,13 @@ static void FreeCred(OicSecCred_t *cred)
 #endif
 
     //Clean PublicData/OptionalData/Credusage
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
      // TODO: Need to check credUsage.
     OICFree(cred->publicData.data);
     OICFree(cred->optionalData.data);
     OICFree(cred->credUsage);
 
-#endif /* __WITH_X509__ ||  __WITH_TLS__*/
+#endif /* __WITH_DTLS__ ||  __WITH_TLS__*/
 
     //Clean PrivateData
     OICFree(cred->privateData.data);
@@ -147,7 +147,7 @@ size_t GetCredKeyDataSize(const OicSecCred_t* cred)
             {
                 size += credPtr->privateData.len;
             }
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
             if (credPtr->publicData.data && 0 < credPtr->publicData.len)
             {
                 size += credPtr->publicData.len;
@@ -224,7 +224,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         {
             mapSize++;
         }
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         if (SIGNED_ASYMMETRIC_KEY == cred->credType && cred->publicData.data)
         {
             mapSize++;
@@ -237,7 +237,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         {
             mapSize++;
         }
-#endif /* __WITH_X509__ ||  __WITH_TLS__*/
+#endif /* __WITH_DTLS__ ||  __WITH_TLS__*/
         if (!secureFlag && cred->privateData.data)
         {
             mapSize++;
@@ -281,7 +281,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         cborEncoderResult = cbor_encode_int(&credMap, cred->credType);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Type Value.");
 
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         //PublicData -- Not Mandatory
         if (SIGNED_ASYMMETRIC_KEY == cred->credType && cred->publicData.data)
         {
@@ -410,7 +410,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
                 strlen(cred->credUsage));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Credusage Name Value.");
         }
-#endif /* __WITH_X509__ ||  __WITH_TLS__*/
+#endif /* __WITH_DTLS__ ||  __WITH_TLS__*/
         //PrivateData -- Not Mandatory
         if(!secureFlag && cred->privateData.data)
         {
@@ -782,7 +782,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 }
 
                             }
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
                             //PublicData -- Not Mandatory
                             if (strcmp(name, OIC_JSON_PUBLICDATA_NAME)  == 0)
                             {
@@ -912,7 +912,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 cborFindResult = cbor_value_dup_text_string(&credMap, &cred->credUsage, &len, NULL);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Period.");
                             }
-#endif  //__WITH_X509__ ||  __WITH_TLS__
+#endif  //__WITH_DTLS__ ||  __WITH_TLS__
 
                             if (0 == strcmp(OIC_JSON_PERIOD_NAME, name))
                             {
@@ -993,7 +993,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
             SYMMETRIC_GROUP_KEY | ASYMMETRIC_KEY | SIGNED_ASYMMETRIC_KEY | PIN_PASSWORD), ERROR);
     cred->credType = credType;
 
-#ifdef __WITH_X509__
+#ifdef __WITH_DTLS__
     if (publicData && publicData->data)
     {
         cred->publicData.data = (uint8_t *)OICCalloc(1, publicData->len);
@@ -1001,7 +1001,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
         memcpy(cred->publicData.data, publicData->data, publicData->len);
         cred->publicData.len = publicData->len;
     }
-#endif // __WITH_X509__
+#endif // __WITH_DTLS__
 
     if (privateData && privateData->data)
     {
@@ -1480,7 +1480,7 @@ exit:
     return false;
 }
 
-#endif //__WITH_DTLS__
+#endif // __WITH_DTLS__ or __WITH_TLS__
 
 static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * ehRequest)
 {
@@ -1542,20 +1542,14 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
                             OicUuid_t emptyUuid = { .id={0}};
                             SetUuidForRandomPinOxm(&emptyUuid);
 
-#ifdef __WITH_TLS__
-                            if(CA_STATUS_OK != CAregisterTlsCredentialsHandler(GetDtlsPskCredentials))
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+                            if(CA_STATUS_OK != CAregisterPskCredentialsHandler(GetDtlsPskCredentials))
                             {
                                 OIC_LOG(ERROR, TAG, "Failed to revert TLS credential handler.");
                                 ret = OC_EH_ERROR;
                                 break;
                             }
-#endif
-                            if(CA_STATUS_OK != CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials))
-                            {
-                                OIC_LOG(ERROR, TAG, "Failed to revert DTLS credential handler.");
-                                ret = OC_EH_ERROR;
-                                break;
-                            }
+#endif // __WITH_DTLS__ or __WITH_TLS__
                         }
 
                         //Select cipher suite to use owner PSK
@@ -2025,81 +2019,6 @@ exit:
 }
 
 #endif /* __WITH_DTLS__ */
-#ifdef __WITH_X509__
-#define CERT_LEN_PREFIX (3)
-#define BYTE_SIZE (8) //bits
-#define PUB_KEY_X_COORD ("x")
-#define PUB_KEY_Y_COORD ("y")
-#define CERTIFICATE ("x5c")
-#define PRIVATE_KEY ("d")
-
-static uint32_t parseCertPrefix(uint8_t *prefix)
-{
-    uint32_t res = 0;
-    if (NULL != prefix)
-    {
-        for (int i = 0; i < CERT_LEN_PREFIX; ++i)
-        {
-            res |= (((uint32_t) prefix[i]) << ((CERT_LEN_PREFIX - 1 -i) * BYTE_SIZE));
-        }
-    }
-    return res;
-}
-
-static OCStackResult GetCAPublicKeyData(CADtlsX509Creds_t *credInfo)
-{
-    OCStackResult ret = OC_STACK_ERROR;
-    uint8_t *ccPtr = credInfo->certificateChain;
-    for (uint8_t i = 0; i < credInfo->chainLen - 1; ++i)
-    {
-        ccPtr += CERT_LEN_PREFIX + parseCertPrefix(ccPtr);
-    }
-
-    ByteArray cert = { .data = ccPtr + CERT_LEN_PREFIX, .len = parseCertPrefix(ccPtr) };
-    CertificateX509 certStruct;
-
-    VERIFY_SUCCESS(TAG, PKI_SUCCESS == DecodeCertificate(cert, &certStruct), ERROR);
-
-    INC_BYTE_ARRAY(certStruct.pubKey, 2);
-
-    memcpy(credInfo->rootPublicKeyX, certStruct.pubKey.data, PUBLIC_KEY_SIZE / 2);
-    memcpy(credInfo->rootPublicKeyY, certStruct.pubKey.data + PUBLIC_KEY_SIZE / 2, PUBLIC_KEY_SIZE / 2);
-
-    ret = OC_STACK_OK;
-    exit:
-    return ret;
-}
-
-int GetDtlsX509Credentials(CADtlsX509Creds_t *credInfo)
-{
-    int ret = 1;
-    VERIFY_NON_NULL(TAG, credInfo, ERROR);
-    if (NULL == gCred)
-    {
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == InitCredResource(), ERROR);
-    }
-
-    OicSecCred_t *cred = NULL;
-    LL_SEARCH_SCALAR(gCred, cred, credType, SIGNED_ASYMMETRIC_KEY);
-    VERIFY_NON_NULL(TAG, cred, ERROR);
-
-    if (cred->publicData.len > MAX_CERT_MESSAGE_LEN || cred->privateData.len > PRIVATE_KEY_SIZE)
-    {
-        goto exit;
-    }
-    credInfo->chainLen = 2;
-    memcpy(credInfo->certificateChain, cred->publicData.data, cred->publicData.len);
-    memcpy(credInfo->devicePrivateKey, cred->privateData.data, cred->privateData.len);
-    credInfo->certificateChainLen = cred->publicData.len;
-    GetCAPublicKeyData(credInfo);
-    ret = 0;
-
-exit:
-
-    return ret;
-}
-#undef CERT_LEN_PREFIX
-#endif /* __WITH_X509__ */
 
 OCStackResult SetCredRownerId(const OicUuid_t* newROwner)
 {
@@ -2154,8 +2073,8 @@ OCStackResult GetCredRownerId(OicUuid_t *rowneruuid)
     return retVal;
 }
 
-#ifdef __WITH_TLS__
-void GetDerCaCert(ByteArray * crt)
+#if defined (__WITH_TLS__) || defined(__WITH_DTLS__)
+void GetDerCaCert(ByteArray_t * crt)
 {
     if (NULL == crt)
     {
@@ -2210,7 +2129,7 @@ void GetDerCaCert(ByteArray * crt)
     return;
 }
 
-void GetDerOwnCert(ByteArray * crt)
+void GetDerOwnCert(ByteArray_t * crt)
 {
     if (NULL == crt)
     {
@@ -2240,7 +2159,7 @@ void GetDerOwnCert(ByteArray * crt)
     return;
 }
 
-void GetDerKey(ByteArray * key)
+void GetDerKey(ByteArray_t * key)
 {
     if (NULL == key)
     {

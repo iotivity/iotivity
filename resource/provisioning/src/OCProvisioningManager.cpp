@@ -309,7 +309,7 @@ namespace OC
         return result;
     }
 
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     OCStackResult OCSecure::saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
                                         OicEncodingType_t encodingType, uint16_t *credId)
     {
@@ -339,7 +339,7 @@ namespace OC
         }
         return result;
     }
-#endif // __WITH_X509__ || __WITH_TLS__
+#endif // __WITH_DTLS__ || __WITH_TLS__
 
     void OCSecureResource::callbackWrapper(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
     {
@@ -633,7 +633,7 @@ namespace OC
         return result;
     }
 
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     OCStackResult OCSecureResource::provisionTrustCertChain(OicSecCredType_t type, uint16_t credId,
                     ResultCallBack resultCallback)
     {
@@ -667,7 +667,7 @@ namespace OC
         }
         return result;
     }
-#endif // __WITH_X509__ || __WITH_TLS__
+#endif // __WITH_DTLS__ or __WITH_TLS__
 
     std::string OCSecureResource::getDeviceID()
     {

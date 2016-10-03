@@ -73,14 +73,7 @@ else :
 		provisiontests_env.AppendUnique(LIBS = ['ra_xmpp'])
 
 if provisiontests_env.get('SECURED') == '1':
-	provisiontests_env.AppendUnique(LIBS = ['tinydtls'])
-	provisiontests_env.AppendUnique(LIBS = ['timer'])
-	if provisiontests_env.get('WITH_TCP') == True:
-		provisiontests_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
-
-if provisiontests_env.get('DTLS_WITH_X509') == '1':
-	provisiontests_env.AppendUnique(LIBS = ['CKManager'])
-	provisiontests_env.AppendUnique(LIBS = ['asn1'])
+	provisiontests_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 
 if provisiontests_env.get('LOGGING'):
@@ -90,13 +83,13 @@ if provisiontests_env.get('LOGGING'):
 # Source files and Targets
 ######################################################################
 ocprovisiontest_src = [
-    'OCProvisioningTest.cpp'
-    ]
+	'OCProvisioningTest.cpp'
+	]
 
 if provisiontests_env.get('WITH_TCP') == True:
-    ocprovisiontest_src = ocprovisiontest_src + [
-    'OCCloudProvisioningTest.cpp'
-    ]
+	ocprovisiontest_src = ocprovisiontest_src + [
+	'OCCloudProvisioningTest.cpp'
+	]
 
 unittests = provisiontests_env.Program('provisiontests', ocprovisiontest_src)
 

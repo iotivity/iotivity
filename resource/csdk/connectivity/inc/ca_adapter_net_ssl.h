@@ -17,8 +17,12 @@
  * limitations under the License.
  *
  ******************************************************************/
-#ifndef CA_ADAPTER_NET_TLS_H_
-#define CA_ADAPTER_NET_TLS_H_
+#ifndef CA_ADAPTER_NET_SSL_H_
+#define CA_ADAPTER_NET_SSL_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif //__cplusplus
 
 #include "caadapterutils.h"
 #include "cainterface.h"
@@ -54,7 +58,7 @@ CAResult_t CAsetTlsCipherSuite(const uint32_t cipher);
  * @param[in]  type  type of adapter.
  *
  */
-void CAsetTlsAdapterCallbacks(CAPacketReceivedCallback recvCallback,
+void CAsetSslAdapterCallbacks(CAPacketReceivedCallback recvCallback,
                               CAPacketSendCallback sendCallback,
                               CATransportAdapter_t type);
 
@@ -67,7 +71,7 @@ void CAsetCredentialTypesCallback(CAgetCredentialTypesHandler credTypesCallback)
  * Register callback to get credential types.
  * @param[in]  typesCallback    callback to get credential types.
  */
-void CAsetTlsCredentialsCallback(CAGetDTLSPskCredentialsHandler credCallback);
+void CAsetSslCredentialsCallback(CAgetPskCredentialsHandler credCallback);
 
 /**
  * Close the TLS session
@@ -76,7 +80,7 @@ void CAsetTlsCredentialsCallback(CAGetDTLSPskCredentialsHandler credCallback);
  *
  * @retval  ::CA_STATUS_OK for success, otherwise some error value
  */
-CAResult_t CAcloseTlsConnection(const CAEndpoint_t *endpoint);
+CAResult_t CAcloseSslConnection(const CAEndpoint_t *endpoint);
 
 /**
  * initialize mbedTLS library and other necessary initialization.
@@ -87,12 +91,12 @@ CAResult_t CAcloseTlsConnection(const CAEndpoint_t *endpoint);
  * @retval  ::CA_STATUS_FAILED Operation failed.
  *
  */
-CAResult_t CAinitTlsAdapter();
+CAResult_t CAinitSslAdapter();
 
 /**
  * de-inits mbedTLS library and free the allocated memory.
  */
-void CAdeinitTlsAdapter();
+void CAdeinitSslAdapter();
 
 /**
  * Performs TLS encryption of the CoAP PDU.
@@ -112,7 +116,7 @@ void CAdeinitTlsAdapter();
  *
  */
 
-CAResult_t CAencryptTls(const CAEndpoint_t *endpoint, void *data, uint32_t dataLen);
+CAResult_t CAencryptSsl(const CAEndpoint_t *endpoint, void *data, uint32_t dataLen);
 
 /**
  * Performs TLS decryption of the data.
@@ -127,7 +131,7 @@ CAResult_t CAencryptTls(const CAEndpoint_t *endpoint, void *data, uint32_t dataL
  * @retval  ::CA_STATUS_FAILED Operation failed.
  *
  */
-CAResult_t CAdecryptTls(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t dataLen);
+CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t dataLen);
 
 /**
  * Initiate TLS handshake with selected cipher suite.
@@ -136,28 +140,41 @@ CAResult_t CAdecryptTls(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
  *
  * @retval  ::CA_STATUS_OK for success, otherwise some error value
  */
-CAResult_t CAinitiateTlsHandshake(const CAEndpoint_t *endpoint);
+CAResult_t CAinitiateSslHandshake(const CAEndpoint_t *endpoint);
 
 /**
  * Register callback to deliver the result of TLS handshake
  * @param[in] tlsHandshakeCallback Callback to receive the result of TLS handshake.
  */
-void CAsetTlsHandshakeCallback(CAErrorCallback tlsHandshakeCallback);
+void CAsetSslHandshakeCallback(CAErrorCallback tlsHandshakeCallback);
 
 /**
- * Generate ownerPSK using the PKCS#12 derivation function
+ * Generate ownerPSK using PRF
+ * OwnerPSK = TLS-PRF('master key' , 'oic.sec.doxm.jw',
+ *                                    'ID of new device(Resource Server)',
+ *                                    'ID of owner smart-phone(Provisioning Server)')
  *
+ * @param[in] endpoint  information of network address
+ * @param[in] label  Ownership transfer method e.g)"oic.sec.doxm.jw"
+ * @param[in] labelLen  Byte length of label
+ * @param[in] rsrcServerDeviceID  ID of new device(Resource Server)
+ * @param[in] rsrcServerDeviceIDLen  Byte length of rsrcServerDeviceID
+ * @param[in] provServerDeviceID  label of previous owner
+ * @param[in] provServerDeviceIDLen  byte length of provServerDeviceID
  * @param[in,out] ownerPSK  Output buffer for owner PSK
  * @param[in] ownerPSKSize  Byte length of the ownerPSK to be generated
- * @param[in] deviceID  ID of new device(Resource Server)
- * @param[in] deviceIDLen  Byte length of deviceID
  *
  * @retval  ::CA_STATUS_OK for success, otherwise some error value
  */
-CAResult_t CAtlsGenerateOwnerPSK(const CAEndpoint_t *endpoint,
-                                 uint8_t* ownerPSK, const size_t ownerPSKSize,
-                                 const uint8_t* deviceID, const size_t deviceIDLen);
+CAResult_t CAsslGenerateOwnerPsk(const CAEndpoint_t *endpoint,
+                    const uint8_t* label, const size_t labelLen,
+                    const uint8_t* rsrcServerDeviceId, const size_t rsrcServerDeviceIdLen,
+                    const uint8_t* provServerDeviceId, const size_t provServerDeviceIdLen,
+                    uint8_t* ownerPsk, const size_t ownerPskSize);
+#ifdef __cplusplus
+}
+#endif //__cplusplus
 
-#endif /* CA_ADAPTER_NET_TLS_H_ */
+#endif /* CA_ADAPTER_NET_SSL_H_ */
 
 

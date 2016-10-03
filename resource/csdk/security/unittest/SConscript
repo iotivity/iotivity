@@ -56,26 +56,24 @@ srmtest_env.PrependUnique(CPPPATH = [
 
 srmtest_env.AppendUnique(LIBPATH = [srmtest_env.get('BUILD_DIR')])
 srmtest_env.PrependUnique(LIBS = ['ocsrm',
-                                    'octbstack',
                                     'oc_logger',
                                     'connectivity_abstraction',
                                     'coap'])
 
 if srmtest_env.get('SECURED') == '1':
-    srmtest_env.AppendUnique(LIBS = ['tinydtls', 'timer'])
-    
-if srmtest_env.get('WITH_TCP') == True:
-		srmtest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+    srmtest_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
+    srmtest_env.AppendUnique(LIBS = ['tinydtls'])
 
 if srmtest_env.get('LOGGING') == '1':
 	srmtest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if target_os == 'windows':
 	srmtest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
-	srmtest_env.AppendUnique(LIBS = ['advapi32', 'bcrypt', 'kernel32', 'ws2_32', 'iphlpapi'])
+	srmtest_env.AppendUnique(LIBS = ['advapi32', 'bcrypt', 'kernel32', 'ws2_32', 'iphlpapi', 'octbstack_static'])
 else:
 	# TODO: Implement feature check.
 	srmtest_env.AppendUnique(CPPDEFINES = ['HAVE_LOCALTIME_R'])
+	srmtest_env.AppendUnique(LIBS = ['octbstack'])
 
 ######################################################################
 # Source files and Targets

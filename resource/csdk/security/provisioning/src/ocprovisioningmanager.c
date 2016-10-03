@@ -359,8 +359,9 @@ static OCStackResult RemoveDeviceInfoFromLocal(const OCProvisionDev_t* pTargetDe
     // Close the DTLS session of the removed device.
     CAEndpoint_t *endpoint = (CAEndpoint_t *)&pTargetDev->endpoint;
     endpoint->port = pTargetDev->securePort;
-    CAResult_t caResult = CACloseDtlsSession(endpoint);
-    if (CA_STATUS_OK != caResult) {
+    CAResult_t caResult = CAcloseSslSession(endpoint);
+    if(CA_STATUS_OK != caResult)
+    {
         OIC_LOG_V(WARNING, TAG, "OCRemoveDevice : Failed to close DTLS session : %d", caResult);
     }
 
@@ -1044,25 +1045,7 @@ void OCDeletePdAclList(OicSecPdAcl_t* pPdAcl)
 {
     FreePdAclList(pPdAcl);
 }
-
-
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
-/**
- * this function sends CRL information to resource.
- *
- * @param[in] ctx Application context would be returned in result callback.
- * @param[in] selectedDeviceInfo Selected target device.
- * @param[in] crl CRL to provision.
- * @param[in] resultCallback callback provided by API user, callback will be called when provisioning
-              request recieves a response from resource server.
- * @return  OC_STACK_OK in case of success and other value otherwise.
- */
-OCStackResult OCProvisionCRL(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecCrl_t *crl,
-                             OCProvisionResultCB resultCallback)
-{
-    return SRPProvisionCRL(ctx, selectedDeviceInfo, crl, resultCallback);
-}
-
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 /**
  * function to provision Trust certificate chain to devices.
  *
@@ -1081,7 +1064,6 @@ OCStackResult OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16
     return SRPProvisionTrustCertChain(ctx, type, credId,
                                       selectedDeviceInfo, resultCallback);
 }
-
 /**
  * function to save Trust certificate chain into Cred of SVR.
  *
@@ -1097,5 +1079,5 @@ OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
     return SRPSaveTrustCertChain(trustCertChain, chainSize, encodingType, credId);
 }
 
-#endif // __WITH_X509__ || __WITH_TLS__
+#endif // __WITH_DTLS__ || __WITH_TLS__
 

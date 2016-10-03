@@ -64,21 +64,13 @@ sptest_env.AppendUnique(LIBPATH = [sptest_env.get('BUILD_DIR')])
 sptest_env.PrependUnique(LIBS = [   'ocpmapi',
                                     'oc',
                                     'ocsrm',
-                                    'octbstack',
                                     'oc_logger',
                                     'connectivity_abstraction',
                                     'coap'])
 
 if sptest_env.get('SECURED') == '1':
-    sptest_env.AppendUnique(LIBS = ['timer'])
+    sptest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
     sptest_env.AppendUnique(LIBS = ['tinydtls'])
-
-if sptest_env.get('DTLS_WITH_X509') == '1':
-	sptest_env.AppendUnique(LIBS = ['CKManager'])
-	sptest_env.AppendUnique(LIBS = ['asn1'])
-
-if sptest_env.get('WITH_TCP') == True:
-	sptest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 if not sptest_env.get('RELEASE'):
 	sptest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
@@ -88,7 +80,10 @@ if target_os in ['msys_nt', 'windows']:
     sptest_env.AppendUnique(LIBS = ['ws2_32',
                                     'advapi32',
                                     'bcrypt',
+                                    'octbstack_static',
                                     'iphlpapi'])
+else:
+	sptest_env.AppendUnique(LIBS = ['octbstack'])
 
 ######################################################################
 # Source files and Targets

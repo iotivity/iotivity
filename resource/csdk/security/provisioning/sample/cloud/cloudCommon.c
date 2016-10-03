@@ -328,7 +328,7 @@ static OCStackResult saveTrustCert(void)
     OCStackResult res = OC_STACK_ERROR;
     OIC_LOG(INFO, TAG, "Save Trust Cert. Chain into Cred of SVR");
 
-    ByteArray trustCertChainArray = {0, 0};
+    ByteArray_t trustCertChainArray = {0, 0};
     const char *filename = "rootca.crt";
 
     if (!readFile(filename, (OCByteString *)&trustCertChainArray))

@@ -27,9 +27,6 @@
 #include "ocprovisioningmanager.h"
 #include "OCApi.h"
 #include "OCPlatform_impl.h"
-#ifdef __WITH_TLS__
-#include "OCCloudProvisioning.h"
-#endif
 
 namespace OC
 {
@@ -211,7 +208,7 @@ namespace OC
                     std::string uuid,
                     ResultCallBack resultCallback);
 
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
             /**
              * API to save Trust certificate chain into Cred of SVR.
              *
@@ -223,7 +220,7 @@ namespace OC
              */
             static OCStackResult saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
                                         OicEncodingType_t encodingType, uint16_t *credId);
-#endif // __WITH_X509__ || __WITH_TLS__
+#endif // __WITH_DTLS__ || __WITH_TLS__
 
     };
 
@@ -326,7 +323,7 @@ namespace OC
             OCStackResult provisionDirectPairing(const OicSecPconf_t *pconf,
                     ResultCallBack resultCallback);
 
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
             /**
              * API to provision cert.
              *
@@ -339,7 +336,7 @@ namespace OC
             OCStackResult provisionTrustCertChain(OicSecCredType_t type, uint16_t credId,
                     ResultCallBack resultCallback);
 
-#endif // __WITH_X509__ || __WITH_TLS__
+#endif // __WITH_DTLS__ or __WITH_TLS__
 
             /**
              * This method is used to get linked devices' IDs.

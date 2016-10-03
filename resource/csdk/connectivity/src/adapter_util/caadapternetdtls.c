@@ -89,20 +89,6 @@ static CAGetDTLSPskCredentialsHandler g_getCredentialsCallback = NULL;
  */
 static CAErrorCallback g_dtlsHandshakeCallback = NULL;
 
-#ifdef __WITH_X509__
-/**
- * @var g_getX509CredentialsCallback
- * @brief callback to get DTLS certificate credentials
- */
-static CAGetDTLSX509CredentialsHandler g_getX509CredentialsCallback = NULL;
-/**
- * @var g_getCrlCallback
- * @brief callback to get CRL for DTLS
- */
-static CAGetDTLSCrlHandler g_getCrlCallback = NULL;
-#endif //__WITH_X509__
-
-
 static CASecureEndpoint_t *GetPeerInfo(const CAEndpoint_t *peer)
 {
     uint32_t list_index = 0;

@@ -369,7 +369,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
                 return OC_STACK_DELETE_TRANSACTION;
             }
 
-#ifdef __WITH_DTLS__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
             res = SavePairingPSK((OCDevAddr*)&endpoint, &peer->deviceID, &ptDeviceID, false);
             if(OC_STACK_OK != res)
             {
@@ -379,7 +379,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
             }
 
             //  close temporary sesion
-            CAResult_t caResult = CACloseDtlsSession((const CAEndpoint_t*)&endpoint);
+            CAResult_t caResult = CAcloseSslSession((const CAEndpoint_t*)&endpoint);
             if(CA_STATUS_OK != caResult)
             {
                 OIC_LOG(INFO, TAG, "Fail to close temporary dtls session");
@@ -390,7 +390,7 @@ static OCStackApplicationResult DirectPairingFinalizeHandler(void *ctx, OCDoHand
             {
                 OIC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
             }
-#endif // __WITH_DTLS__
+#endif // __WITH_DTLS__ or __WITH_TLS__
 
             OIC_LOG(INFO, TAG, "Direct-Papring was successfully completed.");
 
@@ -557,9 +557,9 @@ void DirectPairingDTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInf
                 resultCallback(g_dp_proceed_ctx->userCtx, peer, OC_STACK_AUTHENTICATION_FAILURE);
             }
 
-#ifdef __WITH_DTLS__
-            CARegisterDTLSHandshakeCallback(NULL);
-#endif // __WITH_DTLS__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+            CAregisterSslHandshakeCallback(NULL);
+#endif // __WITH_DTLS__ or __WITH_TLS__
             res = RemoveCredential(&peer->deviceID);
             if(OC_STACK_RESOURCE_DELETED != res)
             {
@@ -610,7 +610,7 @@ static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSE
             // result
             OIC_LOG(INFO, TAG, "DirectPairingHandler : success POST request to /oic/sec/dpairing");
 
-#ifdef __WITH_DTLS__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
             // Add temporary psk
             res = AddTmpPskWithPIN(&dpairData->peer->deviceID,
                            SYMMETRIC_PAIR_WISE_KEY,
@@ -630,7 +630,7 @@ static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSE
 
             //Register proceeding peer info. & DTLS event handler to catch the dtls event while handshake
             g_dp_proceed_ctx = dpairData;
-            res = CARegisterDTLSHandshakeCallback(DirectPairingDTLSHandshakeCB);
+            res = CAregisterSslHandshakeCallback(DirectPairingDTLSHandshakeCB);
             VERIFY_SUCCESS(TAG, CA_STATUS_OK == caresult, ERROR);
 
             // initiate dtls
@@ -644,7 +644,7 @@ static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSE
             caresult = CAInitiateHandshake(endpoint);
             OICFree(endpoint);
             VERIFY_SUCCESS(TAG, CA_STATUS_OK == caresult, ERROR);
-#endif // __WITH_DTLS__
+#endif // __WITH_DTLS__ or __WITH_TLS__
 
             res = OC_STACK_OK;
         }
@@ -659,9 +659,9 @@ static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSE
         OIC_LOG(ERROR, TAG, "DirectPairingHandler received Null clientResponse");
     }
 
-#ifdef __WITH_DTLS__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 exit:
-#endif // __WITH_DTLS__
+#endif // __WITH_DTLS__ or __WITH_TLS__
 
     if (OC_STACK_OK != res)
     {

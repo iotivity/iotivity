@@ -33,7 +33,7 @@
 #include "octypes.h"
 #include <cbor.h>
 
-#ifdef __WITH_TLS__
+#if defined(__WITH_TLS__) || defined(__WITH_DTLS__)
 #include "securevirtualresourcetypes.h"
 #endif
 

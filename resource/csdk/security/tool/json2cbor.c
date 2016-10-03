@@ -846,7 +846,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                     cred->privateData.encoding = OIC_ENCODING_RAW;
                 }
             }
-#ifdef __WITH_X509__
+#ifdef __WITH_DTLS__
             //PublicData is mandatory only for SIGNED_ASYMMETRIC_KEY credentials type.
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PUBLICDATA_NAME);
 
@@ -860,7 +860,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                 memcpy(cred->publicData.data, jsonPub->valuestring, jsonObjLen);
                 cred->publicData.len = jsonObjLen;
             }
-#endif //  __WITH_X509__
+#endif //  __WITH_DTLS__
             //Period -- Not Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PERIOD_NAME);
             if(jsonObj && cJSON_String == jsonObj->type)

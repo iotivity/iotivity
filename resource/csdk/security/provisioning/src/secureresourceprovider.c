@@ -45,7 +45,7 @@
 #include "utlist.h"
 #include "ocpayload.h"
 
-#ifdef __WITH_X509__
+#ifdef __WITH_DTLS__
 #include "crlresource.h"
 #endif // WITH_X509__
 
@@ -360,7 +360,7 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
     return OC_STACK_OK;
 }
 
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 /**
  * Structure to carry certificate data to callback.
  */
@@ -370,19 +370,6 @@ struct CertificateData
     void *ctx;                                  /**< Pointer to user context.**/
     const OCProvisionDev_t *deviceInfo;        /**< Pointer to OCProvisionDev_t.**/
     OicSecCred_t *credInfo;                     /**< Pointer to OicSecCred_t.**/
-    OCProvisionResultCB resultCallback;         /**< Pointer to result callback.**/
-    OCProvisionResult_t *resArr;                /**< Result array.**/
-    int numOfResults;                           /**< Number of results in result array.**/
-};
-
-/**
- * Structure to carry CRL provision API data to callback.
- */
-typedef struct CRLData CRLData_t;
-struct CRLData
-{
-    void *ctx;                                  /**< Pointer to user context.**/
-    const OCProvisionDev_t *deviceInfo;         /**< Pointer to PMDevInfo_t.**/
     OCProvisionResultCB resultCallback;         /**< Pointer to result callback.**/
     OCProvisionResult_t *resArr;                /**< Result array.**/
     int numOfResults;                           /**< Number of results in result array.**/
@@ -400,143 +387,6 @@ static void registerResultForCertProvisioning(CertData_t *certData,
           certData->deviceInfo->doxm->deviceID.id,UUID_LENGTH);
    certData->resArr[(certData->numOfResults)].res = stackresult;
    ++(certData->numOfResults);
-}
-
-/**
- * Internal Function to store results in result array during ACL provisioning.
- */
-static void registerResultForCRLProvisioning(CRLData_t *crlData,
-                                             OCStackResult stackresult)
-{
-   OIC_LOG_V(INFO, TAG, "Inside registerResultForCRLProvisioning crlData->numOfResults is %d\n",
-                       crlData->numOfResults);
-   memcpy(crlData->resArr[(crlData->numOfResults)].deviceId.id,
-          crlData->deviceInfo->doxm->deviceID.id, UUID_LENGTH);
-   crlData->resArr[(crlData->numOfResults)].res = stackresult;
-   ++(crlData->numOfResults);
-}
-
-
-/**
- * Callback handler of SRPProvisionCRL.
- *
- * @param[in] ctx             ctx value passed to callback from calling function.
- * @param[in] UNUSED          handle to an invocation
- * @param[in] clientResponse  Response from queries to remote servers.
- * @return  OC_STACK_DELETE_TRANSACTION to delete the transaction
- *          and  OC_STACK_KEEP_TRANSACTION to keep it.
- */
-static OCStackApplicationResult SRPProvisionCRLCB(void *ctx, OCDoHandle UNUSED,
-                                                  OCClientResponse *clientResponse)
-{
-    OIC_LOG_V(INFO, TAG, "Inside SRPProvisionCRLCB.");
-    (void)UNUSED;
-    VERIFY_NON_NULL(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
-    CRLData_t *crlData = (CRLData_t*)ctx;
-    OCProvisionResultCB resultCallback = crlData->resultCallback;
-
-    if (clientResponse)
-    {
-        if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
-        {
-            registerResultForCRLProvisioning(crlData, OC_STACK_RESOURCE_CHANGED);
-            ((OCProvisionResultCB)(resultCallback))(crlData->ctx, crlData->numOfResults,
-                                                    crlData->resArr,
-                                                    false);
-             OICFree(crlData->resArr);
-             OICFree(crlData);
-             return OC_STACK_DELETE_TRANSACTION;
-        }
-    }
-    registerResultForCRLProvisioning(crlData, OC_STACK_ERROR);
-    ((OCProvisionResultCB)(resultCallback))(crlData->ctx, crlData->numOfResults,
-                                            crlData->resArr,
-                                            true);
-    OIC_LOG_V(ERROR, TAG, "SRPProvisionCRLCB received Null clientResponse");
-    OICFree(crlData->resArr);
-    OICFree(crlData);
-    return OC_STACK_DELETE_TRANSACTION;
-}
-
-OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
-        OicSecCrl_t *crl, OCProvisionResultCB resultCallback)
-{
-    VERIFY_NON_NULL(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL(TAG, crl, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
-
-    OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    if (!secPayload)
-    {
-        OIC_LOG(ERROR, TAG, "Failed to memory allocation");
-        return OC_STACK_NO_MEMORY;
-    }
-
-    secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    OCStackResult res;
-    res = CrlToCBORPayload(crl, &secPayload->securityData, &secPayload->payloadSize, NULL);
-    if((OC_STACK_OK != res) && (NULL == secPayload->securityData))
-    {
-        OICFree(secPayload);
-        OIC_LOG(ERROR, TAG, "Failed to BinToCrlJSON");
-        return OC_STACK_NO_MEMORY;
-    }
-    OIC_LOG(DEBUG, TAG, "Created payload for CRL:");
-    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
-
-    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
-    if(!PMGenerateQuery(true,
-                        selectedDeviceInfo->endpoint.addr,
-                        selectedDeviceInfo->securePort,
-                        selectedDeviceInfo->connType,
-                        query, sizeof(query), OIC_RSRC_CRL_URI))
-    {
-        OIC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
-        OCPayloadDestroy((OCPayload *)secPayload);
-        return OC_STACK_ERROR;
-    }
-    OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
-
-    OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
-    cbData.cb = &SRPProvisionCRLCB;
-    CRLData_t *crlData = (CRLData_t *) OICCalloc(1, sizeof(CRLData_t));
-    if (crlData == NULL)
-    {
-        OCPayloadDestroy((OCPayload *)secPayload);
-        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
-        return OC_STACK_NO_MEMORY;
-    }
-
-    crlData->deviceInfo = selectedDeviceInfo;
-    crlData->resultCallback = resultCallback;
-    crlData->numOfResults=0;
-    crlData->ctx = ctx;
-
-    crlData->resArr = (OCProvisionResult_t*)OICCalloc(1, sizeof(OCProvisionResult_t));
-    if (crlData->resArr == NULL)
-    {
-        OCPayloadDestroy((OCPayload *)secPayload);
-        OIC_LOG(ERROR, TAG, "Unable to allocate memory");
-        return OC_STACK_NO_MEMORY;
-    }
-
-    cbData.context = (void *)crlData;
-    cbData.cd = NULL;
-    OCMethod method = OC_REST_POST;
-    OCDoHandle handle = NULL;
-    OIC_LOG(DEBUG, TAG, "Sending CRL info to resource server");
-
-    OCStackResult ret = OCDoResource(&handle, method, query,
-            &selectedDeviceInfo->endpoint, (OCPayload*)secPayload,
-            selectedDeviceInfo->connType, OC_HIGH_QOS, &cbData, NULL, 0);
-
-    if (ret != OC_STACK_OK)
-    {
-        OICFree(crlData->resArr);
-        OICFree(crlData);
-    }
-
-    return ret;
 }
 
 /**
@@ -834,7 +684,7 @@ OCStackResult SRPSaveOwnCertChain(OicSecCert_t * cert, OicSecKey_t * key, uint16
 
     return res;
 }
-#endif // __WITH_X509__ || __WITH_TLS__
+#endif // __WITH_DTLS__ || __WITH_TLS__
 
 OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t keySize,
                                       const OCProvisionDev_t *pDev1,
@@ -946,50 +796,6 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
             VERIFY_SUCCESS(TAG, (res==OC_STACK_OK), ERROR, OC_STACK_ERROR);
             return res;
         }
-#ifdef __WITH_X509__
-        case SIGNED_ASYMMETRIC_KEY:
-        {
-            const OCProvisionDev_t *firstDevice = pDev1;
-            OicSecCred_t *cred = NULL;
-            OCStackResult res = PMGenerateCertificateCredentials(&provTooldeviceID,
-                                                                &firstDevice->doxm->deviceID,&cred);
-            VERIFY_SUCCESS(TAG, (res==OC_STACK_OK), ERROR, OC_STACK_ERROR);
-            OIC_LOG(INFO, TAG, "Certificate credentials generated successfully");
-            CertData_t *certData = (CertData_t *) OICCalloc(1, sizeof(CertData_t));
-            if (NULL == certData)
-            {
-                OICFree(cred);
-                OIC_LOG(ERROR, TAG, "Memory allocation problem");
-                return OC_STACK_NO_MEMORY;
-            }
-
-            certData->deviceInfo = firstDevice;
-            certData->ctx = ctx;
-            certData->credInfo = cred;
-            certData->numOfResults = 0;
-            certData->resultCallback = resultCallback;
-
-            certData->resArr = (OCProvisionResult_t*)OICCalloc(1, sizeof(OCProvisionResult_t));
-            if (NULL == certData->resArr)
-            {
-                DeleteCredList(cred);
-                OICFree(certData);
-                OIC_LOG(ERROR, TAG, "Memory allocation problem");
-                return OC_STACK_NO_MEMORY;
-            }
-
-            res = provisionCertCred(cred, firstDevice, certData, &provisionCertCB);
-            if (OC_STACK_OK != res)
-            {
-                OICFree(certData->resArr);
-                OICFree(certData);
-            }
-            DeleteCredList(cred);
-            OIC_LOG_V(INFO, TAG, "provisionCertCredentials returned: %d",res);
-
-            return res;
-        }
-#endif
         default:
         {
             OIC_LOG(ERROR, TAG, "Invalid option.");
@@ -1960,7 +1766,7 @@ static OCStackApplicationResult SRPResetDeviceCB(void *ctx, OCDoHandle handle,
 
     //Close the DTLS session of the reset device.
     CAEndpoint_t* endpoint = (CAEndpoint_t *)&clientResponse->devAddr;
-    CAResult_t caResult = CACloseDtlsSession(endpoint);
+    CAResult_t caResult = CAcloseSslSession(endpoint);
     if(CA_STATUS_OK != caResult)
     {
         OIC_LOG_V(WARNING, TAG, "OCResetDevice : Failed to close DTLS session : %d", caResult);

@@ -47,10 +47,7 @@ if target_os not in ['arduino', 'darwin', 'ios', 'msys_nt', 'windows']:
 	catest_env.AppendUnique(LIBS=['rt'])
 
 if catest_env.get('SECURED') == '1':
-	catest_env.AppendUnique(LIBS = ['tinydtls'])
-	catest_env.AppendUnique(LIBS = ['timer'])
-	if catest_env.get('WITH_TCP') == True:
-		catest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+	catest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 if catest_env.get('WITH_RD') == '1':
 	catest_env.PrependUnique(LIBS = ['resource_directory'])

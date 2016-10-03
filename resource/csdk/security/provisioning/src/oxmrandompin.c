@@ -92,16 +92,10 @@ OCStackResult InputPinCodeCallback(OTMContext_t *otmCtx)
      * Credential should not be saved into SVR.
      * For this reason, We will use a temporary get_psk_info callback to random PIN OxM.
      */
-#ifdef __WITH_TLS__
-    if(CA_STATUS_OK != CAregisterTlsCredentialsHandler(GetDtlsPskForRandomPinOxm))
+
+    if(CA_STATUS_OK != CAregisterPskCredentialsHandler(GetDtlsPskForRandomPinOxm))
     {
         OIC_LOG(ERROR, TAG, "Failed to register TLS credentials handler for random PIN OxM.");
-        res = OC_STACK_ERROR;
-    }
-#endif
-    if(CA_STATUS_OK != CARegisterDTLSCredentialsHandler(GetDtlsPskForRandomPinOxm))
-    {
-        OIC_LOG(ERROR, TAG, "Failed to register DTLS credentials handler for random PIN OxM.");
         res = OC_STACK_ERROR;
     }
 
@@ -149,7 +143,7 @@ OCStackResult CreateSecureSessionRandomPinCallback(OTMContext_t* otmCtx)
     else
     {
         endpoint.port = selDevInfo->tcpPort;
-        caresult = CAinitiateTlsHandshake(&endpoint);
+        caresult = CAinitiateSslHandshake(&endpoint);
     }
 #endif
     if (CA_STATUS_OK != caresult)
