@@ -1201,15 +1201,25 @@ static bool includeThisResourceInResponse(OCResource *resource,
 OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCResource *resource,
                                 OCPayload *discoveryPayload, OCEntityHandlerResult ehResult)
 {
-    OCEntityHandlerResponse response = {0};
+    OCEntityHandlerResponse *response = NULL;
+    OCStackResult result = OC_STACK_ERROR;
 
-    response.ehResult = ehResult;
-    response.payload = discoveryPayload;
-    response.persistentBufferFlag = 0;
-    response.requestHandle = (OCRequestHandle) request;
-    response.resourceHandle = (OCResourceHandle) resource;
+    response = (OCEntityHandlerResponse *)OICCalloc(1, sizeof(*response));
+    VERIFY_PARAM_NON_NULL(TAG, response, "Failed allocating OCEntityHandlerResponse");
 
-    return OCDoResponse(&response);
+    response->ehResult = ehResult;
+    response->payload = discoveryPayload;
+    response->persistentBufferFlag = 0;
+    response->requestHandle = (OCRequestHandle) request;
+    response->resourceHandle = (OCResourceHandle) resource;
+
+    result = OCDoResponse(response);
+
+    OICFree(response);
+    return result;
+
+exit:
+    return OC_STACK_NO_MEMORY;
 }
 
 static OCStackResult EHRequest(OCEntityHandlerRequest *ehRequest, OCPayloadType type,
