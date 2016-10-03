@@ -1064,7 +1064,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
     ClientCB * cbNode = NULL;
     char *resourceTypeName = NULL;
-    OCClientResponse response = {.devAddr = {.adapter = OC_DEFAULT_ADAPTER}};
+    OCClientResponse *response = NULL;
     OCStackResult result = OC_STACK_ERROR;
     uint32_t maxAge = 0;
     int uriLen;
@@ -1079,15 +1079,23 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
         return OC_STACK_ERROR;
     }
 
-    response.payload = NULL;
-    response.result = OC_STACK_OK;
+    response = (OCClientResponse *)OICCalloc(1, sizeof(*response));
+    if (!response)
+    {
+            OIC_LOG(ERROR, TAG, "Allocating memory for response failed");
+            return OC_STACK_ERROR;
+    }
+    response->devAddr.adapter = OC_DEFAULT_ADAPTER;
 
-    CopyEndpointToDevAddr(endpoint, &response.devAddr);
-    FixUpClientResponse(&response);
+    response->payload = NULL;
+    response->result = OC_STACK_OK;
+
+    CopyEndpointToDevAddr(endpoint, &response->devAddr);
+    FixUpClientResponse(response);
 
     if (responseInfo->info.payload)
     {
-        result = OCParsePayload(&response.payload,
+        result = OCParsePayload(&response->payload,
                 PAYLOAD_TYPE_PRESENCE,
                 responseInfo->info.payload,
                 responseInfo->info.payloadSize);
@@ -1097,15 +1105,15 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
             OIC_LOG(ERROR, TAG, "Presence parse failed");
             goto exit;
         }
-        if(!response.payload || response.payload->type != PAYLOAD_TYPE_PRESENCE)
+        if(!response->payload || response->payload->type != PAYLOAD_TYPE_PRESENCE)
         {
             OIC_LOG(ERROR, TAG, "Presence payload was wrong type");
             result = OC_STACK_ERROR;
             goto exit;
         }
-        response.sequenceNumber = ((OCPresencePayload*)response.payload)->sequenceNumber;
-        resourceTypeName = ((OCPresencePayload*)response.payload)->resourceType;
-        maxAge = ((OCPresencePayload*)response.payload)->maxAge;
+        response->sequenceNumber = ((OCPresencePayload*)response->payload)->sequenceNumber;
+        resourceTypeName = ((OCPresencePayload*)response->payload)->resourceType;
+        maxAge = ((OCPresencePayload*)response->payload)->maxAge;
     }
 
     // check for unicast presence
@@ -1113,7 +1121,8 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
                                       responseInfo->isMulticast);
     if (uriLen < 0 || (size_t)uriLen >= sizeof (presenceUri))
     {
-        return OC_STACK_INVALID_URI;
+        result = OC_STACK_INVALID_URI;
+        goto exit;
     }
     OIC_LOG(INFO, TAG, "check for unicast presence");
     cbNode = GetClientCB(NULL, 0, NULL, presenceUri);
@@ -1141,7 +1150,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
 
     if (presenceSubscribe)
     {
-        if(cbNode->sequenceNumber == response.sequenceNumber)
+        if(cbNode->sequenceNumber == response->sequenceNumber)
         {
             OIC_LOG(INFO, TAG, "No presence change");
             ResetPresenceTTL(cbNode, maxAge);
@@ -1152,7 +1161,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
         if(maxAge == 0)
         {
             OIC_LOG(INFO, TAG, "Stopping presence");
-            response.result = OC_STACK_PRESENCE_STOPPED;
+            response->result = OC_STACK_PRESENCE_STOPPED;
             if(cbNode->presence)
             {
                 OICFree(cbNode->presence->timeOut);
@@ -1188,7 +1197,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
 
             ResetPresenceTTL(cbNode, maxAge);
 
-            cbNode->sequenceNumber = response.sequenceNumber;
+            cbNode->sequenceNumber = response->sequenceNumber;
         }
     }
     else
@@ -1198,7 +1207,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
         if (0 == maxAge)
         {
             OIC_LOG(INFO, TAG, "Stopping presence");
-            response.result = OC_STACK_PRESENCE_STOPPED;
+            response->result = OC_STACK_PRESENCE_STOPPED;
         }
     }
 
@@ -1214,7 +1223,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
 
     OIC_LOG(INFO, TAG, "Callback for presence");
 
-    cbResult = cbNode->callBack(cbNode->context, cbNode->handle, &response);
+    cbResult = cbNode->callBack(cbNode->context, cbNode->handle, response);
 
     if (cbResult == OC_STACK_DELETE_TRANSACTION)
     {
@@ -1222,7 +1231,8 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     }
 
 exit:
-    OCPayloadDestroy(response.payload);
+    OCPayloadDestroy(response->payload);
+    OICFree(response);
     return result;
 }
 
@@ -1276,54 +1286,80 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             OIC_LOG(INFO, TAG, "Receiving A Timeout for this token");
             OIC_LOG(INFO, TAG, "Calling into application address space");
 
-            OCClientResponse response =
-                {.devAddr = {.adapter = OC_DEFAULT_ADAPTER}};
-            CopyEndpointToDevAddr(endPoint, &response.devAddr);
-            FixUpClientResponse(&response);
-            response.resourceUri = responseInfo->info.resourceUri;
-            memcpy(response.identity.id, responseInfo->info.identity.id,
-                                                sizeof (response.identity.id));
-            response.identity.id_length = responseInfo->info.identity.id_length;
+            OCClientResponse *response = NULL;
 
-            response.result = CAResponseToOCStackResult(responseInfo->result);
+            response = (OCClientResponse *)OICCalloc(1, sizeof(*response));
+            if (!response)
+            {
+                OIC_LOG(ERROR, TAG, "Allocating memory for response failed");
+                return;
+            }
+
+            response->devAddr.adapter = OC_DEFAULT_ADAPTER;
+            CopyEndpointToDevAddr(endPoint, &response->devAddr);
+            FixUpClientResponse(response);
+            response->resourceUri = responseInfo->info.resourceUri;
+            memcpy(response->identity.id, responseInfo->info.identity.id,
+                                                sizeof (response->identity.id));
+            response->identity.id_length = responseInfo->info.identity.id_length;
+
+            response->result = CAResponseToOCStackResult(responseInfo->result);
             cbNode->callBack(cbNode->context,
-                    cbNode->handle, &response);
+                    cbNode->handle, response);
             FindAndDeleteClientCB(cbNode);
+            OICFree(response);
         }
         else if ((cbNode->method == OC_REST_OBSERVE || cbNode->method == OC_REST_OBSERVE_ALL)
                 && (responseInfo->result == CA_CONTENT) && !obsHeaderOpt)
         {
-            OCClientResponse response =
-                {.devAddr = {.adapter = OC_DEFAULT_ADAPTER}};
-            CopyEndpointToDevAddr(endPoint, &response.devAddr);
-            FixUpClientResponse(&response);
-            response.resourceUri = responseInfo->info.resourceUri;
-            memcpy(response.identity.id, responseInfo->info.identity.id,
-                                    sizeof (response.identity.id));
-            response.identity.id_length = responseInfo->info.identity.id_length;
-            response.result = OC_STACK_UNAUTHORIZED_REQ;
+            OCClientResponse *response = NULL;
+
+            response = (OCClientResponse *)OICCalloc(1, sizeof(*response));
+            if (!response)
+            {
+                OIC_LOG(ERROR, TAG, "Allocating memory for response failed");
+                return;
+            }
+
+            response->devAddr.adapter = OC_DEFAULT_ADAPTER;
+            CopyEndpointToDevAddr(endPoint, &response->devAddr);
+            FixUpClientResponse(response);
+            response->resourceUri = responseInfo->info.resourceUri;
+            memcpy(response->identity.id, responseInfo->info.identity.id,
+                                    sizeof (response->identity.id));
+            response->identity.id_length = responseInfo->info.identity.id_length;
+            response->result = OC_STACK_UNAUTHORIZED_REQ;
 
             cbNode->callBack(cbNode->context,
                              cbNode->handle,
-                             &response);
+                             response);
             FindAndDeleteClientCB(cbNode);
+            OICFree(response);
         }
         else
         {
             OIC_LOG(INFO, TAG, "This is a regular response, A client call back is found");
             OIC_LOG(INFO, TAG, "Calling into application address space");
 
-            OCClientResponse response =
-                {.devAddr = {.adapter = OC_DEFAULT_ADAPTER}};
-            response.sequenceNumber = MAX_SEQUENCE_NUMBER + 1;
-            CopyEndpointToDevAddr(endPoint, &response.devAddr);
-            FixUpClientResponse(&response);
-            response.resourceUri = responseInfo->info.resourceUri;
-            memcpy(response.identity.id, responseInfo->info.identity.id,
-                                                sizeof (response.identity.id));
-            response.identity.id_length = responseInfo->info.identity.id_length;
+            OCClientResponse *response = NULL;
 
-            response.result = CAResponseToOCStackResult(responseInfo->result);
+            response = (OCClientResponse *)OICCalloc(1, sizeof(*response));
+            if (!response)
+            {
+                OIC_LOG(ERROR, TAG, "Allocating memory for response failed");
+                return;
+            }
+            
+            response->devAddr.adapter = OC_DEFAULT_ADAPTER;
+            response->sequenceNumber = MAX_SEQUENCE_NUMBER + 1;
+            CopyEndpointToDevAddr(endPoint, &response->devAddr);
+            FixUpClientResponse(response);
+            response->resourceUri = responseInfo->info.resourceUri;
+            memcpy(response->identity.id, responseInfo->info.identity.id,
+                                                sizeof (response->identity.id));
+            response->identity.id_length = responseInfo->info.identity.id_length;
+
+            response->result = CAResponseToOCStackResult(responseInfo->result);
 
             if(responseInfo->info.payload &&
                responseInfo->info.payloadSize)
@@ -1420,21 +1456,23 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 {
                     OIC_LOG_V(ERROR, TAG, "Unknown Payload type: %d %s",
                             cbNode->method, cbNode->requestUri);
+                    OICFree(response);
                     return;
                 }
 
-                if(OC_STACK_OK != OCParsePayload(&response.payload,
+                if(OC_STACK_OK != OCParsePayload(&response->payload,
                             type,
                             responseInfo->info.payload,
                             responseInfo->info.payloadSize))
                 {
                     OIC_LOG(ERROR, TAG, "Error converting payload");
-                    OCPayloadDestroy(response.payload);
+                    OCPayloadDestroy(response->payload);
+                    OICFree(response);
                     return;
                 }
             }
 
-            response.numRcvdVendorSpecificHeaderOptions = 0;
+            response->numRcvdVendorSpecificHeaderOptions = 0;
             if((responseInfo->info.numOptions > 0) && (responseInfo->info.options != NULL))
             {
                 int start = 0;
@@ -1451,36 +1489,37 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                         observationOption =
                             (observationOption << 8) | optionData[i];
                     }
-                    response.sequenceNumber = observationOption;
-                    response.numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions - 1;
+                    response->sequenceNumber = observationOption;
+                    response->numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions - 1;
                     start = 1;
                 }
                 else
                 {
-                    response.numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions;
+                    response->numRcvdVendorSpecificHeaderOptions = responseInfo->info.numOptions;
                 }
 
-                if(response.numRcvdVendorSpecificHeaderOptions > MAX_HEADER_OPTIONS)
+                if(response->numRcvdVendorSpecificHeaderOptions > MAX_HEADER_OPTIONS)
                 {
                     OIC_LOG(ERROR, TAG, "#header options are more than MAX_HEADER_OPTIONS");
-                    OCPayloadDestroy(response.payload);
+                    OCPayloadDestroy(response->payload);
+                    OICFree(response);
                     return;
                 }
 
                 for (uint8_t i = start; i < responseInfo->info.numOptions; i++)
                 {
-                    memcpy (&(response.rcvdVendorSpecificHeaderOptions[i-start]),
+                    memcpy (&(response->rcvdVendorSpecificHeaderOptions[i-start]),
                             &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
                 }
             }
 
             if (cbNode->method == OC_REST_OBSERVE &&
-                response.sequenceNumber > OC_OFFSET_SEQUENCE_NUMBER &&
+                response->sequenceNumber > OC_OFFSET_SEQUENCE_NUMBER &&
                 cbNode->sequenceNumber <=  MAX_SEQUENCE_NUMBER &&
-                response.sequenceNumber <= cbNode->sequenceNumber)
+                response->sequenceNumber <= cbNode->sequenceNumber)
             {
                 OIC_LOG_V(INFO, TAG, "Received stale notification. Number :%d",
-                                                 response.sequenceNumber);
+                                                 response->sequenceNumber);
             }
             else
             {
@@ -1489,29 +1528,29 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 char *targetUri = strstr(cbNode->requestUri, OC_RSRVD_RD_URI);
                 if (targetUri)
                 {
-                    OCUpdateResourceInsWithResponse(cbNode->requestUri, &response);
+                    OCUpdateResourceInsWithResponse(cbNode->requestUri, response);
                 }
 #endif
                 // set remoteID(device ID) into OCClientResponse callback parameter
                 if (OC_REST_DISCOVER == cbNode->method)
                 {
-                    OCDiscoveryPayload *payload = (OCDiscoveryPayload*) response.payload;
+                    OCDiscoveryPayload *payload = (OCDiscoveryPayload*) response->payload;
                     if (!payload)
                     {
                         OIC_LOG(INFO, TAG, "discovery payload is invalid");
                         return;
                     }
 
-                    OICStrcpy(response.devAddr.remoteId, sizeof(response.devAddr.remoteId),
+                    OICStrcpy(response->devAddr.remoteId, sizeof(response->devAddr.remoteId),
                               payload->sid);
                     OIC_LOG_V(INFO, TAG, "Device ID of response : %s",
-                              response.devAddr.remoteId);
+                              response->devAddr.remoteId);
                 }
 
                 OCStackApplicationResult appFeedback = cbNode->callBack(cbNode->context,
                                                                         cbNode->handle,
-                                                                        &response);
-                cbNode->sequenceNumber = response.sequenceNumber;
+                                                                        response);
+                cbNode->sequenceNumber = response->sequenceNumber;
 
                 if (appFeedback == OC_STACK_DELETE_TRANSACTION)
                 {
@@ -1532,7 +1571,8 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                         CA_MSG_ACKNOWLEDGE, 0, NULL, NULL, 0, NULL, CA_RESPONSE_FOR_RES);
             }
 
-            OCPayloadDestroy(response.payload);
+            OCPayloadDestroy(response->payload);
+            OICFree(response);
         }
         return;
     }
@@ -1658,16 +1698,26 @@ void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *er
                                    errorInfo->info.tokenLength, NULL, NULL);
     if (cbNode)
     {
-        OCClientResponse response = { .devAddr = { .adapter = OC_DEFAULT_ADAPTER } };
-        CopyEndpointToDevAddr(endPoint, &response.devAddr);
-        FixUpClientResponse(&response);
-        response.resourceUri = errorInfo->info.resourceUri;
-        memcpy(response.identity.id, errorInfo->info.identity.id,
-               sizeof (response.identity.id));
-        response.identity.id_length = errorInfo->info.identity.id_length;
-        response.result = CAResultToOCResult(errorInfo->result);
+        OCClientResponse *response = NULL;
 
-        cbNode->callBack(cbNode->context, cbNode->handle, &response);
+        response = (OCClientResponse *)OICCalloc(1, sizeof(*response));
+        if (!response)
+        {
+            OIC_LOG(ERROR, TAG, "Allocating memory for response failed");
+            return;
+        }
+
+        response->devAddr.adapter = OC_DEFAULT_ADAPTER;
+        CopyEndpointToDevAddr(endPoint, &response->devAddr);
+        FixUpClientResponse(response);
+        response->resourceUri = errorInfo->info.resourceUri;
+        memcpy(response->identity.id, errorInfo->info.identity.id,
+               sizeof (response->identity.id));
+        response->identity.id_length = errorInfo->info.identity.id_length;
+        response->result = CAResultToOCResult(errorInfo->result);
+
+        cbNode->callBack(cbNode->context, cbNode->handle, response);
+        OICFree(response);
     }
 
     ResourceObserver *observer = GetObserverUsingToken(errorInfo->info.token,
