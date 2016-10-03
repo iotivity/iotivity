@@ -29,7 +29,6 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "crlresource.h"
-#include "crl.h"
 #include "ocpayloadcbor.h"
 #include "base64.h"
 #include <time.h>
@@ -609,6 +608,7 @@ static OicSecCrl_t *GetCrlDefault()
     }
 
     defaultCrl->CrlId = CRL_DEFAULT_CRL_ID;
+    defaultCrl->CrlData.encoding = OIC_ENCODING_DER;
 
     bool result1 = copyByteArray((const uint8_t *)CRL_DEFAULT_CRL_DATA,
                                  strlen(CRL_DEFAULT_CRL_DATA),
@@ -768,7 +768,7 @@ uint8_t *GetCrl()
     return NULL;
 }
 
-void GetDerCrl(ByteArray* out)
+void GetDerCrl(ByteArray_t* out)
 {
     if(NULL == out)
     {
@@ -810,14 +810,9 @@ void GetDerCrl(ByteArray* out)
 
     out->len = 0;
 
-#ifdef __WITH_X509__
-    char *str = "Not enough space in out buffer to store crl!";
-    if (out->data && crl->data && crl->len <= out->len)
-#else
     char *str = "Can't allocate memory for out->data";
     out->data = OICMalloc(crl->len);
     if (out->data)
-#endif
     {
         memcpy(out->data, crl->data, crl->len);
         out->len = crl->len;

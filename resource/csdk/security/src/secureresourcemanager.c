@@ -34,14 +34,10 @@
 #include "srmresourcestrings.h"
 #include "ocresourcehandler.h"
 
-#ifdef __WITH_TLS__
+#if defined( __WITH_TLS__) || defined(__WITH_DTLS__)
 #include "pkix_interface.h"
-#endif //__WITH_TLS__
+#endif //__WITH_TLS__ or __WITH_DTLS__
 #define TAG  "SRM"
-
-#ifdef __WITH_X509__
-#include "crlresource.h"
-#endif // __WITH_X509__
 
 //Request Callback handler
 static CARequestCallback gRequestHandler = NULL;
@@ -351,27 +347,15 @@ OCStackResult SRMInitSecureResources()
     // behavior (for when SVR DB is missing) is settled.
     InitSecureResources();
     OCStackResult ret = OC_STACK_OK;
-#if defined(__WITH_DTLS__)
-    if(CA_STATUS_OK != CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials))
-    {
-        OIC_LOG(ERROR, TAG, "Failed to revert DTLS credential handler.");
-        ret = OC_STACK_ERROR;
-    }
-#endif
-#ifdef __WITH_TLS__
-    if (CA_STATUS_OK != CAregisterTlsCredentialsHandler(GetDtlsPskCredentials))
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    if (CA_STATUS_OK != CAregisterPskCredentialsHandler(GetDtlsPskCredentials))
     {
         OIC_LOG(ERROR, TAG, "Failed to revert TLS credential handler.");
         ret = OC_STACK_ERROR;
     }
     CAregisterPkixInfoHandler(GetPkixInfo);
     CAregisterGetCredentialTypesHandler(InitCipherSuiteList);
-#endif
-#if defined(__WITH_X509__)
-    CARegisterDTLSX509CredentialsHandler(GetDtlsX509Credentials);
-    CARegisterDTLSCrlHandler(GetDerCrl);
-#endif // (__WITH_X509__)
-
+#endif // __WITH_DTLS__ or __WITH_TLS__
     return ret;
 }
 

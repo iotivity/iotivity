@@ -124,7 +124,7 @@ OCStackResult RemoveCredential(const OicUuid_t *subject);
  */
 OCStackResult RemoveCredentialByCredId(uint16_t credId);
 
-#if defined(__WITH_DTLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 /**
  * This internal callback is used by lower stack (i.e. CA layer) to
  * retrieve PSK credentials from RI security layer.
@@ -159,18 +159,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
                             const OicUuid_t * rownerID,
                             OicUuid_t* tmpCredSubject);
 
-#endif /* __WITH_DTLS__ */
-
-#ifdef __WITH_X509__
-/**
- * This function is used toretrieve certificate credentials from RI security layer.
- *
- * @param credInfo is the binary structure containing certificate credentials
- *
- * @return 0 on success.
- */
-int GetDtlsX509Credentials(CADtlsX509Creds_t *credInfo);
-#endif /*__WITH_X509__*/
+#endif // __WITH_DTLS__ or __WITH_TLS__
 
 /**
  * Function to getting credential list
@@ -204,25 +193,25 @@ OCStackResult SetCredRownerId(const OicUuid_t* newROwner);
  */
 OCStackResult GetCredRownerId(OicUuid_t *rowneruuid);
 
-#ifdef __WITH_TLS__
+#if defined(__WITH_TLS__) || defined(__WITH_DTLS__)
 /**
  * Used by mbedTLS to retrieve trusted CA certificates
  *
  * @param[out] crt certificates to be filled.
  */
-void GetDerCaCert(ByteArray * crt);
+void GetDerCaCert(ByteArray_t * crt);
 /**
  * Used by mbedTLS to retrieve own certificate chain
  *
  * @param[out] crt certificate chain to be filled.
  */
-void GetDerOwnCert(ByteArray * crt);
+void GetDerOwnCert(ByteArray_t * crt);
 /**
  * Used by mbedTLS to retrieve owm private key
  *
  * @param[out] key key to be filled.
  */
-void GetDerKey(ByteArray * key);
+void GetDerKey(ByteArray_t * key);
 /**
  * Used by CA to retrieve credential types
  *

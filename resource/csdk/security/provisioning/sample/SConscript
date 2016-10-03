@@ -74,7 +74,7 @@ if target_os not in ['msys_nt', 'windows']:
 	provisioning_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 else:
 	provisioning_env.AppendUnique(LIBPATH = [os.path.join(env.get('BUILD_DIR'), 'resource', 'csdk')])
-	provisioning_env.AppendUnique(LIBS = ['ws2_32', 'iphlpapi', 'advapi32', 'timer'])
+	provisioning_env.AppendUnique(LIBS = ['ws2_32', 'iphlpapi', 'advapi32'])
 
 provisioning_env.PrependUnique(LIBS = ['oc', 'oc_logger', 'octbstack', 'connectivity_abstraction', 'coap'])
 
@@ -83,10 +83,8 @@ if target_os not in ['msys_nt', 'windows']:
 	provisioning_env.PrependUnique(LIBS = ['ocpmapi', 'ocsrm'])
 
 if env.get('SECURED') == '1':
-    provisioning_env.AppendUnique(LIBS = ['tinydtls'])
-if env.get('DTLS_WITH_X509') == '1':
-	provisioning_env.AppendUnique(LIBS = ['CKManager'])
-	provisioning_env.AppendUnique(LIBS = ['asn1'])
+    provisioning_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
+
 
 provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 

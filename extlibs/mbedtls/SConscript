@@ -40,7 +40,7 @@ if not os.path.exists(mbedtls_dir):
 if target_os != 'tizen':
     start_dir = os.getcwd()
     os.chdir(mbedtls_dir)
-    cmd = 'git reset --hard ad249f509fd62a3bbea7ccd1fef605dbd482a7bd && git apply ../ocf.patch'
+    cmd = 'git checkout development && git reset --hard ad249f509fd62a3bbea7ccd1fef605dbd482a7bd && git apply --whitespace=fix ../ocf.patch'
     os.system(cmd)
     os.chdir(start_dir)
 
@@ -48,7 +48,7 @@ if target_os != 'tizen':
 mbedtls_env = env.Clone()
 mbedtls_env.PrependUnique(CPPPATH = [mbedtls_dir])
 mbedtls_env.AppendUnique(CPPPATH = [mbedtls_dir+'include/'])
-mbedtls_env.AppendUnique(CFLAGS = ['-fPIC', '-Wall', '-Wextra', '-W', '-Wdeclaration-after-statement', '-Wwrite-strings'])
+mbedtls_env.AppendUnique(CFLAGS = ['-fPIC', '-Wall'])
 
 ######################################################################
 # Source files and Target(s)

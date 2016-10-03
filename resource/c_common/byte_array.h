@@ -32,18 +32,18 @@ extern "C" {
 #include <stdint.h>
 
 /**
- * @struct ByteArray
+ * @struct ByteArray_t
  *
  * General purpose byte array structure.
  *
  * Contains pointer to array of bytes and it's length.
  */
 
-typedef struct
+typedef struct ByteArray
 {
     uint8_t *data;    /**< Pointer to the byte array */
     size_t len;      /**< Data size */
-} ByteArray;
+} ByteArray_t;
 
 
 /**@def BYTE_ARRAY_INITIALIZER
@@ -57,7 +57,7 @@ typedef struct
  *
  * Initializes of existing byte array \a array.
  *
- * @param array ByteArray
+ * @param array ByteArray_t
  */
 #undef INIT_BYTE_ARRAY
 #define INIT_BYTE_ARRAY(array) do{  \

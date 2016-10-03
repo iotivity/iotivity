@@ -61,8 +61,8 @@
 #include "caipinterface.h"
 #include "caipnwmonitor.h"
 #include "caadapterutils.h"
-#ifdef __WITH_DTLS__
-#include "caadapternetdtls.h"
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+#include "ca_adapter_net_ssl.h"
 #endif
 #include "octhread.h"
 #include "oic_malloc.h"
@@ -623,8 +623,8 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
     if (flags & CA_SECURE)
     {
 #ifdef __WITH_DTLS__
-        int ret = CAAdapterNetDtlsDecrypt(&sep, (uint8_t *)recvBuffer, recvLen);
-        OIC_LOG_V(DEBUG, TAG, "CAAdapterNetDtlsDecrypt returns [%d]", ret);
+        int ret = CAdecryptSsl(&sep, (uint8_t *)recvBuffer, recvLen);
+        OIC_LOG_V(DEBUG, TAG, "CAdecryptSsl returns [%d]", ret);
 #else
         OIC_LOG(ERROR, TAG, "Encrypted message but no DTLS");
 #endif

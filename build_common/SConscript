@@ -112,7 +112,6 @@ else:
 
 help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
 help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))
-help_vars.Add(EnumVariable('DTLS_WITH_X509', 'DTLS with X.509 support', '0', allowed_values=('0', '1')))
 help_vars.Add(EnumVariable('TEST', 'Run unit tests', '0', allowed_values=('0', '1')))
 help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', logging_default))
 help_vars.Add(BoolVariable('UPLOAD', 'Upload binary ? (For Arduino)', require_upload))
@@ -197,19 +196,13 @@ if target_os in targets_support_cc:
     if prefix or tc_path:
         print tc_set_msg
 
-# Import env variables only if reproductibility is ensured
-if target_os in ['yocto']:
-    env['CONFIG_ENVIRONMENT_IMPORT'] = True
-else:
-    env['CONFIG_ENVIRONMENT_IMPORT'] = False
-
-if env['CONFIG_ENVIRONMENT_IMPORT'] == True:
-    print "warning: importing some environment variables for OS: %s" % target_os
-    for ev in ['PATH', 'PKG_CONFIG', 'PKG_CONFIG_PATH', 'PKG_CONFIG_SYSROOT_DIR']:
-        if os.environ.get(ev) != None:
-            env['ENV'][ev] = os.environ.get(ev)
-    if os.environ['LDFLAGS'] != None:
-        env.AppendUnique(LINKFLAGS = Split(os.environ['LDFLAGS']))
+# If cross-compiling, honor environment settings for toolchain to avoid picking up native tools
+if os.environ.get('PKG_CONFIG') != None:
+	env["ENV"]["PKG_CONFIG"] = os.environ.get("PKG_CONFIG")
+if os.environ.get('PKG_CONFIG_PATH') != None:
+	env["ENV"]["PKG_CONFIG_PATH"] = os.environ.get("PKG_CONFIG_PATH")
+if os.environ.get('PKG_CONFIG_SYSROOT_DIR') != None:
+	env["ENV"]["PKG_CONFIG_SYSROOT_DIR"] = os.environ.get("PKG_CONFIG_SYSROOT_DIR")
 
 # Ensure scons be able to change its working directory
 env.SConscriptChdir(1)
@@ -391,6 +384,8 @@ if target_os == "yocto":
                         env[tool] = os.path.join(path, os.environ[tool])
                         break
         env['CROSS_COMPILE'] = target_prefix[:len(target_prefix) - 1]
+        if os.environ['LDFLAGS'] != None:
+            env.AppendUnique(LINKFLAGS = Split(os.environ['LDFLAGS']))
     except:
         print "ERROR in Yocto cross-toolchain environment"
         Exit(1)

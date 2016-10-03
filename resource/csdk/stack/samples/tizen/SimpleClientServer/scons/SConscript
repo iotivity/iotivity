@@ -44,7 +44,7 @@ env.Append(LIBS=[
 if secured == '1':
 	env.PrependUnique(CPPPATH = [root_dir + '/external/inc/'])
 	env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
-	env.Append(LIBS=['tinydtls'])
+	env.Append(LIBS=['mbedtls', 'mbedx509','mbedcrypto'])
 
 if 'ALL' in transport:
 		env.AppendUnique(CPPDEFINES = ['IP_ADAPTER','EDR_ADAPTER','LE_ADAPTER','BT_ADAPTER_TEST','BLE_ADAPTER_TEST'])

@@ -45,9 +45,9 @@
 
 #include <stdint.h> // for uint8_t typedef
 #include <stdbool.h>
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 #include "byte_array.h"
-#endif /* __WITH_X509__  or __WITH_TLS__*/
+#endif /* __WITH_DTLS__  or __WITH_TLS__*/
 
 #ifdef __cplusplus
 extern "C" {
@@ -293,12 +293,12 @@ typedef char *OicUrn_t; //TODO is URN type defined elsewhere?
 typedef struct OicUuid OicUuid_t; //TODO is UUID type defined elsewhere?
 
 
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 typedef struct OicSecCrl OicSecCrl_t;
-typedef ByteArray OicSecCert_t;
+typedef ByteArray_t OicSecCert_t;
 #else
 typedef void OicSecCert_t;
-#endif /* __WITH_X509__ or __WITH_TLS__*/
+#endif /* __WITH_DTLS__ or __WITH_TLS__*/
 
 /**
  * /oic/uuid (Universal Unique Identifier) data type.
@@ -400,11 +400,11 @@ struct OicSecCred
     //size_t              roleIdsLen;     // the number of elts in RoleIds
     //OicSecRole_t        *roleIds;       // 2:R:M:N:oic.sec.role
     OicSecCredType_t    credType;       // 3:R:S:Y:oic.sec.credtype
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     OicSecCert_t        publicData;     // own cerificate chain
     char            *credUsage;            // 4:R:S:N:String
     OicSecKey_t        optionalData;   // CA's cerificate chain
-#endif /* __WITH_X509__  or __WITH_TLS__*/
+#endif /* __WITH_DTLS__  or __WITH_TLS__*/
     OicSecKey_t         privateData;    // 6:R:S:N:oic.sec.key
     char                *period;        // 7:R:S:N:String
     OicUuid_t           rownerID;        // 8:R:S:Y:oic.uuid
@@ -490,14 +490,14 @@ struct OicSecSvc
     OicSecSvc_t             *next;
 };
 
-#if defined(__WITH_X509__) ||  defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) ||  defined(__WITH_TLS__)
 struct OicSecCrl
 {
     uint16_t CrlId;
-    ByteArray ThisUpdate;
+    ByteArray_t ThisUpdate;
     OicSecKey_t CrlData;
 };
-#endif /* __WITH_X509__ or __WITH_TLS__ */
+#endif /* __WITH_DTLS__ or __WITH_TLS__ */
 
 /**
  * @brief   direct pairing data type

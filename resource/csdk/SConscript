@@ -96,8 +96,7 @@ if target_os in ['linux'] and liboctbstack_env.get('SIMULATOR', False):
 
 if env.get('SECURED') == '1':
 	liboctbstack_env.AppendUnique(LIBS = ['tinydtls'])
-	if env.get('WITH_TCP') == True:
-		liboctbstack_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
+	liboctbstack_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
 
 if target_os in ['android', 'linux', 'tizen', 'msys_nt', 'windows']:
 	liboctbstack_env.PrependUnique(LIBS = ['connectivity_abstraction'])
@@ -142,9 +141,6 @@ if target_os == 'android':
 
 if env.get('LOGGING'):
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-
-if env.get('DTLS_WITH_X509') == '1':
-	liboctbstack_env.AppendUnique(CPPDEFINES = ['__WITH_X509__'])
 
 liboctbstack_env.Append(LIBS = ['c_common'])
 

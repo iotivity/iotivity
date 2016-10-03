@@ -46,7 +46,7 @@
 #include "oic_string.h"
 
 #ifdef __WITH_TLS__
-#include "ca_adapter_net_tls.h"
+#include "ca_adapter_net_ssl.h"
 #endif
 
 /**
@@ -550,9 +550,9 @@ static void CAExecuteRequest(CATCPSessionInfo_t *svritem)
         case TLS:
 #ifdef __WITH_TLS__
         {
-            int ret = CAdecryptTls(&svritem->sep, (uint8_t *)svritem->data, svritem->len);
+            int ret = CAdecryptSsl(&svritem->sep, (uint8_t *)svritem->data, svritem->len);
 
-            OIC_LOG_V(DEBUG, TAG, "%s: CAdecryptTls returned %d", __func__, ret);
+            OIC_LOG_V(DEBUG, TAG, "%s: CAdecryptSsl returned %d", __func__, ret);
         }
         break;
 #endif
@@ -1204,7 +1204,10 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
     oc_mutex_lock(g_mutexObjectList);
 
 #ifdef __WITH_TLS__
-    CAcloseTlsConnection(&svritem->sep.endpoint);
+    if (CA_STATUS_OK != CAcloseSslConnection(&svritem->sep.endpoint))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to close TLS session");
+    }
 #endif
 
     // close the socket and remove TCP connection info in list
@@ -1240,7 +1243,7 @@ void CATCPDisconnectAll()
         if (svritem && svritem->fd >= 0)
         {
 #ifdef __WITH_TLS__
-            CAcloseTlsConnection(&svritem->sep.endpoint);
+            CAcloseSslConnection(&svritem->sep.endpoint);
 #endif
             shutdown(svritem->fd, SHUT_RDWR);
             close(svritem->fd);

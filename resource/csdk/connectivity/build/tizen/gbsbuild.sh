@@ -55,6 +55,7 @@ mkdir -p $sourcedir/tmp/con/sample/external/inc
 cp -R $cur_dir/external/inc/* $sourcedir/tmp/con/sample/external/inc/
 
 cp -R ./extlibs/tinydtls/ $sourcedir/tmp/con/extlibs/
+cp -R ./extlibs/mbedtls/ $sourcedir/tmp/con/mbedtls/
 cp -R ./extlibs/timer/ $sourcedir/tmp/con/extlibs/
 cp -R ./extlibs/libcoap/ $sourcedir/tmp/con/extlibs/
 mkdir -p $sourcedir/tmp/con/c_common
@@ -86,6 +87,12 @@ cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp/
 cd $sourcedir/tmp
 
 echo `pwd`
+if [ -d ./extlibs/mbedtls/mbedtls ];then
+    cd ./extlibs/mbedtls/mbedtls
+    git reset --hard ad249f509fd62a3bbea7ccd1fef605dbd482a7bd ; git apply --whitespace=fix ../ocf.patch
+    cd -
+    rm -rf ./extlibs/mbedtls/mbedtls/.git*
+fi
 
 whoami
 # Initialize Git repository

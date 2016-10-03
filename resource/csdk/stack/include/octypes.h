@@ -878,7 +878,7 @@ typedef enum
      *  processing its requests from clients.*/
     OC_SLOW          = (1 << 3),
 
-#ifdef __WITH_DTLS__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     /** When this bit is set, the resource is a secure resource.*/
     OC_SECURE        = (1 << 4),
 #else

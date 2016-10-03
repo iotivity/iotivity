@@ -525,7 +525,7 @@ TEST_F (CATests, GetNetworkInformationTest)
 TEST_F(CATests, RegisterDTLSCredentialsHandlerTest)
 {
 #ifdef __WITH_DTLS__
-    EXPECT_EQ(CA_STATUS_OK, CARegisterDTLSCredentialsHandler(CAGetDtlsPskCredentials));
+    EXPECT_EQ(CA_STATUS_OK, CAregisterPskCredentialsHandler(CAGetDtlsPskCredentials));
 #endif
 }
 

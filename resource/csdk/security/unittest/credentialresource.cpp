@@ -106,12 +106,12 @@ static void printCred(const OicSecCred_t * cred)
         {
             OIC_LOG_V(INFO, TAG, "cred->privateData.data = %s", credTmp1->privateData.data);
         }
-#ifdef __WITH_X509__
+#ifdef __WITH_DTLS__
         if(credTmp1->publicData.data)
         {
            OIC_LOG_V(INFO, TAG, "cred->publicData.data = %s", credTmp1->publicData.data);
         }
-#endif /* __WITH_X509__ */
+#endif /* __WITH_DTLS__ */
     OIC_LOG_V(INFO, TAG, "cred->rownerID = %s", credTmp1->rownerID.id);
     }
 }
@@ -391,48 +391,7 @@ TEST(CredGetResourceDataTest, GetCredResourceDataValidSubject)
 }
 #endif
 
-#ifdef __WITH_X509__
-#include <stdlib.h>
-
-static char PROV_TOOL_DB_FILE[] = "/oic_svr_db_prov.dat";
-
-#define STRINGIZE2(x) #x
-#define STRINGIZE(x) STRINGIZE2(x)
-
-static FILE *client_fopen(const char* UNUSED_PARAM , const char *mode)
-{
-    (void)UNUSED_PARAM;
-
-    int len = strlen(STRINGIZE(SECURITY_BUILD_UNITTEST_DIR)) + strlen(PROV_TOOL_DB_FILE) + 1;
-    char *filepath = (char *)OICCalloc(1, len);
-
-    if (!filepath)
-    {
-        printf("filepath memory allocation failed. \n");
-        return NULL;
-    }
-
-    snprintf(filepath, len, "%s%s", STRINGIZE(SECURITY_BUILD_UNITTEST_DIR), PROV_TOOL_DB_FILE);
-
-    FILE* file =  fopen(filepath, mode);
-    OICFree(filepath);
-    return file;
-}
-
-static OCPersistentStorage ps = { client_fopen, fread, fwrite, fclose, unlink };
-
-//GetDtlsX509Credentials Test
-TEST(CredResourceTest, GetDtlsX509Credentials)
-{
-    ASSERT_EQ(OC_STACK_OK, OCInit(NULL, 0, OC_CLIENT_SERVER));
-    OCRegisterPersistentStorageHandler(&ps);
-    InitCredResource();
-    CADtlsX509Creds_t g_X509Cred = {{0}, 0, 0, {0}, {0}, {0}};
-    EXPECT_EQ(0, GetDtlsX509Credentials(&g_X509Cred));
-}
-
-#endif
-#if defined(__WITH_DTLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 TEST(CredGetDtlsPskCredentialsTest, NullResult)
 {
     EXPECT_EQ(-1, GetDtlsPskCredentials(CA_DTLS_PSK_KEY, NULL, 0, NULL, 0));
@@ -443,7 +402,7 @@ TEST(CredAddTmpPskWithPINTest, NullSubject)
     EXPECT_EQ(OC_STACK_INVALID_PARAM, AddTmpPskWithPIN(NULL, SYMMETRIC_PAIR_WISE_KEY,
               NULL, 0, NULL, NULL));
 }
-#endif
+#endif // __WITH_DTLS__ or __WITH_TLS__
 TEST(CredCBORPayloadToCredTest, NullPayload)
 {
     EXPECT_EQ(OC_STACK_INVALID_PARAM, CBORPayloadToCred(NULL, 0, NULL));

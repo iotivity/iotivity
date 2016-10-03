@@ -752,14 +752,14 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                     if (memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) == 0)
                     {
                         OIC_LOG (INFO, TAG, "Doxm EntityHandle  enabling AnonECDHCipherSuite");
-#ifdef __WITH_DTLS__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
                         ehRet = (CAEnableAnonECDHCipherSuite(true) == CA_STATUS_OK) ? OC_EH_OK : OC_EH_ERROR;
-#endif //__WITH_DTLS__
+#endif // __WITH_DTLS__ or __WITH_TLS__
                         goto exit;
                     }
                     else
                     {
-#ifdef __WITH_DTLS__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
                         //Save the owner's UUID to derive owner credential
                         memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
 
@@ -783,12 +783,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
                         OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
 
-#ifdef __WITH_X509__
-#define TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 0xC0AE
-                        CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
-                                            ehRequest->devAddr.adapter);
-#endif //__WITH_X509__
-#endif //__WITH_DTLS__
+#endif // __WITH_DTLS__ or __WITH_TLS__
                     }
                 }
                 else if (OIC_RANDOM_DEVICE_PIN == newDoxm->oxmSel)
@@ -812,7 +807,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                             ehRet = OC_EH_ERROR;
                         }
 
-#ifdef __WITH_DTLS__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
                         CAResult_t caRes = CA_STATUS_OK;
 
                         caRes = CAEnableAnonECDHCipherSuite(false);
@@ -837,7 +832,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                                  * Credential should not be saved into SVR.
                                  * For this reason, use a temporary get_psk_info callback to random PIN OxM.
                                  */
-                                caRes = CARegisterDTLSCredentialsHandler(GetDtlsPskForRandomPinOxm);
+                                caRes = CAregisterPskCredentialsHandler(GetDtlsPskForRandomPinOxm);
                                 VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
                                 ehRet = OC_EH_OK;
                             }
@@ -860,7 +855,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                                  * For this reason, use a temporary get_psk_info callback to random PIN OxM.
                                  */
 #ifdef __WITH_TLS__
-                                caRes = CAregisterTlsCredentialsHandler(GetDtlsPskForRandomPinOxm);
+                                caRes = CAregisterPskCredentialsHandler(GetDtlsPskForRandomPinOxm);
 #endif
                                 VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
                                 ehRet = OC_EH_OK;
@@ -872,11 +867,11 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                             }
 
                         }
-#endif //__WITH_DTLS__
+#endif // __WITH_DTLS__ or __WITH_TLS__
                     }
                     else
                     {
-#ifdef __WITH_DTLS__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
                         //Save the owner's UUID to derive owner credential
                         memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
 
@@ -890,7 +885,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                             OIC_LOG(ERROR, TAG, "Failed to update DOXM in persistent storage");
                             ehRet = OC_EH_ERROR;
                         }
-#endif
+#endif // __WITH_DTLS__ or __WITH_TLS__
                     }
                 }
             }

@@ -126,7 +126,7 @@ OCStackResult InputPin(char* pinBuffer, size_t bufferSize)
     return OC_STACK_OK;
 }
 
-#ifdef __WITH_DTLS__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 
 void SetUuidForRandomPinOxm(const OicUuid_t* uuid)
 {
@@ -203,4 +203,4 @@ int32_t GetDtlsPskForRandomPinOxm( CADtlsPskCredType_t type,
 
     return ret;
 }
-#endif //__WITH_DTLS__
+#endif // __WITH_DTLS__ or __WITH_TLS__
