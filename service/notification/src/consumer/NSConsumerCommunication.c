@@ -350,18 +350,22 @@ OCRepPayload * NSGetExtraInfo(OCRepPayload * payload)
             if (isFirstExtra)
             {
                 headValue = curValue;
+                extraInfo->values = headValue;
                 isFirstExtra = false;
             }
-            curValue = curValue->next;
+            else
+            {
+                headValue->next = curValue;
+                headValue = curValue;
+            }
             curValue = NULL;
         }
         value = value->next;
     }
     OCRepPayloadDestroy(origin);
 
-    extraInfo->values = headValue;
 
-    if (extraInfo->values)
+    if (!isFirstExtra && extraInfo->values)
     {
         return extraInfo;
     }
