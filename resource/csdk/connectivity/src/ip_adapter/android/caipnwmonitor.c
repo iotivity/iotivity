@@ -37,6 +37,7 @@
 #include "org_iotivity_ca_CaIpInterface.h"
 
 #define TAG "OIC_CA_IP_MONITOR"
+#define NETLINK_MESSAGE_LENGTH  (4096)
 
 static CAIPConnectionStateChangeCallback g_networkChangeCallback;
 
@@ -78,6 +79,17 @@ void CAIPSetNetworkMonitorCallback(CAIPConnectionStateChangeCallback callback)
 
 CAInterface_t *CAFindInterfaceChange()
 {
+    // release netlink event
+    char *bufPtr = (char *)OICCalloc(NETLINK_MESSAGE_LENGTH, sizeof (char));
+    if (!bufPtr)
+    {
+        OIC_LOG(ERROR, TAG, "Netlink malloc failed in CAFindInterfaceChange");
+        return NULL;
+    }
+    recv(caglobals.ip.netlinkFd, bufPtr, NETLINK_MESSAGE_LENGTH, 0);
+    OICFree(bufPtr);
+    bufPtr = NULL;
+
     char buf[MAX_INTERFACE_INFO_LENGTH] = { 0 };
     struct ifconf ifc  = { .ifc_len = MAX_INTERFACE_INFO_LENGTH, .ifc_buf = buf };
 
@@ -295,7 +307,7 @@ static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family
     CAInterface_t *ifitem = (CAInterface_t *)OICCalloc(1, sizeof (CAInterface_t));
     if (!ifitem)
     {
-        OIC_LOG(ERROR, TAG, "Malloc failed");
+        OIC_LOG(ERROR, TAG, "Malloc failed in CANewInterfaceItem");
         return NULL;
     }
 
