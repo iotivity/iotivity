@@ -42,28 +42,41 @@ if target_os == 'android':
 		notification_sample_env.AppendUnique(LIBS = ['log'])
 
 notification_sample_consumer_src = 'notificationconsumer.c'
+notification_sample_provider_src = 'notificationprovider.c'
 
 if env.get('WITH_CLOUD') == True:
 	notification_sample_env.AppendUnique(CPPPATH = ['../../src/consumer'])
+        notification_sample_env.AppendUnique(CPPPATH = ['../../src/provider'])
 	notification_sample_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD'])
-	CONSUMER_CLOUD = File('cloud_connector.c')
-	notification_sample_consumer_src = ['notificationconsumer.c', CONSUMER_CLOUD]
+
+        providerCloudConnectorObj = notification_sample_env.Object('cloud_connector.c')
+        consumerCloudConnectorObj = notification_sample_env.Object('cloud_connector.c')
+
+        #PROVIDER_CLOUD = File('cloud_connector.c')
+        #notification_sample_provider_src = ['notificationprovider.c', PROVIDER_CLOUD]
+        notification_sample_provider_src = ['notificationprovider.c', providerCloudConnectorObj]
+	#CONSUMER_CLOUD = File('cloud_connector.c')
+	#notification_sample_consumer_src = ['notificationconsumer.c', CONSUMER_CLOUD]
+        notification_sample_consumer_src = ['notificationconsumer.c', consumerCloudConnectorObj]
 
 if env.get('WITH_TCP') == True:
 	notification_sample_env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
-
-
+	if env.get('SECURED') == '1':
+		notification_sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ####################################################################
 # Source files and Targets
 ######################################################################
 notification_sample_provider_env = notification_sample_env.Clone()
-
 notification_sample_provider_env.AppendUnique(LIBS = 'libnotification_provider')
-notificationprovider = notification_sample_provider_env.Program('notificationprovider', 'notificationprovider.c')
+notificationprovider = notification_sample_provider_env.Program('notificationprovider', notification_sample_provider_src)
 i_notificationprovider = notification_sample_provider_env.Install(env.get('BUILD_DIR'), notificationprovider)
 
 notification_sample_consumer_env = notification_sample_env.Clone()
 notification_sample_consumer_env.AppendUnique(LIBS = 'libnotification_consumer')
 notificationconsumer = notification_sample_consumer_env.Program('notificationconsumer', notification_sample_consumer_src)
 i_notificationprovider = notification_sample_consumer_env.Install(env.get('BUILD_DIR'), notificationconsumer)
+
+if env.get('WITH_CLOUD') == True:
+        Export('providerCloudConnectorObj')
+        Export('consumerCloudConnectorObj')

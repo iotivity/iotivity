@@ -33,13 +33,12 @@ extern "C" {
 #include "ocstack.h"
 
 #define NS_QOS OC_HIGH_QOS
-#define NS_RESOURCE_TYPE "oic.r.notification"
+#define NS_RESOURCE_TYPE "oic.wk.notification"
 #define NS_RESOURCE_URI "/notification"
 #define NS_INTERFACE_BASELINE "oic.if.baseline"
-#define NS_INTERFACE_NOTIFICATION "oic.if.notification"
 #define NS_RESOURCE_QUERY "/oic/res"
 
-#define NS_DISCOVER_QUERY "/oic/res?rt=oic.r.notification"
+#define NS_DISCOVER_QUERY "/oic/res?rt=oic.wk.notification"
 #define NS_DEVICE_ID_LENGTH 37
 
 typedef enum
@@ -81,6 +80,7 @@ typedef struct
     char * topicUri;
 
     NSSelector accessPolicy;
+    NSProviderState state;
 
     NSProviderConnectionInfo * connection;
 
@@ -96,21 +96,11 @@ typedef struct
 
 } NSSyncInfo_internal;
 
-typedef struct
-{
-    NSSyncType status;
-    NSMessage * msg;
-
-} NSStoreMessage;
-
 bool NSIsStartedConsumer();
 void NSSetIsStartedConsumer(bool setValue);
 
-void NSSetDiscoverProviderCb(NSProviderDiscoveredCallback cb);
-void NSDiscoveredProvider(NSProvider * provider);
-
-void NSSetProviderChangedCb(NSProviderChangedCallback cb);
-void NSProviderChanged(NSProvider * provider, NSResponse response);
+void NSSetProviderChangedCb(NSProviderStateCallback cb);
+void NSProviderChanged(NSProvider * provider, NSProviderState response);
 
 void NSSetMessagePostedCb(NSMessageReceivedCallback  cb);
 void NSMessagePost(NSMessage * obj);
@@ -138,9 +128,6 @@ NSProvider_internal * NSCopyProvider_internal(NSProvider_internal *);
 NSProvider * NSCopyProvider(NSProvider_internal *);
 void NSRemoveProvider_internal(NSProvider_internal *);
 void NSRemoveProvider(NSProvider *);
-
-NSSyncInfo_internal * NSCopySyncInfo(NSSyncInfo_internal *);
-void NSRemoveSyncInfo(NSSyncInfo_internal *);
 
 NSTopicLL * NSCopyTopicNode(NSTopicLL *);
 void NSRemoveTopicNode(NSTopicLL *);

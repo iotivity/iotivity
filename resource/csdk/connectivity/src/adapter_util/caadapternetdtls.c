@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  ******************************************************************/
-#include "platform_features.h"
+#include "iotivity_config.h"
 #include "caadapternetdtls.h"
 #include "cacommon.h"
 #include "caipinterface.h"
@@ -788,6 +788,8 @@ CAResult_t CADtlsClose(const CAEndpoint_t *endpoint)
         ca_mutex_unlock(g_dtlsContextMutex);
         return CA_STATUS_FAILED;
     }
+
+    CARemovePeerFromPeerInfoList(endpoint->addr, endpoint->port);
 
     ca_mutex_unlock(g_dtlsContextMutex);
 

@@ -1,3 +1,25 @@
+/*
+ * //******************************************************************
+ * //
+ * // Copyright 2016 Samsung Electronics All Rights Reserved.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //      http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ */
+
 package org.iotivity.cloud.ciserver.resources.proxy.account;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -7,8 +29,7 @@ import static org.mockito.Mockito.mock;
 
 import java.util.concurrent.CountDownLatch;
 
-import org.iotivity.cloud.base.OCFConstants;
-import org.iotivity.cloud.base.connector.ConnectorPool;
+import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.protocols.IRequest;
@@ -27,25 +48,23 @@ import org.mockito.stubbing.Answer;
 
 public class AclTest {
     private static final String TEST_RESOURCE_ACI_URI = "/"
-            + OCFConstants.PREFIX_WELL_KNOWN + "/" + OCFConstants.PREFIX_OCF
-            + "/" + OCFConstants.ACL_URI;
-    private CoapDevice          mockDevice            = mock(CoapDevice.class);
-    IRequest                    req                   = null;
-    ConnectorPool               connectorPool         = null;
-    DeviceServerSystem          deviceServerSystem    = new DeviceServerSystem();
-    final CountDownLatch        latch                 = new CountDownLatch(1);
+            + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI;
+    private CoapDevice          mMockDevice           = mock(CoapDevice.class);
+    private IRequest            mReq                  = null;
+    private DeviceServerSystem  mDeviceServerSystem   = new DeviceServerSystem();
+    final CountDownLatch        mLatch                = new CountDownLatch(1);
 
     @Mock
-    IRequestChannel             requestChannel;
+    private IRequestChannel     mRequestChannel;
 
     @InjectMocks
-    Acl                         aclHandler            = new Acl();
+    private Acl                 mAclHandler           = new Acl();
 
     @Before
     public void setUp() throws Exception {
-        req = null;
+        mReq = null;
         MockitoAnnotations.initMocks(this);
-        deviceServerSystem.addResource(aclHandler);
+        mDeviceServerSystem.addResource(mAclHandler);
         // callback mock
         Mockito.doAnswer(new Answer<Object>() {
             @Override
@@ -59,11 +78,11 @@ public class AclTest {
                         "\t----------uripath : " + request.getUriPath());
                 System.out.println(
                         "\t---------uriquery : " + request.getUriQuery());
-                req = request;
-                latch.countDown();
+                mReq = request;
+                mLatch.countDown();
                 return null;
             }
-        }).when(requestChannel).sendRequest(Mockito.any(IRequest.class),
+        }).when(mRequestChannel).sendRequest(Mockito.any(IRequest.class),
                 Mockito.any(CoapDevice.class));
     }
 
@@ -74,9 +93,9 @@ public class AclTest {
 
         IRequest request = MessageBuilder.createRequest(RequestMethod.POST,
                 TEST_RESOURCE_ACI_URI, null, null, null);
-        aclHandler.onRequestReceived(mockDevice, request);
+        mAclHandler.onRequestReceived(mMockDevice, request);
 
-        assertTrue(latch.await(1L, SECONDS));
-        assertEquals(req.getUriPath(), TEST_RESOURCE_ACI_URI);
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertEquals(mReq.getUriPath(), TEST_RESOURCE_ACI_URI);
     }
 }

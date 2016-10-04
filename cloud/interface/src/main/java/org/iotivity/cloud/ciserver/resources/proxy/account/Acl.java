@@ -31,12 +31,17 @@ import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 
+/**
+ *
+ * This class provides a set of APIs to send requests about acl to account
+ *
+ */
+
 public class Acl extends Resource {
     IRequestChannel mAuthServer = null;
 
     public Acl() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACL_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACL_URI));
 
         mAuthServer = ConnectorPool.getConnection("account");
     }

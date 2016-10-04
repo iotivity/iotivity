@@ -25,6 +25,7 @@
 #define _GNU_SOURCE // for in6_pktinfo
 #endif
 
+#include "iotivity_config.h"
 #include <sys/types.h>
 #if !defined(_WIN32)
 #include <sys/socket.h>
@@ -56,7 +57,7 @@
 #include <linux/rtnetlink.h>
 #endif
 
-#include "pdu.h"
+#include <coap/pdu.h>
 #include "caipinterface.h"
 #include "caadapterutils.h"
 #ifdef __WITH_DTLS__
@@ -65,7 +66,6 @@
 #include "camutex.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "platform_features.h"
 
 #define USE_IP_MREQN
 #if defined(_WIN32)
@@ -1008,7 +1008,7 @@ static void applyMulticastToInterface4(uint32_t ifindex)
                              .imr_address.s_addr = htonl(INADDR_ANY),
                              .imr_ifindex = ifindex };
 #else
-    struct ip_mreq mreq  = { .imr_multiaddr = IPv4MulticastAddress,
+    struct ip_mreq mreq  = { .imr_multiaddr.s_addr = IPv4MulticastAddress.s_addr,
                              .imr_interface.s_addr = htonl(ifindex) };
 #endif
 
@@ -1040,8 +1040,12 @@ static void applyMulticastToInterface4(uint32_t ifindex)
 
 static void applyMulticast6(int fd, struct in6_addr *addr, uint32_t ifindex)
 {
-    struct ipv6_mreq mreq = {.ipv6mr_multiaddr = *addr,
+    struct ipv6_mreq mreq = {.ipv6mr_multiaddr = {0},
                              .ipv6mr_interface = ifindex };
+
+    // VS2013 has problems with struct copies inside struct initializers, so copy separately.
+    mreq.ipv6mr_multiaddr = *addr;
+
     int ret = setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, OPTVAL_T(&mreq), sizeof (mreq));
     if (OC_SOCKET_ERROR == ret)
     {
@@ -1204,8 +1208,6 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
         return;
     }
 
-    char *secure = (endpoint->flags & CA_SECURE) ? "secure " : "";
-
     (void)cast;  // eliminates release warning
     (void)fam;
 
@@ -1222,6 +1224,10 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
     {
         socklen = sizeof(struct sockaddr_in);
     }
+
+#ifdef TB_LOG
+    const char *secure = (endpoint->flags & CA_SECURE) ? "secure " : "";
+#endif
 #if !defined(_WIN32)
     ssize_t len = sendto(fd, data, dlen, 0, (struct sockaddr *)&sock, socklen);
     if (OC_SOCKET_ERROR == len)
@@ -1336,7 +1342,7 @@ static void sendMulticastData4(const u_arraylist_t *iflist,
                              .imr_address.s_addr = htonl(INADDR_ANY),
                              .imr_ifindex = 0};
 #else
-    struct ip_mreq mreq  = { .imr_multiaddr = IPv4MulticastAddress,
+    struct ip_mreq mreq  = { .imr_multiaddr.s_addr = IPv4MulticastAddress.s_addr,
                              .imr_interface = {0}};
 #endif
 

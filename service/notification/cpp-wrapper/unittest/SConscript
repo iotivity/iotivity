@@ -53,8 +53,13 @@ GTest_Main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
 notification_wrapper_test_env.AppendUnique(LIBPATH = [lib_env.get('BUILD_DIR')])
 notification_wrapper_test_env.AppendUnique(LIBS = [
-    'connectivity_abstraction', 'oc', 'octbstack', 'oc_logger', 'coap', 'notification_provider', 'notification_consumer' ,
+    'connectivity_abstraction', 'oc', 'octbstack', 'oc_logger', 'coap', 
     GTest_Main, GTest])
+
+if env.get('WITH_TCP') == True:
+	notification_wrapper_test_env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
+	if env.get('SECURED') == '1':
+		notification_wrapper_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if target_os not in ['windows', 'winrt']:
     notification_wrapper_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
@@ -77,10 +82,10 @@ notification_wrapper_test_env.AppendUnique(CPPPATH = ['../../src/consumer'])
 ######################################################################
 
 notification_consumer_wrapper_test_env = notification_wrapper_test_env.Clone()
-notification_consumer_wrapper_test_env.AppendUnique(LIBS = ['notification_consumer_wrapper'])
+notification_consumer_wrapper_test_env.AppendUnique(LIBS = ['notification_consumer_wrapper','notification_consumer'])
 
 notification_provider_wrapper_test_env = notification_wrapper_test_env.Clone()
-notification_provider_wrapper_test_env.AppendUnique(LIBS = ['notification_provider_wrapper'])
+notification_provider_wrapper_test_env.AppendUnique(LIBS = ['notification_provider_wrapper','notification_provider'])
 
 notification_consumer_wrapper_test_src = env.Glob('./NSConsumerServiceTest.cpp')
 notification_consumer_wrapper_test = notification_consumer_wrapper_test_env.Program('notification_consumer_wrapper_test', notification_consumer_wrapper_test_src)

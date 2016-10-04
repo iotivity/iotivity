@@ -29,8 +29,13 @@
 #include "NSStructs.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "NSStorageAdapter.h"
 #include "NSUtil.h"
+
+NSCacheList * NSProviderStorageCreate();
+NSCacheElement * NSProviderStorageRead(NSCacheList * list, const char * findId);
+NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj);
+NSResult NSProviderStorageDelete(NSCacheList * list, const char * delId);
+NSResult NSProviderStorageDestroy(NSCacheList * list);
 
 NSResult NSProviderDeleteCacheData(NSCacheType, void *);
 
@@ -45,9 +50,7 @@ NSResult NSProviderDeleteSubDataFromObId(NSCacheList * list, OCObservationId id)
 NSTopicLL * NSProviderGetTopicsCacheData(NSCacheList * regTopicList);
 
 NSTopicLL * NSProviderGetConsumerTopicsCacheData(NSCacheList * regTopicList,
-        NSCacheList * conTopicList, char *consumerId);
-
-size_t NSProviderGetListSize(NSCacheElement * firstElement);
+        NSCacheList * conTopicList, const char * consumerId);
 
 bool NSProviderIsTopicSubScribed(NSCacheElement * conTopicList, char * cId, char * topicName);
 

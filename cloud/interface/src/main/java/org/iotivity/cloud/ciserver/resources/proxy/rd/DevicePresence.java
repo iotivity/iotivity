@@ -40,12 +40,19 @@ import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.util.Cbor;
 
+/**
+ *
+ * This class provides a set of APIs to send requests about device presence to
+ * resource directory
+ *
+ */
+
 public class DevicePresence extends Resource {
     IRequestChannel                       mASServer = null;
     private Cbor<HashMap<String, Object>> mCbor     = new Cbor<>();
 
     public DevicePresence() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
+        super(Arrays.asList(Constants.PREFIX_OIC,
                 Constants.DEVICE_PRESENCE_URI));
 
         mASServer = ConnectorPool.getConnection("account");
@@ -71,6 +78,12 @@ public class DevicePresence extends Resource {
                     HashMap<String, Object> payloadData = mCbor
                             .parsePayloadFromCbor(response.getPayload(),
                                     HashMap.class);
+
+                    if (payloadData == null) {
+                        mSrcDevice.sendResponse(MessageBuilder.createResponse(
+                                mRequest, ResponseStatus.BAD_REQUEST));
+                        return;
+                    }
 
                     if (mRequest.getUriQuery() != null
                             && mRequest.getUriQueryMap()
@@ -145,8 +158,7 @@ public class DevicePresence extends Resource {
         uriQuery.append(Constants.REQ_MEMBER_ID + "=" + srcDevice.getUserId());
 
         StringBuffer uriPath = new StringBuffer();
-        uriPath.append(Constants.PREFIX_WELL_KNOWN + "/");
-        uriPath.append(Constants.PREFIX_OCF + "/");
+        uriPath.append(Constants.PREFIX_OIC + "/");
         uriPath.append(Constants.ACL_URI + "/");
         uriPath.append(Constants.GROUP_URI + "/");
         uriPath.append(srcDevice.getUserId());

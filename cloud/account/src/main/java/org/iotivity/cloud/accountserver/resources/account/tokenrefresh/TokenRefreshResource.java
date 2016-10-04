@@ -36,7 +36,12 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
+
+/**
+ *
+ * This class provides a set of APIs to handle token refresh requests
+ *
+ */
 
 public class TokenRefreshResource extends Resource {
 
@@ -45,8 +50,8 @@ public class TokenRefreshResource extends Resource {
     private AccountManager                mAsManager = new AccountManager();
 
     public TokenRefreshResource() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACCOUNT_URI, Constants.TOKEN_REFRESH_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI,
+                Constants.TOKEN_REFRESH_URI));
     }
 
     @Override
@@ -57,6 +62,7 @@ public class TokenRefreshResource extends Resource {
 
         switch (request.getMethod()) {
             case POST:
+                // make token refresh response message
                 response = handlePostRefreshToken(request);
                 break;
 
@@ -64,29 +70,23 @@ public class TokenRefreshResource extends Resource {
                 throw new BadRequestException(
                         request.getMethod() + " request type is not support");
         }
-
+        // send sign-up response to the source device
         srcDevice.sendResponse(response);
     }
 
     private IResponse handlePostRefreshToken(IRequest request)
             throws ServerException {
 
-        if (request.getPayload() == null) {
-            throw new BadRequestException("payload is null");
-        }
-
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
-        // temp code
-        Log.v(payloadData.toString());
-
         if (payloadData == null) {
-            throw new BadRequestException("CBOR parsing failed");
+            throw new BadRequestException("payload is null");
         }
 
         HashMap<String, Object> responsePayload = null;
 
+        // check if the payload has mandatory properties
         if (checkPayloadException(
                 Arrays.asList(Constants.REQ_UUID_ID, Constants.REQ_DEVICE_ID,
                         Constants.REQ_REFRESH_TOKEN, Constants.REQ_GRANT_TYPE),
@@ -103,7 +103,7 @@ public class TokenRefreshResource extends Resource {
             responsePayload = mAsManager.refreshToken(uuid, deviceId, grantType,
                     refreshToken);
         }
-
+        // return token refresh response message
         return MessageBuilder.createResponse(request, ResponseStatus.CHANGED,
                 ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(responsePayload));

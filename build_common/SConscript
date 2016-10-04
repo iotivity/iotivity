@@ -1,9 +1,12 @@
+# -*- mode: python; python-indent-offset: 4; indent-tabs-mode: nil -*-
 ##
 # This script includes generic build options:
 #    release/debug, target os, target arch, cross toolchain, build environment etc
 ##
 import os
 import platform
+
+project_version = '1.2.0'
 
 # Map of host os and allowed target os (host: allowed target os)
 host_target_map = {
@@ -15,7 +18,7 @@ host_target_map = {
 
 # Map of os and allowed archs (os: allowed archs)
 os_arch_map = {
-		'linux': ['x86', 'x86_64', 'arm', 'arm-v7a', 'arm64'],
+		'linux': ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64'],
 		'tizen': ['x86', 'x86_64', 'arm', 'arm-v7a', 'armeabi-v7a', 'arm64'],
 		'android': ['x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
 		'windows': ['x86', 'amd64', 'arm'],
@@ -23,7 +26,7 @@ os_arch_map = {
 		'darwin': ['i386', 'x86_64'],
 		'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
 		'arduino': ['avr', 'arm'],
-		'yocto': ['i586', 'x86_64', 'arm', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
+		'yocto': ['i586', 'i686', 'x86_64', 'arm', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
 		}
 
 host = platform.system().lower()
@@ -63,6 +66,8 @@ require_upload = ARGUMENTS.get('UPLOAD', False)
 # Get the device name. This name can be used as network display name wherever possible
 device_name = ARGUMENTS.get('DEVICE_NAME', "OIC-DEVICE")
 
+default_with_upstream_libcoap = 0
+
 if ARGUMENTS.get('TEST'):
 	logging_default = False
 else:
@@ -71,7 +76,11 @@ else:
 		release_mode = True
 	logging_default = (release_mode == False)
 
-
+# targets that do not support the DTLS build (SECURED=1 build option)
+targets_without_dtls_support = ['arduino'];
+if ARGUMENTS.get('SECURED') == '1' and target_os in targets_without_dtls_support:
+	print "\nError: DTLS not supported on target os: %s MUST build with SECURED=0\n" % (target_os)
+	Exit(1)
 
 ######################################################################
 # Common build options (release, target os, target arch)
@@ -86,6 +95,7 @@ help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map
 
 help_vars.Add(BoolVariable('WITH_RA', 'Build with Remote Access module', False))
 help_vars.Add(BoolVariable('WITH_TCP', 'Build with TCP adapter', False))
+help_vars.Add(BoolVariable('WITH_PROXY', 'Build with CoAP-HTTP Proxy', False))
 help_vars.Add(ListVariable('WITH_MQ', 'Build with MQ publisher/broker', 'OFF', ['OFF', 'SUB', 'PUB', 'BROKER']))
 help_vars.Add(BoolVariable('WITH_CLOUD', 'Build including AccountManager class and Cloud Client sample', False))
 help_vars.Add(ListVariable('RD_MODE', 'Resource Directory build mode', 'CLIENT', ['CLIENT', 'SERVER']))
@@ -112,6 +122,7 @@ help_vars.AddVariables(('DEVICE_NAME', 'Network display name for device (For Ard
 help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('ANDROID_HOME', 'Android SDK path', None, PathVariable.PathAccept))
 help_vars.Add(PathVariable('ANDROID_GRADLE', 'Gradle binary file', None, PathVariable.PathIsFile))
+help_vars.Add(EnumVariable('WITH_UPSTREAM_LIBCOAP', 'Use latest stable version of LibCoAP downloaded from github', default_with_upstream_libcoap, allowed_values=('0','1')))
 
 AddOption('--prefix',
                   dest='prefix',
@@ -181,13 +192,19 @@ if target_os in targets_support_cc:
 	if prefix or tc_path:
 		print tc_set_msg
 
-# If cross-compiling, honor environment settings for toolchain to avoid picking up native tools
-if os.environ.get('PKG_CONFIG') != None:
-	env["ENV"]["PKG_CONFIG"] = os.environ.get("PKG_CONFIG")
-if os.environ.get('PKG_CONFIG_PATH') != None:
-	env["ENV"]["PKG_CONFIG_PATH"] = os.environ.get("PKG_CONFIG_PATH")
-if os.environ.get('PKG_CONFIG_SYSROOT_DIR') != None:
-	env["ENV"]["PKG_CONFIG_SYSROOT_DIR"] = os.environ.get("PKG_CONFIG_SYSROOT_DIR")
+# Import env variables only if reproductibility is ensured
+if target_os in ['yocto']:
+    env['CONFIG_ENVIRONMENT_IMPORT'] = True
+else:
+    env['CONFIG_ENVIRONMENT_IMPORT'] = False
+
+if env['CONFIG_ENVIRONMENT_IMPORT'] == True:
+    print "warning: importing some environment variables for OS: %s" % target_os
+    for ev in ['PATH', 'PKG_CONFIG', 'PKG_CONFIG_PATH', 'PKG_CONFIG_SYSROOT_DIR']:
+        if os.environ.get(ev) != None:
+            env['ENV'][ev] = os.environ.get(ev)
+    if os.environ['LDFLAGS'] != None:
+        env.AppendUnique(LINKFLAGS = Split(os.environ['LDFLAGS']))
 
 # Ensure scons be able to change its working directory
 env.SConscriptChdir(1)
@@ -306,30 +323,31 @@ Export('env')
 ######################################################################
 pc_file = env.get('SRC_DIR') + '/iotivity.pc.in'
 
-if env.get('ROUTING') == 'GW':
-	routing_define = 'ROUTING_GATEWAY'
-elif env.get('ROUTING') == 'EP':
-	routing_define = 'ROUTING_EP'
-
 user_prefix = env.get('PREFIX')
 user_lib = env.get('LIB_INSTALL_DIR')
-if not user_lib:
-	user_lib = '$${prefix}/lib'
 
-if user_prefix:
-	pc_vars = {'\@PREFIX\@': user_prefix,
-				'\@EXEC_PREFIX\@':user_prefix,
-				'\@VERSION\@': '1.1.1',
-				'\@LIB_INSTALL_DIR\@': user_lib,
-				'\@ROUTING_DEFINE\@': routing_define
-				}
-else:
-	pc_vars = {'\@PREFIX\@': env.get('BUILD_DIR').encode('string_escape'),
-				'\@EXEC_PREFIX\@': env.get('BUILD_DIR').encode('string_escape'),
-				'\@VERSION\@': '1.1.1',
-				'\@LIB_INSTALL_DIR\@': user_lib,
-				'\@ROUTING_DEFINE\@': routing_define
-				}
+if not user_prefix:
+    user_prefix = env.get('BUILD_DIR').encode('string_escape')
+
+if not user_lib:
+    user_lib = '$${prefix}/lib'
+
+defines = []
+if env.get('LOGGING'):
+    defines.append('-DTB_LOG=1')
+
+if env.get('ROUTING') == 'GW':
+    defines.append('-DROUTING_GATEWAY=1')
+elif env.get('ROUTING') == 'EP':
+    defines.append('-DROUTING_EP=1')
+
+pc_vars = {
+    '\@VERSION\@': project_version,
+    '\@PREFIX\@': user_prefix,
+    '\@EXEC_PREFIX\@': user_prefix,
+    '\@LIB_INSTALL_DIR\@': user_lib,
+    '\@DEFINES\@': " ".join(defines)
+}
 
 env.Substfile(pc_file, SUBST_DICT = pc_vars)
 
@@ -427,52 +445,6 @@ conf = Configure(env,
 # threading and mutexes.  This will set the environment variable
 # POSIX_SUPPORTED, 1 if it is supported, 0 otherwise
 conf.CheckPThreadsSupport()
-
-######################################################################
-# Generate macros for presence of headers
-######################################################################
-cxx_headers = ['arpa/inet.h',
-               'fcntl.h',
-               'grp.h',
-               'in6addr.h',
-               'linux/limits.h',
-               'memory.h',
-               'netdb.h',
-               'netinet/in.h',
-               'pthread.h',
-               'pwd.h',
-               'stdlib.h',
-               'string.h',
-               'strings.h',
-               'sys/socket.h',
-               'sys/stat.h',
-               'sys/time.h',
-               'sys/timeb.h',
-               'sys/types.h',
-               'sys/unistd.h',
-               'syslog.h',
-               'time.h',
-               'unistd.h',
-               'uuid/uuid.h',
-               'windows.h',
-               'winsock2.h',
-               'ws2tcpip.h']
-
-if target_os == 'arduino':
-	# Detection of headers on the Arduino platform is currently broken.
-	cxx_headers = []
-
-if target_os == 'msys_nt':
-	# WinPThread provides a pthread.h, but we want to use native threads.
-	cxx_headers.remove('pthread.h')
-
-def get_define_from_header_file(header_file):
-	header_file_converted = header_file.replace("/","_").replace(".","_").upper()
-	return "HAVE_" + header_file_converted
-
-for header_file_name in cxx_headers:
-	if conf.CheckCXXHeader(header_file_name):
-		conf.env.AppendUnique(CPPDEFINES = [get_define_from_header_file(header_file_name)])
 
 env = conf.Finish()
 ######################################################################

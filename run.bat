@@ -57,8 +57,9 @@ set TEST=1
 set LOGGING=OFF
 set WITH_RD=1
 set ROUTING=EP
+set WITH_UPSTREAM_LIBCOAP=0
 
-set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=0 WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=0 BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% WITH_RD=%WITH_RD% ROUTING=%ROUTING%
+set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=0 WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=0 BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% WITH_RD=%WITH_RD% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP%
 
 REM *** BUILD OPTIONS ***
 
@@ -68,7 +69,13 @@ if "!CURRENT_ARG!"=="server" (
 ) else if "!CURRENT_ARG!"=="client" (
   cd %BUILD_DIR%\resource\examples
   %DEBUG% simpleclient.exe
-) else if "!CURRENT_ARG!"=="mediaclient" (
+) else if "!CURRENT_ARG!"=="serverhq" (
+  cd %BUILD_DIR%\resource\examples
+  %DEBUG% simpleserverHQ.exe
+) else if "!CURRENT_ARG!"=="clienthq" (
+  cd %BUILD_DIR%\resource\examples
+  %DEBUG% simpleclientHQ.exe
+)else if "!CURRENT_ARG!"=="mediaclient" (
   cd %BUILD_DIR%\resource\examples
   %DEBUG% mediaclient.exe
 ) else if "!CURRENT_ARG!"=="mediaserver" (
@@ -100,9 +107,11 @@ if "!CURRENT_ARG!"=="server" (
   echo   TARGET_OS=%TARGET_OS%
   echo   TARGET_ARCH=%TARGET_ARCH%
   echo   SECURED=%SECURED%
+  echo   TEST=%TEST%
   echo   LOGGING=%LOGGING%
   echo   WITH_RD=%WITH_RD%
   echo   ROUTING=%ROUTING%
+  echo   WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP%
   CL.exe | findstr "Compiler Verison"
   echo.scons VERBOSE=1 %BUILD_OPTIONS%
   scons VERBOSE=1 %BUILD_OPTIONS%

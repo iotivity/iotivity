@@ -32,6 +32,7 @@
 #include "NSSyncInfo.h"
 #include "NSMessage.h"
 #include "NSUtils.h"
+#include "NSTopicsList.h"
 
 namespace OIC
 {
@@ -62,7 +63,9 @@ namespace OIC
                 /**
                       * @struct   ProviderConfig
                       * @brief Provider sets this following configuration for registering callbacks and configs
-                      *
+                      *  Set the subControllability, for notification servcie refering to following
+                      *  if subControllability, is true, provider decides to allow or deny for all the subscribing consumers.
+                      *  Otherwise(subControllability, is false) consumer decides to request subscription to discovered providers.
                       */
                 typedef struct
                 {
@@ -71,23 +74,13 @@ namespace OIC
                     /** m_syncInfoCb - MessageSynchronizedCallback callback listener.*/
                     MessageSynchronizedCallback m_syncInfoCb;
 
-                    /* Set the policy for notification servcie refering to following
-                                 * if policy is true, provider decides to allow or deny for all the subscribing consumers.
-                                 * Otherwise(policy is false) consumer decides to request subscription to discovered providers.
-                                 */
-                    bool policy;
-                    /* User Information */
+                    /** subControllability - for setting the subscription controllability for Consumer */
+                    bool subControllability;
+                    /** userInfo - user defined information */
                     std::string userInfo;
+                    /* Set on/off with SECURED build option */
+                    bool resourceSecurity;
                 } ProviderConfig;
-
-                /**
-                     * Access policy exchanged between provider and consumer during subscription process
-                     */
-                enum class NSAccessPolicy
-                {
-                    NS_ACCESS_ALLOW = 0,
-                    NS_ACCESS_DENY = 1,
-                };
 
                 /**
                       * API for starting the NS Provider
@@ -98,39 +91,38 @@ namespace OIC
 
                 /**
                       * Initialize notification service for provider
-                      * @param[in]  policy   Accepter
                       * @param[in]  config   ProviderConfig Callback function pointers to onConsumerSubscribed,
                       * and onMessageSynchronized function listeners
                       * @return :: result code of Provider Service
                       */
-                NSResult Start(ProviderConfig config);
+                NSResult start(ProviderConfig config);
 
                 /**
                       * Terminate notification service for provider
                       * @return :: result code of Provider Service
                       */
-                NSResult Stop();
+                NSResult stop();
 
                 /**
                       * Request to publish resource to cloud server
-                      * @param[in]  server address combined with IP address and port number using delimiter :
+                      * @param[in]  serverAddress combined with IP address and port number using delimiter :
                       * @return  result code of Provider Service
                       */
-                NSResult EnableRemoteService(const std::string &serverAddress);
+                NSResult enableRemoteService(const std::string &serverAddress);
 
                 /**
                       * Request to cancel remote service using cloud server
-                      * @param[in]  server address combined with IP address and port number using delimiter :
+                      * @param[in]  serverAddress combined with IP address and port number using delimiter :
                       * @return  result code of Provider Service
                       */
-                NSResult DisableRemoteService(const std::string &serverAddress);
+                NSResult disableRemoteService(const std::string &serverAddress);
 
                 /**
                       * Send notification message to all subscribers
                       * @param[in]  msg  Notification message including id, title, contentText
                       * @return :: result code of Provider Service
                       */
-                NSResult SendMessage(NSMessage *msg);
+                NSResult sendMessage(NSMessage *msg);
 
 
                 /**
@@ -138,13 +130,33 @@ namespace OIC
                       * @param[in]  messageId  Notification message to synchronize the status
                       * @param[in]  type  NotificationSyncType of the SyncInfo message
                       */
-                void SendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type);
+                void sendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type);
 
                 /**
                      * Initialize NSMessage class, service sets message id and provider(device) id
-                     * @return ::NSMessage *
+                     * @return NSMessage *
                      */
-                NSMessage *CreateMessage();
+                NSMessage *createMessage();
+
+                /**
+                     * Add topic to topic list which is located in provider service storage
+                     * @param[in]  topicName Topic name to add
+                     * @return :: OK or result code of NSResult
+                     */
+                NSResult registerTopic(const std::string &topicName);
+
+                /**
+                     * Delete topic from topic list
+                     * @param[in]  topicName Topic name to delete
+                     * @return :: OK or result code of NSResult
+                     */
+                NSResult unregisterTopic(const std::string &topicName);
+
+                /**
+                     * Request topics list already registered by provider user
+                     * @return :: Topic list
+                     */
+                NSTopicsList *getRegisteredTopicList();
 
                 /**
                       *  get Provider config values
@@ -152,8 +164,23 @@ namespace OIC
                       */
                 ProviderConfig getProviderConfig();
 
+                /**
+                      *  request to get NSConsumer pointer
+                      * @param id -id as string
+                      *
+                      * @return pointer to NSConsumer
+                      */
+                NSConsumer *getConsumer(const std::string &id);
+
+                /**
+                      *  get list of Consumers accepted.
+                      * @return m_acceptedConsumers -list of accepted Consumers
+                      */
+                std::list<NSConsumer *> &getAcceptedConsumers();
+
             private :
                 ProviderConfig m_config;
+                std::list<NSConsumer *> m_acceptedConsumers;
 
             private:
                 NSProviderService()
@@ -161,7 +188,7 @@ namespace OIC
                     m_config.m_subscribeRequestCb = NULL;
                     m_config.m_syncInfoCb = NULL;
                 }
-                ~NSProviderService() = default;
+                ~NSProviderService();
                 NSProviderService(const NSProviderService &) = delete;
                 NSProviderService &operator=(const NSProviderService &) = delete;
                 NSProviderService(const NSProviderService &&) = delete;

@@ -45,7 +45,10 @@ void handleRequestWithDelay(int delayInMillis, const RCSRequest& request,
         auto& resAttrs = resObject->getAttributes();
         for (const auto& kv : requestedAttrs)
         {
-            if (resAttrs.contains(kv.key())) resAttrs[kv.key()] = kv.value();
+            if (resAttrs.contains(kv.key()))
+            {
+                resAttrs[kv.key()] = kv.value();
+            }
         }
     }
 
@@ -75,7 +78,10 @@ int processUserInput(int min, int max)
 
         if (!std::cin.fail())
         {
-            if(min <= input && input <= max) return input;
+            if(min <= input && input <= max)
+            {
+                return input;
+            }
         }
 
         std::cin.clear();

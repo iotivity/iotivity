@@ -31,12 +31,20 @@ import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.db.GroupTable;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.base.device.Device;
+import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
+import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
 import org.iotivity.cloud.base.exception.ServerException.UnAuthorizedException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.util.Cbor;
+
+/**
+ *
+ * This class provides a set of APIs to handle group requests
+ *
+ */
 
 public class Group {
 
@@ -60,6 +68,13 @@ public class Group {
 
     private HashMap<String, GroupSubscriber> mSubscribers = new HashMap<>();
 
+    /**
+     * 
+     * API to add the member user id to the group table in the db
+     * 
+     * @param uuid
+     *            User id list which are provided by Sign-up process
+     */
     public void addMember(HashSet<String> uuid) {
 
         GroupTable groupTable = getGroupTable();
@@ -73,6 +88,12 @@ public class Group {
         notifyToSubscriber(getResponsePayload(true));
     }
 
+    /**
+     * API to add the device id to the group table in the db
+     * 
+     * @param di
+     *            device id list to be stored
+     */
     public void addDevice(HashSet<String> di) {
 
         GroupTable groupTable = getGroupTable();
@@ -86,14 +107,25 @@ public class Group {
         notifyToSubscriber(getResponsePayload(true));
     }
 
+    /**
+     * API to remove member user id list from the group table in the db
+     * 
+     * @param uuid
+     *            User id list to be removed from the group table
+     */
     public void removeMember(HashSet<String> uuid) {
 
         GroupTable groupTable = getGroupTable();
-
+        if (groupTable.getGmid() == null) {
+            throw new InternalServerErrorException("group master is empty");
+        }
         if (uuid.contains(groupTable.getGmid())) {
-            GroupResource.getInstance().deleteGroup(groupTable.getGmid(), mGid);
+            GroupManager.getInstance().deleteGroup(groupTable.getGmid(), mGid);
             notifyToSubscriber(getResponsePayload(false));
         } else {
+            if (groupTable.getMidlist() == null) {
+                throw new BadRequestException("midList is invalid in Group");
+            }
             groupTable.setMidlist(
                     removeGroupListSet(groupTable.getMidlist(), uuid));
             AccountDBManager.getInstance().updateRecord(Constants.GROUP_TABLE,
@@ -104,15 +136,21 @@ public class Group {
             while (mid.hasNext()) {
                 removeSubscriber(mid.next());
             }
-
         }
-
     }
 
+    /**
+     * API to remove device id list from the group table in the db
+     * 
+     * @param di
+     *            device id list to be removed from the group table
+     */
     public void removeDevice(HashSet<String> di) {
 
         GroupTable groupTable = getGroupTable();
-
+        if (groupTable.getDilist() == null) {
+            throw new BadRequestException("deviceList is invalid in Group");
+        }
         groupTable.setDilist(removeGroupListSet(groupTable.getDilist(), di));
 
         AccountDBManager.getInstance().updateRecord(Constants.GROUP_TABLE,
@@ -121,35 +159,40 @@ public class Group {
         notifyToSubscriber(getResponsePayload(true));
     }
 
+    /**
+     * API to return the group information payload
+     * 
+     * @param mid
+     *            member id to verify if the id exists in the group table
+     * @return group information payload
+     */
     public HashMap<String, Object> getInfo(String mid) {
 
-        GroupTable groupTable = getGroupTable();
-
-        HashSet<String> midListSet = new HashSet<String>(
-                (Collection<? extends String>) groupTable.getMidlist());
-
-        if (!midListSet.contains(mid)) {
-
-            throw new UnAuthorizedException(
-                    mid + " is not Group member in gid=" + mGid);
-        }
+        verifyGroupTableMid(mid);
 
         return getResponsePayload(true);
     }
 
+    public boolean checkDeviceExistance(String di) {
+        return verifyGroupTableDi(di);
+    }
+
+    /**
+     * API to add group subscriber
+     * 
+     * @param mid
+     *            member id to verify if the id exists in the group table
+     * @param subscriber
+     *            subscriber device
+     * @param request
+     *            request message
+     * @return group information payload
+     */
     public HashMap<String, Object> addSubscriber(String mid, Device subscriber,
             IRequest request) {
 
-        GroupTable groupTable = getGroupTable();
-
-        HashSet<String> midListSet = new HashSet<String>(
-                (Collection<? extends String>) groupTable.getMidlist());
-
-        if (!midListSet.contains(mid)) {
-
-            throw new UnAuthorizedException(
-                    mid + " is not Group member in gid=" + mGid);
-        }
+        // Check if the user has privilege to observe
+        verifyGroupTableMid(mid);
 
         GroupSubscriber newSubscriber = new GroupSubscriber(subscriber,
                 request);
@@ -160,14 +203,56 @@ public class Group {
                 request.getUriQueryMap().get(Constants.REQ_MEMBER).get(0));
     }
 
+    /**
+     * API to unsubscribe group information
+     * 
+     * @param mid
+     *            user Id to unscribe group information
+     * @return group information payload
+     */
     public HashMap<String, Object> removeSubscriber(String mid) {
 
-        HashMap<String, Object> responsePayload = null;
+        HashMap<String, Object> responsePayload = getResponsePayload(true);
+
         if (mSubscribers.containsKey(mid)) {
             mSubscribers.remove(mid);
         }
 
         return responsePayload;
+    }
+
+    private void verifyGroupTableMid(String mid) {
+
+        GroupTable groupTable = getGroupTable();
+
+        if (groupTable.getMidlist() == null) {
+            throw new BadRequestException("midList is invalid in Group");
+        }
+        HashSet<String> midListSet = new HashSet<>(
+                (Collection<? extends String>) groupTable.getMidlist());
+
+        if (!midListSet.contains(mid)) {
+
+            throw new UnAuthorizedException(
+                    mid + " is not Group member in gid=" + mGid);
+        }
+    }
+
+    private boolean verifyGroupTableDi(String di) {
+
+        GroupTable groupTable = getGroupTable();
+
+        if (groupTable.getDilist() == null) {
+            return false;
+        }
+
+        HashSet<String> diListSet = new HashSet<>(
+                (Collection<? extends String>) groupTable.getDilist());
+
+        if (!diListSet.contains(di)) {
+            return false;
+        }
+        return true;
     }
 
     private void notifyToSubscriber(
@@ -228,7 +313,7 @@ public class Group {
     private HashSet<String> addGroupListSet(Object object,
             HashSet<String> addList) {
 
-        HashSet<String> groupSet = new HashSet<String>(
+        HashSet<String> groupSet = new HashSet<>(
                 (Collection<? extends String>) object);
 
         groupSet.addAll(addList);
@@ -239,7 +324,7 @@ public class Group {
     private HashSet<String> removeGroupListSet(Object object,
             HashSet<String> removeList) {
 
-        HashSet<String> groupSet = new HashSet<String>(
+        HashSet<String> groupSet = new HashSet<>(
                 (Collection<? extends String>) object);
 
         groupSet.removeAll(removeList);

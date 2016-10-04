@@ -56,6 +56,8 @@ help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ALL', ['ALL'
 help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
 help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))
 help_vars.Add(EnumVariable('ROUTING', 'Enable routing', 'EP', allowed_values=('GW', 'EP')))
+help_vars.Add(BoolVariable('WITH_PROXY', 'CoAP-HTTP Proxy', False)) # set to 'no', 'false' or 0 for debug
+help_vars.Add(ListVariable('WITH_MQ', 'Build with MQ publisher/subscriber/broker', 'OFF', ['OFF', 'SUB', 'PUB', 'BROKER']))
 
 ######################################################################
 # Platform(build target) specific options: SDK/NDK & toolchain
@@ -177,6 +179,8 @@ if env.get('ROUTING') == 'GW':
 elif env.get('ROUTING') == 'EP':
 	env.AppendUnique(CPPDEFINES = ['ROUTING_EP'])
 env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
+if env.get('WITH_PROXY'):
+	env.AppendUnique(CPPDEFINES = ['WITH_CHPROXY'])
 
 Export('env')
 

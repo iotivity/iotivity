@@ -25,7 +25,6 @@ package com.sec.notiproviderexample;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Intent;
-import android.content.SyncInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -34,50 +33,61 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.iotivity.service.ns.common.MediaContents;
+
+import java.text.DateFormat;
+import java.util.Date;
+
 public class MainActivity extends AppCompatActivity {
 
     private final String TAG = "NS_MAIN_ACTIVITY";
-    private static final int MESSAGE_SUBSCRIPTION = 1;
+    private static final int CONSUMER_SUBSCRIBED = 1;
     private static final int MESSAGE_SYNC = 2;
     private static final int MESSAGE_NOTIFICATION = 3;
 
     private Button btnTitle;
     private Button btnBody;
+    private Button btnTopic;
     private Button btnSend;
     private Button btnStart;
+    private Button btnRegister;
+    private Button btnSet;
     private Button btnStop;
-    private Button btnAccept;
-    private Button btnSync;
+    private Button btnLog;
     private EditText editTextTitle;
     private EditText editTextBody;
+    private EditText editTextTopic;
+    private RadioButton radioProvider;
+    private RadioButton radioConsumer;
     private static TextView TvLog;
 
     private static int notiId = 100;
     private static int subCnt = 0;
     private boolean isStarted = false;
     private String consumerId;
+    private boolean gAcceptor = true;
 
     private NotiListener mNotiListener = null;
-    private ProviderProxy mProviderProxy = null;
+    private ProviderSample mProviderSample = null;
 
     public static Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case MESSAGE_SUBSCRIPTION:
-                    String subscriber = (String) msg.obj;
-                    if(subscriber != null)
-                        TvLog.append("Subscriber IP(" + ++subCnt + "): " + subscriber + "\n");
+                case CONSUMER_SUBSCRIBED:
+                    String ConsumerId = (String) msg.obj;
+                    if(ConsumerId != null)
+                        TvLog.append("Consumer Subscibed: " + ConsumerId + "\n");
                     break;
 
                 case MESSAGE_SYNC:
                     String sync = (String) msg.obj;
                     if(sync != null)
-                        TvLog.append("Sync-Read(Msg ID: " + sync + ")\n");
+                        TvLog.append("SyncInfo Received :" + sync + "\n");
                     break;
 
                 default:
@@ -103,35 +113,39 @@ public class MainActivity extends AppCompatActivity {
 
         btnTitle = (Button) findViewById(R.id.BtnTitle);
         btnBody = (Button) findViewById(R.id.BtnBody);
+        btnTopic = (Button) findViewById(R.id.BtnTopic);
         btnSend = (Button) findViewById(R.id.BtnCreateNoti);
 
         btnStart = (Button) findViewById(R.id.BtnStart);
-        btnAccept = (Button) findViewById(R.id.BtnAccept);
-        btnSync = (Button) findViewById(R.id.BtnSync);
+        btnRegister = (Button) findViewById(R.id.BtnRegister);
+        btnSet = (Button) findViewById(R.id.BtnSet);
+        btnLog = (Button) findViewById(R.id.BtnLog);
         btnStop = (Button) findViewById(R.id.BtnStop);
 
         editTextTitle = (EditText) findViewById(R.id.EditTextTitle);
         editTextBody = (EditText) findViewById(R.id.EditTextBody);
+        editTextTopic = (EditText) findViewById(R.id.EditTextTopic);
+
+        radioProvider = (RadioButton) findViewById(R.id.RadioProvider);
+        radioConsumer = (RadioButton) findViewById(R.id.RadioConsumer);
 
         TvLog = (TextView) findViewById(R.id.TvLog);
 
         btnTitle.setEnabled(false);
         btnBody.setEnabled(false);
+        btnTopic.setEnabled(false);
 
         btnSend.setOnClickListener(mClickListener);
-
         btnStart.setOnClickListener(mClickListener);
-
-        btnAccept.setOnClickListener(mClickListener);
-        btnAccept.setVisibility(View.INVISIBLE);
-
-        btnSync.setOnClickListener(mClickListener);
-        btnSync.setVisibility(View.INVISIBLE);
-
+        btnRegister.setOnClickListener(mClickListener);
+        btnSet.setOnClickListener(mClickListener);
+        btnLog.setOnClickListener(mClickListener);
         btnStop.setOnClickListener(mClickListener);
+        radioProvider.setOnClickListener(mClickListener);
+        radioConsumer.setOnClickListener(mClickListener);
 
-        mProviderProxy = new ProviderProxy(getApplicationContext());
-        mProviderProxy.setHandler(mHandler);
+        mProviderSample = new ProviderSample(getApplicationContext());
+        mProviderSample.setHandler(mHandler);
 
         mNotiListener = new NotiListener(this);
 
@@ -144,36 +158,80 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    public ProviderProxy getProviderProxy()
+    public ProviderSample getProviderSample()
     {
-        return mProviderProxy;
+        return mProviderSample;
     }
 
     Button.OnClickListener mClickListener = new View.OnClickListener() {
         public void onClick(View v) {
             switch (v.getId()) {
+                case R.id.RadioProvider: {
+                    if (isStarted == false) {
+                        gAcceptor = true;
+                        showToast("Provider as acceptor is " + gAcceptor);
+                    }
+                    else
+                        showToast("Start ProviderService again to change acceptor as provider");
+                }
+                break;
+
+                case R.id.RadioConsumer: {
+                    if (isStarted == false) {
+                        gAcceptor = false;
+                        showToast("Provider as acceptor is "+ gAcceptor);
+                    }
+                    else
+                        showToast("Start ProviderService again to change acceptor as consumer");
+                }
+                break;
 
                 case R.id.BtnStart: {
                     if (isStarted == false) {
-                        Log.i(TAG, "Start NS Provider Service");
-
-                        TvLog.setText("Start NS-Provider\n");
-
-                        boolean policy = true; // provider controls the acceptance of consumers
-                        mProviderProxy.Start(policy);
+                        Log.i(TAG, "Start  Provider Service");
+                        TvLog.setText("Start Provider Service\n");
+                        mProviderSample.Start(gAcceptor);
                         isStarted = true;
+                        radioProvider.setEnabled(false);
+                        radioConsumer.setEnabled(false);
                     } else {
-                        Log.e(TAG, "NS Provider Service had already started");
+                        Log.e(TAG, " Provider Service had already started");
+                        showToast(" Provider Service had already started");
                     }
                 }
                 break;
 
-                case R.id.BtnAccept: {
-                    if(isStarted == false)
-                    {
-                        Log.e(TAG, "Fail to request Accept");
+                case R.id.BtnRegister: {
+                    if (isStarted == false) {
+                        Log.i(TAG, "Start  Provider Service");
+                        TvLog.append("Register Topic : OCF_TOPIC1\n");
+                        TvLog.append("Register Topic : OCF_TOPIC2\n");
+                        TvLog.append("Register Topic : OCF_TOPIC3\n");
+                        TvLog.append("Register Topic : OCF_TOPIC4\n");
+                        showToast("Start Provider Service First");
                         break;
                     }
+                    mProviderSample.RegisterTopic();
+
+                }
+                break;
+
+                case R.id.BtnSet: {
+                    if (isStarted == false) {
+                        Log.i(TAG, "Start Provider Service");
+                        TvLog.append("Set Topic : OCF_TOPIC1\n");
+                        TvLog.append("Set Topic : OCF_TOPIC2\n");
+                        TvLog.append("Set Topic : OCF_TOPIC3\n");
+                        TvLog.append("Set Topic : OCF_TOPIC4\n");
+                        showToast("Start Provider Service First");
+                        break;
+                    }
+                    if(gAcceptor == false){
+                        showToast("Operation Not Permitted: \nStart Provider Service with provider as acceptor");
+                        break;
+                    }
+                    mProviderSample.SetTopic();
+
                 }
                 break;
 
@@ -182,10 +240,12 @@ public class MainActivity extends AppCompatActivity {
                     String id = Integer.toString(notiId); // generate notificaion ID
                     String title = editTextTitle.getText().toString();
                     String body = editTextBody.getText().toString();
+                    String topic  = editTextTopic.getText().toString();
 
                     if(isStarted == false)
                     {
                         Log.e(TAG, "Fail to send NSMessage");
+                        showToast("Start ProviderService First");
                         break;
                     }
 
@@ -202,41 +262,38 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(TAG, "#" + notiId + " notified ..");
                     TvLog.append("Send Notitication(Msg ID: " + notiId + ")\n");
                     notiId++;
-                    org.iotivity.service.ns.common.Message notiMessage = new org.iotivity.service.ns.common.Message(title,body,"dss");
+                    org.iotivity.service.ns.common.Message notiMessage = new org.iotivity.service.ns.common.Message(title,body,"provider");
                     notiMessage.setTTL(10);
-                    notiMessage.setTime("12:10");
-                    MediaContents media = new MediaContents("daasd");
+                    notiMessage.setTime(DateFormat.getDateTimeInstance().format(new Date()));
+                    notiMessage.setTopic(topic);
+                    MediaContents media = new MediaContents("Video");
                     notiMessage.setMediaContents(media);
-                    mProviderProxy.SendMessage(notiMessage);
-                }
-                break;
-
-                case R.id.BtnSync: {
-                    if(isStarted == false)
-                    {
-                        Log.e(TAG, "Fail to send sync");
-                        break;
-                    }
-                    org.iotivity.service.ns.common.SyncInfo.SyncType syncType =  org.iotivity.service.ns.common.SyncInfo.SyncType.READ;
-                    mProviderProxy.SendSyncInfo(1,syncType);
+                    mProviderSample.SendMessage(notiMessage);
                 }
                 break;
 
                 case R.id.BtnStop: {
-                    if(isStarted == false)
-                    {
+                    if(isStarted == false) {
                         Log.e(TAG, "Fail to stop service");
+                        showToast("Already Stopped");
                         break;
                     }
 
-                    mProviderProxy.Stop();
+                    mProviderSample.Stop();
                     isStarted = false;
-
-                    TvLog.append("Stop NS-Provider\n");
+                    radioProvider.setEnabled(true);
+                    radioConsumer.setEnabled(true);
+                    showToast("Stopped ProviderService"+ isStarted);
+                    TvLog.append("Stop Provider Service\n");
                 }
                 break;
+
+                case R.id.BtnLog: {
+
+                    TvLog.setText("");
+                }
+                break;  }
             }
-        }
     };
 }
 

@@ -98,10 +98,10 @@ private:
                     std::string msgUri = m_notificationUri + m_messageUri;
                     std::string syncUri = m_notificationUri + m_syncUri;
                     std::string providerId = "123456789012345678901234567890123456";
-                    rep.setValue("ACCEPTER", m_accepter);
-                    rep.setValue("MESSAGE_URI", msgUri);
-                    rep.setValue("SYNC_URI", syncUri);
-                    rep.setValue("PROVIDER_ID", providerId);
+                    rep.setValue("subControllability", (bool) m_accepter);
+                    rep.setValue("messageUri", msgUri);
+                    rep.setValue("syncUri", syncUri);
+                    rep.setValue("providerId", providerId);
                 }
                 else if (type == requestType::NS_SYNC)
                 {
@@ -125,8 +125,8 @@ private:
                 m_syncRep = requests->getResourceRepresentation();
 
                 std::cout << "Receive POST at Sync" << std::endl;
-                std::cout << "Sync Id : " << m_syncRep.getValueToString("ID") << std::endl;
-                std::cout << "Sync State : " << m_syncRep.getValueToString("STATE") << std::endl;
+                std::cout << "provider Id : " << m_syncRep.getValueToString("providerId") << std::endl;
+                std::cout << "Sync State : " << m_syncRep.getValueToString("state") << std::endl;
 
                 response->setResourceRepresentation(m_syncRep);
 
@@ -159,8 +159,8 @@ private:
         {
             OC::OCRepresentation rep;
             std::string providerId = "123456789012345678901234567890123456";
-            rep.setValue<int>("MESSAGE_ID", (int)1);
-            rep.setValue("PROVIDER_ID", providerId);
+            rep.setValue<int>("messageId", (int)1);
+            rep.setValue("providerId", providerId);
 
             auto response = std::make_shared<OC::OCResourceResponse>();
             response->setRequestHandle(requests->getRequestHandle());
@@ -232,27 +232,27 @@ public:
     void sendRead(const uint64_t & id)
     {
         std::string providerId = "123456789012345678901234567890123456";
-        m_syncRep.setValue<int>("MESSAGE_ID", id);
-        m_syncRep.setValue("STATE", (int)1);
-        m_syncRep.setValue("PROVIDER_ID", providerId);
+        m_syncRep.setValue<int>("messageId", id);
+        m_syncRep.setValue("state", (int)1);
+        m_syncRep.setValue("providerId", providerId);
         OC::OCPlatform::notifyAllObservers(m_syncHandle);
     }
     void sendDismiss(const uint64_t & id)
     {
         std::string providerId = "123456789012345678901234567890123456";
-        m_syncRep.setValue<int>("MESSAGE_ID", id);
-        m_syncRep.setValue("STATE", (int)2);
-        m_syncRep.setValue("PROVIDER_ID", providerId);
+        m_syncRep.setValue<int>("messageId", id);
+        m_syncRep.setValue("state", (int)2);
+        m_syncRep.setValue("providerId", providerId);
         OC::OCPlatform::notifyAllObservers(m_syncHandle);
     }
 
     void setMessage(const uint64_t & id, const std::string & title, const std::string & content)
     {
         std::string providerId = "123456789012345678901234567890123456";
-        m_messageRep.setValue<int>("MESSAGE_ID", id);
-        m_messageRep.setValue("TITLE", title);
-        m_messageRep.setValue("CONTENTTEXT", content);
-        m_messageRep.setValue("PROVIDER_ID", providerId);
+        m_messageRep.setValue<int>("messageId", id);
+        m_messageRep.setValue("title", title);
+        m_messageRep.setValue("contentText", content);
+        m_messageRep.setValue("providerId", providerId);
     }
 
     void deleteNotificationResource()
@@ -277,7 +277,7 @@ public:
         OC::OCPlatform::startPresence(30);
 
         std::string notificationUri = m_notificationUri;
-        std::string resourceTypeName = "oic.r.message.notification";
+        std::string resourceTypeName = "oic.wk.notification.message";
         std::string resourceInterface = OC::DEFAULT_INTERFACE;
 
         uint8_t resourceProperty = OC_OBSERVABLE;
@@ -296,7 +296,7 @@ public:
             std::cout << e.what() << std::endl;
         }
 
-        resourceTypeName = "oic.r.sync.notification";
+        resourceTypeName = "oic.wk.notification.sync";
         childUri = uri + m_syncUri;
         try
         {
@@ -313,7 +313,7 @@ public:
         }
 
         resourceProperty = OC_DISCOVERABLE;
-        resourceTypeName = "oic.r.notification";
+        resourceTypeName = "oic.wk.notification";
         try
         {
             OC::OCPlatform::registerResource(

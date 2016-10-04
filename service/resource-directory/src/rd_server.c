@@ -148,7 +148,6 @@ static OCEntityHandlerResult rdEntityHandler(OCEntityHandlerFlag flag,
             case OC_REST_DELETE:
             case OC_REST_OBSERVE:
             case OC_REST_OBSERVE_ALL:
-            case OC_REST_CANCEL_OBSERVE:
             case OC_REST_PRESENCE:
             case OC_REST_NOMETHOD:
                 break;
@@ -165,20 +164,24 @@ OCStackResult OCRDStart()
 {
     OCResourceHandle rdHandle = NULL;
 
-    OCStackResult result = OCCreateResource(&rdHandle,
-                                OC_RSRVD_RESOURCE_TYPE_RD,
-                                OC_RSRVD_INTERFACE_DEFAULT,
-                                OC_RSRVD_RD_URI,
-                                rdEntityHandler,
-                                NULL,
-                                (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE));
-
+    OCStackResult result = OCRDInitializeStorage();
+    if (result == OC_STACK_OK)
+    {
+        result = OCCreateResource(&rdHandle,
+                                  OC_RSRVD_RESOURCE_TYPE_RD,
+                                  OC_RSRVD_INTERFACE_DEFAULT,
+                                  OC_RSRVD_RD_URI,
+                                  rdEntityHandler,
+                                  NULL,
+                                  (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE));
+    }
     if (result == OC_STACK_OK)
     {
         OIC_LOG(DEBUG, TAG, "Resource Directory Started.");
     }
     else
     {
+        OCRDTerminateStorage();
         OIC_LOG(ERROR, TAG, "Failed starting Resource Directory.");
     }
 
@@ -190,6 +193,8 @@ OCStackResult OCRDStart()
  */
 OCStackResult OCRDStop()
 {
+    OCRDTerminateStorage();
+
     OCStackResult result = OCStop();
 
     if (result == OC_STACK_OK)

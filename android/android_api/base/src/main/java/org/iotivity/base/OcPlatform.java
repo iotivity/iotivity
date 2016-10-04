@@ -172,6 +172,10 @@ public final class OcPlatform {
             OcResourceResponse ocResourceResponse) throws OcException {
         OcPlatform.initCheck();
 
+        if (ocObservationIdList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "ocObservationIdList cannot be null");
+        }
+
         byte[] idArr = new byte[ocObservationIdList.size()];
         Iterator<Byte> it = ocObservationIdList.iterator();
         int i = 0;
@@ -210,6 +214,10 @@ public final class OcPlatform {
             OcResourceResponse ocResourceResponse,
             QualityOfService qualityOfService) throws OcException {
         OcPlatform.initCheck();
+
+        if (ocObservationIdList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "ocObservationIdList cannot be null");
+        }
 
         byte[] idArr = new byte[ocObservationIdList.size()];
         Iterator<Byte> it = ocObservationIdList.iterator();
@@ -631,6 +639,11 @@ public final class OcPlatform {
             OcResourceHandle ocResourceCollectionHandle,
             List<OcResourceHandle> ocResourceHandleList) throws OcException {
         OcPlatform.initCheck();
+
+        if (ocResourceHandleList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "ocResourceHandleList cannot be null");
+        }
+
         OcPlatform.bindResources0(
                 ocResourceCollectionHandle,
                 ocResourceHandleList.toArray(
@@ -672,6 +685,11 @@ public final class OcPlatform {
             OcResourceHandle ocResourceCollectionHandle,
             List<OcResourceHandle> ocResourceHandleList) throws OcException {
         OcPlatform.initCheck();
+
+        if (ocResourceHandleList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "ocResourceHandleList cannot be null");
+        }
+
         OcPlatform.unbindResources0(
                 ocResourceCollectionHandle,
                 ocResourceHandleList.toArray(
@@ -1291,7 +1309,6 @@ public final class OcPlatform {
      */
     public interface OnDeleteResourceListener {
         public void onDeleteResourceCompleted(int result);
-        public void onDeleteResourceFailed(Throwable ex);
     }
 
     /**
@@ -1356,6 +1373,14 @@ public final class OcPlatform {
     /**
      * An EntityHandler can be registered via the OcPlatform.registerResource call.
      * Event listeners are notified asynchronously
+     *
+     * @note entityhandler callback :
+     * When you set specific return value like EntityHandlerResult.OK, SLOW
+     * and etc in entity handler callback,
+     * ocstack will be not send response automatically to client
+     * except for error return value like EntityHandlerResult.ERROR
+     * If you want to send response to client with specific result,
+     * sendResponse API should be called with the result value.
      */
     public interface EntityHandler {
         public EntityHandlerResult handleEntity(OcResourceRequest ocResourceRequest);

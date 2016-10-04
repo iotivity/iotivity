@@ -1,3 +1,25 @@
+/*
+ * //******************************************************************
+ * //
+ * // Copyright 2016 Samsung Electronics All Rights Reserved.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //      http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ */
+
 package org.iotivity.cloud.ciserver.resources.proxy.rd;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -20,6 +42,7 @@ import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
+import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.Before;
@@ -32,25 +55,24 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class ResourcePresenceTest {
-    public static final String DEVICE_PRS_REQ_URI = "/.well-known/ocf/prs";
-    public static final String DEVICE_LIST_KEY    = "devices";
-    public static final String RES_PRS_URI        = "/oic/ad";
-    private String             di                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
-    private CoapDevice         mockDevice         = mock(CoapDevice.class);
-    IResponse                  res                = null;
-    IRequest                   req                = null;
-    DeviceServerSystem         deviceServerSystem = new DeviceServerSystem();
+    public static final String DEVICE_PRS_REQ_URI = Constants.DEVICE_PRESENCE_FULL_URI;
+    public static final String RES_PRS_URI        = Constants.RESOURCE_PRESENCE_FULL_URI;
+    private String             mDi                = "B371C481-38E6-4D47-8320-7688D8A5B58C";
+    private CoapDevice         mMockDevice        = mock(CoapDevice.class);
+    private IResponse          mRes               = null;
+    private IRequest           mReq               = null;
+    private DeviceServerSystem deviceServerSystem = new DeviceServerSystem();
     final CountDownLatch       latch              = new CountDownLatch(1);
     @Mock
-    IRequestChannel            requestChannel;
+    private IRequestChannel    requestChannel;
     @InjectMocks
-    ResourcePresence           adHandler          = new ResourcePresence();
+    private ResourcePresence   adHandler          = new ResourcePresence();
 
     @Before
     public void setUp() throws Exception {
-        res = null;
-        req = null;
-        Mockito.doReturn("mockDeviceId").when(mockDevice).getDeviceId();
+        mRes = null;
+        mReq = null;
+        Mockito.doReturn("mockDeviceId").when(mMockDevice).getDeviceId();
         MockitoAnnotations.initMocks(this);
         deviceServerSystem.addResource(adHandler);
         Mockito.doAnswer(new Answer<Object>() {
@@ -65,7 +87,7 @@ public class ResourcePresenceTest {
                         "\t----------uripath : " + request.getUriPath());
                 System.out.println(
                         "\t---------uriquery : " + request.getUriQuery());
-                req = request;
+                mReq = request;
                 latch.countDown();
                 return request;
             }
@@ -80,13 +102,13 @@ public class ResourcePresenceTest {
                 "\t--------------OnRequestReceived(RD) Resource Presence (entire resource) Test------------");
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
                 RES_PRS_URI, null);
-        deviceServerSystem.onRequestReceived(mockDevice, request);
-        HashMap<String, List<String>> queryMap = req.getUriQueryMap();
+        deviceServerSystem.onRequestReceived(mMockDevice, request);
+        HashMap<String, List<String>> queryMap = mReq.getUriQueryMap();
         // assertion: if the request packet from the CI contains the query
         // which includes the accesstoken and the di
         assertTrue(latch.await(1L, SECONDS));
         assertTrue(queryMap.containsKey("mid"));
-        assertEquals(req.getUriPath(), "/.well-known/ocf/acl/group/null");
+        assertEquals(mReq.getUriPath(), Constants.GROUP_FULL_URI + "/null");
     }
 
     @Test
@@ -95,19 +117,19 @@ public class ResourcePresenceTest {
         System.out.println(
                 "\t--------------OnRequestReceived(RD) Resource Presence (specific resources) Test------------");
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
-                RES_PRS_URI, "di=" + di);
-        deviceServerSystem.onRequestReceived(mockDevice, request);
-        HashMap<String, List<String>> queryMap = req.getUriQueryMap();
+                RES_PRS_URI, "di=" + mDi);
+        deviceServerSystem.onRequestReceived(mMockDevice, request);
+        HashMap<String, List<String>> queryMap = mReq.getUriQueryMap();
         assertTrue(latch.await(1L, SECONDS));
         assertTrue(queryMap.containsKey("mid"));
-        assertEquals(req.getUriPath(), "/.well-known/ocf/acl/group/null");
+        assertEquals(mReq.getUriPath(), Constants.GROUP_FULL_URI + "/null");
     }
 
     IRequest                               requestEntireDevices = MessageBuilder
             .createRequest(RequestMethod.GET, RES_PRS_URI, null);
     @InjectMocks
     ResourcePresence.AccountReceiveHandler entireDeviceHandler  = adHandler.new AccountReceiveHandler(
-            requestEntireDevices, mockDevice);
+            requestEntireDevices, mMockDevice);
 
     @Test
     public void testEntireDeviceonResponseReceived() throws ClientException {
@@ -115,10 +137,10 @@ public class ResourcePresenceTest {
                 "\t--------------onResponseReceived(RD) Resource Presence (entire deivces) Test------------");
         IResponse responseFromAccountServer = responseFromAccountServer();
         entireDeviceHandler.onResponseReceived(responseFromAccountServer);
-        HashMap<String, List<String>> queryMap = req.getUriQueryMap();
+        HashMap<String, List<String>> queryMap = mReq.getUriQueryMap();
         // assertion : if query has pre-requested multiple di list given from
         // the AS
-        assertTrue(req.getMethod() == RequestMethod.GET);
+        assertTrue(mReq.getMethod() == RequestMethod.GET);
         assertTrue(queryMap.get("di").contains("device1"));
         assertTrue(queryMap.get("di").contains("device2"));
         assertTrue(queryMap.get("di").contains("device3"));
@@ -128,7 +150,7 @@ public class ResourcePresenceTest {
             .createRequest(RequestMethod.GET, RES_PRS_URI, "di=" + "device1");
     @InjectMocks
     ResourcePresence.AccountReceiveHandler specificDeviceHandler = adHandler.new AccountReceiveHandler(
-            requestSpecificDevice, mockDevice);
+            requestSpecificDevice, mMockDevice);
 
     @Test
     public void testSpecificDeviceonResponseReceived() throws ClientException {
@@ -136,10 +158,10 @@ public class ResourcePresenceTest {
                 "\t--------------onResponseReceived(RD) Resource Presence (specific deivce) Test------------");
         IResponse response = responseFromAccountServer();
         specificDeviceHandler.onResponseReceived(response);
-        HashMap<String, List<String>> queryMap = req.getUriQueryMap();
+        HashMap<String, List<String>> queryMap = mReq.getUriQueryMap();
         // assertion : if query has pre-requested di
         assertTrue(queryMap.get("di").contains("device1"));
-        assertTrue(req.getMethod() == RequestMethod.GET);
+        assertTrue(mReq.getMethod() == RequestMethod.GET);
     }
 
     private IResponse responseFromAccountServer() {

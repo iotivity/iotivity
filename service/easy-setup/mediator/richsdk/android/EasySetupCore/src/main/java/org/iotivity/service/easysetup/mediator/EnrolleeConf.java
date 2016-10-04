@@ -39,7 +39,7 @@ import java.util.List;
 public class EnrolleeConf
 {
     private static final String TAG = EnrolleeConf.class.getName();
-    private OcRepresentation mProvRep = null, mWiFiRep = null, mDevConfRep = null, mCloudRep = null;
+    protected OcRepresentation mProvRep = null;
     /**
      * Constructor
      *
@@ -49,25 +49,11 @@ public class EnrolleeConf
     public EnrolleeConf(OcRepresentation rep)
     {
         mProvRep = rep;
+    }
 
-        List<OcRepresentation> children = rep.getChildren();
-
-        for (OcRepresentation child : children) {
-            List<String> rts = child.getResourceTypes();
-
-            if(child.getUri().indexOf(ESConstants.OC_RSRVD_ES_URI_WIFI) != -1)
-            {
-                mWiFiRep = child;
-            }
-            else if(child.getUri().indexOf(ESConstants.OC_RSRVD_ES_URI_DEVCONF) != -1)
-            {
-                mDevConfRep = child;
-            }
-            else if(child.getUri().indexOf(ESConstants.OC_RSRVD_ES_URI_CLOUDSERVER) != -1)
-            {
-                mCloudRep = child;
-            }
-        }
+    public EnrolleeConf(EnrolleeConf enrolleeConf)
+    {
+        mProvRep = enrolleeConf.getProvResRep();
     }
 
     /**
@@ -77,15 +63,27 @@ public class EnrolleeConf
      */
     public String getDeviceName()
     {
-        try
+        if(mProvRep == null)
         {
-            if(mDevConfRep != null && mDevConfRep.hasAttribute(ESConstants.OC_RSRVD_ES_DEVNAME)) {
-                return (String) mDevConfRep.getValue(ESConstants.OC_RSRVD_ES_DEVNAME);
-            }
-        } catch (OcException e) {
-                Log.e(TAG, "getWiFiModes is failed.");
+            return null;
         }
-        return new String("");
+
+        List<OcRepresentation> children = mProvRep.getChildren();
+
+        for (OcRepresentation child : children) {
+            if(child.getUri().indexOf(ESConstants.OC_RSRVD_ES_URI_DEVCONF) != -1)
+            {
+                try
+                {
+                    if(child.hasAttribute(ESConstants.OC_RSRVD_ES_DEVNAME)) {
+                        return (String) child.getValue(ESConstants.OC_RSRVD_ES_DEVNAME);
+                    }
+                } catch (OcException e) {
+                    Log.e(TAG, "getWiFiModes is failed.");
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -95,15 +93,27 @@ public class EnrolleeConf
      */
     public String getModelNumber()
     {
-        try
+        if(mProvRep == null)
         {
-            if(mDevConfRep != null && mDevConfRep.hasAttribute(ESConstants.OC_RSRVD_ES_MODELNUMBER)) {
-                return (String) mDevConfRep.getValue(ESConstants.OC_RSRVD_ES_MODELNUMBER);
-            }
-        } catch (OcException e) {
-                Log.e(TAG, "getModelNumber is failed.");
+            return null;
         }
-        return new String("");
+
+        List<OcRepresentation> children = mProvRep.getChildren();
+
+        for (OcRepresentation child : children) {
+            if(child.getUri().indexOf(ESConstants.OC_RSRVD_ES_URI_DEVCONF) != -1)
+            {
+                try
+                {
+                    if(child.hasAttribute(ESConstants.OC_RSRVD_ES_MODELNUMBER)) {
+                        return (String) child.getValue(ESConstants.OC_RSRVD_ES_MODELNUMBER);
+                    }
+                } catch (OcException e) {
+                    Log.e(TAG, "getModelNumber is failed.");
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -113,16 +123,27 @@ public class EnrolleeConf
      */
     public ArrayList<WIFI_MODE> getWiFiModes()
     {
+        if(mProvRep == null)
+        {
+            return null;
+        }
+
+        List<OcRepresentation> children = mProvRep.getChildren();
         ArrayList<WIFI_MODE> modes = new ArrayList<WIFI_MODE>();
-        try {
-            if (mWiFiRep != null && mWiFiRep.hasAttribute(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIMODE)) {
-                int modes_int[] = mWiFiRep.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIMODE);
-                for (int i = 0 ; i < modes_int.length ; ++i) {
-                    modes.add(WIFI_MODE.fromInt(modes_int[i]));
+        for (OcRepresentation child : children) {
+            if(child.getUri().indexOf(ESConstants.OC_RSRVD_ES_URI_WIFI) != -1)
+            {
+                try {
+                    if (child.hasAttribute(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIMODE)) {
+                        int modes_int[] = child.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIMODE);
+                        for (int i = 0 ; i < modes_int.length ; ++i) {
+                            modes.add(WIFI_MODE.fromInt(modes_int[i]));
+                        }
+                    }
+                } catch (OcException e) {
+                    Log.e(TAG, "getWiFiModes is failed.");
                 }
             }
-        } catch (OcException e) {
-            Log.e(TAG, "getWiFiModes is failed.");
         }
         return modes;
     }
@@ -134,14 +155,26 @@ public class EnrolleeConf
      */
     public WIFI_FREQ getWiFiFreq()
     {
-        try{
-            if(mWiFiRep != null && mWiFiRep.hasAttribute(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
-                return WIFI_FREQ.fromInt(
-                        (int)mWiFiRep.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
-        } catch (OcException e) {
-            Log.e(TAG, "getWiFiFreq is failed.");
+        if(mProvRep == null)
+        {
+            return WIFI_FREQ.WIFI_FREQ_NONE;
         }
-        return WIFI_FREQ.WIFI_FREQ_NONE;
+
+        List<OcRepresentation> children = mProvRep.getChildren();
+
+        for (OcRepresentation child : children) {
+            if(child.getUri().indexOf(ESConstants.OC_RSRVD_ES_URI_WIFI) != -1)
+            {
+                try{
+                    if(child.hasAttribute(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
+                        return WIFI_FREQ.fromInt(
+                                (int)child.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
+                } catch (OcException e) {
+                    Log.e(TAG, "getWiFiFreq is failed.");
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -152,10 +185,25 @@ public class EnrolleeConf
      */
     public boolean isCloudAccessible()
     {
-        if(mCloudRep != null && mCloudRep.getUri().indexOf(ESConstants.OC_RSRVD_ES_URI_CLOUDSERVER) != -1)
-            return true;
+        if(mProvRep == null)
+        {
+            return false;
+        }
 
+        List<OcRepresentation> children = mProvRep.getChildren();
+
+        for (OcRepresentation child : children) {
+            if(child.getUri().indexOf(ESConstants.OC_RSRVD_ES_URI_CLOUDSERVER) != -1)
+            {
+                return true;
+            }
+        }
         return false;
+    }
+
+    public  OcRepresentation getProvResRep()
+    {
+        return mProvRep;
     }
 }
 

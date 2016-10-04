@@ -29,8 +29,6 @@
 
 #define NS_SYNC_URI "/notification/sync"
 
-static unsigned long NS_MESSAGE_ACCEPTANCE = 1;
-
 NSMessage * NSCreateMessage_internal(uint64_t msgId, const char * providerId);
 NSSyncInfo * NSCreateSyncInfo_consumer(uint64_t msgId, const char * providerId, NSSyncType state);
 
@@ -39,6 +37,20 @@ NSSyncInfo * NSGetSyncInfoc(OCClientResponse * clientResponse);
 NSTopicLL * NSGetTopicLL(OCClientResponse * clientResponse);
 
 char * NSGetCloudUri(const char * providerId, char * uri);
+
+NSResult NSUpdateObserveResult(NSProvider_internal * prov, char * query)
+{
+    NSOICFree(query);
+
+    NSProvider_internal * taskProvider = NSCopyProvider_internal(prov);
+    NSTask * task = NSMakeTask(TASK_CONSUMER_SENT_REQ_OBSERVE, (void *) taskProvider);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(task,
+                    NS_ERROR, NSRemoveProvider_internal(taskProvider));
+
+    NSConsumerPushEvent(task);
+
+    return NS_OK;
+}
 
 NSResult NSConsumerSubscribeProvider(NSProvider * provider)
 {
@@ -84,8 +96,8 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
         OCStackResult ret = NSInvokeRequest(&(connections->messageHandle),
                               OC_REST_OBSERVE, connections->addr, query, NULL,
                               NSConsumerMessageListener, NULL, type);
-        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(
-                NSOCResultToSuccess(ret), NS_ERROR, NSOICFree(query));
+        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(NSOCResultToSuccess(ret),
+                            NS_ERROR, NSUpdateObserveResult(provider_internal, query));
         NSOICFree(query);
         NSOICFree(msgUri);
 
@@ -98,8 +110,8 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
         ret = NSInvokeRequest(&(connections->syncHandle),
                               OC_REST_OBSERVE, connections->addr, query, NULL,
                               NSConsumerSyncInfoListener, NULL, type);
-        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(
-                NSOCResultToSuccess(ret), NS_ERROR, NSOICFree(query));
+        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(NSOCResultToSuccess(ret),
+                            NS_ERROR, NSUpdateObserveResult(provider_internal, query));
         NSOICFree(query);
         NSOICFree(syncUri);
 
@@ -107,6 +119,13 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
 
         connections = connections->next;
     }
+
+    NSProvider_internal * taskProvider = NSCopyProvider_internal(provider_internal);
+    NSTask * task = NSMakeTask(TASK_CONSUMER_SENT_REQ_OBSERVE, (void *) taskProvider);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(task,
+                    NS_ERROR, NSRemoveProvider_internal(taskProvider));
+
+    NSConsumerPushEvent(task);
 
     return NS_OK;
 }
@@ -170,7 +189,7 @@ OCStackApplicationResult NSConsumerMessageListener(
 
     NSTaskType type = TASK_CONSUMER_RECV_MESSAGE;
 
-    if (newNoti->messageId == NS_MESSAGE_ACCEPTANCE || newNoti->messageId == NS_DENY)
+    if (newNoti->messageId == NS_ALLOW || newNoti->messageId == NS_DENY)
     {
         NS_LOG(DEBUG, "Receive subscribe result");
         type = TASK_CONSUMER_RECV_PROVIDER_CHANGED;
@@ -198,6 +217,159 @@ void NSGetMessagePostClean(char * pId, OCDevAddr * addr)
 {
     NSOICFree(pId);
     NSOICFree(addr);
+}
+
+bool NSIsExtraValue(const char * name)
+{
+    if (!strcmp(name, NS_ATTRIBUTE_MESSAGE_ID) ||
+        !strcmp(name, NS_ATTRIBUTE_PROVIDER_ID) ||
+        !strcmp(name, NS_ATTRIBUTE_TITLE) ||
+        !strcmp(name, NS_ATTRIBUTE_TEXT) ||
+        !strcmp(name, NS_ATTRIBUTE_SOURCE) ||
+        !strcmp(name, NS_ATTRIBUTE_TOPIC_NAME) ||
+        !strcmp(name, NS_ATTRIBUTE_TYPE) ||
+        !strcmp(name, NS_ATTRIBUTE_DATETIME) ||
+        !strcmp(name, NS_ATTRIBUTE_TTL) ||
+        !strcmp(name, NS_ATTRIBUTE_ICON_IMAGE))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void NSCopyPayloadValueArray(OCRepPayloadValue* dest, OCRepPayloadValue* source)
+{
+    NS_VERIFY_NOT_NULL_V(source);
+
+    size_t dimTotal = calcDimTotal(source->arr.dimensions);
+    switch(source->arr.type)
+    {
+        case OCREP_PROP_INT:
+            dest->arr.iArray = (int64_t*)OICMalloc(dimTotal * sizeof(int64_t));
+            NS_VERIFY_NOT_NULL_V(dest->arr.iArray);
+            memcpy(dest->arr.iArray, source->arr.iArray, dimTotal * sizeof(int64_t));
+            break;
+        case OCREP_PROP_DOUBLE:
+            dest->arr.dArray = (double*)OICMalloc(dimTotal * sizeof(double));
+            NS_VERIFY_NOT_NULL_V(dest->arr.dArray);
+            memcpy(dest->arr.dArray, source->arr.dArray, dimTotal * sizeof(double));
+            break;
+        case OCREP_PROP_BOOL:
+            dest->arr.bArray = (bool*)OICMalloc(dimTotal * sizeof(bool));
+            NS_VERIFY_NOT_NULL_V(dest->arr.bArray);
+            memcpy(dest->arr.bArray, source->arr.bArray, dimTotal * sizeof(bool));
+            break;
+        case OCREP_PROP_STRING:
+            dest->arr.strArray = (char**)OICMalloc(dimTotal * sizeof(char*));
+            NS_VERIFY_NOT_NULL_V(dest->arr.strArray);
+            for(size_t i = 0; i < dimTotal; ++i)
+            {
+                dest->arr.strArray[i] = OICStrdup(source->arr.strArray[i]);
+            }
+            break;
+        case OCREP_PROP_OBJECT:
+            dest->arr.objArray = (OCRepPayload**)OICMalloc(dimTotal * sizeof(OCRepPayload*));
+            NS_VERIFY_NOT_NULL_V(dest->arr.objArray);
+            for(size_t i = 0; i < dimTotal; ++i)
+            {
+                dest->arr.objArray[i] = OCRepPayloadClone(source->arr.objArray[i]);
+            }
+            break;
+        case OCREP_PROP_ARRAY:
+            dest->arr.objArray = (OCRepPayload**)OICMalloc(dimTotal * sizeof(OCRepPayload*));
+            NS_VERIFY_NOT_NULL_V(dest->arr.objArray);
+            for(size_t i = 0; i < dimTotal; ++i)
+            {
+                dest->arr.objArray[i] = OCRepPayloadClone(source->arr.objArray[i]);
+            }
+            break;
+        case OCREP_PROP_BYTE_STRING:
+            dest->arr.ocByteStrArray = (OCByteString*)OICMalloc(dimTotal * sizeof(OCByteString));
+            NS_VERIFY_NOT_NULL_V(dest->arr.ocByteStrArray);
+            for (size_t i = 0; i < dimTotal; ++i)
+            {
+                OCByteStringCopy(&dest->arr.ocByteStrArray[i], &source->arr.ocByteStrArray[i]);
+                NS_VERIFY_NOT_NULL_V(dest->arr.ocByteStrArray[i].bytes);
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+OCRepPayloadValue * NSCopyPayloadValue(OCRepPayloadValue * value)
+{
+    OCRepPayloadValue * retValue = (OCRepPayloadValue *)OICMalloc(sizeof(OCRepPayloadValue));
+    NS_VERIFY_NOT_NULL(retValue, NULL);
+
+    * retValue = * value;
+    retValue->next = NULL;
+    retValue->name = OICStrdup(value->name);
+
+    switch(value->type)
+    {
+        case OCREP_PROP_STRING:
+            retValue->str = OICStrdup(value->str);
+            break;
+        case OCREP_PROP_BYTE_STRING:
+            retValue->ocByteStr.bytes = (uint8_t * )OICMalloc(value->ocByteStr.len * sizeof(uint8_t));
+            NS_VERIFY_NOT_NULL(retValue->ocByteStr.bytes, NULL);
+            retValue->ocByteStr.len = value->ocByteStr.len;
+            memcpy(retValue->ocByteStr.bytes, value->ocByteStr.bytes, retValue->ocByteStr.len);
+            break;
+        case OCREP_PROP_OBJECT:
+            retValue->obj = OCRepPayloadClone(value->obj);
+            break;
+        case OCREP_PROP_ARRAY:
+            NSCopyPayloadValueArray(retValue, value);
+            break;
+        default:
+            break;
+    }
+
+    return retValue;
+}
+
+OCRepPayload * NSGetExtraInfo(OCRepPayload * payload)
+{
+    NS_LOG(DEBUG, "get extra info");
+    OCRepPayload * extraInfo = OCRepPayloadCreate();
+    OCRepPayload * origin = OCRepPayloadClone(payload);
+
+    bool isFirstExtra = true;
+    OCRepPayloadValue * headValue = NULL;
+    OCRepPayloadValue * curValue = NULL;
+    OCRepPayloadValue * value = origin->values;
+    while(value)
+    {
+        if (NSIsExtraValue(value->name))
+        {
+            curValue = NSCopyPayloadValue(value);
+            NS_LOG_V(DEBUG, " key : %s", curValue->name);
+            if (isFirstExtra)
+            {
+                headValue = curValue;
+                isFirstExtra = false;
+            }
+            curValue = curValue->next;
+            curValue = NULL;
+        }
+        value = value->next;
+    }
+    OCRepPayloadDestroy(origin);
+
+    extraInfo->values = headValue;
+
+    if (extraInfo->values)
+    {
+        return extraInfo;
+    }
+    else
+    {
+        OCRepPayloadDestroy(extraInfo);
+        return NULL;
+    }
 }
 
 NSMessage * NSGetMessage(OCClientResponse * clientResponse)
@@ -230,6 +402,25 @@ NSMessage * NSGetMessage(OCClientResponse * clientResponse)
     OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_TYPE, (int64_t *)&retMsg->type);
     OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_DATETIME, &retMsg->dateTime);
     OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_TTL, (int64_t *)&retMsg->ttl);
+
+    char * icon = NULL;
+    OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_ICON_IMAGE, &icon);
+
+    if (icon && strlen(icon))
+    {
+        NSMediaContents * contents = (NSMediaContents *)OICMalloc(sizeof(NSMediaContents));
+        if (contents)
+        {
+            contents->iconImage = icon;
+            retMsg->mediaContents = contents;
+        }
+        else
+        {
+            NSOICFree(icon);
+        }
+    }
+
+    retMsg->extraInfo = NSGetExtraInfo(payload);
 
     NS_LOG_V(DEBUG, "Msg ID      : %lld", (long long int)retMsg->messageId);
     NS_LOG_V(DEBUG, "Msg Title   : %s", retMsg->title);
@@ -290,6 +481,7 @@ NSMessage * NSCreateMessage_internal(uint64_t id, const char * providerId)
     retMsg->dateTime = NULL;
     retMsg->ttl = 0;
     retMsg->mediaContents = NULL;
+    retMsg->extraInfo = NULL;
 
     return retMsg;
 }
@@ -341,11 +533,11 @@ OCStackResult NSSendSyncInfo(NSSyncInfo * syncInfo, OCDevAddr * addr)
 
 char * NSGetCloudUri(const char * providerId, char * uri)
 {
-    size_t uriLen = NS_DEVICE_ID_LENGTH + 1 + strlen(uri) + 1;
+    size_t uriLen = NS_DEVICE_ID_LENGTH + 1 + strlen(uri) + 1 + 3;
     char * retUri = (char *)OICMalloc(uriLen);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(retUri, NULL, NSOICFree(uri));
 
-    snprintf(retUri, uriLen, "/%s%s", providerId, uri);
+    snprintf(retUri, uriLen, "/di/%s%s", providerId, uri);
     NSOICFree(uri);
     NS_LOG_V(DEBUG, "Cloud uri : %s", retUri);
 
@@ -408,8 +600,7 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
             connections = connections->next;
         }
     }
-    else if (task->taskType == TASK_CONSUMER_REQ_TOPIC_LIST
-                || task->taskType == TASK_CONSUMER_GET_TOPIC_LIST)
+    else if (task->taskType == TASK_CONSUMER_REQ_TOPIC_LIST)
     {
         NSProvider_internal * provider = (NSProvider_internal *)task->taskData;
 
@@ -417,6 +608,7 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         NS_VERIFY_NOT_NULL_V(connections);
 
         char * topicUri = OICStrdup(provider->topicUri);
+        NS_VERIFY_NOT_NULL_V(topicUri);
 
         OCConnectivityType type = CT_DEFAULT;
         if (connections->addr->adapter == OC_ADAPTER_TCP)
@@ -429,15 +621,8 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         }
 
         NS_LOG(DEBUG, "get topic query");
-        char * query = NULL;
-        if (task->taskType == TASK_CONSUMER_REQ_TOPIC_LIST)
-        {
-            query = OICStrdup(topicUri);
-        }
-        else if (task->taskType == TASK_CONSUMER_GET_TOPIC_LIST)
-        {
-            query = NSMakeRequestUriWithConsumerId(topicUri);
-        }
+        char * query = NSMakeRequestUriWithConsumerId(topicUri);
+
         NS_VERIFY_NOT_NULL_V(query);
         NS_LOG_V(DEBUG, "topic query : %s", query);
 
@@ -464,13 +649,17 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         while (iter)
         {
             topicLLSize ++;
+            NS_LOG_V(DEBUG, "[%d] Topic Name:%s\tTopic State:%d",
+                                        topicLLSize, iter->topicName, iter->state);
             iter = (NSTopicLL *) iter->next;
         }
 
         OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_CONSUMER_ID, *NSGetConsumerId());
+        NS_LOG_V(DEBUG, "NS_ATTRIBUTE_CONSUMER_ID: %s", *NSGetConsumerId());
 
         iter = topicLL;
         int iterSize = 0;
+        NS_LOG_V(DEBUG, "DimensionSize: %d", topicLLSize);
 
         OCRepPayload ** topicPayload = NULL;
         if (topicLLSize > 0)
@@ -485,10 +674,13 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
                                             iter->topicName);
                 OCRepPayloadSetPropInt(topicPayload[iterSize], NS_ATTRIBUTE_TOPIC_SELECTION,
                                             iter->state);
+                NS_LOG_V(DEBUG, "NS_ATTRIBUTE_TOPIC_NAME: %s", iter->topicName);
+                NS_LOG_V(DEBUG, "NS_ATTRIBUTE_TOPIC_SELECTION: %d", iter->state);
                 iterSize++;
                 iter = iter->next;
             }
             size_t dimensions[3] = {topicLLSize, 0, 0};
+
             OCRepPayloadSetPropObjectArrayAsOwner(payload, NS_ATTRIBUTE_TOPIC_LIST,
                                                     topicPayload, dimensions);
         }
@@ -498,6 +690,7 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         }
 
         char * topicUri = OICStrdup(provider->topicUri);
+        NS_VERIFY_NOT_NULL_V(topicUri);
 
         OCConnectivityType type = CT_DEFAULT;
         if (connections->addr->adapter == OC_ADAPTER_TCP)
@@ -536,13 +729,12 @@ NSTopicLL * NSGetTopicLL(OCClientResponse * clientResponse)
     NS_VERIFY_NOT_NULL(clientResponse->payload, NULL);
 
     OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
-    while (payload)
+    OCRepPayloadValue * value = payload->values;
+    while (value)
     {
-        NS_LOG_V(DEBUG, "Payload Key : %s", payload->values->name);
-        payload = payload->next;
+        NS_LOG_V(DEBUG, "Payload Key : %s", value->name);
+        value = value->next;
     }
-
-    payload = (OCRepPayload *)clientResponse->payload;
 
     char * consumerId = NULL;
     OCRepPayload ** topicLLPayload = NULL;
@@ -602,7 +794,8 @@ NSTopicLL * NSGetTopicLL(OCClientResponse * clientResponse)
         }
 
         NSResult ret = NSInsertTopicNode(topicLL, topicNode);
-        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(ret, NULL, NSRemoveTopicLL(topicLL));
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *)1 : NULL,
+                                                    NULL, NSRemoveTopicLL(topicLL));
     }
 
     return topicLL;
@@ -630,8 +823,6 @@ OCStackApplicationResult NSIntrospectTopic(
             clientResponse->devAddr.adapter);
 
     NSTopicLL * newTopicLL = NSGetTopicLL(clientResponse);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicLL, OC_STACK_KEEP_TRANSACTION,
-          NSRemoveProvider_internal((NSProvider_internal *) ctx));
 
     NSProvider_internal * provider = (NSProvider_internal *) ctx;
     provider->topicLL = NSCopyTopicLL(newTopicLL);

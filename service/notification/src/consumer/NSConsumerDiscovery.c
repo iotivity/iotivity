@@ -28,9 +28,8 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 
-#define NS_DISCOVER_QUERY "/oic/res?rt=oic.r.notification"
-#define NS_PRESENCE_SUBSCRIBE_QUERY_TCP "/oic/ad?rt=oic.r.notification"
-#define NS_GET_INFORMATION_QUERY "/notification?if=oic.if.notification"
+#define NS_DISCOVER_QUERY "/oic/res?rt=oic.wk.notification"
+#define NS_PRESENCE_SUBSCRIBE_QUERY_TCP "/oic/ad?rt=oic.wk.notification"
 
 NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse);
 
@@ -43,6 +42,7 @@ OCStackApplicationResult NSConsumerPresenceListener(
     (void) handle;
 
     NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_NOT_NULL(clientResponse->payload, OC_STACK_KEEP_TRANSACTION);
     NS_VERIFY_STACK_SUCCESS(
             NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
 
@@ -72,6 +72,8 @@ OCStackApplicationResult NSConsumerPresenceListener(
 
         NSTask * task = NSMakeTask(TASK_CONSUMER_PROVIDER_DELETED, addr);
         NS_VERIFY_NOT_NULL(task, OC_STACK_KEEP_TRANSACTION);
+
+        NSConsumerPushEvent(task);
     }
 
     else if (payload->trigger == OC_PRESENCE_TRIGGER_CREATE)
@@ -109,6 +111,8 @@ OCStackApplicationResult NSProviderDiscoverListener(
     }
 
     OCResourcePayload * resource = ((OCDiscoveryPayload *)clientResponse->payload)->resources;
+    NS_LOG_V(DEBUG, "Discovered resource uri : %s",
+                        resource->uri);
     while (resource)
     {
         NS_VERIFY_NOT_NULL(resource->uri, OC_STACK_KEEP_TRANSACTION);
@@ -120,7 +124,14 @@ OCStackApplicationResult NSProviderDiscoverListener(
                 type = CT_ADAPTER_TCP;
             }
 
-            NSInvokeRequest(NULL, OC_REST_GET, clientResponse->addr,
+            OCDevAddr * addr = clientResponse->addr;
+            if (resource->secure)
+            {
+                addr->port = resource->port;
+                addr->flags |= OC_FLAG_SECURE;
+            }
+
+            NSInvokeRequest(NULL, OC_REST_GET, addr,
                     resource->uri, NULL, NSIntrospectProvider, ctx,
                     type);
         }
@@ -156,10 +167,9 @@ OCStackApplicationResult NSIntrospectProvider(
 
     NSProvider_internal * newProvider = NSGetProvider(clientResponse);
     NS_VERIFY_NOT_NULL(newProvider, OC_STACK_KEEP_TRANSACTION);
-    if (ctx && *((NSConsumerDiscoverType *)ctx) == NS_DISCOVER_CLOUD )
+    if (ctx && ctx == (void *)NS_DISCOVER_CLOUD )
     {
         newProvider->connection->isCloudConnection = true;
-        NSOICFree(ctx);
     }
 
     NS_LOG(DEBUG, "build NSTask");
@@ -186,24 +196,39 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     NS_LOG(DEBUG, "create NSProvider");
     NS_VERIFY_NOT_NULL(clientResponse->payload, NULL);
 
-    OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
-    while (payload)
-    {
-        NS_LOG_V(DEBUG, "Payload Key : %s", payload->values->name);
-        payload = payload->next;
-    }
+    OCRepPayloadPropType accepterType = OCREP_PROP_BOOL;
 
-    payload = (OCRepPayload *)clientResponse->payload;
+    OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
+    OCRepPayloadValue * value = payload->values;
+    while (value)
+    {
+        NS_LOG_V(DEBUG, "Payload Key : %s", value->name);
+        NS_LOG_V(DEBUG, "Payload Type : %d", (int) value->type);
+        if (!strcmp(value->name, NS_ATTRIBUTE_POLICY))
+        {
+            accepterType = value->type;
+        }
+        value = value->next;
+    }
 
     char * providerId = NULL;
     char * messageUri = NULL;
     char * syncUri = NULL;
     char * topicUri = NULL;
-    int64_t accepter = 0;
+    bool bAccepter = 0;
+    int64_t iAccepter = 0;
     NSProviderConnectionInfo * connection = NULL;
 
     NS_LOG(DEBUG, "get information of accepter");
-    bool getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_POLICY, & accepter);
+    bool getResult = false;
+    if (accepterType == OCREP_PROP_BOOL)
+    {
+        getResult = OCRepPayloadGetPropBool(payload, NS_ATTRIBUTE_POLICY, & bAccepter);
+    }
+    else if (accepterType == OCREP_PROP_INT)
+    {
+        getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_POLICY, & iAccepter);
+    }
     NS_VERIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
 
     NS_LOG(DEBUG, "get provider ID");
@@ -242,9 +267,18 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     {
         newProvider->topicUri = topicUri;
     }
-    newProvider->accessPolicy = (NSSelector)accepter;
+    if (accepterType == OCREP_PROP_BOOL)
+    {
+        newProvider->accessPolicy = (NSSelector)bAccepter;
+    }
+    else if (accepterType == OCREP_PROP_INT)
+    {
+        newProvider->accessPolicy = (NSSelector)iAccepter;
+    }
+
     newProvider->connection = connection;
     newProvider->topicLL = NULL;
+    newProvider->state = NS_DISCOVERED;
 
     return newProvider;
 }
@@ -270,7 +304,7 @@ OCDevAddr * NSChangeAddress(const char * address)
     }
 
     int tmp = index + 1;
-    uint16_t port = address[tmp++];
+    uint16_t port = address[tmp++] - '0';
 
     while(address[tmp] != '\0')
     {
@@ -282,23 +316,28 @@ OCDevAddr * NSChangeAddress(const char * address)
     NS_VERIFY_NOT_NULL(retAddr, NULL);
 
     retAddr->adapter = OC_ADAPTER_TCP;
-    OICStrcpy(retAddr->addr, index - 1, address);
+    OICStrcpy(retAddr->addr, index + 1, address);
     retAddr->addr[index] = '\0';
     retAddr->port = port;
+    retAddr->flags = OC_IP_USE_V6;
+
+    NS_LOG(DEBUG, "Change Address for TCP request");
+    NS_LOG_V(DEBUG, "Origin : %s", address);
+    NS_LOG_V(DEBUG, "Changed Addr : %s", retAddr->addr);
+    NS_LOG_V(DEBUG, "Changed Port : %d", retAddr->port);
 
     return retAddr;
 }
 
 void NSConsumerHandleRequestDiscover(OCDevAddr * address, NSConsumerDiscoverType rType)
 {
-    OCConnectivityType type = CT_DEFAULT;
+    OCConnectivityType type = CT_ADAPTER_IP;
     NSConsumerDiscoverType * callbackData = NULL;
 
     if (address)
     {
         if (address->adapter == OC_ADAPTER_IP)
         {
-            type = CT_ADAPTER_IP;
             NS_LOG(DEBUG, "Request discover [UDP]");
         }
         else if (address->adapter == OC_ADAPTER_TCP)
@@ -311,8 +350,7 @@ void NSConsumerHandleRequestDiscover(OCDevAddr * address, NSConsumerDiscoverType
 
             if (rType == NS_DISCOVER_CLOUD)
             {
-                callbackData = (NSConsumerDiscoverType *)OICMalloc(sizeof(NSConsumerDiscoverType));
-                *callbackData = NS_DISCOVER_CLOUD;
+                callbackData = (void *) NS_DISCOVER_CLOUD;
             }
         }
         else

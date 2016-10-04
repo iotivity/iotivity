@@ -46,6 +46,12 @@ CAResult_t CAEDRServerStart()
 {
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "IN");
 
+    if(-1 != g_serverFD)
+    {
+        OIC_LOG_V(DEBUG, EDR_ADAPTER_TAG, "%s Already running", __func__);
+        return CA_STATUS_OK;
+    }
+
     bool isRunning = false;
     bt_error_e err = bt_adapter_is_service_used(OIC_EDR_SERVICE_ID, &isRunning);
     if (BT_ERROR_NONE != err)

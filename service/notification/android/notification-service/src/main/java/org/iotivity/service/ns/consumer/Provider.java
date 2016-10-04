@@ -22,6 +22,7 @@ package org.iotivity.service.ns.consumer;
 
 import android.util.Log;
 import org.iotivity.service.ns.common.*;
+import java.util.Vector;
 
 /**
   * @class   Provider
@@ -30,6 +31,25 @@ import org.iotivity.service.ns.common.*;
 public class Provider
 {
     private static final String LOG_TAG = "ConsumerService_Provider";
+
+    public enum ProviderState
+    {
+        ALLOW(1),
+        DENY(2),
+        TOPIC(3),
+        STOPPED(12);
+        private int state;
+
+        private ProviderState(int state)
+        {
+            this.state = state;
+        }
+
+        public int getProviderState()
+        {
+            return this.state;
+        }
+    };
 
     public String mProviderId        = null;
     private long mNativeHandle       = 0;
@@ -46,25 +66,46 @@ public class Provider
         return mProviderId ;
     }
 
-    public void Subscribe() throws NSException
+    public TopicsList getTopicList() throws NSException
+    {
+        return nativeGetTopicList();
+    }
+
+    public ProviderState getProviderState() throws NSException
+    {
+        return nativeGetProviderState();
+    }
+
+    public void subscribe() throws NSException
     {
         nativeSubscribe();
     }
 
-    public void Unsubscribe() throws NSException
+    public boolean isSubscribed () throws NSException
     {
-        nativeUnsubscribe();
+        return nativeIsSubscribed();
     }
 
-    public void SendSyncInfo(long messageId, SyncInfo.SyncType syncType) throws NSException
+    public void sendSyncInfo(long messageId, SyncInfo.SyncType syncType) throws NSException
     {
         nativeSendSyncInfo(messageId, syncType.ordinal());
     }
 
-    public void SetListener(OnMessageReceivedListner onMessageReceivedListner,
+    public void setListener(OnProviderStateListener onProviderStateListener,
+                            OnMessageReceivedListner onMessageReceivedListner,
                             OnSyncInfoReceivedListner onSyncInfoReceivedListner) throws NSException
     {
-        nativeSetListener(onMessageReceivedListner, onSyncInfoReceivedListner);
+        nativeSetListener(onProviderStateListener, onMessageReceivedListner, onSyncInfoReceivedListner);
+    }
+
+    public int updateTopicList(TopicsList topicsList) throws NSException
+    {
+        return nativeUpdateTopicList(topicsList);
+    }
+
+    public interface OnProviderStateListener
+    {
+        public void onProviderStateReceived(ProviderState state);
     }
 
     public interface OnMessageReceivedListner
@@ -78,10 +119,13 @@ public class Provider
     }
 
     private native void nativeSubscribe() throws NSException;
-    private native void nativeUnsubscribe() throws NSException;
     private native void nativeSendSyncInfo(long messageId, int syncType) throws NSException;
-    private native void nativeSetListener(
-        OnMessageReceivedListner onMessageReceivedListner,
-        OnSyncInfoReceivedListner onSyncInfoReceivedListner
-    ) throws NSException;
+    private native void nativeSetListener(OnProviderStateListener onProviderStateListener,
+                                      OnMessageReceivedListner onMessageReceivedListner,
+                                      OnSyncInfoReceivedListner onSyncInfoReceivedListner) throws NSException;
+    public native TopicsList  nativeGetTopicList() throws NSException;
+    private native int nativeUpdateTopicList(TopicsList topicsList) throws NSException;
+    private native ProviderState nativeGetProviderState() throws NSException;
+    public native boolean  nativeIsSubscribed() throws NSException;
+
 }

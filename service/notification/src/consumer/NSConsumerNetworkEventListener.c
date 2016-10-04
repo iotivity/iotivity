@@ -29,7 +29,7 @@
 #include "NSConsumerDiscovery.h"
 #include "NSConsumerNetworkEventListener.h"
 
-#define NS_PRESENCE_SUBSCRIBE_QUERY "coap://224.0.1.187:5683/oic/ad?rt=oic.r.notification"
+#define NS_PRESENCE_SUBSCRIBE_QUERY "/oic/ad?rt=oic.wk.notification"
 
 void NSConnectionStateListener(const CAEndpoint_t * info, bool isConnected);
 

@@ -19,15 +19,16 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "NSProviderSystem.h"
 
+#if(defined WITH_CLOUD && defined RD_CLIENT)
 #define MAX_SERVER_ADDRESS 32
-static NSConnectionState NSProviderConnectionState;
-
-#ifdef RD_CLIENT
 static char NSRemoteServerAddress[MAX_SERVER_ADDRESS] = {0,};
 #endif
 
+static NSConnectionState NSProviderConnectionState;
+
 NSProviderInfo * providerInfo;
 bool NSPolicy = true;
+bool NSResourceSecurity = true;
 
 void NSSetProviderConnectionState(NSConnectionState state)
 {
@@ -43,7 +44,7 @@ NSConnectionState NSGetProviderConnectionState()
     return NSProviderConnectionState;
 }
 
-#ifdef RD_CLIENT
+#if(defined WITH_CLOUD && defined RD_CLIENT)
 void NSSetRemoteServerAddress(char *serverAddress)
 {
 
@@ -129,7 +130,17 @@ void NSSetPolicy(bool policy)
     NSPolicy = policy;
 }
 
+bool NSGetResourceSecurity()
+{
+    return NSResourceSecurity;
+}
+
+void NSSetResourceSecurity(bool secured)
+{
+    NSResourceSecurity = secured;
+}
+
 const char * NSGetUserInfo()
 {
-    return providerInfo->providerName;
+    return providerInfo->userInfo;
 }

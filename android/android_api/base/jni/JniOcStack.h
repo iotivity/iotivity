@@ -48,6 +48,9 @@ void throwOcException(JNIEnv* env, jobject ex);
 
 extern JavaVM* g_jvm;
 
+extern jclass g_cls_byte1DArray;
+extern jclass g_cls_byte2DArray;
+extern jclass g_cls_byte3DArray;
 extern jclass g_cls_Integer;
 extern jclass g_cls_int1DArray;
 extern jclass g_cls_int2DArray;
@@ -87,6 +90,9 @@ extern jclass g_cls_OcOicSecPdAcl;
 extern jclass g_cls_OcDirectPairDevice;
 #ifdef WITH_CLOUD
 extern jclass g_cls_OcAccountManager;
+#endif
+#ifdef __WITH_TLS__
+extern jclass g_cls_OcCloudProvisioning;
 #endif
 
 extern jclass g_cls_OcOicSecAcl_ace;
@@ -128,6 +134,10 @@ extern jmethodID g_mid_OcDirectPairDevice_ctor;
 extern jmethodID g_mid_OcDirectPairDevice_dev_ctor;
 #ifdef WITH_CLOUD
 extern jmethodID g_mid_OcAccountManager_ctor;
+#endif
+#ifdef __WITH_TLS__
+extern jmethodID g_mid_OcCloudProvisioning_getIP;
+extern jmethodID g_mid_OcCloudProvisioning_getPort;
 #endif
 
 extern jmethodID g_mid_OcOicSecAcl_get_rownerID;

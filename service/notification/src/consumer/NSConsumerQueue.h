@@ -44,7 +44,7 @@ NSConsumerQueue * NSCreateQueue();
 
 void NSDestroyQueue(NSConsumerQueue *);
 
-bool NSPushQueue(NSConsumerQueue *, NSConsumerQueueObject *);
+bool NSPushConsumerQueue(NSConsumerQueue *, NSConsumerQueueObject *);
 
 NSConsumerQueueObject * NSPopQueue(NSConsumerQueue *);
 

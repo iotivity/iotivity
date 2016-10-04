@@ -79,16 +79,14 @@ void JniCloudPropProvisioningStatusListener::onCloudPropProvisioningStatus(std::
     }
 
     ESResult esResult = cloudPropProvisioningStatus->getESResult();
-    ESCloudProvState cloudProvisionState = cloudPropProvisioningStatus->getESCloudState();
 
     //create the java object
     jobject jCloudPropProvisioningStatus = NULL;
     jCloudPropProvisioningStatus = env->NewObject(g_cls_CloudPropProvisioningStatus,
                                                 g_mid_CloudPropProvisioningStatus_ctor,
-                                                (jint)esResult,
-                                                (jint)cloudProvisionState);
+                                                (jint)esResult);
 
-    ES_LOGI("JniCloudPropProvisioningStatus::onCloudPropProvisioningStatus - %d, %d", esResult, cloudProvisionState);
+    ES_LOGI("JniCloudPropProvisioningStatus::onCloudPropProvisioningStatus - %d", esResult);
     if (!jCloudPropProvisioningStatus)
     {
         ES_LOGE("JniCloudPropProvisioningStatus::onCloudPropProvisioningStatus Unable to create the java object");
@@ -99,8 +97,7 @@ void JniCloudPropProvisioningStatusListener::onCloudPropProvisioningStatus(std::
 
     bool needRemoveListener = false;
 
-    if(cloudProvisionState == ES_CLOUD_PROVISIONING_ERROR ||
-            cloudProvisionState == ES_CLOUD_PROVISIONING_SUCCESS )
+    if(esResult == ES_OK)
     {
         needRemoveListener = true;
     }

@@ -31,6 +31,9 @@ JniOnDeleteListener::JniOnDeleteListener(JNIEnv *env, jobject jListener, JniOcRe
     : m_ownerResource(owner)
 {
     m_jwListener = env->NewWeakGlobalRef(jListener);
+#ifdef WITH_CLOUD
+    m_ownerAccountManager = nullptr;
+#endif
 }
 
 #ifdef WITH_CLOUD
@@ -38,6 +41,7 @@ JniOnDeleteListener::JniOnDeleteListener(JNIEnv *env, jobject jListener, JniOcAc
     : m_ownerAccountManager(owner)
 {
     m_jwListener = env->NewWeakGlobalRef(jListener);
+    m_ownerResource = nullptr;
 }
 #endif
 
@@ -157,11 +161,11 @@ void JniOnDeleteListener::checkExAndRemoveListener(JNIEnv* env)
 #ifndef WITH_CLOUD
         m_ownerResource->removeOnDeleteListener(env, m_jwListener);
 #else
-        if (m_ownerResource)
+        if (nullptr != m_ownerResource)
         {
             m_ownerResource->removeOnDeleteListener(env, m_jwListener);
         }
-        if (m_ownerAccountManager)
+        if (nullptr != m_ownerAccountManager)
         {
             m_ownerAccountManager->removeOnDeleteListener(env, m_jwListener);
         }
@@ -173,11 +177,11 @@ void JniOnDeleteListener::checkExAndRemoveListener(JNIEnv* env)
 #ifndef WITH_CLOUD
         m_ownerResource->removeOnDeleteListener(env, m_jwListener);
 #else
-        if (m_ownerResource)
+        if (nullptr != m_ownerResource)
         {
             m_ownerResource->removeOnDeleteListener(env, m_jwListener);
         }
-        if (m_ownerAccountManager)
+        if (nullptr != m_ownerAccountManager)
         {
             m_ownerAccountManager->removeOnDeleteListener(env, m_jwListener);
         }

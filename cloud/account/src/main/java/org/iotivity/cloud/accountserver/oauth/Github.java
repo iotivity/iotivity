@@ -130,6 +130,12 @@ public class Github implements OAuthProvider {
         JSONUtil<HashMap<String, String>> util = new JSONUtil<>();
         HashMap<String, String> parsedData = util.parseJSON(response,
                 HashMap.class);
+
+        if (parsedData == null) {
+            Log.d("parsedData is null!");
+            return null;
+        }
+
         String userId = parsedData.get(userIdKey);
         userInfo.setUserid(userId);
 

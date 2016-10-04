@@ -30,6 +30,8 @@
 
 #include <string>
 #include "NSCommon.h"
+#include "NSUtils.h"
+#include "NSTopicsList.h"
 
 namespace OIC
 {
@@ -50,7 +52,7 @@ namespace OIC
                 /**
                       * Constructor of NSConsumer.
                       *
-                      * @param consumerId - consumerId of the Notification service Consumer.
+                      * @param consumerId -consumerId of the Notification service Consumer.
                       */
                 NSConsumer(const std::string &consumerId)
                     : m_consumerId(consumerId) {}
@@ -77,10 +79,29 @@ namespace OIC
                 /**
                       * This method is for setting icon image for the Notification service media contents.
                       *
-                      * @param consumer - NSConsumer.
                       * @param accepted - as bool.
                       */
-                int acceptSubscription(NSConsumer *consumer, bool accepted);
+                int acceptSubscription(bool accepted);
+
+                /**
+                     * Select a topic name for a consumer
+                     * @param[in]  topicName Topic name to select
+                     * @return :: OK or result code of NSResult
+                     */
+                NSResult setTopic(const std::string &topicName);
+
+                /**
+                     * Unselect a topic from the topic list for consumer
+                     * @param[in]  topicName Topic name to unselect
+                     * @return :: OK or result code of NSResult
+                     */
+                NSResult unsetTopic(const std::string &topicName);
+
+                /**
+                     * Request topic list with selection state for the consumer
+                     * @return :: Topic list
+                     */
+                NSTopicsList *getConsumerTopicList();
 
             private:
                 ::NSConsumer *getNSConsumer();

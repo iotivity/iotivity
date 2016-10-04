@@ -27,6 +27,14 @@ root_dir = './../../../../'
 ######################################################################
 # Build flags
 ######################################################################
+with_upstream_libcoap = provisioning_env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
+	provisioning_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+else:
+	# For bring up purposes only, the forked version will live here.
+	provisioning_env.AppendUnique(CPPPATH = ['../../connectivity/lib/libcoap-4.1.1/include'])
+
 provisioning_env.AppendUnique(CPPPATH = [
 		'../../stack/include',
 		'../../stack/include/internal',
@@ -36,6 +44,7 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../../../c_common/oic_malloc/include',
 		'include',
 		'include/internal',
+		'include/cloud',
 		'include/oxm',
 		'../../resource/csdk/security/include',
 		'../../../../extlibs/cjson/',
@@ -44,7 +53,6 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../../connectivity/inc/pkix',
 		'../../connectivity/external/inc',
 		'../../connectivity/common/inc',
-		'../../connectivity/lib/libcoap-4.1.1',
 		'../../connectivity/api',
 		'../include',
 		'../include/internal',
@@ -54,30 +62,29 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'ck_manager/include'
 		])
 
-if target_os not in ['tizen']:
-	provisioning_env.AppendUnique(CPPPATH = ['../../../../extlibs/sqlite3'])
-
 provisioning_env.AppendUnique(CPPDEFINES= ['__WITH_DTLS__'])
 
 if 'g++' in provisioning_env.get('CXX'):
     provisioning_env.AppendUnique(CXXFLAGS = ['-std=c++0x'])
 
 provisioning_env.AppendUnique(LIBPATH = [provisioning_env.get('BUILD_DIR')])
-provisioning_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
+provisioning_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap', 'ocsrm'])
 
 provisioning_env.AppendUnique(LIBS = ['tinydtls'])
 
+if provisioning_env.get('WITH_TCP') == True:
+	provisioning_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+
 if provisioning_env.get('DTLS_WITH_X509') == '1':
 	provisioning_env.AppendUnique(LIBS = ['CKManager', 'asn1'])
+if provisioning_env.get('WITH_TCP') == True:
+	provisioning_env.AppendUnique(LIBS = ['mbedtls'])
 
 if target_os not in ['msys_nt', 'windows', 'android']:
 	provisioning_env.ParseConfig('pkg-config --libs glib-2.0')
 
 if target_os in ['windows', 'msys_nt']:
 	provisioning_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi', 'timer'])
-
-if target_os in ['tizen']:
-	provisioning_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 
 if target_os in ['android']:
 	provisioning_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
@@ -102,15 +109,28 @@ provisioning_src = [
 	'src/oxmrandompin.c',
 	'src/provisioningdatabasemanager.c' ]
 
-if target_os != 'tizen':
+if provisioning_env.get('WITH_TCP') == True:
+	provisioning_src = provisioning_src + [
+	'src/cloud/utils.c',
+	'src/cloud/crl.c',
+	'src/cloud/aclgroup.c',
+	'src/cloud/aclinvite.c',
+	'src/cloud/aclid.c',
+	'src/cloud/csr.c']
+
+if target_os in ['tizen']:
+	provisioning_env.ParseConfig('pkg-config --cflags --libs sqlite3')
+else:
+	provisioning_env.AppendUnique(CPPPATH = ['../../../../extlibs/sqlite3'])
 	provisioning_src = provisioning_src + [root_dir+'/extlibs/sqlite3/sqlite3.c' ]
 
-if target_os == 'windows':
-	# TODO: Add OC_EXPORT annotations and enable generation of Windows DLL
-	# https://jira.iotivity.org/browse/IOT-1188
+if target_os in ['windows', 'msys_nt']:
+	# octbstack.dll is exporting ocpmapi APIs on Windows - there is no ocpmapi.dll.
 	provisioningserver = provisioning_env.StaticLibrary('ocpmapi', provisioning_src)
 else:
-	provisioningserver = provisioning_env.SharedLibrary('ocpmapi', provisioning_src)
+	static_provisioning_lib = provisioning_env.StaticLibrary('ocpmapi', provisioning_src)
+	shared_provisioning_lib = provisioning_env.SharedLibrary('ocpmapi', provisioning_src)
+	provisioningserver = Flatten([static_provisioning_lib, shared_provisioning_lib])
 
 provisioning_env.InstallTarget(provisioningserver, 'ocpmapi')
 provisioning_env.UserInstallTargetLib(provisioningserver, 'ocpmapi')

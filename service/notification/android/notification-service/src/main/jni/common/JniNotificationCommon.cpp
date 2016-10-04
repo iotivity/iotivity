@@ -20,6 +20,7 @@
 
 #include "JniNotificationCommon.h"
 #include <cstddef>
+#include "JniUtils.h"
 
 static jclass g_cls_NSException = NULL;
 static jmethodID g_mid_NSException_ctor = NULL;

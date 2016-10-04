@@ -29,6 +29,7 @@
 
 #include "caadapterinterface.h"
 #include "cainterface.h"
+#include "cautilinterface.h"
 
 #ifndef SINGLE_THREAD
 #include "cathreadpool.h" /* for thread pool */
@@ -71,8 +72,8 @@ void CASetErrorHandleCallback(CAErrorHandleCallback errorCallback);
  * @param[in]   adapterCB       CAUtil callback to receive adapter status changes.
  * @param[in]   connCB          CAUtil callback to receive connection status changes.
  */
-void CASetNetworkMonitorCallbacks(CAAdapterChangeCallback adapterCB,
-                                  CAConnectionChangeCallback connCB);
+void CASetNetworkMonitorCallbacks(CAAdapterStateChangedCB adapterCB,
+                                  CAConnectionStateChangedCB connCB);
 
 /**
  * Starting different connectivity adapters based on the network selection.

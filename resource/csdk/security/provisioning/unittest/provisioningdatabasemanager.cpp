@@ -17,6 +17,7 @@
  * limitations under the License.
  *
  * *****************************************************************/
+#include "iotivity_config.h"
 #include "gtest/gtest.h"
 #include "provisioningdatabasemanager.h"
 
@@ -103,7 +104,7 @@ TEST(PDMAddDeviceTest, ValidUUID)
     memcpy(&uid.id, &id, UUID_LENGTH);
 
     EXPECT_EQ(OC_STACK_OK, PDMAddDevice(&uid));
-    PDMDeleteDevice(&uid);
+    EXPECT_EQ(OC_STACK_OK, PDMDeleteDevice(&uid));
 }
 
 TEST(PDMLinkDevicesTest, NULLDevice1)

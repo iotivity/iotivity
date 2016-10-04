@@ -26,21 +26,66 @@ import java.util.Arrays;
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
+import org.iotivity.cloud.base.device.IResponseEventHandler;
+import org.iotivity.cloud.base.exception.ClientException;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.protocols.IRequest;
+import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
+import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 
+/**
+ *
+ * This class provides a set of APIs to send requests about account to account
+ *
+ */
+
 public class Account extends Resource {
-    IRequestChannel mAuthServer = null;
+    IRequestChannel mASServer = null;
 
     public Account() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACCOUNT_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI));
 
-        mAuthServer = ConnectorPool.getConnection("account");
+        mASServer = ConnectorPool.getConnection("account");
+    }
+
+    class AccountReceiveHandler implements IResponseEventHandler {
+
+        IRequestChannel  mRDServer = null;
+        private Device   mSrcDevice;
+        private IRequest mRequest;
+
+        public AccountReceiveHandler(IRequest request, Device srcDevice) {
+            mRDServer = ConnectorPool.getConnection("rd");
+            mSrcDevice = srcDevice;
+            mRequest = request;
+        }
+
+        @Override
+        public void onResponseReceived(IResponse response)
+                throws ClientException {
+            switch (response.getStatus()) {
+                case DELETED:
+                    StringBuffer uriPath = new StringBuffer();
+                    uriPath.append(Constants.PREFIX_OIC + "/");
+                    uriPath.append(Constants.RD_URI);
+                    mRDServer.sendRequest(
+                            MessageBuilder.createRequest(RequestMethod.DELETE,
+                                    uriPath.toString(), mRequest.getUriQuery()),
+                            mSrcDevice);
+                    break;
+                case CHANGED:
+                case CONTENT:
+                    mSrcDevice.sendResponse(response);
+                    break;
+                default:
+                    mSrcDevice.sendResponse(MessageBuilder.createResponse(
+                            mRequest, ResponseStatus.BAD_REQUEST));
+            }
+        }
     }
 
     @Override
@@ -55,6 +100,7 @@ public class Account extends Resource {
             request = MessageBuilder.modifyRequest(request, null, uriQuery,
                     null, null);
         }
-        mAuthServer.sendRequest(request, srcDevice);
+        mASServer.sendRequest(request,
+                new AccountReceiveHandler(request, srcDevice));
     }
 }

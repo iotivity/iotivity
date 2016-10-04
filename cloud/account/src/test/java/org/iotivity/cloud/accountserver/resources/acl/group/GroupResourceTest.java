@@ -22,23 +22,18 @@
  */
 package org.iotivity.cloud.accountserver.resources.acl.group;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 
-import org.iotivity.cloud.accountserver.db.TokenTable;
-import org.iotivity.cloud.accountserver.db.UserTable;
-import org.iotivity.cloud.accountserver.util.TypeCastingManager;
-import org.iotivity.cloud.base.ServerSystem;
-import org.iotivity.cloud.base.ServerSystem.PersistentPacketReceiver;
+import org.iotivity.cloud.accountserver.Constants;
+import org.iotivity.cloud.accountserver.db.MongoDB;
 import org.iotivity.cloud.base.device.CoapDevice;
-import org.iotivity.cloud.base.device.Device;
+import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
@@ -49,64 +44,32 @@ import org.iotivity.cloud.base.protocols.enums.Observe;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelId;
-import io.netty.util.Attribute;
-
 public class GroupResourceTest {
-    private static final String            GROUP_URI                 = "/.well-known/ocf/acl/group";
-    private String                         di                        = "d0001";
-    private String                         accessToken               = "5f5536c896da7dd437316585b86ef9dd03441c40";
-    private String                         refreshToken              = "rt0001";
-    private String                         gid                       = null;
-    private TypeCastingManager<UserTable>  mUserTableCastingManager  = new TypeCastingManager<>();
-    private TypeCastingManager<TokenTable> mTokenTableCastingManager = new TypeCastingManager<>();
-    ServerSystem                           serverSystem              = new ServerSystem();
-    final CountDownLatch                   latch                     = new CountDownLatch(
+    private static final String           GROUP_URI         = Constants.GROUP_FULL_URI;
+    private final String                  mUserUuid         = "bc38f243-aab5-44d3-8eb9-4a54ebbaf359";
+    private String                        mGroupId          = null;
+    final CountDownLatch                  mLatch            = new CountDownLatch(
             1);
-    private String                         uuid                      = "bc38f243-aab5-44d3-8eb9-4a54ebbaf359";
-    private String                         authProvider              = "github";
-    private CoapDevice                     mockDevice                = Mockito
+    private CoapDevice                    mMockDevice       = Mockito
             .mock(CoapDevice.class);
-    private Cbor<HashMap<String, Object>>  mCbor                     = new Cbor<>();
-    IResponse                              res                       = null;
-    IResponse                              resObserver               = null;
-
-    @Mock
-    ChannelHandlerContext                  ctx;
-
-    @InjectMocks
-    PersistentPacketReceiver               receiver                  = serverSystem.new PersistentPacketReceiver();
+    private Cbor<HashMap<String, Object>> mCbor             = new Cbor<>();
+    private IResponse                     mResponse         = null;
+    private IResponse                     mResponseObserver = null;
+    private GroupResource                 mGroupResource    = new GroupResource();
 
     @Before
     public void setUp() throws Exception {
-        // create log file
-        Log.createfile();
-        // add resource
-        serverSystem.addResource(new GroupResource());
         MockitoAnnotations.initMocks(this);
-        ChannelId channelId = mock(ChannelId.class);
-        // inject mocked coapDevice into the api
-        Channel channel = mock(Channel.class);
-        Attribute<Device> attribute = mock(Attribute.class);
-        Mockito.doReturn(channel).when(ctx).channel();
-        Mockito.doReturn(attribute).when(channel).attr(Mockito.any());
-        Mockito.doReturn(mockDevice).when(attribute).get();
-        Mockito.doReturn(channelId).when(channel).id();
-        Mockito.doReturn(
-                "0000000141f3edcfc2c3000000000001d0000000000000000000000000000000000000")
-                .when(channelId).asLongText();
+        // reset data base
+        resetDB();
         Mockito.doAnswer(new Answer<Object>() {
             @Override
             public CoapResponse answer(InvocationOnMock invocation)
@@ -116,99 +79,163 @@ public class GroupResourceTest {
                 System.out.println(
                         "\t----------payload : " + resp.getPayloadString());
                 System.out.println("\t---------method : " + resp.getStatus());
-                res = resp;
-                HashMap<String, Object> payloadData = mCbor
-                        .parsePayloadFromCbor(resp.getPayload(), HashMap.class);
-                if (payloadData.containsKey("gid")) {
-                    gid = (String) payloadData.get("gid");
+                mResponse = resp;
+                if (mGroupId == null) {
+                    HashMap<String, Object> payloadData = mCbor
+                            .parsePayloadFromCbor(resp.getPayload(),
+                                    HashMap.class);
+                    if (payloadData.containsKey("gid")) {
+                        mGroupId = (String) payloadData.get("gid");
+                    }
                 }
-                latch.countDown();
-                return resp;
+                mLatch.countDown();
+                return null;
             }
-        }).when(mockDevice).sendResponse(Mockito.anyObject());
+        }).when(mMockDevice).sendResponse(Mockito.anyObject());
+    }
+
+    @After
+    public void resetAccountDatabase() throws Exception {
+        MongoDB mongoDB = new MongoDB(Constants.DB_NAME);
+        mongoDB.createTable(Constants.USER_TABLE);
+        mongoDB.createTable(Constants.TOKEN_TABLE);
+        mongoDB.createTable(Constants.GROUP_TABLE);
     }
 
     @Test
     public void testCreateGroup() throws Exception {
-        System.out.println("\t--------------Create Group Test------------");
-        createGroup(ctx, uuid + "create", "Public");
-        assertTrue(methodCheck(res, ResponseStatus.CHANGED));
-        assertTrue(hashmapCheck(res, "gid"));
-
+        getTestMethodName();
+        createGroup(mMockDevice, mUserUuid + "create", "Public");
+        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
+        assertTrue(hashmapCheck(mResponse, "gid"));
+        assertTrue(mLatch.await(2L, SECONDS));
     }
 
     @Test
     public void testFindMyGroup() throws Exception {
-        System.out.println("\t--------------Find My Group Test------------");
-        String uuid = this.uuid + "find";
-        createGroup(ctx, uuid, "Public");
-        findGroup(ctx, uuid);
-        assertTrue(methodCheck(res, ResponseStatus.CONTENT));
-        assertTrue(hashmapCheck(res, "gidlist"));
+        getTestMethodName();
+        String uuid = this.mUserUuid + "find";
+        createGroup(mMockDevice, uuid, "Public");
+        findGroup(mMockDevice, uuid);
+        assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
+        assertTrue(hashmapCheck(mResponse, "gidlist"));
+        assertTrue(mLatch.await(2L, SECONDS));
+    }
+
+    @Test(expected = ServerException.BadRequestException.class)
+    public void testCreateGroupNotSupportedType() throws Exception {
+        getTestMethodName();
+        String uuid = this.mUserUuid + "delete";
+        createGroup(mMockDevice, uuid, "NotSupported");
+        deleteGroup(mMockDevice, uuid);
     }
 
     @Test
     public void testDeleteGroup() throws Exception {
-        System.out.println("\t--------------Delete Group Test------------");
-        String uuid = this.uuid + "delete";
-        createGroup(ctx, uuid, "Public");
-        deleteGroup(ctx, uuid);
-        System.out.println("\t--------res : " + res.getStatus());
-        assertTrue(methodCheck(res, ResponseStatus.DELETED));
+        getTestMethodName();
+        String uuid = this.mUserUuid + "delete";
+        createGroup(mMockDevice, uuid, "Public");
+        deleteGroup(mMockDevice, uuid);
+        assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
+        assertTrue(mLatch.await(2L, SECONDS));
+    }
+
+    @Test(expected = ServerException.PreconditionFailedException.class)
+    public void testDeleteGroupWithoutGid() throws Exception {
+        getTestMethodName();
+        String uuid = this.mUserUuid + "delete";
+        createGroup(mMockDevice, uuid, "Public");
+        deleteGroupWithoutGid(mMockDevice, uuid);
+    }
+
+    @Test
+    public void testAddDeviceAndUserToGroup() throws Exception {
+        getTestMethodName();
+        String uuid = this.mUserUuid + "AddDeviceAndUser";
+        createGroup(mMockDevice, uuid, "Public");
+        ArrayList<String> midList = new ArrayList<>();
+        midList.add("member0001");
+        midList.add("member0002");
+        ArrayList<String> diList = new ArrayList<>();
+        diList.add("device0001");
+        diList.add("device0002");
+        addDeviceAndUser(mMockDevice, midList, diList);
+    }
+
+    @Test
+    public void testDeleteDeviceAndUserToGroup() throws Exception {
+        getTestMethodName();
+        String uuid = this.mUserUuid + "AddDeviceAndUser";
+        createGroup(mMockDevice, uuid, "Public");
+        ArrayList<String> midList = new ArrayList<>();
+        midList.add("member0001");
+        midList.add("member0002");
+        ArrayList<String> diList = new ArrayList<>();
+        diList.add("device0001");
+        diList.add("device0002");
+        addDeviceAndUser(mMockDevice, midList, diList);
+        deleteDeviceAndUser(mMockDevice, midList, diList);
+    }
+
+    @Test(expected = ServerException.BadRequestException.class)
+    public void testDeleteGroupInvalidGmid() throws Exception {
+        getTestMethodName();
+        String uuid = this.mUserUuid + "delete";
+        createGroup(mMockDevice, uuid, "Public");
+        deleteGroup(mMockDevice, uuid + "invlidGmid");
     }
 
     @Test
     public void testJoinToinvitedGroup() throws Exception {
-        System.out.println(
-                "\t--------------Join to invited group Test------------");
-        String uuid = this.uuid + "join";
-        createGroup(ctx, uuid, "Public");
-        joinGroup(ctx, "u0002");
-        assertTrue(methodCheck(res, ResponseStatus.CHANGED));
+        getTestMethodName();
+        String uuid = this.mUserUuid + "join";
+        createGroup(mMockDevice, uuid, "Public");
+        joinGroup(mMockDevice, "u0002");
+        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
+        assertTrue(mLatch.await(2L, SECONDS));
     }
 
     @Test
     public void testObserveGroup() throws Exception {
-        System.out.println("\t--------------Observe Group Test------------");
-        String uuid = this.uuid + "obs";
-        createGroup(ctx, uuid, "Public");
-        observeGroup(ctx, uuid);
-        assertTrue(methodCheck(res, ResponseStatus.CONTENT));
-        assertTrue(hashmapCheck(res, "gid"));
-        assertTrue(hashmapCheck(res, "gmid"));
-        assertTrue(hashmapCheck(res, "midlist"));
-        assertTrue(hashmapCheck(res, "dilist"));
+        getTestMethodName();
+        String uuid = this.mUserUuid + "obs";
+        createGroup(mMockDevice, uuid, "Public");
+        observeGroup(mMockDevice, uuid);
+        assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
+        assertTrue(hashmapCheck(mResponse, "gid"));
+        assertTrue(hashmapCheck(mResponse, "gmid"));
+        assertTrue(hashmapCheck(mResponse, "midlist"));
+        assertTrue(hashmapCheck(mResponse, "dilist"));
+        assertTrue(mLatch.await(2L, SECONDS));
+    }
+
+    @Test
+    public void testObserveDeregisterGroup() throws Exception {
+        getTestMethodName();
+        String uuid = this.mUserUuid + "obs";
+        createGroup(mMockDevice, uuid, "Public");
+        observeGroup(mMockDevice, uuid);
+        observeDeregisterGroup(mMockDevice, uuid);
+        assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
     }
 
     @Test
     public void testShareDeviceIntoGroup() throws Exception {
-        System.out.println(
-                "\t--------------Share device into group Test------------");
-        String uuid = this.uuid + "share";
-        createGroup(ctx, uuid, "Public");
-        shareDevice(ctx, "d0002");
-        assertTrue(methodCheck(res, ResponseStatus.CHANGED));
+        getTestMethodName();
+        String uuid = this.mUserUuid + "share";
+        createGroup(mMockDevice, uuid, "Public");
+        shareDevice(mMockDevice, "d0002");
+        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
+        assertTrue(mLatch.await(2L, SECONDS));
     }
 
     @Test
     public void testShareDeviceNotification() throws Exception {
-        System.out.println(
-                "\t--------------Share device Notification into group Test------------");
-        String uuid = this.uuid + "share";
+        getTestMethodName();
+        String uuid = this.mUserUuid + "share";
         String uuidGuest = "u0002guest";
-        ChannelHandlerContext ctxGuest = mock(ChannelHandlerContext.class);
-        ChannelId channelIdGuest = mock(ChannelId.class);
         CoapDevice mockDeviceGuest = mock(CoapDevice.class);
-        // inject mocked coapDevice into the api
-        Channel channelGuest = mock(Channel.class);
-        Attribute<Device> attributeGuest = mock(Attribute.class);
-        Mockito.doReturn(channelGuest).when(ctxGuest).channel();
-        Mockito.doReturn(attributeGuest).when(channelGuest).attr(Mockito.any());
-        Mockito.doReturn(mockDeviceGuest).when(attributeGuest).get();
-        Mockito.doReturn(channelIdGuest).when(channelGuest).id();
-        Mockito.doReturn(
-                "0000000141f3edcfc2c3000000000001d0000000000000000000000000000000000001")
-                .when(channelIdGuest).asLongText();
+        CountDownLatch memberLatch = new CountDownLatch(1);
         Mockito.doAnswer(new Answer<Object>() {
             @Override
             public CoapResponse answer(InvocationOnMock invocation)
@@ -219,130 +246,193 @@ public class GroupResourceTest {
                         + resp.getPayloadString());
                 System.out.println(
                         "\t---------new member method : " + resp.getStatus());
-                resObserver = resp;
+                memberLatch.countDown();
+                mResponseObserver = resp;
                 return resp;
             }
         }).when(mockDeviceGuest).sendResponse(Mockito.anyObject());
-        createGroup(ctx, uuid, "Public");
-        joinGroup(ctxGuest, uuidGuest);
-        observeGroup(ctxGuest, uuidGuest);
-        shareDevice(ctx, "d0002");
+        createGroup(mMockDevice, uuid, "Public");
+        joinGroup(mockDeviceGuest, uuidGuest);
+        observeGroup(mockDeviceGuest, uuidGuest);
+        shareDevice(mMockDevice, "d0002");
         // assertion for the group master
-        assertTrue(methodCheck(res, ResponseStatus.CHANGED));
+        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
         // assertion for the observer
-        assertTrue(methodCheck(resObserver, ResponseStatus.CONTENT));
-
+        assertTrue(methodCheck(mResponseObserver, ResponseStatus.CONTENT));
+        assertTrue(mLatch.await(2L, SECONDS));
+        assertTrue(memberLatch.await(2L, SECONDS));
     }
 
-    public void shareDevice(ChannelHandlerContext ctx, String deviceId)
+    public void addDeviceAndUser(CoapDevice device, ArrayList<String> midList,
+            ArrayList<String> diList) throws Exception {
+        HashMap<String, Object> payloadData = new HashMap<>();
+        payloadData.put("midlist", midList);
+        payloadData.put("dilist", diList);
+        IRequest request = MessageBuilder.createRequest(RequestMethod.POST,
+                GROUP_URI + "/" + mGroupId, null,
+                ContentFormat.APPLICATION_CBOR,
+                mCbor.encodingPayloadToCbor(payloadData));
+        System.out.println("-----add Device and User : " + payloadData);
+        mGroupResource.onDefaultRequestReceived(device, request);
+    }
+
+    public void deleteDeviceAndUser(CoapDevice device,
+            ArrayList<String> midList, ArrayList<String> diList)
+            throws Exception {
+        String midListString = "";
+        String didListString = "";
+        for (String mid : midList) {
+            midListString += "midlist=";
+            midListString += mid;
+            midListString += ";";
+        }
+        for (String di : diList) {
+            didListString += "dilist=";
+            didListString += di;
+            didListString += ";";
+        }
+        System.out.println("-----delete Device and User, Query: "
+                + midListString + didListString);
+        IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
+                GROUP_URI + "/" + mGroupId, midListString + didListString);
+        mGroupResource.onDefaultRequestReceived(device, request);
+    }
+
+    private void shareDevice(CoapDevice device, String deviceId)
             throws Exception {
         System.out.println("-----Share Device");
         IRequest request = null;
         request = createShareDeviceRequest(deviceId);
-        receiver.channelRead(ctx, request);
+        mGroupResource.onDefaultRequestReceived(device, request);
     }
 
-    public IRequest createShareDeviceRequest(String deviceId) {
-        IRequest request = null;
-        HashMap<String, Object> payloadData = new HashMap<String, Object>();
-        ArrayList<String> diList = new ArrayList<>();
-        diList.add(deviceId);
-        payloadData.put("dilist", diList);
-        Cbor<HashMap<String, Object>> cbor = new Cbor<HashMap<String, Object>>();
-        request = MessageBuilder.createRequest(RequestMethod.POST,
-                GROUP_URI + "/" + gid, null, ContentFormat.APPLICATION_CBOR,
-                cbor.encodingPayloadToCbor(payloadData));
-        return request;
-    }
-
-    public void createGroup(ChannelHandlerContext ctx, String gmid,
-            String gtype) throws Exception {
+    private void createGroup(CoapDevice device, String gmid, String gtype)
+            throws Exception {
         System.out.println("-----Create Group");
         IRequest request = null;
         request = createGroupRequest(gmid, gtype);
-        receiver.channelRead(ctx, request);
+        mGroupResource.onDefaultRequestReceived(device, request);
     }
 
-    public void findGroup(ChannelHandlerContext ctx, String uuid)
-            throws Exception {
+    private void findGroup(CoapDevice device, String uuid) throws Exception {
         System.out.println("-----Find Group");
         IRequest request = null;
         request = findGroupRequest(uuid);
-        receiver.channelRead(ctx, request);
+        mGroupResource.onDefaultRequestReceived(device, request);
     }
 
-    public void observeGroup(ChannelHandlerContext ctx, String uuid)
+    private void observeDeregisterGroup(CoapDevice device, String uuid)
             throws Exception {
+        System.out.println("-----Observe Deregister Group");
+        IRequest request = null;
+        request = observeDeregisterGroupRequest(uuid);
+        mGroupResource.onDefaultRequestReceived(device, request);
+    }
+
+    private void observeGroup(CoapDevice device, String uuid) throws Exception {
         System.out.println("-----Observe Group");
         IRequest request = null;
         request = observeGroupRequest(uuid);
-        receiver.channelRead(ctx, request);
+        mGroupResource.onDefaultRequestReceived(device, request);
     }
 
-    public void joinGroup(ChannelHandlerContext ctx, String uuid)
-            throws Exception {
+    private void joinGroup(CoapDevice device, String uuid) throws Exception {
         System.out.println("-----Join Group");
         IRequest request = null;
         request = joinGroupRequest(uuid);
-        receiver.channelRead(ctx, request);
+        mGroupResource.onDefaultRequestReceived(device, request);
     }
 
-    public void deleteGroup(ChannelHandlerContext ctx, String uuid)
-            throws Exception {
+    private void deleteGroup(CoapDevice device, String uuid) throws Exception {
         System.out.println("-----Delete Group");
         IRequest request = null;
         request = deleteGroupRequest(uuid);
-        receiver.channelRead(ctx, request);
+        mGroupResource.onDefaultRequestReceived(device, request);
     }
 
-    public IRequest deleteGroupRequest(String uuid) {
+    private void deleteGroupWithoutGid(CoapDevice device, String uuid)
+            throws Exception {
+        System.out.println("-----Delete Group");
+        IRequest request = null;
+        request = deleteGroupWithoutGidRequest(uuid);
+        mGroupResource.onDefaultRequestReceived(device, request);
+    }
+
+    private IRequest deleteGroupWithoutGidRequest(String uuid) {
         IRequest request = null;
         request = MessageBuilder.createRequest(RequestMethod.DELETE, GROUP_URI,
-                "gid=" + gid + ";" + "gmid=" + uuid);
+                "gmid=" + uuid);
         return request;
     }
 
-    public IRequest findGroupRequest(String uuid) {
+    private IRequest deleteGroupRequest(String uuid) {
+        IRequest request = null;
+        request = MessageBuilder.createRequest(RequestMethod.DELETE, GROUP_URI,
+                "gid=" + mGroupId + ";" + "gmid=" + uuid);
+        return request;
+    }
+
+    private IRequest findGroupRequest(String uuid) {
         IRequest request = null;
         request = MessageBuilder.createRequest(RequestMethod.GET, GROUP_URI,
                 "mid=" + uuid);
         return request;
     }
 
-    public IRequest observeGroupRequest(String uuid) {
+    private IRequest createShareDeviceRequest(String deviceId) {
+        IRequest request = null;
+        HashMap<String, Object> payloadData = new HashMap<String, Object>();
+        ArrayList<String> diList = new ArrayList<>();
+        diList.add(deviceId);
+        payloadData.put("dilist", diList);
+        request = MessageBuilder.createRequest(RequestMethod.POST,
+                GROUP_URI + "/" + mGroupId, null,
+                ContentFormat.APPLICATION_CBOR,
+                mCbor.encodingPayloadToCbor(payloadData));
+        return request;
+    }
+
+    private IRequest observeDeregisterGroupRequest(String uuid) {
         IRequest request = null;
         request = MessageBuilder.createRequest(RequestMethod.GET,
-                GROUP_URI + "/" + gid, "mid=" + uuid);
+                GROUP_URI + "/" + mGroupId, "mid=" + uuid);
+        ((CoapRequest) request).setObserve(Observe.UNSUBSCRIBE);
+        return request;
+    }
+
+    private IRequest observeGroupRequest(String uuid) {
+        IRequest request = null;
+        request = MessageBuilder.createRequest(RequestMethod.GET,
+                GROUP_URI + "/" + mGroupId, "mid=" + uuid);
         ((CoapRequest) request).setObserve(Observe.SUBSCRIBE);
         return request;
     }
 
-    public IRequest joinGroupRequest(String uuid) {
+    private IRequest joinGroupRequest(String uuid) {
         IRequest request = null;
         HashMap<String, Object> payloadData = new HashMap<String, Object>();
         ArrayList<String> midList = new ArrayList<>();
         midList.add(uuid);
         payloadData.put("midlist", midList);
-        Cbor<HashMap<String, Object>> cbor = new Cbor<HashMap<String, Object>>();
         request = MessageBuilder.createRequest(RequestMethod.POST,
-                GROUP_URI + "/" + gid, null, ContentFormat.APPLICATION_CBOR,
-                cbor.encodingPayloadToCbor(payloadData));
+                GROUP_URI + "/" + mGroupId, null,
+                ContentFormat.APPLICATION_CBOR,
+                mCbor.encodingPayloadToCbor(payloadData));
         return request;
     }
 
-    public IRequest createGroupRequest(String uuid, String gtype) {
+    private IRequest createGroupRequest(String uuid, String gtype) {
         IRequest request = null;
         HashMap<String, Object> payloadData = new HashMap<String, Object>();
         payloadData.put("gmid", uuid);
         payloadData.put("gtype", gtype);
-        Cbor<HashMap<String, Object>> cbor = new Cbor<HashMap<String, Object>>();
         request = MessageBuilder.createRequest(RequestMethod.POST, GROUP_URI,
                 null, ContentFormat.APPLICATION_CBOR,
-                cbor.encodingPayloadToCbor(payloadData));
+                mCbor.encodingPayloadToCbor(payloadData));
         return request;
     }
 
-    public boolean hashmapCheck(IResponse response, String propertyName) {
+    private boolean hashmapCheck(IResponse response, String propertyName) {
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(response.getPayload(), HashMap.class);
         if (payloadData.containsKey(propertyName))
@@ -351,7 +441,7 @@ public class GroupResourceTest {
             return false;
     }
 
-    public boolean methodCheck(IResponse response,
+    private boolean methodCheck(IResponse response,
             ResponseStatus responseStatus) {
         if (responseStatus == response.getStatus())
             return true;
@@ -359,25 +449,19 @@ public class GroupResourceTest {
             return false;
     }
 
-    private TokenTable makeTokenTable() {
-        TokenTable tokenInfo = new TokenTable();
-        tokenInfo.setUuid(uuid);
-        tokenInfo.setDid(di);
-        tokenInfo.setAccesstoken(accessToken);
-        tokenInfo.setRefreshtoken(refreshToken);
-        tokenInfo.setProvider(authProvider);
-        tokenInfo.setExpiredtime(-1);
-        Date currentTime = new Date();
-        DateFormat transFormat = new SimpleDateFormat("yyyyMMddkkmm");
-        tokenInfo.setIssuedtime(transFormat.format(currentTime));
-        return tokenInfo;
+    private void getTestMethodName() {
+        StackTraceElement[] stacks = new Throwable().getStackTrace();
+        StackTraceElement currentStack = stacks[1];
+        System.out.println("\t---Test Name : " + currentStack.getMethodName());
     }
 
-    private UserTable makeUserTable() {
-        UserTable userInfo = new UserTable();
-        userInfo.setUuid(uuid);
-        userInfo.setProvider(authProvider);
-        userInfo.setUserid("userId");
-        return userInfo;
+    public void resetDB() throws Exception {
+        MongoDB mongoDB = new MongoDB(Constants.DB_NAME);
+        mongoDB.deleteTable(Constants.GROUP_TABLE);
+        mongoDB.createTable(Constants.GROUP_TABLE);
+        mongoDB.deleteTable(Constants.USER_TABLE);
+        mongoDB.createTable(Constants.USER_TABLE);
+        mongoDB.deleteTable(Constants.TOKEN_TABLE);
+        mongoDB.createTable(Constants.TOKEN_TABLE);
     }
 }

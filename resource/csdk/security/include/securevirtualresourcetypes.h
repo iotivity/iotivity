@@ -41,13 +41,13 @@
 #ifndef OC_SECURITY_RESOURCE_TYPES_H
 #define OC_SECURITY_RESOURCE_TYPES_H
 
+#include "iotivity_config.h"
+
 #include <stdint.h> // for uint8_t typedef
 #include <stdbool.h>
 #if defined(__WITH_X509__) || defined(__WITH_TLS__)
 #include "byte_array.h"
 #endif /* __WITH_X509__  or __WITH_TLS__*/
-
-#include "platform_features.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -273,7 +273,9 @@ typedef enum
 {
     OIC_ENCODING_UNKNOW = 0,
     OIC_ENCODING_RAW = 1,
-    OIC_ENCODING_BASE64 = 2
+    OIC_ENCODING_BASE64 = 2,
+    OIC_ENCODING_PEM = 3,
+    OIC_ENCODING_DER = 4
 }OicEncodingType_t;
 
 typedef struct OicSecKey OicSecKey_t;
@@ -400,7 +402,8 @@ struct OicSecCred
     OicSecCredType_t    credType;       // 3:R:S:Y:oic.sec.credtype
 #if defined(__WITH_X509__) || defined(__WITH_TLS__)
     OicSecCert_t        publicData;     // own cerificate chain
-    OicSecCert_t        optionalData;   // CA's cerificate chain
+    char            *credUsage;            // 4:R:S:N:String
+    OicSecKey_t        optionalData;   // CA's cerificate chain
 #endif /* __WITH_X509__  or __WITH_TLS__*/
     OicSecKey_t         privateData;    // 6:R:S:N:oic.sec.key
     char                *period;        // 7:R:S:N:String
@@ -492,7 +495,7 @@ struct OicSecCrl
 {
     uint16_t CrlId;
     ByteArray ThisUpdate;
-    ByteArray CrlData;
+    OicSecKey_t CrlData;
 };
 #endif /* __WITH_X509__ or __WITH_TLS__ */
 

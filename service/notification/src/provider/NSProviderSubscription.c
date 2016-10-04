@@ -24,7 +24,8 @@ NSResult NSInitSubscriptionList()
 {
     NS_LOG(DEBUG, "NSInitSubscriptionList - IN");
 
-    consumerSubList = NSStorageCreate();
+    consumerSubList = NSProviderStorageCreate();
+    NS_VERIFY_NOT_NULL(consumerSubList, NS_FAIL);
     consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER;
 
     NS_LOG(DEBUG, "NSInitSubscriptionList - OUT");
@@ -81,7 +82,8 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
 
     OCRepPayloadSetUri(payload, NS_ROOT_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
-    OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_POLICY, NSGetPolicy());
+    OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_VERSION, VERSION);
+    OCRepPayloadSetPropBool(payload, NS_ATTRIBUTE_POLICY, NSGetPolicy());
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_MESSAGE, NS_COLLECTION_MESSAGE_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_SYNC, NS_COLLECTION_SYNC_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_TOPIC, NS_COLLECTION_TOPIC_URI);
@@ -134,7 +136,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 
         bool iSRemoteServer = false;
 
-#ifdef RD_CLIEND
+#if(defined WITH_CLOUD && defined RD_CLIENT)
         iSRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
         if(iSRemoteServer)
         {
@@ -158,22 +160,22 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         element->data = (void*) subData;
         element->next = NULL;
 
-        if (NSStorageWrite(consumerSubList, element) != NS_OK)
+        if (NSProviderStorageWrite(consumerSubList, element) != NS_OK)
         {
             NS_LOG(DEBUG, "fail to write cache");
         }
 
         bool currPolicy = NSGetPolicy();
+        NSAskAcceptanceToUser(entityHandlerRequest);
 
         if (currPolicy == NS_POLICY_PROVIDER)
         {
             NS_LOG(DEBUG, "NSGetSubscriptionAccepter == NS_ACCEPTER_PROVIDER");
-            NSAskAcceptanceToUser(entityHandlerRequest);
         }
         else if (currPolicy == NS_POLICY_CONSUMER)
         {
             NS_LOG(DEBUG, "NSGetSubscriptionAccepter == NS_ACCEPTER_CONSUMER");
-            NSSendSubscriptionResponse(entityHandlerRequest, true);
+            NSSendConsumerSubResponse(NSCopyOCEntityHandlerRequest(entityHandlerRequest));
         }
     }
     else if (resourceType == NS_RESOURCE_SYNC)
@@ -190,7 +192,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         subData->remote_syncObId = subData->syncObId = 0;
         bool isRemoteServer = false;
 
-#ifdef RD_CLIENT
+#if(defined WITH_CLOUD && defined RD_CLIENT)
         isRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
         if(isRemoteServer)
         {
@@ -214,7 +216,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         element->data = (void*) subData;
         element->next = NULL;
 
-        if (NSStorageWrite(consumerSubList, element) != NS_OK)
+        if (NSProviderStorageWrite(consumerSubList, element) != NS_OK)
         {
             NS_LOG(ERROR, "Fail to write cache");
         }
@@ -229,7 +231,11 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
 {
     NS_LOG(DEBUG, "NSHandleUnsubscription - IN");
 
-    NSProviderDeleteSubDataFromObId(consumerSubList, entityHandlerRequest->obsInfo.obsId);
+    consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER_OBSERVE_ID;
+
+    while(NSProviderStorageDelete(consumerSubList, (char *)
+            &(entityHandlerRequest->obsInfo.obsId)) != NS_FAIL);
+    consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER;
 
     NSFreeOCEntityHandlerRequest(entityHandlerRequest);
 
@@ -268,7 +274,7 @@ NSResult NSSendResponse(const char * id, bool accepted)
         : OCRepPayloadSetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, NS_DENY);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
 
-    NSCacheElement * element = NSStorageRead(consumerSubList, id);
+    NSCacheElement * element = NSProviderStorageRead(consumerSubList, id);
 
     if(element == NULL)
     {
@@ -277,8 +283,8 @@ NSResult NSSendResponse(const char * id, bool accepted)
     }
     NSCacheSubData * subData = (NSCacheSubData*) element->data;
 
-    if (OCNotifyListOfObservers(rHandle, (OCObservationId*)&subData->messageObId, 1, payload, OC_LOW_QOS)
-            != OC_STACK_OK)
+    if (OCNotifyListOfObservers(rHandle, (OCObservationId*)&subData->messageObId, 1,
+            payload, OC_LOW_QOS) != OC_STACK_OK)
     {
         NS_LOG(ERROR, "fail to send Acceptance");
         OCRepPayloadDestroy(payload);
@@ -291,7 +297,7 @@ NSResult NSSendResponse(const char * id, bool accepted)
     return NS_OK;
 }
 
-NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest, bool accepted)
+NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest * entityHandlerRequest)
 {
     NS_LOG(DEBUG, "NSSendSubscriptionResponse - IN");
 
@@ -310,33 +316,9 @@ NSResult NSSendSubscriptionResponse(OCEntityHandlerRequest *entityHandlerRequest
         return NS_ERROR;
     }
 
-    if (accepted)
-    {
-        NS_LOG(DEBUG, "accepted is true");
-        NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
-        NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
-
-        OICStrcpy(subData->id, UUID_STRING_SIZE, id);
-
-        subData->isWhite = true;
-        subData->remote_messageObId = 0;
-        subData->remote_syncObId = 0;
-        subData->syncObId = 0;
-        subData->messageObId = entityHandlerRequest->obsInfo.obsId;
-
-        element->data = (void*) subData;
-        element->next = NULL;
-
-        if (NSStorageWrite(consumerSubList, element) != NS_OK)
-        {
-            NS_LOG(ERROR, "fail to write consumer white list");
-        }
-    }
-
-    NSSendResponse(id, accepted);
-
+    NSCacheUpdateSubScriptionState(consumerSubList, id, true);
+    NSSendResponse(id, true);
     NSFreeOCEntityHandlerRequest(entityHandlerRequest);
-
     NS_LOG(DEBUG, "NSSendSubscriptionResponse - OUT");
     return NS_OK;
 }
@@ -379,21 +361,21 @@ void * NSSubScriptionSchedule(void *ptr)
                 case TASK_SEND_ALLOW:
                 {
                     NS_LOG(DEBUG, "CASE TASK_SEND_ALLOW : ");
-                    NSConsumer * consumer = (NSConsumer *) node->taskData;
+                    char * consumerId = (char *) node->taskData;
 
-                    NSCacheUpdateSubScriptionState(consumerSubList, consumer->consumerId, true);
-                    NSSendResponse(consumer->consumerId, true);
-                    NSFreeConsumer(consumer);
+                    NSCacheUpdateSubScriptionState(consumerSubList, consumerId, true);
+                    NSSendResponse(consumerId, true);
+                    OICFree(consumerId);
                     break;
                 }
                 case TASK_SEND_DENY:
                 {
                     NS_LOG(DEBUG, "CASE TASK_SEND_DENY : ");
-                    NSConsumer * consumer = (NSConsumer *) node->taskData;
+                    char * consumerId = (char *) node->taskData;
 
-                    NSCacheUpdateSubScriptionState(consumerSubList, consumer->consumerId, false);
-                    NSSendResponse(consumer->consumerId, false);
-                    NSFreeConsumer(consumer);
+                    NSCacheUpdateSubScriptionState(consumerSubList, consumerId, false);
+                    NSSendResponse(consumerId, false);
+                    OICFree(consumerId);
 
                     break;
                 }

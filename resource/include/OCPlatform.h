@@ -266,6 +266,13 @@ namespace OC
         * first parameter can take fully qualified URI and core will take that as is for further
         * operations
         * @note OCStackResult is defined in ocstack.h.
+        * @note entity handler callback :
+        * When you set specific return value like OC_EH_CHANGED, OC_EH_CONTENT,
+        * OC_EH_SLOW and etc in entity handler callback,
+        * ocstack will be not send response automatically to client
+        * except for error return value like OC_EH_ERROR
+        * If you want to send response to client with specific result,
+        * OCDoResponse API should be called with the result value.
         */
         OCStackResult registerResource(OCResourceHandle& resourceHandle,
                         std::string& resourceURI,
@@ -310,6 +317,13 @@ namespace OC
         *                      any undefined resources or default actions.
         *                      if NULL is passed it removes the device default entity handler.
         * @return Returns ::OC_STACK_OK  if no errors and ::OC_STACK_ERROR in case of stack process error
+        * @note entity handler callback :
+        * When you set specific return value like OC_EH_CHANGED, OC_EH_CONTENT,
+        * OC_EH_SLOW and etc in entity handler callback,
+        * ocstack will be not send response automatically to client
+        * except for error return value like OC_EH_ERROR
+        * If you want to send response to client with specific result,
+        * sendResponse API should be called with the result value.
         */
         OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler);
 

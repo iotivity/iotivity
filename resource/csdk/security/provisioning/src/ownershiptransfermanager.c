@@ -30,6 +30,7 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
+#include "iotivity_config.h"
 #ifdef HAVE_TIME_H
 #include <time.h>
 #endif
@@ -243,16 +244,22 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
         //Revert psk_info callback and new deivce uuid in case of random PIN OxM
         if(OIC_RANDOM_DEVICE_PIN == otmCtx->selectedDeviceInfo->doxm->oxmSel)
         {
-#ifdef __WITH_TLS__
-            if(CA_STATUS_OK != CAregisterTlsCredentialsHandler(GetDtlsPskCredentials))
+            if(CA_ADAPTER_IP == ((CAEndpoint_t*)(&otmCtx->selectedDeviceInfo->endpoint))->adapter)
             {
-                OIC_LOG(WARNING, TAG, "Failed to revert  is TLS credential handler.");
+                if(CA_STATUS_OK != CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials))
+                {
+                    OIC_LOG(WARNING, TAG, "Failed to register DTLS handshake callback.");
+                }
+            }
+#ifdef __WITH_TLS__
+            else
+            {
+                if(CA_STATUS_OK != CAregisterTlsCredentialsHandler(GetDtlsPskCredentials))
+                {
+                    OIC_LOG(WARNING, TAG, "Failed to register TLS handshake callback.");
+                }
             }
 #endif
-            if(CA_STATUS_OK != CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials))
-            {
-                OIC_LOG(WARNING, TAG, "Failed to revert  is DTLS credential handler.");
-            }
             OicUuid_t emptyUuid = { .id={0}};
             SetUuidForRandomPinOxm(&emptyUuid);
         }
@@ -412,7 +419,7 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
     }
 
     uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = {0};
-    OicSecKey_t ownerKey = {ownerPSK, OWNER_PSK_LENGTH_128};
+    OicSecKey_t ownerKey = {ownerPSK, OWNER_PSK_LENGTH_128, OIC_ENCODING_UNKNOW};
 
     //Generating OwnerPSK
     CAResult_t pskRet = CAGenerateOwnerPSK(&endpoint,
@@ -1353,17 +1360,23 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
     }
 
     //Register DTLS event handler to catch the dtls event while handshake
-    if(CA_STATUS_OK != CARegisterDTLSHandshakeCallback(DTLSHandshakeCB))
+    if(CA_ADAPTER_IP == ((CAEndpoint_t*)(&otmCtx->selectedDeviceInfo->endpoint))->adapter)
     {
-        OIC_LOG(WARNING, TAG, "StartOwnershipTransfer : Failed to register DTLS handshake callback.");
+        if(CA_STATUS_OK != CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials))
+        {
+            OIC_LOG(WARNING, TAG, "Failed to register DTLS handshake callback.");
+        }
     }
 #ifdef __WITH_TLS__
-    //Register TLS event handler to catch the tls event while handshake
-    if(CA_STATUS_OK != CAregisterTlsHandshakeCallback(DTLSHandshakeCB))
+    else
     {
-        OIC_LOG(WARNING, TAG, "StartOwnershipTransfer : Failed to register TLS handshake callback.");
+        if(CA_STATUS_OK != CAregisterTlsCredentialsHandler(GetDtlsPskCredentials))
+        {
+            OIC_LOG(WARNING, TAG, "Failed to register TLS handshake callback.");
+        }
     }
 #endif
+
     OIC_LOG(INFO, TAG, "OUT StartOwnershipTransfer");
 
     return res;

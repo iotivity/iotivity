@@ -34,14 +34,13 @@ import java.util.concurrent.CountDownLatch;
 
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
+import org.iotivity.cloud.accountserver.db.MongoDB;
 import org.iotivity.cloud.accountserver.db.TokenTable;
 import org.iotivity.cloud.accountserver.db.UserTable;
 import org.iotivity.cloud.accountserver.resources.acl.group.GroupResource;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
-import org.iotivity.cloud.base.ServerSystem;
-import org.iotivity.cloud.base.ServerSystem.PersistentPacketReceiver;
 import org.iotivity.cloud.base.device.CoapDevice;
-import org.iotivity.cloud.base.device.Device;
+import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
@@ -50,77 +49,36 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelId;
-import io.netty.util.Attribute;
-
 public class AccountResourceTest {
-    private static final String            REGISTER_URI              = "/.well-known/ocf/account";
-    private static final String            GROUP_URI                 = "/.well-known/ocf/acl/group";
-    private String                         di                        = "B371C481-38E6-4D47-8320-7688D8A5B58C";
-    private String                         authProvider              = "Github";
-    private String                         authCode                  = "7af49183966f84e553dc";
-    String                                 userId                    = "testuser";
-    private CoapDevice                     mockDevice                = mock(
+    private static final String            REGISTER_URI              = Constants.ACCOUNT_FULL_URI;
+    private static final String            GROUP_URI                 = Constants.GROUP_FULL_URI;
+    private static final String            DEVICE_ID                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
+    private String                         mAuthProvider             = "Github";
+    private String                         mAuthCode                 = "b4878d614bbc5f8db463";
+    private CoapDevice                     mMockDevice               = mock(
             CoapDevice.class);
     private Cbor<HashMap<String, Object>>  mCbor                     = new Cbor<>();
-    IResponse                              res                       = null;
-    ServerSystem                           serverSystem              = new ServerSystem();
-    final CountDownLatch                   latch                     = new CountDownLatch(
+    private IResponse                      mResponse                 = null;
+    private CountDownLatch                 mLatch                    = new CountDownLatch(
             1);
     private TypeCastingManager<UserTable>  mUserTableCastingManager  = new TypeCastingManager<>();
     private TypeCastingManager<TokenTable> mTokenTableCastingManager = new TypeCastingManager<>();
-
-    @Mock
-    ChannelHandlerContext                  ctx;
-
-    @InjectMocks
-    PersistentPacketReceiver               receiver                  = serverSystem.new PersistentPacketReceiver();
+    private AccountResource                mAccountResource          = new AccountResource();
+    private GroupResource                  mGroupResource            = new GroupResource();
+    private String                         mGroupId                  = null;
 
     @Before
     public void setUp() throws Exception {
-        // create log file
-        Log.createfile();
-        // add resource
-        serverSystem.addResource(new AccountResource());
-        serverSystem.addResource(new GroupResource());
         MockitoAnnotations.initMocks(this);
-        ChannelId channelId = mock(ChannelId.class);
-        // inject mocked coapDevice into the api
-        Channel channel = mock(Channel.class);
-        Attribute<Device> attribute = mock(Attribute.class);
-        Mockito.doReturn(channel).when(ctx).channel();
-        Mockito.doReturn(attribute).when(channel).attr(Mockito.any());
-        Mockito.doReturn(mockDevice).when(attribute).get();
-        Mockito.doReturn(channelId).when(channel).id();
-        Mockito.doReturn(
-                "0000000141f3edcfc2c3000000000001d0000000000000000000000000000000000000")
-                .when(channelId).asLongText();
-        Mockito.doAnswer(new Answer<Object>() {
-            @Override
-            public CoapResponse answer(InvocationOnMock invocation)
-                    throws Throwable {
-                Object[] args = invocation.getArguments();
-                CoapResponse resp = (CoapResponse) args[0];
-                System.out.println(
-                        "\t----Exception responsestatus : " + resp.getStatus());
-                res = resp;
-                latch.countDown();
-                return null;
-            }
-        }).when(channel).writeAndFlush(Mockito.any());
+        resetAccountDatabase();
         // callback mock
         Mockito.doAnswer(new Answer<Object>() {
             @Override
@@ -128,107 +86,185 @@ public class AccountResourceTest {
                     throws Throwable {
                 Object[] args = invocation.getArguments();
                 CoapResponse resp = (CoapResponse) args[0];
+                if (resp.getPayload() != null) {
+                    HashMap<String, Object> payloadData = mCbor
+                            .parsePayloadFromCbor(resp.getPayload(),
+                                    HashMap.class);
+                    if (payloadData.containsKey("gid")) {
+                        mGroupId = (String) payloadData.get("gid");
+                    }
+                }
                 System.out
                         .println("\t----payload : " + resp.getPayloadString());
                 System.out
                         .println("\t----responsestatus : " + resp.getStatus());
-                res = resp;
-                return resp;
+                mResponse = resp;
+                mLatch.countDown();
+                return null;
             }
-        }).when(mockDevice).sendResponse(Mockito.anyObject());
-        receiver.channelActive(ctx);
+        }).when(mMockDevice).sendResponse(Mockito.anyObject());
     }
 
     @After
-    public void end() throws Exception {
-        receiver.channelInactive(ctx);
+    public void resetAccountDatabase() throws Exception {
+        MongoDB mongoDB = new MongoDB(Constants.DB_NAME);
+        mongoDB.createTable(Constants.USER_TABLE);
+        mongoDB.createTable(Constants.TOKEN_TABLE);
+        mongoDB.createTable(Constants.GROUP_TABLE);
     }
 
     @Test
     public void testSignUpOnDefaultRequestReceived() throws Exception {
-        System.out.println("\t--------------Sign Up Test------------");
-        signUp(di, authProvider, authCode);
-        assertTrue(methodCheck(res, ResponseStatus.CHANGED));
-        assertTrue(hashmapCheck(res, "accesstoken"));
-        assertTrue(hashmapCheck(res, "refreshtoken"));
-        assertTrue(hashmapCheck(res, "tokentype"));
-        assertTrue(hashmapCheck(res, "uid"));
+        getTestMethodName();
+        signUp(DEVICE_ID, mAuthProvider, mAuthCode);
+        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
+        assertTrue(hashmapCheck(mResponse, "accesstoken"));
+        assertTrue(hashmapCheck(mResponse, "refreshtoken"));
+        assertTrue(hashmapCheck(mResponse, "tokentype"));
+        assertTrue(hashmapCheck(mResponse, "uid"));
     }
 
-    @Test
+    @Test(expected = ServerException.InternalServerErrorException.class)
     public void testSignUpwithWrongAuthCodeOnDefaultRequestReceived()
             throws Exception {
-        System.out.println(
-                "\t--------------Sign Up with Wrong AuthCode Test------------");
+        getTestMethodName();
         String wrongAuthCode = "5fc4fcf376f8d7087a3a";
-        signUp(di, authProvider, wrongAuthCode);
-        assertTrue(methodCheck(res, ResponseStatus.INTERNAL_SERVER_ERROR));
+        signUp(DEVICE_ID, mAuthProvider, wrongAuthCode);
     }
 
-    @Test
+    @Test(expected = ServerException.InternalServerErrorException.class)
+    public void testSignUpwithWrongAuthProviderOnDefaultRequestReceived()
+            throws Exception {
+        getTestMethodName();
+        signUp(DEVICE_ID, "wrongAuthProvider", mAuthCode);
+    }
+
+    @Test(expected = ServerException.PreconditionFailedException.class)
     public void testSignUpNullAuthProviderOnDefaultRequestReceived()
             throws Exception {
-        System.out.println(
-                "\t--------------Sign Up Null AuthProvider Test------------");
-        signUp(di, null, authCode);
-        assertTrue(methodCheck(res, ResponseStatus.PRECONDITION_FAILED));
+        getTestMethodName();
+        signUp(DEVICE_ID, null, mAuthCode);
     }
 
-    @Test
+    @Test(expected = ServerException.PreconditionFailedException.class)
     public void testSignUpNullAuthCodeOnDefaultRequestReceived()
             throws Exception {
-        System.out.println(
-                "\t--------------Sign Up with Null AuthCode Test------------");
-        signUp(di, authProvider, null);
-        assertTrue(methodCheck(res, ResponseStatus.PRECONDITION_FAILED));
+        getTestMethodName();
+        signUp(DEVICE_ID, mAuthProvider, null);
     }
 
-    @Test
+    @Test(expected = ServerException.PreconditionFailedException.class)
     public void testSignUpNullDiOnDefaultRequestReceived() throws Exception {
-        System.out.println(
-                "\t--------------Sign Up with Null DeviceId Test------------");
-        signUp(null, authProvider, authCode);
-        assertTrue(methodCheck(res, ResponseStatus.PRECONDITION_FAILED));
+        getTestMethodName();
+        signUp(null, mAuthProvider, mAuthCode);
     }
 
-    @Test
+    @Test(expected = ServerException.BadRequestException.class)
     public void testSignUpInvalidMethodOnDefaultRequestReceived()
             throws Exception {
-        System.out.println(
-                "\t--------------Sign Up with Invalid Method (GET) Test------------");
-        signUpInvalidMethod(di, authProvider, authCode);
-        assertTrue(methodCheck(res, ResponseStatus.BAD_REQUEST));
+        getTestMethodName();
+        signUpInvalidMethod(DEVICE_ID, mAuthProvider, mAuthCode);
     }
 
     @Test
-    public void testDeleteDeviceOnDefaultRequestReceived() throws Exception {
-        System.out.println(
-                "\t--------------Delete Device from all Groups Test------------");
+    public void testGetUserInfoSearchOnDefaultRequestReceived()
+            throws Exception {
+        getTestMethodName();
+        String uuid = "u0001Search";
+        // register TokenInfo and UserInfo to the DB
+        registerTokenUserInfo(uuid, DEVICE_ID);
+        // request uuid using search criteria
+        getUserInfoSearch("search=userid:userId");
+        Cbor<HashMap<String, ArrayList<HashMap<String, Object>>>> cbor = new Cbor<>();
+        HashMap<String, ArrayList<HashMap<String, Object>>> payloadData = cbor
+                .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
+        HashMap<String, Object> getUserInfo = ((ArrayList<HashMap<String, Object>>) payloadData
+                .get("ulist")).get(0);
+
+        assertTrue(getUserInfo.get("uid").equals(uuid));
+    }
+
+    @Test
+    public void testDeleteDeviceDefaultGroupOnDefaultRequestReceived()
+            throws Exception {
+        getTestMethodName();
         // register the token table and user table to the DB
         String uuid = "u0001";
+        registerTokenUserInfo(uuid, DEVICE_ID);
+        createGroup(uuid, "Private");
+        // register three devices to the group
+        shareDevice(DEVICE_ID, uuid);
+        shareDevice(DEVICE_ID + "2", uuid);
+        shareDevice(DEVICE_ID + "3", uuid);
+        // delete one device
+        deleteDevice(DEVICE_ID, uuid);
+        assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
+    }
+
+    @Test
+    public void testDeleteDeviceInEveryGroupOnDefaultRequestReceived()
+            throws Exception {
+        getTestMethodName();
+        // register the token table and user table for three resource servers to
+        // the DB
+        String uuid = "u0001DeleteEveryGroup";
+        registerTokenUserInfo(uuid, DEVICE_ID);
+        registerTokenInfo(uuid, DEVICE_ID + "2");
+        registerTokenInfo(uuid, DEVICE_ID + "3");
+        // register token table for the resource client
+        registerTokenInfo(uuid, DEVICE_ID + "4");
+        createGroup(uuid, "Private");
+        // register three devices to the private group
+        shareDevice(DEVICE_ID, uuid);
+        shareDevice(DEVICE_ID + "2", uuid);
+        shareDevice(DEVICE_ID + "3", uuid);
+        // register resource servers to the public group
+        createGroup(uuid, "Public");
+        shareDevice(DEVICE_ID, mGroupId);
+        shareDevice(DEVICE_ID + "2", mGroupId);
+        shareDevice(DEVICE_ID + "3", mGroupId);
+        // register resource servers to the public group
+        createGroup(uuid, "Public");
+        shareDevice(DEVICE_ID, mGroupId);
+        shareDevice(DEVICE_ID + "2", mGroupId);
+        shareDevice(DEVICE_ID + "3", mGroupId);
+        // device delete for three resource servers
+        deleteDevice(DEVICE_ID, uuid);
+        assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
+        deleteDevice(DEVICE_ID + "2", uuid);
+        assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
+        deleteDevice(DEVICE_ID + "3", uuid);
+        assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
+        // device delete for one resource client
+        deleteDevice(DEVICE_ID + "4", uuid);
+        assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
+    }
+
+    @Test
+    public void testDeleteClientOnDefaultRequestReceived() throws Exception {
+        getTestMethodName();
+        // register the token table and user table to the DB
+        String uuid = "u0001Client";
         HashMap<String, Object> tokenInfo = mTokenTableCastingManager
-                .convertObjectToMap(makeTokenTable(uuid));
+                .convertObjectToMap(makeTokenTable(uuid, DEVICE_ID));
         HashMap<String, Object> userInfo = mUserTableCastingManager
                 .convertObjectToMap(makeUserTable(uuid));
         AccountDBManager.getInstance()
                 .insertAndReplaceRecord(Constants.TOKEN_TABLE, tokenInfo);
         AccountDBManager.getInstance().insertRecord(Constants.USER_TABLE,
                 userInfo);
-        createDefaultGroup(uuid);
-        shareDevice(ctx, di);
-        deleteDevice(di);
-        assertTrue(methodCheck(res, ResponseStatus.DELETED));
+        deleteDevice(DEVICE_ID, uuid);
+        assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
     }
 
-    // @Test
+    @Test
     public void testGetUserInfoUsingUuidOnDefaultRequestReceived()
             throws Exception {
-        System.out.println(
-                "\t--------------Sign Up with Invalid Method (GET) Test------------");
+        getTestMethodName();
         // register the token table and user table to the DB
         String uuid = "u0001Get";
         HashMap<String, Object> tokenInfo = mTokenTableCastingManager
-                .convertObjectToMap(makeTokenTable(uuid));
+                .convertObjectToMap(makeTokenTable(uuid, DEVICE_ID));
         HashMap<String, Object> userInfo = mUserTableCastingManager
                 .convertObjectToMap(makeUserTable(uuid));
         AccountDBManager.getInstance()
@@ -236,120 +272,147 @@ public class AccountResourceTest {
         AccountDBManager.getInstance().insertRecord(Constants.USER_TABLE,
                 userInfo);
         getUserInfoUsingUuid(uuid);
-        assertTrue(methodCheck(res, ResponseStatus.CONTENT));
+        assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
     }
 
-    public void getUserInfoUsingUuid(String uuid) throws Exception {
+    private void registerTokenUserInfo(String uuid, String deviceId) {
+        registerTokenInfo(uuid, deviceId);
+        registerUserInfo(uuid);
+    }
+
+    private void registerTokenInfo(String uuid, String deviceId) {
+        HashMap<String, Object> tokenInfo = mTokenTableCastingManager
+                .convertObjectToMap(makeTokenTable(uuid, deviceId));
+        AccountDBManager.getInstance()
+                .insertAndReplaceRecord(Constants.TOKEN_TABLE, tokenInfo);
+    }
+
+    private void registerUserInfo(String uuid) {
+        HashMap<String, Object> userInfo = mUserTableCastingManager
+                .convertObjectToMap(makeUserTable(uuid));
+        AccountDBManager.getInstance().insertRecord(Constants.USER_TABLE,
+                userInfo);
+    }
+
+    private void getTestMethodName() {
+        StackTraceElement[] stacks = new Throwable().getStackTrace();
+        StackTraceElement currentStack = stacks[1];
+        System.out.println("\t---Test Name : " + currentStack.getMethodName());
+    }
+
+    private void getUserInfoUsingUuid(String uuid) throws Exception {
         System.out.println("-----Get User Info : " + uuid);
         IRequest request = null;
         request = getUserInfoUsingUuidRequest(uuid);
-        receiver.channelRead(ctx, request);
+        mAccountResource.onDefaultRequestReceived(mMockDevice, request);
     }
 
-    public IRequest getUserInfoUsingUuidRequest(String uuid) {
+    private IRequest getUserInfoUsingUuidRequest(String uuid) {
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
                 REGISTER_URI, "uid=" + uuid);
         return request;
     }
 
-    public void createDefaultGroup(String uuid) throws Exception {
-        System.out.println("-----Create Default Group");
+    private void createGroup(String uuid, String gtype) throws Exception {
+        System.out.println("-----Create Group");
         IRequest request = null;
-        request = createDefaultGroupRequest(uuid);
-        receiver.channelRead(ctx, request);
+        request = createDefaultGroupRequest(uuid, gtype);
+        mGroupResource.onDefaultRequestReceived(mMockDevice, request);
     }
 
-    public void deleteDevice(String di) throws Exception {
+    private void deleteDevice(String di, String uid) throws Exception {
         System.out.println("-----Delete Device");
         IRequest request = null;
-        request = deleteDeviceRequest(di);
-        receiver.channelRead(ctx, request);
+        request = deleteDeviceRequest(di, uid);
+        mAccountResource.onDefaultRequestReceived(mMockDevice, request);
     }
 
-    public void signUp(String di, String authProvider, String authCode)
+    private void signUp(String di, String authProvider, String authCode)
             throws Exception {
         System.out.println("-----Sign Up");
         IRequest request = null;
         request = signUpRequest(di, authProvider, authCode);
-        receiver.channelRead(ctx, request);
+        mAccountResource.onDefaultRequestReceived(mMockDevice, request);
     }
 
-    public void signUpInvalidMethod(String di, String authProvider,
+    private void signUpInvalidMethod(String di, String authProvider,
             String authCode) throws Exception {
         System.out.println("-----Sign Up Invalid RequestMethod");
         IRequest request = null;
         request = signUpInvalidMethodRequest(di, authProvider, authCode);
-        receiver.channelRead(ctx, request);
+        mAccountResource.onDefaultRequestReceived(mMockDevice, request);
     }
 
-    public void shareDevice(ChannelHandlerContext ctx, String deviceId)
-            throws Exception {
+    private void shareDevice(String deviceId, String gid) throws Exception {
         System.out.println("-----Share Device");
         IRequest request = null;
-        request = createShareDeviceRequest(deviceId);
-        receiver.channelRead(ctx, request);
+        request = createShareDeviceRequest(deviceId, gid);
+        mGroupResource.onDefaultRequestReceived(mMockDevice, request);
     }
 
-    public IRequest deleteDeviceRequest(String deviceId) {
+    private IRequest deleteDeviceRequest(String deviceId, String uid) {
         IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
-                REGISTER_URI, "di=" + deviceId + ";uid=u0001");
+                REGISTER_URI, "di=" + deviceId + ";uid=" + uid);
         return request;
     }
 
-    public IRequest createDefaultGroupRequest(String uuid) {
+    private IRequest createDefaultGroupRequest(String uuid, String gtype) {
         IRequest request = null;
         HashMap<String, String> payloadData = new HashMap<String, String>();
         payloadData.put("gmid", uuid);
-        payloadData.put("gtype", "Private");
-        Cbor<HashMap<String, String>> cbor = new Cbor<HashMap<String, String>>();
+        payloadData.put("gtype", gtype);
         request = MessageBuilder.createRequest(RequestMethod.POST, GROUP_URI,
                 null, ContentFormat.APPLICATION_CBOR,
-                cbor.encodingPayloadToCbor(payloadData));
+                mCbor.encodingPayloadToCbor(payloadData));
         return request;
     }
 
-    public IRequest createShareDeviceRequest(String deviceId) {
+    private IRequest createShareDeviceRequest(String deviceId, String gid) {
         IRequest request = null;
         HashMap<String, Object> payloadData = new HashMap<String, Object>();
         ArrayList<String> diList = new ArrayList<>();
         diList.add(deviceId);
         payloadData.put("dilist", diList);
-        Cbor<HashMap<String, Object>> cbor = new Cbor<HashMap<String, Object>>();
         request = MessageBuilder.createRequest(RequestMethod.POST,
-                GROUP_URI + "/" + "u0001", null, ContentFormat.APPLICATION_CBOR,
-                cbor.encodingPayloadToCbor(payloadData));
+                GROUP_URI + "/" + gid, null, ContentFormat.APPLICATION_CBOR,
+                mCbor.encodingPayloadToCbor(payloadData));
         return request;
     }
 
-    public IRequest signUpRequest(String deviceId, String authProvider,
+    private IRequest signUpRequest(String deviceId, String authProvider,
             String authCode) {
         IRequest request = null;
         HashMap<String, String> payloadData = new HashMap<String, String>();
         payloadData.put("authcode", authCode);
         payloadData.put("authprovider", authProvider);
         payloadData.put("di", deviceId);
-        Cbor<HashMap<String, String>> cbor = new Cbor<HashMap<String, String>>();
         request = MessageBuilder.createRequest(RequestMethod.POST, REGISTER_URI,
                 null, ContentFormat.APPLICATION_CBOR,
-                cbor.encodingPayloadToCbor(payloadData));
+                mCbor.encodingPayloadToCbor(payloadData));
         return request;
     }
 
-    public IRequest signUpInvalidMethodRequest(String deviceId,
+    private void getUserInfoSearch(String query) {
+        System.out.println("-----get User Info Search using query: " + query);
+        IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
+                REGISTER_URI, query);
+        mAccountResource.onDefaultRequestReceived(mMockDevice, request);
+    }
+
+    private IRequest signUpInvalidMethodRequest(String deviceId,
             String authProvider, String authCode) {
         IRequest request = null;
         HashMap<String, String> payloadData = new HashMap<String, String>();
         payloadData.put("authcode", authCode);
         payloadData.put("authprovider", authProvider);
         payloadData.put("di", deviceId);
-        Cbor<HashMap<String, String>> cbor = new Cbor<HashMap<String, String>>();
         request = MessageBuilder.createRequest(RequestMethod.GET, REGISTER_URI,
                 null, ContentFormat.APPLICATION_CBOR,
-                cbor.encodingPayloadToCbor(payloadData));
+                mCbor.encodingPayloadToCbor(payloadData));
         return request;
     }
 
-    public boolean hashmapCheck(IResponse response, String propertyName) {
+    private boolean hashmapCheck(IResponse response, String propertyName) {
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(response.getPayload(), HashMap.class);
         if (payloadData.containsKey(propertyName))
@@ -358,7 +421,7 @@ public class AccountResourceTest {
             return false;
     }
 
-    public boolean methodCheck(IResponse response,
+    private boolean methodCheck(IResponse response,
             ResponseStatus responseStatus) {
         if (responseStatus == response.getStatus())
             return true;
@@ -366,13 +429,13 @@ public class AccountResourceTest {
             return false;
     }
 
-    private TokenTable makeTokenTable(String uuid) {
+    private TokenTable makeTokenTable(String uuid, String deviceId) {
         TokenTable tokenInfo = new TokenTable();
         tokenInfo.setUuid(uuid);
-        tokenInfo.setDid(di);
+        tokenInfo.setDid(deviceId);
         tokenInfo.setAccesstoken("at0001");
         tokenInfo.setRefreshtoken("rt0001");
-        tokenInfo.setProvider(authProvider);
+        tokenInfo.setProvider(mAuthProvider);
         tokenInfo.setExpiredtime(-1);
         Date currentTime = new Date();
         DateFormat transFormat = new SimpleDateFormat("yyyyMMddkkmm");
@@ -383,7 +446,7 @@ public class AccountResourceTest {
     private UserTable makeUserTable(String uuid) {
         UserTable userInfo = new UserTable();
         userInfo.setUuid(uuid);
-        userInfo.setProvider(authProvider);
+        userInfo.setProvider(mAuthProvider);
         userInfo.setUserid("userId");
         return userInfo;
     }

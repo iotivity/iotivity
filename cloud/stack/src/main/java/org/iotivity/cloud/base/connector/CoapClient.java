@@ -23,6 +23,7 @@ package org.iotivity.cloud.base.connector;
 
 import java.util.HashMap;
 
+import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.device.IResponseEventHandler;
 import org.iotivity.cloud.base.exception.ClientException;
@@ -82,16 +83,17 @@ public class CoapClient implements IRequestChannel, IResponseEventHandler {
 
             switch (request.getObserve()) {
                 case UNSUBSCRIBE:
-                    newToken = mSubscription.remove(Bytes.bytesToLong(token));
+                    newToken = removeObserve(Bytes.bytesToLong(token));
                     break;
 
                 case SUBSCRIBE:
-                    mSubscription.put(Bytes.bytesToLong(token), newToken);
+                    addObserve(Bytes.bytesToLong(token), newToken);
                 default:
                     // We create temp token
                     // TODO: temporal handling
-                    if (request.getUriPath().equals("/oic/ad")) {
-                        mSubscription.put(Bytes.bytesToLong(token), newToken);
+                    if (request.getUriPath()
+                            .equals(OICConstants.RESOURCE_PRESENCE_FULL_URI)) {
+                        addObserve(Bytes.bytesToLong(token), newToken);
                         observe = Observe.SUBSCRIBE;
                     }
                     synchronized (mToken) {
@@ -129,11 +131,34 @@ public class CoapClient implements IRequestChannel, IResponseEventHandler {
         }
 
         // Subscription response should stored
-        if (reqInfo.observe != Observe.SUBSCRIBE) {
+        if (reqInfo.observe != Observe.SUBSCRIBE
+                || coapResponse.getSequenceNumber() == -1) {
             mTokenExchanger.remove(Bytes.bytesToLong(coapResponse.getToken()));
+            if (mSubscription
+                    .containsKey(Bytes.bytesToLong(reqInfo.originToken))) {
+                mSubscription.remove(Bytes.bytesToLong(reqInfo.originToken));
+            }
         }
 
         coapResponse.setToken(reqInfo.originToken);
-        reqInfo.responseHandler.onResponseReceived(response);
+        reqInfo.responseHandler.onResponseReceived(coapResponse);
+    }
+
+    private void addObserve(long token, long newtoken) {
+
+        mSubscription.put(token, newtoken);
+    }
+
+    private Long removeObserve(long token) {
+
+        Long getToken = mSubscription.remove(token);
+        return getToken;
+    }
+
+    public Long isObserveRequest(Long token) {
+        Long getToken = null;
+        getToken = mSubscription.get(token);
+
+        return getToken;
     }
 }

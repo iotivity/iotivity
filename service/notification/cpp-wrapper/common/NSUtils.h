@@ -27,6 +27,7 @@
 #ifndef _NS_UTILS_H_
 #define _NS_UTILS_H_
 
+/** NS_UTILS_UUID_STRING_SIZE - UUID string size*/
 #define NS_UTILS_UUID_STRING_SIZE 37
 
 namespace OIC
@@ -41,15 +42,26 @@ namespace OIC
             SUCCESS = 300,
             FAIL = 400,
         };
-        
+
         /**
-             * NSResponse code of notification service
+             * NSProviderState of notification service
              */
-        enum class NSResponse
+        enum class NSProviderState
         {
             ALLOW = 1,
             DENY = 2,
             TOPIC = 3,
+            STOPPED = 12
+        };
+
+        /**
+             * NSProviderSubscribedState of notification service
+             */
+        enum class NSProviderSubscribedState
+        {
+            DENY = 0,
+            DISCOVERED = 1,
+            SUBSCRIBED = 2
         };
     }
 }

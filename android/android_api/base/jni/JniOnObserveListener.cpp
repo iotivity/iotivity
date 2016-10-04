@@ -23,12 +23,29 @@
 #include "JniOcResource.h"
 #include "JniOcRepresentation.h"
 #include "JniUtils.h"
+#ifdef WITH_CLOUD
+#include "JniOcAccountManager.h"
+#endif
+
+#define CA_OBSERVE_MAX_SEQUENCE_NUMBER 0xFFFFFF
 
 JniOnObserveListener::JniOnObserveListener(JNIEnv *env, jobject jListener, JniOcResource* owner)
     : m_ownerResource(owner)
 {
     m_jwListener = env->NewWeakGlobalRef(jListener);
+#ifdef WITH_CLOUD
+    m_ownerAccountManager = nullptr;
+#endif
 }
+
+#ifdef WITH_CLOUD
+JniOnObserveListener::JniOnObserveListener(JNIEnv *env, jobject jListener, JniOcAccountManager* owner)
+    : m_ownerAccountManager(owner)
+{
+    m_jwListener = env->NewWeakGlobalRef(jListener);
+    m_ownerResource = nullptr;
+}
+#endif
 
 JniOnObserveListener::~JniOnObserveListener()
 {
@@ -61,6 +78,16 @@ void JniOnObserveListener::onObserveCallback(const HeaderOptions headerOptions,
         return;
     }
 
+    if (nullptr == m_jwListener)
+    {
+        LOGE("listener is not available");
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm->DetachCurrentThread();
+        }
+        return;
+    }
+
     jobject jListener = env->NewLocalRef(m_jwListener);
     if (!jListener)
     {
@@ -71,9 +98,11 @@ void JniOnObserveListener::onObserveCallback(const HeaderOptions headerOptions,
         }
         return;
     }
+
     jclass clsL = env->GetObjectClass(jListener);
     if (!clsL)
     {
+        env->DeleteLocalRef(jListener);
         checkExAndRemoveListener(env);
         if (JNI_EDETACHED == envRet)
         {
@@ -88,22 +117,14 @@ void JniOnObserveListener::onObserveCallback(const HeaderOptions headerOptions,
         jobject ex = GetOcException(eCode, "stack error in onObserveCallback");
         if (!ex)
         {
-            checkExAndRemoveListener(env);
-            if (JNI_EDETACHED == envRet)
-            {
-                g_jvm->DetachCurrentThread();
-            }
-            return;
+            goto JNI_EXIT;
         }
+
         jmethodID midL = env->GetMethodID(clsL, "onObserveFailed", "(Ljava/lang/Throwable;)V");
         if (!midL)
         {
-            checkExAndRemoveListener(env);
-            if (JNI_EDETACHED == envRet)
-            {
-                g_jvm->DetachCurrentThread();
-            }
-            return;
+            env->DeleteLocalRef(ex);
+            goto JNI_EXIT;
         }
         env->CallVoidMethod(jListener, midL, ex);
     }
@@ -112,12 +133,7 @@ void JniOnObserveListener::onObserveCallback(const HeaderOptions headerOptions,
         jobject jHeaderOptionList = JniUtils::convertHeaderOptionsVectorToJavaList(env, headerOptions);
         if (!jHeaderOptionList)
         {
-            checkExAndRemoveListener(env);
-            if (JNI_EDETACHED == envRet)
-            {
-                g_jvm->DetachCurrentThread();
-            }
-            return;
+            goto JNI_EXIT;
         }
 
         OCRepresentation * rep = new OCRepresentation(ocRepresentation);
@@ -127,24 +143,17 @@ void JniOnObserveListener::onObserveCallback(const HeaderOptions headerOptions,
         if (!jRepresentation)
         {
             delete rep;
-            checkExAndRemoveListener(env);
-            if (JNI_EDETACHED == envRet)
-            {
-                g_jvm->DetachCurrentThread();
-            }
-            return;
+            env->DeleteLocalRef(jHeaderOptionList);
+            goto JNI_EXIT;
         }
 
         jmethodID midL = env->GetMethodID(clsL, "onObserveCompleted",
             "(Ljava/util/List;Lorg/iotivity/base/OcRepresentation;I)V");
         if (!midL)
         {
-            checkExAndRemoveListener(env);
-            if (JNI_EDETACHED == envRet)
-            {
-                g_jvm->DetachCurrentThread();
-            }
-            return;
+            env->DeleteLocalRef(jRepresentation);
+            env->DeleteLocalRef(jHeaderOptionList);
+            goto JNI_EXIT;
         }
 
         env->CallVoidMethod(jListener, midL, jHeaderOptionList, jRepresentation,
@@ -153,18 +162,44 @@ void JniOnObserveListener::onObserveCallback(const HeaderOptions headerOptions,
         {
             LOGE("Java exception is thrown");
             delete rep;
+            env->DeleteLocalRef(jRepresentation);
+            env->DeleteLocalRef(jHeaderOptionList);
             jthrowable ex = env->ExceptionOccurred();
             env->ExceptionClear();
+#ifndef WITH_CLOUD
             m_ownerResource->removeOnObserveListener(env, m_jwListener);
+#else
+            if (nullptr != m_ownerResource)
+            {
+                m_ownerResource->removeOnObserveListener(env, m_jwListener);
+            }
+            if (nullptr != m_ownerAccountManager)
+            {
+                m_ownerAccountManager->removeOnObserveListener(env, m_jwListener);
+            }
+#endif
             env->Throw((jthrowable)ex);
         }
 
-        if (OC_OBSERVE_DEREGISTER == sequenceNumber)
+        if (CA_OBSERVE_MAX_SEQUENCE_NUMBER + 1 == sequenceNumber)
         {
-            checkExAndRemoveListener(env);
+            LOGI("Observe De-registration action is successful");
+            goto JNI_EXIT;
         }
     }
 
+    env->DeleteLocalRef(clsL);
+    env->DeleteLocalRef(jListener);
+    if (JNI_EDETACHED == envRet)
+    {
+        g_jvm->DetachCurrentThread();
+    }
+    return;
+
+JNI_EXIT:
+    env->DeleteLocalRef(clsL);
+    env->DeleteLocalRef(jListener);
+    checkExAndRemoveListener(env);
     if (JNI_EDETACHED == envRet)
     {
         g_jvm->DetachCurrentThread();
@@ -173,16 +208,39 @@ void JniOnObserveListener::onObserveCallback(const HeaderOptions headerOptions,
 
 void JniOnObserveListener::checkExAndRemoveListener(JNIEnv* env)
 {
+    LOGI("checkExAndRemoveListener");
     if (env->ExceptionCheck())
     {
         jthrowable ex = env->ExceptionOccurred();
         env->ExceptionClear();
+#ifndef WITH_CLOUD
         m_ownerResource->removeOnObserveListener(env, m_jwListener);
+#else
+        if (nullptr != m_ownerResource)
+        {
+            m_ownerResource->removeOnObserveListener(env, m_jwListener);
+        }
+        if (nullptr != m_ownerAccountManager)
+        {
+            m_ownerAccountManager->removeOnObserveListener(env, m_jwListener);
+        }
+#endif
         env->Throw((jthrowable)ex);
     }
     else
     {
+#ifndef WITH_CLOUD
         m_ownerResource->removeOnObserveListener(env, m_jwListener);
+#else
+        if (nullptr != m_ownerResource)
+        {
+            m_ownerResource->removeOnObserveListener(env, m_jwListener);
+        }
+        if (nullptr != m_ownerAccountManager)
+        {
+            m_ownerAccountManager->removeOnObserveListener(env, m_jwListener);
+        }
+#endif
     }
 }
 

@@ -22,6 +22,7 @@ package org.iotivity.service.ns.consumer;
 
 import android.util.Log;
 import org.iotivity.service.ns.common.*;
+import java.util.Vector;
 
 /**
   * @class   ConsumerService
@@ -55,56 +56,38 @@ public class ConsumerService
         return instance;
     }
 
-    public ConsumerService()
-    {
-        Log.i (LOG_TAG, "ConsumerService()");
-    }
-
-    public void Start(
-        OnProviderDiscoveredListner onProviderDiscoveredListner,
-        OnSubscriptionAcceptedListener onSubscriptionAcceptedListener
+    public void start(
+        OnProviderDiscoveredListener onProviderDiscoveredListener
     ) throws NSException
     {
-        nativeStart(onProviderDiscoveredListner, onSubscriptionAcceptedListener);
+        nativeStart(onProviderDiscoveredListener);
     }
 
-    public void Stop() throws NSException
+    public void stop() throws NSException
     {
         nativeStop();
     }
 
-    public void EnableRemoteService(String serverAddress) throws NSException
+    public void enableRemoteService(String serverAddress) throws NSException
     {
         nativeEnableRemoteService(serverAddress);
     }
 
-    public void RescanProvider() throws NSException
+    public void rescanProvider() throws NSException
     {
         nativeRescanProvider();
     }
 
-    public Provider GetProvider(String providerId) throws NSException
-    {
-        return nativeGetProvider(providerId);
-    }
-
-    public interface OnProviderDiscoveredListner
+    public interface OnProviderDiscoveredListener
     {
         public void onProviderDiscovered(Provider provider);
     }
 
-    public interface OnSubscriptionAcceptedListener
-    {
-        public void onSubscriptionAccepted(Provider provider);
-    }
-
     private native void nativeStart (
-        OnProviderDiscoveredListner onProviderDiscoveredListner,
-        OnSubscriptionAcceptedListener onSubscriptionAcceptedListener
+        OnProviderDiscoveredListener onProviderDiscoveredListener
     ) throws NSException;
 
     private native void nativeStop() throws NSException;
     private native void nativeEnableRemoteService(String serverAddress) throws NSException;
     private native void nativeRescanProvider() throws NSException;
-    private native Provider nativeGetProvider(String providerId) throws NSException;
 }

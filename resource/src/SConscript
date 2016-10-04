@@ -37,13 +37,20 @@ with_mq = oclib_env.get('WITH_MQ')
 ######################################################################
 # Build flags
 ######################################################################
+with_upstream_libcoap = oclib_env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
+	oclib_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+else:
+	# For bring up purposes only, the forked version will live here.
+	oclib_env.AppendUnique(CPPPATH = ['../csdk/connectivity/lib/libcoap-4.1.1/include'])
+
 oclib_env.AppendUnique(CPPPATH = [
 		'../include/',
 		'../csdk/stack/include',
 		'../c_common/ocrandom/include',
 		'../csdk/logger/include',
 		'../oc_logger/include',
-		'../csdk/connectivity/lib/libcoap-4.1.1',
 		'../csdk/connectivity/api'
 		])
 
@@ -67,6 +74,7 @@ if target_os == 'android':
 
 if target_os == 'tizen':
 	oclib_env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
+	oclib_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 
 if target_os in ['linux'] and oclib_env.get('SIMULATOR', False):
     oclib_env.Append( RPATH = oclib_env.Literal('\\$$ORIGIN'))

@@ -97,7 +97,7 @@ NSResult NSFreeMessage(NSMessage * obj)
     NSFreeMalloc(&(obj->sourceName));
     NSFreeMalloc(&(obj->topic));
     NSFreeMediaContents(obj->mediaContents);
-
+    OCRepPayloadDestroy(obj->extraInfo);
     OICFree(obj);
 
     return NS_OK;
@@ -114,6 +114,7 @@ NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
     }
 
     newMsg = NSInitializeMessage();
+    NS_VERIFY_NOT_NULL(newMsg, NULL);
 
     newMsg->messageId = copyMsg->messageId;
     OICStrcpy(newMsg->providerId, UUID_STRING_SIZE, copyMsg->providerId);
@@ -148,6 +149,11 @@ NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
     if (copyMsg->topic)
     {
         newMsg->topic = OICStrdup(copyMsg->topic);
+    }
+
+    if (copyMsg->extraInfo)
+    {
+        newMsg->extraInfo = OCRepPayloadClone(copyMsg->extraInfo);
     }
 
     return newMsg;
@@ -268,7 +274,8 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
     retSync->state = NS_SYNC_READ;
 
     OCRepPayload * repPayload = (OCRepPayload *)payload;
-    if (!OCRepPayloadGetPropInt(repPayload, NS_ATTRIBUTE_MESSAGE_ID, (int64_t *)&retSync->messageId))
+    if (!OCRepPayloadGetPropInt(repPayload, NS_ATTRIBUTE_MESSAGE_ID,
+            (int64_t *)&retSync->messageId))
     {
         OICFree(retSync);
         return NULL;
@@ -419,6 +426,7 @@ NSMessage * NSInitializeMessage()
     }
 
     msg->messageId = OICGetCurrentTime(TIME_IN_MS);
+    msg->messageId = msg->messageId & 0x000000007FFFFFFF;
     (msg->providerId)[0] = '\0';
     msg->type = 0;
     msg->dateTime = NULL;
@@ -428,6 +436,7 @@ NSMessage * NSInitializeMessage()
     msg->sourceName = NULL;
     msg->mediaContents = NULL;
     msg->topic = NULL;
+    msg->extraInfo = NULL;
 
     return msg;
 }

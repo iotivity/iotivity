@@ -40,18 +40,11 @@ import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.util.Cbor;
 
 public class GroupResource extends Resource {
-
-    private Cbor<HashMap<String, Object>> mCbor      = new Cbor<>();
-
-    private static GroupManager           mGrManager = new GroupManager();
+    private Cbor<HashMap<String, Object>> mCbor = new Cbor<>();
 
     public GroupResource() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACL_URI, Constants.GROUP_URI));
-    }
-
-    public static GroupManager getInstance() {
-        return mGrManager;
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACL_URI,
+                Constants.GROUP_URI));
     }
 
     @Override
@@ -87,6 +80,10 @@ public class GroupResource extends Resource {
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
+        if (payloadData == null) {
+            throw new BadRequestException("payload is null");
+        }
+
         if (getUriPathSegments().containsAll(request.getUriPathSegments())) {
             String uuid = payloadData.get(Constants.REQ_GROUP_MASTER_ID)
                     .toString();
@@ -98,8 +95,8 @@ public class GroupResource extends Resource {
             }
             return MessageBuilder.createResponse(request,
                     ResponseStatus.CHANGED, ContentFormat.APPLICATION_CBOR,
-                    mCbor.encodingPayloadToCbor(
-                            mGrManager.createGroup(uuid, gtype)));
+                    mCbor.encodingPayloadToCbor(GroupManager.getInstance()
+                            .createGroup(uuid, gtype)));
         } else {
             String gid = request.getUriPathSegments()
                     .get(getUriPathSegments().size());
@@ -111,7 +108,8 @@ public class GroupResource extends Resource {
                     throw new PreconditionFailedException(
                             "midList property is invalid");
                 }
-                mGrManager.addGroupMember(gid, new HashSet<String>(midList));
+                GroupManager.getInstance().addGroupMember(gid,
+                        new HashSet<String>(midList));
             }
 
             if (payloadData.containsKey(Constants.REQ_DEVICE_ID_LIST)) {
@@ -121,7 +119,8 @@ public class GroupResource extends Resource {
                     throw new PreconditionFailedException(
                             "diList property is invalid");
                 }
-                mGrManager.addGroupDevice(gid, new HashSet<String>(diList));
+                GroupManager.getInstance().addGroupDevice(gid,
+                        new HashSet<String>(diList));
             }
         }
         return MessageBuilder.createResponse(request, ResponseStatus.CHANGED);
@@ -140,21 +139,22 @@ public class GroupResource extends Resource {
         mid = request.getUriQueryMap().get(Constants.REQ_MEMBER).get(0);
 
         if (getUriPathSegments().containsAll(request.getUriPathSegments())) {
-            responsePayload = mGrManager.getGroupList(mid);
+            responsePayload = GroupManager.getInstance().getGroupList(mid);
         } else {
             String gid = request.getUriPathSegments()
                     .get(getUriPathSegments().size());
             switch (request.getObserve()) {
                 case NOTHING:
-                    responsePayload = mGrManager.getGroupInfo(gid, mid);
+                    responsePayload = GroupManager.getInstance()
+                            .getGroupInfo(gid, mid);
                     break;
                 case SUBSCRIBE:
-                    responsePayload = mGrManager.addGroupSubscriber(gid, mid,
-                            srcDevice, request);
+                    responsePayload = GroupManager.getInstance()
+                            .addGroupSubscriber(gid, mid, srcDevice, request);
                     break;
                 case UNSUBSCRIBE:
-                    responsePayload = mGrManager.removeGroupSubscriber(gid,
-                            mid);
+                    responsePayload = GroupManager.getInstance()
+                            .removeGroupSubscriber(gid, mid);
                     break;
                 default:
                     throw new BadRequestException(request.getObserve()
@@ -170,20 +170,18 @@ public class GroupResource extends Resource {
             throws ServerException {
         if (getUriPathSegments().containsAll(request.getUriPathSegments())) {
 
+            checkQueryException(Arrays.asList(Constants.REQ_GROUP_MASTER_ID,
+                    Constants.REQ_GROUP_ID), request.getUriQueryMap());
+
             String gmid = request.getUriQueryMap()
                     .get(Constants.REQ_GROUP_MASTER_ID).get(0);
             String gid = request.getUriQueryMap().get(Constants.REQ_GROUP_ID)
                     .get(0);
 
-            if (gmid == null || gid == null) {
-                throw new PreconditionFailedException(
-                        "gmid and gid property is invalid");
-            }
-            mGrManager.deleteGroup(gmid, gid);
+            GroupManager.getInstance().deleteGroup(gmid, gid);
         } else {
             String gid = request.getUriPathSegments()
                     .get(getUriPathSegments().size());
-
             if (request.getUriQueryMap()
                     .containsKey(Constants.REQ_MEMBER_LIST)) {
                 List<String> midList = request.getUriQueryMap()
@@ -192,7 +190,8 @@ public class GroupResource extends Resource {
                     throw new PreconditionFailedException(
                             "midList property is invalid");
                 }
-                mGrManager.removeGroupMember(gid, new HashSet<String>(midList));
+                GroupManager.getInstance().removeGroupMember(gid,
+                        new HashSet<String>(midList));
             }
             if (request.getUriQueryMap()
                     .containsKey(Constants.REQ_DEVICE_ID_LIST)) {
@@ -202,7 +201,8 @@ public class GroupResource extends Resource {
                     throw new PreconditionFailedException(
                             "diList property is invalid");
                 }
-                mGrManager.removeGroupDevice(gid, new HashSet<String>(diList));
+                GroupManager.getInstance().removeGroupDevice(gid,
+                        new HashSet<String>(diList));
             }
         }
         return MessageBuilder.createResponse(request, ResponseStatus.DELETED);

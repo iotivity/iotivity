@@ -55,36 +55,6 @@
                         }
                     ],
                     "permission": 6
-                },
-                {
-                    "subjectuuid": "*",
-                    "resources": [
-                        {
-                            "href": "/oic/sec/pconf",
-                            "rt": ["oic.r.pconf"],
-                            "if": ["oic.if.baseline"],
-                            "rel": ""
-                        },
-                        {
-                            "href": "/oic/sec/dpairing",
-                            "rt": ["oic.r.dpairing"],
-                            "if": ["oic.if.baseline"],
-                            "rel": ""
-                        }
-                    ],
-                    "permission": 6
-                },
-                {
-                    "subjectuuid": "*",
-                    "resources": [
-                        {
-                            "href": "/oic/sec/ver",
-                            "rt": ["oic.r.ver"],
-                            "if": ["oic.if.baseline"],
-                            "rel": ""
-                        }
-                    ],
-                    "permission":2
                 }
             ]
         },

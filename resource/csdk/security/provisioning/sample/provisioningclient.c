@@ -18,13 +18,14 @@
  *
  *****************************************************************/
 
+#include "iotivity_config.h"
+
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
-#include "platform_features.h"
 #include "utlist.h"
 #include "logger.h"
 #include "oic_malloc.h"
@@ -91,7 +92,7 @@ static int g_unown_cnt;
 static bool g_doneCB;
 #ifdef __WITH_TLS__
 static int secure_protocol = 1;
-static void setDevProtocol(const OCProvisionDev_t* dev_lst);
+static void setDevProtocol(OCProvisionDev_t* dev_lst);
 #endif
 // function declaration(s) for calling them before implementing
 static OicSecAcl_t* createAcl(const int);
@@ -596,7 +597,7 @@ static int provisionCred(void)
 
     // display the CRED-provisioned result
     printf("   > Provisioned Selected Pairwise Crendentials\n");
-    printf("   > Please Check Device's Status for the Linked Result, with [33] Menu\n");
+    printf("   > Please Check Device's Status for the Linked Result, with [34] Menu\n");
 
     return 0;
 }
@@ -1065,7 +1066,7 @@ static int removeDeviceWithUuid(void)
     printf("Input the UUID : ");
     for(int ret=0; 1!=ret; )
     {
-        ret = scanf("%64s", strUuid);
+        ret = scanf("%63s", strUuid);
         for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                     // '0x20<=code' is character region
     }
@@ -1076,6 +1077,7 @@ static int removeDeviceWithUuid(void)
         return -1;
     }
 
+    g_doneCB = false;
     rst = OCRemoveDeviceWithUuid("RemoveDeviceWithUUID", DISCOVERY_TIMEOUT, &revUuid, removeDeviceCB);
     if(OC_STACK_OK != rst)
     {
@@ -1083,7 +1085,6 @@ static int removeDeviceWithUuid(void)
         return -1;
     }
 
-    g_doneCB = false;
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
         OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid callback error");
@@ -1241,14 +1242,14 @@ static OicSecAcl_t* createAcl(const int dev_num)
         }
         size_t len = strlen(rsrc_in)+1;  // '1' for null termination
         rsrc->href = (char*) OICCalloc(len, sizeof(char));
-        if(!rsrc)
+        if(!rsrc->href)
         {
             OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
             goto CRACL_ERROR;
         }
         OICStrcpy(rsrc->href, len, rsrc_in);
 
-        int arrLen = 0;
+        size_t arrLen = 0;
         while(1)
         {
             printf("         Enter Number of resource type for [%s] : ", rsrc->href);
@@ -1258,7 +1259,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
-            if(0 < arrLen && ACL_RESRC_ARRAY_SIZE >= arrLen)
+            if(ACL_RESRC_ARRAY_SIZE >= arrLen)
             {
                 break;
             }
@@ -1299,7 +1300,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
-            if(0 < arrLen && ACL_RESRC_ARRAY_SIZE >= arrLen)
+            if(ACL_RESRC_ARRAY_SIZE >= arrLen)
             {
                 break;
             }
@@ -1587,15 +1588,13 @@ static int selectTwoDiffNum(int* a, int* b, const int max, const char* str)
 
 #ifdef __WITH_TLS__
 
-static void setDevProtocol(const OCProvisionDev_t* dev_lst)
+static void setDevProtocol(OCProvisionDev_t* lst)
 {
-    if(!dev_lst)
+    if(!lst)
     {
         printf("     Device List is Empty..\n\n");
         return;
     }
-
-    OCProvisionDev_t* lst = (OCProvisionDev_t*) dev_lst;
 
     for( ; lst; )
     {

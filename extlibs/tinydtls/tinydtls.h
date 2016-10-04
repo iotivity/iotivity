@@ -52,7 +52,7 @@
 #  if defined(__cplusplus)
 #    define INLINE_API inline
 #  else
-#    ifdef _WIN32
+#    ifdef _MSC_VER
 #      define INLINE_API static __inline
 #    else
 #      define INLINE_API static inline

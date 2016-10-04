@@ -21,26 +21,53 @@
  */
 package org.iotivity.cloud.rdserver.resources.directory.rd;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.iotivity.cloud.rdserver.Constants;
 import org.iotivity.cloud.rdserver.db.DBManager;
 
+/**
+ *
+ * This class provides a set of APIs to handle ins(unique value of resource)
+ *
+ */
 public class InsManager {
 
     private HashMap<String, Integer> mNextIns      = new HashMap<>();
     private int                      mInitialValue = 1;
 
+    /**
+     * API for getting ins from DB
+     * 
+     * @param di
+     *            device id
+     * @param href
+     *            resource uri
+     * @return ins
+     */
     public int getIns(String di, String href) {
 
-        Object objectIns = DBManager.getInstance().findInsAboutDi(di, href);
-        if (objectIns == null) {
-            return 0;
-        } else {
-            return (int) objectIns;
+        HashMap<String, Object> condition = new HashMap<>();
+        condition.put(Constants.DEVICE_ID, di);
+        condition.put(Constants.HREF, href);
+        ArrayList<HashMap<String, Object>> records = DBManager.getInstance()
+                .selectRecord(Constants.RD_TABLE, condition);
 
+        if (records.isEmpty()) {
+            return -1;
+        } else {
+            return (int) (records.get(0).get(Constants.INS));
         }
     }
 
+    /**
+     * API for creating ins
+     * 
+     * @param di
+     *            device id
+     * @return created ins
+     */
     public int createIns(String di) {
         Object objectIns;
 

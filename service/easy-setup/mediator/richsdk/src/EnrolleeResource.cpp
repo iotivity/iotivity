@@ -38,25 +38,34 @@ namespace OIC
             m_ocResource = resource;
         }
 
-        void EnrolleeResource::checkProvInformationCb(const HeaderOptions& /*headerOptions*/,
-                const OCRepresentation& rep, const int eCode)
+        void EnrolleeResource::onProvisioningResponse(const HeaderOptions& /*headerOptions*/,
+                const OCRepresentation& /*rep*/, const int eCode)
         {
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "checkProvInformationCb : %s, eCode = %d",
-                    rep.getUri().c_str(),
-                    eCode);
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onProvisioningResponse : eCode = %d",
+                        eCode);
 
             if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
             {
+                ESResult result = ESResult::ES_ERROR;
+
                 OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                        "checkProvInformationCb : Provisioning is failed ");
+                            "onProvisioningResponse : Provisioning is failed ");
+
+                if(eCode == OCStackResult::OC_STACK_COMM_ERROR)
+                {
+                    OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
+                        "can't receive any response from Enrollee by a timeout threshold.");
+                    result = ESResult::ES_COMMUNICATION_ERROR;
+                }
+
                 std::shared_ptr< DevicePropProvisioningStatus > provStatus = std::make_shared<
-                        DevicePropProvisioningStatus >(ESResult::ES_ERROR);
+                        DevicePropProvisioningStatus >(result);
                 m_devicePropProvStatusCb(provStatus);
                 return;
             }
 
             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                    "checkProvInformationCb : Provisioning is success. ");
+                    "onProvisioningResponse : Provisioning is success. ");
 
             std::shared_ptr< DevicePropProvisioningStatus > provStatus = std::make_shared<
                     DevicePropProvisioningStatus >(ESResult::ES_OK);
@@ -66,8 +75,8 @@ namespace OIC
         void EnrolleeResource::onGetStatusResponse(const HeaderOptions& /*headerOptions*/,
                 const OCRepresentation& rep, const int eCode)
         {
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onGetStatusResponse : %s, eCode = %d",
-                    rep.getUri().c_str(), eCode);
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onGetStatusResponse : eCode = %d",
+                        eCode);
 
             if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
             {
@@ -76,11 +85,11 @@ namespace OIC
                 OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                             "onGetStatusResponse : onGetStatusResponse is failed ");
 
-                if (eCode == OCStackResult::OC_STACK_UNAUTHORIZED_REQ)
+                if(eCode == OCStackResult::OC_STACK_COMM_ERROR)
                 {
                     OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                        "Mediator is unauthorized from Enrollee.");
-                    result = ESResult::ES_UNAUTHORIZED;
+                        "can't receive any response from Enrollee by a timeout threshold.");
+                    result = ESResult::ES_COMMUNICATION_ERROR;
                 }
 
                 EnrolleeStatus enrolleeStatus(rep);
@@ -102,21 +111,21 @@ namespace OIC
         void EnrolleeResource::onGetConfigurationResponse(const HeaderOptions& /*headerOptions*/,
                 const OCRepresentation& rep, const int eCode)
         {
-            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onGetConfigurationResponse : %s, eCode = %d",
-                    rep.getUri().c_str(), eCode);
+            OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "onGetConfigurationResponse : eCode = %d",
+                        eCode);
 
             if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
             {
-                ESResult result  = ESResult::ES_ERROR;
+                ESResult result = ESResult::ES_ERROR;
 
                 OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
                             "onGetConfigurationResponse : onGetConfigurationResponse is failed ");
 
-                if (eCode == OCStackResult::OC_STACK_UNAUTHORIZED_REQ)
+                if(eCode == OCStackResult::OC_STACK_COMM_ERROR)
                 {
                     OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG,
-                        "Mediator is unauthorized from Enrollee.");
-                    result = ESResult::ES_UNAUTHORIZED;
+                        "can't receive any response from Enrollee by a timeout threshold.");
+                    result = ESResult::ES_COMMUNICATION_ERROR;
                 }
 
                 EnrolleeConf enrolleeConf(rep);
@@ -169,7 +178,7 @@ namespace OIC
                         const OCRepresentation& rep, const int eCode) >(
                                 std::bind(&EnrolleeResource::onGetStatusResponse, this,
                                         std::placeholders::_1, std::placeholders::_2,
-                                        std::placeholders::_3)));
+                                        std::placeholders::_3)), OC::QualityOfService::HighQos);
             };
 
             OCStackResult result = getStatus();
@@ -203,7 +212,7 @@ namespace OIC
                         const OCRepresentation& rep, const int eCode) >(
                                 std::bind(&EnrolleeResource::onGetConfigurationResponse, this,
                                         std::placeholders::_1, std::placeholders::_2,
-                                        std::placeholders::_3)));
+                                        std::placeholders::_3)), OC::QualityOfService::HighQos);
             };
 
             OCStackResult result = getConfigurationStatus();
@@ -218,7 +227,7 @@ namespace OIC
             }
         }
 
-        void EnrolleeResource::provisionEnrollee(const DeviceProp& deviceProp)
+        void EnrolleeResource::provisionProperties(const DeviceProp& deviceProp)
         {
             if (m_ocResource == nullptr)
             {
@@ -233,9 +242,9 @@ namespace OIC
                     std::function<
                             void(const HeaderOptions& headerOptions,
                                     const OCRepresentation& rep, const int eCode) >(
-                    std::bind(&EnrolleeResource::checkProvInformationCb, this,
+                    std::bind(&EnrolleeResource::onProvisioningResponse, this,
                     std::placeholders::_1, std::placeholders::_2,
-                    std::placeholders::_3)));
+                    std::placeholders::_3)), OC::QualityOfService::HighQos);
         }
     }
 }

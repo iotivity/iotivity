@@ -20,19 +20,22 @@
 
 // OCClient.cpp : Defines the entry point for the console application.
 //
+#include "iotivity_config.h"
+
 #include <set>
 #include <string>
 #include <cstdlib>
-#include <pthread.h>
 #include <mutex>
 #include <condition_variable>
 #include "OCPlatform.h"
 #include "OCApi.h"
 
+#if defined(HAVE_PTHREAD_H)
+#include <pthread.h>
+#endif
 #if defined(HAVE_WINDOWS_H)
 #include <windows.h>
 #endif
-#include "platform_features.h"
 
 using namespace OC;
 
@@ -220,7 +223,7 @@ void postLightRepresentation(std::shared_ptr<OCResource> resource)
 // callback handler on PUT request
 void onPut(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE)
+    if(eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_CHANGED)
     {
         std::cout << "PUT request was successful" << std::endl;
 

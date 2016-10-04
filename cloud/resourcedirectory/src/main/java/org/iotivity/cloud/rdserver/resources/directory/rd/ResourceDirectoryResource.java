@@ -37,21 +37,20 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.rdserver.Constants;
-import org.iotivity.cloud.rdserver.db.DBManager;
-import org.iotivity.cloud.rdserver.resources.presence.ResPresenceManager;
-import org.iotivity.cloud.rdserver.resources.presence.resource.ResPresencePayload;
-import org.iotivity.cloud.rdserver.util.TypeCastingManager;
+import org.iotivity.cloud.rdserver.resources.directory.RDManager;
+import org.iotivity.cloud.rdserver.resources.presence.PresenceManager;
 import org.iotivity.cloud.util.Cbor;
 import org.iotivity.cloud.util.Log;
 
+/**
+ * 
+ * This class provides a set of APIs handle requests about resource directory
+ *
+ */
 public class ResourceDirectoryResource extends Resource {
 
-    private Cbor<HashMap<Object, Object>>    mCbor                    = new Cbor<>();
-    private TypeCastingManager<PublishTags>  mPublishTagsTypeManager  = new TypeCastingManager<>();
-    private TypeCastingManager<PublishLinks> mPublishLinksTypeManager = new TypeCastingManager<>();
-    private InsManager                       mInsManager              = new InsManager();
-    private String                           mNotiDeviceId            = null;
-    private ArrayList<ResPresencePayload>    mNotiPayloadList         = new ArrayList<ResPresencePayload>();
+    private Cbor<HashMap<String, Object>> mCbor      = new Cbor<>();
+    private RDManager                     mRdManager = new RDManager();
 
     public ResourceDirectoryResource() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.RD_URI));
@@ -79,9 +78,24 @@ public class ResourceDirectoryResource extends Resource {
 
         srcDevice.sendResponse(response);
 
-        ResPresenceManager.getInstance().notifyToObservers(mNotiDeviceId,
-                mNotiPayloadList);
+        PresenceManager.getInstance()
+                .notifyToObservers(mRdManager.getmResourcePresence());
 
+    }
+
+    private void checkLinksProperty(HashMap<String, Object> payload) {
+
+        Object links = payload.get(Constants.LINKS);
+        if (links == null) {
+            throw new BadRequestException("links property is null");
+        }
+        ArrayList<HashMap<String, Object>> linksList = (ArrayList<HashMap<String, Object>>) links;
+        for (HashMap<String, Object> link : linksList) {
+            checkPayloadException(
+                    Arrays.asList(Constants.HREF, Constants.RESOURCE_TYPE,
+                            Constants.INS, Constants.INTERFACE),
+                    link);
+        }
     }
 
     private IResponse handlePostRequest(IRequest request)
@@ -89,190 +103,52 @@ public class ResourceDirectoryResource extends Resource {
 
         HashMap<String, List<String>> queryMap = request.getUriQueryMap();
 
-        byte[] encodedPayload = null;
-
-        if (queryMap == null) {
-            throw new PreconditionFailedException("query is null");
-        }
+        checkQueryException(Arrays.asList(Constants.RESOURCE_TYPE), queryMap);
 
         List<String> listRT = queryMap.get(Constants.RESOURCE_TYPE);
 
-        if (listRT == null) {
-            throw new PreconditionFailedException("rt property is not include");
-        } else if (listRT.get(0).equals(Constants.RESOURCE_TYPE_RDPUBLISH)) {
-
-            PublishPayload pubPayload = parsingPublishPayload(
-                    request.getPayload());
-
-            mNotiDeviceId = pubPayload.getTags().getDi();
-
-            PublishPayload copyPubPayload = pubPayload.copy();
-
-            ArrayList<HashMap<Object, Object>> storeResList = creatDBStoreResource(
-                    changeResourceUri(copyPubPayload));
-
-            mNotiPayloadList = DBManager.getInstance()
-                    .registerResource(storeResList);
-
-            encodedPayload = createPublishResponse(pubPayload);
-
-        } else {
-            throw new PreconditionFailedException(
-                    "rt property is not rd publish");
+        // check query "rt=oic.rd.pub"
+        if (!listRT.get(0).equals(Constants.RESOURCE_TYPE_RDPUBLISH)) {
+            throw new PreconditionFailedException("rt property is not correct");
         }
+
+        HashMap<String, Object> payload = mCbor
+                .parsePayloadFromCbor(request.getPayload(), HashMap.class);
+
+        Log.d("publish payload : " + payload);
+
+        checkPayloadException(
+                Arrays.asList(Constants.DEVICE_ID, Constants.LINKS), payload);
+
+        // check mandatory property
+        checkLinksProperty(payload);
+
+        HashMap<String, Object> response = mRdManager.publishResource(payload);
+
+        Log.d("publish response : " + response);
 
         return MessageBuilder.createResponse(request, ResponseStatus.CHANGED,
-                ContentFormat.APPLICATION_CBOR, encodedPayload);
-    }
+                ContentFormat.APPLICATION_CBOR,
+                mCbor.encodingPayloadToCbor(response));
 
-    private byte[] createPublishResponse(PublishPayload pubPayload) {
-        HashMap<Object, Object> responseMap = new HashMap<Object, Object>();
-
-        PublishTags tags = pubPayload.getTags();
-        responseMap.putAll(mPublishTagsTypeManager.convertObjectToMap(tags));
-
-        ArrayList<PublishLinks> pubLinksList = pubPayload.getLinks();
-
-        ArrayList<HashMap<Object, Object>> links = new ArrayList<HashMap<Object, Object>>();
-
-        for (PublishLinks pubLinks : pubLinksList) {
-            mPublishLinksTypeManager.callMethod("changePType", pubLinks);
-            links.add(mPublishLinksTypeManager.convertObjectToMap(pubLinks));
-        }
-        responseMap.put(Constants.LINKS, links);
-
-        Log.i("publish response :" + responseMap.toString());
-
-        byte[] encodedPaylod = mCbor.encodingPayloadToCbor(responseMap);
-
-        return encodedPaylod;
-    }
-
-    private PublishPayload parsingPublishPayload(byte[] payload)
-            throws ServerException {
-
-        HashMap<Object, Object> payloadData = mCbor
-                .parsePayloadFromCbor(payload, HashMap.class);
-
-        if (payloadData == null) {
-            throw new BadRequestException("payload is null");
-        } else {
-            Log.i("publish payload: " + payloadData.toString());
-        }
-
-        PublishTags tags = new PublishTags();
-        tags = mPublishTagsTypeManager.convertMaptoObject(payloadData, tags);
-
-        String di = tags.getDi();
-
-        ArrayList<HashMap<Object, Object>> linksList = (ArrayList<HashMap<Object, Object>>) payloadData
-                .get(Constants.LINKS);
-
-        ArrayList<PublishLinks> pubLinksList = new ArrayList<PublishLinks>();
-
-        for (HashMap<Object, Object> links : linksList) {
-            PublishLinks pubLinks = new PublishLinks();
-            pubLinks = mPublishLinksTypeManager.convertMaptoObject(links,
-                    pubLinks);
-            String href = pubLinks.getHref();
-            href = "/di/" + di + href;
-            int ins = pubLinks.getIns();
-            ins = checkResourceIns(di, href, ins);
-            if (ins == 0) {
-                throw new PreconditionFailedException("ins is null");
-            }
-            pubLinks.setIns(ins);
-            pubLinksList.add(pubLinks);
-        }
-
-        PublishPayload pubPayload = new PublishPayload();
-        pubPayload.setTags(tags);
-        pubPayload.setLinks(pubLinksList);
-
-        return pubPayload;
-    }
-
-    private PublishPayload changeResourceUri(PublishPayload pubPayload) {
-
-        String di = pubPayload.getTags().getDi();
-
-        for (PublishLinks links : pubPayload.getLinks()) {
-            String originHref = links.getHref();
-            links.setHref("/di/" + di + originHref);
-        }
-
-        return pubPayload;
-    }
-
-    private int checkResourceIns(String di, String href, int ins) {
-        int storedIns = mInsManager.getIns(di, href);
-        if (ins == 0) {
-            if (storedIns == 0) {
-                ins = mInsManager.createIns(di);
-            } else {
-                ins = storedIns;
-            }
-        } else {
-            if (ins != storedIns) {
-                ins = 0;
-            }
-        }
-        return ins;
-    }
-
-    private ArrayList<HashMap<Object, Object>> creatDBStoreResource(
-            PublishPayload pubPayload) {
-        PublishTags tags = pubPayload.getTags();
-        ArrayList<PublishLinks> linksList = pubPayload.getLinks();
-
-        ArrayList<HashMap<Object, Object>> storeResList = new ArrayList<HashMap<Object, Object>>();
-        HashMap<Object, Object> storeTags = mPublishTagsTypeManager
-                .convertObjectToMap(tags);
-
-        for (PublishLinks links : linksList) {
-            HashMap<Object, Object> storeRes = new HashMap<Object, Object>();
-            storeRes.putAll(storeTags);
-            storeRes.putAll(mPublishLinksTypeManager.convertObjectToMap(links));
-            storeResList.add(storeRes);
-        }
-        return storeResList;
     }
 
     private IResponse handleDeleteRequest(IRequest request)
             throws ServerException {
 
         HashMap<String, List<String>> queryMap = request.getUriQueryMap();
-        List<String> diList = null;
-        List<String> insList = null;
 
-        if (queryMap == null) {
-            throw new PreconditionFailedException("query is null");
-        } else {
-            diList = queryMap.get(Constants.DEVICE_ID);
-            insList = queryMap.get(Constants.INS);
+        checkQueryException(Arrays.asList(Constants.DEVICE_ID), queryMap);
 
-            if (diList == null) {
-                throw new PreconditionFailedException(
-                        "di property is not include");
-            } else {
-                String di = diList.get(0);
-                mNotiDeviceId = di;
+        List<String> diList = queryMap.get(Constants.DEVICE_ID);
+        List<String> insList = queryMap.get(Constants.INS);
 
-                if (insList == null) {
-                    mNotiPayloadList = DBManager.getInstance()
-                            .deleteResourceAboutDi(di);
-
-                } else {
-                    String ins = insList.get(0);
-                    mNotiPayloadList = DBManager.getInstance()
-                            .deleteResourceAboutDiAandIns(di, ins);
-                }
-            }
-        }
+        mRdManager.deleteResource(diList.get(0), insList);
 
         IResponse response = MessageBuilder.createResponse(request,
                 ResponseStatus.DELETED);
 
         return response;
     }
+
 }

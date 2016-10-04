@@ -148,7 +148,6 @@ public:
                     T* listener = refPair.first;
                     delete listener;
                     m_listenerMap.erase(it);
-
                     LOGI("OnEventListener is removed");
                 }
                 break;
@@ -160,6 +159,7 @@ public:
     void removeAllListeners(JNIEnv* env)
     {
         m_mapMutex.lock();
+        LOGI("All listeners are removed");
 
         for (auto& pair : m_listenerMap)
         {

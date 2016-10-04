@@ -62,6 +62,10 @@ hosting_test_env.AppendUnique(CPPPATH = ['../src'])
 hosting_test_env.AppendUnique(CPPPATH = ['../../resource-encapsulation/include'])
 hosting_test_env.AppendUnique(CPPPATH = ['../../resource-encapsulation/src/common/primitiveResource/include'])
 hosting_test_env.AppendUnique(CPPPATH = ['../../resource-encapsulation/src/common/utils/include'])
+
+if hosting_test_env.get('SECURED') == '1':
+	if hosting_test_env.get('WITH_TCP') == True:
+		hosting_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 ######################################################################
 # Build Test
 ######################################################################

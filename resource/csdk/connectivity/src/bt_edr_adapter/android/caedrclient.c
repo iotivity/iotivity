@@ -71,27 +71,6 @@ static ca_mutex g_mutexObjectList = NULL;
  */
 static CAEDRErrorHandleCallback g_edrErrorHandler = NULL;
 
-typedef struct send_data
-{
-    char* address;
-    char* data;
-    uint32_t id;
-} data_t;
-
-/**
- @brief Thread context information for unicast, multicast and secured unicast server
- */
-typedef struct
-{
-    bool *stopFlag;
-    CAAdapterServerType_t type;
-} CAAdapterReceiveThreadContext_t;
-
-typedef struct
-{
-    bool *stopFlag;
-} CAAdapterAcceptThreadContext_t;
-
 /**
  * implement for BT-EDR adapter common method
  */

@@ -10,9 +10,6 @@ name=iotivity
 
 rm -rf $name-$version
 
-echo $1
-export ES_SAMPLE=$1
-
 builddir=`pwd`
 sourcedir=`pwd`
 
@@ -33,11 +30,13 @@ cp -LR ./extlibs/tinycbor $sourcedir/tmp/extlibs
 rm -rf $sourcedir/tmp/extlibs/tinycbor/tinycbor/.git
 
 cp -R ./extlibs/cjson $sourcedir/tmp/extlibs
+cp -R ./extlibs/mbedtls $sourcedir/tmp/extlibs
 cp -R ./extlibs/gtest $sourcedir/tmp/extlibs
 cp -R ./extlibs/tinydtls $sourcedir/tmp/extlibs
 cp -LR ./extlibs/sqlite3 $sourcedir/tmp/extlibs
 cp -R ./extlibs/timer $sourcedir/tmp/extlibs
 cp -R ./extlibs/rapidxml $sourcedir/tmp/extlibs
+cp -R ./extlibs/libcoap $sourcedir/tmp/extlibs
 cp -R ./resource $sourcedir/tmp
 cp -R ./service $sourcedir/tmp
 cp ./extra_options.scons $sourcedir/tmp
@@ -56,10 +55,9 @@ cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp
 
 cd $sourcedir/tmp
 
-echo `pwd`
 rm -rf ./extlibs/tinycbor/tinycbor/.git*
 
-# Initialize Git repository
+# Initialize Git repositoryㅣ
 if [ ! -d .git ]; then
    git init ./
    git config user.email "you@example.com"
@@ -68,42 +66,40 @@ if [ ! -d .git ]; then
    git commit -m "Initial commit"
 fi
 
+withtcp=0
+withcloud=0
+withproxy=0
+withmq=OFF
+for ARGUMENT_VALUE in $*
+do
+   echo $ARGUMENT_VALUE
+   if [ "WITH_TCP" = $ARGUMENT_VALUE ];then
+       withtcp=1
+   fi
+
+   if [ "WITH_CLOUD" = $ARGUMENT_VALUE ];then
+       withcloud=1
+   fi
+
+   if [ "WITH_PROXY" = $ARGUMENT_VALUE ];then
+       withproxy=1
+   fi
+
+   if [ "WITH_MQ" = $ARGUMENT_VALUE ];then
+       withmq=PUB,SUB,BROKER
+   fi
+done
+
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-OIC --include-all --repository ./"
+gbscommand="gbs build -A armv7l --define 'WITH_TCP $withtcp' --define 'WITH_CLOUD $withcloud' --define 'WITH_PROXY $withproxy' --define 'WITH_MQ $withmq' -B ~/GBS-ROOT-OIC --include-all --repository ./"
 echo $gbscommand
 if eval $gbscommand; then
-   echo "Build is successful"
+    echo "Build is successful"
 else
-   echo "Build failed!"
-   exit 1
+    echo "Build failed!"
+    exit 1
 fi
 
-# Build EasySetup App. if ES_ON is entered on command prompt
-if echo $ES_SAMPLE|grep -qi '^ES_ON$'; then
-    cd service/easy-setup/sampleapp/enrollee/tizen-sdb/EnrolleeSample
-    echo `pwd`
-    echo "EasySetup Sample Build is enabled"
-
-    # Initialize Git repository for EnrolleeSample
-    if [ ! -d .git ]; then
-      git init ./
-      git config user.email "you@example.com"
-      git config user.name "Your Name"
-      git add ./
-      git commit -m "Initial commit"
-    fi
-    echo "Calling EasySetup Sample gbs build command"
-    gbscommand="gbs build -A armv7l -B ~/GBS-ROOT-OIC --include-all --repository ./"
-    echo $gbscommand
-    if eval $gbscommand; then
-      echo "EasySetup Sample build is successful"
-    else
-      echo "EasySetup Sample build is failed."
-      exit 1
-    fi
-else
-    echo "EasySetup Sample Build is not enabled"
-fi
 
 rm -rf tmp
 cd $sourcedir

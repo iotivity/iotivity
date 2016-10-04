@@ -21,6 +21,7 @@
 #ifndef _NS_CONSTANTS_H_
 #define _NS_CONSTANTS_H_
 
+#define __PRINTLOG 0
 #define __NS_FILE__ ( strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__ )
 
 #ifdef TB_LOG
@@ -28,6 +29,7 @@
 #define NS_LOG_V(level, format, ...) (OIC_LOG_V((level), __NS_FILE__, (format), __VA_ARGS__))
 #define NS_LOG(level, msg) (OIC_LOG((level), __NS_FILE__, (msg)))
 #else
+#if (__PRINTLOG == 1)
 #include "logger.h"
 #define NS_CONVERT_LEVEL(level) ( \
         ((level) == 0) ? "DEBUG" : \
@@ -46,6 +48,11 @@
         printf((msg)); \
         printf("\n"); \
     }
+#else
+#define NS_CONVERT_LEVEL(level)
+#define NS_LOG(level, msg)
+#define NS_LOG_V(level, format, ...) NS_LOG((level), ((format), __VA_ARGS__))
+#endif
 #endif
 
 #define NS_TAG                     "IOT_NOTI"
@@ -67,11 +74,13 @@
 #define RESOURCE_TAG               "NS_PROVIDER_RESOURCE"
 #define TOPIC_TAG                  "NS_PROVIDER_TOPIC"
 
-#define NS_ROOT_TYPE               "oic.r.notification"
-#define NS_COLLECTION_MESSAGE_TYPE "oic.r.notification.message"
-#define NS_COLLECTION_SYNC_TYPE    "oic.r.notification.sync"
-#define NS_COLLECTION_TOPIC_TYPE   "oic.r.notification.topic"
+#define NS_ROOT_TYPE               "oic.wk.notification"
+#define NS_COLLECTION_MESSAGE_TYPE "oic.wk.notification.message"
+#define NS_COLLECTION_SYNC_TYPE    "oic.wk.notification.sync"
+#define NS_COLLECTION_TOPIC_TYPE   "oic.wk.notification.topic"
 
+#define NS_INTERFACE_READ          "oic.if.r"
+#define NS_INTERFACE_READWRITE     "oic.if.rw"
 #define NS_DEFAULT_INTERFACE       "oic.if.baseline"
 
 #define NS_ROOT_URI                "/notification"
@@ -82,8 +91,8 @@
 #define NS_QUERY_SEPARATOR         "&;"
 #define NS_KEY_VALUE_DELIMITER     "="
 
-#define NS_QUERY_CONSUMER_ID       "consumerid"
-#define NS_QUERY_PROVIDER_ID       "providerid"
+#define NS_QUERY_CONSUMER_ID       "consumerId"
+#define NS_QUERY_PROVIDER_ID       "providerId"
 
 #define NS_QUERY_ID_SIZE           10
 
@@ -173,6 +182,28 @@
         } \
     }
 
+#define VERSION        "1.2.0"
+
+#define NS_ATTRIBUTE_VERSION "version"
+#define NS_ATTRIBUTE_POLICY "subControllability"
+#define NS_ATTRIBUTE_MESSAGE "messageUri"
+#define NS_ATTRIBUTE_SYNC "syncUri"
+#define NS_ATTRIBUTE_TOPIC "topicUri"
+#define NS_ATTRIBUTE_MESSAGE_ID "messageId"
+#define NS_ATTRIBUTE_PROVIDER_ID "providerId"
+#define NS_ATTRIBUTE_CONSUMER_ID "consumerId"
+#define NS_ATTRIBUTE_TOPIC_LIST "topicList"
+#define NS_ATTRIBUTE_TOPIC_NAME "topicName"
+#define NS_ATTRIBUTE_TOPIC_SELECTION "topicState"
+#define NS_ATTRIBUTE_TITLE "title"
+#define NS_ATTRIBUTE_TEXT "contentText"
+#define NS_ATTRIBUTE_SOURCE "source"
+#define NS_ATTRIBUTE_STATE "state"
+#define NS_ATTRIBUTE_DEVICE "device"
+#define NS_ATTRIBUTE_TYPE "type"
+#define NS_ATTRIBUTE_DATETIME "dateTime"
+#define NS_ATTRIBUTE_TTL "ttl"
+#define NS_ATTRIBUTE_ICON_IMAGE "iconImage"
 
 typedef enum eConnectionState
 {
@@ -219,7 +250,7 @@ typedef enum eTaskType
     TASK_CONSUMER_REQ_DISCOVER = 8001,
     TASK_CONSUMER_REQ_SUBSCRIBE = 8002,
     TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL = 8003,
-    TASK_CONSUMER_RECV_SUBSCRIBE_CONFIRMED = 8004,
+    TASK_CONSUMER_SENT_REQ_OBSERVE = 8004,
     TASK_CONSUMER_RECV_PROVIDER_CHANGED = 8005,
     TASK_CONSUMER_RECV_MESSAGE = 8101,
 
@@ -230,7 +261,6 @@ typedef enum eTaskType
     TASK_CONSUMER_REQ_TOPIC_URI = 8299,
     TASK_CONSUMER_REQ_TOPIC_LIST = 8300,
     TASK_CONSUMER_RECV_TOPIC_LIST = 8031,
-    TASK_CONSUMER_GET_TOPIC_LIST = 8302,
     TASK_CONSUMER_SELECT_TOPIC_LIST = 8303,
 
     TASK_EVENT_CONNECTED = 9000,
@@ -241,11 +271,13 @@ typedef enum eTaskType
     TASK_CB_SYNC = 10001,
 
     TASK_SEND_TOPICS = 11000,
-    TASK_ADD_TOPIC = 11001,
-    TASK_DELETE_TOPIC = 11002,
+    TASK_REGISTER_TOPIC = 11001,
+    TASK_UNREGISTER_TOPIC = 11002,
     TASK_SUBSCRIBE_TOPIC = 11003,
     TASK_UNSUBSCRIBE_TOPIC = 11004,
-    TASK_POST_TOPIC = 11005
+    TASK_POST_TOPIC = 11005,
+    TASK_GET_TOPICS = 11006,
+    TAST_GET_CONSUMER_TOPICS = 11007
 
 } NSTaskType;
 
@@ -263,6 +295,7 @@ typedef enum eCacheType
     NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME = 1002,
     NS_PROVIDER_CACHE_CONSUMER_TOPIC_CID = 1003,
     NS_PROVIDER_CACHE_REGISTER_TOPIC = 1004,
+    NS_PROVIDER_CACHE_SUBSCRIBER_OBSERVE_ID = 1005,
 
     NS_CONSUMER_CACHE_PROVIDER = 2000,
     NS_CONSUMER_CACHE_MESSAGE = 2001,

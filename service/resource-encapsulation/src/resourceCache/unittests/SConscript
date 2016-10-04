@@ -54,13 +54,17 @@ cache_test_env.AppendUnique(CPPPATH = ['../../common/expiryTimer/src'])
 cache_test_env.AppendUnique(CPPPATH = ['../../common/utils/include'])
 cache_test_env.PrependUnique(CPPPATH = [cache_test_env.get('SRC_DIR')+'/extlibs/hippomocks-master'])
 cache_test_env.AppendUnique(LIBPATH = [cache_test_env.get('BUILD_DIR')])
-cache_test_env.PrependUnique(LIBS = ['rcs_client', 'rcs_common', 
+cache_test_env.PrependUnique(LIBS = ['rcs_client', 'rcs_common',
   'oc', 'octbstack', 'oc_logger',
   'connectivity_abstraction', 'coap'])
 
 compiler = cache_test_env.get('CXX')
 if 'g++' in compiler:
     cache_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
+
+if cache_test_env.get('SECURED') == '1':
+	if cache_test_env.get('WITH_TCP') == True:
+		cache_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # Build Test

@@ -42,7 +42,9 @@ FactorySetResource::FactorySetResource()
     m_configurationRep.setResourceTypes(m_configurationTypes);
 }
 
-FactorySetResource::~FactorySetResource(){}
+FactorySetResource::~FactorySetResource()
+{
+}
 
 /// This function internally calls registerResource API.
 void FactorySetResource::createResources(ResourceEntityHandler callback)

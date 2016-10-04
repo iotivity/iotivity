@@ -43,17 +43,29 @@ Java_org_iotivity_service_easysetup_mediator_EasySetup_nativeCreateRemoteEnrolle
     std::shared_ptr<RemoteEnrollee> nativeRemoteEnrollee;
     jobject jRemoteEnrollee;
 
+    if(!jResource)
+    {
+        ES_LOGE("JniEasySetup::nativeCreateRemoteEnrollee Invalid param.");
+        return NULL;
+    }
+
     JniOcResource* jniOcResource = JniOcResource::getJniOcResourcePtr(env, jResource);
 
     if (!jniOcResource)
     {
         ES_LOGE("JniEasySetup::nativeCreateRemoteEnrollee getJniOcResourcePtr returns nullptr.");
-        return nullptr;
+        return NULL;
     }
 
     try
     {
         nativeRemoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(jniOcResource->getOCResource());
+        if (!nativeRemoteEnrollee)
+        {
+            ES_LOGE("Failed to create RemoteEnrollee object.");
+            return NULL;
+        }
+
         //create the java object
         jRemoteEnrollee = env->NewObject(g_cls_RemoteEnrollee, g_mid_RemoteEnrollee_ctor);
         if (!jRemoteEnrollee)

@@ -237,6 +237,9 @@ void CAEDRSocketConnectionStateCallback(int result, bt_socket_connection_state_e
                 ca_mutex_unlock(g_edrDeviceListMutex);
             }
             break;
+
+        default:
+            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Unknown Bluetooth Socket connection state");
     }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
@@ -357,6 +360,9 @@ void CAEDRDeviceDiscoveryCallback(int result, bt_adapter_device_discovery_state_
                 }
             }
             break;
+
+        default:
+            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Unknown Bluetooth Adapter device discovery state");
     }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
@@ -1000,7 +1006,7 @@ void CAEDRDataRecvCallback(bt_socket_received_data_s *data, void *userData)
 
     if (!deviceInfo->totalDataLen)
     {
-        coap_transport_type transport = coap_get_tcp_header_type_from_initbyte(
+        coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(
                 ((unsigned char *)deviceInfo->recvData)[0] >> 4);
         size_t headerLen = coap_get_tcp_header_length_for_transport(transport);
 

@@ -410,6 +410,7 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                     for(size_t i = 0; i < rsrc->typeLen; i++)
                     {
                         cJSON *jsonRsrcType = cJSON_GetArrayItem(jsonRsrcObj, i);
+                        VERIFY_NON_NULL(TAG, jsonRsrcType, ERROR);
                         rsrc->types[i] = OICStrdup(jsonRsrcType->valuestring);
                         VERIFY_NON_NULL(TAG, (rsrc->types[i]), ERROR);
                     }
@@ -426,6 +427,7 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                     for(size_t i = 0; i < rsrc->interfaceLen; i++)
                     {
                         cJSON *jsonInterface = cJSON_GetArrayItem(jsonRsrcObj, i);
+                        VERIFY_NON_NULL(TAG, jsonInterface, ERROR);
                         rsrc->interfaces[i] = OICStrdup(jsonInterface->valuestring);
                         VERIFY_NON_NULL(TAG, (rsrc->interfaces[i]), ERROR);
                     }
@@ -445,7 +447,7 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
             if(jsonValidityObj)
             {
                 VERIFY_SUCCESS(TAG, cJSON_Array == jsonValidityObj->type, ERROR);
-                size_t validityLen = cJSON_GetArraySize(jsonValidityObj);
+                size_t validityLen = (size_t) cJSON_GetArraySize(jsonValidityObj);
                 VERIFY_SUCCESS(TAG, (0 < validityLen), ERROR);
 
                 cJSON *jsonValidity = NULL;
@@ -476,7 +478,7 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                     if(jsonRecurObj)
                     {
                         VERIFY_SUCCESS(TAG, (cJSON_Array == jsonRecurObj->type), ERROR);
-                        validity->recurrenceLen = cJSON_GetArraySize(jsonRecurObj);
+                        validity->recurrenceLen = (size_t) cJSON_GetArraySize(jsonRecurObj);
                         VERIFY_SUCCESS(TAG, (0 < validity->recurrenceLen), ERROR);
 
                         validity->recurrences = (char**)OICCalloc(validity->recurrenceLen, sizeof(char*));

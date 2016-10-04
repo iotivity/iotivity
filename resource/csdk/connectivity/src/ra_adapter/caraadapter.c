@@ -231,16 +231,16 @@ static char *CARAGetSIDFromPDU(coap_pdu_t *pdu)
 
     VERIFY_NON_NULL_RET(pdu, RA_ADAPTER_TAG, "Invalid parameter!", NULL);
 
-    if (pdu->hdr->coap_hdr_udp_t.token_length * 2 > MAX_IBB_SESSION_ID_LENGTH)
+    if (pdu->hdr->token_length * 2 > MAX_IBB_SESSION_ID_LENGTH)
     {
         OIC_LOG(ERROR, RA_ADAPTER_TAG, "Token length more than expected!");
         return NULL;
     }
 
     char hex[3] = {0};
-    for (int i = 0; i < pdu->hdr->coap_hdr_udp_t.token_length; i++)
+    for (int i = 0; i < pdu->hdr->token_length; i++)
     {
-        snprintf(hex, 3, "%02x", pdu->hdr->coap_hdr_udp_t.token[i]);
+        snprintf(hex, 3, "%02x", pdu->hdr->token[i]);
         OICStrcat(s_sid, sizeof(s_sid), hex);
     }
 

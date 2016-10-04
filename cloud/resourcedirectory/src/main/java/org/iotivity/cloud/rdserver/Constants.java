@@ -21,51 +21,59 @@
  */
 package org.iotivity.cloud.rdserver;
 
-import java.util.Arrays;
-import java.util.List;
+import org.iotivity.cloud.base.OICConstants;
 
-import org.iotivity.cloud.base.OCFConstants;
+public class Constants extends OICConstants {
 
-public class Constants extends OCFConstants {
+    /** Database, Table name */
+    public static final String RD_DB_NAME              = "RD_DB";
+    public static final String RD_TABLE                = "RD_TABLE";
+    public static final String PRESENCE_TABLE          = "PRESENCE_TABLE";
 
-    public static final String       RD_DB_NAME              = "RD_DB";
-    public static final String       RD_TABLE                = "RD_TABLE";
-    public static final String       PRESENCE_TABLE          = "PRESENCE_TABLE";
+    /** A human friendly name of device */
+    public static final String DEVICE_NAME             = "n";
+    /** An unique identifier of device */
+    public static final String DEVICE_ID               = "di";
+    /** policies that apply for resource */
+    public static final String POLICY                  = "p";
+    /** To represent bitmap. */
+    public static final String BITMAP                  = "bm";
+    /** An ordinal number that is not repeated */
+    public static final String INS                     = "ins";
+    /** Time (in seconds) to indicate how long RD should publish this item */
+    public static final String DEVICE_TTL              = "lt";
+    /** Time to live for this link */
+    public static final String RESOURCE_TTL            = "ttl";
+    /** URI Reference */
+    public static final String HREF                    = "href";
+    /** Resource Types */
+    public static final String RESOURCE_TYPE           = "rt";
+    /** Resource interface */
+    public static final String INTERFACE               = "if";
+    /** Relation between target URI and context URI */
+    public static final String REL                     = "rel";
+    /** Title for the link relation */
+    public static final String TITLE                   = "title";
+    /** This is used to override the context URI */
+    public static final String ANCHOR                  = "anchor";
+    /** Media type. Default : application/json */
+    public static final String MEDIA_TYPE              = "type";
+    /** To represent links. */
+    public static final String LINKS                   = "links";
+    /** To represent resource type with Publish RD. */
+    public static final String RESOURCE_TYPE_RDPUBLISH = "oic.wk.rdpub";
 
-    public static final String       DEVICE_NAME             = "n";
-    public static final String       DEVICE_ID               = "di";
-    public static final String       POLICY                  = "p";
-    public static final String       BITMAP                  = "bm";
-    public static final String       INS                     = "ins";
-    public static final String       DEVICE_TTL              = "lt";
-    public static final String       RESOURCE_TTL            = "ttl";
-    public static final String       HREF                    = "href";
-    public static final String       RESOURCE_TYPE           = "rt";
-    public static final String       INTERFACE               = "if";
-    public static final String       REL                     = "rel";
-    public static final String       TITLE                   = "title";
-    public static final String       ANCHOR                  = "anchor";
-    public static final String       MEDIA_TYPE              = "type";
-    public static final String       LINKS                   = "links";
-    public static final String       RESOURCE_TYPE_RDPUBLISH = "oic.wk.rdpub";
-    public static final List<String> TAGS                    = Arrays
-            .asList(DEVICE_NAME, DEVICE_ID, DEVICE_TTL);
+    /** '/oic/prs' resource property */
+    public static final String PRESENCE_STATE          = "state";
+    public static final String PRESENCE_LIST           = "prslist";
+    public static final String DEVICE_PRESENCE         = "device_presence";
 
-    public static final String       SEARCH_TYPE             = "st";
-    public static final String       SEARCH_TYPE_DEVICE_LIST = "didList";
-    public static final String       DEVICE_LIST_KEY         = "devices";
-
-    // for '/oic/prs' resource
-    public static final String       PRESENCE_STATE          = "state";
-
-    public static final String       RS_NON                  = "non";
-    public static final String       RS_TRIGGER              = "trg";
-
-    public static final long         OBSERVE_REGISTER        = 0;
-    public static final long         OBSERVE_DEREGISTER      = 1;
-
-    public static final byte         RES_CREATE              = 0;
-    public static final byte         RES_CHANGE              = 1;
-    public static final byte         RES_DELETE              = 2;
+    /** '/oic/ad' resource property */
+    public static final String NON                     = "non";
+    public static final String TRIGGER                 = "trg";
+    public static final byte   RES_CREATE              = 0;
+    public static final byte   RES_CHANGE              = 1;
+    public static final byte   RES_DELETE              = 2;
+    public static final String RESOURCE_PRESENCE       = "resource_presence";
 
 }

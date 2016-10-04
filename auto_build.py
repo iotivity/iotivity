@@ -13,7 +13,7 @@ Usage:
     build:
         python %s <targetbuild>
         Allowed values for <target_build>: all, linux_unsecured, linux_secured, linux_unsecured_with_ra, linux_secured_with_ra, linux_unsecured_with_rd, linux_secured_with_rd, android, arduino, tizen, simulator, darwin, windows, msys
-        Note: \"linux\" will build \"linux_unsecured\", \"linux_secured\", \"linux_unsecured_with_ra\", \"linux_secured_with_ra\", \"linux_secured_with_rd\", \"linux_unsecured_with_mq\" & \"linux_unsecured_with_rd\".
+        Note: \"linux\" will build \"linux_unsecured\", \"linux_secured\", \"linux_unsecured_with_ra\", \"linux_secured_with_ra\", \"linux_secured_with_rd\", \"linux_unsecured_with_mq\", \"linux_secured_with_tcp\" & \"linux_unsecured_with_tcp\" & \"linux_unsecured_with_rd\".
         Any selection will build both debug and release versions of all available targets in the scope you've selected.
         To choose any specific command, please use the SCons commandline directly. Please refer to [IOTIVITY_REPO]/Readme.scons.txt.
     clean:
@@ -36,7 +36,9 @@ def call_scons(build_options, extra_option_str):
     cmd_line += " " + str(extra_option_str)
 
     print ("Running : " + cmd_line)
-    subprocess.Popen([cmd_line], shell=True).wait()
+    exit_code = subprocess.Popen([cmd_line], shell=True).wait()
+    if exit_code != 0:
+        exit(exit_code)
 
 def build_all(flag, extra_option_str):
     if platform.system() == "Linux":
@@ -48,6 +50,8 @@ def build_all(flag, extra_option_str):
         build_linux_unsecured_with_rd(flag, extra_option_str)
         build_linux_secured_with_rd(flag, extra_option_str)
         build_linux_unsecured_with_mq(flag, extra_option_str)
+        build_linux_unsecured_with_tcp(flag, extra_option_str)
+        build_linux_secured_with_tcp(flag, extra_option_str)
         build_simulator(flag, extra_option_str)
 
     build_android(flag, extra_option_str)
@@ -68,6 +72,16 @@ def build_linux_unsecured(flag, extra_option_str):
     print ("*********** Build for linux ************")
     build_options = {
                         'RELEASE':flag,
+                    }
+    call_scons(build_options, extra_option_str)
+
+def build_linux_secured_with_tcp(flag, extra_option_str):
+    print ("*********** Build for linux with Secured TCP ************")
+    build_options = {
+                        'RELEASE':flag,
+                        'WITH_TCP': 1,
+                        'WITH_CLOUD':1,
+                        'SECURED':1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -140,15 +154,25 @@ def build_linux_unsecured_with_mq(flag, extra_option_str):
                     }
     call_scons(build_options, extra_option_str)
 
+def build_linux_unsecured_with_tcp(flag, extra_option_str):
+    print ("*********** Build for linux With tcp ************")
+    build_options = {
+                        'RELEASE':flag,
+                        'WITH_TCP':'1',
+                    }
+    call_scons(build_options, extra_option_str)
+
 def build_android(flag, extra_option_str):
     # Note: for android, as oic-resource uses C++11 feature stoi and to_string,
     # it requires gcc-4.9, currently only android-ndk-r10(for linux)
     # and windows android-ndk-r10(64bit target version) support these features.
-
-    build_android_x86(flag, extra_option_str)
-    build_android_x86_with_rm(flag, extra_option_str)
-    build_android_armeabi(flag, extra_option_str)
-    build_android_armeabi_with_rm(flag, extra_option_str)
+    print ("*********** Build for android armeabi *************")
+    build_options = {
+                        'TARGET_OS':'android',
+                        'TARGET_ARCH':'armeabi',
+                        'RELEASE':flag,
+                    }
+    call_scons(build_options, extra_option_str)
 
 def build_android_x86(flag, extra_option_str):
     print ("*********** Build for android x86 *************")
@@ -405,8 +429,8 @@ elif arg_num == 2:
         unit_tests()
 
     elif str(sys.argv[1]) == "linux":
-        build_all("true", "")
-        build_all("false", "")
+        build_linux("true", "")
+        build_linux("false", "")
 
     elif str(sys.argv[1]) == "linux_unsecured":
         build_linux_unsecured("true", "")
@@ -437,6 +461,14 @@ elif arg_num == 2:
     elif str(sys.argv[1]) == "linux_unsecured_with_mq":
         build_linux_unsecured_with_mq("true", "")
         build_linux_unsecured_with_mq("false", "")
+
+    elif str(sys.argv[1]) == "linux_unsecured_with_tcp":
+        build_linux_unsecured_with_tcp("true", "")
+        build_linux_unsecured_with_tcp("false", "")
+
+    elif str(sys.argv[1]) == "linux_secured_with_tcp":
+        build_linux_secured_with_tcp("false", "")
+        build_linux_secured_with_tcp("true", "")
 
     elif str(sys.argv[1]) == "android":
         build_android("true", "")

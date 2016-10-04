@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 package org.iotivity.service.ns.provider;
 import org.iotivity.service.ns.common.*;
+import java.util.Vector;
 /**
   * @class   ProviderService
   * @brief   This class provides a set of Java APIs for Notification ProviderService.
@@ -39,14 +40,6 @@ public class ProviderService
         System.loadLibrary("notification_provider_wrapper");
         System.loadLibrary("notification_provider_jni");
     }
-    public native int  nativeStart(boolean policy,
-                                   OnSubscriptionListener   subscriptionListener,
-                                   OnSyncInfoListener   syncInfoListener);
-    public native int  nativeStop();
-    public native int  nativeSendMessage(Message message);
-    public native void  nativeSendSyncInfo( long messageId , int type);
-    public native int  nativeEnableRemoteService(String servAdd);
-    public native int  nativeDisableRemoteService(String servAdd);
 
     private static ProviderService instance;
 
@@ -54,56 +47,87 @@ public class ProviderService
     {
         instance = new ProviderService();
     }
-    public interface OnSubscriptionListener
-    {
-        public void onConsumerSubscribed(Consumer consumer);
-    }
-    public interface OnSyncInfoListener
-    {
-        public void onMessageSynchronized(SyncInfo syncInfo);
-    }
 
     public static ProviderService getInstance()
     {
         return instance;
     }
-    public int Start(boolean policy,
-                     OnSubscriptionListener  subscriptionListener,
-                     OnSyncInfoListener  syncInfoListener) throws NSException
-    {
 
-    int result = nativeStart(policy, subscriptionListener, syncInfoListener);
-        return result;
+    public int start(OnConsumerSubscribedListener  subscribedListener,
+                     OnMessageSynchronizedListener  messageSynchronized,
+                     boolean subControllability, String userInfo, 
+                     boolean resourceSecurity) throws NSException
+    {
+        return nativeStart(subscribedListener, messageSynchronized,
+                            subControllability, userInfo, resourceSecurity);
     }
 
-    public int Stop() throws NSException
+    public int stop() throws NSException
     {
-        int result = nativeStop();
-        return result;
+        return nativeStop();
     }
 
-    public int   SendMessage(Message message) throws NSException
+    public int   sendMessage(Message message) throws NSException
     {
-        int result = nativeSendMessage(message);
-        return result;
+        return nativeSendMessage(message);
     }
 
-    public void SendSyncInfo ( long messageId , SyncInfo.SyncType syncType) throws NSException
+    public void sendSyncInfo ( long messageId , SyncInfo.SyncType syncType) throws NSException
     {
         nativeSendSyncInfo(messageId, syncType.ordinal());
-        return ;
     }
 
-    public int   EnableRemoteService(String servAdd) throws NSException
+    public Message createMessage () throws NSException
     {
-        int result = nativeEnableRemoteService(servAdd);
-        return result;
+        return nativeCreateMessage();
     }
 
-    public int  DisableRemoteService(String servAdd) throws NSException
+    public int   enableRemoteService(String servAdd) throws NSException
     {
-        int result = nativeDisableRemoteService(servAdd);
-        return result;
+        return nativeEnableRemoteService(servAdd);
     }
 
+    public int  disableRemoteService(String servAdd) throws NSException
+    {
+        return nativeDisableRemoteService(servAdd);
+    }
+
+    public int registerTopic(String topicName) throws NSException
+    {
+        return nativeRegisterTopic(topicName);
+    }
+
+    public int unregisterTopic(String topicName) throws NSException
+    {
+        return nativeUnregisterTopic(topicName);
+    }
+
+    public TopicsList getRegisteredTopicList() throws NSException
+    {
+        return nativeGetRegisteredTopicList();
+    }
+
+    public interface OnConsumerSubscribedListener
+    {
+        public void onConsumerSubscribed(Consumer consumer);
+    }
+
+    public interface OnMessageSynchronizedListener
+    {
+        public void onMessageSynchronized(SyncInfo syncInfo);
+    }
+
+    public native int  nativeStart(OnConsumerSubscribedListener subscribedListener,
+                                                 OnMessageSynchronizedListener messageSynchronized,
+                                                 boolean subControllability, String userInfo, 
+                                                 boolean resourceSecurity) throws NSException;
+    public native int  nativeStop() throws NSException;
+    public native int  nativeSendMessage(Message message) throws NSException;
+    public native void  nativeSendSyncInfo( long messageId , int type) throws NSException;
+    public native Message nativeCreateMessage() throws NSException;
+    public native int  nativeEnableRemoteService(String servAdd) throws NSException;
+    public native int  nativeDisableRemoteService(String servAdd) throws NSException;
+    public native int  nativeRegisterTopic(String topicName) throws NSException;
+    public native int  nativeUnregisterTopic(String topicName) throws NSException;
+    public native TopicsList  nativeGetRegisteredTopicList() throws NSException;
 }

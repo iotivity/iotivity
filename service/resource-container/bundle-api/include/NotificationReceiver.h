@@ -41,12 +41,18 @@ namespace OIC
                 /**
                 * Constructor for NotificationReceiver
                 */
-                NotificationReceiver() {};
+                NotificationReceiver()
+                {
+
+                };
 
                 /**
                 * destructor for NotificationReceiver
                 */
-                ~NotificationReceiver() {};
+                ~NotificationReceiver()
+                {
+
+                };
 
                 /**
                 * Callback method for getting notification from bundle resources

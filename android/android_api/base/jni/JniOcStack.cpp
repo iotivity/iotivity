@@ -39,6 +39,9 @@
 
 JavaVM* g_jvm = nullptr;
 
+jclass g_cls_byte1DArray = nullptr;
+jclass g_cls_byte2DArray = nullptr;
+jclass g_cls_byte3DArray = nullptr;
 jclass g_cls_Integer = nullptr;
 jclass g_cls_int1DArray = nullptr;
 jclass g_cls_int2DArray = nullptr;
@@ -79,6 +82,9 @@ jclass g_cls_OcOicSecAcl_resr = nullptr;
 jclass g_cls_OcOicSecAcl_validity = nullptr;
 jclass g_cls_OcOicSecPdAcl = nullptr;
 jclass g_cls_OcDirectPairDevice = nullptr;
+#ifdef __WITH_TLS__
+jclass g_cls_OcCloudProvisioning = nullptr;
+#endif
 #ifdef WITH_CLOUD
 jclass g_cls_OcAccountManager = nullptr;
 #endif
@@ -144,6 +150,11 @@ jmethodID g_mid_OcOicSecAcl_validity_get_recurrenceLen = nullptr;
 jmethodID g_mid_OcOicSecAcl_resr_get_interfaceLen = nullptr;
 jmethodID g_mid_OcOicSecAcl_get_rownerID = nullptr;
 
+#ifdef __WITH_TLS__
+jmethodID g_mid_OcCloudProvisioning_getIP = nullptr;
+jmethodID g_mid_OcCloudProvisioning_getPort = nullptr;
+#endif
+
 jobject getOcException(JNIEnv* env, const char* file, const char* functionName,
     const int line, const int code, const char* message)
 {
@@ -192,6 +203,22 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
     VERIFY_VARIABLE_NULL(env);
 
     jclass clazz = nullptr;
+
+    //byte
+    clazz = env->FindClass("[B");
+    VERIFY_VARIABLE_NULL(clazz);
+    g_cls_byte1DArray = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    clazz = env->FindClass("[[B");
+    VERIFY_VARIABLE_NULL(clazz);
+    g_cls_byte2DArray = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
+
+    clazz = env->FindClass("[[[B");
+    VERIFY_VARIABLE_NULL(clazz);
+    g_cls_byte3DArray = (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
 
     //Integer
     clazz = env->FindClass("java/lang/Integer");
@@ -586,14 +613,26 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
 
     g_mid_OcOicSecPdAcl_get_recurrences = env->GetMethodID(g_cls_OcOicSecPdAcl, "getRecurrences", "(I)Ljava/lang/String;");
     VERIFY_VARIABLE_NULL(g_mid_OcOicSecPdAcl_get_recurrences);
+#ifdef __WITH_TLS__
+    //OcCloudProvisioning
+    clazz = env->FindClass("org/iotivity/base/OcCloudProvisioning");
+    VERIFY_VARIABLE_NULL(clazz);
+    g_cls_OcCloudProvisioning =  (jclass)env->NewGlobalRef(clazz);
+    env->DeleteLocalRef(clazz);
 
+    g_mid_OcCloudProvisioning_getIP = env->GetMethodID(g_cls_OcCloudProvisioning, "getIP", "()Ljava/lang/String;");
+    VERIFY_VARIABLE_NULL(g_mid_OcCloudProvisioning_getIP);
+
+    g_mid_OcCloudProvisioning_getPort = env->GetMethodID(g_cls_OcCloudProvisioning, "getPort", "()I");
+    VERIFY_VARIABLE_NULL(g_mid_OcCloudProvisioning_getPort);
+#endif
     return JNI_CURRENT_VERSION;
 }
 
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
 {
     LOGI("JNI_OnUnload");
-    JNIEnv* env;
+    JNIEnv* env = nullptr;
 
     if (vm->GetEnv((void **)&env, JNI_CURRENT_VERSION) != JNI_OK)
     {
@@ -601,47 +640,55 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
         return;
     }
 
-
-    env->DeleteGlobalRef(g_cls_Integer);
-    env->DeleteGlobalRef(g_cls_int1DArray);
-    env->DeleteGlobalRef(g_cls_int2DArray);
-    env->DeleteGlobalRef(g_cls_Double);
-    env->DeleteGlobalRef(g_cls_double1DArray);
-    env->DeleteGlobalRef(g_cls_double2DArray);
-    env->DeleteGlobalRef(g_cls_Boolean);
-    env->DeleteGlobalRef(g_cls_boolean1DArray);
-    env->DeleteGlobalRef(g_cls_boolean2DArray);
-    env->DeleteGlobalRef(g_cls_String);
-    env->DeleteGlobalRef(g_cls_String1DArray);
-    env->DeleteGlobalRef(g_cls_String2DArray);
-    env->DeleteGlobalRef(g_cls_LinkedList);
-    env->DeleteGlobalRef(g_cls_Map);
-    env->DeleteGlobalRef(g_cls_MapEntry);
-    env->DeleteGlobalRef(g_cls_Set);
-    env->DeleteGlobalRef(g_cls_Iterator);
-    env->DeleteGlobalRef(g_cls_HashMap);
-    env->DeleteGlobalRef(g_cls_OcResource);
-    env->DeleteGlobalRef(g_cls_OcException);
-    env->DeleteGlobalRef(g_cls_OcRepresentation);
-    env->DeleteGlobalRef(g_cls_OcRepresentation1DArray);
-    env->DeleteGlobalRef(g_cls_OcRepresentation2DArray);
-    env->DeleteGlobalRef(g_cls_OcResourceRequest);
-    env->DeleteGlobalRef(g_cls_OcResourceResponse);
-    env->DeleteGlobalRef(g_cls_OcResourceHandle);
-    env->DeleteGlobalRef(g_cls_OcPresenceHandle);
-    env->DeleteGlobalRef(g_cls_OcRequestHandle);
-    env->DeleteGlobalRef(g_cls_OcPresenceStatus);
-    env->DeleteGlobalRef(g_cls_OcHeaderOption);
-    env->DeleteGlobalRef(g_cls_ObservationInfo);
-    env->DeleteGlobalRef(g_cls_OcResourceIdentifier);
-    env->DeleteGlobalRef(g_cls_OcSecureResource);
-    env->DeleteGlobalRef(g_cls_OcProvisionResult);
-    env->DeleteGlobalRef(g_cls_OcDirectPairDevice);
+    if (env)
+    {
+        env->DeleteGlobalRef(g_cls_Integer);
+        env->DeleteGlobalRef(g_cls_int1DArray);
+        env->DeleteGlobalRef(g_cls_int2DArray);
+        env->DeleteGlobalRef(g_cls_Double);
+        env->DeleteGlobalRef(g_cls_double1DArray);
+        env->DeleteGlobalRef(g_cls_double2DArray);
+        env->DeleteGlobalRef(g_cls_Boolean);
+        env->DeleteGlobalRef(g_cls_boolean1DArray);
+        env->DeleteGlobalRef(g_cls_boolean2DArray);
+        env->DeleteGlobalRef(g_cls_String);
+        env->DeleteGlobalRef(g_cls_String1DArray);
+        env->DeleteGlobalRef(g_cls_String2DArray);
+        env->DeleteGlobalRef(g_cls_LinkedList);
+        env->DeleteGlobalRef(g_cls_Map);
+        env->DeleteGlobalRef(g_cls_MapEntry);
+        env->DeleteGlobalRef(g_cls_Set);
+        env->DeleteGlobalRef(g_cls_Iterator);
+        env->DeleteGlobalRef(g_cls_HashMap);
+        env->DeleteGlobalRef(g_cls_OcResource);
+        env->DeleteGlobalRef(g_cls_OcException);
+        env->DeleteGlobalRef(g_cls_OcRepresentation);
+        env->DeleteGlobalRef(g_cls_OcRepresentation1DArray);
+        env->DeleteGlobalRef(g_cls_OcRepresentation2DArray);
+        env->DeleteGlobalRef(g_cls_OcResourceRequest);
+        env->DeleteGlobalRef(g_cls_OcResourceResponse);
+        env->DeleteGlobalRef(g_cls_OcResourceHandle);
+        env->DeleteGlobalRef(g_cls_OcPresenceHandle);
+        env->DeleteGlobalRef(g_cls_OcRequestHandle);
+        env->DeleteGlobalRef(g_cls_OcPresenceStatus);
+        env->DeleteGlobalRef(g_cls_OcHeaderOption);
+        env->DeleteGlobalRef(g_cls_ObservationInfo);
+        env->DeleteGlobalRef(g_cls_OcResourceIdentifier);
+        env->DeleteGlobalRef(g_cls_OcSecureResource);
+        env->DeleteGlobalRef(g_cls_OcProvisionResult);
+        env->DeleteGlobalRef(g_cls_OcDirectPairDevice);
+        env->DeleteGlobalRef(g_cls_byte1DArray);
+        env->DeleteGlobalRef(g_cls_byte2DArray);
+        env->DeleteGlobalRef(g_cls_byte3DArray);
 #ifdef WITH_CLOUD
-    env->DeleteGlobalRef(g_cls_OcAccountManager);
+        env->DeleteGlobalRef(g_cls_OcAccountManager);
 #endif
-    env->DeleteGlobalRef(g_cls_OcOicSecAcl);
-    env->DeleteGlobalRef(g_cls_OcOicSecAcl_ace);
-    env->DeleteGlobalRef(g_cls_OcOicSecAcl_resr);
-    env->DeleteGlobalRef(g_cls_OcOicSecAcl_validity);
+#ifdef WITH_CLOUD
+        env->DeleteGlobalRef(g_cls_OcCloudProvisioning);
+#endif
+        env->DeleteGlobalRef(g_cls_OcOicSecAcl);
+        env->DeleteGlobalRef(g_cls_OcOicSecAcl_ace);
+        env->DeleteGlobalRef(g_cls_OcOicSecAcl_resr);
+        env->DeleteGlobalRef(g_cls_OcOicSecAcl_validity);
+    }
 }

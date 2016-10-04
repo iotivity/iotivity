@@ -532,8 +532,8 @@ void IncreaseInterval(KeepAliveEntry_t *entry)
 {
     VERIFY_NON_NULL_NR(entry, FATAL);
 
-    OIC_LOG_V(DEBUG, TAG, "Total interval counts: %d", entry->intervalSize);
-    if (entry->intervalSize > entry->currIndex + 1)
+    OIC_LOG_V(DEBUG, TAG, "Total interval counts: %zu", entry->intervalSize);
+    if (entry->intervalSize > (size_t)entry->currIndex + 1)
     {
         entry->currIndex++;
         entry->interval = entry->intervalInfo[entry->currIndex];
@@ -549,8 +549,15 @@ OCStackResult SendDisconnectMessage(const KeepAliveEntry_t *entry)
      * Send empty message to disconnect a connection.
      * If CA get the empty message from RI, CA will disconnect a connection.
      */
+
+    OCStackResult result = RemoveKeepAliveEntry(&entry->remoteAddr);
+    if (result != OC_STACK_OK)
+    {
+        return result;
+    }
+
     CARequestInfo_t requestInfo = { .method = CA_PUT };
-    CAResult_t result = CASendRequest(&entry->remoteAddr, &requestInfo);
+    result = CASendRequest(&entry->remoteAddr, &requestInfo);
     return CAResultToOCResult(result);
 }
 
@@ -572,8 +579,14 @@ OCStackResult SendPingMessage(KeepAliveEntry_t *entry)
     payload->base.type = PAYLOAD_TYPE_REPRESENTATION;
     OCRepPayloadSetPropInt(payload, INTERVAL, entry->interval);
 
-    OCDoResource(NULL, OC_REST_PUT, KEEPALIVE_RESOURCE_URI, &devAddr,
-                 (OCPayload *) payload, CT_ADAPTER_TCP, OC_LOW_QOS, &pingData, NULL, 0);
+    OCStackResult result = OCDoResource(NULL, OC_REST_PUT, KEEPALIVE_RESOURCE_URI, &devAddr,
+                                        (OCPayload *) payload, CT_ADAPTER_TCP, OC_LOW_QOS,
+                                        &pingData, NULL, 0);
+    if (OC_STACK_OK != result)
+    {
+        OIC_LOG(ERROR, TAG, "OCDoResource has failed");
+        return result;
+    }
 
     // Update timeStamp with time sent ping message for next ping message.
     entry->timeStamp = OICGetCurrentTime(TIME_IN_US);
@@ -734,8 +747,14 @@ void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint, bool isConnected)
         OCDevAddr devAddr = { .adapter = OC_ADAPTER_TCP };
         CopyEndpointToDevAddr(endpoint, &devAddr);
 
-        OCDoResource(NULL, OC_REST_DISCOVER, KEEPALIVE_RESOURCE_URI, &devAddr, NULL,
-                     CT_ADAPTER_TCP, OC_HIGH_QOS, &pingData, NULL, 0);
+        OCStackResult result = OCDoResource(NULL, OC_REST_DISCOVER, KEEPALIVE_RESOURCE_URI,
+                                            &devAddr, NULL, CT_ADAPTER_TCP, OC_HIGH_QOS,
+                                            &pingData, NULL, 0);
+        if (OC_STACK_OK != result)
+        {
+            OIC_LOG(ERROR, TAG, "OCDoResource has failed");
+            return;
+        }
     }
     else
     {
@@ -744,7 +763,6 @@ void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint, bool isConnected)
         OCStackResult result = RemoveKeepAliveEntry(endpoint);
         if(result != OC_STACK_OK)
         {
-            OIC_LOG(ERROR, TAG, "Failed to remove entry");
             return;
         }
     }

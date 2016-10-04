@@ -22,8 +22,8 @@
 #include <cstring>
 #include "NSProviderInterface.h"
 #include "NSConstants.h"
-#include "NSUtils.h"
 #include "oic_string.h"
+#include "oic_malloc.h"
 
 namespace OIC
 {
@@ -40,7 +40,7 @@ namespace OIC
         {
             if (consumer != nullptr)
             {
-                m_consumerId.assign(consumer->consumerId, NS_UTILS_UUID_STRING_SIZE);
+                m_consumerId.assign(consumer->consumerId, NS_UTILS_UUID_STRING_SIZE - 1);
             }
         }
 
@@ -49,13 +49,40 @@ namespace OIC
             return m_consumerId;
         }
 
-        int NSConsumer::acceptSubscription(NSConsumer *consumer, bool accepted)
+        int NSConsumer::acceptSubscription(bool accepted)
         {
             NS_LOG(DEBUG, "acceptSubscription - IN");
-            if (consumer != nullptr)
-                return NSAcceptSubscription(consumer->getNSConsumer(), accepted);
+            NSResult result = (NSResult) NSAcceptSubscription(getConsumerId().c_str(), accepted);
             NS_LOG(DEBUG, "acceptSubscription - OUT");
-            return NS_ERROR;
+            return (int) result;
+        }
+
+        NSResult NSConsumer::setTopic(const std::string &topicName)
+        {
+            NS_LOG(DEBUG, "setTopic - IN");
+            NSResult result = (NSResult) NSProviderSetConsumerTopic(getConsumerId().c_str(),
+                              topicName.c_str());
+            NS_LOG(DEBUG, "setTopic - OUT");
+            return result;
+        }
+
+        NSResult NSConsumer::unsetTopic(const std::string &topicName)
+        {
+            NS_LOG(DEBUG, "unsetTopic - IN");
+            NSResult result = (NSResult) NSProviderUnsetConsumerTopic(getConsumerId().c_str(),
+                              topicName.c_str());
+            NS_LOG(DEBUG, "unsetTopic - OUT");
+            return result;
+        }
+
+        NSTopicsList *NSConsumer::getConsumerTopicList()
+        {
+            NS_LOG(DEBUG, "getConsumerTopicList - IN");
+            ::NSTopicLL *topics = NSProviderGetConsumerTopics(getConsumerId().c_str());
+
+            NSTopicsList *nsTopics = new NSTopicsList(topics);
+            NS_LOG(DEBUG, "getConsumerTopicList - OUT");
+            return nsTopics;
         }
     }
 }

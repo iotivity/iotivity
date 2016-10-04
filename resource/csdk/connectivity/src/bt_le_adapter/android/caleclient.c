@@ -130,8 +130,9 @@ static bool CALECheckConnectionStateValue(jint state)
         case GATT_REQUEST_NOT_SUPPORTED:
         case GATT_WRITE_NOT_PERMITTED:
             return true;
+        default:
+            return false;
     }
-    return false;
 }
 
 void CALEClientSetScanInterval(int32_t intervalTime, int32_t workingCount)
@@ -708,6 +709,9 @@ CAResult_t CALEClientSendMulticastMessage(const uint8_t* data,
 
 CAResult_t CALEClientStartUnicastServer(const char* address)
 {
+#ifndef TB_LOG
+    (void)address;
+#endif
     OIC_LOG_V(DEBUG, TAG, "it is not needed in this platform (%s)", address);
 
     return CA_NOT_SUPPORTED;
@@ -2232,6 +2236,8 @@ CAResult_t CALESetValueAndWriteCharacteristic(JNIEnv* env, jobject gatt)
     // reset flag set by writeCharacteristic Callback
     g_isSignalSetFlag = false;
     ca_mutex_unlock(g_threadWriteCharacteristicMutex);
+
+    CALEClientUpdateSendCnt(env);
 
     OIC_LOG(INFO, TAG, "writeCharacteristic success!!");
     return CA_STATUS_OK;
@@ -4474,8 +4480,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicWriteCallback(
         g_isSignalSetFlag = true;
         ca_cond_signal(g_threadWriteCharacteristicCond);
         ca_mutex_unlock(g_threadWriteCharacteristicMutex);
-
-        CALEClientUpdateSendCnt(env);
     }
 
     (*env)->ReleaseStringUTFChars(env, jni_address, address);

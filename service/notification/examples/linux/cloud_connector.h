@@ -1,7 +1,3 @@
-//******************************************************************
-//
-// Copyright 2016 Samsung Electronics All Rights Reserved.
-//
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,21 +14,40 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-
 #include "ocstack.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
 
-OCStackResult OCCloudRegisterLogin(const char *host, const char *auth_provider,
-                                   const char *auth_code, OCClientResponseHandler response);
-OCStackResult OCCloudLogin(const char *host, const char *auth_session,
-                           OCClientResponseHandler response);
-OCStackResult OCCloudLogout(const char *host, const char *auth_session,
-                            OCClientResponseHandler response);
-OCStackResult OCCloudPublish(const char *host, const char *query,
-                             OCClientResponseHandler response, int numArg, ...);
+#define DEFAULT_CONTEXT_VALUE 0x99
+#define DEFAULT_AUTH_SIGNUP "/oic/account"
+#define DEFAULT_AUTH_SESSION "/oic/account/session"
+#define DEFAULT_AUTH_REFRESH "/oic/account/tokenrefresh"
+
+OCStackResult OCCloudSignup(const char *host, const char *deviceId,
+        const char *authprovider, const char *authcode,
+        OCClientResponseHandler response);
+
+OCStackResult OCCloudSession(const char *host, const char *query, const char *uId,
+        const char *deviceId, const char *accesstoken, bool isLogin,
+        OCClientResponseHandler response);
+
+OCStackResult OCCloudRefresh(const char *host, const char *query, const char *uId,
+        const char *deviceId, const char *refreshtoken, OCClientResponseHandler response);
+
+OCStackResult OCCloudLogin(const char *host, const char *uId, const char *deviceId,
+        const char *accesstoken, OCClientResponseHandler response);
+
+OCStackResult OCCloudLogout(const char *host, OCClientResponseHandler response);
+
+OCStackApplicationResult CloudLoginoutCallback(void *ctx,
+        OCDoHandle handle, OCClientResponse *clientResponse);
+
+OCStackApplicationResult CloudSignupCallback(void *ctx,
+        OCDoHandle handle, OCClientResponse *clientResponse);
+
+bool IsCloudLoggedin();
 
 #ifdef __cplusplus
 }

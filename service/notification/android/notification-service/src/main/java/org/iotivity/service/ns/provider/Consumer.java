@@ -19,29 +19,48 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 package org.iotivity.service.ns.provider;
 import org.iotivity.service.ns.common.*;
+import java.util.Vector;
 /**
   * @class   Consumer
   * @brief   This class provides implementation of Notification Consumer object.
   */
 public class Consumer
 {
-    public native int  nativeAcceptSubscription(Consumer consumer, boolean accepted);
 
-    public String mConsumerId;
+    public String mConsumerId = null;
 
     public Consumer(final String consumerId)
     {
         mConsumerId = consumerId;
     }
+
     public String getConsumerId( )
     {
         return mConsumerId;
     }
-    public int AcceptSubscription(Consumer consumer, boolean accepted) throws NSException
+
+    public int acceptSubscription(boolean accepted) throws NSException
     {
-        if (consumer != null)
-            return nativeAcceptSubscription(consumer, accepted);
-        return -1;
+        return nativeAcceptSubscription(mConsumerId, accepted);
     }
 
+    public int setTopic(String topicName) throws NSException
+    {
+        return nativeSetConsumerTopic(mConsumerId, topicName);
+    }
+
+    public int unsetTopic(String topicName) throws NSException
+    {
+        return nativeUnsetConsumerTopic(mConsumerId, topicName);
+    }
+
+    public TopicsList getConsumerTopicList() throws NSException
+    {
+        return nativeGetConsumerTopicList(mConsumerId);
+    }
+
+    public native int  nativeAcceptSubscription(String  consumerId, boolean accepted) throws NSException;
+    public native int  nativeSetConsumerTopic(String consumerId, String topicName) throws NSException;
+    public native int  nativeUnsetConsumerTopic(String consumerId, String topicName) throws NSException;
+    public native TopicsList  nativeGetConsumerTopicList(String consumerId) throws NSException;
 }

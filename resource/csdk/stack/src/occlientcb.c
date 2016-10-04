@@ -18,9 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-
+#include "iotivity_config.h"
 #include "occlientcb.h"
-#include "utlist.h"
+#include <coap/coap.h>
 #include "logger.h"
 #include "oic_malloc.h"
 #include <string.h>
@@ -31,7 +31,6 @@
 #ifdef HAVE_ARDUINO_TIME_H
 #include "Time.h"
 #endif
-#include "coap_time.h"
 
 #include "cacommon.h"
 #include "cainterface.h"
@@ -49,7 +48,7 @@ AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
              OCDevAddr *devAddr, char * requestUri,
              char * resourceTypeName, uint32_t ttl)
 {
-    if (!clientCB || !cbData || !handle || !requestUri || tokenLength > CA_MAX_TOKEN_LEN)
+    if (!clientCB || !cbData || !handle || tokenLength > CA_MAX_TOKEN_LEN)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -156,8 +155,11 @@ void DeleteClientCB(ClientCB * cbNode)
         CADestroyToken (cbNode->token);
         OICFree(cbNode->devAddr);
         OICFree(cbNode->handle);
-        OIC_LOG_V (INFO, TAG, "Deleting callback with uri %s", cbNode->requestUri);
-        OICFree(cbNode->requestUri);
+        if (cbNode->requestUri)
+        {
+            OIC_LOG_V (INFO, TAG, "Deleting callback with uri %s", cbNode->requestUri);
+            OICFree(cbNode->requestUri);
+        }
         if (cbNode->deleteCallback)
         {
             cbNode->deleteCallback(cbNode->context);

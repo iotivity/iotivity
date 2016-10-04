@@ -152,7 +152,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
     env->DeleteLocalRef(clazz);
 
     g_mid_CloudPropProvisioningStatus_ctor = env->GetMethodID(g_cls_CloudPropProvisioningStatus, "<init>",
-                                "(II)V");
+                                "(I)V");
     if (!g_mid_CloudPropProvisioningStatus_ctor) return JNI_ERR;
 
     // Integer

@@ -39,6 +39,11 @@ import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.util.Cbor;
 
+/**
+ * 
+ * This class provides a set of APIs to handle requests to Invite resource.
+ *
+ */
 public class InviteResource extends Resource {
 
     private InviteManager                 mInviteManager = new InviteManager();
@@ -46,8 +51,8 @@ public class InviteResource extends Resource {
     private Cbor<HashMap<String, Object>> mCbor          = new Cbor<>();
 
     public InviteResource() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACL_URI, Constants.INVITE_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACL_URI,
+                Constants.INVITE_URI));
     }
 
     @Override
@@ -61,14 +66,15 @@ public class InviteResource extends Resource {
                 response = handleGetRequest(srcDevice, request);
                 break;
             case POST:
+                // handle send-invitation message
                 response = handlePostRequest(request);
                 break;
             case DELETE:
                 response = handleDeleteRequest(request);
                 break;
             default:
-                throw new BadRequestException(request.getMethod()
-                        + " request type is not supported");
+                throw new BadRequestException(
+                        request.getMethod() + " request type is not supported");
         }
 
         srcDevice.sendResponse(response);
@@ -91,7 +97,7 @@ public class InviteResource extends Resource {
                         request);
                 break;
             case UNSUBSCRIBE:
-                responsePayload = mInviteManager.removeSubscriber(uid);
+                responsePayload = mInviteManager.removeSubscriber(uid, request);
                 break;
             default:
                 break;
@@ -106,13 +112,15 @@ public class InviteResource extends Resource {
     private IResponse handlePostRequest(IRequest request)
             throws ServerException {
 
-        HashMap<String, Object> payload = mCbor.parsePayloadFromCbor(
-                request.getPayload(), HashMap.class);
+        HashMap<String, Object> payload = mCbor
+                .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
+        // check properties in payload
         checkPayloadException(
                 Arrays.asList(Constants.REQ_UUID_ID, Constants.REQ_INVITE),
                 payload);
 
+        // get user uid
         String uid = (String) payload.get(Constants.REQ_UUID_ID);
         ArrayList<HashMap<String, String>> inviteList = (ArrayList<HashMap<String, String>>) payload
                 .get(Constants.REQ_INVITE);
@@ -139,7 +147,9 @@ public class InviteResource extends Resource {
 
         HashMap<String, List<String>> queryParams = request.getUriQueryMap();
 
-        checkQueryException(Constants.REQ_GROUP_ID, queryParams);
+        checkQueryException(
+                Arrays.asList(Constants.REQ_UUID_ID, Constants.REQ_GROUP_ID),
+                queryParams);
 
         String gid = queryParams.get(Constants.REQ_GROUP_ID).get(0);
         String uid = queryParams.get(Constants.REQ_UUID_ID).get(0);

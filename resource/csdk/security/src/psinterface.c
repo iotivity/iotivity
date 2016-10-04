@@ -183,6 +183,7 @@ OCStackResult UpdateSecureResourceInPS(const char *rsrcName, const uint8_t *psPa
     uint8_t *credCbor = NULL;
     uint8_t *pconfCbor = NULL;
     uint8_t *resetPfCbor = NULL;
+    uint8_t *crlCbor = NULL;
 
     int64_t cborEncoderResult = CborNoError;
     OCStackResult ret = GetSecureVirtualDatabaseFromPS(NULL, &dbData, &dbSize);
@@ -196,6 +197,7 @@ OCStackResult UpdateSecureResourceInPS(const char *rsrcName, const uint8_t *psPa
         size_t credCborLen = 0;
         size_t pconfCborLen = 0;
         size_t resetPfCborLen = 0;
+        size_t crlCborLen = 0;
 
         // Gets each secure virtual resource from persistent storage
         // this local scoping intended, for destroying large cbor instances after use
@@ -254,13 +256,26 @@ OCStackResult UpdateSecureResourceInPS(const char *rsrcName, const uint8_t *psPa
                 cborFindResult = cbor_value_dup_byte_string(&curVal, &resetPfCbor, &resetPfCborLen, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Reset Profile Name Value.");
             }
+            int64_t cborFindCrlResult = cbor_value_map_find_value(&cbor, OIC_JSON_CRL_NAME, &curVal);
+            if (CborNoError == cborFindCrlResult && cbor_value_is_byte_string(&curVal))
+            {
+                cborFindCrlResult = cbor_value_dup_byte_string(&curVal, &crlCbor, &crlCborLen, NULL);
+                if (CborNoError != cborFindCrlResult && CborErrorOutOfMemory != cborFindCrlResult)
+                {
+                    OIC_LOG(ERROR, TAG, "Failed Finding optional CRL Name Value.");
+                }
+                else
+                {
+                    OIC_LOG(INFO, TAG, "Successfully Finding optional CRL Name Value.");
+                }
+            }
         }
 
         // Updates the added |psPayload| with the existing secure virtual resource(s)
         // this local scoping intended, for destroying large cbor instances after use
         {
             size_t size = aclCborLen + pstatCborLen + doxmCborLen + amaclCborLen
-                        + svcCborLen + credCborLen + pconfCborLen + resetPfCborLen
+                        + svcCborLen + credCborLen + pconfCborLen + resetPfCborLen + crlCborLen
                         + psSize + 255;
             // This added '255' is arbitrary value that is added to cover the name of the resource, map addition and ending
 
@@ -335,6 +350,13 @@ OCStackResult UpdateSecureResourceInPS(const char *rsrcName, const uint8_t *psPa
                 cborEncoderResult |= cbor_encode_byte_string(&secRsrc, resetPfCbor, resetPfCborLen);
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Reset Profile Value.");
             }
+            if (strcmp(OIC_JSON_CRL_NAME, rsrcName) && crlCborLen)
+            {
+                cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_CRL_NAME, strlen(OIC_JSON_CRL_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Crl Name.");
+                cborEncoderResult |= cbor_encode_byte_string(&secRsrc, crlCbor, crlCborLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Crl Value.");
+            }
 
             cborEncoderResult |= cbor_encoder_close_container(&encoder, &secRsrc);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Array.");
@@ -405,6 +427,7 @@ exit:
     OICFree(credCbor);
     OICFree(pconfCbor);
     OICFree(resetPfCbor);
+    OICFree(crlCbor);
     return ret;
 }
 
@@ -558,6 +581,7 @@ exit:
     OICFree(pstatCbor);
     OICFree(doxmCbor);
     OICFree(resetPfCbor);
+    return ret;
 }
 
 /**

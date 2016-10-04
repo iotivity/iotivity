@@ -22,13 +22,15 @@
 package org.iotivity.cloud.ciserver;
 
 import java.util.HashMap;
+import java.util.Iterator;
 
-import org.iotivity.cloud.base.OCFConstants;
+import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.ServerSystem;
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
+import org.iotivity.cloud.base.exception.ClientException;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.exception.ServerException.UnAuthorizedException;
@@ -41,6 +43,7 @@ import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.base.server.HttpServer;
 import org.iotivity.cloud.base.server.Server;
+import org.iotivity.cloud.util.Bytes;
 import org.iotivity.cloud.util.Cbor;
 import org.iotivity.cloud.util.Log;
 
@@ -49,11 +52,34 @@ import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 
+/**
+ *
+ * This class provides a set of APIs to manage all of request
+ *
+ */
+
 public class DeviceServerSystem extends ServerSystem {
 
+    IRequestChannel mRDServer = null;
+
+    public DeviceServerSystem() {
+        mRDServer = ConnectorPool.getConnection("rd");
+    }
+
+    /**
+     *
+     * This class provides a set of APIs to manage device pool.
+     *
+     */
     public class CoapDevicePool {
         HashMap<String, Device> mMapDevice = new HashMap<>();
 
+        /**
+         * API for adding device information into pool.
+         * 
+         * @param device
+         *            device to be added
+         */
         public void addDevice(Device device) {
             String deviceId = ((CoapDevice) device).getDeviceId();
             synchronized (mMapDevice) {
@@ -61,15 +87,39 @@ public class DeviceServerSystem extends ServerSystem {
             }
         }
 
-        public void removeDevice(Device device) {
+        /**
+         * API for removing device information into pool.
+         * 
+         * @param device
+         *            device to be removed
+         */
+        public void removeDevice(Device device) throws ClientException {
             String deviceId = ((CoapDevice) device).getDeviceId();
             synchronized (mMapDevice) {
                 if (mMapDevice.get(deviceId) == device) {
                     mMapDevice.remove(deviceId);
                 }
             }
+            removeObserveDevice(device);
         }
 
+        private void removeObserveDevice(Device device) throws ClientException {
+            Iterator<String> iterator = mMapDevice.keySet().iterator();
+            while (iterator.hasNext()) {
+                String deviceId = iterator.next();
+                CoapDevice getDevice = (CoapDevice) mDevicePool
+                        .queryDevice(deviceId);
+                getDevice.removeObserveChannel(
+                        ((CoapDevice) device).getRequestChannel());
+            }
+        }
+
+        /**
+         * API for getting device information.
+         * 
+         * @param deviceId
+         *            device id to get device
+         */
         public Device queryDevice(String deviceId) {
             Device device = null;
             synchronized (mMapDevice) {
@@ -81,6 +131,11 @@ public class DeviceServerSystem extends ServerSystem {
 
     CoapDevicePool mDevicePool = new CoapDevicePool();
 
+    /**
+     *
+     * This class provides a set of APIs to manage life cycle of coap message.
+     *
+     */
     @Sharable
     class CoapLifecycleHandler extends ChannelDuplexHandler {
         @Override
@@ -93,6 +148,31 @@ public class DeviceServerSystem extends ServerSystem {
 
                     if (coapDevice.isExpiredTime()) {
                         throw new UnAuthorizedException("token is expired");
+                    }
+
+                    CoapRequest coapRequest = (CoapRequest) msg;
+                    IRequestChannel targetChannel = null;
+                    if (coapRequest.getUriPathSegments()
+                            .contains(Constants.REQ_DEVICE_ID)) {
+                        CoapDevice targetDevice = (CoapDevice) mDevicePool
+                                .queryDevice(coapRequest.getUriPathSegments()
+                                        .get(1));
+                        targetChannel = targetDevice.getRequestChannel();
+                    }
+                    switch (coapRequest.getObserve()) {
+                        case SUBSCRIBE:
+                            coapDevice.addObserveRequest(
+                                    Bytes.bytesToLong(coapRequest.getToken()),
+                                    coapRequest);
+                            coapDevice.addObserveChannel(targetChannel);
+                            break;
+                        case UNSUBSCRIBE:
+                            coapDevice.removeObserveChannel(targetChannel);
+                            coapDevice.removeObserveRequest(
+                                    Bytes.bytesToLong(coapRequest.getToken()));
+                            break;
+                        default:
+                            break;
                     }
 
                 } catch (Throwable t) {
@@ -111,42 +191,51 @@ public class DeviceServerSystem extends ServerSystem {
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) {
-
-            // Authenticated device connected
             Device device = ctx.channel().attr(keyDevice).get();
-            mDevicePool.addDevice(device);
-            device.onConnected();
+            // Authenticated device connected
 
             sendDevicePresence(device.getDeviceId(), "on");
+            mDevicePool.addDevice(device);
+
+            device.onConnected();
         }
 
         @Override
-        public void channelInactive(ChannelHandlerContext ctx) {
+        public void channelInactive(ChannelHandlerContext ctx)
+                throws ClientException {
             Device device = ctx.channel().attr(keyDevice).get();
             // Some cases, this event occurs after new device connected using
             // same di.
             // So compare actual value, and remove if same.
             if (device != null) {
-                mDevicePool.removeDevice(device);
+                sendDevicePresence(device.getDeviceId(), "off");
+
                 device.onDisconnected();
+
+                mDevicePool.removeDevice(device);
                 ctx.channel().attr(keyDevice).remove();
 
-                sendDevicePresence(device.getDeviceId(), "off");
             }
         }
 
-        private void sendDevicePresence(String deviceId, String state) {
+        /**
+         * API for sending state to resource directory
+         * 
+         * @param deviceId
+         *            device id to be sent to resource directory
+         * @param state
+         *            device state to be sent to resource directory
+         */
+        public void sendDevicePresence(String deviceId, String state) {
 
             Cbor<HashMap<String, Object>> cbor = new Cbor<>();
-            IRequestChannel RDServer = ConnectorPool.getConnection("rd");
             HashMap<String, Object> payload = new HashMap<String, Object>();
             payload.put(Constants.REQ_DEVICE_ID, deviceId);
             payload.put(Constants.PRESENCE_STATE, state);
             StringBuffer uriPath = new StringBuffer();
-            uriPath.append("/" + Constants.PREFIX_WELL_KNOWN);
-            uriPath.append("/" + Constants.PREFIX_OCF);
+            uriPath.append("/" + Constants.PREFIX_OIC);
             uriPath.append("/" + Constants.DEVICE_PRESENCE_URI);
-            RDServer.sendRequest(MessageBuilder.createRequest(
+            mRDServer.sendRequest(MessageBuilder.createRequest(
                     RequestMethod.POST, uriPath.toString(), null,
                     ContentFormat.APPLICATION_CBOR,
                     cbor.encodingPayloadToCbor(payload)), null);
@@ -180,15 +269,18 @@ public class DeviceServerSystem extends ServerSystem {
 
                 switch (response.getUriPath()) {
 
-                    case OCFConstants.ACCOUNT_SESSION_FULL_URI:
+                    case OICConstants.ACCOUNT_SESSION_FULL_URI:
+                        HashMap<String, Object> payloadData = mCbor
+                                .parsePayloadFromCbor(response.getPayload(),
+                                        HashMap.class);
 
                         if (response.getStatus() != ResponseStatus.CHANGED) {
                             throw new UnAuthorizedException();
                         }
 
-                        HashMap<String, Object> payloadData = mCbor
-                                .parsePayloadFromCbor(response.getPayload(),
-                                        HashMap.class);
+                        if (payloadData == null) {
+                            throw new BadRequestException("payload is empty");
+                        }
                         int remainTime = (int) payloadData
                                 .get(Constants.EXPIRES_IN);
 
@@ -227,32 +319,34 @@ public class DeviceServerSystem extends ServerSystem {
                 // And check first response is VALID then add or cut
                 CoapRequest request = (CoapRequest) msg;
 
-                HashMap<String, Object> authPayload = null;
-                Device device = null;
-
                 switch (request.getUriPath()) {
                     // Check whether request is about account
-                    case OCFConstants.ACCOUNT_FULL_URI:
-                    case OCFConstants.ACCOUNT_TOKENREFRESH_FULL_URI:
+                    case OICConstants.ACCOUNT_FULL_URI:
+                    case OICConstants.ACCOUNT_TOKENREFRESH_FULL_URI:
 
                         if (ctx.channel().attr(keyDevice).get() == null) {
                             // Create device first and pass to upperlayer
-                            device = new CoapDevice(ctx);
+                            Device device = new CoapDevice(ctx);
                             ctx.channel().attr(keyDevice).set(device);
                         }
 
                         break;
 
-                    case OCFConstants.ACCOUNT_SESSION_FULL_URI:
+                    case OICConstants.ACCOUNT_SESSION_FULL_URI:
 
-                        authPayload = mCbor.parsePayloadFromCbor(
-                                request.getPayload(), HashMap.class);
+                        HashMap<String, Object> authPayload = mCbor
+                                .parsePayloadFromCbor(request.getPayload(),
+                                        HashMap.class);
 
-                        device = ctx.channel().attr(keyDevice).get();
+                        Device device = ctx.channel().attr(keyDevice).get();
 
                         if (device == null) {
                             device = new CoapDevice(ctx);
                             ctx.channel().attr(keyDevice).set(device);
+                        }
+
+                        if (authPayload == null) {
+                            throw new BadRequestException("payload is empty");
                         }
 
                         ((CoapDevice) device).updateDevice(
@@ -263,7 +357,7 @@ public class DeviceServerSystem extends ServerSystem {
 
                         break;
 
-                    case OCFConstants.KEEP_ALIVE_FULL_URI:
+                    case OICConstants.KEEP_ALIVE_FULL_URI:
                         // TODO: Pass ping request to upper layer
                         break;
 

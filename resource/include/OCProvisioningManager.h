@@ -27,6 +27,9 @@
 #include "ocprovisioningmanager.h"
 #include "OCApi.h"
 #include "OCPlatform_impl.h"
+#ifdef __WITH_TLS__
+#include "OCCloudProvisioning.h"
+#endif
 
 namespace OC
 {
@@ -208,6 +211,20 @@ namespace OC
                     std::string uuid,
                     ResultCallBack resultCallback);
 
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+            /**
+             * API to save Trust certificate chain into Cred of SVR.
+             *
+             * @param[in] trustCertChain Trust certificate chain to be saved in Cred of SVR.
+             * @param[in] chainSize Size of trust certificate chain to be saved in Cred of SVR
+             * @param[in] encodingType Encoding type of trust certificate chain to be saved in Cred of SVR
+             * @param[out] credId CredId of saved trust certificate chain in Cred of SVR.
+             * @return  OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
+                                        OicEncodingType_t encodingType, uint16_t *credId);
+#endif // __WITH_X509__ || __WITH_TLS__
+
     };
 
     /**
@@ -308,6 +325,21 @@ namespace OC
              */
             OCStackResult provisionDirectPairing(const OicSecPconf_t *pconf,
                     ResultCallBack resultCallback);
+
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+            /**
+             * API to provision cert.
+             *
+             * @param type type of cred.
+             * @param credId id of cert.
+             * @param resultCallback Callback will be called when provisioning request
+             *                           receives a response from resource server.
+             * @return  ::OC_STACK_OK in case of success and other value otherwise.
+             */
+            OCStackResult provisionTrustCertChain(OicSecCredType_t type, uint16_t credId,
+                    ResultCallBack resultCallback);
+
+#endif // __WITH_X509__ || __WITH_TLS__
 
             /**
              * This method is used to get linked devices' IDs.

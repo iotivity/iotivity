@@ -69,7 +69,9 @@ void getCurrentPath(std::string *pPath)
         strPath = strrchr(buffer, '/');
 
         if (strPath != NULL)
+        {
             *strPath = '\0';
+        }
     }
 #endif
     pPath->append(buffer);
@@ -98,7 +100,9 @@ dynamic_unique_ptr_cast( std::unique_ptr<Base, Del>&& p )
 class TestBundleResource: public BundleResource
 {
     public:
-        virtual void initAttributes() { }
+        virtual void initAttributes()
+        {
+        }
 
         virtual void handleSetAttributesRequest(const RCSResourceAttributes &attr,
                                                 const std::map< std::string, std::string > &queryParams)
@@ -119,7 +123,8 @@ class TestBundleResource: public BundleResource
 class TestBundleResourceWithAttrs: public BundleResource
 {
     public:
-        virtual void initAttributes() {
+        virtual void initAttributes()
+        {
             setAttribute("attrib1", RCSResourceAttributes::Value("test"));
             setAttribute("attrib2", RCSResourceAttributes::Value(1));
             setAttribute("attrib3", RCSResourceAttributes::Value(true));
@@ -145,7 +150,8 @@ class TestBundleResourceWithAttrs: public BundleResource
 class TestSoftSensorResource: public SoftSensorResource
 {
     public:
-        virtual void initAttributes() {
+        virtual void initAttributes()
+        {
             SoftSensorResource::initAttributes();
         }
 
@@ -163,13 +169,13 @@ class TestSoftSensorResource: public SoftSensorResource
             return BundleResource::getAttributes();
         }
 
-        virtual void executeLogic(){
-
+        virtual void executeLogic()
+        {
         }
 
         virtual void onUpdatedInputResource(
-                std::string, std::vector<OIC::Service::RCSResourceAttributes::Value>){
-
+                std::string, std::vector<OIC::Service::RCSResourceAttributes::Value>)
+        {
         }
 };
 
@@ -445,7 +451,8 @@ TEST_F(ResourceContainerBundleAPITest, RequestHandlerForResourceServerSetWhenReg
 {
     mocks.OnCallFunc(ResourceContainerImpl::buildResourceObject).Return(
         RCSResourceObject::Ptr(m_pResourceObject, [](RCSResourceObject *)
-    {}));
+        {
+        }));
 
     mocks.ExpectCall(m_pResourceObject, RCSResourceObject::setGetRequestHandler);
     mocks.ExpectCall(m_pResourceObject, RCSResourceObject::setSetRequestHandler);
@@ -459,7 +466,8 @@ TEST_F(ResourceContainerBundleAPITest, BundleResourceUnregisteredWhenUnregisterR
 {
     mocks.OnCallFunc(ResourceContainerImpl::buildResourceObject).Return(
         RCSResourceObject::Ptr(m_pResourceObject, [](RCSResourceObject *)
-    {}));
+        {
+        }));
 
     mocks.ExpectCall(m_pResourceObject, RCSResourceObject::setGetRequestHandler);
     mocks.ExpectCall(m_pResourceObject, RCSResourceObject::setSetRequestHandler);
@@ -477,7 +485,8 @@ TEST_F(ResourceContainerBundleAPITest,
 {
     mocks.OnCallFunc(ResourceContainerImpl::buildResourceObject).Return(
         RCSResourceObject::Ptr(m_pResourceObject, [](RCSResourceObject *)
-    {}));
+        {
+        }));
 
     mocks.ExpectCall(m_pResourceObject, RCSResourceObject::setGetRequestHandler);
     mocks.ExpectCall(m_pResourceObject, RCSResourceObject::setSetRequestHandler);
@@ -694,7 +703,9 @@ class DiscoverResourceUnitTest: public TestWithMock
             testObject->createResource();
             m_bundleId = "/a/TempHumSensor/Container";
             m_pDiscoverResourceUnit = std::make_shared< DiscoverResourceUnit >( m_bundleId );
-            m_updatedCB = ([](const std::string, std::vector< RCSResourceAttributes::Value >) { });
+            m_updatedCB = ([](const std::string, std::vector< RCSResourceAttributes::Value >)
+                    {
+                    });
         }
 
         void TearDown()
@@ -707,34 +718,35 @@ class DiscoverResourceUnitTest: public TestWithMock
 
 TEST_F(DiscoverResourceUnitTest, startDiscover)
 {
-    std::string type = "Resource.Container";
+    std::string type = "resource.container";
     std::string attributeName = "TestResourceContainer";
 
     m_pDiscoverResourceUnit->startDiscover(
         DiscoverResourceUnit::DiscoverResourceInfo("", type, attributeName), m_updatedCB);
 
-    std::chrono::milliseconds interval(400);
+    std::chrono::milliseconds interval(ResourceContainerTestSimulator::DEFAULT_WAITTIME);
     std::this_thread::sleep_for(interval);
 }
 
 TEST_F(DiscoverResourceUnitTest, onUpdateCalled)
 {
-    std::string type = "Resource.Container";
+    std::string type = "resource.container";
     std::string attributeName = "TestResourceContainer";
 
     m_pDiscoverResourceUnit->startDiscover(
         DiscoverResourceUnit::DiscoverResourceInfo("", type, attributeName), m_updatedCB);
 
-    std::chrono::milliseconds interval(400);
+    std::chrono::milliseconds interval(ResourceContainerTestSimulator::DEFAULT_WAITTIME);
     std::this_thread::sleep_for(interval);
 
     testObject->ChangeAttributeValue();
-
 }
 
 namespace
 {
-    void onCacheCB(const RCSResourceAttributes &) { }
+    void onCacheCB(const RCSResourceAttributes &)
+    {
+    }
 }
 
 class RemoteResourceUnitTest: public TestWithMock
@@ -756,7 +768,9 @@ class RemoteResourceUnitTest: public TestWithMock
             testObject = std::make_shared<ResourceContainerTestSimulator>();
             testObject->defaultRunSimulator();
             m_pRCSRemoteResourceObject = testObject->getRemoteResource();
-            m_updatedCBFromServer = ([](RemoteResourceUnit::UPDATE_MSG, RCSRemoteResourceObject::Ptr) {});
+            m_updatedCBFromServer = ([](RemoteResourceUnit::UPDATE_MSG, RCSRemoteResourceObject::Ptr) 
+                {
+                });
         }
 
         void TearDown()

@@ -23,7 +23,6 @@
 package org.iotivity.cloud.accountserver.resources.account.session;
 
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -33,13 +32,12 @@ import java.util.concurrent.CountDownLatch;
 
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
+import org.iotivity.cloud.accountserver.db.MongoDB;
 import org.iotivity.cloud.accountserver.db.TokenTable;
 import org.iotivity.cloud.accountserver.db.UserTable;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
-import org.iotivity.cloud.base.ServerSystem;
-import org.iotivity.cloud.base.ServerSystem.PersistentPacketReceiver;
 import org.iotivity.cloud.base.device.CoapDevice;
-import org.iotivity.cloud.base.device.Device;
+import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
@@ -48,64 +46,37 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelId;
-import io.netty.util.Attribute;
-
 public class SessionResourceTest {
-    private final String                   DEFAULT_AUTH_LOGIN        = "/.well-known/ocf/account/session";
-    private final String                   DEFAULT_AUTH_LOGOUT       = "/.well-known/ocf/account/session";
-    private String                         di                        = "d0001";
-    private String                         accessToken               = "5f5536c896da7dd437316585b86ef9dd03441c40";
-    private String                         refreshToken              = "rt0001";
+    private static final String            DEFAULT_AUTH_LOGIN        = Constants.ACCOUNT_SESSION_FULL_URI;
+    private static final String            DEFAULT_AUTH_LOGOUT       = Constants.ACCOUNT_SESSION_FULL_URI;
+    private static final String            DEVICE_ID                 = "d0001";
+    private static final String            ACCESS_TOKEN              = "5f5536c896da7dd437316585b86ef9dd03441c40";
+    private static final String            REFRESH_TOKEN             = "rt0001";
+    private static final String            USER_UUID                 = "bc38f243-aab5-44d3-8eb9-4a54ebbaf359";
+    private static final String            AUTH_PROVIDER             = "Github";
     private TypeCastingManager<UserTable>  mUserTableCastingManager  = new TypeCastingManager<>();
     private TypeCastingManager<TokenTable> mTokenTableCastingManager = new TypeCastingManager<>();
-    ServerSystem                           serverSystem              = new ServerSystem();
-    final CountDownLatch                   latch                     = new CountDownLatch(
+    private CountDownLatch                 mLatch                    = new CountDownLatch(
             1);
-    private String                         uuid                      = "bc38f243-aab5-44d3-8eb9-4a54ebbaf359";
-    private String                         authProvider              = "github";
-    private CoapDevice                     mockDevice                = Mockito
+    private CoapDevice                     mMockDevice               = Mockito
             .mock(CoapDevice.class);
     private Cbor<HashMap<String, Object>>  mCbor                     = new Cbor<>();
-    IResponse                              res                       = null;
-
-    @Mock
-    ChannelHandlerContext                  ctx;
-
-    @InjectMocks
-    PersistentPacketReceiver               receiver                  = serverSystem.new PersistentPacketReceiver();
+    private IResponse                      mResponse                 = null;
+    private SessionResource                mSessionResource          = new SessionResource();
 
     @Before
     public void setUp() throws Exception {
-        // create log file
-        Log.createfile();
-        // add resource
-        serverSystem.addResource(new SessionResource());
         MockitoAnnotations.initMocks(this);
-        ChannelId channelId = mock(ChannelId.class);
-        // inject mocked coapDevice into the api
-        Channel channel = mock(Channel.class);
-        Attribute<Device> attribute = mock(Attribute.class);
-        Mockito.doReturn(channel).when(ctx).channel();
-        Mockito.doReturn(attribute).when(channel).attr(Mockito.any());
-        Mockito.doReturn(mockDevice).when(attribute).get();
-        Mockito.doReturn(channelId).when(channel).id();
-        Mockito.doReturn(
-                "0000000141f3edcfc2c3000000000001d0000000000000000000000000000000000000")
-                .when(channelId).asLongText();
+        // reset data base
+        resetDB();
         // register the token table and user table to the DB
         HashMap<String, Object> tokenInfo = mTokenTableCastingManager
                 .convertObjectToMap(makeTokenTable());
@@ -125,245 +96,231 @@ public class SessionResourceTest {
                 CoapResponse resp = (CoapResponse) args[0];
                 System.out.println(
                         "\t----------payload : " + resp.getPayloadString());
-                System.out.println("\t---------method : " + resp.getMethod());
-                res = resp;
-                latch.countDown();
-                return resp;
-            }
-        }).when(mockDevice).sendResponse(Mockito.anyObject());
-        // exception handler mock
-        Mockito.doAnswer(new Answer<Object>() {
-            @Override
-            public CoapResponse answer(InvocationOnMock invocation)
-                    throws Throwable {
-                Object[] args = invocation.getArguments();
-                CoapResponse resp = (CoapResponse) args[0];
-                System.out.println("\t----exception response status : "
-                        + resp.getStatus());
-                res = resp;
-                latch.countDown();
+                System.out.println("\t---------method : " + resp.getStatus());
+                mResponse = resp;
+                mLatch.countDown();
                 return null;
             }
-        }).when(channel).writeAndFlush(Mockito.any());
+        }).when(mMockDevice).sendResponse(Mockito.anyObject());
     }
 
     @After
-    public void endTest() {
-        AccountDBManager.getInstance().deleteRecord(Constants.TOKEN_TABLE,
-                mTokenTableCastingManager.convertObjectToMap(makeTokenTable()));
-        AccountDBManager.getInstance().deleteRecord(Constants.USER_TABLE,
-                mUserTableCastingManager.convertObjectToMap(makeUserTable()));
+    public void resetAccountDatabase() throws Exception {
+        MongoDB mongoDB = new MongoDB(Constants.DB_NAME);
+        mongoDB.createTable(Constants.USER_TABLE);
+        mongoDB.createTable(Constants.TOKEN_TABLE);
+        mongoDB.createTable(Constants.GROUP_TABLE);
     }
 
     @Test
     public void testSignInOnDefaultRequestReceived() throws Exception {
-        System.out.println("\t--------------Sign In Test------------");
-        SignIn(di, accessToken);
-        assertTrue(hashmapCheck(res, "expiresin"));
-        assertTrue(methodCheck(res, ResponseStatus.CHANGED));
+        getTestMethodName();
+        SignIn(DEVICE_ID, ACCESS_TOKEN);
+        assertTrue(hashmapCheck(mResponse, "expiresin"));
+        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
     }
 
-    @Test
+    @Test(expected = ServerException.UnAuthorizedException.class)
+    public void testSignInExpiredTokenOnDefaultRequestReceived()
+            throws Exception {
+        getTestMethodName();
+        TokenTable tokenTable = makeTokenTable();
+        tokenTable.setExpiredtime(0);
+        HashMap<String, Object> tokenInfo = mTokenTableCastingManager
+                .convertObjectToMap(tokenTable);
+        Thread.sleep(500);
+        AccountDBManager.getInstance()
+                .insertAndReplaceRecord(Constants.TOKEN_TABLE, tokenInfo);
+        SignIn(DEVICE_ID, ACCESS_TOKEN);
+    }
+
+    @Test(expected = ServerException.BadRequestException.class)
     public void testSignInWithInvalidMethodOnDefaultRequestReceived()
             throws Exception {
-        System.out.println(
-                "\t--------------Sign In With Invalid RequestMethod Test------------");
-        SignInWithInvalidMethod(di, accessToken);
-        assertTrue(methodCheck(res, ResponseStatus.BAD_REQUEST));
+        getTestMethodName();
+        SignInWithInvalidMethod(DEVICE_ID, ACCESS_TOKEN);
     }
 
-    @Test
+    @Test(expected = ServerException.UnAuthorizedException.class)
     public void testWrongAccessTokenSignInOnDefaultRequestReceived()
             throws Exception {
-        System.out.println(
-                "\t--------------Wrong AccessToken Sign In Test------------");
+        getTestMethodName();
         String accessTokenNotStored = "5689c70ffa245effc563017fee36d250";
         // sign in request
-        SignIn(di, accessTokenNotStored);
-        assertTrue(methodCheck(res, ResponseStatus.UNAUTHORIZED));
+        SignIn(DEVICE_ID, accessTokenNotStored);
     }
 
-    @Test
+    @Test(expected = ServerException.UnAuthorizedException.class)
     public void testInvalidDeviceIdSignInOnDefaultRequestReceived()
             throws Exception {
-        System.out.println(
-                "\t--------------Invalid DeviceId Sign In Test------------");
+        getTestMethodName();
         String diNotStored = "F371C481-38E6-4D47-8320-7688D8A5B58C";
-        SignIn(diNotStored, accessToken);
-        assertTrue(methodCheck(res, ResponseStatus.UNAUTHORIZED));
+        SignIn(diNotStored, ACCESS_TOKEN);
     }
 
     @Test
     public void testSignOutOnDefaultRequestReceived() throws Exception {
-        System.out.println("\t--------------Sign Out Test------------");
-        SignOut(di, accessToken);
-        assertTrue(methodCheck(res, ResponseStatus.CHANGED));
+        getTestMethodName();
+        SignOut(DEVICE_ID, ACCESS_TOKEN);
+        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
     }
 
-    @Test
+    public void getTestMethodName() {
+        StackTraceElement[] stacks = new Throwable().getStackTrace();
+        StackTraceElement currentStack = stacks[1];
+        System.out.println("\t---Test Name : " + currentStack.getMethodName());
+    }
+
+    @Test(expected = ServerException.BadRequestException.class)
     public void testSignInWithNullPayloadOnDefaultRequestReceived()
             throws Exception {
-        System.out.println(
-                "\t--------------Sign In With Null Payload Test------------");
+        getTestMethodName();
         SignInWithNullPayload();
-        assertTrue(methodCheck(res, ResponseStatus.BAD_REQUEST));
     }
 
-    @Test
+    @Test(expected = ServerException.BadRequestException.class)
     public void testSignOutWithNullPayloadOnDefaultRequestReceived()
             throws Exception {
-        System.out.println(
-                "\t--------------Sign Out With Null Payload Test------------");
-        // sign out request
+        getTestMethodName();
         SignOutWithNullPayload();
-        assertTrue(methodCheck(res, ResponseStatus.BAD_REQUEST));
     }
 
-    @Test
+    @Test(expected = ServerException.PreconditionFailedException.class)
     public void testSignInWithBlankHashMapPayloadOnDefaultRequestReceived()
             throws Exception {
-        System.out.println(
-                "\t--------------Sign In With Blank HashMap Payload Test------------");
+        getTestMethodName();
         SignInWithBlankHashMapPayload();
-        assertTrue(methodCheck(res, ResponseStatus.PRECONDITION_FAILED));
     }
 
-    @Test
+    @Test(expected = ServerException.PreconditionFailedException.class)
     public void testSignOutWithBlankHashMapPayloadOnDefaultRequestReceived()
             throws Exception {
-        System.out.println(
-                "\t--------------Sign Out With Blank HashMap Test------------");
+        getTestMethodName();
         SignOutWithBlankHashMapPayload();
-        assertTrue(methodCheck(res, ResponseStatus.PRECONDITION_FAILED));
     }
 
-    public void SignInWithInvalidMethod(String di, String accessToken)
+    private void SignInWithInvalidMethod(String di, String accessToken)
             throws Exception {
         System.out.println("-----Sign In With Invalid Method (GET)");
         IRequest request = null;
         request = SignInWithInvalidMethodRequest(di, accessToken);
-        receiver.channelRead(ctx, request);
+        mSessionResource.onDefaultRequestReceived(mMockDevice, request);
     }
 
-    public void SignIn(String di, String accessToken) throws Exception {
+    private void SignIn(String di, String accessToken) throws Exception {
         System.out.println("-----Sign In");
         IRequest request = null;
         request = SignInRequest(di, accessToken);
-        receiver.channelRead(ctx, request);
+        mSessionResource.onDefaultRequestReceived(mMockDevice, request);
     }
 
-    public void SignInWithBlankHashMapPayload() throws Exception {
+    private void SignInWithBlankHashMapPayload() throws Exception {
         System.out.println("-----Sign In With Blank Hashmap Payload");
         IRequest request = null;
         request = SignInBlankHashmapPayloadRequest();
-        receiver.channelRead(ctx, request);
+        mSessionResource.onDefaultRequestReceived(mMockDevice, request);
     }
 
-    public void SignInWithNullPayload() throws Exception {
+    private void SignInWithNullPayload() throws Exception {
         System.out.println("-----Sign In With Null Payload");
         IRequest request = null;
         request = SignInNullPayloadRequest();
-        receiver.channelRead(ctx, request);
+        mSessionResource.onDefaultRequestReceived(mMockDevice, request);
     }
 
-    public void SignOut(String di, String accessToken) throws Exception {
+    private void SignOut(String di, String accessToken) throws Exception {
         System.out.println("-----Sign Out");
         IRequest request = null;
         request = SignOutRequest(di, accessToken);
-        receiver.channelRead(ctx, request);
+        mSessionResource.onDefaultRequestReceived(mMockDevice, request);
     }
 
-    public void SignOutWithBlankHashMapPayload() throws Exception {
+    private void SignOutWithBlankHashMapPayload() throws Exception {
         System.out.println("-----Sign Out With Blank Hashmap Payload");
         IRequest request = null;
         request = SignOutBlankHashmapPayloadRequest();
-        receiver.channelRead(ctx, request);
+        mSessionResource.onDefaultRequestReceived(mMockDevice, request);
     }
 
-    public void SignOutWithNullPayload() throws Exception {
+    private void SignOutWithNullPayload() throws Exception {
         System.out.println("-----Sign Out With Null Payload");
         IRequest request = null;
         request = SignOutNullPayloadRequest();
-        receiver.channelRead(ctx, request);
+        mSessionResource.onDefaultRequestReceived(mMockDevice, request);
     }
 
-    public IRequest SignInNullPayloadRequest() {
+    private IRequest SignInNullPayloadRequest() {
         IRequest request = null;
         request = MessageBuilder.createRequest(RequestMethod.POST,
                 DEFAULT_AUTH_LOGIN, null);
         return request;
     }
 
-    public IRequest SignInBlankHashmapPayloadRequest() {
+    private IRequest SignInBlankHashmapPayloadRequest() {
         IRequest request = null;
         HashMap<String, Object> payloadData = new HashMap<String, Object>();
-        Cbor<HashMap<String, Object>> cbor = new Cbor<HashMap<String, Object>>();
         request = MessageBuilder.createRequest(RequestMethod.POST,
                 DEFAULT_AUTH_LOGIN, null, ContentFormat.APPLICATION_CBOR,
-                cbor.encodingPayloadToCbor(payloadData));
+                mCbor.encodingPayloadToCbor(payloadData));
         return request;
     }
 
-    public IRequest SignOutNullPayloadRequest() {
+    private IRequest SignOutNullPayloadRequest() {
         IRequest request = null;
         request = MessageBuilder.createRequest(RequestMethod.POST,
                 DEFAULT_AUTH_LOGOUT, null);
         return request;
     }
 
-    public IRequest SignOutBlankHashmapPayloadRequest() {
+    private IRequest SignOutBlankHashmapPayloadRequest() {
         IRequest request = null;
         HashMap<String, Object> payloadData = new HashMap<String, Object>();
-        Cbor<HashMap<String, Object>> cbor = new Cbor<HashMap<String, Object>>();
         request = MessageBuilder.createRequest(RequestMethod.POST,
                 DEFAULT_AUTH_LOGOUT, null, ContentFormat.APPLICATION_CBOR,
-                cbor.encodingPayloadToCbor(payloadData));
+                mCbor.encodingPayloadToCbor(payloadData));
         return request;
     }
 
-    public IRequest SignInWithInvalidMethodRequest(String deviceId,
+    private IRequest SignInWithInvalidMethodRequest(String deviceId,
             String accessToken) {
         IRequest request = null;
         HashMap<String, Object> payloadData = new HashMap<String, Object>();
         payloadData.put("accesstoken", accessToken);
         payloadData.put("status", true);
         payloadData.put("di", deviceId);
-        Cbor<HashMap<String, Object>> cbor = new Cbor<HashMap<String, Object>>();
         request = MessageBuilder.createRequest(RequestMethod.GET,
                 DEFAULT_AUTH_LOGIN, null, ContentFormat.APPLICATION_CBOR,
-                cbor.encodingPayloadToCbor(payloadData));
+                mCbor.encodingPayloadToCbor(payloadData));
         return request;
     }
 
-    public IRequest SignInRequest(String deviceId, String accessToken) {
+    private IRequest SignInRequest(String deviceId, String accessToken) {
         IRequest request = null;
         HashMap<String, Object> payloadData = new HashMap<String, Object>();
         payloadData.put("accesstoken", accessToken);
         payloadData.put("login", true);
         payloadData.put("di", deviceId);
-        payloadData.put("uid", uuid);
-        Cbor<HashMap<String, Object>> cbor = new Cbor<HashMap<String, Object>>();
+        payloadData.put("uid", USER_UUID);
         request = MessageBuilder.createRequest(RequestMethod.POST,
                 DEFAULT_AUTH_LOGIN, null, ContentFormat.APPLICATION_CBOR,
-                cbor.encodingPayloadToCbor(payloadData));
+                mCbor.encodingPayloadToCbor(payloadData));
         return request;
     }
 
-    public IRequest SignOutRequest(String deviceId, String accessToken) {
+    private IRequest SignOutRequest(String deviceId, String accessToken) {
         IRequest request = null;
         HashMap<String, Object> payloadData = new HashMap<String, Object>();
         payloadData.put("accesstoken", accessToken);
         payloadData.put("login", false);
         payloadData.put("di", deviceId);
-        payloadData.put("uid", uuid);
-        Cbor<HashMap<String, Object>> cbor = new Cbor<HashMap<String, Object>>();
+        payloadData.put("uid", USER_UUID);
         request = MessageBuilder.createRequest(RequestMethod.POST,
                 DEFAULT_AUTH_LOGOUT, null, ContentFormat.APPLICATION_CBOR,
-                cbor.encodingPayloadToCbor(payloadData));
+                mCbor.encodingPayloadToCbor(payloadData));
         return request;
     }
 
-    public boolean hashmapCheck(IResponse response, String propertyName) {
+    private boolean hashmapCheck(IResponse response, String propertyName) {
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(response.getPayload(), HashMap.class);
         if (payloadData.get(propertyName) != null)
@@ -372,7 +329,7 @@ public class SessionResourceTest {
             return false;
     }
 
-    public boolean methodCheck(IResponse response,
+    private boolean methodCheck(IResponse response,
             ResponseStatus responseStatus) {
         if (responseStatus == response.getStatus())
             return true;
@@ -382,11 +339,11 @@ public class SessionResourceTest {
 
     private TokenTable makeTokenTable() {
         TokenTable tokenInfo = new TokenTable();
-        tokenInfo.setUuid(uuid);
-        tokenInfo.setDid(di);
-        tokenInfo.setAccesstoken(accessToken);
-        tokenInfo.setRefreshtoken(refreshToken);
-        tokenInfo.setProvider(authProvider);
+        tokenInfo.setUuid(USER_UUID);
+        tokenInfo.setDid(DEVICE_ID);
+        tokenInfo.setAccesstoken(ACCESS_TOKEN);
+        tokenInfo.setRefreshtoken(REFRESH_TOKEN);
+        tokenInfo.setProvider(AUTH_PROVIDER);
         tokenInfo.setExpiredtime(-1);
         Date currentTime = new Date();
         DateFormat transFormat = new SimpleDateFormat("yyyyMMddkkmm");
@@ -396,9 +353,19 @@ public class SessionResourceTest {
 
     private UserTable makeUserTable() {
         UserTable userInfo = new UserTable();
-        userInfo.setUuid(uuid);
-        userInfo.setProvider(authProvider);
+        userInfo.setUuid(USER_UUID);
+        userInfo.setProvider(AUTH_PROVIDER);
         userInfo.setUserid("userId");
         return userInfo;
+    }
+
+    private void resetDB() throws Exception {
+        MongoDB mongoDB = new MongoDB(Constants.DB_NAME);
+        mongoDB.deleteTable(Constants.GROUP_TABLE);
+        mongoDB.createTable(Constants.GROUP_TABLE);
+        mongoDB.deleteTable(Constants.USER_TABLE);
+        mongoDB.createTable(Constants.USER_TABLE);
+        mongoDB.deleteTable(Constants.TOKEN_TABLE);
+        mongoDB.createTable(Constants.TOKEN_TABLE);
     }
 }

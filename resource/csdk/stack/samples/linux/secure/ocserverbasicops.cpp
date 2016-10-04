@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -31,7 +32,6 @@
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>
 #endif
-#include "platform_features.h"
 #include "ocstack.h"
 #include "logger.h"
 #include "ocpayload.h"

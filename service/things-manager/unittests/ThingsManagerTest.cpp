@@ -944,10 +944,12 @@ void foundResources(std::vector< std::shared_ptr< OC::OCResource > > listOfResou
             lights.push_back((hostAddress + resourceURI));
 
             g_light = (*rsrc);
+            cv2.notify_all();
         }
         else
         {
             configurationResource = (*rsrc);
+            cv2.notify_all();
         }
     }
     cv2.notify_all();
@@ -1132,7 +1134,10 @@ TEST_F(ThingsManagerTest, testAddActionSetAllBulbOff)
 
     mocks.ExpectCallFunc(onPut).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1205,7 +1210,10 @@ TEST_F(ThingsManagerTest, testAddActionSetAllBulbOn)
 
     mocks.ExpectCallFunc(onPut).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1302,7 +1310,10 @@ TEST_F(ThingsManagerTest, testExecuteActionSetAllBulbOn)
 
     mocks.ExpectCallFunc(onPost).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     if (g_resource)
     {
@@ -1328,7 +1339,10 @@ TEST_F(ThingsManagerTest, testExecuteActionSetAllBulbOff)
 {
     mocks.ExpectCallFunc(onPost).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     if (g_resource)
     {
@@ -1358,7 +1372,10 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithDelay)
 
     mocks.ExpectCallFunc(onPut).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1380,7 +1397,10 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithDelay)
 
     mocks.ExpectCallFunc(onPost).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     if (g_resource)
     {
@@ -1402,7 +1422,10 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithDelayEqulasZero)
 
     mocks.ExpectCallFunc(onPut).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1442,7 +1465,10 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithInvalidDelay)
 
     mocks.ExpectCallFunc(onPut).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1483,7 +1509,10 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithDelayWithResourceNull)
 
     mocks.ExpectCallFunc(onPut).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1514,7 +1543,10 @@ TEST_F(ThingsManagerTest, testCancelActionSet)
 {
     mocks.ExpectCallFunc(onPost).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     if (g_resource)
     {
@@ -1539,7 +1571,10 @@ TEST_F(ThingsManagerTest, testDeleteActionSet)
 {
     mocks.ExpectCallFunc(onPut).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     if (g_resource)
     {
@@ -1564,7 +1599,10 @@ TEST_F(ThingsManagerTest, testGetActionSet)
 {
     mocks.ExpectCallFunc(onPost).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     if (g_resource)
     {
@@ -1596,12 +1634,15 @@ TEST_F(ThingsManagerTest, testGetConfigurations)
 
     mocks.ExpectCallFunc(onGet).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     vector<string> types;
     types.push_back("oic.wk.con");
 
-    result = groupMgr->findCandidateResources(types, &foundResources);
+    result = groupMgr->findCandidateResources(types, &foundResources, 3);
 
     std::mutex blocker;
     std::unique_lock < std::mutex > lock(blocker);
@@ -1625,7 +1666,7 @@ TEST_F(ThingsManagerTest, testGetConfigurationsEmptyConfiguration)
     vector<string> types;
     types.push_back("oic.wk.con");
 
-    result = groupMgr->findCandidateResources(types, &foundResources);
+    result = groupMgr->findCandidateResources(types, &foundResources, 3);
 
     std::mutex blocker;
     std::unique_lock < std::mutex > lock(blocker);
@@ -1670,7 +1711,10 @@ TEST_F(ThingsManagerTest, testDoBootstrap)
 
     mocks.ExpectCallFunc(onGetBootstrapInformation).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
     result = g_thingsConf->doBootstrap(&onGetBootstrapInformation);
     Wait();
     EXPECT_TRUE(result == OC_STACK_OK);
@@ -1700,11 +1744,14 @@ TEST_F(ThingsManagerTest, testUpdateConfiguration)
 
     mocks.ExpectCallFunc(onUpdate).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     vector<string> types;
     types.push_back("oic.wk.con");
-    result = groupMgr->findCandidateResources(types, &foundResources);
+    result = groupMgr->findCandidateResources(types, &foundResources, 3);
 
     std::mutex blocker2;
     std::unique_lock < std::mutex > lock2(blocker2);
@@ -1728,7 +1775,7 @@ TEST_F(ThingsManagerTest, testUpdateConfigurationEmptyConfiguration)
 
     vector<string> types;
     types.push_back("oic.wk.con");
-    result = groupMgr->findCandidateResources(types, &foundResources);
+    result = groupMgr->findCandidateResources(types, &foundResources, 3);
 
     std::mutex blocker2;
     std::unique_lock < std::mutex > lock2(blocker2);
@@ -1768,11 +1815,14 @@ TEST_F(ThingsManagerTest, testReboot)
 
     mocks.ExpectCallFunc(onReboot).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     vector<string> types;
     types.push_back("oic.wk.mnt");
-    result = groupMgr->findCandidateResources(types, &foundResources);
+    result = groupMgr->findCandidateResources(types, &foundResources, 3);
 
     std::mutex blocker;
     std::unique_lock < std::mutex > lock(blocker);
@@ -1805,11 +1855,14 @@ TEST_F(ThingsManagerTest, testFactoryReset)
 
     mocks.ExpectCallFunc(onFactoryReset).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     vector<string> types;
     types.push_back("oic.wk.mnt");
-    result = groupMgr->findCandidateResources(types, &foundResources);
+    result = groupMgr->findCandidateResources(types, &foundResources, 3);
 
     std::mutex blocker;
     std::unique_lock < std::mutex > lock(blocker);

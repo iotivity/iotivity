@@ -67,6 +67,10 @@ public class SimpleBase extends Activity implements DrawerFragment.DrawerCallbac
                 fragment = new BluetoothFragment();
                 break;
             case 2:
+                mTitle = getString(R.string.title_cloud);
+                fragment = new CloudFragment();
+                break;
+            case 3:
                 mTitle = getString(R.string.title_template);
                 fragment = new TemplateFragment();
                 break;

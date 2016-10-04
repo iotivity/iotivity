@@ -58,6 +58,18 @@ static bool gWiFiCBflag = false;
 static char gSSID[OIC_STRING_MAX_VALUE];
 static char gPasswd[OIC_STRING_MAX_VALUE];
 
+void PrintMenu()
+{
+    cout << "========================" << endl;
+    cout << "A: Enabled Security" << endl;
+    cout << "B: Init & Start EasySetup" << endl;
+    cout << "C: Set DeviceInfo" << endl;
+    cout << "D: Connect to TargetAP" << endl;
+    cout << "E: Show Menu......." << endl;
+    cout << "Q: Terminate" << endl;
+    cout << "========================" << endl;
+}
+
 void WiFiProvCbInApp(ESWiFiProvData *eventData)
 {
     cout << "WiFiProvCbInApp IN" << endl;
@@ -89,6 +101,7 @@ void WiFiProvCbInApp(ESWiFiProvData *eventData)
     }
 
     cout << "WiFiProvCbInApp OUT" << endl;
+    PrintMenu();
 }
 
 void DevConfProvCbInApp(ESDevConfProvData *eventData)
@@ -103,8 +116,8 @@ void DevConfProvCbInApp(ESDevConfProvData *eventData)
 
     cout << "Language : " << eventData->language << endl;
     cout << "Country : " << eventData->country << endl;
-
     cout << "DevConfProvCbInApp OUT" << endl;
+    PrintMenu();
 }
 
 void CloudDataProvCbInApp(ESCloudProvData *eventData)
@@ -120,9 +133,8 @@ void CloudDataProvCbInApp(ESCloudProvData *eventData)
     cout << "AuthCode : " << eventData->authCode << endl;
     cout << "AuthProvider : " << eventData->authProvider << endl;
     cout << "CI Server : " << eventData->ciServer << endl;
-
     cout << "CloudDataProvCbInApp OUT" << endl;
-
+    PrintMenu();
 }
 
 ESProvisioningCallbacks gCallbacks = {
@@ -130,18 +142,6 @@ ESProvisioningCallbacks gCallbacks = {
     .DevConfProvCb = &DevConfProvCbInApp,
     .CloudDataProvCb = &CloudDataProvCbInApp
 };
-
-void PrintMenu()
-{
-    cout << "========================" << endl;
-    cout << "A: Enabled Security" << endl;
-    cout << "B: Init & Start EasySetup" << endl;
-    cout << "C: Set DeviceInfo" << endl;
-    cout << "D: Connect to TargetAP" << endl;
-    cout << "Q: Terminate" << endl;
-    cout << "ENTER : Show Menu......." << endl;
-    cout << "========================" << endl;
-}
 
 FILE* server_fopen(const char *path, const char *mode)
 {
@@ -312,7 +312,11 @@ gboolean mainThread(GIOChannel *source, GIOCondition condition, gpointer data)
 
         case 'A': // Enable Security
         case 'a':
-            //EnableSecurity();
+#ifdef __WITH_DTLS__
+            EnableSecurity();
+#else
+            cout << "Sample is not built with secured mode" << endl;
+#endif
             PrintMenu();
             break;
 
@@ -331,6 +335,11 @@ gboolean mainThread(GIOChannel *source, GIOCondition condition, gpointer data)
         case 'D': // Start to connect target AP
         case 'd':
             ConnectToTargetAP();
+            PrintMenu();
+            break;
+
+        case 'E': // Print Menu
+        case 'e':
             PrintMenu();
             break;
 
@@ -356,7 +365,7 @@ int main()
 
     gMainloop = g_main_loop_new (NULL, FALSE);
     if(gMainloop == NULL) {
-        cout << "Create Min Loop Error" << endl;
+        cout << "Create Main Loop Error" << endl;
         return 0;
     }
 

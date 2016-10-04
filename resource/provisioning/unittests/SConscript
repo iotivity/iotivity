@@ -40,6 +40,7 @@ provisiontests_env.PrependUnique(CPPPATH = [
 		'../../csdk/security/provisioning/include',
 		'../../csdk/security/provisioning/include/oxm',
 		'../../csdk/security/provisioning/include/internal',
+		'../../csdk/security/provisioning/include/cloud',
 		'../../csdk/stack/include/internal',
 		'../../csdk/connectivity/api',
 		'../../csdk/connectivity/inc/pkix',
@@ -88,7 +89,16 @@ if provisiontests_env.get('LOGGING'):
 ######################################################################
 # Source files and Targets
 ######################################################################
-unittests = provisiontests_env.Program('provisiontests', ['OCProvisioningTest.cpp'])
+ocprovisiontest_src = [
+    'OCProvisioningTest.cpp'
+    ]
+
+if provisiontests_env.get('WITH_TCP') == True:
+    ocprovisiontest_src = ocprovisiontest_src + [
+    'OCCloudProvisioningTest.cpp'
+    ]
+
+unittests = provisiontests_env.Program('provisiontests', ocprovisiontest_src)
 
 Alias("provisiontests", [unittests])
 

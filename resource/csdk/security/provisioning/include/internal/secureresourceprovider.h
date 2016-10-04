@@ -64,7 +64,7 @@ OCStackResult SRPGetCredResource(void *ctx, const OCProvisionDev_t *selectedDevi
 OCStackResult SRPGetACLResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
         OCProvisionResultCB resultCallback);
 
-#ifdef __WITH_X509__
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
 /**
  * API to send CRL information to resource.
  *
@@ -76,7 +76,45 @@ OCStackResult SRPGetACLResource(void *ctx, const OCProvisionDev_t *selectedDevic
  */
 OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
         OicSecCrl_t *crl, OCProvisionResultCB resultCallback);
-#endif // __WITH_X509__
+
+/**
+ * function to provision Trust certificate chain to devices.
+ *
+ * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] type Type of credentials to be provisioned to the device.
+ * @param[in] credId CredId of trust certificate chain to be provisioned to the device.
+ * @param[in] selectedDeviceInfo Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request recieves a response from first resource server.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId,
+                                      const OCProvisionDev_t *selectedDeviceInfo,
+                                      OCProvisionResultCB resultCallback);
+
+/**
+ * function to save Trust certificate chain into Cred of SVR.
+ *
+ * @param[in] trustCertChain Trust certificate chain to be saved in Cred of SVR.
+ * @param[in] chainSize Size of trust certificate chain to be saved in Cred of SVR
+ * @param[in] encodingType Encoding type of trust certificate chain to be saved in Cred of SVR
+ * @param[out] credId CredId of saved trust certificate chain in Cred of SVR.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
+                                        OicEncodingType_t encodingType,uint16_t *credId);
+
+/**
+ * function to save own certificate chain into Cred of SVR.
+ *
+ * @param[in] cert own certificate chain to be saved in Cred of SVR.
+ * @param[in] key own secret key to be saved in Cred of SVR.
+ * @param[out] credId CredId of saved trust certificate chain in Cred of SVR.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPSaveOwnCertChain(OicSecCert_t * cert, OicSecKey_t * key, uint16_t *credId);
+
+#endif // __WITH_X509__ || __WITH_TLS__
 /**
  * API to send Direct-Pairing Configuration to a device.
  *

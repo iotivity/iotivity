@@ -36,7 +36,8 @@ extern "C" {
 
 #include "plugintypes.h"
 #include "telegesis_socket.h"
-#include "utlist.h"
+
+#include <coap/utlist.h>
 
 // TODO: Use OICThread instead of pthread directly.
 // TODO: Use OICMutex instead of mutex directly.

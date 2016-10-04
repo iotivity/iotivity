@@ -36,14 +36,20 @@ import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.util.Cbor;
 
+/**
+ *
+ * This class provides a set of APIs to send requests about group to account
+ *
+ */
+
 public class AclGroup extends Resource {
 
     private IRequestChannel               mAuthServer = null;
     private Cbor<HashMap<String, Object>> mCbor       = new Cbor<>();
 
     public AclGroup() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACL_URI, Constants.GROUP_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACL_URI,
+                Constants.GROUP_URI));
 
         mAuthServer = ConnectorPool.getConnection("account");
     }
@@ -57,12 +63,16 @@ public class AclGroup extends Resource {
                 HashMap<String, Object> payloadData = mCbor
                         .parsePayloadFromCbor(request.getPayload(),
                                 HashMap.class);
+                if (payloadData == null) {
+                    throw new BadRequestException("payload is null");
+                }
                 if (getUriPathSegments()
                         .containsAll(request.getUriPathSegments())) {
                     payloadData.put(Constants.REQ_GROUP_MASTER_ID,
                             srcDevice.getUserId());
                 } else {
                     if (payloadData.isEmpty()) {
+                        payloadData = new HashMap<>();
                         payloadData.put(Constants.REQ_MEMBER_LIST,
                                 Arrays.asList(srcDevice.getUserId()));
                     }

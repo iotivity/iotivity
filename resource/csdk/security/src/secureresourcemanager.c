@@ -32,7 +32,9 @@
 #include "securevirtualresourcetypes.h"
 #include "secureresourcemanager.h"
 #include "srmresourcestrings.h"
-
+#ifdef __WITH_TLS__
+#include "pkix_interface.h"
+#endif //__WITH_TLS__
 #define TAG  "SRM"
 
 #ifdef __WITH_X509__
@@ -325,12 +327,13 @@ OCStackResult SRMInitSecureResources()
     }
 #endif
 #ifdef __WITH_TLS__
-    if(CA_STATUS_OK != CAregisterTlsCredentialsHandler(GetDtlsPskCredentials))
+    if (CA_STATUS_OK != CAregisterTlsCredentialsHandler(GetDtlsPskCredentials))
     {
         OIC_LOG(ERROR, TAG, "Failed to revert TLS credential handler.");
         ret = OC_STACK_ERROR;
     }
     CAregisterPkixInfoHandler(GetPkixInfo);
+    CAregisterGetCredentialTypesHandler(InitCipherSuiteList);
 #endif
 #if defined(__WITH_X509__)
     CARegisterDTLSX509CredentialsHandler(GetDtlsX509Credentials);
@@ -373,6 +376,7 @@ bool SRMIsSecurityResourceURI(const char* uri)
         OIC_RSRC_PCONF_URI,
         OIC_RSRC_DPAIRING_URI,
         OIC_RSRC_VER_URI,
+        OC_RSRVD_PROV_CRL_URL
     };
 
     // Remove query from Uri for resource string comparison

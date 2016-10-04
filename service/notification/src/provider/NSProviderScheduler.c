@@ -164,20 +164,26 @@ void NSPushQueue(NSSchedulerType schedulerType, NSTaskType taskType, void* data)
     if (NSHeadMsg[schedulerType] == NULL)
     {
         NSHeadMsg[schedulerType] = (NSTask*) OICMalloc(sizeof(NSTask));
-        NSHeadMsg[schedulerType]->taskType = taskType;
-        NSHeadMsg[schedulerType]->taskData = data;
-        NSHeadMsg[schedulerType]->nextTask = NULL;
-        NSTailMsg[schedulerType] = NSHeadMsg[schedulerType];
+        if(NSHeadMsg[schedulerType])
+        {
+            NSHeadMsg[schedulerType]->taskType = taskType;
+            NSHeadMsg[schedulerType]->taskData = data;
+            NSHeadMsg[schedulerType]->nextTask = NULL;
+            NSTailMsg[schedulerType] = NSHeadMsg[schedulerType];
+        }
     }
     else
     {
         NSTask* newNode = (NSTask*) OICMalloc(sizeof(NSTask));
-        newNode->taskType = taskType;
-        newNode->taskData = data;
-        newNode->nextTask = NULL;
+        if(newNode)
+        {
+            newNode->taskType = taskType;
+            newNode->taskData = data;
+            newNode->nextTask = NULL;
 
-        NSTailMsg[schedulerType]->nextTask = newNode;
-        NSTailMsg[schedulerType] = newNode;
+            NSTailMsg[schedulerType]->nextTask = newNode;
+            NSTailMsg[schedulerType] = newNode;
+        }
     }
 
     sem_post(&(NSSemaphore[schedulerType]));
@@ -262,6 +268,34 @@ void NSFreeData(NSSchedulerType type, NSTask * task)
                 break;
         }
     }
-
+    else if (type == TOPIC_SCHEDULER)
+    {
+        switch (task->taskType)
+        {
+            case TASK_SUBSCRIBE_TOPIC:
+            case TASK_UNSUBSCRIBE_TOPIC:
+            {
+                NSCacheTopicSubData * data = task->taskData;
+                OICFree(data->topicName);
+                OICFree(data);
+            }
+                break;
+            case TASK_REGISTER_TOPIC:
+            case TASK_UNREGISTER_TOPIC:
+            {
+                OICFree(task->taskData);
+            }
+                break;
+            case TASK_SEND_TOPICS:
+            case TASK_POST_TOPIC:
+            {
+                NS_LOG(DEBUG, "TASK_POST_TOPIC : ");
+                NSFreeOCEntityHandlerRequest((OCEntityHandlerRequest*) task->taskData);
+            }
+                break;
+            default:
+                break;
+        }
+    }
     NS_LOG(DEBUG, "NSFreeData - OUT");
 }

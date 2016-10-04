@@ -26,7 +26,6 @@ extern "C" {
 #endif // __cplusplus
 
 #include "NSStructs.h"
-#include "NSStorageAdapter.h"
 #include "NSConsumerMemoryCache.h"
 #include "NSConsumerCommunication.h"
 
@@ -42,7 +41,7 @@ void NSSetProviderCacheList(NSCacheList *);
 
 void NSDestroyMessageCacheList();
 
-void NSDestroyProviderCacheList();
+void NSDestroyInternalCachedList();
 
 NSMessage * NSMessageCacheFind(const char *);
 

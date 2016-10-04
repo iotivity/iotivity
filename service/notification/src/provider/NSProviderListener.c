@@ -200,7 +200,7 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
     if (OCDoResponse(&response) != OC_STACK_OK)
     {
         NS_LOG(ERROR, "Fail to AccessPolicy send response");
-        return NS_ERROR;
+        return OC_EH_ERROR;
     }
 
     NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OUT");
@@ -215,7 +215,6 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
 
     (void)callback;
 
-    // Validate pointer
     if (!entityHandlerRequest)
     {
         NS_LOG(ERROR, "Invalid request pointer");
@@ -240,20 +239,43 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
             // Receive interesting topic list from consumers
-            NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OC_REST_POST");
-
             // Send topic notice message(id = TOPIC) to the consumer 
             // which requests to post.
-            NSPushQueue(TOPIC_SCHEDULER, TASK_POST_TOPIC,
-                    NSCopyOCEntityHandlerRequest(entityHandlerRequest));
+            NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OC_REST_POST");
 
-            ehResult = OC_EH_OK;
+            // Accepter is provider. our service is not support sendtopiclist from OC_REST_POST
+            ehResult = OC_EH_ERROR;
+
+            // Accepter is consumer. our service is support sendtopiclist from OC_REST_POST
+            if(NSGetPolicy() == false)
+            {
+                NSPushQueue(TOPIC_SCHEDULER, TASK_POST_TOPIC,
+                        NSCopyOCEntityHandlerRequest(entityHandlerRequest));
+                ehResult = OC_EH_OK;
+                OCEntityHandlerResponse response;
+                response.numSendVendorSpecificHeaderOptions = 0;
+                memset(response.sendVendorSpecificHeaderOptions, 0,
+                        sizeof response.sendVendorSpecificHeaderOptions);
+                memset(response.resourceUri, 0, sizeof response.resourceUri);
+
+                response.requestHandle = entityHandlerRequest->requestHandle;
+                response.resourceHandle = entityHandlerRequest->resource;
+                response.persistentBufferFlag = 0;
+                response.ehResult = ehResult;
+                response.payload = (OCPayload *) NULL;
+
+                if (OCDoResponse(&response) != OC_STACK_OK)
+                {
+                    NS_LOG(ERROR, "Fail to AccessPolicy send response");
+                    return OC_EH_ERROR;
+                }
+            }
         }
         else
         {
             NS_LOG_V(DEBUG, "Received unsupported method %d from client",
                     entityHandlerRequest->method);
-            ehResult = OC_EH_OK;
+            ehResult = OC_EH_ERROR;
         }
     }
 

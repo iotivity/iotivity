@@ -197,6 +197,257 @@ public final class OcAccountManager {
                                       OnDeleteListener onDeleteListener) throws OcException;
 
     /**
+     * Method to delete the device registered on the account signed-in
+     *
+     * @param groupType      Group type that can be used for referencing default group ACL creation.
+     * @param onPostListener event handler The event handler will be invoked with a map of
+     *                       attribute name and values.
+     * @throws OcException if failure
+     */
+    public void createGroup(AclGroupType groupType,
+                            OnPostListener onPostListener) throws OcException {
+        this.createGroup0(groupType.getValue(), onPostListener);
+    }
+
+    private native void createGroup0(int groupType,
+                                     OnPostListener onPostListener) throws OcException;
+
+    /**
+     * Method to get a list of groups joined from account server
+     *
+     * @param onGetListener  The event handler will be invoked with a map of attribute name and
+     *                       values. The event handler will also have the result from this Get
+     *                       operation This will have error codes
+     *
+     * @return Returns ::OC_STACK_OK if success
+     */
+    public void getGroupList(OnGetListener onGetListener) throws OcException {
+        this.getGroupList0(onGetListener);
+    }
+
+    private native void getGroupList0(OnGetListener onGetListener) throws OcException;
+
+    /**
+     * Method to delete the group from account server
+     *
+     * @param groupId          Group ID to delete.
+     * @param onDeleteListener event handler The event handler will have headerOptionList.
+     *
+     * @return Returns ::OC_STACK_OK if success
+     */
+    public void deleteGroup(String groupId,
+                            OnDeleteListener onDeleteListener) throws OcException {
+        this.deleteGroup0(groupId, onDeleteListener);
+    }
+
+    private native void deleteGroup0(String groupId,
+                                     OnDeleteListener onDeleteListener) throws OcException;
+
+    /**
+     * Method to join the group on account server
+     *
+     * @param groupId        Group ID to join
+     * @param onPostListener event handler The event handler will be invoked with a map of
+     *                       attribute name and values.
+     *
+     * @return Returns ::OC_STACK_OK if success
+     */
+    public void joinGroup(String groupId,
+                          OnPostListener onPostListener) throws OcException {
+        this.joinGroup0(groupId, onPostListener);
+    }
+
+    private native void joinGroup0(String groupId,
+                                   OnPostListener onPostListener) throws OcException;
+
+    /**
+     * Method to add devices to the group on account server
+     *
+     * @param groupId        Group ID to add devices.
+     * @param deviceId       List of devices to add.
+     * @param onPostListener event handler The event handler will be invoked with a map of
+     *                       attribute name and values.
+     *
+     * @return Returns ::OC_STACK_OK if success
+     */
+    public void addDeviceToGroup(String groupId,
+                                 List<String> deviceId,
+                                 OnPostListener onPostListener) throws OcException {
+        this.addDeviceToGroup0(groupId, deviceId.toArray(new String[deviceId.size()]),
+                               onPostListener);
+    }
+
+    private native void addDeviceToGroup0(String groupId,
+                                          String[] deviceId,
+                                          OnPostListener onPostListener) throws OcException;
+
+    /**
+     * Method to get information of the group from account server
+     *
+     * @param groupId        Group ID to get information.
+     * @param onGetListener  The event handler will be invoked with a map of attribute name and
+     *                       values. The event handler will also have the result from this Get
+     *                       operation This will have error codes
+     *
+     * @return Returns ::OC_STACK_OK if success
+     */
+    public void getGroupInfo(String groupId,
+                             OnGetListener onGetListener) throws OcException {
+        this.getGroupInfo0(groupId, onGetListener);
+    }
+
+    private native void getGroupInfo0(String groupId,
+                                      OnGetListener onGetListener) throws OcException;
+
+    /**
+     * Method to leave the group joined on account server
+     *
+     * @param groupId          Group ID to leave.
+     * @param onDeleteListener event handler The event handler will have headerOptionList.
+     *
+     * @return Returns ::OC_STACK_OK if success
+     */
+    public void leaveGroup(String groupId,
+                           OnDeleteListener onDeleteListener) throws OcException {
+        this.leaveGroup0(groupId, onDeleteListener);
+    }
+
+    private native void leaveGroup0(String groupId,
+                                    OnDeleteListener onDeleteListener) throws OcException;
+
+    /**
+     * Method to delete devices from the group on account server
+     *
+     * @param groupId          Group ID to delete devices.
+     * @param deviceId         List of devices to delete.
+     * @param onDeleteListener event handler The event handler will have headerOptionList.
+     *
+     * @return Returns ::OC_STACK_OK if success
+     */
+    public void deleteDeviceFromGroup(String groupId,
+                                      List<String> deviceId,
+                                      OnDeleteListener onDeleteListener) throws OcException {
+        this.deleteDeviceFromGroup0(groupId, deviceId.toArray(new String[deviceId.size()]),
+                                    onDeleteListener);
+    }
+
+    private native void deleteDeviceFromGroup0(String groupId,
+                                               String[] deviceId,
+                                               OnDeleteListener onDeleteListener) throws OcException;
+
+    /**
+     * Method to register observe to the group on account server
+     * User can receive a notify when the group get changed (eg. new user/device added)
+     *
+     * @param groupId             Group ID to observe.
+     * @param cloudConnectHandler Callback function that will get the result of the operation.
+     *
+     * @return Returns ::OC_STACK_OK if success
+     */
+    public void observeGroup(String groupId,
+                             OnObserveListener onObserveListener) throws OcException {
+        this.observeGroup0(groupId, onObserveListener);
+    }
+
+    private native void observeGroup0(String groupId,
+                                      OnObserveListener onObserveListener) throws OcException;
+
+    /**
+     * Method to cancel observe to the group on account server
+     *
+     * @param groupId Group ID to observe.
+     *
+     * @return Returns ::OC_STACK_OK if success
+     */
+    public void cancelObserveGroup(String groupId) throws OcException {
+        this.cancelObserveGroup0(groupId);
+    }
+
+    private native void cancelObserveGroup0(String groupId) throws OcException;
+
+    /**
+     * Method to register observe to invitation resource on account server
+     * User can receive a invitation which is including group ID to join
+     * Once receive a invitation, user should call 'deleteInvitation' to delete a invitation
+     * on account server.
+     *
+     * @param cloudConnectHandler Callback function that will get the result of the operation.
+     *
+     * @return Returns ::OC_STACK_OK if success
+     */
+    public void observeInvitation(OnObserveListener onObserveListener) throws OcException {
+        this.observeInvitation0(onObserveListener);
+    }
+
+    private native void observeInvitation0(OnObserveListener onObserveListener) throws OcException;
+
+    /**
+     * Method to cancel observe to invitation resource on account server
+     *
+     * @return Returns ::OC_STACK_OK if success
+     */
+    public void cancelObserveInvitation() throws OcException {
+        this.cancelObserveInvitation0();
+    }
+
+    private native void cancelObserveInvitation0() throws OcException;
+
+    /**
+     * Method to send a invitation to invite a user into a group
+     *
+     * @param groupId        Group ID for inviting.
+     * @param userUuid       Identifier of the user to invite.
+     * @param onPostListener event handler The event handler will be invoked with a map of
+     *                       attribute name and values.
+     *
+     * @return Returns ::OC_STACK_OK if success
+     */
+    public void sendInvitation(String groupId,
+                               String userUuid,
+                               OnPostListener onPostListener) throws OcException {
+        this.sendInvitation0(groupId, userUuid, onPostListener);
+    }
+
+    private native void sendInvitation0(String groupId,
+                                        String userUuid,
+                                        OnPostListener onPostListener) throws OcException;
+
+    /**
+     * Method to cancel a invitation on account server that user has sent
+     *
+     * @param groupId          Group ID to cancel a invitation.
+     * @param userUuid         Identifier of the user to cancel a invitation.
+     * @param onDeleteListener event handler The event handler will have headerOptionList.
+     *
+     * @return Returns ::OC_STACK_OK if success
+     */
+    public void cancelInvitation(String groupId,
+                                 String userUuid,
+                                 OnDeleteListener onDeleteListener) throws OcException {
+        this.cancelInvitation0(groupId, userUuid, onDeleteListener);
+    }
+
+    private native void cancelInvitation0(String groupId,
+                                          String userUuid,
+                                          OnDeleteListener onDeleteListener) throws OcException;
+
+    /**
+     * Method to delete a invitation on account server that user has received
+     *
+     * @param groupId          Group ID to delete a invitation.
+     * @param onDeleteListener event handler The event handler will have headerOptionList.
+     *
+     * @return Returns ::OC_STACK_OK if success
+     */
+    public void deleteInvitation(String groupId,
+                                 OnDeleteListener onDeleteListener) throws OcException {
+        this.deleteInvitation0(groupId, onDeleteListener);
+    }
+
+    private native void deleteInvitation0(String groupId,
+                                          OnDeleteListener onDeleteListener) throws OcException;
+
+    /**
      * An OnGetListener can be registered via the resource get call.
      * Event listeners are notified asynchronously
      */
@@ -226,6 +477,31 @@ public final class OcAccountManager {
         public void onDeleteCompleted(List<OcHeaderOption> headerOptionList);
 
         public void onDeleteFailed(Throwable ex);
+    }
+
+    /**
+     * An OnObserveListener can be registered via the resource observe call.
+     * Event listeners are notified asynchronously
+     */
+    public interface OnObserveListener {
+        /**
+         * To Register.
+         */
+        public static final int REGISTER = 0;
+        /**
+         * To Deregister.
+         */
+        public static final int DEREGISTER = 1;
+        /**
+         * Others.
+         */
+        public static final int NO_OPTION = 2;
+
+        public void onObserveCompleted(List<OcHeaderOption> headerOptionList,
+                                       OcRepresentation ocRepresentation,
+                                       int sequenceNumber);
+
+        public void onObserveFailed(Throwable ex);
     }
 
     private long mNativeHandle;

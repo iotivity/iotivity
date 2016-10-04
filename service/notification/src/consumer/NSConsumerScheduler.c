@@ -74,14 +74,10 @@ NSResult NSConsumerMessageHandlerInit()
     NSConsumerThread * handle = NULL;
     NSConsumerQueue * queue = NULL;
 
-    uint8_t uuid[UUID_SIZE] = {0,};
-    char uuidString[UUID_STRING_SIZE] = {0,};
-    OCRandomUuidResult randomRet = OCGenerateUuid(uuid);
-    NS_VERIFY_NOT_NULL(randomRet == RAND_UUID_OK ? (void *) 1 : NULL, NS_ERROR);
-    randomRet = OCConvertUuidToString(uuid, uuidString);
-    NS_VERIFY_NOT_NULL(randomRet == RAND_UUID_OK ? (void *) 1 : NULL, NS_ERROR);
+    char * consumerUuid = (char *)OCGetServerInstanceIDString();
+    NS_VERIFY_NOT_NULL(consumerUuid, NS_ERROR);
 
-    NSSetConsumerId(uuidString);
+    NSSetConsumerId(consumerUuid);
     NS_LOG_V(DEBUG, "Consumer ID : %s", *NSGetConsumerId());
 
     NS_LOG(DEBUG, "listener init");
@@ -120,12 +116,14 @@ void NSConsumerMessageHandlerExit()
 
     NSConsumerListenerTermiate();
     NSCancelAllSubscription();
+
     NSThreadStop(*(NSGetMsgHandleThreadHandle()));
+    NSSetMsgHandleThreadHandle(NULL);
+
     NSDestroyQueue(*(NSGetMsgHandleQueue()));
     NSSetMsgHandleQueue(NULL);
 
-    NSDestroyMessageCacheList();
-    NSDestroyProviderCacheList();
+    NSDestroyInternalCachedList();
 }
 
 void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
@@ -203,7 +201,7 @@ void * NSConsumerMsgPushThreadFunc(void * data)
     }
     else
     {
-        NSPushQueue(queue, obj);
+        NSPushConsumerQueue(queue, obj);
     }
 
     NSThreadUnlock(msgHandleThread);
@@ -264,22 +262,9 @@ void NSConsumerTaskProcessing(NSTask * task)
         }
         case TASK_SEND_SYNCINFO:
         case TASK_CONSUMER_REQ_TOPIC_LIST:
-        {
-            NSConsumerCommunicationTaskProcessing(task);
-            break;
-        }
-        case TASK_CONSUMER_GET_TOPIC_LIST:
         case TASK_CONSUMER_SELECT_TOPIC_LIST:
         {
-            NSProvider_internal * prov =
-                    NSConsumerFindNSProvider(((NSProvider *)task->taskData)->providerId);
-            NS_VERIFY_NOT_NULL_V(prov);
-            NSTask * topTask = NSMakeTask(task->taskType, prov);
-            NS_VERIFY_NOT_NULL_V(topTask);
-            NSConsumerCommunicationTaskProcessing(topTask);
-
-            NSRemoveProvider((NSProvider *)task->taskData);
-            NSOICFree(task);
+            NSConsumerCommunicationTaskProcessing(task);
             break;
         }
         case TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL:
@@ -319,12 +304,25 @@ void NSConsumerTaskProcessing(NSTask * task)
         }
         case TASK_RECV_SYNCINFO:
         case TASK_CONSUMER_RECV_MESSAGE:
-        case TASK_CONSUMER_PROVIDER_DISCOVERED:
+        case TASK_CONSUMER_SENT_REQ_OBSERVE:
         case TASK_CONSUMER_RECV_PROVIDER_CHANGED:
         case TASK_MAKE_SYNCINFO:
         case TASK_CONSUMER_REQ_TOPIC_URI:
         case TASK_CONSUMER_RECV_TOPIC_LIST:
         {
+            NSConsumerInternalTaskProcessing(task);
+            break;
+        }
+        case TASK_CONSUMER_PROVIDER_DISCOVERED:
+        {
+            NSTask * getTopicTask = (NSTask *)OICMalloc(sizeof(NSTask));
+            NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(getTopicTask,
+                        NSRemoveProvider_internal((NSProvider_internal *) task->taskData));
+            getTopicTask->nextTask = NULL;
+            getTopicTask->taskData =
+                    (void *) NSCopyProvider_internal((NSProvider_internal *) task->taskData);
+            getTopicTask->taskType = TASK_CONSUMER_REQ_TOPIC_LIST;
+            NSConsumerCommunicationTaskProcessing(getTopicTask);
             NSConsumerInternalTaskProcessing(task);
             break;
         }
@@ -334,13 +332,6 @@ void NSConsumerTaskProcessing(NSTask * task)
             break;
         }
     }
-}
-
-NSMessage * NSConsumerFindNSMessage(const char* messageId)
-{
-    NS_VERIFY_NOT_NULL(messageId, NULL);
-
-    return NSMessageCacheFind(messageId);
 }
 
 NSProvider_internal * NSConsumerFindNSProvider(const char * providerId)

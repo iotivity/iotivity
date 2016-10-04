@@ -32,9 +32,6 @@
 #include "oic_malloc.h"
 #include "NSUtil.h"
 
-NSCacheList * messageList;
-
 NSResult NSRegisterResource();
-NSResult NSInitMessageList();
 
 #endif /* _NS_PROVIDER_NOTIFICATION_H_ */

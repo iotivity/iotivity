@@ -42,6 +42,17 @@ char *OICStrdup(const char *str)
     return dup;
 }
 
+void OICStringToLower(char* str)
+{
+    for (int ch = 0; str[ch] != '\0'; ch++)
+    {
+        if (str[ch] >= 'A' && str[ch] <= 'Z')
+        {
+            str[ch] += 32;
+        }
+    }
+}
+
 char* OICStrcpy(char* dest, size_t destSize, const char* source)
 {
     return OICStrcpyPartial(dest, destSize, source, destSize == 0 ? 0 : destSize - 1);

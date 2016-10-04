@@ -125,7 +125,6 @@ void SetPolicyEngineState(PEContext_t *context, const PEState_t state)
 static bool IsRequestFromDevOwner(PEContext_t *context)
 {
     bool retVal = false;
-    OicUuid_t ownerid;
 
     if(NULL == context)
     {
@@ -158,18 +157,21 @@ static bool IsRequestFromDevOwner(PEContext_t *context)
 
 OCStackResult GetCrlRownerId(OicUuid_t *rowner)
 {
+    OC_UNUSED(rowner);
     rowner = NULL;
     return OC_STACK_ERROR;
 }
 
 OCStackResult GetSaclRownerId(OicUuid_t *rowner)
 {
+    OC_UNUSED(rowner);
     rowner = NULL;
     return OC_STACK_ERROR;
 }
 
 OCStackResult GetSvcRownerId(OicUuid_t *rowner)
 {
+    OC_UNUSED(rowner);
     rowner = NULL;
     return OC_STACK_ERROR;
 }
@@ -298,12 +300,10 @@ static void CopyParamsToContext(PEContext_t     *context,
     memcpy(&context->subject, subjectId, sizeof(OicUuid_t));
 
     // Copy the resource string into context.
-    length = strlen(resource) + 1;
-    if (0 < length)
-    {
-        strncpy(context->resource, resource, length);
-        context->resource[length - 1] = '\0';
-    }
+    length = sizeof(context->resource) - 1;
+    strncpy(context->resource, resource, length);
+    context->resource[length] = '\0';
+
 
     // Assign the permission field.
     context->permission = requestedPermission;

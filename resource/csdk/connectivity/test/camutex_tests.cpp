@@ -33,6 +33,7 @@
 #define _POSIX_C_SOURCE 200809L
 #endif // _POSIX_C_SOURCE
 
+#include "iotivity_config.h"
 #include "gtest/gtest.h"
 
 #include <camutex.h>
@@ -47,7 +48,6 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "platform_features.h"
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
 #endif

@@ -47,24 +47,24 @@ public class ResourcePresenceResourceTest {
     private ResourceDirectoryResource mRDResource          = null;
     private ResPresenceResource       mResPresenceResource = null;
     private CoapDevice                mockDevice           = null;
-    CountDownLatch                    latch                = null;
-    IResponse                         res;
+    private CountDownLatch            mLatch               = null;
+    private IResponse                 mResponse;
 
     @Before
     public void setUp() throws Exception {
         mRDResource = new ResourceDirectoryResource();
         mResPresenceResource = new ResPresenceResource();
-        res = null;
+        mResponse = null;
         mockDevice = mock(CoapDevice.class);
-        latch = new CountDownLatch(1);
+        mLatch = new CountDownLatch(1);
         // callback mock
         Mockito.doAnswer(new Answer<Object>() {
             @Override
             public CoapResponse answer(InvocationOnMock invocation)
                     throws Throwable {
                 CoapResponse resp = (CoapResponse) invocation.getArguments()[0];
-                latch.countDown();
-                res = resp;
+                mLatch.countDown();
+                mResponse = resp;
                 return resp;
             }
         }).when(mockDevice).sendResponse(Mockito.anyObject());
@@ -81,13 +81,13 @@ public class ResourcePresenceResourceTest {
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
                 RDServerTestUtils.RES_PRS_URI, "di=" + RDServerTestUtils.DI);
         mResPresenceResource.onDefaultRequestReceived(mockDevice, request);
-        assertTrue(latch.await(2L, SECONDS));
-        assertTrue(methodCheck(res, ResponseStatus.CONTENT));
+        assertTrue(mLatch.await(2L, SECONDS));
+        assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
     }
 
     @Test
     public void testHandleGetObserveRequest_ExistValue() throws Exception {
-        System.out.println("\t------testHandleGetObserveRequest_notExistValue");
+        System.out.println("\t------testHandleGetObserveRequest_ExistValue");
         CoapDevice observerDevice = mock(CoapDevice.class);
         CountDownLatch observerLatch = new CountDownLatch(2);
         // callback mock for observer Device
@@ -111,7 +111,6 @@ public class ResourcePresenceResourceTest {
                     assertTrue(payload.contains("ttl"));
                     assertTrue(payload.contains("trg"));
                     assertTrue(payload.contains("rt"));
-                    assertTrue(payload.contains("di"));
                     assertTrue(payload.contains("href"));
                 }
                 return null;
@@ -126,8 +125,8 @@ public class ResourcePresenceResourceTest {
         mRDResource.onDefaultRequestReceived(mockDevice,
                 RDServerTestUtils.makePublishRequest());
         // assertion: if the response status is "CHANGED"
-        assertTrue(latch.await(2L, SECONDS));
-        assertTrue(methodCheck(res, ResponseStatus.CHANGED));
+        assertTrue(mLatch.await(2L, SECONDS));
+        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
     }
 
     private boolean methodCheck(IResponse response,

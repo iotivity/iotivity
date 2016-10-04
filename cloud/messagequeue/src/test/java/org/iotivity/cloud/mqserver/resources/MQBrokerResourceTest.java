@@ -22,16 +22,30 @@
 
 package org.iotivity.cloud.mqserver.resources;
 
-import static org.junit.Assert.*;
+import static com.jayway.awaitility.Awaitility.await;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import kafka.admin.TopicCommand;
+import kafka.admin.TopicCommand.TopicCommandOptions;
+import kafka.utils.ZKStringSerializer$;
+import kafka.utils.ZkUtils;
+
+import org.I0Itec.zkclient.ZkClient;
+import org.I0Itec.zkclient.ZkConnection;
 import org.iotivity.cloud.base.device.CoapDevice;
+import org.iotivity.cloud.base.exception.ServerException.ForbiddenException;
+import org.iotivity.cloud.base.exception.ServerException.NotFoundException;
+import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
@@ -41,36 +55,39 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.Observe;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
-import org.iotivity.cloud.mqserver.resources.MQBrokerResource;
+import org.iotivity.cloud.mqserver.Constants;
 import org.iotivity.cloud.util.Cbor;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import static com.jayway.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class MQBrokerResourceTest {
-    private final String     MQ_BROKER_URI    = "/.well-known/ocf/ps";
-    private MQBrokerResource mqBrokerResource = null;
-    private String           topicNamePrefix  = null;
-    private CoapDevice       mockDevice       = null;
-    IResponse                res              = null;
-    CountDownLatch           latch            = null;
+    private final String     MQ_BROKER_URI     = Constants.MQ_BROKER_FULL_URI;
 
-    @Before // setup for each test
+    private MQBrokerResource mMqBrokerResource = null;
+    private String           mTopicPrefix      = null;
+    private CoapDevice       mMockDevice       = null;
+    IResponse                mResponse         = null;
+    CountDownLatch           mLatch            = null;
+
+    // insert user's zookeper and broker addresses
+    String                   mZookeeper        = "127.0.0.1:2181";
+    String                   mBroker           = "127.0.0.1:9092";
+
+    @Before
+    // setup for each test
     public void setUp() throws Exception {
-        mqBrokerResource = new MQBrokerResource();
-        // insert user's zookeper and broker addresses
-        String zookeeper = "127.0.0.1:2181";
-        String broker = "127.0.0.1:9092";
-        topicNamePrefix = "mqtestTopic";
-        mqBrokerResource.setKafkaInformation(zookeeper, broker);
-        latch = new CountDownLatch(1);
-        res = null; // initialize response packet
-        mockDevice = mock(CoapDevice.class);
-        mqBrokerResource.setKafkaInformation(zookeeper, broker);
+        mMqBrokerResource = new MQBrokerResource();
+
+        mTopicPrefix = "mqtestTopic";
+        mMqBrokerResource.setKafkaInformation(mZookeeper, mBroker);
+        mLatch = new CountDownLatch(1);
+        mResponse = null; // initialize response packet
+        mMockDevice = mock(CoapDevice.class);
+
         // callback mock
         Mockito.doAnswer(new Answer<Object>() {
             @Override
@@ -78,60 +95,83 @@ public class MQBrokerResourceTest {
                     throws Throwable {
                 Object[] args = invocation.getArguments();
                 CoapResponse resp = (CoapResponse) args[0];
-                res = resp;
-                latch.countDown();
+                mResponse = resp;
+                mLatch.countDown();
                 return resp;
             }
-        }).when(mockDevice).sendResponse(Mockito.anyObject());
+        }).when(mMockDevice).sendResponse(Mockito.anyObject());
     }
 
-    @Test // test topic creation
+    @After
+    public void tearDown() throws Exception {
+        // delete topics in Kafka broker
+        ZkClient zkClient = new ZkClient(mZookeeper, 10000, 10000,
+                ZKStringSerializer$.MODULE$);
+        ZkUtils zkUtils = new ZkUtils(zkClient, new ZkConnection(mZookeeper),
+                false);
+
+        String topic = MQ_BROKER_URI + "/*";
+        topic = topic.replace('/', '.');
+
+        String[] arr = { "--topic", topic };
+        TopicCommandOptions opts = new TopicCommandOptions(arr);
+        TopicCommand.deleteTopic(zkUtils, opts);
+
+        zkClient.close();
+        zkUtils.close();
+    }
+
+    @Test
+    // test topic creation
     public void testTopicCreationOnDefaultRequestReceived() throws Exception {
         System.out.println("\t--------------Topic Creation Test------------");
-        CreateTopic(mockDevice, topicNamePrefix);
+        CreateTopic(mMockDevice, mTopicPrefix);
         // assertion: if the response status is "CREATED"
-        assertTrue(latch.await(1L, SECONDS));
-        assertTrue(methodCheck(res, ResponseStatus.CREATED));
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(methodCheck(mResponse, ResponseStatus.CREATED));
     }
 
-    @Test // test subtopic create
+    @Test
+    // test subtopic create
     public void testSubTopicCreationOnDefaultRequestReceived()
             throws Exception {
         System.out
                 .println("\t--------------SubTopic Creation Test------------");
-        String mainTopic = topicNamePrefix + "Main";
-        String subTopic = topicNamePrefix + "Sub";
+        String mainTopic = mTopicPrefix + "Main";
+        String subTopic = mTopicPrefix + "Sub";
         // create main topic
-        CreateTopic(mockDevice, mainTopic);
+        CreateTopic(mMockDevice, mainTopic);
         // create sub topic
-        CreateSubTopic(mockDevice, mainTopic, subTopic);
+        CreateSubTopic(mMockDevice, mainTopic, subTopic);
         // assertion: if the response status is "CREATED"
-        assertTrue(latch.await(1L, SECONDS));
-        assertTrue(methodCheck(res, ResponseStatus.CREATED));
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(methodCheck(mResponse, ResponseStatus.CREATED));
     }
 
-    @Test // test topic publish
+    @Test
+    // test topic publish
     public void testTopicPublishOnDefaultRequestReceived() throws Exception {
         System.out.println("\t--------------Topic Publish Test------------");
-        String topic = topicNamePrefix + "ForPub";
+        String topic = mTopicPrefix + "ForPub";
         // topic creation
-        CreateTopic(mockDevice, topic);
+        CreateTopic(mMockDevice, topic);
         // topic publish
-        PublishTopic(mockDevice, topic);
+        PublishTopic(mMockDevice, topic);
         // assertion: if the response status is "CHANGED"
-        assertTrue(latch.await(1L, SECONDS));
-        assertTrue(methodCheck(res, ResponseStatus.CHANGED));
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
     }
 
-    @Test // test subscribe request
+    @Test
+    // test subscribe request
     public void testSubscribeOnDefaultRequestReceived() throws Exception {
         System.out.println("\t--------------Topic Subscribe Test------------");
         CoapDevice mockSubscriber = mock(CoapDevice.class);
-        String topic = topicNamePrefix + "SubscribeTest";
+        String topic = mTopicPrefix + "SubscribeTest";
         // create topic
-        CreateTopic(mockDevice, topic);
+        CreateTopic(mMockDevice, topic);
         // publish topic
-        PublishTopic(mockDevice, topic);
+        PublishTopic(mMockDevice, topic);
         // callback mock for subscriber
         Mockito.doAnswer(new Answer<Object>() {
             @Override
@@ -150,17 +190,18 @@ public class MQBrokerResourceTest {
         SubscribeTopic(mockSubscriber, topic, Observe.SUBSCRIBE);
     }
 
-    @Test // test unsubscribe request
+    @Test
+    // test unsubscribe request
     public void testUnSubscribeOnDefaultRequestReceived() throws Exception {
         System.out
                 .println("\t--------------Topic Unsubscribe Test------------");
         CountDownLatch latchSubscriber = new CountDownLatch(2);
         CoapDevice mockSubscriber = mock(CoapDevice.class);
-        String topic = topicNamePrefix + "UnSubscribeTest";
+        String topic = mTopicPrefix + "UnSubscribeTest";
         // create topic
-        CreateTopic(mockDevice, topic);
+        CreateTopic(mMockDevice, topic);
         // publish topic
-        PublishTopic(mockDevice, topic);
+        PublishTopic(mMockDevice, topic);
         // callback mock for subscriber
         Mockito.doAnswer(new Answer<Object>() {
             @Override
@@ -184,35 +225,38 @@ public class MQBrokerResourceTest {
         SubscribeTopic(mockSubscriber, topic, Observe.UNSUBSCRIBE);
     }
 
-    @Test // test delete request
+    @Test
+    // test delete request
     public void testDeleteTopicOnDefaultRequestReceived() throws Exception {
         System.out.println("\t--------------Topic Delete Test------------");
-        String topic = topicNamePrefix + "DeleteTest";
+        String topic = mTopicPrefix + "DeleteTest";
         // create topic
-        CreateTopic(mockDevice, topic);
+        CreateTopic(mMockDevice, topic);
         // delete topic
-        DeleteTopic(mockDevice, topic);
+        DeleteTopic(mMockDevice, topic);
         // assertion: if the response status is "DELETED"
-        assertTrue(methodCheck(res, ResponseStatus.DELETED));
-        assertTrue(latch.await(1L, SECONDS));
+        assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
+        assertTrue(mLatch.await(1L, SECONDS));
     }
 
-    @Test // test delete subtopic request
+    @Test
+    // test delete subtopic request
     public void testDeleteSubTopicOnDefaultRequestReceived() throws Exception {
         System.out.println("\t--------------Subtopic Delete Test------------");
-        String topic = topicNamePrefix + "DeleteTest";
-        String subTopic = topicNamePrefix + "DeleteTestSub";
+        String topic = mTopicPrefix + "DeleteTest";
+        String subTopic = mTopicPrefix + "DeleteTestSub";
         // create topic
-        CreateTopic(mockDevice, topic);
+        CreateTopic(mMockDevice, topic);
         // create subtopic
-        CreateSubTopic(mockDevice, topic, subTopic);
+        CreateSubTopic(mMockDevice, topic, subTopic);
         // delete subtopic
-        DeleteSubTopic(mockDevice, topic, subTopic);
+        DeleteSubTopic(mMockDevice, topic, subTopic);
         // assertion: if the response status is "DELETED"
-        assertTrue(methodCheck(res, ResponseStatus.DELETED));
+        assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
     }
 
-    @Test // test notify
+    @Test
+    // test notify
     public void testTopicSubscribeNofityOnDefaultRequestReceived()
             throws Exception {
         System.out.println(
@@ -221,7 +265,7 @@ public class MQBrokerResourceTest {
         CountDownLatch latchSubscriber = new CountDownLatch(2);
         AtomicBoolean countTrue = new AtomicBoolean();
         countTrue.set(false);
-        String topic = topicNamePrefix + "NotifyTest";
+        String topic = mTopicPrefix + "NotifyTest";
         // callback mock for subscriber
         Mockito.doAnswer(new Answer<Object>() {
             @Override
@@ -234,175 +278,232 @@ public class MQBrokerResourceTest {
                 if (latchSubscriber.getCount() == 0) {
                     assertTrue(methodCheck(resp, ResponseStatus.CONTENT));
                     assertTrue(hashmapCheck(resp, "message"));
+
+                    DeleteTopic(mMockDevice, topic);
                 }
                 return resp;
             }
         }).when(mockSubscriber).sendResponse(Mockito.anyObject());
         // create topic
-        CreateTopic(mockDevice, topic);
+        CreateTopic(mMockDevice, topic);
         // publish topic (publisher)
-        PublishTopic(mockDevice, topic);
+        PublishTopic(mMockDevice, topic);
         // subscribe topic (subscriber)
         SubscribeTopic(mockSubscriber, topic, Observe.SUBSCRIBE);
         await().atMost(2, SECONDS).untilFalse(countTrue);
-        PublishTopic(mockDevice, topic);
+        PublishTopic(mMockDevice, topic);
         // verity if subscriber receives two responses
         assertTrue(latchSubscriber.await(2L, SECONDS));
         verify(mockSubscriber, timeout(5000).times(2))
                 .sendResponse(Mockito.anyObject());
     }
 
-    @Test // test discover request
+    @Test
+    // test discover request
     public void testTopicDiscoverOnDefaultRequestReceived() throws Exception {
         System.out.println("\t--------------Topic Discover Test------------");
-        String topic = topicNamePrefix + "DiscoverTest";
+        String topic = mTopicPrefix + "DiscoverTest";
         String subTopic = topic + "sub";
         // create topic
-        CreateTopic(mockDevice, topic);
+        CreateTopic(mMockDevice, topic);
         // create sub topic
-        CreateSubTopic(mockDevice, topic, subTopic);
+        CreateSubTopic(mMockDevice, topic, subTopic);
         // discover topic
         DiscoverTopic();
         // assertion 1: if the response status is "CONTENT"
         // assertion 2: if the response payload has "topiclist" property
         // and there is the topic created in this unit test in the array
-        boolean methodCheck = methodCheck(res, ResponseStatus.CONTENT);
+        boolean methodCheck = methodCheck(mResponse, ResponseStatus.CONTENT);
         Cbor<HashMap<String, ArrayList<String>>> mArrayCbor = new Cbor<>();
         HashMap<String, ArrayList<String>> payloadData = mArrayCbor
-                .parsePayloadFromCbor(res.getPayload(), HashMap.class);
+                .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
         ArrayList<String> topicList = payloadData.get("topiclist");
         System.out.println("\ttopicList : " + topicList);
         assertTrue(methodCheck);
-        assertTrue(topicList.contains("/.well-known/ocf/ps/" + topic));
+        assertTrue(topicList.contains(MQ_BROKER_URI + "/" + topic));
         assertTrue(topicList
-                .contains("/.well-known/ocf/ps/" + topic + "/" + subTopic));
+                .contains(MQ_BROKER_URI + "/" + topic + "/" + subTopic));
     }
 
-    @Test // topic read request
+    @Test
+    // topic read request
     public void testTopicReadOnDefaultRequestReceived() throws Exception {
         System.out.println("\t--------------Topic Read Test------------");
-        String topic = topicNamePrefix + "ReadTest";
+        String topic = mTopicPrefix + "ReadTest";
         // create topic
-        CreateTopic(mockDevice, topic);
+        CreateTopic(mMockDevice, topic);
         // publish topic
-        PublishTopic(mockDevice, topic);
+        PublishTopic(mMockDevice, topic);
         // read topic
         ReadTopic(topic);
         // assertion1 : if the response status is "CONTENT"
         // assertion2 : if the response payload has the "message" property
-        assertTrue(methodCheck(res, ResponseStatus.CONTENT));
-        assertTrue(hashmapCheck(res, "message"));
+        assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
+        assertTrue(hashmapCheck(mResponse, "message"));
     }
 
-    @Test // duplicate topic creation
+    @Test(expected = NotFoundException.class)
+    public void testNotCreatedTopicDeleteOnDefaultRequestReceived()
+            throws Exception {
+        System.out.println(
+                "\t--------------Not Created Topic Delete Test------------");
+        String topic = mTopicPrefix + "NotCreatedTopicDeleteTest";
+
+        DeleteTopic(mMockDevice, topic);
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void testNotCreatedSubtopicDeleteOnDefaultRequestReceived()
+            throws Exception {
+        System.out.println(
+                "\t--------------Not Created Subtopic Delete Test------------");
+        String topic = mTopicPrefix + "Maintopic";
+
+        CreateTopic(mMockDevice, topic);
+
+        topic += "/" + "NotCreatedSubtopicTest";
+
+        DeleteTopic(mMockDevice, topic);
+    }
+
+    @Test(expected = ForbiddenException.class)
+    // duplicate topic creation
     public void testDuplicatedTopicCreateOnDefaultRequestReceived()
             throws Exception {
         System.out.println(
                 "\t--------------Duplicated Topic Creation Test------------");
-        String topic = topicNamePrefix + "DuplicateTest";
+        String topic = mTopicPrefix + "DuplicateTest";
         // create topic
-        CreateTopic(mockDevice, topic);
+        CreateTopic(mMockDevice, topic);
         // create topic again
-        CreateTopic(mockDevice, topic);
-        // assertion: if the response status is "BAD REQUEST"
-        assertTrue(methodCheck(res, ResponseStatus.BAD_REQUEST));
+        CreateTopic(mMockDevice, topic);
     }
 
-    @Test // publish not created topic
+    @Test(expected = ForbiddenException.class)
+    // duplicate subtopic creation
+    public void testDuplicatedSubtopicCreateOnDefaultRequestReceived()
+            throws Exception {
+        System.out.println(
+                "\t--------------Duplicated Subtopic Creation Test------------");
+
+        String topic = mTopicPrefix + "DuplicateTest2";
+
+        // create topic
+        CreateTopic(mMockDevice, topic);
+
+        // create subtopic
+        topic += "/subtopic";
+        CreateTopic(mMockDevice, topic);
+
+        // create subtopic again
+        CreateTopic(mMockDevice, topic);
+    }
+
+    @Test(expected = NotFoundException.class)
+    // publish not created topic
     public void testNotCreatedTopicPublishOnDefaultRequestReceived()
             throws Exception {
         System.out.println(
                 "\t--------------Not Created Topic Publish Test------------");
-        String topic = topicNamePrefix + "NotCreatedTopicTest";
+        String topic = mTopicPrefix + "NotCreatedTopicTest";
         // publish not created topic
-        PublishTopic(mockDevice, topic);
-        // assertion: if the response status is "BAD REQUEST"
-        assertTrue(methodCheck(res, ResponseStatus.BAD_REQUEST));
+        PublishTopic(mMockDevice, topic);
     }
 
-    @Test // subscribe not created topic
+    @Test(expected = NotFoundException.class)
+    // subscribe not created topic
     public void testNotCreatedTopicSubscribeOnDefaultRequestReceived()
             throws Exception {
         System.out.println(
                 "\t--------------Not Created Topic Subscribe Test------------");
-        CoapDevice mockSubscriber = mock(CoapDevice.class);
-        String topic = topicNamePrefix + "NotCreatedTopicSubscribeTest";
-        // callback mock for subscriber
-        Mockito.doAnswer(new Answer<Object>() {
-            @Override
-            public CoapResponse answer(InvocationOnMock invocation)
-                    throws Throwable {
-                Object[] args = invocation.getArguments();
-                CoapResponse resp = (CoapResponse) args[0];
-                // assertion: if the response status is "BAD REQUEST"
-                assertTrue(methodCheck(resp, ResponseStatus.BAD_REQUEST));
-                return resp;
-            }
-        }).when(mockSubscriber).sendResponse(Mockito.anyObject());
-        // subscribe topic (subscriber)
-        SubscribeTopic(mockSubscriber, topic, Observe.SUBSCRIBE);
+        String topic = mTopicPrefix + "NotCreatedTopicSubscribeTest";
+        SubscribeTopic(mMockDevice, topic, Observe.SUBSCRIBE);
     }
 
-    @Test // unsubscribe not created topic
+    @Test(expected = NotFoundException.class)
+    // unsubscribe not created topic
     public void testNotCreatedTopicUnSubscribeOnDefaultRequestReceived()
             throws Exception {
         System.out.println(
                 "\t--------------Not Created Topic Unsubscribe Test------------");
-        CoapDevice mockSubscriber = mock(CoapDevice.class);
-        String topic = topicNamePrefix + "NotCreatedTopicUnSubscribeTest";
-        // callback mock for subscriber
-        Mockito.doAnswer(new Answer<Object>() {
-            @Override
-            public CoapResponse answer(InvocationOnMock invocation)
-                    throws Throwable {
-                Object[] args = invocation.getArguments();
-                CoapResponse resp = (CoapResponse) args[0];
-                // assertion: if the response status is "BAD REQUEST"
-                assertTrue(methodCheck(resp, ResponseStatus.BAD_REQUEST));
-                return resp;
-            }
-        }).when(mockSubscriber).sendResponse(Mockito.anyObject());
-        // unsubscribe topic (subscriber)
-        SubscribeTopic(mockSubscriber, topic, Observe.UNSUBSCRIBE);
+        String topic = mTopicPrefix + "NotCreatedTopicUnSubscribeTest";
+        SubscribeTopic(mMockDevice, topic, Observe.UNSUBSCRIBE);
     }
 
-    @Test // create subtopic under not created maintopic
+    @Test(expected = PreconditionFailedException.class)
+    public void testTopicPublishWithoutMessage() throws Exception {
+        System.out.println(
+                "\t--------------Topic Publish Without Message Test------------");
+        String topic = mTopicPrefix + "ForPubWithoutMessage";
+
+        // topic creation
+        CreateTopic(mMockDevice, topic);
+
+        // topic publish without message
+        String requestUri = MQ_BROKER_URI + "/" + topic;
+        IRequest request = MessageBuilder.createRequest(RequestMethod.POST,
+                requestUri, null);
+
+        mMqBrokerResource.onDefaultRequestReceived(mMockDevice, request);
+    }
+
+    @Test(expected = NotFoundException.class)
+    // create subtopic under not created maintopic
     public void testSubTopicCreateUnderNotCreatedTopicOnDefaultRequestReceived()
             throws Exception {
         System.out.println(
                 "\t--------------Create Subtopic under Not Created Maintopic  ------------");
-        String mainTopic = topicNamePrefix + "NotCreatedMain";
-        String subTopic = topicNamePrefix + "NotCreatedSub";
+        String mainTopic = mTopicPrefix + "NotCreatedMain";
+        String subTopic = mTopicPrefix + "NotCreatedSub";
         // create sub topic
-        CreateSubTopic(mockDevice, mainTopic, subTopic);
-        // assertion: if the response status is "BAD REQUEST"
-        assertTrue(methodCheck(res, ResponseStatus.BAD_REQUEST));
+        CreateSubTopic(mMockDevice, mainTopic, subTopic);
     }
 
-    @Test // create topic which has 'core.light' rt
+    @Test
+    // create topic which has 'core.light' rt
     public void testTopicCreationWithRtOnDefaultRequestReceived()
             throws Exception {
         System.out.println(
                 "\t--------------Topic Creation with RT Test------------");
-        String topicName = topicNamePrefix + "RtTest";
+        String topicName = mTopicPrefix + "RtTest";
         String rt = "rt=core.light";
-        CreateTopicWithRt(mockDevice, topicName, rt);
+        CreateTopicWithRt(mMockDevice, topicName, rt);
         // assertion: if the response status is "CREATED"
-        assertTrue(methodCheck(res, ResponseStatus.CREATED));
+        assertTrue(methodCheck(mResponse, ResponseStatus.CREATED));
     }
 
-    @Test // test discover request with rt
+    @Test
+    // create topic which has 'core.light' rt
+    public void testSubtopicCreationWithRtOnDefaultRequestReceived()
+            throws Exception {
+        System.out.println(
+                "\t--------------Subtopic Creation with RT Test------------");
+        String topicName = mTopicPrefix + "RtTest2";
+        String rt = "rt=core.light";
+
+        // create main topic
+        CreateTopicWithRt(mMockDevice, topicName, rt);
+
+        // create sub topic
+        topicName += "/subtopic";
+        CreateTopicWithRt(mMockDevice, topicName, rt);
+
+        assertTrue(methodCheck(mResponse, ResponseStatus.CREATED));
+    }
+
+    @Test
+    // test discover request with rt
     public void testDiscoverTopicWithRtOnDefaultRequestReceived()
             throws Exception {
         System.out.println(
                 "\t--------------Topic Discover with Rt Test------------");
-        String topicName = topicNamePrefix + "DiscoverRtTest";
-        String topicNameWithoutRt = topicNamePrefix + "DiscoverRtTestWithoutRt";
+        String topicName = mTopicPrefix + "DiscoverRtTest";
+        String topicNameWithoutRt = mTopicPrefix + "DiscoverRtTestWithoutRt";
         String rt = "rt=core.light";
         // create topic with rt
-        CreateTopicWithRt(mockDevice, topicName, rt);
+        CreateTopicWithRt(mMockDevice, topicName, rt);
         // create topic
-        CreateTopic(mockDevice, topicNameWithoutRt);
+        CreateTopic(mMockDevice, topicNameWithoutRt);
         // discover topic
         DiscoverTopicWithRt(rt);
         // assertion 1: if the response status is "CONTENT"
@@ -411,13 +512,13 @@ public class MQBrokerResourceTest {
         // rt
         Cbor<HashMap<String, ArrayList<String>>> mArrayCbor = new Cbor<>();
         HashMap<String, ArrayList<String>> payloadData = mArrayCbor
-                .parsePayloadFromCbor(res.getPayload(), HashMap.class);
+                .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
         ArrayList<String> topicList = payloadData.get("topiclist");
         System.out.println("\ttopicList : " + topicList);
-        assertTrue(methodCheck(res, ResponseStatus.CONTENT));
-        assertTrue(topicList.contains("/.well-known/ocf/ps/" + topicName));
-        assertFalse(topicList
-                .contains("/.well-known/ocf/ps/" + topicNameWithoutRt));
+        assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
+        assertTrue(topicList.contains(MQ_BROKER_URI + "/" + topicName));
+        assertFalse(
+                topicList.contains(MQ_BROKER_URI + "/" + topicNameWithoutRt));
     }
 
     private IRequest PublishTopicRequest(String topicName) {
@@ -498,7 +599,7 @@ public class MQBrokerResourceTest {
         System.out.println("-----CreateTopic || topic : " + topicName);
         IRequest request = null;
         request = CreateTopicWithRtRequest(topicName, type);
-        mqBrokerResource.onDefaultRequestReceived(mockDevice, request);
+        mMqBrokerResource.onDefaultRequestReceived(mockDevice, request);
     }
 
     private void CreateTopic(CoapDevice mockDevice, String topicName)
@@ -506,7 +607,7 @@ public class MQBrokerResourceTest {
         System.out.println("-----CreateTopic || topic : " + topicName);
         IRequest request = null;
         request = CreateTopicRequest(topicName);
-        mqBrokerResource.onDefaultRequestReceived(mockDevice, request);
+        mMqBrokerResource.onDefaultRequestReceived(mockDevice, request);
     }
 
     private void CreateSubTopic(CoapDevice mockDevice, String mainTopicName,
@@ -515,7 +616,7 @@ public class MQBrokerResourceTest {
                 + " || subtopic : " + subTopicName);
         IRequest subTopicRequest = null;
         subTopicRequest = CreateSubTopicRequest(mainTopicName, subTopicName);
-        mqBrokerResource.onDefaultRequestReceived(mockDevice, subTopicRequest);
+        mMqBrokerResource.onDefaultRequestReceived(mockDevice, subTopicRequest);
     }
 
     private void PublishTopic(CoapDevice mockDevice, String topicName)
@@ -523,7 +624,7 @@ public class MQBrokerResourceTest {
         System.out.println("-----PublishTopic : " + topicName);
         IRequest request = null;
         request = PublishTopicRequest(topicName);
-        mqBrokerResource.onDefaultRequestReceived(mockDevice, request);
+        mMqBrokerResource.onDefaultRequestReceived(mockDevice, request);
     }
 
     private void SubscribeTopic(CoapDevice mockSubscriber, String topicName,
@@ -533,7 +634,7 @@ public class MQBrokerResourceTest {
         requestSubscribe = SubscribeTopicRequest(topicName);
         CoapRequest mqRequest = (CoapRequest) requestSubscribe;
         mqRequest.setObserve(observe);
-        mqBrokerResource.onDefaultRequestReceived(mockSubscriber, mqRequest);
+        mMqBrokerResource.onDefaultRequestReceived(mockSubscriber, mqRequest);
     }
 
     private void DeleteTopic(CoapDevice mockDevice, String topicName)
@@ -541,7 +642,7 @@ public class MQBrokerResourceTest {
         System.out.println("-----DeleteTopic : " + topicName);
         IRequest requestToDelete = null;
         requestToDelete = DeleteTopicRequest(topicName);
-        mqBrokerResource.onDefaultRequestReceived(mockDevice, requestToDelete);
+        mMqBrokerResource.onDefaultRequestReceived(mockDevice, requestToDelete);
     }
 
     private void DeleteSubTopic(CoapDevice mockDevice, String topicName,
@@ -550,14 +651,14 @@ public class MQBrokerResourceTest {
         String deleteUri = topicName + "/" + subTopicName;
         IRequest requestToDelete = null;
         requestToDelete = DeleteTopicRequest(deleteUri);
-        mqBrokerResource.onDefaultRequestReceived(mockDevice, requestToDelete);
+        mMqBrokerResource.onDefaultRequestReceived(mockDevice, requestToDelete);
     }
 
     private void DiscoverTopic() throws Exception {
         System.out.println("-----DiscoverTopic : ");
         IRequest requestToDiscover = null;
         requestToDiscover = DiscoverTopicRequest();
-        mqBrokerResource.onDefaultRequestReceived(mockDevice,
+        mMqBrokerResource.onDefaultRequestReceived(mMockDevice,
                 requestToDiscover);
     }
 
@@ -565,7 +666,7 @@ public class MQBrokerResourceTest {
         System.out.println("-----DiscoverTopicWithRt : ");
         IRequest requestToDiscover = null;
         requestToDiscover = DiscoverTopicWithRtRequest(rt);
-        mqBrokerResource.onDefaultRequestReceived(mockDevice,
+        mMqBrokerResource.onDefaultRequestReceived(mMockDevice,
                 requestToDiscover);
     }
 
@@ -573,7 +674,7 @@ public class MQBrokerResourceTest {
         System.out.println("-----ReadTopic : " + topicName);
         CoapRequest readRequest = null;
         readRequest = ReadTopicRequest(topicName);
-        mqBrokerResource.onDefaultRequestReceived(mockDevice, readRequest);
+        mMqBrokerResource.onDefaultRequestReceived(mMockDevice, readRequest);
     }
 
     private boolean hashmapCheck(IResponse response, String propertyName) {

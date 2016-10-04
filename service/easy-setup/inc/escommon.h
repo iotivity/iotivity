@@ -55,17 +55,18 @@ extern "C"
 #define OC_RSRVD_ES_COUNTRY                "ctry"
 #define OC_RSRVD_ES_MODELNUMBER            "mnmo"
 #define OC_RSRVD_ES_LOCATION               "loc"
+#define OC_RSRVD_ES_HREF                   "href"
 
 /**
  * Easysetup defined resoruce types and uris.
  */
-#define OC_RSRVD_ES_RES_TYPE_PROV         "ocf.wk.prov"
+#define OC_RSRVD_ES_RES_TYPE_PROV         "oic.wk.prov"
 #define OC_RSRVD_ES_URI_PROV              "/ProvisioningResURI"
-#define OC_RSRVD_ES_RES_TYPE_WIFI         "ocf.wk.wifi"
+#define OC_RSRVD_ES_RES_TYPE_WIFI         "oic.wk.wifi"
 #define OC_RSRVD_ES_URI_WIFI              "/WiFiProvisioningResURI"
-#define OC_RSRVD_ES_RES_TYPE_CLOUDSERVER  "ocf.wk.cloudserver"
+#define OC_RSRVD_ES_RES_TYPE_CLOUDSERVER  "oic.wk.cloudserver"
 #define OC_RSRVD_ES_URI_CLOUDSERVER       "/CloudServerProvisioningResURI"
-#define OC_RSRVD_ES_RES_TYPE_DEVCONF      "ocf.wk.devconf"
+#define OC_RSRVD_ES_RES_TYPE_DEVCONF      "oic.wk.devconf"
 #define OC_RSRVD_ES_URI_DEVCONF           "/DevConfProvisioningResURI"
 
 
@@ -118,20 +119,60 @@ typedef enum
     TKIP_AES            /**< TKIP-AES **/
 } WIFI_ENCTYPE;
 
+/**
+ * @brief A result of Easy Setup
+ */
 typedef enum
 {
-    ES_ERROR = -1,
+    /**
+     * Provisioning succeeds.
+     */
     ES_OK = 0,
-    ES_NETWORKFOUND = 1,
-    ES_NETWORKCONNECTED,
-    ES_NETWORKNOTCONNECTED,
-    ES_RESOURCECREATED = 11,
-    ES_RECVREQOFPROVRES = 21,
-    ES_RECVREQOFNETRES,
-    ES_RECVUPDATEOFPROVRES,
-    ES_RECVTRIGGEROFPROVRES,
-    ES_UNAUTHORIZED = 31,
-    ES_UNSUPPORTED_OPERATION = 41
+
+    /**
+     * Enrollee discovery fails in cloud provisioning
+     */
+    ES_ENROLLEE_DISCOVERY_FAILURE = 11,
+
+    /**
+     * Valid GET or POST request fails for some reason.
+     * This failure may happen when it failed to receive any response from Enrollee by a timeout threshold
+     */
+    ES_COMMUNICATION_ERROR,
+
+    /**
+     * Security opertion is not supported because Mediator is built as unsecured mode.
+     */
+    ES_SEC_OPERATION_IS_NOT_SUPPORTED = 20,
+
+    /**
+     * Security resource discovery fails due to loss of discovery packet or absence of the resource in a network
+     */
+    ES_SECURE_RESOURCE_DISCOVERY_FAILURE,
+
+    /**
+     * Ownership transfer fails because DTLS handshake failure happens
+     */
+    ES_OWNERSHIP_TRANSFER_FAILURE,
+
+    /**
+     * ACL provisioning fails in cloud provisioning.
+     * It could be that UUID format of cloud server is wrong.
+     * Or any response for the provisioning request is not arrived at Mediator
+     */
+    ES_ACL_PROVISIONING_FAILURE,
+
+    /**
+     * Cert. provisioning fails in cloud provisioning.
+     * It could be that you put a wrong cred ID of which the corresponding certificate does not exist in SVR DB.
+     * Or any response for the provisioning request is not arrived at Mediator
+     */
+    ES_CERT_PROVISIONING_FAILURE,
+
+    /**
+     * Provisioning fails for some reason.
+     */
+    ES_ERROR = 255
 } ESResult;
 
 /**

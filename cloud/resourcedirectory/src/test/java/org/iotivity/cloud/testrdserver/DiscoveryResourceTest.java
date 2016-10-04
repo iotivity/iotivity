@@ -24,9 +24,11 @@ package org.iotivity.cloud.testrdserver;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
+
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
@@ -49,14 +51,14 @@ public class DiscoveryResourceTest {
     private ResourceDirectoryResource mRDResource        = null;
     private DiscoveryResource         mDiscoveryResource = null;
     private CoapDevice                mockDevice         = null;
-    CountDownLatch                    latch              = null;
-    IResponse                         res;
+    private CountDownLatch            mLatch             = null;
+    private IResponse                 mResponse;
 
     @Before
     public void setUp() throws Exception {
-        res = null;
+        mResponse = null;
         mockDevice = mock(CoapDevice.class);
-        latch = new CountDownLatch(1);
+        mLatch = new CountDownLatch(1);
         mRDResource = new ResourceDirectoryResource();
         mDiscoveryResource = new DiscoveryResource();
         // callback mock
@@ -65,8 +67,8 @@ public class DiscoveryResourceTest {
             public CoapResponse answer(InvocationOnMock invocation)
                     throws Throwable {
                 CoapResponse resp = (CoapResponse) invocation.getArguments()[0];
-                latch.countDown();
-                res = resp;
+                mLatch.countDown();
+                mResponse = resp;
                 return resp;
             }
         }).when(mockDevice).sendResponse(Mockito.anyObject());
@@ -81,31 +83,31 @@ public class DiscoveryResourceTest {
     public void testHandleGetRequest_notExistVaule() throws Exception {
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
                 RDServerTestUtils.DISCOVERY_REQ_URI,
-                "rt=core.light&di=" + RDServerTestUtils.DI);
+                "rt=core.light;di=" + RDServerTestUtils.DI);
         mDiscoveryResource.onDefaultRequestReceived(mockDevice, request);
         // assertion: if the response status is "CONTENT"
         // assertion : if the payload is null
-        assertTrue(latch.await(2L, SECONDS));
-        assertTrue(methodCheck(res, ResponseStatus.CONTENT));
-        assertTrue(nullPayloadCheck(res));
+        assertTrue(mLatch.await(2L, SECONDS));
+        assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
+        assertTrue(nullPayloadCheck(mResponse));
     }
 
     @Test
     public void testHandleGetRequest_existValue() throws Exception {
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
                 RDServerTestUtils.DISCOVERY_REQ_URI,
-                "rt=core.light&di=" + RDServerTestUtils.DI);
+                "rt=core.light;di=" + RDServerTestUtils.DI);
         mRDResource.onDefaultRequestReceived(mockDevice,
                 RDServerTestUtils.makePublishRequest());
         mDiscoveryResource.onDefaultRequestReceived(mockDevice, request);
         // assertion: if the response status is "CONTENT"
         // assertion : if the payload contains resource info
-        assertTrue(latch.await(2L, SECONDS));
-        assertTrue(methodCheck(res, ResponseStatus.CONTENT));
-        assertTrue(discoverHashmapCheck(res, "di"));
-        assertTrue(discoveredResourceCheck(res, "href"));
-        assertTrue(discoveredResourceCheck(res, "rt"));
-        assertTrue(discoveredResourceCheck(res, "if"));
+        assertTrue(mLatch.await(2L, SECONDS));
+        assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
+        assertTrue(discoverHashmapCheck(mResponse, "di"));
+        assertTrue(discoveredResourceCheck(mResponse, "href"));
+        assertTrue(discoveredResourceCheck(mResponse, "rt"));
+        assertTrue(discoveredResourceCheck(mResponse, "if"));
     }
 
     private boolean discoverHashmapCheck(IResponse response,
@@ -145,7 +147,7 @@ public class DiscoveryResourceTest {
 
     private boolean nullPayloadCheck(IResponse response) {
         ArrayList<Object> payloadData = mCbor
-                .parsePayloadFromCbor(res.getPayload(), ArrayList.class);
+                .parsePayloadFromCbor(mResponse.getPayload(), ArrayList.class);
         return (payloadData.isEmpty());
     }
 }

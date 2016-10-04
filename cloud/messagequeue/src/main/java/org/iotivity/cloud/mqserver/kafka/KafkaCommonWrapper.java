@@ -32,6 +32,11 @@ import org.I0Itec.zkclient.ZkConnection;
 import org.iotivity.cloud.mqserver.Constants;
 import org.iotivity.cloud.util.Log;
 
+/**
+ *
+ * This class provides a set of APIs to use Kafka APIs for basic operation.
+ *
+ */
 public class KafkaCommonWrapper {
 
     private ZkClient mZkClient = null;
@@ -47,6 +52,15 @@ public class KafkaCommonWrapper {
                 false);
     }
 
+    /**
+     * API to create topic using Kafka utilities
+     * 
+     * @param topic
+     *            name of topic to create
+     * 
+     * @return returns true if the topic is successfully created, otherwise
+     *         false
+     */
     public boolean createTopic(String topic) {
 
         Log.d("kafka createTopic - " + topic);
@@ -64,6 +78,15 @@ public class KafkaCommonWrapper {
         return true;
     }
 
+    /**
+     * API to delete topic using Kafka utilities
+     * 
+     * @param topic
+     *            name of topic to delete
+     * 
+     * @return returns true if the topic is successfully deleted, otherwise
+     *         false
+     */
     public boolean deleteTopic(String topic) {
 
         Log.d("kafka deleteTopic - " + topic);

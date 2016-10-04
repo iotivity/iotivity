@@ -136,33 +136,6 @@ typedef struct
 } OCServerProtocolRequest;
 
 /**
- * This structure will be created in occoap and passed up the stack on the client side.
- */
-typedef struct
-{
-    /** handle is retrieved by comparing the token-handle pair in the PDU.*/
-    ClientCB * cbNode;
-
-    /** This is how long this response is valid for (in seconds).*/
-    uint32_t maxAge;
-
-    /** This is the Uri of the resource. (ex. "coap://192.168.1.1/a/led").*/
-    char * fullUri;
-
-    /** This is the relative Uri of the resource. (ex. "/a/led").*/
-    char * rcvdUri;
-
-    /** This is the received payload.*/
-    char * bufRes;
-
-    /** This is the token received OTA.*/
-    CAToken_t rcvdToken;
-
-    /** this structure will be passed to client.*/
-    OCClientResponse * clientResponse;
-} OCResponse;
-
-/**
  * This typedef is to represent our Server Instance identification.
  */
 typedef uint8_t ServerID[16];
@@ -298,13 +271,13 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
         OCResourceProperty resourceProperties, uint8_t enable);
 #endif
 
-OC_EXPORT const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
+const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
 
-OC_EXPORT OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
+OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
 
-OC_EXPORT_TEST OCStackResult encodeAddressForRFC6874(char * outputAddress,
-                                                     size_t outputSize,
-                                                     const char * inputAddress);
+OCStackResult encodeAddressForRFC6874(char * outputAddress,
+                                      size_t outputSize,
+                                      const char * inputAddress);
 
 void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out);
 

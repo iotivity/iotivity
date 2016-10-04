@@ -40,9 +40,9 @@ namespace OIC
             m_ocResource = resource;
         }
 
-        void CloudResource::provisionEnrollee(const CloudProp& cloudProp)
+        void CloudResource::provisionProperties(const CloudProp& cloudProp)
         {
-            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "Enter provisionEnrollee.");
+            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "Enter provisionProperties.");
 
             OCRepresentation provisioningRepresentation = cloudProp.toOCRepresentation();
 
@@ -53,38 +53,37 @@ namespace OIC
                                         const OCRepresentation& rep, const int eCode) >(
                         std::bind(&CloudResource::onCloudProvResponse, this,
                         std::placeholders::_1, std::placeholders::_2,
-                        std::placeholders::_3)));
+                        std::placeholders::_3)), OC::QualityOfService::HighQos);
         }
 
         void CloudResource::onCloudProvResponse(const HeaderOptions& /*headerOptions*/,
-                const OCRepresentation& rep, const int eCode)
+                const OCRepresentation& /*rep*/, const int eCode)
         {
-            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "onCloudProvResponse : %s, eCode = %d",
-                    rep.getUri().c_str(), eCode);
+            OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG, "onCloudProvResponse : eCode = %d",
+                        eCode);
 
             if (eCode > OCStackResult::OC_STACK_RESOURCE_CHANGED)
             {
-                ESResult result  = ESResult::ES_ERROR;
+                ESResult result = ESResult::ES_ERROR;
 
                 OIC_LOG(DEBUG, ES_CLOUD_RES_TAG,"onCloudProvResponse : onCloudProvResponse is failed ");
 
-                if (eCode == OCStackResult::OC_STACK_UNAUTHORIZED_REQ)
+                if(eCode == OCStackResult::OC_STACK_COMM_ERROR)
                 {
-                    OIC_LOG(DEBUG, ES_CLOUD_RES_TAG, "Mediator is unauthorized from Enrollee.");
-                    result = ESResult::ES_UNAUTHORIZED;
+                    OIC_LOG_V (DEBUG, ES_CLOUD_RES_TAG,
+                            "can't receive any response from Enrollee by a timeout threshold.");
+                    result = ESResult::ES_COMMUNICATION_ERROR;
                 }
 
                 std::shared_ptr< CloudPropProvisioningStatus > provStatus = std::make_shared<
-                        CloudPropProvisioningStatus >(
-                        result, ESCloudProvState::ES_CLOUD_PROVISIONING_ERROR);
+                        CloudPropProvisioningStatus >(result);
                 m_cloudPropProvStatusCb(provStatus);
             }
             else
             {
                 OIC_LOG(DEBUG, ES_CLOUD_RES_TAG,"onCloudProvResponse : onCloudProvResponse is success ");
                 std::shared_ptr< CloudPropProvisioningStatus > provStatus =
-                    std::make_shared<CloudPropProvisioningStatus >(
-                    ESResult::ES_OK, ESCloudProvState::ES_CLOUD_PROVISIONING_SUCCESS);
+                    std::make_shared<CloudPropProvisioningStatus >(ESResult::ES_OK);
                 m_cloudPropProvStatusCb(provStatus);
             }
         }

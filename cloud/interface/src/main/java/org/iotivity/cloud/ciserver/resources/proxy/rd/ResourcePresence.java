@@ -40,6 +40,13 @@ import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.util.Cbor;
 
+/**
+ *
+ * This class provides a set of APIs to send requests about resource presence to
+ * resource directory
+ *
+ */
+
 public class ResourcePresence extends Resource {
     IRequestChannel                       mASServer = null;
     private Cbor<HashMap<String, Object>> mCbor     = new Cbor<>();
@@ -70,6 +77,12 @@ public class ResourcePresence extends Resource {
                     HashMap<String, Object> payloadData = mCbor
                             .parsePayloadFromCbor(response.getPayload(),
                                     HashMap.class);
+
+                    if (payloadData == null) {
+                        mSrcDevice.sendResponse(MessageBuilder.createResponse(
+                                mRequest, ResponseStatus.BAD_REQUEST));
+                        return;
+                    }
 
                     if (mRequest.getUriQuery() != null
                             && mRequest.getUriQueryMap()
@@ -144,8 +157,7 @@ public class ResourcePresence extends Resource {
         uriQuery.append(Constants.REQ_MEMBER_ID + "=" + srcDevice.getUserId());
 
         StringBuffer uriPath = new StringBuffer();
-        uriPath.append(Constants.PREFIX_WELL_KNOWN + "/");
-        uriPath.append(Constants.PREFIX_OCF + "/");
+        uriPath.append(Constants.PREFIX_OIC + "/");
         uriPath.append(Constants.ACL_URI + "/");
         uriPath.append(Constants.GROUP_URI + "/");
         uriPath.append(srcDevice.getUserId());

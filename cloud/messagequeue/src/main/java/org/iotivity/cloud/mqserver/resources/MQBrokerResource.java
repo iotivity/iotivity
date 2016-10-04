@@ -43,15 +43,27 @@ import org.iotivity.cloud.mqserver.MessageQueueUtils;
 import org.iotivity.cloud.mqserver.topic.Topic;
 import org.iotivity.cloud.mqserver.topic.TopicManager;
 
+/**
+ * 
+ * This class provides a set of APIs to handle requests to MessageQueue Broker.
+ *
+ */
 public class MQBrokerResource extends Resource {
 
     private TopicManager mTopicManager = new TopicManager();
 
     public MQBrokerResource() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.MQ_BROKER_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.MQ_BROKER_URI));
     }
 
+    /**
+     * API to set Kafka zookeeper and broker information
+     * 
+     * @param zookeeper
+     *            address and port number of the zookeeper
+     * @param broker
+     *            address and port number of the Kafka broker
+     */
     public void setKafkaInformation(String zookeeper, String broker) {
         mTopicManager.setKafkaInformation(zookeeper, broker);
     }
@@ -84,8 +96,7 @@ public class MQBrokerResource extends Resource {
     private IResponse handleGetRequest(Device srcDevice, IRequest request) {
 
         // DISCOVER
-        if (request.getUriPathSegments().size() == getUriPathSegments()
-                .size()) {
+        if (request.getUriPathSegments().size() == getUriPathSegments().size()) {
             return discoverTopic(request);
         }
 
@@ -107,8 +118,7 @@ public class MQBrokerResource extends Resource {
     // CREATE topic
     private IResponse handlePutRequest(IRequest request) {
 
-        if (request.getUriPathSegments().size() == getUriPathSegments()
-                .size()) {
+        if (request.getUriPathSegments().size() == getUriPathSegments().size()) {
 
             throw new BadRequestException(
                     "topic name is not included in request uri");
@@ -132,8 +142,7 @@ public class MQBrokerResource extends Resource {
     private IResponse createTopic(IRequest request) {
 
         // main topic creation request
-        if (request.getUriPathSegments().size() == getUriPathSegments().size()
-                + 1) {
+        if (request.getUriPathSegments().size() == getUriPathSegments().size() + 1) {
             return createMainTopic(request);
         }
 
@@ -162,8 +171,8 @@ public class MQBrokerResource extends Resource {
         String uriPath = request.getUriPath();
 
         String parentName = uriPath.substring(0, uriPath.lastIndexOf('/'));
-        String targetName = request.getUriPathSegments()
-                .get(request.getUriPathSegments().size() - 1);
+        String targetName = request.getUriPathSegments().get(
+                request.getUriPathSegments().size() - 1);
 
         Topic parentTopic = mTopicManager.getTopic(parentName);
 
@@ -234,14 +243,14 @@ public class MQBrokerResource extends Resource {
         }
 
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
-                ContentFormat.APPLICATION_CBOR, MessageQueueUtils
-                        .buildPayload(Constants.MQ_TOPICLIST, topicList));
+                ContentFormat.APPLICATION_CBOR, MessageQueueUtils.buildPayload(
+                        Constants.MQ_TOPICLIST, topicList));
     }
 
     private IResponse createMainTopic(IRequest request) {
 
-        String topicName = request.getUriPathSegments()
-                .get(request.getUriPathSegments().size() - 1);
+        String topicName = request.getUriPathSegments().get(
+                request.getUriPathSegments().size() - 1);
 
         String type = new String();
 

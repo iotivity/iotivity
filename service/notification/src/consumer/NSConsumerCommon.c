@@ -23,10 +23,11 @@
 #include "NSThread.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "ocpayload.h"
 
 #include <pthread.h>
 
-#define NS_QUERY_CONSUMER_ID "consumerid"
+#define NS_QUERY_CONSUMER_ID "consumerId"
 
 pthread_mutex_t ** NSGetStackMutex()
 {
@@ -98,6 +99,15 @@ bool * NSGetBoneIsStartedConsumer()
 void NSSetIsStartedConsumer(bool setValue)
 {
     * NSGetBoneIsStartedConsumer() = setValue;
+
+    if (setValue == false)
+    {
+        pthread_mutex_destroy(*NSGetStackMutex());
+        *NSGetStackMutex() = NULL;
+
+        NSOICFree(*NSGetConsumerId());
+        *NSGetConsumerId() = NULL;
+    }
 }
 
 bool NSIsStartedConsumer()
@@ -105,53 +115,50 @@ bool NSIsStartedConsumer()
     return * NSGetBoneIsStartedConsumer();
 }
 
-NSProviderDiscoveredCallback * NSGetBoneDiscoverCb()
+NSProviderStateCallback * NSGetProviderChangedCb()
 {
-    static NSProviderDiscoveredCallback g_discoverCb = NULL;
-
-    return & g_discoverCb;
-}
-
-void NSSetDiscoverProviderCb(NSProviderDiscoveredCallback cb)
-{
-    * NSGetBoneDiscoverCb() = cb;
-}
-
-NSProviderDiscoveredCallback NSGetDiscoverCb()
-{
-    return * NSGetBoneDiscoverCb();
-}
-
-void * NSDiscoveredProviderFunc(void * provider)
-{
-    NSGetDiscoverCb()((NSProvider *) provider);
-
-    return NULL;
-}
-
-void NSDiscoveredProvider(NSProvider * provider)
-{
-    NS_VERIFY_NOT_NULL_V(provider);
-
-    NSConsumerThread * thread = NSThreadInit(NSDiscoveredProviderFunc, (void *) provider);
-    NS_VERIFY_NOT_NULL_V(thread);
-}
-
-NSProviderChangedCallback * NSGetProviderChangedCb()
-{
-    static NSProviderChangedCallback g_changedCb = NULL;
+    static NSProviderStateCallback g_changedCb = NULL;
 
     return & g_changedCb;
 }
 
-void NSSetProviderChangedCb(NSProviderChangedCallback cb)
+void NSSetProviderChangedCb(NSProviderStateCallback cb)
 {
     *(NSGetProviderChangedCb()) = cb;
 }
 
-void NSProviderChanged(NSProvider * provider, NSResponse response)
+typedef struct
 {
-    (*(NSGetProviderChangedCb()))(provider, response);
+    NSProvider * provider;
+    NSProviderState state;
+} NSProviderChangedData;
+
+void * NSProviderChangedFunc(void * obj)
+{
+    NSProviderChangedData * data = (NSProviderChangedData *) obj;
+    (*(NSGetProviderChangedCb()))(data->provider, data->state);
+    NSOICFree(data);
+    return NULL;
+}
+
+void NSProviderChanged(NSProvider * provider, NSProviderState response)
+{
+    NS_VERIFY_NOT_NULL_V(provider);
+
+    NSProvider * retProvider = NSCopyProvider((NSProvider_internal *) provider);
+    NS_VERIFY_NOT_NULL_V(retProvider);
+
+    NSProviderChangedData * data =
+            (NSProviderChangedData *)OICMalloc(sizeof(NSProviderChangedData));
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(data, NSRemoveProvider(retProvider));
+
+    data->provider = retProvider;
+    data->state = response;
+
+    NSConsumerThread * thread = NSThreadInit(NSProviderChangedFunc, (void *) data);
+    NS_VERIFY_NOT_NULL_V(thread);
+
+    NSDestroyThreadHandle(thread);
 }
 
 NSSyncInfoReceivedCallback * NSGetBoneNotificationSyncCb()
@@ -182,6 +189,8 @@ void NSNotificationSync(NSSyncInfo * sync)
 
     NSConsumerThread * thread = NSThreadInit(NSNotificationSyncFunc, (void *) retSync);
     NS_VERIFY_NOT_NULL_V(thread);
+
+    NSDestroyThreadHandle(thread);
 }
 
 NSMessageReceivedCallback  * NSGetBoneMessagePostedCb()
@@ -216,6 +225,8 @@ void NSMessagePost(NSMessage * msg)
 
     NSConsumerThread * thread = NSThreadInit(NSMessagePostFunc, (void *) retMsg);
     NS_VERIFY_NOT_NULL_V(thread);
+
+    NSDestroyThreadHandle(thread);
 }
 
 NSTask * NSMakeTask(NSTaskType type, void * data)
@@ -245,14 +256,32 @@ NSMessage * NSCopyMessage(NSMessage * msg)
     newMsg->sourceName = OICStrdup(msg->sourceName);
     newMsg->dateTime = OICStrdup(msg->dateTime);
     newMsg->type = msg->type;
+
     newMsg->topic = NULL;
     if (msg->topic && strlen(msg->topic) > 0)
     {
         newMsg->topic = OICStrdup(msg->topic);
     }
 
-    // TODO change to copy function.
-    newMsg->mediaContents = msg->mediaContents;
+    newMsg->mediaContents = NULL;
+    if (msg->mediaContents)
+    {
+        newMsg->mediaContents = (NSMediaContents *)OICMalloc(sizeof(NSMediaContents));
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(
+                newMsg->mediaContents, NULL, NSRemoveMessage(newMsg));
+        newMsg->mediaContents->iconImage =
+                (char *)OICMalloc(sizeof(char)*strlen(msg->mediaContents->iconImage));
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(
+                newMsg->mediaContents->iconImage, NULL, NSRemoveMessage(newMsg));
+        memcpy(newMsg->mediaContents->iconImage, msg->mediaContents->iconImage,
+               strlen(msg->mediaContents->iconImage));
+    }
+
+    newMsg->extraInfo = NULL;
+    if (msg->extraInfo)
+    {
+        newMsg->extraInfo = OCRepPayloadClone(msg->extraInfo);
+    }
 
     return newMsg;
 }
@@ -267,8 +296,17 @@ void NSRemoveMessage(NSMessage * msg)
     NSOICFree(msg->dateTime);
     NSOICFree(msg->topic);
 
-    // TODO change to remove function.
+    if (msg->mediaContents)
+    {
+        NSOICFree(msg->mediaContents->iconImage);
+    }
     NSOICFree(msg->mediaContents);
+
+    if (msg->extraInfo)
+    {
+        OCRepPayloadDestroy(msg->extraInfo);
+        msg->extraInfo = NULL;
+    }
 
     NSOICFree(msg);
 }
@@ -320,20 +358,26 @@ NSProviderConnectionInfo * NSCopyProviderConnections(NSProviderConnectionInfo * 
 
     NSProviderConnectionInfo * retInfo = NSCreateProviderConnections(tmp->addr);
     NS_VERIFY_NOT_NULL(retInfo, NULL);
+    retInfo->messageHandle = tmp->messageHandle;
+    retInfo->syncHandle = tmp->syncHandle;
+    retInfo->isCloudConnection = tmp->isCloudConnection;
+    retInfo->isSubscribing = tmp->isSubscribing;
+
     tmp = tmp->next;
     NSProviderConnectionInfo * copyInfo = retInfo;
 
     while(tmp)
     {
-        copyInfo = NSCreateProviderConnections(tmp->addr);
-        NS_VERIFY_NOT_NULL(copyInfo, NULL);
+        NSProviderConnectionInfo * tmpInfo = NSCreateProviderConnections(tmp->addr);
+        NS_VERIFY_NOT_NULL(tmpInfo, NULL);
 
-        copyInfo->messageHandle = tmp->messageHandle;
-        copyInfo->syncHandle = tmp->syncHandle;
-        copyInfo->isCloudConnection = tmp->isCloudConnection;
-        copyInfo->isSubscribing = tmp->isSubscribing;
+        tmpInfo->messageHandle = tmp->messageHandle;
+        tmpInfo->syncHandle = tmp->syncHandle;
+        tmpInfo->isCloudConnection = tmp->isCloudConnection;
+        tmpInfo->isSubscribing = tmp->isSubscribing;
         tmp = tmp->next;
-        copyInfo = copyInfo->next;
+        copyInfo->next = tmpInfo;
+        copyInfo = tmpInfo;
     }
 
     return retInfo;
@@ -392,7 +436,7 @@ void NSRemoveTopicLL(NSTopicLL * topicHead)
 
     while (iter)
     {
-        following = (NSTopicLL *) iter->next;
+        following = iter->next;
 
         NSRemoveTopicNode(iter);
 
@@ -406,6 +450,7 @@ NSTopicLL * NSCopyTopicLL(NSTopicLL * topicHead)
 
     NSTopicLL * iter = topicHead;
 
+    NS_LOG_V(DEBUG, "[NSCopyTopicLL] Name:%s\t State:%d", iter->topicName, iter->state);
     NSTopicLL * newTopicHead = NSCopyTopicNode(iter);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicHead, NULL, NSRemoveTopicLL(newTopicHead));
 
@@ -413,11 +458,13 @@ NSTopicLL * NSCopyTopicLL(NSTopicLL * topicHead)
 
     while (iter)
     {
+        NS_LOG_V(DEBUG, "[NSCopyTopicLL] Name:%s\t State:%d", iter->topicName, iter->state);
         NSTopicLL * newTopicNode = NSCopyTopicNode(iter);
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newTopicNode, NULL, NSRemoveTopicLL(newTopicHead));
 
         NSResult ret = NSInsertTopicNode(newTopicHead, newTopicNode);
-        NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(ret, NULL, NSRemoveTopicLL(newTopicHead));
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *)1 : NULL,
+                                                    NULL, NSRemoveTopicLL(newTopicHead));
 
         iter = (NSTopicLL *) iter->next;
     }
@@ -459,6 +506,7 @@ NSProvider_internal * NSCopyProvider_internal(NSProvider_internal * prov)
     newProv->syncUri = OICStrdup(prov->syncUri);
     newProv->topicUri = OICStrdup(prov->topicUri);
     newProv->accessPolicy = prov->accessPolicy;
+    newProv->state = prov->state;
 
     return newProv;
 }
@@ -469,16 +517,6 @@ NSProvider * NSCopyProvider(NSProvider_internal * prov)
 
     NSProvider * newProv = (NSProvider *) OICMalloc(sizeof(NSProvider));
     NS_VERIFY_NOT_NULL(newProv, NULL);
-
-    newProv->topicLL = NULL;
-
-    if (prov->topicLL)
-    {
-        NSTopicLL * topicList = NSCopyTopicLL(prov->topicLL);
-        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(topicList, NULL, NSRemoveProvider(newProv));
-
-        newProv->topicLL = topicList;
-    }
 
     OICStrcpy(newProv->providerId, NS_DEVICE_ID_LENGTH, prov->providerId);
 
@@ -504,40 +542,7 @@ void NSRemoveProvider_internal(NSProvider_internal * prov)
 void NSRemoveProvider(NSProvider * prov)
 {
     NS_VERIFY_NOT_NULL_V(prov);
-
-    if (prov->topicLL)
-    {
-        NSRemoveTopicLL(prov->topicLL);
-    }
-
     NSOICFree(prov);
-}
-
-NSSyncInfo_internal * NSCopySyncInfo(NSSyncInfo_internal * syncInfo)
-{
-    NS_VERIFY_NOT_NULL(syncInfo, NULL);
-
-    NSProviderConnectionInfo * connections = NSCopyProviderConnections(syncInfo->connection);
-    NS_VERIFY_NOT_NULL(connections, NULL);
-
-    NSSyncInfo_internal * newSyncInfo = (NSSyncInfo_internal *)OICMalloc(sizeof(NSSyncInfo_internal));
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(newSyncInfo, NULL, NSRemoveConnections(connections));
-
-    OICStrcpy(newSyncInfo->providerId, sizeof(char) * NS_DEVICE_ID_LENGTH, syncInfo->providerId);
-    newSyncInfo->messageId = syncInfo->messageId;
-    newSyncInfo->state = syncInfo->state;
-    newSyncInfo->connection = connections;
-
-    return newSyncInfo;
-}
-
-void NSRemoveSyncInfo(NSSyncInfo_internal * syncInfo)
-{
-    NS_VERIFY_NOT_NULL_V(syncInfo);
-
-    NSRemoveConnections(syncInfo->connection);
-
-    NSOICFree(syncInfo);
 }
 
 OCStackResult NSInvokeRequest(OCDoHandle * handle,
@@ -570,6 +575,7 @@ bool NSOCResultToSuccess(OCStackResult ret)
         case OC_STACK_OK:
         case OC_STACK_RESOURCE_CREATED:
         case OC_STACK_RESOURCE_DELETED:
+        case OC_STACK_PRESENCE_STOPPED:
         case OC_STACK_CONTINUE:
         case OC_STACK_RESOURCE_CHANGED:
             return true;

@@ -29,6 +29,7 @@
 
 #include <string>
 #include "NSMediaContents.h"
+#include "OCRepresentation.h"
 
 namespace OIC
 {
@@ -54,7 +55,9 @@ namespace OIC
                         * Constructor of NSMessage.
                         */
                 NSMessage(): m_messageId(0), m_type(NSMessageType::NS_MESSAGE_ALERT), m_ttl(0),
-                                            m_mediaContents(new NSMediaContents) { }
+                    m_mediaContents(new NSMediaContents), m_extraInfo(OC::OCRepresentation())
+                {
+                }
 
                 /**
                         * Constructor of NSMessage.
@@ -62,6 +65,21 @@ namespace OIC
                         * @param msg - pointer to NSMessage struct to initialize.
                         */
                 NSMessage(::NSMessage *msg);
+
+                /**
+                     * Copy Constructor of NSMessage.
+                     *
+                     * @param msg - NSMessage to initialize.
+                     */
+                NSMessage(const NSMessage &msg);
+
+                /**
+                     * Copy assignment operator of NSMessage.
+                     *
+                     * @param msg -  NSMessage to initialize.
+                     * @return NSMessage object reference
+                     */
+                NSMessage &operator=(const NSMessage &msg);
 
                 /**
                         * Destructor of NSMessage.
@@ -134,7 +152,7 @@ namespace OIC
                 /**
                      * This method is for setting Title from the Notification service Message.
                      *
-                     * @param Title as string.
+                     * @param title as string.
                      */
                 void setTitle(const std::string &title);
 
@@ -148,7 +166,7 @@ namespace OIC
                 /**
                      * This method is for setting contentText from the Notification service Message.
                      *
-                     * @param contentText as string.
+                     * @param contextText as string.
                      */
                 void setContentText(const std::string &contextText);
 
@@ -180,6 +198,33 @@ namespace OIC
                      */
                 void setMediaContents(NSMediaContents *mediaContents);
 
+                /**
+                     * This method is for getting Topic from the Notification service Message.
+                     *
+                     * @return Topic as string.
+                     */
+                std::string getTopic() const;
+
+                /**
+                     * This method is for setting Topic for the Notification service Message.
+                     *
+                     * @return Topic as string.
+                     */
+                void setTopic(const std::string &topic);
+
+                /**
+                     * This method is for getting extraInfo from the Notification service Message.
+                     *
+                     * @return extraInfo as OCRepresentation.
+                     */
+                OC::OCRepresentation getExtraInfo() const;
+
+                /**
+                     * This method is for setting extraInfo for the Notification service Message.
+                     *
+                     * @return extraInfo as OCRepresentation.
+                     */
+                void setExtraInfo(const OC::OCRepresentation &extraInfo);
 
             private:
                 uint64_t m_messageId;
@@ -192,6 +237,8 @@ namespace OIC
                 std::string m_contentText;
                 std::string m_sourceName;
                 NSMediaContents *m_mediaContents;
+                std::string m_topic;
+                OC::OCRepresentation m_extraInfo;
 
         };
     }

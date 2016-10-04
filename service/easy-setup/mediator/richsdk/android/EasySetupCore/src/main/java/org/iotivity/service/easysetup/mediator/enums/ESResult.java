@@ -24,17 +24,16 @@ package org.iotivity.service.easysetup.mediator.enums;
  * It defines an result during easy setup process, which is same as one in Easy Setup C++ SDK
  */
 public enum ESResult {
-    ES_ERROR(-1),
+
     ES_OK(0),
-    ES_NETWORKFOUND(1),
-    ES_NETWORKCONNECTED(2),
-    ES_NETWORKNOTCONNECTED(3),
-    ES_RESOURCECREATED(11),
-    ES_RECVREQOFPROVRES(21),
-    ES_RECVREQOFNETRES(22),
-    ES_RECVUPDATEOFPROVRES(23),
-    ES_RECVTRIGGEROFPROVRES(24),
-    ES_UNAUTHORIZED(25);
+    ES_ENROLLEE_DISCOVERY_FAILURE(11),
+    ES_COMMUNICATION_ERROR(12),
+    ES_SEC_OPERATION_IS_NOT_SUPPORTED(20),
+    ES_SECURE_RESOURCE_DISCOVERY_FAILURE(21),
+    ES_OWNERSHIP_TRANSFER_FAILURE(22),
+    ES_ACL_PROVISIONING_FAILURE(23),
+    ES_CERT_PROVISIONING_FAILURE(24),
+    ES_ERROR(255);
 
     private int value;
 

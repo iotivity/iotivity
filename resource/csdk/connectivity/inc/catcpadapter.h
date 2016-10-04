@@ -29,12 +29,20 @@
 #include "caadapterinterface.h"
 #include "cathreadpool.h"
 #include "cainterface.h"
-#include "pdu.h"
+#include <coap/pdu.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+
+typedef enum CAProtocol
+{
+    UNKNOWN = 0,
+    TLS,
+    COAP
+} CAProtocol_t;
 
 /**
  * TCP Session Information for IPv4 TCP transport
@@ -45,6 +53,8 @@ typedef struct
     int fd;                             /**< file descriptor info */
     unsigned char* data;                /**< received data from remote device */
     size_t len;                         /**< received data length */
+    size_t totalLen;                    /**< total data length required to receive */
+    CAProtocol_t protocol;              /**< application-level protocol */
 } CATCPSessionInfo_t;
 
 /**

@@ -20,6 +20,7 @@
 
 #define __STDC_LIMIT_MACROS
 
+#include "iotivity_config.h"
 #include <stdlib.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -28,6 +29,7 @@
 #include <strings.h>
 #endif
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "cainterface.h"
 #include "payload_logging.h"
@@ -49,12 +51,21 @@
 #include "psinterface.h"
 #include "pinoxmcommon.h"
 
+#ifdef __unix__
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 #ifdef __WITH_DTLS__
 #include "global.h"
 #endif
 
 #define TAG  "SRM-CREDL"
 
+/** Max credential types number used for TLS */
+#define MAX_TYPE 2
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */
 static const uint16_t CBOR_SIZE = 2048;
@@ -69,6 +80,12 @@ static const uint8_t CRED_MAP_SIZE = 3;
 
 static OicSecCred_t        *gCred = NULL;
 static OCResourceHandle    gCredHandle = NULL;
+
+typedef enum CredCompareResult{
+    CRED_CMP_EQUAL = 0,
+    CRED_CMP_NOT_EQUAL = 1,
+    CRED_CMP_ERROR = 2
+}CredCompareResult_t;
 
 /**
  * This function frees OicSecCred_t object's fields and object itself.
@@ -86,10 +103,14 @@ static void FreeCred(OicSecCred_t *cred)
     OICFree(cred->roleIds);
 #endif
 
-    //Clean PublicData
-#if defined(__WITH_X509__) || defined(WITH_TLS) 
+    //Clean PublicData/OptionalData/Credusage
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+     // TODO: Need to check credUsage.
     OICFree(cred->publicData.data);
-#endif
+    OICFree(cred->optionalData.data);
+    OICFree(cred->credUsage);
+
+#endif /* __WITH_X509__ ||  __WITH_TLS__*/
 
     //Clean PrivateData
     OICFree(cred->privateData.data);
@@ -112,6 +133,34 @@ void DeleteCredList(OicSecCred_t* cred)
             FreeCred(credTmp1);
         }
     }
+}
+
+size_t GetCredKeyDataSize(const OicSecCred_t* cred)
+{
+    size_t size = 0;
+    if (cred)
+    {
+        OicSecCred_t *credPtr = NULL, *credTmp = NULL;
+        LL_FOREACH_SAFE((OicSecCred_t*)cred, credPtr, credTmp)
+        {
+            if (credPtr->privateData.data && 0 < credPtr->privateData.len)
+            {
+                size += credPtr->privateData.len;
+            }
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+            if (credPtr->publicData.data && 0 < credPtr->publicData.len)
+            {
+                size += credPtr->publicData.len;
+            }
+            if (credPtr->optionalData.data && 0 < credPtr->optionalData.len)
+            {
+                size += credPtr->optionalData.len;
+            }
+#endif
+        }
+    }
+    OIC_LOG_V(DEBUG, TAG, "Cred Key Data Size : %d\n", size);
+    return size;
 }
 
 static size_t OicSecCredCount(const OicSecCred_t *secCred)
@@ -170,17 +219,25 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
     {
         CborEncoder credMap;
         size_t mapSize = CRED_MAP_SIZE;
-        char *subject = NULL;
+        size_t inLen = 0;
         if (cred->period)
         {
             mapSize++;
         }
-#ifdef __WITH_X509__
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
         if (SIGNED_ASYMMETRIC_KEY == cred->credType && cred->publicData.data)
         {
             mapSize++;
         }
-#endif /* __WITH_X509__ */
+        if (SIGNED_ASYMMETRIC_KEY == cred->credType && cred->optionalData.data)
+        {
+            mapSize++;
+        }
+        if (cred->credUsage)
+        {
+            mapSize++;
+        }
+#endif /* __WITH_X509__ ||  __WITH_TLS__*/
         if (!secureFlag && cred->privateData.data)
         {
             mapSize++;
@@ -199,11 +256,23 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_SUBJECTID_NAME,
             strlen(OIC_JSON_SUBJECTID_NAME));
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Subject Tag.");
-        ret = ConvertUuidToStr(&cred->subject, &subject);
-        VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
-        cborEncoderResult = cbor_encode_text_string(&credMap, subject, strlen(subject));
-        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Subject Id Value.");
-        OICFree(subject);
+        inLen = (memcmp(&(cred->subject), &WILDCARD_SUBJECT_ID, WILDCARD_SUBJECT_ID_LEN) == 0) ?
+            WILDCARD_SUBJECT_ID_LEN : sizeof(OicUuid_t);
+        if(inLen == WILDCARD_SUBJECT_ID_LEN)
+        {
+            cborEncoderResult = cbor_encode_text_string(&credMap, WILDCARD_RESOURCE_URI,
+                strlen(WILDCARD_RESOURCE_URI));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Subject Id wildcard Value.");
+        }
+        else
+        {
+            char *subject = NULL;
+            ret = ConvertUuidToStr(&cred->subject, &subject);
+            VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
+            cborEncoderResult = cbor_encode_text_string(&credMap, subject, strlen(subject));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Subject Id Value.");
+            OICFree(subject);
+        }
 
         //CredType -- Mandatory
         cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_CREDTYPE_NAME,
@@ -212,7 +281,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         cborEncoderResult = cbor_encode_int(&credMap, cred->credType);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Cred Type Value.");
 
-#ifdef __WITH_X509__
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
         //PublicData -- Not Mandatory
         if (SIGNED_ASYMMETRIC_KEY == cred->credType && cred->publicData.data)
         {
@@ -237,14 +306,111 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             cborEncoderResult = cbor_encode_text_string(&publicMap, OIC_JSON_ENCODING_NAME,
                 strlen(OIC_JSON_ENCODING_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Public Encoding Tag.");
-            cborEncoderResult = cbor_encode_text_string(&publicMap, OIC_SEC_ENCODING_RAW,
-                strlen(OIC_SEC_ENCODING_RAW));
+            cborEncoderResult = cbor_encode_text_string(&publicMap, OIC_SEC_ENCODING_DER,
+                strlen(OIC_SEC_ENCODING_DER));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Public Encoding Value.");
 
             cborEncoderResult = cbor_encoder_close_container(&credMap, &publicMap);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing PublicData Map.");
         }
-#endif /*__WITH_X509__*/
+        //OptionalData -- Not Mandatory
+        if (SIGNED_ASYMMETRIC_KEY == cred->credType && cred->optionalData.data)
+        {
+            CborEncoder optionalMap;
+            const size_t optionalMapSize = 2;
+
+            cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_OPTDATA_NAME,
+                strlen(OIC_JSON_OPTDATA_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding OptionalData Tag.");
+
+            cborEncoderResult = cbor_encoder_create_map(&credMap, &optionalMap, optionalMapSize);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding OptionalData Map");
+
+            // TODO: Need to data strucure modification for OicSecCert_t.
+            if(OIC_ENCODING_RAW == cred->optionalData.encoding)
+            {
+                cborEncoderResult = cbor_encode_text_string(&optionalMap, OIC_JSON_ENCODING_NAME,
+                    strlen(OIC_JSON_ENCODING_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional Encoding Tag.");
+                cborEncoderResult = cbor_encode_text_string(&optionalMap, OIC_SEC_ENCODING_RAW,
+                    strlen(OIC_SEC_ENCODING_RAW));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional Encoding Value.");
+
+                cborEncoderResult = cbor_encode_text_string(&optionalMap, OIC_JSON_DATA_NAME,
+                    strlen(OIC_JSON_DATA_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional Tag.");
+                cborEncoderResult = cbor_encode_byte_string(&optionalMap, cred->optionalData.data,
+                    cred->optionalData.len);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional Value.");
+            }
+            else if(OIC_ENCODING_BASE64 == cred->optionalData.encoding)
+            {
+                cborEncoderResult = cbor_encode_text_string(&optionalMap, OIC_JSON_ENCODING_NAME,
+                    strlen(OIC_JSON_ENCODING_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional Encoding Tag.");
+                cborEncoderResult = cbor_encode_text_string(&optionalMap, OIC_SEC_ENCODING_BASE64,
+                    strlen(OIC_SEC_ENCODING_BASE64));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional Encoding Value.");
+
+                cborEncoderResult = cbor_encode_text_string(&optionalMap, OIC_JSON_DATA_NAME,
+                    strlen(OIC_JSON_DATA_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional Tag.");
+                cborEncoderResult = cbor_encode_text_string(&optionalMap, (char*)(cred->optionalData.data),
+                    cred->optionalData.len);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional Value.");
+            }
+            else if(OIC_ENCODING_PEM == cred->optionalData.encoding)
+            {
+                cborEncoderResult = cbor_encode_text_string(&optionalMap, OIC_JSON_ENCODING_NAME,
+                    strlen(OIC_JSON_ENCODING_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional Encoding Tag.");
+                cborEncoderResult = cbor_encode_text_string(&optionalMap, OIC_SEC_ENCODING_PEM,
+                    strlen(OIC_SEC_ENCODING_PEM));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional Encoding Value.");
+
+                cborEncoderResult = cbor_encode_text_string(&optionalMap, OIC_JSON_DATA_NAME,
+                    strlen(OIC_JSON_DATA_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional Tag.");
+                cborEncoderResult = cbor_encode_text_string(&optionalMap, (char*)(cred->optionalData.data),
+                    cred->optionalData.len);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional Value.");
+            }
+            else if(OIC_ENCODING_DER == cred->optionalData.encoding)
+            {
+                cborEncoderResult = cbor_encode_text_string(&optionalMap, OIC_JSON_ENCODING_NAME,
+                    strlen(OIC_JSON_ENCODING_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional Encoding Tag.");
+                cborEncoderResult = cbor_encode_text_string(&optionalMap, OIC_SEC_ENCODING_DER,
+                    strlen(OIC_SEC_ENCODING_DER));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional Encoding Value.");
+
+                cborEncoderResult = cbor_encode_text_string(&optionalMap, OIC_JSON_DATA_NAME,
+                    strlen(OIC_JSON_DATA_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional Tag.");
+                cborEncoderResult = cbor_encode_byte_string(&optionalMap, cred->optionalData.data,
+                    cred->optionalData.len);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional Value.");
+            }
+            else
+            {
+                OIC_LOG(ERROR, TAG, "Unknow encoding type for optional data.");
+                VERIFY_CBOR_SUCCESS(TAG, CborErrorUnknownType, "Failed Adding optional Encoding Value.");
+            }
+
+            cborEncoderResult = cbor_encoder_close_container(&credMap, &optionalMap);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing OptionalData Map.");
+        }
+        //CredUsage -- Not Mandatory
+        if(cred->credUsage)
+        {
+            cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_CREDUSAGE_NAME,
+                strlen(OIC_JSON_CREDUSAGE_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Credusage Name Tag.");
+            cborEncoderResult = cbor_encode_text_string(&credMap, cred->credUsage,
+                strlen(cred->credUsage));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Credusage Name Value.");
+        }
+#endif /* __WITH_X509__ ||  __WITH_TLS__*/
         //PrivateData -- Not Mandatory
         if(!secureFlag && cred->privateData.data)
         {
@@ -289,6 +455,22 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
                     strlen(OIC_JSON_DATA_NAME));
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Priv Tag.");
                 cborEncoderResult = cbor_encode_text_string(&privateMap, (char*)(cred->privateData.data),
+                    cred->privateData.len);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Priv Value.");
+            }
+            else if(OIC_ENCODING_DER == cred->privateData.encoding)
+            {
+                cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_JSON_ENCODING_NAME,
+                    strlen(OIC_JSON_ENCODING_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Private Encoding Tag.");
+                cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_SEC_ENCODING_DER,
+                    strlen(OIC_SEC_ENCODING_DER));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Private Encoding Value.");
+
+                cborEncoderResult = cbor_encode_text_string(&privateMap, OIC_JSON_DATA_NAME,
+                    strlen(OIC_JSON_DATA_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Priv Tag.");
+                cborEncoderResult = cbor_encode_byte_string(&privateMap, cred->privateData.data,
                     cred->privateData.len);
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Priv Value.");
             }
@@ -505,8 +687,15 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 char *subjectid = NULL;
                                 cborFindResult = cbor_value_dup_text_string(&credMap, &subjectid, &len, NULL);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding subjectid Value.");
-                                ret = ConvertStrToUuid(subjectid, &cred->subject);
-                                VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
+                                if(strcmp(subjectid, WILDCARD_RESOURCE_URI) == 0)
+                                {
+                                    cred->subject.id[0] = '*';
+                                }
+                                else
+                                {
+                                    ret = ConvertStrToUuid(subjectid, &cred->subject);
+                                    VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
+                                }
                                 OICFree(subjectid);
                             }
                             // credtype
@@ -593,7 +782,8 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 }
 
                             }
-#ifdef __WITH_X509__
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+                            //PublicData -- Not Mandatory
                             if (strcmp(name, OIC_JSON_PUBLICDATA_NAME)  == 0)
                             {
                                 CborValue pubMap = { .parser = NULL };
@@ -634,7 +824,95 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                     OICFree(pubname);
                                 }
                             }
-#endif  //__WITH_X509__
+                            //OptionalData -- Not Mandatory
+                            if (strcmp(name, OIC_JSON_OPTDATA_NAME)  == 0)
+                            {
+                                CborValue optMap = { .parser = NULL };
+                                cborFindResult = cbor_value_enter_container(&credMap, &optMap);
+
+                                while (cbor_value_is_valid(&optMap))
+                                {
+                                    char* optname = NULL;
+                                    CborType type = cbor_value_get_type(&optMap);
+                                    if (type == CborTextStringType && cbor_value_is_text_string(&optMap))
+                                    {
+                                        cborFindResult = cbor_value_dup_text_string(&optMap, &optname,
+                                                &len, NULL);
+                                        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to get text");
+                                        cborFindResult = cbor_value_advance(&optMap);
+                                        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to advance value");
+                                    }
+                                    if (optname)
+                                    {
+                                        // OptionalData::optdata -- Mandatory
+                                        if (strcmp(optname, OIC_JSON_DATA_NAME) == 0)
+                                        {
+                                            if(cbor_value_is_byte_string(&optMap))
+                                            {
+                                                cborFindResult = cbor_value_dup_byte_string(&optMap, &cred->optionalData.data,
+                                                    &cred->optionalData.len, NULL);
+                                            }
+                                            else if(cbor_value_is_text_string(&optMap))
+                                            {
+                                                cborFindResult = cbor_value_dup_text_string(&optMap, (char**)(&cred->optionalData.data),
+                                                    &cred->optionalData.len, NULL);
+                                            }
+                                            else
+                                            {
+                                                cborFindResult = CborErrorUnknownType;
+                                                OIC_LOG(ERROR, TAG, "Unknow type for optional data.");
+                                            }
+                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding OptionalData.");
+                                        }
+                                        // OptionalData::encoding -- Mandatory
+                                        if (strcmp(optname, OIC_JSON_ENCODING_NAME) == 0)
+                                        {
+                                            // TODO: Added as workaround. Will be replaced soon.
+                                            char* strEncoding = NULL;
+                                            cborFindResult = cbor_value_dup_text_string(&optMap, &strEncoding, &len, NULL);
+                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding EncodingType");
+
+                                            if(strcmp(strEncoding, OIC_SEC_ENCODING_RAW) == 0)
+                                            {
+                                                OIC_LOG(INFO,TAG,"cbor_value_is_byte_string");
+                                                cred->optionalData.encoding = OIC_ENCODING_RAW;
+                                            }
+                                            else if(strcmp(strEncoding, OIC_SEC_ENCODING_BASE64) == 0)
+                                            {
+                                                cred->optionalData.encoding = OIC_ENCODING_BASE64;
+                                            }
+                                            else if(strcmp(strEncoding, OIC_SEC_ENCODING_PEM) == 0)
+                                            {
+                                                cred->optionalData.encoding = OIC_ENCODING_PEM;
+                                            }
+                                            else if(strcmp(strEncoding, OIC_SEC_ENCODING_DER) == 0)
+                                            {
+                                                cred->optionalData.encoding = OIC_ENCODING_DER;
+                                            }
+                                            else
+                                            {
+                                                //For unit test
+                                                cred->optionalData.encoding = OIC_ENCODING_RAW;
+                                                OIC_LOG(WARNING, TAG, "Unknow encoding type dectected for optional data.");
+                                            }
+                                            OICFree(strEncoding);
+                                        }
+                                    }
+                                    if (cbor_value_is_valid(&optMap))
+                                    {
+                                        cborFindResult = cbor_value_advance(&optMap);
+                                        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing optdata Map.");
+                                    }
+                                    OICFree(optname);
+                                }
+                            }
+                            //Credusage -- Not Mandatory
+                            if (0 == strcmp(OIC_JSON_CREDUSAGE_NAME, name))
+                            {
+                                cborFindResult = cbor_value_dup_text_string(&credMap, &cred->credUsage, &len, NULL);
+                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Period.");
+                            }
+#endif  //__WITH_X509__ ||  __WITH_TLS__
 
                             if (0 == strcmp(OIC_JSON_PERIOD_NAME, name))
                             {
@@ -776,7 +1054,9 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
     if (cred)
     {
         uint8_t *payload = NULL;
-        size_t size = 0;
+        // This added '256' is arbitrary value that is added to cover the name of the resource, map addition and ending
+        size_t size = GetCredKeyDataSize(cred);
+        size += (256 * OicSecCredCount(cred));
         int secureFlag = 0;
         OCStackResult res = CredToCBORPayload(cred, &payload, &size, secureFlag);
         if ((OC_STACK_OK == res) && payload)
@@ -868,14 +1148,167 @@ static OicSecCred_t* GetCredDefault()
     return NULL;
 }
 
+static bool IsSameSecKey(const OicSecKey_t* sk1, const OicSecKey_t* sk2)
+{
+    VERIFY_NON_NULL(TAG, sk1, WARNING);
+    VERIFY_NON_NULL(TAG, sk2, WARNING);
+
+    VERIFY_SUCCESS(TAG, (sk1->len == sk2->len), INFO);
+    VERIFY_SUCCESS(TAG, (sk1->encoding == sk2->encoding), INFO);
+    VERIFY_SUCCESS(TAG, (0 == memcmp(sk1->data, sk2->data, sk1->len)), INFO);
+    return true;
+exit:
+    return false;
+}
+
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+static bool IsSameCert(const OicSecCert_t* cert1, const OicSecCert_t* cert2)
+{
+    VERIFY_NON_NULL(TAG, cert1, WARNING);
+    VERIFY_NON_NULL(TAG, cert2, WARNING);
+
+    VERIFY_SUCCESS(TAG, (cert1->len == cert2->len), INFO);
+    VERIFY_SUCCESS(TAG, (0 == memcmp(cert1->data, cert2->data, cert1->len)), INFO);
+    return true;
+exit:
+    return false;
+}
+#endif //#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+
+/**
+ * Compares credential
+ *
+ * @return CRED_CMP_EQUAL if credentials are equal
+ *         CRED_CMP_NOT_EQUAL if not equal
+ *         otherwise error.
+ */
+
+static CredCompareResult_t CompareCredential(const OicSecCred_t * l, const OicSecCred_t * r)
+{
+    CredCompareResult_t cmpResult = CRED_CMP_ERROR;
+    bool isCompared = false;
+    OIC_LOG(DEBUG, TAG, "IN CompareCredetial");
+
+    VERIFY_NON_NULL(TAG, l, ERROR);
+    VERIFY_NON_NULL(TAG, r, ERROR);
+
+    cmpResult = CRED_CMP_NOT_EQUAL;
+
+    VERIFY_SUCCESS(TAG, (l->credType == r->credType), INFO);
+    VERIFY_SUCCESS(TAG, (0 == memcmp(l->subject.id, r->subject.id, sizeof(l->subject.id))), INFO);
+
+    switch(l->credType)
+    {
+        case SYMMETRIC_PAIR_WISE_KEY:
+        case SYMMETRIC_GROUP_KEY:
+        case PIN_PASSWORD:
+        {
+            if(l->privateData.data && r->privateData.data)
+            {
+                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->privateData, &r->privateData), INFO);
+                isCompared = true;
+            }
+            break;
+        }
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+        case ASYMMETRIC_KEY:
+        case SIGNED_ASYMMETRIC_KEY:
+        {
+            if(l->publicData.data && r->publicData.data)
+            {
+                VERIFY_SUCCESS(TAG, IsSameCert(&l->publicData, &r->publicData), INFO);
+                isCompared = true;
+            }
+
+            if(l->optionalData.data && r->optionalData.data)
+            {
+                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->optionalData, &r->optionalData), INFO);
+                isCompared = true;
+            }
+
+            if(l->credUsage && r->credUsage)
+            {
+                VERIFY_SUCCESS(TAG, (strlen(l->credUsage) == strlen(r->credUsage)), INFO);
+                VERIFY_SUCCESS(TAG, (0 == strncmp(l->credUsage, r->credUsage, strlen(l->credUsage))), INFO);
+                isCompared = true;
+            }
+            break;
+        }
+        case ASYMMETRIC_ENCRYPTION_KEY:
+        {
+            if(l->privateData.data && r->privateData.data)
+            {
+                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->privateData, &r->privateData), INFO);
+                isCompared = true;
+            }
+
+            if(l->publicData.data && r->publicData.data)
+            {
+                VERIFY_SUCCESS(TAG, IsSameCert(&l->publicData, &r->publicData), INFO);
+                isCompared = true;
+            }
+
+            if(l->optionalData.data && r->optionalData.data)
+            {
+                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->optionalData, &r->optionalData), INFO);
+                isCompared = true;
+            }
+
+            break;
+        }
+#endif //__WITH_X509__ or __WITH_TLS__
+        default:
+        {
+            cmpResult = CRED_CMP_ERROR;
+            break;
+        }
+    }
+
+    if(isCompared)
+    {
+        OIC_LOG(DEBUG, TAG, "Same Credentials");
+        cmpResult = CRED_CMP_EQUAL;
+    }
+    else
+    {
+        OIC_LOG(DEBUG, TAG, "Can not find the key data in credential");
+        cmpResult = CRED_CMP_ERROR;
+    }
+exit:
+    OIC_LOG(DEBUG, TAG, "OUT CompareCredetial");
+
+    return cmpResult;
+}
+
 OCStackResult AddCredential(OicSecCred_t * newCred)
 {
     OCStackResult ret = OC_STACK_ERROR;
+    OicSecCred_t * temp = NULL;
     VERIFY_SUCCESS(TAG, NULL != newCred, ERROR);
 
     //Assigning credId to the newCred
     newCred->credId = GetCredId();
     VERIFY_SUCCESS(TAG, newCred->credId != 0, ERROR);
+
+    LL_FOREACH(gCred, temp)
+    {
+        CredCompareResult_t cmpRes = CompareCredential(temp, newCred);
+        if(CRED_CMP_EQUAL == cmpRes)
+        {
+            OIC_LOG_V(WARNING, TAG, "Detected same credential ID(%d)" \
+                      "new credential's ID will be replaced.", temp->credId);
+            newCred->credId = temp->credId;
+            ret = OC_STACK_OK;
+            goto exit;
+        }
+
+        if (CRED_CMP_ERROR == cmpRes)
+        {
+            OIC_LOG_V(WARNING, TAG, "Credential skipped : %d", cmpRes);
+            ret = OC_STACK_ERROR;
+            goto exit;
+        }
+    }
 
     //Append the new Cred to existing list
     LL_APPEND(gCred, newCred);
@@ -1165,6 +1598,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
          * list and updating svr database.
          */
         ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_CHANGED : OC_EH_ERROR;
+        OC_UNUSED(previousMsgId);
 #endif//__WITH_DTLS__
     }
 
@@ -1201,6 +1635,11 @@ static OCEntityHandlerResult HandleGetRequest (const OCEntityHandlerRequest * eh
     int secureFlag = 1;
 
     const OicSecCred_t *cred = gCred;
+
+    size_t credCnt = 0;
+    // This added '256' is arbitrary value that is added to cover the name of the resource, map addition and ending
+    size = GetCredKeyDataSize(cred);
+    size += (256 * OicSecCredCount(cred));
     OCStackResult res = CredToCBORPayload(cred, &payload, &size, secureFlag);
 
     // A device should always have a default cred. Therefore, payload should never be NULL.
@@ -1366,6 +1805,24 @@ OicSecCred_t* GetCredResourceData(const OicUuid_t* subject)
     return NULL;
 }
 
+OicSecCred_t* GetCredResourceDataByCredId(const uint16_t credId)
+{
+    OicSecCred_t *cred = NULL;
+
+   if ( 1 > credId)
+    {
+       return NULL;
+    }
+
+    LL_FOREACH(gCred, cred)
+    {
+        if(cred->credId == credId)
+        {
+            return cred;
+        }
+    }
+    return NULL;
+}
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
@@ -1462,12 +1919,6 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                         return ret;
                     }
                 }
-            }
-            break;
-
-        default:
-            {
-                OIC_LOG (ERROR, TAG, "Wrong value passed for CADtlsPskCredType_t.");
             }
             break;
     }
@@ -1628,6 +2079,10 @@ OCStackResult SetCredRownerId(const OicUuid_t* newROwner)
         memcpy(prevId.id, gCred->rownerID.id, sizeof(prevId.id));
         memcpy(gCred->rownerID.id, newROwner->id, sizeof(newROwner->id));
 
+        size_t credCnt = 0;
+        // This added '256' is arbitrary value that is added to cover the name of the resource, map addition and ending
+        size = GetCredKeyDataSize(gCred);
+        size += (256 * OicSecCredCount(gCred));
         ret = CredToCBORPayload(gCred, &cborPayload, &size, secureFlag);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
@@ -1657,256 +2112,162 @@ OCStackResult GetCredRownerId(OicUuid_t *rowneruuid)
 }
 
 #ifdef __WITH_TLS__
-OCStackResult AddCA(OicSecCert_t * cert)
+void GetDerCaCert(ByteArray * crt)
 {
-    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    if (NULL == crt)
+    {
+        return;
+    }
+    uint8_t *data = NULL;
+    crt->len = 0;
     OCStackResult ret = OC_STACK_ERROR;
-    if (NULL == cert || NULL == cert->data)
+    OicSecCred_t * cred;
+    OicSecCred_t * temp = NULL;
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    LL_FOREACH(gCred, temp)
     {
-        return OC_STACK_INVALID_PARAM;
+        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), TRUST_CA, strlen(TRUST_CA) + 1))
+        {
+            OIC_LOG_V(DEBUG, TAG, "len: %d, crt len: %d", temp->optionalData.len, crt->len);
+            if(OIC_ENCODING_BASE64 == temp->optionalData.encoding)
+            {
+                size_t bufSize = B64DECODE_OUT_SAFESIZE((temp->optionalData.len + 1));
+                uint8 * buf = OICCalloc(1, bufSize);
+                if(NULL == buf)
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to allocate memory");
+                    return;
+                }
+                uint32_t outSize;
+                if(B64_OK != b64Decode(temp->optionalData.data, temp->optionalData.len, buf, bufSize, &outSize))
+                {
+                    OICFree(buf);
+                    OIC_LOG(ERROR, TAG, "Failed to decode base64 data");
+                    return;
+                }
+                crt->data = OICRealloc(crt->data, crt->len + outSize);
+                memcpy(crt->data + crt->len, buf, outSize);
+                crt->len += outSize;
+                OICFree(buf);
+            }
+            else
+            {
+                crt->data = OICRealloc(crt->data, crt->len + temp->optionalData.len);
+                memcpy(crt->data + crt->len, temp->optionalData.data, temp->optionalData.len);
+                crt->len += temp->optionalData.len;
+            }
+            OIC_LOG_V(DEBUG, TAG, "Trust CA Found!! %d", crt->len);
+        }
     }
-    OicUuid_t  subject;
-    OicUuid_t rowner;
-    ret = GetCredRownerId(&rowner);
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-    ret = ConvertStrToUuid(CA_SUBJECT_ID, &subject);
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-
-    OicSecCred_t * cred  = GetCredResourceData(&subject);
-    if (NULL == cred)
+    if(0 == crt->len)
     {
-        //Generating new credential for CA
-        cred = GenerateCredential(&subject, SIGNED_ASYMMETRIC_KEY, cert, NULL, &rowner);
-        VERIFY_NON_NULL(TAG, cred, ERROR);
-        return AddCredential(cred);
+        OIC_LOG(DEBUG, TAG, "Trust CA Not Found!!");
     }
-
-    uint8_t * tempData = OICRealloc(cred->publicData.data, cred->publicData.len + cert->len);
-    if (NULL == tempData)
-    {
-        return OC_STACK_NO_MEMORY;
-    }
-
-    memcpy(tempData + cred->publicData.len, cert->data, cert->len);
-    cred->publicData.data = tempData;
-    cred->publicData.len += cert->len;
-
-    if (UpdatePersistentStorage(gCred))
-    {
-        ret = OC_STACK_OK;
-    }
-
-exit:
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-    return ret;
-}
-// TODO for testing only
-// will be removed
-const unsigned char ca_cert[] = {
-// AMAZON
-0x30, 0x82, 0x02, 0xFE, 0x30, 0x82, 0x01, 0xE6, 0x02, 0x01, 0x01, 0x30, 0x0D, 0x06, 0x09, 0x2A,
-0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x0B, 0x05, 0x00, 0x30, 0x45, 0x31, 0x0B, 0x30, 0x09,
-0x06, 0x03, 0x55, 0x04, 0x06, 0x13, 0x02, 0x41, 0x55, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55,
-0x04, 0x08, 0x0C, 0x0A, 0x53, 0x6F, 0x6D, 0x65, 0x2D, 0x53, 0x74, 0x61, 0x74, 0x65, 0x31, 0x21,
-0x30, 0x1F, 0x06, 0x03, 0x55, 0x04, 0x0A, 0x0C, 0x18, 0x49, 0x6E, 0x74, 0x65, 0x72, 0x6E, 0x65,
-0x74, 0x20, 0x57, 0x69, 0x64, 0x67, 0x69, 0x74, 0x73, 0x20, 0x50, 0x74, 0x79, 0x20, 0x4C, 0x74,
-0x64, 0x30, 0x1E, 0x17, 0x0D, 0x31, 0x36, 0x30, 0x36, 0x32, 0x38, 0x30, 0x35, 0x33, 0x33, 0x35,
-0x38, 0x5A, 0x17, 0x0D, 0x32, 0x36, 0x30, 0x36, 0x32, 0x36, 0x30, 0x35, 0x33, 0x33, 0x35, 0x38,
-0x5A, 0x30, 0x45, 0x31, 0x0B, 0x30, 0x09, 0x06, 0x03, 0x55, 0x04, 0x06, 0x13, 0x02, 0x41, 0x55,
-0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x08, 0x0C, 0x0A, 0x53, 0x6F, 0x6D, 0x65, 0x2D,
-0x53, 0x74, 0x61, 0x74, 0x65, 0x31, 0x21, 0x30, 0x1F, 0x06, 0x03, 0x55, 0x04, 0x0A, 0x0C, 0x18,
-0x49, 0x6E, 0x74, 0x65, 0x72, 0x6E, 0x65, 0x74, 0x20, 0x57, 0x69, 0x64, 0x67, 0x69, 0x74, 0x73,
-0x20, 0x50, 0x74, 0x79, 0x20, 0x4C, 0x74, 0x64, 0x30, 0x82, 0x01, 0x22, 0x30, 0x0D, 0x06, 0x09,
-0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01, 0x05, 0x00, 0x03, 0x82, 0x01, 0x0F, 0x00,
-0x30, 0x82, 0x01, 0x0A, 0x02, 0x82, 0x01, 0x01, 0x00, 0xB5, 0x1C, 0x79, 0x1F, 0x30, 0x6F, 0x5C,
-0x04, 0x9E, 0xD9, 0x78, 0x22, 0x01, 0x29, 0xEE, 0xE9, 0x4A, 0x3A, 0x69, 0xB6, 0xF8, 0xBE, 0x87,
-0x3A, 0x5D, 0x57, 0xBD, 0x96, 0xEE, 0xCC, 0xE9, 0x58, 0x39, 0x53, 0x41, 0xD5, 0x1A, 0x47, 0x12,
-0x8B, 0xF5, 0xAA, 0x0D, 0xC5, 0xBC, 0xAE, 0x17, 0x93, 0x8B, 0xF3, 0x10, 0x10, 0xF6, 0xCD, 0xBC,
-0x22, 0xA2, 0x31, 0x74, 0xF5, 0xBB, 0x5F, 0x72, 0x40, 0x9A, 0x42, 0xE2, 0x83, 0x33, 0x02, 0xA3,
-0x6C, 0x6D, 0x5C, 0x7C, 0xFF, 0x3B, 0x2B, 0xE8, 0x99, 0x4E, 0x9F, 0x86, 0x26, 0xE7, 0x79, 0x0C,
-0x39, 0x0D, 0xEF, 0xA2, 0x52, 0x80, 0xFA, 0xF3, 0x37, 0x46, 0xFB, 0xF9, 0x35, 0x35, 0xC0, 0x16,
-0xC7, 0x1F, 0x95, 0x10, 0x03, 0x30, 0xE1, 0xFB, 0xD9, 0xBD, 0x84, 0x95, 0x11, 0x0D, 0x5A, 0x28,
-0x59, 0xE3, 0xB6, 0xB4, 0x3C, 0xA3, 0xA6, 0x5F, 0x7B, 0x9F, 0x8C, 0x45, 0x3B, 0xC1, 0xAB, 0xE1,
-0xB4, 0xFA, 0x3C, 0x19, 0x58, 0x91, 0x28, 0x29, 0xBA, 0x71, 0x20, 0xFA, 0x4D, 0x58, 0xF1, 0xB1,
-0x01, 0x5D, 0x7B, 0xB4, 0x4A, 0x5E, 0xFA, 0x58, 0x36, 0xEE, 0x31, 0x18, 0x0D, 0x81, 0xB5, 0x41,
-0x48, 0x8B, 0xD9, 0x31, 0xBC, 0xD1, 0x98, 0xD0, 0x40, 0xBF, 0x79, 0x3A, 0x31, 0x13, 0x61, 0xFF,
-0x04, 0x23, 0x1A, 0x2A, 0xAC, 0xA1, 0xEF, 0x1C, 0x2B, 0xC3, 0x8A, 0x7D, 0x33, 0x75, 0xDF, 0x84,
-0xA8, 0xF3, 0x74, 0x63, 0xE4, 0x61, 0x92, 0x5D, 0xCF, 0x62, 0x8C, 0x56, 0x9B, 0xB7, 0x7C, 0xCF,
-0x4A, 0x75, 0x98, 0x3E, 0xE5, 0x73, 0x03, 0x8C, 0xBF, 0x2D, 0x4A, 0x80, 0x48, 0x2D, 0x27, 0xB4,
-0x87, 0xCB, 0x40, 0xF6, 0x48, 0x85, 0xBF, 0x29, 0xA0, 0xE8, 0xC7, 0xF9, 0x11, 0x3C, 0x2D, 0x4F,
-0x92, 0xC1, 0x5E, 0x01, 0x2D, 0x81, 0xD1, 0x9F, 0x73, 0x02, 0x03, 0x01, 0x00, 0x01, 0x30, 0x0D,
-0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x0B, 0x05, 0x00, 0x03, 0x82, 0x01,
-0x01, 0x00, 0x0B, 0x47, 0x8E, 0x29, 0x8C, 0xCB, 0x05, 0xE7, 0xF3, 0xDD, 0xC8, 0x7E, 0xED, 0x6F,
-0xB4, 0xD9, 0xCB, 0xF4, 0x84, 0xCC, 0xA5, 0x08, 0x6C, 0x1C, 0x09, 0x60, 0xD5, 0x00, 0x55, 0x13,
-0x28, 0xC6, 0x64, 0xB2, 0x23, 0x52, 0x03, 0x21, 0xB1, 0x69, 0x63, 0x57, 0x04, 0xC2, 0xD4, 0xF7,
-0x41, 0xAC, 0xEE, 0xD5, 0xD0, 0x49, 0x58, 0x6D, 0xE5, 0x7E, 0x2C, 0xA6, 0x06, 0xC0, 0x39, 0x3A,
-0x7E, 0x30, 0x49, 0xA2, 0x00, 0x8B, 0x81, 0x98, 0x94, 0xC3, 0x5F, 0x05, 0xF1, 0x38, 0xC7, 0x0B,
-0xFA, 0x83, 0xB2, 0x85, 0x84, 0xB2, 0x6D, 0x62, 0x07, 0x82, 0x9C, 0x4D, 0x99, 0x24, 0xD2, 0x79,
-0xBF, 0xDA, 0xF8, 0x9D, 0x1C, 0xAD, 0x13, 0x30, 0xBC, 0xC2, 0xA2, 0x14, 0x7B, 0xD7, 0xFB, 0xCD,
-0x29, 0x2D, 0xAB, 0xB6, 0x24, 0x03, 0x60, 0x62, 0x9E, 0xF4, 0x4C, 0xE3, 0x35, 0x23, 0xB7, 0x1A,
-0x50, 0x96, 0x91, 0x54, 0xD8, 0xB4, 0x93, 0x61, 0x00, 0xB6, 0xBF, 0x05, 0xF0, 0xF3, 0x6B, 0x99,
-0x1E, 0x46, 0x4C, 0x26, 0x95, 0xD2, 0x58, 0x86, 0x5C, 0x78, 0xAD, 0x01, 0xF9, 0xC9, 0x54, 0x67,
-0xB7, 0x99, 0x3C, 0xEE, 0xF8, 0xD7, 0xD2, 0x1E, 0xE6, 0xF0, 0xCC, 0xC8, 0xC2, 0x20, 0x1B, 0xDA,
-0xCF, 0xDB, 0xF5, 0x70, 0x65, 0x33, 0x51, 0x6E, 0x17, 0x1D, 0xC5, 0xC5, 0xC5, 0x63, 0x06, 0x5E,
-0xCA, 0xB5, 0x40, 0x14, 0xEE, 0xDC, 0x14, 0xF2, 0xFE, 0x4B, 0x7A, 0x78, 0xD6, 0x0D, 0x21, 0xF5,
-0x0F, 0x58, 0xE7, 0x2A, 0x26, 0x54, 0x52, 0xCA, 0x60, 0xA2, 0xF8, 0x68, 0xB0, 0xF4, 0x6A, 0x9B,
-0x11, 0x8D, 0x5E, 0x57, 0x5A, 0x5F, 0x51, 0x3E, 0x44, 0x99, 0xB1, 0x76, 0xDA, 0x94, 0x56, 0x0E,
-0x1C, 0xA3, 0xFC, 0xE3, 0x01, 0xB4, 0xD8, 0xEC, 0x2F, 0xBB, 0x65, 0x82, 0x19, 0x06, 0x8E, 0x3A,
-0x2E, 0x5D,
-//Google
-
-0x30, 0x82, 0x03, 0x54, 0x30, 0x82, 0x02, 0x3c, 0xa0, 0x03, 0x02, 0x01, 0x02, 0x02, 0x03, 0x02,
-0x34, 0x56, 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x05, 0x05,
-0x00, 0x30, 0x42, 0x31, 0x0b, 0x30, 0x09, 0x06, 0x03, 0x55, 0x04, 0x06, 0x13, 0x02, 0x55, 0x53,
-0x31, 0x16, 0x30, 0x14, 0x06, 0x03, 0x55, 0x04, 0x0a, 0x13, 0x0d, 0x47, 0x65, 0x6f, 0x54, 0x72,
-0x75, 0x73, 0x74, 0x20, 0x49, 0x6e, 0x63, 0x2e, 0x31, 0x1b, 0x30, 0x19, 0x06, 0x03, 0x55, 0x04,
-0x03, 0x13, 0x12, 0x47, 0x65, 0x6f, 0x54, 0x72, 0x75, 0x73, 0x74, 0x20, 0x47, 0x6c, 0x6f, 0x62,
-0x61, 0x6c, 0x20, 0x43, 0x41, 0x30, 0x1e, 0x17, 0x0d, 0x30, 0x32, 0x30, 0x35, 0x32, 0x31, 0x30,
-0x34, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x17, 0x0d, 0x32, 0x32, 0x30, 0x35, 0x32, 0x31, 0x30, 0x34,
-0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x42, 0x31, 0x0b, 0x30, 0x09, 0x06, 0x03, 0x55, 0x04, 0x06,
-0x13, 0x02, 0x55, 0x53, 0x31, 0x16, 0x30, 0x14, 0x06, 0x03, 0x55, 0x04, 0x0a, 0x13, 0x0d, 0x47,
-0x65, 0x6f, 0x54, 0x72, 0x75, 0x73, 0x74, 0x20, 0x49, 0x6e, 0x63, 0x2e, 0x31, 0x1b, 0x30, 0x19,
-0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x12, 0x47, 0x65, 0x6f, 0x54, 0x72, 0x75, 0x73, 0x74, 0x20,
-0x47, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x20, 0x43, 0x41, 0x30, 0x82, 0x01, 0x22, 0x30, 0x0d, 0x06,
-0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00, 0x03, 0x82, 0x01, 0x0f,
-0x00, 0x30, 0x82, 0x01, 0x0a, 0x02, 0x82, 0x01, 0x01, 0x00, 0xda, 0xcc, 0x18, 0x63, 0x30, 0xfd,
-0xf4, 0x17, 0x23, 0x1a, 0x56, 0x7e, 0x5b, 0xdf, 0x3c, 0x6c, 0x38, 0xe4, 0x71, 0xb7, 0x78, 0x91,
-0xd4, 0xbc, 0xa1, 0xd8, 0x4c, 0xf8, 0xa8, 0x43, 0xb6, 0x03, 0xe9, 0x4d, 0x21, 0x07, 0x08, 0x88,
-0xda, 0x58, 0x2f, 0x66, 0x39, 0x29, 0xbd, 0x05, 0x78, 0x8b, 0x9d, 0x38, 0xe8, 0x05, 0xb7, 0x6a,
-0x7e, 0x71, 0xa4, 0xe6, 0xc4, 0x60, 0xa6, 0xb0, 0xef, 0x80, 0xe4, 0x89, 0x28, 0x0f, 0x9e, 0x25,
-0xd6, 0xed, 0x83, 0xf3, 0xad, 0xa6, 0x91, 0xc7, 0x98, 0xc9, 0x42, 0x18, 0x35, 0x14, 0x9d, 0xad,
-0x98, 0x46, 0x92, 0x2e, 0x4f, 0xca, 0xf1, 0x87, 0x43, 0xc1, 0x16, 0x95, 0x57, 0x2d, 0x50, 0xef,
-0x89, 0x2d, 0x80, 0x7a, 0x57, 0xad, 0xf2, 0xee, 0x5f, 0x6b, 0xd2, 0x00, 0x8d, 0xb9, 0x14, 0xf8,
-0x14, 0x15, 0x35, 0xd9, 0xc0, 0x46, 0xa3, 0x7b, 0x72, 0xc8, 0x91, 0xbf, 0xc9, 0x55, 0x2b, 0xcd,
-0xd0, 0x97, 0x3e, 0x9c, 0x26, 0x64, 0xcc, 0xdf, 0xce, 0x83, 0x19, 0x71, 0xca, 0x4e, 0xe6, 0xd4,
-0xd5, 0x7b, 0xa9, 0x19, 0xcd, 0x55, 0xde, 0xc8, 0xec, 0xd2, 0x5e, 0x38, 0x53, 0xe5, 0x5c, 0x4f,
-0x8c, 0x2d, 0xfe, 0x50, 0x23, 0x36, 0xfc, 0x66, 0xe6, 0xcb, 0x8e, 0xa4, 0x39, 0x19, 0x00, 0xb7,
-0x95, 0x02, 0x39, 0x91, 0x0b, 0x0e, 0xfe, 0x38, 0x2e, 0xd1, 0x1d, 0x05, 0x9a, 0xf6, 0x4d, 0x3e,
-0x6f, 0x0f, 0x07, 0x1d, 0xaf, 0x2c, 0x1e, 0x8f, 0x60, 0x39, 0xe2, 0xfa, 0x36, 0x53, 0x13, 0x39,
-0xd4, 0x5e, 0x26, 0x2b, 0xdb, 0x3d, 0xa8, 0x14, 0xbd, 0x32, 0xeb, 0x18, 0x03, 0x28, 0x52, 0x04,
-0x71, 0xe5, 0xab, 0x33, 0x3d, 0xe1, 0x38, 0xbb, 0x07, 0x36, 0x84, 0x62, 0x9c, 0x79, 0xea, 0x16,
-0x30, 0xf4, 0x5f, 0xc0, 0x2b, 0xe8, 0x71, 0x6b, 0xe4, 0xf9, 0x02, 0x03, 0x01, 0x00, 0x01, 0xa3,
-0x53, 0x30, 0x51, 0x30, 0x0f, 0x06, 0x03, 0x55, 0x1d, 0x13, 0x01, 0x01, 0xff, 0x04, 0x05, 0x30,
-0x03, 0x01, 0x01, 0xff, 0x30, 0x1d, 0x06, 0x03, 0x55, 0x1d, 0x0e, 0x04, 0x16, 0x04, 0x14, 0xc0,
-0x7a, 0x98, 0x68, 0x8d, 0x89, 0xfb, 0xab, 0x05, 0x64, 0x0c, 0x11, 0x7d, 0xaa, 0x7d, 0x65, 0xb8,
-0xca, 0xcc, 0x4e, 0x30, 0x1f, 0x06, 0x03, 0x55, 0x1d, 0x23, 0x04, 0x18, 0x30, 0x16, 0x80, 0x14,
-0xc0, 0x7a, 0x98, 0x68, 0x8d, 0x89, 0xfb, 0xab, 0x05, 0x64, 0x0c, 0x11, 0x7d, 0xaa, 0x7d, 0x65,
-0xb8, 0xca, 0xcc, 0x4e, 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01,
-0x05, 0x05, 0x00, 0x03, 0x82, 0x01, 0x01, 0x00, 0x35, 0xe3, 0x29, 0x6a, 0xe5, 0x2f, 0x5d, 0x54,
-0x8e, 0x29, 0x50, 0x94, 0x9f, 0x99, 0x1a, 0x14, 0xe4, 0x8f, 0x78, 0x2a, 0x62, 0x94, 0xa2, 0x27,
-0x67, 0x9e, 0xd0, 0xcf, 0x1a, 0x5e, 0x47, 0xe9, 0xc1, 0xb2, 0xa4, 0xcf, 0xdd, 0x41, 0x1a, 0x05,
-0x4e, 0x9b, 0x4b, 0xee, 0x4a, 0x6f, 0x55, 0x52, 0xb3, 0x24, 0xa1, 0x37, 0x0a, 0xeb, 0x64, 0x76,
-0x2a, 0x2e, 0x2c, 0xf3, 0xfd, 0x3b, 0x75, 0x90, 0xbf, 0xfa, 0x71, 0xd8, 0xc7, 0x3d, 0x37, 0xd2,
-0xb5, 0x05, 0x95, 0x62, 0xb9, 0xa6, 0xde, 0x89, 0x3d, 0x36, 0x7b, 0x38, 0x77, 0x48, 0x97, 0xac,
-0xa6, 0x20, 0x8f, 0x2e, 0xa6, 0xc9, 0x0c, 0xc2, 0xb2, 0x99, 0x45, 0x00, 0xc7, 0xce, 0x11, 0x51,
-0x22, 0x22, 0xe0, 0xa5, 0xea, 0xb6, 0x15, 0x48, 0x09, 0x64, 0xea, 0x5e, 0x4f, 0x74, 0xf7, 0x05,
-0x3e, 0xc7, 0x8a, 0x52, 0x0c, 0xdb, 0x15, 0xb4, 0xbd, 0x6d, 0x9b, 0xe5, 0xc6, 0xb1, 0x54, 0x68,
-0xa9, 0xe3, 0x69, 0x90, 0xb6, 0x9a, 0xa5, 0x0f, 0xb8, 0xb9, 0x3f, 0x20, 0x7d, 0xae, 0x4a, 0xb5,
-0xb8, 0x9c, 0xe4, 0x1d, 0xb6, 0xab, 0xe6, 0x94, 0xa5, 0xc1, 0xc7, 0x83, 0xad, 0xdb, 0xf5, 0x27,
-0x87, 0x0e, 0x04, 0x6c, 0xd5, 0xff, 0xdd, 0xa0, 0x5d, 0xed, 0x87, 0x52, 0xb7, 0x2b, 0x15, 0x02,
-0xae, 0x39, 0xa6, 0x6a, 0x74, 0xe9, 0xda, 0xc4, 0xe7, 0xbc, 0x4d, 0x34, 0x1e, 0xa9, 0x5c, 0x4d,
-0x33, 0x5f, 0x92, 0x09, 0x2f, 0x88, 0x66, 0x5d, 0x77, 0x97, 0xc7, 0x1d, 0x76, 0x13, 0xa9, 0xd5,
-0xe5, 0xf1, 0x16, 0x09, 0x11, 0x35, 0xd5, 0xac, 0xdb, 0x24, 0x71, 0x70, 0x2c, 0x98, 0x56, 0x0b,
-0xd9, 0x17, 0xb4, 0xd1, 0xe3, 0x51, 0x2b, 0x5e, 0x75, 0xe8, 0xd5, 0xd0, 0xdc, 0x4f, 0x34, 0xed,
-0xc2, 0x05, 0x66, 0x80, 0xa1, 0xcb, 0xe6, 0x33,
-// Device
-0x30, 0x82, 0x01, 0x55, 0x30, 0x81, 0xFB, 0xA0, 0x03, 0x02, 0x01, 0x02, 0x02, 0x01, 0x01, 0x30,
-0x0A, 0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x04, 0x03, 0x02, 0x30, 0x34, 0x31, 0x32, 0x30,
-0x30, 0x06, 0x03, 0x55, 0x04, 0x03, 0x0C, 0x29, 0x75, 0x75, 0x69, 0x64, 0x3A, 0x33, 0x32, 0x33,
-0x32, 0x33, 0x32, 0x33, 0x32, 0x2D, 0x33, 0x32, 0x33, 0x32, 0x2D, 0x33, 0x32, 0x33, 0x32, 0x2D,
-0x33, 0x32, 0x33, 0x32, 0x2D, 0x33, 0x32, 0x33, 0x32, 0x33, 0x32, 0x33, 0x32, 0x33, 0x32, 0x33,
-0x32, 0x30, 0x1E, 0x17, 0x0D, 0x31, 0x36, 0x30, 0x37, 0x32, 0x36, 0x31, 0x34, 0x31, 0x32, 0x32,
-0x31, 0x5A, 0x17, 0x0D, 0x31, 0x37, 0x30, 0x31, 0x30, 0x31, 0x32, 0x32, 0x30, 0x30, 0x30, 0x30,
-0x5A, 0x30, 0x34, 0x31, 0x32, 0x30, 0x30, 0x06, 0x03, 0x55, 0x04, 0x03, 0x0C, 0x29, 0x75, 0x75,
-0x69, 0x64, 0x3A, 0x33, 0x32, 0x33, 0x32, 0x33, 0x32, 0x33, 0x32, 0x2D, 0x33, 0x32, 0x33, 0x32,
-0x2D, 0x33, 0x32, 0x33, 0x32, 0x2D, 0x33, 0x32, 0x33, 0x32, 0x2D, 0x33, 0x32, 0x33, 0x32, 0x33,
-0x32, 0x33, 0x32, 0x33, 0x32, 0x33, 0x32, 0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2A, 0x86, 0x48,
-0xCE, 0x3D, 0x02, 0x01, 0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x03, 0x01, 0x07, 0x03, 0x42,
-0x00, 0x04, 0x19, 0x1D, 0x6B, 0x4A, 0x12, 0xA7, 0x20, 0xF1, 0x95, 0xC6, 0x6D, 0x2A, 0xD7, 0x3B,
-0xFA, 0x90, 0x8C, 0x52, 0xEB, 0x75, 0x67, 0xFF, 0x0A, 0x3F, 0xF2, 0xDF, 0x8D, 0x81, 0x44, 0xC7,
-0xC8, 0x84, 0x60, 0xD4, 0x07, 0x57, 0xB1, 0x96, 0xAF, 0x5E, 0x00, 0xA5, 0xED, 0xA1, 0x48, 0x3F,
-0x88, 0x43, 0x8D, 0x15, 0x81, 0x0A, 0x21, 0x9B, 0x6C, 0xD3, 0xBD, 0x85, 0x86, 0xE1, 0xA6, 0xDA,
-0xC5, 0xCE, 0x30, 0x0A, 0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x04, 0x03, 0x02, 0x03, 0x49,
-0x00, 0x30, 0x46, 0x02, 0x21, 0x00, 0xF7, 0x8E, 0x43, 0x19, 0xD2, 0x86, 0xF9, 0x21, 0x84, 0x66,
-0x23, 0x4B, 0x18, 0x7C, 0x56, 0x18, 0x37, 0x48, 0xDF, 0x16, 0x3B, 0x70, 0x52, 0x26, 0x62, 0xB3,
-0xAA, 0xD8, 0x3D, 0xE9, 0x43, 0xC3, 0x02, 0x21, 0x00, 0xD0, 0x16, 0xA4, 0x33, 0x7A, 0xE3, 0x7C,
-0x62, 0x88, 0x88, 0x7B, 0x76, 0x99, 0xBF, 0x2D, 0xDF, 0x6C, 0xF5, 0xD0, 0x5F, 0xBE, 0x4B, 0xAE,
-0xBA, 0xE5, 0xC0, 0x05, 0x26, 0xBC, 0x8B, 0x20, 0x84
-};
-const unsigned char own_cert[] = {
-0x30, 0x82, 0x01, 0x55, 0x30, 0x81, 0xFB, 0xA0, 0x03, 0x02, 0x01, 0x02, 0x02, 0x01, 0x01, 0x30,
-0x0A, 0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x04, 0x03, 0x02, 0x30, 0x34, 0x31, 0x32, 0x30,
-0x30, 0x06, 0x03, 0x55, 0x04, 0x03, 0x0C, 0x29, 0x75, 0x75, 0x69, 0x64, 0x3A, 0x33, 0x32, 0x33,
-0x32, 0x33, 0x32, 0x33, 0x32, 0x2D, 0x33, 0x32, 0x33, 0x32, 0x2D, 0x33, 0x32, 0x33, 0x32, 0x2D,
-0x33, 0x32, 0x33, 0x32, 0x2D, 0x33, 0x32, 0x33, 0x32, 0x33, 0x32, 0x33, 0x32, 0x33, 0x32, 0x33,
-0x32, 0x30, 0x1E, 0x17, 0x0D, 0x31, 0x36, 0x30, 0x37, 0x32, 0x36, 0x31, 0x34, 0x31, 0x32, 0x32,
-0x31, 0x5A, 0x17, 0x0D, 0x31, 0x37, 0x30, 0x31, 0x30, 0x31, 0x32, 0x32, 0x30, 0x30, 0x30, 0x30,
-0x5A, 0x30, 0x34, 0x31, 0x32, 0x30, 0x30, 0x06, 0x03, 0x55, 0x04, 0x03, 0x0C, 0x29, 0x75, 0x75,
-0x69, 0x64, 0x3A, 0x33, 0x32, 0x33, 0x32, 0x33, 0x32, 0x33, 0x32, 0x2D, 0x33, 0x32, 0x33, 0x32,
-0x2D, 0x33, 0x32, 0x33, 0x32, 0x2D, 0x33, 0x32, 0x33, 0x32, 0x2D, 0x33, 0x32, 0x33, 0x32, 0x33,
-0x32, 0x33, 0x32, 0x33, 0x32, 0x33, 0x32, 0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2A, 0x86, 0x48,
-0xCE, 0x3D, 0x02, 0x01, 0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x03, 0x01, 0x07, 0x03, 0x42,
-0x00, 0x04, 0x19, 0x1D, 0x6B, 0x4A, 0x12, 0xA7, 0x20, 0xF1, 0x95, 0xC6, 0x6D, 0x2A, 0xD7, 0x3B,
-0xFA, 0x90, 0x8C, 0x52, 0xEB, 0x75, 0x67, 0xFF, 0x0A, 0x3F, 0xF2, 0xDF, 0x8D, 0x81, 0x44, 0xC7,
-0xC8, 0x84, 0x60, 0xD4, 0x07, 0x57, 0xB1, 0x96, 0xAF, 0x5E, 0x00, 0xA5, 0xED, 0xA1, 0x48, 0x3F,
-0x88, 0x43, 0x8D, 0x15, 0x81, 0x0A, 0x21, 0x9B, 0x6C, 0xD3, 0xBD, 0x85, 0x86, 0xE1, 0xA6, 0xDA,
-0xC5, 0xCE, 0x30, 0x0A, 0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x04, 0x03, 0x02, 0x03, 0x49,
-0x00, 0x30, 0x46, 0x02, 0x21, 0x00, 0xF7, 0x8E, 0x43, 0x19, 0xD2, 0x86, 0xF9, 0x21, 0x84, 0x66,
-0x23, 0x4B, 0x18, 0x7C, 0x56, 0x18, 0x37, 0x48, 0xDF, 0x16, 0x3B, 0x70, 0x52, 0x26, 0x62, 0xB3,
-0xAA, 0xD8, 0x3D, 0xE9, 0x43, 0xC3, 0x02, 0x21, 0x00, 0xD0, 0x16, 0xA4, 0x33, 0x7A, 0xE3, 0x7C,
-0x62, 0x88, 0x88, 0x7B, 0x76, 0x99, 0xBF, 0x2D, 0xDF, 0x6C, 0xF5, 0xD0, 0x5F, 0xBE, 0x4B, 0xAE,
-0xBA, 0xE5, 0xC0, 0x05, 0x26, 0xBC, 0x8B, 0x20, 0x84
-};
-const unsigned char ca_key[] = {
-0x30, 0x81, 0x93, 0x02, 0x01, 0x00, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02,
-0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x04, 0x79, 0x30, 0x77, 0x02,
-0x01, 0x01, 0x04, 0x20, 0xe9, 0xe4, 0x27, 0xb2, 0x5c, 0xe1, 0xe9, 0xc4, 0x9d, 0x23, 0x55, 0x67,
-0x08, 0x66, 0x0c, 0xe5, 0x83, 0xa9, 0xf1, 0xe2, 0x09, 0xfb, 0x89, 0xea, 0xa8, 0xe4, 0x46, 0x6e,
-0x76, 0xff, 0x75, 0x02, 0xa0, 0x0a, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07,
-0xa1, 0x44, 0x03, 0x42, 0x00, 0x04, 0x19, 0x1d, 0x6b, 0x4a, 0x12, 0xa7, 0x20, 0xf1, 0x95, 0xc6,
-0x6d, 0x2a, 0xd7, 0x3b, 0xfa, 0x90, 0x8c, 0x52, 0xeb, 0x75, 0x67, 0xff, 0x0a, 0x3f, 0xf2, 0xdf,
-0x8d, 0x81, 0x44, 0xc7, 0xc8, 0x84, 0x60, 0xd4, 0x07, 0x57, 0xb1, 0x96, 0xaf, 0x5e, 0x00, 0xa5,
-0xed, 0xa1, 0x48, 0x3f, 0x88, 0x43, 0x8d, 0x15, 0x81, 0x0a, 0x21, 0x9b, 0x6c, 0xd3, 0xbd, 0x85,
-0x86, 0xe1, 0xa6, 0xda, 0xc5, 0xce
-};
-void GetDerOwnCert(OicSecCert_t * crt)
-{
-    crt->data = OICMalloc(sizeof(own_cert));
-    memcpy(crt->data, own_cert, sizeof(own_cert));
-    crt->len = sizeof(own_cert);
     return;
 }
-void GetDerCaCert(OicSecCert_t * crt)
+
+void GetDerOwnCert(ByteArray * crt)
 {
-    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
-    VERIFY_NON_NULL(TAG, crt, ERROR);
-    if (NULL == gCred)
+    if (NULL == crt)
     {
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == InitCredResource(), ERROR);
+        return;
     }
+    crt->len = 0;
+    uint8_t *data = NULL;
+    OicSecCred_t * temp = NULL;
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    LL_FOREACH(gCred, temp)
+    {
+        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), PRIMARY_CERT, strlen(PRIMARY_CERT) + 1))
+        {
+            OIC_LOG_V(DEBUG, TAG, "len: %d, crt len: %d", temp->publicData.len, crt->len);
+            crt->data = OICRealloc(crt->data, crt->len + temp->publicData.len);
+            memcpy(crt->data + crt->len, temp->publicData.data, temp->publicData.len);
+            crt->len += temp->publicData.len;
 
-    OicUuid_t  subject;
-    OCStackResult ret = ConvertStrToUuid(CA_SUBJECT_ID, &subject);
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-
-    OicSecCred_t * cred  = GetCredResourceData(&subject);
-    VERIFY_NON_NULL(TAG, cred, ERROR);
-
-    INIT_BYTE_ARRAY(*crt);
-    crt->data = (uint8_t *) OICCalloc(1, cred->publicData.len);
-    VERIFY_NON_NULL(TAG, cred, ERROR);
-
-    memcpy(crt->data, cred->publicData.data, cred->publicData.len);
-    crt->len = cred->publicData.len;
-
-exit:
+            OIC_LOG_V(DEBUG, TAG, "Trust CA Found!! %d", crt->len);
+        }
+    }
+    if(0 == crt->len)
+    {
+        OIC_LOG(DEBUG, TAG, "Trust CA Not Found!!");
+    }
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    return;
 }
+
 void GetDerKey(ByteArray * key)
 {
-    key->data = OICMalloc(sizeof(ca_key));
-    memcpy(key->data, ca_key, sizeof(ca_key));
-    key->len = sizeof(ca_key);
-    return;
+    if (NULL == key)
+    {
+        return;
+    }
+
+    uint8_t *data = NULL;
+    OicSecCred_t * temp = NULL;
+    key->len = 0;
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    LL_FOREACH(gCred, temp)
+    {
+        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), PRIMARY_CERT, strlen(PRIMARY_CERT) + 1))
+        {
+            OIC_LOG_V(DEBUG, TAG, "len: %d, key len: %d", temp->privateData.len, key->len);
+            key->data = OICRealloc(key->data, key->len + temp->privateData.len);
+            memcpy(key->data + key->len, temp->privateData.data, temp->privateData.len);
+            key->len += temp->privateData.len;
+
+            OIC_LOG_V(DEBUG, TAG, "Key Found!! %d", key->len);
+        }
+    }
+    if(0 == key->len)
+    {
+        OIC_LOG(DEBUG, TAG, "Key Not Found!!");
+    }
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+}
+
+void InitCipherSuiteList(bool * list)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    if (NULL == list)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+        OIC_LOG(DEBUG, TAG, "NULL list param");
+        return;
+    }
+    OicSecCred_t * temp = NULL;
+    LL_FOREACH(gCred, temp)
+    {
+        switch (temp->credType)
+        {
+            case SYMMETRIC_PAIR_WISE_KEY:
+            {
+                list[0] = true;
+                OIC_LOG(DEBUG, TAG, "SYMMETRIC_PAIR_WISE_KEY found");
+                break;
+            }
+            case SIGNED_ASYMMETRIC_KEY:
+            {
+                list[1] = true;
+                OIC_LOG(DEBUG, TAG, "SIGNED_ASYMMETRIC_KEY found");
+                break;
+            }
+            case SYMMETRIC_GROUP_KEY:
+            case ASYMMETRIC_KEY:
+            case PIN_PASSWORD:
+            case ASYMMETRIC_ENCRYPTION_KEY:
+            {
+                OIC_LOG(WARNING, TAG, "Unsupported credential type for TLS.");
+                break;
+            }
+            default:
+            {
+                OIC_LOG(WARNING, TAG, "Unknow credential type for TLS.");
+                break;
+            }
+        }
+    }
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
 #endif

@@ -40,7 +40,10 @@ constexpr char RESOURCE_URI[]{ "/a/TemperatureSensor" };
 constexpr char RESOURCE_TYPE[]{ "resource.type" };
 constexpr char SECOND_RESOURCETYPE[]{ "resource.type.second" };
 
-void onResourceDiscovered(RCSRemoteResourceObject::Ptr) {}
+void onResourceDiscovered(RCSRemoteResourceObject::Ptr)
+{
+
+}
 
 class ScopedTask
 {
@@ -52,7 +55,10 @@ public:
 
     ~ScopedTask()
     {
-        if (m_task) m_task->cancel();
+        if (m_task)
+        {
+            m_task->cancel();
+        }
     }
 
     RCSDiscoveryManager::DiscoveryTask* operator->()
@@ -126,7 +132,8 @@ TEST(DiscoveryManagerTest, TaskCanBeCanceled)
     ASSERT_TRUE(aTaskToBeCanceled->isCanceled());
 }
 
-TEST(DiscoveryManagerTest, CallbackWouldNotBeCalledForSameRemoteResource) {
+TEST(DiscoveryManagerTest, CallbackWouldNotBeCalledForSameRemoteResource)
+{
     FindCallback callback;
 
     MockRepository mocks;

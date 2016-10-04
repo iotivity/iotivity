@@ -18,6 +18,10 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#ifdef ARDUINO
+#define __STDC_LIMIT_MACROS
+#endif
+
 #include "ocpayloadcbor.h"
 #include "platform_features.h"
 #include <stdlib.h>
@@ -172,7 +176,7 @@ static int64_t checkError(int64_t err, CborEncoder* encoder, uint8_t* outPayload
 {
     if (err == CborErrorOutOfMemory)
     {
-        *size += encoder->ptr - encoder->end;
+        *size += cbor_encoder_get_extra_bytes_needed(encoder);
         return err;
     }
     else if (err != CborNoError)
@@ -182,7 +186,7 @@ static int64_t checkError(int64_t err, CborEncoder* encoder, uint8_t* outPayload
     }
     else
     {
-        *size = encoder->ptr - outPayload;
+        *size = cbor_encoder_get_buffer_size(encoder, outPayload);
         return err;
     }
 }
@@ -586,7 +590,7 @@ static int64_t OCConvertArrayItem(CborEncoder *array, const OCRepPayloadValueArr
             }
             break;
         case OCREP_PROP_BYTE_STRING:
-            if (!valArray->strArray[index])
+            if (!valArray->ocByteStrArray[index].len)
             {
                 err |= cbor_encode_null(array);
             }

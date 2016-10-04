@@ -30,13 +30,20 @@ target_os = srmtest_env.get('TARGET_OS')
 ######################################################################
 # Build flags
 ######################################################################
+with_upstream_libcoap = srmtest_env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
+	srmtest_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+else:
+	# For bring up purposes only, the forked version will live here.
+	srmtest_env.AppendUnique(CPPPATH = ['../../connectivity/lib/libcoap-4.1.1/include'])
+
 srmtest_env.PrependUnique(CPPPATH = [
 		'../../../c_common/oic_malloc/include',
 		'../../connectivity/inc',
 		'../../connectivity/inc/pkix',
 		'../../connectivity/api',
 		'../../connectivity/external/inc',
-		'../../connectivity/lib/libcoap-4.1.1',
 		'../include/internal',
 		'../../logger/include',
 		'../../stack/include',

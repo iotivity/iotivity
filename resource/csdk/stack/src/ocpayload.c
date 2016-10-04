@@ -21,6 +21,7 @@
 // Required for strok_r
 #define _POSIX_C_SOURCE 200112L
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include "ocpayload.h"
 #include "octypes.h"
@@ -174,6 +175,15 @@ static void OCCopyPropertyValueArray(OCRepPayloadValue* dest, OCRepPayloadValue*
                 dest->arr.objArray[i] = OCRepPayloadClone(source->arr.objArray[i]);
             }
             break;
+        case OCREP_PROP_BYTE_STRING:
+            dest->arr.ocByteStrArray = (OCByteString*)OICMalloc(dimTotal * sizeof(OCByteString));
+            VERIFY_PARAM_NON_NULL(TAG, dest->arr.ocByteStrArray, "Failed allocating memory");
+            for (size_t i = 0; i < dimTotal; ++i)
+            {
+                OCByteStringCopy(&dest->arr.ocByteStrArray[i], &source->arr.ocByteStrArray[i]);
+                VERIFY_PARAM_NON_NULL(TAG, dest->arr.ocByteStrArray[i].bytes, "Failed allocating memory");
+            }
+            break;
         default:
             OIC_LOG(ERROR, TAG, "CopyPropertyValueArray invalid type");
             break;
@@ -246,16 +256,19 @@ static void OCFreeRepPayloadValueContents(OCRepPayloadValue* val)
                 OICFree(val->arr.iArray);
                 break;
             case OCREP_PROP_STRING:
-                for(size_t i = 0; i< dimTotal; ++i)
+                for(size_t i = 0; i < dimTotal; ++i)
                 {
                     OICFree(val->arr.strArray[i]);
                 }
                 OICFree(val->arr.strArray);
                 break;
             case OCREP_PROP_BYTE_STRING:
-                for (size_t i = 0; i< dimTotal; ++i)
+                for (size_t i = 0; i < dimTotal; ++i)
                 {
-                    OICFree(val->arr.ocByteStrArray[i].bytes);
+                    if (val->arr.ocByteStrArray[i].bytes)
+                    {
+                        OICFree(val->arr.ocByteStrArray[i].bytes);
+                    }
                 }
                 OICFree(val->arr.ocByteStrArray);
                 break;
@@ -520,6 +533,7 @@ static bool OCRepPayloadSetProp(OCRepPayload* payload, const char* name,
                return val->str != NULL;
         case OCREP_PROP_BYTE_STRING:
                val->ocByteStr = *(OCByteString*)value;
+               return val->ocByteStr.bytes != NULL;
                break;
         case OCREP_PROP_NULL:
                return val != NULL;
@@ -619,18 +633,13 @@ bool OCRepPayloadSetPropByteString(OCRepPayload* payload, const char* name, OCBy
         return false;
     }
 
-    OCByteString ocByteStr = {
-                    .bytes = (uint8_t*)OICMalloc(value.len * sizeof(uint8_t)),
-                    .len = value.len };
+    OCByteString ocByteStr = {NULL, 0};
+    bool b = OCByteStringCopy(&ocByteStr, &value);
 
-    if (!ocByteStr.bytes)
+    if (b)
     {
-        return false;
+        b = OCRepPayloadSetPropByteStringAsOwner(payload, name, &ocByteStr);
     }
-    memcpy(ocByteStr.bytes, value.bytes, ocByteStr.len);
-
-    bool b = OCRepPayloadSetPropByteStringAsOwner(payload, name, &ocByteStr);
-
     if (!b)
     {
         OICFree(ocByteStr.bytes);
@@ -686,6 +695,153 @@ bool OCRepPayloadGetPropBool(const OCRepPayload* payload, const char* name, bool
     *value = val->b;
     return true;
 }
+
+#ifdef __WITH_TLS__
+static char *getStringFromEncodingType(OicEncodingType_t type)
+{
+    char *str = NULL;
+    switch (type)
+    {
+        case OIC_ENCODING_BASE64: str = OC_RSRVD_BASE64; break;
+        case OIC_ENCODING_DER: str = OC_RSRVD_DER; break;
+        case OIC_ENCODING_PEM: str = OC_RSRVD_PEM; break;
+        case OIC_ENCODING_RAW: str = OC_RSRVD_RAW; break;
+        default: str = OC_RSRVD_UNKNOWN; break;
+    }
+    char encoding[32];
+    snprintf(encoding, sizeof(encoding), "%s.%s.%s", OC_OIC_SEC, OC_RSRVD_ENCODING, str);
+
+    return OICStrdup(encoding);
+}
+
+bool OCRepPayloadSetPropPubDataTypeAsOwner(OCRepPayload *payload, const char *name,
+                                           const OicSecKey_t *value)
+{
+    if (!payload || !name || !value)
+    {
+        return false;
+    }
+
+    bool binary_field = false;
+    if (OIC_ENCODING_RAW == value->encoding || OIC_ENCODING_DER == value->encoding)
+    {
+        binary_field = true;
+    }
+
+    OCRepPayload *heplerPayload = OCRepPayloadCreate();
+    if (!heplerPayload)
+    {
+        return false;
+    }
+
+    char *encoding = getStringFromEncodingType(value->encoding);
+    if (!OCRepPayloadSetPropString(heplerPayload, OC_RSRVD_ENCODING, encoding))
+    {
+        OIC_LOG_V(ERROR, TAG, "Can't set %s", OC_RSRVD_ENCODING);
+    }
+
+    OCByteString val = {.bytes = value->data, .len = value->len};
+    if (binary_field)
+    {
+        if (!OCRepPayloadSetPropByteString(heplerPayload, OC_RSRVD_DATA, val))
+        {
+            OIC_LOG_V(ERROR, TAG, "Can't set %s", OC_RSRVD_DATA);
+        }
+    }
+    else
+    {
+        if (!OCRepPayloadSetPropString(heplerPayload, OC_RSRVD_DATA, (char *)val.bytes))
+        {
+            OIC_LOG_V(ERROR, TAG, "Can't set %s", OC_RSRVD_DATA);
+        }
+    }
+
+    if (!OCRepPayloadSetPropObject(payload, name, (const OCRepPayload *)heplerPayload))
+    {
+        OIC_LOG_V(ERROR, TAG, "Can't set %s", name);
+    }
+
+    OCRepPayloadDestroy(heplerPayload);
+    OICFree(encoding);
+
+    return true;
+}
+
+bool OCRepPayloadSetPropPubDataType(OCRepPayload *payload, const char *name,
+                                    const OicSecKey_t *value)
+{
+    return OCRepPayloadSetPropPubDataTypeAsOwner(payload, name, value);
+}
+
+static OicEncodingType_t getEncodingTypeFromString(char *encoding)
+{
+    OicEncodingType_t type = OIC_ENCODING_UNKNOW;
+
+    char *str = strrchr(encoding, '.');
+    if (NULL == str)
+    {
+        OIC_LOG_V(ERROR, TAG, "Can't find . in %s", encoding);
+        return type;
+    }
+    str++; //go to encoding itself
+
+    if (0 == strcmp(str, OC_RSRVD_BASE64)) type = OIC_ENCODING_BASE64;
+    else if (0 == strcmp(str, OC_RSRVD_DER)) type = OIC_ENCODING_DER;
+    else if (0 == strcmp(str, OC_RSRVD_PEM)) type = OIC_ENCODING_PEM;
+    else if (0 == strcmp(str, OC_RSRVD_RAW)) type = OIC_ENCODING_RAW;
+
+    return type;
+}
+
+bool OCRepPayloadGetPropPubDataType(const OCRepPayload *payload, const char *name, OicSecKey_t *value)
+{
+    OCRepPayload *heplerPayload = NULL;
+    char *encoding = NULL;
+    OCByteString val;
+
+    if (!payload || !name || !value)
+    {
+        return false;
+    }
+
+    if (!OCRepPayloadGetPropObject(payload, name, &heplerPayload))
+    {
+        OIC_LOG_V(ERROR, TAG, "Can't get object with name %s", name);
+        return false;
+    }
+
+    if (!OCRepPayloadGetPropString(heplerPayload, OC_RSRVD_ENCODING, &encoding))
+    {
+        OIC_LOG_V(ERROR, TAG, "Can't get %s", OC_RSRVD_ENCODING);
+    }
+    else
+    {
+        value->encoding = getEncodingTypeFromString(encoding);
+        OICFree(encoding);
+    }
+
+    if (!OCRepPayloadGetPropByteString(heplerPayload, OC_RSRVD_DATA, &val))
+    {
+        if (!OCRepPayloadGetPropString(heplerPayload, OC_RSRVD_DATA, (char **)&val.bytes))
+        {
+            OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_DATA);
+        }
+        else
+        {
+            value->data = val.bytes;
+            value->len  = strlen(val.bytes);
+        }
+    }
+    else
+    {
+        value->data = val.bytes;
+        value->len  = val.len;
+    }
+
+    OCRepPayloadDestroy(heplerPayload);
+    return true;
+}
+#endif
 
 bool OCRepPayloadSetPropObject(OCRepPayload* payload, const char* name, const OCRepPayload* value)
 {
@@ -1305,16 +1461,19 @@ OCStringLL* OCCreateOCStringLL(const char* text)
     for (head = backup; ; head = NULL)
     {
         token = (char *) strtok_r(head, delim, &tail);
-        if (!token) break;
+        if (!token)
+        {
+            break;
+        }
         iter = (OCStringLL *)OICCalloc(1,sizeof(OCStringLL));
         VERIFY_PARAM_NON_NULL(TAG, iter, "Failed allocating memory");
         if (!result)
         {
-             result = iter;
+            result = iter;
         }
         else
         {
-             prev->next = iter;
+            prev->next = iter;
         }
         iter->value = OICStrdup(token);
         VERIFY_PARAM_NON_NULL(TAG, iter->value, "Failed allocating memory");
@@ -1332,22 +1491,27 @@ exit:
 
 char* OCCreateString(const OCStringLL* ll)
 {
+    if (!ll)
+    {
+        return NULL;
+    }
+
     char *str = NULL;
     char *pos = NULL;
     size_t len = 0;
     size_t sublen = 0;
     int count = 0;
 
-    if (!ll) return NULL;
-
-    for (const OCStringLL *it = ll; it ; it = it->next )
+    for (const OCStringLL *it = ll; it; it = it->next)
     {
         len += strlen(it->value) + 1;
     }
-    len--; // renove trailing separator (just added above)
+    len--; // remove trailing separator (just added above)
     str = (char*) malloc(len + 1);
     if (!str)
+    {
         return NULL;
+    }
 
     pos = str;
     const OCStringLL *it = ll;
@@ -1355,13 +1519,13 @@ char* OCCreateString(const OCStringLL* ll)
     {
         sublen = strlen(it->value);
         count = snprintf(pos, len + 1, "%s", it->value);
-        if (count<sublen)
+        if ((size_t)count < sublen)
         {
             free(str);
             return NULL;
         }
-        len-=sublen;
-        pos+=count;
+        len -= sublen;
+        pos += count;
 
         it = it->next;
         if (it)
@@ -1373,6 +1537,36 @@ char* OCCreateString(const OCStringLL* ll)
     }
 
     return str;
+}
+
+bool OCByteStringCopy(OCByteString* dest, const OCByteString* source)
+{
+    VERIFY_PARAM_NON_NULL(TAG, source, "Bad input");
+
+    if (!dest)
+    {
+        dest = (OCByteString *)OICMalloc(sizeof(OCByteString));
+        VERIFY_PARAM_NON_NULL(TAG, dest, "Failed allocating memory");
+    }
+    if (dest->bytes)
+    {
+        OICFree(dest->bytes);
+    }
+    dest->bytes = (uint8_t*)OICMalloc(source->len * sizeof(uint8_t));
+    VERIFY_PARAM_NON_NULL(TAG, dest->bytes, "Failed allocating memory");
+    memcpy(dest->bytes, source->bytes, source->len * sizeof(uint8_t));
+    dest->len = source->len;
+    return true;
+
+exit:
+    if (dest)
+    {
+        dest->len = 0;
+        OICFree(dest->bytes);
+        dest->bytes = NULL;
+    }
+
+    return false;
 }
 
 OCRepPayload* OCRepPayloadClone (const OCRepPayload* payload)

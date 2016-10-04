@@ -17,6 +17,7 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#include "iotivity_config.h"
 #include "oicresourcedirectory.h"
 
 #include "rdpayload.h"
@@ -33,14 +34,34 @@
 
 #ifdef RD_CLIENT
 OCStackResult OCRDPublish(const char *host, OCConnectivityType connectivityType,
-                          OCResourceHandle resourceHandles[], uint8_t nHandles,
+                          OCResourceHandle *resourceHandles, uint8_t nHandles,
                           OCCallbackData *cbData, OCQualityOfService qos)
 {
-    // Validate input parameters
+    // Validate input parameters.
     if (!host || !cbData || !cbData->cb)
     {
         return OC_STACK_INVALID_CALLBACK;
     }
+
+    // Get Device ID from stack.
+    const unsigned char *id = (const unsigned char *) OCGetServerInstanceIDString();
+
+    return OCRDPublishWithDeviceId(host, id, connectivityType, resourceHandles, nHandles,
+                                   cbData, qos);
+}
+
+OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
+                                      OCConnectivityType connectivityType,
+                                      OCResourceHandle *resourceHandles, uint8_t nHandles,
+                                      OCCallbackData *cbData, OCQualityOfService qos)
+{
+    // Validate input parameters.
+    if (!host || !cbData || !cbData->cb || !id)
+    {
+        return OC_STACK_INVALID_CALLBACK;
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "Publish Resource to RD with device id [%s]", id);
 
     OCResourceHandle *pubResHandle = resourceHandles;
     uint8_t nPubResHandles = nHandles;
@@ -50,10 +71,18 @@ OCStackResult OCRDPublish(const char *host, OCConnectivityType connectivityType,
     {
         OCResourceHandle defaultResHandles[OIC_RD_DEFAULT_RESOURCE] = { 0 };
 
-        // get "/oic/d" resource handle from stack.
+        // get "/oic/d" and "/oic/p" resource handle from stack.
         defaultResHandles[0] = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
-        // get "/oic/p" resource handle from stack.
         defaultResHandles[1] = OCGetResourceHandleAtUri(OC_RSRVD_PLATFORM_URI);
+
+        for (uint8_t j = 0; j < OIC_RD_DEFAULT_RESOURCE; j++)
+        {
+            if (defaultResHandles[j])
+            {
+                OIC_LOG_V(DEBUG, TAG, "Add virtual resource(%s) to resource handle list",
+                          OCGetResourceUri(defaultResHandles[j]));
+            }
+        }
 
         pubResHandle = defaultResHandles;
         nPubResHandles = OIC_RD_DEFAULT_RESOURCE;
@@ -64,7 +93,7 @@ OCStackResult OCRDPublish(const char *host, OCConnectivityType connectivityType,
              OC_RSRVD_RD_URI, OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
     OIC_LOG_V(DEBUG, TAG, "Target URI: %s", targetUri);
 
-    OCPayload *rdPayload = (OCPayload *) OCRDPublishPayloadCreate(pubResHandle, nPubResHandles,
+    OCPayload *rdPayload = (OCPayload *) OCRDPublishPayloadCreate(id, pubResHandle, nPubResHandles,
                                                                   OIC_RD_PUBLISH_TTL);
     if (!rdPayload)
     {
@@ -79,7 +108,7 @@ OCStackResult OCRDPublish(const char *host, OCConnectivityType connectivityType,
 }
 
 OCStackResult OCRDDelete(const char *host, OCConnectivityType connectivityType,
-                         OCResourceHandle resourceHandles[], uint8_t nHandles,
+                         OCResourceHandle *resourceHandles, uint8_t nHandles,
                          OCCallbackData *cbData, OCQualityOfService qos)
 {
     // Validate input parameters
@@ -89,6 +118,23 @@ OCStackResult OCRDDelete(const char *host, OCConnectivityType connectivityType,
     }
 
     const unsigned char *id = (const unsigned char *) OCGetServerInstanceIDString();
+
+    return OCRDDeleteWithDeviceId(host, id, connectivityType, resourceHandles, nHandles,
+                                  cbData, qos);
+}
+
+OCStackResult OCRDDeleteWithDeviceId(const char *host, const unsigned char *id,
+                                     OCConnectivityType connectivityType,
+                                     OCResourceHandle *resourceHandles, uint8_t nHandles,
+                                     OCCallbackData *cbData, OCQualityOfService qos)
+{
+    // Validate input parameters
+    if (!host || !cbData || !cbData->cb || !id)
+    {
+        return OC_STACK_INVALID_CALLBACK;
+    }
+
+    OIC_LOG_V(DEBUG, TAG, "Delete Resource to RD with device id [%s]", id);
 
     char targetUri[MAX_URI_LENGTH] = { 0 };
     snprintf(targetUri, MAX_URI_LENGTH, "%s%s?di=%s", host, OC_RSRVD_RD_URI, id);

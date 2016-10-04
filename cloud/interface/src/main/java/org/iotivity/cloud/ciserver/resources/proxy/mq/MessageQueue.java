@@ -31,12 +31,18 @@ import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 
+/**
+ *
+ * This class provides a set of APIs to send requests about MQ message to
+ * message queue
+ *
+ */
+
 public class MessageQueue extends Resource {
     IRequestChannel mPSServer = null;
 
     public MessageQueue() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.MQ_BROKER_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.MQ_BROKER_URI));
 
         mPSServer = ConnectorPool.getConnection("mq");
     }

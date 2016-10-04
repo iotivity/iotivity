@@ -51,8 +51,7 @@ public class AccountResource extends Resource {
     private AccountManager                mAsManager = new AccountManager();
 
     public AccountResource() {
-        super(Arrays.asList(Constants.PREFIX_WELL_KNOWN, Constants.PREFIX_OCF,
-                Constants.ACCOUNT_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACCOUNT_URI));
 
     }
 
@@ -65,6 +64,7 @@ public class AccountResource extends Resource {
         switch (request.getMethod()) {
 
             case POST:
+                // make sign-up response message
                 response = handlePostSignUp(request);
                 break;
 
@@ -80,26 +80,24 @@ public class AccountResource extends Resource {
                 throw new BadRequestException(
                         request.getMethod() + " request type is not support");
         }
-
+        // send sign-up response to the source device
         srcDevice.sendResponse(response);
     }
 
     private IResponse handlePostSignUp(IRequest request)
             throws ServerException {
 
-        if (request.getPayload() == null) {
-            throw new BadRequestException("payload is null");
-        }
-
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
         if (payloadData == null) {
-            throw new BadRequestException("CBOR parsing failed");
+            throw new BadRequestException("payload is null");
         }
 
         HashMap<String, Object> responsePayload = null;
 
+        // payload verification if the mandatory properties are
+        // included in the payload
         if (checkPayloadException(Arrays.asList(Constants.REQ_DEVICE_ID,
                 Constants.REQ_AUTH_CODE, Constants.REQ_AUTH_PROVIDER),
                 payloadData)) {

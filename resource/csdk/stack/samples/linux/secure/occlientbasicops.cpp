@@ -18,6 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,7 +36,6 @@
 #include <iostream>
 #include <sstream>
 #include <getopt.h>
-#include "platform_features.h"
 #include "ocstack.h"
 #include "logger.h"
 #include "occlientbasicops.h"

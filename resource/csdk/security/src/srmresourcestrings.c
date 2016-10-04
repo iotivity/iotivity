@@ -115,7 +115,8 @@ const char * OIC_JSON_PUBLICDATA_NAME = "publicdata";
 const char * OIC_JSON_PRIVATEDATA_NAME = "privatedata";
 const char * OIC_JSON_PUBDATA_NAME = "pubdata";
 const char * OIC_JSON_PRIVDATA_NAME = "privdata";
-const char * OIC_JSON_OPTDATA_NAME = "optdata";
+const char * OIC_JSON_OPTDATA_NAME = "optionaldata";
+const char * OIC_JSON_CREDUSAGE_NAME = "credusage";
 const char * OIC_JSON_SERVICE_DEVICE_ID = "svcdid";
 const char * OIC_JSON_SERVICE_TYPE = "svct";
 const char* OIC_JSON_VALIDITY_NAME = "validity";
@@ -145,6 +146,9 @@ const char * OIC_JSON_SEC_V_NAME = "secv";
 
 const char * OIC_JSON_EMPTY_STRING = "";
 
+const char * TRUST_CA = "trust_ca";
+const char * PRIMARY_CERT = "primary_cert";
+
 OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
 OicUuid_t WILDCARD_SUBJECT_B64_ID = { .id = {'2', '2', '2', '2', '2', '2', '2', '2',
                                              '2', '2', '2', '2', '2', '2', '2', '2' }};
@@ -159,6 +163,8 @@ const char * OXM_MANUFACTURER_CERTIFICATE = "oic.sec.doxm.mfgcert";
 //Credential data encoding methods
 const char * OIC_SEC_ENCODING_BASE64 = "oic.sec.encoding.base64";
 const char * OIC_SEC_ENCODING_RAW = "oic.sec.encoding.raw";
+const char * OIC_SEC_ENCODING_PEM = "oic.sec.encoding.pem";
+const char * OIC_SEC_ENCODING_DER = "oic.sec.encoding.der";
 
 const char * OIC_SEC_TRUE = "true";
 const char * OIC_SEC_FALSE = "false";

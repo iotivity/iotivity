@@ -39,8 +39,6 @@
 #include "cainterface.h"
 #include "OCPlatform.h"
 
-#define PROV_RESOURCE_TYPE "ocf.wk.prov"
-
 using namespace OC;
 using namespace OIC::Service;
 
@@ -93,7 +91,7 @@ public:
     std::shared_ptr<OC::OCResource> CreateNotProvResource()
     {
         OCConnectivityType connectivityType = CT_DEFAULT;
-        std::vector<std::string> types = {"ocf.wk.notprov"};
+        std::vector<std::string> types = {"oic.wk.notprov"};
         std::vector<std::string> ifaces = {DEFAULT_INTERFACE};
 
         return OCPlatform::constructResourceObject("coap://192.168.1.2:5000",
@@ -106,7 +104,7 @@ public:
 
     void discoverRemoteEnrollee()
     {
-        std::string uri = std::string("/oic/res?rt=") + PROV_RESOURCE_TYPE;
+        std::string uri = std::string("/oic/res?rt=") + OC_RSRVD_ES_RES_TYPE_PROV;
         OC::OCPlatform::findResource("", uri,
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&EasysetupMediatorTest::discoverRemoteEnrolleeCb,
@@ -177,7 +175,7 @@ private:
             return ;
         }
 
-        if(!resource->getResourceTypes().at(0).compare(PROV_RESOURCE_TYPE))
+        if(!resource->getResourceTypes().at(0).compare(OC_RSRVD_ES_RES_TYPE_PROV))
         {
             m_enrolleeResource = resource;
         }
@@ -464,7 +462,6 @@ TEST_F(ProvisionCloudPropertiesTest, ProvisionCloudPropertiesSucceed)
     mocks.OnCallFunc(cloudPropProvStatusCb).Do(
         [& cntForReceivedCallbackWithSuccess](std::shared_ptr< CloudPropProvisioningStatus > status)
         {
-            // Will called twice
             if(status->getESResult() == ES_OK)
             {
                cntForReceivedCallbackWithSuccess++;
@@ -476,7 +473,7 @@ TEST_F(ProvisionCloudPropertiesTest, ProvisionCloudPropertiesSucceed)
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_EQ(cntForReceivedCallbackWithSuccess, 2);
+    EXPECT_EQ(cntForReceivedCallbackWithSuccess, 1);
 
     ESTerminateEnrollee();
 }

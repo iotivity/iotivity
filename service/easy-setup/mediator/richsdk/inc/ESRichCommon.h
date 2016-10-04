@@ -123,15 +123,21 @@ namespace OIC
              */
             CloudProp()
             {
+                m_cloudID = "";
+                m_credID = 0;
             }
 
             CloudProp(const CloudProp& cloudProp) :
-                m_rep(cloudProp.toOCRepresentation()), m_cloudID(cloudProp.getCloudID())
+                                            m_rep(cloudProp.toOCRepresentation()),
+                                            m_cloudID(cloudProp.getCloudID()),
+                                            m_credID(cloudProp.getCredID())
             {
             }
 
             CloudProp(const CloudProp&& cloudProp) :
-                m_rep(std::move(cloudProp.toOCRepresentation())), m_cloudID(cloudProp.getCloudID())
+                                            m_rep(std::move(cloudProp.toOCRepresentation())),
+                                            m_cloudID(cloudProp.getCloudID()),
+                                            m_credID(cloudProp.getCredID())
             {
             }
 
@@ -142,6 +148,7 @@ namespace OIC
             {
                 m_rep = rep;
                 m_cloudID = "";
+                m_credID = 0;
             }
 
             /**
@@ -166,6 +173,16 @@ namespace OIC
             void setCloudID(string cloudID)
             {
                 m_cloudID = cloudID;
+            }
+
+            /**
+             * Set CloudServer's credential ID of certificate
+             *
+             * @param credID Cloud Interface server's credential ID of certificate
+             */
+            void setCredID(int credID)
+            {
+                m_credID = credID;
             }
 
             /**
@@ -221,6 +238,16 @@ namespace OIC
             }
 
             /**
+             * Get a CI server's credential ID of certificate
+             *
+             * @return a CI server's credential ID of certificated
+             */
+            int getCredID() const
+            {
+                return m_credID;
+            }
+
+            /**
              * Get OCRepresentation object
              *
              * @return OCRepresentation object
@@ -232,6 +259,7 @@ namespace OIC
         protected:
             OCRepresentation m_rep;
             std::string m_cloudID;
+            int m_credID;
         };
 
         /**
@@ -396,9 +424,9 @@ namespace OIC
              */
             std::string getLocation() const
             {
-                if(m_rep.hasAttribute(OC_RSRVD_ES_MODELNUMBER))
+                if(m_rep.hasAttribute(OC_RSRVD_ES_LOCATION))
                 {
-                    return m_rep.getValue<std::string>(OC_RSRVD_ES_MODELNUMBER);
+                    return m_rep.getValue<std::string>(OC_RSRVD_ES_LOCATION);
                 }
                 return std::string("");
             }
@@ -418,17 +446,6 @@ namespace OIC
         };
 
         /**
-         * @brief Provisioning state in cloud server property provisioning.
-         */
-        typedef enum
-        {
-            ES_CLOUD_PROVISIONING_ERROR = -1,   /**< An error in cloud provisioning happens **/
-            ES_CLOUD_PROVISIONING_SUCCESS,      /**< Cloud provisioning is successfully done **/
-            ES_CLOUD_ENROLLEE_FOUND,            /**< An enrollee is found in a given network **/
-            ES_CLOUD_ENROLLEE_NOT_FOUND         /**< NO enrollee is found in a given network **/
-        }ESCloudProvState;
-
-        /**
          * Security Provisioning Status
          */
         class SecProvisioningStatus
@@ -444,6 +461,15 @@ namespace OIC
                 return m_devUUID;
             }
 
+            /**
+             * Get a result for about security provisioning is success or not.
+             *
+             * @return ::ES_OK\n
+             *         ::ES_SEC_OPERATION_IS_NOT_SUPPORTED\n
+             *         ::ES_SECURE_RESOURCE_DISCOVERY_FAILURE\n
+             *         ::ES_OWNERSHIP_TRANSFER_FAILURE\n
+             *         ::ES_ERROR\n
+             */
             ESResult getESResult()
             {
                 return m_result;
@@ -544,11 +570,11 @@ namespace OIC
                     if(child->getUri().find(OC_RSRVD_ES_URI_WIFI) != std::string::npos)
                     {
                         if(child->hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
-                {
+                        {
                             for(auto it : child->getValue
                                         <std::vector<int>>(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
-                    {
-                        modes.push_back(static_cast<WIFI_MODE>(it));
+                            {
+                                modes.push_back(static_cast<WIFI_MODE>(it));
                             }
                         }
                     }
@@ -623,16 +649,34 @@ namespace OIC
         class GetEnrolleeStatus
         {
         public:
+            /**
+             * Constructor
+             */
             GetEnrolleeStatus(ESResult result, const EnrolleeStatus& status) :
                 m_result(result), m_enrolleeStatus(status)
             {
             }
 
+            /**
+             * Get a result of getting provisioning status and last error code of Enrollee
+             *
+             * @return ::ES_OK\n
+             *         ::ES_COMMUNICATION_ERROR\n
+             *         ::ES_ERROR\n
+             * @see ESResult
+             */
             ESResult getESResult()
             {
                 return m_result;
             }
 
+            /**
+             * Get Enrollee's status and last error code properties
+             *
+             * @return Enrollee's status and last error code properties
+             *
+             * @see EnrolleeStatus
+             */
             const EnrolleeStatus& getEnrolleeStatus()
             {
                 return m_enrolleeStatus;
@@ -654,16 +698,35 @@ namespace OIC
         class GetConfigurationStatus
         {
         public:
+            /**
+             * Constructor
+             */
             GetConfigurationStatus(ESResult result, const EnrolleeConf& conf) :
                     m_result(result), m_enrolleeConf(conf)
             {
             }
 
+            /**
+             * Get a result of getting preconfiguration of Enrollee
+             *
+             * @return ::ES_OK\n
+             *         ::ES_COMMUNICATION_ERROR\n
+             *         ::ES_ERROR\n
+             *
+             * @see ESResult
+             */
             ESResult getESResult()
             {
                 return m_result;
             }
 
+            /**
+             * Get Enrollee's pre-configuration properties
+             *
+             * @return Enrollee's pre-configuration properties
+             *
+             * @see EnrolleeConf
+             */
             EnrolleeConf& getEnrolleeConf()
             {
                 return m_enrolleeConf;
@@ -682,11 +745,23 @@ namespace OIC
         class DevicePropProvisioningStatus
         {
         public:
+            /**
+             * Constructor
+             */
             DevicePropProvisioningStatus(ESResult result) :
                     m_result(result)
             {
             }
 
+            /**
+             * Get a result of Device property provisioning
+             *
+             * @return ::ES_OK\n
+             *         ::ES_COMMUNICATION_ERROR\n
+             *         ::ES_ERROR\n
+             *
+             * @see ESResult
+             */
             ESResult getESResult()
             {
                 return m_result;
@@ -706,24 +781,34 @@ namespace OIC
         class CloudPropProvisioningStatus
         {
         public:
-            CloudPropProvisioningStatus(ESResult result, ESCloudProvState state) :
-                    m_result(result), m_esCloudState(state)
+            /**
+             * Constructor
+             */
+            CloudPropProvisioningStatus(ESResult result) :
+                    m_result(result)
             {
             }
 
+            /**
+             * Get a result of Cloud property provisioning
+             *
+             * @return ::ES_OK\n
+             *         ::ES_ENROLLEE_DISCOVERY_FAILURE\n
+             *         ::ES_SECURE_RESOURCE_DISCOVERY_FAILURE\n
+             *         ::ES_ACL_PROVISIONING_FAILURE\n
+             *         ::ES_CERT_PROVISIONING_FAILURE\n
+             *         ::ES_COMMUNICATION_ERROR\n
+             *         ::ES_ERROR\n
+             *
+             * @see ESResult
+             */
             ESResult getESResult()
             {
                 return m_result;
             }
 
-            ESCloudProvState getESCloudState()
-            {
-                return m_esCloudState;
-            }
-
         private:
             ESResult m_result;
-            ESCloudProvState m_esCloudState;
         };
 
         /**

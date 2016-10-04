@@ -20,8 +20,11 @@
 
 #include <iostream>
 #include <stdlib.h>
+#include <cstdint>
 #include "NSCommon.h"
 #include "NSProviderService.h"
+#include "NSUtils.h"
+#include "NSTopicsList.h"
 #include "logger.h"
 #include "octypes.h"
 #include "pthread.h"
@@ -32,6 +35,8 @@
 #define TAG "NotiProviderWrapperExample"
 using namespace std;
 using namespace OIC::Service;
+std::string mainConsumer;
+uint64_t mainMessageId;
 
 extern char *strdup(const char *s);
 
@@ -60,7 +65,11 @@ void subscribeRequestCallback(OIC::Service::NSConsumer *consumer)
     std::cout << "consumer requested to subscribe" << std::endl;
 
     std::cout << "Consumer Device ID: " << consumer->getConsumerId() << std::endl;
-    consumer->acceptSubscription(consumer, true);
+    if (mainConsumer.empty())
+    {
+        mainConsumer = consumer->getConsumerId();
+    }
+    consumer->acceptSubscription(true);
 }
 
 void syncCallback(OIC::Service::NSSyncInfo *sync)
@@ -72,8 +81,8 @@ void syncCallback(OIC::Service::NSSyncInfo *sync)
 
 int main()
 {
-    int num;
-    pthread_t processThread;
+    int num = 0;
+    pthread_t processThread = NULL;
 
     std::cout << "start Iotivity" << std::endl;
 
@@ -92,11 +101,18 @@ int main()
         std::cout << "2. Start the Notification Provider(Accepter: Consumer)" << std::endl;
         std::cout << "3. SendMessage " << std::endl;
         std::cout << "4. SendSyncInfo" << std::endl;
+
+        std::cout << "5. RegisterTopic" << std::endl;
+        std::cout << "6. UnregisterTopic" << std::endl;
+        std::cout << "7. SetTopic" << std::endl;
+        std::cout << "8. UnsetTopic" << std::endl;
+        std::cout << "9. GetConsumerTopicList" << std::endl;
+        std::cout << "10. GetRegisteredTopicList" << std::endl;
 #ifdef WITH_CLOUD
-        std::cout << "5. Enable NS Provider RemoteService" << std::endl;
-        std::cout << "6. Disable NS Provider RemoteService" << std::endl;
+        std::cout << "11. Enable NS Provider RemoteService" << std::endl;
+        std::cout << "12. Disable NS Provider RemoteService" << std::endl;
 #endif
-        std::cout << "9. Stop the Notification Provider" << std::endl;
+        std::cout << "13. Stop the Notification Provider" << std::endl;
         std::cout << "0. Exit()" << std::endl;
 
         std::cout << "input : ";
@@ -111,9 +127,9 @@ int main()
                     NSProviderService::ProviderConfig cfg;
                     cfg.m_subscribeRequestCb = subscribeRequestCallback;
                     cfg.m_syncInfoCb = syncCallback;
-                    cfg.policy = (bool) NSProviderService::NSAccessPolicy::NS_ACCESS_ALLOW;
+                    cfg.subControllability = true;
 
-                    NSProviderService::getInstance()->Start(cfg);
+                    NSProviderService::getInstance()->start(cfg);
                     break;
                 }
             case 2:
@@ -122,69 +138,154 @@ int main()
                     NSProviderService::ProviderConfig cfg;
                     cfg.m_subscribeRequestCb = subscribeRequestCallback;
                     cfg.m_syncInfoCb = syncCallback;
-                    cfg.policy = (bool) NSProviderService::NSAccessPolicy::NS_ACCESS_DENY;
+                    cfg.subControllability = false;
 
-                    NSProviderService::getInstance()->Start(cfg);
+                    NSProviderService::getInstance()->start(cfg);
                     break;
                 }
             case 3:
                 {
                     std::cout << "SendMessage" << std::endl;
 
+                    std::string dummy;
                     std::string title;
                     std::string body;
+                    std::string topic;
 
                     std::cout << "id : " << ++id << std::endl;
                     std::cout << "title : ";
 
-                    std::cin >> title;
+                    std::getline(std::cin, dummy);
+                    std::getline(std::cin, title);
 
                     std::cout << "body : ";
-                    std::cin >> body;
+                    std::getline(std::cin, body);
+
+                    std::cout << "topic : ";
+                    std::getline(std::cin, topic);
 
                     std::cout << "app - mTitle : " << title << std::endl;
                     std::cout << "app - mContentText : " << body << std::endl;
+                    std::cout << "app - mTopic : " << topic << std::endl;
 
-                    OIC::Service::NSMessage *msg = NSProviderService::getInstance()->CreateMessage();
+                    OIC::Service::NSMessage *msg = NSProviderService::getInstance()->createMessage();
 
                     msg->setType(OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_INFO);
                     msg->setTitle(title.c_str());
                     msg->setContentText(body.c_str());
                     msg->setSourceName("OCF");
+                    msg->setTopic(topic);
+                    mainMessageId = msg->getMessageId();
+                    std::cout << "ProviderID for Message : " << msg->getProviderId() << std::endl;
 
-                    NSProviderService::getInstance()->SendMessage(msg);
+                    NSProviderService::getInstance()->sendMessage(msg);
 
                     break;
                 }
             case 4:
                 {
                     std::cout <<  "SendSyncInfo" << std::endl;
-                    NSProviderService::getInstance()->SendSyncInfo(1,
+                    NSProviderService::getInstance()->sendSyncInfo(mainMessageId,
                             OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
                     break;
                 }
-#ifdef WITH_CLOUD
+
             case 5:
+                std::cout <<  "RegisterTopic" << std::endl;
+                NSProviderService::getInstance()->registerTopic("OCF_TOPIC1");
+                NSProviderService::getInstance()->registerTopic("OCF_TOPIC2");
+                NSProviderService::getInstance()->registerTopic("OCF_TOPIC3");
+                NSProviderService::getInstance()->registerTopic("OCF_TOPIC4");
+                break;
+
+            case 6:
+                std::cout <<  "UnregisterTopic" << std::endl;
+                NSProviderService::getInstance()->unregisterTopic("OCF_TOPIC2");
+                break;
+
+            case 7:
                 {
-                    std::cout << "3. Enable NS Provider RemoteService" << std::endl;
-                    std::cout << "Input the Server Address :";
-                    std::cin >> REMOTE_SERVER_ADDRESS;
-                    NSProviderService::getInstance()->EnableRemoteService(REMOTE_SERVER_ADDRESS);
+                    std::cout <<  "SetTopic" << std::endl;
+                    OIC::Service::NSConsumer *consumer = NSProviderService::getInstance()->getConsumer(mainConsumer);
+                    if (consumer != nullptr)
+                    {
+                        consumer->setTopic("OCF_TOPIC1");
+                        consumer->setTopic("OCF_TOPIC2");
+                        consumer->setTopic("OCF_TOPIC3");
+                        std::cout <<  "SelectTopic completed" << std::endl;
+                    }
                     break;
                 }
-            case 6:
+            case 8:
                 {
-                    std::cout << "3. Disable NS Provider RemoteService" << std::endl;
+                    std::cout <<  "UnsetTopic" << std::endl;
+                    OIC::Service::NSConsumer *consumer = NSProviderService::getInstance()->getConsumer(mainConsumer);
+                    if (consumer != nullptr)
+                    {
+                        consumer->unsetTopic("OCF_TOPIC1");
+                        std::cout <<  "UnSelectTopic completed" << std::endl;
+                    }
+                    break;
+                }
+                break;
+
+            case 9:
+                {
+                    std::cout <<  "GetConsumerTopicList" << std::endl;
+                    OIC::Service::NSConsumer *consumer = NSProviderService::getInstance()->getConsumer(mainConsumer);
+                    if (consumer != nullptr)
+                    {
+                        auto nsTopics = consumer->getConsumerTopicList();
+                        if (nsTopics != nullptr)
+                        {
+                            for (auto it : nsTopics->getTopicsList())
+                            {
+
+                                std::cout << it->getTopicName() << std::endl;
+                                std::cout << (int) it->getState() << std::endl;
+                            }
+                            delete nsTopics;
+                        }
+                        std::cout <<  "GetConsumerTopicList completed" << std::endl;
+                    }
+                }
+                break;
+
+            case 10:
+                {
+                    std::cout <<  "GetRegisteredTopicList" << std::endl;
+                    auto nsTopics = NSProviderService::getInstance()->getRegisteredTopicList();
+                    for (auto it : nsTopics->getTopicsList())
+                    {
+
+                        std::cout << it->getTopicName() << std::endl;
+                        std::cout << (int) it->getState() << std::endl;
+                    }
+                    delete nsTopics;
+                }
+                break;
+#ifdef WITH_CLOUD
+            case 11:
+                {
+                    std::cout << "11. Enable NS Provider RemoteService" << std::endl;
                     std::cout << "Input the Server Address :";
-                    NSProviderService::getInstance()->DisableRemoteService(REMOTE_SERVER_ADDRESS);
+                    std::cin >> REMOTE_SERVER_ADDRESS;
+                    NSProviderService::getInstance()->enableRemoteService(REMOTE_SERVER_ADDRESS);
+                    break;
+                }
+            case 12:
+                {
+                    std::cout << "12. Disable NS Provider RemoteService" << std::endl;
+                    std::cout << "Input the Server Address :";
+                    NSProviderService::getInstance()->disableRemoteService(REMOTE_SERVER_ADDRESS);
                     break;
                 }
 #endif
-            case 9:
-                NSProviderService::getInstance()->Stop();
+            case 13:
+                NSProviderService::getInstance()->stop();
                 break;
             case 0:
-                NSProviderService::getInstance()->Stop();
+                NSProviderService::getInstance()->stop();
                 isExit = true;
                 break;
             default:

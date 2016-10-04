@@ -317,7 +317,8 @@ dtls_create_cookie(dtls_context_t *ctx,
 		   uint8 *msg, size_t msglen,
 		   uint8 *cookie, int *clen) {
   unsigned char buf[DTLS_HMAC_MAX];
-  size_t len, e;
+  int len;
+  size_t e;
 
   /* create cookie with HMAC-SHA256 over:
    * - SECRET
@@ -1082,7 +1083,8 @@ static int
 dtls_update_parameters(dtls_context_t *ctx, 
 		       dtls_peer_t *peer,
 		       uint8 *data, size_t data_length) {
-  int i, j;
+  int i;
+  unsigned int j;
   int ok;
   dtls_handshake_parameters_t *config = peer->handshake_params;
   dtls_security_parameters_t *security = dtls_security_params(peer);
@@ -3892,7 +3894,7 @@ handle_handshake_msg(dtls_context_t *ctx, dtls_peer_t *peer, session_t *session,
         }
       err = check_server_key_exchange_ecdhe_psk(ctx, peer, data, data_length);
     }
-#endif defined(DTLS_PSK) && defined(DTLS_ECC)
+#endif /* defined(DTLS_PSK) && defined(DTLS_ECC) */
 
 #ifdef DTLS_PSK
     if (is_tls_psk_with_aes_128_ccm_8(peer->handshake_params->cipher)) {
@@ -4301,6 +4303,7 @@ handle_ccs(dtls_context_t *ctx, dtls_peer_t *peer,
 	   uint8 *record_header, uint8 *data, size_t data_length)
 {
   int err;
+  dtls_handshake_parameters_t *handshake;
 
   /* A CCS message is handled after a KeyExchange message was
    * received from the client. When security parameters have been
@@ -4316,7 +4319,7 @@ handle_ccs(dtls_context_t *ctx, dtls_peer_t *peer,
   if (data_length < 1 || data[0] != 1)
     return dtls_alert_fatal_create(DTLS_ALERT_DECODE_ERROR);
 
-  dtls_handshake_parameters_t *handshake = peer->handshake_params;
+  handshake = peer->handshake_params;
   /* Just change the cipher when we are on the same epoch */
   if (peer->role == DTLS_SERVER) {
     err = calculate_key_block(ctx, handshake, peer,

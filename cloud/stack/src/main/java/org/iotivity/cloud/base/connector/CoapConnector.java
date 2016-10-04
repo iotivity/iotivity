@@ -29,7 +29,7 @@ import java.util.List;
 
 import javax.net.ssl.SSLException;
 
-import org.iotivity.cloud.base.OCFConstants;
+import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.protocols.coap.CoapDecoder;
 import org.iotivity.cloud.base.protocols.coap.CoapEncoder;
 import org.iotivity.cloud.base.protocols.coap.CoapLogHandler;
@@ -146,7 +146,7 @@ public class CoapConnector {
         if (tlsMode == true) {
             initializer.setTlsMode(true);
             initializer.setInetSocketAddress(inetSocketAddress);
-            initializer.setRootCertFilePath(OCFConstants.ROOT_CERT_FILE);
+            initializer.setRootCertFilePath(OICConstants.ROOT_CERT_FILE);
         }
 
         initializer.addHandler(new CoapPacketHandler());

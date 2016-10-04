@@ -40,7 +40,6 @@ import java.util.List;
 public class EasySetup {
 
     private static final String TAG = EasySetup.class.getName();
-    public static final String PROV_RESOURCE_TYPE = "ocf.wk.prov";
     private static EasySetup sInstance;
 
     private static Context mContext;
@@ -88,21 +87,19 @@ public class EasySetup {
      *        discovered in a network. The OcResource object can be obtained by calling
      *        OcPlatform.findResource() API. What resource you have to discover with
      *        the OcPlatform.findResource() API is a "provisioning" resource with a certain
-     *        resource type, i.e. ocf.wk.prov
+     *        resource type, i.e. oic.wk.prov
      *
      * @return Pointer to RemoteEnrollee instance
      */
     public synchronized RemoteEnrollee createRemoteEnrollee(OcResource enrolleeResource)
     {
-        // native call
-        if(!enrolleeResource.getResourceTypes().contains(PROV_RESOURCE_TYPE)
-                || !enrolleeResource.getResourceInterfaces().contains(OcPlatform.BATCH_INTERFACE))
-        {
-            Log.e(TAG, "Validation check for OcResource is failed.");
-            return null;
-        }
         mRemoteEnrollee = nativeCreateRemoteEnrollee(enrolleeResource);
-        mRemoteEnrolleeList.add(mRemoteEnrollee);
-        return mRemoteEnrollee;
+
+        if(mRemoteEnrollee != null)
+        {
+            mRemoteEnrolleeList.add(mRemoteEnrollee);
+            return mRemoteEnrollee;
+        }
+        return null;
     }
 }

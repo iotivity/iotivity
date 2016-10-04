@@ -57,6 +57,16 @@ OCStackResult DeInitCredResource();
 OicSecCred_t* GetCredResourceData(const OicUuid_t* subjectId);
 
 /**
+ * This method is used by SRM to retrieve credential for given credId.
+ *
+ * @param credId for which credential is required.
+ *
+ * @return reference to @ref OicSecCred_t, if credential is found, else NULL, if credential
+ * not found.
+ */
+OicSecCred_t* GetCredResourceDataByCredId(const uint16_t credId);
+
+/**
  * This function converts credential data into CBOR format.
  * Caller needs to invoke 'free' when done using returned string.
  *
@@ -180,20 +190,30 @@ OCStackResult GetCredRownerId(OicUuid_t *rowneruuid);
 
 #ifdef __WITH_TLS__
 /**
- * @def CA_SUBJECT_ID
- * @brief subject uuid for credential with CA certificates
+ * Used by mbedTLS to retrieve trusted CA certificates
+ *
+ * @param[out] crt certificates to be filled.
  */
-#define CA_SUBJECT_ID ("00000000-0000-0000-0000-000000000000")
+void GetDerCaCert(ByteArray * crt);
 /**
- * Adds the new CA to the chain
+ * Used by mbedTLS to retrieve own certificate chain
  *
- * @param cert is the pointer to DER encoded certificate
- *
- * @return ::OC_STACK_OK, cert not NULL and persistent storage gets updated.
- * ::OC_STACK_ERROR, cert is NULL or fails to update persistent storage.
+ * @param[out] crt certificate chain to be filled.
  */
-OCStackResult AddCA(OicSecCert_t * cert);
-#endif
+void GetDerOwnCert(ByteArray * crt);
+/**
+ * Used by mbedTLS to retrieve owm private key
+ *
+ * @param[out] key key to be filled.
+ */
+void GetDerKey(ByteArray * key);
+/**
+ * Used by CA to retrieve credential types
+ *
+ * @param[out] key key to be filled.
+ */
+void InitCipherSuiteList(bool *list);
+#endif // __WITH_TLS__
 #ifdef __cplusplus
 }
 #endif

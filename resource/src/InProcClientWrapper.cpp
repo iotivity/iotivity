@@ -165,7 +165,8 @@ namespace OC
             return OC_STACK_KEEP_TRANSACTION;
         }
 
-        try{
+        try
+        {
             ListenOCContainer container(clientWrapper, clientResponse->devAddr,
                                     reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
             // loop to ensure valid construction of all resources
@@ -176,7 +177,8 @@ namespace OC
                 exec.detach();
             }
         }
-        catch (std::exception &e){
+        catch (std::exception &e)
+        {
             oclog() << "Exception in listCallback, ignoring response: "
                     << e.what() << std::flush;
         }
@@ -337,6 +339,7 @@ namespace OC
             return OC_STACK_DELETE_TRANSACTION;
         }
 
+        std::string resourceURI = clientResponse->resourceUri;
         if (clientResponse->result != OC_STACK_OK)
         {
             oclog() << "listenMQCallback(): failed to create resource. clientResponse: "
@@ -344,7 +347,7 @@ namespace OC
                     << std::flush;
 
             std::thread exec(context->callback, clientResponse->result,
-                             clientResponse->resourceUri, nullptr);
+                             resourceURI, nullptr);
             exec.detach();
 
             return OC_STACK_DELETE_TRANSACTION;
@@ -358,7 +361,8 @@ namespace OC
             return OC_STACK_DELETE_TRANSACTION;
         }
 
-        try{
+        try
+        {
             ListenOCContainer container(clientWrapper, clientResponse->devAddr,
                                         (OCRepPayload *) clientResponse->payload);
 
@@ -366,11 +370,12 @@ namespace OC
             for (auto resource : container.Resources())
             {
                 std::thread exec(context->callback, clientResponse->result,
-                                 clientResponse->resourceUri, resource);
+                                 resourceURI, resource);
                 exec.detach();
             }
         }
-        catch (std::exception &e){
+        catch (std::exception &e)
+        {
             oclog() << "Exception in listCallback, ignoring response: "
                     << e.what() << std::flush;
         }
@@ -553,7 +558,7 @@ namespace OC
 
         if (!isLocationOption)
         {
-            createdUri = clientResponse->resourceUri;
+            createdUri = std::string(clientResponse->resourceUri);
         }
 
         auto clientWrapper = context->clientWrapper.lock();
@@ -565,7 +570,8 @@ namespace OC
             return OC_STACK_DELETE_TRANSACTION;
         }
 
-        try{
+        try
+        {
             if (OC_STACK_OK               == result ||
                 OC_STACK_RESOURCE_CREATED == result)
             {
@@ -573,17 +579,22 @@ namespace OC
                                             createdUri);
                 for (auto resource : container.Resources())
                 {
-                    std::thread exec(context->callback, result, createdUri, resource);
+                    std::thread exec(context->callback, result,
+                                     createdUri,
+                                     resource);
                     exec.detach();
                 }
             }
             else
             {
-                std::thread exec(context->callback, result, createdUri, nullptr);
+                std::thread exec(context->callback, result,
+                                 createdUri,
+                                 nullptr);
                 exec.detach();
             }
         }
-        catch (std::exception &e){
+        catch (std::exception &e)
+        {
             oclog() << "Exception in createMQTopicCallback, ignoring response: "
                     << e.what() << std::flush;
         }
@@ -1017,6 +1028,10 @@ namespace OC
         std::thread exec(context->callback, serverHeaderOptions, attrs,
                     result, sequenceNumber);
         exec.detach();
+        if (sequenceNumber == MAX_SEQUENCE_NUMBER + 1)
+        {
+            return OC_STACK_DELETE_TRANSACTION;
+        }
 
         return OC_STACK_KEEP_TRANSACTION;
     }
@@ -1214,7 +1229,7 @@ namespace OC
             std::lock_guard<std::recursive_mutex> lock(*cLock);
 
             std::ostringstream os;
-            os << host << OCF_RSRVD_DEVICE_PRESENCE_URI;
+            os << host << OC_RSRVD_DEVICE_PRESENCE_URI;
             QueryParamsList queryParams({{OC_RSRVD_DEVICE_ID, di}});
             std::string url = assembleSetResourceUri(os.str(), queryParams);
 

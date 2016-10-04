@@ -60,8 +60,6 @@ INLINE_API void check_stack() {
 }
 #endif
 
-struct __session_t;
-
 /** Pre-defined log levels akin to what is used in \b syslog. */
 typedef enum { DTLS_LOG_EMERG=0, DTLS_LOG_ALERT, DTLS_LOG_CRIT, DTLS_LOG_WARN, 
        DTLS_LOG_NOTICE, DTLS_LOG_INFO, DTLS_LOG_DEBUG
@@ -124,7 +122,7 @@ dtls_dsrv_hexdump_log(log_t level, const char *name, const unsigned char *buf, s
 {}
 
 INLINE_API void
-dtls_dsrv_log_addr(log_t level, const char *name, const struct __session_t *addr)
+dtls_dsrv_log_addr(log_t level, const char *name, const session_t *addr)
 {}
 
 #endif /* NDEBUG */

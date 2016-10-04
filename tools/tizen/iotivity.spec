@@ -1,7 +1,7 @@
 Name: iotivity
-Version: 1.1.1
+Version: 1.2.0
 Release: 0
-Summary: IoT Connectivity sponsored by the OIC
+Summary: IoT Connectivity sponsored by the OCF
 Group: Network & Connectivity/Other
 License: Apache-2.0
 URL: https://www.iotivity.org/
@@ -24,7 +24,9 @@ BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(sqlite3)
 Requires(postun): /sbin/ldconfig
 Requires(post): /sbin/ldconfig
-
+%if 0%{?speedpython:1} && 0%{?en_speedpython:1}
+%en_speedpython
+%endif
 
 ## If tizen 2.x, RELEASE follows tizen_build_binary_release_type_eng. ##
 ## and if tizen 3.0, RELEASE follows tizen_build_devel_mode. ##
@@ -35,12 +37,14 @@ Requires(post): /sbin/ldconfig
 %endif
 
 %{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
-%{!?SECURED: %define SECURED 1}
-%{!?LOGGING: %define LOGGING True}
-%{!?ROUTING: %define ROUTING GW}
+%{!?SECURED: %define SECURED 0}
+%{!?LOGGING: %define LOGGING 1}
+%{!?ROUTING: %define ROUTING EP}
+%{!?WITH_CLOUD: %define WITH_CLOUD 0}
+%{!?WITH_TCP: %define WITH_TCP 0}
+%{!?WITH_PROXY: %define WITH_PROXY 0}
+%{!?WITH_MQ: %define WITH_MQ OFF}
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
-%{!?ES_ROLE: %define ES_ROLE enrollee}
-%{!?ES_SOFTAP_MODE: %define ES_SOFTAP_MODE MEDIATOR_SOFTAP}
 %{!?VERBOSE: %define VERBOSE 1}
 
 %description
@@ -107,12 +111,18 @@ cp %{SOURCE1001} ./%{name}-test.manifest
 %define RPM_ARCH "x86"
 %endif
 
-scons -j2 --prefix=%{_prefix} \
+%define JOB "-j4"
+
+%if 0%{?speedpython}
+%define JOB %{?_smp_mflags}
+%endif
+
+scons %{JOB} --prefix=%{_prefix} \
 	VERBOSE=%{VERBOSE} \
 	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
-	RELEASE=%{RELEASE} SECURED=%{SECURED} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
-	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} ES_ROLE=%{ES_ROLE} ES_SOFTAP_MODE=%{ES_SOFTAP_MODE} \
-	LIB_INSTALL_DIR=%{_libdir}
+	RELEASE=%{RELEASE} SECURED=%{SECURED} WITH_TCP=%{WITH_TCP} WITH_CLOUD=%{WITH_CLOUD} WITH_MQ=%{WITH_MQ} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
+	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir} WITH_PROXY=%{WITH_PROXY}
+
 
 
 %install
@@ -120,9 +130,9 @@ rm -rf %{buildroot}
 CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ;
 scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
 	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
-	RELEASE=%{RELEASE} SECURED=%{SECURED} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
-	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} ES_ROLE=%{ES_ROLE} ES_SOFTAP_MODE=%{ES_SOFTAP_MODE} \
-	LIB_INSTALL_DIR=%{_libdir}
+	RELEASE=%{RELEASE} SECURED=%{SECURED} WITH_TCP=%{WITH_TCP} WITH_CLOUD=%{WITH_CLOUD} WITH_MQ=%{WITH_MQ} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
+	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir} WITH_PROXY=%{WITH_PROXY}
+
 
 
 # For Example
@@ -156,6 +166,12 @@ cp out/tizen/*/%{build_mode}/resource/examples/threadingsample %{ex_install_dir}
 cp out/tizen/*/%{build_mode}/resource/examples/oic_svr_db_server.dat %{ex_install_dir}
 cp out/tizen/*/%{build_mode}/resource/examples/oic_svr_db_client.dat %{ex_install_dir}
 cp out/tizen/*/%{build_mode}/libcoap.a %{buildroot}%{_libdir}
+
+%if 0%{?WITH_PROXY} == 1
+mkdir -p %{ex_install_dir}/proxy-sample
+cp out/tizen/*/%{build_mode}/service/coap-http-proxy/samples/proxy_main %{ex_install_dir}/proxy-sample/
+cp out/tizen/*/%{build_mode}/service/coap-http-proxy/samples/proxy_client %{ex_install_dir}/proxy-sample/
+%endif
 %if 0%{?SECURED} == 1
 mkdir -p %{ex_install_dir}/provisioning
 mkdir -p %{ex_install_dir}/provision-sample
@@ -186,6 +202,11 @@ cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
 cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
 cp service/easy-setup/inc/*.h %{buildroot}%{_includedir}
 cp service/easy-setup/enrollee/inc/*.h %{buildroot}%{_includedir}
+
+install -d %{buildroot}%{_includedir}/iotivity
+ln -fs ../resource %{buildroot}%{_includedir}/iotivity/
+ln -fs ../service %{buildroot}%{_includedir}/iotivity/
+ln -fs ../c_common %{buildroot}%{_includedir}/iotivity/
 
 
 %post -p /sbin/ldconfig
@@ -219,6 +240,9 @@ cp service/easy-setup/enrollee/inc/*.h %{buildroot}%{_includedir}
 %{_libdir}/librcs_container.so
 %{_libdir}/librcs_server.so
 %{_libdir}/libESEnrolleeSDK.so
+%if 0%{?WITH_PROXY} == 1
+%{_libdir}/libcoap_http_proxy.so
+%endif
 %if 0%{?SECURED} == 1
 %{_libdir}/libocpmapi.so
 %{_libdir}/libocprovision.so
