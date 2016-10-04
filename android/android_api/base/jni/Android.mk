@@ -130,11 +130,12 @@ ifeq ($(WITH_CLOUD), 1)
 endif
 
 ifeq ($(WITH_TCP), 1)
+ifeq ($(SECURED), 1)
     LOCAL_SRC_FILES +=  JniOcCloudProvisioning.cpp \
                         JniOcCloudResultListener.cpp \
                         JniGetAclIdByDeviceListener.cpp
 endif
-
+endif
 
 LOCAL_LDLIBS := -llog
 LOCAL_STATIC_LIBRARIES := android-oc
