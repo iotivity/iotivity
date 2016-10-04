@@ -154,9 +154,9 @@ CAResult_t CAIPUnSetNetworkMonitorCallback(CATransportAdapter_t adapter)
     return CA_STATUS_OK;
 }
 
-CAInterface_t *CAFindInterfaceChange()
+u_arraylist_t *CAFindInterfaceChange()
 {
-    CAInterface_t *foundNewInterface = NULL;
+    u_arraylist_t *iflist = NULL;
     char buf[NETLINK_MESSAGE_LENGTH] = { 0 };
     struct sockaddr_nl sa = { 0 };
     struct iovec iov = { .iov_base = buf,
@@ -177,41 +177,21 @@ CAInterface_t *CAFindInterfaceChange()
 
         struct ifinfomsg *ifi = (struct ifinfomsg *)NLMSG_DATA(nh);
 
-        int ifiIndex = ifi->ifi_index;
-        u_arraylist_t *iflist = CAIPGetInterfaceInformation(ifiIndex);
-
         if ((!ifi || (ifi->ifi_flags & IFF_LOOPBACK) || !(ifi->ifi_flags & IFF_RUNNING)))
         {
             continue;
         }
+
+        int ifiIndex = ifi->ifi_index;
+        iflist = CAIPGetInterfaceInformation(ifiIndex);
 
         if (!iflist)
         {
             OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));
             return NULL;
         }
-
-        uint32_t listLength = u_arraylist_length(iflist);
-        for (uint32_t i = 0; i < listLength; i++)
-        {
-            CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
-            if (!ifitem)
-            {
-                continue;
-            }
-
-            if ((int)ifitem->index != ifiIndex)
-            {
-                continue;
-            }
-
-            foundNewInterface = CANewInterfaceItem(ifitem->index, ifitem->name, ifitem->family,
-                                                   ifitem->addr, ifitem->flags);
-            break;    // we found the one we were looking for
-        }
-        u_arraylist_destroy(iflist);
     }
-    return foundNewInterface;
+    return iflist;
 }
 
 CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
