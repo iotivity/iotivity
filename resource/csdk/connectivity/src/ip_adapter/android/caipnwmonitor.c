@@ -39,6 +39,7 @@
 #include "org_iotivity_ca_CaIpInterface.h"
 
 #define TAG "OIC_CA_IP_MONITOR"
+#define NETLINK_MESSAGE_LENGTH  (4096)
 
 /**
  * Used to storing adapter changes callback interface.
@@ -179,6 +180,17 @@ CAResult_t CAIPUnSetNetworkMonitorCallback(CATransportAdapter_t adapter)
 
 CAInterface_t *CAFindInterfaceChange()
 {
+    // release netlink event
+    char *bufPtr = (char *)OICCalloc(NETLINK_MESSAGE_LENGTH, sizeof (char));
+    if (!bufPtr)
+    {
+        OIC_LOG(ERROR, TAG, "Malloc failed");
+        return NULL;
+    }
+    recv(caglobals.ip.netlinkFd, bufPtr, NETLINK_MESSAGE_LENGTH, 0);
+    OICFree(bufPtr);
+    bufPtr = NULL;
+
     char buf[MAX_INTERFACE_INFO_LENGTH] = { 0 };
     struct ifconf ifc  = { .ifc_len = MAX_INTERFACE_INFO_LENGTH, .ifc_buf = buf };
 
