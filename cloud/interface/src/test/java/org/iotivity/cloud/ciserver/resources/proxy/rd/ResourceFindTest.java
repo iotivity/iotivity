@@ -65,8 +65,10 @@ public class ResourceFindTest {
     private DeviceServerSystem  mDeviceServerSystem    = new DeviceServerSystem();
     final CountDownLatch        mLatch                 = new CountDownLatch(1);
 
-    @Mock
-    private IRequestChannel     mRequestChannel;
+    @Mock(name = "mRDServer")
+    IRequestChannel             mRequestChannelRDServer;
+    @Mock(name = "mASServer")
+    IRequestChannel             mRequestChannelASServer;
 
     @InjectMocks
     private ResourceFind        mResHandler            = new ResourceFind();
@@ -105,8 +107,27 @@ public class ResourceFindTest {
                 mLatch.countDown();
                 return null;
             }
-        }).when(mRequestChannel).sendRequest(Mockito.any(IRequest.class),
-                Mockito.any(CoapDevice.class));
+        }).when(mRequestChannelRDServer).sendRequest(
+                Mockito.any(IRequest.class), Mockito.any(CoapDevice.class));
+
+        Mockito.doAnswer(new Answer<Object>() {
+            @Override
+            public CoapRequest answer(InvocationOnMock invocation)
+                    throws Throwable {
+                Object[] args = invocation.getArguments();
+                CoapRequest request = (CoapRequest) args[0];
+                System.out.println(
+                        "\t----------payload : " + request.getPayloadString());
+                System.out.println(
+                        "\t----------uripath : " + request.getUriPath());
+                System.out.println(
+                        "\t---------uriquery : " + request.getUriQuery());
+                mReq = request;
+                mLatch.countDown();
+                return null;
+            }
+        }).when(mRequestChannelASServer).sendRequest(
+                Mockito.any(IRequest.class), Mockito.any(CoapDevice.class));
     }
 
     // @InjectMocks for testSpecificDeviceonResponseReceived
@@ -181,7 +202,7 @@ public class ResourceFindTest {
         System.out.println(
                 "\t--------------OnRequestReceived(RD) Resource Find (entire deivces) Test------------");
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
-                TEST_RESOURCE_FIND_URI, "rt=core.light;di=" + di);
+                TEST_RESOURCE_FIND_URI, "rt=core.light");
         mResHandler.onRequestReceived(mockDevice, request);
         HashMap<String, List<String>> queryMap = mReq.getUriQueryMap();
         assertTrue(mLatch.await(1L, SECONDS));
@@ -201,8 +222,8 @@ public class ResourceFindTest {
         // assertion: if the request packet from the CI contains the query
         // which includes device ID and the accesstoken
         assertTrue(mLatch.await(1L, SECONDS));
-        assertTrue(queryMap.containsKey("mid"));
-        assertEquals(mReq.getUriPath(), Constants.GROUP_FULL_URI + "/null");
+        assertTrue(queryMap.containsKey("di"));
+        assertEquals(mReq.getUriPath(), Constants.WELL_KNOWN_FULL_URI);
     }
 
     private IResponse responseFromAccountServer() {
