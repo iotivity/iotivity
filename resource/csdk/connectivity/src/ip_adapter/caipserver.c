@@ -249,11 +249,19 @@ static void CASelectReturned(fd_set *readFds, int ret)
         else ISSET(m4s, readFds, CA_MULTICAST | CA_IPV4 | CA_SECURE)
         else if ((caglobals.ip.netlinkFd != OC_INVALID_SOCKET) && FD_ISSET(caglobals.ip.netlinkFd, readFds))
         {
-            CAInterface_t *ifchanged = CAFindInterfaceChange();
-            if (ifchanged)
+            u_arraylist_t *iflist = CAFindInterfaceChange();
+            if (iflist)
             {
-                CAProcessNewInterface(ifchanged);
-                OICFree(ifchanged);
+                uint32_t listLength = u_arraylist_length(iflist);
+                for (uint32_t i = 0; i < listLength; i++)
+                {
+                    CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+                    if (ifitem)
+                    {
+                        CAProcessNewInterface(ifitem);
+                    }
+                }
+                u_arraylist_destroy(iflist);
             }
             break;
         }
@@ -411,11 +419,19 @@ static void CAFindReadyMessage()
                     if ((caglobals.ip.addressChangeEvent != WSA_INVALID_EVENT) &&
                         (caglobals.ip.addressChangeEvent == eventArray[eventIndex]))
                     {
-                        CAInterface_t *newAddress;
-                        while ((newAddress = CAFindInterfaceChange()) != NULL)
+                        u_arraylist_t *iflist = CAFindInterfaceChange();
+                        if (iflist)
                         {
-                            CAProcessNewInterface(newAddress);
-                            OICFree(newAddress);
+                            uint32_t listLength = u_arraylist_length(iflist);
+                            for (uint32_t i = 0; i < listLength; i++)
+                            {
+                                CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+                                if (ifitem)
+                                {
+                                    CAProcessNewInterface(ifitem);
+                                }
+                            }
+                            u_arraylist_destroy(iflist);
                         }
                         break;
                     }

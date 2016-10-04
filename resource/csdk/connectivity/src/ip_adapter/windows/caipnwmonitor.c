@@ -402,29 +402,44 @@ static CAInterface_t *AllocateCAInterface(int index, const char *name, int famil
 }
 
 /**
- * Find a new IP address. Note that this can only return one, so the caller must
- * call multiple times to get the list, which is pretty inefficient. The caller is
- * responsible for freeing the pointer returned via OICFree().
- * @todo Change the API to allow returning a list or, even better, allow calling
- *       CAIPPassNetworkChangesToTransportAdapter() at any time from IpAddressChangeCallback.
+ * Find a new IP address.
+ * The caller is responsible for freeing the pointer returned via u_arraylist_destroy().
  *
- * @return  Dynamically allocated IP address entry, or NULL if no change.
+ * @return  Dynamically allocated IP address list, or NULL if no change.
  */
-CAInterface_t *CAFindInterfaceChange()
+u_arraylist_t  *CAFindInterfaceChange()
 {
+    u_arraylist_t *iflist = u_arraylist_create();
+    if (!iflist)
+    {
+        OIC_LOG_V(ERROR, TAG, "Failed to create iflist: %s", strerror(errno));
+        return NULL;
+    }
+
     oc_mutex_lock(g_CAIPNetworkMonitorMutex);
 
     bool someAddressWentAway = g_CAIPNetworkMonitorSomeAddressWentAway;
     g_CAIPNetworkMonitorSomeAddressWentAway = false;
 
-    CAInterface_t *newAddress = NULL;
-    if (g_CAIPNetworkMonitorNewAddressQueue)
+    bool newAddress = false;
+
+    // Pop whole new address in list.
+    while (g_CAIPNetworkMonitorNewAddressQueue)
     {
-        // Pop the first new address to return.
         CANewAddress_t *change = g_CAIPNetworkMonitorNewAddressQueue;
-        DL_DELETE(g_CAIPNetworkMonitorNewAddressQueue, change);
-        newAddress = change->ipAddressInfo;
-        OICFree(change);
+
+        bool result = u_arraylist_add(iflist, change->ipAddressInfo);
+        if (!result)
+        {
+            OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
+            break;
+        }
+        else
+        {
+            DL_DELETE(g_CAIPNetworkMonitorNewAddressQueue, change);
+            OICFree(change);
+            newAddress = true;
+        }
     }
 
     oc_mutex_unlock(g_CAIPNetworkMonitorMutex);
@@ -438,7 +453,7 @@ CAInterface_t *CAFindInterfaceChange()
         CAIPPassNetworkChangesToTransportAdapter(CA_INTERFACE_UP);
     }
 
-    return newAddress;
+    return iflist;
 }
 
 static bool IsValidNetworkAdapter(PIP_ADAPTER_ADDRESSES pAdapterAddr, int desiredIndex)
