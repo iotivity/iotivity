@@ -90,11 +90,11 @@ CAResult_t CAIPUnSetNetworkMonitorCallback(CATransportAdapter_t adapter);
 u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex);
 
 /**
- * Find a new network interface.
+ * Find network interface changes.
  *
- * @return  Description of interface (or NULL if no change)
+ * @return  List of CAInterface_t items.
  */
-CAInterface_t *CAFindInterfaceChange();
+u_arraylist_t *CAFindInterfaceChange();
 
 /**
  * Start network monitor.

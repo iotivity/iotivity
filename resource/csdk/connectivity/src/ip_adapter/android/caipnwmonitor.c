@@ -178,7 +178,7 @@ CAResult_t CAIPUnSetNetworkMonitorCallback(CATransportAdapter_t adapter)
     return CA_STATUS_OK;
 }
 
-CAInterface_t *CAFindInterfaceChange()
+u_arraylist_t *CAFindInterfaceChange()
 {
     // release netlink event
     char *bufPtr = (char *)OICCalloc(NETLINK_MESSAGE_LENGTH, sizeof (char));
@@ -201,6 +201,7 @@ CAInterface_t *CAFindInterfaceChange()
         return NULL;
     }
 
+    u_arraylist_t *iflist = NULL;
     CAInterface_t *foundNewInterface = NULL;
 
     struct ifreq* ifr = ifc.ifc_req;
@@ -287,7 +288,39 @@ CAInterface_t *CAFindInterfaceChange()
     }
 
     OICFree(previous);
-    return foundNewInterface;
+    // below code is temporary impl for consistency with caipserver.
+    // TODO: whole code which using ioctl will be removed and changed with internal getifaddrs impl.
+    if (foundNewInterface)
+    {
+        iflist = u_arraylist_create();
+
+        if (!iflist)
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to create iflist: %s", strerror(errno));
+            goto exit;
+        }
+
+        CAResult_t result = CAAddInterfaceItem(iflist,
+                                               foundNewInterface->index,
+                                               foundNewInterface->name,
+                                               foundNewInterface->family,
+                                               foundNewInterface->addr,
+                                               foundNewInterface->flags);
+        if (CA_STATUS_OK != result)
+        {
+            goto exit;
+        }
+
+        // release foundNewInterface
+        OICFree(foundNewInterface);
+        foundNewInterface = NULL;
+    }
+    return iflist;
+exit:
+    OICFree(foundNewInterface);
+    foundNewInterface = NULL;
+    u_arraylist_destroy(iflist);
+    return NULL;
 }
 
 u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
