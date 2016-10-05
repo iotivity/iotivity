@@ -319,6 +319,16 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
                 (OCRepPayload **) NULL, dimensions);
     }
 
+    char * reqInterface =
+            NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_INTERFACE);
+
+    if (reqInterface && strcmp(reqInterface, NS_INTERFACE_BASELINE) == 0)
+    {
+        OCResourcePayloadAddStringLL(&payload->interfaces, NS_INTERFACE_BASELINE);
+        OCResourcePayloadAddStringLL(&payload->interfaces, NS_INTERFACE_READ);
+        OCResourcePayloadAddStringLL(&payload->types, NS_ROOT_TYPE);
+    }
+
     response.requestHandle = entityHandlerRequest->requestHandle;
     response.resourceHandle = entityHandlerRequest->resource;
     response.persistentBufferFlag = 0;
@@ -363,8 +373,7 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
     OCRepPayloadValue * payloadValue = NULL;
     payloadValue = NSPayloadFindValue(payload, NS_ATTRIBUTE_TOPIC_LIST);
     size_t dimensionSize = calcDimTotal(payloadValue->arr.dimensions);
-    size_t dimensions[3] =
-    { dimensionSize, 0, 0 };
+    size_t dimensions[3] = { dimensionSize, 0, 0 };
     OCRepPayloadGetPropObjectArray(payload, NS_ATTRIBUTE_TOPIC_LIST, &topicListPayload, dimensions);
 
     for (int i = 0; i < (int) dimensionSize; i++)
@@ -383,7 +392,7 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
             NS_VERIFY_NOT_NULL(topicSubData, NS_FAIL);
 
             OICStrcpy(topicSubData->id, NS_UUID_STRING_SIZE, consumerId);
-            topicSubData->topicName = OICStrdup(topicName);
+            topicSubData->topicName = topicName;
 
             NSCacheElement * newObj = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
 
@@ -391,6 +400,7 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
             {
                 OICFree(topicSubData->topicName);
                 OICFree(topicSubData);
+                OICFree(consumerId);
                 return NS_FAIL;
             }
 
@@ -401,7 +411,7 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
         }
     }
     NSSendTopicUpdationToConsumer(consumerId);
-
+    OICFree(consumerId);
     NS_LOG(DEBUG, "NSPostConsumerTopics() - OUT");
     return NS_OK;
 }

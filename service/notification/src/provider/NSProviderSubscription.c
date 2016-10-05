@@ -80,6 +80,15 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
 
     NS_LOG_V(DEBUG, "NS Provider ID: %s", NSGetProviderInfo()->providerId);
 
+    char * reqInterface =
+            NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_INTERFACE);
+
+    if (reqInterface && strcmp(reqInterface, NS_INTERFACE_BASELINE) == 0)
+    {
+        OCResourcePayloadAddStringLL(&payload->interfaces, NS_INTERFACE_BASELINE);
+        OCResourcePayloadAddStringLL(&payload->interfaces, NS_INTERFACE_READ);
+        OCResourcePayloadAddStringLL(&payload->types, NS_ROOT_TYPE);
+    }
     OCRepPayloadSetUri(payload, NS_ROOT_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_VERSION, VERSION);
@@ -98,6 +107,7 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
     if (OCDoResponse(&response) != OC_STACK_OK)
     {
         NS_LOG(ERROR, "Fail to AccessPolicy send response");
+        OCRepPayloadDestroy(payload);
         return NS_ERROR;
     }
     OCRepPayloadDestroy(payload);
@@ -304,7 +314,7 @@ NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest * entityHandlerRequest
     if (!entityHandlerRequest)
     {
         NS_LOG(ERROR, "Invalid request pointer");
-        return OC_EH_ERROR;
+        return NS_ERROR;
     }
 
     char * id = NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_CONSUMER_ID);
