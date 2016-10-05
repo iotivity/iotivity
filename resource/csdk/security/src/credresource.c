@@ -1350,6 +1350,46 @@ OCStackResult RemoveCredential(const OicUuid_t *subject)
 
 }
 
+OCStackResult RemoveCredentialByCredId(uint16_t credId)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    OicSecCred_t *cred = NULL;
+    OicSecCred_t *tempCred = NULL;
+    bool deleteFlag = false;
+
+    OIC_LOG(INFO, TAG, "IN RemoveCredentialByCredId");
+
+    if ( 0 == credId)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+
+    LL_FOREACH_SAFE(gCred, cred, tempCred)
+    {
+        if (cred->credId == credId)
+        {
+            OIC_LOG_V(DEBUG, TAG, "Credential(ID=%d) will be removed.", credId);
+
+            LL_DELETE(gCred, cred);
+            FreeCred(cred);
+            deleteFlag = true;
+        }
+    }
+
+    if (deleteFlag)
+    {
+        if (UpdatePersistentStorage(gCred))
+        {
+            ret = OC_STACK_RESOURCE_DELETED;
+        }
+    }
+    OIC_LOG(INFO, TAG, "OUT RemoveCredentialByCredId");
+
+    return ret;
+
+}
+
 /**
  * Remove all credential data on credential resource and persistent storage
  *
@@ -1803,6 +1843,11 @@ OicSecCred_t* GetCredResourceData(const OicUuid_t* subject)
         }
     }
     return NULL;
+}
+
+const OicSecCred_t* GetCredList()
+{
+    return gCred;
 }
 
 OicSecCred_t* GetCredResourceDataByCredId(const uint16_t credId)
