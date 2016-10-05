@@ -64,7 +64,6 @@ namespace OIC
             SecurityProvStatusCb m_securityProvStatusCb;
             SecurityPinCb m_securityPinCb;
             SecProvisioningDbPathCb m_secProvisioningDbPathCb;
-            std::shared_ptr< OC::OCSecureResource > m_unownedDevice;
 
             std::mutex m_mtx;
             std::condition_variable m_cond;
@@ -74,8 +73,7 @@ namespace OIC
             std::atomic<bool> certResult;
 
             std::shared_ptr< OC::OCSecureResource > m_securedResource;
-            std::shared_ptr< OC::OCSecureResource > findEnrolleeSecurityResource(
-                OC::DeviceList_t &list);
+
             ESResult performOwnershipTransfer();
             bool isOwnedDeviceRegisteredInSVRDB();
             void removeDeviceWithUuidCB(OC::PMResultList_t *result, int hasError);
