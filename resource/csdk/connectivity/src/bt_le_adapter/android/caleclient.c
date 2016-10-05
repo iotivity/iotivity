@@ -750,6 +750,7 @@ CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address)
 
     if (!g_deviceList)
     {
+        OIC_LOG(ERROR, TAG, "g_deviceList is not available");
         return CA_STATUS_FAILED;
     }
 
@@ -825,6 +826,10 @@ CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address)
         {
             return CA_STATUS_FAILED;
         }
+    }
+    else
+    {
+        OIC_LOG(DEBUG, TAG, "there is a target device in the scanned devices");
     }
 
     return CA_STATUS_OK;
@@ -904,9 +909,6 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
                 (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
                 (*env)->DeleteLocalRef(env, jni_setAddress);
 
-                // stop scan while sending
-                CALEClientStopScanWithInterval();
-
                 if (g_sendBuffer)
                 {
                     (*env)->DeleteGlobalRef(env, g_sendBuffer);
@@ -952,15 +954,6 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
         (*g_jvm)->DetachCurrentThread(g_jvm);
     }
 
-    // start LE Scan again
-    ret = CALEClientStartScanWithInterval();
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TAG, "CALEClientStartScanWithInterval has failed");
-        oc_mutex_unlock(g_threadSendMutex);
-        return ret;
-    }
-
     oc_mutex_unlock(g_threadSendMutex);
     OIC_LOG(INFO, TAG, "unicast - send logic has finished");
     if (CALEClientIsValidState(address, CA_LE_SEND_STATE,
@@ -986,20 +979,6 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
 
     // error label.
 error_exit:
-
-    // start LE Scan again
-    ret = CALEClientStartScanWithInterval();
-    if (CA_STATUS_OK != ret)
-    {
-        OIC_LOG(ERROR, TAG, "CALEClientStartScanWithInterval has failed");
-        oc_mutex_unlock(g_threadSendMutex);
-        if (isAttached)
-        {
-            (*g_jvm)->DetachCurrentThread(g_jvm);
-        }
-        return ret;
-    }
-
     if (isAttached)
     {
         (*g_jvm)->DetachCurrentThread(g_jvm);
@@ -1040,9 +1019,6 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
         goto error_exit;
     }
 
-    // stop scan while sending
-    CALEClientStopScanWithInterval();
-
     uint32_t length = u_arraylist_length(g_deviceList);
     g_targetCnt = length;
 
@@ -1077,31 +1053,13 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
         OIC_LOG(DEBUG, TAG, "the data was sent");
     }
     oc_mutex_unlock(g_threadMutex);
-
-    // start LE Scan again
-    res = CALEClientStartScanWithInterval();
-    if (CA_STATUS_OK != res)
-    {
-        OIC_LOG(ERROR, TAG, "CALEClientStartScanWithInterval has failed");
-        oc_mutex_unlock(g_threadSendMutex);
-        return res;
-    }
-
     oc_mutex_unlock(g_threadSendMutex);
     OIC_LOG(DEBUG, TAG, "OUT - CALEClientSendMulticastMessageImpl");
     return CA_STATUS_OK;
 
 error_exit:
-    res = CALEClientStartScanWithInterval();
-    if (CA_STATUS_OK != res)
-    {
-        OIC_LOG(ERROR, TAG, "CALEClientStartScanWithInterval has failed");
-        oc_mutex_unlock(g_threadSendMutex);
-        return res;
-    }
-
     oc_mutex_unlock(g_threadSendMutex);
-    OIC_LOG(DEBUG, TAG, "OUT - CALEClientSendMulticastMessageImpl");
+    OIC_LOG(ERROR, TAG, "OUT - CALEClientSendMulticastMessageImpl");
     return CA_SEND_FAILED;
 }
 
@@ -2783,8 +2741,6 @@ CAResult_t CALEClientAddScanDeviceToList(JNIEnv *env, jobject device)
     if (!g_deviceList)
     {
         OIC_LOG(ERROR, TAG, "gdevice_list is null");
-        CALEClientStopScanWithInterval();
-
         oc_mutex_unlock(g_deviceListMutex);
         return CA_STATUS_FAILED;
     }
