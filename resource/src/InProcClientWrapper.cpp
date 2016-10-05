@@ -657,17 +657,15 @@ namespace OC
         OCRepresentation rep;
         HeaderOptions serverHeaderOptions;
         OCStackResult result = clientResponse->result;
-        if (result == OC_STACK_OK)
+
+        parseServerHeaderOptions(clientResponse, serverHeaderOptions);
+        try
         {
-            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
-            try
-            {
-                rep = parseGetSetCallback(clientResponse);
-            }
-            catch(OC::OCException& e)
-            {
-                result = e.code();
-            }
+            rep = parseGetSetCallback(clientResponse);
+        }
+        catch(OC::OCException& e)
+        {
+            result = e.code();
         }
 
         std::thread exec(context->callback, serverHeaderOptions, rep, result);
@@ -733,20 +731,15 @@ namespace OC
         HeaderOptions serverHeaderOptions;
 
         OCStackResult result = clientResponse->result;
-        if (OC_STACK_OK               == result ||
-            OC_STACK_RESOURCE_CREATED == result ||
-            OC_STACK_RESOURCE_DELETED == result ||
-            OC_STACK_RESOURCE_CHANGED == result)
+
+        parseServerHeaderOptions(clientResponse, serverHeaderOptions);
+        try
         {
-            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
-            try
-            {
-                attrs = parseGetSetCallback(clientResponse);
-            }
-            catch(OC::OCException& e)
-            {
-                result = e.code();
-            }
+            attrs = parseGetSetCallback(clientResponse);
+        }
+        catch(OC::OCException& e)
+        {
+            result = e.code();
         }
 
         std::thread exec(context->callback, serverHeaderOptions, attrs, result);
@@ -947,10 +940,8 @@ namespace OC
             static_cast<ClientCallbackContext::DeleteContext*>(ctx);
         HeaderOptions serverHeaderOptions;
 
-        if (clientResponse->result == OC_STACK_OK)
-        {
-            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
-        }
+        parseServerHeaderOptions(clientResponse, serverHeaderOptions);
+
         std::thread exec(context->callback, serverHeaderOptions, clientResponse->result);
         exec.detach();
         return OC_STACK_DELETE_TRANSACTION;
@@ -1013,18 +1004,17 @@ namespace OC
         HeaderOptions serverHeaderOptions;
         uint32_t sequenceNumber = clientResponse->sequenceNumber;
         OCStackResult result = clientResponse->result;
-        if (clientResponse->result == OC_STACK_OK)
+
+        parseServerHeaderOptions(clientResponse, serverHeaderOptions);
+        try
         {
-            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
-            try
-            {
-                attrs = parseGetSetCallback(clientResponse);
-            }
-            catch(OC::OCException& e)
-            {
-                result = e.code();
-            }
+            attrs = parseGetSetCallback(clientResponse);
         }
+        catch(OC::OCException& e)
+        {
+            result = e.code();
+        }
+
         std::thread exec(context->callback, serverHeaderOptions, attrs,
                     result, sequenceNumber);
         exec.detach();
