@@ -479,6 +479,72 @@ exit:
     return result;
 }
 
+OCStackResult OCWrapperAclIndividualUpdate(const OCDevAddr *endPoint, OCCloudResponseCB callback)
+{
+    OCStackResult result = OC_STACK_NO_MEMORY;
+
+    char aclid[MAX_ID_LENGTH] = { 0 };
+    readString(aclid, sizeof(aclid), "acl id", ACL_ID_EXAMPLE);
+
+    cloudAce_t *ace = OICCalloc(1, sizeof(cloudAce_t));
+    if (!ace)
+    {
+        OIC_LOG(ERROR, TAG, "Can't allocate memory for ace");
+        goto exit;
+    }
+
+    char aceid[MAX_ID_LENGTH] = { 0 };
+    char subjectuuid[MAX_ID_LENGTH] = { 0 };
+    int stype = 0;
+    int permission = 0;
+
+    readString(aceid, sizeof(aceid), "ace id", ACE_ID_EXAMPLE);
+    do
+    {
+        readString(subjectuuid, sizeof(subjectuuid), "subjectuuid", SUBJECT_ID_EXAMPLE);
+    } while (OC_STACK_OK != ConvertStrToUuid(subjectuuid, &ace->subjectuuid));
+
+    readInteger(&stype, "subject type", "0 – Device, 1 – User, 2 - Group");
+    readInteger(&permission, "permission", "6");
+
+    ace->stype = stype;
+    ace->permission = permission;
+
+    int reslist_count = 0;
+    readInteger(&reslist_count, "resources list count", "1");
+
+    for (int i = 0; i < reslist_count; i++)
+    {
+        OicSecRsrc_t *res = OICCalloc(1, sizeof(OicSecRsrc_t));
+        if (!res)
+        {
+            OIC_LOG(ERROR, TAG, "Can't allocate memory for res");
+            goto exit;
+        }
+        LL_APPEND(ace->resources, res);
+
+        char href[32] = { 0 };
+        readString(href, sizeof(href), "href", RESOURCE_URI_EXAMPLE);
+
+        stringArray_t rt = {0, 0};
+        readStringArray(&rt, MAX_ID_LENGTH, "resource type", RESOURCE_TYPE_EXAMPLE);
+
+        stringArray_t _if = {0, 0};
+        readStringArray(&_if, MAX_ID_LENGTH, "interface", INTERFACE_EXAMPLE);
+
+        res->href = OICStrdup(href);
+        res->types = rt.array;
+        res->typeLen = rt.length;
+        res->interfaces = _if.array;
+        res->interfaceLen = _if.length;
+    }
+
+
+    result = OCCloudAclIndividualUpdate(NULL, aclid,aceid, ace, endPoint, callback);
+exit:
+    return result;
+}
+
 OCStackResult OCWrapperAclIndividualDelete(const OCDevAddr *endPoint, OCCloudResponseCB callback)
 {
     char aclid[MAX_ID_LENGTH] = { 0 };
@@ -486,6 +552,17 @@ OCStackResult OCWrapperAclIndividualDelete(const OCDevAddr *endPoint, OCCloudRes
     readString(aclid, sizeof(aclid), "acl id", ACL_ID_EXAMPLE);
 
     return OCCloudAclIndividualDelete(NULL, aclid, endPoint, callback);
+}
+
+OCStackResult OCWrapperAclIndividualDeleteAce(const OCDevAddr *endPoint, OCCloudResponseCB callback)
+{
+    char aclid[MAX_ID_LENGTH] = { 0 };
+    char aceid[MAX_ID_LENGTH] = { 0 };
+
+    readString(aclid, sizeof(aclid), "acl id", ACL_ID_EXAMPLE);
+    readString(aceid, sizeof(aceid), "ace id", ACE_ID_EXAMPLE);
+
+    return OCCloudAclIndividualDeleteAce(NULL, aclid, aceid, endPoint, callback);
 }
 
 OCStackResult OCWrapperAclCreateGroup(const OCDevAddr *endPoint, OCCloudResponseCB callback)

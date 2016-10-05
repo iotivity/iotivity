@@ -100,6 +100,9 @@ public class AclVerifyResource extends Resource {
                 if (aclTable.getAclist() == null) {
                     return false;
                 }
+                if (aclTable.getOid().equals(sid)) {
+                    return true;
+                }
                 for (Ace ace : aclTable.getAclist()) {
                     if (ace.getSubjectuuid().equals(sid)) {
                         // check permission matches

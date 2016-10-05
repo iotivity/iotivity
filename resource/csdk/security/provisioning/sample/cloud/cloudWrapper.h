@@ -104,6 +104,15 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
 OCStackResult OCWrapperAclIndividualDelete(const OCDevAddr *endPoint, OCCloudResponseCB callback);
 
 /**
+ * ACL individual delete ACE
+ *
+ * @param[in] endPoint          cloud host and port
+ * @param[in] callback          result callback
+ * @return  OCStackResult application result
+ */
+OCStackResult OCWrapperAclIndividualDeleteAce(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+
+/**
  * ACL post group request function
  *
  * @param[in] endPoint          cloud host and port
