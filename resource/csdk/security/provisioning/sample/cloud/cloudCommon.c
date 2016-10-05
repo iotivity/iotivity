@@ -340,12 +340,15 @@ static OCStackResult saveTrustCert(void)
 
     res = OCSaveTrustCertChain(trustCertChainArray.data, trustCertChainArray.len, OIC_ENCODING_PEM,&g_credId);
 
-    if(OC_STACK_OK != res)
+    if (OC_STACK_OK != res)
     {
-        OIC_LOG(ERROR, TAG, "OCSaveTrustCertChainBin API error");
-        return res;
+        OIC_LOG(ERROR, TAG, "OCSaveTrustCertChain API error");
     }
-    OIC_LOG_V(INFO, TAG, "CredId of Saved Trust Cert. Chain into Cred of SVR : %d.\n", g_credId);
+    else
+    {
+        OIC_LOG_V(INFO, TAG, "CredId of Saved Trust Cert. Chain into Cred of SVR : %d.\n", g_credId);
+    }
+    OICFree(trustCertChainArray.data);
 
     return res;
 }
