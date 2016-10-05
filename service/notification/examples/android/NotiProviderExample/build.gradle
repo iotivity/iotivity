@@ -15,6 +15,11 @@ buildscript {
 allprojects {
     repositories {
         jcenter()
+
+        flatDir {
+            dirs '../../../../android/notification-service/build/outputs/aar'
+            dirs '../../../../../../android/android_api/base/build/outputs/aar'
+        }
     }
 }
 

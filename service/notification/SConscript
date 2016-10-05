@@ -121,11 +121,11 @@ notification_env.UserInstallTargetHeader('include/NSConsumerInterface.h',\
 if target_os == 'linux':
     SConscript('unittest/SConscript')
 
-# Go to build sample apps
-SConscript('examples/SConscript')
-
 # Go to build c++ wrapper
 SConscript('cpp-wrapper/SConscript')
 
 if target_os == 'android':
     SConscript('android/SConscript')
+
+# Go to build sample apps
+SConscript('examples/SConscript')
