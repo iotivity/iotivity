@@ -458,10 +458,15 @@ static void getCurrentUTCTime(char *out, size_t len)
 {
     //TODO: how to implement it in cross-platform way?
     time_t rawtime;
-    struct tm * timeinfo;
+    struct tm * timeinfo = NULL;
 
     time ( &rawtime );
     timeinfo = localtime ( &rawtime );
+
+    if (NULL == timeinfo)
+    {
+        return;
+    }
 
     snprintf(out, len, "%04d%02d%02d%02d%02d%02d",
             timeinfo->tm_year + 1900, timeinfo->tm_mon + 1, timeinfo->tm_mday,
