@@ -65,16 +65,22 @@ NSConsumerThread * NSThreadInit(NSThreadFunc func, void * data)
 
 void NSThreadLock(NSConsumerThread * handle)
 {
+    NS_VERIFY_NOT_NULL_V(handle);
+
     pthread_mutex_lock(&(handle->mutex));
 }
 
 void NSThreadUnlock(NSConsumerThread * handle)
 {
+    NS_VERIFY_NOT_NULL_V(handle);
+
     pthread_mutex_unlock(&(handle->mutex));
 }
 
 void NSThreadStop(NSConsumerThread * handle)
 {
+    NS_VERIFY_NOT_NULL_V(handle);
+
     handle->isStarted = false;
     NSThreadJoin(handle);
 
@@ -83,6 +89,8 @@ void NSThreadStop(NSConsumerThread * handle)
 
 void NSThreadJoin(NSConsumerThread * handle)
 {
+    NS_VERIFY_NOT_NULL_V(handle);
+
     if (handle->thread_id)
     {
         pthread_join(handle->thread_id, NULL);
@@ -91,6 +99,8 @@ void NSThreadJoin(NSConsumerThread * handle)
 
 void NSDestroyThreadHandle(NSConsumerThread * handle)
 {
+    NS_VERIFY_NOT_NULL_V(handle);
+
     pthread_mutex_destroy(&(handle->mutex));
     pthread_mutexattr_destroy(&(handle->mutex_attr));
 
