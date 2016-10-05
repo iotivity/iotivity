@@ -109,11 +109,20 @@ OCStackResult AddCredential(OicSecCred_t * cred);
 /**
  * Function to remove the credential from SVR DB.
  *
+ * @param subject is the Credential Subject to be deleted.
+ *
+ * @return ::OC_STACK_OK for success, or errorcode otherwise.
+ */
+OCStackResult RemoveCredential(const OicUuid_t *subject);
+
+/**
+ * Function to remove the credential from SVR DB.
+ *
  * @param credId is the Credential ID to be deleted.
  *
  * @return ::OC_STACK_OK for success, or errorcode otherwise.
  */
-OCStackResult RemoveCredential(const OicUuid_t *credId);
+OCStackResult RemoveCredentialByCredId(uint16_t credId);
 
 #if defined(__WITH_DTLS__)
 /**
@@ -162,6 +171,13 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
  */
 int GetDtlsX509Credentials(CADtlsX509Creds_t *credInfo);
 #endif /*__WITH_X509__*/
+
+/**
+ * Function to getting credential list
+ *
+ * @return ::credential list
+ */
+const OicSecCred_t* GetCredList();
 
 /**
  * Function to deallocate allocated memory to OicSecCred_t.

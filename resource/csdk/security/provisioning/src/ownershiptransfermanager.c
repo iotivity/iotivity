@@ -51,6 +51,7 @@
 #include "base64.h"
 #include "cJSON.h"
 #include "global.h"
+#include "utlist.h"
 
 #include "srmresourcestrings.h"
 #include "doxmresource.h"
@@ -460,6 +461,41 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
         cred->privateData.len = outSize;
         OICFree(b64Buf);
 #endif //End of Test codes
+
+        //Finding previous ownerPSK.
+        const OicSecCred_t* credList = GetCredList();
+        OicSecCred_t* prevCred = NULL;
+        uint16_t credId = 0;
+        LL_FOREACH(credList, prevCred)
+        {
+            //OwnerPSK's type is SYMMETRIC_PAIR_WISE_KEY
+            if (SYMMETRIC_PAIR_WISE_KEY == prevCred->credType &&
+                0 == memcmp(prevCred->subject.id, cred->subject.id, sizeof(cred->subject.id)))
+            {
+                credId = prevCred->credId;
+                break;
+            }
+        }
+
+        //If duplicate owner PSK is exists, remove it.
+        if(0 < credId)
+        {
+            OIC_LOG(WARNING, TAG, "Duplicate OwnerPSK was detected.");
+            OIC_LOG(WARNING, TAG, "[Subject] : ");
+            OIC_LOG_BUFFER(WARNING, TAG, prevCred->subject.id, sizeof(prevCred->subject.id));
+            OIC_LOG_V(WARNING, TAG, "[Encoding Type] : %d", prevCred->privateData.encoding);
+            OIC_LOG(WARNING, TAG, "[Private Data] : ");
+            OIC_LOG_BUFFER(WARNING, TAG, prevCred->privateData.data, prevCred->privateData.len);
+            OIC_LOG(WARNING, TAG, "Previous OwnerPSK will be removed.");
+
+            res = RemoveCredentialByCredId(credId);
+            if(OC_STACK_RESOURCE_DELETED != res)
+            {
+                OIC_LOG(ERROR, TAG, "Failed to remove the previous OwnerPSK");
+                DeleteCredList(cred);
+                goto exit;
+            }
+        }
 
         res = AddCredential(cred);
         if(res != OC_STACK_OK)
