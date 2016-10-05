@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
+import java.util.ListIterator;
 
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
@@ -154,6 +156,11 @@ public class Acl {
         List<HashMap<String, Object>> aclDbList = (List<HashMap<String, Object>>) hashmap
             .get(Constants.REQ_ACL_LIST);
 
+
+        for(HashMap<String, Object> ace : aclist) {
+            ace.put(Constants.REQ_ACE_ID, UUID.randomUUID().toString());
+        }
+
         List<HashMap<String, Object>> newAcList = new ArrayList<HashMap<String, Object>>(
                 aclist);
 
@@ -161,6 +168,55 @@ public class Acl {
             newAcList.addAll(aclDbList);
         }
         hashmap.put(Constants.REQ_ACL_LIST, newAcList);
+        AccountDBManager.getInstance().updateRecord(Constants.ACL_TABLE,
+                hashmap);
+        notifyToSubscriber(getResponsePayload(true));
+    }
+
+    public void updateACE(String aceid, HashMap<String, Object> ace) {
+
+        HashMap<String, Object> hashmap = AccountDBManager.getInstance()
+            .selectRecord(Constants.ACL_TABLE, getCondition()).get(0);
+
+        List<HashMap<String, Object>> aclDbList = (List<HashMap<String, Object>>) hashmap.get(Constants.REQ_ACL_LIST);
+
+        ace.put(Constants.REQ_ACE_ID, aceid);
+
+        ListIterator<HashMap<String, Object>> iterator = aclDbList.listIterator();
+        while (iterator.hasNext()) {
+            HashMap<String, Object> aceMap = iterator.next();
+            if (aceMap.get(Constants.REQ_ACE_ID).equals(aceid)) {
+                // replace current iterator with new element
+                iterator.set(ace);
+                break;
+            }
+        }
+
+        hashmap.put(Constants.REQ_ACL_LIST, aclDbList);
+        AccountDBManager.getInstance().updateRecord(Constants.ACL_TABLE, hashmap);
+        notifyToSubscriber(getResponsePayload(true));
+    }
+
+    public void deleteACE(String aceid) {
+
+        HashMap<String, Object> hashmap = AccountDBManager.getInstance()
+            .selectRecord(Constants.ACL_TABLE, getCondition()).get(0);
+
+        List<HashMap<String, Object>> aclDbList = (List<HashMap<String, Object>>) hashmap
+            .get(Constants.REQ_ACL_LIST);
+
+
+        ListIterator<HashMap<String, Object>> iterator = aclDbList.listIterator();
+        while (iterator.hasNext()) {
+            HashMap<String, Object> aceMap = iterator.next();
+            if (aceMap.get(Constants.REQ_ACE_ID).equals(aceid)) {
+                // Remove the current element from the iterator
+                iterator.remove();
+                break;
+            }
+        }
+
+        hashmap.put(Constants.REQ_ACL_LIST, aclDbList);
         AccountDBManager.getInstance().updateRecord(Constants.ACL_TABLE,
                 hashmap);
         notifyToSubscriber(getResponsePayload(true));

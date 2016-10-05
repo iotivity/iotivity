@@ -97,7 +97,9 @@ typedef enum {
 
     ACL_INDIVIDUAL_GET_INFO = 40,
     ACL_INDIVIDUAL_UPDATE_ACE = 41,
-    ACL_INDIVIDUAL_DELETE = 42,
+    ACL_INDIVIDUAL_UPDATE = 42,
+    ACL_INDIVIDUAL_DELETE = 43,
+    ACL_INDIVIDUAL_DELETE_ACE = 44,
 
     ACL_GROUP_CREATE = 50,
     ACL_GROUP_FIND   = 51,
@@ -167,7 +169,9 @@ static void printMenu(OCMode mode)
     printf("** ACL INDIVIDUAL\n");
     printf("** %d - ACL individual get info Request\n", ACL_INDIVIDUAL_GET_INFO);
     printf("** %d - ACL individual update ACE Request\n", ACL_INDIVIDUAL_UPDATE_ACE);
+    printf("** %d - ACL individual update Request\n", ACL_INDIVIDUAL_UPDATE);
     printf("** %d - ACL individual delete Request\n", ACL_INDIVIDUAL_DELETE);
+    printf("** %d - ACL individual delete ACE Request\n", ACL_INDIVIDUAL_DELETE_ACE);
 
     printf("** ACL GROUP MANAGER\n");
     printf("** %d - ACL Create Group Request\n", ACL_GROUP_CREATE);
@@ -485,8 +489,14 @@ static void userRequests(void *data)
         case ACL_INDIVIDUAL_UPDATE_ACE:
             res = OCWrapperAclIndividualUpdateAce(&endPoint, handleCB);
             break;
+        case ACL_INDIVIDUAL_UPDATE:
+            res = OCWrapperAclIndividualUpdate(&endPoint, handleCB);
+            break;
         case ACL_INDIVIDUAL_DELETE:
             res = OCWrapperAclIndividualDelete(&endPoint, handleCB);
+            break;
+        case ACL_INDIVIDUAL_DELETE_ACE:
+            res = OCWrapperAclIndividualDeleteAce(&endPoint, handleCB);
             break;
         case CSR_SIGN:
             res = OCWrapperCertificateIssueRequest(&endPoint, handleCB);
