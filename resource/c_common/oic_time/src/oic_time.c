@@ -37,6 +37,7 @@
 
 #if defined(HAVE_WINDOWS_H)
 # include <windows.h>
+# define HAVE_QUERYPERFORMANCEFREQUENCY
 #elif !defined(WITH_ARDUINO)
 # if _POSIX_TIMERS > 0
 #  include <time.h>        // For clock_gettime()
