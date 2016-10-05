@@ -58,7 +58,7 @@ static const uint8_t ACL_RESOURCE_MAP_SIZE = 3;
 
 
 // CborSize is the default cbor payload size being used.
-static const uint16_t CBOR_SIZE = 2048;
+static const uint16_t CBOR_SIZE = 2048*8;
 
 static OicSecAcl_t *gAcl = NULL;
 static OCResourceHandle gAclHandle = NULL;
@@ -1774,6 +1774,7 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
                     }
                 }
             }
+            memcpy(&(gAcl->rownerID), &(newAcl->rownerID), sizeof(OicUuid_t));
 
             DeleteACLList(newAcl);
 
@@ -1781,6 +1782,7 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
             {
                 size_t size = 0;
                 uint8_t *cborPayload = NULL;
+
                 if (OC_STACK_OK == AclToCBORPayload(gAcl, &cborPayload, &size))
                 {
                     if (UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, cborPayload, size) == OC_STACK_OK)

@@ -948,6 +948,10 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                 VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
                 OICFree(stRowner);
             }
+            else if (NULL != gCred)
+            {
+                memcpy(&(headCred->rownerID), &(gCred->rownerID), sizeof(OicUuid_t));
+            }
             OICFree(tagName);
         }
         if (cbor_value_is_valid(&CredRootMap))
@@ -1284,6 +1288,7 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
 {
     OCStackResult ret = OC_STACK_ERROR;
     OicSecCred_t * temp = NULL;
+    bool validFlag = true;
     VERIFY_SUCCESS(TAG, NULL != newCred, ERROR);
 
     //Assigning credId to the newCred
@@ -1299,20 +1304,26 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
                       "new credential's ID will be replaced.", temp->credId);
             newCred->credId = temp->credId;
             ret = OC_STACK_OK;
-            goto exit;
+            validFlag = false;
+            break;
         }
 
         if (CRED_CMP_ERROR == cmpRes)
         {
             OIC_LOG_V(WARNING, TAG, "Credential skipped : %d", cmpRes);
             ret = OC_STACK_ERROR;
-            goto exit;
+            validFlag = false;
+            break;
         }
     }
 
-    //Append the new Cred to existing list
-    LL_APPEND(gCred, newCred);
+    //Append the new Cred to existing list if new Cred is valid
+    if (validFlag)
+    {
+        LL_APPEND(gCred, newCred);
+    }
 
+    memcpy(&(gCred->rownerID), &(newCred->rownerID), sizeof(OicUuid_t));
     if (UpdatePersistentStorage(gCred))
     {
         ret = OC_STACK_OK;
