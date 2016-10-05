@@ -28,5 +28,6 @@ SConscript('provider/SConscript')
 SConscript('consumer/SConscript')
 
 # Go to build sample apps using wrapper
-SConscript('examples/linux/SConscript')
+if target_os == 'linux':
+    SConscript('examples/linux/SConscript')
 

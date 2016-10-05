@@ -21,7 +21,7 @@ package com.sec.noticonsumerexample;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v7.app.AppCompatActivity;
+import android.app.Activity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -31,7 +31,7 @@ import android.widget.Toast;
 import org.iotivity.service.ns.common.TopicsList;
 import org.iotivity.service.ns.common.Topic;
 
-public class MainActivity extends AppCompatActivity
+public class MainActivity extends Activity
 {
     private final String TAG = "NS_MAIN_ACTIVITY";
 
