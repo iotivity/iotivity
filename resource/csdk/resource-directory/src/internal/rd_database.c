@@ -143,7 +143,7 @@ OCStackResult OCRDDatabaseInit(const char *path)
         sqlite3_stmt *stmt = 0;
         VERIFY_SQLITE(sqlite3_prepare_v2 (gRDDB, "PRAGMA foreign_keys = ON;", -1, &stmt, NULL));
 
-        if (SQLITE_STATIC != sqlite3_step(stmt))
+        if (SQLITE_DONE != sqlite3_step(stmt))
         {
             sqlite3_finalize(stmt);
             return OC_STACK_ERROR;
@@ -352,7 +352,7 @@ OCStackResult OCRDDatabaseStoreResources(OCRepPayload *payload, const OCDevAddr 
 
     VERIFY_SQLITE(sqlite3_exec(gRDDB, "COMMIT", NULL, NULL, NULL));
 
-    int64_t rowid = sqlite3_last_insert_rowid(gRDDB)
+    int64_t rowid = sqlite3_last_insert_rowid(gRDDB);
     if (rowid)
     {
         VERIFY_SQLITE(storeLinkPayload(payload, rowid));
@@ -386,7 +386,6 @@ OCStackResult OCRDDatabaseDeleteDevice(const char *deviceId)
 
 static OCStackResult appendStringLL(OCStringLL **type, const unsigned char *value)
 {
-    OCStringLL *tmp = NULL;
     OCStringLL *temp= (OCStringLL *)OICCalloc(1, sizeof(OCStringLL));
     if (!temp)
     {
@@ -457,7 +456,7 @@ OCStackResult OCRDDatabaseCheckResources(const char *interfaceType, const char *
             while (SQLITE_ROW == sqlite3_step(stmtRT))
             {
                 const unsigned char *rt1 = sqlite3_column_text(stmtRT, (rt_value_index - 1));
-                f (rt1)
+                if (rt1)
                 {
                     appendStringLL(&resourcePayload->types, rt1);
                 }
@@ -532,7 +531,7 @@ OCStackResult OCRDDatabaseCheckResources(const char *interfaceType, const char *
             sqlite3_stmt *stmtRT = 0;
             const char *rt = "SELECT rt FROM RD_LINK_RT WHERE LINK_ID=?";
             VERIFY_SQLITE(sqlite3_prepare_v2(gRDDB, rt, -1, &stmtRT, NULL));
-            VERIFY_SQLITE(sqlite3_bind_int(stmtRT, BIND_INDEX_VALUE, id));
+            VERIFY_SQLITE(sqlite3_bind_int(stmtRT, bind_index_value, id));
             while (SQLITE_ROW == sqlite3_step(stmtRT))
             {
                 const unsigned char *rt1 = sqlite3_column_text(stmtRT, (rt_value_index - 1));
