@@ -148,10 +148,11 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
 
     // Copy the subjectID
     OicUuid_t subjectId = {.id = {0}};
+    OicUuid_t nullSubjectId = {.id = {0}};
     memcpy(subjectId.id, requestInfo->info.identity.id, sizeof(subjectId.id));
 
     // if subject id is null that means request is sent thru coap.
-    if (NULL != subjectId.id)
+    if (memcmp(subjectId.id, nullSubjectId.id, sizeof(subjectId.id)) != 0)
     {
         OIC_LOG(INFO, TAG, "request over secure channel");
         isRequestOverSecureChannel = true;
@@ -189,8 +190,9 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     OCResource *resPtr = FindResourceByUri(newUri);
     if (NULL != resPtr)
     {
-        // check whether request is for secure resource or not
-        if (((resPtr->resourceProperties) & OC_SECURE))
+        // check whether request is for secure resource or not and it should not be a SVR resource
+        if (((resPtr->resourceProperties) & OC_SECURE)
+                            && (g_policyEngineContext.resourceType == NOT_A_SVR_RESOURCE))
         {
            // if resource is secure and request is over insecure channel
             if (!isRequestOverSecureChannel)
