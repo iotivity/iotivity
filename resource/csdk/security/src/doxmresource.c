@@ -1210,7 +1210,7 @@ OCStackResult SetDoxmDeviceID(const OicUuid_t *deviceID)
 
     //Check the device's OTM state
 
-#ifdef __WITH_DTLS__}
+#ifdef __WITH_DTLS__
     //for normal device.
     if(true == gDoxm->owned)
     {

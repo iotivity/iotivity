@@ -159,7 +159,7 @@ size_t GetCredKeyDataSize(const OicSecCred_t* cred)
 #endif
         }
     }
-    OIC_LOG_V(DEBUG, TAG, "Cred Key Data Size : %d\n", size);
+    OIC_LOG_V(DEBUG, TAG, "Cred Key Data Size : %zd\n", size);
     return size;
 }
 
@@ -1676,7 +1676,6 @@ static OCEntityHandlerResult HandleGetRequest (const OCEntityHandlerRequest * eh
 
     const OicSecCred_t *cred = gCred;
 
-    size_t credCnt = 0;
     // This added '256' is arbitrary value that is added to cover the name of the resource, map addition and ending
     size = GetCredKeyDataSize(cred);
     size += (256 * OicSecCredCount(cred));
@@ -2124,7 +2123,6 @@ OCStackResult SetCredRownerId(const OicUuid_t* newROwner)
         memcpy(prevId.id, gCred->rownerID.id, sizeof(prevId.id));
         memcpy(gCred->rownerID.id, newROwner->id, sizeof(newROwner->id));
 
-        size_t credCnt = 0;
         // This added '256' is arbitrary value that is added to cover the name of the resource, map addition and ending
         size = GetCredKeyDataSize(gCred);
         size += (256 * OicSecCredCount(gCred));
