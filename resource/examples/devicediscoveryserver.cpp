@@ -33,28 +33,28 @@
 
 using namespace OC;
 
-//Set of strings for each of platform Info fields
+// Set of strings for each of platform Info fields
 std::string dateOfManufacture = "myDateOfManufacture";
 std::string firmwareVersion = "my.Firmware.Version";
 std::string manufacturerName = "myName";
 std::string operatingSystemVersion = "myOS";
 std::string hardwareVersion = "myHardwareVersion";
 std::string platformID = "myPlatformID";
-std::string manufacturerUrl = "www.myurl.com";
+std::string manufacturerLink = "www.myurl.com";
 std::string modelNumber = "myModelNumber";
 std::string platformVersion = "platformVersion";
-std::string supportUrl = "www.mysupporturl.com";
+std::string supportLink = "www.mysupporturl.com";
 std::string systemTime = "mySystemTime";
 
-//Set of strings for each of device info fields
+// Set of strings for each of device info fields
 std::string deviceName = "Bill's Battlestar";
 std::string specVersion = "myDeviceSpecVersion";
 std::string dataModelVersions = "myDeviceModelVersion";
 
-//OCPlatformInfo Contains all the platform info to be stored
+// OCPlatformInfo Contains all the platform info to be stored
 OCPlatformInfo platformInfo;
 
-//OCDeviceInfo Contains all the device info to be stored
+// OCDeviceInfo Contains all the device info to be stored
 OCDeviceInfo deviceInfo;
 
 void DeletePlatformInfo()
@@ -102,23 +102,26 @@ OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerNa
     DuplicateString(&platformInfo.firmwareVersion, firmwareVersion);
     DuplicateString(&platformInfo.supportUrl, supportUrl);
     DuplicateString(&platformInfo.systemTime, systemTime);
+
     return OC_STACK_OK;
 }
-
 
 OCStackResult SetDeviceInfo(std::string deviceName, std::string specVersion, std::string dataModelVersions)
 {
     DuplicateString(&deviceInfo.deviceName, deviceName);
 
     if (!specVersion.empty())
+    {
         DuplicateString(&deviceInfo.specVersion, specVersion);
+    }
 
     if (!dataModelVersions.empty())
+    {
         OCResourcePayloadAddStringLL(&deviceInfo.dataModelVersions, dataModelVersions.c_str());
+    }
 
     return OC_STACK_OK;
 }
-
 
 int main()
 {
@@ -135,9 +138,9 @@ int main()
 
     std::cout<<"Starting server & setting platform info\n";
 
-    OCStackResult result = SetPlatformInfo(platformID, manufacturerName, manufacturerUrl,
+    OCStackResult result = SetPlatformInfo(platformID, manufacturerName, manufacturerLink,
             modelNumber, dateOfManufacture, platformVersion,  operatingSystemVersion,
-            hardwareVersion, firmwareVersion,  supportUrl, systemTime);
+            hardwareVersion, firmwareVersion,  supportLink, systemTime);
 
     result = OCPlatform::registerPlatformInfo(platformInfo);
 

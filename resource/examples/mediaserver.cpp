@@ -28,6 +28,7 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+#include "ocpayload.h"
 #include <windows.h>
 #include <objbase.h>
 
