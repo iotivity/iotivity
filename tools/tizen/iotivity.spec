@@ -129,7 +129,24 @@ developing applications that use %{name}.
 %setup -q
 chmod g-w %_sourcedir/*
 
-cp LICENSE.md LICENSE.APLv2
+find . \
+     -iname "LICEN*E*"  \
+     -o -name "*BSD*" \
+     -o -name "*COPYING*" \
+     -o -name "*GPL*" \
+     -o -name "*MIT*" \
+     | sort | uniq \
+     | while read file ; do \
+          dir=$(dirname -- "$file")
+          echo "Files: ${dir}/*"
+          echo "License: ${file}"
+          sed 's/^/ /' "${file}"
+          echo ""
+          echo ""
+     done > tmp.tmp && mv tmp.tmp LICENSE
+
+cat LICENSE
+
 cp %{SOURCE1001} .
 %if 0%{?tizen_version_major} < 3
 cp %{SOURCE1002} .
@@ -226,10 +243,12 @@ cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat 
 
 %if 0%{?tizen_version_major} < 3
 mkdir -p %{buildroot}/%{_datadir}/license
-cp LICENSE.APLv2 %{buildroot}/%{_datadir}/license/%{name}
-cp LICENSE.APLv2 %{buildroot}/%{_datadir}/license/%{name}-service
-cp LICENSE.APLv2 %{buildroot}/%{_datadir}/license/%{name}-test
+cp LICENSE %{buildroot}/%{_datadir}/license/%{name}
+cp LICENSE %{buildroot}/%{_datadir}/license/%{name}-devel
+cp LICENSE %{buildroot}/%{_datadir}/license/%{name}-service
+cp LICENSE %{buildroot}/%{_datadir}/license/%{name}-test
 %endif
+
 cp resource/c_common/*.h %{buildroot}%{_includedir}
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
@@ -261,7 +280,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %if 0%{?tizen_version_major} < 3
 %{_datadir}/license/%{name}
 %else
-%license LICENSE.APLv2
+%license LICENSE
 %endif
 
 %files service
@@ -292,7 +311,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %if 0%{?tizen_version_major} < 3
 %{_datadir}/license/%{name}-service
 %else
-%license LICENSE.APLv2
+%license LICENSE
 %endif
 
 %files test
@@ -302,11 +321,12 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %if 0%{?tizen_version_major} < 3
 %{_datadir}/license/%{name}-test
 %else
-%license LICENSE.APLv2
+%license LICENSE
 %endif
 
 %files devel
 %defattr(-,root,root,-)
+%license LICENSE
 %{_libdir}/lib*.a
 %{_libdir}/pkgconfig/%{name}.pc
 %{_includedir}/*
