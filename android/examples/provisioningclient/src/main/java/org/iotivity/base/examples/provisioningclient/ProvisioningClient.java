@@ -205,6 +205,16 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
                 0,
                 QualityOfService.LOW, filePath + StringConstants.OIC_CLIENT_CBOR_DB_FILE);
         OcPlatform.Configure(cfg);
+
+        //Get deviceId
+        byte [] deviceIdBytes= OcPlatform.getDeviceId();
+        String devId = new String(deviceIdBytes);
+        Log.d(TAG, "Get Device Id "+devId);
+        //Set deviceId
+        String setId = "adminDeviceUuid1";
+        OcPlatform.setDeviceId(setId.getBytes());
+        Log.d(TAG, "Set Device Id done");
+
         try {
             /*
              * Initialize DataBase

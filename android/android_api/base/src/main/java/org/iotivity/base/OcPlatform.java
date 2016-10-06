@@ -1438,4 +1438,14 @@ public final class OcPlatform {
     private static native OcAccountManager constructAccountManagerObject0(
             String host,
             int connectivityType) throws OcException;
+    /**
+     * Method to get device Id in byte array.
+     * @return My DeviceId.
+     */
+    public static native byte[] getDeviceId();
+
+    /**
+     * Method to set DeviceId.
+     */
+    public static native void setDeviceId(byte[] deviceId);
 }

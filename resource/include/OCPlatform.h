@@ -799,6 +799,22 @@ namespace OC
                                            ResourceHandles& resourceHandles,
                                            DeleteResourceCallback callback, QualityOfService QoS);
 #endif
+
+        /**
+         * gets the deviceId of the client
+         *
+         * @param deviceId pointer.
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult getDeviceId(OCUUIdentity *deviceId);
+
+        /**
+         * sets the deviceId of the client
+         *
+         * @param deviceId pointer.
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult setDeviceId(const OCUUIdentity *deviceId);
     }
 }
 

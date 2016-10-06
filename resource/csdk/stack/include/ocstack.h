@@ -635,6 +635,21 @@ OCGetHeaderOption(OCHeaderOption* ocHdrOpt,
                   size_t optionDataLength,
                   uint16_t* receivedDatalLength);
 
+/**
+ * gets the deviceId of the client
+ *
+ * @param deviceId pointer.
+ * @return Returns ::OC_STACK_OK if success.
+ */
+OCStackResult OCGetDeviceId(OCUUIdentity *deviceId);
+
+/**
+ * sets the deviceId of the client
+ *
+ * @param deviceId pointer.
+ * @return Returns ::OC_STACK_OK if success.
+ */
+OCStackResult OCSetDeviceId(const OCUUIdentity *deviceId);
 #ifdef __cplusplus
 }
 #endif // __cplusplus

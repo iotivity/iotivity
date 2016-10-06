@@ -393,6 +393,15 @@ namespace OC
                                                                     QoS);
         }
 #endif
+        OCStackResult getDeviceId(OCUUIdentity *deviceId)
+        {
+            return OCPlatform_impl::Instance().getDeviceId(deviceId);
+        }
+
+        OCStackResult setDeviceId(const OCUUIdentity *deviceId)
+        {
+            return OCPlatform_impl::Instance().setDeviceId(deviceId);
+        }
     } // namespace OCPlatform
 } //namespace OC
 

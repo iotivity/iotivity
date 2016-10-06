@@ -104,3 +104,5 @@ OCStopPresence
 OCUnBindResource
 OCSetHeaderOption
 OCGetHeaderOption
+OCGetDeviceId
+OCSetDeviceId
