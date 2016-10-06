@@ -144,7 +144,7 @@ static void CASelectReturned(fd_set *readFds, int ret);
 #else
 static void CAEventReturned(CASocketFd_t socket);
 #endif
-static void CAProcessNewInterface(CAInterface_t *ifchanged);
+
 static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags);
 
 static void CAReceiveHandler(void *data)
@@ -1173,7 +1173,7 @@ CAResult_t CAIPStopListenServer()
     return CA_STATUS_OK;
 }
 
-static void CAProcessNewInterface(CAInterface_t *ifitem)
+void CAProcessNewInterface(CAInterface_t *ifitem)
 {
     if (!ifitem)
     {
