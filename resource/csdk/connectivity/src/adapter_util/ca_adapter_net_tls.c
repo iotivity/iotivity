@@ -434,10 +434,14 @@ static int recvTls(void * tep, unsigned char * data, size_t dataLen)
  *
  * @return  0 on success, -1 on error
  */
-static int parseChain(mbedtls_x509_crt * crt, const unsigned char * buf, int buflen)
+static int parseChain(mbedtls_x509_crt * crt, const unsigned char * buf, uint32_t buflen)
 {
+    OIC_LOG_V(DEBUG, NET_TLS_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(crt, NET_TLS_TAG, "Param crt is NULL" , -1);
     VERIFY_NON_NULL_RET(buf, NET_TLS_TAG, "Param buf is NULL" , -1);
+
+    uint32_t pos = 0;
+    size_t len = 0;
 
     char pemCertHeader[] = {
         0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x42, 0x45, 0x47, 0x49, 0x4e, 0x20, 0x43, 0x45, 0x52,
@@ -445,49 +449,87 @@ static int parseChain(mbedtls_x509_crt * crt, const unsigned char * buf, int buf
     };
     char pemCertFooter[] = {
         0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x45, 0x4e, 0x44, 0x20, 0x43, 0x45, 0x52, 0x54, 0x49,
-        0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x0a, 0x00
+        0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x2d, 0x2d, 0x2d, 0x2d, 0x2d
     };
+    char derCertHeader[] = { 0x30, 0x82 };
     size_t pemCertHeaderLen = sizeof(pemCertHeader);
     size_t pemCertFooterLen = sizeof(pemCertFooter);
+    size_t derCertHeaderLen = sizeof(derCertHeader);
+    size_t derCertLengthSectionLen = 2; // for two length bytes after der header
 
-    int pos = 0;
-    int len = 0;
-    int ret = 0;
     while (pos < buflen)
     {
-        if (0x30 == buf[pos] && 0x82 == buf[pos + 1] && pos + 3 < buflen)
+        int ret = 0;
+        if (0 == memcmp(buf + pos, derCertHeader, derCertHeaderLen))
         {
-            len = (((int) buf[pos+2]) << 8) | buf[pos+3];
+            unsigned char * derPtr = NULL;
+            derPtr = (unsigned char *)buf + pos + 1;
+            ret = mbedtls_asn1_get_len(&derPtr, buf + buflen, &len);
+            if(0 != ret)
+            {
+                OIC_LOG_V(ERROR, NET_TLS_TAG, "mbedtls_asn1_get_len returned -0x%x", -ret);
+                OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
+                return -1;
+            }
             if (pos + len < buflen)
             {
-                ret = mbedtls_x509_crt_parse_der(crt, buf+pos, len + 4); 
+                len += derCertHeaderLen + derCertLengthSectionLen;
+                ret = mbedtls_x509_crt_parse_der(crt, buf + pos, len);
                 if( 0 != ret)
                 {
-                    OIC_LOG_V(ERROR, NET_TLS_TAG, "mbedtls_x509_crt_parse returned -0x%x", -ret);
+                    OIC_LOG_V(ERROR, NET_TLS_TAG,
+                              "mbedtls_x509_crt_parse_der returned -0x%x", -ret);
+                    OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
                     return -1;
                 }
             }
-            pos += len + 4;
+            pos += len;
         }
         else if (0 == memcmp(buf + pos, pemCertHeader, pemCertHeaderLen))
         {
-            void * endPos = NULL;
-            endPos = memmem(&(buf[pos]), buflen - pos, pemCertFooter, pemCertFooterLen);
+            char * endPos = NULL;
+            endPos = (char*)memmem(&(buf[pos]), buflen - pos, pemCertFooter, pemCertFooterLen);
             if (NULL == endPos)
             {
                 OIC_LOG(ERROR, NET_TLS_TAG, "Error: end of PEM certificate not found.");
+                OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
                 return -1;
             }
-            len = (char*)endPos - ((char*)(buf + pos)) + pemCertFooterLen;
-            ret = mbedtls_x509_crt_parse(crt, buf, len);
+            if ((*(endPos + pemCertFooterLen + 0) == '\r') &&
+                (*(endPos + pemCertFooterLen + 1) == '\n') &&
+                (*(endPos + pemCertFooterLen + 2) == '\0'))
+            {
+                len = endPos - ((char*)buf + pos) + pemCertFooterLen + sizeof("\r\n");
+            }
+            else if ((*(endPos + pemCertFooterLen + 0) == '\n') &&
+                     (*(endPos + pemCertFooterLen + 1) == '\0'))
+            {
+                len = endPos - ((char*)buf + pos) + pemCertFooterLen + sizeof("\n");
+            }
+            else
+            {
+                OIC_LOG_V(ERROR, NET_TLS_TAG, "Incorrect PEM certificate ending");
+                OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
+                return -1;
+            }
+            ret = mbedtls_x509_crt_parse(crt, buf + pos, len);
+            if(0 != ret)
+            {
+                OIC_LOG_V(ERROR, NET_TLS_TAG, "mbedtls_x509_crt_parse returned -0x%x", -ret);
+                OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
+                return -1;
+            }
             pos += len;
         }
         else
         {
-             OIC_LOG_V(ERROR, NET_TLS_TAG, "mbedtls_x509_crt_parse returned -0x%x", -ret);
+             OIC_LOG_BUFFER(DEBUG, NET_TLS_TAG, buf, buflen);
+             OIC_LOG_V(ERROR, NET_TLS_TAG, "parseChain returned -0x%x", -ret);
+             OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
              return -1;
         }
     }
+    OIC_LOG_V(DEBUG, NET_TLS_TAG, "Out %s", __func__);
     return 0;
 }
 //Loads PKIX related information from SRM
