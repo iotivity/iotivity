@@ -171,8 +171,12 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
 
     // Copy the subjectID
     OicUuid_t subjectId = {.id = {0}};
+    OicUuid_t nullSubjectId = {.id = {0}};
     memcpy(subjectId.id, requestInfo->info.identity.id, sizeof(subjectId.id));
-    if (endPoint->flags & CA_SECURE)
+
+    //If subject id is null that means request is sent thru coap.
+    if ( (endPoint->flags & CA_SECURE)
+         || (memcmp(subjectId.id, nullSubjectId.id, sizeof(subjectId.id)) != 0))
     {
         OIC_LOG(INFO, TAG, "request over secure channel");
         isRequestOverSecureChannel = true;
