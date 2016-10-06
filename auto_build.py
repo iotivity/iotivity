@@ -37,7 +37,7 @@ def call_scons(build_options, extra_option_str):
 
     print ("Running : " + cmd_line)
     sys.stdout.flush()
-    exit_code = subprocess.Popen([cmd_line], shell=True).wait()
+    exit_code = subprocess.Popen(cmd_line, shell=True).wait()
     if exit_code != 0:
         exit(exit_code)
 
@@ -55,9 +55,9 @@ def build_all(flag, extra_option_str):
         build_linux_secured_with_tcp(flag, extra_option_str)
         build_simulator(flag, extra_option_str)
 
-    build_android(flag, extra_option_str)
-    build_arduino(flag, extra_option_str)
-    build_tizen(flag, extra_option_str)
+        build_android(flag, extra_option_str)
+        build_arduino(flag, extra_option_str)
+        build_tizen(flag, extra_option_str)
 
     if platform.system() == "Windows":
         build_windows(flag, extra_option_str)
