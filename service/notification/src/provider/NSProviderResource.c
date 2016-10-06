@@ -199,11 +199,11 @@ NSResult NSCreateResource(char *uri)
         if(NSGetResourceSecurity())
         {
             NS_LOG(DEBUG, "Create secured resource");
-            resourceProperties = OC_DISCOVERABLE | OC_SECURE;
+            resourceProperties = OC_RES_PROP_NONE | OC_SECURE;
         }
         else
         {
-            resourceProperties = OC_DISCOVERABLE;
+            resourceProperties = OC_RES_PROP_NONE;
         }
 
         if (OCCreateResource(&(NotificationTopicResource.handle), NS_COLLECTION_TOPIC_TYPE,
