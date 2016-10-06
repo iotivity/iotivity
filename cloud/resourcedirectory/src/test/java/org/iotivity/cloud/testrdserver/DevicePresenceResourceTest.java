@@ -22,7 +22,6 @@
 package org.iotivity.cloud.testrdserver;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -41,7 +40,6 @@ import org.iotivity.cloud.base.protocols.enums.Observe;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.rdserver.Constants;
-import org.iotivity.cloud.rdserver.resources.directory.rd.ResourceDirectoryResource;
 import org.iotivity.cloud.rdserver.resources.presence.device.DevicePresenceResource;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.After;
@@ -53,7 +51,6 @@ import org.mockito.stubbing.Answer;
 
 public class DevicePresenceResourceTest {
     private Cbor<HashMap<String, Object>> mCbor                       = new Cbor<>();
-    private ResourceDirectoryResource     mRDResource                 = null;
     private DevicePresenceResource        mMockDevicePresenceResource = null;
     private CoapDevice                    mMockDevice                 = null;
     private CountDownLatch                mLatch                      = null;
@@ -64,7 +61,6 @@ public class DevicePresenceResourceTest {
         mResponse = null;
         mMockDevice = mock(CoapDevice.class);
         mLatch = new CountDownLatch(1);
-        mRDResource = new ResourceDirectoryResource();
         mMockDevicePresenceResource = new DevicePresenceResource();
         // callback mock
         Mockito.doAnswer(new Answer<Object>() {
@@ -98,48 +94,34 @@ public class DevicePresenceResourceTest {
         return request;
     }
 
-    private HashMap<String, String> parsePayload(IResponse response) {
-
-        HashMap<String, Object> payloadData = mCbor
-                .parsePayloadFromCbor(response.getPayload(), HashMap.class);
-
-        ArrayList<HashMap<String, String>> prsList = (ArrayList<HashMap<String, String>>) payloadData
-                .get(Constants.PRESENCE_LIST);
-
-        if (prsList.isEmpty()) {
-            return null;
-        } else {
-            return prsList.get(0);
-
-        }
-    }
-
     @Test
     public void testSubscribeRequest() throws Exception {
         System.out.println("\t------testHandleGetSubscribeRequest");
-        mRDResource.onDefaultRequestReceived(mMockDevice,
-                RDServerTestUtils.makePublishRequest());
         IRequest request = makePresenceGetRequest(Observe.SUBSCRIBE);
         mMockDevicePresenceResource.onDefaultRequestReceived(mMockDevice,
                 request);
         // assertion: if the response status is "CONTENT"
         assertTrue(mLatch.await(2L, SECONDS));
         assertTrue(checkResponseCode(mResponse, ResponseStatus.CONTENT));
-        assertNull(parsePayload(mResponse));
+        assertTrue(checkPayloadProperty(mResponse, Constants.DEVICE_ID,
+                RDServerTestUtils.DI));
+        assertTrue(checkPayloadProperty(mResponse, Constants.PRESENCE_STATE,
+                Constants.PRESENCE_OFF));
     }
 
     @Test
     public void testUnsubscribeRequest() throws Exception {
         System.out.println("\t------testHandleGetUnsubscribeRequest");
         IRequest request = makePresenceGetRequest(Observe.UNSUBSCRIBE);
-        mRDResource.onDefaultRequestReceived(mMockDevice,
-                RDServerTestUtils.makePublishRequest());
         mMockDevicePresenceResource.onDefaultRequestReceived(mMockDevice,
                 request);
         // assertion: if the response status is "CONTENT"
         assertTrue(mLatch.await(2L, SECONDS));
         assertTrue(checkResponseCode(mResponse, ResponseStatus.CONTENT));
-        assertNull(parsePayload(mResponse));
+        assertTrue(checkPayloadProperty(mResponse, Constants.DEVICE_ID,
+                RDServerTestUtils.DI));
+        assertTrue(checkPayloadProperty(mResponse, Constants.PRESENCE_STATE,
+                Constants.PRESENCE_OFF));
     }
 
     @Test
@@ -164,11 +146,9 @@ public class DevicePresenceResourceTest {
                     assertTrue(checkResponseCode(response,
                             ResponseStatus.CONTENT));
                     assertTrue(checkPayloadProperty(response,
-                            Constants.DEVICE_ID));
+                            Constants.DEVICE_ID, RDServerTestUtils.DI));
                     assertTrue(checkPayloadProperty(response,
-                            Constants.PRESENCE_STATE));
-                    assertTrue(parsePayload(response)
-                            .get(Constants.PRESENCE_STATE).equals("on"));
+                            Constants.PRESENCE_STATE, Constants.PRESENCE_ON));
                 }
 
                 return null;
@@ -182,7 +162,7 @@ public class DevicePresenceResourceTest {
         // POST device presence off
         HashMap<String, Object> payload = new HashMap<>();
         payload.put(Constants.DEVICE_ID, RDServerTestUtils.DI);
-        payload.put(Constants.PRESENCE_STATE, "on");
+        payload.put(Constants.PRESENCE_STATE, Constants.PRESENCE_ON);
         IRequest request = MessageBuilder.createRequest(RequestMethod.POST,
                 RDServerTestUtils.DEVICE_PRS_REQ_URI, null,
                 ContentFormat.APPLICATION_CBOR,
@@ -212,6 +192,10 @@ public class DevicePresenceResourceTest {
                 if (observerLatch.getCount() == 0) {
                     assertTrue(checkResponseCode(response,
                             ResponseStatus.CONTENT));
+                    assertTrue(checkPayloadProperty(response,
+                            Constants.DEVICE_ID, RDServerTestUtils.DI));
+                    assertTrue(checkPayloadProperty(response,
+                            Constants.PRESENCE_STATE, Constants.PRESENCE_OFF));
                 }
 
                 return null;
@@ -224,7 +208,7 @@ public class DevicePresenceResourceTest {
                 subRequest);
         HashMap<String, Object> payload = new HashMap<>();
         payload.put(Constants.DEVICE_ID, RDServerTestUtils.DI);
-        payload.put(Constants.PRESENCE_STATE, "off");
+        payload.put(Constants.PRESENCE_STATE, Constants.PRESENCE_OFF);
         IRequest request = MessageBuilder.createRequest(RequestMethod.POST,
                 RDServerTestUtils.DEVICE_PRS_REQ_URI, null,
                 ContentFormat.APPLICATION_CBOR,
@@ -238,7 +222,7 @@ public class DevicePresenceResourceTest {
     }
 
     private boolean checkPayloadProperty(IResponse response,
-            String propertyName) {
+            String propertyName, String propertyValue) {
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(response.getPayload(), HashMap.class);
 
@@ -246,9 +230,10 @@ public class DevicePresenceResourceTest {
                 .get(Constants.PRESENCE_LIST);
 
         HashMap<String, String> mapData = prsList.get(0);
-        if (mapData.containsKey(propertyName))
+        if (mapData.containsKey(propertyName)
+                && mapData.get(propertyName).equals(propertyValue)) {
             return true;
-        else
+        } else
             return false;
     }
 

@@ -197,11 +197,16 @@ public class PresenceManager {
             HashMap<String, Object> payloadSegment = new HashMap<>();
 
             String deviceState = getDeviceState(deviceId);
+
+            payloadSegment.put(Constants.DEVICE_ID, deviceId);
+
             if (deviceState != null) {
-                payloadSegment.put(Constants.DEVICE_ID, deviceId);
                 payloadSegment.put(Constants.PRESENCE_STATE, deviceState);
-                prsList.add(payloadSegment);
+            } else {
+                payloadSegment.put(Constants.PRESENCE_STATE,
+                        Constants.PRESENCE_OFF);
             }
+            prsList.add(payloadSegment);
         }
         getPayload.put(Constants.PRESENCE_LIST, prsList);
         Log.i("Device presence observe response : " + getPayload.toString());
