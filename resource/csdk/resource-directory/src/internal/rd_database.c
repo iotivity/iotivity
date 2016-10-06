@@ -142,7 +142,7 @@ OCStackResult OCRDDatabaseInit(const char *path)
         sqlite3_stmt *stmt = 0;
         VERIFY_SQLITE(sqlite3_prepare_v2 (gRDDB, "PRAGMA foreign_keys = ON;", -1, &stmt, NULL));
 
-        if (sqlite3_step(stmt) != SQLITE_DONE)
+        if (SQLITE_DONE != sqlite3_step(stmt))
         {
             sqlite3_finalize(stmt);
             return OC_STACK_ERROR;
@@ -352,8 +352,10 @@ OCStackResult OCRDDatabaseStoreResources(OCRepPayload *payload, const OCDevAddr 
     VERIFY_SQLITE(sqlite3_exec(gRDDB, "COMMIT", NULL, NULL, NULL));
 
     int64_t rowid = sqlite3_last_insert_rowid(gRDDB);
-    VERIFY_SQLITE(storeLinkPayload(payload, rowid));
-
+    if (rowid)
+    {
+        VERIFY_SQLITE(storeLinkPayload(payload, rowid));
+    }
     OICFree(deviceid);
     return OC_STACK_OK;
 }
