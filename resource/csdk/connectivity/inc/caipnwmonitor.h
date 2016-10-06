@@ -119,6 +119,13 @@ CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
  */
 CAResult_t CAIPStopNetworkMonitor(CATransportAdapter_t adapter);
 
+/**
+ * Apply network interface changes.
+ *
+ * @param[in]  ifchanged      Changed interface.
+ */
+void CAProcessNewInterface(CAInterface_t *ifchanged);
+
 #ifdef __cplusplus
 }
 #endif
