@@ -1362,7 +1362,7 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
     //Register DTLS event handler to catch the dtls event while handshake
     if(CA_ADAPTER_IP == ((CAEndpoint_t*)(&otmCtx->selectedDeviceInfo->endpoint))->adapter)
     {
-        if(CA_STATUS_OK != CARegisterDTLSCredentialsHandler(GetDtlsPskCredentials))
+        if(CA_STATUS_OK != CARegisterDTLSHandshakeCallback(DTLSHandshakeCB))
         {
             OIC_LOG(WARNING, TAG, "Failed to register DTLS handshake callback.");
         }
@@ -1370,7 +1370,7 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
 #ifdef __WITH_TLS__
     else
     {
-        if(CA_STATUS_OK != CAregisterTlsCredentialsHandler(GetDtlsPskCredentials))
+        if(CA_STATUS_OK != CAregisterTlsHandshakeCallback(DTLSHandshakeCB))
         {
             OIC_LOG(WARNING, TAG, "Failed to register TLS handshake callback.");
         }
