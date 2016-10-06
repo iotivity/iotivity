@@ -999,6 +999,13 @@ CAResult_t CADetachSendMessage(const CAEndpoint_t *endpoint, const void *sendMsg
     OICFree(data);
 
 #else
+    if (SEND_TYPE_UNICAST == data->type && CAIsLocalEndpoint(data->remoteEndpoint))
+    {
+        OIC_LOG(DEBUG, TAG,
+                "This is a loopback message. Transfer it to the receive queue directly");
+        CAQueueingThreadAddData(&g_receiveThread, data, sizeof(CAData_t));
+        return CA_STATUS_OK;
+    }
 #ifdef WITH_BWT
     if (CAIsSupportedBlockwiseTransfer(endpoint->adapter))
     {
