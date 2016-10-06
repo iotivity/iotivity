@@ -30,6 +30,8 @@
 #include "aclresource.h"
 #include "crlresource.h"
 #include "ocprovisioningmanager.h"
+#include "casecurityinterface.h"
+#include "mbedtls/ssl_ciphersuites.h"
 
 #include "utils.h"
 #include "cloudAuth.h"
@@ -137,7 +139,7 @@ static void printMenu(OCMode mode)
     printf("** %d - Change default port\n", PORT);
     printf("** %d - Change default database filename\n", DB_FILE);
     printf("** %d - Change default auth provider\n", AUTH_PROVIDER);
-    printf("** %d - Change TLS cipher suite to RSA\n", USE_RSA);
+    printf("** %d - Change TLS cipher suite (ECDSA/RSA)\n", USE_RSA);
     printf("** %d - Save Trust Cert. Chain into Cred of SVR\n", SAVE_TRUST_CERT);
     printf("** %d - Change Protocol type (CoAP/CoAPs)\n", USE_SECURE_CONN);
 
@@ -506,8 +508,17 @@ static void userRequests(void *data)
             res= InitRequest(OC_REST_POST);
             break;
         case USE_RSA:
-            CASelectCipherSuite(0x35, CA_ADAPTER_TCP);
+        {
+            int tmp = 0;
+            readInteger(&tmp, "Select Cipher Suite", "0 - ECDSA, other - RSA");
+            uint16_t cipher = tmp? MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA:
+                                   MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
+            if (CA_STATUS_OK != CASelectCipherSuite(cipher, CA_ADAPTER_TCP))
+            {
+                OIC_LOG(ERROR, TAG, "CASelectCipherSuite returned an error");
+            }
             sendDataToServer = false;
+        }
             break;
         case SAVE_TRUST_CERT:
             saveTrustCert();
