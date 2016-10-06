@@ -288,6 +288,7 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
 
         OCRepPayload** payloadTopicArray = (OCRepPayload **) OICMalloc(
                 sizeof(OCRepPayload *) * dimensionSize);
+        NS_VERIFY_NOT_NULL(payloadTopicArray, NS_ERROR);
 
         size_t dimensions[3] =
         { dimensionSize, 0, 0 };
