@@ -69,10 +69,11 @@ RD_SRC_DIR = 'src/'
 rd_src = []
 if 'SERVER' in rd_mode:
     rd_src += [
-            '../../../extlibs/sqlite3/sqlite3.c',
             RD_SRC_DIR + 'internal/rd_database.c',
             RD_SRC_DIR + 'rd_server.c',
             ]
+    if target_os not in ['tizen'] :
+        rd_src += [ '../../../extlibs/sqlite3/sqlite3.c' ]
 if 'CLIENT' in rd_mode:
     rd_src += [RD_SRC_DIR + 'rd_client.c',]
 
