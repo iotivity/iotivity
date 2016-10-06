@@ -85,7 +85,7 @@ static bool CACmpNetworkList(uint32_t ifiindex);
 static CAResult_t CAAddNetworkMonitorList(CAInterface_t *ifitem);
 
 /**
- * Remove network interace from list.
+ * Remove network interface from list.
  */
 static void CARemoveNetworkMonitorList(int ifiindex);
 
@@ -337,7 +337,6 @@ CAInterface_t *CAFindInterfaceChange()
         struct ifinfomsg *ifi = (struct ifinfomsg *)NLMSG_DATA(nh);
 
         int ifiIndex = ifi->ifi_index;
-        u_arraylist_t *iflist = CAIPGetInterfaceInformation(ifiIndex);
 
         if ((!ifi || (ifi->ifi_flags & IFF_LOOPBACK) || !(ifi->ifi_flags & IFF_RUNNING)))
         {
@@ -350,6 +349,7 @@ CAInterface_t *CAFindInterfaceChange()
             continue;
         }
 
+        u_arraylist_t *iflist = CAIPGetInterfaceInformation(ifiIndex);
         if (!iflist)
         {
             OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));

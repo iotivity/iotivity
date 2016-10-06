@@ -368,7 +368,11 @@ static void CAFindReadyMessage()
         PUSH_HANDLE(caglobals.ip.shutdownEvent, eventArray, arraySize);
     }
 
-    /** @todo Support netlink events */
+    if (WSA_INVALID_EVENT != caglobals.ip.addressChangeEvent)
+    {
+        INSERT_SOCKET(OC_INVALID_SOCKET, socketArray, arraySize);
+        PUSH_HANDLE(caglobals.ip.addressChangeEvent, eventArray, arraySize);
+    }
 
     // Should not have overflowed buffer
     assert(arraySize <= (_countof(socketArray)));
@@ -400,7 +404,20 @@ static void CAFindReadyMessage()
                         OIC_LOG_V(ERROR, TAG, "WSAResetEvent failed 0x%08x", WSAGetLastError());
                     }
 
-                    // Break out if shutdownEvent is triggered
+                    // Handle address changes if addressChangeEvent is triggered.
+                    if ((caglobals.ip.addressChangeEvent != WSA_INVALID_EVENT) &&
+                        (caglobals.ip.addressChangeEvent == eventArray[eventIndex]))
+                    {
+                        CAInterface_t *newAddress;
+                        while ((newAddress = CAFindInterfaceChange()) != NULL)
+                        {
+                            CAProcessNewInterface(newAddress);
+                            OICFree(newAddress);
+                        }
+                        break;
+                    }
+
+                    // Break out if shutdownEvent is triggered.
                     if ((caglobals.ip.shutdownEvent != WSA_INVALID_EVENT) &&
                         (caglobals.ip.shutdownEvent == eventArray[eventIndex]))
                     {
@@ -460,6 +477,23 @@ static void CAEventReturned(CASocketFd_t socket)
 
 #endif
 
+void CAUnregisterForAddressChanges()
+{
+#ifdef _WIN32
+    if (caglobals.ip.addressChangeEvent != WSA_INVALID_EVENT)
+    {
+        WSACloseEvent(caglobals.ip.addressChangeEvent);
+        caglobals.ip.addressChangeEvent = WSA_INVALID_EVENT;
+    }
+#else
+    if (caglobals.ip.netlinkFd != OC_INVALID_SOCKET)
+    {
+        close(caglobals.ip.netlinkFd);
+        caglobals.ip.netlinkFd = OC_INVALID_SOCKET;
+    }
+#endif
+}
+
 void CADeInitializeIPGlobals()
 {
     CLOSE_SOCKET(u6);
@@ -471,15 +505,7 @@ void CADeInitializeIPGlobals()
     CLOSE_SOCKET(m4);
     CLOSE_SOCKET(m4s);
 
-    if (caglobals.ip.netlinkFd != OC_INVALID_SOCKET)
-    {
-#ifdef _WIN32
-        closesocket(caglobals.ip.netlinkFd);
-#else
-        close(caglobals.ip.netlinkFd);
-#endif
-        caglobals.ip.netlinkFd = OC_INVALID_SOCKET;
-    }
+    CAUnregisterForAddressChanges();
 }
 
 static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
@@ -769,8 +795,15 @@ static CASocketFd_t CACreateSocket(int family, uint16_t *port, bool isMulticast)
     }   \
     CHECKFD(caglobals.ip.NAME.fd)
 
-static void CAInitializeNetlink()
+static void CARegisterForAddressChanges()
 {
+#ifdef _WIN32
+    caglobals.ip.addressChangeEvent = WSACreateEvent();
+    if (WSA_INVALID_EVENT != caglobals.ip.addressChangeEvent)
+    {
+        OIC_LOG(ERROR, TAG, "WSACreateEvent failed");
+    }
+#else
     caglobals.ip.netlinkFd = OC_INVALID_SOCKET;
 #ifdef __linux__
     // create NETLINK fd for interface change notifications
@@ -795,6 +828,7 @@ static void CAInitializeNetlink()
             CHECKFD(caglobals.ip.netlinkFd);
         }
     }
+#endif
 #endif
 }
 
@@ -925,8 +959,8 @@ CAResult_t CAIPStartServer(const ca_thread_pool_t threadPool)
     // set up appropriate FD mechanism for fast shutdown
     CAInitializeFastShutdownMechanism();
 
-    // create source of network interface change notifications
-    CAInitializeNetlink();
+    // create source of network address change notifications
+    CARegisterForAddressChanges();
 
     caglobals.ip.selectTimeout = CAGetPollingInterval(caglobals.ip.selectTimeout);
 
@@ -1031,7 +1065,18 @@ static void applyMulticastToInterface4(uint32_t ifindex)
 #if !defined(WSAEINVAL)
         if (EADDRINUSE != errno)
 #else
-        if (WSAEINVAL != WSAGetLastError()) // Joining multicast group more than once (IPv4 Flavor)
+        if (WSAEINVAL == WSAGetLastError())
+        {
+            // We're trying to join the multicast group again.
+            // If the interface has gone down and come back up, the socket might be in
+            // an inconsistent state where it still thinks we're joined when the interface
+            // doesn't think we're joined.  So try to leave and rejoin the group just in case.
+            setsockopt(caglobals.ip.m4s.fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, OPTVAL_T(&mreq),
+                             sizeof(mreq));
+            ret = setsockopt(caglobals.ip.m4s.fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, OPTVAL_T(&mreq),
+                             sizeof(mreq));
+        }
+        if (OC_SOCKET_ERROR == ret)
 #endif
         {
             OIC_LOG_V(ERROR, TAG, "SECURE IPv4 IP_ADD_MEMBERSHIP failed: %s", CAIPS_GET_ERROR);
@@ -1051,9 +1096,18 @@ static void applyMulticast6(int fd, struct in6_addr *addr, uint32_t ifindex)
     if (OC_SOCKET_ERROR == ret)
     {
 #if !defined(_WIN32)
-                if (EADDRINUSE != errno)
+        if (EADDRINUSE != errno)
 #else
-                if (WSAEINVAL != WSAGetLastError()) // Joining multicast group more than once (IPv6 Flavor)
+        if (WSAEINVAL == WSAGetLastError())
+        {
+            // We're trying to join the multicast group again.
+            // If the interface has gone down and come back up, the socket might be in
+            // an inconsistent state where it still thinks we're joined when the interface
+            // doesn't think we're joined.  So try to leave and rejoin the group just in case.
+            setsockopt(fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, OPTVAL_T(&mreq), sizeof(mreq));
+            ret = setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, OPTVAL_T(&mreq), sizeof(mreq));
+        }
+        if (OC_SOCKET_ERROR == ret)
 #endif
         {
             OIC_LOG_V(ERROR, TAG, "IPv6 IPV6_JOIN_GROUP failed: %s", CAIPS_GET_ERROR);
