@@ -990,11 +990,10 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
  *
  * requestUri must be a char array of size CA_MAX_URI_LENGTH
  */
-static int FormCanonicalPresenceUri(const CAEndpoint_t *endpoint, char *resourceUri,
+static int FormCanonicalPresenceUri(const CAEndpoint_t *endpoint,
                                     char *presenceUri, bool isMulticast)
 {
     VERIFY_NON_NULL(endpoint   , FATAL, OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL(resourceUri, FATAL, OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL(presenceUri, FATAL, OC_STACK_INVALID_PARAM);
 
     if (isMulticast)
@@ -1101,7 +1100,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     }
 
     // check for unicast presence
-    uriLen = FormCanonicalPresenceUri(endpoint, OC_RSRVD_PRESENCE_URI, presenceUri,
+    uriLen = FormCanonicalPresenceUri(endpoint, presenceUri,
                                       responseInfo->isMulticast);
     if (uriLen < 0 || (size_t)uriLen >= sizeof (presenceUri))
     {
@@ -2653,13 +2652,12 @@ error:
 }
 
 static OCStackResult OCPreparePresence(CAEndpoint_t *endpoint,
-                                       char *resourceUri,
                                        char **requestUri,
                                        bool isMulticast)
 {
     char uri[CA_MAX_URI_LENGTH];
 
-    FormCanonicalPresenceUri(endpoint, resourceUri, uri, isMulticast);
+    FormCanonicalPresenceUri(endpoint, uri, isMulticast);
 
     *requestUri = OICStrdup(uri);
     if (!*requestUri)
@@ -2809,7 +2807,6 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     requestInfo.info.type = qualityOfServiceToMessageType(qos);
     requestInfo.info.token = token;
     requestInfo.info.tokenLength = tokenLength;
-    requestInfo.info.resourceUri = resourceUri;
 
     if ((method == OC_REST_OBSERVE) || (method == OC_REST_OBSERVE_ALL))
     {
@@ -2855,7 +2852,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     if (method == OC_REST_PRESENCE)
     {
         char *presenceUri = NULL;
-        result = OCPreparePresence(&endpoint, resourceUri, &presenceUri,
+        result = OCPreparePresence(&endpoint, &presenceUri,
                                    requestInfo.isMulticast);
         if (OC_STACK_OK != result)
         {
@@ -2872,6 +2869,9 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         resourceUri = presenceUri;
     }
 #endif
+
+    // update resourceUri onto requestInfo after check presence uri
+    requestInfo.info.resourceUri = resourceUri;
 
     ttl = GetTicks(MAX_CB_TIMEOUT_SECONDS * MILLISECONDS_PER_SECOND);
     result = AddClientCB(&clientCB, cbData, token, tokenLength, &resHandle,
