@@ -58,6 +58,10 @@ Source1002: %{name}-test.manifest
 
 %define ex_install_dir %{buildroot}%{_bindir}
 
+%if ! %{?license:0}
+%define license %doc
+%endif
+
 # Default values to be eventually overiden BEFORE or as gbs params:
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
 %{!?LOGGING: %define LOGGING 1}
@@ -240,15 +244,6 @@ cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat 
 
 %endif
 
-
-%if 0%{?tizen_version_major} < 3
-mkdir -p %{buildroot}/%{_datadir}/license
-cp LICENSE %{buildroot}/%{_datadir}/license/%{name}
-cp LICENSE %{buildroot}/%{_datadir}/license/%{name}-devel
-cp LICENSE %{buildroot}/%{_datadir}/license/%{name}-service
-cp LICENSE %{buildroot}/%{_datadir}/license/%{name}-test
-%endif
-
 cp resource/c_common/*.h %{buildroot}%{_includedir}
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
@@ -272,20 +267,17 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %files
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
+%license LICENSE
 %{_libdir}/liboc.so
 %{_libdir}/liboc_logger.so
 %{_libdir}/liboc_logger_core.so
 %{_libdir}/liboctbstack.so
 %{_libdir}/libconnectivity_abstraction.so
-%if 0%{?tizen_version_major} < 3
-%{_datadir}/license/%{name}
-%else
-%license LICENSE
-%endif
 
 %files service
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
+%license LICENSE
 %{_libdir}/libBMISensorBundle.so
 %{_libdir}/libDISensorBundle.so
 %{_libdir}/libTGMSDKLibrary.so
@@ -308,21 +300,12 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %else
 %{_libdir}/libresource_hosting.so
 %endif
-%if 0%{?tizen_version_major} < 3
-%{_datadir}/license/%{name}-service
-%else
-%license LICENSE
-%endif
 
 %files test
 %manifest %{name}-test.manifest
 %defattr(-,root,root,-)
-%{_bindir}/*
-%if 0%{?tizen_version_major} < 3
-%{_datadir}/license/%{name}-test
-%else
 %license LICENSE
-%endif
+%{_bindir}/*
 
 %files devel
 %defattr(-,root,root,-)
