@@ -852,6 +852,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             SendDirectStackResponse(&endpoint, request->coapID, CA_EMPTY, CA_MSG_ACKNOWLEDGE,
                                     0, NULL, NULL, 0, NULL, CA_RESPONSE_FOR_RES);
         }
+        FindAndDeleteServerRequest(request);
 
         // Presence uses observer notification api to respond via SendPresenceNotification.
         SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
@@ -880,6 +881,8 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         {
             // Ignoring the discovery request as per RFC 7252, Section #8.2
             OIC_LOG(INFO, TAG, "Silently ignoring the request since no useful data to send. ");
+            // the request should be removed. since it never remove and causes a big memory waste.
+            FindAndDeleteServerRequest(request);
         }
     }
 
