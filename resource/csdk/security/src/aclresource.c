@@ -2096,6 +2096,7 @@ OCStackResult InitACLResource()
     {
         // Read ACL resource from PS
         gAcl = CBORPayloadToAcl(data, size);
+        OICFree(data);
     }
     /*
      * If SVR database in persistent storage got corrupted or
