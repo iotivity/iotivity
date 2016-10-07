@@ -56,6 +56,7 @@ typedef struct _DiscoveryInfo{
     bool                isOwnedDiscovery;
     bool                isSingleDiscovery;
     bool                isFound;
+    const OicUuid_t     *targetId;
 } DiscoveryInfo;
 
 /*
@@ -723,8 +724,16 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
                     DeleteDoxmBinData(ptrDoxm);
                     return OC_STACK_KEEP_TRANSACTION;
                 }
+                //if targetId and discovered deviceID are different, discard it
+                if ((pDInfo->isSingleDiscovery) &&
+                    (0 != memcmp(&ptrDoxm->deviceID.id, &pDInfo->targetId->id, sizeof(pDInfo->targetId->id))) )
+                {
+                    OIC_LOG(DEBUG, TAG, "Discovered device is not target device");
+                    DeleteDoxmBinData(ptrDoxm);
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
                 //if this is owned discovery and this is PT's reply, discard it
-                if(((pDInfo->isSingleDiscovery) || (pDInfo->isOwnedDiscovery)) &&
+                if (((pDInfo->isSingleDiscovery) || (pDInfo->isOwnedDiscovery)) &&
                         (0 == memcmp(&ptrDoxm->deviceID.id, &myId.id, sizeof(myId.id))) )
                 {
                     OIC_LOG(DEBUG, TAG, "discarding provision tool's reply");
@@ -770,26 +779,33 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
 
 
 /**
- * Discover owned/unowned devices in the specified endpoint.
- * It will return when found one or more device even though timeout is not exceeded
+ * Discover owned/unowned device in the specified endpoint/deviceID.
+ * It will return the found device even though timeout is not exceeded.
  *
  * @param[in] waittime           Timeout in seconds
- * @param[in] host               address of target endpoint
- * @param[in] connType           connectivity type of endpoint
- * @param[out] ppDevicesList      List of OCProvisionDev_t
+ * @param[in] deviceID           deviceID of target device.
+ * @param[out] ppFoundDevice     OCProvisionDev_t of found device
  *
- * @return OC_STACK_OK on success otherwise error.
+ * @return OC_STACK_OK on success otherwise error.\n
+ *         OC_STACK_INVALID_PARAM when deviceID is NULL or ppFoundDevice is not initailized.
  */
-OCStackResult PMSingleDeviceDiscovery(unsigned short waittime, const char* host,
-                                 OCConnectivityType connType, OCProvisionDev_t **ppDevicesList)
+OCStackResult PMSingleDeviceDiscovery(unsigned short waittime, const OicUuid_t* deviceID,
+                                 OCProvisionDev_t **ppFoundDevice)
 {
     OIC_LOG(DEBUG, TAG, "IN PMSingleDeviceDiscovery");
 
-    if (NULL != *ppDevicesList)
+    if (NULL != *ppFoundDevice)
     {
         OIC_LOG(ERROR, TAG, "List is not null can cause memory leak");
         return OC_STACK_INVALID_PARAM;
     }
+
+    if (NULL == deviceID)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid device ID");
+        return OC_STACK_INVALID_PARAM;
+    }
+
 
     DiscoveryInfo *pDInfo = OICCalloc(1, sizeof(DiscoveryInfo));
     if(NULL == pDInfo)
@@ -798,10 +814,11 @@ OCStackResult PMSingleDeviceDiscovery(unsigned short waittime, const char* host,
         return OC_STACK_NO_MEMORY;
     }
 
-    pDInfo->ppDevicesList = ppDevicesList;
+    pDInfo->ppDevicesList = ppFoundDevice;
     pDInfo->isOwnedDiscovery = false;
     pDInfo->isSingleDiscovery = true;
     pDInfo->isFound = false;
+    pDInfo->targetId = deviceID;
 
     OCCallbackData cbData;
     cbData.cb = &DeviceDiscoveryHandler;
@@ -810,15 +827,11 @@ OCStackResult PMSingleDeviceDiscovery(unsigned short waittime, const char* host,
     OCStackResult res = OC_STACK_ERROR;
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH + 1] = { '\0' };
-    if(host == NULL)
-    {
-        host = "";
-    }
-    snprintf(query, MAX_URI_LENGTH + MAX_QUERY_LENGTH + 1, "%s/oic/sec/doxm", host);
+    snprintf(query, MAX_URI_LENGTH + MAX_QUERY_LENGTH + 1, "/oic/sec/doxm");
 
     OCDoHandle handle = NULL;
     res = OCDoResource(&handle, OC_REST_DISCOVER, query, 0, 0,
-                                     connType, OC_HIGH_QOS, &cbData, NULL, 0);
+                                     CT_DEFAULT, OC_HIGH_QOS, &cbData, NULL, 0);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -829,7 +842,7 @@ OCStackResult PMSingleDeviceDiscovery(unsigned short waittime, const char* host,
     //Waiting for each response.
     res = OC_STACK_OK;
     uint64_t startTime = OICGetCurrentTime(TIME_IN_MS);
-    while (OC_STACK_OK == res && pDInfo->isFound == false)
+    while (OC_STACK_OK == res && !pDInfo->isFound)
     {
         uint64_t currTime = OICGetCurrentTime(TIME_IN_MS);
 
@@ -853,7 +866,7 @@ OCStackResult PMSingleDeviceDiscovery(unsigned short waittime, const char* host,
         return res;
     }
 
-    if(*ppDevicesList == NULL)
+    if(NULL == *ppFoundDevice)
     {
         res = OCCancel(handle,OC_HIGH_QOS,NULL,0);
     }
@@ -902,6 +915,7 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
     pDInfo->ppDevicesList = ppDevicesList;
     pDInfo->isOwnedDiscovery = isOwned;
     pDInfo->isSingleDiscovery = false;
+    pDInfo->targetId = NULL;
 
     OCCallbackData cbData;
     cbData.cb = &DeviceDiscoveryHandler;
