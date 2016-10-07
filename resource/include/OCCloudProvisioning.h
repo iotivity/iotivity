@@ -26,6 +26,7 @@
 #include "occloudprovisioning.h"
 #include "OCApi.h"
 #include "OCPlatform_impl.h"
+#include "CAManager.h"
 
 namespace OC
 {
