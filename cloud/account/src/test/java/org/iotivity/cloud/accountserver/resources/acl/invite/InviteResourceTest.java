@@ -33,6 +33,7 @@ import java.util.concurrent.CountDownLatch;
 
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.MongoDB;
+import org.iotivity.cloud.accountserver.resources.acl.group.GroupResource;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedException;
 import org.iotivity.cloud.base.protocols.IRequest;
@@ -53,12 +54,17 @@ import org.mockito.stubbing.Answer;
 
 public class InviteResourceTest {
     private static final String           INVITE_URI        = Constants.INVITE_FULL_URI;
+    private static final String           GROUP_URI         = Constants.GROUP_FULL_URI;
 
     private static final String           TEST_INVITE_USER  = "u0001";
     private static final String           TEST_INVITED_USER = "u0002";
     private static final String           TEST_GROUP_ID     = "g0001";
 
+    private String                        mInvitedGroupId   = null;
+
     private InviteResource                mInviteResource   = null;
+
+    private GroupResource                 mGroupResource    = new GroupResource();
 
     private CountDownLatch                mLatch            = null;
 
@@ -90,6 +96,18 @@ public class InviteResourceTest {
                 Object[] args = invocation.getArguments();
                 CoapResponse resp = (CoapResponse) args[0];
                 mResponse = resp;
+
+                if (resp.getPayloadSize() != 0) {
+
+                    HashMap<String, Object> payloadData = mCbor
+                            .parsePayloadFromCbor(resp.getPayload(),
+                                    HashMap.class);
+
+                    if (payloadData.containsKey(Constants.REQ_GROUP_ID)) {
+                        mInvitedGroupId = (String) payloadData
+                                .get(Constants.REQ_GROUP_ID);
+                    }
+                }
 
                 mLatch.countDown();
 
@@ -247,11 +265,25 @@ public class InviteResourceTest {
     }
 
     @Test
-    public void testDeleteInvitation() throws Exception {
+    public void testDeleteInvitationForAccept() throws Exception {
 
-        sendInvitation(TEST_GROUP_ID, TEST_INVITED_USER);
+        createGroup(TEST_INVITE_USER, "Public");
+        sendInvitation(mInvitedGroupId, TEST_INVITED_USER);
 
-        deleteInvitation(TEST_GROUP_ID, TEST_INVITED_USER, "");
+        deleteInvitationWithQuery(mInvitedGroupId, TEST_INVITED_USER, true);
+
+        assertTrue(mLatch.await(1L, SECONDS));
+        assertEquals(mResponse.getStatus(), ResponseStatus.DELETED);
+
+    }
+
+    @Test
+    public void testDeleteInvitationForDeny() throws Exception {
+
+        createGroup(TEST_INVITE_USER, "Public");
+        sendInvitation(mInvitedGroupId, TEST_INVITED_USER);
+
+        deleteInvitationWithQuery(mInvitedGroupId, TEST_INVITED_USER, false);
 
         assertTrue(mLatch.await(1L, SECONDS));
         assertEquals(mResponse.getStatus(), ResponseStatus.DELETED);
@@ -347,4 +379,43 @@ public class InviteResourceTest {
         return false;
     }
 
+    private void deleteInvitationWithQuery(String gid, String uid,
+            boolean accept) {
+
+        int acceptInt = 0;
+
+        if (accept)
+            acceptInt = 1;
+
+        String uriQuery = Constants.REQ_GROUP_ID + "=" + gid + ";"
+                + Constants.REQ_UUID_ID + "=" + uid + ";"
+                + Constants.REQ_INVITE_ACCEPT + "=" + acceptInt;
+
+        IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
+                INVITE_URI, uriQuery);
+
+        mInviteResource.onDefaultRequestReceived(mMockDevice, request);
+    }
+
+    private void createGroup(String gmid, String gtype) {
+
+        IRequest request = createGroupRequest(gmid, gtype);
+
+        mGroupResource.onDefaultRequestReceived(mMockDevice, request);
+    }
+
+    private IRequest createGroupRequest(String uuid, String gtype) {
+
+        IRequest request = null;
+
+        HashMap<String, Object> payloadData = new HashMap<String, Object>();
+        payloadData.put("gmid", uuid);
+        payloadData.put("gtype", gtype);
+
+        request = MessageBuilder.createRequest(RequestMethod.POST, GROUP_URI,
+                null, ContentFormat.APPLICATION_CBOR,
+                mCbor.encodingPayloadToCbor(payloadData));
+
+        return request;
+    }
 }
