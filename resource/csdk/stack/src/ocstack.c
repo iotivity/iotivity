@@ -2897,6 +2897,21 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     resourceUri = NULL;   // Client CB list entry now owns it
     resourceType = NULL;  // Client CB list entry now owns it
 
+#ifdef WITH_PRESENCE
+    if (method == OC_REST_PRESENCE)
+    {
+        if (requestInfo.isMulticast)
+        {
+            OIC_LOG(ERROR, TAG, "AddClientCB for presence done.");
+            goto exit;
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "this subscribe presence is unicast.");
+        }
+    }
+#endif
+
     // send request
     result = OCSendRequest(&endpoint, &requestInfo);
     if (OC_STACK_OK != result)
