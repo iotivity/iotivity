@@ -461,6 +461,83 @@ TEST_F(NotificationServiceConsumerTest, ExpectCallbackDismissCheckWhenConsumerPo
     EXPECT_EQ(OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_DELETED, type);
 }
 
+TEST_F(NotificationServiceConsumerTest, ExpectGetProviderSuccessWithValidProviderId)
+{
+    OIC::Service::NSProvider * provider =
+                        OIC::Service::NSConsumerService::getInstance()->getProvider(g_provider->getProviderId());
+    int ret = strcmp(provider->getProviderId().c_str(), g_provider->getProviderId().c_str());
+    EXPECT_EQ(0, ret);
+}
+
+TEST_F(NotificationServiceConsumerTest, ExpectGetProviderSuccessWithInvalidProviderId)
+{
+    OIC::Service::NSProvider * provider =
+                        OIC::Service::NSConsumerService::getInstance()->getProvider("123456789012345678901234567890123457");
+    EXPECT_EQ(provider, (void*)NULL);
+}
+
+TEST_F(NotificationServiceConsumerTest, ExpectCallbackTopicUpdated)
+{
+    OIC::Service::NSProviderState revState = OIC::Service::NSProviderState::STOPPED;
+    mocks.OnCallFunc(ProviderChangedCallbackEmpty).Do(
+        [this, & revState](OIC::Service::NSProviderState state)
+        {
+            std::cout << "Income Changed Callback : " << (int)state << std::endl;
+            revState = state;
+            responseCon.notify_all();
+        });
+
+    NSProviderSimulator::NS_TopicList topics;
+    topics.push_back("1");
+    topics.push_back("2");
+    topics.push_back("3");
+
+    g_providerSimul.setTopics(topics);
+
+    std::unique_lock< std::mutex > lock{ mutexForCondition };
+    responseCon.wait_for(lock, g_waitForResponse);
+
+    EXPECT_EQ(OIC::Service::NSProviderState::TOPIC, revState);
+}
+
+TEST_F(NotificationServiceConsumerTest, ExpectEQTopicList)
+{
+    bool isSame = true;
+
+    NSProviderSimulator::NS_TopicList topics;
+    topics.push_back("1");
+    topics.push_back("2");
+    topics.push_back("3");
+
+    std::list<OIC::Service::NSTopic *>  retTopic = g_provider->getTopicList()->getTopicsList();
+    auto it1=retTopic.begin();
+    auto it2=topics.begin();
+    while( it1 != retTopic.end() || it2 != topics.end() )
+    {
+        if((*it1)->getTopicName() !=  *it2)
+        {
+            isSame = false; break;
+        }
+            it1++;it2++;
+     }
+
+
+    EXPECT_EQ(true, isSame);
+}
+
+TEST_F(NotificationServiceConsumerTest, ExpectFailUpdateTopicOnConsumer)
+{
+    OIC::Service::NSTopicsList * retTopic = g_provider->getTopicList();
+    for (auto it : retTopic->getTopicsList())
+    {
+        it->setState(OIC::Service::NSTopic::NSTopicState::SUBSCRIBED);
+    }
+    OIC::Service::NSResult ret = g_provider->updateTopicList(retTopic);
+
+    EXPECT_EQ(OIC::Service::NSResult::ERROR, ret);
+}
+
+
 TEST_F(NotificationServiceConsumerTest, ExpectCallbackDeletedProvider)
 {
     OIC::Service::NSProviderState type = OIC::Service::NSProviderState::ALLOW;
@@ -469,7 +546,6 @@ TEST_F(NotificationServiceConsumerTest, ExpectCallbackDeletedProvider)
     {
         std::cout << "Income Changed Callback : " << std::endl;
         type = state;
-        responseCon.notify_all();
     });
 
     g_providerSimul.deleteNotificationResource();
@@ -480,15 +556,3 @@ TEST_F(NotificationServiceConsumerTest, ExpectCallbackDeletedProvider)
     EXPECT_EQ(type, OIC::Service::NSProviderState::STOPPED);
     OIC::Service::NSConsumerService::getInstance()->stop();
 }
-
-//TO add when unsubscibe API is added back
-//TEST_F(NotificationServiceConsumerTest, ExpectUnsubscribeSuccess)
-//{
-//    g_provider->unsubscribe();
-//   std::unique_lock< std::mutex > lock{ mutexForCondition };
-//    responseCon.wait_for(lock, g_waitForResponse);
-//
-//    g_providerSimul.deleteNotificationResource();
-//     OIC::Service::NSConsumerService::getInstance()->stop();
-//
-//}

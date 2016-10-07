@@ -258,10 +258,8 @@ TEST_F(NotificationProviderServiceTest, ExpectCallNotifyOnConsumerByAcceptIsTrue
     msg->setTitle(std::string("Title"));
     msg->setContentText(std::string("ContentText"));
     msg->setSourceName(std::string("OCF"));
-    OIC::Service::NSProviderService::getInstance()->registerTopic("OCF_TOPIC1");
-    g_consumer->setTopic("OCF_TOPIC1");
+
     OIC::Service::NSProviderService::getInstance()->sendMessage(msg);
-    OIC::Service::NSProviderService::getInstance()->unregisterTopic("OCF_TOPIC1");
     std::unique_lock< std::mutex > lock { mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 }
@@ -479,6 +477,14 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualUnSetConsumerTopicsAndGetCons
     OIC::Service::NSProviderService::getInstance()->unregisterTopic(str1);
     OIC::Service::NSProviderService::getInstance()->unregisterTopic(str2);
     responseCon.wait_for(lock, g_waitForResponse);
+}
+
+TEST_F(NotificationProviderServiceTest, ExpectFailSendMessage)
+{
+    OIC::Service::NSResult result = OIC::Service::NSResult::OK;
+    result = OIC::Service::NSProviderService::getInstance()->sendMessage(nullptr);
+
+    EXPECT_EQ(result, OIC::Service::NSResult::ERROR);
 }
 
 TEST_F(NotificationProviderServiceTest, CancelObserves)

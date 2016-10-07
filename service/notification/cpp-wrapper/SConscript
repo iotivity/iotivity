@@ -31,3 +31,6 @@ SConscript('consumer/SConscript')
 if target_os == 'linux':
     SConscript('examples/linux/SConscript')
 
+# Go to build c++ wrapper unittest
+if target_os == 'linux':
+    SConscript('unittest/SConscript')

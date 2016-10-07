@@ -22,6 +22,7 @@
 #define _NS_PROVIDER_SERVICE_SIMULATOR_H_
 
 #include <iostream>
+#include <memory>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
@@ -34,15 +35,33 @@ namespace
         NS_NOTIFICATION,
         NS_MESSAGE,
         NS_SYNC,
+        NS_TOPIC,
+    };
+    enum class messageType
+    {
+        NS_ALLOW = 1,
+        NS_DENY,
+        NS_TOPIC,
     };
 }
 
 class NSProviderSimulator
 {
+public:
+    enum class TopicAllowState
+    {
+        DENY,
+        ALLOW
+    };
+    typedef std::pair<std::string, TopicAllowState> NS_TopicState;
+    typedef std::map<std::string, TopicAllowState> NS_TopicStateList;
+
+    typedef std::list<std::string> NS_TopicList;
 private:
     OCResourceHandle m_notificationHandle;
     OCResourceHandle m_messageHandle;
     OCResourceHandle m_syncHandle;
+    OCResourceHandle m_topicHandle;
     OC::OCRepresentation m_syncRep;
     OC::OCRepresentation m_messageRep;
     int m_accepter;
@@ -50,16 +69,22 @@ private:
     std::string m_notificationUri;
     std::string m_messageUri;
     std::string m_syncUri;
+    std::string m_topicUri;
+    NS_TopicList m_topicList;
+    NS_TopicStateList m_allowedTopicList;
 
     OC::ObservationIds m_syncObservers;
 
 public:
     NSProviderSimulator()
-    : m_notificationHandle(), m_messageHandle(), m_syncHandle(),
+    : m_notificationHandle(), m_messageHandle(), m_syncHandle(), m_topicHandle(),
       m_syncRep(), m_messageRep(), m_accepter(0),
       m_notificationUri(std::string("/notification")),
       m_messageUri(std::string("/message")),
       m_syncUri(std::string("/sync")),
+      m_topicUri(std::string("/topic")),
+      m_topicList(),
+      m_allowedTopicList(),
       m_syncObservers()
     {
 
@@ -97,10 +122,12 @@ private:
                 {
                     std::string msgUri = m_notificationUri + m_messageUri;
                     std::string syncUri = m_notificationUri + m_syncUri;
+                    std::string topicUri = m_notificationUri + m_topicUri;
                     std::string providerId = "123456789012345678901234567890123456";
-                    rep.setValue("subControllability", (bool) m_accepter);
+                    rep.setValue("subControllability", m_accepter);
                     rep.setValue("messageUri", msgUri);
                     rep.setValue("syncUri", syncUri);
+                    rep.setValue("topicUri", topicUri);
                     rep.setValue("providerId", providerId);
                 }
                 else if (type == requestType::NS_SYNC)
@@ -111,6 +138,35 @@ private:
                 {
                     rep = m_messageRep;
                 }
+                else if (type == requestType::NS_TOPIC)
+                {
+                    if (m_allowedTopicList.empty())
+                    {
+                        std::for_each (m_topicList.begin(), m_topicList.end(),
+                            [this](const std::string & topic)
+                            {
+                                m_allowedTopicList.insert(
+                                        std::make_pair<std::string, TopicAllowState>(
+                                                std::string(topic), TopicAllowState::DENY));
+                            }
+                        );
+                    }
+
+                    std::vector<OC::OCRepresentation> topicArr;
+
+                    std::for_each (m_allowedTopicList.begin(), m_allowedTopicList.end(),
+                        [& topicArr](const NS_TopicState & topicState)
+                        {
+                            OC::OCRepresentation topic;
+                            topic.setValue("topicName", topicState.first);
+                            topic.setValue("topicState", (int) topicState.second);
+                            topicArr.push_back(topic);
+                        }
+                    );
+
+                    rep.setValue<std::vector<OC::OCRepresentation>>
+                        ("topicList", topicArr);
+                }
                 else
                 {
                     return NULL;
@@ -120,19 +176,39 @@ private:
                 return response;
             }
 
-            else if (request == "POST" && type == requestType::NS_SYNC)
+            else if (request == "POST")
             {
-                m_syncRep = requests->getResourceRepresentation();
+                if (type == requestType::NS_SYNC)
+                {
+                    m_syncRep = requests->getResourceRepresentation();
 
-                std::cout << "Receive POST at Sync" << std::endl;
-                std::cout << "provider Id : " << m_syncRep.getValueToString("providerId") << std::endl;
-                std::cout << "Sync State : " << m_syncRep.getValueToString("state") << std::endl;
+                    std::cout << "Receive POST for Sync" << std::endl;
+                    std::cout << "provider Id : " << m_syncRep.getValueToString("providerId") << std::endl;
+                    std::cout << "Sync State : " << m_syncRep.getValueToString("state") << std::endl;
 
-                response->setResourceRepresentation(m_syncRep);
+                    response->setResourceRepresentation(m_syncRep);
 
-                OC::OCPlatform::notifyListOfObservers(m_syncHandle, m_syncObservers, response);
+                    OC::OCPlatform::notifyAllObservers(m_syncHandle);
 
-                return response;
+                    return response;
+                }
+                else if (type == requestType::NS_TOPIC)
+                {
+                    auto receivePayload =
+                            requests->getResourceRepresentation()
+                            .getValue<std::vector<OC::OCRepresentation>>("topicList");
+
+                    std::for_each (receivePayload.begin(), receivePayload.end(),
+                          [this](const OC::OCRepresentation & rep)
+                          {
+                              auto tmp = m_allowedTopicList.find(rep.getValueToString("topicName"));
+                              if (tmp != m_allowedTopicList.end())
+                              {
+                                  tmp->second = (TopicAllowState) rep.getValue<int>("topicState");
+                              }
+                          }
+                    );
+                }
             }
         }
 
@@ -159,7 +235,7 @@ private:
         {
             OC::OCRepresentation rep;
             std::string providerId = "123456789012345678901234567890123456";
-            rep.setValue<int>("messageId", (int)1);
+            rep.setValue<int>("messageId", (int)messageType::NS_ALLOW);
             rep.setValue("providerId", providerId);
 
             auto response = std::make_shared<OC::OCResourceResponse>();
@@ -255,11 +331,58 @@ public:
         m_messageRep.setValue("providerId", providerId);
     }
 
+    void setTopics(const NS_TopicList & topics)
+    {
+        bool isChanged = false;
+        std::for_each (topics.begin(), topics.end(),
+            [this, & isChanged](const std::string & topic)
+            {
+                auto found = std::find(
+                        this->m_topicList.begin(), this->m_topicList.end(), topic);
+                if (found == this->m_topicList.end())
+                {
+                    this->m_topicList.push_back(topic);
+                    isChanged = true;
+                }
+            });
+
+        if (isChanged)
+        {
+            this->notifyMessage((uint64_t)messageType::NS_TOPIC, "", "");
+        }
+    }
+
+    NS_TopicList getTopics() const
+    {
+        return m_topicList;
+    }
+
+    void updateTopicState(const NS_TopicStateList & allowedTopics)
+    {
+        std::for_each (allowedTopics.begin(), allowedTopics.end(),
+            [this](const NS_TopicState & allowedTopic)
+            {
+                auto found = this->m_allowedTopicList.find(allowedTopic.first);
+                if (found != this->m_allowedTopicList.end())
+                {
+                    found->second = allowedTopic.second;
+                }
+            });
+    }
+
+    NS_TopicStateList getTopicAllowState() const
+    {
+        return m_allowedTopicList;
+    }
+
     void deleteNotificationResource()
     {
         OC::OCPlatform::unregisterResource(m_notificationHandle);
         OC::OCPlatform::unregisterResource(m_messageHandle);
         OC::OCPlatform::unregisterResource(m_syncHandle);
+        OC::OCPlatform::unregisterResource(m_topicHandle);
+        m_allowedTopicList.clear();
+        m_topicList.clear();
     }
 
     void createNotificationResource()
@@ -277,11 +400,28 @@ public:
         OC::OCPlatform::startPresence(30);
 
         std::string notificationUri = m_notificationUri;
-        std::string resourceTypeName = "oic.wk.notification.message";
+        std::string resourceTypeName = "oic.wk.notification.topic";
         std::string resourceInterface = OC::DEFAULT_INTERFACE;
 
         uint8_t resourceProperty = OC_OBSERVABLE;
-        std::string childUri = uri + m_messageUri;
+        std::string childUri = uri + m_topicUri;
+        try
+        {
+            OC::OCPlatform::registerResource(
+                    m_topicHandle, childUri,
+                    resourceTypeName, resourceInterface,
+                    std::bind(& NSProviderSimulator::entityHandler, this,
+                            std::placeholders::_1, requestType::NS_TOPIC),
+                            resourceProperty);
+        }
+        catch(std::exception & e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+
+        //resourceProperty |= OC_OBSERVABLE;
+        resourceTypeName = "oic.wk.notification.message";
+        childUri = uri + m_messageUri;
         try
         {
             OC::OCPlatform::registerResource(
@@ -312,7 +452,7 @@ public:
             std::cout << e.what() << std::endl;
         }
 
-        resourceProperty = OC_DISCOVERABLE;
+        resourceProperty |= OC_DISCOVERABLE;
         resourceTypeName = "oic.wk.notification";
         try
         {
