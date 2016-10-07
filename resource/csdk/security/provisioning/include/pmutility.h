@@ -43,18 +43,18 @@ extern "C"
 #define COAPS_TCP_QUERY "coaps+tcp://%s:%d%s"
 
 /**
- * Discover owned/unowned devices in the specified endpoint.
- * It will return when found one or more device even though timeout is not exceeded
+ * Discover owned/unowned device in the specified endpoint/deviceID.
+ * It will return the found device even though timeout is not exceeded.
  *
  * @param[in] waittime           Timeout in seconds
- * @param[in] host               address of target endpoint
- * @param[in] connType           connectivity type of endpoint
- * @param[out] ppDevicesList      List of OCProvisionDev_t
+ * @param[in] deviceID           deviceID of target device.
+ * @param[out] ppFoundDevice     OCProvisionDev_t of found device
  *
- * @return OC_STACK_OK on success otherwise error.
+ * @return OC_STACK_OK on success otherwise error.\n
+ *         OC_STACK_INVALID_PARAM when deviceID is NULL or ppFoundDevice is not initailized.
  */
-OCStackResult PMSingleDeviceDiscovery(unsigned short waittime, const char* host,
-                                 OCConnectivityType connType, OCProvisionDev_t **ppDevicesList);
+OCStackResult PMSingleDeviceDiscovery(unsigned short waittime, const OicUuid_t* deviceID,
+                                 OCProvisionDev_t **ppFoundDevice);
 
 /**
  * Discover owned/unowned devices in the same IP subnet. .

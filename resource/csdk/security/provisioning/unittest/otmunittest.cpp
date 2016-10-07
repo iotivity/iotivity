@@ -418,8 +418,11 @@ TEST(PerformSecureResourceDiscovery, NullParam)
     OCStackResult result = OC_STACK_ERROR;
     OCProvisionDev_t* foundDevice = NULL;
 
+    OicUuid_t uuid;
+    ConvertStrToUuid("11111111-1111-1111-1111-111111111111", &uuid);
+
     OIC_LOG(INFO, TAG, "Discovering Owned/Unowned Device using multicast\n");
-    result = OCDiscoverSecureResource(DISCOVERY_TIMEOUT, "", CT_DEFAULT, &foundDevice);
+    result = OCDiscoverSingleDevice(DISCOVERY_TIMEOUT, &uuid, &foundDevice);
     EXPECT_EQ(OC_STACK_OK, result);
 
     int NumOfFoundDevice = 0;

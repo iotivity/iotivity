@@ -48,6 +48,8 @@ provisiontests_env.PrependUnique(CPPPATH = [
 		'../../csdk/ocsocket/include',
 		'../../csdk/ocrandom/include',
 		'../../csdk/logger/include',
+		'../../csdk/connectivity/lib/libcoap-4.1.1/include',
+		'../../../extlibs/cjson/',
 		'../../../extlibs/hippomocks-master/HippoMocks',
 		'../../../extlibs/hippomocks-master/HippoMocksTest'
 		])

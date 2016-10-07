@@ -66,25 +66,24 @@ OCStackResult OCInitPM(const char* dbPath)
 }
 
 /**
- * The function is responsible for discovery of owned/unowned device is specified endpoint.
- * It will return when found one or more device even though timeout is not exceeded
+ * The function is responsible for discovery of owned/unowned device is specified endpoint/deviceID.
+ * And this function will only return the specified device's response.
  *
  * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
- *                    server before returning the list of devices.
- * @param[in] host               address of target endpoint
- * @param[in] connType           connectivity type of endpoint
- * @param[out] ppList            List of device.
+ *                    server before returning the device.
+ * @param[in] deviceID         deviceID of target device.
+ * @param[out] ppFoundDevice     OCProvisionDev_t of found device
  * @return OTM_SUCCESS in case of success and other value otherwise.
  */
-OCStackResult OCDiscoverSecureResource(unsigned short timeout, const char* host,
-                             OCConnectivityType connType, OCProvisionDev_t **ppList)
+OCStackResult OCDiscoverSingleDevice(unsigned short timeout, const OicUuid_t* deviceID,
+                             OCProvisionDev_t **ppFoundDevice)
 {
-    if( ppList == NULL || *ppList != NULL || 0 == timeout || host == NULL)
+    if( NULL == ppFoundDevice || NULL != *ppFoundDevice || 0 == timeout || NULL == deviceID)
     {
         return OC_STACK_INVALID_PARAM;
     }
 
-    return PMSingleDeviceDiscovery(timeout, host, connType, ppList);
+    return PMSingleDeviceDiscovery(timeout, deviceID, ppFoundDevice);
 }
 
 /**

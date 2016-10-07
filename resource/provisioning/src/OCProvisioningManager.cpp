@@ -121,30 +121,29 @@ namespace OC
         return result;
     }
 
-    OCStackResult OCSecure::discoverSecureResource(unsigned short timeout,
-            const std::string& host,
-            OCConnectivityType connType,
-            DeviceList_t &list)
+    OCStackResult OCSecure::discoverSingleDevice(unsigned short timeout,
+            const OicUuid_t* deviceID,
+            std::shared_ptr<OCSecureResource> &foundDevice)
     {
         OCStackResult result;
-        OCProvisionDev_t *pDevList = nullptr, *pCurDev = nullptr, *tmp = nullptr;
+        OCProvisionDev_t *pDev = nullptr;
         auto csdkLock = OCPlatform_impl::Instance().csdkLock();
         auto cLock = csdkLock.lock();
 
         if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-            result = OCDiscoverSecureResource(timeout, host.c_str(), connType, &pDevList);
+            result = OCDiscoverSingleDevice(timeout, deviceID, &pDev);
             if (result == OC_STACK_OK)
             {
-                pCurDev = pDevList;
-                while (pCurDev)
+                if (pDev)
                 {
-                    tmp = pCurDev;
-                    list.push_back(std::shared_ptr<OCSecureResource>(
-                                new OCSecureResource(csdkLock, pCurDev)));
-                    pCurDev = pCurDev->next;
-                    tmp->next = nullptr;
+                    foundDevice.reset(new OCSecureResource(csdkLock, pDev));
+                }
+                else
+                {
+                    oclog() <<"Not found Secure resource!";
+                    foundDevice.reset();
                 }
             }
             else
