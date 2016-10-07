@@ -559,8 +559,8 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
             }
             validReq = false;
 
-            //Currently, we dose not support the multiple service server driven yet.
-            if (pstat->om != MULTIPLE_SERVICE_SERVER_DRIVEN)
+            //Currently, IoTivity only supports Single Service Client Directed provisioning
+            if (pstat->om == SINGLE_SERVICE_CLIENT_DRIVEN)
             {
                 if ((pstat->cm & RESET) && false == pstat->isOp)
                 {
