@@ -2322,7 +2322,7 @@ OCStackResult SRPResetDevice(const OCProvisionDev_t* pTargetDev,
     pstat->isOp = false;
     memcpy(pstat->deviceID.id, pTargetDev->doxm->deviceID.id, sizeof(OicUuid_t));
     pstat->tm = TAKE_OWNER;
-    pstat->om = (OicSecDpom_t)(SINGLE_SERVICE_SERVER_DRIVEN | MULTIPLE_SERVICE_CLIENT_DRIVEN);
+    pstat->om = (OicSecDpom_t)(SINGLE_SERVICE_CLIENT_DRIVEN); // the only mode IoTivity supports currently
     pstat->smLen = 1;
     pstat->sm = (OicSecDpom_t *) OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
     if (NULL == pstat->sm)
@@ -2331,7 +2331,7 @@ OCStackResult SRPResetDevice(const OCProvisionDev_t* pTargetDev,
         OICFree(pstat);
         return OC_STACK_NO_MEMORY;
     }
-    pstat->sm[0] = (OicSecDpom_t)(SINGLE_SERVICE_SERVER_DRIVEN | MULTIPLE_SERVICE_CLIENT_DRIVEN);
+    pstat->sm[0] = (OicSecDpom_t)(SINGLE_SERVICE_CLIENT_DRIVEN); // the only mode IoTivity supports currently
 
     OCSecurityPayload * secPayload = (OCSecurityPayload *) OICCalloc(1, sizeof(OCSecurityPayload));
     if (!secPayload)

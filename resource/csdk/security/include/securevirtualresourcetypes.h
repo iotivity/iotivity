@@ -222,12 +222,14 @@ typedef enum OicSecDpm
     // << 6 THROUGH 15 RESERVED
 } OicSecDpm_t;
 
+// These types are taken from the Security Spec v1.1.12 /pstat resource definition
+// Note that per the latest spec, there is NO definition for Multiple Service Client Directed
+// provisioning mode, so that enum value has been removed.
 typedef enum OicSecDpom
 {
-    MULTIPLE_SERVICE_SERVER_DRIVEN  = 0x0,
-    SINGLE_SERVICE_SERVER_DRIVEN    = 0x1,
-    MULTIPLE_SERVICE_CLIENT_DRIVEN  = 0x2,
-    SINGLE_SERVICE_CLIENT_DRIVEN    = 0x3,
+    MULTIPLE_SERVICE_SERVER_DRIVEN    = (0x1 << 0),
+    SINGLE_SERVICE_SERVER_DRIVEN      = (0x1 << 1),
+    SINGLE_SERVICE_CLIENT_DRIVEN      = (0x1 << 2),
 } OicSecDpom_t;
 
 typedef enum OicSecSvcType
@@ -435,8 +437,6 @@ struct OicSecDoxm
 
 /**
  * /oic/sec/pstat (Provisioning Status) data type.
- * NOTE: this struct is ahead of Spec v0.95 in definition to include Sm.
- * TODO: change comment when reconciled to Spec v0.96.
  */
 struct OicSecPstat
 {
