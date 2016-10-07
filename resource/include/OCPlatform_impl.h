@@ -277,6 +277,11 @@ namespace OC
         OCAccountManager::Ptr constructAccountManagerObject(const std::string& host,
                                                             OCConnectivityType connectivityType);
 #endif // WITH_CLOUD
+
+        OCStackResult getDeviceId(OCUUIdentity *myUuid);
+
+        OCStackResult setDeviceId(const OCUUIdentity *myUuid);
+
     private:
         PlatformConfig m_cfg;
 

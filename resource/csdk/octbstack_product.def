@@ -100,3 +100,5 @@ OCUnBindResource
 OCSetHeaderOption
 OCGetHeaderOption
 FindResourceByUri
+OCGetDeviceId
+OCSetDeviceId

@@ -5020,3 +5020,34 @@ void OCSetNetworkMonitorHandler(CAAdapterStateChangedCB adapterHandler,
     g_connectionHandler = connectionHandler;
 }
 
+OCStackResult OCGetDeviceId(OCUUIdentity *deviceId)
+{
+    OicUuid_t oicUuid;
+    OCStackResult ret;
+
+    ret = GetDoxmDeviceID(&oicUuid);
+    if (OC_STACK_OK == ret)
+    {
+        memcpy(deviceId, &oicUuid, UUID_IDENTITY_SIZE);
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Device ID Get error");
+    }
+    return ret;
+}
+
+OCStackResult OCSetDeviceId(const OCUUIdentity *deviceId)
+{
+    OicUuid_t oicUuid;
+    OCStackResult ret;
+    OIC_LOG(ERROR, TAG, "Set deviceId DOXM");
+
+    memcpy(&oicUuid, deviceId, UUID_LENGTH);
+    for(int i=0;i < UUID_LENGTH; i++)
+    {
+        OIC_LOG_V(INFO, TAG, "Set Device Id %x", oicUuid.id[i]);
+    }
+    ret = SetDoxmDeviceID(&oicUuid);
+    return ret;
+}

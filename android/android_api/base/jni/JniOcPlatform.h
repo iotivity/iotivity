@@ -393,6 +393,22 @@ extern "C" {
     JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructAccountManagerObject0
         (JNIEnv *, jclass, jstring, jint);
 
+    /*
+     * Class:     org_iotivity_base_OcPlatform
+     * Method:    getDeviceId
+     * Signature: (I)V
+     */
+    JNIEXPORT jbyteArray JNICALL Java_org_iotivity_base_OcPlatform_getDeviceId
+        (JNIEnv *, jobject);
+
+    /*
+     * Class:     org_iotivity_base_OcPlatform
+     * Method:    setDeviceId
+     * Signature: (Ljava/lang/byte;)V
+     */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setDeviceId(
+            JNIEnv *, jobject, jbyteArray);
+
 #ifdef __cplusplus
 }
 #endif
