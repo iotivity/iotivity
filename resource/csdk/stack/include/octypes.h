@@ -919,16 +919,16 @@ typedef enum
 typedef enum
 {
     /** Success status code - START HERE.*/
-    OC_STACK_OK = 0,
-    OC_STACK_RESOURCE_CREATED,
-    OC_STACK_RESOURCE_DELETED,
+    OC_STACK_OK = 0,                /** 203, 205*/
+    OC_STACK_RESOURCE_CREATED,      /** 201*/
+    OC_STACK_RESOURCE_DELETED,      /** 202*/
     OC_STACK_CONTINUE,
-    OC_STACK_RESOURCE_CHANGED,
+    OC_STACK_RESOURCE_CHANGED,      /** 204*/
     /** Success status code - END HERE.*/
 
     /** Error status code - START HERE.*/
     OC_STACK_INVALID_URI = 20,
-    OC_STACK_INVALID_QUERY,
+    OC_STACK_INVALID_QUERY,         /** 400*/
     OC_STACK_INVALID_IP,
     OC_STACK_INVALID_PORT,
     OC_STACK_INVALID_CALLBACK,
@@ -938,13 +938,13 @@ typedef enum
     OC_STACK_INVALID_PARAM,
     OC_STACK_INVALID_OBSERVE_PARAM,
     OC_STACK_NO_MEMORY,
-    OC_STACK_COMM_ERROR,
+    OC_STACK_COMM_ERROR,            /** 504*/
     OC_STACK_TIMEOUT,
     OC_STACK_ADAPTER_NOT_ENABLED,
     OC_STACK_NOTIMPL,
 
     /** Resource not found.*/
-    OC_STACK_NO_RESOURCE,
+    OC_STACK_NO_RESOURCE,           /** 404*/
 
     /** e.g: not supported method or interface.*/
     OC_STACK_RESOURCE_ERROR,
@@ -955,7 +955,7 @@ typedef enum
     OC_STACK_NO_OBSERVERS,
     OC_STACK_OBSERVER_NOT_FOUND,
     OC_STACK_VIRTUAL_DO_NOT_HANDLE,
-    OC_STACK_INVALID_OPTION,
+    OC_STACK_INVALID_OPTION,        /** 402*/
 
     /** The remote reply contained malformed data.*/
     OC_STACK_MALFORMED_RESPONSE,
@@ -965,8 +965,8 @@ typedef enum
     OC_STACK_INVALID_JSON,
 
     /** Request is not authorized by Resource Server. */
-    OC_STACK_UNAUTHORIZED_REQ,
-    OC_STACK_TOO_LARGE_REQ,
+    OC_STACK_UNAUTHORIZED_REQ,      /** 401*/
+    OC_STACK_TOO_LARGE_REQ,         /** 413*/
 
     /** Error code from PDM */
     OC_STACK_PDM_IS_NOT_INITIALIZED,
