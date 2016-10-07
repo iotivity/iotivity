@@ -289,6 +289,7 @@ static void userRequests(void *data)
 
         int request = 0;
         scanf("%d", &request);
+        getchar();
 
         switch (request)
         {
