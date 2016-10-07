@@ -42,7 +42,7 @@
 #define TAG "cloudClient"
 using namespace OC;
 
-#define DEFAULT_HOST            "10.113.68.85"//"127.0.0.1"
+#define DEFAULT_HOST            "127.0.0.1"
 #define DEFAULT_PORT            OC_MULTICAST_PORT
 #define DEFAULT_DEVICEID        "6A757374-776F-726B-4465-765575696430"
 #define DEFAULT_USERID          "6A757374-776F-726B-4465-765575696430"
@@ -63,8 +63,8 @@ static uint16_t g_credId = 0;
 
 ca_cond cond;
 ca_mutex mutex;
-std::string ip("");
-OCCloudProvisioning g_cloudProv(ip, 0);
+std::string ip(DEFAULT_HOST);
+OCCloudProvisioning g_cloudProv(ip, (uint16_t)DEFAULT_PORT);
 
 typedef enum {
     SIGN_UP       = 1,
@@ -187,9 +187,9 @@ void printMenu()
 void handleCB(void* ctx, OCStackResult result, void* data)
 {
     OC_UNUSED(ctx);
-    OC_UNUSED(result);
     OC_UNUSED(data);
 
+    printf("Cloud request Result is == %d", result);
     ca_mutex_lock(mutex);
     ca_cond_signal(cond);
     ca_mutex_unlock(mutex);
@@ -197,9 +197,9 @@ void handleCB(void* ctx, OCStackResult result, void* data)
 
 void handleCB1(OCStackResult result, void *data)
 {
-    OC_UNUSED(result);
     OC_UNUSED(data);
 
+    printf("Cloud request Result is == %d", result);
     ca_mutex_lock(mutex);
     ca_cond_signal(cond);
     ca_mutex_unlock(mutex);
@@ -207,8 +207,8 @@ void handleCB1(OCStackResult result, void *data)
 
 void handleCB2(OCStackResult result, std::string data)
 {
-    OC_UNUSED(result);
-    OC_UNUSED(data);
+    printf("Cloud request Result is == %d", result);
+    printf("ACL ID for the device is == %s", data.c_str());
 
     ca_mutex_lock(mutex);
     ca_cond_signal(cond);
@@ -390,7 +390,7 @@ static void userRequests(void *data)
             res = OCWrapperCertificateIssueRequest( g_cloudProv, handleCB1);
             break;
         case USE_RSA:
-//            CASelectCipherSuite(0x35, CA_ADAPTER_TCP);
+            res = CAManager::setCipherSuite(0x35, OC_ADAPTER_TCP);
             break;
         case SAVE_TRUST_CERT:
             saveTrustCert();
