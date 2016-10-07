@@ -591,7 +591,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_unlinkDevices
 #if defined(__WITH_X509__) || defined(__WITH_TLS__)
     if (!jListener)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "provisionTrustCertChainListener cannot be null");
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "provisionTrustCertChainListener cannot be null");
         return;
     }
 
