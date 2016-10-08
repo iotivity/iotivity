@@ -16,6 +16,8 @@ Cflags: -I${includedir}/resource \
 			-I${includedir}/c_common \
 			-I${svcincludedir}/easy-setup \
 			-I${svcincludedir}/notification \
+			-I${includedir}/resource/stack \
+			-I${includedir}/resource/oc_logger \
 			-I${svcincludedir}/resource-encapsulation \
 			-I${svcincludedir}/resource-container \
 			-I${svcincludedir}/resource-hosting \
