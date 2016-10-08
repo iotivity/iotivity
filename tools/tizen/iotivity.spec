@@ -88,6 +88,7 @@ find . \
      -o -name "*GPL*" \
      -o -name "*MIT*" \
      | sort | uniq \
+     | grep -v 'libcoap-4.1.1/LICENSE.GPL'  \
      | while read file ; do \
           dir=$(dirname -- "$file")
           echo "Files: ${dir}/*"
