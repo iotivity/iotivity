@@ -163,6 +163,8 @@ namespace OIC
 
         void EnrolleeResource::getStatus()
         {
+            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getStatus IN");
+
             if (m_ocResource == nullptr)
             {
                 throw ESBadRequestException("Resource is not initialized");
@@ -193,10 +195,13 @@ namespace OIC
 
                 return;
             }
+            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getStatus OUT");
         }
 
         void EnrolleeResource::getConfiguration()
         {
+            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getConfiguration IN");
+
             if (m_ocResource == nullptr)
             {
                 throw ESBadRequestException("Resource is not initialized");
@@ -225,10 +230,13 @@ namespace OIC
                 m_getConfigurationStatusCb(getConfigurationStatus);
                 return;
             }
+
+            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "getConfiguration OUT");
         }
 
         void EnrolleeResource::provisionProperties(const DeviceProp& deviceProp)
         {
+            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "provisionProperties IN");
             if (m_ocResource == nullptr)
             {
                 throw ESBadRequestException("Resource is not initialized");
@@ -245,6 +253,8 @@ namespace OIC
                     std::bind(&EnrolleeResource::onProvisioningResponse, this,
                     std::placeholders::_1, std::placeholders::_2,
                     std::placeholders::_3)), OC::QualityOfService::HighQos);
+
+            OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "provisionProperties OUT");
         }
     }
 }

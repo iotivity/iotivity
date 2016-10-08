@@ -37,13 +37,12 @@ namespace OIC
 
         EasySetup::EasySetup()
         {
-
         }
 
         EasySetup* EasySetup::getInstance ()
         {
             if (s_instance == nullptr)
-            {
+	    {
                 s_instance = new EasySetup ();
             }
             return s_instance;
@@ -51,12 +50,14 @@ namespace OIC
 
         std::shared_ptr<RemoteEnrollee> EasySetup::createRemoteEnrollee (std::shared_ptr< OC::OCResource > resource)
         {
+            OIC_LOG(DEBUG, EASYSETUP_TAG, "createRemoteEnrollee IN");
+
             if(resource)
             {
                 if(resource->getResourceTypes().at(0) != OC_RSRVD_ES_RES_TYPE_PROV ||
                    resource->connectivityType() & CT_ADAPTER_TCP)
                 {
-                    OIC_LOG_V (DEBUG, EASYSETUP_TAG, "createRemoteEnrollee : invalid resource");
+                    OIC_LOG (ERROR, EASYSETUP_TAG, "Given resource is not valid due to wrong rt or conntype");
                     return nullptr;
                 }
 
@@ -65,11 +66,16 @@ namespace OIC
                 {
                     if(interface.compare(BATCH_INTERFACE) == 0)
                     {
+                        OIC_LOG (DEBUG, EASYSETUP_TAG, "RemoteEnrollee object is succeessfully created");
+                        OIC_LOG_V (DEBUG, EASYSETUP_TAG, "HOST: %s", resource->host().c_str());
+                        OIC_LOG_V (DEBUG, EASYSETUP_TAG, "URI: %s", resource->uri().c_str());
+                        OIC_LOG_V (DEBUG, EASYSETUP_TAG, "SID: %s", resource->sid().c_str());
                         return std::shared_ptr< RemoteEnrollee > (new RemoteEnrollee(resource));
                     }
                 }
             }
-            OIC_LOG_V (DEBUG, EASYSETUP_TAG, "createRemoteEnrollee : invalid resource");
+
+            OIC_LOG (ERROR, EASYSETUP_TAG, "Given resource is NULL");
             return nullptr;
         }
     }
