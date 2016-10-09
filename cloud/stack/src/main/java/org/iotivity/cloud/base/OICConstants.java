@@ -111,6 +111,10 @@ public class OICConstants {
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI + "/"
             + OICConstants.INVITE_URI;
 
+    public static final String ACL_VERIFY_FULL_URI           = "/"
+            + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI + "/"
+            + OICConstants.VERIFY_URI;
+
     public static final String KEEP_ALIVE_FULL_URI           = "/" + PREFIX_OIC
             + "/" + OICConstants.KEEP_ALIVE_URI;
 

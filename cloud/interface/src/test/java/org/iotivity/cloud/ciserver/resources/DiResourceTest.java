@@ -44,6 +44,7 @@ import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.ciserver.DeviceServerSystem.CoapDevicePool;
+import org.iotivity.cloud.ciserver.resources.DiResource.AccountReceiveHandler;
 import org.iotivity.cloud.ciserver.resources.DiResource.DefaultResponseHandler;
 import org.iotivity.cloud.ciserver.resources.DiResource.LinkInterfaceHandler;
 import org.iotivity.cloud.util.Cbor;
@@ -57,21 +58,25 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class DiResourceTest {
-    private static final String           RELAY_URI              = "/di";
-    private static final String           RESOURCE_URI           = "/a/light/0";
-    private String                        mDiServer              = "resourceServerId";
-    private CoapDevice                    mSourceDevice          = mock(
+    private static final String           RELAY_URI                          = "/di";
+    private static final String           RESOURCE_URI                       = "/a/light/0";
+    private static final String           VERIFY_URI                         = "/oic/acl/verify";
+    private String                        mDiServer                          = "resourceServerId";
+    private CoapDevice                    mSourceDevice                      = mock(
             CoapDevice.class);
-    private CoapDevice                    mTargetDevice          = mock(
+    private CoapDevice                    mTargetDevice                      = mock(
             CoapDevice.class);
-    private IResponse                     mRes                   = null;
-    private IRequest                      mReq                   = null;
-    private DeviceServerSystem            mDeviceServerSystem    = new DeviceServerSystem();
-    private final CountDownLatch          mLatch                 = new CountDownLatch(
+    private IResponse                     mRes                               = null;
+    private IRequest                      mReq                               = null;
+    private DeviceServerSystem            mDeviceServerSystem                = new DeviceServerSystem();
+    private final CountDownLatch          mLatch                             = new CountDownLatch(
             1);
-    private Cbor<HashMap<String, Object>> mCbor                  = new Cbor<>();
-    private IRequestChannel               mTargetChannel         = mock(
+    private Cbor<HashMap<String, Object>> mCbor                              = new Cbor<>();
+    private IRequestChannel               mTargetChannel                     = mock(
             IRequestChannel.class);
+
+    @Mock(name = "mASServer")
+    IRequestChannel                       mRequestChannelASServer;
 
     @Mock
     CoapDevicePool                        coapDevicePool;
@@ -80,16 +85,27 @@ public class DiResourceTest {
     IRequestChannel                       requestChannel;
 
     @InjectMocks
-    DiResource                            diHandler              = new DiResource(
+    DiResource                            diHandler                          = new DiResource(
             coapDevicePool);
 
     @InjectMocks
-    LinkInterfaceHandler                  linkInterfaceHandler   = diHandler.new LinkInterfaceHandler(
+    LinkInterfaceHandler                  linkInterfaceHandler               = diHandler.new LinkInterfaceHandler(
             "targetDeviceId", mSourceDevice);
 
     @InjectMocks
-    DefaultResponseHandler                defaultResponseHandler = diHandler.new DefaultResponseHandler(
+    DefaultResponseHandler                defaultResponseHandler             = diHandler.new DefaultResponseHandler(
             "targetDeviceId", mSourceDevice);
+
+    IRequest                              requestDefault                     = makePutRequest();
+    IRequest                              requestLinkInterface               = makePutLinkInterfaceRequest();
+
+    @InjectMocks
+    AccountReceiveHandler                 accountDefaultReceiveHandler       = diHandler.new AccountReceiveHandler(
+            mSourceDevice, requestDefault);
+
+    @InjectMocks
+    AccountReceiveHandler                 accountLinkInterfaceReceiveHandler = diHandler.new AccountReceiveHandler(
+            mSourceDevice, requestLinkInterface);
 
     @Before
     public void setUp() throws Exception {
@@ -134,24 +150,32 @@ public class DiResourceTest {
             }
         }).when(mTargetChannel).sendRequest(Mockito.any(IRequest.class),
                 Mockito.any(CoapDevice.class));
+        Mockito.doAnswer(new Answer<Object>() {
+            @Override
+            public CoapRequest answer(InvocationOnMock invocation)
+                    throws Throwable {
+                Object[] args = invocation.getArguments();
+                CoapRequest request = (CoapRequest) args[0];
+                System.out.println(
+                        "\t----------payload : " + request.getPayloadString());
+                System.out.println(
+                        "\t----------uripath : " + request.getUriPath());
+                System.out.println(
+                        "\t---------uriquery : " + request.getUriQuery());
+                mReq = request;
+                mLatch.countDown();
+                return null;
+            }
+        }).when(mRequestChannelASServer).sendRequest(
+                Mockito.any(IRequest.class), Mockito.any(CoapDevice.class));
     }
 
     @Test
     public void testOnDefaultRequestReceived() throws InterruptedException {
         IRequest request = makePutRequest();
         diHandler.onDefaultRequestReceived(mSourceDevice, request);
-        assertTrue(mReq.getMethod().equals(RequestMethod.PUT));
-        assertTrue(mReq.getUriPath().equals(RESOURCE_URI));
-        assertTrue(mLatch.await(1L, SECONDS));
-    }
-
-    @Test
-    public void testOnLinkInterfaceRequestReceived()
-            throws InterruptedException {
-        IRequest request = makePutLinkInterfaceRequest();
-        diHandler.onLinkInterfaceRequestReceived(mSourceDevice, request);
-        assertTrue(mReq.getMethod().equals(RequestMethod.PUT));
-        assertTrue(mReq.getUriPath().equals(RESOURCE_URI));
+        assertTrue(mReq.getMethod().equals(RequestMethod.GET));
+        assertTrue(mReq.getUriPath().equals(VERIFY_URI));
         assertTrue(mLatch.await(1L, SECONDS));
     }
 
@@ -165,7 +189,32 @@ public class DiResourceTest {
     }
 
     @Test
+    public void testOnAccountReceiveHandlerDeniedonResponseReceived()
+            throws InterruptedException {
+        IResponse response = makeVerifyDeniedContentResponse();
+        accountDefaultReceiveHandler.onResponseReceived(response);
+    }
+
+    @Test
+    public void testOnAccountReceiveHandlerDefaultonResponseReceived()
+            throws InterruptedException {
+        IResponse response = makeVerifyAllowedContentResponse();
+        accountDefaultReceiveHandler.onResponseReceived(response);
+        assertEquals(mReq, requestDefault);
+        assertTrue(mLatch.await(1L, SECONDS));
+    }
+
+    @Test
     public void testOnLinkInterfaceResponseHandleronResponseReceived()
+            throws InterruptedException {
+        IResponse response = makeVerifyAllowedContentResponse();
+        accountLinkInterfaceReceiveHandler.onResponseReceived(response);
+        assertEquals(mReq, requestLinkInterface);
+        assertTrue(mLatch.await(1L, SECONDS));
+    }
+
+    @Test
+    public void testOnAccountReceiveHandlerLinkInterfaceonResponseReceived()
             throws InterruptedException {
         IResponse response = makeContentLinkResponse();
         linkInterfaceHandler.onResponseReceived(response);
@@ -201,6 +250,26 @@ public class DiResourceTest {
         HashMap<String, Object> payloadData = new HashMap<>();
         payloadData.put("state", true);
         payloadData.put("power", 6);
+        IResponse response = MessageBuilder.createResponse(makeGetRequest(),
+                ResponseStatus.CONTENT, ContentFormat.APPLICATION_CBOR,
+                mCbor.encodingPayloadToCbor(payloadData));
+        return response;
+    }
+
+    private IResponse makeVerifyAllowedContentResponse() {
+
+        HashMap<String, Object> payloadData = new HashMap<>();
+        payloadData.put("gp", "Allowed");
+        IResponse response = MessageBuilder.createResponse(makeGetRequest(),
+                ResponseStatus.CONTENT, ContentFormat.APPLICATION_CBOR,
+                mCbor.encodingPayloadToCbor(payloadData));
+        return response;
+    }
+
+    private IResponse makeVerifyDeniedContentResponse() {
+
+        HashMap<String, Object> payloadData = new HashMap<>();
+        payloadData.put("gp", "Denied");
         IResponse response = MessageBuilder.createResponse(makeGetRequest(),
                 ResponseStatus.CONTENT, ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(payloadData));

@@ -47,6 +47,13 @@ public class Constants extends OICConstants {
     public static final String REQ_INVITE          = "invite";
     public static final String REQ_PING_ARRAY      = "inarray";
     public static final String REQ_PING            = "in";
+    public static final String REQ_SEARCH_USER_ID  = "sid";
+    public static final String REQ_REQUEST_METHOD  = "rm";
+    public static final String REQ_REQUEST_URI     = "uri";
+
+    public static final String RESP_GRANT_POLICY   = "gp";
+    public static final String RESP_ACL_ALLOWED    = "Allowed";
+    public static final String RESP_ACL_DENIED     = "Denied";
 
     public static final String REQ_LINKS           = "links";
     public static final String REQ_HREF            = "href";
