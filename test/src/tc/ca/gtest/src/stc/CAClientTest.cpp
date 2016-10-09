@@ -1961,14 +1961,14 @@ TEST_F(CAClientTest_stc, SendConDeleteRequestWithLargePayload_P)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler functionality by sending out non confirm GET request messages using a secure port
- * @target CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler functionality by sending out non confirm GET request messages using a secure port
+ * @target CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @target int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type, const uint8_t *desc, size_t desc_len, uint8_t *result, size_t result_length)
  * @test_data Request messages of CA_GET as method
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
  *                 2. [Server] Select Network by CASelectNetwork API
  *                 3. [Server] Call CARegisterHandler to register handler
- *                 4. [Server] Call CARegisterDTLSCredentialsHandler to set handler
+ *                 4. [Server] Call CAregisterPskCredentialsHandler to set handler
  *                 4. [Server] Call CAStartListeningServer to start server
  *                 5. [Server] Call CAHandleRequestResponse periodically to recieve client request
  *                 6. [Client] Call CAInitialize to initialize CA
@@ -1977,7 +1977,7 @@ TEST_F(CAClientTest_stc, SendConDeleteRequestWithLargePayload_P)
  *                 9. [Client] Call CAStartDiscoveryServer
  *                 10. [Client] Call CAGenerateToken to generate token
  *                 11. [Client] Call CACreateEndpoint to create endpoint for server
- *                 12. [Client] Call CARegisterDTLSCredentialsHandler to set handler
+ *                 12. [Client] Call CAregisterPskCredentialsHandler to set handler
  *                 13. [Client] Register Request Response Handler
  * @procedure  1. [Client] Attempt to send a certain amount of non confirm GET request messages to the server using secure port
  *             2. [Client] Attempt to receive acknowledgments for all the sent messages using that secure port
@@ -1987,7 +1987,7 @@ TEST_F(CAClientTest_stc, SendConDeleteRequestWithLargePayload_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each time
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && defined(__IP__)
+#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecureGetRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -2033,14 +2033,14 @@ TEST_F(CAClientTest_stc, SendSecureGetRequest_P)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler functionality by sending out non confirm POST request messages using a secure port
- * @target CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler functionality by sending out non confirm POST request messages using a secure port
+ * @target CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @target int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type, const uint8_t *desc, size_t desc_len, uint8_t *result, size_t result_length)
  * @test_data Request messages of CA_POST as method
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
  *                 2. [Server] Select Network by CASelectNetwork API
  *                 3. [Server] Call CARegisterHandler to register handler
- *                 4. [Server] Call CARegisterDTLSCredentialsHandler to set handler
+ *                 4. [Server] Call CAregisterPskCredentialsHandler to set handler
  *                 5. [Server] Call CAStartListeningServer to start server
  *                 6. [Server] Call CAHandleRequestResponse periodically to recieve client request
  *                 7. [Client] Call CAInitialize to initialize CA
@@ -2049,7 +2049,7 @@ TEST_F(CAClientTest_stc, SendSecureGetRequest_P)
  *                 10. [Client] Call CAStartDiscoveryServer
  *                 11. [Client] Call CAGenerateToken to generate token
  *                 12. [Client] Call CACreateEndpoint to create endpoint for server
- *                 13. [Client] Call CARegisterDTLSCredentialsHandler to get DTLS PSK credentials
+ *                 13. [Client] Call CAregisterPskCredentialsHandler to get DTLS PSK credentials
  *                 14. [Client] Register Request Response Handler
  * @procedure  1. [Client] Attempt to send a certain amount of non confirm POST request messages to the server using secure port
  *             2. [Client] Attempt to receive acknowledgments for all the sent messages using that secure port
@@ -2059,7 +2059,7 @@ TEST_F(CAClientTest_stc, SendSecureGetRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each time
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && defined(__IP__)
+#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecurePostRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -2105,14 +2105,14 @@ TEST_F(CAClientTest_stc, SendSecurePostRequest_P)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler functionality by sending out non confirm PUT request messages using a secure port
- * @target CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler functionality by sending out non confirm PUT request messages using a secure port
+ * @target CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @target int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type, const uint8_t *desc, size_t desc_len, uint8_t *result, size_t result_length)
  * @test_data Request messages of CA_PUT as method
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
  *                 2. [Server] Select Network by CASelectNetwork API
  *                 3. [Server] Call CARegisterHandler to register handler
- *                 4. [Server] Call CARegisterDTLSCredentialsHandler to set handler
+ *                 4. [Server] Call CAregisterPskCredentialsHandler to set handler
  *                 5. [Server] Call CAStartListeningServer to start server
  *                 6. [Server] Call CAHandleRequestResponse periodically to recieve client request
  *                 7. [Client] Call CAInitialize to initialize CA
@@ -2121,7 +2121,7 @@ TEST_F(CAClientTest_stc, SendSecurePostRequest_P)
  *                 10. [Client] Call CAStartDiscoveryServer
  *                 11. [Client] Call CAGenerateToken to generate token
  *                 12. [Client] Call CACreateEndpoint to create endpoint for server
- *                 13. [Client] Call CARegisterDTLSCredentialsHandler to get DTLS PSK credentials
+ *                 13. [Client] Call CAregisterPskCredentialsHandler to get DTLS PSK credentials
  *                 14. [Client] Register Request Response Handler
  * @procedure  1. [Client] Attempt to send a certain amount of non confirm PUT request messages to the server using secure port
  *             2. [Client] Attempt to receive acknowledgments for all the sent messages using that secure port
@@ -2131,7 +2131,7 @@ TEST_F(CAClientTest_stc, SendSecurePostRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each time
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && defined(__IP__)
+#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecurePutRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -2177,14 +2177,14 @@ TEST_F(CAClientTest_stc, SendSecurePutRequest_P)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler functionality by sending out non confirm DELETE request messages using a secure port
- * @target CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler functionality by sending out non confirm DELETE request messages using a secure port
+ * @target CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @target int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type, const uint8_t *desc, size_t desc_len, uint8_t *result, size_t result_length)
  * @test_data Request messages of CA_DELETE as method
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
  *                 2. [Server] Select Network by CASelectNetwork API
  *                 3. [Server] Call CARegisterHandler to register handler
- *                 4. [Server] Call CARegisterDTLSCredentialsHandler to set handler
+ *                 4. [Server] Call CAregisterPskCredentialsHandler to set handler
  *                 5. [Server] Call CAStartListeningServer to start server
  *                 6. [Server] Call CAHandleRequestResponse periodically to recieve client request
  *                 7. [Client] Call CAInitialize to initialize CA
@@ -2193,7 +2193,7 @@ TEST_F(CAClientTest_stc, SendSecurePutRequest_P)
  *                 10. [Client] Call CAStartDiscoveryServer
  *                 11. [Client] Call CAGenerateToken to generate token
  *                 12. [Client] Call CACreateEndpoint to create endpoint for server
- *                 13. [Client] Call CARegisterDTLSCredentialsHandler to get DTLS PSK credentials
+ *                 13. [Client] Call CAregisterPskCredentialsHandler to get DTLS PSK credentials
  *                 14. [Client] Register Request Response Handler
  * @procedure  1. [Client] Attempt to send a certain amount of non confirm request messages to the server using secure port
  *             2. [Client] Attempt to receive acknowledgments for all the sent messages using that secure port
@@ -2203,7 +2203,7 @@ TEST_F(CAClientTest_stc, SendSecurePutRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each time
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && defined(__IP__)
+#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecureDeleteRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -2249,14 +2249,14 @@ TEST_F(CAClientTest_stc, SendSecureDeleteRequest_P)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler functionality by sending out confirm GET request messages using a secure port
- * @target CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler functionality by sending out confirm GET request messages using a secure port
+ * @target CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @target int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type, const uint8_t *desc, size_t desc_len, uint8_t *result, size_t result_length)
  * @test_data Request messages of CA_GET as method
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
  *                 2. [Server] Select Network by CASelectNetwork API
  *                 3. [Server] Call CARegisterHandler to register handler
- *                 4. [Server] Call CARegisterDTLSCredentialsHandler to set handler
+ *                 4. [Server] Call CAregisterPskCredentialsHandler to set handler
  *                 5. [Server] Call CAStartListeningServer to start server
  *                 6. [Server] Call CAHandleRequestResponse periodically to recieve client request
  *                 7. [Client] Call CAInitialize to initialize CA
@@ -2265,7 +2265,7 @@ TEST_F(CAClientTest_stc, SendSecureDeleteRequest_P)
  *                 10. [Client] Call CAStartDiscoveryServer
  *                 11. [Client] Call CAGenerateToken to generate token
  *                 12. [Client] Call CACreateEndpoint to create endpoint for server
- *                 13. [Client] Call CARegisterDTLSCredentialsHandler to get DTLS PSK credentials
+ *                 13. [Client] Call CAregisterPskCredentialsHandler to get DTLS PSK credentials
  *                 14. [Client] Register Request Response Handler
  * @procedure  1. [Client] Attempt to send a certain amount of confirm get request messages to the server using secure port
  *             2. [Client] Attempt to receive acknowledgments for all the sent messages using that secure port
@@ -2275,7 +2275,7 @@ TEST_F(CAClientTest_stc, SendSecureDeleteRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each time
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && defined(__IP__)
+#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecureConfirmGetRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -2321,14 +2321,14 @@ TEST_F(CAClientTest_stc, SendSecureConfirmGetRequest_P)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler functionality by sending out confirm POST request messages using a secure port
- * @target CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler functionality by sending out confirm POST request messages using a secure port
+ * @target CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @target int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type, const uint8_t *desc, size_t desc_len, uint8_t *result, size_t result_length)
  * @test_data Request messages of CA_POST as method
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
  *                 2. [Server] Select Network by CASelectNetwork API
  *                 3. [Server] Call CARegisterHandler to register handler
- *                 4. [Server] Call CARegisterDTLSCredentialsHandler to set handler
+ *                 4. [Server] Call CAregisterPskCredentialsHandler to set handler
  *                 5. [Server] Call CAStartListeningServer to start server
  *                 6. [Server] Call CAHandleRequestResponse periodically to recieve client request
  *                 7. [Client] Call CAInitialize to initialize CA
@@ -2337,7 +2337,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmGetRequest_P)
  *                 10. [Client] Call CAStartDiscoveryServer
  *                 11. [Client] Call CAGenerateToken to generate token
  *                 12. [Client] Call CACreateEndpoint to create endpoint for server
- *                 13. [Client] Call CARegisterDTLSCredentialsHandler to get DTLS PSK credentials
+ *                 13. [Client] Call CAregisterPskCredentialsHandler to get DTLS PSK credentials
  *                 14. [Client] Register Request Response Handler
  * @procedure  1. [Client] Attempt to send a certain amount of confirm POST request messages to the server using secure port
  *             2. [Client] Attempt to receive acknowledgments for all the sent messages using that secure port
@@ -2347,7 +2347,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmGetRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each time
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && defined(__IP__)
+#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecureConfirmPostRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -2393,14 +2393,14 @@ TEST_F(CAClientTest_stc, SendSecureConfirmPostRequest_P)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler functionality by sending out confirm PUT request messages using a secure port
- * @target CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler functionality by sending out confirm PUT request messages using a secure port
+ * @target CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @target int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type, const uint8_t *desc, size_t desc_len, uint8_t *result, size_t result_length)
  * @test_data Request messages of CA_PUT as method
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
  *                 2. [Server] Select Network by CASelectNetwork API
  *                 3. [Server] Call CARegisterHandler to register handler
- *                 4. [Server] Call CARegisterDTLSCredentialsHandler to set handler
+ *                 4. [Server] Call CAregisterPskCredentialsHandler to set handler
  *                 5. [Server] Call CAStartListeningServer to start server
  *                 6. [Server] Call CAHandleRequestResponse periodically to recieve client request
  *                 7. [Client] Call CAInitialize to initialize CA
@@ -2409,7 +2409,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmPostRequest_P)
  *                 10. [Client] Call CAStartDiscoveryServer
  *                 11. [Client] Call CAGenerateToken to generate token
  *                 12. [Client] Call CACreateEndpoint to create endpoint for server
- *                 13. [Client] Call CARegisterDTLSCredentialsHandler to get DTLS PSK credentials
+ *                 13. [Client] Call CAregisterPskCredentialsHandler to get DTLS PSK credentials
  *                 14. [Client] Register Request Response Handler
  * @procedure  1. [Client] Attempt to send a certain amount of confirm PUT request messages to the server using secure port
  *             2. [Client] Attempt to receive acknowledgments for all the sent messages using that secure port
@@ -2419,7 +2419,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmPostRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each time
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && defined(__IP__)
+#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecureConfirmPutRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -2465,14 +2465,14 @@ TEST_F(CAClientTest_stc, SendSecureConfirmPutRequest_P)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler functionality by sending out confirm DELETE request messages using a secure port
- * @target CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler functionality by sending out confirm DELETE request messages using a secure port
+ * @target CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @target int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type, const uint8_t *desc, size_t desc_len, uint8_t *result, size_t result_length)
  * @test_data Request messages of CA_DELETE as method
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
  *                 2. [Server] Select Network by CASelectNetwork API
  *                 3. [Server] Call CARegisterHandler to register handler
- *                 4. [Server] Call CARegisterDTLSCredentialsHandler to set handler
+ *                 4. [Server] Call CAregisterPskCredentialsHandler to set handler
  *                 5. [Server] Call CAStartListeningServer to start server
  *                 6. [Server] Call CAHandleRequestResponse periodically to recieve client request
  *                 7. [Client] Call CAInitialize to initialize CA
@@ -2481,7 +2481,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmPutRequest_P)
  *                 10. [Client] Call CAStartDiscoveryServer
  *                 11. [Client] Call CAGenerateToken to generate token
  *                 12. [Client] Call CACreateEndpoint to create endpoint for server
- *                 13. [Client] Call CARegisterDTLSCredentialsHandler to get DTLS PSK credentials
+ *                 13. [Client] Call CAregisterPskCredentialsHandler to get DTLS PSK credentials
  *                 14. [Client] Register Request Response Handler
  * @procedure  1. [Client] Attempt to send a certain amount of confirm DELETE request messages to the server using secure port
  *             2. [Client] Attempt to receive acknowledgments for all the sent messages using that secure port
@@ -2491,7 +2491,7 @@ TEST_F(CAClientTest_stc, SendSecureConfirmPutRequest_P)
  *                  3. [CLient] Terminate CA
  * @expected  The number of acknowledgments should be equal to the amount of sent messages each time
  */
-#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && defined(__IP__)
+#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CAClientTest_stc, SendSecureConfirmDeleteRequest_P)
 {
     m_caHelper.setupTestCase(MESSAGE_OUTGOING, MESSAGE_PAYLOAD, MESSAGE_UNICAST);
@@ -2537,14 +2537,14 @@ TEST_F(CAClientTest_stc, SendSecureConfirmDeleteRequest_P)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler functionality by without registering CAGetDTLSCredentialsHandler to send request messages using a secure port
- * @target CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler functionality by without registering CAGetDTLSCredentialsHandler to send request messages using a secure port
+ * @target CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @target int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type, const uint8_t *desc, size_t desc_len, uint8_t *result, size_t result_length)
  * @test_data Request messages
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
  *                 2. [Server] Select Network by CASelectNetwork API
  *                 3. [Server] Call CARegisterHandler to register handler
- *                 4. [Server] Call CARegisterDTLSCredentialsHandler to set handler
+ *                 4. [Server] Call CAregisterPskCredentialsHandler to set handler
  *                 5. [Server] Call CAStartListeningServer to start server
  *                 6. [Server] Call CAHandleRequestResponse periodically to recieve client request
  *                 7. [Client] Call CAInitialize to initialize CA
@@ -2601,14 +2601,14 @@ TEST_F(CAClientTest_stc, SendSecureRequestWithoutDtlsHandler_N)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler functionality by sending request messages using a secure port using large payload
- * @target CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler functionality by sending request messages using a secure port using large payload
+ * @target CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @target int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type, const uint8_t *desc, size_t desc_len, uint8_t *result, size_t result_length)
  * @test_data Request messages with payload > 1 kB
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
  *                 2. [Server] Select Network by CASelectNetwork API
  *                 3. [Server] Call CARegisterHandler to register handler
- *                 4. [Server] Call CARegisterDTLSCredentialsHandler to set handler
+ *                 4. [Server] Call CAregisterPskCredentialsHandler to set handler
  *                 5. [Server] Call CAStartListeningServer to start server
  *                 6. [Server] Call CAHandleRequestResponse periodically to recieve client request
  *                 7. [Client] Call CAInitialize to initialize CA
@@ -2674,8 +2674,8 @@ TEST_F(CAClientTest_stc, SendSecureNonGetRequestWithLargePayload_P)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler functionality by sending out POST request messages using a secure port with large payload
- * @target CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler functionality by sending out POST request messages using a secure port with large payload
+ * @target CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @target int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type, const uint8_t *desc, size_t desc_len, uint8_t *result, size_t result_length)
  * @test_data Request messages of CA_GET as method with payload > 1 kB
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
@@ -2689,7 +2689,7 @@ TEST_F(CAClientTest_stc, SendSecureNonGetRequestWithLargePayload_P)
  *                 9. [Client] Call CAStartDiscoveryServer
  *                 10. [Client] Call CAGenerateToken to generate token
  *                 11. [Client] Call CACreateEndpoint to create endpoint for server
- *                 12. [Client] Call CARegisterDTLSCredentialsHandler to get DTLS PSK credentials
+ *                 12. [Client] Call CAregisterPskCredentialsHandler to get DTLS PSK credentials
  *                 13. [Client] Register Request Response Handler
  * @procedure  1. [Client] Attempt to send a certain amount of non confirm POST request messages to the server using secure port
  *             2. [Client] Attempt to receive acknowledgments for all the sent messages using that secure port
@@ -2747,14 +2747,14 @@ TEST_F(CAClientTest_stc, SendSecureNonPostRequestWithLargePayload_P)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler functionality by sending PUT request messages using a secure port and large payload
- * @target CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler functionality by sending PUT request messages using a secure port and large payload
+ * @target CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @target int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type, const uint8_t *desc, size_t desc_len, uint8_t *result, size_t result_length)
  * @test_data Request messages with payload > 1 kB
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
  *                 2. [Server] Select Network by CASelectNetwork API
  *                 3. [Server] Call CARegisterHandler to register handler
- *                 4. [Server] Call CARegisterDTLSCredentialsHandler to set handler
+ *                 4. [Server] Call CAregisterPskCredentialsHandler to set handler
  *                 5. [Server] Call CAStartListeningServer to start server
  *                 6. [Server] Call CAHandleRequestResponse periodically to recieve client request
  *                 7. [Client] Call CAInitialize to initialize CA
@@ -2820,14 +2820,14 @@ TEST_F(CAClientTest_stc, SendSecureNonPutRequestWithLargePayload_P)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler functionality by sending DELETE request messages using a secure port and large payload
- * @target CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler functionality by sending DELETE request messages using a secure port and large payload
+ * @target CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @target int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type, const uint8_t *desc, size_t desc_len, uint8_t *result, size_t result_length)
  * @test_data Request messages with payload > 1 kB
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
  *                 2. [Server] Select Network by CASelectNetwork API
  *                 3. [Server] Call CARegisterHandler to register handler
- *                 4. [Server] Call CARegisterDTLSCredentialsHandler to set handler
+ *                 4. [Server] Call CAregisterPskCredentialsHandler to set handler
  *                 5. [Server] Call CAStartListeningServer to start server
  *                 6. [Server] Call CAHandleRequestResponse periodically to recieve client request
  *                 7. [Client] Call CAInitialize to initialize CA
@@ -2893,14 +2893,14 @@ TEST_F(CAClientTest_stc, SendSecureNonDeleteRequestWithLargePayload_P)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler functionality by sending confirm GET request messages using a secure port and large payload
- * @target CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler functionality by sending confirm GET request messages using a secure port and large payload
+ * @target CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @target int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type, const uint8_t *desc, size_t desc_len, uint8_t *result, size_t result_length)
  * @test_data Request messages with payload > 1 kB
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
  *                 2. [Server] Select Network by CASelectNetwork API
  *                 3. [Server] Call CARegisterHandler to register handler
- *                 4. [Server] Call CARegisterDTLSCredentialsHandler to set handler
+ *                 4. [Server] Call CAregisterPskCredentialsHandler to set handler
  *                 5. [Server] Call CAStartListeningServer to start server
  *                 6. [Server] Call CAHandleRequestResponse periodically to recieve client request
  *                 7. [Client] Call CAInitialize to initialize CA
@@ -2966,14 +2966,14 @@ TEST_F(CAClientTest_stc, SendSecureConGetRequestWithLargePayload_P)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler functionality by sending confirm POST request messages using a secure port and large payload
- * @target CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler functionality by sending confirm POST request messages using a secure port and large payload
+ * @target CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @target int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type, const uint8_t *desc, size_t desc_len, uint8_t *result, size_t result_length)
  * @test_data Request messages with payload > 1 kB
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
  *                 2. [Server] Select Network by CASelectNetwork API
  *                 3. [Server] Call CARegisterHandler to register handler
- *                 4. [Server] Call CARegisterDTLSCredentialsHandler to set handler
+ *                 4. [Server] Call CAregisterPskCredentialsHandler to set handler
  *                 5. [Server] Call CAStartListeningServer to start server
  *                 6. [Server] Call CAHandleRequestResponse periodically to recieve client request
  *                 7. [Client] Call CAInitialize to initialize CA
@@ -3039,14 +3039,14 @@ TEST_F(CAClientTest_stc, SendSecureConPostRequestWithLargePayload_P)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler functionality by sending confirm PUT request messages using a secure port and large payload
- * @target CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler functionality by sending confirm PUT request messages using a secure port and large payload
+ * @target CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @target int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type, const uint8_t *desc, size_t desc_len, uint8_t *result, size_t result_length)
  * @test_data Request messages with payload > 1 kB
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
  *                 2. [Server] Select Network by CASelectNetwork API
  *                 3. [Server] Call CARegisterHandler to register handler
- *                 4. [Server] Call CARegisterDTLSCredentialsHandler to set handler
+ *                 4. [Server] Call CAregisterPskCredentialsHandler to set handler
  *                 5. [Server] Call CAStartListeningServer to start server
  *                 6. [Server] Call CAHandleRequestResponse periodically to recieve client request
  *                 7. [Client] Call CAInitialize to initialize CA
@@ -3112,14 +3112,14 @@ TEST_F(CAClientTest_stc, SendSecureConPutRequestWithLargePayload_P)
  * @see  void CADestroyToken(CAToken_t token)
  * @see  CAResult_t CAHandleRequestResponse()
  * @see  void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler functionality by sending confirm DELETE request messages using a secure port and large payload
- * @target CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler functionality by sending confirm DELETE request messages using a secure port and large payload
+ * @target CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @target int (*CAGetDTLSPskCredentialsHandler)(CADtlsPskCredType_t type, const uint8_t *desc, size_t desc_len, uint8_t *result, size_t result_length)
  * @test_data Request messages with payload > 1 kB
  * @pre_condition  1. [Server] Call CAInitialize to initialize CA
  *                 2. [Server] Select Network by CASelectNetwork API
  *                 3. [Server] Call CARegisterHandler to register handler
- *                 4. [Server] Call CARegisterDTLSCredentialsHandler to set handler
+ *                 4. [Server] Call CAregisterPskCredentialsHandler to set handler
  *                 5. [Server] Call CAStartListeningServer to start server
  *                 6. [Server] Call CAHandleRequestResponse periodically to recieve client request
  *                 7. [Client] Call CAInitialize to initialize CA

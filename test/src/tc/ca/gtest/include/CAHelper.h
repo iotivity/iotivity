@@ -40,6 +40,9 @@
 #include "cacommon.h"
 #include "cainterface.h"
 #include "cautilinterface.h"
+#include "ca_adapter_net_ssl.h"
+#include "ssl_ciphersuites.h"
+
 #include "CommonUtil.h"
 #include "IotivityTest_Logger.h"
 
@@ -224,7 +227,11 @@ public:
     CAResponseResult_t m_responseResult;
 
 #ifdef __WITH_DTLS__
+    static int s_identityLegth;
+    static int s_pskLength;
     bool setDtls();
+    static void initCipherSuiteList(bool * list);
+    static void dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info);
     static int32_t getDtlsPskCredentials( CADtlsPskCredType_t type, const unsigned char *desc, size_t desc_len, unsigned char *result, size_t result_length);
 #endif
 

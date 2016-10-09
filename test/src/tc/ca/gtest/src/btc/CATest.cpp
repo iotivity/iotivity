@@ -662,14 +662,14 @@ TEST_F(CATest_btc, CADestroyEndpoint_NV_N)
  * @since 2015-02-02
  * @see CAResult_t CAInitialize()
  * @see void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler return value when a valid handler is registered
- * @target   CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler return value when a valid handler is registered
+ * @target   CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @test_data OCDtlsPskCredsBlob object
  * @pre_condition Initialize CA using CAInitialize
- * @procedure call 1. Call CARegisterDTLSCredentialsHandler
+ * @procedure call 1. Call CAregisterPskCredentialsHandler
  *                 2. Check it's return value
  * @post_condition Terminate CA using CATerminate
- * @expected CARegisterDTLSCredentialsHandler return value will be CA_STATUS_OK
+ * @expected CAregisterPskCredentialsHandler return value will be CA_STATUS_OK
  */
 #if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
 TEST_F(CATest_btc, RegisterDtls_P)
@@ -694,14 +694,14 @@ TEST_F(CATest_btc, RegisterDtls_P)
  * @since 2015-02-04
  * @see CAResult_t CAInitialize()
  * @see void CATerminate()
- * @objective Test CARegisterDTLSCredentialsHandler return value when a invalid handler is registered
- * @target   CAResult_t CARegisterDTLSCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
+ * @objective Test CAregisterPskCredentialsHandler return value when a invalid handler is registered
+ * @target   CAResult_t CAregisterPskCredentialsHandler(CAGetDTLSPskCredentialsHandler GetDTLSCredentials)
  * @test_data NULL as GetDTLSCredentials
  * @pre_condition Initialize CA using CAInitialize
- * @procedure call 1. Call CARegisterDTLSCredentialsHandler with NULL handler
+ * @procedure call 1. Call CAregisterPskCredentialsHandler with NULL handler
  *                 2. Check it's return value
  * @post_condition Terminate CA using CATerminate
- * @expected CARegisterDTLSCredentialsHandler return value won't be CA_STATUS_OK
+ * @expected CAregisterPskCredentialsHandler return value won't be CA_STATUS_OK
  */
 #if defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)
 TEST_F(CATest_btc, RegisterDtlsCredentialsWithNullHandler_N)
@@ -712,10 +712,10 @@ TEST_F(CATest_btc, RegisterDtlsCredentialsWithNullHandler_N)
         return;
     }
 
-    CAResult_t result = CARegisterDTLSCredentialsHandler(NULL);
+    CAResult_t result = CAregisterPskCredentialsHandler(NULL);
     if (result != CA_STATUS_OK)
     {
-        SET_FAILURE("CARegisterDTLSCredentialsHandler not returned CA_STATUS_OK with NULL handler");
+        SET_FAILURE("CAregisterPskCredentialsHandler not returned CA_STATUS_OK with NULL handler");
     }
 
     CATerminate();

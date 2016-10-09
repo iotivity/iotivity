@@ -58,7 +58,7 @@ TRANSPORT_CPPDEFINES = [
                             [''],
                             ['__IP__', '__ALL_TRANSPORT__'],
                             ['__TCP__', '__ALL_TRANSPORT__', 'TCP_ADAPTER']
-                        ]
+                       ]
 
 IOTIVITY_LIB_PATH = IOTIVITY_ROOT + '/out/linux/' + TARGET_ARCH + '/' + RELEASE_DIR
 
@@ -71,9 +71,10 @@ IOTIVITY_INCLUDE_PATH = [
                             IOTIVITY_ROOT + '/resource/csdk/connectivity/external/inc',
                             IOTIVITY_ROOT + '/resource/c_common/oic_malloc/include',
                             IOTIVITY_ROOT + '/resource/c_common/oic_string/include',
-                            IOTIVITY_ROOT + '/extlibs/timer',
+                            IOTIVITY_ROOT + '/extlibs/mbedtls/mbedtls/include/mbedtls',
                             IOTIVITY_ROOT + '/resource/c_common',
-                            IOTIVITY_ROOT + '/resource/csdk/logger/include'
+                            IOTIVITY_ROOT + '/resource/csdk/logger/include',
+                            IOTIVITY_ROOT + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include'
                         ]
 
 TC_INCLUDE_PATH = [
@@ -121,12 +122,9 @@ TC_COMMON_SRC = [
                     PROJECT_HOME + '/src/tc/ca/gtest/src/helper/CAHelper.cpp'
                 ]
 
-lib_list = Split('libboost_system libboost_filesystem libboost_thread rt gio-2.0 gobject-2.0 glib-2.0 uuid libdl libexpat pthread gcov coap octbstack connectivity_abstraction timer ocsrm c_common')
+lib_list = Split('libboost_system libboost_filesystem libboost_thread rt gio-2.0 gobject-2.0 glib-2.0 uuid libdl libexpat pthread gcov coap octbstack connectivity_abstraction ocsrm c_common')
 
 if SECURED:
-    lib_list.append('tinydtls')
-
-if 'ALL' in TARGET_TRANSPORT or 'TCP' in TARGET_TRANSPORT:
     lib_list.append('mbedtls')
     lib_list.append('mbedx509')
     lib_list.append('mbedcrypto')

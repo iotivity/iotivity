@@ -27,6 +27,8 @@ std::string CAHelper::s_simulatorIp;
 int CAHelper::s_simulatorPort;
 int CAHelper::s_simulatorSecurePort;
 bool CAHelper::s_bufferEmpty;
+int CAHelper::s_identityLegth;
+int CAHelper::s_pskLength;
 TestCaseInfo CAHelper::s_tcInfo;
 #ifdef TCP_ADAPTER
 int CAHelper::keepAliveCount;
@@ -1527,22 +1529,87 @@ bool CAHelper::attemptReceiveMessage(int totalMessages, int maxAttempts, int fla
 
 bool CAHelper::setDtls()
 {
-    m_result = CARegisterDTLSCredentialsHandler(getDtlsPskCredentials);
+    s_identityLegth = strlen(IDENTITY);
+    s_pskLength = strlen(RS_CLIENT_PSK);
+
+    m_result = CAregisterPskCredentialsHandler(CAHelper::getDtlsPskCredentials);
+    if (m_result != CA_STATUS_OK)
+    {
+        m_failureMessage = "CAregisterPskCredentialsHandler failed";
+        return false;
+    }
+
+    if(m_availableNetwork == CA_ADAPTER_TCP)
+    {
+        m_result = CAregisterSslHandshakeCallback(CAHelper::dtlsHandshakeCb);
+        if (m_result != CA_STATUS_OK)
+        {
+            m_failureMessage = "CAregisterSslHandshakeCallback failed";
+            return false;
+        }
+    }
+
+    CAsetCredentialTypesCallback(CAHelper::initCipherSuiteList);
+
+    if(m_availableNetwork == CA_ADAPTER_IP)
+    {
+        m_result = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, m_availableNetwork);
+    }
+    else if(m_availableNetwork == CA_ADAPTER_TCP)
+    {
+        m_result = CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+    }
 
     if (m_result != CA_STATUS_OK)
     {
-        m_failureMessage = "CARegisterDTLSCredentialsHandler FAILED";
+        m_failureMessage = "CACipherSuite failed";
         return false;
     }
 
     return true;
 }
 
+void CAHelper::initCipherSuiteList(bool * list)
+{
+    IOTIVITYTEST_LOG(DEBUG, "In %s", __func__);
+    if (NULL == list)
+    {
+        IOTIVITYTEST_LOG(DEBUG, "Out %s", __func__);
+        IOTIVITYTEST_LOG(DEBUG, "NULL list param");
+        return;
+    }
+
+    list[0] = true;
+    list[1] = true;
+    IOTIVITYTEST_LOG(DEBUG, "Out %s", __func__);
+}
+
+void CAHelper::dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
+{
+    if (NULL != endpoint)
+    {
+        IOTIVITYTEST_LOG(DEBUG, "Remote device Address %s:%d:", endpoint->addr, endpoint->port);
+    }
+    else
+    {
+        IOTIVITYTEST_LOG(DEBUG, "endpoint is null");
+    }
+
+    if (NULL != info)
+    {
+        IOTIVITYTEST_LOG(DEBUG, "ErrorInfo: %d", info->result);
+    }
+    else
+    {
+        IOTIVITYTEST_LOG(DEBUG, "ErrorInfo is null");
+    }
+}
+
 int32_t CAHelper::getDtlsPskCredentials( CADtlsPskCredType_t type,
         const unsigned char *desc, size_t desc_len,
         unsigned char *result, size_t result_length)
 {
-    printf("CAGetDtlsPskCredentials IN\n");
+    IOTIVITYTEST_LOG(DEBUG, "CAGetDtlsPskCredentials IN\n");
 
     int32_t ret = -1;
 
@@ -1555,40 +1622,40 @@ int32_t CAHelper::getDtlsPskCredentials( CADtlsPskCredType_t type,
     {
         case CA_DTLS_PSK_HINT:
         case CA_DTLS_PSK_IDENTITY:
-        printf("CAGetDtlsPskCredentials CA_DTLS_PSK_IDENTITY\n");
-        if (result_length < sizeof(IDENTITY))
+        IOTIVITYTEST_LOG(DEBUG, "CAGetDtlsPskCredentials CA_DTLS_PSK_IDENTITY\n");
+        if (result_length < s_identityLegth)
         {
-            printf("ERROR : Wrong value for result for storing IDENTITY");
+            IOTIVITYTEST_LOG(DEBUG, "ERROR : Wrong value for result for storing IDENTITY");
             return ret;
         }
 
-        memcpy(result, IDENTITY, sizeof(IDENTITY));
-        ret = sizeof(IDENTITY);
+        memcpy(result, IDENTITY, s_identityLegth);
+        ret = s_identityLegth;
         break;
 
         case CA_DTLS_PSK_KEY:
-        printf("CAGetDtlsPskCredentials CA_DTLS_PSK_KEY\n");
-        if ((desc_len == sizeof(IDENTITY)) &&
-                memcmp(desc, IDENTITY, sizeof(IDENTITY)) == 0)
+        IOTIVITYTEST_LOG(DEBUG, "CAGetDtlsPskCredentials CA_DTLS_PSK_KEY\n");
+        if ((desc_len == s_identityLegth) &&
+                memcmp(desc, IDENTITY, s_identityLegth) == 0)
         {
-            if (result_length < sizeof(RS_CLIENT_PSK))
+            if (result_length < s_pskLength)
             {
-                printf("ERROR : Wrong value for result for storing RS_CLIENT_PSK");
+                IOTIVITYTEST_LOG(DEBUG, "ERROR : Wrong value for result for storing RS_CLIENT_PSK");
                 return ret;
             }
 
-            memcpy(result, RS_CLIENT_PSK, sizeof(RS_CLIENT_PSK));
-            ret = sizeof(RS_CLIENT_PSK);
+            memcpy(result, RS_CLIENT_PSK, s_pskLength);
+            ret = s_pskLength;
         }
         break;
 
         default:
 
-        printf("Wrong value passed for PSK_CRED_TYPE.");
+        IOTIVITYTEST_LOG(DEBUG, "Wrong value passed for PSK_CRED_TYPE.");
         ret = -1;
     }
 
-    printf("CAGetDtlsPskCredentials OUT\n");
+    IOTIVITYTEST_LOG(DEBUG, "CAGetDtlsPskCredentials OUT\n");
     return ret;
 }
 
@@ -1835,7 +1902,7 @@ bool CAHelper::parsingCoapUri(const char* uri, addressSet_t* address, CATranspor
     {
         IOTIVITYTEST_LOG(DEBUG, "uri has '%s' prefix\n", COAPS_PREFIX);
         startIndex = COAPS_PREFIX_LEN;
-        *flags = CA_SECURE;
+        *flags = CA_SECURE|CA_IPV4;
     }
     else if (strncmp(COAP_PREFIX, uri, COAP_PREFIX_LEN) == 0)
     {
@@ -1848,7 +1915,7 @@ bool CAHelper::parsingCoapUri(const char* uri, addressSet_t* address, CATranspor
     {
         IOTIVITYTEST_LOG(DEBUG, "uri has '%s' prefix\n", COAPS_TCP_PREFIX);
         startIndex = COAPS_TCP_PREFIX_LEN;
-        *flags = CA_IPV4;
+        *flags = CA_SECURE|CA_IPV4;
     }
     else if (strncmp(COAP_TCP_PREFIX, uri, COAP_TCP_PREFIX_LEN) == 0)
     {

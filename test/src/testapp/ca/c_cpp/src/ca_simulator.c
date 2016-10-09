@@ -48,10 +48,14 @@
 
 #endif
 
+#include "casimulator.h"
+
 #include "cacommon.h"
 #include "cainterface.h"
-#include "casimulator.h"
 #include "cautilinterface.h"
+#include "casecurityinterface.h"
+#include "ca_adapter_net_ssl.h"
+#include "ssl_ciphersuites.h"
 
 #ifdef ARDUINO
 #include "Arduino.h"
@@ -72,15 +76,9 @@ typedef enum
     SEND_MESSAGE = 0, SELECT_NETWORK, UNSELECT_NETWORK, STOP_SIM, TRANSFER_INFO
 } SimulatorTask;
 
-typedef enum
-{
-    MESSAGE_RESPONSE = 0
-} MessageCommandType;
-
 typedef struct
 {
     SimulatorTask operationType;
-    MessageCommandType messageType;
     CAMethod_t caMethod;
     CAToken_t token;
     uint8_t tokenLength;
@@ -93,13 +91,13 @@ typedef struct
     uint16_t messageId;
 } TestConfiguration;
 
-int g_selectedNetwork = 0;
-bool g_simulatorProcess = true;
-int g_messageId = -1;
 bool g_firstMessage = true;
-int g_mode;
-int g_server = 0;
-int g_client = 1;
+bool g_simulatorProcess = true;
+
+int g_selectedNetwork = 0;
+int g_messageId = -1;
+int g_identityLegth;
+int g_pskLength;
 
 void output(const char *format, ...)
 {
@@ -215,6 +213,44 @@ char* getString(char a[], int length)
 
 #ifdef __WITH_DTLS__
 
+void dtlsHandshakeCb(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
+{
+    if (NULL != endpoint)
+    {
+        output("Remote device Address %s:%d:", endpoint->addr, endpoint->port);
+    }
+    else
+    {
+        output("endpoint is null");
+    }
+
+    if (NULL != info)
+    {
+        output("ErrorInfo: %d", info->result);
+    }
+    else
+    {
+        output("ErrorInfo is null");
+    }
+}
+
+void initCipherSuiteList(bool * list)
+{
+    output("%s In\n", __func__);
+
+    if (NULL == list)
+    {
+        output("Out %s", __func__);
+        output("NULL list param");
+        return;
+    }
+
+    list[0] = true;
+    list[1] = true;
+
+    output("%s Out\n", __func__);
+}
+
 int32_t getDtlsPskCredentials( CADtlsPskCredType_t type, const unsigned char *desc,
         size_t desc_len, unsigned char *result, size_t result_length)
 {
@@ -232,29 +268,29 @@ int32_t getDtlsPskCredentials( CADtlsPskCredType_t type, const unsigned char *de
         case CA_DTLS_PSK_HINT:
         case CA_DTLS_PSK_IDENTITY:
         output("CAGetDtlsPskCredentials CA_DTLS_PSK_IDENTITY\n");
-        if (result_length < sizeof(IDENTITY))
+        if (result_length < g_identityLegth)
         {
             output("ERROR : Wrong value for result for storing IDENTITY\n");
             return ret;
         }
 
-        memcpy(result, IDENTITY, sizeof(IDENTITY));
-        ret = sizeof(IDENTITY);
+        memcpy(result, IDENTITY, g_identityLegth);
+        ret = g_identityLegth;
         break;
 
         case CA_DTLS_PSK_KEY:
         output("CAGetDtlsPskCredentials CA_DTLS_PSK_KEY\n");
-        if ((desc_len == sizeof(IDENTITY)) &&
-                memcmp(desc, IDENTITY, sizeof(IDENTITY)) == 0)
+        if ((desc_len == g_identityLegth) &&
+                memcmp(desc, IDENTITY, g_identityLegth) == 0)
         {
-            if (result_length < sizeof(RS_CLIENT_PSK))
+            if (result_length < g_pskLength)
             {
                 output("ERROR : Wrong value for result for storing RS_CLIENT_PSK\n");
                 return ret;
             }
 
-            memcpy(result, RS_CLIENT_PSK, sizeof(RS_CLIENT_PSK));
-            ret = sizeof(RS_CLIENT_PSK);
+            memcpy(result, RS_CLIENT_PSK, g_pskLength);
+            ret = g_pskLength;
         }
         break;
 
@@ -269,12 +305,43 @@ int32_t getDtlsPskCredentials( CADtlsPskCredType_t type, const unsigned char *de
     return ret;
 }
 
-int registerDtlsHandler()
+int setupSecurity(int selectedTransport)
 {
-    CAResult_t result = CARegisterDTLSCredentialsHandler(getDtlsPskCredentials);
+    g_identityLegth = strlen(IDENTITY);
+    g_pskLength = strlen(RS_CLIENT_PSK);
+
+    int result = CAregisterPskCredentialsHandler(getDtlsPskCredentials);
     if (result != CA_STATUS_OK)
     {
-        output("CARegisterDTLSCredentialsHandler FAILED\n");
+        output("CAregisterPskCredentialsHandler failed. return value is %d\n", result);
+        return 0;
+    }
+
+    if(selectedTransport == CA_ADAPTER_TCP)
+    {
+        result = CAregisterSslHandshakeCallback(dtlsHandshakeCb);
+        if (result != CA_STATUS_OK)
+        {
+            output("CAregisterSslHandshakeCallback failed. return value is %d\n", result);
+            return 0;
+        }
+    }
+
+    CAsetCredentialTypesCallback(initCipherSuiteList);
+
+    if(selectedTransport == CA_ADAPTER_IP)
+    {
+        result = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, selectedTransport);
+    }
+    else if(selectedTransport == CA_ADAPTER_TCP)
+    {
+        result = CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+    }
+
+    if (result != CA_STATUS_OK)
+    {
+        output("CACipherSuite failed. return value is %d\n", result);
+        return 0;
     }
 
     return 1;
@@ -379,7 +446,7 @@ int handleMessage()
     return 1;
 }
 
-int returnResponse(const CAEndpoint_t* endPoint, char* resourceUri, char* payload, int payloadSize,
+int returnResponse(const CAEndpoint_t* endpoint, char* resourceUri, char* payload, int payloadSize,
         CAMessageType_t type, CAResponseResult_t responseCode, uint16_t messageId, CAToken_t token,
         uint8_t tokenLength, CAHeaderOption_t *options, uint8_t numOptions)
 {
@@ -415,7 +482,7 @@ int returnResponse(const CAEndpoint_t* endPoint, char* resourceUri, char* payloa
 
     output("Sending response....\n");
 
-    CAResult_t res = CASendResponse(endPoint, &responseInfo);
+    CAResult_t res = CASendResponse(endpoint, &responseInfo);
 
     output("Response Send....\n");
 
@@ -485,40 +552,33 @@ void unSelectNetwork(void)
     output("unselected network out\n");
 }
 
-void returnMessage(const CAEndpoint_t* endPoint, TestConfiguration* testConfig)
+void returnMessage(const CAEndpoint_t* endpoint, TestConfiguration* testConfig)
 {
     int index = 0;
 
     output("returnMessage in\n");
 
-    switch (testConfig->messageType)
+    for (index = 0; index < testConfig->numberOfTimes; index++)
     {
-        case MESSAGE_RESPONSE:
-            for (index = 0; index < testConfig->numberOfTimes; index++)
-            {
-                returnResponse(endPoint, testConfig->resourceUri, testConfig->payload,
-                        testConfig->payloadSize, CA_MSG_NONCONFIRM, CA_VALID, testConfig->messageId,
-                        testConfig->token, testConfig->tokenLength, NULL, 0);
-                customWait(testConfig->interval);
-            }
-            break;
-        default:
-            break;
+        returnResponse(endpoint, testConfig->resourceUri, testConfig->payload,
+                testConfig->payloadSize, CA_MSG_NONCONFIRM, CA_VALID, testConfig->messageId,
+                testConfig->token, testConfig->tokenLength, NULL, 0);
+        customWait(testConfig->interval);
     }
 
     output("returnMessage out\n");
 }
 
-void requestHandler(const CAEndpoint_t* endPoint, const CARequestInfo_t* requestInfo)
+void requestHandler(const CAEndpoint_t* endpoint, const CARequestInfo_t* requestInfo)
 {
     TestConfiguration testConfig;
     char numConversion[4];
 
     output("requestHandler in\n");
 
-    if (!endPoint)
+    if (!endpoint)
     {
-        output("endPoint is NULL\n");
+        output("endpoint is NULL\n");
         return;
     }
 
@@ -528,7 +588,7 @@ void requestHandler(const CAEndpoint_t* endPoint, const CARequestInfo_t* request
         return;
     }
 
-    output("IP %s, Port %d\n", endPoint->addr, endPoint->port);
+    output("IP %s, Port %d\n", endpoint->addr, endpoint->port);
     output("Message Id: %d\n", requestInfo->info.messageId);
 
     if (requestInfo->info.options)
@@ -559,7 +619,7 @@ void requestHandler(const CAEndpoint_t* endPoint, const CARequestInfo_t* request
 
         output("calling returnResponse ...\n");
 
-        returnResponse(endPoint, SIM_RES_ACK, str, strlen(str), CA_MSG_NONCONFIRM, CA_VALID,
+        returnResponse(endpoint, SIM_RES_ACK, str, strlen(str), CA_MSG_NONCONFIRM, CA_VALID,
                 requestInfo->info.messageId, requestInfo->info.token, requestInfo->info.tokenLength,
                 requestInfo->info.options, requestInfo->info.numOptions);
 
@@ -601,8 +661,6 @@ void requestHandler(const CAEndpoint_t* endPoint, const CARequestInfo_t* request
             case SEND_MESSAGE:
                 output("OperationType: SEND_MESSAGE\n");
 
-                testConfig.messageType = (requestInfo->info.payload[1] - CH_ZERO);
-
                 memset(&numConversion, 0, sizeof(numConversion));
                 strncpy(numConversion, &requestInfo->info.payload[2], sizeof(numConversion));
                 testConfig.numberOfTimes = atoi(numConversion); //4 byte
@@ -635,7 +693,7 @@ void requestHandler(const CAEndpoint_t* endPoint, const CARequestInfo_t* request
                     testConfig.tokenLength = 0;
                 }
 
-                returnMessage(endPoint, &testConfig);
+                returnMessage(endpoint, &testConfig);
 
                 break;
 
@@ -686,7 +744,7 @@ void requestHandler(const CAEndpoint_t* endPoint, const CARequestInfo_t* request
 
         output("calling returnResponse ...\n");
 
-        returnResponse(endPoint, requestInfo->info.resourceUri, requestInfo->info.payload,
+        returnResponse(endpoint, requestInfo->info.resourceUri, requestInfo->info.payload,
                 requestInfo->info.payloadSize, messageType, CA_VALID, requestInfo->info.messageId,
                 requestInfo->info.token, requestInfo->info.tokenLength, requestInfo->info.options,
                 requestInfo->info.numOptions);
@@ -701,27 +759,27 @@ void requestHandler(const CAEndpoint_t* endPoint, const CARequestInfo_t* request
     output("requestHandler out\n");
 }
 
-void responseHandler(const CAEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
+void responseHandler(const CAEndpoint_t* endpoint, const CAResponseInfo_t* responseInfo)
 {
     output("Something Wrong!!! Response Handler shouldn't be called for CA Simulator\n");
     output("Check whether message comes from CA testcases or somewhere else\n");
 
-    if (!endPoint)
+    if (!endpoint)
     {
-        output("endPoint is NULL\n");
+        output("endpoint is NULL\n");
         return;
     }
 
     if (!responseInfo)
     {
-        output("requestInfo is NULL\n");
+        output("responseInfo is NULL\n");
         return;
     }
 
-    output("IP %s, Port %d\n", endPoint->addr, endPoint->port);
+    output("IP %s, Port %d\n", endpoint->addr, endpoint->port);
 }
 
-void errorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t* errorInfo)
+void errorHandler(const CAEndpoint_t *endpoint, const CAErrorInfo_t* errorInfo)
 {
     output("errorHandler in\n");
 
@@ -731,13 +789,13 @@ void errorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t* errorInfo)
         return;
     }
 
-    if (!endPoint)
+    if (!endpoint)
     {
-        output("endPoint is NULL\n");
+        output("endpoint is NULL\n");
         return;
     }
 
-    output("IP %s, Port %d\n", endPoint->addr, endPoint->port);
+    output("IP %s, Port %d\n", endpoint->addr, endpoint->port);
 
     const CAInfo_t *info = &errorInfo->info;
 
@@ -981,13 +1039,6 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-#ifdef __WITH_DTLS__
-    if(!registerDtlsHandler())
-    {
-        return -1;
-    }
-#endif
-
     if(!selectNetwork(argc, argv))
     {
         return -1;
@@ -1002,6 +1053,13 @@ int main(int argc, char *argv[])
     {
         return -1;
     }
+
+#ifdef __WITH_DTLS__
+    if(!setupSecurity(g_selectedNetwork))
+    {
+        return -1;
+    }
+#endif
 
     if(g_selectedNetwork == CA_ADAPTER_IP)
     {

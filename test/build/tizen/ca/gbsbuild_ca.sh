@@ -57,7 +57,7 @@ echo $gbscommand
 
 if eval $gbscommand; then
    echo "GBS build is successful"
-   
+
    echo "Extracting RPM"
    extractCommand="rpm2cpio "$rpm_path/$rpm_name" | cpio -idmv"
    echo $extractCommand

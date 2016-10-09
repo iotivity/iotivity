@@ -859,7 +859,7 @@ TEST_F(CANetworkTest_btc, CAGetNonSecurePortNumber_P)
  * @post_condition Terminate CA using CATerminate
  * @expected It will return ephemeral port number
  */
-#if (defined(__LINUX__) || defined(__ANDROID__) || defined(__TIZEN__)) && defined(__IP__)
+#if (defined(__LINUX__) || defined(__TIZEN__) || defined(__ANDROID__)) && (defined(__IP__) || defined(__TCP__))
 TEST_F(CANetworkTest_btc, CAGetSecurePortNumber_P)
 {
     if (!m_caHelper.initNetwork())
