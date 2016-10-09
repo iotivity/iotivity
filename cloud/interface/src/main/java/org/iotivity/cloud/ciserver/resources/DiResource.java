@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import org.iotivity.cloud.base.OICConstants;
+import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
@@ -39,6 +41,7 @@ import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
+import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
@@ -53,16 +56,14 @@ import org.iotivity.cloud.util.Cbor;
  */
 public class DiResource extends Resource {
 
-    private CoapDevicePool mDevicePool = null;
+    private CoapDevicePool                mDevicePool = null;
+    private IRequestChannel               mASServer   = null;
+    private Cbor<HashMap<String, Object>> mCbor       = new Cbor<>();
 
     public DiResource(CoapDevicePool devicePool) {
         super(Arrays.asList(Constants.REQ_DEVICE_ID));
+        mASServer = ConnectorPool.getConnection("account");
         mDevicePool = devicePool;
-
-        addQueryHandler(
-                Arrays.asList(Constants.RS_INTERFACE + "="
-                        + Constants.LINK_INTERFACE),
-                this::onLinkInterfaceRequestReceived);
     }
 
     private IRequestChannel getTargetDeviceChannel(IRequest request)
@@ -155,31 +156,6 @@ public class DiResource extends Resource {
         }
     }
 
-    /**
-     * API for handling optional method for handling packet contains link
-     * interface.
-     * 
-     * @param srcDevice
-     *            device information contains response channel
-     * @param request
-     *            received request to relay
-     */
-    public void onLinkInterfaceRequestReceived(Device srcDevice,
-            IRequest request) throws ServerException {
-        IRequestChannel requestChannel = getTargetDeviceChannel(request);
-
-        if (requestChannel == null) {
-            throw new NotFoundException();
-        }
-
-        String deviceId = request.getUriPathSegments().get(1);
-
-        requestChannel.sendRequest(
-                MessageBuilder.modifyRequest(request,
-                        extractTargetUriPath(request), null, null, null),
-                new LinkInterfaceHandler(deviceId, srcDevice));
-    }
-
     class DefaultResponseHandler implements IResponseEventHandler {
         private String mTargetDI  = null;
         private Device mSrcDevice = null;
@@ -196,22 +172,96 @@ public class DiResource extends Resource {
         }
     }
 
+    class AccountReceiveHandler implements IResponseEventHandler {
+        private IRequest mRequest   = null;
+        private Device   mSrcDevice = null;
+
+        public AccountReceiveHandler(Device srcDevice, IRequest request) {
+            mRequest = request;
+            mSrcDevice = srcDevice;
+        }
+
+        @Override
+        public void onResponseReceived(IResponse response) {
+            switch (response.getStatus()) {
+                case CONTENT:
+                    HashMap<String, Object> payloadData = mCbor
+                            .parsePayloadFromCbor(response.getPayload(),
+                                    HashMap.class);
+                    checkPayloadException(Constants.RESP_GRANT_POLICY,
+                            payloadData);
+                    String gp = (String) payloadData
+                            .get(Constants.RESP_GRANT_POLICY);
+                    verifyRequest(mSrcDevice, mRequest, gp);
+                    break;
+                default:
+                    mSrcDevice.sendResponse(MessageBuilder.createResponse(
+                            mRequest, ResponseStatus.BAD_REQUEST));
+            }
+
+        }
+    }
+
+    private void verifyRequest(Device srcDevice, IRequest request,
+            String grantPermisson) {
+        switch (grantPermisson) {
+            case Constants.RESP_ACL_ALLOWED:
+                IRequestChannel requestChannel = getTargetDeviceChannel(
+                        request);
+
+                if (requestChannel == null) {
+                    throw new NotFoundException();
+                }
+
+                String deviceId = request.getUriPathSegments().get(1);
+
+                IResponseEventHandler responseHandler = null;
+                if (request.getUriQuery() != null && checkQueryException(
+                        Constants.RS_INTERFACE, request.getUriQueryMap())) {
+                    boolean hasLinkInterface = request.getUriQuery()
+                            .contains(Constants.LINK_INTERFACE);
+                    if (hasLinkInterface) {
+                        responseHandler = new LinkInterfaceHandler(deviceId,
+                                srcDevice);
+                    }
+                } else {
+                    responseHandler = new DefaultResponseHandler(deviceId,
+                            srcDevice);
+                }
+
+                String uriPath = extractTargetUriPath(request);
+                IRequest requestToResource = MessageBuilder
+                        .modifyRequest(request, uriPath, null, null, null);
+                requestChannel.sendRequest(requestToResource, responseHandler);
+                break;
+            case Constants.RESP_ACL_DENIED:
+                srcDevice.sendResponse(MessageBuilder.createResponse(request,
+                        ResponseStatus.UNAUTHORIZED));
+                break;
+            default:
+                srcDevice.sendResponse(MessageBuilder.createResponse(request,
+                        ResponseStatus.BAD_REQUEST));
+        }
+    }
+
     @Override
     public void onDefaultRequestReceived(Device srcDevice, IRequest request)
             throws ServerException {
-        // Find proper request channel using di in URI path field.
-        IRequestChannel requestChannel = getTargetDeviceChannel(request);
+        // verify Permission
+        StringBuffer uriQuery = new StringBuffer();
+        uriQuery.append(Constants.REQ_SEARCH_USER_ID + "="
+                + srcDevice.getUserId() + ";");
+        uriQuery.append(Constants.REQ_DEVICE_ID + "="
+                + request.getUriPathSegments().get(1) + ";");
+        uriQuery.append(
+                Constants.REQ_REQUEST_METHOD + "=" + request.getMethod() + ";");
+        uriQuery.append(Constants.REQ_REQUEST_URI + "="
+                + extractTargetUriPath(request));
 
-        if (requestChannel == null) {
-            throw new NotFoundException();
-        }
+        IRequest verifyRequest = MessageBuilder.createRequest(RequestMethod.GET,
+                OICConstants.ACL_VERIFY_FULL_URI, uriQuery.toString());
 
-        String deviceId = request.getUriPathSegments().get(1);
-
-        requestChannel.sendRequest(
-                MessageBuilder.modifyRequest(request,
-                        extractTargetUriPath(request), null, null, null),
-                new DefaultResponseHandler(deviceId, srcDevice));
+        mASServer.sendRequest(verifyRequest,
+                new AccountReceiveHandler(srcDevice, request));
     }
-
 }
