@@ -40,6 +40,7 @@ import org.iotivity.cloud.accountserver.db.TokenTable;
 import org.iotivity.cloud.accountserver.db.UserTable;
 import org.iotivity.cloud.accountserver.oauth.OAuthProviderFactory;
 import org.iotivity.cloud.accountserver.resources.acl.group.GroupManager;
+import org.iotivity.cloud.accountserver.resources.acl.id.AclResource;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
@@ -106,7 +107,9 @@ public class AccountManager {
 
         // store token information and user information to the DB
         // private group creation and store group information to the DB
-        storeUserTokenInfo(userUuid, userInfo, tokenInfo, did);
+        userUuid = storeUserTokenInfo(userUuid, userInfo, tokenInfo, did);
+
+        AclResource.getInstance().createAcl(userUuid, did);
 
         // make response
         HashMap<String, Object> response = makeSignUpResponse(tokenInfo);
@@ -214,7 +217,7 @@ public class AccountManager {
         return response;
     }
 
-    private void storeUserTokenInfo(String userUuid, UserTable userInfo,
+    private String storeUserTokenInfo(String userUuid, UserTable userInfo,
             TokenTable tokenInfo, String did) {
         // store db
         // the user table is created
@@ -232,6 +235,7 @@ public class AccountManager {
         tokenInfo.setUuid(userUuid);
         AccountDBManager.getInstance().insertAndReplaceRecord(
                 Constants.TOKEN_TABLE, castTokenTableToMap(tokenInfo));
+        return userUuid;
     }
 
     private String checkAuthProviderName(String authProvider) {
@@ -570,6 +574,19 @@ public class AccountManager {
         GroupManager.getInstance().removeGroupDeviceinEveryGroup(uid, di);
 
         // TODO remove device record from the ACL table
+        HashMap<String, Object> getAcl = new HashMap<>();
+
+        getAcl = AclResource.getInstance().getAclid(di);
+        if (getAcl == null || getAcl.containsKey(Constants.KEYFIELD_ACLID)) {
+            throw new BadRequestException("getAcl is invalid");
+        }
+
+        if (getAcl.get(Constants.KEYFIELD_ACLID) == null) {
+            throw new BadRequestException("getAcl is null");
+        }
+
+        AclResource.getInstance()
+                .deleteAcl((String) getAcl.get(Constants.KEYFIELD_ACLID));
     }
 
 }

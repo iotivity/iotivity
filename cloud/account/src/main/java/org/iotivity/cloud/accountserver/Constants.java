@@ -72,6 +72,10 @@ public class Constants extends OICConstants {
 
     public static final String KEYFIELD_DID               = "did";
 
+    public static final String KEYFIELD_UID               = "uid";
+
+    public static final String KEYFIELD_OID               = "oid";
+
     public static final String KEYFIELD_ACLID             = "aclid";
 
     public static final String KEYFIELD_DI                = "di";
