@@ -523,9 +523,11 @@ NSProvider * NSCopyProvider(NSProvider_internal * prov)
     return newProv;
 }
 
-void NSRemoveProvider_internal(NSProvider_internal * prov)
+void NSRemoveProvider_internal(void * data)
 {
-    NS_VERIFY_NOT_NULL_V(prov);
+    NS_VERIFY_NOT_NULL_V(data);
+
+    NSProvider_internal * prov = data;
 
     NSOICFree(prov->messageUri);
     NSOICFree(prov->syncUri);
@@ -548,7 +550,8 @@ void NSRemoveProvider(NSProvider * prov)
 OCStackResult NSInvokeRequest(OCDoHandle * handle,
         OCMethod method, const OCDevAddr * addr,
         const char * queryUrl, OCPayload * payload,
-        void * callbackFunc, void * callbackData, OCConnectivityType type)
+        void * callbackFunc, void * callbackData,
+        OCClientContextDeleter cd, OCConnectivityType type)
 {
     int mutexRet = pthread_mutex_lock(*(NSGetStackMutex()));
     NS_VERIFY_NOT_NULL(mutexRet != 0 ? NULL : (void *)1, OC_STACK_ERROR);
@@ -557,7 +560,7 @@ OCStackResult NSInvokeRequest(OCDoHandle * handle,
 
     cbdata.cb = callbackFunc;
     cbdata.context = callbackData;
-    cbdata.cd = NULL;
+    cbdata.cd = cd;
 
     OCStackResult ret = OCDoResource(handle, method, queryUrl, addr,
                                      payload, type, NS_QOS, &cbdata, NULL, 0);
