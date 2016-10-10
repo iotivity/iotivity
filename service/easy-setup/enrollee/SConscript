@@ -51,7 +51,7 @@ enrollee_env.PrependUnique(CPPPATH = [
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/inc',
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/src'])
 
-if target_os not in ['tizen']:
+if target_os not in ['linux', 'tizen']:
     enrollee_env.PrependUnique(CPPPATH = [
         enrollee_env.get('SRC_DIR') + '/extlibs/sqlite3'])
 
