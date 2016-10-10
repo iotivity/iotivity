@@ -107,10 +107,19 @@ public class SimpleServer {
     private final static String TAG = SimpleServer.class.getSimpleName();
 
     public static void main(String[] args) {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                stopSimpleServer();
+            }
+        });
+
         startSimpleServer();
+        while (true) {
+            sleep(1);
+        }
     }
 
-    public void sleep(int seconds) {
+    public static void sleep(int seconds) {
         try {
             Thread.sleep(seconds * 1000);
         } catch (InterruptedException e) {
