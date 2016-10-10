@@ -524,7 +524,9 @@ OCRepPayload* constructResponseOfWiFi(OCEntityHandlerRequest *ehRequest)
     }
 
     OIC_LOG(INFO, ES_RH_TAG, "constructResponse wifi res");
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_HREF, OC_RSRVD_ES_URI_WIFI);
+    OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_WIFI);
+    OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
+    OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_WIFI);
 
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = {gWiFiResource.numMode, 0, 0};
     int64_t *modes_64 = (int64_t *)OICMalloc(gWiFiResource.numMode * sizeof(int64_t));
@@ -566,8 +568,11 @@ OCRepPayload* constructResponseOfCloud(OCEntityHandlerRequest *ehRequest)
         return NULL;
     }
 
-    OIC_LOG(INFO, ES_RH_TAG, "constructResponse prov res");
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_HREF, OC_RSRVD_ES_URI_CLOUDSERVER);
+    OIC_LOG(INFO, ES_RH_TAG, "constructResponse cloudserver res");
+    OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_CLOUDSERVER);
+    OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
+    OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER);
+
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHCODE, gCloudResource.authCode);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHPROVIDER, gCloudResource.authProvider);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CISERVER, gCloudResource.ciServer);
@@ -598,8 +603,11 @@ OCRepPayload* constructResponseOfDevConf(OCEntityHandlerRequest *ehRequest)
         return NULL;
     }
 
-    OIC_LOG(INFO, ES_RH_TAG, "constructResponse prov res");
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_HREF, OC_RSRVD_ES_URI_DEVCONF);
+    OIC_LOG(INFO, ES_RH_TAG, "constructResponse devconf res");
+    OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_DEVCONF);
+    OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
+    OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_DEVCONF);
+
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_DEVNAME, gDevConfResource.devName);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_MODELNUMBER, gDevConfResource.modelNumber);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LOCATION, gDevConfResource.location);
@@ -624,7 +632,11 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
     }
 
     // Requested interface is Link list interface
-    if(ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_LL))
+    //if(ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_LL))
+    if(!ehRequest->query ||
+        (ehRequest->query && !strcmp(ehRequest->query, "")) ||
+        (ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_LL)) ||
+        (ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT)))
     {
         const OCRepPayload *arrayPayload[3] = {NULL};
 
@@ -733,18 +745,61 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
         }
 
         size_t dimensions[MAX_REP_ARRAY_DEPTH] = {childResCnt, 0, 0};
-        OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_ES_LINKS, arrayPayload, dimensions);
 
-        return payload;
-    } else if (!ehRequest->query ||
-        (ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_BATCH)) ||
-        (ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT)))
+        if(!ehRequest->query ||
+            (ehRequest->query && !strcmp(ehRequest->query, "")) ||
+            (ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT)))
+        {
+            OIC_LOG(INFO, ES_RH_TAG, "constructResponse prov res");
+            OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_PROV);
+            OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
+            OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_LL);
+            OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_BATCH);
+            OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_PROV);
+
+            OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PROVSTATUS, gProvResource.status);
+            OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_LAST_ERRORCODE, gProvResource.lastErrCode);
+
+            OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_ES_LINKS, arrayPayload, dimensions);
+        }
+        else    // link list interface
+        {
+            OCRepPayload* head = payload;
+            OCRepPayload* nextPayload = NULL;
+
+            childResCnt = 0;
+
+            for(int i = 0 ; i < childResCnt ; ++i)
+            {
+                nextPayload = arrayPayload[i];
+                if(nextPayload != NULL)
+                {
+                    payload->next = nextPayload;
+                    payload = payload->next;
+                }
+            }
+            if(head->next != NULL)
+            {
+                payload = head->next;
+            }
+            else
+            {
+                payload = head;
+            }
+        }
+    } else if (
+        ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_BATCH))
+
     {
         OIC_LOG(INFO, ES_RH_TAG, "constructResponse prov res");
-        OCRepPayloadSetPropString(payload, OC_RSRVD_ES_HREF, OC_RSRVD_ES_URI_PROV);
+        OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_PROV);
+        OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
+        OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_LL);
+        OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_BATCH);
+        OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_PROV);
+
         OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PROVSTATUS, gProvResource.status);
         OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_LAST_ERRORCODE, gProvResource.lastErrCode);
-        OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LINKS, gProvResource.ocfWebLinks);
     }
 
     if(gWriteUserdataCb)
@@ -963,22 +1018,65 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
     }
 
     OCRepPayload *getResp = NULL;
+    *payload = NULL;
 
     if(ehRequest->resource == gProvResource.handle)
     {
-        getResp = constructResponseOfProv(ehRequest);
+        if(ehRequest->query &&
+            strcmp(ehRequest->query, "") &&
+            !CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_LL) &&
+            !CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_BATCH) &&
+            !CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT))
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Not supported Interface");
+            return OC_EH_BAD_REQ;
+        }
+        else
+        {
+            getResp = constructResponseOfProv(ehRequest);
+        }
     }
     else if(ehRequest->resource == gWiFiResource.handle)
     {
-        getResp = constructResponseOfWiFi(ehRequest);
+        if(ehRequest->query &&
+            strcmp(ehRequest->query, "") &&
+            !CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT))
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Not supported Interface");
+            return OC_EH_BAD_REQ;
+        }
+        else
+        {
+            getResp = constructResponseOfWiFi(ehRequest);
+        }
     }
     else if(ehRequest->resource == gCloudResource.handle)
     {
-        getResp = constructResponseOfCloud(ehRequest);
+        if(ehRequest->query &&
+            strcmp(ehRequest->query, "") &&
+            !CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT))
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Not supported Interface");
+            return OC_EH_BAD_REQ;
+        }
+        else
+        {
+            getResp = constructResponseOfCloud(ehRequest);
+        }
     }
     else if(ehRequest->resource == gDevConfResource.handle)
     {
-        getResp = constructResponseOfDevConf(ehRequest);
+        if(ehRequest->query &&
+            strcmp(ehRequest->query, "") &&
+            !CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT))
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Not supported Interface");
+            return OC_EH_BAD_REQ;
+        }
+        else
+        {
+            getResp = constructResponseOfDevConf(ehRequest);
+        }
     }
 
     if (!getResp)
@@ -1012,19 +1110,60 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
 
     if(ehRequest->resource == gProvResource.handle)
     {
-        updateProvResource(ehRequest, input);
+        if(ehRequest->query &&
+            strcmp(ehRequest->query, "") &&
+            !CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_BATCH) &&
+            !CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT))
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Not supported Interface");
+            return OC_EH_BAD_REQ;
+        }
+        else
+        {
+            updateProvResource(ehRequest, input);
+        }
     }
     else if(ehRequest->resource == gWiFiResource.handle)
     {
-        updateWiFiResource(ehRequest, input);
+        if(ehRequest->query &&
+            strcmp(ehRequest->query, "") &&
+            !CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT))
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Not supported Interface");
+            return OC_EH_BAD_REQ;
+        }
+        else
+        {
+            updateWiFiResource(ehRequest, input);
+        }
     }
     else if(ehRequest->resource == gCloudResource.handle)
     {
-        updateCloudResource(ehRequest, input);
+        if(ehRequest->query &&
+            strcmp(ehRequest->query, "") &&
+            !CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT))
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Not supported Interface");
+            return OC_EH_BAD_REQ;
+        }
+        else
+        {
+            updateCloudResource(ehRequest, input);
+        }
     }
     else if(ehRequest->resource == gDevConfResource.handle)
     {
-        updateDevConfResource(ehRequest, input);
+        if(ehRequest->query &&
+            strcmp(ehRequest->query, "") &&
+            !CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT))
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Not supported Interface");
+            return OC_EH_BAD_REQ;
+        }
+        else
+        {
+            updateDevConfResource(ehRequest, input);
+        }
     }
 
     OCRepPayload *getResp = NULL;
@@ -1062,7 +1201,7 @@ OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest * ehRequest,
 {
     (void) ehRequest;
     (void) payload;
-    OCEntityHandlerResult ehResult = OC_EH_METHOD_NOT_ALLOWED;
+    OCEntityHandlerResult ehResult = OC_EH_BAD_REQ;
 
     return ehResult;
 }
