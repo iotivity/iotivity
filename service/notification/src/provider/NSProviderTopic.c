@@ -444,31 +444,51 @@ void * NSTopicSchedule(void * ptr)
                 case TASK_SUBSCRIBE_TOPIC:
                 {
                     NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPIC : ");
+                    NSTopicSyncResult * topicSyncResult = (NSTopicSyncResult *) node->taskData;
+                    pthread_mutex_lock(topicSyncResult->mutex);
                     NSCacheElement * newObj = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
-                    if (newObj)
+                    NSCacheTopicSubData * subData =
+                            (NSCacheTopicSubData *) topicSyncResult->topicData;
+                    if (!newObj)
                     {
-                        newObj->data = node->taskData;
-                        newObj->next = NULL;
-                        if (NSProviderStorageWrite(consumerTopicList, newObj) == NS_OK)
+                        OICFree(subData->topicName);
+                        OICFree(subData);
+                        pthread_cond_signal(topicSyncResult->condition);
+                        pthread_mutex_unlock(topicSyncResult->mutex);
+                    }
+                    else
+                    {
+                        if (NSProviderStorageRead(registeredTopicList, subData->topicName))
                         {
-                            NSCacheTopicSubData * topicSubData =
-                                    (NSCacheTopicSubData *) node->taskData;
-                            NSSendTopicUpdationToConsumer(topicSubData->id);
+                            newObj->data = topicSyncResult->topicData;
+                            newObj->next = NULL;
+                            NSProviderStorageWrite(consumerTopicList, newObj);
+                            NSSendTopicUpdationToConsumer(subData->id);
+                            topicSyncResult->result = NS_OK;
                         }
                     }
+                    pthread_cond_signal(topicSyncResult->condition);
+                    pthread_mutex_unlock(topicSyncResult->mutex);
+
                 }
                     break;
                 case TASK_UNSUBSCRIBE_TOPIC:
                 {
-                    NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPIC : ");
-                    NSCacheTopicSubData * topicSubData = (NSCacheTopicSubData *) node->taskData;
-                    if (NSProviderDeleteConsumerTopic(consumerTopicList,
-                            (NSCacheTopicSubData *) node->taskData) == NS_OK)
+                    NS_LOG(DEBUG, "CASE TASK_UNSUBSCRIBE_TOPIC : ");
+                    NSTopicSyncResult * topicSyncResult = (NSTopicSyncResult *) node->taskData;
+                    pthread_mutex_lock(topicSyncResult->mutex);
+                    NSCacheTopicSubData * topicSubData =
+                            (NSCacheTopicSubData *) topicSyncResult->topicData;
+                    if (NSProviderDeleteConsumerTopic(consumerTopicList, topicSubData) == NS_OK)
                     {
                         NSSendTopicUpdationToConsumer(topicSubData->id);
+                        topicSyncResult->result = NS_OK;
                     }
                     OICFree(topicSubData->topicName);
                     OICFree(topicSubData);
+                    pthread_cond_signal(topicSyncResult->condition);
+                    pthread_mutex_unlock(topicSyncResult->mutex);
+
                 }
                     break;
                 case TASK_REGISTER_TOPIC:
@@ -478,7 +498,7 @@ void * NSTopicSchedule(void * ptr)
 
                     pthread_mutex_lock(topicSyncResult->mutex);
                     topicSyncResult->result = NSRegisterTopic(
-                            (const char *) topicSyncResult->topicName);
+                            (const char *) topicSyncResult->topicData);
                     pthread_cond_signal(topicSyncResult->condition);
                     pthread_mutex_unlock(topicSyncResult->mutex);
                 }
@@ -489,7 +509,7 @@ void * NSTopicSchedule(void * ptr)
                     NSTopicSyncResult * topicSyncResult = (NSTopicSyncResult *) node->taskData;
                     pthread_mutex_lock(topicSyncResult->mutex);
                     topicSyncResult->result = NSUnregisterTopic(
-                            (const char *) topicSyncResult->topicName);
+                            (const char *) topicSyncResult->topicData);
                     pthread_cond_signal(topicSyncResult->condition);
                     pthread_mutex_unlock(topicSyncResult->mutex);
                 }
