@@ -134,7 +134,6 @@ else:
 
 if target_os in ['tizen', 'linux']:
 	liboctbstack_env.ParseConfig("pkg-config --cflags --libs uuid")
-if target_os in ['tizen']:
 	liboctbstack_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 
 if target_os == 'arduino':
