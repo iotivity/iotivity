@@ -95,7 +95,7 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
         NS_LOG_V(DEBUG, "subscribe query : %s", query);
         OCStackResult ret = NSInvokeRequest(&(connections->messageHandle),
                               OC_REST_OBSERVE, connections->addr, query, NULL,
-                              NSConsumerMessageListener, NULL, type);
+                              NSConsumerMessageListener, NULL, NULL, type);
         NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(NSOCResultToSuccess(ret),
                             NS_ERROR, NSUpdateObserveResult(provider_internal, query));
         NSOICFree(query);
@@ -109,7 +109,7 @@ NSResult NSConsumerSubscribeProvider(NSProvider * provider)
         NS_LOG_V(DEBUG, "subscribe query : %s", query);
         ret = NSInvokeRequest(&(connections->syncHandle),
                               OC_REST_OBSERVE, connections->addr, query, NULL,
-                              NSConsumerSyncInfoListener, NULL, type);
+                              NSConsumerSyncInfoListener, NULL, NULL, type);
         NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(NSOCResultToSuccess(ret),
                             NS_ERROR, NSUpdateObserveResult(provider_internal, query));
         NSOICFree(query);
@@ -529,7 +529,7 @@ OCStackResult NSSendSyncInfo(NSSyncInfo * syncInfo, OCDevAddr * addr)
 
     OCStackResult ret = NSInvokeRequest(NULL, OC_REST_POST, addr,
                             uri, (OCPayload*)payload,
-                            NSConsumerCheckPostResult, NULL, type);
+                            NSConsumerCheckPostResult, NULL, NULL, type);
     NSOICFree(uri);
 
     return ret;
@@ -603,10 +603,13 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
             connections->isSubscribing = false;
             connections = connections->next;
         }
+
+        NSRemoveProvider_internal(provider);
     }
     else if (task->taskType == TASK_CONSUMER_REQ_TOPIC_LIST)
     {
-        NSProvider_internal * provider = (NSProvider_internal *)task->taskData;
+        NSProvider_internal * provider = NSCopyProvider_internal(task->taskData);
+        NSRemoveProvider_internal((NSProvider_internal *)task->taskData);
 
         NSProviderConnectionInfo * connections = provider->connection;
         NS_VERIFY_NOT_NULL_V(connections);
@@ -631,7 +634,8 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         NS_LOG_V(DEBUG, "topic query : %s", query);
 
         OCStackResult ret = NSInvokeRequest(NULL, OC_REST_GET, connections->addr,
-                                query, NULL, NSIntrospectTopic, (void *) provider, type);
+                                query, NULL, NSIntrospectTopic, (void *) provider,
+                                NSRemoveProvider_internal, type);
         NS_VERIFY_STACK_SUCCESS_V(NSOCResultToSuccess(ret));
 
         NSOICFree(query);
@@ -713,9 +717,11 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         NS_LOG_V(DEBUG, "topic query : %s", query);
 
         OCStackResult ret = NSInvokeRequest(NULL, OC_REST_POST, connections->addr,
-                                query, (OCPayload*)payload, NSConsumerCheckPostResult, NULL, type);
+                                query, (OCPayload*)payload, NSConsumerCheckPostResult,
+                                NULL, NULL, type);
         NS_VERIFY_STACK_SUCCESS_V(NSOCResultToSuccess(ret));
 
+        NSRemoveProvider_internal(provider);
         NSOICFree(query);
         NSOICFree(topicUri);
     }
@@ -810,10 +816,9 @@ OCStackApplicationResult NSIntrospectTopic(
 {
     (void) handle;
 
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(clientResponse, OC_STACK_KEEP_TRANSACTION,
-            NSRemoveProvider_internal((NSProvider_internal *) ctx));
-    NS_VERIFY_STACK_SUCCESS_WITH_POST_CLEANING(NSOCResultToSuccess(clientResponse->result),
-            OC_STACK_KEEP_TRANSACTION, NSRemoveProvider_internal((NSProvider_internal *) ctx));
+    NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(clientResponse->result),
+                            OC_STACK_KEEP_TRANSACTION);
 
     NS_LOG_V(DEBUG, "GET response income : %s:%d",
             clientResponse->devAddr.addr, clientResponse->devAddr.port);
@@ -828,7 +833,7 @@ OCStackApplicationResult NSIntrospectTopic(
 
     NSTopicLL * newTopicLL = NSGetTopicLL(clientResponse);
 
-    NSProvider_internal * provider = (NSProvider_internal *) ctx;
+    NSProvider_internal * provider = NSCopyProvider_internal((NSProvider_internal *) ctx);
     provider->topicLL = NSCopyTopicLL(newTopicLL);
 
     NS_LOG(DEBUG, "build NSTask");
