@@ -34,22 +34,22 @@
 using namespace OC;
 
 // Set of strings for each of platform Info fields
-std::string dateOfManufacture = "myDateOfManufacture";
-std::string firmwareVersion = "my.Firmware.Version";
-std::string manufacturerName = "myName";
-std::string operatingSystemVersion = "myOS";
-std::string hardwareVersion = "myHardwareVersion";
-std::string platformID = "myPlatformID";
-std::string manufacturerLink = "www.myurl.com";
-std::string modelNumber = "myModelNumber";
-std::string platformVersion = "platformVersion";
-std::string supportLink = "www.mysupporturl.com";
-std::string systemTime = "mySystemTime";
+std::string  platformID = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+std::string  manufacturerName = "myName";
+std::string  manufacturerLink = "https://www.example.com";
+std::string  modelNumber = "myModelNumber";
+std::string  dateOfManufacture = "2016-01-15";
+std::string  platformVersion = "platformVersion";
+std::string  operatingSystemVersion = "myOS";
+std::string  hardwareVersion = "myHardwareVersion";
+std::string  firmwareVersion = "1.0";
+std::string  supportLink = "https://www.examplesupport.com";
+std::string  systemTime = "2016-01-15T11.01";
 
 // Set of strings for each of device info fields
-std::string deviceName = "Bill's Battlestar";
-std::string specVersion = "myDeviceSpecVersion";
-std::string dataModelVersions = "myDeviceModelVersion";
+std::string  deviceName = "Bill's Battlestar";
+std::string  specVersion = "core.1.1.0";
+std::string  dataModelVersions = "res.1.1.0";
 
 // OCPlatformInfo Contains all the platform info to be stored
 OCPlatformInfo platformInfo;
