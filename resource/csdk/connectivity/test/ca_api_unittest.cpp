@@ -288,39 +288,6 @@ TEST_F(CATests, SendRequestTestWithInvalidAddress)
 }
 
 // CASendRequest TC
-TEST(SendRequestTest, DISABLED_TC_16_Positive_01)
-{
-    addr = (char *) ADDRESS;
-    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr, PORT, &tempRep);
-
-    memset(&requestData, 0, sizeof(CAInfo_t));
-    CAGenerateToken(&tempToken, tokenLength);
-    requestData.token = tempToken;
-    requestData.tokenLength = tokenLength;
-
-    int length = strlen(NORMAL_INFO_DATA) + strlen("a/light");
-    requestData.payload = (CAPayload_t) calloc(length, sizeof(char));
-    if(!requestData.payload)
-    {
-        CADestroyToken(tempToken);
-        FAIL() << "requestData.payload allocation failed";
-    }
-    snprintf((char*)requestData.payload, length, NORMAL_INFO_DATA, "a/light");
-    requestData.payloadSize = length + 1;
-    requestData.type = CA_MSG_NONCONFIRM;
-
-    memset(&requestInfo, 0, sizeof(CARequestInfo_t));
-    requestInfo.method = CA_GET;
-    requestInfo.info = requestData;
-
-    EXPECT_EQ(CA_STATUS_OK, CASendRequest(tempRep, &requestInfo));
-
-    CADestroyToken(tempToken);
-    CADestroyEndpoint(tempRep);
-    free(requestData.payload);
-    tempRep = NULL;
-}
-
 // check return value when a NULL is passed instead of a valid CARequestInfo_t address
 TEST_F(CATests, SendRequestTestWithNullAddr)
 {
@@ -333,6 +300,7 @@ TEST_F(CATests, SendRequestTestWithNullAddr)
     tempRep = NULL;
 }
 
+// CASendResponse TC
 TEST_F(CATests, SendResponseTestWithInvalidCode)
 {
     EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
@@ -365,82 +333,6 @@ TEST_F(CATests, SendResponseTestWithInvalidCode)
         free(responseData.payload);
         tempRep = NULL;
     }
-}
-
-// CASendResponse TC
-TEST(SendResponseTest, DISABLED_TC_19_Positive_01)
-{
-    addr = (char *) ADDRESS;
-    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr, PORT, &tempRep);
-
-    memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.type = CA_MSG_NONCONFIRM;
-    responseData.messageId = 1;
-    responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
-    responseData.dataType = CA_RESPONSE_DATA;
-
-    EXPECT_TRUE(responseData.payload != NULL);
-    if(!responseData.payload)
-    {
-        CADestroyEndpoint(tempRep);
-        return;
-    }
-
-    memcpy(responseData.payload, "response payload", sizeof("response payload"));
-    responseData.payloadSize = sizeof("response payload");
-
-    CAGenerateToken(&tempToken, tokenLength);
-    requestData.token = tempToken;
-    requestData.tokenLength = tokenLength;
-
-    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_CONTENT;
-    responseInfo.info = responseData;
-
-    EXPECT_EQ(CA_STATUS_OK, CASendResponse(tempRep, &responseInfo));
-
-    CADestroyToken(tempToken);
-    CADestroyEndpoint(tempRep);
-    free(responseData.payload);
-    tempRep = NULL;
-}
-
-// check return value when address is NULL as multicast
-TEST(SendResponseTest, DISABLED_TC_20_Negative_01)
-{
-    addr = NULL;
-    CACreateEndpoint(CA_DEFAULT_FLAGS, CA_ADAPTER_IP, addr, 0, &tempRep);
-
-    memset(&responseData, 0, sizeof(CAInfo_t));
-    responseData.type = CA_MSG_NONCONFIRM;
-    responseData.messageId = 1;
-    responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
-    responseData.dataType = CA_RESPONSE_DATA;
-    EXPECT_TRUE(responseData.payload != NULL);
-
-    if(!responseData.payload)
-    {
-        CADestroyEndpoint(tempRep);
-        return;
-    }
-
-    memcpy(responseData.payload, "response payload", sizeof("response payload"));
-    responseData.payloadSize = sizeof("response payload");
-
-    CAGenerateToken(&tempToken, tokenLength);
-    requestData.token = tempToken;
-    requestData.tokenLength = tokenLength;
-
-    memset(&responseInfo, 0, sizeof(CAResponseInfo_t));
-    responseInfo.result = CA_CONTENT;
-    responseInfo.info = responseData;
-
-    EXPECT_EQ(CA_STATUS_OK, CASendResponse(tempRep, &responseInfo));
-
-    CADestroyToken(tempToken);
-    CADestroyEndpoint(tempRep);
-    free (responseData.payload);
-    tempRep = NULL;
 }
 
 // check return value NULL is passed instead of a valid CAResponseInfo_t address
