@@ -35,6 +35,12 @@ bool isExit = false;
 std::string REMOTE_SERVER_ADDRESS;
 std::string mainProvider;
 
+FILE* server_fopen(const char *path, const char *mode)
+{
+    (void)path;
+    return fopen("oic_ns_provider_db.dat", mode);
+}
+
 void onNotificationPostedCb(OIC::Service::NSMessage *notification)
 {
     std::cout << "id : " << notification->getMessageId() << std::endl;
@@ -128,7 +134,12 @@ int main(void)
     pthread_t OCThread = NULL;
 
     std::cout << "start Iotivity" << std::endl;
-    if (OCInit1(OC_CLIENT, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS) != OC_STACK_OK)
+
+    // open oic_db
+    static OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
+    OCRegisterPersistentStorageHandler(&ps);
+
+    if (OCInit1(OC_CLIENT_SERVER, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS) != OC_STACK_OK)
     {
         std::cout << "OCInit fail" << std::endl;
         return 0;
