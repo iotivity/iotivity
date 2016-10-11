@@ -542,10 +542,6 @@ static OCStackApplicationResult SecurityVersionDiscoveryHandler(void *ctx, OCDoH
 
                 OIC_LOG(INFO, TAG, "Exiting SecVersionDiscoveryHandler.");
                 DeleteVerBinData(ptrVer);
-                if(pDInfo->isSingleDiscovery)
-                {
-                    pDInfo->isFound = true;
-                }
             }
         }
     }
@@ -630,12 +626,23 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
                 return OC_STACK_DELETE_TRANSACTION;
             }
 
+            if(pDInfo->isSingleDiscovery)
+            {
+                pDInfo->isFound = true;
+            }
+
+/*
+ * Since security version discovery does not used anymore, disable security version discovery.
+ * Need to discussion to removing all version discovery related codes.
+ */
+#if 0
             res = SecurityVersionDiscovery(pDInfo, clientResponse);
             if(OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, TAG, "Failed to SecurityVersionDiscovery");
                 return OC_STACK_DELETE_TRANSACTION;
             }
+#endif
 
             OIC_LOG(INFO, TAG, "Exiting SecurePortDiscoveryHandler.");
         }
