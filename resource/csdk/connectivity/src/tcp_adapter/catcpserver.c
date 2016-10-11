@@ -38,6 +38,7 @@
 #endif
 
 #include "catcpinterface.h"
+#include "caipnwmonitor.h"
 #include <coap/pdu.h>
 #include "caadapterutils.h"
 #include "camutex.h"
@@ -1184,14 +1185,26 @@ void CATCPDisconnectAll()
         svritem = (CATCPSessionInfo_t *) u_arraylist_get(caglobals.tcp.svrlist, i);
         if (svritem && svritem->fd >= 0)
         {
+#ifdef __WITH_TLS__
+            if (CA_STATUS_OK != CAcloseSslConnection(&svritem->sep.endpoint))
+            {
+                OIC_LOG(ERROR, TAG, "Failed to close TLS session");
+            }
+#endif
             shutdown(svritem->fd, SHUT_RDWR);
             close(svritem->fd);
-
             OICFree(svritem->data);
             svritem->data = NULL;
+
+            // pass the connection information to CA Common Layer.
+            if (g_connectionCallback)
+            {
+                g_connectionCallback(&(svritem->sep.endpoint), false);
+            }
         }
     }
     u_arraylist_destroy(caglobals.tcp.svrlist);
+    caglobals.tcp.svrlist = NULL;
     ca_mutex_unlock(g_mutexObjectList);
 }
 

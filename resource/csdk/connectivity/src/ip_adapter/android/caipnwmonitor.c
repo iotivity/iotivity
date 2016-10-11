@@ -29,8 +29,10 @@
 
 #include <arpa/inet.h>
 #include <linux/if.h>
+#include <coap/utlist.h>
 
 #include "caadapterutils.h"
+#include "caipnwmonitor.h"
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -39,32 +41,74 @@
 #define TAG "OIC_CA_IP_MONITOR"
 #define NETLINK_MESSAGE_LENGTH  (4096)
 
-static CAIPConnectionStateChangeCallback g_networkChangeCallback;
+/**
+ * Used to storing adapter changes callback interface.
+ */
+static struct CAIPCBData_t *g_adapterCallbackList = NULL;
 
+/**
+ * Create new interface item to add in activated interface list.
+ * @param[in]  index    Network interface index number.
+ * @param[in]  name     Network interface name.
+ * @param[in]  family   Network interface family type.
+ * @param[in]  addr     New interface address.
+ * @param[in]  flags    The active flag word of a device.
+ * @return  CAInterface_t objects.
+ */
 static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family,
                                          const char *addr, int flags);
 
+/**
+ * Add created new interface item activated interface list.
+ * @param[in]  iflist   Network interface array list.
+ * @param[in]  index    Network interface index number.
+ * @param[in]  name     Network interface name.
+ * @param[in]  family   Network interface family type.
+ * @param[in]  addr     New interface address.
+ * @param[in]  flags    The active flag word of a device.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
 static CAResult_t CAAddInterfaceItem(u_arraylist_t *iflist, int index,
                                      const char *name, int family, const char *addr, int flags);
 
+/**
+ * Initialize JNI interface.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
 CAResult_t CAIPJniInit();
 
 /**
- * destroy JNI interface.
+ * Destroy JNI interface.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 static CAResult_t CAIPDestroyJniInterface();
 
 #define MAX_INTERFACE_INFO_LENGTH 1024 // allows 32 interfaces from SIOCGIFCONF
 
-CAResult_t CAIPStartNetworkMonitor()
+CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
+                                   CATransportAdapter_t adapter)
 {
-    return CAIPJniInit();
+    CAResult_t res = CAIPJniInit();
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "failed to initialize ip jni interface");
+        return res;
+    }
+
+    return CAIPSetNetworkMonitorCallback(callback, adapter);
 }
 
-CAResult_t CAIPStopNetworkMonitor()
+CAResult_t CAIPStopNetworkMonitor(CATransportAdapter_t adapter)
 {
-    return CAIPDestroyJniInterface();
+    CAIPUnSetNetworkMonitorCallback(adapter);
+
+    // if there is no callback to pass the changed status, stop monitoring.
+    if (!g_adapterCallbackList)
+    {
+        return CAIPDestroyJniInterface();
+    }
+
+    return CA_STATUS_OK;
 }
 
 int CAGetPollingInterval(int interval)
@@ -72,9 +116,66 @@ int CAGetPollingInterval(int interval)
     return interval;
 }
 
-void CAIPSetNetworkMonitorCallback(CAIPConnectionStateChangeCallback callback)
+static void CAIPPassNetworkChangesToAdapter(CANetworkStatus_t status)
 {
-    g_networkChangeCallback = callback;
+    CAIPCBData_t *cbitem = NULL;
+    LL_FOREACH(g_adapterCallbackList, cbitem)
+    {
+        if (cbitem && cbitem->adapter)
+        {
+            cbitem->callback(cbitem->adapter, status);
+        }
+    }
+}
+
+CAResult_t CAIPSetNetworkMonitorCallback(CAIPAdapterStateChangeCallback callback,
+                                         CATransportAdapter_t adapter)
+{
+    if (!callback)
+    {
+        OIC_LOG(ERROR, TAG, "callback is null");
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    CAIPCBData_t *cbitem = NULL;
+    LL_FOREACH(g_adapterCallbackList, cbitem)
+    {
+        if (cbitem && adapter == cbitem->adapter && callback == cbitem->callback)
+        {
+            OIC_LOG(DEBUG, TAG, "this callback is already added");
+            return CA_STATUS_OK;
+        }
+    }
+
+    cbitem = (CAIPCBData_t *)OICCalloc(1, sizeof(*cbitem));
+    if (!cbitem)
+    {
+        OIC_LOG(ERROR, TAG, "Malloc failed");
+        return CA_STATUS_FAILED;
+    }
+
+    cbitem->adapter = adapter;
+    cbitem->callback = callback;
+    LL_APPEND(g_adapterCallbackList, cbitem);
+
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAIPUnSetNetworkMonitorCallback(CATransportAdapter_t adapter)
+{
+    CAIPCBData_t *cbitem = NULL;
+    CAIPCBData_t *tmpCbitem = NULL;
+    LL_FOREACH_SAFE(g_adapterCallbackList, cbitem, tmpCbitem)
+    {
+        if (cbitem && adapter == cbitem->adapter)
+        {
+            OIC_LOG(DEBUG, TAG, "remove specific callback");
+            LL_DELETE(g_adapterCallbackList, cbitem);
+            OICFree(cbitem);
+            return CA_STATUS_OK;
+        }
+    }
+    return CA_STATUS_OK;
 }
 
 CAInterface_t *CAFindInterfaceChange()
@@ -464,7 +565,7 @@ Java_org_iotivity_ca_CaIpInterface_caIpStateEnabled(JNIEnv *env, jclass class)
     (void)class;
 
     OIC_LOG(DEBUG, TAG, "Wifi is in Activated State");
-    g_networkChangeCallback(CA_ADAPTER_IP, CA_INTERFACE_UP);
+    CAIPPassNetworkChangesToAdapter(CA_INTERFACE_UP);
 }
 
 JNIEXPORT void JNICALL
@@ -474,5 +575,5 @@ Java_org_iotivity_ca_CaIpInterface_caIpStateDisabled(JNIEnv *env, jclass class)
     (void)class;
 
     OIC_LOG(DEBUG, TAG, "Wifi is in Deactivated State");
-    g_networkChangeCallback(CA_ADAPTER_IP, CA_INTERFACE_DOWN);
+    CAIPPassNetworkChangesToAdapter(CA_INTERFACE_DOWN);
 }

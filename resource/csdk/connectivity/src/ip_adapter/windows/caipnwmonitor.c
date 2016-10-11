@@ -32,6 +32,7 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "caipnwmonitor.h"
 
 #define TAG "IP_MONITOR"
 
@@ -39,7 +40,8 @@
  * @todo Implement network interface monitoring in case the IP changes.
  * Not critical for win32 bring-up.
  */
-CAResult_t CAIPStartNetworkMonitor()
+CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
+                                   CATransportAdapter_t adapter)
 {
     return CA_STATUS_OK;
 }
@@ -48,7 +50,8 @@ CAResult_t CAIPStartNetworkMonitor()
  * @todo Implement network interface monitoring in case the IP changes.
  * Not critical for win32 bring-up.
  */
-CAResult_t CAIPStopNetworkMonitor()
+CAResult_t CAIPStopNetworkMonitor(CATransportAdapter_t adapter)
+
 {
     return CA_STATUS_OK;
 }
@@ -78,9 +81,10 @@ CAInterface_t *CAFindInterfaceChange()
  * @todo Implement network interface monitoring.
  * Not critical for win32 bring-up.
  */
-void CAIPSetNetworkMonitorCallback(CAIPConnectionStateChangeCallback callback)
+CAResult_t CAIPSetNetworkMonitorCallback(CAIPAdapterStateChangeCallback callback,
+                                         CATransportAdapter_t adapter)
 {
-    return;
+    return CA_NOT_SUPPORTED;
 }
 
 bool IsValidAdapter(PIP_ADAPTER_ADDRESSES pAdapterAddr, int desiredIndex, uint16_t family)

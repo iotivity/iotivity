@@ -32,6 +32,7 @@
 #include "cainterface.h"
 #include "caadapterinterface.h"
 #include "caipadapter.h"
+#include "caipnwmonitor.h"
 #include "caipadapterutils_eth.h"
 #include "caadapterutils.h"
 #include "oic_malloc.h"
