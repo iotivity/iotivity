@@ -240,6 +240,14 @@ static OCVirtualResources GetTypeOfVirtualURI(const char *uriInRequest)
         return OC_MQ_BROKER_URI;
     }
 #endif //MQ_BROKER
+
+#ifdef TCP_ADAPTER
+    else if (strcmp(uriInRequest, OC_RSRVD_KEEPALIVE_URI) == 0)
+    {
+        return OC_KEEPALIVE_RESOURCE_URI;
+    }
+#endif
+
     return OC_UNKNOWN_URI;
 }
 
@@ -825,7 +833,14 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 
     }
 #endif
-
+#ifdef TCP_ADAPTER
+    else if (OC_KEEPALIVE_RESOURCE_URI == virtualUriInRequest)
+    {
+        // Received request for a keepalive
+        OIC_LOG(INFO, TAG, "Request is for KeepAlive Request");
+        discoveryResult = HandleKeepAliveRequest(request, resource);
+    }
+#endif
     /**
      * Step 2: Send the discovery response
      *
@@ -858,31 +873,39 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
     }
     else
-    #endif
-#ifdef ROUTING_GATEWAY
+#endif
+#if ROUTING_GATEWAY
     // Gateway uses the RMHandleGatewayRequest to respond to the request.
     if (OC_GATEWAY_URI != virtualUriInRequest)
 #endif
     {
-        if(discoveryResult == OC_STACK_OK)
+#if TCP_ADAPTER
+        // KeepAlive uses the HandleKeepAliveRequest to respond to the request.
+        if (OC_KEEPALIVE_RESOURCE_URI != virtualUriInRequest)
+#endif
         {
-            SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
-        }
-        else if(((request->devAddr.flags &  OC_MULTICAST) == false) &&
-            (request->devAddr.adapter != OC_ADAPTER_RFCOMM_BTEDR) &&
-            (request->devAddr.adapter != OC_ADAPTER_GATT_BTLE))
-        {
-            OIC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d) discovery request",
-                discoveryResult, virtualUriInRequest);
-            SendNonPersistantDiscoveryResponse(request, resource, NULL,
-                (discoveryResult == OC_STACK_NO_RESOURCE) ? OC_EH_RESOURCE_NOT_FOUND : OC_EH_ERROR);
-        }
-        else
-        {
-            // Ignoring the discovery request as per RFC 7252, Section #8.2
-            OIC_LOG(INFO, TAG, "Silently ignoring the request since no useful data to send. ");
-            // the request should be removed. since it never remove and causes a big memory waste.
-            FindAndDeleteServerRequest(request);
+            if(discoveryResult == OC_STACK_OK)
+            {
+                SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
+            }
+            else if(((request->devAddr.flags &  OC_MULTICAST) == false) &&
+                (request->devAddr.adapter != OC_ADAPTER_RFCOMM_BTEDR) &&
+                (request->devAddr.adapter != OC_ADAPTER_GATT_BTLE))
+            {
+                OIC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d) discovery request",
+                    discoveryResult, virtualUriInRequest);
+                SendNonPersistantDiscoveryResponse(request, resource, NULL,
+                    (discoveryResult == OC_STACK_NO_RESOURCE) ?
+                            OC_EH_RESOURCE_NOT_FOUND : OC_EH_ERROR);
+            }
+            else
+            {
+                // Ignoring the discovery request as per RFC 7252, Section #8.2
+                OIC_LOG(INFO, TAG, "Silently ignoring the request since no useful data to send.");
+                // the request should be removed.
+                // since it never remove and causes a big memory waste.
+                FindAndDeleteServerRequest(request);
+            }
         }
     }
 
