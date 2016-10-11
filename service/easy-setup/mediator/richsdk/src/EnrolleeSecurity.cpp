@@ -58,16 +58,6 @@ namespace OIC
             m_ocResource = resource;
         }
 
-        void EnrolleeSecurity::registerCallbackHandler(
-            const SecurityProvStatusCb securityProvStatusCb,
-            const SecurityPinCb securityPinCb,
-            const SecProvisioningDbPathCb secProvisioningDbPathCb)
-        {
-            m_securityProvStatusCb = securityProvStatusCb;
-            m_securityPinCb = securityPinCb;
-            m_secProvisioningDbPathCb = secProvisioningDbPathCb;
-        }
-
         void EnrolleeSecurity::convertUUIDToString(const uint8_t uuid[UUID_SIZE],
                                                               std::string& uuidString)
         {

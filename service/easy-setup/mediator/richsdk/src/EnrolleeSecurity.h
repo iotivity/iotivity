@@ -52,10 +52,6 @@ namespace OIC
         public:
             EnrolleeSecurity(std::shared_ptr< OC::OCResource > resource,
             const std::string secDbPath);
-            void registerCallbackHandler(
-                const SecurityProvStatusCb securityProvStatusCb,
-                const SecurityPinCb securityPinCb,
-                const SecProvisioningDbPathCb secProvisioningDbPathCb);
             ESResult provisionOwnership();
             std::string getUUID() const;
 
