@@ -230,6 +230,14 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
 OCStackResult BindResourceTypeToResource(OCResource* resource,
                                             const char *resourceTypeName);
 
+/**
+ * Convert OCStackResult to CAResponseResult_t.
+ *
+ * @param ocCode OCStackResult code.
+ * @param method OCMethod method the return code replies to.
+ * @return ::CA_CONTENT on OK, some other value upon failure.
+ */
+CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method);
 
 /**
  * Converts a CAResult_t type to a OCStackResult type.

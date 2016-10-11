@@ -71,6 +71,9 @@ extern "C" {
 /** MQ Broker URI.*/
 #define OC_RSRVD_WELL_KNOWN_MQ_URI            "/oic/ps"
 
+/** KeepAlive URI.*/
+#define OC_RSRVD_KEEPALIVE_URI                "/oic/ping"
+
 
 /** Presence */
 

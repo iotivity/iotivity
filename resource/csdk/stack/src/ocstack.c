@@ -305,15 +305,6 @@ static CAResult_t OCSelectNetwork();
 static OCStackResult CAResponseToOCStackResult(CAResponseResult_t caCode);
 
 /**
- * Convert OCStackResult to CAResponseResult_t.
- *
- * @param caCode OCStackResult code.
- * @param method OCMethod method the return code replies to.
- * @return ::CA_CONTENT on OK, some other value upon failure.
- */
-static CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method);
-
-/**
  * Convert OCTransportFlags_t to CATransportModifiers_t.
  *
  * @param ocConType OCTransportFlags_t input.
@@ -1342,7 +1333,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                         type = PAYLOAD_TYPE_REPRESENTATION ;
                     }
 #ifdef TCP_ADAPTER
-                    else if (strcmp(cbNode->requestUri, KEEPALIVE_RESOURCE_URI) == 0)
+                    else if (strcmp(cbNode->requestUri, OC_KEEPALIVE_RESOURCE_URI) == 0)
                     {
                         type = PAYLOAD_TYPE_REPRESENTATION;
                     }
@@ -1800,15 +1791,6 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
 void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* requestInfo)
 {
     OIC_LOG(DEBUG, TAG, "Enter OCHandleRequests");
-
-#ifdef TCP_ADAPTER
-    if (requestInfo->info.resourceUri &&
-            strcmp(requestInfo->info.resourceUri, KEEPALIVE_RESOURCE_URI) == 0)
-    {
-        HandleKeepAliveRequest(endPoint, requestInfo);
-        return;
-    }
-#endif
 
     OCStackResult requestResult = OC_STACK_ERROR;
 
