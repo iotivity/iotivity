@@ -53,22 +53,6 @@ namespace OIC
             m_deviceId = resource->sid();
         }
 
-#ifdef __WITH_DTLS__
-        ESResult RemoteEnrollee::registerSecurityCallbackHandler(
-                const SecurityPinCb securityPinCb,
-                const SecProvisioningDbPathCb secProvisioningDbPathCb)
-        {
-            // No need to check NULL for m_secProvisioningDbPathCB as this is not a mandatory
-            // callback function. If m_secProvisioningDbPathCB is NULL, provisioning manager
-            // in security layer will try to find the PDM.db file in the local path.
-            // If PDM.db is found, the provisioning manager operations will succeed.
-            // Otherwise all the provisioning manager operations will fail.
-            m_secProvisioningDbPathCb = secProvisioningDbPathCb;
-            m_securityPinCb = securityPinCb;
-            return ES_OK;
-        }
-#endif //__WITH_DTLS__
-
         void RemoteEnrollee::securityStatusHandler(
                 const std::shared_ptr< SecProvisioningStatus > status) const
         {
@@ -239,9 +223,6 @@ namespace OIC
                     std::placeholders::_1);
             //TODO : DBPath is passed empty as of now. Need to take dbpath from application.
             m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
-
-            m_enrolleeSecurity->registerCallbackHandler(securityProvStatusCb, m_securityPinCb,
-                                                        m_secProvisioningDbPathCb);
 
             res = m_enrolleeSecurity->provisionOwnership();
 
