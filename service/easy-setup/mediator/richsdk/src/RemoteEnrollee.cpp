@@ -222,13 +222,17 @@ namespace OIC
                     this,
                     std::placeholders::_1);
             //TODO : DBPath is passed empty as of now. Need to take dbpath from application.
-            m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+            if(!m_enrolleeSecurity.get())
+            {
+                m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+            }
 
             res = m_enrolleeSecurity->provisionOwnership();
 
             std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
                             std::make_shared< SecProvisioningStatus >(m_enrolleeSecurity->getUUID(), res);
             m_securityProvStatusCb(securityProvisioningStatus);
+            m_enrolleeSecurity.reset();
 #else
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG,"Mediator is unsecured built.");
 
@@ -392,11 +396,15 @@ namespace OIC
             if(!(cloudProp.getCloudID().empty() && cloudProp.getCredID() <= 0))
             {
                 ESResult res = ESResult::ES_ERROR;
-                m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+                if(!m_enrolleeSecurity.get())
+                {
+                    m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+                }
+
 
                 res = m_enrolleeSecurity->provisionSecurityForCloudServer(cloudProp.getCloudID(),
                                                                           cloudProp.getCredID());
-
+                m_enrolleeSecurity.reset();
                 if(res != ESResult::ES_OK)
                 {
                     m_cloudResource = nullptr;
