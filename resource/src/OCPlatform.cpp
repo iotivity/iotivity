@@ -123,6 +123,14 @@ namespace OC
                                     connectivityType, resourceHandler, errorHandler, QoS);
         }
 
+        OCStackResult findResourceList(const std::string& host, const std::string& resourceURI,
+                    OCConnectivityType connectivityType, FindResListCallback resourceHandler,
+                    QualityOfService QoS)
+        {
+            return OCPlatform_impl::Instance().findResourceList(host, resourceURI,
+                                    connectivityType, resourceHandler, QoS);
+        }
+
         OCStackResult getDeviceInfo(const std::string& host,
                                  const std::string& deviceURI,
                                  OCConnectivityType connectivityType,
