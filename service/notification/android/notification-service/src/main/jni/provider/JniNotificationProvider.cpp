@@ -124,9 +124,9 @@ OIC::Service::NSMessage *getNativeMessage(JNIEnv *env, jobject jMsg)
         LOGE("Error: jfieldID for message ttl is null");
         return nullptr;
     }
-    jlong jttl = (jlong) env->GetObjectField( jMsg, fid_ttl);
-    uint64_t  ttl = jttl;
 
+    jlong jttl = (jlong) env->GetLongField( jMsg, fid_ttl);
+    uint64_t  ttl = jttl;
     LOGD("Message ID: %lld\n", ttl);
 
     // Message Title

@@ -70,6 +70,9 @@ if target_os == 'linux':
 if target_os == 'android':
 	notification_env.AppendUnique(CCFLAGS = ['-frtti', '-fexceptions'])
 	notification_env.AppendUnique(LIBS = ['gnustl_shared','log'])
+	notification_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libnotification_provider.so'])
+	notification_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libnotification_consumer.so'])
+	
 
 	if not env.get('RELEASE'):
 		notification_env.AppendUnique(LIBS = ['log'])

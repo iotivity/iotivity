@@ -262,13 +262,6 @@ public class MainActivity extends Activity {
                     Log.i(TAG, "#" + notiId + " notified ..");
                     TvLog.append("Send Notitication(Msg ID: " + notiId + ")\n");
                     notiId++;
-                    org.iotivity.service.ns.common.Message notiMessage = new org.iotivity.service.ns.common.Message(title,body,"provider");
-                    notiMessage.setTTL(10);
-                    notiMessage.setTime(DateFormat.getDateTimeInstance().format(new Date()));
-                    notiMessage.setTopic(topic);
-                    MediaContents media = new MediaContents("Video");
-                    notiMessage.setMediaContents(media);
-                    mProviderSample.SendMessage(notiMessage);
                 }
                 break;
 
