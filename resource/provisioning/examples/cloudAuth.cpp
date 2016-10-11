@@ -401,8 +401,6 @@ OCStackApplicationResult handleCloudSignOutResponse(void *ctx,
         OIC_LOG_V(ERROR, TAG, "Sign Out OK");
     }
 
-    SessionFree();
-
     OIC_LOG_V(DEBUG, TAG, "OUT: %s", __func__);
 
 exit:
