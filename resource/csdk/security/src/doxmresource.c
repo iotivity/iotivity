@@ -1189,6 +1189,16 @@ OCStackResult GetDoxmDeviceID(OicUuid_t *deviceID)
     return OC_STACK_ERROR;
 }
 
+OCStackResult GetDoxmIsOwned(bool *isOwned)
+{
+    if (isOwned && gDoxm)
+    {
+       *isOwned = gDoxm->owned;
+        return OC_STACK_OK;
+    }
+    return OC_STACK_ERROR;
+}
+
 OCStackResult SetDoxmDeviceID(const OicUuid_t *deviceID)
 {
     bool isPT = false;

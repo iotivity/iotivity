@@ -103,6 +103,14 @@ OCStackResult SetDoxmDeviceID(const OicUuid_t *deviceID);
 OCStackResult GetDoxmDevOwnerId(OicUuid_t *devownerid);
 
 /**
+ * Gets the bool state of "isOwned" property on the doxm resource.
+ *
+ * @param isOwned a pointer to be assigned to isOwned property
+ * @return ::OC_STACK_OK if isOwned is assigned correctly, else ::OC_STACK_ERROR. 
+ */
+OCStackResult GetDoxmIsOwned(bool *isOwned);
+
+/**
  * Gets the OicUuid_t value for the rowneruuid of the doxm resource.
  *
  * @param rowneruuid a pointer to be assigned to the rowneruuid property
