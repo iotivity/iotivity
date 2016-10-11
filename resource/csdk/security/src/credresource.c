@@ -1165,7 +1165,7 @@ exit:
     return false;
 }
 
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 static bool IsSameCert(const OicSecCert_t* cert1, const OicSecCert_t* cert2)
 {
     VERIFY_NON_NULL(TAG, cert1, WARNING);
@@ -1177,7 +1177,7 @@ static bool IsSameCert(const OicSecCert_t* cert1, const OicSecCert_t* cert2)
 exit:
     return false;
 }
-#endif //#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#endif //#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 
 /**
  * Compares credential
@@ -1214,7 +1214,7 @@ static CredCompareResult_t CompareCredential(const OicSecCred_t * l, const OicSe
             }
             break;
         }
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         case ASYMMETRIC_KEY:
         case SIGNED_ASYMMETRIC_KEY:
         {
@@ -1260,7 +1260,7 @@ static CredCompareResult_t CompareCredential(const OicSecCred_t * l, const OicSe
 
             break;
         }
-#endif //__WITH_X509__ or __WITH_TLS__
+#endif //__WITH_DTLS__ or __WITH_TLS__
         default:
         {
             cmpResult = CRED_CMP_ERROR;
