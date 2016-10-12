@@ -148,38 +148,47 @@ static OCStackResult GetTCPPortInfo(OCDevAddr *endpoint, uint16_t *port)
  */
 static OCStackResult ExtractFiltersFromQuery(char *query, char **filterOne, char **filterTwo)
 {
-
     char *key = NULL;
     char *value = NULL;
+    char *queryDup = NULL;
     char *restOfQuery = NULL;
+    char *keyValuePair = NULL;
     int numKeyValuePairsParsed = 0;
 
     *filterOne = NULL;
     *filterTwo = NULL;
 
-    OIC_LOG_V(INFO, TAG, "Extracting params from %s", query);
-
-    if (strnlen(query, MAX_QUERY_LENGTH) >= MAX_QUERY_LENGTH)
+    queryDup = OICStrdup(query);
+    if (NULL == queryDup)
     {
-        OIC_LOG(ERROR, TAG, "Query exceeds maximum length.");
-        return OC_STACK_INVALID_QUERY;
+        OIC_LOG_V(ERROR, TAG, "Creating duplicate string failed!");
+        return OC_STACK_NO_MEMORY;
     }
 
-    char *keyValuePair = strtok_r (query, OC_QUERY_SEPARATOR, &restOfQuery);
+    OIC_LOG_V(INFO, TAG, "Extracting params from %s", queryDup);
+
+    OCStackResult eCode = OC_STACK_INVALID_QUERY;
+    if (strnlen(queryDup, MAX_QUERY_LENGTH) >= MAX_QUERY_LENGTH)
+    {
+        OIC_LOG(ERROR, TAG, "Query exceeds maximum length.");
+        goto exit;
+    }
+
+    keyValuePair = strtok_r (queryDup, OC_QUERY_SEPARATOR, &restOfQuery);
 
     while(keyValuePair)
     {
         if (numKeyValuePairsParsed >= 2)
         {
             OIC_LOG(ERROR, TAG, "More than 2 queries params in URI.");
-            return OC_STACK_INVALID_QUERY;
+            goto exit;
         }
 
         key = strtok_r(keyValuePair, OC_KEY_VALUE_DELIMITER, &value);
 
         if (!key || !value)
         {
-            return OC_STACK_INVALID_QUERY;
+            goto exit;
         }
         else if (strncasecmp(key, OC_RSRVD_INTERFACE, sizeof(OC_RSRVD_INTERFACE) - 1) == 0)
         {
@@ -192,15 +201,45 @@ static OCStackResult ExtractFiltersFromQuery(char *query, char **filterOne, char
         else
         {
             OIC_LOG_V(ERROR, TAG, "Unsupported query key: %s", key);
-            return OC_STACK_INVALID_QUERY;
+            goto exit;
         }
         ++numKeyValuePairsParsed;
 
         keyValuePair = strtok_r(NULL, OC_QUERY_SEPARATOR, &restOfQuery);
     }
 
+    if (*filterOne)
+    {
+        *filterOne = OICStrdup(*filterOne);
+        if (NULL == *filterOne)
+        {
+            OIC_LOG_V(ERROR, TAG, "Creating duplicate string failed!");
+            eCode = OC_STACK_NO_MEMORY;
+            goto exit;
+        }
+    }
+
+    if (*filterTwo)
+    {
+        *filterTwo = OICStrdup(*filterTwo);
+        if (NULL == *filterTwo)
+        {
+            OIC_LOG_V(ERROR, TAG, "Creating duplicate string failed!");
+            OICFree(*filterOne);
+            eCode = OC_STACK_NO_MEMORY;
+            goto exit;
+        }
+    }
+
+    OICFree(queryDup);
     OIC_LOG_V(INFO, TAG, "Extracted params if: %s and rt: %s.", *filterOne, *filterTwo);
     return OC_STACK_OK;
+
+exit:
+    *filterOne = NULL;
+    *filterTwo = NULL;
+    OICFree(queryDup);
+    return eCode;
 }
 
 static OCVirtualResources GetTypeOfVirtualURI(const char *uriInRequest)
@@ -760,9 +799,15 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         {
             OIC_LOG_V(ERROR, TAG, "Error (%d) parsing query.", discoveryResult);
         }
-        if (interfaceQueryAllocated)
+
+        if (interfaceQuery)
         {
             OICFree(interfaceQuery);
+        }
+
+        if (resourceTypeQuery)
+        {
+            OICFree(resourceTypeQuery);
         }
     }
     else if (virtualUriInRequest == OC_DEVICE_URI)
