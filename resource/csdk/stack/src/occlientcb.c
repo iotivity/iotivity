@@ -39,7 +39,6 @@
 #define TAG "OIC_RI_CLIENTCB"
 
 struct ClientCB *cbList = NULL;
-static OCMulticastNode * mcPresenceNodes = NULL;
 
 OCStackResult
 AddClientCB (ClientCB** clientCB, OCCallbackData* cbData,
@@ -313,41 +312,4 @@ void FindAndDeleteClientCB(ClientCB * cbNode)
             }
         }
     }
-}
-
-OCStackResult AddMCPresenceNode(OCMulticastNode** outnode, char* uri, uint32_t nonce)
-{
-    if (!outnode)
-    {
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    OCMulticastNode *node = (OCMulticastNode*) OICMalloc(sizeof(*node));
-    if (node)
-    {
-        node->nonce = nonce;
-        node->uri = uri;
-        LL_APPEND(mcPresenceNodes, node);
-        *outnode = node;
-        return OC_STACK_OK;
-    }
-    *outnode = NULL;
-    return OC_STACK_NO_MEMORY;
-}
-
-OCMulticastNode* GetMCPresenceNode(const char * uri)
-{
-    if (uri)
-    {
-        OCMulticastNode* out = NULL;
-        LL_FOREACH(mcPresenceNodes, out)
-        {
-            if (out->uri && strcmp(out->uri, uri) == 0)
-            {
-                return out;
-            }
-        }
-    }
-    OIC_LOG(INFO, TAG, "MulticastNode Not found !!");
-    return NULL;
 }

@@ -1179,72 +1179,29 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
             ResetPresenceTTL(cbNode, maxAge);
 
             cbNode->sequenceNumber = response.sequenceNumber;
-
-            // Ensure that a filter is actually applied.
-            if( resourceTypeName && cbNode->filterResourceType)
-            {
-                if(!findResourceType(cbNode->filterResourceType, resourceTypeName))
-                {
-                    goto exit;
-                }
-            }
         }
     }
     else
     {
         // This is the multicast case
-        OCMulticastNode* mcNode = NULL;
-        mcNode = GetMCPresenceNode(presenceUri);
-
-        if(mcNode != NULL)
+        OIC_LOG(INFO, TAG, "this is the multicast presence");
+        if (0 == maxAge)
         {
-            if(mcNode->nonce == response.sequenceNumber)
-            {
-                OIC_LOG(INFO, TAG, "No presence change (Multicast)");
-                goto exit;
-            }
-            mcNode->nonce = response.sequenceNumber;
-
-            if(maxAge == 0)
-            {
-                OIC_LOG(INFO, TAG, "Stopping presence");
-                response.result = OC_STACK_PRESENCE_STOPPED;
-            }
-        }
-        else
-        {
-            char* uri = OICStrdup(presenceUri);
-            if (!uri)
-            {
-                OIC_LOG(INFO, TAG,
-                    "No Memory for URI to store in the presence node");
-                result = OC_STACK_NO_MEMORY;
-                goto exit;
-            }
-
-            result = AddMCPresenceNode(&mcNode, uri, response.sequenceNumber);
-            if(result == OC_STACK_NO_MEMORY)
-            {
-                OIC_LOG(INFO, TAG,
-                    "No Memory for Multicast Presence Node");
-                OICFree(uri);
-                goto exit;
-            }
-            // presence node now owns uri
-        }
-
-
-
-        // Ensure that a filter is actually applied.
-        if(resourceTypeName && cbNode->filterResourceType)
-        {
-            OIC_LOG_V(INFO, TAG, "find resource type : %s", resourceTypeName);
-            if(!findResourceType(cbNode->filterResourceType, resourceTypeName))
-            {
-                goto exit;
-            }
+            OIC_LOG(INFO, TAG, "Stopping presence");
+            response.result = OC_STACK_PRESENCE_STOPPED;
         }
     }
+
+    // Ensure that a filter is actually applied.
+    if (resourceTypeName && cbNode->filterResourceType)
+    {
+        OIC_LOG_V(INFO, TAG, "find resource type : %s", resourceTypeName);
+        if(!findResourceType(cbNode->filterResourceType, resourceTypeName))
+        {
+            goto exit;
+        }
+    }
+
     OIC_LOG(INFO, TAG, "Callback for presence");
 
     cbResult = cbNode->callBack(cbNode->context, cbNode->handle, &response);
@@ -3173,6 +3130,7 @@ OCStackResult OCProcess()
 #ifdef WITH_PRESENCE
 OCStackResult OCStartPresence(const uint32_t ttl)
 {
+    OIC_LOG(INFO, TAG, "Entering OCStartPresence");
     uint8_t tokenLength = CA_MAX_TOKEN_LEN;
     OCChangeResourceProperty(
             &(((OCResource *)presenceResource.handle)->resourceProperties),
@@ -3224,6 +3182,7 @@ OCStackResult OCStartPresence(const uint32_t ttl)
 
 OCStackResult OCStopPresence()
 {
+    OIC_LOG(INFO, TAG, "Entering OCStopPresence");
     OCStackResult result = OC_STACK_ERROR;
 
     if(presenceResource.handle)
@@ -4032,6 +3991,7 @@ void incrementSequenceNumber(OCResource * resPtr)
 OCStackResult SendPresenceNotification(OCResourceType *resourceType,
         OCPresenceTrigger trigger)
 {
+    OIC_LOG(INFO, TAG, "SendPresenceNotification");
     OCResource *resPtr = NULL;
     OCStackResult result = OC_STACK_ERROR;
     OCMethod method = OC_REST_PRESENCE;
@@ -4055,6 +4015,7 @@ OCStackResult SendPresenceNotification(OCResourceType *resourceType,
 
 OCStackResult SendStopNotification()
 {
+    OIC_LOG(INFO, TAG, "SendStopNotification");
     OCResource *resPtr = NULL;
     OCStackResult result = OC_STACK_ERROR;
     OCMethod method = OC_REST_PRESENCE;
