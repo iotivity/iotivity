@@ -313,7 +313,6 @@ public class SmokeTest extends InstrumentationTestCase {
                                             assertTrue(false);
                                         }
 
-                                        ocResourceResponse.setErrorCode(200);
                                         ocResourceResponse.setResponseResult(EntityHandlerResult.OK);
                                         ocResourceResponse.setResourceRepresentation(
                                                 getRepresentation(74));
@@ -488,7 +487,6 @@ public class SmokeTest extends InstrumentationTestCase {
                                         Log.i(TAG, "URI: " + rep.getUri());
 
                                         ocResourceResponse.setResponseResult(EntityHandlerResult.OK);
-                                        ocResourceResponse.setErrorCode(200);
                                         ocResourceResponse.setResourceRepresentation(rep);
                                         break;
                                     case POST:
@@ -668,7 +666,6 @@ public class SmokeTest extends InstrumentationTestCase {
                                         }
                                         Log.i(TAG, "URI: " + rep.getUri());
 
-                                        ocResourceResponse.setErrorCode(200);
                                         ocResourceResponse.setResponseResult(EntityHandlerResult.OK);
                                         ocResourceResponse.setResourceRepresentation(
                                                 getRepresentation(44));
@@ -787,7 +784,6 @@ public class SmokeTest extends InstrumentationTestCase {
 
                                 switch (requestType) {
                                     case DELETE:
-                                        ocResourceResponse.setErrorCode(200);
                                         ocResourceResponse.setResponseResult(
                                                 EntityHandlerResult.RESOURCE_DELETED);
                                         break;
@@ -956,22 +952,18 @@ public class SmokeTest extends InstrumentationTestCase {
 
                                 switch (requestType) {
                                     case GET:
-                                        ocResourceResponse.setErrorCode(200);
                                         ocResourceResponse.setResponseResult(
                                                 EntityHandlerResult.ERROR);
                                         break;
                                     case PUT:
-                                        ocResourceResponse.setErrorCode(200);
                                         ocResourceResponse.setResponseResult(
                                                 EntityHandlerResult.ERROR);
                                         break;
                                     case POST:
-                                        ocResourceResponse.setErrorCode(200);
-                                        ocResourceResponse.setResponseResult(
+                                         ocResourceResponse.setResponseResult(
                                                 EntityHandlerResult.ERROR);
                                         break;
                                     case DELETE:
-                                        ocResourceResponse.setErrorCode(200);
                                         ocResourceResponse.setResponseResult(
                                                 EntityHandlerResult.ERROR);
                                         break;
@@ -1552,7 +1544,6 @@ public class SmokeTest extends InstrumentationTestCase {
 
                     switch (requestType) {
                         case GET:
-                            ocResourceResponse.setErrorCode(200);
                             ocResourceResponse.setResponseResult(EntityHandlerResult.OK);
                             ocResourceResponse.setResourceRepresentation(
                                     getRepresentation(

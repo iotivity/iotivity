@@ -741,7 +741,6 @@ namespace OIC
             auto ocResponse = std::make_shared< OC::OCResourceResponse >();
 
             ocResponse->setResponseResult(OC_EH_OK);
-            ocResponse->setErrorCode(reqHandler->getErrorCode());
 
             if (reqHandler->hasCustomRepresentation())
             {

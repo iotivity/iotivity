@@ -218,7 +218,6 @@ private:
                     }
                     else
                     {
-                        pResponse->setErrorCode(200);
                         pResponse->setResponseResult(OC_EH_OK);
                         pResponse->setResourceRepresentation(get());
                         if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -232,7 +231,6 @@ private:
                     cout << "\t\t\trequestType : PUT\n";
                     OCRepresentation rep = request->getResourceRepresentation();
                     put(rep);
-                    pResponse->setErrorCode(200);
                     pResponse->setResponseResult(OC_EH_OK);
                     pResponse->setResourceRepresentation(rep);
                     if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -248,7 +246,6 @@ private:
                     OCRepresentation rep_post = post(rep);
 
                     pResponse->setResourceRepresentation(rep_post);
-                    pResponse->setErrorCode(200);
                     if (rep_post.hasAttribute("createduri"))
                     {
                         pResponse->setResponseResult(OC_EH_RESOURCE_CREATED);
@@ -283,7 +280,6 @@ void *handleSlowResponse(void *param, std::shared_ptr< OCResourceRequest > pRequ
     pResponse->setRequestHandle(pRequest->getRequestHandle());
     pResponse->setResourceHandle(pRequest->getResourceHandle());
     pResponse->setResourceRepresentation(lightPtr->get());
-    pResponse->setErrorCode(200);
     pResponse->setResponseResult(OC_EH_OK);
 
     isSlowResponse = false;
@@ -677,7 +673,6 @@ OCStackResult sendResponseForResource(std::shared_ptr< OCResourceRequest > pRequ
         pResponse->setResourceRepresentation(rep, DEFAULT_INTERFACE);
     }
 
-    pResponse->setErrorCode(200);
     pResponse->setResponseResult(OC_EH_OK);
 
     return OCPlatform::sendResponse(pResponse);
@@ -818,7 +813,6 @@ OCStackResult sendResponse(std::shared_ptr< OCResourceRequest > pRequest)
     pResponse->setRequestHandle(pRequest->getRequestHandle());
     pResponse->setResourceHandle(pRequest->getResourceHandle());
     pResponse->setResourceRepresentation(myBootstrapResource.getBootstrapRepresentation());
-    pResponse->setErrorCode(200);
     pResponse->setResponseResult(OC_EH_OK);
 
     return OCPlatform::sendResponse(pResponse);

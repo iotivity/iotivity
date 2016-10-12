@@ -151,8 +151,6 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
 
                 if (response)
                 {
-                    // TODO Error Code
-                    response->setErrorCode(200);
                     response->setResourceRepresentation(rep, DEFAULT_INTERFACE);
                 }
             }

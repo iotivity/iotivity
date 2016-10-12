@@ -239,7 +239,6 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
             {
                 cout << "\t\trequestType : GET\n";
 
-                pResponse->setErrorCode(200);
                 pResponse->setResponseResult(OC_EH_OK);
                 pResponse->setResourceRepresentation(myResource.get());
                 if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -257,7 +256,6 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
 
                 if (pResponse)
                 {
-                    pResponse->setErrorCode(200);
                     pResponse->setResourceRepresentation(myResource.get());
                 }
                 if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -278,7 +276,6 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
 
                 if (pResponse)
                 {
-                    pResponse->setErrorCode(200);
                     pResponse->setResourceRepresentation(myResource.get());
                 }
                 if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -299,7 +296,6 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
                 if (myResource.deleteDeviceResource() == OC_STACK_OK)
                 {
                     cout << "\tSuccess DELETE\n";
-                    pResponse->setErrorCode(200);
                     pResponse->setResponseResult(OC_EH_RESOURCE_DELETED);
                     ehResult = OC_EH_OK;
                 }

@@ -785,7 +785,6 @@ public class CloudFragment extends Fragment implements
         OcResourceResponse response = new OcResourceResponse();
         response.setRequestHandle(request.getRequestHandle());
         response.setResourceHandle(request.getResourceHandle());
-        response.setErrorCode(Common.SUCCESS);
         response.setResponseResult(EntityHandlerResult.OK);
         response.setResourceRepresentation(getOcRepresentation());
         return sendResponse(response);
@@ -799,7 +798,6 @@ public class CloudFragment extends Fragment implements
         setOcRepresentation(request.getResourceRepresentation());
         response.setResourceRepresentation(getOcRepresentation());
         response.setResponseResult(EntityHandlerResult.OK);
-        response.setErrorCode(Common.SUCCESS);
         return sendResponse(response);
     }
 

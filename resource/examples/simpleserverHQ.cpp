@@ -264,7 +264,7 @@ OCStackResult sendResponse(std::shared_ptr<OCResourceRequest> pRequest)
     pResponse->setRequestHandle(pRequest->getRequestHandle());
     pResponse->setResourceHandle(pRequest->getResourceHandle());
     pResponse->setResourceRepresentation(get());
-    pResponse->setErrorCode(200);
+
     pResponse->setResponseResult(OC_EH_OK);
 
     return OCPlatform::sendResponse(pResponse);
@@ -280,7 +280,7 @@ OCStackResult sendPostResponse(std::shared_ptr<OCResourceRequest> pRequest)
     OCRepresentation rep_post = post(rep);
 
     pResponse->setResourceRepresentation(rep_post);
-    pResponse->setErrorCode(200);
+
     pResponse->setResponseResult(OC_EH_OK);
 
     return OCPlatform::sendResponse(pResponse);
@@ -411,7 +411,6 @@ void * ChangeLightRepresentation (void *param)
                 std::shared_ptr<OCResourceResponse> resourceResponse =
                             std::make_shared<OCResourceResponse>();
 
-                resourceResponse->setErrorCode(200);
                 resourceResponse->setResourceRepresentation(lightPtr->get(), DEFAULT_INTERFACE);
 
                 result = OCPlatform::notifyListOfObservers(

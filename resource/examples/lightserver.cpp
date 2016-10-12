@@ -229,7 +229,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
                 }
                 else // normal response case.
                 {
-                    pResponse->setErrorCode(200);
+
                     pResponse->setResponseResult(OC_EH_OK);
                     pResponse->setResourceRepresentation(get());
                     if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -246,7 +246,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
                 // Do related operations related to PUT request
                 // Update the lightResource
                 put(rep);
-                pResponse->setErrorCode(200);
+
                 pResponse->setResponseResult(OC_EH_OK);
                 pResponse->setResourceRepresentation(get());
                 if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -263,7 +263,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
                 // Do related operations related to POST request
                 OCRepresentation rep_post = post(rep);
                 pResponse->setResourceRepresentation(rep_post);
-                pResponse->setErrorCode(200);
+
                 if(rep_post.hasAttribute("createduri"))
                 {
                     pResponse->setResponseResult(OC_EH_RESOURCE_CREATED);
@@ -302,7 +302,7 @@ void * handleSlowResponse (void *param, std::shared_ptr<OCResourceRequest> pRequ
     pResponse->setRequestHandle(pRequest->getRequestHandle());
     pResponse->setResourceHandle(pRequest->getResourceHandle());
     pResponse->setResourceRepresentation(lightPtr->get());
-    pResponse->setErrorCode(200);
+
     pResponse->setResponseResult(OC_EH_OK);
 
     // Set the slow response flag back to false

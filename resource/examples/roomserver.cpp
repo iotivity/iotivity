@@ -298,7 +298,7 @@ OCStackResult sendRoomResponse(std::shared_ptr<OCResourceRequest> pRequest)
         pResponse->setResourceRepresentation(rep, DEFAULT_INTERFACE);
     }
 
-    pResponse->setErrorCode(200);
+
     pResponse->setResponseResult(OC_EH_OK);
 
     return OCPlatform::sendResponse(pResponse);
@@ -478,7 +478,7 @@ OCStackResult sendLightResponse(std::shared_ptr<OCResourceRequest> pRequest)
     pResponse->setRequestHandle(pRequest->getRequestHandle());
     pResponse->setResourceHandle(pRequest->getResourceHandle());
     pResponse->setResourceRepresentation(myRoomResource.getLightRepresentation());
-    pResponse->setErrorCode(200);
+
     pResponse->setResponseResult(OC_EH_OK);
 
     return OCPlatform::sendResponse(pResponse);
@@ -515,7 +515,7 @@ OCStackResult sendFanResponse(std::shared_ptr<OCResourceRequest> pRequest)
     pResponse->setRequestHandle(pRequest->getRequestHandle());
     pResponse->setResourceHandle(pRequest->getResourceHandle());
     pResponse->setResourceRepresentation(myRoomResource.getFanRepresentation());
-    pResponse->setErrorCode(200);
+
     pResponse->setResponseResult(OC_EH_OK);
 
     return OCPlatform::sendResponse(pResponse);

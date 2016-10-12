@@ -99,7 +99,7 @@ struct FooResource
         pResponse->setRequestHandle(pRequest->getRequestHandle());
         pResponse->setResourceHandle(pRequest->getResourceHandle());
         pResponse->setResourceRepresentation(get(), "");
-        pResponse->setErrorCode(200);
+
         pResponse->setResponseResult(OC_EH_OK);
 
         return OCPlatform::sendResponse(pResponse);
