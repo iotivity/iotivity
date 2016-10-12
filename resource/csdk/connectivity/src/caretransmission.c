@@ -157,7 +157,7 @@ static bool CACheckTimeout(uint64_t currentTime, CARetransmissionData_t *retData
     }
 #else
     // #1. calculate timeout
-    uint64_t timeOut = (2 << retData->triedCount) * 1000000;
+    uint64_t timeOut = (2 << retData->triedCount) * (uint64_t) 1000000;
 
     if (currentTime >= retData->timeStamp + timeOut)
     {
