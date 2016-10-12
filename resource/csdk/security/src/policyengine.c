@@ -478,23 +478,24 @@ SRMAccessResponse_t CheckPermission(PEContext_t     *context,
 
         // Before doing any ACL processing, check if request a) coming
         // from DevOwner AND b) the device is in Ready for OTM or Reset state
-        // (which in IoTivity is equivalent to isOp == false && owned == false) 
-        // AND c) the request is for a SVR resource.  
+        // (which in IoTivity is equivalent to isOp == false && owned == false)
+        // AND c) the request is for a SVR resource.
         // If all 3 conditions are met, grant request.
         bool isDeviceOwned = true; // default to value that will not grant access
-        if (OC_STACK_OK == GetDoxmIsOwned(&isDeviceOwned)) // if runtime error, don't grant
+        if (OC_STACK_OK != GetDoxmIsOwned(&isDeviceOwned)) // if runtime error, don't grant
         {
-            // If we were able to get the value of doxm->isOwned, proceed with
-            // test for implicit access...
-            if (IsRequestFromDevOwner(context) // if from DevOwner
-            && (GetPstatIsop() == false) // AND if pstat->isOp == false
-            && (isDeviceOwned == false) // AND if doxm->isOwned == false
-            && (context->resourceType != NOT_A_SVR_RESOURCE)) // AND if SVR type
-            {
-                context->retVal = ACCESS_GRANTED;
-            }        
+            context->retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
         }
-        // If not granted via DevOwner status, 
+        // If we were able to get the value of doxm->isOwned, proceed with
+        // test for implicit access...
+        else if (IsRequestFromDevOwner(context) // if from DevOwner
+        && (GetPstatIsop() == false) // AND if pstat->isOp == false
+        && (isDeviceOwned == false) // AND if doxm->isOwned == false
+        && (context->resourceType != NOT_A_SVR_RESOURCE)) // AND if SVR type
+        {
+            context->retVal = ACCESS_GRANTED;
+        }
+        // If not granted via DevOwner status,
         // then check if request is for a SVR and coming from rowner
         else if (IsRequestFromResourceOwner(context))
         {
