@@ -39,7 +39,7 @@ import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.db.TokenTable;
 import org.iotivity.cloud.accountserver.db.UserTable;
 import org.iotivity.cloud.accountserver.oauth.OAuthProviderFactory;
-import org.iotivity.cloud.accountserver.resources.acl.group.GroupManager;
+import org.iotivity.cloud.accountserver.resources.acl.group.GroupBrokerManager;
 import org.iotivity.cloud.accountserver.resources.acl.id.AclResource;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
@@ -229,8 +229,8 @@ public class AccountManager {
                     castUserTableToMap(userInfo));
 
             // make my private group
-            GroupManager.getInstance().createGroup(userInfo.getUuid(),
-                    Constants.REQ_GTYPE_PRIVATE);
+            GroupBrokerManager.getInstance().createGroup(userInfo.getUuid(),
+                    userInfo.getUuid(), null, null);
         }
         tokenInfo.setUuid(userUuid);
         AccountDBManager.getInstance().insertAndReplaceRecord(
@@ -571,7 +571,7 @@ public class AccountManager {
         AccountDBManager.getInstance().deleteRecord(Constants.TOKEN_TABLE,
                 condition);
         // delete device ID from all groups in the DB
-        GroupManager.getInstance().removeGroupDeviceinEveryGroup(uid, di);
+        // GroupManager.getInstance().removeGroupDeviceinEveryGroup(uid, di);
 
         // TODO remove device record from the ACL table
         HashMap<String, Object> getAcl = new HashMap<>();
