@@ -72,6 +72,7 @@ public class AccountDBManager {
         mongoDB.createTable(Constants.INVITE_TABLE);
         mongoDB.createTable(Constants.DEVICE_TABLE);
         mongoDB.createTable(Constants.ACL_TABLE);
+        mongoDB.createTable(Constants.ACE_TABLE);
         mongoDB.createTable(Constants.ACLTEMPLATE_TABLE);
         mongoDB.createTable(Constants.CERTIFICATE_TABLE);
         mongoDB.createTable(Constants.CRL_TABLE);
@@ -120,7 +121,14 @@ public class AccountDBManager {
         keyField.put(Constants.ACL_TABLE, keys);
 
         keys = new ArrayList<>();
-        keys.add(Constants.KEYFIELD_GTYPE);
+        keys.add(Constants.KEYFIELD_GID);
+        keys.add(Constants.KEYFIELD_DI);
+        keys.add(Constants.KEYFIELD_UID);
+        keys.add(Constants.KEYFIELD_OID);
+        keys.add(Constants.KEYFIELD_ACE_RESOURCE_HREF);
+
+        mongoDB.createIndex(Constants.ACE_TABLE, keys);
+        keyField.put(Constants.ACE_TABLE, keys);
 
         mongoDB.createIndex(Constants.ACLTEMPLATE_TABLE, keys);
         keyField.put(Constants.ACLTEMPLATE_TABLE, keys);
@@ -193,6 +201,36 @@ public class AccountDBManager {
             HashMap<String, Object> condition) {
 
         return _selectRecord(tableName, condition);
+    }
+
+    /**
+     * API for selecting records to primary key from DB table
+     * 
+     * @param tableName
+     *            table name to be selected
+     * 
+     * @param condition
+     *            condition record to be selected
+     * @return selected record
+     */
+
+    public HashMap<String, Object> selectOneRecord(String tableName,
+            HashMap<String, Object> condition) {
+
+        ArrayList<HashMap<String, Object>> records = _selectRecord(tableName,
+                condition);
+
+        if (records.size() > 1) {
+            throw new InternalServerErrorException(
+                    "Database record select failed");
+        }
+
+        if (records.isEmpty()) {
+            return new HashMap<String, Object>();
+        } else {
+            return records.get(0);
+        }
+
     }
 
     /**
