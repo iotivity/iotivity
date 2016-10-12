@@ -491,7 +491,10 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
             result = OC_STACK_ERROR;
             break;
         case OC_EH_FORBIDDEN:
-            result = OC_STACK_RESOURCE_ERROR;
+            result = OC_STACK_FORBIDDEN_REQ;
+            break;
+        case OC_EH_INTERNAL_SERVER_ERROR:
+            result = OC_STACK_INTERNAL_SERVER_ERROR;
             break;
         case OC_EH_RESOURCE_CREATED:
             result = OC_STACK_RESOURCE_CREATED;
