@@ -103,6 +103,7 @@ void NSSetIsStartedConsumer(bool setValue)
     if (setValue == false)
     {
         pthread_mutex_destroy(*NSGetStackMutex());
+        NSOICFree(*NSGetStackMutex());
         *NSGetStackMutex() = NULL;
 
         NSOICFree(*NSGetConsumerId());
@@ -156,9 +157,14 @@ void NSProviderChanged(NSProvider * provider, NSProviderState response)
     data->state = response;
 
     NSConsumerThread * thread = NSThreadInit(NSProviderChangedFunc, (void *) data);
-    NS_VERIFY_NOT_NULL_V(thread);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(thread,
+    {
+        NSRemoveProvider(retProvider);
+        NSOICFree(data);
+    });
 
     NSDestroyThreadHandle(thread);
+    NSOICFree(thread);
 }
 
 NSSyncInfoReceivedCallback * NSGetBoneNotificationSyncCb()
@@ -191,6 +197,7 @@ void NSNotificationSync(NSSyncInfo * sync)
     NS_VERIFY_NOT_NULL_V(thread);
 
     NSDestroyThreadHandle(thread);
+    NSOICFree(thread);
 }
 
 NSMessageReceivedCallback  * NSGetBoneMessagePostedCb()
@@ -227,6 +234,7 @@ void NSMessagePost(NSMessage * msg)
     NS_VERIFY_NOT_NULL_V(thread);
 
     NSDestroyThreadHandle(thread);
+    NSOICFree(thread);
 }
 
 NSTask * NSMakeTask(NSTaskType type, void * data)
@@ -270,11 +278,11 @@ NSMessage * NSCopyMessage(NSMessage * msg)
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(
                 newMsg->mediaContents, NULL, NSRemoveMessage(newMsg));
         newMsg->mediaContents->iconImage =
-                (char *)OICMalloc(sizeof(char)*strlen(msg->mediaContents->iconImage));
+                (char *)OICMalloc(sizeof(char)*strlen(msg->mediaContents->iconImage) + 1);
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(
                 newMsg->mediaContents->iconImage, NULL, NSRemoveMessage(newMsg));
         memcpy(newMsg->mediaContents->iconImage, msg->mediaContents->iconImage,
-               strlen(msg->mediaContents->iconImage));
+               strlen(msg->mediaContents->iconImage) + 1);
     }
 
     newMsg->extraInfo = NULL;
@@ -322,10 +330,10 @@ void NSRemoveConnections(NSProviderConnectionInfo * connections)
         tmp->messageHandle = NULL;
         tmp->syncHandle = NULL;
         NSOICFree(tmp->addr);
-        tmp = tmp->next;
+        NSProviderConnectionInfo * next = tmp->next;
+        NSOICFree(tmp);
+        tmp = next;
     }
-
-    NSOICFree(connections);
 }
 
 NSProviderConnectionInfo * NSCreateProviderConnections(OCDevAddr * inAddr)
@@ -527,7 +535,7 @@ void NSRemoveProvider_internal(void * data)
 {
     NS_VERIFY_NOT_NULL_V(data);
 
-    NSProvider_internal * prov = data;
+    NSProvider_internal * prov = (NSProvider_internal *) data;
 
     NSOICFree(prov->messageUri);
     NSOICFree(prov->syncUri);
@@ -556,7 +564,7 @@ OCStackResult NSInvokeRequest(OCDoHandle * handle,
     int mutexRet = pthread_mutex_lock(*(NSGetStackMutex()));
     NS_VERIFY_NOT_NULL(mutexRet != 0 ? NULL : (void *)1, OC_STACK_ERROR);
 
-    OCCallbackData cbdata = { 0, };
+    OCCallbackData cbdata = { NULL, NULL, NULL };
 
     cbdata.cb = callbackFunc;
     cbdata.context = callbackData;
