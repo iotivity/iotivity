@@ -766,10 +766,6 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
                 }
 
                 OIC_LOG(INFO, TAG, "Exiting ProvisionDiscoveryHandler.");
-                if(pDInfo->isSingleDiscovery)
-                {
-                    return OC_STACK_DELETE_TRANSACTION;
-                }
             }
 
             return  OC_STACK_KEEP_TRANSACTION;
@@ -873,11 +869,7 @@ OCStackResult PMSingleDeviceDiscovery(unsigned short waittime, const OicUuid_t* 
         return res;
     }
 
-    if(NULL == *ppFoundDevice)
-    {
-        res = OCCancel(handle,OC_HIGH_QOS,NULL,0);
-    }
-
+    res = OCCancel(handle,OC_HIGH_QOS,NULL,0);
     if (OC_STACK_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Failed to remove registered callback");
