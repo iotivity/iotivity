@@ -32,6 +32,9 @@ public class Provider
 {
     private static final String LOG_TAG = "ConsumerService_Provider";
 
+    /**
+      * ProviderState of Notification resource
+      */
     public enum ProviderState
     {
         ALLOW(1),
@@ -54,6 +57,10 @@ public class Provider
     public String mProviderId        = null;
     private long mNativeHandle       = 0;
 
+    /**
+      * Constructor of Provider.
+      * @param providerId - providerId of Provider.
+      */
     public Provider(String providerId)
     {
         Log.i (LOG_TAG, "Provider()");
@@ -61,36 +68,65 @@ public class Provider
         mProviderId = providerId;
     }
 
+    /**
+      * API for getting providerId.
+      * @return ConsumerId as string.
+      */
     public String getProviderId()
     {
         return mProviderId ;
     }
 
+    /**
+      * API for getting for getting Topic List.
+      * @return TopicsList.
+      */
     public TopicsList getTopicList() throws NSException
     {
         return nativeGetTopicList();
     }
 
+    /**
+      * API for getting for getting ProviderState.
+      * @return ProviderState.
+      */
     public ProviderState getProviderState() throws NSException
     {
         return nativeGetProviderState();
     }
 
+    /**
+      * API for for requesting subscription of Notification service.
+      */
     public void subscribe() throws NSException
     {
         nativeSubscribe();
     }
 
+    /**
+      * API for for requesting subscription status from Provider of Notification service.
+      */
     public boolean isSubscribed () throws NSException
     {
         return nativeIsSubscribed();
     }
 
+    /**
+      * This method is for Sending SyncInfo of Notification service.
+      * @param messageId - id of  message.
+      * @param syncType - SyncType of Notification service.
+      */
     public void sendSyncInfo(long messageId, SyncInfo.SyncType syncType) throws NSException
     {
         nativeSendSyncInfo(messageId, syncType.ordinal());
     }
 
+    /**
+      * This method is for registering for listeners of Notification .
+      * @param onProviderStateListener - OnProviderStateListener callback Interface.
+      * @param onMessageReceivedListner - OnMessageReceivedListner callback Interface.
+      * @param onSyncInfoReceivedListner - OnSyncInfoReceivedListner callback Interface.
+      */
     public void setListener(OnProviderStateListener onProviderStateListener,
                             OnMessageReceivedListner onMessageReceivedListner,
                             OnSyncInfoReceivedListner onSyncInfoReceivedListner) throws NSException
@@ -98,23 +134,49 @@ public class Provider
         nativeSetListener(onProviderStateListener, onMessageReceivedListner, onSyncInfoReceivedListner);
     }
 
+    /**
+      * Update Topic list that is wanted to be subscribed from provider
+      * @param topicsList - TopicsList of interested Topics.
+      * @return :: result code  100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+      */
     public int updateTopicList(TopicsList topicsList) throws NSException
     {
         return nativeUpdateTopicList(topicsList);
     }
 
+    /**
+      * Interface to implement callback function to receive provider state information
+      */
     public interface OnProviderStateListener
     {
+        /**
+          * Callback function to receive provider state information
+          * @param state - ProviderState
+          */
         public void onProviderStateReceived(ProviderState state);
     }
 
+    /**
+      * Interface to implement callback function to receive Notification Message
+      */
     public interface OnMessageReceivedListner
     {
+        /**
+          * Callback function to receive Notification Message
+          * @param message - Notification Message
+          */
         public void onMessageReceived(Message message);
     }
 
+    /**
+      * Interface to implement callback function to receive message read synchronization
+      */
     public interface OnSyncInfoReceivedListner
     {
+        /**
+          * Callback function to receive message read synchronization
+          * @param sync - SyncInfo
+          */
         public void onSyncInfoReceived(SyncInfo sync);
     }
 

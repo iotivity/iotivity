@@ -29,31 +29,58 @@ public class Consumer
 
     public String mConsumerId = null;
 
+    /**
+      * Constructor of Consumer.
+      */
     public Consumer(final String consumerId)
     {
         mConsumerId = consumerId;
     }
 
+    /**
+      * API for getting consumerId
+      * @return ConsumerId as string
+      */
     public String getConsumerId( )
     {
         return mConsumerId;
     }
 
+    /**
+      * API for accepting Subscription request.
+      * This function is valid only when subControllability is set true.
+      * @param accepted - boolean variable representing Subscription response as TRUE/FALSE.
+      * @return :: result code  100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+      */
     public int acceptSubscription(boolean accepted) throws NSException
     {
         return nativeAcceptSubscription(mConsumerId, accepted);
     }
 
+    /**
+      * Select a topic for a consumer
+      * @param  topicName - Topic name to select
+      * @return :: result code
+      */
     public int setTopic(String topicName) throws NSException
     {
         return nativeSetConsumerTopic(mConsumerId, topicName);
     }
 
+    /**
+      * Unselect a topic for a consumer
+      * @param  topicName - Topic name to Unselect
+      * @return :: result code
+      */
     public int unsetTopic(String topicName) throws NSException
     {
         return nativeUnsetConsumerTopic(mConsumerId, topicName);
     }
 
+    /**
+      * Request topic list with selection state for the consumer
+      * @return :: Topic list
+      */
     public TopicsList getConsumerTopicList() throws NSException
     {
         return nativeGetConsumerTopicList(mConsumerId);
