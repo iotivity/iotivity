@@ -27,28 +27,31 @@
 
 #include "iotivity_config.h"
 #include <sys/types.h>
-#if !defined(_WIN32)
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
-
-#if defined(_WIN32)
 #include <assert.h>
+#ifdef HAVE_WINSOCK2_H
 #include <winsock2.h>
-#include <ws2def.h>
-#include <mswsock.h>
+#endif
+#ifdef HAVE_WS2TCPIP_H
 #include <ws2tcpip.h>
 #endif
-
 #include <stdio.h>
-#if !defined(_MSC_VER)
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif //!defined(_MSC_VER)
-#include <sys/types.h>
+#endif
 #include <fcntl.h>
-#if !defined(_WIN32)
+#ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+#ifdef HAVE_NET_IF_H
 #include <net/if.h>
 #endif
 #include <errno.h>
@@ -556,14 +559,11 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
         return CA_STATUS_FAILED;
     }
 
-    if (flags & CA_MULTICAST)
+    for (cmp = CMSG_FIRSTHDR(&msg); cmp != NULL; cmp = CMSG_NXTHDR(&msg, cmp))
     {
-        for (cmp = CMSG_FIRSTHDR(&msg); cmp != NULL; cmp = CMSG_NXTHDR(&msg, cmp))
+        if (cmp->cmsg_level == level && cmp->cmsg_type == type)
         {
-            if (cmp->cmsg_level == level && cmp->cmsg_type == type)
-            {
-                pktinfo = CMSG_DATA(cmp);
-            }
+            pktinfo = CMSG_DATA(cmp);
         }
     }
 #else // if defined(WSA_CMSG_DATA)
@@ -603,15 +603,12 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
         OIC_LOG_V(ERROR, TAG, "WSARecvMsg failed %i", WSAGetLastError());
     }
 
-    if (flags & CA_MULTICAST)
+    for (WSACMSGHDR *cmp = WSA_CMSG_FIRSTHDR(&msg); cmp != NULL;
+         cmp = WSA_CMSG_NXTHDR(&msg, cmp))
     {
-        for (WSACMSGHDR *cmp = WSA_CMSG_FIRSTHDR(&msg); cmp != NULL;
-             cmp = WSA_CMSG_NXTHDR(&msg, cmp))
+        if (cmp->cmsg_level == level && cmp->cmsg_type == type)
         {
-            if (cmp->cmsg_level == level && cmp->cmsg_type == type)
-            {
-                pktinfo = WSA_CMSG_DATA(cmp);
-            }
+            pktinfo = WSA_CMSG_DATA(cmp);
         }
     }
 #endif // !defined(WSA_CMSG_DATA)
@@ -619,8 +616,9 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
 
     if (flags & CA_IPV6)
     {
-        /** @todo figure out correct usage for ifindex, and sin6_scope_id.*/
-        if ((flags & CA_MULTICAST) && pktinfo)
+        sep.endpoint.ifindex = ((struct in6_pktinfo *)pktinfo)->ipi6_ifindex;
+
+        if (flags & CA_MULTICAST)
         {
             struct in6_addr *addr = &(((struct in6_pktinfo *)pktinfo)->ipi6_addr);
             unsigned char topbits = ((unsigned char *)addr)[0];
@@ -632,7 +630,9 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
     }
     else
     {
-        if ((flags & CA_MULTICAST) && pktinfo)
+        sep.endpoint.ifindex = ((struct in_pktinfo *)pktinfo)->ipi_ifindex;
+
+        if (flags & CA_MULTICAST)
         {
             struct in_addr *addr = &((struct in_pktinfo *)pktinfo)->ipi_addr;
             uint32_t host = ntohl(addr->s_addr);
@@ -664,7 +664,6 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
     }
 
     return CA_STATUS_OK;
-
 }
 
 void CAIPPullData()
@@ -707,16 +706,13 @@ static CASocketFd_t CACreateSocket(int family, uint16_t *port, bool isMulticast)
             OIC_LOG_V(ERROR, TAG, "IPV6_V6ONLY failed: %s", CAIPS_GET_ERROR);
         }
 
-        if (isMulticast && *port) // only do this for multicast ports
-        {
 #if defined(IPV6_RECVPKTINFO)
-            if (OC_SOCKET_ERROR == setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on, sizeof (on)))
+        if (OC_SOCKET_ERROR == setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on, sizeof (on)))
 #else
-            if (OC_SOCKET_ERROR == setsockopt(fd, IPPROTO_IPV6, IPV6_PKTINFO, OPTVAL_T(&on), sizeof (on)))
+        if (OC_SOCKET_ERROR == setsockopt(fd, IPPROTO_IPV6, IPV6_PKTINFO, OPTVAL_T(&on), sizeof (on)))
 #endif
-            {
-                OIC_LOG_V(ERROR, TAG, "IPV6_RECVPKTINFO failed: %s",CAIPS_GET_ERROR);
-            }
+        {
+            OIC_LOG_V(ERROR, TAG, "IPV6_RECVPKTINFO failed: %s",CAIPS_GET_ERROR);
         }
 
         ((struct sockaddr_in6 *)&sa)->sin6_port = htons(*port);
@@ -724,13 +720,10 @@ static CASocketFd_t CACreateSocket(int family, uint16_t *port, bool isMulticast)
     }
     else
     {
-        if (isMulticast && *port) // only do this for multicast ports
+        int on = 1;
+        if (OC_SOCKET_ERROR == setsockopt(fd, IPPROTO_IP, IP_PKTINFO, OPTVAL_T(&on), sizeof (on)))
         {
-            int on = 1;
-            if (OC_SOCKET_ERROR == setsockopt(fd, IPPROTO_IP, IP_PKTINFO, OPTVAL_T(&on), sizeof (on)))
-            {
-                OIC_LOG_V(ERROR, TAG, "IP_PKTINFO failed: %s", CAIPS_GET_ERROR);
-            }
+            OIC_LOG_V(ERROR, TAG, "IP_PKTINFO failed: %s", CAIPS_GET_ERROR);
         }
 
         ((struct sockaddr_in *)&sa)->sin_port = htons(*port);
@@ -1267,7 +1260,6 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
     socklen_t socklen = 0;
     if (sock.ss_family == AF_INET6)
     {
-        /** @todo figure out correct usage for ifindex, and sin6_scope_id */
         socklen = sizeof(struct sockaddr_in6);
     }
     else
