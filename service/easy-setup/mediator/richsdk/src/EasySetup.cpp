@@ -42,7 +42,7 @@ namespace OIC
         EasySetup* EasySetup::getInstance ()
         {
             if (s_instance == nullptr)
-	    {
+            {
                 s_instance = new EasySetup ();
             }
             return s_instance;

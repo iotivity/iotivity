@@ -106,7 +106,11 @@ namespace OIC
 
             OCStackResult result = OC_STACK_ERROR;
             OicUuid_t uuid;
-            ConvertStrToUuid(m_ocResource->sid().c_str(), &uuid);
+            if(OC_STACK_OK != ConvertStrToUuid(m_ocResource->sid().c_str(), &uuid))
+            {
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Convert to uuid from deviceID failed.");
+                return res;
+            }
 
             result = OCSecure::discoverSingleDevice(ES_SEC_DISCOVERY_TIMEOUT,
                                                     &uuid,
@@ -271,7 +275,6 @@ namespace OIC
             }
 
             OCUuidList_t *pUuidList = uuidList;
-
             while (pUuidList)
             {
                 std::string uuid;
@@ -281,10 +284,12 @@ namespace OIC
                     m_ocResource->sid().c_str(), uuid.c_str());
                 if(m_ocResource->sid() == uuid.c_str())
                 {
+                    OICFree(uuidList);
                     return true;
                 }
                 pUuidList = pUuidList->next;
             }
+            OICFree(uuidList);
             return false;
         }
 
@@ -307,7 +312,12 @@ namespace OIC
 
             OCStackResult result;
             OicUuid_t uuid;
-            ConvertStrToUuid(m_ocResource->sid().c_str(), &uuid);
+            if(OC_STACK_OK != ConvertStrToUuid(m_ocResource->sid().c_str(), &uuid))
+            {
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Convert to uuid from deviceID failed.");
+                return res;
+            }
+
 
             result = OCSecure::discoverSingleDevice(ES_SEC_DISCOVERY_TIMEOUT,
                                                     &uuid,
@@ -437,7 +447,12 @@ namespace OIC
             OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Given cloudUuid: %s", cloudUuid.c_str());
 
             OicUuid_t uuid;
-            ConvertStrToUuid(cloudUuid.c_str(), &uuid);
+            if(OC_STACK_OK != ConvertStrToUuid(cloudUuid.c_str(), &uuid))
+            {
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Convert to uuid from deviceID failed.");
+                return res;
+            }
+
 
             // Create Acl for Cloud Server to be provisioned to Enrollee
             OicSecAcl_t* acl = createAcl(uuid);
