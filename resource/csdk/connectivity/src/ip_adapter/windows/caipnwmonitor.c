@@ -157,9 +157,9 @@ static HANDLE g_CAIPNetworkMonitorChangeNotificationHandle = NULL;
  * @param[in]  row               Interface that changed, or NULL on the initial callback.
  * @param[in]  notificationType  Type of change that occurred.
  */
-static void IpAddressChangeCallback(void *context,
-                                    MIB_UNICASTIPADDRESS_ROW *row,
-                                    MIB_NOTIFICATION_TYPE notificationType)
+static void CALLBACK IpAddressChangeCallback(void *context,
+                                             MIB_UNICASTIPADDRESS_ROW *row,
+                                             MIB_NOTIFICATION_TYPE notificationType)
 {
     oc_mutex_lock(g_CAIPNetworkMonitorMutex);
 
