@@ -171,7 +171,7 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
             }
 
             uint8_t ins = 0;
-            if (OCGetResourceIns(handle, &ins))
+            if (OC_STACK_OK == OCGetResourceIns(handle, &ins))
             {
                 OCRepPayloadSetPropInt(link, OC_RSRVD_INS, ins);
             }
@@ -244,13 +244,15 @@ OCStackResult OCRDDeleteWithDeviceId(const char *host, const unsigned char *id,
     char targetUri[MAX_URI_LENGTH] = { 0 };
     snprintf(targetUri, MAX_URI_LENGTH, "%s%s?di=%s", host, OC_RSRVD_RD_URI, id);
 
+    uint8_t len = 0;
     char queryParam[MAX_URI_LENGTH] = { 0 };
     for (uint8_t j = 0; j < nHandles; j++)
     {
         OCResource *handle = (OCResource *) resourceHandles[j];
         uint8_t ins = 0;
         OCGetResourceIns(handle, &ins);
-        snprintf(queryParam, MAX_URI_LENGTH, "&ins=%u", ins);
+        len += snprintf(queryParam + len, MAX_URI_LENGTH, "&ins=%d", ins);
+        OIC_LOG_V(DEBUG, TAG, "queryParam [%s]", queryParam);
     }
 
     OICStrcatPartial(targetUri, sizeof(targetUri), queryParam, strlen(queryParam));
