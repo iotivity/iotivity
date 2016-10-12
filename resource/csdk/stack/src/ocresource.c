@@ -1007,7 +1007,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         OIC_LOG(INFO, TAG, "No observation requested");
         ehFlag = OC_REQUEST_FLAG;
     }
-    else if(ehRequest.obsInfo.action == OC_OBSERVE_REGISTER && !collectionResource)
+    else if(ehRequest.obsInfo.action == OC_OBSERVE_REGISTER)
     {
         OIC_LOG(INFO, TAG, "Observation registration requested");
 
@@ -1062,8 +1062,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         }
 
     }
-    else if(ehRequest.obsInfo.action == OC_OBSERVE_DEREGISTER &&
-            !collectionResource)
+    else if(ehRequest.obsInfo.action == OC_OBSERVE_DEREGISTER)
     {
         OIC_LOG(INFO, TAG, "Deregistering observation requested");
 
