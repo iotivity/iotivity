@@ -313,7 +313,7 @@ static void * memmem(const void *l, size_t lLen, const void *s, size_t sLen)
     }
     if (sLen == 1)
     {
-        return memchr(l, (int)*cs, lLen);
+        return (void *)memchr(l, (int)*cs, lLen);
     }
 
     last = (char *)cl + lLen - sLen;

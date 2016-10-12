@@ -66,27 +66,24 @@ else:
 # Source files and Targets
 ######################################################################
 
+tests_src = [
+	'catests.cpp',
+	'caprotocolmessagetest.cpp',
+	'ca_api_unittest.cpp',
+	'octhread_tests.cpp',
+	'uarraylist_test.cpp',
+	'ulinklist_test.cpp',
+	'uqueue_test.cpp'
+]
+
 if (('IP' in target_transport) or ('ALL' in target_transport)):
 	if target_os != 'arduino':
-		catests = catest_env.Program('catests', ['catests.cpp',
-		                                         'caprotocolmessagetest.cpp',
-		                                         'cablocktransfertest.cpp',
-		                                         'ca_api_unittest.cpp',
-		                                         'octhread_tests.cpp',
-		                                         'uarraylist_test.cpp',
-		                                         'ulinklist_test.cpp',
-		                                         'uqueue_test.cpp'
-		                                               ])
-else:
-	# Include all unit test files
-		catests = catest_env.Program('catests', ['catests.cpp',
-		                                         'caprotocolmessagetest.cpp',
-		                                         'ca_api_unittest.cpp',
-		                                         'octhread_tests.cpp',
-		                                         'uarraylist_test.cpp',
-		                                         'ulinklist_test.cpp',
-		                                         'uqueue_test.cpp'
-		                                               ])
+		tests_src = tests_src + ['cablocktransfertest.cpp']
+
+if catest_env.get('SECURED') == '1':
+	tests_src = tests_src + ['ssladapter_test.cpp']
+
+catests = catest_env.Program('catests', tests_src)
 
 Alias("test", [catests])
 
