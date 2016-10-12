@@ -48,14 +48,14 @@ namespace OIC
             public:
                 /**
                       * Provider uses this callback function to receive subscription request of consumer
-                      * @param[in] consumer        Consumer who subscribes the resource
+                      * @param[in] consumer  Consumer who subscribes the notification message resource
                       */
                 typedef void (*ConsumerSubscribedCallback)(NSConsumer *);
 
                 /**
                       * Provider use this callback function to receive the status of the message
                       * synchronization
-                      * @param[in] sync        Synchronization information of the notification message
+                      * @param[in] sync Synchronization information of the notification message
                       */
                 typedef void (*MessageSynchronizedCallback)(NSSyncInfo *);
 
@@ -76,9 +76,9 @@ namespace OIC
 
                     /** subControllability - for setting the subscription controllability for Consumer */
                     bool subControllability;
-                    /** userInfo - user defined information */
+                    /** userInfo - user defined information such as device friendly name */
                     std::string userInfo;
-                    /* Set on/off with SECURED build option */
+                    /* Set on/off for secure resource channel setting */
                     bool resourceSecurity;
                 } ProviderConfig;
 
@@ -127,13 +127,13 @@ namespace OIC
 
                 /**
                       * Send read-check to provider in order to synchronize notification status with other consumers
-                      * @param[in]  messageId  Notification message to synchronize the status
+                      * @param[in]  messageId  ID of Notification message to synchronize the status
                       * @param[in]  type  NotificationSyncType of the SyncInfo message
                       */
                 void sendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type);
 
                 /**
-                     * Initialize NSMessage class, service sets message id and provider(device) id
+                     * Initialize NSMessage class, This function is valid only when subControllability is set true.
                      * @return NSMessage *
                      */
                 NSMessage *createMessage();
