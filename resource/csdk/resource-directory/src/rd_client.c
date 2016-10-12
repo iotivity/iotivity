@@ -84,13 +84,12 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
     OIC_LOG_V(DEBUG, TAG, "Publish Resource to RD with device id [%s]", id);
 
     OCResourceHandle *pubResHandle = resourceHandles;
+    OCResourceHandle defaultResHandles[OIC_RD_DEFAULT_RESOURCE] = { 0 };
     uint8_t nPubResHandles = nHandles;
 
     // if resource handles is null, "/oic/p" and "/oic/d" resource will be published to RD.
-    if (!pubResHandle && !nPubResHandles)
+    if (!pubResHandle)
     {
-        OCResourceHandle defaultResHandles[OIC_RD_DEFAULT_RESOURCE] = { 0 };
-
         // get "/oic/d" and "/oic/p" resource handle from stack.
         defaultResHandles[0] = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
         defaultResHandles[1] = OCGetResourceHandleAtUri(OC_RSRVD_PLATFORM_URI);
