@@ -728,6 +728,12 @@ OCStackResult CAResponseToOCStackResult(CAResponseResult_t caCode)
         case CA_REQUEST_ENTITY_TOO_LARGE:
             ret = OC_STACK_TOO_LARGE_REQ;
             break;
+        case CA_FORBIDDEN_REQ:
+            ret = OC_STACK_FORBIDDEN_REQ;
+            break;
+        case CA_INTERNAL_SERVER_ERROR:
+            ret = OC_STACK_INTERNAL_SERVER_ERROR;
+            break;
         default:
             break;
     }
@@ -785,6 +791,12 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
             break;
         case OC_STACK_UNAUTHORIZED_REQ:
             ret = CA_UNAUTHORIZED_REQ;
+            break;
+        case OC_STACK_FORBIDDEN_REQ:
+            ret = CA_FORBIDDEN_REQ;
+            break;
+        case OC_STACK_INTERNAL_SERVER_ERROR:
+            ret = CA_INTERNAL_SERVER_ERROR;
             break;
         default:
             break;

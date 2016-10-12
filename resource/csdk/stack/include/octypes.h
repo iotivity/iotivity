@@ -985,6 +985,11 @@ typedef enum
     OC_STACK_PRESENCE_TIMEOUT,
     OC_STACK_PRESENCE_DO_NOT_HANDLE,
 #endif
+
+    /** ERROR code from server */
+    OC_STACK_FORBIDDEN_REQ,          /** 403*/
+    OC_STACK_INTERNAL_SERVER_ERROR,  /** 500*/
+
     /** ERROR in stack.*/
     OC_STACK_ERROR = 255
     /** Error status code - END HERE.*/
