@@ -53,7 +53,7 @@ NSConsumerThread * NSThreadInit(NSThreadFunc func, void * data)
 
     handle->isStarted = true;
 
-    pthread_attr_t attrDetached;
+    pthread_attr_t attrDetached = {};
     pthread_attr_init(& attrDetached);
     pthread_attr_setdetachstate(& attrDetached, PTHREAD_CREATE_DETACHED);
 
