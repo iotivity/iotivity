@@ -235,7 +235,7 @@ namespace OC
         std::string resourceURI = clientResponse->resourceUri;
         std::thread exec(context->errorCallback, resourceURI, result);
         exec.detach();
-        return OC_STACK_DELETE_TRANSACTION;
+        return OC_STACK_KEEP_TRANSACTION;
     }
 
     OCStackResult InProcClientWrapper::ListenForResource(
