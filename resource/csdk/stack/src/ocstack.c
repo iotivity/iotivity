@@ -1316,7 +1316,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                         type = PAYLOAD_TYPE_REPRESENTATION ;
                     }
 #ifdef TCP_ADAPTER
-                    else if (strcmp(cbNode->requestUri, OC_KEEPALIVE_RESOURCE_URI) == 0)
+                    else if (strcmp(cbNode->requestUri, KEEPALIVE_RESOURCE_URI) == 0)
                     {
                         type = PAYLOAD_TYPE_REPRESENTATION;
                     }
