@@ -135,7 +135,9 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
     {
         NS_LOG(DEBUG, "resourceType == NS_RESOURCE_MESSAGE");
         NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
+        NS_VERIFY_NOT_NULL_V(element);
         NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
+        NS_VERIFY_NOT_NULL_V(subData);
 
         OICStrcpy(subData->id, UUID_STRING_SIZE, id);
         NS_LOG_V(DEBUG, "SubList ID = [%s]", subData->id);
@@ -192,7 +194,9 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
     {
         NS_LOG(DEBUG, "resourceType == NS_RESOURCE_SYNC");
         NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
+        NS_VERIFY_NOT_NULL_V(element);
         NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
+        NS_VERIFY_NOT_NULL_V(subData);
 
         OICStrcpy(subData->id, UUID_STRING_SIZE, id);
         NS_LOG_V(DEBUG, "SubList ID = [%s]", subData->id);
