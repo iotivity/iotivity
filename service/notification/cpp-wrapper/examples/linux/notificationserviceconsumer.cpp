@@ -131,7 +131,7 @@ void *OCProcessThread(void *ptr)
 
 int main(void)
 {
-    pthread_t OCThread = NULL;
+    pthread_t OCThread = 0;
 
     std::cout << "start Iotivity" << std::endl;
 

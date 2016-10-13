@@ -82,7 +82,7 @@ void syncCallback(OIC::Service::NSSyncInfo *sync)
 int main()
 {
     int num = 0;
-    pthread_t processThread = NULL;
+    pthread_t processThread = 0;
 
     std::cout << "start Iotivity" << std::endl;
 
