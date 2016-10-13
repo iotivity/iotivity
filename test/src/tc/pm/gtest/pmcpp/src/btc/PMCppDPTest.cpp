@@ -18,6 +18,7 @@
  *
  *
  ******************************************************************/
+#if defined(__DIRECTPAIRING__)
 
 #include "PMCppDPHelper.h"
 
@@ -73,7 +74,6 @@ TEST_F(PMCppDPTest_btc, FindDirectPairingDevices_RV_SRC_P)
                     PMCppDPHelper::findCallback, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppDPHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -107,7 +107,6 @@ TEST_F(PMCppDPTest_btc, FindDirectPairingDevices_LBV_P)
                     PMCppDPHelper::findCallback, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppDPHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -149,7 +148,6 @@ TEST_F(PMCppDPTest_btc, DoDirectPairing_RV_SRC_P)
     if(!m_PMCppDPHelper.doDirectPairing(DP_DEV_INSTANCE_ONE, DP_PRE_CONFIGURED, DP_PRECONFIG_PIN, PMCppDPHelper::resultCallback, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppDPHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -191,7 +189,6 @@ TEST_F(PMCppDPTest_btc, DoDirectPairingPin_NV_N)
     if(!m_PMCppDPHelper.doDirectPairing(DP_DEV_INSTANCE_ONE, DP_NOT_ALLOWED, NULL, PMCppDPHelper::resultCallback, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppDPHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -233,7 +230,6 @@ TEST_F(PMCppDPTest_btc, DoDirectPairingPin_EG_N)
     if(!m_PMCppDPHelper.doDirectPairing(DP_DEV_INSTANCE_ONE, DP_PRE_CONFIGURED, DP_WRONG_PIN, PMCppDPHelper::resultCallback, OC_STACK_OK, OC_STACK_AUTHENTICATION_FAILURE))
     {
         SET_FAILURE(m_PMCppDPHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -275,7 +271,6 @@ TEST_F(PMCppDPTest_btc, DoDirectPairingPmSel_EG_N)
     if(!m_PMCppDPHelper.doDirectPairing(DP_DEV_INSTANCE_ONE, DP_NOT_ALLOWED, DP_PRECONFIG_PIN, PMCppDPHelper::resultCallback, OC_STACK_OK, OC_STACK_ERROR))
     {
         SET_FAILURE(m_PMCppDPHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -317,7 +312,6 @@ TEST_F(PMCppDPTest_btc, DoDirectPairingCB_NV_N)
     if(!m_PMCppDPHelper.doDirectPairing(DP_DEV_INSTANCE_ONE, DP_PRE_CONFIGURED, DP_PRECONFIG_PIN, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppDPHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -367,7 +361,6 @@ TEST_F(PMCppDPTest_btc, GetDirectPairedDevices_RV_SRC_P)
     if(!m_PMCppDPHelper.getDirectPairedDevices(PMCppDPHelper::pairedDevListCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppDPHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -417,7 +410,6 @@ TEST_F(PMCppDPTest_btc, GetDirectPairedDevicesCb_NV_N)
     if(!m_PMCppDPHelper.getDirectPairedDevices(NULL, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppDPHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -460,7 +452,6 @@ TEST_F(PMCppDPTest_btc, GetHost_RV_P)
     if(!m_PMCppDPHelper.getHost(DP_DEV_INSTANCE_ONE))
     {
         SET_FAILURE(m_PMCppDPHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -503,7 +494,6 @@ TEST_F(PMCppDPTest_btc, GetDeviceID_RV_P)
     if(!m_PMCppDPHelper.getDeviceID(DP_DEV_INSTANCE_ONE))
     {
         SET_FAILURE(m_PMCppDPHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -546,7 +536,6 @@ TEST_F(PMCppDPTest_btc, GetPairingMethods_RV_P)
     if(!m_PMCppDPHelper.getPairingMethods(DP_DEV_INSTANCE_ONE))
     {
         SET_FAILURE(m_PMCppDPHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -589,7 +578,6 @@ TEST_F(PMCppDPTest_btc, GetConnType_RV_P)
     if(!m_PMCppDPHelper.getConnType(DP_DEV_INSTANCE_ONE))
     {
         SET_FAILURE(m_PMCppDPHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -632,7 +620,8 @@ TEST_F(PMCppDPTest_btc, GetDev_RV_P)
     if(!m_PMCppDPHelper.getDev(DP_DEV_INSTANCE_ONE))
     {
         SET_FAILURE(m_PMCppDPHelper.getFailureMessage());
-        return;
     }
 }
 #endif
+
+#endif /*#if defined(__DIRECTPAIRING__)*/

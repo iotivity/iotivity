@@ -19,6 +19,7 @@
  *
  ******************************************************************/
 
+#if defined(__DIRECTPAIRING__)
 #include "PMCppDPHelper.h"
 
 int g_dpCBInvoked = CALLBACK_NOT_INVOKED;
@@ -252,7 +253,7 @@ bool PMCppDPHelper::getPairingMethods(int nDevInstance)
             for (int i = 0; i < prms.size(); i++)
             {
                 std::cout << "[PMCppDPHelper] PAIRING METHOD TYPE : "
-                        << getPairingMethodsType(prms[i]) << std::endl;
+                << getPairingMethodsType(prms[i]) << std::endl;
             }
         }
     }
@@ -273,17 +274,17 @@ std::string PMCppDPHelper::getPairingMethodsType(int connectionType)
     switch (connectionType)
     {
         case DP_NOT_ALLOWED:
-            pairingMethodTypeName = "DP_NOT_ALLOWED";
-            break;
+        pairingMethodTypeName = "DP_NOT_ALLOWED";
+        break;
         case DP_PRE_CONFIGURED:
-            pairingMethodTypeName = "DP_PRE_CONFIGURED";
-            break;
+        pairingMethodTypeName = "DP_PRE_CONFIGURED";
+        break;
         case DP_RANDOM_PIN:
-            pairingMethodTypeName = "DP_RANDOM_PIN";
-            break;
+        pairingMethodTypeName = "DP_RANDOM_PIN";
+        break;
         default:
-            pairingMethodTypeName = "DP_UNKNOWN_TYPE";
-            break;
+        pairingMethodTypeName = "DP_UNKNOWN_TYPE";
+        break;
     }
 
     return pairingMethodTypeName;
@@ -296,10 +297,10 @@ bool PMCppDPHelper::getConnType(int nDevInstance)
     try
     {
         OCConnectivityType actualConnectivityType =
-                s_discoveredDpDevList[nDevInstance]->getConnType();
+        s_discoveredDpDevList[nDevInstance]->getConnType();
 
         std::cout << "[PMCppDPHelper] ConnectivityType  : "
-                << getConnectivityTypeName(actualConnectivityType) << std::endl;
+        << getConnectivityTypeName(actualConnectivityType) << std::endl;
     }
     catch (exception& e)
     {
@@ -317,22 +318,22 @@ std::string PMCppDPHelper::getConnectivityTypeName(OCConnectivityType connType)
     switch (connType & CT_MASK_ADAPTER)
     {
         case CT_ADAPTER_IP:
-            return "IP";
+        return "IP";
 
         case CT_IP_USE_V4:
-            return "IPv4";
+        return "IPv4";
 
         case CT_IP_USE_V6:
-            return "IPv6";
+        return "IPv6";
 
         case CT_ADAPTER_GATT_BTLE:
-            return "GATT";
+        return "GATT";
 
         case CT_ADAPTER_RFCOMM_BTEDR:
-            return "RFCOMM";
+        return "RFCOMM";
 
         default:
-            return "Incorrect connectivity";
+        return "Incorrect connectivity";
     }
 }
 
@@ -386,67 +387,67 @@ std::string PMCppDPHelper::getDpOCStackResult(OCStackResult ocstackresult)
     switch (ocstackresult)
     {
         case OC_STACK_OK:
-            resultString = "OC_STACK_OK";
-            break;
+        resultString = "OC_STACK_OK";
+        break;
         case OC_STACK_RESOURCE_CREATED:
-            resultString = "OC_STACK_RESOURCE_CREATED";
-            break;
+        resultString = "OC_STACK_RESOURCE_CREATED";
+        break;
         case OC_STACK_RESOURCE_DELETED:
-            resultString = "OC_STACK_RESOURCE_DELETED";
-            break;
+        resultString = "OC_STACK_RESOURCE_DELETED";
+        break;
         case OC_STACK_CONTINUE:
-            resultString = "OC_STACK_CONTINUE";
-            break;
+        resultString = "OC_STACK_CONTINUE";
+        break;
         case OC_STACK_INVALID_URI:
-            resultString = "OC_STACK_INVALID_URI";
-            break;
+        resultString = "OC_STACK_INVALID_URI";
+        break;
         case OC_STACK_INVALID_QUERY:
-            resultString = "OC_STACK_INVALID_QUERY";
-            break;
+        resultString = "OC_STACK_INVALID_QUERY";
+        break;
         case OC_STACK_INVALID_IP:
-            resultString = "OC_STACK_INVALID_IP";
-            break;
+        resultString = "OC_STACK_INVALID_IP";
+        break;
         case OC_STACK_INVALID_PORT:
-            resultString = "OC_STACK_INVALID_PORT";
-            break;
+        resultString = "OC_STACK_INVALID_PORT";
+        break;
         case OC_STACK_INVALID_CALLBACK:
-            resultString = "OC_STACK_INVALID_CALLBACK";
-            break;
+        resultString = "OC_STACK_INVALID_CALLBACK";
+        break;
         case OC_STACK_INVALID_METHOD:
-            resultString = "OC_STACK_INVALID_METHOD";
-            break;
+        resultString = "OC_STACK_INVALID_METHOD";
+        break;
         case OC_STACK_INVALID_PARAM:
-            resultString = "OC_STACK_INVALID_PARAM";
-            break;
+        resultString = "OC_STACK_INVALID_PARAM";
+        break;
         case OC_STACK_INVALID_OBSERVE_PARAM:
-            resultString = "OC_STACK_INVALID_OBSERVE_PARAM";
-            break;
+        resultString = "OC_STACK_INVALID_OBSERVE_PARAM";
+        break;
         case OC_STACK_NO_MEMORY:
-            resultString = "OC_STACK_NO_MEMORY";
-            break;
+        resultString = "OC_STACK_NO_MEMORY";
+        break;
         case OC_STACK_COMM_ERROR:
-            resultString = "OC_STACK_COMM_ERROR";
-            break;
+        resultString = "OC_STACK_COMM_ERROR";
+        break;
         case OC_STACK_TIMEOUT:
-            resultString = "OC_STACK_TIMEOUT";
-            break;
+        resultString = "OC_STACK_TIMEOUT";
+        break;
         case OC_STACK_ADAPTER_NOT_ENABLED:
-            resultString = "OC_STACK_ADAPTER_NOT_ENABLED";
-            break;
+        resultString = "OC_STACK_ADAPTER_NOT_ENABLED";
+        break;
         case OC_STACK_NOTIMPL:
-            resultString = "OC_STACK_NOTIMPL";
-            break;
+        resultString = "OC_STACK_NOTIMPL";
+        break;
         case OC_STACK_NO_RESOURCE:
-            resultString = "OC_STACK_NO_RESOURCE";
-            break;
+        resultString = "OC_STACK_NO_RESOURCE";
+        break;
         case OC_STACK_AUTHENTICATION_FAILURE:
-            return "OC_STACK_AUTHENTICATION_FAILURE";
+        return "OC_STACK_AUTHENTICATION_FAILURE";
         case OC_STACK_ERROR:
-            return "OC_STACK_ERROR";
-            break;
+        return "OC_STACK_ERROR";
+        break;
         default:
-            resultString = "UNKNOWN_STATE";
-            break;
+        resultString = "UNKNOWN_STATE";
+        break;
     }
 
     return resultString;
@@ -467,8 +468,8 @@ std::string PMCppDPHelper::setFailureMessage(OCStackResult expectedApiResult,
         OCStackResult actualResult)
 {
     std::string errorMessage = "\033[1;31m[Error] Expected : \033[0m"
-            + getDpOCStackResult(expectedApiResult) + " \033[1;31mActual : \033[0m"
-            + getDpOCStackResult(actualResult);
+    + getDpOCStackResult(expectedApiResult) + " \033[1;31mActual : \033[0m"
+    + getDpOCStackResult(actualResult);
     return errorMessage;
 }
 
@@ -480,3 +481,5 @@ std::string PMCppDPHelper::setFailureMessage(std::string errorMessage)
 
     return retErrorMessage;
 }
+
+#endif /*#if defined(__DIRECTPAIRING__)*/

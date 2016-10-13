@@ -21,6 +21,7 @@
 
 #ifndef PMCppDPHelper_H_
 #define PMCppDPHelper_H_
+#if defined(__DIRECTPAIRING__)
 
 #include <stdio.h>
 #include <string.h>
@@ -108,3 +109,5 @@ public:
 
 };
 #endif
+
+#endif /*#if defined(__DIRECTPAIRING__)*/

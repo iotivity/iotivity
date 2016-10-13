@@ -20,6 +20,7 @@
  ******************************************************************/
 
 #include "PMCppHelper.h"
+#include "PMCppUtilityHelper.h"
 
 class PMCppTest_btc: public ::testing::Test
 {
@@ -74,7 +75,6 @@ TEST_F(PMCppTest_btc, DiscoverUnownedDevices_RV_P)
     if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -97,7 +97,6 @@ TEST_F(PMCppTest_btc, DiscoverUnownedDevicesTime_LBV_P)
     if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT_ONE, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -120,7 +119,6 @@ TEST_F(PMCppTest_btc, DiscoverUnownedDevicesTime_LOBV_N)
     if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT_ZERO, m_UnownedDevList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -143,7 +141,6 @@ TEST_F(PMCppTest_btc, DiscoverOwnedDevices_RV_P)
     if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -166,7 +163,6 @@ TEST_F(PMCppTest_btc, DiscoverOwnedDevicesTime_LBV_P)
     if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT_ONE, m_OwnedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -189,7 +185,6 @@ TEST_F(PMCppTest_btc, DiscoverOwnedDevicesTime_LOBV_N)
     if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT_ZERO, m_OwnedDevList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -212,7 +207,6 @@ TEST_F(PMCppTest_btc, GetDevInfoFromNetwork_RV_P)
     if(!m_PMCppHelper.getDevInfoFromNetwork(DISCOVERY_TIMEOUT, m_OwnedDevList, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -235,7 +229,6 @@ TEST_F(PMCppTest_btc, GetDevInfoFromNetworkTime_LBV_P)
     if(!m_PMCppHelper.getDevInfoFromNetwork(DISCOVERY_TIMEOUT_TWO, m_OwnedDevList, m_UnownedDevList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -258,7 +251,6 @@ TEST_F(PMCppTest_btc, GetDevInfoFromNetworkTime_LOBV_N)
     if(!m_PMCppHelper.getDevInfoFromNetwork(DISCOVERY_TIMEOUT_ONE, m_OwnedDevList, m_UnownedDevList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -290,7 +282,6 @@ TEST_F(PMCppTest_btc, SetOwnerTransferCBDataJustWork_RV_P)
     if(!m_PMCppHelper.setOwnerTransferCallbackData(OIC_JUST_WORKS, justWorksCBData, NULL, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -322,7 +313,6 @@ TEST_F(PMCppTest_btc, SetOwnerTransferCBDataJustWork_REV_P)
     if(!m_PMCppHelper.setOwnerTransferCallbackData(OTM_JUSTWORK, justWorksCBData, NULL, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -354,7 +344,6 @@ TEST_F(PMCppTest_btc, SetOwnerTransferCBDataJustWorkInvalidCB_N)
     if(!m_PMCppHelper.setOwnerTransferCallbackData(OIC_OXM_COUNT, justWorksCBData, NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -545,7 +534,6 @@ TEST_F(PMCppTest_btc, DoOwnershipTransferJustWorkCB_NV_N)
     if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -611,7 +599,6 @@ TEST_F(PMCppTest_btc, ProvisionAcl_RV_P)
     if(!m_PMCppHelper.provisionACL(m_OwnedDevList, acl1, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -677,7 +664,6 @@ TEST_F(PMCppTest_btc, ProvisionAcl_NV_N)
     if(!m_PMCppHelper.provisionACL(m_OwnedDevList, NULL, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -750,7 +736,6 @@ TEST_F(PMCppTest_btc, ProvisionAclCB_NV_N)
     if(!m_PMCppHelper.provisionACL(m_OwnedDevList, acl1, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -818,7 +803,6 @@ TEST_F(PMCppTest_btc, ProvisionCredentialsKeysize_FSV_LBV_P)
     if(!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -886,7 +870,6 @@ TEST_F(PMCppTest_btc, ProvisionCredentialsKeysize_UBV_P)
     if(!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -964,7 +947,6 @@ TEST_F(PMCppTest_btc, ProvisionCredentialsCB_NV_N)
     if(!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(), NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1032,7 +1014,6 @@ TEST_F(PMCppTest_btc, ProvisionCredentialsKeysize_LOBV_N)
     if(!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1169,7 +1150,6 @@ TEST_F(PMCppTest_btc, ProvisionCredentialsCredType_LOBV_N)
     if(!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1237,7 +1217,6 @@ TEST_F(PMCppTest_btc, ProvisionCredentialsCredType_UOBV_N)
     if(!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1305,7 +1284,6 @@ TEST_F(PMCppTest_btc, ProvisionCredentialsSameDev_EG_N)
     if(!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[0].get(), PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1375,7 +1353,6 @@ TEST_F(PMCppTest_btc, ProvisionPairwiseDevicesKeySize_LBV_P)
     if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, acl1, *m_OwnedDevList[1].get(), acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1445,7 +1422,6 @@ TEST_F(PMCppTest_btc, ProvisionPairwiseDevicesKeySize_FSV_UBV_P)
     if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, acl1, *m_OwnedDevList[1].get(), acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1515,7 +1491,6 @@ TEST_F(PMCppTest_btc, ProvisionPairwiseDevicesKeySize_LOBV_N)
     if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, acl1, *m_OwnedDevList[1].get(), acl2, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1585,7 +1560,6 @@ TEST_F(PMCppTest_btc, ProvisionPairwiseDevicesKeySize_UOBV_N)
     if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, acl1, *m_OwnedDevList[1].get(), acl2, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1655,7 +1629,6 @@ TEST_F(PMCppTest_btc, ProvisionPairwiseDevicesCB_NV_N)
     if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, acl1, *m_OwnedDevList[1].get(), acl2, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1724,7 +1697,6 @@ TEST_F(PMCppTest_btc, ProvisionPairwiseDevicesAcl1_NV_P)
     if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, NULL, *m_OwnedDevList[1].get(), acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1793,86 +1765,6 @@ TEST_F(PMCppTest_btc, ProvisionPairwiseDevicesAcl2_NV_P)
     if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, acl1, *m_OwnedDevList[1].get(), NULL, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-
-/**
- * @since           2015-11-30
- * @see             static OCStackResult provisionInit(const std::string& dbPath)
- * @see             static OCStackResult setOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData, InputPinCallback inputPin)
- * @see             static OCStackResult discoverUnownedDevices(unsigned short timeout, DeviceList_t &list)
- * @see             OCStackResult doOwnershipTransfer(ResultCallBack resultCallback)
- * @see             static OCStackResult discoverOwnedDevices(unsigned short timeout, DeviceList_t &list)
- * @objective       test provisionPairwiseDevices positively
- * @target          OCStackResult provisionPairwiseDevices(const Credential &cred, const OicSecAcl_t* acl1, const OCSecureResource &device2, const OicSecAcl_t* acl2, ResultCallBack resultCallback)
- * @test_data       Regular data for provisionPairwiseDevices
- * @pre_condition   start two justworks simulators
- * @procedure       1. call provisionInit
- *                  2. call discoverUnownedDevices
- *                  3. call setOwnerTransferCallbackData
- *                  4. call doOwnershipTransfer
- *                  5. call discoverOwnedDevices
- *                  6. call provisionPairwiseDevices
- * @post_condition  None
- * @expected        provisionPairwiseDevices will return OC_STACK_OK
- */
-#if defined(__LINUX__)
-TEST_F(PMCppTest_btc, ProvisionDirectPairing_SRC_LBV_P)
-{
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
-    }
-
-    OTMCallbackData_t justWorksCBData;
-    justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
-    justWorksCBData.createSecureSessionCB =
-    CreateSecureSessionJustWorksCallback;
-    justWorksCBData.createSelectOxmPayloadCB =
-    CreateJustWorksSelectOxmPayload;
-    justWorksCBData.createOwnerTransferPayloadCB =
-    CreateJustWorksOwnerTransferPayload;
-
-    if(!m_PMCppHelper.setOwnerTransferCallbackData(OIC_JUST_WORKS, justWorksCBData, NULL, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
-    }
-
-    OicSecPconf_t g_pconf;
-    g_pconf.edp = true;
-    g_pconf.prmLen = sizeof(SUPPORTED_PRMS)/sizeof(OicSecPrm_t);
-    if(g_pconf.prm)
-    {
-        for (size_t i=0; i < g_pconf.prmLen; i++)
-        {
-            g_pconf.prm[i] = SUPPORTED_PRMS[i];
-        }
-    }
-
-    memcpy(g_pconf.pin.val, DEFAULT_DP_PROVSIONING_PIN, DP_PIN_LENGTH);
-
-    g_pconf.pdacls = createPdAcl(DEFAULT_PERMISSION);
-
-    if(!m_PMCppHelper.provisionDirectPairing(m_OwnedDevList, g_pconf, PMCppHelper::provisionCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2032,7 +1924,6 @@ TEST_F(PMCppTest_btc, UnlinkDevices_RV_P)
     if(!m_PMCppHelper.unlinkDevices(m_OwnedDevList, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2110,7 +2001,6 @@ TEST_F(PMCppTest_btc, UnlinkDevicesCB_NV_N)
     if(!m_PMCppHelper.unlinkDevices(m_OwnedDevList, *m_OwnedDevList[1].get(), NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2194,7 +2084,6 @@ TEST_F(PMCppTest_btc, RemoveDevice_RV_P)
     if(!m_PMCppHelper.removeDevice(m_OwnedDevList, DISCOVERY_TIMEOUT, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2272,7 +2161,6 @@ TEST_F(PMCppTest_btc, RemoveDeviceTime_LBV_P)
     if(!m_PMCppHelper.removeDevice(m_OwnedDevList, DISCOVERY_TIMEOUT_ONE, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2300,7 +2188,7 @@ TEST_F(PMCppTest_btc, RemoveDeviceTime_LBV_P)
  * @expected        removeDevice will return OC_STACK_INVALID_PARAM
  */
 #if defined(__LINUX__)
-TEST_F(PMCppTest_btc, RemoveDeviceTime_LOBV_P)
+TEST_F(PMCppTest_btc, RemoveDeviceTime_LOBV_N)
 {
     if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
     {
@@ -2350,7 +2238,6 @@ TEST_F(PMCppTest_btc, RemoveDeviceTime_LOBV_P)
     if(!m_PMCppHelper.removeDevice(m_OwnedDevList, DISCOVERY_TIMEOUT_ZERO, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2428,7 +2315,6 @@ TEST_F(PMCppTest_btc, RemoveDeviceCB_NV_N)
     if(!m_PMCppHelper.removeDevice(m_OwnedDevList, DISCOVERY_TIMEOUT, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2528,7 +2414,6 @@ TEST_F(PMCppTest_btc, GetDeviceStatusOn_SRC_P)
     if (ON != m_UnownedDevList[0]->getDeviceStatus())
     {
         SET_FAILURE("getDeviceStatus Failed");
-        return;
     }
 }
 #endif
@@ -2559,7 +2444,6 @@ TEST_F(PMCppTest_btc, GetOwnedStatusUnowned_SRC_P)
     if (DEVICE_UNOWNED != m_UnownedDevList[0]->getOwnedStatus())
     {
         SET_FAILURE("getOwnedStatus Failed");
-        return;
     }
 }
 #endif
@@ -2631,7 +2515,6 @@ TEST_F(PMCppTest_btc, GetOwnedStatusOwned_SRCC_P)
     if (DEVICE_OWNED != m_OwnedDevList[0]->getOwnedStatus())
     {
         SET_FAILURE("getOwnedStatus Failed");
-        return;
     }
 }
 #endif
@@ -2797,4 +2680,177 @@ TEST_F(PMCppTest_btc, SetDisplayPinCB_N)
         SET_FAILURE("setDisplayPinCB Failed");
     }
 }
+#endif
+#if defined(__CLOUD__)
+
+/**
+ * @since           2016-10-24
+ * @see             static OCStackResult provisionInit(const std::string& dbPath)
+ * @see             static OCStackResult setOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData, InputPinCallback inputPin)
+ * @see             static OCStackResult discoverUnownedDevices(unsigned short timeout, DeviceList_t &list)
+ * @see             OCStackResult doOwnershipTransfer(ResultCallBack resultCallback)
+ * @see             static OCStackResult discoverOwnedDevices(unsigned short timeout, DeviceList_t &list)
+ * @objective       test provisionTrustCertChain positively
+ * @target          OCStackResult provisionTrustCertChain(OicSecCredType_t type, uint16_t credId, ResultCallBack resultCallback)
+ * @test_data       Regular data for getLinkedDevices
+ * @pre_condition   start two justworks simulators
+ * @procedure       1. call provisionInit
+ *                  2. call discoverUnownedDevices
+ *                  3. call setOwnerTransferCallbackData
+ *                  4. call doOwnershipTransfer
+ *                  5. call discoverOwnedDevices
+ *                  6. call provisionTrustCertChain
+ * @post_condition  None
+ * @expected        provisionTrustCertChain will return OC_STACK_OK
+ */
+#if defined(__LINUX__)
+TEST_F(PMCppTest_btc, ProvisionTrustCertChain_RV_SRC_P)
+{
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    OTMCallbackData_t justWorksCBData;
+    justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
+    justWorksCBData.createSecureSessionCB =
+    CreateSecureSessionJustWorksCallback;
+    justWorksCBData.createSelectOxmPayloadCB =
+    CreateJustWorksSelectOxmPayload;
+    justWorksCBData.createOwnerTransferPayloadCB =
+    CreateJustWorksOwnerTransferPayload;
+
+    if(!m_PMCppHelper.setOwnerTransferCallbackData(OIC_JUST_WORKS, justWorksCBData, NULL, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.provisionTrustCertChain(m_OwnedDevList, SIGNED_ASYMMETRIC_KEY, CRED_ID_ONE, PMCppHelper::provisionCB, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+    }
+}
+#endif
+
+/**
+ * @since           2016-10-24
+ * @see             static OCStackResult provisionInit(const std::string& dbPath)
+ * @see             static OCStackResult setOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData, InputPinCallback inputPin)
+ * @see             static OCStackResult discoverUnownedDevices(unsigned short timeout, DeviceList_t &list)
+ * @see             OCStackResult doOwnershipTransfer(ResultCallBack resultCallback)
+ * @see             static OCStackResult discoverOwnedDevices(unsigned short timeout, DeviceList_t &list)
+ * @objective       test provisionTrustCertChain negatively with OicSecCredType_t as SYMMETRIC_PAIR_WISE_KEY
+ * @target          OCStackResult provisionTrustCertChain(OicSecCredType_t type, uint16_t credId, ResultCallBack resultCallback)
+ * @test_data       Regular data for getLinkedDevices
+ * @pre_condition   start two justworks simulators
+ * @procedure       1. call provisionInit
+ *                  2. call discoverUnownedDevices
+ *                  3. call setOwnerTransferCallbackData
+ *                  4. call doOwnershipTransfer
+ *                  5. call discoverOwnedDevices
+ *                  6. call provisionTrustCertChain
+ * @post_condition  None
+ * @expected        provisionTrustCertChain will return OC_STACK_INVALID_PARAM
+ */
+#if defined(__LINUX__)
+TEST_F(PMCppTest_btc, ProvisionTrustCertChainCredType_EG_N)
+{
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    OTMCallbackData_t justWorksCBData;
+    justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
+    justWorksCBData.createSecureSessionCB =
+    CreateSecureSessionJustWorksCallback;
+    justWorksCBData.createSelectOxmPayloadCB =
+    CreateJustWorksSelectOxmPayload;
+    justWorksCBData.createOwnerTransferPayloadCB =
+    CreateJustWorksOwnerTransferPayload;
+
+    if(!m_PMCppHelper.setOwnerTransferCallbackData(OIC_JUST_WORKS, justWorksCBData, NULL, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.provisionTrustCertChain(m_OwnedDevList, SYMMETRIC_PAIR_WISE_KEY, CRED_ID_ONE, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+    }
+}
+#endif
+
+#if defined(__LINUX__)
+TEST_F(PMCppTest_btc, ProvisionTrustCertChainCb_NV_N)
+{
+    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    OTMCallbackData_t justWorksCBData;
+    justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
+    justWorksCBData.createSecureSessionCB =
+    CreateSecureSessionJustWorksCallback;
+    justWorksCBData.createSelectOxmPayloadCB =
+    CreateJustWorksSelectOxmPayload;
+    justWorksCBData.createOwnerTransferPayloadCB =
+    CreateJustWorksOwnerTransferPayload;
+
+    if(!m_PMCppHelper.setOwnerTransferCallbackData(OIC_JUST_WORKS, justWorksCBData, NULL, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, m_OwnedDevList, OC_STACK_OK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+        return;
+    }
+
+    OicSecCredType_t type = SIGNED_ASYMMETRIC_KEY;
+
+    if(!m_PMCppHelper.provisionTrustCertChain(m_OwnedDevList, type, 1, NULL, OC_STACK_INVALID_CALLBACK))
+    {
+        SET_FAILURE(m_PMCppHelper.getFailureMessage());
+    }
+}
+#endif
 #endif

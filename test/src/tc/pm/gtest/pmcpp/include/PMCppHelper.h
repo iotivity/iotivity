@@ -133,8 +133,8 @@ using namespace OC;
 #define SVR_DB_FILE_NAME "oic_svr_db_client.dat"
 #define PRVN_DB_FILE_NAME "oic_prvn_mng.db"
 #define JUSTWORKS_SERVER "./sampleserver_justworks"
-#define JUSTWORKS_SERVER1 "'./sampleserver_justworks 1'"
-#define JUSTWORKS_SERVER2 "'./sampleserver_justworks 2'"
+#define JUSTWORKS_SERVER1 "./sampleserver_justworks 1"
+#define JUSTWORKS_SERVER2 "./sampleserver_justworks 2"
 #define JUSTWORKS_SERVER1_CBOR "./oic_svr_db_server.dat"
 #define JUSTWORKS_SERVER2_CBOR "./oic_svr_db_server_justworks.dat"
 #define JUSTWORKS_SERVER1_CBOR_BACKUP "../oic_svr_db_server.dat"
@@ -187,14 +187,16 @@ public:
             OCStackResult expectedResult);
     bool unlinkDevices(DeviceList_t& deviceList, const OCSecureResource &device2,
             ResultCallBack resultCallback, OCStackResult expectedResult);
-    bool removeDevice(DeviceList_t& deviceList,
-            unsigned short waitTimeForOwnedDeviceDiscovery, ResultCallBack resultCallback,
-            OCStackResult expectedResult);
+    bool removeDevice(DeviceList_t& deviceList, unsigned short waitTimeForOwnedDeviceDiscovery,
+            ResultCallBack resultCallback, OCStackResult expectedResult);
     bool removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery, std::string uuid,
+            ResultCallBack resultCallback, OCStackResult expectedResult);
+    bool provisionTrustCertChain(DeviceList_t& deviceList, OicSecCredType_t type, uint16_t credId,
             ResultCallBack resultCallback, OCStackResult expectedResult);
 
     static void ownershipTransferCB(PMResultList_t *result, int hasError);
     static void provisionCB(PMResultList_t *result, int hasError);
+    static void provisionCB1(PMResultList_t *result, int hasError);
 
     std::string getFailureMessage();
     static std::string setFailureMessage(OCStackResult expectedResult, OCStackResult actualResult);

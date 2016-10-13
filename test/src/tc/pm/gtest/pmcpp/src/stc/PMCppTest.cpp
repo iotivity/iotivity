@@ -119,7 +119,6 @@ TEST_F(PMCppTest_stc, ProvisionAclPermisison_UBV_P)
     if(!m_PMCppHelper.provisionACL(m_OwnedDevList, acl1, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -185,7 +184,6 @@ TEST_F(PMCppTest_stc, ProvisionAclPermisison_LBV_P)
     if(!m_PMCppHelper.provisionACL(m_OwnedDevList, acl1, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -253,7 +251,6 @@ TEST_F(PMCppTest_stc, ProvisionCredentialsCredType_REV_P)
     if(!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -326,7 +323,6 @@ TEST_F(PMCppTest_stc, ProvisionAclCBAcl_NV_N)
     if(!m_PMCppHelper.provisionACL(m_OwnedDevList, NULL, NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -399,7 +395,6 @@ TEST_F(PMCppTest_stc, ProvisionAclMultipleTimes_SQV_P)
     if(!m_PMCppHelper.provisionACL(m_OwnedDevList, acl1, PMCppHelper::provisionCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -474,7 +469,6 @@ TEST_F(PMCppTest_stc, ProvisionCredentialsMultipleTimes_EG_N)
     if(!m_PMCppHelper.provisionCredentials(m_OwnedDevList, cred, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -551,7 +545,6 @@ TEST_F(PMCppTest_stc, ProvisionPairwiseDevicesMultipleTimes_EG_N)
     if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, acl1, *m_OwnedDevList[1].get(), acl2, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -636,7 +629,6 @@ TEST_F(PMCppTest_stc, UnlinkDeviceMultipleTimes_EG_N)
     if(!m_PMCppHelper.unlinkDevices(m_OwnedDevList, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -721,7 +713,6 @@ TEST_F(PMCppTest_stc, RemoveDeviceMultipleTimes_EG_N)
     if(!m_PMCppHelper.removeDevice(m_OwnedDevList, DISCOVERY_TIMEOUT, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
     }
 }
 #endif

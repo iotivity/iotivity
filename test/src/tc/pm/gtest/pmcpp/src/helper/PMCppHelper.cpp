@@ -20,6 +20,7 @@
  ******************************************************************/
 
 #include "PMCppHelper.h"
+#include "PMCppUtilityHelper.h"
 
 int g_cbInvoked = CALLBACK_NOT_INVOKED;
 
@@ -33,23 +34,6 @@ void printDevices(DeviceList_t &list)
         std::cout << list[i]->getDeviceStatus() << " Owned Status: ";
         std::cout << list[i]->getOwnedStatus() << std::endl;
     }
-}
-
-static void printUuid(const OicUuid_t* uid)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printUuid IN");
-
-    for (int i = 0; i < UUID_LENGTH;)
-    {
-        printf("%02X", (*uid).id[i++]);
-        if (i == 4 || i == 6 || i == 8 || i == 10) // canonical format for UUID has '8-4-4-4-12'
-        {
-            printf(DASH);
-        }
-    }
-    printf("\n");
-
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printUuid OUT");
 }
 
 void printUuid(OicUuid_t uuid)
@@ -85,7 +69,7 @@ void InputPinCB(char* pin, size_t len)
     fgets(buff, PIN_MAX_SIZE, (FILE*) fp);
     fclose(fp);
 
-    IOTIVITYTEST_LOG(DEBUG, "[PIN CODE] %s\n\n", buff);
+    IOTIVITYTEST_LOG(DEBUG, "[PIN CODE] %s\n", buff);
 
     strcpy(pin, (const char*) buff);
 
@@ -102,34 +86,39 @@ OicSecAcl_t* createAcl(const int dev_num, int nPermission, DeviceList_t &m_Owned
     LL_APPEND(acl->aces, ace);
     int num = 0;
 
-    if(dev_num == 1) {
+    if (dev_num == 1)
+    {
         memcpy(&ace->subjectuuid, ACL_ROWNER_UUID_02, UUID_LENGTH);
-    } else {
+    }
+    else
+    {
         memcpy(&ace->subjectuuid, ACL_ROWNER_UUID_01, UUID_LENGTH);
     }
 
     num = 1;
-    char rsrc_in[ACL_RESRC_MAX_LEN+1] = {0};  // '1' for null termination
-    for(int i = 0; num > i; ++i)
+    char rsrc_in[ACL_RESRC_MAX_LEN + 1] =
+    { 0 }; // '1' for null termination
+
+    for (int i = 0; num > i; ++i)
     {
-        OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+        OicSecRsrc_t* rsrc = (OicSecRsrc_t*) OICCalloc(1, sizeof(OicSecRsrc_t));
 
         // Resource URI
-        size_t len = strlen(LIGHT_RESOURCE_URI_01)+1;  // '1' for null termination
+        size_t len = strlen(LIGHT_RESOURCE_URI_01) + 1; // '1' for null termination
         rsrc->href = (char*) OICCalloc(len, sizeof(char));
         OICStrcpy(rsrc->href, len, LIGHT_RESOURCE_URI_01);
 
         // Resource Type
         rsrc->typeLen = 1;
-        rsrc->types = (char**)OICCalloc(rsrc->typeLen, sizeof(char*));
-        for(int i = 0; i < rsrc->typeLen; i++)
+        rsrc->types = (char**) OICCalloc(rsrc->typeLen, sizeof(char*));
+        for (int i = 0; i < rsrc->typeLen; i++)
         {
             rsrc->types[i] = OICStrdup(LIGHT_RESOURCE_URI_01);
         }
 
         rsrc->interfaceLen = 1;
-        rsrc->interfaces = (char**)OICCalloc(rsrc->typeLen, sizeof(char*));
-        for(int i = 0; i < rsrc->interfaceLen; i++)
+        rsrc->interfaces = (char**) OICCalloc(rsrc->typeLen, sizeof(char*));
+        for (int i = 0; i < rsrc->interfaceLen; i++)
         {
             rsrc->interfaces[i] = OICStrdup(LIGHT_RESOURCE_URI_01);
         }
@@ -176,7 +165,7 @@ bool PMCppHelper::discoverUnownedDevices(int time, DeviceList_t& deviceList,
     OCStackResult res = OC_STACK_OK;
     res = OCSecure::discoverUnownedDevices(time, deviceList);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] discoverUnownedDevices returns : %s",
-            getOCStackResultCPP(res).c_str());
+            PMCppUtilityHelper::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -204,7 +193,7 @@ bool PMCppHelper::discoverOwnedDevices(int time, DeviceList_t& deviceList,
     OCStackResult res = OC_STACK_OK;
     res = OCSecure::discoverOwnedDevices(time, deviceList);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] discoverOwnedDevices returns : %s",
-            getOCStackResultCPP(res).c_str());
+            PMCppUtilityHelper::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -231,7 +220,7 @@ bool PMCppHelper::getDevInfoFromNetwork(unsigned short time, DeviceList_t& owned
     OCStackResult res = OC_STACK_OK;
     res = OCSecure::getDevInfoFromNetwork(time, ownedDevList, unownedDevList);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] getDevInfoFromNetwork returns : %s",
-            getOCStackResultCPP(res).c_str());
+            PMCppUtilityHelper::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -266,7 +255,7 @@ bool PMCppHelper::setOwnerTransferCallbackData(int num, OTMCallbackData_t &data,
 
     res = OCSecure::setOwnerTransferCallbackData((OicSecOxm_t) num, &data, inputPin);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] setOwnerTransferCallbackData returns : %s",
-            getOCStackResultCPP(res).c_str());
+            PMCppUtilityHelper::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -291,9 +280,7 @@ bool PMCppHelper::doOwnershipTransfer(DeviceList_t &data, ResultCallBack resultC
 
         res = data[i]->doOwnershipTransfer(resultCallback);
         IOTIVITYTEST_LOG(INFO, "[API Return Code] doOwnershipTransfer returns : %s",
-                getOCStackResultCPP(res).c_str());
-
-        sleep(10);
+                PMCppUtilityHelper::getOCStackResult(res));
 
         if (res != expectedResult)
         {
@@ -324,7 +311,7 @@ bool PMCppHelper::provisionACL(DeviceList_t& deviceList, const OicSecAcl_t* acl,
 
     res = deviceList[0]->provisionACL(acl, resultCallback);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] provisionACL returns : %s",
-            getOCStackResultCPP(res).c_str());
+            PMCppUtilityHelper::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -355,7 +342,7 @@ bool PMCppHelper::provisionCredentials(DeviceList_t& deviceList, const Credentia
 
     res = deviceList[0]->provisionCredentials(cred, device2, resultCallback);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] provisionCredentials returns : %s",
-            getOCStackResultCPP(res).c_str());
+            PMCppUtilityHelper::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -386,7 +373,7 @@ bool PMCppHelper::provisionPairwiseDevices(DeviceList_t& deviceList, const Crede
 
     res = deviceList[0]->provisionPairwiseDevices(cred, acl1, device2, acl2, resultCallback);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] provisionPairwiseDevices returns : %s",
-            getOCStackResultCPP(res).c_str());
+            PMCppUtilityHelper::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -417,7 +404,7 @@ bool PMCppHelper::provisionDirectPairing(DeviceList_t& deviceList, const OicSecP
 
     OCStackResult res = deviceList[0]->provisionDirectPairing(&pconf, resultCallback);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] provisionDirectPairing returns : %s",
-            getOCStackResultCPP(res).c_str());
+            PMCppUtilityHelper::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -449,7 +436,7 @@ bool PMCppHelper::getLinkedDevices(DeviceList_t& deviceList, UuidList_t &uuidLis
     res = deviceList[0]->getLinkedDevices(uuidList);
 
     IOTIVITYTEST_LOG(INFO, "[API Return Code] getLinkedDevices returns : %s",
-            getOCStackResultCPP(res).c_str());
+            PMCppUtilityHelper::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -470,7 +457,7 @@ bool PMCppHelper::unlinkDevices(DeviceList_t& deviceList, const OCSecureResource
 
     res = deviceList[0]->unlinkDevices(device2, resultCallback);
     IOTIVITYTEST_LOG(INFO, "[API Return Code] unlinkDevices returns : %s",
-            getOCStackResultCPP(res).c_str());
+            PMCppUtilityHelper::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -501,8 +488,38 @@ bool PMCppHelper::removeDevice(DeviceList_t& deviceList,
     g_cbInvoked = CALLBACK_NOT_INVOKED;
 
     res = deviceList[0]->removeDevice(waitTimeForOwnedDeviceDiscovery, resultCallback);
-    IOTIVITYTEST_LOG(INFO, "[API Return Code] removeDevice returns : %s",
-            getOCStackResultCPP(res).c_str());
+    IOTIVITYTEST_LOG(DEBUG, "[API Return Code] removeDevice returns : %s",
+            PMCppUtilityHelper::getOCStackResult(res));
+
+    if (res != expectedResult)
+    {
+        IOTIVITYTEST_LOG(ERROR, "Expected Result Mismatch");
+        return false;
+    }
+
+    if (OC_STACK_OK == res)
+    {
+        if (CALLBACK_NOT_INVOKED == waitCallbackRet())
+        {
+            IOTIVITYTEST_LOG(ERROR, "Callback Not Invoked");
+            return false;
+        }
+    }
+
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] removeDevice OUT");
+    return true;
+}
+
+bool PMCppHelper::provisionTrustCertChain(DeviceList_t& deviceList, OicSecCredType_t type,
+        uint16_t credId, ResultCallBack resultCallback, OCStackResult expectedResult)
+{
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] provisionTrustCertChain IN");
+    OCStackResult res = OC_STACK_OK;
+    g_cbInvoked = CALLBACK_NOT_INVOKED;
+
+    res = deviceList[0]->provisionTrustCertChain(type, credId, resultCallback);
+    IOTIVITYTEST_LOG(INFO, "[API Return Code] provisionTrustCertChain returns : %s",
+            PMCppUtilityHelper::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -514,25 +531,27 @@ bool PMCppHelper::removeDevice(DeviceList_t& deviceList,
     {
         if (CALLBACK_NOT_INVOKED == waitCallbackRet())
         {
-            m_failureMessage = "removeDevice Callback Not Invoked";
+            m_failureMessage = "provisionTrustCertChain Callback Not Invoked";
             return false;
 
         }
     }
 
-    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] removeDevice OUT");
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] provisionTrustCertChain OUT");
     return true;
 }
 
-bool PMCppHelper::removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery, std::string uuid,
-        ResultCallBack resultCallback, OCStackResult expectedResult)
+bool PMCppHelper::removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery,
+        std::string uuid, ResultCallBack resultCallback, OCStackResult expectedResult)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] removeDeviceWithUuid IN");
     OCStackResult res = OC_STACK_OK;
     g_cbInvoked = CALLBACK_NOT_INVOKED;
 
-    res = OCSecure::removeDeviceWithUuid(waitTimeForOwnedDeviceDiscovery, uuid, PMCppHelper::provisionCB);
-    IOTIVITYTEST_LOG(DEBUG, "[API Return Code] removeDeviceWithUuid returns : %s\n", getOCStackResultCPP(res).c_str());
+    res = OCSecure::removeDeviceWithUuid(waitTimeForOwnedDeviceDiscovery, uuid,
+            PMCppHelper::provisionCB);
+    IOTIVITYTEST_LOG(DEBUG, "[API Return Code] removeDeviceWithUuid returns : %s",
+            PMCppUtilityHelper::getOCStackResult(res));
 
     if (res != expectedResult)
     {
@@ -656,72 +675,29 @@ void PMCppHelper::provisionCB(PMResultList_t *result, int hasError)
     IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] provisionCB OUT");
 }
 
-std::string getOCStackResultCPP(OCStackResult ocstackresult)
+void PMCppHelper::provisionCB1(PMResultList_t *result, int hasError)
 {
-    std::string resultString = EMPTY_STRING;
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] provisionCB IN");
 
-    switch (ocstackresult)
+    if (hasError)
     {
-        case OC_STACK_OK:
-            resultString = "OC_STACK_OK";
-            break;
-        case OC_STACK_RESOURCE_CREATED:
-            resultString = "OC_STACK_RESOURCE_CREATED";
-            break;
-        case OC_STACK_RESOURCE_DELETED:
-            resultString = "OC_STACK_RESOURCE_DELETED";
-            break;
-        case OC_STACK_INVALID_URI:
-            resultString = "OC_STACK_INVALID_URI";
-            break;
-        case OC_STACK_INVALID_QUERY:
-            resultString = "OC_STACK_INVALID_QUERY";
-            break;
-        case OC_STACK_INVALID_IP:
-            resultString = "OC_STACK_INVALID_IP";
-            break;
-        case OC_STACK_INVALID_PORT:
-            resultString = "OC_STACK_INVALID_PORT";
-            break;
-        case OC_STACK_INVALID_CALLBACK:
-            resultString = "OC_STACK_INVALID_CALLBACK";
-            break;
-        case OC_STACK_INVALID_METHOD:
-            resultString = "OC_STACK_INVALID_METHOD";
-            break;
-        case OC_STACK_INVALID_PARAM:
-            resultString = "OC_STACK_INVALID_PARAM";
-            break;
-        case OC_STACK_INVALID_OBSERVE_PARAM:
-            resultString = "OC_STACK_INVALID_OBSERVE_PARAM";
-            break;
-        case OC_STACK_NO_MEMORY:
-            resultString = "OC_STACK_NO_MEMORY";
-            break;
-        case OC_STACK_COMM_ERROR:
-            resultString = "OC_STACK_COMM_ERROR";
-            break;
-        case OC_STACK_TIMEOUT:
-            resultString = "OC_STACK_TIMEOUT";
-            break;
-        case OC_STACK_ADAPTER_NOT_ENABLED:
-            resultString = "OC_STACK_ADAPTER_NOT_ENABLED";
-            break;
-        case OC_STACK_NOTIMPL:
-            resultString = "OC_STACK_NOTIMPL";
-            break;
-        case OC_STACK_NO_RESOURCE:
-            resultString = "OC_STACK_NO_RESOURCE";
-            break;
-        case OC_STACK_ERROR:
-            return "OC_STACK_ERROR";
-            break;
-        default:
-            resultString = "UNKNOWN_STATE";
-            break;
+        IOTIVITYTEST_LOG(ERROR, "[PMCppHelper] Provisioning ERROR %d!!!", hasError);
+    }
+    else
+    {
+        IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] Received provisioning results: ");
+
+        for (unsigned int i = 0; i < result->size(); i++)
+        {
+            std::cout << "Result is = " << result->at(i).res << " for device ";
+            printUuid(result->at(i).deviceId);
+        }
+
+        delete result;
     }
 
-    return resultString;
+    g_cbInvoked = CALLBACK_INVOKED;
+    IOTIVITYTEST_LOG(DEBUG, "[PMCppHelper] provisionCB OUT");
 }
 
 /**
@@ -738,8 +714,8 @@ std::string PMCppHelper::getFailureMessage()
 std::string PMCppHelper::setFailureMessage(OCStackResult expectedResult, OCStackResult actualResult)
 {
     std::string errorMessage = "\033[1;31m[Error] Expected : \033[0m"
-            + getOCStackResultCPP(expectedResult) + " \033[1;31mActual : \033[0m"
-            + getOCStackResultCPP(actualResult);
+            + string(PMCppUtilityHelper::getOCStackResult(expectedResult)) + " \033[1;31mActual : \033[0m"
+            + string(PMCppUtilityHelper::getOCStackResult(actualResult));
     return errorMessage;
 }
 
