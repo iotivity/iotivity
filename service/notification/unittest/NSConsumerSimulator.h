@@ -37,10 +37,12 @@ private:
     std::shared_ptr<OC::OCResource> m_msgResource;
     std::shared_ptr<OC::OCResource> m_topicResource;
 
+    bool isTopicPost;
+
 public:
     NSConsumerSimulator()
     : m_messageFunc(), m_syncFunc(),
-      m_syncResource() { };
+      m_syncResource(), isTopicPost(false) { };
     ~NSConsumerSimulator() = default;
 
     NSConsumerSimulator(const NSConsumerSimulator &) = delete;
@@ -97,8 +99,8 @@ private:
     {
         if(resource->uri() == "/notification")
         {
-            resource->get(OC::QueryParamsMap(),
-                    std::bind(&NSConsumerSimulator::onGet, this,
+            resource->get(std::string("oic.wk.notification"), std::string("oic.if.baseline"),
+                    OC::QueryParamsMap(), std::bind(&NSConsumerSimulator::onGet, this,
                             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                             resource), OC::QualityOfService::LowQos);
         }
@@ -163,7 +165,8 @@ private:
 
             if(rep.getValue<int>("messageId") == 3)
             {
-                m_topicResource->get(OC::QueryParamsMap(),
+                m_topicResource->get(std::string("oic.wk.notification"),
+                        std::string("oic.if.baseline"), OC::QueryParamsMap(),
                         std::bind(&NSConsumerSimulator::onTopicGet, this, std::placeholders::_1,
                                 std::placeholders::_2, std::placeholders::_3, m_topicResource),
                                 OC::QualityOfService::LowQos);
@@ -176,9 +179,43 @@ private:
     }
 
     void onTopicGet(const OC::HeaderOptions &/*headerOption*/,
-            const OC::OCRepresentation & /*rep*/ , const int /*eCode*/,
+            const OC::OCRepresentation & rep , const int /*eCode*/,
             std::shared_ptr<OC::OCResource> /*resource*/)
     {
+
+        if(!isTopicPost)
+        {
+            isTopicPost = true;
+            OC::OCRepresentation postRep;
+
+            std::vector<OC::OCRepresentation> topicArr =
+                            rep.getValue<std::vector<OC::OCRepresentation>>("topicList");
+
+            std::vector<OC::OCRepresentation> postTopicArr;
+
+            for(std::vector<OC::OCRepresentation>::iterator it = topicArr.begin();
+                    it != topicArr.end(); ++it) {
+                /* std::cout << *it; ... */
+                OC::OCRepresentation topic = *it;
+                OC::OCRepresentation postTopic;
+
+                postTopic.setValue("topicName", topic.getValueToString("topicName"));
+                postTopic.setValue("topicState", (int) topic.getValue<int>("topicState"));
+
+                postTopicArr.push_back(topic);
+
+//                std::cout << "tName : " << tName << std::endl;
+//                std::cout << "tState : " << tState << std::endl;
+            }
+
+            postRep.setValue<std::vector<OC::OCRepresentation>>
+                ("topicList", postTopicArr);
+
+            OC::QueryParamsMap map;
+            map.insert(std::pair<std::string,std::string>(std::string("consumerId"),
+                    std::string("123456789012345678901234567890123456")));
+            m_topicResource->post(postRep, map, &onPost, OC::QualityOfService::LowQos);
+        }
     }
 
     OCStackResult msgResourceCancelObserve(OC::QualityOfService qos)
