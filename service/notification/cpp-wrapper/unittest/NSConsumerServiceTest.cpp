@@ -242,7 +242,9 @@ TEST_F(NotificationServiceConsumerTest, ExpectSubscribeSuccess)
                              (OIC::Service::NSProvider::MessageReceivedCallback)NotificationReceivedCallbackEmpty,
                              (OIC::Service::NSProvider::SyncInfoReceivedCallback)SyncCallbackEmpty);
     if (!g_provider->isSubscribed())
+    {
         g_provider->subscribe();
+    }
     std::unique_lock< std::mutex > lock { mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
     EXPECT_EQ(OIC::Service::NSProviderState::ALLOW, revState);
@@ -283,7 +285,9 @@ TEST_F(NotificationServiceConsumerTest, DiscoverProviderWithAccepterisProvider)
                                  (OIC::Service::NSProvider::MessageReceivedCallback)NotificationReceivedCallbackEmpty,
                                  (OIC::Service::NSProvider::SyncInfoReceivedCallback)SyncCallbackEmpty);
         if (!g_provider->isSubscribed())
+        {
             g_provider->subscribe();
+        }
         std::cout << g_provider->getProviderId() << std::endl;
         responseCon.notify_all();
     });
@@ -518,8 +522,8 @@ TEST_F(NotificationServiceConsumerTest, ExpectEQTopicList)
         {
             isSame = false; break;
         }
-            it1++;it2++;
-     }
+        it1++;it2++;
+    }
 
 
     EXPECT_EQ(true, isSame);
