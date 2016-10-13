@@ -52,6 +52,12 @@ else:
 
 IOTIVITY_LIB_PATH = IOTIVITY_ROOT + '/out/linux/' + TARGET_ARCH + '/' + RELEASE_DIR
 
+#Features Configuration
+CERT_ENABLED = 0
+MOT_ENABLED = 1
+CLOUD_ENABLED = 1
+DP_ENABLED = 0
+
 arch_flag = ''
 if TARGET_ARCH in ['x86']:
     env_linux.AppendUnique(CCFLAGS = ['-m32'])
@@ -65,25 +71,32 @@ elif TARGET_ARCH in ['x86_64']:
 IOTIVITY_INCLUDE_PATH = [
                             IOTIVITY_ROOT + '/resource/csdk',
                             IOTIVITY_ROOT + '/resource/csdk/security/include',
+                            IOTIVITY_ROOT + '/resource/csdk/security/include/internal',
                             IOTIVITY_ROOT + '/resource/csdk/security/provisioning/include',
                             IOTIVITY_ROOT + '/resource/csdk/security/provisioning/include/internal',
                             IOTIVITY_ROOT + '/resource/csdk/security/provisioning/include/oxm',
+                            IOTIVITY_ROOT + '/resource/csdk/security/provisioning/include/cloud',
                             IOTIVITY_ROOT + '/resource/include',
                             IOTIVITY_ROOT + '/resource/csdk/stack/include',
                             IOTIVITY_ROOT + '/resource/csdk/ocrandom/include',
                             IOTIVITY_ROOT + '/resource/csdk/logger/include',                                                        
                             IOTIVITY_ROOT + '/resource/csdk/connectivity/inc',
+                            IOTIVITY_ROOT + '/resource/csdk/connectivity/inc/pkix',
                             IOTIVITY_ROOT + '/resource/csdk/connectivity/common/inc',
                             IOTIVITY_ROOT + '/resource/csdk/connectivity/lib/libcoap-4.1.1',
                             IOTIVITY_ROOT + '/resource/csdk/connectivity/api',
                             IOTIVITY_ROOT + '/resource/c_common/oic_malloc/include',
                             IOTIVITY_ROOT + '/resource/c_common',
                             IOTIVITY_ROOT + '/resource/c_common/oic_string/include',
-                            IOTIVITY_ROOT + '/resource/c_common/oic_string/include',                                                       
+                            IOTIVITY_ROOT + '/resource/c_common/oic_string/include', 
+                            IOTIVITY_ROOT + '/resource/oc_logger/include',                                                      
                             IOTIVITY_ROOT + '/extlibs/tinydtls',
                             IOTIVITY_ROOT + '/extlibs/cjson',
                             IOTIVITY_ROOT + '/extlibs/base64',
-                            IOTIVITY_ROOT + '/extlibs/tinycbor/tinycbor/src'
+                            IOTIVITY_ROOT + '/extlibs/tinycbor/tinycbor/src',
+                            IOTIVITY_ROOT + '/resource/csdk/security/provisioning/sample/cloud',
+                            IOTIVITY_ROOT + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include/',
+                            IOTIVITY_ROOT + '/resource/csdk/resource-directory/include'
                             ]
 
 PM_CERT_INCLUDE_PATH = [
@@ -117,11 +130,8 @@ LIB_PATH_LIST = [
                     PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/linux'
                     ]
 
-common_cflags = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D __WITH_DTLS__ -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs  -ftest-coverage -fprofile-arcs')
-PM_CXXFLAGS = ['-std=c++11','-c','-std=gnu99','-D__WITH_DTLS__','-std=c99','-Os','-Wall','-Wextra','-fPIC', arch_flag,'-pthread','-DNDEBUG','-DWITH_POSIX','-D__linux__','-DIP_ADAPTER','-DNO_EDR_ADAPTER','-DLE_ADAPTER','-DHAVE_SYS_TIME_H','-DDTLSV12','-DWITH_SHA256','-DDTLS_CHECK_CONTENTTYPE','-DSHA2_USE_INTTYPES_H','-DROUTING_EP','-DWITH_BWT','-D__WITH_DTLS__','-DCA_DBUS_GATT_SERVICE_NAME="org.iotivity.gatt.service"','-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_32','-DTB_LOG', '-ftest-coverage' , '-fprofile-arcs']
-
 TC_SRC_LIST = [
-                Glob( IOTIVITY_LIB_PATH + '/resource/csdk/security/src/*.o'),
+                Glob(IOTIVITY_LIB_PATH + '/resource/csdk/security/src/*.o'),
                 Glob(IOTIVITY_ROOT + '/extlibs/asn1cert/*.o'),
                 Glob(IOTIVITY_LIB_PATH + '/resource/csdk/connectivity/src/adapter_util/pkix/*.o'),
                 Glob(PROJECT_HOME + '/src/common/commonutil/c_cpp/CommonUtil.cpp'),
@@ -141,8 +151,24 @@ TEST_APP_SRC_LIST = [
                 Glob(PROJECT_HOME + '/src/iBtestapp/modules/pm/c_cpp/csdk/src/*.cpp')
                 ]
 
-lib_list = Split('boost_system boost_filesystem boost_thread c_common CKManager coap connectivity_abstraction asn1 dl expat gcov gio-2.0 gobject-2.0 glib-2.0 m oc oc_logger octbstack ocpmapi ocprovision ocsrm octbstack pthread rt uuid timer tinydtls')
+PM_CPPFLAGS = Split('-w -s -pthread -march=native -std=gnu++0x -pthread -Wall -DTCP_ADAPTER -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D__WITH_DTLS__ -D__WITH_TLS__ -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs  -ftest-coverage -fprofile-arcs')
+PM_CXXFLAGS = ['-std=c++11','-c','-std=gnu99','-D_ENABLE_MULTIPLE_OWNER_', '-D__WITH_DTLS__','-DWITH_CLOUD', '-DRD_CLIENT', '-std=c99','-Os','-Wall','-Wextra','-fPIC', arch_flag,'-pthread','-DNDEBUG','-DWITH_POSIX','-D__linux__','-DIP_ADAPTER','-DNO_EDR_ADAPTER','-DLE_ADAPTER','-DHAVE_SYS_TIME_H','-DDTLSV12','-DWITH_SHA256','-DDTLS_CHECK_CONTENTTYPE','-DSHA2_USE_INTTYPES_H','-DROUTING_EP','-DWITH_BWT','-D__WITH_DTLS__','-DCA_DBUS_GATT_SERVICE_NAME="org.iotivity.gatt.service"','-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_32','-DTB_LOG', '-ftest-coverage' , '-fprofile-arcs']
 
+lib_list = Split('boost_system boost_filesystem boost_thread c_common coap connectivity_abstraction dl expat gcov gio-2.0 gobject-2.0 glib-2.0 m oc oc_logger octbstack ocpmapi ocprovision ocsrm octbstack pthread rt uuid tinydtls')
+
+if CERT_ENABLED == 1:
+    lib_list.append(['asn1', 'CKManager'])
+    PM_CPPFLAGS.append('-D__CERT__') 
+
+if MOT_ENABLED == 1:
+    PM_CPPFLAGS.append('-D__MOT__')
+
+if CLOUD_ENABLED == 1:
+	PM_CPPFLAGS.append(['-D__CLOUD__'])
+	PM_CXXFLAGS.append(['-O2', '-g', '-std=c++0x'])
+
+if DP_ENABLED == 1:
+    PM_CPPFLAGS.append(['-D__DIRECTPAIRING__'])
 
 if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:    
 
@@ -151,7 +177,7 @@ if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:
                         CPPPATH = IOTIVITY_INCLUDE_PATH + PM_CERT_INCLUDE_PATH + TC_INCLUDE_PATH, 
                         LIBS = lib_list, 
                         LIBPATH = LIB_PATH_LIST, 
-                        CPPFLAGS = common_cflags,
+                        CPPFLAGS = PM_CPPFLAGS,
                         CXXFLAGS = PM_CXXFLAGS)            
                         
     install_targets += pmc_tc
@@ -161,7 +187,7 @@ if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:
                     CPPPATH = IOTIVITY_INCLUDE_PATH, 
                     LIBS = lib_list, 
                     LIBPATH = LIB_PATH_LIST, 
-                    CPPFLAGS = common_cflags)
+                    CPPFLAGS = PM_CPPFLAGS)
     
     install_targets += pmc_jw_simulator
                         
@@ -170,7 +196,7 @@ if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:
                 CPPPATH = IOTIVITY_INCLUDE_PATH, 
                 LIBS = lib_list, 
                 LIBPATH = LIB_PATH_LIST, 
-                CPPFLAGS = common_cflags,
+                CPPFLAGS = PM_CPPFLAGS,
                 CXXFLAGS = PM_CXXFLAGS)
 
     install_targets += pmc_rndmpin_simulator
@@ -182,7 +208,7 @@ if TARGET_TEST == None or 'app' in TARGET_TEST or 'all' in TARGET_TEST:
                 CPPPATH = IOTIVITY_INCLUDE_PATH + PM_CERT_INCLUDE_PATH + TC_INCLUDE_PATH + TEST_APP_INCLUDE_PATH, 
                 LIBS = lib_list, 
                 LIBPATH = LIB_PATH_LIST, 
-                CPPFLAGS = common_cflags,
+                CPPFLAGS = PM_CPPFLAGS,
                 CXXFLAGS = PM_CXXFLAGS)
 
     install_targets += pmc_test_app

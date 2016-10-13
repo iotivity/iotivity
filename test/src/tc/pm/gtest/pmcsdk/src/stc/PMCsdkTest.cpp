@@ -19,6 +19,7 @@
  *
  ******************************************************************/
 #include "PMCsdkHelper.h"
+#include "PMCsdkUtilityHelper.h"
 
 class PMCsdkTest_stc: public ::testing::Test
 {
@@ -372,7 +373,6 @@ TEST_F(PMCsdkTest_stc, OCProvisionDirectPairingClientDevice_EG_N)
         return;
     }
 
-    printDevList(m_OwnList);
     OCProvisionDev_t *device1 = m_OwnList->next->next;
 
     OicSecPconf_t pconf;

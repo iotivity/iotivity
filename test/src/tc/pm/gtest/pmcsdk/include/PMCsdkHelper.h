@@ -20,6 +20,7 @@
  ******************************************************************/
 #ifndef PMCsdkHelper_H_
 #define PMCsdkHelper_H_
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -40,6 +41,9 @@
 
 #define DASH "-"
 #define g_ctx "Provision Manager Client Application Context"
+#define ctxProvisionPreconfPin "ProvisionPreconfPin Context"
+#define ctxChangeMOTMode "OCChangeMOTMode Context"
+#define ctxSelectMOTMethod "OCSelectMOTMethod Context"
 #define ctxProvCreadential "ProvisionCredentials Context"
 #define ctxProvPairwise "ctxProvPairwise"
 #define ctxProvDirectPairing "ctxProvDirectPairing"
@@ -105,8 +109,8 @@
 #define SVR_DB_FILE_NAME "oic_svr_db_client.dat"
 #define PRVN_DB_FILE_NAME "oic_prvn_mng.db"
 #define JUSTWORKS_SERVER "./sampleserver_justworks"
-#define JUSTWORKS_SERVER1 "'./sampleserver_justworks 1'"
-#define JUSTWORKS_SERVER2 "'./sampleserver_justworks 2'"
+#define JUSTWORKS_SERVER1 "./sampleserver_justworks 1"
+#define JUSTWORKS_SERVER2 "./sampleserver_justworks 2"
 #define JUSTWORKS_SERVER1_CBOR "./oic_svr_db_server.dat"
 #define JUSTWORKS_SERVER2_CBOR "./oic_svr_db_server_justworks.dat"
 #define JUSTWORKS_SERVER1_CBOR_BACKUP "../oic_svr_db_server.dat"
@@ -129,21 +133,11 @@
 #define DISCOVERY_TIMEOUT_TWO 2
 #define DISCOVERY_TIMEOUT_INVALID -1
 
-static const OicSecPrm_t SUPPORTED_PRMS[1] =
-{ PRM_PRE_CONFIGURED, };
-
 // function declaration(s) for calling them before implementing
 FILE* fopenProvManager(const char*, const char*);
-char *getOCStackResult(OCStackResult ocstackresult);
-int printDevList(OCProvisionDev_t*);
-int printResultList(const OCProvisionResult_t*, const int);
 int waitCallbackRet(void);
-size_t printUuidList(const OCUuidList_t*);
-void printUuid(const OicUuid_t*);
 OicSecAcl_t* createAcl(const int dev_num, int permission, OCProvisionDev_t** m_own_list);
-
 OicSecPdAcl_t* createPdAcl(int nPermission);
-OCProvisionDev_t* getDevInst(OCProvisionDev_t*, const int);
 OTMCallbackData_t otmCbRegister(int otmType);
 void inputPinCBWrong(char* pin, size_t len);
 
@@ -205,6 +199,22 @@ public:
     static void unlinkDevicesCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
     static void removeDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
 
+#if defined(__MOT__)
+    bool discoverMultipleOwnerEnabledDevices(int nTime, OCProvisionDev_t** motdev_list, OCStackResult expectedResult);
+    bool provisionPreconfPin(void* ctx, OCProvisionDev_t *targetDeviceInfo, const char * preconfPin, size_t preconfPinLen, OCProvisionResultCB resultCallback, OCStackResult expectedResult);
+    bool changeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecMomType_t momType, OCProvisionResultCB resultCallback, OCStackResult expectedResult);
+    bool selectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback, OCStackResult expectedResult);
+    static void provisionPreconfPinCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
+    static void changeMOTModeCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
+    static void selectMOTMethodCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
+#endif
+
+    static ByteArray getTrustCertChainArray();
+    bool provisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId,
+            const OCProvisionDev_t *selectedDeviceInfo, OCProvisionResultCB resultCallback,
+            OCStackResult expectedResult);
+    bool saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
+            OicEncodingType_t encodingType, uint16_t *credId, OCStackResult expectedResult);
     /**
      * All Utility Methods for Provision Manager
      */

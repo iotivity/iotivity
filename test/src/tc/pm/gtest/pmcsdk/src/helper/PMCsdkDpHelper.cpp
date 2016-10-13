@@ -1,25 +1,26 @@
-///******************************************************************
-// *
-// * Copyright 2016 Samsung Electronics All Rights Reserved.
-// *
-// *
-// *
-// * Licensed under the Apache License, Version 2.0 (the "License");
-// * you may not use this file except in compliance with the License.
-// * You may obtain a copy of the License at
-// *
-// *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
-// *
-// * Unless required by applicable law or agreed to in writing, software
-// * distributed under the License is distributed on an "AS IS" BASIS,
-// * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// * See the License for the specific language governing permissions and
-// * limitations under the License.
-// *
-// *
-// ******************************************************************/
-//
+/******************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      LICENSE-2.0" target="_blank">http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
+ ******************************************************************/
+#if defined(__DIRECTPAIRING__)
 #include "PMCsdkDpHelper.h"
+#include "PMCsdkUtilityHelper.h"
 
 int g_isDpCbInvoked = CALLBACK_NOT_INVOKED;
 OCStackResult g_expectedCbResult = OC_STACK_ERROR;
@@ -238,48 +239,50 @@ const char *getDPResult(OCStackResult result)
     switch (result)
     {
         case OC_STACK_OK:
-            return "OC_STACK_OK";
+        return "OC_STACK_OK";
         case OC_STACK_RESOURCE_CREATED:
-            return "OC_STACK_RESOURCE_CREATED";
+        return "OC_STACK_RESOURCE_CREATED";
         case OC_STACK_RESOURCE_DELETED:
-            return "OC_STACK_RESOURCE_DELETED";
+        return "OC_STACK_RESOURCE_DELETED";
         case OC_STACK_INVALID_URI:
-            return "OC_STACK_INVALID_URI";
+        return "OC_STACK_INVALID_URI";
         case OC_STACK_INVALID_QUERY:
-            return "OC_STACK_INVALID_QUERY";
+        return "OC_STACK_INVALID_QUERY";
         case OC_STACK_INVALID_IP:
-            return "OC_STACK_INVALID_IP";
+        return "OC_STACK_INVALID_IP";
         case OC_STACK_INVALID_PORT:
-            return "OC_STACK_INVALID_PORT";
+        return "OC_STACK_INVALID_PORT";
         case OC_STACK_INVALID_CALLBACK:
-            return "OC_STACK_INVALID_CALLBACK";
+        return "OC_STACK_INVALID_CALLBACK";
         case OC_STACK_INVALID_METHOD:
-            return "OC_STACK_INVALID_METHOD";
+        return "OC_STACK_INVALID_METHOD";
         case OC_STACK_NO_MEMORY:
-            return "OC_STACK_NO_MEMORY";
+        return "OC_STACK_NO_MEMORY";
         case OC_STACK_COMM_ERROR:
-            return "OC_STACK_COMM_ERROR";
+        return "OC_STACK_COMM_ERROR";
         case OC_STACK_INVALID_PARAM:
-            return "OC_STACK_INVALID_PARAM";
+        return "OC_STACK_INVALID_PARAM";
         case OC_STACK_NOTIMPL:
-            return "OC_STACK_NOTIMPL";
+        return "OC_STACK_NOTIMPL";
         case OC_STACK_NO_RESOURCE:
-            return "OC_STACK_NO_RESOURCE";
+        return "OC_STACK_NO_RESOURCE";
         case OC_STACK_RESOURCE_ERROR:
-            return "OC_STACK_RESOURCE_ERROR";
+        return "OC_STACK_RESOURCE_ERROR";
         case OC_STACK_SLOW_RESOURCE:
-            return "OC_STACK_SLOW_RESOURCE";
+        return "OC_STACK_SLOW_RESOURCE";
         case OC_STACK_NO_OBSERVERS:
-            return "OC_STACK_NO_OBSERVERS";
+        return "OC_STACK_NO_OBSERVERS";
         case OC_STACK_AUTHENTICATION_FAILURE:
-            return "OC_STACK_AUTHENTICATION_FAILURE";
+        return "OC_STACK_AUTHENTICATION_FAILURE";
 #ifdef WITH_PRESENCE
-            case OC_STACK_PRESENCE_STOPPED:
-            return "OC_STACK_PRESENCE_STOPPED";
+        case OC_STACK_PRESENCE_STOPPED:
+        return "OC_STACK_PRESENCE_STOPPED";
 #endif
         case OC_STACK_ERROR:
-            return "OC_STACK_ERROR";
+        return "OC_STACK_ERROR";
         default:
-            return "UNKNOWN";
+        return "UNKNOWN";
     }
 }
+
+#endif /*#if defined(__DIRECTPAIRING__)*/

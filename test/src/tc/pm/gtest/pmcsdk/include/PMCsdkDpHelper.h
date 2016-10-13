@@ -21,6 +21,8 @@
 
 #ifndef PMCsdkDpHelper_H_
 #define PMCsdkDpHelper_H_
+
+#if defined(__DIRECTPAIRING__)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,7 +44,7 @@
 #include "CommonUtil.h"
 #include "IotivityTest_Logger.h"
 
-#define JUSTWORKS_SERVER_DP "'./sampleserver_justworks 6'"
+#define JUSTWORKS_SERVER_DP "./sampleserver_justworks 6"
 #define KILL_JUSTWORKS_SERVER_DP "./sampleserver_justworks"
 #define JUSTWORKS_SERVER_DP_C_DAT "./justworks_server_dp_c.dat"
 #define DIRECT_PAIRING_CLIENT_C_DAT "./direct_pairing_c.dat"
@@ -99,4 +101,6 @@ public:
     std::string setFailureMessage(OCStackResult actualResult, OCStackResult expectedResult);
     std::string setFailureMessage(std::string errorMessage);
 };
+#endif  /*#if defined(__DIRECTPAIRING__)*/
+
 #endif

@@ -8,18 +8,38 @@
                         {
                             "href": "/oic/res",
                             "rel": "",
-                            "rt": ["oic.wk.res"],
-                            "if": ["oic.if.ll"]
-                        },{
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
                             "href": "/oic/d",
                             "rel": "",
-                            "rt": ["oic.wk.d"],
-                            "if": ["oic.if.baseline", "oic.if.r"]
-                        },{
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
                             "href": "/oic/p",
                             "rel": "",
-                            "rt": ["oic.wk.p"],
-                            "if": ["oic.if.baseline", "oic.if.r"]
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/res/types/d",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/ad",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
+                        },
+                        {
+                            "href": "/oic/sec/amacl",
+                            "rel": "",
+                            "rt": "",
+                            "if": ""
                         }
                     ],
                     "permission": 2
@@ -30,40 +50,22 @@
                         {
                             "href": "/oic/sec/doxm",
                             "rel": "",
-                            "rt": ["oic.r.doxm"],
-                            "if": ["oic.if.baseline"]
+                            "rt": "",
+                            "if": ""
                         },
                         {
                             "href": "/oic/sec/pstat",
                             "rel": "",
-                            "rt": ["oic.r.pstat"],
-                            "if": ["oic.if.baseline"]
-                        }
-                    ],
-                    "permission": 2
-                },
-                {
-                    "subjectuuid": "*",
-                    "resources": [
-                        {
-                            "href": "/oic/sec/pconf",
-                            "rel": "",
-                            "rt": ["oic.r.pconf"],
-                            "if": ["oic.if.baseline"]
-                        },
-                        {
-                            "href": "/oic/sec/dpairing",
-                            "rel": "",
-                            "rt": ["oic.r.dpairing"],
-                            "if": ["oic.if.baseline"]
-                        }
+                            "rt": "",
+                            "if": ""
+                        }                  
                     ],
                     "permission": 2
                 }
             ]
         },
         "rowneruuid" : "61646D69-6E44-6576-6963-655575696430"
-    },
+    },    
     "pstat": {
         "isop": true,
         "cm": 0,
@@ -79,7 +81,7 @@
         "sct": 1,
         "owned": true,
         "deviceuuid": "61646D69-6E44-6576-6963-655575696430",
-        "x.org.iotivity.dpc": false,
+        "dpc": false,
         "devowneruuid": "61646D69-6E44-6576-6963-655575696430",
         "rowneruuid": "61646D69-6E44-6576-6963-655575696430"
     }
