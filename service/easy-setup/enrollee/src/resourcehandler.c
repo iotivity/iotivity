@@ -353,6 +353,11 @@ void updateWiFiResource(OCRepPayload* input)
         }
     }
 
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(gWiFiResource.handle, OC_HIGH_QOS))
+    {
+        OIC_LOG(INFO, ES_RH_TAG, "Enrollee doesn't have any observers.");
+    }
+
     OICFree(wiFiData);
 }
 
@@ -415,6 +420,11 @@ void updateCloudResource(OCRepPayload* input)
         }
     }
 
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(gCloudResource.handle, OC_HIGH_QOS))
+    {
+        OIC_LOG(INFO, ES_RH_TAG, "cloudResource doesn't have any observers.");
+    }
+
     OICFree(cloudData);
 }
 
@@ -473,6 +483,11 @@ void updateDevConfResource(OCRepPayload* input)
         {
             OIC_LOG(ERROR, ES_RH_TAG, "gDevConfRsrcEvtCb is NULL");
         }
+    }
+
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(gDevConfResource.handle, OC_HIGH_QOS))
+    {
+        OIC_LOG(INFO, ES_RH_TAG, "devConfResource doesn't have any observers.");
     }
 
     OICFree(devConfData);
@@ -1208,7 +1223,19 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
             ehRet = OC_EH_ERROR;
         }
     }
+    if (flag & OC_OBSERVE_FLAG)
+    {
+        OIC_LOG(INFO, ES_RH_TAG, "Flag includes OC_OBSERVE_FLAG");
 
+        if (OC_OBSERVE_REGISTER == entityHandlerRequest->obsInfo.action)
+        {
+            OIC_LOG (INFO, ES_RH_TAG, "Received OC_OBSERVE_REGISTER from Mediator");
+        }
+        else if (OC_OBSERVE_DEREGISTER == entityHandlerRequest->obsInfo.action)
+        {
+            OIC_LOG (INFO, ES_RH_TAG, "Received OC_OBSERVE_DEREGISTER from Mediator");
+        }
+    }
     return ehRet;
 }
 
@@ -1235,6 +1262,16 @@ OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty)
                                                             (deviceProperty->DevConf).modelNumber);
     OIC_LOG_V(INFO, ES_RH_TAG, "Model Number : %s", gDevConfResource.modelNumber);
 
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(gWiFiResource.handle, OC_HIGH_QOS))
+    {
+        OIC_LOG(INFO, ES_RH_TAG, "wifiResource doesn't have any observers.");
+    }
+
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(gDevConfResource.handle, OC_HIGH_QOS))
+    {
+        OIC_LOG(INFO, ES_RH_TAG, "devConfResource doesn't have any observers.");
+    }
+
     OIC_LOG(INFO, ES_RH_TAG, "SetDeviceProperty OUT");
     return OC_STACK_OK;
 }
@@ -1246,6 +1283,11 @@ OCStackResult SetEnrolleeState(ESEnrolleeState esState)
     gProvResource.status = esState;
     OIC_LOG_V(INFO, ES_RH_TAG, "Enrollee Status : %d", gProvResource.status);
 
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(gProvResource.handle, OC_HIGH_QOS))
+    {
+        OIC_LOG(INFO, ES_RH_TAG, "provResource doesn't have any observers.");
+    }
+
     OIC_LOG(INFO, ES_RH_TAG, "SetEnrolleeState OUT");
     return OC_STACK_OK;
 }
@@ -1256,6 +1298,11 @@ OCStackResult SetEnrolleeErrCode(ESErrorCode esErrCode)
 
     gProvResource.lastErrCode = esErrCode;
     OIC_LOG_V(INFO, ES_RH_TAG, "Enrollee ErrorCode : %d", gProvResource.lastErrCode);
+
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(gProvResource.handle, OC_HIGH_QOS))
+    {
+        OIC_LOG(INFO, ES_RH_TAG, "provResource doesn't have any observers.");
+    }
 
     OIC_LOG(INFO, ES_RH_TAG, "SetEnrolleeErrCode OUT");
     return OC_STACK_OK;
