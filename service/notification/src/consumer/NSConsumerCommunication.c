@@ -335,6 +335,7 @@ OCRepPayload * NSGetExtraInfo(OCRepPayload * payload)
 {
     NS_LOG(DEBUG, "get extra info");
     OCRepPayload * extraInfo = OCRepPayloadCreate();
+    NS_VERIFY_NOT_NULL(extraInfo, NULL);
     OCRepPayload * origin = OCRepPayloadClone(payload);
 
     bool isFirstExtra = true;
@@ -628,7 +629,6 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(connections,
         {
             NSRemoveProvider_internal((void *) provider);
-            NSRemoveProvider_internal((void *) task->taskData);
             NSOICFree(task);
         });
 
@@ -636,7 +636,6 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(topicUri,
         {
             NSRemoveProvider_internal((void *) provider);
-            NSRemoveProvider_internal((void *) task->taskData);
             NSOICFree(task);
         });
 
@@ -655,7 +654,6 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(query,
         {
             NSRemoveProvider_internal((void *) provider);
-            NSRemoveProvider_internal((void *) task->taskData);
             NSOICFree(task);
         });
         NS_LOG_V(DEBUG, "topic query : %s", query);
@@ -666,7 +664,6 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(NSOCResultToSuccess(ret) == true ? (void *) 1 : NULL,
         {
             NSRemoveProvider_internal((void *) provider);
-            NSRemoveProvider_internal((void *) task->taskData);
             NSOICFree(task);
         });
 
