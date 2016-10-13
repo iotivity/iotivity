@@ -289,7 +289,9 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
             NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OC_REST_POST");
             // Accepter is provider. our service is not support sendtopiclist from OC_REST_POST
             // Accepter is consumer. our service is support sendtopiclist from OC_REST_POST
-            if(NSGetPolicy() == false)
+            if(NSGetPolicy() == false &&
+                    NSProviderIsTopicAttributes(OCRepPayloadClone((OCRepPayload *)
+                            entityHandlerRequest->payload)))
             {
                 NSPushQueue(TOPIC_SCHEDULER, TASK_POST_TOPIC,
                         NSCopyOCEntityHandlerRequest(entityHandlerRequest));
@@ -430,7 +432,7 @@ bool NSProviderIsTopicAttributes(OCRepPayload * payload)
     OCRepPayloadValue * curr = payload->values;
     while(curr)
     {
-        if (!NSProviderCompareSyncAttributes(curr->name))
+        if (!NSProviderCompareTopicAttributes(curr->name))
         {
             return false;
         }
@@ -517,26 +519,28 @@ OCStackResult NSProviderSendResponse(OCEntityHandlerRequest * entityHandlerReque
         OCResourcePayloadAddStringLL(&payload->types, rtStr);
     }
 
-    if(resourceType != NS_RESOURCE_TOPIC)
+    if (resourceType == NS_RESOURCE_TOPIC && entityHandlerRequest->method == OC_REST_GET)
     {
-        OCEntityHandlerResponse response;
-        response.numSendVendorSpecificHeaderOptions = 0;
-        memset(response.sendVendorSpecificHeaderOptions, 0,
-                sizeof response.sendVendorSpecificHeaderOptions);
-        memset(response.resourceUri, 0, sizeof response.resourceUri);
+        OCRepPayloadDestroy(payload);
+        return ehResult;
+    }
 
-        response.requestHandle = entityHandlerRequest->requestHandle;
-        response.resourceHandle = entityHandlerRequest->resource;
-        response.persistentBufferFlag = 0;
-        response.ehResult = ehResult;
-        response.payload = (OCPayload *) payload;
+    OCEntityHandlerResponse response;
+    response.numSendVendorSpecificHeaderOptions = 0;
+    memset(response.sendVendorSpecificHeaderOptions, 0,
+            sizeof response.sendVendorSpecificHeaderOptions);
+    memset(response.resourceUri, 0, sizeof response.resourceUri);
 
-        if (OCDoResponse(&response) != OC_STACK_OK)
-        {
-            NS_LOG(ERROR, "Fail to AccessPolicy send response");
-            OCRepPayloadDestroy(payload);
-            return ehResult;
-        }
+    response.requestHandle = entityHandlerRequest->requestHandle;
+    response.resourceHandle = entityHandlerRequest->resource;
+    response.persistentBufferFlag = 0;
+    response.ehResult = ehResult;
+    response.payload = (OCPayload *) payload;
+
+    if (OCDoResponse(&response) != OC_STACK_OK)
+    {
+        NS_LOG(ERROR, "Fail to AccessPolicy send response");
+        ehResult = OC_STACK_ERROR;
     }
 
     OCRepPayloadDestroy(payload);
