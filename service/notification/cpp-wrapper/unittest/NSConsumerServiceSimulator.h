@@ -40,7 +40,9 @@ private:
 public:
     NSConsumerSimulator()
     : m_messageFunc(), m_syncFunc(),
-      m_syncResource() { };
+      m_syncResource()
+    {
+    }
     ~NSConsumerSimulator() = default;
 
     NSConsumerSimulator(const NSConsumerSimulator &) = delete;
@@ -74,9 +76,11 @@ public:
 
     bool cancelObserves()
     {
-        if(!msgResourceCancelObserve(OC::QualityOfService::HighQos) &&
-                !syncResourceCancelObserve(OC::QualityOfService::HighQos))
+        if((msgResourceCancelObserve(OC::QualityOfService::HighQos) == OC_STACK_OK) &&
+                (syncResourceCancelObserve(OC::QualityOfService::HighQos) == OC_STACK_OK))
+        {
             return true;
+        }
         return false;
     }
 

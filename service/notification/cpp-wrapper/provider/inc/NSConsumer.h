@@ -55,7 +55,9 @@ namespace OIC
                       * @param consumerId -consumerId of the Notification service Consumer.
                       */
                 NSConsumer(const std::string &consumerId)
-                    : m_consumerId(consumerId) {}
+                    : m_consumerId(consumerId)
+                {
+                }
 
                 /**
                       * Constructor of NSConsumer.
