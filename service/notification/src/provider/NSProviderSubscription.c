@@ -80,8 +80,8 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
 
     NS_LOG_V(DEBUG, "NS Provider ID: %s", NSGetProviderInfo()->providerId);
 
-    char * reqInterface =
-            NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_INTERFACE);
+    char * copyReq = OICStrdup(entityHandlerRequest->query);
+    char * reqInterface = NSGetValueFromQuery(copyReq, NS_QUERY_INTERFACE);
 
     if (reqInterface && strcmp(reqInterface, NS_INTERFACE_BASELINE) == 0)
     {
@@ -89,6 +89,7 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
         OCResourcePayloadAddStringLL(&payload->interfaces, NS_INTERFACE_READ);
         OCResourcePayloadAddStringLL(&payload->types, NS_ROOT_TYPE);
     }
+    OICFree(copyReq);
     OCRepPayloadSetUri(payload, NS_ROOT_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_VERSION, VERSION);
@@ -121,10 +122,12 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 {
     NS_LOG(DEBUG, "NSHandleSubscription - IN");
 
-    char * id = NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_CONSUMER_ID);
+    char * copyReq = OICStrdup(entityHandlerRequest->query);
+    char * id = NSGetValueFromQuery(copyReq, NS_QUERY_CONSUMER_ID);
 
     if(!id)
     {
+        OICFree(copyReq);
         NSFreeOCEntityHandlerRequest(entityHandlerRequest);
         NS_LOG(ERROR, "Invalid ConsumerID");
         return;
@@ -237,6 +240,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 
         NSFreeOCEntityHandlerRequest(entityHandlerRequest);
     }
+    OICFree(copyReq);
 
     NS_LOG(DEBUG, "NSHandleSubscription - OUT");
 }
@@ -321,10 +325,12 @@ NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest * entityHandlerRequest
         return NS_ERROR;
     }
 
-    char * id = NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_CONSUMER_ID);
+    char * copyReq = OICStrdup(entityHandlerRequest->query);
+    char * id = NSGetValueFromQuery(copyReq, NS_QUERY_CONSUMER_ID);
 
     if(!id)
     {
+        OICFree(copyReq);
         NSFreeOCEntityHandlerRequest(entityHandlerRequest);
         NS_LOG(ERROR, "Invalid ConsumerID");
         return NS_ERROR;
@@ -332,6 +338,7 @@ NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest * entityHandlerRequest
 
     NSCacheUpdateSubScriptionState(consumerSubList, id, true);
     NSSendResponse(id, true);
+    OICFree(copyReq);
     NSFreeOCEntityHandlerRequest(entityHandlerRequest);
     NS_LOG(DEBUG, "NSSendSubscriptionResponse - OUT");
     return NS_OK;

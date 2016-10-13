@@ -235,7 +235,8 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
 {
     NS_LOG(DEBUG, "NSSendTopicList - IN");
 
-    char * id = NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_CONSUMER_ID);
+    char * copyReq = OICStrdup(entityHandlerRequest->query);
+    char * id = NSGetValueFromQuery(copyReq, NS_QUERY_CONSUMER_ID);
     NSTopicLL * topics = NULL;
 
     if (!id)
@@ -264,6 +265,7 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
     if (!payload)
     {
         NS_LOG(ERROR, "payload is NULL");
+        OICFree(copyReq);
         return NS_ERROR;
     }
 
@@ -273,12 +275,12 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
         OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_CONSUMER_ID, id);
     }
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
+    OICFree(copyReq);
 
     if (topics)
     {
         NS_LOG(DEBUG, "topicList is NULL");
         size_t dimensionSize = (size_t) NSProviderGetTopicListSize(topics);
-
         NS_LOG_V(DEBUG, "dimensionSize = %d", (int)dimensionSize);
 
         if (!dimensionSize)
@@ -290,8 +292,7 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
                 sizeof(OCRepPayload *) * dimensionSize);
         NS_VERIFY_NOT_NULL(payloadTopicArray, NS_ERROR);
 
-        size_t dimensions[3] =
-        { dimensionSize, 0, 0 };
+        size_t dimensions[3] = { dimensionSize, 0, 0 };
 
         for (int i = 0; i < (int) dimensionSize; i++)
         {
@@ -305,7 +306,9 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
             OCRepPayloadSetPropInt(payloadTopicArray[i], NS_ATTRIBUTE_TOPIC_SELECTION,
                     (int) topics->state);
 
-            topics = topics->next;
+            NSTopicLL * next = topics->next;
+            OICFree(topics);
+            topics = next;
         }
 
         OCRepPayloadSetPropObjectArray(payload, NS_ATTRIBUTE_TOPIC_LIST,
@@ -313,15 +316,14 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
     }
     else
     {
-        size_t dimensions[3] =
-        { 0, 0, 0 };
+        size_t dimensions[3] = { 0, 0, 0 };
 
         OCRepPayloadSetPropObjectArrayAsOwner(payload, NS_ATTRIBUTE_TOPIC_LIST,
                 (OCRepPayload **) NULL, dimensions);
     }
 
-    char * reqInterface =
-            NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_INTERFACE);
+    copyReq = OICStrdup(entityHandlerRequest->query);
+    char * reqInterface = NSGetValueFromQuery(copyReq, NS_QUERY_INTERFACE);
 
     if (reqInterface && strcmp(reqInterface, NS_INTERFACE_BASELINE) == 0)
     {
@@ -329,6 +331,7 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
         OCResourcePayloadAddStringLL(&payload->interfaces, NS_INTERFACE_READ);
         OCResourcePayloadAddStringLL(&payload->types, NS_ROOT_TYPE);
     }
+    OICFree(copyReq);
 
     response.requestHandle = entityHandlerRequest->requestHandle;
     response.resourceHandle = entityHandlerRequest->resource;

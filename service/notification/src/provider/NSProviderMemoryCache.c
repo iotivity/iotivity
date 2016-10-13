@@ -186,7 +186,8 @@ NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj)
                 }
 
                 NS_LOG(DEBUG, "Update Data - OUT");
-
+                OICFree(subData);
+                OICFree(newObj);
                 pthread_mutex_unlock(&NSCacheMutex);
                 return NS_OK;
             }

@@ -49,16 +49,18 @@ OCEntityHandlerResult NSEntityHandlerNotificationCb(OCEntityHandlerFlag flag,
         {
             NS_LOG(DEBUG, "NSEntityHandlerNotificationCb - OC_REST_GET");
 
-            char * reqInterface =
-                    NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_INTERFACE);
+            char * copyQuery = OICStrdup(entityHandlerRequest->query);
+            char * reqInterface = NSGetValueFromQuery(copyQuery, NS_QUERY_INTERFACE);
 
             if (reqInterface && strcmp(reqInterface, NS_INTERFACE_BASELINE) != 0
                     && strcmp(reqInterface, NS_INTERFACE_READ) != 0)
             {
                 NS_LOG(ERROR, "Invalid interface");
+                OICFree(copyQuery);
                 return ehResult;
             }
 
+            OICFree(copyQuery);
             NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SEND_POLICY,
                     NSCopyOCEntityHandlerRequest(entityHandlerRequest));
 
@@ -100,8 +102,9 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
         {
             NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_REST_GET");
 
-            reqInterface =
-                    NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_INTERFACE);
+            char * copyQuery = OICStrdup(entityHandlerRequest->query);
+            reqInterface = OICStrdup(NSGetValueFromQuery(copyQuery, NS_QUERY_INTERFACE));
+            OICFree(copyQuery);
 
             if (reqInterface && strcmp(reqInterface, NS_INTERFACE_BASELINE) != 0
                     && strcmp(reqInterface, NS_INTERFACE_READ) != 0)
@@ -109,7 +112,6 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
                 NS_LOG(ERROR, "Invalid interface");
                 return ehResult;
             }
-
             ehResult = OC_EH_OK;
         }
         else
@@ -129,6 +131,7 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
             NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_OBSERVE_REGISTER");
             NS_LOG_V(DEBUG, "NSEntityHandlerMessageCb\n"
                     "Register message observerID : %d\n", entityHandlerRequest->obsInfo.obsId);
+
             NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_RECV_SUBSCRIPTION,
                     NSCopyOCEntityHandlerRequest(entityHandlerRequest));
             ehResult = OC_EH_OK;
@@ -149,9 +152,11 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
         }
     }
 
-    NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OUT");
-    return NSProviderSendResponse(entityHandlerRequest, payload, reqInterface, ehResult,
+    ehResult = NSProviderSendResponse(entityHandlerRequest, payload, reqInterface, ehResult,
             NS_INTERFACE_TYPE_READ, NS_RESOURCE_MESSAGE);
+    OICFree(reqInterface);
+    NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OUT");
+    return ehResult;
 }
 
 OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
@@ -176,8 +181,10 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
 
         if (OC_REST_GET == entityHandlerRequest->method)
         {
-            reqInterface =
-                    NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_INTERFACE);
+
+            char * copyQuery = OICStrdup(entityHandlerRequest->query);
+            reqInterface = OICStrdup(NSGetValueFromQuery(copyQuery, NS_QUERY_INTERFACE));
+            OICFree(copyQuery);
 
             if (reqInterface && strcmp(reqInterface, NS_INTERFACE_BASELINE) != 0
                     && strcmp(reqInterface, NS_INTERFACE_READWRITE) != 0)
@@ -237,8 +244,12 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
     }
 
     NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OUT");
-    return NSProviderSendResponse(entityHandlerRequest, payload, reqInterface, ehResult,
-            NS_INTERFACE_TYPE_READWRITE, NS_RESOURCE_SYNC);
+
+    ehResult = NSProviderSendResponse(entityHandlerRequest, payload, reqInterface, ehResult,
+            NS_INTERFACE_TYPE_READ, NS_RESOURCE_MESSAGE);
+    OICFree(reqInterface);
+
+    return ehResult;
 }
 
 OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
@@ -265,8 +276,9 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
         {
             NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OC_REST_GET");
 
-            reqInterface =
-                    NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_INTERFACE);
+            char * copyReq = OICStrdup(entityHandlerRequest->query);
+            reqInterface = OICStrdup(NSGetValueFromQuery(copyReq, NS_QUERY_INTERFACE));
+            OICFree(copyReq);
 
             if (reqInterface && strcmp(reqInterface, NS_INTERFACE_BASELINE) != 0
                     && strcmp(reqInterface, NS_INTERFACE_READWRITE) != 0)
@@ -305,8 +317,10 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
     }
 
     NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OUT");
-    return NSProviderSendResponse(entityHandlerRequest, payload, reqInterface, ehResult,
+    ehResult = NSProviderSendResponse(entityHandlerRequest, payload, reqInterface, ehResult,
             NS_INTERFACE_TYPE_READWRITE, NS_RESOURCE_TOPIC);
+    OICFree(reqInterface);
+    return ehResult;
 }
 
 void NSProviderConnectionStateListener(const CAEndpoint_t * info, bool connected)
