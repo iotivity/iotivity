@@ -236,6 +236,8 @@ TEST_F(NotificationProviderServiceTest, NeverCallNotifyOnConsumerByAcceptIsFalse
     std::unique_lock< std::mutex > lock { mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
+    delete msg;
+
     EXPECT_EQ(expectTrue, true);
 }
 
@@ -264,6 +266,8 @@ TEST_F(NotificationProviderServiceTest, ExpectCallNotifyOnConsumerByAcceptIsTrue
     OIC::Service::NSProviderService::getInstance()->sendMessage(msg);
     std::unique_lock< std::mutex > lock { mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
+
+    delete msg;
 }
 
 TEST_F(NotificationProviderServiceTest, ExpectCallbackSyncOnReadToConsumer)
@@ -292,6 +296,8 @@ TEST_F(NotificationProviderServiceTest, ExpectCallbackSyncOnReadToConsumer)
             OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
     std::unique_lock< std::mutex > lock { mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
+
+    delete msg;
 }
 
 TEST_F(NotificationProviderServiceTest, ExpectCallbackSyncOnReadFromConsumer)
@@ -318,6 +324,8 @@ TEST_F(NotificationProviderServiceTest, ExpectCallbackSyncOnReadFromConsumer)
     g_consumerSimul.syncToProvider(type, id, msg->getProviderId());
     std::unique_lock< std::mutex > lock { mutexForCondition };
     responseCon.wait(lock);
+
+    delete msg;
 }
 
 TEST_F(NotificationProviderServiceTest, ExpectEqualAddedTopicsAndRegisteredTopics)

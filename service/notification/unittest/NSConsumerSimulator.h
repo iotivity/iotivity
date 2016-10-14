@@ -194,7 +194,8 @@ private:
             std::vector<OC::OCRepresentation> postTopicArr;
 
             for(std::vector<OC::OCRepresentation>::iterator it = topicArr.begin();
-                    it != topicArr.end(); ++it) {
+                    it != topicArr.end(); ++it)
+            {
                 /* std::cout << *it; ... */
                 OC::OCRepresentation topic = *it;
                 OC::OCRepresentation postTopic;
