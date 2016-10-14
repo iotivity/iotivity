@@ -1634,6 +1634,83 @@ static bool IsSameACE(OicSecAce_t* ace1, OicSecAce_t* ace2)
     return false;
 }
 
+/**
+ * Internal function to remove all ACL data on ACL resource and persistent storage
+ *
+ * @retval
+ *     OC_STACK_RESOURCE_DELETED  - no errors
+ *     Otherwise                  - error
+ */
+static OCStackResult RemoveAllAce(void)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    uint8_t* aclBackup = NULL;
+    size_t backupSize = 0;
+    uint8_t* payload = NULL;
+    size_t size = 0;
+    OicSecAce_t* aceItem = NULL;
+    OicSecAce_t* tempAce = NULL;
+
+    OIC_LOG(INFO, TAG, "IN RemoveAllAce");
+
+    //Backup the current ACL
+    ret = AclToCBORPayload(gAcl, &aclBackup, &backupSize);
+    if(OC_STACK_OK == ret)
+    {
+        // Remove all ACE from ACL
+        LL_FOREACH_SAFE(gAcl->aces, aceItem, tempAce)
+        {
+            LL_DELETE(gAcl->aces, aceItem);
+            FreeACE(aceItem);
+        }
+
+        //Generate empty ACL payload
+        ret = AclToCBORPayload(gAcl, &payload, &size);
+        if (OC_STACK_OK == ret )
+        {
+            //Update the PS.
+            ret = UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, payload, size);
+            if (OC_STACK_OK != ret)
+            {
+                OIC_LOG_V(ERROR, TAG, "Error in UpdateSecureResourceInPS : %d", ret);
+            }
+        }
+
+        if(OC_STACK_OK != ret)
+        {
+            OIC_LOG_V(ERROR, TAG, "Error while DELETE ACE : %d", ret);
+
+            //If some erorr is occured, revert back.
+            OicSecAcl_t* originAcl = CBORPayloadToAcl(aclBackup, backupSize);
+            if( originAcl )
+            {
+                ret = UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, aclBackup, backupSize);
+                if (OC_STACK_OK == ret)
+                {
+                    DeleteACLList(gAcl);
+                    gAcl = originAcl;
+                }
+                else
+                {
+                    OIC_LOG_V(ERROR, TAG, "Error in UpdateSecureResourceInPS : %d", ret);
+                }
+            }
+            else
+            {
+                OIC_LOG(FATAL, TAG, "Error in CBORPayloadToAcl");
+                ret = OC_STACK_ERROR;
+            }
+        }
+    }
+
+    OICFree(aclBackup);
+    OICFree(payload);
+
+    OIC_LOG(INFO, TAG, "OUT RemoveAllAce");
+
+    return (OC_STACK_OK == ret ? OC_STACK_RESOURCE_DELETED : ret);
+}
+
 static OCEntityHandlerResult HandleACLGetRequest(const OCEntityHandlerRequest *ehRequest)
 {
     OIC_LOG(INFO, TAG, "HandleACLGetRequest processing the request");
@@ -1821,14 +1898,25 @@ static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest
 
     VERIFY_NON_NULL(TAG, ehRequest->query, ERROR);
 
-    // 'Subject' field is MUST for processing a querystring in REST request.
-    VERIFY_SUCCESS(TAG, true == GetSubjectFromQueryString(ehRequest->query, &subject), ERROR);
-
-    GetResourceFromQueryString(ehRequest->query, resource, sizeof(resource));
-
-    if (OC_STACK_RESOURCE_DELETED == RemoveACE(&subject, resource))
+    // If 'Subject' field exist, processing a querystring in REST request.
+    if(GetSubjectFromQueryString(ehRequest->query, &subject))
     {
-        ehRet = OC_EH_RESOURCE_DELETED;
+        GetResourceFromQueryString(ehRequest->query, resource, sizeof(resource));
+
+        if (OC_STACK_RESOURCE_DELETED == RemoveACE(&subject, resource))
+        {
+            ehRet = OC_EH_RESOURCE_DELETED;
+        }
+    }
+    // If 'subject field not exist, remove all ACL data from ACL resource
+    else
+    {
+        OIC_LOG(WARNING, TAG, "Can not find the 'subject' in querystring, All ACL list will be removed.");
+
+        if(OC_STACK_RESOURCE_DELETED == RemoveAllAce())
+        {
+            ehRet = OC_EH_RESOURCE_DELETED;
+        }
     }
 
 exit:
