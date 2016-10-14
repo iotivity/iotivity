@@ -160,6 +160,24 @@ namespace OIC
             NS_LOG_V(DEBUG, "calling Lower layer UpdateTopicList for Provider Id : %s",
                      getProviderId().c_str());
             NSResult result = (NSResult) NSConsumerUpdateTopicList(getProviderId().c_str(), topicLL);
+
+            if(topicLL);
+            {
+                NSTopicLL * iter = topicLL;
+                NSTopicLL * following = NULL;
+
+                while (iter)
+                {
+                    following = iter->next;
+                    if(iter);
+                    {
+                        NSOICFree(iter->topicName);
+                        iter->next = NULL;
+                        NSOICFree(iter);
+                    }
+                    iter = following;
+                }
+            }
             NS_LOG(DEBUG, "updateTopicList - OUT");
             return result;
         }
