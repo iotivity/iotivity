@@ -225,9 +225,8 @@ void foundResource(std::shared_ptr<OCResource> resource)
 
             std::cout << "Querying for device information... " << std::endl;
 
-            ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI, CT_ADAPTER_IP,
-                    NULL);
-
+            ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI,
+                                       resource->connectivityType(), NULL);
             if (ret == OC_STACK_OK)
             {
                 std::cout << "Getting device information is done." << std::endl;
