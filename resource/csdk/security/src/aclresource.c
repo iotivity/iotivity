@@ -1253,6 +1253,10 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                 VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
                 OICFree(stRowner);
             }
+            else if (NULL != gAcl)
+            {
+                memcpy(&(acl->rownerID), &(gAcl->rownerID), sizeof(OicUuid_t));
+            }
             OICFree(tagName);
         }
         if (cbor_value_is_valid(&aclMap))
