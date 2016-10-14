@@ -72,6 +72,7 @@ typedef struct OCProvisionDev
 #endif
     char             secVer[MAX_VERSION_LEN];         /**< security version **/
     DeviceStatus    devStatus;       /**< status of device **/
+    OCDoHandle    handle;
     struct OCProvisionDev  *next;    /**< Next pointer. **/
 }OCProvisionDev_t;
 
