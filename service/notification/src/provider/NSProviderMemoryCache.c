@@ -206,6 +206,7 @@ NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj)
             NS_LOG(DEBUG, "already registered for topic name");
             OICFree(topicData->topicName);
             OICFree(topicData);
+            OICFree(newObj);
             pthread_mutex_unlock(&NSCacheMutex);
             return NS_FAIL;
         }
@@ -222,6 +223,7 @@ NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj)
             NS_LOG(DEBUG, "already registered for topic name");
             OICFree(topicData->topicName);
             OICFree(topicData);
+            OICFree(newObj);
             pthread_mutex_unlock(&NSCacheMutex);
             return NS_FAIL;
         }
@@ -238,6 +240,7 @@ NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj)
             NS_LOG(DEBUG, "already registered for topic name");
             OICFree(topicData->topicName);
             OICFree(topicData);
+            OICFree(newObj);
             pthread_mutex_unlock(&NSCacheMutex);
             return NS_FAIL;
         }
@@ -404,12 +407,14 @@ NSResult NSProviderDeleteCacheData(NSCacheType type, void * data)
                 (int)topicData->state);
 
         OICFree(topicData->topicName);
+        OICFree(topicData);
     }
     else if(type == NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME ||
             type == NS_PROVIDER_CACHE_CONSUMER_TOPIC_CID)
     {
         NSCacheTopicSubData * topicData = (NSCacheTopicSubData *) data;
         OICFree(topicData->topicName);
+        OICFree(topicData);
     }
 
     return NS_OK;

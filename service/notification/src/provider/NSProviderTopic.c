@@ -307,12 +307,18 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
                     (int) topics->state);
 
             NSTopicLL * next = topics->next;
+            OICFree(topics->topicName);
             OICFree(topics);
             topics = next;
         }
 
         OCRepPayloadSetPropObjectArray(payload, NS_ATTRIBUTE_TOPIC_LIST,
                 (const OCRepPayload**) (payloadTopicArray), dimensions);
+        for (int i = 0; i < (int) dimensionSize; ++i)
+        {
+            OCRepPayloadDestroy(payloadTopicArray[i]);
+        }
+        OICFree(payloadTopicArray);
     }
     else
     {
@@ -342,10 +348,11 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
     if (OCDoResponse(&response) != OC_STACK_OK)
     {
         NS_LOG(ERROR, "Fail to response topic list");
+        OCRepPayloadDestroy(payload);
         return NS_ERROR;
     }
-    OCRepPayloadDestroy(payload);
 
+    OCRepPayloadDestroy(payload);
     NS_LOG(DEBUG, "NSSendTopicList - OUT");
     return NS_OK;
 }
@@ -465,14 +472,21 @@ void * NSTopicSchedule(void * ptr)
                         {
                             newObj->data = topicSyncResult->topicData;
                             newObj->next = NULL;
-                            NSProviderStorageWrite(consumerTopicList, newObj);
-                            NSSendTopicUpdationToConsumer(subData->id);
-                            topicSyncResult->result = NS_OK;
+                            if(NSProviderStorageWrite(consumerTopicList, newObj) == NS_OK)
+                            {
+                                NSSendTopicUpdationToConsumer(subData->id);
+                                topicSyncResult->result = NS_OK;
+                            }
+                        }
+                        else
+                        {
+                            OICFree(subData->topicName);
+                            OICFree(subData);
+                            OICFree(newObj);
                         }
                     }
                     pthread_cond_signal(topicSyncResult->condition);
                     pthread_mutex_unlock(topicSyncResult->mutex);
-
                 }
                     break;
                 case TASK_UNSUBSCRIBE_TOPIC:
