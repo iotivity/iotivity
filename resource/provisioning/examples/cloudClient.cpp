@@ -289,7 +289,7 @@ static void userRequests(void *data)
 
         int request = 0;
         scanf("%d", &request);
-        getchar();
+        for( ; 0x20<=getchar(); );
 
         switch (request)
         {

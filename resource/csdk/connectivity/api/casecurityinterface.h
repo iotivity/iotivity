@@ -65,6 +65,20 @@ typedef enum
 typedef int (*CAgetPskCredentialsHandler)(CADtlsPskCredType_t type,
               const uint8_t *desc, size_t desc_len,
               uint8_t *result, size_t result_length);
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+#ifdef _ENABLE_MULTIPLE_OWNER_
+/**
+ * API to get a secure connected peer information
+ *
+ * @param[in] peer peer information includs IP address and port.
+ *
+ * @return  secure connected peer information on success, otherwise NULL
+ */
+const CASecureEndpoint_t *CAGetSecureEndpointData(const CAEndpoint_t *peer);
+#endif //_ENABLE_MULTIPLE_OWNER_
+#endif
+
 /**
  * This internal callback is used by CA layer to
  * retrieve all credential types from SRM

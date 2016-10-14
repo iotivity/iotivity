@@ -67,6 +67,9 @@ if srmtest_env.get('SECURED') == '1':
 if srmtest_env.get('LOGGING') == '1':
 	srmtest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
+if srmtest_env.get('MULTIPLE_OWNER') == '1':
+	srmtest_env.AppendUnique(CPPDEFINES=['_ENABLE_MULTIPLE_OWNER_'])
+
 if target_os == 'windows':
 	srmtest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
 	srmtest_env.AppendUnique(LIBS = ['advapi32', 'bcrypt', 'kernel32', 'ws2_32', 'iphlpapi', 'octbstack_static'])
@@ -119,7 +122,7 @@ srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
     unittest_src_dir + 'oic_svr_db_prov.dat'))
 srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
     unittest_src_dir + 'oic_svr_db.dat'))
-    
+
 srmtest_env.AppendTarget('test')
 if srmtest_env.get('TEST') == '1':
 	if target_os in ['linux', 'windows']:

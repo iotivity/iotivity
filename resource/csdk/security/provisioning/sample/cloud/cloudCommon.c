@@ -340,6 +340,7 @@ static OCStackResult saveTrustCert(void)
     if (!readFile(filename, (OCByteString *)&trustCertChainArray))
     {
         OIC_LOG_V(ERROR, TAG, "Can't read %s file", filename);
+        OICFree(((OCByteString *)&trustCertChainArray)->bytes);
         return OC_STACK_ERROR;
     }
     OIC_LOG_BUFFER(DEBUG, TAG, trustCertChainArray.data, trustCertChainArray.len);

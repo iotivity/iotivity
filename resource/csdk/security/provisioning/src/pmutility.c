@@ -960,6 +960,240 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
     return res;
 }
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+static OCStackApplicationResult MOTDeviceDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
+                                OCClientResponse *clientResponse)
+{
+    if (ctx == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Lost List of device information");
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+    (void)UNUSED;
+    if (clientResponse)
+    {
+        if  (NULL == clientResponse->payload)
+        {
+            OIC_LOG(INFO, TAG, "Skipping Null payload");
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+        if (OC_STACK_OK != clientResponse->result)
+        {
+            OIC_LOG(INFO, TAG, "Error in response");
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+        else
+        {
+            if (PAYLOAD_TYPE_SECURITY != clientResponse->payload->type)
+            {
+                OIC_LOG(INFO, TAG, "Unknown payload type");
+                return OC_STACK_KEEP_TRANSACTION;
+            }
+
+            OicSecDoxm_t *ptrDoxm = NULL;
+            uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData;
+            size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
+
+            OCStackResult res = CBORPayloadToDoxm(payload, size, &ptrDoxm);
+            if ((NULL == ptrDoxm) || (OC_STACK_OK != res))
+            {
+                OIC_LOG(INFO, TAG, "Ignoring malformed CBOR");
+                return OC_STACK_KEEP_TRANSACTION;
+            }
+            else
+            {
+                OIC_LOG(DEBUG, TAG, "Successfully converted doxm cbor to bin.");
+
+                //If this is owend device discovery we have to filter out the responses.
+                DiscoveryInfo* pDInfo = (DiscoveryInfo*)ctx;
+                OCProvisionDev_t **ppDevicesList = pDInfo->ppDevicesList;
+
+                // Get my device ID from doxm resource
+                OicUuid_t myId;
+                memset(&myId, 0, sizeof(myId));
+                OCStackResult res = GetDoxmDevOwnerId(&myId);
+                if(OC_STACK_OK != res)
+                {
+                    OIC_LOG(ERROR, TAG, "Error while getting my device ID.");
+                    DeleteDoxmBinData(ptrDoxm);
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
+
+                res = GetDoxmDeviceID(&myId);
+                if(OC_STACK_OK != res)
+                {
+                    OIC_LOG(ERROR, TAG, "Error while getting my UUID.");
+                    DeleteDoxmBinData(ptrDoxm);
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
+                //if this is owned discovery and this is PT's reply, discard it
+                if((pDInfo->isOwnedDiscovery) &&
+                        (0 == memcmp(&ptrDoxm->deviceID.id, &myId.id, sizeof(myId.id))) )
+                {
+                    OIC_LOG(DEBUG, TAG, "discarding provision tool's reply");
+                    DeleteDoxmBinData(ptrDoxm);
+                    return OC_STACK_KEEP_TRANSACTION;
+                }
+
+                if(pDInfo->isOwnedDiscovery)
+                {
+                    OicSecSubOwner_t* subOwner = NULL;
+                    LL_FOREACH(ptrDoxm->subOwners, subOwner)
+                    {
+                        if(memcmp(myId.id, subOwner->uuid.id, sizeof(myId.id)) == 0)
+                        {
+                            break;
+                        }
+                    }
+
+                    if(subOwner)
+                    {
+                        res = AddDevice(ppDevicesList, &clientResponse->devAddr,
+                                clientResponse->connType, ptrDoxm);
+                        if (OC_STACK_OK != res)
+                        {
+                            OIC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
+                            DeleteDoxmBinData(ptrDoxm);
+                            return OC_STACK_KEEP_TRANSACTION;
+                        }
+
+                        res = SecurePortDiscovery(pDInfo, clientResponse);
+                        if(OC_STACK_OK != res)
+                        {
+                            OIC_LOG(ERROR, TAG, "Failed to SecurePortDiscovery");
+                            DeleteDoxmBinData(ptrDoxm);
+                            return OC_STACK_KEEP_TRANSACTION;
+                        }
+                    }
+                    else
+                    {
+                        OIC_LOG(ERROR, TAG, "discarding device's reply, because not a SubOwner.");
+                        DeleteDoxmBinData(ptrDoxm);
+                        return OC_STACK_KEEP_TRANSACTION;
+                    }
+                }
+                else
+                {
+                    if(ptrDoxm->mom && OIC_MULTIPLE_OWNER_DISABLE != ptrDoxm->mom->mode)
+                    {
+                        res = AddDevice(ppDevicesList, &clientResponse->devAddr,
+                                clientResponse->connType, ptrDoxm);
+                        if (OC_STACK_OK != res)
+                        {
+                            OIC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
+                            DeleteDoxmBinData(ptrDoxm);
+                            return OC_STACK_KEEP_TRANSACTION;
+                        }
+
+                        res = SecurePortDiscovery(pDInfo, clientResponse);
+                        if(OC_STACK_OK != res)
+                        {
+                            OIC_LOG(ERROR, TAG, "Failed to SecurePortDiscovery");
+                            DeleteDoxmBinData(ptrDoxm);
+                            return OC_STACK_KEEP_TRANSACTION;
+                        }
+                    }
+                    else
+                    {
+                        OIC_LOG(ERROR, TAG, "discarding mom disabled device's reply");
+                        DeleteDoxmBinData(ptrDoxm);
+                        return OC_STACK_KEEP_TRANSACTION;
+                    }
+                }
+
+                OIC_LOG(INFO, TAG, "Exiting ProvisionDiscoveryHandler.");
+            }
+
+            return  OC_STACK_KEEP_TRANSACTION;
+        }
+    }
+    else
+    {
+        OIC_LOG(INFO, TAG, "Skiping Null response");
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    return  OC_STACK_DELETE_TRANSACTION;
+}
+
+
+/**
+ * Discover multiple OTM enabled devices in the same IP subnet.
+ *
+ * @param[in] waittime      Timeout in seconds.
+ * @param[in] ppDevicesList        List of OCProvisionDev_t.
+ *
+ * @return OC_STACK_OK on success otherwise error.
+ */
+OCStackResult PMMultipleOwnerDeviceDiscovery(unsigned short waittime, bool isMultipleOwned, OCProvisionDev_t **ppDevicesList)
+{
+    OIC_LOG(DEBUG, TAG, "IN PMMultipleOwnerEnabledDeviceDiscovery");
+
+    if (NULL != *ppDevicesList)
+    {
+        OIC_LOG(ERROR, TAG, "List is not null can cause memory leak");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    const char *DOXM_MOM_ENABLE_MULTICAST_QUERY = "/oic/sec/doxm?mom!=0&owned=TRUE";
+    const char *DOXM_MULTIPLE_OWNED_MULTICAST_QUERY = "/oic/sec/doxm?owned=TRUE";
+
+    DiscoveryInfo *pDInfo = OICCalloc(1, sizeof(DiscoveryInfo));
+    if(NULL == pDInfo)
+    {
+        OIC_LOG(ERROR, TAG, "PMDeviceDiscovery : Memory allocation failed.");
+        return OC_STACK_NO_MEMORY;
+    }
+
+    pDInfo->ppDevicesList = ppDevicesList;
+    pDInfo->isOwnedDiscovery = isMultipleOwned;
+
+    OCCallbackData cbData;
+    cbData.cb = &MOTDeviceDiscoveryHandler;
+    cbData.context = (void *)pDInfo;
+    cbData.cd = NULL;
+    OCStackResult res = OC_STACK_ERROR;
+
+    const char* query = isMultipleOwned ? DOXM_MULTIPLE_OWNED_MULTICAST_QUERY :
+                                          DOXM_MOM_ENABLE_MULTICAST_QUERY;
+
+    OCDoHandle handle = NULL;
+    res = OCDoResource(&handle, OC_REST_DISCOVER, query, 0, 0,
+                                     CT_DEFAULT, OC_HIGH_QOS, &cbData, NULL, 0);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
+        OICFree(pDInfo);
+        return res;
+    }
+
+    //Waiting for each response.
+    res = PMTimeout(waittime, true);
+    if(OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to wait response for secure discovery.");
+        OICFree(pDInfo);
+        OCStackResult resCancel = OCCancel(handle, OC_HIGH_QOS, NULL, 0);
+        if(OC_STACK_OK !=  resCancel)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to remove registered callback");
+        }
+        return res;
+    }
+    res = OCCancel(handle,OC_HIGH_QOS,NULL,0);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to remove registered callback");
+        OICFree(pDInfo);
+        return res;
+    }
+    OIC_LOG(DEBUG, TAG, "OUT PMMultipleOwnerEnabledDeviceDiscovery");
+    OICFree(pDInfo);
+    return res;
+}
+
+#endif //_ENABLE_MULTIPLE_OWNER_
+
 static OCStackResult SecurePortDiscovery(DiscoveryInfo* discoveryInfo,
                                          const OCClientResponse *clientResponse)
 {

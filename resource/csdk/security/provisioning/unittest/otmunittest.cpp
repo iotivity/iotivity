@@ -31,6 +31,9 @@
 #include "oxmrandompin.h"
 #include "securevirtualresourcetypes.h"
 #include "provisioningdatabasemanager.h"
+#ifdef _ENABLE_MULTIPLE_OWNER_
+#include "multipleownershiptransfermanager.h"
+#endif //_ENABLE_MULTIPLE_OWNER_
 #include "srmutility.h"
 #include "doxmresource.h"
 #include "pmtypes.h"
@@ -202,6 +205,10 @@ static pid_t g_myPID2;
 static const char* g_otmCtx = "Test User Context";
 static OCProvisionDev_t* g_unownedDevices = NULL;
 static OCProvisionDev_t* g_ownedDevices = NULL;
+#ifdef _ENABLE_MULTIPLE_OWNER_
+static OCProvisionDev_t* g_motEnabledDevices = NULL;
+static OCProvisionDev_t* g_multiplOwnedDevices = NULL;
+#endif //_ENABLE_MULTIPLE_OWNER_
 
 static void GetCurrentWorkingDirectory(char* buf, size_t bufsize)
 {
@@ -261,6 +268,35 @@ static void ownershipTransferCB(void* ctx, int UNUSED1, OCProvisionResult_t* UNU
     g_doneCB = true;
 }
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "POST 'doxm' SUCCEEDED - ctx: %s", (char*) ctx);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "POST 'doxm'  FAILED - ctx: %s", (char*) ctx);
+    }
+    g_callbackResult = !hasError;
+    g_doneCB = true;
+}
+
+static void provisionPreconfiguredPinCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "Provision Preconfigured-PIN SUCCEEDED - ctx: %s", (char*) ctx);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "Provision Preconfigured-PIN FAILED - ctx: %s", (char*) ctx);
+    }
+    g_callbackResult = !hasError;
+    g_doneCB = true;
+}
+#endif //_ENABLE_MULTIPLE_OWNER_
 
 // callback function(s) for provisioning client using C-level provisioning API
 static void removeDeviceCB(void* ctx, int UNUSED1, OCProvisionResult_t* UNUSED2, bool hasError)
@@ -574,6 +610,121 @@ TEST(PerformUnlinkDevices, NullParam)
 
     EXPECT_EQ(OC_STACK_OK, result);
 }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+TEST(RegisterPreconfiguredPIN, NullParam)
+{
+    OCStackResult result = SetPreconfigPin("12341234", strlen("12341234"));
+    EXPECT_EQ(OC_STACK_OK, result);
+}
+
+TEST(EnableMOT, NullParam)
+{
+    OCStackResult result = OC_STACK_OK;
+
+    if(NULL == g_ownedDevices)
+    {
+        OIC_LOG(INFO, TAG, "Discovering Only Owned Devices on Network..\n");
+        result = OCDiscoverOwnedDevices(DISCOVERY_TIMEOUT, &g_ownedDevices);
+        EXPECT_EQ(OC_STACK_OK, result);
+        RemoveUnknownDeviceFromDevList(g_ownedDevices);
+    }
+    EXPECT_NE((OCProvisionDev_t*)NULL, g_ownedDevices);
+
+    g_doneCB = false;
+    result = MOTChangeMode(NULL, g_ownedDevices, OIC_MULTIPLE_OWNER_ENABLE, updateDoxmForMOTCB);
+    EXPECT_EQ(OC_STACK_OK, result);
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCChangeMOTMode callback error");
+        return;
+    }
+
+    EXPECT_TRUE(g_callbackResult);
+}
+
+TEST(DiscoverMOTEnabledDevices, NullParam)
+{
+    OCStackResult result = OC_STACK_OK;
+
+    if(g_motEnabledDevices)
+    {
+        PMDeleteDeviceList(g_motEnabledDevices);
+    }
+
+    OIC_LOG(INFO, TAG, "Discovering MOT Enabled Devices on Network..\n");
+    result = OCDiscoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT, &g_motEnabledDevices);
+    EXPECT_EQ(OC_STACK_OK, result);
+    RemoveUnknownDeviceFromDevList(g_motEnabledDevices);
+    EXPECT_NE((OCProvisionDev_t*)NULL, g_motEnabledDevices);
+}
+
+TEST(ProvisonPreconfiguredPIN, NullParam)
+{
+    OCStackResult result = OC_STACK_OK;
+
+    g_doneCB = false;
+    result = OCProvisionPreconfPin(NULL, g_motEnabledDevices, "12341234", strlen("12341234"), provisionPreconfiguredPinCB);
+    EXPECT_EQ(OC_STACK_OK, result);
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCProvisionPreconfPin callback error");
+        return;
+    }
+
+    EXPECT_EQ(true, g_callbackResult);
+}
+
+TEST(SelectMOTMethod, NullParam)
+{
+    OCStackResult result = OC_STACK_OK;
+
+    g_doneCB = false;
+    result = MOTSelectMOTMethod(NULL, g_motEnabledDevices, OIC_PRECONFIG_PIN, updateDoxmForMOTCB);
+    EXPECT_EQ(OC_STACK_OK, result);
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCSelectMOTMethod callback error");
+        return;
+    }
+
+    EXPECT_EQ(true, g_callbackResult);
+}
+
+// TODO: Need to new server to perform MOT
+/*
+TEST(PerformMOT, NullParam)
+{
+    OCStackResult result = OC_STACK_OK;
+
+    g_doneCB = false;
+    result = OCDoMultipleOwnershipTransfer(NULL, g_motEnabledDevices, ownershipTransferCB);
+    EXPECT_EQ(OC_STACK_OK, result);
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCDoMultipleOwnershipTransfer callback error");
+        return;
+    }
+    EXPECT_EQ(true, g_callbackResult);
+}
+
+TEST(DiscoverMultipleOwnedDevices, NullParam)
+{
+    OCStackResult result = OC_STACK_OK;
+
+    if(g_multiplOwnedDevices)
+    {
+        PMDeleteDeviceList(g_multiplOwnedDevices);
+    }
+
+    OIC_LOG(INFO, TAG, "Discovering MOT Enabled Devices on Network..\n");
+    result = OCDiscoverMultipleOwnedDevices(DISCOVERY_TIMEOUT, &g_multiplOwnedDevices);
+    EXPECT_EQ(OC_STACK_OK, result);
+    RemoveUnknownDeviceFromDevList(g_multiplOwnedDevices);
+    EXPECT_TRUE(NULL != g_multiplOwnedDevices);
+}*/
+
+#endif //_ENABLE_MULTIPLE_OWNER_
 
 TEST(PerformRemoveDevice, NullParam)
 {

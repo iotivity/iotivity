@@ -80,6 +80,19 @@ OicSecCred_t* GetCredResourceDataByCredId(const uint16_t credId);
 OCStackResult CredToCBORPayload(const OicSecCred_t* cred, uint8_t **cborPayload,
                                 size_t *cborSize, int secureFlag);
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+/**
+ * Function to check the credential access of SubOwner
+ *
+ * @param[in] uuid SubOwner's UUID
+ * @param[in] cborPayload CBOR payload of credential
+ * @param[in] size Byte length of cborPayload
+ *
+ * @return ::true for valid access, otherwise invalid access
+ */
+bool IsValidCredentialAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPayload, size_t size);
+#endif //_ENABLE_MULTIPLE_OWNER_
+
 /**
  * This function generates the bin credential data.
  *
@@ -88,13 +101,14 @@ OCStackResult CredToCBORPayload(const OicSecCred_t* cred, uint8_t **cborPayload,
  * @param publicData public data such as public key.
  * @param privateData private data such as private key.
  * @param rownerID Resource owner's UUID.
+ * @param eownerID Entry owner's UUID.
  *
  * @return pointer to instance of @ref OicSecCred_t if successful. else NULL in case of error.
 
  */
 OicSecCred_t * GenerateCredential(const OicUuid_t* subject, OicSecCredType_t credType,
                      const OicSecCert_t * publicData, const OicSecKey_t * privateData,
-                     const OicUuid_t * rownerID);
+                     const OicUuid_t * rownerID, const OicUuid_t * eownerID);
 
 /**
  * This function adds the new cred to the credential list.

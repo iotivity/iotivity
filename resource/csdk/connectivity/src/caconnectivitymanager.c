@@ -140,11 +140,27 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
 
     CASetInterfaceCallbacks(ReqHandler, RespHandler, ErrorHandler);
 }
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+#ifdef _ENABLE_MULTIPLE_OWNER_
+const CASecureEndpoint_t *CAGetSecureEndpointData(const CAEndpoint_t *peer)
+{
+    OIC_LOG(DEBUG, TAG, "IN CAGetSecurePeerInfo");
+
+    if (!g_isInitialized)
+    {
+        OIC_LOG(DEBUG, TAG, "CA is not initialized");
+        return NULL;
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT CAGetSecurePeerInfo");
+    return GetCASecureEndpointData(peer);
+}
+#endif //_ENABLE_MULTIPLE_OWNER_
+
 CAResult_t CAregisterSslHandshakeCallback(CAErrorCallback tlsHandshakeCallback)
 {
     OIC_LOG(DEBUG, TAG, "CAregisterSslHandshakeCallback");
-
     if(!g_isInitialized)
     {
         return CA_STATUS_NOT_INITIALIZED;

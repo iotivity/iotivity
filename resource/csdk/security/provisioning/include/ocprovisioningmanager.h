@@ -24,6 +24,9 @@
 #include "octypes.h"
 #include "pmtypes.h"
 #include "ownershiptransfermanager.h"
+#ifdef _ENABLE_MULTIPLE_OWNER_
+#include "securevirtualresourcetypes.h"
+#endif //_ENABLE_MULTIPLE_OWNER_
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,6 +81,20 @@ OCStackResult OCDoOwnershipTransfer(void* ctx,
                                     OCProvisionDev_t *targetDevices,
                                     OCProvisionResultCB resultCallback);
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+/**
+ * API to perfrom multiple ownership transfer for MOT enabled device.
+ *
+ * @param[in] ctx Application context would be returned in result callback
+ * @param[in] targetDevices List of devices to perform ownership transfer.
+ * @param[in] resultCallback Result callback function to be invoked when ownership transfer finished.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCDoMultipleOwnershipTransfer(void* ctx,
+                                      OCProvisionDev_t *targetDevices,
+                                      OCProvisionResultCB resultCallback);
+#endif //_ENABLE_MULTIPLE_OWNER_
+
 /**
  * API to register for particular OxM.
  *
@@ -97,6 +114,28 @@ OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t*
  * @return OTM_SUCCESS in case of success and other value otherwise.
  */
 OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList);
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+/**
+ * The function is responsible for discovery of MOT enabled device is current subnet.
+ *
+ * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
+ *                    server before returning the list of devices.
+ * @param[out] ppList List of MOT enabled devices.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCDiscoverMultipleOwnerEnabledDevices(unsigned short timeout, OCProvisionDev_t **ppList);
+
+/**
+ * The function is responsible for discovery of Multiple Owned device is current subnet.
+ *
+ * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
+ *                    server before returning the list of devices.
+ * @param[out] ppList List of Multiple Owned devices.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCDiscoverMultipleOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList);
+#endif //_ENABLE_MULTIPLE_OWNER_
 
 /**
  * API to provision credentials between two devices and ACLs for the devices who act as a server.
@@ -181,6 +220,62 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
                                       const OCProvisionDev_t *pDev1,
                                       const OCProvisionDev_t *pDev2,
                                       OCProvisionResultCB resultCallback);
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+/**
+ * API to provision preconfigured PIN to device(NOT LIST).
+ * If device does not support the Preconfigured PIN OxM,
+ * OCProvisionPreconfPin API will be update the device's Doxm
+ * and then try prevonfigured PIN provisioning once again.
+ *
+ * @param[in] ctx Application context would be returned in result callback.
+ * @param[in] targetDeviceInfo Selected target device.
+ * @param[in] preconfPin string of preconfigured PIN.
+ * @param[in] preconfPinLen string length of 'preconfPin'.
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            provisioning request recieves a response from first resource server.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCProvisionPreconfPin(void* ctx,
+                                               OCProvisionDev_t *targetDeviceInfo,
+                                               const char * preconfPin, size_t preconfPinLen,
+                                               OCProvisionResultCB resultCallback);
+
+/**
+ * API to add preconfigured PIN to local SVR DB.
+ *
+ * @param[in] targetDeviceInfo Selected target device.
+ * @param[in] preconfPIN Preconfig PIN which is used while multiple owner authentication
+ * @param[in] preconfPINLen Byte length of preconfig PIN
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
+                                 const char* preconfPIN, size_t preconfPINLen);
+
+/**
+ * API to update 'doxm.mom' to resource server.
+ *
+ * @param[in] targetDeviceInfo Selected target device.
+ * @param[in] momType Mode of multiple ownership transfer (ref. oic.sec.mom)
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            POST 'mom' request recieves a response from resource server.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
+                            const OicSecMomType_t momType, OCProvisionResultCB resultCallback);
+
+/**
+ * API to update 'doxm.oxmsel' to resource server.
+ *
+ * @param[in] targetDeviceInfo Selected target device.
+ * @param[in] oxmSelValue Method of multiple ownership transfer (ref. oic.sec.oxm)
+ * @param[in] resultCallback callback provided by API user, callback will be called when
+ *            POST 'oxmsel' request recieves a response from resource server.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
+                                 const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback);
+#endif //_ENABLE_MULTIPLE_OWNER_
 
 /**
  * Function to unlink devices.

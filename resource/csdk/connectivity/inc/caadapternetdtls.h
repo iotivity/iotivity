@@ -132,12 +132,6 @@ void CADTLSSetAdapterCallbacks(CAPacketReceivedCallback recvCallback,
 void CADTLSSetHandshakeCallback(CAErrorCallback dtlsHandshakeCallback);
 
 /**
- * Register callback to get DTLS PSK credentials.
- * @param[in]  credCallback    callback to get DTLS PSK credentials.
- */
-void CADTLSSetCredentialsCallback(CAGetDTLSPskCredentialsHandler credCallback);
-
-/**
  * Select the cipher suite for dtls handshake
  *
  * @param[in] cipher    cipher suite
@@ -255,6 +249,18 @@ CAResult_t CAAdapterNetDtlsEncrypt(const CAEndpoint_t *endpoint,
 CAResult_t CAAdapterNetDtlsDecrypt(const CASecureEndpoint_t *sep,
                                    uint8_t *data,
                                    uint32_t dataLen);
+
+
+/**
+ * API to get a secure connected peer information
+ * NOTE : This API use the mutex lock to access 'g_caDtlsContext',
+ *        Please do not invoke this API for internal function of dtls adapter
+ *
+ * @param[in] peer peer information includs IP address and port.
+ *
+ * @ return  secure connected peer information on success, otherwise NULL
+ */
+CASecureEndpoint_t *CAGetSecurePeerInfo(const CAEndpoint_t *peer);
 
 #endif /* CA_ADAPTER_NET_DTLS_H_ */
 

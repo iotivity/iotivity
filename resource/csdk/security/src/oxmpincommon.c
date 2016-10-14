@@ -25,7 +25,12 @@
 #include "logger.h"
 #include "pinoxmcommon.h"
 #include "pbkdf2.h"
+#include "base64.h"
 #include "securevirtualresourcetypes.h"
+#include "srmresourcestrings.h"
+#include "doxmresource.h"
+#include "credresource.h"
+#include "cainterface.h"
 
 #define TAG "PIN_OXM_COMMON"
 
@@ -93,9 +98,30 @@ OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize)
         return OC_STACK_ERROR;
     }
 
+    OicUuid_t deviceID;
+    if(OC_STACK_OK == GetDoxmDeviceID(&deviceID))
+    {
+        //Set the device id to derive temporal PSK
+        SetUuidForPinBasedOxm(&deviceID);
+
+        /**
+         * Since PSK will be used directly by DTLS layer while PIN based ownership transfer,
+         * Credential should not be saved into SVR.
+         * For this reason, use a temporary get_psk_info callback to random PIN OxM.
+         */
+        if(CA_STATUS_OK != CAregisterPskCredentialsHandler(GetDtlsPskForRandomPinOxm))
+        {
+            OIC_LOG(ERROR, TAG, "Failed to register DTLS credential handler for Random PIN OxM.");
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Failed to read device ID");
+        return OC_STACK_ERROR;
+    }
+
     return OC_STACK_OK;
 }
-
 
 OCStackResult InputPin(char* pinBuffer, size_t bufferSize)
 {
@@ -119,21 +145,53 @@ OCStackResult InputPin(char* pinBuffer, size_t bufferSize)
     else
     {
         OIC_LOG(ERROR, TAG, "Invoke PIN callback failed!");
-        OIC_LOG(ERROR, TAG, "Callback for input PIN should be registered to use PIN based OxM.");
+        OIC_LOG(ERROR, TAG, "Callback for input PIN should be registered to use Random PIN based OxM.");
         return OC_STACK_ERROR;
     }
 
     return OC_STACK_OK;
 }
 
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+#ifdef _ENABLE_MULTIPLE_OWNER_
+OCStackResult SetPreconfigPin(const char* pinBuffer, size_t pinLength)
+{
+    if(NULL == pinBuffer || OXM_PRECONFIG_PIN_SIZE < pinLength)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
 
-void SetUuidForRandomPinOxm(const OicUuid_t* uuid)
+    memcpy(g_PinOxmData.pinData, pinBuffer, pinLength);
+    g_PinOxmData.pinData[pinLength] = '\0';
+
+    return OC_STACK_OK;
+}
+#endif //_ENABLE_MULTIPLE_OWNER_
+
+#ifdef __WITH_DTLS__
+
+void SetUuidForPinBasedOxm(const OicUuid_t* uuid)
 {
     if(NULL != uuid)
     {
         memcpy(g_PinOxmData.newDevice.id, uuid->id, UUID_LENGTH);
     }
+}
+
+int DerivePSKUsingPIN(uint8_t* result)
+{
+    int dtlsRes = DeriveCryptoKeyFromPassword(
+                                              (const unsigned char *)g_PinOxmData.pinData,
+                                              OXM_RANDOM_PIN_SIZE,
+                                              g_PinOxmData.newDevice.id,
+                                              UUID_LENGTH, PBKDF_ITERATIONS,
+                                              OWNER_PSK_LENGTH_128, result);
+
+    OIC_LOG_V(DEBUG, TAG, "DeriveCryptoKeyFromPassword Completed (%d)", dtlsRes);
+    OIC_LOG_V(DEBUG, TAG, "PIN : %s", g_PinOxmData.pinData);
+    OIC_LOG(DEBUG, TAG, "UUID : ");
+    OIC_LOG_BUFFER(DEBUG, TAG, g_PinOxmData.newDevice.id, UUID_LENGTH);
+
+    return dtlsRes;
 }
 
 int32_t GetDtlsPskForRandomPinOxm( CADtlsPskCredType_t type,
@@ -154,40 +212,30 @@ int32_t GetDtlsPskForRandomPinOxm( CADtlsPskCredType_t type,
     {
         case CA_DTLS_PSK_HINT:
         case CA_DTLS_PSK_IDENTITY:
-            /**
-             * The server will provide PSK hint to identify PSK according to RFC 4589 and RFC 4279.
-             *
-             * At this point, The server generate random hint and
-             * provide it to client through server key exchange message.
-             */
-            OCFillRandomMem(result, result_length);
-            ret = result_length;
+            {
+                /**
+                 * The server will provide PSK hint to identify PSK according to RFC 4589 and RFC 4279.
+                 *
+                 * At this point, The server generate random hint and
+                 * provide it to client through server key exchange message.
+                 */
+                OCFillRandomMem(result, result_length);
+                ret = result_length;
 
-            OIC_LOG(DEBUG, TAG, "PSK HINT : ");
-            OIC_LOG_BUFFER(DEBUG, TAG, result, result_length);
+                OIC_LOG(DEBUG, TAG, "PSK HINT : ");
+                OIC_LOG_BUFFER(DEBUG, TAG, result, result_length);
+            }
             break;
 
         case CA_DTLS_PSK_KEY:
             {
-                int dtlsRes = DeriveCryptoKeyFromPassword(
-                                                          (const unsigned char *)g_PinOxmData.pinData,
-                                                          OXM_RANDOM_PIN_SIZE,
-                                                          g_PinOxmData.newDevice.id,
-                                                          UUID_LENGTH, PBKDF_ITERATIONS,
-                                                          OWNER_PSK_LENGTH_128, (uint8_t*)result);
-
-                OIC_LOG_V(DEBUG, TAG, "DeriveCryptoKeyFromPassword Completed (%d)", dtlsRes);
-                OIC_LOG_V(DEBUG, TAG, "PIN : %s", g_PinOxmData.pinData);
-                OIC_LOG(DEBUG, TAG, "UUID : ");
-                OIC_LOG_BUFFER(DEBUG, TAG, g_PinOxmData.newDevice.id, UUID_LENGTH);
-
-                if(0 == dtlsRes)
+                if(0 == DerivePSKUsingPIN((uint8_t*)result))
                 {
                     ret = OWNER_PSK_LENGTH_128;
                 }
                 else
                 {
-                    OIC_LOG_V(ERROR, TAG, "Failed to derive crypto key from PIN : result=%d", dtlsRes);
+                    OIC_LOG_V(ERROR, TAG, "Failed to derive crypto key from PIN");
                     ret = -1;
                 }
             }
@@ -203,4 +251,270 @@ int32_t GetDtlsPskForRandomPinOxm( CADtlsPskCredType_t type,
 
     return ret;
 }
-#endif // __WITH_DTLS__ or __WITH_TLS__
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+int32_t GetDtlsPskForMotRandomPinOxm( CADtlsPskCredType_t type,
+              const unsigned char *UNUSED1, size_t UNUSED2,
+              unsigned char *result, size_t result_length)
+{
+    int32_t ret = -1;
+
+    (void)UNUSED1;
+    (void)UNUSED2;
+
+    if (NULL == result || result_length < OWNER_PSK_LENGTH_128)
+    {
+        return ret;
+    }
+
+    const OicSecDoxm_t* doxm = GetDoxmResourceData();
+    if(doxm)
+    {
+        switch (type)
+        {
+            case CA_DTLS_PSK_HINT:
+            case CA_DTLS_PSK_IDENTITY:
+                {
+                    memcpy(result, doxm->deviceID.id, sizeof(doxm->deviceID.id));
+                    return (sizeof(doxm->deviceID.id));
+                }
+                break;
+
+            case CA_DTLS_PSK_KEY:
+                {
+                    if(0 == DerivePSKUsingPIN((uint8_t*)result))
+                    {
+                        ret = OWNER_PSK_LENGTH_128;
+                    }
+                    else
+                    {
+                        OIC_LOG_V(ERROR, TAG, "Failed to derive crypto key from PIN : result");
+                        ret = -1;
+                    }
+                }
+                break;
+
+            default:
+                {
+                    OIC_LOG (ERROR, TAG, "Wrong value passed for CADtlsPskCredType_t.");
+                    ret = -1;
+                }
+                break;
+        }
+    }
+
+    return ret;
+}
+
+
+int32_t GetDtlsPskForPreconfPinOxm( CADtlsPskCredType_t type,
+              const unsigned char *UNUSED1, size_t UNUSED2,
+              unsigned char *result, size_t result_length)
+{
+    int32_t ret = -1;
+
+    (void)UNUSED1;
+    (void)UNUSED2;
+
+    if (NULL == result || result_length < OWNER_PSK_LENGTH_128)
+    {
+        return ret;
+    }
+
+    const OicSecDoxm_t* doxm = GetDoxmResourceData();
+    if(doxm)
+    {
+        switch (type)
+        {
+            case CA_DTLS_PSK_HINT:
+            case CA_DTLS_PSK_IDENTITY:
+                {
+                    /**
+                     * The server will provide PSK hint to identify PSK according to RFC 4589 and RFC 4279.
+                     *
+                     * At this point, The server generate random hint and
+                     * provide it to client through server key exchange message.
+                     */
+                    OCFillRandomMem(result, result_length);
+                    ret = result_length;
+
+                    OIC_LOG(DEBUG, TAG, "PSK HINT : ");
+                    OIC_LOG_BUFFER(DEBUG, TAG, result, result_length);
+                }
+                break;
+
+            case CA_DTLS_PSK_KEY:
+                {
+                    OicUuid_t uuid;
+                    memset(&uuid, 0x00, sizeof(uuid));
+                    OICStrcpy(uuid.id, sizeof(uuid.id), WILDCARD_SUBJECT_ID.id);
+
+                    //Load PreConfigured-PIN
+                    const OicSecCred_t* cred = GetCredResourceData(&uuid);
+                    if(cred)
+                    {
+                        char* pinBuffer = NULL;
+                        uint32_t pinLength = 0;
+                        if(OIC_ENCODING_RAW == cred->privateData.encoding)
+                        {
+                            pinBuffer = OICCalloc(1, cred->privateData.len + 1);
+                            if(NULL == pinBuffer)
+                            {
+                                OIC_LOG (ERROR, TAG, "Failed to allocate memory");
+                                return ret;
+                            }
+                            pinLength = cred->privateData.len;
+                            memcpy(pinBuffer, cred->privateData.data, pinLength);
+                        }
+                        else if(OIC_ENCODING_BASE64 == cred->privateData.encoding)
+                        {
+                            size_t pinBufSize = B64DECODE_OUT_SAFESIZE((cred->privateData.len + 1));
+                            pinBuffer = OICCalloc(1, pinBufSize);
+                            if(NULL == pinBuffer)
+                            {
+                                OIC_LOG (ERROR, TAG, "Failed to allocate memory");
+                                return ret;
+                            }
+
+                            if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, pinBuffer, pinBufSize, &pinLength))
+                            {
+                                OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
+                                return ret;
+                            }
+                        }
+                        else
+                        {
+                            OIC_LOG(ERROR, TAG, "Unknown encoding type of PIN/PW credential.");
+                            return ret;
+                        }
+
+                        memcpy(g_PinOxmData.pinData, pinBuffer, pinLength);
+                        OICFree(pinBuffer);
+                    }
+
+                    if(0 == DerivePSKUsingPIN((uint8_t*)result))
+                    {
+                        ret = OWNER_PSK_LENGTH_128;
+                    }
+                    else
+                    {
+                        OIC_LOG_V(ERROR, TAG, "Failed to derive crypto key from PIN : result");
+                        ret = -1;
+                    }
+                }
+                break;
+
+            default:
+                {
+                    OIC_LOG (ERROR, TAG, "Wrong value passed for CADtlsPskCredType_t.");
+                    ret = -1;
+                }
+                break;
+        }
+    }
+
+    return ret;
+}
+
+
+int32_t GetDtlsPskForMotPreconfPinOxm( CADtlsPskCredType_t type,
+              const unsigned char *UNUSED1, size_t UNUSED2,
+              unsigned char *result, size_t result_length)
+{
+    int32_t ret = -1;
+
+    (void)UNUSED1;
+    (void)UNUSED2;
+
+    if (NULL == result || result_length < OWNER_PSK_LENGTH_128)
+    {
+        return ret;
+    }
+
+    const OicSecDoxm_t* doxm = GetDoxmResourceData();
+    if(doxm)
+    {
+        switch (type)
+        {
+            case CA_DTLS_PSK_HINT:
+            case CA_DTLS_PSK_IDENTITY:
+                {
+                    memcpy(result, doxm->deviceID.id, sizeof(doxm->deviceID.id));
+                    return (sizeof(doxm->deviceID.id));
+                }
+                break;
+            case CA_DTLS_PSK_KEY:
+                {
+                    OicUuid_t uuid;
+                    memset(&uuid, 0x00, sizeof(uuid));
+                    OICStrcpy(uuid.id, sizeof(uuid.id), WILDCARD_SUBJECT_ID.id);
+
+                    //Load PreConfigured-PIN
+                    const OicSecCred_t* cred = GetCredResourceData(&uuid);
+                    if(cred)
+                    {
+                        char* pinBuffer = NULL;
+                        uint32_t pinLength = 0;
+                        if(OIC_ENCODING_RAW == cred->privateData.encoding)
+                        {
+                            pinBuffer = OICCalloc(1, cred->privateData.len + 1);
+                            if(NULL == pinBuffer)
+                            {
+                                OIC_LOG (ERROR, TAG, "Failed to allocate memory");
+                                return ret;
+                            }
+                            pinLength = cred->privateData.len;
+                            memcpy(pinBuffer, cred->privateData.data, pinLength);
+                        }
+                        else if(OIC_ENCODING_BASE64 == cred->privateData.encoding)
+                        {
+                            size_t pinBufSize = B64DECODE_OUT_SAFESIZE((cred->privateData.len + 1));
+                            pinBuffer = OICCalloc(1, pinBufSize);
+                            if(NULL == pinBuffer)
+                            {
+                                OIC_LOG (ERROR, TAG, "Failed to allocate memory");
+                                return ret;
+                            }
+
+                            if(B64_OK != b64Decode((char*)cred->privateData.data, cred->privateData.len, pinBuffer, pinBufSize, &pinLength))
+                            {
+                                OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
+                                return ret;
+                            }
+                        }
+                        else
+                        {
+                            OIC_LOG(ERROR, TAG, "Unknown encoding type of PIN/PW credential.");
+                            return ret;
+                        }
+
+                        memcpy(g_PinOxmData.pinData, pinBuffer, pinLength);
+                        OICFree(pinBuffer);
+                    }
+
+                    if(0 == DerivePSKUsingPIN((uint8_t*)result))
+                    {
+                        ret = OWNER_PSK_LENGTH_128;
+                    }
+                    else
+                    {
+                        OIC_LOG_V(ERROR, TAG, "Failed to derive crypto key from PIN : result");
+                        ret = -1;
+                    }
+                }
+                break;
+
+            default:
+                {
+                    OIC_LOG (ERROR, TAG, "Wrong value passed for CADtlsPskCredType_t.");
+                    ret = -1;
+                }
+                break;
+        }
+    }
+
+    return ret;
+}
+#endif //_ENABLE_MULTIPLE_OWNER_
+
+#endif //__WITH_DTLS__

@@ -348,6 +348,13 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
             }
         }
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+        if(ace->eownerID)
+        {
+            aclMapSize++;
+        }
+#endif //_ENABLE_MULTIPLE_OWNER_
+
         cborEncoderResult = cbor_encoder_create_map(&acesArray, &oicSecAclMap, aclMapSize);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Creating ACES Map");
 
@@ -537,6 +544,22 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
             cborEncoderResult = cbor_encoder_close_container(&oicSecAclMap, &validities);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Validities Array.");
         }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+        // Eownerid -- Not Mandatory
+        if(ace->eownerID)
+        {
+            char *eowner = NULL;
+            cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_EOWNERID_NAME,
+                strlen(OIC_JSON_EOWNERID_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding eownerId Name Tag.");
+            ret = ConvertUuidToStr(ace->eownerID, &eowner);
+            VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
+            cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, eowner, strlen(eowner));
+            OICFree(eowner);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding eownerId Value.");
+        }
+#endif //_ENABLE_MULTIPLE_OWNER_
 
         cborEncoderResult = cbor_encoder_close_container(&acesArray, &oicSecAclMap);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing ACES Map.");
@@ -948,15 +971,17 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
         return NULL;
     }
     OCStackResult ret = OC_STACK_ERROR;
+    CborValue aclMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
     CborValue aclCbor = { .parser = NULL };
     CborParser parser = { .end = NULL };
     CborError cborFindResult = CborNoError;
+
     cbor_parser_init(cborPayload, size, 0, &parser, &aclCbor);
 
     OicSecAcl_t *acl = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
+    VERIFY_NON_NULL(TAG, acl, ERROR);
 
     // Enter ACL Map
-    CborValue aclMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
     cborFindResult = cbor_value_enter_container(&aclCbor, &aclMap);
     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering ACL Map.");
 
@@ -980,7 +1005,6 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                 CborValue aclistMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
                 cborFindResult = cbor_value_enter_container(&aclMap, &aclistMap);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering ACLIST Map.");
-
 
                 while (cbor_value_is_valid(&aclistMap))
                 {
@@ -1016,8 +1040,6 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                 ace = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
                                 VERIFY_NON_NULL(TAG, ace, ERROR);
                                 LL_APPEND(acl->aces, ace);
-
-                                VERIFY_NON_NULL(TAG, acl, ERROR);
 
                                 while (cbor_value_is_valid(&aceMap))
                                 {
@@ -1215,6 +1237,24 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing a validities Array.");
                                             }
                                         }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+                                        // eowner uuid -- Not Mandatory
+                                        if (strcmp(name, OIC_JSON_EOWNERID_NAME)  == 0)
+                                        {
+                                            char *eowner = NULL;
+                                            cborFindResult = cbor_value_dup_text_string(&aceMap, &eowner, &len, NULL);
+                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding eownerId Value.");
+                                            if(NULL == ace->eownerID)
+                                            {
+                                                ace->eownerID = (OicUuid_t*)OICCalloc(1, sizeof(OicUuid_t));
+                                                VERIFY_NON_NULL(TAG, ace->eownerID, ERROR);
+                                            }
+                                            ret = ConvertStrToUuid(eowner, ace->eownerID);
+                                            OICFree(eowner);
+                                            VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
+                                        }
+#endif //_ENABLE_MULTIPLE_OWNER_
                                         OICFree(name);
                                     }
 
@@ -1276,6 +1316,48 @@ exit:
 
     return acl;
 }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+bool IsValidAclAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPayload, const size_t size)
+{
+    bool retValue = false;
+    OicSecAcl_t* acl = NULL;
+
+    VERIFY_NON_NULL(TAG, uuid, ERROR);
+    VERIFY_NON_NULL(TAG, cborPayload, ERROR);
+    VERIFY_SUCCESS(TAG, 0 != size, ERROR);
+
+    acl = CBORPayloadToAcl(cborPayload, size);
+    VERIFY_NON_NULL(TAG, acl, ERROR);
+
+    OicSecAce_t* ace = NULL;
+    OicSecAce_t* tempAce = NULL;
+    LL_FOREACH_SAFE(acl->aces, ace, tempAce)
+    {
+        OicSecRsrc_t* rsrc = NULL;
+        OicSecRsrc_t* tempRsrc = NULL;
+
+        VERIFY_NON_NULL(TAG, ace->eownerID, ERROR);
+        VERIFY_SUCCESS(TAG, memcmp(ace->eownerID->id, uuid->id, sizeof(uuid->id)) == 0, ERROR);
+
+        LL_FOREACH_SAFE(ace->resources, rsrc, tempRsrc)
+        {
+            VERIFY_SUCCESS(TAG, strcmp(rsrc->href, OIC_RSRC_TYPE_SEC_DOXM) != 0, ERROR);
+            VERIFY_SUCCESS(TAG, strcmp(rsrc->href, OIC_RSRC_TYPE_SEC_CRED) != 0, ERROR);
+            VERIFY_SUCCESS(TAG, strcmp(rsrc->href, OIC_RSRC_TYPE_SEC_ACL) != 0, ERROR);
+            VERIFY_SUCCESS(TAG, strcmp(rsrc->href, OIC_RSRC_TYPE_SEC_PSTAT) != 0, ERROR);
+            VERIFY_SUCCESS(TAG, strcmp(rsrc->href, OIC_RSRC_TYPE_SEC_CRL) != 0, ERROR);
+        }
+    }
+
+    retValue = true;
+
+exit:
+    DeleteACLList(acl);
+
+    return retValue;
+}
+#endif //_ENABLE_MULTIPLE_OWNER_
 
 /**
  * This method removes ACE for the subject and resource from the ACL
