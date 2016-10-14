@@ -114,6 +114,7 @@ namespace OIC
             nsConfig.resourceSecurity = config.resourceSecurity;
 
             NSResult result = (NSResult) NSStartProvider(nsConfig);
+            OICFree(nsConfig.userInfo);
             NS_LOG(DEBUG, "start - OUT");
             return result;
         }
@@ -166,6 +167,12 @@ namespace OIC
 
                 NS_LOG_V(DEBUG, "nsMsg->providerId : %s", nsMsg->providerId);
                 result = (NSResult) NSSendMessage(nsMsg);
+                OICFree(nsMsg->dateTime);
+                OICFree(nsMsg->title);
+                OICFree(nsMsg->contentText);
+                OICFree(nsMsg->sourceName);
+                OICFree(nsMsg->topic);
+                OICFree(nsMsg->extraInfo);
                 delete nsMsg->mediaContents;
                 delete nsMsg;
             }
@@ -197,6 +204,7 @@ namespace OIC
             NS_LOG_V(DEBUG, "Provider ID : %s", nsMessage->getProviderId().c_str());
             NS_LOG(DEBUG, "createMessage - OUT");
 
+            OICFree(message);
             return nsMessage;
         }
 

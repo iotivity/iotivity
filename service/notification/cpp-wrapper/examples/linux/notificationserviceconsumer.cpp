@@ -19,6 +19,7 @@
  ******************************************************************/
 
 #include <iostream>
+#include <limits>
 
 #include <unistd.h>
 #include "NSConsumerService.h"
@@ -203,6 +204,8 @@ int main(void)
                         topicList->addTopic("OCF_TOPIC3", NSTopic::NSTopicState::UNSUBSCRIBED);
 
                         provider->updateTopicList(topicList);
+                        delete topicList;
+                        delete provider;
                     }
                 }
                 break;
@@ -218,9 +221,12 @@ int main(void)
 #endif
             case 6:
                 std::cout << "6. Exit" << std::endl;
+                NSConsumerService::getInstance()->stop();
                 isExit = true;
                 break;
             default:
+                std::cin.clear();
+                std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 break;
         }
     }

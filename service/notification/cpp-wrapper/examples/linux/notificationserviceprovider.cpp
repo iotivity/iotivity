@@ -113,7 +113,7 @@ int main()
         std::cout << "12. Disable NS Provider RemoteService" << std::endl;
 #endif
         std::cout << "13. Stop the Notification Provider" << std::endl;
-        std::cout << "0. Exit()" << std::endl;
+        std::cout << "14. Exit()" << std::endl;
 
         std::cout << "input : ";
 
@@ -284,12 +284,14 @@ int main()
             case 13:
                 NSProviderService::getInstance()->stop();
                 break;
-            case 0:
+            case 14:
                 NSProviderService::getInstance()->stop();
                 isExit = true;
                 break;
             default:
                 std::cout << "Under Construction" << std::endl;
+                std::cin.clear();
+                std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 break;
         }
 
