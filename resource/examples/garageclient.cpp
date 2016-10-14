@@ -288,8 +288,8 @@ void foundResource(std::shared_ptr<OCResource> resource)
 
             std::cout << "Querying for device information... " << std::endl;
 
-            ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI, CT_ADAPTER_IP,
-                    NULL);
+            ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI,
+                                    resource->connectivityType(), NULL);
 
             if (ret == OC_STACK_OK)
             {
@@ -299,7 +299,7 @@ void foundResource(std::shared_ptr<OCResource> resource)
             {
                 std::cout << "Getting device information failed." << std::endl;
             }
-  
+
             if(resourceURI == "/a/garage")
             {
                 curResource = resource;

@@ -102,7 +102,8 @@ class ClientFridge
 
         std::cout << "Querying for device information... " << std::endl;
 
-        ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI, CT_ADAPTER_IP, NULL);
+        ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI, 
+                                resource->connectivityType(), NULL);
 
         if (ret == OC_STACK_OK)
         {
