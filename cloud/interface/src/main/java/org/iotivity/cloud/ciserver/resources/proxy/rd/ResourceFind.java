@@ -98,12 +98,6 @@ public class ResourceFind extends Resource {
                     } else {
                         String additionalQuery = makeAdditionalQuery(
                                 payloadData);
-                        if (additionalQuery == null) {
-                            mSrcDevice.sendResponse(
-                                    MessageBuilder.createResponse(mRequest,
-                                            ResponseStatus.BAD_REQUEST));
-                            return;
-                        }
                         mRequest = MessageBuilder.modifyRequest(mRequest, null,
                                 (mRequest.getUriQuery() != null
                                         ? mRequest.getUriQuery() : "")
@@ -124,7 +118,6 @@ public class ResourceFind extends Resource {
                 HashMap<String, Object> payloadData) {
 
             StringBuilder additionalQuery = new StringBuilder();
-
             List<String> deviceList = getResponseDeviceList(payloadData);
 
             if (deviceList == null) {
