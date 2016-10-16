@@ -571,14 +571,17 @@ NSMessageStateList * NSGetMessageStateList()
 NSMessageStateLL * NSFindMessageState(uint64_t msgId)
 {
     NS_LOG_V(DEBUG, "%s", __func__);
-    if (msgId <= NS_RESERVED_MESSAGEID) return NULL;
+    if (msgId <= NS_RESERVED_MESSAGEID)
+    {
+        return NULL;
+    }
     NSMessageStateLL * iter = NULL;
 
     NSLockMessageListMutex();
     if (NSGetMessageStateList()->head == NULL)
     {
         NSUnlockMessageListMutex();
-        return false;
+        return NULL;
     }
 
     for (iter = NSGetMessageStateList()->head; iter; iter = iter->next)
@@ -597,7 +600,10 @@ NSMessageStateLL * NSFindMessageState(uint64_t msgId)
 bool NSUpdateMessageState(uint64_t msgId, NSSyncType state)
 {
     NS_LOG_V(DEBUG, "%s", __func__);
-    if (msgId <= NS_RESERVED_MESSAGEID) return NULL;
+    if (msgId <= NS_RESERVED_MESSAGEID)
+    {
+        return false;
+    }
     NSMessageStateLL * iter = NULL;
 
     NSLockMessageListMutex();
@@ -618,7 +624,11 @@ bool NSUpdateMessageState(uint64_t msgId, NSSyncType state)
 bool NSDeleteMessageState(uint64_t msgId)
 {
     NS_LOG_V(DEBUG, "%s", __func__);
-    if (msgId <= NS_RESERVED_MESSAGEID) return NULL;
+    if (msgId <= NS_RESERVED_MESSAGEID)
+    {
+        return false;
+    }
+
     NSMessageStateLL * iter = NULL;
     NSMessageStateLL * prev = NULL;
 
