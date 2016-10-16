@@ -25,6 +25,7 @@
 #include "NSConsumerCommon.h"
 #include "cautilinterface.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 #include "NSConsumerDiscovery.h"
 #include "NSConsumerNetworkEventListener.h"
@@ -90,15 +91,20 @@ void NSConnectionStateListener(const CAEndpoint_t * info, bool connected)
         {
             type = TASK_EVENT_CONNECTED_TCP;
             NS_LOG(DEBUG, "try to discover notification provider : TCP.");
-            // TODO convet to OCDevAddr;
-            // addr = .....
         }
         else if (info->adapter == CA_ADAPTER_IP)
         {
-            NS_LOG(DEBUG, "try to discover notification provider.");
-            // TODO convet to OCDevAddr;
-            // addr = .....
+            NS_LOG(DEBUG, "try to discover notification provider : IP.");
         }
+
+        addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
+        NS_VERIFY_NOT_NULL_V(addr);
+
+        addr->adapter = (OCTransportAdapter) info->adapter;
+        OICStrcpy(addr->addr, MAX_ADDR_STR_SIZE, info->addr);
+        addr->flags = info->flags;
+        addr->ifindex = info->ifindex;
+        addr->port = info->port;
 
         NSTask * task = NSMakeTask(type, addr);
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(task, NSOICFree(addr));
