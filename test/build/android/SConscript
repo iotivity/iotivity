@@ -84,7 +84,7 @@ if 'ca' in target_service or 'all' in target_service:
     CURRENT_PATH = Dir('.').srcnode().abspath
 
     if 'gtest' in target_framework or 'all' in target_framework:
-        cagtest_build_script = "bash build/android/ca/gtest/native_build.sh clean=false push=%s android_home=%s android_ndk=%s release=%s stand_alone=false" % (push, sdk_dir, ndk_dir, RELEASE_DIR)
+        cagtest_build_script = "bash build/android/ca/gtest/native_build.sh clean=false push=%s android_home=%s android_ndk=%s release=%s stand_alone=0" % (push, sdk_dir, ndk_dir, RELEASE_DIR)
         cagtest_native_build = env_android.Command('cagtest_native_build', None, cagtest_build_script)
         default_targets += cagtest_native_build
 
@@ -95,7 +95,7 @@ if 'ca' in target_service or 'all' in target_service:
             cajunit_gradle_build = jdk_env.Gradle(target=CURRENT_PATH + '/../../bin/android/ca/outputs/apk/catest-debug.apk', source=CURRENT_PATH + '/../../src/tc/ca/junit/build.gradle')
             default_targets += cajunit_gradle_build
 
-            casimulator_build_script = "bash build/android/ca/junit/native_build.sh type=simulator android_ndk=%s stand_alone=false" % (ndk_dir)
+            casimulator_build_script = "bash build/android/ca/junit/native_build.sh type=simulator android_ndk=%s stand_alone=0" % (ndk_dir)
             casimuator_native_build = env_android.Command('casimulator_native_build', None, casimulator_build_script)
             default_targets += casimuator_native_build
 

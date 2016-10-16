@@ -50,6 +50,9 @@ IOTIVITY_INCLUDE += $(IOTIVITY_PATH)/resource/csdk/stack/include
 IOTIVITY_INCLUDE += $(IOTIVITY_PATH)/resource/csdk/logger/include
 IOTIVITY_INCLUDE += $(IOTIVITY_PATH)/resource/c_common/oic_malloc/include 
 IOTIVITY_INCLUDE += $(IOTIVITY_PATH)/resource/c_common/oic_string/include
+IOTIVITY_INCLUDE += $(IOTIVITY_PATH)/resource/csdk/connectivity/lib/libcoap-4.1.1/include
+IOTIVITY_INCLUDE += $(IOTIVITY_PATH)/resource/csdk/connectivity/common/inc
+IOTIVITY_INCLUDE += $(IOTIVITY_PATH)/extlibs/mbedtls/mbedtls/include/mbedtls
 
 COMMON_TC_INCLUDE := $(BOOST_PATH) $(GTEST_PATH) $(GTEST_PATH)/include 
 COMMON_TC_INCLUDE += $(IOTIVITY_INCLUDE) 
@@ -60,7 +63,6 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := connectivity_abstraction
 LOCAL_SRC_FILES := $(IOTIVITY_PATH)/out/android/armeabi/${RELEASE_DIR}/libconnectivity_abstraction.so
 include $(PREBUILT_SHARED_LIBRARY)
-
 
 include $(CLEAR_VARS)
 LOCAL_PATH := $(APP_PATH)

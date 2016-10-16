@@ -41,16 +41,22 @@ is_prevent_enabled = env_tizen.get('PREVENT')
 target_transport = ARGUMENTS.get('TARGET_TRANSPORT')
 target_secured = env_tizen.get('SECURED')
 
-print "Value of Prevent : " + is_prevent_enabled
-print 'target_secured: ' + target_secured
-print 'target_service: ' + target_service
-print 'target_test: ' + target_test
+print 'Value of Prevent: ' + is_prevent_enabled
+print 'target_secured:   ' + target_secured
+print 'target_service:   ' + target_service
+print 'target_test:      ' + target_test
+
+warning_msg = """
+########################################################################################
+#   ERROR... GBS RPM Path is not defined of not a valid directory.                     #
+#   To Set the Path: RPMS_DIR=<your RPMS path>                                         #
+########################################################################################
+"""
 
 if 'PATH_NOT_DEFINED' in rpm_path or not os.path.isdir(rpm_path):
     print warning_msg
     exit(1)
-    
-    
+
 ######################################################################
 
 # Initializing Build
@@ -69,8 +75,8 @@ else:
 if 'tm' in target_service or 'all' in target_service:
     gbs_script_tm = "sh build/tizen/tm/gbsbuild_tm.sh %s %s %s %s %s" % (target_arch, rpm_path, variant_dir, target_source, is_prevent_enabled)
     default_targets += [gbs_script_tm]
-        
-        
+
+
 if 'ca' in target_service or 'all' in target_service:
     gbs_script_ca = "sh build/tizen/ca/gbsbuild_ca.sh %s %s %s %s %s %s %s" % (target_arch, target_transport, target_secured, rpm_path, variant_dir, target_source, is_prevent_enabled)
     default_targets += [gbs_script_ca]
@@ -98,7 +104,7 @@ if 'ri' in target_service or 'ricsdk' in target_service or 'ricpp' in target_ser
 
     gbs_script_ri = "bash build/tizen/ri/gbsbuild.sh stand_alone=false rpms_dir=%s push=%s security_mode=%s target_service=%s target_test=%s" % (rpms_dir, push, security_mode, target_service, target_test)
     default_targets += [gbs_script_ri]
-    
+
 if 'iut' in target_service or 'all' in target_service:
 
     rpms_dir = env_tizen.get('RPMS_DIR') 
@@ -114,9 +120,9 @@ if 'iut' in target_service or 'all' in target_service:
         target_source_command = ''
 
     gbs_script_iut = "bash build/tizen/iut/gbsbuild.sh stand_alone=false %s rpms_dir=%s push=%s security_mode=%s" % (target_source_command, rpms_dir, push, security_mode)
-    default_targets += [gbs_script_iut]    
-    
-    
+    default_targets += [gbs_script_iut]
+
+
 gbs_build = env_tizen.Command('gbs_build', None, default_targets)
 
 env_tizen.Default(gbs_build)

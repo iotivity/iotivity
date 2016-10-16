@@ -59,6 +59,7 @@ TRANSPORT_CPPDEFINES = [
                         ]
 
 IOTIVITY_INCLUDE_PATH = [
+                            IOTIVITY_ROOT + '/extlibs/mbedtls/mbedtls/include/mbedtls',
                             IOTIVITY_ROOT + '/resource/c_common',
                             IOTIVITY_ROOT + '/resource/csdk/stack/include',
                             IOTIVITY_ROOT + '/resource/csdk/connectivity/api',
@@ -66,7 +67,8 @@ IOTIVITY_INCLUDE_PATH = [
                             IOTIVITY_ROOT + '/resource/csdk/connectivity/external/inc',
                             IOTIVITY_ROOT + '/resource/csdk/connectivity/common/inc',
                             IOTIVITY_ROOT + '/resource/c_common/oic_malloc/include',
-                            IOTIVITY_ROOT + '/resource/c_common/oic_string/include'
+                            IOTIVITY_ROOT + '/resource/c_common/oic_string/include',
+                            IOTIVITY_ROOT + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include'
                         ]
 
 TC_INCLUDE_PATH = [

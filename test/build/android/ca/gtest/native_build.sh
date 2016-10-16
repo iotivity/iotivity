@@ -2,16 +2,16 @@
 
 # Run Command
 
-# ./native_build.sh push=true clean=true android_ndk=ndk-absolute_path android_home=sdk_absolute_path
+# ./native_build.sh push=1 clean=1 android_ndk=ndk-absolute_path android_home=sdk_absolute_path
 
-push='true'
-clean='true'
-release='release'
+push='1'
+clean='1'
+release='debug'
 total_device=1
 red=`tput setaf 1`
 green=`tput setaf 2`
 reset=`tput sgr0`
-stand_alone='true'
+stand_alone='1'
 android_home=${ANDROID_HOME}
 android_ndk=${ANDROID_NDK}
 
@@ -92,7 +92,7 @@ if [[ "${push}" = "1" ]]; then
     echo 'total_device: '${total_device}    
 fi
 
-if [[ "${stand_alone}" = "false" ]]; then
+if [[ "${stand_alone}" = "0" ]]; then
     cd build/android/ca/gtest
 fi
 
@@ -110,7 +110,7 @@ cd $current_path
 
 echo $current_iotivity_path
 
-if [[ "${clean}" = "true" || "${clean}" = "1" ]]; then
+if [[ "${clean}" = "1" ]]; then
     rm -rf obj
 fi
 
@@ -170,6 +170,6 @@ if [[ "${push}" = "1" ]]; then
     done    
 fi
 
-if [[ "${stand_alone}" = "false" ]]; then
+if [[ "${stand_alone}" = "0" ]]; then
     cd ../../../../
 fi

@@ -5,7 +5,7 @@ CURRENT_PATH = $(SECTEST_PATH)/build/android/ca/junit
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := connectivity_abstraction
-LOCAL_SRC_FILES := $(IOTIVITY_PATH)/out/android/armeabi/release/libconnectivity_abstraction.so
+LOCAL_SRC_FILES := $(IOTIVITY_PATH)/out/android/armeabi/$(RELEASE_DIR)/libconnectivity_abstraction.so
 include $(PREBUILT_SHARED_LIBRARY)
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -23,6 +23,7 @@ LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/c_common/oic_string/include
 LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/c_common/ocrandom/include
 LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/csdk/logger/include 
 LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/csdk/connectivity/lib/libcoap-4.1.1
+LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/csdk/connectivity/lib/libcoap-4.1.1/include
 LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/csdk/connectivity/src/bt_le_adapter/android/
 LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/csdk/connectivity/util/inc/
 LOCAL_C_INCLUDES += $(IOTIVITY_PATH)/resource/csdk/connectivity/util/src/camanager/android/

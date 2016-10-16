@@ -27,8 +27,10 @@ std::string CAHelper::s_simulatorIp;
 int CAHelper::s_simulatorPort;
 int CAHelper::s_simulatorSecurePort;
 bool CAHelper::s_bufferEmpty;
+#ifdef __WITH_DTLS__
 int CAHelper::s_identityLegth;
 int CAHelper::s_pskLength;
+#endif
 TestCaseInfo CAHelper::s_tcInfo;
 #ifdef TCP_ADAPTER
 int CAHelper::keepAliveCount;

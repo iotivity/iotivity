@@ -26,8 +26,10 @@ mkdir $tmp_dir/packaging
 mkdir $tmp_dir/$test_dir
 mkdir -p $tmp_dir/iotivity/resource/csdk/connectivity
 mkdir $tmp_dir/iotivity
+mkdir -p $tmp_dir/iotivity/extlibs/mbedtls
 mkdir -p $tmp_dir/iotivity/resource
 
+cp -R $homeDir/extlibs/mbedtls/* $tmp_dir/iotivity/extlibs/mbedtls
 cp -R $homeDir/resource/* $tmp_dir/iotivity/resource/
 cp -R $homeDir/$test_dir/* $tmp_dir/$test_dir
 cp $build_script_dir/com.oic.ca.sim.spec $tmp_dir/packaging

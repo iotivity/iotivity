@@ -40,8 +40,10 @@
 #include "cacommon.h"
 #include "cainterface.h"
 #include "cautilinterface.h"
+#ifdef __WITH_DTLS__
 #include "ca_adapter_net_ssl.h"
 #include "ssl_ciphersuites.h"
+#endif
 
 #include "CommonUtil.h"
 #include "IotivityTest_Logger.h"

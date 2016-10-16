@@ -14,12 +14,11 @@ done
 arg_parts=(${args//=/ })
 len=${#arg_parts[@]}
 
-clean='true'
-source=''
+clean='1'
 type='tc'
-release='bebug'
+release='debug'
 android_ndk=${ANDROID_NDK}
-stand_alone='true'
+stand_alone='1'
 
 i=0
 while [ $i -lt $len ]; do    
@@ -31,9 +30,7 @@ done
 i=0
 while [ $i -lt $len ]; do
     if [[ "${arg_parts[i]}" = "clean" ]]; then
-        clean=${arg_parts[i+1]}
-    elif [[ "${arg_parts[i]}" = "source" ]]; then
-        source=${arg_parts[i+1]}    
+        clean=${arg_parts[i+1]}    
     elif [[ "${arg_parts[i]}" = "type" ]]; then
         type=${arg_parts[i+1]}
     elif [[ "${arg_parts[i]}" = "release" ]]; then
@@ -46,7 +43,7 @@ while [ $i -lt $len ]; do
     let i=i+2
 done
 
-if [[ "${stand_alone}" = "false" ]]; then
+if [[ "${stand_alone}" = "0" ]]; then
     cd build/android/ca/junit
 fi
 
@@ -101,12 +98,12 @@ if [[ "${type}" = "tc" ]]; then
 fi
 
 if [[ "${type}" = "simulator" ]]; then
-    echo 'copy simulator file'    
+    echo 'copy simulator file'
     cp $simulator_path/org_iotivity_CAJni.h $dst_path/org_iotivity_CAJni.h
     cp $simulator_path/CAJni.c $dst_path/CAJni.c
 fi
 
-if [[ "${clean}" = "true" ]]; then
+if [[ "${clean}" = "1" ]]; then
     rm -rf libs
     rm -rf obj
 fi
@@ -114,7 +111,7 @@ fi
 echo '-----------------------Environment Variable-----------------------'
 echo $SECTEST_PATH
 echo $IOTIVITY_PATH
-
+echo $RELEASE_DIR
 echo '-----------------------End-----------------------'
 
 ${android_ndk}/ndk-build $binary_name
@@ -122,6 +119,6 @@ ${android_ndk}/ndk-build $binary_name
 mkdir -p $SECTEST_PATH/extlibs/android/ca/armeabi
 cp -r ./libs/armeabi/* $SECTEST_PATH/extlibs/android/ca/armeabi
 
-if [[ "${stand_alone}" = "false" ]]; then
+if [[ "${stand_alone}" = "0" ]]; then
     cd ../../../..
 fi
