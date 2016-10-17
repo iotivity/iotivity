@@ -83,6 +83,11 @@ public class DiscoveryResource extends Resource {
         ArrayList<Object> response = mRdManager.discoverResource(diList, rtList,
                 ifList);
 
+        if (response.size() == 0) {
+            return MessageBuilder.createResponse(request,
+                    ResponseStatus.NOT_FOUND);
+        }
+
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
                 ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(response));
