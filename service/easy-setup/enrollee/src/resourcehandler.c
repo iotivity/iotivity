@@ -502,6 +502,12 @@ OCRepPayload* constructResponseOfWiFi()
         return NULL;
     }
 
+    if(gWiFiResource.handle == NULL)
+    {
+        OIC_LOG(ERROR, ES_RH_TAG, "WiFi resource is not created");
+        return NULL;
+    }
+
     OIC_LOG(INFO, ES_RH_TAG, "constructResponse wifi res");
     OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_WIFI);
     OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
@@ -538,6 +544,12 @@ OCRepPayload* constructResponseOfCloud()
         return NULL;
     }
 
+    if(gCloudResource.handle == NULL)
+    {
+        OIC_LOG(ERROR, ES_RH_TAG, "CloudServer resource is not created");
+        return NULL;
+    }
+
     OIC_LOG(INFO, ES_RH_TAG, "constructResponse cloudserver res");
     OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_CLOUDSERVER);
     OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
@@ -561,6 +573,12 @@ OCRepPayload* constructResponseOfDevConf()
     if (!payload)
     {
         OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+        return NULL;
+    }
+
+    if(gDevConfResource.handle == NULL)
+    {
+        OIC_LOG(ERROR, ES_RH_TAG, "DevConf resource is not created");
         return NULL;
     }
 
