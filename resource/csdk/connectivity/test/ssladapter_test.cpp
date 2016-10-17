@@ -1439,7 +1439,7 @@ TEST(TLSAdaper, Test_3_0)
         exit(EXIT_FAILURE);
     }
 
-    sleep(1);
+    sleep(5);
 
     ret = pthread_create( &thread2, NULL, test0CAinitiateSslHandshake, &arg);
     if(ret)
@@ -1448,7 +1448,7 @@ TEST(TLSAdaper, Test_3_0)
         exit(EXIT_FAILURE);
     }
 
-    sleep(1);
+    sleep(5);
 
     EXPECT_EQ(0, arg);
 }
@@ -1588,7 +1588,7 @@ TEST(TLSAdaper, Test_4)
         exit(EXIT_FAILURE);
     }
 
-    sleep(1);
+    sleep(5);
 
     ret = pthread_create( &thread2, NULL, testCAencryptSsl, &arg);
     if(ret)
@@ -1597,7 +1597,7 @@ TEST(TLSAdaper, Test_4)
         exit(EXIT_FAILURE);
     }
 
-    sleep(1);
+    sleep(5);
 
     EXPECT_EQ(0, arg);
 }
@@ -1735,7 +1735,7 @@ TEST(TLSAdaper, Test_5)
         exit(EXIT_FAILURE);
     }
 
-    sleep(1);
+    sleep(5);
 
     ret = pthread_create( &thread2, NULL, testCAdecryptSsl, &arg);
     if(ret)
@@ -1744,7 +1744,7 @@ TEST(TLSAdaper, Test_5)
         exit(EXIT_FAILURE);
     }
 
-    sleep(1);
+    sleep(5);
 
     EXPECT_EQ(0, arg);
 }
@@ -1920,7 +1920,7 @@ TEST(TLSAdaper, Test_7)
         exit(EXIT_FAILURE);
     }
 
-    sleep(1);
+    sleep(5);
 
     ret = pthread_create( &thread2, NULL, client, (void*) NULL);
     if (ret)
@@ -1929,7 +1929,7 @@ TEST(TLSAdaper, Test_7)
         exit(EXIT_FAILURE);
     }
 
-    sleep(1);
+    sleep(5);
 
     EXPECT_EQ(NULL, arg);
 }
@@ -2224,7 +2224,7 @@ TEST(TLSAdaper, Test_11)
         exit(EXIT_FAILURE);
     }
 
-    sleep(1);
+    sleep(5);
 
     ret = pthread_create( &thread2, NULL, testCAsslGenerateOwnerPsk, &arg);
     if(ret)
@@ -2233,7 +2233,7 @@ TEST(TLSAdaper, Test_11)
         exit(EXIT_FAILURE);
     }
 
-    sleep(1);
+    sleep(5);
 
     EXPECT_EQ(0, arg);
 }
