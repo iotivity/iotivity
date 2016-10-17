@@ -194,7 +194,7 @@ OCEntityHandlerResult CHPEntityHandler(OCEntityHandlerFlag flag,
                                        void* callbackParam)
 {
     OIC_LOG(INFO, TAG, "Proxy request received");
-    UNUSED(callbackParam);
+    OC_UNUSED(callbackParam);
 
     if (!g_isCHProxyInitialized)
     {
