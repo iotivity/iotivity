@@ -1079,7 +1079,7 @@ static OCStackApplicationResult MOTDeviceDiscoveryHandler(void *ctx, OCDoHandle 
 
                 //If this is owend device discovery we have to filter out the responses.
                 DiscoveryInfo* pDInfo = (DiscoveryInfo*)ctx;
-                OCProvisionDev_t **ppDevicesList = pDInfo->ppDevicesList;
+                OCProvisionDev_t **ppDevicesList = &pDInfo->pCandidateList;
 
                 // Get my device ID from doxm resource
                 OicUuid_t myId;
@@ -1219,6 +1219,7 @@ OCStackResult PMMultipleOwnerDeviceDiscovery(unsigned short waittime, bool isMul
     }
 
     pDInfo->ppDevicesList = ppDevicesList;
+    pDInfo->pCandidateList = NULL;
     pDInfo->isOwnedDiscovery = isMultipleOwned;
 
     OCCallbackData cbData;
