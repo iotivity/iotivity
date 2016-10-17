@@ -211,9 +211,14 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
         String devId = new String(deviceIdBytes);
         Log.d(TAG, "Get Device Id "+devId);
         //Set deviceId
-        String setId = "adminDeviceUuid1";
-        OcPlatform.setDeviceId(setId.getBytes());
-        Log.d(TAG, "Set Device Id done");
+        try {
+            String setId = "adminDeviceUuid1";
+            OcPlatform.setDeviceId(setId.getBytes());
+            Log.d(TAG, "Set Device Id done");
+        }
+        catch (OcException e) {
+            Log.d(TAG, e.getMessage());
+        }
 
         try {
             /*
