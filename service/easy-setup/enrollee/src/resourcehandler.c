@@ -1223,7 +1223,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
             ehRet = OC_EH_ERROR;
         }
     }
-    if (flag & OC_OBSERVE_FLAG)
+    if (entityHandlerRequest && (flag & OC_OBSERVE_FLAG))
     {
         OIC_LOG(INFO, ES_RH_TAG, "Flag includes OC_OBSERVE_FLAG");
 
