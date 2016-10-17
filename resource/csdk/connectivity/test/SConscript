@@ -80,7 +80,7 @@ if (('IP' in target_transport) or ('ALL' in target_transport)):
 	if target_os != 'arduino':
 		tests_src = tests_src + ['cablocktransfertest.cpp']
 
-if catest_env.get('SECURED') == '1':
+if catest_env.get('SECURED') == '1' and catest_env.get('WITH_TCP') == True:
 	tests_src = tests_src + ['ssladapter_test.cpp']
 
 catests = catest_env.Program('catests', tests_src)
