@@ -1446,5 +1446,5 @@ public final class OcPlatform {
     /**
      * Method to set DeviceId.
      */
-    public static native void setDeviceId(byte[] deviceId);
+    public static native void setDeviceId(byte[] deviceId) throws OcException;
 }
