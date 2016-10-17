@@ -105,7 +105,6 @@ sampleserver_randompin = provisioning_env.Program('sampleserver_randompin', 'sam
 
 if provisioning_env.get('MULTIPLE_OWNER') == '1':
 	subownerclient = provisioning_env.Program('subownerclient', 'subownerclient.c')
-	sampleclient_ownedbysubowner = provisioning_env.Program('sampleclient_ownedbysubowner', 'sampleclient_owned_by_subowner.cpp')
 
 if provisioning_env.get('WITH_TCP') == True:
     cloud_src = [
@@ -133,8 +132,6 @@ randompin_with_emptyuuid_dat = provisioning_env.Install(sec_provisioning_build_d
 if provisioning_env.get('MULTIPLE_OWNER') == '1':
 	subownerclientdat = provisioning_env.Install(sec_provisioning_build_dir,
 	                                        sec_provisioning_src_dir + 'oic_svr_db_subowner_client.dat')
-	clientownedbysubownerdat = provisioning_env.Install(sec_provisioning_build_dir,
-	                                        sec_provisioning_src_dir + 'oic_svr_db_client_owned_by_subowner.dat')
 
 if provisioning_env.get('WITH_TCP') == True:
     clouddat = provisioning_env.Install(sec_provisioning_build_dir,
@@ -146,9 +143,9 @@ if provisioning_env.get('WITH_TCP') == True:
 
 if provisioning_env.get('MULTIPLE_OWNER') == '1':
 	Alias("samples", [
-					provisioningclient, subownerclient, sampleclient_ownedbysubowner,
+					provisioningclient, subownerclient,
 					sampleserver_justworks, sampleserver_randompin,
-					clientdat, subownerclientdat, clientownedbysubownerdat,
+					clientdat, subownerclientdat,
 					justworksdat, randompindat, randompin_with_emptyuuid_dat
 				])
 else:
