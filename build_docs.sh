@@ -11,28 +11,38 @@ rm -rf docs
 # JavaDoc now... from Uze's script
 ANDROID_JAR="$ANDROID_HOME/platforms/android-21/android.jar"
 
-if [ ! -e "$ANDROID_JAR" ]; then
-    echo "Android platform not found. Expected '$ANDROID_JAR'"
-    exit 1
-fi
-
+#if [ ! -e "$ANDROID_JAR" ]; then
+#    echo "Android platform not found. Expected '$ANDROID_JAR'"
+#    exit 1
+#fi
 BASE_PATH="android/android_api/base/src/main/java/"
 BASE_PKG="org.iotivity.base"
+
+ES_PATH="service/easy-setup/mediator/richsdk/android/EasySetupCore/src/main/java/"
+ES_PKG="org.iotivity.service.easysetup.mediator"
+
+NS_PATH="service/notification/android/notification-service/src/main/java/"
+NS_PKG_1="org.iotivity.service.ns.common"
+NS_PKG_2="org.iotivity.service.ns.provider"
+NS_PKG_3="org.iotivity.service.ns.consumer"
+
+RC_PATH="service/resource-container/android/resource-container/src/main/java/"
+RC_PKG="org.iotivity.service.resourcecontainer"
+
+RE_PATH="service/resource-encapsulation/android/service/src/main/java/"
+RE_PKG_1="org.iotivity.service"
+RE_PKG_2="org.iotivity.service.server"
+RE_PKG_3="org.iotivity.service.client"
 
 TM_PATH="service/things-manager/sdk/java/src/"
 TM_PKG="org.iotivity.service.tm"
 
-SSM_PATH="service/soft-sensor-manager/SDK/java/"
-SSM_PKG="org.iotivity.service.ssm"
-
-PPM_PATH="service/protocol-plugin/plugin-manager/src/Android/src"
-PPM_PKG="service/protocol-plugin/plugin-manager/src/Android/src/org/iotivity/service/ppm/PluginManager.java service/protocol-plugin/plugin-manager/src/Android/src/org/iotivity/service/ppm/Plugin.java"
-# PPM_PKG="org.iotivity.service.ppm"
 
 javadoc -splitindex \
         -d ./docs/java \
-        -sourcepath $BASE_PATH:$TM_PATH:$SSM_PATH $BASE_PKG $TM_PKG $SSM_PKG $PPM_PKG \
-        -classpath $ANDROID_JAR
+        -sourcepath $BASE_PATH:$RE_PATH:$RC_PATH:$ES_PATH:$NS_PATH \
+        $BASE_PKG $NS_PKG_1 $NS_PKG_2 $NS_PKG_3 $RE_PKG_1 $RE_PKG_2 $RE_PKG_3 $RC_PKG $ES_PKG 
+#        -classpath $ANDROID_JAR
 
 # Doxygen now...
 # NOTE: For now this is a workaround since I am ready to modify the doxygen setup
