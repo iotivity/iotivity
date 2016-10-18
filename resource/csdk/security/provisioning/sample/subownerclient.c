@@ -36,6 +36,7 @@
 #include "securevirtualresourcetypes.h"
 #include "srmutility.h"
 #include "pmtypes.h"
+#include "pmutility.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -173,13 +174,17 @@ static void LedCB(void *ctx, OCDoHandle UNUSED,
 {
     if(clientResponse)
     {
-        if(clientResponse->result == OC_STACK_OK)
+        if(OC_STACK_OK == clientResponse->result)
         {
-            printf("Get OC_STACK_OK from server\n");
+            printf("Received OC_STACK_OK from server\n");
             if(clientResponse->payload)
             {
                 printf("Response ===================> %s\n", clientResponse->payload);
             }
+        }
+        else if(OC_STACK_RESOURCE_CHANGED == clientResponse->result)
+        {
+            printf("Received OC_STACK_RESOURCE_CHANGED from server\n");
         }
         else
         {
@@ -386,19 +391,28 @@ static int sendGetLed()
         return -1;
     }
 
-    g_doneCB = false;
-    snprintf(query, MAX_URI_LENGTH, "coaps://%s:%d/a/led", selDev->endpoint.addr, selDev->securePort);
-    printf("query=%s\n", query);
-    if(OC_STACK_OK != OCDoResource(NULL, OC_REST_GET, query, NULL, NULL, selDev->connType, OC_HIGH_QOS, &cbData, NULL, 0))
+    if(PMGenerateQuery(true, selDev->endpoint.addr, selDev->securePort, selDev->connType,
+                       query, sizeof(query), "/a/led"))
     {
-        printf("********************************\n");
-        printf("Failed to send GET request to %s\n", query);
-        printf("********************************\n");
-        g_doneCB = true;
+        g_doneCB = false;
+        printf("query=%s\n", query);
+        if(OC_STACK_OK != OCDoResource(NULL, OC_REST_GET, query, NULL, NULL, selDev->connType,
+                                       OC_HIGH_QOS, &cbData, NULL, 0))
+        {
+            printf("********************************\n");
+            printf("Failed to send GET request to %s\n", query);
+            printf("********************************\n");
+            g_doneCB = true;
+            return -1;
+        }
+
+        waitCallbackRet();
+    }
+    else
+    {
+        printf("Failed to generate GET request for /a/led\n");
         return -1;
     }
-
-    waitCallbackRet();
 
     return 0;
 }
@@ -437,18 +451,28 @@ static int sendPutLed()
         return -1;
     }
 
-    g_doneCB = false;
-    snprintf(query, MAX_URI_LENGTH, "coaps://%s:%d/a/led", selDev->endpoint.addr, selDev->securePort);
-    if(OC_STACK_OK != OCDoResource(NULL, OC_REST_PUT, query, NULL, NULL, selDev->connType, OC_LOW_QOS, &cbData, NULL, 0))
+    if(PMGenerateQuery(true, selDev->endpoint.addr, selDev->securePort, selDev->connType,
+                       query, sizeof(query), "/a/led"))
     {
-        printf("********************************\n");
-        printf("Failed to send PUT request to %s\n", query);
-        printf("********************************\n");
-        g_doneCB = true;
+        g_doneCB = false;
+        printf("query=%s\n", query);
+        if(OC_STACK_OK != OCDoResource(NULL, OC_REST_PUT, query, NULL, NULL, selDev->connType,
+                                       OC_LOW_QOS, &cbData, NULL, 0))
+        {
+            printf("********************************\n");
+            printf("Failed to send PUT request to %s\n", query);
+            printf("********************************\n");
+            g_doneCB = true;
+            return -1;
+        }
+
+        waitCallbackRet();
+    }
+    else
+    {
+        printf("Failed to generate PUT request for /a/led\n");
         return -1;
     }
-
-    waitCallbackRet();
 
     return 0;
 }
