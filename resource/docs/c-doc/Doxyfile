@@ -686,11 +686,12 @@ INPUT                  = . \
              ../../csdk/security/provisioning/include/internal \
              ../../csdk/security/provisioning/include/oxm \
              ../../csdk/security/provisioning/include/cloud \
-             ../../csdk/security/provisioning/sample/cloudAuth.h \
-             ../../csdk/security/provisioning/sample/cloudWrapper.h \
+             ../../csdk/resource-directory/include \
+             ../../csdk/routing/include \
              ../../../service/easy-setup/inc \
              ../../../service/easy-setup/enrollee/inc \
-             ../../../service/resource-directory/include \
+             ../../../service/notification/include \
+             ../../../service/coap-http-proxy/include \
 
 
 # This tag can be used to specify the character encoding of the source files

@@ -39,9 +39,15 @@ EASYSETUP_PKG=org.iotivity.service.easysetup.mediator
 RESOURCECONTAINER_PATH="../../service/resource-container/android/resource-container/src/main/java/"
 RESOURCECONTAINER_PKG=org.iotivity.service.resourcecontainer
 
+NS_PATH="../../service/notification/android/notification-service/src/main/java/"
+NS_PKG_1=org.iotivity.service.ns.common
+NS_PKG_2=org.iotivity.service.ns.provider
+NS_PKG_3=org.iotivity.service.ns.consumer
+
+
 javadoc -public -splitindex -d ./Java_API -sourcepath \
-    $BASE_PATH:$RE_PATH:$RH_PATH:$EASYSETUP_PATH:$RESOURCECONTAINER_PATH \
-    $BASE_PKG $RE_COMMON_PKG  $RE_CLINET_PKG $RE_SERVER_PKG $TM_SRCS $TM_PKG $RH_PKG $EASYSETUP_PKG \
-    $RESOURCECONTAINER_PKG 
+    $BASE_PATH:$RE_PATH:$RH_PATH:$EASYSETUP_PATH:$RESOURCECONTAINER_PATH:$NS_PATH \
+    $BASE_PKG $RE_COMMON_PKG  $RE_CLINET_PKG $RE_SERVER_PKG $EASYSETUP_PKG \
+    $RESOURCECONTAINER_PKG $NS_PKG_1 $NS_PKG_2 $NS_PKG_3
 
 
