@@ -1371,31 +1371,41 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
     OCStackResult ret = OC_STACK_ERROR;
     OicSecCred_t * temp = NULL;
     bool validFlag = true;
+    OicUuid_t emptyOwner = { .id = {0} };
     VERIFY_SUCCESS(TAG, NULL != newCred, ERROR);
 
     //Assigning credId to the newCred
     newCred->credId = GetCredId();
     VERIFY_SUCCESS(TAG, newCred->credId != 0, ERROR);
 
-    LL_FOREACH(gCred, temp)
-    {
-        CredCompareResult_t cmpRes = CompareCredential(temp, newCred);
-        if(CRED_CMP_EQUAL == cmpRes)
-        {
-            OIC_LOG_V(WARNING, TAG, "Detected same credential ID(%d)" \
-                      "new credential's ID will be replaced.", temp->credId);
-            newCred->credId = temp->credId;
-            ret = OC_STACK_OK;
-            validFlag = false;
-            break;
-        }
+    //the newCred is not valid if it is empty
 
-        if (CRED_CMP_ERROR == cmpRes)
+    if (memcmp(&(newCred->subject.id), &emptyOwner, UUID_IDENTITY_SIZE) == 0)
+    {
+        validFlag = false;
+    }
+    else
+    {
+        LL_FOREACH(gCred, temp)
         {
-            OIC_LOG_V(WARNING, TAG, "Credential skipped : %d", cmpRes);
-            ret = OC_STACK_ERROR;
-            validFlag = false;
-            break;
+            CredCompareResult_t cmpRes = CompareCredential(temp, newCred);
+            if(CRED_CMP_EQUAL == cmpRes)
+            {
+                OIC_LOG_V(WARNING, TAG, "Detected same credential ID(%d)" \
+                          "new credential's ID will be replaced.", temp->credId);
+                newCred->credId = temp->credId;
+                ret = OC_STACK_OK;
+                validFlag = false;
+                break;
+            }
+
+            if (CRED_CMP_ERROR == cmpRes)
+            {
+                OIC_LOG_V(WARNING, TAG, "Credential skipped : %d", cmpRes);
+                ret = OC_STACK_ERROR;
+                validFlag = false;
+                break;
+            }
         }
     }
 
