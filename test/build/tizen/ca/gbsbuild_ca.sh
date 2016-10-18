@@ -6,14 +6,11 @@ echo "Please wait. It will take a few seconds..."
 echo " "
 
 cd build/
-homeDir='../..'
-
+home_dir='../..'
 tmp_dirName='tmpCA'
-tmp_dir=$homeDir'/'$tmp_dirName
-ext_lib_dir='extlibs'
-test_dir='test'
-rpm_name="com-oic-ca-sim-0.0.1-1.armv7l.rpm"
-target_dir=$test_dir'/bin/tizen'
+tmp_dir=$home_dir'/'$tmp_dirName
+rpm_name="com-oic-ca-sim-1.2.0-4.armv7l.rpm"
+target_dir=test'/bin/tizen'
 build_script_dir='tizen/ca'
 
 target_arch=$1
@@ -21,17 +18,35 @@ target_tranport=$2
 secured=$3
 rpm_path=$4
 
+rm -rf $tmp_dir
 mkdir $tmp_dir
 mkdir $tmp_dir/packaging
-mkdir $tmp_dir/$test_dir
-mkdir -p $tmp_dir/iotivity/resource/csdk/connectivity
-mkdir $tmp_dir/iotivity
-mkdir -p $tmp_dir/iotivity/extlibs/mbedtls
-mkdir -p $tmp_dir/iotivity/resource
 
-cp -R $homeDir/extlibs/mbedtls/* $tmp_dir/iotivity/extlibs/mbedtls
-cp -R $homeDir/resource/* $tmp_dir/iotivity/resource/
-cp -R $homeDir/$test_dir/* $tmp_dir/$test_dir
+mkdir -p $tmp_dir/extlibs/mbedtls/mbedtls/include
+cp -rf $home_dir/extlibs/mbedtls/mbedtls/include/mbedtls/ $tmp_dir/extlibs/mbedtls/mbedtls/include
+
+cp -rf $home_dir/resource/ $tmp_dir/
+
+mkdir -p $tmp_dir/test/extlibs
+cp -rf $home_dir/test/extlibs/gtest-1.7.0 $tmp_dir/test/extlibs/
+
+mkdir -p $tmp_dir/test/res
+cp -rf $home_dir/test/res/ca_resource $tmp_dir/test/res/
+
+cp -rf $home_dir/test/include $tmp_dir/test
+
+mkdir -p $tmp_dir/test/src/common/commonutil/
+cp -rf $home_dir/test/src/common/commonutil/c_cpp $tmp_dir/test/src/common/commonutil/
+
+mkdir -p $tmp_dir/test/src/common/testcase/
+cp -rf $home_dir/test/src/common/testcase/gtest $tmp_dir/test/src/common/testcase
+
+mkdir -p $tmp_dir/test/src/tc/ca
+cp -rf $home_dir/test/src/tc/ca/gtest $tmp_dir/test/src/tc/ca/
+
+mkdir -p $tmp_dir/test/src/testapp/ca/
+cp -rf $home_dir/test/src/testapp/ca/c_cpp $tmp_dir/test/src/testapp/ca/
+
 cp $build_script_dir/com.oic.ca.sim.spec $tmp_dir/packaging
 cp $build_script_dir/com.oic.ca.sim.manifest $tmp_dir
 cp $build_script_dir/com.oic.ca.sim.xml $tmp_dir
@@ -83,4 +98,4 @@ echo ""
 echo "Deleting Tmp Directory"
 
 cd ..
-rm -rf $tmp_dirName/
+rm -rf $tmp_dirName

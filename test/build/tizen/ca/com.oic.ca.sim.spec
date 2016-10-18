@@ -3,8 +3,8 @@
 %{!?VERBOSE: %define VERBOSE 1}
 
 Name: com-oic-ca-sim
-Version: 0.0.1
-Release: 1
+Version: 1.2.0
+Release: 4
 Summary: Connectivity Abstruction Test
 URL: http://slp-source.sec.samsung.net
 Source: %{name}-%{version}.tar.gz

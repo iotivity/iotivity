@@ -128,6 +128,7 @@ if SECURED:
     lib_list.append('mbedtls')
     lib_list.append('mbedx509')
     lib_list.append('mbedcrypto')
+    COMMON_CPPDEFINES.append('__WITH_DTLS__')
 
 if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:
     i = -1
@@ -143,9 +144,6 @@ if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:
         temp_source_list = []
 
         cpp_defines = COMMON_CPPDEFINES + TRANSPORT_CPPDEFINES[i]
-
-        if SECURED:
-            cpp_defines.append('__WITH_DTLS__')
 
         for single_cpp in TC_COMMON_SRC + GTEST_SRC[i]:
             temp_single_cpp = str(single_cpp)
@@ -185,9 +183,6 @@ if TARGET_TEST == None or 'app' in TARGET_TEST or 'all' in TARGET_TEST:
     if 'ALL' in TARGET_TRANSPORT or 'TCP' in TARGET_TRANSPORT:
         simulator_cpp_defines.append('WITH_TCP')
         simulator_cpp_defines.append('TCP_ADAPTER')
-
-    if SECURED:
-        simulator_cpp_defines.append('__WITH_DTLS__')
 
     ca_simulator = env_linux.Program(source = [PROJECT_HOME + '/src/testapp/ca/c_cpp/src/ca_simulator.c'],
                         target = 'iotivity_ca_simulator',

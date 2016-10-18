@@ -97,7 +97,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := iotivity_ca_test
 LOCAL_STATIC_LIBRARIES := helper_interface
 LOCAL_SHARED_LIBRARIES := connectivity_abstraction
-LOCAL_CFLAGS := -std=gnu++11 -fPIE -fpermissive -D__CA__ -D__ANDROID__ -D__ANDROID_NATIVE__ -D__ALL_TRANSPORT__
+LOCAL_CFLAGS := -std=gnu++11 -fPIE -fpermissive -D__CA__ -D__ANDROID__ -D__ANDROID_NATIVE__ -D__ALL_TRANSPORT__ -D__WITH_DTLS__
 LOCAL_CPPFLAGS := -pthread -frtti -fexceptions
 LOCAL_C_INCLUDES := $(COMMON_TC_INCLUDE)
 LOCAL_C_INCLUDES += $(COMMON_UTIL_HEADER_PATH) $(EXTERNAL_PATH) $(HELPER_HEADER_PATH) 

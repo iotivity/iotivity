@@ -27,13 +27,6 @@ SECURED = ARGUMENTS.get('SECURED')
 TARGET_TEST = ARGUMENTS.get('TARGET_TEST')
 TARGET_TRANSPORT = ARGUMENTS.get('TARGET_TRANSPORT')
 
-print 'SECURED: ' + str(SECURED)
-
-if env.get('SECURED') == '1':
-    SECURED = True
-else:
-    SECURED = False
-
 if TARGET_TRANSPORT:
     print 'TARGET_TRANSPORT: ' + TARGET_TRANSPORT
 else:
@@ -46,7 +39,6 @@ else:
 
 ENV_HOME = '.'
 PROJECT_HOME = 'test'
-IOTIVITY_ROOT = 'iotivity'
 
 TRANSPORTS = [ 'None', 'IP', 'BT', 'BLE', 'TCP' ]
 TRANSPORT_BINS = [ 'iotivity_ca_test', 'iotivity_ca_ip_test', 'iotivity_ca_bt_test', 'iotivity_ca_ble_test', 'iotivity_ca_tcp_test' ]
@@ -59,16 +51,16 @@ TRANSPORT_CPPDEFINES = [
                         ]
 
 IOTIVITY_INCLUDE_PATH = [
-                            IOTIVITY_ROOT + '/extlibs/mbedtls/mbedtls/include/mbedtls',
-                            IOTIVITY_ROOT + '/resource/c_common',
-                            IOTIVITY_ROOT + '/resource/csdk/stack/include',
-                            IOTIVITY_ROOT + '/resource/csdk/connectivity/api',
-                            IOTIVITY_ROOT + '/resource/csdk/connectivity/inc',
-                            IOTIVITY_ROOT + '/resource/csdk/connectivity/external/inc',
-                            IOTIVITY_ROOT + '/resource/csdk/connectivity/common/inc',
-                            IOTIVITY_ROOT + '/resource/c_common/oic_malloc/include',
-                            IOTIVITY_ROOT + '/resource/c_common/oic_string/include',
-                            IOTIVITY_ROOT + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include'
+                            ENV_HOME + '/extlibs/mbedtls/mbedtls/include/mbedtls',
+                            ENV_HOME + '/resource/c_common',
+                            ENV_HOME + '/resource/csdk/stack/include',
+                            ENV_HOME + '/resource/csdk/connectivity/api',
+                            ENV_HOME + '/resource/csdk/connectivity/inc',
+                            ENV_HOME + '/resource/csdk/connectivity/external/inc',
+                            ENV_HOME + '/resource/csdk/connectivity/common/inc',
+                            ENV_HOME + '/resource/c_common/oic_malloc/include',
+                            ENV_HOME + '/resource/c_common/oic_string/include',
+                            ENV_HOME + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include'
                         ]
 
 TC_INCLUDE_PATH = [
@@ -116,16 +108,17 @@ TC_COMMON_SRC = [
 
 CA_LIBS = Split('m pthread rt dl stdc++ gobject-2.0 gio-2.0 glib-2.0 capi-network-wifi dlog capi-network-bluetooth connectivity_abstraction coap octbstack ocsrm c_common expat boost_system boost_filesystem boost_thread')
 
-COMMON_CPPDEFINES = [ '__TIZEN__', 'WITH_POSIX', 'SLP_SDK_LOG', '_GNU_SOURCE','TIZEN_DEBUG_ENABLE', 'TB_LOG' ]
+COMMON_CPPDEFINES = [ '__TIZEN__', 'WITH_POSIX', 'SLP_SDK_LOG', '_GNU_SOURCE','TIZEN_DEBUG_ENABLE', 'TB_LOG']
 
 COMMON_CPPFLAGS = ['-std=c++0x', '-fPIC', '-Wall', '-g', '`pkg-config', '--cflags', '--libs','dlog', 'com.oic.ri', 'capi-network-wifi', 'gobject-2.0','glib-2.0`', '-fpermissive']
 
 TC_LIB_PATH = [ PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/tizen' ]
 
-if SECURED:
-    lib_list.append('mbedtls')
-    lib_list.append('mbedx509')
-    lib_list.append('mbedcrypto')
+if ARGUMENTS.get('SECURED') == '1':
+    CA_LIBS.append('mbedtls')
+    CA_LIBS.append('mbedx509')
+    CA_LIBS.append('mbedcrypto')
+    COMMON_CPPDEFINES.append('__WITH_DTLS__')
 
 if TARGET_TEST == None or 'all' in TARGET_TEST or 'tc' in TARGET_TEST:
     i = -1
@@ -139,9 +132,6 @@ if TARGET_TEST == None or 'all' in TARGET_TEST or 'tc' in TARGET_TEST:
                 continue
 
         tc_cppdefines = COMMON_CPPDEFINES + TRANSPORT_CPPDEFINES[i]
-
-        if SECURED:
-            tc_cppdefines.append('__WITH_DTLS__')
 
         list_of_src = []
 
@@ -175,8 +165,6 @@ if TARGET_TEST == None or 'all' in TARGET_TEST or 'tc' in TARGET_TEST:
 if TARGET_TEST == None or 'all' in TARGET_TEST or 'app' in TARGET_TEST:
     simulator_cppdefines = COMMON_CPPDEFINES
 
-    if SECURED:
-        simulator_cppdefines.append('__WITH_DTLS__')
     if TARGET_TRANSPORT != None and 'BT' in TARGET_TRANSPORT:
         simulator_cppdefines.append('EDR_ADAPTER')
         simulator_cppdefines.append('BT_ADAPTER_TEST')

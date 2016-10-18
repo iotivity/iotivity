@@ -281,7 +281,7 @@ public class CANetworkCommonTest extends AndroidTestCase {
      * @expected 2. It will return CA_STATUS_OK 6. It will return
      *           CA_STATUS_FAILED
      */
-    public static void testCASelectNetworkUnSelectNetwork_SCV_N() {
+    public void testCASelectNetworkUnSelectNetwork_SCV_N() {
         if (!CAJni.initServerNetwork()) {
             fail();
             return;
