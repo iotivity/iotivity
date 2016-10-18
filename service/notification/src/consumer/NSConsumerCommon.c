@@ -264,6 +264,7 @@ NSMessage * NSCopyMessage(NSMessage * msg)
     newMsg->sourceName = OICStrdup(msg->sourceName);
     newMsg->dateTime = OICStrdup(msg->dateTime);
     newMsg->type = msg->type;
+    newMsg->ttl= msg->ttl;
 
     newMsg->topic = NULL;
     if (msg->topic && strlen(msg->topic) > 0)
