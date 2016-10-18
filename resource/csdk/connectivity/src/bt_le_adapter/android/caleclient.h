@@ -41,6 +41,7 @@ static const uint16_t STATE_SEND_NONE = 1;
 static const uint16_t STATE_SEND_SUCCESS = 2;
 static const uint16_t STATE_SEND_FAIL = 3;
 static const uint16_t STATE_SENDING = 4;
+static const uint16_t STATE_SEND_PREPARING = 5;
 
 typedef struct le_state_info
 {
@@ -497,6 +498,19 @@ CAResult_t CALEClientRemoveGattObjForAddr(JNIEnv *env, jstring addr);
  * @return  ble address.
  */
 jstring CALEClientGetLEAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice);
+
+/**
+ * update new state information by Bluetooth device object.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   device                Bluetooth device.
+ * @param[in]   state_type            state type.
+ * @param[in]   target_state          state index to update.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientUpdateDeviceStateWithBtDevice(JNIEnv *env,
+                                                   jobject device,
+                                                   uint16_t state_type,
+                                                   uint16_t target_state);
 
 /**
  * update new state information.

@@ -945,7 +945,7 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
     {
         OIC_LOG(DEBUG, TAG, "waiting send finish signal");
         oc_cond_wait(g_threadCond, g_threadMutex);
-        OIC_LOG(DEBUG, TAG, "the data was sent");
+        OIC_LOG(DEBUG, TAG, "connection / send is finished for unicast");
     }
     oc_mutex_unlock(g_threadMutex);
 
@@ -959,10 +959,12 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
     if (CALEClientIsValidState(address, CA_LE_SEND_STATE,
                                STATE_SEND_SUCCESS))
     {
+        OIC_LOG(INFO, TAG, "send success");
         ret = CA_STATUS_OK;
     }
     else
     {
+        OIC_LOG(ERROR, TAG, "send failure");
         ret = CA_SEND_FAILED;
     }
 
@@ -1050,7 +1052,7 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
     {
         OIC_LOG(DEBUG, TAG, "waiting send finish signal");
         oc_cond_wait(g_threadCond, g_threadMutex);
-        OIC_LOG(DEBUG, TAG, "the data was sent");
+        OIC_LOG(DEBUG, TAG, "connection / send is finished for multicast");
     }
     oc_mutex_unlock(g_threadMutex);
     oc_mutex_unlock(g_threadSendMutex);
@@ -1085,6 +1087,22 @@ CAResult_t CALEClientSendData(JNIEnv *env, jobject device)
         oc_mutex_lock(g_deviceStateListMutex);
         state = CALEClientGetStateInfo(address);
         oc_mutex_unlock(g_deviceStateListMutex);
+    }
+
+    // Since disconnect event can be caused from BT stack while connection step is running.
+    // DeviceState has to have current status for processing send failure.
+    OIC_LOG(INFO, TAG, "set STATE_SEND_PREPARING");
+    CAResult_t res = CALEClientUpdateDeviceStateWithBtDevice(env, device,
+                                                             CA_LE_SEND_STATE,
+                                                             STATE_SEND_PREPARING);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceStateWithBtDevice has failed");
+        if (address)
+        {
+            (*env)->ReleaseStringUTFChars(env, jni_address, address);
+        }
+        return CA_STATUS_FAILED;
     }
 
     if (!state)
@@ -3387,13 +3405,48 @@ jstring CALEClientGetLEAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
 /**
  * BT State List
  */
+CAResult_t CALEClientUpdateDeviceStateWithBtDevice(JNIEnv *env,
+                                                   jobject device,
+                                                   uint16_t state_type,
+                                                   uint16_t target_state)
+{
+    VERIFY_NON_NULL(device, TAG, "device is null");
+
+    // get Bluetooth Address
+    jstring jni_Address = CALEGetAddressFromBTDevice(env, device);
+    if (!jni_Address)
+    {
+        OIC_LOG(ERROR, TAG, "CALEGetAddressFromBTDevice has failed");
+        return CA_STATUS_FAILED;
+    }
+
+    const char* address = (*env)->GetStringUTFChars(env, jni_Address, NULL);
+    if (!address)
+    {
+        OIC_LOG(ERROR, TAG, "targetAddress is not available");
+        return CA_STATUS_FAILED;
+    }
+
+    if (CALEClientIsValidState(address, state_type, target_state))
+    {
+        return CA_STATUS_OK;
+    }
+
+    CAResult_t res = CALEClientUpdateDeviceState(address, state_type,
+                                                 target_state);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+    }
+    (*env)->ReleaseStringUTFChars(env, jni_Address, address);
+
+    return res;
+}
 
 CAResult_t CALEClientUpdateDeviceState(const char* address, uint16_t state_type,
                                        uint16_t target_state)
 {
     VERIFY_NON_NULL(address, TAG, "address is null");
-    VERIFY_NON_NULL(address, TAG, "state_type is null");
-    VERIFY_NON_NULL(address, TAG, "target_state is null");
 
     if (!g_deviceStateList)
     {
@@ -4206,6 +4259,17 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
     else // STATE_DISCONNECTED == newstate
     {
         OIC_LOG(DEBUG, TAG, "LE is disconnected");
+
+        if (CALEClientIsValidState(address, CA_LE_SEND_STATE, STATE_SEND_PREPARING))
+        {
+            OIC_LOG(INFO, TAG, "current state is STATE_SEND_PREPARING");
+            CAResult_t res = CALEClientUpdateDeviceState(address, CA_LE_SEND_STATE,
+                                                         STATE_SEND_FAIL);
+            if (CA_STATUS_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+            }
+        }
 
         CAResult_t res = CALEClientUpdateDeviceState(address,
                                                      CA_LE_CONNECTION_STATE,
