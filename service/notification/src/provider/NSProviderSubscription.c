@@ -89,6 +89,7 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
         OCResourcePayloadAddStringLL(&payload->interfaces, NS_INTERFACE_READ);
         OCResourcePayloadAddStringLL(&payload->types, NS_ROOT_TYPE);
     }
+
     OICFree(copyReq);
     OCRepPayloadSetUri(payload, NS_ROOT_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
@@ -125,7 +126,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
     char * copyReq = OICStrdup(entityHandlerRequest->query);
     char * id = NSGetValueFromQuery(copyReq, NS_QUERY_CONSUMER_ID);
 
-    if(!id)
+    if (!id)
     {
         OICFree(copyReq);
         NSFreeOCEntityHandlerRequest(entityHandlerRequest);
@@ -153,7 +154,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 
 #if(defined WITH_CLOUD && defined RD_CLIENT)
         iSRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
-        if(iSRemoteServer)
+        if (iSRemoteServer)
         {
             NS_LOG(DEBUG, "Requested by remote server");
             subData->remote_messageObId = entityHandlerRequest->obsInfo.obsId;
@@ -161,7 +162,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         }
 #endif
 
-        if(!iSRemoteServer)
+        if (!iSRemoteServer)
         {
             NS_LOG(DEBUG, "Requested by local consumer");
             subData->messageObId = entityHandlerRequest->obsInfo.obsId;
@@ -209,9 +210,9 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         subData->remote_syncObId = subData->syncObId = 0;
         bool isRemoteServer = false;
 
-#if(defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD && defined RD_CLIENT)
         isRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
-        if(isRemoteServer)
+        if (isRemoteServer)
         {
             NS_LOG(DEBUG, "Requested by remote server");
             subData->remote_syncObId = entityHandlerRequest->obsInfo.obsId;
@@ -219,7 +220,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         }
 #endif
 
-        if(!isRemoteServer)
+        if (!isRemoteServer)
         {
             NS_LOG(DEBUG, "Requested by local consumer");
             subData->syncObId = entityHandlerRequest->obsInfo.obsId;
@@ -251,12 +252,11 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
 
     consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER_OBSERVE_ID;
 
-    while(NSProviderStorageDelete(consumerSubList, (char *)
+    while (NSProviderStorageDelete(consumerSubList, (char *)
             &(entityHandlerRequest->obsInfo.obsId)) != NS_FAIL);
+
     consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER;
-
     NSFreeOCEntityHandlerRequest(entityHandlerRequest);
-
     NS_LOG(DEBUG, "NSHandleUnsubscription - OUT");
 }
 
@@ -294,11 +294,12 @@ NSResult NSSendResponse(const char * id, bool accepted)
 
     NSCacheElement * element = NSProviderStorageRead(consumerSubList, id);
 
-    if(element == NULL)
+    if (element == NULL)
     {
         NS_LOG(ERROR, "element is NULL");
         return NS_ERROR;
     }
+
     NSCacheSubData * subData = (NSCacheSubData*) element->data;
 
     if (OCNotifyListOfObservers(rHandle, (OCObservationId*)&subData->messageObId, 1,
@@ -309,8 +310,8 @@ NSResult NSSendResponse(const char * id, bool accepted)
         return NS_ERROR;
 
     }
-    OCRepPayloadDestroy(payload);
 
+    OCRepPayloadDestroy(payload);
     NS_LOG(DEBUG, "NSSendResponse - OUT");
     return NS_OK;
 }
@@ -328,7 +329,7 @@ NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest * entityHandlerRequest
     char * copyReq = OICStrdup(entityHandlerRequest->query);
     char * id = NSGetValueFromQuery(copyReq, NS_QUERY_CONSUMER_ID);
 
-    if(!id)
+    if (!id)
     {
         OICFree(copyReq);
         NSFreeOCEntityHandlerRequest(entityHandlerRequest);

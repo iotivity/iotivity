@@ -141,7 +141,7 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
                 return ehResult;
             }
         }
-        else if(ocObAction == OC_OBSERVE_DEREGISTER)
+        else if (ocObAction == OC_OBSERVE_DEREGISTER)
         {
             NS_LOG(DEBUG, "NSEntityHandlerMessageCb - OC_OBSERVE_DEREGISTER");
             NS_LOG_V(DEBUG, "NSEntityHandlerMessageCb\n - "
@@ -203,7 +203,7 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
 
             NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_REST_POST");
 
-            if(NSProviderIsSyncAttributes((OCRepPayload *)entityHandlerRequest->payload))
+            if (NSProviderIsSyncAttributes((OCRepPayload *)entityHandlerRequest->payload))
             {
                 NSPushQueue(NOTIFICATION_SCHEDULER, TASK_RECV_READ,
                                     NSGetSyncInfo(entityHandlerRequest->payload));
@@ -233,7 +233,7 @@ OCEntityHandlerResult NSEntityHandlerSyncCb(OCEntityHandlerFlag flag,
             NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_SYNC_SUBSCRIPTION,
                     NSCopyOCEntityHandlerRequest(entityHandlerRequest));
         }
-        else if(ocObAction == OC_OBSERVE_DEREGISTER)
+        else if (ocObAction == OC_OBSERVE_DEREGISTER)
         {
             NS_LOG(DEBUG, "NSEntityHandlerSyncCb - OC_OBSERVE_DEREGISTER");
             NS_LOG_V(DEBUG, "NSEntityHandlerSyncCb\n - "
@@ -301,7 +301,7 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
             NS_LOG(DEBUG, "NSEntityHandlerTopicCb - OC_REST_POST");
             // Accepter is provider. our service is not support sendtopiclist from OC_REST_POST
             // Accepter is consumer. our service is support sendtopiclist from OC_REST_POST
-            if(NSGetPolicy() == false &&
+            if (NSGetPolicy() == false &&
                     NSProviderIsTopicAttributes(OCRepPayloadClone((OCRepPayload *)
                             entityHandlerRequest->payload)))
             {
@@ -339,7 +339,7 @@ void NSProviderConnectionStateListener(const CAEndpoint_t * info, bool connected
         // Start Presence
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_START_PRESENCE, NULL);
 
-        if(info->adapter == CA_ADAPTER_TCP)
+        if (info->adapter == CA_ADAPTER_TCP)
         {
             NS_LOG_V(DEBUG, "TCP Connected remote address: %s:%d", info->addr, info->port);
         }
@@ -351,7 +351,7 @@ void NSProviderConnectionStateListener(const CAEndpoint_t * info, bool connected
         // Set Connection State
         NSSetProviderConnectionState(DISCONNECTED);
 
-        if(info->adapter == CA_ADAPTER_TCP)
+        if (info->adapter == CA_ADAPTER_TCP)
         {
             NS_LOG_V(DEBUG, "TCP Disconnected remote address: %s:%d", info->addr, info->port);
         }
@@ -403,14 +403,15 @@ bool NSProviderCompareSyncAttributes(const char * name)
 bool NSProviderIsSyncAttributes(OCRepPayload * payload)
 {
     NS_LOG(DEBUG, "get extra info");
-
     OCRepPayloadValue * curr = payload->values;
-    while(curr)
+
+    while (curr)
     {
         if (!NSProviderCompareSyncAttributes(curr->name))
         {
             return false;
         }
+
         curr = curr->next;
     }
 
@@ -442,9 +443,9 @@ bool NSProviderCompareSubTopicAttributes(const char * name)
 bool NSProviderIsTopicAttributes(OCRepPayload * payload)
 {
     NS_LOG(DEBUG, "get extra info");
-
     OCRepPayloadValue * curr = payload->values;
-    while(curr)
+
+    while (curr)
     {
         if (!NSProviderCompareTopicAttributes(curr->name))
         {
@@ -470,7 +471,8 @@ bool NSProviderIsTopicAttributes(OCRepPayload * payload)
             for (int i = 0; i < (int) dimensionSize; i++)
             {
                 OCRepPayloadValue * subCurr = topicListPayload[i]->values;
-                while(subCurr)
+
+                while (subCurr)
                 {
                     if (!NSProviderCompareSubTopicAttributes(subCurr->name))
                     {
