@@ -39,16 +39,14 @@ PROJECT_HOME = '../../'
 EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
 ORG_SRC = ''
 
-target_source = env_linux.get('TARGET_SOURCE')
 iotivity_directory = env_linux.get('IOTIVITY_DIR')
 
-print "target source is --------------------------------" + target_source
 print "iotivity root is --------------------------------" + iotivity_directory
 
 if env_linux.get('RELEASE'):
-	target_release = 'release'
+    target_release = 'release'
 else:
-	target_release = 'debug'
+    target_release = 'debug'
 
 print "target build is --------------------------------" + target_release
 
@@ -73,10 +71,12 @@ IUT_RESOURCE_STACK = IUT_RESOURCE_DIR + '/csdk/stack/include'
 IUT_RESOURCE_SOCKET = IUT_RESOURCE_DIR + '/csdk/ocsocket/include'
 IUT_RESOURCE_RANDOM = IUT_RESOURCE_DIR + '/csdk/ocrandom/include'
 IUT_RESOURCE_LOGGER = IUT_RESOURCE_DIR + '/csdk/logger/include'
+IUT_RESOURCE_SECURITY = IUT_RESOURCE_DIR + '/csdk/security/include'
 IUT_RESOURCE_COMMON = IUT_RESOURCE_DIR + '/c_common/'
 IUT_RESOURCE_OC_LOGGER = IUT_RESOURCE_DIR + '/oc_logger/include'
 IUT_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
 IUT_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
+IUT_RESOURCE_CBOR = ORG_SRC_HOME + '/extlibs/tinycbor/tinycbor/src/'
 
 ######################################################################
 # Initializing Project Dir
@@ -107,7 +107,7 @@ IUT_CFLAGS = [COMMON_FLAGS]
 ######################################################################
 
 COMMON_CINCLUDE = [INCLUDE_DIR]
-IUT_CINCLUDE = [COMMON_CINCLUDE, IUT_RESOURCE_INCLUDE, IUT_RESOURCE_STACK, IUT_RESOURCE_SOCKET, IUT_RESOURCE_RANDOM, IUT_RESOURCE_OC_LOGGER, INCLUDE_DIR, IUT_RESOURCE_COMMON]
+IUT_CINCLUDE = [COMMON_CINCLUDE, IUT_RESOURCE_INCLUDE, IUT_RESOURCE_STACK, IUT_RESOURCE_SOCKET, IUT_RESOURCE_SECURITY, IUT_RESOURCE_RANDOM, IUT_RESOURCE_OC_LOGGER, IUT_RESOURCE_CBOR, INCLUDE_DIR, IUT_RESOURCE_COMMON]
 
 ######################################################################
 # Initializing Libraries
