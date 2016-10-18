@@ -54,6 +54,7 @@ typedef enum
     NS_TOPIC = 3,
     NS_DISCOVERED = 11,
     NS_STOPPED = 12
+
 } NSProviderState;
 
 /**

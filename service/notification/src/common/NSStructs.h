@@ -35,6 +35,7 @@ typedef struct _nsTask
     NSTaskType taskType;
     void * taskData;
     struct _nsTask * nextTask;
+
 } NSTask;
 
 typedef struct
@@ -52,6 +53,7 @@ typedef struct _NSCacheElement
 {
     NSCacheData * data;
     struct _NSCacheElement * next;
+
 } NSCacheElement;
 
 typedef struct
@@ -59,6 +61,7 @@ typedef struct
     NSCacheType cacheType;
     NSCacheElement * head;
     NSCacheElement * tail;
+
 } NSCacheList;
 
 typedef struct
@@ -69,6 +72,7 @@ typedef struct
     int remote_syncObId; //sync observer ID subscribed through remote server
     int remote_messageObId; //message observer ID subscribed through remote server
     bool isWhite; // access state -> True: allowed / False: blocked
+
 } NSCacheSubData;
 
 typedef struct
@@ -76,6 +80,7 @@ typedef struct
     char * id;
     int messageType; // noti = 1, read = 2, dismiss = 3
     NSMessage * nsMessage;
+
 } NSCacheMsgData;
 
 typedef struct
@@ -103,6 +108,7 @@ typedef struct
 
     //optional
     char * topic_uri;
+
 } NSNotificationResource;
 
 typedef struct
@@ -121,6 +127,7 @@ typedef struct
     char * sourceName;
     char * topicName;
     NSMediaContents * mediaContents;
+
 } NSMessageResource;
 
 typedef struct
@@ -129,6 +136,7 @@ typedef struct
     uint64_t messageId;
     char providerId[NS_UUID_STRING_SIZE];
     char * state;
+
 } NSSyncResource;
 
 typedef struct
@@ -137,6 +145,7 @@ typedef struct
     char providerId[NS_UUID_STRING_SIZE];
     char consumerId[NS_UUID_STRING_SIZE];
     NSTopicList ** TopicList;
+
 } NSTopicResource;
 
 typedef struct
@@ -144,6 +153,7 @@ typedef struct
     char providerId[NS_UUID_STRING_SIZE];
     char * providerName;
     char * userInfo;
+
 } NSProviderInfo;
 
 #endif /* _NS_STRUCTS_H_ */

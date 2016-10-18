@@ -235,6 +235,7 @@ typedef enum eSchedulerType
     SUBSCRIPTION_SCHEDULER = 2,
     NOTIFICATION_SCHEDULER = 3,
     TOPIC_SCHEDULER = 4,
+
 } NSSchedulerType;
 
 typedef enum eTaskType
@@ -315,6 +316,7 @@ typedef enum eCacheType
 
     NS_CONSUMER_CACHE_PROVIDER = 2000,
     NS_CONSUMER_CACHE_MESSAGE = 2001,
+
 } NSCacheType;
 
 typedef enum eResourceType
@@ -322,12 +324,14 @@ typedef enum eResourceType
     NS_RESOURCE_MESSAGE = 1000,
     NS_RESOURCE_SYNC = 1001,
     NS_RESOURCE_TOPIC = 1002,
+
 } NSResourceType;
 
 typedef enum eInterfaceType
 {
     NS_INTERFACE_TYPE_READ = 1,
     NS_INTERFACE_TYPE_READWRITE = 2,
+
 } NSInterfaceType;
 
 #endif /* _NS_CONSTANTS_H_ */

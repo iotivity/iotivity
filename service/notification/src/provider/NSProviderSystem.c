@@ -19,7 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "NSProviderSystem.h"
 
-#if(defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD && defined RD_CLIENT)
 #define MAX_SERVER_ADDRESS 32
 static char NSRemoteServerAddress[MAX_SERVER_ADDRESS] = {0,};
 #endif
@@ -44,7 +44,7 @@ NSConnectionState NSGetProviderConnectionState()
     return NSProviderConnectionState;
 }
 
-#if(defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD && defined RD_CLIENT)
 void NSSetRemoteServerAddress(char *serverAddress)
 {
 
@@ -62,7 +62,7 @@ bool NSIsRemoteServerAddress(char *serverAddress)
 {
     NS_LOG_V(DEBUG, "Check server address: %s", serverAddress);
 
-    if(serverAddress != NULL)
+    if (serverAddress != NULL)
     {
         return strstr(NSRemoteServerAddress, serverAddress);
     }
@@ -83,27 +83,29 @@ void NSInitProviderInfo(const char * userInfo)
     providerInfo->providerName = NULL;
     providerInfo->userInfo = NULL;
 
-    if(userInfo)
+    if (userInfo)
+    {
         providerInfo->userInfo = OICStrdup(userInfo);
+    }
 }
 
 void NSDeinitProviderInfo()
 {
     NS_LOG(DEBUG, "NSDeinitProviderInfo");
 
-    if(!providerInfo)
+    if (!providerInfo)
     {
         NS_LOG(DEBUG, "providerInfo is NULL");
         return;
     }
 
-    if(providerInfo->providerName)
+    if (providerInfo->providerName)
     {
         OICFree(providerInfo->providerName);
         providerInfo->providerName = NULL;
     }
 
-    if(providerInfo->userInfo)
+    if (providerInfo->userInfo)
     {
         OICFree(providerInfo->userInfo);
         providerInfo->userInfo = NULL;
