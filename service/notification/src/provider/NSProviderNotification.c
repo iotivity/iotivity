@@ -37,7 +37,7 @@ NSResult NSSetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
     OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_PROVIDER_ID, msg->providerId);
 
     NSDuplicateSetPropertyInt(msgPayload, NS_ATTRIBUTE_TYPE, msg->type);
-    NSDuplicateSetPropertyInt(msgPayload, NS_ATTRIBUTE_MESSAGE_ID, msg->ttl);
+    NSDuplicateSetPropertyInt(msgPayload, NS_ATTRIBUTE_TTL, msg->ttl);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_DATETIME, msg->dateTime);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TITLE, msg->title);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TEXT, msg->contentText);
