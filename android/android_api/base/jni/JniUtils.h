@@ -108,21 +108,7 @@ public:
                 return OC::ObserveType::ObserveAll;
         };
     }
-#ifdef WITH_CLOUD
-    static OC::AclGroupType getAclGroupType(JNIEnv *env, int type)
-    {
-        switch (type)
-        {
-            case 0:
-                return OC::AclGroupType::PUBLIC;
-            case 1:
-                return OC::AclGroupType::PRIVATE;
-            default:
-                ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected acl group type");
-                return OC::AclGroupType::PUBLIC;
-        };
-    }
-#endif
+
     static OCEntityHandlerResult getOCEntityHandlerResult(JNIEnv *env, int type)
     {
         switch (type)

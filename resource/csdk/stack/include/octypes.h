@@ -409,32 +409,32 @@ extern "C" {
 /** Defines user UUID. */
 #define OC_RSRVD_USER_UUID                 "uid"
 
-/** Defines user ID. */
-#define OC_RSRVD_USER_ID                   "userid"
-
 /** Defines group ID. */
 #define OC_RSRVD_GROUP_ID                  "gid"
-
-/** Defines group Master ID. */
-#define OC_RSRVD_GROUP_MASTER_ID           "gmid"
-
-/** Defines group type. */
-#define OC_RSRVD_GROUP_TYPE                "gtype"
 
 /** Defines member of group ID. */
 #define OC_RSRVD_MEMBER_ID                 "mid"
 
-/** Defines device ID list. */
-#define OC_RSRVD_DEVICE_ID_LIST            "dilist"
-
-/** Defines public. */
-#define OC_RSRVD_PUBLIC                    "Public"
-
-/** Defines private. */
-#define OC_RSRVD_PRIVATE                   "Private"
-
 /** Defines invite. */
 #define OC_RSRVD_INVITE                    "invite"
+
+/** Defines accept. */
+#define OC_RSRVD_ACCEPT                    "accept"
+
+/** Defines operation. */
+#define OC_RSRVD_OPERATION                 "op"
+
+/** Defines add. */
+#define OC_RSRVD_ADD                       "add"
+
+/** Defines delete. */
+#define OC_RSRVD_DELETE                    "delete"
+
+/** Defines owner. */
+#define OC_RSRVD_OWNER                     "owner"
+
+/** Defines members. */
+#define OC_RSRVD_MEMBERS                   "members"
 
 /** To represent grant type with refresh token. */
 #define OC_RSRVD_GRANT_TYPE_REFRESH_TOKEN  "refresh_token"

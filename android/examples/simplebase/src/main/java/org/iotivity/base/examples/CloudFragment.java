@@ -43,7 +43,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.iotivity.base.AclGroupType;
+import org.iotivity.base.EntityHandlerResult;
 import org.iotivity.base.ErrorCode;
 import org.iotivity.base.ModeType;
 import org.iotivity.base.OcAccountManager;
@@ -66,6 +66,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -173,7 +174,7 @@ public class CloudFragment extends Fragment implements
     private void signOut() {
         try {
             msg("signOut");
-            mAccountManager.signOut(onSignOut);
+            mAccountManager.signOut(mAccessToken, onSignOut);
         } catch (OcException e) {
             e.printStackTrace();
         }
@@ -182,9 +183,22 @@ public class CloudFragment extends Fragment implements
     private void createGroup() {
         try {
             msg("createGroup");
-            mAccountManager.createGroup(AclGroupType.PUBLIC, onCreateGroup);
+            mAccountManager.createGroup(onCreateGroup);
         } catch (OcException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void deleteGroup() {
+        if (mGroupId == null) {
+            msg("there is no any group");
+        } else {
+            try {
+                msg("deleteGroup");
+                mAccountManager.deleteGroup(mGroupId, onDeleteGroup);
+            } catch (OcException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -196,19 +210,29 @@ public class CloudFragment extends Fragment implements
         }
     }
 
-    private void leaveGroup() {
-        try {
-            if (mGroupId == null) {
-                msg("there is no any group");
-            } else {
-                msg("leaveGroup");
-                mAccountManager.leaveGroup(mGroupId, onLeaveGroup);
-            }
-        } catch (OcException e) {
-            e.printStackTrace();
+    private void addPropertyValueToGroup() {
+        if (mGroupId == null) {
+            msg("there is no any group");
+        } else {
+            showPostPropertyValueToGroup(0);
         }
     }
 
+    private void deletePropertyValueFromGroup() {
+        if (mGroupId == null) {
+            msg("there is no any group");
+        } else {
+            showPostPropertyValueToGroup(1);
+        }
+    }
+
+    private void updatePropertyValueOnGroup() {
+        if (mGroupId == null) {
+            msg("there is no any group");
+        } else {
+            showPostPropertyValueToGroup(2);
+        }
+    }
     // FOR WEB-VIEW
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -270,8 +294,10 @@ public class CloudFragment extends Fragment implements
             try {
                 msg("observeInvitation");
                 mAccountManager.observeInvitation(onObserveInvitation);
+                msg("observeGroup");
+                mAccountManager.observeGroup(onObserveGroup);
                 msg("getGroupList");
-                mAccountManager.getGroupList(onGetGroupList);
+                mAccountManager.getGroupInfoAll(onGetGroupInfoAll);
             } catch (OcException e) {
                 Log.e(TAG, e.toString());
             }
@@ -308,20 +334,49 @@ public class CloudFragment extends Fragment implements
         }
     };
 
-    OcAccountManager.OnGetListener onGetGroupList = new OcAccountManager.OnGetListener() {
+    OcAccountManager.OnGetListener onGetGroupInfoAll = new OcAccountManager.OnGetListener() {
         @Override
         public void onGetCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
-            msg("getGroupList was successful");
+            msg("getGroupInfoAll was successful");
             try {
-                String[] gidlist = ocRepresentation.getValue("gidlist");
-                if (gidlist == null) {
+
+                OcRepresentation[] gidlist = ocRepresentation.getValue("groups");
+                if (gidlist == null || gidlist.length == 0) {
                     msg("\tgroup list is empty");
                     mGroupId = null;
                 } else {
                     msg("\tgroup list");
-                    for (String group : gidlist) {
-                        msg("\t\t" + group);
-                        mGroupId = group;
+
+                    for (OcRepresentation group : gidlist) {
+                        String gid = group.getValue("gid");
+                        String gname = group.getValue("gname");
+                        String owner = group.getValue("owner");
+
+                        msg("\t\t-GroupID : " + gid);
+                        msg("\t\t Group name : " + gname);
+                        msg("\t\t Owner : " + owner);
+
+                        String[] members = group.getValue("members");
+                        if (members != null && members.length != 0) {
+                            msg("\t\t members :");
+                            for (String member : members) {
+                                msg("\t\t\t" + member);
+                            }
+                        }
+
+                        String[] devices = group.getValue("devices");
+                        if (devices != null && devices.length != 0) {
+                            msg("\t\t devices");
+                            for (String device : devices) {
+                                msg("\t\t\t" + device);
+                            }
+                        }
+
+                        if (group.hasAttribute("parent")) {
+                            msg("\t\t parent group : " + group.getValue("parent"));
+                        }
+
+                        mGroupId = gid;
                     }
                     msg("\tcurrent group is " + mGroupId);
                 }
@@ -332,7 +387,31 @@ public class CloudFragment extends Fragment implements
 
         @Override
         public void onGetFailed(Throwable throwable) {
-            msg("Failed to getGroupList");
+            msg("Failed to getGroupInfoAll");
+            if (throwable instanceof OcException) {
+                OcException ocEx = (OcException) throwable;
+                Log.e(TAG, ocEx.toString());
+                ErrorCode errCode = ocEx.getErrorCode();
+                msg("Error code: " + errCode);
+            }
+        }
+    };
+
+    OcAccountManager.OnGetListener onGetGroupInfo = new OcAccountManager.OnGetListener() {
+        @Override
+        public void onGetCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
+            msg("getGroupInfo was successful");
+
+            Map<String, Object> valueMap = ocRepresentation.getValues();
+
+            for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
+                msg("\tproperty: " + entry.getKey() + " value: " + entry.getValue());
+            }
+        }
+
+        @Override
+        public void onGetFailed(Throwable throwable) {
+            msg("Failed to getGroupInfo");
             if (throwable instanceof OcException) {
                 OcException ocEx = (OcException) throwable;
                 Log.e(TAG, ocEx.toString());
@@ -354,7 +433,7 @@ public class CloudFragment extends Fragment implements
 
                             OcRepresentation[] sendInvitationList =
                                     ocRepresentation.getValue("invite");
-                            if (sendInvitationList != null) {
+                            if (sendInvitationList != null && sendInvitationList.length != 0) {
                                 msg("\tList of invitation that I sent");
                                 for (OcRepresentation invitation : sendInvitationList) {
                                     String gid = invitation.getValue("gid");
@@ -366,7 +445,7 @@ public class CloudFragment extends Fragment implements
 
                             OcRepresentation[] receiveInvitationList =
                                     ocRepresentation.getValue("invited");
-                            if (receiveInvitationList != null) {
+                            if (receiveInvitationList != null && receiveInvitationList.length != 0) {
                                 msg("\tList of invitation that I received");
                                 for (OcRepresentation invitation : receiveInvitationList) {
                                     String gid = invitation.getValue("gid");
@@ -380,7 +459,7 @@ public class CloudFragment extends Fragment implements
                         } else {
                             OcRepresentation[] sendInvitationList =
                                     ocRepresentation.getValue("invite");
-                            if (sendInvitationList != null) {
+                            if (sendInvitationList != null && sendInvitationList.length != 0) {
                                 msg("\tList of invitation that I sent");
                                 for (OcRepresentation invitation : sendInvitationList) {
                                     String gid = invitation.getValue("gid");
@@ -392,7 +471,7 @@ public class CloudFragment extends Fragment implements
 
                             OcRepresentation[] receivInvitationList =
                                     ocRepresentation.getValue("invited");
-                            if (receivInvitationList != null) {
+                            if (receivInvitationList != null && receivInvitationList.length != 0) {
                                 msg("\tList of invitation that I received");
                                 for (OcRepresentation invitation : receivInvitationList) {
                                     mGroupId = invitation.getValue("gid");
@@ -459,37 +538,24 @@ public class CloudFragment extends Fragment implements
         }
     };
 
-    OcAccountManager.OnPostListener onJoinGroup = new OcAccountManager.OnPostListener() {
+    OcAccountManager.OnDeleteListener onDeleteGroup = new OcAccountManager.OnDeleteListener() {
         @Override
-        public synchronized void onPostCompleted(List<OcHeaderOption> list,
-                                                 OcRepresentation ocRepresentation) {
-            msg("joinGroup was successful");
-            try {
-                msg("observeGroup");
-                mAccountManager.observeGroup(mGroupId, onObserveGroup);
-            } catch (OcException e) {
-                Log.e(TAG, e.toString());
-            }
+        public void onDeleteCompleted(List<OcHeaderOption> list) {
+            msg("deleteGroup was successful");
         }
 
         @Override
-        public synchronized void onPostFailed(Throwable throwable) {
-            msg("Failed to joinGroup");
-            if (throwable instanceof OcException) {
-                OcException ocEx = (OcException) throwable;
-                Log.e(TAG, ocEx.toString());
-                ErrorCode errCode = ocEx.getErrorCode();
-                msg("Error code: " + errCode);
-            }
+        public void onDeleteFailed(Throwable throwable) {
+            msg("Failed to deleteGroup");
         }
     };
 
-    OcAccountManager.OnDeleteListener onDeleteInvitation = new OcAccountManager.OnDeleteListener() {
+    OcAccountManager.OnDeleteListener onReplyToInvitation = new OcAccountManager.OnDeleteListener() {
         @Override
         public void onDeleteCompleted(List<OcHeaderOption> list) {
-            msg("deleteInvitation was successful");
+            msg("replyToInvitation was successful");
             try {
-                mAccountManager.getGroupList(onGetGroupList);
+                mAccountManager.getGroupInfoAll(onGetGroupInfoAll);
             } catch (OcException e) {
                 e.printStackTrace();
             }
@@ -542,8 +608,8 @@ public class CloudFragment extends Fragment implements
                 mGroupId = ocRepresentation.getValue("gid");
                 msg("\tgroupId: " + mGroupId);
 
-                msg("observeGroup");
-                mAccountManager.observeGroup(mGroupId, onObserveGroup);
+                msg("getGroupInfo");
+                mAccountManager.getGroupInfo(mGroupId, onGetGroupInfo);
             } catch (OcException e) {
                 Log.e(TAG, e.toString());
             }
@@ -579,7 +645,7 @@ public class CloudFragment extends Fragment implements
                     msg("\tGroupMasterID: " + gmid);
 
                     String[] midlist = ocRepresentation.getValue("midlist");
-                    if (midlist == null) {
+                    if (midlist == null || midlist.length == 0) {
                         msg("\tMember List is empty");
                     } else {
                         msg("\tMember List(" + midlist.length + ")");
@@ -589,7 +655,7 @@ public class CloudFragment extends Fragment implements
                     }
 
                     String[] dilist = ocRepresentation.getValue("dilist");
-                    if (dilist == null) {
+                    if (dilist == null || dilist.length == 0) {
                         msg("\tDevice List is empty");
                     } else {
                         msg("\tDevice List(" + dilist.length + ")");
@@ -615,6 +681,25 @@ public class CloudFragment extends Fragment implements
         }
     };
 
+    OcAccountManager.OnPostListener onPostPropertyValue = new OcAccountManager.OnPostListener() {
+        @Override
+        public synchronized void onPostCompleted(List<OcHeaderOption> list,
+                                                 OcRepresentation ocRepresentation) {
+            msg("Post was successful (changed property value)");
+        }
+
+        @Override
+        public synchronized void onPostFailed(Throwable throwable) {
+            msg("Failed to Post (changed property value)");
+            if (throwable instanceof OcException) {
+                OcException ocEx = (OcException) throwable;
+                Log.e(TAG, ocEx.toString());
+                ErrorCode errCode = ocEx.getErrorCode();
+                msg("Error code: " + errCode);
+            }
+        }
+    };
+
     OcAccountManager.OnPostListener onSendInvitation = new OcAccountManager.OnPostListener() {
         @Override
         public synchronized void onPostCompleted(List<OcHeaderOption> list,
@@ -631,24 +716,6 @@ public class CloudFragment extends Fragment implements
                 ErrorCode errCode = ocEx.getErrorCode();
                 msg("Error code: " + errCode);
             }
-        }
-    };
-
-    OcAccountManager.OnDeleteListener onLeaveGroup = new OcAccountManager.OnDeleteListener() {
-        @Override
-        public void onDeleteCompleted(List<OcHeaderOption> list) {
-            msg("leaveGroup was successful");
-            try {
-                msg("getGroupList");
-                mAccountManager.getGroupList(onGetGroupList);
-            } catch (OcException e) {
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        public void onDeleteFailed(Throwable throwable) {
-            msg("Failed to leaveGroup");
         }
     };
 
@@ -1171,6 +1238,65 @@ public class CloudFragment extends Fragment implements
         alert.show();
     }
 
+
+    private void showPostPropertyValueToGroup(int operation) {
+        LayoutInflater layoutInflater = LayoutInflater.from(mContext);
+        View inputView = layoutInflater.inflate(R.layout.input, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(mActivity);
+        alertDialogBuilder.setView(inputView);
+
+        final int op = operation;
+
+        final TextView textView = (TextView) inputView.getRootView().findViewById(R.id.inputView);
+        final EditText editText = (EditText) inputView.getRootView().findViewById(R.id.inputText);
+        final TextView textView2 = (TextView) inputView.getRootView().findViewById(R.id.inputView2);
+        final EditText editText2 = (EditText) inputView.getRootView().findViewById(R.id.inputText2);
+
+        textView.setText("Please enter property.");
+        textView2.setText("Please enter value(String Array).");
+        textView2.setVisibility(View.VISIBLE);
+        editText2.setVisibility(View.VISIBLE);
+
+
+        alertDialogBuilder
+                .setCancelable(true)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        if (editText.getText().length() != 0 && editText2.getText().length() != 0){
+                            final String property = editText.getText().toString();
+                            final String value = editText2.getText().toString();
+                            String[] values = {value};
+
+                            try {
+                                OcRepresentation propertyValue = new OcRepresentation();
+                                propertyValue.setValue(property, values);
+
+                                if (op == 0) {
+                                    msg("addPropertyValueToGroup");
+                                    mAccountManager.addPropertyValueToGroup(mGroupId, propertyValue, onPostPropertyValue);
+                                } else if (op == 1){
+                                    msg("deletePropertyValueFromGroup");
+                                    mAccountManager.deletePropertyValueFromGroup(mGroupId, propertyValue, onPostPropertyValue);
+                                } else if (op == 2){
+                                    msg("updatePropertyValueOnGroup");
+                                    mAccountManager.updatePropertyValueOnGroup(mGroupId, propertyValue, onPostPropertyValue);
+                                }
+                            } catch (OcException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+
+        AlertDialog alert = alertDialogBuilder.create();
+        alert.show();
+    }
+
     private void showInviteMsg(String userID) {
 
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(mActivity);
@@ -1186,10 +1312,8 @@ public class CloudFragment extends Fragment implements
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         try {
-                            msg("joinGroup");
-                            mAccountManager.joinGroup(mGroupId, onJoinGroup);
-                            msg("deleteInvitation");
-                            mAccountManager.deleteInvitation(mGroupId, onDeleteInvitation);
+                            msg("replyToInvitation (accept:yes)");
+                            mAccountManager.replyToInvitation(mGroupId, true, onReplyToInvitation);
                         } catch (OcException e) {
                             e.printStackTrace();
                         }
@@ -1199,9 +1323,8 @@ public class CloudFragment extends Fragment implements
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.cancel();
                         try {
-                            msg("gid: " + mGroupId);
-                            msg("deleteInvitation");
-                            mAccountManager.deleteInvitation(mGroupId, onDeleteInvitation);
+                            msg("replyToInvitation (accept:no)");
+                            mAccountManager.replyToInvitation(mGroupId, false, onReplyToInvitation);
                         } catch (OcException e) {
                             e.printStackTrace();
                         }
@@ -1253,7 +1376,8 @@ public class CloudFragment extends Fragment implements
         int viewID = view.getId();
         if (mAccountManager == null && (viewID == R.id.signin_button
                 || viewID == R.id.signout_button || viewID == R.id.creategroup_button
-                || viewID == R.id.invite_button || viewID == R.id.leavegroup_button)) {
+                || viewID == R.id.invite_button || viewID == R.id.addpropertyvalue_button
+                || viewID == R.id.deletepropertyvalue_button || viewID == R.id.updatepropertyvalue_button)) {
             mActionLog.append("Do 'SignUp' first" + EOL);
             return;
         }
@@ -1280,13 +1404,25 @@ public class CloudFragment extends Fragment implements
                 mActionLog.append("Create Group" + EOL);
                 createGroup();
                 break;
+            case R.id.deletegroup_button:
+                mActionLog.append("Delete Group" + EOL);
+                deleteGroup();
+                break;
             case R.id.invite_button:
                 mActionLog.append("Invite User" + EOL);
                 inviteUser();
                 break;
-            case R.id.leavegroup_button:
-                mActionLog.append("Leave Group" + EOL);
-                leaveGroup();
+            case R.id.addpropertyvalue_button:
+                mActionLog.append("Add Property Value To Group" + EOL);
+                addPropertyValueToGroup();
+                break;
+            case R.id.deletepropertyvalue_button:
+                mActionLog.append("Delete Property Value From Group" + EOL);
+                deletePropertyValueFromGroup();
+                break;
+            case R.id.updatepropertyvalue_button:
+                mActionLog.append("Update Property Value On Group" + EOL);
+                updatePropertyValueOnGroup();
                 break;
 
             // RD
@@ -1360,14 +1496,18 @@ public class CloudFragment extends Fragment implements
         Button signOutButton = (Button) rootView.findViewById(R.id.signout_button);
         Button createGroupButton = (Button) rootView.findViewById(R.id.creategroup_button);
         Button inviteButton = (Button) rootView.findViewById(R.id.invite_button);
-        Button leaveGroupButton = (Button) rootView.findViewById(R.id.leavegroup_button);
+        Button addValueToGroup = (Button) rootView.findViewById(R.id.addpropertyvalue_button);
+        Button deleteValueFromGroup = (Button) rootView.findViewById(R.id.deletepropertyvalue_button);
+        Button updateValueOnGroup = (Button) rootView.findViewById(R.id.updatepropertyvalue_button);
         setIPButton.setOnClickListener(this);
         signUpButton.setOnClickListener(this);
         signInButton.setOnClickListener(this);
         signOutButton.setOnClickListener(this);
         createGroupButton.setOnClickListener(this);
         inviteButton.setOnClickListener(this);
-        leaveGroupButton.setOnClickListener(this);
+        addValueToGroup.setOnClickListener(this);
+        deleteValueFromGroup.setOnClickListener(this);
+        updateValueOnGroup.setOnClickListener(this);
 
         Button rdPubButton = (Button) rootView.findViewById(R.id.rdpub_button);
         Button rdDelButton = (Button) rootView.findViewById(R.id.rddel_button);

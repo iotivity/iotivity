@@ -386,6 +386,7 @@ int main(int argc, char **argv)
     OCPlatform::publishResourceToRD(g_host, OCConnectivityType::CT_ADAPTER_TCP, resourceHandles,
             &onPublish);
     g_callbackLock.wait(lock);
+/* TODO: need to modify the below according to the OCAccountManager API changed.
     if (g_option == "owner")
     {
         cout << "Creating group" << endl;
@@ -427,6 +428,6 @@ int main(int argc, char **argv)
 
         cin >> cmd;
     }
-
+*/
     return 0;
 }
