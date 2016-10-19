@@ -156,7 +156,12 @@ static void* oc_process_loop(void* ptr)
 
     while(g_LoopFlag)
     {
-        OCProcess();
+        if (OCProcess() != OC_STACK_OK)
+        {
+            OIC_LOG(ERROR, TAG, "OCStack process error");
+            g_LoopFlag = false;
+            break;
+        }
         nanosleep(&timeout, NULL);
     }
     pthread_join(&oc_process_thread, NULL);

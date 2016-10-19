@@ -844,7 +844,10 @@ static void DeviceDiscoveryDeleteHandler(void *ctx)
         {
             OIC_LOG_V(DEBUG, TAG, "OCCancel - %s : %d",
                             pDev->endpoint.addr, pDev->endpoint.port);
-            OCCancel(pDev->handle,OC_HIGH_QOS,NULL,0);
+            if(OC_STACK_OK !=  OCCancel(pDev->handle,OC_HIGH_QOS,NULL,0))
+            {
+                OIC_LOG(ERROR, TAG, "Failed to remove registered callback");
+            }
         }
         PMDeleteDeviceList(pDInfo->pCandidateList);
     }
