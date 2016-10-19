@@ -43,6 +43,14 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
                                         OicSecAcl_t *acl, OCProvisionResultCB resultCallback);
 
 /**
+ * API to save ACL which has several ACE into Acl of SVR.
+ *
+ * @param acl ACL to be saved in Acl of SVR.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPSaveACL(const OicSecAcl_t *acl);
+
+/**
  * API to request CRED information to resource.
  *
  * @param[in] selectedDeviceInfo Selected target device.

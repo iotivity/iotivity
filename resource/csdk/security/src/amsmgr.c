@@ -300,7 +300,7 @@ static OCStackApplicationResult AmsMgrAclReqCallback(void *ctx, OCDoHandle handl
     {
         size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
         OCStackResult ret =
-                InstallNewACL(((OCSecurityPayload*)clientResponse->payload)->securityData, size);
+                AppendACL(((OCSecurityPayload*)clientResponse->payload)->securityData, size);
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
 
         OIC_LOG_V(INFO, TAG, "%s : Calling checkPermission", __func__);

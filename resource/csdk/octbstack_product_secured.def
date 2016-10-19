@@ -23,6 +23,7 @@ OCGetDevInfoFromNetwork
 OCGetLinkedStatus
 OCInitPM
 OCProvisionACL
+OCSaveACL
 OCProvisionCredentials
 OCProvisionDirectPairing
 OCProvisionPairwiseDevices
