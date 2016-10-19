@@ -1301,11 +1301,19 @@ static OCStackResult SecurePortDiscovery(DiscoveryInfo* discoveryInfo,
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
+    // Set filter query with rt=oic.r.doxm
+    const char RES_DOXM_QUERY_FMT[] = "%s?%s=%s";
+    char uri[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    snprintf(uri, sizeof(uri), RES_DOXM_QUERY_FMT, query,
+            OC_RSRVD_RESOURCE_TYPE, OIC_RSRC_TYPE_SEC_DOXM);
+
+    OIC_LOG_V(DEBUG, TAG, "URI=%s", uri);
+
     OCCallbackData cbData;
     cbData.cb = &SecurePortDiscoveryHandler;
     cbData.context = (void*)discoveryInfo;
     cbData.cd = NULL;
-    OCStackResult ret = OCDoResource(&pDev->handle, OC_REST_DISCOVER, query, 0, 0,
+    OCStackResult ret = OCDoResource(&pDev->handle, OC_REST_DISCOVER, uri, 0, 0,
             pDev->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if(OC_STACK_OK != ret)
     {
