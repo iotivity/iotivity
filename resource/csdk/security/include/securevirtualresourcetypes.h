@@ -219,7 +219,10 @@ typedef enum OicSecDpm
     SECURITY_MANAGEMENT_SERVICES    = (0x1 << 3),
     PROVISION_CREDENTIALS           = (0x1 << 4),
     PROVISION_ACLS                  = (0x1 << 5),
-    // << 6 THROUGH 15 RESERVED
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    TAKE_SUB_OWNER                  = (0x1 << 6),
+#endif
+    // << 7 THROUGH 15 RESERVED
 } OicSecDpm_t;
 
 // These types are taken from the Security Spec v1.1.12 /pstat resource definition
@@ -268,6 +271,9 @@ typedef enum
     OIC_JUST_WORKS                          = 0x0,
     OIC_RANDOM_DEVICE_PIN                   = 0x1,
     OIC_MANUFACTURER_CERTIFICATE           = 0x2,
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    OIC_PRECONFIG_PIN                      = 0x3,
+#endif //_ENABLE_MULTIPLE_OWNER_
     OIC_OXM_COUNT
 }OicSecOxm_t;
 
@@ -279,6 +285,30 @@ typedef enum
     OIC_ENCODING_PEM = 3,
     OIC_ENCODING_DER = 4
 }OicEncodingType_t;
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+typedef enum
+{
+    MOT_STATUS_READY = 0,
+    MOT_STATUS_IN_PROGRESS = 1,
+    MOT_STATUS_DONE = 2,
+}MotStatus_t;
+#endif //_ENABLE_MULTIPLE_OWNER_
+
+/*
+ * oic.sec.mom type definition
+ * TODO: This type will be included to OIC Security Spec.
+ * 0 : Disable multiple owner
+ * 1 : Enable multiple owner (Always on)
+ * 2 : Timely multiple owner enable
+ */
+typedef enum
+{
+    OIC_MULTIPLE_OWNER_DISABLE = 0,
+    OIC_MULTIPLE_OWNER_ENABLE = 1,
+    OIC_MULTIPLE_OWNER_TIMELY_ENABLE = 2,
+    OIC_NUMBER_OF_MOM_TYPE = 3
+}OicSecMomType_t;
 
 typedef struct OicSecKey OicSecKey_t;
 
@@ -293,6 +323,11 @@ typedef struct OicSecSvc OicSecSvc_t;
 typedef char *OicUrn_t; //TODO is URN type defined elsewhere?
 
 typedef struct OicUuid OicUuid_t; //TODO is UUID type defined elsewhere?
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+typedef struct OicSecSubOwner OicSecSubOwner_t;
+typedef struct OicSecMom OicSecMom_t;
+#endif //_ENABLE_MULTIPLE_OWNER_
 
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
@@ -355,10 +390,13 @@ struct OicSecValidity
 struct OicSecAce
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    OicUuid_t subjectuuid; // 0:R:S:Y:uuid
-    OicSecRsrc_t *resources; // 1:R:M:Y:Resource
-    uint16_t permission; // 2:R:S:Y:UINT16
-    OicSecValidity_t *validities; // 3:R:M:N:Time-interval
+    OicUuid_t subjectuuid;              // 0:R:S:Y:uuid
+    OicSecRsrc_t *resources;            // 1:R:M:Y:Resource
+    uint16_t permission;                // 2:R:S:Y:UINT16
+    OicSecValidity_t *validities;       // 3:R:M:N:Time-interval
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    OicUuid_t* eownerID;                //4:R:S:N:oic.uuid
+#endif
     OicSecAce_t *next;
 };
 
@@ -409,9 +447,24 @@ struct OicSecCred
 #endif /* __WITH_DTLS__  or __WITH_TLS__*/
     OicSecKey_t         privateData;    // 6:R:S:N:oic.sec.key
     char                *period;        // 7:R:S:N:String
-    OicUuid_t           rownerID;        // 8:R:S:Y:oic.uuid
+    OicUuid_t           rownerID;       // 8:R:S:Y:oic.uuid
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    OicUuid_t           *eownerID;      //9:R:S:N:oic.uuid
+#endif //_ENABLE_MULTIPLE_OWNER_
     OicSecCred_t        *next;
 };
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+struct OicSecSubOwner {
+    OicUuid_t uuid;
+    MotStatus_t status;
+    OicSecSubOwner_t* next;
+};
+
+struct OicSecMom{
+    OicSecMomType_t mode;
+};
+#endif //_ENABLE_MULTIPLE_OWNER_
 
 /**
  * /oic/sec/doxm (Device Owner Transfer Methods) data type
@@ -432,7 +485,11 @@ struct OicSecDoxm
     OicUuid_t           deviceID;       // 6:R:S:Y:oic.uuid
     bool                dpc;            // 7:R:S:Y:Boolean
     OicUuid_t           owner;          // 8:R:S:Y:oic.uuid
-    OicUuid_t           rownerID;       // 9:R:S:Y:oic.uuid
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    OicSecSubOwner_t* subOwners;        //9:R/W:M:N:oic.uuid
+    OicSecMom_t *mom;                   //10:R/W:S:N:oic.sec.mom
+#endif //_ENABLE_MULTIPLE_OWNER_
+    OicUuid_t           rownerID;       // 11:R:S:Y:oic.uuid
 };
 
 /**

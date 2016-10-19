@@ -765,6 +765,45 @@ static SslEndPoint_t *GetSslPeer(const CAEndpoint_t *peer)
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return NULL;
 }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+/**
+ * Gets CA secure endpoint info corresponding for endpoint.
+ *
+ * @param[in]  peer    remote address
+ *
+ * @return  CASecureEndpoint or NULL
+ */
+const CASecureEndpoint_t *GetCASecureEndpointData(const CAEndpoint_t* peer)
+{
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
+
+    // TODO: Added as workaround, need to debug
+    oc_mutex_unlock(g_sslContextMutex);
+
+    oc_mutex_lock(g_sslContextMutex);
+    if (NULL == g_caSslContext)
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "Context is NULL");
+        oc_mutex_unlock(g_sslContextMutex);
+        return NULL;
+    }
+
+    SslEndPoint_t* sslPeer = GetSslPeer(peer);
+    if(sslPeer)
+    {
+        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+        oc_mutex_unlock(g_sslContextMutex);
+        return &sslPeer->sep;
+    }
+
+    OIC_LOG(DEBUG, NET_SSL_TAG, "Return NULL");
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+    oc_mutex_unlock(g_sslContextMutex);
+    return NULL;
+}
+#endif
+
 /**
  * Deletes cached message.
  *
@@ -1958,6 +1997,9 @@ CAResult_t CAsslGenerateOwnerPsk(const CAEndpoint_t *endpoint,
     VERIFY_NON_NULL_RET(rsrcServerDeviceId, NET_SSL_TAG, "rsrcId is NULL", CA_STATUS_INVALID_PARAM);
     VERIFY_NON_NULL_RET(provServerDeviceId, NET_SSL_TAG, "provId is NULL", CA_STATUS_INVALID_PARAM);
     VERIFY_NON_NULL_RET(ownerPsk, NET_SSL_TAG, "ownerPSK is NULL", CA_STATUS_INVALID_PARAM);
+
+    // TODO: Added as workaround, need to debug
+    oc_mutex_unlock(g_sslContextMutex);
 
     oc_mutex_lock(g_sslContextMutex);
     if (NULL == g_caSslContext)

@@ -8,6 +8,7 @@ Import('env')
 ca_os = env.get('TARGET_OS')
 ca_transport = env.get('TARGET_TRANSPORT')
 secured = env.get('SECURED')
+multiple_owner = env.get('MULTIPLE_OWNER')
 with_ra = env.get ('WITH_RA')
 with_ra_ibb = env.get('WITH_RA_IBB')
 with_tcp = env.get('WITH_TCP')
@@ -83,6 +84,9 @@ if env.get('SECURED') == '1':
 
 if ((secured == '1') and (with_tcp == True)):
 	env.AppendUnique(CPPDEFINES = ['__WITH_TLS__'])
+
+if (multiple_owner == '1'):
+	env.AppendUnique(CPPDEFINES=['_ENABLE_MULTIPLE_OWNER_'])
 
 
 ca_common_src = None

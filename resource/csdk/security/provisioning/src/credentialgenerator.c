@@ -60,11 +60,11 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
     OCFillRandomMem(privData, privDataKeySize);
 
     // TODO: currently owner array is 1. only provisioning tool's id.
-    tempFirstCred =  GenerateCredential(secondDeviceId, type, NULL, &privKey, ptDeviceId);
+    tempFirstCred =  GenerateCredential(secondDeviceId, type, NULL, &privKey, ptDeviceId, NULL);
     VERIFY_NON_NULL(TAG, tempFirstCred, ERROR);
 
     // TODO: currently owner array is 1. only provisioning tool's id.
-    tempSecondCred =  GenerateCredential(firstDeviceId, type, NULL, &privKey, ptDeviceId);
+    tempSecondCred =  GenerateCredential(firstDeviceId, type, NULL, &privKey, ptDeviceId, NULL);
     VERIFY_NON_NULL(TAG, tempSecondCred, ERROR);
 
     *firstCred = tempFirstCred;

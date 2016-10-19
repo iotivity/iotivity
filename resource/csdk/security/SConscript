@@ -88,6 +88,9 @@ if target_os in ['darwin', 'ios']:
 if env.get('LOGGING'):
 	libocsrm_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
+if env.get('MULTIPLE_OWNER') == '1':
+	libocsrm_env.AppendUnique(CPPDEFINES=['_ENABLE_MULTIPLE_OWNER_'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################

@@ -89,6 +89,9 @@ if target_os in ['darwin', 'ios']:
 if provisioning_env.get('LOGGING'):
     provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
+if provisioning_env.get('MULTIPLE_OWNER') == '1':
+	provisioning_env.AppendUnique(CPPDEFINES=['_ENABLE_MULTIPLE_OWNER_'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -101,6 +104,11 @@ provisioning_src = [
 	'src/oxmjustworks.c',
 	'src/oxmrandompin.c',
 	'src/provisioningdatabasemanager.c' ]
+
+if provisioning_env.get('MULTIPLE_OWNER') == '1':
+	provisioning_src = provisioning_src + [
+		'src/multipleownershiptransfermanager.c',
+		'src/oxmpreconfpin.c']
 
 if provisioning_env.get('WITH_TCP') == True:
 	provisioning_env.AppendUnique(CPPDEFINES= ['__WITH_TLS__'])

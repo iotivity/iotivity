@@ -76,6 +76,9 @@ if sptest_env.get('SECURED') == '1':
 if not sptest_env.get('RELEASE'):
 	sptest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
+if sptest_env.get('MULTIPLE_OWNER') == '1':
+	sptest_env.AppendUnique(CPPDEFINES=['_ENABLE_MULTIPLE_OWNER_'])
+
 if target_os in ['msys_nt', 'windows']:
     sptest_env.AppendUnique(LIBS = ['ws2_32',
                                     'advapi32',

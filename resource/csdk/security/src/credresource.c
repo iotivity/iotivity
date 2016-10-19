@@ -118,6 +118,11 @@ static void FreeCred(OicSecCred_t *cred)
     //Clean Period
     OICFree(cred->period);
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    //Clean eowner
+    OICFree(cred->eownerID);
+#endif
+
     //Clean Cred node itself
     OICFree(cred);
 }
@@ -224,7 +229,15 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         {
             mapSize++;
         }
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+#ifdef _ENABLE_MULTIPLE_OWNER_
+        if(cred->eownerID)
+        {
+            mapSize++;
+        }
+#endif //_ENABLE_MULTIPLE_OWNER_
+
         if (SIGNED_ASYMMETRIC_KEY == cred->credType && cred->publicData.data)
         {
             mapSize++;
@@ -393,7 +406,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             }
             else
             {
-                OIC_LOG(ERROR, TAG, "Unknow encoding type for optional data.");
+                OIC_LOG(ERROR, TAG, "Unknown encoding type for optional data.");
                 VERIFY_CBOR_SUCCESS(TAG, CborErrorUnknownType, "Failed Adding optional Encoding Value.");
             }
 
@@ -476,7 +489,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             }
             else
             {
-                OIC_LOG(ERROR, TAG, "Unknow encoding type for private data.");
+                OIC_LOG(ERROR, TAG, "Unknown encoding type for private data.");
                 VERIFY_CBOR_SUCCESS(TAG, CborErrorUnknownType, "Failed Adding Private Encoding Value.");
             }
 
@@ -495,6 +508,21 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Period Name Value.");
         }
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+        // Eownerid -- Not Mandatory
+        if(cred->eownerID)
+        {
+            char *eowner = NULL;
+            cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_EOWNERID_NAME,
+                strlen(OIC_JSON_EOWNERID_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding eownerId Name Tag.");
+            ret = ConvertUuidToStr(cred->eownerID, &eowner);
+            VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
+            cborEncoderResult = cbor_encode_text_string(&credMap, eowner, strlen(eowner));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding eownerId Value.");
+            OICFree(eowner);
+        }
+#endif //_ENABLE_MULTIPLE_OWNER_
 
         cborEncoderResult = cbor_encoder_close_container(&credArray, &credMap);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Cred Map.");
@@ -742,7 +770,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                             else
                                             {
                                                 cborFindResult = CborErrorUnknownType;
-                                                OIC_LOG(ERROR, TAG, "Unknow type for private data.");
+                                                OIC_LOG(ERROR, TAG, "Unknown type for private data.");
                                             }
                                             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding PrivateData.");
                                         }
@@ -767,7 +795,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                             {
                                                 //For unit test
                                                 cred->privateData.encoding = OIC_ENCODING_RAW;
-                                                OIC_LOG(WARNING, TAG, "Unknow encoding type dectected for private data.");
+                                                OIC_LOG(WARNING, TAG, "Unknown encoding type dectected for private data.");
                                             }
 
                                             OICFree(strEncoding);
@@ -860,7 +888,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                             else
                                             {
                                                 cborFindResult = CborErrorUnknownType;
-                                                OIC_LOG(ERROR, TAG, "Unknow type for optional data.");
+                                                OIC_LOG(ERROR, TAG, "Unknown type for optional data.");
                                             }
                                             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding OptionalData.");
                                         }
@@ -893,7 +921,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                             {
                                                 //For unit test
                                                 cred->optionalData.encoding = OIC_ENCODING_RAW;
-                                                OIC_LOG(WARNING, TAG, "Unknow encoding type dectected for optional data.");
+                                                OIC_LOG(WARNING, TAG, "Unknown encoding type dectected for optional data.");
                                             }
                                             OICFree(strEncoding);
                                         }
@@ -919,6 +947,24 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 cborFindResult = cbor_value_dup_text_string(&credMap, &cred->period, &len, NULL);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Period.");
                             }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+                            // Eowner uuid -- Not Mandatory
+                            if (strcmp(OIC_JSON_EOWNERID_NAME, name)  == 0 && cbor_value_is_text_string(&credMap))
+                            {
+                                char *eowner = NULL;
+                                cborFindResult = cbor_value_dup_text_string(&credMap, &eowner, &len, NULL);
+                                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding eownerId Value.");
+                                if(NULL == cred->eownerID)
+                                {
+                                    cred->eownerID = (OicUuid_t*)OICCalloc(1, sizeof(OicUuid_t));
+                                    VERIFY_NON_NULL(TAG, cred->eownerID, ERROR);
+                                }
+                                ret = ConvertStrToUuid(eowner, cred->eownerID);
+                                OICFree(eowner);
+                                VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
+                            }
+#endif //_ENABLE_MULTIPLE_OWNER_
 
                             if (cbor_value_is_valid(&credMap))
                             {
@@ -976,9 +1022,35 @@ exit:
     return ret;
 }
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+bool IsValidCredentialAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPayload, size_t size)
+{
+    OicSecCred_t* cred = NULL;
+    bool isValidCred = false;
+
+    OIC_LOG_BUFFER(DEBUG, TAG, cborPayload, size);
+
+    VERIFY_NON_NULL(TAG, uuid, ERROR);
+    VERIFY_NON_NULL(TAG, cborPayload, ERROR);
+    VERIFY_SUCCESS(TAG, 0 != size, ERROR);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == CBORPayloadToCred(cborPayload, size, &cred), ERROR);
+    VERIFY_NON_NULL(TAG, cred, ERROR);
+    VERIFY_NON_NULL(TAG, cred->eownerID, ERROR);
+    VERIFY_SUCCESS(TAG, (memcmp(cred->eownerID->id, uuid->id, sizeof(uuid->id)) == 0), ERROR);
+
+    isValidCred = true;
+
+exit:
+    DeleteCredList(cred);
+
+    return isValidCred;
+
+}
+#endif //_ENABLE_MULTIPLE_OWNER_
+
 OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t credType,
                                   const OicSecCert_t * publicData, const OicSecKey_t* privateData,
-                                  const OicUuid_t * rownerID)
+                                  const OicUuid_t * rownerID, const OicUuid_t * eownerID)
 {
     (void)publicData;
     OCStackResult ret = OC_STACK_ERROR;
@@ -1040,6 +1112,15 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     VERIFY_NON_NULL(TAG, rownerID, ERROR);
     memcpy(&cred->rownerID, rownerID, sizeof(OicUuid_t));
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    if(eownerID)
+    {
+        cred->eownerID = (OicUuid_t*)OICCalloc(1, sizeof(OicUuid_t));
+        VERIFY_NON_NULL(TAG, cred->eownerID, ERROR);
+        memcpy(cred->eownerID->id, eownerID->id, sizeof(eownerID->id));
+    }
+#endif //_ENABLE_MULTIPLE_OWNER_
+
     ret = OC_STACK_OK;
 exit:
     if (OC_STACK_OK != ret)
@@ -1058,9 +1139,10 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
     if (cred)
     {
         uint8_t *payload = NULL;
-        // This added '256' is arbitrary value that is added to cover the name of the resource, map addition and ending
+        // This added '512' is arbitrary value that is added to cover the name of the resource, map addition and ending
         size_t size = GetCredKeyDataSize(cred);
-        size += (256 * OicSecCredCount(cred));
+        size += (512 * OicSecCredCount(cred));
+
         int secureFlag = 0;
         OCStackResult res = CredToCBORPayload(cred, &payload, &size, secureFlag);
         if ((OC_STACK_OK == res) && payload)
@@ -1477,7 +1559,6 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
     }
     else
     {
-        // TODO: error
         VERIFY_SUCCESS(TAG, OIC_ENCODING_UNKNOW, ERROR);
     }
 
@@ -1491,6 +1572,79 @@ exit:
     return false;
 }
 
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+/**
+ * Internal function to fill private data of SubOwner PSK.
+ *
+ * @param receviedCred recevied owner credential from SubOwner
+ * @param ownerAdd address of SubOwner
+ * @param doxm current device's doxm resource
+ *
+ * @return
+ *     true successfully done and valid subower psk information
+ *     false Invalid subowner psk information or failed to subowner psk generation
+ */
+static bool FillPrivateDataOfSubOwnerPSK(OicSecCred_t* receivedCred, const CAEndpoint_t* ownerAddr,
+                           const OicSecDoxm_t* doxm, const OicUuid_t* subOwner)
+{
+    char* b64Buf = NULL;
+    //Derive OwnerPSK locally
+    const char* oxmLabel = GetOxmString(doxm->oxmSel);
+    VERIFY_NON_NULL(TAG, oxmLabel, ERROR);
+
+    uint8_t subOwnerPSK[OWNER_PSK_LENGTH_128] = {0};
+    CAResult_t pskRet = CAGenerateOwnerPSK(ownerAddr,
+        (uint8_t*)oxmLabel, strlen(oxmLabel),
+        subOwner->id, sizeof(subOwner->id),
+        doxm->deviceID.id, sizeof(doxm->deviceID.id),
+        subOwnerPSK, OWNER_PSK_LENGTH_128);
+    VERIFY_SUCCESS(TAG, pskRet == CA_STATUS_OK, ERROR);
+
+    OIC_LOG(DEBUG, TAG, "SubOwnerPSK dump :");
+    OIC_LOG_BUFFER(DEBUG, TAG, subOwnerPSK, OWNER_PSK_LENGTH_128);
+
+    //Generate owner credential based on received credential information
+
+    if(OIC_ENCODING_RAW == receivedCred->privateData.encoding)
+    {
+        receivedCred->privateData.data = (uint8_t *)OICCalloc(1, OWNER_PSK_LENGTH_128);
+        VERIFY_NON_NULL(TAG, receivedCred->privateData.data, ERROR);
+        receivedCred->privateData.len = OWNER_PSK_LENGTH_128;
+        memcpy(receivedCred->privateData.data, subOwnerPSK, OWNER_PSK_LENGTH_128);
+    }
+    else if(OIC_ENCODING_BASE64 == receivedCred->privateData.encoding)
+    {
+        uint32_t b64OutSize = 0;
+        size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
+        b64Buf = OICCalloc(1, b64BufSize);
+        VERIFY_NON_NULL(TAG, b64Buf, ERROR);
+
+        VERIFY_SUCCESS(TAG, \
+                       B64_OK == b64Encode(subOwnerPSK, OWNER_PSK_LENGTH_128, b64Buf, b64BufSize, &b64OutSize), \
+                       ERROR);
+
+        receivedCred->privateData.data = (uint8_t *)OICCalloc(1, b64OutSize + 1);
+        VERIFY_NON_NULL(TAG, receivedCred->privateData.data, ERROR);
+        receivedCred->privateData.len = b64OutSize;
+        strncpy((char*)receivedCred->privateData.data, b64Buf, b64OutSize);
+        receivedCred->privateData.data[b64OutSize] = '\0';
+    }
+    else
+    {
+        OIC_LOG(INFO, TAG, "Unknown credential encoding type.");
+        VERIFY_SUCCESS(TAG, OIC_ENCODING_UNKNOW, ERROR);
+    }
+
+    OIC_LOG(INFO, TAG, "PrivateData of SubOwnerPSK was calculated successfully");
+    OICFree(b64Buf);
+    return true;
+exit:
+    //receivedCred->privateData.data will be deallocated when deleting credential.
+    OICFree(b64Buf);
+    return false;
+}
+#endif //_ENABLE_MULTIPLE_OWNER_
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
 static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * ehRequest)
@@ -1551,7 +1705,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
                         if(OIC_RANDOM_DEVICE_PIN == doxm->oxmSel)
                         {
                             OicUuid_t emptyUuid = { .id={0}};
-                            SetUuidForRandomPinOxm(&emptyUuid);
+                            SetUuidForPinBasedOxm(&emptyUuid);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
                             if(CA_STATUS_OK != CAregisterPskCredentialsHandler(GetDtlsPskCredentials))
@@ -1596,7 +1750,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
                 }
                 default:
                 {
-                    OIC_LOG(WARNING, TAG, "Unknow credential type for owner credential.");
+                    OIC_LOG(WARNING, TAG, "Unknown credential type for owner credential.");
                     ret = OC_EH_ERROR;
                     break;
                 }
@@ -1625,6 +1779,62 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
                 }
             }
         }
+#ifdef _ENABLE_MULTIPLE_OWNER_
+        // In case SubOwner Credential
+        else if(doxm && doxm->owned && doxm->mom &&
+                OIC_MULTIPLE_OWNER_DISABLE != doxm->mom->mode &&
+                0 == cred->privateData.len)
+        {
+            switch(cred->credType)
+            {
+                case SYMMETRIC_PAIR_WISE_KEY:
+                {
+                    OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
+                    if(FillPrivateDataOfSubOwnerPSK(cred, (CAEndpoint_t *)&request->devAddr, doxm, &cred->subject))
+                    {
+                        if(OC_STACK_RESOURCE_DELETED == RemoveCredential(&cred->subject))
+                        {
+                            OIC_LOG(WARNING, TAG, "The credential with the same subject ID was detected!");
+                        }
+
+                        OIC_LOG(ERROR, TAG, "SubOwnerPSK was generated successfully.");
+                        if(OC_STACK_OK == AddCredential(cred))
+                        {
+                            ret = OC_EH_CHANGED;
+                        }
+                        else
+                        {
+                            OIC_LOG(ERROR, TAG, "Failed to save the SubOwnerPSK as cred resource");
+                            ret = OC_EH_ERROR;
+                        }
+                    }
+                    else
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to verify receviced SubOwner PSK.");
+                        ret = OC_EH_ERROR;
+                    }
+                }
+                break;
+
+                case SYMMETRIC_GROUP_KEY:
+                case ASYMMETRIC_KEY:
+                case SIGNED_ASYMMETRIC_KEY:
+                case PIN_PASSWORD:
+                case ASYMMETRIC_ENCRYPTION_KEY:
+                {
+                    OIC_LOG(WARNING, TAG, "Unsupported credential type for SubOwner credential.");
+                    ret = OC_EH_ERROR;
+                    break;
+                }
+                default:
+                {
+                    OIC_LOG(WARNING, TAG, "Unknown credential type for SubOwner credential.");
+                    ret = OC_EH_ERROR;
+                    break;
+                }
+            }
+        }
+#endif //_ENABLE_MULTIPLE_OWNER_
         else
         {
             /*
@@ -1857,8 +2067,7 @@ const OicSecCred_t* GetCredList()
 OicSecCred_t* GetCredResourceDataByCredId(const uint16_t credId)
 {
     OicSecCred_t *cred = NULL;
-
-   if ( 1 > credId)
+    if ( 1 > credId)
     {
        return NULL;
     }
@@ -1948,7 +2157,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                             uint32_t outKeySize;
                             if(NULL == outKey)
                             {
-                                OIC_LOG (ERROR, TAG, "Failed to memoray allocation.");
+                                OIC_LOG (ERROR, TAG, "Failed to allocate memory.");
                                 return ret;
                             }
 
@@ -1968,6 +2177,105 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                         return ret;
                     }
                 }
+                OIC_LOG(DEBUG, TAG, "Can not find subject matched credential.");
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+                const OicSecDoxm_t* doxm = GetDoxmResourceData();
+                if(doxm && doxm->mom && OIC_MULTIPLE_OWNER_DISABLE != doxm->mom->mode)
+                {
+                    // in case of multiple owner transfer authentication
+                    if(OIC_PRECONFIG_PIN == doxm->oxmSel)
+                    {
+                        OicSecCred_t* wildCardCred = GetCredResourceData(&WILDCARD_SUBJECT_ID);
+                        if(wildCardCred)
+                        {
+                            OIC_LOG(DEBUG, TAG, "Detected wildcard credential.");
+                            if(PIN_PASSWORD == wildCardCred->credType)
+                            {
+                                //Read PIN/PW
+                                char* pinBuffer = NULL;
+                                uint32_t pinLength = 0;
+                                if(OIC_ENCODING_RAW == wildCardCred->privateData.encoding)
+                                {
+                                    pinBuffer = OICCalloc(1, wildCardCred->privateData.len + 1);
+                                    if(NULL == pinBuffer)
+                                    {
+                                        OIC_LOG (ERROR, TAG, "Failed to allocate memory.");
+                                        return ret;
+                                    }
+                                    pinLength = wildCardCred->privateData.len;
+                                    memcpy(pinBuffer, wildCardCred->privateData.data, pinLength);
+                                }
+                                else if(OIC_ENCODING_BASE64 == wildCardCred->privateData.encoding)
+                                {
+                                    size_t pinBufSize = B64DECODE_OUT_SAFESIZE((wildCardCred->privateData.len + 1));
+                                    pinBuffer = OICCalloc(1, pinBufSize);
+                                    if(NULL == pinBuffer)
+                                    {
+                                        OIC_LOG (ERROR, TAG, "Failed to allocate memory.");
+                                        return ret;
+                                    }
+
+                                    if(B64_OK != b64Decode((char*)wildCardCred->privateData.data, wildCardCred->privateData.len, pinBuffer, pinBufSize, &pinLength))
+                                    {
+                                        OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
+                                        return ret;
+                                    }
+                                }
+                                else
+                                {
+                                    OIC_LOG(ERROR, TAG, "Unknown encoding type of PIN/PW credential.");
+                                    return ret;
+                                }
+
+                                //Set the PIN/PW to derive PSK
+                                if(OC_STACK_OK != SetPreconfigPin(pinBuffer, pinLength))
+                                {
+                                    OICFree(pinBuffer);
+                                    OIC_LOG(ERROR, TAG, "Failed to load PIN data.");
+                                    return ret;
+                                }
+                                OICFree(pinBuffer);
+
+                                OicUuid_t myUuid;
+                                if(OC_STACK_OK != GetDoxmDeviceID(&myUuid))
+                                {
+                                    OIC_LOG(ERROR, TAG, "Failed to read device ID");
+                                    return ret;
+                                }
+                                SetUuidForPinBasedOxm(&myUuid);
+
+                                //Calculate PSK using PIN/PW
+                                if(0 == DerivePSKUsingPIN((uint8_t*)result))
+                                {
+                                    ret = OWNER_PSK_LENGTH_128;
+                                }
+                                else
+                                {
+                                    OIC_LOG_V(ERROR, TAG, "Failed to derive crypto key from PIN");
+                                }
+
+                                if(CA_STATUS_OK != CAregisterSslHandshakeCallback(MultipleOwnerDTLSHandshakeCB))
+                                {
+                                    OIC_LOG(WARNING, TAG, "Error while bind the DTLS Handshake Callback.");
+                                }
+                            }
+                        }
+                    }
+                    else if(OIC_RANDOM_DEVICE_PIN == doxm->oxmSel)
+                    {
+                        if(0 == DerivePSKUsingPIN((uint8_t*)result))
+                        {
+                            ret = OWNER_PSK_LENGTH_128;
+                        }
+                        else
+                        {
+                            OIC_LOG_V(ERROR, TAG, "Failed to derive crypto key from PIN : result");
+                            ret = -1;
+                        }
+                    }
+                }
+#endif //_ENABLE_MULTIPLE_OWNER_
             }
             break;
     }
@@ -2008,7 +2316,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
     VERIFY_SUCCESS(TAG, (0 == dtlsRes) , ERROR);
 
     cred = GenerateCredential(tmpSubject, credType, NULL,
-                              &privKey, rownerID);
+                              &privKey, rownerID, NULL);
     if(NULL == cred)
     {
         OIC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to generate credential");
@@ -2214,6 +2522,12 @@ void InitCipherSuiteList(bool * list)
     {
         switch (temp->credType)
         {
+            case PIN_PASSWORD:
+            {
+                list[0] = true;
+                OIC_LOG(DEBUG, TAG, "PIN_PASSWORD found");
+                break;
+            }
             case SYMMETRIC_PAIR_WISE_KEY:
             {
                 list[0] = true;
@@ -2228,7 +2542,6 @@ void InitCipherSuiteList(bool * list)
             }
             case SYMMETRIC_GROUP_KEY:
             case ASYMMETRIC_KEY:
-            case PIN_PASSWORD:
             case ASYMMETRIC_ENCRYPTION_KEY:
             {
                 OIC_LOG(WARNING, TAG, "Unsupported credential type for TLS.");
@@ -2236,7 +2549,7 @@ void InitCipherSuiteList(bool * list)
             }
             default:
             {
-                OIC_LOG(WARNING, TAG, "Unknow credential type for TLS.");
+                OIC_LOG(WARNING, TAG, "Unknown credential type for TLS.");
                 break;
             }
         }

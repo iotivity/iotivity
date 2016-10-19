@@ -86,6 +86,9 @@ if env.get('SECURED') == '1':
     provisioning_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
 
 
+if env.get('MULTIPLE_OWNER') == '1':
+	provisioning_env.AppendUnique(CPPDEFINES = ['_ENABLE_MULTIPLE_OWNER_'])
+
 provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if target_os == 'tizen':
@@ -99,6 +102,10 @@ if target_os == 'tizen':
 provisioningclient = provisioning_env.Program('provisioningclient', 'provisioningclient.c')
 sampleserver_justworks = provisioning_env.Program('sampleserver_justworks', 'sampleserver_justworks.cpp')
 sampleserver_randompin = provisioning_env.Program('sampleserver_randompin', 'sampleserver_randompin.cpp')
+
+if provisioning_env.get('MULTIPLE_OWNER') == '1':
+	subownerclient = provisioning_env.Program('subownerclient', 'subownerclient.c')
+
 if provisioning_env.get('WITH_TCP') == True:
     cloud_src = [
         'cloud/cloudAuth.c',
@@ -121,6 +128,11 @@ randompindat = provisioning_env.Install(sec_provisioning_build_dir,
                                     sec_provisioning_src_dir+ 'oic_svr_db_server_randompin.dat')
 randompin_with_emptyuuid_dat = provisioning_env.Install(sec_provisioning_build_dir,
                                     sec_provisioning_src_dir+ 'oic_svr_db_randompin_with_empty_deviceid.dat')
+
+if provisioning_env.get('MULTIPLE_OWNER') == '1':
+	subownerclientdat = provisioning_env.Install(sec_provisioning_build_dir,
+	                                        sec_provisioning_src_dir + 'oic_svr_db_subowner_client.dat')
+
 if provisioning_env.get('WITH_TCP') == True:
     clouddat = provisioning_env.Install(sec_provisioning_build_dir,
                                         sec_provisioning_src_dir + 'cloud.dat')
@@ -129,6 +141,20 @@ if provisioning_env.get('WITH_TCP') == True:
     Alias("cloud", [clouddat, rootcert, cloudClient, cloudServer])
     provisioning_env.AppendTarget("cloud")
 
-Alias("samples", [provisioningclient, sampleserver_justworks, sampleserver_randompin, clientdat, justworksdat, randompindat, randompin_with_emptyuuid_dat])
+if provisioning_env.get('MULTIPLE_OWNER') == '1':
+	Alias("samples", [
+					provisioningclient, subownerclient,
+					sampleserver_justworks, sampleserver_randompin,
+					clientdat, subownerclientdat,
+					justworksdat, randompindat, randompin_with_emptyuuid_dat
+				])
+else:
+	Alias("samples", [
+					provisioningclient,
+					sampleserver_justworks, sampleserver_randompin,
+					clientdat,
+					justworksdat, randompindat, randompin_with_emptyuuid_dat
+				])
+
 provisioning_env.AppendTarget('samples')
 

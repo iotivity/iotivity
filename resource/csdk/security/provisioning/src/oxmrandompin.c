@@ -92,15 +92,31 @@ OCStackResult InputPinCodeCallback(OTMContext_t *otmCtx)
      * Credential should not be saved into SVR.
      * For this reason, We will use a temporary get_psk_info callback to random PIN OxM.
      */
-
-    if(CA_STATUS_OK != CAregisterPskCredentialsHandler(GetDtlsPskForRandomPinOxm))
+    //in case of OTM
+    if(!(otmCtx->selectedDeviceInfo->doxm->owned))
     {
-        OIC_LOG(ERROR, TAG, "Failed to register TLS credentials handler for random PIN OxM.");
-        res = OC_STACK_ERROR;
+        if(CA_STATUS_OK != CAregisterPskCredentialsHandler(GetDtlsPskForRandomPinOxm))
+        {
+            OIC_LOG(ERROR, TAG, "Failed to register DTLS credentials handler for random PIN OxM.");
+            res = OC_STACK_ERROR;
+        }
     }
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    //in case of MOT
+    else if(otmCtx->selectedDeviceInfo->doxm->owned &&
+            otmCtx->selectedDeviceInfo->doxm->mom &&
+            OIC_MULTIPLE_OWNER_DISABLE != otmCtx->selectedDeviceInfo->doxm->mom->mode)
+    {
+        if(CA_STATUS_OK != CAregisterPskCredentialsHandler(GetDtlsPskForMotRandomPinOxm))
+        {
+            OIC_LOG(ERROR, TAG, "Failed to register TLS credentials handler for random PIN OxM.");
+            res = OC_STACK_ERROR;
+        }
+    }
+#endif //_ENABLE_MULTIPLE_OWNER_
 
     //Set the device id to derive temporal PSK
-    SetUuidForRandomPinOxm(&(otmCtx->selectedDeviceInfo->doxm->deviceID));
+    SetUuidForPinBasedOxm(&(otmCtx->selectedDeviceInfo->doxm->deviceID));
 
     return res;
 }
