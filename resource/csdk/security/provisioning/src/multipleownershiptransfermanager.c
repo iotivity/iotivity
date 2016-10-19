@@ -220,7 +220,9 @@ OCStackResult MOTChangeMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
 
     OIC_LOG(DEBUG, TAG, "IN MOTChangeMode");
 
+    VERIFY_SUCCESS(TAG, (OIC_NUMBER_OF_MOM_TYPE > momType), ERROR);
     VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
+    postMomRes = OC_STACK_INVALID_CALLBACK;
     VERIFY_NON_NULL(TAG, resultCallback, ERROR);
 
     //Dulpicate doxm resource to update the 'mom' property
@@ -233,6 +235,7 @@ OCStackResult MOTChangeMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
 
     if(NULL == doxm->mom)
     {
+        postMomRes = OC_STACK_NO_MEMORY;
         doxm->mom = (OicSecMom_t*)OICCalloc(1, sizeof(OicSecMom_t));
         VERIFY_NON_NULL(TAG, (doxm->mom), ERROR);
     }
@@ -269,20 +272,22 @@ OCStackResult MOTAddMOTMethod(void *ctx, OCProvisionDev_t *targetDeviceInfo,
 
     OIC_LOG(DEBUG, TAG, "IN MOTAddMOTMethod");
 
+    VERIFY_SUCCESS(TAG, (OIC_OXM_COUNT > newOxm), ERROR);
     VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
+    postOxmRes = OC_STACK_INVALID_CALLBACK;
     VERIFY_NON_NULL(TAG, resultCallback, ERROR);
+    postOxmRes = OC_STACK_NO_MEMORY;
 
     for(size_t i = 0; i < targetDeviceInfo->doxm->oxmLen; i++)
     {
         if(targetDeviceInfo->doxm->oxm[i] == newOxm)
         {
             OIC_LOG_V(INFO, TAG, "[%d] OxM already supported", (int)newOxm);
-
             OCProvisionResult_t* resArr = (OCProvisionResult_t*)OICCalloc(1, sizeof(OCProvisionResult_t));
+            VERIFY_NON_NULL(TAG, resArr, ERROR);
             resArr->res = OC_STACK_OK;
             memcpy(resArr->deviceId.id, targetDeviceInfo->doxm->deviceID.id, sizeof(resArr->deviceId.id));
             resultCallback(ctx, 1, resArr, false);
-
             return OC_STACK_OK;
         }
     }
