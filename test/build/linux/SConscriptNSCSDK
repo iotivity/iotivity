@@ -24,7 +24,7 @@
 #
 ##
 
-print '\n---------------Started Building IotivitySecTest for Linux---------------\n'
+print '\n---------------Started Building NS CSDK TestCases for Linux---------------\n'
 
 Import('env_linux')
 import os
@@ -40,24 +40,18 @@ EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
 SRC_HOME = ENV_HOME + '/IotivitySECDevSource'
 ORG_SRC = ''
 
-target_source = env_linux.get('TARGET_SOURCE')
-iotivity_directory = env_linux.get('IOTIVITY_DIR')
-
-print "target source is --------------------------------" + target_source
-print "iotivity root is --------------------------------" + iotivity_directory
-
 if env_linux.get('RELEASE'):
 	target_release = 'release'
 else:
 	target_release = 'debug'
 
-print "target build is --------------------------------" + target_release
+print "target build is -------------------------------- " + target_release
 
 ORG_SRC = env_linux['ORG_SRC']
 ORG_SRC_HOME = env_linux['ORG_SRC_HOME']
 
 target_arch = env_linux.get('TARGET_ARCH')
-ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release 
+ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release
 COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
 
 ######################################################################
@@ -69,20 +63,15 @@ NS_RESOURCE_INCLUDE = NS_RESOURCE_DIR + '/include'
 NS_C_COMMON = NS_RESOURCE_DIR + '/c_common'
 NS_C_STRING = NS_C_COMMON + '/oic_string/include'
 NS_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
-NS_RESOURCE_CSDK_LIB = NS_RESOURCE_LIB
 NS_RESOURCE_STACK = NS_RESOURCE_DIR + '/csdk/stack/include'
 NS_RESOURCE_SOCKET = NS_RESOURCE_DIR + '/csdk/ocsocket/include'
 NS_RESOURCE_RANDOM = NS_RESOURCE_DIR + '/csdk/ocrandom/include'
 NS_RESOURCE_LOGGER = NS_RESOURCE_DIR + '/csdk/logger/include'
 NS_RESOURCE_OC_LOGGER = NS_RESOURCE_DIR + '/oc_logger/include'
 NS_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
-NS_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
-NS_RESOURCE_OC_LOGGER_LIB = NS_RESOURCE_LIB
 NS_DIR = ORG_SRC_HOME + '/service/notification'
 NS_INCLUDE = NS_DIR + '/include'
 NS_SRC_DIR = NS_DIR + '/src'
-NS_LIB = NS_RESOURCE_LIB
-NS_LIB_TIMER = NS_RESOURCE_LIB + '/extlibs/timer/'
 LOGGER_INC_DIR = ORG_SRC_HOME + '/resource/csdk/logger/include'
 
 ######################################################################
@@ -110,30 +99,22 @@ GTEST_LIB = GTEST_BIN + '/libgtest.a'
 
 RESOURCE_LIB_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
 
-TC_DIR = PROJECT_HOME +  TARGET + 'tc' + '/ns/gtest/src'
+TC_DIR = PROJECT_HOME +  TARGET + 'tc' + '/ns/gtest/csdk/src'
 STC_DIR = TC_DIR + '/stc'
 BTC_DIR = TC_DIR + '/btc'
-TESTAPP_DIR = PROJECT_HOME +  TARGET + 'testapp'
-TESTAPP_CINCLUDE = PROJECT_HOME + '/include/testapp'
-
 
 COMMON_DIR = PROJECT_HOME +  TARGET + 'common'
 COMMON_UTIL_DIR = PROJECT_HOME +  TARGET + 'common/commonutil/c_cpp'
 CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
 TC_COMMON_DIR = COMMON_DIR + '/testcase'
-#TESTAPP_COMMON_DIR = COMMON_DIR + '/testapp/c_cpp'
 
-INCLUDE_DIR = PROJECT_HOME + '/src/tc/ns/gtest/include'
+INCLUDE_DIR = PROJECT_HOME + '/src/tc/ns/gtest/csdk/include'
 TC_INCLUDE_DIR = INCLUDE_DIR + '/testcase'
 NS_INCLUDE_DIR = INCLUDE_DIR + '/testcase/ns'
 
-
-#COMMON_UTIL_INCLUDE_DIR = INCLUDE_DIR + '/commonutil'
 COMMON_UTIL_INCLUDE_DIR = PROJECT_HOME + '/include'
 
-
 TESTAPP_INCLUDE_DIR = INCLUDE_DIR + '/testapp'
-
 
 ######################################################################
 
@@ -155,7 +136,7 @@ NS_CFLAGS = [COMMON_FLAGS]
 
 COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, LOGGER_INC_DIR]
 
-NS_CINCLUDE = [COMMON_CINCLUDE, NS_RESOURCE_INCLUDE, NS_RESOURCE_STACK, NS_RESOURCE_SOCKET, NS_RESOURCE_RANDOM, NS_RESOURCE_OC_LOGGER, NS_INCLUDE, NS_RESOURCE_CEREAL, NS_RESOURCE_TIMER, NS_LIB_TIMER, NS_SRC_DIR, NS_INCLUDE_DIR, NS_C_COMMON, NS_C_STRING]
+NS_CINCLUDE = [COMMON_CINCLUDE, NS_RESOURCE_INCLUDE, NS_RESOURCE_STACK, NS_RESOURCE_SOCKET, NS_RESOURCE_RANDOM, NS_RESOURCE_OC_LOGGER, NS_INCLUDE, NS_RESOURCE_CEREAL, NS_SRC_DIR, NS_INCLUDE_DIR, NS_C_COMMON, NS_C_STRING]
 
 ######################################################################
 
@@ -163,16 +144,13 @@ NS_CINCLUDE = [COMMON_CINCLUDE, NS_RESOURCE_INCLUDE, NS_RESOURCE_STACK, NS_RESOU
 ######################################################################
 
 COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR, CA_LIB_DIR, '/usr/local/lib/', CA_LIB_DIR + '/resource/c_common']
-NS_LIB_LOCATION = [COMMON_LIB_LOCATION, NS_RESOURCE_LIB, NS_RESOURCE_CSDK_LIB, NS_RESOURCE_OC_LOGGER_LIB, NS_LIB]
+NS_LIB_LOCATION = [COMMON_LIB_LOCATION, NS_RESOURCE_LIB]
 
 COMMON_STATIC_LIBS = [GTEST_LIB]
 COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat liboc  liboc_logger liboc_logger_core pthread libglib-2.0 uuid gcov')
 NS_PROVIDER_SHARED_LIBS = Split('libnotification_provider')
 NS_CONSUMER_SHARED_LIBS = Split('libnotification_consumer')
-#NS_STATIC_LIBS = [NS_LIB + '/libnotification_consumer.a', NS_LIB + '/libnotification_provider.a', NS_LIB + '/libnotification_consumer_wrapper.a']
 
-NS_STATIC_LIBS = []
-NS_STATIC_RESOURCE_LIBS = []
 NS_PROVIDER_LIBS = [COMMON_SHARED_LIBS, NS_PROVIDER_SHARED_LIBS]
 NS_CONSUMER_LIBS = [COMMON_SHARED_LIBS, NS_CONSUMER_SHARED_LIBS]
 NS_LIBS = [COMMON_SHARED_LIBS, NS_CONSUMER_SHARED_LIBS, NS_PROVIDER_SHARED_LIBS]
@@ -212,10 +190,10 @@ NS_CONSUMER_BTC_CPP = Glob(BTC_DIR + '/*ConsumerTest.cpp')
 NS_PROVIDER_STC_CPP = Glob(STC_DIR + '/*ProviderTest.cpp')
 NS_PROVIDER_BTC_CPP = Glob(BTC_DIR + '/*ProviderTest.cpp')
 
-NS_CPP = [TEST_MAIN, COMMON_UTIL_CPP, CALL_GRAPH_CPP]
+NS_CPP = [TEST_MAIN, COMMON_UTIL_CPP, CALL_GRAPH_CPP, TC_DIR + '/helper/NSCommonHelper.cpp']
 
-NS_PROVIDER_TC_SRC = [NS_CPP, NS_PROVIDER_HELPER_CPP, NS_PROVIDER_BTC_CPP, NS_PROVIDER_STC_CPP, COMMON_STATIC_LIBS, NS_STATIC_LIBS, NS_STATIC_RESOURCE_LIBS]
-NS_CONSUMER_TC_SRC = [NS_CPP, NS_CONSUMER_HELPER_CPP, NS_CONSUMER_BTC_CPP, NS_CONSUMER_STC_CPP, COMMON_STATIC_LIBS, NS_STATIC_LIBS, NS_STATIC_RESOURCE_LIBS]
+NS_PROVIDER_TC_SRC = [NS_CPP, NS_PROVIDER_HELPER_CPP, NS_PROVIDER_BTC_CPP, NS_PROVIDER_STC_CPP, COMMON_STATIC_LIBS]
+NS_CONSUMER_TC_SRC = [NS_CPP, NS_CONSUMER_HELPER_CPP, NS_CONSUMER_BTC_CPP, NS_CONSUMER_STC_CPP, COMMON_STATIC_LIBS]
 
 NS_TESTAPP_INC = [PROJECT_HOME + TARGET + 'iBtestapp/modules/ns/c_cpp/csdk/include', NS_CINCLUDE]
 NS_PROVIDER_APP_SRC = [PROJECT_HOME +  TARGET + 'iBtestapp/modules/ns/c_cpp/csdk/src/NSProviderApp.cpp']
@@ -224,9 +202,9 @@ NS_CONSUMER_APP_SRC = [PROJECT_HOME +  TARGET + 'iBtestapp/modules/ns/c_cpp/csdk
 ### NS Simulator ###
 NS_PROVIDER_SIMULATOR_BIN = 'ns_provider_simulator'
 NS_CONSUMER_SIMULATOR_BIN = 'ns_consumer_simulator'
-SIMULATOR_INC = [PROJECT_HOME + TARGET + 'testapp/ns/c_cpp/include', NS_CINCLUDE, COMMON_CINCLUDE]
-PROVIDER_SIMUTALOR_SRC = [COMMON_UTIL_CPP, COMMON_STATIC_LIBS, PROJECT_HOME + TARGET + 'testapp/ns/c_cpp/src/NSProviderSimulator.cpp']
-CONSUMER_SIMUTALOR_SRC = [COMMON_UTIL_CPP, COMMON_STATIC_LIBS, PROJECT_HOME + TARGET + 'testapp/ns/c_cpp/src/NSConsumerSimulator.cpp']
+SIMULATOR_INC = [PROJECT_HOME + TARGET + 'testapp/ns/csdk/include', NS_CINCLUDE, COMMON_CINCLUDE]
+PROVIDER_SIMUTALOR_SRC = [COMMON_UTIL_CPP, COMMON_STATIC_LIBS, PROJECT_HOME + TARGET + 'testapp/ns/csdk/src/NSProviderSimulator.cpp']
+CONSUMER_SIMUTALOR_SRC = [COMMON_UTIL_CPP, COMMON_STATIC_LIBS, PROJECT_HOME + TARGET + 'testapp/ns/csdk/src/NSConsumerSimulator.cpp']
 
 ######################################################################
 

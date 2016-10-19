@@ -19,7 +19,7 @@
  *
  ******************************************************************/
 
-#include <NSSimulatorUtil.h>
+#include "NSSimulatorUtil.h"
 
 bool isStarted = false;
 int id = 0;
@@ -142,10 +142,10 @@ int main(int argc, char **argv) {
 
     chooseOption(inCase);
 
-    IOTIVITYTEST_LOG(INFO, "Press any key and the enter to stop the servers :-)....");
+    IOTIVITYTEST_LOG(INFO, "Notification Provider is Running :-)....");
 
-    char n;
-    cin >> n;
+    while(true) {
+    }
 
     stopProvider();
 

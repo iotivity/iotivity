@@ -22,35 +22,15 @@
 #ifndef INCLUDE_TESTCASE_NS_GTEST_NSPROVIDERHELPER_H_
 #define INCLUDE_TESTCASE_NS_GTEST_NSPROVIDERHELPER_H_
 
-#include <algorithm>
-#include <iostream>
-#include <map>
-#include <utility>
-#include <vector>
-#include <mutex>
-#include <string>
-
-#include "ocstack.h"
-#include "octypes.h"
-#include "oic_string.h"
-#include "gtest_custom.h"
-#include "gtest/gtest.h"
-#include "OCPlatform.h"
-#include "CommonUtil.h"
-#include "IotivityTest_Logger.h"
+#include "NSCommonHelper.h"
 
 #include "NSCommon.h"
 #include "NSProviderInterface.h"
 
-#define WAIT_TIME_MIN 1
-#define WAIT_TIME_DEFAULT 2
-#define WAIT_TIME_MAX 10
+#define CONSUMER_SIMULATOR "./ns_consumer_simulator"
+#define CONSUMER_SIMULATOR_OPTION "./ns_consumer_simulator 0"
 
-#define CONSUMER_APP "./ns_consumer_simulator 0"
-
-using namespace OC;
-using namespace std;
-namespace PH = std::placeholders;
+#define TOPIC_NAME_PROVIDER "Test_Topic_1"
 
 class NSProviderHelper
 {
@@ -59,10 +39,13 @@ private:
     static std::mutex s_mutex;
     static NSConsumer *s_pConsumer;
     void waitForConsumer(int time);
-
-public:
     NSProviderHelper();
     ~NSProviderHelper();
+
+public:
+    static bool s_isOnSubscribeRequest;
+    static bool s_isOnProviderSyncInfo;
+    static string s_consumerID;
 
     /**
      * @brief   Function is for getting singleton instance of NSProviderHelper
@@ -88,9 +71,18 @@ public:
 
     /**
      * @brief   Get consumer from callback
-     * @return  NSConsumer
+     * @return  consumerID
+     */
+    string getConsumerID();
+
+    /**
+     * @brief   Get consumer from callback
+     * @return  consumer
      */
     NSConsumer* getConsumer();
+
+    bool printProviderTopicList(NSTopicLL *topics);
+
 };
 
 #endif /* INCLUDE_TESTCASE_NS_GTEST_NSPROVIDERHELPER_H_ */

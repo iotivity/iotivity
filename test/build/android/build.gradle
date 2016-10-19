@@ -116,6 +116,7 @@ def reModuleBuildFileDir = "${moduleBuildFileDir}/re/junit/build.gradle"
 def pmModuleBuildFileDir = "${moduleBuildFileDir}/pm/junit/build.gradle"
 def caModuleBuildFileDir = "${moduleBuildFileDir}/ca/junit/build.gradle"
 def riModuleBuildFileDir = "${moduleBuildFileDir}/ri/junit/build.gradle"
+def nsModuleBuildFileDir = "${moduleBuildFileDir}/ns/junit/build.gradle"
 
 if(project.hasProperty('app')){
     def testAppBaseDirectory = "${secTestRootDirectoryFromBuild}/src/iBtestapp/modules"
@@ -125,6 +126,7 @@ if(project.hasProperty('app')){
     reModuleBuildFileDir = "${testAppBaseDirectory}/re/android/build.gradle"
     caModuleBuildFileDir = "${testAppBaseDirectory}/ca/android/build.gradle"
     riModuleBuildFileDir = "${testAppBaseDirectory}/ri/android/build.gradle"
+    nsModuleBuildFileDir = "${testAppBaseDirectory}/ns/android/build.gradle"
 }
 
 ext.easySetupNDkBuildDir = "${iotivityRootDirectoryFromBuild}/service/easy-setup/mediator/richsdk/android"
@@ -218,20 +220,29 @@ task esWL(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFil
 }
 
 /*
- * task to build pm 
+ * task to build pm
 */
 task pm(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile']) {
     buildFile = pmModuleBuildFileDir
     tasks = ['pmbuild']
-    startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()   
+    startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
 }
 
 /*
- * task to build re utc 
+ * task to build re utc
 */
 task re(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile']) {
     buildFile = reModuleBuildFileDir
     tasks = ['rebuild']
+    startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
+}
+
+/*
+ * task to build ns
+*/
+task ns(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile']) {
+    buildFile = nsModuleBuildFileDir
+    tasks = ['nsbuild']
     startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
 }
 
@@ -242,7 +253,6 @@ task checkRCLibFiles {
         if( !file(rcHueBandleJar).exists() ) {
             throw new GradleException("RC Jar file does not exist in ${rcHueBandleJar}")
         }
-  
     }
 }
 
@@ -278,30 +288,30 @@ checkRCLibFiles.mustRunAfter(createRCLibrary)
 task performNDKBuild(type: Exec) {
     workingDir "ca/junit"
     commandLine "./native_build.sh"
-    args = caModuleArgs   	
+    args = caModuleArgs
 }
 
 /*
- * task to build ca 
+ * task to build ca
 */
 task ca(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile', 'performNDKBuild']) {
-    buildFile = caModuleBuildFileDir 
+    buildFile = caModuleBuildFileDir
     tasks = ['cabuild']
-    startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties() 
+    startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
 }
 
 /*
- * task to build ri 
+ * task to build ri
 */
 task ri(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile']) {
-    buildFile = riModuleBuildFileDir 
+    buildFile = riModuleBuildFileDir
     tasks = ['ribuild']
-    startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties() 
+    startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
 }
 
 /*
- * task to build all modules 
+ * task to build all modules
 */
-task all(dependsOn:['phy', 'pm', 're', 'rc', 'ca']){
+task all(dependsOn:['phy', 'pm', 're', 'rc', 'ca', 'ns']){
 
 }

@@ -22,48 +22,32 @@
 #ifndef INCLUDE_TESTCASE_NS_GTEST_NSCONSUMER_HELPER_H_
 #define INCLUDE_TESTCASE_NS_GTEST_NSCONSUMER_HELPER_H_
 
-#include <algorithm>
-#include <iostream>
-#include <map>
-#include <utility>
-#include <vector>
-#include <mutex>
-#include <string>
+#include "NSCommonHelper.h"
 
-#include "ocstack.h"
-#include "octypes.h"
-#include "oic_string.h"
-#include "gtest_custom.h"
-#include "gtest/gtest.h"
-#include "OCPlatform.h"
-#include "CommonUtil.h"
-#include "IotivityTest_Logger.h"
-
-#include "NSCommon.h"
 #include "NSConsumerInterface.h"
+#include "NSCommon.h"
 
-#define WAIT_TIME_MIN 1
-#define WAIT_TIME_DEFAULT 2
-#define WAIT_TIME_MAX 10
+#define PROVIDER_SIMULATOR "./ns_provider_simulator"
+#define PROVIDER_SIMULATOR_ALLOW "./ns_provider_simulator 0"
 
-#define PROVIDER_APP_ALLOW "./ns_provider_simulator 0"
-#define PROVIDER_APP_DENY "./ns_provider_simulator 1"
-
-using namespace OC;
-using namespace std;
-namespace PH = std::placeholders;
+#define TOPIC_NAME_2 "TESTAPP_Topic2"
 
 class NSConsumerHelper
 {
 private:
     static NSConsumerHelper* s_nsHelperInstance;
     static std::mutex s_mutex;
-    static NSProvider *s_pProvider;
     void waitForProvider(int time);
-
-public:
+    static NSMessage* s_pNotification;
     NSConsumerHelper();
     ~NSConsumerHelper();
+
+public:
+    static NSProvider *s_pProvider;
+    static bool s_isDiscovered;
+    static bool s_isTopicChanged;
+    static bool s_isConsumerAllowed;
+    static bool s_isNotificationPosted;
 
     /**
      * @brief   Function is for getting singleton instance of NSConsumerHelper
@@ -104,6 +88,10 @@ public:
      * @return  NSResult as string
      */
     string getResultString(NSResult result);
+
+    bool printTopicList(NSTopicLL *topics);
+
+    NSMessage* getNotificationMessage();
 };
 
 #endif /* INCLUDE_TESTCASE_NS_GTEST_NSCONSUMER_HELPER_H_ */

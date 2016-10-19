@@ -24,6 +24,11 @@
 NSConsumerHelper* NSConsumerHelper::s_nsHelperInstance = NULL;
 std::mutex NSConsumerHelper::s_mutex;
 NSProvider* NSConsumerHelper::s_pProvider = nullptr;
+NSMessage* NSConsumerHelper::s_pNotification = nullptr;
+bool NSConsumerHelper::s_isDiscovered;
+bool NSConsumerHelper::s_isTopicChanged;
+bool NSConsumerHelper::s_isConsumerAllowed;
+bool NSConsumerHelper::s_isNotificationPosted;
 
 NSConsumerHelper::NSConsumerHelper()
 {
@@ -67,11 +72,32 @@ void NSConsumerHelper::onProviderChanged(NSProvider * provider, NSProviderState 
     IOTIVITYTEST_LOG(INFO, "onProviderChanged() called !!");
 
     NSConsumerHelper::s_pProvider = provider;
+
+    IOTIVITYTEST_LOG(INFO, "Provider changed: %d", response);
+    IOTIVITYTEST_LOG(INFO, "Subscribed provider Id : %s", provider->providerId);
+
+    if (response == NS_DISCOVERED)
+    {
+        s_isDiscovered = true;
+        IOTIVITYTEST_LOG(INFO, "notification resource discovered\n");
+    }
+    else if (response == NS_TOPIC)
+    {
+        s_isTopicChanged = true;
+        IOTIVITYTEST_LOG(INFO, "Provider Topic Updated\n");
+    }
+    else if (response == NS_ALLOW)
+    {
+        s_isConsumerAllowed = true;
+        IOTIVITYTEST_LOG(INFO, "subscribe allowed\n");
+    }
 }
 
 void NSConsumerHelper::onNotificationPosted(NSMessage * notification)
 {
     IOTIVITYTEST_LOG(INFO, "onNotificationPosted() called !!");
+    s_isNotificationPosted = true;
+    s_pNotification = notification;
 }
 
 void NSConsumerHelper::onNotificationSync(NSSyncInfo * sync)
@@ -90,7 +116,8 @@ NSConsumerConfig NSConsumerHelper::getConsumerConfig()
     return config;
 }
 
-NSProvider* NSConsumerHelper::getProvider() {
+NSProvider* NSConsumerHelper::getProvider()
+{
     NSConsumerHelper::s_pProvider = nullptr;
 
     IOTIVITYTEST_LOG(INFO, "Getting Provider.....");
@@ -102,11 +129,14 @@ NSProvider* NSConsumerHelper::getProvider() {
     return NSConsumerHelper::s_pProvider;
 }
 
-void NSConsumerHelper::waitForProvider(int time) {
-	IOTIVITYTEST_LOG(INFO, "Waiting for provider........");
+void NSConsumerHelper::waitForProvider(int time)
+{
+    IOTIVITYTEST_LOG(INFO, "Waiting for provider........");
 
-    while(time--) {
-        if (NSConsumerHelper::s_pProvider != nullptr) {
+    while (time--)
+    {
+        if (NSConsumerHelper::s_pProvider != nullptr)
+        {
             return;
         }
 
@@ -114,8 +144,10 @@ void NSConsumerHelper::waitForProvider(int time) {
     }
 }
 
-string NSConsumerHelper::getResultString(NSResult result) {
-    switch (result) {
+string NSConsumerHelper::getResultString(NSResult result)
+{
+    switch (result)
+    {
         case NSResult::NS_OK:
             return "NS_OK";
 
@@ -132,3 +164,31 @@ string NSConsumerHelper::getResultString(NSResult result) {
             return "UNKNOWN";
     }
 }
+
+bool NSConsumerHelper::printTopicList(NSTopicLL *topics)
+{
+    IOTIVITYTEST_LOG(INFO, "Printing topic list");
+    bool isTopicFound = false;
+    if (topics)
+    {
+        NSTopicLL *topicIter = topics;
+        while (topicIter)
+        {
+            IOTIVITYTEST_LOG(INFO, "\t Topic Name: %s \t Topic State: %d", topicIter->topicName,
+                    topicIter->state);
+            if (strcmp(topicIter->topicName, TOPIC_NAME_2) == 0)
+            {
+                isTopicFound = true;
+            }
+            topicIter = topicIter->next;
+        }
+    }
+
+    return isTopicFound;
+}
+
+NSMessage* NSConsumerHelper::getNotificationMessage()
+{
+    return s_pNotification;
+}
+

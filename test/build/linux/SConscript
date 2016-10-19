@@ -127,20 +127,23 @@ if 'sm' in target_service or 'all' in target_service:
 if 'ricpp' in target_service or 'all' in target_service:
     SConscript('SConscriptRICPP', exports = 'env_linux')
     SConscript('SConscriptRIApp', exports = 'env_linux')
-    
+
 if 'ricsdk' in target_service or 'all' in target_service:
     SConscript('SConscriptRICSDK', exports = 'env_linux')
     SConscript('SConscriptRIApp', exports = 'env_linux')
 
-if 'ns' in target_service or 'all' in target_service:
-    SConscript('SConscriptNS', exports = 'env_linux')
+if 'nscsdk' in target_service or 'all' in target_service:
+    SConscript('SConscriptNSCSDK', exports = 'env_linux')
+
+if 'nscpp' in target_service or 'all' in target_service:
+    SConscript('SConscriptNSCPP', exports = 'env_linux')
 
 if 'es' in target_service or 'all' in target_service:
     SConscript('SConscriptES', exports = 'env_linux')
 
 if 'cloud' in target_service or 'all' in target_service:
     SConscript('SConscriptIC', exports = 'env_linux')
-    
+
 if 'iut' in target_service or 'all' in target_service:
     SConscript('SConscriptIUT', exports = 'env_linux')
 

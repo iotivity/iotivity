@@ -24,7 +24,10 @@
 NSProviderHelper* NSProviderHelper::s_nsHelperInstance = NULL;
 std::mutex NSProviderHelper::s_mutex;
 NSConsumer* NSProviderHelper::s_pConsumer = nullptr;
-const string notificationInfo = "OCF_NOTIFICATION";
+string NSProviderHelper::s_consumerID = "";
+const string NOTIFICATION_INFO = "OCF_NOTIFICATION";
+bool NSProviderHelper::s_isOnSubscribeRequest = false;
+bool NSProviderHelper::s_isOnProviderSyncInfo = false;
 
 NSProviderHelper::NSProviderHelper()
 {
@@ -66,13 +69,17 @@ NSProviderHelper* NSProviderHelper::getInstance(void)
 void NSProviderHelper::onProviderSyncInfo(NSSyncInfo* syncInfo)
 {
     IOTIVITYTEST_LOG(INFO, "onProviderSyncInfoCallback() called !!");
+    s_isOnProviderSyncInfo = true;
 }
 
 void NSProviderHelper::onSubscribeRequest(NSConsumer* consumer)
 {
-    IOTIVITYTEST_LOG(INFO, "onSubscribeRequestCallback() called !!");
+    IOTIVITYTEST_LOG(INFO, "onSubscribeRequestCallback() called with consumerID %s !!",
+            string(consumer->consumerId).c_str());
 
     NSProviderHelper::s_pConsumer = consumer;
+    NSProviderHelper::s_consumerID = consumer->consumerId;
+    s_isOnSubscribeRequest = true;
 }
 
 NSProviderConfig NSProviderHelper::getProviderConfig(bool policy)
@@ -82,27 +89,63 @@ NSProviderConfig NSProviderHelper::getProviderConfig(bool policy)
     config.subRequestCallback = &NSProviderHelper::onSubscribeRequest;
     config.syncInfoCallback = &NSProviderHelper::onProviderSyncInfo;
     config.subControllability = policy;
-    config.userInfo = OICStrdup(notificationInfo.c_str());
+    config.userInfo = OICStrdup(NOTIFICATION_INFO.c_str());
 
     return config;
 }
 
-NSConsumer* NSProviderHelper::getConsumer() {
+NSConsumer* NSProviderHelper::getConsumer()
+{
     NSProviderHelper::s_pConsumer = nullptr;
+    NSProviderHelper::s_consumerID = "";
 
     waitForConsumer(WAIT_TIME_MAX);
 
     return NSProviderHelper::s_pConsumer;
 }
 
-void NSProviderHelper::waitForConsumer(int time) {
+string NSProviderHelper::getConsumerID()
+{
+    NSProviderHelper::s_pConsumer = nullptr;
+    NSProviderHelper::s_consumerID = "";
+
+    waitForConsumer(WAIT_TIME_MAX);
+
+    return NSProviderHelper::s_consumerID;
+}
+
+void NSProviderHelper::waitForConsumer(int time)
+{
     IOTIVITYTEST_LOG(INFO, "Waiting for consumer........");
 
-    while(time--) {
-        if (NSProviderHelper::s_pConsumer != nullptr) {
+    while (time--)
+    {
+        if (NSProviderHelper::s_pConsumer != nullptr)
+        {
             return;
         }
 
         CommonUtil::waitInSecond(WAIT_TIME_MIN);
     }
+}
+
+bool NSProviderHelper::printProviderTopicList(NSTopicLL *topics)
+{
+    bool isTopicFound = false;
+    if (topics)
+    {
+        NSTopicLL *topicIter = topics;
+        while (topicIter)
+        {
+            IOTIVITYTEST_LOG(INFO, "Topic Name: %s \t Topic State: %d", topicIter->topicName,
+                    topicIter->state);
+            if (strcmp(topicIter->topicName, TOPIC_NAME_PROVIDER) == 0)
+            {
+                isTopicFound = true;
+            }
+            topicIter = topicIter->next;
+        }
+    }
+
+    return isTopicFound;
 }

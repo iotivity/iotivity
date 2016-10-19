@@ -25,12 +25,14 @@ class NSConsumerTest_btc: public ::testing::Test
 {
 protected:
     NSConsumerHelper* m_pNSHelper;
+    NSCommonHelper* m_pCommonHelper;
 
     virtual void SetUp()
     {
         CommonUtil::runCommonTCSetUpPart();
 
         m_pNSHelper = NSConsumerHelper::getInstance();
+        m_pCommonHelper = NSCommonHelper::getInstance();
     }
 
     virtual void TearDown()
@@ -73,6 +75,7 @@ TEST_F(NSConsumerTest_btc, StartConsumer_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSConsumerTest_btc, StopConsumer_SRC_P)
 {
+    NSStartConsumer(m_pNSHelper->getConsumerConfig());
     EXPECT_EQ(NSStopConsumer(), NS_OK);
 }
 #endif
@@ -116,18 +119,14 @@ TEST_F(NSConsumerTest_btc, RescanProvider_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSConsumerTest_btc, Subscribe_SRC_P)
 {
-#ifdef __LINUX__
-    CommonUtil::launchApp(PROVIDER_APP_ALLOW);
+    CommonUtil::launchApp(PROVIDER_SIMULATOR_ALLOW);
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
-#endif
 
     NSProvider *provider = m_pNSHelper->getProvider();
 
     EXPECT_EQ(NS_OK, NSSubscribe(provider->providerId));
 
-#ifdef __LINUX__
-    CommonUtil::killApp(PROVIDER_APP_ALLOW);
-#endif
+    CommonUtil::killApp(PROVIDER_SIMULATOR);
 }
 #endif
 
@@ -168,18 +167,14 @@ TEST_F(NSConsumerTest_btc, Subscribe_NV_N)
 #if defined(__LINUX__)
 TEST_F(NSConsumerTest_btc, GetProvider_SRC_P)
 {
-#ifdef __LINUX__
-    CommonUtil::launchApp(PROVIDER_APP_ALLOW);
+    CommonUtil::launchApp(PROVIDER_SIMULATOR_ALLOW);
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
-#endif
 
     NSProvider *provider = m_pNSHelper->getProvider();
 
     EXPECT_NE(nullptr, NSConsumerGetProvider(provider->providerId));
 
-#ifdef __LINUX__
-    CommonUtil::killApp(PROVIDER_APP_ALLOW);
-#endif
+    CommonUtil::killApp(PROVIDER_SIMULATOR);
 }
 #endif
 
@@ -220,10 +215,8 @@ TEST_F(NSConsumerTest_btc, GetProvider_USV_N)
 #if defined(__LINUX__)
 TEST_F(NSConsumerTest_btc, GetTopicList_SRC_P)
 {
-#ifdef __LINUX__
-    CommonUtil::launchApp(PROVIDER_APP_ALLOW);
+    CommonUtil::launchApp(PROVIDER_SIMULATOR_ALLOW);
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
-#endif
 
     NSProvider *provider = m_pNSHelper->getProvider();
 
@@ -231,9 +224,7 @@ TEST_F(NSConsumerTest_btc, GetTopicList_SRC_P)
 
     EXPECT_NE(NULL, topics);
 
-#ifdef __LINUX__
-    CommonUtil::killApp(PROVIDER_APP_ALLOW);
-#endif
+    CommonUtil::killApp(PROVIDER_SIMULATOR);
 }
 #endif
 
@@ -278,10 +269,8 @@ TEST_F(NSConsumerTest_btc, GetTopicList_USV_N)
 #if defined(__LINUX__)
 TEST_F(NSConsumerTest_btc, UpdateTopicList_SRC_P)
 {
-#ifdef __LINUX__
-    CommonUtil::launchApp(PROVIDER_APP_ALLOW);
+    CommonUtil::launchApp(PROVIDER_SIMULATOR_ALLOW);
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
-#endif
 
     NSProvider *provider = m_pNSHelper->getProvider();
 
@@ -290,11 +279,9 @@ TEST_F(NSConsumerTest_btc, UpdateTopicList_SRC_P)
     NSResult result = NSConsumerUpdateTopicList(provider->providerId, topics);
 
     EXPECT_NE(NS_OK, result) << "Expected: Not " << m_pNSHelper->getResultString(NS_OK)
-            << " Actual: " << m_pNSHelper->getResultString(result) << endl;
+    << " Actual: " << m_pNSHelper->getResultString(result) << endl;
 
-#ifdef __LINUX__
-    CommonUtil::killApp(PROVIDER_APP_ALLOW);
-#endif
+    CommonUtil::killApp(PROVIDER_SIMULATOR);
 }
 #endif
 
@@ -315,10 +302,8 @@ TEST_F(NSConsumerTest_btc, UpdateTopicList_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSConsumerTest_btc, UpdateTopicList_NV_N)
 {
-#ifdef __LINUX__
-    CommonUtil::launchApp(PROVIDER_APP_ALLOW);
+    CommonUtil::launchApp(PROVIDER_SIMULATOR_ALLOW);
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
-#endif
 
     NSProvider *provider = m_pNSHelper->getProvider();
 
@@ -327,10 +312,8 @@ TEST_F(NSConsumerTest_btc, UpdateTopicList_NV_N)
     NSResult result = NSConsumerUpdateTopicList(provider->providerId, topics);
 
     EXPECT_NE(NS_OK, result) << "Expected: Not " << m_pNSHelper->getResultString(NS_OK)
-            << " Actual: " << m_pNSHelper->getResultString(result) << endl;
+    << " Actual: " << m_pNSHelper->getResultString(result) << endl;
 
-#ifdef __LINUX__
-    CommonUtil::killApp(PROVIDER_APP_ALLOW);
-#endif
+    CommonUtil::killApp(PROVIDER_SIMULATOR);
 }
 #endif

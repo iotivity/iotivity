@@ -171,6 +171,7 @@ TEST_F(NSProviderTest_btc, SendMessage_SRC_P)
     msg->contentText = OICStrdup(m_MsgBody.c_str());
     msg->sourceName = OICStrdup(m_SourceName.c_str());
 
+    NSStartProvider(m_pNSHelper->getProviderConfig(true));
     EXPECT_EQ(NS_OK, NSSendMessage(msg));
 }
 #endif
@@ -215,21 +216,15 @@ TEST_F(NSProviderTest_btc, AcceptSubscriptionAllow_SRC_P)
 {
     NSStartProvider(m_pNSHelper->getProviderConfig(true));
 
-#ifdef __LINUX__
-    CommonUtil::launchApp(CONSUMER_APP);
+    CommonUtil::launchApp(CONSUMER_SIMULATOR_OPTION);
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
-#endif
 
     bool isAccept = true;
-    NSConsumer *consumer = m_pNSHelper->getConsumer();
+    string consumerID = m_pNSHelper->getConsumerID();
 
-#ifdef __LINUX__
-    CommonUtil::killApp(CONSUMER_APP);
-#endif
+    CommonUtil::killApp(CONSUMER_SIMULATOR);
 
-    ASSERT_NE(nullptr, consumer);
-
-    EXPECT_EQ(NS_OK, NSAcceptSubscription(consumer->consumerId, isAccept));
+    EXPECT_EQ(NS_OK, NSAcceptSubscription(consumerID.c_str(), isAccept));
 }
 #endif
 
@@ -253,21 +248,15 @@ TEST_F(NSProviderTest_btc, AcceptSubscriptionDeny_SRC_P)
 {
     NSStartProvider(m_pNSHelper->getProviderConfig(true));
 
-#ifdef __LINUX__
-    CommonUtil::launchApp(CONSUMER_APP);
+    CommonUtil::launchApp(CONSUMER_SIMULATOR_OPTION);
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
-#endif
 
     bool isAccept = false;
-    NSConsumer *consumer = m_pNSHelper->getConsumer();
+    string consumerID = m_pNSHelper->getConsumerID();
 
-#ifdef __LINUX__
-    CommonUtil::killApp(CONSUMER_APP);
-#endif
+    CommonUtil::killApp(CONSUMER_SIMULATOR);
 
-    EXPECT_NE(nullptr, consumer);
-
-    EXPECT_EQ(NS_OK, NSAcceptSubscription(consumer->consumerId, isAccept));
+    EXPECT_EQ(NS_OK, NSAcceptSubscription(consumerID.c_str(), isAccept));
 }
 #endif
 
@@ -306,6 +295,7 @@ TEST_F(NSProviderTest_btc, AcceptSubscription_NV_N)
 #if defined(__LINUX__)
 TEST_F(NSProviderTest_btc, SendSyncInfoAsUnread_SRC_P)
 {
+    NSStartProvider(m_pNSHelper->getProviderConfig(true));
     EXPECT_EQ(NS_OK, NSProviderSendSyncInfo(m_MessageId, NSSyncType::NS_SYNC_UNREAD));
 }
 #endif
@@ -324,6 +314,7 @@ TEST_F(NSProviderTest_btc, SendSyncInfoAsUnread_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSProviderTest_btc, SendSyncInfoAsRead_SRC_P)
 {
+    NSStartProvider(m_pNSHelper->getProviderConfig(true));
     EXPECT_EQ(NS_OK, NSProviderSendSyncInfo(m_MessageId, NSSyncType::NS_SYNC_READ));
 }
 #endif
@@ -342,6 +333,7 @@ TEST_F(NSProviderTest_btc, SendSyncInfoAsRead_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSProviderTest_btc, SendSyncInfoAsDeleted_SRC_P)
 {
+    NSStartProvider(m_pNSHelper->getProviderConfig(true));
     EXPECT_EQ(NS_OK, NSProviderSendSyncInfo(m_MessageId, NSSyncType::NS_SYNC_DELETED));
 }
 #endif
@@ -360,6 +352,7 @@ TEST_F(NSProviderTest_btc, SendSyncInfoAsDeleted_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSProviderTest_btc, NSRegisterTopic_SRC_P)
 {
+    NSStartProvider(m_pNSHelper->getProviderConfig(true));
     EXPECT_EQ(NS_OK, NSProviderRegisterTopic(m_TopicName.c_str()));
 }
 #endif
@@ -378,6 +371,7 @@ TEST_F(NSProviderTest_btc, NSRegisterTopic_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSProviderTest_btc, NSUnregisterTopic_SRC_P)
 {
+    NSStartProvider(m_pNSHelper->getProviderConfig(true));
     NSProviderRegisterTopic(m_TopicName.c_str());
 
     EXPECT_EQ(NS_OK, NSProviderUnregisterTopic(m_TopicName.c_str()));
@@ -398,8 +392,9 @@ TEST_F(NSProviderTest_btc, NSUnregisterTopic_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSProviderTest_btc, NSUnregisterTopic_USV_N)
 {
+    NSStartProvider(m_pNSHelper->getProviderConfig(true));
     EXPECT_NE(NS_OK, NSProviderUnregisterTopic(m_TopicName.c_str()))
-            << "Unregister topic success without registering.";
+    << "Unregister topic success without registering.";
 }
 #endif
 
@@ -426,21 +421,46 @@ TEST_F(NSProviderTest_btc, NSSetConsumerTopic_SRC_P)
     NSStartProvider(m_pNSHelper->getProviderConfig(true));
     NSProviderRegisterTopic(m_TopicName.c_str());
 
-#ifdef __LINUX__
-    CommonUtil::launchApp(CONSUMER_APP);
+    CommonUtil::launchApp(CONSUMER_SIMULATOR_OPTION);
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
+
+    string consumerID = m_pNSHelper->getConsumerID();
+
+    CommonUtil::killApp(CONSUMER_SIMULATOR);
+
+    EXPECT_EQ(NS_OK, NSProviderSetConsumerTopic(consumerID.c_str(), m_TopicName.c_str()));
+}
 #endif
 
-    bool isAccept = false;
-    NSConsumer *consumer = m_pNSHelper->getConsumer();
+/**
+ * @since 2016-10-06
+ * @see NSResult NSStartProvider(NSProviderConfig config)
+ * @see NSResult NSStartConsumer(NSConsumerConfig config)
+ * @see NSResult NSSubscribe(const char * providerId)
+ * @objective Test 'NSProviderSetConsumerTopic' function with positive basic way
+ * @target NSResult NSProviderSetConsumerTopic(const char * consumerId, const char * topicName)
+ * @test_data consumerId from callback, topic = "Test Topic"
+ * @pre_condition 1. Start Provider
+ *                2. Start Consumer
+ *                3. Subscribe consumer
+ *                4. Get consumer from callback
+ * @procedure Perform NSProviderSetConsumerTopic() API
+ * @post_condition Stop Consumer
+ * @expected The API should not return NS_OK
+ **/
+#if defined(__LINUX__)
+TEST_F(NSProviderTest_btc, NSSetConsumerTopic_USV_N)
+{
+    NSStartProvider(m_pNSHelper->getProviderConfig(true));
 
-#ifdef __LINUX__
-    CommonUtil::killApp(CONSUMER_APP);
-#endif
+    CommonUtil::launchApp(CONSUMER_SIMULATOR_OPTION);
+    CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
-    ASSERT_NE(nullptr, consumer);
+    string consumerID = m_pNSHelper->getConsumerID();
 
-    EXPECT_EQ(NS_OK, NSProviderSetConsumerTopic(consumer->consumerId, m_TopicName.c_str()));
+    CommonUtil::killApp(CONSUMER_SIMULATOR);
+
+    EXPECT_NE(NS_OK, NSProviderSetConsumerTopic(consumerID.c_str(), m_TopicName.c_str()));
 }
 #endif
 
@@ -491,23 +511,52 @@ TEST_F(NSProviderTest_btc, NSUnsetConsumerTopic_SRC_P)
     NSStartProvider(m_pNSHelper->getProviderConfig(true));
     NSProviderRegisterTopic(m_TopicName.c_str());
 
-#ifdef __LINUX__
-    CommonUtil::launchApp(CONSUMER_APP);
+    CommonUtil::launchApp(CONSUMER_SIMULATOR_OPTION);
     CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
+
+    string consumerID = m_pNSHelper->getConsumerID();
+
+    CommonUtil::killApp(CONSUMER_SIMULATOR);
+
+    NSProviderSetConsumerTopic(consumerID.c_str(), m_TopicName.c_str());
+
+    EXPECT_EQ(NS_OK, NSProviderUnsetConsumerTopic(consumerID.c_str(), m_TopicName.c_str()));
+}
 #endif
 
-    bool isAccept = false;
-    NSConsumer *consumer = m_pNSHelper->getConsumer();
+/**
+ * @since 2016-09-08
+ * @see NSResult NSStartProvider(NSProviderConfig config)
+ * @see NSResult NSStartConsumer(NSConsumerConfig config)
+ * @see NSResult NSSubscribe(const char * providerId)
+ * @see NSResult NSProviderSetConsumerTopic(const char * consumerId, const char * topicName)
+ * @objective Test 'NSProviderUnsetConsumerTopic' function with positive basic way
+ * @target NSResult NSProviderUnsetConsumerTopic(const char * consumerId, const char * topicName)
+ * @test_data consumerId from callback, topic = "Test Topic"
+ * @pre_condition 1. Start Provider as Provider Acceptor
+ *                2. Register topic
+ *                3. Start Consumer
+ *                4. Subscribe consumer
+ *                5. Get consumer from callback
+ *                6. Perform NSProviderSetConsumerTopic() API
+ * @procedure Perform NSProviderUnsetConsumerTopic() API
+ * @post_condition Stop Consumer
+ * @expected The API should return NS_OK
+ **/
+#if defined(__LINUX__)
+TEST_F(NSProviderTest_btc, NSUnsetConsumerTopic_USV_N)
+{
+    NSStartProvider(m_pNSHelper->getProviderConfig(true));
+    NSProviderRegisterTopic(m_TopicName.c_str());
 
-#ifdef __LINUX__
-    CommonUtil::killApp(CONSUMER_APP);
-#endif
+    CommonUtil::launchApp(CONSUMER_SIMULATOR_OPTION);
+    CommonUtil::waitInSecond(WAIT_TIME_DEFAULT);
 
-    ASSERT_NE(nullptr, consumer);
+    string consumerID = m_pNSHelper->getConsumerID();
 
-    NSProviderSetConsumerTopic(consumer->consumerId, m_TopicName.c_str());
+    CommonUtil::killApp(CONSUMER_SIMULATOR);
 
-    EXPECT_EQ(NS_OK, NSProviderUnsetConsumerTopic(consumer->consumerId, m_TopicName.c_str()));
+    EXPECT_NE(NS_OK, NSProviderUnsetConsumerTopic(consumerID.c_str(), m_TopicName.c_str()));
 }
 #endif
 
@@ -532,7 +581,6 @@ TEST_F(NSProviderTest_btc, NSUnsetConsumerTopic_NV_N)
 #endif
 
 /**
- /**
  * @since 2016-09-07
  * @see None
  * @objective Test 'NSProviderGetConsumerTopics' function with positive basic way
@@ -566,6 +614,9 @@ TEST_F(NSProviderTest_btc, NSGetConsumerTopics_NV_N)
 #if defined(__LINUX__)
 TEST_F(NSProviderTest_btc, NSGetTopics_SRC_P)
 {
+    NSProviderConfig config = m_pNSHelper->getProviderConfig(true);
+    NSResult result = NSStartProvider(config);
+
     NSProviderRegisterTopic(m_TopicName.c_str());
 
     EXPECT_NE(NULL, NSProviderGetTopics());
@@ -586,6 +637,9 @@ TEST_F(NSProviderTest_btc, NSGetTopics_SRC_P)
 #if defined(__LINUX__)
 TEST_F(NSProviderTest_btc, NSGetTopics_USV_N)
 {
+    NSProviderConfig config = m_pNSHelper->getProviderConfig(true);
+    NSResult result = NSStartProvider(config);
+
     EXPECT_EQ(NULL, NSProviderGetTopics());
 }
 #endif
