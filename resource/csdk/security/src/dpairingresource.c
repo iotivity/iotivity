@@ -635,7 +635,7 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
             uint8_t *payload = NULL;
             if (OC_STACK_OK == AclToCBORPayload(acl, &payload, &size))
             {
-                InstallNewACL(payload, size);
+                AppendACL(payload, size);
                 OICFree(payload);
             }
             DeleteACLList(acl);

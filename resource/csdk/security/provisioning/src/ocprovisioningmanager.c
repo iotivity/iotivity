@@ -272,6 +272,17 @@ OCStackResult OCProvisionACL(void* ctx, const OCProvisionDev_t *selectedDeviceIn
 }
 
 /**
+ * function to save ACL which has several ACE into Acl of SVR.
+ *
+ * @param acl ACL to be saved in Acl of SVR.
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCSaveACL(const OicSecAcl_t* acl)
+{
+    return SRPSaveACL(acl);
+}
+
+/**
  * this function requests CRED information to resource.
  *
  * @param[in] ctx Application context would be returned in result callback.

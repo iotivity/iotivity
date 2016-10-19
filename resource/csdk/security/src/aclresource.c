@@ -2441,7 +2441,7 @@ void printACL(const OicSecAcl_t* acl)
     }
 }
 
-OCStackResult InstallNewACL2(const OicSecAcl_t* acl)
+OCStackResult AppendACL2(const OicSecAcl_t* acl)
 {
     OCStackResult ret = OC_STACK_ERROR;
 
@@ -2480,12 +2480,83 @@ OCStackResult InstallNewACL2(const OicSecAcl_t* acl)
     return ret;
 }
 
-OCStackResult InstallNewACL(const uint8_t *cborPayload, const size_t size)
+OCStackResult AppendACL(const uint8_t *cborPayload, const size_t size)
 {
     // Convert CBOR format to ACL data. This will also validate the ACL data received.
     OicSecAcl_t* newAcl = CBORPayloadToAcl(cborPayload, size);
 
-    return InstallNewACL2(newAcl);
+    return AppendACL2(newAcl);
+}
+
+OCStackResult InstallACL(const OicSecAcl_t* acl)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+
+    if (!acl)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    bool isNewAce = true;
+    OicSecAce_t* existAce = NULL;
+    OicSecAce_t* newAce = NULL;
+    OicSecAce_t* tempAce1 = NULL;
+    OicSecAce_t* tempAce2 = NULL;
+    OicSecAcl_t* newInstallAcl = NULL;
+
+    LL_FOREACH_SAFE(acl->aces, newAce, tempAce1)
+    {
+        isNewAce = true;
+        LL_FOREACH_SAFE(gAcl->aces, existAce, tempAce2)
+        {
+            if(IsSameACE(newAce, existAce))
+            {
+                OIC_LOG(DEBUG, TAG, "Duplicated ACE dectected.");
+                ret = OC_STACK_DUPLICATE_REQUEST;
+                isNewAce = false;
+            }
+        }
+        if(isNewAce)
+        {
+            // Append new ACE to existing ACL
+            OIC_LOG(DEBUG, TAG, "NEW ACE dectected.");
+
+            OicSecAce_t* insertAce = DuplicateACE(newAce);
+            if(insertAce)
+            {
+                OIC_LOG(DEBUG, TAG, "Appending new ACE..");
+
+                if (!newInstallAcl)
+                {
+                    newInstallAcl = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
+                    if (NULL == newInstallAcl)
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to acllocate ACL");
+                        return OC_STACK_NO_MEMORY;
+                    }
+                }
+                LL_PREPEND(newInstallAcl->aces, insertAce);
+            }
+            else
+            {
+                OIC_LOG(ERROR, TAG, "Failed to duplicate ACE");
+                DeleteACLList(newInstallAcl);
+                return OC_STACK_ERROR;
+            }
+        }
+    }
+
+    if (newInstallAcl)
+    {
+        ret = AppendACL2(newInstallAcl);
+        if (OC_STACK_OK != ret)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to append ACL");
+        }
+        OICFree(newInstallAcl);
+    }
+
+    return ret;
 }
 
 /**

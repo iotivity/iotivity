@@ -957,6 +957,17 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     return OC_STACK_OK;
 }
 
+OCStackResult SRPSaveACL(const OicSecAcl_t *acl)
+{
+    OIC_LOG(DEBUG, TAG, "IN SRPSaveACL");
+    VERIFY_NON_NULL(TAG, acl, ERROR,  OC_STACK_INVALID_PARAM);
+
+    OCStackResult res =  InstallACL(acl);
+
+    OIC_LOG(DEBUG, TAG, "OUT SRPSaveACL");
+    return res;
+}
+
 /**
  * Internal Function to store results in result array during Direct-Pairing provisioning.
  */

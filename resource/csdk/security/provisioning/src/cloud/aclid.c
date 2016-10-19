@@ -193,7 +193,7 @@ static OCStackResult handleAclGetInfoResponse(void *ctx, void **data, OCClientRe
 
     printACL(acl);
 
-    result = InstallNewACL2(acl);
+    result = InstallACL(acl);
     if (result != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "Can't update ACL resource");

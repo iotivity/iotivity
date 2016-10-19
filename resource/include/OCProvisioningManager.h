@@ -208,6 +208,14 @@ namespace OC
                     std::string uuid,
                     ResultCallBack resultCallback);
 
+            /**
+             * API to save ACL which has several ACE into Acl of SVR.
+             *
+             * @param acl ACL to be saved in Acl of SVR.
+             * @return  OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult saveACL(const OicSecAcl_t* acl);
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
             /**
              * API to save Trust certificate chain into Cred of SVR.
