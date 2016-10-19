@@ -214,7 +214,7 @@ int main(void)
                     std::cout << "2. Send Delete Sync" << std::endl;
                     int syn = 0;
                     while(!(std::cin >> syn)){
-                        cout << "Bad value!";
+                        std::cout << "Bad value!" <<std::endl;;
                         std::cin.clear();
                         std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
                     }

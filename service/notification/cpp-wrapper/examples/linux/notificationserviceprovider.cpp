@@ -35,7 +35,7 @@
 #define TAG "NotiProviderWrapperExample"
 using namespace std;
 using namespace OIC::Service;
-std::string mainConsumer;
+std::vector<std::string> discoveredConsumers;
 uint64_t mainMessageId = 0;
 
 extern char *strdup(const char *s);
@@ -65,10 +65,7 @@ void subscribeRequestCallback(OIC::Service::NSConsumer *consumer)
     std::cout << "consumer requested to subscribe" << std::endl;
 
     std::cout << "Consumer Device ID: " << consumer->getConsumerId() << std::endl;
-    if (mainConsumer.empty())
-    {
-        mainConsumer = consumer->getConsumerId();
-    }
+    discoveredConsumers.push_back(consumer->getConsumerId());
     consumer->acceptSubscription(true);
 }
 
@@ -78,6 +75,30 @@ void syncCallback(OIC::Service::NSSyncInfo *sync)
     std::cout << "Sync ID : " <<  sync->getMessageId() << std::endl;
     std::cout << "Provider ID : " <<  sync->getProviderId() << std::endl;
     std::cout << "Sync State: " << (int) sync->getState() << std::endl;
+}
+
+OIC::Service::NSConsumer *printAvailableConsumers()
+{
+    std::cout << "Choose the Consumer ID for operation" << std::endl;
+    int pos = 1;
+    unsigned int option = 0;
+    for(auto it: discoveredConsumers)
+    {
+        std::cout << pos << ". " << it <<std::endl;
+        pos++;
+    }
+    while(!(std::cin >> option)){
+        std::cout << "Bad value!" <<std::endl;;
+        std::cin.clear();
+        std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+    option--;
+    if (option > discoveredConsumers.size())
+        return NULL;
+    std::string consumerId = discoveredConsumers[option];
+    OIC::Service::NSConsumer *consumer = NSProviderService::getInstance()->getConsumer(
+                                            consumerId);
+    return consumer;
 }
 
 int main()
@@ -149,8 +170,7 @@ int main()
             case 3:
                 {
                     std::cout << "Allow Subscription" << std::endl;
-                    OIC::Service::NSConsumer *consumer = NSProviderService::getInstance()->getConsumer(
-                                                            mainConsumer);
+                    OIC::Service::NSConsumer *consumer = printAvailableConsumers();
                     if (consumer != nullptr)
                     {
                         std::cout << "ALLOW" << std::endl;
@@ -161,8 +181,7 @@ int main()
             case 4:
                 {
                     std::cout << "Deny Subscription" << std::endl;
-                    OIC::Service::NSConsumer *consumer = NSProviderService::getInstance()->getConsumer(
-                                                            mainConsumer);
+                    OIC::Service::NSConsumer *consumer = printAvailableConsumers();
                     if (consumer != nullptr)
                     {
                         std::cout << "DENY" << std::endl;
@@ -237,7 +256,7 @@ int main()
                     std::cout << "2. Send Delete Sync" << std::endl;
                     int syn = 0;
                     while(!(std::cin >> syn)){
-                        cout << "Bad value!";
+                        std::cout << "Bad value!" <<std::endl;;
                         std::cin.clear();
                         std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
                     }
@@ -286,7 +305,7 @@ int main()
             case 9:
                 {
                     std::cout <<  "SetTopic" << std::endl;
-                    OIC::Service::NSConsumer *consumer = NSProviderService::getInstance()->getConsumer(mainConsumer);
+                    OIC::Service::NSConsumer *consumer = printAvailableConsumers();
                     if (consumer != nullptr)
                     {
                         consumer->setTopic("OCF_TOPIC1");
@@ -299,7 +318,7 @@ int main()
             case 10:
                 {
                     std::cout <<  "UnsetTopic" << std::endl;
-                    OIC::Service::NSConsumer *consumer = NSProviderService::getInstance()->getConsumer(mainConsumer);
+                    OIC::Service::NSConsumer *consumer = printAvailableConsumers();
                     if (consumer != nullptr)
                     {
                         consumer->unsetTopic("OCF_TOPIC1");
@@ -312,7 +331,7 @@ int main()
             case 11:
                 {
                     std::cout <<  "GetConsumerTopicList" << std::endl;
-                    OIC::Service::NSConsumer *consumer = NSProviderService::getInstance()->getConsumer(mainConsumer);
+                    OIC::Service::NSConsumer *consumer = printAvailableConsumers();
                     if (consumer != nullptr)
                     {
                         auto nsTopics = consumer->getConsumerTopicList();
