@@ -287,7 +287,7 @@ OCStackResult CreateKeepAliveResource()
                                             KEEPALIVE_RESOURCE_URI,
                                             NULL,
                                             NULL,
-                                            OC_DISCOVERABLE);
+                                            OC_RES_PROP_NONE);
 
     if (OC_STACK_OK != result)
     {
