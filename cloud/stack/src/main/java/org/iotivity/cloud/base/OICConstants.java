@@ -31,6 +31,8 @@ public class OICConstants {
 
     public static final String RS_INTERFACE                  = "if";
 
+    public static final String RS_RESOURCE_TYPE              = "rt";
+
     /* resource url for account */
     public static final String ACCOUNT_URI                   = "account";
 
