@@ -44,7 +44,8 @@
 #define TAG  "JSON2CBOR"
 #define MAX_RANGE   ((size_t)-1)
 //SVR database buffer block size
-static const size_t DB_FILE_SIZE_BLOCK = 1023;
+
+#define DB_FILE_SIZE_BLOCK 1023
 
 static OicSecPstat_t* JSONToPstatBin(const char * jsonStr);
 static OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr);
@@ -941,7 +942,7 @@ static OicSecSvc_t* JSONToSvcBin(const char * jsonStr)
             }
 
             cJSON *jsonObj = NULL;
-            unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
+            unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {0};
             uint32_t outLen = 0;
             B64Result b64Ret = B64_OK;
 
