@@ -39,6 +39,11 @@ import org.iotivity.cloud.mqserver.kafka.KafkaConsumerWrapper;
 import org.iotivity.cloud.mqserver.kafka.KafkaProducerWrapper;
 import org.iotivity.cloud.util.Cbor;
 
+/**
+ * 
+ * This class provides a set of APIs to handle requests to MessageQueue Topic.
+ *
+ */
 public class Topic {
 
     private TopicManager           mTopicManager = null;
@@ -88,18 +93,36 @@ public class Topic {
         mLatestData = mCbor.encodingPayloadToCbor(data);
     }
 
+    /**
+     * API to get name of the topic
+     * 
+     * @return name of the topic
+     */
     public String getName() {
         return mName;
     }
 
+    /**
+     * API to get type of the topic
+     * 
+     * @return type of the topic
+     */
     public String getType() {
         return mType;
     }
 
+    /**
+     * API to handle request to create subtopic
+     * 
+     * @param request
+     *            received request for subtopic creation
+     * 
+     * @return response of subtopic creation
+     */
     public IResponse handleCreateSubtopic(IRequest request) {
 
-        String newTopicName = request.getUriPathSegments()
-                .get(request.getUriPathSegments().size() - 1);
+        String newTopicName = request.getUriPathSegments().get(
+                request.getUriPathSegments().size() - 1);
 
         String newTopicType = new String();
 
@@ -128,6 +151,16 @@ public class Topic {
         return response;
     }
 
+    /**
+     * API to handle request to remove subtopic
+     * 
+     * @param request
+     *            received request for subtopic removal
+     * @param topicName
+     *            subtopic name to remove
+     * 
+     * @return response of subtopic removal
+     */
     public IResponse handleRemoveSubtopic(IRequest request, String topicName) {
 
         Topic targetTopic = getSubtopic(topicName);
@@ -149,6 +182,16 @@ public class Topic {
         return MessageBuilder.createResponse(request, ResponseStatus.DELETED);
     }
 
+    /**
+     * API to handle request to subscribe the topic
+     * 
+     * @param srcDevice
+     *            device that sent request for topic subscription
+     * @param request
+     *            received request for topic subscription
+     * 
+     * @return response of topic subscription
+     */
     public IResponse handleSubscribeTopic(Device srcDevice, IRequest request) {
 
         // get latest data from kafka if consumer started for the first time
@@ -166,20 +209,28 @@ public class Topic {
         }
 
         synchronized (mSubscribers) {
-            mSubscribers.put(request.getRequestId(),
-                    new TopicSubscriber(srcDevice, request));
+            mSubscribers.put(request.getRequestId(), new TopicSubscriber(
+                    srcDevice, request));
         }
 
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
                 ContentFormat.APPLICATION_CBOR, mLatestData);
     }
 
+    /**
+     * API to handle request to unsubscribe the topic
+     * 
+     * @param request
+     *            received request for topic unsubscription
+     * 
+     * @return response of topic unsubscription
+     */
     public IResponse handleUnsubscribeTopic(IRequest request) {
 
         synchronized (mSubscribers) {
 
-            TopicSubscriber subscriber = mSubscribers
-                    .get(request.getRequestId());
+            TopicSubscriber subscriber = mSubscribers.get(request
+                    .getRequestId());
 
             mSubscribers.remove(subscriber.mRequest.getRequestId());
 
@@ -194,6 +245,14 @@ public class Topic {
                 ContentFormat.APPLICATION_CBOR, mLatestData);
     }
 
+    /**
+     * API to handle request to publish message to the topic
+     * 
+     * @param request
+     *            received request for message publication
+     * 
+     * @return response of message publication
+     */
     public IResponse handlePublishMessage(IRequest request) {
         byte[] payload = request.getPayload();
 
@@ -217,6 +276,14 @@ public class Topic {
         return MessageBuilder.createResponse(request, ResponseStatus.CHANGED);
     }
 
+    /**
+     * API to handle request to read latest message in the topic
+     * 
+     * @param request
+     *            received request for reading latest message in topic
+     * 
+     * @return response of reading latest message in topic
+     */
     public IResponse handleReadMessage(IRequest request) {
         // if consumer is not started, get data from kafka broker
         if (mKafkaConsumerOperator.consumerStarted() == false) {
@@ -232,13 +299,21 @@ public class Topic {
                 ContentFormat.APPLICATION_CBOR, mLatestData);
     }
 
+    /**
+     * API to close connection of Kafka producer and consumer
+     */
     public void cleanup() {
 
         mKafkaProducerOperator.closeConnection();
         mKafkaConsumerOperator.closeConnection();
     }
 
-    // callback from Kafka Consumer
+    /**
+     * callback from Kafka Consumer to get published message
+     * 
+     * @param message
+     *            published message
+     */
     public void onMessagePublished(byte[] message) {
 
         mLatestData = message;
@@ -261,8 +336,8 @@ public class Topic {
         synchronized (mSubscribers) {
             for (TopicSubscriber subscriber : mSubscribers.values()) {
 
-                subscriber.mSubscriber.sendResponse(
-                        MessageBuilder.createResponse(subscriber.mRequest,
+                subscriber.mSubscriber.sendResponse(MessageBuilder
+                        .createResponse(subscriber.mRequest,
                                 ResponseStatus.CONTENT,
                                 ContentFormat.APPLICATION_CBOR, mLatestData));
             }

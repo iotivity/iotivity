@@ -148,32 +148,84 @@ public class Acl {
 
     @SuppressWarnings("unchecked")
 
-    public void addACE(List<HashMap<String, Object>> aclist) {
+        public List<HashMap<String, Object>> addACE(List<HashMap<String, Object>> aclist) {
+            Log.v("IN addACE");
+            HashMap<String, Object> hashmap = AccountDBManager.getInstance()
+                .selectRecord(Constants.ACL_TABLE, getCondition()).get(0);
+            if (hashmap == null) {
+                throw new BadRequestException("aclid is invalid");
+            }
+            List<HashMap<String, Object>> aclDbList = (List<HashMap<String, Object>>) hashmap
+                .get(Constants.REQ_ACL_LIST);
 
+
+            ListIterator<HashMap<String, Object>> iterator = aclist.listIterator();
+            while (iterator.hasNext()) {
+                HashMap<String, Object> aceMap = iterator.next();
+                if (aceMap.get(Constants.KEYFIELD_ACE_SUBJECT_ID)
+                        .equals(hashmap.get(Constants.REQ_OWNER_ID))) {
+                    // remove current iterator
+                    iterator.remove();
+                    continue;
+                }
+                aceMap.put(Constants.REQ_ACE_ID, UUID.randomUUID().toString());
+            }
+
+            List<HashMap<String, Object>> newAcList = new ArrayList<HashMap<String, Object>>(
+                    aclist);
+
+            if (aclDbList != null) {
+                newAcList.addAll(aclDbList);
+            }
+            hashmap.put(Constants.REQ_ACL_LIST, newAcList);
+            AccountDBManager.getInstance().updateRecord(Constants.ACL_TABLE,
+                    hashmap);
+            notifyToSubscriber(getResponsePayload(true));
+            Log.v("OUT addACE");
+            return aclist;
+        }
+
+    public HashMap<String, Object> getACE(String aceid) {
         HashMap<String, Object> hashmap = AccountDBManager.getInstance()
             .selectRecord(Constants.ACL_TABLE, getCondition()).get(0);
+        if (hashmap == null) {
+            throw new BadRequestException("aclid is invalid");
+        }
 
         List<HashMap<String, Object>> aclDbList = (List<HashMap<String, Object>>) hashmap
             .get(Constants.REQ_ACL_LIST);
-
-
-        for(HashMap<String, Object> ace : aclist) {
-            ace.put(Constants.REQ_ACE_ID, UUID.randomUUID().toString());
+        ListIterator<HashMap<String, Object>> iterator = aclDbList
+            .listIterator();
+        while (iterator.hasNext()) {
+            HashMap<String, Object> aceMap = iterator.next();
+            if (aceMap.get(Constants.REQ_ACE_ID).equals(aceid)) {
+                // Return the current element from the iterator
+                return aceMap;
+            }
         }
-
-        List<HashMap<String, Object>> newAcList = new ArrayList<HashMap<String, Object>>(
-                aclist);
-
-        if (aclDbList != null) {
-            newAcList.addAll(aclDbList);
-        }
-        hashmap.put(Constants.REQ_ACL_LIST, newAcList);
-        AccountDBManager.getInstance().updateRecord(Constants.ACL_TABLE,
-                hashmap);
-        notifyToSubscriber(getResponsePayload(true));
+        throw new BadRequestException("aceid is invalid");
     }
+    public boolean isValidAceId(String aceid) {
+        HashMap<String, Object> hashmap = AccountDBManager.getInstance()
+            .selectRecord(Constants.ACL_TABLE, getCondition()).get(0);
+        if (hashmap == null) {
+            return false;
+        }
 
+        List<HashMap<String, Object>> aclDbList = (List<HashMap<String, Object>>) hashmap
+            .get(Constants.REQ_ACL_LIST);
+        ListIterator<HashMap<String, Object>> iterator = aclDbList
+            .listIterator();
+        while (iterator.hasNext()) {
+            HashMap<String, Object> aceMap = iterator.next();
+            if (aceMap.get(Constants.REQ_ACE_ID).equals(aceid)) {
+                return true;
+            }
+        }
+        return false;
+    }
     public void updateACE(String aceid, HashMap<String, Object> ace) {
+        Log.v("IN updateACE");
 
         HashMap<String, Object> hashmap = AccountDBManager.getInstance()
             .selectRecord(Constants.ACL_TABLE, getCondition()).get(0);
@@ -195,6 +247,8 @@ public class Acl {
         hashmap.put(Constants.REQ_ACL_LIST, aclDbList);
         AccountDBManager.getInstance().updateRecord(Constants.ACL_TABLE, hashmap);
         notifyToSubscriber(getResponsePayload(true));
+        Log.v("OUT updateACE");
+
     }
 
     public void deleteACE(String aceid) {

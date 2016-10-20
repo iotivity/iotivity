@@ -23,12 +23,11 @@ package org.iotivity.cloud.accountserver.resources.credprov.cert;
 
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
-import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.jce.ECNamedCurveTable;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.iotivity.cloud.accountserver.x509.cert.CertificateBuilder;
 import org.iotivity.cloud.accountserver.x509.cert.CertificateExtension;
+import org.iotivity.cloud.util.Log;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -42,6 +41,10 @@ import java.security.cert.X509Certificate;
 
 import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.*;
 
+/**
+ * This class is used for loading and storing key store.
+ * Also it generates CA certificate and puts it to keystore.
+ */
 public final class CertificateStorage {
 
     /**
@@ -51,78 +54,62 @@ public final class CertificateStorage {
     private static final String PASSWORD = PROPERTIES.getProperty("password");
 
     /**
-     * Keystore object for save, get data from keystore.
+     * Root private key is used for signing certificates ans CRLs.
+     */
+    public static PrivateKey ROOT_PRIVATE_KEY;
+
+    /**
+     * Root certificate, is used for isssuing low level certificates.
+     */
+    public static X509Certificate ROOT_CERTIFICATE;
+
+    /**
+     * Keystore object to save, retrieve ca private key and ca certificate from keystore.
      */
     private static KeyStore keyStore;
 
-    public static PrivateKey ROOT_PRIVATE_KEY;
-
-    public static X509Certificate ROOT_CERTIFICATE;
-
+    /**
+     * Private contructor to make this class non-instantiable.
+     */
     private CertificateStorage() {
         throw new AssertionError();
     }
 
     /**
-     * Init KeyStore. If it does not exists, create it and push to KEYSTORE_FILE.
+     * Loads keystore with null paramaters.
+     * Stores it empty version. Generates CA certificate and private key and
+     * saves it to key storage.
      */
     static void init() throws GeneralSecurityException, IOException, OperatorCreationException {
-        Files.createDirectories(Paths.get("keystore"));
-        keyStore = load(null, null);
-        store();
-        CertificateStorage.generateCACertificate();
-        CertificateStorage.saveCertificatePrivateKey();
+        Files.createDirectories(Paths.get(KEYSTORE_DIR));
+        keyStore = KeyStore.getInstance(KEYSTORE_TYPE, SECURITY_PROVIDER);
+        keyStore.load(null, null);
+        generate();
     }
 
     /**
-     * Load KeyStore with default keystore file and password.
+     * Loads KeyStore intance from created keystore file and with default password.
      *
      * @return KeyStore instance.
      */
-    public static void load() throws GeneralSecurityException, IOException {
-        keyStore = load(new FileInputStream(KEYSTORE_FILE), PASSWORD.toCharArray());
-        initRoot();
+    static void load() throws GeneralSecurityException, IOException {
+        keyStore = KeyStore.getInstance(KEYSTORE_TYPE, SECURITY_PROVIDER);
+        try (InputStream inputStream = new FileInputStream(KEYSTORE_FILE)) {
+            keyStore.load(inputStream, PASSWORD.toCharArray());
+        } catch (IOException ioException) {
+            Log.e(ioException.getMessage());
+        }
+        ROOT_PRIVATE_KEY = (PrivateKey) keyStore.getKey(CA_ALIAS, PASSWORD.toCharArray());
+        ROOT_CERTIFICATE = (X509Certificate) keyStore.getCertificate(CA_ALIAS);
     }
 
     /**
-     * Loads KeyStore with defined inputStream object and password.
-     *
-     * @param is       specified inputStream which contains keystore bytes.
-     * @param password specified password for opening keystore.
-     * @return KeyStore instance.
-     */
-    private static KeyStore load(InputStream is, char[] password) throws IOException, GeneralSecurityException {
-        KeyStore keyStore = KeyStore.getInstance(KEYSTORE_TYPE, BouncyCastleProvider.PROVIDER_NAME);
-        keyStore.load(is, password);
-        return keyStore;
-    }
-
-
-    /**
-     * Stores keyStore to default file KEYSTORE_FILE with default password.
-     */
-    static void store() throws IOException, GeneralSecurityException {
-        store(keyStore, new FileOutputStream(KEYSTORE_FILE), PASSWORD.toCharArray());
-    }
-
-    /**
-     * Stores KeyStore to file outputstream with specifie password.
-     *
-     * @param keyStore
-     */
-    private static void store(KeyStore keyStore, FileOutputStream out, char[] password) throws GeneralSecurityException,
-            IOException {
-        keyStore.store(out, password);
-        out.close();
-    }
-
-    /**
-     * Generates X509Certificate  with PublicKey and PrivateKey
+     * Generates CA X509Certificate and private key and stores it to key storage.
      *
      * @return certificate and private key
      */
-    private static void generateCACertificate() throws GeneralSecurityException,
-            OperatorCreationException, CertIOException {
+    private static void generate() throws GeneralSecurityException,
+            OperatorCreationException, IOException {
         if (ROOT_PRIVATE_KEY == null) {
             KeyPairGenerator g = KeyPairGenerator.getInstance(KEY_GENERATOR_ALGORITHM, SECURITY_PROVIDER);
             g.initialize(ECNamedCurveTable.getParameterSpec(CURVE), new SecureRandom());
@@ -131,21 +118,21 @@ public final class CertificateStorage {
             ROOT_CERTIFICATE = new CertificateBuilder(CA_ISSUER, pair.getPublic(),
                     new CertificateExtension(Extension.basicConstraints, false,
                             new BasicConstraints(true))).build();
+            keyStore.setCertificateEntry(CA_ALIAS, ROOT_CERTIFICATE);
+            keyStore.setKeyEntry(CA_ALIAS, ROOT_PRIVATE_KEY, PASSWORD.toCharArray(),
+                    new Certificate[]{ROOT_CERTIFICATE});
+            store();
         }
     }
 
     /**
-     * Stores certificate and private key to keystore.
+     * Stores keyStore instance to default keystore file with default password.
      */
-    private static void saveCertificatePrivateKey() throws GeneralSecurityException, IOException {
-        keyStore.setCertificateEntry(CA_ALIAS, ROOT_CERTIFICATE);
-        keyStore.setKeyEntry(CA_ALIAS, ROOT_PRIVATE_KEY, PASSWORD.toCharArray(),
-                new Certificate[]{ROOT_CERTIFICATE});
-        store();
-    }
-
-    private static void initRoot() throws GeneralSecurityException {
-        ROOT_PRIVATE_KEY = (PrivateKey) keyStore.getKey(CA_ALIAS, PASSWORD.toCharArray());
-        ROOT_CERTIFICATE = (X509Certificate) keyStore.getCertificate(CA_ALIAS);
+    private static void store() throws IOException, GeneralSecurityException {
+        try (FileOutputStream out = new FileOutputStream(KEYSTORE_FILE)) {
+            keyStore.store(out, PASSWORD.toCharArray());
+        } catch (IOException ioException) {
+            Log.e(ioException.getMessage());
+        }
     }
 }

@@ -28,15 +28,19 @@ import java.util.List;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
-import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.rdserver.Constants;
-import org.iotivity.cloud.rdserver.resources.presence.ResPresenceManager;
+import org.iotivity.cloud.rdserver.resources.presence.PresenceManager;
 
+/**
+ * 
+ * This class provides a set of APIs handle requests about resource presence
+ *
+ */
 public class ResPresenceResource extends Resource {
 
     public ResPresenceResource() {
@@ -51,7 +55,7 @@ public class ResPresenceResource extends Resource {
 
         switch (request.getMethod()) {
             case GET:
-                response = handleRegisterRequest(srcDevice, request);
+                response = handleGetRequest(srcDevice, request);
                 break;
 
             default:
@@ -62,23 +66,17 @@ public class ResPresenceResource extends Resource {
         srcDevice.sendResponse(response);
     }
 
-    public IResponse handleRegisterRequest(Device srcDevice, IRequest request)
+    private IResponse handleGetRequest(Device srcDevice, IRequest request)
             throws ServerException {
 
         HashMap<String, List<String>> queryMap = request.getUriQueryMap();
 
-        if (queryMap == null) {
-            throw new PreconditionFailedException("query is null");
-        }
+        checkQueryException(Arrays.asList(Constants.DEVICE_ID), queryMap);
 
         List<String> deviceList = queryMap.get(Constants.DEVICE_ID);
 
-        if (deviceList == null) {
-            throw new PreconditionFailedException("deviceList is null");
-        }
-
-        ResPresenceManager.getInstance().addObserver(srcDevice, request,
-                deviceList);
+        PresenceManager.getInstance().subscribePresence(srcDevice, request,
+                deviceList, Constants.RESOURCE_PRESENCE);
 
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT);
     }

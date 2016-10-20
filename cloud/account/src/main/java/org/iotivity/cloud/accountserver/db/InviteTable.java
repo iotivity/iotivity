@@ -30,28 +30,66 @@ public class InviteTable {
     public InviteTable() {
     }
 
+    /**
+     * API to initialize an instance of the group invitation table
+     * 
+     * @param inviteUser
+     *            user ID who requests the group invitation for the
+     *            "invitedUser"
+     * @param gid
+     *            group ID to be invited
+     * @param invitedUser
+     *            invited user ID
+     */
     public InviteTable(String inviteUser, String gid, String invitedUser) {
         this.inviteUser = inviteUser;
         this.gid = gid;
         this.invitedUser = invitedUser;
     }
 
+    /**
+     * API to get the group ID to be invited
+     * 
+     * @return group ID
+     */
     public String getGid() {
         return gid;
     }
 
+    /**
+     * API to set the group ID to invite
+     * 
+     * @param gid
+     *            group ID
+     */
     public void setGid(String gid) {
         this.gid = gid;
     }
 
+    /**
+     * API to get the user ID who requests the group invitation
+     * 
+     * @return user ID
+     */
     public String getInviteUser() {
         return inviteUser;
     }
 
+    /**
+     * API to set the user ID to be invited
+     * 
+     * @param inviteUser
+     *            user ID to be invited
+     */
     public void setInviteUser(String inviteUser) {
         this.inviteUser = inviteUser;
     }
 
+    /**
+     * API to get the user Id to be invited
+     * 
+     * @return user ID to be invited
+     */
     public String getInvitedUser() {
         return invitedUser;
     }

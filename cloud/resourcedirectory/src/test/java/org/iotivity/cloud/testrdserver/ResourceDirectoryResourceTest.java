@@ -49,14 +49,14 @@ public class ResourceDirectoryResourceTest {
     private Cbor<HashMap<String, Object>> mCbor       = new Cbor<>();
     private ResourceDirectoryResource     mRDResource = null;
     private CoapDevice                    mockDevice  = null;
-    CountDownLatch                        latch       = null;
-    IResponse                             res;
+    CountDownLatch                        mLatch      = null;
+    IResponse                             mResponse;
 
     @Before
     public void setUp() throws Exception {
-        res = null;
+        mResponse = null;
         mockDevice = mock(CoapDevice.class);
-        latch = new CountDownLatch(1);
+        mLatch = new CountDownLatch(1);
         mRDResource = new ResourceDirectoryResource();
         // callback mock
         Mockito.doAnswer(new Answer<Object>() {
@@ -64,8 +64,8 @@ public class ResourceDirectoryResourceTest {
             public CoapResponse answer(InvocationOnMock invocation)
                     throws Throwable {
                 CoapResponse resp = (CoapResponse) invocation.getArguments()[0];
-                latch.countDown();
-                res = resp;
+                mLatch.countDown();
+                mResponse = resp;
                 return resp;
             }
         }).when(mockDevice).sendResponse(Mockito.anyObject());
@@ -83,15 +83,15 @@ public class ResourceDirectoryResourceTest {
                 RDServerTestUtils.makePublishRequest());
         // assertion: if the response status is "CHANGED" according to
         // the resource publication
-        assertTrue(latch.await(2L, SECONDS));
-        assertTrue(methodCheck(res, ResponseStatus.CHANGED));
+        assertTrue(mLatch.await(2L, SECONDS));
+        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
         // assertion : if the mandatory properties are received in the
         // response
-        assertTrue(linkCheck(res, "href"));
-        assertTrue(linkCheck(res, "rt"));
-        assertTrue(linkCheck(res, "if"));
-        assertTrue(linkCheck(res, "ins"));
-        assertTrue(hashmapCheck(res, "di"));
+        assertTrue(linkCheck(mResponse, "href"));
+        assertTrue(linkCheck(mResponse, "rt"));
+        assertTrue(linkCheck(mResponse, "if"));
+        assertTrue(linkCheck(mResponse, "ins"));
+        assertTrue(hashmapCheck(mResponse, "di"));
     }
 
     @Test
@@ -102,8 +102,8 @@ public class ResourceDirectoryResourceTest {
         mRDResource.onDefaultRequestReceived(mockDevice, request);
         // assertion: if the response status is "DELETED" according to the
         // resource publication
-        assertTrue(latch.await(2L, SECONDS));
-        assertTrue(methodCheck(res, ResponseStatus.DELETED));
+        assertTrue(mLatch.await(2L, SECONDS));
+        assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
     }
 
     @Test
@@ -116,8 +116,8 @@ public class ResourceDirectoryResourceTest {
         mRDResource.onDefaultRequestReceived(mockDevice, request);
         // assertion: if the response status is "DELETED" according to the
         // resource publication
-        assertTrue(latch.await(2L, SECONDS));
-        assertTrue(methodCheck(res, ResponseStatus.DELETED));
+        assertTrue(mLatch.await(2L, SECONDS));
+        assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
     }
 
     @Test
@@ -130,8 +130,8 @@ public class ResourceDirectoryResourceTest {
         mRDResource.onDefaultRequestReceived(mockDevice, request);
         // assertion: if the response status is "DELETED" according to the
         // resource publication
-        assertTrue(latch.await(2L, SECONDS));
-        assertTrue(methodCheck(res, ResponseStatus.DELETED));
+        assertTrue(mLatch.await(2L, SECONDS));
+        assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
     }
 
     @Test
@@ -145,8 +145,8 @@ public class ResourceDirectoryResourceTest {
         mRDResource.onDefaultRequestReceived(mockDevice, request);
         // assertion: if the response status is "DELETED" according to the
         // resource publication
-        assertTrue(latch.await(2L, SECONDS));
-        assertTrue(methodCheck(res, ResponseStatus.DELETED));
+        assertTrue(mLatch.await(2L, SECONDS));
+        assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
     }
 
     private boolean hashmapCheck(IResponse response, String propertyName) {

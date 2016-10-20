@@ -54,6 +54,12 @@ import org.iotivity.cloud.mqserver.Constants;
 import org.iotivity.cloud.mqserver.topic.Topic;
 import org.iotivity.cloud.util.Log;
 
+/**
+ *
+ * This class provides a set of APIs to use Kafka consumer APIs for receiving
+ * messages.
+ *
+ */
 public class KafkaConsumerWrapper {
 
     private String            mTopicName         = null;
@@ -88,11 +94,21 @@ public class KafkaConsumerWrapper {
                 false);
     }
 
+    /**
+     * API to check if Kafka consumer is started
+     * 
+     * @return returns true if Kafka consumer started, otherwise false
+     */
     public boolean consumerStarted() {
         return mConsumerStarted;
     }
 
-    // TODO exception handling
+    /**
+     * API to subscribe Kafka topic to receive messages
+     * 
+     * @return returns true if the topic is successfully subscribed, otherwise
+     *         false
+     */
     public boolean subscribeTopic() {
 
         Log.d("kafka subscribeTopic - " + mTopicName);
@@ -148,6 +164,12 @@ public class KafkaConsumerWrapper {
         return true;
     }
 
+    /**
+     * API to unsubscribe Kafka topic to stop receiving messages
+     * 
+     * @return returns true if the topic is successfully unsubscribed, otherwise
+     *         false
+     */
     public boolean unsubscribeTopic() {
 
         Log.d("kafka unsubscribeTopic - " + mTopicName);
@@ -168,6 +190,9 @@ public class KafkaConsumerWrapper {
         return true;
     }
 
+    /**
+     * API to close Kafka consumer connection
+     */
     public void closeConnection() {
 
         if (mConsumerStarted == true) {
@@ -178,6 +203,11 @@ public class KafkaConsumerWrapper {
         mZkClient.close();
     }
 
+    /**
+     * API to get all messages from Kafka topic
+     * 
+     * @return returns the list of messages published to the topic
+     */
     public ArrayList<byte[]> getMessages() {
 
         Log.d("kafka get all messages - " + mTopicName);

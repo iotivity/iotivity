@@ -74,10 +74,6 @@ public class AccountServer {
 
         serverSystem.addResource(new AclResource());
 
-        serverSystem.addResource(new CrlResource());
-
-        serverSystem.addResource(new AclResource());
-
         serverSystem.addResource(new InviteResource());
 
         serverSystem.addServer(new CoapServer(

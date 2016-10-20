@@ -87,16 +87,34 @@ public class AclManager {
         mAcls.remove(aclid);
     }
 
-    public void addAclACE(String aclid, List<HashMap<String, Object>> aclist) {
-        getAcl(aclid).addACE(aclist);
+    public List<HashMap<String, Object>> addAclACE(String aclid, List<HashMap<String, Object>> aclist) {
+        return getAcl(aclid).addACE(aclist);
+    }
+
+    public HashMap<String, Object> getAclACE(String aclid, String aceid) {
+        return getAcl(aclid).getACE(aceid);
     }
 
     public void updateACE(String aclid, String aceid, HashMap<String, Object> ace) {
-        getAcl(aclid).updateACE(aceid, ace);
+        if(getAcl(aclid).isValidAceId(aceid))
+        {
+            getAcl(aclid).updateACE(aceid, ace);
+        }
+        else
+        {
+            throw new BadRequestException("Invalid parameters");
+        }
     }
 
     public void deleteAclACE(String aclid, String aceid) {
-        getAcl(aclid).deleteACE(aceid);
+        if(getAcl(aclid).isValidAceId(aceid))
+        {
+            getAcl(aclid).deleteACE(aceid);
+        }
+        else
+        {
+            throw new BadRequestException("Invalid parameters");
+        }
     }
     public void deleteAclAclist(String aclid) {
         getAcl(aclid).deleteAclist();

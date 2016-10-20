@@ -49,6 +49,7 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.util.Cbor;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -104,7 +105,8 @@ public class AccountResourceTest {
         }).when(mMockDevice).sendResponse(Mockito.anyObject());
     }
 
-    public static void resetAccountDatabase() throws Exception {
+    @After
+    public void resetAccountDatabase() throws Exception {
         MongoDB mongoDB = new MongoDB(Constants.DB_NAME);
         mongoDB.createTable(Constants.USER_TABLE);
         mongoDB.createTable(Constants.TOKEN_TABLE);
@@ -178,6 +180,7 @@ public class AccountResourceTest {
                 .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
         HashMap<String, Object> getUserInfo = ((ArrayList<HashMap<String, Object>>) payloadData
                 .get("ulist")).get(0);
+
         assertTrue(getUserInfo.get("uid").equals(uuid));
     }
 

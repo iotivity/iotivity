@@ -102,3 +102,8 @@ group_invite_src = [
         'group_invite/group_invite.cpp'
         ]
 cc_sample_app_env.Program('group_invite_sample', group_invite_src)
+
+group_light_share_src = [
+        'group_invite/group_light_share.cpp'
+        ]
+cc_sample_app_env.Program('group_light_share_sample', group_light_share_src)

@@ -32,6 +32,11 @@ import org.iotivity.cloud.rdserver.resources.presence.device.DevicePresenceResou
 import org.iotivity.cloud.rdserver.resources.presence.resource.ResPresenceResource;
 import org.iotivity.cloud.util.Log;
 
+/**
+ *
+ * This class is in charge of running of resource directory server.
+ *
+ */
 public class ResourceDirectoryServer {
 
     public static void main(String[] args) throws Exception {
@@ -40,8 +45,7 @@ public class ResourceDirectoryServer {
         System.out.println("-----RD SERVER-----");
 
         if (args.length != 2) {
-            Log.e("coap server port and TLS mode required\n"
-                    + "ex) 5684 0\n");
+            Log.e("coap server port and TLS mode required\n" + "ex) 5684 0\n");
             return;
         }
 

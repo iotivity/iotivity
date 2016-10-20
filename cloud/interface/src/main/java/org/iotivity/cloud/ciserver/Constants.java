@@ -50,5 +50,5 @@ public class Constants extends OICConstants {
 
     public static final String REQ_LINKS           = "links";
     public static final String REQ_HREF            = "href";
-    public static final String REQ_CRL = "crl";
+    public static final String REQ_CRL             = "crl";
 }

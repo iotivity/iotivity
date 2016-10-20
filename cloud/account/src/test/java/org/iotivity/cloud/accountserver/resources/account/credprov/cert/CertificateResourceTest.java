@@ -21,15 +21,12 @@
  */
 package org.iotivity.cloud.accountserver.resources.account.credprov.cert;
 
-import org.bouncycastle.util.encoders.Base64;
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.db.TokenTable;
-import org.iotivity.cloud.accountserver.resources.account.credprov.crl.CrlResourceTest;
 import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants;
 import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateResource;
 import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateStorage;
-import org.iotivity.cloud.accountserver.resources.credprov.crl.CrlResource;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.accountserver.x509.cert.Utility;
 import org.iotivity.cloud.base.OICConstants;
@@ -56,37 +53,31 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.math.BigInteger;
-import java.security.cert.*;
-import java.util.*;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
-import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.*;
-import static org.junit.Assert.*;
+import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.CERTIFICATE_FACTORY;
+import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.KEYSTORE_FILE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 public class CertificateResourceTest {
 
-    private static final String COMMON_NAME = "OU=OCF Device CA, O=Samsung, C=KR, CN=uuid:B371C481-38E6-4D47-8320-7688D8A5B58C";
-
+    public static final String COMMON_NAME = "OU=OCF Device CA, O=Samsung, C=KR, CN=uuid:B371C481-38E6-4D47-8320-7688D8A5B58C";
+    public static final String DEVICE_ID = "B371C481-38E6-4D47-8320-7688D8A5B58C";
     private static final String CERTIFICATE_URI = OICConstants.CREDPROV_CERT_FULL_URI;
-
-    private static final String DEVICE_ID = "B371C481-38E6-4D47-8320-7688D8A5B58C";
-
+    private static CertificateResource certificateResource = new CertificateResource();
+    private static TypeCastingManager<TokenTable> castingManager = new TypeCastingManager<>();
     private CoapDevice mMockDevice = mock(CoapDevice.class);
-
     private Cbor<HashMap<String, Object>> mCbor = new Cbor<>();
-
     private IResponse mResponse = null;
-
     private CountDownLatch mLatch = new CountDownLatch(
             1);
-
-    private static CertificateResource certificateResource = new CertificateResource();
-
     private byte[] csr;
-
-    private static TypeCastingManager<TokenTable> castingManager = new TypeCastingManager<>();
 
     static void createToken() {
         TokenTable certificateTable = new TokenTable();
@@ -99,6 +90,7 @@ public class CertificateResourceTest {
     @AfterClass
     public static void after() {
         KEYSTORE_FILE.delete();
+        AccountDBManager.getInstance().deleteRecord(Constants.CERTIFICATE_TABLE, new HashMap<>());
     }
 
     @BeforeClass
@@ -142,8 +134,6 @@ public class CertificateResourceTest {
                 Object[] args = invocation.getArguments();
                 CoapResponse resp = (CoapResponse) args[0];
                 mResponse = resp;
-
-
                 mLatch.countDown();
                 return null;
             }
@@ -247,67 +237,6 @@ public class CertificateResourceTest {
         assertTrue(methodCheck(mResponse, ResponseStatus.BAD_REQUEST));
     }
 
-    Map<String, Object> payloadData;
-
-    Map<String, Object> crlMap;
-
-    byte[] data;
-
-    X509CRL crlX509;
-
-    @Test
-    public void testReIssueBase64() throws CRLException, CertificateException {
-        IRequest request = csrRequest(DEVICE_ID, CertificateConstants.BASE_64, Base64.encode(csr), RequestMethod.POST, true);
-        certificateResource.onDefaultRequestReceived(mMockDevice, request);
-        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
-
-        Map<String, Object> payloadData = mCbor
-                .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
-        List<BigInteger> serialNumbers = new ArrayList<>();
-        Map<String, Object> certMap = (Map<String, Object>) payloadData.get(Constants.CERT);
-        InputStream in = new ByteArrayInputStream(Base64.decode((byte[]) certMap.get(Constants.DATA)));
-        X509Certificate personaleCert = (X509Certificate) CERTIFICATE_FACTORY.generateCertificate(in);
-        serialNumbers.add(personaleCert.getSerialNumber());
-        serialNumbers.add(personaleCert.getSerialNumber().subtract(BigInteger.ONE));
-
-        request = csrRequest(DEVICE_ID, CertificateConstants.BASE_64, Base64.encode(csr), RequestMethod.POST, true);
-        certificateResource.onDefaultRequestReceived(mMockDevice, request);
-        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
-        payloadData = mCbor
-                .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
-        certMap = (Map<String, Object>) payloadData.get(Constants.CERT);
-        in = new ByteArrayInputStream(Base64.decode((byte[]) certMap.get(Constants.DATA)));
-        personaleCert = (X509Certificate) CERTIFICATE_FACTORY.generateCertificate(in);
-        serialNumbers.add(personaleCert.getSerialNumber());
-
-
-        request = csrRequest(DEVICE_ID, CertificateConstants.BASE_64, Base64.encode(csr), RequestMethod.POST, true);
-        certificateResource.onDefaultRequestReceived(mMockDevice, request);
-        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
-        getTestMethodName();
-        request = CrlResourceTest.crlRequest(RequestMethod.GET, CrlResourceTest.CRL_URI, CrlResourceTest.CRL_URI_QUERY);
-        CrlResource crlResource = new CrlResource();
-        crlResource.onDefaultRequestReceived(mMockDevice, request);
-        assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
-        hashmapCheck(mResponse, Constants.ENCODING);
-        hashmapCheck(mResponse, Constants.DATA);
-        if (mResponse.getPayload() != null) {
-            payloadData = mCbor
-                    .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
-            crlMap = (Map<String, Object>) payloadData.get(Constants.REQ_CRL);
-            data = (byte[]) crlMap.get(Constants.DATA);
-            crlX509 = (X509CRL) CERTIFICATE_FACTORY.generateCRL(new ByteArrayInputStream(data));
-        }
-
-        assertEquals(DER, crlMap.get(Constants.ENCODING));
-        assertNotNull(data);
-        Set<? extends X509CRLEntry> entries = crlX509.getRevokedCertificates();
-        Iterator<? extends X509CRLEntry> iterator = entries.iterator();
-        while (iterator.hasNext()) {
-            assertTrue(serialNumbers.contains(iterator.next().getSerialNumber()));
-        }
-    }
-
     @Test
     public void testMethodNotAllowed() {
         IRequest request = csrRequest(DEVICE_ID, CertificateConstants.DER, csr, RequestMethod.GET, true);
@@ -364,7 +293,24 @@ public class CertificateResourceTest {
         return request;
     }
 
-    private static class CSR {
+    private boolean methodCheck(IResponse response,
+                                ResponseStatus responseStatus) {
+        if (responseStatus == response.getStatus())
+            return true;
+        else
+            return false;
+    }
+
+    private boolean hashmapCheck(IResponse response, String propertyName) {
+        HashMap<String, Object> payloadData = mCbor
+                .parsePayloadFromCbor(response.getPayload(), HashMap.class);
+        if (payloadData.containsKey(propertyName))
+            return true;
+        else
+            return false;
+    }
+
+    public static class CSR {
         String encoding;
 
         byte[] data;
@@ -392,23 +338,6 @@ public class CertificateResourceTest {
                     ", data=" + Arrays.toString(data) +
                     '}';
         }
-    }
-
-    private boolean methodCheck(IResponse response,
-                                ResponseStatus responseStatus) {
-        if (responseStatus == response.getStatus())
-            return true;
-        else
-            return false;
-    }
-
-    private boolean hashmapCheck(IResponse response, String propertyName) {
-        HashMap<String, Object> payloadData = mCbor
-                .parsePayloadFromCbor(response.getPayload(), HashMap.class);
-        if (payloadData.containsKey(propertyName))
-            return true;
-        else
-            return false;
     }
 
 }

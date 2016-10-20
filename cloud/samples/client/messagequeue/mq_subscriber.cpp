@@ -229,51 +229,78 @@ int main(int argc, char *argv[])
     {
         cin >> cmd;
 
-        QueryParamsMap query;
-        OCRepresentation rep;
-
-        switch (cmd[0])
+        try
         {
-            case '0':
-                gTopicList.clear();
-                cout << "Discovering topics" << endl;
-                result = g_mqBrokerResource->discoveryMQTopics(query, &discoverTopicCB, QualityOfService::LowQos);
-                break;
+            QueryParamsMap query;
+            OCRepresentation rep;
 
-            case '1':
-                gTopicList.clear();
-                cout << "Put topic type to discover: ";
-                cin >> cmd;
-                query["rt"] = cmd;
-                result = g_mqBrokerResource->discoveryMQTopics(query, &discoverTopicCB, QualityOfService::LowQos);
-                break;
+            switch (cmd[0])
+            {
+                case '0':
+                    gTopicList.clear();
+                    cout << "Discovering topics" << endl;
+                    result = g_mqBrokerResource->discoveryMQTopics(query, &discoverTopicCB, QualityOfService::LowQos);
+                    break;
 
-            case '2':
-                cout << "Put discovered topic index to select: ";
-                cin >> cmd;
-                g_mqSelectedTopicResource = gTopicList[atoi(cmd.c_str())];
-                cout << g_mqSelectedTopicResource->uri() << " selected" << endl;
-                break;
+                case '1':
+                    gTopicList.clear();
+                    cout << "Put topic type to discover: ";
+                    cin >> cmd;
+                    query["rt"] = cmd;
+                    result = g_mqBrokerResource->discoveryMQTopics(query, &discoverTopicCB, QualityOfService::LowQos);
+                    break;
 
-            case '3':
-                cout << "Subscribe to selected topic" << endl;
-                result = g_mqSelectedTopicResource->subscribeMQTopic(ObserveType::Observe, query, &subscribeCB,
-                         QualityOfService::LowQos);
-                break;
+                case '2':
+                    cout << "Put discovered topic index to select: ";
+                    cin >> cmd;
+                    {
+                        int index = atoi(cmd.c_str());
+                        if (index < 0 || (unsigned int) index >= gTopicList.size())
+                        {
+                            cout << "invalid topic index selected" << endl;
+                            continue;
+                        }
 
-            case '4':
-                cout << "Unsubscribe to selected topic" << endl;
-                result = g_mqSelectedTopicResource->unsubscribeMQTopic(QualityOfService::LowQos);
-                break;
+                        g_mqSelectedTopicResource = gTopicList[index];
+                        cout << g_mqSelectedTopicResource->uri() << " selected" << endl;
+                    }
+                    break;
 
-            case 'q':
-                goto exit;
-                break;
+                case '3':
+                    if (g_mqSelectedTopicResource == nullptr)
+                    {
+                        cout << "Topic is not selected." << endl;
+                        continue;
+                    }
+
+                    cout << "Subscribe to selected topic" << endl;
+                    result = g_mqSelectedTopicResource->subscribeMQTopic(ObserveType::Observe, query, &subscribeCB,
+                             QualityOfService::LowQos);
+                    break;
+
+                case '4':
+                    if (g_mqSelectedTopicResource == nullptr)
+                    {
+                        cout << "Topic is not selected." << endl;
+                        continue;
+                    }
+                    cout << "Unsubscribe to selected topic" << endl;
+                    result = g_mqSelectedTopicResource->unsubscribeMQTopic(QualityOfService::LowQos);
+                    break;
+
+                case 'q':
+                    goto exit;
+                    break;
+            }
+
+            if (result != OC_STACK_OK)
+            {
+                cout << "Error, return code: " << result << endl;
+            }
         }
-
-        if (result != OC_STACK_OK)
+        catch (const exception &e)
         {
-            cout << "Error, return code: " << result << endl;
+            cout << "Precondition failed: " << e.what() << endl;
         }
     }
 

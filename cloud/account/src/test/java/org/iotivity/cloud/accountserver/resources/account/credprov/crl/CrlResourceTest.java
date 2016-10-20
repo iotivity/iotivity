@@ -27,6 +27,8 @@ import org.bouncycastle.util.encoders.Base64;
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.db.CRLTable;
+import org.iotivity.cloud.accountserver.resources.account.credprov.cert.CertificateResourceTest;
+import org.iotivity.cloud.accountserver.resources.account.credprov.cert.GenerateCSR;
 import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants;
 import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateResource;
 import org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateStorage;
@@ -34,6 +36,7 @@ import org.iotivity.cloud.accountserver.resources.credprov.crl.CrlManager;
 import org.iotivity.cloud.accountserver.resources.credprov.crl.CrlResource;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.accountserver.x509.crl.CrlIssuer;
+import org.iotivity.cloud.base.OICConstants;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
@@ -43,7 +46,9 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.util.Cbor;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -52,6 +57,7 @@ import org.mockito.stubbing.Answer;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -61,6 +67,7 @@ import java.security.Security;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509CRL;
 import java.security.cert.X509CRLEntry;
+import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -84,13 +91,22 @@ public class CrlResourceTest {
     public static final String CRL_URI_QUERY_CONDITION_FALSE = "lu=21160726210000";
     public static final String CRL_URI_QUERY_PARSE_ERROR = "lu=1231212asdzfg4123123123123123";
     public static final String[] FOR_FULL_CRL = {Constants.REQ_THIS_UPDATE, Constants.REQ_NEXT_UPDATE, Constants.REQ_CRL};
-    public static final PublicKey key = CertificateStorage.ROOT_CERTIFICATE.getPublicKey();
+    public static PublicKey key;
+    static CertificateResource certificateResource;
 
     private static TypeCastingManager<CRLTable> castingManager = new TypeCastingManager<>();
 
-    static {
+    @AfterClass
+    public static void after() {
+        AccountDBManager.getInstance().deleteRecord(Constants.CERTIFICATE_TABLE, new HashMap<>());
+        AccountDBManager.getInstance().deleteRecord(Constants.CRL_TABLE, new HashMap<>());
+    }
+
+    @BeforeClass
+    public static void setUpBefore() {
         Security.insertProviderAt(new BouncyCastleProvider(), 0);
-        new CertificateResource();
+        certificateResource = new CertificateResource();
+        key = CertificateStorage.ROOT_CERTIFICATE.getPublicKey();
     }
 
     /**
@@ -121,11 +137,12 @@ public class CrlResourceTest {
                     payloadData = mCbor
                             .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
                     crlMap = (Map<String, Object>) payloadData.get(Constants.REQ_CRL);
-                    data = (byte[]) crlMap.get(Constants.DATA);
-                    CertificateFactory factory = CertificateFactory.getInstance("X509");
-                    crlX509 = (X509CRL) factory.generateCRL(new ByteArrayInputStream(data));
+                    if (crlMap != null) {
+                        data = (byte[]) crlMap.get(Constants.DATA);
+                        CertificateFactory factory = CertificateFactory.getInstance("X509");
+                        crlX509 = (X509CRL) factory.generateCRL(new ByteArrayInputStream(data));
+                    }
                 }
-
                 mLatch.countDown();
                 return null;
             }
@@ -157,6 +174,73 @@ public class CrlResourceTest {
         set("serialNumber", SERIAL_NUMBER.toString());
         return SERIAL_NUMBER;
     }
+
+
+    @Test
+    public void testAeIssueBase64() throws Exception {
+        byte[] csr = GenerateCSR.generatePKCS10(CertificateResourceTest.COMMON_NAME, false);
+        IRequest request = csrRequest(CertificateResourceTest.DEVICE_ID, CertificateConstants.BASE_64, Base64.encode(csr), RequestMethod.POST, true);
+        certificateResource.onDefaultRequestReceived(mMockDevice, request);
+        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
+        Map<String, Object> payloadData = mCbor
+                .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
+        List<BigInteger> serialNumbers = new ArrayList<>();
+        Map<String, Object> certMap = (Map<String, Object>) payloadData.get(Constants.CERT);
+        InputStream in = new ByteArrayInputStream(Base64.decode((byte[]) certMap.get(Constants.DATA)));
+        X509Certificate personaleCert = (X509Certificate) CERTIFICATE_FACTORY.generateCertificate(in);
+        serialNumbers.add(personaleCert.getSerialNumber());
+        serialNumbers.add(personaleCert.getSerialNumber().subtract(BigInteger.ONE));
+        request = csrRequest(CertificateResourceTest.DEVICE_ID, CertificateConstants.BASE_64, Base64.encode(csr), RequestMethod.POST, true);
+        certificateResource.onDefaultRequestReceived(mMockDevice, request);
+        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
+        payloadData = mCbor
+                .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
+        certMap = (Map<String, Object>) payloadData.get(Constants.CERT);
+        in = new ByteArrayInputStream(Base64.decode((byte[]) certMap.get(Constants.DATA)));
+        personaleCert = (X509Certificate) CERTIFICATE_FACTORY.generateCertificate(in);
+        serialNumbers.add(personaleCert.getSerialNumber());
+        request = csrRequest(CertificateResourceTest.DEVICE_ID, CertificateConstants.BASE_64, Base64.encode(csr), RequestMethod.POST, true);
+        certificateResource.onDefaultRequestReceived(mMockDevice, request);
+        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
+        getTestMethodName();
+        request = CrlResourceTest.crlRequest(RequestMethod.GET, CrlResourceTest.CRL_URI, CrlResourceTest.CRL_URI_QUERY);
+        CrlResource crlResource = new CrlResource();
+        crlResource.onDefaultRequestReceived(mMockDevice, request);
+        assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
+        hashmapCheck(mResponse, Constants.ENCODING);
+        hashmapCheck(mResponse, Constants.DATA);
+        if (mResponse.getPayload() != null) {
+            payloadData = mCbor
+                    .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
+            crlMap = (Map<String, Object>) payloadData.get(Constants.REQ_CRL);
+            data = (byte[]) crlMap.get(Constants.DATA);
+            crlX509 = (X509CRL) CERTIFICATE_FACTORY.generateCRL(new ByteArrayInputStream(data));
+        }
+        assertEquals(DER, crlMap.get(Constants.ENCODING));
+        assertNotNull(data);
+        Set<? extends X509CRLEntry> entries = crlX509.getRevokedCertificates();
+        Iterator<? extends X509CRLEntry> iterator = entries.iterator();
+        while (iterator.hasNext()) {
+            assertTrue(serialNumbers.contains(iterator.next().getSerialNumber()));
+        }
+    }
+
+    private IRequest csrRequest(String deviceId, String encoding, byte[] data, RequestMethod method, boolean isEncoded) {
+        IRequest request;
+        HashMap<String, Object> payloadData = new HashMap<>();
+        payloadData.put(Constants.REQ_DEVICE_ID, deviceId);
+        CertificateResourceTest.CSR csr = new CertificateResourceTest.CSR();
+        if (isEncoded) {
+            csr.setEncoding(encoding);
+            csr.setData(data);
+            payloadData.put("csr", csr);
+        }
+        request = MessageBuilder.createRequest(method, OICConstants.CREDPROV_CERT_FULL_URI,
+                null, ContentFormat.APPLICATION_CBOR,
+                mCbor.encodingPayloadToCbor(payloadData));
+        return request;
+    }
+
 
     @Test
     public void testCrlGetContent() throws Exception {
@@ -208,34 +292,6 @@ public class CrlResourceTest {
     }
 
     @Test
-    public void testX509CRL() {
-        Field field;
-        Method m;
-        try {
-            IRequest request = crlRequest(RequestMethod.GET, CRL_URI, CRL_URI_QUERY);
-            crlResource.onDefaultRequestReceived(mMockDevice, request);
-            assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
-            field = CrlManager.class.getDeclaredField("x509CRL");
-            field.setAccessible(true);
-            Object value = field.get(CrlManager.CRL_MANAGER);
-            field.set(CrlManager.CRL_MANAGER, null);
-            request = crlRequest(RequestMethod.GET, CRL_URI, CRL_URI_QUERY);
-            crlResource.onDefaultRequestReceived(mMockDevice, request);
-            assertTrue(methodCheck(mResponse, ResponseStatus.NOT_FOUND));
-            m = CrlManager.class.getDeclaredMethod("getPayload");
-            m.setAccessible(true);
-            field.set(CrlManager.CRL_MANAGER, null);
-            Object o = m.invoke(CrlManager.CRL_MANAGER);
-            assertEquals(Collections.EMPTY_MAP, o);
-            field.set(CrlManager.CRL_MANAGER, value);
-        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Test
     public void testCrlPreconditionFailedException() throws ParseException, IOException, OperatorCreationException {
         getTestMethodName();
         getTestMethodName();
@@ -261,6 +317,7 @@ public class CrlResourceTest {
         getTestMethodName();
         IRequest request = crlRequest(RequestMethod.GET, CRL_URI, CRL_URI_QUERY);
         crlResource.onDefaultRequestReceived(mMockDevice, request);
+        System.out.println("MRESPONSE" + mResponse.getStatus());
         assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
         String thisUpdate = CertificateConstants.DATE_FORMAT.format(crlX509.getThisUpdate());
         String nextUpdate = CertificateConstants.DATE_FORMAT.format(crlX509.getNextUpdate());

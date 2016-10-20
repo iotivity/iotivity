@@ -33,6 +33,22 @@ public class GroupTable {
     public GroupTable() {
     }
 
+    /**
+     * API to initialize group table instance
+     * 
+     * @param gid
+     *            group ID
+     * @param midlist
+     *            member ID list as a form of array
+     * @param dilist
+     *            device ID list as a form of array
+     * @param gmid
+     *            group master ID
+     * @param gacl
+     *            group ACL
+     * @param gtype
+     *            group type
+     */
     public GroupTable(String gid, Object midlist, Object dilist, String gmid,
             String gacl, String gtype) {
         this.gid = gid;
@@ -43,50 +59,116 @@ public class GroupTable {
         this.gtype = gtype;
     }
 
+    /**
+     * API to get group ID
+     * 
+     * @return group ID
+     */
     public String getGid() {
         return gid;
     }
 
+    /**
+     * API to set group ID
+     * 
+     * @param gid
+     *            group ID to be set
+     */
     public void setGid(Object gid) {
         this.gid = gid.toString();
     }
 
+    /**
+     * API to get member ID list of the group
+     * 
+     * @return member ID list
+     */
     public Object getMidlist() {
         return midlist;
     }
 
+    /**
+     * API to set member ID list of the group
+     * 
+     * @param midlist
+     *            member ID list to be set
+     */
     public void setMidlist(Object midlist) {
         this.midlist = midlist;
     }
 
+    /**
+     * API to get device ID list of the group
+     * 
+     * @return device ID list
+     */
     public Object getDilist() {
         return dilist;
     }
 
+    /**
+     * API to set device ID list of the group
+     * 
+     * @param dilist
+     *            device ID list to be set
+     */
     public void setDilist(Object dilist) {
         this.dilist = dilist;
     }
 
+    /**
+     * API to get the group master ID
+     * 
+     * @return group master ID
+     */
     public String getGmid() {
         return gmid;
     }
 
+    /**
+     * API to set the master ID of the group
+     * 
+     * @param gmid
+     *            group master ID to be set
+     */
     public void setGmid(Object gmid) {
         this.gmid = gmid.toString();
     }
 
+    /**
+     * API to get group ACL
+     * 
+     * @return group ACL
+     */
     public String getGacl() {
         return gacl;
     }
 
+    /**
+     * API to set group ACL of the group
+     * 
+     * @param gacl
+     *            group ACL to be set
+     */
     public void setGacl(Object gacl) {
         this.gacl = gacl.toString();
     }
 
+    /**
+     * API to get group type
+     * 
+     * @return group type
+     */
     public String getGtype() {
         return gtype;
     }
 
+    /**
+     * API to set group type
+     * 
+     * @param gtype
+     *            group type to be set
+     */
     public void setGtype(Object gtype) {
         this.gtype = gtype.toString();
     }

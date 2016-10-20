@@ -21,7 +21,6 @@
  */
 package org.iotivity.cloud.rdserver.resources.presence.device;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -36,36 +35,22 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.rdserver.Constants;
-import org.iotivity.cloud.rdserver.db.DBManager;
-import org.iotivity.cloud.rdserver.util.TypeCastingManager;
+import org.iotivity.cloud.rdserver.resources.presence.PresenceManager;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 
+/**
+ * 
+ * This class provides a set of APIs handle requests about device presence
+ *
+ */
 public class DevicePresenceResource extends Resource {
 
     private Cbor<HashMap<String, Object>> mCbor = new Cbor<>();
-
-    private class PresenceSubscriber {
-        PresenceSubscriber(Device subscriber, IRequest request) {
-            mSubscriber = subscriber;
-            mRequest = request;
-        }
-
-        public Device   mSubscriber;
-        public IRequest mRequest;
-    }
-
-    // di , token, Subscriber list
-    private HashMap<String, HashMap<String, PresenceSubscriber>> mDeviceSubscriber  = null;
-    // token, di list
-    private HashMap<String, List<String>>                        mSubscribedDevices = null;
 
     public DevicePresenceResource() {
         super(Arrays.asList(Constants.PREFIX_OIC,
                 Constants.DEVICE_PRESENCE_URI));
 
-        mDeviceSubscriber = new HashMap<>();
-        mSubscribedDevices = new HashMap<>();
     }
 
     @Override
@@ -95,30 +80,31 @@ public class DevicePresenceResource extends Resource {
             throws ServerException {
         HashMap<String, List<String>> queryMap = request.getUriQueryMap();
 
-        byte[] payload = null;
+        checkQueryException(Arrays.asList(Constants.DEVICE_ID), queryMap);
 
-        if (checkQueryException(Arrays.asList(Constants.DEVICE_ID), queryMap)) {
+        List<String> deviceList = queryMap.get(Constants.DEVICE_ID);
 
-            List<String> deviceList = queryMap.get(Constants.DEVICE_ID);
-
-            switch (request.getObserve()) {
-                case SUBSCRIBE:
-                    addObserver(srcDevice, request, deviceList);
-                    break;
-                case UNSUBSCRIBE:
-                    removeObserver(request);
-                    break;
-                default:
-            }
-
-            payload = makeResponsePayload(deviceList);
+        switch (request.getObserve()) {
+            case SUBSCRIBE:
+                PresenceManager.getInstance().subscribePresence(srcDevice,
+                        request, deviceList, Constants.DEVICE_PRESENCE);
+                break;
+            case UNSUBSCRIBE:
+                PresenceManager.getInstance().unsubscribePresence(request,
+                        deviceList, Constants.DEVICE_PRESENCE);
+                break;
+            default:
         }
+
+        byte[] payload = PresenceManager.getInstance()
+                .makeResponsePayload(deviceList);
 
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
                 ContentFormat.APPLICATION_CBOR, payload);
+
     }
 
-    public IResponse handlePostRequest(IRequest request)
+    private IResponse handlePostRequest(IRequest request)
             throws ServerException {
         // check payload
         byte[] payload = request.getPayload();
@@ -126,104 +112,18 @@ public class DevicePresenceResource extends Resource {
         HashMap<String, Object> parsedPayload = mCbor
                 .parsePayloadFromCbor(payload, HashMap.class);
 
-        if (checkPayloadException(
+        checkPayloadException(
                 Arrays.asList(Constants.DEVICE_ID, Constants.PRESENCE_STATE),
-                parsedPayload)) {
+                parsedPayload);
 
-            String deviceId = parsedPayload.get(Constants.DEVICE_ID).toString();
-            String state = parsedPayload.get(Constants.PRESENCE_STATE)
-                    .toString();
-            DeviceState deviceState = new DeviceState();
-            deviceState.setDi(deviceId);
-            deviceState.setState(state);
+        // store db
+        PresenceManager.getInstance().updateDevicePresence(parsedPayload);
 
-            TypeCastingManager<DeviceState> deviceStateTypeManager = new TypeCastingManager<DeviceState>();
-            HashMap<Object, Object> storeMap = deviceStateTypeManager
-                    .convertObjectToMap(deviceState);
-
-            // store db
-            DBManager.getInstance().updateDeviceState(storeMap);
-
-            // notification to observers
-            notifyToObservers(deviceId);
-        }
+        // notification to observers
+        String di = parsedPayload.get(Constants.DEVICE_ID).toString();
+        PresenceManager.getInstance().notifyToObservers(di);
 
         return MessageBuilder.createResponse(request, ResponseStatus.CHANGED);
-    }
 
-    private void addObserver(Device srcDevice, IRequest request,
-            List<String> deviceIdList) {
-
-        for (String deviceId : deviceIdList) {
-            HashMap<String, PresenceSubscriber> subscribers = mDeviceSubscriber
-                    .get(deviceId);
-
-            if (subscribers == null) {
-                subscribers = new HashMap<>();
-                mDeviceSubscriber.put(deviceId, subscribers);
-            }
-
-            subscribers.put(request.getRequestId(),
-                    new PresenceSubscriber(srcDevice, request));
-        }
-
-        mSubscribedDevices.put(request.getRequestId(), deviceIdList);
-    }
-
-    private void removeObserver(IRequest request) {
-
-        List<String> deviceIdList = mSubscribedDevices
-                .get(request.getRequestId());
-
-        if (deviceIdList == null) {
-            return;
-        }
-
-        for (String deviceId : deviceIdList) {
-            HashMap<String, PresenceSubscriber> subscribers = mDeviceSubscriber
-                    .get(deviceId);
-
-            if (subscribers == null) {
-                continue;
-            }
-
-            subscribers.remove(request.getRequestId());
-        }
-    }
-
-    private void notifyToObservers(String deviceId) {
-
-        HashMap<String, PresenceSubscriber> tokenNSubscribers = mDeviceSubscriber
-                .get(deviceId);
-
-        if (tokenNSubscribers != null) {
-            byte[] paylod = makeResponsePayload(Arrays.asList(deviceId));
-
-            for (PresenceSubscriber subscriber : tokenNSubscribers.values()) {
-
-                subscriber.mSubscriber.sendResponse(
-                        MessageBuilder.createResponse(subscriber.mRequest,
-                                ResponseStatus.CONTENT,
-                                ContentFormat.APPLICATION_CBOR, paylod));
-            }
-        }
-    }
-
-    private byte[] makeResponsePayload(List<String> deviceList) {
-
-        HashMap<String, Object> getPayload = new HashMap<>();
-        ArrayList<HashMap<String, String>> prsList = new ArrayList<HashMap<String, String>>();
-
-        for (String deviceId : deviceList) {
-            HashMap<String, String> payloadSegment = new HashMap<String, String>();
-            payloadSegment.put(Constants.DEVICE_ID, deviceId);
-            payloadSegment.put(Constants.PRESENCE_STATE,
-                    DBManager.getInstance().findDeviceState(deviceId));
-            prsList.add(payloadSegment);
-        }
-        getPayload.put(Constants.PRESENCE_LIST, prsList);
-        Log.i("Get observe response" + getPayload.toString());
-
-        return mCbor.encodingPayloadToCbor(getPayload);
     }
 }
