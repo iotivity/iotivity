@@ -39,6 +39,7 @@ namespace OC {
 static const char COAP[] = "coap://";
 static const char COAPS[] = "coaps://";
 static const char COAP_TCP[] = "coap+tcp://";
+static const char COAPS_TCP[] = "coaps+tcp://";
 static const char COAP_GATT[] = "coap+gatt://";
 static const char COAP_RFCOMM[] = "coap+rfcomm://";
 
@@ -138,6 +139,11 @@ void OCResource::setHost(const std::string& host)
     else if (host.compare(0, sizeof(COAP_TCP) - 1, COAP_TCP) == 0)
     {
         prefix_len = sizeof(COAP_TCP) - 1;
+    }
+    else if (host.compare(0, sizeof(COAPS_TCP) - 1, COAPS_TCP) == 0)
+    {
+        prefix_len = sizeof(COAPS_TCP) - 1;
+        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags | OC_SECURE);
     }
     else if (host.compare(0, sizeof(COAP_GATT) - 1, COAP_GATT) == 0)
     {
@@ -502,7 +508,14 @@ std::string OCResource::host() const
 
     if (m_devAddr.adapter & OC_ADAPTER_TCP)
     {
-        ss << COAP_TCP;
+        if (m_devAddr.flags & OC_SECURE)
+        {
+            ss << COAPS_TCP;
+        }
+        else
+        {
+            ss << COAP_TCP;
+        }
     }
     else if (m_devAddr.adapter & OC_ADAPTER_GATT_BTLE)
     {
