@@ -310,9 +310,10 @@ TEST_F(SRPTest, SRPSaveOwnCertChainTest)
     key.data = keyData;
     key.len = sizeof(keyData);
 
+    //This test case cannot succeed. because doxm resource has not been initialized.
     result = SRPSaveOwnCertChain(&cert, &key, &credId);
 
-    EXPECT_EQ(OC_STACK_OK, result);
+    EXPECT_EQ(OC_STACK_ERROR, result);
 }
 
 TEST_F(SRPTest, SRPSaveOwnCertChainTestNullCert)

@@ -89,6 +89,88 @@ typedef enum CredCompareResult{
 }CredCompareResult_t;
 
 /**
+ * Internal function to check credential
+ */
+static bool IsVaildCredential(const OicSecCred_t* cred)
+{
+    OicUuid_t emptyUuid = {.id={0}};
+
+
+    OIC_LOG(DEBUG, TAG, "IN IsVaildCredential");
+
+    VERIFY_NON_NULL(TAG, cred, ERROR);
+    VERIFY_SUCCESS(TAG, 0 != cred->credId, ERROR);
+    OIC_LOG_V(DEBUG, TAG, "Cred ID = %d", cred->credId);
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    OIC_LOG_V(DEBUG, TAG, "Cred Type = %d", cred->credType);
+
+    switch(cred->credType)
+    {
+        case SYMMETRIC_PAIR_WISE_KEY:
+        case SYMMETRIC_GROUP_KEY:
+        case PIN_PASSWORD:
+        {
+            VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
+            VERIFY_SUCCESS(TAG, 0 != cred->privateData.len, ERROR);
+            VERIFY_SUCCESS(TAG, \
+                           (OIC_ENCODING_RAW == cred->privateData.encoding || \
+                           OIC_ENCODING_BASE64 == cred->privateData.encoding), \
+                           ERROR);
+            break;
+        }
+        case ASYMMETRIC_KEY:
+        {
+            VERIFY_NON_NULL(TAG, cred->publicData.data, ERROR);
+            VERIFY_SUCCESS(TAG, 0 != cred->publicData.len, ERROR);
+            break;
+        }
+        case SIGNED_ASYMMETRIC_KEY:
+        {
+            VERIFY_SUCCESS(TAG, (NULL != cred->publicData.data ||NULL != cred->optionalData.data) , ERROR);
+            VERIFY_SUCCESS(TAG, (0 != cred->publicData.len || 0 != cred->optionalData.len), ERROR);
+
+            if(NULL != cred->optionalData.data)
+            {
+                VERIFY_SUCCESS(TAG, \
+                               (OIC_ENCODING_RAW == cred->optionalData.encoding ||\
+                               OIC_ENCODING_BASE64 == cred->optionalData.encoding || \
+                               OIC_ENCODING_PEM == cred->optionalData.encoding || \
+                               OIC_ENCODING_DER == cred->optionalData.encoding), \
+                               ERROR);
+            }
+            break;
+        }
+        case ASYMMETRIC_ENCRYPTION_KEY:
+        {
+            VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
+            VERIFY_SUCCESS(TAG, 0 != cred->privateData.len, ERROR);
+            VERIFY_SUCCESS(TAG, \
+                           (OIC_ENCODING_RAW == cred->privateData.encoding ||\
+                           OIC_ENCODING_BASE64 == cred->privateData.encoding || \
+                           OIC_ENCODING_PEM == cred->privateData.encoding || \
+                           OIC_ENCODING_DER == cred->privateData.encoding), \
+                           ERROR);
+            break;
+        }
+        default:
+        {
+            OIC_LOG(WARNING, TAG, "Unknown credential type");
+            return false;
+        }
+    }
+#endif
+
+    VERIFY_SUCCESS(TAG, 0 != memcmp(emptyUuid.id, cred->subject.id, sizeof(cred->subject.id)), ERROR);
+
+    OIC_LOG(DEBUG, TAG, "OUT IsVaildCredential");
+    return true;
+exit:
+    OIC_LOG(WARNING, TAG, "OUT IsVaildCredential : Invalid Credential detected.");
+    return false;
+}
+
+/**
  * This function frees OicSecCred_t object's fields and object itself.
  */
 static void FreeCred(OicSecCred_t *cred)
@@ -1053,6 +1135,8 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
                                   const OicSecCert_t * publicData, const OicSecKey_t* privateData,
                                   const OicUuid_t * rownerID, const OicUuid_t * eownerID)
 {
+    OIC_LOG(DEBUG, TAG, "IN GenerateCredential");
+
     (void)publicData;
     OCStackResult ret = OC_STACK_ERROR;
 
@@ -1123,18 +1207,49 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
 #endif //_ENABLE_MULTIPLE_OWNER_
 
     ret = OC_STACK_OK;
+
+    OIC_LOG_V(DEBUG, TAG, "GenerateCredential : result: %d", ret);
+    OIC_LOG_V(DEBUG, TAG, "GenerateCredential : credId: %d", cred->credId);
+    OIC_LOG_V(DEBUG, TAG, "GenerateCredential : credType: %d", cred->credType);
+    OIC_LOG_BUFFER(DEBUG, TAG, cred->subject.id, sizeof(cred->subject.id));
+    if (cred->privateData.data)
+    {
+        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : privateData len: %d", cred->privateData.len);
+        OIC_LOG_BUFFER(DEBUG, TAG, cred->privateData.data, cred->privateData.len);
+    }
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    if(cred->credUsage)
+    {
+        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : credUsage: %s", cred->credUsage);
+    }
+    if (cred->publicData.data)
+    {
+        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : publicData len: %d", cred->publicData.len);
+        OIC_LOG_BUFFER(DEBUG, TAG, cred->publicData.data, cred->publicData.len);
+
+    }
+    if (cred->optionalData.data)
+    {
+        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : optionalData len: %d", cred->optionalData.len);
+        OIC_LOG_BUFFER(DEBUG, TAG, cred->optionalData.data, cred->optionalData.len);
+
+    }
+#endif //defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+
 exit:
     if (OC_STACK_OK != ret)
     {
         DeleteCredList(cred);
         cred = NULL;
     }
+    OIC_LOG(DEBUG, TAG, "OUT GenerateCredential");
     return cred;
 }
 
 static bool UpdatePersistentStorage(const OicSecCred_t *cred)
 {
     bool ret = false;
+    OIC_LOG(DEBUG, TAG, "IN Cred UpdatePersistentStorage");
 
     // Convert Cred data into JSON for update to persistent storage
     if (cred)
@@ -1143,6 +1258,7 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
         // This added '512' is arbitrary value that is added to cover the name of the resource, map addition and ending
         size_t size = GetCredKeyDataSize(cred);
         size += (512 * OicSecCredCount(cred));
+        OIC_LOG_V(DEBUG, TAG, "cred size: %" PRIu64, size);
 
         int secureFlag = 0;
         OCStackResult res = CredToCBORPayload(cred, &payload, &size, secureFlag);
@@ -1162,6 +1278,7 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
             ret = true;
         }
     }
+    OIC_LOG(DEBUG, TAG, "OUT Cred UpdatePersistentStorage");
     return ret;
 }
 
@@ -1373,11 +1490,13 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
     OicSecCred_t * temp = NULL;
     bool validFlag = true;
     OicUuid_t emptyOwner = { .id = {0} };
-    VERIFY_SUCCESS(TAG, NULL != newCred, ERROR);
 
+    OIC_LOG(DEBUG, TAG, "IN AddCredential");
+
+    VERIFY_SUCCESS(TAG, NULL != newCred, ERROR);
     //Assigning credId to the newCred
     newCred->credId = GetCredId();
-    VERIFY_SUCCESS(TAG, newCred->credId != 0, ERROR);
+    VERIFY_SUCCESS(TAG, true == IsVaildCredential(newCred), ERROR);
 
     //the newCred is not valid if it is empty
 
@@ -1423,6 +1542,7 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
     }
 
 exit:
+    OIC_LOG(DEBUG, TAG, "OUT AddCredential");
     return ret;
 }
 
@@ -2012,6 +2132,7 @@ OCStackResult CreateCredResource()
 OCStackResult InitCredResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
+    OicSecCred_t* cred = NULL;
 
     //Read Cred resource from PS
     uint8_t *data = NULL;
@@ -2037,6 +2158,17 @@ OCStackResult InitCredResource()
     {
         gCred = GetCredDefault();
     }
+
+    //Add a log to track the invalid credential.
+    LL_FOREACH(gCred, cred)
+    {
+        if (false == IsVaildCredential(cred))
+        {
+            OIC_LOG(WARNING, TAG, "Invalid credential data was dectected while InitCredResource");
+            OIC_LOG_V(WARNING, TAG, "Invalid credential ID = %d", cred->credId);
+        }
+    }
+
     //Instantiate 'oic.sec.cred'
     ret = CreateCredResource();
     OICFree(data);
