@@ -95,6 +95,16 @@ OCStackResult OCWrapperAclIndividualGetInfo(const OCDevAddr *endPoint, OCCloudRe
 OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloudResponseCB callback);
 
 /**
+ * ACL individual update. Replaces an existing ACE with a new one
+ *
+ * @param[in] endPoint          cloud host and port
+ * @param[in] callback          result callback
+ * @return  OCStackResult application result
+ */
+
+OCStackResult OCWrapperAclIndividualUpdate(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+
+/**
  * ACL individual delete
  *
  * @param[in] endPoint          cloud host and port
@@ -102,6 +112,15 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
  * @return  OCStackResult application result
  */
 OCStackResult OCWrapperAclIndividualDelete(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+
+/**
+ * ACL individual delete ACE
+ *
+ * @param[in] endPoint          cloud host and port
+ * @param[in] callback          result callback
+ * @return  OCStackResult application result
+ */
+OCStackResult OCWrapperAclIndividualDeleteAce(const OCDevAddr *endPoint, OCCloudResponseCB callback);
 
 /**
  * ACL post group request function
@@ -247,5 +266,26 @@ void readInteger(int* item, const char* description, const char* example);
  * @return                   negative error code
  * */
 int readFile(const char *name, OCByteString *out);
+
+/**
+ * Print array of strings
+ *
+ * @param[in] list           array of strings
+ */
+void printStringArray(stringArray_t *list);
+
+/**
+ * Print invitation response
+ *
+ * @param[in] in           invitation response
+ */
+void printInviteResponse(inviteResponse_t *in);
+
+/**
+ * Clear invitation response
+ *
+ * @param[in] in           invitation response
+ */
+void clearInviteResponse(inviteResponse_t *in);
 
 #endif //OC_CLOUD_WRAPPER_H

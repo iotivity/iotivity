@@ -29,6 +29,7 @@ samples_env.PrependUnique(CPPPATH = [
 		'../../../../stack/include',
 		'../../../../security/include',
 		'../../../../../../extlibs/cjson',
+		'../../../../../../extlibs/tinydtls',
 		'../../../../../oc_logger/include'
 		])
 
@@ -48,9 +49,7 @@ else:
 	samples_env.PrependUnique(LIBS = ['m'])
 samples_env.PrependUnique(LIBS = ['octbstack', 'connectivity_abstraction', 'coap'])
 if env.get('SECURED') == '1':
-	samples_env.AppendUnique(LIBS = ['tinydtls'])
-	if env.get('WITH_TCP') == True:
-		samples_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+	samples_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 
 if target_os == 'android':

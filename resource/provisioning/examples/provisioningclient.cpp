@@ -39,7 +39,6 @@
 #include "aclresource.h"
 #include "utlist.h"
 
-//#define MAX_URI_LENGTH (64)
 #define MAX_PERMISSION_LENGTH (5)
 #define ACL_RESRC_ARRAY_SIZE (3)
 #define CREATE (1)
@@ -92,10 +91,10 @@ void printMenu()
     std::cout << "  10. Get Linked Devices"<<std::endl;
     std::cout << "  11. Get Device Status"<<std::endl;
     std::cout << "  12. Provision Direct-Pairing Configuration"<<std::endl;
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     std::cout << "  13. Save the Trust Cert. Chain into Cred of SVR"<<std::endl;
     std::cout << "  14. Provision the Trust Cert. Chain"<<std::endl;
-#endif // __WITH_X509__ || __WITH_TLS__
+#endif // __WITH_DTLS__ || __WITH_TLS__
     std::cout << "  99. Exit loop"<<std::endl;
 }
 
@@ -402,7 +401,7 @@ static int InputACL(OicSecAcl_t *acl)
         return -1;
     }
     printf("-URI of resource\n");
-    printf("ex)/oic/sh/temp/0 (Max_URI_Length: 64 Byte )\n");
+    printf("ex)/oic/sh/temp/0 (Max_URI_Length: %d Byte )\n", MAX_URI_LENGTH);
     for(size_t i = 0; i < resourcesLen; i++)
     {
         OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
@@ -658,7 +657,7 @@ static OicSecPdAcl_t* InputPdACL()
         return NULL;
     }
     printf("-URI of resource\n");
-    printf("ex)/oic/sh/temp/0 (Max_URI_Length: 64 Byte )\n");
+    printf("ex)/oic/sh/temp/0 (Max_URI_Length: %d Byte )\n", MAX_URI_LENGTH);
     acl->resources = (char **)OICCalloc(acl->resourcesLen, sizeof(char *));
     if (NULL == acl->resources)
     {
@@ -801,7 +800,7 @@ PVDP_ERROR:
     ask = 1;
 }
 
-#ifdef __WITH_TLS__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 static int saveTrustCert(void)
 {
 
@@ -846,7 +845,7 @@ static int saveTrustCert(void)
 
     return 0;
 }
-#endif //__WITH_TLS__
+#endif // __WITH_DTLS__ or __WITH_TLS__
 
 int main(void)
 {
@@ -1284,7 +1283,7 @@ int main(void)
 
                         break;
                     }
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
                 case 13:
                     {
                         if(saveTrustCert())
@@ -1312,7 +1311,7 @@ int main(void)
                         }
                         break;
                     }
-#endif //__WITH_X509__ || __WITH_TLS__
+#endif //__WITH_DTLS__ || __WITH_TLS__
                 case 99:
                 default:
                     out = 1;

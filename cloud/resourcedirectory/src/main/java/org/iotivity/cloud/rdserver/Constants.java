@@ -65,6 +65,8 @@ public class Constants extends OICConstants {
 
     /** '/oic/prs' resource property */
     public static final String PRESENCE_STATE          = "state";
+    public static final String PRESENCE_ON             = "on";
+    public static final String PRESENCE_OFF            = "off";
     public static final String PRESENCE_LIST           = "prslist";
     public static final String DEVICE_PRESENCE         = "device_presence";
 

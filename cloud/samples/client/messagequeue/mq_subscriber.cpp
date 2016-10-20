@@ -41,7 +41,6 @@ using namespace OC;
 using namespace std;
 
 #define DEFAULT_MQ_BROKER_URI "/oic/ps"
-#define maxSequenceNumber 0xFFFFFF
 
 OC::OCResource::Ptr g_mqBrokerResource = nullptr;
 OC::OCResource::Ptr g_mqSelectedTopicResource = nullptr;
@@ -96,7 +95,7 @@ void subscribeCB(const HeaderOptions &,
 {
     try
     {
-        if (eCode == OC_STACK_OK && sequenceNumber != maxSequenceNumber + 1)
+        if (eCode == OC_STACK_OK && sequenceNumber <= MAX_SEQUENCE_NUMBER)
         {
             if (sequenceNumber == OC_OBSERVE_REGISTER)
             {
@@ -256,7 +255,7 @@ int main(int argc, char *argv[])
                     cin >> cmd;
                     {
                         int index = atoi(cmd.c_str());
-                        if(index < 0 || (unsigned int) index >= gTopicList.size())
+                        if (index < 0 || (unsigned int) index >= gTopicList.size())
                         {
                             cout << "invalid topic index selected" << endl;
                             continue;
@@ -268,7 +267,7 @@ int main(int argc, char *argv[])
                     break;
 
                 case '3':
-                    if(g_mqSelectedTopicResource == nullptr)
+                    if (g_mqSelectedTopicResource == nullptr)
                     {
                         cout << "Topic is not selected." << endl;
                         continue;
@@ -280,6 +279,11 @@ int main(int argc, char *argv[])
                     break;
 
                 case '4':
+                    if (g_mqSelectedTopicResource == nullptr)
+                    {
+                        cout << "Topic is not selected." << endl;
+                        continue;
+                    }
                     cout << "Unsubscribe to selected topic" << endl;
                     result = g_mqSelectedTopicResource->unsubscribeMQTopic(QualityOfService::LowQos);
                     break;
@@ -294,9 +298,9 @@ int main(int argc, char *argv[])
                 cout << "Error, return code: " << result << endl;
             }
         }
-        catch(exception e)
+        catch (const exception &e)
         {
-            cout << "Precondition failed." << endl;
+            cout << "Precondition failed: " << e.what() << endl;
         }
     }
 

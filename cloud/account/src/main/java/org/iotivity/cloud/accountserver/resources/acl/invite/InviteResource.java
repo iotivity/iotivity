@@ -50,6 +50,10 @@ public class InviteResource extends Resource {
 
     private Cbor<HashMap<String, Object>> mCbor          = new Cbor<>();
 
+    private enum ReqType {
+        NONE, CANCEL_INVITATION, DELETE_INVITATION
+    };
+
     public InviteResource() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.ACL_URI,
                 Constants.INVITE_URI));
@@ -154,11 +158,32 @@ public class InviteResource extends Resource {
         String gid = queryParams.get(Constants.REQ_GROUP_ID).get(0);
         String uid = queryParams.get(Constants.REQ_UUID_ID).get(0);
 
+        ReqType reqType = ReqType.NONE;
         if (queryParams.get(Constants.REQ_MEMBER) == null) {
-            mInviteManager.deleteInvitation(uid, gid);
+            reqType = ReqType.DELETE_INVITATION;
         } else {
+            reqType = ReqType.CANCEL_INVITATION;
+        }
+
+        if (reqType.equals(ReqType.DELETE_INVITATION)) {
+
+            String acceptStr = queryParams.get(Constants.REQ_INVITE_ACCEPT)
+                    .get(0);
+            boolean accepted = false;
+            if (acceptStr.equals(Constants.INVITE_ACCEPT)) {
+                accepted = true;
+            }
+
+            mInviteManager.deleteInvitation(uid, gid, accepted);
+
+        } else if (reqType.equals(ReqType.CANCEL_INVITATION)) {
+
             String mid = queryParams.get(Constants.REQ_MEMBER).get(0);
             mInviteManager.cancelInvitation(uid, gid, mid);
+
+        } else {
+
+            throw new BadRequestException("queryData is not enough");
         }
 
         return MessageBuilder.createResponse(request, ResponseStatus.DELETED);

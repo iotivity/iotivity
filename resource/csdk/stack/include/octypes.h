@@ -71,6 +71,9 @@ extern "C" {
 /** MQ Broker URI.*/
 #define OC_RSRVD_WELL_KNOWN_MQ_URI            "/oic/ps"
 
+/** KeepAlive URI.*/
+#define OC_RSRVD_KEEPALIVE_URI                "/oic/ping"
+
 
 /** Presence */
 
@@ -878,7 +881,7 @@ typedef enum
      *  processing its requests from clients.*/
     OC_SLOW          = (1 << 3),
 
-#ifdef __WITH_DTLS__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     /** When this bit is set, the resource is a secure resource.*/
     OC_SECURE        = (1 << 4),
 #else
@@ -985,6 +988,11 @@ typedef enum
     OC_STACK_PRESENCE_TIMEOUT,
     OC_STACK_PRESENCE_DO_NOT_HANDLE,
 #endif
+
+    /** ERROR code from server */
+    OC_STACK_FORBIDDEN_REQ,          /** 403*/
+    OC_STACK_INTERNAL_SERVER_ERROR,  /** 500*/
+
     /** ERROR in stack.*/
     OC_STACK_ERROR = 255
     /** Error status code - END HERE.*/
@@ -1236,9 +1244,7 @@ typedef enum
     /** The payload is an OCSecurityPayload */
     PAYLOAD_TYPE_SECURITY,
     /** The payload is an OCPresencePayload */
-    PAYLOAD_TYPE_PRESENCE,
-    /** The payload is an OCRDPayload */
-    PAYLOAD_TYPE_RD,
+    PAYLOAD_TYPE_PRESENCE
 } OCPayloadType;
 
 /**
@@ -1342,66 +1348,6 @@ typedef struct OCResourcePayload
     struct OCResourcePayload* next;
 } OCResourcePayload;
 
-/**
- * Structure holding Links Payload. It is a sub-structure used in
- * OCResourceCollectionPayload.
- */
-typedef struct OCLinksPayload
-{
-    /** This is the target relative URI. */
-    char *href;
-    /** The relation of the target URI referenced by the link to the context URI;
-     * The default value is null. */
-    char *rel;
-    /** Resource Type - A standard OIC specified or vendor defined resource
-     * type of the resource referenced by the target URI. */
-    OCStringLL *rt;
-    /** Interface - The interfaces supported by the resource referenced by the target URI. */
-    OCStringLL *itf;
-    /** Bitmap - The bitmap holds observable, discoverable, secure option flag. */
-    uint8_t p;
-    /** A title for the link relation. Can be used by the UI to provide a context. */
-    char *title;
-    /** This is used to override the context URI e.g. override the URI of the containing collection. */
-    char *anchor;
-    /** The instance identifier for this web link in an array of web links - used in links. */
-    union
-    {
-        /** An ordinal number that is not repeated - must be unique in the collection context. */
-        uint8_t ins;
-        /** Any unique string including a URI. */
-        char *uniqueStr;
-        /** Use UUID for universal uniqueness - used in /oic/res to identify the device. */
-        OCIdentity uniqueUUID;
-    };
-    /** Time to keep holding resource.*/
-    uint64_t ttl;
-    /** A hint of the media type of the representation of the resource referenced by the target URI. */
-    OCStringLL *type;
-    /** Holding address of the next resource. */
-    struct OCLinksPayload *next;
-} OCLinksPayload;
-
-/** Structure holding tags value of the links payload. */
-typedef struct
-{
-    /** Name of tags. */
-    OCDeviceInfo n;
-    /** Device identifier. */
-    OCIdentity di;
-    /** Time to keep holding resource.*/
-    uint64_t ttl;
-} OCTagsPayload;
-
-/** Resource collection payload. */
-typedef struct OCResourceCollectionPayload
-{
-    /** Collection tags payload.*/
-    OCTagsPayload *tags;
-    /** Array of links payload. */
-    OCLinksPayload *setLinks;
-} OCResourceCollectionPayload;
-
 typedef struct OCDiscoveryPayload
 {
     OCPayload base;
@@ -1431,31 +1377,6 @@ typedef struct OCDiscoveryPayload
     struct OCDiscoveryPayload *next;
 
 } OCDiscoveryPayload;
-
-/**
- * Structure holding discovery payload.
- */
-typedef struct
-{
-    /** Device Name. */
-    OCDeviceInfo n;
-    /** Device Identity. */
-    OCIdentity di;
-    /** Value holding the bias factor of the RD. */
-    uint8_t sel;
-} OCRDDiscoveryPayload;
-
-/**
- * RD Payload that will be transmitted over the wire.
- */
-typedef struct
-{
-    OCPayload base;
-    /** Pointer to the discovery response payload.*/
-    OCRDDiscoveryPayload *rdDiscovery;
-    /** Pointer to the publish payload.*/
-    OCResourceCollectionPayload *rdPublish;
-} OCRDPayload;
 
 typedef struct
 {

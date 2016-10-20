@@ -38,7 +38,7 @@ typedef struct {
 typedef struct {
     pthread_cond_t * condition;
     pthread_mutex_t * mutex;
-    char * topicName;
+    void * topicData;
     NSResult result;
 } NSTopicSyncResult;
 

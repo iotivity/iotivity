@@ -297,7 +297,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListen
 (JNIEnv *env, jobject thiz, jbyteArray trustCertChain, jint encodingType)
 {
     LOGD("OcProvisioning_saveTrustCertChain1");
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     jbyte* trustCertChainBytes = env->GetByteArrayElements(trustCertChain, 0);
     jsize arrayLength = env->GetArrayLength(trustCertChain);
     uint16_t credId;
@@ -322,5 +322,5 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListen
 #else
     ThrowOcException(OC_STACK_INVALID_PARAM, "WITH_TLS not enabled");
     return -1;
-#endif // __WITH_X509__ || __WITH_TLS__
+#endif // __WITH_DTLS__ || __WITH_TLS__
 }

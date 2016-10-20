@@ -28,7 +28,9 @@
  extern "C" {
 #endif // __cplusplus
 
-#define OXM_RANDOM_PIN_SIZE 8
+#define OXM_RANDOM_PIN_SIZE (8)
+#define OXM_PRECONFIG_PIN_SIZE (OXM_RANDOM_PIN_SIZE)
+
 
 /**
  * Function pointer to print pin code.
@@ -54,6 +56,15 @@ void SetGeneratePinCB(GeneratePinCallback pinCB);
  */
 void SetInputPinCB(InputPinCallback pinCB);
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+/**
+ * Function to save the preconfig PIN getter from user.
+ *
+ * @param pinCB implementation of preconfig PIN function.
+ */
+void SetGetPreconfigPinCB(InputPinCallback pinCB);
+#endif //_ENABLE_MULTIPLE_OWNER_
+
 /**
  * Function to generate random PIN.
  * This function will send generated PIN to user via callback.
@@ -75,22 +86,45 @@ OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize);
  */
 OCStackResult InputPin(char* pinBuffer, size_t bufferSize);
 
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+/**
+ * Function to save the Pre-configured PIN.
+ *
+ * @param[in] pinBuffer PIN data
+ * @param[in] pinLength byte length of PIN
+ *
+ * @return ::OC_STACK_SUCCESS in case of success or other value in ccase of error.
+ */
+OCStackResult SetPreconfigPin(const char* pinBuffer, size_t pinLength);
+
+/**
+ * Function to read preconfig PIN.
+ *
+ * @param[in,out] pinBuffer is the reference to the buffer to store the preconfigured PIN.
+ * @param[in] bufferSize is the size of buffer.
+ *
+ * @return ::OC_STACK_SUCCESS in case of success or other value in ccase of error.
+ */
+OCStackResult GetPreconfigPin(char* pinBuffer, size_t bufferSize);
+#endif
+
 #ifdef __WITH_DTLS__
 
 /**
  * This function is used by OTM and SRM to
  * register device UUID is required to derive the temporal PSK.
  */
-void SetUuidForRandomPinOxm(const OicUuid_t* uuid);
+void SetUuidForPinBasedOxm(const OicUuid_t* uuid);
 
 /**
- * This internal callback is used while PIN based ownership transfer.
+ * This internal callback is used while Random PIN based OTM.
  * This callback will be used to establish a temporary secure session according to
  * TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256.
  *
  * @param[in]  type type of PSK data required by tinyDTLS layer during DTLS handshake.
- * @param[in]  desc UNUSED.
- * @param[in]  desc_len UNUSED.
+ * @param[in]  UNUSED1 UNUSED.
+ * @param[in]  UNUSED2 UNUSED.
  * @param[out] result  Must be filled with the requested information.
  * @param[in]  result_length  Maximum size of @p result.
  *
@@ -100,6 +134,77 @@ void SetUuidForRandomPinOxm(const OicUuid_t* uuid);
 int32_t GetDtlsPskForRandomPinOxm( CADtlsPskCredType_t type,
               const unsigned char *UNUSED1, size_t UNUSED2,
               unsigned char *result, size_t result_length);
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+/**
+ * This internal callback is used while Random PIN based MOT.
+ * This callback will be used to establish a temporary secure session according to
+ * TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256.
+ *
+ * @param[in]  type type of PSK data required by tinyDTLS layer during DTLS handshake.
+ * @param[in]  UNUSED1 UNUSED.
+ * @param[in]  UNUSED2 UNUSED.
+ * @param[out] result  Must be filled with the requested information.
+ * @param[in]  result_length  Maximum size of @p result.
+ *
+ * @return The number of bytes written to @p result or a value
+ *         less than zero on error.
+ */
+int32_t GetDtlsPskForMotRandomPinOxm( CADtlsPskCredType_t type,
+              const unsigned char *UNUSED1, size_t UNUSED2,
+              unsigned char *result, size_t result_length);
+
+
+/**
+ * This internal callback is used while Preconfigured-PIN OTM.
+ * This callback will be used to establish a temporary secure session according to
+ * TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256.
+ *
+ * @param[in]  type type of PSK data required by tinyDTLS layer during DTLS handshake.
+ * @param[in]  UNUSED1 UNUSED.
+ * @param[in]  UNUSED2 UNUSED.
+ * @param[out] result  Must be filled with the requested information.
+ * @param[in]  result_length  Maximum size of @p result.
+ *
+ * @return The number of bytes written to @p result or a value
+ *         less than zero on error.
+ */
+int32_t GetDtlsPskForPreconfPinOxm( CADtlsPskCredType_t type,
+              const unsigned char *UNUSED1, size_t UNUSED2,
+              unsigned char *result, size_t result_length);
+
+
+/**
+ * This internal callback is used while Preconfigured-PIN MOT.
+ * This callback will be used to establish a temporary secure session according to
+ * TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256.
+ *
+ * @param[in]  type type of PSK data required by tinyDTLS layer during DTLS handshake.
+ * @param[in]  UNUSED1 UNUSED.
+ * @param[in]  UNUSED2 UNUSED.
+ * @param[out] result  Must be filled with the requested information.
+ * @param[in]  result_length  Maximum size of @p result.
+ *
+ * @return The number of bytes written to @p result or a value
+ *         less than zero on error.
+ */
+int32_t GetDtlsPskForMotPreconfPinOxm( CADtlsPskCredType_t type,
+              const unsigned char *UNUSED1, size_t UNUSED2,
+              unsigned char *result, size_t result_length);
+
+#endif //_ENABLE_MULTIPLE_OWNER_
+
+
+/**
+ * API to derive the PSK based on PIN and new device's UUID.
+ * New device's UUID should be set through SetUuidForPinBasedOxm() API before this API is invoked.
+ *
+ * @param[out] result generated PSK
+ *
+ * @return 0 for success, otherwise error.
+ */
+int DerivePSKUsingPIN(uint8_t* result);
+
 #endif //__WITH_DTLS__
 
 #ifdef __cplusplus

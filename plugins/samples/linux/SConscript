@@ -62,7 +62,7 @@ elif target_os not in ['arduino']:
 	samples_env.AppendUnique(LIBS = ['pthread'])
 
 if env.get('SECURED') == '1':
-    samples_env.AppendUnique(LIBS = ['tinydtls'])
+    samples_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
 
 samples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 

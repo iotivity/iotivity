@@ -39,7 +39,7 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #ifdef __WITH_TLS__
-#include "ca_adapter_net_tls.h"
+#include "ca_adapter_net_ssl.h"
 #endif
 
 /**
@@ -263,8 +263,14 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
     CATCPSetErrorHandler(CATCPErrorHandler);
 
 #ifdef __WITH_TLS__
-    CAinitTlsAdapter();
-    CAsetTlsAdapterCallbacks(CATCPPacketReceivedCB, CATCPPacketSendCB, 0);
+    if (CA_STATUS_OK != CAinitSslAdapter())
+    {
+        OIC_LOG(ERROR, TAG, "Failed to init SSL adapter");
+    }
+    else
+    {
+        CAsetSslAdapterCallbacks(CATCPPacketReceivedCB, CATCPPacketSendCB, CA_ADAPTER_TCP);
+    }
 #endif
 
     CAConnectivityHandler_t tcpHandler = {
@@ -435,7 +441,7 @@ CAResult_t CAStopTCP()
     CAInitializeTCPGlobals();
 
 #ifdef __WITH_TLS__
-    CAdeinitTlsAdapter();
+    CAdeinitSslAdapter();
 #endif
 
     return CA_STATUS_OK;
@@ -471,8 +477,8 @@ void CATCPSendDataThread(void *threadData)
          if (tcpData->remoteEndpoint && tcpData->remoteEndpoint->flags & CA_SECURE)
          {
              CAResult_t result = CA_STATUS_OK;
-             OIC_LOG(DEBUG, TAG, "CAencryptTls called!");
-             result = CAencryptTls(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen);
+             OIC_LOG(DEBUG, TAG, "CAencryptSsl called!");
+             result = CAencryptSsl(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen);
 
              if (CA_STATUS_OK != result)
              {

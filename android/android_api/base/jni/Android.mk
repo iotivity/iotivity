@@ -130,11 +130,12 @@ ifeq ($(WITH_CLOUD), 1)
 endif
 
 ifeq ($(WITH_TCP), 1)
+ifeq ($(SECURED), 1)
     LOCAL_SRC_FILES +=  JniOcCloudProvisioning.cpp \
                         JniOcCloudResultListener.cpp \
                         JniGetAclIdByDeviceListener.cpp
 endif
-
+endif
 
 LOCAL_LDLIBS := -llog
 LOCAL_STATIC_LIBRARIES := android-oc
@@ -162,6 +163,7 @@ LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/ocsocket/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/oc_logger/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/../extlibs/boost/boost_1_58_0
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/../extlibs/cjson
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/../extlibs/tinycbor/tinycbor/src
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/../build_common/android/compatibility
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/provisioning/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/security/provisioning/include/oxm/

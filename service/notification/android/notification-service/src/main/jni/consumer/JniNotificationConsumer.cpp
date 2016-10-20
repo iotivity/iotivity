@@ -116,38 +116,32 @@ jobject getJavaSyncType(JNIEnv *env, OIC::Service::NSSyncInfo::NSSyncType nsType
         LOGE ("Failed to Get ObjectClass for SyncType");
         return NULL;
     }
-    jobject syncType;
     switch (nsType)
     {
         case OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_UNREAD:
             {
                 static jfieldID fieldID = env->GetStaticFieldID(cls_SyncType,
                                           "UNREAD", "Lorg/iotivity/service/ns/common/SyncInfo$SyncType;");
-                syncType = env->GetStaticObjectField(cls_SyncType, fieldID);
+                return env->GetStaticObjectField(cls_SyncType, fieldID);
             }
         case OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ :
             {
                 static jfieldID fieldID = env->GetStaticFieldID(cls_SyncType,
                                           "READ", "Lorg/iotivity/service/ns/common/SyncInfo$SyncType;");
-                syncType = env->GetStaticObjectField(cls_SyncType, fieldID);
+                return env->GetStaticObjectField(cls_SyncType, fieldID);
             }
         case OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_DELETED :
             {
                 static jfieldID fieldID = env->GetStaticFieldID(cls_SyncType,
                                           "DELETED", "Lorg/iotivity/service/ns/common/SyncInfo$SyncType;");
-                syncType = env->GetStaticObjectField(cls_SyncType, fieldID);
+                return env->GetStaticObjectField(cls_SyncType, fieldID);
             }
-
+        default:
+            return NULL;
     }
 
-    if (syncType == NULL)
-    {
-        LOGD("Error: object of field  Synctype  is null");
-    }
-
-    env->DeleteLocalRef(cls_SyncType);
     LOGD ("ConsumerService_getJavaSyncType - OUT");
-    return syncType;
+    return NULL;
 }
 
 jobject getJavaTopicState(JNIEnv *env, OIC::Service::NSTopic::NSTopicState nsState)
@@ -610,7 +604,7 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
         }
         env->SetObjectField(obj_message, fid_type, jType);
     }
-    
+
     LOGD("Reading OCRepresentation Object from Native");
 
     OC::OCRepresentation *ocRepresentation = new OC::OCRepresentation(message->getExtraInfo());
@@ -636,7 +630,7 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
     }
     LOGD ("setting extraInfo field");
     env->SetObjectField(obj_message, fid_extraInfo, jRepresentation);
-    
+
     env->DeleteLocalRef(cls_message);
     LOGD ("ConsumerService_getJavaMessage - OUT");
     return obj_message;

@@ -103,6 +103,8 @@ notification_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer_wra
 # Source files and Targets for Consumer Jni
 ######################################################################
 if target_os == 'android':
+	Import('notificationJniCommonSharedObjs')
+
 	notification_jni_consumer_env.AppendUnique(CPPPATH = ['../../../../extlibs/boost/boost_1_58_0'])
 	notification_jni_consumer_env.AppendUnique(CPPPATH = ['../../../../android/android_api/base/jni'])
 	notification_jni_consumer_env.AppendUnique(CPPPATH = ['../../android/notification-service/src/main/jni/common'])
@@ -114,7 +116,7 @@ if target_os == 'android':
 
 	notification_consumer_jni_src = [
 		env.Glob('../../android/notification-service/src/main/jni/consumer/*.cpp'),
-		env.Glob('../../android/notification-service/src/main/jni/common/*.cpp')]
+		notificationJniCommonSharedObjs]
 
 	consumerJni = notification_jni_consumer_env.SharedLibrary('notification_consumer_jni', notification_consumer_jni_src)
 	notification_jni_consumer_env.InstallTarget(consumerJni, 'libnotification_consumer_jni')

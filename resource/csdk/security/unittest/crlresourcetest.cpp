@@ -17,7 +17,7 @@
 * limitations under the License.
 *
 ******************************************************************/
-#ifdef __WITH_X509__
+#ifdef __WITH_DTLS__
 
 #include "gtest/gtest.h"
 #include "logger.h"
@@ -32,25 +32,8 @@
 #include "srmutility.h"
 #include "psinterface.h"
 #include "security_internals.h"
-#include "crl.h"
 
 #define TAG  "SRM-CRL-UT"
-
-void DeleteCrl(OicSecCrl_t *crl)
-{
-    if (crl)
-    {
-        //Clean ThisUpdate
-        OICFree(crl->ThisUpdate.data);
-        crl->ThisUpdate.data = NULL;
-        //clean CrlData
-        OICFree(crl->CrlData.data);
-        crl->CrlData.data = NULL;
-        //Clean crl itself
-        OICFree(crl);
-        crl = NULL;
-    }
-}
 
  //InitCRLResource Tests
 TEST(CRLResourceTest, InitCRLResource)
@@ -79,8 +62,8 @@ TEST(CRLResourceTest, CrlToCBORPayload)
     size_t size;
     OicSecCrl_t *crl = GetCRLResource();
     ASSERT_TRUE(NULL != crl);
-    size = crl->CrlData.len;
-    EXPECT_EQ(OC_STACK_OK, CrlToCBORPayload(crl, &payload, &size));
+    size = 0;
+    EXPECT_EQ(OC_STACK_OK, CrlToCBORPayload(crl, &payload, &size, NULL));
     DeleteCrl(crl);
     OICFree(payload);
 }
@@ -92,8 +75,8 @@ TEST(CRLResourceTest, CBORPayloadToCrl)
     size_t size;
     OicSecCrl_t *crl = GetCRLResource();
     ASSERT_TRUE(NULL != crl);
-    size = crl->CrlData.len;
-    EXPECT_EQ(OC_STACK_OK, CrlToCBORPayload(crl, &payload, &size));
+    size = 0;
+    EXPECT_EQ(OC_STACK_OK, CrlToCBORPayload(crl, &payload, &size, NULL));
     DeleteCrl(crl);
     crl = NULL;
     EXPECT_EQ(OC_STACK_OK, CBORPayloadToCrl(payload, size, &crl));
@@ -104,6 +87,7 @@ TEST(CRLResourceTest, CBORPayloadToCrl)
 //GetDerCrl Tests
 TEST(CRLResourceTest, GetDerCrl)
 {
+#define CRL_MAX_LEN 1024
     uint8_t crlData[CRL_MAX_LEN] = {0};
     ByteArray crlArray = {crlData, CRL_MAX_LEN};
     GetDerCrl(&crlArray);

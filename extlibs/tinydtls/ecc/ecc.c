@@ -334,18 +334,14 @@ int uECC_get_pubkey_impl(const uint8_t p_key_handle[uECC_BYTES], uint8_t p_publi
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <wincrypt.h>
+#include <bcrypt.h>
 
 static int default_RNG(uint8_t *p_dest, unsigned p_size)
 {
-    HCRYPTPROV l_prov;
-    if(!CryptAcquireContext(&l_prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
+    if (!BCRYPT_SUCCESS(BCryptGenRandom(NULL, (PUCHAR)p_dest, p_size, BCRYPT_USE_SYSTEM_PREFERRED_RNG)))
     {
         return 0;
     }
-
-    CryptGenRandom(l_prov, p_size, (BYTE *)p_dest);
-    CryptReleaseContext(l_prov, 0);
 
     return 1;
 }

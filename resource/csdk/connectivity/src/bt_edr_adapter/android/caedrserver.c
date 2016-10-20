@@ -46,6 +46,13 @@ static ca_thread_pool_t g_threadPoolHandle = NULL;
 static JavaVM *g_jvm;
 
 /**
+ * when Both Mode(server and client) in App is set,
+ * startDiscoveryServer and startListenningServer is calling.
+ * and then both accept thread and receive thread is running redundantly.
+ */
+static bool g_isStartServer = false;
+
+/**
  * Maximum CoAP over TCP header length
  * to know the total data length.
  */
@@ -90,6 +97,11 @@ static ca_mutex g_mutexStateList = NULL;
  * Mutex to synchronize device object list.
  */
 static ca_mutex g_mutexObjectList = NULL;
+
+/**
+ * Mutex to synchronize start server state.
+ */
+static ca_mutex g_mutexStartServerState = NULL;
 
 /**
  * Thread context information for unicast, multicast and secured unicast server.
@@ -252,6 +264,15 @@ CAResult_t CAEDRServerStart()
         return CA_STATUS_NOT_INITIALIZED;
     }
 
+    ca_mutex_lock(g_mutexStartServerState);
+    if (g_isStartServer)
+    {
+        OIC_LOG(DEBUG, TAG, "server already started");
+        ca_mutex_unlock(g_mutexStartServerState);
+        return CA_STATUS_OK;
+    }
+    ca_mutex_unlock(g_mutexStartServerState);
+
     CAResult_t res = CAEDRServerStartAcceptThread();
     if (CA_STATUS_OK == res)
     {
@@ -262,6 +283,9 @@ CAResult_t CAEDRServerStart()
             CAEDRServerStop();
             return CA_STATUS_FAILED;
         }
+        ca_mutex_lock(g_mutexStartServerState);
+        g_isStartServer = true;
+        ca_mutex_unlock(g_mutexStartServerState);
     }
 
     return res;
@@ -298,6 +322,9 @@ CAResult_t CAEDRServerStop()
     }
 
     CAEDRNatvieCloseServerTask(env);
+    ca_mutex_lock(g_mutexStartServerState);
+    g_isStartServer = false;
+    ca_mutex_unlock(g_mutexStartServerState);
 
     if (isAttached)
     {
@@ -343,6 +370,12 @@ static void CAEDRServerDestroyMutex()
         ca_mutex_free(g_mutexObjectList);
         g_mutexObjectList = NULL;
     }
+
+    if (g_mutexStartServerState)
+    {
+        ca_mutex_free(g_mutexStartServerState);
+        g_mutexStartServerState = NULL;
+    }
 }
 
 static CAResult_t CAEDRServerCreateMutex()
@@ -383,6 +416,15 @@ static CAResult_t CAEDRServerCreateMutex()
 
     g_mutexObjectList = ca_mutex_new();
     if (!g_mutexObjectList)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to created mutex!");
+
+        CAEDRServerDestroyMutex();
+        return CA_STATUS_FAILED;
+    }
+
+    g_mutexStartServerState = ca_mutex_new();
+    if (!g_mutexStartServerState)
     {
         OIC_LOG(ERROR, TAG, "Failed to created mutex!");
 

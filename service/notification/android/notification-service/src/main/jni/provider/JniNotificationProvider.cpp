@@ -124,10 +124,10 @@ OIC::Service::NSMessage *getNativeMessage(JNIEnv *env, jobject jMsg)
         LOGE("Error: jfieldID for message ttl is null");
         return nullptr;
     }
-    jlong jttl = (jlong) env->GetObjectField( jMsg, fid_ttl);
-    uint64_t  ttl = jttl;
 
-    LOGD("Message ID: %lld\n", ttl);
+    jlong jttl = (jlong) env->GetLongField( jMsg, fid_ttl);
+    uint64_t  ttl = jttl;
+    LOGD("TTL: %d\n", ttl);
 
     // Message Title
     jfieldID fid_title = env->GetFieldID( cls, "mTitle", "Ljava/lang/String;");
@@ -271,7 +271,23 @@ OIC::Service::NSMessage *getNativeMessage(JNIEnv *env, jobject jMsg)
         }
     }
     OIC::Service::NSMediaContents *media = new OIC::Service::NSMediaContents(std::string(iconImage));
-    OIC::Service::NSMessage *nsMsg = OIC::Service::NSProviderService::getInstance()->createMessage();
+    OIC::Service::NSMessage *nsMsg;
+    jfieldID nativeHandle = env->GetFieldID(cls, "mNativeHandle", "J");
+    if (!nativeHandle)
+    {
+        LOGE("Error: fieldID for mNativeHandle is null");
+        return nullptr;
+    }
+    jlong jMessage = env->GetLongField(jMsg, nativeHandle);
+    if (jMessage)
+    {
+        LOGD ("calling sendMessage on mNativeHandle");
+        nsMsg = (OIC::Service::NSMessage *) (jMessage);
+    }
+    else
+    {
+        nsMsg = OIC::Service::NSProviderService::getInstance()->createMessage();
+    }
 
     nsMsg->setType(type);
     nsMsg->setTime(std::string(time));
@@ -608,38 +624,32 @@ jobject getJavaSyncType(JNIEnv *env, OIC::Service::NSSyncInfo::NSSyncType nsType
         LOGE ("Failed to Get ObjectClass for SyncType");
         return NULL;
     }
-    jobject syncType;
     switch (nsType)
     {
         case OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_UNREAD:
             {
                 static jfieldID fieldID = env->GetStaticFieldID(cls_SyncType,
                                           "UNREAD", "Lorg/iotivity/service/ns/common/SyncInfo$SyncType;");
-                syncType = env->GetStaticObjectField(cls_SyncType, fieldID);
+                return env->GetStaticObjectField(cls_SyncType, fieldID);
             }
         case OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ :
             {
                 static jfieldID fieldID = env->GetStaticFieldID(cls_SyncType,
                                           "READ", "Lorg/iotivity/service/ns/common/SyncInfo$SyncType;");
-                syncType = env->GetStaticObjectField(cls_SyncType, fieldID);
+                return env->GetStaticObjectField(cls_SyncType, fieldID);
             }
         case OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_DELETED :
             {
                 static jfieldID fieldID = env->GetStaticFieldID(cls_SyncType,
                                           "DELETED", "Lorg/iotivity/service/ns/common/SyncInfo$SyncType;");
-                syncType = env->GetStaticObjectField(cls_SyncType, fieldID);
+                return env->GetStaticObjectField(cls_SyncType, fieldID);
             }
-
+        default:
+            return NULL;
     }
 
-    if (syncType == NULL)
-    {
-        LOGE("Error: object of field  Synctype  is null");
-    }
-
-    env->DeleteLocalRef(cls_SyncType);
     LOGD ("JNIProviderService: getJavaSyncType - OUT");
-    return syncType;
+    return NULL;
 }
 
 

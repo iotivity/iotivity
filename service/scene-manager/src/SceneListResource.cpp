@@ -169,8 +169,8 @@ namespace OIC
         RCSGetResponse SceneListResource::SceneListRequestHandler::onGetRequest(
                 const RCSRequest & request, RCSResourceAttributes & /*attributes*/)
         {
-
-            if(request.getInterface() != OC::DEFAULT_INTERFACE)
+            if(request.getInterface() != OC::DEFAULT_INTERFACE &&
+                !request.getInterface().empty())
             {
                 return RCSGetResponse::defaultAction();
             }
@@ -188,6 +188,18 @@ namespace OIC
             if (childrenAttrs.size())
             {
                 retAttr[SCENE_KEY_CHILD] = childrenAttrs;
+            }
+
+            if (!retAttr.contains("if"))
+            {
+                std::vector<std::string> ifs = { BASELINE_IF, OC::BATCH_INTERFACE, LINK_BATCH };
+                retAttr["if"] = ifs;
+            }
+
+            if (!retAttr.contains("rt"))
+            {
+                std::vector<std::string> rt = { SCENE_LIST_RT };
+                retAttr["rt"] = rt;
             }
 
             return RCSGetResponse::create(retAttr);

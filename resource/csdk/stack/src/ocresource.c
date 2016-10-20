@@ -55,6 +55,10 @@
 #include "routingmanager.h"
 #endif
 
+#ifdef RD_SERVER
+#include "rd_database.h"
+#endif
+
 /// Module Name
 #define TAG "OIC_RI_RESOURCE"
 
@@ -75,8 +79,7 @@ static OCDeviceInfo savedDeviceInfo = {0};
  */
 static OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
                                                   OCDiscoveryPayload* payload,
-                                                  OCDevAddr *endpoint,
-                                                  bool rdResponse);
+                                                  OCDevAddr *endpoint);
 
 //-----------------------------------------------------------------------------
 // Default resource entity handler function
@@ -237,6 +240,14 @@ static OCVirtualResources GetTypeOfVirtualURI(const char *uriInRequest)
         return OC_MQ_BROKER_URI;
     }
 #endif //MQ_BROKER
+
+#ifdef TCP_ADAPTER
+    else if (strcmp(uriInRequest, OC_RSRVD_KEEPALIVE_URI) == 0)
+    {
+        return OC_KEEPALIVE_RESOURCE_URI;
+    }
+#endif
+
     return OC_UNKNOWN_URI;
 }
 
@@ -323,7 +334,7 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
 }
 
 OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
-                        OCDiscoveryPayload *payload, OCDevAddr *devAddr, bool rdResponse)
+                        OCDiscoveryPayload *payload, OCDevAddr *devAddr)
 {
     if (!resourcePtr || !payload)
     {
@@ -336,11 +347,6 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
        {
            securePort = 0;
        }
-    }
-
-    if (rdResponse)
-    {
-        securePort = devAddr->port;
     }
 
 #ifdef TCP_ADAPTER
@@ -485,7 +491,10 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
             result = OC_STACK_ERROR;
             break;
         case OC_EH_FORBIDDEN:
-            result = OC_STACK_RESOURCE_ERROR;
+            result = OC_STACK_FORBIDDEN_REQ;
+            break;
+        case OC_EH_INTERNAL_SERVER_ERROR:
+            result = OC_STACK_INTERNAL_SERVER_ERROR;
             break;
         case OC_EH_RESOURCE_CREATED:
             result = OC_STACK_RESOURCE_CREATED;
@@ -664,14 +673,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             if (payload)
             {
                 OCDiscoveryPayload *discPayload = (OCDiscoveryPayload *)payload;
-                discPayload->sid = (char *)OICCalloc(1, UUID_STRING_SIZE);
-                VERIFY_NON_NULL(discPayload->sid, ERROR, OC_STACK_NO_MEMORY);
-
-                const char* uid = OCGetServerInstanceIDString();
-                if (uid)
-                {
-                    memcpy(discPayload->sid, uid, UUID_STRING_SIZE);
-                }
+                bool foundResourceAtRD = false;
 
                 if (!resourceTypeQuery && interfaceQuery && (0 == strcmp(interfaceQuery, OC_RSRVD_INTERFACE_LL)))
                 {
@@ -685,17 +687,20 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 
                     for (; resource && discoveryResult == OC_STACK_OK; resource = resource->next)
                     {
-                        bool result = false;
-
-                        if (resource->resourceProperties & prop)
+                        foundResourceAtRD = false;
+#ifdef RD_SERVER
+                        if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
                         {
-                            result = true;
+                            if (OC_STACK_OK == OCRDDatabaseCheckResources(interfaceQuery, resourceTypeQuery, discPayload))
+                            {
+                                foundResourceAtRD = true;
+                                discoveryResult = OC_STACK_OK;
+                            }
                         }
-
-                        if (result)
+#endif
+                        if (!foundResourceAtRD && (resource->resourceProperties & prop))
                         {
-                            discoveryResult = BuildVirtualResourceResponse(resource,
-                            discPayload, &request->devAddr, false);
+                            discoveryResult = BuildVirtualResourceResponse(resource, discPayload, &request->devAddr);
                         }
                     }
                 }
@@ -718,13 +723,21 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                         OCResourcePayloadAddStringLL(&discPayload->iface, OC_RSRVD_INTERFACE_DEFAULT);
                         VERIFY_NON_NULL(discPayload->iface, ERROR, OC_STACK_NO_MEMORY);
                     }
-                    bool foundResourceAtRD = false;
                     for (;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
                     {
+#ifdef RD_SERVER
+                        if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
+                        {
+                            if (OC_STACK_OK == OCRDDatabaseCheckResources(interfaceQuery, resourceTypeQuery, discPayload))
+                            {
+                                foundResourceAtRD = true;
+                                discoveryResult = OC_STACK_OK;
+                            }
+                        }
+#endif
                         if (!foundResourceAtRD && includeThisResourceInResponse(resource, interfaceQuery, resourceTypeQuery))
                         {
-                            discoveryResult = BuildVirtualResourceResponse(resource,
-                                discPayload, &request->devAddr, false);
+                            discoveryResult = BuildVirtualResourceResponse(resource, discPayload, &request->devAddr);
                         }
                     }
                     // Set discoveryResult appropriately if no 'valid' resources are available
@@ -733,11 +746,23 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                         discoveryResult = OC_STACK_NO_RESOURCE;
                     }
                 }
+                if (discoveryResult == OC_STACK_OK && foundResourceAtRD == false)
+                {
+                    discPayload->sid = (char *)OICCalloc(1, UUID_STRING_SIZE);
+                    VERIFY_NON_NULL(discPayload->sid, ERROR, OC_STACK_NO_MEMORY);
+
+                    const char* uid = OCGetServerInstanceIDString();
+                    if (uid)
+                    {
+                        memcpy(discPayload->sid, uid, UUID_STRING_SIZE);
+                    }
+                }
             }
             else
             {
                 discoveryResult = OC_STACK_NO_MEMORY;
             }
+
         }
         else
         {
@@ -811,7 +836,14 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 
     }
 #endif
-
+#ifdef TCP_ADAPTER
+    else if (OC_KEEPALIVE_RESOURCE_URI == virtualUriInRequest)
+    {
+        // Received request for a keepalive
+        OIC_LOG(INFO, TAG, "Request is for KeepAlive Request");
+        discoveryResult = HandleKeepAliveRequest(request, resource);
+    }
+#endif
     /**
      * Step 2: Send the discovery response
      *
@@ -838,34 +870,45 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             SendDirectStackResponse(&endpoint, request->coapID, CA_EMPTY, CA_MSG_ACKNOWLEDGE,
                                     0, NULL, NULL, 0, NULL, CA_RESPONSE_FOR_RES);
         }
+        FindAndDeleteServerRequest(request);
 
         // Presence uses observer notification api to respond via SendPresenceNotification.
         SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
     }
     else
-    #endif
-#ifdef ROUTING_GATEWAY
+#endif
+#if ROUTING_GATEWAY
     // Gateway uses the RMHandleGatewayRequest to respond to the request.
     if (OC_GATEWAY_URI != virtualUriInRequest)
 #endif
     {
-        if(discoveryResult == OC_STACK_OK)
+#if TCP_ADAPTER
+        // KeepAlive uses the HandleKeepAliveRequest to respond to the request.
+        if (OC_KEEPALIVE_RESOURCE_URI != virtualUriInRequest)
+#endif
         {
-            SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
-        }
-        else if(((request->devAddr.flags &  OC_MULTICAST) == false) &&
-            (request->devAddr.adapter != OC_ADAPTER_RFCOMM_BTEDR) &&
-            (request->devAddr.adapter != OC_ADAPTER_GATT_BTLE))
-        {
-            OIC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d) discovery request",
-                discoveryResult, virtualUriInRequest);
-            SendNonPersistantDiscoveryResponse(request, resource, NULL,
-                (discoveryResult == OC_STACK_NO_RESOURCE) ? OC_EH_RESOURCE_NOT_FOUND : OC_EH_ERROR);
-        }
-        else
-        {
-            // Ignoring the discovery request as per RFC 7252, Section #8.2
-            OIC_LOG(INFO, TAG, "Silently ignoring the request since no useful data to send. ");
+            if(discoveryResult == OC_STACK_OK)
+            {
+                SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
+            }
+            else if(((request->devAddr.flags &  OC_MULTICAST) == false) &&
+                (request->devAddr.adapter != OC_ADAPTER_RFCOMM_BTEDR) &&
+                (request->devAddr.adapter != OC_ADAPTER_GATT_BTLE))
+            {
+                OIC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d) discovery request",
+                    discoveryResult, virtualUriInRequest);
+                SendNonPersistantDiscoveryResponse(request, resource, NULL,
+                    (discoveryResult == OC_STACK_NO_RESOURCE) ?
+                            OC_EH_RESOURCE_NOT_FOUND : OC_EH_ERROR);
+            }
+            else
+            {
+                // Ignoring the discovery request as per RFC 7252, Section #8.2
+                OIC_LOG(INFO, TAG, "Silently ignoring the request since no useful data to send.");
+                // the request should be removed.
+                // since it never remove and causes a big memory waste.
+                FindAndDeleteServerRequest(request);
+            }
         }
     }
 
@@ -946,11 +989,6 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
 
     }
 
-    if (request && strcmp(request->resourceUrl, OC_RSRVD_RD_URI) == 0)
-    {
-        type = PAYLOAD_TYPE_RD;
-    }
-
     result = FormOCEntityHandlerRequest(&ehRequest,
                                         (OCRequestHandle)request,
                                         request->method,
@@ -972,7 +1010,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         OIC_LOG(INFO, TAG, "No observation requested");
         ehFlag = OC_REQUEST_FLAG;
     }
-    else if(ehRequest.obsInfo.action == OC_OBSERVE_REGISTER && !collectionResource)
+    else if(ehRequest.obsInfo.action == OC_OBSERVE_REGISTER)
     {
         OIC_LOG(INFO, TAG, "Observation registration requested");
 
@@ -1027,8 +1065,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         }
 
     }
-    else if(ehRequest.obsInfo.action == OC_OBSERVE_DEREGISTER &&
-            !collectionResource)
+    else if(ehRequest.obsInfo.action == OC_OBSERVE_DEREGISTER)
     {
         OIC_LOG(INFO, TAG, "Deregistering observation requested");
 

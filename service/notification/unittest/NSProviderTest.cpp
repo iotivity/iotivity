@@ -139,7 +139,7 @@ TEST_F(NotificationProviderTest, StartProviderPositiveWithNSPolicyTrue)
     config.subRequestCallback = NSRequestedSubscribeCallbackEmpty;
     config.syncInfoCallback = NSSyncCallbackEmpty;
     config.subControllability = true;
-    config.userInfo = NULL;
+    config.userInfo = strdup("user1");
 
     NSResult ret = NSStartProvider(config);
 

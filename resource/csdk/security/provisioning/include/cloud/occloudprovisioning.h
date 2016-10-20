@@ -175,7 +175,25 @@ OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
                                             OCCloudResponseCB callback);
 
 /**
- * ACL individual delete
+ * ACL individual update
+ *
+ * @param[in] ctx               user-defined context
+ * @param[in] aclId             mandatory parameter acl id
+ * @param[in] aceId             mandatory parameter target ace id
+ * @param[in] aces              mandatory parameter aces
+ * @param[in] endPoint          cloud host and port
+ * @param[in] callback          optional result callback, can be NULL if not required
+ * @return  OCStackResult application result
+ */
+OCStackResult OCCloudAclIndividualUpdate(void* ctx,
+                                            const char *aclId,
+                                            const char *aceId,
+                                            const cloudAce_t *aces,
+                                            const OCDevAddr *endPoint,
+                                            OCCloudResponseCB callback);
+
+/**
+ * ACL individual delete - replaces ACE with given aceid with provided ACE
  *
  * @param[in] ctx               user-defined context
  * @param[in] aclId             mandatory parameter acl id
@@ -185,6 +203,22 @@ OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
  */
 OCStackResult OCCloudAclIndividualDelete(void* ctx,
                                          const char *aclId,
+                                         const OCDevAddr *endPoint,
+                                         OCCloudResponseCB callback);
+
+/**
+ * ACL individual delete ACE
+ *
+ * @param[in] ctx               user-defined context
+ * @param[in] aclId             mandatory parameter acl id
+ * @param[in] aceId             target ace id
+ * @param[in] endPoint          cloud host and port
+ * @param[in] callback          optional result callback, can be NULL if not required
+ * @return  OCStackResult application result
+ */
+OCStackResult OCCloudAclIndividualDeleteAce(void* ctx,
+                                         const char *aclId,
+                                         const char *aceId,
                                          const OCDevAddr *endPoint,
                                          OCCloudResponseCB callback);
 

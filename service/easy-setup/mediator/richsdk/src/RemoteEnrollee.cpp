@@ -53,22 +53,6 @@ namespace OIC
             m_deviceId = resource->sid();
         }
 
-#ifdef __WITH_DTLS__
-        ESResult RemoteEnrollee::registerSecurityCallbackHandler(
-                const SecurityPinCb securityPinCb,
-                const SecProvisioningDbPathCb secProvisioningDbPathCb)
-        {
-            // No need to check NULL for m_secProvisioningDbPathCB as this is not a mandatory
-            // callback function. If m_secProvisioningDbPathCB is NULL, provisioning manager
-            // in security layer will try to find the PDM.db file in the local path.
-            // If PDM.db is found, the provisioning manager operations will succeed.
-            // Otherwise all the provisioning manager operations will fail.
-            m_secProvisioningDbPathCb = secProvisioningDbPathCb;
-            m_securityPinCb = securityPinCb;
-            return ES_OK;
-        }
-#endif //__WITH_DTLS__
-
         void RemoteEnrollee::securityStatusHandler(
                 const std::shared_ptr< SecProvisioningStatus > status) const
         {
@@ -236,16 +220,17 @@ namespace OIC
                     this,
                     std::placeholders::_1);
             //TODO : DBPath is passed empty as of now. Need to take dbpath from application.
-            m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
-
-            m_enrolleeSecurity->registerCallbackHandler(securityProvStatusCb, m_securityPinCb,
-                                                        m_secProvisioningDbPathCb);
+            if(!m_enrolleeSecurity.get())
+            {
+                m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+            }
 
             res = m_enrolleeSecurity->provisionOwnership();
 
             std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
                             std::make_shared< SecProvisioningStatus >(m_enrolleeSecurity->getUUID(), res);
             m_securityProvStatusCb(securityProvisioningStatus);
+            m_enrolleeSecurity.reset();
 #else
             OIC_LOG(DEBUG,ES_REMOTE_ENROLLEE_TAG,"Mediator is unsecured.");
             if(!callback)
@@ -394,11 +379,15 @@ namespace OIC
             if(!(cloudProp.getCloudID().empty() && cloudProp.getCredID() <= 0))
             {
                 ESResult res = ESResult::ES_ERROR;
-                m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+                if(!m_enrolleeSecurity.get())
+                {
+                    m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+                }
+
 
                 res = m_enrolleeSecurity->provisionSecurityForCloudServer(cloudProp.getCloudID(),
                                                                           cloudProp.getCredID());
-
+                m_enrolleeSecurity.reset();
                 if(res != ESResult::ES_OK)
                 {
                     m_cloudResource = nullptr;

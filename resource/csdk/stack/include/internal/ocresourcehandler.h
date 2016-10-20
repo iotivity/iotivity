@@ -25,6 +25,10 @@
 #include "ocstackinternal.h"
 #include "ocserverrequest.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 /**
  * Common JSON string components used by the stack to build JSON strings.
  * These details are exposed in ocstackconfig.h file in the form of documentation.
@@ -67,14 +71,19 @@ typedef enum
     /** "/oic/gateway" .*/
     OC_GATEWAY_URI,
 #endif
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     /** "/oic/ad" .*/
     OC_PRESENCE,
-    #endif
+#endif
 
 #ifdef MQ_BROKER
     /** "/oic/ps" .*/
     OC_MQ_BROKER_URI,
+#endif
+
+#ifdef TCP_ADAPTER
+    /** "/oic/ping" .*/
+    OC_KEEPALIVE_RESOURCE_URI,
 #endif
 
     /** Max items in the list */
@@ -185,5 +194,8 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
  */
 OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult);
 
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 #endif //OC_RESOURCEHANDLER_H
 

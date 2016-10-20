@@ -55,7 +55,9 @@ namespace OIC
                       * @param consumerId -consumerId of the Notification service Consumer.
                       */
                 NSConsumer(const std::string &consumerId)
-                    : m_consumerId(consumerId) {}
+                    : m_consumerId(consumerId)
+                {
+                }
 
                 /**
                       * Constructor of NSConsumer.
@@ -78,7 +80,7 @@ namespace OIC
 
                 /**
                       * This method is for setting icon image for the Notification service media contents.
-                      *
+                      * This function is valid only when subControllability is set true.
                       * @param accepted - as bool.
                       */
                 int acceptSubscription(bool accepted);

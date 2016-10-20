@@ -683,7 +683,7 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
 #ifdef WITH_CLOUD
         env->DeleteGlobalRef(g_cls_OcAccountManager);
 #endif
-#ifdef WITH_CLOUD
+#ifdef __WITH_TLS__
         env->DeleteGlobalRef(g_cls_OcCloudProvisioning);
 #endif
         env->DeleteGlobalRef(g_cls_OcOicSecAcl);

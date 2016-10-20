@@ -235,7 +235,8 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
 {
     NS_LOG(DEBUG, "NSSendTopicList - IN");
 
-    char * id = NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_CONSUMER_ID);
+    char * copyReq = OICStrdup(entityHandlerRequest->query);
+    char * id = NSGetValueFromQuery(copyReq, NS_QUERY_CONSUMER_ID);
     NSTopicLL * topics = NULL;
 
     if (!id)
@@ -264,6 +265,7 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
     if (!payload)
     {
         NS_LOG(ERROR, "payload is NULL");
+        OICFree(copyReq);
         return NS_ERROR;
     }
 
@@ -273,12 +275,12 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
         OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_CONSUMER_ID, id);
     }
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
+    OICFree(copyReq);
 
     if (topics)
     {
         NS_LOG(DEBUG, "topicList is NULL");
         size_t dimensionSize = (size_t) NSProviderGetTopicListSize(topics);
-
         NS_LOG_V(DEBUG, "dimensionSize = %d", (int)dimensionSize);
 
         if (!dimensionSize)
@@ -288,9 +290,9 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
 
         OCRepPayload** payloadTopicArray = (OCRepPayload **) OICMalloc(
                 sizeof(OCRepPayload *) * dimensionSize);
+        NS_VERIFY_NOT_NULL(payloadTopicArray, NS_ERROR);
 
-        size_t dimensions[3] =
-        { dimensionSize, 0, 0 };
+        size_t dimensions[3] = { dimensionSize, 0, 0 };
 
         for (int i = 0; i < (int) dimensionSize; i++)
         {
@@ -304,20 +306,38 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
             OCRepPayloadSetPropInt(payloadTopicArray[i], NS_ATTRIBUTE_TOPIC_SELECTION,
                     (int) topics->state);
 
-            topics = topics->next;
+            NSTopicLL * next = topics->next;
+            OICFree(topics->topicName);
+            OICFree(topics);
+            topics = next;
         }
 
         OCRepPayloadSetPropObjectArray(payload, NS_ATTRIBUTE_TOPIC_LIST,
                 (const OCRepPayload**) (payloadTopicArray), dimensions);
+        for (int i = 0; i < (int) dimensionSize; ++i)
+        {
+            OCRepPayloadDestroy(payloadTopicArray[i]);
+        }
+        OICFree(payloadTopicArray);
     }
     else
     {
-        size_t dimensions[3] =
-        { 0, 0, 0 };
+        size_t dimensions[3] = { 0, 0, 0 };
 
         OCRepPayloadSetPropObjectArrayAsOwner(payload, NS_ATTRIBUTE_TOPIC_LIST,
                 (OCRepPayload **) NULL, dimensions);
     }
+
+    copyReq = OICStrdup(entityHandlerRequest->query);
+    char * reqInterface = NSGetValueFromQuery(copyReq, NS_QUERY_INTERFACE);
+
+    if (reqInterface && strcmp(reqInterface, NS_INTERFACE_BASELINE) == 0)
+    {
+        OCResourcePayloadAddStringLL(&payload->interfaces, NS_INTERFACE_BASELINE);
+        OCResourcePayloadAddStringLL(&payload->interfaces, NS_INTERFACE_READ);
+        OCResourcePayloadAddStringLL(&payload->types, NS_ROOT_TYPE);
+    }
+    OICFree(copyReq);
 
     response.requestHandle = entityHandlerRequest->requestHandle;
     response.resourceHandle = entityHandlerRequest->resource;
@@ -328,10 +348,11 @@ NSResult NSSendTopicList(OCEntityHandlerRequest * entityHandlerRequest)
     if (OCDoResponse(&response) != OC_STACK_OK)
     {
         NS_LOG(ERROR, "Fail to response topic list");
+        OCRepPayloadDestroy(payload);
         return NS_ERROR;
     }
-    OCRepPayloadDestroy(payload);
 
+    OCRepPayloadDestroy(payload);
     NS_LOG(DEBUG, "NSSendTopicList - OUT");
     return NS_OK;
 }
@@ -363,8 +384,7 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
     OCRepPayloadValue * payloadValue = NULL;
     payloadValue = NSPayloadFindValue(payload, NS_ATTRIBUTE_TOPIC_LIST);
     size_t dimensionSize = calcDimTotal(payloadValue->arr.dimensions);
-    size_t dimensions[3] =
-    { dimensionSize, 0, 0 };
+    size_t dimensions[3] = { dimensionSize, 0, 0 };
     OCRepPayloadGetPropObjectArray(payload, NS_ATTRIBUTE_TOPIC_LIST, &topicListPayload, dimensions);
 
     for (int i = 0; i < (int) dimensionSize; i++)
@@ -383,7 +403,7 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
             NS_VERIFY_NOT_NULL(topicSubData, NS_FAIL);
 
             OICStrcpy(topicSubData->id, NS_UUID_STRING_SIZE, consumerId);
-            topicSubData->topicName = OICStrdup(topicName);
+            topicSubData->topicName = topicName;
 
             NSCacheElement * newObj = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
 
@@ -391,6 +411,7 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
             {
                 OICFree(topicSubData->topicName);
                 OICFree(topicSubData);
+                OICFree(consumerId);
                 return NS_FAIL;
             }
 
@@ -401,7 +422,7 @@ NSResult NSPostConsumerTopics(OCEntityHandlerRequest * entityHandlerRequest)
         }
     }
     NSSendTopicUpdationToConsumer(consumerId);
-
+    OICFree(consumerId);
     NS_LOG(DEBUG, "NSPostConsumerTopics() - OUT");
     return NS_OK;
 }
@@ -433,31 +454,58 @@ void * NSTopicSchedule(void * ptr)
                 case TASK_SUBSCRIBE_TOPIC:
                 {
                     NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPIC : ");
+                    NSTopicSyncResult * topicSyncResult = (NSTopicSyncResult *) node->taskData;
+                    pthread_mutex_lock(topicSyncResult->mutex);
                     NSCacheElement * newObj = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
-                    if (newObj)
+                    NSCacheTopicSubData * subData =
+                            (NSCacheTopicSubData *) topicSyncResult->topicData;
+                    if (!newObj)
                     {
-                        newObj->data = node->taskData;
-                        newObj->next = NULL;
-                        if (NSProviderStorageWrite(consumerTopicList, newObj) == NS_OK)
+                        OICFree(subData->topicName);
+                        OICFree(subData);
+                        pthread_cond_signal(topicSyncResult->condition);
+                        pthread_mutex_unlock(topicSyncResult->mutex);
+                    }
+                    else
+                    {
+                        if (NSProviderStorageRead(registeredTopicList, subData->topicName))
                         {
-                            NSCacheTopicSubData * topicSubData =
-                                    (NSCacheTopicSubData *) node->taskData;
-                            NSSendTopicUpdationToConsumer(topicSubData->id);
+                            newObj->data = topicSyncResult->topicData;
+                            newObj->next = NULL;
+                            if(NSProviderStorageWrite(consumerTopicList, newObj) == NS_OK)
+                            {
+                                NSSendTopicUpdationToConsumer(subData->id);
+                                topicSyncResult->result = NS_OK;
+                            }
+                        }
+                        else
+                        {
+                            OICFree(subData->topicName);
+                            OICFree(subData);
+                            OICFree(newObj);
                         }
                     }
+                    pthread_cond_signal(topicSyncResult->condition);
+                    pthread_mutex_unlock(topicSyncResult->mutex);
                 }
                     break;
                 case TASK_UNSUBSCRIBE_TOPIC:
                 {
-                    NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPIC : ");
-                    NSCacheTopicSubData * topicSubData = (NSCacheTopicSubData *) node->taskData;
-                    if (NSProviderDeleteConsumerTopic(consumerTopicList,
-                            (NSCacheTopicSubData *) node->taskData) == NS_OK)
+                    NS_LOG(DEBUG, "CASE TASK_UNSUBSCRIBE_TOPIC : ");
+                    NSTopicSyncResult * topicSyncResult = (NSTopicSyncResult *) node->taskData;
+                    pthread_mutex_lock(topicSyncResult->mutex);
+                    NSCacheTopicSubData * topicSubData =
+                            (NSCacheTopicSubData *) topicSyncResult->topicData;
+                    if (NSProviderDeleteConsumerTopic(consumerTopicList, topicSubData) == NS_OK)
                     {
                         NSSendTopicUpdationToConsumer(topicSubData->id);
+                        topicSyncResult->result = NS_OK;
                     }
                     OICFree(topicSubData->topicName);
                     OICFree(topicSubData);
+                    pthread_cond_signal(topicSyncResult->condition);
+                    pthread_mutex_unlock(topicSyncResult->mutex);
+
                 }
                     break;
                 case TASK_REGISTER_TOPIC:
@@ -467,7 +515,7 @@ void * NSTopicSchedule(void * ptr)
 
                     pthread_mutex_lock(topicSyncResult->mutex);
                     topicSyncResult->result = NSRegisterTopic(
-                            (const char *) topicSyncResult->topicName);
+                            (const char *) topicSyncResult->topicData);
                     pthread_cond_signal(topicSyncResult->condition);
                     pthread_mutex_unlock(topicSyncResult->mutex);
                 }
@@ -478,7 +526,7 @@ void * NSTopicSchedule(void * ptr)
                     NSTopicSyncResult * topicSyncResult = (NSTopicSyncResult *) node->taskData;
                     pthread_mutex_lock(topicSyncResult->mutex);
                     topicSyncResult->result = NSUnregisterTopic(
-                            (const char *) topicSyncResult->topicName);
+                            (const char *) topicSyncResult->topicData);
                     pthread_cond_signal(topicSyncResult->condition);
                     pthread_mutex_unlock(topicSyncResult->mutex);
                 }

@@ -160,7 +160,7 @@ NSResult NSConsumerStorageDelete(NSCacheList * list, const char * delId)
 
             if (type == NS_CONSUMER_CACHE_PROVIDER)
             {
-                NSRemoveProvider_internal((NSProvider_internal *) del->data);
+                NSRemoveProvider_internal((void *) del->data);
             }
             NSOICFree(del);
             pthread_mutex_unlock(mutex);
@@ -314,7 +314,7 @@ NSResult NSConsumerStorageDestroy(NSCacheList * list)
         {
             next = (NSCacheElement *) iter->next;
 
-            NSRemoveProvider_internal((NSProvider_internal *) iter->data);
+            NSRemoveProvider_internal((void *) iter->data);
             NSOICFree(iter);
 
             iter = next;

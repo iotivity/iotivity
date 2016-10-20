@@ -147,6 +147,95 @@ static bool IsRequestFromDevOwner(PEContext_t *context)
     return retVal;
 }
 
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+/**
+ * Compare the request's subject to SubOwner.
+ *
+ * @return true if context->subjectId exist subowner list, else false.
+ */
+static bool IsRequestFromSubOwner(PEContext_t *context)
+{
+    bool retVal = false;
+
+    if(NULL == context)
+    {
+        return retVal;
+    }
+
+    if(IsSubOwner(&context->subject))
+    {
+        retVal = true;
+    }
+
+    if(true == retVal)
+    {
+        OIC_LOG(INFO, TAG, "PE.IsRequestFromSubOwner(): returning true");
+    }
+    else
+    {
+        OIC_LOG(INFO, TAG, "PE.IsRequestFromSubOwner(): returning false");
+    }
+
+    return retVal;
+}
+
+
+/**
+ * Verify the SubOwner's request.
+ *
+ * @return true if request is valid, else false.
+ */
+static bool IsValidRequestFromSubOwner(PEContext_t *context)
+{
+    bool isValidRequest = false;
+
+    if(NULL == context)
+    {
+        return isValidRequest;
+    }
+
+    switch(context->resourceType)
+    {
+        case OIC_R_DOXM_TYPE:
+            //SubOwner has READ permission only for DOXM
+            if(PERMISSION_READ == context->permission)
+            {
+                isValidRequest = true;
+            }
+            break;
+        case OIC_R_PSTAT_TYPE:
+            //SubOwner has full permsion for PSTAT
+            isValidRequest = true;
+            break;
+        case OIC_R_CRED_TYPE:
+            //SubOwner can only access the credential which is registered as the eowner.
+            isValidRequest = IsValidCredentialAccessForSubOwner(&context->subject, context->payload, context->payloadSize);
+            break;
+        case OIC_R_ACL_TYPE:
+            //SubOwner can only access the ACL which is registered as the eowner.
+            isValidRequest = IsValidAclAccessForSubOwner(&context->subject, context->payload, context->payloadSize);
+            break;
+        default:
+            //SubOwner has full permission for all resource except the security resource
+            isValidRequest = true;
+            break;
+    }
+
+    if(isValidRequest)
+    {
+        OIC_LOG(INFO, TAG, "PE.IsValidRequestFromSubOwner(): returning true");
+    }
+    else
+    {
+        OIC_LOG(INFO, TAG, "PE.IsValidRequestFromSubOwner(): returning false");
+    }
+
+    return isValidRequest;
+}
+#endif //_ENABLE_MULTIPLE_OWNER_
+
+
 // TODO - remove these function placeholders as they are implemented
 // in the resource entity handler code.
 // Note that because many SVRs do not have a rowner, in those cases we
@@ -476,13 +565,37 @@ SRMAccessResponse_t CheckPermission(PEContext_t     *context,
             CopyParamsToContext(context, subjectId, resource, requestedPermission);
         }
 
-        // Before doing any processing, check if request coming
-        // from DevOwner and if so, always GRANT.
-        if (IsRequestFromDevOwner(context))
+        // Before doing any ACL processing, check if request a) coming
+        // from DevOwner AND b) the device is in Ready for OTM or Reset state
+        // (which in IoTivity is equivalent to isOp == false && owned == false)
+        // AND c) the request is for a SVR resource.
+        // If all 3 conditions are met, grant request.
+        bool isDeviceOwned = true; // default to value that will not grant access
+        if (OC_STACK_OK != GetDoxmIsOwned(&isDeviceOwned)) // if runtime error, don't grant
+        {
+            context->retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
+        }
+        // If we were able to get the value of doxm->isOwned, proceed with
+        // test for implicit access...
+        else if (IsRequestFromDevOwner(context) // if from DevOwner
+        && (GetPstatIsop() == false) // AND if pstat->isOp == false
+        && (isDeviceOwned == false) // AND if doxm->isOwned == false
+        && (context->resourceType != NOT_A_SVR_RESOURCE)) // AND if SVR type
         {
             context->retVal = ACCESS_GRANTED;
         }
-        // Then check if request is for a SVR and coming from rowner
+#ifdef _ENABLE_MULTIPLE_OWNER_
+        //Then check if request from SubOwner
+        else if(IsRequestFromSubOwner(context))
+        {
+            if(IsValidRequestFromSubOwner(context))
+            {
+                context->retVal = ACCESS_GRANTED;
+            }
+        }
+#endif //_ENABLE_MULTIPLE_OWNER_
+        // If not granted via DevOwner status and not a subowner,
+        // then check if request is for a SVR and coming from rowner
         else if (IsRequestFromResourceOwner(context))
         {
             context->retVal = ACCESS_GRANTED;

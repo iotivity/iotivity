@@ -72,7 +72,7 @@ public class AclVerifyResource extends Resource {
     private boolean checkResourceUri(List<AceResource> aceResources, String uri)
         throws ServerException {
             for (AceResource aceResource : aceResources) {
-                if (aceResource.getHref().equals(uri)) {
+                if (aceResource.getHref().trim().equals("*") || aceResource.getHref().equals(uri)) {
                     return true;
                 }
             }
@@ -97,9 +97,13 @@ public class AclVerifyResource extends Resource {
             for (HashMap<String, Object> eachAclMap : aclResult) {
 
                 AclTable aclTable = Acl.convertMaptoAclObject(eachAclMap);
+                if (aclTable.getOid().equals(sid)) {
+                    return true;
+                }
                 if (aclTable.getAclist() == null) {
                     return false;
                 }
+
                 for (Ace ace : aclTable.getAclist()) {
                     if (ace.getSubjectuuid().equals(sid)) {
                         // check permission matches

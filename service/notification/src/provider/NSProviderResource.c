@@ -20,6 +20,7 @@
 
 #include "NSProviderResource.h"
 #include <string.h>
+#include "rd_client.h"
 
 NSNotificationResource NotificationResource;
 NSMessageResource NotificationMessageResource;
@@ -100,7 +101,7 @@ NSResult NSCreateResource(char *uri)
             resourceProperties = OC_DISCOVERABLE;
         }
 
-        if (OCCreateResource(&NotificationResource.handle, NS_ROOT_TYPE, NS_DEFAULT_INTERFACE,
+        if (OCCreateResource(&NotificationResource.handle, NS_ROOT_TYPE, NS_INTERFACE_BASELINE,
                 NS_ROOT_URI, NSEntityHandlerNotificationCb, NULL,
                 resourceProperties) != OC_STACK_OK)
         {
@@ -141,7 +142,7 @@ NSResult NSCreateResource(char *uri)
         }
 
         if (OCCreateResource(&NotificationMessageResource.handle, NS_COLLECTION_MESSAGE_TYPE,
-                NS_DEFAULT_INTERFACE, NS_COLLECTION_MESSAGE_URI, NSEntityHandlerMessageCb, NULL,
+                NS_INTERFACE_BASELINE, NS_COLLECTION_MESSAGE_URI, NSEntityHandlerMessageCb, NULL,
                 resourceProperties) != OC_STACK_OK)
         {
             NS_LOG(NS_ERROR, "Fail to Create Notification Message Resource");
@@ -173,7 +174,7 @@ NSResult NSCreateResource(char *uri)
         }
 
         if (OCCreateResource(&(NotificationSyncResource.handle), NS_COLLECTION_SYNC_TYPE,
-                NS_DEFAULT_INTERFACE, NS_COLLECTION_SYNC_URI, NSEntityHandlerSyncCb, NULL,
+                NS_INTERFACE_BASELINE, NS_COLLECTION_SYNC_URI, NSEntityHandlerSyncCb, NULL,
                 resourceProperties) != OC_STACK_OK)
         {
             NS_LOG(NS_ERROR, "Fail to Create Notification Sync Resource");
@@ -198,15 +199,15 @@ NSResult NSCreateResource(char *uri)
         if(NSGetResourceSecurity())
         {
             NS_LOG(DEBUG, "Create secured resource");
-            resourceProperties = OC_DISCOVERABLE | OC_SECURE;
+            resourceProperties = OC_RES_PROP_NONE | OC_SECURE;
         }
         else
         {
-            resourceProperties = OC_DISCOVERABLE;
+            resourceProperties = OC_RES_PROP_NONE;
         }
 
         if (OCCreateResource(&(NotificationTopicResource.handle), NS_COLLECTION_TOPIC_TYPE,
-                NS_DEFAULT_INTERFACE, NS_COLLECTION_TOPIC_URI, NSEntityHandlerTopicCb, NULL,
+                NS_INTERFACE_BASELINE, NS_COLLECTION_TOPIC_URI, NSEntityHandlerTopicCb, NULL,
                 resourceProperties) != OC_STACK_OK)
         {
             NS_LOG(NS_ERROR, "Fail to Create Notification Sync Resource");

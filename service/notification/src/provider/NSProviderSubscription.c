@@ -80,6 +80,16 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
 
     NS_LOG_V(DEBUG, "NS Provider ID: %s", NSGetProviderInfo()->providerId);
 
+    char * copyReq = OICStrdup(entityHandlerRequest->query);
+    char * reqInterface = NSGetValueFromQuery(copyReq, NS_QUERY_INTERFACE);
+
+    if (reqInterface && strcmp(reqInterface, NS_INTERFACE_BASELINE) == 0)
+    {
+        OCResourcePayloadAddStringLL(&payload->interfaces, NS_INTERFACE_BASELINE);
+        OCResourcePayloadAddStringLL(&payload->interfaces, NS_INTERFACE_READ);
+        OCResourcePayloadAddStringLL(&payload->types, NS_ROOT_TYPE);
+    }
+    OICFree(copyReq);
     OCRepPayloadSetUri(payload, NS_ROOT_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_VERSION, VERSION);
@@ -98,6 +108,7 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
     if (OCDoResponse(&response) != OC_STACK_OK)
     {
         NS_LOG(ERROR, "Fail to AccessPolicy send response");
+        OCRepPayloadDestroy(payload);
         return NS_ERROR;
     }
     OCRepPayloadDestroy(payload);
@@ -111,10 +122,12 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 {
     NS_LOG(DEBUG, "NSHandleSubscription - IN");
 
-    char * id = NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_CONSUMER_ID);
+    char * copyReq = OICStrdup(entityHandlerRequest->query);
+    char * id = NSGetValueFromQuery(copyReq, NS_QUERY_CONSUMER_ID);
 
     if(!id)
     {
+        OICFree(copyReq);
         NSFreeOCEntityHandlerRequest(entityHandlerRequest);
         NS_LOG(ERROR, "Invalid ConsumerID");
         return;
@@ -125,7 +138,9 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
     {
         NS_LOG(DEBUG, "resourceType == NS_RESOURCE_MESSAGE");
         NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
+        NS_VERIFY_NOT_NULL_V(element);
         NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
+        NS_VERIFY_NOT_NULL_V(subData);
 
         OICStrcpy(subData->id, UUID_STRING_SIZE, id);
         NS_LOG_V(DEBUG, "SubList ID = [%s]", subData->id);
@@ -182,7 +197,9 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
     {
         NS_LOG(DEBUG, "resourceType == NS_RESOURCE_SYNC");
         NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
+        NS_VERIFY_NOT_NULL_V(element);
         NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
+        NS_VERIFY_NOT_NULL_V(subData);
 
         OICStrcpy(subData->id, UUID_STRING_SIZE, id);
         NS_LOG_V(DEBUG, "SubList ID = [%s]", subData->id);
@@ -223,6 +240,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 
         NSFreeOCEntityHandlerRequest(entityHandlerRequest);
     }
+    OICFree(copyReq);
 
     NS_LOG(DEBUG, "NSHandleSubscription - OUT");
 }
@@ -304,13 +322,15 @@ NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest * entityHandlerRequest
     if (!entityHandlerRequest)
     {
         NS_LOG(ERROR, "Invalid request pointer");
-        return OC_EH_ERROR;
+        return NS_ERROR;
     }
 
-    char * id = NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_CONSUMER_ID);
+    char * copyReq = OICStrdup(entityHandlerRequest->query);
+    char * id = NSGetValueFromQuery(copyReq, NS_QUERY_CONSUMER_ID);
 
     if(!id)
     {
+        OICFree(copyReq);
         NSFreeOCEntityHandlerRequest(entityHandlerRequest);
         NS_LOG(ERROR, "Invalid ConsumerID");
         return NS_ERROR;
@@ -318,6 +338,7 @@ NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest * entityHandlerRequest
 
     NSCacheUpdateSubScriptionState(consumerSubList, id, true);
     NSSendResponse(id, true);
+    OICFree(copyReq);
     NSFreeOCEntityHandlerRequest(entityHandlerRequest);
     NS_LOG(DEBUG, "NSSendSubscriptionResponse - OUT");
     return NS_OK;

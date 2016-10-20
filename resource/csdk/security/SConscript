@@ -57,7 +57,6 @@ libocsrm_env.PrependUnique(CPPPATH = [
 		'../../oc_logger/include',
 		'../connectivity/external/inc',
 		'../connectivity/common/inc',
-		'../connectivity/inc/pkix',
 		'../connectivity/inc',
 		'../connectivity/api',
 		'../security/include',
@@ -89,8 +88,8 @@ if target_os in ['darwin', 'ios']:
 if env.get('LOGGING'):
 	libocsrm_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-if env.get('DTLS_WITH_X509') == '1':
-	libocsrm_env.AppendUnique(CPPDEFINES = ['__WITH_X509__'])
+if env.get('MULTIPLE_OWNER') == '1':
+	libocsrm_env.AppendUnique(CPPDEFINES=['_ENABLE_MULTIPLE_OWNER_'])
 
 ######################################################################
 # Source files and Targets
@@ -120,12 +119,11 @@ libocsrm_src = [
 
 if libocsrm_env.get('SECURED') == '1':
 	libocsrm_src = libocsrm_src + [OCSRM_SRC + 'oxmpincommon.c', OCSRM_SRC + 'pbkdf2.c']
+	libocsrm_src  = libocsrm_src + [OCSRM_SRC + 'crlresource.c', OCSRM_SRC + 'pkix_interface.c']
 
 if target_os in ['windows', 'msys_nt']:
 	libocsrm_src  = libocsrm_src + [OCSRM_SRC + 'strptime.c']
 
-if (env.get('DTLS_WITH_X509') == '1' or env.get('WITH_TCP') == True) and env.get('SECURED') == '1':
-	libocsrm_src  = libocsrm_src + [OCSRM_SRC + 'crlresource.c', OCSRM_SRC + 'pkix_interface.c']
 
 libocsrm_src.extend(env['cbor_files'])
 

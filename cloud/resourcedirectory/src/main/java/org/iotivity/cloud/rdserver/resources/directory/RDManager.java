@@ -176,6 +176,10 @@ public class RDManager {
         }
 
         if (!foundRecord.isEmpty()) {
+            // set resource presence
+            for (HashMap<String, Object> record : foundRecord) {
+                record.put(Constants.TRIGGER, Constants.RES_DELETE);
+            }
             setmResourcePresence(foundRecord);
         }
     }

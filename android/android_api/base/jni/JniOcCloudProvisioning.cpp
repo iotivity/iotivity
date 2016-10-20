@@ -271,7 +271,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcCloudProvisioning_requestCertifi
     LOGD("OcCloudProvisioning_requestCertificate");
     if (!jListener)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "Listener cannot be null");
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Listener cannot be null");
         return;
     }
 
@@ -314,12 +314,17 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcCloudProvisioning_getAclIdByDevi
   (JNIEnv *env, jobject thiz, jstring jdeviceId, jobject jListener)
 {
     LOGD("OcCloudProvisioning_getAclIdByDevice");
-    if (!jListener || !jdeviceId)
+    if (!jListener)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "Listener and deviceID cannot be null");
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Listener cannot be null");
         return;
     }
 
+    if (!jdeviceId)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "deviceID can not be null");
+        return;
+    }
     JniOcCloudProvisioning *cloud = JniOcCloudProvisioning::getJniOcCloudProvisioningPtr(env, thiz);
     if (!cloud)
     {
@@ -368,9 +373,14 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcCloudProvisioning_getIndividualA
   (JNIEnv *env, jobject thiz, jstring jaclID, jobject jListener)
 {
     LOGD("OcCloudProvisioning_getIndividualAclInfo");
-    if (!jListener || !jaclID)
+    if (!jListener)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "Listener/aclID cannot be null");
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Listener cannot be null");
+        return;
+    }
+    if (!jaclID)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "aclID cannot be null");
         return;
     }
 
@@ -419,7 +429,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcCloudProvisioning_getCRL
     LOGD("OcCloudProvisioning_getCRL");
     if (!jListener)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "Listener cannot be null");
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Listener cannot be null");
         return;
     }
 
@@ -463,7 +473,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcCloudProvisioning_postCRL0
    jobjectArray jserialnumArray, jobject jListener)
 {
     LOGD("OcCloudProvisioning_postCRL0");
-    if (!jListener || !jthisUpdate || !jnextUpdate || !jserialnumArray)
+     if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_CALLBACK,"Listener can not be null");
+        return;
+    }
+    if (!jthisUpdate || !jnextUpdate || !jserialnumArray)
     {
         ThrowOcException(OC_STACK_INVALID_PARAM, " Invalid parameter (NULL param)");
         return;

@@ -61,8 +61,8 @@ static OCStackResult handleCrlGetResponse(void *ctx, void **data, OCClientRespon
         OIC_LOG(ERROR, TAG, "Can't update Crl resource");
     }
 
+    *data = crl;
 exit:
-    DeleteCrl(crl);
     return result;
 }
 

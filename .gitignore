@@ -93,6 +93,7 @@ os
 out/
 platform
 iotivity.pc
+tmp/
 
 # Ignore downloaded dependencies
 extlibs/libcoap/libcoap
@@ -116,6 +117,7 @@ build_common/arduino/extlibs/arduino/arduino-1.5.8
 extlibs/tinydtls/dtls-client
 extlibs/tinydtls/dtls-server
 extlibs/bluez/bluez
+extlibs/mbedtls/mbedtls
 
 # Ignore editor (e.g. Emacs) backup and autosave files
 *~
@@ -130,3 +132,13 @@ extlibs/bluez/bluez
 
 # Ignore Valgrind generated files.
 *.memcheck
+
+# Ignore  generated files
+*.dat
+
+# Ignore debian generated files
+debian/files
+debian/*.debhelper.log
+debian/*.substvars
+debian/iotivity*/*
+debian/tmp/*

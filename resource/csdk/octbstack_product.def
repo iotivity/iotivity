@@ -62,10 +62,6 @@ OCNotifyAllObservers
 OCNotifyListOfObservers
 OCPayloadDestroy
 OCProcess
-OCRDDelete
-OCRDDeleteWithDeviceId
-OCRDPublish
-OCRDPublishWithDeviceId
 OCRegisterPersistentStorageHandler
 OCRepPayloadAddInterface
 OCRepPayloadAddResourceType
@@ -103,3 +99,6 @@ OCStopPresence
 OCUnBindResource
 OCSetHeaderOption
 OCGetHeaderOption
+FindResourceByUri
+OCGetDeviceId
+OCSetDeviceId

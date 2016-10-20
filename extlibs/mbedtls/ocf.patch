@@ -132,6 +132,47 @@ index deaaa37..4f10540 100644
  #define MBEDTLS_KEY_EXCHANGE__SOME__ECDHE_ENABLED
  #endif
  
+diff --git a/library/entropy_poll.c b/library/entropy_poll.c
+index a116e60..c022caf 100644
+--- a/library/entropy_poll.c
++++ b/library/entropy_poll.c
+@@ -54,28 +54,29 @@
+ #define _WIN32_WINNT 0x0400
+ #endif
+ #include <windows.h>
+-#include <wincrypt.h>
++#include <bcrypt.h>
+ 
+ int mbedtls_platform_entropy_poll( void *data, unsigned char *output, size_t len,
+                            size_t *olen )
+ {
+-    HCRYPTPROV provider;
+     ((void) data);
+     *olen = 0;
+ 
+-    if( CryptAcquireContext( &provider, NULL, NULL,
+-                              PROV_RSA_FULL, CRYPT_VERIFYCONTEXT ) == FALSE )
++    /*
++     * size_t may be 64 bits, but ULONG is always 32.
++     * If len is larger than the maximum for ULONG, just fail.
++     * It's unlikely anything ever will want to ask for this much randomness.
++     */
++    if ( len > 0xFFFFFFFFULL )
+     {
+         return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
+     }
+ 
+-    if( CryptGenRandom( provider, (DWORD) len, output ) == FALSE )
++    if ( !BCRYPT_SUCCESS(BCryptGenRandom(NULL, output, (ULONG) len, BCRYPT_USE_SYSTEM_PREFERRED_RNG)) )
+     {
+-        CryptReleaseContext( provider, 0 );
+         return( MBEDTLS_ERR_ENTROPY_SOURCE_FAILED );
+     }
+ 
+-    CryptReleaseContext( provider, 0 );
+     *olen = len;
+ 
+     return( 0 );
 diff --git a/library/ssl_ciphersuites.c b/library/ssl_ciphersuites.c
 index 3546331..74cef29 100644
 --- a/library/ssl_ciphersuites.c
@@ -552,3 +593,48 @@ index 5d20ba0..6404a0c 100644
  #if defined(MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED)
      "MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED",
  #endif /* MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED */
+diff --git a/library/x509_crt.c b/library/x509_crt.c
+index af6c2a4..6dcb6aa 100644
+--- a/library/x509_crt.c
++++ b/library/x509_crt.c
+@@ -62,6 +62,7 @@
+ 
+ #if defined(_WIN32) && !defined(EFIX64) && !defined(EFI32)
+ #include <windows.h>
++#include <intsafe.h>
+ #else
+ #include <time.h>
+ #endif
+@@ -1108,6 +1109,7 @@ int mbedtls_x509_crt_parse_path( mbedtls_x509_crt *chain, const char *path )
+     char filename[MAX_PATH];
+     char *p;
+     size_t len = strlen( path );
++    int lengthAsInt = 0;
+ 
+     WIN32_FIND_DATAW file_data;
+     HANDLE hFind;
+@@ -1122,7 +1124,10 @@ int mbedtls_x509_crt_parse_path( mbedtls_x509_crt *chain, const char *path )
+     p = filename + len;
+     filename[len++] = '*';
+ 
+-    w_ret = MultiByteToWideChar( CP_ACP, 0, filename, len, szDir,
++    if ( FAILED ( SizeTToInt( len, &lengthAsInt ) ) )
++        return( MBEDTLS_ERR_X509_FILE_IO_ERROR );
++
++    w_ret = MultiByteToWideChar( CP_ACP, 0, filename, lengthAsInt, szDir,
+                                  MAX_PATH - 3 );
+     if( w_ret == 0 )
+         return( MBEDTLS_ERR_X509_BAD_INPUT_DATA );
+@@ -1139,8 +1144,11 @@ int mbedtls_x509_crt_parse_path( mbedtls_x509_crt *chain, const char *path )
+         if( file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY )
+             continue;
+ 
++        if ( FAILED( SizeTToInt( wcslen( file_data.cFileName ), &lengthAsInt ) ) )
++            return( MBEDTLS_ERR_X509_FILE_IO_ERROR );
++
+         w_ret = WideCharToMultiByte( CP_ACP, 0, file_data.cFileName,
+-                                     lstrlenW( file_data.cFileName ),
++                                     lengthAsInt,
+                                      p, (int) len - 1,
+                                      NULL, NULL );
+         if( w_ret == 0 )
