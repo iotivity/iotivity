@@ -660,12 +660,12 @@ WARN_LOGFILE           = ./doxygen.log
 # with spaces.
 
 INPUT                  = . \
-             ../../csdk/security/provisioning/include/ocprovisioningmanager.h
-             ../../csdk/security/provisioning/include/pmtypes.h
-             ../../csdk/security/provisioning/include/pmutility.h
-             ../../csdk/stack/include/ocstack.h
-             ../../csdk/stack/include/octypes.h
-             ../../csdk/stack/include/ocpayload.h
+             ../../csdk/security/provisioning/include/ocprovisioningmanager.h \
+             ../../csdk/security/provisioning/include/pmtypes.h \
+             ../../csdk/security/provisioning/include/pmutility.h \
+             ../../csdk/stack/include/ocstack.h \
+             ../../csdk/stack/include/octypes.h \
+             ../../csdk/stack/include/ocpayload.h \
              ../../csdk/stack/include/ocpresence.h \
              ../../csdk/stack/include/payload_logging.h \
              ../../csdk/stack/include/ocstackconfig.h \
