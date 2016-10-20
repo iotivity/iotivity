@@ -161,7 +161,7 @@ namespace OIC
                      getProviderId().c_str());
             NSResult result = (NSResult) NSConsumerUpdateTopicList(getProviderId().c_str(), topicLL);
 
-            if(topicLL);
+            if(topicLL)
             {
                 NSTopicLL * iter = topicLL;
                 NSTopicLL * following = NULL;
@@ -169,7 +169,7 @@ namespace OIC
                 while (iter)
                 {
                     following = iter->next;
-                    if(iter);
+                    if(iter)
                     {
                         NSOICFree(iter->topicName);
                         iter->next = NULL;
