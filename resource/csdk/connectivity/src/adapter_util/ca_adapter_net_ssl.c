@@ -186,6 +186,9 @@ if (0 != (ret) && MBEDTLS_ERR_SSL_WANT_READ != (int) (ret) &&                   
  *
  * If function returns error code it goes to error processing.
  *
+ * **IMPORTANT:** Any time CHECK_MBEDTLS_RET is used an `exit:` goto label must
+ *                be present to handle error processing.
+ *
  * @param[in] f  Function to call
  */
 #define CHECK_MBEDTLS_RET(f, ...) do {                                                             \
@@ -529,27 +532,27 @@ static int RecvCallBack(void * tep, unsigned char * data, size_t dataLen)
  * Parse chain of X.509 certificates.
  *
  * @param[out] crt     container for X.509 certificates
- * @param[in]  data    buffer with X.509 certificates. Certificates may be in either in PEM
+ * @param[in]  buf     buffer with X.509 certificates. Certificates may be in either in PEM
                        or DER format in a jumble. Each PEM certificate must be NULL-terminated.
  * @param[in]  bufLen  buffer length
  *
  * @return  0 on success, -1 on error
  */
-static int ParseChain(mbedtls_x509_crt * crt, const unsigned char * buf, int bufLen)
+static int ParseChain(mbedtls_x509_crt * crt, const unsigned char * buf, size_t bufLen)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(crt, NET_SSL_TAG, "Param crt is NULL" , -1);
     VERIFY_NON_NULL_RET(buf, NET_SSL_TAG, "Param buf is NULL" , -1);
 
-    int pos = 0;
-    int ret = 0;
+    size_t pos = 0;
     size_t len = 0;
     unsigned char * tmp = NULL;
-
+    /* byte encoded ASCII string '-----BEGIN CERTIFICATE-----' */
     char pemCertHeader[] = {
         0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x42, 0x45, 0x47, 0x49, 0x4e, 0x20, 0x43, 0x45, 0x52,
         0x54, 0x49, 0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x2d, 0x2d, 0x2d, 0x2d, 0x2d
     };
+    // byte encoded ASCII string '-----END CERTIFICATE-----' */
     char pemCertFooter[] = {
         0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x45, 0x4e, 0x44, 0x20, 0x43, 0x45, 0x52, 0x54, 0x49,
         0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x2d, 0x2d, 0x2d, 0x2d, 0x2d
@@ -602,14 +605,13 @@ static int ParseChain(mbedtls_x509_crt * crt, const unsigned char * buf, int buf
         else
         {
              OIC_LOG_BUFFER(DEBUG, NET_SSL_TAG, buf, bufLen);
-             OIC_LOG_V(ERROR, NET_SSL_TAG, "parseChain returned -0x%x", -ret);
              OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
              return -1;
         }
     }
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return 0;
-
+    // exit label required for CHECK_MBEDTLS_RET macro
 exit:
     return -1;
 }
@@ -1978,7 +1980,7 @@ static int pHash (const unsigned char *key, size_t keyLen,
     mbedtls_md_free(&hmacA);
     mbedtls_md_free(&hmacP);
     return bufLen;
-
+    // exit label required for CHECK_MBEDTLS_RET macro
 exit:
     mbedtls_md_free(&hmacA);
     mbedtls_md_free(&hmacP);
