@@ -233,7 +233,10 @@ cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/service/coap-http-proxy/samples
 mkdir -p %{ex_install_dir}/provisioning
 mkdir -p %{ex_install_dir}/provision-sample
 
-cp ./resource/csdk/security/include/pinoxmcommon.h %{buildroot}%{_includedir}
+
+cp ./resource/csdk/security/include/*.h %{buildroot}%{_includedir}
+cp ./extlibs/tinycbor/tinycbor/src/*.h %{buildroot}%{_includedir}/
+cp ./resource/csdk/connectivity/api/*.h %{buildroot}%{_includedir}/
 cp ./resource/csdk/security/provisioning/include/oxm/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/internal/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/*.h %{buildroot}%{_includedir}
