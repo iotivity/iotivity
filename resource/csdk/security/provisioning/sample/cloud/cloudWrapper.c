@@ -430,7 +430,6 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
         int stype = 0;
         int permission = 0;
 
-        readString(aceid, sizeof(aceid), "ace id", ACE_ID_EXAMPLE);
         do
         {
             readString(subjectuuid, sizeof(subjectuuid), "subjectuuid", SUBJECT_ID_EXAMPLE);
