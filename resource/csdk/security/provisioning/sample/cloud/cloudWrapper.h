@@ -95,6 +95,16 @@ OCStackResult OCWrapperAclIndividualGetInfo(const OCDevAddr *endPoint, OCCloudRe
 OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloudResponseCB callback);
 
 /**
+ * ACL individual update. Replaces an existing ACE with a new one
+ *
+ * @param[in] endPoint          cloud host and port
+ * @param[in] callback          result callback
+ * @return  OCStackResult application result
+ */
+
+OCStackResult OCWrapperAclIndividualUpdate(const OCDevAddr *endPoint, OCCloudResponseCB callback);
+
+/**
  * ACL individual delete
  *
  * @param[in] endPoint          cloud host and port

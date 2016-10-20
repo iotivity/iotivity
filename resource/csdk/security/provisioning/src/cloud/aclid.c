@@ -290,7 +290,6 @@ OCStackResult OCCloudAclIndividualUpdateAce(void* ctx,
             OIC_LOG(ERROR, TAG, "Can't convert subjectuuid to string");
         }
 
-        OCRepPayloadSetPropString(payload, OC_RSRVD_ACE_ID, ace->aceId);
         OCRepPayloadSetPropString(payload, OC_RSRVD_SUBJECT_UUID, (const char *)uuid);
         OCRepPayloadSetPropInt(payload, OC_RSRVD_SUBJECT_TYPE, ace->stype);
         OCRepPayloadSetPropInt(payload, OC_RSRVD_PERMISSION_MASK, ace->permission);
@@ -371,7 +370,7 @@ no_memory:
 OCStackResult OCCloudAclIndividualUpdate(void* ctx,
                                             const char *aclId,
                                             const char *aceId,
-                                            const cloudAce_t *ace,
+                                            const cloudAce_t *aces,
                                             const OCDevAddr *endPoint,
                                             OCCloudResponseCB callback)
 {
@@ -385,10 +384,11 @@ OCStackResult OCCloudAclIndividualUpdate(void* ctx,
 
     VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL_RET(ace, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(aces, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
-    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s", DEFAULT_PREFIX,
-            endPoint->addr, endPoint->port, OC_RSRVD_ACL_ID_URL, aclId);
+    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s?%s=%s", DEFAULT_PREFIX,
+            endPoint->addr, endPoint->port, OC_RSRVD_ACL_ID_URL, aclId,
+            OC_RSRVD_ACE_ID, aceId);
 
     OCRepPayload *payload = OCRepPayloadCreate();
     if (!payload)
@@ -407,9 +407,9 @@ OCStackResult OCCloudAclIndividualUpdate(void* ctx,
     }
 
     i = 0;
-    cloudAce_t *tempAce = NULL;
+    cloudAce_t *ace = NULL;
 
-    LL_FOREACH((cloudAce_t*)ace, tempAce)
+    LL_FOREACH((cloudAce_t*)aces, ace)
     {
         OCRepPayload *payload = OCRepPayloadCreate();
         if (!payload)
@@ -420,22 +420,21 @@ OCStackResult OCCloudAclIndividualUpdate(void* ctx,
         helperPayload[i++] = payload;
 
         char *uuid = NULL;
-        if (OC_STACK_OK != ConvertUuidToStr(&tempAce->subjectuuid, &uuid))
+        if (OC_STACK_OK != ConvertUuidToStr(&ace->subjectuuid, &uuid))
         {
             OIC_LOG(ERROR, TAG, "Can't convert subjectuuid to string");
         }
 
-        OCRepPayloadSetPropString(payload, OC_RSRVD_ACE_ID, tempAce->aceId);
         OCRepPayloadSetPropString(payload, OC_RSRVD_SUBJECT_UUID, (const char *)uuid);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_SUBJECT_TYPE, tempAce->stype);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_PERMISSION_MASK, tempAce->permission);
+        OCRepPayloadSetPropInt(payload, OC_RSRVD_SUBJECT_TYPE, ace->stype);
+        OCRepPayloadSetPropInt(payload, OC_RSRVD_PERMISSION_MASK, ace->permission);
 
         OICFree(uuid);
 
         int reslist_count = 0;
         //code below duplicates LL_COUNT, implemented in newer version of utlist.h
         {
-            OicSecRsrc_t *res = tempAce->resources;
+            OicSecRsrc_t *res = ace->resources;
             while (res)
             {
                 res = res->next;
@@ -452,7 +451,7 @@ OCStackResult OCCloudAclIndividualUpdate(void* ctx,
         j = 0;
         OicSecRsrc_t *res = NULL;
 
-        LL_FOREACH(tempAce->resources, res)
+        LL_FOREACH(ace->resources, res)
         {
             OCRepPayload *payload = OCRepPayloadCreate();
             if (!payload)
