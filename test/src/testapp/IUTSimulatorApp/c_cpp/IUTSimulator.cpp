@@ -34,6 +34,7 @@
 #include "ResourceHelper.h"
 #include "OCPlatform.h"
 #include "OCApi.h"
+#include "pinoxmcommon.h"
 
 using namespace OC;
 using namespace std;
@@ -79,6 +80,9 @@ ResourceHelper *g_resourceHelper;
 static mutex s_mutex;
 static const char CRED_FILE_SERVER[] = "oic_svr_db_server.dat";
 static const char CRED_FILE_CLIENT[] = "oic_svr_db_client.dat";
+static const int CLIENT_MODE = 1;
+static const int SERVER_MODE = 2;
+static const char sourceFileNames[][100] = { "../../oic_svr_db_server_justworks.dat", "../../oic_svr_db_server_randompin.dat" };
 
 void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep, const int &eCode,
         const int &sequenceNumber);
@@ -91,8 +95,8 @@ void onPlatformInfoReceived(const OCRepresentation& rep);
 void onCollectionFound(shared_ptr< OCResource > collection);
 void onResourceFound(shared_ptr< OCResource > resource);
 
-void handleMenu(void);
-void showMenu(void);
+void handleMenu(int argc, char* argv[]);
+void showMenu(int argc, char* argv[]);
 void createTvDevice(bool isSecured = false);
 void createAirConDevice(bool isSecured = false);
 void createResource(void);
@@ -152,6 +156,75 @@ void handler(int sig)
 #endif
 
     exit(1);
+}
+
+void replaceDatFile(int modeType, int securityType)
+{
+    int num;
+    char buffer[1000];
+
+    FILE *source;
+
+    source = fopen(sourceFileNames[securityType], "rb");
+    if(source == NULL)
+    {
+      cout << "Unable to read source file " << endl;
+      exit(-1);
+    }
+
+    if (modeType == CLIENT_MODE)
+    {
+        FILE *clientFile = fopen(CRED_FILE_CLIENT, "wb");
+        if(clientFile == NULL)
+        {
+            fclose(source);
+            cout << "Unable to write client dat file " << endl;
+            exit(-1);
+        }
+
+        while ((num = fread(buffer, sizeof(char), sizeof(buffer), source)) != 0)
+        {
+            fwrite(buffer, sizeof(char), num, clientFile);
+        }
+
+        cout << "Dat File copied successfully" << endl;
+        fclose(clientFile);
+    }
+    else if(modeType == SERVER_MODE)
+    {
+        FILE *serverFile = fopen(CRED_FILE_SERVER, "wb");
+        if(serverFile == NULL)
+        {
+            fclose(source);
+            cout << "Unable to write server dat file " << endl;
+            exit(-1);
+        }
+
+        while ((num = fread(buffer, sizeof(char), sizeof(buffer), source)) != 0)
+        {
+            fwrite(buffer, sizeof(char), num, serverFile);
+        }
+
+        cout << "Dat File copied successfully" << endl;
+
+        fclose(serverFile);
+    }
+
+    fclose(source);
+}
+
+void generatePinCB(char* pin, size_t pinSize)
+{
+    if(NULL == pin || pinSize <= 0)
+    {
+        cout << "Invalid PIN" << endl;
+    }
+    else
+    {
+        cout << "============================" << endl;
+        cout << "    PIN CODE : " << string(pin) << endl;
+        cout << "============================" << endl;
+    }
 }
 
 int main(int argc, char* argv[])
@@ -237,19 +310,35 @@ int main(int argc, char* argv[])
         {
             int optionSelected = stoi(argv[3]);
 
-            if (optionSelected == 1)
+            if (optionSelected == 0 || optionSelected == 1)
             {
                 cout << "Using secured client...." << endl;
                 isSecuredClient = true;
+                SetGeneratePinCB(generatePinCB);
+                replaceDatFile(CLIENT_MODE, optionSelected%2);
             }
-            else if (optionSelected == 2)
+            else if (optionSelected == 2 || optionSelected == 3)
             {
                 cout << "Using secured server...." << endl;
                 isSecuredServer = true;
+                SetGeneratePinCB(generatePinCB);
+                replaceDatFile(SERVER_MODE, optionSelected%2);
             }
             else
             {
                 cout << "Using unsecured server & client...." << endl;
+            }
+
+            if (optionSelected >= 0 && optionSelected <= 3)
+            {
+                if(optionSelected%2)
+                {
+                    cout << "Supported Security Mode: randompin" << endl;
+                }
+                else
+                {
+                    cout << "Supported Security Mode: justworks" << endl;
+                }
             }
         }
         catch (std::exception&)
@@ -296,7 +385,7 @@ int main(int argc, char* argv[])
     }
 
     cout << "Conformance Simulator started successfully" << endl << endl;
-    showMenu();
+    showMenu(argc, argv);
 
     cout << "Iotivity Server stopped successfully" << endl;
     cout << "Quitting Conformance Simulator App.... Done!!" << endl;
@@ -1978,7 +2067,7 @@ int selectLocalResource()
     return selection;
 }
 
-void showMenu()
+void showMenu(int argc, char* argv[])
 {
     cout << "Please Select an option from the menu and press Enter" << endl;
     cout << "\t\t 0. Quit IUT Simulator" << endl;
@@ -2026,10 +2115,10 @@ void showMenu()
     cout << "\t\t 104. Create Secured Air Conditioner Device" << endl;
 
     g_hasCallbackArrived = false;
-    handleMenu();
+    handleMenu(argc, argv);
 }
 
-void handleMenu()
+void handleMenu(int argc, char* argv[])
 {
     string userInput;
     string userResourceType;
@@ -2041,7 +2130,15 @@ void handleMenu()
     AttributeValue attrVal;
     OCRepresentation linkRep;
     bool isMulticast = false;
-    cin >> userInput;
+
+    if (argc > 4)
+    {
+        userInput = string(argv[4]);
+    }
+    else
+    {
+        cin >> userInput;
+    }
 
     long int choice = strtol(userInput.c_str(), NULL, 10);
     if ((choice > 36 && choice < 101) || choice < 0 || (choice > 8 && choice < 10) || choice > 104)
@@ -2317,5 +2414,5 @@ void handleMenu()
                 break;
         }
     }
-    showMenu();
+    showMenu(0, NULL);
 }

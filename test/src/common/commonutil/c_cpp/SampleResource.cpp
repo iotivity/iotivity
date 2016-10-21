@@ -385,10 +385,17 @@ void SampleResource::handlePostRequest(QueryParamsMap &queryParamsMap,
                     repValueString = m_representation.getValueToString(key);
                     incomingValueString = incomingRepresentation.getValueToString(key);
 
+                    if (repValueString.compare(incomingValueString) != 0)
+                    {
                         updateRepresentation(key, incomingRepresentation, response);
                         isSameAttributeValue = false;
                         isRepUpdated = true;
-
+                    }
+                    else
+                    {
+                        isSameAttributeValue = true;
+                        isRepUpdated = false;
+                    }
                 }
                 else if (m_representation.hasAttribute(key) && (isReadonly(key) == true))
                 {

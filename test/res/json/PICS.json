@@ -1,0 +1,42 @@
+{
+	"role": "Client",
+	"supportedVerticalProfile": ["Smart Home"],
+	"supportedDeviceTypes": ["oic.d.airconditioner"],
+	"icv": "core.1.1.0",
+	"dmv": "res.1.1.0,SH.1.1.0",
+	"network": {
+		"IPv4": {
+			"supported": true
+		},
+		"IPv6": {
+			"supported": true
+		}
+	},
+	"messaging": {
+		"coap": {
+			"supported": true
+		},
+		"coaps": {
+			"supported": true
+		}
+	},
+	"encoding": {
+		"CBOR": {
+			"supported": true
+		},
+		"JSON": {
+			"supported": false
+		}
+	},
+	
+	"resources": [ "oic.r.switch.binary", "oic.r.airflow", "oic.r.doxm" , "oic.r.temperature", "oic.r.pstat", "x.com.vendor.timer"],
+	
+	"CRUDN": {
+		"notify": {
+			"supported": true,
+			"resources": ["/switch"]
+		}
+	},
+    "jurisdictionSwitch": false,
+    "OTM":["oic.sec.doxm.jw", "oic.sec.doxm.rdp"]
+}

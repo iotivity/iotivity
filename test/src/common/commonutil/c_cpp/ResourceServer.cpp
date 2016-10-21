@@ -234,11 +234,11 @@ OCStackResult ResourceServer::startResource(uint8_t resourceProperty)
         m_isServerRunning = true;
         cout << "Server Started" << endl;
 
-        bool isRegisteredForPresence = false;
+        m_isRegisteredForPresence = false;
         int presenceInterval = 0;
-        onResourceServerStarted(isRegisteredForPresence, presenceInterval); // pure virtual method to implement task for child after resource server starts
+        onResourceServerStarted(m_isRegisteredForPresence, presenceInterval); // pure virtual method to implement task for child after resource server starts
 
-        if (isRegisteredForPresence)
+        if (m_isRegisteredForPresence)
         {
             OCPlatform::startPresence(presenceInterval);
         }
@@ -264,7 +264,10 @@ OCStackResult ResourceServer::stopResource(void)
     }
 
     //stop presence
-    result = OCPlatform::stopPresence();
+    if (m_isRegisteredForPresence)
+    {
+        OCPlatform::stopPresence();
+    }
 
     //stop server
     result = OCPlatform::unregisterResource(m_resourceHandle);
