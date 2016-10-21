@@ -47,6 +47,9 @@ extern "C"
 #define _10_DISCOV_ALL_DEVS_        10
 #define _11_DISCOV_UNOWN_DEVS_      11
 #define _12_DISCOV_OWN_DEVS_        12
+#ifdef _ENABLE_MULTIPLE_OWNER_
+#define _13_MOT_DISCOV_DEV_         13
+#endif //_ENABLE_MULTIPLE_OWNER_
 #define _20_REGIST_DEVS_            20
 #define _30_PROVIS_PAIR_DEVS_       30
 #define _31_PROVIS_CRED_            31
@@ -59,7 +62,12 @@ extern "C"
 #define _52_RESET_SELEC_DEV_        52
 #define _60_GET_CRED_               60
 #define _61_GET_ACL_                61
-#define _70_SELECT_PROTOCOL_        70
+#ifdef _ENABLE_MULTIPLE_OWNER_
+#define _70_MOT_CHANGE_MOM_         70
+#define _71_MOT_PROV_PRECONF_PIN_   71
+#define _72_MOT_OXM_SEL_            72
+#endif //_ENABLE_MULTIPLE_OWNER_
+#define _80_SELECT_PROTOCOL_        80
 #define _99_EXIT_PRVN_CLT_          99
 
 #define ACL_RESRC_MAX_NUM   16
@@ -89,10 +97,15 @@ static OCProvisionDev_t* g_own_list;
 static OCProvisionDev_t* g_unown_list;
 static int g_own_cnt;
 static int g_unown_cnt;
+#ifdef _ENABLE_MULTIPLE_OWNER_
+static OCProvisionDev_t* g_mot_enable_list;
+static int g_mot_enable_cnt;
+#endif //_ENABLE_MULTIPLE_OWNER_
+
 static bool g_doneCB;
 #ifdef __WITH_TLS__
 static int secure_protocol = 1;
-static void setDevProtocol(const OCProvisionDev_t* dev_lst);
+static void setDevProtocol(OCProvisionDev_t* dev_lst);
 #endif
 // function declaration(s) for calling them before implementing
 static OicSecAcl_t* createAcl(const int);
@@ -247,6 +260,22 @@ static void syncDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool h
     g_doneCB = true;
 }
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "POST 'doxm' SUCCEEDED - ctx: %s", (char*) ctx);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "POST 'doxm'  FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+    g_doneCB = true;
+}
+#endif //_ENABLE_MULTIPLE_OWNER_
+
 static void inputPinCB(char* pin, size_t len)
 {
     if(!pin || OXM_RANDOM_PIN_SIZE>=len)
@@ -308,28 +337,6 @@ static int initProvisionClient(void)
         return -1;
     }
 
-    // register callback function(s) to each OxM
-    OTMCallbackData_t otmcb =
-    {
-        .loadSecretCB = LoadSecretJustWorksCallback,
-        .createSecureSessionCB = CreateSecureSessionJustWorksCallback,
-        .createSelectOxmPayloadCB = CreateJustWorksSelectOxmPayload,
-        .createOwnerTransferPayloadCB = CreateJustWorksOwnerTransferPayload
-    };
-    if(OC_STACK_OK != OCSetOwnerTransferCallbackData(OIC_JUST_WORKS, &otmcb))
-    {
-        OIC_LOG(ERROR, TAG, "OCSetOwnerTransferCallbackData error: OIC_JUST_WORKS");
-        return -1;
-    }
-    otmcb.loadSecretCB = InputPinCodeCallback;
-    otmcb.createSecureSessionCB = CreateSecureSessionRandomPinCallback;
-    otmcb.createSelectOxmPayloadCB = CreatePinBasedSelectOxmPayload;
-    otmcb.createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload;
-    if(OC_STACK_OK != OCSetOwnerTransferCallbackData(OIC_RANDOM_DEVICE_PIN, &otmcb))
-    {
-        OIC_LOG(ERROR, TAG, "OCSetOwnerTransferCallbackData error: OIC_RANDOM_DEVICE_PIN");
-        return -1;
-    }
     SetInputPinCB(inputPinCB);
 
     return 0;
@@ -421,6 +428,32 @@ static int discoverOwnedDevices(void)
 #endif
     return 0;
 }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+static int discoverMOTEnabledDevices(void)
+{
+    // delete owned device list before updating it
+    if(g_mot_enable_list)
+    {
+        OCDeleteDiscoveredDevices(g_mot_enable_list);
+        g_mot_enable_list = NULL;
+    }
+
+    // call |OCDiscoverOwnedDevices| API actually
+    printf("   Discovering Multiple Ownership Transfer Enabled Devices on Network..\n");
+    if(OC_STACK_OK != OCDiscoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT, &g_mot_enable_list))
+    {
+        OIC_LOG(ERROR, TAG, "OCDiscoverMultipleOwnerEnalbedDevices API error");
+        return -1;
+    }
+
+    // display the discovered owned list
+    printf("   > Discovered Multiple Ownership Transfer Enabled Devices\n");
+    g_mot_enable_cnt = printDevList(g_mot_enable_list);
+
+    return 0;
+}
+#endif //_ENABLE_MULTIPLE_OWNER_
 
 static int registerDevices(void)
 {
@@ -1098,6 +1131,202 @@ static int removeDeviceWithUuid(void)
     return 0;
 }
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+static int changeMultipleOwnershipTrnasferMode(void)
+{
+    // check |own_list| for removing device
+    if(!g_own_list || 1>g_own_cnt)
+    {
+        printf("   > Owned Device List is Empty\n");
+        printf("   > Please Discover the Owned Devices, with [12] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for removing it
+    int dev_num = 0;
+    for( ; ; )
+    {
+        printf("   > Enter Device Number, for MOT Device: ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(0<dev_num && g_own_cnt>=dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    int mom = 0;
+    for( ; ; )
+    {
+        printf("   0. Disable Multuple Ownership Transfer\n");
+        printf("   1. Enable Multuple Ownership Transfer\n");
+        printf("   2. (Not Supported yet) Timely Enable Multuple Ownership Transfer\n");
+        printf("   > Enter Mode of Multuple Ownership Transfer : ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &mom);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(0 <= dev_num && OIC_NUMBER_OF_MOM_TYPE > dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    OCProvisionDev_t* motDev = getDevInst(g_own_list, dev_num);
+    if(OC_STACK_OK == MOTChangeMode(NULL, motDev, (OicSecMomType_t)mom, updateDoxmForMOTCB))
+    {
+        g_doneCB = false;
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "MOTChangeMode API error");
+        return -1;
+    }
+
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "waitCallbackRet callback error");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int selectMultipleOwnershipTrnasferMethod(void)
+{
+    // check |own_list| for removing device
+    if(!g_mot_enable_list || 1>g_mot_enable_cnt)
+    {
+        printf("   > Multiple Ownership Transfer Enabled Device List is Empty\n");
+        printf("   > Please Discover the Multiple Ownership Transfer Enabled Devices, with [13] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for removing it
+    int dev_num = 0;
+    for( ; ; )
+    {
+        printf("   > Enter Device Number, for MOT Device: ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(0<dev_num && g_mot_enable_cnt>=dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    int oxm = 0;
+    for( ; ; )
+    {
+        printf("   0. (Not Supported)\n");
+        printf("   1. Random PIN OxM\n");
+        printf("   2. (Not Supported)\n");
+        printf("   3. Pre-Configured PIN OxM\n");
+        printf("   > Enter Number of  OxM for Multiple Ownership Transfer : ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &oxm);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(OIC_PRECONFIG_PIN == oxm || OIC_RANDOM_DEVICE_PIN == oxm)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    OCProvisionDev_t* motDev = getDevInst(g_mot_enable_list, dev_num);
+    if(OC_STACK_OK ==  MOTSelectMOTMethod(NULL, motDev, (OicSecOxm_t)oxm, updateDoxmForMOTCB))
+    {
+        g_doneCB = false;
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "MOTSelectMOTMethod API error");
+        return -1;
+    }
+
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "waitCallbackRet callback error");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int provisionPreconfigPIN()
+{
+    // check |own_list| for removing device
+    if(!g_mot_enable_list || 1>g_mot_enable_cnt)
+    {
+        printf("   > Multiple Ownership Transfer Enabled Device List is Empty\n");
+        printf("   > Please Discover the Multiple Ownership Transfer Enabled Devices, with [13] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for removing it
+    int dev_num = 0;
+    for( ; ; )
+    {
+        printf("   > Enter Device Number, for MOT Device: ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(0<dev_num && g_mot_enable_cnt>=dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    char preconfPIN[9] = {0};
+    printf("   > Input the PreconfigPIN (e.g. 12341234) : ");
+    for(int ret=0; 1!=ret; )
+    {
+        ret = scanf("%8s", preconfPIN);
+        for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                    // '0x20<=code' is character region
+    }
+
+    OCProvisionDev_t* motDev = getDevInst(g_mot_enable_list, dev_num);
+    if(OC_STACK_OK == OCProvisionPreconfPin(NULL, motDev, preconfPIN, strlen(preconfPIN), provisionCredCB))
+    {
+        g_doneCB = false;
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "OCProvisionPreconfPin API error");
+        return -1;
+    }
+
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "waitCallbackRet callback error");
+        return -1;
+    }
+
+    return 0;
+}
+#endif //_ENABLE_MULTIPLE_OWNER_
+
 static int resetDevice(void)
 {
     // check |own_list| for removing device
@@ -1242,14 +1471,14 @@ static OicSecAcl_t* createAcl(const int dev_num)
         }
         size_t len = strlen(rsrc_in)+1;  // '1' for null termination
         rsrc->href = (char*) OICCalloc(len, sizeof(char));
-        if(!rsrc)
+        if(!rsrc->href)
         {
             OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
             goto CRACL_ERROR;
         }
         OICStrcpy(rsrc->href, len, rsrc_in);
 
-        int arrLen = 0;
+        size_t arrLen = 0;
         while(1)
         {
             printf("         Enter Number of resource type for [%s] : ", rsrc->href);
@@ -1259,7 +1488,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
-            if(0 < arrLen && ACL_RESRC_ARRAY_SIZE >= arrLen)
+            if(ACL_RESRC_ARRAY_SIZE >= arrLen)
             {
                 break;
             }
@@ -1300,7 +1529,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
-            if(0 < arrLen && ACL_RESRC_ARRAY_SIZE >= arrLen)
+            if(ACL_RESRC_ARRAY_SIZE >= arrLen)
             {
                 break;
             }
@@ -1588,15 +1817,13 @@ static int selectTwoDiffNum(int* a, int* b, const int max, const char* str)
 
 #ifdef __WITH_TLS__
 
-static void setDevProtocol(const OCProvisionDev_t* dev_lst)
+static void setDevProtocol(OCProvisionDev_t* lst)
 {
-    if(!dev_lst)
+    if(!lst)
     {
         printf("     Device List is Empty..\n\n");
         return;
     }
-
-    OCProvisionDev_t* lst = (OCProvisionDev_t*) dev_lst;
 
     for( ; lst; )
     {
@@ -1644,7 +1871,12 @@ static void printMenu(void)
     printf("** [A] DISCOVER DEVICES ON NETWORK\n");
     printf("** 10. Discover All Un/Owned Devices on Network\n");
     printf("** 11. Discover Only Unowned Devices on Network\n");
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    printf("** 12. Discover Only Owned Devices on Network\n");
+    printf("** 13. Discover Multiple Ownership Transfer Enabled Devices on Network\n\n");
+#else
     printf("** 12. Discover Only Owned Devices on Network\n\n");
+#endif //_ENABLE_MULTIPLE_OWNER_
 
     printf("** [B] REGISTER/OWN ALL DISCOVERED UNOWNED DEVICES\n");
     printf("** 20. Register/Own All Discovered Unowned Devices\n\n");
@@ -1667,11 +1899,23 @@ static void printMenu(void)
     printf("** [F] GET SECURITY RESOURCE FOR DEBUGGING ONLY\n");
     printf("** 60. Get the Credential resources of the Selected Device\n");
     printf("** 61. Get the ACL resources of the Selected Device\n\n");
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    printf("** [G] UPDATE THE MULTIPLE OWNERSHIP TRANSFER RELATED VALUE\n");
+    printf("** 70. Change the Multiple Ownership transfer MODE(update mom)\n");
+    printf("** 71. Provision Preconfigured PIN\n");
+    printf("** 72. Change the Multiple Ownership transfer METHOD(update oxmsel)\n\n");
+#endif //_ENABLE_MULTIPLE_OWNER_
+
 #ifdef __WITH_TLS__
-    printf("** [F] SELECT SECURE PROTOCOL DTLS/TLS\n");
-    printf("** 70. Select secure protocol(default DTLS)\n\n");
+    printf("** [H] SELECT SECURE PROTOCOL DTLS/TLS\n");
+    printf("** 80. Select secure protocol(default DTLS)\n\n");
+
+    printf("** [I] EXIT PROVISIONING CLIENT\n");
+#else
+    printf("** [H] EXIT PROVISIONING CLIENT\n");
 #endif
-    printf("** [F] EXIT PROVISIONING CLIENT\n");
+
     printf("** 99. Exit Provisionong Client\n\n");
 
     printf("************************************************************\n\n");
@@ -1707,6 +1951,10 @@ int main()
         goto PMCLT_ERROR;
     }
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    SetPreconfigPin("12341234", 8);
+#endif //_ENABLE_MULTIPLE_OWNER_
+
     // main loop for provisioning manager
     int mn_num = 0;
     for( ; ; )
@@ -1741,6 +1989,14 @@ int main()
                 OIC_LOG(ERROR, TAG, "_12_DISCOV_OWN_DEVS_: error");
             }
             break;
+#ifdef _ENABLE_MULTIPLE_OWNER_
+        case _13_MOT_DISCOV_DEV_:
+            if(discoverMOTEnabledDevices())
+            {
+                OIC_LOG(ERROR, TAG, "_13_MOT_DISCOV_DEV_: error");
+            }
+            break;
+#endif //_ENABLE_MULTIPLE_OWNER_
         case _20_REGIST_DEVS_:
             if(registerDevices())
             {
@@ -1813,8 +2069,28 @@ int main()
                 OIC_LOG(ERROR, TAG, "_61_GET_ACL_: error");
             }
             break;
+#ifdef _ENABLE_MULTIPLE_OWNER_
+        case _70_MOT_CHANGE_MOM_:
+            if(changeMultipleOwnershipTrnasferMode())
+            {
+                OIC_LOG(ERROR, TAG, "_70_MOT_CHANGE_MOM_: error");
+            }
+            break;
+        case _71_MOT_PROV_PRECONF_PIN_:
+            if(provisionPreconfigPIN())
+            {
+                OIC_LOG(ERROR, TAG, "_71_MOT_PROV_PRECONF_PIN_: error");
+            }
+            break;
+        case _72_MOT_OXM_SEL_:
+            if(selectMultipleOwnershipTrnasferMethod())
+            {
+                OIC_LOG(ERROR, TAG, "_72_MOT_OXM_SEL_: error");
+            }
+            break;
+#endif //_ENABLE_MULTIPLE_OWNER_
 #ifdef __WITH_TLS__
-        case  _70_SELECT_PROTOCOL_:
+        case  _80_SELECT_PROTOCOL_:
             selectSecureProtocol();
             break;
 #endif
@@ -1833,6 +2109,9 @@ PMCLT_ERROR:
     }
     OCDeleteDiscoveredDevices(g_own_list);  // after here |g_own_list| points nothing
     OCDeleteDiscoveredDevices(g_unown_list);  // after here |g_unown_list| points nothing
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    OCDeleteDiscoveredDevices(g_mot_enable_list);  // after here |g_motdev_list| points nothing
+#endif //_ENABLE_MULTIPLE_OWNER_
 
     if(g_svr_fname)
     {

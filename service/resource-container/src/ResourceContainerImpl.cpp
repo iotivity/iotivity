@@ -68,7 +68,8 @@ namespace OIC
 
 
             activationLock.lock();
-            try{
+            try
+            {
                 if (!configFile.empty())
                 {
                     m_config = new Configuration(configFile);
@@ -111,7 +112,9 @@ namespace OIC
                 }
 
                 OIC_LOG(INFO, CONTAINER_TAG, "Resource container started.");
-            }catch(...){
+            }
+            catch (...)
+            {
                 OIC_LOG(INFO, CONTAINER_TAG, "Resource container failed starting.");
             }
             activationLock.unlock();
@@ -142,7 +145,9 @@ namespace OIC
             }
 
             if (m_config)
+            {
                 delete m_config;
+            }
         }
 
         void ResourceContainerImpl::activateBundle(shared_ptr<RCSBundleInfo> bundleInfo)
@@ -175,10 +180,12 @@ namespace OIC
                      std::string(m_bundles[id]->getID()).c_str());
 
             activationLock.lock();
-            try{
+            try
+            {
                 activateBundleThread(id);
             }
-            catch(...){
+            catch (...)
+            {
                 OIC_LOG_V(INFO, CONTAINER_TAG, "Activating bundle: (%s) failed",
                                      std::string(m_bundles[id]->getID()).c_str());
             }
@@ -222,14 +229,15 @@ namespace OIC
                 registerExtBundle(bundleInfo);
 #endif
             }
-            else if(has_suffix(bundleInfo->getPath(), ".so"))
+            else if (has_suffix(bundleInfo->getPath(), ".so"))
             {
                 bundleInfoInternal->setSoBundle(true);
                 bundleInfoInternal->setJavaBundle(false);
                 registerSoBundle(bundleInfo);
             }
             // other cases might be for example .apk for android, which are loaded in the wrapper
-            else{
+            else
+            {
                 bundleInfoInternal->setSoBundle(false);
                 bundleInfoInternal->setJavaBundle(false);
                 registerExtBundle(bundleInfo);
@@ -246,7 +254,7 @@ namespace OIC
                 {
                     unregisterBundleSo(bundleInfo->getID());
                 }
-                else if(bundleInfoInternal->getJavaBundle())
+                else if (bundleInfoInternal->getJavaBundle())
                 {
 #if(JAVA_SUPPORT)
                     unregisterBundleJava(bundleInfo->getID());
@@ -290,7 +298,8 @@ namespace OIC
             registrationLock.lock();
             if (m_mapResources.find(strUri) == m_mapResources.end())
             {
-                if (strInterface.empty()) {
+                if (strInterface.empty())
+                {
                     strInterface = "oic.if.baseline";
                 }
 
@@ -321,7 +330,8 @@ namespace OIC
                               strResourceType).c_str());
                         discoverInputResource(strUri);
                     }
-                    else{
+                    else
+                    {
                         OIC_LOG_V(INFO, CONTAINER_TAG, "Resource has no input (%s)",
                                  std::string(strUri + ", " +
                                  strResourceType).c_str());
@@ -395,7 +405,8 @@ namespace OIC
             {
                 m_config->getResourceConfiguration(bundleId, configOutput);
             }
-            else{
+            else
+            {
                 OIC_LOG_V(DEBUG, CONTAINER_TAG, "no config present ");
             }
         }
@@ -499,7 +510,9 @@ namespace OIC
             if (m_bundles.find(bundleId) != m_bundles.end())
             {
                 if (!m_bundles[bundleId]->isActivated())
+                {
                     activateBundle(m_bundles[bundleId]);
+                }
                 else
                 {
                     OIC_LOG(ERROR, CONTAINER_TAG, "Bundle already started");
@@ -518,7 +531,9 @@ namespace OIC
             if (m_bundles.find(bundleId) != m_bundles.end())
             {
                 if (m_bundles[bundleId]->isActivated())
+                {
                     deactivateBundle(m_bundles[bundleId]);
+                }
                 else
                 {
                     OIC_LOG(ERROR, CONTAINER_TAG, "Bundle not activated");
@@ -540,7 +555,9 @@ namespace OIC
             (void) bundleUri;
 
             if (m_bundles.find(bundleId) != m_bundles.end())
+            {
                 OIC_LOG(ERROR, CONTAINER_TAG, "BundleId already exist");
+            }
 
             else
             {
@@ -571,10 +588,14 @@ namespace OIC
             {
                 shared_ptr<BundleInfoInternal> bundleInfo = m_bundles[bundleId];
                 if (bundleInfo->isActivated())
+                {
                     deactivateBundle(bundleInfo);
+                }
 
                 if (bundleInfo->isLoaded())
+                {
                     unregisterBundle(bundleInfo);
+                }
             }
             else
             {
@@ -611,11 +632,17 @@ namespace OIC
                     newResourceInfo.uri = resourceUri;
 
                     if (params.find(OUTPUT_RESOURCE_NAME) != params.end())
+                    {
                         newResourceInfo.name = params[OUTPUT_RESOURCE_NAME];
+                    }
                     if (params.find(OUTPUT_RESOURCE_TYPE) != params.end())
+                    {
                         newResourceInfo.resourceType = params[OUTPUT_RESOURCE_TYPE];
+                    }
                     if (params.find(OUTPUT_RESOURCE_ADDR) != params.end())
+                    {
                         newResourceInfo.address = params[OUTPUT_RESOURCE_ADDR];
+                    }
 
                     addSoBundleResource(bundleId, newResourceInfo);
                 }
@@ -691,7 +718,8 @@ namespace OIC
                 {
                   OIC_LOG_V(ERROR, CONTAINER_TAG, "Error while loading .so bundle: (%s)", error);
                 }
-                else{
+                else
+                {
                   OIC_LOG_V(DEBUG, CONTAINER_TAG, "Looked up %s", ("" +
                           bundleInfoInternal->getActivatorName()
                           + "_externalActivateBundle").c_str());
@@ -704,7 +732,8 @@ namespace OIC
                 {
                   OIC_LOG_V(ERROR, CONTAINER_TAG, "Error while loading .so bundle: (%s)", error);
                 }
-                else{
+                else
+                {
                   OIC_LOG_V(DEBUG, CONTAINER_TAG, "Looked up %s", ("" +
                           bundleInfoInternal->getActivatorName()
                           + "_externalDeactivateBundle").c_str());
@@ -717,7 +746,8 @@ namespace OIC
                 {
                   OIC_LOG_V(ERROR, CONTAINER_TAG, "Error while loading .so bundle: (%s)", error);
                 }
-                else{
+                else
+                {
                   OIC_LOG_V(DEBUG, CONTAINER_TAG, "Looked up %s", ("" +
                           bundleInfoInternal->getActivatorName()
                           + "_externalCreateResource").c_str());
@@ -730,7 +760,8 @@ namespace OIC
                 {
                   OIC_LOG_V(ERROR, CONTAINER_TAG, "Error while loading .so bundle: (%s)", error);
                 }
-                else{
+                else
+                {
                   OIC_LOG_V(DEBUG, CONTAINER_TAG, "Looked up %s", ("" +
                           bundleInfoInternal->getActivatorName()
                           + "_externalDestroyResource").c_str());
@@ -763,7 +794,8 @@ namespace OIC
             OIC_LOG_V(DEBUG, CONTAINER_TAG, "Register SO bundle finished");
         }
 
-        void ResourceContainerImpl::registerExtBundle(shared_ptr<RCSBundleInfo> bundleInfo){
+        void ResourceContainerImpl::registerExtBundle(shared_ptr<RCSBundleInfo> bundleInfo)
+        {
             OIC_LOG_V(INFO, CONTAINER_TAG, "Registering ext bundle (%s)",
                                  std::string(bundleInfo->getID()).c_str());
             OIC_LOG_V(INFO, CONTAINER_TAG, "Activator name (%s)",
@@ -955,7 +987,7 @@ namespace OIC
                 activateJavaBundle(id);
 #endif
             }
-            else if(m_bundles[id]->getSoBundle())
+            else if (m_bundles[id]->getSoBundle())
             {
                 activateSoBundle (id);
             }

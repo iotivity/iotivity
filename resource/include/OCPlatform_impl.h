@@ -92,6 +92,10 @@ namespace OC
                     OCConnectivityType connectivityType, FindCallback resourceHandler,
                     FindErrorCallback errorHandler, QualityOfService QoS);
 
+        OCStackResult findResourceList(const std::string& host, const std::string& resourceURI,
+                    OCConnectivityType connectivityType, FindResListCallback resourceHandler,
+                    QualityOfService QoS);
+
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     OCConnectivityType connectivityType, FindDeviceCallback deviceInfoHandler);
 
@@ -277,6 +281,11 @@ namespace OC
         OCAccountManager::Ptr constructAccountManagerObject(const std::string& host,
                                                             OCConnectivityType connectivityType);
 #endif // WITH_CLOUD
+
+        OCStackResult getDeviceId(OCUUIdentity *myUuid);
+
+        OCStackResult setDeviceId(const OCUUIdentity *myUuid);
+
     private:
         PlatformConfig m_cfg;
 

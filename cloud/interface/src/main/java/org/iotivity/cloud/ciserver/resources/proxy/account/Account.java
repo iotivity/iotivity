@@ -37,6 +37,12 @@ import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 
+/**
+ *
+ * This class provides a set of APIs to send requests about account to account
+ *
+ */
+
 public class Account extends Resource {
     IRequestChannel mASServer = null;
 

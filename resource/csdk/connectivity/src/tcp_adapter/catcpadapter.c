@@ -29,6 +29,7 @@
 #include <inttypes.h>
 
 #include "cainterface.h"
+#include "caipnwmonitor.h"
 #include "catcpadapter.h"
 #include "catcpinterface.h"
 #include "caqueueingthread.h"
@@ -39,7 +40,7 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #ifdef __WITH_TLS__
-#include "ca_adapter_net_tls.h"
+#include "ca_adapter_net_ssl.h"
 #endif
 
 /**
@@ -212,6 +213,35 @@ void CATCPSetKeepAliveCallbacks(CAKeepAliveConnectionCallback ConnHandler)
     g_connKeepAliveCallback = ConnHandler;
 }
 
+void CATCPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
+{
+    if (g_networkChangeCallback)
+    {
+        g_networkChangeCallback(adapter, status);
+    }
+
+    if (CA_INTERFACE_DOWN == status)
+    {
+        OIC_LOG(DEBUG, TAG, "Network status is down, close all session");
+        CATCPStopServer();
+    }
+    else if (CA_INTERFACE_UP == status)
+    {
+        OIC_LOG(DEBUG, TAG, "Network status is up, create new socket for listening");
+
+        CAResult_t ret = CA_STATUS_FAILED;
+#ifndef SINGLE_THREAD
+        ret = CATCPStartServer((const ca_thread_pool_t)caglobals.tcp.threadpool);
+#else
+        ret = CATCPStartServer();
+#endif
+        if (CA_STATUS_OK != ret)
+        {
+            OIC_LOG_V(DEBUG, TAG, "CATCPStartServer failed[%d]", ret);
+        }
+    }
+}
+
 static void CAInitializeTCPGlobals()
 {
     caglobals.tcp.ipv4.fd = -1;
@@ -263,8 +293,14 @@ CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
     CATCPSetErrorHandler(CATCPErrorHandler);
 
 #ifdef __WITH_TLS__
-    CAinitTlsAdapter();
-    CAsetTlsAdapterCallbacks(CATCPPacketReceivedCB, CATCPPacketSendCB, 0);
+    if (CA_STATUS_OK != CAinitSslAdapter())
+    {
+        OIC_LOG(ERROR, TAG, "Failed to init SSL adapter");
+    }
+    else
+    {
+        CAsetSslAdapterCallbacks(CATCPPacketReceivedCB, CATCPPacketSendCB, CA_ADAPTER_TCP);
+    }
 #endif
 
     CAConnectivityHandler_t tcpHandler = {
@@ -290,7 +326,10 @@ CAResult_t CAStartTCP()
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
-    // Specific the port number received from application.
+    // Start network monitoring to receive adapter status changes.
+    CAIPStartNetworkMonitor(CATCPAdapterHandler, CA_ADAPTER_TCP);
+
+    // Set the port number received from application.
     caglobals.tcp.ipv4.port = caglobals.ports.tcp.u4;
     caglobals.tcp.ipv6.port = caglobals.ports.tcp.u6;
 
@@ -308,7 +347,6 @@ CAResult_t CAStartTCP()
         OIC_LOG(ERROR, TAG, "Failed to Start Send Data Thread");
         return CA_STATUS_FAILED;
     }
-
 #else
     CAResult_t ret = CATCPStartServer();
     if (CA_STATUS_OK != ret)
@@ -422,11 +460,14 @@ CAResult_t CAReadTCPData()
 
 CAResult_t CAStopTCP()
 {
+    CAIPStopNetworkMonitor(CA_ADAPTER_TCP);
+
 #ifndef SINGLE_THREAD
     if (g_sendQueueHandle && g_sendQueueHandle->threadMutex)
     {
         CAQueueingThreadStop(g_sendQueueHandle);
     }
+    CATCPDeinitializeQueueHandles();
 #endif
 
     CATCPStopServer();
@@ -435,7 +476,7 @@ CAResult_t CAStopTCP()
     CAInitializeTCPGlobals();
 
 #ifdef __WITH_TLS__
-    CAdeinitTlsAdapter();
+    CAdeinitSslAdapter();
 #endif
 
     return CA_STATUS_OK;
@@ -443,11 +484,8 @@ CAResult_t CAStopTCP()
 
 void CATerminateTCP()
 {
+    CAStopTCP();
     CATCPSetPacketReceiveCallback(NULL);
-
-#ifndef SINGLE_THREAD
-    CATCPDeinitializeQueueHandles();
-#endif
 }
 
 void CATCPSendDataThread(void *threadData)
@@ -471,8 +509,8 @@ void CATCPSendDataThread(void *threadData)
          if (tcpData->remoteEndpoint && tcpData->remoteEndpoint->flags & CA_SECURE)
          {
              CAResult_t result = CA_STATUS_OK;
-             OIC_LOG(DEBUG, TAG, "CAencryptTls called!");
-             result = CAencryptTls(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen);
+             OIC_LOG(DEBUG, TAG, "CAencryptSsl called!");
+             result = CAencryptSsl(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen);
 
              if (CA_STATUS_OK != result)
              {

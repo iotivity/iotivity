@@ -56,6 +56,9 @@ OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
 
 void ActionSetCD(void *context);
 
+OCStackResult InitializeScheduleResourceList();
+
+void TerminateScheduleResourceList();
 
 OCStackResult
 BuildCollectionGroupActionCBORResponse(OCMethod method/*OCEntityHandlerFlag flag*/,

@@ -36,6 +36,12 @@ import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.util.Cbor;
 
+/**
+ *
+ * This class provides a set of APIs to send requests about group to account
+ *
+ */
+
 public class AclGroup extends Resource {
 
     private IRequestChannel               mAuthServer = null;

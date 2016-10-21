@@ -26,6 +26,7 @@
 
 import os
 import glob
+import datetime
 
 Import('env')
 
@@ -147,13 +148,114 @@ if with_upstream_libcoap == '1':
     coap_h_output  = os.path.join(libcoap_dir, 'include', 'coap', 'coap.h')
 
     # Generate coap_config.h
-    # TODO: generate coap_config.h dynamically.  For now we use a pregenerated version
-    # per target OS.
-    if target_os == 'windows':
-        libcoap_env.Textfile(target = libcoap_dir + '/include/coap/coap_config.h', source = [File(libcoap_dir + '/coap_config.h.windows')])
-
-    libcoap_version = libcoap_branch
+    target_arch = env.get('TARGET_ARCH')
     lib_prefix = '' + str(libcoap_env.get('PREFIX'))
+    libcoap_version = libcoap_branch
+
+    conf = Configure(libcoap_env)
+
+    config_h_header = '''
+/* ****************************************************************************
+ * coap_config.h - libcoap platform-specific configuration header.
+ *
+ * Auto-generated code for the %s %s platform.
+ *
+ * Generated at %s
+ *
+ *************************************************************************** */
+
+#ifndef _COAP_CONFIG_H_
+#define _COAP_CONFIG_H_
+
+''' % (str(target_os), str(target_arch), str(datetime.datetime.utcnow()))
+
+    config_h_body = ''
+
+    config_h_footer = '''
+
+/* Define to the full name of this package. */
+#define PACKAGE_NAME "%s"
+
+/* Define to the full name and version of this package. */
+#define PACKAGE_STRING "%s"
+
+#ifndef COAP_STATIC_INLINE
+#  if defined(__cplusplus)
+#    define COAP_STATIC_INLINE inline
+#  else
+#    ifdef _MSC_VER
+#      define COAP_STATIC_INLINE static __inline
+#    else
+#      define COAP_STATIC_INLINE static inline
+#    endif
+#  endif
+#endif
+
+#endif // _COAP_CONFIG_H_
+
+''' % (str(lib_prefix + 'coap'), str(lib_prefix + 'coap ' + libcoap_version))
+
+    cxx_headers = ['arpa/inet.h',
+                   'assert.h',
+                   'limits.h',
+                   'netinet/in.h',
+                   'stdio.h',
+                   'strings.h',
+                   'sys/select.h',
+                   'sys/socket.h',
+                   'sys/time.h',
+                   'sys/types.h',
+                   'sys/uio.h',
+                   'sys/unistd.h',
+                   'syslog.h',
+                   'time.h',
+                   'unistd.h',
+                   'winsock2.h',
+                   'ws2tcpip.h']
+
+    cxx_functions = ['malloc',
+                     'snprintf',
+                     'strnlen',
+                     'vprintf']
+
+    if target_os == 'arduino':
+        # Detection of headers on the Arduino platform is currently broken.
+        cxx_headers = []
+
+    def get_define_from_string(string):
+        string_converted = string.replace("/","_").replace(".","_").upper()
+        return "HAVE_" + string_converted
+
+    for header_file_name in cxx_headers:
+        if conf.CheckCXXHeader(header_file_name):
+            config_h_body += "#define %s 1\n\n" % get_define_from_string(header_file_name)
+
+    for function_name in cxx_functions:
+        if conf.CheckFunc(function_name):
+            config_h_body += "#define %s 1\n\n" % get_define_from_string(function_name)
+
+    if conf.CheckCXXHeader('windows.h'):
+        config_h_body += "#define ssize_t SSIZE_T\n\n"
+        config_h_body += "#define in_port_t uint16_t\n\n"
+
+    conf.Finish()
+
+    # Autoconf feature doesn't work with Jenkins' arduino toolchain, so hardcode it here.
+    if target_os == 'arduino':
+        config_h_body += "#define HAVE_ARDUINO_TIME_H\n\n"
+
+    # Generate the file
+    config_h_file_path = os.path.join(src_dir, 'extlibs', 'libcoap', 'libcoap', 'include', 'coap', 'coap_config.h')
+    if os.path.exists(config_h_file_path):
+        os.remove(config_h_file_path)
+    config_h_file = open(config_h_file_path, "w")
+    config_h_file.write(config_h_header + config_h_body + config_h_footer)
+    config_h_file.close()
+
+    # Sanity check to ensure that the above block created the file.
+    if not os.path.exists(config_h_file_path):
+        print "Error: coap_config.h file not created!"
+
     pc_vars = {
         '\@LIBCOAP_PACKAGE_NAME\@'          : lib_prefix + 'coap',
         '\@LIBCOAP_PACKAGE_STRING\@'        : lib_prefix + 'coap-' + libcoap_version,

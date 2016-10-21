@@ -39,7 +39,8 @@ NSCacheList * consumerSubList;
 NSResult NSInitSubscriptionList();
 NSResult NSSetSubscriptionAccessPolicy(bool policy);
 NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest);
-void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResourceType resourceType);
+void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest,
+        NSResourceType resourceType);
 void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest);
 void NSAskAcceptanceToUser(OCEntityHandlerRequest *entityHandlerRequest);
 NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest *entityHandlerRequest);

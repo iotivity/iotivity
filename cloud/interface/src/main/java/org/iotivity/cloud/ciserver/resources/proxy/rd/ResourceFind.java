@@ -40,24 +40,32 @@ import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.util.Cbor;
 
+/**
+ *
+ * This class provides a set of APIs to send requests about find resource to
+ * resource directory
+ *
+ */
+
 public class ResourceFind extends Resource {
     IRequestChannel                       mASServer = null;
+    IRequestChannel                       mRDServer = null;
     private Cbor<HashMap<String, Object>> mCbor     = new Cbor<>();
 
     public ResourceFind() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.WELL_KNOWN_URI));
 
         mASServer = ConnectorPool.getConnection("account");
+        mRDServer = ConnectorPool.getConnection("rd");
     }
 
     class AccountReceiveHandler implements IResponseEventHandler {
 
-        IRequestChannel  mRDServer = null;
         private Device   mSrcDevice;
         private IRequest mRequest;
 
         public AccountReceiveHandler(IRequest request, Device srcDevice) {
-            mRDServer = ConnectorPool.getConnection("rd");
+
             mSrcDevice = srcDevice;
             mRequest = request;
         }
@@ -89,18 +97,12 @@ public class ResourceFind extends Resource {
                         }
                     } else {
                         String additionalQuery = makeAdditionalQuery(
-                                payloadData, mSrcDevice.getDeviceId());
-                        if (additionalQuery == null) {
-                            mSrcDevice.sendResponse(
-                                    MessageBuilder.createResponse(mRequest,
-                                            ResponseStatus.BAD_REQUEST));
-                            return;
-                        }
+                                payloadData);
                         mRequest = MessageBuilder.modifyRequest(mRequest, null,
-                                additionalQuery
-                                        + (mRequest.getUriQuery() != null
-                                                ? ";" + mRequest.getUriQuery()
-                                                : ""),
+                                (mRequest.getUriQuery() != null
+                                        ? mRequest.getUriQuery() : "")
+                                        + (additionalQuery == null ? ""
+                                                : ";" + additionalQuery),
                                 null, null);
                     }
 
@@ -112,12 +114,15 @@ public class ResourceFind extends Resource {
             }
         }
 
-        private String makeAdditionalQuery(HashMap<String, Object> payloadData,
-                String did) {
+        private String makeAdditionalQuery(
+                HashMap<String, Object> payloadData) {
 
             StringBuilder additionalQuery = new StringBuilder();
-
             List<String> deviceList = getResponseDeviceList(payloadData);
+
+            if (deviceList == null) {
+                return null;
+            }
 
             if (deviceList.isEmpty()) {
                 return null;
@@ -146,19 +151,26 @@ public class ResourceFind extends Resource {
     @Override
     public void onDefaultRequestReceived(Device srcDevice, IRequest request)
             throws ServerException {
-        StringBuffer uriQuery = new StringBuffer();
-        uriQuery.append(Constants.REQ_MEMBER_ID + "=" + srcDevice.getUserId());
+        if (request.getUriQuery() != null && request.getUriQueryMap()
+                .containsKey(Constants.REQ_DEVICE_ID)) {
 
-        StringBuffer uriPath = new StringBuffer();
-        uriPath.append(Constants.PREFIX_OIC + "/");
-        uriPath.append(Constants.ACL_URI + "/");
-        uriPath.append(Constants.GROUP_URI + "/");
-        uriPath.append(srcDevice.getUserId());
+            mRDServer.sendRequest(request, srcDevice);
+        } else {
+            StringBuffer uriQuery = new StringBuffer();
+            uriQuery.append(
+                    Constants.REQ_MEMBER_ID + "=" + srcDevice.getUserId());
 
-        IRequest requestToAS = MessageBuilder.createRequest(RequestMethod.GET,
-                uriPath.toString(), uriQuery.toString());
+            StringBuffer uriPath = new StringBuffer();
+            uriPath.append(Constants.PREFIX_OIC + "/");
+            uriPath.append(Constants.ACL_URI + "/");
+            uriPath.append(Constants.GROUP_URI + "/");
+            uriPath.append(srcDevice.getUserId());
 
-        mASServer.sendRequest(requestToAS,
-                new AccountReceiveHandler(request, srcDevice));
+            IRequest requestToAS = MessageBuilder.createRequest(
+                    RequestMethod.GET, uriPath.toString(), uriQuery.toString());
+
+            mASServer.sendRequest(requestToAS,
+                    new AccountReceiveHandler(request, srcDevice));
+        }
     }
 }

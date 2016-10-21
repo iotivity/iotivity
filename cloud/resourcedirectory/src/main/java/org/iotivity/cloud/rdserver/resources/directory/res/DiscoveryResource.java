@@ -29,7 +29,6 @@ import java.util.List;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
-import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
@@ -37,15 +36,17 @@ import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.rdserver.Constants;
-import org.iotivity.cloud.rdserver.db.DBManager;
-import org.iotivity.cloud.rdserver.util.TypeCastingManager;
+import org.iotivity.cloud.rdserver.resources.directory.RDManager;
 import org.iotivity.cloud.util.Cbor;
-import org.iotivity.cloud.util.Log;
 
+/**
+ * 
+ * This class provides a set of APIs handle requests about resource discovery
+ *
+ */
 public class DiscoveryResource extends Resource {
-    private Cbor<HashMap<Object, Object>>      mCbor                     = new Cbor<>();
-    private TypeCastingManager<DiscoveryTags>  mDiscoveryTagsTypeManager = new TypeCastingManager<>();
-    private TypeCastingManager<DiscoveryLinks> mDiscoveryLinkTypeManager = new TypeCastingManager<>();
+    private Cbor<ArrayList<Object>> mCbor      = new Cbor<>();
+    private RDManager               mRdManager = new RDManager();
 
     public DiscoveryResource() {
         super(Arrays.asList(Constants.PREFIX_OIC, Constants.WELL_KNOWN_URI));
@@ -75,105 +76,21 @@ public class DiscoveryResource extends Resource {
 
         HashMap<String, List<String>> queryMap = request.getUriQueryMap();
 
-        ArrayList<DiscoveryPayload> resourceList = new ArrayList<DiscoveryPayload>();
+        List<String> diList = queryMap.get(Constants.DEVICE_ID);
+        List<String> rtList = queryMap.get(Constants.RESOURCE_TYPE);
+        List<String> ifList = queryMap.get(Constants.INTERFACE);
 
-        if (queryMap == null) {
-            throw new PreconditionFailedException("query is null");
-        }
+        ArrayList<Object> response = mRdManager.discoverResource(diList, rtList,
+                ifList);
 
-        List<String> deviceList = queryMap.get(Constants.DEVICE_ID);
-
-        if (deviceList == null) {
-            throw new PreconditionFailedException(
-                    "di property is not included");
-        }
-
-        List<String> listRT = queryMap.get(Constants.RESOURCE_TYPE);
-        List<String> listITF = queryMap.get(Constants.INTERFACE);
-        String key = null, value = null;
-        ArrayList<HashMap<Object, Object>> foundResList = null;
-
-        // TODO: Multiple RT or ITF support required
-        if (listRT != null) {
-            key = Constants.RESOURCE_TYPE;
-            value = listRT.get(0);
-        } else if (listITF != null) {
-            key = Constants.INTERFACE;
-            value = listITF.get(0);
-        }
-
-        for (String deviceId : deviceList) {
-            if(key != null && value != null){
-                foundResList = DBManager.getInstance().findResourceAboutDiAndFilter(deviceId,
-                        key, value);
-            } else {
-                foundResList = DBManager.getInstance().findResourceAboutDi(deviceId);
-            }
-
-            if (foundResList != null) {
-                resourceList.add(makeDiscoveryPayloadSegment(foundResList));
-            }
+        if (response.size() == 0) {
+            return MessageBuilder.createResponse(request,
+                    ResponseStatus.NOT_FOUND);
         }
 
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
                 ContentFormat.APPLICATION_CBOR,
-                createDiscoveryResponse(resourceList));
+                mCbor.encodingPayloadToCbor(response));
     }
 
-    private DiscoveryPayload makeDiscoveryPayloadSegment(
-            ArrayList<HashMap<Object, Object>> foundResList) {
-
-        ArrayList<DiscoveryLinks> discoveryLinksList = new ArrayList<DiscoveryLinks>();
-
-        for (HashMap<Object, Object> res : foundResList) {
-            DiscoveryLinks discoveryLinksPayload = new DiscoveryLinks();
-            discoveryLinksPayload = mDiscoveryLinkTypeManager
-                    .convertMaptoObject(res, discoveryLinksPayload);
-            discoveryLinksList.add(discoveryLinksPayload);
-        }
-
-        DiscoveryPayload discoveryPayload = new DiscoveryPayload();
-
-        DiscoveryTags tagsPayload = new DiscoveryTags();
-
-        tagsPayload = mDiscoveryTagsTypeManager
-                .convertMaptoObject(foundResList.get(0), tagsPayload);
-
-        discoveryPayload.setTags(tagsPayload);
-        discoveryPayload.setLinks(discoveryLinksList);
-
-        return discoveryPayload;
-    }
-
-    private byte[] createDiscoveryResponse(
-            ArrayList<DiscoveryPayload> discoveryPayloadList) {
-        ArrayList<HashMap<Object, Object>> responseMapList = new ArrayList<HashMap<Object, Object>>();
-
-        for (DiscoveryPayload discoveryPayload : discoveryPayloadList) {
-
-            DiscoveryTags tags = discoveryPayload.getTags();
-
-            HashMap<Object, Object> responseSegment = mDiscoveryTagsTypeManager
-                    .convertObjectToMap(tags);
-
-            ArrayList<DiscoveryLinks> discoveryLinksList = discoveryPayload
-                    .getLinks();
-
-            ArrayList<HashMap<Object, Object>> links = new ArrayList<HashMap<Object, Object>>();
-
-            for (DiscoveryLinks discoveryLinks : discoveryLinksList) {
-                links.add(mDiscoveryLinkTypeManager
-                        .convertObjectToMap(discoveryLinks));
-            }
-            responseSegment.put(Constants.LINKS, links);
-
-            responseMapList.add(responseSegment);
-        }
-
-        Log.i("discover payload :" + responseMapList.toString());
-
-        byte[] encodedPaylod = mCbor.encodingPayloadToCbor(responseMapList);
-
-        return encodedPaylod;
-    }
 }

@@ -86,6 +86,7 @@ OCStackResult DeleteEasySetupResources();
 OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty);
 OCStackResult SetEnrolleeState(ESEnrolleeState esState);
 OCStackResult SetEnrolleeErrCode(ESErrorCode esErrCode);
+OCEntityHandlerResult CheckEhRequestPayload(OCEntityHandlerRequest *ehRequest);
 
 void RegisterWifiRsrcEventCallBack(ESWiFiCB);
 void RegisterCloudRsrcEventCallBack(ESCloudCB);

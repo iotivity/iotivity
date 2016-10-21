@@ -26,7 +26,6 @@ extern "C" {
 #endif // __cplusplus
 
 #include "NSStructs.h"
-#include "NSStorageAdapter.h"
 #include "NSConsumerMemoryCache.h"
 #include "NSConsumerCommunication.h"
 

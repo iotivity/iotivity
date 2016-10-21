@@ -892,7 +892,7 @@ static OCEntityHandlerResult HandlePconfPostRequest (const OCEntityHandlerReques
     OCStackResult res=OC_STACK_OK;
     OicSecPconf_t* newPconf = NULL;
 
-    if (true == GetDoxmResourceData()->dpc)
+    if (NULL != GetDoxmResourceData() && true == GetDoxmResourceData()->dpc)
     {
         // Convert CBOR PCONF data into binary. This will also validate the PCONF data received.
         uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData;

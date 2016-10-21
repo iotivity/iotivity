@@ -85,7 +85,7 @@ if target_os in ['msys_nt', 'windows']:
 	oclib_env.AppendUnique(LIBS=['octbstack', 'logger', 'oc_logger','connectivity_abstraction', 'ocsrm', 'c_common', 'routingmanager'])
 	oclib_env.AppendUnique(LIBS=[ 'coap', 'ws2_32' ,'iphlpapi'])
 	if secured == '1':
-		oclib_env.AppendUnique(LIBS=['tinydtls'])
+		oclib_env.AppendUnique(LIBS=['mbedtls', 'mbedx509','mbedcrypto'])
 
 if with_cloud:
 	oclib_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD'])
@@ -99,10 +99,17 @@ if 'PUB' in with_mq:
 if 'BROKER' in with_mq:
 	oclib_env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
 
-if 'CLIENT' in oclib_env.get('RD_MODE'):
-	oclib_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
-if 'SERVER' in oclib_env.get('RD_MODE'):
-	oclib_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
+if target_os in ['linux', 'android'] and oclib_env.get('RD_MODE'):
+	rd_mode = oclib_env.get('RD_MODE')
+	oclib_env.AppendUnique(LIBPATH = [os.path.join(oclib_env.get('BUILD_DIR'), 'resource', 'csdk','resource-directory')])
+	oclib_env.AppendUnique(CPPPATH = ['../csdk/resource-directory/include'])
+	oclib_env.AppendUnique(LIBS=['resource_directory'])
+
+	if 'CLIENT' in rd_mode:
+	 	oclib_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+
+	if 'SERVER' in rd_mode:
+		oclib_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
 
 ######################################################################
 # Source files and Targets

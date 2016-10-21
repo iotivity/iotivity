@@ -410,6 +410,7 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                     for(size_t i = 0; i < rsrc->typeLen; i++)
                     {
                         cJSON *jsonRsrcType = cJSON_GetArrayItem(jsonRsrcObj, i);
+                        VERIFY_NON_NULL(TAG, jsonRsrcType, ERROR);
                         rsrc->types[i] = OICStrdup(jsonRsrcType->valuestring);
                         VERIFY_NON_NULL(TAG, (rsrc->types[i]), ERROR);
                     }
@@ -426,6 +427,7 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                     for(size_t i = 0; i < rsrc->interfaceLen; i++)
                     {
                         cJSON *jsonInterface = cJSON_GetArrayItem(jsonRsrcObj, i);
+                        VERIFY_NON_NULL(TAG, jsonInterface, ERROR);
                         rsrc->interfaces[i] = OICStrdup(jsonInterface->valuestring);
                         VERIFY_NON_NULL(TAG, (rsrc->interfaces[i]), ERROR);
                     }
@@ -445,7 +447,7 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
             if(jsonValidityObj)
             {
                 VERIFY_SUCCESS(TAG, cJSON_Array == jsonValidityObj->type, ERROR);
-                size_t validityLen = cJSON_GetArraySize(jsonValidityObj);
+                size_t validityLen = (size_t) cJSON_GetArraySize(jsonValidityObj);
                 VERIFY_SUCCESS(TAG, (0 < validityLen), ERROR);
 
                 cJSON *jsonValidity = NULL;
@@ -476,7 +478,7 @@ OicSecAcl_t* JSONToAclBin(const char * jsonStr)
                     if(jsonRecurObj)
                     {
                         VERIFY_SUCCESS(TAG, (cJSON_Array == jsonRecurObj->type), ERROR);
-                        validity->recurrenceLen = cJSON_GetArraySize(jsonRecurObj);
+                        validity->recurrenceLen = (size_t) cJSON_GetArraySize(jsonRecurObj);
                         VERIFY_SUCCESS(TAG, (0 < validity->recurrenceLen), ERROR);
 
                         validity->recurrences = (char**)OICCalloc(validity->recurrenceLen, sizeof(char*));
@@ -613,6 +615,18 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
         VERIFY_SUCCESS(TAG, (cJSON_True == jsonObj->type || cJSON_False == jsonObj->type), ERROR);
         doxm->dpc = jsonObj->valueint;
     }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    //mom -- Not Mandatory
+    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_MOM_NAME);
+    if (jsonObj)
+    {
+        VERIFY_SUCCESS(TAG, (cJSON_Number == jsonObj->type), ERROR);
+        doxm->mom = (OicSecMom_t*)OICCalloc(1, sizeof(OicSecMom_t));
+        VERIFY_NON_NULL(TAG, doxm->mom, ERROR);
+        doxm->mom->mode = (OicSecMomType_t)jsonObj->valueint;
+    }
+#endif //_ENABLE_MULTIPLE_OWNER_
 
     //DeviceId -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DEVICE_ID_NAME);
@@ -844,7 +858,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                     cred->privateData.encoding = OIC_ENCODING_RAW;
                 }
             }
-#ifdef __WITH_X509__
+#ifdef __WITH_DTLS__
             //PublicData is mandatory only for SIGNED_ASYMMETRIC_KEY credentials type.
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PUBLICDATA_NAME);
 
@@ -858,7 +872,7 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                 memcpy(cred->publicData.data, jsonPub->valuestring, jsonObjLen);
                 cred->publicData.len = jsonObjLen;
             }
-#endif //  __WITH_X509__
+#endif //  __WITH_DTLS__
             //Period -- Not Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PERIOD_NAME);
             if(jsonObj && cJSON_String == jsonObj->type)

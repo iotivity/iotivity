@@ -553,10 +553,11 @@ typedef struct
         CASocket_t m6s;             /**< multicast IPv6 secure */
         CASocket_t m4;              /**< multicast IPv4 */
         CASocket_t m4s;             /**< multicast IPv4 secure */
-        CASocketFd_t netlinkFd;     /**< netlink */
 #if defined(_WIN32)
+        WSAEVENT addressChangeEvent;/**< Event used to signal address changes */
         WSAEVENT shutdownEvent;     /**< Event used to signal threads to stop */
 #else
+        int netlinkFd;              /**< netlink */
         int shutdownFds[2];         /**< fds used to signal threads to stop */
 #endif
         int selectTimeout;          /**< in seconds */

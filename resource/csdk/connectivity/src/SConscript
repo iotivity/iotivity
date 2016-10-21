@@ -8,6 +8,7 @@ Import('env')
 ca_os = env.get('TARGET_OS')
 ca_transport = env.get('TARGET_TRANSPORT')
 secured = env.get('SECURED')
+multiple_owner = env.get('MULTIPLE_OWNER')
 with_ra = env.get ('WITH_RA')
 with_ra_ibb = env.get('WITH_RA_IBB')
 with_tcp = env.get('WITH_TCP')
@@ -56,35 +57,20 @@ env.SConscript(os.path.join(root_dir, 'util', 'SConscript'))
 # is interpreted by SCons as the top-level iotivity directory where
 # the SConscruct file is found.
 build_dir = env.get('BUILD_DIR')
-if env.get('SECURED') == '1':
-	env.SConscript(build_dir + 'extlibs/tinydtls/SConscript')
-	env.SConscript(build_dir + 'extlibs/timer/SConscript')
-	env.AppendUnique(CPPPATH = ['#extlibs/timer'])
-	env.AppendUnique(CPPPATH = [src_dir + '/resource/csdk/connectivity/inc/pkix'])
 
 env.AppendUnique(CA_SRC = [os.path.join(ca_path,
                                         'adapter_util/caadapterutils.c')])
-env.AppendUnique(CA_SRC = [os.path.join(ca_path,
-                                        'adapter_util/cafragmentation.c')])
+
+if (('BLE' in ca_transport) or ('ALL' in ca_transport)):
+	env.AppendUnique(CA_SRC = [os.path.join(ca_path,
+                                          'adapter_util/cafragmentation.c')])
 
 if env.get('SECURED') == '1':
-	env.AppendUnique(CA_SRC = [os.path.join(ca_path,
-                                                'adapter_util/caadapternetdtls.c')])
-	env.AppendUnique(CPPPATH = [os.path.join(root_dir,
-                                                 'external/inc')])
-if env.get('DTLS_WITH_X509') == '1':
-	env.AppendUnique(CPPPATH = [src_dir + '/resource/csdk/connectivity/inc/pkix'])
-	env.AppendUnique(CPPPATH = [src_dir + '/extlibs/tinydtls/ecc/'])
-	env.AppendUnique(CPPPATH = [src_dir + '/extlibs/tinydtls/sha2/'])
-	env.AppendUnique(CPPDEFINES = ['__WITH_X509__'])
-	if not env.get('RELEASE'):
-		env.AppendUnique(CPPDEFINES = ['X509_DEBUG'])
-	pkix_src = Glob('adapter_util/pkix/*.c');
-	env.AppendUnique(CA_SRC = pkix_src)
-
-if ((secured == '1') and (with_tcp == True)):
-	env.AppendUnique(CPPPATH = [os.path.join(src_dir, 'resource', 'csdk', 'security', 'include')])
-	env.AppendUnique(CPPDEFINES = ['__WITH_TLS__'])
+	env.SConscript(build_dir + 'extlibs/tinydtls/SConscript')
+	env.AppendUnique(CPPPATH = ['#extlibs/tinydtls'])
+	env.AppendUnique(CPPPATH = [src_dir + '/resource/csdk/security/include'])
+	env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
+	env.AppendUnique(CPPPATH = [os.path.join(root_dir, 'external/inc')])
 	tls_path = 'extlibs/mbedtls';
 	tls_headers_path = 'mbedtls/include';
 	if ca_os == 'tizen' and os.path.exists(root_dir + '/' + tls_path):
@@ -94,7 +80,14 @@ if ((secured == '1') and (with_tcp == True)):
 		if ca_os != 'android':
 			env.SConscript('#' + tls_path + '/SConscript')
 		env.AppendUnique(CPPPATH = ['#' + tls_path + '/' + tls_headers_path])
-		env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'adapter_util/ca_adapter_net_tls.c')])
+		env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'adapter_util/ca_adapter_net_ssl.c')])
+
+if ((secured == '1') and (with_tcp == True)):
+	env.AppendUnique(CPPDEFINES = ['__WITH_TLS__'])
+
+if (multiple_owner == '1'):
+	env.AppendUnique(CPPDEFINES=['_ENABLE_MULTIPLE_OWNER_'])
+
 
 ca_common_src = None
 
@@ -131,12 +124,6 @@ else:
 	if (('IP' in ca_transport) or ('ALL' in ca_transport)):
 		env.AppendUnique(CA_SRC = [os.path.join(ca_path, 'cablockwisetransfer.c') ])
 		env.AppendUnique(CPPDEFINES = ['WITH_BWT'])
-	if secured == '1':
-		env.AppendUnique(CPPDEFINES = ['__WITH_DTLS__'])
-		if ca_os == 'tizen' and os.path.exists(root_dir + '/extlibs/tinydtls'):
-			env.AppendUnique(CPPPATH = [os.path.join(root_dir, 'extlibs/tinydtls')])
-		else:
-			env.AppendUnique(CPPPATH = ['#extlibs/tinydtls'])
 
 ca_common_src = [
         os.path.join(ca_path, d) for d in ca_common_src ]
@@ -212,19 +199,18 @@ if ca_os == 'android':
 if ca_os in ['android', 'tizen', 'linux', 'yocto']:
 	lib_env.AppendUnique(LIBS = ['coap'])
 	if lib_env.get('SECURED') == '1':
-		lib_env.AppendUnique(LIBS = ['tinydtls'])
-		lib_env.AppendUnique(LIBS = ['timer'])
+		lib_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
 	if ca_os != 'android':
 		lib_env.AppendUnique(LIBS = ['rt'])
 		if ((lib_env.get('SECURED') == '1') and ((lib_env.get('WITH_TCP')) or (lib_env.get('WITH_CLOUD')))):
 			lib_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
-
-	calib = lib_env.SharedLibrary('connectivity_abstraction', env.get('CA_SRC'))
+	static_calib = lib_env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
+	shared_calib = lib_env.SharedLibrary('connectivity_abstraction', lib_env.get('CA_SRC'))
+	calib = Flatten([static_calib, shared_calib])
 elif ca_os in ['msys_nt', 'windows']:
 	lib_env.AppendUnique(LIBS = ['coap', 'mswsock', 'ws2_32', 'iphlpapi', 'logger'])
 	if lib_env.get('SECURED') == '1':
-		lib_env.AppendUnique(LIBS = ['tinydtls'])
-		lib_env.AppendUnique(LIBS = ['timer'])
+		lib_env.AppendUnique(LIBS = ['mbedtls','mbedx509','mbedcrypto'])
 	calib = lib_env.StaticLibrary('connectivity_abstraction', env.get('CA_SRC'))
 else:
 	calib = lib_env.StaticLibrary('connectivity_abstraction', lib_env.get('CA_SRC'))

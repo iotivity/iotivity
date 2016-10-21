@@ -45,9 +45,9 @@
 
 #include <stdint.h> // for uint8_t typedef
 #include <stdbool.h>
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 #include "byte_array.h"
-#endif /* __WITH_X509__  or __WITH_TLS__*/
+#endif /* __WITH_DTLS__  or __WITH_TLS__*/
 
 #ifdef __cplusplus
 extern "C" {
@@ -219,15 +219,20 @@ typedef enum OicSecDpm
     SECURITY_MANAGEMENT_SERVICES    = (0x1 << 3),
     PROVISION_CREDENTIALS           = (0x1 << 4),
     PROVISION_ACLS                  = (0x1 << 5),
-    // << 6 THROUGH 15 RESERVED
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    TAKE_SUB_OWNER                  = (0x1 << 6),
+#endif
+    // << 7 THROUGH 15 RESERVED
 } OicSecDpm_t;
 
+// These types are taken from the Security Spec v1.1.12 /pstat resource definition
+// Note that per the latest spec, there is NO definition for Multiple Service Client Directed
+// provisioning mode, so that enum value has been removed.
 typedef enum OicSecDpom
 {
-    MULTIPLE_SERVICE_SERVER_DRIVEN  = 0x0,
-    SINGLE_SERVICE_SERVER_DRIVEN    = 0x1,
-    MULTIPLE_SERVICE_CLIENT_DRIVEN  = 0x2,
-    SINGLE_SERVICE_CLIENT_DRIVEN    = 0x3,
+    MULTIPLE_SERVICE_SERVER_DRIVEN    = (0x1 << 0),
+    SINGLE_SERVICE_SERVER_DRIVEN      = (0x1 << 1),
+    SINGLE_SERVICE_CLIENT_DRIVEN      = (0x1 << 2),
 } OicSecDpom_t;
 
 typedef enum OicSecSvcType
@@ -266,6 +271,9 @@ typedef enum
     OIC_JUST_WORKS                          = 0x0,
     OIC_RANDOM_DEVICE_PIN                   = 0x1,
     OIC_MANUFACTURER_CERTIFICATE           = 0x2,
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    OIC_PRECONFIG_PIN                      = 0x3,
+#endif //_ENABLE_MULTIPLE_OWNER_
     OIC_OXM_COUNT
 }OicSecOxm_t;
 
@@ -277,6 +285,30 @@ typedef enum
     OIC_ENCODING_PEM = 3,
     OIC_ENCODING_DER = 4
 }OicEncodingType_t;
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+typedef enum
+{
+    MOT_STATUS_READY = 0,
+    MOT_STATUS_IN_PROGRESS = 1,
+    MOT_STATUS_DONE = 2,
+}MotStatus_t;
+#endif //_ENABLE_MULTIPLE_OWNER_
+
+/*
+ * oic.sec.mom type definition
+ * TODO: This type will be included to OIC Security Spec.
+ * 0 : Disable multiple owner
+ * 1 : Enable multiple owner (Always on)
+ * 2 : Timely multiple owner enable
+ */
+typedef enum
+{
+    OIC_MULTIPLE_OWNER_DISABLE = 0,
+    OIC_MULTIPLE_OWNER_ENABLE = 1,
+    OIC_MULTIPLE_OWNER_TIMELY_ENABLE = 2,
+    OIC_NUMBER_OF_MOM_TYPE = 3
+}OicSecMomType_t;
 
 typedef struct OicSecKey OicSecKey_t;
 
@@ -292,13 +324,18 @@ typedef char *OicUrn_t; //TODO is URN type defined elsewhere?
 
 typedef struct OicUuid OicUuid_t; //TODO is UUID type defined elsewhere?
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+typedef struct OicSecSubOwner OicSecSubOwner_t;
+typedef struct OicSecMom OicSecMom_t;
+#endif //_ENABLE_MULTIPLE_OWNER_
 
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 typedef struct OicSecCrl OicSecCrl_t;
-typedef ByteArray OicSecCert_t;
+typedef ByteArray_t OicSecCert_t;
 #else
 typedef void OicSecCert_t;
-#endif /* __WITH_X509__ or __WITH_TLS__*/
+#endif /* __WITH_DTLS__ or __WITH_TLS__*/
 
 /**
  * /oic/uuid (Universal Unique Identifier) data type.
@@ -353,10 +390,13 @@ struct OicSecValidity
 struct OicSecAce
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    OicUuid_t subjectuuid; // 0:R:S:Y:uuid
-    OicSecRsrc_t *resources; // 1:R:M:Y:Resource
-    uint16_t permission; // 2:R:S:Y:UINT16
-    OicSecValidity_t *validities; // 3:R:M:N:Time-interval
+    OicUuid_t subjectuuid;              // 0:R:S:Y:uuid
+    OicSecRsrc_t *resources;            // 1:R:M:Y:Resource
+    uint16_t permission;                // 2:R:S:Y:UINT16
+    OicSecValidity_t *validities;       // 3:R:M:N:Time-interval
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    OicUuid_t* eownerID;                //4:R:S:N:oic.uuid
+#endif
     OicSecAce_t *next;
 };
 
@@ -400,16 +440,31 @@ struct OicSecCred
     //size_t              roleIdsLen;     // the number of elts in RoleIds
     //OicSecRole_t        *roleIds;       // 2:R:M:N:oic.sec.role
     OicSecCredType_t    credType;       // 3:R:S:Y:oic.sec.credtype
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     OicSecCert_t        publicData;     // own cerificate chain
     char            *credUsage;            // 4:R:S:N:String
     OicSecKey_t        optionalData;   // CA's cerificate chain
-#endif /* __WITH_X509__  or __WITH_TLS__*/
+#endif /* __WITH_DTLS__  or __WITH_TLS__*/
     OicSecKey_t         privateData;    // 6:R:S:N:oic.sec.key
     char                *period;        // 7:R:S:N:String
-    OicUuid_t           rownerID;        // 8:R:S:Y:oic.uuid
+    OicUuid_t           rownerID;       // 8:R:S:Y:oic.uuid
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    OicUuid_t           *eownerID;      //9:R:S:N:oic.uuid
+#endif //_ENABLE_MULTIPLE_OWNER_
     OicSecCred_t        *next;
 };
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+struct OicSecSubOwner {
+    OicUuid_t uuid;
+    MotStatus_t status;
+    OicSecSubOwner_t* next;
+};
+
+struct OicSecMom{
+    OicSecMomType_t mode;
+};
+#endif //_ENABLE_MULTIPLE_OWNER_
 
 /**
  * /oic/sec/doxm (Device Owner Transfer Methods) data type
@@ -430,13 +485,15 @@ struct OicSecDoxm
     OicUuid_t           deviceID;       // 6:R:S:Y:oic.uuid
     bool                dpc;            // 7:R:S:Y:Boolean
     OicUuid_t           owner;          // 8:R:S:Y:oic.uuid
-    OicUuid_t           rownerID;       // 9:R:S:Y:oic.uuid
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    OicSecSubOwner_t* subOwners;        //9:R/W:M:N:oic.uuid
+    OicSecMom_t *mom;                   //10:R/W:S:N:oic.sec.mom
+#endif //_ENABLE_MULTIPLE_OWNER_
+    OicUuid_t           rownerID;       // 11:R:S:Y:oic.uuid
 };
 
 /**
  * /oic/sec/pstat (Provisioning Status) data type.
- * NOTE: this struct is ahead of Spec v0.95 in definition to include Sm.
- * TODO: change comment when reconciled to Spec v0.96.
  */
 struct OicSecPstat
 {
@@ -490,14 +547,14 @@ struct OicSecSvc
     OicSecSvc_t             *next;
 };
 
-#if defined(__WITH_X509__) ||  defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) ||  defined(__WITH_TLS__)
 struct OicSecCrl
 {
     uint16_t CrlId;
-    ByteArray ThisUpdate;
+    ByteArray_t ThisUpdate;
     OicSecKey_t CrlData;
 };
-#endif /* __WITH_X509__ or __WITH_TLS__ */
+#endif /* __WITH_DTLS__ or __WITH_TLS__ */
 
 /**
  * @brief   direct pairing data type

@@ -73,7 +73,9 @@ namespace OIC
             for (auto it : getTopicsList())
             {
                 if (it->getTopicName().compare(topicName) == 0)
+                {
                     m_topicsList.remove(it);
+                }
             }
         }
 

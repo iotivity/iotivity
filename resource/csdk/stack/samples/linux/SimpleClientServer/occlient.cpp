@@ -289,45 +289,46 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle,
 
     if (clientResponse)
     {
-        OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OIC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d",
-                gNumObserveNotifies);
-        OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OIC_LOG(INFO, TAG, ("=============> Obs Response"));
-        gNumObserveNotifies++;
-        if (gNumObserveNotifies > 15) //large number to test observing in DELETE case.
+        if (clientResponse->sequenceNumber <= MAX_SEQUENCE_NUMBER)
         {
-            if (TestCase == TEST_OBS_REQ_NON || TestCase == TEST_OBS_REQ_CON)
+            if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
             {
-                OIC_LOG(ERROR, TAG, "Cancelling with LOW QOS");
-                if (OCCancel (handle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
-                {
-                    OIC_LOG(ERROR, TAG, "Observe cancel error");
-                }
-                return OC_STACK_DELETE_TRANSACTION;
+                OIC_LOG(INFO, TAG, "This also serves as a registration confirmation.");
             }
-            else if (TestCase == TEST_OBS_REQ_NON_CANCEL_IMM)
+
+            OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
+            OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
+            OIC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d",
+                    gNumObserveNotifies);
+            OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
+            OIC_LOG(INFO, TAG, ("=============> Obs Response"));
+            gNumObserveNotifies++;
+
+            if (gNumObserveNotifies > 15) //large number to test observing in DELETE case.
             {
-                OIC_LOG(ERROR, TAG, "Cancelling with HIGH QOS");
-                if (OCCancel (handle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+                if (TestCase == TEST_OBS_REQ_NON || TestCase == TEST_OBS_REQ_CON)
                 {
-                    OIC_LOG(ERROR, TAG, "Observe cancel error");
+                    OIC_LOG(ERROR, TAG, "Cancelling with LOW QOS");
+                    if (OCCancel (handle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
+                    {
+                        OIC_LOG(ERROR, TAG, "Observe cancel error");
+                    }
+                    return OC_STACK_DELETE_TRANSACTION;
+                }
+                else if (TestCase == TEST_OBS_REQ_NON_CANCEL_IMM)
+                {
+                    OIC_LOG(ERROR, TAG, "Cancelling with HIGH QOS");
+                    if (OCCancel (handle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+                    {
+                        OIC_LOG(ERROR, TAG, "Observe cancel error");
+                    }
                 }
             }
         }
-        if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
+        else
         {
-            OIC_LOG(INFO, TAG, "This also serves as a registration confirmation");
-        }
-        else if (clientResponse->sequenceNumber == OC_OBSERVE_DEREGISTER)
-        {
-            OIC_LOG(INFO, TAG, "This also serves as a deregistration confirmation");
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-        else if (clientResponse->sequenceNumber == OC_OBSERVE_NO_OPTION)
-        {
-            OIC_LOG(INFO, TAG, "This also tells you that registration/deregistration failed");
+            OIC_LOG(INFO, TAG, "No observe option header is returned in the response.");
+            OIC_LOG(INFO, TAG, "For a registration request, it means the registration failed");
             return OC_STACK_DELETE_TRANSACTION;
         }
     }

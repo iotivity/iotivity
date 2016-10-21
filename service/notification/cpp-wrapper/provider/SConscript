@@ -51,6 +51,7 @@ notification_env.AppendUnique(CPPPATH = ['../../src/common'])
 
 notification_env.PrependUnique(LIBS = [
 	'oc_logger',
+	'oc',
 	'notification_provider'
 	])
 notification_env.AppendUnique(CXXFLAGS = ['-std=c++0x','-frtti'])
@@ -76,8 +77,10 @@ if env.get('WITH_CLOUD') == True:
 	notification_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD'])
 
 ######################################################################
-# Source files and Targets
+# Source files and Targets for Provider
 ######################################################################
+notification_jni_provider_env = notification_env.Clone()
+
 notificationCommonStaticObjs = [
 	notification_env.Object('../common/NSMediaContents.cpp'),
 	notification_env.Object('../common/NSMessage.cpp'),
@@ -108,3 +111,29 @@ notification_env.UserInstallTargetLib(providersdk, 'libnotification_provider_wra
 
 Export('notificationCommonStaticObjs')
 Export('notificationCommonSharedObjs')
+
+######################################################################
+# Source files and Targets for Provider Jni
+######################################################################
+if target_os == 'android':
+	notification_jni_provider_env.AppendUnique(CPPPATH = ['../../../../extlibs/boost/boost_1_58_0'])
+	notification_jni_provider_env.AppendUnique(CPPPATH = ['../../../../android/android_api/base/jni'])
+	notification_jni_provider_env.AppendUnique(CPPPATH = ['../../android/notification-service/src/main/jni/common'])
+	notification_jni_provider_env.AppendUnique(CPPPATH = ['../../android/notification-service/src/main/jni/provider'])
+
+	notification_jni_provider_env.PrependUnique(LIBS = [
+		'notification_provider_wrapper'
+		])
+
+	notificationJniCommonSharedObjs = [
+		notification_jni_provider_env.SharedObject('../../android/notification-service/src/main/jni/common/JniNotificationCommon.cpp')]
+
+	notification_provider_jni_src = [
+		env.Glob('../../android/notification-service/src/main/jni/provider/*.cpp'),
+		notificationJniCommonSharedObjs]
+
+	providerJni = notification_jni_provider_env.SharedLibrary('notification_provider_jni', notification_provider_jni_src)
+	notification_jni_provider_env.InstallTarget(providerJni, 'libnotification_provider_jni')
+	notification_jni_provider_env.UserInstallTargetLib(providerJni, 'libnotification_provider_jni')
+
+	Export('notificationJniCommonSharedObjs')

@@ -1134,7 +1134,10 @@ TEST_F(ThingsManagerTest, testAddActionSetAllBulbOff)
 
     mocks.ExpectCallFunc(onPut).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1207,7 +1210,10 @@ TEST_F(ThingsManagerTest, testAddActionSetAllBulbOn)
 
     mocks.ExpectCallFunc(onPut).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1304,7 +1310,10 @@ TEST_F(ThingsManagerTest, testExecuteActionSetAllBulbOn)
 
     mocks.ExpectCallFunc(onPost).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     if (g_resource)
     {
@@ -1330,7 +1339,10 @@ TEST_F(ThingsManagerTest, testExecuteActionSetAllBulbOff)
 {
     mocks.ExpectCallFunc(onPost).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     if (g_resource)
     {
@@ -1360,7 +1372,10 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithDelay)
 
     mocks.ExpectCallFunc(onPut).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1382,7 +1397,10 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithDelay)
 
     mocks.ExpectCallFunc(onPost).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     if (g_resource)
     {
@@ -1404,7 +1422,10 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithDelayEqulasZero)
 
     mocks.ExpectCallFunc(onPut).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1444,7 +1465,10 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithInvalidDelay)
 
     mocks.ExpectCallFunc(onPut).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1485,7 +1509,10 @@ TEST_F(ThingsManagerTest, testExcecuteActionSetWithDelayWithResourceNull)
 
     mocks.ExpectCallFunc(onPut).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     for (auto iter = lights.begin(); iter != lights.end(); ++iter)
     {
@@ -1516,7 +1543,10 @@ TEST_F(ThingsManagerTest, testCancelActionSet)
 {
     mocks.ExpectCallFunc(onPost).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     if (g_resource)
     {
@@ -1541,7 +1571,10 @@ TEST_F(ThingsManagerTest, testDeleteActionSet)
 {
     mocks.ExpectCallFunc(onPut).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     if (g_resource)
     {
@@ -1566,7 +1599,10 @@ TEST_F(ThingsManagerTest, testGetActionSet)
 {
     mocks.ExpectCallFunc(onPost).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     if (g_resource)
     {
@@ -1598,7 +1634,10 @@ TEST_F(ThingsManagerTest, testGetConfigurations)
 
     mocks.ExpectCallFunc(onGet).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     vector<string> types;
     types.push_back("oic.wk.con");
@@ -1672,7 +1711,10 @@ TEST_F(ThingsManagerTest, testDoBootstrap)
 
     mocks.ExpectCallFunc(onGetBootstrapInformation).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
     result = g_thingsConf->doBootstrap(&onGetBootstrapInformation);
     Wait();
     EXPECT_TRUE(result == OC_STACK_OK);
@@ -1702,7 +1744,10 @@ TEST_F(ThingsManagerTest, testUpdateConfiguration)
 
     mocks.ExpectCallFunc(onUpdate).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     vector<string> types;
     types.push_back("oic.wk.con");
@@ -1770,7 +1815,10 @@ TEST_F(ThingsManagerTest, testReboot)
 
     mocks.ExpectCallFunc(onReboot).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     vector<string> types;
     types.push_back("oic.wk.mnt");
@@ -1807,7 +1855,10 @@ TEST_F(ThingsManagerTest, testFactoryReset)
 
     mocks.ExpectCallFunc(onFactoryReset).
     Do([this](const HeaderOptions& /*headerOptions*/, const OCRepresentation& /*rep*/,
-            const int /*eCode*/) {   Proceed();});
+            const int /*eCode*/)
+            {
+                Proceed();
+            });
 
     vector<string> types;
     types.push_back("oic.wk.mnt");

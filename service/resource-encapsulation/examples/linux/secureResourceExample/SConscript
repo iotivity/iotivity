@@ -38,7 +38,7 @@ sample_env.AppendUnique(LIBS = [
     'oc',
     'rcs_common',
     'pthread',
-    'tinydtls'
+    'mbedtls', 'mbedx509', 'mbedcrypto'
     ])
 sample_env.AppendUnique(CPPPATH = ['../../../include'])
 

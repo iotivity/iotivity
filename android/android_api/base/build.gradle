@@ -83,6 +83,10 @@ android {
                     exclude "**/ca/CaNfcInterface.java"
                     println 'excluded NFC interface'
                     }
+                if (WITH_CLOUD == "0" || SECURED == "0") {
+                    exclude "**/base/OcCloudProvisioning.java"
+                    println 'excluded secure files'
+                    }
             }
         }
     }

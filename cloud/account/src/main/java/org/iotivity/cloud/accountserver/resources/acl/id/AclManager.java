@@ -61,18 +61,22 @@ public class AclManager {
 
     public HashMap<String, Object> getAclid(String di) {
         HashMap<String, Object> responsePayload = new HashMap<>();
-        ArrayList<String> aclidList = new ArrayList<String>();
+        String aclid = null;
         HashMap<String, Object> condition = new HashMap<>();
         condition.put(Constants.KEYFIELD_DI, di);
         ArrayList<HashMap<String, Object>> result = AccountDBManager
             .getInstance().selectRecord(Constants.ACL_TABLE, condition);
-        for (HashMap<String, Object> element : result) {
-            AclTable getAclTable = new AclTable();
-            getAclTable = Acl.convertMaptoAclObject(element);
-            aclidList.add(getAclTable.getAclid());
+        if (result != null)
+        {
+            for (HashMap<String, Object> element : result) {
+                AclTable getAclTable = new AclTable();
+                getAclTable = Acl.convertMaptoAclObject(element);
+                aclid = getAclTable.getAclid();
+                responsePayload.put(Constants.KEYFIELD_ACLID, aclid);
+                return responsePayload;
+            }
         }
-        responsePayload.put(Constants.KEYFIELD_ACLID, aclidList);
-        return responsePayload;
+        return null;
     }
 
     public void deleteAcl(String aclid) {
@@ -83,11 +87,36 @@ public class AclManager {
         mAcls.remove(aclid);
     }
 
-    public void addAclACE(String aclid, List<HashMap<String, Object>> aclist) {
-        getAcl(aclid).addACE(aclist);
+    public List<HashMap<String, Object>> addAclACE(String aclid, List<HashMap<String, Object>> aclist) {
+        return getAcl(aclid).addACE(aclist);
     }
 
-    public void deleteAclACE(String aclid) {
+    public HashMap<String, Object> getAclACE(String aclid, String aceid) {
+        return getAcl(aclid).getACE(aceid);
+    }
+
+    public void updateACE(String aclid, String aceid, HashMap<String, Object> ace) {
+        if(getAcl(aclid).isValidAceId(aceid))
+        {
+            getAcl(aclid).updateACE(aceid, ace);
+        }
+        else
+        {
+            throw new BadRequestException("Invalid parameters");
+        }
+    }
+
+    public void deleteAclACE(String aclid, String aceid) {
+        if(getAcl(aclid).isValidAceId(aceid))
+        {
+            getAcl(aclid).deleteACE(aceid);
+        }
+        else
+        {
+            throw new BadRequestException("Invalid parameters");
+        }
+    }
+    public void deleteAclAclist(String aclid) {
         getAcl(aclid).deleteAclist();
     }
 

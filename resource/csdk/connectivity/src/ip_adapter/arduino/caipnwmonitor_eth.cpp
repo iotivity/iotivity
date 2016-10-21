@@ -35,6 +35,7 @@
 #include "logger.h"
 #include "cacommon.h"
 #include "caipadapter.h"
+#include "caipnwmonitor.h"
 #include "caadapterutils.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -45,12 +46,13 @@
 // defined & used (as-is defined in the linux socket headers).
 #define AF_INET (2)
 
-CAResult_t CAIPStartNetworkMonitor()
+CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
+                                   CATransportAdapter_t adapter)
 {
     return CA_STATUS_OK;
 }
 
-CAResult_t CAIPStopNetworkMonitor()
+CAResult_t CAIPStopNetworkMonitor(CATransportAdapter_t adapter)
 {
     return CA_STATUS_OK;
 }

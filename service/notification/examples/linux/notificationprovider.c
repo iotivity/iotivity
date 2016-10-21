@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "NSProviderInterface.h"
 #include "NSCommon.h"
@@ -193,14 +194,18 @@ int main()
 
         printf("input : ");
 
-        if(scanf("%d", &num) > 0)
+        if(scanf("%d", &num) > 0 && isdigit(num) == 0)
         {
-            fflush(stdin);
             if(scanf("%c", &dummy) > 0)
             {
                 fflush(stdin);
                 printf("\n");
             }
+        }
+        else
+        {
+            printf("invalid input \n");
+            num = 0;
         }
 
         switch (num)
@@ -251,17 +256,20 @@ int main()
                 printf("app - topic : %s \n", topic);
 
                 NSMessage * msg = NSCreateMessage();
-
-                msg->title = OICStrdup(title);
-                msg->contentText = OICStrdup(body);
-                msg->sourceName = OICStrdup("OCF");
-
-                if(topic[0] != '\0')
+                if(msg)
                 {
-                    msg->topic = OICStrdup(topic);
-                }
 
-                NSSendMessage(msg);
+                    msg->title = OICStrdup(title);
+                    msg->contentText = OICStrdup(body);
+                    msg->sourceName = OICStrdup("OCF");
+
+                    if(topic[0] != '\0')
+                    {
+                        msg->topic = OICStrdup(topic);
+                    }
+
+                    NSSendMessage(msg);
+                }
             }
                 break;
 

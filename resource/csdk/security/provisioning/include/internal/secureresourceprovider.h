@@ -64,18 +64,7 @@ OCStackResult SRPGetCredResource(void *ctx, const OCProvisionDev_t *selectedDevi
 OCStackResult SRPGetACLResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
         OCProvisionResultCB resultCallback);
 
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
-/**
- * API to send CRL information to resource.
- *
- * @param[in] selectedDeviceInfo Selected target device.
- * @param[in] crl CRL to provision.
- * @param[in] resultCallback callback provided by API user, callback will be called when
- *            provisioning request recieves a response from resource server.
- * @return OC_STACK_OK in case of success and other value otherwise.
- */
-OCStackResult SRPProvisionCRL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
-        OicSecCrl_t *crl, OCProvisionResultCB resultCallback);
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 
 /**
  * function to provision Trust certificate chain to devices.
@@ -114,7 +103,7 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
  */
 OCStackResult SRPSaveOwnCertChain(OicSecCert_t * cert, OicSecKey_t * key, uint16_t *credId);
 
-#endif // __WITH_X509__ || __WITH_TLS__
+#endif // __WITH_DTLS__ || __WITH_TLS__
 /**
  * API to send Direct-Pairing Configuration to a device.
  *

@@ -25,11 +25,12 @@
 #include "NSConsumerCommon.h"
 #include "cautilinterface.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 #include "NSConsumerDiscovery.h"
 #include "NSConsumerNetworkEventListener.h"
 
-#define NS_PRESENCE_SUBSCRIBE_QUERY "/oic/ad?rt=oic.r.notification"
+#define NS_PRESENCE_SUBSCRIBE_QUERY "/oic/ad?rt=oic.wk.notification"
 
 void NSConnectionStateListener(const CAEndpoint_t * info, bool isConnected);
 
@@ -56,13 +57,13 @@ NSResult NSConsumerListenerInit()
     NS_LOG(DEBUG, "Request to subscribe presence");
     OCStackResult stackResult = NSInvokeRequest(getPresenceHandle(), OC_REST_PRESENCE, NULL,
                         NS_PRESENCE_SUBSCRIBE_QUERY, NULL, NSConsumerPresenceListener,
-                        NULL, CT_DEFAULT);
+                        NULL, NULL, CT_DEFAULT);
     NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(stackResult), NS_ERROR);
 
     NS_LOG(DEBUG, "Request to discover provider");
     stackResult = NSInvokeRequest(NULL, OC_REST_DISCOVER, NULL,
                       NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener,
-                      NULL, CT_DEFAULT);
+                      NULL, NULL, CT_DEFAULT);
     NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(stackResult), NS_ERROR);
 
     return NS_OK;
@@ -90,15 +91,20 @@ void NSConnectionStateListener(const CAEndpoint_t * info, bool connected)
         {
             type = TASK_EVENT_CONNECTED_TCP;
             NS_LOG(DEBUG, "try to discover notification provider : TCP.");
-            // TODO convet to OCDevAddr;
-            // addr = .....
         }
         else if (info->adapter == CA_ADAPTER_IP)
         {
-            NS_LOG(DEBUG, "try to discover notification provider.");
-            // TODO convet to OCDevAddr;
-            // addr = .....
+            NS_LOG(DEBUG, "try to discover notification provider : IP.");
         }
+
+        addr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
+        NS_VERIFY_NOT_NULL_V(addr);
+
+        addr->adapter = (OCTransportAdapter) info->adapter;
+        OICStrcpy(addr->addr, MAX_ADDR_STR_SIZE, info->addr);
+        addr->flags = info->flags;
+        addr->ifindex = info->ifindex;
+        addr->port = info->port;
 
         NSTask * task = NSMakeTask(type, addr);
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(task, NSOICFree(addr));

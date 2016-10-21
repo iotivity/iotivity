@@ -40,9 +40,16 @@ class ResourceCacheManagerTest : public TestWithMock
         {
             TestWithMock::SetUp();
             cacheInstance = ResourceCacheManager::getInstance();
-            pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource *) {});
+            pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(),
+                                               [](PrimitiveResource *)
+                                               {
+
+                                               });
             mocks.OnCall(pResource.get(), PrimitiveResource::isObservable).Return(false);
-            cb = ([](std::shared_ptr<PrimitiveResource >, const RCSResourceAttributes &)->OCStackResult {return OC_STACK_OK;});
+            cb = ([](std::shared_ptr<PrimitiveResource >, const RCSResourceAttributes &)->OCStackResult
+                    {
+                        return OC_STACK_OK;
+                    });
         }
 
         virtual void TearDown()

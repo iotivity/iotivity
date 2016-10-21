@@ -47,13 +47,15 @@ notification_env.AppendUnique(CPPPATH = ['src/common'])
 notification_env.AppendUnique(CPPPATH = ['src/provider'])
 notification_env.AppendUnique(CPPPATH = ['src/consumer'])
 notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/stack/include'])
+notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/resource-directory/include'])
 notification_env.AppendUnique(CPPPATH = ['../../resource/csdk/connectivity/api'])
 
 notification_env.PrependUnique(LIBS = [
 	'octbstack',
 	'oc_logger',
 	'connectivity_abstraction',
-	'libcoap'
+	'libcoap',
+	'resource_directory'
 	])
 
 if target_os not in ['windows', 'winrt']:
@@ -73,58 +75,65 @@ if target_os == 'android':
 		notification_env.AppendUnique(LIBS = ['log'])
 
 if not env.get('RELEASE'):
-    notification_env.PrependUnique(LIBS = ['gcov'])
-    notification_env.AppendUnique(CCFLAGS = ['--coverage'])
+	notification_env.PrependUnique(LIBS = ['gcov'])
+	notification_env.AppendUnique(CCFLAGS = ['--coverage'])
 
 if 'CLIENT' in notification_env.get('RD_MODE'):
-        notification_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
-    
-if env.get('WITH_CLOUD') == True:	
+	notification_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+
+if env.get('WITH_CLOUD') == True:
 	notification_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD'])
 
 if env.get('SECURED') == '1':
-	notification_env.AppendUnique(CPPDEFINES = ['SECURED']) 
+	notification_env.AppendUnique(CPPDEFINES = ['SECURED'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
+notification_provider_env = notification_env.Clone()
+notification_consumer_env = notification_env.Clone()
+
+if target_os == 'android':
+	notification_provider_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libnotification_provider.so'])
+if target_os == 'android':
+	notification_consumer_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libnotification_consumer.so'])
 
 notification_provider_src = [
 	env.Glob('src/provider/*.c'), env.Glob('src/common/*.c')]
 notification_consumer_src = [
 	env.Glob('src/consumer/*.c'), env.Glob('src/common/*.c')]
 
-providersdk = notification_env.SharedLibrary('notification_provider', notification_provider_src)
-notification_env.InstallTarget(providersdk, 'libnotification_provider')
-notification_env.UserInstallTargetLib(providersdk, 'libnotification_provider')
 
-consumersdk = notification_env.SharedLibrary('notification_consumer', notification_consumer_src)
-notification_env.InstallTarget(consumersdk, 'libnotification_consumer')
-notification_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer')
+providersdk = notification_provider_env.SharedLibrary('notification_provider', notification_provider_src)
+notification_provider_env.InstallTarget(providersdk, 'libnotification_provider')
+notification_provider_env.UserInstallTargetLib(providersdk, 'libnotification_provider')
 
-providersdk = notification_env.StaticLibrary('notification_provider', notification_provider_src)
-notification_env.InstallTarget(providersdk, 'libnotification_provider')
-notification_env.UserInstallTargetLib(providersdk, 'libnotification_provider')
+consumersdk = notification_consumer_env.SharedLibrary('notification_consumer', notification_consumer_src)
+notification_consumer_env.InstallTarget(consumersdk, 'libnotification_consumer')
+notification_consumer_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer')
 
-consumersdk = notification_env.StaticLibrary('notification_consumer', notification_consumer_src)
-notification_env.InstallTarget(consumersdk, 'libnotification_consumer')
-notification_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer')
+providersdk = notification_provider_env.StaticLibrary('notification_provider', notification_provider_src)
+notification_provider_env.InstallTarget(providersdk, 'libnotification_provider')
+notification_provider_env.UserInstallTargetLib(providersdk, 'libnotification_provider')
 
-notification_env.UserInstallTargetHeader('include/NSProviderInterface.h',\
+consumersdk = notification_consumer_env.StaticLibrary('notification_consumer', notification_consumer_src)
+notification_consumer_env.InstallTarget(consumersdk, 'libnotification_consumer')
+notification_consumer_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer')
+
+notification_provider_env.UserInstallTargetHeader('include/NSProviderInterface.h',\
 	'service/notification', 'NSProviderInterface.h')
-notification_env.UserInstallTargetHeader('include/NSConsumerInterface.h',\
+notification_consumer_env.UserInstallTargetHeader('include/NSConsumerInterface.h',\
 	'service/notification', 'NSConsumerInterface.h')
 
 # Go to build Unit test
 if target_os == 'linux':
     SConscript('unittest/SConscript')
 
-# Go to build sample apps
-SConscript('examples/SConscript')
+# Go to build c++ wrapper
+SConscript('cpp-wrapper/SConscript')
 
-# Go to build jni
 if target_os == 'android':
     SConscript('android/SConscript')
 
-# Go to build c++ wrapper
-SConscript('cpp-wrapper/SConscript')
+# Go to build sample apps
+SConscript('examples/SConscript')

@@ -29,6 +29,7 @@
 
 #include <string>
 #include "NSMediaContents.h"
+#include "OCRepresentation.h"
 
 namespace OIC
 {
@@ -54,7 +55,9 @@ namespace OIC
                         * Constructor of NSMessage.
                         */
                 NSMessage(): m_messageId(0), m_type(NSMessageType::NS_MESSAGE_ALERT), m_ttl(0),
-                    m_mediaContents(new NSMediaContents) { }
+                    m_mediaContents(new NSMediaContents), m_extraInfo(OC::OCRepresentation())
+                {
+                }
 
                 /**
                         * Constructor of NSMessage.
@@ -209,6 +212,20 @@ namespace OIC
                      */
                 void setTopic(const std::string &topic);
 
+                /**
+                     * This method is for getting extraInfo from the Notification service Message.
+                     *
+                     * @return extraInfo as OCRepresentation.
+                     */
+                OC::OCRepresentation getExtraInfo() const;
+
+                /**
+                     * This method is for setting extraInfo for the Notification service Message.
+                     *
+                     * @return extraInfo as OCRepresentation.
+                     */
+                void setExtraInfo(const OC::OCRepresentation &extraInfo);
+
             private:
                 uint64_t m_messageId;
                 std::string m_providerId;
@@ -221,6 +238,7 @@ namespace OIC
                 std::string m_sourceName;
                 NSMediaContents *m_mediaContents;
                 std::string m_topic;
+                OC::OCRepresentation m_extraInfo;
 
         };
     }

@@ -506,33 +506,6 @@ TEST(ConditionTests, TC_05_WAIT)
     ca_thread_pool_free(mythreadpool);
 }
 
-// Disabled because this should no longer be a valid test
-TEST(ConditionTests, DISABLED_TC_06_INVALIDWAIT)
-{
-
-    oc_mutex sharedMutex = oc_mutex_new();
-    oc_cond sharedCond = oc_cond_new();
-
-    oc_mutex_lock(sharedMutex);
-
-    int ret = oc_cond_wait_for(NULL, sharedMutex, 5000);
-    EXPECT_EQ(OC_WAIT_INVAL,ret);
-
-    ret = oc_cond_wait_for(sharedCond, NULL, 5000);
-    EXPECT_EQ(OC_WAIT_INVAL,ret);
-
-    ret = oc_cond_wait_for(NULL, NULL, 5000);
-    EXPECT_EQ(OC_WAIT_INVAL,ret);
-
-    oc_mutex_unlock(sharedMutex);
-
-    // Cleanup Everything
-
-    oc_mutex_free(sharedMutex);
-
-    oc_cond_free(sharedCond);
-}
-
 TEST(ConditionTests, TC_07_WAITDURATION)
 {
     const double TARGET_WAIT = 1.125;

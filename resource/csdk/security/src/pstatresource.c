@@ -390,11 +390,6 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
         OICFree(strUuid );
         strUuid  = NULL;
-
-        if (roParsed)
-        {
-            *roParsed = true;
-        }
     }
     else
     {
@@ -564,8 +559,8 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
             }
             validReq = false;
 
-            //Currently, we dose not support the multiple service server driven yet.
-            if (pstat->om != MULTIPLE_SERVICE_SERVER_DRIVEN)
+            //Currently, IoTivity only supports Single Service Client Directed provisioning
+            if (pstat->om == SINGLE_SERVICE_CLIENT_DRIVEN)
             {
                 if ((pstat->cm & RESET) && false == pstat->isOp)
                 {
@@ -607,6 +602,7 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
             gPstat->om = pstat->om;
             gPstat->tm = pstat->tm;
             gPstat->cm = pstat->cm;
+            memcpy(&(gPstat->rownerID), &(pstat->rownerID), sizeof(OicUuid_t));
 
             // Convert pstat data into CBOR for update to persistent storage
             if (UpdatePersistentStorage(gPstat))

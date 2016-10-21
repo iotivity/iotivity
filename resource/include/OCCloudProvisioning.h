@@ -26,6 +26,7 @@
 #include "occloudprovisioning.h"
 #include "OCApi.h"
 #include "OCPlatform_impl.h"
+#include "CAManager.h"
 
 namespace OC
 {
@@ -53,7 +54,6 @@ namespace OC
 
         private:
             OCDevAddr  m_devAddr;
-            std::weak_ptr<std::recursive_mutex> m_csdkLock;
         public:
 
             /**

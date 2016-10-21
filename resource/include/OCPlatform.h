@@ -173,6 +173,10 @@ namespace OC
                     OCConnectivityType connectivityType, FindCallback resourceHandler,
                     FindErrorCallback errorHandler, QualityOfService QoS);
 
+        OCStackResult findResourceList(const std::string& host, const std::string& resourceURI,
+                    OCConnectivityType connectivityType, FindResListCallback resourceHandler,
+                    QualityOfService QoS = QualityOfService::LowQos);
+
         /**
          * API for Device Discovery
          *
@@ -799,6 +803,22 @@ namespace OC
                                            ResourceHandles& resourceHandles,
                                            DeleteResourceCallback callback, QualityOfService QoS);
 #endif
+
+        /**
+         * gets the deviceId of the client
+         *
+         * @param deviceId pointer.
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult getDeviceId(OCUUIdentity *deviceId);
+
+        /**
+         * sets the deviceId of the client
+         *
+         * @param deviceId pointer.
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult setDeviceId(const OCUUIdentity *deviceId);
     }
 }
 

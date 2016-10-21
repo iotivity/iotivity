@@ -63,8 +63,14 @@ namespace OC
                         if (payload->baseURI)
                         {
                             OCDevAddr rdPubAddr = m_devAddr;
-                            OICStrcpy(rdPubAddr.addr, sizeof(rdPubAddr.addr), payload->baseURI);
-                            rdPubAddr.port = res->port;
+
+                            std::string baseURI = std::string(payload->baseURI);
+                            size_t len = baseURI.length();
+                            int addressLen = baseURI.find_first_of(":");
+                            std::string ipaddress = baseURI.substr(0, addressLen);
+                            int port = atoi(baseURI.substr(addressLen + 1, len).c_str());
+                            OICStrcpy(rdPubAddr.addr, addressLen + 1, ipaddress.c_str());
+                            rdPubAddr.port = port;
                             m_resources.push_back(std::shared_ptr<OC::OCResource>(
                                         new OC::OCResource(m_clientWrapper, rdPubAddr,
                                             std::string(res->uri),

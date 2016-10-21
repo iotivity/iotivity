@@ -34,11 +34,11 @@
 
 #define CLOUD_CONTEXT_VALUE 0x99
 
-char CLOUD_ADDRESS[50];
-char CLOUD_AUTH_PROVIDER[50];
-char CLOUD_AUTH_CODE[50];
-char CLOUD_UID[50];
-char CLOUD_ACCESS_TOKEN[50];
+char CLOUD_ADDRESS[100];
+char CLOUD_AUTH_PROVIDER[100];
+char CLOUD_AUTH_CODE[100];
+char CLOUD_UID[100];
+char CLOUD_ACCESS_TOKEN[100];
 #endif
 
 
@@ -120,6 +120,17 @@ void* OCProcessThread(void * ptr)
     }
 
     return NULL;
+}
+
+void input(char * buffer)
+{
+    char ch;
+    int i = 0;
+
+    while( (ch = getchar()) != '\n' && i < 100)
+        buffer[i++] = ch;
+
+    buffer[i] = '\0';
 }
 
 int main(void)
@@ -251,13 +262,13 @@ int main(void)
                 break;
             case 31:
                 printf("Remote Server Address: ");
-                gets(CLOUD_ADDRESS);
+                input(CLOUD_ADDRESS);
 
                 printf("Auth Provider(eg. github): ");
-                gets(CLOUD_AUTH_PROVIDER);
+                input(CLOUD_AUTH_PROVIDER);
 
                 printf("Auth Code: ");
-                gets(CLOUD_AUTH_CODE);
+                input(CLOUD_AUTH_CODE);
 
                 OCCloudSignup(CLOUD_ADDRESS, OCGetServerInstanceIDString(),
                     CLOUD_AUTH_PROVIDER, CLOUD_AUTH_CODE, CloudSignupCallback);
@@ -265,13 +276,13 @@ int main(void)
                 break;
             case 32:
                 printf("Remote Server Address: ");
-                gets(CLOUD_ADDRESS);
+                input(CLOUD_ADDRESS);
 
                 printf("UID: ");
-                gets(CLOUD_UID);
+                input(CLOUD_UID);
 
                 printf("ACCESS_TOKEN: ");
-                gets(CLOUD_ACCESS_TOKEN);
+                input(CLOUD_ACCESS_TOKEN);
 
                 OCCloudLogin(CLOUD_ADDRESS, CLOUD_UID, OCGetServerInstanceIDString(),
                     CLOUD_ACCESS_TOKEN, CloudLoginoutCallback);

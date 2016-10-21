@@ -37,9 +37,10 @@ import java.util.List;
 public final class OcPlatform {
 
     static {
+        System.loadLibrary("gnustl_shared");
+        System.loadLibrary("connectivity_abstraction");
         System.loadLibrary("oc_logger");
         System.loadLibrary("octbstack");
-        System.loadLibrary("connectivity_abstraction");
         System.loadLibrary("oc");
         if (0 != BuildConfig.SECURED)
         {
@@ -172,6 +173,10 @@ public final class OcPlatform {
             OcResourceResponse ocResourceResponse) throws OcException {
         OcPlatform.initCheck();
 
+        if (ocObservationIdList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "ocObservationIdList cannot be null");
+        }
+
         byte[] idArr = new byte[ocObservationIdList.size()];
         Iterator<Byte> it = ocObservationIdList.iterator();
         int i = 0;
@@ -210,6 +215,10 @@ public final class OcPlatform {
             OcResourceResponse ocResourceResponse,
             QualityOfService qualityOfService) throws OcException {
         OcPlatform.initCheck();
+
+        if (ocObservationIdList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "ocObservationIdList cannot be null");
+        }
 
         byte[] idArr = new byte[ocObservationIdList.size()];
         Iterator<Byte> it = ocObservationIdList.iterator();
@@ -631,6 +640,11 @@ public final class OcPlatform {
             OcResourceHandle ocResourceCollectionHandle,
             List<OcResourceHandle> ocResourceHandleList) throws OcException {
         OcPlatform.initCheck();
+
+        if (ocResourceHandleList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "ocResourceHandleList cannot be null");
+        }
+
         OcPlatform.bindResources0(
                 ocResourceCollectionHandle,
                 ocResourceHandleList.toArray(
@@ -672,6 +686,11 @@ public final class OcPlatform {
             OcResourceHandle ocResourceCollectionHandle,
             List<OcResourceHandle> ocResourceHandleList) throws OcException {
         OcPlatform.initCheck();
+
+        if (ocResourceHandleList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "ocResourceHandleList cannot be null");
+        }
+
         OcPlatform.unbindResources0(
                 ocResourceCollectionHandle,
                 ocResourceHandleList.toArray(
@@ -1419,4 +1438,14 @@ public final class OcPlatform {
     private static native OcAccountManager constructAccountManagerObject0(
             String host,
             int connectivityType) throws OcException;
+    /**
+     * Method to get device Id in byte array.
+     * @return My DeviceId.
+     */
+    public static native byte[] getDeviceId();
+
+    /**
+     * Method to set DeviceId.
+     */
+    public static native void setDeviceId(byte[] deviceId) throws OcException;
 }

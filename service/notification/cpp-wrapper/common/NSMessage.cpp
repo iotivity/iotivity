@@ -32,7 +32,7 @@ namespace OIC
             m_messageId = 0;
             m_type = NSMessage::NSMessageType::NS_MESSAGE_ALERT;
             m_ttl = 0;
-            m_mediaContents = new NSMediaContents();
+            m_mediaContents = nullptr;
 
             if (msg != nullptr)
             {
@@ -42,26 +42,59 @@ namespace OIC
                 m_type = (NSMessageType)msg->type;
 
                 if ((msg->dateTime != nullptr) && strlen(msg->dateTime))
+                {
                     m_time.assign(msg->dateTime, strlen(msg->dateTime));
+                }
 
                 m_ttl =  msg->ttl;
 
                 if ((msg->title != nullptr) && strlen(msg->title))
+                {
                     m_title.assign(msg->title, strlen(msg->title));
+                }
 
                 if ((msg->contentText != nullptr) && strlen(msg->contentText))
+                {
                     m_contentText.assign(msg->contentText, strlen(msg->contentText));
+                }
 
                 if ((msg->sourceName != nullptr) && strlen(msg->sourceName))
+                {
                     m_sourceName.assign(msg->sourceName, strlen(msg->sourceName));
+                }
 
                 if (msg->mediaContents != nullptr)
+                {
+                    m_mediaContents = new NSMediaContents();
                     if ((msg->mediaContents->iconImage != nullptr) && strlen(msg->mediaContents->iconImage))
+                    {
                         m_mediaContents->setIconImage(msg->mediaContents->iconImage);
+                    }
+                }
 
                 if ((msg->topic != nullptr) && strlen(msg->topic))
+                {
                     m_topic.assign(msg->topic, strlen(msg->topic));
+                }
 
+                if (msg->extraInfo != nullptr)
+                {
+                    OC::MessageContainer info;
+                    info.setPayload(msg->extraInfo);
+                    const std::vector<OC::OCRepresentation> &reps = info.representations();
+                    if (reps.size() > 0)
+                    {
+                        std::vector<OC::OCRepresentation>::const_iterator itr = reps.begin();
+                        std::vector<OC::OCRepresentation>::const_iterator back = reps.end();
+                        m_extraInfo = *itr;
+                        ++itr;
+
+                        for (; itr != back; ++itr)
+                        {
+                            m_extraInfo.addChild(*itr);
+                        }
+                    }
+                }
             }
         }
 
@@ -78,10 +111,15 @@ namespace OIC
             m_sourceName = msg.getSourceName();
 
             if (msg.getMediaContents() != nullptr)
+            {
                 m_mediaContents = new NSMediaContents(msg.getMediaContents()->getIconImage());
+            }
             else
+            {
                 m_mediaContents = new NSMediaContents();
+            }
             m_topic = msg.getTopic();
+            m_extraInfo = OC::OCRepresentation(msg.getExtraInfo());
         }
 
         NSMessage &NSMessage::operator=(const NSMessage &msg)
@@ -97,17 +135,24 @@ namespace OIC
             this->m_sourceName = msg.getSourceName();
 
             if (msg.getMediaContents() != nullptr)
+            {
                 this->m_mediaContents = new NSMediaContents(msg.getMediaContents()->getIconImage());
+            }
             else
+            {
                 this->m_mediaContents = new NSMediaContents();
+            }
             this->m_topic = msg.getTopic();
+            this->m_extraInfo = OC::OCRepresentation(msg.getExtraInfo());
             return *this;
         }
 
         NSMessage::~NSMessage()
         {
             if (m_mediaContents != nullptr)
+            {
                 delete m_mediaContents;
+            }
         }
 
         uint64_t NSMessage::getMessageId() const
@@ -198,6 +243,16 @@ namespace OIC
         void NSMessage::setTopic(const std::string &topic)
         {
             m_topic = topic;
+        }
+
+        OC::OCRepresentation NSMessage::getExtraInfo() const
+        {
+            return OC::OCRepresentation(m_extraInfo);
+        }
+
+        void NSMessage::setExtraInfo(const OC::OCRepresentation &extraInfo)
+        {
+            m_extraInfo = OC::OCRepresentation(extraInfo);
         }
     }
 }

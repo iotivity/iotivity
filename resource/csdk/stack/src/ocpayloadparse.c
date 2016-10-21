@@ -26,6 +26,7 @@
 // Refer http://pubs.opengroup.org/onlinepubs/009695399/
 // Required for strok_r
 #define _POSIX_C_SOURCE 200112L
+
 #include <string.h>
 #include <stdlib.h>
 #include "oic_string.h"
@@ -35,10 +36,6 @@
 #include "ocstackinternal.h"
 #include "payload_logging.h"
 #include "platform_features.h"
-
-#if defined(RD_CLIENT) || defined(RD_SERVER)
-#include "rdpayload.h"
-#endif
 
 #define TAG "OIC_RI_PAYLOADPARSE"
 
@@ -89,11 +86,6 @@ OCStackResult OCParsePayload(OCPayload **outPayload, OCPayloadType payloadType,
         case PAYLOAD_TYPE_SECURITY:
             result = OCParseSecurityPayload(outPayload, payload, payloadSize);
             break;
-#if defined(RD_CLIENT) || defined(RD_SERVER)
-        case PAYLOAD_TYPE_RD:
-            result = OCRDCborToPayload(&rootValue, outPayload);
-            break;
-#endif
         default:
             OIC_LOG_V(ERROR, TAG, "ParsePayload Type default: %d", payloadType);
             result = OC_STACK_INVALID_PARAM;

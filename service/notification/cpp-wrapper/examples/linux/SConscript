@@ -43,6 +43,7 @@ notification_sample_env.AppendUnique(CPPPATH = ['../../../src/common'])
 notification_sample_env.PrependUnique(LIBS = [
 	'liboctbstack',
 	'oc_logger',
+	'oc',
 	'connectivity_abstraction',
 	'libcoap'
 	])

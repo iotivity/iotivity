@@ -60,7 +60,9 @@ namespace OIC
                      * @param iconImage - iconImage of the Notification service MediaContents.
                      */
                 NSMediaContents(const std::string &iconImage)
-                    : m_iconImage(iconImage) {}
+                    : m_iconImage(iconImage)
+                {
+                }
 
 
                 /**

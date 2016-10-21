@@ -19,6 +19,8 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
+#include <ocstack.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -30,7 +32,6 @@
 #endif
 #include <signal.h>
 #include <stdbool.h>
-#include <ocstack.h>
 #include <logger.h>
 
 #define TAG ("ocserver")

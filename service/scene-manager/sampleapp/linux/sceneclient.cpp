@@ -52,7 +52,7 @@ Run g_currentRun;
 
 const std::string scene_name = "Night mode";
 const std::string relativetUri = OC_RSRVD_WELL_KNOWN_URI;
-const std::vector<std::string> resourceTypes{ "oic.wk.scenelist", "core.light", "core.fan" };
+const std::vector<std::string> resourceTypes{ "oic.wk.sceneList", "core.light", "core.fan" };
 
 std::mutex g_mtx;
 std::mutex g_discoverymtx;
@@ -505,7 +505,7 @@ void onResourceDiscovered(std::shared_ptr<RCSRemoteResourceObject> foundResource
     std::cout << "\t\tResource Host : " << hostAddress << std::endl;
 
     // if the found resource is a scene list resource
-    if (std::find(vecRTs.begin(), vecRTs.end(), "oic.wk.scenelist") != vecRTs.end())
+    if (std::find(vecRTs.begin(), vecRTs.end(), "oic.wk.sceneList") != vecRTs.end())
         g_foundListResource = foundResource;
 
     // if the found resource is a light resource

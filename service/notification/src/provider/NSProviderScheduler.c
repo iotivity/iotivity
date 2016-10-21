@@ -150,7 +150,7 @@ bool NSStopScheduler()
 void NSPushQueue(NSSchedulerType schedulerType, NSTaskType taskType, void* data)
 {
 
-    if(!NSIsRunning[schedulerType])
+    if (!NSIsRunning[schedulerType])
     {
         return;
     }
@@ -164,20 +164,27 @@ void NSPushQueue(NSSchedulerType schedulerType, NSTaskType taskType, void* data)
     if (NSHeadMsg[schedulerType] == NULL)
     {
         NSHeadMsg[schedulerType] = (NSTask*) OICMalloc(sizeof(NSTask));
-        NSHeadMsg[schedulerType]->taskType = taskType;
-        NSHeadMsg[schedulerType]->taskData = data;
-        NSHeadMsg[schedulerType]->nextTask = NULL;
-        NSTailMsg[schedulerType] = NSHeadMsg[schedulerType];
+
+        if (NSHeadMsg[schedulerType])
+        {
+            NSHeadMsg[schedulerType]->taskType = taskType;
+            NSHeadMsg[schedulerType]->taskData = data;
+            NSHeadMsg[schedulerType]->nextTask = NULL;
+            NSTailMsg[schedulerType] = NSHeadMsg[schedulerType];
+        }
     }
     else
     {
         NSTask* newNode = (NSTask*) OICMalloc(sizeof(NSTask));
-        newNode->taskType = taskType;
-        newNode->taskData = data;
-        newNode->nextTask = NULL;
+        if (newNode)
+        {
+            newNode->taskType = taskType;
+            newNode->taskData = data;
+            newNode->nextTask = NULL;
 
-        NSTailMsg[schedulerType]->nextTask = newNode;
-        NSTailMsg[schedulerType] = newNode;
+            NSTailMsg[schedulerType]->nextTask = newNode;
+            NSTailMsg[schedulerType] = newNode;
+        }
     }
 
     sem_post(&(NSSemaphore[schedulerType]));

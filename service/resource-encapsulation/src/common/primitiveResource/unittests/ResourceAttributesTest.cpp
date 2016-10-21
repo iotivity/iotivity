@@ -165,7 +165,8 @@ TEST_F(ResourceAttributesIteratorTest, CanIteratesWithForeach)
 
     int count = 0;
 
-    for (auto& i : resourceAttributes) {
+    for (auto& i : resourceAttributes)
+    {
         i.key();
         ++count;
     }
@@ -178,7 +179,8 @@ TEST_F(ResourceAttributesIteratorTest, IteratesWithRef)
     const char arbitraryStr[] { "ftryb457" };
     resourceAttributes[KEY] = 1;
 
-    for (auto& i : resourceAttributes) {
+    for (auto& i : resourceAttributes)
+    {
         i.value() = arbitraryStr;
     }
 

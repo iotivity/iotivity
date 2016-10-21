@@ -47,7 +47,7 @@ def ensure_libs(target, source, env):
     return target, [source, env.get('BUILD_DIR') + 'liboc.so',
                             env.get('BUILD_DIR') + 'liboc_logger.so',
                             env.get('BUILD_DIR') + 'libnotification_provider_wrapper.so',
-                            env.get('BUILD_DIR') + 'libnotification_consumer.so']
+                            env.get('BUILD_DIR') + 'libnotification_consumer_wrapper.so']
 
 
 jdk_env = Environment(ENV=os.environ)
@@ -55,5 +55,9 @@ jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') +
     ' build -bservice/notification/android/build.gradle -PTARGET_ARCH=%s -PRELEASE=%s --stacktrace' %(ANDROID_TARGET_ARCH, ANDROID_RELEASE),
     emitter = ensure_libs)
 jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
-jdk_env.Gradle(target="notification-service/objs",
+cmdBuildNotification = jdk_env.Gradle(target="notification-service/objs",
     source="notification-service/src/main/java/org/iotivity/service/ns/consumer/ConsumerService.java")
+
+Depends(cmdBuildNotification, env.get('baseAAR'))
+
+env.AppendUnique(notificationAAR = cmdBuildNotification)

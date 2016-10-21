@@ -59,8 +59,15 @@ protected:
     {
         TestWithMock::SetUp();
         instance.reset(new ResourcePresence());
-        pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource*){});
-        cb = ([](BROKER_STATE)->OCStackResult{return OC_STACK_OK;});
+        pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(),
+                                           [](PrimitiveResource*)
+                                           {
+
+                                           });
+        cb = ([](BROKER_STATE)->OCStackResult
+                {
+                    return OC_STACK_OK;
+                });
         id = 0;
     }
 
@@ -75,7 +82,11 @@ protected:
 
     void MockingFunc()
     {
-        mocks.OnCall(pResource.get(), PrimitiveResource::requestGet).Do([](GetCallback){});
+        mocks.OnCall(pResource.get(), PrimitiveResource::requestGet).Do(
+                [](GetCallback)
+                {
+
+                });
         mocks.OnCall(pResource.get(), PrimitiveResource::getHost).Return(std::string());
         mocks.OnCallFuncOverload(static_cast< subscribePresenceSig1 >(OC::OCPlatform::subscribePresence)).Return(OC_STACK_OK);
     }
@@ -218,30 +229,32 @@ TEST_F(ResourcePresenceTest,getCB_NormalHandlingIfMessageOC_STACK_OK)
 {
 
     mocks.ExpectCall(pResource.get(), PrimitiveResource::requestGet).Do(
-                [](GetCallback callback){
+                [](GetCallback callback)
+                {
+                    OIC::Service::HeaderOptions op;
+                    RCSResourceAttributes attr;
+                    OIC::Service::ResponseStatement res(attr);
 
-        OIC::Service::HeaderOptions op;
-        RCSResourceAttributes attr;
-        OIC::Service::ResponseStatement res(attr);
+                    callback(op,res,OC_STACK_OK);
 
-        callback(op,res,OC_STACK_OK);
-
-    });
+                });
 
     mocks.OnCall(pResource.get(), PrimitiveResource::requestGet).Do(
-                                [](GetCallback){
-        std::cout <<"End call requestGetFunc()\n";
-                    });
+                [](GetCallback)
+                {
+                    std::cout <<"End call requestGetFunc()\n";
+                });
     mocks.OnCall(pResource.get(), PrimitiveResource::getHost).Return("address1");
 
     mocks.OnCallFuncOverload(static_cast< subscribePresenceSig1 >(OC::OCPlatform::subscribePresence)).Do(
             [](OC::OCPlatform::OCPresenceHandle&,
-                    const std::string&, OCConnectivityType, SubscribeCallback callback)->OCStackResult{
+                    const std::string&, OCConnectivityType, SubscribeCallback callback)->OCStackResult
+                {
+                    callback(OC_STACK_OK,0,std::string());
+                    return OC_STACK_OK;
 
-        callback(OC_STACK_OK,0,std::string());
-        return OC_STACK_OK;
-
-    }).Return(OC_STACK_OK);
+                }
+    ).Return(OC_STACK_OK);
 
     instance->initializeResourcePresence(pResource);
     sleep(3);

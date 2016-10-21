@@ -33,6 +33,7 @@ cc_sample_app_env = lib_env.Clone()
 ######################################################################
 cc_sample_app_env.AppendUnique(CPPPATH = [
         '../../../resource/include/',
+        '../../../resource/csdk/resource-directory/include',
         '../../../resource/csdk/stack/include',
         '../../../resource/c_common/ocrandom/include',
         '../../../resource/csdk/logger/include',
@@ -101,3 +102,8 @@ group_invite_src = [
         'group_invite/group_invite.cpp'
         ]
 cc_sample_app_env.Program('group_invite_sample', group_invite_src)
+
+group_light_share_src = [
+        'group_invite/group_light_share.cpp'
+        ]
+cc_sample_app_env.Program('group_light_share_sample', group_light_share_src)

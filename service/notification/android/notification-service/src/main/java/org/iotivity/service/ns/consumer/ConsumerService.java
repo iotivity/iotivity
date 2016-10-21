@@ -51,11 +51,20 @@ public class ConsumerService
     {
         instance = new ConsumerService();
     }
+
+    /**
+      * API for getting instance of ConsumerService
+      * @return ConsumerService singleton instance created
+      */
     public static ConsumerService getInstance()
     {
         return instance;
     }
 
+   /**
+     * Start ConsumerService
+     * @param onProviderDiscoveredListener - OnProviderDiscoveredListener Callback Interface
+     */
     public void start(
         OnProviderDiscoveredListener onProviderDiscoveredListener
     ) throws NSException
@@ -63,23 +72,41 @@ public class ConsumerService
         nativeStart(onProviderDiscoveredListener);
     }
 
+    /**
+      * Stop ConsumerService
+      */
     public void stop() throws NSException
     {
         nativeStop();
     }
 
+    /**
+      * Request to publish resource to cloud server
+      * @param[in]  serverAddress combined with IP address and port number using delimiter :
+      * @return  result code
+      */
     public void enableRemoteService(String serverAddress) throws NSException
     {
         nativeEnableRemoteService(serverAddress);
     }
 
+    /**
+      * Request discovery manually
+      */
     public void rescanProvider() throws NSException
     {
         nativeRescanProvider();
     }
 
+    /**
+      * Interface to implement callback function to receive provider on discovery
+      */
     public interface OnProviderDiscoveredListener
     {
+        /**
+          * Callback function to receive provider on discovery
+          * @param provider - Provider object
+          */
         public void onProviderDiscovered(Provider provider);
     }
 

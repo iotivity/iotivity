@@ -445,19 +445,19 @@ ResourceObserver* GetObserverUsingId (const OCObservationId observeId)
 
 ResourceObserver* GetObserverUsingToken (const CAToken_t token, uint8_t tokenLength)
 {
-    ResourceObserver *out = NULL;
-
     if (token)
     {
         OIC_LOG(INFO, TAG, "Looking for token");
         OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)token, tokenLength);
-        OIC_LOG(INFO, TAG, "\tFound token:");
 
+        ResourceObserver *out = NULL;
         LL_FOREACH (g_serverObsList, out)
         {
-            OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, tokenLength);
+            /* de-annotate below line if want to see all token in cbList */
+            //OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)out->token, tokenLength);
             if ((memcmp(out->token, token, tokenLength) == 0))
             {
+                OIC_LOG(INFO, TAG, "Found in observer list");
                 return out;
             }
         }

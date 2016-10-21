@@ -57,9 +57,9 @@ namespace OIC
         const std::string SCENE_KEY_URI = "uri";
         const std::string SCENE_KEY_CHILD = "child";
 
-        const std::string SCENE_LIST_RT = "oic.wk.scenelist";
-        const std::string SCENE_MEMBER_RT = "oic.wk.scenemember";
-        const std::string SCENE_COLLECTION_RT = "oic.wk.scenecollection";
+        const std::string SCENE_LIST_RT = "oic.wk.sceneList";
+        const std::string SCENE_MEMBER_RT = "oic.wk.sceneMember";
+        const std::string SCENE_COLLECTION_RT = "oic.wk.sceneCollection";
 
         const std::string COAP_TAG = "coap://";
         const std::string SCENE_LIST_URI = "/SceneListResURI";

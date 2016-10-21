@@ -30,7 +30,9 @@ namespace OIC
             if (mediacontents != nullptr)
             {
                 if ((mediacontents->iconImage != nullptr) && strlen(mediacontents->iconImage))
+                {
                     m_iconImage.assign(mediacontents->iconImage, strlen(mediacontents->iconImage));
+                }
             }
         }
 

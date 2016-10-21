@@ -51,6 +51,12 @@ namespace OC
                                                ConnectionChangedCallback connectionHandler);
 
         /**
+        * Unset network monitoring handler.
+        * @return Returns ::OC_STACK_OK if success.
+        */
+        OCStackResult unsetNetworkMonitorHandler();
+
+        /**
         * Set port number to use.
         * @param adapter transport adapter type to assign the specified port number.
         * @param flag transport flag information.
@@ -67,6 +73,20 @@ namespace OC
         * @return Returns currently assigned port number.
         */
         uint16_t getAssignedPortNumber(OCTransportAdapter adapter, OCTransportFlags flag);
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+        /**
+         * Select the cipher suite for TLS/DTLS handshake.
+         * @param cipher  cipher suite (Note : Make sure endianness).
+         *                    0x35   : TLS_RSA_WITH_AES_256_CBC_SHA
+         *                    0xC018 : TLS_ECDH_anon_WITH_AES_128_CBC_SHA
+         *                    0xC037 : TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256
+         *                    0xC0AE : TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
+         * @param adapter transport adapter type.
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult setCipherSuite(const uint16_t cipher, OCTransportAdapter adapter);
+#endif // defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     }
 }
 

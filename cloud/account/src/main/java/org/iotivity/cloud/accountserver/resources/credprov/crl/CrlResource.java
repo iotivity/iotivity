@@ -47,7 +47,8 @@ import static org.iotivity.cloud.accountserver.resources.credprov.cert.Certifica
 import static org.iotivity.cloud.accountserver.resources.credprov.crl.CrlManager.CRL_MANAGER;
 
 /**
- * Class is responsible for handling requests GET and POST for CRL data.
+ * Class is used working with POST and GET requests and
+ * handles CRL requests.
  */
 public class CrlResource extends Resource {
 
@@ -83,7 +84,20 @@ public class CrlResource extends Resource {
     }
 
     /**
-     * Handles GET request and sends response back to the client.
+     * Method handles GET requests with specified format:
+     * GET /oic/credprov/crl?lu=20170701000000
+     * Checks if “lu” value is not after the latest update.
+     * If so, response with the latest CRL, otherwise response error (e.g. 4.04 Not Found)
+     * And response of next format:
+     * 2.05 CONTENTS
+     * {
+     *      “tu” : “20160711000000”,
+     *      “nu” : “20161011000000”,
+     *      “crl” : {
+     *          “encoding” : “oic.sec.encoding.base64”,
+     *          “data” : “<Base64 encoded CRL Binary>”
+     *       }
+     * }
      */
     private IResponse handleGetRequest(IRequest request)
             throws ServerException {
@@ -91,11 +105,13 @@ public class CrlResource extends Resource {
         IResponse iResponse = MessageBuilder.createResponse(request, ResponseStatus.NOT_FOUND);
         if (queryData != null) {
             List<String> lastUpdateList = queryData.get(Constants.REQ_LAST_UPDATE);
-            if (lastUpdateList != null && !lastUpdateList.isEmpty() &&
-                    CRL_MANAGER.checkLastUpdate(lastUpdateList.get(0))) {
+            if (lastUpdateList != null && !lastUpdateList.isEmpty()) {
                 try {
-                    iResponse = MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
-                            ContentFormat.APPLICATION_CBOR, MAP_CBOR.encodingPayloadToCbor(CRL_MANAGER.getPayload()));
+                    Map<String, Object> payload = CRL_MANAGER.getPayload(lastUpdateList.get(0));
+                    if (!payload.isEmpty()) {
+                        iResponse = MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
+                                ContentFormat.APPLICATION_CBOR, MAP_CBOR.encodingPayloadToCbor(payload));
+                    }
                 } catch (CRLException e) {
                     Log.e(e.getMessage());
                 }
@@ -105,42 +121,63 @@ public class CrlResource extends Resource {
     }
 
     /**
-     * Handles POST requests and sends back CRL data in response.
+     * Handles POST requests of next formats:
+     * POST /oic/credprov/crl
+     * {
+     *      “tu” : “20160727000000”,
+     *      “nu” : “20161027000000”,
+     *      “rcsn” : “123456”
+     * }
+     * AND
+     * POST /oic/credprov/crl
+     * {
+     *      “tu” : “20160727000000”,
+     *      “nu” : “20161027000000”,
+     *      “crl” : {
+     *          “encoding” : “oic.sec.encoding.base64”,
+     *          “data” : “<Base64 encoded New CRL Binary>”
+     *       }
+     * }
+     * And responds back with 2.04 CHANGED if everything is ok, and PRECONDITION_FAILED - otherwise
      */
     private IResponse handlePostRequest(IRequest request)
             throws ServerException {
-        Map<String, Object> payloadData = MAP_CBOR
-                .parsePayloadFromCbor(request.getPayload(), HashMap.class);
-        Object thisUpdate = payloadData.get(Constants.REQ_THIS_UPDATE);
-        Object nextUpdate = payloadData.get(Constants.REQ_NEXT_UPDATE);
+        byte[] requestPayload = request.getPayload();
         IResponse response = MessageBuilder.createResponse(request, ResponseStatus.PRECONDITION_FAILED);
-        if (thisUpdate != null && thisUpdate instanceof String && nextUpdate != null && nextUpdate instanceof String) {
-            Date thisUpdateDate;
-            try {
-                thisUpdateDate = DATE_FORMAT.parse(thisUpdate.toString());
-                DATE_FORMAT.parse(nextUpdate.toString());
-                Object reqSerialNumber = payloadData.get(Constants.REQ_SERIAL_NUMBER);
-                Object crl = payloadData.get(Constants.REQ_CRL);
-                if (reqSerialNumber != null && reqSerialNumber instanceof List) {
-                    CRL_MANAGER.revoke(((List<String>) reqSerialNumber).toArray(new String[]{}));
-                    response = MessageBuilder.createResponse(request, ResponseStatus.CHANGED);
-                } else if (crl != null && crl instanceof Map) {
-                    Object encoding = ((Map<String, Object>) crl).get(Constants.ENCODING);
-                    Object crlData = ((Map<String, Object>) crl).get(Constants.DATA);
-                    if (encoding != null && encoding instanceof String && crlData != null && crlData instanceof byte[]) {
-                        try {
-                            if (encoding.equals(BASE_64)) {
-                                crlData = Base64.decode((byte[]) crlData);
-                            }
-                            CRL_MANAGER.update(thisUpdateDate, (byte[]) crlData);
+        if (requestPayload != null) {
+            Map<String, Object> payloadData = MAP_CBOR
+                    .parsePayloadFromCbor(request.getPayload(), HashMap.class);
+            if (payloadData != null) {
+                Object thisUpdate = payloadData.get(Constants.REQ_THIS_UPDATE);
+                Object nextUpdate = payloadData.get(Constants.REQ_NEXT_UPDATE);
+                if (thisUpdate != null && thisUpdate instanceof String && nextUpdate != null && nextUpdate instanceof String) {
+                    Date thisUpdateDate;
+                    try {
+                        thisUpdateDate = DATE_FORMAT.parse(thisUpdate.toString());
+                        Object reqSerialNumber = payloadData.get(Constants.REQ_SERIAL_NUMBER);
+                        Object crl = payloadData.get(Constants.REQ_CRL);
+                        if (reqSerialNumber != null && reqSerialNumber instanceof List) {
+                            CRL_MANAGER.revoke(((List<String>) reqSerialNumber).toArray(new String[]{}));
                             response = MessageBuilder.createResponse(request, ResponseStatus.CHANGED);
-                        } catch (DecoderException e) {
-                            Log.e(e.getMessage() + e.getClass());
+                        } else if (crl != null && crl instanceof Map) {
+                            Object encoding = ((Map<String, Object>) crl).get(Constants.ENCODING);
+                            Object crlData = ((Map<String, Object>) crl).get(Constants.DATA);
+                            if (encoding != null && encoding instanceof String && crlData != null && crlData instanceof byte[]) {
+                                try {
+                                    if (encoding.equals(BASE_64)) {
+                                        crlData = Base64.decode((byte[]) crlData);
+                                    }
+                                    CRL_MANAGER.update(thisUpdateDate, (byte[]) crlData);
+                                    response = MessageBuilder.createResponse(request, ResponseStatus.CHANGED);
+                                } catch (DecoderException e) {
+                                    Log.e(e.getMessage() + e.getClass());
+                                }
+                            }
                         }
+                    } catch (CRLException | IOException | OperatorCreationException | ParseException e) {
+                        Log.e(e.getMessage() + e.getClass());
                     }
                 }
-            } catch (CRLException | IOException | OperatorCreationException | ParseException e) {
-                Log.e(e.getMessage() + e.getClass());
             }
         }
         return response;

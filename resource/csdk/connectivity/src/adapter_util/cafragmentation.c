@@ -185,9 +185,10 @@ CAResult_t CAMakeFirstDataSegment(uint8_t *dataSegment,
 }
 
 CAResult_t CAMakeRemainDataSegment(uint8_t *dataSegment,
-                                   const uint8_t *data,
-                                   const uint32_t dataLength,
-                                   const uint32_t index,
+                                   const uint32_t segmentPayloadLength,
+                                   const uint8_t *sourceData,
+                                   const uint32_t sourceDataLength,
+                                   const uint32_t segmentNum,
                                    const uint8_t *dataHeader)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -195,17 +196,16 @@ CAResult_t CAMakeRemainDataSegment(uint8_t *dataSegment,
     VERIFY_NON_NULL(dataSegment, TAG, "dataSegment is NULL");
     VERIFY_NON_NULL(dataHeader, TAG, "dataHeader is NULL");
 
-    const uint8_t *cur_pos = data +
-        (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE - CA_BLE_LENGTH_HEADER_SIZE +
-         (index * (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE)));
-    if (NULL == cur_pos)
+    uint32_t index = CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE +
+            (segmentNum * CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE);
+    if (sourceDataLength < index + segmentPayloadLength)
     {
-        OIC_LOG(ERROR, TAG, "data is NULL");
+        OIC_LOG(DEBUG, TAG, "dataSegment will exceed");
         return CA_STATUS_FAILED;
     }
 
     memcpy(dataSegment, dataHeader, CA_BLE_HEADER_SIZE);
-    memcpy(dataSegment + CA_BLE_HEADER_SIZE, cur_pos, dataLength);
+    memcpy(dataSegment + CA_BLE_HEADER_SIZE, sourceData + index, segmentPayloadLength);
 
     OIC_LOG(DEBUG, TAG, "OUT");
 

@@ -43,12 +43,18 @@ namespace OIC
                 /**
                 * Constructor for ProtocolBridgeResource
                 */
-                ProtocolBridgeResource() { };
+                ProtocolBridgeResource()
+                {
+
+                };
 
                 /**
                 * Virtual destructor for ProtocolBridgeResource
                 */
-                virtual ~ProtocolBridgeResource() { };
+                virtual ~ProtocolBridgeResource()
+                {
+
+                };
 
                 /**
                 * Initialize attributes of the resource

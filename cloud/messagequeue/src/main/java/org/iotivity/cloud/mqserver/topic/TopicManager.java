@@ -25,6 +25,11 @@ import java.util.ArrayList;
 
 import org.iotivity.cloud.mqserver.kafka.KafkaCommonWrapper;
 
+/**
+ *
+ * This class provides a set of APIs to manage topics in MessageQueue Broker
+ *
+ */
 public class TopicManager {
 
     private ArrayList<Topic>   mTopics              = new ArrayList<>();
@@ -35,6 +40,14 @@ public class TopicManager {
 
     private KafkaCommonWrapper mKafkaCommonOperator = null;
 
+    /**
+     * API to create topic
+     * 
+     * @param topic
+     *            topic to create
+     * 
+     * @return returns true if the topic successfully created, otherwise false
+     */
     public boolean createTopic(Topic topic) {
 
         if (mKafkaCommonOperator.createTopic(topic.getName()) == false) {
@@ -48,11 +61,24 @@ public class TopicManager {
         return true;
     }
 
+    /**
+     * API to remove topic
+     * 
+     * @param topic
+     *            topic to remove
+     * 
+     * @return returns true if the topic successfully removed, otherwise false
+     */
     public boolean removeTopic(Topic topic) {
 
         return removeTopics(topic.getName());
     }
 
+    /**
+     * API to get list of topics
+     * 
+     * @return returns list of topic uris
+     */
     public ArrayList<String> getTopicList() {
 
         ArrayList<String> topicList = new ArrayList<>();
@@ -66,6 +92,14 @@ public class TopicManager {
         return topicList;
     }
 
+    /**
+     * API to get list of topics with specific topic type
+     * 
+     * @param type
+     *            topic type
+     * 
+     * @return returns list of topic uris searched with the topic type
+     */
     public ArrayList<String> getTopicListByType(String type) {
 
         ArrayList<String> topicList = new ArrayList<>();
@@ -82,6 +116,14 @@ public class TopicManager {
         return topicList;
     }
 
+    /**
+     * API to get topic with topic name
+     * 
+     * @param topicName
+     *            topic name to search
+     * 
+     * @return topic searched with the topic name
+     */
     public Topic getTopic(String topicName) {
 
         Topic foundTopic = null;
@@ -99,6 +141,14 @@ public class TopicManager {
         return foundTopic;
     }
 
+    /**
+     * API to set Kafka zookeeper and broker information
+     * 
+     * @param zookeeper
+     *            address and port number of the zookeeper
+     * @param broker
+     *            address and port number of the Kafka broker
+     */
     public void setKafkaInformation(String zookeeper, String broker) {
         mKafkaZookeeper = zookeeper;
         mKafkaBroker = broker;
@@ -106,10 +156,20 @@ public class TopicManager {
         mKafkaCommonOperator = new KafkaCommonWrapper(zookeeper, broker);
     }
 
+    /**
+     * API to get zookeeper information
+     * 
+     * @return address and port number of the zookeeper
+     */
     public String getKafkaZookeeper() {
         return mKafkaZookeeper;
     }
 
+    /**
+     * API to get Kafka broker information
+     * 
+     * @return address and port number of the Kafka broker
+     */
     public String getKafkaBroker() {
         return mKafkaBroker;
     }

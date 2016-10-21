@@ -63,22 +63,22 @@ static int stopPresenceCount = 10;
 #endif
 
 char *gResourceUri= (char *)"/a/light";
-const char *dateOfManufacture = "myDateOfManufacture";
+const char *dateOfManufacture = "2016-01-15";
 const char *deviceName = "myDeviceName";
-const char *deviceUUID = "myDeviceUUID";
+const char *deviceUUID = "51b55ddc-ccbb-4cb3-a57f-494eeca13a21";
 const char *firmwareVersion = "myFirmwareVersion";
 const char *manufacturerName = "myName";
 const char *operatingSystemVersion = "myOS";
 const char *hardwareVersion = "myHardwareVersion";
-const char* platformID = "myPlatformID";
-const char *manufacturerUrl = "myManufacturerUrl";
+const char *platformID = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+const char *manufacturerLink = "https://www.iotivity.org";
 const char *modelNumber = "myModelNumber";
 const char *platformVersion = "myPlatformVersion";
-const char *supportUrl = "mySupportUrl";
+const char *supportLink = "https://www.iotivity.org";
 const char *version = "myVersion";
 const char *systemTime = "2015-05-15T11.04";
-const char *specVersion = "myDeviceSpecVersion";
-const char *dataModelVersions = "myDeviceModelVersions";
+const char *specVersion = "core.1.1.0";
+const char *dataModelVersions = "res.1.1.0";
 
 // Entity handler should check for resourceTypeName and ResourceInterface in order to GET
 // the existence of a known resource
@@ -1014,9 +1014,9 @@ int main(int argc, char* argv[])
     OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandlerCb, NULL);
 
     OCStackResult registrationResult =
-        SetPlatformInfo(platformID, manufacturerName, manufacturerUrl, modelNumber,
+        SetPlatformInfo(platformID, manufacturerName, manufacturerLink, modelNumber,
             dateOfManufacture, platformVersion,  operatingSystemVersion,  hardwareVersion,
-            firmwareVersion,  supportUrl, systemTime);
+            firmwareVersion,  supportLink, systemTime);
 
     if (registrationResult != OC_STACK_OK)
     {

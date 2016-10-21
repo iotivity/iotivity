@@ -24,11 +24,12 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "caipnwmonitor.h"
 #include "caipinterface.h"
 #include "caqueueingthread.h"
 #include "caadapterutils.h"
 #ifdef __WITH_DTLS__
-#include "caadapternetdtls.h"
+#include "ca_adapter_net_ssl.h"
 #endif
 #include "octhread.h"
 #include "uarraylist.h"
@@ -137,7 +138,7 @@ void CAIPDeinitializeQueueHandles()
 
 #endif // SINGLE_THREAD
 
-void CAIPConnectionStateCB(CATransportAdapter_t adapter, CANetworkStatus_t status)
+void CAIPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
 {
     if (g_networkChangeCallback)
     {
@@ -241,13 +242,16 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
 
     CAIPSetErrorHandler(CAIPErrorHandler);
     CAIPSetPacketReceiveCallback(CAIPPacketReceivedCB);
-#ifndef SINGLE_THREAD
-    CAIPSetConnectionStateChangeCallback(CAIPConnectionStateCB);
-#endif
-#ifdef __WITH_DTLS__
-    CAAdapterNetDtlsInit();
 
-    CADTLSSetAdapterCallbacks(CAIPPacketReceivedCB, CAIPPacketSendCB, 0);
+#ifdef __WITH_DTLS__
+    if (CA_STATUS_OK != CAinitSslAdapter())
+    {
+        OIC_LOG(ERROR, TAG, "Failed to init SSL adapter");
+    }
+    else
+    {
+        CAsetSslAdapterCallbacks(CAIPPacketReceivedCB, CAIPPacketSendCB, CA_ADAPTER_IP);
+    }
 #endif
 
     static const CAConnectivityHandler_t ipHandler =
@@ -278,7 +282,7 @@ CAResult_t CAStartIP()
     caglobals.ip.u4.port  = caglobals.ports.udp.u4;
     caglobals.ip.u4s.port = caglobals.ports.udp.u4s;
 
-    CAIPStartNetworkMonitor();
+    CAIPStartNetworkMonitor(CAIPAdapterHandler, CA_ADAPTER_IP);
 #ifdef SINGLE_THREAD
     uint16_t unicastPort = 55555;
     // Address is hardcoded as we are using Single Interface
@@ -402,7 +406,7 @@ CAResult_t CAReadIPData()
 CAResult_t CAStopIP()
 {
 #ifdef __WITH_DTLS__
-    CAAdapterNetDtlsDeInit();
+    CAdeinitSslAdapter();
 #endif
 
 #ifndef SINGLE_THREAD
@@ -412,7 +416,7 @@ CAResult_t CAStopIP()
     }
 #endif
 
-    CAIPStopNetworkMonitor();
+    CAIPStopNetworkMonitor(CA_ADAPTER_IP);
     CAIPStopServer();
     //Re-initializing the Globals to start them again
     CAInitializeIPGlobals();
@@ -423,7 +427,7 @@ CAResult_t CAStopIP()
 void CATerminateIP()
 {
 #ifdef __WITH_DTLS__
-    CADTLSSetAdapterCallbacks(NULL, NULL, 0);
+    CAsetSslAdapterCallbacks(NULL, NULL, CA_ADAPTER_IP);
 #endif
 
     CAIPSetPacketReceiveCallback(NULL);
@@ -457,15 +461,13 @@ void CAIPSendDataThread(void *threadData)
 #ifdef __WITH_DTLS__
         if (ipData->remoteEndpoint && ipData->remoteEndpoint->flags & CA_SECURE)
         {
-            OIC_LOG(DEBUG, TAG, "CAAdapterNetDtlsEncrypt called!");
-            CAResult_t result = CAAdapterNetDtlsEncrypt(ipData->remoteEndpoint,
-                                               ipData->data, ipData->dataLen);
+            OIC_LOG(DEBUG, TAG, "DTLS encrypt called");
+            CAResult_t result = CAencryptSsl(ipData->remoteEndpoint, ipData->data, ipData->dataLen);
             if (CA_STATUS_OK != result)
             {
-                OIC_LOG(ERROR, TAG, "CAAdapterNetDtlsEncrypt failed!");
+                OIC_LOG(ERROR, TAG, "CAencryptSsl failed!");
             }
-            OIC_LOG_V(DEBUG, TAG,
-                      "CAAdapterNetDtlsEncrypt returned with result[%d]", result);
+            OIC_LOG_V(DEBUG, TAG, "CAencryptSsl returned with result[%d]", result);
         }
         else
         {
