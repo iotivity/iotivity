@@ -39,6 +39,15 @@
 
 #define TAG "IP_MONITOR"
 
+// When this is defined, a socket will be used to get address change events.  The
+// SIO_ADDRESS_LIST_CHANGE socket option is accessible on all versions of Windows
+// and is available to both desktop and store apps, but it is more complex and hence
+// more appropriate for use by applications using SIO_ADDRESS_LIST_QUERY to get addresses
+// from Winsock rather than GetAdaptersAddresses() which we need to use to get additional
+// information.  We expect NotifyUnicastIpAddressChange will be available to store apps
+// at some point in the future and this workaround can go away at that point.
+#define USE_SOCKET_ADDRESS_CHANGE_EVENT
+
 /**
  * Mutex for synchronizing access to cached address information.
  */
@@ -229,6 +238,177 @@ static void CALLBACK IpAddressChangeCallback(void *context,
     oc_mutex_unlock(g_CAIPNetworkMonitorMutex);
 }
 
+#ifdef USE_SOCKET_ADDRESS_CHANGE_EVENT
+static HANDLE g_CAIPNetworkMonitorShutdownEvent = NULL;
+
+void UnregisterForIpAddressChange()
+{
+    if (g_CAIPNetworkMonitorShutdownEvent != NULL)
+    {
+        // Cancel the worker thread.
+        if (SetEvent(g_CAIPNetworkMonitorShutdownEvent))
+        {
+            WaitForSingleObject(g_CAIPNetworkMonitorChangeNotificationHandle, INFINITE);
+        }
+
+        CloseHandle(g_CAIPNetworkMonitorShutdownEvent);
+        g_CAIPNetworkMonitorShutdownEvent = NULL;
+    }
+    if (g_CAIPNetworkMonitorChangeNotificationHandle != NULL)
+    {
+        CloseHandle(g_CAIPNetworkMonitorChangeNotificationHandle);
+        g_CAIPNetworkMonitorChangeNotificationHandle = NULL;
+    }
+}
+
+DWORD WINAPI IpNetworkMonitorWorker(PVOID context)
+{
+    OVERLAPPED overlapped = {0};
+
+    WORD wVersionRequested = MAKEWORD(2, 2);
+    WSADATA wsaData = {.wVersion = 0};
+    int err = WSAStartup(wVersionRequested, &wsaData);
+    if (err != NO_ERROR)
+    {
+        return err;
+    }
+
+    SOCKET nwmSocket = WSASocket(
+        AF_INET6,
+        SOCK_DGRAM,
+        0, // Default proto.
+        NULL, // No other protocol info.
+        0, // Ignore group.
+        WSA_FLAG_OVERLAPPED);
+    if (INVALID_SOCKET == nwmSocket)
+    {
+        err = WSAGetLastError();
+        goto done;
+    }
+
+    // Put socket into dual IPv4/IPv6 mode.
+    BOOL ipv6Only = FALSE;
+    if (SOCKET_ERROR == setsockopt(nwmSocket,
+                                   IPPROTO_IPV6,
+                                   IPV6_V6ONLY,
+                                   (char*)&ipv6Only,
+                                   sizeof(ipv6Only)))
+    {
+        err = WSAGetLastError();
+        goto done;
+    }
+
+    overlapped.hEvent = CreateEvent(
+        NULL, // No security descriptor.
+        TRUE, // Manual reset event.
+        FALSE, // Start not signaled.
+        NULL); // No name.
+    if (NULL == overlapped.hEvent)
+    {
+        err = GetLastError();
+        goto done;
+    }
+
+    WSAEVENT eventList[2] = { overlapped.hEvent,
+                              g_CAIPNetworkMonitorShutdownEvent,
+                            };
+    DWORD bytesReturned = 0;
+    for (;;)
+    {
+        if (SOCKET_ERROR == WSAIoctl(nwmSocket,
+                                     SIO_ADDRESS_LIST_CHANGE,
+                                     NULL, // No input buffer.
+                                     0,
+                                     NULL, // No outupt buffer.
+                                     0,
+                                     &bytesReturned,
+                                     &overlapped,
+                                     NULL)) // No completion routine.
+        {
+            err = WSAGetLastError();
+            if (err != ERROR_IO_PENDING)
+            {
+                break;
+            }
+            else
+            {
+                // Wait for an address change or a request to cancel the thread.
+                DWORD waitStatus = WSAWaitForMultipleEvents(_countof(eventList),
+                                                            eventList,
+                                                            FALSE, // Wait for any one to fire.
+                                                            WSA_INFINITE,
+                                                            FALSE); // No I/O completion routines.
+
+                if (waitStatus != WSA_WAIT_EVENT_0)
+                {
+                    // The cancel event was signaled.  There is no need to call CancelIo
+                    // here, because we will close the socket handle below, causing any
+                    // pending I/O to be canceled then.
+                    assert(waitStatus == WSA_WAIT_EVENT_0 + 1);
+                    break;
+                }
+
+                WSAResetEvent(overlapped.hEvent);
+            }
+        }
+
+        // We have a change to process.  The address change callback ignores
+        // the parameters, so we just pass default values.
+        IpAddressChangeCallback(context, NULL, MibInitialNotification);
+    }
+
+done:
+    if (nwmSocket != INVALID_SOCKET)
+    {
+        closesocket(nwmSocket);
+        nwmSocket = INVALID_SOCKET;
+    }
+    if (overlapped.hEvent != NULL)
+    {
+        CloseHandle(overlapped.hEvent);
+        overlapped.hEvent = NULL;
+    }
+    WSACleanup();
+    return err;
+}
+
+BOOL RegisterForIpAddressChange()
+{
+    assert(g_CAIPNetworkMonitorChangeNotificationHandle == NULL);
+
+    g_CAIPNetworkMonitorShutdownEvent = CreateEvent(
+        NULL, // No security descriptor.
+        TRUE, // Manual reset event.
+        FALSE, // Start not signaled.
+        NULL); // No name.
+    if (g_CAIPNetworkMonitorShutdownEvent == NULL)
+    {
+        return false;
+    }
+
+    g_CAIPNetworkMonitorChangeNotificationHandle = CreateThread(
+        NULL, // Default security attributes.
+        0, // Default stack size.
+        IpNetworkMonitorWorker,
+        NULL, // No context.
+        0, // Run immediately.
+        NULL); // We don't need the thread id.
+
+    if (g_CAIPNetworkMonitorChangeNotificationHandle == NULL)
+    {
+        CloseHandle(g_CAIPNetworkMonitorShutdownEvent);
+        g_CAIPNetworkMonitorShutdownEvent = NULL;
+        return false;
+    }
+
+    // Signal the callback to query the initial state.  The address change callback ignores
+    // the parameters, so we just pass default values.
+    IpAddressChangeCallback(NULL, NULL, MibInitialNotification);
+
+    return true;
+}
+#endif
+
 /**
  * Start network monitor.
  *
@@ -253,6 +433,12 @@ CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
 
     if (g_CAIPNetworkMonitorChangeNotificationHandle == NULL)
     {
+#ifdef USE_SOCKET_ADDRESS_CHANGE_EVENT
+        if (!RegisterForIpAddressChange())
+        {
+            return CA_STATUS_FAILED;
+        }
+#else
         int err = NotifyUnicastIpAddressChange(AF_UNSPEC, IpAddressChangeCallback, NULL,
                                                true,
                                                &g_CAIPNetworkMonitorChangeNotificationHandle);
@@ -260,6 +446,7 @@ CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
         {
             return CA_STATUS_FAILED;
         }
+#endif
     }
     return CA_STATUS_OK;
 }
@@ -274,9 +461,13 @@ CAResult_t CAIPStopNetworkMonitor(CATransportAdapter_t adapter)
 {
     if (g_CAIPNetworkMonitorChangeNotificationHandle != NULL)
     {
+#ifdef USE_SOCKET_ADDRESS_CHANGE_EVENT
+        UnregisterForIpAddressChange();
+#else
         int err = CancelMibChangeNotify2(g_CAIPNetworkMonitorChangeNotificationHandle);
         assert(err == NO_ERROR);
         g_CAIPNetworkMonitorChangeNotificationHandle = NULL;
+#endif
     }
 
     CAIPDestroyNetworkMonitorList();

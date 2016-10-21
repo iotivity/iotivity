@@ -97,7 +97,7 @@ if "!RUN_ARG!"=="server" (
 ) else if "!RUN_ARG!"=="clienthq" (
   cd %BUILD_DIR%\resource\examples
   %DEBUG% simpleclientHQ.exe
-)else if "!RUN_ARG!"=="mediaclient" (
+) else if "!RUN_ARG!"=="mediaclient" (
   cd %BUILD_DIR%\resource\examples
   %DEBUG% mediaclient.exe
 ) else if "!RUN_ARG!"=="mediaserver" (
@@ -140,6 +140,7 @@ if "!RUN_ARG!"=="server" (
   echo   WITH_RD=%WITH_RD%
   echo   ROUTING=%ROUTING%
   echo   WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP%
+  echo   MSVC_VERSION=%MSVC_VERSION%
   echo.scons VERBOSE=1 %BUILD_OPTIONS%
   scons VERBOSE=1 %BUILD_OPTIONS%
 ) else if "!RUN_ARG!"=="clean" (
@@ -152,11 +153,12 @@ if "!RUN_ARG!"=="server" (
   erase resource\c_common\iotivity_config.h
   erase extlibs\libcoap\coap.lib
   erase extlibs\libcoap\libcoap\include\coap\coap_config.h
+  erase extlibs\mbedtls\mbed*.lib
 ) else if "!RUN_ARG!"=="cleangtest" (
   rd /s /q extlibs\gtest\gtest-1.7.0
   del extlibs\gtest\gtest-1.7.0.zip
 ) else (
-    echo %0 - Script requires a valid argument!
+    echo.%0 - Script requires a valid argument!
     goto :EOF
 )
 
@@ -170,11 +172,11 @@ goto EOF
 echo %0 - Helper to build/test iotivity.  Requires an argument.
 echo Installation: Drop this into your iotivity root directory to use it.
 echo.
-echo. Default buidl settings are: debug binaries run unittests and no logging
+echo. Default build settings are: debug binaries run unittests and no logging
 echo.
 echo. Default build parameters can be overridden using the following arguments
 echo. 
-echo   -arch [x86 | amd64]    - Build either amd64 or x86 architecture binaries
+echo   -arch [x86 ^| amd64]    - Build either amd64 or x86 architecture binaries
 echo.
 echo   -noTest                - Don't run the unittests after building the binaries
 echo.
