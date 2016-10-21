@@ -1338,6 +1338,8 @@ static int CmpCredId(const OicSecCred_t * first, const OicSecCred_t *second)
 static uint16_t GetCredId()
 {
     //Sorts credential list in incremental order of credId
+    /** @todo: Remove pragma for VS2013 warning; Investigate fixing LL_SORT macro */
+    #pragma warning(suppress:4133)
     LL_SORT(gCred, CmpCredId);
 
     OicSecCred_t *currentCred = NULL, *credTmp = NULL;

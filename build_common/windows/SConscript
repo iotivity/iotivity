@@ -19,6 +19,10 @@ if env['CC'] == 'cl':
         '/wd4365',   # C4365 signed/unsigned mismatch
         '/wd4503'])  # C4503 decorated name length exceeded, name was truncated
 
+    # Enable warnings as errors.
+    env.AppendUnique(CCFLAGS=[
+        '/we4133'])  # C4133 incompatible type conversion
+
     env.AppendUnique(CCFLAGS=['/EHsc'])
 
     # Set release/debug flags
