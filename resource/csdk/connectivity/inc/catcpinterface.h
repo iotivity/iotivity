@@ -214,6 +214,15 @@ size_t CAGetTotalLengthFromHeader(const unsigned char *recvBuffer);
  */
 CATCPSessionInfo_t *CAGetSessionInfoFromFD(int fd, size_t *index);
 
+/**
+ * Get total payload length from CoAP over TCP header.
+ *
+ * @param[in]   data    Data to be send.
+ * @param[in]   dlen    Total data length.
+ * @return  Payload length
+ */
+size_t CACheckPayloadLengthFromHeader(const void *data, size_t dlen);
+
 #ifdef __cplusplus
 }
 #endif

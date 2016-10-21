@@ -947,7 +947,7 @@ void CATCPSetConnectionChangedCallback(CATCPConnectionHandleCallback connHandler
     g_connectionCallback = connHandler;
 }
 
-static size_t CACheckPayloadLength(const void *data, size_t dlen)
+size_t CACheckPayloadLengthFromHeader(const void *data, size_t dlen)
 {
     VERIFY_NON_NULL_RET(data, TAG, "data", -1);
 
@@ -1004,22 +1004,7 @@ static void sendData(const CAEndpoint_t *endpoint, const void *data,
         }
     }
 
-    // #2. check payload length
-#ifdef __WITH_TLS__
-    if (false == CAIsTlsMessage(data, dlen))
-#endif
-    {
-        size_t payloadLen = CACheckPayloadLength(data, dlen);
-        // if payload length is zero, disconnect from TCP server
-        if (!payloadLen)
-        {
-            OIC_LOG(DEBUG, TAG, "payload length is zero, disconnect from remote device");
-            CADisconnectTCPSession(svritem, index);
-            return;
-        }
-    }
-
-    // #3. check connection state
+    // #2. check connection state
     if (svritem->fd < 0)
     {
         // if file descriptor value is wrong, remove TCP Server info from list
@@ -1032,7 +1017,7 @@ static void sendData(const CAEndpoint_t *endpoint, const void *data,
         return;
     }
 
-    // #4. send data to TCP Server
+    // #3. send data to TCP Server
     ssize_t remainLen = dlen;
     do
     {

@@ -505,10 +505,30 @@ void CATCPSendDataThread(void *threadData)
     }
     else
     {
+        // Check payload length from CoAP over TCP format header.
+        CAResult_t result = CA_STATUS_OK;
+        size_t payloadLen = CACheckPayloadLengthFromHeader(tcpData->data, tcpData->dataLen);
+        if (!payloadLen)
+        {
+            // if payload length is zero, disconnect from remote device.
+            OIC_LOG(DEBUG, TAG, "payload length is zero, disconnect from remote device");
+            size_t index = 0;
+            CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(tcpData->remoteEndpoint,
+                                                                          &index);
+            if (svritem)
+            {
+                result = CADisconnectTCPSession(svritem, index);
+                if (CA_STATUS_OK != result)
+                {
+                    OIC_LOG_V(ERROR, TAG, "CADisconnectTCPSession failed, result[%d]", result);
+                }
+            }
+            return;
+        }
+
 #ifdef __WITH_TLS__
          if (tcpData->remoteEndpoint && tcpData->remoteEndpoint->flags & CA_SECURE)
          {
-             CAResult_t result = CA_STATUS_OK;
              OIC_LOG(DEBUG, TAG, "CAencryptSsl called!");
              result = CAencryptSsl(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen);
 
