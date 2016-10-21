@@ -506,7 +506,7 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
         return OC_STACK_INVALID_PARAM;
     }
 
-    OicSecCred_t *trustCertChainCred = GetCredResourceDataByCredId(credId);
+    OicSecCred_t *trustCertChainCred = GetCredEntryByCredId(credId);
     if(NULL == trustCertChainCred)
     {
         OIC_LOG(ERROR, TAG, "Can not find matched Trust Cert. Chain.");
@@ -516,6 +516,7 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if(!secPayload)
     {
+        DeleteCredList(trustCertChainCred);
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
     }
@@ -523,10 +524,12 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
     int secureFlag = 0;
     if(OC_STACK_OK != CredToCBORPayload(trustCertChainCred, &secPayload->securityData, &secPayload->payloadSize, secureFlag))
     {
+        DeleteCredList(trustCertChainCred);
         OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
+    DeleteCredList(trustCertChainCred);
     OIC_LOG(DEBUG, TAG, "Created payload for Cred:");
     OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
