@@ -38,6 +38,7 @@
 #include "base64.h"
 #include "ocserverrequest.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "ocpayload.h"
 #include "utlist.h"
 #include "credresource.h"
@@ -2074,21 +2075,75 @@ const OicSecCred_t* GetCredList()
     return gCred;
 }
 
-OicSecCred_t* GetCredResourceDataByCredId(const uint16_t credId)
+OicSecCred_t* GetCredEntryByCredId(const uint16_t credId)
 {
     OicSecCred_t *cred = NULL;
-    if ( 1 > credId)
+    OicSecCred_t *tmpCred = NULL;
+
+   if ( 1 > credId)
     {
        return NULL;
     }
 
-    LL_FOREACH(gCred, cred)
+    LL_FOREACH(gCred, tmpCred)
     {
-        if(cred->credId == credId)
+        if(tmpCred->credId == credId)
         {
+            cred = (OicSecCred_t*)OICCalloc(1, sizeof(OicSecCred_t));
+            VERIFY_NON_NULL(TAG, cred, ERROR);
+
+            // common
+            cred->next = NULL;
+            cred->credId = tmpCred->credId;
+            cred->credType = tmpCred->credType;
+            memcpy(cred->subject.id, tmpCred->subject.id , sizeof(cred->subject.id));
+            memcpy(cred->rownerID.id, tmpCred->rownerID.id , sizeof(cred->rownerID.id));
+            if (tmpCred->period)
+            {
+                cred->period = OICStrdup(tmpCred->period);
+            }
+
+            // key data
+            if (tmpCred->privateData.data)
+            {
+                cred->privateData.data = (uint8_t *)OICCalloc(1, tmpCred->privateData.len);
+                VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
+
+                memcpy(cred->privateData.data, tmpCred->privateData.data, tmpCred->privateData.len);
+                cred->privateData.len = tmpCred->privateData.len;
+                cred->privateData.encoding = tmpCred->privateData.encoding;
+            }
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+            else if (tmpCred->publicData.data)
+            {
+                cred->publicData.data = (uint8_t *)OICCalloc(1, tmpCred->publicData.len);
+                VERIFY_NON_NULL(TAG, cred->publicData.data, ERROR);
+
+                memcpy(cred->publicData.data, tmpCred->publicData.data, tmpCred->publicData.len);
+                cred->publicData.len = tmpCred->publicData.len;
+            }
+            else if (tmpCred->optionalData.data)
+            {
+                cred->optionalData.data = (uint8_t *)OICCalloc(1, tmpCred->optionalData.len);
+                VERIFY_NON_NULL(TAG, cred->optionalData.data, ERROR);
+
+                memcpy(cred->optionalData.data, tmpCred->optionalData.data, tmpCred->optionalData.len);
+                cred->optionalData.len = tmpCred->optionalData.len;
+                cred->optionalData.encoding = tmpCred->optionalData.encoding;
+            }
+
+            if (tmpCred->credUsage)
+            {
+                cred->credUsage = OICStrdup(tmpCred->credUsage);
+            }
+#endif /* __WITH_X509__  or __WITH_TLS__*/
+
             return cred;
         }
     }
+
+exit:
+    FreeCred(cred);
     return NULL;
 }
 
