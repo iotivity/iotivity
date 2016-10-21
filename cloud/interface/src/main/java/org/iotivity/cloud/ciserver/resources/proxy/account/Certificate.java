@@ -31,12 +31,19 @@ import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 
+/**
+ *
+ * This class provides a set of APIs to send requests about certificate to
+ * account
+ *
+ */
+
 public class Certificate extends Resource {
     IRequestChannel mAuthServer = null;
 
     public Certificate() {
-        super(Arrays.asList(Constants.PREFIX_OIC,
-                Constants.CREDPROV_URI, Constants.CERT_URI));
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.CREDPROV_URI,
+                Constants.CERT_URI));
         mAuthServer = ConnectorPool.getConnection("account");
     }
 

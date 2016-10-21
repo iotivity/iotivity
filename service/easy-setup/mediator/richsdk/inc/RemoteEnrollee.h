@@ -52,23 +52,6 @@ namespace OIC
         public:
             ~RemoteEnrollee() = default;
 
-#ifdef __WITH_DTLS__
-            /**
-             * Register Security status and other information callback handlers.
-             *
-             * @param secProvisioningDbCb Callback to be invoked when the stack expects a
-             *        path for the provisioning db.
-             * @param securityPinCb Callback to get security pin during pin based ownership transfer.
-             *
-             * @throws InvalidParameterException If callback is an empty function or null.
-             * @throws ESBadRequestException If registration is already completed.
-             *
-             * @see SecProvisioningResult
-             */
-            ESResult registerSecurityCallbackHandler(const SecurityPinCb securityPinCb,
-                    const SecProvisioningDbPathCb secProvisioningDbPathCb);
-#endif //__WITH_DTLS__
-
             /**
              * Get an Enrollee's status which includes provisioning status and last error code
              *

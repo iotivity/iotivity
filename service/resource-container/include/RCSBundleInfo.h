@@ -90,8 +90,12 @@ namespace OIC
                 */
                 virtual bool isActivated() = 0;
 
-                RCSBundleInfo(){};
-                virtual ~RCSBundleInfo(){};
+                RCSBundleInfo()
+                {
+                };
+                virtual ~RCSBundleInfo()
+                {
+                };
             protected:
                 std::string m_ID, m_path, m_version;
 

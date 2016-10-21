@@ -273,6 +273,10 @@ int InitGetRequest(OCQualityOfService qos)
     OIC_LOG_V(INFO, TAG, "Executing %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
+    if(WithTcp)
+    {
+        endpoint.adapter = OC_ADAPTER_TCP;
+    }
     endpoint.flags = (OCTransportFlags)(endpoint.flags|OC_SECURE);
 
     return (InvokeOCDoResource(query, OC_REST_GET, &endpoint,

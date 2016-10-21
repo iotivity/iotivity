@@ -266,7 +266,7 @@ void ConnectToTargetAP()
     WiFiConnErrCode ret = WIFI_NO_ERROR;
     ret = TizenWiFiScanStart();
     if(ret != WIFI_NO_ERROR){
-        ESSetState(ES_STATE_CONNECTED_FAIL_TO_ENROLLER);
+        ESSetState(ES_STATE_FAILED_TO_CONNECT_TO_ENROLLER);
         ESSetErrorCode(ES_ERRCODE_UNKNOWN);
         cout << "WiFi Scan Error" << endl;
         return;
@@ -277,7 +277,7 @@ void ConnectToTargetAP()
 
     ret = TizenWiFiConn(gSSID, gPasswd);
     if(ret != WIFI_NO_ERROR) {
-        ESSetState(ES_STATE_CONNECTED_FAIL_TO_ENROLLER);
+        ESSetState(ES_STATE_FAILED_TO_CONNECT_TO_ENROLLER);
 
         if(ret == WIFI_NOTFOUND_SSID_ERROR) {
             ESSetErrorCode(ES_ERRCODE_SSID_NOT_FOUND);
@@ -365,7 +365,7 @@ int main()
 
     gMainloop = g_main_loop_new (NULL, FALSE);
     if(gMainloop == NULL) {
-        cout << "Create Min Loop Error" << endl;
+        cout << "Create Main Loop Error" << endl;
         return 0;
     }
 

@@ -17,7 +17,7 @@ sim_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 sim_env.PrependUnique(LIBS = ['SimulatorManager'])
 
 if sim_env.get('SECURED') == '1':
-    sim_env.AppendUnique(LIBS = ['tinydtls'])
+    sim_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # Source files and Targets

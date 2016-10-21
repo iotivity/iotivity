@@ -36,12 +36,13 @@ namespace OIC
             NS_LOG_V(DEBUG, "provider Id : %s", provider->providerId);
             NS_LOG_V(DEBUG, "state : %d", (int)state);
 
-            NSProvider *nsProvider = new NSProvider(provider);
-            NSProvider *oldProvider = NSConsumerService::getInstance()->getProvider(
-                                          nsProvider->getProviderId());
+            std::string provId;
+            provId.assign(provider->providerId, NS_UTILS_UUID_STRING_SIZE - 1);
+            NSProvider *oldProvider = NSConsumerService::getInstance()->getProvider(provId);
 
             if (oldProvider == nullptr)
             {
+                NSProvider *nsProvider = new NSProvider(provider);
                 NS_LOG(DEBUG, "Provider with same Id do not exist. updating Data for New Provider");
                 auto discoveredCallback = NSConsumerService::getInstance()->getProviderDiscoveredCb();
                 nsProvider->setProviderState((NSProviderState)state);
@@ -72,7 +73,6 @@ namespace OIC
                 NS_LOG(DEBUG, "Provider with same Id exists. updating the old Provider data");
                 auto changeCallback = oldProvider->getProviderStateReceivedCb();
                 oldProvider->setProviderState((NSProviderState)state);
-                delete nsProvider;
                 if (state == NS_ALLOW)
                 {
                     oldProvider->setProviderSubscribedState(NSProviderSubscribedState::SUBSCRIBED);

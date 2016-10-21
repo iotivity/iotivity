@@ -21,6 +21,7 @@
  */
 package org.iotivity.cloud.accountserver.x509.cert;
 
+import org.bouncycastle.asn1.x500.AttributeTypeAndValue;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.openssl.PEMException;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
@@ -95,8 +96,11 @@ public class CSRParser {
      * Returns common name from csr subject.
      */
     public String getCommonName() {
-        return subject.getRDNs(CN)[0].getFirst().getValue().toString();
-
+        AttributeTypeAndValue rdn = subject.getRDNs(CN)[0].getFirst();
+        if (rdn != null) {
+            return rdn.getValue().toString();
+        }
+        return null;
     }
 
     /**

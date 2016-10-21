@@ -85,11 +85,9 @@ public class DiscoveryResourceTest {
                 RDServerTestUtils.DISCOVERY_REQ_URI,
                 "rt=core.light;di=" + RDServerTestUtils.DI);
         mDiscoveryResource.onDefaultRequestReceived(mockDevice, request);
-        // assertion: if the response status is "CONTENT"
-        // assertion : if the payload is null
+        // assertion: if the response status is "NOT_FOUND"
         assertTrue(mLatch.await(2L, SECONDS));
-        assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
-        assertTrue(nullPayloadCheck(mResponse));
+        assertTrue(methodCheck(mResponse, ResponseStatus.NOT_FOUND));
     }
 
     @Test

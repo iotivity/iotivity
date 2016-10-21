@@ -224,13 +224,27 @@ popup_set_clicked_cb(void *data, Evas_Object *obj, void *event_info)
     // Remove white spaces(if any) at the beginning
     string logMessage = "";
     int beginning = 0;
+
+    if(NULL == attributeString)
+    {
+        dlog_print(DLOG_INFO, LOG_TAG, "#### Read NULL Value");
+        string logMessage = g_attributeKey + "Cannot be NULL<br>";
+        logMessage += "----------------------<br>";
+        dlog_print(DLOG_INFO, LOG_TAG, " %s", logMessage.c_str());
+        ecore_main_loop_thread_safe_call_sync((void * ( *)(void *))updateGroupLog,
+                                          &logMessage);
+        evas_object_del(popup_fields->popup);
+        free(popup_fields);
+        return;
+    }
+
     while (attributeString[beginning] == ' ')
     {
         (beginning)++;
     }
 
     int len = strlen(attributeString);
-    if (NULL == attributeString || 1 > len)
+    if (1 > len)
     {
         dlog_print(DLOG_INFO, LOG_TAG, "#### Read NULL Value");
         logMessage = g_attributeKey + "Cannot be NULL<br>";

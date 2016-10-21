@@ -28,6 +28,7 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+#include "ocpayload.h"
 #include <windows.h>
 #include <objbase.h>
 
@@ -104,16 +105,60 @@ public:
     /// This function internally calls registerResource API.
     void createResource()
     {
-        //URI of the resource
+        OCStackResult result = OC_STACK_OK;
+
+        /* Resource Information */
         std::string resourceURI = m_mediaUri;
-        //resource type name. In this case, it is media
         std::string resourceTypeName = "core.media";
-        // resource interface.
         std::string resourceInterface = DEFAULT_INTERFACE;
+
+        /* Device Information */
+        char* deviceName = "IoTivity Media Server";
+        char* specVersion = "core.1.1.0";
+        OCStringLL types{ nullptr, const_cast<char*>(resourceTypeName.c_str()) };
+        OCDeviceInfo deviceInfo{ deviceName, &types, specVersion, nullptr };
+
+        result = OCPlatform::registerDeviceInfo(deviceInfo);
+        if (OC_STACK_OK != result)
+        {
+            cout << "Device information registration was unsuccessful\n";
+            return;
+        }
+
+        /* Platform Info */
+        char* platformId = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+        char* manufacturerName = "OCF";
+        char* manufacturerLink = "https://www.iotivity.org";
+        char* modelNumber = "895";
+        char* dateOfManufacture = "2016-01-15";
+        char* platformVersion = "1.0";
+        char* osVersion = "1.0";
+        char* hardwareVersion = "1.0";
+        char* firmwareVersion = "1.0";
+        char* supportLink = "https://www.iotivity.org";
+        OCPlatformInfo platformInfo = { platformId,
+                                        manufacturerName,
+                                        manufacturerLink,
+                                        modelNumber,
+                                        dateOfManufacture,
+                                        platformVersion,
+                                        osVersion,
+                                        hardwareVersion,
+                                        firmwareVersion,
+                                        supportLink,
+                                        nullptr
+                                      };
+
+        result = OCPlatform::registerPlatformInfo(platformInfo);
+        if (OC_STACK_OK != result)
+        {
+            cout << "Platform information registration was unsuccessful\n";
+            return;
+        }
 
         // OCResourceProperty is defined ocstack.h
         uint8_t resourceProperty;
-        if(isSecure)
+        if (isSecure)
         {
             resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE;
         }
@@ -121,13 +166,11 @@ public:
         {
             resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE;
         }
-        EntityHandler cb = std::bind(&MediaResource::entityHandler, this,PH::_1);
+        EntityHandler cb = std::bind(&MediaResource::entityHandler, this, PH::_1);
 
         // This will internally create and register the resource.
-        OCStackResult result = OCPlatform::registerResource(
-                                    m_resourceHandle, resourceURI, resourceTypeName,
-                                    resourceInterface, cb, resourceProperty);
-
+        result = OCPlatform::registerResource(m_resourceHandle, resourceURI, resourceTypeName,
+                                              resourceInterface, cb, resourceProperty);
         if (OC_STACK_OK != result)
         {
             cout << "Resource creation was unsuccessful\n";

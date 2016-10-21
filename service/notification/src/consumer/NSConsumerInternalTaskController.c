@@ -73,14 +73,14 @@ void NSDestroyInternalCachedList()
     NSCacheList * cache = *(NSGetProviderCacheList());
     if (cache)
     {
-        NSStorageDestroy(cache);
+        NSConsumerStorageDestroy(cache);
     }
 
     NSSetProviderCacheList(NULL);
 
     NSDestroyMessageStateList();
     pthread_mutex_destroy(*NSGetMessageListMutex());
-    *NSGetMessageListMutex() = NULL;
+    NSOICFree(*NSGetMessageListMutex());
 }
 
 NSProvider_internal * NSProviderCacheFind(const char * providerId)
@@ -91,14 +91,14 @@ NSProvider_internal * NSProviderCacheFind(const char * providerId)
     if (!ProviderCache)
     {
         NS_LOG(DEBUG, "Provider Cache Init");
-        ProviderCache = NSStorageCreate();
+        ProviderCache = NSConsumerStorageCreate();
         NS_VERIFY_NOT_NULL(ProviderCache, NULL);
 
         ProviderCache->cacheType = NS_CONSUMER_CACHE_PROVIDER;
         NSSetProviderCacheList(ProviderCache);
     }
 
-    NSCacheElement * cacheElement = NSStorageRead(ProviderCache, providerId);
+    NSCacheElement * cacheElement = NSConsumerStorageRead(ProviderCache, providerId);
     NS_VERIFY_NOT_NULL(cacheElement, NULL);
 
     return NSCopyProvider_internal((NSProvider_internal *) cacheElement->data);
@@ -129,7 +129,7 @@ NSResult NSProviderCacheUpdate(NSProvider_internal * provider)
     if (!ProviderCache)
     {
         NS_LOG(DEBUG, "Provider Cache Init");
-        ProviderCache = NSStorageCreate();
+        ProviderCache = NSConsumerStorageCreate();
         NS_VERIFY_NOT_NULL(ProviderCache, NS_ERROR);
 
         ProviderCache->cacheType = NS_CONSUMER_CACHE_PROVIDER;
@@ -145,9 +145,11 @@ NSResult NSProviderCacheUpdate(NSProvider_internal * provider)
     obj->next = NULL;
 
     NS_LOG(DEBUG, "try to write to storage");
-    NSResult ret = NSStorageWrite(ProviderCache, obj);
+    NSResult ret = NSConsumerStorageWrite(ProviderCache, obj);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(ret == NS_OK ? (void *) 1 : NULL,
             NS_ERROR, NSOICFree(obj));
+
+    NSOICFree(obj);
 
     return NS_OK;
 }
@@ -158,25 +160,29 @@ void NSCancelAllSubscription()
     if (!ProviderCache)
     {
         NS_LOG(DEBUG, "Provider Cache Init");
-        ProviderCache = NSStorageCreate();
+        ProviderCache = NSConsumerStorageCreate();
         NS_VERIFY_NOT_NULL_V(ProviderCache);
 
         ProviderCache->cacheType = NS_CONSUMER_CACHE_PROVIDER;
         NSSetProviderCacheList(ProviderCache);
     }
 
-    NSCacheElement * obj = NULL;
-    while ((obj = NSPopProviderCacheList(ProviderCache)))
+    NSCacheElement * obj = NSPopProviderCacheList(ProviderCache);
+    while (obj)
     {
         NS_LOG(DEBUG, "build NSTask");
         NSProvider * prov = NSCopyProvider((NSProvider_internal *) obj->data);
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(prov,
-                    NSRemoveProvider_internal((NSProvider_internal *) obj->data));
+                    NSRemoveProvider_internal((void *) obj->data));
 
         NSTask * task = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE_CANCEL, prov);
         NS_VERIFY_NOT_NULL_V(task);
 
         NSConsumerPushEvent(task);
+        NSRemoveProvider_internal((void *) obj->data);
+        NSOICFree(obj);
+
+        obj = NSPopProviderCacheList(ProviderCache);
     }
 }
 
@@ -239,7 +245,8 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
     }
 
     NSResult ret = NSProviderCacheUpdate(provider);
-    NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(ret == NS_OK ? (void *) 1 : NULL,
+            NSRemoveProvider_internal(providerCacheData));
 
     if (isAdded == false)
     {
@@ -254,16 +261,17 @@ void NSConsumerHandleProviderDiscovered(NSProvider_internal * provider)
     if (provider->accessPolicy == NS_SELECTION_CONSUMER && isSubscribing == false)
     {
         NS_LOG(DEBUG, "accepter is NS_ACCEPTER_CONSUMER, Callback to user");
-        NSProvider * providerForCb = NSCopyProvider(provider);
-        NSProviderChanged(providerForCb, NS_DISCOVERED);
-        NSRemoveProvider(providerForCb);
+        NSProvider * prov = NSCopyProvider(provider);
+        NSProviderChanged(prov, NS_DISCOVERED);
+        NSRemoveProvider(prov);
     }
     else
     {
         NS_LOG(DEBUG, "accepter is NS_ACCEPTER_PROVIDER, request subscribe");
-        NSProvider_internal * subProvider = NSCopyProvider_internal(provider);
+        NSProvider * subProvider = NSCopyProvider(provider);
         NSTask * task = NSMakeTask(TASK_CONSUMER_REQ_SUBSCRIBE, (void *) subProvider);
-        NS_VERIFY_NOT_NULL_V(task);
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(task,
+                NSRemoveProvider_internal(providerCacheData));
 
         NSConsumerPushEvent(task);
     }
@@ -278,12 +286,13 @@ void NSConsumerHandleProviderDeleted(NSProvider_internal * provider)
     NSCacheList * providerCache = *(NSGetProviderCacheList());
     NS_VERIFY_NOT_NULL_V(providerCache);
 
-    NSResult ret = NSStorageDelete(providerCache, provider->providerId);
+    NSResult ret = NSConsumerStorageDelete(providerCache, provider->providerId);
     NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *)1 : NULL);
 
     NS_LOG_V(DEBUG, "Stopped Provider : %s", provider->providerId);
-    NSProvider * providerForCb = NSCopyProvider(provider);
-    NSProviderChanged(providerForCb, NS_STOPPED);
+    NSProvider * prov = NSCopyProvider(provider);
+    NSProviderChanged(prov, NS_STOPPED);
+    NSRemoveProvider(prov);
 }
 
 void NSConsumerHandleSubscribeSucceed(NSProvider_internal * provider)
@@ -292,7 +301,7 @@ void NSConsumerHandleSubscribeSucceed(NSProvider_internal * provider)
 
     NSCacheList * ProviderCache = *(NSGetProviderCacheList());
 
-    NSCacheElement * cacheElement = NSStorageRead(ProviderCache, provider->providerId);
+    NSCacheElement * cacheElement = NSConsumerStorageRead(ProviderCache, provider->providerId);
     NS_VERIFY_NOT_NULL_V(cacheElement);
 
     pthread_mutex_t * mutex = NSGetCacheMutex();
@@ -318,7 +327,7 @@ void NSConsumerHandleRecvProviderChanged(NSMessage * msg)
 
     NSCacheList * ProviderCache = *(NSGetProviderCacheList());
 
-    NSCacheElement * cacheElement = NSStorageRead(ProviderCache, msg->providerId);
+    NSCacheElement * cacheElement = NSConsumerStorageRead(ProviderCache, msg->providerId);
     NS_VERIFY_NOT_NULL_V(cacheElement);
 
     pthread_mutex_t * mutex = NSGetCacheMutex();
@@ -341,6 +350,7 @@ void NSConsumerHandleRecvProviderChanged(NSMessage * msg)
 
     pthread_mutex_unlock(mutex);
     NSProviderChanged(prov, (NSProviderState) msg->messageId);
+    NSRemoveProvider(prov);
 }
 
 void NSConsumerHandleRecvMessage(NSMessage * msg)
@@ -376,7 +386,7 @@ void NSConsumerHandleMakeSyncInfo(NSSyncInfo * sync)
     NS_VERIFY_NOT_NULL_V (provider);
 
     NSProviderConnectionInfo * connections = NSCopyProviderConnections(provider->connection);
-    NSRemoveProvider_internal(provider);
+    NSRemoveProvider_internal((void *) provider);
     NS_VERIFY_NOT_NULL_V (connections);
 
     NSSyncInfo_internal * syncInfo = (NSSyncInfo_internal *)OICMalloc(sizeof(NSSyncInfo_internal));
@@ -413,12 +423,24 @@ void NSConsumerHandleRecvTopicLL(NSProvider_internal * provider)
     NSRemoveConnections(provider->connection);
     provider->connection = NULL;
 
+    NSProvider_internal * cachedProvider = NSProviderCacheFind(provider->providerId);
+    NS_VERIFY_NOT_NULL_V(cachedProvider);
+
+    if (!cachedProvider->topicLL && !provider->topicLL)
+    {
+        NS_LOG(DEBUG, "topic is null and previous status is same.");
+        NSRemoveProvider_internal(cachedProvider);
+        return;
+    }
+    NSRemoveProvider_internal(cachedProvider);
+
     NSResult ret = NSProviderCacheUpdate(provider);
     NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *) 1 : NULL);
 
     NS_LOG(DEBUG, "call back to user");
     NSProvider * prov = NSCopyProvider(provider);
     NSProviderChanged((NSProvider *) prov, (NSProviderState) NS_TOPIC);
+    NSRemoveProvider(prov);
 }
 
 void NSConsumerInternalTaskProcessing(NSTask * task)
@@ -432,7 +454,7 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
         {
             NS_LOG(DEBUG, "Receive Subscribe succeed from provider.");
             NSConsumerHandleSubscribeSucceed((NSProvider_internal *)task->taskData);
-            NSRemoveProvider_internal((NSProvider_internal *)task->taskData);
+            NSRemoveProvider_internal((void *)task->taskData);
             break;
         }
         case TASK_CONSUMER_RECV_PROVIDER_CHANGED:
@@ -526,7 +548,7 @@ void NSUnlockMessageListMutex()
     pthread_mutex_unlock(*NSGetMessageListMutex());
 }
 
-NSMessageStateList * NSGetMessageStateList()
+NSMessageStateList ** NSGetMessageStateListAddr()
 {
     static NSMessageStateList * g_messageStateList = NULL;
     if (g_messageStateList == NULL)
@@ -538,20 +560,28 @@ NSMessageStateList * NSGetMessageStateList()
         g_messageStateList->tail = NULL;
     }
 
-    return g_messageStateList;
+    return & g_messageStateList;
+}
+
+NSMessageStateList * NSGetMessageStateList()
+{
+    return * NSGetMessageStateListAddr();
 }
 
 NSMessageStateLL * NSFindMessageState(uint64_t msgId)
 {
     NS_LOG_V(DEBUG, "%s", __func__);
-    if (msgId <= NS_RESERVED_MESSAGEID) return NULL;
+    if (msgId <= NS_RESERVED_MESSAGEID)
+    {
+        return NULL;
+    }
     NSMessageStateLL * iter = NULL;
 
     NSLockMessageListMutex();
     if (NSGetMessageStateList()->head == NULL)
     {
         NSUnlockMessageListMutex();
-        return false;
+        return NULL;
     }
 
     for (iter = NSGetMessageStateList()->head; iter; iter = iter->next)
@@ -570,7 +600,10 @@ NSMessageStateLL * NSFindMessageState(uint64_t msgId)
 bool NSUpdateMessageState(uint64_t msgId, NSSyncType state)
 {
     NS_LOG_V(DEBUG, "%s", __func__);
-    if (msgId <= NS_RESERVED_MESSAGEID) return NULL;
+    if (msgId <= NS_RESERVED_MESSAGEID)
+    {
+        return false;
+    }
     NSMessageStateLL * iter = NULL;
 
     NSLockMessageListMutex();
@@ -591,7 +624,11 @@ bool NSUpdateMessageState(uint64_t msgId, NSSyncType state)
 bool NSDeleteMessageState(uint64_t msgId)
 {
     NS_LOG_V(DEBUG, "%s", __func__);
-    if (msgId <= NS_RESERVED_MESSAGEID) return NULL;
+    if (msgId <= NS_RESERVED_MESSAGEID)
+    {
+        return false;
+    }
+
     NSMessageStateLL * iter = NULL;
     NSMessageStateLL * prev = NULL;
 
@@ -673,4 +710,13 @@ void NSDestroyMessageStateList()
     NSGetMessageStateList()->tail = NULL;
 
     NSUnlockMessageListMutex();
+
+    pthread_mutex_t * mu = *NSGetMessageListMutex();
+    pthread_mutex_destroy(mu);
+    NSOICFree(mu);
+    *NSGetMessageListMutex() = NULL;
+
+    NSMessageStateList * list = NSGetMessageStateList();
+    NSOICFree(list);
+    *NSGetMessageStateListAddr() = NULL;
 }

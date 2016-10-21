@@ -32,6 +32,8 @@
 #include "cacommon.h"
 #include "cainterface.h"
 
+#include "tree.h"
+
 /**
  * The signature of the internal call back functions to handle responses from entity handler
  */
@@ -94,8 +96,8 @@ typedef struct OCServerRequest
     /** Request to complete.*/
     uint8_t requestComplete;
 
-    /** Linked list; for multiple server request.*/
-    struct OCServerRequest * next;
+    /** Node entry in red-black tree.*/
+    RB_ENTRY(OCServerRequest) entry;
 
     /** Flag indicating slow response.*/
     uint8_t slowFlag;
@@ -118,10 +120,10 @@ typedef struct OCServerRequest
  * Following structure will be created in ocstack to aggregate responses
  * (in future: for block transfer).
  */
-typedef struct OCServerResponse {
-
-    /** Linked list; for multiple server response.*/
-    struct OCServerResponse * next;
+typedef struct OCServerResponse
+{
+    /** Node entry in red-black tree.*/
+    RB_ENTRY(OCServerResponse) entry;
 
     /** this is the pointer to server payload data to be transferred.*/
     OCPayload* payload;

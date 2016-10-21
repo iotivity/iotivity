@@ -44,7 +44,7 @@ stacktest_env.PrependUnique(CPPPATH = [
 		])
 
 stacktest_env.AppendUnique(LIBPATH = [stacktest_env.get('BUILD_DIR')])
-stacktest_env.PrependUnique(LIBS = ['octbstack',
+stacktest_env.PrependUnique(LIBS = ['octbstack_test',
                                     'ocsrm',
                                     'connectivity_abstraction',
                                     'coap'])
@@ -52,15 +52,14 @@ if target_os != 'darwin':
     stacktest_env.PrependUnique(LIBS = ['oc_logger'])
 
 if stacktest_env.get('SECURED') == '1':
+	stacktest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 	stacktest_env.AppendUnique(LIBS = ['tinydtls'])
-	if stacktest_env.get('WITH_TCP') == True:
-		stacktest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 if stacktest_env.get('LOGGING'):
 	stacktest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if target_os in ['msys_nt', 'windows']:
-	stacktest_env.AppendUnique(LIBS = ['ws2_32', 'iphlpapi', 'kernel32'])
+	stacktest_env.AppendUnique(LIBS = ['ws2_32', 'iphlpapi', 'kernel32', 'bcrypt', 'advapi32'])
 else:
 	stacktest_env.PrependUnique(LIBS = ['m'])
 
@@ -75,8 +74,6 @@ Alias("test", [stacktests, cbortests])
 
 stacktest_env.AppendTarget('test')
 if stacktest_env.get('TEST') == '1':
-	if target_os in ['windows']:
-		stacktest_env.AppendENVPath('PATH', [os.path.join(stacktest_env.get('BUILD_DIR'), 'resource', 'csdk')])
 	if target_os in ['linux', 'windows']:
                 from tools.scons.RunTest import *
                 run_test(stacktest_env,

@@ -289,41 +289,42 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle /*handle*/,
 
     if (clientResponse)
     {
-        cout << "\nStackResult: " << getResult(clientResponse->result);
-        cout << "\nSEQUENCE NUMBER: " << clientResponse->sequenceNumber;
-        cout << "\nCallback Context for OBSERVE notification recvd successfully ";
-        //OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        gNumObserveNotifies++;
-        if (gNumObserveNotifies == 15) //large number to test observing in DELETE case.
+        if (clientResponse->sequenceNumber <= MAX_SEQUENCE_NUMBER)
         {
-            if (g_testCase == TEST_OBS_REQ_NON || g_testCase == TEST_OBS_REQ_CON)
+            if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
             {
-                if (OCCancel (gObserveDoHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
-                {
-                    cout << "\nObserve cancel error";
-                }
-                return OC_STACK_DELETE_TRANSACTION;
+                cout << "This also serves as a registration confirmation" << endl;
             }
-            else if (g_testCase == TEST_OBS_REQ_NON_CANCEL_IMM)
+
+            cout << "\nStackResult: " << getResult(clientResponse->result);
+            cout << "\nSEQUENCE NUMBER: " << clientResponse->sequenceNumber;
+            cout << "\nCallback Context for OBSERVE notification recvd successfully ";
+            //OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
+            gNumObserveNotifies++;
+
+            if (gNumObserveNotifies == 15) //large number to test observing in DELETE case.
             {
-                if (OCCancel (gObserveDoHandle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+                if (g_testCase == TEST_OBS_REQ_NON || g_testCase == TEST_OBS_REQ_CON)
                 {
-                    cout << "\nObserve cancel error";
+                    if (OCCancel(gObserveDoHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
+                    {
+                        cout << "Observe cancel error" << endl;
+                    }
+                    return OC_STACK_DELETE_TRANSACTION;
+                }
+                else if (g_testCase == TEST_OBS_REQ_NON_CANCEL_IMM)
+                {
+                    if (OCCancel(gObserveDoHandle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+                    {
+                        cout << "\nObserve cancel error";
+                    }
                 }
             }
         }
-        if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
+        else
         {
-            cout << "\nThis also serves as a registration confirmation";
-        }
-        else if (clientResponse->sequenceNumber == OC_OBSERVE_DEREGISTER)
-        {
-            cout << "\nThis also serves as a deregistration confirmation";
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-        else if (clientResponse->sequenceNumber == OC_OBSERVE_NO_OPTION)
-        {
-            cout << "\nThis also tells you that registration/deregistration failed";
+            OIC_LOG(INFO, TAG, "No observe option header is returned in the response.");
+            OIC_LOG(INFO, TAG, "For a registration request, it means the registration failed");
             return OC_STACK_DELETE_TRANSACTION;
         }
     }

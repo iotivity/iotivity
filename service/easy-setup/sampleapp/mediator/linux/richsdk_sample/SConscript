@@ -59,14 +59,12 @@ mediator_env.PrependUnique(CPPPATH = [
 			env.get('SRC_DIR') + '/service/easy-setup/inc'])
 
 if env.get('SECURED') == '1':
-	mediator_env.PrependUnique(LIBS = ['tinydtls', 'timer'])
+	mediator_env.PrependUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 mediator_env.PrependUnique(LIBS = ['ESMediatorRich', 'oc', 'octbstack', 'oc_logger', 'connectivity_abstraction'])
 
 if env.get('SECURED') == '1':
 	mediator_env.PrependUnique(LIBS = ['ocpmapi', 'ocprovision'])
-	if env.get('WITH_TCP') == True:
-		mediator_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 mediator = mediator_env.Program('mediator_rich', 'mediator_cpp.cpp')
 

@@ -39,7 +39,6 @@
 #include "aclresource.h"
 #include "utlist.h"
 
-#define MAX_URI_LENGTH (64)
 #define MAX_PERMISSION_LENGTH (5)
 #define ACL_RESRC_ARRAY_SIZE (3)
 #define CREATE (1)
@@ -69,6 +68,7 @@ using namespace OC;
 DeviceList_t pUnownedDevList, pOwnedDevList;
 static int transferDevIdx, ask = 1;
 static OicSecPconf_t g_pconf;
+static uint16_t g_credId = 0;
 
 static FILE* client_open(const char *UNUSED_PARAM, const char *mode)
 {
@@ -91,7 +91,11 @@ void printMenu()
     std::cout << "  10. Get Linked Devices"<<std::endl;
     std::cout << "  11. Get Device Status"<<std::endl;
     std::cout << "  12. Provision Direct-Pairing Configuration"<<std::endl;
-    std::cout << "  13. Exit loop"<<std::endl;
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    std::cout << "  13. Save the Trust Cert. Chain into Cred of SVR"<<std::endl;
+    std::cout << "  14. Provision the Trust Cert. Chain"<<std::endl;
+#endif // __WITH_DTLS__ || __WITH_TLS__
+    std::cout << "  99. Exit loop"<<std::endl;
 }
 
 void moveTransferredDevice()
@@ -397,7 +401,7 @@ static int InputACL(OicSecAcl_t *acl)
         return -1;
     }
     printf("-URI of resource\n");
-    printf("ex)/oic/sh/temp/0 (Max_URI_Length: 64 Byte )\n");
+    printf("ex)/oic/sh/temp/0 (Max_URI_Length: %d Byte )\n", MAX_URI_LENGTH);
     for(size_t i = 0; i < resourcesLen; i++)
     {
         OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
@@ -422,7 +426,7 @@ static int InputACL(OicSecAcl_t *acl)
         OICFree(temp_rsc);
 
         char* rsrc_in = NULL;
-        int arrLen = 0;
+        size_t arrLen = 0;
         while(1)
         {
             printf("         Enter Number of resource type for [%s]: ", rsrc->href);
@@ -432,7 +436,7 @@ static int InputACL(OicSecAcl_t *acl)
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
-            if(0 < arrLen && ACL_RESRC_ARRAY_SIZE >= arrLen)
+            if(ACL_RESRC_ARRAY_SIZE >= arrLen)
             {
                 break;
             }
@@ -474,7 +478,7 @@ static int InputACL(OicSecAcl_t *acl)
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
-            if(0 < arrLen && ACL_RESRC_ARRAY_SIZE >= arrLen)
+            if(ACL_RESRC_ARRAY_SIZE >= arrLen)
             {
                 break;
             }
@@ -653,7 +657,7 @@ static OicSecPdAcl_t* InputPdACL()
         return NULL;
     }
     printf("-URI of resource\n");
-    printf("ex)/oic/sh/temp/0 (Max_URI_Length: 64 Byte )\n");
+    printf("ex)/oic/sh/temp/0 (Max_URI_Length: %d Byte )\n", MAX_URI_LENGTH);
     acl->resources = (char **)OICCalloc(acl->resourcesLen, sizeof(char *));
     if (NULL == acl->resources)
     {
@@ -795,6 +799,53 @@ PVDP_ERROR:
     deletePconf();  // after here |acl| points nothing
     ask = 1;
 }
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+static int saveTrustCert(void)
+{
+
+    // call |OCSaveTrustCertChainBin| API actually
+    printf("   Save Trust Cert. Chain into Cred of SVR.\n");
+
+    ByteArray trustCertChainArray = {0, 0};
+
+    FILE *fp = fopen("rootca.crt", "rb+");
+
+    if (fp)
+    {
+        size_t fsize;
+        if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)) >= 0)
+        {
+            trustCertChainArray.data = (uint8_t*)OICMalloc(fsize);
+            trustCertChainArray.len = fsize;
+            if (NULL == trustCertChainArray.data)
+            {
+                OIC_LOG(ERROR,TAG,"malloc");
+                fclose(fp);
+                return -1;
+            }
+            rewind(fp);
+            fsize = fread(trustCertChainArray.data, 1, fsize, fp);
+            if(0 == fsize)
+            {
+                OIC_LOG(ERROR,TAG,"Read error");
+            }
+            fclose(fp);
+        }
+    }
+    OIC_LOG_BUFFER(DEBUG, TAG, trustCertChainArray.data, trustCertChainArray.len);
+
+    if(OC_STACK_OK != OCSecure::saveTrustCertChain(trustCertChainArray.data, trustCertChainArray.len,
+                        OIC_ENCODING_PEM,&g_credId))
+    {
+        OIC_LOG(ERROR, TAG, "OCSaveTrustCertChainBin API error");
+        return -1;
+    }
+    printf("CredId of Saved Trust Cert. Chain into Cred of SVR : %d.\n", g_credId);
+
+    return 0;
+}
+#endif // __WITH_DTLS__ or __WITH_TLS__
 
 int main(void)
 {
@@ -1232,7 +1283,36 @@ int main(void)
 
                         break;
                     }
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
                 case 13:
+                    {
+                        if(saveTrustCert())
+                        {
+                            std::cout<<"Error in saving cert"<<std::endl;
+                        }
+                        break;
+                    }
+                case 14:
+                    {
+                        int index;
+
+                        if (0 != readDeviceNumber(pOwnedDevList, 1, &index)) break;
+
+                        std::cout << "Provision cert for : "<<
+                            pOwnedDevList[index]->getDeviceID()<< std::endl;
+
+                        ask = 0;
+
+                        if (pOwnedDevList[index]->provisionTrustCertChain(SIGNED_ASYMMETRIC_KEY,
+                                                                    g_credId,provisionCB ) != OC_STACK_OK)
+                        {
+                            ask = 1;
+                            std::cout <<"provision cert is failed"<< std::endl;
+                        }
+                        break;
+                    }
+#endif //__WITH_DTLS__ || __WITH_TLS__
+                case 99:
                 default:
                     out = 1;
                     break;

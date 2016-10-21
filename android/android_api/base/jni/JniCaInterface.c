@@ -222,8 +222,12 @@ Java_org_iotivity_ca_CaInterface_caManagerInitialize(JNIEnv *env, jclass clazz,
                                                    "(I)Lorg/iotivity/base/OcConnectivityType;");
         }
     }
-    CARegisterNetworkMonitorHandler(CAManagerAdapterStateChangedCB,
-                                    CAManagerConnectionStateChangedCB);
+    CAResult_t res = CARegisterNetworkMonitorHandler(CAManagerAdapterStateChangedCB,
+                                                     CAManagerConnectionStateChangedCB);
+    if (CA_STATUS_OK != res)
+    {
+        LOGE("CARegisterNetworkMonitorHandler has failed");
+    }
 }
 
 JNIEXPORT void JNICALL
@@ -243,6 +247,13 @@ Java_org_iotivity_ca_CaInterface_caManagerTerminate(JNIEnv *env, jclass clazz)
     {
         (*env)->DeleteGlobalRef(env, g_jni_cls_enum);
         g_jni_cls_enum = NULL;
+    }
+
+    CAResult_t res = CAUnregisterNetworkMonitorHandler(CAManagerAdapterStateChangedCB,
+                                                       CAManagerConnectionStateChangedCB);
+    if (CA_STATUS_OK != res)
+    {
+        LOGE("CAUnregisterNetworkMonitorHandler has failed");
     }
 }
 
@@ -351,5 +362,20 @@ Java_org_iotivity_ca_CaInterface_setLeScanIntervalTimeImpl(JNIEnv *env, jclass c
     (void)env;
     (void)clazz;
     CAUtilSetLEScanInterval(intervalTime, workignCount);
+}
+
+JNIEXPORT jint JNICALL Java_org_iotivity_ca_CaInterface_setCipherSuiteImpl
+  (JNIEnv *env, jclass clazz, jint cipherSuite, jint adapter)
+{
+    LOGI("setCipherSuiteImpl");
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    (void)env;
+    (void)clazz;
+    CAResult_t ret = CASelectCipherSuite(cipherSuite, (CATransportAdapter_t) adapter);
+    return ret;
+#else
+    LOGE("Method not supported");
+    return -1;
+#endif //  __WITH_DTLS__ || __WITH_TLS__
 }
 

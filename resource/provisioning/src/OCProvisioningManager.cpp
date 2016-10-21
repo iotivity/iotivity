@@ -121,30 +121,29 @@ namespace OC
         return result;
     }
 
-    OCStackResult OCSecure::discoverSecureResource(unsigned short timeout,
-            const std::string& host,
-            OCConnectivityType connType,
-            DeviceList_t &list)
+    OCStackResult OCSecure::discoverSingleDevice(unsigned short timeout,
+            const OicUuid_t* deviceID,
+            std::shared_ptr<OCSecureResource> &foundDevice)
     {
         OCStackResult result;
-        OCProvisionDev_t *pDevList = nullptr, *pCurDev = nullptr, *tmp = nullptr;
+        OCProvisionDev_t *pDev = nullptr;
         auto csdkLock = OCPlatform_impl::Instance().csdkLock();
         auto cLock = csdkLock.lock();
 
         if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-            result = OCDiscoverSecureResource(timeout, host.c_str(), connType, &pDevList);
+            result = OCDiscoverSingleDevice(timeout, deviceID, &pDev);
             if (result == OC_STACK_OK)
             {
-                pCurDev = pDevList;
-                while (pCurDev)
+                if (pDev)
                 {
-                    tmp = pCurDev;
-                    list.push_back(std::shared_ptr<OCSecureResource>(
-                                new OCSecureResource(csdkLock, pCurDev)));
-                    pCurDev = pCurDev->next;
-                    tmp->next = nullptr;
+                    foundDevice.reset(new OCSecureResource(csdkLock, pDev));
+                }
+                else
+                {
+                    oclog() <<"Not found Secure resource!";
+                    foundDevice.reset();
                 }
             }
             else
@@ -309,7 +308,7 @@ namespace OC
         return result;
     }
 
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     OCStackResult OCSecure::saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
                                         OicEncodingType_t encodingType, uint16_t *credId)
     {
@@ -339,7 +338,7 @@ namespace OC
         }
         return result;
     }
-#endif // __WITH_X509__ || __WITH_TLS__
+#endif // __WITH_DTLS__ || __WITH_TLS__
 
     void OCSecureResource::callbackWrapper(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
     {
@@ -633,7 +632,7 @@ namespace OC
         return result;
     }
 
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     OCStackResult OCSecureResource::provisionTrustCertChain(OicSecCredType_t type, uint16_t credId,
                     ResultCallBack resultCallback)
     {
@@ -667,7 +666,7 @@ namespace OC
         }
         return result;
     }
-#endif // __WITH_X509__ || __WITH_TLS__
+#endif // __WITH_DTLS__ or __WITH_TLS__
 
     std::string OCSecureResource::getDeviceID()
     {

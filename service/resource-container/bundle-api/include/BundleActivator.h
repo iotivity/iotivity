@@ -43,12 +43,18 @@ namespace OIC
                 /**
                 * Constructor for BundleActivator
                 */
-                BundleActivator() { };
+                BundleActivator()
+                {
+
+                };
 
                 /**
                 * Virtual destructor for BundleActivator
                 */
-                virtual ~BundleActivator() { };
+                virtual ~BundleActivator()
+                {
+
+                };
 
                 /**
                 * Activate the Bundle to make bundle work and create bundle resources

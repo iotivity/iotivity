@@ -89,7 +89,8 @@ void DiscoverResourceUnit::discoverdCB(RCSRemoteResourceObject::Ptr remoteObject
     if (remoteObject && !isAlreadyDiscoveredResource(remoteObject))
     {
         OIC_LOG_V(DEBUG, DISCOVER_TAG, "Discovered - uri: %s", uri.c_str());
-        if (uri.empty() || uri.compare(remoteObject->getUri()) == 0){
+        if (uri.empty() || uri.compare(remoteObject->getUri()) == 0)
+        {
             RemoteResourceUnit::Ptr newDiscoveredResource =
                        RemoteResourceUnit::createRemoteResourceInfo(remoteObject,
                                pUpdatedCBFromServer);
@@ -99,7 +100,8 @@ void DiscoverResourceUnit::discoverdCB(RCSRemoteResourceObject::Ptr remoteObject
 
             OIC_LOG_V(DEBUG, DISCOVER_TAG, "Created remote resource unit");
         }
-        else{
+        else
+        {
             OIC_LOG_V(DEBUG, DISCOVER_TAG, "URI is not matching - uri: %s", uri.c_str());
         }
     }

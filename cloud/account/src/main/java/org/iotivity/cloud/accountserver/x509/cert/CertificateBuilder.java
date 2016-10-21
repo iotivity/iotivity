@@ -58,31 +58,31 @@ public class CertificateBuilder {
     /**
      * Attribute for X500Name subject.
      */
-    private X500Name subject;
+    private final X500Name subject;
 
     /**
      * Attribute for public key.
      */
-    private PublicKey publicKey;
+    private final PublicKey publicKey;
 
     /**
      * Attribute for certificate extension.
      */
-    private CertificateExtension extension;
+    private final CertificateExtension extension;
 
     /**
      * Constructs certificate builder with specified subject
      * public key and certificate extension.
      */
-    public CertificateBuilder(X500Name subject,
-                              PublicKey publicKey, CertificateExtension extension) {
+    public CertificateBuilder(X500Name subject, PublicKey publicKey, CertificateExtension extension) {
         this.subject = subject;
         this.publicKey = publicKey;
         this.extension = extension;
     }
 
     /**
-     * Builds X509Certificate with default root key.
+     * Builds X509Certificate, issued by CA issuer, with specific subject and publick key
+     * Adds extension during build.
      */
     public X509Certificate build() throws CertIOException, GeneralSecurityException, OperatorCreationException {
         X509v3CertificateBuilder certGen = new JcaX509v3CertificateBuilder(
@@ -120,6 +120,4 @@ public class CertificateBuilder {
                 Integer.parseInt(NOT_AFTER_INTERVAL));
         return calendar.getTime();
     }
-
-
 }

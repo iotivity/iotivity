@@ -51,7 +51,6 @@
 
 static const char COAP_URI_HEADER[] = "coap://[::]/";
 
-#ifdef WITH_CHPROXY
 static char g_chproxyUri[CA_MAX_URI_LENGTH];
 
 CAResult_t CASetProxyUri(const char *uri)
@@ -60,7 +59,6 @@ CAResult_t CASetProxyUri(const char *uri)
     OICStrcpy(g_chproxyUri, sizeof (g_chproxyUri), uri);
     return CA_STATUS_OK;
 }
-#endif
 
 CAResult_t CAGetRequestInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                    CARequestInfo_t *outReqInfo)
@@ -760,9 +758,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     uint32_t optionLength = 0;
     bool isfirstsetflag = false;
     bool isQueryBeingProcessed = false;
-#ifdef WITH_CHPROXY
     bool isProxyRequest = false;
-#endif
 
     while ((option = coap_option_next(&opt_iter)))
     {
@@ -890,12 +886,10 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             }
             else
             {
-#ifdef WITH_CHPROXY
                 if (COAP_OPTION_PROXY_URI == opt_iter.type)
                 {
                     isProxyRequest = true;
                 }
-#endif
                 if (idx < count)
                 {
                     if (bufLength <= sizeof(outInfo->options[0].optionData))
@@ -961,11 +955,10 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             return CA_MEMORY_ALLOC_FAILED;
         }
     }
-#ifdef WITH_CHPROXY
     else if(isProxyRequest && g_chproxyUri[0] != '\0')
     {
        /*
-        *   A request for CoAP-HTTP Proxy will not have any uri element as per CoAP specs
+        *   A request for Proxy will not have any uri element as per CoAP specs
         *   and only COAP_OPTION_PROXY_URI will be present. Use preset proxy uri
         *   for such requests.
         */
@@ -978,7 +971,6 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             return CA_MEMORY_ALLOC_FAILED;
         }
     }
-#endif
     return CA_STATUS_OK;
 
 exit:

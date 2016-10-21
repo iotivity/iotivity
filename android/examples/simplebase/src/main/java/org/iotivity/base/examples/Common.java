@@ -55,6 +55,10 @@ public class Common {
     public static final String LARGE_GET          = "large_get";
     public static final String RESOURCE_URI       = "/a/light";
     public static final String RESOURCE_TYPE      = "core.light";
+    public static final String LIGHT_POWER_KEY    = "power";
+    public static final String LIGHT_STATE_KEY    = "state";
+    public static final int    SUCCESS            = 200;
+
     public static final String RESOURCE_INTERFACE = OcPlatform.DEFAULT_INTERFACE;
     public static final EnumSet<ResourceProperty> RESOURCE_PROPERTIES =
             EnumSet.of(ResourceProperty.DISCOVERABLE, ResourceProperty.OBSERVABLE);

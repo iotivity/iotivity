@@ -23,18 +23,46 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <stdlib.h>
 
-int g_quitFlag = 0;
+static int g_quitFlag = 0;
+static int g_secureFlag = 0;
 
 void handleSigInt(int signum);
+
+static void PrintUsage()
+{
+    printf("Usage : proxy_main -s <0|1>\n");
+    printf("-s 0 : Launch proxy in unsecure mode.\n");
+    printf("-s 1 : Launch proxy in secure mode.\n");
+}
 
 /*
 * This method is an entry point of CoAP-HTTP Proxy.
 */
-
-int main()
+int main(int argc, char* argv[])
 {
-    printf("CoAP-HTTP proxy is starting..\n");
+    int opt = 0;
+    while ((opt = getopt(argc, argv, "s:")) != -1)
+    {
+        switch (opt)
+        {
+            case 's':
+                g_secureFlag = atoi(optarg);
+                break;
+            default:
+                PrintUsage();
+                return -1;
+        }
+    }
+
+    if (g_secureFlag != 0 && g_secureFlag != 1)
+    {
+        PrintUsage();
+        return -1;
+    }
+
+    printf("CoAP-HTTP proxy is starting. Mode [%d].\n", g_secureFlag);
     OCStackResult result = OCInit(NULL, 0, OC_SERVER);
     if (result != OC_STACK_OK)
     {
@@ -42,7 +70,7 @@ int main()
         return 0;
     }
 
-    if (CHPInitialize() != OC_STACK_OK)
+    if (CHPInitialize(g_secureFlag) != OC_STACK_OK)
     {
         printf("Failed to start proxy.\n");
         OCStop();

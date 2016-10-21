@@ -32,7 +32,7 @@ namespace OIC
 {
     namespace Service
     {
-        #define ENROLEE_SECURITY_TAG "ENROLLEE_SECURITY"
+        #define ENROLEE_SECURITY_TAG "ES_ENROLLEE_SECURITY"
         #define UUID_SIZE (16)
         #define UUID_STRING_SIZE (37)
 
@@ -52,11 +52,7 @@ namespace OIC
         public:
             EnrolleeSecurity(std::shared_ptr< OC::OCResource > resource,
             const std::string secDbPath);
-            void registerCallbackHandler(
-                const SecurityProvStatusCb securityProvStatusCb,
-                const SecurityPinCb securityPinCb,
-                const SecProvisioningDbPathCb secProvisioningDbPathCb);
-            void provisionOwnership();
+            ESResult provisionOwnership();
             std::string getUUID() const;
 
         private:
@@ -64,17 +60,17 @@ namespace OIC
             SecurityProvStatusCb m_securityProvStatusCb;
             SecurityPinCb m_securityPinCb;
             SecProvisioningDbPathCb m_secProvisioningDbPathCb;
-            std::shared_ptr< OC::OCSecureResource > m_unownedDevice;
 
             std::mutex m_mtx;
             std::condition_variable m_cond;
-            std::atomic<bool>  aclResult;
-            std::atomic<bool>  certResult;
+            std::atomic<bool> OTMResult;
+            std::atomic<bool> removeDeviceResult;
+            std::atomic<bool> aclResult;
+            std::atomic<bool> certResult;
 
             std::shared_ptr< OC::OCSecureResource > m_securedResource;
-            std::shared_ptr< OC::OCSecureResource > findEnrolleeSecurityResource(
-                OC::DeviceList_t &list);
-            void performOwnershipTransfer();
+
+            ESResult performOwnershipTransfer();
             bool isOwnedDeviceRegisteredInSVRDB();
             void removeDeviceWithUuidCB(OC::PMResultList_t *result, int hasError);
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError);
@@ -83,7 +79,7 @@ namespace OIC
 
 #if defined(__WITH_DTLS__) && defined(__WITH_TLS__)
         public:
-            void provisionSecurityForCloudServer(
+            ESResult provisionSecurityForCloudServer(
                 std::string cloudUuid, int credId);
         private:
             ESResult performCertProvisioningForCloudServer(

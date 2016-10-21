@@ -38,13 +38,15 @@
 #endif
 
 #include "catcpinterface.h"
+#include "caipnwmonitor.h"
 #include <coap/pdu.h>
 #include "caadapterutils.h"
 #include "octhread.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 
 #ifdef __WITH_TLS__
-#include "ca_adapter_net_tls.h"
+#include "ca_adapter_net_ssl.h"
 #endif
 
 /**
@@ -548,9 +550,9 @@ static void CAExecuteRequest(CATCPSessionInfo_t *svritem)
         case TLS:
 #ifdef __WITH_TLS__
         {
-            int ret = CAdecryptTls(&svritem->sep, (uint8_t *)svritem->data, svritem->len);
+            int ret = CAdecryptSsl(&svritem->sep, (uint8_t *)svritem->data, svritem->len);
 
-            OIC_LOG_V(DEBUG, TAG, "%s: CAdecryptTls returned %d", __func__, ret);
+            OIC_LOG_V(DEBUG, TAG, "%s: CAdecryptSsl returned %d", __func__, ret);
         }
         break;
 #endif
@@ -657,6 +659,11 @@ static CAResult_t CATCPConvertNameToAddr(int family, const char *host, uint16_t 
 
 static int CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
 {
+    VERIFY_NON_NULL_RET(svritem, TAG, "svritem", -1);
+
+    OIC_LOG_V(DEBUG, TAG, "try to connect with [%s:%u]",
+              svritem->sep.endpoint.addr, svritem->sep.endpoint.port);
+
     // #1. create tcp socket.
     int fd = socket(family, SOCK_STREAM, IPPROTO_TCP);
     if (-1 == fd)
@@ -679,11 +686,6 @@ static int CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
     socklen_t socklen = 0;
     if (sa.ss_family == AF_INET6)
     {
-        struct sockaddr_in6 *sock6 = (struct sockaddr_in6 *)&sa;
-        if (!sock6->sin6_scope_id)
-        {
-            sock6->sin6_scope_id = svritem->sep.endpoint.ifindex;
-        }
         socklen = sizeof(struct sockaddr_in6);
     }
     else
@@ -1082,7 +1084,58 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     VERIFY_NON_NULL(info, TAG, "info is NULL");
     VERIFY_NON_NULL(size, TAG, "size is NULL");
 
-    return CA_NOT_SUPPORTED;
+    u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
+    if (!iflist)
+    {
+        OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));
+        return CA_STATUS_FAILED;
+    }
+
+    uint32_t len = u_arraylist_length(iflist);
+
+    CAEndpoint_t *ep = (CAEndpoint_t *)OICCalloc(len, sizeof (CAEndpoint_t));
+    if (!ep)
+    {
+        OIC_LOG(ERROR, TAG, "Malloc Failed");
+        u_arraylist_destroy(iflist);
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
+    for (uint32_t i = 0, j = 0; i < len; i++)
+    {
+        CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+        if (!ifitem)
+        {
+            continue;
+        }
+
+        ep[j].adapter = CA_ADAPTER_TCP;
+        ep[j].ifindex = 0;
+
+        if (ifitem->family == AF_INET6)
+        {
+            ep[j].flags = CA_IPV6;
+            ep[j].port = caglobals.tcp.ipv6.port;
+        }
+        else if (ifitem->family == AF_INET)
+        {
+            ep[j].flags = CA_IPV4;
+            ep[j].port = caglobals.tcp.ipv4.port;
+        }
+        else
+        {
+            continue;
+        }
+        OICStrcpy(ep[j].addr, sizeof(ep[j].addr), ifitem->addr);
+        j++;
+    }
+
+    *info = ep;
+    *size = len;
+
+    u_arraylist_destroy(iflist);
+
+    return CA_STATUS_OK;
 }
 
 CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
@@ -1145,6 +1198,13 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
 
     oc_mutex_lock(g_mutexObjectList);
 
+#ifdef __WITH_TLS__
+    if (CA_STATUS_OK != CAcloseSslConnection(&svritem->sep.endpoint))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to close TLS session");
+    }
+#endif
+
     // close the socket and remove TCP connection info in list
     if (svritem->fd >= 0)
     {
@@ -1177,14 +1237,23 @@ void CATCPDisconnectAll()
         svritem = (CATCPSessionInfo_t *) u_arraylist_get(caglobals.tcp.svrlist, i);
         if (svritem && svritem->fd >= 0)
         {
+#ifdef __WITH_TLS__
+            CAcloseSslConnection(&svritem->sep.endpoint);
+#endif
             shutdown(svritem->fd, SHUT_RDWR);
             close(svritem->fd);
-
             OICFree(svritem->data);
             svritem->data = NULL;
+
+            // pass the connection information to CA Common Layer.
+            if (g_connectionCallback)
+            {
+                g_connectionCallback(&(svritem->sep.endpoint), false);
+            }
         }
     }
     u_arraylist_destroy(caglobals.tcp.svrlist);
+    caglobals.tcp.svrlist = NULL;
     oc_mutex_unlock(g_mutexObjectList);
 }
 

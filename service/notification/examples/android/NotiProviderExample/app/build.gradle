@@ -1,21 +1,30 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.1"
+    compileSdkVersion 21
+    buildToolsVersion "20.0.0"
+
+    packagingOptions {
+        pickFirst 'lib/armeabi/libocstack-jni.so'
+        pickFirst 'lib/armeabi-v7a/libocstack-jni.so'
+        pickFirst 'lib/x86/libocstack-jni.so'
+    }
 
     defaultConfig {
         applicationId "sample.notification.service.iotivity.org.notificationsample"
         minSdkVersion 21
-        targetSdkVersion 23
+        targetSdkVersion 21
         versionCode 1
         versionName "1.0"
+    }
+
+    lintOptions {
+        abortOnError false
     }
 }
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.support:appcompat-v7:23.0.1'
-    compile project(':iotivity-armeabi-notification-service-debug')
-    compile project(':iotivity-base-armeabi-debug')
+    compile ":iotivity-base-${TARGET_ARCH}-${RELEASE}@aar"
+    compile ":iotivity-${TARGET_ARCH}-notification-service-${RELEASE}@aar"
 }

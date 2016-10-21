@@ -43,7 +43,7 @@ if target_os not in ['arduino','darwin', 'ios', 'windows']:
     if target_os in ['linux']:
         SConscript('scene-manager/SConscript')
 
-    # Build notification-service project    
+    # Build notification-service project
     if target_os in ['linux','android']:
         SConscript('notification/SConscript')
 
@@ -51,15 +51,10 @@ if target_os not in ['arduino','darwin', 'ios', 'windows']:
     if target_os in ['linux'] and env.get('SIMULATOR', False):
         SConscript('simulator/SConscript')
 
-    # Build resource directory project
-    #if env.get('WITH_RD') == '1':
-        #SConscript('resource-directory/SConscript')
-
     # Build coap-http-proxy project
-    if target_os in ['linux'] and env.get('WITH_PROXY', False):
+    if target_os in ['linux', 'tizen'] and env.get('WITH_PROXY', False):
         SConscript('coap-http-proxy/SConscript')
 
 # Build EasySetup module
 if target_os in ['arduino', 'android', 'linux','tizen']:
     SConscript('easy-setup/SConscript')
-

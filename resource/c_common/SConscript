@@ -46,13 +46,13 @@ config_h_header = '''
 #ifndef IOTIVITY_CONFIG_H__
 #define IOTIVITY_CONFIG_H__
 
-#include "platform_features.h"
-
 ''' % (str(target_os), str(target_arch), str(datetime.datetime.utcnow()))
 
 config_h_body = ''
 
 config_h_footer = '''
+
+#include "platform_features.h"
 
 #endif // IOTIVITY_CONFIG_H__
 
@@ -64,6 +64,7 @@ cxx_headers = ['arpa/inet.h',
                'in6addr.h',
                'linux/limits.h',
                'memory.h',
+               'net/if.h',
                'netdb.h',
                'netinet/in.h',
                'pthread.h',
@@ -153,14 +154,6 @@ if target_os in ['tizen', 'linux']:
 common_env = env.Clone()
 
 ######################################################################
-# Build flags
-######################################################################
-common_conf = Configure(common_env)
-if common_conf.CheckFunc('QueryPerformanceFrequency'):
-	common_env.AppendUnique(CPPDEFINES = ['HAVE_QUERYPERFORMANCEFREQUENCY'])
-common_env = common_conf.Finish()
-
-######################################################################
 # Source files and Targets
 ######################################################################
 common_src = [
@@ -177,6 +170,8 @@ elif target_os  in ['windows']:
 else:
 	common_src.append('octhread/src/noop/octhread.c')
 
+common_env.AppendUnique(LIBS = ['logger'])
+common_env.AppendUnique(CPPPATH = ['#resource/csdk/logger/include'])
 commonlib = common_env.StaticLibrary('c_common', common_src)
 common_env.InstallTarget(commonlib, 'c_common')
 common_env.UserInstallTargetLib(commonlib, 'c_common')

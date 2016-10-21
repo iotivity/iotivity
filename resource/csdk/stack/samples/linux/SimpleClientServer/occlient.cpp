@@ -66,10 +66,6 @@ static OCDevAddr serverAddr;
 static char discoveryAddr[100];
 static std::string coapServerResource = "/a/light";
 
-// Following resource is used to verify coap-http proxy
-static std::string coapProxyResource = OC_RSRVD_PROXY_URI;
-static std::string httpResource;    // Will be taken as user input
-
 #ifdef WITH_PRESENCE
 // The handle for observe registration
 OCDoHandle gPresenceHandle;
@@ -109,7 +105,7 @@ OCPayload* putPayload()
 
 static void PrintUsage()
 {
-    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..21> -c <0|1>");
+    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..20> -c <0|1>");
     OIC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OIC_LOG(INFO, TAG, "-c 0 : Use Default connectivity(IP)");
     OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
@@ -144,7 +140,6 @@ static void PrintUsage()
             "add  vendor specific header options");
     OIC_LOG(INFO, TAG, "-t 19 :  Discover Platform");
     OIC_LOG(INFO, TAG, "-t 20 :  Discover Devices");
-    OIC_LOG(INFO, TAG, "-t 21 -p \"http_uri\":  Discover Proxy and Initiate Nonconfirmable Get Request");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -163,8 +158,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    const char *uri = query.str().length() ? query.str().c_str() : NULL;
-    ret = OCDoResource(&handle, method, uri, remoteAddr,
+    ret = OCDoResource(&handle, method, query.str().c_str(), remoteAddr,
                        (method == OC_REST_PUT) ? putPayload() : NULL,
                        (ConnType), qos, &cbData, options, numOptions);
 
@@ -295,45 +289,46 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle,
 
     if (clientResponse)
     {
-        OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OIC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d",
-                gNumObserveNotifies);
-        OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OIC_LOG(INFO, TAG, ("=============> Obs Response"));
-        gNumObserveNotifies++;
-        if (gNumObserveNotifies > 15) //large number to test observing in DELETE case.
+        if (clientResponse->sequenceNumber <= MAX_SEQUENCE_NUMBER)
         {
-            if (TestCase == TEST_OBS_REQ_NON || TestCase == TEST_OBS_REQ_CON)
+            if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
             {
-                OIC_LOG(ERROR, TAG, "Cancelling with LOW QOS");
-                if (OCCancel (handle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
-                {
-                    OIC_LOG(ERROR, TAG, "Observe cancel error");
-                }
-                return OC_STACK_DELETE_TRANSACTION;
+                OIC_LOG(INFO, TAG, "This also serves as a registration confirmation.");
             }
-            else if (TestCase == TEST_OBS_REQ_NON_CANCEL_IMM)
+
+            OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
+            OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
+            OIC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d",
+                    gNumObserveNotifies);
+            OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
+            OIC_LOG(INFO, TAG, ("=============> Obs Response"));
+            gNumObserveNotifies++;
+
+            if (gNumObserveNotifies > 15) //large number to test observing in DELETE case.
             {
-                OIC_LOG(ERROR, TAG, "Cancelling with HIGH QOS");
-                if (OCCancel (handle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+                if (TestCase == TEST_OBS_REQ_NON || TestCase == TEST_OBS_REQ_CON)
                 {
-                    OIC_LOG(ERROR, TAG, "Observe cancel error");
+                    OIC_LOG(ERROR, TAG, "Cancelling with LOW QOS");
+                    if (OCCancel (handle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
+                    {
+                        OIC_LOG(ERROR, TAG, "Observe cancel error");
+                    }
+                    return OC_STACK_DELETE_TRANSACTION;
+                }
+                else if (TestCase == TEST_OBS_REQ_NON_CANCEL_IMM)
+                {
+                    OIC_LOG(ERROR, TAG, "Cancelling with HIGH QOS");
+                    if (OCCancel (handle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+                    {
+                        OIC_LOG(ERROR, TAG, "Observe cancel error");
+                    }
                 }
             }
         }
-        if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
+        else
         {
-            OIC_LOG(INFO, TAG, "This also serves as a registration confirmation");
-        }
-        else if (clientResponse->sequenceNumber == OC_OBSERVE_DEREGISTER)
-        {
-            OIC_LOG(INFO, TAG, "This also serves as a deregistration confirmation");
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-        else if (clientResponse->sequenceNumber == OC_OBSERVE_NO_OPTION)
-        {
-            OIC_LOG(INFO, TAG, "This also tells you that registration/deregistration failed");
+            OIC_LOG(INFO, TAG, "No observe option header is returned in the response.");
+            OIC_LOG(INFO, TAG, "For a registration request, it means the registration failed");
             return OC_STACK_DELETE_TRANSACTION;
         }
     }
@@ -409,12 +404,9 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
 
         OCResourcePayload *resource = (OCResourcePayload*) payload->resources;
         int found = 0;
-
-        std::string resourceToFind = (TestCase == TEST_PROXY_GET_REQ_NON) ?
-                                            coapProxyResource : coapServerResource;
         while (resource)
         {
-            if(resource->uri && strcmp(resource->uri, resourceToFind.c_str()) == 0)
+            if(resource->uri && strcmp(resource->uri, coapServerResource.c_str()) == 0)
             {
                 found = 1;
                 break;
@@ -424,7 +416,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
 
         if(!found)
         {
-            OIC_LOG_V (INFO, TAG, "No %s in payload", resourceToFind.c_str());
+            OIC_LOG_V (INFO, TAG, "No %s in payload", coapServerResource.c_str());
             return OC_STACK_KEEP_TRANSACTION;
         }
 
@@ -463,9 +455,6 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
                 break;
             case TEST_OBS_REQ_CON:
                 InitObserveRequest(OC_HIGH_QOS);
-                break;
-            case TEST_PROXY_GET_REQ_NON:
-                InitProxyGetRequest(OC_LOW_QOS);
                 break;
 #ifdef WITH_PRESENCE
             case TEST_OBS_PRESENCE:
@@ -700,25 +689,6 @@ int InitDeleteRequest(OCQualityOfService qos)
     return result;
 }
 
-int InitProxyGetRequest(OCQualityOfService qos)
-{
-    OIC_LOG(INFO, TAG, "InitProxyGetRequest");
-    OCHeaderOption option;
-    memset(&option, 0, sizeof(option));
-
-    option.protocolID = OC_COAP_ID;
-    option.optionID = OC_RSRVD_PROXY_OPTION_ID;
-    memcpy(option.optionData, (uint8_t *)httpResource.c_str(), httpResource.length());
-    option.optionLength = httpResource.length();
-
-    std::ostringstream query;
-    // A request with proxy uri shall not have resource uri
-    // query << coapProxyResource;
-
-    return (InvokeOCDoResource(query, &serverAddr, OC_REST_GET,
-                (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS, getReqCB, &option, 1));
-}
-
 int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions,
                    bool getWithQuery)
 {
@@ -738,17 +708,25 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
 
     if (withVendorSpecificHeaderOptions)
     {
+        memset(options, 0, sizeof(OCHeaderOption)* MAX_HEADER_OPTIONS);
+        size_t numOptions = 0;
         uint8_t option0[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        uint16_t optionID = 2048;
+        size_t optionDataSize = sizeof(option0);
+        OCSetHeaderOption(options,
+                          &numOptions,
+                          optionID,
+                          option0,
+                          optionDataSize);
+
         uint8_t option1[] = { 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
-        memset(options, 0, sizeof(OCHeaderOption) * MAX_HEADER_OPTIONS);
-        options[0].protocolID = OC_COAP_ID;
-        options[0].optionID = 2048;
-        memcpy(options[0].optionData, option0, sizeof(option0));
-        options[0].optionLength = 10;
-        options[1].protocolID = OC_COAP_ID;
-        options[1].optionID = 3000;
-        memcpy(options[1].optionData, option1, sizeof(option1));
-        options[1].optionLength = 10;
+        optionID = 3000;
+        optionDataSize = sizeof(option1);
+        OCSetHeaderOption(options,
+                          &numOptions,
+                          optionID,
+                          option1,
+                          optionDataSize);
     }
     if (withVendorSpecificHeaderOptions)
     {
@@ -838,7 +816,7 @@ int main(int argc, char* argv[])
 {
     int opt;
 
-    while ((opt = getopt(argc, argv, "u:t:c:p:")) != -1)
+    while ((opt = getopt(argc, argv, "u:t:c:")) != -1)
     {
         switch(opt)
         {
@@ -851,12 +829,6 @@ int main(int argc, char* argv[])
             case 'c':
                 Connectivity = atoi(optarg);
                 break;
-            case 'p':
-                if(optarg)
-                {
-                    httpResource = optarg;
-                }
-                break;
             default:
                 PrintUsage();
                 return -1;
@@ -865,8 +837,7 @@ int main(int argc, char* argv[])
 
     if ((UnicastDiscovery != 0 && UnicastDiscovery != 1) ||
             (TestCase < TEST_DISCOVER_REQ || TestCase >= MAX_TESTS) ||
-            (Connectivity < CT_ADAPTER_DEFAULT || Connectivity >= MAX_CT) ||
-            (TestCase == TEST_PROXY_GET_REQ_NON && httpResource.length() == 0) )
+            (Connectivity < CT_ADAPTER_DEFAULT || Connectivity >= MAX_CT))
     {
         PrintUsage();
         return -1;

@@ -47,22 +47,24 @@ unittests_env.PrependUnique(CPPPATH = [
 		])
 
 if target_os in ['windows']:
-	unittests_env.AppendUnique(LIBS = ['ws2_32'])
+	unittests_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi', 'bcrypt'])
 	unittests_env.AppendUnique(CPPPATH = ['#extlibs/boost/boost'])
+
+if unittests_env.get('SECURED') == '1':
+	unittests_env.AppendUnique(LIBS = ['ocsrm'])
 
 unittests_env.AppendUnique(LIBPATH = [unittests_env.get('BUILD_DIR')])
 unittests_env.PrependUnique(LIBS = [
 		'oc',
-		'octbstack',
+		'octbstack_test',
 		'oc_logger',
 		'connectivity_abstraction',
 		'coap'
 		])
 
 if unittests_env.get('SECURED') == '1':
+	unittests_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 	unittests_env.AppendUnique(LIBS = ['tinydtls'])
-	if unittests_env.get('WITH_TCP') == True:
-		unittests_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 if unittests_env.get('LOGGING'):
 	unittests_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
@@ -87,9 +89,9 @@ unittests_src = [
 
 # TODO: Fix errors in the following Windows tests.
 if target_os in ['windows']:
-	unittests_src.remove('OCPlatformTest.cpp')
-	unittests_src.remove('OCRepresentationEncodingTest.cpp')
 	if '12.0' == unittests_env['MSVC_VERSION']:
+		unittests_src.remove('OCPlatformTest.cpp')
+		unittests_src.remove('OCRepresentationEncodingTest.cpp')
 		unittests_src.remove('OCRepresentationTest.cpp')
 		unittests_src.remove('OCResourceTest.cpp')
 

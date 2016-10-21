@@ -45,6 +45,12 @@ import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem.CoapDevicePool;
 import org.iotivity.cloud.util.Cbor;
 
+/**
+ *
+ * This class provides a set of APIs to send requests about message to another
+ * device
+ *
+ */
 public class DiResource extends Resource {
 
     private CoapDevicePool mDevicePool = null;
@@ -108,6 +114,12 @@ public class DiResource extends Resource {
                 null);
     }
 
+    /**
+     *
+     * This class provides a set of APIs to handling message contains link
+     * interface.
+     *
+     */
     class LinkInterfaceHandler implements IResponseEventHandler {
         private Cbor<List<HashMap<String, Object>>> mCbor      = new Cbor<>();
         private String                              mTargetDI  = null;
@@ -143,6 +155,15 @@ public class DiResource extends Resource {
         }
     }
 
+    /**
+     * API for handling optional method for handling packet contains link
+     * interface.
+     * 
+     * @param srcDevice
+     *            device information contains response channel
+     * @param request
+     *            received request to relay
+     */
     public void onLinkInterfaceRequestReceived(Device srcDevice,
             IRequest request) throws ServerException {
         IRequestChannel requestChannel = getTargetDeviceChannel(request);
@@ -175,7 +196,6 @@ public class DiResource extends Resource {
         }
     }
 
-    // This is optional method for packet handling
     @Override
     public void onDefaultRequestReceived(Device srcDevice, IRequest request)
             throws ServerException {

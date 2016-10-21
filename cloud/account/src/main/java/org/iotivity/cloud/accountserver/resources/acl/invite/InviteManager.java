@@ -23,11 +23,13 @@ package org.iotivity.cloud.accountserver.resources.acl.invite;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.db.InviteTable;
+import org.iotivity.cloud.accountserver.resources.acl.group.GroupManager;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
@@ -42,7 +44,6 @@ import org.iotivity.cloud.util.Cbor;
  * This class provides a set of APIs to invite a user to a group
  *
  */
-
 public class InviteManager {
 
     private TypeCastingManager<InviteTable> mTypeInvite = new TypeCastingManager<>();
@@ -60,6 +61,16 @@ public class InviteManager {
     // <uid, subscriber list>
     private HashMap<String, ArrayList<InviteSubscriber>> mSubscribers = new HashMap<>();
 
+    /**
+     * API to add invitation
+     * 
+     * @param uid
+     *            id of user who sent invitation
+     * @param gid
+     *            id of group to invite member to
+     * @param mid
+     *            id of invited user
+     */
     public void addInvitation(String uid, String gid, String mid) {
 
         // create invitation table
@@ -79,7 +90,17 @@ public class InviteManager {
         }
     }
 
-    public void deleteInvitation(String mid, String gid) {
+    /**
+     * API to delete invitation by invited user
+     * 
+     * @param mid
+     *            id of invited user
+     * @param gid
+     *            id of group which the user was invited to
+     * @param accepted
+     *            value of invitation accept or deny
+     */
+    public void deleteInvitation(String mid, String gid, boolean accepted) {
         HashMap<String, Object> condition = new HashMap<>();
         condition.put(Constants.REQ_GROUP_ID, gid);
         condition.put(Constants.KEYFIELD_INVITED_USER, mid);
@@ -99,12 +120,31 @@ public class InviteManager {
         AccountDBManager.getInstance().deleteRecord(Constants.INVITE_TABLE,
                 condition);
 
+        /* add user into group */
+        if (accepted) {
+
+            HashSet<String> midlist = new HashSet<String>();
+            midlist.add(mid);
+
+            GroupManager.getInstance().addGroupMember(gid, midlist);
+        }
+
         notifyToSubscriber(mid);
         for (String uid : uidList) {
             notifyToSubscriber(uid);
         }
     }
 
+    /**
+     * API to cancel invitation by user who invited member
+     * 
+     * @param uid
+     *            id of user who sent invitation
+     * @param gid
+     *            id of group to invite member to
+     * @param mid
+     *            id of invited user
+     */
     public void cancelInvitation(String uid, String gid, String mid) {
 
         HashMap<String, Object> condition = new HashMap<>();
@@ -120,6 +160,14 @@ public class InviteManager {
         notifyToSubscriber(mid);
     }
 
+    /**
+     * API to get invitation information
+     * 
+     * @param uid
+     *            user id
+     * 
+     * @return returns invite and invited information of the user
+     */
     public HashMap<String, Object> getInvitationInfo(String uid) {
         HashMap<String, Object> responsePayload = new HashMap<>();
 
@@ -158,6 +206,18 @@ public class InviteManager {
         return responsePayload;
     }
 
+    /**
+     * API to add subscriber of invite resource
+     * 
+     * @param uid
+     *            user id
+     * @param subscriber
+     *            device that sent request for subscription
+     * @param request
+     *            received request for subscription
+     * 
+     * @return returns invite and invited information of the user
+     */
     public HashMap<String, Object> addSubscriber(String uid, Device subscriber,
             IRequest request) {
 
@@ -178,14 +238,24 @@ public class InviteManager {
         return getInvitationInfo(uid);
     }
 
-    public HashMap<String, Object> removeSubscriber(String uid, IRequest request) {
+    /**
+     * API to remove subscriber of invite resource
+     * 
+     * @param uid
+     *            user id
+     * @param request
+     *            received request for unsubscription
+     * 
+     * @return returns invite and invited information of the user
+     */
+    public HashMap<String, Object> removeSubscriber(String uid,
+            IRequest request) {
 
         synchronized (mSubscribers) {
             if (mSubscribers.containsKey(uid)) {
 
-                mSubscribers.get(uid).removeIf(
-                        subscriber -> subscriber.mRequest.getRequestId()
-                                .equals(request.getRequestId()));
+                mSubscribers.get(uid).removeIf(subscriber -> subscriber.mRequest
+                        .getRequestId().equals(request.getRequestId()));
             }
         }
 
@@ -204,8 +274,8 @@ public class InviteManager {
 
             for (InviteSubscriber subscriber : mSubscribers.get(id)) {
 
-                subscriber.mSubscriber.sendResponse(MessageBuilder
-                        .createResponse(subscriber.mRequest,
+                subscriber.mSubscriber.sendResponse(
+                        MessageBuilder.createResponse(subscriber.mRequest,
                                 ResponseStatus.CONTENT,
                                 ContentFormat.APPLICATION_CBOR, payload));
             }

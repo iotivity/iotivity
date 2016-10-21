@@ -34,11 +34,11 @@
 
 #define CLOUD_CONTEXT_VALUE 0x99
 
-char CLOUD_ADDRESS[50];
-char CLOUD_AUTH_PROVIDER[50];
-char CLOUD_AUTH_CODE[50];
-char CLOUD_UID[50];
-char CLOUD_ACCESS_TOKEN[50];
+char CLOUD_ADDRESS[100];
+char CLOUD_AUTH_PROVIDER[100];
+char CLOUD_AUTH_CODE[100];
+char CLOUD_UID[100];
+char CLOUD_ACCESS_TOKEN[100];
 #endif
 
 
@@ -122,6 +122,17 @@ void* OCProcessThread(void * ptr)
     return NULL;
 }
 
+void input(char * buffer)
+{
+    char ch;
+    int i = 0;
+
+    while( (ch = getchar()) != '\n' && i < 100)
+        buffer[i++] = ch;
+
+    buffer[i] = '\0';
+}
+
 int main(void)
 {
     bool isExit = false;
@@ -156,7 +167,8 @@ int main(void)
         printf("2. Stop Consumer\n");
         printf("3. Get Topics\n");
         printf("4. Select Topics\n");
-        printf("5. Exit\n");
+        printf("5. Cancel select Topics\n");
+        printf("0. Exit\n");
 #ifdef WITH_CLOUD
         printf("21. Enable Remote Service (after login)\n");
         printf("31. Cloud Signup\n");
@@ -166,9 +178,16 @@ int main(void)
 
         printf("Input: ");
 
-        scanf("%d", &num);
+        if(scanf("%d", &num) == EOF)
+        {
+            printf("Fail to input num\n");
+        }
         fflush(stdin);
-        scanf("%c", &dummy);
+
+        if(scanf("%c", &dummy) == EOF)
+        {
+            printf("Fail to input dummy\n");
+        }
         fflush(stdin);
 
         switch (num)
@@ -213,7 +232,22 @@ int main(void)
                 }
                 break;
             case 5:
-                printf("5. Exit");
+                printf("5. Cancel select Topics\n");
+                NSTopicLL * iter = g_topicLL;
+                while (iter)
+                {
+                    iter->state = NS_TOPIC_UNSUBSCRIBED;
+                    iter = iter->next;
+                }
+
+                NSResult ret = NSConsumerUpdateTopicList(g_provider->providerId, g_topicLL);
+                if (ret != NS_OK)
+                {
+                    printf("Cancel select topic fail\n");
+                }
+                break;
+            case 0:
+                printf("0. Exit");
                 isExit = true;
                 break;
 #ifdef WITH_CLOUD
@@ -228,13 +262,13 @@ int main(void)
                 break;
             case 31:
                 printf("Remote Server Address: ");
-                gets(CLOUD_ADDRESS);
+                input(CLOUD_ADDRESS);
 
                 printf("Auth Provider(eg. github): ");
-                gets(CLOUD_AUTH_PROVIDER);
+                input(CLOUD_AUTH_PROVIDER);
 
                 printf("Auth Code: ");
-                gets(CLOUD_AUTH_CODE);
+                input(CLOUD_AUTH_CODE);
 
                 OCCloudSignup(CLOUD_ADDRESS, OCGetServerInstanceIDString(),
                     CLOUD_AUTH_PROVIDER, CLOUD_AUTH_CODE, CloudSignupCallback);
@@ -242,13 +276,13 @@ int main(void)
                 break;
             case 32:
                 printf("Remote Server Address: ");
-                gets(CLOUD_ADDRESS);
+                input(CLOUD_ADDRESS);
 
                 printf("UID: ");
-                gets(CLOUD_UID);
+                input(CLOUD_UID);
 
                 printf("ACCESS_TOKEN: ");
-                gets(CLOUD_ACCESS_TOKEN);
+                input(CLOUD_ACCESS_TOKEN);
 
                 OCCloudLogin(CLOUD_ADDRESS, CLOUD_UID, OCGetServerInstanceIDString(),
                     CLOUD_ACCESS_TOKEN, CloudLoginoutCallback);
@@ -265,3 +299,4 @@ int main(void)
     }
     return 0;
 }
+

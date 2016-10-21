@@ -28,9 +28,8 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 
-#define NS_DISCOVER_QUERY "/oic/res?rt=oic.r.notification"
-#define NS_PRESENCE_SUBSCRIBE_QUERY_TCP "/oic/ad?rt=oic.r.notification"
-#define NS_GET_INFORMATION_QUERY "/notification?if=oic.if.notification"
+#define NS_DISCOVER_QUERY "/oic/res?rt=oic.wk.notification"
+#define NS_PRESENCE_SUBSCRIBE_QUERY_TCP "/oic/ad?rt=oic.wk.notification"
 
 NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse);
 
@@ -81,7 +80,7 @@ OCStackApplicationResult NSConsumerPresenceListener(
     {
         NS_LOG(DEBUG, "started presence or resource is created.");
         NSInvokeRequest(NULL, OC_REST_DISCOVER, clientResponse->addr,
-            NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener, NULL,
+            NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener, NULL, NULL,
             clientResponse->addr->adapter);
     }
 
@@ -125,9 +124,16 @@ OCStackApplicationResult NSProviderDiscoverListener(
                 type = CT_ADAPTER_TCP;
             }
 
-            NSInvokeRequest(NULL, OC_REST_GET, clientResponse->addr,
+            OCDevAddr * addr = clientResponse->addr;
+            if (resource->secure)
+            {
+                addr->port = resource->port;
+                addr->flags |= OC_FLAG_SECURE;
+            }
+
+            NSInvokeRequest(NULL, OC_REST_GET, addr,
                     resource->uri, NULL, NSIntrospectProvider, ctx,
-                    type);
+                    NULL, type);
         }
         resource = resource->next;
     }
@@ -193,18 +199,17 @@ NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse)
     OCRepPayloadPropType accepterType = OCREP_PROP_BOOL;
 
     OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
-    while (payload)
+    OCRepPayloadValue * value = payload->values;
+    while (value)
     {
-        NS_LOG_V(DEBUG, "Payload Key : %s", payload->values->name);
-        NS_LOG_V(DEBUG, "Payload Type : %d", (int) payload->values->type);
-        if (!strcmp(payload->values->name, NS_ATTRIBUTE_POLICY))
+        NS_LOG_V(DEBUG, "Payload Key : %s", value->name);
+        NS_LOG_V(DEBUG, "Payload Type : %d", (int) value->type);
+        if (!strcmp(value->name, NS_ATTRIBUTE_POLICY))
         {
-            accepterType = payload->values->type;
+            accepterType = value->type;
         }
-        payload = payload->next;
+        value = value->next;
     }
-
-    payload = (OCRepPayload *)clientResponse->payload;
 
     char * providerId = NULL;
     char * messageUri = NULL;
@@ -341,7 +346,7 @@ void NSConsumerHandleRequestDiscover(OCDevAddr * address, NSConsumerDiscoverType
             NS_LOG(DEBUG, "Request discover and subscribe presence [TCP]");
             NS_LOG(DEBUG, "Subscribe presence [TCP]");
             NSInvokeRequest(NULL, OC_REST_PRESENCE, address, NS_PRESENCE_SUBSCRIBE_QUERY_TCP,
-                    NULL, NSConsumerPresenceListener, NULL, type);
+                    NULL, NSConsumerPresenceListener, NULL, NULL, type);
 
             if (rType == NS_DISCOVER_CLOUD)
             {
@@ -359,7 +364,7 @@ void NSConsumerHandleRequestDiscover(OCDevAddr * address, NSConsumerDiscoverType
     }
 
     NSInvokeRequest(NULL, OC_REST_DISCOVER, address, NS_DISCOVER_QUERY,
-            NULL, NSProviderDiscoverListener, (void *)callbackData, type);
+            NULL, NSProviderDiscoverListener, (void *)callbackData, NULL, type);
 }
 
 void NSConsumerDiscoveryTaskProcessing(NSTask * task)

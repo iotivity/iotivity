@@ -74,14 +74,10 @@ NSResult NSConsumerMessageHandlerInit()
     NSConsumerThread * handle = NULL;
     NSConsumerQueue * queue = NULL;
 
-    uint8_t uuid[UUID_SIZE] = {0,};
-    char uuidString[UUID_STRING_SIZE] = {0,};
-    OCRandomUuidResult randomRet = OCGenerateUuid(uuid);
-    NS_VERIFY_NOT_NULL(randomRet == RAND_UUID_OK ? (void *) 1 : NULL, NS_ERROR);
-    randomRet = OCConvertUuidToString(uuid, uuidString);
-    NS_VERIFY_NOT_NULL(randomRet == RAND_UUID_OK ? (void *) 1 : NULL, NS_ERROR);
+    char * consumerUuid = (char *)OCGetServerInstanceIDString();
+    NS_VERIFY_NOT_NULL(consumerUuid, NS_ERROR);
 
-    NSSetConsumerId(uuidString);
+    NSSetConsumerId(consumerUuid);
     NS_LOG_V(DEBUG, "Consumer ID : %s", *NSGetConsumerId());
 
     NS_LOG(DEBUG, "listener init");
@@ -92,15 +88,15 @@ NSResult NSConsumerMessageHandlerInit()
     ret = NSConsumerSystemInit();
     NS_VERIFY_NOT_NULL(ret == NS_OK ? (void *) 1 : NULL, NS_ERROR);
 
-    NS_LOG(DEBUG, "queue thread init");
-    handle = NSThreadInit(NSConsumerMsgHandleThreadFunc, NULL);
-    NS_VERIFY_NOT_NULL(handle, NS_ERROR);
-    NSSetMsgHandleThreadHandle(handle);
-
     NS_LOG(DEBUG, "create queue");
     queue = NSCreateQueue();
     NS_VERIFY_NOT_NULL(queue, NS_ERROR);
     NSSetMsgHandleQueue(queue);
+
+    NS_LOG(DEBUG, "queue thread init");
+    handle = NSThreadInit(NSConsumerMsgHandleThreadFunc, NULL);
+    NS_VERIFY_NOT_NULL(handle, NS_ERROR);
+    NSSetMsgHandleThreadHandle(handle);
 
     return NS_OK;
 }
@@ -111,6 +107,7 @@ NSResult NSConsumerPushEvent(NSTask * task)
     NS_VERIFY_NOT_NULL(thread, NS_ERROR);
 
     NSDestroyThreadHandle(thread);
+    NSOICFree(thread);
 
     return NS_OK;
 }
@@ -121,10 +118,12 @@ void NSConsumerMessageHandlerExit()
     NSConsumerListenerTermiate();
     NSCancelAllSubscription();
 
-    NSThreadStop(*(NSGetMsgHandleThreadHandle()));
+    NSConsumerThread * thread = *(NSGetMsgHandleThreadHandle());
+    NSThreadStop(thread);
     NSSetMsgHandleThreadHandle(NULL);
 
-    NSDestroyQueue(*(NSGetMsgHandleQueue()));
+    NSConsumerQueue * queue = *(NSGetMsgHandleQueue());
+    NSDestroyQueue(queue);
     NSSetMsgHandleQueue(NULL);
 
     NSDestroyInternalCachedList();
@@ -167,6 +166,7 @@ void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
         if (obj)
         {
             NSConsumerTaskProcessing((NSTask *)(obj->data));
+            NSOICFree(obj);
         }
 
         NSThreadUnlock(queueHandleThread);
@@ -178,8 +178,6 @@ void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
 
 void * NSConsumerMsgPushThreadFunc(void * data)
 {
-    NSThreadDetach();
-
     NSConsumerQueueObject * obj = NULL;
     NSConsumerQueue * queue = NULL;
 
@@ -205,7 +203,7 @@ void * NSConsumerMsgPushThreadFunc(void * data)
     }
     else
     {
-        NSPushQueue(queue, obj);
+        NSPushConsumerQueue(queue, obj);
     }
 
     NSThreadUnlock(msgHandleThread);
@@ -321,7 +319,7 @@ void NSConsumerTaskProcessing(NSTask * task)
         {
             NSTask * getTopicTask = (NSTask *)OICMalloc(sizeof(NSTask));
             NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(getTopicTask,
-                        NSRemoveProvider_internal((NSProvider_internal *) task->taskData));
+                        NSRemoveProvider_internal((void *) task->taskData));
             getTopicTask->nextTask = NULL;
             getTopicTask->taskData =
                     (void *) NSCopyProvider_internal((NSProvider_internal *) task->taskData);

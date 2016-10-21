@@ -59,8 +59,14 @@ int processUserInput(int min, int max)
 
     if (!std::cin.fail())
     {
-        if(input == max + 1) throw CloseApp();
-        if(min <= input && input <= max) return input;
+        if (input == max + 1)
+        {
+            throw CloseApp();
+        }
+        if (min <= input && input <= max)
+        {
+            return input;
+        }
     }
 
     std::cin.clear();
@@ -89,7 +95,7 @@ void displayControlLightMenu()
 
 void printAttributes(const RCSResourceAttributes& attrs)
 {
-    for(const auto& attr : attrs)
+    for (const auto& attr : attrs)
     {
         std::cout << "\tkey : " << attr.key() << "\n\tvalue : "
                   << attr.value().toString() << std::endl;
@@ -144,7 +150,7 @@ void updateAttribute(const std::string& attrKey, int control)
         attrs[attrKey] = attrs[attrKey].get<int>() + diff;
     }
 
-    if(control == INCREASE)
+    if (control == INCREASE)
     {
         std::cout << attrKey << " increased." << std::endl;
     }
@@ -237,17 +243,17 @@ int main(void)
 {
     g_currentRun = runPresenceSelection;
 
-    while(true)
+    while (true)
     {
         try
         {
             g_currentRun();
         }
-        catch(const std::exception& e)
+        catch (const std::exception& e)
         {
             std::cout << e.what() << std::endl;
         }
-        catch(const CloseApp&)
+        catch (const CloseApp&)
         {
             break;
         }
@@ -256,7 +262,7 @@ int main(void)
 
     g_resource.reset();
 
-    if(g_isPresenceStarted)
+    if (g_isPresenceStarted)
     {
         stopPresence();
     }

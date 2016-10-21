@@ -35,7 +35,7 @@ static OCStackResult parseInvitePayload(const OCRepPayload *payload, const char 
         return OC_STACK_MALFORMED_RESPONSE;
     }
 
-    int count = calcDimTotal(dimensions);
+    size_t count = calcDimTotal(dimensions);
 
     stringArray_t *gidlist = &out->gidlist;
     stringArray_t *midlist = &out->midlist;
@@ -135,12 +135,7 @@ static OCStackResult handleAclGetInvitationResponse(void *ctx, void **data, OCCl
     }
 
     *data = answer;
-
 exit:
-    if (result != OC_STACK_OK)
-    {
-        OICFree(answer);
-    }
     return result;
 }
 
@@ -185,6 +180,7 @@ OCStackResult OCCloudAclInviteUser(void* ctx,
     char uri[MAX_URI_LENGTH] = { 0 };
     size_t i = 0;
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupIds, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(memberIds, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
@@ -245,6 +241,8 @@ OCStackResult OCCloudAclGetInvitation(void* ctx,
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+
     snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s", DEFAULT_PREFIX,
             endPoint->addr, endPoint->port, OC_RSRVD_ACL_INVITE_URL);
 
@@ -269,6 +267,7 @@ OCStackResult OCCloudAclDeleteInvitation(void* ctx,
 {
     char uri[MAX_URI_LENGTH] = { 0 };
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
     snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s", DEFAULT_PREFIX,
@@ -300,6 +299,7 @@ OCStackResult OCCloudAclCancelInvitation(void* ctx,
     char uri[MAX_URI_LENGTH] = { 0 };
     size_t len = 0 ;
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(groupId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(memberId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
 
@@ -335,6 +335,7 @@ OCStackResult OCCloudAclPolicyCheck(void* ctx,
     char uri[MAX_URI_LENGTH] = { 0 };
     size_t len = 0;
 
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(subjectId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(deviceId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL_RET(method, TAG, "NULL input param", OC_STACK_INVALID_PARAM);

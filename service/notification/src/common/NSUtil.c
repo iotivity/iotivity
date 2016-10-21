@@ -35,7 +35,7 @@ OCEntityHandlerRequest *NSCopyOCEntityHandlerRequest(OCEntityHandlerRequest *ent
         if (copyOfRequest->query)
         {
             copyOfRequest->query = OICStrdup(entityHandlerRequest->query);
-            if(!copyOfRequest->query)
+            if (!copyOfRequest->query)
             {
                 NS_LOG(ERROR, "Copy failed due to allocation failure");
                 OICFree(copyOfRequest);
@@ -97,7 +97,7 @@ NSResult NSFreeMessage(NSMessage * obj)
     NSFreeMalloc(&(obj->sourceName));
     NSFreeMalloc(&(obj->topic));
     NSFreeMediaContents(obj->mediaContents);
-
+    OCRepPayloadDestroy(obj->extraInfo);
     OICFree(obj);
 
     return NS_OK;
@@ -107,18 +107,19 @@ NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
 {
     NSMessage * newMsg = NULL;
 
-    if(copyMsg == NULL)
+    if (copyMsg == NULL)
     {
         NS_LOG(ERROR, "Copy Msg is NULL");
         return NULL;
     }
 
     newMsg = NSInitializeMessage();
+    NS_VERIFY_NOT_NULL(newMsg, NULL);
 
     newMsg->messageId = copyMsg->messageId;
     OICStrcpy(newMsg->providerId, UUID_STRING_SIZE, copyMsg->providerId);
 
-    if(copyMsg->dateTime)
+    if (copyMsg->dateTime)
     {
         newMsg->dateTime = OICStrdup(copyMsg->dateTime);
     }
@@ -150,6 +151,11 @@ NSMessage * NSDuplicateMessage(NSMessage * copyMsg)
         newMsg->topic = OICStrdup(copyMsg->topic);
     }
 
+    if (copyMsg->extraInfo)
+    {
+        newMsg->extraInfo = OCRepPayloadClone(copyMsg->extraInfo);
+    }
+
     return newMsg;
 }
 
@@ -169,7 +175,7 @@ NSSyncInfo* NSDuplicateSync(NSSyncInfo * copyMsg)
 {
     NSSyncInfo * newMsg = NULL;
 
-    if(!copyMsg)
+    if (!copyMsg)
     {
         NS_LOG(ERROR, "Copy Msg is NULL");
         return NULL;
@@ -177,7 +183,7 @@ NSSyncInfo* NSDuplicateSync(NSSyncInfo * copyMsg)
 
     newMsg = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
 
-    if(!newMsg)
+    if (!newMsg)
     {
         NS_LOG(ERROR, "newMsg is NULL");
         return NULL;
@@ -209,7 +215,7 @@ NSConsumer* NSDuplicateConsumer(NSConsumer * copyMsg)
 {
     NSConsumer * newMsg = NULL;
 
-    if(copyMsg == NULL)
+    if (copyMsg == NULL)
     {
         NS_LOG(ERROR, "Copy Msg is NULL");
         return NULL;
@@ -217,7 +223,7 @@ NSConsumer* NSDuplicateConsumer(NSConsumer * copyMsg)
 
     newMsg = (NSConsumer *)OICMalloc(sizeof(NSConsumer));
 
-    if(!newMsg)
+    if (!newMsg)
     {
         NS_LOG(ERROR, "newMsg is NULL");
         return NULL;
@@ -233,7 +239,7 @@ NSConsumer* NSDuplicateConsumer(NSConsumer * copyMsg)
 void NSDuplicateSetPropertyString(OCRepPayload** msgPayload, const char * name,
         const char * copyString)
 {
-    if(copyString)
+    if (copyString)
     {
         OCRepPayloadSetPropString(*msgPayload, name, copyString);
     }
@@ -242,7 +248,7 @@ void NSDuplicateSetPropertyString(OCRepPayload** msgPayload, const char * name,
 void NSDuplicateSetPropertyInt(OCRepPayload** msgPayload, const char * name,
         int64_t value)
 {
-    if(value)
+    if (value)
     {
         OCRepPayloadSetPropInt(*msgPayload, name, value);
     }
@@ -254,11 +260,13 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
     char * providerId = NULL;
     int64_t state = 0;
 
-    if(!payload)
+    if (!payload)
     {
         return NULL;
     }
+
     NSSyncInfo * retSync = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
+
     if (!retSync)
     {
         return NULL;
@@ -266,9 +274,10 @@ NSSyncInfo * NSGetSyncInfo(OCPayload * payload)
 
     retSync->messageId = 0;
     retSync->state = NS_SYNC_READ;
-
     OCRepPayload * repPayload = (OCRepPayload *)payload;
-    if (!OCRepPayloadGetPropInt(repPayload, NS_ATTRIBUTE_MESSAGE_ID, (int64_t *)&retSync->messageId))
+
+    if (!OCRepPayloadGetPropInt(repPayload, NS_ATTRIBUTE_MESSAGE_ID,
+            (int64_t *)&retSync->messageId))
     {
         OICFree(retSync);
         return NULL;
@@ -322,7 +331,7 @@ char * NSGetValueFromQuery(char *query, char * compareKey)
 
     NS_LOG_V(INFO, "NS Query Params = %s", query);
 
-    if(!query || query[0] == '\0' || !strlen(query))
+    if (!query || query[0] == '\0' || !strlen(query))
     {
         NS_LOG(ERROR, "query is null or \\0 or size is 0");
         return NULL;
@@ -362,7 +371,7 @@ char * NSGetValueFromQuery(char *query, char * compareKey)
 
 NSResult NSFreeMalloc(char ** obj)
 {
-    if(*obj)
+    if (*obj)
     {
         OICFree(*obj);
         *obj = NULL;
@@ -374,20 +383,20 @@ NSResult NSFreeMalloc(char ** obj)
 
 NSMediaContents * NSDuplicateMediaContents(NSMediaContents * copyObj)
 {
-    if(!copyObj)
+    if (!copyObj)
     {
         return NULL;
     }
 
     NSMediaContents * newObj = (NSMediaContents *)OICMalloc(sizeof(NSMediaContents));
 
-    if(!newObj)
+    if (!newObj)
     {
         NS_LOG(ERROR, "contents newObj is NULL");
         return NULL;
     }
 
-    if(copyObj->iconImage)
+    if (copyObj->iconImage)
     {
         newObj->iconImage = OICStrdup(copyObj->iconImage);
     }
@@ -397,7 +406,7 @@ NSMediaContents * NSDuplicateMediaContents(NSMediaContents * copyObj)
 
 NSResult NSFreeMediaContents(NSMediaContents * obj)
 {
-    if(!obj)
+    if (!obj)
     {
         return NS_FAIL;
     }
@@ -412,7 +421,7 @@ NSMessage * NSInitializeMessage()
 {
     NSMessage * msg = (NSMessage *)OICMalloc(sizeof(NSMessage));
 
-    if(!msg)
+    if (!msg)
     {
         NS_LOG(ERROR, "Msg is NULL");
         return NULL;
@@ -429,6 +438,7 @@ NSMessage * NSInitializeMessage()
     msg->sourceName = NULL;
     msg->mediaContents = NULL;
     msg->topic = NULL;
+    msg->extraInfo = NULL;
 
     return msg;
 }
@@ -441,7 +451,8 @@ OCRepPayloadValue* NSPayloadFindValue(const OCRepPayload* payload, const char* n
     }
 
     OCRepPayloadValue* val = payload->values;
-    while(val)
+
+    while (val)
     {
         if (0 == strcmp(val->name, name))
         {
@@ -457,7 +468,7 @@ NSTopicList * NSInitializeTopicList()
 {
     NSTopicList * topicList = (NSTopicList *)OICMalloc(sizeof(NSTopicList));
 
-    if(!topicList)
+    if (!topicList)
     {
         NS_LOG(ERROR, "topicList is NULL");
         return NULL;
@@ -468,18 +479,5 @@ NSTopicList * NSInitializeTopicList()
     topicList->tail = NULL;
 
     return topicList;
-}
-
-NSResult NSFreeTopicList(NSTopicList * topicList)
-{
-    if (!topicList)
-    {
-        return NS_ERROR;
-    }
-
-    //TODO:Free Topic List
-
-
-    return NS_OK;
 }
 

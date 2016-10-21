@@ -51,14 +51,20 @@ namespace OIC
 
         void ResourceHosting::startHosting()
         {
-            if (m_isStartedHosting) return;
+            if (m_isStartedHosting)
+            {
+                return;
+            }
             m_isStartedHosting = true;
             createDiscoveryListener();
         }
 
         void ResourceHosting::stopHosting()
         {
-            if (!m_isStartedHosting) return;
+            if (!m_isStartedHosting)
+            {
+                return;
+            }
 
             if (!m_discoveryTask->isCanceled())
             {
@@ -89,7 +95,10 @@ namespace OIC
             }
 
             auto foundHostingObject = findRemoteResource(remoteResource);
-            if (foundHostingObject != nullptr) return;
+            if (foundHostingObject != nullptr)
+            {
+                return;
+            }
 
             try
             {
@@ -100,7 +109,8 @@ namespace OIC
                 RHLock lock(m_mutexForList);
                 m_hostingObjects.insert(std::make_pair(key, foundHostingObject));
 
-            } catch (const RCSException & e)
+            }
+            catch (const RCSException & e)
             {
                 OIC_HOSTING_LOG(DEBUG,
                         "[ResourceHosting::discoverHandler]InvalidParameterException:%s", e.what());
@@ -112,7 +122,10 @@ namespace OIC
             RHLock lock(m_mutexForList);
 
             auto iter = m_hostingObjects.find(generateHostingObjectKey(remoteResource));
-            if (iter != m_hostingObjects.end()) return iter->second;
+            if (iter != m_hostingObjects.end())
+            {
+                return iter->second;
+            }
 
             return nullptr;
         }

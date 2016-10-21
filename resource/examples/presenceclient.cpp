@@ -102,6 +102,9 @@ void foundResource(std::shared_ptr<OCResource> resource)
 
     std::string resourceURI;
     std::string hostAddress;
+    std::string platformDiscoveryURI = "/oic/p";
+    std::string deviceDiscoveryURI   = "/oic/d";
+
     try
     {
         // Do some operations with resource object.
@@ -129,6 +132,35 @@ void foundResource(std::shared_ptr<OCResource> resource)
             {
                 std::cout << "\t\t" << resourceInterfaces << std::endl;
             }
+
+            OCStackResult ret;
+
+             std::cout << "Querying for platform information... " << std::endl;
+
+             ret = OCPlatform::getPlatformInfo("", platformDiscoveryURI, CT_ADAPTER_IP, NULL);
+
+             if (ret == OC_STACK_OK)
+             {
+                 std::cout << "Get platform information is done." << std::endl;
+             }
+             else
+             {
+                 std::cout << "Get platform information failed." << std::endl;
+             }
+
+             std::cout << "Querying for device information... " << std::endl;
+
+             ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI, CT_ADAPTER_IP,
+                     NULL);
+
+             if (ret == OC_STACK_OK)
+             {
+                 std::cout << "Getting device information is done." << std::endl;
+             }
+             else
+             {
+                 std::cout << "Getting device information failed." << std::endl;
+             }
 
             if(resourceURI == "/a/light")
             {

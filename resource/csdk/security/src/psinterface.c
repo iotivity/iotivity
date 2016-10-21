@@ -654,7 +654,7 @@ OCStackResult CreateResetProfile(void)
             memcpy(&pstat->rownerID, &emptyUuid, sizeof(OicUuid_t));
 
             ret = PstatToCBORPayload(pstat, &pstatCbor, &pstatCborLen, false);
-            OICFree(pstat);
+            DeletePstatBinData(pstat);
         }
         if (doxmCbor)
         {
@@ -669,7 +669,7 @@ OCStackResult CreateResetProfile(void)
             memcpy(&doxm->rownerID, &emptyUuid, sizeof(OicUuid_t));
 
             ret = DoxmToCBORPayload(doxm, &doxmCbor, &doxmCborLen, false);
-            OICFree(doxm);
+            DeleteDoxmBinData(doxm);
         }
 
         {

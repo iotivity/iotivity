@@ -297,7 +297,9 @@ OCStackResult JniOcResource::observe(JNIEnv* env, ObserveType observeType,
 
 OCStackResult JniOcResource::cancelObserve(JNIEnv* env, QualityOfService qos)
 {
-    if (QualityOfService::HighQos != qos)
+    // In Low case, after delete the callback and send empty message when client receive the notify.
+    // But TCP does not support EMPTY message.
+    if ((CT_ADAPTER_IP & connectivityType()) && QualityOfService::HighQos != qos)
     {
         this->m_onObserveManager.removeAllListeners(env);
     }

@@ -38,5 +38,7 @@ NSProviderInfo * NSGetProviderInfo();
 const char * NSGetUserInfo();
 bool NSGetPolicy();
 void NSSetPolicy(bool policy);
+bool NSGetResourceSecurity();
+void NSSetResourceSecurity(bool secured);
 
 #endif /* _NS_PROVIDER_SYSTEM__H_ */

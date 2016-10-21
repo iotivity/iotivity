@@ -67,9 +67,9 @@ bool CHPIsInitialized()
     return g_isCHProxyInitialized;
 }
 
-OCStackResult CHPInitialize()
+OCStackResult CHPInitialize(bool secure)
 {
-    OIC_LOG(DEBUG, TAG, "CHPInitialize IN");
+    OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
     if (g_isCHProxyInitialized)
     {
         OIC_LOG(DEBUG, TAG, "CH Proxy already initialized");
@@ -91,13 +91,18 @@ OCStackResult CHPInitialize()
         return result;
     }
 
+    uint8_t prop = OC_ACTIVE | OC_DISCOVERABLE | OC_SLOW;
+    if(secure)
+    {
+        prop |= OC_SECURE;
+    }
     result = OCCreateResource(&g_proxyHandle,
                                CHP_RESOURCE_TYPE_NAME,
                                CHP_RESOURCE_INTF_NAME,
                                OC_RSRVD_PROXY_URI,
                                CHPEntityHandler,
                                NULL,
-                               OC_ACTIVE | OC_DISCOVERABLE | OC_SLOW);
+                               prop);
 
     if (OC_STACK_OK != result)
     {
@@ -107,13 +112,13 @@ OCStackResult CHPInitialize()
     }
 
     g_isCHProxyInitialized = true;
-    OIC_LOG(DEBUG, TAG, "CHPInitialize OUT");
+    OIC_LOG_V(DEBUG, TAG, "%s OUT", __func__);
     return OC_STACK_OK;
 }
 
 OCStackResult CHPTerminate()
 {
-    OIC_LOG(DEBUG, TAG, "CHPTerminate IN");
+    OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
     OCStackResult result = CHPParserTerminate();
     if (OC_STACK_OK != result)
     {
@@ -129,14 +134,14 @@ OCStackResult CHPTerminate()
     g_proxyHandle = NULL;
     g_isCHProxyInitialized = false;
     return result;
-    OIC_LOG(DEBUG, TAG, "CHPTerminate OUT");
+    OIC_LOG_V(DEBUG, TAG, "%s OUT", __func__);
 }
 
 static void CHPGetProxyURI(OCHeaderOption* options, uint8_t *numOptions, char* uri,
                            size_t uriLength)
 {
-    OIC_LOG(DEBUG, TAG, "CHPGetProxyURI IN");
-    if(!uri || uriLength <= 0)
+    OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
+    if (!uri || uriLength <= 0)
     {
         OIC_LOG (INFO, TAG, "Invalid uri buffer");
         return;
@@ -165,7 +170,7 @@ static void CHPGetProxyURI(OCHeaderOption* options, uint8_t *numOptions, char* u
         }
     }
 
-    OIC_LOG(DEBUG, TAG, "CHPGetProxyURI OUT");
+    OIC_LOG_V(DEBUG, TAG, "%s OUT", __func__);
     return;
 }
 
@@ -173,7 +178,7 @@ static void CHPGetProxyURI(OCHeaderOption* options, uint8_t *numOptions, char* u
 static OCRepPayload* CHPGetDiscoveryPayload()
 {
     OCRepPayload* payload = OCRepPayloadCreate();
-    if(!payload)
+    if (!payload)
     {
         OIC_LOG(ERROR, TAG, PCF("Failed to create Payload"));
         return NULL;
@@ -188,10 +193,10 @@ OCEntityHandlerResult CHPEntityHandler(OCEntityHandlerFlag flag,
                                        OCEntityHandlerRequest* entityHandlerRequest,
                                        void* callbackParam)
 {
-    OIC_LOG_V(INFO, TAG, "Proxy request received");
+    OIC_LOG(INFO, TAG, "Proxy request received");
     UNUSED(callbackParam);
 
-    if(!g_isCHProxyInitialized)
+    if (!g_isCHProxyInitialized)
     {
         OIC_LOG (ERROR, TAG, "Proxy not initialized");
         return OC_EH_INTERNAL_SERVER_ERROR;
@@ -203,7 +208,7 @@ OCEntityHandlerResult CHPEntityHandler(OCEntityHandlerFlag flag,
         return OC_EH_ERROR;
     }
 
-    if(flag & OC_OBSERVE_FLAG)
+    if (flag & OC_OBSERVE_FLAG)
     {
         OIC_LOG_V (ERROR, TAG, "Proxy is not observable");
         return OC_EH_BAD_REQ;
@@ -220,11 +225,11 @@ OCEntityHandlerResult CHPEntityHandler(OCEntityHandlerFlag flag,
                        &(entityHandlerRequest->numRcvdVendorSpecificHeaderOptions),
                        proxyUri, sizeof(proxyUri));
 
-        if(proxyUri[0] != '\0')
+        if (proxyUri[0] != '\0')
         {
             // A request for HTTP resource. Response will be sent asynchronously
-            if(OC_STACK_OK == CHPHandleOCFRequest(entityHandlerRequest,
-                                                  proxyUri) )
+            if (OC_STACK_OK == CHPHandleOCFRequest(entityHandlerRequest,
+                                                   proxyUri) )
             {
                 return OC_EH_SLOW;
             }
@@ -274,7 +279,7 @@ OCEntityHandlerResult CHPEntityHandler(OCEntityHandlerFlag flag,
 
 void CHPHandleHttpResponse(const HttpResponse_t *httpResponse, void *context)
 {
-    OIC_LOG(DEBUG, TAG, "CHPHandleHttpResponse IN");
+    OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
     if (!httpResponse || !context)
     {
         OIC_LOG(ERROR, TAG, "Invalid arguements");
@@ -303,53 +308,65 @@ void CHPHandleHttpResponse(const HttpResponse_t *httpResponse, void *context)
     // ctxt not required now.
     OICFree(ctxt);
 
-    OCPayloadFormat format = CHPGetOCContentType(httpResponse->dataFormat);
-    switch (format)
+    if (httpResponse->dataFormat[0] != '\0')
     {
-        case OC_FORMAT_CBOR:
-            OIC_LOG(DEBUG, TAG, "Payload format is CBOR");
-            result = OCParsePayload(&response.payload, PAYLOAD_TYPE_REPRESENTATION,
-                                    httpResponse->payload, httpResponse->payloadLength);
-            if(result  != OC_STACK_OK)
-            {
-                OIC_LOG(ERROR, TAG, "Error parsing payload");
-                response.ehResult = OC_EH_INTERNAL_SERVER_ERROR;
-                if (OCDoResponse(&response) != OC_STACK_OK)
+        OCPayloadFormat format = CHPGetOCContentType(httpResponse->dataFormat);
+        switch (format)
+        {
+            case OC_FORMAT_CBOR:
+                OIC_LOG(DEBUG, TAG, "Payload format is CBOR");
+                result = OCParsePayload(&response.payload, PAYLOAD_TYPE_REPRESENTATION,
+                                        httpResponse->payload, httpResponse->payloadLength);
+                if (result != OC_STACK_OK)
                 {
-                    OIC_LOG(ERROR, TAG, "Error sending response");
+                    OIC_LOG(ERROR, TAG, "Error parsing payload");
+                    response.ehResult = OC_EH_INTERNAL_SERVER_ERROR;
+                    if (OCDoResponse(&response) != OC_STACK_OK)
+                    {
+                        OIC_LOG(ERROR, TAG, "Error sending response");
+                    }
+                    return;
                 }
-                return;
-            }
-            break;
-        case OC_FORMAT_JSON:
-            OIC_LOG(DEBUG, TAG, "Payload format is JSON");
-            cJSON *payloadJson = cJSON_Parse((char *)httpResponse->payload);
-            OCRepPayload* payloadCbor = OCRepPayloadCreate();
-            if(!payloadCbor)
-            {
-                response.ehResult = OC_EH_INTERNAL_SERVER_ERROR;
-                if (OCDoResponse(&response) != OC_STACK_OK)
+                break;
+            case OC_FORMAT_JSON:
+                OIC_LOG(DEBUG, TAG, "Payload format is JSON");
+                cJSON *payloadJson = cJSON_Parse((char *)httpResponse->payload);
+                if (!payloadJson)
                 {
-                    OIC_LOG(ERROR, TAG, "Error sending response");
+                    OIC_LOG(ERROR, TAG, "Unable to parse json response");
+                    response.ehResult = OC_EH_INTERNAL_SERVER_ERROR;
+                    if (OCDoResponse(&response) != OC_STACK_OK)
+                    {
+                        OIC_LOG(ERROR, TAG, "Error sending response");
+                    }
+                    return;
                 }
+                OCRepPayload* payloadCbor = OCRepPayloadCreate();
+                if (!payloadCbor)
+                {
+                    response.ehResult = OC_EH_INTERNAL_SERVER_ERROR;
+                    if (OCDoResponse(&response) != OC_STACK_OK)
+                    {
+                        OIC_LOG(ERROR, TAG, "Error sending response");
+                    }
+                    cJSON_Delete(payloadJson);
+                    return;
+                }
+
+                CHPJsonToRepPayload(payloadJson, payloadCbor);
+                response.payload = (OCPayload *)payloadCbor;
                 cJSON_Delete(payloadJson);
+                break;
+            default:
+                OIC_LOG(ERROR, TAG, "Payload format is not supported");
+                response.ehResult = OC_EH_INTERNAL_SERVER_ERROR;
+                if (OCDoResponse(&response) != OC_STACK_OK)
+                {
+                    OIC_LOG(ERROR, TAG, "Error sending response");
+                }
                 return;
-            }
-
-            CHPJsonToRepPayload(payloadJson, payloadCbor);
-            response.payload = (OCPayload *)payloadCbor;
-            cJSON_Delete(payloadJson);
-            break;
-        default:
-            OIC_LOG(ERROR, TAG, "Payload format is not supported");
-            response.ehResult = OC_EH_INTERNAL_SERVER_ERROR;
-            if (OCDoResponse(&response) != OC_STACK_OK)
-            {
-                OIC_LOG(ERROR, TAG, "Error sending response");
-            }
-            return;
+        }
     }
-
     // Header Options parsing
     response.numSendVendorSpecificHeaderOptions = 0;
     OCHeaderOption *optionsPointer = response.sendVendorSpecificHeaderOptions;
@@ -378,7 +395,7 @@ void CHPHandleHttpResponse(const HttpResponse_t *httpResponse, void *context)
     }
 
     //OICFree(coapResponseInfo.info.payload);
-    OIC_LOG(DEBUG, TAG, "CHPHandleHttpResponse OUT");
+    OIC_LOG_V(DEBUG, TAG, "%s OUT", __func__);
 }
 
 OCStackResult CHPHandleOCFRequest(const OCEntityHandlerRequest* requestInfo,
@@ -428,7 +445,7 @@ OCStackResult CHPHandleOCFRequest(const OCEntityHandlerRequest* requestInfo,
     {
         // Conversion from cbor to json.
         cJSON *payloadJson = CHPRepPayloadToJson((OCRepPayload *)requestInfo->payload);
-        if(!payloadJson)
+        if (!payloadJson)
         {
             response.ehResult = OC_EH_BAD_REQ;
             if (OCDoResponse(&response) != OC_STACK_OK)
@@ -491,7 +508,7 @@ OCStackResult CHPHandleOCFRequest(const OCEntityHandlerRequest* requestInfo,
         return OC_STACK_ERROR;
     }
 
-    if(!httpRequest.payloadCached)
+    if (!httpRequest.payloadCached)
     {
         // Free only if parser has not cached it.
         OICFree(httpRequest.payload);

@@ -35,6 +35,7 @@
 #include "cathreadpool.h"
 #include "caipadapter.h"
 #include "cainterface.h"
+#include <coap/utlist.h>
 
 #ifdef RA_ADAPTER
 #include "caraadapter.h"
@@ -55,11 +56,26 @@ static uint32_t g_numberOfAdapters = 0;
 
 static CANetworkPacketReceivedCallback g_networkPacketReceivedCallback = NULL;
 
-static CAAdapterStateChangedCB g_adapterChangeCallback = NULL;
-
-static CAConnectionStateChangedCB g_connChangeCallback = NULL;
-
 static CAErrorHandleCallback g_errorHandleCallback = NULL;
+
+static struct CANetworkCallback_t * g_networkChangeCallbackList = NULL;
+
+/**
+ * network callback structure is handling
+ * for adapter state changed and connection state changed event.
+ */
+typedef struct CANetworkCallback_t {
+
+    /** Linked list; for multiple callback list.*/
+    struct CANetworkCallback_t * next;
+
+    /** Adapter state changed event callback. */
+    CAAdapterStateChangedCB adapter;
+
+    /** Connection state changed event callback. */
+    CAConnectionStateChangedCB conn;
+
+} CANetworkCallback_t;
 
 static int CAGetAdapterIndex(CATransportAdapter_t cType)
 {
@@ -104,6 +120,93 @@ static void CARegisterCallback(CAConnectivityHandler_t handler)
     OIC_LOG_V(DEBUG, TAG, "%d type adapter, register complete!", handler.cType);
 }
 
+/**
+ * Add a network callback from caller to the network callback list
+ *
+ * @param adapterCB  adapter state changed callback
+ * @param connCB     connection state changed callback
+ *
+ * @return
+ *     CAResult_t
+ */
+static CAResult_t AddNetworkStateChangedCallback(CAAdapterStateChangedCB adapterCB,
+                                                 CAConnectionStateChangedCB connCB)
+{
+    OIC_LOG(DEBUG, TAG, "Add NetworkStateChanged Callback");
+
+    if (!adapterCB || !connCB)
+    {
+        OIC_LOG(ERROR, TAG, "parameter is null");
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    CANetworkCallback_t* callback = NULL;
+    LL_FOREACH(g_networkChangeCallbackList, callback)
+    {
+        if (callback && adapterCB == callback->adapter && connCB == callback->conn)
+        {
+            OIC_LOG(DEBUG, TAG, "this callback is already added");
+            return CA_STATUS_OK;
+        }
+    }
+
+    callback = (CANetworkCallback_t *) OICCalloc(1, sizeof(CANetworkCallback_t));
+    if (NULL == callback)
+    {
+        OIC_LOG(ERROR, TAG, "Memory allocation failed during registration");
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
+    callback->adapter = adapterCB;
+    callback->conn = connCB;
+    LL_APPEND(g_networkChangeCallbackList, callback);
+    return CA_STATUS_OK;
+}
+
+/**
+ * Remove a network callback from the network callback list
+ *
+ * @param adapterCB  adapter state changed callback
+ * @param connCB     connection state changed callback
+ *
+ * @return
+ *     CAResult_t
+ */
+static CAResult_t RemoveNetworkStateChangedCallback(CAAdapterStateChangedCB adapterCB,
+                                                    CAConnectionStateChangedCB connCB)
+{
+    OIC_LOG(DEBUG, TAG, "Remove NetworkStateChanged Callback");
+
+    CANetworkCallback_t* callback = NULL;
+    LL_FOREACH(g_networkChangeCallbackList, callback)
+    {
+        if (callback && adapterCB == callback->adapter && connCB == callback->conn)
+        {
+            OIC_LOG(DEBUG, TAG, "remove specific callback");
+            LL_DELETE(g_networkChangeCallbackList, callback);
+            OICFree(callback);
+            return CA_STATUS_OK;
+        }
+    }
+    return CA_STATUS_OK;
+}
+
+/**
+ * Remove all network callback from the network callback list
+ */
+static void RemoveAllNetworkStateChangedCallback()
+{
+    OIC_LOG(DEBUG, TAG, "Remove All NetworkStateChanged Callback");
+
+    CANetworkCallback_t* callback = NULL;
+    LL_FOREACH(g_networkChangeCallbackList, callback)
+    {
+        OIC_LOG(DEBUG, TAG, "remove all callbacks");
+        LL_DELETE(g_networkChangeCallbackList, callback);
+        OICFree(callback);
+    }
+}
+
 #ifdef RA_ADAPTER
 CAResult_t CASetAdapterRAInfo(const CARAInfo_t *caraInfo)
 {
@@ -127,27 +230,35 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
 static void CAAdapterChangedCallback(CATransportAdapter_t adapter, CANetworkStatus_t status)
 {
     // Call the callback.
-    if (g_adapterChangeCallback != NULL)
+    CANetworkCallback_t* callback  = NULL;
+    LL_FOREACH(g_networkChangeCallbackList, callback)
     {
-        if (CA_INTERFACE_UP == status)
+        if (callback && callback->adapter)
         {
-            g_adapterChangeCallback(adapter, true);
-        }
-        else if (CA_INTERFACE_DOWN == status)
-        {
-            g_adapterChangeCallback(adapter, false);
+            if (CA_INTERFACE_UP == status)
+            {
+                callback->adapter(adapter, true);
+            }
+            else if (CA_INTERFACE_DOWN == status)
+            {
+                callback->adapter(adapter, false);
+            }
         }
     }
-    OIC_LOG_V(DEBUG, TAG, "[%d]adapter status is changed to [%d]", adapter, status);
+    OIC_LOG_V(DEBUG, TAG, "[%d] adapter status is changed to [%d]", adapter, status);
 }
 
 #if defined(TCP_ADAPTER) || defined(EDR_ADAPTER) || defined(LE_ADAPTER)
 static void CAConnectionChangedCallback(const CAEndpoint_t *info, bool isConnected)
 {
     // Call the callback.
-    if (g_connChangeCallback != NULL)
+    CANetworkCallback_t* callback = NULL;
+    LL_FOREACH(g_networkChangeCallbackList, callback)
     {
-        g_connChangeCallback(info, isConnected);
+        if (callback && callback->conn)
+        {
+            callback->conn(info, isConnected);
+        }
     }
     OIC_LOG_V(DEBUG, TAG, "[%s] connection status is changed to [%d]", info->addr, isConnected);
 }
@@ -209,13 +320,30 @@ void CASetPacketReceivedCallback(CANetworkPacketReceivedCallback callback)
     g_networkPacketReceivedCallback = callback;
 }
 
-void CASetNetworkMonitorCallbacks(CAAdapterStateChangedCB adapterCB,
-                                  CAConnectionStateChangedCB connCB)
+CAResult_t CASetNetworkMonitorCallbacks(CAAdapterStateChangedCB adapterCB,
+                                        CAConnectionStateChangedCB connCB)
 {
     OIC_LOG(DEBUG, TAG, "Set network monitoring callback");
+    CAResult_t res = AddNetworkStateChangedCallback(adapterCB, connCB);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "AddNetworkStateChangedCallback has failed");
+        return CA_STATUS_FAILED;
+    }
+    return CA_STATUS_OK;
+}
 
-    g_adapterChangeCallback = adapterCB;
-    g_connChangeCallback = connCB;
+CAResult_t CAUnsetNetworkMonitorCallbacks(CAAdapterStateChangedCB adapterCB,
+                                          CAConnectionStateChangedCB connCB)
+{
+    OIC_LOG(DEBUG, TAG, "Unset network monitoring callback");
+    CAResult_t res = RemoveNetworkStateChangedCallback(adapterCB, connCB);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "RemoveNetworkStateChangedCallback has failed");
+        return CA_STATUS_FAILED;
+    }
+    return CA_STATUS_OK;
 }
 
 void CASetErrorHandleCallback(CAErrorHandleCallback errorCallback)

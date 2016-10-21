@@ -44,9 +44,15 @@ namespace OIC
                 struct DiscoverResourceInfo
                 {
                     DiscoverResourceInfo()
-                        : resourceUri(), resourceType(), attributeName() {}
+                        : resourceUri(), resourceType(), attributeName()
+                    {
+
+                    }
                     DiscoverResourceInfo(std::string uri, std::string type, std::string name)
-                        : resourceUri(uri), resourceType(type), attributeName(name) {}
+                        : resourceUri(uri), resourceType(type), attributeName(name)
+                    {
+
+                    }
                     std::string resourceUri;
                     std::string resourceType;
                     std::string attributeName;

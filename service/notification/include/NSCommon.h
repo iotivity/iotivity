@@ -28,6 +28,7 @@
 #define _NS_COMMON_H_
 
 #include <stdint.h>
+#include <octypes.h>
 
 #define NS_UUID_STRING_SIZE 37
 
@@ -53,6 +54,7 @@ typedef enum
     NS_TOPIC = 3,
     NS_DISCOVERED = 11,
     NS_STOPPED = 12
+
 } NSProviderState;
 
 /**
@@ -148,6 +150,7 @@ typedef struct
     char * sourceName;
     NSMediaContents * mediaContents;
     char * topic;
+    OCRepPayload * extraInfo;
 
 } NSMessage;
 

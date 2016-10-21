@@ -29,10 +29,18 @@
 #include "NSProviderSubscription.h"
 
 typedef struct {
-    pthread_cond_t condition;
+    pthread_cond_t * condition;
+    pthread_mutex_t * mutex;
     char * consumerId;
     NSTopicLL * topics;
-} NSTopicSynchronization;
+} NSTopicSync;
+
+typedef struct {
+    pthread_cond_t * condition;
+    pthread_mutex_t * mutex;
+    void * topicData;
+    NSResult result;
+} NSTopicSyncResult;
 
 NSCacheList * consumerTopicList;
 NSCacheList * registeredTopicList;

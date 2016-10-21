@@ -23,8 +23,6 @@
 #ifndef _Included_org_iotivity_base_OcResource_OnMQSubscribeListener
 #define _Included_org_iotivity_base_OcResource_OnMQSubscribeListener
 
-#define MAX_SEQUENCE_NUMBER 0xFFFFFF
-
 using namespace OC;
 
 class JniOcResource;

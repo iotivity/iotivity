@@ -80,10 +80,14 @@ namespace OIC
         { "c","Currency", "/oic/con" } };
 
         for (int i = 0; i < NUMCONFUNIT; i++)
+        {
             ConfigurationUnitTable.push_back(unit[i]);
+        }
     }
 
-    ThingsConfiguration::~ThingsConfiguration(void){}
+    ThingsConfiguration::~ThingsConfiguration(void)
+    {
+    }
 
     void ThingsConfiguration::setGroupManager(GroupManager *groupmanager)
     {
@@ -113,7 +117,9 @@ namespace OIC
         for (auto it = ConfigurationUnitTable.begin(); ConfigurationUnitTable.end() != it; it++)
         {
             if ((*it).m_name == name)
+            {
                 return (*it).m_attribute;
+            }
         }
 
         return "";
@@ -124,7 +130,9 @@ namespace OIC
         for (auto it = ConfigurationUnitTable.begin(); ConfigurationUnitTable.end() != it; it++)
         {
             if ((*it).m_name == name)
+            {
                 return (*it).m_uri;
+            }
         }
 
         return "";
@@ -136,9 +144,13 @@ namespace OIC
                 configurationRequestTable.find(conf);
 
         if (it == configurationRequestTable.end())
+        {
             return NULL;
+        }
         else
+        {
             return it->second.m_updateVal;
+        }
 
     }
     std::shared_ptr< OCResource > ThingsConfiguration::getResource(std::string conf)
@@ -147,9 +159,13 @@ namespace OIC
                 configurationRequestTable.find(conf);
 
         if (it == configurationRequestTable.end())
+        {
             return NULL;
+        }
         else
+        {
             return it->second.m_resource;
+        }
     }
 
     ConfigurationCallback ThingsConfiguration::getCallback(std::string conf)
@@ -158,9 +174,13 @@ namespace OIC
                 configurationRequestTable.find(conf);
 
         if (it == configurationRequestTable.end())
+        {
             return NULL;
+        }
         else
+        {
             return it->second.m_callback;
+        }
     }
 
     std::string ThingsConfiguration::getListOfSupportedConfigurationUnits()
@@ -176,9 +196,13 @@ namespace OIC
             it++;
 
             if (it == ConfigurationUnitTable.end())
+            {
                 break;
+            }
             else
+            {
                 res += ",";
+            }
         }
 
         res += "]}";
@@ -192,9 +216,13 @@ namespace OIC
         std::string newUri;
 
         if ((f = oldUri.find("/factoryset/oic/")) != string::npos)
+        {
             newUri = oldUri.replace(f, oldUri.size(), "");
+        }
         else if ((f = oldUri.find("/oic/")) != string::npos)
+        {
             newUri = oldUri.replace(f, oldUri.size(), "");
+        }
 
         return newUri;
     }
@@ -249,7 +277,9 @@ namespace OIC
         std::string attrKey = conf;
 
         if (uri == "")
+        {
             return;
+        }
 
         if (resource)
         {
@@ -309,12 +339,18 @@ namespace OIC
         std::string uri = getUriByConfigurationName(conf);
 
         if (uri == "")
+        {
             return;
+        }
 
         if (uri == "/factoryset" || uri == "/factoryset/oic/con")
+        {
             m_if.push_back(BATCH_INTERFACE);
+        }
         else
+        {
             m_if.push_back(DEFAULT_INTERFACE);
+        }
 
         std::vector < OCRepresentation > children = rep.getChildren();
         for (auto oit = children.begin(); oit != children.end(); ++oit)
@@ -333,7 +369,8 @@ namespace OIC
                         oit->getResourceTypes(), m_if);
 
                 p_resources.push_back(tempResource);
-            } catch (std::exception& e)
+            }
+            catch (std::exception& e)
             {
                 std::cout << "Exception: " << e.what() << std::endl;
             }
@@ -406,7 +443,9 @@ namespace OIC
         for (unsigned int i = 0; i < resource->getResourceTypes().size(); ++i)
         {
             if (resource->getResourceTypes().at(i).find(".resourceset", 0) != std::string::npos)
+            {
                 return false;
+            }
         }
 
         return true;
@@ -417,7 +456,9 @@ namespace OIC
         for (unsigned int i = 0; i < resource->getResourceInterfaces().size(); ++i)
         {
             if (resource->getResourceInterfaces().at(i) == BATCH_INTERFACE)
+            {
                 return true;
+            }
         }
 
         return false;
@@ -479,7 +520,9 @@ namespace OIC
         std::map< std::string, ConfigurationRequestEntry >::iterator iter =
                 configurationRequestTable.find(conf);
         if (iter != configurationRequestTable.end())
+        {
             configurationRequestTable.erase(iter);
+        }
 
         // Create new request entry stored in the queue
         ConfigurationRequestEntry newCallback(conf, callback, resource, it->second);
@@ -538,7 +581,9 @@ namespace OIC
         std::map< std::string, ConfigurationRequestEntry >::iterator iter =
                 configurationRequestTable.find(conf);
         if (iter != configurationRequestTable.end())
+        {
             configurationRequestTable.erase(iter);
+        }
 
         // Create new request entry stored in the queue
         ConfigurationRequestEntry newCallback(conf, callback, resource, conf);
@@ -553,7 +598,9 @@ namespace OIC
             std::string m_if = DEFAULT_INTERFACE;
 
             if (hasBatchInterface(resource))
+            {
                 m_if = BATCH_INTERFACE;
+            }
 
             return resource->get(resource->getResourceTypes().at(0), m_if, query,
                     std::function<
@@ -633,9 +680,13 @@ namespace OIC
     OCStackResult ThingsConfiguration::doBootstrap(ConfigurationCallback callback)
     {
         if(callback == NULL)
+        {
             return OC_STACK_ERROR;
+        }
         else
+        {
           g_bootstrapCallback = callback;
+        }
 
         // Find bootstrap server.
         std::vector < std::string > type;

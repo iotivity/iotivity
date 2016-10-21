@@ -1441,12 +1441,12 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo1(
         ThrowOcException(OC_STACK_INVALID_PARAM, "onPlatformFoundListener cannot be null");
         return;
     }
-    JniOnDeviceInfoListener *onDeviceInfoListener = AddOnDeviceInfoListener(env, jListener);
+    JniOnPlatformInfoListener *onPlatformInfoListener = AddOnPlatformInfoListener(env, jListener);
 
-    FindDeviceCallback findDeviceCallback =
-        [onDeviceInfoListener](const OCRepresentation& ocRepresentation)
+    FindPlatformCallback findPlatformCallback =
+        [onPlatformInfoListener](const OCRepresentation& ocRepresentation)
         {
-            onDeviceInfoListener->foundDeviceCallback(ocRepresentation);
+            onPlatformInfoListener->foundPlatformCallback(ocRepresentation);
         };
 
     try
@@ -1455,7 +1455,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPlatformInfo1(
             host,
             resourceUri,
             static_cast<OCConnectivityType>(jConnectivityType),
-            findDeviceCallback,
+            findPlatformCallback,
             JniUtils::getQOS(env, static_cast<int>(jQoS)));
 
         if (OC_STACK_OK != result)
@@ -2991,4 +2991,85 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcPlatform_constructAccountMana
     }
     return jAccountManager;
 #endif
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
+* Method:    getDeviceId
+* Signature: (I)V
+*/
+JNIEXPORT jbyteArray JNICALL Java_org_iotivity_base_OcPlatform_getDeviceId
+(JNIEnv *env, jobject thiz)
+{
+    LOGD("OcPlatform_getDeviceId");
+    OCUUIdentity deviceId;
+
+    jbyteArray ret = env->NewByteArray(UUID_IDENTITY_SIZE);
+    jbyte uuid[UUID_IDENTITY_SIZE];
+    try
+    {
+
+        OCStackResult result = OCPlatform::getDeviceId(&deviceId);
+        LOGD("OcPlatform_getDeviceId return from CPP");
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Error while getting my device Id");
+        }
+        else
+        {
+            for(int i=0;i < UUID_IDENTITY_SIZE; i++)
+            {
+                uuid[i] =(jbyte) deviceId.id[i];
+            }
+        }
+
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+
+    env->SetByteArrayRegion(ret, 0, UUID_IDENTITY_SIZE, uuid);
+
+    return ret;
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
+* Method:    setDeviceId
+* Signature: (Ljava/lang/byte;)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setDeviceId(
+    JNIEnv *env, jobject thiz, jbyteArray data)
+{
+    LOGI("OcPlatform_setDeviceId");
+    OCUUIdentity deviceId;
+    try
+    {
+        OCStackResult result;
+        jbyte* uuid = env->GetByteArrayElements(data, 0);
+        jsize arrayLength = env->GetArrayLength(data);
+        if(arrayLength!=UUID_IDENTITY_SIZE)
+        {
+            ThrowOcException(OC_STACK_INVALID_PARAM, "Byte length not equal to UUID_IDENTITY_SIZE");
+        }
+        else
+        {
+            for(int i=0;i < UUID_IDENTITY_SIZE; i++)
+            {
+                deviceId.id[i]=(jchar)uuid[i];
+            }
+            result = OCPlatform::setDeviceId(&deviceId);
+            if (OC_STACK_OK != result)
+            {
+                ThrowOcException(result, "Failed to set DeviceId");
+            }
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
 }

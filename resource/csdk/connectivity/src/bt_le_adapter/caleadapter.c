@@ -48,8 +48,7 @@
 /**
  * Stores information of all the senders.
  *
- * This structure will be used to track and defragment all incoming
- * data packet.
+ * This structure will be used to track and defragment all incoming data packet.
  */
 typedef struct
 {
@@ -1111,7 +1110,7 @@ static void CALEServerSendDataThread(void *threadData)
     else
     {
         length = CA_SUPPORTED_BLE_MTU_SIZE;
-        dataLen = CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE - CA_BLE_LENGTH_HEADER_SIZE;
+        dataLen = CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE;
     }
 
     result = CAMakeFirstDataSegment(dataSegment,
@@ -1179,8 +1178,9 @@ static void CALEServerSendDataThread(void *threadData)
                       index);
 
             result = CAMakeRemainDataSegment(dataSegment,
+                                             CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE,
                                              bleData->data,
-                                             CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE,
+                                             bleData->dataLen,
                                              index,
                                              dataHeader);
 
@@ -1216,8 +1216,9 @@ static void CALEServerSendDataThread(void *threadData)
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
 
             result = CAMakeRemainDataSegment(dataSegment,
-                                             bleData->data,
                                              remainingLen,
+                                             bleData->data,
+                                             bleData->dataLen,
                                              index,
                                              dataHeader);
 
@@ -1283,8 +1284,9 @@ static void CALEServerSendDataThread(void *threadData)
             OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Sending the chunk number [%d]", index);
 
             result = CAMakeRemainDataSegment(dataSegment,
+                                             CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE,
                                              bleData->data,
-                                             CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE,
+                                             bleData->dataLen,
                                              index,
                                              dataHeader);
 
@@ -1317,8 +1319,9 @@ static void CALEServerSendDataThread(void *threadData)
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
 
             result = CAMakeRemainDataSegment(dataSegment,
-                                             bleData->data,
                                              remainingLen,
+                                             bleData->data,
+                                             bleData->dataLen,
                                              index,
                                              dataHeader);
 
@@ -1436,7 +1439,7 @@ static void CALEClientSendDataThread(void *threadData)
     else
     {
         length = CA_SUPPORTED_BLE_MTU_SIZE;
-        dataLen = CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE - CA_BLE_LENGTH_HEADER_SIZE;
+        dataLen = CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE;
     }
 
     result = CAMakeFirstDataSegment(dataSegment,
@@ -1500,8 +1503,9 @@ static void CALEClientSendDataThread(void *threadData)
         for (index = 0; index < iter; index++)
         {
             result = CAMakeRemainDataSegment(dataSegment,
+                                             CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE,
                                              bleData->data,
-                                             CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE,
+                                             bleData->dataLen,
                                              index,
                                              dataHeader);
 
@@ -1540,8 +1544,9 @@ static void CALEClientSendDataThread(void *threadData)
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
 
             result = CAMakeRemainDataSegment(dataSegment,
-                                             bleData->data,
                                              remainingLen,
+                                             bleData->data,
+                                             bleData->dataLen,
                                              index,
                                              dataHeader);
 
@@ -1603,8 +1608,9 @@ static void CALEClientSendDataThread(void *threadData)
         for (index = 0; index < iter; index++)
         {
             result = CAMakeRemainDataSegment(dataSegment,
+                                             CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE,
                                              bleData->data,
-                                             CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE,
+                                             bleData->dataLen,
                                              index,
                                              dataHeader);
 
@@ -1638,8 +1644,9 @@ static void CALEClientSendDataThread(void *threadData)
             OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
 
             result = CAMakeRemainDataSegment(dataSegment,
-                                             bleData->data,
                                              remainingLen,
+                                             bleData->data,
+                                             bleData->dataLen,
                                              index,
                                              dataHeader);
 
@@ -1916,7 +1923,7 @@ static CAResult_t CALEServerSendDataSingleThread(const uint8_t *data,
     else
     {
         length = CA_SUPPORTED_BLE_MTU_SIZE;
-        dataOnlyLen = CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE - CA_BLE_LENGTH_HEADER_SIZE;
+        dataOnlyLen = CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE;
     }
 
     result = CAMakeFirstDataSegment(dataSegment,
@@ -1960,8 +1967,9 @@ static CAResult_t CALEServerSendDataSingleThread(const uint8_t *data,
     for (uint32_t iter = 0; iter < dataLimit; iter++)
     {
         result = CAMakeRemainDataSegment(dataSegment,
+                                         CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE,
                                          data,
-                                         CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE,
+                                         dataLen,
                                          iter,
                                          dataHeader);
 
@@ -1991,8 +1999,9 @@ static CAResult_t CALEServerSendDataSingleThread(const uint8_t *data,
         OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
 
         result = CAMakeRemainDataSegment(dataSegment,
-                                         data,
                                          remainingLen,
+                                         data,
+                                         dataLen,
                                          dataLimit,
                                          dataHeader);
 

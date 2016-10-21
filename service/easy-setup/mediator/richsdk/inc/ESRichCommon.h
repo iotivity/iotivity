@@ -124,7 +124,7 @@ namespace OIC
             CloudProp()
             {
                 m_cloudID = "";
-                m_credID = -1;
+                m_credID = 0;
             }
 
             CloudProp(const CloudProp& cloudProp) :
@@ -148,6 +148,7 @@ namespace OIC
             {
                 m_rep = rep;
                 m_cloudID = "";
+                m_credID = 0;
             }
 
             /**
@@ -460,6 +461,15 @@ namespace OIC
                 return m_devUUID;
             }
 
+            /**
+             * Get a result for about security provisioning is success or not.
+             *
+             * @return ::ES_OK\n
+             *         ::ES_SEC_OPERATION_IS_NOT_SUPPORTED\n
+             *         ::ES_SECURE_RESOURCE_DISCOVERY_FAILURE\n
+             *         ::ES_OWNERSHIP_TRANSFER_FAILURE\n
+             *         ::ES_ERROR\n
+             */
             ESResult getESResult()
             {
                 return m_result;
@@ -606,9 +616,12 @@ namespace OIC
                 std::vector<OCRepresentation> children = m_ProvRep.getChildren();
                 for(auto child = children.begin(); child != children.end(); ++child)
                 {
-                    if(child->getUri().find(OC_RSRVD_ES_URI_CLOUDSERVER) != std::string::npos)
+                    for(auto rt : child->getResourceTypes())
                     {
-                        return true;
+                        if(0 == rt.compare(OC_RSRVD_ES_RES_TYPE_CLOUDSERVER))
+                        {
+                            return true;
+                        }
                     }
                 }
                 return false;
@@ -650,8 +663,9 @@ namespace OIC
             /**
              * Get a result of getting provisioning status and last error code of Enrollee
              *
-             * @return a result of getting provisioning status and last error code of Enrollee
-             *
+             * @return ::ES_OK\n
+             *         ::ES_COMMUNICATION_ERROR\n
+             *         ::ES_ERROR\n
              * @see ESResult
              */
             ESResult getESResult()
@@ -698,7 +712,9 @@ namespace OIC
             /**
              * Get a result of getting preconfiguration of Enrollee
              *
-             * @return a result of preconfiguration of Enrollee
+             * @return ::ES_OK\n
+             *         ::ES_COMMUNICATION_ERROR\n
+             *         ::ES_ERROR\n
              *
              * @see ESResult
              */
@@ -743,7 +759,9 @@ namespace OIC
             /**
              * Get a result of Device property provisioning
              *
-             * @return a result of Device property provisioning
+             * @return ::ES_OK\n
+             *         ::ES_COMMUNICATION_ERROR\n
+             *         ::ES_ERROR\n
              *
              * @see ESResult
              */
@@ -777,7 +795,13 @@ namespace OIC
             /**
              * Get a result of Cloud property provisioning
              *
-             * @return a result of Cloud property provisioning
+             * @return ::ES_OK\n
+             *         ::ES_ENROLLEE_DISCOVERY_FAILURE\n
+             *         ::ES_SECURE_RESOURCE_DISCOVERY_FAILURE\n
+             *         ::ES_ACL_PROVISIONING_FAILURE\n
+             *         ::ES_CERT_PROVISIONING_FAILURE\n
+             *         ::ES_COMMUNICATION_ERROR\n
+             *         ::ES_ERROR\n
              *
              * @see ESResult
              */

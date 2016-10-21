@@ -28,6 +28,9 @@ Import('env')
 target_os = env.get('TARGET_OS')
 src_dir = env.get('SRC_DIR')
 
+# Build C Common dependencies
+SConscript('c_common/SConscript')
+
 # Build liblogger
 SConscript('csdk/logger/SConscript')
 
@@ -37,15 +40,17 @@ if target_os not in ['arduino', 'darwin', 'ios', 'android', 'msys_nt', 'windows'
 # Download (if not already present) & build libcoap
 SConscript('#extlibs/libcoap/SConscript')
 
-# Build C Common dependencies
-SConscript('c_common/SConscript')
-
 # Build connectivity
 SConscript('csdk/connectivity/SConscript')
 
 if env.get('ROUTING') in ['GW', 'EP']:
 	# Build Routing
 	SConscript('csdk/routing/SConscript')
+
+if target_os in ['linux', 'android']:
+    rd_mode = env.get('RD_MODE')
+    if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
+        SConscript('csdk/resource-directory/SConscript')
 
 # Build libocsrm
 SConscript('csdk/security/SConscript')

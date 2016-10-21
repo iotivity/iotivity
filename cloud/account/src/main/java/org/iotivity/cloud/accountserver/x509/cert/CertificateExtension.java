@@ -69,8 +69,6 @@ public class CertificateExtension {
 
     /**
      * Returns ASN1Encodable attribute value.
-     *
-     * @return
      */
     ASN1Encodable getValue() {
         return value;

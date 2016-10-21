@@ -26,6 +26,7 @@
 #include "NSConsumer.h"
 #include "NSSyncInfo.h"
 #include "NSConstants.h"
+#include "OCRepresentation.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
 
@@ -72,11 +73,16 @@ namespace OIC
             nsMsg->contentText = OICStrdup(msg->getContentText().c_str());
             nsMsg->topic = OICStrdup(msg->getTopic().c_str());
 
-            nsMsg->mediaContents = new ::NSMediaContents;
             if (msg->getMediaContents() != nullptr)
+            {
+                nsMsg->mediaContents = new ::NSMediaContents;
                 nsMsg->mediaContents->iconImage = OICStrdup(msg->getMediaContents()->getIconImage().c_str());
+            }
             else
-                nsMsg->mediaContents->iconImage = nullptr;
+            {
+                nsMsg->mediaContents = nullptr;
+            }
+            nsMsg->extraInfo = msg->getExtraInfo().getPayload();
             return nsMsg;
         }
 
@@ -105,8 +111,10 @@ namespace OIC
             nsConfig.syncInfoCallback = onMessageSynchronizedCallback;
             nsConfig.subControllability = config.subControllability;
             nsConfig.userInfo = OICStrdup(config.userInfo.c_str());
+            nsConfig.resourceSecurity = config.resourceSecurity;
 
             NSResult result = (NSResult) NSStartProvider(nsConfig);
+            OICFree(nsConfig.userInfo);
             NS_LOG(DEBUG, "start - OUT");
             return result;
         }
@@ -159,6 +167,12 @@ namespace OIC
 
                 NS_LOG_V(DEBUG, "nsMsg->providerId : %s", nsMsg->providerId);
                 result = (NSResult) NSSendMessage(nsMsg);
+                OICFree(nsMsg->dateTime);
+                OICFree(nsMsg->title);
+                OICFree(nsMsg->contentText);
+                OICFree(nsMsg->sourceName);
+                OICFree(nsMsg->topic);
+                OICFree(nsMsg->extraInfo);
                 delete nsMsg->mediaContents;
                 delete nsMsg;
             }
@@ -190,6 +204,7 @@ namespace OIC
             NS_LOG_V(DEBUG, "Provider ID : %s", nsMessage->getProviderId().c_str());
             NS_LOG(DEBUG, "createMessage - OUT");
 
+            OICFree(message);
             return nsMessage;
         }
 

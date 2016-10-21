@@ -275,10 +275,10 @@ extern "C" {
 #define OC_RSRVD_DATA_MODEL_VERSION     "dmv"
 
 /** Device specification version.*/
-#define OC_SPEC_VERSION                 "core.1.0.0"
+#define OC_SPEC_VERSION                 "core.1.1.0"
 
 /** Device Data Model version.*/
-#define OC_DATA_MODEL_VERSION           "res.1.0.0"
+#define OC_DATA_MODEL_VERSION           "res.1.1.0"
 
 /**
  *  These provide backward compatibility - their use is deprecated.
@@ -797,9 +797,6 @@ typedef enum
     /** Register observe request for all notifications, including stale notifications.*/
     OC_REST_OBSERVE_ALL    = (1 << 5),
 
-    /** De-register observation, intended for internal use.*/
-    OC_REST_CANCEL_OBSERVE = (1 << 6),
-
 #ifdef WITH_PRESENCE
     /** Subscribe for all presence notifications of a particular resource.*/
     OC_REST_PRESENCE       = (1 << 7),
@@ -881,7 +878,7 @@ typedef enum
      *  processing its requests from clients.*/
     OC_SLOW          = (1 << 3),
 
-#ifdef __WITH_DTLS__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     /** When this bit is set, the resource is a secure resource.*/
     OC_SECURE        = (1 << 4),
 #else
@@ -922,16 +919,16 @@ typedef enum
 typedef enum
 {
     /** Success status code - START HERE.*/
-    OC_STACK_OK = 0,
-    OC_STACK_RESOURCE_CREATED,
-    OC_STACK_RESOURCE_DELETED,
+    OC_STACK_OK = 0,                /** 203, 205*/
+    OC_STACK_RESOURCE_CREATED,      /** 201*/
+    OC_STACK_RESOURCE_DELETED,      /** 202*/
     OC_STACK_CONTINUE,
-    OC_STACK_RESOURCE_CHANGED,
+    OC_STACK_RESOURCE_CHANGED,      /** 204*/
     /** Success status code - END HERE.*/
 
     /** Error status code - START HERE.*/
     OC_STACK_INVALID_URI = 20,
-    OC_STACK_INVALID_QUERY,
+    OC_STACK_INVALID_QUERY,         /** 400*/
     OC_STACK_INVALID_IP,
     OC_STACK_INVALID_PORT,
     OC_STACK_INVALID_CALLBACK,
@@ -941,13 +938,13 @@ typedef enum
     OC_STACK_INVALID_PARAM,
     OC_STACK_INVALID_OBSERVE_PARAM,
     OC_STACK_NO_MEMORY,
-    OC_STACK_COMM_ERROR,
+    OC_STACK_COMM_ERROR,            /** 504*/
     OC_STACK_TIMEOUT,
     OC_STACK_ADAPTER_NOT_ENABLED,
     OC_STACK_NOTIMPL,
 
     /** Resource not found.*/
-    OC_STACK_NO_RESOURCE,
+    OC_STACK_NO_RESOURCE,           /** 404*/
 
     /** e.g: not supported method or interface.*/
     OC_STACK_RESOURCE_ERROR,
@@ -958,7 +955,7 @@ typedef enum
     OC_STACK_NO_OBSERVERS,
     OC_STACK_OBSERVER_NOT_FOUND,
     OC_STACK_VIRTUAL_DO_NOT_HANDLE,
-    OC_STACK_INVALID_OPTION,
+    OC_STACK_INVALID_OPTION,        /** 402*/
 
     /** The remote reply contained malformed data.*/
     OC_STACK_MALFORMED_RESPONSE,
@@ -968,8 +965,8 @@ typedef enum
     OC_STACK_INVALID_JSON,
 
     /** Request is not authorized by Resource Server. */
-    OC_STACK_UNAUTHORIZED_REQ,
-    OC_STACK_TOO_LARGE_REQ,
+    OC_STACK_UNAUTHORIZED_REQ,      /** 401*/
+    OC_STACK_TOO_LARGE_REQ,         /** 413*/
 
     /** Error code from PDM */
     OC_STACK_PDM_IS_NOT_INITIALIZED,
@@ -988,6 +985,11 @@ typedef enum
     OC_STACK_PRESENCE_TIMEOUT,
     OC_STACK_PRESENCE_DO_NOT_HANDLE,
 #endif
+
+    /** ERROR code from server */
+    OC_STACK_FORBIDDEN_REQ,          /** 403*/
+    OC_STACK_INTERNAL_SERVER_ERROR,  /** 500*/
+
     /** ERROR in stack.*/
     OC_STACK_ERROR = 255
     /** Error status code - END HERE.*/
@@ -1015,6 +1017,12 @@ typedef void * OCRequestHandle;
  * There can be maximum of 256 observations per server.
  */
 typedef uint8_t OCObservationId;
+
+/**
+ * Sequence number is a 24 bit field,
+ * per https://tools.ietf.org/html/rfc7641.
+ */
+#define MAX_SEQUENCE_NUMBER              (0xFFFFFF)
 
 /**
  * Action associated with observation.
@@ -1135,7 +1143,6 @@ typedef struct OCHeaderOption
 #endif
 } OCHeaderOption;
 
-
 /**
  * This structure describes the platform properties. All non-Null properties will be
  * included in a platform discovery request.
@@ -1234,9 +1241,7 @@ typedef enum
     /** The payload is an OCSecurityPayload */
     PAYLOAD_TYPE_SECURITY,
     /** The payload is an OCPresencePayload */
-    PAYLOAD_TYPE_PRESENCE,
-    /** The payload is an OCRDPayload */
-    PAYLOAD_TYPE_RD,
+    PAYLOAD_TYPE_PRESENCE
 } OCPayloadType;
 
 /**
@@ -1340,66 +1345,6 @@ typedef struct OCResourcePayload
     struct OCResourcePayload* next;
 } OCResourcePayload;
 
-/**
- * Structure holding Links Payload. It is a sub-structure used in
- * OCResourceCollectionPayload.
- */
-typedef struct OCLinksPayload
-{
-    /** This is the target relative URI. */
-    char *href;
-    /** The relation of the target URI referenced by the link to the context URI;
-     * The default value is null. */
-    char *rel;
-    /** Resource Type - A standard OIC specified or vendor defined resource
-     * type of the resource referenced by the target URI. */
-    OCStringLL *rt;
-    /** Interface - The interfaces supported by the resource referenced by the target URI. */
-    OCStringLL *itf;
-    /** Bitmap - The bitmap holds observable, discoverable, secure option flag. */
-    uint8_t p;
-    /** A title for the link relation. Can be used by the UI to provide a context. */
-    char *title;
-    /** This is used to override the context URI e.g. override the URI of the containing collection. */
-    char *anchor;
-    /** The instance identifier for this web link in an array of web links - used in links. */
-    union
-    {
-        /** An ordinal number that is not repeated - must be unique in the collection context. */
-        uint8_t ins;
-        /** Any unique string including a URI. */
-        char *uniqueStr;
-        /** Use UUID for universal uniqueness - used in /oic/res to identify the device. */
-        OCIdentity uniqueUUID;
-    };
-    /** Time to keep holding resource.*/
-    uint64_t ttl;
-    /** A hint of the media type of the representation of the resource referenced by the target URI. */
-    OCStringLL *type;
-    /** Holding address of the next resource. */
-    struct OCLinksPayload *next;
-} OCLinksPayload;
-
-/** Structure holding tags value of the links payload. */
-typedef struct
-{
-    /** Name of tags. */
-    OCDeviceInfo n;
-    /** Device identifier. */
-    OCIdentity di;
-    /** Time to keep holding resource.*/
-    uint64_t ttl;
-} OCTagsPayload;
-
-/** Resource collection payload. */
-typedef struct OCResourceCollectionPayload
-{
-    /** Collection tags payload.*/
-    OCTagsPayload *tags;
-    /** Array of links payload. */
-    OCLinksPayload *setLinks;
-} OCResourceCollectionPayload;
-
 typedef struct OCDiscoveryPayload
 {
     OCPayload base;
@@ -1429,31 +1374,6 @@ typedef struct OCDiscoveryPayload
     struct OCDiscoveryPayload *next;
 
 } OCDiscoveryPayload;
-
-/**
- * Structure holding discovery payload.
- */
-typedef struct
-{
-    /** Device Name. */
-    OCDeviceInfo n;
-    /** Device Identity. */
-    OCIdentity di;
-    /** Value holding the bias factor of the RD. */
-    uint8_t sel;
-} OCRDDiscoveryPayload;
-
-/**
- * RD Payload that will be transmitted over the wire.
- */
-typedef struct
-{
-    OCPayload base;
-    /** Pointer to the discovery response payload.*/
-    OCRDDiscoveryPayload *rdDiscovery;
-    /** Pointer to the publish payload.*/
-    OCResourceCollectionPayload *rdPublish;
-} OCRDPayload;
 
 typedef struct
 {

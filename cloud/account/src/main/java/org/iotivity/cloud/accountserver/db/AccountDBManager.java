@@ -137,6 +137,11 @@ public class AccountDBManager {
 
     }
 
+    /**
+     * API to implement singleton pattern based DB manager
+     * 
+     * @return account DB manager
+     */
     public static AccountDBManager getInstance() {
 
         return accoutDBManager;
@@ -148,7 +153,7 @@ public class AccountDBManager {
      * 
      * @param tableName
      *            table name to be inserted
-     * @param insert
+     * @param record
      *            record to be inserted
      */
     public void insertRecord(String tableName, HashMap<String, Object> insert) {
@@ -219,7 +224,7 @@ public class AccountDBManager {
 
         if (!_updateRecord(tableName, replace))
             throw new InternalServerErrorException(
-                    "Database record updateX509CRL failed");
+                    "Database record update failed");
 
     }
 

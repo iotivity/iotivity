@@ -38,8 +38,7 @@ catest_env.PrependUnique(CPPPATH = [
                ])
 
 catest_env.AppendUnique(LIBPATH = [catest_env.get('BUILD_DIR')])
-catest_env.PrependUnique(LIBS = ['gtest', 'gtest_main'])
-catest_env.PrependUnique(LIBS = ['octbstack',
+catest_env.PrependUnique(LIBS = ['octbstack_test',
                                     'connectivity_abstraction',
                                     'coap'])
 
@@ -47,10 +46,7 @@ if target_os not in ['arduino', 'darwin', 'ios', 'msys_nt', 'windows']:
 	catest_env.AppendUnique(LIBS=['rt'])
 
 if catest_env.get('SECURED') == '1':
-	catest_env.AppendUnique(LIBS = ['tinydtls'])
-	catest_env.AppendUnique(LIBS = ['timer'])
-	if catest_env.get('WITH_TCP') == True:
-		catest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
+	catest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
 if catest_env.get('WITH_RD') == '1':
 	catest_env.PrependUnique(LIBS = ['resource_directory'])
@@ -61,6 +57,7 @@ if catest_env.get('LOGGING'):
 if target_os in ['msys_nt', 'windows']:
 	catest_env.AppendUnique(LIBS = ['ws2_32',
                                         'advapi32',
+                                        'bcrypt',
                                         'iphlpapi'])
 else:
 	catest_env.AppendUnique(LIBS = ['m'])
@@ -69,27 +66,24 @@ else:
 # Source files and Targets
 ######################################################################
 
+tests_src = [
+	'catests.cpp',
+	'caprotocolmessagetest.cpp',
+	'ca_api_unittest.cpp',
+	'octhread_tests.cpp',
+	'uarraylist_test.cpp',
+	'ulinklist_test.cpp',
+	'uqueue_test.cpp'
+]
+
 if (('IP' in target_transport) or ('ALL' in target_transport)):
 	if target_os != 'arduino':
-		catests = catest_env.Program('catests', ['catests.cpp',
-		                                         'caprotocolmessagetest.cpp',
-		                                         'cablocktransfertest.cpp',
-		                                         'ca_api_unittest.cpp',
-		                                         'octhread_tests.cpp',
-		                                         'uarraylist_test.cpp',
-		                                         'ulinklist_test.cpp',
-		                                         'uqueue_test.cpp'
-		                                               ])
-else:
-	# Include all unit test files
-		catests = catest_env.Program('catests', ['catests.cpp',
-		                                         'caprotocolmessagetest.cpp',
-		                                         'ca_api_unittest.cpp',
-		                                         'octhread_tests.cpp',
-		                                         'uarraylist_test.cpp',
-		                                         'ulinklist_test.cpp',
-		                                         'uqueue_test.cpp'
-		                                               ])
+		tests_src = tests_src + ['cablocktransfertest.cpp']
+
+if catest_env.get('SECURED') == '1' and catest_env.get('WITH_TCP') == True:
+	tests_src = tests_src + ['ssladapter_test.cpp']
+
+catests = catest_env.Program('catests', tests_src)
 
 Alias("test", [catests])
 

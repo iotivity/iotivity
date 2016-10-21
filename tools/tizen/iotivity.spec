@@ -8,6 +8,67 @@ URL: https://www.iotivity.org/
 Source0: %{name}-%{version}.tar.bz2
 Source1001: %{name}.manifest
 Source1002: %{name}-test.manifest
+
+
+%if "%{TARGET_OS}" == "linux"
+%define TARGET_TRANSPORT IP
+%endif
+
+%define JOB "-j4"
+%if 0%{?speedpython}
+%define JOB %{?_smp_mflags}
+%endif
+%if 0%{?speedpython:1} && 0%{?en_speedpython:1}
+%en_speedpython
+%endif
+
+## If tizen 2.x, RELEASE follows tizen_build_binary_release_type_eng. ##
+## and if tizen 3.0, RELEASE follows tizen_build_devel_mode. ##
+%if 0%{?tizen_build_devel_mode} == 1 || 0%{?tizen_build_binary_release_type_eng} == 1
+%define RELEASE False
+%else
+%define RELEASE True
+%endif
+# For Example
+%if %{RELEASE} == "True"
+%define build_mode release
+%else
+%define build_mode debug
+%endif
+
+%ifarch armv7l armv7hl armv7nhl armv7tnhl armv7thl
+%define TARGET_ARCH "armeabi-v7a"
+%endif
+%ifarch aarch64
+%define TARGET_ARCH "arm64"
+%endif
+%ifarch x86_64
+%define TARGET_ARCH "x86_64"
+%endif
+%ifarch %{ix86}
+%define TARGET_ARCH "x86"
+%endif
+
+%define ex_install_dir %{buildroot}%{_bindir}
+
+%if ! %{?license:0}
+%define license %doc
+%endif
+
+# Default values to be eventually overiden BEFORE or as gbs params:
+%{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
+%{!?LOGGING: %define LOGGING 1}
+%{!?ROUTING: %define ROUTING EP}
+%{!?SECURED: %define SECURED 0}
+%{!?TARGET_ARCH: %define TARGET_ARCH %{_arch}}
+%{!?TARGET_OS: %define TARGET_OS tizen}
+%{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP,BT}
+%{!?VERBOSE: %define VERBOSE 1}
+%{!?WITH_CLOUD: %define WITH_CLOUD 0}
+%{!?WITH_MQ: %define WITH_MQ OFF}
+%{!?WITH_PROXY: %define WITH_PROXY 0}
+%{!?WITH_TCP: %define WITH_TCP 0}
+
 BuildRequires:  gettext-tools, expat-devel
 BuildRequires:  python, libcurl-devel
 BuildRequires:  scons
@@ -18,30 +79,15 @@ BuildRequires:  boost-system
 BuildRequires:  boost-filesystem
 BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(uuid)
-BuildRequires:  pkgconfig(capi-network-wifi)
-BuildRequires:  pkgconfig(capi-network-bluetooth)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(sqlite3)
+%if "%{TARGET_OS}" == "tizen"
+BuildRequires:  pkgconfig(dlog)
+BuildRequires:  pkgconfig(capi-network-wifi)
+BuildRequires:  pkgconfig(capi-network-bluetooth) >= 0.1.52
+%endif
 Requires(postun): /sbin/ldconfig
 Requires(post): /sbin/ldconfig
-
-
-## If tizen 2.x, RELEASE follows tizen_build_binary_release_type_eng. ##
-## and if tizen 3.0, RELEASE follows tizen_build_devel_mode. ##
-%if 0%{?tizen_build_devel_mode} == 1 || 0%{?tizen_build_binary_release_type_eng} == 1
-%define RELEASE False
-%else
-%define RELEASE True
-%endif
-
-%{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
-%{!?SECURED: %define SECURED 1}
-%{!?LOGGING: %define LOGGING True}
-%{!?ROUTING: %define ROUTING EP}
-%{!?WITH_TCP: %define WITH_TCP true}
-%{!?WITH_PROXY: %define WITH_PROXY False}
-%{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
-%{!?VERBOSE: %define VERBOSE 1}
 
 %description
 An open source reference implementation of the OIC standard specifications
@@ -80,7 +126,25 @@ developing applications that use %{name}.
 %setup -q
 chmod g-w %_sourcedir/*
 
-cp LICENSE.md LICENSE.APLv2
+find . \
+     -iname "LICEN*E*"  \
+     -o -name "*BSD*" \
+     -o -name "*COPYING*" \
+     -o -name "*GPL*" \
+     -o -name "*MIT*" \
+     | sort | uniq \
+     | grep -v 'libcoap-4.1.1/LICENSE.GPL'  \
+     | while read file ; do \
+          dir=$(dirname -- "$file")
+          echo "Files: ${dir}/*"
+          echo "License: ${file}"
+          sed 's/^/ /' "${file}"
+          echo ""
+          echo ""
+     done > tmp.tmp && mv tmp.tmp LICENSE
+
+cat LICENSE
+
 cp %{SOURCE1001} .
 %if 0%{?tizen_version_major} < 3
 cp %{SOURCE1002} .
@@ -89,29 +153,22 @@ cp %{SOURCE1001} ./%{name}-test.manifest
 %endif
 
 %build
-%define RPM_ARCH %{_arch}
-
-%ifarch armv7l armv7hl armv7nhl armv7tnhl armv7thl
-%define RPM_ARCH "armeabi-v7a"
-%endif
-
-%ifarch aarch64
-%define RPM_ARCH "arm64"
-%endif
-
-%ifarch x86_64
-%define RPM_ARCH "x86_64"
-%endif
-
-%ifarch %{ix86}
-%define RPM_ARCH "x86"
-%endif
-
-scons -j2 --prefix=%{_prefix} \
-	VERBOSE=%{VERBOSE} \
-	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
-	RELEASE=%{RELEASE} SECURED=%{SECURED} WITH_TCP=%{WITH_TCP} WITH_CLOUD=%{WITH_CLOUD} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
-	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir} WITH_PROXY=%{WITH_PROXY}
+scons %{JOB} --prefix=%{_prefix} \
+    ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} \
+    LIB_INSTALL_DIR=%{_libdir} \
+    LOGGING=%{LOGGING} \
+    RELEASE=%{RELEASE} \
+    ROUTING=%{ROUTING} \
+    SECURED=%{SECURED} \
+    TARGET_ARCH=%{TARGET_ARCH} \
+    TARGET_OS=%{TARGET_OS} \
+    TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
+    VERBOSE=%{VERBOSE} \
+    WITH_CLOUD=%{WITH_CLOUD} \
+    WITH_MQ=%{WITH_MQ} \
+    WITH_PROXY=%{WITH_PROXY} \
+    WITH_TCP=%{WITH_TCP} \
+    #eol
 
 
 
@@ -119,43 +176,52 @@ scons -j2 --prefix=%{_prefix} \
 rm -rf %{buildroot}
 CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ;
 scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
-	TARGET_OS=tizen TARGET_ARCH=%{RPM_ARCH} TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
-	RELEASE=%{RELEASE} SECURED=%{SECURED} WITH_TCP=%{WITH_TCP} WITH_CLOUD=%{WITH_CLOUD} LOGGING=%{LOGGING} ROUTING=%{ROUTING} \
-	ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} LIB_INSTALL_DIR=%{_libdir} WITH_PROXY=%{WITH_PROXY}
+    ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} \
+    LIB_INSTALL_DIR=%{_libdir} \
+    LOGGING=%{LOGGING} \
+    RELEASE=%{RELEASE} \
+    ROUTING=%{ROUTING} \
+    SECURED=%{SECURED} \
+    TARGET_ARCH=%{TARGET_ARCH} \
+    TARGET_OS=%{TARGET_OS} \
+    TARGET_TRANSPORT=%{TARGET_TRANSPORT} \
+    VERBOSE=%{VERBOSE} \
+    WITH_CLOUD=%{WITH_CLOUD} \
+    WITH_MQ=%{WITH_MQ} \
+    WITH_PROXY=%{WITH_PROXY} \
+    WITH_TCP=%{WITH_TCP} \
+    #eol
 
-
-
-# For Example
-%if %{RELEASE} == "True"
-%define build_mode release
-%else
-%define build_mode debug
-%endif
-%define ex_install_dir %{buildroot}%{_bindir}
 mkdir -p %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/examples/OICMiddle/OICMiddle %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/devicediscoveryclient %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/devicediscoveryserver %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/fridgeclient %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/fridgeserver %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/garageclient %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/garageserver %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/groupclient %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/groupserver %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/lightserver %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/presenceclient %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/presenceserver %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/roomclient %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/roomserver %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/simpleclient %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/simpleclientHQ %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/simpleclientserver %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/simpleserver %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/simpleserverHQ %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/threadingsample %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/oic_svr_db_server.dat %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/resource/examples/oic_svr_db_client.dat %{ex_install_dir}
-cp out/tizen/*/%{build_mode}/libcoap.a %{buildroot}%{_libdir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/examples/OICMiddle/OICMiddle %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/devicediscoveryclient %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/devicediscoveryserver %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/fridgeclient %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/fridgeserver %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/garageclient %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/garageserver %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/groupclient %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/groupserver %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/lightserver %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/presenceclient %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/presenceserver %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/roomclient %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/roomserver %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleclient %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleclientHQ %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleclientserver %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleserver %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/simpleserverHQ %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/threadingsample %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/oic_svr_db_server.dat %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/examples/oic_svr_db_client.dat %{ex_install_dir}
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/libcoap.a %{buildroot}%{_libdir}
+
+%if 0%{?WITH_PROXY} == 1
+mkdir -p %{ex_install_dir}/proxy-sample
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/service/coap-http-proxy/samples/proxy_main %{ex_install_dir}/proxy-sample/
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/service/coap-http-proxy/samples/proxy_client %{ex_install_dir}/proxy-sample/
+%endif
 %if 0%{?SECURED} == 1
 mkdir -p %{ex_install_dir}/provisioning
 mkdir -p %{ex_install_dir}/provision-sample
@@ -165,20 +231,13 @@ cp ./resource/csdk/security/provisioning/include/oxm/*.h %{buildroot}%{_included
 cp ./resource/csdk/security/provisioning/include/internal/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{buildroot}%{_libdir}/oic_svr_db_server.dat
-cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_justworks %{ex_install_dir}/provision-sample/
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_justworks %{ex_install_dir}/provision-sample/
 cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat %{ex_install_dir}/provision-sample/
-cp out/tizen/*/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_randompin %{ex_install_dir}/provision-sample/
+cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_randompin %{ex_install_dir}/provision-sample/
 cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat %{ex_install_dir}/provision-sample/
 
 %endif
 
-
-%if 0%{?tizen_version_major} < 3
-mkdir -p %{buildroot}/%{_datadir}/license
-cp LICENSE.APLv2 %{buildroot}/%{_datadir}/license/%{name}
-cp LICENSE.APLv2 %{buildroot}/%{_datadir}/license/%{name}-service
-cp LICENSE.APLv2 %{buildroot}/%{_datadir}/license/%{name}-test
-%endif
 cp resource/c_common/*.h %{buildroot}%{_includedir}
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
@@ -186,6 +245,13 @@ cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
 cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
 cp service/easy-setup/inc/*.h %{buildroot}%{_includedir}
 cp service/easy-setup/enrollee/inc/*.h %{buildroot}%{_includedir}
+
+install -d %{buildroot}%{_includedir}/iotivity
+ln -fs ../resource %{buildroot}%{_includedir}/iotivity/
+ln -fs ../service %{buildroot}%{_includedir}/iotivity/
+ln -fs ../c_common %{buildroot}%{_includedir}/iotivity/
+
+rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 
 
 %post -p /sbin/ldconfig
@@ -195,23 +261,19 @@ cp service/easy-setup/enrollee/inc/*.h %{buildroot}%{_includedir}
 %files
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
+%license LICENSE
 %{_libdir}/liboc.so
 %{_libdir}/liboc_logger.so
 %{_libdir}/liboc_logger_core.so
 %{_libdir}/liboctbstack.so
 %{_libdir}/libconnectivity_abstraction.so
-%if 0%{?tizen_version_major} < 3
-%{_datadir}/license/%{name}
-%else
-%license LICENSE.APLv2
-%endif
 
 %files service
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
+%license LICENSE
 %{_libdir}/libBMISensorBundle.so
 %{_libdir}/libDISensorBundle.so
-%{_libdir}/libresource_hosting.so
 %{_libdir}/libTGMSDKLibrary.so
 %{_libdir}/libHueBundle.so
 %{_libdir}/librcs_client.so
@@ -219,29 +281,29 @@ cp service/easy-setup/enrollee/inc/*.h %{buildroot}%{_includedir}
 %{_libdir}/librcs_container.so
 %{_libdir}/librcs_server.so
 %{_libdir}/libESEnrolleeSDK.so
+%if 0%{?WITH_PROXY} == 1
+%{_libdir}/libcoap_http_proxy.so
+%endif
 %if 0%{?SECURED} == 1
 %{_libdir}/libocpmapi.so
 %{_libdir}/libocprovision.so
 %{_libdir}/oic_svr_db_server.dat
 %endif
-%if 0%{?tizen_version_major} < 3
-%{_datadir}/license/%{name}-service
+%if "%{TARGET_OS}" == "linux"
+%{_libdir}/libnotification*.so
 %else
-%license LICENSE.APLv2
+%{_libdir}/libresource_hosting.so
 %endif
 
 %files test
 %manifest %{name}-test.manifest
 %defattr(-,root,root,-)
+%license LICENSE
 %{_bindir}/*
-%if 0%{?tizen_version_major} < 3
-%{_datadir}/license/%{name}-test
-%else
-%license LICENSE.APLv2
-%endif
 
 %files devel
 %defattr(-,root,root,-)
+%license LICENSE
 %{_libdir}/lib*.a
 %{_libdir}/pkgconfig/%{name}.pc
 %{_includedir}/*

@@ -46,6 +46,11 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
+import org.iotivity.ca.OicCipher;
+import org.iotivity.base.OcConnectivityType;
+import org.iotivity.ca.CaInterface;
+
+
 public class ProvisioningClient extends Activity implements
 OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwiseDevicesListener {
 
@@ -182,6 +187,9 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
             }
             initOICStack();
             saveCertChain();
+            int ret = CaInterface.setCipherSuite(OicCipher.TLS_ECDH_anon_WITH_AES_128_CBC_SHA,
+                                                    OcConnectivityType.CT_ADAPTER_IP);
+            Log.e(TAG,"CaInterface.setCipherSuite returned = "+ret);
         }
 
     /**
@@ -197,6 +205,21 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
                 0,
                 QualityOfService.LOW, filePath + StringConstants.OIC_CLIENT_CBOR_DB_FILE);
         OcPlatform.Configure(cfg);
+
+        //Get deviceId
+        byte [] deviceIdBytes= OcPlatform.getDeviceId();
+        String devId = new String(deviceIdBytes);
+        Log.d(TAG, "Get Device Id "+devId);
+        //Set deviceId
+        try {
+            String setId = "adminDeviceUuid1";
+            OcPlatform.setDeviceId(setId.getBytes());
+            Log.d(TAG, "Set Device Id done");
+        }
+        catch (OcException e) {
+            Log.d(TAG, e.getMessage());
+        }
+
         try {
             /*
              * Initialize DataBase

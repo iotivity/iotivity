@@ -33,7 +33,7 @@
 
 #include "ocstack.h"
 #include "ocpayload.h"
-#include "oicresourcedirectory.h"
+#include "rd_client.h"
 
 using namespace std;
 
@@ -43,7 +43,7 @@ using namespace std;
 #define DEFAULT_AUTH_REFRESH "/oic/account/tokenrefresh"
 
 OCStackResult OCCloudSignup(const char *host, const char *deviceId, const char *authprovider,
-        const char *authcode, OCClientResponseHandler response)
+                            const char *authcode, OCClientResponseHandler response)
 {
     char targetUri[MAX_URI_LENGTH * 2] =
     { 0, };
@@ -66,15 +66,16 @@ OCStackResult OCCloudSignup(const char *host, const char *deviceId, const char *
     OCRepPayloadSetPropString(registerPayload, "authcode", authcode);
 
     return OCDoResource(NULL, OC_REST_POST, targetUri, NULL, (OCPayload *) registerPayload,
-            CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+                        CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 
-    no_memory: OCRepPayloadDestroy(registerPayload);
+no_memory:
+    OCRepPayloadDestroy(registerPayload);
     return OC_STACK_NO_MEMORY;
 }
 
 OCStackResult OCCloudSession(const char *host, const char *query, const char *uId,
-        const char *deviceId, const char *accesstoken, bool isLogin,
-        OCClientResponseHandler response)
+                             const char *deviceId, const char *accesstoken, bool isLogin,
+                             OCClientResponseHandler response)
 {
     char targetUri[MAX_URI_LENGTH * 2] =
     { 0, };
@@ -109,15 +110,16 @@ OCStackResult OCCloudSession(const char *host, const char *query, const char *uI
     OCRepPayloadSetPropBool(loginoutPayload, "login", isLogin);
 
     return OCDoResource(NULL, OC_REST_POST, targetUri, NULL, (OCPayload *) loginoutPayload,
-            CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+                        CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 
-    no_memory: OCRepPayloadDestroy(loginoutPayload);
+no_memory:
+    OCRepPayloadDestroy(loginoutPayload);
     return OC_STACK_NO_MEMORY;
 }
 
 //Client should call refresh before expiresin or when receive 4.01 during sign-in
 OCStackResult OCCloudRefresh(const char *host, const char *query, const char *uId,
-        const char *deviceId, const char *refreshtoken, OCClientResponseHandler response)
+                             const char *deviceId, const char *refreshtoken, OCClientResponseHandler response)
 {
     char targetUri[MAX_URI_LENGTH * 2] =
     { 0, };
@@ -141,14 +143,15 @@ OCStackResult OCCloudRefresh(const char *host, const char *query, const char *uI
     OCRepPayloadSetPropString(refreshPayload, "refreshtoken", refreshtoken);
 
     return OCDoResource(NULL, OC_REST_POST, targetUri, NULL, (OCPayload *) refreshPayload,
-            CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+                        CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 
-    no_memory: OCRepPayloadDestroy(refreshPayload);
+no_memory:
+    OCRepPayloadDestroy(refreshPayload);
     return OC_STACK_NO_MEMORY;
 }
 
 OCStackResult OCCloudLogin(const char *host, const char *uId, const char *deviceId,
-        const char *accesstoken, OCClientResponseHandler response)
+                           const char *accesstoken, OCClientResponseHandler response)
 {
     return OCCloudSession(host, DEFAULT_AUTH_SESSION, uId, deviceId, accesstoken, true, response);
 }
@@ -197,10 +200,6 @@ OCRepPayload *constructResponse(OCEntityHandlerRequest *ehRequest)
     if (ehRequest->resource == gLightInstance[0].handle)
     {
         currLightResource = &gLightInstance[0];
-    }
-    else if (ehRequest->resource == gLightInstance[1].handle)
-    {
-        currLightResource = &gLightInstance[1];
     }
 
     if (OC_REST_PUT == ehRequest->method)
@@ -276,17 +275,13 @@ void *ChangeLightRepresentation(void *param)
     {
         sleep(3);
         gLightInstance[0].power += 1;
-        gLightInstance[1].power += 3;
 
         if (gLightUnderObservation)
         {
             cout << " =====> Notifying stack of new power level " << gLightInstance[0].power
-                    << endl;
-            cout << " =====> Notifying stack of new power level " << gLightInstance[1].power
-                    << endl;
+                 << endl;
             // Notifying all observers
             result = OCNotifyAllObservers(gLightInstance[0].handle, OC_NA_QOS);
-            result = OCNotifyAllObservers(gLightInstance[1].handle, OC_NA_QOS);
 
             cout << " =====> Notifying result " << result << endl;
         }
@@ -297,7 +292,7 @@ void *ChangeLightRepresentation(void *param)
 void ProcessObserveRegister(OCEntityHandlerRequest *ehRequest)
 {
     cout << "Received observation registration request with observation Id "
-            << ehRequest->obsInfo.obsId << endl;
+         << ehRequest->obsInfo.obsId << endl;
 
     if (!observeThreadStarted)
     {
@@ -321,7 +316,7 @@ void ProcessObserveDeregister(OCEntityHandlerRequest *ehRequest)
     bool clientStillObserving = false;
 
     cout << "Received observation deregistration request for observation Id "
-            << ehRequest->obsInfo.obsId << endl;
+         << ehRequest->obsInfo.obsId << endl;
     for (uint8_t i = 0; i < SAMPLE_MAX_NUM_OBSERVATIONS; i++)
     {
         if (interestedObservers[i].observationId == ehRequest->obsInfo.obsId)
@@ -339,13 +334,15 @@ void ProcessObserveDeregister(OCEntityHandlerRequest *ehRequest)
 }
 
 OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
-        OCEntityHandlerRequest *entityHandlerRequest, void * /*callback*/)
+                                        OCEntityHandlerRequest *entityHandlerRequest, void * /*callback*/)
 {
     OCEntityHandlerResult ehResult = OC_EH_OK;
     OCEntityHandlerResponse response =
-    { 0, 0, OC_EH_ERROR, 0, 0,
-    { },
-    { 0 }, false };
+    {
+        0, 0, OC_EH_ERROR, 0, 0,
+        { },
+        { 0 }, false
+    };
 
     // Validate pointer
     if (!entityHandlerRequest)
@@ -357,7 +354,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
     // Initialize certain response fields
     response.numSendVendorSpecificHeaderOptions = 0;
     memset(response.sendVendorSpecificHeaderOptions, 0,
-            sizeof response.sendVendorSpecificHeaderOptions);
+           sizeof response.sendVendorSpecificHeaderOptions);
     memset(response.resourceUri, 0, sizeof response.resourceUri);
     OCRepPayload *payload = nullptr;
 
@@ -378,7 +375,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
         else
         {
             cout << "Received unsupported method %d from client " << entityHandlerRequest->method
-                    << endl;
+                 << endl;
             ehResult = OC_EH_ERROR;
         }
         // If the result isn't an error or forbidden, send response
@@ -431,7 +428,7 @@ int createLightResource(char *uri, LightResource *lightResource)
     lightResource->state = false;
     lightResource->power = 0;
     OCStackResult res = OCCreateResource(&(lightResource->handle), "core.light", "oc.mi.def", uri,
-            OCEntityHandlerCb, NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
+                                         OCEntityHandlerCb, NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
     cout << "Created Light resource with result:" << res << endl;
 
     return res;
@@ -550,7 +547,7 @@ OCStackApplicationResult handleLoginoutCB(void *ctx, OCDoHandle /*handle*/,
     cout << "Login/out response received code: " << clientResponse->result << endl;
 
     if (clientResponse->payload != NULL
-            && clientResponse->payload->type == PAYLOAD_TYPE_REPRESENTATION)
+        && clientResponse->payload->type == PAYLOAD_TYPE_REPRESENTATION)
     {
         cout << "PAYLOAD_TYPE_REPRESENTATION received" << endl;
 
@@ -578,7 +575,7 @@ OCStackApplicationResult handleRegisterCB(void *ctx, OCDoHandle /*handle*/,
     cout << "Register response received code: " << clientResponse->result << endl;
 
     if (clientResponse->payload != NULL
-            && clientResponse->payload->type == PAYLOAD_TYPE_REPRESENTATION)
+        && clientResponse->payload->type == PAYLOAD_TYPE_REPRESENTATION)
     {
         cout << "PAYLOAD_TYPE_REPRESENTATION received" << endl;
         cout << "You can Sign-In using retrieved accesstoken when disconnected or reboot" << endl;
@@ -675,21 +672,21 @@ int main(int argc, char *argv[])
         case 2:
             cout << "Sign-Up to cloud using " << authProvider << " " << authCode << endl;
             res = OCCloudSignup(g_host.c_str(), OCGetServerInstanceIDString(), authProvider.c_str(),
-                    authCode.c_str(), handleRegisterCB);
+                                authCode.c_str(), handleRegisterCB);
             cout << "OCCloudSignup return " << res << endl;
             break;
 
         case 4:
             cout << "Sign-In to cloud using " << accessToken << endl;
             res = OCCloudLogin(g_host.c_str(), uId.c_str(), OCGetServerInstanceIDString(),
-                    accessToken.c_str(), handleLoginoutCB);
+                               accessToken.c_str(), handleLoginoutCB);
             cout << "OCCloudLogin return " << res << endl;
             break;
 
         case 5:
             cout << "Token refresh to cloud using the refresh token " << refreshToken << endl;
             res = OCCloudRefresh(g_host.c_str(), DEFAULT_AUTH_REFRESH, uId.c_str(),
-                    OCGetServerInstanceIDString(), refreshToken.c_str(), handleRegisterCB);
+                                 OCGetServerInstanceIDString(), refreshToken.c_str(), handleRegisterCB);
             cout << "OCCloudRefresh return " << res << endl;
             break;
 

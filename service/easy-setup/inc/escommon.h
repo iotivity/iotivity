@@ -130,37 +130,49 @@ typedef enum
     ES_OK = 0,
 
     /**
-     * Successfully found Enrollee in a given network. This will be given in Cloud provisioning step.
+     * Enrollee discovery fails in cloud provisioning
      */
-    ES_FOUND_ENROLLEE = 1,
+    ES_ENROLLEE_DISCOVERY_FAILURE = 11,
 
     /**
-     * Not found Enrollee in a give network. This will be given in Cloud provisioning step.
+     * Valid GET or POST request fails for some reason.
+     * This failure may happen when it failed to receive any response from Enrollee by a timeout threshold
      */
-    ES_NOT_FOUND_ENROLLEE = 11,
+    ES_COMMUNICATION_ERROR,
 
     /**
-     * Security opertion is not supported because it is built as unsecured mode.
+     * Security opertion is not supported because Mediator is built as unsecured mode.
      */
     ES_SEC_OPERATION_IS_NOT_SUPPORTED = 20,
 
     /**
-     * A previous request is denied due to its unauthority. It means, Mediator is not unauthroized
-     * to Enrollee for some reaons.
+     * Security resource discovery fails due to loss of discovery packet or absence of the resource in a network
      */
-    ES_UNAUTHORIZED_REQ = 21,
+    ES_SECURE_RESOURCE_DISCOVERY_FAILURE,
 
     /**
-     * Security provisioning fails. The reasons would be: a packet loss for unowned/owned device
-     * discovery request or ownership transfer request, or a denial to ownership transfer by Enrollee
-     * for some reason.
+     * Ownership transfer fails because DTLS handshake failure happens
      */
-    ES_SEC_PROVISION_FAILS = 22,
+    ES_OWNERSHIP_TRANSFER_FAILURE,
+
+    /**
+     * ACL provisioning fails in cloud provisioning.
+     * It could be that UUID format of cloud server is wrong.
+     * Or any response for the provisioning request is not arrived at Mediator
+     */
+    ES_ACL_PROVISIONING_FAILURE,
+
+    /**
+     * Cert. provisioning fails in cloud provisioning.
+     * It could be that you put a wrong cred ID of which the corresponding certificate does not exist in SVR DB.
+     * Or any response for the provisioning request is not arrived at Mediator
+     */
+    ES_CERT_PROVISIONING_FAILURE,
 
     /**
      * Provisioning fails for some reason.
      */
-    ES_ERROR = 255,
+    ES_ERROR = 255
 } ESResult;
 
 /**
@@ -185,29 +197,54 @@ typedef enum
     ES_STATE_INIT = 0,
 
     /**
-    * Status indicating being cnnecting to target network
-    */
+     * Status indicating being connecting to target network
+     */
     ES_STATE_CONNECTING_TO_ENROLLER,
 
     /**
-    * Status indicating successful conection to target network
-    */
+     * Status indicating successful conection to target network
+     */
     ES_STATE_CONNECTED_TO_ENROLLER,
 
     /**
-    * Status indicating failure connection to target network
-    */
-    ES_STATE_CONNECTED_FAIL_TO_ENROLLER,
+     * Status indicating connection failure to target network
+     */
+    ES_STATE_FAILED_TO_CONNECT_TO_ENROLLER,
 
     /**
-    * Status indicating successful registration to cloud
-    */
+     * Status indicating being registering to cloud
+     */
+    ES_STATE_REGISTERING_TO_CLOUD,
+
+    /**
+     * Status indicating successful registration to cloud
+     */
     ES_STATE_REGISTERED_TO_CLOUD,
 
     /**
-    * Status indicating failure registeration to cloud
-    */
-    ES_STATE_REGISTRRED_FAIL_TO_CLOUD
+     * Status indicating registeration failure to cloud
+     */
+    ES_STATE_FAILED_TO_REGISTER_TO_CLOUD,
+
+    /**
+     * Status indicating being publishing resources to cloud
+     */
+    ES_STATE_PUBLISHING_RESOURCES_TO_CLOUD,
+
+    /**
+     * Status indicating successful resource publish to cloud
+     */
+    ES_STATE_PUBLISHED_RESOURCES_TO_CLOUD,
+
+    /**
+     * Status indicating resource publish failure to cloud
+     */
+    ES_STATE_FAILED_TO_PUBLISH_RESOURCES_TO_CLOUD,
+
+    /**
+     * End of Easy setup status
+     */
+    ES_STATE_EOF = 255
 } ESEnrolleeState, ProvStatus;
 
 /**
@@ -221,34 +258,69 @@ typedef enum
     ES_ERRCODE_NO_ERROR = 0,
 
     /**
-    * Error Code that given WiFi's SSID is not found
-    */
+     * Error Code that given WiFi's SSID is not found
+     */
     ES_ERRCODE_SSID_NOT_FOUND,
 
     /**
-    * Error Code that given WiFi's Password is wrong
-    */
+     * Error Code that given WiFi's Password is wrong
+     */
     ES_ERRCODE_PW_WRONG,
 
     /**
-    * Error Code that IP address is not allocated
-    */
+     * Error Code that IP address is not allocated
+     */
     ES_ERRCODE_IP_NOT_ALLOCATED,
 
     /**
-    * Error Code that there is no Internet connection
-    */
+     * Error Code that there is no Internet connection
+     */
     ES_ERRCODE_NO_INTERNETCONNECTION,
 
     /**
-    * Error Code that Timeout occured
-    */
+     * Error Code that Timeout occured
+     */
     ES_ERRCODE_TIMEOUT,
 
     /**
-    * Error Code that Unknown error occured
-    */
-    ES_ERRCODE_UNKNOWN
+     * Error Code that cloud server is not reachable due to wrong URL of cloud server, for example.
+     */
+    ES_ERRCODE_FAILED_TO_ACCESS_CLOUD_SERVER,
+
+    /**
+     * Error Code that no response is arrived from cloud server
+     */
+    ES_ERRCODE_NO_RESPONSE_FROM_CLOUD_SERVER,
+
+    /**
+     * Error Code that a delivered authcode is not valid.
+     */
+    ES_ERRCODE_INVALID_AUTHCODE,
+
+    /**
+     * Error Code that a given access token is not valid due to its expiration, for example.
+     */
+    ES_ERRCODE_INVALID_ACCESSTOKEN,
+
+    /**
+     * Error Code that a refresh of expired access token is failed due to some reasons.
+     */
+    ES_ERRCODE_FAILED_TO_REFRESH_ACCESSTOKEN,
+
+    /**
+     * Error Code that a target device is not discovered in cloud server
+     */
+    ES_ERRCODE_FAILED_TO_FIND_REGISTERED_DEVICE_IN_CLOUD,
+
+    /**
+     * Error Code that a target user does not exist in cloud server.
+     */
+    ES_ERRCODE_FAILED_TO_FIND_REGISTERED_USER_IN_CLOUD,
+
+    /**
+     * Error Code that Unknown error occured
+     */
+    ES_ERRCODE_UNKNOWN = 255
 } ESErrorCode;
 
 #ifdef __cplusplus

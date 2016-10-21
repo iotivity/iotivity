@@ -588,10 +588,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_unlinkDevices
 (JNIEnv *env, jobject thiz, jint type, jint credId, jobject jListener)
 {
     LOGD("OcSecureResource_provisionTrustCertChain1");
-#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     if (!jListener)
     {
-        ThrowOcException(OC_STACK_INVALID_PARAM, "provisionTrustCertChainListener cannot be null");
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "provisionTrustCertChainListener cannot be null");
         return;
     }
 
@@ -619,7 +619,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_unlinkDevices
 #else
     ThrowOcException(OC_STACK_INVALID_PARAM, "WITH_TLS not enabled");
     return;
-#endif // __WITH_X509__ || __WITH_TLS__
+#endif // __WITH_DTLS__ || __WITH_TLS__
 }
 
 /*

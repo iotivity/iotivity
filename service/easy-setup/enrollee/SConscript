@@ -57,8 +57,7 @@ if enrollee_env.get('SECURED') == '1':
 		enrollee_env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include',
 		enrollee_env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/internal',
 		enrollee_env.get('SRC_DIR') + '/resource/csdk/security/provisioning/include/oxm'])
-	if enrollee_env.get('WITH_TCP') == True:
-		enrollee_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+	enrollee_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if target_os not in ['windows']:
 	enrollee_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
@@ -104,8 +103,9 @@ es_enrollee_src = None
 if target_os in ['linux', 'tizen']:
 	es_enrollee_common_src = ['./src/easysetup.c','./src/resourcehandler.c']
 	enrollee_sdk_shared = enrollee_env.SharedLibrary('ESEnrolleeSDK', es_enrollee_common_src)
-	enrollee_env.InstallTarget(enrollee_sdk_shared, 'libESEnrollee')
-	enrollee_env.UserInstallTargetLib(enrollee_sdk_shared, 'libESEnrollee')
+	enrollee_sdk_static = enrollee_env.StaticLibrary('ESEnrolleeSDK', es_enrollee_common_src)
+	enrollee_env.InstallTarget([enrollee_sdk_shared, enrollee_sdk_static], 'libESEnrollee')
+	enrollee_env.UserInstallTargetLib([enrollee_sdk_shared, enrollee_sdk_static], 'libESEnrollee')
 
 if target_os == 'arduino':
 	es_enrollee_common_src = ['./src/easysetup.c','./src/resourcehandler.c']

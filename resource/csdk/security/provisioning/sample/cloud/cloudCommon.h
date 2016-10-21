@@ -20,8 +20,54 @@
 #ifndef CLOUD_COMMON_H
 #define CLOUD_COMMON_H
 
+#include "octypes.h"
+
 /**
- * Used to sync with main menu
+ * Used parse command line arguments
+ * Interpret given argument as database filename and check that given file exists
+ *
+ * @param[in] argc  count of command line parameters
+ * @param[in] argv  command line parameters
+ * @return  bool true if parameters are correct, false otherwise
+ */
+bool parseCommandLineArguments(int argc, char *argv[]);
+
+/**
+ * This function initializes persistent storage
+ * It uses database filename from global variable
+ *
+ * @return  OCStackResult application result
+ */
+OCStackResult initPersistentStorage();
+
+/**
+ * Used to display Main Menu and send requests
+ *
+ * @param[in] mode  OC_CLIENT/OC_SERVER mode
+ * @return  OCStackResult application result
+ */
+OCStackResult startRequestsThread(OCMode *mode);
+
+/**
+ * This function initialize main process
+ *
+ * @param[in] mode  in which mode process starts (client/server/both/gateway)
+ * @return  OCStackResult application result
+ */
+OCStackResult initProcess(OCMode mode);
+
+/**
+ * This function starts main process which responds to any requests
+ */
+void startProcess();
+
+/**
+ * This function frees thread pool data
+ */
+void freeThreadResources();
+
+/**
+ * Used to sync with Main Menu
  * Create this function to have proper API for delete callbacks
  *
  * @param[in] data         data

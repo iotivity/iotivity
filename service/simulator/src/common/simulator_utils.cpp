@@ -129,9 +129,6 @@ std::string getPayloadTypeString(OCPayloadType type)
         case PAYLOAD_TYPE_PRESENCE:
             typeStr = "PAYLOAD_TYPE_PRESENCE";
             break;
-        case PAYLOAD_TYPE_RD:
-            typeStr = "PAYLOAD_TYPE_RD";
-            break;
     }
     return typeStr;
 }

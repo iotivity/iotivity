@@ -42,6 +42,13 @@ import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.util.Cbor;
 
+/**
+ *
+ * This class provides a set of APIs to send requests about publish resource to
+ * resource directory
+ *
+ */
+
 public class ResourceDirectory extends Resource {
     private Cbor<HashMap<String, Object>> mCbor     = new Cbor<>();
     IRequestChannel                       mRDServer = null;
@@ -72,23 +79,23 @@ public class ResourceDirectory extends Resource {
 
                 HashMap<String, Object> requestPayload = new HashMap<>();
 
-                requestPayload
-                        .put(Constants.REQ_DEVICE_LIST, Arrays.asList(di));
+                requestPayload.put(Constants.REQ_DEVICE_LIST,
+                        Arrays.asList(di));
                 IRequest requestToAS = MessageBuilder.createRequest(
                         RequestMethod.POST, uriPath.toString(), null,
                         ContentFormat.APPLICATION_CBOR,
                         mCbor.encodingPayloadToCbor(requestPayload));
 
-                mASServer.sendRequest(requestToAS, new AccountReceiveHandler(
-                        request, srcDevice));
+                mASServer.sendRequest(requestToAS,
+                        new AccountReceiveHandler(request, srcDevice));
                 break;
 
             case DELETE:
                 mRDServer.sendRequest(request, srcDevice);
                 break;
             default:
-                throw new BadRequestException(request.getMethod()
-                        + " request type is not support");
+                throw new BadRequestException(
+                        request.getMethod() + " request type is not support");
         }
     }
 
@@ -121,8 +128,8 @@ public class ResourceDirectory extends Resource {
                             null, ContentFormat.APPLICATION_CBOR,
                             convertedPayload);
 
-                    mRDServer.sendRequest(mRequest, new PublishResponseHandler(
-                            mSrcDevice));
+                    mRDServer.sendRequest(mRequest,
+                            new PublishResponseHandler(mSrcDevice));
                     break;
 
                 default:
@@ -135,8 +142,8 @@ public class ResourceDirectory extends Resource {
         private byte[] convertPublishHref(IRequest request, Device device) {
 
             Cbor<HashMap<String, Object>> cbor = new Cbor<>();
-            HashMap<String, Object> payload = cbor.parsePayloadFromCbor(
-                    request.getPayload(), HashMap.class);
+            HashMap<String, Object> payload = cbor
+                    .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
             if (verifyPublishPayload(payload) == false) {
 
@@ -213,8 +220,8 @@ public class ResourceDirectory extends Resource {
         private byte[] convertResponseHref(IResponse response) {
 
             Cbor<HashMap<String, Object>> cbor = new Cbor<>();
-            HashMap<String, Object> payload = cbor.parsePayloadFromCbor(
-                    response.getPayload(), HashMap.class);
+            HashMap<String, Object> payload = cbor
+                    .parsePayloadFromCbor(response.getPayload(), HashMap.class);
 
             ArrayList<HashMap<String, Object>> links = (ArrayList<HashMap<String, Object>>) payload
                     .get(Constants.REQ_LINKS);

@@ -56,6 +56,15 @@ namespace OC
                 : callback(cb), clientWrapper(cw){}
         };
 
+        struct ListenContext2
+        {
+            FindResListCallback callback;
+            std::weak_ptr<IClientWrapper> clientWrapper;
+
+            ListenContext2(FindResListCallback cb, std::weak_ptr<IClientWrapper> cw)
+                : callback(cb), clientWrapper(cw){}
+        };
+
         struct ListenErrorContext
         {
             FindCallback callback;
@@ -123,6 +132,10 @@ namespace OC
         virtual OCStackResult ListenForResource(const std::string& serviceUrl,
             const std::string& resourceType, OCConnectivityType transportFlags,
             FindCallback& callback, QualityOfService QoS);
+
+        virtual OCStackResult ListenForResource2(const std::string& serviceUrl,
+            const std::string& resourceType, OCConnectivityType transportFlags,
+            FindResListCallback& callback, QualityOfService QoS);
 
         virtual OCStackResult ListenErrorForResource(const std::string& serviceUrl,
             const std::string& resourceType, OCConnectivityType transportFlags,

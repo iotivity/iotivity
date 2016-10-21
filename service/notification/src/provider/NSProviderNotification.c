@@ -24,7 +24,7 @@ NSResult NSSetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
 {
     NS_LOG(DEBUG, "NSSetMessagePayload - IN");
 
-    *msgPayload = OCRepPayloadCreate();
+    *msgPayload = msg->extraInfo != NULL ? msg->extraInfo : OCRepPayloadCreate();
 
     if (!*msgPayload)
     {
@@ -37,16 +37,17 @@ NSResult NSSetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
     OCRepPayloadSetPropString(*msgPayload, NS_ATTRIBUTE_PROVIDER_ID, msg->providerId);
 
     NSDuplicateSetPropertyInt(msgPayload, NS_ATTRIBUTE_TYPE, msg->type);
-    NSDuplicateSetPropertyInt(msgPayload, NS_ATTRIBUTE_MESSAGE_ID, msg->ttl);
+    NSDuplicateSetPropertyInt(msgPayload, NS_ATTRIBUTE_TTL, msg->ttl);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_DATETIME, msg->dateTime);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TITLE, msg->title);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TEXT, msg->contentText);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_SOURCE, msg->sourceName);
     NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_TOPIC_NAME, msg->topic);
-    if(msg->mediaContents)
+
+    if (msg->mediaContents)
     {
-        NSDuplicateSetPropertyString(msgPayload,
-                NS_ATTRIBUTE_ICON_IMAGE, msg->mediaContents->iconImage);
+        NSDuplicateSetPropertyString(msgPayload, NS_ATTRIBUTE_ICON_IMAGE,
+                msg->mediaContents->iconImage);
     }
 
     NS_LOG(DEBUG, "NSSetMessagePayload - OUT");
@@ -119,11 +120,11 @@ NSResult NSSendNotification(NSMessage *msg)
         {
             if(subData->messageObId != 0)
             {
-                if(msg->topic && (msg->topic)[0] != '\0')
+                if (msg->topic && (msg->topic)[0] != '\0')
                 {
                     NS_LOG_V(DEBUG, "this is topic message: %s", msg->topic);
 
-                    if(NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
+                    if (NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
                     {
                         obArray[obCount++] = subData->messageObId;
                     }
@@ -134,13 +135,13 @@ NSResult NSSendNotification(NSMessage *msg)
                 }
             }
 
-#if(defined WITH_CLOUD && defined RD_CLIENT)
-            if(subData->remote_messageObId != 0)
+#if (defined WITH_CLOUD && defined RD_CLIENT)
+            if (subData->remote_messageObId != 0)
             {
-                if(msg->topic && (msg->topic)[0] != '\0')
+                if (msg->topic && (msg->topic)[0] != '\0')
                 {
                     NS_LOG_V(DEBUG, "this is topic message via remote server: %s", msg->topic);
-                    if(NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
+                    if (NSProviderIsTopicSubScribed(consumerTopicList->head, subData->id, msg->topic))
                     {
                         obArray[obCount++] = subData->remote_messageObId;
                     }
@@ -151,8 +152,8 @@ NSResult NSSendNotification(NSMessage *msg)
                 }
             }
 #endif
-
         }
+
         it = it->next;
     }
 
@@ -163,7 +164,7 @@ NSResult NSSendNotification(NSMessage *msg)
         NS_LOG(DEBUG, "-------------------------------------------------------message\n");
     }
 
-    if(!obCount)
+    if (!obCount)
     {
         NS_LOG(ERROR, "observer count is zero");
         return NS_ERROR;
@@ -178,13 +179,14 @@ NSResult NSSendNotification(NSMessage *msg)
     {
         NS_LOG(ERROR, "fail to send message");
         OCRepPayloadDestroy(payload);
+        msg->extraInfo = NULL;
         return NS_ERROR;
     }
 
     OCRepPayloadDestroy(payload);
+    msg->extraInfo = NULL;
 
     NS_LOG(DEBUG, "NSSendMessage - OUT");
-
     return NS_OK;
 }
 
@@ -217,13 +219,13 @@ NSResult NSSendSync(NSSyncInfo *sync)
 
         if (subData->isWhite)
         {
-            if(subData->syncObId != 0)
+            if (subData->syncObId != 0)
             {
                 obArray[obCount++] = subData->syncObId;
             }
 
-#if(defined WITH_CLOUD && defined RD_CLIENT)
-            if(subData->remote_syncObId != 0)
+#if (defined WITH_CLOUD && defined RD_CLIENT)
+            if (subData->remote_syncObId != 0)
             {
                 obArray[obCount++] = subData->remote_syncObId;
             }

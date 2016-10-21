@@ -48,8 +48,15 @@ protected:
     {
         TestWithMock::SetUp();
         brokerInstance = ResourceBroker::getInstance();
-        pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource*){});
-        cb = ([](BROKER_STATE)->OCStackResult{return OC_STACK_OK;});
+        pResource = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(),
+                                           [](PrimitiveResource*)
+                                           {
+
+                                           });
+        cb = ([](BROKER_STATE)->OCStackResult
+                {
+                    return OC_STACK_OK;
+                });
         id = 0;
     }
 
@@ -179,7 +186,10 @@ TEST_F(ResourceBrokerTest,getResourceState_NormalErrorHandlingIfAbnormalResource
 
     for(int i=0;i!=3;i++)
     {
-        resource[i] = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(), [](PrimitiveResource*){});
+        resource[i] = PrimitiveResource::Ptr(mocks.Mock< PrimitiveResource >(),
+                [](PrimitiveResource*)
+                {
+                });
         mocks.OnCall(resource[i].get(), PrimitiveResource::requestGet);
         mocks.OnCall(resource[i].get(), PrimitiveResource::getHost).Return(std::string());
         mocks.OnCallFuncOverload(static_cast< subscribePresenceSig1 >(OC::OCPlatform::subscribePresence)).Return(OC_STACK_OK);
