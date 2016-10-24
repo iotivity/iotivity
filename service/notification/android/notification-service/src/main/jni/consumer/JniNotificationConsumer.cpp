@@ -156,31 +156,26 @@ jobject getJavaTopicState(JNIEnv *env, OIC::Service::NSTopic::NSTopicState nsSta
         return NULL;
     }
 
-    jobject obj_topicState;
     switch (nsState)
     {
         case OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED:
             {
                 static jfieldID fieldID = env->GetStaticFieldID(cls_topicState,
                                           "UNSUBSCRIBED", "Lorg/iotivity/service/ns/common/Topic$TopicState;");
-                obj_topicState = env->GetStaticObjectField(cls_topicState, fieldID);
+                return env->GetStaticObjectField(cls_topicState, fieldID);
             }
         case OIC::Service::NSTopic::NSTopicState::SUBSCRIBED:
             {
                 static jfieldID fieldID = env->GetStaticFieldID(cls_topicState,
                                           "SUBSCRIBED", "Lorg/iotivity/service/ns/common/Topic$TopicState;");
-                obj_topicState = env->GetStaticObjectField(cls_topicState, fieldID);
+                return env->GetStaticObjectField(cls_topicState, fieldID);
             }
-
-    }
-    if (obj_topicState == NULL)
-    {
-        LOGD("Error: object of field  TopicState  is null");
+        default:
+            return NULL;
     }
 
-    env->DeleteLocalRef(cls_topicState);
     LOGD ("ConsumerService_getJavaTopicState - OUT");
-    return obj_topicState;
+    return NULL;
 }
 
 jobject getJavaTopicsList(JNIEnv *env, OIC::Service::NSTopicsList *topicList)
