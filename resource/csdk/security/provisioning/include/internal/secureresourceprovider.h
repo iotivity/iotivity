@@ -24,6 +24,8 @@
 #include "ocstack.h"
 #include "securevirtualresourcetypes.h"
 #include "pmtypes.h"
+#include "octypes.h"
+
 
 #ifdef __cplusplus
 extern "C"
@@ -110,6 +112,20 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult SRPSaveOwnCertChain(OicSecCert_t * cert, OicSecKey_t * key, uint16_t *credId);
+
+/**
+ * function to register callback, for getting notification for TrustCertChain change.
+ *
+ * @param[in] ctx user context to be passed.
+ * @param[in] TrustCertChainChangeCB notifier callback function
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult SRPRegisterTrustCertChainNotifier(void *ctx, TrustCertChainChangeCB callback);
+
+/**
+ * function to de-register TrustCertChain notification callback.
+ */
+void SRPRemoveTrustCertChainNotifier(void);
 
 #endif // __WITH_DTLS__ || __WITH_TLS__
 /**

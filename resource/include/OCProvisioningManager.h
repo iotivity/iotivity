@@ -36,6 +36,8 @@ namespace OC
     typedef std::vector<OicUuid_t> UuidList_t;
     typedef std::vector<OCProvisionResult_t> PMResultList_t;
     typedef std::function<void(PMResultList_t *result, int hasError)> ResultCallBack;
+    typedef std::function<void(uint16_t credId, uint8_t *trustCertChain,
+            size_t chainSize)>CertChainCallBack;
 
     struct ProvisionContext
     {
@@ -43,6 +45,11 @@ namespace OC
         ProvisionContext(ResultCallBack cb) : callback(cb){}
     };
 
+    struct TrustCertChainContext
+    {
+        CertChainCallBack callback;
+        TrustCertChainContext(CertChainCallBack cb) : callback(cb){}
+    };
     /**
      * This class is for credential's to be set to devices.
      * The types supported are
@@ -240,6 +247,34 @@ namespace OC
              */
             static OCStackResult readTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
                                      size_t *chainSize);
+
+            /**
+             * API to register Notifier for trustCertChain change.
+             *
+             * @param[in] TrustCertChainChangeCB trustCertChain Change will be
+             * notified asynchronously. User need to "delete[]" trustCertChain
+             * in the callback function.
+             * @return  OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult registerTrustCertChangeNotifier(CertChainCallBack);
+
+            /**
+             * API to remove Already registered Notifier.
+             *
+             *@return  OC_STACK_OK always, kept it for symmetry.
+             */
+            static OCStackResult removeTrustCertChangeNotifier();
+
+            /**
+             * Notifier wrapper for trustCertChain change.
+             *
+             * @param[in] ctx  User context returned in callback
+             * @param[in] credId  trustCertChain changed for this ID
+             * @param[in] trustCertChain trustcertchain binary blob
+             * @param[in] chainSize size of trustCertChain
+             */
+            static void certCallbackWrapper(void* ctx, uint16_t credId, uint8_t *trustCertChain,
+                                size_t chainSize);
 #endif // __WITH_DTLS__ || __WITH_TLS__
 
     };

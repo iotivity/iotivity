@@ -65,6 +65,9 @@
 #define VERIFY_SUCCESS(tag, op, logLevel, retValue) { if (!(op)) \
             {OIC_LOG((logLevel), tag, #op " failed!!"); return retValue;} }
 
+
+trustCertChainContext_t g_trustCertChainNotifier;
+
 /**
  * Structure to carry credential data to callback.
  */
@@ -452,6 +455,26 @@ static OCStackResult provisionCertCred(const OicSecCred_t *cred,
     return ret;
 }
 
+OCStackResult SRPRegisterTrustCertChainNotifier(void *ctx, TrustCertChainChangeCB callback)
+{
+    if (g_trustCertChainNotifier.callback)
+    {
+        OIC_LOG(ERROR, TAG, "Can't register Notifier, Unregister previous one");
+        return OC_STACK_ERROR;
+    }
+
+    g_trustCertChainNotifier.callback = callback;
+    g_trustCertChainNotifier.context = ctx;
+    return OC_STACK_OK;
+}
+
+void SRPRemoveTrustCertChainNotifier()
+{
+    g_trustCertChainNotifier.callback = NULL;
+    g_trustCertChainNotifier.context = NULL;
+    return;
+}
+
 /**
  * Callback handler for handling callback of certificate provisioning device.
  *
@@ -628,6 +651,16 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
         return res;
     }
     *credId = cred->credId;
+
+    if (g_trustCertChainNotifier.callback)
+    {
+        uint8_t *certChain = (uint8_t*)OICCalloc(1, sizeof(uint8_t) * chainSize);
+        VERIFY_NON_NULL(TAG, certChain, ERROR, OC_STACK_NO_MEMORY);
+        memcpy(certChain, trustCertChain, chainSize);
+        g_trustCertChainNotifier.callback(g_trustCertChainNotifier.context, credId,
+                certChain, chainSize);
+        OICFree(certChain);
+    }
 
     OIC_LOG(DEBUG, TAG, "OUT SRPSaveTrustCertChain");
 

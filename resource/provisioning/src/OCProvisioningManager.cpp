@@ -364,7 +364,7 @@ namespace OC
     }
 
     OCStackResult OCSecure::readTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
-                                                 size_t *chainSize)
+            size_t *chainSize)
     {
         OCStackResult result;
         auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
@@ -373,6 +373,63 @@ namespace OC
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCReadTrustCertChain(credId, trustCertChain, chainSize);
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+    void OCSecure::certCallbackWrapper(void* ctx, uint16_t credId, uint8_t *trustCertChain,
+            size_t chainSize)
+    {
+        TrustCertChainContext* context = static_cast<TrustCertChainContext*>(ctx);
+        uint8_t *certChain = new uint8_t[chainSize];
+        memcpy(certChain, trustCertChain, chainSize);
+        std::thread exec(context->callback, credId, certChain, chainSize);
+        exec.detach();
+        delete context;
+    }
+
+    OCStackResult OCSecure::registerTrustCertChangeNotifier(CertChainCallBack callback)
+    {
+        if (!callback)
+        {
+            oclog() <<"callback can not be null";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            TrustCertChainContext* context = new TrustCertChainContext(callback);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCRegisterTrustCertChainNotifier(static_cast<void*>(context),
+                    &OCSecure::certCallbackWrapper);
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+
+    OCStackResult OCSecure::removeTrustCertChangeNotifier()
+    {
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            OCRemoveTrustCertChainNotifier();
+            result = OC_STACK_OK;
         }
         else
         {
