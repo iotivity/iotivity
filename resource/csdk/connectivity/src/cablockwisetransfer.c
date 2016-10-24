@@ -391,20 +391,20 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
     // if there is no block option in pdu, check if there is error code.
     if (!isBlock1 && !isBlock2)
     {
-        CABlockDataID_t* blockDataID = CACreateBlockDatablockId(
-                (CAToken_t)pdu->transport_hdr->udp.token,
-                pdu->transport_hdr->udp.token_length,
-                endpoint->addr, endpoint->port);
-        if (NULL == blockDataID || blockDataID->idLength < 1)
-        {
-            OIC_LOG(ERROR, TAG, "blockId is null");
-            CADestroyBlockID(blockDataID);
-            return CA_STATUS_FAILED;
-        }
-
         uint32_t code = CA_RESPONSE_CODE(pdu->transport_hdr->udp.code);
         if (CA_REQUEST_ENTITY_INCOMPLETE == code)
         {
+            CABlockDataID_t* blockDataID = CACreateBlockDatablockId(
+                                                        (CAToken_t)pdu->transport_hdr->udp.token,
+                                                        pdu->transport_hdr->udp.token_length,
+                                                        endpoint->addr, endpoint->port);
+            if (NULL == blockDataID || blockDataID->idLength < 1)
+            {
+                OIC_LOG(ERROR, TAG, "blockId is null");
+                CADestroyBlockID(blockDataID);
+                return CA_STATUS_FAILED;
+            }
+
             CABlockData_t *data = CAGetBlockDataFromBlockDataList(blockDataID);
             if (!data)
             {
@@ -453,9 +453,10 @@ CAResult_t CAReceiveBlockWiseData(coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
             // and sent data remain in block data list, remove block data
             if (receivedData->responseInfo)
             {
-                CARemoveBlockDataFromList(blockDataID);
+                CARemoveBlockDataFromListWithSeed((CAToken_t)pdu->transport_hdr->udp.token,
+                                                  pdu->transport_hdr->udp.token_length,
+                                                  endpoint->addr, endpoint->port);
             }
-            CADestroyBlockID(blockDataID);
             return CA_NOT_SUPPORTED;
         }
     }
