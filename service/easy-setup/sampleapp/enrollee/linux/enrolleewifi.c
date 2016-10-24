@@ -32,6 +32,7 @@
 #define TAG "ENROLLEE_SAMPLE"
 
 void *listeningFunc(void *);
+pthread_t thread_handle = NULL;
 
 /**
  * Secure Virtual Resource database for Iotivity Server
@@ -159,7 +160,6 @@ void StartEasySetup()
     }
     printf("ESInitEnrollee Success\n");
 
-    pthread_t thread_handle = NULL;
     if (pthread_create(&thread_handle, NULL, listeningFunc, NULL))
     {
         printf("Thread creation failed\n");
@@ -197,6 +197,12 @@ void StopEasySetup()
     if (ESTerminateEnrollee() == ES_ERROR)
     {
         printf("ESTerminateEnrollee Failed!!\n");
+        return;
+    }
+
+    if (0 != pthread_cancel(thread_handle))
+    {
+        printf("Thread cancellation failed\n");
         return;
     }
 
