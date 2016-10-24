@@ -22,7 +22,7 @@ string         g_uid;
 string         g_accesstoken;
 
 string              g_host;
-OC::OCResource::Ptr g_binaryswitchResource;
+OC::OCResource::Ptr g_binaryswitchResource = nullptr;
 
 void printRepresentation(OCRepresentation rep)
 {
@@ -154,6 +154,12 @@ void onPost(const HeaderOptions & /*headerOptions*/, const OCRepresentation &rep
 
 void turnOnOffSwitch(bool toTurn)
 {
+    if (g_binaryswitchResource == nullptr)
+    {
+        cout << "Binary switch not found" << endl;
+        return;
+    }
+
     OCRepresentation binarySwitch;
     binarySwitch.setValue("value", toTurn);
 
