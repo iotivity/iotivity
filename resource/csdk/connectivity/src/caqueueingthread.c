@@ -269,6 +269,7 @@ CAResult_t CAQueueingThreadDestroy(CAQueueingThread_t *thread)
     }
 
     u_queue_delete(thread->dataQueue);
+    thread->dataQueue = NULL;
 
     return CA_STATUS_OK;
 }
