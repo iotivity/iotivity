@@ -29,9 +29,9 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include "ocpayload.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
-#include "ocpayload.h"
 #include "ocpayloadcbor.h"
 #include "ocstackinternal.h"
 #include "payload_logging.h"
@@ -39,6 +39,11 @@
 #include "ocendpoint.h"
 
 #define TAG "OIC_RI_PAYLOADPARSE"
+
+/*
+ * The length of UINT64_MAX as a decimal string.
+ */
+#define UINT64_MAX_STRLEN 20
 
 static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *arrayVal);
 static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *repParent, bool isRoot);
@@ -477,6 +482,7 @@ static OCRepPayloadPropType DecodeCborType(CborType type)
             return OCREP_PROP_NULL;
     }
 }
+
 static CborError OCParseArrayFindDimensionsAndType(const CborValue *parent,
         size_t dimensions[MAX_REP_ARRAY_DEPTH], OCRepPayloadPropType *type)
 {
@@ -789,7 +795,7 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
     VERIFY_PARAM_NON_NULL(TAG, outPayload, "Invalid Parameter outPayload");
     VERIFY_PARAM_NON_NULL(TAG, objMap, "Invalid Parameter objMap");
 
-    if (cbor_value_is_map(objMap))
+    if (cbor_value_is_map(objMap) || cbor_value_is_array(objMap))
     {
         if (!*outPayload)
         {
@@ -802,6 +808,7 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
 
         OCRepPayload *curPayload = *outPayload;
 
+        uint64_t arrayIndex = 0;
         size_t len = 0;
         CborValue repMap;
         err = cbor_value_enter_container(objMap, &repMap);
@@ -809,7 +816,7 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
 
         while (!err && cbor_value_is_valid(&repMap))
         {
-            if (cbor_value_is_text_string(&repMap))
+            if (cbor_value_is_map(objMap) && cbor_value_is_text_string(&repMap))
             {
                 err = cbor_value_dup_text_string(&repMap, &name, &len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding tag name in the map");
@@ -825,6 +832,30 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
                     free(name);  // Free *TinyCBOR allocated* string.
                     continue;
                 }
+            }
+            else if (cbor_value_is_array(objMap))
+            {
+                name = (char*)OICCalloc(UINT64_MAX_STRLEN + 1, sizeof(char));
+                VERIFY_PARAM_NON_NULL(TAG, name, "Failed allocating tag name in the map");
+#ifdef PRIu64
+                snprintf(name, UINT64_MAX_STRLEN + 1, "%" PRIu64, arrayIndex);
+#else
+                /*
+                 * Some libc implementations do not support the PRIu64 format
+                 * specifier.  Since we don't expect huge heterogeneous arrays,
+                 * we should never hit the error path below in practice.
+                 */
+                if (arrayIndex <= UINT32_MAX)
+                {
+                    snprintf(name, UINT64_MAX_STRLEN + 1, "%" PRIu32, (uint32_t)arrayIndex);
+                }
+                else
+                {
+                    err = CborErrorDataTooLarge;
+                    OICFree(name);
+                    continue;
+                }
+#endif
             }
             CborType type = cbor_value_get_type(&repMap);
             switch (type)
@@ -883,6 +914,15 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
                     break;
                 case CborArrayType:
                     err = OCParseArray(curPayload, name, &repMap);
+                    if (err != CborNoError)
+                    {
+                        // OCParseArray will fail if the array contains mixed types, try
+                        // to parse as payload with non-negative integer value names
+                        OCRepPayload *pl = NULL;
+                        err = OCParseSingleRepPayload(&pl, &repMap, false);
+                        VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting parse single rep");
+                        res = OCRepPayloadSetPropObjectAsOwner(curPayload, name, pl);
+                    }
                     break;
                 default:
                     OIC_LOG_V(ERROR, TAG, "Parsing rep property, unknown type %d", repMap.type);
@@ -901,6 +941,7 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
             }
             OICFree(name);
             name = NULL;
+            ++arrayIndex;
         }
         if (cbor_value_is_container(objMap))
         {

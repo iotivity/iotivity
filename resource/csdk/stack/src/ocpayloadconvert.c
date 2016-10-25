@@ -58,6 +58,7 @@ static int64_t OCConvertPresencePayload(OCPresencePayload *payload, uint8_t *out
         size_t *size);
 static int64_t OCConvertSecurityPayload(OCSecurityPayload *payload, uint8_t *outPayload,
         size_t *size);
+static int64_t OCConvertSingleRepPayloadValue(CborEncoder *parent, const OCRepPayloadValue *value);
 static int64_t OCConvertSingleRepPayload(CborEncoder *parent, const OCRepPayload *payload);
 static int64_t OCConvertArray(CborEncoder *parent, const OCRepPayloadValueArray *valArray);
 
@@ -563,14 +564,83 @@ exit:
 static int64_t OCConvertRepMap(CborEncoder *map, const OCRepPayload *payload)
 {
     int64_t err = CborNoError;
-    CborEncoder repMap;
-    err |= cbor_encoder_create_map(map, &repMap, CborIndefiniteLength);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep map");
-    err |= OCConvertSingleRepPayload(&repMap, payload);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed converting single rep payload");
-    err |= cbor_encoder_close_container(map, &repMap);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing rep map");
+    CborEncoder encoder;
+    OCRepPayloadValue *value = NULL;
+    size_t arrayLength = 0;
+
+    // Encode payload as an array when value names are consecutive
+    // non-negative integers.  Otherwise encode as a map.
+    arrayLength = 0;
+    for (value = payload->values; value; value = value->next)
+    {
+        char *endp;
+        long i = strtol(value->name, &endp, 0);
+        if (*endp != '\0' || i < 0 || arrayLength != (size_t)i)
+        {
+            break;
+        }
+        ++arrayLength;
+    }
+
+    if (value)
+    {
+        err |= cbor_encoder_create_map(map, &encoder, CborIndefiniteLength);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep map");
+        err |= OCConvertSingleRepPayload(&encoder, payload);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed converting single rep payload");
+        err |= cbor_encoder_close_container(map, &encoder);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing rep map");
+    }
+    else
+    {
+        err |= cbor_encoder_create_array(map, &encoder, arrayLength);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep map");
+        for (value = payload->values; value; value = value->next)
+        {
+            err |= OCConvertSingleRepPayloadValue(&encoder, value);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed converting single rep value");
+        }
+        err |= cbor_encoder_close_container(map, &encoder);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing rep map");
+    }
+
 exit:
+    return err;
+}
+
+static int64_t OCConvertSingleRepPayloadValue(CborEncoder *parent, const OCRepPayloadValue *value)
+{
+    int64_t err = CborNoError;
+    switch (value->type)
+    {
+        case OCREP_PROP_NULL:
+            err = cbor_encode_null(parent);
+            break;
+        case OCREP_PROP_INT:
+            err = cbor_encode_int(parent, value->i);
+            break;
+        case OCREP_PROP_DOUBLE:
+            err = cbor_encode_double(parent, value->d);
+            break;
+        case OCREP_PROP_BOOL:
+            err = cbor_encode_boolean(parent, value->b);
+            break;
+        case OCREP_PROP_STRING:
+            err = cbor_encode_text_string(parent, value->str, strlen(value->str));
+            break;
+        case OCREP_PROP_BYTE_STRING:
+            err = cbor_encode_byte_string(parent, value->ocByteStr.bytes, value->ocByteStr.len);
+            break;
+        case OCREP_PROP_OBJECT:
+            err = OCConvertRepMap(parent, value->obj);
+            break;
+        case OCREP_PROP_ARRAY:
+            err = OCConvertArray(parent, &value->arr);
+            break;
+        default:
+            OIC_LOG_V(ERROR, TAG, "Invalid Prop type: %d", value->type);
+            break;
+    }
     return err;
 }
 
@@ -583,36 +653,7 @@ static int64_t OCConvertSingleRepPayload(CborEncoder *repMap, const OCRepPayload
         err |= cbor_encode_text_string(repMap, value->name, strlen(value->name));
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding tag name");
 
-        switch (value->type)
-        {
-            case OCREP_PROP_NULL:
-                err |= cbor_encode_null(repMap);
-                break;
-            case OCREP_PROP_INT:
-                err |= cbor_encode_int(repMap, value->i);
-                break;
-            case OCREP_PROP_DOUBLE:
-                err |= cbor_encode_double(repMap, value->d);
-                break;
-            case OCREP_PROP_BOOL:
-                err |= cbor_encode_boolean(repMap, value->b);
-                break;
-            case OCREP_PROP_STRING:
-                err |= cbor_encode_text_string(repMap, value->str, strlen(value->str));
-                break;
-            case OCREP_PROP_BYTE_STRING:
-                err |= cbor_encode_byte_string(repMap, value->ocByteStr.bytes, value->ocByteStr.len);
-                break;
-            case OCREP_PROP_OBJECT:
-                err |= OCConvertRepMap(repMap, value->obj);
-                break;
-            case OCREP_PROP_ARRAY:
-                err |= OCConvertArray(repMap, &value->arr);
-                break;
-            default:
-                OIC_LOG_V(ERROR, TAG, "Invalid Prop type: %d", value->type);
-                break;
-        }
+        err |= OCConvertSingleRepPayloadValue(repMap, value);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding single rep value");
         value = value->next;
     }
