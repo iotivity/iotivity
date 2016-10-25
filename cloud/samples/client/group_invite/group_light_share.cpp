@@ -99,7 +99,6 @@ private:
                 if (requestType == "GET")
                 {
                     cout << "\t\t\trequestType : GET\n";
-                    pResponse->setErrorCode(200);
                     pResponse->setResponseResult(OC_EH_OK);
                     pResponse->setResourceRepresentation(get());
                     if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -116,7 +115,6 @@ private:
                     // Do related operations related to POST request
                     OCRepresentation rep_post = post(rep);
                     pResponse->setResourceRepresentation(rep_post);
-                    pResponse->setErrorCode(200);
 
                     if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {
