@@ -28,6 +28,7 @@ print Dir('.').abspath
 
 enrollee_env = env.Clone()
 transport = enrollee_env.get('TARGET_TRANSPORT')
+rd_mode = env.get('RD_MODE')
 
 ######################################################################
 # Build flags
@@ -60,6 +61,9 @@ if enrollee_env.get('SECURED') == '1':
 	enrollee_env.PrependUnique(LIBS = ['ocpmapi', 'ocprovision'])
 	if enrollee_env.get('WITH_TCP') == True:
 		enrollee_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+
+if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
+	enrollee_env.AppendUnique(LIBS = ['resource_directory'])
 
 enrollee = enrollee_env.Program('enrollee', ['enrolleewifi.c', 'easysetup_x.c'])
 

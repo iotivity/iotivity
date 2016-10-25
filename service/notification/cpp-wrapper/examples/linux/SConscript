@@ -28,6 +28,7 @@ lib_env = env.Clone()
 SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
 notification_sample_env = lib_env.Clone()
 
+rd_mode = env.get('RD_MODE')
 target_os = env.get('TARGET_OS')
 ######################################################################
 # Build flags
@@ -73,6 +74,13 @@ if env.get('WITH_TCP') == True:
 	notification_sample_env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
 	if env.get('SECURED') == '1':
 		notification_sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+
+if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
+    if 'CLIENT' in rd_mode:
+        notification_sample_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+    if 'SERVER' in rd_mode:
+        notification_sample_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
+    notification_sample_env.AppendUnique(LIBS = ['resource_directory'])
 
 ####################################################################
 # Source files and Targets

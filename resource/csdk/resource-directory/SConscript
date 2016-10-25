@@ -35,15 +35,16 @@ rd_mode = env.get('RD_MODE')
 ######################################################################
 # Build flags
 ######################################################################
-rd_env.AppendUnique(CPPPATH = ['include', 'src/internal', '../stack/include', '../../oc_logger/include'])
+rd_env.AppendUnique(CPPPATH = ['include', 'src/internal', '../stack/include'])
 
 if 'CLIENT' in rd_mode:
     rd_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
 if 'SERVER' in rd_mode:
     rd_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
 
-rd_env.AppendUnique(LIBPATH = [rd_env.get('BUILD_DIR')])
-rd_env.AppendUnique(LIBS = ['octbstack'])
+rd_env.PrependUnique(LIBPATH = [rd_env.get('BUILD_DIR')])
+rd_env.PrependUnique(RPATH = [rd_env.get('BUILD_DIR')])
+rd_env.PrependUnique(LIBS = ['octbstack'])
 
 if target_os not in ['windows']:
     rd_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra'])
@@ -76,8 +77,10 @@ if 'SERVER' in rd_mode:
 if 'CLIENT' in rd_mode:
     rd_src += [RD_SRC_DIR + 'rd_client.c',]
 
-if target_os in ['tizen']:
-    rdsdk = rd_env.SharedLibrary('resource_directory', rd_src)
+if target_os not in ['arduino', 'darwin', 'ios', 'windows', 'winrt']:
+    rdsdk_shared = rd_env.SharedLibrary('resource_directory', rd_src)
+    rdsdk_static = rd_env.StaticLibrary('resource_directory', rd_src)
+    rdsdk = Flatten([rdsdk_static, rdsdk_shared])
 else :
     rdsdk = rd_env.StaticLibrary('resource_directory', rd_src)
 rd_env.InstallTarget(rdsdk, 'resource_directory')

@@ -24,6 +24,7 @@
 # SConscript file for Local PKI google tests
 gtest_env = SConscript('#extlibs/gtest/SConscript')
 lib_env = gtest_env.Clone()
+rd_mode = lib_env.get('RD_MODE')
 
 if lib_env.get('RELEASE'):
     lib_env.AppendUnique(CCFLAGS = ['-Os'])
@@ -72,6 +73,9 @@ if 'g++' in compiler:
 if broker_test_env.get('SECURED') == '1':
 	if broker_test_env.get('WITH_TCP') == True:
 		broker_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+
+if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
+	broker_test_env.AppendUnique(LIBS = ['resource_directory'])
 
 ######################################################################
 # Build Test
