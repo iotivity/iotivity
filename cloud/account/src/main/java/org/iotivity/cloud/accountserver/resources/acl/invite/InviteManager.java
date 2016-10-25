@@ -23,12 +23,12 @@ package org.iotivity.cloud.accountserver.resources.acl.invite;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 
 import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.db.InviteTable;
+import org.iotivity.cloud.accountserver.resources.acl.group.GroupBrokerManager;
 import org.iotivity.cloud.accountserver.resources.acl.group.GroupManager;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.base.device.Device;
@@ -123,10 +123,12 @@ public class InviteManager {
         /* add user into group */
         if (accepted) {
 
-            HashSet<String> midlist = new HashSet<String>();
+            ArrayList<String> midlist = new ArrayList<>();
             midlist.add(mid);
 
-            GroupManager.getInstance().addGroupMember(gid, midlist);
+            GroupManager.getInstance().addMembersToGroup(gid, midlist);
+            GroupBrokerManager.getInstance().notifyToObservers(
+                    GroupManager.getInstance().getGroupTable(gid).getMembers());
         }
 
         notifyToSubscriber(mid);

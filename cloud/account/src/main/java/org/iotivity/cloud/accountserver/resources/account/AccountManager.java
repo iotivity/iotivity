@@ -40,6 +40,7 @@ import org.iotivity.cloud.accountserver.db.TokenTable;
 import org.iotivity.cloud.accountserver.db.UserTable;
 import org.iotivity.cloud.accountserver.oauth.OAuthProviderFactory;
 import org.iotivity.cloud.accountserver.resources.acl.group.GroupBrokerManager;
+import org.iotivity.cloud.accountserver.resources.acl.group.GroupManager;
 import org.iotivity.cloud.accountserver.resources.acl.id.AclResource;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
@@ -571,22 +572,7 @@ public class AccountManager {
         AccountDBManager.getInstance().deleteRecord(Constants.TOKEN_TABLE,
                 condition);
         // delete device ID from all groups in the DB
-        // GroupManager.getInstance().removeGroupDeviceinEveryGroup(uid, di);
-
-        // TODO remove device record from the ACL table
-        HashMap<String, Object> getAcl = new HashMap<>();
-
-        getAcl = AclResource.getInstance().getAclid(di);
-        if (getAcl == null || getAcl.containsKey(Constants.KEYFIELD_ACLID)) {
-            throw new BadRequestException("getAcl is invalid");
-        }
-
-        if (getAcl.get(Constants.KEYFIELD_ACLID) == null) {
-            throw new BadRequestException("getAcl is null");
-        }
-
-        AclResource.getInstance()
-                .deleteAcl((String) getAcl.get(Constants.KEYFIELD_ACLID));
+        GroupManager.getInstance().deleteDevicesFromAllGroup(di);
     }
 
 }

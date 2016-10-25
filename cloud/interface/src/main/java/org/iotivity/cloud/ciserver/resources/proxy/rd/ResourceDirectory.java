@@ -78,11 +78,11 @@ public class ResourceDirectory extends Resource {
                 String di = payloadData.get(Constants.REQ_DEVICE_ID).toString();
 
                 HashMap<String, Object> requestPayload = new HashMap<>();
-
-                requestPayload.put(Constants.REQ_DEVICE_LIST,
+                requestPayload.put(Constants.USER_ID, srcDevice.getUserId());
+                requestPayload.put(Constants.REQ_GROUP_DEVICES,
                         Arrays.asList(di));
                 IRequest requestToAS = MessageBuilder.createRequest(
-                        RequestMethod.POST, uriPath.toString(), null,
+                        RequestMethod.POST, uriPath.toString(), "op=add",
                         ContentFormat.APPLICATION_CBOR,
                         mCbor.encodingPayloadToCbor(requestPayload));
 
