@@ -172,7 +172,14 @@ if (0 != (ret) && MBEDTLS_ERR_SSL_WANT_READ != (int) (ret) &&                   
     {                                                                                              \
         mbedtls_ssl_send_alert_message(&(peer)->ssl, MBEDTLS_SSL_ALERT_LEVEL_FATAL, (msg));        \
     }                                                                                              \
-    SSL_RES((peer), CA_STATUS_FAILED);                                                             \
+    if ((int) MBEDTLS_ERR_SSL_FATAL_ALERT_MESSAGE == (int) (ret) &&                                \
+        ((int) MBEDTLS_SSL_ALERT_MSG_DECRYPTION_FAILED == (peer)->ssl.in_msg[1] ||                 \
+         (int) MBEDTLS_SSL_ALERT_MSG_DECRYPT_ERROR == (peer)->ssl.in_msg[1] ||                     \
+         (int) MBEDTLS_SSL_ALERT_MSG_HANDSHAKE_FAILURE == (peer)->ssl.in_msg[1] ||                 \
+         (int) MBEDTLS_SSL_ALERT_MSG_BAD_RECORD_MAC == (peer)->ssl.in_msg[1]))                     \
+    {                                                                                              \
+        SSL_RES((peer), CA_DTLS_AUTHENTICATION_FAILURE);                                           \
+    }                                                                                              \
     RemovePeerFromList(&(peer)->sep.endpoint);                                                     \
     if (mutex)                                                                                     \
     {                                                                                              \
