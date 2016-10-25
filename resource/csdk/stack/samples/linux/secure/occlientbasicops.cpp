@@ -144,7 +144,7 @@ OCStackApplicationResult putReqCB(void*, OCDoHandle, OCClientResponse * clientRe
     {
         OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OIC_LOG(INFO, TAG, ("=============> Put Response"));
+        OIC_LOG(INFO, TAG, "=============> Put Response");
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -157,7 +157,7 @@ OCStackApplicationResult postReqCB(void *, OCDoHandle, OCClientResponse *clientR
     {
         OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OIC_LOG(INFO, TAG, ("=============> Post Response"));
+        OIC_LOG(INFO, TAG, "=============> Post Response");
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
@@ -171,7 +171,7 @@ OCStackApplicationResult getReqCB(void*, OCDoHandle, OCClientResponse * clientRe
         OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
         OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
         OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OIC_LOG(INFO, TAG, ("=============> Get Response"));
+        OIC_LOG(INFO, TAG, "=============> Get Response");
     }
     return OC_STACK_DELETE_TRANSACTION;
 }

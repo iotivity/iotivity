@@ -28,9 +28,9 @@ extern "C" {
 #include "cainterface.h"
 
 /**
- * Currently TLS supported adapters(2) WIFI and ETHENET for linux platform.
+ * Currently TLS supported adapters(3) WIFI, ETHENET and BLE for linux platform.
  */
-#define MAX_SUPPORTED_ADAPTERS 2
+#define MAX_SUPPORTED_ADAPTERS 3
 
 typedef void (*CAPacketReceivedCallback)(const CASecureEndpoint_t *sep,
                                          const void *data, size_t dataLength);

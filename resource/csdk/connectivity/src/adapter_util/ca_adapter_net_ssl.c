@@ -484,6 +484,8 @@ static int GetAdapterIndex(CATransportAdapter_t adapter)
             return 0;
         case CA_ADAPTER_TCP:
             return 1;
+        case CA_ADAPTER_GATT_BTLE:
+            return 2;
         default:
             OIC_LOG(ERROR, NET_SSL_TAG, "Unsupported adapter");
             return -1;
@@ -507,7 +509,7 @@ static int SendCallBack(void * tep, const unsigned char * data, size_t dataLen)
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Adapter: %u", ((SslEndPoint_t * )tep)->sep.endpoint.adapter);
     ssize_t sentLen = 0;
     int adapterIndex = GetAdapterIndex(((SslEndPoint_t * )tep)->sep.endpoint.adapter);
-    if (0 == adapterIndex || 1 == adapterIndex)
+    if (0 <= adapterIndex && MAX_SUPPORTED_ADAPTERS > adapterIndex)
     {
         CAPacketSendCallback sendCallback = g_caSslContext->adapterCallbacks[adapterIndex].sendCallback;
         sentLen = sendCallback(&(((SslEndPoint_t * )tep)->sep.endpoint), (const void *) data, dataLen);
@@ -658,9 +660,11 @@ static int InitPKIX(CATransportAdapter_t adapter)
     mbedtls_pk_init(&g_caSslContext->pkey);
     mbedtls_x509_crl_init(&g_caSslContext->crl);
 
-    mbedtls_ssl_config * serverConf = (adapter == CA_ADAPTER_IP ?
+    mbedtls_ssl_config * serverConf = (adapter == CA_ADAPTER_IP ||
+                                   adapter == CA_ADAPTER_GATT_BTLE ?
                                    &g_caSslContext->serverDtlsConf : &g_caSslContext->serverTlsConf);
-    mbedtls_ssl_config * clientConf = (adapter == CA_ADAPTER_IP ?
+    mbedtls_ssl_config * clientConf = (adapter == CA_ADAPTER_IP ||
+                                   adapter == CA_ADAPTER_GATT_BTLE ?
                                    &g_caSslContext->clientDtlsConf : &g_caSslContext->clientTlsConf);
     // optional
     int ret = ParseChain(&g_caSslContext->crt, g_pkiInfo.crt.data, g_pkiInfo.crt.len);
@@ -779,10 +783,14 @@ static SslEndPoint_t *GetSslPeer(const CAEndpoint_t *peer)
         {
             continue;
         }
-        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Compare [%s:%d] and [%s:%d]",
-                  peer->addr, peer->port, tep->sep.endpoint.addr, tep->sep.endpoint.port);
-        if((0 == strncmp(peer->addr, tep->sep.endpoint.addr, MAX_ADDR_STR_SIZE_CA))
-                && (peer->port == tep->sep.endpoint.port))
+
+        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Compare [%s:%d] and [%s:%d] for %d adapter",
+                  peer->addr, peer->port, tep->sep.endpoint.addr, tep->sep.endpoint.port,
+                  peer->adapter);
+
+        if((peer->adapter == tep->sep.endpoint.adapter)
+                && (0 == strncmp(peer->addr, tep->sep.endpoint.addr, MAX_ADDR_STR_SIZE_CA))
+                && (peer->port == tep->sep.endpoint.port || CA_ADAPTER_GATT_BTLE == peer->adapter))
         {
             OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
             return tep;
@@ -1167,7 +1175,8 @@ static SslEndPoint_t * InitiateTlsHandshake(const CAEndpoint_t *endpoint)
     VERIFY_NON_NULL_RET(endpoint, NET_SSL_TAG, "Param endpoint is NULL" , NULL);
 
 
-    mbedtls_ssl_config * config = (endpoint->adapter == CA_ADAPTER_IP ?
+    mbedtls_ssl_config * config = (endpoint->adapter == CA_ADAPTER_IP ||
+                                   endpoint->adapter == CA_ADAPTER_GATT_BTLE ?
                                    &g_caSslContext->clientDtlsConf : &g_caSslContext->clientTlsConf);
     tep = NewSslEndPoint(endpoint, config);
     if (NULL == tep)
@@ -1678,7 +1687,8 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
     SslEndPoint_t * peer = GetSslPeer(&sep->endpoint);
     if (NULL == peer)
     {
-        mbedtls_ssl_config * config = (sep->endpoint.adapter == CA_ADAPTER_IP ?
+        mbedtls_ssl_config * config = (sep->endpoint.adapter == CA_ADAPTER_IP ||
+                                   sep->endpoint.adapter == CA_ADAPTER_GATT_BTLE ?
                                    &g_caSslContext->serverDtlsConf : &g_caSslContext->serverTlsConf);
         peer = NewSslEndPoint(&sep->endpoint, config);
         if (NULL == peer)
@@ -1826,7 +1836,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
         else if (0 < ret)
         {
             int adapterIndex = GetAdapterIndex(peer->sep.endpoint.adapter);
-            if (0 == adapterIndex || adapterIndex == 1)
+            if (0 <= adapterIndex && MAX_SUPPORTED_ADAPTERS > adapterIndex)
             {
                 g_caSslContext->adapterCallbacks[adapterIndex].recvCallback(&peer->sep, decryptBuffer, ret);
             }
@@ -1871,6 +1881,10 @@ void CAsetSslAdapterCallbacks(CAPacketReceivedCallback recvCallback,
             case CA_ADAPTER_TCP:
                 g_caSslContext->adapterCallbacks[1].recvCallback = recvCallback;
                 g_caSslContext->adapterCallbacks[1].sendCallback = sendCallback;
+                break;
+            case CA_ADAPTER_GATT_BTLE:
+                g_caSslContext->adapterCallbacks[2].recvCallback = recvCallback;
+                g_caSslContext->adapterCallbacks[2].sendCallback = sendCallback;
                 break;
             default:
                 OIC_LOG_V(ERROR, NET_SSL_TAG, "Unsupported adapter: %d", type);

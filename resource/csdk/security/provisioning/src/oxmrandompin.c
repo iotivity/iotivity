@@ -155,6 +155,10 @@ OCStackResult CreateSecureSessionRandomPinCallback(OTMContext_t* otmCtx)
         endpoint.port = selDevInfo->securePort;
         caresult = CAInitiateHandshake(&endpoint);
     }
+    else if (CA_ADAPTER_GATT_BTLE == endpoint.adapter)
+    {
+        caresult = CAInitiateHandshake(&endpoint);
+    }
 #ifdef __WITH_TLS__
     else
     {

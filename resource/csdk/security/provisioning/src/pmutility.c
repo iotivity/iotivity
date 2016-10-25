@@ -178,7 +178,8 @@ OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, OCDevAddr* endpoint,
 
         ptr->endpoint = *endpoint;
         ptr->doxm = doxm;
-        ptr->securePort = DEFAULT_SECURE_PORT;
+        ptr->securePort = (CT_ADAPTER_GATT_BTLE == connType) ?
+                          endpoint->port : DEFAULT_SECURE_PORT;
         ptr->next = NULL;
         ptr->connType = connType;
         ptr->devStatus = DEV_STATUS_ON; //AddDevice is called when discovery(=alive)
@@ -245,7 +246,8 @@ static OCStackResult UpdateSecurePortOfDevice(OCProvisionDev_t **ppDevicesList, 
         return OC_STACK_ERROR;
     }
 
-    ptr->securePort = securePort;
+    ptr->securePort = (OC_ADAPTER_GATT_BTLE == ptr->endpoint.adapter) ?
+                      ptr->endpoint.port : securePort;
 
 #ifdef __WITH_TLS__
     ptr->tcpPort = tcpPort;
@@ -448,27 +450,29 @@ bool PMGenerateQuery(bool isSecure,
                     OIC_LOG(ERROR, TAG, "Unknown address format.");
                     return false;
             }
-            // snprintf return value check
-            if (snRet < 0)
-            {
-                OIC_LOG_V(ERROR, TAG, "PMGenerateQuery : Error (snprintf) %d\n", snRet);
-                return false;
-            }
-            else if ((size_t)snRet >= bufferSize)
-            {
-                OIC_LOG_V(ERROR, TAG, "PMGenerateQuery : Truncated (snprintf) %d\n", snRet);
-                return false;
-            }
-
             break;
-        // TODO: We need to verify tinyDTLS in below cases
         case CT_ADAPTER_GATT_BTLE:
+            snRet = snprintf(buffer, bufferSize, "%s%s%s",
+                             prefix, address, uri);
+            break;
         case CT_ADAPTER_RFCOMM_BTEDR:
             OIC_LOG(ERROR, TAG, "Not supported connectivity adapter.");
             return false;
         default:
             OIC_LOG(ERROR, TAG, "Unknown connectivity adapter.");
             return false;
+    }
+
+    // snprintf return value check
+    if (snRet < 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "PMGenerateQuery : Error (snprintf) %d\n", snRet);
+        return false;
+    }
+    else if ((size_t)snRet >= bufferSize)
+    {
+        OIC_LOG_V(ERROR, TAG, "PMGenerateQuery : Truncated (snprintf) %d\n", snRet);
+        return false;
     }
 
     return true;
