@@ -26,11 +26,12 @@
 #endif
 
 #include "iotivity_config.h"
+#include "iotivity_debug.h"
+
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
-#include <assert.h>
 #ifdef HAVE_WINSOCK2_H
 #include <winsock2.h>
 #endif
@@ -299,20 +300,21 @@ static void CASelectReturned(fd_set *readFds, int ret)
     INDEX++; \
 }
 
-// Turn handle into WSAEvent and push to ARRAY
+// Create WSAEvent for SOCKET and push the new event into ARRAY
 #define PUSH_SOCKET(SOCKET, ARRAY, INDEX) \
     if (SOCKET != OC_INVALID_SOCKET) \
     { \
-        WSAEVENT NewEvent; \
-        NewEvent = WSACreateEvent(); \
+        WSAEVENT NewEvent = WSACreateEvent(); \
         if (WSA_INVALID_EVENT != NewEvent) \
         { \
             if (0 != WSAEventSelect(SOCKET, NewEvent, FD_READ)) \
             { \
-                OIC_LOG_V(ERROR, TAG, "WSAEventSelect failed 0x%08x ", WSAGetLastError()); \
-                if (!WSACloseEvent(NewEvent)) \
+                OIC_LOG_V(ERROR, TAG, "WSAEventSelect failed %d", WSAGetLastError()); \
+                BOOL closed = WSACloseEvent(NewEvent); \
+                assert(closed); \
+                if (!closed) \
                 { \
-                    OIC_LOG_V(ERROR, TAG, "WSACloseEvent(NewEvent) failed 0x%08x", WSAGetLastError()); \
+                    OIC_LOG_V(ERROR, TAG, "WSACloseEvent(NewEvent) failed %d", WSAGetLastError()); \
                 } \
             } \
             else \
@@ -322,7 +324,7 @@ static void CASelectReturned(fd_set *readFds, int ret)
         } \
         else \
         { \
-            OIC_LOG_V(ERROR, TAG, "WSACreateEvent(NewEvent) failed 0x%08x", WSAGetLastError()); \
+            OIC_LOG_V(ERROR, TAG, "WSACreateEvent failed %d", WSAGetLastError()); \
         }\
     }
 
@@ -363,6 +365,7 @@ static void CAFindReadyMessage()
 
     // socketArray and eventArray should have same number of elements
     OC_STATIC_ASSERT(_countof(socketArray) == _countof(eventArray), "Arrays should have same number of elements");
+    OC_STATIC_ASSERT(_countof(eventArray) <= WSA_MAXIMUM_WAIT_EVENTS, "Too many events for a single Wait");
 
     PUSH_IP_SOCKET(u6,  eventArray, socketArray, arraySize);
     PUSH_IP_SOCKET(u6s, eventArray, socketArray, arraySize);
@@ -394,17 +397,19 @@ static void CAFindReadyMessage()
     while (!caglobals.ip.terminate)
     {
         int ret = WSAWaitForMultipleEvents(arraySize, eventArray, FALSE, WSA_INFINITE, FALSE);
+        assert(ret >= WSA_WAIT_EVENT_0);
+        assert(ret < (WSA_WAIT_EVENT_0 + arraySize));
 
         switch (ret)
         {
             case WSA_WAIT_FAILED:
-                OIC_LOG_V(ERROR, TAG, "WSAWaitForMultipleEvents returned WSA_WAIT_FAILED 0x%08x", WSAGetLastError());
+                OIC_LOG_V(ERROR, TAG, "WSAWaitForMultipleEvents returned WSA_WAIT_FAILED %d", WSAGetLastError());
                 break;
             case WSA_WAIT_IO_COMPLETION:
-                OIC_LOG_V(ERROR, TAG, "WSAWaitForMultipleEvents returned WSA_WAIT_IO_COMPLETION 0x%08x", WSAGetLastError());
+                OIC_LOG_V(ERROR, TAG, "WSAWaitForMultipleEvents returned WSA_WAIT_IO_COMPLETION %d", WSAGetLastError());
                 break;
             case WSA_WAIT_TIMEOUT:
-                OIC_LOG_V(ERROR, TAG, "WSAWaitForMultipleEvents returned WSA_WAIT_TIMEOUT 0x%08x", WSAGetLastError());
+                OIC_LOG_V(ERROR, TAG, "WSAWaitForMultipleEvents returned WSA_WAIT_TIMEOUT %d", WSAGetLastError());
                 break;
             default:
                 eventIndex = ret - WSA_WAIT_EVENT_0;
@@ -412,7 +417,7 @@ static void CAFindReadyMessage()
                 {
                     if (false == WSAResetEvent(eventArray[eventIndex]))
                     {
-                        OIC_LOG_V(ERROR, TAG, "WSAResetEvent failed 0x%08x", WSAGetLastError());
+                        OIC_LOG_V(ERROR, TAG, "WSAResetEvent failed %d", WSAGetLastError());
                     }
 
                     // Handle address changes if addressChangeEvent is triggered.
@@ -446,19 +451,24 @@ static void CAFindReadyMessage()
                 }
                 else
                 {
-                    OIC_LOG_V(ERROR, TAG, "WSAWaitForMultipleEvents failed 0x%08x", WSAGetLastError());
+                    OIC_LOG_V(ERROR, TAG, "WSAWaitForMultipleEvents failed %d", WSAGetLastError());
                 }
                 break;
         }
 
     }
 
-    while (arraySize > 0)
+    for (int i = 0; i < arraySize; i++)
     {
-        arraySize--;
-        if (!WSACloseEvent(eventArray[arraySize]))
+        HANDLE h = eventArray[i];
+        if (h != caglobals.ip.addressChangeEvent)
         {
-            OIC_LOG_V(ERROR, TAG, "WSACloseEvent (Index %i) failed 0x%08x", arraySize, WSAGetLastError());
+            BOOL closed = WSACloseEvent(h);
+            assert(closed);
+            if (!closed)
+            {
+                OIC_LOG_V(ERROR, TAG, "WSACloseEvent (Index %i) failed %d", i, WSAGetLastError());
+            }
         }
     }
 
@@ -501,7 +511,7 @@ void CAUnregisterForAddressChanges()
 #ifdef _WIN32
     if (caglobals.ip.addressChangeEvent != WSA_INVALID_EVENT)
     {
-        WSACloseEvent(caglobals.ip.addressChangeEvent);
+        OC_VERIFY(WSACloseEvent(caglobals.ip.addressChangeEvent));
         caglobals.ip.addressChangeEvent = WSA_INVALID_EVENT;
     }
 #else
@@ -1018,7 +1028,7 @@ void CAIPStopServer()
     // receive thread will stop immediately.
     if (!WSASetEvent(caglobals.ip.shutdownEvent))
     {
-        OIC_LOG_V(DEBUG, TAG, "set shutdown event failed: %#08X", GetLastError());
+        OIC_LOG_V(DEBUG, TAG, "set shutdown event failed: %d", WSAGetLastError());
     }
 #endif
 }
@@ -1041,7 +1051,7 @@ void CAWakeUpForChange()
 #else
     if (!WSASetEvent(caglobals.ip.shutdownEvent))
     {
-        OIC_LOG_V(DEBUG, TAG, "set shutdown event failed: %#08X", GetLastError());
+        OIC_LOG_V(DEBUG, TAG, "set shutdown event failed: %d", WSAGetLastError());
     }
 #endif
 }

@@ -18,6 +18,7 @@
 ******************************************************************/
 
 #include "iotivity_config.h"
+#include "iotivity_debug.h"
 #include "caipinterface.h"
 
 #include <assert.h>
@@ -157,7 +158,7 @@ static bool CACmpNetworkList(uint32_t ifIndex, int family, const char *addr, u_a
     return false;
 }
 
-static HANDLE g_CAIPNetworkMonitorChangeNotificationHandle = NULL;
+static HANDLE g_CAIPNetworkMonitorNotificationHandle = NULL;
 
 /**
  * Handle a notification that the IP address info changed.
@@ -223,11 +224,9 @@ static void CALLBACK IpAddressChangeCallback(void *context,
         // in order to join the multicast group on the associated interface and address family.
         if (g_CAIPNetworkMonitorNewAddressQueue)
         {
-            int ret = WSASetEvent(caglobals.ip.addressChangeEvent);
-
             // Setting the event should always succeed, since the handle should always be
             // valid when this code is reached.
-            assert(ret);
+            OC_VERIFY(WSASetEvent(caglobals.ip.addressChangeEvent));
         }
     }
 
@@ -246,18 +245,16 @@ void UnregisterForIpAddressChange()
     if (g_CAIPNetworkMonitorShutdownEvent != NULL)
     {
         // Cancel the worker thread.
-        if (SetEvent(g_CAIPNetworkMonitorShutdownEvent))
-        {
-            WaitForSingleObject(g_CAIPNetworkMonitorChangeNotificationHandle, INFINITE);
-        }
-
-        CloseHandle(g_CAIPNetworkMonitorShutdownEvent);
+        OC_VERIFY(SetEvent(g_CAIPNetworkMonitorShutdownEvent));
+        OC_VERIFY(WaitForSingleObject(g_CAIPNetworkMonitorNotificationHandle,
+                                      INFINITE) == WAIT_OBJECT_0);
+        OC_VERIFY(CloseHandle(g_CAIPNetworkMonitorShutdownEvent));
         g_CAIPNetworkMonitorShutdownEvent = NULL;
     }
-    if (g_CAIPNetworkMonitorChangeNotificationHandle != NULL)
+    if (g_CAIPNetworkMonitorNotificationHandle != NULL)
     {
-        CloseHandle(g_CAIPNetworkMonitorChangeNotificationHandle);
-        g_CAIPNetworkMonitorChangeNotificationHandle = NULL;
+        OC_VERIFY(CloseHandle(g_CAIPNetworkMonitorNotificationHandle));
+        g_CAIPNetworkMonitorNotificationHandle = NULL;
     }
 }
 
@@ -348,7 +345,7 @@ DWORD WINAPI IpNetworkMonitorWorker(PVOID context)
                     break;
                 }
 
-                WSAResetEvent(overlapped.hEvent);
+                OC_VERIFY(WSAResetEvent(overlapped.hEvent));
             }
         }
 
@@ -365,7 +362,7 @@ done:
     }
     if (overlapped.hEvent != NULL)
     {
-        CloseHandle(overlapped.hEvent);
+        OC_VERIFY(CloseHandle(overlapped.hEvent));
         overlapped.hEvent = NULL;
     }
     WSACleanup();
@@ -374,7 +371,7 @@ done:
 
 BOOL RegisterForIpAddressChange()
 {
-    assert(g_CAIPNetworkMonitorChangeNotificationHandle == NULL);
+    assert(g_CAIPNetworkMonitorNotificationHandle == NULL);
 
     g_CAIPNetworkMonitorShutdownEvent = CreateEvent(
         NULL, // No security descriptor.
@@ -386,7 +383,7 @@ BOOL RegisterForIpAddressChange()
         return false;
     }
 
-    g_CAIPNetworkMonitorChangeNotificationHandle = CreateThread(
+    g_CAIPNetworkMonitorNotificationHandle = CreateThread(
         NULL, // Default security attributes.
         0, // Default stack size.
         IpNetworkMonitorWorker,
@@ -394,9 +391,9 @@ BOOL RegisterForIpAddressChange()
         0, // Run immediately.
         NULL); // We don't need the thread id.
 
-    if (g_CAIPNetworkMonitorChangeNotificationHandle == NULL)
+    if (g_CAIPNetworkMonitorNotificationHandle == NULL)
     {
-        CloseHandle(g_CAIPNetworkMonitorShutdownEvent);
+        OC_VERIFY(CloseHandle(g_CAIPNetworkMonitorShutdownEvent));
         g_CAIPNetworkMonitorShutdownEvent = NULL;
         return false;
     }
@@ -431,7 +428,7 @@ CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
         return res;
     }
 
-    if (g_CAIPNetworkMonitorChangeNotificationHandle == NULL)
+    if (g_CAIPNetworkMonitorNotificationHandle == NULL)
     {
 #ifdef USE_SOCKET_ADDRESS_CHANGE_EVENT
         if (!RegisterForIpAddressChange())
@@ -441,7 +438,7 @@ CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
 #else
         int err = NotifyUnicastIpAddressChange(AF_UNSPEC, IpAddressChangeCallback, NULL,
                                                true,
-                                               &g_CAIPNetworkMonitorChangeNotificationHandle);
+                                               &g_CAIPNetworkMonitorNotificationHandle);
         if (err != NO_ERROR)
         {
             return CA_STATUS_FAILED;
@@ -459,14 +456,14 @@ CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
  */
 CAResult_t CAIPStopNetworkMonitor(CATransportAdapter_t adapter)
 {
-    if (g_CAIPNetworkMonitorChangeNotificationHandle != NULL)
+    if (g_CAIPNetworkMonitorNotificationHandle != NULL)
     {
 #ifdef USE_SOCKET_ADDRESS_CHANGE_EVENT
         UnregisterForIpAddressChange();
 #else
-        int err = CancelMibChangeNotify2(g_CAIPNetworkMonitorChangeNotificationHandle);
+        int err = CancelMibChangeNotify2(g_CAIPNetworkMonitorNotificationHandle);
         assert(err == NO_ERROR);
-        g_CAIPNetworkMonitorChangeNotificationHandle = NULL;
+        g_CAIPNetworkMonitorNotificationHandle = NULL;
 #endif
     }
 
