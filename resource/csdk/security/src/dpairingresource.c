@@ -39,10 +39,10 @@
 #include "aclresource.h"
 #include "srmutility.h"
 #include "ocserverrequest.h"
-#include "ocpayloadcbor.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "payload_logging.h"
-#include <stdlib.h>
+
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif

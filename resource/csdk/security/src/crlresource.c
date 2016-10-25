@@ -26,6 +26,7 @@
 #include "srmutility.h"
 #include "doxmresource.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "crlresource.h"

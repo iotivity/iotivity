@@ -24,6 +24,7 @@
 #include "ocstack.h"
 #include "oic_malloc.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "payload_logging.h"
 #include "resourcemanager.h"
 #include "pstatresource.h"
