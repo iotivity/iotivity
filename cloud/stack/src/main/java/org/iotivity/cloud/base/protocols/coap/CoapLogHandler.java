@@ -50,10 +50,11 @@ public class CoapLogHandler extends ChannelDuplexHandler {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        ctx.fireChannelInactive();
         Log.v(ctx.channel().id().asLongText().substring(26)
                 + " Disconnected, Address: "
                 + ctx.channel().remoteAddress().toString());
+
+        ctx.fireChannelInactive();
     }
 
     @Override

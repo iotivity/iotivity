@@ -26,6 +26,7 @@ import java.util.Scanner;
 
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.server.CoapServer;
+import org.iotivity.cloud.base.server.HttpServer;
 import org.iotivity.cloud.ciserver.DeviceServerSystem.CoapDevicePool;
 import org.iotivity.cloud.ciserver.resources.DiResource;
 import org.iotivity.cloud.ciserver.resources.KeepAliveResource;
@@ -50,13 +51,23 @@ public class CloudInterfaceServer {
 
         System.out.println("-----CI SERVER-------");
 
-        if (args.length != 8) {
-            Log.e("coap server port and RDServer_Address port AccountServer_Address Port MQBroker_Address Port and TLS mode required\n"
-                    + "ex) 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686 0\n");
+        if (!(args.length == 8 || args.length == 9)) {
+            Log.e("\nCoAP-server <Port> and RD-server <Address> <Port> Account-server <Address> <Port> MQ-broker <Address> <Port> HC-proxy [HTTP-port] and TLS-mode <0|1> are required.\n"
+                    + "ex) 5683 127.0.0.1 5684 127.0.0.1 5685 127.0.0.1 5686 80 0\n");
             return;
         }
 
-        boolean tlsMode = Integer.parseInt(args[7]) == 1;
+        boolean hcProxyMode = false;
+        if (args.length == 9) {
+            hcProxyMode = true;
+        }
+
+        boolean tlsMode = false;
+        if (hcProxyMode) {
+            tlsMode = Integer.parseInt(args[8]) == 1;
+        } else {
+            tlsMode = Integer.parseInt(args[7]) == 1;
+        }
 
         ConnectorPool.addConnection("rd",
                 new InetSocketAddress(args[1], Integer.parseInt(args[2])),
@@ -118,7 +129,11 @@ public class CloudInterfaceServer {
         deviceServer.addServer(new CoapServer(
                 new InetSocketAddress(Integer.parseInt(args[0]))));
 
-        // deviceServer.addServer(new HttpServer(new InetSocketAddress(8080)));
+        // Add HTTP Server for HTTP-to-CoAP Proxy
+        if (hcProxyMode) {
+            deviceServer.addServer(new HttpServer(
+                    new InetSocketAddress(Integer.valueOf(args[7]))));
+        }
 
         deviceServer.startSystem(tlsMode);
 

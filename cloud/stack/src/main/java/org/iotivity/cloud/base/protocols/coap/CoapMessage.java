@@ -415,6 +415,14 @@ public abstract class CoapMessage extends Message {
         return ContentFormat.NO_CONTENT;
     }
 
+    public int getContentFormatValue() {
+        if (content_format == null) {
+            return 0;
+        } else {
+            return content_format[0];
+        }
+    }
+
     @Override
     public void setLocationPath(String locationPath) {
         if (location_path == null) {

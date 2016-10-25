@@ -33,7 +33,6 @@ import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.exception.ServerException.NotFoundException;
 import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedException;
 import org.iotivity.cloud.base.protocols.IRequest;
-import org.iotivity.cloud.util.Cbor;
 
 public class Resource implements IRequestEventHandler {
 
