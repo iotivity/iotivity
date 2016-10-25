@@ -51,6 +51,8 @@ public class Constants extends OICConstants {
     public static final String REQ_REQUEST_METHOD  = "rm";
     public static final String REQ_REQUEST_URI     = "uri";
 
+    public static final String REQ_GROUP_DEVICES   = "devices";
+
     public static final String RESP_GRANT_POLICY   = "gp";
     public static final String RESP_ACL_ALLOWED    = "Allowed";
     public static final String RESP_ACL_DENIED     = "Denied";
@@ -58,4 +60,7 @@ public class Constants extends OICConstants {
     public static final String REQ_LINKS           = "links";
     public static final String REQ_HREF            = "href";
     public static final String REQ_CRL             = "crl";
+
+    public static final String KEYFIELD_GROUPS     = "groups";
+    public static final String KEYFIELD_DEVICES    = "devices";
 }

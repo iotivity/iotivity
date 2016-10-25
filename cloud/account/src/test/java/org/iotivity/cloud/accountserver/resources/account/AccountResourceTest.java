@@ -28,8 +28,10 @@ import static org.mockito.Mockito.mock;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import org.iotivity.cloud.accountserver.Constants;
@@ -37,7 +39,10 @@ import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.db.MongoDB;
 import org.iotivity.cloud.accountserver.db.TokenTable;
 import org.iotivity.cloud.accountserver.db.UserTable;
+import org.iotivity.cloud.accountserver.resources.acl.group.GroupBrokerManager;
+import org.iotivity.cloud.accountserver.resources.acl.group.GroupManager;
 import org.iotivity.cloud.accountserver.resources.acl.group.GroupResource;
+import org.iotivity.cloud.accountserver.resources.acl.id.AclResource;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.base.device.CoapDevice;
 import org.iotivity.cloud.base.exception.ServerException;
@@ -60,9 +65,9 @@ import org.mockito.stubbing.Answer;
 public class AccountResourceTest {
     private static final String            REGISTER_URI              = Constants.ACCOUNT_FULL_URI;
     private static final String            GROUP_URI                 = Constants.GROUP_FULL_URI;
-    private static final String            DEVICE_ID                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
+    private static final String            DEVICE_ID                 = "DEVICE";
     private String                         mAuthProvider             = "Github";
-    private String                         mAuthCode                 = "b4878d614bbc5f8db463";
+    private String                         mAuthCode                 = "3af038b49edc4ebdc45c";
     private CoapDevice                     mMockDevice               = mock(
             CoapDevice.class);
     private Cbor<HashMap<String, Object>>  mCbor                     = new Cbor<>();
@@ -185,23 +190,6 @@ public class AccountResourceTest {
     }
 
     @Test
-    public void testDeleteDeviceDefaultGroupOnDefaultRequestReceived()
-            throws Exception {
-        getTestMethodName();
-        // register the token table and user table to the DB
-        String uuid = "u0001";
-        registerTokenUserInfo(uuid, DEVICE_ID);
-        createGroup(uuid, "Private");
-        // register three devices to the group
-        shareDevice(DEVICE_ID, uuid);
-        shareDevice(DEVICE_ID + "2", uuid);
-        shareDevice(DEVICE_ID + "3", uuid);
-        // delete one device
-        deleteDevice(DEVICE_ID, uuid);
-        assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
-    }
-
-    @Test
     public void testDeleteDeviceInEveryGroupOnDefaultRequestReceived()
             throws Exception {
         getTestMethodName();
@@ -211,23 +199,39 @@ public class AccountResourceTest {
         registerTokenUserInfo(uuid, DEVICE_ID);
         registerTokenInfo(uuid, DEVICE_ID + "2");
         registerTokenInfo(uuid, DEVICE_ID + "3");
-        // register token table for the resource client
         registerTokenInfo(uuid, DEVICE_ID + "4");
-        createGroup(uuid, "Private");
+        registerTokenInfo(uuid, DEVICE_ID + "5");
+        AclResource.getInstance().createAcl(uuid, DEVICE_ID);
+        AclResource.getInstance().createAcl(uuid, DEVICE_ID + "2");
+        AclResource.getInstance().createAcl(uuid, DEVICE_ID + "3");
+        AclResource.getInstance().createAcl(uuid, DEVICE_ID + "4");
+        AclResource.getInstance().createAcl(uuid, DEVICE_ID + "5");
+        GroupBrokerManager.getInstance().createGroup(uuid, uuid, null, null);
         // register three devices to the private group
-        shareDevice(DEVICE_ID, uuid);
-        shareDevice(DEVICE_ID + "2", uuid);
-        shareDevice(DEVICE_ID + "3", uuid);
-        // register resource servers to the public group
-        createGroup(uuid, "Public");
-        shareDevice(DEVICE_ID, mGroupId);
-        shareDevice(DEVICE_ID + "2", mGroupId);
-        shareDevice(DEVICE_ID + "3", mGroupId);
-        // register resource servers to the public group
-        createGroup(uuid, "Public");
-        shareDevice(DEVICE_ID, mGroupId);
-        shareDevice(DEVICE_ID + "2", mGroupId);
-        shareDevice(DEVICE_ID + "3", mGroupId);
+        GroupManager.getInstance().addDevicesToGroup(uuid,
+                new ArrayList<String>(Arrays.asList(DEVICE_ID, DEVICE_ID + "2",
+                        DEVICE_ID + "3")));
+        GroupBrokerManager.getInstance().createGroup(uuid, "group1", null,
+                null);
+        GroupManager.getInstance().addDevicesToGroup("group1",
+                new ArrayList<String>(Arrays.asList(DEVICE_ID, DEVICE_ID + "2",
+                        DEVICE_ID + "3")));
+        GroupBrokerManager.getInstance().createGroup(uuid, "group2", null,
+                null);
+        GroupManager.getInstance().addDevicesToGroup("group2",
+                new ArrayList<String>(Arrays.asList(DEVICE_ID, DEVICE_ID + "2",
+                        DEVICE_ID + "3")));
+        ArrayList<Object> resources = new ArrayList<>();
+        // add resource 1
+        resources.add(makeResources("/di/" + DEVICE_ID + "4" + "/a/light/0",
+                Arrays.asList("core.light"), Arrays.asList("oic.if.baseline")));
+        resources.add(makeResources("/di/" + DEVICE_ID + "4" + "/a/switch/1",
+                Arrays.asList("core.switch"),
+                Arrays.asList("oic.if.baseline")));
+        resources.add(makeResources("/di/" + DEVICE_ID + "5" + "/a/fan/1",
+                Arrays.asList("core.fan"), Arrays.asList("oic.if.baseline")));
+        GroupManager.getInstance().addResourcesToGroup("group2", resources);
+
         // device delete for three resource servers
         deleteDevice(DEVICE_ID, uuid);
         assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
@@ -237,23 +241,6 @@ public class AccountResourceTest {
         assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
         // device delete for one resource client
         deleteDevice(DEVICE_ID + "4", uuid);
-        assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
-    }
-
-    @Test
-    public void testDeleteClientOnDefaultRequestReceived() throws Exception {
-        getTestMethodName();
-        // register the token table and user table to the DB
-        String uuid = "u0001Client";
-        HashMap<String, Object> tokenInfo = mTokenTableCastingManager
-                .convertObjectToMap(makeTokenTable(uuid, DEVICE_ID));
-        HashMap<String, Object> userInfo = mUserTableCastingManager
-                .convertObjectToMap(makeUserTable(uuid));
-        AccountDBManager.getInstance()
-                .insertAndReplaceRecord(Constants.TOKEN_TABLE, tokenInfo);
-        AccountDBManager.getInstance().insertRecord(Constants.USER_TABLE,
-                userInfo);
-        deleteDevice(DEVICE_ID, uuid);
         assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
     }
 
@@ -313,15 +300,8 @@ public class AccountResourceTest {
         return request;
     }
 
-    private void createGroup(String uuid, String gtype) throws Exception {
-        System.out.println("-----Create Group");
-        IRequest request = null;
-        request = createDefaultGroupRequest(uuid, gtype);
-        mGroupResource.onDefaultRequestReceived(mMockDevice, request);
-    }
-
     private void deleteDevice(String di, String uid) throws Exception {
-        System.out.println("-----Delete Device");
+        System.out.println("-----Delete Device " + di);
         IRequest request = null;
         request = deleteDeviceRequest(di, uid);
         mAccountResource.onDefaultRequestReceived(mMockDevice, request);
@@ -343,40 +323,19 @@ public class AccountResourceTest {
         mAccountResource.onDefaultRequestReceived(mMockDevice, request);
     }
 
-    private void shareDevice(String deviceId, String gid) throws Exception {
-        System.out.println("-----Share Device");
-        IRequest request = null;
-        request = createShareDeviceRequest(deviceId, gid);
-        mGroupResource.onDefaultRequestReceived(mMockDevice, request);
-    }
-
     private IRequest deleteDeviceRequest(String deviceId, String uid) {
         IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
                 REGISTER_URI, "di=" + deviceId + ";uid=" + uid);
         return request;
     }
 
-    private IRequest createDefaultGroupRequest(String uuid, String gtype) {
-        IRequest request = null;
-        HashMap<String, String> payloadData = new HashMap<String, String>();
-        payloadData.put("gmid", uuid);
-        payloadData.put("gtype", gtype);
-        request = MessageBuilder.createRequest(RequestMethod.POST, GROUP_URI,
-                null, ContentFormat.APPLICATION_CBOR,
-                mCbor.encodingPayloadToCbor(payloadData));
-        return request;
-    }
-
-    private IRequest createShareDeviceRequest(String deviceId, String gid) {
-        IRequest request = null;
-        HashMap<String, Object> payloadData = new HashMap<String, Object>();
-        ArrayList<String> diList = new ArrayList<>();
-        diList.add(deviceId);
-        payloadData.put("dilist", diList);
-        request = MessageBuilder.createRequest(RequestMethod.POST,
-                GROUP_URI + "/" + gid, null, ContentFormat.APPLICATION_CBOR,
-                mCbor.encodingPayloadToCbor(payloadData));
-        return request;
+    private HashMap<String, Object> makeResources(String href, List<String> rt,
+            List<String> itf) {
+        HashMap<String, Object> resource = new HashMap<String, Object>();
+        resource.put(Constants.KEYFIELD_ACE_RESOURCE_HREF, href);
+        resource.put(Constants.RS_INTERFACE, itf);
+        resource.put(Constants.KEYFIELD_RESOURCE_RT, rt);
+        return resource;
     }
 
     private IRequest signUpRequest(String deviceId, String authProvider,
