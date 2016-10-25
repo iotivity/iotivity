@@ -691,9 +691,10 @@ typedef struct
 
     /** usually zero for default interface.*/
     uint32_t                ifindex;
-#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
-    char                    routeData[MAX_ADDR_STR_SIZE]; //destination GatewayID:ClientId
-#endif
+
+    /** destination GatewayID:ClientId.*/
+    char                    routeData[MAX_ADDR_STR_SIZE];
+
 } OCDevAddr;
 
 /**
