@@ -21,6 +21,7 @@
  */
 package org.iotivity.cloud.ciserver.resources.proxy.rd;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -85,19 +86,24 @@ public class ResourceFind extends Resource {
                         return;
                     }
 
+                    ArrayList<String> devices = new ArrayList<>();
+
+                    devices = (ArrayList<String>) payloadData
+                            .get(Constants.KEYFIELD_DEVICES);
+
+                    System.out.println("devices : " + devices);
+
                     if (mRequest.getUriQuery() != null
                             && mRequest.getUriQueryMap()
                                     .containsKey(Constants.REQ_DEVICE_ID)) {
-                        if (!getResponseDeviceList(payloadData)
-                                .containsAll(mRequest.getUriQueryMap()
-                                        .get(Constants.REQ_DEVICE_ID))) {
+                        if (!devices.containsAll(mRequest.getUriQueryMap()
+                                .get(Constants.REQ_DEVICE_ID))) {
                             mSrcDevice.sendResponse(
                                     MessageBuilder.createResponse(mRequest,
                                             ResponseStatus.BAD_REQUEST));
                         }
                     } else {
-                        String additionalQuery = makeAdditionalQuery(
-                                payloadData);
+                        String additionalQuery = makeAdditionalQuery(devices);
                         mRequest = MessageBuilder.modifyRequest(mRequest, null,
                                 (mRequest.getUriQuery() != null
                                         ? mRequest.getUriQuery() : "")
@@ -114,11 +120,9 @@ public class ResourceFind extends Resource {
             }
         }
 
-        private String makeAdditionalQuery(
-                HashMap<String, Object> payloadData) {
+        private String makeAdditionalQuery(ArrayList<String> deviceList) {
 
             StringBuilder additionalQuery = new StringBuilder();
-            List<String> deviceList = getResponseDeviceList(payloadData);
 
             if (deviceList == null) {
                 return null;
@@ -157,8 +161,7 @@ public class ResourceFind extends Resource {
             mRDServer.sendRequest(request, srcDevice);
         } else {
             StringBuffer uriQuery = new StringBuffer();
-            uriQuery.append(
-                    Constants.REQ_MEMBER_ID + "=" + srcDevice.getUserId());
+            uriQuery.append(Constants.USER_ID + "=" + srcDevice.getUserId());
 
             StringBuffer uriPath = new StringBuffer();
             uriPath.append(Constants.PREFIX_OIC + "/");
