@@ -50,6 +50,21 @@ namespace OC
         typedef OCDoHandle OCPresenceHandle;
 
         /**
+         * API for stop Base layer including resource and connectivity abstraction.
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult stop();
+
+        /**
+         * API for start Base layer including resource and connectivity abstraction.
+         * OCInit will be invoked.
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult start();
+
+        /**
          * API for notifying base that resource's attributes have changed.
          *
          * @param resourceHandle resource handle of the resource

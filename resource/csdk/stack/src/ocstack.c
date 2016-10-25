@@ -2277,7 +2277,7 @@ OCStackResult OCStop()
     }
     else if (stackState != OC_STACK_INITIALIZED)
     {
-        OIC_LOG(ERROR, TAG, "Stack not initialized");
+        OIC_LOG(INFO, TAG, "Stack not initialized");
         return OC_STACK_ERROR;
     }
 

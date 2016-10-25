@@ -48,6 +48,7 @@ namespace OC
         static const char UNKNOWN_ERROR[]              = "Unknown Error";
 
         static const char STACK_INIT_ERROR[]           = "Error Initializing Stack";
+        static const char STACK_TERMINATE_ERROR[]      = "Error Terminating Stack";
         static const char NOT_CONFIGURED_AS_SERVER[]   =
                           "Cannot static construct a Server when configured as a client";
         static const char INVALID_PARAM[]              = "Invalid Param";

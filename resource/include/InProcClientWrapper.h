@@ -227,6 +227,9 @@ namespace OC
             MQTopicCallback& callback, QualityOfService QoS);
 #endif
 
+        virtual OCStackResult stop();
+        virtual OCStackResult start();
+
     private:
         void listeningFunc();
         std::string assembleSetResourceUri(std::string uri, const QueryParamsMap& queryParams);

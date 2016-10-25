@@ -78,6 +78,8 @@ public final class OcPlatform {
     private static volatile boolean sIsPlatformInitialized = false;
     private static QualityOfService sPlatformQualityOfService = QualityOfService.NA;
 
+    private static volatile boolean sIsStopPlatform = false;
+
     private OcPlatform() {
     }
 
@@ -90,6 +92,12 @@ public final class OcPlatform {
      * @param platformConfig platform configuration
      */
     public synchronized static void Configure(PlatformConfig platformConfig) {
+        if (sIsStopPlatform)
+        {
+            OcPlatform.start();
+            sIsStopPlatform = false;
+        }
+
         if (!sIsPlatformInitialized) {
             CaInterface.initialize(platformConfig.getActivity(), platformConfig.getContext());
 
@@ -114,6 +122,27 @@ public final class OcPlatform {
                                          int port,
                                          int qualityOfService,
                                          String dbPath);
+
+    /**
+     * API for stop all process of the OcPlatform.
+     * All of threads and memory will be terminated by this API.
+     * Iotivity Core can be started again through Configure(PlatformConfig platformConfig) API.
+     * Both Configure and Shutdown API is filtering for duplicated calling even while processing.
+     * <p>
+     * Note: This API is for both server and client side.
+     * </p>
+     */
+    public synchronized static void Shutdown() {
+        if (!sIsStopPlatform)
+        {
+            OcPlatform.stop();
+            sIsStopPlatform = true;
+            sIsPlatformInitialized = false;
+        }
+    }
+
+    private static native void stop();
+    private static native void start();
 
     /**
      * API for notifying base that resource's attributes have changed.
