@@ -194,14 +194,6 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
     OCRepPayloadSetPropObjectArray(rdPayload, OC_RSRVD_LINKS, linkArr, dimensions);
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
 
-    if (OC_STACK_OK == OCStopMulticastServer())
-    {
-        OIC_LOG_V(DEBUG, TAG, "Stopped receiving the multicast traffic.");
-    }
-    else
-    {
-        OIC_LOG_V(DEBUG, TAG, "Failed stopping the multicast traffic.");
-    }
     return OCDoResource(NULL, OC_REST_POST, targetUri, NULL, (OCPayload *)rdPayload,
                         connectivityType, qos, cbData, NULL, 0);
 }
