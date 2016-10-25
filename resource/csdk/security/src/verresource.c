@@ -32,6 +32,7 @@
 #include "logger.h"
 #include "payload_logging.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "cainterface.h"
 #include "ocserverrequest.h"
 #include "resourcemanager.h"

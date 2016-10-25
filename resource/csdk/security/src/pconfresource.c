@@ -28,6 +28,7 @@
 #include "cJSON.h"
 #include "base64.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "payload_logging.h"
 #include "resourcemanager.h"
 #include "pconfresource.h"
@@ -37,7 +38,6 @@
 #include "doxmresource.h"
 #include "srmutility.h"
 #include "ocserverrequest.h"
-#include <stdlib.h>
 #include "psinterface.h"
 #include "security_internals.h"
 #ifdef HAVE_STRINGS_H

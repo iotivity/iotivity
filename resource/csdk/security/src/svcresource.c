@@ -22,6 +22,7 @@
 
 #include "ocstack.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "oic_malloc.h"
 #include "utlist.h"
 #include "payload_logging.h"
