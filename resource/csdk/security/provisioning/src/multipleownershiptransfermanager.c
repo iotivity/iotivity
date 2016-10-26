@@ -327,15 +327,16 @@ exit:
 OCStackResult MOTSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
                                  const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback)
 {
-    OCStackResult postMomRes = OC_STACK_INVALID_PARAM;
+    OCStackResult postMomRes = OC_STACK_INVALID_CALLBACK;
     OicSecDoxm_t* doxm = NULL;
     uint8_t* doxmPayload = NULL;
     size_t doxmPayloadLen = 0;
 
     OIC_LOG(DEBUG, TAG, "IN MOTSelectOTMethod");
 
-    VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
     VERIFY_NON_NULL(TAG, resultCallback, ERROR);
+    postMomRes = OC_STACK_INVALID_PARAM;
+    VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
 
     bool isValidOxmsel = false;
     for(size_t i = 0; i < targetDeviceInfo->doxm->oxmLen; i++)
@@ -383,7 +384,7 @@ exit:
 OCStackResult MOTProvisionPreconfigPIN(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
                                  const char* preconfPIN, size_t preconfPINLen, OCProvisionResultCB resultCallback)
 {
-    OCStackResult postCredRes = OC_STACK_INVALID_PARAM;
+    OCStackResult postCredRes = OC_STACK_INVALID_CALLBACK;
     bool freeFlag = true;
     OCSecurityPayload* secPayload = NULL;
     MOTContext_t *motCtx = NULL;
@@ -391,8 +392,9 @@ OCStackResult MOTProvisionPreconfigPIN(void *ctx, const OCProvisionDev_t *target
 
     OIC_LOG(DEBUG, TAG, "IN MOTProvisionPreconfigPIN");
 
-    VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
     VERIFY_NON_NULL(TAG, resultCallback, ERROR);
+    postCredRes = OC_STACK_INVALID_PARAM;
+    VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
     VERIFY_NON_NULL(TAG, preconfPIN, ERROR);
     VERIFY_SUCCESS(TAG, (0 != preconfPINLen), ERROR);
     VERIFY_SUCCESS(TAG, (0 != preconfPINLen && OXM_PRECONFIG_PIN_SIZE >= preconfPINLen), ERROR);
