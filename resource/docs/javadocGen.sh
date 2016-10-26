@@ -19,6 +19,9 @@
 BASE_PATH="../../android/android_api/base/src/main/java/"
 BASE_PKG="org.iotivity.base"
 
+CA_SRCS="../../android/android_api/base/src/main/java/org/iotivity/ca/CaBtPairingInterface.java \
+         ../../android/android_api/base/src/main/java/org/iotivity/ca/CaInterface.java"
+
 RE_PATH="../../service/resource-encapsulation/android/service/src/main/java/"
 RE_COMMON_PKG=org.iotivity.service
 RE_CLINET_PKG=org.iotivity.service.client
@@ -47,7 +50,6 @@ NS_PKG_3=org.iotivity.service.ns.consumer
 
 javadoc -public -splitindex -d ./Java_API -sourcepath \
     $BASE_PATH:$RE_PATH:$RH_PATH:$EASYSETUP_PATH:$RESOURCECONTAINER_PATH:$NS_PATH \
-    $BASE_PKG $RE_COMMON_PKG  $RE_CLINET_PKG $RE_SERVER_PKG $EASYSETUP_PKG \
+    $BASE_PKG $CA_SRCS $RE_COMMON_PKG $RE_CLINET_PKG $RE_SERVER_PKG $EASYSETUP_PKG \
     $RESOURCECONTAINER_PKG $NS_PKG_1 $NS_PKG_2 $NS_PKG_3
-
 
