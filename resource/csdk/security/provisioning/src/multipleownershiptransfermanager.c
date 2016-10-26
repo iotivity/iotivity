@@ -272,7 +272,7 @@ OCStackResult MOTAddMOTMethod(void *ctx, OCProvisionDev_t *targetDeviceInfo,
 
     OIC_LOG(DEBUG, TAG, "IN MOTAddMOTMethod");
 
-    VERIFY_SUCCESS(TAG, (OIC_OXM_COUNT > newOxm), ERROR);
+    VERIFY_SUCCESS(TAG, (OIC_OXM_COUNT > newOxm || OIC_PRECONFIG_PIN == newOxm), ERROR);
     VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
     postOxmRes = OC_STACK_INVALID_CALLBACK;
     VERIFY_NON_NULL(TAG, resultCallback, ERROR);
@@ -483,35 +483,6 @@ exit:
 
 static OCStackResult StartMultipleOwnershipTransfer(OTMContext_t* motCtx,
                                                     OCProvisionDev_t* selectedDevice);
-
-/**
- * Array to store the callbacks for each owner transfer method.
- */
-static OTMCallbackData_t g_MOTCbDatas[OIC_OXM_COUNT] = {
-        //Just works
-        {.loadSecretCB = LoadSecretJustWorksCallback,
-          .createSecureSessionCB = CreateSecureSessionJustWorksCallback,
-          .createSelectOxmPayloadCB = NULL,
-          .createOwnerTransferPayloadCB = NULL},
-
-          //Random PIN
-        {.loadSecretCB = InputPinCodeCallback,
-          .createSecureSessionCB = CreateSecureSessionRandomPinCallback,
-          .createSelectOxmPayloadCB = NULL,
-          .createOwnerTransferPayloadCB = NULL},
-
-        //Manufacturer Cert
-        {.loadSecretCB = NULL,
-          .createSecureSessionCB = NULL,
-          .createSelectOxmPayloadCB = NULL,
-          .createOwnerTransferPayloadCB = NULL},
-
-          //Preconfig PIN
-        {.loadSecretCB = LoadPreconfPinCodeCallback,
-          .createSecureSessionCB = CreateSecureSessionPreconfPinCallback,
-          .createSelectOxmPayloadCB = NULL,
-          .createOwnerTransferPayloadCB = NULL},
-};
 
 static OTMContext_t* g_MotCtx = NULL;
 
@@ -1015,8 +986,18 @@ static OCStackResult StartMultipleOwnershipTransfer(OTMContext_t* motCtx,
         OIC_LOG(WARNING, TAG, "StartOwnershipTransfer : Failed to register DTLS handshake callback.");
     }
 
-    size_t oxmSel = (size_t)(selectedDevice->doxm->oxmSel);
-    OIC_LOG_V(DEBUG, TAG, "Multiple Ownership Transfer method = %d", selectedDevice->doxm->oxmSel);
+    OicSecOxm_t oxmSel = selectedDevice->doxm->oxmSel;
+    OIC_LOG_V(DEBUG, TAG, "Multiple Ownership Transfer method = %d", (int)oxmSel);
+
+    res = OTMSetOTCallback(selectedDevice->doxm->oxmSel, &motCtx->otmCallback);
+    if(OC_STACK_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Error in OTMSetOTCallback : %d", res);
+        return res;
+    }
+    //Only two functions required for MOT
+    VERIFY_NON_NULL(TAG, motCtx->otmCallback.loadSecretCB, ERROR);
+    VERIFY_NON_NULL(TAG, motCtx->otmCallback.createSecureSessionCB, ERROR);
 
     if(OIC_PRECONFIG_PIN != oxmSel && OIC_RANDOM_DEVICE_PIN != oxmSel)
     {
@@ -1024,7 +1005,7 @@ static OCStackResult StartMultipleOwnershipTransfer(OTMContext_t* motCtx,
         return OC_STACK_ERROR;
     }
 
-    if(OIC_RANDOM_DEVICE_PIN == selectedDevice->doxm->oxmSel)
+    if(OIC_RANDOM_DEVICE_PIN == oxmSel)
     {
         if(CA_STATUS_OK != CAregisterPskCredentialsHandler(GetDtlsPskForRandomPinOxm))
         {
@@ -1032,13 +1013,13 @@ static OCStackResult StartMultipleOwnershipTransfer(OTMContext_t* motCtx,
         }
     }
 
-    res = g_MOTCbDatas[oxmSel].loadSecretCB(motCtx);
+    res = motCtx->otmCallback.loadSecretCB(motCtx);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);
 
     //Save the current context instance to use on the dtls handshake callback
     g_MotCtx = motCtx;
 
-    res = g_MOTCbDatas[oxmSel].createSecureSessionCB(motCtx);
+    res = motCtx->otmCallback.createSecureSessionCB(motCtx);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);
 
     OIC_LOG(INFO, TAG, "OUT StartMultipleOwnershipTransfer");

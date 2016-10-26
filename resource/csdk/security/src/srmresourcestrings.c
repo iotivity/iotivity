@@ -169,7 +169,7 @@ const char * OXM_JUST_WORKS = "oic.sec.doxm.jw";
 const char * OXM_RANDOM_DEVICE_PIN = "oic.sec.doxm.rdp";
 const char * OXM_MANUFACTURER_CERTIFICATE = "oic.sec.doxm.mfgcert";
 #ifdef _ENABLE_MULTIPLE_OWNER_
-const char * OXM_PRECONF_PIN = "oic.sec.doxm.pcp";
+const char * OXM_PRECONF_PIN = "x.org.iotivity.doxm.pcp";
 #endif //_ENABLE_MULTIPLE_OWNER_
 
 //Credential data encoding methods

@@ -76,40 +76,63 @@
 #define TAG "OTM"
 
 /**
- * Array to store the callbacks for each owner transfer method.
- */
-static OTMCallbackData_t g_OTMCbDatas[OIC_OXM_COUNT] = {
-        //Just works
-        {.loadSecretCB = LoadSecretJustWorksCallback,
-          .createSecureSessionCB = CreateSecureSessionJustWorksCallback,
-          .createSelectOxmPayloadCB = CreateJustWorksSelectOxmPayload,
-          .createOwnerTransferPayloadCB = CreateJustWorksOwnerTransferPayload},
-
-          //Random PIN
-        {.loadSecretCB = InputPinCodeCallback,
-          .createSecureSessionCB = CreateSecureSessionRandomPinCallback,
-          .createSelectOxmPayloadCB = CreatePinBasedSelectOxmPayload,
-          .createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload},
-
-        //Manufacturer Cert
-        {.loadSecretCB = NULL,
-          .createSecureSessionCB = NULL,
-          .createSelectOxmPayloadCB = NULL,
-          .createOwnerTransferPayloadCB = NULL},
-
-#ifdef _ENABLE_MULTIPLE_OWNER_
-          //Preconfig PIN
-        {.loadSecretCB = LoadPreconfPinCodeCallback,
-          .createSecureSessionCB = CreateSecureSessionPreconfPinCallback,
-          .createSelectOxmPayloadCB = CreatePreconfPinBasedSelectOxmPayload,
-          .createOwnerTransferPayloadCB = CreatePreconfPinBasedOwnerTransferPayload},
-#endif //_ENABLE_MULTIPLE_OWNER_
-};
-
-/**
  * Variables for pointing the OTMContext to be used in the DTLS handshake result callback.
  */
 static OTMContext_t* g_otmCtx = NULL;
+
+OCStackResult OTMSetOTCallback(OicSecOxm_t oxm, OTMCallbackData_t* callbacks)
+{
+    OCStackResult res = OC_STACK_INVALID_PARAM;
+
+    OIC_LOG(INFO, TAG, "IN OTMSetOTCallback");
+
+    VERIFY_NON_NULL(TAG, callbacks, ERROR);
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    VERIFY_SUCCESS(TAG, (OIC_OXM_COUNT > oxm || OIC_PRECONFIG_PIN == oxm), ERROR);
+#else
+    VERIFY_SUCCESS(TAG, (OIC_OXM_COUNT > oxm), ERROR);
+#endif //_ENABLE_MULTIPLE_OWNER_
+
+    switch(oxm)
+    {
+    case OIC_JUST_WORKS:
+        callbacks->loadSecretCB = LoadSecretJustWorksCallback;
+        callbacks->createSecureSessionCB = CreateSecureSessionJustWorksCallback;
+        callbacks->createSelectOxmPayloadCB = CreateJustWorksSelectOxmPayload;
+        callbacks->createOwnerTransferPayloadCB = CreateJustWorksOwnerTransferPayload;
+        break;
+    case OIC_RANDOM_DEVICE_PIN:
+        callbacks->loadSecretCB = InputPinCodeCallback;
+        callbacks->createSecureSessionCB = CreateSecureSessionRandomPinCallback;
+        callbacks->createSelectOxmPayloadCB = CreatePinBasedSelectOxmPayload;
+        callbacks->createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload;
+        break;
+    case OIC_MANUFACTURER_CERTIFICATE:
+        OIC_LOG(ERROR, TAG, "OIC_MANUFACTURER_CERTIFICATE not supported yet.");
+        return OC_STACK_INVALID_METHOD;
+    case OIC_DECENTRALIZED_PUBLIC_KEY:
+        OIC_LOG(ERROR, TAG, "OIC_DECENTRALIZED_PUBLIC_KEY not supported yet.");
+        return OC_STACK_INVALID_METHOD;
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    case OIC_PRECONFIG_PIN:
+        callbacks->loadSecretCB = LoadPreconfPinCodeCallback;
+        callbacks->createSecureSessionCB = CreateSecureSessionPreconfPinCallback;
+        callbacks->createSelectOxmPayloadCB = CreatePreconfPinBasedSelectOxmPayload;
+        callbacks->createOwnerTransferPayloadCB = CreatePreconfPinBasedOwnerTransferPayload;
+        break;
+#endif //_ENABLE_MULTIPLE_OWNER_
+    default:
+        OIC_LOG_V(ERROR, TAG, "Unknown OxM : %d", (int)oxm);
+        return OC_STACK_INVALID_PARAM;
+        break;
+    }
+
+    res = OC_STACK_OK;
+exit:
+    OIC_LOG(INFO, TAG, "OUT OTMSetOTCallback");
+    return res;
+}
+
 
 /**
  * Function to select appropriate  provisioning method.
@@ -137,15 +160,6 @@ static OCStackResult SelectProvisioningMethod(const OicSecOxm_t *supportedMethod
         {
             *selectedMethod =  supportedMethods[i];
         }
-    }
-
-    if(NULL == g_OTMCbDatas[(*selectedMethod)].loadSecretCB ||
-       NULL == g_OTMCbDatas[(*selectedMethod)].createSecureSessionCB ||
-       NULL == g_OTMCbDatas[(*selectedMethod)].createSelectOxmPayloadCB ||
-       NULL == g_OTMCbDatas[(*selectedMethod)].createOwnerTransferPayloadCB)
-    {
-        OIC_LOG_V(ERROR, TAG, "Please make sure the OxM(%d)'s callback registration", (int)(*selectedMethod));
-        return OC_STACK_INVALID_CALLBACK;
     }
 
     OIC_LOG(DEBUG, TAG, "OUT SelectProvisioningMethod");
@@ -752,9 +766,9 @@ static OCStackApplicationResult OperationModeUpdateHandler(void *ctx, OCDoHandle
 
         //DTLS Handshake
         //Load secret for temporal secure session.
-        if(g_OTMCbDatas[selOxm].loadSecretCB)
+        if(otmCtx->otmCallback.loadSecretCB)
         {
-            res = g_OTMCbDatas[selOxm].loadSecretCB(otmCtx);
+            res = otmCtx->otmCallback.loadSecretCB(otmCtx);
             if(OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, TAG, "OperationModeUpdate : Failed to load secret");
@@ -767,9 +781,9 @@ static OCStackApplicationResult OperationModeUpdateHandler(void *ctx, OCDoHandle
         g_otmCtx = otmCtx;
 
         //Try DTLS handshake to generate secure session
-        if(g_OTMCbDatas[selOxm].createSecureSessionCB)
+        if(otmCtx->otmCallback.createSecureSessionCB)
         {
-            res = g_OTMCbDatas[selOxm].createSecureSessionCB(otmCtx);
+            res = otmCtx->otmCallback.createSecureSessionCB(otmCtx);
             if(OC_STACK_OK != res)
             {
                 OIC_LOG(ERROR, TAG, "OperationModeUpdate : Failed to create DTLS session");
@@ -1347,14 +1361,16 @@ static OCStackResult PostOwnerTransferModeToResource(OTMContext_t* otmCtx)
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
+
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if(!secPayload)
     {
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
     }
+
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    OCStackResult res = g_OTMCbDatas[selectedOxm].createSelectOxmPayloadCB(otmCtx,
+    OCStackResult res = otmCtx->otmCallback.createSelectOxmPayloadCB(otmCtx,
             &secPayload->securityData, &secPayload->payloadSize);
     if (OC_STACK_OK != res && NULL == secPayload->securityData)
     {
@@ -1448,7 +1464,7 @@ static OCStackResult PostOwnerUuid(OTMContext_t* otmCtx)
         return OC_STACK_NO_MEMORY;
     }
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
-    OCStackResult res =  g_OTMCbDatas[deviceInfo->doxm->oxmSel].createOwnerTransferPayloadCB(
+    OCStackResult res = otmCtx->otmCallback.createOwnerTransferPayloadCB(
             otmCtx, &secPayload->securityData, &secPayload->payloadSize);
     if (OC_STACK_OK != res && NULL == secPayload->securityData)
     {
@@ -1610,6 +1626,13 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
     }
     OIC_LOG_V(DEBUG, TAG, "Selected provisoning method = %d", selectedDevice->doxm->oxmSel);
 
+    res = OTMSetOTCallback(selectedDevice->doxm->oxmSel, &otmCtx->otmCallback);
+    if(OC_STACK_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Error in OTMSetOTCallback : %d", res);
+        return res;
+    }
+
     //Send Req: POST /oic/sec/doxm [{..."OxmSel" :g_OTMCbDatas[Index of Selected OxM].OXMString,...}]
     res = PostOwnerTransferModeToResource(otmCtx);
     if(OC_STACK_OK != res)
@@ -1647,10 +1670,7 @@ OCStackResult OTMSetOwnershipTransferCallbackData(OicSecOxm_t oxmType, OTMCallba
         return OC_STACK_INVALID_PARAM;
     }
 
-    g_OTMCbDatas[oxmType].loadSecretCB= data->loadSecretCB;
-    g_OTMCbDatas[oxmType].createSecureSessionCB = data->createSecureSessionCB;
-    g_OTMCbDatas[oxmType].createSelectOxmPayloadCB = data->createSelectOxmPayloadCB;
-    g_OTMCbDatas[oxmType].createOwnerTransferPayloadCB = data->createOwnerTransferPayloadCB;
+    // TODO: Remove this API, Please see the jira ticket IOT-1484
 
     OIC_LOG(DEBUG, TAG, "OUT OTMSetOwnerTransferCallbackData");
 

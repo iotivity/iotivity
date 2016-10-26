@@ -1228,13 +1228,15 @@ static int selectMultipleOwnershipTrnasferMethod(void)
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
+    const int preconfOxm = 4;
     int oxm = 0;
     for( ; ; )
     {
-        printf("   0. (Not Supported)\n");
-        printf("   1. Random PIN OxM\n");
-        printf("   2. (Not Supported)\n");
-        printf("   3. Pre-Configured PIN OxM\n");
+        printf("   %d. (Not Supported)\n", OIC_JUST_WORKS);
+        printf("   %d. Random PIN OxM\n", OIC_RANDOM_DEVICE_PIN);
+        printf("   %d. (Not Supported)\n", OIC_MANUFACTURER_CERTIFICATE);
+        printf("   %d. (Not Supported)\n", OIC_DECENTRALIZED_PUBLIC_KEY);
+        printf("   %d. Pre-Configured PIN OxM\n", OIC_PRECONFIG_PIN);
         printf("   > Enter Number of  OxM for Multiple Ownership Transfer : ");
         for(int ret=0; 1!=ret; )
         {
