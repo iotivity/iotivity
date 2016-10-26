@@ -270,11 +270,12 @@ typedef enum
 {
     OIC_JUST_WORKS                          = 0x0,
     OIC_RANDOM_DEVICE_PIN                   = 0x1,
-    OIC_MANUFACTURER_CERTIFICATE           = 0x2,
+    OIC_MANUFACTURER_CERTIFICATE            = 0x2,
+    OIC_DECENTRALIZED_PUBLIC_KEY            = 0x3,
+    OIC_OXM_COUNT,
 #ifdef _ENABLE_MULTIPLE_OWNER_
-    OIC_PRECONFIG_PIN                      = 0x3,
+    OIC_PRECONFIG_PIN                       = 0xFF00,
 #endif //_ENABLE_MULTIPLE_OWNER_
-    OIC_OXM_COUNT
 }OicSecOxm_t;
 
 typedef enum
