@@ -698,10 +698,8 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 
         discoveryResult = getQueryParamsForFiltering (virtualUriInRequest, request->query,
                 &interfaceQuery, &resourceTypeQuery);
-        bool interfaceQueryAllocated = false;
         if (!interfaceQuery && !resourceTypeQuery)
         {
-            interfaceQueryAllocated = true;
             interfaceQuery = OICStrdup(OC_RSRVD_INTERFACE_LL);
         }
 
@@ -1013,6 +1011,8 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
                                  OCResource *resource,
                                  uint8_t collectionResource)
 {
+    OC_UNUSED(collectionResource);
+
     if(!request || ! resource)
     {
         return OC_STACK_INVALID_PARAM;
