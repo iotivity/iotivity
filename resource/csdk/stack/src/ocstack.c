@@ -2848,15 +2848,8 @@ OCStackResult OCDoResource(OCDoHandle *handle,
 #ifdef WITH_PRESENCE
     if (method == OC_REST_PRESENCE)
     {
-        if (requestInfo.isMulticast)
-        {
-            OIC_LOG(ERROR, TAG, "AddClientCB for presence done.");
-            goto exit;
-        }
-        else
-        {
-            OIC_LOG(ERROR, TAG, "this subscribe presence is unicast.");
-        }
+        OIC_LOG(ERROR, TAG, "AddClientCB for presence done.");
+        goto exit;
     }
 #endif
 
