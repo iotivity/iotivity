@@ -1599,7 +1599,8 @@ OCStackResult SetDoxmDeviceID(const OicUuid_t *deviceID)
 
 #ifdef __WITH_DTLS__
     //for normal device.
-    if(true == gDoxm->owned)
+    if(true == gDoxm->owned &&
+       memcmp(gDoxm->deviceID.id, gDoxm->owner.id, sizeof(gDoxm->owner.id)) != 0)
     {
         OIC_LOG(ERROR, TAG, "This device owned by owner's device.");
         OIC_LOG(ERROR, TAG, "Device UUID cannot be changed to guarantee the reliability of the connection.");
