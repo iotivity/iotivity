@@ -73,6 +73,55 @@ class ClientFridge
     }
 
     private:
+    void receivedPlatformInfo(const OCRepresentation& rep)
+    {
+        std::cout << "\nPlatform Information received ---->\n";
+        std::string value;
+        std::string values[] =
+        {
+            "pi",   "Platform ID                    ",
+            "mnmn", "Manufacturer name              ",
+            "mnml", "Manufacturer url               ",
+            "mnmo", "Manufacturer Model No          ",
+            "mndt", "Manufactured Date              ",
+            "mnpv", "Manufacturer Platform Version  ",
+            "mnos", "Manufacturer OS version        ",
+            "mnhw", "Manufacturer hardware version  ",
+            "mnfv", "Manufacturer firmware version  ",
+            "mnsl", "Manufacturer support url       ",
+            "st",   "Manufacturer system time       "
+        };
+
+        for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]); i += 2)
+        {
+            if(rep.getValue(values[i], value))
+            {
+                std::cout << values[i + 1] << " : "<< value << std::endl;
+            }
+        }
+    }
+
+    void receivedDeviceInfo(const OCRepresentation& rep)
+    {
+        std::cout << "\nDevice Information received ---->\n";
+        std::string value;
+        std::string values[] =
+        {
+            "di",  "Device ID        ",
+            "n",   "Device name      ",
+            "lcv", "Spec version url ",
+            "dmv", "Data Model Model ",
+        };
+
+        for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]); i += 2)
+        {
+            if (rep.getValue(values[i], value))
+            {
+                std::cout << values[i + 1] << " : " << value << std::endl;
+            }
+        }
+    }
+
     void foundDevice(std::shared_ptr<OCResource> resource)
     {
         using namespace OC::OCPlatform;
@@ -89,7 +138,10 @@ class ClientFridge
 
         std::cout << "Querying for platform information... " << std::endl;
 
-        ret = OCPlatform::getPlatformInfo("", platformDiscoveryURI, CT_ADAPTER_IP, NULL);
+        ret = OCPlatform::getPlatformInfo(resource->host(), platformDiscoveryURI,
+                                          resource->connectivityType(),
+                                          std::bind(&ClientFridge::receivedPlatformInfo,
+                                                    this, PH::_1));
 
         if (ret == OC_STACK_OK)
         {
@@ -102,8 +154,10 @@ class ClientFridge
 
         std::cout << "Querying for device information... " << std::endl;
 
-        ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI, 
-                                resource->connectivityType(), NULL);
+        ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI,
+                                        resource->connectivityType(),
+                                        std::bind(&ClientFridge::receivedDeviceInfo,
+                                                  this, PH::_1));
 
         if (ret == OC_STACK_OK)
         {
