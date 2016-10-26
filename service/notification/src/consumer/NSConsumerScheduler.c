@@ -41,6 +41,10 @@
 #include "NSConsumerNetworkEventListener.h"
 #include "NSConsumerSystem.h"
 
+#ifdef WITH_MQ
+#include "NSConsumerMQPlugin.h"
+#endif
+
 void * NSConsumerMsgHandleThreadFunc(void * handle);
 
 void * NSConsumerMsgPushThreadFunc(void * data);
@@ -328,6 +332,13 @@ void NSConsumerTaskProcessing(NSTask * task)
             NSConsumerInternalTaskProcessing(task);
             break;
         }
+#ifdef WITH_MQ
+        case TASK_MQ_REQ_SUBSCRIBE:
+        {
+            NSConsumerMQTaskProcessing(task);
+            break;
+        }
+#endif
         default:
         {
             NS_LOG(ERROR, "Unknown type of task");

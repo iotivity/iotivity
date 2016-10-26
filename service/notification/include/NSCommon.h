@@ -81,6 +81,8 @@ typedef enum
     NS_MESSAGE_NOTICE = 2,
     NS_MESSAGE_EVENT = 3,
     NS_MESSAGE_INFO = 4,
+    NS_MESSAGE_READ = 11,
+    NS_MESSAGE_DELETED = 12
 
 } NSMessageType;
 

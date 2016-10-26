@@ -96,6 +96,14 @@ typedef struct
 
 } NSSyncInfo_internal;
 
+#ifdef WITH_MQ
+typedef struct
+{
+    char * serverAddr;
+    char * topicName;
+} NSMQTopicAddress;
+#endif
+
 bool NSIsStartedConsumer();
 void NSSetIsStartedConsumer(bool setValue);
 
@@ -114,12 +122,16 @@ void NSSetConsumerId(char * cId);
 char * NSMakeRequestUriWithConsumerId(const char * uri);
 
 NSTask * NSMakeTask(NSTaskType, void *);
-
 NSResult NSConsumerPushEvent(NSTask *);
 
+NSMessage * NSGetMessage(OCRepPayload * payload);
 NSMessage * NSCopyMessage(NSMessage *);
 void NSRemoveMessage(NSMessage *);
 
+void NSGetProviderPostClean(
+        char * pId, char * mUri, char * sUri, char * tUri, NSProviderConnectionInfo * connection);
+
+NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse);
 NSProviderConnectionInfo * NSCreateProviderConnections(OCDevAddr *);
 NSProviderConnectionInfo * NSCopyProviderConnections(NSProviderConnectionInfo *);
 void NSRemoveConnections(NSProviderConnectionInfo *);
@@ -143,6 +155,8 @@ OCStackResult NSInvokeRequest(OCDoHandle * handle,
         OCClientContextDeleter cd, OCConnectivityType type);
 
 bool NSOCResultToSuccess(OCStackResult ret);
+
+OCDevAddr * NSChangeAddress(const char * address);
 
 #ifdef __cplusplus
 }

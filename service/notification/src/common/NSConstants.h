@@ -225,6 +225,10 @@ typedef enum eSchedulerType
 
 typedef enum eTaskType
 {
+#ifdef WITH_MQ
+    TASK_MQ_REQ_SUBSCRIBE = 20001,
+#endif
+
     TASK_REGISTER_RESOURCE = 1000,
     TASK_PUBLISH_RESOURCE = 1001,
 

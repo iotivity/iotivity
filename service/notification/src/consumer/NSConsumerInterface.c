@@ -30,6 +30,8 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 
+static char * NSGetQueryAddress(const char * serverFullAddress);
+
 // Public APIs
 NSResult NSStartConsumer(NSConsumerConfig config)
 {
@@ -67,25 +69,42 @@ NSResult NSStopConsumer()
     return NS_OK;
 }
 
-NSResult NSConsumerEnableRemoteService(const char *serverAddress)
+#ifdef WITH_MQ
+NSResult NSConsumerSubscribeMQService(const char * serverAddress, const char * topicName)
+{
+    NS_VERIFY_NOT_NULL(serverAddress, NS_ERROR);
+    NS_VERIFY_NOT_NULL(topicName, NS_ERROR);
+    bool isStartedConsumer = NSIsStartedConsumer();
+    NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
+
+    char * queryAddr = NSGetQueryAddress(serverAddress);
+    NS_VERIFY_NOT_NULL(queryAddr, NS_ERROR);
+
+    NSMQTopicAddress * topicAddr = (NSMQTopicAddress *)OICMalloc(sizeof(NSMQTopicAddress));
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(queryAddr, NS_ERROR, NSOICFree(queryAddr));
+
+    topicAddr->serverAddr = queryAddr;
+    topicAddr->topicName = OICStrdup(topicName);
+
+    NSTask * subMQTask = NSMakeTask(TASK_MQ_REQ_SUBSCRIBE, (void *)topicAddr);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(subMQTask, NS_ERROR,
+                  {
+                      NSOICFree(topicAddr->serverAddr);
+                      NSOICFree(topicAddr->topicName)
+                      NSOICFree(topicAddr);
+                  });
+
+    return NSConsumerPushEvent(subMQTask);
+}
+#endif
+
+NSResult NSConsumerEnableRemoteService(const char * serverAddress)
 {
     NS_VERIFY_NOT_NULL(serverAddress, NS_ERROR);
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
-    char * queryAddr = NULL;
-    if (strstr(serverAddress, "coap+tcp://"))
-    {
-        queryAddr = OICStrdup(serverAddress+11);
-    }
-    else if (strstr(serverAddress, "coap://"))
-    {
-        queryAddr = OICStrdup(serverAddress+7);
-    }
-    else
-    {
-        queryAddr = OICStrdup(serverAddress);
-    }
+    char * queryAddr = NSGetQueryAddress(serverAddress);
     NS_VERIFY_NOT_NULL(queryAddr, NS_ERROR);
 
     NSTask * discoverTask = NSMakeTask(TASK_CONSUMER_REQ_DISCOVER, (void *)queryAddr);
@@ -221,4 +240,20 @@ NSResult NSConsumerUpdateTopicList(const char * providerId, NSTopicLL * topics)
     NS_VERIFY_NOT_NULL(topicTask, NS_ERROR);
 
     return NSConsumerPushEvent(topicTask);
+}
+
+char * NSGetQueryAddress(const char * serverFullAddress)
+{
+    if (strstr(serverFullAddress, "coap+tcp://"))
+    {
+        return OICStrdup(serverFullAddress+11);
+    }
+    else if (strstr(serverFullAddress, "coap://"))
+    {
+        return OICStrdup(serverFullAddress+7);
+    }
+    else
+    {
+        return OICStrdup(serverFullAddress);
+    }
 }
