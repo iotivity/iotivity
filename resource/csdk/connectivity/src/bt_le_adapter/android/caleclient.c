@@ -497,6 +497,13 @@ void CALEClientTerminate()
         isAttached = true;
     }
 
+    // stop scan
+    CAResult_t ret = CALEClientStopScan();
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(INFO, TAG, "CALEClientStopScan has failed");
+    }
+
     if (g_leScanCallback)
     {
         (*env)->DeleteGlobalRef(env, g_leScanCallback);
@@ -521,7 +528,7 @@ void CALEClientTerminate()
         g_uuidList = NULL;
     }
 
-    CAResult_t ret = CALEClientRemoveAllDeviceState();
+    ret = CALEClientRemoveAllDeviceState();
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "CALEClientRemoveAllDeviceState has failed");
