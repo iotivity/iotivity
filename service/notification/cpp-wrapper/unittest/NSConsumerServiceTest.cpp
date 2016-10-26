@@ -467,17 +467,17 @@ TEST_F(NotificationServiceConsumerTest, ExpectCallbackDismissCheckWhenConsumerPo
 
 TEST_F(NotificationServiceConsumerTest, ExpectGetProviderSuccessWithValidProviderId)
 {
-    OIC::Service::NSProvider * provider =
-                        OIC::Service::NSConsumerService::getInstance()->getProvider(g_provider->getProviderId());
+    OIC::Service::NSProvider *provider =
+        OIC::Service::NSConsumerService::getInstance()->getProvider(g_provider->getProviderId());
     int ret = strcmp(provider->getProviderId().c_str(), g_provider->getProviderId().c_str());
     EXPECT_EQ(0, ret);
 }
 
 TEST_F(NotificationServiceConsumerTest, ExpectGetProviderSuccessWithInvalidProviderId)
 {
-    OIC::Service::NSProvider * provider =
-                        OIC::Service::NSConsumerService::getInstance()->getProvider("123456789012345678901234567890123457");
-    EXPECT_EQ(provider, (void*)NULL);
+    OIC::Service::NSProvider *provider =
+        OIC::Service::NSConsumerService::getInstance()->getProvider("123456789012345678901234567890123457");
+    EXPECT_EQ(provider, (void *)NULL);
 }
 
 TEST_F(NotificationServiceConsumerTest, ExpectCallbackTopicUpdated)
@@ -485,11 +485,11 @@ TEST_F(NotificationServiceConsumerTest, ExpectCallbackTopicUpdated)
     OIC::Service::NSProviderState revState = OIC::Service::NSProviderState::STOPPED;
     mocks.OnCallFunc(ProviderChangedCallbackEmpty).Do(
         [this, & revState](OIC::Service::NSProviderState state)
-        {
-            std::cout << "Income Changed Callback : " << (int)state << std::endl;
-            revState = state;
-            responseCon.notify_all();
-        });
+    {
+        std::cout << "Income Changed Callback : " << (int)state << std::endl;
+        revState = state;
+        responseCon.notify_all();
+    });
 
     NSProviderSimulator::NS_TopicList topics;
     topics.push_back("1");
@@ -514,15 +514,15 @@ TEST_F(NotificationServiceConsumerTest, ExpectEQTopicList)
     topics.push_back("3");
 
     std::list<OIC::Service::NSTopic *>  retTopic = g_provider->getTopicList()->getTopicsList();
-    auto it1=retTopic.begin();
-    auto it2=topics.begin();
-    while( it1 != retTopic.end() || it2 != topics.end() )
+    auto it1 = retTopic.begin();
+    auto it2 = topics.begin();
+    while ( it1 != retTopic.end() || it2 != topics.end() )
     {
-        if((*it1)->getTopicName() !=  *it2)
+        if ((*it1)->getTopicName() !=  *it2)
         {
             isSame = false; break;
         }
-        it1++;it2++;
+        it1++; it2++;
     }
 
 
@@ -531,7 +531,7 @@ TEST_F(NotificationServiceConsumerTest, ExpectEQTopicList)
 
 TEST_F(NotificationServiceConsumerTest, ExpectFailUpdateTopicOnConsumer)
 {
-    OIC::Service::NSTopicsList * retTopic = g_provider->getTopicList();
+    OIC::Service::NSTopicsList *retTopic = g_provider->getTopicList();
     for (auto it : retTopic->getTopicsList())
     {
         it->setState(OIC::Service::NSTopic::NSTopicState::SUBSCRIBED);

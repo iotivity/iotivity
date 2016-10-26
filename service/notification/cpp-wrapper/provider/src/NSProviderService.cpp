@@ -27,6 +27,7 @@
 #include "NSSyncInfo.h"
 #include "NSConstants.h"
 #include "OCRepresentation.h"
+#include "ocpayload.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
 
@@ -172,8 +173,15 @@ namespace OIC
                 OICFree(nsMsg->contentText);
                 OICFree(nsMsg->sourceName);
                 OICFree(nsMsg->topic);
-                OICFree(nsMsg->extraInfo);
-                delete nsMsg->mediaContents;
+                if (nsMsg->mediaContents != NULL)
+                {
+                    if (nsMsg->mediaContents->iconImage != NULL)
+                    {
+                        OICFree(nsMsg->mediaContents->iconImage);
+                    }
+                    delete nsMsg->mediaContents;
+                }
+                OCPayloadDestroy((OCPayload *) nsMsg->extraInfo);
                 delete nsMsg;
             }
             else
