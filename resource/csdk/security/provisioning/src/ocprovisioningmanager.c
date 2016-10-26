@@ -609,6 +609,7 @@ OCStackResult OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedD
     OCProvisionDev_t* pTargetDev = NULL;
     bool discoverdFlag = false;
     OCProvisionDev_t* pOwnedDevList = NULL;
+    OCStackResult resReq = OC_STACK_CONTINUE;
 
     if (!pTargetUuid || 0 == waitTimeForOwnedDeviceDiscovery)
     {
@@ -628,67 +629,91 @@ OCStackResult OCRemoveDeviceWithUuid(void* ctx, unsigned short waitTimeForOwnedD
         goto error;
     }
 
-    //2. Find owned device from the network
-    res = PMDeviceDiscovery(waitTimeForOwnedDeviceDiscovery, true, &pOwnedDevList);
-    if (OC_STACK_OK != res)
-    {
-        OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Failed to PMDeviceDiscovery");
-        goto error;
-    }
-
-    LL_FOREACH(pOwnedDevList, pTargetDev)
-    {
-        if(memcmp(&pTargetDev->doxm->deviceID.id, pTargetUuid->id, sizeof(pTargetUuid->id)) == 0)
-        {
-            break;
-        }
-    }
-
+    //Generate OCProvisionDev_t instance to use when target device not found on the network.
+    //In this case, the device id required only.
+    pTargetDev = (OCProvisionDev_t*)OICCalloc(1, sizeof(OCProvisionDev_t));
     if(NULL == pTargetDev)
     {
-        OIC_LOG_V(WARNING, TAG, "Can not find [%s] on the network.", strUuid);
-        OIC_LOG(WARNING, TAG, "Device information will be deleted from local and other devices.");
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory.");
+        res = OC_STACK_NO_MEMORY;
+        goto error;
+    }
+    pTargetDev->doxm = (OicSecDoxm_t*)OICCalloc(1, sizeof(OicSecDoxm_t));
+    if(NULL == pTargetDev->doxm)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to allocate memory.");
+        res = OC_STACK_NO_MEMORY;
+        goto error;
+    }
+    memcpy(pTargetDev->doxm->deviceID.id, pTargetUuid->id, sizeof(pTargetUuid->id));
 
-        pTargetDev = (OCProvisionDev_t*)OICCalloc(1, sizeof(OCProvisionDev_t));
-        if(NULL == pTargetDev)
+    OCUuidList_t* linkedDevices = NULL;
+    size_t numOfLinkedDevices = 0;
+    res = PDMGetLinkedDevices(pTargetUuid, &linkedDevices, &numOfLinkedDevices);
+    if(OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Error in PDMGetLinkedDevices");
+        goto error;
+    }
+    PDMDestoryOicUuidLinkList(linkedDevices);
+
+    //If there is no linked devices, device revocation step can be skipped.
+    if(0 != numOfLinkedDevices)
+    {
+        OIC_LOG_V(INFO, TAG, "[%s] linked with other devices.", strUuid);
+        //2. Find owned device from the network
+        res = PMDeviceDiscovery(waitTimeForOwnedDeviceDiscovery, true, &pOwnedDevList);
+        if (OC_STACK_OK != res)
         {
-            OIC_LOG(ERROR, TAG, "Failed to memory allocation.");
+            OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Failed to PMDeviceDiscovery");
             goto error;
         }
 
-        pTargetDev->doxm = (OicSecDoxm_t*)OICCalloc(1, sizeof(OicSecDoxm_t));
-        if(NULL == pTargetDev->doxm)
+        OCProvisionDev_t* tempDev = NULL;
+        LL_FOREACH(pOwnedDevList, tempDev)
         {
-            OIC_LOG(ERROR, TAG, "Failed to memory allocation.");
-            goto error;
+            if(memcmp(&tempDev->doxm->deviceID.id, pTargetUuid->id, sizeof(pTargetUuid->id)) == 0)
+            {
+                break;
+            }
         }
 
-        //in case of can't find target device, the device id required only.
-        memcpy(pTargetDev->doxm->deviceID.id, pTargetUuid->id, sizeof(pTargetUuid->id));
-    }
-    else
-    {
-        discoverdFlag = true;
-        OIC_LOG_V(INFO, TAG, "[%s] is dectected on the network.", strUuid);
-    }
-
-    OIC_LOG_V(INFO, TAG, "Trying [%s] revocation.", strUuid);
-
-    // Send DELETE requests to linked devices
-    OCStackResult resReq = OC_STACK_ERROR; // Check that we have to wait callback or not.
-    resReq = SRPRemoveDeviceWithoutDiscovery(ctx, pOwnedDevList, pTargetDev, resultCallback);
-    if (OC_STACK_OK != resReq)
-    {
-        if (OC_STACK_CONTINUE == resReq)
+        if(NULL == tempDev)
         {
-            OIC_LOG(DEBUG, TAG, "OCRemoveDeviceWithUuid : Revoked device has no linked device except PT.");
+            OIC_LOG_V(WARNING, TAG, "Can not find [%s] on the network.", strUuid);
+            OIC_LOG_V(WARNING, TAG, "[%s]'s information will be deleted from local and other devices.", strUuid);
         }
         else
         {
-            OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Failed to invoke SRPRemoveDevice");
-            res = resReq;
-            goto error;
+            OICFree(pTargetDev->doxm);
+            OICFree(pTargetDev);
+            pTargetDev = tempDev;
+            discoverdFlag = true;
+            OIC_LOG_V(INFO, TAG, "[%s] is dectected on the network.", strUuid);
         }
+
+        OIC_LOG_V(INFO, TAG, "Trying [%s] revocation.", strUuid);
+
+        // Send DELETE requests to linked devices
+        resReq = SRPRemoveDeviceWithoutDiscovery(ctx, pOwnedDevList, pTargetDev, resultCallback);
+        if (OC_STACK_OK != resReq)
+        {
+            if (OC_STACK_CONTINUE == resReq)
+            {
+                OIC_LOG(INFO, TAG, "OCRemoveDeviceWithUuid : Revoked device has no linked device except PT.");
+            }
+            else
+            {
+                OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid : Failed to invoke SRPRemoveDevice");
+                res = resReq;
+                goto error;
+            }
+        }
+    }
+    else
+    {
+        OIC_LOG_V(INFO, TAG, "There is no linked devices with [%s]", strUuid);
+        OIC_LOG(INFO, TAG, "Device discovery and SRPRemoveDevice will be skipped.");
     }
 
     res = RemoveDeviceInfoFromLocal(pTargetDev);
