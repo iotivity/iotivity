@@ -473,7 +473,7 @@ static void CheckTimedOutObserver(ResourceObserver* observer)
         return;
     }
 
-    coap_tick_t now;
+    coap_tick_t now = 0;
     coap_ticks(&now);
 
     if (observer->TTL < now)

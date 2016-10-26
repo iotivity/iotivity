@@ -628,6 +628,12 @@ static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags)
         }
     }
 #endif // !defined(WSA_CMSG_DATA)
+    if (!pktinfo)
+    {
+        OIC_LOG(ERROR, TAG, "pktinfo is null");
+        return CA_STATUS_FAILED;
+    }
+
     CASecureEndpoint_t sep = {.endpoint = {.adapter = CA_ADAPTER_IP, .flags = flags}};
 
     if (flags & CA_IPV6)
