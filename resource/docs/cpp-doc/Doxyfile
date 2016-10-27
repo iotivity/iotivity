@@ -676,6 +676,14 @@ INPUT                  = . \
                          ../../../service/easy-setup/mediator/richsdk/inc/ \
                          ../../../service/easy-setup/inc \
                          ../../../service/scene-manager/include \
+                         ../../../service/notification/cpp-wrapper/provider/inc \
+                         ../../../service/notification/cpp-wrapper/consumer/inc \
+                         ../../../service/notification/cpp-wrapper/common/NSMediaContents.h \
+                         ../../../service/notification/cpp-wrapper/common/NSMessage.h \
+                         ../../../service/notification/cpp-wrapper/common/NSSyncInfo.h \
+                         ../../../service/notification/cpp-wrapper/common/NSTopic.h \
+                         ../../../service/notification/cpp-wrapper/common/NSTopicsList.h \
+                         ../../../service/notification/cpp-wrapper/common/NSUtils.h \
 
                          #../../../service/resource-hosting/include \
                          #../../../service/things-manager/sdk/inc/ThingsConfiguration.h \
