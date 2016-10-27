@@ -3,7 +3,6 @@ echo "Please wait. It will take a few seconds..."
 
 push="false"
 iotivity_dir="iotivity"
-release='1'
 rpmPath=''
 deviceId=''
 stand_alone='false'
@@ -56,7 +55,7 @@ fi
 
 tmpDir='tmp_ri'
 target_arch='armv7l'
-rpmName="com-oic-ri-test-0.0.1-1.armv7l.rpm"
+rpmName="com-oic-ri-test-1.2.0-4.armv7l.rpm"
 
 current_path=`pwd`
 echo 'current_path: '$current_path
@@ -80,15 +79,15 @@ rm -rf $tmpDir/
 mkdir $tmpDir
 mkdir $tmpDir/packaging
 mkdir -p $tmpDir'/bin/tizen/ri'
-mkdir -p $tmpDir/iotivity/resource
-mkdir -p $tmpDir/test/src
-mkdir -p $tmpDir/test/include
+mkdir $tmpDir/test
+mkdir $tmpDir/extlibs
 
-cp -R $iotivity_path/resource/* $tmpDir/iotivity/resource/
-
-cp -R $test_project_root/src $tmpDir/test
-cp -R $test_project_root/include $tmpDir/test
-cp -R $test_project_root/extlibs $tmpDir/test
+cp -rf $iotivity_path/resource $tmpDir/
+cp -rf $iotivity_path/test/extlibs $tmpDir/test
+cp -rf $iotivity_path/extlibs/tinycbor $tmpDir/extlibs
+cp -rf $test_project_root/src $tmpDir/test
+cp -rf $test_project_root/include $tmpDir/test
+cp $iotivity_path/extlibs/tinycbor/tinycbor/src/cbor.h $tmpDir/test/include/cbor.h
 
 cp com.oic.ri.test.spec $tmpDir/packaging
 cp com.oic.ri.test.manifest $tmpDir

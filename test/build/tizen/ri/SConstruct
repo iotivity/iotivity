@@ -5,18 +5,19 @@ ENV_HOME = '.'
 TARGET_SERVICE = ARGUMENTS.get('TARGET_SERVICE')
 TARGET_TEST = ARGUMENTS.get('TARGET_TEST')
 
-IOTIVITY_INCLUDES = [ 
-                        ENV_HOME + '/iotivity/resource/include', 
-                        ENV_HOME + '/iotivity/resource/csdk/stack/include',
-                        ENV_HOME + '/iotivity/resource/c_common',
-                        ENV_HOME + '/iotivity/resource/oc_logger/include',
-                        ENV_HOME + '/test/include',
-                        ENV_HOME + '/iotivity/resource/c_common/oic_malloc/include', 
-                        ENV_HOME + '/iotivity/resource/c_common/oic_string/include'
+IOTIVITY_INCLUDES = [
+                        ENV_HOME + '/resource/include', 
+                        ENV_HOME + '/resource/csdk/logger/include',
+                        ENV_HOME + '/resource/csdk/stack/include',
+                        ENV_HOME + '/resource/c_common',
+                        ENV_HOME + '/resource/csdk/security/include',
+                        ENV_HOME + '/resource/oc_logger/include',
+                        ENV_HOME + '/resource/c_common/oic_malloc/include', 
+                        ENV_HOME + '/resource/c_common/oic_string/include'
                     ]
 
 INTEROP_INCLUDES = [ 
-                            ENV_HOME + '/test/include'
+                        ENV_HOME + '/test/include'
                    ]
 
 CSDK_INCLUDES = [ 
@@ -64,7 +65,7 @@ LIBS = Split('-lm -lpthread -lrt -ldl -lstdc++ -lgobject-2.0 -lgio-2.0 -lglib-2.
 
 LIB_PATH = [ ENV_HOME + '/test/extlibs/gtest-1.7.0/bin/tizen' ]
 
-CPPDEFINES = Split('WITH_POSIX SLP_SDK_LOG _GNU_SOURCE TIZEN_DEBUG_ENABLE TB_LOG __WITH_DTLS__ TIZEN __TIZEN__ WITH_TCP IP_ADAPTER NO_EDR_ADAPTER LE_ADAPTER ROUTING_EP WITH_BWT')
+CPPDEFINES = Split('WITH_POSIX SLP_SDK_LOG _GNU_SOURCE TIZEN_DEBUG_ENABLE TB_LOG __WITH_DTLS__ __TIZEN__ WITH_TCP IP_ADAPTER NO_EDR_ADAPTER LE_ADAPTER ROUTING_EP WITH_BWT')
 
 CPPFLAGS = Split('-s -pthread -Wall -finstrument-functions -finstrument-functions -fpermissive -fPIC -g -std=gnu++0x `pkg-config --cflags --libs dlog capi-network-wifi gobject-2.0 glib-2.0` -lm -lpthread -lrt -ldl -lstdc++ -lgobject-2.0 -lgio-2.0 -lglib-2.0 -lcapi-network-wifi -ldlog')	
 

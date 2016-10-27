@@ -3,7 +3,7 @@
 
 Name: com-oic-ri-test
 Version: 1.2.0
-Release: 1
+Release: 4
 License: To be filled
 Summary: RI TEST
 Packager: Masud Parves <m.parves@samsung.com>
