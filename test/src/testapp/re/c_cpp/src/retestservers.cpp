@@ -51,9 +51,12 @@ int main()
         return 1;
     }
 
-    IOTIVITYTEST_LOG(INFO, "Press any key and the enter to stop the servers :-)....");
-    char n;
-    std::cin >> n;
+    IOTIVITYTEST_LOG(INFO, "Server is running :-)....");
+
+    while(true)
+    {
+    }
+
 
     return 0;
 }

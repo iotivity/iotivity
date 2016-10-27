@@ -75,7 +75,7 @@ public class MainActivity extends Base {
         menuMap.put("13", new MenuInfo("Stop Caching", "stopCaching"));
         menuMap.put("14", new MenuInfo("Get Cached Attributes",
                 "getCachedAttributes"));
-        menuMap.put("13", new MenuInfo("Get Cached State", "getCachedState"));
+        menuMap.put("15", new MenuInfo("Get Cached State", "getCachedState"));
         menuMap.put("0", new MenuInfo("Exit", "exitApplication"));
 
         RegisterApp("Resource Encapsulation", menuMap, new RETestAppAction());

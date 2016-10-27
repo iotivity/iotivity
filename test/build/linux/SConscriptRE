@@ -81,7 +81,7 @@ GTEST_LIB = GTEST_BIN + '/libgtest.a'
 
 RE_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
 RE_RESOURCE_INCLUDE = RE_RESOURCE_DIR + '/include'
-RE_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+RE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
 RE_RESOURCE_STACK = RE_RESOURCE_DIR + '/csdk/stack/include'
 RE_RESOURCE_SOCKET = RE_RESOURCE_DIR + '/csdk/ocsocket/include'
 RE_RESOURCE_RANDOM = RE_RESOURCE_DIR + '/csdk/ocrandom/include'
@@ -101,6 +101,7 @@ RE_CACHE_INCLUDE = RE_MODULES_DIR + '/resourceCache/include/'
 RE_CONTAINER_INCLUDE = RE_MODULES_DIR + '/resourceContainer/include/'
 RE_CONTAINER_BUNDLE_INCLUDE = RE_MODULES_DIR + '/resourceContainer/bundle-api/include/'
 RE_SERVER_BUILDER_INCLUDE = RE_MODULES_DIR + '/serverBuilder/include/'
+LOGGER_INC_DIR = ORG_SRC_HOME + '/resource/csdk/logger/include'
 
 ######################################################################
 
@@ -125,12 +126,9 @@ BTC_DIR = TC_DIR + '/btc'
 TESTAPP_DIR = PROJECT_HOME +  TARGET + 'testapp'
 TESTAPP_CINCLUDE = PROJECT_HOME + '/include/testapp'
 
-
 COMMON_DIR = PROJECT_HOME +  TARGET + 'common'
 
 COMMON_UTIL_DIR = PROJECT_HOME +  TARGET + 'common/commonutil/c_cpp'
-
-
 
 CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
 TC_COMMON_DIR = COMMON_DIR + '/testcase'
@@ -147,7 +145,6 @@ COMMON_UTIL_INCLUDE_DIR = PROJECT_HOME + '/include'
 
 TESTAPP_INCLUDE_DIR = INCLUDE_DIR + '/testapp'
 
-
 ######################################################################
 
 # Initializing Flags
@@ -163,8 +160,7 @@ RE_CFLAGS = [COMMON_FLAGS]
 # Initializing Includes
 ######################################################################
 
-COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, RE_RESOURCE_LOGGER]
-
+COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, LOGGER_INC_DIR]
 RE_CINCLUDE = [ RE_C_COMMON, COMMON_CINCLUDE, RE_RESOURCE_INCLUDE, RE_RESOURCE_STACK, RE_RESOURCE_SOCKET, RE_RESOURCE_RANDOM, RE_RESOURCE_OC_LOGGER, RE_RESOURCE_CEREAL, RE_RESOURCE_TIMER, RE_INCLUDE, RE_COMMON_INCLUDE, RE_COMMON_TIMER_INCLUDE, RE_COMMON_INTERNAL_INCLUDE, RE_BROKER_INCLUDE, RE_CACHE_INCLUDE, RE_CONTAINER_INCLUDE, RE_CONTAINER_BUNDLE_INCLUDE, RE_SERVER_BUILDER_INCLUDE, RE_INCLUDE_DIR]
 
 ######################################################################
@@ -173,12 +169,12 @@ RE_CINCLUDE = [ RE_C_COMMON, COMMON_CINCLUDE, RE_RESOURCE_INCLUDE, RE_RESOURCE_S
 ######################################################################
 COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR, CA_LIB_DIR, '/usr/local/lib/', CA_LIB_DIR + '/resource/c_common']
 
-RE_LIB_LOCATION = [COMMON_LIB_LOCATION, RE_RESOURCE_LIB, JAVA_LIB]
+RE_LIB_LOCATION = [COMMON_LIB_LOCATION, RE_LIB, JAVA_LIB]
 
 COMMON_STATIC_LIBS = [GTEST_LIB]
 COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboc_logger liboc_logger_core pthread libglib-2.0 uuid gcov')
 
-RE_STATIC_LIBS = [RE_RESOURCE_LIB + '/librcs_client.a', RE_RESOURCE_LIB + '/librcs_common.a', RE_RESOURCE_LIB + '/librcs_container.a', RE_RESOURCE_LIB + '/librcs_server.a', RE_RESOURCE_LIB + '/libocsrm.a']
+RE_STATIC_LIBS = [RE_LIB + '/librcs_client.a', RE_LIB + '/librcs_common.a', RE_LIB + '/librcs_container.a', RE_LIB + '/librcs_server.a', RE_LIB + '/libocsrm.a']
 RE_STATIC_RESOURCE_LIBS = []
 RE_SHARED_LIBS = Split('-lHueBundle -lrcs_common -lrcs_container -lrcs_server -lrcs_client')
 RE_LIBS = [COMMON_SHARED_LIBS, RE_SHARED_LIBS]
@@ -194,11 +190,11 @@ RE_TEST_SERVER_BIN = 'retestserver'
 
 RE_HELPER_BIN = 're_helper.o'
 RE_TESTAPP_BIN = 're_testapp'
+
 ######################################################################
 
 # Initializing Sources
 ######################################################################
-
 
 COMMON_TC_CPP = Glob(COMMON_DIR + '/testcase/*.cpp')
 
@@ -206,17 +202,14 @@ RE_HELPER_CPP = Glob(TC_DIR + '/helper/*.cpp')
 
 RE_TEST_SERVER_CPP = TESTAPP_DIR + '/re/c_cpp/src/retestservers.cpp'
 
-TEST_MAIN = [PROJECT_HOME +  TARGET + 'common/testcase/gtest' + '/IotivitySECTestMain.cpp'] 
-
+TEST_MAIN = [PROJECT_HOME +  TARGET + 'common/testcase/gtest' + '/IotivitySECTestMain.cpp']
 
 COMMON_UTIL_CPP = [COMMON_UTIL_DIR + '/CommonUtil.cpp']
-
 
 RE_CPP = [TEST_MAIN, COMMON_UTIL_CPP, RE_HELPER_CPP, CALL_GRAPH_CPP]
 
 RE_STC_CPP = Glob(STC_DIR + '/*.cpp')
 RE_BTC_CPP = Glob(BTC_DIR + '/*.cpp')
-
 
 RE_STC_SRC = [RE_CPP, RE_STC_CPP, RE_BTC_CPP, COMMON_STATIC_LIBS, RE_STATIC_LIBS, RE_STATIC_RESOURCE_LIBS]
 RE_BTC_SRC = [RE_CPP, RE_BTC_CPP, COMMON_STATIC_LIBS, RE_STATIC_LIBS, RE_STATIC_RESOURCE_LIBS]
@@ -258,7 +251,6 @@ print "target_transport = " + target_transport
 
 print "---------------service-------------- " + target_service
 print "---------------tc-------------- "+ target_test
-
 
 if 're' in target_service or 'all' in target_service:
     install_targets += [re_test_server]

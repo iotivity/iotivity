@@ -92,7 +92,7 @@ void REHelper::OnPrimitiveResourceDiscovered(
 
     IOTIVITYTEST_LOG(DEBUG, "Inside PrimitiveResourceFound!!");
 
-    if (pResource)
+    if (pResource && ((pResource->getUri().compare(LIGHT_URI) == 0) || (pResource->getUri().compare(FAN_URI) == 0)))
     {
         m_primitiveResourceList.push_back(pResource);
         IOTIVITYTEST_LOG(DEBUG, "Resource added to found resource list, host = %s , uri = %s",
@@ -100,7 +100,7 @@ void REHelper::OnPrimitiveResourceDiscovered(
     }
     else
     {
-        IOTIVITYTEST_LOG(WARNING, "Found resource is null");
+        IOTIVITYTEST_LOG(WARNING, "Found resource is invalid");
     }
 
     s_mutex.unlock();

@@ -36,11 +36,15 @@ protected:
     bool m_isResourceStateChanged;
     bool m_isResourceStateUpdated;
     bool m_isResourceStateReceived;
+    bool isPutCorrect = false;
+    bool isDeleteCorrect = false;
+    int m_temp = 20;
+    int m_hour = 20;
 
     virtual void SetUp()
     {
         CommonUtil::runCommonTCSetUpPart();
-#ifdef __LINUX__        
+#ifdef __LINUX__
         CommonUtil::launchApp(RE_SERVER_APP);
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
 #endif
@@ -104,6 +108,18 @@ public:
     {
         m_GetCallbackCheck = true;
         std::cout << "Get callback is Successfully Invoked!" << endl;
+    }
+
+    void onPut(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
+    {
+        isPutCorrect = true;
+        IOTIVITYTEST_LOG(INFO, "PUT request was successful");
+    }
+
+    void onDelete(const HeaderOptions &headerOptions, const int eCode)
+    {
+        isDeleteCorrect = true;
+        IOTIVITYTEST_LOG(INFO, "Delete request was successful");
     }
 };
 
@@ -1054,7 +1070,7 @@ TEST_F(REResourceCacheAPITest_stc, IsCaching_SQV_P)
 /**
  * @since 2016-02-26
  * @see None
- * @objective Test 'isCaching' function with state check validation 
+ * @objective Test 'isCaching' function with state check validation
  * @target isCaching API
  * @test_data None
  * @pre_condition Remote Resource Object should be instantialized
@@ -1944,13 +1960,13 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSetWithQueryParams_SQV_P)
  * @see   RCSResourceObject, RCSResourceObject::SetRequestHandlerPolicy
  * @see   RCSRepresentation(const std::string& uri, const std::vector< std::string >& interfaces,const std::vector< std::string >& resourceTypes,
             const RCSResourceAttributes& attrs);
- * @objective Test set function with sequential validation 
+ * @objective Test set function with sequential validation
  * @target void set(const RCSQueryParams& queryParams, const RCSRepresentation &rep,
                     SetCallback cb);
  * @test_data Query parameters, Representation and SetCallback
  * @pre_condition Remote Resource Object should be instantialized
  * @procedure 1. Perform RCSRepresentation() API
- *            2. Perform set() API  
+ *            2. Perform set() API
  * @post_condition None
  * @expected 1. set request should be sucessful with resource representation 2. should not generate any exception
  **/
@@ -1984,6 +2000,85 @@ TEST_F(REResourceCacheAPITest_stc, RemoteResourceObjectSetRCSQRCSREP_SQV_P)
     {
         SET_FAILURE(
                 "Exception occurred inside RemoteResourceObjectSetRCSQRCSREP_SQV_P: " + string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2016-09-09
+ * @see OC::OCResource::put(const OCRepresentation &representation, const QueryParamsMap &queryParametersMap,
+ *      PutCallback attributeHandler)
+ * @objective Test toOCResource function with PUT Request
+ * @target static std::shared_ptr< OC::OCResource > toOCResource(
+                    RCSRemoteResourceObject::Ptr rcsResource);
+ * @test_data "temperature" and "hour"
+ * @pre_condition Remote Resource Object should be instantialized
+ * @procedure 1. Perform toOCResource() API
+ *            2. Perform put() API
+ * @post_condition None
+ * @expected onPut callback is called and response is found correctly
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(REResourceCacheAPITest_stc, ToOCResourceAndSendPutRequest_SQV_P)
+{
+    try
+    {
+        std::shared_ptr<OC::OCResource> ocRes;
+        QueryParamsMap test;
+        OCRepresentation rep;
+        rep.setValue("temperature",m_temp);
+        rep.setValue("hour",m_hour);
+
+        ocRes= RCSRemoteResourceObject::toOCResource(m_resource);
+
+        ASSERT_EQ(OC_STACK_OK, ocRes->put(rep,test,std::bind(&REResourceCacheAPITest_stc::onPut, this, PH::_1, PH::_2, PH::_3)))
+        << "PUT Request does not return success";
+        CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
+        if(!isPutCorrect)
+        {
+            SET_FAILURE("onPut Callback isn't successful!");
+        }
+    }
+    catch (exception &e)
+    {
+        SET_FAILURE("Exception occurred. Exception is " + std::string(e.what()));
+    }
+}
+#endif
+
+/**
+ * @since 2016-09-09
+ * @see   OC::OCResource::deleteResource(DeleteCallback deleteHandler)
+ * @objective Test toOCResource function with DELETE Request
+ * @target static std::shared_ptr< OC::OCResource > toOCResource(
+                    RCSRemoteResourceObject::Ptr rcsResource);
+ * @test_data uri = "/device/tube-light"
+ * @pre_condition Remote Resource Object should be instantialized
+ * @procedure 1. Perform toOCResource() API
+ *            2. Perform delete() API
+ * @post_condition None
+ * @expected onDelete callback is called and response is found correctly
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(REResourceCacheAPITest_stc, ToOCResourceAndSendDeleteRequest_SQV_P)
+{
+    try
+    {
+        std::shared_ptr<OC::OCResource> ocRes;
+
+        ocRes= RCSRemoteResourceObject::toOCResource(m_resource);
+
+        ASSERT_EQ(OC_STACK_OK, ocRes->deleteResource(std::bind(&REResourceCacheAPITest_stc::onDelete, this, PH::_1, PH::_2)))
+        << "Delete does not return success";
+        CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
+        if(!isDeleteCorrect)
+        {
+            SET_FAILURE("onDelete Callback isn't successful!");
+        }
+    }
+    catch (exception &e)
+    {
+        SET_FAILURE("Exception occurred. Exception is " + std::string(e.what()));
     }
 }
 #endif
