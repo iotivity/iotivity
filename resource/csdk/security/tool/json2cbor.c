@@ -754,6 +754,29 @@ exit:
     return pstat;
 }
 
+static OicEncodingType_t GetEncodingTypeFromStr(const char* encodingType)
+{
+    if (strcmp(OIC_SEC_ENCODING_RAW, encodingType) == 0)
+    {
+        return OIC_ENCODING_RAW;
+    }
+    if (strcmp(OIC_SEC_ENCODING_BASE64, encodingType) == 0)
+    {
+        return OIC_ENCODING_BASE64;
+    }
+    if (strcmp(OIC_SEC_ENCODING_PEM, encodingType) == 0)
+    {
+        return OIC_ENCODING_PEM;
+    }
+    if (strcmp(OIC_SEC_ENCODING_DER, encodingType) == 0)
+    {
+        return OIC_ENCODING_DER;
+    }
+    OIC_LOG(WARNING, TAG, "Unknow encoding type dectected!");
+    OIC_LOG(WARNING, TAG, "json2cbor will use \"oic.sec.encoding.raw\" as default encoding type.");
+    return OIC_ENCODING_RAW;
+}
+
 OicSecCred_t * JSONToCredBin(const char * jsonStr)
 {
     if (NULL == jsonStr)
@@ -820,8 +843,15 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_SUBJECTID_NAME);
             VERIFY_NON_NULL(TAG, jsonObj, ERROR);
             VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-            ret = ConvertStrToUuid(jsonObj->valuestring, &cred->subject);
-            VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+            if(strcmp(jsonObj->valuestring, WILDCARD_RESOURCE_URI) == 0)
+            {
+                cred->subject.id[0] = '*';
+            }
+            else
+            {
+                ret = ConvertStrToUuid(jsonObj->valuestring, &cred->subject);
+                VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+            }
 
             //CredType -- Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_CREDTYPE_NAME);
@@ -843,23 +873,9 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
 
                 cJSON *jsonEncoding = cJSON_GetObjectItem(jsonObj, OIC_JSON_ENCODING_NAME);
                 VERIFY_NON_NULL(TAG, jsonEncoding, ERROR);
-
-                if(strcmp(OIC_SEC_ENCODING_RAW, jsonEncoding->valuestring) == 0)
-                {
-                    cred->privateData.encoding = OIC_ENCODING_RAW;
-                }
-                else if(strcmp(OIC_SEC_ENCODING_BASE64, jsonEncoding->valuestring) == 0)
-                {
-                    cred->privateData.encoding = OIC_ENCODING_BASE64;
-                }
-                else
-                {
-                    printf("Unknow encoding type dectected!\n");
-                    printf("json2cbor will use \"oic.sec.encoding.raw\" as default encoding type.\n");
-                    cred->privateData.encoding = OIC_ENCODING_RAW;
-                }
+                cred->privateData.encoding = GetEncodingTypeFromStr(jsonEncoding->valuestring);
             }
-#ifdef __WITH_DTLS__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
             //PublicData is mandatory only for SIGNED_ASYMMETRIC_KEY credentials type.
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PUBLICDATA_NAME);
 
@@ -873,7 +889,35 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                 memcpy(cred->publicData.data, jsonPub->valuestring, jsonObjLen);
                 cred->publicData.len = jsonObjLen;
             }
-#endif //  __WITH_DTLS__
+
+            //Optional Data
+            jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_OPTDATA_NAME);
+            if (NULL != jsonObj)
+            {
+                cJSON *jsonOpt = cJSON_GetObjectItem(jsonObj, OIC_JSON_DATA_NAME);
+                VERIFY_NON_NULL(TAG, jsonOpt, ERROR);
+                jsonObjLen = strlen(jsonOpt->valuestring);
+                cred->optionalData.data =  (uint8_t *)OICCalloc(1, jsonObjLen);
+                VERIFY_NON_NULL(TAG, (cred->optionalData.data), ERROR);
+                memcpy(cred->optionalData.data, jsonOpt->valuestring, jsonObjLen);
+                cred->optionalData.len = jsonObjLen;
+
+                cJSON *jsonEncoding = cJSON_GetObjectItem(jsonObj, OIC_JSON_ENCODING_NAME);
+                VERIFY_NON_NULL(TAG, jsonEncoding, ERROR);
+                cred->optionalData.encoding = GetEncodingTypeFromStr(jsonEncoding->valuestring);
+            }
+
+            //CredUsage
+            jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_CREDUSAGE_NAME);
+            if (NULL != jsonObj)
+            {
+                jsonObjLen = strlen(jsonObj->valuestring);
+                cred->credUsage = OICStrdup(jsonObj->valuestring);
+                VERIFY_NON_NULL(TAG, (cred->credUsage), ERROR);
+            }
+
+#endif // defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+
             //Period -- Not Mandatory
             jsonObj = cJSON_GetObjectItem(jsonCred, OIC_JSON_PERIOD_NAME);
             if(jsonObj && cJSON_String == jsonObj->type)
