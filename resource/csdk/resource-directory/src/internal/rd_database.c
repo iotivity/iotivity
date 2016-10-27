@@ -401,7 +401,8 @@ static OCStackResult appendStringLL(OCStringLL **type, const unsigned char *valu
     }
     else
     {
-        for (OCStringLL *tmp = *type; tmp->next; tmp = tmp->next);
+        OCStringLL *tmp = *type;
+        for (; tmp->next; tmp = tmp->next);
         tmp->next = temp;
     }
     return OC_STACK_OK;

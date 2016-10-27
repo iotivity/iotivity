@@ -35,25 +35,22 @@ rd_mode = env.get('RD_MODE')
 ######################################################################
 # Build flags
 ######################################################################
-rd_env.AppendUnique(CPPPATH = ['include', 'src/internal', '../stack/include'])
+rd_env.AppendUnique(CPPPATH = ['include', 'src/internal', '../stack/include', '../../oc_logger/include'])
 
 if 'CLIENT' in rd_mode:
     rd_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
 if 'SERVER' in rd_mode:
     rd_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
 
-rd_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
+rd_env.AppendUnique(LIBPATH = [rd_env.get('BUILD_DIR')])
+rd_env.AppendUnique(LIBS = ['octbstack'])
 
 if target_os not in ['windows']:
     rd_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra'])
 
-if target_os in ['linux']:
-    rd_env.AppendUnique(LIBS = ['pthread'])
-
 if target_os == 'android':
     rd_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
     rd_env.AppendUnique(LIBS = ['gnustl_static'])
-
     if not env.get('RELEASE'):
         rd_env.AppendUnique(LIBS = ['log'])
 
@@ -67,23 +64,25 @@ else:
 ######################################################################
 RD_SRC_DIR = 'src/'
 rd_src = []
+
 if 'SERVER' in rd_mode:
     rd_src += [
-            RD_SRC_DIR + 'internal/rd_database.c',
-            RD_SRC_DIR + 'rd_server.c',
-            ]
+        RD_SRC_DIR + 'internal/rd_database.c',
+        RD_SRC_DIR + 'rd_server.c',
+        ]
     if target_os not in ['tizen'] :
         rd_src += [ '../../../extlibs/sqlite3/sqlite3.c' ]
+
 if 'CLIENT' in rd_mode:
     rd_src += [RD_SRC_DIR + 'rd_client.c',]
 
-if target_os in ['tizen'] :
+if target_os in ['tizen']:
     rdsdk = rd_env.SharedLibrary('resource_directory', rd_src)
 else :
     rdsdk = rd_env.StaticLibrary('resource_directory', rd_src)
-
 rd_env.InstallTarget(rdsdk, 'resource_directory')
 rd_env.UserInstallTargetLib(rdsdk, 'resource_directory')
+
 if 'CLIENT' in rd_mode:
     rd_env.UserInstallTargetHeader('include/rd_client.h', 'service/resource-directory', 'rd_client.h')
 
