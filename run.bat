@@ -36,6 +36,7 @@ if "%RELEASE%" == "" (
 set SECURED=1
 set ROUTING=EP
 set WITH_UPSTREAM_LIBCOAP=1
+set BINDIR=debug
 
 set RUN_ARG=%1
 SHIFT
@@ -65,12 +66,16 @@ IF NOT "%1"=="" (
   GOTO :processArgs
 )
 
+IF %RELEASE% == 1 (
+  set BINDIR=release
+)
+
 REM We need to append the "PATH" so the octbstack.dll can be found by executables
 IF "%BUILD_MSYS%" == "" (
-  set BUILD_DIR=out\windows\%TARGET_ARCH%\debug
+  set BUILD_DIR=out\windows\%TARGET_ARCH%\%BINDIR%
   set PATH=!PATH!;!IOTIVITY_DIR!!BUILD_DIR!;
 ) ELSE (
-  set BUILD_DIR=out\msys_nt\x86_64\debug
+  set BUILD_DIR=out\msys_nt\x86_64\%BINDIR%
   set PATH=!PATH!;!BUILD_DIR!;C:\msys64\mingw64\bin
 )
 
