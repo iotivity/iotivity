@@ -557,14 +557,7 @@ static OicSecAcl_t* createAclForLEDAccess(const OicUuid_t* subject)
         goto CRACL_ERROR;
     }
 
-    //fill the eowner id as my deviceID.
-    OicUuid_t myUuid = {.id={0}};
-    if(OC_STACK_OK != GetDoxmDeviceID(&myUuid))
-    {
-        OIC_LOG(ERROR, TAG, "createAcl: GetDoxmDeviceID error return");
-        goto CRACL_ERROR;
-    }
-    memcpy(ace->eownerID->id, myUuid.id, sizeof(myUuid.id));
+    memcpy(ace->eownerID->id, subject->id, sizeof(subject->id));
 
     return acl;
 
@@ -616,22 +609,14 @@ static int provisionAclForLed()
         goto PVACL_ERROR;
     }
 
-    OicUuid_t subjectUuid;
-    OCStackResult rst = GetDoxmDeviceID(&subjectUuid);
-    if(OC_STACK_OK != rst)
-    {
-        OIC_LOG_V(ERROR, TAG, "GetDoxmDeviceID API error: %d", rst);
-        goto PVACL_ERROR;
-    }
-
-    acl = createAclForLEDAccess(&subjectUuid);
+    acl = createAclForLEDAccess(&dev->doxm->subOwners->uuid);
     if(NULL == acl)
     {
         OIC_LOG(ERROR, TAG, "provisionAcl: Failed to create ACL for LED");
         return -1;
     }
 
-    rst = OCProvisionACL((void*) g_ctx, dev, acl, provisionAclCB);
+    OCStackResult rst = OCProvisionACL((void*) g_ctx, dev, acl, provisionAclCB);
     if(OC_STACK_OK != rst)
     {
         OIC_LOG_V(ERROR, TAG, "OCProvisionACL API error: %d", rst);
