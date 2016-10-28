@@ -87,6 +87,7 @@ BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(sqlite3)
 %if "%{TARGET_OS}" == "tizen"
 BuildRequires:  pkgconfig(dlog)
+BuildRequires:  pkgconfig(capi-network-connection)
 BuildRequires:  pkgconfig(capi-network-wifi)
 BuildRequires:  pkgconfig(capi-network-bluetooth) >= 0.1.52
 %endif

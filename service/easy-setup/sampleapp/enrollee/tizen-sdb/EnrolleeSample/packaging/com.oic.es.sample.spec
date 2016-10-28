@@ -37,6 +37,7 @@ BuildRequires: boost-devel
 BuildRequires: boost-thread
 BuildRequires: boost-system
 BuildRequires: boost-filesystem
+BuildRequires: pkgconfig(capi-network-connection)
 BuildRequires: pkgconfig(capi-network-wifi)
 BuildRequires: pkgconfig(capi-network-bluetooth)
 BuildRequires: scons
