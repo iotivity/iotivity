@@ -20,7 +20,7 @@ else:
 if env.get('LOGGING'):
     env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-env.ParseConfig("pkg-config --cflags --libs capi-network-wifi dlog glib-2.0")
+env.ParseConfig("pkg-config --cflags --libs capi-network-wifi capi-network-connection dlog glib-2.0")
 if 'ALL' in transport:
 		env.AppendUnique(CPPDEFINES = ['WIFI_ADAPTER', 'NO_ETHERNET_ADAPTER','EDR_ADAPTER','LE_ADAPTER'])
 		print "CA Transport is ALL"
