@@ -39,6 +39,8 @@ namespace OIC
         class CloudResource;
         class EnrolleeSecurity;
 
+        typedef std::function<void(const std::shared_ptr<OC::OCResource> resource)>  onDeviceDiscoveredCb;
+
         /**
          * This class represents Remote Enrollee device instance. What operation the class provides:
          * 1) Ownership transfer for enabling secured communication between Mediator and Enrollee
@@ -47,7 +49,7 @@ namespace OIC
          * 3) Provision Device confiruation setting, i.e. language, country, and etc
          * 4) Provision Cloud information used for which Enrollee is going to register to the cloud
          */
-        class RemoteEnrollee
+        class RemoteEnrollee : public std::enable_shared_from_this<RemoteEnrollee>
         {
         public:
             ~RemoteEnrollee() = default;
@@ -124,6 +126,10 @@ namespace OIC
             RemoteEnrollee(const std::shared_ptr< OC::OCResource > resource);
 
             ESResult discoverResource();
+
+            static void onDiscoveredCallback(const std::shared_ptr<OC::OCResource> resource,
+            std::weak_ptr<RemoteEnrollee> this_ptr);
+
             void onDeviceDiscovered(const std::shared_ptr<OC::OCResource> resource);
             void initCloudResource();
 
