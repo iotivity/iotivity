@@ -112,7 +112,7 @@ public class DBManager {
      * duplicated one.
      * 
      * @param tableName
-     *            table name to be inserted
+     *            table name to be inserted or replaced
      * @param replace
      *            record to be inserted
      */
@@ -128,7 +128,7 @@ public class DBManager {
      * API for selecting records from DB table.
      * 
      * @param tableName
-     *            table name to be inserted
+     *            table name to be selected
      * @param condition
      *            condition record to be selected
      * @return selected records
@@ -140,10 +140,40 @@ public class DBManager {
     }
 
     /**
+     * API for selecting records to primary key from DB table
+     * 
+     * @param tableName
+     *            table name to be selected
+     * 
+     * @param condition
+     *            condition record to be selected
+     * @return selected record
+     */
+
+    public HashMap<String, Object> selectOneRecord(String tableName,
+            HashMap<String, Object> condition) {
+
+        ArrayList<HashMap<String, Object>> records = _selectRecord(tableName,
+                condition);
+
+        if (records.size() > 1) {
+            throw new InternalServerErrorException(
+                    "Database record select failed");
+        }
+
+        if (records.isEmpty()) {
+            return new HashMap<String, Object>();
+        } else {
+            return records.get(0);
+        }
+
+    }
+
+    /**
      * API for deleting records from DB table.
      * 
      * @param tableName
-     *            table name to be inserted
+     *            table name to be deleted
      * @param condition
      *            condition record to be deleted
      */
@@ -159,7 +189,7 @@ public class DBManager {
      * API for updating a record into DB table.
      * 
      * @param tableName
-     *            table name to be inserted
+     *            table name to be updated
      * @param replace
      *            record to be updated
      */
