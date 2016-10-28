@@ -76,6 +76,11 @@ public class DiscoveryResource extends Resource {
 
         HashMap<String, List<String>> queryMap = request.getUriQueryMap();
 
+        if (queryMap == null) {
+            return MessageBuilder.createResponse(request,
+                    ResponseStatus.NOT_FOUND);
+        }
+
         List<String> diList = queryMap.get(Constants.DEVICE_ID);
         List<String> rtList = queryMap.get(Constants.RESOURCE_TYPE);
         List<String> ifList = queryMap.get(Constants.INTERFACE);
