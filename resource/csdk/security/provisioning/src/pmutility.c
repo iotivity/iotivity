@@ -795,13 +795,6 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
                     return OC_STACK_KEEP_TRANSACTION;
                 }
 
-                if(strcmp(clientResponse->addr->addr, "fe80::52b7:c3ff:fea1:9e6a%eth0") != 0)
-                {
-                    OIC_LOG_V(DEBUG, TAG, "discarding [%s]'s reply", clientResponse->addr->addr);
-                    DeleteDoxmBinData(ptrDoxm);
-                    return OC_STACK_KEEP_TRANSACTION;
-                }
-
                 res = AddDevice(ppDevicesList, &clientResponse->devAddr,
                         clientResponse->connType, ptrDoxm);
                 if (OC_STACK_OK != res)
