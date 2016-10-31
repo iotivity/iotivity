@@ -37,12 +37,13 @@ TARGET = env_linux['VARIANT_DIR']
 ENV_HOME = '../../..'
 PROJECT_HOME = '../../'
 EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
+SRC_HOME = ENV_HOME + '/IotivitySECDevSource'
 ORG_SRC = ''
 
 if env_linux.get('RELEASE'):
-    target_release = 'release'
+	target_release = 'release'
 else:
-    target_release = 'debug'
+	target_release = 'debug'
 
 print "target build is --------------------------------" + target_release
 
@@ -50,7 +51,8 @@ ORG_SRC = env_linux['ORG_SRC']
 ORG_SRC_HOME = env_linux['ORG_SRC_HOME']
 
 target_arch = env_linux.get('TARGET_ARCH')
-ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release
+ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release 
+COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
 
 ######################################################################
 # Initializing IC Dir
@@ -60,6 +62,9 @@ IC_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
 IC_RESOURCE_INCLUDE = IC_RESOURCE_DIR + '/include'
 IC_C_COMMON = IC_RESOURCE_DIR + '/c_common'
 IC_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+IC_RESOURCE_CSDK_LIB = IC_RESOURCE_LIB
+IC_RESOURCE_CSDK_SECURITY = IC_RESOURCE_DIR + '/csdk/security/include'
+IC_RESOURCE_CSDK_RESOURCE_DIRECTORY =  IC_RESOURCE_DIR + '/csdk/resource-directory/include'
 IC_RESOURCE_STACK = IC_RESOURCE_DIR + '/csdk/stack/include'
 IC_RESOURCE_SOCKET = IC_RESOURCE_DIR + '/csdk/ocsocket/include'
 IC_RESOURCE_RANDOM = IC_RESOURCE_DIR + '/csdk/ocrandom/include'
@@ -67,9 +72,13 @@ IC_RESOURCE_LOGGER = IC_RESOURCE_DIR + '/csdk/logger/include'
 IC_RESOURCE_OC_LOGGER = IC_RESOURCE_DIR + '/oc_logger/include'
 IC_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
 IC_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
+IC_RESOURCE_OC_LOGGER_LIB = IC_RESOURCE_LIB
 IC_DIR = ORG_SRC_HOME + '/service/things-manager'
 IC_INCLUDE = IC_DIR + '/sdk/inc'
 IC_SDK_INCLUDE = IC_DIR + '/sdk/src'
+IC_LIB = IC_RESOURCE_LIB
+IC_LIB_TIMER = IC_RESOURCE_LIB + '/extlibs/timer/'
+LOGGER_INC_DIR = ORG_SRC_HOME + '/resource/csdk/logger/include'
 
 ######################################################################
 
@@ -85,6 +94,7 @@ CA_LIB_DIR = CA_IOT + '/out/linux/' + target_arch + '/' + target_release
 
 GTEST = EXT_LIB_HOME + '/gtest-1.7.0'
 GTEST_INCLUDE = GTEST + '/include'
+TINY_CBOR_INCLUDE = ORG_SRC_HOME + '/extlibs/tinycbor/tinycbor/src'
 GTEST_BIN = GTEST + '/bin/linux'
 GTEST_LIB = GTEST_BIN + '/libgtest.a'
 
@@ -107,11 +117,14 @@ COMMON_DIR = PROJECT_HOME +  TARGET + 'common'
 COMMON_UTIL_DIR = PROJECT_HOME +  TARGET + 'common/commonutil/c_cpp'
 CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
 TC_COMMON_DIR = COMMON_DIR + '/testcase'
+#TESTAPP_COMMON_DIR = COMMON_DIR + '/testapp/c_cpp'
 
 INCLUDE_DIR = PROJECT_HOME + '/src/tc/ic/gtest'
 TC_INCLUDE_DIR = INCLUDE_DIR + '/include'
+IC_INCLUDE_DIR = INCLUDE_DIR
 
 
+#COMMON_UTIL_INCLUDE_DIR = INCLUDE_DIR + '/commonutil'
 COMMON_UTIL_INCLUDE_DIR = PROJECT_HOME + '/include'
 
 
@@ -130,17 +143,16 @@ COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLI
 PKG_FLAGS = Split('`pkg-config --cflags --libs uuid`')
 
 IC_CFLAGS = [COMMON_FLAGS]
-IC_CPPDEFINES = ['WITH_CLOUD', 'RD_CLIENT','MQ_BROKER', 'WITH_MQ', 'MQ_PUBLISHER', 'MQ_SUBSCRIBER']
 
 ######################################################################
 
 # Initializing Includes
 ######################################################################
 
-COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, IC_RESOURCE_LOGGER]
+COMMON_CINCLUDE = [GTEST_INCLUDE, TINY_CBOR_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, LOGGER_INC_DIR]
 
 
-IC_CINCLUDE = [COMMON_CINCLUDE, IC_RESOURCE_INCLUDE, IC_RESOURCE_STACK, IC_RESOURCE_SOCKET, IC_RESOURCE_RANDOM, IC_RESOURCE_OC_LOGGER, IC_INCLUDE, IC_RESOURCE_CEREAL, IC_RESOURCE_TIMER, IC_SDK_INCLUDE, IC_C_COMMON]
+IC_CINCLUDE = [COMMON_CINCLUDE, IC_RESOURCE_INCLUDE, IC_RESOURCE_STACK, IC_RESOURCE_CSDK_SECURITY, IC_RESOURCE_CSDK_RESOURCE_DIRECTORY, IC_INCLUDE_DIR, IC_RESOURCE_SOCKET, IC_RESOURCE_RANDOM, IC_RESOURCE_OC_LOGGER, IC_INCLUDE, IC_RESOURCE_CEREAL, IC_RESOURCE_TIMER, IC_LIB_TIMER, IC_SDK_INCLUDE, IC_INCLUDE_DIR, IC_C_COMMON]
 
 
 ######################################################################
@@ -149,11 +161,12 @@ IC_CINCLUDE = [COMMON_CINCLUDE, IC_RESOURCE_INCLUDE, IC_RESOURCE_STACK, IC_RESOU
 ######################################################################
 
 COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR, CA_LIB_DIR, '/usr/local/lib/', CA_LIB_DIR + '/resource/c_common']
-IC_LIB_LOCATION = [COMMON_LIB_LOCATION, IC_RESOURCE_LIB]
+IC_LIB_LOCATION = [COMMON_LIB_LOCATION, IC_RESOURCE_LIB, IC_RESOURCE_CSDK_LIB, IC_RESOURCE_OC_LOGGER_LIB, IC_LIB]
 
 COMMON_STATIC_LIBS = [GTEST_LIB]
-COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat liboc  liboc_logger liboc_logger_core pthread libglib-2.0 uuid gcov')
+COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat libresource_directory liboc liboc_logger liboc_logger_core pthread libglib-2.0 uuid gcov curl')
 
+IC_STATIC_LIBS = [IC_LIB + '/libTGMSDKLibrary.a']
 IC_STATIC_RESOURCE_LIBS = []
 IC_LIBS = COMMON_SHARED_LIBS
 
@@ -180,18 +193,33 @@ IC_TESTAPP_BIN = "IC_testapp"
 COMMON_CPP = Glob(COMMON_UTIL_DIR + '/*.cpp')
 COMMON_TC_CPP = Glob(COMMON_DIR + '/testcase/*.cpp')
 
+#IC_HELPER_CPP = Glob(TC_DIR + '/helper/*.cpp')
 IC_HELPER_CPP = Glob(PROJECT_HOME + '/src/tc/ic/gtest/src/helper/*.cpp')
+
 
 COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
 
-TEST_MAIN = [PROJECT_HOME +  TARGET + 'common/testcase/gtest' + '/IotivitySECTestMain.cpp']
+TEST_MAIN = [PROJECT_HOME +  TARGET + 'common/testcase/gtest' + '/IotivitySECTestMain.cpp'] 
+
 
 IC_STC_CPP = Glob(STC_DIR + '/*.cpp')
 IC_BTC_CPP = Glob(BTC_DIR + '/*.cpp')
 
+
 IC_CPP = [TEST_MAIN, COMMON_UTIL_CPP, IC_HELPER_CPP, CALL_GRAPH_CPP]
 
-IC_TC_SRC = [IC_CPP, IC_STC_CPP, IC_BTC_CPP, COMMON_STATIC_LIBS, IC_STATIC_RESOURCE_LIBS]
+
+IC_TC_SRC = [IC_CPP, IC_STC_CPP, IC_BTC_CPP, COMMON_STATIC_LIBS, IC_STATIC_LIBS, IC_STATIC_RESOURCE_LIBS]
+
+#TEST_SERVER_SRC = [TEST_SERVER_CPP, COMMON_UTIL_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, IC_STATIC_LIBS, IC_STATIC_RESOURCE_LIBS]
+
+#UICUPPORTIVE_SERVER_SRC = [UNSUPPORTIVE_TEST_SERVER_CPP, COMMON_UTIL_CPP, UNSUPPORTIVE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, IC_STATIC_LIBS, IC_STATIC_RESOURCE_LIBS]
+
+#BOOTSTRAP_SERVER_SRC = [BOOTSTRAP_SERVER_CPP, COMMON_UTIL_CPP, COMMON_STATIC_LIBS, IC_STATIC_LIBS, IC_STATIC_RESOURCE_LIBS]
+
+#TEST_COLLECTION_SRC = [TEST_COLLECTION_CPP, COMMON_UTIL_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, IC_STATIC_LIBS, IC_STATIC_RESOURCE_LIBS]
+
+#IC_TESTAPP_SRC = Glob(PROJECT_HOME +  TARGET + '/iBtestapp/modules/ic/c_cpp/bootstrapserver.cpp')
 
 
 ######################################################################
@@ -203,7 +231,17 @@ env_linux.ParseConfig("pkg-config --cflags --libs uuid")
 
 create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
 
-IC_itc = env_linux.Program(source = IC_TC_SRC, target = IC_ITC_BIN,CPPDEFINES =IC_CPPDEFINES, CPPPATH = IC_CINCLUDE, LIBS = IC_LIBS, LIBPATH = IC_LIB_LOCATION, CPPFLAGS = IC_CFLAGS)
+IC_itc = env_linux.Program(source = IC_TC_SRC, target = IC_ITC_BIN,CPPDEFINES = ['WITH_CLOUD', 'MQ_BROKER','RD_CLIENT', 'MQ_SUBSCRIBER', 'MQ_PUBLISHER', 'WITH_MQ'], CPPPATH = IC_CINCLUDE, LIBS = IC_LIBS, LIBPATH = IC_LIB_LOCATION, CPPFLAGS = IC_CFLAGS)
+
+#test_server = env_linux.Program(source = TEST_SERVER_SRC, target = TEST_SERVER_BIN, CPPPATH = IC_CINCLUDE, LIBS = IC_LIBS, LIBPATH = IC_LIB_LOCATION, CPPFLAGS = IC_CFLAGS)
+
+#unsupportive_server = env_linux.Program(source = UNSUPPORTIVE_SERVER_SRC, target = UNSUPPORTIVE_SERVER_BIN, CPPPATH = IC_CINCLUDE, LIBS = IC_LIBS, LIBPATH = IC_LIB_LOCATION, CPPFLAGS = IC_CFLAGS)
+
+#bootstrap_server = env_linux.Program(source = BOOTSTRAP_SERVER_SRC, target = BOOTSTRAP_SERVER_BIN, CPPPATH = IC_CINCLUDE, LIBS = IC_LIBS, LIBPATH = IC_LIB_LOCATION, CPPFLAGS = IC_CFLAGS)
+
+#test_collection = env_linux.Program(source = TEST_COLLECTION_SRC, target = TEST_COLLECTION_BIN, CPPPATH = IC_CINCLUDE, LIBS = IC_LIBS, LIBPATH = IC_LIB_LOCATION, CPPFLAGS = IC_CFLAGS)
+
+#IC_testapp = env_linux.Program(source = IC_TESTAPP_SRC, target = IC_TESTAPP_BIN, CPPPATH = IC_CINCLUDE, LIBS = IC_LIBS, LIBPATH = IC_LIB_LOCATION, CPPFLAGS = IC_CFLAGS)
 
 env_linux.AppendUnique(CPPFLAGS = PKG_FLAGS)
 
@@ -224,6 +262,7 @@ print "target_service = " + target_service
 print "target_test = " + target_test
 print "target_transport = " + target_transport
 
+#SConscript(GTEST + '/SConscript')
 
 print "---------------service--------------" + target_service + target_test
 

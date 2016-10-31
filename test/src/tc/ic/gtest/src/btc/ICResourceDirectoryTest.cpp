@@ -92,7 +92,7 @@ public:
  * @expected        It will Publish Virtual Resource to Resource Directory & return OC_STACK_OK
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRD_SRC_FSV_P)
 {
     try
@@ -110,23 +110,27 @@ TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRD_SRC_FSV_P)
 }
 #endif
 
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'publishResourceToRD' to Publish Virtual Resource to RD with invalid host address
- * @target          publishResourceToRD(const std::string& host,OCConnectivityType connectivityType,
- *                                      PublishResourceCallback callback)
- * @test_data       1. host                 invalid host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onPublish as callback
- * @pre_condition   none
- * @procedure       1. Call publishResourceToRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_URI
+/**
+ * @since           2015-11-30
+ * @see             static OCStackResult provisionInit(const std::string& dbPath)
+ * @see             static OCStackResult setOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData, InputPinCallback inputPin)
+ * @see             static OCStackResult discoverUnownedDevices(unsigned short timeout, DeviceList_t &list)
+ * @see             OCStackResult doOwnershipTransfer(ResultCallBack resultCallback)
+ * @see             static OCStackResult discoverOwnedDevices(unsigned short timeout, DeviceList_t &list)
+ * @objective       test provisionACL positively with minimum range of Acl permission
+ * @target          OCStackResult provisionACL(const OicSecAcl_t* acl, ResultCallBack resultCallback)
+ * @test_data       Acl permission with minimum Range
+ * @pre_condition   start two justworks simulators
+ * @procedure       1. call provisionInit
+ *                  2. call discoverUnownedDevices
+ *                  3. call setOwnerTransferCallbackData
+ *                  4. call doOwnershipTransfer
+ *                  5. call discoverOwnedDevices
+ *                  6. call provisionACL
+ * @post_condition  None
+ * @expected        provisionACL will return OC_STACK_OK
  */
-
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDwithInvalidHost_USV_N)
 {
     try
@@ -160,7 +164,7 @@ TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDwithInvalidHost_USV_N)
  * @expected        It will not success & return OC_STACK_INVALID_PARAM
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDwithEmptyHost_ESV_N)
 {
     try
@@ -195,7 +199,7 @@ TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDwithEmptyHost_ESV_N)
  * @expected        It will success & return OC_STACK_OK
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDwithNullCallback_NV_N)
 {
     try
@@ -229,7 +233,7 @@ TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDwithNullCallback_NV_N)
  * @expected        It will Publish Resource to Resource Directory & return OC_STACK_OK
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithQOS_SRC_FSV_P)
 {
     try
@@ -264,7 +268,7 @@ TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithQOS_SRC_FSV_P)
  * @expected        It will not success & return OC_STACK_INVALID_URI
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithQOSWithInvalidHost_USV_N)
 {
     try
@@ -299,7 +303,7 @@ TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithQOSWithInvalidHost_US
  * @expected        It will not success & return OC_STACK_INVALID_PARAM
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithQOSWithEmptyHost_ESV_N)
 {
     try
@@ -335,7 +339,7 @@ TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithQOSWithEmptyHost_ESV_
  * @expected        It will success & return OC_STACK_OK
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithQOSWithNullCallback_NV_N)
 {
     try
@@ -369,7 +373,7 @@ TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithQOSWithNullCallback_N
  * @expected        It will Publish Virtual Resource to Resource Directory & return OC_STACK_OK
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandle_SRC_FSV_P)
 {
     try
@@ -404,7 +408,7 @@ TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandle_SRC_FS
  * @expected        It will not success & return OC_STACK_INVALID_URI
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleWithInvalidHost_USV_N)
 {
     try
@@ -439,7 +443,7 @@ TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleWithInv
  * @expected        It will not success & return OC_STACK_INVALID_PARAM
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleWithEmptyHost_ESV_N)
 {
     try
@@ -475,7 +479,7 @@ TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleWithEmp
  * @expected        It will success & return OC_STACK_OK
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleWithNullCallback_NV_N)
 {
     try
@@ -510,7 +514,7 @@ TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleWithNul
  * @expected        It will Publish Resource to Resource Directory & return OC_STACK_OK
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleAndWithQOS_SRC_FSV_P)
 {
     try
@@ -545,7 +549,7 @@ TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleAndWith
  * @expected        It will not success & return OC_STACK_INVALID_URI
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleAndWithQOSWithInvalidHost_USV_N)
 {
     try
@@ -580,7 +584,7 @@ TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleAndWith
  * @expected        It will not success & return OC_STACK_INVALID_PARAM
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleAndWithQOSWithEmptyHost_ESV_N)
 {
     try
@@ -616,7 +620,7 @@ TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleAndWith
  * @expected        It will success & return OC_STACK_OK
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleAndWithQOSWithNullCallback_NV_N)
 {
     try
@@ -650,7 +654,7 @@ TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleAndWith
  * @expected        It will delete Published Resource from Resource Directory & return OC_STACK_OK
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRD_SRC_FSV_P)
 {
     try
@@ -684,7 +688,7 @@ TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRD_SRC_FSV_P)
  * @expected        It will not success & return OC_STACK_INVALID_URI
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithInvalidHost_USV_N)
 {
     try
@@ -716,7 +720,7 @@ TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithInvalidHost_USV_N)
  * @expected        It will not success & return OC_STACK_INVALID_PARAM
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithEmptyHost_ESV_N)
 {
     try
@@ -750,7 +754,7 @@ TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithEmptyHost_ESV_N)
  * @expected        It will not success & return OC_STACK_INVALID_PARAM
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDDWithNullCallback_NV_N)
 {
     try
@@ -784,7 +788,7 @@ TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDDWithNullCallback_NV_N)
  * @expected        It will delete Published Resource from Resource Directory & return OC_STACK_OK
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithQOS_SRC_FSV_P)
 {
     try
@@ -819,7 +823,7 @@ TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithQOS_SRC_FSV_P)
  * @expected        It will not success & return OC_STACK_INVALID_URI
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithQOSWithInvalidHost_USV_N)
 {
     try
@@ -852,7 +856,7 @@ TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithQOSWithInvalidHost_U
  * @expected        It will not success & return OC_STACK_INVALID_PARAM
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithQOSWithEmptyHost_ESV_N)
 {
     try
@@ -887,7 +891,7 @@ TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithQOSWithEmptyHost_ESV
  * @expected        It will not success & return OC_STACK_INVALID_PARAM
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithQOSWithNullCallback_NV_N)
 {
     try
@@ -921,7 +925,7 @@ TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithQOSWithNullCallback_
  * @expected        It will delete Published Resource from Resource Directory & return OC_STACK_OK
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHandler_SRC_FSV_P)
 {
     try
@@ -956,7 +960,7 @@ TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHandler_SRC_
  * @expected        It will not success & return OC_STACK_INVALID_URI
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHandlerWithInvalidHost_USV_N)
 {
     try
@@ -989,7 +993,7 @@ TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHandlerWithI
  * @expected        It will not success & return OC_STACK_INVALID_PARAM
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHandlerWithEmptyHost_ESV_N)
 {
     try
@@ -1024,7 +1028,7 @@ TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHandlerWithE
  * @expected        It will not success & return OC_STACK_INVALID_PARAM
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHandlerWithNullCallback_NV_N)
 {
     try
@@ -1059,7 +1063,7 @@ TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHandlerWithN
  * @expected        It will delete Published Resource from Resource Directory & return OC_STACK_OK
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHanlderAndQOS_SRC_FSV_P)
 {
     try
@@ -1095,7 +1099,7 @@ TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHanlderAndQO
  * @expected        It will not success & return OC_STACK_INVALID_URI
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHanlderAndQOSWithInvalidHost_USV_N)
 {
     try
@@ -1129,7 +1133,7 @@ TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHanlderAndQO
  * @expected        It will not success & return OC_STACK_INVALID_PARAM
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHanlderAndQOSWithEmptyHost_ESV_N)
 {
     try
@@ -1165,7 +1169,7 @@ TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHanlderAndQO
  * @expected        It will not success & return OC_STACK_INVALID_PARAM
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHanlderAndQOSWithNullCallback_NV_N)
 {
     try
@@ -1201,7 +1205,7 @@ TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHanlderAndQO
  * @expected        It will subscribes to a server's device presence change events & return OC_STACK_OK
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, SubscribeDevicePresenceWithValidParameters_SRC_FSV_P)
 {
     try
@@ -1237,7 +1241,7 @@ TEST_F(ICResourceDirectoryTest_btc, SubscribeDevicePresenceWithValidParameters_S
  * @expected        It will not subscribes & will return OC_STACK_INVALID_URI
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, SubscribeDevicePresenceWithInvalidHostAddress_USV_N)
 {
     try
@@ -1273,7 +1277,7 @@ TEST_F(ICResourceDirectoryTest_btc, SubscribeDevicePresenceWithInvalidHostAddres
  * @expected        It will not subscribes & should return OC_STACK_INVALID_PARAM
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, SubscribeDevicePresenceWithEmptyHost_ESV_N)
 {
     try
@@ -1309,7 +1313,7 @@ TEST_F(ICResourceDirectoryTest_btc, SubscribeDevicePresenceWithEmptyHost_ESV_N)
  * @expected        It will not subscribes & should not return OC_STACK_OK
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, SubscribeDevicePresenceWithNullCallback_NV_N)
 {
     try
@@ -1343,7 +1347,7 @@ TEST_F(ICResourceDirectoryTest_btc, SubscribeDevicePresenceWithNullCallback_NV_N
  * @expected        It will unsubscribes & should return OC_STACK_OK
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, UnsubscribePresenceWithValidParameters_SRC_FSV_P)
 {
     try
@@ -1378,7 +1382,7 @@ TEST_F(ICResourceDirectoryTest_btc, UnsubscribePresenceWithValidParameters_SRC_F
  * @expected        It will not subscribes & will return OC_STACK_INVALID_PARAM
  */
 
-#if defined(__LINUX__)
+#if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICResourceDirectoryTest_btc, UnSubscribeDevicePresenceWithInvalidOCPresentHandler_USV_N)
 {
     try
