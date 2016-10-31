@@ -20,6 +20,7 @@
 #include "rd_client.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -198,7 +199,7 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
         }
     }
 
-    OCRepPayloadSetPropObjectArray(rdPayload, OC_RSRVD_LINKS, linkArr, dimensions);
+    OCRepPayloadSetPropObjectArray(rdPayload, OC_RSRVD_LINKS, (const OCRepPayload **)linkArr, dimensions);
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
 
     for (uint8_t i = 0; i < nPubResHandles; i++)
