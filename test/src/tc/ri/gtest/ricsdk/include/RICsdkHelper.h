@@ -151,6 +151,7 @@ public:
     static char* s_units;
     static int64_t s_hour;
 
+    static bool s_isBtc;
     OCStackResult m_result;
 
 public:
@@ -189,6 +190,8 @@ public:
             OCClientResponse * clientResponse);
     static OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle /*handle*/,
             OCClientResponse * clientResponse);
+    static OCStackApplicationResult allReqCB(void* ctx, OCDoHandle /*handle*/,
+                OCClientResponse * clientResponse);
 
     //stc functions
     OCStackResult initClientServer();

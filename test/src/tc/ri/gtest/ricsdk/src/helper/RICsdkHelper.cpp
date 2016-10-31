@@ -30,7 +30,7 @@ bool RICsdkHelper::s_isServerResponse;
 bool RICsdkHelper::s_isResourceFound;
 string RICsdkHelper::s_failureMsg;
 OCEntityHandlerResult RICsdkHelper::s_responseErrorCode;
-int RICsdkHelper::s_unicastDiscovery = 0;
+int RICsdkHelper::s_unicastDiscovery = 5;
 char RICsdkHelper::s_szQueryUri[100] =
 { 0 };
 char RICsdkHelper::s_discoveryAddr[100];
@@ -40,6 +40,7 @@ OCResourceHandle RICsdkHelper::s_handle;
 int64_t RICsdkHelper::s_temp = 10;
 char* RICsdkHelper::s_units = "C";
 int64_t RICsdkHelper::s_hour = 5;
+bool RICsdkHelper::s_isBtc = false;
 
 RICsdkHelper::RICsdkHelper()
 {
@@ -237,6 +238,12 @@ OCEntityHandlerResult RICsdkHelper::ProcessDeleteRequest(OCEntityHandlerRequest 
 OCEntityHandlerResult RICsdkHelper::OCEntityHandlerCb(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, void* /*callback*/)
 {
+
+    if (s_isBtc == true)
+    {
+        return OC_EH_OK;
+    }
+
     IOTIVITYTEST_LOG(INFO, "Inside server's callback");
     IOTIVITYTEST_LOG(INFO, "Inside entity handler - flags: 0x%x", flag);
 
@@ -395,7 +402,7 @@ bool RICsdkHelper::payloadLogPlatform(OCPlatformPayload* payload)
     if (payload->info.dateOfManufacture == NULL)
     {
         s_failureMsg = s_failureMsg + "Payload does not have any information. ";
-        IOTIVITYTEST_LOG(INFO,"Payload does not have any information. ");
+        IOTIVITYTEST_LOG(INFO, "Payload does not have any information. ");
         return false;
     }
 
@@ -475,7 +482,7 @@ bool RICsdkHelper::payloadLogDevice(OCDevicePayload* payload)
     if (payload->deviceName == NULL)
     {
         s_failureMsg = s_failureMsg + "Payload does not have any information. ";
-        IOTIVITYTEST_LOG(INFO,"Payload does not have any information. ");
+        IOTIVITYTEST_LOG(INFO, "Payload does not have any information. ");
         return false;
     }
 
@@ -1112,7 +1119,7 @@ OCStackApplicationResult RICsdkHelper::obsReqCB(void* ctx, OCDoHandle /*handle*/
         IOTIVITYTEST_LOG(INFO, "DeleteRequest received Null clientResponse");
     }
 
-    return OC_STACK_KEEP_TRANSACTION;
+    return (s_unicastDiscovery) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION;
 }
 
 OCDoHandle RICsdkHelper::doResource(OCMethod method, const char *requestUri, OCQualityOfService qos)

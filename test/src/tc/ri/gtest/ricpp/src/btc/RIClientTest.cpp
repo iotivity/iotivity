@@ -79,7 +79,7 @@ public:
 TEST_F(RIClientTest_btc, Configure_SRC_P)
 {
     PlatformConfig config
-    { OC::ServiceType::InProc, OC::ModeType::Client, "0.0.0.0", 0, OC::QualityOfService::LowQos };
+    {   OC::ServiceType::InProc, OC::ModeType::Client, "0.0.0.0", 0, OC::QualityOfService::LowQos};
 
     try
     {
@@ -721,6 +721,40 @@ TEST_F(RIClientTest_btc, UnsubscribePresence_SRC_P)
             bind(&RIClientTest_btc::presenceHandler, this, PH::_1, PH::_2, PH::_3));
 
     EXPECT_EQ(OC_STACK_OK, OCPlatform::unsubscribePresence(presenceHandle));
+}
+#endif
+
+/**
+ * @since 2016-07-13
+ * @see OCStackResult subscribePresence(OCPresenceHandle& presenceHandle, const std::string& host,
+ *                    const std::string& resourceType, OCConnectivityType connectivityType,
+ *                    SubscribeCallback presenceHandler)
+ * @objective Test unsubscribePresence() with null host address
+ * @target OCStackResult unsubscribePresence(OCPresenceHandle presenceHandle)
+ * @test_data presenceHandler
+ * @pre_condition get presenceHandler from subscribePresence() (using empty string as host)
+ * @procedure Call unsubscribePresence() API with the presenceHandler
+ * @post_condition None
+ * @expected Exception should occur
+ */
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(RIClientTest_btc, UnsubscribePresence_ESV_N)
+{
+    OCPlatform::OCPresenceHandle presenceHandle = nullptr;
+    const std::string host = "";
+
+    OCPlatform::subscribePresence(presenceHandle, host, CT_DEFAULT,
+            bind(&RIClientTest_btc::presenceHandler, this, PH::_1, PH::_2, PH::_3));
+
+    try
+    {
+        OCPlatform::unsubscribePresence(presenceHandle);
+        SET_FAILURE("Exception should occur");
+    }
+    catch (exception &e)
+    {
+        IOTIVITYTEST_LOG(INFO, e.what());
+    }
 }
 #endif
 

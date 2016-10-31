@@ -35,6 +35,8 @@ public:
     {
         CommonUtil::runCommonTCSetUpPart();
 
+        RICsdkHelper::s_isBtc = false;
+
         m_pRICsdkHelper = RICsdkHelper::getInstance();
         m_result = OC_STACK_ERROR;
         RICsdkHelper::s_isCallback == false;

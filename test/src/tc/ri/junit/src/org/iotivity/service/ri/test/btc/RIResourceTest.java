@@ -1084,6 +1084,46 @@ public class RIResourceTest extends InstrumentationTestCase {
             fail("Exception occured");
         }
     }
+    
+    /**
+     * @objective Test observe function with negtaive basic way(with high qos) using null
+     * 			observeType
+     * @target void observe(ObserveType observeType,
+     * Map<String, String> queryParamsMap,
+     * OnObserveListener onObserveListener,
+     * QualityOfService qualityOfService)
+     * @test_data 1. observeType null
+     * 2. queryParamsMap map with query paramter and value
+     * `			3. onObserveListener event handler
+     * `			4. qualityOfService High
+     * @pre_condition 1. configure platform
+     * 2. construct resource object
+     * @procedure Call observe() API(with high qos) using resource with null observe type
+     * @post_condition None
+     * @expected OcException should occur
+     * @see void Configure(PlatformConfig platformConfig)
+     * @see OcResource constructResourceObject(
+     * String host,
+     * String uri,
+     * EnumSet<OcConnectivityType> connectivityTypeSet,
+     * boolean isObservable,
+     * List<String> resourceTypeList,
+     * List<String> interfaceList)
+     * @since 2016-09-05
+     **/
+    public void testObserveResourceWithQosObserveType_NV_N() {
+        Map<String, String> qpMap = new HashMap<String, String>();
+
+        try {
+            m_resource.observe(null, qpMap, onObserve, QualityOfService.HIGH);
+            fail("OcException should have occured");
+        } catch (OcException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpected exception occured");
+        }                
+    }
 
     /**
      * @objective Test cancelObserve function with positive basic way

@@ -731,7 +731,7 @@ public class RIClientTest extends InstrumentationTestCase {
      * OcPresenceHandle ocPresenceHandle)
      * @test_data ocPresenceHandle the handle object provided by the subscribePresence call
      * @pre_condition 1. Configure platform
-     * 2. Call subscribePresence() API
+     * 2. Call subscribePresence() API 
      * @procedure Call unsubscribePresence() API
      * @post_condition None
      * @expected No exceptions should occur
@@ -745,8 +745,9 @@ public class RIClientTest extends InstrumentationTestCase {
     public void testUnsubscribePresence_SRC_P() {
         m_riHelper.configClientServerPlatform();
 
+        String host = "224.0.1.87";
         try {
-            m_presenceHandle = OcPlatform.subscribePresence(m_host, EnumSet.of(OcConnectivityType.CT_DEFAULT), onPresenceReceived);
+            m_presenceHandle = OcPlatform.subscribePresence(host, EnumSet.of(OcConnectivityType.CT_DEFAULT), onPresenceReceived);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured in subscribePresence");
@@ -758,6 +759,42 @@ public class RIClientTest extends InstrumentationTestCase {
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception occured");
+        }
+    }
+    
+    /**
+     * @objective Test unsubscribePresence function with positive basic way
+     * @target void unsubscribePresence(
+     * OcPresenceHandle ocPresenceHandle)
+     * @test_data ocPresenceHandle the handle object provided by the subscribePresence call
+     * @pre_condition 1. Configure platform
+     * 2. Call subscribePresence() API with empty string as host
+     * @procedure Call unsubscribePresence() API
+     * @post_condition None
+     * @expected Exception should occur
+     * @see void Configure(PlatformConfig platformConfig)
+     * @see OcPresenceHandle subscribePresence(
+     * String host,
+     * EnumSet<OcConnectivityType> connectivityTypeSet,
+     * OnPresenceListener onPresenceListener)
+     * @since 2016-08-30
+     **/
+    public void testUnsubscribePresence_ESV_N() {
+        m_riHelper.configClientServerPlatform();
+        
+        try {
+            m_presenceHandle = OcPlatform.subscribePresence(m_host, EnumSet.of(OcConnectivityType.CT_DEFAULT), onPresenceReceived);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Exception occured in subscribePresence");
+        }
+        assertNotNull("subscribePresence could not create presence handle", m_presenceHandle);
+
+        try {
+            OcPlatform.unsubscribePresence(m_presenceHandle);
+            fail("Exception should occur");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

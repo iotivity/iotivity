@@ -36,6 +36,8 @@ public:
     {
         CommonUtil::runCommonTCSetUpPart();
 
+        RICsdkHelper::s_isBtc = true;
+
         m_pRICsdkHelper = RICsdkHelper::getInstance();
         m_result = OC_STACK_ERROR;
         m_cbData.cb = DeviceDiscoveryReqCB;
@@ -51,8 +53,6 @@ public:
     virtual void TearDown()
     {
         CommonUtil::runCommonTCTearDownPart();
-        CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
-        OCStop();
     }
 
     static OCStackApplicationResult DeviceDiscoveryReqCB(void* ctx, OCDoHandle /*m_doHandle*/,
@@ -72,7 +72,7 @@ public:
  *                 3. mode client mode
  * @pre_condition none
  * @procedure Call OCInit() API
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_OK
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -94,7 +94,7 @@ TEST_F(RICsdkClientTest_btc, OCInitClient_SRC_P)
  *                 3. clientFlags Default client transport flags
  * @pre_condition none
  * @procedure Call OCInit1() API
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_OK
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -131,7 +131,7 @@ TEST_F(RICsdkClientTest_btc, OCInit1Client_SRC_P)
  *                  10. numOptions 0
  * @pre_condition Call OCInit() API
  * @procedure Call OCDoResource() API
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -171,7 +171,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceNON_SRC_P)
  *                  10. numOptions 0
  * @pre_condition Call OCInit() API
  * @procedure Call OCDoResource() API
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -211,7 +211,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceCON_SRC_P)
  *                  10. numOptions 0
  * @pre_condition Call OCInit() API
  * @procedure Call OCDoResource() API
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -222,8 +222,6 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverPlatformNON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,PLATFORM_DISCOVERY_QUERY,OC_LOW_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
-
-    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -253,7 +251,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverPlatformNON_SRC_P)
  *                  10. numOptions 0
  * @pre_condition Call OCInit() API
  * @procedure Call OCDoResource() API
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -264,8 +262,6 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverPlatformCON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DISCOVER,PLATFORM_DISCOVERY_QUERY,OC_HIGH_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
-
-    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -297,7 +293,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverPlatformCON_SRC_P)
  *                    2. Call OCDoResource() API for discovering resource
  *                    3. Check if resource is found
  * @procedure Call OCDoResource() API to send get request
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -324,8 +320,6 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceGetRequestNON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET,ALL_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
-
-    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -357,7 +351,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceGetRequestNON_SRC_P)
  *                    2. Call OCDoResource() API for discovering resource
  *                    3. Check if resource is found
  * @procedure Call OCDoResource() API to send get request
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -384,9 +378,6 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceGetRequestCON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_GET,ALL_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
-
-    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
-
 }
 #endif
 
@@ -418,7 +409,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceGetRequestCON_SRC_P)
  *                    2. Call OCDoResource() API for discovering resource
  *                    3. Check if resource is found
  * @procedure Call OCDoResource() API to send put request
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -445,8 +436,6 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePutRequestNON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT,ALL_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
-
-    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -478,7 +467,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePutRequestNON_SRC_P)
  *                    2. Call OCDoResource() API for discovering resource
  *                    3. Check if resource is found
  * @procedure Call OCDoResource() API
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -505,8 +494,6 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePutRequestCON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_PUT,ALL_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
-
-    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -538,7 +525,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePutRequestCON_SRC_P)
  *                    2. Call OCDoResource() API for discovering resource
  *                    3. Check if resource is found
  * @procedure Call OCDoResource() API to send post request
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -565,8 +552,6 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePostRequestNON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST,ALL_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
-
-    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -598,7 +583,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePostRequestNON_SRC_P)
  *                    2. Call OCDoResource() API for discovering resource
  *                    3. Check if resource is found
  * @procedure Call OCDoResource() API to send post request
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -625,8 +610,6 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePostRequestCON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_POST,ALL_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
-
-    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -658,7 +641,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourcePostRequestCON_SRC_P)
  *                    2. Call OCDoResource() API for discovering resource
  *                    3. Check if resource is found
  * @procedure Call OCDoResource() API to send delete request
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -685,8 +668,6 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDeleteRequestNON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE,ALL_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
-
-    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -718,7 +699,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDeleteRequestNON_SRC_P)
  *                    2. Call OCDoResource() API for discovering resource
  *                    3. Check if resource is found
  * @procedure Call OCDoResource() API to send delete request
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -745,8 +726,6 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDeleteRequestCON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_DELETE,ALL_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
-
-    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -778,7 +757,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDeleteRequestCON_SRC_P)
  *                    2. Call OCDoResource() API for discovering resource
  *                    3. Check if resource is found
  * @procedure Call OCDoResource() API to send observe request
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -805,8 +784,6 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceObserveRequestNON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_OBSERVE,ALL_RESOURCE_DISCOVERY_QUERY,OC_LOW_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
-
-    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -838,7 +815,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceObserveRequestNON_SRC_P)
  *                    2. Call OCDoResource() API for discovering resource
  *                    3. Check if resource is found
  * @procedure Call OCDoResource() API to send observe request
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_OK and handle should be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -865,8 +842,6 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceObserveRequestCON_SRC_P)
 
     m_doHandle = m_pRICsdkHelper->doResource(OC_REST_OBSERVE,ALL_RESOURCE_DISCOVERY_QUERY,OC_HIGH_QOS);
     ASSERT_NE(NULL,m_doHandle) << m_pRICsdkHelper->getFailureMessage();
-
-    CommonUtil::waitInSecond(CALLBACK_WAIT_DEFAULT);
 }
 #endif
 
@@ -896,7 +871,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceObserveRequestCON_SRC_P)
  *                  10. numOptions 0
  * @pre_condition Call OCInit() API
  * @procedure Call OCDoResource() API
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_INVALID_CALLBACK and handle should not be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -937,7 +912,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceCallbackData_NV_N)
  *                  10. numOptions 0
  * @pre_condition Call OCInit() API
  * @procedure Call OCDoResource() API
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_INVALID_URI and handle should not be returned
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -977,7 +952,7 @@ TEST_F(RICsdkClientTest_btc, OCDoResourceDiscoverDeviceRequestUri_ESV_N)
  * @pre_condition     1. Call OCInit() API
  *                     2. Call OCDoResource() API
  * @procedure Call OCCancel() API
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_OK
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
@@ -1019,7 +994,7 @@ TEST_F(RICsdkClientTest_btc, OCCancel_SRC_P)
  * @pre_condition     1. Call OCInit() API
  *                     2. Call OCDoResource() API
  * @procedure Call OCCancel() API
- * @post_condition Call OCStop()
+ * @post_condition None
  * @expected Should return OC_STACK_INVALID_PARAM
  */
 #if defined(__LINUX__) || defined(__TIZEN__)
