@@ -624,15 +624,19 @@ CAResult_t CALEClientDirectConnect(JNIEnv *env, jobject bluetoothDevice, jboolea
  * set new interval time and working count.
  * @param[in]  intervalTime             interval time(Seconds).
  * @param[in]  workingCount             working count for selected interval time.
+ * @param[in]  nextScanningStep         set next scanning state.
  */
-void CALEClientSetScanInterval(int32_t intervalTime, int32_t workingCount);
+void CALEClientSetScanInterval(int32_t intervalTime, int32_t workingCount,
+                               CALEScanState_t nextScanningStep);
 
 /**
  * restart scanning with new interval time and working count.
  * @param[in]  intervalTime             interval time(Seconds).
  * @param[in]  workingCount             working count for selected interval time.
+ * @param[in]  nextScanningStep         set next scanning state.
  */
-void CALERestartScanWithInterval(int32_t intervalTime, int32_t workingCount);
+void CALERestartScanWithInterval(int32_t intervalTime, int32_t workingCount,
+                                 CALEScanState_t nextScanningStep);
 
 /**
  * start LE scanning logic with interval time and working count.
