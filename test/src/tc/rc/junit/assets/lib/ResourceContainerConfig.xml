@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<container>    
+<container>
     <bundle>
         <id>oic.bundle.discomfortIndexSensor</id>
-        <path>data/data/org.iotivity.service.rc.test/files/libDISensorBundle.so</path>
-        <libraryPath>data/data/org.iotivity.service.rc.test/files/libDISensorBundle.so</libraryPath>
+        <path>/data/data/org.iotivity.service.rc.test/files/libDISensorBundle.so</path>
+        <libraryPath>/data/data/org.iotivity.service.rc.test/files/libDISensorBundle.so</libraryPath>
         <activator>disensor</activator>
         <version>1.0.0</version>
         <resources>
@@ -11,7 +11,7 @@
                 <name>DiscomfortIndexSensor1</name>
                 <resourceType>oic.r.sensor</resourceType>
                 <resourceUri>oic/DiscomfortRes</resourceUri>
-                <address>107.109.9.85</address>
+                <address>192.168.0.2</address>
                 <outputs>
                     <output>
                         <name>discomfortIndex</name>
@@ -38,14 +38,14 @@
                         <resourceType>oic.r.temperature</resourceType>
                     </input>
                 </inputs>
-            </resourceInfo>       
+            </resourceInfo>
         </resources>
     </bundle>
 
     <bundle>
         <id>oic.bundle.BMISensor</id>
-        <path>data/data/org.iotivity.service.rc.utc/files/libBMISensorBundle.so</path>
-        <libraryPath>data/data/org.iotivity.service.rc.utc/files/libBMISensorBundle.so</libraryPath>
+        <path>/data/data/org.iotivity.service.rc.test/files/libBMISensorBundle.so</path>
+        <libraryPath>/data/data/org.iotivity.service.rc.test/files/libBMISensorBundle.so</libraryPath>
         <activator>bmisensor</activator>
         <version>1.0.0</version>
         <resources>
@@ -72,15 +72,14 @@
                         <resourceUri>/Thing_HeightSensor</resourceUri>
                     </input>
                 </inputs>
-            </resourceInfo>       
+            </resourceInfo>
         </resources>
     </bundle>
-
     <!-- Will be loaded dynamically with sample application -->
     <!--
     <bundle>
         <id>oic.bundle.hueSample</id>
-        <path>data/data/org.iotivity.service.rc.utc/files/libHueBundle.so</path>
+        <path>/data/data/org.iotivity.service.rc.test/files/libHueBundle.so</path>
         <activator>huesample</activator>
         <version>1.0.0</version>
         <resources>
@@ -88,15 +87,14 @@
                 <name>light</name>
                 <resourceType>oic.r.light</resourceType>
                 <address>http://192.168.0.2/api/newdeveloper/lights/1</address>
-            </resourceInfo>       
+            </resourceInfo>
         </resources>
     </bundle>
     -->
-
     <!-- Example Configuration For Java Bundle -->
     <!--
     <bundle>
-        <id>oic.bundle.hueJavaSample</id>       
+        <id>oic.bundle.hueJavaSample</id>
         <path>../../../../../../service/resource-container/examples/HueJavaSampleBundle/hue/target/hue-0.1-jar-with-dependencies.jar</path>
         <libraryPath>.</libraryPath>
         <uri>/hueJava</uri>
@@ -108,9 +106,8 @@
                 <resourceUri>/hueJava/light/1</resourceUri>
                 <resourceType>oic.r.light</resourceType>
                 <address>http://192.168.0.2/api/newdeveloper/lights/1</address>
-            </resourceInfo>       
+            </resourceInfo>
         </resources>
     </bundle>
     -->
-
 </container>
