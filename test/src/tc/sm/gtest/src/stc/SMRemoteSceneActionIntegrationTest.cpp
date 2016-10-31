@@ -54,6 +54,8 @@ public:
         m_pSMRemoteHelper->discoverResource();
         m_pSMRemoteHelper->stopDiscovery();
 
+        ASSERT_NE(NULL_PTR,m_pSMRemoteHelper->g_pFoundSceneList) << "Local scene List resource was not found in discovery";
+
         m_pRemoteSceneList = m_pSMRemoteHelper->createRemoteSceneListInstance();
         ASSERT_NE(m_pRemoteSceneList,NULL_PTR) << "did not find remote scene list instance";
 

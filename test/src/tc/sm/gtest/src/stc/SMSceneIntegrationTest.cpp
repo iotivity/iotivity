@@ -67,7 +67,7 @@ public:
         m_pScene1 = m_pSceneCollection->addNewScene(SCENE_NAME_1);
         ASSERT_NE(m_pScene1,NULL_PTR) << "scene pointer is not found";
 
-        ASSERT_EQ(m_pSMHelper->g_foundResourceList.size(),INT_TWO) << "Light and Fan Resources are Not Found";
+        ASSERT_GE(m_pSMHelper->g_foundResourceList.size(),INT_TWO) << "Light and Fan Resources are Not Found";
 
         m_pResource1 = m_pSMHelper->g_foundResourceList.at(INT_ZERO);
         m_pResource2 = m_pSMHelper->g_foundResourceList.at(INT_ONE);

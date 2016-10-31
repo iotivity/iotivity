@@ -46,6 +46,8 @@ public:
         m_pSMRemoteHelper = new SMRemoteHelper();
         m_pSMRemoteHelper->discoverResource();
         m_pSMRemoteHelper->stopDiscovery();
+
+        ASSERT_NE(NULL_PTR,m_pSMRemoteHelper->g_pFoundSceneList) << "Local scene List resource was not found in discovery";
     }
 
     virtual void TearDown() {

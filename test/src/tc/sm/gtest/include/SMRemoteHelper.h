@@ -28,7 +28,7 @@
 #include "SMCommon.h"
 
 #define SCENE_SERVER "./sceneserver"
-#define RESOURCE_TYPE_SCENELIST "oic.wk.scenelist"
+#define RESOURCE_TYPE_SCENELIST "oic.wk.sceneList"
 
 constexpr char REMOTE_SCENE_LIST_NAME[] { "Home" };
 constexpr int SCENE_RESULT_OK = 200;

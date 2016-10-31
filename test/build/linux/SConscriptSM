@@ -60,7 +60,7 @@ COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
 ######################################################################
 ######################################################################
 
-# Initializing TM Dir
+# Initializing SM Dir
 ######################################################################
 
 SM_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
@@ -70,13 +70,16 @@ SM_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
 SM_RESOURCE_STACK = SM_RESOURCE_DIR + '/csdk/stack/include'
 SM_RESOURCE_SOCKET = SM_RESOURCE_DIR + '/csdk/ocsocket/include'
 SM_RESOURCE_RANDOM = SM_RESOURCE_DIR + '/csdk/ocrandom/include'
-SM_RESOURCE_LOGGER = SM_RESOURCE_DIR + '/csdk/logger/include'
 SM_RESOURCE_OC_LOGGER = SM_RESOURCE_DIR + '/oc_logger/include'
 SM_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
 SM_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
 SM_DIR = ORG_SRC_HOME + '/service/scene-manager'
 SM_INCLUDE = SM_DIR + '/include'
 SM_SDK_INCLUDE = SM_DIR + '/sdk/src'
+SM_LIB_TIMER = SM_RESOURCE_LIB + '/extlibs/timer/'
+LOGGER_INC_DIR = ORG_SRC_HOME + '/resource/csdk/logger/include'
+CBOR_INC_DIR = ORG_SRC_HOME + '/extlibs/tinycbor/tinycbor/src'
+SECURE_VIRTUAL_RESOURCE_INC = ORG_SRC_HOME + '/resource/csdk/security/include'
 
 ######################################################################
 
@@ -139,18 +142,21 @@ COMMON_UTIL_INCLUDE_DIR = PROJECT_HOME + '/include'
 
 env_linux['CC'] = 'g++'
 
+COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D __WITH_DTLS__ -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs  -ftest-coverage -fprofile-arcs')
 
-COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D __WITH_DTLS__  -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs')
-SM_CFLAGS = [COMMON_FLAGS]
+
+SM_FLAGS = Split('-O2 -g -Wall -fmessage-length=0 -std=c++0x -Os -Wall -Wextra -fPIC -pthread -DNDEBUG -DWITH_POSIX -D__linux__ -DIP_ADAPTER -DNO_EDR_ADAPTER -DLE_ADAPTER -DROUTING_EP -DWITH_BWT -DCA_DBUS_GATT_SERVICE_NAME='"org.iotivity.gatt.service"' -DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_32 -DWITH_TCP')
+SM_CFLAGS = [COMMON_FLAGS + SM_FLAGS]
+
 
 ######################################################################
 
 # Initializing Includes
 ######################################################################
 
-COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, SM_RESOURCE_LOGGER]
+COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, LOGGER_INC_DIR, CBOR_INC_DIR, SECURE_VIRTUAL_RESOURCE_INC]
 
-SM_CINCLUDE = [COMMON_CINCLUDE, SM_RESOURCE_INCLUDE, SM_RESOURCE_STACK, SM_RESOURCE_SOCKET, SM_RESOURCE_RANDOM, SM_RESOURCE_OC_LOGGER, SM_INCLUDE, SM_RESOURCE_CEREAL, SM_RESOURCE_TIMER, SM_SDK_INCLUDE, SM_INCLUDE_DIR, SM_C_COMMON, RE_INCLUDE]
+SM_CINCLUDE = [COMMON_CINCLUDE, SM_RESOURCE_INCLUDE, SM_RESOURCE_STACK, SM_RESOURCE_SOCKET, SM_RESOURCE_RANDOM, SM_RESOURCE_OC_LOGGER, SM_INCLUDE, SM_RESOURCE_CEREAL, SM_RESOURCE_TIMER, SM_LIB_TIMER, SM_SDK_INCLUDE, SM_INCLUDE_DIR, SM_C_COMMON, RE_INCLUDE]
 
 
 ######################################################################
@@ -163,12 +169,19 @@ SM_LIB_LOCATION = [COMMON_LIB_LOCATION, SM_RESOURCE_LIB]
 
 
 COMMON_STATIC_LIBS = [GTEST_LIB]
-COMMON_SHARED_LIBS = Split('libconnectivity_abstraction scene_manager rcs_client rcs_server rcs_common liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat liboc liboc_logger liboc_logger_core pthread libglib-2.0 gcov uuid')
+COMMON_SHARED_LIBS = Split('libboost_system libboost_filesystem libboost_thread libdl libexpat libresource_directory liboc liboctbstack liboc_logger liboc_logger_core libconnectivity_abstraction libcoap pthread libglib-2.0 gcov uuid')
 
 
 SM_STATIC_RESOURCE_LIBS = []
 
-SM_LIBS = [COMMON_SHARED_LIBS]
+SM_LIBS = [COMMON_SHARED_LIBS, 'scene_manager', 'rcs_client', 'rcs_server',
+    'rcs_common',
+    'oc',
+    'octbstack',
+    'oc_logger',
+    'connectivity_abstraction',
+    'coap',
+    'pthread']
 
 ######################################################################
 
@@ -189,11 +202,7 @@ CALL_GRAPH_BIN = 'call_graph_sm.o'
 
 SM_HELPER_CPP = Glob(TC_DIR + '/helper/*.cpp')
 
-COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
-
-SAMPLE_RESOURCE_CPP = COMMON_UTIL_DIR + '/SampleResource.cpp'
-RESOURCE_HELPER_CPP = COMMON_UTIL_DIR + '/ResourceHelper.cpp'
-RESOURCE_SERVER_CPP = COMMON_UTIL_DIR + '/ResourceServer.cpp'
+COMMON_UTIL_CPP = [COMMON_UTIL_DIR + '/CommonUtil.cpp']
 
 TEST_MAIN = [PROJECT_HOME +  TARGET + 'common/testcase/gtest' + '/IotivitySECTestMain.cpp'] 
 
@@ -231,13 +240,11 @@ common_util = env_linux.Object(source = COMMON_UTIL_CPP, target = COMMON_UTIL_BI
 call_graph = env_linux.Object(source = CALL_GRAPH_CPP, target = CALL_GRAPH_BIN, CPPPATH = COMMON_CINCLUDE, CPPFLAGS = COMMON_FLAGS )
 
 
-SM_itc = env_linux.Program(source = [test_main, common_util, call_graph, SM_ITC_SRC], target = SM_ITC_BIN, CPPPATH = SM_CINCLUDE, LIBS = SM_LIBS, LIBPATH = SM_LIB_LOCATION, CPPFLAGS = SM_CFLAGS)
+SM_itc = env_linux.Program(source = [test_main, common_util, call_graph, SM_ITC_SRC], target = SM_ITC_BIN, CPPPATH = SM_CINCLUDE, LIBS = SM_LIBS, LIBPATH = SM_LIB_LOCATION, CPPFLAGS = SM_CFLAGS, RPATH = SM_RESOURCE_LIB)
 
+SM_scene_server = env_linux.Program(source = SM_SCENE_SERVER_SRC, target = SM_SCENE_SERVER_BIN, CPPPATH = SM_CINCLUDE, LIBS = SM_LIBS, LIBPATH = SM_LIB_LOCATION, CPPFLAGS = SM_CFLAGS, RPATH = SM_RESOURCE_LIB)
 
-
-SM_scene_server = env_linux.Program(source = SM_SCENE_SERVER_SRC, target = SM_SCENE_SERVER_BIN, CPPPATH = SM_CINCLUDE, LIBS = SM_LIBS, LIBPATH = SM_LIB_LOCATION, CPPFLAGS = SM_CFLAGS)
-
-SM_TESTAPP = env_linux.Program(source = [SM_TESTAPP_SRC, SAMPLE_RESOURCE_CPP, RESOURCE_HELPER_CPP, RESOURCE_SERVER_CPP], target = SM_TESTAPP_BIN, CPPPATH = [SM_CINCLUDE , SM_TESTAPP_INC], LIBS = SM_LIBS, LIBPATH = SM_LIB_LOCATION, CPPFLAGS = SM_CFLAGS)
+SM_TESTAPP = env_linux.Program(source = [SM_TESTAPP_SRC, COMMON_UTIL_DIR + '/SampleResource.cpp', COMMON_UTIL_DIR + '/ResourceHelper.cpp', COMMON_UTIL_DIR + '/ResourceServer.cpp'], target = SM_TESTAPP_BIN, CPPPATH = [SM_CINCLUDE , SM_TESTAPP_INC], LIBS = SM_LIBS, LIBPATH = SM_LIB_LOCATION, CPPFLAGS = SM_CFLAGS, RPATH = SM_RESOURCE_LIB)
 
 pre_job = [create_target_dir]
 
@@ -256,6 +263,7 @@ print "target_service = " + target_service
 print "target_test = " + target_test
 print "target_transport = " + target_transport
 
+#SConscript(GTEST + '/SConscript')
 
 print "---------------service--------------" + target_service + target_test
 
@@ -267,7 +275,7 @@ if 'sm' in target_service or 'all' in target_service:
         copy_sm_fan_server = env_linux.Command('copy_fan_server', [], Copy(TARGET, sm_out_path + '/fanserver'))
         copy_sm_light_server = env_linux.Command('copy_light_server', [], Copy(TARGET, sm_out_path + '/lightserver'))
         default_targets += copy_sm_fan_server + copy_sm_light_server
-        install_targets += SM_scene_server + SM_itc + test_main + common_util + call_graph
+        install_targets += SM_scene_server + SM_itc 
 
     if 'app' in target_test or 'all' in target_test:
         print '---------------SM TEST APP Build Selected---------------'

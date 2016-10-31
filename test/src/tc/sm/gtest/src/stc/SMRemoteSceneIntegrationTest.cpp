@@ -62,6 +62,8 @@ public:
         m_pSMRemoteHelper->discoverResource();
         m_pSMRemoteHelper->stopDiscovery();
 
+        ASSERT_NE(NULL_PTR,m_pSMRemoteHelper->g_pFoundSceneList) << "Local scene List resource was not found in discovery";
+
         m_pRemoteSceneList = m_pSMRemoteHelper->createRemoteSceneListInstance();
         ASSERT_NE(m_pRemoteSceneList,NULL_PTR)<< "did not find remote scene list instance";
 
@@ -79,7 +81,7 @@ public:
         CommonUtil::waitInSecond(CALLBACK_WAIT_MAX);
         ASSERT_NE(m_pRemoteScene,NULL_PTR)<< "remote scene is not created";
 
-        ASSERT_EQ(m_pSMRemoteHelper->g_vecFoundResourceList.size(),INT_TWO)<< "light and fan resources were not found";
+        ASSERT_GE(m_pSMRemoteHelper->g_vecFoundResourceList.size(),INT_TWO)<< "Light and Fan Resources are Not Found";
         m_pRemoteResource1 = m_pSMRemoteHelper->g_vecFoundResourceList.at(
         INT_ZERO);
         m_pRemoteResource2 = m_pSMRemoteHelper->g_vecFoundResourceList.at(
