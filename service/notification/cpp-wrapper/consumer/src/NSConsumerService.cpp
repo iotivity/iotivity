@@ -73,6 +73,7 @@ namespace OIC
             {
                 NS_LOG(DEBUG, "Provider with same Id exists. updating the old Provider data");
                 auto changeCallback = oldProvider->getProviderStateReceivedCb();
+                auto prevState = oldProvider->getProviderState();
                 oldProvider->setProviderState((NSProviderState)state);
                 if (state == NS_ALLOW)
                 {
@@ -81,6 +82,14 @@ namespace OIC
                     {
                         NS_LOG(DEBUG, "initiating the callback for Response : NS_ALLOW");
                         changeCallback((NSProviderState)state);
+                    }
+                    else
+                    {
+                        oldProvider->setProviderSubscribedState(NSProviderSubscribedState::SUBSCRIBED);
+                        auto discoveredCallback = NSConsumerService::getInstance()->getProviderDiscoveredCb();
+                        discoveredCallback(oldProvider);
+                        auto changeCallback = oldProvider->getProviderStateReceivedCb();
+                        changeCallback(prevState);
                     }
                 }
                 else if (state == NS_DENY)
