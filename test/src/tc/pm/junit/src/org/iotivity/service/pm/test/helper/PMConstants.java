@@ -51,8 +51,12 @@ public class PMConstants {
     public static final String OIC_JWSERVER_CBOR_DB_FILE_1 = "oic_svr_db_server_justworks.dat";
     public static final String OIC_JWSERVER_CBOR_DB_FILE_2 = "oic_svr_db_server.dat";
     public static final String OIC_DP_CLIENT_CBOR_DB_FILE = "oic_svr_db_client_directpairing.dat";
+    public static final String OIC_CLOUD_CLIENT = "cloud.dat";
     public static final String OIC_SQL_DB_FILE = "Pdm.db";
 
+    //Cloud Resource
+    public static final String CERT_SERIAL_ONE = "1";
+    
     // ACL Related Resource
     public static final String DEFAULT_ROWNER_ID = "61646d69-6e44-6576-6963-655555494430";
     public static final String DEFAULT_RESOURCES = "*";
@@ -96,4 +100,15 @@ public class PMConstants {
     // Others
     public static final int DEVICE_INDEX_ZERO = 0;
     public static final int DEVICE_INDEX_ONE = 1;
+    
+    public static final String DEFAULT_DEVICE_ID = "9cfbeb8e-5a1e-4d1c-9d01-2ae6fdb";
+    public static final String COAP_TCP = "coap+tcp://";
+    public static final String DEFAULT_COAP_DERVER_IP = "107.109.211.225";
+    public static final String DEFAULT_COAP_DERVER_PORT = "5683";
+    public static final String DEFAULT_AUTH_PROVIDER = "github";
+    public static final String DEFAULT_AUTH_CODE = "0ae302ac2da009b10c00";
+
+    public static final String MESSAGE = "message";
+    public static final String OIC_CLOUD_SQL_DB_FILE = "Cloud.db";
+    public static final String DEFAULT_CRL = "CRL";
 }
