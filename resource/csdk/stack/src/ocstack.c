@@ -2857,6 +2857,12 @@ OCStackResult OCDoResource(OCDoHandle *handle,
     if (method == OC_REST_PRESENCE)
     {
         OIC_LOG(ERROR, TAG, "AddClientCB for presence done.");
+
+        if (handle)
+        {
+            *handle = resHandle;
+        }
+
         goto exit;
     }
 #endif
