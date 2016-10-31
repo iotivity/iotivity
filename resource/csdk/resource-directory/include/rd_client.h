@@ -28,6 +28,8 @@
 extern "C" {
 #endif // __cplusplus
 
+#ifdef RD_CLIENT
+
 #define OIC_RD_PUBLISH_TTL 86400
 
 #define OIC_RD_DEFAULT_RESOURCE 2
@@ -123,6 +125,8 @@ OCStackResult OCRDDeleteWithDeviceId(const char *host, const unsigned char *id,
                                      OCConnectivityType connectivityType,
                                      OCResourceHandle *resourceHandles, uint8_t nHandles,
                                      OCCallbackData *cbData, OCQualityOfService qos);
+
+#endif
 
 #ifdef __cplusplus
 }

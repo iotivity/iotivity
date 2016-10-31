@@ -179,10 +179,6 @@ if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
 		liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
 	if 'SERVER' in rd_mode:
 		liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
-	if target_os in ['linux', 'android']:
-		liboctbstack_env.Prepend(LIBS = ['resource_directory'])
-		liboctbstack_env.PrependUnique(CPPPATH = [env.get('BUILD_DIR') + 'resource/csdk/resource-directory/include'])
-		liboctbstack_env.PrependUnique(LIBPATH = [env.get('BUILD_DIR') + 'resource/csdk/resource-directory/include'])
 
 if with_tcp == True:
 	liboctbstack_src.append(OCTBSTACK_SRC + 'oickeepalive.c')

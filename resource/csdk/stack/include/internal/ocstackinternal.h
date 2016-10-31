@@ -291,6 +291,20 @@ void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out);
 
 void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out);
 
+#if defined(RD_CLIENT) || defined(RD_SERVER)
+/**
+ * This function binds an resource unique ins value to the resource. This can be only called
+ * when stack is received response from resource-directory.
+ *
+ * @param requestUri URI of the resource.
+ * @param response Response from queries to remote servers.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
+                                              const OCClientResponse *response);
+#endif
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

@@ -28,6 +28,8 @@ lib_env = thread_env.Clone()
 SConscript('#resource/third_party_libs.scons', 'lib_env')
 examples_env = lib_env.Clone()
 target_os = examples_env.get('TARGET_OS')
+rd_mode = examples_env.get('RD_MODE')
+
 ######################################################################
 # Build flags
 ######################################################################
@@ -78,6 +80,9 @@ if target_os in ['msys_nt', 'windows']:
 
 if examples_env.get('LOGGING'):
 	examples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
+	examples_env.AppendUnique(LIBS = ['resource_directory'])
 
 def make_single_file_cpp_program(program_name):
 	return examples_env.Program(program_name, program_name + ".cpp")

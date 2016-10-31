@@ -55,6 +55,7 @@ OCGetResourceInterfaceName
 OCGetResourceProperties
 OCGetResourceTypeName
 OCGetResourceUri
+OCGetResourceIns
 OCGetServerInstanceIDString
 OCInit
 OCInit1
@@ -83,6 +84,7 @@ OCRepPayloadSetPropBool
 OCRepPayloadSetPropDouble
 OCRepPayloadSetPropByteString
 OCRepPayloadSetPropInt
+OCRepPayloadSetPropObjectArray
 OCRepPayloadSetPropObjectArrayAsOwner
 OCRepPayloadSetPropObjectAsOwner
 OCRepPayloadSetPropString
@@ -96,6 +98,7 @@ OCSetPlatformInfo
 OCStartPresence
 OCStop
 OCStopPresence
+OCStopMulticastServer
 OCUnBindResource
 OCSetHeaderOption
 OCGetHeaderOption

@@ -1438,6 +1438,14 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             }
             else
             {
+#ifdef RD_CLIENT
+                // if request uri is '/oic/rd', update ins value of resource.
+                char *targetUri = strstr(cbNode->requestUri, OC_RSRVD_RD_URI);
+                if (targetUri)
+                {
+                    OCUpdateResourceInsWithResponse(cbNode->requestUri, &response);
+                }
+#endif
                 OCStackApplicationResult appFeedback = cbNode->callBack(cbNode->context,
                                                                         cbNode->handle,
                                                                         &response);
@@ -4843,6 +4851,117 @@ OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, uint8_t ins)
     return OC_STACK_OK;
 }
 
+
+OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
+                                              const OCClientResponse *response)
+{
+    // Validate input parameters
+    VERIFY_NON_NULL(requestUri, ERROR, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(response, ERROR, OC_STACK_INVALID_PARAM);
+
+    char *targetUri = (char *) OICMalloc(strlen(requestUri) + 1);
+    if (!targetUri)
+    {
+        return OC_STACK_NO_MEMORY;
+    }
+    strncpy(targetUri, requestUri, strlen(requestUri) + 1);
+
+    if (response->result == OC_STACK_RESOURCE_CHANGED) // publish message
+    {
+        OIC_LOG(DEBUG, TAG, "update the ins of published resource");
+
+        char rdPubUri[MAX_URI_LENGTH] = { 0 };
+        snprintf(rdPubUri, MAX_URI_LENGTH, "%s?rt=%s", OC_RSRVD_RD_URI,
+                 OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
+
+        if (strcmp(rdPubUri, targetUri) == 0)
+        {
+            // Update resource unique id in stack.
+            if (response)
+            {
+                if (response->payload)
+                {
+                    OCRepPayload *rdPayload = (OCRepPayload *) response->payload;
+                    OCRepPayload **links = NULL;
+                    size_t dimensions[MAX_REP_ARRAY_DEPTH];
+                    if (OCRepPayloadGetPropObjectArray(rdPayload, OC_RSRVD_LINKS,
+                                                       &links, dimensions))
+                    {
+                        size_t i = 0;
+                        for (; i < dimensions[0]; i++)
+                        {
+                            char *uri = NULL;
+                            if (OCRepPayloadGetPropString(links[i], OC_RSRVD_HREF, &uri))
+                            {
+                                OCResourceHandle handle = OCGetResourceHandleAtUri(uri);
+                                int64_t ins = 0;
+                                if (OCRepPayloadGetPropInt(links[i], OC_RSRVD_INS, &ins))
+                                {
+                                    OCBindResourceInsToResource(handle, ins);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else if (response->result == OC_STACK_RESOURCE_DELETED) // delete message
+    {
+        OIC_LOG(DEBUG, TAG, "update the ins of deleted resource with 0");
+
+        uint8_t numResources = 0;
+        OCGetNumberOfResources(&numResources);
+
+        char *ins = strstr(targetUri, OC_RSRVD_INS);
+        if (!ins)
+        {
+            for (uint8_t i = 0; i < numResources; i++)
+            {
+                OCResourceHandle resHandle = OCGetResourceHandle(i);
+                if (resHandle)
+                {
+                    OCBindResourceInsToResource(resHandle, 0);
+                }
+            }
+        }
+        else
+        {
+            const char *token = "&";
+            char *iterTokenPtr = NULL;
+            char *start = strtok_r(targetUri, token, &iterTokenPtr);
+
+             while (start != NULL)
+             {
+                 char *query = start;
+                 query = strstr(query, OC_RSRVD_INS);
+                 if (query)
+                 {
+                     uint8_t queryIns = atoi(query + 4);
+                     for (uint8_t i = 0; i < numResources; i++)
+                     {
+                         OCResourceHandle resHandle = OCGetResourceHandle(i);
+                         if (resHandle)
+                         {
+                             uint8_t resIns = 0;
+                             OCGetResourceIns(resHandle, &resIns);
+                             if (queryIns && queryIns == resIns)
+                             {
+                                 OCBindResourceInsToResource(resHandle, 0);
+                                 break;
+                             }
+                         }
+                     }
+                 }
+                 start = strtok_r(NULL, token, &iterTokenPtr);
+             }
+        }
+    }
+
+    OICFree(targetUri);
+    return OC_STACK_OK;
+}
+
 OCResourceHandle OCGetResourceHandleAtUri(const char *uri)
 {
     if (!uri)
@@ -4880,9 +4999,10 @@ OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins)
     }
     return OC_STACK_ERROR;
 }
+#endif
 
 OCStackResult OCSetHeaderOption(OCHeaderOption* ocHdrOpt, size_t* numOptions, uint16_t optionID,
-        void* optionData, size_t optionDataLength)
+                                void* optionData, size_t optionDataLength)
 {
     if (!ocHdrOpt)
     {
@@ -4919,8 +5039,9 @@ OCStackResult OCSetHeaderOption(OCHeaderOption* ocHdrOpt, size_t* numOptions, ui
 
     return OC_STACK_OK;
 }
+
 OCStackResult OCGetHeaderOption(OCHeaderOption* ocHdrOpt, size_t numOptions, uint16_t optionID,
-        void* optionData, size_t optionDataLength, uint16_t* receivedDataLength)
+                                void* optionData, size_t optionDataLength, uint16_t* receivedDataLength)
 {
     if (!ocHdrOpt || !numOptions)
     {
@@ -4959,7 +5080,6 @@ OCStackResult OCGetHeaderOption(OCHeaderOption* ocHdrOpt, size_t numOptions, uin
     }
     return OC_STACK_OK;
 }
-#endif
 
 void OCDefaultAdapterStateChangedHandler(CATransportAdapter_t adapter, bool enabled)
 {

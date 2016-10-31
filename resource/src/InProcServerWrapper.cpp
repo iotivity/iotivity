@@ -641,30 +641,9 @@ namespace OC
 
         try
         {
-            // Update resource unique id in stack.
-            if (clientResponse)
-            {
-                if (clientResponse->payload)
-                {
-                    OCRepPayload *rdPayload = (OCRepPayload *) clientResponse->payload;
-                    OCRepPayload **links = NULL;
-
-                    size_t dimensions[MAX_REP_ARRAY_DEPTH];
-                    OCRepPayloadGetPropObjectArray(rdPayload, OC_RSRVD_LINKS, &links, dimensions);
-                    for(size_t i = 0; i < dimensions[0]; i++)
-                    {
-                        char *uri = NULL;
-                        OCRepPayloadGetPropString(links[i], OC_RSRVD_HREF, &uri);
-                        OCResourceHandle handle = OCGetResourceHandleAtUri(uri);
-                        int64_t ins = 0;
-                        OCRepPayloadGetPropInt(links[i], OC_RSRVD_INS, &ins);
-                        OCBindResourceInsToResource(handle, ins);
-                    }
-                }
-                OCRepresentation rep = parseRDResponseCallback(clientResponse);
-                std::thread exec(context->callback, rep, clientResponse->result);
-                exec.detach();
-            }
+            OCRepresentation rep = parseRDResponseCallback(clientResponse);
+            std::thread exec(context->callback, rep, clientResponse->result);
+            exec.detach();
         }
         catch (OC::OCException& e)
         {
@@ -672,7 +651,7 @@ namespace OC
                 <<e.what() <<std::flush;
         }
 
-        return OC_STACK_KEEP_TRANSACTION;
+        return OC_STACK_DELETE_TRANSACTION;
     }
 
     OCStackResult InProcServerWrapper::publishResourceToRD(const std::string& host,
