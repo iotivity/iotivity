@@ -108,7 +108,13 @@ if target_os not in ['windows', 'msys_nt']:
 		'groupserver',
 		'groupclient',
 		'lightserver',
-		'threadingsample'
+		'threadingsample',
+		]
+
+if 'CLIENT' in examples_env.get('RD_MODE'):
+	examples_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+	example_names += [
+		'rdclient'
 		]
 
 examples = map(make_single_file_cpp_program, example_names)
