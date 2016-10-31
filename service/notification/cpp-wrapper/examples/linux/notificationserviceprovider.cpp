@@ -18,20 +18,27 @@
  *
  ******************************************************************/
 
+// std
 #include <iostream>
 #include <stdlib.h>
 #include <cstdint>
 #include <limits>
+
+// ns
 #include "NSCommon.h"
 #include "NSProviderService.h"
 #include "NSUtils.h"
 #include "NSTopicsList.h"
+
+// base
 #include "logger.h"
 #include "octypes.h"
-#include "pthread.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
 #include "ocstack.h"
+
+// external
+#include "pthread.h"
 
 #define TAG "NotiProviderWrapperExample"
 using namespace std;
