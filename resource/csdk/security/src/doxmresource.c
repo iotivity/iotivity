@@ -930,15 +930,30 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
         const CASecureEndpoint_t* authenticatedSubOwnerInfo = CAGetSecureEndpointData(object);
         if(authenticatedSubOwnerInfo)
         {
-            OicSecSubOwner_t* subOwnerInst = (OicSecSubOwner_t*)OICMalloc(sizeof(OicSecSubOwner_t));
-            if(subOwnerInst)
+            OicSecSubOwner_t* subOwnerInst = NULL;
+            LL_FOREACH(gDoxm->subOwners, subOwnerInst)
             {
-                OIC_LOG(DEBUG, TAG, "Adding New SubOwner");
-                memcpy(subOwnerInst->uuid.id, authenticatedSubOwnerInfo->identity.id, authenticatedSubOwnerInfo->identity.id_length);
-                LL_APPEND(gDoxm->subOwners, subOwnerInst);
-                if(!UpdatePersistentStorage(gDoxm))
+                if(0 == memcmp(subOwnerInst->uuid.id,
+                               authenticatedSubOwnerInfo->identity.id,
+                               authenticatedSubOwnerInfo->identity.id_length))
                 {
-                    OIC_LOG(ERROR, TAG, "Failed to register SubOwner UUID into Doxm");
+                    break;
+                }
+            }
+
+            if(NULL == subOwnerInst)
+            {
+                subOwnerInst = (OicSecSubOwner_t*)OICCalloc(1, sizeof(OicSecSubOwner_t));
+                if(subOwnerInst)
+                {
+                    OIC_LOG(DEBUG, TAG, "Adding New SubOwner");
+                    memcpy(subOwnerInst->uuid.id, authenticatedSubOwnerInfo->identity.id,
+                           authenticatedSubOwnerInfo->identity.id_length);
+                    LL_APPEND(gDoxm->subOwners, subOwnerInst);
+                    if(!UpdatePersistentStorage(gDoxm))
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to register SubOwner UUID into Doxm");
+                    }
                 }
             }
         }

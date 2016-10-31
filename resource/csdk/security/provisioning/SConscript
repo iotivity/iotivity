@@ -98,6 +98,7 @@ if provisioning_env.get('MULTIPLE_OWNER') == '1':
 provisioning_src = [
 	'src/pmutility.c',
 	'src/credentialgenerator.c',
+	'src/otmcontextlist.c',
 	'src/ownershiptransfermanager.c',
 	'src/secureresourceprovider.c',
 	'src/ocprovisioningmanager.c',

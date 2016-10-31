@@ -55,7 +55,6 @@ OCStackResult OTMDoOwnershipTransfer(void* ctx,
  */
 typedef OCStackResult (*OTMLoadSecret)(OTMContext_t* otmCtx);
 
-
 /*
  * Callback for create secure channel using secret inputed from OTMLoadSecret callback
  */
@@ -89,6 +88,7 @@ struct OTMContext{
     OCProvisionResult_t* ctxResultArray;      /**< Result array having result of all device. */
     size_t ctxResultArraySize;                /**< No of elements in result array. */
     bool ctxHasError;                         /**< Does OT process have any error. */
+    OCDoHandle ocDoHandle;                    /** <A handle for latest request message*/
     OTMCallbackData_t otmCallback; /**< OTM callbacks to perform the OT/MOT. **/
     int attemptCnt;
 };

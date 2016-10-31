@@ -28,6 +28,12 @@
 extern "C" {
 #endif
 
+typedef enum PdmDeviceState {
+    PDM_DEVICE_ACTIVE = 0,
+    PDM_DEVICE_STALE = 1,
+    PDM_DEVICE_INIT = 2,
+    PDM_DEVICE_UNKNOWN = 99
+}PdmDeviceState_t;
 
 /**
  * This method is used by provisioning manager to open provisioning database.
@@ -39,14 +45,24 @@ extern "C" {
 OCStackResult PDMInit(const char* dbPath);
 
 /**
- * This method is used by provisioning manager to check whether device is stale or not with PDM.
+ * This method is used by provisioning manager to check device status.
  *
  * @param[in] uuid information about the target device's uuid.
- * @param[out] result true in case device is stale.
+ * @param[out] result device status.
  *
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult PDMIsDeviceStale(const OicUuid_t *uuid, bool *result);
+OCStackResult PDMGetDeviceState(const OicUuid_t* uuid, PdmDeviceState_t* result);
+
+/**
+ * This method is used by provisioning manager to update device status.
+ *
+ * @param[in] uuid id of device.
+ * @param[in] state device state. (ref. PdmDeviceState_t)
+ *
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult PDMSetDeviceState(const OicUuid_t* uuid, PdmDeviceState_t state);
 
 /**
  * This method is used by provisioning manager to check duplication of device's Device ID with
@@ -128,15 +144,6 @@ OCStackResult PDMGetLinkedDevices(const OicUuid_t* uuidOfDevice, OCUuidList_t** 
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult PDMSetLinkStale(const OicUuid_t* uuidOfDevice1, const OicUuid_t* uuidOfDevice2);
-
-/**
- * This method is used by provisioning manager to update device status as stale.
- *
- * @param[in] uuidOfDevice id of stale device.
- *
- * @return OC_STACK_OK in case of success and other value otherwise.
- */
-OCStackResult PDMSetDeviceStale(const OicUuid_t* uuidOfDevice);
 
 /**
  * This method is used by provisioning manager to get stale devices.
