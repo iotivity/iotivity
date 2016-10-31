@@ -151,7 +151,15 @@ void selectResourceType()
 
 int main(void)
 {
-    selectResourceType();
+    try
+    {
+        selectResourceType();
+    }
+    catch(...)
+    {
+        std::cout << "Can't select Resource Type" << std::endl;
+        return -1;
+    }
 
     std::cout << "Resource successfully created!" << std::endl;
 
