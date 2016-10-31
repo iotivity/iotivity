@@ -104,7 +104,8 @@ static int32_t g_scanIntervalTime = WAIT_TIME_SCAN_INTERVAL_DEFAULT;
 static int32_t g_scanIntervalTimePrev = WAIT_TIME_SCAN_INTERVAL_DEFAULT;
 static int32_t g_intervalCount = 0;
 static bool g_isWorkingScanThread = false;
-static CALEScanState_t g_scanningStep = BLE_SCAN_DISABLE;
+static CALEScanState_t g_curScanningStep = BLE_SCAN_DISABLE;
+static CALEScanState_t g_nextScanningStep = BLE_SCAN_ENABLE;
 
 static CABLEDataReceivedCallback g_CABLEClientDataReceivedCallback = NULL;
 
@@ -135,10 +136,11 @@ static bool CALECheckConnectionStateValue(jint state)
     }
 }
 
-void CALEClientSetScanInterval(int32_t intervalTime, int32_t workingCount)
+void CALEClientSetScanInterval(int32_t intervalTime, int32_t workingCount,
+                               CALEScanState_t nextScanningStep)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALEClientSetScanInterval : %d -> %d",
-              g_scanIntervalTime, intervalTime);
+    OIC_LOG_V(DEBUG, TAG, "CALEClientSetScanInterval : %d -> %d, next scan state will be %d",
+              g_scanIntervalTime, intervalTime, nextScanningStep);
 
     // previous time should be stored.
     if (0 < workingCount)
@@ -147,12 +149,21 @@ void CALEClientSetScanInterval(int32_t intervalTime, int32_t workingCount)
     }
     g_scanIntervalTime = intervalTime;
     g_intervalCount = workingCount;
+    g_nextScanningStep = nextScanningStep;
 }
 
-void CALERestartScanWithInterval(int32_t intervalTime, int32_t workingCount)
+void CALERestartScanWithInterval(int32_t intervalTime, int32_t workingCount,
+                                 CALEScanState_t nextScanningStep)
 {
-    // restart scan with interval
-    CALEClientSetScanInterval(intervalTime, workingCount);
+    if (intervalTime == g_scanIntervalTime
+            && workingCount == g_intervalCount
+            && nextScanningStep == g_nextScanningStep)
+    {
+        OIC_LOG(DEBUG, TAG, "setting duplicate interval time");
+        return;
+    }
+
+    CALEClientSetScanInterval(intervalTime, workingCount, nextScanningStep);
     ca_cond_signal(g_threadScanIntervalCond);
 }
 
@@ -180,7 +191,7 @@ static void CALEScanThread(void* object)
     while(g_isWorkingScanThread)
     {
         OIC_LOG(DEBUG, TAG, "scan waiting time out");
-        if (BLE_SCAN_ENABLE == g_scanningStep)
+        if (BLE_SCAN_ENABLE == g_curScanningStep)
         {
             //stop scan
             CAResult_t ret = CALEClientStopScan();
@@ -206,27 +217,34 @@ static void CALEScanThread(void* object)
         {
             // called signal scan thread will be terminated
             OIC_LOG(DEBUG, TAG, "signal scanInterval waiting");
-            g_scanningStep = BLE_SCAN_DISABLE;
+            if (BLE_SCAN_DISABLE == g_nextScanningStep)
+            {
+                g_curScanningStep = BLE_SCAN_ENABLE;
+            }
+            else
+            {
+                g_curScanningStep = BLE_SCAN_DISABLE;
+            }
         }
         else
         {
-           if (BLE_SCAN_ENABLE == g_scanningStep)
+           if (BLE_SCAN_ENABLE == g_curScanningStep)
            {
                if (g_intervalCount > 0)
                {
                    if (g_intervalCount == 1)
                    {
                        OIC_LOG(DEBUG, TAG, "reset default time");
-                       CALEClientSetScanInterval(g_scanIntervalTimePrev, 0);
+                       CALEClientSetScanInterval(g_scanIntervalTimePrev, 0, BLE_SCAN_ENABLE);
                    }
                    g_intervalCount--;
                    OIC_LOG_V(DEBUG, TAG, "interval count : %d", g_intervalCount);
                }
-               g_scanningStep = BLE_SCAN_DISABLE;
+               g_curScanningStep = BLE_SCAN_DISABLE;
            }
            else
            {
-               g_scanningStep = BLE_SCAN_ENABLE;
+               g_curScanningStep = BLE_SCAN_ENABLE;
            }
         }
     }
@@ -249,10 +267,11 @@ CAResult_t CALEClientStartScanWithInterval()
     }
 
     // initialize scan flags
-    g_scanningStep = BLE_SCAN_DISABLE;
+    g_curScanningStep = BLE_SCAN_DISABLE;
     g_isWorkingScanThread = true;
     g_intervalCount = 0;
     g_scanIntervalTime = g_scanIntervalTimePrev;
+    g_nextScanningStep = BLE_SCAN_ENABLE;
 
     if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle,
                                                 CALEScanThread, NULL))
@@ -766,7 +785,7 @@ CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address)
             2 * MICROSECS_PER_SEC;  // Microseconds
 
         // set scan interval and start scan
-        CALERestartScanWithInterval(WAIT_TIME_SCANNED_CHECKING, 1);
+        CALERestartScanWithInterval(WAIT_TIME_SCANNED_CHECKING, 1, BLE_SCAN_ENABLE);
 
         bool devicesDiscovered = false;
         for (size_t i = 0; i < RETRIES; ++i)
@@ -819,7 +838,7 @@ CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address)
         }
 
         // reset scan interval time after checking scanned devices
-        CALERestartScanWithInterval(g_scanIntervalTimePrev, 0);
+        CALERestartScanWithInterval(0, 0, BLE_SCAN_DISABLE);
 
         // time out for scanning devices
         if (!devicesDiscovered)
@@ -1729,6 +1748,9 @@ jobject CALEClientConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autocon
     OIC_LOG(DEBUG, TAG, "CALEClientConnect");
     VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
     VERIFY_NON_NULL_RET(bluetoothDevice, TAG, "bluetoothDevice is null", NULL);
+
+    // reset scan interval time after checking scanned devices
+    CALERestartScanWithInterval(0, 0, BLE_SCAN_DISABLE);
 
     // get gatt object from Bluetooth Device object for closeProfileProxy(..)
     jstring jni_address = CALEClientGetLEAddressFromBTDevice(env, bluetoothDevice);
@@ -3753,6 +3775,10 @@ void CALEClientUpdateSendCnt(JNIEnv *env)
         CALEClientSetSendFinishFlag(true);
         OIC_LOG(DEBUG, TAG, "set signal for send data");
     }
+
+    // reset interval scan logic
+    CALERestartScanWithInterval(g_scanIntervalTimePrev, 0, BLE_SCAN_ENABLE);
+
     // mutex unlock
     ca_mutex_unlock(g_threadMutex);
 }
@@ -4350,6 +4376,9 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
             goto error_exit;
         }
     }
+
+    // reset interval scan logic
+    CALERestartScanWithInterval(g_scanIntervalTimePrev, 0, BLE_SCAN_ENABLE);
 
     OIC_LOG(INFO, TAG, "ServicesDiscovery is successful");
     (*env)->ReleaseStringUTFChars(env, jni_address, address);
