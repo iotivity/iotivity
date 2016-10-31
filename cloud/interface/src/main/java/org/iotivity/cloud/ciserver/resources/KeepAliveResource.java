@@ -67,11 +67,12 @@ public class KeepAliveResource extends Resource {
 
         switch (request.getMethod()) {
             case GET:
-                response = handleGetPingConfig(request);
+                response = handlePingConfig(request);
                 break;
 
             case PUT:
-                response = handlePutPingConfig(srcDevice, request);
+            case POST:
+                response = handlePingConfig(srcDevice, request);
                 break;
 
             default:
@@ -96,7 +97,7 @@ public class KeepAliveResource extends Resource {
      * @param request
      *            ChannelHandlerContext of request message
      */
-    private IResponse handleGetPingConfig(IRequest request) {
+    private IResponse handlePingConfig(IRequest request) {
 
         HashMap<String, int[]> payloadData = new HashMap<>();
         payloadData.put(Constants.REQ_PING_ARRAY, mIntervals);
@@ -106,7 +107,7 @@ public class KeepAliveResource extends Resource {
                 mCbor.encodingPayloadToCbor(payloadData));
     }
 
-    private IResponse handlePutPingConfig(Device srcDevice, IRequest request) {
+    private IResponse handlePingConfig(Device srcDevice, IRequest request) {
 
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
