@@ -26,6 +26,7 @@ gtest_env = SConscript('#extlibs/gtest/SConscript')
 sptest_env = gtest_env.Clone()
 src_dir = sptest_env.get('SRC_DIR')
 target_os = sptest_env.get('TARGET_OS')
+rd_mode = sptest_env.get('RD_MODE')
 
 ######################################################################
 # Build flags
@@ -87,6 +88,9 @@ if target_os in ['msys_nt', 'windows']:
                                     'iphlpapi'])
 else:
 	sptest_env.AppendUnique(LIBS = ['octbstack'])
+
+if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
+	sptest_env.PrependUnique(LIBS = ['resource_directory'])
 
 ######################################################################
 # Source files and Targets

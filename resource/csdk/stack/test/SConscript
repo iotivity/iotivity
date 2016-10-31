@@ -25,6 +25,7 @@ import os.path
 gtest_env = SConscript('#extlibs/gtest/SConscript')
 stacktest_env = gtest_env.Clone()
 target_os = stacktest_env.get('TARGET_OS')
+rd_mode = stacktest_env.get('RD_MODE')
 
 ######################################################################
 # Build flags
@@ -62,6 +63,9 @@ if target_os in ['msys_nt', 'windows']:
 	stacktest_env.AppendUnique(LIBS = ['ws2_32', 'iphlpapi', 'kernel32', 'bcrypt', 'advapi32'])
 else:
 	stacktest_env.PrependUnique(LIBS = ['m'])
+
+if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
+	stacktest_env.PrependUnique(LIBS = ['resource_directory'])
 
 ######################################################################
 # Source files and Targets

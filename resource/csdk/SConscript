@@ -147,14 +147,15 @@ if liboctbstack_env.get('ROUTING') in ['GW', 'EP']:
 	liboctbstack_env.Prepend(LIBS = ['routingmanager'])
 
 if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-    if 'CLIENT' in rd_mode:
-        liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
-    if 'SERVER' in rd_mode:
-        liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
-        if target_os in ['tizen']:
-            liboctbstack_env.ParseConfig('pkg-config --cflags --libs sqlite3')
-        else:
-            liboctbstack_env.AppendUnique(CPPPATH = ['#extlibs/sqlite3'])
+	liboctbstack_env.PrependUnique(CPPPATH = ['resource-directory/include'])
+	if 'CLIENT' in rd_mode:
+		liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+	if 'SERVER' in rd_mode:
+		liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
+		if target_os in ['tizen']:
+			liboctbstack_env.ParseConfig('pkg-config --cflags --libs sqlite3')
+		else:
+			liboctbstack_env.AppendUnique(CPPPATH = ['#extlibs/sqlite3'])
 
 ######################################################################
 # Source files and Targets
