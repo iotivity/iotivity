@@ -36,9 +36,6 @@
 
 #define TAG "PDM"
 
-#define PDM_STALE_STATE 1
-#define PDM_ACTIVE_STATE 0
-
 #define PDM_FIRST_INDEX 0
 #define PDM_SECOND_INDEX 1
 
@@ -203,7 +200,7 @@ OCStackResult PDMAddDevice(const OicUuid_t *UUID)
     res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_SECOND, UUID, UUID_LENGTH, SQLITE_STATIC);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
-    res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_THIRD, PDM_ACTIVE_STATE);
+    res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_THIRD, PDM_DEVICE_INIT);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_step(stmt);
@@ -220,42 +217,6 @@ OCStackResult PDMAddDevice(const OicUuid_t *UUID)
         sqlite3_finalize(stmt);
         return OC_STACK_ERROR;
     }
-    sqlite3_finalize(stmt);
-    return OC_STACK_OK;
-}
-
-/**
- * Function to check whether device is stale or not
- */
-OCStackResult PDMIsDeviceStale(const OicUuid_t *uuid, bool *result)
-{
-    if (NULL == uuid || NULL == result)
-    {
-        OIC_LOG(ERROR, TAG, "UUID or result is NULL");
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    sqlite3_stmt *stmt = 0;
-    int res = 0;
-    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_DEVICE_STATUS, strlen(PDM_SQLITE_GET_DEVICE_STATUS) + 1,
-                              &stmt, NULL);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
-
-    res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_FIRST, uuid, UUID_LENGTH, SQLITE_STATIC);
-    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
-
-    bool retValue = false;
-    while(SQLITE_ROW == sqlite3_step(stmt))
-    {
-        int tempStaleStateFromDb = sqlite3_column_int(stmt, PDM_FIRST_INDEX);
-        OIC_LOG_V(DEBUG, TAG, "Stale state is %d", tempStaleStateFromDb);
-        if (PDM_STALE_STATE == tempStaleStateFromDb)
-        {
-            OIC_LOG(INFO, TAG, "Device is stale");
-            retValue = true;
-        }
-    }
-    *result = retValue;
     sqlite3_finalize(stmt);
     return OC_STACK_OK;
 }
@@ -336,7 +297,7 @@ static OCStackResult addlink(int id1, int id2)
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_SECOND, id2);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
-    res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_THIRD, PDM_ACTIVE_STATE);
+    res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_THIRD, PDM_DEVICE_ACTIVE);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     if (sqlite3_step(stmt) != SQLITE_DONE)
@@ -358,26 +319,27 @@ OCStackResult PDMLinkDevices(const OicUuid_t *UUID1, const OicUuid_t *UUID2)
         return  OC_STACK_INVALID_PARAM;
     }
 
-    bool result = false;
-    if (OC_STACK_OK != PDMIsDeviceStale(UUID1, &result))
+    PdmDeviceState_t state = PDM_DEVICE_UNKNOWN;
+    if (OC_STACK_OK != PDMGetDeviceState(UUID1, &state))
     {
         OIC_LOG(ERROR, TAG, "Internal error occured");
         return OC_STACK_ERROR;
     }
-    if (result)
+    if (PDM_DEVICE_ACTIVE != state)
     {
-        OIC_LOG(ERROR, TAG, "UUID1:Stale device");
+        OIC_LOG_V(ERROR, TAG, "UUID1: Device state is not active : %d", state);
         return OC_STACK_INVALID_PARAM;
     }
-    result = false;
-    if (OC_STACK_OK != PDMIsDeviceStale(UUID2, &result))
+
+    state = PDM_DEVICE_UNKNOWN;
+    if (OC_STACK_OK != PDMGetDeviceState(UUID2, &state))
     {
         OIC_LOG(ERROR, TAG, "Internal error occured");
         return OC_STACK_ERROR;
     }
-    if (result)
+    if (PDM_DEVICE_ACTIVE != state)
     {
-        OIC_LOG(ERROR, TAG, "UUID2:Stale device");
+        OIC_LOG_V(ERROR, TAG, "UUID2: Device state is not active : %d", state);
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -546,8 +508,7 @@ OCStackResult PDMSetLinkStale(const OicUuid_t* uuidOfDevice1, const OicUuid_t* u
         return OC_STACK_INVALID_PARAM;
     }
     ASCENDING_ORDER(id1, id2);
-    return updateLinkState(id1, id2, PDM_STALE_STATE);
-
+    return updateLinkState(id1, id2, PDM_DEVICE_STALE);
 }
 
 OCStackResult PDMGetOwnedDevices(OCUuidList_t **uuidList, size_t *numOfDevices)
@@ -602,7 +563,7 @@ static OCStackResult getUUIDforId(int id, OicUuid_t *uid, bool *result)
         memcpy(uid, ptr, sizeof(OicUuid_t));
 
         int temp = sqlite3_column_int(stmt, PDM_SECOND_INDEX);
-        if(PDM_STALE_STATE == temp)
+        if(PDM_DEVICE_STALE == temp)
         {
             if(result)
             {
@@ -635,16 +596,16 @@ OCStackResult PDMGetLinkedDevices(const OicUuid_t *UUID, OCUuidList_t **UUIDLIST
         OIC_LOG(ERROR, TAG, "Not null list will cause memory leak");
         return OC_STACK_INVALID_PARAM;
     }
-    bool result = false;
-    OCStackResult ret = PDMIsDeviceStale(UUID, &result);
+    PdmDeviceState_t state = PDM_DEVICE_UNKNOWN;
+    OCStackResult ret = PDMGetDeviceState(UUID, &state);
     if (OC_STACK_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "Internal error occured");
         return OC_STACK_ERROR;
     }
-    if (result)
+    if (PDM_DEVICE_ACTIVE != state)
     {
-        OIC_LOG(ERROR, TAG, "Device is stale");
+        OIC_LOG_V(ERROR, TAG, "Device state is not active : %d", state);
         return OC_STACK_INVALID_PARAM;
     }
     int id = 0;
@@ -714,7 +675,7 @@ OCStackResult PDMGetToBeUnlinkedDevices(OCPairList_t **staleDevList, size_t *num
                               strlen(PDM_SQLITE_GET_STALE_INFO) + 1, &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
-    res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, PDM_STALE_STATE);
+    res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, PDM_DEVICE_STALE);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     size_t counter  = 0;
@@ -801,27 +762,27 @@ OCStackResult PDMIsLinkExists(const OicUuid_t* uuidOfDevice1, const OicUuid_t* u
         return OC_STACK_INVALID_PARAM;
     }
 
-    bool isStale = false;
-    if (OC_STACK_OK != PDMIsDeviceStale(uuidOfDevice1, &isStale))
+    PdmDeviceState_t state = PDM_DEVICE_UNKNOWN;
+    if (OC_STACK_OK != PDMGetDeviceState(uuidOfDevice1, &state))
     {
         OIC_LOG(ERROR, TAG, "uuidOfDevice1:Internal error occured");
         return OC_STACK_ERROR;
     }
-    if (isStale)
+    if (PDM_DEVICE_ACTIVE != state)
     {
-        OIC_LOG(ERROR, TAG, "uuidOfDevice1:Device is stale");
+        OIC_LOG_V(ERROR, TAG, "uuidOfDevice1:Device state is not active : %d", state);
         return OC_STACK_INVALID_PARAM;
     }
 
-    isStale = false;
-    if (OC_STACK_OK != PDMIsDeviceStale(uuidOfDevice2, &isStale))
+    state = PDM_DEVICE_UNKNOWN;
+    if (OC_STACK_OK != PDMGetDeviceState(uuidOfDevice2, &state))
     {
         OIC_LOG(ERROR, TAG, "uuidOfDevice2:Internal error occured");
         return OC_STACK_ERROR;
     }
-    if (isStale)
+    if (PDM_DEVICE_ACTIVE != state)
     {
-        OIC_LOG(ERROR, TAG, "uuidOfDevice2:Device is stale");
+        OIC_LOG_V(ERROR, TAG, "uuidOfDevice2:Device state is not active : %d", state);
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -850,7 +811,7 @@ OCStackResult PDMIsLinkExists(const OicUuid_t* uuidOfDevice1, const OicUuid_t* u
     return OC_STACK_OK;
 }
 
-static OCStackResult updateDeviceState(const OicUuid_t *uuid, int state)
+static OCStackResult updateDeviceState(const OicUuid_t *uuid, PdmDeviceState_t state)
 {
     sqlite3_stmt *stmt = 0;
     int res = 0 ;
@@ -907,23 +868,30 @@ static OCStackResult updateLinkForStaleDevice(const OicUuid_t *devUuid)
     return OC_STACK_OK;
 }
 
-OCStackResult PDMSetDeviceStale(const OicUuid_t* uuidOfDevice)
+OCStackResult PDMSetDeviceState(const OicUuid_t* uuid, PdmDeviceState_t state)
 {
+    OCStackResult res = OC_STACK_ERROR;
+
     CHECK_PDM_INIT(TAG);
-    if (NULL == uuidOfDevice)
+    if (NULL == uuid)
     {
         OIC_LOG(ERROR, TAG, "Invalid PARAM");
         return  OC_STACK_INVALID_PARAM;
     }
     begin();
-    OCStackResult res = updateLinkForStaleDevice(uuidOfDevice);
-    if (OC_STACK_OK != res)
+
+    if(PDM_DEVICE_STALE == state)
     {
-        rollback();
-        OIC_LOG(ERROR, TAG, "unable to update links");
-        return res;
+        res = updateLinkForStaleDevice(uuid);
+        if (OC_STACK_OK != res)
+        {
+            rollback();
+            OIC_LOG(ERROR, TAG, "unable to update links");
+            return res;
+        }
     }
-    res = updateDeviceState(uuidOfDevice, PDM_STALE_STATE);
+
+    res = updateDeviceState(uuid, state);
     if (OC_STACK_OK != res)
     {
         rollback();
@@ -933,3 +901,32 @@ OCStackResult PDMSetDeviceStale(const OicUuid_t* uuidOfDevice)
     commit();
     return OC_STACK_OK;
 }
+
+OCStackResult PDMGetDeviceState(const OicUuid_t *uuid, PdmDeviceState_t* result)
+{
+    if (NULL == uuid || NULL == result)
+    {
+        OIC_LOG(ERROR, TAG, "UUID or result is NULL");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    sqlite3_stmt *stmt = 0;
+    int res = 0;
+    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_DEVICE_STATUS, strlen(PDM_SQLITE_GET_DEVICE_STATUS) + 1,
+                              &stmt, NULL);
+    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+
+    res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_FIRST, uuid, UUID_LENGTH, SQLITE_STATIC);
+    PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
+
+    *result = PDM_DEVICE_UNKNOWN;
+    while(SQLITE_ROW == sqlite3_step(stmt))
+    {
+        int tempStaleStateFromDb = sqlite3_column_int(stmt, PDM_FIRST_INDEX);
+        OIC_LOG_V(DEBUG, TAG, "Device state is %d", tempStaleStateFromDb);
+        *result = (PdmDeviceState_t)tempStaleStateFromDb;
+    }
+    sqlite3_finalize(stmt);
+    return OC_STACK_OK;
+}
+

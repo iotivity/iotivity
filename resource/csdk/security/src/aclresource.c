@@ -132,6 +132,10 @@ static void FreeACE(OicSecAce_t *ace)
         validity = NULL;
     }
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    OICFree(ace->eownerID);
+#endif
+
     //Clean ACE
     OICFree(ace);
     ace = NULL;
@@ -251,6 +255,18 @@ OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
                 }
             }
         }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+        if (ace->eownerID)
+        {
+            if (NULL == newAce->eownerID)
+            {
+                newAce->eownerID = (OicUuid_t*)OICCalloc(1, sizeof(OicUuid_t));
+                VERIFY_NON_NULL(TAG, (newAce->eownerID), ERROR);
+            }
+            memcpy(newAce->eownerID->id, ace->eownerID->id, sizeof(ace->eownerID->id));
+        }
+#endif
 
         newAce->next = NULL;
     }
@@ -1686,6 +1702,21 @@ static bool IsSameValidities(OicSecValidity_t* validities1, OicSecValidity_t* va
     return false;
 }
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+static bool IsSameEowner(OicUuid_t* eowner1, OicUuid_t* eowner2)
+{
+    if(NULL != eowner1 && NULL != eowner2)
+    {
+        if (memcmp(eowner1->id, eowner2->id, sizeof(eowner1->id)) == 0)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+#endif
+
 static bool IsSameACE(OicSecAce_t* ace1, OicSecAce_t* ace2)
 {
     if(ace1 && ace2)
@@ -1709,6 +1740,13 @@ static bool IsSameACE(OicSecAce_t* ace1, OicSecAce_t* ace2)
         {
             return false;
         }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+        if(false == IsSameEowner(ace1->eownerID, ace2->eownerID))
+        {
+            return false;
+        }
+#endif
 
         return true;
     }

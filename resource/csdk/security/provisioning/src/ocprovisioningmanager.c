@@ -501,7 +501,7 @@ static OCStackResult RemoveDeviceInfoFromLocal(const OCProvisionDev_t* pTargetDe
      * Change the device status as stale status.
      * If all request are successed, this device information will be deleted.
      */
-    res = PDMSetDeviceStale(&pTargetDev->doxm->deviceID);
+    res = PDMSetDeviceState(&pTargetDev->doxm->deviceID, PDM_DEVICE_STALE);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(WARNING, TAG, "OCRemoveDevice : Failed to set device status as stale");
