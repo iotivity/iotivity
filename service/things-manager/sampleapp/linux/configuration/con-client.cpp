@@ -536,11 +536,18 @@ int main()
                     continue;
                 }
 
-                if (g_thingsMnt->reboot(g_maintenanceCollection, &onReboot) != OC_STACK_ERROR)
+                try
                 {
-                    pthread_mutex_lock(&mutex_lock);
-                    isWaiting = 0;
-                    pthread_mutex_unlock(&mutex_lock);
+                    if (g_thingsMnt->reboot(g_maintenanceCollection, &onReboot) != OC_STACK_ERROR)
+                    {
+                        pthread_mutex_lock(&mutex_lock);
+                        isWaiting = 0;
+                        pthread_mutex_unlock(&mutex_lock);
+                    }
+                }
+                catch(...)
+                {
+                    std::cout<<"Reboot fail." << std::endl;
                 }
             }
             else if (g_Steps == 10)

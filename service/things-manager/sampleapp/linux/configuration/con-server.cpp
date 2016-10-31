@@ -290,15 +290,22 @@ int main()
             }
             else if (g_Steps == 1)
             {
-                if( g_thingsConf->doBootstrap(&onBootstrap) == OC_STACK_OK)
+                try
                 {
-                    pthread_mutex_lock(&mutex_lock);
-                    isWaiting = 1;
-                    pthread_mutex_unlock(&mutex_lock);
+                    if( g_thingsConf->doBootstrap(&onBootstrap) == OC_STACK_OK)
+                    {
+                        pthread_mutex_lock(&mutex_lock);
+                        isWaiting = 1;
+                        pthread_mutex_unlock(&mutex_lock);
+                    }
+                    else
+                    {
+                        std::cout << "A callback pointer of the function is NULL." << std::endl;
+                    }
                 }
-                else
+                catch(...)
                 {
-                    std::cout << "A callback pointer of the function is NULL." << std::endl;
+                     std::cout << "doBootstrap fail." << std::endl;
                 }
             }
             else if (g_Steps == 2)
