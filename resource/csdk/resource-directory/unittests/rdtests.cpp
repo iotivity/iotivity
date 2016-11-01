@@ -20,8 +20,8 @@
 
 extern "C"
 {
-    #include "rd_server.h"
     #include "rd_client.h"
+    #include "rd_server.h"
     #include "ocstack.h"
     #include "logger.h"
     #include "oic_malloc.h"
@@ -62,7 +62,7 @@ std::chrono::seconds const SHORT_TEST_TIMEOUT = std::chrono::seconds(5);
 //-----------------------------------------------------------------------------
 // Callback functions
 //-----------------------------------------------------------------------------
-#ifdef RD_SERVER
+#if (defined(RD_SERVER) && defined(RD_CLIENT))
 static OCStackApplicationResult handleDiscoveryCB(__attribute__((unused))void *ctx,
                                                   __attribute__((unused)) OCDoHandle handle,
                                                   __attribute__((unused))
@@ -124,7 +124,7 @@ class RDTests : public testing::Test {
     }
 };
 
-#ifdef RD_SERVER
+#if (defined(RD_SERVER) && defined(RD_CLIENT))
 TEST_F(RDTests, CreateRDResource)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
@@ -134,7 +134,6 @@ TEST_F(RDTests, CreateRDResource)
     cbData.cb = &handleDiscoveryCB;;
     cbData.cd = NULL;
     cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
-
     EXPECT_EQ(OC_STACK_OK, OCRDDiscover(CT_ADAPTER_IP, &cbData, OC_LOW_QOS));
 
     EXPECT_EQ(OC_STACK_OK, OCRDStop());

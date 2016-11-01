@@ -57,10 +57,6 @@
 #include "routingmanager.h"
 #endif
 
-#ifdef RD_SERVER
-#include "rd_database.h"
-#endif
-
 /// Module Name
 #define TAG "OIC_RI_RESOURCE"
 
