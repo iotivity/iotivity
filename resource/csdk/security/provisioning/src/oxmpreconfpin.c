@@ -39,7 +39,7 @@
 
 #define TAG "OXM_PreconfigPIN"
 
-OCStackResult CreatePreconfPinBasedSelectOxmPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
+OCStackResult CreatePreconfigPinBasedSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **payload, size_t *size)
 {
     if(!otmCtx || !otmCtx->selectedDeviceInfo || !payload || *payload || !size)
     {
@@ -51,7 +51,7 @@ OCStackResult CreatePreconfPinBasedSelectOxmPayload(OTMContext_t* otmCtx, uint8_
     return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
 }
 
-OCStackResult CreatePreconfPinBasedOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
+OCStackResult CreatePreconfigPinBasedOwnerTransferPayload(OTMContext_t *otmCtx, uint8_t **payload, size_t *size)
 {
     if(!otmCtx || !otmCtx->selectedDeviceInfo || !payload || *payload || !size)
     {
@@ -72,9 +72,9 @@ OCStackResult CreatePreconfPinBasedOwnerTransferPayload(OTMContext_t* otmCtx, ui
     return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
 }
 
-OCStackResult LoadPreconfPinCodeCallback(OTMContext_t *otmCtx)
+OCStackResult LoadPreconfigPinCodeCallback(OTMContext_t *otmCtx)
 {
-    OIC_LOG(INFO, TAG, "IN LoadPreconfPinCodeCallback");
+    OIC_LOG(INFO, TAG, "IN LoadPreconfigPinCodeCallback");
     OCStackResult res = OC_STACK_ERROR;
     OicSecCred_t* cred = GetCredResourceData(&otmCtx->selectedDeviceInfo->doxm->deviceID);
     if(NULL == cred)
@@ -163,14 +163,14 @@ OCStackResult LoadPreconfPinCodeCallback(OTMContext_t *otmCtx)
     //Set the device id to derive temporal PSK
     SetUuidForPinBasedOxm(&(otmCtx->selectedDeviceInfo->doxm->deviceID));
 
-    OIC_LOG(INFO, TAG, "OUT LoadPreconfPinCodeCallback");
+    OIC_LOG(INFO, TAG, "OUT LoadPreconfigPinCodeCallback");
 
     return res;
 }
 
-OCStackResult CreateSecureSessionPreconfPinCallback(OTMContext_t* otmCtx)
+OCStackResult CreateSecureSessionPreconfigPinCallback(OTMContext_t* otmCtx)
 {
-    OIC_LOG(INFO, TAG, "IN CreateSecureSessionPreconfPinCallback");
+    OIC_LOG(INFO, TAG, "IN CreateSecureSessionPreconfigPinCallback");
 
     if (!otmCtx || !otmCtx->selectedDeviceInfo)
     {
@@ -209,7 +209,7 @@ OCStackResult CreateSecureSessionPreconfPinCallback(OTMContext_t* otmCtx)
         return OC_STACK_ERROR;
     }
 
-    OIC_LOG(INFO, TAG, "OUT CreateSecureSessionPreconfPinCallback");
+    OIC_LOG(INFO, TAG, "OUT CreateSecureSessionPreconfigPinCallback");
 
     return OC_STACK_OK;
 }

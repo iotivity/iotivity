@@ -2427,7 +2427,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                                 }
 
                                 //Set the PIN/PW to derive PSK
-                                if(OC_STACK_OK != SetPreconfigPin(pinBuffer, pinLength))
+                                if (OC_STACK_OK != SetPreconfigPin(pinBuffer, pinLength))
                                 {
                                     OICFree(pinBuffer);
                                     OIC_LOG(ERROR, TAG, "Failed to load PIN data.");
