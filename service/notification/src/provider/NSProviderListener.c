@@ -325,6 +325,170 @@ OCEntityHandlerResult NSEntityHandlerTopicCb(OCEntityHandlerFlag flag,
     return ehResult;
 }
 
+#ifdef WITH_MQ
+OCStackApplicationResult NSProviderMQListener(void * ctx, OCDoHandle handle,
+        OCClientResponse * clientResponse)
+{
+    (void) ctx;
+    (void) handle;
+
+    if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
+    {
+        NS_LOG(DEBUG, "MQ OC_OBSERVE_RIGSTER");
+        NSSetMQServerInfo(clientResponse->resourceUri, &(clientResponse->devAddr));
+    }
+
+    NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_NOT_NULL(clientResponse->payload, OC_STACK_KEEP_TRANSACTION);
+
+    NS_LOG(DEBUG, "income observe response of MQ notification");
+    NS_LOG_V(DEBUG, "MQ OBS response income : %s:%d",
+            clientResponse->devAddr.addr, clientResponse->devAddr.port);
+    NS_LOG_V(DEBUG, "MQ OBS response result : %d",
+            clientResponse->result);
+    NS_LOG_V(DEBUG, "MQ OBS response sequenceNum : %d",
+            clientResponse->sequenceNumber);
+    NS_LOG_V(DEBUG, "MQ OBS response resource uri : %s",
+            clientResponse->resourceUri);
+    NS_LOG_V(DEBUG, "MQ OBS response Transport Type : %d",
+                    clientResponse->devAddr.adapter);
+
+    OCRepPayload * payload = NULL;
+    OCRepPayloadGetPropObject((OCRepPayload *)clientResponse->payload, NS_ATTRIBUTE_MQ_MESSAGE,
+                              & payload);
+    NS_VERIFY_NOT_NULL(payload, OC_STACK_KEEP_TRANSACTION);
+
+    char * pId = NULL;
+    bool getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, &pId);
+    NS_LOG_V (DEBUG, "provider id: %s", pId);
+
+    if (strcmp(pId, NSGetProviderInfo()->providerId) == 0)
+    {
+        NSMessageType type = -1;
+        getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_TYPE, (int64_t *) &type);
+
+        if (getResult && (type == NS_MESSAGE_READ || type == NS_MESSAGE_DELETED))
+        {
+            NSSyncInfo * syncInfo = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
+            NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(syncInfo,
+                                  OC_STACK_KEEP_TRANSACTION, NSFreeSync(syncInfo));
+
+            bool getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID,
+                    (int64_t *) &(syncInfo->messageId));
+            syncInfo->state = (type == NS_MESSAGE_READ) ? NS_SYNC_READ : NS_SYNC_DELETED;
+            OICStrcpy(syncInfo->providerId, NS_UUID_STRING_SIZE, pId);
+
+            if (getResult)
+            {
+                NSPushQueue(NOTIFICATION_SCHEDULER, TASK_RECV_READ, (void*) syncInfo);
+            }
+            else
+            {
+                NSFreeSync(syncInfo);
+            }
+        }
+    }
+
+    OCRepPayloadDestroy(payload);
+    return OC_STACK_KEEP_TRANSACTION;
+}
+
+OCStackApplicationResult NSProviderIntrospectMQTopic(void * ctx, OCDoHandle handle,
+        OCClientResponse * clientResponse)
+{
+    (void) handle;
+
+    NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_STACK_SUCCESS(NSOCResultToSuccess(clientResponse->result), OC_STACK_KEEP_TRANSACTION);
+    NS_VERIFY_NOT_NULL(clientResponse->payload, OC_STACK_KEEP_TRANSACTION);
+
+    NS_LOG(DEBUG, "income get response of MQ broker");
+    NS_LOG_V(DEBUG, "MQ GET response income : %s:%d",
+            clientResponse->devAddr.addr, clientResponse->devAddr.port);
+    NS_LOG_V(DEBUG, "MQ GET response result : %d",
+            clientResponse->result);
+    NS_LOG_V(DEBUG, "MQ GET response sequenceNum : %d",
+            clientResponse->sequenceNumber);
+    NS_LOG_V(DEBUG, "MQ GET response resource uri : %s",
+            clientResponse->resourceUri);
+    NS_LOG_V(DEBUG, "MQ GET response Transport Type : %d",
+                    clientResponse->devAddr.adapter);
+
+    char ** topicList = NULL;
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0};
+    OCRepPayloadGetStringArray((OCRepPayload *) clientResponse->payload,
+                               NS_ATTIRBUTE_MQ_TOPICLIST, & topicList, dimensions);
+
+    char * interestTopicName = (char *) ctx;
+    for (size_t i = 0; i < dimensions[0]; ++i)
+    {
+        NS_LOG_V(DEBUG, "found MQ topic : %s", topicList[i]);
+        if (!strcmp(topicList[i], interestTopicName))
+        {
+            NS_LOG(DEBUG, "subscribe to MQ notification");
+
+            OCCallbackData cbdata = { NULL, NULL, NULL };
+            cbdata.cb = NSProviderMQListener;
+            cbdata.context = NULL;
+            cbdata.cd = NULL;
+
+            OCStackResult ret = OCDoResource(NULL, OC_REST_OBSERVE, topicList[i],
+                    clientResponse->addr, NULL, CT_DEFAULT, OC_LOW_QOS, &cbdata, NULL, 0);
+
+            if (!NSOCResultToSuccess(ret))
+            {
+                NS_LOG(DEBUG, "fail to subscribe to MQ notification");
+                continue;
+            }
+        }
+    }
+
+    return OC_STACK_KEEP_TRANSACTION;
+}
+
+OCStackApplicationResult NSProviderPublishTopicCB(void *ctx, OCDoHandle handle,
+        OCClientResponse *clientResponse)
+{
+    (void) ctx;
+    (void) handle;
+    NS_LOG(DEBUG, "Publish Topic callback received");
+
+    OCStackApplicationResult res = OC_STACK_ERROR;
+
+    NS_LOG_V(DEBUG, "Publish Topic response received code: (%d)", clientResponse->result);
+
+    if (clientResponse->payload != NULL &&
+        clientResponse->payload->type == PAYLOAD_TYPE_REPRESENTATION)
+    {
+        NS_LOG(DEBUG, "PAYLOAD_TYPE_REPRESENTATION received");
+
+        OCRepPayloadValue *val = ((OCRepPayload *)clientResponse->payload)->values;
+        while (val)
+        {
+            if( val->type == OCREP_PROP_INT)
+            {
+                NS_LOG_V(DEBUG, "Key: %s, Value: %lld, int", val->name, val->i);
+            }
+            else if( val->type == OCREP_PROP_STRING)
+            {
+                NS_LOG_V(DEBUG, "Key: %s, Value: %s, string", val->name, val->str);
+            }
+            else
+            {
+                NS_LOG_V(DEBUG, "Un supported val Type.(0x%d)", val->type);
+            }
+
+            val = val->next;
+        }
+
+        res = OC_STACK_KEEP_TRANSACTION;
+    }
+
+    return res;
+}
+#endif
+
 void NSProviderConnectionStateListener(const CAEndpoint_t * info, bool connected)
 {
     NS_LOG(DEBUG, "NSProviderConnectionStateListener - IN");

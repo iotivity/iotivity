@@ -345,6 +345,29 @@ NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest * entityHandlerRequest
     return NS_OK;
 }
 
+#ifdef WITH_MQ
+void NSProviderMQSubscription(NSMQTopicAddress * topicAddr)
+{
+    char * serverUri = topicAddr->serverAddr;
+    char * topicName = topicAddr->topicName;
+
+    OCDevAddr * addr = NSChangeAddress(serverUri);
+    OCCallbackData cbdata = { NULL, NULL, NULL };
+    cbdata.cb = NSProviderIntrospectMQTopic;
+    cbdata.context = topicName;
+    cbdata.cd = OICFree;
+
+    OCStackResult ret = OCDoResource(NULL, OC_REST_GET, serverUri, addr,
+                                     NULL, CT_DEFAULT, OC_LOW_QOS, &cbdata, NULL, 0);
+
+    NSOCResultToSuccess(ret);
+
+    OICFree(topicAddr->serverAddr);
+    OICFree(topicAddr->topicName);
+    OICFree(topicAddr);
+}
+#endif
+
 void * NSSubScriptionSchedule(void *ptr)
 {
     if (ptr == NULL)
@@ -406,6 +429,12 @@ void * NSSubScriptionSchedule(void *ptr)
                     NSHandleSubscription((OCEntityHandlerRequest*) node->taskData,
                             NS_RESOURCE_SYNC);
                     break;
+#ifdef WITH_MQ
+                case TASK_MQ_REQ_SUBSCRIBE:
+                    NS_LOG(DEBUG, "CASE TASK_MQ_REQ_SUBSCRIBE : ");
+                    NSProviderMQSubscription((NSMQTopicAddress*) node->taskData);
+                    break;
+#endif
                 default:
                     break;
 

@@ -22,13 +22,11 @@
 #include "NSConstants.h"
 #include "NSConsumerCommon.h"
 #include "NSConsumerMQPlugin.h"
+#include "NSUtil.h"
 
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocpayload.h"
-
-#define NS_ATTRIBUTE_MQ_MESSAGE "message"
-#define NS_ATTIRBUTE_MQ_TOPICLIST "topiclist"
 
 void NSHandleMQSubscription(NSMQTopicAddress * address);
 

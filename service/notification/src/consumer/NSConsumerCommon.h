@@ -96,14 +96,6 @@ typedef struct
 
 } NSSyncInfo_internal;
 
-#ifdef WITH_MQ
-typedef struct
-{
-    char * serverAddr;
-    char * topicName;
-} NSMQTopicAddress;
-#endif
-
 bool NSIsStartedConsumer();
 void NSSetIsStartedConsumer(bool setValue);
 
@@ -155,8 +147,6 @@ OCStackResult NSInvokeRequest(OCDoHandle * handle,
         OCClientContextDeleter cd, OCConnectivityType type);
 
 bool NSOCResultToSuccess(OCStackResult ret);
-
-OCDevAddr * NSChangeAddress(const char * address);
 
 #ifdef __cplusplus
 }

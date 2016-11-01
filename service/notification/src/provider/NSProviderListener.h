@@ -51,4 +51,10 @@ void NSProviderConnectionStateListener(const CAEndpoint_t * info, bool isConnect
 
 void NSProviderAdapterStateListener(CATransportAdapter_t adapter, bool enabled);
 
+OCStackApplicationResult NSProviderIntrospectMQTopic(void * ctx, OCDoHandle handle,
+        OCClientResponse * clientResponse);
+
+OCStackApplicationResult NSProviderPublishTopicCB(void *ctx, OCDoHandle handle,
+        OCClientResponse *clientResponse);
+
 #endif /* _NS_PROVIDER_LISTENER__H_ */

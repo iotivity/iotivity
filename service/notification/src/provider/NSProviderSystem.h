@@ -41,4 +41,9 @@ void NSSetPolicy(bool policy);
 bool NSGetResourceSecurity();
 void NSSetResourceSecurity(bool secured);
 
+#ifdef WITH_MQ
+void NSSetMQServerInfo(const char * serverUri, OCDevAddr * devAddr);
+NSMQServerInfo * NSGetMQServerInfo();
+#endif
+
 #endif /* _NS_PROVIDER_SYSTEM__H_ */

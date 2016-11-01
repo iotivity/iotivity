@@ -21,7 +21,7 @@
 #ifndef _NS_CONSTANTS_H_
 #define _NS_CONSTANTS_H_
 
-#define __PRINTLOG 0
+#define __PRINTLOG 1
 #define __NS_FILE__ ( strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__ )
 
 #ifdef TB_LOG
@@ -101,6 +101,11 @@
 #define NS_POLICY_CONSUMER         0
 
 #define NS_RD_PUBLISH_QUERY        "/oic/rd?rt=oic.wk.rdpub"
+
+#ifdef WITH_MQ
+#define NS_ATTRIBUTE_MQ_MESSAGE "message"
+#define NS_ATTIRBUTE_MQ_TOPICLIST "topiclist"
+#endif
 
 #define NS_VERIFY_NOT_NULL_V(obj) \
     { \

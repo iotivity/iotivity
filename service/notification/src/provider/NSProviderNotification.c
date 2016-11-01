@@ -76,6 +76,31 @@ NSResult NSSetSyncPayload(NSSyncInfo *sync, OCRepPayload** syncPayload)
     return NS_OK;
 }
 
+#ifdef WITH_MQ
+OCStackResult NSProviderPublishTopic(OCRepPayload * payload, OCClientResponseHandler response)
+{
+    OCCallbackData cbData;
+    memset(&cbData, 0, sizeof(OCCallbackData));
+    cbData.cb = response;
+    cbData.cd = NULL;
+    cbData.context = NULL;
+
+    OCRepPayload *publishPayload = OCRepPayloadCreate();
+    if (!publishPayload)
+    {
+        OCRepPayloadDestroy(publishPayload);
+        return OC_STACK_NO_MEMORY;
+    }
+
+    OCRepPayloadSetPropObject(publishPayload, NS_ATTRIBUTE_MQ_MESSAGE, payload);
+
+    NSMQServerInfo * serverInfo = NSGetMQServerInfo();
+    return OCDoResource(NULL, OC_REST_POST, serverInfo->serverUri, serverInfo->devAddr,
+            (OCPayload *)publishPayload,
+                        CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+}
+#endif
+
 NSResult NSSendNotification(NSMessage *msg)
 {
     NS_LOG(DEBUG, "NSSendMessage - IN");
@@ -150,6 +175,13 @@ NSResult NSSendNotification(NSMessage *msg)
                 {
                     obArray[obCount++] = subData->remote_messageObId;
                 }
+            }
+#endif
+
+#ifdef WITH_MQ
+            if (!NSGetMQServerInfo())
+            {
+                NSProviderPublishTopic(payload, NSProviderPublishTopicCB);
             }
 #endif
         }
@@ -252,7 +284,6 @@ NSResult NSSendSync(NSSyncInfo *sync)
             obCount, payload, OC_LOW_QOS);
 
     NS_LOG_V(DEBUG, "Sync ocstackResult = %d", ocstackResult);
-
     if (ocstackResult != OC_STACK_OK)
     {
         NS_LOG(ERROR, "fail to send Sync");
@@ -311,7 +342,6 @@ void * NSNotificationSchedule(void *ptr)
         }
 
         pthread_mutex_unlock(&NSMutex[NOTIFICATION_SCHEDULER]);
-
     }
 
     NS_LOG(INFO, "Destroy NSNotificationSchedule");

@@ -31,7 +31,7 @@
 #include <octypes.h>
 
 #define NS_UUID_STRING_SIZE 37
-
+//#define WITH_MQ
 /**
  * Result code of notification service
  */

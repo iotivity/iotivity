@@ -27,10 +27,9 @@
 #include "NSConsumerCommon.h"
 #include "NSConstants.h"
 #include "NSConsumerScheduler.h"
+#include "NSUtil.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-
-static char * NSGetQueryAddress(const char * serverFullAddress);
 
 // Public APIs
 NSResult NSStartConsumer(NSConsumerConfig config)
@@ -240,20 +239,4 @@ NSResult NSConsumerUpdateTopicList(const char * providerId, NSTopicLL * topics)
     NS_VERIFY_NOT_NULL(topicTask, NS_ERROR);
 
     return NSConsumerPushEvent(topicTask);
-}
-
-char * NSGetQueryAddress(const char * serverFullAddress)
-{
-    if (strstr(serverFullAddress, "coap+tcp://"))
-    {
-        return OICStrdup(serverFullAddress+11);
-    }
-    else if (strstr(serverFullAddress, "coap://"))
-    {
-        return OICStrdup(serverFullAddress+7);
-    }
-    else
-    {
-        return OICStrdup(serverFullAddress);
-    }
 }
