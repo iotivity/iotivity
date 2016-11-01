@@ -2998,10 +2998,11 @@ OCStackResult OCProcessPresence()
     // to most purposes.  Uncomment as needed.
     //OIC_LOG(INFO, TAG, "Entering RequestPresence");
     ClientCB* cbNode = NULL;
+    ClientCB* cbTemp = NULL;
     OCClientResponse clientResponse;
     OCStackApplicationResult cbResult = OC_STACK_DELETE_TRANSACTION;
 
-    LL_FOREACH(cbList, cbNode)
+    LL_FOREACH_SAFE(cbList, cbNode, cbTemp)
     {
         if (OC_REST_PRESENCE != cbNode->method || !cbNode->presence)
         {
