@@ -594,6 +594,22 @@ OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins);
  * @return Found  resource handle or NULL if not found.
  */
 OCResourceHandle OCGetResourceHandleAtUri(const char *uri);
+
+#endif
+
+#ifdef RD_SERVER
+/**
+* Search the RD database for queries.
+*
+* @param interfaceType is the interface type that is queried.
+* @param resourceType is the resource type that is queried.
+* @param discPayload is NULL if no resource found or else OCDiscoveryPayload with the details
+* about the resource.
+*
+* @return ::OC_STACK_OK in case of success or else other value.
+*/
+OCStackResult OCRDDatabaseCheckResources(const char *interfaceType, const char *resourceType,
+    OCDiscoveryPayload *discPayload);
 #endif
 //#endif // DIRECT_PAIRING
 
