@@ -28,6 +28,9 @@
 #include "cacommon.h"
 #include "octhread.h"
 #include "caadapterutils.h"
+#ifdef __WITH_DTLS__
+#include "ca_adapter_net_ssl.h"
+#endif
 #ifndef SINGLE_THREAD
 #include "caqueueingthread.h"
 #endif
@@ -91,6 +94,13 @@ static char g_localBLEAddress[18] = { 0 };
  * Variable to differentiate btw GattServer and GattClient.
  */
 static CABLEAdapter_t g_adapterType = ADAPTER_EMPTY;
+
+#ifdef __WITH_DTLS__
+/**
+ * Variable for storing data type during dtls encryption.
+ */
+static CADataType_t g_dataType = CA_REQUEST_DATA;
+#endif
 
 /**
  * Mutex to synchronize the task to be executed on the GattServer
@@ -156,6 +166,20 @@ static CANetworkPacketReceivedCallback g_networkPacketReceivedCallback = NULL;
  * Callback to notify error from the BLE adapter.
  */
 static CAErrorHandleCallback g_errorHandler = NULL;
+
+#ifdef __WITH_DTLS__
+/**
+ * Callback to receive decrypted data from the ssl adapter.
+ */
+static void CALESecureReceiveDataCB(const CASecureEndpoint_t *endpoint,
+                                 const void *data, uint32_t dataLength);
+
+/**
+ * Callback to receive encrypted data from the ssl adapter.
+ */
+static void CALESecureSendDataCB(CAEndpoint_t *endpoint,
+                             const void *data, uint32_t dataLength);
+#endif
 
 #ifdef SINGLE_THREAD
 /**
@@ -1033,9 +1057,16 @@ static void CALEDataReceiverHandler(void *threadData, CABLEAdapter_t receiverTyp
                 oc_mutex_unlock(bleReceiveDataMutex);
                 return;
             }
+            CATransportFlags_t flags = CA_DEFAULT_FLAGS;
+#ifdef __WITH_DTLS__
+            if (CA_BLE_PACKET_SECURE ==  secureFlag)
+            {
+                flags |= CA_SECURE;
+            }
+#endif
 
             const char *remoteAddress = bleData->remoteEndpoint->addr;
-            newSender->remoteEndpoint = CACreateEndpointObject(CA_DEFAULT_FLAGS,
+            newSender->remoteEndpoint = CACreateEndpointObject(flags,
                                                                CA_ADAPTER_GATT_BTLE,
                                                                remoteAddress,
                                                                bleData->remoteEndpoint->port);
@@ -1127,9 +1158,33 @@ static void CALEDataReceiverHandler(void *threadData, CABLEAdapter_t receiverTyp
                     .endpoint = *senderInfo->remoteEndpoint
                 };
 
-            g_networkPacketReceivedCallback(&tmp,
-                                            senderInfo->defragData,
-                                            senderInfo->recvDataLen);
+#ifdef __WITH_DTLS__
+            if (CA_SECURE & tmp.endpoint.flags)
+            {
+                OIC_LOG(ERROR, CALEADAPTER_TAG, "Secure data received");
+                if (CA_STATUS_FAILED == CAdecryptSsl(&tmp,
+                                                senderInfo->defragData,
+                                                senderInfo->recvDataLen))
+                {
+                    OIC_LOG(ERROR, CALEADAPTER_TAG, "CAdecryptSsl failed");
+                }
+                else
+                {
+                    OIC_LOG(ERROR, CALEADAPTER_TAG, "CAdecryptSsl successed");
+                }
+                OICFree(senderInfo->defragData);
+            }
+            else
+            {
+#endif
+                OIC_LOG(DEBUG, CALEADAPTER_TAG, "Non-Secure data received");
+                g_networkPacketReceivedCallback(&tmp,
+                                                senderInfo->defragData,
+                                                senderInfo->recvDataLen);
+#ifdef __WITH_DTLS__
+            }
+#endif
+
             oc_mutex_unlock(g_bleAdapterReqRespCbMutex);
             u_arraylist_remove(bleData->senderInfo, senderIndex);
             senderInfo->remoteEndpoint = NULL;
@@ -1199,9 +1254,10 @@ static void CALEServerSendDataThread(void *threadData)
 
     if (NULL != bleData->remoteEndpoint) //Unicast Data
     {
-        secureFlag = bleData->remoteEndpoint->flags == CA_SECURE ?
+        secureFlag = (bleData->remoteEndpoint->flags & CA_SECURE) ?
             CA_BLE_PACKET_SECURE : CA_BLE_PACKET_NON_SECURE;
 
+        OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "This Packet is secure? %d", secureFlag);
         result = CAGenerateHeader(dataHeader,
                                   CA_BLE_PACKET_START,
                                   g_localBLESourcePort,
@@ -1290,7 +1346,7 @@ static void CALEServerSendDataThread(void *threadData)
 
         OIC_LOG_V(DEBUG,
                   CALEADAPTER_TAG,
-                  "Server Sent data length [%u]",
+                  "Server Sent Unicast First Data - data length [%zu]",
                   length);
 
         result = CAGenerateHeader(dataHeader,
@@ -1310,11 +1366,6 @@ static void CALEServerSendDataThread(void *threadData)
         for (index = 0; index < iter; index++)
         {
             // Send the remaining header.
-            OIC_LOG_V(DEBUG,
-                      CALEADAPTER_TAG,
-                      "Sending the chunk number [%u]",
-                      index);
-
             result = CAMakeRemainDataSegment(dataSegment,
                                              CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE,
                                              bleData->data,
@@ -1343,16 +1394,17 @@ static void CALEServerSendDataThread(void *threadData)
                 g_errorHandler(bleData->remoteEndpoint, bleData->data, bleData->dataLen, result);
                 return;
             }
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Server Sent data length [%d]",
-                                               CA_SUPPORTED_BLE_MTU_SIZE);
+            OIC_LOG_V(DEBUG,
+                      CALEADAPTER_TAG,
+                      "Server Sent Unicast %d Data - data length [%zu]",
+                      index + 1,
+                      CA_SUPPORTED_BLE_MTU_SIZE);
         }
 
         if (remainingLen && (totalLength > CA_SUPPORTED_BLE_MTU_SIZE))
         {
             // send the last segment of the data (Ex: 22 bytes of 622
             // bytes of data when MTU is 200)
-            OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
-
             result = CAMakeRemainDataSegment(dataSegment,
                                              remainingLen,
                                              bleData->data,
@@ -1385,8 +1437,10 @@ static void CALEServerSendDataThread(void *threadData)
                                result);
                 return;
             }
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG,
-                      "Server Sent data length [%zu]", remainingLen + CA_BLE_HEADER_SIZE);
+            OIC_LOG_V(DEBUG,
+                      CALEADAPTER_TAG,
+                      "Server Sent Unicast Last Data - data length [%zu]",
+                      remainingLen + CA_BLE_HEADER_SIZE);
         }
      }
     else
@@ -1403,7 +1457,6 @@ static void CALEServerSendDataThread(void *threadData)
             CALEErrorHandler(NULL, bleData->data, bleData->dataLen, result);
             return;
         }
-        OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Server Sent data length [%d]", length);
 
         result = CAGenerateHeader(dataHeader,
                                   CA_BLE_PACKET_NOT_START,
@@ -1418,12 +1471,14 @@ static void CALEServerSendDataThread(void *threadData)
             g_errorHandler(bleData->remoteEndpoint, bleData->data, bleData->dataLen, result);
             return;
         }
+        OIC_LOG_V(DEBUG,
+                  CALEADAPTER_TAG,
+                  "Server Sent Multicast First Data - data length [%zu]",
+                  length);
 
         for (index = 0; index < iter; index++)
         {
             // Send the remaining header.
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Sending the chunk number [%d]", index);
-
             result = CAMakeRemainDataSegment(dataSegment,
                                              CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE,
                                              bleData->data,
@@ -1450,15 +1505,17 @@ static void CALEServerSendDataThread(void *threadData)
                 CALEErrorHandler(NULL, bleData->data, bleData->dataLen, result);
                 return;
             }
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Server Sent data length [%u]",
+            OIC_LOG_V(DEBUG,
+                      CALEADAPTER_TAG,
+                      "Server Sent Multicast %d Data - data length [%zu]",
+                      index + 1,
                       CA_SUPPORTED_BLE_MTU_SIZE);
         }
 
         if (remainingLen && (totalLength > CA_SUPPORTED_BLE_MTU_SIZE))
         {
-            // send the last segment of the data
-            OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
-
+            // send the last segment of the data (Ex: 22 bytes of 622
+            // bytes of data when MTU is 200)
             result = CAMakeRemainDataSegment(dataSegment,
                                              remainingLen,
                                              bleData->data,
@@ -1485,8 +1542,10 @@ static void CALEServerSendDataThread(void *threadData)
                 CALEErrorHandler(NULL, bleData->data, bleData->dataLen, result);
                 return;
             }
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG,
-                      "Server Sent data length [%zu]", remainingLen + CA_BLE_HEADER_SIZE);
+            OIC_LOG_V(DEBUG,
+                      CALEADAPTER_TAG,
+                      "Server Sent Multicast Last Data - data length [%zu]",
+                      remainingLen + CA_BLE_HEADER_SIZE);
         }
 #else
         OIC_LOG(DEBUG, CALEADAPTER_TAG, "BLE Multicast is not supported");
@@ -1534,9 +1593,10 @@ static void CALEClientSendDataThread(void *threadData)
 
     if (NULL != bleData->remoteEndpoint) //Unicast Data
     {
-        secureFlag = bleData->remoteEndpoint->flags == CA_SECURE ?
+        secureFlag = (bleData->remoteEndpoint->flags & CA_SECURE) ?
             CA_BLE_PACKET_SECURE : CA_BLE_PACKET_NON_SECURE;
 
+        OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "This Packet is secure? %d", secureFlag);
         result = CAGenerateHeader(dataHeader,
                                   CA_BLE_PACKET_START,
                                   g_localBLESourcePort,
@@ -1602,7 +1662,7 @@ static void CALEClientSendDataThread(void *threadData)
     uint32_t index = 0;
     if (NULL != bleData->remoteEndpoint) //Sending Unicast Data
     {
-        OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending Unicast Data");
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "Client Sending Unicast Data");
         // Send the first segment with the header.
         result =
             CAUpdateCharacteristicsToGattServer(
@@ -1624,10 +1684,9 @@ static void CALEClientSendDataThread(void *threadData)
                            result);
             return;
         }
-
         OIC_LOG_V(DEBUG,
                   CALEADAPTER_TAG,
-                  "Client Sent Data length  is [%u]",
+                  "Client Sent Unicast First Data - data length [%zu]",
                   length);
 
         result = CAGenerateHeader(dataHeader,
@@ -1677,16 +1736,17 @@ static void CALEClientSendDataThread(void *threadData)
                 g_errorHandler(bleData->remoteEndpoint, bleData->data, bleData->dataLen, result);
                 return;
             }
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Client Sent Data length  is [%d]",
-                                               CA_SUPPORTED_BLE_MTU_SIZE);
+            OIC_LOG_V(DEBUG,
+                      CALEADAPTER_TAG,
+                      "Client Sent Unicast %d Data - data length [%zu]",
+                      index + 1,
+                      CA_SUPPORTED_BLE_MTU_SIZE);
         }
 
         if (remainingLen && (totalLength > CA_SUPPORTED_BLE_MTU_SIZE))
         {
             // send the last segment of the data (Ex: 22 bytes of 622
             // bytes of data when MTU is 200)
-            OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
-
             result = CAMakeRemainDataSegment(dataSegment,
                                              remainingLen,
                                              bleData->data,
@@ -1715,8 +1775,10 @@ static void CALEClientSendDataThread(void *threadData)
                 g_errorHandler(bleData->remoteEndpoint, bleData->data, bleData->dataLen, result);
                 return;
             }
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG,
-                      "Client Sent Data length  is [%zu]", remainingLen + CA_BLE_HEADER_SIZE);
+            OIC_LOG_V(DEBUG,
+                      CALEADAPTER_TAG,
+                      "Client Sent Unicast Last Data - data length [%zu]",
+                      remainingLen + CA_BLE_HEADER_SIZE);
         }
     }
     else
@@ -1726,16 +1788,15 @@ static void CALEClientSendDataThread(void *threadData)
         // tizen ble should also disabled when Tizen 3.0 is updated.
         //Sending Mulitcast Data
         // Send the first segment with the header.
-        OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending Multicast Data");
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "Client Sending Multicast Data");
         result = CAUpdateCharacteristicsToAllGattServers(dataSegment, length);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG_V(ERROR, CALEADAPTER_TAG,
                       "Update characteristics (all) failed, result [%d]", result);
             CALEErrorHandler(NULL, bleData->data, bleData->dataLen, result);
-            return ;
+            return;
         }
-        OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Client Sent Data length  is [%d]", length);
 
         result = CAGenerateHeader(dataHeader,
                                   CA_BLE_PACKET_NOT_START,
@@ -1750,10 +1811,14 @@ static void CALEClientSendDataThread(void *threadData)
             g_errorHandler(bleData->remoteEndpoint, bleData->data, bleData->dataLen, result);
             return;
         }
+        OIC_LOG_V(DEBUG,
+                  CALEADAPTER_TAG,
+                  "Client Sent Multicast First Data - data length [%zu]",
+                  length);
 
-        // Send the remaining header.
         for (index = 0; index < iter; index++)
         {
+            // Send the remaining header.
             result = CAMakeRemainDataSegment(dataSegment,
                                              CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE,
                                              bleData->data,
@@ -1780,7 +1845,10 @@ static void CALEClientSendDataThread(void *threadData)
                 CALEErrorHandler(NULL, bleData->data, bleData->dataLen, result);
                 return;
             }
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Client Sent Data length  is [%d]",
+            OIC_LOG_V(DEBUG,
+                      CALEADAPTER_TAG,
+                      "Client Sent Multicast %d Data - data length [%zu]",
+                      index + 1,
                       CA_SUPPORTED_BLE_MTU_SIZE);
         }
 
@@ -1788,8 +1856,6 @@ static void CALEClientSendDataThread(void *threadData)
         {
             // send the last segment of the data (Ex: 22 bytes of 622
             // bytes of data when MTU is 200)
-            OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
-
             result = CAMakeRemainDataSegment(dataSegment,
                                              remainingLen,
                                              bleData->data,
@@ -1817,8 +1883,10 @@ static void CALEClientSendDataThread(void *threadData)
                 CALEErrorHandler(NULL, bleData->data, bleData->dataLen, result);
                 return;
             }
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG,
-                      "Client Sent Data length  is [%zu]", remainingLen + CA_BLE_HEADER_SIZE);
+            OIC_LOG_V(DEBUG,
+                      CALEADAPTER_TAG,
+                      "Client Sent Multicast Last Data - data length [%zu]",
+                      remainingLen + CA_BLE_HEADER_SIZE);
         }
 #else
         OIC_LOG(DEBUG, CALEADAPTER_TAG, "BLE Multicast is not supported");
@@ -2611,6 +2679,71 @@ static CAResult_t CALEAdapterGattClientStop()
 #endif
 }
 
+#ifdef __WITH_DTLS__
+static void CALESecureSendDataCB(CAEndpoint_t *endpoint, const void *data, uint32_t dataLen)
+{
+    VERIFY_NON_NULL_VOID(endpoint, CALEADAPTER_TAG, "endpoint is NULL");
+    VERIFY_NON_NULL_VOID(data, CALEADAPTER_TAG, "data is NULL");
+
+    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Secure Data Send - encrypted datalen = %d", dataLen);
+
+    CAResult_t result;
+    CADataType_t dataType = g_dataType;
+
+    if (ADAPTER_SERVER == g_adapterType ||
+            (ADAPTER_BOTH_CLIENT_SERVER == g_adapterType && CA_RESPONSE_DATA == dataType))
+    {
+        result = CALEAdapterServerSendData(endpoint, data, dataLen);
+        if (CA_STATUS_OK != result)
+        {
+            OIC_LOG(ERROR, CALEADAPTER_TAG, "Send unicast data for server failed" );
+
+             if (g_errorHandler)
+             {
+                 g_errorHandler(endpoint, data, dataLen, result);
+             }
+        }
+    }
+    else if (ADAPTER_CLIENT == g_adapterType ||
+            (ADAPTER_BOTH_CLIENT_SERVER == g_adapterType && CA_REQUEST_DATA == dataType) ||
+            (ADAPTER_BOTH_CLIENT_SERVER == g_adapterType && CA_RESPONSE_FOR_RES == dataType))
+    {
+        result = CALEAdapterClientSendData(endpoint, data, dataLen);
+        if (CA_STATUS_OK != result)
+        {
+            OIC_LOG(ERROR, CALEADAPTER_TAG, "Send unicast data for client failed" );
+
+             if (g_errorHandler)
+             {
+                 g_errorHandler(endpoint, data, dataLen, result);
+             }
+        }
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, CALEADAPTER_TAG,
+                  "Can't Send Message adapterType = %d, dataType = %d", g_adapterType, dataType);
+    }
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
+}
+
+void CALESecureReceiveDataCB(const CASecureEndpoint_t *sep, const void *data,
+                          uint32_t dataLen)
+{
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
+
+    VERIFY_NON_NULL_VOID(sep, CALEADAPTER_TAG, "sep is NULL");
+    VERIFY_NON_NULL_VOID(data, CALEADAPTER_TAG, "data is NULL");
+
+    OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Secure Data Receive - decrypted datalen = %d", dataLen);
+
+    if (g_networkPacketReceivedCallback)
+    {
+        g_networkPacketReceivedCallback(sep, data, dataLen);
+    }
+}
+#endif
+
 CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback reqRespCallback,
                           CAAdapterChangeCallback netCallback,
@@ -2670,6 +2803,17 @@ CAResult_t CAInitializeLE(CARegisterConnectivityCallback registerCallback,
 
     g_errorHandler = errorCallback;
 
+#ifdef __WITH_DTLS__
+     if (CA_STATUS_OK != CAinitSslAdapter())
+    {
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "Failed to init SSL adapter");
+    }
+    else
+    {
+        CAsetSslAdapterCallbacks(CALESecureReceiveDataCB, CALESecureSendDataCB, CA_ADAPTER_GATT_BTLE);
+    }
+#endif
+
     static const CAConnectivityHandler_t connHandler =
         {
             .startAdapter = CAStartLE,
@@ -2702,6 +2846,11 @@ static CAResult_t CAStartLE()
 static CAResult_t CAStopLE()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
+
+#ifdef __WITH_DTLS__
+    CAdeinitSslAdapter();
+#endif
+
 #ifndef SINGLE_THREAD
     CAStopLEQueues();
 #endif
@@ -2761,6 +2910,11 @@ static void CATerminateLE()
 #ifndef SINGLE_THREAD
     CATerminateLEQueues();
 #endif
+
+#ifdef __WITH_DTLS__
+    CAsetSslAdapterCallbacks(NULL, NULL, CA_ADAPTER_GATT_BTLE);
+#endif
+
     CATerminateLEAdapterMutex();
 
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
@@ -2903,7 +3057,31 @@ static int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint,
     if (ADAPTER_SERVER == g_adapterType ||
             (ADAPTER_BOTH_CLIENT_SERVER == g_adapterType && CA_RESPONSE_DATA == dataType))
     {
+#ifdef __WITH_DTLS__
+        if (endpoint && endpoint->flags & CA_SECURE)
+        {
+            OIC_LOG(DEBUG, CALEADAPTER_TAG,
+                    "Response Data or server - secured data send(caadapternetdtlsencrypt) call");
+            g_dataType = dataType;
+            oc_mutex_unlock(g_bleIsServerMutex);
+
+            result = CAencryptSsl(endpoint, data, dataLen);
+            if (CA_STATUS_OK != result)
+            {
+                OIC_LOG(ERROR, CALEADAPTER_TAG, "caadapternetdtlsencrypt failed!");
+                return -1;
+            }
+            return dataLen;
+        }
+        else
+        {
+            OIC_LOG(DEBUG, CALEADAPTER_TAG,
+                    "server or both - none secured data send(CALEAdapterServerSendData) call");
+            result = CALEAdapterServerSendData(endpoint, data, dataLen);
+        }
+#else
         result = CALEAdapterServerSendData(endpoint, data, dataLen);
+#endif
         if (CA_STATUS_OK != result)
         {
             oc_mutex_unlock(g_bleIsServerMutex);
@@ -2916,12 +3094,35 @@ static int32_t CASendLEUnicastData(const CAEndpoint_t *endpoint,
             return -1;
         }
     }
-
-    if (ADAPTER_CLIENT == g_adapterType ||
+    else if (ADAPTER_CLIENT == g_adapterType ||
             (ADAPTER_BOTH_CLIENT_SERVER == g_adapterType && CA_REQUEST_DATA == dataType) ||
             (ADAPTER_BOTH_CLIENT_SERVER == g_adapterType && CA_RESPONSE_FOR_RES == dataType))
     {
+#ifdef __WITH_DTLS__
+        if (endpoint && endpoint->flags & CA_SECURE)
+        {
+            OIC_LOG(DEBUG, CALEADAPTER_TAG,
+                    "Request Data or client - secured data send(caadapternetdtlsencrypt) call");
+            g_dataType = dataType;
+            oc_mutex_unlock(g_bleIsServerMutex);
+
+            result = CAencryptSsl(endpoint, data, dataLen);
+            if (CA_STATUS_OK != result)
+            {
+                OIC_LOG(ERROR, CALEADAPTER_TAG, "caadapternetdtlsencrypt failed!");
+                return -1;
+            }
+            return dataLen;
+        }
+        else
+        {
+            OIC_LOG(DEBUG, CALEADAPTER_TAG,
+                    "client or both - none secured data send(CALEAdapterClientSendData) call");
+            result = CALEAdapterClientSendData(endpoint, data, dataLen);
+        }
+#else
         result = CALEAdapterClientSendData(endpoint, data, dataLen);
+#endif
         if (CA_STATUS_OK != result)
         {
             oc_mutex_unlock(g_bleIsServerMutex);
@@ -3109,6 +3310,9 @@ static void CALEConnectionStateChangedCb(CATransportAdapter_t adapter, const cha
     VERIFY_NON_NULL_VOID(address, CALEADAPTER_TAG, "address");
     (void)adapter;
 
+    CAEndpoint_t localEndpoint = { .adapter = CA_ADAPTER_GATT_BTLE };
+    OICStrcpy(localEndpoint.addr, sizeof(localEndpoint.addr), address);
+
 #ifdef __TIZEN__
     oc_mutex_lock(g_bleIsServerMutex);
     switch (g_adapterType)
@@ -3157,10 +3361,11 @@ static void CALEConnectionStateChangedCb(CATransportAdapter_t adapter, const cha
                                     address);
         }
 #endif
-    }
 
-    CAEndpoint_t localEndpoint = { .adapter = CA_ADAPTER_GATT_BTLE };
-    OICStrcpy(localEndpoint.addr, sizeof(localEndpoint.addr), address);
+#ifdef __WITH_DTLS__
+        CAcloseSslConnection(&localEndpoint);
+#endif
+    }
 
     oc_mutex_lock(g_bleNetworkCbMutex);
     if (g_connectionCallback)
@@ -3426,7 +3631,7 @@ static CAResult_t CALEAdapterClientReceivedData(const char *remoteAddress,
     // Create bleData to add to queue
     OIC_LOG_V(DEBUG,
               CALEADAPTER_TAG,
-              "Data received from LE Client layer [%d]",
+              "Data received from LE Client layer [%zu]",
               dataLength);
 
     CALEData_t * const bleData =
