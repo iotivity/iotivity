@@ -1706,7 +1706,11 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
             ret = mbedtls_ssl_read(&peer->ssl, decryptBuffer, TLS_MSG_BUF_LEN);
         } while (MBEDTLS_ERR_SSL_WANT_READ == ret);
 
-        if (MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY == ret)
+        if (MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY == ret ||
+            // TinyDTLS sends fatal close_notify alert
+            (MBEDTLS_ERR_SSL_FATAL_ALERT_MESSAGE == ret &&
+             MBEDTLS_SSL_ALERT_LEVEL_FATAL == peer->ssl.in_msg[0] &&
+             MBEDTLS_SSL_ALERT_MSG_CLOSE_NOTIFY == peer->ssl.in_msg[1]))
         {
             OIC_LOG(INFO, NET_SSL_TAG, "Connection was closed gracefully");
             SSL_CLOSE_NOTIFY(peer, ret);
