@@ -1163,19 +1163,12 @@ void CATCPDisconnectAll()
 {
     ca_mutex_lock(g_mutexObjectList);
     uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);
-
     CATCPSessionInfo_t *svritem = NULL;
     for (size_t i = 0; i < length; i++)
     {
         svritem = (CATCPSessionInfo_t *) u_arraylist_get(caglobals.tcp.svrlist, i);
         if (svritem && svritem->fd >= 0)
         {
-#ifdef __WITH_TLS__
-            if (CA_STATUS_OK != CAcloseSslConnection(&svritem->sep.endpoint))
-            {
-                OIC_LOG(ERROR, TAG, "Failed to close TLS session");
-            }
-#endif
             shutdown(svritem->fd, SHUT_RDWR);
             close(svritem->fd);
             OICFree(svritem->data);
@@ -1191,6 +1184,11 @@ void CATCPDisconnectAll()
     u_arraylist_destroy(caglobals.tcp.svrlist);
     caglobals.tcp.svrlist = NULL;
     ca_mutex_unlock(g_mutexObjectList);
+
+#ifdef __WITH_TLS__
+    CAcloseSslConnectionAll();
+#endif
+
 }
 
 CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint, size_t *index)

@@ -239,6 +239,12 @@ CAResult_t CAinitiateSslHandshake(const CAEndpoint_t *endpoint);
  */
 CAResult_t CAcloseSslConnection(const CAEndpoint_t *endpoint);
 
+
+/**
+ * Close All of DTLS sessions.
+ */
+void CAcloseSslConnectionAll();
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

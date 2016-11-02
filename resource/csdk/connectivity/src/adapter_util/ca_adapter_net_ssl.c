@@ -945,6 +945,44 @@ CAResult_t CAcloseSslConnection(const CAEndpoint_t *endpoint)
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return CA_STATUS_OK;
 }
+
+void CAcloseSslConnectionAll()
+{
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
+    ca_mutex_lock(g_sslContextMutex);
+    if (NULL == g_caSslContext)
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "Context is NULL");
+        ca_mutex_unlock(g_sslContextMutex);
+        return;
+    }
+
+    uint32_t listLength = u_arraylist_length(g_caSslContext->peerList);
+    for (uint32_t i = listLength; i > 0; i--)
+    {
+        SslEndPoint_t *tep = (SslEndPoint_t *)u_arraylist_remove(g_caSslContext->peerList, i - 1);
+        if (NULL == tep)
+        {
+            continue;
+        }
+        OIC_LOG_V(DEBUG, NET_SSL_TAG, "SSL Connection [%s:%d]",
+                  tep->sep.endpoint.addr, tep->sep.endpoint.port);
+
+        // TODO: need to check below code after socket close is ensured.
+        /*int ret = 0;
+        do
+        {
+            ret = mbedtls_ssl_close_notify(&tep->ssl);
+        }
+        while (MBEDTLS_ERR_SSL_WANT_WRITE == ret);*/
+
+        DeleteSslEndPoint(tep);
+    }
+    ca_mutex_unlock(g_sslContextMutex);
+
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+    return;
+}
 /**
  * Creates session for endpoint.
  *
