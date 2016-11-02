@@ -341,8 +341,14 @@ elif env.get('ROUTING') == 'EP':
     defines.append('-DROUTING_EP=1')
 
 libs = []
+if env.get('WITH_TCP'):
+    defines.append('-DTCP_ADAPTER=1')
+    if env.get('SECURED'):
+        defines.append('-D__WITH_TLS__=1')
+
 if env.get('SECURED'):
     libs.append('-locpmapi')
+    defines.append('-D_WITH_DTLS_=1')
 
 pc_vars = {
     '\@VERSION\@': project_version,
