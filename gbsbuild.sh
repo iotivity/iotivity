@@ -86,21 +86,8 @@ done
 
 if [ $secured -eq 1 ];then
   echo `pwd`
-  if [ -d ./extlibs/mbedtls/mbedtls ];then
-      cd ./extlibs/mbedtls/mbedtls
-      git reset --hard ad249f509fd62a3bbea7ccd1fef605dbd482a7bd ; git apply ../ocf.patch
-      cd -
-      rm -rf ./extlibs/mbedtls/mbedtls/.git*
-
-  else
-      echo ""
-      echo "*********************************** Error: ****************************************"
-      echo "* Please download mbedtls using the following command:                            *"
-      echo "*     $ git clone https://github.com/ARMmbed/mbedtls.git extlibs/mbedtls/mbedtls  *"
-      echo "***********************************************************************************"
-      echo ""
-      exit
-  fi
+  # Prepare mbedTLS dependency
+  $SHELL ./extlibs/mbedtls/prep.sh
 fi
 
 rm -rf ./extlibs/tinycbor/tinycbor/.git*
