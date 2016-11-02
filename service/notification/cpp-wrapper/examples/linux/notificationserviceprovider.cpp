@@ -21,6 +21,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <cstdint>
+#include <limits>
 #include "NSCommon.h"
 #include "NSProviderService.h"
 #include "NSUtils.h"

@@ -55,6 +55,7 @@ protected:
     std::vector<std::string> m_resourceInterfaces;
     OCResourceHandle m_resourceHandle;
     PlatformConfig m_platformConfig;
+    bool m_isRegisteredForPresence;
     bool m_isServerRunning;
     bool m_isSlowResource;
     uint8_t m_resourceProperty;
