@@ -306,6 +306,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %{_libdir}/librcs_common.so
 %{_libdir}/librcs_container.so
 %{_libdir}/librcs_server.so
+%{_libdir}/libresource_directory.so
 %{_libdir}/libESEnrolleeSDK.so
 %{_libdir}/libnotification*.so
 %if 0%{?WITH_PROXY} == 1
