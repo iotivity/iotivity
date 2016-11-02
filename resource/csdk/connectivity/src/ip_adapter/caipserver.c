@@ -1537,7 +1537,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         }
 
         eps[j].adapter = CA_ADAPTER_IP;
-        eps[j].ifindex = 0;
+        eps[j].ifindex = ifitem->index;
 
         if (ifitem->family == AF_INET6)
         {
@@ -1555,7 +1555,7 @@ CAResult_t CAGetIPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         j++;
 
         eps[j].adapter = CA_ADAPTER_IP;
-        eps[j].ifindex = 0;
+        eps[j].ifindex = ifitem->index;
 
         if (ifitem->family == AF_INET6)
         {
