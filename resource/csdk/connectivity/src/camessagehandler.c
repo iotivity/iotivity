@@ -698,7 +698,7 @@ static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, ui
     {
         CAHistoryItem_t *item = &(history->items[i]);
         if (id == item->messageId && tokenLength == item->tokenLength
-            && memcmp(item->token, token, tokenLength) == 0)
+            && ep->ifindex == item->ifindex && memcmp(item->token, token, tokenLength) == 0)
         {
             if ((familyFlags ^ item->flags) == CA_IPFAMILY_MASK)
             {
@@ -712,6 +712,7 @@ static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, ui
 
     history->items[history->nextIndex].flags = familyFlags;
     history->items[history->nextIndex].messageId = id;
+    history->items[history->nextIndex].ifindex = ep->ifindex;
     if (token && tokenLength)
     {
         memcpy(history->items[history->nextIndex].token, token, tokenLength);
