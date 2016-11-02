@@ -186,6 +186,13 @@ public class SmokeTest extends InstrumentationTestCase {
                     resourceFoundListener);
 
             //server
+            //wait 2 seconds for the client's resourceFoundListener to set the presenceListener.
+            //the presenceListener must be set before startPresence() is called to get notified.
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                Log.e(TAG, e.getMessage());
+            }
             OcPlatform.startPresence(OcPlatform.DEFAULT_PRESENCE_TTL);
 
             //wait for onPresence event
