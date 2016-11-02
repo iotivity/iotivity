@@ -1152,17 +1152,17 @@ static void applyMulticastToInterface6(uint32_t ifindex)
     }
     //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressInt, ifindex);
     applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressLnk, ifindex);
-    //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressRlm, ifindex);
+    applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressRlm, ifindex);
     //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressAdm, ifindex);
-    //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressSit, ifindex);
+    applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressSit, ifindex);
     //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressOrg, ifindex);
     //applyMulticast6(caglobals.ip.m6.fd, &IPv6MulticastAddressGlb, ifindex);
 
     //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressInt, ifindex);
     applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressLnk, ifindex);
-    //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressRlm, ifindex);
+    applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressRlm, ifindex);
     //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressAdm, ifindex);
-    //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressSit, ifindex);
+    applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressSit, ifindex);
     //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressOrg, ifindex);
     //applyMulticast6(caglobals.ip.m6s.fd, &IPv6MulticastAddressGlb, ifindex);
 }
