@@ -171,6 +171,24 @@ exit:
     return false;
 }
 
+static bool IsEmptyCred(const OicSecCred_t* cred)
+{
+    OicUuid_t emptyUuid = {.id={0}};
+
+    VERIFY_SUCCESS(TAG, (0 == memcmp(cred->subject.id, emptyUuid.id, sizeof(emptyUuid))), ERROR);
+    VERIFY_SUCCESS(TAG, (0 == cred->credId), ERROR);
+    VERIFY_SUCCESS(TAG, (0 == cred->credType), ERROR);
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    VERIFY_SUCCESS(TAG, (NULL == cred->privateData.data), ERROR);
+    VERIFY_SUCCESS(TAG, (NULL == cred->publicData.data), ERROR);
+    VERIFY_SUCCESS(TAG, (NULL == cred->optionalData.data), ERROR);
+    VERIFY_SUCCESS(TAG, (NULL == cred->credUsage), ERROR);
+#endif
+    return true;
+exit:
+    return false;
+}
+
 /**
  * This function frees OicSecCred_t object's fields and object itself.
  */
@@ -1836,7 +1854,6 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
                          */
                         if(OIC_RANDOM_DEVICE_PIN == doxm->oxmSel)
                         {
-                            OicUuid_t emptyUuid = { .id={0}};
                             SetUuidForPinBasedOxm(&emptyUuid);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
@@ -1969,13 +1986,37 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
 #endif //_ENABLE_MULTIPLE_OWNER_
         else
         {
-            /*
-             * If the post request credential has credId, it will be
-             * discarded and the next available credId will be assigned
-             * to it before getting appended to the existing credential
-             * list and updating svr database.
-             */
-            ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_CHANGED : OC_EH_ERROR;
+            if(IsEmptyCred(cred))
+            {
+                OicUuid_t emptyUuid = {.id={0}};
+                if(memcmp(cred->rownerID.id, emptyUuid.id, sizeof(emptyUuid.id)) != 0)
+                {
+                    OIC_LOG(INFO, TAG, "CRED's rowner will be updated.");
+                    memcpy(gCred->rownerID.id, cred->rownerID.id, sizeof(cred->rownerID.id));
+                    if (UpdatePersistentStorage(gCred))
+                    {
+                        ret = OC_EH_CHANGED;
+                    }
+                    else
+                    {
+                        ret = OC_EH_ERROR;
+                    }
+                }
+                else
+                {
+                    ret = OC_EH_ERROR;
+                }
+            }
+            else
+            {
+                /*
+                 * If the post request credential has credId, it will be
+                 * discarded and the next available credId will be assigned
+                 * to it before getting appended to the existing credential
+                 * list and updating svr database.
+                 */
+                ret = (OC_STACK_OK == AddCredential(cred))? OC_EH_CHANGED : OC_EH_ERROR;
+            }
         }
 #else //not __WITH_DTLS__
         /*
