@@ -91,6 +91,17 @@ public class ConsumerService
     }
 
     /**
+      * Request to subscribe to MQ server
+      * @param servAdd -  servAdd combined with IP address and port number  and MQ broker uri using delimiter :
+      * @param topicName - the interest Topic name for subscription
+      * @return  result code
+      */
+    public int  subscribeMQService(String servAdd, String topicName) throws NSException
+    {
+        return nativeSubscribeMQService(servAdd, topicName);
+    }
+
+    /**
       * Request discovery manually
       */
     public void rescanProvider() throws NSException
@@ -116,5 +127,6 @@ public class ConsumerService
 
     private native void nativeStop() throws NSException;
     private native void nativeEnableRemoteService(String serverAddress) throws NSException;
-    private native void nativeRescanProvider() throws NSException;
+    private native int  nativeSubscribeMQService(String servAdd, String topicName) throws NSException;
+   private native void nativeRescanProvider() throws NSException;
 }
