@@ -233,32 +233,34 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
 /**
  * API to provision preconfigured PIN to device(NOT LIST).
  * If device does not support the Preconfigured PIN OxM,
- * OCProvisionPreconfPin API will be update the device's Doxm
- * and then try prevonfigured PIN provisioning once again.
+ * OCProvisionPreconfigPin API will update the device's Doxm
+ * and then try preconfigured PIN provisioning once again.
  *
  * @param[in] ctx Application context would be returned in result callback.
  * @param[in] targetDeviceInfo Selected target device.
- * @param[in] preconfPin string of preconfigured PIN.
- * @param[in] preconfPinLen string length of 'preconfPin'.
+ * @param[in] preconfigPin string of preconfigured PIN.
+ * @param[in] preconfigPinLen string length of 'preconfigPin'.
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from first resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCProvisionPreconfPin(void* ctx,
-                                               OCProvisionDev_t *targetDeviceInfo,
-                                               const char * preconfPin, size_t preconfPinLen,
-                                               OCProvisionResultCB resultCallback);
+OCStackResult OCProvisionPreconfigPin(void *ctx,
+                                      OCProvisionDev_t *targetDeviceInfo,
+                                      const char *preconfigPin,
+                                      size_t preconfigPinLen,
+                                      OCProvisionResultCB resultCallback);
 
 /**
  * API to add preconfigured PIN to local SVR DB.
  *
  * @param[in] targetDeviceInfo Selected target device.
- * @param[in] preconfPIN Preconfig PIN which is used while multiple owner authentication
- * @param[in] preconfPINLen Byte length of preconfig PIN
+ * @param[in] preconfigPin Preconfig PIN which is used while multiple owner authentication
+ * @param[in] preconfigPinLen Byte length of preconfigPin
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
-                                 const char* preconfPIN, size_t preconfPINLen);
+OCStackResult OCAddPreconfigPin(const OCProvisionDev_t *targetDeviceInfo,
+                                const char *preconfigPin, 
+                                size_t preconfigPinLen);
 
 /**
  * API to update 'doxm.mom' to resource server.

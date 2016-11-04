@@ -177,22 +177,21 @@ OCStackResult OCDiscoverMultipleOwnedDevices(unsigned short timeout, OCProvision
     return PMMultipleOwnerDeviceDiscovery(timeout, true, ppList);
 }
 
-
 /**
  * API to add preconfigured PIN to local SVR DB.
  *
  * @param[in] targetDeviceInfo Selected target device.
- * @param[in] preconfPIN Preconfig PIN which is used while multiple owner authentication
- * @param[in] preconfPINLen Byte length of preconfig PIN
+ * @param[in] preconfigPin Preconfig PIN which is used while multiple owner authentication
+ * @param[in] preconfigPinLen Byte length of preconfigPin
  *
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
-                                 const char* preconfPIN, size_t preconfPINLen)
+OCStackResult OCAddPreconfigPin(const OCProvisionDev_t *targetDeviceInfo,
+                                const char *preconfigPin,
+                                size_t preconfigPinLen)
 {
-    return MOTAddPreconfigPIN( targetDeviceInfo, preconfPIN, preconfPINLen);
+    return MOTAddPreconfigPIN(targetDeviceInfo, preconfigPin, preconfigPinLen);
 }
-
 
 OCStackResult OCDoMultipleOwnershipTransfer(void* ctx,
                                       OCProvisionDev_t *targetDevices,
@@ -209,7 +208,6 @@ OCStackResult OCDoMultipleOwnershipTransfer(void* ctx,
     }
     return MOTDoOwnershipTransfer(ctx, targetDevices, resultCallback);
 }
-
 #endif //_ENABLE_MULTIPLE_OWNER_
 
 /**
@@ -364,10 +362,11 @@ static void AddPreconfPinOxMCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, 
     }
 }
 
-OCStackResult OCProvisionPreconfPin(void* ctx,
-                                               OCProvisionDev_t *targetDeviceInfo,
-                                               const char * preconfPin, size_t preconfPinLen,
-                                               OCProvisionResultCB resultCallback)
+OCStackResult OCProvisionPreconfigPin(void *ctx,
+                                      OCProvisionDev_t *targetDeviceInfo,
+                                      const char *preconfigPin,
+                                      size_t preconfigPinLen,
+                                      OCProvisionResultCB resultCallback)
 {
     if( NULL == targetDeviceInfo )
     {
@@ -375,7 +374,7 @@ OCStackResult OCProvisionPreconfPin(void* ctx,
     }
     if (NULL == resultCallback)
     {
-        OIC_LOG(INFO, TAG, "OCProvisionPreconfPINCredential : NULL Callback");
+        OIC_LOG(INFO, TAG, "OCProvisionPreconfigPinCredential : NULL Callback");
         return OC_STACK_INVALID_CALLBACK;
     }
 
@@ -386,8 +385,8 @@ OCStackResult OCProvisionPreconfPin(void* ctx,
     }
     provCtx->ctx = ctx;
     provCtx->devInfo = targetDeviceInfo;
-    provCtx->pin = preconfPin;
-    provCtx->pinLen = preconfPinLen;
+    provCtx->pin = preconfigPin;
+    provCtx->pinLen = preconfigPinLen;
     provCtx->resultCallback = resultCallback;
     /*
      * First of all, update OxMs to support preconfigured PIN OxM.

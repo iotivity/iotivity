@@ -115,10 +115,10 @@ OCStackResult OTMSetOTCallback(OicSecOxm_t oxm, OTMCallbackData_t* callbacks)
         return OC_STACK_INVALID_METHOD;
 #ifdef _ENABLE_MULTIPLE_OWNER_
     case OIC_PRECONFIG_PIN:
-        callbacks->loadSecretCB = LoadPreconfPinCodeCallback;
-        callbacks->createSecureSessionCB = CreateSecureSessionPreconfPinCallback;
-        callbacks->createSelectOxmPayloadCB = CreatePreconfPinBasedSelectOxmPayload;
-        callbacks->createOwnerTransferPayloadCB = CreatePreconfPinBasedOwnerTransferPayload;
+        callbacks->loadSecretCB = LoadPreconfigPinCodeCallback;
+        callbacks->createSecureSessionCB = CreateSecureSessionPreconfigPinCallback;
+        callbacks->createSelectOxmPayloadCB = CreatePreconfigPinBasedSelectOxmPayload;
+        callbacks->createOwnerTransferPayloadCB = CreatePreconfigPinBasedOwnerTransferPayload;
         break;
 #endif //_ENABLE_MULTIPLE_OWNER_
     default:

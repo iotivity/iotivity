@@ -1256,13 +1256,13 @@ static int changeMultipleOwnershipTrnasferMode(void)
     }
 
     OCProvisionDev_t* motDev = getDevInst(g_own_list, dev_num);
-    if(OC_STACK_OK == MOTChangeMode(NULL, motDev, (OicSecMomType_t)mom, updateDoxmForMOTCB))
+    if(OC_STACK_OK == OCChangeMOTMode(NULL, motDev, (OicSecMomType_t)mom, updateDoxmForMOTCB))
     {
         g_doneCB = false;
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "MOTChangeMode API error");
+        OIC_LOG(ERROR, TAG, "OCChangeMOTMode API error");
         return -1;
     }
 
@@ -1327,13 +1327,13 @@ static int selectMultipleOwnershipTrnasferMethod(void)
     }
 
     OCProvisionDev_t* motDev = getDevInst(g_mot_enable_list, dev_num);
-    if(OC_STACK_OK ==  MOTSelectMOTMethod(NULL, motDev, (OicSecOxm_t)oxm, updateDoxmForMOTCB))
+    if(OC_STACK_OK == OCSelectMOTMethod(NULL, motDev, (OicSecOxm_t)oxm, updateDoxmForMOTCB))
     {
         g_doneCB = false;
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "MOTSelectMOTMethod API error");
+        OIC_LOG(ERROR, TAG, "OCSelectMOTMethod API error");
         return -1;
     }
 
@@ -1374,23 +1374,23 @@ static int provisionPreconfigPIN()
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
-    char preconfPIN[9] = {0};
-    printf("   > Input the PreconfigPIN (e.g. 12341234) : ");
+    char preconfigPin[9] = {0};
+    printf("   > Input the PreconfigPin (e.g. 12341234) : ");
     for(int ret=0; 1!=ret; )
     {
-        ret = scanf("%8s", preconfPIN);
+        ret = scanf("%8s", preconfigPin);
         for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                     // '0x20<=code' is character region
     }
 
     OCProvisionDev_t* motDev = getDevInst(g_mot_enable_list, dev_num);
-    if(OC_STACK_OK == OCProvisionPreconfPin(NULL, motDev, preconfPIN, strlen(preconfPIN), provisionCredCB))
+    if(OC_STACK_OK == OCProvisionPreconfigPin(NULL, motDev, preconfigPin, strlen(preconfigPin), provisionCredCB))
     {
         g_doneCB = false;
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionPreconfPin API error");
+        OIC_LOG(ERROR, TAG, "OCProvisionPreconfigPin API error");
         return -1;
     }
 

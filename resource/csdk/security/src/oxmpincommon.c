@@ -249,7 +249,7 @@ OCStackResult InputPin(char* pinBuffer, size_t bufferSize)
 }
 
 #ifdef _ENABLE_MULTIPLE_OWNER_
-OCStackResult SetPreconfigPin(const char* pinBuffer, size_t pinLength)
+OCStackResult SetPreconfigPin(const char *pinBuffer, size_t pinLength)
 {
     if(NULL == pinBuffer || OXM_PRECONFIG_PIN_MAX_SIZE < pinLength)
     {

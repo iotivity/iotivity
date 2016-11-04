@@ -328,8 +328,8 @@ static int multipleOwnershipTransfer(void)
         if(OIC_PRECONFIG_PIN == dev->doxm->oxmSel)
         {
             //Pre-Configured PIN initialization
-            const char* testPreconfPin = "12341234";
-            if(OC_STACK_OK != OCAddPreconfigPIN(dev, testPreconfPin, strlen(testPreconfPin)))
+            const char* testPreconfigPin = "12341234";
+            if(OC_STACK_OK != OCAddPreconfigPin(dev, testPreconfigPin, strlen(testPreconfigPin)))
             {
                 printf("\n\n\n*** %60s ***\n", "WARNNING : Failed to save the pre-configured PIN");
                 printf("*** %60s ***\n\n\n", "WARNNING : You can't use the pre-configured PIN OxM for MOT");
