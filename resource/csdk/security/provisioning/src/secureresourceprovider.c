@@ -341,6 +341,7 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
                         query, sizeof(query), OIC_RSRC_CRED_URI))
     {
         OIC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -564,6 +565,7 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
                         query, sizeof(query), OIC_RSRC_CRED_URI))
     {
         OIC_LOG(ERROR, TAG, "SRPProvisionTrustCertChain : Failed to generate query");
+        OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -574,6 +576,7 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
     if (NULL == certData)
     {
         OIC_LOG(ERROR, TAG, "Memory allocation problem");
+        OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_NO_MEMORY;
     }
     certData->deviceInfo = selectedDeviceInfo;
