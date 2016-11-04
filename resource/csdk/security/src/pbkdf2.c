@@ -75,8 +75,8 @@ int DeriveCryptoKeyFromPassword(const unsigned char *passwd, size_t pLen,
                                 const size_t keyLen, uint8_t *derivedKey)
 {
     int res = 0;
-    uint8_t buf[DTLS_HMAC_DIGEST_SIZE];
-    uint8_t uBuf[DTLS_HMAC_DIGEST_SIZE];
+    uint8_t buf[DTLS_HMAC_DIGEST_SIZE] = {0,};
+    uint8_t uBuf[DTLS_HMAC_DIGEST_SIZE] = {0,};
 
     size_t nBlocks = 0;
     size_t nOctetInLastBlock = 0;

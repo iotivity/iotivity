@@ -1722,9 +1722,22 @@ static OicSecAcl_t* createSimpleAcl(const OicUuid_t uuid)
     size_t arrLen = 1;
     rsrc->typeLen = arrLen;
     rsrc->types = (char**)OICCalloc(arrLen, sizeof(char*));
+    if(!rsrc->types)
+    {
+        OIC_LOG(DEBUG, TAG,  "OICCalloc error return");
+        OCDeleteACLList(acl);
+        return NULL;
+    }
+    rsrc->types[0] = OICStrdup("");   // ignore
+
     rsrc->interfaceLen = 1;
     rsrc->interfaces = (char**)OICCalloc(arrLen, sizeof(char*));
-    rsrc->types[0] = OICStrdup("");   // ignore
+    if(!rsrc->interfaces)
+    {
+        OIC_LOG(DEBUG, TAG,  "OICCalloc error return");
+        OCDeleteACLList(acl);
+        return NULL;
+    }
     rsrc->interfaces[0] = OICStrdup("oic.if.baseline");  // ignore
 
     LL_APPEND(ace->resources, rsrc);
