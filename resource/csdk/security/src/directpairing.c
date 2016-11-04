@@ -467,8 +467,8 @@ OCStackResult FinalizeDirectPairing(void *ctx, OCDirectPairingDev_t* peer,
         OIC_LOG(ERROR, TAG, "Failed to DpairingToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
-    OIC_LOG(INFO, TAG, "DPARING CBOR data:");
-    OIC_LOG_BUFFER(INFO, TAG, secPayload->securityData, secPayload->payloadSize);
+    OIC_LOG(DEBUG, TAG, "DPARING CBOR data:");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!DPGenerateQuery(true,
@@ -724,8 +724,8 @@ OCStackResult DPDirectPairing(void *ctx, OCDirectPairingDev_t* peer, OicSecPrm_t
         OIC_LOG(ERROR, TAG, "Failed to DpairingToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
-    OIC_LOG(INFO, TAG, "DPARING CBOR data:");
-    OIC_LOG_BUFFER(INFO, TAG, secPayload->securityData, secPayload->payloadSize);
+    OIC_LOG(DEBUG, TAG, "DPARING CBOR data:");
+    OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!DPGenerateQuery(false,

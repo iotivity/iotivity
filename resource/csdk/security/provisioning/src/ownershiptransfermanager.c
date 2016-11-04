@@ -515,8 +515,8 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
 
     if (CA_STATUS_OK == pskRet)
     {
-        OIC_LOG(INFO, TAG,"Owner PSK dump:\n");
-        OIC_LOG_BUFFER(INFO, TAG,ownerPSK, OWNER_PSK_LENGTH_128);
+        OIC_LOG(DEBUG, TAG,"Owner PSK dump:\n");
+        OIC_LOG_BUFFER(DEBUG, TAG,ownerPSK, OWNER_PSK_LENGTH_128);
         //Generating new credential for provisioning tool
         OicSecCred_t *cred = GenerateCredential(&selectedDeviceInfo->doxm->deviceID,
                                   SYMMETRIC_PAIR_WISE_KEY, NULL,
@@ -567,8 +567,8 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
             OIC_LOG(WARNING, TAG, "[Subject] : ");
             OIC_LOG_BUFFER(WARNING, TAG, prevCred->subject.id, sizeof(prevCred->subject.id));
             OIC_LOG_V(WARNING, TAG, "[Encoding Type] : %d", prevCred->privateData.encoding);
-            OIC_LOG(WARNING, TAG, "[Private Data] : ");
-            OIC_LOG_BUFFER(WARNING, TAG, prevCred->privateData.data, prevCred->privateData.len);
+            OIC_LOG(DEBUG, TAG, "[Private Data] : ");
+            OIC_LOG_BUFFER(DEBUG, TAG, prevCred->privateData.data, prevCred->privateData.len);
             OIC_LOG(WARNING, TAG, "Previous OwnerPSK will be removed.");
 
             res = RemoveCredentialByCredId(credId);
