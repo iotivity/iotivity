@@ -521,6 +521,7 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
         OicSecCred_t *cred = GenerateCredential(&selectedDeviceInfo->doxm->deviceID,
                                   SYMMETRIC_PAIR_WISE_KEY, NULL,
                                   &ownerKey, &ownerDeviceID, NULL);
+        OICClearMemory(ownerPSK, sizeof(ownerPSK));
         VERIFY_NON_NULL(TAG, cred, ERROR);
 
         // TODO: Added as workaround. Will be replaced soon.

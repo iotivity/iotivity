@@ -72,6 +72,7 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
     res = OC_STACK_OK;
 
 exit:
+    OICClearMemory(privData, privDataKeySize);
     OICFree(privData);
 
     if(res != OC_STACK_OK)

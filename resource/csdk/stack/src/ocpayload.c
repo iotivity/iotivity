@@ -1644,6 +1644,7 @@ void OCSecurityPayloadDestroy(OCSecurityPayload* payload)
         return;
     }
 
+    OICClearMemory(payload->securityData, payload->payloadSize);
     OICFree(payload->securityData);
     OICFree(payload);
 }

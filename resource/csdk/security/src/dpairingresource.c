@@ -154,6 +154,7 @@ OCStackResult SavePairingPSK(OCDevAddr *endpoint,
         OicSecCred_t *cred = GenerateCredential(peerDevID,
                 SYMMETRIC_PAIR_WISE_KEY, NULL,
                 &pairingKey, owner, NULL);
+        OICClearMemory(pairingPSK, sizeof(pairingPSK));
         VERIFY_NON_NULL(TAG, cred, ERROR);
 
         res = AddCredential(cred);

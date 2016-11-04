@@ -215,6 +215,7 @@ static void FreeCred(OicSecCred_t *cred)
 #endif /* __WITH_DTLS__ ||  __WITH_TLS__*/
 
     //Clean PrivateData
+    OICClearMemory(cred->privateData.data, cred->privateData.len);
     OICFree(cred->privateData.data);
 
     //Clean Period
@@ -1287,6 +1288,7 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
             {
                 ret = true;
             }
+            OICClearMemory(payload, size);
             OICFree(payload);
         }
     }
@@ -1671,6 +1673,8 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
 {
     //Derive OwnerPSK locally
     const char* oxmLabel = GetOxmString(doxm->oxmSel);
+    char* b64Buf = NULL;
+    size_t b64BufSize = 0;
     VERIFY_NON_NULL(TAG, oxmLabel, ERROR);
 
     uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = {0};
@@ -1679,6 +1683,7 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
         doxm->owner.id, sizeof(doxm->owner.id),
         doxm->deviceID.id, sizeof(doxm->deviceID.id),
         ownerPSK, OWNER_PSK_LENGTH_128);
+    OICClearMemory(ownerPSK, sizeof(ownerPSK));
     VERIFY_SUCCESS(TAG, pskRet == CA_STATUS_OK, ERROR);
 
     OIC_LOG(DEBUG, TAG, "OwnerPSK dump :");
@@ -1696,18 +1701,23 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
     }
     else if(OIC_ENCODING_BASE64 == receviedCred->privateData.encoding)
     {
+        B64Result b64res = B64_OK;
         uint32_t b64OutSize = 0;
-        size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
-        char* b64Buf = OICCalloc(1, b64BufSize);
+        b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
+        b64Buf = OICCalloc(1, b64BufSize);
         VERIFY_NON_NULL(TAG, b64Buf, ERROR);
 
-        b64Encode(ownerPSK, OWNER_PSK_LENGTH_128, b64Buf, b64BufSize, &b64OutSize);
+        b64res = b64Encode(ownerPSK, OWNER_PSK_LENGTH_128, b64Buf, b64BufSize, &b64OutSize);
+        VERIFY_SUCCESS(TAG, B64_OK == b64res, ERROR);
 
         receviedCred->privateData.data = (uint8_t *)OICCalloc(1, b64OutSize + 1);
         VERIFY_NON_NULL(TAG, receviedCred->privateData.data, ERROR);
         receviedCred->privateData.len = b64OutSize;
         strncpy((char*)receviedCred->privateData.data, b64Buf, b64OutSize);
         receviedCred->privateData.data[b64OutSize] = '\0';
+        OICClearMemory(b64Buf, b64BufSize);
+        OICFree(b64Buf);
+        b64Buf = NULL;
     }
     else
     {
@@ -1721,6 +1731,8 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
             receviedCred->credType == SYMMETRIC_PAIR_WISE_KEY);
 exit:
     //receviedCred->privateData.data will be deallocated when deleting credential.
+    OICClearMemory(b64Buf, b64BufSize);
+    OICFree(b64Buf);
     return false;
 }
 
@@ -2078,6 +2090,7 @@ static OCEntityHandlerResult HandleGetRequest (const OCEntityHandlerRequest * eh
     //Send payload to request originator
     ehRet = ((SendSRMResponse(ehRequest, ehRet, payload, size)) == OC_STACK_OK) ?
                        OC_EH_OK : OC_EH_ERROR;
+    OICClearMemory(payload, size);
     OICFree(payload);
     return ehRet;
 }
@@ -2215,6 +2228,7 @@ OCStackResult InitCredResource()
 
     //Instantiate 'oic.sec.cred'
     ret = CreateCredResource();
+    OICClearMemory(data, size);
     OICFree(data);
     return ret;
 }
@@ -2558,6 +2572,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
 
     cred = GenerateCredential(tmpSubject, credType, NULL,
                               &privKey, rownerID, NULL);
+    OICClearMemory(privData, sizeof(privData));
     if(NULL == cred)
     {
         OIC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to generate credential");
