@@ -94,6 +94,7 @@ void printMenu()
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     std::cout << "  13. Save the Trust Cert. Chain into Cred of SVR"<<std::endl;
     std::cout << "  14. Provision the Trust Cert. Chain"<<std::endl;
+    std::cout << "  15. Read trust cert chain"<<std::endl;
 #endif // __WITH_DTLS__ || __WITH_TLS__
     std::cout << "  99. Exit loop"<<std::endl;
 }
@@ -1308,6 +1309,27 @@ int main(void)
                         {
                             ask = 1;
                             std::cout <<"provision cert is failed"<< std::endl;
+                        }
+                        break;
+                    }
+                case 15:
+                    {
+                        if (0==g_credId)
+                        {
+                            std::cout<<"please save cert using option 13.";
+                        }
+                        else
+                        {
+                            uint8_t *trustCertChain = NULL;
+                            size_t chainSize = 0;
+                            if (OC_STACK_OK != OCSecure::readTrustCertChain(g_credId, &trustCertChain,&chainSize))
+                            {
+                                std::cout <<"issue in read trust chain"<< std::endl;
+                            }
+                            else
+                            {
+                                std::cout<<"size of cert : "<<chainSize<<std::endl;
+                            }
                         }
                         break;
                     }
