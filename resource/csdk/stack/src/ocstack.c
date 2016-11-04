@@ -2507,7 +2507,27 @@ static OCStackResult ParseRequestUri(const char *fullUri,
         {
             return OC_STACK_NO_MEMORY;
         }
-        OICStrcpyPartial(da->addr, sizeof(da->addr), start, len);
+
+        // Decode address per RFC 6874.
+        char *percent = strchr(start, '%');
+        if (!percent || (percent > end))
+        {
+            OICStrcpyPartial(da->addr, sizeof(da->addr), start, len);
+        }
+        else
+        {
+            if (percent[1] != '2' || percent[2] != '5')
+            {
+                OICFree(*devAddr);
+                return OC_STACK_INVALID_URI;
+            }
+
+            int addrlen = percent - start + 1;
+            OICStrcpyPartial(da->addr, sizeof(da->addr), start, addrlen);
+            OICStrcpyPartial(da->addr + addrlen, sizeof(da->addr) - addrlen,
+                             percent + 3, end - percent - 3);
+        }
+
         da->port = port;
         da->adapter = adapter;
         da->flags = flags;
