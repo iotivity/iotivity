@@ -543,11 +543,6 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
         OICFree(strUuid);
         strUuid  = NULL;
-
-        if (roParsed)
-        {
-            *roParsed = true;
-        }
     }
     else
     {
@@ -872,6 +867,9 @@ static void updateWriteableProperty(const OicSecDoxm_t* src, OicSecDoxm_t* dst)
 
         //update rowner
         memcpy(&(dst->rownerID), &(src->rownerID), sizeof(OicUuid_t));
+
+        //update deviceuuid
+        memcpy(&(dst->deviceID), &(src->deviceID), sizeof(OicUuid_t));
 
         //Update owned status
         if(dst->owned != src->owned)
