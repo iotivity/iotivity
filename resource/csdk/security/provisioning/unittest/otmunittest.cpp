@@ -664,11 +664,11 @@ TEST(ProvisonPreconfiguredPIN, NullParam)
     OCStackResult result = OC_STACK_OK;
 
     g_doneCB = false;
-    result = OCProvisionPreconfPin(NULL, g_motEnabledDevices, "12341234", strlen("12341234"), provisionPreconfiguredPinCB);
+    result = OCProvisionPreconfigPin(NULL, g_motEnabledDevices, "12341234", strlen("12341234"), provisionPreconfiguredPinCB);
     EXPECT_EQ(OC_STACK_OK, result);
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionPreconfPin callback error");
+        OIC_LOG(ERROR, TAG, "OCProvisionPreconfigPin callback error");
         return;
     }
 
