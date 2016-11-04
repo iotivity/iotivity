@@ -1095,7 +1095,7 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         }
 
         ep[j].adapter = CA_ADAPTER_TCP;
-        ep[j].ifindex = 0;
+        ep[j].ifindex = ifitem->index;
 
         if (ifitem->family == AF_INET6)
         {
