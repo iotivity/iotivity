@@ -792,13 +792,14 @@ void deleteResource()
     if (g_createdResourceList.size() != 0)
     {
 
-        for (unsigned int i = 0; i < g_createdResourceList.size(); i++)
+        for (auto resource : g_createdResourceList)
         {
-            result = g_createdResourceList[i]->stopResource();
+            result = resource->stopResource();
             if (result == OC_STACK_OK)
             {
                 cout << "Successfully stopped Resource with URI: "
-                        << g_createdResourceList[i]->getUri() << endl;
+                        << resource->getUri() << endl;
+                delete resource;
             }
         }
     }
