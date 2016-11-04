@@ -451,6 +451,18 @@ OCStackResult OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16
  */
 OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
                                         OicEncodingType_t encodingType, uint16_t *credId);
+/**
+ * function to register callback, for getting notification for TrustCertChain change.
+ *
+ * @param[in] TrustCertChainChangeCB notifier callback function
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCRegisterTrustCertChainNotifier(void *cb, TrustCertChainChangeCB CB);
+
+/**
+ * function to de-register TrustCertChain notification callback.
+ */
+void OCRemoveTrustCertChainNotifier(void);
 
 /*
  * Function to read Trust certificate chain from SVR.

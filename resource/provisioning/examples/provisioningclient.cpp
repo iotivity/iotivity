@@ -846,6 +846,12 @@ static int saveTrustCert(void)
 
     return 0;
 }
+
+void certChainCallBack(uint16_t credId, uint8_t *trustCertChain,size_t chainSize)
+{
+    OIC_LOG_V(INFO, TAG, "trustCertChain Changed for credId %u", credId);
+    return;
+}
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
 int main(void)
@@ -1287,10 +1293,14 @@ int main(void)
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
                 case 13:
                     {
+                        std::cout<< "registering cert chain change notifier"<<std::endl;
+                        OCSecure::registerTrustCertChangeNotifier(certChainCallBack);
                         if(saveTrustCert())
                         {
                             std::cout<<"Error in saving cert"<<std::endl;
                         }
+                        std::cout<< "Unregister notifier"<<std::endl;
+                        OCSecure::removeTrustCertChangeNotifier();
                         break;
                     }
                 case 14:

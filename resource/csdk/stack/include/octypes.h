@@ -1694,6 +1694,28 @@ typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
 typedef void (*OCDirectPairingCB)(void *ctx, OCDPDev_t *peer, OCStackResult result);
 //#endif // DIRECT_PAIRING
 
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+/**
+ * Callback function definition for Change in TrustCertChain
+ *
+ * @param[IN] ctx - user context returned in the callback.
+ * @param[IN] credId - trustCertChain changed for this ID
+ * @param[IN] trustCertChain - trustcertchain binary blob.
+ * @param[IN] chainSize - size of trustchain
+ */
+typedef void (*TrustCertChainChangeCB)(void *ctx, uint16_t credId, uint8_t *trustCertChain,
+        size_t chainSize);
+
+/**
+ * certChain context structure.
+ */
+typedef struct trustCertChainContext
+{
+    TrustCertChainChangeCB callback;
+    void *context;
+} trustCertChainContext_t;
+#endif
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
