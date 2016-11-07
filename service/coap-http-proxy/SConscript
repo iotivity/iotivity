@@ -52,7 +52,7 @@ if with_upstream_libcoap == '1':
     # we manually copy the forked version to where the unforked version is downloaded.
     env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
 else:
-    env.AppendUnique(CPPPATH = ['#resource/csdk/connectivity/lib/libcoap-4.1.1/include')
+    env.AppendUnique(CPPPATH = ['#resource/csdk/connectivity/lib/libcoap-4.1.1/include'])
 
 local_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'coap'])
 if target_os not in ['windows']:
