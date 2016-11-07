@@ -236,16 +236,17 @@ static void socketConnect()
         error("ERROR connecting");
 }
 
-static void CATCPPacketSendCB(CAEndpoint_t *, const void *buf, uint32_t buflen)
+static ssize_t CATCPPacketSendCB(CAEndpoint_t *, const void *buf, size_t buflen)
 {
     int n;
     n = write(sockfd, buf, buflen);
     if (n < 0)
          error("ERROR writing to socket");
+    return n;
 }
 
-char msg[256] = {0}; int msglen = 0;
-static void CATCPPacketReceivedCB(const CASecureEndpoint_t *, const void *data, uint32_t dataLength)
+char msg[256] = {0}; size_t msglen = 0;
+static void CATCPPacketReceivedCB(const CASecureEndpoint_t *, const void *data, size_t dataLength)
 {
     memcpy(msg, data, dataLength);
     msglen = dataLength;
@@ -314,15 +315,16 @@ static void socketOpen_server()
           error("\nERROR on accept");
 }
 
-static void CATCPPacketSendCB_server(CAEndpoint_t *, const void *buf, uint32_t buflen)
+static ssize_t CATCPPacketSendCB_server(CAEndpoint_t *, const void *buf, size_t buflen)
 {
     int n;
     n = write(newsockfd,buf,buflen);
     if (n < 0)
          error("ERROR writing to socket");
+    return n;
 }
 
-static void CATCPPacketReceivedCB_server(const CASecureEndpoint_t *, const void *data, uint32_t dataLength)
+static void CATCPPacketReceivedCB_server(const CASecureEndpoint_t *, const void *data, size_t dataLength)
 {
     memcpy(msg, data, dataLength);
     msglen = dataLength;
@@ -1242,7 +1244,7 @@ unsigned char predictedClientHello[] = {
 };
 static unsigned char controlBuf[sizeof(predictedClientHello)];
 static char controlBufLen = 0;
-static void CATCPPacketSendCB_forInitHsTest(CAEndpoint_t *, const void * buf, uint32_t buflen)
+static ssize_t CATCPPacketSendCB_forInitHsTest(CAEndpoint_t *, const void * buf, size_t buflen)
 {
     int n;
     n = write(sockfd, buf, buflen);
@@ -1252,6 +1254,7 @@ static void CATCPPacketSendCB_forInitHsTest(CAEndpoint_t *, const void * buf, ui
     memset(controlBuf, 0, sizeof(predictedClientHello));
     memcpy(controlBuf, buf, buflen);
     controlBufLen = buflen;
+    return buflen;
 }
 
 static void * test0CAinitiateSslHandshake(void * arg)
