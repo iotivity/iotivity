@@ -73,6 +73,12 @@ namespace OIC
             FREQUENCY
         };
 
+        enum class CACHE_METHOD
+        {
+            OBSERVE_ONLY,
+            ITERATED_GET
+        };
+
         typedef int CacheID;
 
         typedef std::function<OCStackResult(std::shared_ptr<PrimitiveResource>,
