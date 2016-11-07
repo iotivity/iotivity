@@ -2670,3 +2670,24 @@ OCStackResult SRPGetACLResource(void *ctx, const OCProvisionDev_t *selectedDevic
 
     return OC_STACK_OK;
 }
+
+OCStackResult SRPReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
+                                     size_t *chainSize)
+{
+    OIC_LOG(DEBUG, TAG, "IN SRPReadTrustCertChain");
+
+    OCStackResult res = OC_STACK_ERROR;
+    int secureFlag = 0;
+    OicSecCred_t* credData = GetCredEntryByCredId(credId);
+    if(credData)
+    {
+        res = CredToCBORPayload((const OicSecCred_t*) credData, trustCertChain,
+                                chainSize, secureFlag);
+        if(OC_STACK_OK != res)
+        {
+            OIC_LOG(INFO, TAG, "CredToCBORPayload failed");
+        }
+    }
+    DeleteCredList(credData);
+    return res;
+}

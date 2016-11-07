@@ -452,6 +452,17 @@ OCStackResult OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16
 OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
                                         OicEncodingType_t encodingType, uint16_t *credId);
 
+/*
+ * Function to read Trust certificate chain from SVR.
+ * Caller must free when done using the returned trust certificate
+ * @param[in] credId CredId of trust certificate chain in SVR.
+ * @param[out] trustCertChain Trust certificate chain.
+ * @param[out] chainSize Size of trust certificate chain
+ * @return  OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
+                                     size_t *chainSize);
+
 #endif // __WITH_DTLS__ || __WITH_TLS__
 
 

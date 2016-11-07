@@ -362,6 +362,25 @@ namespace OC
         }
         return result;
     }
+
+    OCStackResult OCSecure::readTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
+                                                 size_t *chainSize)
+    {
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCReadTrustCertChain(credId, trustCertChain, chainSize);
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
 #endif // __WITH_DTLS__ || __WITH_TLS__
 
     void OCSecureResource::callbackWrapper(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)

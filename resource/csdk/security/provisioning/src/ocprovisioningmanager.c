@@ -310,6 +310,12 @@ OCStackResult OCGetACLResource(void* ctx, const OCProvisionDev_t *selectedDevice
     return SRPGetACLResource(ctx, selectedDeviceInfo, resultCallback);
 }
 
+
+OCStackResult OCReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
+                                     size_t *chainSize)
+{
+    return SRPReadTrustCertChain(credId, trustCertChain, chainSize);
+}
 /**
  * function to provision credential to devices.
  *
