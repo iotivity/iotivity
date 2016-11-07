@@ -103,7 +103,7 @@ namespace OIC
             int result = SCENE_CLIENT_BADREQUEST;
             std::string link, id;
 
-            if (eCode == OC_STACK_OK)
+            if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
             {
                 try
                 {
@@ -143,13 +143,13 @@ namespace OIC
             const InternalSetNameCallback &internalCB)
         {
             int result = SCENE_CLIENT_BADREQUEST;
-            if (eCode == OC_STACK_OK)
+
+            if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
             {
                 if (rep.getAttributes().at(SCENE_KEY_NAME).get< std::string >() == name)
                 {
                     result = SCENE_RESPONSE_SUCCESS;
                 }
-
             }
 
             internalCB(result);

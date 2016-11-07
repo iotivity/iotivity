@@ -32,9 +32,10 @@ extern "C"
 
 /**
  * Callback function type for connection status changes delivery.
+ * @param[out]   info           Remote endpoint information.
+ * @param[out]   isConnected    Current connection status info.
  */
-typedef void (*CAConnectionStateChangedCB)(CATransportAdapter_t adapter,
-        const char *remote_address, bool connected);
+typedef void (*CAConnectionStateChangedCB)(const CAEndpoint_t *info, bool isConnected);
 
 /**
  * Callback function type for adapter status changes delivery.
@@ -55,6 +56,17 @@ CAResult_t CARegisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateC
                                            CAConnectionStateChangedCB connStateCB);
 
 /**
+ * Unregister network monitoring callback.
+ * Network status changes are delivered these callback.
+ * @param[in]   adapterStateCB  Adapter state monitoring callback.
+ * @param[in]   connStateCB     Connection state monitoring callback.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
+ */
+CAResult_t CAUnregisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateCB,
+                                             CAConnectionStateChangedCB connStateCB);
+
+/**
  * Set device to handle for auto connection.
  * @param[in]   address         LE address to set.
  *
@@ -69,6 +81,26 @@ CAResult_t CASetAutoConnectionDeviceInfo(const char* address);
  * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED.
  */
 CAResult_t CAUnsetAutoConnectionDeviceInfo(const char* address);
+
+/**
+ * Set the port number to assign .
+ * @param[in]   adapter     Transport adapter information.
+ * @param[in]   flag        Transport flag information.
+ * @param[in]   port        The port number to use.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED.
+ */
+CAResult_t CASetPortNumberToAssign(CATransportAdapter_t adapter,
+                                   CATransportFlags_t flag, uint16_t port);
+
+/**
+ * Get the assigned port number currently.
+ * @param[in]   adapter     Transport adapter information.
+ * @param[in]   flag        Transport flag information.
+ *
+ * @return  assigned port number information.
+ */
+uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_t flag);
 
 #ifdef __JAVA__
 #ifdef __ANDROID__
@@ -90,7 +122,7 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context);
  * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
  */
 CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm);
-#endif
+#endif //_ANDROID__
 
 /**
  * terminate util client for android
@@ -125,11 +157,21 @@ CAResult_t CAUtilCreateBond(JNIEnv *env, jobject device);
  * @param[in]  listener         callback listener
  */
 void CAUtilSetFoundDeviceListener(jobject listener);
-#endif
+
+/**
+ * set interval time and working count for LE scan.
+ * @param[in]  intervalTime         interval time(Seconds).
+ * @param[in]  workingCount         working cycle for selected interval time.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
+ */
+CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount);
+
+#endif //__JAVA__
 
 #ifdef __cplusplus
 } /* extern "C" */
-#endif
+#endif //__cplusplus
 
 #endif /* CA_UTILS_INTERFACE_H_ */
 

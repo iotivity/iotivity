@@ -40,6 +40,8 @@ import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
 
+import java.util.Arrays;
+
 /**
  * This sample demonstrates platform and device discovery feature.
  * The server sets the platform and device related info. which can be later retrieved by a client.
@@ -61,7 +63,11 @@ public class DeviceDiscoveryServer extends Activity {
         msg("Configuring platform.");
         OcPlatform.Configure(platformConfig);
 
-        OcDeviceInfo deviceInfo = new OcDeviceInfo("myDeviceName");
+        OcDeviceInfo deviceInfo = new OcDeviceInfo(
+                "myDeviceName",
+                Arrays.asList(new String[]{"oic.d.phone"})
+        );
+
         try {
             msg("Registering device info");
             OcPlatform.registerDeviceInfo(deviceInfo);

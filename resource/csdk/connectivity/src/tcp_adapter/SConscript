@@ -19,6 +19,8 @@ if target_os in ['linux', 'tizen', 'android']:
     common_files = [
         os.path.join(src_dir, 'catcpadapter.c'),
         os.path.join(src_dir, 'catcpserver.c') ]
+else :
+    common_files = [os.path.join(src_dir, 'catcpadapter.c')]
 
 # Get list of target-specific source file base names, i.e. no parent
 # directories prepended to the path.
@@ -42,6 +44,6 @@ target_files = [ os.path.join(src_dir, target_os, f) for f in target_files ]
 
 # Source files to build for Linux-like platforms
 
-# The list of BLE adapter source files is a combination of both the
+# The list of TCP adapter source files is a combination of both the
 # common and target-specific source file lists.
 env.AppendUnique(CA_SRC = common_files + target_files)

@@ -23,6 +23,7 @@
 /// server in a separate thread, and running 2 clients in each thread.
 ///
 
+#include "iotivity_config.h"
 
 #include <memory>
 #include <iostream>
@@ -33,6 +34,11 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
+
 using namespace OC;
 
 static std::ostringstream requestURI;

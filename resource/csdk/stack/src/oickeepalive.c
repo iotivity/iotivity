@@ -356,7 +356,7 @@ OCStackResult HandleKeepAliveGETRequest(const CAEndpoint_t* endPoint,
     SendDirectStackResponse(endPoint, requestInfo->info.messageId, result, requestInfo->info.type,
                             requestInfo->info.numOptions, requestInfo->info.options,
                             requestInfo->info.token, requestInfo->info.tokenLength,
-                            requestInfo->info.resourceUri);
+                            requestInfo->info.resourceUri, CA_RESPONSE_DATA);
 
     return OC_STACK_OK;
 }
@@ -392,13 +392,14 @@ OCStackResult HandleKeepAlivePUTRequest(const CAEndpoint_t* endPoint,
     OIC_LOG_V(DEBUG, TAG, "Received interval is [%d]", entry->interval);
     entry->timeStamp = OICGetCurrentTime(TIME_IN_US);
 
-    // Send response message.
-    SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_VALID, requestInfo->info.type,
-                            requestInfo->info.numOptions, requestInfo->info.options,
-                            requestInfo->info.token, requestInfo->info.tokenLength,
-                            requestInfo->info.resourceUri);
+    OCPayloadDestroy(ocPayload);
 
-    return OC_STACK_OK;
+    // Send response message.
+    return SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_CHANGED,
+                                   requestInfo->info.type, requestInfo->info.numOptions,
+                                   requestInfo->info.options, requestInfo->info.token,
+                                   requestInfo->info.tokenLength, requestInfo->info.resourceUri,
+                                   CA_RESPONSE_DATA);
 }
 
 OCStackResult HandleKeepAliveResponse(const CAEndpoint_t *endPoint,
@@ -468,7 +469,8 @@ void ProcessKeepAlive()
 
     for (uint32_t i = 0; i < len; i++)
     {
-        KeepAliveEntry_t *entry = u_arraylist_get(g_keepAliveConnectionTable, i);
+        KeepAliveEntry_t *entry = (KeepAliveEntry_t *)u_arraylist_get(g_keepAliveConnectionTable,
+                                                                      i);
         if (NULL == entry)
         {
             continue;
@@ -530,8 +532,8 @@ void IncreaseInterval(KeepAliveEntry_t *entry)
 {
     VERIFY_NON_NULL_NR(entry, FATAL);
 
-    OIC_LOG_V(DEBUG, TAG, "Total interval counts: %d", entry->intervalSize);
-    if (entry->intervalSize > entry->currIndex + 1)
+    OIC_LOG_V(DEBUG, TAG, "Total interval counts: %zu", entry->intervalSize);
+    if (entry->intervalSize > (size_t)entry->currIndex + 1)
     {
         entry->currIndex++;
         entry->interval = entry->intervalInfo[entry->currIndex];
@@ -547,8 +549,16 @@ OCStackResult SendDisconnectMessage(const KeepAliveEntry_t *entry)
      * Send empty message to disconnect a connection.
      * If CA get the empty message from RI, CA will disconnect a connection.
      */
+
+    OCStackResult result = RemoveKeepAliveEntry(&entry->remoteAddr);
+    if (result != OC_STACK_OK)
+    {
+        return result;
+    }
+
     CARequestInfo_t requestInfo = { .method = CA_PUT };
-    return CASendRequest(&entry->remoteAddr, &requestInfo);
+    result = CASendRequest(&entry->remoteAddr, &requestInfo);
+    return CAResultToOCResult(result);
 }
 
 OCStackResult SendPingMessage(KeepAliveEntry_t *entry)
@@ -556,7 +566,7 @@ OCStackResult SendPingMessage(KeepAliveEntry_t *entry)
     VERIFY_NON_NULL(entry, FATAL, OC_STACK_INVALID_PARAM);
 
     // Send ping message.
-    OCCallbackData pingData = { .cb = PingRequestCallback };
+    OCCallbackData pingData = { .context = NULL, .cb = PingRequestCallback };
     OCDevAddr devAddr = { .adapter = OC_ADAPTER_TCP };
     CopyEndpointToDevAddr(&(entry->remoteAddr), &devAddr);
 
@@ -569,8 +579,14 @@ OCStackResult SendPingMessage(KeepAliveEntry_t *entry)
     payload->base.type = PAYLOAD_TYPE_REPRESENTATION;
     OCRepPayloadSetPropInt(payload, INTERVAL, entry->interval);
 
-    OCDoResource(NULL, OC_REST_PUT, KEEPALIVE_RESOURCE_URI, &devAddr,
-                 (OCPayload *) payload, CT_ADAPTER_TCP, OC_LOW_QOS, &pingData, NULL, 0);
+    OCStackResult result = OCDoResource(NULL, OC_REST_PUT, KEEPALIVE_RESOURCE_URI, &devAddr,
+                                        (OCPayload *) payload, CT_ADAPTER_TCP, OC_LOW_QOS,
+                                        &pingData, NULL, 0);
+    if (OC_STACK_OK != result)
+    {
+        OIC_LOG(ERROR, TAG, "OCDoResource has failed");
+        return result;
+    }
 
     // Update timeStamp with time sent ping message for next ping message.
     entry->timeStamp = OICGetCurrentTime(TIME_IN_US);
@@ -615,7 +631,8 @@ KeepAliveEntry_t *GetEntryFromEndpoint(const CAEndpoint_t *endpoint, uint32_t *i
 
     for (uint32_t i = 0; i < len; i++)
     {
-        KeepAliveEntry_t *entry = u_arraylist_get(g_keepAliveConnectionTable, i);
+        KeepAliveEntry_t *entry = (KeepAliveEntry_t *)u_arraylist_get(g_keepAliveConnectionTable,
+                                                                      i);
         if (NULL == entry)
         {
             continue;
@@ -659,7 +676,7 @@ KeepAliveEntry_t *AddKeepAliveEntry(const CAEndpoint_t *endpoint, OCMode mode,
     entry->timeStamp = OICGetCurrentTime(TIME_IN_US);
     entry->remoteAddr.adapter = endpoint->adapter;
     entry->remoteAddr.flags = endpoint->flags;
-    entry->remoteAddr.interface = endpoint->interface;
+    entry->remoteAddr.ifindex = endpoint->ifindex;
     entry->remoteAddr.port = endpoint->port;
     strncpy(entry->remoteAddr.addr, endpoint->addr, sizeof(entry->remoteAddr.addr));
 
@@ -699,7 +716,8 @@ OCStackResult RemoveKeepAliveEntry(const CAEndpoint_t *endpoint)
         return OC_STACK_ERROR;
     }
 
-    KeepAliveEntry_t *removedEntry = u_arraylist_remove(g_keepAliveConnectionTable, index);
+    KeepAliveEntry_t *removedEntry = (KeepAliveEntry_t *)
+                                        u_arraylist_remove(g_keepAliveConnectionTable, index);
     if (NULL == removedEntry)
     {
         OIC_LOG(ERROR, TAG, "Removed Entry is NULL");
@@ -716,31 +734,36 @@ OCStackResult RemoveKeepAliveEntry(const CAEndpoint_t *endpoint)
     return OC_STACK_OK;
 }
 
-void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint)
+void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint, bool isConnected)
 {
     VERIFY_NON_NULL_NR(endpoint, FATAL);
 
-    OIC_LOG(DEBUG, TAG, "Received the connected device information from CA");
-
-    // Send discover message to find ping resource
-    OCCallbackData pingData = { .cb = PingRequestCallback };
-    OCDevAddr devAddr = { .adapter = OC_ADAPTER_TCP };
-    CopyEndpointToDevAddr(endpoint, &devAddr);
-
-    OCDoResource(NULL, OC_REST_DISCOVER, KEEPALIVE_RESOURCE_URI, &devAddr, NULL,
-                 OC_ADAPTER_TCP, OC_HIGH_QOS, &pingData, NULL, 0);
-}
-
-void HandleKeepAliveDisconnCB(const CAEndpoint_t *endpoint)
-{
-    VERIFY_NON_NULL_NR(endpoint, FATAL);
-
-    OIC_LOG(DEBUG, TAG, "Received the disconnected device information from CA");
-
-    OCStackResult result = RemoveKeepAliveEntry(endpoint);
-    if(result != OC_STACK_OK)
+    if (isConnected)
     {
-        OIC_LOG(ERROR, TAG, "Failed to remove entry");
-        return;
+        OIC_LOG(DEBUG, TAG, "Received the connected device information from CA");
+
+        // Send discover message to find ping resource
+        OCCallbackData pingData = {.context = NULL, .cb = PingRequestCallback };
+        OCDevAddr devAddr = { .adapter = OC_ADAPTER_TCP };
+        CopyEndpointToDevAddr(endpoint, &devAddr);
+
+        OCStackResult result = OCDoResource(NULL, OC_REST_DISCOVER, KEEPALIVE_RESOURCE_URI,
+                                            &devAddr, NULL, CT_ADAPTER_TCP, OC_HIGH_QOS,
+                                            &pingData, NULL, 0);
+        if (OC_STACK_OK != result)
+        {
+            OIC_LOG(ERROR, TAG, "OCDoResource has failed");
+            return;
+        }
+    }
+    else
+    {
+        OIC_LOG(DEBUG, TAG, "Received the disconnected device information from CA");
+
+        OCStackResult result = RemoveKeepAliveEntry(endpoint);
+        if(result != OC_STACK_OK)
+        {
+            return;
+        }
     }
 }

@@ -1,6 +1,6 @@
 diff -rupN RBL_nRF8001_old/RBL_nRF8001.cpp RBL_nRF8001/RBL_nRF8001.cpp
---- RBL_nRF8001_old/RBL_nRF8001.cpp	2016-02-01 16:05:03.759472495 +0530
-+++ RBL_nRF8001/RBL_nRF8001.cpp	2016-02-01 16:05:44.623472629 +0530
+--- RBL_nRF8001_old/RBL_nRF8001.cpp	2015-01-13 12:25:32.000000000 +0530
++++ RBL_nRF8001/RBL_nRF8001.cpp	2015-01-13 12:40:41.740244741 +0530
 @@ -22,7 +22,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOU
  #endif
  
@@ -123,8 +123,8 @@ diff -rupN RBL_nRF8001_old/RBL_nRF8001.cpp RBL_nRF8001/RBL_nRF8001.cpp
 +    lib_aci_radio_reset();
 +}
 diff -rupN RBL_nRF8001_old/RBL_nRF8001.h RBL_nRF8001/RBL_nRF8001.h
---- RBL_nRF8001_old/RBL_nRF8001.h	2016-02-01 16:04:50.975472453 +0530
-+++ RBL_nRF8001/RBL_nRF8001.h	2016-02-01 16:05:52.511472655 +0530
+--- RBL_nRF8001_old/RBL_nRF8001.h	2015-01-13 12:25:32.000000000 +0530
++++ RBL_nRF8001/RBL_nRF8001.h	2015-01-13 12:40:41.740244741 +0530
 @@ -48,6 +48,8 @@ void ble_set_pins(uint8_t reqn, uint8_t
  unsigned char ble_busy();
  void ble_reset(uint8_t reset_pin);
@@ -135,8 +135,8 @@ diff -rupN RBL_nRF8001_old/RBL_nRF8001.h RBL_nRF8001/RBL_nRF8001.h
  #endif
  
 diff -rupN RBL_nRF8001_old/RBL_nRF8001.xml RBL_nRF8001/RBL_nRF8001.xml
---- RBL_nRF8001_old/RBL_nRF8001.xml	2016-02-01 16:04:47.047472440 +0530
-+++ RBL_nRF8001/RBL_nRF8001.xml	2016-02-01 16:05:32.359472589 +0530
+--- RBL_nRF8001_old/RBL_nRF8001.xml	2015-01-14 01:52:26.000000000 +0530
++++ RBL_nRF8001/RBL_nRF8001.xml	2015-07-21 14:27:18.000000000 +0530
 @@ -5,10 +5,10 @@
      <Device>nRF8001_Dx</Device>
      <Service Type="local" PrimaryService="true">
@@ -150,24 +150,7 @@ diff -rupN RBL_nRF8001_old/RBL_nRF8001.xml RBL_nRF8001/RBL_nRF8001.xml
              <DefaultValue></DefaultValue>
              <UsePresentationFormat>0</UsePresentationFormat>
              <MaxDataLength>20</MaxDataLength>
-@@ -16,21 +16,21 @@
-             <ForceOpen>false</ForceOpen>
-             <ForceEncryption>false</ForceEncryption>
-             <Properties>
--                <WriteWithoutResponse>true</WriteWithoutResponse>
--                <Write>false</Write>
-+                <WriteWithoutResponse>false</WriteWithoutResponse>
-+                <Write>true</Write>
-                 <Notify>false</Notify>
-                 <Indicate>false</Indicate>
-                 <Broadcast>false</Broadcast>
-             </Properties>
-             <SetPipe>false</SetPipe>
--            <AckIsAuto>false</AckIsAuto>
-+            <AckIsAuto>true</AckIsAuto>
-             <PresentationFormatDescriptor Value="0000" Exponent="0" Format="1" NameSpace="01" Unit="0000"/>
-             <PeriodForReadingThisCharacteristic>0</PeriodForReadingThisCharacteristic>
-             <PeriodForProperties/>
+@@ -30,7 +30,7 @@
          </Characteristic>
          <Characteristic>
              <Name>UART TX</Name>
@@ -186,30 +169,8 @@ diff -rupN RBL_nRF8001_old/RBL_nRF8001.xml RBL_nRF8001/RBL_nRF8001.xml
          <CustomAdTypes>
              <AdType index="1">
 diff -rupN RBL_nRF8001_old/RBL_services.h RBL_nRF8001/RBL_services.h
---- RBL_nRF8001_old/RBL_services.h	2016-02-01 16:05:08.527472511 +0530
-+++ RBL_nRF8001/RBL_services.h	2016-02-01 16:05:38.391472608 +0530
-@@ -21,9 +21,9 @@
- #define PIPE_GATT_SERVICE_CHANGED_TX_ACK          2
- #define PIPE_GATT_SERVICE_CHANGED_TX_ACK_MAX_SIZE 4
- 
--/* Service: UART over BTLE - Characteristic: UART RX - Pipe: RX */
--#define PIPE_UART_OVER_BTLE_UART_RX_RX          3
--#define PIPE_UART_OVER_BTLE_UART_RX_RX_MAX_SIZE 20
-+/* Service: UART over BTLE - Characteristic: UART RX - Pipe: RX_ACK_AUTO */
-+#define PIPE_UART_OVER_BTLE_UART_RX_RX_ACK_AUTO          3
-+#define PIPE_UART_OVER_BTLE_UART_RX_RX_ACK_AUTO_MAX_SIZE 20
- 
- /* Service: UART over BTLE - Characteristic: UART TX - Pipe: TX */
- #define PIPE_UART_OVER_BTLE_UART_TX_TX          4
-@@ -39,7 +39,7 @@
- #define SERVICES_PIPE_TYPE_MAPPING_CONTENT {\
-   {ACI_STORE_LOCAL, ACI_SET},   \
-   {ACI_STORE_LOCAL, ACI_TX_ACK},   \
--  {ACI_STORE_LOCAL, ACI_RX},   \
-+  {ACI_STORE_LOCAL, ACI_RX_ACK_AUTO},   \
-   {ACI_STORE_LOCAL, ACI_TX},   \
-   {ACI_STORE_LOCAL, ACI_SET},   \
- }
+--- RBL_nRF8001_old/RBL_services.h	2015-01-14 01:52:26.000000000 +0530
++++ RBL_nRF8001/RBL_services.h	2015-07-17 15:22:22.000000000 +0530
 @@ -49,7 +49,7 @@
  #define GAP_PPCP_SLAVE_LATENCY 0
  #define GAP_PPCP_CONN_TIMEOUT 0xa /** Connection Supervision timeout multiplier as a multiple of 10msec, 0xFFFF means no specific value requested */
@@ -248,7 +209,7 @@ diff -rupN RBL_nRF8001_old/RBL_services.h RBL_nRF8001/RBL_services.h
          {\
 -            0x1f,0x06,0x20,0xa8,0x3e,0x50,0x00,0x00,0x3d,0x71,0x04,0x04,0x13,0x13,0x00,0x0d,0x28,0x03,0x01,0x04,\
 -            0x0e,0x00,0x1e,0x94,0x8d,0xf1,0x48,0x31,0x94,0xba,0x75,0x4c,\
-+            0x1f,0x06,0x20,0xa8,0x84,0xc7,0x29,0xd5,0xe3,0xad,0x04,0x04,0x13,0x13,0x00,0x0d,0x28,0x03,0x01,0x08,\
++            0x1f,0x06,0x20,0xa8,0x84,0xc7,0x29,0xd5,0xe3,0xad,0x04,0x04,0x13,0x13,0x00,0x0d,0x28,0x03,0x01,0x04,\
 +            0x0e,0x00,0x18,0xd2,0x03,0x7f,0x78,0x9d,0xb6,0x90,0x86,0x4b,\
          },\
      },\
@@ -278,7 +239,7 @@ diff -rupN RBL_nRF8001_old/RBL_services.h RBL_nRF8001/RBL_services.h
          {\
              0x1f,0x06,0x40,0x00,0x2a,0x00,0x01,0x00,0x80,0x04,0x00,0x03,0x00,0x00,0x2a,0x05,0x01,0x00,0x04,0x04,\
 -            0x00,0x0a,0x00,0x0b,0x00,0x03,0x02,0x00,0x08,0x04,0x00,0x0e,\
-+            0x00,0x0a,0x00,0x0b,0x33,0x4f,0x03,0x04,0x00,0x04,0x00,0x0e,\
++            0x00,0x0a,0x00,0x0b,0x33,0x4f,0x03,0x00,0x08,0x04,0x00,0x0e,\
          },\
      },\
      {0x00,\
@@ -307,7 +268,7 @@ diff -rupN RBL_nRF8001_old/RBL_services.h RBL_nRF8001/RBL_services.h
      {0x00,\
          {\
 -            0x06,0x06,0xf0,0x00,0x03,0x3d,0x6c,\
-+            0x06,0x06,0xf0,0x00,0x03,0x58,0xa1,\
++            0x06,0x06,0xf0,0x00,0x03,0x2b,0x7e,\
          },\
      },\
  }

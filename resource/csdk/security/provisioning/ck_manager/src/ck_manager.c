@@ -23,6 +23,12 @@
 #include "crlresource.h"
 #include "oic_malloc.h"
 
+#ifdef __unix__
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#endif // __unix__
+
 /* The first octet of the OCTET STRING indicates whether the key is
 compressed or uncompressed.  The uncompressed form is indicated by 0x04
 and the compressed form is indicated by either 0x02 or 0x03 (RFC 5480)*/
@@ -310,14 +316,37 @@ PKIError CKMIssueDeviceCertificate (const uint8_t *uint8SubjectName,
     );
 }
 
-PKIError GenerateDERCertificateFile (const ByteArray *certificate, const char *certFileName)
+PKIError GenerateDERCertificateFile (const ByteArray *certificate, const char * const certFileName)
 {
     FUNCTION_INIT();
+
+#ifdef __unix__
+    struct stat st;
+    int fd = -1;
+#else
     FILE *filePointer = NULL;
+#endif
 
     CHECK_NULL(certFileName, ISSUER_NULL_PASSED);
     CHECK_NULL(certificate, ISSUER_NULL_PASSED);
     CHECK_NULL(certificate->data, ISSUER_NULL_PASSED);
+
+#ifdef __unix__
+    fd = open(certFileName, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+    CHECK_NOT_EQUAL(fd, -1, ISSUER_NULL_PASSED);
+    CHECK_EQUAL(fstat(fd, &st), 0, ISSUER_NULL_PASSED);
+    CHECK_COND(S_ISREG(st.st_mode), ISSUER_FILE_WRITE_ERROR);
+    CHECK_COND(!S_ISLNK(st.st_mode), ISSUER_FILE_WRITE_ERROR);
+    CHECK_EQUAL(write(fd, certificate->data, certificate->len), (ssize_t) certificate->len,
+            ISSUER_FILE_WRITE_ERROR);
+
+    FUNCTION_CLEAR(
+        if(-1 != fd)
+        {
+            close(fd);
+        }
+    );
+#else
     filePointer = fopen(certFileName, "wb");
     CHECK_NULL(filePointer, ISSUER_FILE_WRITE_ERROR);
     CHECK_EQUAL(fwrite(certificate->data, 1, certificate->len, filePointer), certificate->len,
@@ -325,11 +354,13 @@ PKIError GenerateDERCertificateFile (const ByteArray *certificate, const char *c
 
     FUNCTION_CLEAR(
         if(filePointer)
-            {
-                fclose(filePointer);
-            }
+        {
+            fclose(filePointer);
+        }
         filePointer = NULL;
     );
+#endif
+
 }
 
 PKIError SetSerialNumber (const long serNum)

@@ -32,7 +32,7 @@ namespace OIC
 {
     namespace Service
     {
-        BundleResource::BundleResource() : m_pNotiReceiver(nullptr)
+        BundleResource::BundleResource() : m_pNotiReceiver(nullptr), m_resourceAttributes_mutex()
         {
 
         }
@@ -51,7 +51,8 @@ namespace OIC
         {
             std::list< std::string > ret;
 
-            for (auto &it : m_resourceAttributes){
+            for (auto &it : m_resourceAttributes)
+            {
                 ret.push_back(it.key());
             }
 
@@ -81,12 +82,14 @@ namespace OIC
                 m_resourceAttributes[it.key()] = it.value();
             }
 
-            if(notify){
+            if(notify)
+            {
                 // asynchronous notification
                 auto notifyFunc = [](NotificationReceiver *notificationReceiver,
                                         std::string uri)
                 {
-                    if (notificationReceiver){
+                    if (notificationReceiver)
+                    {
                         notificationReceiver->onNotificationReceived(uri);
                     }
                 };
@@ -104,12 +107,14 @@ namespace OIC
             std::lock_guard<std::mutex> lock(m_resourceAttributes_mutex);
             m_resourceAttributes[key] = std::move(value);
 
-            if(notify){
+            if(notify)
+            {
                 // asynchronous notification
                 auto notifyFunc = [](NotificationReceiver *notificationReceiver,
                                         std::string uri)
                 {
-                    if (notificationReceiver){
+                    if (notificationReceiver)
+                    {
                         notificationReceiver->onNotificationReceived(uri);
                     }
                 };

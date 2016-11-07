@@ -65,12 +65,11 @@ typedef void (*CATCPErrorHandleCallback)(const CAEndpoint_t *endpoint, const voi
 /**
   * Callback to notify connection information in the TCP adapter.
   *
-  * @param[in]  addr    connected device address.
-  * @param[in]  port    connected port info.
-  * @param[in]  isConnected    Whether keepalive message needs to be sent.
+  * @param[in]  endpoint        network endpoint description.
+  * @param[in]  isConnected     Whether keepalive message needs to be sent.
   * @see  Callback must be registered using CATCPSetKeepAliveCallback().
  */
-typedef void (*CATCPKeepAliveHandleCallback)(const char *addr, uint16_t port, bool isConnected);
+typedef void (*CATCPConnectionHandleCallback)(const CAEndpoint_t *endpoint, bool isConnected);
 
 /**
  * set error callback to notify error in TCP adapter.
@@ -80,13 +79,41 @@ typedef void (*CATCPKeepAliveHandleCallback)(const char *addr, uint16_t port, bo
  */
 void CATCPSetErrorHandler(CATCPErrorHandleCallback errorHandleCallback);
 
+#ifdef SINGLE_THREAD
+
+CAResult_t CATCPStartServer();
+
+/**
+ * Pull the Received Data.
+ */
+void CATCPPullData();
+
+/**
+ * Get TCP Header Details.
+ * @param[in]    recvBuffer   index of array list.
+ * @param[out]   transport    TCP Server address.
+ * @param[out]   headerlen    TCP Server port.
+ */
+void CAGetTCPHeaderDetails(unsigned char *recvBuffer, coap_transport_t *transport,
+                           size_t *headerlen);
+
+/**
+ * Get total length from CoAP over TCP header.
+ *
+ * @param[in]   recvBuffer    received header data.
+ * @param[in]   size          length of buffer.
+ * @return  total data length
+ */
+size_t CAGetTotalLengthFromPacketHeader(const unsigned char *recvBuffer, size_t size);
+
+#else
 /**
  * set keepalive callback to notify connection information in TCP adapter.
  *
  * @param[in]  keepaliveHandler Callback function to notify the connection information.
  * in the TCP adapter.
  */
-void CATCPSetKeepAliveCallback(CATCPKeepAliveHandleCallback keepaliveHandler);
+void CATCPSetKeepAliveCallback(CAKeepAliveConnectionCallback keepaliveHandler);
 
 /**
  * Start TCP server.
@@ -99,6 +126,8 @@ void CATCPSetKeepAliveCallback(CATCPKeepAliveHandleCallback keepaliveHandler);
  */
 CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool);
 
+#endif
+
 /**
  * Stop TCP server.
  */
@@ -110,6 +139,13 @@ void CATCPStopServer();
  * @param[in]  callback    Callback to be notified on reception of unicast data packets.
  */
 void CATCPSetPacketReceiveCallback(CATCPPacketReceivedCallback callback);
+
+/**
+ * Set this callback for receiving the changed connection information from peer devices.
+ *
+ * @param[in]  connHandler    Callback to be notified when connection state changes.
+ */
+void CATCPSetConnectionChangedCallback(CATCPConnectionHandleCallback connHandler);
 
 /**
  * API to send unicast TCP data.

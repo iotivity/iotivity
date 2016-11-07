@@ -24,7 +24,8 @@
 
 JniOcResourceIdentifier::JniOcResourceIdentifier(OC::OCResourceIdentifier resourceIdentifier)
     : m_resourceIdentifier(resourceIdentifier)
-{}
+{
+}
 
 JniOcResourceIdentifier::~JniOcResourceIdentifier()
 {
@@ -60,10 +61,16 @@ JNIEXPORT jboolean JNICALL Java_org_iotivity_base_OcResourceIdentifier_equalsN
 (JNIEnv *env, jobject jThiz, jobject jOther)
 {
     JniOcResourceIdentifier *thiz = JniOcResourceIdentifier::getJniOcResourceIdentifierPtr(env, jThiz);
-    if (!thiz) return false;
+    if (!thiz)
+    {
+        return false;
+    }
 
     JniOcResourceIdentifier *other = JniOcResourceIdentifier::getJniOcResourceIdentifierPtr(env, jOther);
-    if (!other) return false;
+    if (!other)
+    {
+        return false;
+    }
 
     if (thiz->getOCResourceIdentifier() == other->getOCResourceIdentifier())
     {

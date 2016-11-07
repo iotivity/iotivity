@@ -47,12 +47,20 @@ dtls_ticks(dtls_tick_t *t) {
 }
 
 #else /* WITH_CONTIKI */
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 time_t dtls_clock_offset;
 
 void
 dtls_clock_init(void) {
+#ifdef _WIN32
+  /* Use clock offset in milliseconds */
+  dtls_clock_offset = GetTickCount64();
+#else
 #ifdef HAVE_TIME_H
+  /* Use clock offset in seconds */
   dtls_clock_offset = time(NULL);
 #else
 #  ifdef __GNUC__
@@ -62,9 +70,13 @@ dtls_clock_init(void) {
 #  endif
   dtls_clock_offset = 0;
 #endif
+#endif
 }
 
 void dtls_ticks(dtls_tick_t *t) {
+#ifdef _WIN32
+  *t = ((GetTickCount64() - dtls_clock_offset) * DTLS_TICKS_PER_SECOND / 1000);
+#else
 #ifdef HAVE_SYS_TIME_H
   struct timeval tv;
   gettimeofday(&tv, NULL);
@@ -72,6 +84,7 @@ void dtls_ticks(dtls_tick_t *t) {
     + (tv.tv_usec * DTLS_TICKS_PER_SECOND / 1000000);
 #else
 #error "clock not implemented"
+#endif
 #endif
 }
 

@@ -29,6 +29,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include <array>
+#include "oic_malloc.h"
 #include "ocstack.h"
 #include "logger.h"
 #include "ocpayload.h"
@@ -43,6 +44,9 @@ static int gObserveNotifyType = 3;
 
 int gQuitFlag = 0;
 int gLightUnderObservation = 0;
+
+static GMainLoop *g_mainloop = NULL;
+pthread_t g_thread;
 
 static LightResource Light;
 // This variable determines instance number of the Light resource.
@@ -73,6 +77,8 @@ const char *platformVersion = "myPlatformVersion";
 const char *supportUrl = "mySupportUrl";
 const char *version = "myVersion";
 const char *systemTime = "2015-05-15T11.04";
+const char *specVersion = "myDeviceSpecVersion";
+const char *dataModelVersions = "myDeviceModelVersions";
 
 // Entity handler should check for resourceTypeName and ResourceInterface in order to GET
 // the existence of a known resource
@@ -804,6 +810,8 @@ void DeletePlatformInfo()
 void DeleteDeviceInfo()
 {
     free (deviceInfo.deviceName);
+    free (deviceInfo.specVersion);
+    OCFreeOCStringLL (deviceInfo.dataModelVersions);
 }
 
 bool DuplicateString(char** targetString, const char* sourceString)
@@ -907,9 +915,19 @@ OCStackResult SetPlatformInfo(const char* platformID, const char *manufacturerNa
     return OC_STACK_ERROR;
 }
 
-OCStackResult SetDeviceInfo(const char* deviceName)
+OCStackResult SetDeviceInfo(const char* deviceName, const char* specVersion, const char* dataModelVersions)
 {
     if(!DuplicateString(&deviceInfo.deviceName, deviceName))
+    {
+        return OC_STACK_ERROR;
+    }
+    if(!DuplicateString(&deviceInfo.specVersion, specVersion))
+    {
+        return OC_STACK_ERROR;
+    }
+    OCFreeOCStringLL(deviceInfo.dataModelVersions);
+    deviceInfo.dataModelVersions = OCCreateOCStringLL(dataModelVersions);
+    if (!deviceInfo.dataModelVersions)
     {
         return OC_STACK_ERROR;
     }
@@ -923,11 +941,40 @@ static void PrintUsage()
     cout << "\n-o 1 : Notify list of observers";
 }
 
+void *GMainLoopThread(void *param)
+{
+
+    while (!gQuitFlag)
+    {
+        if (OCProcess() != OC_STACK_OK)
+        {
+            cout << "\nOCStack process error";
+            return NULL;
+        }
+#ifndef ROUTING_GATEWAY
+        sleep(1);
+#endif
+    }
+
+    if (g_mainloop)
+    {
+        g_main_loop_quit(g_mainloop);
+    }
+    return NULL;
+}
+
 int main(int argc, char* argv[])
 {
     pthread_t threadId;
     pthread_t threadId_presence;
     int opt;
+
+    g_mainloop = g_main_loop_new(NULL, FALSE);
+    if(!g_mainloop)
+    {
+        printf("g_main_loop_new failed\n");
+        return 0;
+    }
 
     while ((opt = getopt(argc, argv, "o:")) != -1)
     {
@@ -955,6 +1002,7 @@ int main(int argc, char* argv[])
         cout << "\nOCStack init error";
         return 0;
     }
+
 #ifdef WITH_PRESENCE
     if (OCStartPresence(0) != OC_STACK_OK)
     {
@@ -984,7 +1032,7 @@ int main(int argc, char* argv[])
         exit (EXIT_FAILURE);
     }
 
-    registrationResult = SetDeviceInfo(deviceName);
+    registrationResult = SetDeviceInfo(deviceName, specVersion, dataModelVersions);
 
     if (registrationResult != OC_STACK_OK)
     {
@@ -1035,17 +1083,14 @@ int main(int argc, char* argv[])
 
     signal(SIGINT, handleSigInt);
 
-    while (!gQuitFlag)
+    int result = pthread_create(&g_thread, NULL, GMainLoopThread, (void *)NULL);
+    if (result < 0)
     {
-        if (OCProcess() != OC_STACK_OK)
-        {
-            cout << "\nOCStack process error";
-            return 0;
-        }
-#ifndef ROUTING_GATEWAY
-        sleep(1);
-#endif
+        printf("pthread_create failed in initialize\n");
+        return 0;
     }
+
+    g_main_loop_run(g_mainloop);
 
     /*
      * Cancel the Light thread and wait for it to terminate

@@ -28,7 +28,7 @@
 #ifndef OCTYPES_H_
 #define OCTYPES_H_
 
-#include "platform_features.h"
+#include "iotivity_config.h"
 #include "ocstackconfig.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -64,23 +64,30 @@ extern "C" {
 
 /** Resource Type.*/
 #define OC_RSRVD_RESOURCE_TYPES_URI           "/oic/res/types/d"
-#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
+
 /** Gateway URI.*/
 #define OC_RSRVD_GATEWAY_URI                  "/oic/gateway"
-#endif
-#ifdef WITH_PRESENCE
+
+/** MQ Broker URI.*/
+#define OC_RSRVD_WELL_KNOWN_MQ_URI            "/oic/ps"
+
+
+/** Presence */
 
 /** Presence URI through which the OIC devices advertise their presence.*/
 #define OC_RSRVD_PRESENCE_URI                 "/oic/ad"
 
+/** Presence URI through which the OIC devices advertise their device presence.*/
+#define OC_RSRVD_DEVICE_PRESENCE_URI         "/oic/prs"
+
 /** Sets the default time to live (TTL) for presence.*/
-#define OC_DEFAULT_PRESENCE_TTL_SECONDS (60)
+#define OC_DEFAULT_PRESENCE_TTL_SECONDS       (60)
 
 /** For multicast Discovery mechanism.*/
-#define OC_MULTICAST_DISCOVERY_URI           "/oic/res"
+#define OC_MULTICAST_DISCOVERY_URI            "/oic/res"
 
 /** Separator for multiple query string.*/
-#define OC_QUERY_SEPARATOR                "&;"
+#define OC_QUERY_SEPARATOR                    "&;"
 
 /**
  *  OC_DEFAULT_PRESENCE_TTL_SECONDS sets the default time to live (TTL) for presence.
@@ -94,7 +101,7 @@ extern "C" {
  *  60 sec/min * 60 min/hr * 24 hr/day
  */
 #define OC_MAX_PRESENCE_TTL_SECONDS     (60 * 60 * 24)
-#endif
+
 
 /**
  *  Presence "Announcement Triggers".
@@ -114,6 +121,7 @@ extern "C" {
  */
 
 #define OC_RSRVD_OC                     "oic"
+
 
 /** For payload. */
 
@@ -144,10 +152,20 @@ extern "C" {
 #define OC_RSRVD_RESOURCE_TYPE_PLATFORM "oic.wk.p"
 
 /** To represent resource type with RES.*/
-#define OC_RSRVD_RESOURCE_TYPE_RES    "oic.wk.res"
+#define OC_RSRVD_RESOURCE_TYPE_RES      "oic.wk.res"
+
+/** To represent content type with MQ Broker.*/
+#define OC_RSRVD_RESOURCE_TYPE_MQ_BROKER "oic.wk.ps"
+
+/** To represent content type with MQ Topic.*/
+#define OC_RSRVD_RESOURCE_TYPE_MQ_TOPIC  "oic.wk.ps.topic"
+
 
 /** To represent interface.*/
 #define OC_RSRVD_INTERFACE              "if"
+
+/** To indicate how long RD should publish this item.*/
+#define OC_RSRVD_DEVICE_TTL             "lt"
 
 /** To represent time to live.*/
 #define OC_RSRVD_TTL                    "ttl"
@@ -197,6 +215,9 @@ extern "C" {
 /** Port. */
 #define OC_RSRVD_HOSTING_PORT           "port"
 
+/** TCP Port. */
+#define OC_RSRVD_TCP_PORT               "x.org.iotivity.tcp"
+
 /** For Server instance ID.*/
 #define OC_RSRVD_SERVER_INSTANCE_ID     "sid"
 
@@ -235,7 +256,7 @@ extern "C" {
 #define OC_RSRVD_SUPPORT_URL            "mnsl"
 
 /** System time for the platform. */
-#define OC_RSRVD_SYSTEM_TIME             "st"
+#define OC_RSRVD_SYSTEM_TIME            "st"
 
 /**
  *  Device.
@@ -254,10 +275,10 @@ extern "C" {
 #define OC_RSRVD_DATA_MODEL_VERSION     "dmv"
 
 /** Device specification version.*/
-#define OC_SPEC_VERSION                "core.1.0.0"
+#define OC_SPEC_VERSION                 "core.1.1.0"
 
 /** Device Data Model version.*/
-#define OC_DATA_MODEL_VERSION          "res.1.0.0"
+#define OC_DATA_MODEL_VERSION           "res.1.1.0"
 
 /**
  *  These provide backward compatibility - their use is deprecated.
@@ -265,21 +286,24 @@ extern "C" {
 #ifndef GOING_AWAY
 
 /** Multicast Prefix.*/
-#define OC_MULTICAST_PREFIX                  "224.0.1.187:5683"
+#define OC_MULTICAST_PREFIX             "224.0.1.187:5683"
 
 /** Multicast IP address.*/
-#define OC_MULTICAST_IP                      "224.0.1.187"
+#define OC_MULTICAST_IP                 "224.0.1.187"
 
 /** Multicast Port.*/
-#define OC_MULTICAST_PORT                    5683
+#define OC_MULTICAST_PORT               (5683)
 #endif // GOING_AWAY
 
 /** Max Device address size. */
 #ifdef RA_ADAPTER
 #define MAX_ADDR_STR_SIZE (256)
 #else
-/** Max Address could be "coap+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx]:xxxxx" */
-#define MAX_ADDR_STR_SIZE (59)
+/** Max Address could be
+ * "coaps+tcp://[xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:yyy.yyy.yyy.yyy]:xxxxx"
+ * +1 for null terminator.
+ */
+#define MAX_ADDR_STR_SIZE (66)
 #endif
 
 /** Length of MAC address */
@@ -289,7 +313,7 @@ extern "C" {
 #define MAC_ADDR_BLOCKS (6)
 
 /** Max identity size. */
-#define MAX_IDENTITY_SIZE (32)
+#define MAX_IDENTITY_SIZE (37)
 
 /** Universal unique identity size. */
 #define UUID_IDENTITY_SIZE (128/8)
@@ -304,6 +328,12 @@ extern "C" {
 
 /** RD Discovery bias factor type. */
 #define OC_RSRVD_RD_DISCOVERY_SEL        "sel"
+
+/** Resource URI used to discover Proxy */
+#define OC_RSRVD_PROXY_URI "/oic/chp"
+
+/** Resource URI used to discover Proxy */
+#define OC_RSRVD_PROXY_OPTION_ID 35
 
 /** Base URI. */
 #define OC_RSRVD_BASE_URI                "baseURI"
@@ -324,14 +354,197 @@ extern "C" {
 #define OC_RSRVD_TITLE                   "title"
 
 /** Defines URI. */
-#define OC_RSRVD_URI                     "uri"
+#define OC_RSRVD_URI                     "anchor"
 
 /** Defines media type. */
-#define OC_RSRVD_MEDIA_TYPE              "mt"
+#define OC_RSRVD_MEDIA_TYPE              "type"
 
 /** To represent resource type with Publish RD.*/
-#define OC_RSRVD_RESOURCE_TYPE_RDPUBLISH "oic.wk.rdPub"
+#define OC_RSRVD_RESOURCE_TYPE_RDPUBLISH "oic.wk.rdpub"
 
+/** Cloud Account */
+
+/** Account URI.*/
+#define OC_RSRVD_ACCOUNT_URI               "/oic/account"
+
+/** Account session URI.*/
+#define OC_RSRVD_ACCOUNT_SESSION_URI       "/oic/account/session"
+
+/** Account token refresh URI.*/
+#define OC_RSRVD_ACCOUNT_TOKEN_REFRESH_URI "/oic/account/tokenrefresh"
+
+/** ACL group URI.*/
+#define OC_RSRVD_ACL_GROUP_URI             "/oic/acl/group"
+
+/** ACL invite URI.*/
+#define OC_RSRVD_ACL_INVITE_URI            "/oic/acl/invite"
+
+/** Defines auth provider. */
+#define OC_RSRVD_AUTHPROVIDER              "authprovider"
+
+/** Defines auth code. */
+#define OC_RSRVD_AUTHCODE                  "authcode"
+
+/** Defines access token. */
+#define OC_RSRVD_ACCESS_TOKEN              "accesstoken"
+
+/** Defines login. */
+#define OC_RSRVD_LOGIN                     "login"
+
+/** Defines search. */
+#define OC_RSRVD_SEARCH                    "search"
+
+/** Defines grant type. */
+#define OC_RSRVD_GRANT_TYPE                "granttype"
+
+/** Defines refresh token. */
+#define OC_RSRVD_REFRESH_TOKEN             "refreshtoken"
+
+/** Defines user UUID. */
+#define OC_RSRVD_USER_UUID                 "uid"
+
+/** Defines user ID. */
+#define OC_RSRVD_USER_ID                   "userid"
+
+/** Defines group ID. */
+#define OC_RSRVD_GROUP_ID                  "gid"
+
+/** Defines group Master ID. */
+#define OC_RSRVD_GROUP_MASTER_ID           "gmid"
+
+/** Defines group type. */
+#define OC_RSRVD_GROUP_TYPE                "gtype"
+
+/** Defines member of group ID. */
+#define OC_RSRVD_MEMBER_ID                 "mid"
+
+/** Defines device ID list. */
+#define OC_RSRVD_DEVICE_ID_LIST            "dilist"
+
+/** Defines public. */
+#define OC_RSRVD_PUBLIC                    "Public"
+
+/** Defines private. */
+#define OC_RSRVD_PRIVATE                   "Private"
+
+/** Defines invite. */
+#define OC_RSRVD_INVITE                    "invite"
+
+/** To represent grant type with refresh token. */
+#define OC_RSRVD_GRANT_TYPE_REFRESH_TOKEN  "refresh_token"
+
+/** Cloud CRL */
+#define OC_RSRVD_PROV_CRL_URL              "/oic/credprov/crl"
+
+#define OC_RSRVD_LAST_UPDATE              "lu"
+
+#define OC_RSRVD_THIS_UPDATE              "tu"
+
+#define OC_RSRVD_NEXT_UPDATE              "nu"
+
+#define OC_RSRVD_SERIAL_NUMBERS           "rcsn"
+
+#define OC_RSRVD_CRL                      "crl"
+
+#define OC_RSRVD_CRL_ID                   "crlid"
+
+/** Cloud ACL */
+#define OC_RSRVD_GROUP_URL                "/oic/group"
+
+#define OC_RSRVD_ACL_GROUP_URL            "/oic/acl/group"
+
+#define OC_RSRVD_ACL_INVITE_URL           "/oic/acl/invite"
+
+#define OC_RSRVD_ACL_VERIFY_URL           "/oic/acl/verify"
+
+#define OC_RSRVD_ACL_ID_URL               "/oic/acl/id"
+
+#define OC_RSRVD_MEMBER_ID                "mid"
+
+#define OC_RSRVD_GROUP_ID                 "gid"
+
+#define OC_RSRVD_OWNER_ID                 "oid"
+
+#define OC_RSRVD_ACL_ID                   "aclid"
+
+#define OC_RSRVD_ACE_ID                   "aceid"
+
+#define OC_RSRVD_DEVICE_ID                "di"
+
+#define OC_RSRVD_SUBJECT_ID               "sid"
+
+#define OC_RSRVD_REQUEST_METHOD           "rm"
+
+#define OC_RSRVD_REQUEST_URI              "uri"
+
+#define OC_RSRVD_GROUP_MASTER_ID          "gmid"
+
+#define OC_RSRVD_GROUP_TYPE               "gtype"
+
+#define OC_RSRVD_SUBJECT_TYPE             "stype"
+
+#define OC_RSRVD_GROUP_ID_LIST            "gidlist"
+
+#define OC_RSRVD_MEMBER_ID_LIST           "midlist"
+
+#define OC_RSRVD_DEVICE_ID_LIST           "dilist"
+
+#define OC_RSRVD_ACCESS_CONTROL_LIST      "aclist"
+
+#define OC_RSRVD_RESOURCES                "resources"
+
+#define OC_RSRVD_VALIDITY                 "validity"
+
+#define OC_RSRVD_PERIOD                   "period"
+
+#define OC_RSRVD_RECURRENCE               "recurrence"
+
+#define OC_RSRVD_INVITE                   "invite"
+
+#define OC_RSRVD_INVITED                  "invited"
+
+#define OC_RSRVD_ENCODING                 "encoding"
+
+#define OC_OIC_SEC                        "oic.sec"
+
+#define OC_RSRVD_BASE64                   "base64"
+
+#define OC_RSRVD_DER                      "der"
+
+#define OC_RSRVD_PEM                      "pem"
+
+#define OC_RSRVD_RAW                      "raw"
+
+#define OC_RSRVD_UNKNOWN                  "unknown"
+
+#define OC_RSRVD_DATA                     "data"
+
+#define OC_RSRVD_RESOURCE_OWNER_UUID      "rowneruuid"
+
+#define OC_RSRVD_SUBJECT_UUID             "subjectuuid"
+
+#define OC_RSRVD_PERMISSION_MASK          "permission"
+
+#define OC_RSRVD_GROUP_PERMISSION         "gp"
+
+#define OC_RSRVD_GROUP_ACL                "gacl"
+
+/** Certificete Sign Request */
+#define OC_RSRVD_PROV_CERT_URI            "/oic/credprov/cert"
+
+#define OC_RSRVD_CSR                      "csr"
+
+#define OC_RSRVD_CERT                     "cert"
+
+#define OC_RSRVD_CACERT                   "certchain"
+
+#define OC_RSRVD_TOKEN_TYPE               "tokentype"
+
+#define OC_RSRVD_EXPIRES_IN               "expiresin"
+
+#define OC_RSRVD_REDIRECT_URI             "redirecturi"
+
+#define OC_RSRVD_CERTIFICATE              "certificate"
 /**
  * Mark a parameter as unused. Used to prevent unused variable compiler warnings.
  * Used in three cases:
@@ -386,14 +599,14 @@ typedef enum
     OC_FLAG_SECURE     = (1 << 4),
 
     /** IPv4 & IPv6 auto-selection is the default.*/
-    /** IP adapter only.*/
+    /** IP & TCP adapter only.*/
     OC_IP_USE_V6       = (1 << 5),
 
-    /** IP adapter only.*/
+    /** IP & TCP adapter only.*/
     OC_IP_USE_V4       = (1 << 6),
 
-    /** internal use only.*/
-    OC_RESERVED1       = (1 << 7),   // internal use only
+    /** Multicast only.*/
+    OC_MULTICAST       = (1 << 7),
 
     /** Link-Local multicast is the default multicast scope for IPv6.
      *  These are placed here to correspond to the IPv6 multicast address bits.*/
@@ -474,7 +687,7 @@ typedef struct
     char                    addr[MAX_ADDR_STR_SIZE];
 
     /** usually zero for default interface.*/
-    uint32_t                interface;
+    uint32_t                ifindex;
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     char                    routeData[MAX_ADDR_STR_SIZE]; //destination GatewayID:ClientId
 #endif
@@ -584,14 +797,11 @@ typedef enum
     /** Register observe request for all notifications, including stale notifications.*/
     OC_REST_OBSERVE_ALL    = (1 << 5),
 
-    /** De-register observation, intended for internal use.*/
-    OC_REST_CANCEL_OBSERVE = (1 << 6),
-
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     /** Subscribe for all presence notifications of a particular resource.*/
     OC_REST_PRESENCE       = (1 << 7),
 
-    #endif
+#endif
     /** Allows OCDoResource caller to do discovery.*/
     OC_REST_DISCOVER       = (1 << 8)
 } OCMethod;
@@ -602,6 +812,7 @@ typedef enum
 typedef enum
 {
     OC_FORMAT_CBOR,
+    OC_FORMAT_JSON,
     OC_FORMAT_UNDEFINED,
     OC_FORMAT_UNSUPPORTED,
 } OCPayloadFormat;
@@ -667,13 +878,27 @@ typedef enum
      *  processing its requests from clients.*/
     OC_SLOW          = (1 << 3),
 
+#ifdef __WITH_DTLS__
     /** When this bit is set, the resource is a secure resource.*/
     OC_SECURE        = (1 << 4),
+#else
+    OC_SECURE        = (0),
+#endif
 
     /** When this bit is set, the resource is allowed to be discovered only
      *  if discovery request contains an explicit querystring.
      *  Ex: GET /oic/res?rt=oic.sec.acl */
     OC_EXPLICIT_DISCOVERABLE   = (1 << 5)
+
+#ifdef WITH_MQ
+    /** When this bit is set, the resource is allowed to be published */
+    ,OC_MQ_PUBLISHER     = (1 << 6)
+#endif
+
+#ifdef MQ_BROKER
+    /** When this bit is set, the resource is allowed to be notified as MQ broker.*/
+    ,OC_MQ_BROKER        = (1 << 7)
+#endif
 } OCResourceProperty;
 
 /**
@@ -698,6 +923,7 @@ typedef enum
     OC_STACK_RESOURCE_CREATED,
     OC_STACK_RESOURCE_DELETED,
     OC_STACK_CONTINUE,
+    OC_STACK_RESOURCE_CHANGED,
     /** Success status code - END HERE.*/
 
     /** Error status code - START HERE.*/
@@ -740,6 +966,7 @@ typedef enum
 
     /** Request is not authorized by Resource Server. */
     OC_STACK_UNAUTHORIZED_REQ,
+    OC_STACK_TOO_LARGE_REQ,
 
     /** Error code from PDM */
     OC_STACK_PDM_IS_NOT_INITIALIZED,
@@ -748,16 +975,16 @@ typedef enum
 
     /**
      * Error code from OTM
-     * This error is plused from DTLS interface when handshake failure happens
+     * This error is pushed from DTLS interface when handshake failure happens
      */
     OC_STACK_AUTHENTICATION_FAILURE,
 
     /** Insert all new error codes here!.*/
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     OC_STACK_PRESENCE_STOPPED = 128,
     OC_STACK_PRESENCE_TIMEOUT,
     OC_STACK_PRESENCE_DO_NOT_HANDLE,
-    #endif
+#endif
     /** ERROR in stack.*/
     OC_STACK_ERROR = 255
     /** Error status code - END HERE.*/
@@ -787,6 +1014,12 @@ typedef void * OCRequestHandle;
 typedef uint8_t OCObservationId;
 
 /**
+ * Sequence number is a 24 bit field,
+ * per https://tools.ietf.org/html/rfc7641.
+ */
+#define MAX_SEQUENCE_NUMBER              (0xFFFFFF)
+
+/**
  * Action associated with observation.
  */
 typedef enum
@@ -798,7 +1031,8 @@ typedef enum
     OC_OBSERVE_DEREGISTER = 1,
 
     /** Others. */
-    OC_OBSERVE_NO_OPTION = 2
+    OC_OBSERVE_NO_OPTION = 2,
+
 } OCObserveAction;
 
 
@@ -806,6 +1040,7 @@ typedef enum
  * Persistent storage handlers. An APP must provide OCPersistentStorage handler pointers
  * when it calls OCRegisterPersistentStorageHandler.
  * Persistent storage open handler points to default file path.
+ * It should check file path and whether the file is symbolic link or no.
  * Application can point to appropriate SVR database path for it's IoTivity Server.
  */
 typedef struct {
@@ -844,11 +1079,25 @@ typedef enum
 {
     OC_EH_OK = 0,
     OC_EH_ERROR,
-    OC_EH_RESOURCE_CREATED,
-    OC_EH_RESOURCE_DELETED,
     OC_EH_SLOW,
-    OC_EH_FORBIDDEN,
-    OC_EH_RESOURCE_NOT_FOUND
+    OC_EH_RESOURCE_CREATED = 201,
+    OC_EH_RESOURCE_DELETED = 202,
+    OC_EH_VALID = 203,
+    OC_EH_CHANGED = 204,
+    OC_EH_CONTENT = 205,
+    OC_EH_BAD_REQ = 400,
+    OC_EH_UNAUTHORIZED_REQ = 401,
+    OC_EH_BAD_OPT = 402,
+    OC_EH_FORBIDDEN = 403,
+    OC_EH_RESOURCE_NOT_FOUND = 404,
+    OC_EH_METHOD_NOT_ALLOWED = 405,
+    OC_EH_NOT_ACCEPTABLE = 406,
+    OC_EH_TOO_LARGE = 413,
+    OC_EH_UNSUPPORTED_MEDIA_TYPE = 415,
+    OC_EH_INTERNAL_SERVER_ERROR = 500,
+    OC_EH_BAD_GATEWAY = 502,
+    OC_EH_SERVICE_UNAVAILABLE = 503,
+    OC_EH_RETRANSMIT_TIMEOUT = 504
 } OCEntityHandlerResult;
 
 /**
@@ -888,7 +1137,6 @@ typedef struct OCHeaderOption
     }
 #endif
 } OCHeaderOption;
-
 
 /**
  * This structure describes the platform properties. All non-Null properties will be
@@ -942,6 +1190,10 @@ typedef struct
     char *deviceName;
     /** Pointer to the types.*/
     OCStringLL *types;
+    /** Pointer to the device specification version.*/
+    char *specVersion;
+    /** Pointer to the device data model versions (in CSV format).*/
+    OCStringLL *dataModelVersions;
 } OCDeviceInfo;
 
 #ifdef RA_ADAPTER
@@ -971,19 +1223,31 @@ typedef struct
 /** Enum to describe the type of object held by the OCPayload object.*/
 typedef enum
 {
+    /** Contents of the payload are invalid */
     PAYLOAD_TYPE_INVALID,
+    /** The payload is an OCDiscoveryPayload */
     PAYLOAD_TYPE_DISCOVERY,
+    /** The payload is an OCDevicePayload */
     PAYLOAD_TYPE_DEVICE,
+    /** The payload is an OCPlatformPayload */
     PAYLOAD_TYPE_PLATFORM,
+    /** The payload is an OCRepPayload */
     PAYLOAD_TYPE_REPRESENTATION,
+    /** The payload is an OCSecurityPayload */
     PAYLOAD_TYPE_SECURITY,
-    PAYLOAD_TYPE_PRESENCE,
-    PAYLOAD_TYPE_RD
+    /** The payload is an OCPresencePayload */
+    PAYLOAD_TYPE_PRESENCE
 } OCPayloadType;
 
+/**
+ * A generic struct representing a payload returned from a resource operation
+ *
+ * A pointer to OCPayLoad can be cast to a more specific struct to access members
+ * for the its type.
+ */
 typedef struct
 {
-    // The type of message that was received
+    /** The type of message that was received */
     OCPayloadType type;
 } OCPayload;
 
@@ -1070,92 +1334,13 @@ typedef struct OCResourcePayload
     uint8_t bitmap;
     bool secure;
     uint16_t port;
+#ifdef TCP_ADAPTER
+    uint16_t tcpPort;
+#endif
     struct OCResourcePayload* next;
 } OCResourcePayload;
 
-/**
- * Structure holding Links Payload. It is a sub-structure used in
- * OCResourceCollectionPayload.
- */
-typedef struct OCLinksPayload
-{
-    /** This is the target relative URI. */
-    char *href;
-    /** Resource Type - A standard OIC specified or vendor defined resource
-     * type of the resource referenced by the target URI. */
-    OCStringLL *rt;
-    /** Interface - The interfaces supported by the resource referenced by the target URI. */
-    OCStringLL *itf;
-    /** The relation of the target URI referenced by the link to the context URI;
-     * The default value is null. */
-    char *rel;
-    /** Specifies if the resource referenced by the target URIis observable or not. */
-    bool obs;
-    /** A title for the link relation. Can be used by the UI to provide a context. */
-    char *title;
-    /** This is used to override the context URI e.g. override the URI of the containing collection. */
-    char *uri;
-    /** The instance identifier for this web link in an array of web links - used in links. */
-    union
-    {
-        /** An ordinal number that is not repeated - must be unique in the collection context. */
-        uint8_t ins;
-        /** Any unique string including a URI. */
-        char *uniqueStr;
-        /** Use UUID for universal uniqueness - used in /oic/res to identify the device. */
-        OCIdentity uniqueUUID;
-    };
-    /** A hint of the media type of the representation of the resource referenced by the target URI. */
-    OCStringLL *mt;
-    /** Holding address of the next resource. */
-    struct OCLinksPayload *next;
-} OCLinksPayload;
-
-/** Structure holding tags value of the links payload. */
-typedef struct
-{
-    /** Name of tags. */
-    OCDeviceInfo n;
-    /** Device identifier. */
-    OCIdentity di;
-    /** The base URI where the resources are hold. */
-    char *baseURI;
-    /** Bitmap holds observable, discoverable, secure option flag.*/
-    uint8_t bitmap;
-    /** Port set in case, the secure flag is set above. */
-    uint16_t port;
-    /** Id for each set of links i.e. tag. */
-    union
-    {
-        /** An ordinal number that is not repeated - must be unique in the collection context. */
-        uint8_t ins;
-        /** Any unique string including a URI. */
-        char *uniqueStr;
-        /** Use UUID for universal uniqueness - used in /oic/res to identify the device. */
-        OCIdentity uniqueUUID;
-    };
-    /** Defines the list of allowable resource types (for Target and anchors) in links included
-     * in the collection; new links being created can only be from this list. */
-    char *rts;
-    /** When specified this is the default relationship to use when an OIC Link does not specify
-     * an explicit relationship with *rel* parameter. */
-    char *drel;
-    /** Time to keep holding resource.*/
-    uint32_t ttl;
-} OCTagsPayload;
-
-/** Resource collection payload. */
-typedef struct OCResourceCollectionPayload
-{
-    /** Collection tags payload.*/
-    OCTagsPayload *tags;
-    /** Array of links payload. */
-    OCLinksPayload *setLinks;
-    /** Holding address of the next resource. */
-    struct OCResourceCollectionPayload *next;
-} OCResourceCollectionPayload;
-
-typedef struct
+typedef struct OCDiscoveryPayload
 {
     OCPayload base;
 
@@ -1172,49 +1357,28 @@ typedef struct
     char *uri;
 
     /** Resource Type */
-    char *type;
+    OCStringLL *type;
 
     /** Interface */
-    OCStringLL *interface;
+    OCStringLL *iface;
 
     /** This structure holds the old /oic/res response. */
     OCResourcePayload *resources;
 
+    /** Holding address of the next DiscoveryPayload. */
+    struct OCDiscoveryPayload *next;
+
 } OCDiscoveryPayload;
-
-/**
- * Structure holding discovery payload.
- */
-typedef struct
-{
-    /** Device Name. */
-    OCDeviceInfo n;
-    /** Device Identity. */
-    OCIdentity di;
-    /** Value holding the bias factor of the RD. */
-    uint8_t sel;
-} OCRDDiscoveryPayload;
-
-/**
- * RD Payload that will be transmitted over the wire.
- */
-typedef struct
-{
-    OCPayload base;
-    /** Pointer to the discovery response payload.*/
-    OCRDDiscoveryPayload *rdDiscovery;
-    /** Pointer to the publish payload.*/
-    OCResourceCollectionPayload *rdPublish;
-} OCRDPayload;
 
 typedef struct
 {
     OCPayload base;
     char *sid;
-    OCStringLL *types;
     char* deviceName;
     char* specVersion;
-    char* dataModelVersion;
+    OCStringLL *dataModelVersions;
+    OCStringLL *interfaces;
+    OCStringLL *types;
 } OCDevicePayload;
 
 typedef struct
@@ -1222,15 +1386,17 @@ typedef struct
     OCPayload base;
     char* uri;
     OCPlatformInfo info;
-    char* rt;
+    OCStringLL* rt;
     OCStringLL* interfaces;
 } OCPlatformPayload;
 
 typedef struct
 {
     OCPayload base;
-    char* securityData;
+    uint8_t* securityData;
+    size_t payloadSize;
 } OCSecurityPayload;
+
 #ifdef WITH_PRESENCE
 typedef struct
 {
@@ -1274,6 +1440,9 @@ typedef struct
 
     /** Pointer to the array of the received vendor specific header options.*/
     OCHeaderOption * rcvdVendorSpecificHeaderOptions;
+
+    /** Message id.*/
+    uint16_t messageID;
 
     /** the payload from the request PDU.*/
     OCPayload *payload;
@@ -1360,11 +1529,16 @@ typedef enum
 } OCEntityHandlerFlag;
 
 /**
- * Possible returned values from client application.
+ * Possible return values from client application callback
+ *
+ * A client application callback returns an OCStackApplicationResult to indicate whether
+ * the stack should continue to keep the callback registered.
  */
 typedef enum
 {
+    /** Make no more calls to the callback and call the OCClientContextDeleter for this callback */
     OC_STACK_DELETE_TRANSACTION = 0,
+    /** Keep this callback registered and call it if an apropriate event occurs */
     OC_STACK_KEEP_TRANSACTION
 } OCStackApplicationResult;
 
@@ -1442,12 +1616,60 @@ typedef struct OCCallbackData
 /**
  * Application server implementations must implement this callback to consume requests OTA.
  * Entity handler callback needs to fill the resPayload of the entityHandlerRequest.
+ *
+ * When you set specific return value like OC_EH_CHANGED, OC_EH_CONTENT,
+ * OC_EH_SLOW and etc in entity handler callback,
+ * ocstack will be not send response automatically to client
+ * except for error return value like OC_EH_ERROR.
+ *
+ * If you want to send response to client with specific result,
+ * OCDoResponse API should be called with the result value.
+ *
+ * e.g)
+ *
+ * OCEntityHandlerResponse response;
+ *
+ * ..
+ *
+ * response.ehResult = OC_EH_CHANGED;
+ *
+ * ..
+ *
+ * OCDoResponse(&response)
+ *
+ * ..
+ *
+ * return OC_EH_OK;
  */
 typedef OCEntityHandlerResult (*OCEntityHandler)
 (OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest, void* callbackParam);
 
 /**
  * Device Entity handler need to use this call back instead of OCEntityHandler.
+ *
+ * When you set specific return value like OC_EH_CHANGED, OC_EH_CONTENT,
+ * OC_EH_SLOW and etc in entity handler callback,
+ * ocstack will be not send response automatically to client
+ * except for error return value like OC_EH_ERROR.
+ *
+ * If you want to send response to client with specific result,
+ * OCDoResponse API should be called with the result value.
+ *
+ * e.g)
+ *
+ * OCEntityHandlerResponse response;
+ *
+ * ..
+ *
+ * response.ehResult = OC_EH_CHANGED;
+ *
+ * ..
+ *
+ * OCDoResponse(&response)
+ *
+ * ..
+ *
+ * return OC_EH_OK;
  */
 typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
 (OCEntityHandlerFlag flag, OCEntityHandlerRequest * entityHandlerRequest, char* uri, void* callbackParam);
@@ -1456,11 +1678,12 @@ typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
 /**
  * Callback function definition of direct-pairing
  *
+ * @param[OUT] ctx - user context returned in the callback.
  * @param[OUT] peer - pairing device info.
- * @param[OUT} result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK'
+ * @param[OUT] result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK'
  *                                   if D2D pairing is success without error
  */
-typedef void (*OCDirectPairingCB)(OCDPDev_t *peer, OCStackResult result);
+typedef void (*OCDirectPairingCB)(void *ctx, OCDPDev_t *peer, OCStackResult result);
 //#endif // DIRECT_PAIRING
 
 #ifdef __cplusplus

@@ -72,13 +72,6 @@ typedef void (*CAIPErrorHandleCallback)(const CAEndpoint_t *endpoint, const void
                                         uint32_t dataLength, CAResult_t result);
 
 /**
- * Callback to be notified when exception occures on multicast/unicast server.
- * @param  type   Type of server(#CAAdapterServerType_t).
- * @pre  Callback must be registered using CAIPSetExceptionCallback().
- */
-typedef void (*CAIPExceptionCallback)(CAAdapterServerType_t type);
-
-/**
  * Start IP server.
  *
  * @param   threadPool   Thread pool for managing Unicast/Multicast server threads.
@@ -128,13 +121,6 @@ CAResult_t CAIPStopListenServer();
 void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback);
 
 /**
- * Set this callback for receiving exception notifications.
- *
- * @param[in]  callback  Callback to be notified on exception on running servers.
- */
-void CAIPSetExceptionCallback(CAIPExceptionCallback callback);
-
-/**
  * Set socket description for sending unicast UDP data.
  * Once the Unicast server is started,
  * the same socket descriptor is used for sending the Unicast UDP data.
@@ -176,33 +162,9 @@ void CAIPPullData();
 
 #define CA_COAP        5683
 #define CA_SECURE_COAP 5684
-#define INTERFACE_NAME_MAX 16
-
-typedef struct
-{
-    char name[INTERFACE_NAME_MAX];
-    uint32_t index;
-    uint32_t flags;
-    uint16_t family;
-    uint32_t ipv4addr;        /**< used for IPv4 only. */
-} CAInterface_t;
 
 /**
- * Get a list of CAInterface_t items.
- *
- * @return  List of CAInterface_t items.
- */
-u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex);
-
-/**
- * @brief   Find a new network interface.
- *
- * @return  Description of interface (or NULL if no change)
- */
-CAInterface_t *CAFindInterfaceChange();
-
-/**
- * @brief   Let the network monitor update the polling interval.
+ * Let the network monitor update the polling interval.
  * @param   [in] current polling interval
  *
  * @return  desired polling interval
@@ -210,30 +172,16 @@ CAInterface_t *CAFindInterfaceChange();
 int CAGetPollingInterval(int interval);
 
 /**
- * @brief   Tell the IP server an interface has been added.
+ * Tell the IP server an interface has been added.
  */
 void CAWakeUpForChange();
 
 /**
- * Start network monitor.
+ * Set callback for error handling.
  *
- * @return ::CA_STATUS_OK or Appropriate error code.
+ * @param[in]  errorHandleCallback  callback to notify error to the ipadapter.
  */
-CAResult_t CAIPStartNetworkMonitor();
-
-/**
- * Stops network monitor.
- *
- * @return ::CA_STATUS_OK or Appropriate error code.
- */
-CAResult_t CAIPStopNetworkMonitor();
-
-/**
- * @brief  Set callback for error handling.
- *
- * @param[in]  ipErrorCallback  callback to notify error to the ipadapter.
- */
-void CAIPSetErrorHandleCallback(CAIPErrorHandleCallback ipErrorCallback);
+void CAIPSetErrorHandler(CAIPErrorHandleCallback errorHandleCallback);
 
 #ifdef __cplusplus
 }

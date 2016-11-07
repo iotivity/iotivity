@@ -41,6 +41,8 @@ class ResourceContainerTestSimulator
         RCSResourceObject::Ptr server;
         RCSRemoteResourceObject::Ptr remoteResource;
 
+        static constexpr int DEFAULT_WAITTIME = 3000;
+
     private:
         std::mutex mutexForDiscovery;
 
@@ -60,9 +62,10 @@ class ResourceContainerTestSimulator
               RESOURCEURI("/a/TempHumSensor/Container"),
               RESOURCETYPE("resource.container"),
               RESOURCEINTERFACE("oic.if.baseline"),
-              ATTR_KEY("Temperature"),
+              ATTR_KEY("TestResourceContainer"),
               ATTR_VALUE(0)
-        { }
+        {
+        }
 
         ~ResourceContainerTestSimulator()
         {
@@ -115,7 +118,7 @@ class ResourceContainerTestSimulator
         }
         void waitForDiscovery()
         {
-            std::chrono::milliseconds interval(100);
+            std::chrono::milliseconds interval(DEFAULT_WAITTIME);
             while (true)
             {
                 if (mutexForDiscovery.try_lock())
@@ -180,17 +183,21 @@ class ResourceContainerTestSimulator
 
         void ChangeAttributeValue()
         {
-            std::chrono::milliseconds interval(100);
+            std::chrono::milliseconds interval(DEFAULT_WAITTIME);
             if (server != nullptr)
+            {
                 server->setAttribute(ATTR_KEY, ATTR_VALUE + 10);
+            }
             std::this_thread::sleep_for(interval);
         }
 
         void ChangeResourceState()
         {
-            std::chrono::milliseconds interval(400);
+            std::chrono::milliseconds interval(DEFAULT_WAITTIME);
             if (server != nullptr)
+            {
                 server = nullptr;
+            }
             std::this_thread::sleep_for(interval);
         }
 

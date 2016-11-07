@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2015 Samsung Electronics All Rights Reserved.
+// Copyright 2016 Samsung Electronics All Rights Reserved.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -20,29 +20,25 @@
 
 
 #include "easysetup.h"
+#include "easysetup_wifi_conn.h"
 
 #include <unistd.h>
 #include <string.h>
 #include <iostream>
 #include <pthread.h>
-
-#define TAG "TS"
+#include <glib.h>
+#include <limits>
+#include <unistd.h>
+#define TAG "TIZEN_ES"
 
 using namespace std;
 
-void *listeningFunc(void*);
+gboolean mainThread(GIOChannel *source, GIOCondition condition, gpointer data);
+void *listeningFunc(void *);
 
-/**
- * @var ssid
- * @brief Target SSID of the Soft Access point to which the device has to connect
- */
-static char ssid[] = "EasySetup123";
+GMainLoop *gMainloop;
+static pthread_t gThreadHandle = 0;
 
-/**
- * @var passwd
- * @brief Password of the Soft Access point to which the device has to connect
- */
-static char passwd[] = "EasySetup123";
 
 /**
  * Secure Virtual Resource database for Iotivity Server
@@ -51,56 +47,101 @@ static char passwd[] = "EasySetup123";
  */
 static char CRED_FILE[] = "oic_svr_db_server.dat";
 
-OCPersistentStorage ps ;
-
+OCPersistentStorage ps;
 
 /**
  * @var gIsSecured
  * @brief Variable to check if secure mode is enabled or not.
  */
 static bool gIsSecured = false;
+static bool gWiFiCBflag = false;
+static char gSSID[OIC_STRING_MAX_VALUE];
+static char gPasswd[OIC_STRING_MAX_VALUE];
 
 void PrintMenu()
 {
-    cout<<"============"<<endl;
-    cout<<"S: Enabled Security"<<endl;
-    cout<<"I: Init easy setup"<<endl;
-    cout<<"P: start provisioning resources"<<endl;
-    cout<<"T: terminate"<<endl;
-    cout<<"Q: quit"<<endl;
-    cout<<"============"<<endl;
+    cout << "========================" << endl;
+    cout << "A: Enabled Security" << endl;
+    cout << "B: Init & Start EasySetup" << endl;
+    cout << "C: Set DeviceInfo" << endl;
+    cout << "D: Connect to TargetAP" << endl;
+    cout << "E: Show Menu......." << endl;
+    cout << "Q: Terminate" << endl;
+    cout << "========================" << endl;
 }
 
-void EventCallbackInApp(ESResult esResult, EnrolleeState enrolleeState)
+void WiFiProvCbInApp(ESWiFiProvData *eventData)
 {
-    cout<<"Easy setup event callback"<<endl;
+    cout << "WiFiProvCbInApp IN" << endl;
+    gWiFiCBflag = true;
 
-    if(esResult == ES_OK)
+    ESSetState(ES_STATE_CONNECTING_TO_ENROLLER);
+
+    if(eventData == NULL)
     {
-        if(enrolleeState == ES_ON_BOARDED_STATE)
-        {
-            cout<<"Device is successfully OnBoared on Adhoc network"<<endl;
-        }
-        else if (enrolleeState == ES_PROVISIONED_STATE)
-        {
-            cout<<"Device is provisioned with target network's credentials"<<endl;
-        }
-        else if (enrolleeState == ES_ON_BOARDED_TARGET_NETWORK_STATE)
-        {
-            cout<<"Device is onboarded/connected with target network"<<endl;
-        }
-        else
-        {
-            cout<<"Wrong state !! Easy setup is failed at Enrollee state = "<<enrolleeState<<endl;
-        }
-    }
-    else
-    {
-        cout<<"Easy stup is failed at Enrollee state = "<<enrolleeState<<endl;
+        cout << "ESWiFiProvData is NULL" << endl;
+        return ;
     }
 
+    cout << "SSID : " << eventData->ssid << endl;
+    cout << "Password : " << eventData->pwd << endl;
+    cout << "AuthType : " << eventData->authtype << endl;
+    cout << "EncType : " << eventData->enctype << endl;
+
+    memset(gSSID, 0, OIC_STRING_MAX_VALUE);
+    memset(gPasswd, 0, OIC_STRING_MAX_VALUE);
+    if(eventData->ssid != NULL)
+    {
+        strncpy(gSSID, eventData->ssid, strlen(eventData->ssid));
+    }
+
+    if(eventData->pwd != NULL)
+    {
+        strncpy(gPasswd, eventData->pwd, strlen(eventData->pwd));
+    }
+
+    cout << "WiFiProvCbInApp OUT" << endl;
     PrintMenu();
 }
+
+void DevConfProvCbInApp(ESDevConfProvData *eventData)
+{
+    cout << "DevConfProvCbInApp IN" << endl;
+
+    if(eventData == NULL)
+    {
+        cout << "ESDevConfProvData is NULL" << endl;
+        return ;
+    }
+
+    cout << "Language : " << eventData->language << endl;
+    cout << "Country : " << eventData->country << endl;
+    cout << "DevConfProvCbInApp OUT" << endl;
+    PrintMenu();
+}
+
+void CloudDataProvCbInApp(ESCloudProvData *eventData)
+{
+    cout << "CloudDataProvCbInApp IN" << endl;
+
+    if(eventData == NULL)
+    {
+        cout << "ESCloudProvData is NULL" << endl;
+        return ;
+    }
+
+    cout << "AuthCode : " << eventData->authCode << endl;
+    cout << "AuthProvider : " << eventData->authProvider << endl;
+    cout << "CI Server : " << eventData->ciServer << endl;
+    cout << "CloudDataProvCbInApp OUT" << endl;
+    PrintMenu();
+}
+
+ESProvisioningCallbacks gCallbacks = {
+    .WiFiProvCb = &WiFiProvCbInApp,
+    .DevConfProvCb = &DevConfProvCbInApp,
+    .CloudDataProvCb = &CloudDataProvCbInApp
+};
 
 FILE* server_fopen(const char *path, const char *mode)
 {
@@ -110,121 +151,233 @@ FILE* server_fopen(const char *path, const char *mode)
 
 void EnableSecurity()
 {
-    cout << "Inside EnableSecurity API.." << endl;
+    printf("Inside EnableSecurity API..\n");
 
     gIsSecured = true;
 
     // Initialize Persistent Storage for SVR database
-    ps = { server_fopen, fread, fwrite, fclose, unlink };
+    ps = (OCPersistentStorage){ server_fopen, fread, fwrite, fclose, unlink };
     OCRegisterPersistentStorageHandler(&ps);
 }
 
 void StartEasySetup()
 {
-    cout<<"StartEasySetup and onboarding started.."<<endl;
+    cout << "StartEasySetup IN" << endl;
 
-    if(InitEasySetup(CT_ADAPTER_IP, ssid, passwd, gIsSecured, EventCallbackInApp) == ES_ERROR)
-    {
-        cout<<"StartEasySetup and onboarding Fail!!"<<endl;
-        return;
-    }
-}
-
-void StartOICStackAndStartResources()
-{
-    cout<<"Starting Enrollee Provisioning"<<endl;
-
-    // Initialize the OC Stack in Server mode
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        cout<<"OCStack init error!!"<<endl;
+        cout << "OCStack init error!!" << endl;
         return;
     }
 
-    if (InitProvisioning() == ES_ERROR)
+    ESResourceMask resourcemMask = (ESResourceMask) (ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
+    cout << "resourcemMask : " << resourcemMask << endl;
+    if(ESInitEnrollee(gIsSecured, resourcemMask, gCallbacks) != ES_OK)
     {
-        cout<<"Init Provisioning Failed!!"<<endl;
+        cout << "OCStack init error!!" << endl;
         return;
     }
 
-    pthread_t thread_handle;
-    if (pthread_create(&thread_handle, NULL, listeningFunc, NULL))
-    {
-        cout<<"Thread creation failed"<<endl;
+    cout << "ESInitEnrollee Success" << endl;
+
+    if(gThreadHandle == 0) {
+
+        if (pthread_create(&gThreadHandle, NULL, listeningFunc, NULL)) {
+            cout << "Thread creation failed" << endl;
+            return;
+        }
+
     }
 
-    cout<<"InitProvisioning Success"<<endl;
+    ESSetState(ES_STATE_INIT);
+    ESSetErrorCode(ES_ERRCODE_NO_ERROR);
+
+    int ret = 0;
+
+    ret = TizenWiFiInit();
+    if(ret != WIFI_NO_ERROR) {
+        cout << "WiFi Init Error" << endl;
+    }
+    else
+        cout << "WiFi Init Success" << endl;
+
+    ret = TizenWiFiScanStart();
+    if(ret != WIFI_NO_ERROR) {
+        cout << "WiFi Scan Error" << endl;
+    }
+    else
+        cout << "WiFi Scan Success" << endl;
+
+    cout << "StartEasySetup OUT" << endl;
+}
+
+void SetDeviceInfo()
+{
+    cout << "SetDeviceInfo IN" << endl;
+
+    ESDeviceProperty deviceProperty = {
+        {{WIFI_11G, WIFI_11N, WIFI_11AC, WiFi_EOF}, WIFI_5G}, {"Tizen Device"}
+    };
+
+    if(ESSetDeviceProperty(&deviceProperty) == ES_ERROR)
+    {
+        cout << "ESSetDeviceProperty Error" << endl;
+    }
+
+    // Set user properties if needed
+
+    cout << "SetDeviceInfo OUT" << endl;
 }
 
 void StopEasySetup()
 {
-    cout<<"StopEasySetup IN"<<endl;
-
-    if (TerminateEasySetup() == ES_ERROR)
+    cout << "StopEasySetup IN" << endl;
+    if (ESTerminateEnrollee() == ES_ERROR)
     {
-        cout<<"TerminateEasySetup Failed!!"<<endl;
+        cout << "ESTerminateEnrollee Failed!!" << endl;
         return;
     }
 
-    //stop OC Stack
+    // Deinit Tizen Wifi
+    TizenWiFiDeinit();
+
+    // Stop OC Stack
     if (OCStop() != OC_STACK_OK)
     {
-        cout<<"OCStack stop failed!!"<<endl;
+        cout << "OCStack stop failed!!" << endl;
         return;
     }
 
-    cout<<"StopEasySetup OUT"<<endl;
+    if(gThreadHandle != 0) {
+        pthread_cancel(gThreadHandle);
+        pthread_join(gThreadHandle, NULL);
+    }
+
+    cout << "StopEasySetup OUT" << endl;
+}
+
+void ConnectToTargetAP()
+{
+    if(!gWiFiCBflag){
+        cout << "WiFi Provisioning is needed to be preceded" << endl;
+        return;
+    }
+
+    WiFiConnErrCode ret = WIFI_NO_ERROR;
+    ret = TizenWiFiScanStart();
+    if(ret != WIFI_NO_ERROR){
+        ESSetState(ES_STATE_CONNECTED_FAIL_TO_ENROLLER);
+        ESSetErrorCode(ES_ERRCODE_UNKNOWN);
+        cout << "WiFi Scan Error" << endl;
+        return;
+    }
+    else{
+        cout << "WiFi Scan Succss" << endl;
+    }
+
+    ret = TizenWiFiConn(gSSID, gPasswd);
+    if(ret != WIFI_NO_ERROR) {
+        ESSetState(ES_STATE_CONNECTED_FAIL_TO_ENROLLER);
+
+        if(ret == WIFI_NOTFOUND_SSID_ERROR) {
+            ESSetErrorCode(ES_ERRCODE_SSID_NOT_FOUND);
+        }
+        else if(ret == WIFI_WRONG_PWD_ERROR) {
+            ESSetErrorCode(ES_ERRCODE_PW_WRONG);
+        }
+        else {
+            ESSetErrorCode(ES_ERRCODE_TIMEOUT);
+        }
+        cout << "WiFi Connection Error" << endl;
+        return;
+    }
+    else {
+        cout << "WIFI Connection Success" << endl;
+        ESSetState(ES_STATE_CONNECTED_TO_ENROLLER);
+        ESSetErrorCode(ES_ERRCODE_NO_ERROR);
+    }
+}
+
+gboolean mainThread(GIOChannel *source, GIOCondition condition, gpointer data)
+{
+    char entered;
+    cin >> entered;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    switch (entered) {
+        case 'Q': // quit
+        case 'q':
+            StopEasySetup();
+            break;
+
+        case 'A': // Enable Security
+        case 'a':
+#ifdef __WITH_DTLS__
+            EnableSecurity();
+#else
+            cout << "Sample is not built with secured mode" << endl;
+#endif
+            PrintMenu();
+            break;
+
+        case 'B': // Init EasySetup
+        case 'b':
+            StartEasySetup();
+            PrintMenu();
+            break;
+
+        case 'C': // Set Device Info
+        case 'c':
+            SetDeviceInfo();
+            PrintMenu();
+            break;
+
+        case 'D': // Start to connect target AP
+        case 'd':
+            ConnectToTargetAP();
+            PrintMenu();
+            break;
+
+        case 'E': // Print Menu
+        case 'e':
+            PrintMenu();
+            break;
+
+        default:
+            cout << "Wrong option" << endl;
+            PrintMenu();
+            break;
+    }
+
+    if(entered == 'q' || entered == 'Q'){
+        g_main_loop_quit(gMainloop);
+    }
+
+    return TRUE;
 }
 
 int main()
 {
-    cout<<"#########################"<<endl;
-    cout<<"EasySetup Enrollee SAMPLE"<<endl;
-    cout<<"#########################"<<endl;
+    cout << "#########################" << endl;
+    cout << "EasySetup Enrollee SAMPLE" << endl;
+    cout << "#########################" << endl;
     PrintMenu();
-    char option;
 
-    while(true)
-    {
-        cin>>option;
-        switch (option)
-        {
-            case 'H': // help
-            case 'h':
-                PrintMenu();
-                break;
-
-            case 'Q': // quit
-            case 'q':
-                cout<<"quit";
-                break;
-
-            case 'S': // Enable Security
-            case 's':
-                EnableSecurity();
-                break;
-
-            case 'I': // Init EasySetup
-            case 'i':
-                StartEasySetup();
-                break;
-
-            case 'P': // start provisioning
-            case 'p':
-                StartOICStackAndStartResources();
-                break;
-
-            case 'T': // stop easy setup
-            case 't':
-                StopEasySetup();
-                break;
-
-            default:
-                cout<<"wrong option"<<endl;
-                break;
-        }
-        if (option == 'Q' || option == 'q') break;
+    gMainloop = g_main_loop_new (NULL, FALSE);
+    if(gMainloop == NULL) {
+        cout << "Create Main Loop Error" << endl;
+        return 0;
     }
+
+    GIOChannel *channel = g_io_channel_unix_new(0);
+    g_io_add_watch(channel, (GIOCondition)(G_IO_IN|G_IO_ERR|G_IO_HUP|G_IO_NVAL), mainThread, NULL);
+
+    g_main_loop_run (gMainloop);
+
+    cout << "#########################" << endl;
+    cout << "Terminate Enrollee SAMPLE" << endl;
+    cout << "#########################" << endl;
+
     return 0;
 }
 

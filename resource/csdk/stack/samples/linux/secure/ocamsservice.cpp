@@ -1,11 +1,18 @@
 
-
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <signal.h>
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include "ocstack.h"
 #include "logger.h"
 #include "common.h"
@@ -16,7 +23,7 @@ int gQuitFlag = 0;
 
 //AMS service database, hold AMS service Identity and
 //the PSK credentials of trusted devices
-static char AMSS_DB_FILE[] = "oic_amss_db.json";
+static char AMSS_DB_FILE[] = "oic_amss_db.dat";
 
 /* SIGINT handler: set gQuitFlag to 1 for graceful termination */
 void handleSigInt(int signum)

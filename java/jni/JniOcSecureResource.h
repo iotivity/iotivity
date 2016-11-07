@@ -53,9 +53,12 @@ class JniOcSecureResource
                 jobject acl1, jobject device2, jobject acl2, jobject jListener);
         OCStackResult provisionCredentials(JNIEnv* env, jint type, jint keySize,
                 jobject device2, jobject jListener);
+        OCStackResult provisionTrustCertChain(JNIEnv* env, jint type, jint credId,
+                jobject jListener);
         OCStackResult unlinkDevices(JNIEnv* env, jobject device2, jobject jListener);
         OCStackResult removeDevice(JNIEnv* env, jint timeout, jobject jListener);
-
+        OCStackResult provisionDirectPairing(JNIEnv* env, jobjectArray jpdacls,jobject jListener,
+                std::string pin, std::vector<int> prms, int edp);
     private:
 
         std::map<jobject, std::pair<JniProvisionResultListner*, int>> resultMap;
@@ -98,7 +101,15 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_unlinkDevices
  * Signature: (IILjava/lang/Object;Lorg/iotivity/base/OcSecureResource/ProvisionCredentialsListener;)V
  */
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionCredentials1
-  (JNIEnv *, jobject, jint, jint, jobject, jobject);
+    (JNIEnv *, jobject, jint, jint, jobject, jobject);
+
+/*
+ * Class:     org_iotivity_base_OcSecureResource
+ * Method:    provisionTrustCertChain1
+ * Signature: (Lorg/iotivity/base/OcSecureResource/ProvisionTrustCertChainListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionTrustCertChain1
+    (JNIEnv *, jobject, jint, jint, jobject);
 
 /*
  * Class:     org_iotivity_base_OcSecureResource
@@ -106,7 +117,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionCredenti
  * Signature: (Ljava/lang/Object;Lorg/iotivity/base/OcSecureResource/ProvisionAclListener;)V
  */
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionACL
-  (JNIEnv *, jobject, jobject, jobject);
+    (JNIEnv *, jobject, jobject, jobject);
 
 /*
  * Class:     org_iotivity_base_OcSecureResource
@@ -115,6 +126,14 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionACL
  */
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionPairwiseDevices1
   (JNIEnv *, jobject, jint, jint, jobject, jobject, jobject, jobject);
+
+/*
+ * Class:     org_iotivity_base_OcSecureResource
+ * Method:    provisionDirectPairing
+ * Signature: (Ljava/lang/Object;Lorg/iotivity/base/OcSecureResource/ProvisionDirectPairingListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionDirectPairing
+  (JNIEnv *, jobject, jstring, jobjectArray, jintArray, jint, jobject);
 
 /*
  * Class:     org_iotivity_base_OcSecureResource

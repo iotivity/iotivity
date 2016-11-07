@@ -47,84 +47,103 @@ public:
 
     static OC::ServiceType getServiceType(JNIEnv *env, int type)
     {
-        switch (type) {
-        case 0:
-            return OC::ServiceType::InProc;
-        case 1:
-            return OC::ServiceType::OutOfProc;
-        default:
-            ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected service type");
-            return OC::ServiceType::OutOfProc;
+        switch (type)
+        {
+            case 0:
+                return OC::ServiceType::InProc;
+            case 1:
+                return OC::ServiceType::OutOfProc;
+            default:
+                ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected service type");
+                return OC::ServiceType::OutOfProc;
         };
     }
 
     static OC::ModeType getModeType(JNIEnv *env, int type)
     {
-        switch (type) {
-        case 0:
-            return OC::ModeType::Server;
-        case 1:
-            return OC::ModeType::Client;
-        case 2:
-            return OC::ModeType::Both;
-        case 3:
-            return OC::ModeType::Gateway;
-        default:
-            ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected mode type");
-            return OC::ModeType::Both;
+        switch (type)
+        {
+            case 0:
+                return OC::ModeType::Server;
+            case 1:
+                return OC::ModeType::Client;
+            case 2:
+                return OC::ModeType::Both;
+            case 3:
+                return OC::ModeType::Gateway;
+            default:
+                ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected mode type");
+                return OC::ModeType::Both;
         };
     }
 
     static OC::QualityOfService getQOS(JNIEnv *env, int type)
     {
-        switch (type) {
-        case 0:
-            return OC::QualityOfService::LowQos;
-        case 1:
-            return OC::QualityOfService::MidQos;
-        case 2:
-            return OC::QualityOfService::HighQos;
-        case 3:
-            return OC::QualityOfService::NaQos;
-        default:
-            ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected quality of service");
-            return OC::QualityOfService::NaQos;
+        switch (type)
+        {
+            case 0:
+                return OC::QualityOfService::LowQos;
+            case 1:
+                return OC::QualityOfService::MidQos;
+            case 2:
+                return OC::QualityOfService::HighQos;
+            case 3:
+                return OC::QualityOfService::NaQos;
+            default:
+                ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected quality of service");
+                return OC::QualityOfService::NaQos;
         };
     }
 
     static OC::ObserveType getObserveType(JNIEnv *env, int type)
     {
-        switch (type) {
-        case 0:
-            return OC::ObserveType::Observe;
-        case 1:
-            return OC::ObserveType::ObserveAll;
-        default:
-            ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected observe type");
-            return OC::ObserveType::ObserveAll;
+        switch (type)
+        {
+            case 0:
+                return OC::ObserveType::Observe;
+            case 1:
+                return OC::ObserveType::ObserveAll;
+            default:
+                ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected observe type");
+                return OC::ObserveType::ObserveAll;
         };
     }
-
+#ifdef WITH_CLOUD
+    static OC::AclGroupType getAclGroupType(JNIEnv *env, int type)
+    {
+        switch (type)
+        {
+            case 0:
+                return OC::AclGroupType::PUBLIC;
+            case 1:
+                return OC::AclGroupType::PRIVATE;
+            default:
+                ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected acl group type");
+                return OC::AclGroupType::PUBLIC;
+        };
+    }
+#endif
     static OCEntityHandlerResult getOCEntityHandlerResult(JNIEnv *env, int type)
     {
-        switch (type) {
-        case 0:
-            return OCEntityHandlerResult::OC_EH_OK;
-        case 1:
-            return OCEntityHandlerResult::OC_EH_ERROR;
-        case 2:
-            return OCEntityHandlerResult::OC_EH_RESOURCE_CREATED;
-        case 3:
-            return OCEntityHandlerResult::OC_EH_RESOURCE_DELETED;
-        case 4:
-            return OCEntityHandlerResult::OC_EH_SLOW;
-        case 5:
-            return OCEntityHandlerResult::OC_EH_FORBIDDEN;
-        case 6:
-            return OCEntityHandlerResult::OC_EH_RESOURCE_NOT_FOUND;
-        default:
-            ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected OCEntityHandlerResult");
-            return OCEntityHandlerResult::OC_EH_ERROR;
+        switch (type)
+        {
+            case 0:
+                return OCEntityHandlerResult::OC_EH_OK;
+            case 1:
+                return OCEntityHandlerResult::OC_EH_ERROR;
+            case 2:
+                return OCEntityHandlerResult::OC_EH_RESOURCE_CREATED;
+            case 3:
+                return OCEntityHandlerResult::OC_EH_RESOURCE_DELETED;
+            case 4:
+                return OCEntityHandlerResult::OC_EH_SLOW;
+            case 5:
+                return OCEntityHandlerResult::OC_EH_FORBIDDEN;
+            case 6:
+                return OCEntityHandlerResult::OC_EH_RESOURCE_NOT_FOUND;
+            default:
+                ThrowOcException(OC_STACK_INVALID_PARAM, "Unexpected OCEntityHandlerResult");
+                return OCEntityHandlerResult::OC_EH_ERROR;
         };
     }
 
@@ -132,103 +151,108 @@ public:
     {
         switch (result)
         {
-        /** Success status code - START HERE.*/
-        case OC_STACK_OK:
-            return "OK";
-        case OC_STACK_RESOURCE_CREATED:
-            return "RESOURCE_CREATED";
-        case OC_STACK_RESOURCE_DELETED:
-            return "RESOURCE_DELETED";
-        case OC_STACK_CONTINUE:
-            return "CONTINUE";
-        /* Error status code - START HERE */
-        case OC_STACK_INVALID_URI:
-            return "INVALID_URI";
-        case OC_STACK_INVALID_QUERY:
-            return "INVALID_QUERY";
-        case OC_STACK_INVALID_IP:
-            return "INVALID_IP";
-        case OC_STACK_INVALID_PORT:
-            return "INVALID_PORT";
-        case OC_STACK_INVALID_CALLBACK:
-            return "INVALID_CALLBACK";
-        case OC_STACK_INVALID_METHOD:
-            return "INVALID_METHOD";
-        /** Invalid parameter.*/
-        case OC_STACK_INVALID_PARAM:
-            return "INVALID_PARAM";
-        case OC_STACK_INVALID_OBSERVE_PARAM:
-            return "INVALID_OBSERVE_PARAM";
-        case OC_STACK_NO_MEMORY:
-            return "NO_MEMORY";
-        case OC_STACK_COMM_ERROR:
-            return "COMM_ERROR";
-        case OC_STACK_TIMEOUT:
-            return "TIMEOUT";
-        case OC_STACK_ADAPTER_NOT_ENABLED:
-            return "ADAPTER_NOT_ENABLED";
-        case OC_STACK_NOTIMPL:
-            return "NOTIMPL";
-        /** Resource not found.*/
-        case OC_STACK_NO_RESOURCE:
-            return "NO_RESOURCE";
-        /** e.g: not supported method or interface.*/
-        case  OC_STACK_RESOURCE_ERROR:
-            return "RESOURCE_ERROR";
-        case OC_STACK_SLOW_RESOURCE:
-            return "SLOW_RESOURCE";
-        case OC_STACK_DUPLICATE_REQUEST:
-            return "DUPLICATE_REQUEST";
-        /** Resource has no registered observers.*/
-        case OC_STACK_NO_OBSERVERS:
-            return "NO_OBSERVERS";
-        case OC_STACK_OBSERVER_NOT_FOUND:
-            return "OBSERVER_NOT_FOUND";
-        case OC_STACK_VIRTUAL_DO_NOT_HANDLE:
-            return "VIRTUAL_DO_NOT_HANDLE";
-        case OC_STACK_INVALID_OPTION:
-            return "INVALID_OPTION";
-        /** The remote reply contained malformed data.*/
-        case OC_STACK_MALFORMED_RESPONSE:
-            return "MALFORMED_RESPONSE";
-        case OC_STACK_PERSISTENT_BUFFER_REQUIRED:
-            return "PERSISTENT_BUFFER_REQUIRED";
-        case OC_STACK_INVALID_REQUEST_HANDLE:
-            return "INVALID_REQUEST_HANDLE";
-        case OC_STACK_INVALID_DEVICE_INFO:
-            return "INVALID_DEVICE_INFO";
-        case OC_STACK_INVALID_JSON:
-            return "INVALID_JSON";
-        /** Request is not authorized by Resource Server. */
-        case OC_STACK_UNAUTHORIZED_REQ:
-            return "UNAUTHORIZED_REQ";
-        /** Error code from PDM */
-        case OC_STACK_PDM_IS_NOT_INITIALIZED:
-            return "PDM_IS_NOT_INITIALIZED";
-        case OC_STACK_DUPLICATE_UUID:
-            return "DUPLICATE_UUID";
-        case OC_STACK_INCONSISTENT_DB:
-            return "INCONSISTENT_DB";
-        /** Insert all new error codes here!.*/
+            /** Success status code - START HERE.*/
+            case OC_STACK_OK:
+                return "OK";
+            case OC_STACK_RESOURCE_CREATED:
+                return "RESOURCE_CREATED";
+            case OC_STACK_RESOURCE_DELETED:
+                return "RESOURCE_DELETED";
+            case OC_STACK_RESOURCE_CHANGED:
+                return "RESOURCE_CHANGED";
+            case OC_STACK_CONTINUE:
+                return "CONTINUE";
+            /* Error status code - START HERE */
+            case OC_STACK_INVALID_URI:
+                return "INVALID_URI";
+            case OC_STACK_INVALID_QUERY:
+                return "INVALID_QUERY";
+            case OC_STACK_INVALID_IP:
+                return "INVALID_IP";
+            case OC_STACK_INVALID_PORT:
+                return "INVALID_PORT";
+            case OC_STACK_INVALID_CALLBACK:
+                return "INVALID_CALLBACK";
+            case OC_STACK_INVALID_METHOD:
+                return "INVALID_METHOD";
+            /** Invalid parameter.*/
+            case OC_STACK_INVALID_PARAM:
+                return "INVALID_PARAM";
+            case OC_STACK_INVALID_OBSERVE_PARAM:
+                return "INVALID_OBSERVE_PARAM";
+            case OC_STACK_NO_MEMORY:
+                return "NO_MEMORY";
+            case OC_STACK_COMM_ERROR:
+                return "COMM_ERROR";
+            case OC_STACK_TIMEOUT:
+                return "TIMEOUT";
+            case OC_STACK_ADAPTER_NOT_ENABLED:
+                return "ADAPTER_NOT_ENABLED";
+            case OC_STACK_NOTIMPL:
+                return "NOTIMPL";
+            /** Resource not found.*/
+            case OC_STACK_NO_RESOURCE:
+                return "NO_RESOURCE";
+            /** e.g: not supported method or interface.*/
+            case  OC_STACK_RESOURCE_ERROR:
+                return "RESOURCE_ERROR";
+            case OC_STACK_SLOW_RESOURCE:
+                return "SLOW_RESOURCE";
+            case OC_STACK_DUPLICATE_REQUEST:
+                return "DUPLICATE_REQUEST";
+            /** Resource has no registered observers.*/
+            case OC_STACK_NO_OBSERVERS:
+                return "NO_OBSERVERS";
+            case OC_STACK_OBSERVER_NOT_FOUND:
+                return "OBSERVER_NOT_FOUND";
+            case OC_STACK_VIRTUAL_DO_NOT_HANDLE:
+                return "VIRTUAL_DO_NOT_HANDLE";
+            case OC_STACK_INVALID_OPTION:
+                return "INVALID_OPTION";
+            /** The remote reply contained malformed data.*/
+            case OC_STACK_MALFORMED_RESPONSE:
+                return "MALFORMED_RESPONSE";
+            case OC_STACK_PERSISTENT_BUFFER_REQUIRED:
+                return "PERSISTENT_BUFFER_REQUIRED";
+            case OC_STACK_INVALID_REQUEST_HANDLE:
+                return "INVALID_REQUEST_HANDLE";
+            case OC_STACK_INVALID_DEVICE_INFO:
+                return "INVALID_DEVICE_INFO";
+            case OC_STACK_INVALID_JSON:
+                return "INVALID_JSON";
+            /** Request is not authorized by Resource Server. */
+            case OC_STACK_UNAUTHORIZED_REQ:
+                return "UNAUTHORIZED_REQ";
+            /** Error code from PDM */
+            case OC_STACK_PDM_IS_NOT_INITIALIZED:
+                return "PDM_IS_NOT_INITIALIZED";
+            case OC_STACK_DUPLICATE_UUID:
+                return "DUPLICATE_UUID";
+            case OC_STACK_INCONSISTENT_DB:
+                return "INCONSISTENT_DB";
+            /** Error code from OTM */
+            case OC_STACK_AUTHENTICATION_FAILURE:
+                return "AUTHENTICATION_FAILURE";
+            /** Insert all new error codes here!.*/
 #ifdef WITH_PRESENCE
-        case OC_STACK_PRESENCE_STOPPED:
-            return "PRESENCE_STOPPED";
-        case OC_STACK_PRESENCE_TIMEOUT:
-            return "PRESENCE_TIMEOUT";
-        case OC_STACK_PRESENCE_DO_NOT_HANDLE:
-            return "PRESENCE_DO_NOT_HANDLE";
+            case OC_STACK_PRESENCE_STOPPED:
+                return "PRESENCE_STOPPED";
+            case OC_STACK_PRESENCE_TIMEOUT:
+                return "PRESENCE_TIMEOUT";
+            case OC_STACK_PRESENCE_DO_NOT_HANDLE:
+                return "PRESENCE_DO_NOT_HANDLE";
 #endif
-        case OC_STACK_ERROR:
-            return "ERROR";
+            case OC_STACK_ERROR:
+                return "ERROR";
 
-        case JNI_EXCEPTION:
-            return "JNI_EXCEPTION";
-        case JNI_NO_NATIVE_POINTER:
-            return "JNI_NO_NATIVE_POINTER";
-        case JNI_INVALID_VALUE:
-            return "JNI_INVALID_VALUE";
-        default:
-            return "";
+            case JNI_EXCEPTION:
+                return "JNI_EXCEPTION";
+            case JNI_NO_NATIVE_POINTER:
+                return "JNI_NO_NATIVE_POINTER";
+            case JNI_INVALID_VALUE:
+                return "JNI_INVALID_VALUE";
+            default:
+                return "";
         }
     }
 };

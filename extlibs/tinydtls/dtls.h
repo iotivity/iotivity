@@ -368,7 +368,7 @@ void dtls_free_context(dtls_context_t *ctx);
 #define dtls_get_app_data(CTX) ((CTX)->app)
 
 /** Sets the callback handler object for @p ctx to @p h. */
-static inline void dtls_set_handler(dtls_context_t *ctx, dtls_handler_t *h) {
+INLINE_API void dtls_set_handler(dtls_context_t *ctx, dtls_handler_t *h) {
   ctx->h = h;
 }
 
@@ -454,8 +454,16 @@ void dtls_check_retransmit(dtls_context_t *context, clock_time_t *next);
 #define DTLS_CT_HANDSHAKE          22
 #define DTLS_CT_APPLICATION_DATA   23
 
+#if defined(_MSC_VER)
+#define PACKED_STRUCT_START __pragma(pack(push,1)); typedef struct
+#define PACKED_STRUCT_END   __pragma(pack(pop))
+#else
+#define PACKED_STRUCT_START typedef struct __attribute__((__packed__))
+#define PACKED_STRUCT_END
+#endif
+
 /** Generic header structure of the DTLS record layer. */
-typedef struct __attribute__((__packed__)) {
+PACKED_STRUCT_START {
   uint8 content_type;		/**< content type of the included message */
   uint16 version;		/**< Protocol version */
   uint16 epoch;		        /**< counter for cipher state changes */
@@ -463,6 +471,7 @@ typedef struct __attribute__((__packed__)) {
   uint16 length;		/**< length of the following fragment */
   /* fragment */
 } dtls_record_header_t;
+PACKED_STRUCT_END;
 
 /* Handshake types */
 
@@ -479,7 +488,7 @@ typedef struct __attribute__((__packed__)) {
 #define DTLS_HT_FINISHED            20
 
 /** Header structure for the DTLS handshake protocol. */
-typedef struct __attribute__((__packed__)) {
+PACKED_STRUCT_START {
   uint8 msg_type; /**< Type of handshake message  (one of DTLS_HT_) */
   uint24 length;  /**< length of this message */
   uint16 message_seq; 	/**< Message sequence number */
@@ -487,9 +496,10 @@ typedef struct __attribute__((__packed__)) {
   uint24 fragment_length;	/**< Fragment length. */
   /* body */
 } dtls_handshake_header_t;
+PACKED_STRUCT_END;
 
 /** Structure of the Client Hello message. */
-typedef struct __attribute__((__packed__)) {
+PACKED_STRUCT_START {
   uint16 version;	  /**< Client version */
   uint32 gmt_random;	  /**< GMT time of the random byte creation */
   unsigned char random[28];	/**< Client random bytes */
@@ -498,13 +508,15 @@ typedef struct __attribute__((__packed__)) {
   /* cipher suite (2 to 2^16 -1 bytes) */
   /* compression method */
 } dtls_client_hello_t;
+PACKED_STRUCT_END;
 
 /** Structure of the Hello Verify Request. */
-typedef struct __attribute__((__packed__)) {
+PACKED_STRUCT_START {
   uint16 version;		/**< Server version */
   uint8 cookie_length;	/**< Length of the included cookie */
   uint8 cookie[];		/**< up to 32 bytes making up the cookie */
 } dtls_hello_verify_t;  
+PACKED_STRUCT_END;
 
 #if 0
 /** 

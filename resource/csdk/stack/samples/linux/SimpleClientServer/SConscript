@@ -18,33 +18,46 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-Import('env')
-target_os = env.get('TARGET_OS')
-samples_env = env.Clone()
-with_ra = env.get ('WITH_RA')
+thread_env = SConscript('#build_common/thread.scons')
+samples_env = thread_env.Clone()
+target_os = samples_env.get('TARGET_OS')
+with_ra = samples_env.get ('WITH_RA')
+
 ######################################################################
 # Build flags
 ######################################################################
+with_upstream_libcoap = samples_env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
+	samples_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+else:
+	# For bring up purposes only, the forked version will live here.
+	samples_env.AppendUnique(CPPPATH = ['../../../../../connectivity/lib/libcoap-4.1.1/include'])
+
 samples_env.PrependUnique(CPPPATH = [
 		'../../../../logger/include',
 		'../../../../stack/include',
 		'../../../../../../extlibs/cjson',
+		'../../../../../../extlibs/boost/boost',
 		'../../../../../oc_logger/include',
-		'../../../../../connectivity/lib/libcoap-4.1.1'
 		])
 
-samples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-samples_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-samples_env.AppendUnique(LIBS = ['-lpthread' ])
-samples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+compiler = samples_env.get('CXX')
+if 'g++' in compiler:
+	samples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
 
-if target_os in ['darwin', 'ios']:
-	samples_env.PrependUnique(LIBS = ['m','octbstack', 'ocsrm', 'connectivity_abstraction','coap' ])
-elif target_os not in ['arduino']:
-	samples_env.PrependUnique(LIBS = ['m', 'octbstack', 'ocsrm', 'connectivity_abstraction', 'coap'])
+samples_env.AppendUnique(RPATH = [samples_env.get('BUILD_DIR')])
+samples_env.AppendUnique(LIBPATH = [samples_env.get('BUILD_DIR')])
+
+samples_env.PrependUnique(LIBS = ['octbstack', 'ocsrm', 'connectivity_abstraction', 'coap'])
+
+if target_os not in ['arduino', 'windows', 'darwin', 'ios', 'msys_nt']:
 	samples_env.AppendUnique(LIBS = ['rt'])
 
-if env.get('SECURED') == '1':
+if target_os not in ['windows']:
+	samples_env.PrependUnique(LIBS = ['m'])
+
+if samples_env.get('SECURED') == '1':
     samples_env.AppendUnique(LIBS = ['tinydtls'])
 
 samples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
@@ -75,6 +88,6 @@ if with_ra:
 	list_of_samples.append (ocremoteaccessclient)
 Alias("samples", list_of_samples)
 
-env.AppendTarget('samples')
+samples_env.AppendTarget('samples')
 
 

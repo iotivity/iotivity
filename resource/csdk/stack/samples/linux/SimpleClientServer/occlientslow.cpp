@@ -18,19 +18,27 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <iostream>
 #include <sstream>
+#include <getopt.h>
 #include "ocstack.h"
 #include "logger.h"
 #include "occlientslow.h"
 #include "oic_string.h"
 #include "ocpayload.h"
 #include "payload_logging.h"
+#include "common.h"
 
 // Tracking user input
 static int UnicastDiscovery = 0;
@@ -41,10 +49,9 @@ static std::string coapServerResource = "/a/led";
 
 //The following variable determines the interface protocol (IP, etc)
 //to be used for sending unicast messages. Default set to IP.
-static OCConnectivityType AdapterType = CT_ADAPTER_IP;
+static OCConnectivityType adapterType = CT_ADAPTER_IP;
 static OCDevAddr endpoint;
 static const char *RESOURCE_DISCOVERY_QUERY = "%s/oic/res";
-void StripNewLineChar(char* str);
 
 int gQuitFlag = 0;
 
@@ -99,7 +106,7 @@ OCStackResult InvokeOCDoResource(std::ostringstream &query,
 
     ret = OCDoResource(NULL, method, query.str().c_str(), dest,
             (method == OC_REST_PUT) ? putPayload() : NULL,
-            AdapterType, qos, &cbData, options, numOptions);
+            adapterType, qos, &cbData, options, numOptions);
 
     if (ret != OC_STACK_OK)
     {
@@ -292,12 +299,12 @@ int main(int argc, char* argv[])
 
     if(ConnectivityType == CT_ADAPTER_DEFAULT || ConnectivityType == CT_IP)
     {
-        AdapterType = CT_ADAPTER_IP;
+        adapterType = CT_ADAPTER_IP;
     }
     else
     {
         OIC_LOG(INFO, TAG, "Default Connectivity type selected...");
-        AdapterType = CT_ADAPTER_IP;
+        adapterType = CT_ADAPTER_IP;
     }
 
     InitDiscovery();

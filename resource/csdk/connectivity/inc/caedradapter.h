@@ -44,7 +44,9 @@ extern "C"
  *                                 Abstraction Layer.
  * @param[in]   reqRespCallback    Callback to notify request and response messages from
  *                                 server(s) started at Connectivity Abstraction Layer.
- * @param[in]   netCallback        Callback to notify the network additions to Connectivity
+ * @param[in]   netCallback        Callback to notify the adapter changes to Connectivity
+ *                                 Abstraction Layer.
+ * @param[in]   connCallback       Callback to notify the connection changes to Connectivity
  *                                 Abstraction Layer.
  * @param[in]   errorCallback      errorCallback to notify error to connectivity common logic
  *                                 layer from adapter.
@@ -52,8 +54,9 @@ extern "C"
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CAInitializeEDR(CARegisterConnectivityCallback registerCallback,
-                           CANetworkPacketReceivedCallback reqRespCallback,
-                           CANetworkChangeCallback netCallback,
+                           CANetworkPacketReceivedCallback packetReceivedCallback,
+                           CAAdapterChangeCallback netCallback,
+                           CAConnectionChangeCallback connCallback,
                            CAErrorHandleCallback errorCallback, ca_thread_pool_t handle);
 
 /**
@@ -93,21 +96,23 @@ CAResult_t CAStartEDRDiscoveryServer();
  *                              connectivity type) to which the unicast data has to be sent.
  * @param[in]  data             Data to be sent.
  * @param[in]  dataLength       Size of data to be sent.
+ * @param[in]  dataType         Data type which is REQUEST or RESPONSE.
  * @return The number of bytes sent on the network. Returns -1 on error.
  *
  */
 int32_t CASendEDRUnicastData(const CAEndpoint_t *endpoint, const void *data,
-                             uint32_t dataLength);
+                             uint32_t dataLength, CADataType_t dataType);
 
 /**
  * Sends multicast data to all discovered bluetooth OIC devices using the adapter.
  * @param[in]  endpoint      Remote Endpoint information (like ipaddress, port, and connectivity.
  * @param[in]  data          Data which needs to be sent to all discovered bluetooth OIC device.
  * @param[in]  dataLength    Length of data in bytes.
+ * @param[in]  dataType      Data type which is REQUEST or RESPONSE.
  * @return Number of bytes sent on the network. Returns -1 on error.
  */
 int32_t CASendEDRMulticastData(const CAEndpoint_t *endpoint, const void *data,
-                               uint32_t dataLength);
+                               uint32_t dataLength, CADataType_t dataType);
 
 /**
  * Get EDR Connectivity network information.

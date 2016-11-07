@@ -28,6 +28,7 @@ public enum ErrorCode {
     RESOURCE_CREATED("RESOURCE_CREATED", ""),
     RESOURCE_DELETED("RESOURCE_DELETED", ""),
     CONTINUE("CONTINUE", ""),
+    RESOURCE_CHANGED("RESOURCE_CHANGED", ""),
     /** Success status code - END HERE.*/
     /* Error status code - START HERE */
     INVALID_URI("INVALID_URI", ""),
@@ -61,6 +62,9 @@ public enum ErrorCode {
     PDM_IS_NOT_INITIALIZED("PDM_IS_NOT_INITIALIZED", ""),
     DUPLICATE_UUID("DUPLICATE_UUID", ""),
     INCONSISTENT_DB("INCONSISTENT_DB", ""),
+    /** Error code from OTM */
+    AUTHENTICATION_FAILURE("AUTHENTICATION_FAILURE",
+        "This error is pushed from DTLS interface when handshake failure happens"),
     /** Insert all new error codes here!.*/
     PRESENCE_STOPPED("PRESENCE_STOPPED", ""),
     PRESENCE_TIMEOUT("PRESENCE_TIMEOUT", ""),

@@ -51,12 +51,12 @@ void CAInitializeAdapters();
 void CASetPacketReceivedCallback(CANetworkPacketReceivedCallback callback);
 
 /**
- * @brief   Set the network status changed callback for message handler
+ * @brief   Set the adapter status changed callback for message handler
  * @param   callback        [IN]    message handler network status callback to receive network
  *                                  changes.
  * @return   none
  */
-void CASetNetworkChangeCallback(CANetworkChangeCallback callback);
+void CASetNetworkChangeCallback(CAAdapterChangeCallback callback);
 
 /**
  * @brief   Set the error handler callback for message handler

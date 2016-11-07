@@ -38,40 +38,42 @@
 
 #define TAG "OXM_RandomPIN"
 
-char* CreatePinBasedSelectOxmPayload(OTMContext_t* otmCtx)
+OCStackResult CreatePinBasedSelectOxmPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
 {
-    if(!otmCtx || !otmCtx->selectedDeviceInfo)
+    if(!otmCtx || !otmCtx->selectedDeviceInfo || !payload || *payload || !size)
     {
-        return NULL;
+        return OC_STACK_INVALID_PARAM;
     }
 
     otmCtx->selectedDeviceInfo->doxm->oxmSel = OIC_RANDOM_DEVICE_PIN;
 
-    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
+    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
 }
 
-char* CreatePinBasedOwnerTransferPayload(OTMContext_t* otmCtx)
+OCStackResult CreatePinBasedOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
 {
-    if(!otmCtx || !otmCtx->selectedDeviceInfo)
+    if(!otmCtx || !otmCtx->selectedDeviceInfo || !payload || *payload || !size)
     {
-        return NULL;
+        return OC_STACK_INVALID_PARAM;
     }
 
     OicUuid_t uuidPT = {.id={0}};
+    *payload = NULL;
+    *size = 0;
 
     if (OC_STACK_OK != GetDoxmDeviceID(&uuidPT))
     {
         OIC_LOG(ERROR, TAG, "Error while retrieving provisioning tool's device ID");
-        return NULL;
+        return OC_STACK_ERROR;
     }
     memcpy(otmCtx->selectedDeviceInfo->doxm->owner.id, uuidPT.id , UUID_LENGTH);
 
-    return BinToDoxmJSON(otmCtx->selectedDeviceInfo->doxm);
+    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
 }
 
-OCStackResult InputPinCodeCallback(OTMContext_t* otmCtx)
+OCStackResult InputPinCodeCallback(OTMContext_t *otmCtx)
 {
-    if(!otmCtx || !otmCtx->selectedDeviceInfo)
+    if (!otmCtx || !otmCtx->selectedDeviceInfo)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -79,7 +81,7 @@ OCStackResult InputPinCodeCallback(OTMContext_t* otmCtx)
     uint8_t pinData[OXM_RANDOM_PIN_SIZE + 1];
 
     OCStackResult res = InputPin((char*)pinData, OXM_RANDOM_PIN_SIZE + 1);
-    if(OC_STACK_OK != res)
+    if (OC_STACK_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Failed to input PIN");
         return res;
@@ -90,6 +92,13 @@ OCStackResult InputPinCodeCallback(OTMContext_t* otmCtx)
      * Credential should not be saved into SVR.
      * For this reason, We will use a temporary get_psk_info callback to random PIN OxM.
      */
+#ifdef __WITH_TLS__
+    if(CA_STATUS_OK != CAregisterTlsCredentialsHandler(GetDtlsPskForRandomPinOxm))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to register TLS credentials handler for random PIN OxM.");
+        res = OC_STACK_ERROR;
+    }
+#endif
     if(CA_STATUS_OK != CARegisterDTLSCredentialsHandler(GetDtlsPskForRandomPinOxm))
     {
         OIC_LOG(ERROR, TAG, "Failed to register DTLS credentials handler for random PIN OxM.");
@@ -102,11 +111,11 @@ OCStackResult InputPinCodeCallback(OTMContext_t* otmCtx)
     return res;
 }
 
-OCStackResult CreateSecureSessionRandomPinCallbak(OTMContext_t* otmCtx)
+OCStackResult CreateSecureSessionRandomPinCallback(OTMContext_t* otmCtx)
 {
     OIC_LOG(INFO, TAG, "IN CreateSecureSessionRandomPinCallbak");
 
-    if(!otmCtx || !otmCtx->selectedDeviceInfo)
+    if (!otmCtx || !otmCtx->selectedDeviceInfo)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -119,7 +128,7 @@ OCStackResult CreateSecureSessionRandomPinCallbak(OTMContext_t* otmCtx)
     }
     OIC_LOG(INFO, TAG, "Anonymous cipher suite disabled.");
 
-    caresult  = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256);
+    caresult  = CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256, otmCtx->selectedDeviceInfo->endpoint.adapter);
     if (CA_STATUS_OK != caresult)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256");
@@ -127,17 +136,22 @@ OCStackResult CreateSecureSessionRandomPinCallbak(OTMContext_t* otmCtx)
     }
     OIC_LOG(INFO, TAG, "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 cipher suite selected.");
 
-
     OCProvisionDev_t* selDevInfo = otmCtx->selectedDeviceInfo;
-    CAEndpoint_t *endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
-    if(NULL == endpoint)
+    CAEndpoint_t endpoint;
+    memcpy(&endpoint, &selDevInfo->endpoint, sizeof(CAEndpoint_t));
+
+    if(CA_ADAPTER_IP == endpoint.adapter)
     {
-        return OC_STACK_NO_MEMORY;
+        endpoint.port = selDevInfo->securePort;
+        caresult = CAInitiateHandshake(&endpoint);
     }
-    memcpy(endpoint,&selDevInfo->endpoint,sizeof(CAEndpoint_t));
-    endpoint->port = selDevInfo->securePort;
-    caresult = CAInitiateHandshake(endpoint);
-    OICFree(endpoint);
+#ifdef __WITH_TLS__
+    else
+    {
+        endpoint.port = selDevInfo->tcpPort;
+        caresult = CAinitiateTlsHandshake(&endpoint);
+    }
+#endif
     if (CA_STATUS_OK != caresult)
     {
         OIC_LOG_V(ERROR, TAG, "DTLS handshake failure.");
@@ -148,4 +162,3 @@ OCStackResult CreateSecureSessionRandomPinCallbak(OTMContext_t* otmCtx)
 
     return OC_STACK_OK;
 }
-

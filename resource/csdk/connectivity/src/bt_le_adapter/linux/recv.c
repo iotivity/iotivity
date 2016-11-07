@@ -51,7 +51,7 @@ bool CAGattRecv(CAGattRecvInfo * info,
 {
     uint32_t sent_length = 0;
 
-    ca_mutex_lock(info->context->lock);
+    oc_mutex_lock(info->context->lock);
 
     bool const success =
         info->on_packet_received(info->peer,
@@ -59,7 +59,7 @@ bool CAGattRecv(CAGattRecvInfo * info,
                                  length,
                                  &sent_length) == CA_STATUS_OK;
 
-    ca_mutex_unlock(info->context->lock);
+    oc_mutex_unlock(info->context->lock);
 
     return success && length == sent_length;
 }

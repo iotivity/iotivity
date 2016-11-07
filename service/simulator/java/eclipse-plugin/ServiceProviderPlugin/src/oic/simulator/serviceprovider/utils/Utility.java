@@ -577,7 +577,6 @@ public class Utility {
         Map<String, String> ifTypes = null;
         if (resourceClass == SingleResource.class) {
             ifTypes = new HashMap<String, String>();
-            ifTypes.put(Constants.BASELINE_INTERFACE, "Baseline");
             ifTypes.put(Constants.READ_ONLY_INTERFACE, "Read-Only");
             ifTypes.put(Constants.READ_WRITE_INTERFACE, "Read-Write");
             ifTypes.put(Constants.ACTUATOR_INTERFACE, "Actuator");

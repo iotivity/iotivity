@@ -27,6 +27,7 @@
 #include "ESRichCommon.h"
 #include "RemoteEnrollee.h"
 
+using namespace OC;
 namespace OIC
 {
     namespace Service
@@ -34,11 +35,8 @@ namespace OIC
         class RemoteEnrollee;
 
         /**
-         * This provides methods for Mediator devices to perform EasySetup of Enrollee devices.
-         * EasySetup involves
-         * 1) Ownership transfer for enabling secured communication between Mediator and Enrollee
-         * devices.
-         * 2) Provisioning of Enrollee devices using the credentails of target Enroller devices.
+         * This provides an API to instanciate a new RemoteEnrollee object correspondent to Enrollee
+         * Device to be setup.
          */
         class EasySetup
         {
@@ -50,28 +48,28 @@ namespace OIC
             static EasySetup* getInstance();
 
             /**
-             * This API is used for creating a remote Enrollee device instance.
-             * @param enrolleeNWProvIndo Provisioning information for configuring the Enrollee.
+             * This API is used for creating a remote Enrollee instance.
+             *
+             * @param enrolleeResource an OCResource object corresponding to enrollee resource
+             *        discovered in a network. The OCResource object can be obtained by calling
+             *        OCPlatform.findResource() API. What resource you have to discover with
+             *        the OCPlatform.findResource() API is a "provisioning" resource with a certain
+             *        resource type, i.e. oic.wk.prov
              *
              * @throws ESBadRequestException If createEnrolleeDevice is invoked with the same
              *         provisioning information.
              *
              * @return Pointer to RemoteEnrollee instance.
              */
-            std::shared_ptr<RemoteEnrollee> createEnrolleeDevice (
-                         const ProvConfig& enrolleeNWProvInfo,
-                         const WiFiOnboadingConnection& wifiOnboardingconn);
+            std::shared_ptr<RemoteEnrollee> createRemoteEnrollee(
+                                        std::shared_ptr< OC::OCResource > enrolleeResource);
+
         private:
             EasySetup();
             ~EasySetup();
 
-            RemoteEnrollee::shared_ptr findDeviceInProvisioningList(
-                                const ProvConfig& enrolleeNWProvInfo,
-                                const WiFiOnboadingConnection& wifiOnboardingconn);
-            bool addDeviceToProvisioningList(const RemoteEnrollee::shared_ptr remoteEnrollee);
-            bool deleteDeviceFromProvisioningList (const ProvConfig& enrolleeNWProvInfo);
-
-            std::vector< RemoteEnrollee::shared_ptr > m_activeEnrolleeList;
+        private:
+            std::shared_ptr< OC::OCResource > m_ocResource;
             static EasySetup *s_instance;
         };
     }

@@ -23,6 +23,7 @@
 #include <stdexcept>
 #include <utility>
 #include "InternalTypes.h"
+#include <string.h>
 
 #define CONTAINER_TAG "RESOURCE_CONTAINER"
 #define DISCOVER_TAG "DISCOVER_RESOURCE_UNIT"
@@ -151,7 +152,8 @@ namespace OIC
                             {
                                 strBundleId = bundle->first_node(BUNDLE_ID)->value();
                             }
-                            else{
+                            else
+                            {
                                 strBundleId = "";
                             }
 
@@ -160,19 +162,23 @@ namespace OIC
                                 bundleConfigMap.insert(std::make_pair(BUNDLE_ID, trim_both(strBundleId)));
 
                                 // <path>
-                                if (bundle->first_node(BUNDLE_PATH)){
+                                if (bundle->first_node(BUNDLE_PATH))
+                                {
                                     strPath = bundle->first_node(BUNDLE_PATH)->value();
                                 }
-                                else{
+                                else
+                                {
                                     strPath = "";
                                 }
                                 bundleConfigMap.insert(std::make_pair(BUNDLE_PATH, trim_both(strPath)));
 
                                 // <version>
-                                if (bundle->first_node(BUNDLE_VERSION)){
+                                if (bundle->first_node(BUNDLE_VERSION))
+                                {
                                     strVersion = bundle->first_node(BUNDLE_VERSION)->value();
                                 }
-                                else{
+                                else
+                                {
                                     strVersion = "";
                                 }
                                 bundleConfigMap.insert(
@@ -193,8 +199,9 @@ namespace OIC
             }
         }
 
-        void Configuration::getResourceConfiguration(std::string bundleId, std::string resourceName,
-                        resourceInfo *resourceInfoOut){
+        void Configuration::getResourceConfiguration(std::string bundleId, std::string resourceUri,
+                        resourceInfo *resourceInfoOut)
+        {
             rapidxml::xml_node< char > *bundle;
             rapidxml::xml_node< char > *resource;
             rapidxml::xml_node< char > *item, *subItem, *subItem2;
@@ -202,7 +209,7 @@ namespace OIC
             string strBundleId;
             string strKey, strValue;
             OIC_LOG_V(INFO, CONTAINER_TAG, "Loading resource configuration for %s %s!",
-                    bundleId.c_str(), resourceName.c_str());
+                bundleId.c_str(), resourceUri.c_str());
 
             if (m_loaded)
             {
@@ -226,7 +233,8 @@ namespace OIC
                                 OIC_LOG_V(INFO, CONTAINER_TAG, "Inspecting");
                                 // <resourceInfo>
                                 bundle = bundle->first_node(OUTPUT_RESOURCES_TAG);
-                                if (bundle){
+                                if (bundle)
+                                {
                                     for (resource = bundle->first_node(OUTPUT_RESOURCE_INFO);
                                          resource; resource = resource->next_sibling())
                                     {
@@ -239,18 +247,28 @@ namespace OIC
 
                                             if (!strKey.compare(OUTPUT_RESOURCE_NAME))
                                             {
-                                                if (trim_both(strValue).compare(resourceName) != 0) break;
+                                                
                                                 resourceInfoOut->name = trim_both(strValue);
                                             }
 
                                             else if (!strKey.compare(OUTPUT_RESOURCE_URI))
+                                            {
+                                                if (trim_both(strValue).compare(resourceUri) != 0)
+                                                {
+                                                    break;
+                                                }
                                                 resourceInfoOut->uri = trim_both(strValue);
+                                            }
 
                                             else if (!strKey.compare(OUTPUT_RESOURCE_ADDR))
+                                            {
                                                 resourceInfoOut->address = trim_both(strValue);
+                                            }
 
                                             else if (!strKey.compare(OUTPUT_RESOURCE_TYPE))
+                                            {
                                                 resourceInfoOut->resourceType = trim_both(strValue);
+                                            }
 
                                             else
                                             {
@@ -300,7 +318,8 @@ namespace OIC
                     OIC_LOG_V(ERROR, CONTAINER_TAG, "Exception (%s)", e.what());
                 }
             }
-            else{
+            else
+            {
                 OIC_LOG(INFO, CONTAINER_TAG, "config is not loaded yet !!");
             }
         }
@@ -353,16 +372,24 @@ namespace OIC
                                             strValue = item->value();
 
                                             if (!strKey.compare(OUTPUT_RESOURCE_NAME))
+                                            {
                                                 tempResourceInfo.name = trim_both(strValue);
+                                            }
 
                                             else if (!strKey.compare(OUTPUT_RESOURCE_URI))
+                                            {
                                                 tempResourceInfo.uri = trim_both(strValue);
+                                            }
 
                                             else if (!strKey.compare(OUTPUT_RESOURCE_ADDR))
+                                            {
                                                 tempResourceInfo.address = trim_both(strValue);
+                                            }
 
                                             else if (!strKey.compare(OUTPUT_RESOURCE_TYPE))
+                                            {
                                                 tempResourceInfo.resourceType = trim_both(strValue);
+                                            }
 
                                             else
                                             {
@@ -413,7 +440,8 @@ namespace OIC
                     OIC_LOG_V(ERROR, CONTAINER_TAG, "Exception (%s)", e.what());
                 }
             }
-            else{
+            else
+            {
                 OIC_LOG(INFO, CONTAINER_TAG, "config is not loaded yet !!");
             }
         }

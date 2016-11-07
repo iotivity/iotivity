@@ -11,11 +11,11 @@ sqlite_env = env.Clone()
 target_os = sqlite_env.get('TARGET_OS')
 src_dir = sqlite_env.get('SRC_DIR')
 
-targets_need_sqlite = ['linux', 'android', 'tizen']
+targets_need_sqlite = ['linux', 'android', 'tizen', 'msys_nt', 'windows']
 sqlite_dir      = src_dir + '/extlibs/sqlite3/'
 sqlite_build_dir      = src_dir + '/extlibs/sqlite3/sqlite-amalgamation-3081101/'
 sqlite_zip_file = src_dir + '/extlibs/sqlite3/sqlite-amalgamation-3081101.zip'
-sqlite_url      = 'http://www.sqlite.org/2015/sqlite-amalgamation-3081101.zip'
+sqlite_url      = 'https://www.sqlite.org/2015/sqlite-amalgamation-3081101.zip'
 
 # Download
 if target_os in targets_need_sqlite:

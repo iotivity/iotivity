@@ -29,14 +29,14 @@
  * implementation for prng().  You might want to change prng() to use
  * a better PRNG on your specific platform.
  */
-static inline int
+INLINE_API int
 dtls_prng(unsigned char *buf, size_t len) {
   while (len--)
     *buf++ = rand() & 0xFF;
   return 1;
 }
 
-static inline void
+INLINE_API void
 dtls_prng_init(unsigned short seed) {
 	srand(seed);
 }
@@ -45,7 +45,7 @@ dtls_prng_init(unsigned short seed) {
 #include "random.h"
 
 #ifdef HAVE_PRNG
-static inline int
+INLINE_API int
 dtls_prng(unsigned char *buf, size_t len)
 {
 	return contiki_prng_impl(buf, len);
@@ -56,7 +56,7 @@ dtls_prng(unsigned char *buf, size_t len)
  * implementation for prng().  You might want to change prng() to use
  * a better PRNG on your specific platform.
  */
-static inline int
+INLINE_API int
 dtls_prng(unsigned char *buf, size_t len) {
   unsigned short v = random_rand();
   while (len > sizeof(v)) {
@@ -71,7 +71,7 @@ dtls_prng(unsigned char *buf, size_t len) {
 }
 #endif /* HAVE_PRNG */
 
-static inline void
+INLINE_API void
 dtls_prng_init(unsigned short seed) {
 	random_init(seed);
 }

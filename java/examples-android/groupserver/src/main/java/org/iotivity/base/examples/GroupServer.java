@@ -206,6 +206,12 @@ public class GroupServer extends Activity implements OcPlatform.OnResourceFoundL
         enableStartStopButton();
     }
 
+    @Override
+    public synchronized void onFindResourceFailed(Throwable throwable, String uri) {
+        msg("findResource request has failed");
+        Log.e(TAG, throwable.toString());
+    }
+
     /**
      * A local method to reset group server
      */

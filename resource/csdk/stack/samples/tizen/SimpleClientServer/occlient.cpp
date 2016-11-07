@@ -20,6 +20,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <stdio.h>
+#include <glib.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
@@ -50,6 +51,9 @@ using namespace std;
 static int g_unicastDiscovery = 0;
 static int g_testCase = 0;
 static int g_connectivity = 0;
+
+static GMainLoop *g_mainloop = NULL;
+pthread_t g_thread;
 
 static const char *DEVICE_DISCOVERY_QUERY = "%s/oic/d";
 static const char *PLATFORM_DISCOVERY_QUERY = "%s/oic/p";
@@ -285,41 +289,42 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle /*handle*/,
 
     if (clientResponse)
     {
-        cout << "\nStackResult: " << getResult(clientResponse->result);
-        cout << "\nSEQUENCE NUMBER: " << clientResponse->sequenceNumber;
-        cout << "\nCallback Context for OBSERVE notification recvd successfully ";
-        //OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        gNumObserveNotifies++;
-        if (gNumObserveNotifies == 15) //large number to test observing in DELETE case.
+        if (clientResponse->sequenceNumber <= MAX_SEQUENCE_NUMBER)
         {
-            if (g_testCase == TEST_OBS_REQ_NON || g_testCase == TEST_OBS_REQ_CON)
+            if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
             {
-                if (OCCancel (gObserveDoHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
-                {
-                    cout << "\nObserve cancel error";
-                }
-                return OC_STACK_DELETE_TRANSACTION;
+                cout << "This also serves as a registration confirmation" << endl;
             }
-            else if (g_testCase == TEST_OBS_REQ_NON_CANCEL_IMM)
+
+            cout << "\nStackResult: " << getResult(clientResponse->result);
+            cout << "\nSEQUENCE NUMBER: " << clientResponse->sequenceNumber;
+            cout << "\nCallback Context for OBSERVE notification recvd successfully ";
+            //OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
+            gNumObserveNotifies++;
+
+            if (gNumObserveNotifies == 15) //large number to test observing in DELETE case.
             {
-                if (OCCancel (gObserveDoHandle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+                if (g_testCase == TEST_OBS_REQ_NON || g_testCase == TEST_OBS_REQ_CON)
                 {
-                    cout << "\nObserve cancel error";
+                    if (OCCancel(gObserveDoHandle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
+                    {
+                        cout << "Observe cancel error" << endl;
+                    }
+                    return OC_STACK_DELETE_TRANSACTION;
+                }
+                else if (g_testCase == TEST_OBS_REQ_NON_CANCEL_IMM)
+                {
+                    if (OCCancel(gObserveDoHandle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+                    {
+                        cout << "\nObserve cancel error";
+                    }
                 }
             }
         }
-        if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
+        else
         {
-            cout << "\nThis also serves as a registration confirmation";
-        }
-        else if (clientResponse->sequenceNumber == OC_OBSERVE_DEREGISTER)
-        {
-            cout << "\nThis also serves as a deregistration confirmation";
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-        else if (clientResponse->sequenceNumber == OC_OBSERVE_NO_OPTION)
-        {
-            cout << "\nThis also tells you that registration/deregistration failed";
+            OIC_LOG(INFO, TAG, "No observe option header is returned in the response.");
+            OIC_LOG(INFO, TAG, "For a registration request, it means the registration failed");
             return OC_STACK_DELETE_TRANSACTION;
         }
     }
@@ -715,7 +720,7 @@ int InitPlatformDiscovery(OCQualityOfService qos)
 
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[64] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
     snprintf(szQueryUri, sizeof (szQueryUri) - 1, PLATFORM_DISCOVERY_QUERY, g_discoveryAddr);
 
@@ -740,7 +745,7 @@ int InitDeviceDiscovery(OCQualityOfService qos)
 
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[100] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
     snprintf(szQueryUri, sizeof (szQueryUri) - 1, DEVICE_DISCOVERY_QUERY, g_discoveryAddr);
 
@@ -763,7 +768,7 @@ int InitDiscovery(OCQualityOfService qos)
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[100] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
     snprintf(szQueryUri, sizeof (szQueryUri) - 1, RESOURCE_DISCOVERY_QUERY, g_discoveryAddr);
 
@@ -781,9 +786,51 @@ int InitDiscovery(OCQualityOfService qos)
     return ret;
 }
 
+void *GMainLoopThread(void *param)
+{
+
+    if (g_unicastDiscovery == 0 && g_testCase == TEST_DISCOVER_DEV_REQ)
+    {
+        InitDeviceDiscovery(OC_LOW_QOS);
+    }
+    else if (g_unicastDiscovery == 0 && g_testCase == TEST_DISCOVER_PLATFORM_REQ)
+    {
+        InitPlatformDiscovery(OC_LOW_QOS);
+    }
+    else
+    {
+        InitDiscovery(OC_LOW_QOS);
+    }
+
+    while (!gQuitFlag)
+    {
+        if (OCProcess() != OC_STACK_OK)
+        {
+            cout << "\nOCStack process error";
+            return NULL;
+        }
+#ifndef ROUTING_GATEWAY
+        sleep(1);
+#endif
+    }
+
+    if (g_mainloop)
+    {
+        g_main_loop_quit(g_mainloop);
+    }
+    return NULL;
+}
+
 int main(int argc, char* argv[])
 {
     int opt;
+
+    g_mainloop = g_main_loop_new(NULL, FALSE);
+    if(!g_mainloop)
+    {
+        printf("g_main_loop_new failed\n");
+        return 0;
+    }
 
     while ((opt = getopt(argc, argv, "u:t:c:")) != -1)
     {
@@ -872,34 +919,19 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (g_unicastDiscovery == 0 && g_testCase == TEST_DISCOVER_DEV_REQ)
-    {
-        InitDeviceDiscovery(OC_LOW_QOS);
-    }
-    else if (g_unicastDiscovery == 0 && g_testCase == TEST_DISCOVER_PLATFORM_REQ)
-    {
-        InitPlatformDiscovery(OC_LOW_QOS);
-    }
-    else
-    {
-        InitDiscovery(OC_LOW_QOS);
-    }
 
     // Break from loop with Ctrl+C
     OIC_LOG(INFO, TAG, "Entering occlient main loop...");
     signal(SIGINT, handleSigInt);
-    while (!gQuitFlag)
-    {
 
-        if (OCProcess() != OC_STACK_OK)
-        {
-            cout << "\nOCStack process error\n";
-            return 0;
-        }
-#ifndef ROUTING_GATEWAY
-        sleep(1);
-#endif
+    int result = pthread_create(&g_thread, NULL, GMainLoopThread, (void *)NULL);
+    if (result < 0)
+    {
+        printf("pthread_create failed in initialize\n");
+        return 0;
     }
+
+    g_main_loop_run(g_mainloop);
 
     cout << "\nExiting occlient main loop...\n";
 

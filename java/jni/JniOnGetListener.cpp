@@ -23,41 +23,68 @@
 #include "JniOcResource.h"
 #include "JniOcRepresentation.h"
 #include "JniUtils.h"
+#ifdef WITH_CLOUD
+#include "JniOcAccountManager.h"
+#endif
 
 JniOnGetListener::JniOnGetListener(JNIEnv *env, jobject jListener, JniOcResource* owner)
     : m_ownerResource(owner)
 {
     m_jwListener = env->NewWeakGlobalRef(jListener);
+#ifdef WITH_CLOUD
+    m_ownerAccountManager = nullptr;
+#endif
 }
+
+#ifdef WITH_CLOUD
+JniOnGetListener::JniOnGetListener(JNIEnv *env, jobject jListener, JniOcAccountManager* owner)
+    : m_ownerAccountManager(owner)
+{
+    m_jwListener = env->NewWeakGlobalRef(jListener);
+    m_ownerResource = nullptr;
+}
+#endif
 
 JniOnGetListener::~JniOnGetListener()
 {
     LOGD("~JniOnGetListener");
     if (m_jwListener)
     {
-        jint ret;
+        jint ret = JNI_ERR;
         JNIEnv *env = GetJNIEnv(ret);
-        if (nullptr == env) return;
+        if (nullptr == env)
+        {
+            return;
+        }
 
         env->DeleteWeakGlobalRef(m_jwListener);
         m_jwListener = nullptr;
 
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
     }
 }
 
 void JniOnGetListener::onGetCallback(const HeaderOptions& headerOptions,
     const OCRepresentation& ocRepresentation, const int eCode)
 {
-    jint envRet;
+    jint envRet = JNI_ERR;
     JNIEnv *env = GetJNIEnv(envRet);
-    if (nullptr == env) return;
+    if (nullptr == env)
+    {
+        return;
+    }
 
     jobject jListener = env->NewLocalRef(m_jwListener);
     if (!jListener)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
     jclass clsL = env->GetObjectClass(jListener);
@@ -65,7 +92,10 @@ void JniOnGetListener::onGetCallback(const HeaderOptions& headerOptions,
     if (!clsL)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
@@ -75,14 +105,20 @@ void JniOnGetListener::onGetCallback(const HeaderOptions& headerOptions,
         if (!ex)
         {
             checkExAndRemoveListener(env);
-            if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+            if (JNI_EDETACHED == envRet)
+            {
+                g_jvm->DetachCurrentThread();
+            }
             return;
         }
         jmethodID midL = env->GetMethodID(clsL, "onGetFailed", "(Ljava/lang/Throwable;)V");
         if (!midL)
         {
             checkExAndRemoveListener(env);
-            if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+            if (JNI_EDETACHED == envRet)
+            {
+                g_jvm->DetachCurrentThread();
+            }
             return;
         }
         env->CallVoidMethod(jListener, midL, ex);
@@ -93,7 +129,10 @@ void JniOnGetListener::onGetCallback(const HeaderOptions& headerOptions,
         if (!jHeaderOptionList)
         {
             checkExAndRemoveListener(env);
-            if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+            if (JNI_EDETACHED == envRet)
+            {
+                g_jvm->DetachCurrentThread();
+            }
             return;
         }
 
@@ -105,7 +144,10 @@ void JniOnGetListener::onGetCallback(const HeaderOptions& headerOptions,
         {
             delete rep;
             checkExAndRemoveListener(env);
-            if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+            if (JNI_EDETACHED == envRet)
+            {
+                g_jvm->DetachCurrentThread();
+            }
             return;
         }
 
@@ -115,7 +157,10 @@ void JniOnGetListener::onGetCallback(const HeaderOptions& headerOptions,
         {
             delete rep;
             checkExAndRemoveListener(env);
-            if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+            if (JNI_EDETACHED == envRet)
+            {
+                g_jvm->DetachCurrentThread();
+            }
             return;
         }
         env->CallVoidMethod(jListener, midL, jHeaderOptionList, jRepresentation);
@@ -127,7 +172,10 @@ void JniOnGetListener::onGetCallback(const HeaderOptions& headerOptions,
     }
 
     checkExAndRemoveListener(env);
-    if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+    if (JNI_EDETACHED == envRet)
+    {
+        g_jvm->DetachCurrentThread();
+    }
 }
 
 void JniOnGetListener::checkExAndRemoveListener(JNIEnv* env)
@@ -136,11 +184,33 @@ void JniOnGetListener::checkExAndRemoveListener(JNIEnv* env)
     {
         jthrowable ex = env->ExceptionOccurred();
         env->ExceptionClear();
+#ifndef WITH_CLOUD
         m_ownerResource->removeOnGetListener(env, m_jwListener);
+#else
+        if (nullptr != m_ownerResource)
+        {
+            m_ownerResource->removeOnGetListener(env, m_jwListener);
+        }
+        if (nullptr != m_ownerAccountManager)
+        {
+            m_ownerAccountManager->removeOnGetListener(env, m_jwListener);
+        }
+#endif
         env->Throw((jthrowable)ex);
     }
     else
     {
+#ifndef WITH_CLOUD
         m_ownerResource->removeOnGetListener(env, m_jwListener);
+#else
+        if (nullptr != m_ownerResource)
+        {
+            m_ownerResource->removeOnGetListener(env, m_jwListener);
+        }
+        if (nullptr != m_ownerAccountManager)
+        {
+            m_ownerAccountManager->removeOnGetListener(env, m_jwListener);
+        }
+#endif
     }
 }

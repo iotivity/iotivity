@@ -25,7 +25,7 @@ Import('env')
 
 # Add third party libraries
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 
 sample_env = lib_env.Clone()
 
@@ -41,6 +41,10 @@ sample_env.AppendUnique(LIBS = [
     'tinydtls'
     ])
 sample_env.AppendUnique(CPPPATH = ['../../../include'])
+
+if env.get('SECURED') == '1':
+	if env.get('WITH_TCP') == True:
+		sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if 'rt' in sample_env.get('LIBS'):
     sample_env.Append(LIBS = ['rt'])

@@ -33,6 +33,7 @@ public:
     ~JniOnResourceFoundListener();
 
     void foundResourceCallback(std::shared_ptr<OC::OCResource> resource);
+    void findResourceErrorCallback(const std::string& uri, const int eCode);
 
 private:
     RemoveListenerCallback m_removeListenerCallback;

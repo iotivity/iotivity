@@ -26,6 +26,7 @@
 // Refer http://pubs.opengroup.org/onlinepubs/009695399/
 // Required for strok_r
 #define _POSIX_C_SOURCE 200112L
+
 #include <string.h>
 #include <stdlib.h>
 #include "oic_string.h"
@@ -34,7 +35,7 @@
 #include "ocpayloadcbor.h"
 #include "ocstackinternal.h"
 #include "payload_logging.h"
-#include "rdpayload.h"
+#include "platform_features.h"
 
 #define TAG "OIC_RI_PAYLOADPARSE"
 
@@ -44,7 +45,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *a
 static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *repParent, bool isRoot);
 static OCStackResult OCParseRepPayload(OCPayload **outPayload, CborValue *arrayVal);
 static OCStackResult OCParsePresencePayload(OCPayload **outPayload, CborValue *arrayVal);
-static OCStackResult OCParseSecurityPayload(OCPayload **outPayload, CborValue * rrayVal);
+static OCStackResult OCParseSecurityPayload(OCPayload **outPayload, const uint8_t *payload, size_t size);
 
 OCStackResult OCParsePayload(OCPayload **outPayload, OCPayloadType payloadType,
         const uint8_t *payload, size_t payloadSize)
@@ -55,7 +56,9 @@ OCStackResult OCParsePayload(OCPayload **outPayload, OCPayloadType payloadType,
     VERIFY_PARAM_NON_NULL(TAG, outPayload, "Conversion of outPayload failed");
     VERIFY_PARAM_NON_NULL(TAG, payload, "Invalid cbor payload value");
 
-    OIC_LOG_V(INFO, TAG, "CBOR Parsing size: %zu", payloadSize);
+    OIC_LOG_V(INFO, TAG, "CBOR Parsing size: %zu of Payload Type: %d, Payload:",
+            payloadSize, payloadType);
+    OIC_LOG_BUFFER(DEBUG, TAG, payload, payloadSize);
 
     CborParser parser;
     CborValue rootValue;
@@ -81,10 +84,7 @@ OCStackResult OCParsePayload(OCPayload **outPayload, OCPayloadType payloadType,
             result = OCParsePresencePayload(outPayload, &rootValue);
             break;
         case PAYLOAD_TYPE_SECURITY:
-            result = OCParseSecurityPayload(outPayload, &rootValue);
-            break;
-        case PAYLOAD_TYPE_RD:
-            result = OCRDCborToPayload(&rootValue, outPayload);
+            result = OCParseSecurityPayload(outPayload, payload, payloadSize);
             break;
         default:
             OIC_LOG_V(ERROR, TAG, "ParsePayload Type default: %d", payloadType);
@@ -98,35 +98,18 @@ exit:
     return result;
 }
 
-void OCFreeOCStringLL(OCStringLL* ll);
-
-static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, CborValue* rootValue)
+static OCStackResult OCParseSecurityPayload(OCPayload** outPayload, const uint8_t *payload,
+        size_t size)
 {
-    OCStackResult ret = OC_STACK_MALFORMED_RESPONSE;
-    CborError err;
-    char *securityData = NULL;
-
-    VERIFY_PARAM_NON_NULL(TAG, outPayload, "Invalid parameter");
-    VERIFY_PARAM_NON_NULL(TAG, outPayload, "Invalid cbor");
-
-    CborValue strVal;
-
-    err = cbor_value_enter_container(rootValue, &strVal);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed entering container");
-    if (cbor_value_is_text_string(&strVal))
+    if (size > 0)
     {
-        size_t len = 0;
-        err = cbor_value_dup_text_string(&strVal, &securityData, &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed reading security data");
-        *outPayload = (OCPayload *)OCSecurityPayloadCreate(securityData);
-        VERIFY_PARAM_NON_NULL(TAG, *outPayload, "Invalid cbor");
-        ret = OC_STACK_OK;
+        *outPayload = (OCPayload *)OCSecurityPayloadCreate(payload, size);
     }
-
-exit:
-    OICFree(securityData);
-    return ret;
-
+    else
+    {
+        *outPayload = NULL;
+    }
+    return OC_STACK_OK;
 }
 
 static char* InPlaceStringTrim(char* str)
@@ -153,31 +136,40 @@ static CborError OCParseStringLL(CborValue *map, char *type, OCStringLL **resour
     CborError err = cbor_value_map_find_value(map, type, &val);
     VERIFY_CBOR_SUCCESS(TAG, err, "to find StringLL TAG");
 
-    if (cbor_value_is_text_string(&val))
+    if (cbor_value_is_array(&val))
     {
-        char *input = NULL;
-        char *savePtr = NULL;
-        size_t len = 0;
-
-        err = cbor_value_dup_text_string(&val, &input, &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, err, "to find StringLL value");
-
-        if (input)
+        CborValue txtStr;
+        err = cbor_value_enter_container(&val, &txtStr);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to enter container");
+        while (cbor_value_is_text_string(&txtStr))
         {
-            char *curPtr = strtok_r(input, " ", &savePtr);
-            while (curPtr)
+            size_t len = 0;
+            char *input = NULL;
+            err = cbor_value_dup_text_string(&txtStr, &input, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, err, "to find StringLL value.");
+            if (input)
             {
-                char *trimmed = InPlaceStringTrim(curPtr);
-                if (trimmed[0] !='\0')
+                char *savePtr = NULL;
+                char *curPtr = strtok_r(input, " ", &savePtr);
+                while (curPtr)
                 {
-                    if (!OCResourcePayloadAddStringLL(resource, trimmed))
+                    char *trimmed = InPlaceStringTrim(curPtr);
+                    if (trimmed[0] !='\0')
                     {
-                        return CborErrorOutOfMemory;
+                        if (!OCResourcePayloadAddStringLL(resource, trimmed))
+                        {
+                            return CborErrorOutOfMemory;
+                        }
                     }
+                    curPtr = strtok_r(NULL, " ", &savePtr);
                 }
-                curPtr = strtok_r(NULL, " ", &savePtr);
+                OICFree(input);
             }
-            OICFree(input);
+            if (cbor_value_is_text_string(&txtStr))
+            {
+                err = cbor_value_advance(&txtStr);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to advance string value");
+            }
         }
     }
 exit:
@@ -188,169 +180,222 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
 {
     OCStackResult ret = OC_STACK_INVALID_PARAM;
     OCResourcePayload *resource = NULL;
-    OCDiscoveryPayload *out = NULL;
+    OCDiscoveryPayload *temp = NULL;
+    OCDiscoveryPayload *rootPayload = NULL;
+    OCDiscoveryPayload *curPayload = NULL;
     size_t len = 0;
     CborError err = CborNoError;
     *outPayload = NULL;
 
     VERIFY_PARAM_NON_NULL(TAG, outPayload, "Invalid Parameter outPayload");
     VERIFY_PARAM_NON_NULL(TAG, rootValue, "Invalid Parameter rootValue");
-
-    // Root value is already inside the main root array
-    CborValue rootMap;
-    ret = OC_STACK_NO_MEMORY;
-    out = OCDiscoveryPayloadCreate();
-    VERIFY_PARAM_NON_NULL(TAG, out, "Failed error initializing discovery payload");
-
-    // Enter the main root map
-    ret = OC_STACK_MALFORMED_RESPONSE;
-    err = cbor_value_enter_container(rootValue, &rootMap);
-    VERIFY_CBOR_SUCCESS(TAG, err, "to enter root map container");
-
-    // Look for DI
-    CborValue curVal;
-    err = cbor_value_map_find_value(&rootMap, OC_RSRVD_DEVICE_ID, &curVal);
-    VERIFY_CBOR_SUCCESS(TAG, err, "to find device id tag");
-    if (cbor_value_is_valid(&curVal))
+    if (cbor_value_is_array(rootValue))
     {
-        if (cbor_value_is_byte_string(&curVal))
+        // Root value is already inside the main root array
+        CborValue rootMap;
+
+        // Enter the main root map
+        ret = OC_STACK_MALFORMED_RESPONSE;
+        err = cbor_value_enter_container(rootValue, &rootMap);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to enter root map container");
+        while (cbor_value_is_map(&rootMap))
         {
-            err = cbor_value_dup_byte_string(&curVal, (uint8_t **)&(out->sid), &len, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, err, "to copy device id value");
-        }
-        else if (cbor_value_is_text_string(&curVal))
-        {
-            err = cbor_value_dup_text_string(&curVal, &(out->sid), &len, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, err, "to copy device id value");
-        }
-    }
+            ret = OC_STACK_NO_MEMORY;
+            temp = OCDiscoveryPayloadCreate();
+            VERIFY_PARAM_NON_NULL(TAG, temp, "Failed error initializing discovery payload");
 
-    // BaseURI - Not a mandatory field
-    err = cbor_value_map_find_value(&rootMap, OC_RSRVD_BASE_URI, &curVal);
-    if (cbor_value_is_valid(&curVal))
-    {
-        err = cbor_value_dup_text_string(&curVal, &(out->baseURI), &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, err, "to find base uri value");
-    }
-
-    // HREF - Not a mandatory field
-    err = cbor_value_map_find_value(&rootMap, OC_RSRVD_HREF, &curVal);
-    if (cbor_value_is_valid(&curVal))
-    {
-        err = cbor_value_dup_text_string(&curVal, &(out->uri), &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, err, "to find uri value");
-    }
-
-    // RT - Not a mandatory field
-    err = cbor_value_map_find_value(&rootMap, OC_RSRVD_RESOURCE_TYPE, &curVal);
-    if (cbor_value_is_valid(&curVal))
-    {
-        err = cbor_value_dup_text_string(&curVal, &(out->type), &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, err, "to find base uri value");
-    }
-
-    // IF - Not a mandatory field
-    err = cbor_value_map_find_value(&rootMap, OC_RSRVD_INTERFACE, &curVal);
-    if (cbor_value_is_valid(&curVal))
-    {
-        err =  OCParseStringLL(&rootMap, OC_RSRVD_INTERFACE, &out->interface);
-    }
-    if (!out->interface)
-    {
-        if (!OCResourcePayloadAddStringLL(&out->interface, OC_RSRVD_INTERFACE_LL))
-        {
-            err = CborErrorOutOfMemory;
-        }
-    }
-
-    // Name - Not a mandatory field
-    err = cbor_value_map_find_value(&rootMap, OC_RSRVD_DEVICE_NAME, &curVal);
-    if (cbor_value_is_valid(&curVal))
-    {
-        err = cbor_value_dup_text_string(&curVal, &out->name, &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, err, "to find device name");
-    }
-
-    // Look for Links which will have an array as the value
-    CborValue linkMap;
-    err = cbor_value_map_find_value(&rootMap, OC_RSRVD_LINKS, &linkMap);
-    VERIFY_CBOR_SUCCESS(TAG, err, "to find links tag");
-
-    // Enter the links array and start iterating through the array processing
-    // each resource which shows up as a map.
-    CborValue resourceMap;
-    err = cbor_value_enter_container(&linkMap, &resourceMap);
-    VERIFY_CBOR_SUCCESS(TAG, err, "to enter link map");
-
-    while (cbor_value_is_map(&resourceMap))
-    {
-        resource = (OCResourcePayload *)OICCalloc(1, sizeof(OCResourcePayload));
-        VERIFY_PARAM_NON_NULL(TAG, resource, "Failed allocating resource payload");
-
-        // Uri
-        err = cbor_value_map_find_value(&resourceMap, OC_RSRVD_HREF, &curVal);
-        VERIFY_CBOR_SUCCESS(TAG, err, "to find href tag");
-        err = cbor_value_dup_text_string(&curVal, &(resource->uri), &len, NULL);
-        VERIFY_CBOR_SUCCESS(TAG, err, "to find href value");
-
-        // ResourceTypes
-        err =  OCParseStringLL(&resourceMap, OC_RSRVD_RESOURCE_TYPE, &resource->types);
-        VERIFY_CBOR_SUCCESS(TAG, err, "to find resource type tag/value");
-
-        // Interface Types
-        err =  OCParseStringLL(&resourceMap, OC_RSRVD_INTERFACE, &resource->interfaces);
-        if (CborNoError != err)
-        {
-            if (!OCResourcePayloadAddStringLL(&resource->interfaces, OC_RSRVD_INTERFACE_LL))
+            // Look for DI
+            CborValue curVal;
+            err = cbor_value_map_find_value(&rootMap, OC_RSRVD_DEVICE_ID, &curVal);
+            VERIFY_CBOR_SUCCESS(TAG, err, "to find device id tag");
+            if (cbor_value_is_valid(&curVal))
             {
-                err = CborErrorOutOfMemory;
+                if (cbor_value_is_byte_string(&curVal))
+                {
+                    err = cbor_value_dup_byte_string(&curVal, (uint8_t **)&(temp->sid), &len, NULL);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "to copy device id value");
+                }
+                else if (cbor_value_is_text_string(&curVal))
+                {
+                    err = cbor_value_dup_text_string(&curVal, &(temp->sid), &len, NULL);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "to copy device id value");
+                }
+            }
+
+            // BaseURI - Not a mandatory field
+            err = cbor_value_map_find_value(&rootMap, OC_RSRVD_BASE_URI, &curVal);
+            VERIFY_CBOR_SUCCESS(TAG, err, "to find uri tag");
+            if (cbor_value_is_valid(&curVal))
+            {
+                err = cbor_value_dup_text_string(&curVal, &(temp->baseURI), &len, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find base uri value");
+            }
+
+            // HREF - Not a mandatory field
+            err = cbor_value_map_find_value(&rootMap, OC_RSRVD_HREF, &curVal);
+            if (cbor_value_is_valid(&curVal))
+            {
+                err = cbor_value_dup_text_string(&curVal, &(temp->uri), &len, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find uri value");
+            }
+
+            // RT - Not a mandatory field
+            err = cbor_value_map_find_value(&rootMap, OC_RSRVD_RESOURCE_TYPE, &curVal);
+            if (cbor_value_is_valid(&curVal))
+            {
+                err = OCParseStringLL(&rootMap, OC_RSRVD_RESOURCE_TYPE, &temp->type);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find base uri value");
+            }
+
+            // IF - Not a mandatory field
+            err = cbor_value_map_find_value(&rootMap, OC_RSRVD_INTERFACE, &curVal);
+            if (cbor_value_is_valid(&curVal))
+            {
+                err =  OCParseStringLL(&rootMap, OC_RSRVD_INTERFACE, &temp->iface);
+            }
+            if (!temp->iface)
+            {
+                if (!OCResourcePayloadAddStringLL(&temp->iface, OC_RSRVD_INTERFACE_LL))
+                {
+                    err = CborErrorOutOfMemory;
+                }
+            }
+
+            // Name - Not a mandatory field
+            err = cbor_value_map_find_value(&rootMap, OC_RSRVD_DEVICE_NAME, &curVal);
+            if (cbor_value_is_valid(&curVal))
+            {
+                err = cbor_value_dup_text_string(&curVal, &temp->name, &len, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find device name");
+            }
+
+            // Look for Links which will have an array as the value
+            CborValue linkMap;
+            err = cbor_value_map_find_value(&rootMap, OC_RSRVD_LINKS, &linkMap);
+            VERIFY_CBOR_SUCCESS(TAG, err, "to find links tag");
+
+            // Enter the links array and start iterating through the array processing
+            // each resource which shows up as a map.
+            CborValue resourceMap;
+            err = cbor_value_enter_container(&linkMap, &resourceMap);
+            VERIFY_CBOR_SUCCESS(TAG, err, "to enter link map");
+
+            while (cbor_value_is_map(&resourceMap))
+            {
+                int bitmap;
+
+                resource = (OCResourcePayload *)OICCalloc(1, sizeof(OCResourcePayload));
+                VERIFY_PARAM_NON_NULL(TAG, resource, "Failed allocating resource payload");
+
+                // Uri
+                err = cbor_value_map_find_value(&resourceMap, OC_RSRVD_HREF, &curVal);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find href tag");
+                err = cbor_value_dup_text_string(&curVal, &(resource->uri), &len, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find href value");
+
+                // ResourceTypes
+                err =  OCParseStringLL(&resourceMap, OC_RSRVD_RESOURCE_TYPE, &resource->types);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find resource type tag/value");
+
+                // Interface Types
+                err =  OCParseStringLL(&resourceMap, OC_RSRVD_INTERFACE, &resource->interfaces);
+                if (CborNoError != err)
+                {
+                    if (!OCResourcePayloadAddStringLL(&resource->interfaces, OC_RSRVD_INTERFACE_LL))
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to add string to StringLL");
+                        goto exit;
+                    }
+                }
+
+                // Policy
+                CborValue policyMap;
+                err = cbor_value_map_find_value(&resourceMap, OC_RSRVD_POLICY, &policyMap);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find policy tag");
+
+                // Bitmap
+                err = cbor_value_map_find_value(&policyMap, OC_RSRVD_BITMAP, &curVal);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find bitmap tag");
+                err = cbor_value_get_int(&curVal, &bitmap);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find bitmap value");
+                resource->bitmap = (uint8_t)bitmap;
+
+                // Secure Flag
+                err = cbor_value_map_find_value(&policyMap, OC_RSRVD_SECURE, &curVal);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find secure tag");
+                if (cbor_value_is_valid(&curVal))
+                {
+                    err = cbor_value_get_boolean(&curVal, &(resource->secure));
+                    VERIFY_CBOR_SUCCESS(TAG, err, "to find secure value");
+                }
+
+                // Port
+                err = cbor_value_map_find_value(&policyMap, OC_RSRVD_HOSTING_PORT, &curVal);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find port tag");
+                if (cbor_value_is_valid(&curVal))
+                {
+                    int port;
+
+                    err = cbor_value_get_int(&curVal, &port);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "to find port value");
+                    resource->port = (uint16_t)port;
+                }
+
+#ifdef TCP_ADAPTER
+                // TCP Port
+                err = cbor_value_map_find_value(&policyMap, OC_RSRVD_TCP_PORT, &curVal);
+                if (cbor_value_is_valid(&curVal))
+                {
+                    int tcpPort;
+
+                    err = cbor_value_get_int(&curVal, &tcpPort);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "to find tcp port value");
+                    resource->tcpPort = (uint16_t)tcpPort;
+                }
+#endif
+
+                err = cbor_value_advance(&resourceMap);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to advance resource map");
+
+                OCDiscoveryPayloadAddNewResource(temp, resource);
+            }
+
+            err = cbor_value_leave_container(&linkMap, &resourceMap);
+            VERIFY_CBOR_SUCCESS(TAG, err, "to leave resource map");
+
+            err = cbor_value_advance(&rootMap);
+            VERIFY_CBOR_SUCCESS(TAG, err, "to advance root map");
+
+            if(rootPayload == NULL)
+            {
+                rootPayload = temp;
+                curPayload = temp;
+            }
+            else
+            {
+                curPayload->next = temp;
+                curPayload = curPayload->next;
             }
         }
 
-        // Policy
-        CborValue policyMap;
-        err = cbor_value_map_find_value(&resourceMap, OC_RSRVD_POLICY, &policyMap);
-        VERIFY_CBOR_SUCCESS(TAG, err, "to find policy tag");
+        err = cbor_value_leave_container(rootValue, &rootMap);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to leave root map");
 
-        // Bitmap
-        err = cbor_value_map_find_value(&policyMap, OC_RSRVD_BITMAP, &curVal);
-        VERIFY_CBOR_SUCCESS(TAG, err, "to find bitmap tag");
-        err = cbor_value_get_int(&curVal, (int *)&resource->bitmap);
-        VERIFY_CBOR_SUCCESS(TAG, err, "to find bitmap value");
-
-        // Secure Flag
-        err = cbor_value_map_find_value(&policyMap, OC_RSRVD_SECURE, &curVal);
-        if (cbor_value_is_valid(&curVal))
-        {
-            err = cbor_value_get_boolean(&curVal, &(resource->secure));
-            VERIFY_CBOR_SUCCESS(TAG, err, "to find secure value");
-        }
-
-        // Port
-        err = cbor_value_map_find_value(&policyMap, OC_RSRVD_HOSTING_PORT, &curVal);
-        if (cbor_value_is_valid(&curVal))
-        {
-            err = cbor_value_get_int(&curVal, (int *)&resource->port);
-            VERIFY_CBOR_SUCCESS(TAG, err, "to find port value");
-        }
-
-        err = cbor_value_advance(&resourceMap);
-        VERIFY_CBOR_SUCCESS(TAG, err, "to advance resource map");
-
-        OCDiscoveryPayloadAddNewResource(out, resource);
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Malformed packet ");
+        goto exit;
     }
 
-    err = cbor_value_leave_container(rootValue, &resourceMap);
-    VERIFY_CBOR_SUCCESS(TAG, err, "to advance resource map");
-
-    *outPayload = (OCPayload *)out;
+    *outPayload = (OCPayload *)rootPayload;
     OIC_LOG_PAYLOAD(DEBUG, *outPayload);
 
     return OC_STACK_OK;
 
 exit:
     OCDiscoveryResourceDestroy(resource);
-    OCDiscoveryPayloadDestroy(out);
+    OCDiscoveryPayloadDestroy(rootPayload);
     return ret;
 }
 
@@ -374,14 +419,25 @@ static OCStackResult OCParseDevicePayload(OCPayload **outPayload, CborValue *roo
         CborValue curVal;
         // Resource Type
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_RESOURCE_TYPE, &curVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find resource type tag");
+
         if (cbor_value_is_valid(&curVal))
         {
             err =  OCParseStringLL(rootValue, OC_RSRVD_RESOURCE_TYPE, &out->types);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed to find rt type tag/value");
         }
+
+        err = cbor_value_map_find_value(rootValue, OC_RSRVD_INTERFACE, &curVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find interface tag");
+        if (cbor_value_is_valid(&curVal))
+        {
+            err =  OCParseStringLL(rootValue, OC_RSRVD_INTERFACE, &out->interfaces);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed to find interfaces tag/value");
+        }
         // Device ID
         size_t len = 0;
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_DEVICE_ID, &curVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find device id tag");
         if (cbor_value_is_valid(&curVal))
         {
             if (cbor_value_is_byte_string(&curVal))
@@ -397,6 +453,7 @@ static OCStackResult OCParseDevicePayload(OCPayload **outPayload, CborValue *roo
         }
         // Device Name
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_DEVICE_NAME, &curVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find device name tag");
         if (cbor_value_is_valid(&curVal))
         {
             err = cbor_value_dup_text_string(&curVal, &out->deviceName, &len, NULL);
@@ -404,17 +461,23 @@ static OCStackResult OCParseDevicePayload(OCPayload **outPayload, CborValue *roo
         }
         // Device Spec Version
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_SPEC_VERSION, &curVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find spec ver tag");
         if (cbor_value_is_valid(&curVal))
         {
             err = cbor_value_dup_text_string(&curVal, &out->specVersion, &len, NULL);
             VERIFY_CBOR_SUCCESS(TAG, err, "to find spec version in device payload");
         }
-        // Data Model Version
+        // Data Model Versions
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_DATA_MODEL_VERSION, &curVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find data model versions tag");
         if (cbor_value_is_valid(&curVal))
         {
-            err = cbor_value_dup_text_string(&curVal, &out->dataModelVersion, &len, NULL);
-            VERIFY_CBOR_SUCCESS(TAG, err, "to find data model version in device payload");
+            size_t len = 0;
+            char * str = NULL;
+            err = cbor_value_dup_text_string(&curVal, &str, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, err, "to find data model versions in device payload");
+            out->dataModelVersions = OCCreateOCStringLL(str);
+            OICFree(str);
         }
         err = cbor_value_advance(rootValue);
         VERIFY_CBOR_SUCCESS(TAG, err, "to advance device payload");
@@ -433,7 +496,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
     OCStackResult ret = OC_STACK_INVALID_PARAM;
     CborError err = CborNoError;
     OCPlatformInfo info = {0};
-    char* rt = NULL;
+    OCStringLL* rt = NULL;
     OCStringLL* interfaces = NULL;
     OCPlatformPayload* out = NULL;
 
@@ -447,6 +510,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
 
         // Platform ID
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_PLATFORM_ID, &repVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find platform id tag");
         if (cbor_value_is_valid(&repVal))
         {
             err = cbor_value_dup_text_string(&repVal, &(info.platformID), &len, NULL);
@@ -454,6 +518,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
         }
          // MFG Name
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_MFG_NAME, &repVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find mfg name tag");
         if (cbor_value_is_valid(&repVal))
         {
             err = cbor_value_dup_text_string(&repVal, &(info.manufacturerName), &len, NULL);
@@ -461,6 +526,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
         }
         // MFG URL
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_MFG_URL, &repVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find mfg url tag");
         if (cbor_value_is_valid(&repVal))
         {
             err = cbor_value_dup_text_string(&repVal, &(info.manufacturerUrl), &len, NULL);
@@ -468,6 +534,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
         }
         // Model Num
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_MODEL_NUM, &repVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find model num tag");
         if (cbor_value_is_valid(&repVal))
         {
             err = cbor_value_dup_text_string(&repVal, &(info.modelNumber), &len, NULL);
@@ -475,6 +542,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
         }
         // Date of Mfg
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_MFG_DATE, &repVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find mfg date tag");
         if (cbor_value_is_valid(&repVal))
         {
             err = cbor_value_dup_text_string(&repVal, &(info.dateOfManufacture), &len, NULL);
@@ -482,6 +550,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
         }
         // Platform Version
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_PLATFORM_VERSION, &repVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find platform ver tag");
         if (cbor_value_is_valid(&repVal))
         {
             err = cbor_value_dup_text_string(&repVal, &(info.platformVersion), &len, NULL);
@@ -489,6 +558,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
         }
         // OS Version
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_OS_VERSION, &repVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find os ver tag");
         if (cbor_value_is_valid(&repVal))
         {
             err = cbor_value_dup_text_string(&repVal, &(info.operatingSystemVersion), &len, NULL);
@@ -496,6 +566,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
         }
         // Hardware Version
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_HARDWARE_VERSION, &repVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find hw ver tag");
         if(cbor_value_is_valid(&repVal))
         {
             err = cbor_value_dup_text_string(&repVal, &(info.hardwareVersion), &len, NULL);
@@ -503,6 +574,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
         }
         // Firmware Version
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_FIRMWARE_VERSION, &repVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find fw ver tag");
         if(cbor_value_is_valid(&repVal))
         {
             err = cbor_value_dup_text_string(&repVal, &(info.firmwareVersion), &len, NULL);
@@ -510,6 +582,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
         }
         // Support URL
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_SUPPORT_URL, &repVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find support url tag");
         if(cbor_value_is_valid(&repVal))
         {
             err = cbor_value_dup_text_string(&repVal, &(info.supportUrl), &len, NULL);
@@ -517,6 +590,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
         }
         // System Time
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_SYSTEM_TIME, &repVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find sys time tag");
         if(cbor_value_is_valid(&repVal))
         {
             err = cbor_value_dup_text_string(&repVal, &(info.systemTime), &len, NULL);
@@ -525,14 +599,18 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
 
         // Resource type
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_RESOURCE_TYPE, &repVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find resource type tag");
+
         if(cbor_value_is_valid(&repVal))
         {
-            err = cbor_value_dup_text_string(&repVal, &rt, &len, NULL);
+            err = OCParseStringLL(rootValue, OC_RSRVD_RESOURCE_TYPE, &rt);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed to find resource type in the platform payload");
         }
 
         // Interface Types
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_INTERFACE, &repVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find interface tag");
+
         if(cbor_value_is_valid(&repVal))
         {
             err =  OCParseStringLL(rootValue, OC_RSRVD_INTERFACE, &interfaces);
@@ -546,6 +624,7 @@ static OCStackResult OCParsePlatformPayload(OCPayload **outPayload, CborValue *r
        out->rt = rt;
        out->interfaces = interfaces;
        *outPayload = (OCPayload *)out;
+       OIC_LOG_PAYLOAD(DEBUG, *outPayload);
        return OC_STACK_OK;
     }
 
@@ -564,6 +643,7 @@ static OCRepPayloadPropType DecodeCborType(CborType type)
         case CborIntegerType:
             return OCREP_PROP_INT;
         case CborDoubleType:
+        case CborFloatType:
             return OCREP_PROP_DOUBLE;
         case CborBooleanType:
             return OCREP_PROP_BOOL;
@@ -710,7 +790,19 @@ static CborError OCParseArrayFillArray(const CborValue *parent,
                 case OCREP_PROP_DOUBLE:
                     if (dimensions[1] == 0)
                     {
-                        err = cbor_value_get_double(&insideArray, &(((double*)targetArray)[i]));
+                        double *d = &(((double*)targetArray)[i]);
+                        if (cbor_value_get_type(&insideArray) == CborDoubleType)
+                        {
+                            err = cbor_value_get_double(&insideArray, d);
+                        }
+                        else
+                        {
+                            /* must be float */
+                            float f;
+                            err = cbor_value_get_float(&insideArray, &f);
+                            if (!err)
+                                *d = f;
+                        }
                     }
                     else
                     {
@@ -791,8 +883,10 @@ exit:
 static CborError OCParseArray(OCRepPayload *out, const char *name, CborValue *container)
 {
     void *arr = NULL;
+
     OCRepPayloadPropType type = OCREP_PROP_NULL;
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
+
     size_t dimTotal = 0;
     size_t allocSize = 0;
     bool res = true;
@@ -1021,6 +1115,7 @@ static OCStackResult OCParseRepPayload(OCPayload **outPayload, CborValue *root)
     if (cbor_value_is_array(root))
     {
         err = cbor_value_enter_container(root, &rootMap);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed entering repMap");
     }
     while (cbor_value_is_valid(&rootMap))
     {
@@ -1039,6 +1134,7 @@ static OCStackResult OCParseRepPayload(OCPayload **outPayload, CborValue *root)
         if (cbor_value_is_map(&rootMap))
         {
             err = cbor_value_map_find_value(&rootMap, OC_RSRVD_HREF, &curVal);
+            VERIFY_CBOR_SUCCESS(TAG, err, "to find href tag");
             if (cbor_value_is_valid(&curVal))
             {
                 size_t len = 0;
@@ -1117,27 +1213,34 @@ static OCStackResult OCParsePresencePayload(OCPayload **outPayload, CborValue *r
     if (cbor_value_is_map(rootValue))
     {
         CborValue curVal;
+        uint64_t temp = 0;
+        uint8_t trigger;
 
         // Sequence Number
         CborError err = cbor_value_map_find_value(rootValue, OC_RSRVD_NONCE, &curVal);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding nonce tag");
-        err = cbor_value_get_uint64(&curVal, (uint64_t *)&payload->sequenceNumber);
+        err = cbor_value_get_uint64(&curVal, &temp);
+        payload->sequenceNumber = (uint32_t)temp;
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding nonce value");
 
         // Max Age
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_TTL, &curVal);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding ttl tag");
-        err = cbor_value_get_uint64(&curVal, (uint64_t *)&payload->maxAge);
+        temp = 0;
+        err = cbor_value_get_uint64(&curVal, &temp);
+        payload->maxAge = (uint32_t)temp;
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding ttl value");
 
         // Trigger
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_TRIGGER, &curVal);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding trigger tag");
-        err = cbor_value_get_simple_type(&curVal, (uint8_t *)&payload->trigger);
+        err = cbor_value_get_simple_type(&curVal, &trigger);
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding trigger value");
+        payload->trigger = (OCPresenceTrigger)trigger;
 
         // Resource type name
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_RESOURCE_TYPE, &curVal);
+        VERIFY_CBOR_SUCCESS(TAG, err, "to find res type tag");
         if (cbor_value_is_valid(&curVal))
         {
             size_t len = 0;

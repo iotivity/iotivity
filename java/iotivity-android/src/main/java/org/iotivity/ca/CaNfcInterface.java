@@ -49,7 +49,9 @@ public class CaNfcInterface implements NfcAdapter.CreateNdefMessageCallback {
 
     private CaNfcInterface(Context context, Activity activity) {
         Log.d(MYTAG, "NFC  registerNfcReceiver");
-        mContext = context;
+        synchronized(CaNfcInterface.class) {
+            mContext = context;
+        }
         mActivity = activity;
 
         mAdapter = NfcAdapter.getDefaultAdapter(mContext);

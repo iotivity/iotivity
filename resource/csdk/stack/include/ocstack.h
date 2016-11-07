@@ -148,15 +148,15 @@ OCStackResult OCProcess();
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
 OCStackResult OCDoResource(OCDoHandle *handle,
-                            OCMethod method,
-                            const char *requestUri,
-                            const OCDevAddr *destination,
-                            OCPayload* payload,
-                            OCConnectivityType connectivityType,
-                            OCQualityOfService qos,
-                            OCCallbackData *cbData,
-                            OCHeaderOption *options,
-                            uint8_t numOptions);
+                           OCMethod method,
+                           const char *requestUri,
+                           const OCDevAddr *destination,
+                           OCPayload* payload,
+                           OCConnectivityType connectivityType,
+                           OCQualityOfService qos,
+                           OCCallbackData *cbData,
+                           OCHeaderOption *options,
+                           uint8_t numOptions);
 /**
  * This function cancels a request associated with a specific @ref OCDoResource invocation.
  *
@@ -168,8 +168,10 @@ OCStackResult OCDoResource(OCDoHandle *handle,
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCCancel(OCDoHandle handle, OCQualityOfService qos, OCHeaderOption * options,
-        uint8_t numOptions);
+OCStackResult OCCancel(OCDoHandle handle,
+                       OCQualityOfService qos,
+                       OCHeaderOption * options,
+                       uint8_t numOptions);
 
 /**
  * Register Persistent storage callback.
@@ -231,7 +233,13 @@ OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandle
 /**
  * This function sets device information.
  *
- * @param deviceInfo   Structure passed by the server application containing the device information.
+ * Upon call to OCInit, the default Device Type (i.e. "rt") has already been set to the default
+ * Device Type "oic.wk.d". You do not have to specify "oic.wk.d" in the OCDeviceInfo.types linked
+ * list. The default Device Type is mandatory and always specified by this Device as the first
+ * Device Type.
+ *
+ * @param deviceInfo   Structure passed by the server application containing the device
+ *                     information.
  *
  * @return
  *     ::OC_STACK_OK               no errors.
@@ -278,7 +286,6 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
                                OCEntityHandler entityHandler,
                                void* callbackParam,
                                uint8_t resourceProperties);
-
 
 /**
  * This function adds a resource to a collection resource.
@@ -330,8 +337,9 @@ OCStackResult OCBindResourceInterfaceToResource(OCResourceHandle handle,
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
  */
-OCStackResult OCBindResourceHandler(OCResourceHandle handle, OCEntityHandler entityHandler,
-                                        void *callbackParameter);
+OCStackResult OCBindResourceHandler(OCResourceHandle handle,
+                                    OCEntityHandler entityHandler,
+                                    void *callbackParameter);
 
 /**
  * This function gets the number of resources that have been created in the stack.
@@ -499,10 +507,10 @@ OCStackResult OCNotifyAllObservers(OCResourceHandle handle, OCQualityOfService q
  */
 OCStackResult
 OCNotifyListOfObservers (OCResourceHandle handle,
-                            OCObservationId  *obsIdList,
-                            uint8_t          numberOfIds,
-                            const OCRepPayload *payload,
-                            OCQualityOfService qos);
+                         OCObservationId  *obsIdList,
+                         uint8_t          numberOfIds,
+                         const OCRepPayload *payload,
+                         OCQualityOfService qos);
 
 
 /**
@@ -547,9 +555,85 @@ const OCDPDev_t* OCGetDirectPairedDevices();
  * @param[in] resultCallback Callback fucntion to event status of process.
  * @return OTM_SUCCESS in case of success and other value otherwise.
  */
-OCStackResult OCDoDirectPairing(OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
-                                                     OCDirectPairingCB resultCallback);
+OCStackResult OCDoDirectPairing(void *ctx, OCDPDev_t* peer, OCPrm_t pmSel, char *pinNumber,
+                                OCDirectPairingCB resultCallback);
+
+/**
+ * This function sets uri being used for proxy.
+ *
+ * @param uri            NULL terminated resource uri for CoAP-HTTP Proxy.
+ */
+OCStackResult OCSetProxyURI(const char *uri);
+
+#if defined(RD_CLIENT) || defined(RD_SERVER)
+/**
+ * This function binds an resource unique id to the resource.
+ *
+ * @param handle            Handle to the resource that the contained resource is to be bound.
+ * @param ins               Unique ID for resource.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, uint8_t ins);
+
+/**
+ * This function gets the resource unique id for a resource.
+ *
+ * @param handle            Handle of resource.
+ * @param ins               Unique ID for resource.
+ *
+ * @return Ins if resource found or 0 resource not found.
+ */
+OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins);
+
+/**
+ * This function gets a resource handle by resource uri.
+ *
+ * @param uri   Uri of Resource to get Resource handle.
+ *
+ * @return Found  resource handle or NULL if not found.
+ */
+OCResourceHandle OCGetResourceHandleAtUri(const char *uri);
+#endif
 //#endif // DIRECT_PAIRING
+
+/**
+ *  Add a header option to the given header option array.
+ *
+ * @param ocHdrOpt            Pointer to existing options.
+ * @param numOptions          Number of existing options.
+ * @param optionID            COAP option ID.
+ * @param optionData          Option data value.
+ * @param optionDataLength    Size of Option data value.
+ *
+ * @return ::OC_STACK_OK on success and other value otherwise.
+ */
+OCStackResult
+OCSetHeaderOption(OCHeaderOption* ocHdrOpt,
+                  size_t* numOptions,
+                  uint16_t optionID,
+                  void* optionData,
+                  size_t optionDataLength);
+
+/**
+ *  Get data value of the option with specified option ID from given header option array.
+ *
+ * @param ocHdrOpt            Pointer to existing options.
+ * @param numOptions          Number of existing options.
+ * @param optionID            COAP option ID.
+ * @param optionData          Pointer to option data.
+ * @param optionDataLength    Size of option data value.
+ * @param receivedDatalLength Pointer to the actual length of received data.
+ *
+ * @return ::OC_STACK_OK on success and other value otherwise.
+ */
+OCStackResult
+OCGetHeaderOption(OCHeaderOption* ocHdrOpt,
+                  size_t numOptions,
+                  uint16_t optionID,
+                  void* optionData,
+                  size_t optionDataLength,
+                  uint16_t* receivedDatalLength);
 
 #ifdef __cplusplus
 }

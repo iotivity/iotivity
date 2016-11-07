@@ -73,7 +73,17 @@ android {
         minSdkVersion 21
         targetSdkVersion 21
         versionCode 1
-        versionName "1.0"
+        versionName "1.2.0"
+        buildConfigField 'int', 'SECURED', SECURED
+        buildConfigField 'int', 'WITH_TCP', WITH_TCP
+        buildConfigField 'int', 'WITH_CLOUD', WITH_CLOUD
+        buildConfigField "int", 'WITH_MQ_PUB', WITH_MQ_PUB
+        buildConfigField "int", 'WITH_MQ_SUB', WITH_MQ_SUB
+        buildConfigField "int", 'WITH_MQ_BROKER', WITH_MQ_BROKER
+        buildConfigField "String", 'RD_MODE', "\"RD_MODE\""
+        buildConfigField "int", 'WITH_TRANSPORT_EDR', WITH_TRANSPORT_EDR
+        buildConfigField "int", 'WITH_TRANSPORT_BLE', WITH_TRANSPORT_BLE
+        buildConfigField "int", 'WITH_TRANSPORT_NFC', WITH_TRANSPORT_NFC
     }
     buildTypes {
         release {
@@ -85,6 +95,33 @@ android {
         abortOnError false
     }
 
+    sourceSets {
+        main {
+            manifest.srcFile 'src/main/AndroidManifest.xml'
+            jniLibs.srcDir '$buildDir/native-libs'
+            jni.srcDirs = [] //disable automatic ndk-build call
+            java{
+                if (WITH_TRANSPORT_EDR == "0") {
+                    exclude "**/ca/CaBtPairingInterface.java"
+                    exclude "**/ca/CaEdrInterface.java"
+                    println 'excluded EDR interface'
+                    }
+                if (WITH_TRANSPORT_BLE == "0") {
+                    exclude "**/ca/CaLeClientInterface.java"
+                    exclude "**/ca/CaLeServerInterface.java"
+                    println 'excluded BLE interface'
+                    }
+                if (WITH_TRANSPORT_NFC == "0") {
+                    exclude "**/ca/CaNfcInterface.java"
+                    println 'excluded NFC interface'
+                    }
+                if (WITH_CLOUD == "0" || SECURED == "0") {
+                    exclude "**/base/OcCloudProvisioning.java"
+                    println 'excluded secure files'
+                    }
+            }
+        }
+    }
 }
 
 dependencies {
@@ -115,4 +152,18 @@ tasks.withType(JavaCompile) { compileTask -> compileTask.dependsOn copyNativeLib
 tasks.withType(com.android.build.gradle.tasks.PackageApplication) { pkgTask ->
     pkgTask.jniFolders = new HashSet<File>()
     pkgTask.jniFolders.add(new File(buildDir, 'native-libs'))
+}
+
+task buildNative(type: Exec) {
+    if (System.env.ANDROID_NDK_HOME != null) {
+        //for windows use 'ndk-build.cmd'
+        //def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build.cmd')
+        def ndkBuild = new File(System.env.ANDROID_NDK_HOME, 'ndk-build')
+        commandLine ndkBuild, "APP_ABI=$TARGET_ARCH", "APP_OPTIM=$RELEASE", "SECURE=$SECURED", "WITH_CLOUD=$WITH_CLOUD", "RD_MODE=$RD_MODE", "WITH_MQ_PUB=$WITH_MQ_PUB", "WITH_MQ_SUB=$WITH_MQ_SUB", "WITH_MQ_BROKER=$WITH_MQ_BROKER", "WITH_TCP=$WITH_TCP"
+    } else {
+        println '##################'
+        println 'Skipping NDK build'
+        println 'Reason: ANDROID_NDK_HOME not set.'
+        println '##################'
+    }
 }

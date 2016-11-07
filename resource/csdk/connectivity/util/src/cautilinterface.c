@@ -21,7 +21,7 @@
 #include "camanagerleinterface.h"
 #include "cabtpairinginterface.h"
 #include "cautilinterface.h"
-
+#include "cainterfacecontroller.h"
 #include "cacommon.h"
 #include "logger.h"
 
@@ -32,22 +32,22 @@ CAResult_t CARegisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateC
 {
     OIC_LOG(DEBUG, TAG, "CARegisterNetworkMonitorHandler");
 
-#ifdef LE_ADAPTER
-    CASetLENetworkMonitorCallbacks(adapterStateCB, connStateCB);
-    return CA_STATUS_OK;
-#else
-    (void)adapterStateCB;
-    (void)connStateCB;
-    return CA_NOT_SUPPORTED;
-#endif
+    return CASetNetworkMonitorCallbacks(adapterStateCB, connStateCB);
+}
 
+CAResult_t CAUnregisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateCB,
+                                             CAConnectionStateChangedCB connStateCB)
+{
+    OIC_LOG(DEBUG, TAG, "CAUnregisterNetworkMonitorHandler");
+
+    return CAUnsetNetworkMonitorCallbacks(adapterStateCB, connStateCB);
 }
 
 CAResult_t CASetAutoConnectionDeviceInfo(const char *address)
 {
     OIC_LOG(DEBUG, TAG, "CASetAutoConnectionDeviceInfo");
 
-#ifdef LE_ADAPTER
+#if defined(__ANDROID__) && defined(LE_ADAPTER)
     return CASetLEClientAutoConnectionDeviceInfo(address);
 #else
     (void)address;
@@ -59,12 +59,110 @@ CAResult_t CAUnsetAutoConnectionDeviceInfo(const char *address)
 {
     OIC_LOG(DEBUG, TAG, "CAUnsetAutoConnectionDeviceInfo");
 
-#ifdef LE_ADAPTER
+#if defined(__ANDROID__) && defined(LE_ADAPTER)
     return CAUnsetLEClientAutoConnectionDeviceInfo(address);
 #else
     (void)address;
     return CA_NOT_SUPPORTED;
 #endif
+}
+
+CAResult_t CASetPortNumberToAssign(CATransportAdapter_t adapter,
+                                   CATransportFlags_t flag, uint16_t port)
+{
+    uint16_t *targetPort = 0;
+
+    if (CA_ADAPTER_IP & adapter)
+    {
+        if (CA_SECURE & flag)
+        {
+            if (CA_IPV6 & flag)
+            {
+                targetPort = &caglobals.ports.udp.u6s;
+            }
+            else if (CA_IPV4 & flag)
+            {
+                targetPort = &caglobals.ports.udp.u4s;
+            }
+        }
+        else
+        {
+            if (CA_IPV6 & flag)
+            {
+                targetPort = &caglobals.ports.udp.u6;
+            }
+            else if (CA_IPV4 & flag)
+            {
+                targetPort = &caglobals.ports.udp.u4;
+            }
+        }
+    }
+#ifdef TCP_ADAPTER
+    if (CA_ADAPTER_TCP & adapter)
+    {
+        if (CA_IPV6 & flag)
+        {
+            targetPort = &caglobals.ports.tcp.u6;
+        }
+        else if (CA_IPV4 & flag)
+        {
+            targetPort = &caglobals.ports.tcp.u4;
+        }
+    }
+#endif
+
+    if (targetPort)
+    {
+        *targetPort = port;
+        return CA_STATUS_OK;
+    }
+
+    return CA_NOT_SUPPORTED;
+}
+
+uint16_t CAGetAssignedPortNumber(CATransportAdapter_t adapter, CATransportFlags_t flag)
+{
+    OIC_LOG(DEBUG, TAG, "CAGetAssignedPortNumber");
+
+    if (CA_ADAPTER_IP & adapter)
+    {
+        if (CA_SECURE & flag)
+        {
+            if (CA_IPV6 & flag)
+            {
+                return caglobals.ip.u6s.port;
+            }
+            else if (CA_IPV4 & flag)
+            {
+                return caglobals.ip.u4s.port;
+            }
+        }
+        else
+        {
+            if (CA_IPV6 & flag)
+            {
+                return caglobals.ip.u6.port;
+            }
+            else if (CA_IPV4 & flag)
+            {
+                return caglobals.ip.u4.port;
+            }
+        }
+    }
+#ifdef TCP_ADAPTER
+    if (CA_ADAPTER_TCP & adapter)
+    {
+        if (CA_IPV6 & flag)
+        {
+            return caglobals.tcp.ipv6.port;
+        }
+        else if (CA_IPV4 & flag)
+        {
+            return caglobals.tcp.ipv4.port;
+        }
+    }
+#endif
+    return 0;
 }
 
 #ifdef __JAVA__
@@ -94,6 +192,12 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
         OIC_LOG(ERROR, TAG, "CABTPairingInitialize has failed");
         res = CA_STATUS_FAILED;
     }
+#endif
+
+#if !defined(LE_ADAPTER) && !defined(EDR_ADAPTER)
+    (void)env;
+    (void)jvm;
+    (void)context;
 #endif
     return res;
 }
@@ -126,7 +230,7 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm)
     return res;
 }
 
-#endif
+#endif //__ANDROID__
 
 /**
  * terminate client connection manager
@@ -185,6 +289,20 @@ void CAUtilSetFoundDeviceListener(jobject listener)
     CABTPairingSetFoundDeviceListener(listener);
 #else
     (void)listener;
+#endif
+}
+
+CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount)
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilSetLEScanInterval");
+#ifdef LE_ADAPTER
+    CAManagerLESetScanInterval(intervalTime, workingCount);
+    return CA_STATUS_OK;
+#else
+    (void)intervalTime;
+    (void)workingCount;
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
 #endif
 }
 #endif

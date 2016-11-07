@@ -41,7 +41,7 @@
 #ifdef CONTIKI_TARGET_MBXXX
 extern char __Stack_Init, _estack;
 
-static inline void check_stack() {
+INLINE_API void check_stack() {
   const char *p = &__Stack_Init;
   while (p < &_estack && *p == 0x38) {
     p++;
@@ -50,17 +50,15 @@ static inline void check_stack() {
   PRINTF("Stack: %d bytes used (%d free)\n", &_estack - p, p - &__Stack_Init);
 }
 #else /* CONTIKI_TARGET_MBXXX */
-static inline void check_stack() {
+INLINE_API void check_stack() {
 }
 #endif /* CONTIKI_TARGET_MBXXX */
 #else /* WITH_CONTKI */
 #define PRINTF(...)
 
-static inline void check_stack() {
+INLINE_API void check_stack() {
 }
 #endif
-
-struct __session_t;
 
 /** Pre-defined log levels akin to what is used in \b syslog. */
 typedef enum { DTLS_LOG_EMERG=0, DTLS_LOG_ALERT, DTLS_LOG_CRIT, DTLS_LOG_WARN, 
@@ -102,29 +100,29 @@ void dtls_dsrv_log_addr(log_t level, const char *name, const session_t *addr);
 
 #else /* NDEBUG */
 
-static inline log_t dtls_get_log_level()
+INLINE_API log_t dtls_get_log_level()
 {
   return DTLS_LOG_EMERG;
 }
 
-static inline void dtls_set_log_level(log_t level)
+INLINE_API void dtls_set_log_level(log_t level)
 {}
 
-static inline void dsrv_log(log_t level, char *format, ...)
+INLINE_API void dsrv_log(log_t level, char *format, ...)
 {}
 
-static inline void hexdump(const unsigned char *packet, int length)
+INLINE_API void hexdump(const unsigned char *packet, int length)
 {}
 
-static inline void dump(unsigned char *buf, size_t len)
+INLINE_API void dump(unsigned char *buf, size_t len)
 {}
 
-static inline void
+INLINE_API void
 dtls_dsrv_hexdump_log(log_t level, const char *name, const unsigned char *buf, size_t length, int extend)
 {}
 
-static inline void
-dtls_dsrv_log_addr(log_t level, const char *name, const struct __session_t *addr)
+INLINE_API void
+dtls_dsrv_log_addr(log_t level, const char *name, const session_t *addr)
 {}
 
 #endif /* NDEBUG */

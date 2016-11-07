@@ -53,21 +53,26 @@ build_dir = env.get('BUILD_DIR')
 # Build 'resource' sub-project
 SConscript(build_dir + 'resource/SConscript')
 
-if target_os not in ['arduino','darwin','ios', 'android']:
+if target_os not in ['arduino','darwin','ios', 'android', 'msys_nt', 'windows']:
 	SConscript(build_dir + 'examples/OICMiddle/SConscript')
 
-# Build 'service' sub-project
-SConscript(build_dir + 'service/SConscript')
+java_build = None
+if env.get('BUILD_JAVA') == 'ON' or target_os == 'android':
+    if env.get('JAVA_HOME') != None:
+        java_build = SConscript(build_dir + 'java/SConscript')
 
-# Build "plugin interface" sub-project
-SConscript(build_dir + 'plugins/SConscript')
+# Build 'service' sub-project
+service_build = SConscript(build_dir + 'service/SConscript')
+
+if env.get('BUILD_JAVA') == 'ON' or target_os == 'android':
+    if env.get('JAVA_HOME') != None:
+        Depends(service_build, java_build)
 
 # Build "cloud" sub-project
 SConscript(build_dir + 'cloud/SConscript')
 
-if env.get('BUILD_JAVA') == 'ON' or target_os == 'android':
-	if env.get('JAVA_HOME') != None:
-		SConscript(build_dir + 'java/SConscript')
+# Build "plugin interface" sub-project
+SConscript(build_dir + 'plugins/SConscript')
 
 # Append targets information to the help information, to see help info, execute command line:
 #     $ scon [options] -h
@@ -77,6 +82,6 @@ env.PrintTargets()
 if target_os == 'arduino':
 	env.UploadHelp()
 
-# to install the generated pc file into custome prefix location
+# to install the generated pc file into custom prefix location
 env.UserInstallTargetPCFile('iotivity.pc', 'iotivity.pc')
 

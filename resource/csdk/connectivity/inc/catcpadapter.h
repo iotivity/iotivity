@@ -29,11 +29,20 @@
 #include "caadapterinterface.h"
 #include "cathreadpool.h"
 #include "cainterface.h"
+#include <coap/pdu.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+
+typedef enum CAProtocol
+{
+    UNKNOWN = 0,
+    TLS,
+    COAP
+} CAProtocol_t;
 
 /**
  * TCP Session Information for IPv4 TCP transport
@@ -42,9 +51,10 @@ typedef struct
 {
     CASecureEndpoint_t sep;             /**< secure endpoint information */
     int fd;                             /**< file descriptor info */
-    void *recvData;                     /**< received data from remote device*/
-    size_t recvDataLen;                 /**< received data length */
-    size_t totalDataLen;                /**< total data length */
+    unsigned char* data;                /**< received data from remote device */
+    size_t len;                         /**< received data length */
+    size_t totalLen;                    /**< total data length required to receive */
+    CAProtocol_t protocol;              /**< application-level protocol */
 } CATCPSessionInfo_t;
 
 /**
@@ -54,7 +64,9 @@ typedef struct
  * @param[in] networkPacketCallback Callback to notify request and
  *                                  response messages from server(s)
  *                                  started at Connectivity Abstraction Layer.
- * @param[in] netCallback           Callback to notify the network additions
+ * @param[in] netCallback           Callback to notify the adapter changes
+ *                                  to Connectivity Abstraction Layer.
+ * @param[in] connCallback          Callback to notify the connection changes
  *                                  to Connectivity Abstraction Layer.
  * @param[in] errorCallback         Callback to notify the network errors to
  *                                  Connectivity Abstraction Layer.
@@ -63,7 +75,8 @@ typedef struct
  */
 CAResult_t CAInitializeTCP(CARegisterConnectivityCallback registerCallback,
                            CANetworkPacketReceivedCallback networkPacketCallback,
-                           CANetworkChangeCallback netCallback,
+                           CAAdapterChangeCallback netCallback,
+                           CAConnectionChangeCallback connCallback,
                            CAErrorHandleCallback errorCallback, ca_thread_pool_t handle);
 
 /**
@@ -106,11 +119,13 @@ CAResult_t CAStartTCPDiscoveryServer();
  *                              which the unicast data has to be sent.
  * @param[in]   data           Data which is required to be sent.
  * @param[in]   dataLen        Size of data to be sent.
+ * @param[in]   dataType       Data type which is REQUEST or RESPONSE.
  * @note  dataLen must be > 0.
  * @return  The number of bytes sent on the network, or -1 upon error.
  */
 int32_t CASendTCPUnicastData(const CAEndpoint_t *endpoint,
-                             const void *data, uint32_t dataLen);
+                             const void *data, uint32_t dataLen,
+                             CADataType_t dataType);
 
 /**
  * Send Multicast data to the endpoint using the TCP connectivity.
@@ -118,11 +133,13 @@ int32_t CASendTCPUnicastData(const CAEndpoint_t *endpoint,
  *                              port)
  * @param[in]   data           Data which is required to be sent.
  * @param[in]   dataLen        Size of data to be sent.
+ * @param[in]   dataType       Data type which is REQUEST or RESPONSE.
  * @note  dataLen must be > 0.
  * @return  The number of bytes sent on the network, or -1 upon error.
  */
 int32_t CASendTCPMulticastData(const CAEndpoint_t *endpoint,
-                               const void *data, uint32_t dataLen);
+                               const void *data, uint32_t dataLen,
+                               CADataType_t dataType);
 
 /**
  * Get TCP Connectivity network information.
@@ -152,13 +169,11 @@ CAResult_t CAStopTCP();
 void CATerminateTCP();
 
 /**
- * Set connected callback and disconnected callback to process KeepAlive.
+ * Set connection status changes callback to process KeepAlive.
  * connection informations are delivered these callbacks.
- * @param[in]   ConnHandler     Connected callback.
- * @param[in]   DisconnHandler  Disconnected Callback.
+ * @param[in]   ConnHandler     Connection status changes callback.
  */
-void CATCPSetKeepAliveCallbacks(CAKeepAliveConnectedCallback ConnHandler,
-                                CAKeepAliveDisconnectedCallback DisconnHandler);
+void CATCPSetKeepAliveCallbacks(CAKeepAliveConnectionCallback ConnHandler);
 
 #ifdef __cplusplus
 } /* extern "C" */

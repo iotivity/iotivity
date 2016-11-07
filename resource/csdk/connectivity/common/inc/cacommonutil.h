@@ -38,7 +38,8 @@ extern "C"
  * @param  ret  return value
  */
 #define VERIFY_NON_NULL_RET(arg, log_tag, log_message, ret) \
-    if (NULL == (arg)) { \
+    if (NULL == (arg)) \
+    { \
         OIC_LOG_V(ERROR, (log_tag), "Invalid input:%s", (log_message)); \
         return (ret); \
     } \

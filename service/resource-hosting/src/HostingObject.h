@@ -26,7 +26,11 @@
 #include "RCSRemoteResourceObject.h"
 #include "RCSResourceObject.h"
 
+#ifdef _MSC_VER
+#define OIC_HOSTING_LOG(level, fmt, ...) OIC_LOG_V((level), PCF("Hosting"), fmt, __VA_ARGS__)
+#else
 #define OIC_HOSTING_LOG(level, fmt, args...) OIC_LOG_V((level), PCF("Hosting"), fmt, ##args)
+#endif
 
 namespace OIC
 {

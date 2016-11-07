@@ -18,49 +18,89 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-/**
- * @file
- *
- * This file contains SDK APIs for device operating in Enrollee Mode of EasySetup
- */
 
 #ifndef EASYSETUP_ENROLLEE_H__
 #define EASYSETUP_ENROLLEE_H__
 
 #include "escommon.h"
+#include "ESEnrolleeCommon.h"
+
+/**
+ * @file
+ *
+ * This file contains Enrollee APIs
+ */
 
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
 
-/*
- * Callback function for updating the Enrollee OnBoarding and Provisioning status result to the application
- *
- * @param esResult ESResult provides the current state of the Enrollee Device
+/**
+ * A function pointer for registering a user-defined function to set user-specific properties to a
+ * response going back to a client.
+ * @param payload Represents a response. You can set a specific value with specific property key
+ * to the payload. If a client receives the response and know the property key, then it can
+ * extract the value.
+ * @param resourceType Used to distinguish which resource the received property belongs to.
  */
-typedef void (*EventCallback)(ESResult esResult, EnrolleeState enrolleeState);
+typedef void (*ESWriteUserdataCb)(OCRepPayload* payload, char* resourceType);
+
+/**
+ * A function pointer for registering a user-defined function to parse user-specific properties from
+ * received POST request.
+ * @param payload Represents a received POST request. If you know user-specific property key,
+ * then you can extract a corresponding value if it exists.
+ * @param resourceType Used to distinguish which resource the received property belongs to
+ * @param userdata User-specific data you want to deliver to desired users, i.e. application.
+ * The user should know a data structure of passed userdata.
+ */
+typedef void (*ESReadUserdataCb)(OCRepPayload* payload, char* resourceType, void** userdata);
 
 /**
  * This function Initializes the EasySetup. This API must be called prior to invoking any other API
  *
- * @param networkType       NetworkType on which OnBoarding has to be performed.
- * @param ssid              SSID of the target SoftAP network to which the Enrollee is connecting.
- * @param passwd            Password of the target SoftAP network to which the Enrollee is connecting
  * @param isSecured         True if the Enrollee is operating in secured mode.
- * @param eventCallback     EventCallback for for updating the Enrollee OnBoarding status result to
- *                          the application
+ * @param resourceMask      Provisining Resource Type which application wants to make.
+ *                          ES_WIFI_RESOURCE = 0x01,
+ *                          ES_CLOUD_RESOURCE = 0x02,
+ *                          ES_DEVCONF_RESOURCE = 0x04
+ * @param callbacks         ESProvisioningCallbacks for updating Provisioning Resources' data to the application
  * @return ::ES_OK on success, some other value upon failure.
  */
-ESResult InitEasySetup(OCConnectivityType networkType, const char *ssid, const char *passwd,
-        bool isSecured,
-        EventCallback eventCallback);
+ESResult ESInitEnrollee(bool isSecured, ESResourceMask resourceMask, ESProvisioningCallbacks callbacks);
+
 
 /**
- * This function performs initialization of Provisioning and Network resources needed for EasySetup
- * process.
+ * This function Sets Device Information.
+ *
+ * @param deviceProperty   Contains device information composed of WiFi Structure & DevConf Structure
  * @return ::ES_OK on success, some other value upon failure.
+ *
+ * @see ESDeviceProperty
  */
-ESResult InitProvisioning();
+ESResult ESSetDeviceProperty(ESDeviceProperty *deviceProperty);
+
+
+/**
+ * This function Sets Enrollee's State.
+ *
+ * @param esState   Contains current enrollee's state.
+ * @return ::ES_OK on success, some other value upon failure.
+ *
+ * @see ESEnrolleeState
+ */
+ESResult ESSetState(ESEnrolleeState esState);
+
+
+/**
+ * This function Sets Enrollee's Error Code.
+ *
+ * @param esErrCode   Contains enrollee's error code.
+ * @return ::ES_OK on success, some other value upon failure.
+ *
+ * @see ESErrorCode
+ */
+ESResult ESSetErrorCode(ESErrorCode esErrCode);
 
 /**
  * This function performs termination of Provisioning and Network resources.
@@ -68,7 +108,23 @@ ESResult InitProvisioning();
  *
  * @return ::ES_OK on success, some other value upon failure.
  */
-ESResult TerminateEasySetup();
+ESResult ESTerminateEnrollee();
+
+/**
+ * This function is to set two function pointer to handle user-specific properties in in-comming
+ * POST request and to out-going response for GET or POST request.
+ * If you register certain functions with this API, you have to handle OCRepPayload structure to
+ * set and get properties you want.
+ *
+ * @param readCb a callback for parsing properties from POST request
+ * @param writeCb a callback for putting properties to a response to be sent
+ *
+ * @return ::ES_OK on success, some other value upon failure.
+ *
+ * @see ESReadUserdataCb
+ * @see ESWriteUserdataCb
+ */
+ESResult ESSetCallbackForUserdata(ESReadUserdataCb readCb, ESWriteUserdataCb writeCb);
 
 #ifdef __cplusplus
 }

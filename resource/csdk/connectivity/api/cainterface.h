@@ -69,22 +69,14 @@ typedef struct
  * Callback function to pass the connection information from CA to RI.
  * @param[out]   object           remote device information.
  */
-typedef void (*CAKeepAliveConnectedCallback)(const CAEndpoint_t *object);
+typedef void (*CAKeepAliveConnectionCallback)(const CAEndpoint_t *object, bool isConnected);
 
 /**
- * Callback function to pass the disconnection information from CA to RI.
- * @param[out]   object           remote device information.
- */
-typedef void (*CAKeepAliveDisconnectedCallback)(const CAEndpoint_t *object);
-
-/**
- * Register connected callback and disconnected callback to process KeepAlive.
+ * Register connection status changes callback to process KeepAlive.
  * connection informations are delivered these callbacks.
- * @param[in]   ConnHandler     Connected callback.
- * @param[in]   DisconnHandler  Disconnected Callback.
+ * @param[in]   ConnHandler     Connection status changes callback.
  */
-void CARegisterKeepAliveHandler(CAKeepAliveConnectedCallback ConnHandler,
-                                CAKeepAliveDisconnectedCallback DisconnHandler);
+void CARegisterKeepAliveHandler(CAKeepAliveConnectionCallback ConnHandler);
 #endif
 /**
  * Initialize the connectivity abstraction module.
@@ -239,7 +231,14 @@ CAResult_t CAHandleRequestResponse();
 CAResult_t CASetRAInfo(const CARAInfo_t *caraInfo);
 #endif
 
-
+/**
+ * This function sets uri being used for proxy.
+ *
+ * @param uri            NULL terminated resource uri for CoAP-HTTP Proxy.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_INVALID_PARAM
+ */
+CAResult_t CASetProxyUri(const char *uri);
 
 #ifdef __cplusplus
 } /* extern "C" */

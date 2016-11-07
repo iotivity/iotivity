@@ -17,7 +17,6 @@
 package oic.simulator.serviceprovider.view.dialogs;
 
 import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TrayDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
@@ -35,8 +34,6 @@ import org.eclipse.swt.widgets.Shell;
 
 import java.util.ArrayList;
 import java.util.Map;
-
-import oic.simulator.serviceprovider.utils.Constants;
 
 /**
  * Dialog for starting and stopping the automatic verifications.
@@ -197,23 +194,15 @@ public class UpdateResourceInterfaceDialog extends TrayDialog {
 
     @Override
     protected void okPressed() {
-        String[] items = ifTypesList.getItems();
-        if (null == items || items.length == 0) {
-            MessageDialog
-                    .openInformation(
-                            getShell(),
-                            "Default Interface Type Selection",
-                            "As no interface types are added, the resource will be "
-                                    + "configured with the default interface type(oic.if.baseline).");
-            ifTypesList.add("Baseline" + " ("
-                    + Constants.DEFAULT_SINGLE_RESOURCE_INTERFACE + ")");
-        }
-
         // Clearing the map to freshly add selected items.
         updatedResInterfaces.clear();
-        for (String item : ifTypesList.getItems()) {
-            String value = supportedResInterfaces.get(item);
-            updatedResInterfaces.put(item, value);
+
+        String[] items = ifTypesList.getItems();
+        if (null != items && items.length > 0) {
+            for (String item : items) {
+                String value = supportedResInterfaces.get(item);
+                updatedResInterfaces.put(item, value);
+            }
         }
         close();
     }

@@ -40,9 +40,12 @@ import java.util.Locale;
 public class Common {
 
     public static final int    DATA_SIZE          = 3000;
+    public static String       HOST               = "coap+tcp://192.168.0.1:5683";
     public static final String COAP_TCP           = "coap+tcp://";
+    public static final String COAPS_TCP          = "coaps+tcp://";
     public static String       TCP_ADDRESS        = "192.168.0.1";
-    public static final String TCP_PORT           = ":8000";
+    public static String       TCP_PORT           = "5683";
+    public static final String PORT_SEPARATOR     = ":";
     public static final String IP_ADDRESS         = "0.0.0.0";
     public static final int    IP_PORT            = 0;
     public static final String GET_COMMAND        = "get_command";
@@ -52,9 +55,17 @@ public class Common {
     public static final String LARGE_GET          = "large_get";
     public static final String RESOURCE_URI       = "/a/light";
     public static final String RESOURCE_TYPE      = "core.light";
+    public static final String LIGHT_POWER_KEY    = "power";
+    public static final String LIGHT_STATE_KEY    = "state";
+    public static final int    SUCCESS            = 200;
+
     public static final String RESOURCE_INTERFACE = OcPlatform.DEFAULT_INTERFACE;
     public static final EnumSet<ResourceProperty> RESOURCE_PROPERTIES =
             EnumSet.of(ResourceProperty.DISCOVERABLE, ResourceProperty.OBSERVABLE);
+
+    // MQ
+    public final static String MQ_DEFAULT_TOPIC_URI = "/oic/ps/cleanroom";
+    public final static String MQ_BROKER_URI = "/oic/ps";
 
     public static String getDateCurrentTimeZone() {
         StringBuilder sb = new StringBuilder();
@@ -62,8 +73,8 @@ public class Common {
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(System.currentTimeMillis());
             DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.DEFAULT,
-                                                                   DateFormat.DEFAULT,
-                                                                   Locale.getDefault());
+                    DateFormat.DEFAULT,
+                    Locale.getDefault());
             Date currentTimeZone = calendar.getTime();
             sb.append(dateFormat.format(currentTimeZone));
         } catch (Exception e) {
@@ -76,3 +87,4 @@ public class Common {
         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
     }
 }
+

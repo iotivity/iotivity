@@ -25,7 +25,9 @@
 
 #include <algorithm>
 #include <thread>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <string.h>
 
 #include "GroupManager.h"
@@ -264,7 +266,7 @@ OCStackResult GroupManager::bindResourceToGroup(OCResourceHandle& childHandle, s
     }
 
     return result;
- }
+}
 
 
 
@@ -368,7 +370,8 @@ void GroupManager::checkCollectionRepresentation(const OCRepresentation& rep,
                             std::bind(&GroupManager::collectionPresenceHandler, this,
                                     std::placeholders::_1, std::placeholders::_2,
                                     std::placeholders::_3, hostAddress, oit->getUri())));
-        }catch(OCException& e)
+        }
+        catch(OCException& e)
         {
             std::cout<< "Exception in subscribePresence: "<< e.what() << std::endl;
         }
@@ -435,7 +438,9 @@ std::string GroupManager::getStringFromActionSet(const ActionSet *newActionSet)
     std::string message = "";
 
     if(newActionSet == NULL)
+    {
         return message;
+    }
 
     message = newActionSet->actionsetName;
     message.append("*");
@@ -456,7 +461,9 @@ std::string GroupManager::getStringFromActionSet(const ActionSet *newActionSet)
             message.append((*iterCapa)->status);
 
             if (iterCapa + 1 != (*iterAction)->listOfCapability.end())
+            {
                 message.append("|");
+            }
         }
 
         if (iterAction + 1 != newActionSet->listOfAction.end())
@@ -468,12 +475,14 @@ std::string GroupManager::getStringFromActionSet(const ActionSet *newActionSet)
     return message;
 }
 
-#define DELETE(p) { \
+#define DELETE(p) \
+{ \
     delete p; \
     p = NULL; \
 }
 
-#define DELETEARRAY(p) { \
+#define DELETEARRAY(p) \
+{ \
     delete[] p; \
     p = NULL; \
 }
@@ -515,7 +524,9 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
         actionset->actionsetName = std::string(token);
 
         if((actionset->actionsetName).empty())
+        {
             goto exit;
+        }
 
         // Find the second token
         token = strtok_r(NULL, ACTION_DELIMITER, &plainPtr);
@@ -616,14 +627,20 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
                         token = strtok_r(NULL, ATTR_DELIMITER, &attrPtr);
 
                         if( token == NULL )
+                        {
                             goto exit;
+                        }
 
                         capa->status = std::string(token);
 
                         if (action != NULL)
+                        {
                             action->listOfCapability.push_back(capa);
+                        }
                         else
+                        {
                             goto exit;
+                        }
                     }
 
                     token = strtok_r(NULL, ATTR_DELIMITER, &attrPtr);
@@ -638,7 +655,9 @@ ActionSet* GroupManager::getActionSetfromString(std::string description)
                 action = NULL;
             }
             else
+            {
                 goto exit;
+            }
             //delete action;
         }
         else

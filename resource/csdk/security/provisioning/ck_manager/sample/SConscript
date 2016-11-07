@@ -1,3 +1,4 @@
+# -*- mode: python; python-indent-offset: 4; indent-tabs-mode: nil -*-
 # //******************************************************************
 # //
 # // Copyright 2015 Samsung Electronics All Rights Reserved.
@@ -26,6 +27,14 @@ provisioning_env = env.Clone()
 ######################################################################
 # Build flags
 ######################################################################
+with_upstream_libcoap = provisioning_env.get('WITH_UPSTREAM_LIBCOAP')
+if with_upstream_libcoap == '1':
+	# For bring up purposes only, we manually copy the forked version to where the unforked version is downloaded.
+	provisioning_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
+else:
+	# For bring up purposes only, the forked version will live here.
+	provisioning_env.AppendUnique(CPPPATH = ['../../../../connectivity/lib/libcoap-4.1.1/include'])
+
 provisioning_env.AppendUnique(CPPPATH = [
 		'../../../../stack/include',
 		'../../../../../c_common/ocrandom/include',
@@ -44,7 +53,6 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../../../../connectivity/inc',
 		'../../../../connectivity/inc/pkix/',
 		'../../../../connectivity/common/inc',
-		'../../../../connectivity/lib/libcoap-4.1.1',
 		'../../../../connectivity/api',
 		'../../../../../c_common/oic_malloc/include',
 		'../include',
@@ -64,7 +72,8 @@ provisioning_env.AppendUnique(LIBS = ['asn1'])
 if env.get('SECURED') == '1':
     provisioning_env.AppendUnique(LIBS = ['tinydtls'])
 
-provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+if provisioning_env.get('LOGGING'):
+    provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 ######################################################################
 # Source files and Targets
@@ -87,5 +96,11 @@ provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_bui
 	sec_provisioning_src_dir + 'oic_svr_db_light.json'))
 provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
 	sec_provisioning_src_dir + 'oic_svr_db_door.json'))
+provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
+	sec_provisioning_src_dir + 'oic_svr_db_pt.dat'))
+provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
+	sec_provisioning_src_dir + 'oic_svr_db_light.dat'))
+provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
+	sec_provisioning_src_dir + 'oic_svr_db_door.dat'))
 provisioning_env.Alias("install", provisioning_env.Install( sec_provisioning_build_dir,
 	sec_provisioning_src_dir + 'README.txt'))

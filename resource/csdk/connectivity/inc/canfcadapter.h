@@ -49,7 +49,7 @@ extern "C"
  */
 CAResult_t CAInitializeNFC(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback networkPacketCallback,
-                          CANetworkChangeCallback netCallback,
+                          CAAdapterChangeCallback netCallback,
                           CAErrorHandleCallback errorCallback, ca_thread_pool_t handle);
 
 /**
@@ -81,21 +81,24 @@ CAResult_t CAStartNFCDiscoveryServer();
  * @param[in]   endpoint    Remote Endpoint information.
  * @param[in]   data        data to be sent.
  * @param[in]   dataLen     Size of data to be sent.
+ * @param[in]   dataType    Data type which is REQUEST or RESPONSE.
  * @return  number of bytes sent on the network. Return value equal to -1 indicates error.
  * @remark  dataLen must be > 0.
  */
 int32_t CASendNFCUnicastData(const CAEndpoint_t *endpoint, const void *data,
-                             uint32_t dataLen);
+                             uint32_t dataLen, CADataType_t dataType);
 
 /**
  * Send Multicast data to the endpoint using the NFC connectivity.
  * @param[in]   endpoint    Remote Endpoint information.
  * @param[in]   data        Data which is required to be sent.
  * @param[in]   dataLen     Size of data to be sent.
+   @param[in]   dataType    Data type which is REQUEST or RESPONSE.
  * @return  number of bytes sent on the network. Return value equal to -1 indicates error.
  * @remark  dataLen must be > 0.
  */
-int32_t CASendNFCMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLen);
+int32_t CASendNFCMulticastData(const CAEndpoint_t *endpoint, const void *data,
+                               uint32_t dataLen, CADataType_t dataType);
 
 /**
  * Get NFC Connectivity network information

@@ -39,6 +39,16 @@ extern "C" {
 OCStackResult PDMInit(const char* dbPath);
 
 /**
+ * This method is used by provisioning manager to check whether device is stale or not with PDM.
+ *
+ * @param[in] uuid information about the target device's uuid.
+ * @param[out] result true in case device is stale.
+ *
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult PDMIsDeviceStale(const OicUuid_t *uuid, bool *result);
+
+/**
  * This method is used by provisioning manager to check duplication of device's Device ID with
  * provisioning database.
  *

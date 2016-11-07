@@ -26,7 +26,8 @@
 
 JniOcResource::JniOcResource(std::shared_ptr<OCResource> resource)
     : m_sharedResource(resource)
-{}
+{
+}
 
 JniOcResource::~JniOcResource()
 {
@@ -34,17 +35,27 @@ JniOcResource::~JniOcResource()
 
     m_sharedResource = nullptr;
 
-    jint envRet;
+    jint envRet = JNI_ERR;
     JNIEnv *env = GetJNIEnv(envRet);
-    if (nullptr == env) return;
+    if (nullptr == env)
+    {
+        return;
+    }
 
     m_onGetManager.removeAllListeners(env);
     m_onPutManager.removeAllListeners(env);
     m_onPostManager.removeAllListeners(env);
     m_onDeleteManager.removeAllListeners(env);
     m_onObserveManager.removeAllListeners(env);
+#ifdef WITH_MQ
+    m_onFoundTopicResourceManager.removeAllListeners(env);
+    m_onSubcribeTopicManager.removeAllListeners(env);
+#endif
 
-    if (JNI_EDETACHED == envRet) g_jvm->DetachCurrentThread();
+    if (JNI_EDETACHED == envRet)
+    {
+        g_jvm->DetachCurrentThread();
+    }
 }
 
 OCStackResult JniOcResource::get(JNIEnv* env, const QueryParamsMap &queryParametersMap, jobject jListener)
@@ -286,7 +297,9 @@ OCStackResult JniOcResource::observe(JNIEnv* env, ObserveType observeType,
 
 OCStackResult JniOcResource::cancelObserve(JNIEnv* env, QualityOfService qos)
 {
-    if (QualityOfService::HighQos != qos)
+    // In Low case, after delete the callback and send empty message when client receive the notify.
+    // But TCP does not support EMPTY message.
+    if ((CT_ADAPTER_IP & connectivityType()) && QualityOfService::HighQos != qos)
     {
         this->m_onObserveManager.removeAllListeners(env);
     }
@@ -393,6 +406,28 @@ void JniOcResource::removeOnObserveListener(JNIEnv* env, jobject jListener)
     this->m_onObserveManager.removeListener(env, jListener);
 }
 
+#ifdef WITH_MQ
+JniOnMQTopicFoundListener* JniOcResource::addOnTopicFoundListener(JNIEnv* env, jobject jListener)
+{
+    return this->m_onFoundTopicResourceManager.addListener(env, jListener, this);
+}
+
+void JniOcResource::removeOnTopicFoundListener(JNIEnv* env, jobject jListener)
+{
+    this->m_onFoundTopicResourceManager.removeListener(env, jListener);
+}
+
+JniOnMQSubscribeListener* JniOcResource::addOnMQTopicSubscribeListener(JNIEnv* env, jobject jListener)
+{
+    return this->m_onSubcribeTopicManager.addListener(env, jListener, this);
+}
+
+void JniOcResource::removeOnMQTopicSubscribeListener(JNIEnv* env, jobject jListener)
+{
+    this->m_onSubcribeTopicManager.removeListener(env, jListener);
+}
+#endif
+
 std::shared_ptr<OCResource> JniOcResource::getOCResource()
 {
     return this->m_sharedResource;
@@ -411,6 +446,90 @@ JniOcResource* JniOcResource::getJniOcResourcePtr(JNIEnv *env, jobject thiz)
     }
     return resource;
 }
+
+#ifdef WITH_MQ
+OCStackResult JniOcResource::discoveryMQTopics(JNIEnv* env,
+    const QueryParamsMap &queryParametersMap, jobject jListener, QualityOfService QoS)
+{
+    JniOnMQTopicFoundListener *onTopicFoundListener = addOnTopicFoundListener(env, jListener);
+
+    MQTopicCallback findCallback = [onTopicFoundListener](const int& eCode,
+            const std::string& uri, std::shared_ptr<OCResource> resource)
+    {
+        onTopicFoundListener->foundTopicCallback(eCode, uri, resource);
+    };
+
+    return m_sharedResource->discoveryMQTopics(queryParametersMap, findCallback, QoS);
+}
+
+OCStackResult JniOcResource::createMQTopic(JNIEnv* env,
+    const OCRepresentation &representation, const std::string &targetUri,
+    const QueryParamsMap &queryParametersMap, jobject jListener, QualityOfService QoS)
+{
+    JniOnMQTopicFoundListener *onTopicCreatedListener = addOnTopicFoundListener(env, jListener);
+
+    MQTopicCallback createCallback = [onTopicCreatedListener](const int& eCode,
+            const std::string& uri, std::shared_ptr<OCResource> resource)
+    {
+        onTopicCreatedListener->createdTopicCallback(eCode, uri, resource);
+    };
+
+    return m_sharedResource->createMQTopic(representation, targetUri,
+                                           queryParametersMap,
+                                           createCallback, QoS);
+}
+#endif
+#ifdef MQ_SUBSCRIBER
+OCStackResult JniOcResource::subscribeMQTopic(JNIEnv* env,
+    const QueryParamsMap &queryParametersMap, jobject jListener, QualityOfService QoS)
+{
+    JniOnMQSubscribeListener *onSubscribeListener = addOnMQTopicSubscribeListener(env, jListener);
+
+    ObserveCallback subscribeCallback = [onSubscribeListener](const HeaderOptions& opts,
+        const OCRepresentation& rep, const int& eCode, const int& sequenceNumber)
+    {
+        onSubscribeListener->onSubscribeCallback(opts, rep, eCode, sequenceNumber);
+    };
+
+    return m_sharedResource->subscribeMQTopic(ObserveType::Observe, queryParametersMap,
+                                              subscribeCallback, QoS);
+}
+
+OCStackResult JniOcResource::unsubscribeMQTopic(QualityOfService QoS)
+{
+    return m_sharedResource->unsubscribeMQTopic(QoS);
+}
+
+OCStackResult JniOcResource::requestMQPublish(JNIEnv* env,
+    const QueryParamsMap &queryParametersMap, jobject jListener, QualityOfService QoS)
+{
+    JniOnPostListener *onPostListener = addOnPostListener(env, jListener);
+
+    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
+        const OCRepresentation& rep, const int eCode)
+    {
+        onPostListener->onPostCallback(opts, rep, eCode);
+    };
+
+    return m_sharedResource->requestMQPublish(queryParametersMap, postCallback, QoS);
+}
+#endif
+#ifdef MQ_PUBLISHER
+OCStackResult JniOcResource::publishMQTopic(JNIEnv* env, const OCRepresentation &representation,
+    const QueryParamsMap &queryParametersMap, jobject jListener, QualityOfService QoS)
+{
+    JniOnPostListener *onPostListener = addOnPostListener(env, jListener);
+
+    PostCallback postCallback = [onPostListener](const HeaderOptions& opts,
+        const OCRepresentation& rep, const int eCode)
+    {
+        onPostListener->onPostCallback(opts, rep, eCode);
+    };
+
+    return m_sharedResource->publishMQTopic(representation, queryParametersMap,
+                                            postCallback, QoS);
+}
+#endif
 
 /*
 * Class:     org_iotivity_base_OcResource
@@ -432,7 +551,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_get
         return;
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
@@ -476,7 +598,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_get1
         return;
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
@@ -533,7 +658,10 @@ jobject jQueryParamsMap, jobject jListener)
         return;
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
@@ -590,7 +718,10 @@ jobject jQueryParamsMap, jobject jListener, jint jQoS)
         resourceInterface = env->GetStringUTFChars(jResourceInterface, nullptr);
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
@@ -643,10 +774,16 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_put
         return;
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env, jRepresentation);
-    if (!representation) return;
+    if (!representation)
+    {
+        return;
+    }
 
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
@@ -698,10 +835,16 @@ jobject jListener, jint jQoS)
         return;
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env, jRepresentation);
-    if (!representation) return;
+    if (!representation)
+    {
+        return;
+    }
 
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
@@ -764,10 +907,16 @@ jobject jRepresentation, jobject jQueryParamsMap, jobject jListener)
         return;
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env, jRepresentation);
-    if (!representation) return;
+    if (!representation)
+    {
+        return;
+    }
 
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
@@ -832,10 +981,16 @@ jobject jQueryParamsMap, jobject jListener, jint jQoS)
     }
 
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env, jRepresentation);
-    if (!representation) return;
+    if (!representation)
+    {
+        return;
+    }
 
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
@@ -888,10 +1043,16 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_post
         return;
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env, jRepresentation);
-    if (!representation) return;
+    if (!representation)
+    {
+        return;
+    }
 
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
@@ -941,10 +1102,16 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_post1
         return;
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env, jRepresentation);
-    if (!representation) return;
+    if (!representation)
+    {
+        return;
+    }
 
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
@@ -1008,10 +1175,16 @@ jobject jRepresentation, jobject jQueryParamsMap, jobject jListener)
     }
 
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env, jRepresentation);
-    if (!representation) return;
+    if (!representation)
+    {
+        return;
+    }
 
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
@@ -1076,10 +1249,16 @@ jobject jRepresentation, jobject jQueryParamsMap, jobject jListener, jint jQoS)
     }
 
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env, jRepresentation);
-    if (!representation) return;
+    if (!representation)
+    {
+        return;
+    }
 
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
@@ -1122,7 +1301,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_deleteResource
         return;
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     try
     {
@@ -1157,7 +1339,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_deleteResource1
         return;
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     try
     {
@@ -1199,7 +1384,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_observe
         return;
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
@@ -1246,7 +1434,10 @@ jobject jListener, jint jQoS)
         return;
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     QueryParamsMap qpm;
     JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
@@ -1282,7 +1473,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_cancelObserve1
 {
     LOGD("OcResource_cancelObserve1");
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     try
     {
@@ -1317,7 +1511,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_setHeaderOptions
         return;
     }
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     HeaderOptions headerOptions;
     JniUtils::convertJavaHeaderOptionsArrToVector(env, jheaderOptionArr, headerOptions);
@@ -1335,7 +1532,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_unsetHeaderOptions
 {
     LOGD("OcResource_unsetHeaderOptions");
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return;
+    if (!resource)
+    {
+        return;
+    }
 
     resource->unsetHeaderOptions();
 }
@@ -1350,7 +1550,10 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcResource_getHost
 {
     LOGD("OcResource_getHost");
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return nullptr;
+    if (!resource)
+    {
+        return nullptr;
+    }
 
     return env->NewStringUTF(resource->host().c_str());
 }
@@ -1365,7 +1568,10 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcResource_getUri
 {
     LOGD("OcResource_getUri");
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return nullptr;
+    if (!resource)
+    {
+        return nullptr;
+    }
 
     return env->NewStringUTF(resource->uri().c_str());
 }
@@ -1380,7 +1586,10 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcResource_getConnectivityTypeN
 {
     LOGD("OcResource_getConnectivityType");
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return -1;
+    if (!resource)
+    {
+        return -1;
+    }
 
     OCConnectivityType connectivityType = resource->connectivityType();
     return static_cast<jint>(connectivityType);
@@ -1396,6 +1605,11 @@ JNIEXPORT jboolean JNICALL Java_org_iotivity_base_OcResource_isObservable
 {
     LOGD("OcResource_isObservable");
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+    if (!resource)
+    {
+        return false;
+    }
+
     return (jboolean)resource->isObservable();
 }
 
@@ -1409,7 +1623,10 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcResource_getResourceTypes
 {
     LOGD("OcResource_getResourceTypes");
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return nullptr;
+    if (!resource)
+    {
+        return nullptr;
+    }
 
     std::vector<std::string> resourceTypes = resource->getResourceTypes();
 
@@ -1426,7 +1643,10 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcResource_getResourceInterface
 {
     LOGD("OcResource_getResourceInterfaces");
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return nullptr;
+    if (!resource)
+    {
+        return nullptr;
+    }
 
     std::vector<std::string> resourceInterfaces = resource->getResourceInterfaces();
 
@@ -1443,11 +1663,17 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_base_OcResource_getUniqueIdentifier
 {
     LOGD("OcResource_getUniqueIdentifier");
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return nullptr;
+    if (!resource)
+    {
+        return nullptr;
+    }
 
     JniOcResourceIdentifier *jniResourceIdentifier =
         new JniOcResourceIdentifier(resource->uniqueIdentifier());
-    if (!jniResourceIdentifier) return nullptr;
+    if (!jniResourceIdentifier)
+    {
+        return nullptr;
+    }
 
     jlong handle = reinterpret_cast<jlong>(jniResourceIdentifier);
     jobject jResourceIdentifier = env->NewObject(g_cls_OcResourceIdentifier,
@@ -1469,7 +1695,10 @@ JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcResource_getServerId
 {
     LOGD("OcResource_getServerId");
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
-    if (!resource) return nullptr;
+    if (!resource)
+    {
+        return nullptr;
+    }
 
     return env->NewStringUTF(resource->sid().c_str());
 }
@@ -1485,4 +1714,347 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_dispose
     LOGD("OcResource_dispose");
     JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
     delete resource;
+}
+
+/*
+* Class:     org_iotivity_base_OcResource
+* Method:    discoveryMQTopicsImpl
+* Signature: (Ljava/util/Map;Lorg/iotivity/base/OcPlatform/OnResourceFoundListener;I)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_discoveryMQTopicsImpl
+(JNIEnv *env, jobject thiz, jobject jQueryParamsMap, jobject jListener, jint jQoS)
+{
+    LOGD("OcResource_discoveryMQTopicsImpl");
+
+#ifdef WITH_MQ
+    if (!jQueryParamsMap)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "queryParamsMap cannot be null");
+        return;
+    }
+
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "listener cannot be null");
+        return;
+    }
+
+    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+    if (!resource)
+    {
+        return;
+    }
+
+    QueryParamsMap qpm;
+    JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
+
+    try
+    {
+        OCStackResult result = resource->discoveryMQTopics(
+            env,
+            qpm,
+            jListener,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_discoveryMQTopicsImpl");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+#else
+    ThrowOcException(JNI_NO_SUPPORT, "not support");
+#endif
+}
+
+/*
+* Class:     org_iotivity_base_OcResource
+* Method:    createMQTopicImpl
+* Signature: (Lorg/iotivity/base/OcRepresentation;Ljava/util/String;Ljava/util/Map
+*             ;Lorg/iotivity/base/OcPlatform/OnMQTopicCreatedListener;I)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_createMQTopicImpl
+(JNIEnv *env, jobject thiz, jobject jRepresentation, jstring jUri,
+ jobject jQueryParamsMap, jobject jListener, jint jQoS)
+{
+    LOGD("OcResource_createMQTopicImpl");
+
+#ifdef WITH_MQ
+    if (!jQueryParamsMap)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "queryParamsMap cannot be null");
+        return;
+    }
+
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "listener cannot be null");
+        return;
+    }
+
+    if (!jRepresentation)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "representation null");
+        return;
+    }
+
+    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+    if (!resource)
+    {
+        return;
+    }
+
+    std::string targetUri;
+    if (jUri)
+    {
+        targetUri = env->GetStringUTFChars(jUri, nullptr);
+    }
+
+    OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env,
+                                                                                   jRepresentation);
+    if (!representation)
+    {
+        return;
+    }
+
+    QueryParamsMap qpm;
+    JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
+
+    try
+    {
+        OCStackResult result = resource->createMQTopic(
+            env,
+            *representation,
+            targetUri,
+            qpm,
+            jListener,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_createMQTopicImpl");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+#else
+    ThrowOcException(JNI_NO_SUPPORT, "not support");
+#endif
+}
+
+/*
+* Class:     org_iotivity_base_OcResource
+* Method:    subscribeMQTopic
+* Signature: (Ljava/util/Map;Lorg/iotivity/base/OcResource/OnObserveListener;I)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_subscribeMQTopicImpl
+(JNIEnv *env, jobject thiz, jobject jQueryParamsMap, jobject jListener, jint jQoS)
+{
+    LOGD("OcResource_subscribeMQTopicImpl");
+#ifdef MQ_SUBSCRIBER
+    if (!jQueryParamsMap)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "queryParamsMap cannot be null");
+        return;
+    }
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "onObserveListener cannot be null");
+        return;
+    }
+    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+    if (!resource)
+    {
+        return;
+    }
+
+    QueryParamsMap qpm;
+    JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
+
+    try
+    {
+        OCStackResult result = resource->subscribeMQTopic(
+            env,
+            qpm,
+            jListener,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_subscribeMQTopicImpl");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+#else
+    ThrowOcException(JNI_NO_SUPPORT, "not support");
+#endif
+}
+
+/*
+* Class:     org_iotivity_base_OcResource
+* Method:    unsubscribeMQTopicImpl
+* Signature: (I)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_unsubscribeMQTopicImpl
+(JNIEnv *env, jobject thiz, jint jQoS)
+{
+    LOGD("OcResource_unsubscribeMQTopicImpl");
+#ifdef MQ_SUBSCRIBER
+    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+    if (!resource)
+    {
+        return;
+    }
+
+    try
+    {
+        OCStackResult result = resource->unsubscribeMQTopic(
+                JniUtils::getQOS(env, static_cast<int>(jQoS)));
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_unsubscribeMQTopicImpl");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+#else
+    ThrowOcException(JNI_NO_SUPPORT, "not support");
+#endif
+}
+
+/*
+* Class:     org_iotivity_base_OcResource
+* Method:    requestMQPublishImpl
+* Signature: (Ljava/util/Map;Lorg/iotivity/base/OcResource/OnPostListener;I)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_requestMQPublishImpl
+(JNIEnv *env, jobject thiz, jobject jQueryParamsMap, jobject jListener, jint jQoS)
+{
+    LOGD("OcResource_requestMQPublishImpl");
+#ifdef MQ_SUBSCRIBER
+    if (!jQueryParamsMap)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "queryParamsMap cannot be null");
+        return;
+    }
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "onPostListener cannot be null");
+        return;
+    }
+
+    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+    if (!resource)
+    {
+        return;
+    }
+
+    QueryParamsMap qpm;
+    JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
+
+    try
+    {
+        OCStackResult result = resource->requestMQPublish(
+            env,
+            qpm,
+            jListener,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_requestMQPublishImpl");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+#else
+    ThrowOcException(JNI_NO_SUPPORT, "not support");
+#endif
+}
+
+/*
+* Class:     org_iotivity_base_OcResource
+* Method:    publishMQTopicImpl
+* Signature: (Lorg/iotivity/base/OcRepresentation;Ljava/util/Map;
+*             Lorg/iotivity/base/OcResource/OnPostListener;I)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcResource_publishMQTopicImpl
+(JNIEnv *env, jobject thiz, jobject jRepresentation, jobject jQueryParamsMap,
+ jobject jListener, jint jQoS)
+{
+    LOGD("OcResource_publishMQTopicImpl");
+#ifdef MQ_PUBLISHER
+    if (!jRepresentation)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "representation cannot be null");
+        return;
+    }
+
+    if (!jQueryParamsMap)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "queryParamsMap cannot be null");
+        return;
+    }
+
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "onPostListener cannot be null");
+        return;
+    }
+
+    JniOcResource *resource = JniOcResource::getJniOcResourcePtr(env, thiz);
+    if (!resource)
+    {
+        return;
+    }
+
+    OCRepresentation *representation = JniOcRepresentation::getOCRepresentationPtr(env,
+                                                                                   jRepresentation);
+    if (!representation)
+    {
+        return;
+    }
+
+    QueryParamsMap qpm;
+    JniUtils::convertJavaMapToQueryParamsMap(env, jQueryParamsMap, qpm);
+
+    try
+    {
+        OCStackResult result = resource->publishMQTopic(
+            env,
+            *representation,
+            qpm,
+            jListener,
+            JniUtils::getQOS(env, static_cast<int>(jQoS)));
+
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcResource_publishMQTopicImpl");
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+#else
+    ThrowOcException(JNI_NO_SUPPORT, "not support");
+#endif
 }

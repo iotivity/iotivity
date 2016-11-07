@@ -30,19 +30,30 @@ import java.security.InvalidParameterException;
  * After creating instances of OcHeaderOptions, use setHeaderOptions API
  * (in OcResource) to set header Options.
  * NOTE: optionId  is an integer value which MUST be within
- * range of 2048 to 3000 inclusive of lower and upper bound.
+ * range of 2048 to 3000 inclusive of lower and upper bound
+ * except for a few options including If-Match with empty(num : 1),
+ * If-None-Match(num : 5), Location-Path(num : 8),
+ * Location-Query(num : 20) CoAP option.
  * HeaderOption instance creation fails if above condition is not satisfied.
  */
 public class OcHeaderOption {
 
     public static final int MIN_HEADER_OPTION_ID = 2048;
     public static final int MAX_HEADER_OPTION_ID = 3000;
+    public static final int IF_MATCH_OPTION_ID = 1;
+    public static final int IF_NONE_MATCH_OPTION_ID = 5;
+    public static final int LOCATION_PATH_OPTION_ID = 8;
+    public static final int LOCATION_QUERY_OPTION_ID = 20;
 
     private int mOptionId;
     private String mOptionData;
 
     public OcHeaderOption(int optionId, String optionData) {
-        if (!(optionId >= MIN_HEADER_OPTION_ID && optionId <= MAX_HEADER_OPTION_ID)) {
+        if (!(optionId >= MIN_HEADER_OPTION_ID && optionId <= MAX_HEADER_OPTION_ID)
+                && optionId != IF_MATCH_OPTION_ID
+                && optionId != IF_NONE_MATCH_OPTION_ID
+                && optionId != LOCATION_PATH_OPTION_ID
+                && optionId != LOCATION_QUERY_OPTION_ID) {
             throw new InvalidParameterException("Option ID range is invalid");
         }
 

@@ -73,7 +73,9 @@
 #define DTLS_X509 1
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
+#ifndef _WIN32
 #define HAVE_ARPA_INET_H 1
+#endif
 
 /* Define to 1 if you have the <assert.h> header file. */
 #define HAVE_ASSERT_H 1
@@ -98,10 +100,14 @@
 #define HAVE_MEMSET 1
 
 /* Define to 1 if you have the <netdb.h> header file. */
+#ifndef _WIN32
 #define HAVE_NETDB_H 1
+#endif
 
 /* Define to 1 if you have the <netinet/in.h> header file. */
+#ifndef _WIN32
 #define HAVE_NETINET_IN_H 1
+#endif
 
 /* Define to 1 if you have the `select' function. */
 #define HAVE_SELECT 1
@@ -140,13 +146,17 @@
 #define HAVE_SYS_PARAM_H 1
 
 /* Define to 1 if you have the <sys/socket.h> header file. */
+#ifndef _WIN32
 #define HAVE_SYS_SOCKET_H 1
+#endif
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
 
 /* Define to 1 if you have the <sys/time.h> header file. */
+#ifndef _WIN32
 #define HAVE_SYS_TIME_H 1
+#endif
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 1
@@ -192,6 +202,15 @@
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 
 /* #undef size_t */
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+#define ssize_t SSIZE_T
+#define snprintf vs12_snprintf
+#endif
+#if defined(_WIN32)
+#define MSG_DONTWAIT 0
+#define HAVE_WINSOCK2_H 1
+#define HAVE_WS2TCPIP_H 1
+#endif
 
 /************************************************************************/
 /* Specific Contiki platforms                                           */

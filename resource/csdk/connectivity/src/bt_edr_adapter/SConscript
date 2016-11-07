@@ -36,6 +36,6 @@ if os.path.exists(target_sconscript_abspath):
 # the list.
 target_files = [ os.path.join(src_dir, target_os, f) for f in target_files ]
 
-# The list of BLE adapter source files is a combination of both the
+# The list of EDR adapter source files is a combination of both the
 # common and target-specific source file lists.
 env.AppendUnique(CA_SRC = common_files + target_files)

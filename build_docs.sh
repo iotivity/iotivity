@@ -16,7 +16,7 @@ if [ ! -e "$ANDROID_JAR" ]; then
     exit 1
 fi
 
-BASE_PATH="android/android_api/base/src/main/java/"
+BASE_PATH="java/common/src/main/java/"
 BASE_PKG="org.iotivity.base"
 
 TM_PATH="service/things-manager/sdk/java/src/"

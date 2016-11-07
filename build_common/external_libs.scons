@@ -28,6 +28,7 @@ Import('env')
 
 target_os = env.get('TARGET_OS')
 target_arch = env.get('TARGET_ARCH')
+rd_mode = env.get('RD_MODE')
 
 # for android, doesn't distinguish 'armeabi-v7a-hard' and 'armeabi-v7a' library
 if target_os == 'android':
@@ -52,8 +53,9 @@ if env.get('BUILD_JAVA') == 'ON' and target_os != 'android':
 
 # External library include files are in <src_dir>/deps/<target_os>/include
 # the library binaries are in <src_dir>/deps/<target_os>/lib/<arch>
-env.AppendUnique(CPPPATH = [os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'include')])
-env.AppendUnique(LIBPATH = [os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'lib', target_arch)])
+if target_os not in ['windows']:
+	env.AppendUnique(CPPPATH = [os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'include')])
+	env.AppendUnique(LIBPATH = [os.path.join(env.get('SRC_DIR'), 'deps', target_os, 'lib', target_arch)])
 
 # Check whether a library exists, if not, notify user to install it or try to
 # download the source code and build it
@@ -151,5 +153,8 @@ env.AddMethod(__download, "Download")
 env.AddMethod(__install_head_file, "InstallHeadFile")
 env.AddMethod(__install_lib, "InstallLib")
 
-if env.get('SECURED') == '1':
+if env.get('SECURED') == '1' and target_os != 'tizen':
+	SConscript(os.path.join(env.get('SRC_DIR'), 'extlibs', 'sqlite3', 'SConscript'))
+
+if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
 	SConscript(os.path.join(env.get('SRC_DIR'), 'extlibs', 'sqlite3', 'SConscript'))

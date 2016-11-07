@@ -33,19 +33,25 @@ samples_env.PrependUnique(CPPPATH = [
 		])
 
 target_os = env.get('TARGET_OS')
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
 	samples_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
 
 	# Note: 'pthread' is in libc for android.
 	if target_os != 'android':
-		samples_env.AppendUnique(LIBS = ['-lpthread'])
+		samples_env.AppendUnique(LIBS = ['pthread'])
+	samples_env.Append(LINKFLAGS = ['-Wl,--no-as-needed'])
 
 samples_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-samples_env.PrependUnique(LIBS = ['octbstack', 'm', 'connectivity_abstraction', 'coap'])
+if target_os in ['windows', 'msys_nt']:
+	samples_env.PrependUnique(LIBS = ['ocsrm', 'ws2_32', 'iphlpapi'])
+else:
+	samples_env.PrependUnique(LIBS = ['m'])
+samples_env.PrependUnique(LIBS = ['octbstack', 'connectivity_abstraction', 'coap'])
 if env.get('SECURED') == '1':
-    samples_env.AppendUnique(LIBS = ['tinydtls'])
+	samples_env.AppendUnique(LIBS = ['tinydtls'])
+	if env.get('WITH_TCP') == True:
+		samples_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
-samples_env.Append(LINKFLAGS = ['-Wl,--no-as-needed'])
 
 if target_os == 'android':
 	samples_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
@@ -82,10 +88,22 @@ sec_samples_build_dir = env.get('BUILD_DIR') +'/resource/csdk/stack/samples/linu
 samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
     sec_samples_src_dir + 'oic_svr_db_server.json'))
 samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
-    sec_samples_src_dir + 'oic_svr_db_client.json'))
+    sec_samples_src_dir + 'oic_svr_db_client_devowner.json'))
+samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
+    sec_samples_src_dir + 'oic_svr_db_client_nondevowner.json'))
 samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
     sec_samples_src_dir + 'oic_amss_db.json'))
 if env.get('SECURED') == '1':
 	samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
 		sec_samples_src_dir + 'oic_svr_db_client_directpairing.json'))
+	samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
+    	sec_samples_src_dir + 'oic_svr_db_client_directpairing.dat'))
 
+samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
+    sec_samples_src_dir + 'oic_svr_db_server.dat'))
+samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
+    sec_samples_src_dir + 'oic_svr_db_client_devowner.dat'))
+samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
+    sec_samples_src_dir + 'oic_svr_db_client_nondevowner.dat'))
+samples_env.Alias("install", samples_env.Install( sec_samples_build_dir,
+    sec_samples_src_dir + 'oic_amss_db.dat'))

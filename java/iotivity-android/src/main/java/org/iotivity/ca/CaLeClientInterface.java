@@ -41,15 +41,19 @@ import android.util.Log;
 public class CaLeClientInterface {
 
     private static String SERVICE_UUID = "ADE3D529-C784-4F63-A987-EB69F70EE816";
-    private static String TAG          = "Sample_Service : CaLeClientInterface";
+    private static String TAG          = "OIC_LE_CB_INTERFACE";
     private static Context mContext;
 
     private CaLeClientInterface(Context context) {
         caLeRegisterLeScanCallback(mLeScanCallback);
         caLeRegisterGattCallback(mGattCallback);
-        mContext = context;
+        synchronized(CaLeClientInterface.class) {
+            mContext = context;
+        }
         registerIntentFilter();
     }
+
+
 
     public static void getLeScanCallback() {
         caLeRegisterLeScanCallback(mLeScanCallback);
@@ -93,6 +97,8 @@ public class CaLeClientInterface {
 
     private native static void caLeGattNWServicesDiscoveredCallback(BluetoothGatt gatt,
                                                                     int status);
+
+    private native static void caLeGattNWDescriptorWriteCallback(BluetoothGatt gatt, int status);
 
     private native static void caLeGattCharacteristicWriteCallback(
             BluetoothGatt gatt, byte[] data, int status);
@@ -251,6 +257,7 @@ public class CaLeClientInterface {
             super.onDescriptorWrite(gatt, descriptor, status);
 
             caLeGattDescriptorWriteCallback(gatt, status);
+            caLeGattNWDescriptorWriteCallback(gatt, status);
         }
 
         @Override

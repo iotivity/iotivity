@@ -18,7 +18,7 @@
  *
  ******************************************************************/
 
-
+#include <glib.h>
 #include <stdio.h>
 #include <string.h>
 #include <string>
@@ -37,6 +37,8 @@ using namespace std;
 #define TAG "ocrouting"
 
 int gQuitFlag = 0;
+static GMainLoop *g_mainloop = NULL;
+pthread_t g_thread;
 
 /* SIGINT handler: set gQuitFlag to 1 for graceful termination */
 void handleSigInt(int signum)
@@ -47,9 +49,37 @@ void handleSigInt(int signum)
     }
 }
 
+void *GMainLoopThread(void *param)
+{
+
+    while (!gQuitFlag)
+    {
+        if (OCProcess() != OC_STACK_OK)
+        {
+            cout << "\nOCStack process error";
+            return NULL;
+        }
+#ifndef ROUTING_GATEWAY
+        sleep(1);
+#endif
+    }
+
+    if (g_mainloop)
+    {
+        g_main_loop_quit(g_mainloop);
+    }
+    return NULL;
+}
+
 int main()
 {
     cout << "\nOCRouting sample is starting...";
+    g_mainloop = g_main_loop_new(NULL, FALSE);
+    if(!g_mainloop)
+    {
+        printf("g_main_loop_new failed\n");
+        return 0;
+    }
 
     if (OCInit(NULL, 0, OC_GATEWAY) != OC_STACK_OK)
     {
@@ -62,14 +92,15 @@ int main()
 
     signal(SIGINT, handleSigInt);
 
-    while (!gQuitFlag)
+
+    int result = pthread_create(&g_thread, NULL, GMainLoopThread, (void *)NULL);
+    if (result < 0)
     {
-        if (OCProcess() != OC_STACK_OK)
-        {
-            cout << "\nOCStack process error";
-            return 0;
-        }
+        printf("pthread_create failed in initialize\n");
+        return 0;
     }
+
+    g_main_loop_run(g_mainloop);
 
     cout << "\nExiting ocrouting main loop...";
 

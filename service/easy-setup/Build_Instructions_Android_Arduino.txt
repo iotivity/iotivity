@@ -43,11 +43,10 @@ Steps to build and deploy Easysetup Mediator in Android platform
         export ANDROID_NDK=<ANDROID_NDK>
 
     a) In the IoTivity root source folder execute
-         scons TARGET_OS=android TARGET_ARCH=armeabi TARGET_TRANSPORT=IP ES_ROLE=mediator ES_TARGET_ENROLLEE={Platform} RELEASE=0
-		 Note : {Platform} can be -> arduino , linux, tizen
+         scons TARGET_OS=android TARGET_ARCH=armeabi TARGET_TRANSPORT=IP RELEASE=0
 
     b) If the project is setup correctly, you should see a BUILD SUCCESSFUL message on the terminal
-        You should see the .aar files generated inside of '<iotivity>/android/android_api/base/build/outputs/aar' directory. The .aar files contain jni directory and also a .jar file
+        You should see the .aar files generated inside of '<iotivity>/java/iotivity-android/build/outputs/aar' directory. The .aar files contain jni directory and also a .jar file
 
     c) Now navigate to the Easysetup NDK folder
         <iotivity-root>/service/easy-setup/mediator/richsdk/android
@@ -121,7 +120,7 @@ Steps to build and deploy Easysetup Mediator in Arduino platform
 
        Possible values for <transport> are: [Only ip is currently supported]
         -> IP :
-        $ scons service TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=WIFI ES_ROLE=enrollee RELEASE=0
+        $ scons service TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=WIFI RELEASE=0
         -> BLE :
         $ scons service TARGET_OS=arduino BOARD=arduino_due_x_dbg TARGET_ARCH=arm SHIELD=BLE RELEASE=0 [Currently not supporting]
 

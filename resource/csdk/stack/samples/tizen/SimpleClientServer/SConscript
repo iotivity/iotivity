@@ -9,7 +9,7 @@ print "Inside the Config SConscript"
 # Map of host os and allowed target os (host: allowed target os)
 host_target_map = {
 		'linux': ['linux', 'android', 'arduino', 'yocto', 'tizen'],
-		'windows': ['windows', 'winrt', 'android', 'arduino', 'tizen'],
+		'windows': ['windows', 'android', 'arduino', 'tizen'],
 		'darwin': ['darwin', 'ios', 'android', 'arduino'],
 		}
 
@@ -18,7 +18,6 @@ os_arch_map = {
 		'linux': ['x86', 'x86_64', 'arm', 'arm64'],
 		'android': ['x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
 		'windows': ['x86', 'amd64', 'arm'],
-		'winrt': ['arm'],
 		'darwin': ['i386', 'x86_64'],
 		'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
 		'arduino': ['avr', 'arm'],
@@ -57,6 +56,7 @@ help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ALL', ['ALL'
 help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
 help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))
 help_vars.Add(EnumVariable('ROUTING', 'Enable routing', 'EP', allowed_values=('GW', 'EP')))
+help_vars.Add(BoolVariable('WITH_PROXY', 'CoAP-HTTP Proxy', False)) # set to 'no', 'false' or 0 for debug
 
 ######################################################################
 # Platform(build target) specific options: SDK/NDK & toolchain

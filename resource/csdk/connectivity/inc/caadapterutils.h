@@ -27,18 +27,28 @@
 #ifndef CA_ADAPTER_UTILS_H_
 #define CA_ADAPTER_UTILS_H_
 
+#include "iotivity_config.h"
+
 #include <stdbool.h>
 #ifdef __JAVA__
 #include <jni.h>
 #endif
 
-#ifndef WITH_ARDUINO
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+
+#if defined(HAVE_WINSOCK2_H) && defined(HAVE_WS2TCPIP_H)
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
 
 #include "cacommon.h"
 #include "logger.h"
-#include "pdu.h"
+#include <coap/pdu.h>
 #include "uarraylist.h"
 #include "cacommonutil.h"
 

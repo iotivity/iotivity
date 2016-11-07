@@ -22,6 +22,6 @@ Import('env')
 
 target_os = env.get('TARGET_OS')
 
-if target_os == 'linux' :
+if target_os in ['linux']:
 	SConscript('HeightSensorApp/SConscript')
 	SConscript('WeightSensorApp/SConscript')

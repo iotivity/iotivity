@@ -92,28 +92,28 @@ struct list {
     (struct_ptr)->LIST_CONCAT(name,_list) = NULL;			\
   }
 
-static inline void *
+INLINE_API void *
 list_head(list_t list) {
   return *list;
 }
 
-static inline void 
+INLINE_API void 
 list_remove(list_t list, void *item) {
   LL_DELETE(*(struct list **)list, (struct list *)item);
 }
 
-static inline void 
+INLINE_API void 
 list_add(list_t list, void *item) {
   list_remove(list, item);
   LL_APPEND(*(struct list **)list, (struct list *)item);
 }
 
-static inline void 
+INLINE_API void 
 list_push(list_t list, void *item) {
   LL_PREPEND(*(struct list **)list, (struct list *)item);
 }
 
-static inline void *
+INLINE_API void *
 list_pop(list_t list) {
   struct list *l;
   l = *list;
@@ -123,7 +123,7 @@ list_pop(list_t list) {
   return l;
 }
 
-static inline void
+INLINE_API void
 list_insert(list_t list, void *previtem, void *newitem) {
   if(previtem == NULL) {
     list_push(list, newitem);
@@ -133,7 +133,7 @@ list_insert(list_t list, void *previtem, void *newitem) {
   } 
 }
 
-static inline void *
+INLINE_API void *
 list_item_next(void *item)
 {
   return item == NULL? NULL: ((struct list *)item)->next;

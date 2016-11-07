@@ -177,22 +177,6 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
         resourceModel.remove("resourceType");
     }
 
-    // Construct resource type from uri
-    if(resourceType.empty())
-    {
-        std::ostringstream rtString;
-        rtString << "oic.r.";
-
-        size_t pos = resourceURI.rfind("/");
-        if (pos == std::string::npos)
-            pos = -1;
-
-        std::string rtName = resourceURI.substr(pos+1);
-        std::transform(rtName.begin(), rtName.end(), rtName.begin(), ::tolower);
-        rtString << rtName;
-        resourceType = rtString.str();
-    }
-
     // Extracting interface type.
     std::vector<std::string> interfaceTypes;
     if (resourceModel.contains("if"))
@@ -236,7 +220,8 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
             new SimulatorCollectionResourceImpl());
 
         collectionRes->setName(resourceName);
-        collectionRes->setResourceType(resourceType);
+        if(!resourceType.empty())
+            collectionRes->setResourceType(resourceType);
         if (interfaceTypes.size() > 0)
             collectionRes->setInterface(interfaceTypes);
         collectionRes->setURI(ResourceURIFactory::getInstance()->makeUniqueURI(resourceURI));
@@ -254,7 +239,8 @@ std::shared_ptr<SimulatorResource> SimulatorResourceFactory::buildResource(
             new SimulatorSingleResourceImpl());
 
         singleRes->setName(resourceName);
-        singleRes->setResourceType(resourceType);
+        if(!resourceType.empty())
+            singleRes->setResourceType(resourceType);
         if (interfaceTypes.size() > 0)
             singleRes->setInterface(interfaceTypes);
         singleRes->setURI(ResourceURIFactory::getInstance()->makeUniqueURI(resourceURI));

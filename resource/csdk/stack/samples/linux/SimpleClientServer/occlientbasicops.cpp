@@ -17,14 +17,21 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <stdint.h>
 #include <sstream>
 #include <iostream>
+#include <getopt.h>
 
 #include "ocstack.h"
 #include "logger.h"
@@ -33,6 +40,7 @@
 #include "payload_logging.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "common.h"
 
 #define MAX_IP_ADDR_ST_SZ  16 //string size of "155.255.255.255" (15 + 1)
 #define MAX_PORT_ST_SZ  6     //string size of "65535" (5 + 1)

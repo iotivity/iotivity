@@ -28,7 +28,6 @@
 #ifndef OC_REPRESENTATION_H_
 #define OC_REPRESENTATION_H_
 
-
 #include <string>
 #include <sstream>
 #include <vector>
@@ -99,13 +98,28 @@ namespace OC
             // this fix will work in the meantime.
             OCRepresentation(): m_interfaceType(InterfaceType::None){}
 
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+            OCRepresentation(OCRepresentation&& o)
+            {
+                std::memmove(this, &o, sizeof(o));
+            }
+#else
             OCRepresentation(OCRepresentation&&) = default;
+#endif
 
             OCRepresentation(const OCRepresentation&) = default;
 
             OCRepresentation& operator=(const OCRepresentation&) = default;
 
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+            OCRepresentation& operator=(OCRepresentation&& o)
+            {
+                std::memmove(this, &o, sizeof(o));
+                return *this;
+            }
+#else
             OCRepresentation& operator=(OCRepresentation&&) = default;
+#endif
 
             virtual ~OCRepresentation(){}
 
@@ -131,6 +145,8 @@ namespace OC
 
             const std::vector<std::string>& getResourceTypes() const;
 
+            const std::vector<std::string>& getDataModelVersions() const;
+
             void setResourceTypes(const std::vector<std::string>& resourceTypes);
 
             void addResourceType(const std::string& str);
@@ -140,6 +156,8 @@ namespace OC
             void setResourceInterfaces(const std::vector<std::string>& resourceInterfaces);
 
             void addResourceInterface(const std::string& str);
+
+            void addDataModelVersion(const std::string& str);
 
             bool emptyData() const;
 
@@ -151,6 +169,17 @@ namespace OC
             void setValue(const std::string& str, const T& val)
             {
                 m_values[str] = val;
+            }
+
+            // using R-value(or universal ref depending) to move string and vector<uint8_t>
+            template <typename T>
+            void setValue(const std::string& str, T&& val)
+            {
+                m_values[str] = std::forward<T>(val);
+            }
+
+            const std::map<std::string, AttributeValue>& getValues() const {
+                return m_values;
             }
 
             /**
@@ -295,12 +324,42 @@ namespace OC
                     // Enable-if required to prevent conversions to alternate types.  This prevents
                     // ambigious conversions in the case where conversions can include a number of
                     // types, such as the string constructor.
+#if (defined(_MSC_VER) ) || (defined(__GNUC__) && (__GNUC__ <= 5))
+                    template<typename T, typename std::enable_if<
+                     std::is_same<T, int>::value ||
+                     std::is_same<T, double>::value ||
+                     std::is_same<T, bool>::value ||
+                     std::is_same<T, std::string>::value ||
+                     std::is_same<T, OCRepresentation>::value ||
+                     std::is_same<T, OCByteString>::value ||
+                     std::is_same<T, std::vector<int>>::value ||
+                     std::is_same<T, std::vector<std::vector<int>>>::value ||
+                     std::is_same<T, std::vector<std::vector<std::vector<int>>>>::value ||
+                     std::is_same<T, std::vector<double>>::value ||
+                     std::is_same<T, std::vector<std::vector<double>>>::value ||
+                     std::is_same<T, std::vector<std::vector<std::vector<double>>>>::value ||
+                     std::is_same<T, std::vector<bool>>::value ||
+                     std::is_same<T, std::vector<std::vector<bool>>>::value ||
+                     std::is_same<T, std::vector<std::vector<std::vector<bool>>>>::value ||
+                     std::is_same<T, std::vector<std::string>>::value ||
+                     std::is_same<T, std::vector<std::vector<std::string>>>::value ||
+                     std::is_same<T, std::vector<std::vector<std::vector<std::string>>>>::value ||
+                     std::is_same<T, std::vector<OCRepresentation>>::value ||
+                     std::is_same<T, std::vector<std::vector<OCRepresentation>>>::value ||
+                     std::is_same<T, std::vector<std::vector<std::vector<OCRepresentation>>>>::value ||
+                     std::is_same<T, std::vector<OCByteString>>::value ||
+                     std::is_same<T, std::vector<std::vector<OCByteString>>>::value ||
+                     std::is_same<T, std::vector<std::vector<std::vector<OCByteString>>>>::value
+                     , int>::type = 0// enable_if
+                    >
+#else
                     template<typename T, typename std::enable_if<
                         is_component<T,
                             remove_first<AttributeValue>::type
                             >::value
                         , int>::type = 0
                     >
+#endif
                     operator T() const
                     {
                         return this->getValue<T>();
@@ -445,6 +504,7 @@ namespace OC
             mutable std::map<std::string, AttributeValue> m_values;
             std::vector<std::string> m_resourceTypes;
             std::vector<std::string> m_interfaces;
+            std::vector<std::string> m_dataModelVersions;
 
             InterfaceType m_interfaceType;
     };
@@ -454,4 +514,3 @@ namespace OC
 
 
 #endif // OC_REPRESENTATION_H_
-

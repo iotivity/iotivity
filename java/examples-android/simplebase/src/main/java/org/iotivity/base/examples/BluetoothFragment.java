@@ -178,7 +178,6 @@ public class BluetoothFragment extends Fragment implements
         super.onDestroy();
         CaInterface.stopBtPairingService();
         CaInterface.stopManagerService();
-        CaBtPairingInterface.destroyEdrInterface();
         if (mGatt != null) {
             mGatt.close();
             mGatt = null;
@@ -273,6 +272,12 @@ public class BluetoothFragment extends Fragment implements
                         @Override
                         public void onResourceFound(OcResource ocResource) {
                             Log.i(TAG, "onResourceFound : " + ocResource.getUri());
+                        }
+
+                        @Override
+                        public void onFindResourceFailed(Throwable throwable, String uri) {
+                           Log.i(TAG, "findResource request has failed");
+                           Log.e(TAG, throwable.toString());
                         }
                     };
                     OcPlatform.findResource("", address + OcPlatform.WELL_KNOWN_QUERY,

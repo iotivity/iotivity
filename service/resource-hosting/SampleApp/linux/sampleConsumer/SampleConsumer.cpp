@@ -95,7 +95,9 @@ void startObserve(std::shared_ptr< OCResource > resource)
 
     QueryParamsMap test;
     if (OC_STACK_OK != resource->observe(ObserveType::Observe , test , &onObserve))
+    {
         std::cout << "To Fail resource observe() process" << std::endl;
+    }
 }
 
 void startGet(std::shared_ptr< OCResource > resource)
@@ -110,7 +112,9 @@ void startGet(std::shared_ptr< OCResource > resource)
     QueryParamsMap test;
     std::cout << "URI :" << resource->uri() << std::endl;
     if (OC_STACK_OK != resource->get(test, &onGet))
+    {
         std::cout << "To Fail resource get() process" << std::endl;
+    }
 }
 
 void startPost(std::shared_ptr< OCResource > resource)
@@ -128,7 +132,9 @@ void startPost(std::shared_ptr< OCResource > resource)
 
     QueryParamsMap test;
     if (OC_STACK_OK != resource->post(rep, test, &onPost))
+    {
         std::cout << "To Fail resource post() process" << std::endl;
+    }
 }
 
 void startDelete(std::shared_ptr< OCResource > resource)
@@ -141,7 +147,9 @@ void startDelete(std::shared_ptr< OCResource > resource)
 
     g_curResource = resource;
     if (OC_STACK_OK != resource->deleteResource(&onDelete))
+    {
         std::cout << "To Fail resource delete() process" << std::endl;
+    }
 }
 
 int observe_count()
@@ -368,7 +376,8 @@ int main()
             continue;
         }
 
-        try {
+        try
+        {
             switch ((int)in)
             {
                 case OBSERVE:
@@ -384,7 +393,9 @@ int main()
                     std::cout << "Invalid input, please try again" << std::endl;
                     break;
             }
-        }catch(OCException & e) {
+        }
+        catch(OCException & e)
+        {
             std::cout<< "Caught OCException [Code: "<<e.code()<<" Reason: "<<e.reason()<<std::endl;
         }
     }

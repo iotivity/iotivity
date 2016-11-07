@@ -27,6 +27,9 @@
 #include "ocprovisioningmanager.h"
 #include "OCApi.h"
 #include "OCPlatform_impl.h"
+#ifdef __WITH_TLS__
+#include "OCCloudProvisioning.h"
+#endif
 
 namespace OC
 {
@@ -124,7 +127,7 @@ namespace OC
              * all the device in subnet which are not yet owned.
              *
              * @param timeout Timeout in seconds, time until which function will listen to
-             *                    responses from client before returning the list of devices.
+             *                    responses from server before returning the list of devices.
              * @param list List of candidate devices to be provisioned.
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */
@@ -136,11 +139,27 @@ namespace OC
              * all the device in subnet which are already owned by calling provisioning client.
              *
              * @param timeout Timeout in seconds, time until which function will listen to
-             *                    responses from client before returning the list of devices.
+             *                    responses from server before returning the list of devices.
              * @param list List of owned devices.
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */
             static OCStackResult discoverOwnedDevices(unsigned short timeout,
+                    DeviceList_t &list);
+
+            /**
+             * API is responsible for discovery of devices in specified endpoint.
+             * It will return when found one or more device even though timeout is not exceeded
+             *
+             * @param timeout Timeout in seconds, time until which function will listen to
+             *                    responses from server before returning the list of devices.
+             * @param host        address of target endpoint
+             * @param connType    connectivity type of endpoint
+             * @param list List of devices.
+             * @return ::OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult discoverSecureResource(unsigned short timeout,
+                    const std::string& host,
+                    OCConnectivityType connType,
                     DeviceList_t &list);
 
             /**
@@ -177,6 +196,35 @@ namespace OC
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */
             static OCStackResult setDisplayPinCB(GeneratePinCallback displayPin);
+
+            /**
+             * API to remove device credential and ACL from all devices in subnet.
+             *
+             * @param resultCallback Callback provided by API user, callback will be called when
+             *            credential revocation is finished.
+             * @param uuid Device uuid to be revoked.
+             * @param waitTimeForOwnedDeviceDiscovery Maximum wait time for owned device
+             *            discovery in seconds.
+             * @return  ::OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery,
+                    std::string uuid,
+                    ResultCallBack resultCallback);
+
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+            /**
+             * API to save Trust certificate chain into Cred of SVR.
+             *
+             * @param[in] trustCertChain Trust certificate chain to be saved in Cred of SVR.
+             * @param[in] chainSize Size of trust certificate chain to be saved in Cred of SVR
+             * @param[in] encodingType Encoding type of trust certificate chain to be saved in Cred of SVR
+             * @param[out] credId CredId of saved trust certificate chain in Cred of SVR.
+             * @return  OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
+                                        OicEncodingType_t encodingType, uint16_t *credId);
+#endif // __WITH_X509__ || __WITH_TLS__
+
     };
 
     /**
@@ -268,6 +316,32 @@ namespace OC
                     ResultCallBack resultCallback);
 
             /**
+             * API to provision DirectPairing to devices.
+             *
+             * @param pconf pointer to PCONF (Pairing Configuration).
+             * @param resultCallback Callback will be called when provisioning request receives
+             *                           a response from first resource server.
+             * @return  ::OC_STACK_OK in case of success and other value otherwise.
+             */
+            OCStackResult provisionDirectPairing(const OicSecPconf_t *pconf,
+                    ResultCallBack resultCallback);
+
+#if defined(__WITH_X509__) || defined(__WITH_TLS__)
+            /**
+             * API to provision cert.
+             *
+             * @param type type of cred.
+             * @param credId id of cert.
+             * @param resultCallback Callback will be called when provisioning request
+             *                           receives a response from resource server.
+             * @return  ::OC_STACK_OK in case of success and other value otherwise.
+             */
+            OCStackResult provisionTrustCertChain(OicSecCredType_t type, uint16_t credId,
+                    ResultCallBack resultCallback);
+
+#endif // __WITH_X509__ || __WITH_TLS__
+
+            /**
              * This method is used to get linked devices' IDs.
              *
              * @param uuidList Information about the list of linked devices uuids.
@@ -305,13 +379,14 @@ namespace OC
              */
             bool getOwnedStatus();
 
-        private:
+
             /**
              * Common callback wrapper, which will be called from OC-APIs.
              */
             static void callbackWrapper(void* ctx, int nOfRes,
                     OCProvisionResult_t *arr, bool hasError);
 
+        private:
             void validateSecureResource();
     };
 

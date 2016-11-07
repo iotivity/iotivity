@@ -19,18 +19,29 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <string.h>
 #include <string>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <signal.h>
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include <array>
+#include "oic_malloc.h"
+#include <getopt.h>
 #include "ocstack.h"
 #include "logger.h"
 #include "ocpayload.h"
 #include "ocserver.h"
+#include "common.h"
 
 //string length of "/a/light/" + std::numeric_limits<int>::digits10 + '\0'"
 // 9 + 9 + 1 = 19
@@ -74,6 +85,8 @@ const char *platformVersion = "myPlatformVersion";
 const char *supportUrl = "mySupportUrl";
 const char *version = "myVersion";
 const char *systemTime = "2015-05-15T11.04";
+const char *specVersion = "myDeviceSpecVersion";
+const char *dataModelVersions = "myDeviceModelVersions";
 
 // Entity handler should check for resourceTypeName and ResourceInterface in order to GET
 // the existence of a known resource
@@ -605,17 +618,48 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
                             MAX_HEADER_OPTION_DATA_LENGTH);
                     }
                 }
-                OCHeaderOption * sendOptions = response.sendVendorSpecificHeaderOptions;
-                uint8_t option2[] = {21,22,23,24,25,26,27,28,29,30};
-                uint8_t option3[] = {31,32,33,34,35,36,37,38,39,40};
-                sendOptions[0].protocolID = OC_COAP_ID;
-                sendOptions[0].optionID = 2248;
-                memcpy(sendOptions[0].optionData, option2, sizeof(option2));
-                sendOptions[0].optionLength = 10;
-                sendOptions[1].protocolID = OC_COAP_ID;
-                sendOptions[1].optionID = 2600;
-                memcpy(sendOptions[1].optionData, option3, sizeof(option3));
-                sendOptions[1].optionLength = 10;
+
+                OCHeaderOption* sendOptions = response.sendVendorSpecificHeaderOptions;
+                size_t numOptions = response.numSendVendorSpecificHeaderOptions;
+                // Check if the option header has already existed before adding it in.
+                uint8_t optionData[MAX_HEADER_OPTION_DATA_LENGTH];
+                size_t optionDataSize = sizeof(optionData);
+                uint16_t actualDataSize = 0;
+                OCGetHeaderOption(response.sendVendorSpecificHeaderOptions,
+                                  response.numSendVendorSpecificHeaderOptions,
+                                  2248,
+                                  optionData,
+                                  optionDataSize,
+                                  &actualDataSize);
+                if (actualDataSize == 0)
+                {
+                    uint8_t option2[] = {21,22,23,24,25,26,27,28,29,30};
+                    uint16_t optionID2 = 2248;
+                    size_t optionDataSize2 = sizeof(option2);
+                    OCSetHeaderOption(sendOptions,
+                                      &numOptions,
+                                      optionID2,
+                                      option2,
+                                      optionDataSize2);
+                }
+
+                OCGetHeaderOption(response.sendVendorSpecificHeaderOptions,
+                                  response.numSendVendorSpecificHeaderOptions,
+                                  2600,
+                                  optionData,
+                                  optionDataSize,
+                                  &actualDataSize);
+                if (actualDataSize == 0)
+                {
+                    uint8_t option3[] = {31,32,33,34,35,36,37,38,39,40};
+                    uint16_t optionID3 = 2600;
+                    size_t optionDataSize3 = sizeof(option3);
+                    OCSetHeaderOption(sendOptions,
+                                      &numOptions,
+                                      optionID3,
+                                      option3,
+                                      optionDataSize3);
+                }
                 response.numSendVendorSpecificHeaderOptions = 2;
             }
 
@@ -662,8 +706,7 @@ void *ChangeLightRepresentation (void *param)
     OCStackResult result = OC_STACK_ERROR;
 
     uint8_t j = 0;
-    uint8_t numNotifies = (SAMPLE_MAX_NUM_OBSERVATIONS)/2;
-    OCObservationId obsNotify[numNotifies];
+    OCObservationId obsNotify[(SAMPLE_MAX_NUM_OBSERVATIONS)/2];
 
     while (!gQuitFlag)
     {
@@ -814,6 +857,8 @@ void DeletePlatformInfo()
 void DeleteDeviceInfo()
 {
     free (deviceInfo.deviceName);
+    free (deviceInfo.specVersion);
+    OCFreeOCStringLL (deviceInfo.dataModelVersions);
 }
 
 bool DuplicateString(char** targetString, const char* sourceString)
@@ -917,9 +962,19 @@ OCStackResult SetPlatformInfo(const char* platformID, const char *manufacturerNa
     return OC_STACK_ERROR;
 }
 
-OCStackResult SetDeviceInfo(const char* deviceName)
+OCStackResult SetDeviceInfo(const char* deviceName, const char* specVersion, const char* dataModelVersions)
 {
     if(!DuplicateString(&deviceInfo.deviceName, deviceName))
+    {
+        return OC_STACK_ERROR;
+    }
+    if(!DuplicateString(&deviceInfo.specVersion, specVersion))
+    {
+        return OC_STACK_ERROR;
+    }
+    OCFreeOCStringLL(deviceInfo.dataModelVersions);
+    deviceInfo.dataModelVersions = OCCreateOCStringLL(dataModelVersions);
+    if (!deviceInfo.dataModelVersions)
     {
         return OC_STACK_ERROR;
     }
@@ -1043,7 +1098,7 @@ int main(int argc, char* argv[])
         exit (EXIT_FAILURE);
     }
 
-    registrationResult = SetDeviceInfo(deviceName);
+    registrationResult = SetDeviceInfo(deviceName, specVersion, dataModelVersions);
 
     if (registrationResult != OC_STACK_OK)
     {
@@ -1101,12 +1156,16 @@ int main(int argc, char* argv[])
 
     if (observeThreadStarted)
     {
+#ifdef HAVE_PTHREAD_H
         pthread_cancel(threadId_observe);
         pthread_join(threadId_observe, NULL);
+#endif
     }
 
+#ifdef HAVE_PTHREAD_H
     pthread_cancel(threadId_presence);
     pthread_join(threadId_presence, NULL);
+#endif
 
     OIC_LOG(INFO, TAG, "Exiting ocserver main loop...");
 

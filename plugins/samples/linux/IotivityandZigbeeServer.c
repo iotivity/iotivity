@@ -139,11 +139,14 @@ OCStackResult SetDeviceInfo()
     static OCDeviceInfo deviceInfo =
         {
             .deviceName = "IoTivity/Zigbee Server Sample",
+            .specVersion = "IoTivity/Zigbee Device Spec Version",
         };
+    char *dmv = OICStrdup("IoTivity/Zigbee Data Model Version");
+    deviceInfo.dataModelVersions = (OCStringLL *)OICCalloc(1, sizeof(OCStringLL));
+    deviceInfo.dataModelVersions->value = dmv;
     char *dup = OICStrdup("oic.wk.d");
     deviceInfo.types = (OCStringLL *)OICCalloc(1, sizeof(OCStringLL));
     deviceInfo.types->value = dup;
-    OICFree(dup);
     return OCSetDeviceInfo(deviceInfo);
 }
 

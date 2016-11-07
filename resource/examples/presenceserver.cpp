@@ -23,15 +23,22 @@
 /// (properties and methods) and host this resource on the server.
 ///
 
+#include "iotivity_config.h"
 #include <functional>
 
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
 #include <array>
 #include <mutex>
 #include <condition_variable>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 
 using namespace OC;
 using namespace std;
@@ -141,9 +148,9 @@ public:
         }
     }
 
-    void addInterface(const std::string& interface) const
+    void addInterface(const std::string& iface) const
     {
-        OCStackResult result = OC::OCPlatform::bindInterfaceToResource(m_resourceHandle, interface);
+        OCStackResult result = OC::OCPlatform::bindInterfaceToResource(m_resourceHandle, iface);
         if (OC_STACK_OK != result)
         {
             cout << "Binding TypeName to Resource was unsuccessful\n";

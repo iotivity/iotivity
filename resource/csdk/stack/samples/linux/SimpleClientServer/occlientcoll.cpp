@@ -18,18 +18,27 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <ocstack.h>
 #include <iostream>
 #include <sstream>
+#include <getopt.h>
 #include "ocpayload.h"
 #include "payload_logging.h"
 #include "logger.h"
-const char *getResult(OCStackResult result);
+#include "common.h"
+#include "oic_string.h"
+
 std::string getQueryStrForGetPut();
 
 #define TAG ("occlient")
@@ -350,9 +359,9 @@ int InitDiscovery()
     OCStackResult ret;
     OCCallbackData cbData;
     /* Start a discovery query*/
-    char szQueryUri[64] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
-    strcpy(szQueryUri, RESOURCE_DISCOVERY_QUERY);
+    OICStrcpy(szQueryUri, sizeof(RESOURCE_DISCOVERY_QUERY), RESOURCE_DISCOVERY_QUERY);
 
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;

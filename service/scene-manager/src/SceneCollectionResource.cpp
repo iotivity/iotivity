@@ -345,9 +345,9 @@ namespace OIC
             auto requestKey = attributes.at(SCENE_KEY_LAST_SCENE).get<std::string>();
 
             RCSRequest req(request.getResourceObject().lock(), request.getOCRequest());
-  
+
             ptr->execute(std::string(requestKey),
-                    [req](int /*eCode*/) 
+                    [req](int /*eCode*/)
                     {
                         // TODO need to set error code.
                         // and need to set specific attr' but this attr not to be apply to RCSResourceObject.

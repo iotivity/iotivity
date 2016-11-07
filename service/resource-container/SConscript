@@ -37,7 +37,7 @@ env.AddMethod(filtered_glob, "FilteredGlob");
 
 # Add third party libraries
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', exports = 'lib_env')
+SConscript('#service/third_party_libs.scons', exports = 'lib_env')
 
 resource_container_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
@@ -83,12 +83,12 @@ if int(containerJavaSupport):
         print ''
 
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
     resource_container_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall'])
     if target_os != 'android':
         resource_container_env.AppendUnique(CXXFLAGS = ['-pthread'])
 
-if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
+if target_os not in ['darwin', 'ios', 'windows']:
     resource_container_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 
 if target_os == 'android':
@@ -112,6 +112,10 @@ resource_container_env.AppendUnique(LIBS = ['dl'])
 resource_container_env.AppendUnique(LIBS = ['boost_system'])
 resource_container_env.AppendUnique(LIBS = ['boost_date_time'])
 resource_container_env.AppendUnique(LIBS = ['boost_thread'])
+
+if resource_container_env.get('SECURED') == '1':
+	if resource_container_env.get('WITH_TCP') == True:
+		resource_container_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 if int(containerJavaSupport):
     try:
@@ -152,7 +156,7 @@ if target_os in ['linux', 'tizen', 'android']:
     DI_sensor_bundle_env.InstallTarget(DISensorBundle, 'libDISensorBundle')
     DI_sensor_bundle_env.UserInstallTargetLib(DISensorBundle, 'libDISensorBundle')
 
-    if target_os == 'linux' :
+    if target_os in ['linux']:
         SConscript(DI_SENSOR_BUNDLE_DIR + 'src/inputSensors/SConscript')
         Command("THSensorApp", DI_SENSOR_BUNDLE_DIR + "src/inputSensors/THSensorApp/THSensorApp", Copy("$TARGET", "$SOURCE"))
         Command("THSensorApp1", DI_SENSOR_BUNDLE_DIR + "src/inputSensors/THSensorApp1/THSensorApp1", Copy("$TARGET", "$SOURCE"))
@@ -175,7 +179,7 @@ if target_os in ['linux', 'tizen', 'android']:
     BMI_sensor_bundle_env.InstallTarget(BMISensorBundle, 'libBMISensorBundle')
     BMI_sensor_bundle_env.UserInstallTargetLib(BMISensorBundle, 'libBMISensorBundle')
 
-    if target_os == 'linux' :
+    if target_os in ['linux']:
         SConscript(BMI_SENSOR_BUNDLE_DIR + 'src/inputSensors/SConscript')
         Command("HeightSensorApp", BMI_SENSOR_BUNDLE_DIR + "src/inputSensors/HeightSensorApp/HeightSensorApp", Copy("$TARGET", "$SOURCE"))
         Command("WeightSensorApp", BMI_SENSOR_BUNDLE_DIR + "src/inputSensors/WeightSensorApp/WeightSensorApp", Copy("$TARGET", "$SOURCE"))
@@ -218,7 +222,7 @@ lib_env = conf2.Finish()
 ######################################################################
 # build resource container unit tests
 ######################################################################
-if target_os == 'linux':
+if target_os in ['linux']:
     SConscript('unittests/SConscript')
 
 ######################################################################

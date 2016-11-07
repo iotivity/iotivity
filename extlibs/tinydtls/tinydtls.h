@@ -48,4 +48,16 @@
 /** Define to 1 if building with Hardware Abstraction Layer */
 #define DTLS_CRYPTO_HAL 0
 
+#ifndef INLINE_API
+#  if defined(__cplusplus)
+#    define INLINE_API inline
+#  else
+#    ifdef _MSC_VER
+#      define INLINE_API static __inline
+#    else
+#      define INLINE_API static inline
+#    endif
+#  endif
+#endif
+
 #endif /* _DTLS_TINYDTLS_H_ */

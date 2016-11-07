@@ -20,7 +20,7 @@
 #include "canfcinterface.h"
 
 #include "caadapterutils.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 
@@ -133,7 +133,7 @@ CAResult_t CANfcCreateJniInterfaceObject()
     VERIFY_NON_NULL(g_jvm, TAG, "g_jvm");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -243,7 +243,7 @@ CAResult_t CANFCStartServer()
 
     OIC_LOG(INFO, TAG, "CANFCStartServer : IN");
 
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -531,7 +531,7 @@ CAResult_t CANfcSendDataImpl(const CAEndpoint_t * ep, const char* data, uint32_t
 
     OIC_LOG(INFO, TAG, "CANfcSendDataImpl moved env outside");
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {

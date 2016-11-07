@@ -29,7 +29,7 @@
 #include <stdint.h>
 
 #include "cathreadpool.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "cacommon.h"
 
@@ -50,7 +50,8 @@
 /** retransmission data send method type. **/
 typedef CAResult_t (*CADataSendMethod_t)(const CAEndpoint_t *endpoint,
                                          const void *pdu,
-                                         uint32_t size);
+                                         uint32_t size,
+                                         CADataType_t dataType);
 
 /** retransmission timeout callback type. **/
 typedef void (*CATimeoutCallback_t)(const CAEndpoint_t *endpoint,
@@ -73,10 +74,10 @@ typedef struct
     ca_thread_pool_t threadPool;
 
     /** mutex for synchronization. **/
-    ca_mutex threadMutex;
+    oc_mutex threadMutex;
 
     /** conditional mutex for synchronization. **/
-    ca_cond threadCond;
+    oc_cond threadCond;
 
     /** send method for retransmission data. **/
     CADataSendMethod_t dataSendMethod;
@@ -128,13 +129,15 @@ CAResult_t CARetransmissionStart(CARetransmission_t *context);
  * process the retransmission data.
  * @param[in]   context      context for retransmission.
  * @param[in]   endpoint     endpoint information.
+ * @param[in]   dataType     Data type which is REQUEST or RESPONSE.
  * @param[in]   pdu          sent pdu binary data.
  * @param[in]   size         sent pdu binary data size.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CARetransmissionSentData(CARetransmission_t* context,
-                                    const CAEndpoint_t* endpoint,
-                                    const void* pdu, uint32_t size);
+CAResult_t CARetransmissionSentData(CARetransmission_t *context,
+                                    const CAEndpoint_t *endpoint,
+                                    CADataType_t dataType,
+                                    const void *pdu, uint32_t size);
 
 /**
  * Pass the received pdu data. if received pdu is ACK data for the retransmission CON data,

@@ -72,8 +72,14 @@ typedef enum
     OC_PRESENCE,
     #endif
 
+#ifdef MQ_BROKER
+    /** "/oic/ps" .*/
+    OC_MQ_BROKER_URI,
+#endif
+
     /** Max items in the list */
     OC_MAX_VIRTUAL_RESOURCES    //<s Max items in the list
+
 } OCVirtualResources;
 
 /**

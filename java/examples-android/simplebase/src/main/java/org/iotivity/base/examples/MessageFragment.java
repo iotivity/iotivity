@@ -23,12 +23,8 @@
 package org.iotivity.base.examples;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -36,10 +32,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import org.iotivity.base.EntityHandlerResult;
@@ -56,13 +50,9 @@ import org.iotivity.base.OcResourceResponse;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
-import org.iotivity.ca.CaEdrInterface;
-import org.iotivity.ca.CaIpInterface;
-import org.iotivity.ca.CaLeClientInterface;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -73,7 +63,7 @@ import java.util.Map;
  * It can handle message manually.
  */
 public class MessageFragment extends Fragment implements OcResource.OnGetListener,
-                                                         OcResource.OnPutListener {
+        OcResource.OnPutListener {
 
     private static final String TAG          = "OIC_SIMPLE_MESSAGE";
     private final String        EOL          = System.getProperties().getProperty("line.separator");
@@ -85,6 +75,7 @@ public class MessageFragment extends Fragment implements OcResource.OnGetListene
     OcPlatform.EntityHandler    mEntityHandler;
     private OcResourceHandle    mResourceHandle;
     private OcResource          mFoundResource;
+    private OcConnectivityType  mCurrConnectivity;
 
     private QualityOfService    mQos         = QualityOfService.LOW;
 
@@ -167,63 +158,43 @@ public class MessageFragment extends Fragment implements OcResource.OnGetListene
         return new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Log.i(TAG, "discoverButtonListener");
                 initOcPlatform(ModeType.CLIENT);
                 mFoundResource = null;
+                mCurrConnectivity = connectivityType;
 
-                if (OcConnectivityType.CT_ADAPTER_TCP == connectivityType) {
-                    showTCPInput();
-                } else {
-                    try {
-                        Log.i(TAG, "discoverButtonListener");
+                try {
+                    if (OcConnectivityType.CT_ADAPTER_TCP == connectivityType) {
                         OcPlatform.findResource("",
-                                                OcPlatform.WELL_KNOWN_QUERY,
-                                                EnumSet.of(connectivityType),
-                                                resourceFoundListener, mQos);
-
-                        mActivity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                mActionLog.setText("[Action Log]" + EOL);
-                                mActionLog.append("Find resource()" + EOL);
-                                mActionLog.append("Connectivity : " + connectivityType + EOL);
-
-                                mResultLog.setText("[Result Log]" + EOL);
-                                mResultLog.append("Start Time : ");
-                                mResultLog.append(Common.getDateCurrentTimeZone() + EOL);
-                                mStartTime = System.currentTimeMillis();
-                            }
-                        });
-                    } catch (OcException e) {
-                        e.printStackTrace();
+                                OcPlatform.WELL_KNOWN_QUERY,
+                                EnumSet.of(OcConnectivityType.CT_ADAPTER_IP),
+                                resourceFoundListener, mQos);
+                    } else {
+                        OcPlatform.findResource("",
+                                OcPlatform.WELL_KNOWN_QUERY,
+                                EnumSet.of(connectivityType),
+                                resourceFoundListener, mQos);
                     }
+                } catch (OcException e) {
+                    e.printStackTrace();
                 }
+
+                mActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mActionLog.setText("[Action Log]" + EOL);
+                        mActionLog.append("Find resource()" + EOL);
+                        mActionLog.append("Connectivity : " + connectivityType + EOL);
+
+                        mResultLog.setText("[Result Log]" + EOL);
+                        mResultLog.append("Start Time : ");
+                        mResultLog.append(Common.getDateCurrentTimeZone() + EOL);
+                        mStartTime = System.currentTimeMillis();
+                    }
+                });
                 mServerLayout.setVisibility(View.GONE);
             }
         };
-    }
-
-    void makeTCPResource(String address) {
-
-        List<String> resourceTypeList = new ArrayList<String>();
-        List<String> resourceInterfaceList = new ArrayList<String>();
-        resourceInterfaceList.add(Common.RESOURCE_INTERFACE);
-        resourceTypeList.add(Common.RESOURCE_TYPE);
-        try {
-            mFoundResource = OcPlatform.constructResourceObject(address,
-                    Common.RESOURCE_URI,
-                    EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP), false,
-                    resourceTypeList, resourceInterfaceList);
-
-            mActionLog.setText("[Action Log]" + EOL);
-            mActionLog.append("Found resource()" + EOL);
-            mActionLog.append("Connectivity : " + OcConnectivityType.CT_ADAPTER_TCP + EOL);
-            mActionLog.append(mFoundResource.getHost() + Common.RESOURCE_URI);
-
-            mResultLog.setText("[Result Log]" + EOL);
-
-        } catch (OcException e) {
-            e.printStackTrace();
-        }
     }
 
     void sendGetToFoundResource(String command) {
@@ -261,29 +232,38 @@ public class MessageFragment extends Fragment implements OcResource.OnGetListene
     }
 
     OcPlatform.OnResourceFoundListener resourceFoundListener =
-                                           new OcPlatform.OnResourceFoundListener() {
-        @Override
-        public void onResourceFound(OcResource ocResource) {
-            synchronized (mActivity) {
-                final String resourceUri = ocResource.getUri();
-                Log.i(TAG, "onResourceFound : " + ocResource.getUri());
+            new OcPlatform.OnResourceFoundListener() {
+                @Override
+                public void onResourceFound(OcResource ocResource) {
+                    synchronized (mActivity) {
+                        final String resourceUri = ocResource.getUri();
+                        Log.i(TAG, "onResourceFound : " + ocResource.getUri());
 
-                if (resourceUri.contains(Common.RESOURCE_URI)) {
-                    mFoundResource = ocResource;
-                    mActivity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mEndTime = System.currentTimeMillis();
-                            double flightTime = (double) (mEndTime - mStartTime) / MILLI_PER_SEC;
-                            mResultLog.append("Discovery Time : ");
-                            mResultLog.append(String.format("%.3f", flightTime) + "sec" + EOL);
-                            mActionLog.append(mFoundResource.getHost() + resourceUri + EOL);
+                        if (resourceUri.contains(Common.RESOURCE_URI)
+                                && ocResource.getConnectivityTypeSet().contains(mCurrConnectivity)) {
+                            mFoundResource = ocResource;
+                            mActivity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mEndTime = System.currentTimeMillis();
+                                    double flightTime = (double) (mEndTime - mStartTime) / MILLI_PER_SEC;
+                                    mResultLog.append("Discovery Time : ");
+                                    mResultLog.append(String.format("%.3f", flightTime) + "sec" + EOL);
+                                    mActionLog.append(mFoundResource.getHost() + resourceUri + EOL);
+                                }
+                            });
                         }
-                    });
+                    }
                 }
-            }
-        }
-    };
+
+                @Override
+                public void onFindResourceFailed(Throwable throwable, String uri) {
+                    synchronized (mActivity) {
+                        Log.i(TAG, "findResource request has failed");
+                        Log.e(TAG, throwable.toString());
+                    }
+                }
+            };
 
     @Override
     public void onGetCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
@@ -370,8 +350,8 @@ public class MessageFragment extends Fragment implements OcResource.OnGetListene
 
         try {
             mResourceHandle = OcPlatform.registerResource(Common.RESOURCE_URI,
-                                 Common.RESOURCE_TYPE, Common.RESOURCE_INTERFACE,
-                                 mEntityHandler, Common.RESOURCE_PROPERTIES);
+                    Common.RESOURCE_TYPE, Common.RESOURCE_INTERFACE,
+                    mEntityHandler, Common.RESOURCE_PROPERTIES);
 
         } catch (OcException e) {
             String errString = "Error : " + e.getErrorCode().toString();
@@ -520,17 +500,17 @@ public class MessageFragment extends Fragment implements OcResource.OnGetListene
 
     private void initOcPlatform(ModeType type) {
         PlatformConfig cfg = new PlatformConfig(mActivity, mContext,
-                                                ServiceType.IN_PROC,
-                                                type,
-                                                Common.IP_ADDRESS,
-                                                Common.IP_PORT,
-                                                mQos);
+                ServiceType.IN_PROC,
+                type,
+                Common.IP_ADDRESS,
+                Common.IP_PORT,
+                mQos);
         OcPlatform.Configure(cfg);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_message, container, false);
 
         mServerLayout = (LinearLayout) rootView.findViewById(R.id.server_layout);
@@ -593,40 +573,6 @@ public class MessageFragment extends Fragment implements OcResource.OnGetListene
                 });
 
         return rootView;
-    }
-
-    private void showTCPInput() {
-
-        LayoutInflater layoutInflater = LayoutInflater.from(mContext);
-        View inputView = layoutInflater.inflate(R.layout.tcp_input, null);
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(mActivity);
-        alertDialogBuilder.setView(inputView);
-
-        final EditText editText = (EditText) inputView.getRootView().findViewById(R.id.ipText);
-        editText.setText(Common.TCP_ADDRESS);
-        alertDialogBuilder
-                .setCancelable(false)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        if (editText.getText().length() != 0) {
-                            Common.TCP_ADDRESS = editText.getText().toString();
-
-                            StringBuilder sb = new StringBuilder();
-                            sb.append(Common.COAP_TCP);
-                            sb.append(Common.TCP_ADDRESS);
-                            sb.append(Common.TCP_PORT);
-                            makeTCPResource(sb.toString());
-                        }
-                    }
-                })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                    }
-                });
-
-        AlertDialog alert = alertDialogBuilder.create();
-        alert.show();
     }
 
     @Override

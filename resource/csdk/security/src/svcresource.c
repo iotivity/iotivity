@@ -17,24 +17,35 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-#include "ocstack.h"
-#include "logger.h"
-#include "oic_malloc.h"
-#include "cJSON.h"
-#include "base64.h"
-#include "resourcemanager.h"
-#include "psinterface.h"
-#include "svcresource.h"
-#include "utlist.h"
-#include "srmresourcestrings.h"
-#include "srmutility.h"
 #include <stdlib.h>
 #include <string.h>
 
+#include "ocstack.h"
+#include "ocpayload.h"
+#include "oic_malloc.h"
+#include "utlist.h"
+#include "payload_logging.h"
+#include "resourcemanager.h"
+#include "psinterface.h"
+#include "svcresource.h"
+#include "srmresourcestrings.h"
+#include "srmutility.h"
+
+#include "security_internals.h"
+
 #define TAG  "SRM-SVC"
 
-OicSecSvc_t        *gSvc = NULL;
+/** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
+ * The value of payload size is increased until reaching belox max cbor size. */
+static const uint16_t CBOR_SIZE = 512;
+
+/** Max cbor size payload. */
+static const uint16_t CBOR_MAX_SIZE = 4400;
+
+/** SVC Map size - Number of mandatory items. */
+static const uint8_t SVC_MAP_SIZE = 3;
+
+static OicSecSvc_t        *gSvc = NULL;
 static OCResourceHandle    gSvcHandle = NULL;
 
 void DeleteSVCList(OicSecSvc_t* svc)
@@ -55,236 +66,320 @@ void DeleteSVCList(OicSecSvc_t* svc)
     }
 }
 
-/*
- * This internal method converts SVC data into JSON format.
- *
- * Note: Caller needs to invoke 'free' when finished done using
- * return string.
- */
-char * BinToSvcJSON(const OicSecSvc_t * svc)
+static size_t svcElementsCount(const OicSecSvc_t *secSvc)
 {
-    cJSON *jsonRoot = NULL;
-    char *jsonStr = NULL;
-
-    if (svc)
+    size_t size = 0;
+    for (const OicSecSvc_t *svc = secSvc; svc; svc = svc->next)
     {
-        jsonRoot = cJSON_CreateObject();
-        VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
+        size++;
+    }
+    return size;
+}
 
-        cJSON *jsonSvcArray = NULL;
-        cJSON_AddItemToObject (jsonRoot, OIC_JSON_SVC_NAME, jsonSvcArray = cJSON_CreateArray());
-        VERIFY_NON_NULL(TAG, jsonSvcArray, ERROR);
+OCStackResult SVCToCBORPayload(const OicSecSvc_t *svc, uint8_t **cborPayload,
+                               size_t *cborSize)
+{
+    if (NULL == svc || NULL == cborPayload || NULL != *cborPayload || NULL == cborSize)
+    {
+       return OC_STACK_INVALID_PARAM;
+    }
 
-        while(svc)
+    size_t cborLen = *cborSize;
+    if (0 == cborLen)
+    {
+        cborLen = CBOR_SIZE;
+    }
+    *cborPayload = NULL;
+    *cborSize = 0;
+
+    int64_t cborEncoderResult = CborNoError;
+    OCStackResult ret = OC_STACK_ERROR;
+    CborEncoder encoder;
+    CborEncoder svcArray;
+
+    uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
+    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+
+    cbor_encoder_init(&encoder, outPayload, cborLen, 0);
+
+    // Create SVC Array
+    cborEncoderResult = cbor_encoder_create_array(&encoder, &svcArray, svcElementsCount(svc));
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Create SVC Array.");
+
+    while (svc)
+    {
+        CborEncoder svcMap;
+        CborEncoder owners;
+
+        cborEncoderResult = cbor_encoder_create_map(&svcArray, &svcMap, SVC_MAP_SIZE);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Create SVC Map.");
+
+        // Service Device Identity
+        cborEncoderResult = cbor_encode_text_string(&svcMap, OIC_JSON_SERVICE_DEVICE_ID,
+            strlen(OIC_JSON_SERVICE_DEVICE_ID));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Add SVC Device Id.");
+        cborEncoderResult = cbor_encode_byte_string(&svcMap, (uint8_t *)svc->svcdid.id,
+            sizeof(svc->svcdid.id));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to ");
+
+        // Service Type
+        cborEncoderResult = cbor_encode_text_string(&svcMap, OIC_JSON_SERVICE_TYPE,
+            strlen(OIC_JSON_SERVICE_TYPE));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Add SVC Serv Type Tag.");
+        cborEncoderResult = cbor_encode_int(&svcMap, svc->svct);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Add SVC Serv Type Value.");
+
+        // Owners
+        // TODO: Need to modification to single ROwner, (Currently SINGLE_SERVICE_CLIENT_DRIVEN only)
+        cborEncoderResult = cbor_encode_text_string(&svcMap, OIC_JSON_OWNERS_NAME,
+            strlen(OIC_JSON_OWNERS_NAME));
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Add SVC Owners Tag.");
+        cborEncoderResult = cbor_encoder_create_array(&svcMap, &owners, svc->ownersLen);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Add SVC Array.");
+        for (size_t i = 0; i < svc->ownersLen; i++)
         {
-            char base64Buff[B64ENCODE_OUT_SAFESIZE(sizeof(((OicUuid_t*)0)->id)) + 1] = {};
-            uint32_t outLen = 0;
-            B64Result b64Ret = B64_OK;
-
-            cJSON *jsonSvc = cJSON_CreateObject();
-
-            // Service Device Identity
-            outLen = 0;
-            b64Ret = b64Encode(svc->svcdid.id, sizeof(OicUuid_t), base64Buff,
-                    sizeof(base64Buff), &outLen);
-            VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-            cJSON_AddStringToObject(jsonSvc, OIC_JSON_SERVICE_DEVICE_ID, base64Buff );
-
-            // Service Type
-            cJSON_AddNumberToObject (jsonSvc, OIC_JSON_SERVICE_TYPE, svc->svct);
-
-            // Owners
-            cJSON *jsonOwnrArray = NULL;
-            cJSON_AddItemToObject (jsonSvc, OIC_JSON_OWNERS_NAME, jsonOwnrArray = cJSON_CreateArray());
-            VERIFY_NON_NULL(TAG, jsonOwnrArray, ERROR);
-            for (unsigned int i = 0; i < svc->ownersLen; i++)
-            {
-                outLen = 0;
-
-                b64Ret = b64Encode(svc->owners[i].id, sizeof(((OicUuid_t*)0)->id), base64Buff,
-                        sizeof(base64Buff), &outLen);
-                VERIFY_SUCCESS(TAG, b64Ret == B64_OK, ERROR);
-
-                cJSON_AddItemToArray (jsonOwnrArray, cJSON_CreateString(base64Buff));
-            }
-
-            // Attach current svc node to Svc Array
-            cJSON_AddItemToArray(jsonSvcArray, jsonSvc);
-            svc = svc->next;
+            cborEncoderResult = cbor_encode_byte_string(&owners, (uint8_t *)svc->owners[i].id,
+                sizeof(svc->owners[i].id));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Add SVC Owners Value.");
         }
+        cborEncoderResult = cbor_encoder_close_container(&svcMap, &owners);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Close SVC Array.");
 
-        jsonStr = cJSON_PrintUnformatted(jsonRoot);
+        cborEncoderResult = cbor_encoder_close_container(&svcArray, &svcMap);
+        VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Close SVC Map.");
+
+        svc = svc->next;
+    }
+
+    cborEncoderResult = cbor_encoder_close_container(&encoder, &svcArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to Close SVC Array.");
+
+    if (CborNoError == cborEncoderResult)
+    {
+        *cborPayload = outPayload;
+        *cborSize = encoder.ptr - outPayload;
+        ret = OC_STACK_OK;
     }
 
 exit:
-    if (jsonRoot)
+    if ((CborErrorOutOfMemory == cborEncoderResult) && (cborLen < CBOR_MAX_SIZE))
     {
-        cJSON_Delete(jsonRoot);
+        // reallocate and try again!
+        OICFree(outPayload);
+        outPayload = NULL;
+        // Since the allocated initial memory failed, double the memory.
+        cborLen += encoder.ptr - encoder.end;
+        cborEncoderResult = CborNoError;
+        ret = SVCToCBORPayload(svc, cborPayload, &cborLen);
+        *cborSize = cborLen;
     }
-    return jsonStr;
+
+    if (CborNoError != cborEncoderResult)
+    {
+        OICFree(outPayload);
+        outPayload = NULL;
+        *cborSize = 0;
+        *cborPayload = NULL;
+        ret = OC_STACK_ERROR;
+    }
+
+    return ret;
 }
 
-/*
- * This internal method converts JSON SVC into binary SVC.
- */
-OicSecSvc_t * JSONToSvcBin(const char * jsonStr)
+OCStackResult CBORPayloadToSVC(const uint8_t *cborPayload, size_t size,
+                               OicSecSvc_t **secSvc)
 {
-    OCStackResult ret = OC_STACK_ERROR;
-    OicSecSvc_t * headSvc = NULL;
-    OicSecSvc_t * prevSvc = NULL;
-    cJSON *jsonRoot = NULL;
-    cJSON *jsonSvcArray = NULL;
-
-    VERIFY_NON_NULL(TAG, jsonStr, ERROR);
-
-    jsonRoot = cJSON_Parse(jsonStr);
-    VERIFY_NON_NULL(TAG, jsonRoot, ERROR);
-
-    jsonSvcArray = cJSON_GetObjectItem(jsonRoot, OIC_JSON_SVC_NAME);
-    VERIFY_NON_NULL(TAG, jsonSvcArray, INFO);
-
-    if (cJSON_Array == jsonSvcArray->type)
+    if (NULL == cborPayload || NULL == secSvc || NULL != *secSvc || 0 == size)
     {
-        int numSvc = cJSON_GetArraySize(jsonSvcArray);
-        int idx = 0;
-
-        VERIFY_SUCCESS(TAG, numSvc > 0, INFO);
-        do
-        {
-            cJSON *jsonSvc = cJSON_GetArrayItem(jsonSvcArray, idx);
-            VERIFY_NON_NULL(TAG, jsonSvc, ERROR);
-
-            OicSecSvc_t *svc = (OicSecSvc_t*)OICCalloc(1, sizeof(OicSecSvc_t));
-            VERIFY_NON_NULL(TAG, svc, ERROR);
-
-            headSvc = (headSvc) ? headSvc : svc;
-            if (prevSvc)
-            {
-                prevSvc->next = svc;
-            }
-
-            cJSON *jsonObj = NULL;
-
-            unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {};
-            uint32_t outLen = 0;
-            B64Result b64Ret = B64_OK;
-
-            // Service Device Identity
-            jsonObj = cJSON_GetObjectItem(jsonSvc, OIC_JSON_SERVICE_DEVICE_ID);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_String == jsonObj->type, ERROR);
-            outLen = 0;
-            b64Ret = b64Decode(jsonObj->valuestring, strlen(jsonObj->valuestring), base64Buff,
-                        sizeof(base64Buff), &outLen);
-            VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(svc->svcdid.id)), ERROR);
-            memcpy(svc->svcdid.id, base64Buff, outLen);
-
-            // Service Type
-            jsonObj = cJSON_GetObjectItem(jsonSvc, OIC_JSON_SERVICE_TYPE);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Number == jsonObj->type, ERROR);
-            svc->svct = (OicSecSvcType_t)jsonObj->valueint;
-
-            // Resource Owners
-            jsonObj = cJSON_GetObjectItem(jsonSvc, OIC_JSON_OWNERS_NAME);
-            VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-            VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
-
-            svc->ownersLen = (size_t)cJSON_GetArraySize(jsonObj);
-            VERIFY_SUCCESS(TAG, svc->ownersLen > 0, ERROR);
-            svc->owners = (OicUuid_t*)OICCalloc(svc->ownersLen, sizeof(OicUuid_t));
-            VERIFY_NON_NULL(TAG, (svc->owners), ERROR);
-
-            size_t idxx = 0;
-            do
-            {
-                cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, idxx);
-                VERIFY_NON_NULL(TAG, jsonOwnr, ERROR);
-                VERIFY_SUCCESS(TAG, cJSON_String == jsonOwnr->type, ERROR);
-
-                outLen = 0;
-                b64Ret = b64Decode(jsonOwnr->valuestring, strlen(jsonOwnr->valuestring), base64Buff,
-                            sizeof(base64Buff), &outLen);
-
-                VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof(svc->owners[idxx].id)),
-                                    ERROR);
-                memcpy(svc->owners[idxx].id, base64Buff, outLen);
-            } while ( ++idxx < svc->ownersLen);
-
-            prevSvc = svc;
-        } while( ++idx < numSvc);
+        return OC_STACK_INVALID_PARAM;
     }
 
+    *secSvc = NULL;
+
+    OCStackResult ret = OC_STACK_ERROR;
+
+    CborValue svcCbor = { .parser = NULL };
+    CborParser parser = { .end = NULL };
+    CborError cborFindResult = CborNoError;
+
+    cbor_parser_init(cborPayload, size, 0, &parser, &svcCbor);
+    OicSecSvc_t *headSvc = NULL;
+
+    CborValue svcArray = { .parser = NULL };
+    cborFindResult = cbor_value_enter_container(&svcCbor, &svcArray);
+    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Enter SVC Array.");
+
+    while (cbor_value_is_valid(&svcArray))
+    {
+        CborValue svcMap = { .parser = NULL };
+        OicSecSvc_t *svc = (OicSecSvc_t *) OICCalloc(1, sizeof(OicSecSvc_t));
+        VERIFY_NON_NULL(TAG, svc, ERROR);
+        cborFindResult = cbor_value_enter_container(&svcArray, &svcMap);
+        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Enter SVC Map.");
+
+        while (cbor_value_is_valid(&svcMap))
+        {
+            char* name = NULL;
+            size_t len = 0;
+            CborType type = CborInvalidType;
+
+            cborFindResult = cbor_value_dup_text_string(&svcMap, &name, &len, NULL);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Find Name.");
+            cborFindResult = cbor_value_advance(&svcMap);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Advance.");
+
+            type = cbor_value_get_type(&svcMap);
+            // Service Device Identity
+            if (0 == strcmp(OIC_JSON_SERVICE_DEVICE_ID, name) && cbor_value_is_byte_string(&svcMap))
+            {
+                uint8_t *subjectId = NULL;
+                cborFindResult = cbor_value_dup_byte_string(&svcMap, &subjectId, &len, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Find SubjectId.");
+                memcpy(svc->svcdid.id, subjectId, len);
+                OICFree(subjectId);
+            }
+            // Service Type
+            if (0 == strcmp(OIC_JSON_SERVICE_TYPE, name) && cbor_value_is_integer(&svcMap))
+            {
+                int svct;
+
+                cborFindResult = cbor_value_get_int(&svcMap, &svct);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Find SVCT.");
+                svc->svct = (OicSecSvcType_t)svct;
+            }
+
+            // Owners -- Mandatory
+            if (0 == strcmp(OIC_JSON_OWNERS_NAME, name) && cbor_value_is_array(&svcMap))
+            {
+                int i = 0;
+                CborValue owners = { .parser = NULL };
+
+                cborFindResult = cbor_value_get_array_length(&svcMap, &svc->ownersLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Find Owner Len.");
+                cborFindResult = cbor_value_enter_container(&svcMap, &owners);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Enter Owner Array.");
+                svc->owners = (OicUuid_t *)OICCalloc(svc->ownersLen, sizeof(*svc->owners));
+                VERIFY_NON_NULL(TAG, svc->owners, ERROR);
+
+                while (cbor_value_is_valid(&owners) && cbor_value_is_byte_string(&owners))
+                {
+                    uint8_t *owner = NULL;
+                    cborFindResult = cbor_value_dup_byte_string(&owners, &owner, &len, NULL);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Find Owner Array Value.");
+                    cborFindResult = cbor_value_advance(&owners);
+                    VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Advance Owner Array.");
+                    memcpy(svc->owners[i++].id, owner, len);
+                    OICFree(owner);
+                }
+            }
+            if (CborMapType != type  && cbor_value_is_valid(&svcMap))
+            {
+                cborFindResult = cbor_value_advance(&svcMap);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Advance SVC.");
+            }
+            OICFree(name);
+        }
+
+        svc->next = NULL;
+        if (NULL == headSvc)
+        {
+            headSvc = svc;
+        }
+        else
+        {
+            OicSecSvc_t *temp = headSvc;
+            while (temp->next)
+            {
+                temp = temp->next;
+            }
+            temp->next = svc;
+        }
+        if (cbor_value_is_valid(&svcArray))
+        {
+            cborFindResult = cbor_value_advance(&svcArray);
+            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Find Name.");
+        }
+    }
+    *secSvc = headSvc;
     ret = OC_STACK_OK;
 
 exit:
-    cJSON_Delete(jsonRoot);
-    if (OC_STACK_OK != ret)
+    if (CborNoError != cborFindResult)
     {
         DeleteSVCList(headSvc);
         headSvc = NULL;
+        *secSvc = NULL;
+        ret = OC_STACK_ERROR;
     }
-    return headSvc;
+    return ret;
 }
 
-static OCEntityHandlerResult HandleSVCGetRequest (const OCEntityHandlerRequest * ehRequest)
+static OCEntityHandlerResult HandleSVCGetRequest(const OCEntityHandlerRequest * ehRequest)
 {
     // Convert SVC data into JSON for transmission
-    char* jsonStr = BinToSvcJSON(gSvc);
-
-    OCEntityHandlerResult ehRet = (jsonStr ? OC_EH_OK : OC_EH_ERROR);
+    size_t size = 0;
+    uint8_t *cborSvc = NULL;
+    OCStackResult res =  SVCToCBORPayload(gSvc, &cborSvc, &size);
+    OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
 
     // Send response payload to request originator
-    SendSRMResponse(ehRequest, ehRet, jsonStr);
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, cborSvc, size))
+    {
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleSVCGetRequest");
+    }
 
-    OICFree(jsonStr);
-
+    OICFree(cborSvc);
     OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
-static OCEntityHandlerResult HandleSVCPostRequest (const OCEntityHandlerRequest * ehRequest)
+static OCEntityHandlerResult HandleSVCPostRequest(const OCEntityHandlerRequest * ehRequest)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
-
-    // Convert JSON SVC data into binary. This will also validate the SVC data received.
-    OicSecSvc_t* newSvc = JSONToSvcBin(((OCSecurityPayload*)ehRequest->payload)->securityData);
-
-    if (newSvc)
+    uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData;
+    size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
+    if (payload)
     {
-        // Append the new SVC to existing SVC
-        LL_APPEND(gSvc, newSvc);
-
-        // Convert SVC data into JSON for update to persistent storage
-        char *jsonStr = BinToSvcJSON(gSvc);
-        if (jsonStr)
+        // Convert CBOR SVC data into SVC. This will also validate the SVC data received.
+        OicSecSvc_t *newSvc = NULL;
+        OCStackResult res =  CBORPayloadToSVC(payload, size, &newSvc);
+        if (newSvc && res == OC_STACK_OK)
         {
-            cJSON *jsonSvc = cJSON_Parse(jsonStr);
-            OICFree(jsonStr);
+            // Append the new SVC to existing SVC
+            LL_APPEND(gSvc, newSvc);
 
-            if ((jsonSvc) &&
-                (OC_STACK_OK == UpdateSVRDatabase(OIC_JSON_SVC_NAME, jsonSvc)))
+            // Convert SVC data into JSON for update to persistent storage
+            size_t size = 0;
+            uint8_t *cborPayload = NULL;
+            res = SVCToCBORPayload(gSvc, &cborPayload, &size);
+            if (cborPayload && OC_STACK_OK == res &&
+                UpdateSecureResourceInPS(OIC_JSON_SVC_NAME, cborPayload, size) == OC_STACK_OK)
             {
-                ehRet = OC_EH_RESOURCE_CREATED;
+                ehRet = OC_EH_CHANGED;
             }
-            cJSON_Delete(jsonSvc);
+            OICFree(cborPayload);
         }
     }
 
     // Send payload to request originator
-    SendSRMResponse(ehRequest, ehRet, NULL);
+    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
+    {
+        ehRet = OC_EH_ERROR;
+        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleSVCPostRequest");
+    }
 
     OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
     return ehRet;
 }
 
-/*
+/**
  * This internal method is the entity handler for SVC resources and
  * will handle REST request (GET/PUT/POST/DEL) for them.
  */
-OCEntityHandlerResult SVCEntityHandler (OCEntityHandlerFlag flag,
-                                        OCEntityHandlerRequest * ehRequest,
-                                        void* callbackParameter)
+static OCEntityHandlerResult SVCEntityHandler(OCEntityHandlerFlag flag,
+                                              OCEntityHandlerRequest * ehRequest,
+                                              void* callbackParameter)
 {
     (void) callbackParameter;
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
@@ -308,51 +403,58 @@ OCEntityHandlerResult SVCEntityHandler (OCEntityHandlerFlag flag,
 
             default:
                 ehRet = OC_EH_ERROR;
-                SendSRMResponse(ehRequest, ehRet, NULL);
+                SendSRMResponse(ehRequest, ehRet, NULL, 0);
         }
     }
 
     return ehRet;
 }
 
-/*
+/**
  * This internal method is used to create '/oic/sec/svc' resource.
  */
-OCStackResult CreateSVCResource()
+static OCStackResult CreateSVCResource()
 {
-    OCStackResult ret;
-
-    ret = OCCreateResource(&gSvcHandle,
-                           OIC_RSRC_TYPE_SEC_SVC,
-                           OIC_MI_DEF,
-                           OIC_RSRC_SVC_URI,
-                           SVCEntityHandler,
-                           NULL,
-                           OC_OBSERVABLE);
+    OCStackResult ret = OCCreateResource(&gSvcHandle,
+                                         OIC_RSRC_TYPE_SEC_SVC,
+                                         OC_RSRVD_INTERFACE_DEFAULT,
+                                         OIC_RSRC_SVC_URI,
+                                         SVCEntityHandler,
+                                         NULL,
+                                         OC_OBSERVABLE);
 
     if (OC_STACK_OK != ret)
     {
-        OIC_LOG (FATAL, TAG, "Unable to instantiate SVC resource");
+        OIC_LOG(FATAL, TAG, "Unable to instantiate SVC resource");
         DeInitSVCResource();
     }
     return ret;
 }
 
-
 OCStackResult InitSVCResource()
 {
     OCStackResult ret = OC_STACK_ERROR;
 
-    OIC_LOG_V (DEBUG, TAG, "Begin %s ", __func__ );
+    OIC_LOG_V(DEBUG, TAG, "Begin %s ", __func__ );
 
-    // Read SVC resource from PS
-    char* jsonSVRDatabase = GetSVRDatabase();
-
-    if (jsonSVRDatabase)
+    uint8_t *data = NULL;
+    size_t size = 0;
+    ret = GetSecureVirtualDatabaseFromPS(OIC_JSON_SVC_NAME, &data, &size);
+    // If database read failed
+    if (ret != OC_STACK_OK)
     {
-        // Convert JSON SVC into binary format
-        gSvc = JSONToSvcBin(jsonSVRDatabase);
-        OICFree(jsonSVRDatabase);
+        OIC_LOG (DEBUG, TAG, "ReadSVDataFromPS failed");
+    }
+
+    if (data)
+    {
+        // Convert CBOR SVC into binary format
+        ret = CBORPayloadToSVC(data, size, &gSvc);
+        if (ret != OC_STACK_OK)
+        {
+            OIC_LOG (DEBUG, TAG, " ConvertCBOR SVC into binary format failed");
+        }
+        OICFree(data);
     }
 
     // Instantiate 'oic.sec.svc'
@@ -363,15 +465,10 @@ OCStackResult InitSVCResource()
         DeInitSVCResource();
     }
 
-    OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ret);
+    OIC_LOG_V(DEBUG, TAG, "%s RetVal %d", __func__ , ret);
     return ret;
 }
 
-/**
- * Perform cleanup for SVC resources.
- *
- * @retval  none
- */
 void DeInitSVCResource()
 {
     OCDeleteResource(gSvcHandle);
@@ -380,4 +477,3 @@ void DeInitSVCResource()
     DeleteSVCList(gSvc);
     gSvc = NULL;
 }
-

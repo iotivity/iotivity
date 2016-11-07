@@ -20,9 +20,12 @@
 
 #include "EasySetup.h"
 
+#include "OCPlatform.h"
 #include "logger.h"
 #include "ESException.h"
 #include "RemoteEnrollee.h"
+
+using namespace OC;
 
 namespace OIC
 {
@@ -46,82 +49,29 @@ namespace OIC
             return s_instance;
         }
 
-        RemoteEnrollee::shared_ptr EasySetup::findDeviceInProvisioningList (
-                            const ProvConfig& provConfig, const WiFiOnboadingConnection& onboardingconn)
+        std::shared_ptr<RemoteEnrollee> EasySetup::createRemoteEnrollee (std::shared_ptr< OC::OCResource > resource)
         {
-            OIC_LOG(DEBUG,EASYSETUP_TAG,"Entered findDeviceInProvisioningList ()");
-
-            std::vector< std::shared_ptr< RemoteEnrollee > >::iterator it;
-
-            std::shared_ptr< RemoteEnrollee > remoteEnrollee = nullptr;
-            for(auto it : m_activeEnrolleeList)
+            if(resource)
             {
-                OIC_LOG_V(DEBUG,EASYSETUP_TAG,"entered the iterator");
-
-                ProvConfig activeEnrolleConfig =  it->getProvConfig();
-                WiFiOnboadingConnection activeEnrolleConn = it->getOnboardConn();
-                if ((0 == memcmp(&activeEnrolleConfig.provData,
-                                &provConfig.provData, sizeof(ProvConfig))) &&
-                    (0 == memcmp(&activeEnrolleConn.ipAddress,
-                          &onboardingconn.ipAddress, sizeof(onboardingconn.ipAddress))))
+                if(resource->getResourceTypes().at(0) != OC_RSRVD_ES_RES_TYPE_PROV ||
+                   resource->connectivityType() & CT_ADAPTER_TCP)
                 {
-                    remoteEnrollee = it;
-                    return remoteEnrollee;
+                    OIC_LOG_V (DEBUG, EASYSETUP_TAG, "createRemoteEnrollee : invalid resource");
+                    return nullptr;
+                }
+
+                auto interfaces = resource->getResourceInterfaces();
+                for(auto interface : interfaces)
+                {
+                    if(interface.compare(BATCH_INTERFACE) == 0)
+                    {
+                        return std::shared_ptr< RemoteEnrollee > (new RemoteEnrollee(resource));
+                    }
                 }
             }
-
-            OIC_LOG_V(DEBUG,EASYSETUP_TAG,"Return nullptr for  findDeviceInProvisioningList call");
-            return remoteEnrollee;
+            OIC_LOG_V (DEBUG, EASYSETUP_TAG, "createRemoteEnrollee : invalid resource");
+            return nullptr;
         }
-
-        bool EasySetup::addDeviceToProvisioningList(const RemoteEnrollee::shared_ptr remoteEnrollee)
-        {
-            ProvConfig remoteEnrolleConfig =  remoteEnrollee->getProvConfig();
-            WiFiOnboadingConnection remoteEnrolleConn = remoteEnrollee->getOnboardConn();
-
-            for (auto it : m_activeEnrolleeList)
-            {
-                ProvConfig activeEnrolleConfig =  it->getProvConfig();
-                WiFiOnboadingConnection activeEnrolleConn = it->getOnboardConn();
-                if ( (0 == memcmp(&activeEnrolleConfig.provData,
-                                &remoteEnrolleConfig.provData,
-                                sizeof(ProvConfig)))  &&
-                     (0 == memcmp(&activeEnrolleConn.ipAddress,
-                                &remoteEnrolleConn.ipAddress,
-                                sizeof(remoteEnrolleConn.ipAddress)))
-                   )
-                {
-                    return false;
-                }
-            }
-
-            OIC_LOG_V(DEBUG,EASYSETUP_TAG,"Adding new device RemoteEnrollee list");
-            m_activeEnrolleeList.push_back(remoteEnrollee);
-            return true;
-        }
-
-        std::shared_ptr<RemoteEnrollee> EasySetup::createEnrolleeDevice (
-                                        const ProvConfig& provConfig, const WiFiOnboadingConnection& wifiOnboardingconn)
-        {
-            if (findDeviceInProvisioningList(provConfig,wifiOnboardingconn) != nullptr)
-            {
-                throw ESBadRequestException { "Device already created exception" };
-            }
-
-            RemoteEnrollee::shared_ptr remoteEnrollee;
-
-            remoteEnrollee = std::make_shared< RemoteEnrollee > (provConfig, wifiOnboardingconn);
-
-
-            if (!addDeviceToProvisioningList (remoteEnrollee))
-            {
-                return nullptr;
-            }
-
-            return remoteEnrollee;
-        }
-
-
     }
 }
 

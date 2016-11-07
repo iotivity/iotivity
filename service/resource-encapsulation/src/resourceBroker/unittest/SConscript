@@ -21,35 +21,31 @@
 ##
 # ResourceBroker Unit Test build script
 ##
+# SConscript file for Local PKI google tests
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+lib_env = gtest_env.Clone()
 
-Import('env')
-
-if env.get('RELEASE'):
-	env.AppendUnique(CCFLAGS = ['-Os'])
-	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
+if lib_env.get('RELEASE'):
+    lib_env.AppendUnique(CCFLAGS = ['-Os'])
+    lib_env.AppendUnique(CPPDEFINES = ['NDEBUG'])
 else:
-	env.AppendUnique(CCFLAGS = ['-g'])
+    lib_env.AppendUnique(CCFLAGS = ['-g'])
 
-if env.get('LOGGING'):
-	env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+if lib_env.get('LOGGING'):
+    lib_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 
 ######################################################################
 #unit test setting
 ######################################################################
-src_dir = lib_env.get('SRC_DIR')
-gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
-
 broker_test_env = lib_env.Clone()
-target_os = env.get('TARGET_OS')
+src_dir = broker_test_env.get('SRC_DIR')
+target_os = broker_test_env.get('TARGET_OS')
 
 ######################################################################
 # Build flags
 ######################################################################
-gtest = File(gtest_dir + '/lib/.libs/libgtest.a')
-gtest_main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
 broker_test_env.AppendUnique(CPPPATH = ['../include'])
 broker_test_env.AppendUnique(CPPPATH = ['../../../include'])
@@ -58,9 +54,8 @@ broker_test_env.AppendUnique(CPPPATH = ['../../common/expiryTimer/include'])
 broker_test_env.AppendUnique(CPPPATH = ['../../common/expiryTimer/src'])
 broker_test_env.AppendUnique(CPPPATH = ['../../common/utils/include'])
 
-broker_test_env.PrependUnique(CPPPATH = [env.get('SRC_DIR')+'/extlibs/hippomocks-master',
-                             gtest_dir + '/include'])
-broker_test_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+broker_test_env.PrependUnique(CPPPATH = [broker_test_env.get('SRC_DIR')+'/extlibs/hippomocks-master'])
+broker_test_env.AppendUnique(LIBPATH = [broker_test_env.get('BUILD_DIR')])
 
 broker_test_env.PrependUnique(LIBS = ['coap'])
 broker_test_env.AppendUnique(LIBS = ['connectivity_abstraction'])
@@ -69,27 +64,26 @@ broker_test_env.AppendUnique(LIBS = ['octbstack'])
 broker_test_env.AppendUnique(LIBS = ['oc'])
 broker_test_env.AppendUnique(LIBS = ['rcs_client'])
 broker_test_env.AppendUnique(LIBS = ['rcs_common'])
-broker_test_env.AppendUnique(LIBS = [gtest])
-broker_test_env.AppendUnique(LIBS = [gtest_main])
 
-if target_os not in ['windows', 'winrt']:
+compiler = broker_test_env.get('CXX')
+if 'g++' in compiler:
     broker_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
-if target_os == 'linux':
-    broker_test_env.AppendUnique(LIBS = ['pthread'])
+if broker_test_env.get('SECURED') == '1':
+	if broker_test_env.get('WITH_TCP') == True:
+		broker_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # Build Test
 ######################################################################
 
-broker_test_src = env.Glob('./*.cpp')
+broker_test_src = broker_test_env.Glob('./*.cpp')
 broker_test = broker_test_env.Program('broker_test', broker_test_src)
 Alias("broker_test", broker_test)
-env.AppendTarget('broker_test')
+broker_test_env.AppendTarget('broker_test')
 
-if env.get('TEST') == '1':
-        target_os = env.get('TARGET_OS')
-        if target_os == 'linux':
+if broker_test_env.get('TEST') == '1':
+        if target_os in ['linux']:
                 from tools.scons.RunTest import *
                 run_test(broker_test_env,
                          '',

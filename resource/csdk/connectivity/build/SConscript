@@ -8,7 +8,7 @@ import platform
 # Map of host os and allowed target os (host: allowed target os)
 host_target_map = {
 		'linux': ['linux', 'android', 'arduino', 'yocto', 'tizen'],
-		'windows': ['windows', 'winrt', 'android', 'arduino'],
+		'windows': ['windows', 'android', 'arduino'],
 		'darwin': ['darwin', 'ios', 'android', 'arduino'],
 		}
 
@@ -18,11 +18,10 @@ os_arch_map = {
 		'tizen': ['x86', 'x86_64', 'arm', 'arm64'],
 		'android': ['x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
 		'windows': ['x86', 'amd64', 'arm'],
-		'winrt': ['arm'],
 		'darwin': ['i386', 'x86_64'],
 		'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
 		'arduino': ['avr', 'arm'],
-                'yocto': ['i586', 'x86_64', 'arm', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
+                'yocto': ['i586', 'i686', 'x86_64', 'arm', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
 		}
 
 host = platform.system().lower()
@@ -152,9 +151,9 @@ def __set_dir(env, dir):
 		Exit(1)
 
 	if env.get('RELEASE'):
-		build_dir = dir + '/out/' + target_os + '/' + target_arch + '/release/'
+		build_dir = os.path.join(dir, 'out', target_os, target_arch, 'release') + os.sep
 	else:
-		build_dir = dir + '/out/' + target_os + '/' + target_arch + '/debug/'
+		build_dir = os.path.join(dir, 'out', target_os, target_arch, 'debug') + os.sep
 	env.VariantDir(build_dir, dir, duplicate=0)
 
 	env.Replace(BUILD_DIR = build_dir)
@@ -174,8 +173,11 @@ def __install(ienv, targets, name):
 def __installlib(ienv, targets, name):
 	user_prefix = env.get('PREFIX')
 	if user_prefix:
-		i_n = ienv.Install(user_prefix + '/lib', targets)
-		ienv.Alias("install", i_n)
+		install_lib_dir = os.path.join(user_prefix, 'lib')
+	else:
+		install_lib_dir = os.path.join(env.get('BUILD_DIR'), 'lib')
+	i_n = ienv.Install(install_lib_dir, targets)
+	ienv.Alias("install", i_n)
 
 def __installbin(ienv, targets, name):
 	user_prefix = env.get('PREFIX')
@@ -269,7 +271,8 @@ if target_os == "yocto":
     env.AppendUnique(CPPDEFINES = ['WITH_POSIX', '__linux__', '_GNU_SOURCE'])
     env.AppendUnique(CFLAGS = ['-std=gnu99'])
     env.AppendUnique(CCFLAGS = ['-Wall', '-fPIC'])
-    env.AppendUnique(LINKFLAGS = ['-ldl', '-lpthread'])
+    if target_os in ['linux']:
+        env.AppendUnique(LIBS = ['dl', 'pthread'])
     Export('env')
 else:
     '''

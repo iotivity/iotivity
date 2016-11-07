@@ -10,20 +10,24 @@ Build and Run
 2) Build a CloudStack. If you are building first time, then build the stack.
 
 	go to "stack" folder in root directory
-	$ mvn install
+	$ mvn install -Dmaven.test.skip=true
 
 3) Build a .jar file
 
-	$ mvn install
+	$ mvn install -Dmaven.test.skip=true
 
 	- The CloudAccount-0.0.1-SNAPSHOT.jar file will be placed in the "target" folder
 
 4) Run .jar file
 
 	go to "target" folder
-	$ java -jar CloudAccount-0.0.1-SNAPSHOT.jar arg1(AccountServer CoAP Server Port)
-	e.g. java -jar CloudAccount-0.0.1-SNAPSHOT.jar 5685
+	$ java -jar CloudAccount-0.0.1-SNAPSHOT.jar arg1(AccountServer CoAP Server Port) arg2(TLS mode required)
+	e.g. java -jar CloudAccount-0.0.1-SNAPSHOT.jar 5685 0
 
+        - If you want to operate on TLS mode, "CLOUD_CERT_FILE(iotivitycloud.crt)" and "CLOUD_KEY_FILE(iotivitycloud.key)" files
+          should be placed in the "target" folder.
+        - If you want to provide a certificate of another server in the payload of a sign-up response (when the certificate is
+          needed for a client to connect to the server), a "ROOT_CERT_FILE(rootca.crt)" file should be placed in the "target" folder.
 	- Before you run a Accout server, You need to set up following steps.
           1) Install MongoDB
           2) Install Github certificates for github.com and *.github.com.

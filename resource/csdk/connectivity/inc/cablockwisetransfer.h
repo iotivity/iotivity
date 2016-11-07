@@ -28,9 +28,9 @@
 
 #include <stdint.h>
 
-#include "coap.h"
+#include <coap/coap.h>
 #include "cathreadpool.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "cacommon.h"
 #include "caprotocolmessage.h"
@@ -68,10 +68,10 @@ typedef struct
     u_arraylist_t *dataList;
 
     /** data list mutex for synchronization. **/
-    ca_mutex blockDataListMutex;
+    oc_mutex blockDataListMutex;
 
     /** sender mutex for synchronization. **/
-    ca_mutex blockDataSenderMutex;
+    oc_mutex blockDataSenderMutex;
 } CABlockWiseContext_t;
 
 /**
@@ -557,12 +557,14 @@ CAResult_t CARemoveBlockDataFromList(const CABlockDataID_t *blockID);
 CAResult_t CARemoveAllBlockDataFromList();
 
 /**
- * Check if data exist in block-wise transfer list.
- * @param[in]   blockID     ID set of CABlockData.
- * @return true or false.
+ * Find the block data with seed info and remove it from block-wise transfer list.
+ * @param[in]   token         token of the message.
+ * @param[in]   tokenLength   token length of the message.
+ * @param[in]   portNumber    port.
+ * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-bool CAIsBlockDataInList(const CABlockDataID_t *blockID);
-
+CAResult_t CARemoveBlockDataFromListWithSeed(const CAToken_t token, uint8_t tokenLength,
+                                             uint16_t portNumber);
 
 #ifdef __cplusplus
 } /* extern "C" */

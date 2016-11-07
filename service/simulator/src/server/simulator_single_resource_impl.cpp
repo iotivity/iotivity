@@ -79,6 +79,12 @@ void SimulatorSingleResourceImpl::setInterface(const std::string &interfaceType)
 {
     VALIDATE_INPUT(interfaceType.empty(), "Interface type list is empty!")
 
+    if (false == OCInterfaceDetails::getInstance()->isInterface(interfaceType))
+    {
+        OIC_LOG(ERROR, TAG, "Request is not OIC spec defined!");
+        return;
+    }
+
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
     if (m_resourceHandle)
     {
@@ -86,7 +92,8 @@ void SimulatorSingleResourceImpl::setInterface(const std::string &interfaceType)
                                  "Resource interface can not be reset when resource is started!");
     }
 
-    m_interfaces = {interfaceType};
+    if (interfaceType != OC::DEFAULT_INTERFACE)
+        m_interfaces = {OC::DEFAULT_INTERFACE, interfaceType};
 }
 
 void SimulatorSingleResourceImpl::setInterface(const std::vector<std::string> &interfaceTypes)
@@ -100,9 +107,12 @@ void SimulatorSingleResourceImpl::setInterface(const std::vector<std::string> &i
                                  "Resource interface can not be reset when resource is started!");
     }
 
-    m_interfaces.clear();
+    m_interfaces = {OC::DEFAULT_INTERFACE};
     for (auto &interfaceType : interfaceTypes)
     {
+        if (false == OCInterfaceDetails::getInstance()->isInterface(interfaceType))
+            continue;
+
         if (m_interfaces.end() ==
             std::find(m_interfaces.begin(), m_interfaces.end(), interfaceType))
         {
@@ -114,6 +124,12 @@ void SimulatorSingleResourceImpl::setInterface(const std::vector<std::string> &i
 void SimulatorSingleResourceImpl::addInterface(const std::string &interfaceType)
 {
     VALIDATE_INPUT(interfaceType.empty(), "Interface type is empty!")
+
+    if (false == OCInterfaceDetails::getInstance()->isInterface(interfaceType))
+    {
+        OIC_LOG(ERROR, TAG, "Request is not OIC spec defined!");
+        return;
+    }
 
     if (m_interfaces.end() != std::find(m_interfaces.begin(), m_interfaces.end(), interfaceType))
     {

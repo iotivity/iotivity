@@ -19,14 +19,14 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <iostream>
-#include<stdio.h>
+#include <condition_variable>
 
-#include "oic_string.h"
-#include "EasySetup.h"
 #include "OCPlatform.h"
-#include "logger.h"
+#include "OCApi.h"
 #include "OCProvisioningManager.h"
 
+#include "EasySetup.h"
+#include "ESRichCommon.h"
 
 #define ES_SAMPLE_APP_TAG "ES_SAMPLE_APP_TAG"
 #define DECLARE_MENU(FUNC, ...) { #FUNC, FUNC }
@@ -36,35 +36,27 @@
 using namespace OC;
 using namespace OIC::Service;
 
-static EasySetup *easySetupIntance = nullptr;
-static ProvConfig netInfo;
-static WiFiOnboadingConnection onboardingConn;
-static RemoteEnrollee::shared_ptr remoteEnrollee = nullptr;
+static std::shared_ptr<RemoteEnrollee> remoteEnrollee = nullptr;
+static std::shared_ptr<OC::OCResource> curResource = nullptr;
 
-static std::string ipaddress, ssid, pwd;
-char security;
-
-struct CloseApp
-{
-};
+static std::mutex g_discoverymtx;
+static std::condition_variable g_cond;
 
 typedef void (*Runner)();
 
 Runner g_currentRun;
 
-int processUserInput(int min, int max)
+int processUserInput(int min = std::numeric_limits<int>::min(),
+        int max = std::numeric_limits<int>::max())
 {
     assert(min <= max);
 
     int input;
 
     std::cin >> input;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-    if (!std::cin.fail())
-    {
-        if(input == max + 1) throw CloseApp();
-        if(min <= input && input <= max) return input;
-    }
+    if (!std::cin.fail() && min <= input && input <= max) return input;
 
     std::cin.clear();
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -72,113 +64,326 @@ int processUserInput(int min, int max)
     throw std::runtime_error("Invalid Input, please try again");
 }
 
-void easySetupStatusCallback (std::shared_ptr< EasySetupStatus > easySetupStatus)
+void printConfiguration(EnrolleeConf conf)
 {
-    OC_UNUSED(easySetupStatus);
-    OIC_LOG_V(DEBUG, ES_SAMPLE_APP_TAG, "easySetupStatusCallback status is Status = %d",
-            easySetupStatus->getEasySetupState());
+    cout << "===========================================" << endl;
+    cout << "\tDevice Name : " << conf.getDeviceName() << endl;
+    cout << "\tModel Number : " << conf.getModelNumber() << endl;
 
+    for(auto it : conf.getWiFiModes())
+    {
+        cout << "\tSupported WiFi modes : " << it << endl;
+    }
+
+    cout << "\tSupported WiFi freq : " << static_cast<int>(conf.getWiFiFreq()) << endl;
+    cout << "\tCloud accessibility: " << conf.isCloudAccessible() << endl;
+    cout << "===========================================" << endl;
 }
 
-void startProvisioning()
+void printStatus(EnrolleeStatus status)
 {
-    try
-    {
-        remoteEnrollee->startProvisioning();
-    }
-    catch(OCException &exception)
-    {
-        std::cout << "Exception : " << exception.reason();
-    }
+    cout << "===========================================" << endl;
+    cout << "\tProvStatus : " << status.getProvStatus() << endl;
+    cout << "\tLastErrCode : " << status.getLastErrCode() << endl;
+    cout << "===========================================" << endl;
 }
 
-void initEasySetup()
+void provisionSecurityStatusCallback(std::shared_ptr<SecProvisioningStatus> secProvisioningStatus)
 {
-
-    easySetupIntance = EasySetup::getInstance();
-
-    cout<<"\n Enter the IP address : ";
-    cin>>ipaddress;
-    cout<<"\n Enter the Target Network SSID : ";
-    cin>>ssid;
-    cout<<"\n Enter the Target Network Password : ";
-    cin>>pwd;
-    cout<<"\n Enable Security: [Y/N] ";
-    cin>>security;
-
-    if ( ipaddress.size() == 0 || ssid.size() == 0  || pwd.size()==0 )
+    if(secProvisioningStatus->getESResult() != ES_OK)
     {
-         cout<<"\n Invalid information try again !!!";
+      cout << "provisionSecurity is failed." << endl;
+      return;
     }
     else
-     {
-           cout <<"\n Entered details are :  \n";
-           cout<<"\n IP address : "<<ipaddress;
-           cout<<"\n Target Network SSID : "<<ssid;
-           cout<<"\n Target Network Password : "<<pwd;
-
-          if (security == 'Y' || security == 'y' )
-          {
-                  onboardingConn.isSecured = true;
-                  cout<<"\n Security is Enabled\n\n\n";
-           }
-           else
-           {
-                 onboardingConn.isSecured = false;
-                 cout<<"\n Security is not Enabled\n\n\n";
-           }
-
-          netInfo.connType = CT_ADAPTER_IP;
-
-         OICStrcpy(netInfo.provData.WIFI.ssid, NET_WIFI_SSID_SIZE - 1, ssid.c_str());
-         OICStrcpy(netInfo.provData.WIFI.pwd, NET_WIFI_PWD_SIZE - 1, pwd.c_str());
-
-         OICStrcpy(onboardingConn.ipAddress, IPV4_ADDR_SIZE - 1, ipaddress.c_str());
-
-         try
-         {
-             remoteEnrollee = easySetupIntance->createEnrolleeDevice(netInfo,onboardingConn);
-         }
-         catch (OCException &e)
-         {
-             std::cout << "Exception during createEnrolleeDevice call" << e.reason();
-             return;
-         }
-
-         remoteEnrollee->registerEasySetupStatusHandler(&easySetupStatusCallback);
+    {
+      cout << "provisionSecurity is success." << endl;
+      cout << "uuid : " << secProvisioningStatus->getDeviceUUID()<< endl;
     }
 }
 
-void runEasySetupMenu()
+void provisionSecurity()
 {
-    constexpr int EASY_SETUP_INIT = 1;
-    constexpr int START_PROVISIONING = 2;
-    constexpr int STOP_PROVISIONING = 3;
-    constexpr int STOP_EASY_SETUP = 4;
+    if(!remoteEnrollee)
+    {
+        std::cout << "RemoteEnrollee is null, retry Discovery EnrolleeResource." << endl;
+        return;
+    }
+
+    try
+    {
+        remoteEnrollee->provisionSecurity(provisionSecurityStatusCallback);
+    }
+    catch (OCException &e)
+    {
+        std::cout << "Exception during provisionSecurity call" << e.reason();
+        return;
+    }
+}
+
+void getStatusCallback(std::shared_ptr< GetEnrolleeStatus > getEnrolleeStatus)
+{
+    if(getEnrolleeStatus->getESResult() != ES_OK)
+    {
+      cout << "getStatus is failed." << endl;
+      return;
+    }
+    else
+    {
+      cout << "getStatus is success." << endl;
+      printStatus(getEnrolleeStatus->getEnrolleeStatus());
+    }
+}
+
+
+void getStatus()
+{
+    if(!remoteEnrollee)
+    {
+        std::cout << "RemoteEnrollee is null, retry Discovery EnrolleeResource." << endl;
+        return;
+    }
+
+    try
+    {
+        remoteEnrollee->getStatus(getStatusCallback);
+    }
+    catch (OCException &e)
+    {
+        std::cout << "Exception during getConfiguration call" << e.reason();
+        return;
+    }
+}
+
+void getConfigurationCallback(std::shared_ptr< GetConfigurationStatus > getConfigurationStatus)
+{
+    if(getConfigurationStatus->getESResult() != ES_OK)
+    {
+      cout << "GetConfigurationStatus is failed." << endl;
+      return;
+    }
+    else
+    {
+      cout << "GetConfigurationStatus is success." << endl;
+      printConfiguration(getConfigurationStatus->getEnrolleeConf());
+    }
+}
+
+void getConfiguration()
+{
+    if(!remoteEnrollee)
+    {
+        std::cout << "RemoteEnrollee is null, retry Discovery EnrolleeResource." << endl;
+        return;
+    }
+
+    try
+    {
+        remoteEnrollee->getConfiguration(getConfigurationCallback);
+    }
+    catch (OCException &e)
+    {
+        std::cout << "Exception during getConfiguration call" << e.reason();
+        return;
+    }
+}
+
+void deviceProvisioningStatusCallback(std::shared_ptr< DevicePropProvisioningStatus > provStatus)
+{
+    if(provStatus->getESResult() != ES_OK)
+    {
+      cout << "Device Provisioning is failed." << endl;
+      return;
+    }
+    else
+    {
+      cout << "Device Provisioning is success." << endl;
+    }
+}
+
+void provisionDeviceProperty()
+{
+    if(!remoteEnrollee)
+    {
+        std::cout << "RemoteEnrollee is null, retry Discovery EnrolleeResource." << endl;
+        return;
+    }
+
+    DeviceProp devProp;
+    devProp.setWiFiProp("Iotivity_SSID", "Iotivity_PWD", WPA2_PSK, TKIP_AES);
+    devProp.setDevConfProp("korean", "Korea", "Location");
+
+    try
+    {
+        remoteEnrollee->provisionDeviceProperties(devProp, deviceProvisioningStatusCallback);
+    }
+    catch (OCException &e)
+    {
+        std::cout << "Exception during provisionDeviceProperties call" << e.reason();
+        return;
+    }
+}
+
+void cloudProvisioningStatusCallback(std::shared_ptr< CloudPropProvisioningStatus > provStatus)
+{
+    switch (provStatus->getESResult())
+    {
+        case ES_OK:
+            cout << "Cloud Provisioning is success." << endl;
+            break;
+        case ES_SECURE_RESOURCE_DISCOVERY_FAILURE:
+            cout << "Enrollee is not found in a given network." << endl;
+            break;
+        case ES_ACL_PROVISIONING_FAILURE:
+            cout << "ACL provisioning is failed." << endl;
+            break;
+        case ES_CERT_PROVISIONING_FAILURE:
+            cout << "CERT provisioning is failed." << endl;
+            break;
+        default:
+            cout << "Cloud Provisioning is failed." << endl;
+            break;
+    }
+}
+
+void provisionCloudProperty()
+{
+    if(!remoteEnrollee)
+    {
+        std::cout << "RemoteEnrollee is null, retry Discovery EnrolleeResource." << endl;
+        return;
+    }
+
+    CloudProp cloudProp;
+    cloudProp.setCloudProp("authCode", "authProvider", "ciServer");
+    cloudProp.setCloudID("f002ae8b-c42c-40d3-8b8d-1927c17bd1b3");
+    cloudProp.setCredID(1);
+
+    try
+    {
+        remoteEnrollee->provisionCloudProperties(cloudProp, cloudProvisioningStatusCallback);
+    }
+    catch (OCException &e)
+    {
+        std::cout << "Exception during provisionCloudProperties call" << e.reason();
+        return;
+    }
+}
+
+// Callback to found resources
+void foundResource(std::shared_ptr<OC::OCResource> resource)
+{
+    std::string resourceURI;
+    std::string hostAddress;
+    try
+    {
+        // Do some operations with resource object.
+        if(resource &&
+           !curResource &&
+           resource->getResourceTypes().at(0) == OC_RSRVD_ES_RES_TYPE_PROV)
+        {
+            std::cout<<"DISCOVERED Resource:"<<std::endl;
+            // Get the resource URI
+            resourceURI = resource->uri();
+            std::cout << "\tURI of the resource: " << resourceURI << std::endl;
+
+            // Get the resource host address
+            hostAddress = resource->host();
+            std::cout << "\tHost address of the resource: " << hostAddress << std::endl;
+
+            // Get the resource types
+            std::cout << "\tList of resource types: " << std::endl;
+            for(auto &resourceTypes : resource->getResourceTypes())
+            {
+                std::cout << "\t\t" << resourceTypes << std::endl;
+            }
+
+            // Get the resource interfaces
+            std::cout << "\tList of resource interfaces: " << std::endl;
+            for(auto &resourceInterfaces : resource->getResourceInterfaces())
+            {
+                std::cout << "\t\t" << resourceInterfaces << std::endl;
+            }
+
+            if(curResource == nullptr)
+            {
+                remoteEnrollee = EasySetup::getInstance()->createRemoteEnrollee(resource);
+                if(!remoteEnrollee)
+                {
+                    std::cout << "RemoteEnrollee object is failed for some reasons!" << std::endl;
+                }
+                else
+                {
+                    curResource = resource;
+                    std::cout << "RemoteEnrollee object is successfully created!" << std::endl;
+                    g_cond.notify_all();
+                }
+            }
+        }
+    }
+    catch(std::exception& e)
+    {
+        std::cerr << "Exception in foundResource: "<< e.what() << std::endl;
+    }
+}
+
+void discoveryEnrolleeResource()
+{
+	try
+	{
+	    std::ostringstream requestURI;
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=" << OC_RSRVD_ES_RES_TYPE_PROV;
+        OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource);
+        std::cout<< "Finding Resource... " <<std::endl;
+
+        std::unique_lock<std::mutex> lck(g_discoverymtx);
+        g_cond.wait_for(lck, std::chrono::seconds(5));
+	}
+	catch (OCException& e)
+	{
+		std::cout << "Exception in discoveryEnrolleeResource: "<<e.what();
+	}
+}
+
+void DisplayMenu()
+{
+	constexpr int DISCOVERY_ENROLLEE = 1;
+    constexpr int PROVISION_SECURITY = 2;
+    constexpr int GET_STATUS = 3;
+    constexpr int GET_CONFIGURATION = 4;
+    constexpr int PROVISION_DEVICE_PROPERTY = 5;
+    constexpr int PROVISION_CLOUD_PROPERTY = 6;
 
     std::cout << "========================================================\n";
-    std::cout << EASY_SETUP_INIT << ". Easy Setup Init                    \n";
-    std::cout << START_PROVISIONING << ". Start Provisioning              \n";
-    std::cout << STOP_PROVISIONING << ". Stop Provisioning                \n";
-    std::cout << STOP_EASY_SETUP << ". Stop Easy Setup                    \n";
-    std::cout << STOP_EASY_SETUP + 1 << ". Quit                           \n";
+    std::cout << DISCOVERY_ENROLLEE << ". Discovery Enrollee Resource \n";
+    std::cout << PROVISION_SECURITY << ". Provision Security to Enrollee  \n";
+    std::cout << GET_STATUS << ". Get Status from Enrollee  \n";
+    std::cout << GET_CONFIGURATION << ". Get Configuration from Enrollee  \n";
+    std::cout << PROVISION_DEVICE_PROPERTY << ". Provision Device Property\n";
+    std::cout << PROVISION_CLOUD_PROPERTY << ". Provision Cloud Property  \n";
     std::cout << "========================================================\n";
 
-    int selection = processUserInput(EASY_SETUP_INIT, STOP_EASY_SETUP);
+    int selection = processUserInput(DISCOVERY_ENROLLEE, PROVISION_CLOUD_PROPERTY);
 
     switch (selection)
     {
-        case EASY_SETUP_INIT:
-            initEasySetup();
+        case DISCOVERY_ENROLLEE:
+            discoveryEnrolleeResource();
             break;
-        case START_PROVISIONING:
-            startProvisioning();
+        case PROVISION_SECURITY:
+            provisionSecurity();
             break;
-        case STOP_PROVISIONING:
-            //stopProvisioning();
+        case GET_STATUS:
+            getStatus();
             break;
-        case STOP_EASY_SETUP:
-            //stopEasySetup();
+        case GET_CONFIGURATION:
+            getConfiguration();
+            break;
+        case PROVISION_DEVICE_PROPERTY:
+            provisionDeviceProperty();
+            break;
+        case PROVISION_CLOUD_PROPERTY:
+            provisionCloudProperty();
             break;
         default:
             break;
@@ -197,36 +402,36 @@ int main()
 
     PlatformConfig config
     {
-        OC::ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::LowQos, &ps
+        OC::ServiceType::InProc, ModeType::Both, "0.0.0.0", 0, OC::QualityOfService::HighQos, &ps
     };
 
     OCPlatform::Configure(config);
 
-#ifdef __WITH_DTLS__
-    //Initializing the provisioning client stack using the db path provided by the application.
-    OCStackResult result = OCSecure::provisionInit("");
-
-    if (result != OC_STACK_OK)
+    try
     {
-        return -1;
-    }
-#endif
+#ifdef __WITH_DTLS__
+        //Initializing the provisioning client stack using the db path provided by the application.
+        OCStackResult result = OCSecure::provisionInit("");
 
-    g_currentRun = runEasySetupMenu;
+        if (result != OC_STACK_OK)
+        {
+            return -1;
+        }
+#endif
+    }catch(OCException& e)
+    {
+        std::cout << "Exception in main: "<<e.what();
+    }
 
     while (true)
     {
         try
         {
-            g_currentRun();
+            DisplayMenu();
         }
         catch (const std::exception& e)
         {
             std::cout << "Exception caught in main " << e.what() << std::endl;
-        }
-        catch (const CloseApp&)
-        {
-            break;
         }
     }
 

@@ -20,15 +20,31 @@
 ///////////////////////////////////////////////////////////////////////
 //NOTE :  This sample server is generated based on ocserverbasicops.cpp
 ///////////////////////////////////////////////////////////////////////
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#include <signal.h>
+#endif
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
+#include <signal.h>
 #include "ocstack.h"
-#include "logger.h"
 #include "ocpayload.h"
+#include "pinoxmcommon.h"
+
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+/** @todo stop-gap for naming issue. Windows.h does not like us to use ERROR */
+#ifdef ERROR
+#undef ERROR
+#endif //ERROR
+#endif //HAVE_WINDOWS_H
+#include "platform_features.h"
+#include "logger.h"
+
 
 #define TAG "SAMPLE_JUSTWORKS"
 
@@ -53,7 +69,7 @@ char *gResourceUri= (char *)"/a/led";
 //Secure Virtual Resource database for Iotivity Server
 //It contains Server's Identity and the PSK credentials
 //of other devices which the server trusts
-static char CRED_FILE[] = "oic_svr_db_server_justworks.json";
+static char CRED_FILE[] = "oic_svr_db_server_justworks.dat";
 
 /* Function that creates a new LED resource by calling the
  * OCCreateResource() method.

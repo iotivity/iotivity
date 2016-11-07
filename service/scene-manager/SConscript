@@ -34,7 +34,7 @@ if env.get('LOGGING'):
     env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
+SConscript('#service/third_party_libs.scons', 'lib_env')
 scenemanager_env = lib_env.Clone()
 
 target_os = env.get('TARGET_OS')
@@ -60,13 +60,13 @@ scenemanager_env.PrependUnique(LIBS = [
     'rcs_common'
     ])
 
-if target_os not in ['windows', 'winrt']:
+if target_os not in ['windows']:
     scenemanager_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
-if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
+if target_os not in ['darwin', 'ios', 'windows']:
     scenemanager_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 
-if target_os == 'linux':
+if target_os in ['linux']:
     scenemanager_env.AppendUnique(LIBS = ['pthread'])
     
 
@@ -101,7 +101,7 @@ scenemanager_env.UserInstallTargetHeader('include/RemoteScene.h', 'service/scene
 scenemanager_env.UserInstallTargetHeader('include/RemoteSceneAction.h', 'service/scene-manager', 'RemoteSceneAction.h')
 
 # Go to build Unit test
-if target_os == 'linux':
+if target_os in ['linux']:
     SConscript('unittests/SConscript')
 
 # Go to build sample apps

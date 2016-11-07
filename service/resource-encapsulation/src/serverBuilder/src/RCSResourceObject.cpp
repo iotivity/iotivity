@@ -815,7 +815,7 @@ namespace OIC
                     m_resourceObject, m_resourceObject.m_resourceAttributes, m_autoNotifyPolicy);
         }
 
-        RCSResourceObject::WeakGuard::WeakGuard(
+      RCSResourceObject::WeakGuard::WeakGuard(
                 const RCSResourceObject& resourceObject) :
                 m_isOwningLock{ false },
                 m_resourceObject(resourceObject)

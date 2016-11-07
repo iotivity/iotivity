@@ -32,13 +32,17 @@ BMISensorResource::~BMISensorResource()
 }
 
 void BMISensorResource::handleSetAttributesRequest(
-    const RCSResourceAttributes &value)
+    const RCSResourceAttributes &value,
+    const std::map< std::string, std::string > &queryParams)
 {
+    (void)queryParams;
     BundleResource::setAttributes(value);
 }
 
-RCSResourceAttributes BMISensorResource::handleGetAttributesRequest()
+RCSResourceAttributes BMISensorResource::handleGetAttributesRequest(const
+        std::map< std::string, std::string > &queryParams)
 {
+    (void)queryParams;
     return BundleResource::getAttributes();
 }
 
@@ -47,7 +51,9 @@ void BMISensorResource::executeLogic()
     std::string strBMIResult;
 
     if (m_pBMISensor->executeBMISensorLogic(&m_mapInputData, &strBMIResult) != -1)
+    {
         setAttribute("BMIresult", RCSResourceAttributes::Value(strBMIResult.c_str()));
+    }
 }
 
 void BMISensorResource::onUpdatedInputResource(const std::string attributeName,
@@ -57,10 +63,14 @@ void BMISensorResource::onUpdatedInputResource(const std::string attributeName,
     m_mapInputData.clear();
 
     if (!attributeName.compare("weight"))
-        m_mapInputData.insert(std::make_pair("weight", values.back().toString()));
+    {
+        m_mapInputData.insert(std::make_pair("weight", values.back().get< std::string >()));
+    }
 
     if (!attributeName.compare("height"))
-        m_mapInputData.insert(std::make_pair("height", values.back().toString()));
+    {
+        m_mapInputData.insert(std::make_pair("height", values.back().get< std::string >()));
+    }
 
     executeLogic();
 }

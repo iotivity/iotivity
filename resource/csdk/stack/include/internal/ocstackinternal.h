@@ -66,8 +66,8 @@ extern void* defaultDeviceHandlerCallbackParameter;
 /** The coap scheme */
 #define OC_COAP_SCHEME "coap://"
 
-/** the first outgoing sequence number will be 5*/
-#define OC_OFFSET_SEQUENCE_NUMBER (4)
+/** the first outgoing sequence number will be 1*/
+#define OC_OFFSET_SEQUENCE_NUMBER (0)
 
 /**
  * This structure will be created in occoap and passed up the stack on the server side.
@@ -136,33 +136,6 @@ typedef struct
 } OCServerProtocolRequest;
 
 /**
- * This structure will be created in occoap and passed up the stack on the client side.
- */
-typedef struct
-{
-    /** handle is retrieved by comparing the token-handle pair in the PDU.*/
-    ClientCB * cbNode;
-
-    /** This is how long this response is valid for (in seconds).*/
-    uint32_t maxAge;
-
-    /** This is the Uri of the resource. (ex. "coap://192.168.1.1/a/led").*/
-    char * fullUri;
-
-    /** This is the relative Uri of the resource. (ex. "/a/led").*/
-    char * rcvdUri;
-
-    /** This is the received payload.*/
-    char * bufRes;
-
-    /** This is the token received OTA.*/
-    CAToken_t rcvdToken;
-
-    /** this structure will be passed to client.*/
-    OCClientResponse * clientResponse;
-} OCResponse;
-
-/**
  * This typedef is to represent our Server Instance identification.
  */
 typedef uint8_t ServerID[16];
@@ -202,7 +175,8 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest);
 OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16_t coapID,
         const CAResponseResult_t responseResult, const CAMessageType_t type,
         const uint8_t numOptions, const CAHeaderOption_t *options,
-        CAToken_t token, uint8_t tokenLength, const char *resourceUri);
+        CAToken_t token, uint8_t tokenLength, const char *resourceUri,
+        CADataType_t dataType);
 
 #ifdef WITH_PRESENCE
 
@@ -266,6 +240,14 @@ OCStackResult BindResourceTypeToResource(OCResource* resource,
 OCStackResult CAResultToOCResult(CAResult_t caResult);
 
 /**
+ * Converts a OCStackResult type to a bool type.
+ *
+ * @param ocResult OCStackResult value to convert.
+ * @return true on success, false upon failure.
+ */
+bool OCResultToSuccess(OCStackResult ocResult);
+
+/**
  * Map OCQualityOfService to CAMessageType.
  *
  * @param qos Input qos.
@@ -292,6 +274,10 @@ OCStackResult OCChangeResourceProperty(OCResourceProperty * inputProperty,
 const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
 
 OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
+
+OCStackResult encodeAddressForRFC6874(char * outputAddress,
+                                      size_t outputSize,
+                                      const char * inputAddress);
 
 void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out);
 

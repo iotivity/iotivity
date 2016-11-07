@@ -23,8 +23,14 @@
 #include "OCPlatform.h"
 
 JniOcPresenceHandle::JniOcPresenceHandle(JniOnPresenceListener* jniListener, OCPresenceHandle presenceHandle)
-    : m_jniListener(jniListener), m_presenceHandle(presenceHandle)
-{}
+    : m_jniListener(jniListener), m_presenceHandle(presenceHandle), m_jniObserveListener(nullptr)
+{
+}
+
+JniOcPresenceHandle::JniOcPresenceHandle(JniOnObserveListener* jniListener, OCPresenceHandle presenceHandle)
+    : m_jniObserveListener(jniListener), m_presenceHandle(presenceHandle), m_jniListener(nullptr)
+{
+}
 
 JniOcPresenceHandle::~JniOcPresenceHandle()
 {
@@ -57,6 +63,11 @@ OCPresenceHandle JniOcPresenceHandle::getOCPresenceHandle()
 JniOnPresenceListener* JniOcPresenceHandle::getJniOnPresenceListener()
 {
     return this->m_jniListener;
+}
+
+JniOnObserveListener* JniOcPresenceHandle::getJniOnObserveListener()
+{
+    return this->m_jniObserveListener;
 }
 
 /*

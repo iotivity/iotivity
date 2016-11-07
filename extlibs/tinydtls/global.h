@@ -115,7 +115,7 @@ typedef enum {
 /**
  * XORs \p n bytes byte-by-byte starting at \p y to the memory area
  * starting at \p x. */
-static inline void
+INLINE_API void
 memxor(unsigned char *x, const unsigned char *y, size_t n) {
   while(n--) {
     *x ^= *y;
@@ -133,7 +133,7 @@ memxor(unsigned char *x, const unsigned char *y, size_t n) {
  * \param len Number of bytes to compare.
  * \return \c 1 if \p a and \p b are equal, \c 0 otherwise.
  */
-static inline int
+INLINE_API int
 equals(unsigned char *a, unsigned char *b, size_t len) {
   int result = 1;
   while (len--) {
@@ -145,7 +145,7 @@ equals(unsigned char *a, unsigned char *b, size_t len) {
 #ifdef HAVE_FLS
 #define dtls_fls(i) fls(i)
 #else
-static inline int
+INLINE_API int
 dtls_fls(unsigned int i) {
   int n;
   for (n = 0; i; n++)

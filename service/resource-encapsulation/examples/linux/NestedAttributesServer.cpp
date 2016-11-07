@@ -293,15 +293,24 @@ void process()
 
         int ret = selectServerMenu();
 
-        if (ret == QUIT) return;
-        if (ret == CORRECT_INPUT) break;
+        if (ret == QUIT)
+        {
+            return;
+        }
+        if (ret == CORRECT_INPUT)
+        {
+            break;
+        }
     }
 
     while (true)
     {
         displayControlMenu();
 
-        if (selectControlMenu() == QUIT) return;
+        if (selectControlMenu() == QUIT)
+        {
+            return;
+        }
     }
 }
 

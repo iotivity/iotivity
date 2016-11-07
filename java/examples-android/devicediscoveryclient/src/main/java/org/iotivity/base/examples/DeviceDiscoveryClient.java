@@ -127,7 +127,7 @@ public class DeviceDiscoveryClient extends Activity implements
     private final static Map<String, String> DEVICE_INFO_KEYS = new HashMap<String, String>() {{
         put("di", "Device ID: ");
         put("n", "Device name: ");
-        put("lcv", "Spec version url: ");
+        put("icv", "Spec version url: ");
         put("dmv", "Data Model: ");
     }};
 
@@ -137,6 +137,12 @@ public class DeviceDiscoveryClient extends Activity implements
         try {
             for (String key : DEVICE_INFO_KEYS.keySet()) {
                 msg("\t" + DEVICE_INFO_KEYS.get(key) + ocRepresentation.getValue(key));
+            }
+
+            msg("\tDevice types:");
+
+            for (String type : ocRepresentation.getResourceTypes()) {
+                msg("\t\t" + type);
             }
         } catch (OcException e) {
             Log.e(TAG, e.toString());

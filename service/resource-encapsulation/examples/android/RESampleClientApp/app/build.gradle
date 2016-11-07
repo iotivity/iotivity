@@ -23,5 +23,5 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
 
     compile(name:'iotivity-armeabi-service-release', ext:'aar')
-    compile(name:'iotivity-armeabi-base-release', ext:'aar')
+    compile(name:'iotivity-base-armeabi-release', ext:'aar')
 }

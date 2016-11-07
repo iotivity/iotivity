@@ -35,26 +35,38 @@ JniProvisionResultListner::~JniProvisionResultListner()
     LOGI("~JniProvisionResultListner()");
     if (m_jwListener)
     {
-        jint ret;
+        jint ret = JNI_ERR;
         JNIEnv *env = GetJNIEnv(ret);
-        if (NULL == env) return;
+        if (nullptr == env)
+        {
+            return;
+        }
         env->DeleteWeakGlobalRef(m_jwListener);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
     }
 }
 
 void JniProvisionResultListner::ProvisionResultCallback(PMResultList_t *result, int hasError,
       ListenerFunc func)
 {
-    jint ret;
+    jint ret = JNI_ERR;
     JNIEnv *env = GetJNIEnv(ret);
-    if (NULL == env) return;
+    if (nullptr == env)
+    {
+        return;
+    }
 
     jobject jListener = env->NewLocalRef(m_jwListener);
     if (!jListener)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
@@ -63,7 +75,10 @@ void JniProvisionResultListner::ProvisionResultCallback(PMResultList_t *result, 
     if (!clsL)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
@@ -72,7 +87,10 @@ void JniProvisionResultListner::ProvisionResultCallback(PMResultList_t *result, 
     if (!jResultList)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
 
@@ -94,6 +112,11 @@ void JniProvisionResultListner::ProvisionResultCallback(PMResultList_t *result, 
             calledFunc = "provisionCredentialsListener";
         }
         break;
+        case ListenerFunc::PROVISIONTRUSTCERTCHAIN:
+        {
+            calledFunc = "provisionTrustCertChainListener";
+        }
+        break;
         case ListenerFunc::UNLINKDEVICES:
         {
             calledFunc = "unlinkDevicesListener";
@@ -109,10 +132,19 @@ void JniProvisionResultListner::ProvisionResultCallback(PMResultList_t *result, 
             calledFunc = "provisionPairwiseDevicesListener";
         }
         break;
+        case ListenerFunc::PROVISIONDIRECTPAIRING:
+        {
+            calledFunc = "provisionDirectPairingListener";
+        }
+        break;
         default:
         {
             checkExAndRemoveListener(env);
-            if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+            if (JNI_EDETACHED == ret)
+            {
+                g_jvm->DetachCurrentThread();
+            }
+            return;
         }
         return;
     }
@@ -121,7 +153,10 @@ void JniProvisionResultListner::ProvisionResultCallback(PMResultList_t *result, 
     if (!midL)
     {
         checkExAndRemoveListener(env);
-        if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+        if (JNI_EDETACHED == ret)
+        {
+            g_jvm->DetachCurrentThread();
+        }
         return;
     }
     env->CallVoidMethod(jListener, midL, jResultList, (jint)hasError);
@@ -131,7 +166,10 @@ void JniProvisionResultListner::ProvisionResultCallback(PMResultList_t *result, 
     }
 
     checkExAndRemoveListener(env);
-    if (JNI_EDETACHED == ret) g_jvm->DetachCurrentThread();
+    if (JNI_EDETACHED == ret)
+    {
+        g_jvm->DetachCurrentThread();
+    }
 }
 
 void JniProvisionResultListner::checkExAndRemoveListener(JNIEnv* env)

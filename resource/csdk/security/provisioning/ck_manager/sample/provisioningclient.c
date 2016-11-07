@@ -35,8 +35,12 @@
 #include "ckm_info.h"
 #include "crlresource.h"
 
-#define MAX_URI_LENGTH (64)
 #define MAX_PERMISSION_LENGTH (5)
+#define MAX_ACE_LENGTH (100)
+#define MAX_INTERFACE_LENGTH (10)
+#define MAX_RESOURCETYPE_LENGTH (10)
+#define MAX_STRING_INPUT_BUFFER_SIZE (256)
+
 #define CREATE (1)
 #define READ (2)
 #define UPDATE (4)
@@ -50,7 +54,7 @@
 
 static OicSecAcl_t        *gAcl = NULL;
 static OicSecCrl_t        *gCrl = NULL;
-static char PROV_TOOL_DB_FILE[] = "oic_svr_db_pt.json";
+static char PROV_TOOL_DB_FILE[] = "oic_svr_db_pt.dat";
 static const char* PRVN_DB_FILE_NAME = "oic_prvn_mng.db";
 static int gOwnershipState = 0;
 
@@ -63,32 +67,6 @@ typedef enum
     provisionCert2Done = 1 << 5,
     provisionCrlDone = 1 << 6
 } StateManager;
-
-
-/**
- * Perform cleanup for ACL
- * @param[in]    ACL
- */
-static void deleteACL(OicSecAcl_t *acl)
-{
-    if (acl)
-    {
-        /* Clean Resources */
-        for (size_t i = 0; i < (acl)->resourcesLen; i++)
-        {
-            OICFree((acl)->resources[i]);
-        }
-        OICFree((acl)->resources);
-
-        /* Clean Owners */
-        OICFree((acl)->owners);
-
-        /* Clean ACL node itself */
-        OICFree((acl));
-
-        acl = NULL;
-    }
-}
 
 void deleteCrl(OicSecCrl_t *crl)
 {
@@ -181,9 +159,19 @@ static int InputACL(OicSecAcl_t *acl)
     char temp_id [UUID_LENGTH + 4] = {0,};
     char temp_rsc[MAX_URI_LENGTH + 1] = {0,};
     char temp_pms[MAX_PERMISSION_LENGTH + 1] = {0,};
+    char input_buffer[MAX_STRING_INPUT_BUFFER_SIZE] = {0};
+    OicSecAce_t* ace = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
+    if(!ace)
+    {
+        printf("Failed to memory allocation\n");
+        return -1;
+    }
+    LL_APPEND(acl->aces, ace);
+
     printf("******************************************************************************\n");
     printf("-Set ACL policy for target device\n");
     printf("******************************************************************************\n");
+
     //Set Subject.
     printf("-URN identifying the subject\n");
     printf("ex) doorDeviceUUID00 (16 Numbers except to '-')\n");
@@ -210,112 +198,147 @@ static int InputACL(OicSecAcl_t *acl)
                 printf("Invalid input\n");
                 return -1;
             }
-            acl->subject.id[j++] = temp_id[i];
+            ace->subjectuuid.id[j++] = temp_id[i];
         }
     }
 
     //Set Resource.
     printf("Num. of Resource : \n");
-    ret = scanf("%zu", &acl->resourcesLen);
-    if(-1 == ret)
+    size_t inputLen = 0;
+    ret = scanf("%zu", &inputLen);
+    if(-1 == ret || MAX_ACE_LENGTH < inputLen)
     {
         printf("Error while input\n");
         return -1;
     }
     printf("-URI of resource\n");
-    printf("ex) /a/light (Max_URI_Length: 64 Byte )\n");
-    acl->resources = (char **)OICCalloc(acl->resourcesLen, sizeof(char *));
-    if (NULL == acl->resources)
+    printf("ex) /a/light (Max_URI_Length: %d Byte )\n", MAX_URI_LENGTH);
+
+    for(size_t i = 0; i < inputLen; i++)
     {
-        OIC_LOG(ERROR, TAG, "Error while memory allocation");
-        return -1;
-    }
-    for (size_t i = 0; i < acl->resourcesLen; i++)
-    {
+        OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+        if(!rsrc)
+        {
+            printf("Failed to memory allocation\n");
+            return -1;
+        }
+        LL_APPEND(ace->resources, rsrc);
+
+        //Input the resource URI for each resource
         printf("[%zu]Resource : ", i + 1);
-        char *ptr_tempRsc = NULL;
-        ret = scanf("%64ms", &ptr_tempRsc);
+        ret = scanf("%s", input_buffer);
         if (1==ret)
         {
-            OICStrcpy(temp_rsc, sizeof(temp_rsc), ptr_tempRsc);
-            OICFree(ptr_tempRsc);
+            rsrc->href = OICStrdup(input_buffer);
+            if(!rsrc->href)
+            {
+                printf("Failed to OICStrdup\n");
+                return -1;
+            }
         }
         else
         {
             printf("Error while input\n");
             return -1;
         }
-        acl->resources[i] = OICStrdup(temp_rsc);
 
-        if (NULL == acl->resources[i])
+        //Input the interface name of resource
+        printf("Num. of Interface of [%s] (Max value : %d) : \n", rsrc->href, MAX_INTERFACE_LENGTH);
+        ret = scanf("%zu", &rsrc->interfaceLen);
+        if(-1 == ret || MAX_INTERFACE_LENGTH < rsrc->interfaceLen)
         {
-            OIC_LOG(ERROR, TAG, "Error while memory allocation");
+            printf("Error while input\n");
             return -1;
         }
+
+        printf("-Interface of [%s] resource\n", rsrc->href);
+        printf("ex) oic.if.baseline (Max Length: 64 Byte )\n");
+        rsrc->interfaces = (char**)OICCalloc(rsrc->interfaceLen, sizeof(char*));
+        if(!rsrc->interfaces)
+        {
+            printf("Failed to memory allocation\n");
+            return -1;
+        }
+        for(size_t j = 0; j < rsrc->interfaceLen; j++)
+        {
+            printf("Interface[%zu] : ", j + 1);
+            ret = scanf("%s", input_buffer);
+            if(1 == ret)
+            {
+                rsrc->interfaces[i] = OICStrdup(input_buffer);
+                if(!rsrc->interfaces[i])
+                {
+                    printf("Failed to OICStrdup\n");
+                    return -1;
+                }
+            }
+            else
+            {
+                printf("Error while input\n");
+                return -1;
+            }
+        }
+
+        //Input the resource type of resource
+        printf("Num. of ResourceType of [%s] (Max value : %d)  : \n", rsrc->href, MAX_RESOURCETYPE_LENGTH);
+        ret = scanf("%zu", &rsrc->typeLen);
+        if(-1 == ret || MAX_RESOURCETYPE_LENGTH < rsrc->typeLen)
+        {
+            printf("Error while input\n");
+            return -1;
+        }
+
+        printf("-Resource Type of [%s] resource\n", rsrc->href);
+        printf("ex) oic.core (Max Length: 64 Byte )\n");
+        rsrc->types = (char**)OICCalloc(rsrc->typeLen, sizeof(char*));
+        if(!rsrc->types)
+        {
+            printf("Failed to memory allocation\n");
+            return -1;
+        }
+        for(size_t j = 0; j < rsrc->typeLen; j++)
+        {
+            printf("Resource type[%zu] : ", j + 1);
+            ret = scanf("%s", input_buffer);
+            if(1 == ret)
+            {
+                rsrc->types[i] = OICStrdup(input_buffer);
+                if(!rsrc->types[i])
+                {
+                    printf("Failed to OICStrdup\n");
+                    return -1;
+                }
+            }
+            else
+            {
+                printf("Error while input\n");
+                return -1;
+            }
+        }
     }
+
     // Set Permission
     do
     {
         printf("-Set the permission(C,R,U,D,N)\n");
         printf("ex) CRUDN, CRU_N,..(5 Charaters)\n");
         printf("Permission : ");
-        char *ptr_temp_pms = NULL;
-        ret = scanf("%5ms", &ptr_temp_pms);
+        ret = scanf("%s", &input_buffer);
         if(1 == ret)
         {
-            OICStrcpy(temp_pms, sizeof(temp_pms), ptr_temp_pms);
-            OICFree(ptr_temp_pms);
+            OICStrcpy(temp_pms, sizeof(temp_pms), input_buffer);
+        }
+        else
+        {
+            printf("Error while input\n");
+            return -1;
+        }
+    }
+    while (0 != CalculateAclPermission(temp_pms, &(ace->permission)) );
 
-        }
-        else
-        {
-            printf("Error while input\n");
-            return -1;
-        }
-    }
-    while (0 != CalculateAclPermission(temp_pms, &(acl->permission)) );
-    // Set Rowner
-    printf("Num. of Rowner : ");
-    ret = scanf("%zu", &acl->ownersLen);
-    if(-1 == ret)
-    {
-        printf("Error while input\n");
-        return -1;
-    }
-    printf("-URN identifying the rowner\n");
-    printf("ex) lightDeviceUUID0 (16 Numbers except to '-')\n");
-    acl->owners = (OicUuid_t *)OICCalloc(acl->ownersLen, sizeof(OicUuid_t));
-    if (NULL == acl->owners)
-    {
-        OIC_LOG(ERROR, TAG, "Error while memory allocation");
-        return -1;
-    }
-    for (size_t i = 0; i < acl->ownersLen; i++)
-    {
-        printf("[%zu]Rowner : ", i + 1);
-        char *ptr_temp_id = NULL;
-        ret = scanf("%19ms", &ptr_temp_id);
-        if (1 == ret)
-        {
-            OICStrcpy(temp_id, sizeof(temp_id), ptr_temp_id);
-            OICFree(ptr_temp_id);
-        }
-        else
-        {
-            printf("Error while input\n");
-            return -1;
-        }
-        j = 0;
-        for (int k = 0; temp_id[k] != '\0'; k++)
-        {
-            if (DASH != temp_id[k])
-            {
-                acl->owners[i].id[j++] = temp_id[k];
-            }
-        }
-    }
     return 0;
 }
+
 
 
 //FILE *client_fopen(const char *path, const char *mode)
@@ -498,10 +521,15 @@ static int InputCRL(OicSecCrl_t *crlRes)
     PRINT_BYTE_ARRAY("CRL:\n",crl);
     CHECK_CALL(SetCertificateRevocationList, &crl);
     crlRes->CrlData = crl;
-    crlRes->ThisUpdate.data = uint8ThisUpdateTime;
+    crlRes->ThisUpdate.data = OICStrdup(uint8ThisUpdateTime);
     crlRes->ThisUpdate.len = DATE_LENGTH;
     crlRes->CrlId = 1;
 
+    if(NULL == crlRes->ThisUpdate.data)
+    {
+        printf("OICStrdup failed\n");
+        return PKI_MEMORY_ALLOC_FAILED;
+    }
 
     FUNCTION_CLEAR(
     //OICFree(crl.data);
@@ -756,7 +784,8 @@ int main()
     }
 
 error:
-    deleteACL(gAcl);
+    DeleteACLList(gAcl);
+    deleteCrl(gCrl);
     OCDeleteDiscoveredDevices(pDeviceList);
     OCDeleteDiscoveredDevices(pOwnedList);
 

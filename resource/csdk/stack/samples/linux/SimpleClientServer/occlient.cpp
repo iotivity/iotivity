@@ -18,18 +18,26 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+#include "iotivity_config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 #include <iostream>
 #include <sstream>
+#include <getopt.h>
 #include "ocstack.h"
 #include "logger.h"
 #include "occlient.h"
 #include "ocpayload.h"
 #include "payload_logging.h"
+#include "common.h"
 
 #ifdef ROUTING_GATEWAY
 /**
@@ -57,8 +65,6 @@ static OCConnectivityType ConnType = CT_ADAPTER_IP;
 static OCDevAddr serverAddr;
 static char discoveryAddr[100];
 static std::string coapServerResource = "/a/light";
-
-void StripNewLineChar(char* str);
 
 #ifdef WITH_PRESENCE
 // The handle for observe registration
@@ -99,7 +105,7 @@ OCPayload* putPayload()
 
 static void PrintUsage()
 {
-    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..17> -c <0|1>");
+    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..20> -c <0|1>");
     OIC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OIC_LOG(INFO, TAG, "-c 0 : Use Default connectivity(IP)");
     OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
@@ -283,45 +289,46 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle,
 
     if (clientResponse)
     {
-        OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
-        OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-        OIC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d",
-                gNumObserveNotifies);
-        OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-        OIC_LOG(INFO, TAG, ("=============> Obs Response"));
-        gNumObserveNotifies++;
-        if (gNumObserveNotifies > 15) //large number to test observing in DELETE case.
+        if (clientResponse->sequenceNumber <= MAX_SEQUENCE_NUMBER)
         {
-            if (TestCase == TEST_OBS_REQ_NON || TestCase == TEST_OBS_REQ_CON)
+            if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
             {
-                OIC_LOG(ERROR, TAG, "Cancelling with LOW QOS");
-                if (OCCancel (handle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
-                {
-                    OIC_LOG(ERROR, TAG, "Observe cancel error");
-                }
-                return OC_STACK_DELETE_TRANSACTION;
+                OIC_LOG(INFO, TAG, "This also serves as a registration confirmation.");
             }
-            else if (TestCase == TEST_OBS_REQ_NON_CANCEL_IMM)
+
+            OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
+            OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
+            OIC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d",
+                    gNumObserveNotifies);
+            OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
+            OIC_LOG(INFO, TAG, ("=============> Obs Response"));
+            gNumObserveNotifies++;
+
+            if (gNumObserveNotifies > 15) //large number to test observing in DELETE case.
             {
-                OIC_LOG(ERROR, TAG, "Cancelling with HIGH QOS");
-                if (OCCancel (handle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+                if (TestCase == TEST_OBS_REQ_NON || TestCase == TEST_OBS_REQ_CON)
                 {
-                    OIC_LOG(ERROR, TAG, "Observe cancel error");
+                    OIC_LOG(ERROR, TAG, "Cancelling with LOW QOS");
+                    if (OCCancel (handle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
+                    {
+                        OIC_LOG(ERROR, TAG, "Observe cancel error");
+                    }
+                    return OC_STACK_DELETE_TRANSACTION;
+                }
+                else if (TestCase == TEST_OBS_REQ_NON_CANCEL_IMM)
+                {
+                    OIC_LOG(ERROR, TAG, "Cancelling with HIGH QOS");
+                    if (OCCancel (handle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+                    {
+                        OIC_LOG(ERROR, TAG, "Observe cancel error");
+                    }
                 }
             }
         }
-        if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
+        else
         {
-            OIC_LOG(INFO, TAG, "This also serves as a registration confirmation");
-        }
-        else if (clientResponse->sequenceNumber == OC_OBSERVE_DEREGISTER)
-        {
-            OIC_LOG(INFO, TAG, "This also serves as a deregistration confirmation");
-            return OC_STACK_DELETE_TRANSACTION;
-        }
-        else if (clientResponse->sequenceNumber == OC_OBSERVE_NO_OPTION)
-        {
-            OIC_LOG(INFO, TAG, "This also tells you that registration/deregistration failed");
+            OIC_LOG(INFO, TAG, "No observe option header is returned in the response.");
+            OIC_LOG(INFO, TAG, "For a registration request, it means the registration failed");
             return OC_STACK_DELETE_TRANSACTION;
         }
     }
@@ -409,7 +416,7 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
 
         if(!found)
         {
-            OIC_LOG_V (INFO, TAG, "No /a/light in payload");
+            OIC_LOG_V (INFO, TAG, "No %s in payload", coapServerResource.c_str());
             return OC_STACK_KEEP_TRANSACTION;
         }
 
@@ -555,10 +562,7 @@ int InitPresence()
     {
         if (result == OC_STACK_OK)
         {
-            std::ostringstream multicastPresenceQuery;
-            multicastPresenceQuery.str("");
-            multicastPresenceQuery << "coap://" << OC_MULTICAST_PREFIX << OC_RSRVD_PRESENCE_URI;
-            result = InvokeOCDoResource(multicastPresenceQuery, &serverAddr, OC_REST_PRESENCE, OC_LOW_QOS,
+            result = InvokeOCDoResource(query, NULL, OC_REST_PRESENCE, OC_LOW_QOS,
                     presenceCB, NULL, 0);
         }
     }
@@ -685,7 +689,8 @@ int InitDeleteRequest(OCQualityOfService qos)
     return result;
 }
 
-int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions, bool getWithQuery)
+int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions,
+                   bool getWithQuery)
 {
 
     OCHeaderOption options[MAX_HEADER_OPTIONS];
@@ -703,17 +708,25 @@ int InitGetRequest(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptio
 
     if (withVendorSpecificHeaderOptions)
     {
+        memset(options, 0, sizeof(OCHeaderOption)* MAX_HEADER_OPTIONS);
+        size_t numOptions = 0;
         uint8_t option0[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        uint16_t optionID = 2048;
+        size_t optionDataSize = sizeof(option0);
+        OCSetHeaderOption(options,
+                          &numOptions,
+                          optionID,
+                          option0,
+                          optionDataSize);
+
         uint8_t option1[] = { 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
-        memset(options, 0, sizeof(OCHeaderOption) * MAX_HEADER_OPTIONS);
-        options[0].protocolID = OC_COAP_ID;
-        options[0].optionID = 2048;
-        memcpy(options[0].optionData, option0, sizeof(option0));
-        options[0].optionLength = 10;
-        options[1].protocolID = OC_COAP_ID;
-        options[1].optionID = 3000;
-        memcpy(options[1].optionData, option1, sizeof(option1));
-        options[1].optionLength = 10;
+        optionID = 3000;
+        optionDataSize = sizeof(option1);
+        OCSetHeaderOption(options,
+                          &numOptions,
+                          optionID,
+                          option1,
+                          optionDataSize);
     }
     if (withVendorSpecificHeaderOptions)
     {
@@ -733,7 +746,7 @@ int InitPlatformDiscovery(OCQualityOfService qos)
 
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[64] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
     snprintf(szQueryUri, sizeof (szQueryUri) - 1, PLATFORM_DISCOVERY_QUERY, discoveryAddr);
 
@@ -758,7 +771,7 @@ int InitDeviceDiscovery(OCQualityOfService qos)
 
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[100] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
     snprintf(szQueryUri, sizeof (szQueryUri) - 1, DEVICE_DISCOVERY_QUERY, discoveryAddr);
 
@@ -781,7 +794,7 @@ int InitDiscovery(OCQualityOfService qos)
 {
     OCStackResult ret;
     OCCallbackData cbData;
-    char szQueryUri[100] = { 0 };
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
     snprintf(szQueryUri, sizeof (szQueryUri) - 1, RESOURCE_DISCOVERY_QUERY, discoveryAddr);
 

@@ -42,7 +42,7 @@ const char *gResourceUri = (char *)"/a/light";
 //Secure Virtual Resource database for Iotivity Server
 //It contains Server's Identity and the PSK credentials
 //of other devices which the server trusts
-static char CRED_FILE[] = "oic_svr_db_light.json";
+static char CRED_FILE[] = "oic_svr_db_light.dat";
 
 
 //Structure to represent a light resource  and its attributes
@@ -303,7 +303,7 @@ int main()
      */
     createLightResource(gResourceUri, &Light);
 
-    CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+    CASelectCipherSuite(TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8, CA_ADAPTER_IP);
 
     struct timespec timeout;
     timeout.tv_sec  = 0;

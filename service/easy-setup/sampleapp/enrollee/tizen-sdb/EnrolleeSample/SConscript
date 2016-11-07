@@ -29,7 +29,7 @@ print "Inside the Config SConscript"
 # Map of host os and allowed target os (host: allowed target os)
 host_target_map = {
         'linux': ['linux', 'android', 'arduino', 'yocto', 'tizen'],
-        'windows': ['windows', 'winrt', 'android', 'arduino', 'tizen'],
+        'windows': ['windows', 'android', 'arduino', 'tizen'],
         'darwin': ['darwin', 'ios', 'android', 'arduino'],
         }
 
@@ -38,7 +38,6 @@ os_arch_map = {
         'linux': ['x86', 'x86_64', 'arm', 'arm64'],
         'android': ['x86', 'x86_64', 'armeabi', 'armeabi-v7a', 'armeabi-v7a-hard', 'arm64-v8a'],
         'windows': ['x86', 'amd64', 'arm'],
-        'winrt': ['arm'],
         'darwin': ['i386', 'x86_64'],
         'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
         'arduino': ['avr', 'arm'],
@@ -193,10 +192,6 @@ env.SetDir(env.GetLaunchDir())
 env['ROOT_DIR']=env.GetLaunchDir()
 
 env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-if env.get('ROUTING') == 'GW':
-    env.AppendUnique(CPPDEFINES = ['ROUTING_GATEWAY'])
-elif env.get('ROUTING') == 'EP':
-    env.AppendUnique(CPPDEFINES = ['ROUTING_EP'])
 env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
 
 Export('env')

@@ -35,6 +35,7 @@
 #include "cathreadpool.h"
 #include "caipadapter.h"
 #include "cainterface.h"
+#include <coap/utlist.h>
 
 #ifdef RA_ADAPTER
 #include "caraadapter.h"
@@ -49,17 +50,32 @@
 #define CA_MEMORY_ALLOC_CHECK(arg) {if (arg == NULL) \
     {OIC_LOG(ERROR, TAG, "memory error");goto memory_error_exit;} }
 
-
-
 static CAConnectivityHandler_t *g_adapterHandler = NULL;
 
 static uint32_t g_numberOfAdapters = 0;
 
 static CANetworkPacketReceivedCallback g_networkPacketReceivedCallback = NULL;
 
-static CANetworkChangeCallback g_networkChangeCallback = NULL;
-
 static CAErrorHandleCallback g_errorHandleCallback = NULL;
+
+static struct CANetworkCallback_t * g_networkChangeCallbackList = NULL;
+
+/**
+ * network callback structure is handling
+ * for adapter state changed and connection state changed event.
+ */
+typedef struct CANetworkCallback_t {
+
+    /** Linked list; for multiple callback list.*/
+    struct CANetworkCallback_t * next;
+
+    /** Adapter state changed event callback. */
+    CAAdapterStateChangedCB adapter;
+
+    /** Connection state changed event callback. */
+    CAConnectionStateChangedCB conn;
+
+} CANetworkCallback_t;
 
 static int CAGetAdapterIndex(CATransportAdapter_t cType)
 {
@@ -75,7 +91,7 @@ static int CAGetAdapterIndex(CATransportAdapter_t cType)
 
 static void CARegisterCallback(CAConnectivityHandler_t handler)
 {
-    if(handler.startAdapter == NULL ||
+    if (handler.startAdapter == NULL ||
         handler.startListenServer == NULL ||
         handler.stopListenServer == NULL ||
         handler.startDiscoveryServer == NULL ||
@@ -104,6 +120,93 @@ static void CARegisterCallback(CAConnectivityHandler_t handler)
     OIC_LOG_V(DEBUG, TAG, "%d type adapter, register complete!", handler.cType);
 }
 
+/**
+ * Add a network callback from caller to the network callback list
+ *
+ * @param adapterCB  adapter state changed callback
+ * @param connCB     connection state changed callback
+ *
+ * @return
+ *     CAResult_t
+ */
+static CAResult_t AddNetworkStateChangedCallback(CAAdapterStateChangedCB adapterCB,
+                                                 CAConnectionStateChangedCB connCB)
+{
+    OIC_LOG(DEBUG, TAG, "Add NetworkStateChanged Callback");
+
+    if (!adapterCB || !connCB)
+    {
+        OIC_LOG(ERROR, TAG, "parameter is null");
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    CANetworkCallback_t* callback = NULL;
+    LL_FOREACH(g_networkChangeCallbackList, callback)
+    {
+        if (callback && adapterCB == callback->adapter && connCB == callback->conn)
+        {
+            OIC_LOG(DEBUG, TAG, "this callback is already added");
+            return CA_STATUS_OK;
+        }
+    }
+
+    callback = (CANetworkCallback_t *) OICCalloc(1, sizeof(CANetworkCallback_t));
+    if (NULL == callback)
+    {
+        OIC_LOG(ERROR, TAG, "Memory allocation failed during registration");
+        return CA_MEMORY_ALLOC_FAILED;
+    }
+
+    callback->adapter = adapterCB;
+    callback->conn = connCB;
+    LL_APPEND(g_networkChangeCallbackList, callback);
+    return CA_STATUS_OK;
+}
+
+/**
+ * Remove a network callback from the network callback list
+ *
+ * @param adapterCB  adapter state changed callback
+ * @param connCB     connection state changed callback
+ *
+ * @return
+ *     CAResult_t
+ */
+static CAResult_t RemoveNetworkStateChangedCallback(CAAdapterStateChangedCB adapterCB,
+                                                    CAConnectionStateChangedCB connCB)
+{
+    OIC_LOG(DEBUG, TAG, "Remove NetworkStateChanged Callback");
+
+    CANetworkCallback_t* callback = NULL;
+    LL_FOREACH(g_networkChangeCallbackList, callback)
+    {
+        if (callback && adapterCB == callback->adapter && connCB == callback->conn)
+        {
+            OIC_LOG(DEBUG, TAG, "remove specific callback");
+            LL_DELETE(g_networkChangeCallbackList, callback);
+            OICFree(callback);
+            return CA_STATUS_OK;
+        }
+    }
+    return CA_STATUS_OK;
+}
+
+/**
+ * Remove all network callback from the network callback list
+ */
+static void RemoveAllNetworkStateChangedCallback()
+{
+    OIC_LOG(DEBUG, TAG, "Remove All NetworkStateChanged Callback");
+
+    CANetworkCallback_t* callback = NULL;
+    LL_FOREACH(g_networkChangeCallbackList, callback)
+    {
+        OIC_LOG(DEBUG, TAG, "remove all callbacks");
+        LL_DELETE(g_networkChangeCallbackList, callback);
+        OICFree(callback);
+    }
+}
+
 #ifdef RA_ADAPTER
 CAResult_t CASetAdapterRAInfo(const CARAInfo_t *caraInfo)
 {
@@ -124,14 +227,42 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
     }
 }
 
-static void CANetworkChangedCallback(const CAEndpoint_t *info, CANetworkStatus_t status)
+static void CAAdapterChangedCallback(CATransportAdapter_t adapter, CANetworkStatus_t status)
 {
     // Call the callback.
-    if (g_networkChangeCallback != NULL)
+    CANetworkCallback_t* callback  = NULL;
+    LL_FOREACH(g_networkChangeCallbackList, callback)
     {
-        g_networkChangeCallback(info, status);
+        if (callback && callback->adapter)
+        {
+            if (CA_INTERFACE_UP == status)
+            {
+                callback->adapter(adapter, true);
+            }
+            else if (CA_INTERFACE_DOWN == status)
+            {
+                callback->adapter(adapter, false);
+            }
+        }
     }
+    OIC_LOG_V(DEBUG, TAG, "[%d] adapter status is changed to [%d]", adapter, status);
 }
+
+#if defined(TCP_ADAPTER) || defined(EDR_ADAPTER) || defined(LE_ADAPTER)
+static void CAConnectionChangedCallback(const CAEndpoint_t *info, bool isConnected)
+{
+    // Call the callback.
+    CANetworkCallback_t* callback = NULL;
+    LL_FOREACH(g_networkChangeCallbackList, callback)
+    {
+        if (callback && callback->conn)
+        {
+            callback->conn(info, isConnected);
+        }
+    }
+    OIC_LOG_V(DEBUG, TAG, "[%s] connection status is changed to [%d]", info->addr, isConnected);
+}
+#endif
 
 static void CAAdapterErrorHandleCallback(const CAEndpoint_t *endpoint,
                                          const void *data, uint32_t dataLen,
@@ -152,32 +283,32 @@ void CAInitializeAdapters(ca_thread_pool_t handle)
 
     // Initialize adapters and register callback.
 #ifdef IP_ADAPTER
-    CAInitializeIP(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+    CAInitializeIP(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
                    CAAdapterErrorHandleCallback, handle);
 #endif /* IP_ADAPTER */
 
 #ifdef EDR_ADAPTER
-    CAInitializeEDR(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
-                    CAAdapterErrorHandleCallback, handle);
+    CAInitializeEDR(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
+                    CAConnectionChangedCallback, CAAdapterErrorHandleCallback, handle);
 #endif /* EDR_ADAPTER */
 
 #ifdef LE_ADAPTER
-    CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
-                   CAAdapterErrorHandleCallback, handle);
+    CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
+                   CAConnectionChangedCallback, CAAdapterErrorHandleCallback, handle);
 #endif /* LE_ADAPTER */
 
 #ifdef RA_ADAPTER
-    CAInitializeRA(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+    CAInitializeRA(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
                    handle);
 #endif /* RA_ADAPTER */
 
 #ifdef TCP_ADAPTER
-    CAInitializeTCP(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
-                    CAAdapterErrorHandleCallback, handle);
+    CAInitializeTCP(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
+                    CAConnectionChangedCallback, CAAdapterErrorHandleCallback, handle);
 #endif /* TCP_ADAPTER */
 
 #ifdef NFC_ADAPTER
-    CAInitializeNFC(CARegisterCallback, CAReceivedPacketCallback, CANetworkChangedCallback,
+    CAInitializeNFC(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
                     CAAdapterErrorHandleCallback, handle);
 #endif /* NFC_ADAPTER */
 }
@@ -189,11 +320,30 @@ void CASetPacketReceivedCallback(CANetworkPacketReceivedCallback callback)
     g_networkPacketReceivedCallback = callback;
 }
 
-void CASetNetworkChangeCallback(CANetworkChangeCallback callback)
+CAResult_t CASetNetworkMonitorCallbacks(CAAdapterStateChangedCB adapterCB,
+                                        CAConnectionStateChangedCB connCB)
 {
-    OIC_LOG(DEBUG, TAG, "Set network handle callback");
+    OIC_LOG(DEBUG, TAG, "Set network monitoring callback");
+    CAResult_t res = AddNetworkStateChangedCallback(adapterCB, connCB);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "AddNetworkStateChangedCallback has failed");
+        return CA_STATUS_FAILED;
+    }
+    return CA_STATUS_OK;
+}
 
-    g_networkChangeCallback = callback;
+CAResult_t CAUnsetNetworkMonitorCallbacks(CAAdapterStateChangedCB adapterCB,
+                                          CAConnectionStateChangedCB connCB)
+{
+    OIC_LOG(DEBUG, TAG, "Unset network monitoring callback");
+    CAResult_t res = RemoveNetworkStateChangedCallback(adapterCB, connCB);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "RemoveNetworkStateChangedCallback has failed");
+        return CA_STATUS_FAILED;
+    }
+    return CA_STATUS_OK;
 }
 
 void CASetErrorHandleCallback(CAErrorHandleCallback errorCallback)
@@ -278,7 +428,7 @@ CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size)
 
             OIC_LOG_V(DEBUG,
                       TAG,
-                      "%zu adapter network info size is %" PRIu32 " res:%d",
+                      "%" PRIu32 " adapter network info size is %" PRIu32 " res:%d",
                       index,
                       tempSize[index],
                       res);
@@ -295,7 +445,10 @@ CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size)
         {
             return res;
         }
-        return CA_STATUS_FAILED;
+        else
+        {
+            return CA_STATUS_FAILED;
+        }
     }
 
     // #3. add data into result
@@ -345,7 +498,8 @@ memory_error_exit:
     return CA_MEMORY_ALLOC_FAILED;
 }
 
-CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length)
+CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length,
+                             CADataType_t dataType)
 {
     if (endpoint == NULL)
     {
@@ -390,7 +544,7 @@ CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uin
         if (NULL != g_adapterHandler[index].sendData)
         {
             OIC_LOG(DEBUG, TAG, "unicast message to adapter");
-            sentDataLen = g_adapterHandler[index].sendData(endpoint, data, length);
+            sentDataLen = g_adapterHandler[index].sendData(endpoint, data, length, dataType);
         }
 
         if (sentDataLen != (int32_t)length)
@@ -407,7 +561,8 @@ CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uin
     return CA_STATUS_OK;
 }
 
-CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length)
+CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length,
+                               CADataType_t dataType)
 {
     u_arraylist_t *list = CAGetSelectedNetworkList();
     if (!list)
@@ -422,7 +577,7 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
     {
         void* ptrType = u_arraylist_get(list, i);
 
-        if(NULL == ptrType)
+        if (NULL == ptrType)
         {
             continue;
         }
@@ -435,9 +590,8 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
 
         int index = CAGetAdapterIndex(connType);
         if (0 > index)
-        if (-1 == index)
         {
-            OIC_LOG(DEBUG, TAG, "unknown connectivity type!");
+            OIC_LOG(ERROR, TAG, "unknown connectivity type!");
             continue;
         }
 
@@ -452,7 +606,7 @@ CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, u
                 return CA_MEMORY_ALLOC_FAILED;
             }
             memcpy(payload, data, length);
-            sentDataLen = g_adapterHandler[index].sendDataToAll(endpoint, payload, length);
+            sentDataLen = g_adapterHandler[index].sendDataToAll(endpoint, payload, length, dataType);
             OICFree(payload);
         }
 

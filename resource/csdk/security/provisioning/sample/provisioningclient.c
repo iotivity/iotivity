@@ -18,10 +18,15 @@
  *
  *****************************************************************/
 
+#include "iotivity_config.h"
+
 #include <stdio.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
+#include "utlist.h"
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -39,20 +44,26 @@ extern "C"
 
 // declaration(s) for provisioning client using C-level provisioning API
 // user input definition for main loop on provisioning client
-#define _10_DISCOV_ALL_DEVS_    10
-#define _11_DISCOV_UNOWN_DEVS_  11
-#define _12_DISCOV_OWN_DEVS_    12
-#define _20_REGIST_DEVS_        20
-#define _30_PROVIS_PAIR_DEVS_   30
-#define _31_PROVIS_CRED_        31
-#define _32_PROVIS_ACL_         32
-#define _33_PROVIS_DP_           33
-#define _34_CHECK_LINK_STATUS_  34
-#define _40_UNLINK_PAIR_DEVS_   40
-#define _50_REMOVE_SELEC_DEV_   50
-#define _99_EXIT_PRVN_CLT_      99
+#define _10_DISCOV_ALL_DEVS_        10
+#define _11_DISCOV_UNOWN_DEVS_      11
+#define _12_DISCOV_OWN_DEVS_        12
+#define _20_REGIST_DEVS_            20
+#define _30_PROVIS_PAIR_DEVS_       30
+#define _31_PROVIS_CRED_            31
+#define _32_PROVIS_ACL_             32
+#define _33_PROVIS_DP_              33
+#define _34_CHECK_LINK_STATUS_      34
+#define _40_UNLINK_PAIR_DEVS_       40
+#define _50_REMOVE_SELEC_DEV_       50
+#define _51_REMOVE_DEV_WITH_UUID_   51
+#define _52_RESET_SELEC_DEV_        52
+#define _60_GET_CRED_               60
+#define _61_GET_ACL_                61
+#define _70_SELECT_PROTOCOL_        70
+#define _99_EXIT_PRVN_CLT_          99
 
 #define ACL_RESRC_MAX_NUM   16
+#define ACL_RESRC_ARRAY_SIZE   3 //This value is used only for sample (not OCF spec)
 #define ACL_RESRC_MAX_LEN   128
 #define ACL_PEMISN_CNT      5
 #define DISCOVERY_TIMEOUT   10  // 10 sec
@@ -60,7 +71,7 @@ extern "C"
 #define TAG "provisioningclient"
 
 static const char* ACL_PEMISN[5] = {"CREATE", "READ", "WRITE", "DELETE", "NOTIFY"};
-static const char* SVR_DB_FILE_NAME = "oic_svr_db_client.json";
+static const char* SVR_DB_FILE_NAME = "oic_svr_db_client.dat";
         // '_' for separaing from the same constant variable in |srmresourcestrings.c|
 static const char* PRVN_DB_FILE_NAME = "oic_prvn_mng.db";
 static const OicSecPrm_t  SUPPORTED_PRMS[1] =
@@ -79,7 +90,10 @@ static OCProvisionDev_t* g_unown_list;
 static int g_own_cnt;
 static int g_unown_cnt;
 static bool g_doneCB;
-
+#ifdef __WITH_TLS__
+static int secure_protocol = 1;
+static void setDevProtocol(OCProvisionDev_t* dev_lst);
+#endif
 // function declaration(s) for calling them before implementing
 static OicSecAcl_t* createAcl(const int);
 static OicSecPdAcl_t* createPdAcl(const int);
@@ -149,6 +163,34 @@ static void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool
     g_doneCB = true;
 }
 
+static void getCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "getCredCB SUCCEEDED - ctx: %s", (char*) ctx);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "getCredCB FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+    g_doneCB = true;
+}
+
+static void getAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "getAclCB SUCCEEDED - ctx: %s", (char*) ctx);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "getAclCB FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+    g_doneCB = true;
+}
+
 static void provisionDPCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
@@ -186,6 +228,20 @@ static void removeDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool
     else
     {
         OIC_LOG_V(ERROR, TAG, "Remove Device FAILED - ctx: %s", (char*) ctx);
+        printResultList((const OCProvisionResult_t*) arr, nOfRes);
+    }
+    g_doneCB = true;
+}
+
+static void syncDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+{
+    if(!hasError)
+    {
+        OIC_LOG_V(INFO, TAG, "Sync Device SUCCEEDED - ctx: %s", (char*) ctx);
+    }
+    else
+    {
+        OIC_LOG_V(ERROR, TAG, "Sync Device FAILED - ctx: %s", (char*) ctx);
         printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
     g_doneCB = true;
@@ -266,7 +322,7 @@ static int initProvisionClient(void)
         return -1;
     }
     otmcb.loadSecretCB = InputPinCodeCallback;
-    otmcb.createSecureSessionCB = CreateSecureSessionRandomPinCallbak;
+    otmcb.createSecureSessionCB = CreateSecureSessionRandomPinCallback;
     otmcb.createSelectOxmPayloadCB = CreatePinBasedSelectOxmPayload;
     otmcb.createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload;
     if(OC_STACK_OK != OCSetOwnerTransferCallbackData(OIC_RANDOM_DEVICE_PIN, &otmcb))
@@ -306,7 +362,10 @@ static int discoverAllDevices(void)
     g_own_cnt = printDevList(g_own_list);
     printf("   > Discovered Unowned Devices\n");
     g_unown_cnt = printDevList(g_unown_list);
-
+#ifdef __WITH_TLS__
+    setDevProtocol(g_own_list);
+    setDevProtocol(g_unown_list);
+#endif
     return 0;
 }
 
@@ -331,7 +390,9 @@ static int discoverUnownedDevices(void)
     // display the discovered unowned list
     printf("   > Discovered Unowned Devices\n");
     g_unown_cnt = printDevList(g_unown_list);
-
+#ifdef __WITH_TLS__
+    setDevProtocol(g_unown_list);
+#endif
     return 0;
 }
 
@@ -355,7 +416,9 @@ static int discoverOwnedDevices(void)
     // display the discovered owned list
     printf("   > Discovered Owned Devices\n");
     g_own_cnt = printDevList(g_own_list);
-
+#ifdef __WITH_TLS__
+    setDevProtocol(g_own_list);
+#endif
     return 0;
 }
 
@@ -534,7 +597,7 @@ static int provisionCred(void)
 
     // display the CRED-provisioned result
     printf("   > Provisioned Selected Pairwise Crendentials\n");
-    printf("   > Please Check Device's Status for the Linked Result, with [33] Menu\n");
+    printf("   > Please Check Device's Status for the Linked Result, with [34] Menu\n");
 
     return 0;
 }
@@ -777,6 +840,125 @@ CKLST_ERROR:
     return -1;
 }
 
+static int getCred(void)
+{
+    // check |own_list| for checking selected link status on PRVN DB
+    if(!g_own_list || 1>g_own_cnt)
+    {
+        printf("   > Owned Device List, to Check Linked Status on PRVN DB, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for checking selected link status on PRVN DB
+    int dev_num = 0;
+    for( ; ; )
+    {
+        printf("   > Enter Device Number, for Checking Linked Status on PRVN DB: ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(0<dev_num && g_own_cnt>=dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    // call |getDevInst| API actually
+    // calling this API with callback actually acts like blocking
+    // for error checking, the return value saved and printed
+    g_doneCB = false;
+    OCProvisionDev_t* dev = getDevInst((const OCProvisionDev_t*) g_own_list, dev_num);
+    if(!dev)
+    {
+        OIC_LOG(ERROR, TAG, "getDevInst: device instance empty");
+        goto PVACL_ERROR;
+    }
+    OCStackResult rst = OCGetCredResource((void*) g_ctx, dev, getCredCB);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCGetCred API error: %d", rst);
+        goto PVACL_ERROR;
+    }
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCGetCredResource callback error");
+        goto PVACL_ERROR;
+    }
+
+    // display the result of get credential
+    printf("   > Get Cred SUCCEEDED\n");
+
+    return 0;
+
+PVACL_ERROR:
+    return -1;
+}
+
+static int getAcl(void)
+{
+    // check |own_list| for checking selected link status on PRVN DB
+    if(!g_own_list || 1>g_own_cnt)
+    {
+        printf("   > Owned Device List, to Check Linked Status on PRVN DB, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;  // normal case
+    }
+
+    // select device for checking selected link status on PRVN DB
+    int dev_num = 0;
+    for( ; ; )
+    {
+        printf("   > Enter Device Number, for Checking Linked Status on PRVN DB: ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(0<dev_num && g_own_cnt>=dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    // call |getDevInst| API actually
+    // calling this API with callback actually acts like blocking
+    // for error checking, the return value saved and printed
+    g_doneCB = false;
+    OCProvisionDev_t* dev = getDevInst((const OCProvisionDev_t*) g_own_list, dev_num);
+    if(!dev)
+    {
+        OIC_LOG(ERROR, TAG, "getDevInst: device instance empty");
+        goto PVACL_ERROR;
+    }
+    OCStackResult rst = OCGetACLResource((void*) g_ctx, dev, getAclCB);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCGetACLResource API error: %d", rst);
+
+        goto PVACL_ERROR;
+    }
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCGetACLResource callback error");
+        goto PVACL_ERROR;
+    }
+
+    // display the result of get credential
+    printf("   > Get ACL SUCCEEDED\n");
+
+    return 0;
+
+PVACL_ERROR:
+    return -1;
+}
+
 static int unlinkPairwise(void)
 {
     // check |own_list| for unlinking pairwise devices
@@ -877,6 +1059,97 @@ static int removeDevice(void)
     return 0;
 }
 
+static int removeDeviceWithUuid(void)
+{
+    char strUuid[64] = {0};
+    OicUuid_t revUuid;
+    printf("Input the UUID : ");
+    for(int ret=0; 1!=ret; )
+    {
+        ret = scanf("%63s", strUuid);
+        for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                    // '0x20<=code' is character region
+    }
+    OCStackResult rst = ConvertStrToUuid(strUuid, &revUuid);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "ConvertStrToUuid API error: %d", rst);
+        return -1;
+    }
+
+    g_doneCB = false;
+    rst = OCRemoveDeviceWithUuid("RemoveDeviceWithUUID", DISCOVERY_TIMEOUT, &revUuid, removeDeviceCB);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCRemoveDeviceWithUuid API error: %d", rst);
+        return -1;
+    }
+
+    if(waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCRemoveDeviceWithUuid callback error");
+        return -1;
+    }
+
+    // display the removed result
+    printf("   > Removed %s Device\n", strUuid);
+    printf("   > Please Discover Owned Devices for the Registered Result, with [10|12] Menu\n");
+
+    return 0;
+}
+
+static int resetDevice(void)
+{
+    // check |own_list| for removing device
+    if (!g_own_list || 1 > g_own_cnt)
+    {
+        printf("   > Owned Device List, to Reset Device, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return 0;
+    }
+
+    // select device for removing it
+    int dev_num = 0;
+    for ( ; ; )
+    {
+        printf("   > Enter Device Number, for Resetting Device: ");
+        for (int ret = 0; 1 != ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for ( ; 0x20 <= getchar() ; );  // for removing overflow garbages
+                                            // '0x20 <= code' is character region
+        }
+        if (0 < dev_num && g_own_cnt >= dev_num)
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+    g_doneCB = false;
+    printf("   Resetting Selected Owned Device..\n");
+
+    OCStackResult rst = OCResetDevice((void *) g_ctx, DISCOVERY_TIMEOUT,
+                    getDevInst((const OCProvisionDev_t *) g_own_list, dev_num), syncDeviceCB);
+    if (OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCResetDevice API error: %d", rst);
+        return -1;
+    }
+
+    if (waitCallbackRet())  // input |g_doneCB| flag implicitly
+    {
+        OIC_LOG(ERROR, TAG, "OCProvisionCredentials callback error");
+        return -1;
+    }
+
+    // display the removed result
+    printf("   > Reset Selected Owned Device SUCCEEDED\n");
+    printf("   > Please Discover Owned Devices for the Registered Result, with [10|12] Menu\n");
+
+    return 0;
+}
+
 static OicSecAcl_t* createAcl(const int dev_num)
 {
     if(0>=dev_num || g_own_cnt<dev_num)
@@ -893,6 +1166,13 @@ static OicSecAcl_t* createAcl(const int dev_num)
         OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
         return NULL;  // not need to 'goto' |ERROR| before allocating |acl|
     }
+    OicSecAce_t* ace = (OicSecAce_t*) OICCalloc(1, sizeof(OicSecAce_t));
+    if(!ace)
+    {
+        OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
+        return NULL;  // not need to 'goto' |ERROR| before allocating |acl|
+    }
+    LL_APPEND(acl->aces, ace);
 
     // enter |subject| device number
     int num = 0;
@@ -918,7 +1198,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
         OIC_LOG(ERROR, TAG, "createAcl: device instance empty");
         goto CRACL_ERROR;
     }
-    memcpy(&acl->subject, &dev->doxm->deviceID, UUID_LENGTH);
+    memcpy(&ace->subjectuuid, &dev->doxm->deviceID, UUID_LENGTH);
 
     // enter number of |resources| in 'accessed' device
     for( ; ; )
@@ -942,17 +1222,18 @@ static OicSecAcl_t* createAcl(const int dev_num)
     // enter actually each 'accessed' |resources| name
     printf("         Enter Each Accessed Resource Name (each under 128 char)\n");
             // '128' is ACL_RESRC_MAX_LEN
-    acl->resourcesLen = (unsigned) num;
-    acl->resources = (char**) OICCalloc(acl->resourcesLen, sizeof(char*));
-    if(!acl->resources)
-    {
-        OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
-        goto CRACL_ERROR;
-    }
+
     char rsrc_in[ACL_RESRC_MAX_LEN+1] = {0};  // '1' for null termination
-    for(int i=0; acl->resourcesLen>(unsigned)i; ++i)
+    for(int i = 0; num > i; ++i)
     {
-        printf("         Enter Accessed Resource[%d] Name: ", i+1);
+        OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+        if(!rsrc)
+        {
+            OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
+            goto CRACL_ERROR;
+        }
+
+        printf("         Enter Accessed Resource[%d] Name: (e.g. /a/led)", i+1);
         for(int ret=0; 1!=ret; )
         {
             ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
@@ -960,14 +1241,98 @@ static OicSecAcl_t* createAcl(const int dev_num)
                                         // '0x20<=code' is character region
         }
         size_t len = strlen(rsrc_in)+1;  // '1' for null termination
-        char* rsrc = (char*) OICCalloc(len, sizeof(char));
-        if(!rsrc)
+        rsrc->href = (char*) OICCalloc(len, sizeof(char));
+        if(!rsrc->href)
         {
             OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
             goto CRACL_ERROR;
         }
-        OICStrcpy(rsrc, len, rsrc_in);
-        acl->resources[i] = rsrc;  // after here, |rsrc| points nothing
+        OICStrcpy(rsrc->href, len, rsrc_in);
+
+        size_t arrLen = 0;
+        while(1)
+        {
+            printf("         Enter Number of resource type for [%s] : ", rsrc->href);
+            for(int ret=0; 1!=ret; )
+            {
+                ret = scanf("%d", &arrLen);
+                for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                            // '0x20<=code' is character region
+            }
+            if(ACL_RESRC_ARRAY_SIZE >= arrLen)
+            {
+                break;
+            }
+            printf("     Entered Wrong Number. Please Enter under %d Again\n", ACL_RESRC_ARRAY_SIZE);
+        }
+
+        rsrc->typeLen = arrLen;
+        rsrc->types = (char**)OICCalloc(arrLen, sizeof(char*));
+        if(!rsrc->types)
+        {
+            OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
+            goto CRACL_ERROR;
+        }
+
+        for(int i = 0; i < arrLen; i++)
+        {
+            printf("         Enter ResourceType[%d] Name (e.g. core.led): ", i+1);
+            for(int ret=0; 1!=ret; )
+            {
+                ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
+                for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                            // '0x20<=code' is character region
+            }
+            rsrc->types[i] = OICStrdup(rsrc_in);
+            if(!rsrc->types[i])
+            {
+                OIC_LOG(ERROR, TAG, "createAcl: OICStrdup error return");
+                goto CRACL_ERROR;
+            }
+        }
+
+        while(1)
+        {
+            printf("         Enter Number of interface for [%s]: ", rsrc->href);
+            for(int ret=0; 1!=ret; )
+            {
+                ret = scanf("%d", &arrLen);
+                for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                            // '0x20<=code' is character region
+            }
+            if(ACL_RESRC_ARRAY_SIZE >= arrLen)
+            {
+                break;
+            }
+            printf("     Entered Wrong Number. Please Enter under %d Again\n", ACL_RESRC_ARRAY_SIZE);
+        }
+
+        rsrc->interfaceLen = arrLen;
+        rsrc->interfaces = (char**)OICCalloc(arrLen, sizeof(char*));
+        if(!rsrc->interfaces)
+        {
+            OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
+            goto CRACL_ERROR;
+        }
+
+        for(int i = 0; i < arrLen; i++)
+        {
+            printf("         Enter Interface[%d] Name (e.g. oic.if.baseline): ", i+1);
+            for(int ret=0; 1!=ret; )
+            {
+                ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
+                for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                            // '0x20<=code' is character region
+            }
+            rsrc->interfaces[i] = OICStrdup(rsrc_in);
+            if(!rsrc->interfaces[i])
+            {
+                OIC_LOG(ERROR, TAG, "createAcl: OICStrdup error return");
+                goto CRACL_ERROR;
+            }
+        }
+
+        LL_APPEND(ace->resources, rsrc);
     }
 
     // enter |permission| for this access
@@ -999,41 +1364,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
         }
         pmsn_msk <<= 1;
     }
-    acl->permission = pmsn;
-
-    // enter |owner| device number
-    int own_num = 0;
-    for( ; ; )
-    {
-        printf("   > [D] Enter Owner Device Number: ");
-        for(int ret=0; 1!=ret; )
-        {
-            ret = scanf("%d", &own_num);
-            for( ; 0x20<=getchar(); );  // for removing overflow garbages
-                                        // '0x20<=code' is character region
-        }
-        if(0<own_num && g_own_cnt>=own_num)
-        {
-            break;
-        }
-        printf("         Entered Wrong Number. Please Enter Again\n");
-    }
-    acl->ownersLen = 1;
-    acl->owners = (OicUuid_t*) OICCalloc(1, sizeof(OicUuid_t));
-    if(!acl->owners)
-    {
-        OIC_LOG(ERROR, TAG, "createAcl: OICCalloc error return");
-        goto CRACL_ERROR;
-    }
-
-    dev = getDevInst((const OCProvisionDev_t*)g_own_list, own_num);
-    if(!dev || !dev->doxm)
-    {
-        OIC_LOG(ERROR, TAG, "createAcl: device instance empty");
-        goto CRACL_ERROR;
-    }
-    memcpy(acl->owners, &dev->doxm->deviceID, UUID_LENGTH);
-    printf("\n");
+    ace->permission = pmsn;
 
     return acl;
 
@@ -1219,7 +1550,7 @@ static int waitCallbackRet(void)
 
 static int selectTwoDiffNum(int* a, int* b, const int max, const char* str)
 {
-    if(!a || !b || 2>=max || !str)
+    if(!a || !b || 2>max || !str)
     {
         return -1;
     }
@@ -1255,6 +1586,53 @@ static int selectTwoDiffNum(int* a, int* b, const int max, const char* str)
     return -1;
 }
 
+#ifdef __WITH_TLS__
+
+static void setDevProtocol(OCProvisionDev_t* lst)
+{
+    if(!lst)
+    {
+        printf("     Device List is Empty..\n\n");
+        return;
+    }
+
+    for( ; lst; )
+    {
+        if(2 == secure_protocol)
+        {
+            lst->connType &= ~CT_ADAPTER_IP; //reset IP flag
+            lst->connType |= CT_ADAPTER_TCP; //set TCP flag
+            lst->endpoint.adapter = OC_ADAPTER_TCP;
+            lst->endpoint.port = lst->tcpPort;
+            lst->securePort = lst->tcpPort;
+        }
+        lst = lst->next;
+    }
+}
+
+static void selectSecureProtocol()
+{
+    printf("   Select protocol\n");
+    printf("   1 - DTLS(Default)\n");
+    printf("   2 - TLS\n");
+
+    for(int ret=0; 1!=ret; )
+    {
+        ret = scanf("%d",&secure_protocol);
+        for( ; 0x20<=getchar(); );  // for removing overflow garbages
+        // '0x20<=code' is character region
+    }
+
+    if(0 >= secure_protocol || 2 < secure_protocol)
+    {
+        secure_protocol = 1;
+    }
+
+    setDevProtocol(g_own_list);
+    setDevProtocol(g_unown_list);
+}
+#endif
+
 static void printMenu(void)
 {
     printf("************************************************************\n");
@@ -1280,8 +1658,17 @@ static void printMenu(void)
     printf("** 40. Unlink Pairwise Things\n\n");
 
     printf("** [E] REMOVE THE SELECTED DEVICE\n");
-    printf("** 50. Remove the Selected Device\n\n");
+    printf("** 50. Remove the Selected Device\n");
+    printf("** 51. Remove Device with UUID (UUID input is required)\n");
+    printf("** 52. Reset the Selected Device\n\n");
 
+    printf("** [F] GET SECURITY RESOURCE FOR DEBUGGING ONLY\n");
+    printf("** 60. Get the Credential resources of the Selected Device\n");
+    printf("** 61. Get the ACL resources of the Selected Device\n\n");
+#ifdef __WITH_TLS__
+    printf("** [F] SELECT SECURE PROTOCOL DTLS/TLS\n");
+    printf("** 70. Select secure protocol(default DTLS)\n\n");
+#endif
     printf("** [F] EXIT PROVISIONING CLIENT\n");
     printf("** 99. Exit Provisionong Client\n\n");
 
@@ -1400,6 +1787,35 @@ int main()
                 OIC_LOG(ERROR, TAG, "_50_REMOVE_SELEC_DEV_: error");
             }
             break;
+        case _51_REMOVE_DEV_WITH_UUID_:
+            if(removeDeviceWithUuid())
+            {
+                OIC_LOG(ERROR, TAG, "_51_REMOVE_DEV_WITH_UUID_: error");
+            }
+            break;
+        case _52_RESET_SELEC_DEV_:
+            if(resetDevice())
+            {
+                OIC_LOG(ERROR, TAG, "_52_RESET_SELEC_DEV_: error");
+            }
+            break;
+        case _60_GET_CRED_:
+            if(getCred())
+            {
+                OIC_LOG(ERROR, TAG, "_60_GET_CRED_: error");
+            }
+            break;
+        case _61_GET_ACL_:
+            if(getAcl())
+            {
+                OIC_LOG(ERROR, TAG, "_61_GET_ACL_: error");
+            }
+            break;
+#ifdef __WITH_TLS__
+        case  _70_SELECT_PROTOCOL_:
+            selectSecureProtocol();
+            break;
+#endif
         case _99_EXIT_PRVN_CLT_:
             goto PMCLT_ERROR;
         default:

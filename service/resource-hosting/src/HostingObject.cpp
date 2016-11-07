@@ -76,7 +76,10 @@ namespace OIC
 
         void HostingObject::destroyHostingObject()
         {
-            if (pDestroyCB) pDestroyCB();
+            if (pDestroyCB)
+            {
+                pDestroyCB();
+            }
         }
 
         void HostingObject::stateChangedCB(ResourceState state)
@@ -117,8 +120,10 @@ namespace OIC
                 break;
             }
             default:
+            {
                 // not support of state
                 break;
+            }
             }
         }
 
@@ -178,7 +183,8 @@ namespace OIC
                         std::bind(&HostingObject::setRequestHandler, this,
                                 std::placeholders::_1, std::placeholders::_2));
                 return retResource;
-            } catch (...)
+            }
+            catch (...)
             {
                 OIC_HOSTING_LOG(DEBUG, "[HostingObject::createMirroredServer] %s", "Exception");
                 throw;
@@ -193,7 +199,8 @@ namespace OIC
                 RequestObject::invokeRequest(getRemoteResource(),
                         primitiveRequest, RequestObject::RequestMethod::Set, resourceAttibutes);
 
-            } catch (const RCSPlatformException & e)
+            }
+            catch (const RCSPlatformException & e)
             {
                 OIC_HOSTING_LOG(DEBUG,
                         "[HostingObject::setRequestHandler] PlatformException:%s",

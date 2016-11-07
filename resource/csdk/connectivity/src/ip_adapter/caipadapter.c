@@ -24,13 +24,14 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "caipnwmonitor.h"
 #include "caipinterface.h"
 #include "caqueueingthread.h"
 #include "caadapterutils.h"
 #ifdef __WITH_DTLS__
 #include "caadapternetdtls.h"
 #endif
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "caremotehandler.h"
 #include "logger.h"
@@ -68,7 +69,7 @@ static CANetworkPacketReceivedCallback g_networkPacketCallback = NULL;
 /**
  * Network Changed Callback to CA.
  */
-static CANetworkChangeCallback g_networkChangeCallback = NULL;
+static CAAdapterChangeCallback g_networkChangeCallback = NULL;
 
 /**
  * error Callback to CA adapter.
@@ -137,10 +138,16 @@ void CAIPDeinitializeQueueHandles()
 
 #endif // SINGLE_THREAD
 
-void CAIPConnectionStateCB(const char *ipAddress, CANetworkStatus_t status)
+void CAIPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
 {
-    (void)ipAddress;
-    (void)status;
+    if (g_networkChangeCallback)
+    {
+        g_networkChangeCallback(adapter, status);
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "g_networkChangeCallback is NULL");
+    }
 }
 
 #ifdef __WITH_DTLS__
@@ -215,7 +222,7 @@ static void CAInitializeIPGlobals()
 
 CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
                           CANetworkPacketReceivedCallback networkPacketCallback,
-                          CANetworkChangeCallback netCallback,
+                          CAAdapterChangeCallback netCallback,
                           CAErrorHandleCallback errorCallback, ca_thread_pool_t handle)
 {
     OIC_LOG(DEBUG, TAG, "IN");
@@ -233,7 +240,9 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
     CAInitializeIPGlobals();
     caglobals.ip.threadpool = handle;
 
+    CAIPSetErrorHandler(CAIPErrorHandler);
     CAIPSetPacketReceiveCallback(CAIPPacketReceivedCB);
+
 #ifdef __WITH_DTLS__
     CAAdapterNetDtlsInit();
 
@@ -262,7 +271,13 @@ CAResult_t CAInitializeIP(CARegisterConnectivityCallback registerCallback,
 
 CAResult_t CAStartIP()
 {
-    CAIPStartNetworkMonitor();
+    // Specific the port number received from application.
+    caglobals.ip.u6.port  = caglobals.ports.udp.u6;
+    caglobals.ip.u6s.port = caglobals.ports.udp.u6s;
+    caglobals.ip.u4.port  = caglobals.ports.udp.u4;
+    caglobals.ip.u4s.port = caglobals.ports.udp.u4s;
+
+    CAIPStartNetworkMonitor(CAIPAdapterHandler, CA_ADAPTER_IP);
 #ifdef SINGLE_THREAD
     uint16_t unicastPort = 55555;
     // Address is hardcoded as we are using Single Interface
@@ -363,13 +378,17 @@ static int32_t CAQueueIPData(bool isMulticast, const CAEndpoint_t *endpoint,
 }
 
 int32_t CASendIPUnicastData(const CAEndpoint_t *endpoint,
-                            const void *data, uint32_t dataLength)
+                            const void *data, uint32_t dataLength,
+                            CADataType_t dataType)
 {
+    (void)dataType;
     return CAQueueIPData(false, endpoint, data, dataLength);
 }
 
-int32_t CASendIPMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
+int32_t CASendIPMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t dataLength,
+                              CADataType_t dataType)
 {
+    (void)dataType;
     return CAQueueIPData(true, endpoint, data, dataLength);
 }
 
@@ -392,7 +411,7 @@ CAResult_t CAStopIP()
     }
 #endif
 
-    CAIPStopNetworkMonitor();
+    CAIPStopNetworkMonitor(CA_ADAPTER_IP);
     CAIPStopServer();
     //Re-initializing the Globals to start them again
     CAInitializeIPGlobals();

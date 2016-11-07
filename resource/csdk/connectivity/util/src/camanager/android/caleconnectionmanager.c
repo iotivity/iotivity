@@ -32,9 +32,6 @@
 
 #define TAG "OIC_CA_MANAGER_LE"
 
-static CAAdapterStateChangedCB g_adapterStateCB = NULL;
-static CAConnectionStateChangedCB g_connStateCB = NULL;
-
 static const jint SUPPORT_ADNROID_API_LEVEL = 18;
 static const jint AUTH_FAIL = 5;
 static const jint LINK_LOSS = 8;
@@ -46,14 +43,6 @@ static JavaVM *g_jvm = NULL;
 static jobject g_context = NULL;
 static jobject g_connectedDeviceSet = NULL;
 
-void CASetLENetworkMonitorCallbacks(CAAdapterStateChangedCB adapterStateCB,
-                                    CAConnectionStateChangedCB connStateCB)
-{
-    OIC_LOG(DEBUG, TAG, "CASetLENetworkMonitorCallbacks");
-
-    g_adapterStateCB = adapterStateCB;
-    g_connStateCB = connStateCB;
-}
 
 CAResult_t CASetLEClientAutoConnectionDeviceInfo(const char* address)
 {
@@ -61,7 +50,7 @@ CAResult_t CASetLEClientAutoConnectionDeviceInfo(const char* address)
     VERIFY_NON_NULL(address, TAG, "address");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -75,27 +64,25 @@ CAResult_t CASetLEClientAutoConnectionDeviceInfo(const char* address)
         }
         isAttached = true;
     }
-
     OIC_LOG_V(DEBUG, TAG, "set [%s] for Auto Connection", address);
+
     jstring jni_leAddress = (*env)->NewStringUTF(env, address);
+    if (!jni_leAddress)
+    {
+        OIC_LOG(ERROR, TAG, "jni_leAddress is null");
+        goto error_exit;
+    }
 
     if (!CAManagerCheckBTAddress(env, jni_leAddress))
     {
         OIC_LOG(ERROR, TAG, "this address is not BT address string format");
-        if (isAttached)
-        {
-            (*g_jvm)->DetachCurrentThread(g_jvm);
-        }
-        return CA_STATUS_FAILED;
+        goto error_exit;
     }
 
-    // if there is target address in SharedPreference. it will be reseted.
-    if (CAManagerIsConnectedDeviceAddress(env, g_context,
-                                          jni_leAddress,
-                                          g_connectedDeviceSet))
+    // if there is target address in SharedPreference, it will be reset.
+    if (CAManagerIsConnectedDeviceAddress(env, g_context, jni_leAddress, g_connectedDeviceSet))
     {
-        if (!CAManagerRemoveConnectedDeviceAddress(env, g_context,
-                                                   jni_leAddress,
+        if (!CAManagerRemoveConnectedDeviceAddress(env, g_context, jni_leAddress,
                                                    g_connectedDeviceSet))
         {
             OIC_LOG(ERROR, TAG, "Preference - remove has failed");
@@ -107,8 +94,7 @@ CAResult_t CASetLEClientAutoConnectionDeviceInfo(const char* address)
     }
 
     // it will be added new target address.
-    if (!CAManagerAddConnectedDeviceAddress(env, g_context,
-                                            jni_leAddress, g_connectedDeviceSet))
+    if (!CAManagerAddConnectedDeviceAddress(env, g_context, jni_leAddress, g_connectedDeviceSet))
     {
         OIC_LOG(ERROR, TAG, "Preference - putting has failed");
     }
@@ -123,6 +109,15 @@ CAResult_t CASetLEClientAutoConnectionDeviceInfo(const char* address)
     }
 
     return CA_STATUS_OK;
+
+error_exit:
+
+    if (isAttached)
+    {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
+
+    return CA_STATUS_FAILED;
 }
 
 CAResult_t CAUnsetLEClientAutoConnectionDeviceInfo(const char* address)
@@ -131,7 +126,7 @@ CAResult_t CAUnsetLEClientAutoConnectionDeviceInfo(const char* address)
     VERIFY_NON_NULL(address, TAG, "address");
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -145,27 +140,25 @@ CAResult_t CAUnsetLEClientAutoConnectionDeviceInfo(const char* address)
         }
         isAttached = true;
     }
-
     OIC_LOG_V(DEBUG, TAG, "unset [%s] for Auto Connection", address);
+
     jstring jni_leAddress = (*env)->NewStringUTF(env, address);
+    if (!jni_leAddress)
+    {
+        OIC_LOG(ERROR, TAG, "jni_leAddress is null");
+        goto error_exit;
+    }
 
     if (!CAManagerCheckBTAddress(env, jni_leAddress))
     {
         OIC_LOG(ERROR, TAG, "this address is not BT address string format");
-        if (isAttached)
-        {
-            (*g_jvm)->DetachCurrentThread(g_jvm);
-        }
-        return CA_STATUS_FAILED;
+        goto error_exit;
     }
 
-    // if there is target address in SharedPreference. it would be removed
-    if (CAManagerIsConnectedDeviceAddress(env, g_context,
-                                          jni_leAddress,
-                                          g_connectedDeviceSet))
+    // if there is target address in SharedPreference, it will be removed
+    if (CAManagerIsConnectedDeviceAddress(env, g_context, jni_leAddress, g_connectedDeviceSet))
     {
-        if (!CAManagerRemoveConnectedDeviceAddress(env, g_context,
-                                                   jni_leAddress,
+        if (!CAManagerRemoveConnectedDeviceAddress(env, g_context, jni_leAddress,
                                                    g_connectedDeviceSet))
         {
             OIC_LOG(ERROR, TAG, "Preference - remove has failed");
@@ -177,10 +170,10 @@ CAResult_t CAUnsetLEClientAutoConnectionDeviceInfo(const char* address)
     }
 
     // remove target device for auto connection
-    CAResult_t ret = CAManagerRemoveData(env, jni_leAddress);
+    CAResult_t ret = CAManagerRemoveACData(env, jni_leAddress);
     if (CA_STATUS_OK != ret)
     {
-        OIC_LOG(ERROR, TAG, "CAManagerRemoveData has failed");
+        OIC_LOG(ERROR, TAG, "CAManagerRemoveACData has failed");
     }
 
     if (isAttached)
@@ -188,7 +181,16 @@ CAResult_t CAUnsetLEClientAutoConnectionDeviceInfo(const char* address)
         (*g_jvm)->DetachCurrentThread(g_jvm);
     }
 
-    return CA_STATUS_OK;
+    return ret;
+
+error_exit:
+
+    if (isAttached)
+    {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
+
+    return CA_STATUS_FAILED;
 }
 
 CAResult_t CAManagerLEClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
@@ -207,10 +209,10 @@ CAResult_t CAManagerLEClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context
 
     g_jvm = jvm;
     g_context = (*env)->NewGlobalRef(env, context);;
+
     CAManagerInitMutexVaraibles();
     CAManagerInitLEAutoConnection();
-
-    CAManagerCreateACDataList(env);
+    CAManagerCreateACDataList();
 
     // get last connected device list
     jobject set = NULL;
@@ -219,15 +221,12 @@ CAResult_t CAManagerLEClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context
     {
         // create new set<String> object
         set = CAManagerCreateSetString(env);
-        if (set)
-        {
-            OIC_LOG(DEBUG, TAG, "created new SetString");
-        }
-        else
+        if (!set)
         {
             OIC_LOG(ERROR, TAG, "CAManagerCreateSetString has failed");
             return CA_STATUS_FAILED;
         }
+        OIC_LOG(DEBUG, TAG, "created new SetString");
     }
     else
     {
@@ -256,12 +255,13 @@ CAResult_t CAManagerLEClientTerminate(JNIEnv *env)
         OIC_LOG(ERROR, TAG, "CALEClientDisconnectAll has failed");
     }
 
-    res = CAManagerRemoveAllData(env);
+    res = CAManagerRemoveAllACData(env);
     if (CA_STATUS_OK != res)
     {
-        OIC_LOG(ERROR, TAG, "CAManagerRemoveAllData has failed");
+        OIC_LOG(ERROR, TAG, "CAManagerRemoveAllACData has failed");
     }
 
+    CAManagerDestroyACDataList();
     CAManagerTerminateLEAutoConnection();
     CAManagerTerminateMutexVariables();
 
@@ -280,11 +280,17 @@ CAResult_t CAManagerLEClientTerminate(JNIEnv *env)
     return res;
 }
 
+void CAManagerLESetScanInterval(jint interval, jint count)
+{
+    OIC_LOG(DEBUG, TAG, "CAManagerLESetScanInterval");
+    CALERestartScanWithInterval(interval, count);
+}
+
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeClientInterface_caManagerAdapterStateChangedCallback(
         JNIEnv *env, jobject obj, jint state)
 {
-    OIC_LOG(DEBUG, TAG, "caManagerAdapterStateChangedCallback");
+    OIC_LOG_V(INFO, TAG, "caManagerAdapterStateChangedCallback - state %d", state);
     VERIFY_NON_NULL_VOID(env, TAG, "env");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
 
@@ -295,17 +301,13 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerAdapterStateChangedCallback(
     if (state_on == state)
     {
         OIC_LOG(DEBUG, TAG, "AdapterStateChangedCallback : state_on");
-        if (g_adapterStateCB)
-        {
-            g_adapterStateCB(CA_ADAPTER_GATT_BTLE, true);
-        }
 
         // when BT state is on. recovery flag has to be reset.
         CAManagerSetBTRecovery(false);
 
         // find target device for autoconnect
         size_t length = CAManagerGetACDataLength();
-        OIC_LOG_V(DEBUG, TAG, "target device : %d", length);
+        OIC_LOG_V(DEBUG, TAG, "length of ACDataList : %d", length);
         for (size_t idx = 0; idx < length; idx++)
         {
             jstring leAddress = CAManagerGetLEAddressFromACData(env, idx);
@@ -323,19 +325,16 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerAdapterStateChangedCallback(
     else if (state_off == state)
     {
         OIC_LOG(DEBUG, TAG, "AdapterStateChangedCallback : state_off");
-        if (g_adapterStateCB)
-        {
-            g_adapterStateCB(CA_ADAPTER_GATT_BTLE, false);
-        }
 
-        // reset autoconnect flag for all target devices
+        // reset isAutoConnecting flag for all target devices
         size_t length = CAManagerGetACDataLength();
+        OIC_LOG_V(DEBUG, TAG, "length of ACDataList : %d", length);
         for (size_t idx = 0; idx < length; idx++)
         {
             jstring address = CAManagerGetLEAddressFromACData(env, idx);
             if (address)
             {
-                CAManagerSetAutoConnectionFlag(env, address, false);
+                CAManagerSetAutoConnectingFlag(env, address, false);
             }
         }
 
@@ -348,12 +347,10 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerAdapterStateChangedCallback(
     else if (state_turning_off == state)
     {
         OIC_LOG(DEBUG, TAG, "AdapterStateChangedCallback : state_turning_off");
-        return;
     }
     else
     {
         OIC_LOG(INFO, TAG, "AdapterStateChangedCallback state is not available");
-        return;
     }
 }
 
@@ -361,7 +358,10 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeClientInterface_caManagerBondStateChangedCallback(
         JNIEnv *env, jobject obj, jobject device)
 {
-    OIC_LOG(DEBUG, TAG, "caManagerBondStateChangedCallback");
+    OIC_LOG(INFO, TAG, "caManagerBondStateChangedCallback");
+    // this callback is called by CaLeClientInterface
+    // only when bond state is changed from BOND_BONDED to BOND_NONE
+    OIC_LOG(DEBUG, TAG, "bond state is changed from BOND_BONDED to BOND_NONE");
     VERIFY_NON_NULL_VOID(env, TAG, "env");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
     VERIFY_NON_NULL_VOID(device, TAG, "device");
@@ -384,29 +384,26 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerBondStateChangedCallback(
     // if there is no data, CAData will be created.
     OIC_LOG_V(DEBUG, TAG, "bond none device : %s", leAddress);
 
-    CAResult_t res = CAManagerRemoveData(env, jni_leAddress);
+    CAResult_t res = CAManagerRemoveACData(env, jni_leAddress);
     if (CA_STATUS_OK != res)
     {
-        OIC_LOG(ERROR, TAG, "CAManagerRemoveData has failed");
+        OIC_LOG(ERROR, TAG, "CAManagerRemoveACData has failed");
     }
 
     (*env)->ReleaseStringUTFChars(env, jni_leAddress, leAddress);
 
-    if (!CAManagerRemoveConnectedDeviceAddress(env, g_context,
-                                               jni_leAddress,
+    if (!CAManagerRemoveConnectedDeviceAddress(env, g_context, jni_leAddress,
                                                g_connectedDeviceSet))
     {
         OIC_LOG(ERROR, TAG, "CAManagerRemoveConnectedDeviceAddress has failed");
     }
-
-    OIC_LOG(INFO, TAG, "bonded state changed bone_none");
 }
 
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeClientInterface_caManagerLeGattConnectionStateChangeCB(
         JNIEnv *env, jobject obj, jobject gatt, jint status, jint newState)
 {
-    OIC_LOG_V(DEBUG, TAG, "caManagerLeGattConnectionStateChangeCB-status(%d), newState(%d)",
+    OIC_LOG_V(INFO, TAG, "caManagerLeGattConnectionStateChangeCB - status %d, newState %d",
               status, newState);
 
     VERIFY_NON_NULL_VOID(env, TAG, "env");
@@ -415,7 +412,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeGattConnectionStateChangeCB(
 
     jint state_connected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE, "STATE_CONNECTED");
     jint state_disconnected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE, "STATE_DISCONNECTED");
-    jint gatt_success = CALEGetConstantsValue(env, CLASSPATH_BT_GATT, "GATT_SUCCESS");
 
     jstring jni_address = CALEGetAddressFromGatt(env, gatt);
     if (!jni_address)
@@ -428,52 +424,43 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeGattConnectionStateChangeCB(
     if (!address)
     {
         OIC_LOG(ERROR, TAG, "address is null");
+        (*env)->DeleteLocalRef(env, jni_address);
         return;
     }
 
-    OIC_LOG_V(INFO, TAG, "connection state : status(%d), addr:(%s), newState(%d)",
-              status, address, newState);
+    OIC_LOG_V(DEBUG, TAG, "caManagerLeGattConnectionStateChangeCB - address [%s]", address);
 
-    if (gatt_success == status && state_connected == newState) // le connected
+    if (GATT_SUCCESS == status && state_connected == newState) // le connected
     {
         OIC_LOG(DEBUG, TAG, "LE is connected");
+
         CAResult_t res = CAManagerReadRemoteRssi(env, gatt);
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "CAManagerReadRemoteRssi has failed");
-            (*env)->ReleaseStringUTFChars(env, jni_address, address);
-            return;
+            goto exit;
         }
     }
     else if (state_disconnected == newState)// le disconnected
     {
         OIC_LOG(DEBUG, TAG, "LE is disconnected");
 
-        if (g_connStateCB)
-        {
-            OIC_LOG_V(DEBUG, TAG, "LE Disconnected state is %d, %s", newState, address);
-            g_connStateCB(CA_ADAPTER_GATT_BTLE, address, false);
-            OIC_LOG(DEBUG, TAG, "LE Disconnected state callback is called");
-        }
-
         if (LINK_LOSS == status || REMOTE_DISCONNECT == status)
         {
-            if (!CAManagerIsMatchedACData(env, jni_address))
+            if (!CAManagerIsInACDataList(env, jni_address))
             {
                 OIC_LOG_V(DEBUG, TAG, "this[%s] is not target address for Auto Connection",
                           address);
-                (*env)->ReleaseStringUTFChars(env, jni_address, address);
-                return;
+                goto exit;
             }
 
-            CAManagerSetAutoConnectionFlag(env, jni_address, false);
+            CAManagerSetAutoConnectingFlag(env, jni_address, false);
 
             CAResult_t res = CAManagerStartAutoConnection(env, jni_address);
             if (CA_STATUS_OK != res)
             {
-                (*env)->ReleaseStringUTFChars(env, jni_address, address);
                 OIC_LOG(ERROR, TAG, "CAManagerStartAutoConnection has failed");
-                return;
+                goto exit;
             }
         }
         else if (ACCEPT_TIMEOUT_EXCEPTION == status)
@@ -481,6 +468,8 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeGattConnectionStateChangeCB(
             CAManagerProcessRecovery(env, START_RECOVERY);
         }
     }
+
+exit:
     (*env)->ReleaseStringUTFChars(env, jni_address, address);
     (*env)->DeleteLocalRef(env, jni_address);
 }
@@ -496,7 +485,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeServicesDiscoveredCallback(J
                                                                                jobject gatt,
                                                                                jint status)
 {
-    OIC_LOG_V(DEBUG, TAG, "caManagerLeServicesDiscoveredCallback - status %d: ", status);
+    OIC_LOG_V(INFO, TAG, "caManagerLeServicesDiscoveredCallback - status %d", status);
     VERIFY_NON_NULL_VOID(env, TAG, "env");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
     VERIFY_NON_NULL_VOID(gatt, TAG, "gatt");
@@ -523,139 +512,27 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeServicesDiscoveredCallback(J
             (*env)->DeleteLocalRef(env, jni_address);
             return;
         }
+
         OIC_LOG_V(DEBUG, TAG, "ServicesDiscovered device : %s", address);
 
-        // target address for auto connection will be set in device list.
-        // check set connected address information by user
-        jclass jni_cls_set = (*env)->FindClass(env, "java/util/HashSet");
-        if (!jni_cls_set)
+        if (CAManagerIsConnectedDeviceAddress(env, g_context, jni_address, g_connectedDeviceSet))
         {
-            OIC_LOG(ERROR, TAG, "jni_cls_set is null");
-            (*env)->ReleaseStringUTFChars(env, jni_address, address);
-            (*env)->DeleteLocalRef(env, jni_address);
-            return;
+            OIC_LOG(INFO, TAG, "AC list - the address will be added to ACData list");
+            CAManagerAddACData(env, jni_address);
+            CAManagerSetAutoConnectingFlag(env, jni_address, false);
+
+            // next connection will be requested with JNI_TRUE on autoConnect flag
+            // after first connection
+            CALEClientSetFlagToState(env, jni_address, CA_LE_AUTO_CONNECT_FLAG, JNI_TRUE);
+        }
+        else
+        {
+            OIC_LOG(DEBUG, TAG, "AC list - the address is not set to AutoConnect");
         }
 
-        jmethodID jni_mid_iterator = (*env)->GetMethodID(env, jni_cls_set, "iterator",
-                                                            "()Ljava/util/Iterator;");
-        if (!jni_mid_iterator)
-        {
-            OIC_LOG(ERROR, TAG, "jni_mid_iterator is null");
-            (*env)->DeleteLocalRef(env, jni_cls_set);
-            (*env)->ReleaseStringUTFChars(env, jni_address, address);
-            (*env)->DeleteLocalRef(env, jni_address);
-            return;
-        }
-
-        jobject jni_obj_iter = (*env)->CallObjectMethod(env, g_connectedDeviceSet, jni_mid_iterator);
-        if (!jni_obj_iter)
-        {
-            OIC_LOG(ERROR, TAG, "jni_obj_iter is null");
-            (*env)->DeleteLocalRef(env, jni_cls_set);
-            (*env)->ReleaseStringUTFChars(env, jni_address, address);
-            (*env)->DeleteLocalRef(env, jni_address);
-            return;
-        }
-
-        // Get the Iterator method IDs
-        jclass jni_cls_iterator = (*env)->FindClass(env, "java/util/Iterator");
-        if (!jni_cls_iterator)
-        {
-            OIC_LOG(ERROR, TAG, "jni_cls_iterator is null");
-            (*env)->DeleteLocalRef(env, jni_obj_iter);
-            (*env)->DeleteLocalRef(env, jni_cls_set);
-            (*env)->ReleaseStringUTFChars(env, jni_address, address);
-            (*env)->DeleteLocalRef(env, jni_address);
-            return;
-        }
-
-        jmethodID jni_mid_hasNext = (*env)->GetMethodID(env, jni_cls_iterator, "hasNext", "()Z");
-        if (!jni_mid_hasNext)
-        {
-            OIC_LOG(ERROR, TAG, "jni_mid_hasNext is null");
-            (*env)->DeleteLocalRef(env, jni_cls_iterator);
-            (*env)->DeleteLocalRef(env, jni_obj_iter);
-            (*env)->DeleteLocalRef(env, jni_cls_set);
-            (*env)->ReleaseStringUTFChars(env, jni_address, address);
-            (*env)->DeleteLocalRef(env, jni_address);
-            return;
-        }
-
-        jmethodID jni_mid_next = (*env)->GetMethodID(env, jni_cls_iterator, "next",
-                                                        "()Ljava/lang/Object;");
-        if (!jni_mid_next)
-        {
-            OIC_LOG(ERROR, TAG, "jni_mid_next is null");
-            (*env)->DeleteLocalRef(env, jni_cls_iterator);
-            (*env)->DeleteLocalRef(env, jni_obj_iter);
-            (*env)->DeleteLocalRef(env, jni_cls_set);
-            (*env)->ReleaseStringUTFChars(env, jni_address, address);
-            (*env)->DeleteLocalRef(env, jni_address);
-            return;
-        }
-
-        // Iterate over the entry Set
-        while ((*env)->CallBooleanMethod(env, jni_obj_iter, jni_mid_hasNext))
-        {
-            jstring jni_str_entry = (jstring)(*env)->CallObjectMethod(env, jni_obj_iter,
-                                                                        jni_mid_next);
-            if (!jni_str_entry)
-            {
-                OIC_LOG(ERROR, TAG, "jni_str_entry is null");
-                (*env)->DeleteLocalRef(env, jni_cls_iterator);
-                (*env)->DeleteLocalRef(env, jni_obj_iter);
-                (*env)->DeleteLocalRef(env, jni_cls_set);
-                (*env)->ReleaseStringUTFChars(env, jni_address, address);
-                (*env)->DeleteLocalRef(env, jni_address);
-                return;
-            }
-            const char* foundAddress = (*env)->GetStringUTFChars(env, jni_str_entry, NULL);
-            if (!foundAddress)
-            {
-                OIC_LOG(ERROR, TAG, "addr is null");
-                (*env)->DeleteLocalRef(env, jni_str_entry);
-                (*env)->DeleteLocalRef(env, jni_cls_iterator);
-                (*env)->DeleteLocalRef(env, jni_obj_iter);
-                (*env)->DeleteLocalRef(env, jni_cls_set);
-                (*env)->ReleaseStringUTFChars(env, jni_address, address);
-                (*env)->DeleteLocalRef(env, jni_address);
-                return;
-            }
-            OIC_LOG_V(INFO, TAG, "found last connected address [%s] from SharedPreferences",
-                      foundAddress);
-
-            if (!strcmp(foundAddress, address))
-            {
-                // if BLE address is matched each other
-                // this address will be added into auto connection list.
-                OIC_LOG(INFO, TAG, "AC list - address will be added into ACData list");
-                CAManagerAddACData(env, jni_address);
-                CAManagerSetAutoConnectionFlag(env, jni_address, false);
-
-                // next connection will be requested as JNI_TRUE flag
-                // after first connection
-                CALEClientSetFlagToState(env, jni_str_entry, CA_LE_AUTO_CONNECT_FLAG, JNI_TRUE);
-            }
-            else
-            {
-                OIC_LOG(INFO, TAG, "AC list - device is not matched");
-            }
-
-            (*env)->ReleaseStringUTFChars(env, jni_str_entry, foundAddress);
-            (*env)->DeleteLocalRef(env, jni_str_entry);
-        }
-
-        if (g_connStateCB)
-        {
-            g_connStateCB(CA_ADAPTER_GATT_BTLE, address, true);
-            OIC_LOG(DEBUG, TAG, "LE Connected callback is called");
-        }
-
-        (*env)->DeleteLocalRef(env, jni_cls_iterator);
-        (*env)->DeleteLocalRef(env, jni_obj_iter);
-        (*env)->DeleteLocalRef(env, jni_cls_set);
         (*env)->ReleaseStringUTFChars(env, jni_address, address);
         (*env)->DeleteLocalRef(env, jni_address);
+
         OIC_LOG(INFO, TAG, "ServicesDiscovery is successful");
     }
     else
@@ -676,6 +553,10 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeRemoteRssiCallback(JNIEnv *e
                                                                        jint rssi,
                                                                        jint status)
 {
+#ifndef TB_LOG
+    (void)rssi;
+    (void)status;
+#endif
     OIC_LOG_V(DEBUG, TAG, "caManagerLeRemoteRssiCallback - rssi : %d: ", rssi);
     OIC_LOG_V(DEBUG, TAG, "caManagerLeRemoteRssiCallback - status : %d: ", status);
     VERIFY_NON_NULL_VOID(env, TAG, "env");

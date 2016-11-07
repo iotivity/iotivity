@@ -41,7 +41,7 @@ CPPPATH: The directories that the preprocessor will search for include headers.
 CPPDEFINES: Platform independent specification of C preprocessor definitions.
 
 Note: CPPPATH and CPPDEFINES is common for all compiler. But others are
-compiler specific, when change the key value, it may requried to specify the
+compiler specific, when change the key value, it may required to specify the
 target platform(actually the compiler).
 
 e.g.
@@ -82,7 +82,7 @@ In above example, 'target_os' is used. How to get it?
 
 User can build IoTivity project on Linux / Windows / MAC OSX for various
 targets(Linux, Tizen, Android, Arduino, Windows, MAC OSX, IOS ...). Most
-platform specific configures have been done in the common scripts which are in
+platform specific configurations have been done in the common scripts which are in
 build_common. The common scripts prepare an environment named 'env' with
 target platform specific configuration.
 
@@ -105,7 +105,7 @@ or
 	env['XXX']
 
 XXX is the information name, below are the extra information added by IoTivity
-common scrirpts:
+common scripts:
 BUILD_DIR: the path of the build directory, all output are in this directory
 SRC_DIR: the path of the top directory of the source code
 RELEASE: build type, boolean. True - release build, False - debug build
@@ -136,7 +136,7 @@ PrintTargets(): print all target names in the help information.
 AppendTarget(name, target = None): add a target name into targets list, when use
 	PrintTargets, the target name will be print
 # @param name - the name of the target(s)(user defined name)
-# @param target - Final binary, file(s) etc genereted after build.
+# @param target - Final binary, file(s) etc generated after build.
 
 InstallTarget(files, name): it takes the same action as AppendTarget, besides,
 	it installs the 'files' to BUILD_DIR.
@@ -149,7 +149,7 @@ will be auto added to the environment and the library will be built and linked
 into the final binary.
 
 CreateBin(bin, src): For Arduino, after build the program, it's required to
-be converted into specific format (e.g .hex). This function will genearate the
+be converted into specific format (e.g .hex). This function will generate the
 required .hex (and .eep if target arch is avr) file from 'bin'.
 
 UploadHelp(): For different board, the upload command line is different, this
@@ -171,7 +171,7 @@ Download(target, url): Download source code from URL 'url' and save as 'target'.
 # @param target - the name of the source code package to be saved as
 # @param url - the URL from which to download the source code
 
-Configure(cwd, cmd): Run configure command(such as: boostrap, configure etc.
+Configure(cwd, cmd): Run configure command(such as: bootstrap, configure etc.
 usually it's done before build a library)
 # @param cwd - the work directory, full path or relative path to the directory
 		where the library build script in
@@ -188,7 +188,7 @@ Install_lib(lib): Install library binaries to <src_dir>/deps/<target_os>/lib/<ar
 Scons provides a function 'SConscript(scripts, [exports, variant_dir, duplicate])'
 It tells scons to execute one or more subsidiary configuration files(A script,
 usually named SConscript). Take below project hierarchy as example to show how
-to organize the scripts.
+to organise the scripts.
 
 		prj
 		|-------prj_1
@@ -204,7 +204,7 @@ to organize the scripts.
 As above project hierarchy, in 'SConstruct' file in the 'prj' directory, there
 should include some lines like these:
 
-#Please change this part according to the organization of your projects.
+#Please change this part according to the organisation of your projects.
 #Note: To make the output is in build_dir, the path of the scripts should
 #be relevant to build_dir
 SConscript(build_dir + 'prj_1/SConscript')
@@ -223,7 +223,7 @@ The path is relevant to 'prj_1/SConscript'. You can also use the full path
 (build_dir + 'prj_1/sub_prj_1x/SConscript'), but it's not recommended.
 
 Above just to show a recommended way to manage subsidiary scripts. You don't
-need restrictly follow it.
+need strictly follow it.
 
 ==== The content of a typical script ====
 
@@ -231,8 +231,8 @@ After run the scripts in build_common (usually it's done at the beginning of
 SConstruct), an global environment 'env' is exported, 'env' has include the
 default configuration of the target OS and arch. 'env' is used in all projects,
 should avoid to change its keys. To avoid change 'env', usually clone 'env' and
-update it accroding to the requirement of current sub project. Then specify the
-target(usually binary) to build.
+update it according to the requirement of current sub project. Then specify the
+target (usually binary) to build.
 
 Below is an example:
 	# import the global environment 'env'
@@ -244,10 +244,10 @@ Below is an example:
 	# Update the new environment, usually include add header file paths,
 	# library path, libs to link and other compiler flags. This part is
 	# optional.
-	new_env.AppeneUnique(xxx = [ .... ])
+	new_env.AppendUnique(xxx = [ .... ])
 
 	# Specify the target(application, library, object or others) to build
-	ts = new_env.Program('progam_name', [source_list])
+	ts = new_env.Program('program_name', [source_list])
 
 	# Install the target (optional)
 	# If it's an important library or daemon to be published

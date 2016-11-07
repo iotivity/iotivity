@@ -180,9 +180,13 @@ void onPost2(const HeaderOptions &headerOptions, const OCRepresentation &rep, co
             }
 
             if (OBSERVE_TYPE_TO_USE == ObserveType::Observe)
+            {
                 std::cout << std::endl << "Observe is used." << std::endl << std::endl;
+            }
             else if (OBSERVE_TYPE_TO_USE == ObserveType::ObserveAll)
+            {
                 std::cout << std::endl << "ObserveAll is used." << std::endl << std::endl;
+            }
 
             curResource->observe(OBSERVE_TYPE_TO_USE, QueryParamsMap(), &onObserve);
 

@@ -31,7 +31,9 @@ public class CaBtPairingInterface {
     private static Context mContext;
 
     private CaBtPairingInterface(Context context) {
-        mContext = context;
+        synchronized(CaBtPairingInterface.class) {
+            mContext = context;
+        }
         registerIntentFilter();
     }
 

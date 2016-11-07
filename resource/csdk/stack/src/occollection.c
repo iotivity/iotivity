@@ -49,6 +49,8 @@
 #define NUM_PARAM_IN_QUERY   2 // The expected number of parameters in a query
 #define NUM_FIELDS_IN_QUERY  2 // The expected number of fields in a query
 
+#include "platform_features.h"
+
 static OCStackResult CheckRTParamSupport(const OCResource* resource, const char* rtPtr)
 {
     if (!resource || !rtPtr)

@@ -21,7 +21,7 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
-#define IOTIVITY_VERSION "1.1.0"
+#define IOTIVITY_VERSION "1.2.0"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -41,6 +41,11 @@
 extern "C"
 {
 #endif
+
+/**
+* Helper for unused warning.
+*/
+#define UNUSED(x) (void)(x)
 
 // Use the PCF macro to wrap strings stored in FLASH on the Arduino
 // Example:  OIC_LOG(INFO, TAG, PCF("Entering function"));
@@ -67,6 +72,12 @@ typedef enum {
     FATAL = DLOG_ERROR
 } LogLevel;
 #else
+
+/** @todo temporary work-around until better names with prefixes are used for the enum values. */
+#ifdef ERROR
+#undef ERROR
+#endif
+
 typedef enum {
     DEBUG = 0,
     INFO,
@@ -89,7 +100,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
 
 #define OCLog(level,tag,mes) LOG_(LOG_ID_MAIN, (level), (tag), mes)
 #define OCLogv(level,tag,fmt,args...) LOG_(LOG_ID_MAIN, (level),tag,fmt,##args)
-#elif defined(ANDROID) || defined(__linux__) || defined(__APPLE__)
+#elif !defined(ARDUINO)
     /**
      * Configure logger to use a context that defines a custom logger function
      *
@@ -196,7 +207,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
 #define OIC_LOG_BUFFER(level, tag, buffer, bufferSize)\
     OCLogBuffer((level), (tag), (buffer), (bufferSize))
 
-#else // These macros are defined for Linux, Android, and Arduino
+#else // These macros are defined for Linux, Android, Win32, and Arduino
 
 #define OIC_LOG_INIT()    OCLogInit()
 
@@ -217,7 +228,7 @@ void OCLogBuffer(LogLevel level, const char * tag, const uint8_t * buffer, uint1
 #define OIC_LOG_CONFIG(ctx)    OCLogConfig((ctx))
 #define OIC_LOG_SHUTDOWN()     OCLogShutdown()
 #define OIC_LOG(level, tag, logStr)  OCLog((level), (tag), (logStr))
-// Define variable argument log function for Linux and Android
+// Define variable argument log function for Linux, Android, and Win32
 #define OIC_LOG_V(level, tag, ...)  OCLogv((level), (tag), __VA_ARGS__)
 
 #endif //ARDUINO

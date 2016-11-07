@@ -27,13 +27,17 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+#include "iotivity_config.h"
 #include <errno.h>
-#include <pthread.h>
+#if defined HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
 #include "cathreadpool.h"
 #include "logger.h"
 #include "oic_malloc.h"
 #include "uarraylist.h"
-#include "camutex.h"
+#include "octhread.h"
+#include "platform_features.h"
 
 #define TAG PCF("UTHREADPOOL")
 
@@ -44,7 +48,7 @@
 typedef struct ca_thread_pool_details_t
 {
     u_arraylist_t* threads_list;
-    ca_mutex list_lock;
+    oc_mutex list_lock;
 } ca_thread_pool_details_t;
 
 /**
@@ -104,7 +108,7 @@ CAResult_t ca_thread_pool_init(int32_t num_of_threads, ca_thread_pool_t *thread_
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    (*thread_pool)->details->list_lock = ca_mutex_new();
+    (*thread_pool)->details->list_lock = oc_mutex_new();
 
     if(!(*thread_pool)->details->list_lock)
     {
@@ -117,7 +121,7 @@ CAResult_t ca_thread_pool_init(int32_t num_of_threads, ca_thread_pool_t *thread_
     if(!(*thread_pool)->details->threads_list)
     {
         OIC_LOG(ERROR, TAG, "Failed to create thread-pool list");
-        if(!ca_mutex_free((*thread_pool)->details->list_lock))
+        if(!oc_mutex_free((*thread_pool)->details->list_lock))
         {
             OIC_LOG(ERROR, TAG, "Failed to free thread-pool mutex");
         }
@@ -155,23 +159,23 @@ CAResult_t ca_thread_pool_add_task(ca_thread_pool_t thread_pool, ca_thread_func 
     info->func = method;
     info->data = data;
 
-    pthread_t threadHandle;
-
-    int result = pthread_create(&threadHandle, NULL, ca_thread_pool_pthreads_delegate, info);
-
-    if(result != 0)
+    oc_thread thread;
+    int thrRet = oc_thread_new(&thread, ca_thread_pool_pthreads_delegate, info);
+    if (thrRet != 0)
     {
-        OIC_LOG_V(ERROR, TAG, "Thread start failed with error %d", result);
+        OIC_LOG_V(ERROR, TAG, "Thread start failed with error %d", thrRet);
+        OICFree(info);
         return CA_STATUS_FAILED;
     }
 
-    ca_mutex_lock(thread_pool->details->list_lock);
-    bool addResult = u_arraylist_add(thread_pool->details->threads_list, (void*)threadHandle);
-    ca_mutex_unlock(thread_pool->details->list_lock);
+    oc_mutex_lock(thread_pool->details->list_lock);
+    bool addResult = u_arraylist_add(thread_pool->details->threads_list, (void*)thread);
+    oc_mutex_unlock(thread_pool->details->list_lock);
 
     if(!addResult)
     {
         OIC_LOG_V(ERROR, TAG, "Arraylist Add failed, may not be properly joined: %d", addResult);
+        oc_thread_free(thread);
         return CA_STATUS_FAILED;
     }
 
@@ -189,22 +193,19 @@ void ca_thread_pool_free(ca_thread_pool_t thread_pool)
         return;
     }
 
-    ca_mutex_lock(thread_pool->details->list_lock);
+    oc_mutex_lock(thread_pool->details->list_lock);
 
     for(uint32_t i = 0; i<u_arraylist_length(thread_pool->details->threads_list); ++i)
     {
-        pthread_t tid = (pthread_t)u_arraylist_get(thread_pool->details->threads_list, i);
-        int joinres = pthread_join(tid, NULL);
-        if(0 != joinres)
-        {
-            OIC_LOG_V(ERROR, TAG, "Failed to join thread at index %u with error %d", i, joinres);
-        }
+        oc_thread thr = (oc_thread)u_arraylist_get(thread_pool->details->threads_list, i);
+        oc_thread_wait(thr);
+        oc_thread_free(thr);
     }
 
     u_arraylist_free(&(thread_pool->details->threads_list));
 
-    ca_mutex_unlock(thread_pool->details->list_lock);
-    ca_mutex_free(thread_pool->details->list_lock);
+    oc_mutex_unlock(thread_pool->details->list_lock);
+    oc_mutex_free(thread_pool->details->list_lock);
 
     OICFree(thread_pool->details);
     OICFree(thread_pool);

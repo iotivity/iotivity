@@ -39,7 +39,7 @@ bool OCInterfaceDetails::isInterface(const std::string &interfaceType)
 {
     if (m_interfaces.end() != m_interfaces.find(interfaceType))
         return true;
-    return true;
+    return false;
 }
 
 bool OCInterfaceDetails::isRequestSupported(const std::string &interfaceType,

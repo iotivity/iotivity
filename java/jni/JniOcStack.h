@@ -20,7 +20,13 @@
 * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */
 #include <jni.h>
+
+#ifdef __ANDROID__
+#include <android/log.h>
+#else
 #include "logger.h"
+#endif
+
 #include "OCApi.h"
 
 #ifndef _Included_org_iotivity_base_ocstack
@@ -30,14 +36,21 @@
 
 #define JNI_CURRENT_VERSION JNI_VERSION_1_6
 
+#ifdef __ANDROID__
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
+#else
 #define LOGI(...) OIC_LOG_V(INFO, TAG, __VA_ARGS__)
 #define LOGD(...) OIC_LOG_V(DEBUG, TAG, __VA_ARGS__)
 #define LOGE(...) OIC_LOG_V(ERROR, TAG, __VA_ARGS__)
+#endif
 
 #define JNI_EXCEPTION 1000
 #define JNI_NO_NATIVE_POINTER 1001
 #define JNI_INVALID_VALUE 1002
 #define JNI_NO_SUCH_KEY 1003
+#define JNI_NO_SUPPORT 1004
 
 jobject getOcException(JNIEnv* env, const char* file, const char* functionName, const int line,
     const int code, const char* message);
@@ -47,6 +60,9 @@ void throwOcException(JNIEnv* env, jobject ex);
 
 extern JavaVM* g_jvm;
 
+extern jclass g_cls_byte1DArray;
+extern jclass g_cls_byte2DArray;
+extern jclass g_cls_byte3DArray;
 extern jclass g_cls_Integer;
 extern jclass g_cls_int1DArray;
 extern jclass g_cls_int2DArray;
@@ -82,6 +98,18 @@ extern jclass g_cls_OcResourceIdentifier;
 extern jclass g_cls_OcProvisionResult;
 extern jclass g_cls_OcSecureResource;
 extern jclass g_cls_OcOicSecAcl;
+extern jclass g_cls_OcOicSecPdAcl;
+extern jclass g_cls_OcDirectPairDevice;
+#ifdef WITH_CLOUD
+extern jclass g_cls_OcAccountManager;
+#endif
+#ifdef __WITH_TLS__
+extern jclass g_cls_OcCloudProvisioning;
+#endif
+
+extern jclass g_cls_OcOicSecAcl_ace;
+extern jclass g_cls_OcOicSecAcl_resr;
+extern jclass g_cls_OcOicSecAcl_validity;
 
 extern jmethodID g_mid_Integer_ctor;
 extern jmethodID g_mid_Double_ctor;
@@ -114,15 +142,38 @@ extern jmethodID g_mid_OcPresenceStatus_get;
 extern jmethodID g_mid_OcResourceIdentifier_N_ctor;
 extern jmethodID g_mid_OcProvisionResult_ctor;
 extern jmethodID g_mid_OcSecureResource_ctor;
-extern jmethodID g_mid_OcOicSecAcl_get_subject;
-extern jmethodID g_mid_OcOicSecAcl_get_resources_cnt;
-extern jmethodID g_mid_OcOicSecAcl_get_resources;
-extern jmethodID g_mid_OcOicSecAcl_get_permission;
-extern jmethodID g_mid_OcOicSecAcl_get_periods_cnt;
-extern jmethodID g_mid_OcOicSecAcl_get_periods;
-extern jmethodID g_mid_OcOicSecAcl_get_recurrences;
-extern jmethodID g_mid_OcOicSecAcl_get_owners_cnt;
-extern jmethodID g_mid_OcOicSecAcl_get_owners;
+extern jmethodID g_mid_OcDirectPairDevice_ctor;
+extern jmethodID g_mid_OcDirectPairDevice_dev_ctor;
+#ifdef WITH_CLOUD
+extern jmethodID g_mid_OcAccountManager_ctor;
+#endif
+#ifdef __WITH_TLS__
+extern jmethodID g_mid_OcCloudProvisioning_getIP;
+extern jmethodID g_mid_OcCloudProvisioning_getPort;
+#endif
+
+extern jmethodID g_mid_OcOicSecAcl_get_rownerID;
+extern jmethodID g_mid_OcOicSecAcl_get_aces;
+extern jmethodID g_mid_OcOicSecAcl_ace_get_subjectID;
+extern jmethodID g_mid_OcOicSecAcl_ace_get_permissions;
+extern jmethodID g_mid_OcOicSecAcl_ace_get_resources;
+extern jmethodID g_mid_OcOicSecAcl_ace_get_validities;
+extern jmethodID g_mid_OcOicSecAcl_resr_get_href;
+extern jmethodID g_mid_OcOicSecAcl_resr_get_rel;
+extern jmethodID g_mid_OcOicSecAcl_resr_get_types;
+extern jmethodID g_mid_OcOicSecAcl_resr_get_typeLen;
+extern jmethodID g_mid_OcOicSecAcl_resr_get_interfaces;
+extern jmethodID g_mid_OcOicSecAcl_resr_get_interfaceLen;
+extern jmethodID g_mid_OcOicSecAcl_validity_get_getPeriod;
+extern jmethodID g_mid_OcOicSecAcl_validity_get_recurrences;
+extern jmethodID g_mid_OcOicSecAcl_validity_get_recurrenceLen;
+extern jmethodID g_mid_OcOicSecPdAcl_get_resources_cnt;
+extern jmethodID g_mid_OcOicSecPdAcl_get_resources;
+extern jmethodID g_mid_OcOicSecPdAcl_get_permission;
+extern jmethodID g_mid_OcOicSecPdAcl_get_periods_cnt;
+extern jmethodID g_mid_OcOicSecPdAcl_get_periods;
+extern jmethodID g_mid_OcOicSecPdAcl_get_recurrences;
+
 
 typedef void(*RemoveListenerCallback)(JNIEnv* env, jobject jListener);
 
@@ -152,30 +203,32 @@ static JNIEnv* GetJNIEnv(jint& ret)
     JNIEnv *env = nullptr;
 
     ret = g_jvm->GetEnv((void **)&env, JNI_CURRENT_VERSION);
-    switch (ret) {
-    case JNI_OK:
-        return env;
-    case JNI_EDETACHED:
-// AttachCurrentThread API changed in JNI 1.7 which is not a defined version
-#pragma GCC diagnostic push
-#pragma GCC diagnostic warning "-fpermissive"
-        if (g_jvm->AttachCurrentThread(&env, nullptr) < 0)
-#pragma GCC diagnostic push
-        {
+    switch (ret)
+    {
+        case JNI_OK:
+            return env;
+        case JNI_EDETACHED:
+#ifdef __ANDROID__
+            if (g_jvm->AttachCurrentThread(&env, nullptr) < 0)
+#else
+            if (g_jvm->AttachCurrentThread((void **)&env, nullptr) < 0)
+#endif
+            {
+                LOGE("Failed to get the environment");
+                return nullptr;
+            }
+            else
+            {
+                return env;
+            }
+        case JNI_EVERSION:
+            LOGE("JNI version not supported");
+            break;
+        default:
             LOGE("Failed to get the environment");
             return nullptr;
-        }
-        else
-        {
-            return env;
-        }
-
-    case JNI_EVERSION:
-        LOGE("JNI version not supported");
-    default:
-        LOGE("Failed to get the environment");
-        return nullptr;
     }
+    return nullptr;
 }
 
 static void DuplicateString(char ** targetString, std::string sourceString)

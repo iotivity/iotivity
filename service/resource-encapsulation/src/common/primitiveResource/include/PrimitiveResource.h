@@ -77,6 +77,11 @@ namespace OIC
                     const OC::QueryParamsMap& queryParametersMap,
                     const RCSResourceAttributes&, GetCallback) = 0;
 
+            virtual void requestSetWith(const std::string& resourceType,
+                    const std::string& resourceInterface,
+                    const OC::QueryParamsMap& queryParametersMap,
+                    const RCSRepresentation&, SetCallback) = 0;
+
             virtual void requestPut(const RCSResourceAttributes&, PutCallback) = 0;
             virtual void requestObserve(ObserveCallback) = 0;
             virtual void cancelObserve() = 0;

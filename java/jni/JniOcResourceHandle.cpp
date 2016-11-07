@@ -25,7 +25,8 @@ using namespace OC;
 
 JniOcResourceHandle::JniOcResourceHandle(OCResourceHandle resourceHandle)
     : m_resourceHandle(resourceHandle)
-{}
+{
+}
 
 JniOcResourceHandle::~JniOcResourceHandle()
 {

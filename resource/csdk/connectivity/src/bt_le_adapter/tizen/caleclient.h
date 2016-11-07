@@ -66,15 +66,6 @@ void CALEGattCharacteristicChangedCb(bt_gatt_h characteristic,
 void CALEGattCharacteristicWriteCb(int result, bt_gatt_h reqHandle, void *userData);
 
 /**
- * This is the callback which will be called whenever there is change in gatt connection
- * with server(Connected/Disconnected)
- *
- * @param[in]  connected     State of connection
- * @param[in]  remoteAddress Mac address of the remote device in which we made connection.
- */
-void CALEGattConnectionStateChanged(bool connected, const char *remoteAddress);
-
-/**
  * This is the callback which will be called when LE advertisement is found.
  *
  * @param[in]  result         The result of Scanning
@@ -83,15 +74,6 @@ void CALEGattConnectionStateChanged(bool connected, const char *remoteAddress);
  */
 void CALEAdapterScanResultCb(int result, bt_adapter_le_device_scan_result_info_s *scanInfo,
                              void *userData);
-
-/**
- * This thread will be used to initialize the Gatt Client and start device discovery.
- * 1. Setting neccessary callbacks for connection, characteristics changed and discovery.
- * 2. Start device discovery
- *
- * @param[in] data Currently it will be NULL(no parameter)
- */
-void CAStartLEGattClientThread(void *data);
 
 /**
  * This thread will be used to Start the timer for scanning.

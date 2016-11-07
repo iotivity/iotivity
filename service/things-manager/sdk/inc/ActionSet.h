@@ -25,9 +25,7 @@
 #include <vector>
 #include <cstdio>
 #include <iostream>
-
 #include <ctime>
-
 #include <timer.h>
 
 using namespace std;

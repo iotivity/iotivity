@@ -427,7 +427,7 @@ void deviceNodeIdChanged(const char * eui, const char * nodeId, PIPlugin_Zigbee*
                                                   nodeId);
     if(result != OC_STACK_OK)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to update Zigbee Resource NodeId due to result: %s", result);
+        OIC_LOG_V(ERROR, TAG, "Failed to update Zigbee Resource NodeId due to result: %u", result);
     }
 }
 

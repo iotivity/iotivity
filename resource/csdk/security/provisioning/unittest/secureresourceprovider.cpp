@@ -26,6 +26,35 @@ static OCProvisionDev_t pDev2;
 static OicSecCredType_t credType = SYMMETRIC_PAIR_WISE_KEY;
 static OCProvisionDev_t selectedDeviceInfo;
 static OicSecPconf_t pconf;
+static OicSecOxm_t oicSecDoxmJustWorks = OIC_JUST_WORKS;
+static OicSecOxm_t oicSecDoxmRandomPin = OIC_RANDOM_DEVICE_PIN;
+static OicSecDoxm_t defaultDoxm1 =
+{
+    NULL,                   /* OicUrn_t *oxmType */
+    0,                      /* size_t oxmTypeLen */
+    &oicSecDoxmJustWorks,  /* uint16_t *oxm */
+    1,                      /* size_t oxmLen */
+    OIC_JUST_WORKS,         /* uint16_t oxmSel */
+    SYMMETRIC_PAIR_WISE_KEY,/* OicSecCredType_t sct */
+    false,                  /* bool owned */
+    {{0}},            /* OicUuid_t deviceID */
+    false,                  /* bool dpc */
+    {{0}},            /* OicUuid_t owner */
+};
+
+static OicSecDoxm_t defaultDoxm2 =
+{
+    NULL,                   /* OicUrn_t *oxmType */
+    0,                      /* size_t oxmTypeLen */
+    &oicSecDoxmRandomPin,  /* uint16_t *oxm */
+    1,                      /* size_t oxmLen */
+    OIC_RANDOM_DEVICE_PIN,         /* uint16_t oxmSel */
+    SYMMETRIC_PAIR_WISE_KEY,/* OicSecCredType_t sct */
+    false,                  /* bool owned */
+    {{0}},            /* OicUuid_t deviceID */
+    false,                  /* bool dpc */
+    {{0}},            /* OicUuid_t owner */
+};
 
 static void provisioningCB (void* UNUSED1, int UNUSED2, OCProvisionResult_t *UNUSED3, bool UNUSED4)
 {
@@ -38,6 +67,14 @@ static void provisioningCB (void* UNUSED1, int UNUSED2, OCProvisionResult_t *UNU
 
 TEST(SRPProvisionACLTest, NullDeviceInfo)
 {
+    pDev1.doxm = &defaultDoxm1;
+    uint8_t deviceId1[] = {0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x64};
+    memcpy(pDev1.doxm->deviceID.id, deviceId1, sizeof(deviceId1));
+
+    pDev2.doxm = &defaultDoxm2;
+    uint8_t deviceId2[] = {0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x63};
+    memcpy(pDev2.doxm->deviceID.id, deviceId2, sizeof(deviceId2));
+
     EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionACL(NULL, NULL, &acl, &provisioningCB));
 }
 
@@ -58,6 +95,13 @@ TEST(SRPProvisionCredentialsTest, NullDevice1)
                                                               &pDev2, &provisioningCB));
 }
 
+TEST(SRPProvisionCredentialsTest, SamelDeviceId)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPProvisionCredentials(NULL, credType,
+                                                              OWNER_PSK_LENGTH_128, &pDev1,
+                                                              &pDev1, &provisioningCB));
+}
+
 TEST(SRPProvisionCredentialsTest, NullCallback)
 {
     EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPProvisionCredentials(NULL, credType,
@@ -74,21 +118,22 @@ TEST(SRPProvisionCredentialsTest, InvalidKeySize)
 
 TEST(SRPUnlinkDevicesTest, NullDevice1)
 {
-    OCProvisionDev_t dev2;
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, NULL, &dev2, provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, NULL, &pDev2, provisioningCB));
 }
 
 TEST(SRPUnlinkDevicesTest, NullDevice2)
 {
-    OCProvisionDev_t dev1;
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, &dev1, NULL, provisioningCB));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, &pDev1, NULL, provisioningCB));
+}
+
+TEST(SRPUnlinkDevicesTest, SamelDeviceId)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, &pDev1, &pDev1, provisioningCB));
 }
 
 TEST(SRPUnlinkDevicesTest, NullCallback)
 {
-    OCProvisionDev_t dev1;
-    OCProvisionDev_t dev2;
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPUnlinkDevices(NULL, &dev1, &dev2, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPUnlinkDevices(NULL, &pDev1, &pDev2, NULL));
 }
 
 TEST(SRPRemoveDeviceTest, NullTargetDevice)
@@ -101,7 +146,7 @@ TEST(SRPRemoveDeviceTest, NullResultCallback)
 {
     unsigned short waitTime = 10;
     OCProvisionDev_t dev1;
-    EXPECT_EQ(OC_STACK_INVALID_PARAM, SRPRemoveDevice(NULL, waitTime, &dev1, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_CALLBACK, SRPRemoveDevice(NULL, waitTime, &dev1, NULL));
 }
 
 TEST(SRPRemoveDeviceTest, ZeroWaitTime)

@@ -7,12 +7,12 @@ Import('env')
 
 # Add third party libraries
 lib_env = env.Clone()
-SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', exports = 'lib_env')
+SConscript('#service/third_party_libs.scons', exports = 'lib_env')
 
 tm_jni_env = lib_env.Clone()
 target_os = tm_jni_env.get('TARGET_OS')
 tm_sdk = tm_jni_env.get('SRC_DIR') + '/service/things-manager/sdk'
-base_jni = tm_jni_env.get('SRC_DIR') + '/android/android_api/base/jni'
+base_jni = tm_jni_env.get('SRC_DIR') + '/java/jni'
 extlibs = tm_jni_env.get('SRC_DIR') + '/extlibs'
 
 ######################################################################
@@ -27,7 +27,7 @@ tm_jni_env.AppendUnique(CPPPATH = [tm_sdk+'/inc'])
 tm_jni_env.AppendUnique(CPPPATH = [base_jni])
 tm_jni_env.AppendUnique(CPPPATH = ['tm/inc', 'jniutil/inc', extlibs+'/timer/'])
 
-if target_os not in ['darwin', 'ios', 'windows', 'winrt']:
+if target_os not in ['darwin', 'ios', 'windows']:
     tm_jni_env.AppendUnique(LINKFLAGS = ['-Wl,--no-undefined'])
 
 ######################################################################

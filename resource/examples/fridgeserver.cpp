@@ -114,6 +114,9 @@ class DeviceResource : public Resource
             std::string clientAPIVersion;
             std::string clientToken;
 
+            // Get the message ID from the request
+            std::cout << " MessageID: " << request->getMessageID() << std::endl;
+
             // Search the header options map and look for API version and Client token
             for (auto it = headerOptions.begin(); it != headerOptions.end(); ++it)
             {

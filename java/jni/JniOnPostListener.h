@@ -27,11 +27,17 @@
 using namespace OC;
 
 class JniOcResource;
+#ifdef WITH_CLOUD
+class JniOcAccountManager;
+#endif
 
 class JniOnPostListener
 {
 public:
     JniOnPostListener(JNIEnv *env, jobject jListener, JniOcResource* owner);
+#ifdef WITH_CLOUD
+    JniOnPostListener(JNIEnv *env, jobject jListener, JniOcAccountManager* owner);
+#endif
     ~JniOnPostListener();
 
     void onPostCallback(const HeaderOptions& headerOptions, const OCRepresentation& rep, const int eCode);
@@ -39,6 +45,9 @@ public:
 private:
     jweak m_jwListener;
     JniOcResource* m_ownerResource;
+#ifdef WITH_CLOUD
+    JniOcAccountManager* m_ownerAccountManager;
+#endif
     void checkExAndRemoveListener(JNIEnv *env);
 };
 

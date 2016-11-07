@@ -25,6 +25,7 @@ package org.iotivity.base;
 import java.security.InvalidParameterException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -51,6 +52,8 @@ public class OcRepresentation {
         this.mNativeHandle = nativeHandle;
         this.mNativeNeedsDelete = nativeNeedsDelete;
     }
+
+    public native Map<String, Object> getValues();
 
     public <T> T getValue(String key) throws OcException {
         Object obj = this.getValueN(key);
@@ -141,6 +144,10 @@ public class OcRepresentation {
         this.setValueRepresentation3DArray(key, value);
     }
 
+    public void setValue(String key, byte[] value) throws OcException {
+        this.setValueByteArray(key, value);
+    }
+
     private native void setValueInteger(String key, int value) throws OcException;
 
     private native void setValueDouble(String key, double value) throws OcException;
@@ -180,6 +187,8 @@ public class OcRepresentation {
     private native void setValueRepresentation2DArray(String key, OcRepresentation[][] value) throws OcException;
 
     private native void setValueRepresentation3DArray(String key, OcRepresentation[][][] value) throws OcException;
+
+    private native void setValueByteArray(String key, byte[] value) throws OcException;
 
     /**
      * @deprecated use {@link #getValue(String key)} instead.

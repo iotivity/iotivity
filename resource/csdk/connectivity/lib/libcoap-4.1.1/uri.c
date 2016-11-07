@@ -6,7 +6,7 @@
  * README for terms of use.
  */
 
-#include "config.h"
+#include "include/coap/config.h"
 
 #if defined(HAVE_ASSERT_H) && !defined(assert)
 # include <assert.h>
@@ -16,11 +16,11 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "mem.h"
-#include "debug.h"
-#include "pdu.h"
-#include "option.h"
-#include "uri.h"
+#include "include/coap/mem.h"
+#include "include/coap/debug.h"
+#include "include/coap/pdu.h"
+#include "include/coap/option.h"
+#include "include/coap/uri.h"
 /**
  * A length-safe version of strchr(). This function returns a pointer
  * to the first occurrence of @p c  in @p s, or @c NULL if not found.
@@ -32,7 +32,7 @@
  * @return A pointer to the first occurence of @p c, or @c NULL
  * if not found.
  */
-static inline unsigned char *
+INLINE_API unsigned char *
 strnchr(unsigned char *s, size_t len, unsigned char c)
 {
     while (len && *s++ != c)
@@ -493,7 +493,7 @@ coap_clone_uri(const coap_uri_t *uri)
 
 /* The function signature of coap_hash() is different from
  * segment_handler_t hence we use this wrapper as safe typecast. */
-static inline void hash_segment(unsigned char *s, size_t len, void *data)
+INLINE_API void hash_segment(unsigned char *s, size_t len, void *data)
 {
     coap_hash(s, len, (unsigned char *) data);
 }

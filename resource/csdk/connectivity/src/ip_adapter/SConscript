@@ -48,6 +48,9 @@ if target_os in ['linux','darwin','ios']:
     target_files += [ os.path.join(src_dir,
                                    'linux/caipnwmonitor.c') ]
 
+if target_os in ['msys_nt']:
+	target_files += [ os.path.join(src_dir, 'windows/caipnwmonitor.c') ]
+
 # The list of BLE adapter source files is a combination of both the
 # common and target-specific source file lists.
 env.AppendUnique(CA_SRC = common_files + target_files)

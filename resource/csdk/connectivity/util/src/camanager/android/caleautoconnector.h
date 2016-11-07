@@ -43,9 +43,9 @@ CAResult_t CAManagerStartAutoConnection(JNIEnv *env, jstring remote_le_address);
  * request connect gatt on client in adapter
  * @param[in]   env                   JNI interface pointer.
  * @param[in]   remote_le_address     remote address.
- * @return  gatt profile object.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-jobject CAManagerConnectGatt(JNIEnv *env, jstring remote_le_address);
+CAResult_t CAManagerConnectGatt(JNIEnv *env, jstring remote_le_address);
 
 /**
  * initialize LE AutoConnection.

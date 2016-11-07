@@ -35,6 +35,7 @@
 #include "logger.h"
 #include "cacommon.h"
 #include "caipadapter.h"
+#include "caipnwmonitor.h"
 #include "caadapterutils.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -45,18 +46,19 @@
 // defined & used (as-is defined in the linux socket headers).
 #define AF_INET (2)
 
-CAResult_t CAIPStartNetworkMonitor()
+CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
+                                   CATransportAdapter_t adapter)
 {
     return CA_STATUS_OK;
 }
 
-CAResult_t CAIPStopNetworkMonitor()
+CAResult_t CAIPStopNetworkMonitor(CATransportAdapter_t adapter)
 {
     return CA_STATUS_OK;
 }
 
 /// Retrieves the IP address assigned to Arduino Ethernet shield
-void CAArduinoGetInterfaceAddress(uint32_t *address)
+void CAArduinoGetInterfaceAddress(char *address, size_t len)
 {
     OIC_LOG(DEBUG, TAG, "IN");
     VERIFY_NON_NULL_VOID(address, TAG, "address");
@@ -64,10 +66,10 @@ void CAArduinoGetInterfaceAddress(uint32_t *address)
     //TODO : Fix this for scenarios when this API is invoked when device is not connected
     uint8_t rawIPAddr[4];
     W5100.getIPAddress(rawIPAddr);
-    *address = (uint32_t) rawIPAddr;
+    snprintf(address, len, "%d.%d.%d.%d",
+             rawIPAddr[0], rawIPAddr[1], rawIPAddr[2], rawIPAddr[3]);
 
-    OIC_LOG_V(DEBUG, TAG, "address:%d.%d.%d.%d", rawIPAddr[0], rawIPAddr[1],
-              rawIPAddr[2], rawIPAddr[3]);
+    OIC_LOG_V(DEBUG, TAG, "address: %s", address);
     OIC_LOG(DEBUG, TAG, "OUT");
     return;
 }
@@ -95,7 +97,7 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
     ifitem->index = 1;
     ifitem->family = AF_INET;
     ifitem->flags = 0;
-    CAArduinoGetInterfaceAddress(&ifitem->ipv4addr);
+    CAArduinoGetInterfaceAddress(ifitem->addr, sizeof(ifitem->addr));
 
     result = u_arraylist_add(iflist, ifitem);
     if (!result)

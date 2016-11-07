@@ -31,13 +31,14 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "cathreadpool.h"
-#include "camutex.h"
+#include "octhread.h"
 #include "uarraylist.h"
 #include "org_iotivity_ca_CaLeServerInterface.h"
 
 #define TAG PCF("OIC_CA_LE_SERVER")
 
 #define WAIT_TIME_WRITE_CHARACTERISTIC 10000000
+#define INVALID_STATE -1
 
 static JavaVM *g_jvm = NULL;
 static jobject g_context = NULL;
@@ -58,14 +59,17 @@ static jbyteArray g_sendBuffer = NULL;
 static jobject g_obj_bluetoothDevice = NULL;
 
 static CABLEDataReceivedCallback g_CABLEServerDataReceivedCallback = NULL;
-static ca_mutex g_bleReqRespCbMutex = NULL;
-static ca_mutex g_bleClientBDAddressMutex = NULL;
-static ca_mutex g_connectedDeviceListMutex = NULL;
+static oc_mutex g_bleReqRespCbMutex = NULL;
+static oc_mutex g_bleClientBDAddressMutex = NULL;
+static oc_mutex g_connectedDeviceListMutex = NULL;
 
-static ca_mutex g_threadSendMutex = NULL;
-static ca_mutex g_threadSendNotifyMutex = NULL;
-static ca_cond g_threadSendNotifyCond = NULL;
+static oc_mutex g_threadSendMutex = NULL;
+static oc_mutex g_threadSendNotifyMutex = NULL;
+static oc_cond g_threadSendNotifyCond = NULL;
 static bool g_isSignalSetFlag = false;
+
+static jint g_state_connected = INVALID_STATE;
+static jint g_state_disconnected = INVALID_STATE;
 
 static const char CLASSPATH_BT_ADVERTISE_CB[] = "android/bluetooth/le/AdvertiseCallback";
 static const char CLASSPATH_BT_GATTSERVER[] = "android/bluetooth/BluetoothGattServer";
@@ -99,7 +103,7 @@ CAResult_t CALEServerCreateJniInterfaceObject()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -293,7 +297,13 @@ CAResult_t CALEServerSendResponseData(JNIEnv *env, jobject device, jobject respo
         return CA_ADAPTER_NOT_ENABLED;
     }
 
-    if (STATE_CONNECTED != CALEServerGetConnectionState(env, device))
+    if (!g_bluetoothGattServer)
+    {
+        OIC_LOG(ERROR, TAG, "g_bluetoothGattServer is not available");
+        return CA_STATUS_FAILED;
+    }
+
+    if (g_state_connected != CALEServerGetConnectionState(env, device))
     {
         OIC_LOG(ERROR, TAG, "it is not connected state");
         return CA_STATUS_FAILED;
@@ -323,21 +333,21 @@ CAResult_t CALEServerSendResponseData(JNIEnv *env, jobject device, jobject respo
     }
 
     OIC_LOG_V(DEBUG, TAG, "callback flag is %d", g_isSignalSetFlag);
-    ca_mutex_lock(g_threadSendNotifyMutex);
+    oc_mutex_lock(g_threadSendNotifyMutex);
     if (!g_isSignalSetFlag)
     {
         OIC_LOG(DEBUG, TAG, "wait for callback to notify notifyCharacteristic is success");
-        if (0 != ca_cond_wait_for(g_threadSendNotifyCond, g_threadSendNotifyMutex,
+        if (0 != oc_cond_wait_for(g_threadSendNotifyCond, g_threadSendNotifyMutex,
                                   WAIT_TIME_WRITE_CHARACTERISTIC))
         {
             OIC_LOG(ERROR, TAG, "there is no response. notifyCharacteristic has failed");
-            ca_mutex_unlock(g_threadSendNotifyMutex);
+            oc_mutex_unlock(g_threadSendNotifyMutex);
             return CA_STATUS_FAILED;
         }
     }
     // reset flag set by writeCharacteristic Callback
     g_isSignalSetFlag = false;
-    ca_mutex_unlock(g_threadSendNotifyMutex);
+    oc_mutex_unlock(g_threadSendNotifyMutex);
     OIC_LOG(INFO, TAG, "notifyCharacteristic success");
     return CA_STATUS_OK;
 }
@@ -356,6 +366,12 @@ CAResult_t CALEServerSendResponse(JNIEnv *env, jobject device, jint requestId, j
     {
         OIC_LOG(ERROR, TAG, "BT adapter is not enabled");
         return CA_ADAPTER_NOT_ENABLED;
+    }
+
+    if (!g_bluetoothGattServer)
+    {
+        OIC_LOG(ERROR, TAG, "g_bluetoothGattServer is not available");
+        return CA_STATUS_FAILED;
     }
 
     jmethodID jni_mid_sendResponse = CAGetJNIMethodID(env, CLASSPATH_BT_GATTSERVER,
@@ -391,7 +407,7 @@ CAResult_t CALEStartAdvertise()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -1293,11 +1309,11 @@ CAResult_t CALEServerDisconnectAllDevices(JNIEnv *env)
     OIC_LOG(DEBUG, TAG, "IN - CALEServerDisconnectAllDevices");
     VERIFY_NON_NULL(env, TAG, "env is null");
 
-    ca_mutex_lock(g_connectedDeviceListMutex);
+    oc_mutex_lock(g_connectedDeviceListMutex);
     if (!g_connectedDeviceList)
     {
         OIC_LOG(ERROR, TAG, "g_connectedDeviceList is null");
-        ca_mutex_unlock(g_connectedDeviceListMutex);
+        oc_mutex_unlock(g_connectedDeviceListMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -1320,7 +1336,7 @@ CAResult_t CALEServerDisconnectAllDevices(JNIEnv *env)
         }
     }
 
-    ca_mutex_unlock(g_connectedDeviceListMutex);
+    oc_mutex_unlock(g_connectedDeviceListMutex);
     OIC_LOG(DEBUG, TAG, "OUT - CALEServerDisconnectAllDevices");
     return CA_STATUS_OK;
 }
@@ -1437,7 +1453,7 @@ CAResult_t CALEServerInitialize()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -1464,7 +1480,7 @@ CAResult_t CALEServerInitialize()
         return ret;
     }
 
-    g_threadSendNotifyCond = ca_cond_new();
+    g_threadSendNotifyCond = oc_cond_new();
 
     ret = CALEServerInitMutexVaraibles();
     if (CA_STATUS_OK != ret)
@@ -1514,7 +1530,7 @@ void CALEServerTerminate()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -1541,7 +1557,7 @@ void CALEServerTerminate()
         g_bluetoothManager = NULL;
     }
 
-    ca_cond_free(g_threadSendNotifyCond);
+    oc_cond_free(g_threadSendNotifyCond);
     g_threadSendNotifyCond = NULL;
 
     CALEServerTerminateMutexVaraibles();
@@ -1570,7 +1586,7 @@ CAResult_t CALEServerSendUnicastMessage(const char* address, const uint8_t* data
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -1611,7 +1627,7 @@ CAResult_t CALEServerSendMulticastMessage(const uint8_t* data, uint32_t dataLen)
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -1663,7 +1679,7 @@ CAResult_t CALEServerStartMulticastServer()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -1695,6 +1711,10 @@ CAResult_t CALEServerStartMulticastServer()
         OIC_LOG(ERROR, TAG, "CALEServerStartAdvertise has failed");
     }
 
+    // get Constants Value from Android Platform
+    g_state_connected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE, "STATE_CONNECTED");
+    g_state_disconnected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE, "STATE_DISCONNECTED");
+
     if (isAttached)
     {
         (*g_jvm)->DetachCurrentThread(g_jvm);
@@ -1721,7 +1741,7 @@ CAResult_t CALEServerStopMulticastServer()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -1774,7 +1794,7 @@ CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, co
         return CA_STATUS_FAILED;
     }
 
-    ca_mutex_lock(g_threadSendMutex);
+    oc_mutex_lock(g_threadSendMutex);
 
     uint32_t length = u_arraylist_length(g_connectedDeviceList);
     for (uint32_t index = 0; index < length; index++)
@@ -1848,7 +1868,7 @@ CAResult_t CALEServerSendUnicastMessageImpl(JNIEnv *env, const char* address, co
         g_sendBuffer = NULL;
     }
 
-    ca_mutex_unlock(g_threadSendMutex);
+    oc_mutex_unlock(g_threadSendMutex);
     OIC_LOG(INFO, TAG, "unicast - send request is successful");
     return CA_STATUS_OK;
 
@@ -1865,7 +1885,7 @@ error_exit:
         g_obj_bluetoothDevice = NULL;
     }
 
-    ca_mutex_unlock(g_threadSendMutex);
+    oc_mutex_unlock(g_threadSendMutex);
     return CA_SEND_FAILED;
 }
 
@@ -1881,7 +1901,7 @@ CAResult_t CALEServerSendMulticastMessageImpl(JNIEnv *env, const uint8_t *data, 
         return CA_STATUS_FAILED;
     }
 
-    ca_mutex_lock(g_threadSendMutex);
+    oc_mutex_lock(g_threadSendMutex);
 
     OIC_LOG(DEBUG, TAG, "set data into g_sendBuffer for notify");
     if (g_sendBuffer)
@@ -1955,20 +1975,20 @@ CAResult_t CALEServerSendMulticastMessageImpl(JNIEnv *env, const uint8_t *data, 
         g_sendBuffer = NULL;
     }
 
-    ca_mutex_unlock(g_threadSendMutex);
+    oc_mutex_unlock(g_threadSendMutex);
     return CA_STATUS_OK;
 }
 
 void CALEServerCreateCachedDeviceList()
 {
-    ca_mutex_lock(g_connectedDeviceListMutex);
+    oc_mutex_lock(g_connectedDeviceListMutex);
     // create new object array
     if (!g_connectedDeviceList)
     {
         OIC_LOG(DEBUG, TAG, "Create device list");
         g_connectedDeviceList = u_arraylist_create();
     }
-    ca_mutex_unlock(g_connectedDeviceListMutex);
+    oc_mutex_unlock(g_connectedDeviceListMutex);
 }
 
 bool CALEServerIsDeviceInList(JNIEnv *env, const char* remoteAddress)
@@ -2030,12 +2050,12 @@ CAResult_t CALEServerAddDeviceToList(JNIEnv *env, jobject device)
     VERIFY_NON_NULL(device, TAG, "device is null");
     VERIFY_NON_NULL(env, TAG, "env is null");
 
-    ca_mutex_lock(g_connectedDeviceListMutex);
+    oc_mutex_lock(g_connectedDeviceListMutex);
 
     if (!g_connectedDeviceList)
     {
         OIC_LOG(ERROR, TAG, "list is null");
-        ca_mutex_unlock(g_connectedDeviceListMutex);
+        oc_mutex_unlock(g_connectedDeviceListMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -2043,7 +2063,7 @@ CAResult_t CALEServerAddDeviceToList(JNIEnv *env, jobject device)
     if (!jni_remoteAddress)
     {
         OIC_LOG(ERROR, TAG, "jni_remoteAddress is null");
-        ca_mutex_unlock(g_connectedDeviceListMutex);
+        oc_mutex_unlock(g_connectedDeviceListMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -2051,7 +2071,7 @@ CAResult_t CALEServerAddDeviceToList(JNIEnv *env, jobject device)
     if (!remoteAddress)
     {
         OIC_LOG(ERROR, TAG, "remoteAddress is null");
-        ca_mutex_unlock(g_connectedDeviceListMutex);
+        oc_mutex_unlock(g_connectedDeviceListMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -2063,7 +2083,7 @@ CAResult_t CALEServerAddDeviceToList(JNIEnv *env, jobject device)
     }
 
     (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
-    ca_mutex_unlock(g_connectedDeviceListMutex);
+    oc_mutex_unlock(g_connectedDeviceListMutex);
     OIC_LOG(DEBUG, TAG, "OUT - CALEServerAddDeviceToList");
     return CA_STATUS_OK;
 }
@@ -2073,11 +2093,11 @@ CAResult_t CALEServerRemoveAllDevices(JNIEnv *env)
     OIC_LOG(DEBUG, TAG, "IN - CALEServerRemoveAllDevices");
     VERIFY_NON_NULL(env, TAG, "env is null");
 
-    ca_mutex_lock(g_connectedDeviceListMutex);
+    oc_mutex_lock(g_connectedDeviceListMutex);
     if (!g_connectedDeviceList)
     {
         OIC_LOG(ERROR, TAG, "g_connectedDeviceList is null");
-        ca_mutex_unlock(g_connectedDeviceListMutex);
+        oc_mutex_unlock(g_connectedDeviceListMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -2093,7 +2113,7 @@ CAResult_t CALEServerRemoveAllDevices(JNIEnv *env)
 
     OICFree(g_connectedDeviceList);
     g_connectedDeviceList = NULL;
-    ca_mutex_unlock(g_connectedDeviceListMutex);
+    oc_mutex_unlock(g_connectedDeviceListMutex);
 
     OIC_LOG(DEBUG, TAG, "OUT - CALEServerRemoveAllDevices");
     return CA_STATUS_OK;
@@ -2105,11 +2125,11 @@ CAResult_t CALEServerRemoveDevice(JNIEnv *env, jstring address)
     VERIFY_NON_NULL(env, TAG, "env is null");
     VERIFY_NON_NULL(address, TAG, "address is null");
 
-    ca_mutex_lock(g_connectedDeviceListMutex);
+    oc_mutex_lock(g_connectedDeviceListMutex);
     if (!g_connectedDeviceList)
     {
         OIC_LOG(ERROR, TAG, "no deviceList");
-        ca_mutex_unlock(g_connectedDeviceListMutex);
+        oc_mutex_unlock(g_connectedDeviceListMutex);
         return CA_STATUS_FAILED;
     }
 
@@ -2153,10 +2173,10 @@ CAResult_t CALEServerRemoveDevice(JNIEnv *env, jstring address)
                 if (NULL == u_arraylist_remove(g_connectedDeviceList, index))
                 {
                     OIC_LOG(ERROR, TAG, "List removal failed.");
-                    ca_mutex_unlock(g_connectedDeviceListMutex);
+                    oc_mutex_unlock(g_connectedDeviceListMutex);
                     return CA_STATUS_FAILED;
                 }
-                ca_mutex_unlock(g_connectedDeviceListMutex);
+                oc_mutex_unlock(g_connectedDeviceListMutex);
                 return CA_STATUS_OK;
             }
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
@@ -2164,7 +2184,7 @@ CAResult_t CALEServerRemoveDevice(JNIEnv *env, jstring address)
         }
     }
 
-    ca_mutex_unlock(g_connectedDeviceListMutex);
+    oc_mutex_unlock(g_connectedDeviceListMutex);
 
     OIC_LOG(DEBUG, TAG, "there are no device in the device list");
 
@@ -2208,13 +2228,7 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
     VERIFY_NON_NULL_VOID(device, TAG, "device");
 
-    // STATE_CONNECTED
-    jint state_connected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE, "STATE_CONNECTED");
-
-    // STATE_DISCONNECTED
-    jint state_disconnected = CALEGetConstantsValue(env, CLASSPATH_BT_PROFILE, "STATE_DISCONNECTED");
-
-    if (newState == state_connected)
+    if (newState == g_state_connected)
     {
 
         OIC_LOG(DEBUG, TAG, "LE CONNECTED");
@@ -2240,7 +2254,7 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
         }
         (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
     }
-    else if (newState == state_disconnected)
+    else if (newState == g_state_disconnected)
     {
         OIC_LOG(DEBUG, TAG, "LE DISCONNECTED");
 
@@ -2260,6 +2274,9 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
     }
     else
     {
+#ifndef TB_LOG
+        (void)status;
+#endif
         OIC_LOG_V(DEBUG, TAG, "LE Connection state is [newState : %d, status %d]", newState,
                 status);
     }
@@ -2274,7 +2291,9 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerServiceAddedCallback(JNIE
     VERIFY_NON_NULL_VOID(env, TAG, "env");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
     VERIFY_NON_NULL_VOID(gattService, TAG, "gattService");
-
+#ifndef TB_LOG
+    (void)status;
+#endif
     OIC_LOG_V(DEBUG, TAG, "Gatt Service Added Callback(%d)", status);
 }
 
@@ -2334,11 +2353,11 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerCharacteristicWriteReques
 
     OIC_LOG_V(DEBUG, TAG, "remote device address : %s, %p, %d", address, requestData, length);
 
-    ca_mutex_lock(g_bleClientBDAddressMutex);
+    oc_mutex_lock(g_bleClientBDAddressMutex);
     uint32_t sentLength = 0;
     g_CABLEServerDataReceivedCallback(address, requestData, length,
                                       &sentLength);
-    ca_mutex_unlock(g_bleClientBDAddressMutex);
+    oc_mutex_unlock(g_bleClientBDAddressMutex);
 
     (*env)->ReleaseStringUTFChars(env, jni_address, address);
 }
@@ -2372,10 +2391,10 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerNotificationSentCallback(
                 g_obj_bluetoothDevice = NULL;
             }
 
-            ca_mutex_lock(g_threadSendNotifyMutex);
+            oc_mutex_lock(g_threadSendNotifyMutex);
             g_isSignalSetFlag = true;
-            ca_cond_signal(g_threadSendNotifyCond);
-            ca_mutex_unlock(g_threadSendNotifyMutex);
+            oc_cond_signal(g_threadSendNotifyCond);
+            oc_mutex_unlock(g_threadSendNotifyMutex);
             return;
         }
     }
@@ -2390,11 +2409,11 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerNotificationSentCallback(
         }
 
         // next data can be sent
-        ca_mutex_lock(g_threadSendNotifyMutex);
+        oc_mutex_lock(g_threadSendNotifyMutex);
         OIC_LOG(DEBUG, TAG, "g_isSignalSetFlag is set true and signal");
         g_isSignalSetFlag = true;
-        ca_cond_signal(g_threadSendNotifyCond);
-        ca_mutex_unlock(g_threadSendNotifyMutex);
+        oc_cond_signal(g_threadSendNotifyCond);
+        oc_mutex_unlock(g_threadSendNotifyMutex);
     }
 
 }
@@ -2459,7 +2478,7 @@ CAResult_t CAStopLEGattServer()
     }
 
     bool isAttached = false;
-    JNIEnv* env;
+    JNIEnv* env = NULL;
     jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
     if (JNI_OK != res)
     {
@@ -2523,9 +2542,9 @@ CAResult_t CAStopLEGattServer()
         g_obj_bluetoothDevice = NULL;
     }
 
-    ca_mutex_lock(g_threadSendNotifyMutex);
-    ca_cond_signal(g_threadSendNotifyCond);
-    ca_mutex_unlock(g_threadSendNotifyMutex);
+    oc_mutex_lock(g_threadSendNotifyMutex);
+    oc_cond_signal(g_threadSendNotifyCond);
+    oc_mutex_unlock(g_threadSendNotifyMutex);
 
     g_isStartServer = false;
 
@@ -2551,9 +2570,9 @@ void CATerminateLEGattServer()
 
 void CASetLEReqRespServerCallback(CABLEDataReceivedCallback callback)
 {
-    ca_mutex_lock(g_bleReqRespCbMutex);
+    oc_mutex_lock(g_bleReqRespCbMutex);
     g_CABLEServerDataReceivedCallback = callback;
-    ca_mutex_unlock(g_bleReqRespCbMutex);
+    oc_mutex_unlock(g_bleReqRespCbMutex);
 }
 
 void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback)
@@ -2597,50 +2616,50 @@ CAResult_t CALEServerInitMutexVaraibles()
 {
     if (NULL == g_bleReqRespCbMutex)
     {
-        g_bleReqRespCbMutex = ca_mutex_new();
+        g_bleReqRespCbMutex = oc_mutex_new();
         if (NULL == g_bleReqRespCbMutex)
         {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_bleClientBDAddressMutex)
     {
-        g_bleClientBDAddressMutex = ca_mutex_new();
+        g_bleClientBDAddressMutex = oc_mutex_new();
         if (NULL == g_bleClientBDAddressMutex)
         {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_connectedDeviceListMutex)
     {
-        g_connectedDeviceListMutex = ca_mutex_new();
+        g_connectedDeviceListMutex = oc_mutex_new();
         if (NULL == g_connectedDeviceListMutex)
         {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_threadSendMutex)
     {
-        g_threadSendMutex = ca_mutex_new();
+        g_threadSendMutex = oc_mutex_new();
         if (NULL == g_threadSendMutex)
         {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
             return CA_STATUS_FAILED;
         }
     }
 
     if (NULL == g_threadSendNotifyMutex)
     {
-        g_threadSendNotifyMutex = ca_mutex_new();
+        g_threadSendNotifyMutex = oc_mutex_new();
         if (NULL == g_threadSendNotifyMutex)
         {
-            OIC_LOG(ERROR, TAG, "ca_mutex_new has failed");
+            OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
             return CA_STATUS_FAILED;
         }
     }
@@ -2650,19 +2669,19 @@ CAResult_t CALEServerInitMutexVaraibles()
 
 void CALEServerTerminateMutexVaraibles()
 {
-    ca_mutex_free(g_bleReqRespCbMutex);
+    oc_mutex_free(g_bleReqRespCbMutex);
     g_bleReqRespCbMutex = NULL;
 
-    ca_mutex_free(g_bleClientBDAddressMutex);
+    oc_mutex_free(g_bleClientBDAddressMutex);
     g_bleClientBDAddressMutex = NULL;
 
-    ca_mutex_free(g_connectedDeviceListMutex);
+    oc_mutex_free(g_connectedDeviceListMutex);
     g_connectedDeviceListMutex = NULL;
 
-    ca_mutex_free(g_threadSendMutex);
+    oc_mutex_free(g_threadSendMutex);
     g_threadSendMutex = NULL;
 
-    ca_mutex_free(g_threadSendNotifyMutex);
+    oc_mutex_free(g_threadSendNotifyMutex);
     g_threadSendNotifyMutex = NULL;
 }
 

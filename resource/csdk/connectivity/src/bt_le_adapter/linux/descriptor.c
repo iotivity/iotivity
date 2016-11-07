@@ -82,8 +82,8 @@ static gboolean CAGattDescriptorReadValue(
  * @param[in]  descriptor_path @c GattDescriptor1 object path for the
  *                             user description descriptor.
  * @param[in]  value           User description descriptor value,
- *                             e.g. @c "OIC Node Request" or
- *                             @c "OIC Node Response".
+ *                             e.g. @c "OCF Node Request" or
+ *                             @c "OCF Node Response".
  *
  * @note This function does not allocate the @a descriptor object
  *       itself.  The caller is responsible for allocating that

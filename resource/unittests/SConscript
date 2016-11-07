@@ -18,12 +18,16 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-Import('env')
 import os
 import os.path
-unittests_env = env.Clone()
 
+# SConscript file for Local PKI google tests
+gtest_env = SConscript('#extlibs/gtest/SConscript')
+unittests_env = gtest_env.Clone()
 src_dir = unittests_env.get('SRC_DIR')
+target_os = unittests_env.get('TARGET_OS')
+with_mq = unittests_env.get('WITH_MQ')
+
 ######################################################################
 # Build flags
 ######################################################################
@@ -38,49 +42,75 @@ unittests_env.PrependUnique(CPPPATH = [
 		'../csdk/ocsocket/include',
 		'../c_common/ocrandom/include',
 		'../csdk/logger/include',
-		'#extlibs/gtest/gtest-1.7.0/include',
 		'#extlibs/hippomocks-master/HippoMocks',
 		'#extlibs/hippomocks-master/HippoMocksTest'
 		])
 
-unittests_env.AppendUnique(CXXFLAGS = ['-std=c++0x', '-Wall', '-pthread'])
-unittests_env.AppendUnique(LIBS = ['-lpthread'])
-unittests_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
-unittests_env.AppendUnique(LIBPATH = [src_dir + '/extlibs/gtest/gtest-1.7.0/lib/.libs'])
+if target_os in ['windows']:
+	unittests_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi', 'bcrypt'])
+	unittests_env.AppendUnique(CPPPATH = ['#extlibs/boost/boost'])
+
+if unittests_env.get('SECURED') == '1':
+	unittests_env.AppendUnique(LIBS = ['ocsrm'])
+
+unittests_env.AppendUnique(LIBPATH = [unittests_env.get('BUILD_DIR')])
 unittests_env.PrependUnique(LIBS = [
 		'oc',
-		'octbstack',
+		'octbstack_test',
 		'oc_logger',
 		'connectivity_abstraction',
-		'coap',
-		'gtest',
-		'gtest_main'
+		'coap'
 		])
 
-if env.get('SECURED') == '1':
-    unittests_env.AppendUnique(LIBS = ['tinydtls'])
+if unittests_env.get('SECURED') == '1':
+	unittests_env.AppendUnique(LIBS = ['tinydtls'])
+	if unittests_env.get('WITH_TCP') == True:
+		unittests_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 
-if env.get('LOGGING'):
+if unittests_env.get('LOGGING'):
 	unittests_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
+
+if unittests_env.get('WITH_CLOUD'):
+	unittests_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-unittests = unittests_env.Program('unittests', ['ConstructResourceTest.cpp',
-                                                'OCPlatformTest.cpp',
-                                                'OCRepresentationTest.cpp',
-                                                'OCRepresentationEncodingTest.cpp',
-                                                'OCResourceTest.cpp',
-                                                'OCExceptionTest.cpp',
-                                                'OCResourceResponseTest.cpp',
-                                                'OCHeaderOptionTest.cpp'])
+
+unittests_src = [
+		'ConstructResourceTest.cpp',
+		'OCPlatformTest.cpp',
+		'OCRepresentationTest.cpp',
+		'OCRepresentationEncodingTest.cpp',
+		'OCResourceTest.cpp',
+		'OCExceptionTest.cpp',
+		'OCResourceResponseTest.cpp',
+		'OCHeaderOptionTest.cpp'
+	]
+
+# TODO: Fix errors in the following Windows tests.
+if target_os in ['windows']:
+	if '12.0' == unittests_env['MSVC_VERSION']:
+		unittests_src.remove('OCPlatformTest.cpp')
+		unittests_src.remove('OCRepresentationEncodingTest.cpp')
+		unittests_src.remove('OCRepresentationTest.cpp')
+		unittests_src.remove('OCResourceTest.cpp')
+
+if (('SUB' in with_mq) or ('PUB' in with_mq) or ('BROKER' in with_mq)):
+	unittests_src = unittests_src + ['OCMQResourceTest.cpp']
+
+if unittests_env.get('WITH_CLOUD'):
+	unittests_src = unittests_src + ['OCAccountManagerTest.cpp']
+
+unittests = unittests_env.Program('unittests', unittests_src)
 
 Alias("unittests", [unittests])
 
-env.AppendTarget('unittests')
-if env.get('TEST') == '1':
-	target_os = env.get('TARGET_OS')
-	if target_os == 'linux':
+unittests_env.AppendTarget('unittests')
+if unittests_env.get('TEST') == '1':
+	if target_os in ['windows']:
+		unittests_env.AppendENVPath('PATH', unittests_env.get('BUILD_DIR'))
+	if target_os in ['linux', 'windows']:
                 from tools.scons.RunTest import *
                 run_test(unittests_env,
                          'resource_unittests_unittests.memcheck',
@@ -88,8 +118,8 @@ if env.get('TEST') == '1':
 
 src_dir = unittests_env.get('SRC_DIR')
 svr_db_src_dir = os.path.join(src_dir, 'resource/examples/')
-svr_db_build_dir = os.path.join(env.get('BUILD_DIR'), 'resource/unittests/')
+svr_db_build_dir = os.path.join(unittests_env.get('BUILD_DIR'), 'resource', 'unittests') + os.sep
 unittests_env.Alias("install",
                     unittests_env.Install(svr_db_build_dir,
                                           os.path.join(svr_db_src_dir,
-                                                       'oic_svr_db_client.json')))
+                                                       'oic_svr_db_client.dat')))

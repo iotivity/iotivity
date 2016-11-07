@@ -1,7 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-OIC_LIB_PATH := ../../../../../android/android_api/base/libs/$(TARGET_ARCH_ABI)
+OIC_LIB_PATH := ../../../../../java/iotivity-android/build/native-libs/$(TARGET_ARCH_ABI)
 LOCAL_MODULE := ca_interface
 LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libca-interface.so
 include $(PREBUILT_SHARED_LIBRARY)
@@ -37,7 +37,7 @@ LOCAL_SRC_FILES := $(OIC_LIB_PATH)/liboc.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
-OIC_LIB_PATH := ../../../../../android/android_api/base/libs/$(TARGET_ARCH_ABI)
+OIC_LIB_PATH := ../../../../../java/iotivity-android/build/native-libs/$(TARGET_ARCH_ABI)
 LOCAL_MODULE := ocstack-jni
 LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libocstack-jni.so
 include $(PREBUILT_SHARED_LIBRARY)

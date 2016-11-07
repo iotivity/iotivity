@@ -44,7 +44,7 @@ ex) doorDeviceUUID00 (16 Numbers except to '-')
 Subject : doorDeviceUUID00
 Num. of Resource : 1
 -URI of resource
-ex) /a/light (Max_URI_Length: 64 Byte )
+ex) /a/light (Max_URI_Length: 256 Byte )
 [1]Resource : /a/light
 -Set the permission(C,R,U,D,N)
 ex) CRUDN, CRU_N,..(5 Charaters)

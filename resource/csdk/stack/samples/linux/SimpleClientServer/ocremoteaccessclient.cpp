@@ -30,6 +30,7 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 #include "ocremoteaccessclient.h"
+#include "common.h"
 
 #define SET_BUT_NOT_USED(x) (void) x
 // Tracking user input
@@ -43,7 +44,6 @@ static std::string coapServerResource = "/a/light";
 static OCDevAddr responseAddr;
 //Use ipv4addr for both InitDiscovery and InitPlatformOrDeviceDiscovery
 char remoteServerJabberID[MAX_ADDR_STR_SIZE];
-void StripNewLineChar(char* str);
 static uint16_t maxNotification = 15;
 
 // The handle for the observe registration

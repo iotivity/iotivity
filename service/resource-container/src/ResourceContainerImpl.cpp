@@ -68,58 +68,56 @@ namespace OIC
 
 
             activationLock.lock();
-            if (!configFile.empty())
+            try
             {
-                m_config = new Configuration(configFile);
-
-                if (m_config->isLoaded())
+                if (!configFile.empty())
                 {
-                    configInfo bundles;
-                    m_config->getConfiguredBundles(&bundles);
+                    m_config = new Configuration(configFile);
 
-                    for (unsigned int i = 0; i < bundles.size(); i++)
+                    if (m_config->isLoaded())
                     {
-                        shared_ptr<BundleInfoInternal> bundleInfo(new BundleInfoInternal);
-                        bundleInfo->setPath(bundles[i][BUNDLE_PATH]);
-                        bundleInfo->setVersion(bundles[i][BUNDLE_VERSION]);
-                        bundleInfo->setID(bundles[i][BUNDLE_ID]);
-                        if (!bundles[i][BUNDLE_ACTIVATOR].empty())
+                        configInfo bundles;
+                        m_config->getConfiguredBundles(&bundles);
+
+                        for (unsigned int i = 0; i < bundles.size(); i++)
                         {
-                            string activatorName = bundles[i][BUNDLE_ACTIVATOR];
-                            std::replace(activatorName.begin(), activatorName.end(), '.', '/');
-                            bundleInfo->setActivatorName(activatorName);
-                            bundleInfo->setLibraryPath(bundles[i][BUNDLE_LIBRARY_PATH]);
+                            shared_ptr<BundleInfoInternal> bundleInfo(new BundleInfoInternal);
+                            bundleInfo->setPath(bundles[i][BUNDLE_PATH]);
+                            bundleInfo->setVersion(bundles[i][BUNDLE_VERSION]);
+                            bundleInfo->setID(bundles[i][BUNDLE_ID]);
+                            if (!bundles[i][BUNDLE_ACTIVATOR].empty())
+                            {
+                                string activatorName = bundles[i][BUNDLE_ACTIVATOR];
+                                std::replace(activatorName.begin(), activatorName.end(), '.', '/');
+                                bundleInfo->setActivatorName(activatorName);
+                                bundleInfo->setLibraryPath(bundles[i][BUNDLE_LIBRARY_PATH]);
+                            }
+
+                            OIC_LOG_V(INFO, CONTAINER_TAG, "Init Bundle:(%s)",
+                                     std::string(bundles[i][BUNDLE_ID] + ";" +
+                                                 bundles[i][BUNDLE_PATH]).c_str());
+
+                            registerBundle(bundleInfo);
+                            activateBundle(bundleInfo);
                         }
-
-                        OIC_LOG_V(INFO, CONTAINER_TAG, "Init Bundle:(%s)",
-                                 std::string(bundles[i][BUNDLE_ID] + ";" +
-                                             bundles[i][BUNDLE_PATH]).c_str());
-
-                        registerBundle(bundleInfo);
-                        activateBundle(bundleInfo);
+                    }
+                    else
+                    {
+                        OIC_LOG_V(ERROR, CONTAINER_TAG, "Container started with invalid configfile path.");
                     }
                 }
                 else
                 {
-                    OIC_LOG_V(ERROR, CONTAINER_TAG, "Container started with invalid configfile path.");
+                    OIC_LOG_V(INFO, CONTAINER_TAG, "No configuration file for the container provided.");
                 }
-            }
-            else
-            {
-                OIC_LOG_V(INFO, CONTAINER_TAG, "No configuration file for the container provided.");
-            }
 
-            map<std::string, boost::thread >::iterator activatorIterator;
-
-            for (activatorIterator = m_activators.begin(); activatorIterator != m_activators.end();
-                 activatorIterator++)
+                OIC_LOG(INFO, CONTAINER_TAG, "Resource container started.");
+            }
+            catch (...)
             {
-                activatorIterator->second.timed_join(
-                    boost::posix_time::seconds(BUNDLE_ACTIVATION_WAIT_SEC));
-                // wait for bundles to be activated
+                OIC_LOG(INFO, CONTAINER_TAG, "Resource container failed starting.");
             }
             activationLock.unlock();
-            OIC_LOG(INFO, CONTAINER_TAG, "Resource container started.");
         }
 
         void ResourceContainerImpl::stopContainer()
@@ -147,7 +145,9 @@ namespace OIC
             }
 
             if (m_config)
+            {
                 delete m_config;
+            }
         }
 
         void ResourceContainerImpl::activateBundle(shared_ptr<RCSBundleInfo> bundleInfo)
@@ -178,11 +178,17 @@ namespace OIC
         {
             OIC_LOG_V(INFO, CONTAINER_TAG, "Activating bundle: (%s)",
                      std::string(m_bundles[id]->getID()).c_str());
+
             activationLock.lock();
-            auto f = std::bind(&ResourceContainerImpl::activateBundleThread, this,
-                               id);
-            boost::thread activator(f);
-            activator.timed_join(boost::posix_time::seconds(BUNDLE_SET_GET_WAIT_SEC));
+            try
+            {
+                activateBundleThread(id);
+            }
+            catch (...)
+            {
+                OIC_LOG_V(INFO, CONTAINER_TAG, "Activating bundle: (%s) failed",
+                                     std::string(m_bundles[id]->getID()).c_str());
+            }
             activationLock.unlock();
             OIC_LOG_V(INFO, CONTAINER_TAG, "Bundle activated: (%s)",
                      std::string(m_bundles[id]->getID()).c_str());
@@ -223,14 +229,15 @@ namespace OIC
                 registerExtBundle(bundleInfo);
 #endif
             }
-            else if(has_suffix(bundleInfo->getPath(), ".so"))
+            else if (has_suffix(bundleInfo->getPath(), ".so"))
             {
                 bundleInfoInternal->setSoBundle(true);
                 bundleInfoInternal->setJavaBundle(false);
                 registerSoBundle(bundleInfo);
             }
             // other cases might be for example .apk for android, which are loaded in the wrapper
-            else{
+            else
+            {
                 bundleInfoInternal->setSoBundle(false);
                 bundleInfoInternal->setJavaBundle(false);
                 registerExtBundle(bundleInfo);
@@ -247,7 +254,7 @@ namespace OIC
                 {
                     unregisterBundleSo(bundleInfo->getID());
                 }
-                else if(bundleInfoInternal->getJavaBundle())
+                else if (bundleInfoInternal->getJavaBundle())
                 {
 #if(JAVA_SUPPORT)
                     unregisterBundleJava(bundleInfo->getID());
@@ -291,7 +298,8 @@ namespace OIC
             registrationLock.lock();
             if (m_mapResources.find(strUri) == m_mapResources.end())
             {
-                if (strInterface.empty()) {
+                if (strInterface.empty())
+                {
                     strInterface = "oic.if.baseline";
                 }
 
@@ -322,7 +330,8 @@ namespace OIC
                               strResourceType).c_str());
                         discoverInputResource(strUri);
                     }
-                    else{
+                    else
+                    {
                         OIC_LOG_V(INFO, CONTAINER_TAG, "Resource has no input (%s)",
                                  std::string(strUri + ", " +
                                  strResourceType).c_str());
@@ -396,7 +405,8 @@ namespace OIC
             {
                 m_config->getResourceConfiguration(bundleId, configOutput);
             }
-            else{
+            else
+            {
                 OIC_LOG_V(DEBUG, CONTAINER_TAG, "no config present ");
             }
         }
@@ -406,6 +416,8 @@ namespace OIC
         {
             RCSResourceAttributes attr;
             std::string strResourceUri = request.getResourceUri();
+            const std::map< std::string, std::string > &queryParams  = request.getQueryParams();
+
             OIC_LOG_V(INFO, CONTAINER_TAG, "Container get request for %s",strResourceUri.c_str());
 
             if (m_mapServers.find(strResourceUri) != m_mapServers.end()
@@ -413,9 +425,9 @@ namespace OIC
             {
                 if (m_mapResources[strResourceUri])
                 {
-                    auto getFunction = [this, &attr, &strResourceUri]()
+                    auto getFunction = [this, &attr, &strResourceUri, queryParams]()
                     {
-                        attr = m_mapResources[strResourceUri]->handleGetAttributesRequest();
+                        attr = m_mapResources[strResourceUri]->handleGetAttributesRequest(queryParams);
                     };
                     boost::thread getThread(getFunction);
                     getThread.timed_join(boost::posix_time::seconds(BUNDLE_SET_GET_WAIT_SEC));
@@ -433,6 +445,7 @@ namespace OIC
             RCSResourceAttributes attr;
             std::list<std::string> lstAttributes;
             std::string strResourceUri = request.getResourceUri();
+            const std::map< std::string, std::string > &queryParams  = request.getQueryParams();
 
             OIC_LOG_V(INFO, CONTAINER_TAG, "Container set request for %s, %zu attributes",strResourceUri.c_str(), attributes.size());
 
@@ -441,7 +454,7 @@ namespace OIC
             {
                 if (m_mapResources[strResourceUri])
                 {
-                    auto setFunction = [this, &lstAttributes, &strResourceUri, &attributes, &attr]()
+                    auto setFunction = [this, &lstAttributes, &strResourceUri, &attributes, &attr, queryParams]()
                     {
                         lstAttributes = m_mapResources[strResourceUri]->getAttributeNames();
 
@@ -456,7 +469,7 @@ namespace OIC
                         }
 
                         OIC_LOG_V(INFO, CONTAINER_TAG, "Calling handleSetAttributeRequest");
-                        m_mapResources[strResourceUri]->handleSetAttributesRequest(attr);
+                        m_mapResources[strResourceUri]->handleSetAttributesRequest(attr, queryParams);
                     };
                     boost::thread setThread(setFunction);
                     setThread.timed_join(boost::posix_time::seconds(BUNDLE_SET_GET_WAIT_SEC));
@@ -497,7 +510,9 @@ namespace OIC
             if (m_bundles.find(bundleId) != m_bundles.end())
             {
                 if (!m_bundles[bundleId]->isActivated())
+                {
                     activateBundle(m_bundles[bundleId]);
+                }
                 else
                 {
                     OIC_LOG(ERROR, CONTAINER_TAG, "Bundle already started");
@@ -516,7 +531,9 @@ namespace OIC
             if (m_bundles.find(bundleId) != m_bundles.end())
             {
                 if (m_bundles[bundleId]->isActivated())
+                {
                     deactivateBundle(m_bundles[bundleId]);
+                }
                 else
                 {
                     OIC_LOG(ERROR, CONTAINER_TAG, "Bundle not activated");
@@ -538,7 +555,9 @@ namespace OIC
             (void) bundleUri;
 
             if (m_bundles.find(bundleId) != m_bundles.end())
+            {
                 OIC_LOG(ERROR, CONTAINER_TAG, "BundleId already exist");
+            }
 
             else
             {
@@ -569,10 +588,14 @@ namespace OIC
             {
                 shared_ptr<BundleInfoInternal> bundleInfo = m_bundles[bundleId];
                 if (bundleInfo->isActivated())
+                {
                     deactivateBundle(bundleInfo);
+                }
 
                 if (bundleInfo->isLoaded())
+                {
                     unregisterBundle(bundleInfo);
+                }
             }
             else
             {
@@ -609,11 +632,17 @@ namespace OIC
                     newResourceInfo.uri = resourceUri;
 
                     if (params.find(OUTPUT_RESOURCE_NAME) != params.end())
+                    {
                         newResourceInfo.name = params[OUTPUT_RESOURCE_NAME];
+                    }
                     if (params.find(OUTPUT_RESOURCE_TYPE) != params.end())
+                    {
                         newResourceInfo.resourceType = params[OUTPUT_RESOURCE_TYPE];
+                    }
                     if (params.find(OUTPUT_RESOURCE_ADDR) != params.end())
+                    {
                         newResourceInfo.address = params[OUTPUT_RESOURCE_ADDR];
+                    }
 
                     addSoBundleResource(bundleId, newResourceInfo);
                 }
@@ -689,7 +718,8 @@ namespace OIC
                 {
                   OIC_LOG_V(ERROR, CONTAINER_TAG, "Error while loading .so bundle: (%s)", error);
                 }
-                else{
+                else
+                {
                   OIC_LOG_V(DEBUG, CONTAINER_TAG, "Looked up %s", ("" +
                           bundleInfoInternal->getActivatorName()
                           + "_externalActivateBundle").c_str());
@@ -702,7 +732,8 @@ namespace OIC
                 {
                   OIC_LOG_V(ERROR, CONTAINER_TAG, "Error while loading .so bundle: (%s)", error);
                 }
-                else{
+                else
+                {
                   OIC_LOG_V(DEBUG, CONTAINER_TAG, "Looked up %s", ("" +
                           bundleInfoInternal->getActivatorName()
                           + "_externalDeactivateBundle").c_str());
@@ -715,7 +746,8 @@ namespace OIC
                 {
                   OIC_LOG_V(ERROR, CONTAINER_TAG, "Error while loading .so bundle: (%s)", error);
                 }
-                else{
+                else
+                {
                   OIC_LOG_V(DEBUG, CONTAINER_TAG, "Looked up %s", ("" +
                           bundleInfoInternal->getActivatorName()
                           + "_externalCreateResource").c_str());
@@ -728,7 +760,8 @@ namespace OIC
                 {
                   OIC_LOG_V(ERROR, CONTAINER_TAG, "Error while loading .so bundle: (%s)", error);
                 }
-                else{
+                else
+                {
                   OIC_LOG_V(DEBUG, CONTAINER_TAG, "Looked up %s", ("" +
                           bundleInfoInternal->getActivatorName()
                           + "_externalDestroyResource").c_str());
@@ -761,7 +794,8 @@ namespace OIC
             OIC_LOG_V(DEBUG, CONTAINER_TAG, "Register SO bundle finished");
         }
 
-        void ResourceContainerImpl::registerExtBundle(shared_ptr<RCSBundleInfo> bundleInfo){
+        void ResourceContainerImpl::registerExtBundle(shared_ptr<RCSBundleInfo> bundleInfo)
+        {
             OIC_LOG_V(INFO, CONTAINER_TAG, "Registering ext bundle (%s)",
                                  std::string(bundleInfo->getID()).c_str());
             OIC_LOG_V(INFO, CONTAINER_TAG, "Activator name (%s)",
@@ -817,11 +851,10 @@ namespace OIC
         {
             OIC_LOG_V(DEBUG, CONTAINER_TAG, "Discover input resource %s", outputResourceUri.c_str());
             auto foundOutputResource = m_mapResources.find(outputResourceUri);
-           // auto resourceProperty = foundOutputResource->second->m_mapResourceProperty;
 
             resourceInfo info;
             m_config->getResourceConfiguration(foundOutputResource->second->m_bundleId,
-                    foundOutputResource->second->m_name, &info);
+                outputResourceUri, &info);
             map< string, vector< map< string, string > > > resourceProperty = info.resourceProperty;
 
             try
@@ -954,7 +987,7 @@ namespace OIC
                 activateJavaBundle(id);
 #endif
             }
-            else if(m_bundles[id]->getSoBundle())
+            else if (m_bundles[id]->getSoBundle())
             {
                 activateSoBundle (id);
             }

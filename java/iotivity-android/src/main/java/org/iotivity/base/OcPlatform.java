@@ -23,6 +23,7 @@
 package org.iotivity.base;
 
 import org.iotivity.ca.CaInterface;
+import org.iotivity.base.BuildConfig;
 
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -36,10 +37,15 @@ import java.util.List;
 public final class OcPlatform {
 
     static {
+        System.loadLibrary("gnustl_shared");
+        System.loadLibrary("connectivity_abstraction");
         System.loadLibrary("oc_logger");
         System.loadLibrary("octbstack");
-        System.loadLibrary("connectivity_abstraction");
         System.loadLibrary("oc");
+        if (0 != BuildConfig.SECURED)
+        {
+            System.loadLibrary("ocprovision");
+        }
         System.loadLibrary("ocstack-jni");
     }
 
@@ -167,6 +173,10 @@ public final class OcPlatform {
             OcResourceResponse ocResourceResponse) throws OcException {
         OcPlatform.initCheck();
 
+        if (ocObservationIdList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "ocObservationIdList cannot be null");
+        }
+
         byte[] idArr = new byte[ocObservationIdList.size()];
         Iterator<Byte> it = ocObservationIdList.iterator();
         int i = 0;
@@ -205,6 +215,10 @@ public final class OcPlatform {
             OcResourceResponse ocResourceResponse,
             QualityOfService qualityOfService) throws OcException {
         OcPlatform.initCheck();
+
+        if (ocObservationIdList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "ocObservationIdList cannot be null");
+        }
 
         byte[] idArr = new byte[ocObservationIdList.size()];
         Iterator<Byte> it = ocObservationIdList.iterator();
@@ -536,12 +550,16 @@ public final class OcPlatform {
             OcDeviceInfo ocDeviceInfo) throws OcException {
         OcPlatform.initCheck();
         OcPlatform.registerDeviceInfo0(
-                ocDeviceInfo.getDeviceName()
+                ocDeviceInfo.getDeviceName(),
+                ocDeviceInfo.getDeviceTypes().toArray(
+                        new String[ocDeviceInfo.getDeviceTypes().size()]
+                )
         );
     }
 
     private static native void registerDeviceInfo0(
-            String deviceName
+            String deviceName,
+            String[] deviceTypes
     ) throws OcException;
 
     /**
@@ -622,6 +640,11 @@ public final class OcPlatform {
             OcResourceHandle ocResourceCollectionHandle,
             List<OcResourceHandle> ocResourceHandleList) throws OcException {
         OcPlatform.initCheck();
+
+        if (ocResourceHandleList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "ocResourceHandleList cannot be null");
+        }
+
         OcPlatform.bindResources0(
                 ocResourceCollectionHandle,
                 ocResourceHandleList.toArray(
@@ -663,6 +686,11 @@ public final class OcPlatform {
             OcResourceHandle ocResourceCollectionHandle,
             List<OcResourceHandle> ocResourceHandleList) throws OcException {
         OcPlatform.initCheck();
+
+        if (ocResourceHandleList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "ocResourceHandleList cannot be null");
+        }
+
         OcPlatform.unbindResources0(
                 ocResourceCollectionHandle,
                 ocResourceHandleList.toArray(
@@ -825,6 +853,43 @@ public final class OcPlatform {
             OcPresenceHandle ocPresenceHandle) throws OcException;
 
     /**
+     * Subscribes to a server's device presence change events.
+     *
+     * @param host                The IP address/addressable name of the server to subscribe to.
+     * @param di                  Vector which can have the devices id.
+     * @param connectivityTypeSet Set of connectivity types, e.g. IP.
+     * @param onObserveListener   The handler method will be invoked with a map
+     *                            of attribute name and values.
+     * @return a handle object that can be used to identify this subscription request.
+     *         It can be used to unsubscribe from these events in the future.
+     * @throws OcException if failure.
+     */
+    public static OcPresenceHandle subscribeDevicePresence(
+            String host,
+            List<String> di,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            OcResource.OnObserveListener onObserveListener) throws OcException {
+        OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
+        return OcPlatform.subscribeDevicePresence0(
+                host,
+                di.toArray(new String[di.size()]),
+                connTypeInt,
+                onObserveListener);
+    }
+
+    private static native OcPresenceHandle subscribeDevicePresence0(
+            String host,
+            String[] di,
+            int connectivityType,
+            OcResource.OnObserveListener onObserveListener) throws OcException;
+
+    /**
      * Creates a resource proxy object so that get/put/observe functionality can be used without
      * discovering the object in advance. Note that the consumer of this method needs to provide
      * all of the details required to correctly contact and observe the object. If the consumer
@@ -892,11 +957,394 @@ public final class OcPlatform {
             throws OcException;
 
     /**
+     *  Method to find all devices which are eligible for direct pairing and return the list.
+     *
+     *  @param timeout timeout for discovering direct pair devices.
+     *  @param FindDirectPairingListener Callback function, which will receive the list of direct
+     *                                  pairable devices.
+     *  @throws OcException
+     */
+   public static native void findDirectPairingDevices(int timeout,
+            FindDirectPairingListener onFindDirectPairingListener) throws OcException;
+
+    /**
+     *  Method to get list of all paired devices for a given device.
+     *
+     *  @param GetDirectPairedListener Callback function, which will receive the list of direct
+     *                                 paired devices.
+     *  @throws OcException
+     */
+    public native void getDirectPairedDevices(GetDirectPairedListener onGetDirectPairedListener)
+        throws OcException;
+
+    /**
+     *  Method to perform direct pairing between two devices.
+     *
+     *  @param peer  Target peer
+     *  @param prmType Pairing Method to be used for Pairing
+     *  @param pin pin
+     *  @param DirectPairingListener Callback function, which will be called after
+     *                                      completion of direct pairing.
+     *  @throws OcException
+     */
+    public static void doDirectPairing(
+            OcDirectPairDevice peer,
+            OcPrmType prmType,
+            String pin,
+            DirectPairingListener onDirectPairingListener) throws OcException {
+
+        OcPlatform.doDirectPairing0(
+                peer,
+                prmType.getValue(),
+                pin,
+                onDirectPairingListener
+                );
+    }
+
+    private static native void doDirectPairing0(OcDirectPairDevice peer,
+            int pmSel, String pinNumber, DirectPairingListener onDirectPairingListener)
+    throws OcException;
+
+    /**
+     * API to publish resource to remote resource-directory.
+     *
+     * @param host                        Host Address of a service to publish resource.
+     * @param connectivityTypeSet         Set of types of connectivity. Example: IP
+     * @param onPublishResourceListener   Handles events, success states and failure states.
+     * @throws OcException if failure
+     */
+    public static void publishResourceToRD(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            OnPublishResourceListener onPublishResourceListener) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType)) {
+                connTypeInt |= connType.getValue();
+            }
+        }
+
+        OcPlatform.publishResourceToRD0(
+                host,
+                connTypeInt,
+                onPublishResourceListener,
+                sPlatformQualityOfService.getValue()
+        );
+    }
+
+    /**
+     * API to publish resource to remote resource-directory.
+     *
+     * @param host                        Host Address of a service to publish resource.
+     * @param connectivityTypeSet         Set of types of connectivity. Example: IP
+     * @param onPublishResourceListener   Handles events, success states and failure states.
+     * @param qualityOfService            the quality of communication.
+     * @throws OcException if failure
+     */
+    public static void publishResourceToRD(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            OnPublishResourceListener onPublishResourceListener,
+            QualityOfService qualityOfService) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType)) {
+                connTypeInt |= connType.getValue();
+            }
+        }
+
+        OcPlatform.publishResourceToRD0(
+                host,
+                connTypeInt,
+                onPublishResourceListener,
+                qualityOfService.getValue()
+        );
+    }
+
+    private static native void publishResourceToRD0(
+            String host,
+            int connectivityType,
+            OnPublishResourceListener onPublishResourceListener,
+            int qualityOfService) throws OcException;
+
+    /**
+     * API to publish resource to remote resource-directory.
+     *
+     * @param host                        Host Address of a service to publish resource.
+     * @param connectivityTypeSet         Set of types of connectivity. Example: IP
+     * @param ocResourceHandleList        reference to list of resource handles to be published.
+     * @param onPublishResourceListener   Handles events, success states and failure states.
+     * @throws OcException if failure
+     */
+    public static void publishResourceToRD(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            List<OcResourceHandle> ocResourceHandleList,
+            OnPublishResourceListener onPublishResourceListener) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType)) {
+                connTypeInt |= connType.getValue();
+            }
+        }
+
+        OcPlatform.publishResourceToRD1(
+                host,
+                connTypeInt,
+                ocResourceHandleList.toArray(
+                        new OcResourceHandle[ocResourceHandleList.size()]),
+                onPublishResourceListener,
+                sPlatformQualityOfService.getValue()
+        );
+    }
+
+    /**
+     * API to publish resource to remote resource-directory.
+     *
+     * @param host                        Host IP Address of a service to publish resource.
+     * @param connectivityTypeSet         Set of types of connectivity. Example: IP
+     * @param ocResourceHandleList        reference to list of resource handles to be published.
+     * @param onPublishResourceListener   Handles events, success states and failure states.
+     * @param qualityOfService            the quality of communication
+     * @throws OcException if failure
+     */
+    public static void publishResourceToRD(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            List<OcResourceHandle> ocResourceHandleList,
+            OnPublishResourceListener onPublishResourceListener,
+            QualityOfService qualityOfService) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType)) {
+                connTypeInt |= connType.getValue();
+            }
+        }
+
+        OcPlatform.publishResourceToRD1(
+            host,
+            connTypeInt,
+            ocResourceHandleList.toArray(
+                    new OcResourceHandle[ocResourceHandleList.size()]),
+            onPublishResourceListener,
+            qualityOfService.getValue()
+        );
+    }
+
+    private static native void publishResourceToRD1(
+            String host,
+            int connectivityType,
+            OcResourceHandle[] ocResourceHandleArray,
+            OnPublishResourceListener onPublishResourceListener,
+            int qualityOfService) throws OcException;
+
+    /**
+     * API to delete resource from remote resource-directory.
+     *
+     * @param host                        Host Address of a service to publish resource.
+     * @param connectivityTypeSet         Set of types of connectivity. Example: IP
+     * @param onDeleteResourceListener    Handles events, success states and failure states.
+     * @throws OcException if failure
+     */
+    public static void deleteResourceFromRD(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            OnDeleteResourceListener onDeleteResourceListener) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType)) {
+                connTypeInt |= connType.getValue();
+            }
+        }
+
+        OcPlatform.deleteResourceFromRD0(
+                host,
+                connTypeInt,
+                onDeleteResourceListener,
+                sPlatformQualityOfService.getValue()
+        );
+    }
+
+    /**
+     * API to delete resource from remote resource-directory.
+     *
+     * @param host                        Host Address of a service to publish resource.
+     * @param connectivityTypeSet         Set of types of connectivity. Example: IP
+     * @param onDeleteResourceListener    Handles events, success states and failure states.
+     * @param qualityOfService            the quality of communication.
+     * @throws OcException if failure
+     */
+    public static void deleteResourceFromRD(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            OnDeleteResourceListener onDeleteResourceListener,
+            QualityOfService qualityOfService) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType)) {
+                connTypeInt |= connType.getValue();
+            }
+        }
+
+        OcPlatform.deleteResourceFromRD0(
+                host,
+                connTypeInt,
+                onDeleteResourceListener,
+                qualityOfService.getValue()
+        );
+    }
+
+    private static native void deleteResourceFromRD0(
+            String host,
+            int connectivityType,
+            OnDeleteResourceListener onDeleteResourceListener,
+            int qualityOfService) throws OcException;
+
+    /**
+     * API to delete resource from remote resource-directory.
+     *
+     * @param host                        Host Address of a service to publish resource.
+     * @param connectivityTypeSet         Set of types of connectivity. Example: IP
+     * @param ocResourceHandleList        reference to list of resource handles to be published.
+     * @param onDeleteResourceListener   	Handles events, success states and failure states.
+     * @throws OcException if failure
+     */
+    public static void deleteResourceFromRD(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            List<OcResourceHandle> ocResourceHandleList,
+            OnDeleteResourceListener onDeleteResourceListener) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType)) {
+                connTypeInt |= connType.getValue();
+            }
+        }
+
+        OcPlatform.deleteResourceFromRD1(
+                host,
+                connTypeInt,
+                ocResourceHandleList.toArray(
+                        new OcResourceHandle[ocResourceHandleList.size()]),
+                onDeleteResourceListener,
+                sPlatformQualityOfService.getValue()
+        );
+    }
+
+    /**
+     * API to delete resource from remote resource-directory.
+     *
+     * @param host                        Host IP Address of a service to publish resource.
+     * @param connectivityTypeSet         Set of types of connectivity. Example: IP
+     * @param ocResourceHandleList        reference to list of resource handles to be published.
+     * @param onDeleteResourceListener    Handles events, success states and failure states.
+     * @param qualityOfService            the quality of communication
+     * @throws OcException if failure
+     */
+    public static void deleteResourceFromRD(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            List<OcResourceHandle> ocResourceHandleList,
+            OnDeleteResourceListener onDeleteResourceListener,
+            QualityOfService qualityOfService) throws OcException {
+        OcPlatform.initCheck();
+
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType)) {
+                connTypeInt |= connType.getValue();
+            }
+        }
+
+        OcPlatform.deleteResourceFromRD1(
+            host,
+            connTypeInt,
+            ocResourceHandleList.toArray(
+                    new OcResourceHandle[ocResourceHandleList.size()]),
+            onDeleteResourceListener,
+            qualityOfService.getValue()
+        );
+    }
+
+    private static native void deleteResourceFromRD1(
+            String host,
+            int connectivityType,
+            OcResourceHandle[] ocResourceHandleArray,
+            OnDeleteResourceListener onDeleteResourceListener,
+            int qualityOfService) throws OcException;
+
+    /**
+     * An OnPublishResourceListener can be registered via the OcPlatform.publishResourceToRD call.
+     * Event listeners are notified asynchronously
+     */
+    public interface OnPublishResourceListener {
+        public void onPublishResourceCompleted(OcRepresentation ocRepresentation);
+        public void onPublishResourceFailed(Throwable ex);
+    }
+
+    /**
+     * An OnDeleteResourceListener can be registered via the OcPlatform.deleteResourceFromRD call.
+     * Event listeners are notified asynchronously
+     */
+    public interface OnDeleteResourceListener {
+        public void onDeleteResourceCompleted(int result);
+    }
+
+    /**
+     * An FindDirectPairingListener can be registered via the OcPlatform.findDirectPairingDevices call.
+     * Event listeners are notified asynchronously
+     */
+    public interface FindDirectPairingListener {
+        public void onFindDirectPairingListener(List<OcDirectPairDevice> ocPairedDeviceList);
+    }
+
+    /**
+     * Listerner to Get List of already Direct Paired devices.
+     * An GetDirectPairedListener can be registered via the OcPlatform.getDirectPairedDevices call.
+     * Event listeners are notified asynchronously
+     */
+    public interface GetDirectPairedListener {
+        public void onGetDirectPairedListener(List<OcDirectPairDevice> ocPairedDeviceList);
+    }
+
+    /**
+     * Listner to get result of doDirectPairing.
+     * An DirectPairingListener can be registered via the OcPlatform.doDirectPairing call.
+     * Event listeners are notified asynchronously
+     */
+    public interface DirectPairingListener {
+        public void onDirectPairingListener(String devId, int result);
+    }
+
+    /**
      * An OnResourceFoundListener can be registered via the OcPlatform.findResource call.
      * Event listeners are notified asynchronously
      */
     public interface OnResourceFoundListener {
         public void onResourceFound(OcResource resource);
+        public void onFindResourceFailed(Throwable ex, String uri);
     }
 
     /**
@@ -926,6 +1374,14 @@ public final class OcPlatform {
     /**
      * An EntityHandler can be registered via the OcPlatform.registerResource call.
      * Event listeners are notified asynchronously
+     *
+     * @note entityhandler callback :
+     * When you set specific return value like EntityHandlerResult.OK, SLOW
+     * and etc in entity handler callback,
+     * ocstack will be not send response automatically to client
+     * except for error return value like EntityHandlerResult.ERROR
+     * If you want to send response to client with specific result,
+     * sendResponse API should be called with the result value.
      */
     public interface EntityHandler {
         public EntityHandlerResult handleEntity(OcResourceRequest ocResourceRequest);
@@ -947,4 +1403,39 @@ public final class OcPlatform {
         OcPlatform.initCheck();
         return sPlatformQualityOfService;
     }
+
+    /**
+     * Create an account manager object that can be used for doing request to account server.
+     * You can only create this object if OCPlatform was initialized to be a Client or
+     * Client/Server. Otherwise, this will return an empty shared ptr.
+     *
+     * @note For now, OCPlatform SHOULD be initialized to be a Client/Server(Both) for the
+     *       methods of this object to work since device id is not generated on Client mode.
+     *
+     * @param host                Host IP Address of a account server.
+     * @param connectivityTypeSet Set of types of connectivity. Example: CT_ADAPTER_IP
+     * @return new AccountManager object
+     * @throws OcException if failure
+     */
+    public static OcAccountManager constructAccountManagerObject(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet) throws OcException {
+        OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+            {
+                connTypeInt |= connType.getValue();
+            }
+        }
+        return OcPlatform.constructAccountManagerObject0(
+                host,
+                connTypeInt
+                );
+    }
+
+    private static native OcAccountManager constructAccountManagerObject0(
+            String host,
+            int connectivityType) throws OcException;
 }

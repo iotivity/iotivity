@@ -32,10 +32,16 @@
 #include <OCResourceRequest.h>
 #include <OCResourceResponse.h>
 #include <ocstack.h>
+#include <ocpayload.h>
+
 #include <OCApi.h>
 #include <oic_malloc.h>
 #include <OCPlatform.h>
 #include <OCUtilities.h>
+
+#ifdef RD_CLIENT
+#include <rd_client.h>
+#endif
 
 using namespace std;
 using namespace OC;
@@ -47,7 +53,7 @@ namespace OC
         std::mutex serverWrapperLock;
         std::map <OCResourceHandle, OC::EntityHandler>  entityHandlerMap;
         std::map <OCResourceHandle, std::string> resourceUriMap;
-        EntityHandler defaultDeviceEntityHandler = 0;
+        EntityHandler defaultDeviceEntityHandler;
     }
 }
 
@@ -59,6 +65,7 @@ void formResourceRequest(OCEntityHandlerFlag flag,
     {
         pRequest->setRequestHandle(entityHandlerRequest->requestHandle);
         pRequest->setResourceHandle(entityHandlerRequest->resource);
+        pRequest->setMessageID(entityHandlerRequest->messageID);
     }
 
     if(flag & OC_REQUEST_FLAG)
@@ -322,7 +329,7 @@ namespace OC
         return result;
     }
 
-     OCStackResult InProcServerWrapper::registerPlatformInfo(const OCPlatformInfo platformInfo)
+    OCStackResult InProcServerWrapper::registerPlatformInfo(const OCPlatformInfo platformInfo)
     {
         auto cLock = m_csdkLock.lock();
         OCStackResult result = OC_STACK_ERROR;
@@ -595,6 +602,153 @@ namespace OC
         }
     }
 
+#ifdef RD_CLIENT
+    OCRepresentation parseRDResponseCallback(OCClientResponse* clientResponse)
+    {
+        if (nullptr == clientResponse || nullptr == clientResponse->payload ||
+            PAYLOAD_TYPE_REPRESENTATION != clientResponse->payload->type)
+        {
+            return OCRepresentation();
+        }
+
+        MessageContainer oc;
+        oc.setPayload(clientResponse->payload);
+
+        std::vector<OCRepresentation>::const_iterator it = oc.representations().begin();
+        if (it == oc.representations().end())
+        {
+            return OCRepresentation();
+        }
+
+        // first one is considered the root, everything else is considered a child of this one.
+        OCRepresentation root = *it;
+        root.setDevAddr(clientResponse->devAddr);
+        root.setUri(clientResponse->resourceUri);
+        ++it;
+
+        std::for_each(it, oc.representations().end(),
+                [&root](const OCRepresentation& repItr)
+                {root.addChild(repItr);});
+        return root;
+
+    }
+
+    OCStackApplicationResult publishResourceToRDCallback(void* ctx, OCDoHandle /*handle*/,
+                                                         OCClientResponse* clientResponse)
+    {
+        ServerCallbackContext::PublishContext* context =
+        static_cast<ServerCallbackContext::PublishContext*>(ctx);
+
+        try
+        {
+            // Update resource unique id in stack.
+            if (clientResponse)
+            {
+                if (clientResponse->payload)
+                {
+                    OCRepPayload *rdPayload = (OCRepPayload *) clientResponse->payload;
+                    OCRepPayload **links = NULL;
+
+                    size_t dimensions[MAX_REP_ARRAY_DEPTH];
+                    OCRepPayloadGetPropObjectArray(rdPayload, OC_RSRVD_LINKS, &links, dimensions);
+                    for(size_t i = 0; i < dimensions[0]; i++)
+                    {
+                        char *uri = NULL;
+                        OCRepPayloadGetPropString(links[i], OC_RSRVD_HREF, &uri);
+                        OCResourceHandle handle = OCGetResourceHandleAtUri(uri);
+                        int64_t ins = 0;
+                        OCRepPayloadGetPropInt(links[i], OC_RSRVD_INS, &ins);
+                        OCBindResourceInsToResource(handle, ins);
+                    }
+                }
+                OCRepresentation rep = parseRDResponseCallback(clientResponse);
+                std::thread exec(context->callback, rep, clientResponse->result);
+                exec.detach();
+            }
+        }
+        catch (OC::OCException& e)
+        {
+            oclog() <<"Exception in publishResourceToRDCallback, ignoring response: "
+                <<e.what() <<std::flush;
+        }
+
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    OCStackResult InProcServerWrapper::publishResourceToRD(const std::string& host,
+                                                           OCConnectivityType connectivityType,
+                                                           ResourceHandles& resourceHandles,
+                                                           PublishResourceCallback& callback,
+                                                           OCQualityOfService qos)
+    {
+        ServerCallbackContext::PublishContext* ctx =
+            new ServerCallbackContext::PublishContext(callback);
+        OCCallbackData cbdata(
+                static_cast<void*>(ctx),
+                publishResourceToRDCallback,
+                [](void* c)
+                {delete static_cast<ServerCallbackContext::PublishContext*>(c);}
+                );
+
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result = OC_STACK_ERROR;
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCRDPublish(host.c_str(), connectivityType, &resourceHandles[0],
+                                 resourceHandles.size(), &cbdata, qos);
+        }
+
+        if (OC_STACK_OK != result)
+        {
+            throw OCException(OC::Exception::PUBLISH_RESOURCE_FAILED, result);
+        }
+        return result;
+    }
+
+    OCStackApplicationResult deleteResourceFromRDCallback(void* ctx, OCDoHandle /*handle*/,
+                                                          OCClientResponse* clientResponse)
+    {
+        ServerCallbackContext::DeleteContext* context =
+        static_cast<ServerCallbackContext::DeleteContext*>(ctx);
+
+        std::thread exec(context->callback, clientResponse->result);
+        exec.detach();
+        return OC_STACK_DELETE_TRANSACTION;
+    }
+
+    OCStackResult InProcServerWrapper::deleteResourceFromRD(const std::string& host,
+                                                            OCConnectivityType connectivityType,
+                                                            ResourceHandles& resourceHandles,
+                                                            DeleteResourceCallback& callback,
+                                                            OCQualityOfService qos)
+    {
+        ServerCallbackContext::DeleteContext* ctx =
+            new ServerCallbackContext::DeleteContext(callback);
+        OCCallbackData cbdata(
+                static_cast<void*>(ctx),
+                deleteResourceFromRDCallback,
+                [](void* c)
+                {delete static_cast<ServerCallbackContext::DeleteContext*>(c);}
+                );
+
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result = OC_STACK_ERROR;
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCRDDelete(host.c_str(), connectivityType, &resourceHandles[0],
+                                resourceHandles.size(), &cbdata, qos);
+        }
+
+        if (OC_STACK_OK != result)
+        {
+            throw OCException(OC::Exception::PUBLISH_RESOURCE_FAILED, result);
+        }
+        return result;
+    }
+#endif
+
     InProcServerWrapper::~InProcServerWrapper()
     {
         if(m_processThread.joinable())
@@ -606,4 +760,3 @@ namespace OC
         OCStop();
     }
 }
-

@@ -222,12 +222,8 @@ namespace OIC
             BrokerID retID = 0;
             srand(time(NULL));
 
-            while(1)
+            while((retID==0)||( s_brokerIDMap->find(retID) != s_brokerIDMap->end()))
             {
-                if(retID != 0 && s_brokerIDMap->find(retID) == s_brokerIDMap->end())
-                {
-                    break;
-                }
                 retID = (unsigned int)rand();
             }
 

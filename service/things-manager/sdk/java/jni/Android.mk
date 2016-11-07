@@ -25,13 +25,13 @@ LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libconnectivity_abstraction.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
-OIC_LIB_PATH := ../../../../../android/android_api/base/libs/$(TARGET_ARCH_ABI)
+OIC_LIB_PATH := ../../../../../java/iotivity-android/build/native-libs/$(TARGET_ARCH_ABI)
 LOCAL_MODULE := android-ocstack-jni
 LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libocstack-jni.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
-OIC_LIB_PATH := ../../../../../android/android_api/base/libs/$(TARGET_ARCH_ABI)
+OIC_LIB_PATH := ../../../../../java/iotivity-android/build/native-libs/$(TARGET_ARCH_ABI)
 LOCAL_MODULE := android-ca-interface
 LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libca-interface.so
 include $(PREBUILT_SHARED_LIBRARY)
@@ -47,7 +47,7 @@ OIC_SRC_DIR := ../../../..
 LOCAL_MODULE    := things-manager-jni
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/jniutil/inc \
-                    $(OIC_SRC_DIR)/android/android_api/base/jni \
+                    $(OIC_SRC_DIR)/java/jni \
                     $(OIC_SRC_DIR)/resource/include \
                     $(OIC_SRC_DIR)/resource/c_common \
                     $(OIC_SRC_DIR)/resource/csdk/stack/include \

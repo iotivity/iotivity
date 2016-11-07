@@ -309,6 +309,18 @@ public class OcRepresentationTest extends InstrumentationTestCase {
         rep.setValue(representationK, representationArrVEmpty);
         OcRepresentation[] representationArrVEmptyA = rep.getValue(representationK);
         assertEquals(representationArrVEmpty.length, representationArrVEmptyA.length);
+
+        //byte
+        String byteK = "byteK";
+        byte[] byteArrV = {1, 2, 3, 4, 0, 5, 6, 7};
+        rep.setValue(byteK, byteArrV);
+        byte[] byteArrVa = rep.getValue(byteK);
+        assertTrue(Arrays.equals(byteArrV, byteArrVa));
+
+        byte[] byteArrVEmpty = {};
+        rep.setValue(byteK, byteArrVEmpty);
+        byte[] byteArrVEmptyA = rep.getValue(byteK);
+        assertTrue(Arrays.equals(byteArrVEmpty, byteArrVEmptyA));
     }
 
     public void testAttributeAccessBy2DType() throws OcException {
