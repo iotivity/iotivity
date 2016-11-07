@@ -91,6 +91,9 @@ static CAErrorHandleCallback g_errorCallback = NULL;
 static void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep,
                                   const void *data, uint32_t dataLength);
 
+static void CATCPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
+                              size_t dataLength, CAResult_t result);
+
 /**
  * KeepAlive Connected or Disconnected Callback to CA adapter.
  */
@@ -167,22 +170,28 @@ void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
 }
 
 #ifdef __WITH_TLS__
-static void CATCPPacketSendCB(CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
+static ssize_t CATCPPacketSendCB(CAEndpoint_t *endpoint, const void *data, size_t dataLength)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
-    VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
-    VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
+    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint is NULL", -1);
+    VERIFY_NON_NULL_RET(data, TAG, "data is NULL", -1);
 
     OIC_LOG_V(DEBUG, TAG, "Address: %s, port:%d", endpoint->addr, endpoint->port);
     OIC_LOG_BUFFER(DEBUG, TAG, data, dataLength);
 
-    CATCPSendData(endpoint, data, dataLength, false);
-    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    ssize_t ret = CATCPSendData(endpoint, data, dataLength);
+    if (-1 == ret)
+    {
+        CASearchAndDeleteTCPSession(endpoint);
+        CATCPErrorHandler(endpoint, data, dataLength, CA_SEND_FAILED);
+    }
+    OIC_LOG_V(DEBUG, TAG, "Out %s : %d bytes sent", __func__, ret);
+    return ret;
 }
 #endif
 
-void CATCPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
-                       uint32_t dataLength, CAResult_t result)
+static void CATCPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
+                              size_t dataLength, CAResult_t result)
 {
     VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
@@ -436,8 +445,7 @@ int32_t CASendTCPUnicastData(const CAEndpoint_t *endpoint,
 #ifndef SINGLE_THREAD
     return CAQueueTCPData(false, endpoint, data, dataLength);
 #else
-    CATCPSendData(endpoint, data, dataLength, false);
-    return dataLength;
+    return CATCPSendData(endpoint, data, dataLength);
 #endif
 }
 
@@ -512,17 +520,13 @@ void CATCPSendDataThread(void *threadData)
         {
             // if payload length is zero, disconnect from remote device.
             OIC_LOG(DEBUG, TAG, "payload length is zero, disconnect from remote device");
-            size_t index = 0;
-            CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(tcpData->remoteEndpoint,
-                                                                          &index);
-            if (svritem)
+#ifdef __WITH_TLS__
+            if (CA_STATUS_OK != CAcloseSslConnection(tcpData->remoteEndpoint))
             {
-                result = CADisconnectTCPSession(svritem, index);
-                if (CA_STATUS_OK != result)
-                {
-                    OIC_LOG_V(ERROR, TAG, "CADisconnectTCPSession failed, result[%d]", result);
-                }
+                OIC_LOG(ERROR, TAG, "Failed to close TLS session");
             }
+#endif
+            CASearchAndDeleteTCPSession(tcpData->remoteEndpoint);
             return;
         }
 
@@ -542,7 +546,13 @@ void CATCPSendDataThread(void *threadData)
          }
 #endif
         //Processing for sending unicast
-        CATCPSendData(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen, false);
+         ssize_t dlen = CATCPSendData(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen);
+         if (-1 == dlen)
+         {
+             CASearchAndDeleteTCPSession(tcpData->remoteEndpoint);
+             CATCPErrorHandler(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen,
+                               CA_SEND_FAILED);
+         }
     }
 }
 

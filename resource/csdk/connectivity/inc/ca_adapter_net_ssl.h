@@ -33,10 +33,10 @@ extern "C" {
 #define MAX_SUPPORTED_ADAPTERS 2
 
 typedef void (*CAPacketReceivedCallback)(const CASecureEndpoint_t *sep,
-                                         const void *data, uint32_t dataLength);
+                                         const void *data, size_t dataLength);
 
-typedef void (*CAPacketSendCallback)(CAEndpoint_t *endpoint,
-                                         const void *data, uint32_t dataLength);
+typedef ssize_t (*CAPacketSendCallback)(CAEndpoint_t *endpoint,
+                                        const void *data, size_t dataLength);
 
 /**
  * Select the cipher suite for dtls handshake

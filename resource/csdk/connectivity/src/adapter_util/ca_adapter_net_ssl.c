@@ -485,29 +485,35 @@ static int GetAdapterIndex(CATransportAdapter_t adapter)
  * @param[in]  data    message
  * @param[in]  dataLen    message length
  *
- * @return  message length
+ * @return  message length or -1 on error.
  */
 static int SendCallBack(void * tep, const unsigned char * data, size_t dataLen)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
-    VERIFY_NON_NULL_RET(tep, NET_SSL_TAG, "secure endpoint is NULL", 0);
-    VERIFY_NON_NULL_RET(data, NET_SSL_TAG, "data is NULL", 0);
+    VERIFY_NON_NULL_RET(tep, NET_SSL_TAG, "secure endpoint is NULL", -1);
+    VERIFY_NON_NULL_RET(data, NET_SSL_TAG, "data is NULL", -1);
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Data len: %zu", dataLen);
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Adapter: %u", ((SslEndPoint_t * )tep)->sep.endpoint.adapter);
+    ssize_t sentLen = 0;
     int adapterIndex = GetAdapterIndex(((SslEndPoint_t * )tep)->sep.endpoint.adapter);
     if (0 == adapterIndex || 1 == adapterIndex)
     {
         CAPacketSendCallback sendCallback = g_caSslContext->adapterCallbacks[adapterIndex].sendCallback;
-        sendCallback(&(((SslEndPoint_t * )tep)->sep.endpoint), (const void *) data, (uint32_t) dataLen);
+        sentLen = sendCallback(&(((SslEndPoint_t * )tep)->sep.endpoint), (const void *) data, dataLen);
+        if (sentLen != dataLen)
+        {
+            OIC_LOG_V(DEBUG, NET_SSL_TAG,
+                      "Packet was partially sent - total/sent/remained bytes : %d/%d/%d",
+                      sentLen, dataLen, (dataLen - sentLen));
+        }
     }
     else
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Unsupported adapter");
-        dataLen = 0;
     }
 
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
-    return dataLen;
+    return sentLen;
 }
 /**
  * Read callback.
