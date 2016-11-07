@@ -562,44 +562,39 @@ static int64_t OCConvertArrayItem(CborEncoder *array, const OCRepPayloadValueArr
             err = CborUnknownError;
             break;
         case OCREP_PROP_INT:
-            err |= cbor_encode_int(array, valArray->iArray[index]);
+            if (valArray->iArray != 0)
+            {
+                err |= cbor_encode_int(array, valArray->iArray[index]);
+            }
             break;
         case OCREP_PROP_DOUBLE:
-            err |= cbor_encode_double(array, valArray->dArray[index]);
+            if (valArray->dArray != 0)
+            {
+                err |= cbor_encode_double(array, valArray->dArray[index]);
+            }
             break;
         case OCREP_PROP_BOOL:
-            err |= cbor_encode_boolean(array, valArray->bArray[index]);
+            if (valArray->bArray != 0)
+            {
+                err |= cbor_encode_boolean(array, valArray->bArray[index]);
+            }
             break;
         case OCREP_PROP_STRING:
-            if (!valArray->strArray[index])
+            if (valArray->strArray != 0)
             {
-                err |= cbor_encode_null(array);
-            }
-            else
-            {
-                err |= cbor_encode_text_string(array, valArray->strArray[index],
-                        strlen(valArray->strArray[index]));
+                err |= (!valArray->strArray[index]) ? cbor_encode_null(array) : cbor_encode_text_string(array,
+                    valArray->strArray[index], strlen(valArray->strArray[index]));
             }
             break;
         case OCREP_PROP_BYTE_STRING:
-            if (!valArray->ocByteStrArray[index].len)
-            {
-                err |= cbor_encode_null(array);
-            }
-            else
-            {
-                err |= cbor_encode_byte_string(array, valArray->ocByteStrArray[index].bytes,
-                        valArray->ocByteStrArray[index].len);
-            }
+            err |= (!valArray->ocByteStrArray[index].len) ? cbor_encode_null(array) : cbor_encode_byte_string(array,
+                valArray->ocByteStrArray[index].bytes, valArray->ocByteStrArray[index].len);
             break;
         case OCREP_PROP_OBJECT:
-            if (!valArray->objArray[index])
+            if (valArray->objArray != 0)
             {
-                err |= cbor_encode_null(array);
-            }
-            else
-            {
-                err |= OCConvertRepMap(array, valArray->objArray[index]);
+                err |= (!valArray->objArray[index]) ? cbor_encode_null(array): OCConvertRepMap(array,
+                        valArray->objArray[index]);
             }
             break;
         case OCREP_PROP_ARRAY:
@@ -617,47 +612,55 @@ static int64_t OCConvertArray(CborEncoder *parent, const OCRepPayloadValueArray 
     CborEncoder array;
     err |= cbor_encoder_create_array(parent, &array, valArray->dimensions[0]);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep array");
-
-    for (size_t i = 0; i < valArray->dimensions[0]; ++i)
+    // empty array
+    if (valArray->dimensions[0] == 0)
     {
-        if (0 != valArray->dimensions[1])
+        err |= OCConvertArrayItem(&array, valArray, 0);
+        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array value");
+    }
+    else
+    {
+        for (size_t i = 0; i < valArray->dimensions[0]; ++i)
         {
-            CborEncoder array2;
-            err |= cbor_encoder_create_array(&array, &array2, valArray->dimensions[1]);
-            VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep array2");
-
-            for (size_t j = 0; j < valArray->dimensions[1]; ++j)
+            if (0 != valArray->dimensions[1])
             {
-                if (0 != valArray->dimensions[2])
-                {
-                    CborEncoder array3;
-                    err |= cbor_encoder_create_array(&array2, &array3, valArray->dimensions[2]);
-                    VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep array3");
+                CborEncoder array2;
+                err |= cbor_encoder_create_array(&array, &array2, valArray->dimensions[1]);
+                VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep array2");
 
-                    for(size_t k = 0; k < valArray->dimensions[2]; ++k)
-                    {
-                        err |= OCConvertArrayItem(&array3, valArray,
-                            j * valArray->dimensions[2] +
-                            i * valArray->dimensions[2] * valArray->dimensions[1] +
-                            k);
-                        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array3 value");
-                    }
-                    err |= cbor_encoder_close_container(&array2, &array3);
-                    VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing rep array3");
-                }
-                else
+                for (size_t j = 0; j < valArray->dimensions[1]; ++j)
                 {
-                    err |= OCConvertArrayItem(&array2, valArray, i * valArray->dimensions[1] + j);
-                    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array2 value");
+                    if (0 != valArray->dimensions[2])
+                    {
+                        CborEncoder array3;
+                        err |= cbor_encoder_create_array(&array2, &array3, valArray->dimensions[2]);
+                        VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating rep array3");
+
+                        for(size_t k = 0; k < valArray->dimensions[2]; ++k)
+                        {
+                            err |= OCConvertArrayItem(&array3, valArray,
+                                j * valArray->dimensions[2] +
+                                i * valArray->dimensions[2] * valArray->dimensions[1] +
+                                k);
+                            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array3 value");
+                        }
+                        err |= cbor_encoder_close_container(&array2, &array3);
+                        VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing rep array3");
+                    }
+                    else
+                    {
+                        err |= OCConvertArrayItem(&array2, valArray, i * valArray->dimensions[1] + j);
+                        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array2 value");
+                    }
                 }
+                err |= cbor_encoder_close_container(&array, &array2);
+                VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing rep array2");
             }
-            err |= cbor_encoder_close_container(&array, &array2);
-            VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing rep array2");
-        }
-        else
-        {
-            err |= OCConvertArrayItem(&array, valArray, i);
-            VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array value");
+            else
+            {
+                err |= OCConvertArrayItem(&array, valArray, i);
+                VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rep array value");
+            }
         }
     }
     err |= cbor_encoder_close_container(parent, &array);
