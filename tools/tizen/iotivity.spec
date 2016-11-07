@@ -277,6 +277,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %{_libdir}/liboc_logger_core.so
 %{_libdir}/liboctbstack.so
 %{_libdir}/libconnectivity_abstraction.so
+%{_libdir}/libresource_directory.so
 
 %files service
 %manifest %{name}.manifest
