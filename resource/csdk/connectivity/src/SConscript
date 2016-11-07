@@ -31,7 +31,7 @@ if with_upstream_libcoap == '1':
 	env.AppendUnique(CPPDEFINES = ['WITH_UPSTREAM_LIBCOAP'])
 else:
 	# For bring up purposes only, the forked version will live here.
-	env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'lib', 'libcoap-4.1.1', 'include')])
+	env.AppendUnique(CPPPATH = [ os.path.join('#resource', 'csdk', 'connectivity', 'lib', 'libcoap-4.1.1', 'include')])
 
 env.AppendUnique(CPPPATH = [ os.path.join(root_dir, 'inc'),
                              os.path.join(src_dir, 'resource', 'csdk', 'logger', 'include'),
