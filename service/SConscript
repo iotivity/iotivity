@@ -44,7 +44,7 @@ if target_os not in ['arduino','darwin', 'ios', 'windows']:
         SConscript('scene-manager/SConscript')
 
     # Build notification-service project
-    if target_os in ['linux','android']:
+    if target_os in ['linux','android','tizen']:
         SConscript('notification/SConscript')
 
     # Build simulator module
