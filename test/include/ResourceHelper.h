@@ -40,12 +40,15 @@ namespace PH = std::placeholders;
 #define TV_AUDIO_URI "/AudioResURI"
 #define TV_MEDIA_SOURCE_LIST_URI "/mediaSourceListResURI"
 
+#define COLLECTION_RESOURCE_URI "/vendor/aircon/collection"
+
 #define AC_Device_URI  "/AirCon-1"
 #define AC_SWITCH_URI "/BinarySwitchResURI"
 #define AC_TEMPERATURE_URI "/TemperatureResURI"
 #define AC_AIR_FLOW_URI "/AirFlowResURI"
 #define AC_TIMER_URI "/Vendor/AirConditioner/TimerClock"
 #define AC_CHILD_LOCK_URI "/Vendor/AirConditioner/ChildLock"
+#define AC_SWING_URI "/Vendor/AirConditioner/Swinger"
 
 #define Device_TYPE_TV "oic.d.tv"
 #define Device_TYPE_AC "oic.d.airconditioner"
@@ -56,6 +59,7 @@ namespace PH = std::placeholders;
 #define AIR_FLOW_RESOURCE_TYPE "oic.r.airflow"
 #define TIMER_RESOURCE_TYPE "x.com.vendor.timer"
 #define CHILD_LOCK_RESOURCE_TYPE "x.com.vendor.child.lock"
+#define SWING_RESOURCE_TYPE "x.com.vendor.swing"
 
 #define TV_Device_INTERFACE "oic.if.a"
 #define AC_Device_INTERFACE "oic.if.a"
@@ -66,6 +70,7 @@ namespace PH = std::placeholders;
 #define AIR_FLOW_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
 #define TIMER_RESOURCE_INTERFACE "oic.if.a oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline oic.if.baseline"
 #define CHILD_LOCK_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
+#define SWING_RESOURCE_INTERFACE "oic.if.a oic.if.baseline"
 
 #define ACTUATOR_INTERFACE "oic.if.a"
 #define LIGHT_1_URI "/device/light-1"

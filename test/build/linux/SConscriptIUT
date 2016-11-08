@@ -40,6 +40,7 @@ EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
 ORG_SRC = ''
 
 iotivity_directory = env_linux.get('IOTIVITY_DIR')
+SECURED = env_linux.get('SECURED')
 
 print "iotivity root is --------------------------------" + iotivity_directory
 
@@ -68,9 +69,13 @@ IUT_SOURCE_DIR = PROJECT_HOME +  TARGET + 'testapp/IUTSimulatorApp/c_cpp'
 
 env_linux['CC'] = 'g++'
 
-COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D __WITH_DTLS__  -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs')
+COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -Wall -DLINUX -fpermissive -D__LINUX__ -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs')
 
 IUT_CFLAGS = [COMMON_FLAGS]
+
+if SECURED == '1':
+    IUT_CFLAGS.append('-DSECURED')
+    IUT_CFLAGS.append('-D__WITH_DTLS__')
 
 IUT_CINCLUDE = [
                             PROJECT_HOME + '/include',
@@ -113,7 +118,7 @@ IUT_APP_SRC = [SOURCE_CPP, RESOURCE_SERVER_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_HE
 
 create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
 
-IUT_APP = env_linux.Program(source = IUT_APP_SRC, target = IUT_APP_BIN, CPPPATH = IUT_CINCLUDE, LIBS = IUT_LIBS, LIBPATH = IUT_LIB_LOCATION, RPATH = IUT_RESOURCE_LIB, CPPFLAGS = COMMON_FLAGS)
+IUT_APP = env_linux.Program(source = IUT_APP_SRC, target = IUT_APP_BIN, CPPPATH = IUT_CINCLUDE, LIBS = IUT_LIBS, LIBPATH = IUT_LIB_LOCATION, RPATH = IUT_RESOURCE_LIB, CPPFLAGS = IUT_CFLAGS)
 
 copy_justworks_dat_file = env_linux.Command('copy_justworks_dat_file', [], Copy('.', '../resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat'))
 copy_randompin_dat_file = env_linux.Command('copy_randompin_dat_file', [], Copy('.', '../resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat'))

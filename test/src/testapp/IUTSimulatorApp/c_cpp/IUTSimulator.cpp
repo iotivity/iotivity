@@ -20,8 +20,8 @@
 
 #include <vector>
 #include <iostream>
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
 
 #ifdef __LINUX__
 #include <execinfo.h>
@@ -63,6 +63,10 @@ SampleResource *g_acSwitchResource;
 SampleResource *g_acAirFlowResource;
 SampleResource *g_acTemperatureResource;
 SampleResource *g_acTimerResource;
+SampleResource *g_acSwingResource;
+
+bool g_isSecuredClient = false;
+bool g_isSecuredServer = false;
 
 bool g_hasCallbackArrived = false;
 bool g_isObservingResource = false;
@@ -238,8 +242,7 @@ int main(int argc, char* argv[])
     OCStackResult result = OC_STACK_OK;
     string serverIp = SERVER_IP_V6;
     OCConnectivityType ipVer = CT_DEFAULT;
-    bool isSecuredClient = false;
-    bool isSecuredServer = false;
+
 
     if (argc > 1)
     {
@@ -313,15 +316,19 @@ int main(int argc, char* argv[])
             if (optionSelected == 0 || optionSelected == 1)
             {
                 cout << "Using secured client...." << endl;
-                isSecuredClient = true;
+                g_isSecuredClient = true;
+#ifdef SECURED
                 SetGeneratePinCB(generatePinCB);
+#endif
                 replaceDatFile(CLIENT_MODE, optionSelected%2);
             }
             else if (optionSelected == 2 || optionSelected == 3)
             {
                 cout << "Using secured server...." << endl;
-                isSecuredServer = true;
+                g_isSecuredServer = true;
+#ifdef SECURED
                 SetGeneratePinCB(generatePinCB);
+#endif
                 replaceDatFile(SERVER_MODE, optionSelected%2);
             }
             else
@@ -351,7 +358,7 @@ int main(int argc, char* argv[])
         cout << "Security mode not specified. Using default: unsecured server & client" << endl;
     }
 
-    if (isSecuredClient)
+    if (g_isSecuredClient)
     {
         OCPersistentStorage ps =
         { client_fopen, fread, fwrite, fclose, unlink };
@@ -359,7 +366,7 @@ int main(int argc, char* argv[])
         { OC::ServiceType::InProc, OC::ModeType::Both, ipVer, ipVer, g_qos, &ps };
         result = SampleResource::constructServer(cfg);
     }
-    else if (isSecuredServer)
+    else if (g_isSecuredServer)
     {
         OCPersistentStorage ps =
         { server_fopen, fread, fwrite, fclose, unlink };
@@ -485,7 +492,7 @@ void onDeviceInfoReceived(const OCRepresentation& rep)
 // callback handler on GET request
 void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
-    if (eCode == SUCCESS_RESPONSE)
+    if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_OK)
     {
         cout << "Response: GET request was successful" << endl;
 
@@ -530,7 +537,7 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
 // callback handler on PUT request
 void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
-    if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED)
+    if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED || eCode == OC_STACK_RESOURCE_CHANGED)
     {
         cout << "Response: PUT request was successful" << endl;
         cout << "THe PUT response has the following representation:" << endl;
@@ -546,7 +553,7 @@ void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
 // callback handler on POST request
 void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
-    if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED)
+    if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED || eCode == OC_STACK_RESOURCE_CHANGED)
     {
         cout << "Response: POST request was successful" << endl;
         cout << "THe POST Response has the following representation:" << endl;
@@ -563,7 +570,7 @@ void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, con
 // callback handler on DELETE request
 void onDelete(const HeaderOptions &headerOptions, const int eCode)
 {
-    if (eCode == SUCCESS_RESPONSE)
+    if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_DELETED)
     {
         cout << "Response: DELETE request was successful" << endl;
     }
@@ -914,6 +921,34 @@ void createAirConDevice(bool isSecured)
         {
             cout << "Unable to create Air Conditioner Timer resource" << endl;
         }
+
+        resourceProperty = OC_ACTIVE | OC_DISCOVERABLE;
+        g_acSwingResource = new SampleResource();
+        g_acSwingResource->setResourceProperties(AC_SWING_URI, SWING_RESOURCE_TYPE,
+        SWING_RESOURCE_INTERFACE);
+
+        OCRepresentation swingRep;
+        swingRep.setValue("x.com.vendor.swing.on", false);
+        value = "horizontal";
+        swingRep.setValue("x.com.vendor.swing.direction", value);
+        string supportedDirection[2] = {"horizontal", "vertical" };
+        swingRep.setValue("x.com.vendor.swing.supported.direction", supportedDirection);
+        g_acAirFlowResource->setAsReadOnly("x.com.vendor.swing.supported.direction");
+
+        g_acSwingResource->setResourceRepresentation(swingRep);
+
+        result = g_acSwingResource->startResource(resourceProperty);
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "Air Conditioner Swing Resource created successfully" << endl;
+            g_createdResourceList.push_back(g_acSwingResource);
+            g_isAirConDeviceCreated = true;
+        }
+        else
+        {
+            cout << "Unable to create Air Conditioner Swing resource" << endl;
+        }
     }
     else
     {
@@ -1128,15 +1163,21 @@ void createGroup(string groupType)
     {
         try
         {
-            string resourceURI = "/core/a/collection";
-            string resourceInterface = BATCH_INTERFACE;
+            string resourceURI = COLLECTION_RESOURCE_URI;
+            string resourceInterface = LINK_INTERFACE;
+            uint8_t collectionProperty = OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE;
+            if (g_isSecuredServer)
+            {
+                collectionProperty = collectionProperty | OC_SECURE;
+            }
 
             OCPlatform::registerResource(g_collectionHandle, resourceURI, groupType,
                     resourceInterface, NULL,
-                    OC_DISCOVERABLE | OC_OBSERVABLE);
+                    collectionProperty);
 
             cout << "Create Group is called." << endl;
 
+            OCPlatform::bindInterfaceToResource(g_collectionHandle, BATCH_INTERFACE);
             OCPlatform::bindInterfaceToResource(g_collectionHandle, GROUP_INTERFACE);
             OCPlatform::bindInterfaceToResource(g_collectionHandle, DEFAULT_INTERFACE);
 
@@ -1780,7 +1821,8 @@ void updateLocalResource()
             g_createdResourceList.at(selection)->setResourceRepresentation(rep);
             cout << "Successfully updated resource attribute!!" << endl;
             ResourceHelper::getInstance()->printRepresentation(rep);
-            g_createdResourceList.at(selection)->notifyObservers(g_createdResourceList.at(selection));
+            g_createdResourceList.at(selection)->notifyObservers(
+                    g_createdResourceList.at(selection));
         }
         else
         {
@@ -2021,7 +2063,8 @@ int selectResource()
 
         for (int i = 1; i <= totalResource; i++)
         {
-            cout << "\t\t" << i << ". " << g_foundResourceList.at(i - 1)->uniqueIdentifier() << endl;
+            cout << "\t\t" << i << ". " << g_foundResourceList.at(i - 1)->uniqueIdentifier()
+                    << endl;
         }
 
         cin >> selection;
