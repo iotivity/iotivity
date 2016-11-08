@@ -57,6 +57,7 @@ OCGetHeaderOption
 OCGetNumberOfResources
 OCGetNumberOfResourceInterfaces
 OCGetNumberOfResourceTypes
+OCGetLinkLocalZoneId
 OCGetPropertyValue
 OCGetResourceHandle
 OCGetResourceHandleAtUri

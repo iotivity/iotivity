@@ -2564,3 +2564,28 @@ TEST_F(OCDiscoverTests, DiscoverResourceWithInvalidQueries)
     OC_HIGH_QOS, discoverUnicastRTEmptyCB, NULL, 0));
     discoverUnicastRTEmptyCB.Wait(10);
 }
+
+TEST(StackZoneId, getZoneId)
+{
+    uint32_t tempSize = 0;
+    CAEndpoint_t *tempInfo = NULL;
+    CAGetNetworkInformation(&tempInfo, &tempSize);
+
+    for (uint32_t i = 0; i < tempSize; i++)
+    {
+        char *zoneId = NULL;
+        EXPECT_EQ(OC_STACK_OK, OCGetLinkLocalZoneId(tempInfo[i].ifindex, &zoneId));
+        OICFree(zoneId);
+        zoneId = NULL;
+    }
+
+    OICFree(tempInfo);
+}
+
+TEST(StackZoneId, getZoneIdWithInvalidParams)
+{
+    char *zoneId = NULL;
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCGetLinkLocalZoneId(0, NULL));
+    EXPECT_EQ(OC_STACK_ERROR, OCGetLinkLocalZoneId(9999, &zoneId));
+    EXPECT_EQ(OC_STACK_ERROR, OCGetLinkLocalZoneId(-1, &zoneId));
+}

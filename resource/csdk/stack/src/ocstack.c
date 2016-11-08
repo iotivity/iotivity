@@ -60,6 +60,7 @@
 #include "ocpayload.h"
 #include "ocpayloadcbor.h"
 #include "cautilinterface.h"
+#include "cainterface.h"
 #include "oicgroup.h"
 #include "ocendpoint.h"
 
@@ -5575,4 +5576,9 @@ OCStackResult OCGetDeviceOwnedState(bool *isOwned)
         OIC_LOG(ERROR, TAG, "Device Owned State Get error");
     }
     return ret;
+}
+
+OCStackResult OCGetLinkLocalZoneId(uint32_t ifindex, char **zoneId)
+{
+    return CAResultToOCResult(CAGetLinkLocalZoneId(ifindex, zoneId));
 }

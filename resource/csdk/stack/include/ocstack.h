@@ -878,6 +878,16 @@ OCStackResult OCGetPropertyValue(OCPayloadType type, const char *propName, void 
 */
 OCPersistentStorage *OCGetPersistentStorageHandler();
 
+/**
+* This function return link local zone id related from ifindex.
+*
+* @param ifindex[in]     interface index.
+* @param zoneId[out]     pointer of zoneId string, caller should free
+*                        zoneId using OICFree() when it returned CA_STATUS_OK.
+* @return Returns ::OC_STACK_OK if success.
+*/
+OCStackResult OCGetLinkLocalZoneId(uint32_t ifindex, char **zoneId);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

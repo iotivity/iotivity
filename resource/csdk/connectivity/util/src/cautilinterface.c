@@ -349,3 +349,8 @@ CAResult_t CAUtilSetBTConfigure(CAUtilConfig_t config)
     return CA_NOT_SUPPORTED;
 #endif
 }
+
+CAResult_t CAGetIpv6AddrScope(const char *addr, CATransportFlags_t *scopeLevel)
+{
+    return CAGetIpv6AddrScopeInternal(addr, scopeLevel);
+}

@@ -50,6 +50,11 @@
 #define USE_SOCKET_ADDRESS_CHANGE_EVENT
 
 /**
+* Buffer size for PIP_ADAPTER_ADDRESSES
+*/
+#define WORKING_BUFFER_SIZE 15000
+
+/**
  * Mutex for synchronizing access to cached address information.
  */
 static oc_mutex g_CAIPNetworkMonitorMutex = NULL;
@@ -911,4 +916,45 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
     oc_mutex_unlock(g_CAIPNetworkMonitorMutex);
 
     return iflist;
+}
+
+CAResult_t CAGetLinkLocalZoneIdInternal(uint32_t ifindex, char **zoneId)
+{
+    if (!zoneId || (*zoneId != NULL))
+    {
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    PIP_ADAPTER_ADDRESSES pAdapters = GetAdapters();
+
+    if (!pAdapters)
+    {
+        OICFree(pAdapters);
+        return CA_STATUS_FAILED;
+    }
+
+    PIP_ADAPTER_ADDRESSES pCurrAdapter = NULL;
+    pCurrAdapter = pAdapters;
+
+    while (pCurrAdapter)
+    {
+        if (ifindex == pCurrAdapter->IfIndex)
+        {
+            OIC_LOG_V(DEBUG, TAG, "Given ifindex is %d parsed zoneId is %d",
+                      ifindex, pCurrAdapter->ZoneIndices[ScopeLevelLink]);
+            *zoneId = (char *)OICCalloc(IF_NAMESIZE, sizeof(char));
+            _ultoa(pCurrAdapter->ZoneIndices[ScopeLevelLink], *zoneId, 10);
+            break;
+        }
+        pCurrAdapter = pCurrAdapter->Next;
+    }
+
+    OICFree(pAdapters);
+
+    if (!*zoneId)
+    {
+        return CA_STATUS_FAILED;
+    }
+
+    return CA_STATUS_OK;
 }

@@ -678,3 +678,195 @@ TEST(CAfragmentationTest, DefragmentTest)
     free(data);
 #endif
 }
+
+TEST(Ipv6ScopeLevel, getMulticastScope)
+{
+
+    const char interfaceLocalStart[] = "ff01::";
+    const char linkLocalStart[]      = "ff02::";
+    const char realmLocalStart[]     = "ff03::";
+    const char adminLocalStart[]     = "ff04::";
+    const char siteLocalStart[]      = "ff05::";
+    const char orgLocalStart[]       = "ff08::";
+    const char globalStart[]         = "ff0e::";
+
+    const char interfaceLocalMid[] = "ff81:0000:0000:f000:0000:0000:0000:0000";
+    const char linkLocalMid[]      = "ff82:0000:0000:f000:0000:0000:0000:0000";
+    const char realmLocalMid[]     = "ff83:0000:0000:f000:0000:0000:0000:0000";
+    const char adminLocalMid[]     = "ff84:0000:0000:f000:0000:0000:0000:0000";
+    const char siteLocalMid[]      = "ff85:0000:0000:f000:0000:0000:0000:0000";
+    const char orgLocalMid[]       = "ff88:0000:0000:f000:0000:0000:0000:0000";
+    const char globalMid[]         = "ff8e:0000:0000:f000:0000:0000:0000:0000";
+
+    const char interfaceLocalEnd[] = "fff1:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char linkLocalEnd[]      = "fff2:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char realmLocalEnd[]     = "fff3:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char adminLocalEnd[]     = "fff4:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char siteLocalEnd[]      = "fff5:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char orgLocalEnd[]       = "fff8:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char globalEnd[]         = "fffe:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+
+    // range start
+    CATransportFlags_t scopeLevel = CA_DEFAULT_FLAGS;
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(interfaceLocalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_INTERFACE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(linkLocalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_LINK, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(realmLocalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_REALM, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(adminLocalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_ADMIN, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(siteLocalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_SITE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(orgLocalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_ORG, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(globalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    // range mid
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(interfaceLocalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_INTERFACE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(linkLocalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_LINK, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(realmLocalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_REALM, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(adminLocalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_ADMIN, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(siteLocalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_SITE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(orgLocalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_ORG, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(globalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    // range end
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(interfaceLocalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_INTERFACE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(linkLocalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_LINK, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(realmLocalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_REALM, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(adminLocalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_ADMIN, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(siteLocalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_SITE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(orgLocalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_ORG, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(globalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+}
+
+TEST(Ipv6ScopeLevel, getUnicastScope)
+{
+    const char linkLocalLoopBack[]  = "::1";
+
+    const char linkLocalStart[]     = "fe80::";
+    const char linkLocalMid[]       = "fe80:0000:0000:0000:0f00:0000:0000:0000";
+    const char linkLocalEnd[]       = "febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+
+    const char siteLocalStart[]     = "fec0::";
+    const char siteLocalMid[]       = "fec0:0000:0000:0000:0f00:0000:0000:0000";
+    const char siteLocalEnd[]       = "feff:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+
+    const char globalStart[]   = "2000:0000:0000:0000:0000:0000:0000:0000";
+    const char globalMid[]     = "2000:0000:0000:0f00:0000:0000:0000:0000";
+    const char globalEnd[]     = "3fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+
+    // loopback
+    CATransportFlags_t scopeLevel = CA_DEFAULT_FLAGS;
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(linkLocalLoopBack, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_LINK, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    // linklocal
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(linkLocalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_LINK, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(linkLocalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_LINK, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(linkLocalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_LINK, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    // sitelocal
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(siteLocalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_SITE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(siteLocalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_SITE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(siteLocalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_SITE, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    // global
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(globalStart, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(globalMid, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+
+    EXPECT_EQ(CA_STATUS_OK, CAGetIpv6AddrScope(globalEnd, &scopeLevel));
+    EXPECT_EQ(CA_SCOPE_GLOBAL, scopeLevel);
+    scopeLevel = CA_DEFAULT_FLAGS;
+}
+
+TEST(Ipv6ScopeLevel, invalidAddressTest)
+{
+    const char invalidAddr1[]    = "qqqq";
+    const char invalidAddr2[]    = "ffx7:ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    const char invalidAddr3[]    = "ffx7::::::::::dsds";
+    const char invalidAddr4[]    = "ffx7:ffff:ffff:ff@f:ffff:ffff:ffff:ffff";
+
+    CATransportFlags_t scopeLevel = CA_DEFAULT_FLAGS;
+    EXPECT_EQ(CA_STATUS_FAILED, CAGetIpv6AddrScope(invalidAddr1, &scopeLevel));
+    EXPECT_EQ(CA_STATUS_FAILED, CAGetIpv6AddrScope(invalidAddr2, &scopeLevel));
+    EXPECT_EQ(CA_STATUS_FAILED, CAGetIpv6AddrScope(invalidAddr3, &scopeLevel));
+    EXPECT_EQ(CA_STATUS_FAILED, CAGetIpv6AddrScope(invalidAddr4, &scopeLevel));
+}

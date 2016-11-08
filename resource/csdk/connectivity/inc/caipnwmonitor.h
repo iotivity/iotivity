@@ -126,6 +126,16 @@ CAResult_t CAIPStopNetworkMonitor(CATransportAdapter_t adapter);
  */
 void CAProcessNewInterface(CAInterface_t *ifchanged);
 
+/**
+ * This function return link local zone id related from ifindex.
+ *
+ * @param ifindex[in]     interface index.
+ * @param zoneId[out]     pointer of zoneId string, caller should free
+ *                        zoneId using OICFree() when it returned CA_STATUS_OK.
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_INVALID_PARAM
+ */
+CAResult_t CAGetLinkLocalZoneIdInternal(uint32_t ifindex, char **zoneId);
+
 #ifdef __cplusplus
 }
 #endif

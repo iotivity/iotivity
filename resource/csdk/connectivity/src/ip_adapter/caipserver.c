@@ -1590,3 +1590,8 @@ void CAIPSetErrorHandler(CAIPErrorHandleCallback errorHandleCallback)
 {
     g_ipErrorHandler = errorHandleCallback;
 }
+
+CAResult_t CAGetLinkLocalZoneId(uint32_t ifindex, char **zoneId)
+{
+    return CAGetLinkLocalZoneIdInternal(ifindex, zoneId);
+}
