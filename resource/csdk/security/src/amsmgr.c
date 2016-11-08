@@ -122,7 +122,7 @@ static OCStackApplicationResult AmsMgrDiscoveryCallback(void *ctx, OCDoHandle ha
 
     OicUuid_t deviceId = {.id={0}};
     memcpy(&deviceId, &doxm->deviceID, sizeof(deviceId));
-    OICFree(doxm);
+    DeleteDoxmBinData(doxm);
 
     /* TODO : By assuming that the first response received is the actual
      * AMS service, a 'bad device' can cause DoS attack.

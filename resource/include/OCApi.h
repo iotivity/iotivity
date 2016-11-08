@@ -275,6 +275,8 @@ namespace OC
 
     typedef std::function<void(const std::string&, const int)> FindErrorCallback;
 
+    typedef std::function<void(std::vector<std::shared_ptr<OCResource>>)> FindResListCallback;
+
     typedef std::function<void(const OCRepresentation&)> FindDeviceCallback;
 
     typedef std::function<void(const OCRepresentation&)> FindPlatformCallback;

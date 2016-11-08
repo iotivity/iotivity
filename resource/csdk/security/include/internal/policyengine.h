@@ -50,6 +50,11 @@ typedef struct PEContext
     bool        amsProcessing;
     SRMAccessResponse_t retVal;
     AmsMgrContext_t     *amsMgrContext;
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    uint8_t* payload;
+    size_t payloadSize;
+#endif //_ENABLE_MULTIPLE_OWNER_
 } PEContext_t;
 
 /**

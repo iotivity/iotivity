@@ -1,7 +1,6 @@
 /* *****************************************************************
 *
-* Copyright 2016 Intel Corporation
-*
+* Copyright 2016 Microsoft
 *
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,76 +17,431 @@
 *
 ******************************************************************/
 
+#include "iotivity_config.h"
 #include "caipinterface.h"
 
+#include <assert.h>
 #include <sys/types.h>
 #include <string.h>
-#include <errno.h>
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #include <iphlpapi.h>
-#include "platform_features.h"
+#include <mstcpip.h>
 #include <iptypes.h>
 #include <stdbool.h>
+#include "octhread.h"
 #include "caadapterutils.h"
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "caipnwmonitor.h"
+#include <coap/utlist.h>
 
 #define TAG "IP_MONITOR"
 
 /**
- * @todo Implement network interface monitoring in case the IP changes.
- * Not critical for win32 bring-up.
+ * Mutex for synchronizing access to cached address information.
+ */
+static oc_mutex g_CAIPNetworkMonitorMutex = NULL;
+
+static bool g_CAIPNetworkMonitorSomeAddressWentAway = false;
+
+typedef struct CANewAddress_t {
+    struct CANewAddress_t *next;
+    struct CANewAddress_t *prev;
+    CAInterface_t *ipAddressInfo; 
+} CANewAddress_t;
+
+/**
+ * List of network addresses that we've already reported.
+ */
+static u_arraylist_t *g_CAIPNetworkMonitorAddressList = NULL;
+
+/**
+ * Queue of new addresses that haven't yet been returned in CAFindInterfaceChange().
+ */
+static CANewAddress_t *g_CAIPNetworkMonitorNewAddressQueue = NULL;
+
+/**
+ * Transport adapter change callback list.
+ */
+static struct CAIPCBData_t *g_CAIPNetworkMonitorAdapterCallbackList = NULL;
+
+static CAInterface_t *AllocateCAInterface(int index, const char *name, int family,
+                                          const char *addr, int flags);
+
+static u_arraylist_t *GetInterfaceInformation(int desiredIndex);
+
+static void CAIPDestroyNetworkMonitorList();
+
+static CAResult_t CAIPInitializeNetworkMonitorList()
+{
+    assert(!g_CAIPNetworkMonitorMutex);
+    assert(!g_CAIPNetworkMonitorAddressList);
+
+    g_CAIPNetworkMonitorMutex = oc_mutex_new();
+    if (!g_CAIPNetworkMonitorMutex)
+    {
+        OIC_LOG(ERROR, TAG, "oc_mutex_new has failed");
+        return CA_STATUS_FAILED;
+    }
+
+    g_CAIPNetworkMonitorAddressList = u_arraylist_create();
+    if (!g_CAIPNetworkMonitorAddressList)
+    {
+        OIC_LOG(ERROR, TAG, "u_arraylist_create has failed");
+        CAIPDestroyNetworkMonitorList();
+        return CA_STATUS_FAILED;
+    }
+
+    return CA_STATUS_OK;
+}
+
+/**
+ * Destroy the network monitoring list.
+ */
+static void CAIPDestroyNetworkMonitorList()
+{
+    // Free any new addresses waiting to be indicated up.
+    while (g_CAIPNetworkMonitorNewAddressQueue)
+    {
+        CANewAddress_t *change = g_CAIPNetworkMonitorNewAddressQueue;
+        DL_DELETE(g_CAIPNetworkMonitorNewAddressQueue, change);
+        OICFree(change->ipAddressInfo);
+        OICFree(change);
+    }
+
+    // Free our cache of operational addresses.
+    if (g_CAIPNetworkMonitorAddressList)
+    {
+        u_arraylist_destroy(g_CAIPNetworkMonitorAddressList);
+        g_CAIPNetworkMonitorAddressList = NULL;
+    }
+
+    if (g_CAIPNetworkMonitorMutex)
+    {
+        oc_mutex_free(g_CAIPNetworkMonitorMutex);
+        g_CAIPNetworkMonitorMutex = NULL;
+    }
+}
+
+/**
+ * See if a CAInterface_t with a given index and address already exists in a list.
+ *
+ * @param[in] ifIndex  Interface index to look for.
+ * @param[in] family   Family of address to look for.
+ * @param[in] addr     Address to look for.
+ * @return true if already in the list, false if not.
+ */
+static bool CACmpNetworkList(uint32_t ifIndex, int family, const char *addr, u_arraylist_t *iflist)
+{
+    uint32_t list_length = u_arraylist_length(iflist);
+    for (uint32_t list_index = 0; list_index < list_length; list_index++)
+    {
+        CAInterface_t *currItem = (CAInterface_t *) u_arraylist_get(iflist, list_index);
+        if ((currItem->index == ifIndex) && (currItem->family == family) &&
+            (strcmp(currItem->addr, addr) == 0))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+static HANDLE g_CAIPNetworkMonitorChangeNotificationHandle = NULL;
+
+/**
+ * Handle a notification that the IP address info changed.
+ *
+ * @param[in]  context           Context passed to NotifyUnicastIpChange.
+ * @param[in]  row               Interface that changed, or NULL on the initial callback.
+ * @param[in]  notificationType  Type of change that occurred.
+ */
+static void CALLBACK IpAddressChangeCallback(void *context,
+                                             MIB_UNICASTIPADDRESS_ROW *row,
+                                             MIB_NOTIFICATION_TYPE notificationType)
+{
+    oc_mutex_lock(g_CAIPNetworkMonitorMutex);
+
+    // Fetch new network address info.
+    u_arraylist_t *newList = GetInterfaceInformation(0);
+    uint32_t newLen = u_arraylist_length(newList);
+
+    u_arraylist_t *oldList = g_CAIPNetworkMonitorAddressList;
+    uint32_t oldLen = u_arraylist_length(oldList);
+
+    if (caglobals.ip.addressChangeEvent)
+    {
+        // Check whether any addresses went away.
+        for (uint32_t i = 0; i < oldLen; i++)
+        {
+            CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(oldList, i);
+            if (!CACmpNetworkList(ifitem->index, ifitem->family, ifitem->addr, newList))
+            {
+                g_CAIPNetworkMonitorSomeAddressWentAway = true;
+                break;
+            }
+        }
+
+        // Check whether any new addresses are available.
+        for (uint32_t i = 0; i < newLen; i++)
+        {
+            CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(newList, i);
+            if (!CACmpNetworkList(ifitem->index, ifitem->family, ifitem->addr, oldList))
+            {
+                // Create a new CAInterface_t to add to the queue to indicate to the higher
+                // layer.  We cannot simply invoke the callback here currently, since the
+                // higher layer is not thread-safe.
+                CAInterface_t *dup = AllocateCAInterface(ifitem->index, ifitem->name,
+                                                         ifitem->family, ifitem->addr,
+                                                         ifitem->flags);
+                CANewAddress_t *change = (CANewAddress_t *)OICCalloc(1, sizeof(*change));
+                if (change)
+                {
+                    change->ipAddressInfo = dup;
+                    DL_APPEND(g_CAIPNetworkMonitorNewAddressQueue, change);
+                }
+                else
+                {
+                    OIC_LOG(WARNING, TAG, "Couldn't allocate memory for CANewAddress_t");
+                }
+            }
+        }
+
+        // If the new address queue is not empty, signal the transport server that it needs
+        // to call CAFindInterfaceChange().  We don't need to set the event if an address
+        // went away, since the higher layer just uses the event to ask for new addresses
+        // in order to join the multicast group on the associated interface and address family.
+        if (g_CAIPNetworkMonitorNewAddressQueue)
+        {
+            int ret = WSASetEvent(caglobals.ip.addressChangeEvent);
+
+            // Setting the event should always succeed, since the handle should always be
+            // valid when this code is reached.
+            assert(ret);
+        }
+    }
+
+    // Replace old cached info.
+    g_CAIPNetworkMonitorAddressList = newList;
+    u_arraylist_destroy(oldList);
+
+    oc_mutex_unlock(g_CAIPNetworkMonitorMutex);
+}
+
+/**
+ * Start network monitor.
+ *
+ * @param[in]  callback     Callback to be notified when IP/TCP adapter connection state changes.
+ * @param[in]  adapter      Transport adapter.
+ * @return ::CA_STATUS_OK or an appropriate error code.
  */
 CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
                                    CATransportAdapter_t adapter)
 {
+    CAResult_t res = CAIPInitializeNetworkMonitorList();
+    if (res != CA_STATUS_OK)
+    {
+        return res;
+    }
+
+    res = CAIPSetNetworkMonitorCallback(callback, adapter);
+    if (res != CA_STATUS_OK)
+    {
+        return res;
+    }
+
+    if (g_CAIPNetworkMonitorChangeNotificationHandle == NULL)
+    {
+        int err = NotifyUnicastIpAddressChange(AF_UNSPEC, IpAddressChangeCallback, NULL,
+                                               true,
+                                               &g_CAIPNetworkMonitorChangeNotificationHandle);
+        if (err != NO_ERROR)
+        {
+            return CA_STATUS_FAILED;
+        }
+    }
     return CA_STATUS_OK;
 }
 
 /**
- * @todo Implement network interface monitoring in case the IP changes.
- * Not critical for win32 bring-up.
+ * Stops network monitor.
+ *
+ * @param[in]  adapter      Transport adapter.
+ * @return ::CA_STATUS_OK or an appropriate error code.
  */
 CAResult_t CAIPStopNetworkMonitor(CATransportAdapter_t adapter)
-
 {
-    return CA_STATUS_OK;
+    if (g_CAIPNetworkMonitorChangeNotificationHandle != NULL)
+    {
+        int err = CancelMibChangeNotify2(g_CAIPNetworkMonitorChangeNotificationHandle);
+        assert(err == NO_ERROR);
+        g_CAIPNetworkMonitorChangeNotificationHandle = NULL;
+    }
+
+    CAIPDestroyNetworkMonitorList();
+    return CAIPUnSetNetworkMonitorCallback(adapter);
 }
 
 /**
- * @todo Implement network interface monitoring.
- * Not used in win32, but caipserver currently requires this function
- * be defined. not critical.
+ * Let the network monitor update the polling interval.
+ * @param[in] interval Current polling interval, in seconds
+ *
+ * @return  desired polling interval
  */
 int CAGetPollingInterval(int interval)
 {
+    // Don't change the polling interval.
     return interval;
 }
 
 /**
- * @todo Implement network interface monitoring.
- * Not used in win32, but caipserver currently requires this function
- * be defined. not critical.
+ * Pass the changed network status through the stored callback.
+ * Note that the current API doesn't allow us to specify which address changed,
+ * the caller has to look at the return from CAFindInterfaceChange() to learn about
+ * each new address, and look through CAIPGetInterfaceInformation() to see what's
+ * missing to detect any removed addresses.
+ *
+ * @param[in] status Network status to pass to the callback.
  */
-CAInterface_t *CAFindInterfaceChange()
+static void CAIPPassNetworkChangesToTransportAdapter(CANetworkStatus_t status)
 {
-    CAInterface_t *foundNewInterface = NULL;
-    return foundNewInterface;
+    CAIPCBData_t *cbitem = NULL;
+    LL_FOREACH(g_CAIPNetworkMonitorAdapterCallbackList, cbitem)
+    {
+        if (cbitem && cbitem->adapter)
+        {
+            cbitem->callback(cbitem->adapter, status);
+        }
+    }
 }
 
 /**
- * @todo Implement network interface monitoring.
- * Not critical for win32 bring-up.
+ * Set callback for receiving local IP/TCP adapter connection status.
+ *
+ * @param[in]  callback     Callback to be notified when IP/TCP adapter connection state changes.
+ * @param[in]  adapter      Transport adapter.
+ * @return ::CA_STATUS_OK or an appropriate error code.
  */
 CAResult_t CAIPSetNetworkMonitorCallback(CAIPAdapterStateChangeCallback callback,
                                          CATransportAdapter_t adapter)
 {
-    return CA_NOT_SUPPORTED;
+    if (!callback)
+    {
+        OIC_LOG(ERROR, TAG, "callback is null");
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    CAIPCBData_t *cbitem = NULL;
+    LL_FOREACH(g_CAIPNetworkMonitorAdapterCallbackList, cbitem)
+    {
+        if ((adapter == cbitem->adapter) && (callback == cbitem->callback))
+        {
+            OIC_LOG(DEBUG, TAG, "this callback is already added");
+            return CA_STATUS_OK;
+        }
+    }
+
+    cbitem = (CAIPCBData_t *)OICCalloc(1, sizeof(*cbitem));
+    if (!cbitem)
+    {
+        OIC_LOG(ERROR, TAG, "Malloc failed");
+        return CA_STATUS_FAILED;
+    }
+
+    cbitem->adapter = adapter;
+    cbitem->callback = callback;
+    LL_APPEND(g_CAIPNetworkMonitorAdapterCallbackList, cbitem);
+
+    return CA_STATUS_OK;
 }
 
-bool IsValidAdapter(PIP_ADAPTER_ADDRESSES pAdapterAddr, int desiredIndex, uint16_t family)
+/**
+ * Unset callback for receiving local IP/TCP adapter connection status.
+ *
+ * @param[in]  adapter      Transport adapter.
+ * @return CA_STATUS_OK.
+ */
+CAResult_t CAIPUnSetNetworkMonitorCallback(CATransportAdapter_t adapter)
+{
+    CAIPCBData_t *cbitem = NULL;
+    CAIPCBData_t *tmpCbitem = NULL;
+    LL_FOREACH_SAFE(g_CAIPNetworkMonitorAdapterCallbackList, cbitem, tmpCbitem)
+    {
+        if (cbitem && adapter == cbitem->adapter)
+        {
+            OIC_LOG(DEBUG, TAG, "remove specific callback");
+            LL_DELETE(g_CAIPNetworkMonitorAdapterCallbackList, cbitem);
+            OICFree(cbitem);
+            return CA_STATUS_OK;
+        }
+    }
+    return CA_STATUS_OK;
+}
+
+/**
+ * Allocate a new CAInterface_t entry for a given IP address.
+ */
+static CAInterface_t *AllocateCAInterface(int index, const char *name, int family,
+                                          const char *addr, int flags)
+{
+    CAInterface_t *ifitem = (CAInterface_t *)OICCalloc(1, sizeof(*ifitem));
+    if (!ifitem)
+    {
+        OIC_LOG(ERROR, TAG, "Allocating memory for a CAInterface_t failed");
+        return NULL;
+    }
+
+    OICStrcpy(ifitem->name, sizeof(ifitem->name), name);
+    ifitem->index = index;
+    ifitem->family = family;
+    OICStrcpy(ifitem->addr, sizeof(ifitem->addr), addr);
+    ifitem->flags = flags;
+
+    return ifitem;
+}
+
+/**
+ * Find a new IP address. Note that this can only return one, so the caller must
+ * call multiple times to get the list, which is pretty inefficient. The caller is
+ * responsible for freeing the pointer returned via OICFree().
+ * @todo Change the API to allow returning a list or, even better, allow calling
+ *       CAIPPassNetworkChangesToTransportAdapter() at any time from IpAddressChangeCallback.
+ *
+ * @return  Dynamically allocated IP address entry, or NULL if no change.
+ */
+CAInterface_t *CAFindInterfaceChange()
+{
+    oc_mutex_lock(g_CAIPNetworkMonitorMutex);
+
+    bool someAddressWentAway = g_CAIPNetworkMonitorSomeAddressWentAway;
+    g_CAIPNetworkMonitorSomeAddressWentAway = false;
+
+    CAInterface_t *newAddress = NULL;
+    if (g_CAIPNetworkMonitorNewAddressQueue)
+    {
+        // Pop the first new address to return.
+        CANewAddress_t *change = g_CAIPNetworkMonitorNewAddressQueue;
+        DL_DELETE(g_CAIPNetworkMonitorNewAddressQueue, change);
+        newAddress = change->ipAddressInfo;
+        OICFree(change);
+    }
+
+    oc_mutex_unlock(g_CAIPNetworkMonitorMutex);
+
+    if (someAddressWentAway)
+    {
+        CAIPPassNetworkChangesToTransportAdapter(CA_INTERFACE_DOWN);
+    }
+    if (newAddress)
+    {
+        CAIPPassNetworkChangesToTransportAdapter(CA_INTERFACE_UP);
+    }
+
+    return newAddress;
+}
+
+static bool IsValidNetworkAdapter(PIP_ADAPTER_ADDRESSES pAdapterAddr, int desiredIndex)
 {
     bool valid = true;
 
@@ -105,189 +459,244 @@ bool IsValidAdapter(PIP_ADAPTER_ADDRESSES pAdapterAddr, int desiredIndex, uint16
         valid = false;
     }
 
-    // If the adapter must support the requested family
-    if ((family == AF_INET6) && ((pAdapterAddr->Flags & IP_ADAPTER_IPV6_ENABLED) == 0))
-    {
-        OIC_LOG_V(DEBUG, TAG, "\t\tInterface %i does not support IPv6", pAdapterAddr->IfIndex);
-        valid = false;
-    }
-    else if ((family == AF_INET) && ((pAdapterAddr->Flags & IP_ADAPTER_IPV4_ENABLED) == 0))
-    {
-        OIC_LOG_V(DEBUG, TAG, "\t\tInterface %i does not support IPv4", pAdapterAddr->IfIndex);
-        valid = false;
-    }
-
     if ((pAdapterAddr->OperStatus & IfOperStatusUp) == 0)
     {
         OIC_LOG_V(DEBUG, TAG, "\t\tInterface %i is not operational.", pAdapterAddr->IfIndex);
         valid = false;
     }
     return valid;
-
 }
 
-
-bool AddCAInterface(u_arraylist_t *iflist, const char * name, uint32_t index, uint16_t family)
+/*
+ * Allocate a new CAInterface_t structure and add it to a given list.  A new entry is added
+ * for each address.
+ *
+ * @param[in/out] iflist  List to add to.
+ * @param[in]     name    Interface name.
+ * @param[in]     index   Interface index.
+ * @param[in]     family  Address family.
+ * @param[in]     addr    Address.
+ * @return Pointer to entry added, or NULL on failure.
+ */
+CAInterface_t *AddCAInterface(u_arraylist_t *iflist, const char *name, uint32_t index,
+                              uint16_t family, const char *addr)
 {
-    bool bSucceeded = false;
-    CAInterface_t *ifitem = (CAInterface_t *)OICCalloc(1, sizeof(*ifitem));
-    if (ifitem)
+    CAInterface_t *ifitem = AllocateCAInterface(index, name, family, addr, IFF_UP);
+    if (ifitem == NULL)
     {
-        OICStrcpy(ifitem->name, INTERFACE_NAME_MAX, name);
-        ifitem->index = index;
-        ifitem->family = family;
-        ifitem->flags |= IFF_UP;// IsValidAddress() will have filtered out non-operational addresses already.
+        return NULL;
+    }
 
-        if (u_arraylist_add(iflist, ifitem))
-        {
-            bSucceeded = true;
-        }
-        else
-        {
-            OIC_LOG(ERROR, TAG, "u_arraylist_add failed");
-            OICFree(ifitem);
-        }
-    }
-    else
+    if (!u_arraylist_add(iflist, ifitem))
     {
-        OIC_LOG(ERROR, TAG, "Allocating memory for a CAInterface_t failed");
+        OIC_LOG(ERROR, TAG, "u_arraylist_add failed");
+        OICFree(ifitem);
+        return NULL;
     }
-    return bSucceeded;
+
+    return ifitem;
 }
 
-bool AddInterfaces(PIP_ADAPTER_ADDRESSES pAdapterAddr, u_arraylist_t *iflist, int desiredIndex)
+bool IsValidAddress(PIP_ADAPTER_UNICAST_ADDRESS pAddress)
 {
-    bool bSucceeded = false;
+    if (pAddress->Address.lpSockaddr->sa_family != AF_INET6)
+    {
+        // All IPv4 addresses are valid.
+        return true;
+    }
+
+    PSOCKADDR_IN6 sockAddr = (PSOCKADDR_IN6)pAddress->Address.lpSockaddr;
+    if (Ipv6UnicastAddressScope(sockAddr->sin6_addr.s6_addr) == ScopeLevelLink)
+    {
+        // IPv6 link local addresses are valid.
+        return true;
+    }
+
+    // Other IPv6 addresses are valid if they are DNS eligible.
+    // That is, ignore temporary addresses.
+    return ((pAddress->Flags & IP_ADAPTER_ADDRESS_DNS_ELIGIBLE) != 0);
+}
+
+bool AddAddresses(PIP_ADAPTER_ADDRESSES pAdapterAddr, u_arraylist_t *iflist, int desiredIndex)
+{
+    bool bSucceeded = true;
     for (PIP_ADAPTER_ADDRESSES pCurAdapterAddr = pAdapterAddr;
          pCurAdapterAddr != NULL; pCurAdapterAddr = pCurAdapterAddr->Next)
     {
         OIC_LOG_V(DEBUG, TAG, "\tInterface Index: %u", pCurAdapterAddr->IfIndex);
         OIC_LOG_V(DEBUG, TAG, "\tInterface  name: %s", pCurAdapterAddr->AdapterName);
 
-        // Prefer IPv6 over IPv4.
-        if (pCurAdapterAddr->Flags & IP_ADAPTER_IPV6_ENABLED)
+        if (!IsValidNetworkAdapter(pCurAdapterAddr, desiredIndex))
         {
-            // Do not add loopback, duplicate, or non-operational adapters
-            if (IsValidAdapter(pCurAdapterAddr, desiredIndex, AF_INET6))
-            {
-                if (AddCAInterface(iflist, pCurAdapterAddr->AdapterName, pCurAdapterAddr->IfIndex, AF_INET6))
-                {
-                    OIC_LOG_V(DEBUG, TAG, "\t\tAdded IPv6 interface %i", pCurAdapterAddr->IfIndex);
-                    bSucceeded = true;
-                }
-                else
-                {
-                    OIC_LOG_V(ERROR, TAG, "\tAdding IPv6 interface %i failed", pCurAdapterAddr->IfIndex);
-                    break;
-                }
-            }
-            else
-            {
-                OIC_LOG_V(DEBUG, TAG, "\t\tIPv6 interface %i not valid, skipping...", pCurAdapterAddr->IfIndex);
-            }
+            continue;
         }
 
-        if (pCurAdapterAddr->Flags & IP_ADAPTER_IPV4_ENABLED)
+        for (PIP_ADAPTER_UNICAST_ADDRESS pAddress = pCurAdapterAddr->FirstUnicastAddress;
+             pAddress != NULL;
+             pAddress = pAddress->Next)
         {
-            // Do not add loopback, duplicate, or non-operational adapters
-            if (IsValidAdapter(pCurAdapterAddr, desiredIndex, AF_INET))
+            if (!IsValidAddress(pAddress))
             {
-                if (AddCAInterface(iflist, pCurAdapterAddr->AdapterName, pCurAdapterAddr->IfIndex, AF_INET))
-                {
-                    OIC_LOG_V(DEBUG, TAG, "\t\tAdded IPv4 interface %i", pCurAdapterAddr->IfIndex);
-                    bSucceeded = true;
-                }
-                else
-                {
-                    OIC_LOG_V(ERROR, TAG, "\tAdding IPv4 interface %i failed", pCurAdapterAddr->IfIndex);
-                    break;
-                }
-            }
-            else
-            {
-                OIC_LOG_V(DEBUG, TAG, "\t\tIPv6 interface %i not valid, skipping...", pCurAdapterAddr->IfIndex);
+                continue;
             }
 
+            char addr[INET6_ADDRSTRLEN];
+            if (!inet_ntop(pAddress->Address.lpSockaddr->sa_family,
+                           INETADDR_ADDRESS(pAddress->Address.lpSockaddr),
+                           addr,
+                           sizeof(addr)))
+            {
+                continue;
+            }
+
+            CAInterface_t *ipAddressInfo = AddCAInterface(iflist, pCurAdapterAddr->AdapterName,
+                                                          pCurAdapterAddr->IfIndex,
+                                                          pAddress->Address.lpSockaddr->sa_family,
+                                                          addr);
+            if (!ipAddressInfo)
+            {
+                OIC_LOG_V(ERROR, TAG, "\tAdding address on interface %i failed",
+                          pCurAdapterAddr->IfIndex);
+                bSucceeded = false;
+                break;
+            }
+
+            OIC_LOG_V(DEBUG, TAG, "\t\tAdded address %s", ipAddressInfo->addr);
         }
     }
     return bSucceeded;
 }
 
+/*
+ * Get the set of IP_ADAPTER_ADDRESSES structures.  The caller is responsible for
+ * freeng the set using OICFree on the pointer returned.
+ *
+ * @return List of network adapters.
+ */
 PIP_ADAPTER_ADDRESSES GetAdapters()
 {
-    ULONG ulOutBufLen = sizeof(IP_ADAPTER_ADDRESSES);
-    PIP_ADAPTER_ADDRESSES pAdapterAddr = (IP_ADAPTER_ADDRESSES *) OICMalloc(ulOutBufLen);
-    if (pAdapterAddr != NULL)
+    ULONG ulOutBufLen = 0;
+    PIP_ADAPTER_ADDRESSES pAdapterAddr = NULL;
+
+    // We don't need most of the default information, so optimize this call by not
+    // asking for them.
+    ULONG flags = GAA_FLAG_SKIP_ANYCAST |
+                  GAA_FLAG_SKIP_MULTICAST |
+                  GAA_FLAG_SKIP_DNS_SERVER |
+                  GAA_FLAG_SKIP_FRIENDLY_NAME;
+
+    // Call up to 3 times: once to get the size, once to get the data, and once more
+    // just in case there was an increase in length in between the first two. If the
+    // length is still increasing due to more addresses being added, even this may fail
+    // and we'll have to wait for the next IP address change notification.
+    for (int i = 0; i < 3; i++)
     {
-        ULONG flags = 0;
         ULONG ret = GetAdaptersAddresses(AF_UNSPEC, flags, NULL, pAdapterAddr, &ulOutBufLen);
         if (ERROR_BUFFER_OVERFLOW == ret)
         {
-            // Redo with updated length
-            OICFree(pAdapterAddr);
-            pAdapterAddr = (PIP_ADAPTER_ADDRESSES) OICMalloc(ulOutBufLen);
-            if (pAdapterAddr != NULL) {
-                ret = GetAdaptersAddresses(AF_UNSPEC, flags, NULL, pAdapterAddr, &ulOutBufLen);
-                if (NO_ERROR != ret)
-                {
-                    OIC_LOG(ERROR, TAG, "GetAdaptersAddresses() failed");
-                    OICFree(pAdapterAddr);
-                    pAdapterAddr = NULL;
-                }
-                else
-                {
-                    // Succeeded getting adapters
-                }
-            }
-            else
+            // Redo with updated length.
+            if (pAdapterAddr != NULL)
             {
-                OIC_LOG(ERROR, TAG, "Second time allocating memory for GetAdaptersAddresses() failed");
+                OICFree(pAdapterAddr);
             }
+            pAdapterAddr = (PIP_ADAPTER_ADDRESSES) OICMalloc(ulOutBufLen);
+            if (pAdapterAddr == NULL) {
+                OIC_LOG(ERROR, TAG, "Allocating memory for GetAdaptersAddresses() failed");
+                break;
+            }
+            continue;
         }
-        else
+        if (NO_ERROR != ret)
         {
-            OIC_LOG(ERROR, TAG, "Expected GetAdaptersAddresses() to fail on first try, but it didn't.");
+            OIC_LOG(ERROR, TAG, "GetAdaptersAddresses() failed");
+            break;
         }
+
+        // Succeeded getting adapters
+        return pAdapterAddr;
     }
-    else
+
+    if (pAdapterAddr != NULL)
     {
-        OIC_LOG(ERROR, TAG, "First time allocating memory for GetAdaptersAddresses() failed");
+        OICFree(pAdapterAddr);
     }
-    return pAdapterAddr;
+    return NULL;
+}
+
+/**
+ * Get the list of CAInterface_t items.  Currently only 0 is passed as the desiredIndex by any
+ * caller.
+ *
+ * @param[in]  desiredIndex      Network interface index, or 0 for all.
+ * @return  List of CAInterface_t items.
+ */
+static u_arraylist_t *GetInterfaceInformation(int desiredIndex)
+{
+    if (desiredIndex < 0)
+    {
+        OIC_LOG_V(ERROR, TAG, "invalid index : %d", desiredIndex);
+        return NULL;
+    }
+
+    u_arraylist_t *iflist = u_arraylist_create();
+    if (!iflist)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to create iflist");
+        return NULL;
+    }
+
+    PIP_ADAPTER_ADDRESSES pAdapterAddr = GetAdapters();
+    if (!pAdapterAddr)
+    {
+        OIC_LOG(ERROR, TAG, "Enumerating Adapters failed");
+        u_arraylist_destroy(iflist);
+        return NULL;
+    }
+
+    // Cycle through network adapters.
+    // Add valid network addresses to the address list.
+    bool ret = AddAddresses(pAdapterAddr, iflist, desiredIndex);
+    if (false == ret)
+    {
+        OIC_LOG(ERROR, TAG, "AddAddresses() failed");
+        u_arraylist_destroy(iflist);
+        iflist = NULL;
+    }
+
+    // Finished with network adapter list.
+    OICFree(pAdapterAddr);
+
+    return iflist;
 }
 
 u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
 {
     u_arraylist_t *iflist = u_arraylist_create();
-    if (iflist)
-    {
-        PIP_ADAPTER_ADDRESSES pAdapterAddr = NULL;
-        pAdapterAddr = GetAdapters();
-        if (pAdapterAddr)
-        {
-            // Cycle through adapters
-            // Add valid adapters to the interface list.
-            bool ret = AddInterfaces(pAdapterAddr, iflist, desiredIndex);
-            if (false == ret)
-            {
-                OIC_LOG(ERROR, TAG, "AddInterfaces() failed");
-                u_arraylist_destroy(iflist);
-                iflist = NULL;
-            }
-
-            // Finished with Adapter List
-            OICFree(pAdapterAddr);
-        }
-        else
-        {
-            OIC_LOG(ERROR, TAG, "Enumerating Adapters failed");
-            u_arraylist_destroy(iflist);
-            iflist = NULL;
-        }
-    }
-    else
+    if (!iflist)
     {
         OIC_LOG(ERROR, TAG, "Failed to create iflist");
+        return NULL;
     }
+
+    // Avoid extra kernel calls by just duplicating what's in our cache.
+    oc_mutex_lock(g_CAIPNetworkMonitorMutex);
+
+    uint32_t list_length = u_arraylist_length(g_CAIPNetworkMonitorAddressList);
+    for (uint32_t list_index = 0; list_index < list_length; list_index++)
+    {
+        CAInterface_t *currItem = (CAInterface_t *)u_arraylist_get(g_CAIPNetworkMonitorAddressList,
+                                                                   list_index);
+        if (!AddCAInterface(iflist, currItem->name, currItem->index, currItem->family,
+                            currItem->addr))
+        {
+            OIC_LOG(ERROR, TAG, "AddCAInterface() failed");
+            u_arraylist_destroy(iflist);
+            iflist = NULL;
+            break;
+        }
+    }
+
+    oc_mutex_unlock(g_CAIPNetworkMonitorMutex);
+
     return iflist;
 }

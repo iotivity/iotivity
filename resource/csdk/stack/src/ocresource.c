@@ -483,7 +483,10 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult)
             result = OC_STACK_ERROR;
             break;
         case OC_EH_FORBIDDEN:
-            result = OC_STACK_RESOURCE_ERROR;
+            result = OC_STACK_FORBIDDEN_REQ;
+            break;
+        case OC_EH_INTERNAL_SERVER_ERROR:
+            result = OC_STACK_INTERNAL_SERVER_ERROR;
             break;
         case OC_EH_RESOURCE_CREATED:
             result = OC_STACK_RESOURCE_CREATED;
@@ -852,6 +855,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
             SendDirectStackResponse(&endpoint, request->coapID, CA_EMPTY, CA_MSG_ACKNOWLEDGE,
                                     0, NULL, NULL, 0, NULL, CA_RESPONSE_FOR_RES);
         }
+        FindAndDeleteServerRequest(request);
 
         // Presence uses observer notification api to respond via SendPresenceNotification.
         SendPresenceNotification(resource->rsrcType, OC_PRESENCE_TRIGGER_CHANGE);
@@ -880,6 +884,8 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         {
             // Ignoring the discovery request as per RFC 7252, Section #8.2
             OIC_LOG(INFO, TAG, "Silently ignoring the request since no useful data to send. ");
+            // the request should be removed. since it never remove and causes a big memory waste.
+            FindAndDeleteServerRequest(request);
         }
     }
 
@@ -981,7 +987,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         OIC_LOG(INFO, TAG, "No observation requested");
         ehFlag = OC_REQUEST_FLAG;
     }
-    else if(ehRequest.obsInfo.action == OC_OBSERVE_REGISTER && !collectionResource)
+    else if(ehRequest.obsInfo.action == OC_OBSERVE_REGISTER)
     {
         OIC_LOG(INFO, TAG, "Observation registration requested");
 
@@ -1036,8 +1042,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         }
 
     }
-    else if(ehRequest.obsInfo.action == OC_OBSERVE_DEREGISTER &&
-            !collectionResource)
+    else if(ehRequest.obsInfo.action == OC_OBSERVE_DEREGISTER)
     {
         OIC_LOG(INFO, TAG, "Deregistering observation requested");
 

@@ -50,7 +50,7 @@ uint8_t* GetCrl();
  *
  * @return encoded CRL with DER format. array len is 0 if error occured (e.g. CRL did not set).
  */
-void  GetDerCrl(ByteArray* crlArray);
+void  GetDerCrl(ByteArray_t* crlArray);
 
 /**
  * This function converts CRL to CBOR
@@ -119,6 +119,13 @@ void DeleteCrl(OicSecCrl_t *crl);
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
 OCStackResult getLastUpdateFromDB(char **lastUpdate);
+
+/**
+ * This function prints OicSecCrl_t object
+ *
+ * @param crl  crl object
+ */
+void printCrl(OicSecCrl_t *crl);
 
 #ifdef __cplusplus
 }

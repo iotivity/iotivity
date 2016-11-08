@@ -25,6 +25,10 @@
 #include "ocstackinternal.h"
 #include "ocserverrequest.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 /**
  * Common JSON string components used by the stack to build JSON strings.
  * These details are exposed in ocstackconfig.h file in the form of documentation.
@@ -185,5 +189,8 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
  */
 OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult);
 
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 #endif //OC_RESOURCEHANDLER_H
 

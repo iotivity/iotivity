@@ -76,7 +76,7 @@ OCStackResult DpairingToCBORPayload(const OicSecDpairing_t *dpair, uint8_t **pay
  */
 void DeleteDpairingBinData(OicSecDpairing_t* dpair);
 
-#ifdef __WITH_DTLS__
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 /**
  * Function to save PairingPSK.
  *
@@ -88,7 +88,7 @@ void DeleteDpairingBinData(OicSecDpairing_t* dpair);
  */
 OCStackResult SavePairingPSK(OCDevAddr *endpoint,
             OicUuid_t *peerDevID, OicUuid_t *owner, bool isPairingServer);
-#endif // __WITH_DTLS__
+#endif // __WITH_DTLS__ or __WITH_TLS__
 
 /**
  * Gets the OicUuid_t value for the rownerid of the Dpairing resource.

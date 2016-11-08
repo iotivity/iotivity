@@ -80,6 +80,17 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
 
     NS_LOG_V(DEBUG, "NS Provider ID: %s", NSGetProviderInfo()->providerId);
 
+    char * copyReq = OICStrdup(entityHandlerRequest->query);
+    char * reqInterface = NSGetValueFromQuery(copyReq, NS_QUERY_INTERFACE);
+
+    if (reqInterface && strcmp(reqInterface, NS_INTERFACE_BASELINE) == 0)
+    {
+        OCResourcePayloadAddStringLL(&payload->interfaces, NS_INTERFACE_BASELINE);
+        OCResourcePayloadAddStringLL(&payload->interfaces, NS_INTERFACE_READ);
+        OCResourcePayloadAddStringLL(&payload->types, NS_ROOT_TYPE);
+    }
+
+    OICFree(copyReq);
     OCRepPayloadSetUri(payload, NS_ROOT_URI);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, NSGetProviderInfo()->providerId);
     OCRepPayloadSetPropString(payload, NS_ATTRIBUTE_VERSION, VERSION);
@@ -98,6 +109,7 @@ NSResult NSSendAccessPolicyResponse(OCEntityHandlerRequest *entityHandlerRequest
     if (OCDoResponse(&response) != OC_STACK_OK)
     {
         NS_LOG(ERROR, "Fail to AccessPolicy send response");
+        OCRepPayloadDestroy(payload);
         return NS_ERROR;
     }
     OCRepPayloadDestroy(payload);
@@ -111,10 +123,12 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 {
     NS_LOG(DEBUG, "NSHandleSubscription - IN");
 
-    char * id = NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_CONSUMER_ID);
+    char * copyReq = OICStrdup(entityHandlerRequest->query);
+    char * id = NSGetValueFromQuery(copyReq, NS_QUERY_CONSUMER_ID);
 
-    if(!id)
+    if (!id)
     {
+        OICFree(copyReq);
         NSFreeOCEntityHandlerRequest(entityHandlerRequest);
         NS_LOG(ERROR, "Invalid ConsumerID");
         return;
@@ -125,7 +139,9 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
     {
         NS_LOG(DEBUG, "resourceType == NS_RESOURCE_MESSAGE");
         NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
+        NS_VERIFY_NOT_NULL_V(element);
         NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
+        NS_VERIFY_NOT_NULL_V(subData);
 
         OICStrcpy(subData->id, UUID_STRING_SIZE, id);
         NS_LOG_V(DEBUG, "SubList ID = [%s]", subData->id);
@@ -138,7 +154,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 
 #if(defined WITH_CLOUD && defined RD_CLIENT)
         iSRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
-        if(iSRemoteServer)
+        if (iSRemoteServer)
         {
             NS_LOG(DEBUG, "Requested by remote server");
             subData->remote_messageObId = entityHandlerRequest->obsInfo.obsId;
@@ -146,7 +162,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         }
 #endif
 
-        if(!iSRemoteServer)
+        if (!iSRemoteServer)
         {
             NS_LOG(DEBUG, "Requested by local consumer");
             subData->messageObId = entityHandlerRequest->obsInfo.obsId;
@@ -182,7 +198,9 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
     {
         NS_LOG(DEBUG, "resourceType == NS_RESOURCE_SYNC");
         NSCacheElement * element = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
+        NS_VERIFY_NOT_NULL_V(element);
         NSCacheSubData * subData = (NSCacheSubData *) OICMalloc(sizeof(NSCacheSubData));
+        NS_VERIFY_NOT_NULL_V(subData);
 
         OICStrcpy(subData->id, UUID_STRING_SIZE, id);
         NS_LOG_V(DEBUG, "SubList ID = [%s]", subData->id);
@@ -192,9 +210,9 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         subData->remote_syncObId = subData->syncObId = 0;
         bool isRemoteServer = false;
 
-#if(defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD && defined RD_CLIENT)
         isRemoteServer = NSIsRemoteServerAddress(entityHandlerRequest->devAddr.addr);
-        if(isRemoteServer)
+        if (isRemoteServer)
         {
             NS_LOG(DEBUG, "Requested by remote server");
             subData->remote_syncObId = entityHandlerRequest->obsInfo.obsId;
@@ -202,7 +220,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
         }
 #endif
 
-        if(!isRemoteServer)
+        if (!isRemoteServer)
         {
             NS_LOG(DEBUG, "Requested by local consumer");
             subData->syncObId = entityHandlerRequest->obsInfo.obsId;
@@ -223,6 +241,7 @@ void NSHandleSubscription(OCEntityHandlerRequest *entityHandlerRequest, NSResour
 
         NSFreeOCEntityHandlerRequest(entityHandlerRequest);
     }
+    OICFree(copyReq);
 
     NS_LOG(DEBUG, "NSHandleSubscription - OUT");
 }
@@ -233,12 +252,11 @@ void NSHandleUnsubscription(OCEntityHandlerRequest *entityHandlerRequest)
 
     consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER_OBSERVE_ID;
 
-    while(NSProviderStorageDelete(consumerSubList, (char *)
+    while (NSProviderStorageDelete(consumerSubList, (char *)
             &(entityHandlerRequest->obsInfo.obsId)) != NS_FAIL);
+
     consumerSubList->cacheType = NS_PROVIDER_CACHE_SUBSCRIBER;
-
     NSFreeOCEntityHandlerRequest(entityHandlerRequest);
-
     NS_LOG(DEBUG, "NSHandleUnsubscription - OUT");
 }
 
@@ -276,11 +294,12 @@ NSResult NSSendResponse(const char * id, bool accepted)
 
     NSCacheElement * element = NSProviderStorageRead(consumerSubList, id);
 
-    if(element == NULL)
+    if (element == NULL)
     {
         NS_LOG(ERROR, "element is NULL");
         return NS_ERROR;
     }
+
     NSCacheSubData * subData = (NSCacheSubData*) element->data;
 
     if (OCNotifyListOfObservers(rHandle, (OCObservationId*)&subData->messageObId, 1,
@@ -291,8 +310,8 @@ NSResult NSSendResponse(const char * id, bool accepted)
         return NS_ERROR;
 
     }
-    OCRepPayloadDestroy(payload);
 
+    OCRepPayloadDestroy(payload);
     NS_LOG(DEBUG, "NSSendResponse - OUT");
     return NS_OK;
 }
@@ -304,13 +323,15 @@ NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest * entityHandlerRequest
     if (!entityHandlerRequest)
     {
         NS_LOG(ERROR, "Invalid request pointer");
-        return OC_EH_ERROR;
+        return NS_ERROR;
     }
 
-    char * id = NSGetValueFromQuery(OICStrdup(entityHandlerRequest->query), NS_QUERY_CONSUMER_ID);
+    char * copyReq = OICStrdup(entityHandlerRequest->query);
+    char * id = NSGetValueFromQuery(copyReq, NS_QUERY_CONSUMER_ID);
 
-    if(!id)
+    if (!id)
     {
+        OICFree(copyReq);
         NSFreeOCEntityHandlerRequest(entityHandlerRequest);
         NS_LOG(ERROR, "Invalid ConsumerID");
         return NS_ERROR;
@@ -318,6 +339,7 @@ NSResult NSSendConsumerSubResponse(OCEntityHandlerRequest * entityHandlerRequest
 
     NSCacheUpdateSubScriptionState(consumerSubList, id, true);
     NSSendResponse(id, true);
+    OICFree(copyReq);
     NSFreeOCEntityHandlerRequest(entityHandlerRequest);
     NS_LOG(DEBUG, "NSSendSubscriptionResponse - OUT");
     return NS_OK;

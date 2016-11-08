@@ -100,6 +100,12 @@ public class AclResource extends Resource {
                         .get(Constants.REQ_ACL_LIST);
             mAclManager.addAclACE(aclid, aclist);
             return MessageBuilder.createResponse(request, ResponseStatus.CHANGED);
+        }else if (getUriPathSegments().containsAll(request.getUriPathSegments())) {
+            String aclid = request.getUriPathSegments().get(getUriPathSegments().size());
+            String aceid = request.getUriQueryMap().get(Constants.REQ_ACE_ID).get(0);
+            HashMap<String, Object> ace = (HashMap<String, Object>) payloadData.get(Constants.REQ_ACL_LIST);
+            mAclManager.updateACE(aclid, aceid, ace);
+            return MessageBuilder.createResponse(request, ResponseStatus.CHANGED);
         }
 
         throw new BadRequestException("uriPath is invalid");
@@ -163,7 +169,12 @@ public class AclResource extends Resource {
             mAclManager.deleteAcl(aclid);
         } else {
             aclid = request.getUriPathSegments().get(getUriPathSegments().size());
-            mAclManager.deleteAclACE(aclid);
+            String aceid = request.getUriQueryMap().get(Constants.REQ_ACE_ID).get(0);
+            if (aceid == null) {
+                mAclManager.deleteAclAclist(aclid);
+            } else {
+                mAclManager.deleteAclACE(aclid, aceid);
+            }
         }
 
         return MessageBuilder.createResponse(request, ResponseStatus.DELETED);

@@ -24,6 +24,7 @@
 #include <OCPlatform_impl.h>
 #include <oxmjustworks.h>
 #include <oxmrandompin.h>
+#include <srmutility.h>
 #include <OCProvisioningManager.h>
 #include <gtest/gtest.h>
 
@@ -53,14 +54,20 @@ namespace OCProvisioningTest
 
     TEST(DiscoveryTest, SecureResource)
     {
-        DeviceList_t list;
-        EXPECT_EQ(OC_STACK_OK, OCSecure::discoverSecureResource(TIMEOUT, "", CT_DEFAULT, list));
+        std::shared_ptr< OC::OCSecureResource > secureResource;
+        OicUuid_t uuid;
+        ConvertStrToUuid("11111111-1111-1111-1111-111111111111", &uuid);
+
+        EXPECT_EQ(OC_STACK_OK, OCSecure::discoverSingleDevice(TIMEOUT, &uuid, secureResource));
     }
 
     TEST(DiscoveryTest, SecureResourceZeroTimeout)
     {
-        DeviceList_t list;
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::discoverSecureResource(0, "", CT_DEFAULT, list));
+        std::shared_ptr< OC::OCSecureResource > secureResource;
+        OicUuid_t uuid;
+        ConvertStrToUuid("11111111-1111-1111-1111-111111111111", &uuid);
+
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::discoverSingleDevice(0, &uuid, secureResource));
     }
 
     TEST(DiscoveryTest, UnownedDevices)

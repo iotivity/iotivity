@@ -90,15 +90,16 @@ void * NSCallbackResponseSchedule(void * ptr)
                     OCEntityHandlerRequest * request = (OCEntityHandlerRequest*)node->taskData;
                     NSConsumer * consumer = (NSConsumer *)OICMalloc(sizeof(NSConsumer));
 
-                    char * consumerId = NSGetValueFromQuery(OICStrdup(request->query),
-                            NS_QUERY_CONSUMER_ID);
+                    char * copyQuery = OICStrdup(request->query);
+                    char * consumerId = NSGetValueFromQuery(copyQuery, NS_QUERY_CONSUMER_ID);
 
-                    if(consumerId)
+                    if (consumerId)
                     {
                         OICStrcpy(consumer->consumerId, UUID_STRING_SIZE, consumerId);
                         NSSubscribeRequestCb(consumer);
                     }
 
+                    OICFree(copyQuery);
                     NSFreeConsumer(consumer);
                     NSFreeOCEntityHandlerRequest(request);
 

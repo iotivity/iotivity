@@ -90,6 +90,9 @@ namespace
     {
         RCSRepresentation rcsRep;
 
+        RCSResourceObject::LockGuard lock{ resource, RCSResourceObject::AutoNotifyPolicy::NEVER };
+        rcsRep.setAttributes(resource.getAttributes());
+
         for (const auto& bound : resource.getBoundResources())
         {
             rcsRep.addChild(toRepresentation(*bound));

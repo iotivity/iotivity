@@ -40,7 +40,7 @@ scons TARGET_OS=tizen -c
 
 scons TARGET_OS=tizen \
     TARGET_TRANSPORT=%{TARGET_TRANSPORT} SECURED=%{SECURED} \
-    ROUTING=%{ROUTING} WITH_TCP=%{WITH_TCP} WITH_PROXY=%{WITH_PROXY} \
+    ROUTING=%{ROUTING} WITH_TCP=%{WITH_TCP} WITH_PROXY=%{WITH_PROXY} WITH_MQ=%{WITH_MQ} \
     RELEASE=%{RELEASE} LOGGING=%{LOGGING} \
     VERBOSE=%{VERBOSE}
 
@@ -56,9 +56,14 @@ cp -f %{ROOTDIR}/extlibs/libcoap/libcoap.a %{buildroot}/%{_libdir}
 cp /usr/lib/libuuid.so.1 %{buildroot}%{_libdir}
 if echo %{SECURED}|grep -qi '1'; then
 	cp -f %{ROOTDIR}/out/tizen/*/*/extlibs/tinydtls/libtinydtls.a %{buildroot}/%{_libdir}
+	cp -f %{ROOTDIR}/out/tizen/*/*/libmbedcrypto.a %{buildroot}/%{_libdir}
+	cp -f %{ROOTDIR}/out/tizen/*/*/libmbedtls.a %{buildroot}/%{_libdir}
+	cp -f %{ROOTDIR}/out/tizen/*/*/libmbedx509.a %{buildroot}/%{_libdir}
 fi
 
 cp -rf %{ROOTDIR}/resource/csdk/stack/include/ocstack.h* %{DEST_INC_DIR}/
+cp -rf %{ROOTDIR}/resource/csdk/security/include/securevirtualresourcetypes.h* %{DEST_INC_DIR}/
+cp -rf %{ROOTDIR}/resource/c_common/byte_array.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/resource/csdk/stack/include/ocstackconfig.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/resource/csdk/stack/include/octypes.h* %{DEST_INC_DIR}/
 cp -rf %{ROOTDIR}/resource/csdk/logger/include/logger.h* %{DEST_INC_DIR}/

@@ -48,6 +48,9 @@
 #define TAG "SAMPLE_RANDOMPIN"
 
 int gQuitFlag = 0;
+#ifdef _ENABLE_MULTIPLE_OWNER_
+static bool g_LoopFlag = true;
+#endif //_ENABLE_MULTIPLE_OWNER_
 
 /* Structure to represent a LED resource */
 typedef struct LEDRESOURCE{
@@ -141,6 +144,40 @@ const char *getResult(OCStackResult result) {
         return "UNKNOWN";
     }
 }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+static pthread_t oc_process_thread;
+
+static void* oc_process_loop(void* ptr)
+{
+    struct timespec timeout;
+    timeout.tv_sec  = 0;
+    timeout.tv_nsec = 100000000L;
+
+    while(g_LoopFlag)
+    {
+        if (OCProcess() != OC_STACK_OK)
+        {
+            OIC_LOG(ERROR, TAG, "OCStack process error");
+            g_LoopFlag = false;
+            break;
+        }
+        nanosleep(&timeout, NULL);
+    }
+    pthread_join(&oc_process_thread, NULL);
+    return NULL;
+}
+
+static void StartOCProcessThread()
+{
+    pthread_create(&oc_process_thread, NULL, oc_process_loop, NULL);
+}
+
+static void StopOCProcessThread()
+{
+    g_LoopFlag = false;
+}
+#endif //_ENABLE_MULTIPLE_OWNER_
 
 OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
 {
@@ -425,8 +462,6 @@ void GeneratePinCB(char* pin, size_t pinSize)
 
 int main()
 {
-    struct timespec timeout;
-
     OIC_LOG(DEBUG, TAG, "OCServer is starting...");
 
     // Initialize Persistent Storage for SVR database
@@ -443,19 +478,42 @@ int main()
      * If server supported random pin based ownership transfer,
      * callback of print PIN should be registered before runing server.
      */
-    SetGeneratePinCB(&GeneratePinCB);
+    SetGeneratePinCB(GeneratePinCB);
 
     /*
      * Declare and create the example resource: LED
      */
     createLEDResource(gResourceUri, &LED, false, 0);
 
-    timeout.tv_sec  = 0;
-    timeout.tv_nsec = 100000000L;
-
     // Break from loop with Ctrl-C
     OIC_LOG(INFO, TAG, "Entering ocserver main loop...");
     signal(SIGINT, handleSigInt);
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    StartOCProcessThread();
+
+    while(!gQuitFlag)
+    {
+        printf("Press 'G' to generate random PIN...\n");
+        printf("Press 'E' to exit...\n");
+        char in = getchar();
+        if('G' == in || 'g' == in)
+        {
+            char ranPin[OXM_RANDOM_PIN_SIZE + 1] = {0};
+            GeneratePin(ranPin, OXM_RANDOM_PIN_SIZE + 1);
+        }
+        if('E' == in || 'e' == in)
+        {
+            break;
+        }
+    }
+
+    StopOCProcessThread();
+#else
+    struct timespec timeout;
+    timeout.tv_sec  = 0;
+    timeout.tv_nsec = 100000000L;
+
     while (!gQuitFlag)
     {
         if (OCProcess() != OC_STACK_OK)
@@ -465,6 +523,7 @@ int main()
         }
         nanosleep(&timeout, NULL);
     }
+#endif //_ENABLE_MULTIPLE_OWNER_
 
     OIC_LOG(INFO, TAG, "Exiting ocserver main loop...");
 

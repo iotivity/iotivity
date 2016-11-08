@@ -17,7 +17,8 @@ allprojects {
         jcenter()
 
         flatDir {
-            dirs 'libs'
+            dirs '../../../../android/service/build/outputs/aar'
+            dirs '../../../../../../java/iotivity-android/build/outputs/aar/'
         }
     }
 }

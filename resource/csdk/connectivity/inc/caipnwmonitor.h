@@ -47,6 +47,11 @@ extern "C"
 typedef void (*CAIPAdapterStateChangeCallback)(CATransportAdapter_t adapter,
                                                CANetworkStatus_t status);
 
+/*
+ * Structure for IP address information, to be used to construct a CAEndpoint_t.  The
+ * structure name is a misnomer, as there is one entry per address not one per interface.
+ * An interface with 4 addresses should result in 4 instances of CAInterface_t.
+ */
 typedef struct
 {
     char name[INTERFACE_NAME_MAX];

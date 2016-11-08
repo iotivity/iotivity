@@ -126,7 +126,7 @@ void NSRemoveConnections(NSProviderConnectionInfo *);
 
 NSProvider_internal * NSCopyProvider_internal(NSProvider_internal *);
 NSProvider * NSCopyProvider(NSProvider_internal *);
-void NSRemoveProvider_internal(NSProvider_internal *);
+void NSRemoveProvider_internal(void *);
 void NSRemoveProvider(NSProvider *);
 
 NSTopicLL * NSCopyTopicNode(NSTopicLL *);
@@ -139,7 +139,8 @@ void NSRemoveTopicLL(NSTopicLL *);
 OCStackResult NSInvokeRequest(OCDoHandle * handle,
         OCMethod method, const OCDevAddr * addr,
         const char * queryUrl, OCPayload * payload,
-        void * callbackFunc, void * callbackData, OCConnectivityType type);
+        void * callbackFunc, void * callbackData,
+        OCClientContextDeleter cd, OCConnectivityType type);
 
 bool NSOCResultToSuccess(OCStackResult ret);
 

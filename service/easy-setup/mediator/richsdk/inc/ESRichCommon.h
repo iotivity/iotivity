@@ -616,9 +616,12 @@ namespace OIC
                 std::vector<OCRepresentation> children = m_ProvRep.getChildren();
                 for(auto child = children.begin(); child != children.end(); ++child)
                 {
-                    if(child->getUri().find(OC_RSRVD_ES_URI_CLOUDSERVER) != std::string::npos)
+                    for(auto rt : child->getResourceTypes())
                     {
-                        return true;
+                        if(0 == rt.compare(OC_RSRVD_ES_RES_TYPE_CLOUDSERVER))
+                        {
+                            return true;
+                        }
                     }
                 }
                 return false;

@@ -58,7 +58,7 @@ static const uint8_t ACL_RESOURCE_MAP_SIZE = 3;
 
 
 // CborSize is the default cbor payload size being used.
-static const uint16_t CBOR_SIZE = 2048;
+static const uint16_t CBOR_SIZE = 2048*8;
 
 static OicSecAcl_t *gAcl = NULL;
 static OCResourceHandle gAclHandle = NULL;
@@ -348,6 +348,13 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
             }
         }
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+        if(ace->eownerID)
+        {
+            aclMapSize++;
+        }
+#endif //_ENABLE_MULTIPLE_OWNER_
+
         cborEncoderResult = cbor_encoder_create_map(&acesArray, &oicSecAclMap, aclMapSize);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Creating ACES Map");
 
@@ -537,6 +544,22 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
             cborEncoderResult = cbor_encoder_close_container(&oicSecAclMap, &validities);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Validities Array.");
         }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+        // Eownerid -- Not Mandatory
+        if(ace->eownerID)
+        {
+            char *eowner = NULL;
+            cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, OIC_JSON_EOWNERID_NAME,
+                strlen(OIC_JSON_EOWNERID_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding eownerId Name Tag.");
+            ret = ConvertUuidToStr(ace->eownerID, &eowner);
+            VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
+            cborEncoderResult = cbor_encode_text_string(&oicSecAclMap, eowner, strlen(eowner));
+            OICFree(eowner);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding eownerId Value.");
+        }
+#endif //_ENABLE_MULTIPLE_OWNER_
 
         cborEncoderResult = cbor_encoder_close_container(&acesArray, &oicSecAclMap);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing ACES Map.");
@@ -948,15 +971,17 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
         return NULL;
     }
     OCStackResult ret = OC_STACK_ERROR;
+    CborValue aclMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
     CborValue aclCbor = { .parser = NULL };
     CborParser parser = { .end = NULL };
     CborError cborFindResult = CborNoError;
+
     cbor_parser_init(cborPayload, size, 0, &parser, &aclCbor);
 
     OicSecAcl_t *acl = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
+    VERIFY_NON_NULL(TAG, acl, ERROR);
 
     // Enter ACL Map
-    CborValue aclMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
     cborFindResult = cbor_value_enter_container(&aclCbor, &aclMap);
     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering ACL Map.");
 
@@ -980,7 +1005,6 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                 CborValue aclistMap = { .parser = NULL, .ptr = NULL, .remaining = 0, .extra = 0, .type = 0, .flags = 0 };
                 cborFindResult = cbor_value_enter_container(&aclMap, &aclistMap);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering ACLIST Map.");
-
 
                 while (cbor_value_is_valid(&aclistMap))
                 {
@@ -1016,8 +1040,6 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                 ace = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
                                 VERIFY_NON_NULL(TAG, ace, ERROR);
                                 LL_APPEND(acl->aces, ace);
-
-                                VERIFY_NON_NULL(TAG, acl, ERROR);
 
                                 while (cbor_value_is_valid(&aceMap))
                                 {
@@ -1215,6 +1237,24 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Advancing a validities Array.");
                                             }
                                         }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+                                        // eowner uuid -- Not Mandatory
+                                        if (strcmp(name, OIC_JSON_EOWNERID_NAME)  == 0)
+                                        {
+                                            char *eowner = NULL;
+                                            cborFindResult = cbor_value_dup_text_string(&aceMap, &eowner, &len, NULL);
+                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding eownerId Value.");
+                                            if(NULL == ace->eownerID)
+                                            {
+                                                ace->eownerID = (OicUuid_t*)OICCalloc(1, sizeof(OicUuid_t));
+                                                VERIFY_NON_NULL(TAG, ace->eownerID, ERROR);
+                                            }
+                                            ret = ConvertStrToUuid(eowner, ace->eownerID);
+                                            OICFree(eowner);
+                                            VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
+                                        }
+#endif //_ENABLE_MULTIPLE_OWNER_
                                         OICFree(name);
                                     }
 
@@ -1253,6 +1293,10 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                 VERIFY_SUCCESS(TAG, ret == OC_STACK_OK, ERROR);
                 OICFree(stRowner);
             }
+            else if (NULL != gAcl)
+            {
+                memcpy(&(acl->rownerID), &(gAcl->rownerID), sizeof(OicUuid_t));
+            }
             OICFree(tagName);
         }
         if (cbor_value_is_valid(&aclMap))
@@ -1272,6 +1316,48 @@ exit:
 
     return acl;
 }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+bool IsValidAclAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPayload, const size_t size)
+{
+    bool retValue = false;
+    OicSecAcl_t* acl = NULL;
+
+    VERIFY_NON_NULL(TAG, uuid, ERROR);
+    VERIFY_NON_NULL(TAG, cborPayload, ERROR);
+    VERIFY_SUCCESS(TAG, 0 != size, ERROR);
+
+    acl = CBORPayloadToAcl(cborPayload, size);
+    VERIFY_NON_NULL(TAG, acl, ERROR);
+
+    OicSecAce_t* ace = NULL;
+    OicSecAce_t* tempAce = NULL;
+    LL_FOREACH_SAFE(acl->aces, ace, tempAce)
+    {
+        OicSecRsrc_t* rsrc = NULL;
+        OicSecRsrc_t* tempRsrc = NULL;
+
+        VERIFY_NON_NULL(TAG, ace->eownerID, ERROR);
+        VERIFY_SUCCESS(TAG, memcmp(ace->eownerID->id, uuid->id, sizeof(uuid->id)) == 0, ERROR);
+
+        LL_FOREACH_SAFE(ace->resources, rsrc, tempRsrc)
+        {
+            VERIFY_SUCCESS(TAG, strcmp(rsrc->href, OIC_RSRC_TYPE_SEC_DOXM) != 0, ERROR);
+            VERIFY_SUCCESS(TAG, strcmp(rsrc->href, OIC_RSRC_TYPE_SEC_CRED) != 0, ERROR);
+            VERIFY_SUCCESS(TAG, strcmp(rsrc->href, OIC_RSRC_TYPE_SEC_ACL) != 0, ERROR);
+            VERIFY_SUCCESS(TAG, strcmp(rsrc->href, OIC_RSRC_TYPE_SEC_PSTAT) != 0, ERROR);
+            VERIFY_SUCCESS(TAG, strcmp(rsrc->href, OIC_RSRC_TYPE_SEC_CRL) != 0, ERROR);
+        }
+    }
+
+    retValue = true;
+
+exit:
+    DeleteACLList(acl);
+
+    return retValue;
+}
+#endif //_ENABLE_MULTIPLE_OWNER_
 
 /**
  * This method removes ACE for the subject and resource from the ACL
@@ -1630,6 +1716,83 @@ static bool IsSameACE(OicSecAce_t* ace1, OicSecAce_t* ace2)
     return false;
 }
 
+/**
+ * Internal function to remove all ACL data on ACL resource and persistent storage
+ *
+ * @retval
+ *     OC_STACK_RESOURCE_DELETED  - no errors
+ *     Otherwise                  - error
+ */
+static OCStackResult RemoveAllAce(void)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    uint8_t* aclBackup = NULL;
+    size_t backupSize = 0;
+    uint8_t* payload = NULL;
+    size_t size = 0;
+    OicSecAce_t* aceItem = NULL;
+    OicSecAce_t* tempAce = NULL;
+
+    OIC_LOG(INFO, TAG, "IN RemoveAllAce");
+
+    //Backup the current ACL
+    ret = AclToCBORPayload(gAcl, &aclBackup, &backupSize);
+    if(OC_STACK_OK == ret)
+    {
+        // Remove all ACE from ACL
+        LL_FOREACH_SAFE(gAcl->aces, aceItem, tempAce)
+        {
+            LL_DELETE(gAcl->aces, aceItem);
+            FreeACE(aceItem);
+        }
+
+        //Generate empty ACL payload
+        ret = AclToCBORPayload(gAcl, &payload, &size);
+        if (OC_STACK_OK == ret )
+        {
+            //Update the PS.
+            ret = UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, payload, size);
+            if (OC_STACK_OK != ret)
+            {
+                OIC_LOG_V(ERROR, TAG, "Error in UpdateSecureResourceInPS : %d", ret);
+            }
+        }
+
+        if(OC_STACK_OK != ret)
+        {
+            OIC_LOG_V(ERROR, TAG, "Error while DELETE ACE : %d", ret);
+
+            //If some erorr is occured, revert back.
+            OicSecAcl_t* originAcl = CBORPayloadToAcl(aclBackup, backupSize);
+            if( originAcl )
+            {
+                ret = UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, aclBackup, backupSize);
+                if (OC_STACK_OK == ret)
+                {
+                    DeleteACLList(gAcl);
+                    gAcl = originAcl;
+                }
+                else
+                {
+                    OIC_LOG_V(ERROR, TAG, "Error in UpdateSecureResourceInPS : %d", ret);
+                }
+            }
+            else
+            {
+                OIC_LOG(FATAL, TAG, "Error in CBORPayloadToAcl");
+                ret = OC_STACK_ERROR;
+            }
+        }
+    }
+
+    OICFree(aclBackup);
+    OICFree(payload);
+
+    OIC_LOG(INFO, TAG, "OUT RemoveAllAce");
+
+    return (OC_STACK_OK == ret ? OC_STACK_RESOURCE_DELETED : ret);
+}
+
 static OCEntityHandlerResult HandleACLGetRequest(const OCEntityHandlerRequest *ehRequest)
 {
     OIC_LOG(INFO, TAG, "HandleACLGetRequest processing the request");
@@ -1774,6 +1937,7 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
                     }
                 }
             }
+            memcpy(&(gAcl->rownerID), &(newAcl->rownerID), sizeof(OicUuid_t));
 
             DeleteACLList(newAcl);
 
@@ -1781,6 +1945,7 @@ static OCEntityHandlerResult HandleACLPostRequest(const OCEntityHandlerRequest *
             {
                 size_t size = 0;
                 uint8_t *cborPayload = NULL;
+
                 if (OC_STACK_OK == AclToCBORPayload(gAcl, &cborPayload, &size))
                 {
                     if (UpdateSecureResourceInPS(OIC_JSON_ACL_NAME, cborPayload, size) == OC_STACK_OK)
@@ -1815,14 +1980,25 @@ static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest
 
     VERIFY_NON_NULL(TAG, ehRequest->query, ERROR);
 
-    // 'Subject' field is MUST for processing a querystring in REST request.
-    VERIFY_SUCCESS(TAG, true == GetSubjectFromQueryString(ehRequest->query, &subject), ERROR);
-
-    GetResourceFromQueryString(ehRequest->query, resource, sizeof(resource));
-
-    if (OC_STACK_RESOURCE_DELETED == RemoveACE(&subject, resource))
+    // If 'Subject' field exist, processing a querystring in REST request.
+    if(GetSubjectFromQueryString(ehRequest->query, &subject))
     {
-        ehRet = OC_EH_RESOURCE_DELETED;
+        GetResourceFromQueryString(ehRequest->query, resource, sizeof(resource));
+
+        if (OC_STACK_RESOURCE_DELETED == RemoveACE(&subject, resource))
+        {
+            ehRet = OC_EH_RESOURCE_DELETED;
+        }
+    }
+    // If 'subject field not exist, remove all ACL data from ACL resource
+    else
+    {
+        OIC_LOG(WARNING, TAG, "Can not find the 'subject' in querystring, All ACL list will be removed.");
+
+        if(OC_STACK_RESOURCE_DELETED == RemoveAllAce())
+        {
+            ehRet = OC_EH_RESOURCE_DELETED;
+        }
     }
 
 exit:
@@ -2094,6 +2270,7 @@ OCStackResult InitACLResource()
     {
         // Read ACL resource from PS
         gAcl = CBORPayloadToAcl(data, size);
+        OICFree(data);
     }
     /*
      * If SVR database in persistent storage got corrupted or
@@ -2187,6 +2364,12 @@ const OicSecAce_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAce_t **
 void printACL(const OicSecAcl_t* acl)
 {
     OIC_LOG(INFO, TAG, "Print ACL:");
+
+    if (NULL == acl)
+    {
+        OIC_LOG(INFO, TAG, "Received NULL acl");
+        return;
+    }
 
     char *rowner = NULL;
     if (OC_STACK_OK == ConvertUuidToStr(&acl->rownerID, &rowner))

@@ -29,7 +29,6 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "crlresource.h"
-#include "crl.h"
 #include "ocpayloadcbor.h"
 #include "base64.h"
 #include <time.h>
@@ -75,16 +74,22 @@ void DeleteCrl(OicSecCrl_t *crl)
     }
 }
 
-static void printCrl(const OicSecCrl_t *crl)
+void printCrl(OicSecCrl_t *crl)
 {
-    OIC_LOG(DEBUG, TAG, "Crl object contain:");
-    OIC_LOG_V(DEBUG, TAG, "id = %d", crl->CrlId);
-    OIC_LOG_V(DEBUG, TAG, "this update = %s", crl->ThisUpdate.data);
+    if (NULL == crl)
+    {
+        OIC_LOG(INFO, TAG, "Received NULL CRL");
+        return;
+    }
 
-    OIC_LOG(DEBUG, TAG, "crl:");
-    OIC_LOG_V(DEBUG, TAG, "encoding = %d", crl->CrlData.encoding);
-    OIC_LOG_V(DEBUG, TAG, "data (length = %zu):", crl->CrlData.len);
-    OIC_LOG_BUFFER(DEBUG, TAG, crl->CrlData.data, crl->CrlData.len);
+    OIC_LOG(INFO, TAG, "Crl object contain:");
+    OIC_LOG_V(INFO, TAG, "id = %d", crl->CrlId);
+    OIC_LOG_V(INFO, TAG, "this update = %s", crl->ThisUpdate.data);
+
+    OIC_LOG(INFO, TAG, "crl:");
+    OIC_LOG_V(INFO, TAG, "encoding = %d", crl->CrlData.encoding);
+    OIC_LOG_V(INFO, TAG, "data (length = %zu):", crl->CrlData.len);
+    OIC_LOG_BUFFER(INFO, TAG, crl->CrlData.data, crl->CrlData.len);
 }
 
 static bool copyByteArray(const uint8_t *in, size_t in_len, uint8_t **out, size_t *out_len)
@@ -452,10 +457,15 @@ static void getCurrentUTCTime(char *out, size_t len)
 {
     //TODO: how to implement it in cross-platform way?
     time_t rawtime;
-    struct tm * timeinfo;
+    struct tm * timeinfo = NULL;
 
     time ( &rawtime );
     timeinfo = localtime ( &rawtime );
+
+    if (NULL == timeinfo)
+    {
+        return;
+    }
 
     snprintf(out, len, "%04d%02d%02d%02d%02d%02d",
             timeinfo->tm_year + 1900, timeinfo->tm_mon + 1, timeinfo->tm_mday,
@@ -598,6 +608,7 @@ static OicSecCrl_t *GetCrlDefault()
     }
 
     defaultCrl->CrlId = CRL_DEFAULT_CRL_ID;
+    defaultCrl->CrlData.encoding = OIC_ENCODING_DER;
 
     bool result1 = copyByteArray((const uint8_t *)CRL_DEFAULT_CRL_DATA,
                                  strlen(CRL_DEFAULT_CRL_DATA),
@@ -757,7 +768,7 @@ uint8_t *GetCrl()
     return NULL;
 }
 
-void GetDerCrl(ByteArray* out)
+void GetDerCrl(ByteArray_t* out)
 {
     if(NULL == out)
     {
@@ -799,14 +810,9 @@ void GetDerCrl(ByteArray* out)
 
     out->len = 0;
 
-#ifdef __WITH_X509__
-    char *str = "Not enough space in out buffer to store crl!";
-    if (out->data && crl->data && crl->len <= out->len)
-#else
     char *str = "Can't allocate memory for out->data";
     out->data = OICMalloc(crl->len);
     if (out->data)
-#endif
     {
         memcpy(out->data, crl->data, crl->len);
         out->len = crl->len;

@@ -80,7 +80,7 @@ OCStackApplicationResult NSConsumerPresenceListener(
     {
         NS_LOG(DEBUG, "started presence or resource is created.");
         NSInvokeRequest(NULL, OC_REST_DISCOVER, clientResponse->addr,
-            NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener, NULL,
+            NS_DISCOVER_QUERY, NULL, NSProviderDiscoverListener, NULL, NULL,
             clientResponse->addr->adapter);
     }
 
@@ -133,7 +133,7 @@ OCStackApplicationResult NSProviderDiscoverListener(
 
             NSInvokeRequest(NULL, OC_REST_GET, addr,
                     resource->uri, NULL, NSIntrospectProvider, ctx,
-                    type);
+                    NULL, type);
         }
         resource = resource->next;
     }
@@ -346,7 +346,7 @@ void NSConsumerHandleRequestDiscover(OCDevAddr * address, NSConsumerDiscoverType
             NS_LOG(DEBUG, "Request discover and subscribe presence [TCP]");
             NS_LOG(DEBUG, "Subscribe presence [TCP]");
             NSInvokeRequest(NULL, OC_REST_PRESENCE, address, NS_PRESENCE_SUBSCRIBE_QUERY_TCP,
-                    NULL, NSConsumerPresenceListener, NULL, type);
+                    NULL, NSConsumerPresenceListener, NULL, NULL, type);
 
             if (rType == NS_DISCOVER_CLOUD)
             {
@@ -364,7 +364,7 @@ void NSConsumerHandleRequestDiscover(OCDevAddr * address, NSConsumerDiscoverType
     }
 
     NSInvokeRequest(NULL, OC_REST_DISCOVER, address, NS_DISCOVER_QUERY,
-            NULL, NSProviderDiscoverListener, (void *)callbackData, type);
+            NULL, NSProviderDiscoverListener, (void *)callbackData, NULL, type);
 }
 
 void NSConsumerDiscoveryTaskProcessing(NSTask * task)

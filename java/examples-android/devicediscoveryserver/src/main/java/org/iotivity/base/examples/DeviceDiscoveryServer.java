@@ -77,17 +77,17 @@ public class DeviceDiscoveryServer extends Activity {
         }
 
         OcPlatformInfo platformInfo = new OcPlatformInfo(
-                "myPlatformId",             //Platform ID
-                "myManufactName",           //Manufacturer Name
-                "www.myurl.com",            //Manufacturer URL
-                "myModelNumber",            //Model Number
-                "myDateOfManufacture",      //Date of Manufacture
-                "myPlatformVersion",        //Platform Version
-                "Manufacturer OS version",  //Operating System Version
-                "myHardwareVersion",        //Hardware Version
-                "myFirmwareVersion",        //Firmware Version
-                "www.mysupporturl.com",     //Support URL
-                String.valueOf(System.currentTimeMillis()) // System Time
+                "0A3E0D6F-DBF5-404E-8719-D6880042463A",        // Platform ID
+                "myManufactName",                              // Manufacturer Name
+                "https://www.mylink.com",                      // Manufacturer Link
+                "myModelNumber",                               // Model Number
+                "2016-01-15",                                  // Date of Manufacture
+                "myPlatformVersion",                           // Platform Version
+                "Manufacturer OS version",                     // Operating System Version
+                "myHardwareVersion",                           // Hardware Version
+                "myFirmwareVersion",                           // Firmware Version
+                "https://www.mysupportlink.com",               // Support Link
+                String.valueOf(System.currentTimeMillis())     // System Time
         );
         try {
             msg("Registering platform info");

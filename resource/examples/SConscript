@@ -55,7 +55,7 @@ if target_os in ['msys_nt', 'windows']:
 	examples_env.PrependUnique(LIBS = ['mswsock', 'ws2_32', 'iphlpapi', 'ole32'])
 
 if examples_env.get('SECURED') == '1':
-	examples_env.AppendUnique(LIBS = ['tinydtls'])
+	examples_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
 	examples_env.AppendUnique(CPPDEFINES = ['_WITH_DTLS_'])
 	if target_os in ['msys_nt', 'windows']:
 		examples_env.AppendUnique(LIBS = ['advapi32'])

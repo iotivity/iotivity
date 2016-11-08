@@ -94,9 +94,15 @@ const char * OIC_JSON_PERMISSION_NAME = "permission";
 const char * OIC_JSON_OWNERS_NAME = "ownrs";
 const char * OIC_JSON_OWNER_NAME = "ownr";
 const char * OIC_JSON_DEVOWNERID_NAME = "devowneruuid";
+#ifdef _ENABLE_MULTIPLE_OWNER_
+const char * OIC_JSON_SUBOWNERID_NAME = "x.org.iotivity.subowneruuid";
+#endif //_ENABLE_MULTIPLE_OWNER_
 const char * OIC_JSON_OWNED_NAME = "owned";
 const char * OIC_JSON_OXM_NAME = "oxm";
 const char * OIC_JSON_OXMS_NAME = "oxms";
+#ifdef _ENABLE_MULTIPLE_OWNER_
+const char * OIC_JSON_MOM_NAME = "x.org.iotivity.mom";
+#endif //_ENABLE_MULTIPLE_OWNER_
 const char * OIC_JSON_OXM_TYPE_NAME = "oxmtype";
 const char * OIC_JSON_OXM_SEL_NAME = "oxmsel";
 const char * OIC_JSON_DEVICE_ID_FORMAT_NAME = "didformat";
@@ -140,6 +146,9 @@ const char * OIC_JSON_REL_NAME = OC_RSRVD_REL;
 const char * OIC_JSON_RT_NAME = OC_RSRVD_RESOURCE_TYPE;
 const char * OIC_JSON_IF_NAME = OC_RSRVD_INTERFACE;
 const char * OIC_JSON_ROWNERID_NAME = "rowneruuid";
+#ifdef _ENABLE_MULTIPLE_OWNER_
+const char * OIC_JSON_EOWNERID_NAME = "x.org.iotivity.eowneruuid";
+#endif //_ENABLE_MULTIPLE_OWNER_
 const char * OIC_JSON_ENCODING_NAME = "encoding";
 const char * OIC_JSON_DATA_NAME = "data";
 const char * OIC_JSON_SEC_V_NAME = "secv";
@@ -159,6 +168,9 @@ const char * WILDCARD_RESOURCE_URI = "*";
 const char * OXM_JUST_WORKS = "oic.sec.doxm.jw";
 const char * OXM_RANDOM_DEVICE_PIN = "oic.sec.doxm.rdp";
 const char * OXM_MANUFACTURER_CERTIFICATE = "oic.sec.doxm.mfgcert";
+#ifdef _ENABLE_MULTIPLE_OWNER_
+const char * OXM_PRECONF_PIN = "oic.sec.doxm.pcp";
+#endif //_ENABLE_MULTIPLE_OWNER_
 
 //Credential data encoding methods
 const char * OIC_SEC_ENCODING_BASE64 = "oic.sec.encoding.base64";

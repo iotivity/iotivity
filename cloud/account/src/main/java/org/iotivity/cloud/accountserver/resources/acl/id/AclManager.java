@@ -91,7 +91,14 @@ public class AclManager {
         getAcl(aclid).addACE(aclist);
     }
 
-    public void deleteAclACE(String aclid) {
+    public void updateACE(String aclid, String aceid, HashMap<String, Object> ace) {
+        getAcl(aclid).updateACE(aceid, ace);
+    }
+
+    public void deleteAclACE(String aclid, String aceid) {
+        getAcl(aclid).deleteACE(aceid);
+    }
+    public void deleteAclAclist(String aclid) {
         getAcl(aclid).deleteAclist();
     }
 

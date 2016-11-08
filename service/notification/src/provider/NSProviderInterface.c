@@ -92,10 +92,11 @@ NSResult NSStartProvider(NSProviderConfig config)
 #ifdef SECURED
         NS_LOG(DEBUG, "Built with SECURED");
 
-        if(!config.resourceSecurity)
+        if (!config.resourceSecurity)
         {
             NS_LOG(DEBUG, "Resource Security Off");
         }
+
         NSSetResourceSecurity(config.resourceSecurity);
 #endif
 
@@ -121,7 +122,7 @@ NSResult NSStopProvider()
     NS_LOG(DEBUG, "NSStopProvider - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(initProvider)
+    if (initProvider)
     {
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_STOP_PRESENCE, NULL);
         NSDeinitProviderInfo();
@@ -141,16 +142,17 @@ NSResult NSStopProvider()
 
 NSResult NSProviderEnableRemoteService(char *serverAddress)
 {
-#if(defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD && defined RD_CLIENT)
     NS_LOG(DEBUG, "NSProviderEnableRemoteService - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!initProvider || !serverAddress)
+    if (!initProvider || !serverAddress)
     {
         NS_LOG(DEBUG, "Provider service has not been started yet");
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
+
     NS_LOG_V(DEBUG, "Remote server address: %s", serverAddress);
     NS_LOG(DEBUG, "Request to publish resource");
     NSPushQueue(DISCOVERY_SCHEDULER, TASK_PUBLISH_RESOURCE, serverAddress);
@@ -167,15 +169,16 @@ NSResult NSProviderEnableRemoteService(char *serverAddress)
 
 NSResult NSProviderDisableRemoteService(char *serverAddress)
 {
-#if(defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD && defined RD_CLIENT)
     NS_LOG(DEBUG, "NSProviderDisableRemoteService - IN");
     pthread_mutex_lock(&nsInitMutex);
 
-    if(!initProvider || !serverAddress)
+    if (!initProvider || !serverAddress)
     {
         NS_LOG(DEBUG, "Provider service has not been started yet");
         return NS_FAIL;
     }
+
     NS_LOG_V(DEBUG, "Remote server address: %s", serverAddress);
 
     NS_LOG(DEBUG, "Delete remote server info");
@@ -346,7 +349,7 @@ NSResult NSProviderRegisterTopic(const char * topicName)
     }
 
     NSTopicSyncResult topicSyncResult;
-    topicSyncResult.topicName = OICStrdup(topicName);
+    topicSyncResult.topicData = (void *) OICStrdup(topicName);
     topicSyncResult.condition = &nstopicCond;
     topicSyncResult.result = NS_OK;
     topicSyncResult.mutex = &nsInitMutex;
@@ -377,7 +380,7 @@ NSResult NSProviderUnregisterTopic(const char * topicName)
     }
 
     NSTopicSyncResult topicSyncResult;
-    topicSyncResult.topicName = OICStrdup(topicName);
+    topicSyncResult.topicData = (void *) OICStrdup(topicName);
     topicSyncResult.condition = &nstopicCond;
     topicSyncResult.result = NS_OK;
     topicSyncResult.mutex = &nsInitMutex;
@@ -389,7 +392,7 @@ NSResult NSProviderUnregisterTopic(const char * topicName)
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
-    OICFree(topicSyncResult.topicName);
+    OICFree(topicSyncResult.topicData);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderDeleteTopics - OUT");
@@ -417,11 +420,18 @@ NSResult NSProviderSetConsumerTopic(const char * consumerId, const char * topicN
     OICStrcpy(topicSubData->id, NS_UUID_STRING_SIZE, consumerId);
     topicSubData->topicName = OICStrdup(topicName);
 
-    NSPushQueue(TOPIC_SCHEDULER, TASK_SUBSCRIBE_TOPIC, (void *)topicSubData);
+    NSTopicSyncResult topicSyncResult;
+    topicSyncResult.topicData = (void *) topicSubData;
+    topicSyncResult.condition = &nstopicCond;
+    topicSyncResult.result = NS_FAIL;
+    topicSyncResult.mutex = &nsInitMutex;
+
+    NSPushQueue(TOPIC_SCHEDULER, TASK_SUBSCRIBE_TOPIC, (void *)&topicSyncResult);
+    pthread_cond_wait(topicSyncResult.condition, &nsInitMutex);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderSelectTopics - OUT");
-    return NS_OK;
+    return topicSyncResult.result;
 }
 
 NSResult NSProviderUnsetConsumerTopic(const char * consumerId, const char * topicName)
@@ -445,9 +455,16 @@ NSResult NSProviderUnsetConsumerTopic(const char * consumerId, const char * topi
     OICStrcpy(topicSubData->id, NS_UUID_STRING_SIZE, consumerId);
     topicSubData->topicName = OICStrdup(topicName);
 
-    NSPushQueue(TOPIC_SCHEDULER, TASK_UNSUBSCRIBE_TOPIC, (void *)topicSubData);
+    NSTopicSyncResult topicSyncResult;
+    topicSyncResult.topicData = (void *) topicSubData;
+    topicSyncResult.condition = &nstopicCond;
+    topicSyncResult.result = NS_FAIL;
+    topicSyncResult.mutex = &nsInitMutex;
+
+    NSPushQueue(TOPIC_SCHEDULER, TASK_UNSUBSCRIBE_TOPIC, (void *)&topicSyncResult);
+    pthread_cond_wait(topicSyncResult.condition, &nsInitMutex);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderUnselectTopics - OUT");
-    return NS_OK;
+    return topicSyncResult.result;
 }

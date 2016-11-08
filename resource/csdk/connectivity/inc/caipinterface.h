@@ -120,6 +120,7 @@ CAResult_t CAIPStopListenServer();
  */
 void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback);
 
+#ifdef WITH_ARDUINO
 /**
  * Set socket description for sending unicast UDP data.
  * Once the Unicast server is started,
@@ -128,6 +129,7 @@ void CAIPSetPacketReceiveCallback(CAIPPacketReceivedCallback callback);
  * @param[in]  socketFD   Socket descriptor used for sending UDP data.
  */
 void CAIPSetUnicastSocket(int socketFD);
+#endif
 
 /**
  * Set the port number for sending unicast UDP data.
@@ -164,8 +166,8 @@ void CAIPPullData();
 #define CA_SECURE_COAP 5684
 
 /**
- * Let the network monitor update the polling interval.
- * @param   [in] current polling interval
+ * Let the network monitor update the polling interval, in seconds.
+ * @param[in]  interval  current polling interval
  *
  * @return  desired polling interval
  */

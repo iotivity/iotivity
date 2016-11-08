@@ -55,10 +55,45 @@ public enum ESErrorCode {
      */
     ES_ERRCODE_TIMEOUT(5),
 
+	/**
+     * Error Code that cloud server is not reachable due to wrong URL of cloud server, for example.
+     */
+    ES_ERRCODE_FAILED_TO_ACCESS_CLOUD_SERVER(6),
+
+    /**
+     * Error Code that no response is arrived from cloud server
+     */
+    ES_ERRCODE_NO_RESPONSE_FROM_CLOUD_SERVER(7),
+
+    /**
+     * Error Code that a delivered authcode is not valid.
+     */
+    ES_ERRCODE_INVALID_AUTHCODE(8),
+
+    /**
+     * Error Code that a given access token is not valid due to its expiration, for example.
+     */
+    ES_ERRCODE_INVALID_ACCESSTOKEN(9),
+
+    /**
+     * Error Code that a refresh of expired access token is failed due to some reasons.
+     */
+    ES_ERRCODE_FAILED_TO_REFRESH_ACCESSTOKEN(10),
+
+    /**
+     * Error Code that a target device is not discovered in cloud server
+     */
+    ES_ERRCODE_FAILED_TO_FIND_REGISTERED_DEVICE_IN_CLOUD(11),
+
+    /**
+     * Error Code that a target user does not exist in cloud server.
+     */
+    ES_ERRCODE_FAILED_TO_FIND_REGISTERED_USER_IN_CLOUD(12),
+
     /**
      * Error Code that Unknown error occured
      */
-    ES_ERRCODE_UNKNOWN(6);
+    ES_ERRCODE_UNKNOWN(255);
 
     private int value;
 

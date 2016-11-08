@@ -180,8 +180,8 @@ static OCStackResult handleAclGetInfoResponse(void *ctx, void **data, OCClientRe
         OIC_LOG(ERROR, TAG, "Can't update ACL resource");
     }
 
+    *data = acl;
 exit:
-    //can't delete acl because aces was added to gAcl
     OICFree(cbor);
     return result;
 }
@@ -349,6 +349,143 @@ no_memory:
     return OC_STACK_NO_MEMORY;
 }
 
+OCStackResult OCCloudAclIndividualUpdate(void* ctx,
+                                            const char *aclId,
+                                            const char *aceId,
+                                            const cloudAce_t *ace,
+                                            const OCDevAddr *endPoint,
+                                            OCCloudResponseCB callback)
+{
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
+    char uri[MAX_URI_LENGTH]  = { 0 };
+
+    int i = 0, j = 0;
+
+    OCRepPayload **helperPayload  = NULL;
+    OCRepPayload **helperPayload2 = NULL;
+
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(ace, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
+
+    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s", DEFAULT_PREFIX,
+            endPoint->addr, endPoint->port, OC_RSRVD_ACL_ID_URL, aclId);
+
+    OCRepPayload *payload = OCRepPayloadCreate();
+    if (!payload)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Can't allocate memory for payload");
+        goto no_memory;
+    }
+
+    int acllist_count = 1;
+
+    helperPayload = OICCalloc(acllist_count, sizeof(OCRepPayload *));
+    if (!helperPayload)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Can't allocate memory for helperPayload");
+        goto no_memory;
+    }
+
+    i = 0;
+    cloudAce_t *tempAce = NULL;
+
+    LL_FOREACH((cloudAce_t*)ace, tempAce)
+    {
+        OCRepPayload *payload = OCRepPayloadCreate();
+        if (!payload)
+        {
+            OIC_LOG_V(DEBUG, TAG, "Can't allocate memory for helperPayload[i]");
+            goto no_memory;
+        }
+        helperPayload[i++] = payload;
+
+        char *uuid = NULL;
+        if (OC_STACK_OK != ConvertUuidToStr(&tempAce->subjectuuid, &uuid))
+        {
+            OIC_LOG(ERROR, TAG, "Can't convert subjectuuid to string");
+        }
+
+        OCRepPayloadSetPropString(payload, OC_RSRVD_ACE_ID, tempAce->aceId);
+        OCRepPayloadSetPropString(payload, OC_RSRVD_SUBJECT_UUID, (const char *)uuid);
+        OCRepPayloadSetPropInt(payload, OC_RSRVD_SUBJECT_TYPE, tempAce->stype);
+        OCRepPayloadSetPropInt(payload, OC_RSRVD_PERMISSION_MASK, tempAce->permission);
+
+        OICFree(uuid);
+
+        int reslist_count = 0;
+        //code below duplicates LL_COUNT, implemented in newer version of utlist.h
+        {
+            OicSecRsrc_t *res = tempAce->resources;
+            while (res)
+            {
+                res = res->next;
+                reslist_count++;
+            }
+        }
+
+        helperPayload2 = OICCalloc(reslist_count, sizeof(OCRepPayload *));
+        if (!helperPayload2)
+        {
+            goto no_memory;
+        }
+
+        j = 0;
+        OicSecRsrc_t *res = NULL;
+
+        LL_FOREACH(tempAce->resources, res)
+        {
+            OCRepPayload *payload = OCRepPayloadCreate();
+            if (!payload)
+            {
+                OIC_LOG_V(DEBUG, TAG, "Can't allocate memory for helperPayload2[j]");
+                goto no_memory;
+            }
+            helperPayload2[j++] = payload;
+
+            OCRepPayloadSetPropString(payload, OC_RSRVD_HREF, res->href);
+
+            dimensions[0] = res->typeLen;
+            OCRepPayloadSetStringArray(payload, OC_RSRVD_RESOURCE_TYPE,
+                                       (const char **)res->types, dimensions);
+
+            dimensions[0] = res->interfaceLen;
+            OCRepPayloadSetStringArray(payload, OC_RSRVD_INTERFACE,
+                                       (const char **)res->interfaces, dimensions);
+        }
+        dimensions[0] = reslist_count;
+        OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_RESOURCES,
+                (const OCRepPayload **)helperPayload2, dimensions);
+    }
+    dimensions[0] = acllist_count;
+    OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_ACCESS_CONTROL_LIST,
+            (const OCRepPayload **)helperPayload, dimensions);
+
+    OCCallbackData cbData;
+    fillCallbackData(&cbData, ctx, callback, NULL, NULL);
+
+    OIC_LOG(DEBUG, TAG, "Next payload created:");
+    OIC_LOG_PAYLOAD(DEBUG, (OCPayload *)payload);
+
+    return OCDoResource(NULL, OC_REST_POST, uri, NULL, (OCPayload *)payload,
+                        CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+no_memory:
+    if (helperPayload2)
+    {
+        for (int k = 0; k < j; k++) OCRepPayloadDestroy(helperPayload2[k]);
+        OICFree(helperPayload2);
+    }
+    if (helperPayload)
+    {
+        for (int k = 0; k < i; k++) OCRepPayloadDestroy(helperPayload[k]);
+        OICFree(helperPayload);
+    }
+    OCRepPayloadDestroy(payload);
+    return OC_STACK_NO_MEMORY;
+}
+
+
+
 OCStackResult OCCloudAclIndividualDelete(void* ctx,
                                          const char *aclId,
                                          const OCDevAddr *endPoint,
@@ -368,3 +505,26 @@ OCStackResult OCCloudAclIndividualDelete(void* ctx,
     return OCDoResource(NULL, OC_REST_DELETE, uri, NULL, NULL,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
+
+OCStackResult OCCloudAclIndividualDeleteAce(void* ctx,
+                                         const char *aclId,
+                                         const char *aceId,
+                                         const OCDevAddr *endPoint,
+                                         OCCloudResponseCB callback)
+{
+    char uri[MAX_URI_LENGTH]  = { 0 };
+
+    VERIFY_NON_NULL_RET(endPoint, TAG, "NULL endpoint", OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL_RET(aclId, TAG, "NULL input param", OC_STACK_INVALID_PARAM);
+
+    snprintf(uri, MAX_URI_LENGTH, "%s%s:%d%s/%s?%s=%s", DEFAULT_PREFIX,
+            endPoint->addr, endPoint->port, OC_RSRVD_ACL_ID_URL, aclId,
+            OC_RSRVD_ACE_ID, aceId);
+
+    OCCallbackData cbData;
+    fillCallbackData(&cbData, ctx, callback, NULL, NULL);
+
+    return OCDoResource(NULL, OC_REST_DELETE, uri, NULL, NULL,
+                        CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+}
+

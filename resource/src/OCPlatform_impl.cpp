@@ -209,6 +209,16 @@ namespace OC
                              errorHandler, QoS);
     }
 
+    OCStackResult OCPlatform_impl::findResourceList(const std::string& host,
+                                            const std::string& resourceName,
+                                            OCConnectivityType connectivityType,
+                                            FindResListCallback resourceHandler,
+                                            QualityOfService QoS)
+    {
+        return checked_guard(m_client, &IClientWrapper::ListenForResource2,
+                             host, resourceName, connectivityType, resourceHandler, QoS);
+    }
+
     OCStackResult OCPlatform_impl::getDeviceInfo(const std::string& host,
                                             const std::string& deviceURI,
                                             OCConnectivityType connectivityType,
@@ -483,5 +493,15 @@ namespace OC
                                                                       connectivityType));
     }
 #endif // WITH_CLOUD
+
+    OCStackResult OCPlatform_impl::getDeviceId(OCUUIdentity *myUuid)
+    {
+        return OCGetDeviceId(myUuid);
+    }
+
+    OCStackResult OCPlatform_impl::setDeviceId(const OCUUIdentity *myUuid)
+    {
+        return OCSetDeviceId(myUuid);
+    }
 } //namespace OC
 

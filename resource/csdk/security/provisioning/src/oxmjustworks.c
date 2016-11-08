@@ -121,7 +121,7 @@ OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
     else
     {
         endpoint.port = selDevInfo->tcpPort;
-        caresult = CAinitiateTlsHandshake(&endpoint);
+        caresult = CAinitiateSslHandshake(&endpoint);
     }
 #endif
     if (CA_STATUS_OK != caresult)

@@ -327,6 +327,97 @@ namespace OC
         }
         return result;
     }
+
+    OCStackApplicationResult listenCallback2(void* ctx, OCDoHandle /*handle*/,
+        OCClientResponse* clientResponse)
+    {
+        ClientCallbackContext::ListenContext2* context =
+            static_cast<ClientCallbackContext::ListenContext2*>(ctx);
+
+        if (clientResponse->result != OC_STACK_OK)
+        {
+            oclog() << "listenCallback2(): failed to create resource. clientResponse: "
+                    << clientResponse->result
+                    << std::flush;
+
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
+        if (!clientResponse->payload || clientResponse->payload->type != PAYLOAD_TYPE_DISCOVERY)
+        {
+            oclog() << "listenCallback2(): clientResponse payload was null or the wrong type"
+                << std::flush;
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
+        auto clientWrapper = context->clientWrapper.lock();
+
+        if (!clientWrapper)
+        {
+            oclog() << "listenCallback2(): failed to get a shared_ptr to the client wrapper"
+                    << std::flush;
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
+        try
+        {
+            ListenOCContainer container(clientWrapper, clientResponse->devAddr,
+                                    reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
+
+            std::thread exec(context->callback, container.Resources());
+            exec.detach();
+        }
+        catch (std::exception &e)
+        {
+            oclog() << "Exception in listCallback2, ignoring response: "
+                    << e.what() << std::flush;
+        }
+
+
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    OCStackResult InProcClientWrapper::ListenForResource2(
+            const std::string& serviceUrl,
+            const std::string& resourceType,
+            OCConnectivityType connectivityType,
+            FindResListCallback& callback, QualityOfService QoS)
+    {
+        if (!callback)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        OCStackResult result;
+        ostringstream resourceUri;
+        resourceUri << serviceUrl << resourceType;
+
+        ClientCallbackContext::ListenContext2* context =
+            new ClientCallbackContext::ListenContext2(callback, shared_from_this());
+        OCCallbackData cbdata;
+        cbdata.context = static_cast<void*>(context),
+        cbdata.cb      = listenCallback2;
+        cbdata.cd      = [](void* c){delete (ClientCallbackContext::ListenContext2*)c;};
+
+        auto cLock = m_csdkLock.lock();
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCDoResource(nullptr, OC_REST_DISCOVER,
+                                  resourceUri.str().c_str(),
+                                  nullptr, nullptr, connectivityType,
+                                  static_cast<OCQualityOfService>(QoS),
+                                  &cbdata,
+                                  nullptr, 0);
+        }
+        else
+        {
+            delete context;
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
 #ifdef WITH_MQ
     OCStackApplicationResult listenMQCallback(void* ctx, OCDoHandle /*handle*/,
                                               OCClientResponse* clientResponse)
@@ -657,17 +748,15 @@ namespace OC
         OCRepresentation rep;
         HeaderOptions serverHeaderOptions;
         OCStackResult result = clientResponse->result;
-        if (result == OC_STACK_OK)
+
+        parseServerHeaderOptions(clientResponse, serverHeaderOptions);
+        try
         {
-            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
-            try
-            {
-                rep = parseGetSetCallback(clientResponse);
-            }
-            catch(OC::OCException& e)
-            {
-                result = e.code();
-            }
+            rep = parseGetSetCallback(clientResponse);
+        }
+        catch(OC::OCException& e)
+        {
+            result = e.code();
         }
 
         std::thread exec(context->callback, serverHeaderOptions, rep, result);
@@ -733,20 +822,15 @@ namespace OC
         HeaderOptions serverHeaderOptions;
 
         OCStackResult result = clientResponse->result;
-        if (OC_STACK_OK               == result ||
-            OC_STACK_RESOURCE_CREATED == result ||
-            OC_STACK_RESOURCE_DELETED == result ||
-            OC_STACK_RESOURCE_CHANGED == result)
+
+        parseServerHeaderOptions(clientResponse, serverHeaderOptions);
+        try
         {
-            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
-            try
-            {
-                attrs = parseGetSetCallback(clientResponse);
-            }
-            catch(OC::OCException& e)
-            {
-                result = e.code();
-            }
+            attrs = parseGetSetCallback(clientResponse);
+        }
+        catch(OC::OCException& e)
+        {
+            result = e.code();
         }
 
         std::thread exec(context->callback, serverHeaderOptions, attrs, result);
@@ -947,10 +1031,8 @@ namespace OC
             static_cast<ClientCallbackContext::DeleteContext*>(ctx);
         HeaderOptions serverHeaderOptions;
 
-        if (clientResponse->result == OC_STACK_OK)
-        {
-            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
-        }
+        parseServerHeaderOptions(clientResponse, serverHeaderOptions);
+
         std::thread exec(context->callback, serverHeaderOptions, clientResponse->result);
         exec.detach();
         return OC_STACK_DELETE_TRANSACTION;
@@ -1013,18 +1095,17 @@ namespace OC
         HeaderOptions serverHeaderOptions;
         uint32_t sequenceNumber = clientResponse->sequenceNumber;
         OCStackResult result = clientResponse->result;
-        if (clientResponse->result == OC_STACK_OK)
+
+        parseServerHeaderOptions(clientResponse, serverHeaderOptions);
+        try
         {
-            parseServerHeaderOptions(clientResponse, serverHeaderOptions);
-            try
-            {
-                attrs = parseGetSetCallback(clientResponse);
-            }
-            catch(OC::OCException& e)
-            {
-                result = e.code();
-            }
+            attrs = parseGetSetCallback(clientResponse);
         }
+        catch(OC::OCException& e)
+        {
+            result = e.code();
+        }
+
         std::thread exec(context->callback, serverHeaderOptions, attrs,
                     result, sequenceNumber);
         exec.detach();

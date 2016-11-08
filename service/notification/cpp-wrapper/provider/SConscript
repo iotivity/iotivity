@@ -125,10 +125,15 @@ if target_os == 'android':
 		'notification_provider_wrapper'
 		])
 
+	notificationJniCommonSharedObjs = [
+		notification_jni_provider_env.SharedObject('../../android/notification-service/src/main/jni/common/JniNotificationCommon.cpp')]
+
 	notification_provider_jni_src = [
 		env.Glob('../../android/notification-service/src/main/jni/provider/*.cpp'),
-		env.Glob('../../android/notification-service/src/main/jni/common/*.cpp')]
+		notificationJniCommonSharedObjs]
 
 	providerJni = notification_jni_provider_env.SharedLibrary('notification_provider_jni', notification_provider_jni_src)
 	notification_jni_provider_env.InstallTarget(providerJni, 'libnotification_provider_jni')
 	notification_jni_provider_env.UserInstallTargetLib(providerJni, 'libnotification_provider_jni')
+
+	Export('notificationJniCommonSharedObjs')

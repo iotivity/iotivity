@@ -61,10 +61,18 @@ public:
 
         m_resourceUri = resourceURI;
 
-        OCPlatform::registerResource(m_resourceHandle, resourceURI, resourceTypeName,
-                                     resourceInterface,
-                                     nullptr,
-                                     OC_DISCOVERABLE);
+        OCStackResult ret = OCPlatform::registerResource(m_resourceHandle,
+                                                         resourceURI,
+                                                         resourceTypeName,
+                                                         resourceInterface,
+                                                         nullptr,
+                                                         OC_DISCOVERABLE);
+
+        if (OC_STACK_OK != ret)
+        {
+            cout << "Resource creation was unsuccessful\n";
+            return;
+        }
 
         m_publishedResourceHandles.push_back(m_resourceHandle);
         cout << "registerResource is called." << endl;

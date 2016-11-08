@@ -81,7 +81,7 @@
 
 #define NS_INTERFACE_READ          "oic.if.r"
 #define NS_INTERFACE_READWRITE     "oic.if.rw"
-#define NS_DEFAULT_INTERFACE       "oic.if.baseline"
+#define NS_INTERFACE_BASELINE       "oic.if.baseline"
 
 #define NS_ROOT_URI                "/notification"
 #define NS_COLLECTION_MESSAGE_URI  "/notification/message"
@@ -93,6 +93,7 @@
 
 #define NS_QUERY_CONSUMER_ID       "consumerId"
 #define NS_QUERY_PROVIDER_ID       "providerId"
+#define NS_QUERY_INTERFACE         "if"
 
 #define NS_QUERY_ID_SIZE           10
 
@@ -219,6 +220,7 @@ typedef enum eSchedulerType
     SUBSCRIPTION_SCHEDULER = 2,
     NOTIFICATION_SCHEDULER = 3,
     TOPIC_SCHEDULER = 4,
+
 } NSSchedulerType;
 
 typedef enum eTaskType
@@ -299,6 +301,7 @@ typedef enum eCacheType
 
     NS_CONSUMER_CACHE_PROVIDER = 2000,
     NS_CONSUMER_CACHE_MESSAGE = 2001,
+
 } NSCacheType;
 
 typedef enum eResourceType
@@ -306,6 +309,14 @@ typedef enum eResourceType
     NS_RESOURCE_MESSAGE = 1000,
     NS_RESOURCE_SYNC = 1001,
     NS_RESOURCE_TOPIC = 1002,
+
 } NSResourceType;
+
+typedef enum eInterfaceType
+{
+    NS_INTERFACE_TYPE_READ = 1,
+    NS_INTERFACE_TYPE_READWRITE = 2,
+
+} NSInterfaceType;
 
 #endif /* _NS_CONSTANTS_H_ */

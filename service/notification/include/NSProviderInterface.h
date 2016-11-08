@@ -37,15 +37,15 @@ extern "C"
 #include <stdint.h>
 
 /**
- * Invoked when a consumer requests subscription.
- * @param[in] consumer        Consumer who subscribes the resource
+ * Invoked when provider receives the subscription request of consumer.
+ * @param[in] consumer  Consumer who subscribes the notification message resource
  */
 typedef void (*NSSubscribeRequestCallback)(NSConsumer *);
 
 /**
- * Invoked when synchronization data which has notification message 
+ * Invoked when synchronization data which has notification message
  * read/deleted event from consumer is received.
- * @param[in] sync        Synchronization information of the notification message
+ * @param[in] sync  Synchronization information of the notification message
  */
 typedef void (*NSProviderSyncInfoCallback)(NSSyncInfo *);
 
@@ -58,14 +58,16 @@ typedef struct
     NSSubscribeRequestCallback subRequestCallback;
     /* Invoked when the synchronization data, read and deleted, is sent by consumer is received */
     NSProviderSyncInfoCallback syncInfoCallback;
-    /* Set the policy for notification servcie refering to following
-     * if true, the controllability such as subscription request and consumer topic selection
-     * is owned by provider user. Otherwise(policy is false), consumer user has the same.
+    /* Set the policy for notification servcie which checks whether provider is capable of 
+     * denying the subscription of notification message from consumer
+     * and getting controllabliity to set consumer topic list.
+     * If true, provider is able to control subscription request and consumer topic list.
+     * Otherwise(policy is false), consumer can do the same.
      */
     bool subControllability;
-    /* User Information */
+    /* User defined information such as device friendly name */
     char * userInfo;
-    /* Set on/off with SECURED build option */
+    /* Set on/off for secure resource channel setting */
     bool resourceSecurity;
 
 } NSProviderConfig;
@@ -106,30 +108,25 @@ NSResult NSSendMessage(NSMessage * msg);
 
 /**
  * Send acceptance to consumer who subscribes the resource of notification message
+ * This function is valid only when subControllability is set true.
  * @param[in]  consumer  Consumer who subscribes the resource
- * @param[in]  accepted  the result of acceptance; Allow or Deny
- * @return ::NS_OK if the action is requested succesfully or NS_FAIL if subContollability is false.
+ * @param[in]  accepted  the result of acceptance; ALLOW or DENY
+ * @return ::NS_OK if this function is requested succesfully
+ * or NS_FAIL if subContollability is false.
  */
 NSResult NSAcceptSubscription(const char * consumerId, bool accepted);
 
 /**
- * Get consumer list that is stored in the cache of notification service
- * @param[in]  list  Consumer list
- * @param[in]  size  the number of consumers stored in the cache
- * @return ::NS_OK or result code of NSResult
- */
-//TODO will use Function.
-// NSResult NSGetConsumerList(uint8_t *list, uint32_t size);
-
-/**
  * Send synchronizad state of notificaion message to consumers
- * @param[in]  message  Notification message to synchronize the status
+ * @param[in]  messageiId  ID of notification message
+ * @param[in]  type  SyncType of the syncInfo message
  * @return ::NS_OK if the action is requested succesfully or NS_FAIL if wrong parameter is set.
  */
 NSResult NSProviderSendSyncInfo(uint64_t messageId, NSSyncType type);
 
 /**
- * Initialize NSMessage struct, provider service sets generated message id and provider(device) id
+ * Initialize NSMessage struct.
+ * Service sets mandatory fields which message id and provider(device) id are filled with.
  * @return ::NSMessage *
  */
 NSMessage * NSCreateMessage();

@@ -80,6 +80,19 @@ OicSecCred_t* GetCredResourceDataByCredId(const uint16_t credId);
 OCStackResult CredToCBORPayload(const OicSecCred_t* cred, uint8_t **cborPayload,
                                 size_t *cborSize, int secureFlag);
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+/**
+ * Function to check the credential access of SubOwner
+ *
+ * @param[in] uuid SubOwner's UUID
+ * @param[in] cborPayload CBOR payload of credential
+ * @param[in] size Byte length of cborPayload
+ *
+ * @return ::true for valid access, otherwise invalid access
+ */
+bool IsValidCredentialAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPayload, size_t size);
+#endif //_ENABLE_MULTIPLE_OWNER_
+
 /**
  * This function generates the bin credential data.
  *
@@ -88,13 +101,14 @@ OCStackResult CredToCBORPayload(const OicSecCred_t* cred, uint8_t **cborPayload,
  * @param publicData public data such as public key.
  * @param privateData private data such as private key.
  * @param rownerID Resource owner's UUID.
+ * @param eownerID Entry owner's UUID.
  *
  * @return pointer to instance of @ref OicSecCred_t if successful. else NULL in case of error.
 
  */
 OicSecCred_t * GenerateCredential(const OicUuid_t* subject, OicSecCredType_t credType,
                      const OicSecCert_t * publicData, const OicSecKey_t * privateData,
-                     const OicUuid_t * rownerID);
+                     const OicUuid_t * rownerID, const OicUuid_t * eownerID);
 
 /**
  * This function adds the new cred to the credential list.
@@ -109,13 +123,22 @@ OCStackResult AddCredential(OicSecCred_t * cred);
 /**
  * Function to remove the credential from SVR DB.
  *
+ * @param subject is the Credential Subject to be deleted.
+ *
+ * @return ::OC_STACK_OK for success, or errorcode otherwise.
+ */
+OCStackResult RemoveCredential(const OicUuid_t *subject);
+
+/**
+ * Function to remove the credential from SVR DB.
+ *
  * @param credId is the Credential ID to be deleted.
  *
  * @return ::OC_STACK_OK for success, or errorcode otherwise.
  */
-OCStackResult RemoveCredential(const OicUuid_t *credId);
+OCStackResult RemoveCredentialByCredId(uint16_t credId);
 
-#if defined(__WITH_DTLS__)
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 /**
  * This internal callback is used by lower stack (i.e. CA layer) to
  * retrieve PSK credentials from RI security layer.
@@ -150,18 +173,14 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
                             const OicUuid_t * rownerID,
                             OicUuid_t* tmpCredSubject);
 
-#endif /* __WITH_DTLS__ */
+#endif // __WITH_DTLS__ or __WITH_TLS__
 
-#ifdef __WITH_X509__
 /**
- * This function is used toretrieve certificate credentials from RI security layer.
+ * Function to getting credential list
  *
- * @param credInfo is the binary structure containing certificate credentials
- *
- * @return 0 on success.
+ * @return ::credential list
  */
-int GetDtlsX509Credentials(CADtlsX509Creds_t *credInfo);
-#endif /*__WITH_X509__*/
+const OicSecCred_t* GetCredList();
 
 /**
  * Function to deallocate allocated memory to OicSecCred_t.
@@ -188,25 +207,25 @@ OCStackResult SetCredRownerId(const OicUuid_t* newROwner);
  */
 OCStackResult GetCredRownerId(OicUuid_t *rowneruuid);
 
-#ifdef __WITH_TLS__
+#if defined(__WITH_TLS__) || defined(__WITH_DTLS__)
 /**
  * Used by mbedTLS to retrieve trusted CA certificates
  *
  * @param[out] crt certificates to be filled.
  */
-void GetDerCaCert(ByteArray * crt);
+void GetDerCaCert(ByteArray_t * crt);
 /**
  * Used by mbedTLS to retrieve own certificate chain
  *
  * @param[out] crt certificate chain to be filled.
  */
-void GetDerOwnCert(ByteArray * crt);
+void GetDerOwnCert(ByteArray_t * crt);
 /**
  * Used by mbedTLS to retrieve owm private key
  *
  * @param[out] key key to be filled.
  */
-void GetDerKey(ByteArray * key);
+void GetDerKey(ByteArray_t * key);
 /**
  * Used by CA to retrieve credential types
  *

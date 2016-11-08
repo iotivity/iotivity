@@ -607,7 +607,7 @@ namespace OIC
         std::list<std::unique_ptr<RCSBundleInfo>> ResourceContainerImpl::listBundles()
         {
             OIC_LOG_V(INFO, CONTAINER_TAG,
-                                 "list bundles (%d)", m_bundles.size());
+                                 "list bundles (%d)", static_cast<int>(m_bundles.size()));
             std::list<std::unique_ptr<RCSBundleInfo> > ret;
             for (std::map< std::string, shared_ptr<BundleInfoInternal> >::iterator it = m_bundles.begin();
                  it != m_bundles.end(); ++it)
