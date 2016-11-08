@@ -73,7 +73,7 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 
-#define TAG "OTM"
+#define TAG "OIC_OTM"
 
 /**
  * Variables for pointing the OTMContext to be used in the DTLS handshake result callback.

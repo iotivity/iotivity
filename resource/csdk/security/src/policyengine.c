@@ -37,7 +37,7 @@
 #include "amaclresource.h"
 #include "credresource.h"
 
-#define TAG "SRM-PE"
+#define TAG "OIC_SRM_PE"
 
 uint16_t GetPermissionFromCAMethod_t(const CAMethod_t method)
 {

@@ -36,7 +36,7 @@
 #include "ownershiptransfermanager.h"
 #include "pinoxmcommon.h"
 
-#define TAG "OXM_RandomPIN"
+#define TAG "OIC_OXM_RandomPIN"
 
 OCStackResult CreatePinBasedSelectOxmPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
 {

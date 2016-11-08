@@ -34,7 +34,7 @@
 
 #define DB_FILE "PDM.db"
 
-#define TAG "PDM"
+#define TAG "OIC_PDM"
 
 #define PDM_STALE_STATE 1
 #define PDM_ACTIVE_STATE 0

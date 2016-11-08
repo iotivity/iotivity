@@ -41,7 +41,7 @@
 #include "svcresource.h"
 #include "security_internals.h"
 
-#define TAG  "JSON2CBOR"
+#define TAG  "OIC_JSON2CBOR"
 #define MAX_RANGE   ((size_t)-1)
 //SVR database buffer block size
 static const size_t DB_FILE_SIZE_BLOCK = 1023;

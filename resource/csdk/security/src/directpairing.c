@@ -61,7 +61,7 @@
 #endif
 
 
-#define TAG ("DP")
+#define TAG ("OIC_DP")
 static const uint16_t CBOR_SIZE = 1024;
 
 /**

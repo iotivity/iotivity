@@ -36,7 +36,7 @@
 #include "aclresource.h" //Note: SRM internal header
 #include "pconfresource.h"
 
-#define TAG "OCPMAPI"
+#define TAG "OIC_OCPMAPI"
 
 typedef struct Linkdata Linkdata_t;
 struct Linkdata
@@ -188,7 +188,7 @@ OCStackResult OCDiscoverMultipleOwnedDevices(unsigned short timeout, OCProvision
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OCAddPreconfigPin(const OCProvisionDev_t *targetDeviceInfo,
-                                const char *preconfigPin, 
+                                const char *preconfigPin,
                                 size_t preconfigPinLen)
 {
     return MOTAddPreconfigPIN(targetDeviceInfo, preconfigPin, preconfigPinLen);

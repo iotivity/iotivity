@@ -37,7 +37,7 @@
 #include "pinoxmcommon.h"
 #include "srmresourcestrings.h"
 
-#define TAG "OXM_PreconfigPIN"
+#define TAG "OIC_OXM_PreconfigPIN"
 
 OCStackResult CreatePreconfigPinBasedSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **payload, size_t *size)
 {

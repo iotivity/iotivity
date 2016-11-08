@@ -44,7 +44,7 @@
 #include <strings.h>
 #endif
 
-#define TAG  "SRM-PCONF"
+#define TAG  "OIC_SRM_PCONF"
 
 static const uint16_t CBOR_SIZE = 1024;
 static const uint64_t CBOR_MAX_SIZE = 4400;

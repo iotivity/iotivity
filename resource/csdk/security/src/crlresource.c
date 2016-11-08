@@ -34,7 +34,7 @@
 #include "base64.h"
 #include <time.h>
 
-#define TAG  "SRM-CRL"
+#define TAG  "OIC_SRM_CRL"
 
 #define SEPARATOR                   ":"
 #define SEPARATOR_LEN               (1)

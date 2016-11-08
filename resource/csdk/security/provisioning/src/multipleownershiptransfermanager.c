@@ -59,7 +59,7 @@
 #include "oxmpreconfpin.h"
 #include "oxmrandompin.h"
 
-#define TAG "MULTIPLE_OTM"
+#define TAG "OIC_MULTIPLE_OTM"
 
 /**********************************************************************
  * API for Super Owner

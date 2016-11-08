@@ -39,7 +39,7 @@
 #include "pstatresource.h"
 #include "doxmresource.h"
 
-#define TAG  "SRM-PSI"
+#define TAG  "OIC_SRM_PSI"
 
 //SVR database buffer block size
 #ifdef _WIN32

@@ -46,7 +46,7 @@
 
 #include "security_internals.h"
 
-#define TAG  "SRM-ACL"
+#define TAG  "OIC_SRM_ACL"
 #define NUMBER_OF_SEC_PROV_RSCS 4
 #define NUMBER_OF_DEFAULT_SEC_RSCS 2
 #define STRING_UUID_SIZE (UUID_LENGTH * 2 + 5)
