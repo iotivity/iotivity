@@ -24,13 +24,28 @@
 #define __PRINTLOG 0
 #define __NS_FILE__ ( strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__ )
 
-#ifdef TB_LOG
 #include "logger.h"
+
+#ifdef TB_LOG
+#ifdef __TIZEN__
+#include <dlog.h>
+#ifdef LOG_TAG
+#undef LOG_TAG
+#endif // LOG_TAG
+#define LOG_TAG "NotificationService"
+#define NS_CONVERT_LEVEL(level) ( \
+        ((level) == 0) ? DLOG_DEBUG : \
+        ((level) == 1) ? DLOG_INFO : \
+        ((level) == 2) ? DLOG_WARN : \
+    ((level) == 3) ? DLOG_ERROR : DLOG_ERROR)
+#define NS_LOG_V(level, format, ...) (dlog_print(NS_CONVERT_LEVEL(level), LOG_TAG, (format), __VA_ARGS__))
+#define NS_LOG(level, msg) (dlog_print(NS_CONVERT_LEVEL(level), LOG_TAG, (msg)))
+#else // __TIZEN__
 #define NS_LOG_V(level, format, ...) (OIC_LOG_V((level), __NS_FILE__, (format), __VA_ARGS__))
 #define NS_LOG(level, msg) (OIC_LOG((level), __NS_FILE__, (msg)))
-#else
+#endif // __TIZEN__
+#else // TB_LOG
 #if (__PRINTLOG == 1)
-#include "logger.h"
 #define NS_CONVERT_LEVEL(level) ( \
         ((level) == 0) ? "DEBUG" : \
         ((level) == 1) ? "INFO" : \
@@ -48,12 +63,12 @@
         printf((msg)); \
         printf("\n"); \
     }
-#else
+#else // (__PRINTLOG == 1)
 #define NS_CONVERT_LEVEL(level)
 #define NS_LOG(level, msg)
 #define NS_LOG_V(level, format, ...) NS_LOG((level), ((format), __VA_ARGS__))
-#endif
-#endif
+#endif // (__PRINTLOG == 1)
+#endif // TB_LOG
 
 #define NS_TAG                     "IOT_NOTI"
 
