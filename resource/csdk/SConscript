@@ -158,6 +158,17 @@ liboctbstack_env.Append(LIBS = ['c_common'])
 if liboctbstack_env.get('ROUTING') in ['GW', 'EP']:
 	liboctbstack_env.Prepend(LIBS = ['routingmanager'])
 
+if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
+	liboctbstack_env.PrependUnique(CPPPATH = ['resource-directory/include'])
+	if 'CLIENT' in rd_mode:
+		liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+	if 'SERVER' in rd_mode:
+		liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
+		if target_os in ['tizen']:
+			liboctbstack_env.ParseConfig('pkg-config --cflags --libs sqlite3')
+		else:
+			liboctbstack_env.AppendUnique(CPPPATH = ['#extlibs/sqlite3'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -177,14 +188,13 @@ liboctbstack_src = [
 	OCTBSTACK_SRC + 'oicgroup.c'
 	]
 
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	if 'CLIENT' in rd_mode:
-		liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
-	if 'SERVER' in rd_mode:
-		liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
-
 if with_tcp == True:
 	liboctbstack_src.append(OCTBSTACK_SRC + 'oickeepalive.c')
+
+if 'SERVER' in rd_mode:
+	liboctbstack_src.append(OCTBSTACK_SRC + 'oicresourcedirectory.c')
+	if target_os not in ['tizen']:
+		liboctbstack_src.append('#extlibs/sqlite3/sqlite3.c')
 
 if target_os in ['windows', 'msys_nt']:
 	# Avoid a name conflict with the octbstack.lib target of the SharedLibrary.
