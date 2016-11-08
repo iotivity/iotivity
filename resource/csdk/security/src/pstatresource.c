@@ -33,7 +33,7 @@
 #include "srmresourcestrings.h"
 #include "srmutility.h"
 
-#define TAG  "SRM-PSTAT"
+#define TAG  "OIC_SRM_PSTAT"
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching below max cbor size. */

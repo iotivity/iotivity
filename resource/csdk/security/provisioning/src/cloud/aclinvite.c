@@ -31,7 +31,7 @@
 #include "pmutility.h"
 #include "cacommonutil.h"
 
-#define TAG "CLOUD-ACL-INVITE"
+#define TAG "OIC_CLOUD_ACL_INVITE"
 
 /**
  * This helper function parses "name" : { "gid":[], "mid":[] } payload

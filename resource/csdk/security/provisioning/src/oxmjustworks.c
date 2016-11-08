@@ -30,7 +30,7 @@
 #include "pmtypes.h"
 #include "ownershiptransfermanager.h"
 
-#define TAG "OXM_JustWorks"
+#define TAG "OIC_OXM_JustWorks"
 
 OCStackResult CreateJustWorksSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **payload, size_t *size)
 {

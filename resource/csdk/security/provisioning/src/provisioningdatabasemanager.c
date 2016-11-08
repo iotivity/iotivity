@@ -34,7 +34,7 @@
 
 #define DB_FILE "PDM.db"
 
-#define TAG "PDM"
+#define TAG "OIC_PDM"
 
 #define PDM_FIRST_INDEX 0
 #define PDM_SECOND_INDEX 1

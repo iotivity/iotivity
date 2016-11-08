@@ -64,7 +64,7 @@
 #include "global.h"
 #endif
 
-#define TAG  "SRM-CREDL"
+#define TAG  "OIC_SRM_CREDL"
 
 /** Max credential types number used for TLS */
 #define MAX_TYPE 2

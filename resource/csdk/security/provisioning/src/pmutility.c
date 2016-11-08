@@ -49,7 +49,7 @@
 
 #include "srmutility.h"
 
-#define TAG ("PM-UTILITY")
+#define TAG ("OIC_PM_UTILITY")
 
 typedef struct _DiscoveryInfo{
     OCProvisionDev_t    **ppDevicesList;

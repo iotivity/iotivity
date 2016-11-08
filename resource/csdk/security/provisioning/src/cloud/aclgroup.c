@@ -30,7 +30,7 @@
 #include "pmutility.h"
 #include "cacommonutil.h"
 
-#define TAG "CLOUD-ACL-GROUP"
+#define TAG "OIC_CLOUD_ACL_GROUP"
 
 /**
  * ACL create group request received data handler

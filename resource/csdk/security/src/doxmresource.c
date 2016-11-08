@@ -52,7 +52,7 @@
 #include "srmutility.h"
 #include "pinoxmcommon.h"
 
-#define TAG  "SRM-DOXM"
+#define TAG  "OIC_SRM_DOXM"
 #define CHAR_ZERO ('0')
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.

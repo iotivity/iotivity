@@ -26,7 +26,7 @@
 #include "srmutility.h"
 #include "pmutility.h"
 
-#define TAG "CLOUD-UTILS"
+#define TAG "OIC_CLOUD_UTILS"
 
 typedef struct {
     void *ctx;

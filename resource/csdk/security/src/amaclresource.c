@@ -31,7 +31,7 @@
 #include "srmutility.h"
 #include "amaclresource.h"
 
-#define TAG  "SRM-AMACL"
+#define TAG  "OIC_SRM_AMACL"
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */

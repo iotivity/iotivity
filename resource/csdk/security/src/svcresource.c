@@ -34,7 +34,7 @@
 
 #include "security_internals.h"
 
-#define TAG  "SRM-SVC"
+#define TAG  "OIC_SRM_SVC"
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */

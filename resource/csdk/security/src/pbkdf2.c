@@ -26,7 +26,7 @@
 #include "debug.h"
 #include "logger.h"
 
-#define TAG "PBDKF2"
+#define TAG "OIC_PBDKF2"
 #define XOR_BUF(in, out, bufSize)\
 do \
 {\

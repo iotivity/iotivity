@@ -37,7 +37,7 @@
 #if defined( __WITH_TLS__) || defined(__WITH_DTLS__)
 #include "pkix_interface.h"
 #endif //__WITH_TLS__ or __WITH_DTLS__
-#define TAG  "SRM"
+#define TAG  "OIC_SRM"
 
 //Request Callback handler
 static CARequestCallback gRequestHandler = NULL;

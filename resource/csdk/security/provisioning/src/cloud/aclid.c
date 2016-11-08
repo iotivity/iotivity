@@ -31,7 +31,7 @@
 #include "payload_logging.h"
 #include "utlist.h"
 
-#define TAG "CLOUD-ACL-ID"
+#define TAG "OIC_CLOUD_ACL_ID"
 
 /**
  * ACL Id parse from received response

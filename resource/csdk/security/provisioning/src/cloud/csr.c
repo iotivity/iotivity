@@ -49,7 +49,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#define TAG "CLOUD-CSR"
+#define TAG "OIC_CLOUD_CSR"
 
 //TODO: is it required in CSR response?
 static OCByteString privateKey = {0, 0};

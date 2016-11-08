@@ -36,7 +36,7 @@
 #include "aclresource.h" //Note: SRM internal header
 #include "pconfresource.h"
 
-#define TAG "OCPMAPI"
+#define TAG "OIC_OCPMAPI"
 
 typedef struct Linkdata Linkdata_t;
 struct Linkdata

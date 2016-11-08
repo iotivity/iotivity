@@ -23,7 +23,7 @@
 #include "crlresource.h"
 #include "logger.h"
 
-#define TAG "SRM-PKIX-INTERFACE"
+#define TAG "OIC_SRM_PKIX_INTERFACE"
 
 void GetPkixInfo(PkiInfo_t * inf)
 {

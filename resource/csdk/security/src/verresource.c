@@ -43,7 +43,7 @@
 #include "securevirtualresourcetypes.h"
 #include "srmutility.h"
 
-#define TAG  "SEC-VER"
+#define TAG  "OIC_SEC_VER"
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */

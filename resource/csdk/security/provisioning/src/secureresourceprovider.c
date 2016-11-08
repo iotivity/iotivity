@@ -49,7 +49,7 @@
 #include "crlresource.h"
 #endif // WITH_X509__
 
-#define TAG "SRPAPI"
+#define TAG "OIC_SRPAPI"
 
 /**
  * Macro to verify argument is not equal to NULL.
