@@ -1662,6 +1662,8 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
     if(OC_STACK_OK != result)
     {
         OIC_LOG_V(ERROR, TAG, "Add routing option failed [%d]", result);
+        OICFree (respInfo.info.resourceUri);
+        OICFree (respInfo.info.options);
         return result;
     }
     if (doPost)
@@ -1686,6 +1688,9 @@ OCStackResult SendDirectStackResponse(const CAEndpoint_t* endPoint, const uint16
             if (NULL == reqInfo.info.options)
             {
                 OIC_LOG(ERROR, TAG, "Calloc failed");
+                OICFree (reqInfo.info.resourceUri);
+                OICFree (respInfo.info.resourceUri);
+                OICFree (respInfo.info.options);
                 return OC_STACK_NO_MEMORY;
             }
             memcpy (reqInfo.info.options, respInfo.info.options,
