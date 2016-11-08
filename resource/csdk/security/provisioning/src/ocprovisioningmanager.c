@@ -1299,12 +1299,11 @@ OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
  *
  * @param[in] ctx user context.
  * @param[in] TrustCertChainChangeCB notification callback fucntion.
- * @return @return  OC_STACK_OK in case of success and other value otherwise.
+ * @return    OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OCRegisterTrustCertChainNotifier(void *ctx, TrustCertChainChangeCB Callback)
 {
-    SRPRegisterTrustCertChainNotifier(ctx, Callback);
-    return;
+    return SRPRegisterTrustCertChainNotifier(ctx, Callback);
 }
 
 /**
@@ -1312,7 +1311,7 @@ OCStackResult OCRegisterTrustCertChainNotifier(void *ctx, TrustCertChainChangeCB
  */
 void OCRemoveTrustCertChainNotifier()
 {
-    return SRPRemoveTrustCertChainNotifier();
+    SRPRemoveTrustCertChainNotifier();
 }
 #endif // __WITH_DTLS__ || __WITH_TLS__
 
