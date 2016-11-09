@@ -90,7 +90,8 @@ if [ $secured -eq 1 ];then
   $SHELL ./extlibs/mbedtls/prep.sh
 fi
 
-rm -rf ./extlibs/tinycbor/tinycbor/.git*
+# Prepare TinyCBOR dependency
+$SHELL ./extlibs/tinycbor/prep.sh
 
 # Initialize Git repositoryㅣ
 if [ ! -d .git ]; then
