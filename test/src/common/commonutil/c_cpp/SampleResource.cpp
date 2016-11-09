@@ -99,6 +99,7 @@ void SampleResource::handleObserveRequest(QueryParamsMap &queryParamsMap,
 
         response->setErrorCode(COAP_RESPONSE_CODE_SUCCESS);
         response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
+        response->setResourceRepresentation(getRepresentation(), DEFAULT_INTERFACE);
         result = OCPlatform::sendResponse(response);
         if (result != OC_STACK_OK)
         {
