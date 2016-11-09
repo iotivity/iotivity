@@ -1,6 +1,6 @@
 /******************************************************************
 *
-* Copyright 2014 Samsung Electronics All Rights Reserved.
+* Copyright 2016 Samsung Electronics All Rights Reserved.
 *
 *
 *
@@ -18,7 +18,7 @@
 *
 ******************************************************************/
 
-#include "ifaddrs.h"
+#include "caifaddrs.h"
 
 #include <stdbool.h>
 #include <string.h>
@@ -149,10 +149,21 @@ CAResult_t CAGetIfaddrsUsingNetlink(struct ifaddrs **ifap)
     while (1)
     {
         char recvBuf[NETLINK_MESSAGE_LENGTH] = {0};
-        int len = recv(netlinkFd, recvBuf, sizeof(recvBuf), 0);
-        struct nlmsghdr *recvMsg = (struct nlmsghdr*)recvBuf;
+        struct nlmsghdr *recvMsg = NULL;
         struct ifaddrs *node = NULL;
-        for (; NLMSG_OK(recvMsg, len); recvMsg = NLMSG_NEXT(recvMsg, len))
+        struct sockaddr_nl sa = { .nl_family = 0 };
+        struct iovec iov = { .iov_base = recvBuf,
+                         .iov_len = sizeof (recvBuf) };
+
+        struct msghdr msg = { .msg_name = (void *)&sa,
+                          .msg_namelen = sizeof (sa),
+                          .msg_iov = &iov,
+                          .msg_iovlen = 1 };
+
+        ssize_t len = recvmsg(netlinkFd, &msg, 0);
+
+        for (recvMsg = (struct nlmsghdr *)recvBuf; NLMSG_OK(recvMsg, len);
+             recvMsg = NLMSG_NEXT(recvMsg, len))
         {
             switch (recvMsg->nlmsg_type)
             {

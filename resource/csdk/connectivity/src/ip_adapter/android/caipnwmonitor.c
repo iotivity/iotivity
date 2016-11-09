@@ -39,7 +39,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "org_iotivity_ca_CaIpInterface.h"
-#include "ifaddrs.h"
+#include "caifaddrs.h"
 
 #define TAG "OIC_CA_IP_MONITOR"
 #define NETLINK_MESSAGE_LENGTH  (4096)
@@ -195,7 +195,7 @@ u_arraylist_t *CAFindInterfaceChange()
                           .msg_iov = &iov,
                           .msg_iovlen = 1 };
 
-    size_t len = recvmsg(caglobals.ip.netlinkFd, &msg, 0);
+    ssize_t len = recvmsg(caglobals.ip.netlinkFd, &msg, 0);
     return NULL;
 }
 
