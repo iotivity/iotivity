@@ -1,24 +1,24 @@
-/******************************************************************
-*
-* Copyright 2014 Samsung Electronics All Rights Reserved.
-*
-*
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-******************************************************************/
+/* *****************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
-#include "ifaddrs.h"
+#include "caifaddrs.h"
 
 #include <stdbool.h>
 #include <string.h>
@@ -155,10 +155,21 @@ CAResult_t CAGetIfaddrsUsingNetlink(struct ifaddrs **ifap)
     while (1)
     {
         char recvBuf[NETLINK_MESSAGE_LENGTH] = {0};
-        int len = recv(netlinkFd, recvBuf, sizeof(recvBuf), 0);
-        struct nlmsghdr *recvMsg = (struct nlmsghdr*)recvBuf;
+        struct nlmsghdr *recvMsg = NULL;
         struct ifaddrs *node = NULL;
-        for (; NLMSG_OK(recvMsg, len); recvMsg = NLMSG_NEXT(recvMsg, len))
+        struct sockaddr_nl sa = { .nl_family = 0 };
+        struct iovec iov = { .iov_base = recvBuf,
+                         .iov_len = sizeof (recvBuf) };
+
+        struct msghdr msg = { .msg_name = (void *)&sa,
+                          .msg_namelen = sizeof (sa),
+                          .msg_iov = &iov,
+                          .msg_iovlen = 1 };
+
+        ssize_t len = recvmsg(netlinkFd, &msg, 0);
+
+        for (recvMsg = (struct nlmsghdr *)recvBuf; NLMSG_OK(recvMsg, len);
+             recvMsg = NLMSG_NEXT(recvMsg, len))
         {
             switch (recvMsg->nlmsg_type)
             {
