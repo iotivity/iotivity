@@ -19,6 +19,8 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSProviderNotification.h"
+#include "NSProviderListener.h"
+#include "NSProviderSystem.h"
 
 NSResult NSSetMessagePayload(NSMessage *msg, OCRepPayload** msgPayload)
 {
@@ -79,6 +81,7 @@ NSResult NSSetSyncPayload(NSSyncInfo *sync, OCRepPayload** syncPayload)
 #ifdef WITH_MQ
 OCStackResult NSProviderPublishTopic(OCRepPayload * payload, OCClientResponseHandler response)
 {
+    NS_LOG(DEBUG, "NSProviderPublishTopic - IN");
     OCCallbackData cbData;
     memset(&cbData, 0, sizeof(OCCallbackData));
     cbData.cb = response;
@@ -95,6 +98,15 @@ OCStackResult NSProviderPublishTopic(OCRepPayload * payload, OCClientResponseHan
     OCRepPayloadSetPropObject(publishPayload, NS_ATTRIBUTE_MQ_MESSAGE, payload);
 
     NSMQServerInfo * serverInfo = NSGetMQServerInfo();
+
+    if (!serverInfo)
+    {
+        NS_LOG(DEBUG, "serverInfo is not NULL");
+        NS_LOG_V(DEBUG, "serverInfo->serverUri = %s", serverInfo->serverUri);
+    }
+
+    NS_LOG(DEBUG, "NSProviderPublishTopic - OUT");
+
     return OCDoResource(NULL, OC_REST_POST, serverInfo->serverUri, serverInfo->devAddr,
             (OCPayload *)publishPayload,
                         CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
@@ -115,17 +127,24 @@ NSResult NSSendNotification(NSMessage *msg)
         return NS_ERROR;
     }
 
-    if (consumerSubList->head == NULL)
-    {
-        NS_LOG(ERROR, "SubList->head is NULL, empty SubList");
-        return NS_ERROR;
-    }
-
     OCRepPayload* payload = NULL;
 
     if (NSSetMessagePayload(msg, &payload) != NS_OK)
     {
         NS_LOG(ERROR, "fail to Get message payload");
+        return NS_ERROR;
+    }
+
+#ifdef WITH_MQ
+    if (NSGetMQServerInfo())
+    {
+        NSProviderPublishTopic(payload, NSProviderPublishTopicCB);
+    }
+#endif
+
+    if (consumerSubList->head == NULL)
+    {
+        NS_LOG(ERROR, "SubList->head is NULL, empty SubList");
         return NS_ERROR;
     }
 
@@ -178,14 +197,7 @@ NSResult NSSendNotification(NSMessage *msg)
             }
 #endif
 
-#ifdef WITH_MQ
-            if (!NSGetMQServerInfo())
-            {
-                NSProviderPublishTopic(payload, NSProviderPublishTopicCB);
-            }
-#endif
         }
-
         it = it->next;
     }
 

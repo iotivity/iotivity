@@ -220,7 +220,9 @@ NSResult NSProviderSubscribeMQService(const char * serverAddress, const char * t
     topicAddr->serverAddr = NSGetQueryAddress(serverAddress);
     topicAddr->topicName = OICStrdup(topicName);
 
-    NSPushQueue(DISCOVERY_SCHEDULER, TASK_MQ_REQ_SUBSCRIBE, (void *) topicAddr);
+    NS_LOG_V(DEBUG, "input Topic Name : %s", topicAddr->topicName);
+
+    NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_MQ_REQ_SUBSCRIBE, (void *) topicAddr);
 
     pthread_mutex_unlock(&nsInitMutex);
     NS_LOG(DEBUG, "NSProviderSubscribeMQService - OUT");

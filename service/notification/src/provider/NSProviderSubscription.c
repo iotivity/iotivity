@@ -19,6 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "NSProviderSubscription.h"
+#include "NSProviderListener.h"
 
 NSResult NSInitSubscriptionList()
 {
@@ -351,14 +352,23 @@ void NSProviderMQSubscription(NSMQTopicAddress * topicAddr)
     char * serverUri = topicAddr->serverAddr;
     char * topicName = topicAddr->topicName;
 
+    NS_LOG_V(DEBUG, "input Topic Name2 : %s", topicAddr->topicName);
+
     OCDevAddr * addr = NSChangeAddress(serverUri);
     OCCallbackData cbdata = { NULL, NULL, NULL };
     cbdata.cb = NSProviderIntrospectMQTopic;
-    cbdata.context = topicName;
+    cbdata.context = OICStrdup(topicName);
     cbdata.cd = OICFree;
 
-    OCStackResult ret = OCDoResource(NULL, OC_REST_GET, serverUri, addr,
-                                     NULL, CT_DEFAULT, OC_LOW_QOS, &cbdata, NULL, 0);
+    char requestUri[100] = "coap+tcp://";
+
+    NS_LOG_V(DEBUG, "requestUri1 = %s", requestUri);
+    OICStrcat(requestUri, strlen(requestUri)+strlen(serverUri)+1, serverUri);
+    NS_LOG_V(DEBUG, "requestUri2 = %s", requestUri);
+    OICStrcat(requestUri, strlen(requestUri)+ strlen("/oic/ps") + 1, "/oic/ps");
+    NS_LOG_V(DEBUG, "requestUri3 = %s", requestUri);
+    OCStackResult ret = OCDoResource(NULL, OC_REST_GET, requestUri, addr,
+                                     NULL, CT_DEFAULT, OC_HIGH_QOS, &cbdata, NULL, 0);
 
     NSOCResultToSuccess(ret);
 

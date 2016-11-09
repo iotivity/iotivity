@@ -332,6 +332,8 @@ OCStackApplicationResult NSProviderMQListener(void * ctx, OCDoHandle handle,
     (void) ctx;
     (void) handle;
 
+    NS_LOG_V(DEBUG, "clientResponse->sequenceNumber = %d", clientResponse->sequenceNumber);
+
     if (clientResponse->sequenceNumber == OC_OBSERVE_REGISTER)
     {
         NS_LOG(DEBUG, "MQ OC_OBSERVE_RIGSTER");
@@ -397,6 +399,8 @@ OCStackApplicationResult NSProviderMQListener(void * ctx, OCDoHandle handle,
 OCStackApplicationResult NSProviderIntrospectMQTopic(void * ctx, OCDoHandle handle,
         OCClientResponse * clientResponse)
 {
+    NS_LOG(DEBUG, "NSProviderIntrospectMQTopic - IN");
+
     (void) handle;
 
     NS_VERIFY_NOT_NULL(clientResponse, OC_STACK_KEEP_TRANSACTION);
@@ -421,6 +425,8 @@ OCStackApplicationResult NSProviderIntrospectMQTopic(void * ctx, OCDoHandle hand
                                NS_ATTIRBUTE_MQ_TOPICLIST, & topicList, dimensions);
 
     char * interestTopicName = (char *) ctx;
+
+    NS_LOG_V(DEBUG, "interestTopicName = %s", interestTopicName);
     for (size_t i = 0; i < dimensions[0]; ++i)
     {
         NS_LOG_V(DEBUG, "found MQ topic : %s", topicList[i]);
@@ -434,7 +440,7 @@ OCStackApplicationResult NSProviderIntrospectMQTopic(void * ctx, OCDoHandle hand
             cbdata.cd = NULL;
 
             OCStackResult ret = OCDoResource(NULL, OC_REST_OBSERVE, topicList[i],
-                    clientResponse->addr, NULL, CT_DEFAULT, OC_LOW_QOS, &cbdata, NULL, 0);
+                    clientResponse->addr, NULL, CT_DEFAULT, OC_HIGH_QOS, &cbdata, NULL, 0);
 
             if (!NSOCResultToSuccess(ret))
             {
@@ -444,6 +450,7 @@ OCStackApplicationResult NSProviderIntrospectMQTopic(void * ctx, OCDoHandle hand
         }
     }
 
+    NS_LOG(DEBUG, "NSProviderIntrospectMQTopic - OUT");
     return OC_STACK_KEEP_TRANSACTION;
 }
 

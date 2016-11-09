@@ -156,6 +156,7 @@ void NSSetMQServerInfo(const char * serverUri, OCDevAddr * devAddr)
 {
     if (!mqServerInfo)
     {
+        NS_LOG(DEBUG, "setMqServer");
         mqServerInfo = (NSMQServerInfo *)OICMalloc(sizeof(NSMQServerInfo));
         mqServerInfo->serverUri = OICStrdup(serverUri);
         mqServerInfo->devAddr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
