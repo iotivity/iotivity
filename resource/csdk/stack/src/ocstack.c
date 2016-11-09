@@ -4890,7 +4890,7 @@ OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
                 {
                     OCRepPayload *rdPayload = (OCRepPayload *) response->payload;
                     OCRepPayload **links = NULL;
-                    size_t dimensions[MAX_REP_ARRAY_DEPTH];
+                    size_t dimensions[MAX_REP_ARRAY_DEPTH] = { 0 };
                     if (OCRepPayloadGetPropObjectArray(rdPayload, OC_RSRVD_LINKS,
                                                        &links, dimensions))
                     {
