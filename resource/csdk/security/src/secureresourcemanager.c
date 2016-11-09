@@ -183,9 +183,13 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     OCResource *resPtr = FindResourceByUri(newUri);
     if (NULL != resPtr)
     {
-        // check whether request is for secure resource or not and it should not be a SVR resource
-        if (((resPtr->resourceProperties) & OC_SECURE)
+        // All vertical secure resources and SVR resources other than DOXM & PSTAT should reject request
+        // over coap.
+        if ((((resPtr->resourceProperties) & OC_SECURE)
                             && (g_policyEngineContext.resourceType == NOT_A_SVR_RESOURCE))
+                            || ((g_policyEngineContext.resourceType < OIC_SEC_SVR_TYPE_COUNT)
+                            &&  (g_policyEngineContext.resourceType != OIC_R_DOXM_TYPE)
+                            &&  (g_policyEngineContext.resourceType != OIC_R_PSTAT_TYPE)))
         {
            // if resource is secure and request is over insecure channel
             if (!isRequestOverSecureChannel)
