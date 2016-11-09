@@ -51,7 +51,6 @@ mkdir ./tmp
 mkdir ./tmp/extlibs/
 mkdir ./tmp/packaging
 cp -LR ./extlibs/tinycbor $sourcedir/tmp/extlibs
-rm -rf $sourcedir/tmp/extlibs/tinycbor/tinycbor/.git
 cp -Rf ./extlibs/mbedtls $sourcedir/tmp/extlibs
 cp -R ./extlibs/cjson $sourcedir/tmp/extlibs
 cp -R ./extlibs/tinydtls $sourcedir/tmp/extlibs
@@ -91,6 +90,9 @@ cd $sourcedir/tmp
 echo `pwd`
 # Prepare mbedTLS dependency
 $SHELL ./extlibs/mbedtls/prep.sh
+
+# Prepare TinyCBOR dependency
+$SHELL ./extlibs/tinycbor/prep.sh
 
 whoami
 # Initialize Git repository

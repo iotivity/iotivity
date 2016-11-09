@@ -30,7 +30,6 @@ cp -R ./examples $sourcedir/tmp
 
 # tinycbor is available as soft-link, so copying with 'dereference' option.
 cp -LR ./extlibs/tinycbor $sourcedir/tmp/extlibs
-rm -rf $sourcedir/tmp/extlibs/tinycbor/tinycbor/.git
 
 cp -R ./extlibs/cjson $sourcedir/tmp/extlibs
 cp -R ./extlibs/mbedtls $sourcedir/tmp/extlibs
@@ -62,7 +61,8 @@ echo `pwd`
 # Prepare mbedTLS dependency
 $SHELL ./extlibs/mbedtls/prep.sh
 
-rm -rf ./extlibs/tinycbor/tinycbor/.git*
+# Prepare TinyCBOR dependency
+$SHELL ./extlibs/tinycbor/prep.sh
 
 # Build IoTivity
 # Initialize Git repository
