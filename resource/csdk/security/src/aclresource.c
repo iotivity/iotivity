@@ -2355,7 +2355,7 @@ const OicSecAce_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAce_t **
     OicSecAce_t *ace = NULL;
     OicSecAce_t *begin = NULL;
 
-    if (NULL == subjectId)
+    if (NULL == subjectId || NULL == savePtr || NULL == gAcl)
     {
         return NULL;
     }
