@@ -46,13 +46,14 @@ typedef struct {
 
 static bool CASendNetlinkMessage(int netlinkFd, const void* data, size_t len)
 {
-    ssize_t sentByteCount = TEMP_FAILURE_RETRY(send(netlinkFd, data, len, 0));
+    ssize_t sentByteCount = 0;
+    sentByteCount = TEMP_FAILURE_RETRY(send(netlinkFd, data, len, 0));
     return (sentByteCount == (ssize_t)(len));
 }
 
 void CAFreeIfAddrs(struct ifaddrs *ifa)
 {
-    struct ifaddrs *cur;
+    struct ifaddrs *cur = NULL;
     while (ifa)
     {
         cur = ifa;
@@ -89,6 +90,11 @@ static struct ifaddrs *CAParsingAddr(struct nlmsghdr *recvMsg)
         {
             case IFA_ADDRESS:
                 ss = (struct sockaddr_storage*)OICCalloc(1, sizeof(struct sockaddr_storage));
+                if (!ss)
+                {
+                    OIC_LOG(ERROR, TAG, "Memory allocation failed!");
+                    return NULL;
+                }
                 ss->ss_family = ifaddrmsgData-> ifa_family;
 
                 if (ifaddrmsgData-> ifa_family == AF_INET)

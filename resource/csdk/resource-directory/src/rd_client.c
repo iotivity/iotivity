@@ -185,6 +185,19 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
 
             size_t mtDim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
             char **mediaType = (char **)OICMalloc(sizeof(char *) * 1);
+            if (!mediaType)
+            {
+                OIC_LOG(ERROR, TAG, "Memory allocation failed!");
+
+                for(uint8_t i = 0; i < nPubResHandles; i++)
+                {
+                    OCRepPayloadDestroy(linkArr[i]);
+                }
+                OICFree(linkArr);
+                OCRepPayloadDestroy(rdPayload);
+                return OC_STACK_NO_MEMORY;
+            }
+
             mediaType[0] = OICStrdup(DEFAULT_MESSAGE_TYPE);
             OCRepPayloadSetStringArrayAsOwner(link, OC_RSRVD_MEDIA_TYPE, mediaType,
             mtDim);

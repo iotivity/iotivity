@@ -3539,6 +3539,13 @@ static void CALERemoveReceiveQueueData(u_arraylist_t *dataInfoList, const char* 
         for (uint32_t i = 0; i < arrayLength; i++)
         {
             uint16_t *port = (uint16_t *)u_arraylist_get(portList, i);
+            if (!port)
+            {
+                OIC_LOG(ERROR, CALEADAPTER_TAG, "Failed to get port from sender info !");
+                u_arraylist_destroy(portList);
+                return;
+            }
+
             OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "port : %X", *port);
 
             if (CA_STATUS_OK == CALEGetSenderInfo(address, *port,
@@ -3584,6 +3591,11 @@ static CAResult_t CALEGetPortsFromSenderInfo(const char *leAddress,
         if (!strncmp(info->remoteEndpoint->addr, leAddress, addrLength))
         {
             uint16_t *port = (uint16_t *)OICMalloc(sizeof(uint16_t));
+            if (!port)
+            {
+                OIC_LOG(ERROR, CALEADAPTER_TAG, "memory allocation failed!");
+                return CA_MEMORY_ALLOC_FAILED;
+            }
             *port = info->remoteEndpoint->port;
             u_arraylist_add(portList, (void *)port);
         }
