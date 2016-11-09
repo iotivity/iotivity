@@ -21,6 +21,7 @@
 #include "pkix_interface.h"
 #include "credresource.h"
 #include "crlresource.h"
+#include "srmresourcestrings.h"
 #include "logger.h"
 
 #define TAG "OIC_SRM_PKIX_INTERFACE"
@@ -28,9 +29,59 @@
 void GetPkixInfo(PkiInfo_t * inf)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
-    GetDerOwnCert(&inf->crt);
-    GetDerKey(&inf->key);
-    GetDerCaCert(&inf->ca);
+    if (NULL == inf)
+    {
+        OIC_LOG(ERROR, TAG, "NULL passed");
+        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+        return;
+    }
+    GetDerOwnCert(&inf->crt, PRIMARY_CERT);
+    GetDerKey(&inf->key, PRIMARY_CERT);
+    GetDerCaCert(&inf->ca, TRUST_CA);
     GetDerCrl(&inf->crl);
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+}
+
+void GetManufacturerPkixInfo(PkiInfo_t * inf)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    if (NULL == inf)
+    {
+        OIC_LOG(ERROR, TAG, "NULL passed");
+        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+        return;
+    }
+    GetDerOwnCert(&inf->crt, MF_PRIMARY_CERT);
+    GetDerKey(&inf->key, MF_PRIMARY_CERT);
+    GetDerCaCert(&inf->ca, MF_TRUST_CA);
+    // CRL not provided
+    inf->crl.data = NULL;
+    inf->crl.len = 0;
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+}
+
+void InitCipherSuiteList(bool * list)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    if (NULL == list)
+    {
+        OIC_LOG(ERROR, TAG, "NULL passed");
+        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+        return;
+    }
+    InitCipherSuiteListInternal(list, TRUST_CA);
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+}
+
+void InitManufacturerCipherSuiteList(bool * list)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    if (NULL == list)
+    {
+        OIC_LOG(ERROR, TAG, "NULL passed");
+        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+        return;
+    }
+    InitCipherSuiteListInternal(list, MF_TRUST_CA);
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
