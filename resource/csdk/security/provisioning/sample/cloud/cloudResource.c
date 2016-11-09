@@ -55,11 +55,15 @@ static OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
 static OCEntityHandlerResult ProcessRequest (OCEntityHandlerRequest *request,
         OCRepPayload **payload)
 {
-    if(!request || !request->payload || request->payload->type != PAYLOAD_TYPE_REPRESENTATION)
+    OIC_LOG_V(DEBUG, TAG, "%s: IN",  __func__);
+
+    if(!request)
     {
-        OIC_LOG(ERROR, TAG, "Incoming payload not a representation");
+        OIC_LOG_V(ERROR, TAG, "%s: OUT: request is NULL",__func__);
         return OC_EH_ERROR;
     }
+
+    OIC_LOG_V(DEBUG, TAG, "%s: method: %d",  __func__, request->method);
 
     LEDResource *currLEDResource = &LED;
 
@@ -76,6 +80,12 @@ static OCEntityHandlerResult ProcessRequest (OCEntityHandlerRequest *request,
 
     if(OC_REST_PUT == request->method)
     {
+        if (!request->payload || request->payload->type != PAYLOAD_TYPE_REPRESENTATION)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: OUT: Incoming payload type(%d) is not a representation",
+                      __func__, request->payload ? request->payload->type : 0);
+            return OC_EH_ERROR;
+        }
         OCRepPayload* input = (OCRepPayload*)request->payload;
         // Get pointer to query
         int64_t pow;
@@ -93,7 +103,9 @@ static OCEntityHandlerResult ProcessRequest (OCEntityHandlerRequest *request,
 
     *payload = getPayload(gResourceUri, currLEDResource->power, currLEDResource->state);
 
-    return (*payload)? OC_EH_OK : OC_EH_ERROR;
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT",  __func__);
+
+    return (*payload) ? OC_EH_OK : OC_EH_ERROR;
 }
 
 static OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *request,
