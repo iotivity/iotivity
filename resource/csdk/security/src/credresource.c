@@ -2632,23 +2632,22 @@ OCStackResult GetCredRownerId(OicUuid_t *rowneruuid)
 }
 
 #if defined (__WITH_TLS__) || defined(__WITH_DTLS__)
-void GetDerCaCert(ByteArray_t * crt)
+void GetDerCaCert(ByteArray_t * crt, const char * usage)
 {
-    if (NULL == crt)
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    if (NULL == crt || NULL == usage)
     {
+        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
-    uint8_t *data = NULL;
     crt->len = 0;
-    OCStackResult ret = OC_STACK_ERROR;
-    OicSecCred_t * cred;
     OicSecCred_t * temp = NULL;
-    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
     LL_FOREACH(gCred, temp)
     {
-        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), TRUST_CA, strlen(TRUST_CA) + 1))
+        if (SIGNED_ASYMMETRIC_KEY == temp->credType &&
+            0 == strcmp(temp->credUsage, usage))
         {
-            OIC_LOG_V(DEBUG, TAG, "len: %d, crt len: %d", temp->optionalData.len, crt->len);
             if(OIC_ENCODING_BASE64 == temp->optionalData.encoding)
             {
                 size_t bufSize = B64DECODE_OUT_SAFESIZE((temp->optionalData.len + 1));
@@ -2676,84 +2675,82 @@ void GetDerCaCert(ByteArray_t * crt)
                 memcpy(crt->data + crt->len, temp->optionalData.data, temp->optionalData.len);
                 crt->len += temp->optionalData.len;
             }
-            OIC_LOG_V(DEBUG, TAG, "Trust CA Found!! %d", crt->len);
+            OIC_LOG_V(DEBUG, TAG, "%s found", usage);
         }
     }
     if(0 == crt->len)
     {
-        OIC_LOG(DEBUG, TAG, "Trust CA Not Found!!");
+        OIC_LOG_V(WARNING, TAG, "%s not found", usage);
     }
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return;
 }
 
-void GetDerOwnCert(ByteArray_t * crt)
+void GetDerOwnCert(ByteArray_t * crt, const char * usage)
 {
-    if (NULL == crt)
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    if (NULL == crt || NULL == usage)
     {
+        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
     crt->len = 0;
-    uint8_t *data = NULL;
     OicSecCred_t * temp = NULL;
-    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
     LL_FOREACH(gCred, temp)
     {
-        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), PRIMARY_CERT, strlen(PRIMARY_CERT) + 1))
+        if (SIGNED_ASYMMETRIC_KEY == temp->credType &&
+            0 == strcmp(temp->credUsage, usage))
         {
-            OIC_LOG_V(DEBUG, TAG, "len: %d, crt len: %d", temp->publicData.len, crt->len);
             crt->data = OICRealloc(crt->data, crt->len + temp->publicData.len);
             memcpy(crt->data + crt->len, temp->publicData.data, temp->publicData.len);
             crt->len += temp->publicData.len;
-
-            OIC_LOG_V(DEBUG, TAG, "Trust CA Found!! %d", crt->len);
+            OIC_LOG_V(DEBUG, TAG, "%s found", usage);
         }
     }
     if(0 == crt->len)
     {
-        OIC_LOG(DEBUG, TAG, "Trust CA Not Found!!");
+        OIC_LOG_V(WARNING, TAG, "%s not found", usage);
     }
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return;
 }
 
-void GetDerKey(ByteArray_t * key)
+void GetDerKey(ByteArray_t * key, const char * usage)
 {
-    if (NULL == key)
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    if (NULL == key || NULL == usage)
     {
+        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
 
-    uint8_t *data = NULL;
     OicSecCred_t * temp = NULL;
     key->len = 0;
-    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
     LL_FOREACH(gCred, temp)
     {
-        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), PRIMARY_CERT, strlen(PRIMARY_CERT) + 1))
+        if (SIGNED_ASYMMETRIC_KEY == temp->credType &&
+            0 == strcmp(temp->credUsage, usage))
         {
-            OIC_LOG_V(DEBUG, TAG, "len: %d, key len: %d", temp->privateData.len, key->len);
             key->data = OICRealloc(key->data, key->len + temp->privateData.len);
             memcpy(key->data + key->len, temp->privateData.data, temp->privateData.len);
             key->len += temp->privateData.len;
-
-            OIC_LOG_V(DEBUG, TAG, "Key Found!! %d", key->len);
+            OIC_LOG_V(DEBUG, TAG, "Key for %s found", usage);
         }
     }
     if(0 == key->len)
     {
-        OIC_LOG(DEBUG, TAG, "Key Not Found!!");
+        OIC_LOG_V(WARNING, TAG, "Key for %s not found", usage);
     }
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
 
-void InitCipherSuiteList(bool * list)
+void InitCipherSuiteListInternal(bool * list, const char * usage)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
-    if (NULL == list)
+    if (NULL == list || NULL == usage)
     {
+        OIC_LOG(DEBUG, TAG, "NULL passed");
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        OIC_LOG(DEBUG, TAG, "NULL list param");
         return;
     }
     OicSecCred_t * temp = NULL;
@@ -2775,8 +2772,11 @@ void InitCipherSuiteList(bool * list)
             }
             case SIGNED_ASYMMETRIC_KEY:
             {
-                list[1] = true;
-                OIC_LOG(DEBUG, TAG, "SIGNED_ASYMMETRIC_KEY found");
+                if (0 == strcmp(temp->credUsage, usage))
+                {
+                    list[1] = true;
+                    OIC_LOG_V(DEBUG, TAG, "SIGNED_ASYMMETRIC_KEY found for %s", usage);
+                }
                 break;
             }
             case SYMMETRIC_GROUP_KEY:
