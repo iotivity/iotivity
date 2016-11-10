@@ -73,7 +73,7 @@ if srmtest_env.get('MULTIPLE_OWNER') == '1':
 
 if target_os == 'windows':
 	srmtest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
-	srmtest_env.AppendUnique(LIBS = ['advapi32', 'bcrypt', 'kernel32', 'ws2_32', 'iphlpapi', 'octbstack_static'])
+	srmtest_env.AppendUnique(LIBS = ['advapi32', 'bcrypt', 'crypt32', 'kernel32', 'ws2_32', 'iphlpapi', 'octbstack_static'])
 else:
 	# TODO: Implement feature check.
 	srmtest_env.AppendUnique(CPPDEFINES = ['HAVE_LOCALTIME_R'])

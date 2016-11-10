@@ -84,6 +84,7 @@ if target_os in ['msys_nt', 'windows']:
     sptest_env.AppendUnique(LIBS = ['ws2_32',
                                     'advapi32',
                                     'bcrypt',
+                                    'crypt32',
                                     'octbstack_static',
                                     'iphlpapi'])
 else:
