@@ -690,7 +690,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
     {
         OIC_LOG(DEBUG, TAG, "CredToCBORPayload Successed");
         *cborPayload = outPayload;
-        *cborSize = encoder.ptr - outPayload;
+        *cborSize = cbor_encoder_get_buffer_size(&encoder, outPayload);
         ret = OC_STACK_OK;
     }
     OIC_LOG(DEBUG, TAG, "CredToCBORPayload OUT");
@@ -701,7 +701,7 @@ exit:
         // reallocate and try again!
         OICFree(outPayload);
         // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         cborEncoderResult = CborNoError;
         ret = CredToCBORPayload(credS, cborPayload, &cborLen, secureFlag);
         *cborSize = cborLen;

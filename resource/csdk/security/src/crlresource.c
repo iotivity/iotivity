@@ -357,7 +357,7 @@ OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t
     cborEncoderResult = cbor_encoder_close_container(&encoder, &crlMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to add close Crl map");
 
-    *size = encoder.ptr - outPayload;
+    *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
     *payload = outPayload;
     ret = OC_STACK_OK;
 
@@ -367,7 +367,7 @@ exit:
         // reallocate and try again!
         OICFree(outPayload);
         // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         cborEncoderResult = CborNoError;
         ret = CrlToCBORPayload(crl, payload, &cborLen, lastUpdate);
     }

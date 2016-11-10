@@ -204,7 +204,7 @@ OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayl
     if (CborNoError == cborEncoderResult)
     {
         *cborPayload = outPayload;
-        *cborSize = encoder.ptr - outPayload;
+        *cborSize = cbor_encoder_get_buffer_size(&encoder, outPayload);
         ret = OC_STACK_OK;
     }
 
@@ -215,7 +215,7 @@ exit:
        OICFree(outPayload);
        outPayload = NULL;
        // Since the allocated initial memory failed, double the memory.
-       cborLen += encoder.ptr - encoder.end;
+       cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
        cborEncoderResult = CborNoError;
        ret = AmaclToCBORPayload(amaclS, cborPayload, &cborLen);
        if (OC_STACK_OK == ret)
