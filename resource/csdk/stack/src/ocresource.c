@@ -591,9 +591,9 @@ static bool resourceMatchesIFFilter(OCResource *resource, char *interfaceFilter)
 
     while (interfacePtr)
     {
-        if ((strcmp (interfacePtr->name, interfaceFilter) == 0) &&
-            (strcmp (OC_RSRVD_INTERFACE_LL, interfaceFilter) == 0 ||
-             strcmp (OC_RSRVD_INTERFACE_DEFAULT, interfaceFilter) == 0))
+        if (strcmp (interfacePtr->name, interfaceFilter) == 0 ||
+            strcmp (OC_RSRVD_INTERFACE_LL, interfaceFilter) == 0 ||
+            strcmp (OC_RSRVD_INTERFACE_DEFAULT, interfaceFilter) == 0)
         {
             return true;
         }
