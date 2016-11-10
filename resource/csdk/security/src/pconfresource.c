@@ -426,7 +426,7 @@ OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,si
     cborEncoderResult = cbor_encoder_close_container(&encoder, &pconfMap);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed to close pconfMap");
 
-    *size = encoder.ptr - outPayload;
+    *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
     *payload = outPayload;
     ret = OC_STACK_OK;
 exit:
@@ -435,7 +435,7 @@ exit:
         // reallocate and try again!
         OICFree(outPayload);
         // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         cborEncoderResult = CborNoError;
         ret = PconfToCBORPayload(pconf, payload, &cborLen);
         *size = cborLen;

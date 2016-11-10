@@ -130,7 +130,7 @@ OCStackResult VerToCBORPayload(const OicSecVer_t *ver, uint8_t **payload, size_t
 
     if (CborNoError == cborEncoderResult)
     {
-        *size = encoder.ptr - outPayload;
+        *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
         *payload = outPayload;
         ret = OC_STACK_OK;
     }
@@ -141,7 +141,7 @@ exit:
         // reallocate and try again!
         OICFree(outPayload);
         // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         OIC_LOG_V(DEBUG, TAG, "Ver reallocation size : %zd.", cborLen);
         cborEncoderResult = CborNoError;
         ret = VerToCBORPayload(ver, payload, &cborLen);
