@@ -1071,7 +1071,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     {
         return OC_STACK_INVALID_URI;
     }
-    OIC_LOG(ERROR, TAG, "check for unicast presence");
+    OIC_LOG(INFO, TAG, "check for unicast presence");
     cbNode = GetClientCB(NULL, 0, NULL, presenceUri);
     if (cbNode)
     {
@@ -1080,7 +1080,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     else
     {
         // check for multicast presence
-        OIC_LOG(ERROR, TAG, "check for multicast presence");
+        OIC_LOG(INFO, TAG, "check for multicast presence");
         cbNode = GetClientCB(NULL, 0, NULL, OC_RSRVD_PRESENCE_URI);
         if (cbNode)
         {
@@ -1090,7 +1090,8 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
 
     if (!presenceSubscribe && !multicastPresenceSubscribe)
     {
-        OIC_LOG(ERROR, TAG, "Received a presence notification, but no callback, ignoring");
+        OIC_LOG(INFO, TAG, "Received a presence notification, "
+                "but need to register presence callback, ignoring");
         goto exit;
     }
 
