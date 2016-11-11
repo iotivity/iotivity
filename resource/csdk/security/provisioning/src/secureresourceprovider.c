@@ -49,7 +49,7 @@
 #include "crlresource.h"
 #endif // WITH_X509__
 
-#define TAG "SRPAPI"
+#define TAG "OIC_SRPAPI"
 
 /**
  * Macro to verify argument is not equal to NULL.
@@ -64,6 +64,9 @@
  */
 #define VERIFY_SUCCESS(tag, op, logLevel, retValue) { if (!(op)) \
             {OIC_LOG((logLevel), tag, #op " failed!!"); return retValue;} }
+
+
+trustCertChainContext_t g_trustCertChainNotifier;
 
 /**
  * Structure to carry credential data to callback.
@@ -452,6 +455,26 @@ static OCStackResult provisionCertCred(const OicSecCred_t *cred,
     return ret;
 }
 
+OCStackResult SRPRegisterTrustCertChainNotifier(void *ctx, TrustCertChainChangeCB callback)
+{
+    if (g_trustCertChainNotifier.callback)
+    {
+        OIC_LOG(ERROR, TAG, "Can't register Notifier, Unregister previous one");
+        return OC_STACK_ERROR;
+    }
+
+    g_trustCertChainNotifier.callback = callback;
+    g_trustCertChainNotifier.context = ctx;
+    return OC_STACK_OK;
+}
+
+void SRPRemoveTrustCertChainNotifier()
+{
+    g_trustCertChainNotifier.callback = NULL;
+    g_trustCertChainNotifier.context = NULL;
+    return;
+}
+
 /**
  * Callback handler for handling callback of certificate provisioning device.
  *
@@ -506,7 +529,7 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
         return OC_STACK_INVALID_PARAM;
     }
 
-    OicSecCred_t *trustCertChainCred = GetCredResourceDataByCredId(credId);
+    OicSecCred_t *trustCertChainCred = GetCredEntryByCredId(credId);
     if(NULL == trustCertChainCred)
     {
         OIC_LOG(ERROR, TAG, "Can not find matched Trust Cert. Chain.");
@@ -516,6 +539,7 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
     OCSecurityPayload* secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
     if(!secPayload)
     {
+        DeleteCredList(trustCertChainCred);
         OIC_LOG(ERROR, TAG, "Failed to memory allocation");
         return OC_STACK_NO_MEMORY;
     }
@@ -523,10 +547,12 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
     int secureFlag = 0;
     if(OC_STACK_OK != CredToCBORPayload(trustCertChainCred, &secPayload->securityData, &secPayload->payloadSize, secureFlag))
     {
+        DeleteCredList(trustCertChainCred);
         OCPayloadDestroy((OCPayload *)secPayload);
         OIC_LOG(ERROR, TAG, "Failed to CredToCBORPayload");
         return OC_STACK_NO_MEMORY;
     }
+    DeleteCredList(trustCertChainCred);
     OIC_LOG(DEBUG, TAG, "Created payload for Cred:");
     OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
 
@@ -625,6 +651,16 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
         return res;
     }
     *credId = cred->credId;
+
+    if (g_trustCertChainNotifier.callback)
+    {
+        uint8_t *certChain = (uint8_t*)OICCalloc(1, sizeof(uint8_t) * chainSize);
+        VERIFY_NON_NULL(TAG, certChain, ERROR, OC_STACK_NO_MEMORY);
+        memcpy(certChain, trustCertChain, chainSize);
+        g_trustCertChainNotifier.callback(g_trustCertChainNotifier.context, credId,
+                certChain, chainSize);
+        OICFree(certChain);
+    }
 
     OIC_LOG(DEBUG, TAG, "OUT SRPSaveTrustCertChain");
 
@@ -952,6 +988,17 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
     }
     VERIFY_SUCCESS(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
     return OC_STACK_OK;
+}
+
+OCStackResult SRPSaveACL(const OicSecAcl_t *acl)
+{
+    OIC_LOG(DEBUG, TAG, "IN SRPSaveACL");
+    VERIFY_NON_NULL(TAG, acl, ERROR,  OC_STACK_INVALID_PARAM);
+
+    OCStackResult res =  InstallACL(acl);
+
+    OIC_LOG(DEBUG, TAG, "OUT SRPSaveACL");
+    return res;
 }
 
 /**
@@ -2655,4 +2702,25 @@ OCStackResult SRPGetACLResource(void *ctx, const OCProvisionDev_t *selectedDevic
     OIC_LOG(DEBUG, TAG, "OUT SRPGetACLResource");
 
     return OC_STACK_OK;
+}
+
+OCStackResult SRPReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
+                                     size_t *chainSize)
+{
+    OIC_LOG(DEBUG, TAG, "IN SRPReadTrustCertChain");
+
+    OCStackResult res = OC_STACK_ERROR;
+    int secureFlag = 0;
+    OicSecCred_t* credData = GetCredEntryByCredId(credId);
+    if(credData)
+    {
+        res = CredToCBORPayload((const OicSecCred_t*) credData, trustCertChain,
+                                chainSize, secureFlag);
+        if(OC_STACK_OK != res)
+        {
+            OIC_LOG(INFO, TAG, "CredToCBORPayload failed");
+        }
+    }
+    DeleteCredList(credData);
+    return res;
 }

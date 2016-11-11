@@ -38,11 +38,6 @@ JniOcResourceResponse::~JniOcResourceResponse()
 {
 }
 
-void JniOcResourceResponse::setErrorCode(const int eCode)
-{
-    this->m_response->setErrorCode(eCode);
-}
-
 std::string JniOcResourceResponse::getNewResourceUri(void)
 {
     return this->m_response->getNewResourceUri();
@@ -103,22 +98,6 @@ JniOcResourceResponse* JniOcResourceResponse::getJniOcResourceResponsePtr
         ThrowOcException(JNI_NO_NATIVE_POINTER, "");
     }
     return request;
-}
-/*
-* Class:     org_iotivity_base_OcResourceResponse
-* Method:    setErrorCode
-* Signature: (I)V
-*/
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcResourceResponse_setErrorCode
-(JNIEnv *env, jobject thiz, jint eCode)
-{
-    LOGD("OcResourceResponse_setErrorCode");
-    JniOcResourceResponse *response = JniOcResourceResponse::getJniOcResourceResponsePtr(env, thiz);
-    if (!response)
-    {
-        return;
-    }
-    response->setErrorCode(static_cast<int>(eCode));
 }
 
 /*

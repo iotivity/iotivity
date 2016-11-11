@@ -142,14 +142,14 @@ public class CoapDevice extends Device {
     @Override
     public void sendResponse(IResponse response) {
         // This message must converted to CoapResponse
-        CoapResponse coapResp = (CoapResponse) response;
+        CoapResponse coapResponse = (CoapResponse) response;
 
         Iterator<Long> iterator = mObserveRequestList.keySet().iterator();
         while (iterator.hasNext()) {
             Long token = iterator.next();
-            Long respToken = Bytes.bytesToLong(coapResp.getToken());
+            Long respToken = Bytes.bytesToLong(coapResponse.getToken());
             if (respToken.equals(token)
-                    && coapResp.getObserve().equals(Observe.UNSUBSCRIBE)) {
+                    && coapResponse.getSequenceNumber() == -1) {
                 iterator.remove();
             }
         }

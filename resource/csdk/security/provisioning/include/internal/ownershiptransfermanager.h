@@ -33,19 +33,8 @@ extern "C" {
 #define OXM_STRING_MAX_LENGTH 32
 #define WRONG_PIN_MAX_ATTEMP 5
 
-/**
- * Context for ownership transfer(OT)
- */
-typedef struct OTMContext{
-    void* userCtx;                            /**< Context for user.*/
-    OCProvisionDev_t* selectedDeviceInfo;     /**< Selected device info for OT. */
-    OicUuid_t subIdForPinOxm;                 /**< Subject Id which uses PIN based OTM. */
-    OCProvisionResultCB ctxResultCallback;    /**< Function pointer to store result callback. */
-    OCProvisionResult_t* ctxResultArray;      /**< Result array having result of all device. */
-    size_t ctxResultArraySize;                /**< No of elements in result array. */
-    bool ctxHasError;                         /**< Does OT process have any error. */
-    int attemptCnt;
-}OTMContext_t;
+typedef struct OTMCallbackData OTMCallbackData_t;
+typedef struct OTMContext OTMContext_t;
 
 /**
  * Do ownership transfer for the unowned devices.
@@ -66,7 +55,6 @@ OCStackResult OTMDoOwnershipTransfer(void* ctx,
  */
 typedef OCStackResult (*OTMLoadSecret)(OTMContext_t* otmCtx);
 
-
 /*
  * Callback for create secure channel using secret inputed from OTMLoadSecret callback
  */
@@ -81,14 +69,31 @@ typedef OCStackResult (*OTMCreatePayloadCallback)(OTMContext_t* otmCtx, uint8_t 
 /**
  * Required callback for performing ownership transfer
  */
-typedef struct OTMCallbackData
+struct OTMCallbackData
 {
     OTMLoadSecret loadSecretCB;
     OTMCreateSecureSession createSecureSessionCB;
     OTMCreatePayloadCallback createSelectOxmPayloadCB;
     OTMCreatePayloadCallback createOwnerTransferPayloadCB;
-} OTMCallbackData_t;
+};
 
+/**
+ * Context for ownership transfer(OT)
+ */
+struct OTMContext{
+    void* userCtx;                            /**< Context for user.*/
+    OCProvisionDev_t* selectedDeviceInfo;     /**< Selected device info for OT. */
+    OicUuid_t subIdForPinOxm;                 /**< Subject Id which uses PIN based OTM. */
+    OCProvisionResultCB ctxResultCallback;    /**< Function pointer to store result callback. */
+    OCProvisionResult_t* ctxResultArray;      /**< Result array having result of all device. */
+    size_t ctxResultArraySize;                /**< No of elements in result array. */
+    bool ctxHasError;                         /**< Does OT process have any error. */
+    OCDoHandle ocDoHandle;                    /** <A handle for latest request message*/
+    OTMCallbackData_t otmCallback; /**< OTM callbacks to perform the OT/MOT. **/
+    int attemptCnt;
+};
+
+// TODO: Remove this OTMSetOwnershipTransferCallbackData, Please see the jira ticket IOT-1484
 /**
  * Set the callbacks for ownership transfer
  *
@@ -97,6 +102,15 @@ typedef struct OTMCallbackData
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OTMSetOwnershipTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData);
+
+/**
+ * API to assign the OTMCallback for each OxM.
+ *
+ * @param[out] callbacks Instance of OTMCallback_t
+ * @param[in] oxm Ownership transfer method
+ * @return  OC_STACK_OK on success
+ */
+OCStackResult OTMSetOTCallback(OicSecOxm_t oxm, OTMCallbackData_t* callbacks);
 
 #ifdef __cplusplus
 }

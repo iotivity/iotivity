@@ -74,12 +74,12 @@ void ProcessKeepAlive();
 /**
  * This API will be called from RI layer whenever there is a request for KeepAlive.
  * Virtual Resource.
- * @param[in]   endPoint        RemoteEndpoint which sent the packet.
- * @param[in]   requestInfo     Received coap packet.
+ * @param[in]   request     Received request information.
+ * @param[in]   resource    Resource handle used for sending the response.
  * @return  ::OC_STACK_OK or Appropriate error code.
  */
-OCStackResult HandleKeepAliveRequest(const CAEndpoint_t* endPoint,
-                                     const CARequestInfo_t* requestInfo);
+OCStackResult HandleKeepAliveRequest(OCServerRequest *request,
+                                     const OCResource *resource);
 
 /**
  * API to handle the connected device for KeepAlive.

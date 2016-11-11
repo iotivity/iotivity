@@ -188,7 +188,7 @@ class DeviceResource : public Resource
                     if(request->getRequestType() == "GET")
                     {
                         std::cout<<"DeviceResource Get Request"<<std::endl;
-                        pResponse->setErrorCode(200);
+
                         pResponse->setResponseResult(OC_EH_OK);
                         pResponse->setResourceRepresentation(get(), "");
                         if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -201,7 +201,7 @@ class DeviceResource : public Resource
                         std::cout<<"DeviceResource Delete Request"<<std::endl;
                         if(deleteDeviceResource() == OC_STACK_OK)
                         {
-                            pResponse->setErrorCode(200);
+
                             pResponse->setResponseResult(OC_EH_RESOURCE_DELETED);
                             ehResult = OC_EH_OK;
                         }
@@ -252,7 +252,7 @@ class DeviceResource : public Resource
                 if(request->getRequestType() == "GET")
                 {
                     std::cout<<"Default Entity Handler: Get Request"<<std::endl;
-                    pResponse->setErrorCode(200);
+
                     pResponse->setResourceRepresentation(get(), "");
                     if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {
@@ -333,7 +333,7 @@ class LightResource : public Resource
                 if(request->getRequestType() == "GET")
                 {
                     std::cout<<"Light Get Request"<<std::endl;
-                    pResponse->setErrorCode(200);
+
                     pResponse->setResourceRepresentation(get(), "");
                     if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {
@@ -344,7 +344,7 @@ class LightResource : public Resource
                 {
                     std::cout <<"Light Put Request"<<std::endl;
                     put(request->getResourceRepresentation());
-                    pResponse->setErrorCode(200);
+
                     pResponse->setResourceRepresentation(get(), "");
                     if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {
@@ -433,7 +433,7 @@ class DoorResource : public Resource
                     // note that we know the side because std::bind gives us the
                     // appropriate object
                     std::cout<< m_side << " Door Get Request"<<std::endl;
-                    pResponse->setErrorCode(200);
+
                     pResponse->setResourceRepresentation(get(), "");
                     if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {
@@ -444,7 +444,7 @@ class DoorResource : public Resource
                 {
                     std::cout << m_side <<" Door Put Request"<<std::endl;
                     put(request->getResourceRepresentation());
-                    pResponse->setErrorCode(200);
+
                     pResponse->setResourceRepresentation(get(),"");
                     if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                     {

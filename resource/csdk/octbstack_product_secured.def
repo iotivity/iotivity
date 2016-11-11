@@ -23,6 +23,7 @@ OCGetDevInfoFromNetwork
 OCGetLinkedStatus
 OCInitPM
 OCProvisionACL
+OCSaveACL
 OCProvisionCredentials
 OCProvisionDirectPairing
 OCProvisionPairwiseDevices
@@ -34,3 +35,4 @@ OCUnlinkDevices
 
 SetGeneratePinCB
 SetInputPinCB
+SetRandomPinPolicy

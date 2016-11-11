@@ -280,7 +280,6 @@ public class ConfigurationServer {
             rep = mntResource.getDiagnosticsRepresentation();
         }
         response.setResourceRepresentation(rep, OcPlatform.DEFAULT_INTERFACE);
-        response.setErrorCode(200);
 
         try {
             OcPlatform.sendResponse(response);

@@ -32,18 +32,60 @@
 #include "credresource.h"
 #include "cainterface.h"
 
-#define TAG "PIN_OXM_COMMON"
+#define TAG "OIC_PIN_OXM_COMMON"
+
+#define NUMBER_OF_PINNUM (10)
+#define NUMBER_OF_ALPHABET (26)
 
 static GeneratePinCallback gGenPinCallback = NULL;
 static InputPinCallback gInputPinCallback = NULL;
 
 typedef struct PinOxmData {
-    uint8_t pinData[OXM_RANDOM_PIN_SIZE + 1];
+    uint8_t pinData[OXM_RANDOM_PIN_MAX_SIZE + 1];
+    size_t pinSize;
+    OicSecPinType_t pinType;
     OicUuid_t newDevice;
 }PinOxmData_t;
 
-static PinOxmData_t g_PinOxmData;
+static PinOxmData_t g_PinOxmData = {
+        .pinData={0},
+        .pinSize = OXM_RANDOM_PIN_DEFAULT_SIZE,
+        .pinType = (OicSecPinType_t)(OXM_RANDOM_PIN_DEFAULT_PIN_TYPE),
+    };
 
+/**
+ * Internal function to check pinType
+ */
+static bool IsValidPinType(OicSecPinType_t pinType)
+{
+    return ((NUM_PIN & pinType) ||
+            (LOWERCASE_CHAR_PIN & pinType) ||
+            (UPPERCASE_CHAR_PIN & pinType));
+}
+
+OCStackResult SetRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType)
+{
+    if(OXM_RANDOM_PIN_MIN_SIZE > pinSize)
+    {
+        OIC_LOG(ERROR, TAG, "PIN size is too small");
+        return OC_STACK_INVALID_PARAM;
+    }
+    if(OXM_RANDOM_PIN_MAX_SIZE < pinSize)
+    {
+        OIC_LOG_V(ERROR, TAG, "PIN size can not exceed %d bytes", OXM_RANDOM_PIN_MAX_SIZE);
+        return OC_STACK_INVALID_PARAM;
+    }
+    if(false == IsValidPinType(pinType))
+    {
+        OIC_LOG(ERROR, TAG, "Invalid PIN type.");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    g_PinOxmData.pinSize = pinSize;
+    g_PinOxmData.pinType = pinType;
+
+    return OC_STACK_OK;
+}
 
 void SetInputPinCB(InputPinCallback pinCB)
 {
@@ -67,6 +109,52 @@ void SetGeneratePinCB(GeneratePinCallback pinCB)
     gGenPinCallback = pinCB;
 }
 
+void UnsetInputPinCB()
+{
+    gInputPinCallback = NULL;
+}
+
+/**
+ * Internal function to generate PIN element according to pinType.
+ * This function assumes the pinType is valid.
+ * In case of invalid pinType, '0' will be returned as default vaule.
+ */
+static char GenerateRandomPinElement(OicSecPinType_t pinType)
+{
+    const char defaultRetValue = '0';
+    char allowedCharacters[NUMBER_OF_PINNUM + NUMBER_OF_ALPHABET * 2];
+    size_t curIndex = 0;
+
+    if(NUM_PIN & pinType)
+    {
+        for(char pinEle = '0'; pinEle <= '9'; pinEle++)
+        {
+            allowedCharacters[curIndex++] = pinEle;
+        }
+    }
+    if(UPPERCASE_CHAR_PIN & pinType)
+    {
+        for(char pinEle = 'A'; pinEle <= 'Z'; pinEle++)
+        {
+            allowedCharacters[curIndex++] = pinEle;
+        }
+    }
+    if(LOWERCASE_CHAR_PIN & pinType)
+    {
+        for(char pinEle = 'a'; pinEle <= 'z'; pinEle++)
+        {
+            allowedCharacters[curIndex++] = pinEle;
+        }
+    }
+
+    if(0 == curIndex)
+    {
+        return defaultRetValue;
+    }
+
+    return allowedCharacters[OCGetRandomRange(0, curIndex)];
+}
+
 OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize)
 {
     if(!pinBuffer)
@@ -74,22 +162,30 @@ OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize)
         OIC_LOG(ERROR, TAG, "PIN buffer is NULL");
         return OC_STACK_INVALID_PARAM;
     }
-    if(OXM_RANDOM_PIN_SIZE + 1 > bufferSize)
+    if(g_PinOxmData.pinSize + 1 > bufferSize)
     {
         OIC_LOG(ERROR, TAG, "PIN buffer size is too small");
         return OC_STACK_INVALID_PARAM;
     }
-    for(size_t i = 0; i < OXM_RANDOM_PIN_SIZE; i++)
+    if(false == IsValidPinType(g_PinOxmData.pinType))
     {
-        pinBuffer[i] = OCGetRandomRange((uint32_t)'0', (uint32_t)'9');
+        OIC_LOG(ERROR, TAG, "Invalid PIN type.");
+        OIC_LOG(ERROR, TAG, "Please set the PIN type using SetRandomPinPolicy API.");
+        return OC_STACK_ERROR;
+    }
+
+    for(size_t i = 0; i < g_PinOxmData.pinSize; i++)
+    {
+        pinBuffer[i] = GenerateRandomPinElement(g_PinOxmData.pinType);
         g_PinOxmData.pinData[i] = pinBuffer[i];
     }
-    pinBuffer[OXM_RANDOM_PIN_SIZE] = '\0';
-    g_PinOxmData.pinData[OXM_RANDOM_PIN_SIZE] = '\0';
+
+    pinBuffer[g_PinOxmData.pinSize] = '\0';
+    g_PinOxmData.pinData[g_PinOxmData.pinSize] = '\0';
 
     if(gGenPinCallback)
     {
-        gGenPinCallback(pinBuffer, OXM_RANDOM_PIN_SIZE);
+        gGenPinCallback(pinBuffer, g_PinOxmData.pinSize);
     }
     else
     {
@@ -130,7 +226,7 @@ OCStackResult InputPin(char* pinBuffer, size_t bufferSize)
         OIC_LOG(ERROR, TAG, "PIN buffer is NULL");
         return OC_STACK_INVALID_PARAM;
     }
-    if(OXM_RANDOM_PIN_SIZE + 1 > bufferSize)
+    if(g_PinOxmData.pinSize + 1 > bufferSize)
     {
         OIC_LOG(ERROR, TAG, "PIN buffer size is too small");
         return OC_STACK_INVALID_PARAM;
@@ -138,9 +234,9 @@ OCStackResult InputPin(char* pinBuffer, size_t bufferSize)
 
     if(gInputPinCallback)
     {
-        gInputPinCallback(pinBuffer, OXM_RANDOM_PIN_SIZE + 1);
-        memcpy(g_PinOxmData.pinData, pinBuffer, OXM_RANDOM_PIN_SIZE);
-        g_PinOxmData.pinData[OXM_RANDOM_PIN_SIZE] = '\0';
+        gInputPinCallback(pinBuffer, bufferSize);
+        OICStrcpy(g_PinOxmData.pinData, OXM_RANDOM_PIN_MAX_SIZE + 1, pinBuffer);
+        g_PinOxmData.pinSize = strlen(g_PinOxmData.pinData);
     }
     else
     {
@@ -153,9 +249,9 @@ OCStackResult InputPin(char* pinBuffer, size_t bufferSize)
 }
 
 #ifdef _ENABLE_MULTIPLE_OWNER_
-OCStackResult SetPreconfigPin(const char* pinBuffer, size_t pinLength)
+OCStackResult SetPreconfigPin(const char *pinBuffer, size_t pinLength)
 {
-    if(NULL == pinBuffer || OXM_PRECONFIG_PIN_SIZE < pinLength)
+    if(NULL == pinBuffer || OXM_PRECONFIG_PIN_MAX_SIZE < pinLength)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -181,7 +277,7 @@ int DerivePSKUsingPIN(uint8_t* result)
 {
     int dtlsRes = DeriveCryptoKeyFromPassword(
                                               (const unsigned char *)g_PinOxmData.pinData,
-                                              OXM_RANDOM_PIN_SIZE,
+                                              g_PinOxmData.pinSize,
                                               g_PinOxmData.newDevice.id,
                                               UUID_LENGTH, PBKDF_ITERATIONS,
                                               OWNER_PSK_LENGTH_128, result);

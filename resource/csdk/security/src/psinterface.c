@@ -39,7 +39,7 @@
 #include "pstatresource.h"
 #include "doxmresource.h"
 
-#define TAG  "SRM-PSI"
+#define TAG  "OIC_SRM_PSI"
 
 //SVR database buffer block size
 #ifdef _WIN32
@@ -360,7 +360,7 @@ OCStackResult UpdateSecureResourceInPS(const char *rsrcName, const uint8_t *psPa
 
             cborEncoderResult |= cbor_encoder_close_container(&encoder, &secRsrc);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Array.");
-            outSize = encoder.ptr - outPayload;
+            outSize = cbor_encoder_get_buffer_size(&encoder, outPayload);
         }
     }
     else if (psPayload && psSize)
@@ -383,7 +383,7 @@ OCStackResult UpdateSecureResourceInPS(const char *rsrcName, const uint8_t *psPa
 
         cborEncoderResult |= cbor_encoder_close_container(&encoder, &secRsrc);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Array.");
-        outSize = encoder.ptr - outPayload;
+        outSize = cbor_encoder_get_buffer_size(&encoder, outPayload);
     }
 
     if (outPayload && outSize)
@@ -537,7 +537,7 @@ OCStackResult ResetSecureResourceInPS(void)
 
             cborEncoderResult |= cbor_encoder_close_container(&encoder, &secRsrc);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Array.");
-            outSize = encoder.ptr - outPayload;
+            outSize = cbor_encoder_get_buffer_size(&encoder, outPayload);
         }
 
         if (outPayload && outSize)
@@ -698,7 +698,7 @@ OCStackResult CreateResetProfile(void)
 
             cborEncoderResult |= cbor_encoder_close_container(&encoder, &secRsrc);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Array.");
-            resetPfCborLen = encoder.ptr - resetPfCbor;
+            resetPfCborLen = cbor_encoder_get_buffer_size(&encoder, resetPfCbor);
         }
 
         UpdateSecureResourceInPS(OIC_JSON_RESET_PF_NAME, resetPfCbor, resetPfCborLen);

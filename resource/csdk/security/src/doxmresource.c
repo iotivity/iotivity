@@ -35,6 +35,7 @@
 #include "utlist.h"
 #include "ocrandom.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "cainterface.h"
 #include "ocserverrequest.h"
 #include "resourcemanager.h"
@@ -51,7 +52,7 @@
 #include "srmutility.h"
 #include "pinoxmcommon.h"
 
-#define TAG  "SRM-DOXM"
+#define TAG  "OIC_SRM_DOXM"
 #define CHAR_ZERO ('0')
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
@@ -344,7 +345,7 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
 
     if (CborNoError == cborEncoderResult)
     {
-        *size = encoder.ptr - outPayload;
+        *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
         *payload = outPayload;
         ret = OC_STACK_OK;
     }
@@ -355,7 +356,7 @@ exit:
         // reallocate and try again!
         OICFree(outPayload);
         // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         OIC_LOG_V(DEBUG, TAG, "Doxm reallocation size : %zd.", cborLen);
         cborEncoderResult = CborNoError;
         ret = DoxmToCBORPayload(doxm, payload, &cborLen, rwOnly);
@@ -929,15 +930,30 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
         const CASecureEndpoint_t* authenticatedSubOwnerInfo = CAGetSecureEndpointData(object);
         if(authenticatedSubOwnerInfo)
         {
-            OicSecSubOwner_t* subOwnerInst = (OicSecSubOwner_t*)OICMalloc(sizeof(OicSecSubOwner_t));
-            if(subOwnerInst)
+            OicSecSubOwner_t* subOwnerInst = NULL;
+            LL_FOREACH(gDoxm->subOwners, subOwnerInst)
             {
-                OIC_LOG(DEBUG, TAG, "Adding New SubOwner");
-                memcpy(subOwnerInst->uuid.id, authenticatedSubOwnerInfo->identity.id, authenticatedSubOwnerInfo->identity.id_length);
-                LL_APPEND(gDoxm->subOwners, subOwnerInst);
-                if(!UpdatePersistentStorage(gDoxm))
+                if(0 == memcmp(subOwnerInst->uuid.id,
+                               authenticatedSubOwnerInfo->identity.id,
+                               authenticatedSubOwnerInfo->identity.id_length))
                 {
-                    OIC_LOG(ERROR, TAG, "Failed to register SubOwner UUID into Doxm");
+                    break;
+                }
+            }
+
+            if(NULL == subOwnerInst)
+            {
+                subOwnerInst = (OicSecSubOwner_t*)OICCalloc(1, sizeof(OicSecSubOwner_t));
+                if(subOwnerInst)
+                {
+                    OIC_LOG(DEBUG, TAG, "Adding New SubOwner");
+                    memcpy(subOwnerInst->uuid.id, authenticatedSubOwnerInfo->identity.id,
+                           authenticatedSubOwnerInfo->identity.id_length);
+                    LL_APPEND(gDoxm->subOwners, subOwnerInst);
+                    if(!UpdatePersistentStorage(gDoxm))
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to register SubOwner UUID into Doxm");
+                    }
                 }
             }
         }
@@ -1145,11 +1161,11 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                                                     ehRequest->devAddr.adapter);
                         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
 
-                        char ranPin[OXM_RANDOM_PIN_SIZE + 1] = {0,};
+                        char ranPin[OXM_RANDOM_PIN_MAX_SIZE + 1] = {0};
                          //TODO ehRequest->messageID for copa over TCP always is null. Find reason why.
                         if(ehRequest->devAddr.adapter == OC_ADAPTER_IP && previousMsgId != ehRequest->messageID)
                         {
-                            if(OC_STACK_OK == GeneratePin(ranPin, OXM_RANDOM_PIN_SIZE + 1))
+                            if(OC_STACK_OK == GeneratePin(ranPin, sizeof(ranPin)))
                             {
                                 //Set the device id to derive temporal PSK
                                 SetUuidForPinBasedOxm(&gDoxm->deviceID);
@@ -1171,7 +1187,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                         }
                         else if(previousMsgId != ehRequest->messageID)
                         {
-                            if(OC_STACK_OK == GeneratePin(ranPin, OXM_RANDOM_PIN_SIZE + 1))
+                            if(OC_STACK_OK == GeneratePin(ranPin, sizeof(ranPin)))
                             {
                                 //Set the device id to derive temporal PSK
                                 SetUuidForPinBasedOxm(&gDoxm->deviceID);
@@ -1599,7 +1615,8 @@ OCStackResult SetDoxmDeviceID(const OicUuid_t *deviceID)
 
 #ifdef __WITH_DTLS__
     //for normal device.
-    if(true == gDoxm->owned)
+    if(true == gDoxm->owned &&
+       memcmp(gDoxm->deviceID.id, gDoxm->owner.id, sizeof(gDoxm->owner.id)) != 0)
     {
         OIC_LOG(ERROR, TAG, "This device owned by owner's device.");
         OIC_LOG(ERROR, TAG, "Device UUID cannot be changed to guarantee the reliability of the connection.");

@@ -93,6 +93,7 @@ provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if target_os == 'tizen':
     provisioning_env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
+if target_os in ['linux', 'tizen']:
     provisioning_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 
 ######################################################################

@@ -62,7 +62,6 @@ OCEntityHandlerResult MiddleServer::entityHandler(const std::shared_ptr<OCResour
         auto response = std::make_shared<OC::OCResourceResponse>();
         response->setRequestHandle(request->getRequestHandle());
         response->setResourceHandle(request->getResourceHandle());
-        response->setErrorCode(200);
         response->setResponseResult(OC_EH_OK);
         if (OC_STACK_OK != OCPlatform::sendResponse(response)) {
             return OC_EH_ERROR;

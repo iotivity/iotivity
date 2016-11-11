@@ -172,7 +172,14 @@ if (0 != (ret) && MBEDTLS_ERR_SSL_WANT_READ != (int) (ret) &&                   
     {                                                                                              \
         mbedtls_ssl_send_alert_message(&(peer)->ssl, MBEDTLS_SSL_ALERT_LEVEL_FATAL, (msg));        \
     }                                                                                              \
-    SSL_RES((peer), CA_STATUS_FAILED);                                                             \
+    if ((int) MBEDTLS_ERR_SSL_FATAL_ALERT_MESSAGE == (int) (ret) &&                                \
+        ((int) MBEDTLS_SSL_ALERT_MSG_DECRYPTION_FAILED == (peer)->ssl.in_msg[1] ||                 \
+         (int) MBEDTLS_SSL_ALERT_MSG_DECRYPT_ERROR == (peer)->ssl.in_msg[1] ||                     \
+         (int) MBEDTLS_SSL_ALERT_MSG_HANDSHAKE_FAILURE == (peer)->ssl.in_msg[1] ||                 \
+         (int) MBEDTLS_SSL_ALERT_MSG_BAD_RECORD_MAC == (peer)->ssl.in_msg[1]))                     \
+    {                                                                                              \
+        SSL_RES((peer), CA_DTLS_AUTHENTICATION_FAILURE);                                           \
+    }                                                                                              \
     RemovePeerFromList(&(peer)->sep.endpoint);                                                     \
     if (mutex)                                                                                     \
     {                                                                                              \
@@ -185,6 +192,9 @@ if (0 != (ret) && MBEDTLS_ERR_SSL_WANT_READ != (int) (ret) &&                   
  * A macro that checks \a f function return code
  *
  * If function returns error code it goes to error processing.
+ *
+ * **IMPORTANT:** Any time CHECK_MBEDTLS_RET is used an `exit:` goto label must
+ *                be present to handle error processing.
  *
  * @param[in] f  Function to call
  */
@@ -475,29 +485,35 @@ static int GetAdapterIndex(CATransportAdapter_t adapter)
  * @param[in]  data    message
  * @param[in]  dataLen    message length
  *
- * @return  message length
+ * @return  message length or -1 on error.
  */
 static int SendCallBack(void * tep, const unsigned char * data, size_t dataLen)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
-    VERIFY_NON_NULL_RET(tep, NET_SSL_TAG, "secure endpoint is NULL", 0);
-    VERIFY_NON_NULL_RET(data, NET_SSL_TAG, "data is NULL", 0);
+    VERIFY_NON_NULL_RET(tep, NET_SSL_TAG, "secure endpoint is NULL", -1);
+    VERIFY_NON_NULL_RET(data, NET_SSL_TAG, "data is NULL", -1);
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Data len: %zu", dataLen);
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Adapter: %u", ((SslEndPoint_t * )tep)->sep.endpoint.adapter);
+    ssize_t sentLen = 0;
     int adapterIndex = GetAdapterIndex(((SslEndPoint_t * )tep)->sep.endpoint.adapter);
     if (0 == adapterIndex || 1 == adapterIndex)
     {
         CAPacketSendCallback sendCallback = g_caSslContext->adapterCallbacks[adapterIndex].sendCallback;
-        sendCallback(&(((SslEndPoint_t * )tep)->sep.endpoint), (const void *) data, (uint32_t) dataLen);
+        sentLen = sendCallback(&(((SslEndPoint_t * )tep)->sep.endpoint), (const void *) data, dataLen);
+        if (sentLen != dataLen)
+        {
+            OIC_LOG_V(DEBUG, NET_SSL_TAG,
+                      "Packet was partially sent - total/sent/remained bytes : %d/%d/%d",
+                      sentLen, dataLen, (dataLen - sentLen));
+        }
     }
     else
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Unsupported adapter");
-        dataLen = 0;
     }
 
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
-    return dataLen;
+    return sentLen;
 }
 /**
  * Read callback.
@@ -529,27 +545,27 @@ static int RecvCallBack(void * tep, unsigned char * data, size_t dataLen)
  * Parse chain of X.509 certificates.
  *
  * @param[out] crt     container for X.509 certificates
- * @param[in]  data    buffer with X.509 certificates. Certificates may be in either in PEM
+ * @param[in]  buf     buffer with X.509 certificates. Certificates may be in either in PEM
                        or DER format in a jumble. Each PEM certificate must be NULL-terminated.
  * @param[in]  bufLen  buffer length
  *
  * @return  0 on success, -1 on error
  */
-static int ParseChain(mbedtls_x509_crt * crt, const unsigned char * buf, int bufLen)
+static int ParseChain(mbedtls_x509_crt * crt, const unsigned char * buf, size_t bufLen)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(crt, NET_SSL_TAG, "Param crt is NULL" , -1);
     VERIFY_NON_NULL_RET(buf, NET_SSL_TAG, "Param buf is NULL" , -1);
 
-    int pos = 0;
-    int ret = 0;
+    size_t pos = 0;
     size_t len = 0;
     unsigned char * tmp = NULL;
-
+    /* byte encoded ASCII string '-----BEGIN CERTIFICATE-----' */
     char pemCertHeader[] = {
         0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x42, 0x45, 0x47, 0x49, 0x4e, 0x20, 0x43, 0x45, 0x52,
         0x54, 0x49, 0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x2d, 0x2d, 0x2d, 0x2d, 0x2d
     };
+    // byte encoded ASCII string '-----END CERTIFICATE-----' */
     char pemCertFooter[] = {
         0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x45, 0x4e, 0x44, 0x20, 0x43, 0x45, 0x52, 0x54, 0x49,
         0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x2d, 0x2d, 0x2d, 0x2d, 0x2d
@@ -602,14 +618,13 @@ static int ParseChain(mbedtls_x509_crt * crt, const unsigned char * buf, int buf
         else
         {
              OIC_LOG_BUFFER(DEBUG, NET_SSL_TAG, buf, bufLen);
-             OIC_LOG_V(ERROR, NET_SSL_TAG, "parseChain returned -0x%x", -ret);
              OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
              return -1;
         }
     }
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return 0;
-
+    // exit label required for CHECK_MBEDTLS_RET macro
 exit:
     return -1;
 }
@@ -1699,7 +1714,11 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
             ret = mbedtls_ssl_read(&peer->ssl, decryptBuffer, TLS_MSG_BUF_LEN);
         } while (MBEDTLS_ERR_SSL_WANT_READ == ret);
 
-        if (MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY == ret)
+        if (MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY == ret ||
+            // TinyDTLS sends fatal close_notify alert
+            (MBEDTLS_ERR_SSL_FATAL_ALERT_MESSAGE == ret &&
+             MBEDTLS_SSL_ALERT_LEVEL_FATAL == peer->ssl.in_msg[0] &&
+             MBEDTLS_SSL_ALERT_MSG_CLOSE_NOTIFY == peer->ssl.in_msg[1]))
         {
             OIC_LOG(INFO, NET_SSL_TAG, "Connection was closed gracefully");
             SSL_CLOSE_NOTIFY(peer, ret);
@@ -1978,7 +1997,7 @@ static int pHash (const unsigned char *key, size_t keyLen,
     mbedtls_md_free(&hmacA);
     mbedtls_md_free(&hmacP);
     return bufLen;
-
+    // exit label required for CHECK_MBEDTLS_RET macro
 exit:
     mbedtls_md_free(&hmacA);
     mbedtls_md_free(&hmacP);

@@ -32,7 +32,6 @@ class JniOcResourceResponse
 public:
     JniOcResourceResponse(std::shared_ptr<OCResourceResponse> resourceResponse);
     ~JniOcResourceResponse();
-    void setErrorCode(const int eCode);
     std::string getNewResourceUri(void);
     void setNewResourceUri(const std::string newResourceUri);
     void setHeaderOptions(const HeaderOptions& headerOptions);
@@ -50,14 +49,6 @@ private:
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-    /*
-    * Class:     org_iotivity_base_OcResourceResponse
-    * Method:    setErrorCode
-    * Signature: (I)V
-    */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcResourceResponse_setErrorCode
-        (JNIEnv *, jobject, jint);
 
     /*
     * Class:     org_iotivity_base_OcResourceResponse

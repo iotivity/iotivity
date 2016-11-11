@@ -9,6 +9,18 @@ Source0: %{name}-%{version}.tar.bz2
 Source1001: %{name}.manifest
 Source1002: %{name}-test.manifest
 
+%if "%{tizen}" == "2.3"
+%define TARGET_TRANSPORT IP
+%endif
+
+%if "%{profile}" == "ivi"
+%define TARGET_TRANSPORT IP
+%endif
+
+%if "%{TARGET_OS}" == "linux"
+%define TARGET_TRANSPORT IP
+%endif
+
 %define JOB "-j4"
 %if 0%{?speedpython}
 %define JOB %{?_smp_mflags}
@@ -46,6 +58,10 @@ Source1002: %{name}-test.manifest
 
 %define ex_install_dir %{buildroot}%{_bindir}
 
+%if ! %{?license:0}
+%define license %doc
+%endif
+
 # Default values to be eventually overiden BEFORE or as gbs params:
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
 %{!?LOGGING: %define LOGGING 1}
@@ -53,7 +69,7 @@ Source1002: %{name}-test.manifest
 %{!?SECURED: %define SECURED 0}
 %{!?TARGET_ARCH: %define TARGET_ARCH %{_arch}}
 %{!?TARGET_OS: %define TARGET_OS tizen}
-%{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
+%{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP,BT}
 %{!?VERBOSE: %define VERBOSE 1}
 %{!?WITH_CLOUD: %define WITH_CLOUD 0}
 %{!?WITH_MQ: %define WITH_MQ OFF}
@@ -74,6 +90,7 @@ BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(sqlite3)
 %if "%{TARGET_OS}" == "tizen"
 BuildRequires:  pkgconfig(dlog)
+BuildRequires:  pkgconfig(capi-network-connection)
 BuildRequires:  pkgconfig(capi-network-wifi)
 BuildRequires:  pkgconfig(capi-network-bluetooth) >= 0.1.52
 %endif
@@ -217,7 +234,9 @@ cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/service/coap-http-proxy/samples
 mkdir -p %{ex_install_dir}/provisioning
 mkdir -p %{ex_install_dir}/provision-sample
 
-cp ./resource/csdk/security/include/pinoxmcommon.h %{buildroot}%{_includedir}
+
+cp ./resource/csdk/security/include/*.h %{buildroot}%{_includedir}
+cp ./resource/csdk/connectivity/api/*.h %{buildroot}%{_includedir}/
 cp ./resource/csdk/security/provisioning/include/oxm/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/internal/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/*.h %{buildroot}%{_includedir}
@@ -227,15 +246,6 @@ cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_justworks.dat 
 cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/resource/csdk/security/provisioning/sample/sampleserver_randompin %{ex_install_dir}/provision-sample/
 cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat %{ex_install_dir}/provision-sample/
 
-%endif
-
-
-%if 0%{?tizen_version_major} < 3
-mkdir -p %{buildroot}/%{_datadir}/license
-cp LICENSE %{buildroot}/%{_datadir}/license/%{name}
-cp LICENSE %{buildroot}/%{_datadir}/license/%{name}-devel
-cp LICENSE %{buildroot}/%{_datadir}/license/%{name}-service
-cp LICENSE %{buildroot}/%{_datadir}/license/%{name}-test
 %endif
 
 cp resource/c_common/*.h %{buildroot}%{_includedir}
@@ -261,20 +271,17 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %files
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
+%license LICENSE
 %{_libdir}/liboc.so
 %{_libdir}/liboc_logger.so
 %{_libdir}/liboc_logger_core.so
 %{_libdir}/liboctbstack.so
 %{_libdir}/libconnectivity_abstraction.so
-%if 0%{?tizen_version_major} < 3
-%{_datadir}/license/%{name}
-%else
-%license LICENSE
-%endif
 
 %files service
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
+%license LICENSE
 %{_libdir}/libBMISensorBundle.so
 %{_libdir}/libDISensorBundle.so
 %{_libdir}/libTGMSDKLibrary.so
@@ -297,21 +304,12 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %else
 %{_libdir}/libresource_hosting.so
 %endif
-%if 0%{?tizen_version_major} < 3
-%{_datadir}/license/%{name}-service
-%else
-%license LICENSE
-%endif
 
 %files test
 %manifest %{name}-test.manifest
 %defattr(-,root,root,-)
-%{_bindir}/*
-%if 0%{?tizen_version_major} < 3
-%{_datadir}/license/%{name}-test
-%else
 %license LICENSE
-%endif
+%{_bindir}/*
 
 %files devel
 %defattr(-,root,root,-)

@@ -94,8 +94,9 @@ if target_os in ['android','linux']:
 		env.get('SRC_DIR') + '/resource/csdk/logger/include',
 		env.get('SRC_DIR') + '/resource/csdk/security/include',
 		env.get('SRC_DIR') + '/extlibs/cjson',
-		env.get('SRC_DIR') + '/extlibs/sqlite3',
 		env.get('SRC_DIR') + '/service/easy-setup/inc'])
+	if target_os not in ['linux', 'tizen']:
+		easy_setup_env.PrependUnique(CPPPATH = [env.get('SRC_DIR') + '/extlibs/sqlite3'])
 	if env.get('SECURED') == '1':
 		with_upstream_libcoap = easy_setup_env.get('WITH_UPSTREAM_LIBCOAP')
 		if with_upstream_libcoap == '1':

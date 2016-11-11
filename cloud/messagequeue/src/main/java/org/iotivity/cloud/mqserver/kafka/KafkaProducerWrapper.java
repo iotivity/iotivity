@@ -28,6 +28,12 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.iotivity.cloud.util.Log;
 
+/**
+ *
+ * This class provides a set of APIs to use Kafka producer APIs for publishing
+ * messages.
+ *
+ */
 public class KafkaProducerWrapper {
 
     private String                   mTopicName = null;
@@ -44,7 +50,15 @@ public class KafkaProducerWrapper {
         mProducer = new KafkaProducer<>(buildPropertiesForPublish());
     }
 
-    // TODO handle exception
+    /**
+     * API to publish message to Kafka topic
+     * 
+     * @param message
+     *            message to publish
+     * 
+     * @return returns true if the message is successfully published, otherwise
+     *         false
+     */
     public boolean publishMessage(byte[] message) {
 
         Log.d("kafka publishMessage - " + mTopicName);
@@ -58,6 +72,9 @@ public class KafkaProducerWrapper {
         return true;
     }
 
+    /**
+     * API to close Kafka producer connection
+     */
     public void closeConnection() {
 
         mProducer.close();

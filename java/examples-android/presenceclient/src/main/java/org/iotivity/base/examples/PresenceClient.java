@@ -73,6 +73,15 @@ public class PresenceClient extends Activity implements
         OcPlatform.Configure(platformConfig);
 
         try {
+            msg("Subscribing to multicast presence");
+            OcPlatform.subscribePresence(OcPlatform.PRESENCE_URI,
+                    EnumSet.of(OcConnectivityType.CT_DEFAULT), this);
+        } catch (OcException e) {
+            Log.e(TAG, e.toString());
+            msg("Failed to subscribe to multicast presence");
+        }
+
+        try {
             msg("Finding Resource...");
             OcPlatform.findResource("", OcPlatform.WELL_KNOWN_QUERY,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), this);

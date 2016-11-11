@@ -632,7 +632,7 @@ TEST(EnableMOT, NullParam)
     EXPECT_NE((OCProvisionDev_t*)NULL, g_ownedDevices);
 
     g_doneCB = false;
-    result = MOTChangeMode(NULL, g_ownedDevices, OIC_MULTIPLE_OWNER_ENABLE, updateDoxmForMOTCB);
+    result = OCChangeMOTMode(NULL, g_ownedDevices, OIC_MULTIPLE_OWNER_ENABLE, updateDoxmForMOTCB);
     EXPECT_EQ(OC_STACK_OK, result);
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
@@ -664,11 +664,11 @@ TEST(ProvisonPreconfiguredPIN, NullParam)
     OCStackResult result = OC_STACK_OK;
 
     g_doneCB = false;
-    result = OCProvisionPreconfPin(NULL, g_motEnabledDevices, "12341234", strlen("12341234"), provisionPreconfiguredPinCB);
+    result = OCProvisionPreconfigPin(NULL, g_motEnabledDevices, "12341234", strlen("12341234"), provisionPreconfiguredPinCB);
     EXPECT_EQ(OC_STACK_OK, result);
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionPreconfPin callback error");
+        OIC_LOG(ERROR, TAG, "OCProvisionPreconfigPin callback error");
         return;
     }
 
@@ -680,7 +680,7 @@ TEST(SelectMOTMethod, NullParam)
     OCStackResult result = OC_STACK_OK;
 
     g_doneCB = false;
-    result = MOTSelectMOTMethod(NULL, g_motEnabledDevices, OIC_PRECONFIG_PIN, updateDoxmForMOTCB);
+    result = OCSelectMOTMethod(NULL, g_motEnabledDevices, OIC_PRECONFIG_PIN, updateDoxmForMOTCB);
     EXPECT_EQ(OC_STACK_OK, result);
     if(waitCallbackRet())  // input |g_doneCB| flag implicitly
     {

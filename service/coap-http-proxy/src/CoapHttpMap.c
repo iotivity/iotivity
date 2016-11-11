@@ -24,7 +24,7 @@
 #include "oic_string.h"
 #include "logger.h"
 #include "ocstack.h"
-#include "pdu.h"
+#include <coap/pdu.h>
 #include "ocpayload.h"
 
 #define TAG "CHPMap"

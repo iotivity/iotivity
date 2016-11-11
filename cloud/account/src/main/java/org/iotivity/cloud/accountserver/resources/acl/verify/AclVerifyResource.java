@@ -1,3 +1,24 @@
+/*
+ * //******************************************************************
+ * //
+ * // Copyright 2016 Samsung Electronics All Rights Reserved.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ * //
+ * // Licensed under the Apache License, Version 2.0 (the "License");
+ * // you may not use this file except in compliance with the License.
+ * // You may obtain a copy of the License at
+ * //
+ * //      http://www.apache.org/licenses/LICENSE-2.0
+ * //
+ * // Unless required by applicable law or agreed to in writing, software
+ * // distributed under the License is distributed on an "AS IS" BASIS,
+ * // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * // See the License for the specific language governing permissions and
+ * // limitations under the License.
+ * //
+ * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+ */
 package org.iotivity.cloud.accountserver.resources.acl.verify;
 
 import java.util.ArrayList;
@@ -72,7 +93,7 @@ public class AclVerifyResource extends Resource {
     private boolean checkResourceUri(List<AceResource> aceResources, String uri)
         throws ServerException {
             for (AceResource aceResource : aceResources) {
-                if (aceResource.getHref().equals(uri)) {
+                if (aceResource.getHref().trim().equals("*") || aceResource.getHref().equals(uri)) {
                     return true;
                 }
             }
@@ -97,12 +118,13 @@ public class AclVerifyResource extends Resource {
             for (HashMap<String, Object> eachAclMap : aclResult) {
 
                 AclTable aclTable = Acl.convertMaptoAclObject(eachAclMap);
-                if (aclTable.getAclist() == null) {
-                    return false;
-                }
                 if (aclTable.getOid().equals(sid)) {
                     return true;
                 }
+                if (aclTable.getAclist() == null) {
+                    return false;
+                }
+
                 for (Ace ace : aclTable.getAclist()) {
                     if (ace.getSubjectuuid().equals(sid)) {
                         // check permission matches

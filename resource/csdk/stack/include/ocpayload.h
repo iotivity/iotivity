@@ -31,7 +31,6 @@
 #include <stdbool.h>
 #include <inttypes.h>
 #include "octypes.h"
-#include <cbor.h>
 
 #if defined(__WITH_TLS__) || defined(__WITH_DTLS__)
 #include "securevirtualresourcetypes.h"

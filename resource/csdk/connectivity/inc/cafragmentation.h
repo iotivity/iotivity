@@ -67,14 +67,14 @@
 /**
  * The length payload size of the normal data segment (after first segment) for ble fragmentation.
  */
-#define CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE  CA_SUPPORTED_BLE_MTU_SIZE \
-    - CA_BLE_HEADER_SIZE
+#define CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE ((CA_SUPPORTED_BLE_MTU_SIZE) \
+                                            - (CA_BLE_HEADER_SIZE))
 
 /**
  * The length payload size of the first data segment for ble fragmentation.
  */
-#define CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE \
-    - CA_BLE_LENGTH_HEADER_SIZE
+#define CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE ((CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE) \
+                                           - (CA_BLE_LENGTH_HEADER_SIZE))
 
 /**
  * Current Header version.

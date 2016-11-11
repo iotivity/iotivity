@@ -24,6 +24,7 @@
 #include "ocstack.h"
 #include "oic_malloc.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "payload_logging.h"
 #include "resourcemanager.h"
 #include "pstatresource.h"
@@ -32,7 +33,7 @@
 #include "srmresourcestrings.h"
 #include "srmutility.h"
 
-#define TAG  "SRM-PSTAT"
+#define TAG  "OIC_SRM_PSTAT"
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching below max cbor size. */
@@ -214,7 +215,7 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
 
     if (CborNoError == cborEncoderResult)
     {
-        *size = encoder.ptr - outPayload;
+        *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
         *payload = outPayload;
         ret = OC_STACK_OK;
     }
@@ -224,7 +225,7 @@ exit:
         // reallocate and try again!
         OICFree(outPayload);
         // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         cborEncoderResult = CborNoError;
         ret = PstatToCBORPayload(pstat, payload, &cborLen, writableOnly);
         if (OC_STACK_OK == ret)

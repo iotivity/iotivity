@@ -34,9 +34,9 @@ if "%RELEASE%" == "" (
 )
 
 set SECURED=1
-set WITH_RD=1
 set ROUTING=EP
 set WITH_UPSTREAM_LIBCOAP=1
+set BINDIR=debug
 
 set RUN_ARG=%1
 SHIFT
@@ -66,16 +66,20 @@ IF NOT "%1"=="" (
   GOTO :processArgs
 )
 
+IF %RELEASE% == 1 (
+  set BINDIR=release
+)
+
 REM We need to append the "PATH" so the octbstack.dll can be found by executables
 IF "%BUILD_MSYS%" == "" (
-  set BUILD_DIR=out\windows\%TARGET_ARCH%\debug
+  set BUILD_DIR=out\windows\%TARGET_ARCH%\%BINDIR%
   set PATH=!PATH!;!IOTIVITY_DIR!!BUILD_DIR!;
 ) ELSE (
-  set BUILD_DIR=out\msys_nt\x86_64\debug
+  set BUILD_DIR=out\msys_nt\x86_64\%BINDIR%
   set PATH=!PATH!;!BUILD_DIR!;C:\msys64\mingw64\bin
 )
 
-set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=0 BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% WITH_RD=%WITH_RD% ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP%
+set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=0 BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% RD_MODE=CLIENT ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP%
 
 REM Use MSVC_VERSION=12.0 for VS2013, or MSVC_VERSION=14.0 for VS2015.
 REM If MSVC_VERSION has not been defined here, SCons chooses automatically a VS version.
@@ -97,7 +101,7 @@ if "!RUN_ARG!"=="server" (
 ) else if "!RUN_ARG!"=="clienthq" (
   cd %BUILD_DIR%\resource\examples
   %DEBUG% simpleclientHQ.exe
-)else if "!RUN_ARG!"=="mediaclient" (
+) else if "!RUN_ARG!"=="mediaclient" (
   cd %BUILD_DIR%\resource\examples
   %DEBUG% mediaclient.exe
 ) else if "!RUN_ARG!"=="mediaserver" (
@@ -137,9 +141,9 @@ if "!RUN_ARG!"=="server" (
   echo   RELEASE=%RELEASE%
   echo   TEST=%TEST%
   echo   LOGGING=%LOGGING%
-  echo   WITH_RD=%WITH_RD%
   echo   ROUTING=%ROUTING%
   echo   WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP%
+  echo   MSVC_VERSION=%MSVC_VERSION%
   echo.scons VERBOSE=1 %BUILD_OPTIONS%
   scons VERBOSE=1 %BUILD_OPTIONS%
 ) else if "!RUN_ARG!"=="clean" (
@@ -152,11 +156,12 @@ if "!RUN_ARG!"=="server" (
   erase resource\c_common\iotivity_config.h
   erase extlibs\libcoap\coap.lib
   erase extlibs\libcoap\libcoap\include\coap\coap_config.h
+  erase extlibs\mbedtls\mbed*.lib
 ) else if "!RUN_ARG!"=="cleangtest" (
   rd /s /q extlibs\gtest\gtest-1.7.0
   del extlibs\gtest\gtest-1.7.0.zip
 ) else (
-    echo %0 - Script requires a valid argument!
+    echo.%0 - Script requires a valid argument!
     goto :EOF
 )
 
@@ -170,11 +175,11 @@ goto EOF
 echo %0 - Helper to build/test iotivity.  Requires an argument.
 echo Installation: Drop this into your iotivity root directory to use it.
 echo.
-echo. Default buidl settings are: debug binaries run unittests and no logging
+echo. Default build settings are: debug binaries run unittests and no logging
 echo.
 echo. Default build parameters can be overridden using the following arguments
 echo. 
-echo   -arch [x86 | amd64]    - Build either amd64 or x86 architecture binaries
+echo   -arch [x86 ^| amd64]    - Build either amd64 or x86 architecture binaries
 echo.
 echo   -noTest                - Don't run the unittests after building the binaries
 echo.

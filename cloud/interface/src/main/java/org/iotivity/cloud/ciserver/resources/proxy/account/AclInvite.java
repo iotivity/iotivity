@@ -35,6 +35,12 @@ import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.util.Cbor;
 
+/**
+ *
+ * This class provides a set of APIs to send requests about invite to account
+ *
+ */
+
 public class AclInvite extends Resource {
 
     IRequestChannel mAuthServer = null;

@@ -26,8 +26,23 @@ import java.util.HashMap;
 import org.iotivity.cloud.util.Cbor;
 import org.iotivity.cloud.util.Log;
 
+/**
+ * 
+ * This class provides a set of APIs of utilities for MessageQueue.
+ *
+ */
 public class MessageQueueUtils {
 
+    /**
+     * API to get data in the payload with specific property key
+     * 
+     * @param payload
+     *            payload received
+     * @param key
+     *            property key to get data
+     *
+     * @return extracted data in payload
+     */
     public static <T> T extractDataFromPayload(byte[] payload, String key) {
 
         if (payload == null || key.isEmpty()) {
@@ -48,6 +63,16 @@ public class MessageQueueUtils {
         return parsedData.get(key);
     }
 
+    /**
+     * API to build payload with property key and value
+     * 
+     * @param key
+     *            property key
+     * @param value
+     *            property value
+     *
+     * @return cbor encoded payload with providing key and value
+     */
     public static <T> byte[] buildPayload(String key, T value) {
 
         Cbor<HashMap<String, T>> cbor = new Cbor<>();

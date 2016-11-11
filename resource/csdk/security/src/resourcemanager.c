@@ -38,7 +38,7 @@
 //#endif // DIRECT_PAIRING
 #include "verresource.h"
 
-#define TAG "SRM-RM"
+#define TAG "OIC_SRM_RM"
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 #include "crlresource.h"

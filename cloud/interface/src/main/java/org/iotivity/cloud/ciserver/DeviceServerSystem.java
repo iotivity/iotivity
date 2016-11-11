@@ -52,6 +52,12 @@ import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 
+/**
+ *
+ * This class provides a set of APIs to manage all of request
+ *
+ */
+
 public class DeviceServerSystem extends ServerSystem {
 
     IRequestChannel mRDServer = null;
@@ -60,9 +66,20 @@ public class DeviceServerSystem extends ServerSystem {
         mRDServer = ConnectorPool.getConnection("rd");
     }
 
+    /**
+     *
+     * This class provides a set of APIs to manage device pool.
+     *
+     */
     public class CoapDevicePool {
         HashMap<String, Device> mMapDevice = new HashMap<>();
 
+        /**
+         * API for adding device information into pool.
+         * 
+         * @param device
+         *            device to be added
+         */
         public void addDevice(Device device) {
             String deviceId = ((CoapDevice) device).getDeviceId();
             synchronized (mMapDevice) {
@@ -70,6 +87,12 @@ public class DeviceServerSystem extends ServerSystem {
             }
         }
 
+        /**
+         * API for removing device information into pool.
+         * 
+         * @param device
+         *            device to be removed
+         */
         public void removeDevice(Device device) throws ClientException {
             String deviceId = ((CoapDevice) device).getDeviceId();
             synchronized (mMapDevice) {
@@ -91,6 +114,12 @@ public class DeviceServerSystem extends ServerSystem {
             }
         }
 
+        /**
+         * API for getting device information.
+         * 
+         * @param deviceId
+         *            device id to get device
+         */
         public Device queryDevice(String deviceId) {
             Device device = null;
             synchronized (mMapDevice) {
@@ -102,6 +131,11 @@ public class DeviceServerSystem extends ServerSystem {
 
     CoapDevicePool mDevicePool = new CoapDevicePool();
 
+    /**
+     *
+     * This class provides a set of APIs to manage life cycle of coap message.
+     *
+     */
     @Sharable
     class CoapLifecycleHandler extends ChannelDuplexHandler {
         @Override
@@ -184,6 +218,14 @@ public class DeviceServerSystem extends ServerSystem {
             }
         }
 
+        /**
+         * API for sending state to resource directory
+         * 
+         * @param deviceId
+         *            device id to be sent to resource directory
+         * @param state
+         *            device state to be sent to resource directory
+         */
         public void sendDevicePresence(String deviceId, String state) {
 
             Cbor<HashMap<String, Object>> cbor = new Cbor<>();

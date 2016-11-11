@@ -216,6 +216,13 @@ CAResult_t CAUnSelectNetwork(CATransportAdapter_t nonInterestedNetwork);
 CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t *size);
 
 /**
+ * Get supported network adapter.
+ *
+ * @return  Bit combinations of CATransportAdapter_t enumeration which indicate enabled adapter.
+ */
+CATransportAdapter_t CAGetSelectedNetwork();
+
+/**
  * To Handle the Request or Response.
  * @return   ::CA_STATUS_OK or ::CA_STATUS_NOT_INITIALIZED
  */

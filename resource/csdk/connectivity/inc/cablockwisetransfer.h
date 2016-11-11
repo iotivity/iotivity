@@ -419,11 +419,12 @@ void CADestroyDataSet(CAData_t* data);
  * Create the blockId for CABlockData.
  * @param[in]   token   token of current message.
  * @param[in]   tokenLength   token length of current message.
+ * @param[in]   addr    address, must be MAX_ADDR_STR_SIZE_CA in length.
  * @param[in]   portNumber   port.
  * @return ID set of CABlockData.
  */
 CABlockDataID_t* CACreateBlockDatablockId(const CAToken_t token, uint8_t tokenLength,
-                                          uint16_t portNumber);
+                                          const char* addr, uint16_t portNumber);
 
 /**
  * Destroy the blockId set.
@@ -560,11 +561,12 @@ CAResult_t CARemoveAllBlockDataFromList();
  * Find the block data with seed info and remove it from block-wise transfer list.
  * @param[in]   token         token of the message.
  * @param[in]   tokenLength   token length of the message.
+ * @param[in]   addr          address, must be MAX_ADDR_STR_SIZE_CA in length.
  * @param[in]   portNumber    port.
  * @return ::CASTATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CARemoveBlockDataFromListWithSeed(const CAToken_t token, uint8_t tokenLength,
-                                             uint16_t portNumber);
+                                             const char* addr, uint16_t portNumber);
 
 #ifdef __cplusplus
 } /* extern "C" */

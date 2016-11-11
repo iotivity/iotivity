@@ -39,10 +39,10 @@
 #include "aclresource.h"
 #include "srmutility.h"
 #include "ocserverrequest.h"
-#include "ocpayloadcbor.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "payload_logging.h"
-#include <stdlib.h>
+
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif
@@ -51,7 +51,7 @@
 #include "global.h"
 #endif
 
-#define TAG  "SRM-DPAIRING"
+#define TAG  "OIC_SRM_DPAIRING"
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */
@@ -243,7 +243,7 @@ OCStackResult DpairingToCBORPayload(const OicSecDpairing_t *dpair, uint8_t **pay
 
      if (CborNoError == cborEncoderResult)
     {
-        *size = encoder.ptr - outPayload;
+        *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
         *payload = outPayload;
         ret = OC_STACK_OK;
     }
@@ -254,7 +254,7 @@ exit:
        // reallocate and try again!
        OICFree(outPayload);
        // Since the allocated initial memory failed, double the memory.
-       cborLen += encoder.ptr - encoder.end;
+       cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
        cborEncoderResult = CborNoError;
        ret = DpairingToCBORPayload(dpair, payload, &cborLen);
        *size = cborLen;
@@ -635,7 +635,7 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
             uint8_t *payload = NULL;
             if (OC_STACK_OK == AclToCBORPayload(acl, &payload, &size))
             {
-                InstallNewACL(payload, size);
+                AppendACL(payload, size);
                 OICFree(payload);
             }
             DeleteACLList(acl);

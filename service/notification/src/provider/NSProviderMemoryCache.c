@@ -21,6 +21,19 @@
 #include "NSProviderMemoryCache.h"
 #include <string.h>
 
+#define NS_PROVIDER_DELETE_REGISTERED_TOPIC_DATA(it, topicData, newObj) \
+    { \
+        if (it) \
+        { \
+            NS_LOG(DEBUG, "already registered for topic name"); \
+            OICFree(topicData->topicName); \
+            OICFree(topicData); \
+            OICFree(newObj); \
+            pthread_mutex_unlock(&NSCacheMutex); \
+            return NS_FAIL; \
+        } \
+    }
+
 NSCacheList * NSProviderStorageCreate()
 {
     pthread_mutex_lock(&NSCacheMutex);
@@ -202,15 +215,7 @@ NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj)
         NSCacheTopicData * topicData = (NSCacheTopicData *) newObj->data;
         NSCacheElement * it = NSProviderStorageRead(list, topicData->topicName);
 
-        if (it)
-        {
-            NS_LOG(DEBUG, "already registered for topic name");
-            OICFree(topicData->topicName);
-            OICFree(topicData);
-            OICFree(newObj);
-            pthread_mutex_unlock(&NSCacheMutex);
-            return NS_FAIL;
-        }
+        NS_PROVIDER_DELETE_REGISTERED_TOPIC_DATA(it, topicData, newObj);
     }
     else if (type == NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME)
     {
@@ -219,15 +224,7 @@ NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj)
         NSCacheTopicSubData * topicData = (NSCacheTopicSubData *) newObj->data;
         NSCacheElement * it = NSProviderStorageRead(list, topicData->topicName);
 
-        if (it)
-        {
-            NS_LOG(DEBUG, "already registered for topic name");
-            OICFree(topicData->topicName);
-            OICFree(topicData);
-            OICFree(newObj);
-            pthread_mutex_unlock(&NSCacheMutex);
-            return NS_FAIL;
-        }
+        NS_PROVIDER_DELETE_REGISTERED_TOPIC_DATA(it, topicData, newObj);
     }
     else if (type == NS_PROVIDER_CACHE_CONSUMER_TOPIC_CID)
     {
@@ -236,15 +233,7 @@ NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj)
         NSCacheTopicSubData * topicData = (NSCacheTopicSubData *) newObj->data;
         NSCacheElement * it = NSProviderStorageRead(list, topicData->id);
 
-        if (it)
-        {
-            NS_LOG(DEBUG, "already registered for topic name");
-            OICFree(topicData->topicName);
-            OICFree(topicData);
-            OICFree(newObj);
-            pthread_mutex_unlock(&NSCacheMutex);
-            return NS_FAIL;
-        }
+        NS_PROVIDER_DELETE_REGISTERED_TOPIC_DATA(it, topicData, newObj);
     }
 
     if (list->head == NULL)
@@ -278,7 +267,6 @@ NSResult NSProviderStorageDestroy(NSCacheList * list)
     OICFree(list);
     return NS_OK;
 }
-
 
 bool NSIsSameObId(NSCacheSubData * data, OCObservationId id)
 {

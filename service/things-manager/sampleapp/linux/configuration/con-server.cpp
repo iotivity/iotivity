@@ -185,7 +185,6 @@ OCStackResult sendResponseForResource(std::shared_ptr< OCResourceRequest > pRequ
         pResponse->setResourceRepresentation(rep, DEFAULT_INTERFACE);
     }
 
-    pResponse->setErrorCode(200);
     pResponse->setResponseResult(OC_EH_OK);
 
     return OCPlatform::sendResponse(pResponse);

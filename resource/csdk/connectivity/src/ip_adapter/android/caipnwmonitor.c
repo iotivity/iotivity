@@ -30,6 +30,8 @@
 #include <arpa/inet.h>
 #include <linux/if.h>
 #include <coap/utlist.h>
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
 
 #include "caadapterutils.h"
 #include "caipnwmonitor.h"
@@ -37,10 +39,13 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "org_iotivity_ca_CaIpInterface.h"
+#include "ifaddrs.h"
 
 #define TAG "OIC_CA_IP_MONITOR"
 #define NETLINK_MESSAGE_LENGTH  (4096)
-
+#define IFC_LABEL_LOOP          "lo"
+#define IFC_ADDR_LOOP_IPV4      "127.0.0.1"
+#define IFC_ADDR_LOOP_IPV6      "::1"
 /**
  * Used to storing adapter changes callback interface.
  */
@@ -178,116 +183,98 @@ CAResult_t CAIPUnSetNetworkMonitorCallback(CATransportAdapter_t adapter)
     return CA_STATUS_OK;
 }
 
-CAInterface_t *CAFindInterfaceChange()
+u_arraylist_t *CAFindInterfaceChange()
 {
-    // release netlink event
-    char *bufPtr = (char *)OICCalloc(NETLINK_MESSAGE_LENGTH, sizeof (char));
-    if (!bufPtr)
+    char buf[NETLINK_MESSAGE_LENGTH] = { 0 };
+    struct sockaddr_nl sa = { 0 };
+    struct iovec iov = { .iov_base = buf,
+                         .iov_len = sizeof (buf) };
+    struct msghdr msg = { .msg_name = (void *)&sa,
+                          .msg_namelen = sizeof (sa),
+                          .msg_iov = &iov,
+                          .msg_iovlen = 1 };
+
+    size_t len = recvmsg(caglobals.ip.netlinkFd, &msg, 0);
+    return NULL;
+}
+
+/**
+ * Used to send netlink query to kernel and recv response from kernel.
+ *
+ * @param[in]   idx       desired network interface index, 0 means all interfaces.
+ * @param[out]  iflist    linked list.
+ *
+ */
+static bool CAParsingNetorkInfo(int idx, u_arraylist_t *iflist)
+{
+    if ((idx < 0) || (iflist == NULL))
     {
-        OIC_LOG(ERROR, TAG, "Malloc failed");
-        return NULL;
-    }
-    recv(caglobals.ip.netlinkFd, bufPtr, NETLINK_MESSAGE_LENGTH, 0);
-    OICFree(bufPtr);
-    bufPtr = NULL;
-
-    char buf[MAX_INTERFACE_INFO_LENGTH] = { 0 };
-    struct ifconf ifc  = { .ifc_len = MAX_INTERFACE_INFO_LENGTH, .ifc_buf = buf };
-
-    int s = caglobals.ip.u6.fd != -1 ? caglobals.ip.u6.fd : caglobals.ip.u4.fd;
-    if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
-    {
-        OIC_LOG_V(ERROR, TAG, "SIOCGIFCONF failed: %s", strerror(errno));
-        return NULL;
-    }
-
-    CAInterface_t *foundNewInterface = NULL;
-
-    struct ifreq* ifr = ifc.ifc_req;
-    size_t interfaces = ifc.ifc_len / sizeof (ifc.ifc_req[0]);
-    size_t ifreqsize = ifc.ifc_len;
-
-    CAIfItem_t *previous = (CAIfItem_t *)OICMalloc(ifreqsize);
-    if (!previous)
-    {
-        OIC_LOG(ERROR, TAG, "OICMalloc failed");
-        return NULL;
+        return false;
     }
 
-    memcpy(previous, caglobals.ip.nm.ifItems, ifreqsize);
-    size_t numprevious = caglobals.ip.nm.numIfItems;
-
-    if (ifreqsize > caglobals.ip.nm.sizeIfItems)
+    struct ifaddrs *ifp = NULL;
+    CAResult_t ret = CAGetIfaddrsUsingNetlink(&ifp);
+    if (CA_STATUS_OK != ret)
     {
-
-        CAIfItem_t *items = (CAIfItem_t *)OICRealloc(caglobals.ip.nm.ifItems, ifreqsize);
-        if (!items)
-        {
-            OIC_LOG(ERROR, TAG, "OICRealloc failed");
-            OICFree(previous);
-            return NULL;
-        }
-        caglobals.ip.nm.ifItems = items;
-        caglobals.ip.nm.sizeIfItems = ifreqsize;
+        OIC_LOG_V(ERROR, TAG, "Failed to get ifaddrs err code is: %d", ret);
+        return false;
     }
 
-    caglobals.ip.nm.numIfItems = 0;
-    for (size_t i = 0; i < interfaces; i++)
+    struct ifaddrs *ifa = NULL;
+    for (ifa = ifp; ifa; ifa = ifa->ifa_next)
     {
-        struct ifreq* item = &ifr[i];
-        char *name = item->ifr_name;
-
-        if (ioctl(s, SIOCGIFFLAGS, item) < 0)
-        {
-            OIC_LOG_V(ERROR, TAG, "SIOCGIFFLAGS failed: %s", strerror(errno));
-            continue;
-        }
-        int16_t flags = item->ifr_flags;
-        if ((flags & IFF_LOOPBACK) || !(flags & IFF_RUNNING))
+        if (!ifa->ifa_addr)
         {
             continue;
         }
-        if (ioctl(s, SIOCGIFINDEX, item) < 0)
+
+        int family = ifa->ifa_addr->sa_family;
+        if ((ifa->ifa_flags & IFF_LOOPBACK) || (AF_INET != family && AF_INET6 != family))
         {
-            OIC_LOG_V(ERROR, TAG, "SIOCGIFINDEX failed: %s", strerror(errno));
             continue;
         }
 
-        int ifIndex = item->ifr_ifindex;
-        caglobals.ip.nm.ifItems[i].ifIndex = ifIndex;  // refill interface list
-        caglobals.ip.nm.numIfItems++;
-
-        if (foundNewInterface)
+        int ifindex = if_nametoindex(ifa->ifa_name);
+        if (idx && (ifindex != idx))
         {
-            continue;   // continue updating interface list
-        }
-
-        // see if this interface didn't previously exist
-        bool found = false;
-        for (size_t j = 0; j < numprevious; j++)
-        {
-            if (ifIndex == previous[j].ifIndex)
-            {
-                found = true;
-                break;
-            }
-        }
-        if (found)
-        {
-            OIC_LOG_V(INFO, TAG, "Interface found: %s", name);
             continue;
         }
 
-        // Get address of network interface.
-        char addr[MAX_ADDR_STR_SIZE_CA] = { 0 };
-        struct sockaddr_in *sa = (struct sockaddr_in *)&item->ifr_addr;
-        inet_ntop(AF_INET, (void *)&(sa->sin_addr), addr, sizeof(addr));
+        char ipaddr[MAX_ADDR_STR_SIZE_CA] = {0};
+        if (family == AF_INET6)
+        {
+            struct sockaddr_in6 *in6 = (struct sockaddr_in6*) ifa->ifa_addr;
+            inet_ntop(family, (void *)&(in6->sin6_addr), ipaddr, sizeof(ipaddr));
+        }
+        else if (family == AF_INET)
+        {
+            struct sockaddr_in *in = (struct sockaddr_in*) ifa->ifa_addr;
+            inet_ntop(family, (void *)&(in->sin_addr), ipaddr, sizeof(ipaddr));
+        }
 
-        foundNewInterface = CANewInterfaceItem(ifIndex, name, AF_INET, addr, flags);
+        if ((strcmp(ipaddr, IFC_ADDR_LOOP_IPV4) == 0) ||
+            (strcmp(ipaddr, IFC_ADDR_LOOP_IPV6) == 0) ||
+            (strcmp(ifa->ifa_name, IFC_LABEL_LOOP) == 0))
+        {
+            OIC_LOG(DEBUG, TAG, "LOOPBACK continue!!!");
+            continue;
+        }
+
+        CAResult_t result = CAAddInterfaceItem(iflist, ifindex,
+                                               ifa->ifa_name, family,
+                                               ipaddr, ifa->ifa_flags);
+        if (CA_STATUS_OK != result)
+        {
+            OIC_LOG(ERROR, TAG, "CAAddInterfaceItem fail");
+            goto exit;
+        }
     }
+    CAFreeIfAddrs(ifp);
+    return true;
 
-    OICFree(previous);
-    return foundNewInterface;
+exit:
+    CAFreeIfAddrs(ifp);
+    return false;
 }
 
 u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
@@ -299,83 +286,11 @@ u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)
         return NULL;
     }
 
-    char buf[MAX_INTERFACE_INFO_LENGTH] = { 0 };
-    struct ifconf ifc = { .ifc_len = MAX_INTERFACE_INFO_LENGTH, .ifc_buf = buf };
-
-    int s = caglobals.ip.u6.fd != -1 ? caglobals.ip.u6.fd : caglobals.ip.u4.fd;
-    if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
+    if (!CAParsingNetorkInfo(desiredIndex, iflist))
     {
-        OIC_LOG_V(ERROR, TAG, "SIOCGIFCONF failed: %s", strerror(errno));
-        u_arraylist_destroy(iflist);
-        return NULL;
+        goto exit;
     }
 
-    struct ifreq* ifr = ifc.ifc_req;
-    size_t interfaces = ifc.ifc_len / sizeof (ifc.ifc_req[0]);
-    size_t ifreqsize = ifc.ifc_len;
-
-    if (ifreqsize > caglobals.ip.nm.sizeIfItems)
-    {
-        CAIfItem_t *items = (CAIfItem_t *)OICRealloc(caglobals.ip.nm.ifItems, ifreqsize);
-        if (!items)
-        {
-            OIC_LOG(ERROR, TAG, "OICRealloc failed");
-            goto exit;
-        }
-        caglobals.ip.nm.ifItems = items;
-        caglobals.ip.nm.sizeIfItems = ifreqsize;
-    }
-
-    caglobals.ip.nm.numIfItems = 0;
-    for (size_t i = 0; i < interfaces; i++)
-    {
-        struct ifreq* item = &ifr[i];
-        char *name = item->ifr_name;
-
-        if (ioctl(s, SIOCGIFFLAGS, item) < 0)
-        {
-            OIC_LOG_V(ERROR, TAG, "SIOCGIFFLAGS failed: %s", strerror(errno));
-            continue;
-        }
-        int16_t flags = item->ifr_flags;
-        if ((flags & IFF_LOOPBACK) || !(flags & IFF_RUNNING))
-        {
-            continue;
-        }
-        if (ioctl(s, SIOCGIFINDEX, item) < 0)
-        {
-            OIC_LOG_V(ERROR, TAG, "SIOCGIFINDEX failed: %s", strerror(errno));
-            continue;
-        }
-
-        int ifindex = item->ifr_ifindex;
-        caglobals.ip.nm.ifItems[i].ifIndex = ifindex;
-        caglobals.ip.nm.numIfItems++;
-
-        if (desiredIndex && (ifindex != desiredIndex))
-        {
-            continue;
-        }
-
-        // Get address of network interface.
-        char addr[MAX_ADDR_STR_SIZE_CA] = { 0 };
-        struct sockaddr_in *sa = (struct sockaddr_in *)&item->ifr_addr;
-        inet_ntop(AF_INET, (void *)&(sa->sin_addr), addr, sizeof(addr));
-
-        // Add IPv4 interface
-        CAResult_t result = CAAddInterfaceItem(iflist, ifindex, name, AF_INET, addr, flags);
-        if (CA_STATUS_OK != result)
-        {
-            goto exit;
-        }
-
-        // Add IPv6 interface
-        result = CAAddInterfaceItem(iflist, ifindex, name, AF_INET6, addr, flags);
-        if (CA_STATUS_OK != result)
-        {
-            goto exit;
-        }
-    }
     return iflist;
 
 exit:
@@ -566,6 +481,28 @@ Java_org_iotivity_ca_CaIpInterface_caIpStateEnabled(JNIEnv *env, jclass class)
 
     OIC_LOG(DEBUG, TAG, "Wifi is in Activated State");
     CAIPPassNetworkChangesToAdapter(CA_INTERFACE_UP);
+
+    // Apply network interface changes.
+    u_arraylist_t *iflist = CAIPGetInterfaceInformation(0);
+    if (!iflist)
+    {
+        OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));
+        return;
+    }
+
+    uint32_t listLength = u_arraylist_length(iflist);
+    for (uint32_t i = 0; i < listLength; i++)
+    {
+        CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+        if (!ifitem)
+        {
+            continue;
+        }
+
+        CAProcessNewInterface(ifitem);
+
+    }
+    u_arraylist_destroy(iflist);
 }
 
 JNIEXPORT void JNICALL

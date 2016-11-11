@@ -31,20 +31,6 @@ namespace OCResourceResponseTest
     using namespace OC;
     using namespace std;
 
-    TEST(ErrorCodeTest, SetGetErrorCodeValidCode)
-    {
-        OCResourceResponse response;
-        int setCode = 200;
-        EXPECT_NO_THROW(response.setErrorCode(setCode));
-        EXPECT_EQ(setCode, response.getErrorCode());
-        setCode = 500;
-        EXPECT_NO_THROW(response.setErrorCode(setCode));
-        EXPECT_EQ(setCode, response.getErrorCode());
-        setCode = 400;
-        EXPECT_NO_THROW(response.setErrorCode(setCode));
-        EXPECT_EQ(setCode, response.getErrorCode());
-    }
-
     TEST(NewResourceUriTest, SetGetNewResourceUriValidUri)
     {
         OCResourceResponse response;

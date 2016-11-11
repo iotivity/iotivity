@@ -22,7 +22,7 @@ string         g_uid;
 string         g_accesstoken;
 
 string              g_host;
-OC::OCResource::Ptr g_binaryswitchResource;
+OC::OCResource::Ptr g_binaryswitchResource = nullptr;
 
 void printRepresentation(OCRepresentation rep)
 {
@@ -154,6 +154,12 @@ void onPost(const HeaderOptions & /*headerOptions*/, const OCRepresentation &rep
 
 void turnOnOffSwitch(bool toTurn)
 {
+    if (g_binaryswitchResource == nullptr)
+    {
+        cout << "Binary switch not found" << endl;
+        return;
+    }
+
     OCRepresentation binarySwitch;
     binarySwitch.setValue("value", toTurn);
 
@@ -217,6 +223,8 @@ void foundAirconditionerResource(shared_ptr<OC::OCResource> resource)
 
 void foundDevice(shared_ptr<OC::OCResource> resource)
 {
+    cout << "Found device called!" << endl;
+
     vector<string> rt = resource->getResourceTypes();
 
     cout << "Device found: " << resource->uri() << endl;
@@ -246,6 +254,12 @@ void foundDevice(shared_ptr<OC::OCResource> resource)
             }
         }
     }
+}
+
+void errorFoundDevice(const std::string &uri, const int ecode)
+{
+    cout << "Found device error on " << uri << " code " << ecode << endl;
+    g_callbackLock.notify_all();
 }
 
 void presenceDevice(OCStackResult , const unsigned int i, const string &str)
@@ -325,7 +339,7 @@ int main(int argc, char *argv[])
 
     result = OCPlatform::findResource(g_host, "/oic/res?rt=oic.wk.d",
                                       static_cast<OCConnectivityType>(CT_ADAPTER_TCP | CT_IP_USE_V4),
-                                      &foundDevice);
+                                      &foundDevice, &errorFoundDevice);
 
     cout << " result: " << result << endl;
 

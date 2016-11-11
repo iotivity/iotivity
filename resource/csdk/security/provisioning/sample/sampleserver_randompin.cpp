@@ -27,8 +27,8 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_PTHREAD_H
-#include <pthread.h>
+#ifdef HAVE_TIME_H
+#include <time.h>
 #endif
 #include <signal.h>
 #include "ocstack.h"
@@ -48,9 +48,6 @@
 #define TAG "SAMPLE_RANDOMPIN"
 
 int gQuitFlag = 0;
-#ifdef _ENABLE_MULTIPLE_OWNER_
-static bool g_LoopFlag = true;
-#endif //_ENABLE_MULTIPLE_OWNER_
 
 /* Structure to represent a LED resource */
 typedef struct LEDRESOURCE{
@@ -146,14 +143,16 @@ const char *getResult(OCStackResult result) {
 }
 
 #ifdef _ENABLE_MULTIPLE_OWNER_
-static pthread_t oc_process_thread;
 
-static void* oc_process_loop(void* ptr)
+#include <assert.h>
+#include <thread>
+#include <chrono>
+
+static bool volatile g_LoopFlag;
+static std::thread* oc_process_thread;
+
+static void oc_process_loop()
 {
-    struct timespec timeout;
-    timeout.tv_sec  = 0;
-    timeout.tv_nsec = 100000000L;
-
     while(g_LoopFlag)
     {
         if (OCProcess() != OC_STACK_OK)
@@ -162,20 +161,21 @@ static void* oc_process_loop(void* ptr)
             g_LoopFlag = false;
             break;
         }
-        nanosleep(&timeout, NULL);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    pthread_join(&oc_process_thread, NULL);
-    return NULL;
 }
 
 static void StartOCProcessThread()
 {
-    pthread_create(&oc_process_thread, NULL, oc_process_loop, NULL);
+    g_LoopFlag = true;
+    oc_process_thread = new std::thread(oc_process_loop);
 }
 
 static void StopOCProcessThread()
 {
+    assert(oc_process_thread->joinable() == true);
     g_LoopFlag = false;
+    oc_process_thread->join();
 }
 #endif //_ENABLE_MULTIPLE_OWNER_
 
@@ -480,6 +480,17 @@ int main()
      */
     SetGeneratePinCB(GeneratePinCB);
 
+    /**
+     * Random PIN generation policy can be changed through SetRandomPinPolicy() API.
+     * first param : byte length of random PIN ( 4 <= first param <= 32)
+     * second param : PIN type (This is bitmask)
+     */
+    if(OC_STACK_OK != SetRandomPinPolicy(8, NUM_PIN))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to setting PIN policy");
+        return 0;
+    }
+
     /*
      * Declare and create the example resource: LED
      */
@@ -499,8 +510,8 @@ int main()
         char in = getchar();
         if('G' == in || 'g' == in)
         {
-            char ranPin[OXM_RANDOM_PIN_SIZE + 1] = {0};
-            GeneratePin(ranPin, OXM_RANDOM_PIN_SIZE + 1);
+            char ranPin[OXM_RANDOM_PIN_MAX_SIZE + 1] = {0};
+            GeneratePin(ranPin, sizeof(ranPin));
         }
         if('E' == in || 'e' == in)
         {

@@ -283,7 +283,7 @@ CAResult_t CAManagerLEClientTerminate(JNIEnv *env)
 void CAManagerLESetScanInterval(jint interval, jint count)
 {
     OIC_LOG(DEBUG, TAG, "CAManagerLESetScanInterval");
-    CALERestartScanWithInterval(interval, count);
+    CALERestartScanWithInterval(interval, count, BLE_SCAN_ENABLE);
 }
 
 JNIEXPORT void JNICALL

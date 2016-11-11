@@ -414,6 +414,63 @@ TEST_F (CATests, GetNetworkInformationTest)
     free(tempInfo);
 }
 
+TEST_F(CATests, GetSelectecNetwork)
+{
+    CATransportAdapter_t SelectedNetwork = CA_DEFAULT_ADAPTER;
+
+#ifdef IP_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork | CA_ADAPTER_IP) ;
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_IP));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef LE_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork | CA_ADAPTER_GATT_BTLE);
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_GATT_BTLE));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef EDR_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork | CA_ADAPTER_RFCOMM_BTEDR);
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_RFCOMM_BTEDR));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef TCP_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork | CA_ADAPTER_TCP);
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_TCP));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef NFC_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork | CA_ADAPTER_NFC);
+    EXPECT_EQ(CA_STATUS_OK, CASelectNetwork(CA_ADAPTER_NFC));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+
+#ifdef IP_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_IP) ;
+    EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ADAPTER_IP));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef LE_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_GATT_BTLE);
+    EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ADAPTER_GATT_BTLE));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef EDR_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_RFCOMM_BTEDR);
+    EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ADAPTER_RFCOMM_BTEDR));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef TCP_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_TCP);
+    EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ADAPTER_TCP));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+#ifdef NFC_ADAPTER
+    SelectedNetwork = (CATransportAdapter_t)(SelectedNetwork & ~CA_ADAPTER_NFC);
+    EXPECT_EQ(CA_STATUS_OK, CAUnSelectNetwork(CA_ADAPTER_NFC));
+    EXPECT_EQ(SelectedNetwork, CAGetSelectedNetwork());
+#endif
+}
+
 TEST_F(CATests, RegisterDTLSCredentialsHandlerTest)
 {
 #ifdef __WITH_DTLS__

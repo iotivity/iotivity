@@ -43,7 +43,7 @@ cc_sample_app_env.AppendUnique(CPPPATH = [
 cc_sample_app_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra', '-std=c++0x', '-pthread'])
 cc_sample_app_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 cc_sample_app_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
-cc_sample_app_env.PrependUnique(LIBS = ['oc', 'octbstack', 'pthread'])
+cc_sample_app_env.PrependUnique(LIBS = ['oc', 'octbstack', 'pthread', 'resource_directory'])
 
 cc_sample_app_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD', 'RD_CLIENT'])
 
@@ -102,3 +102,8 @@ group_invite_src = [
         'group_invite/group_invite.cpp'
         ]
 cc_sample_app_env.Program('group_invite_sample', group_invite_src)
+
+group_light_share_src = [
+        'group_invite/group_light_share.cpp'
+        ]
+cc_sample_app_env.Program('group_light_share_sample', group_light_share_src)

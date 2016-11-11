@@ -57,14 +57,16 @@ OCStackResult DeInitCredResource();
 OicSecCred_t* GetCredResourceData(const OicUuid_t* subjectId);
 
 /**
- * This method is used by SRM to retrieve credential for given credId.
+ * This method is used by SRM to retrieve credential entry for given credId.
+ *
+ * @note Caller needs to release this memory by calling DeleteCredList().
  *
  * @param credId for which credential is required.
  *
  * @return reference to @ref OicSecCred_t, if credential is found, else NULL, if credential
  * not found.
  */
-OicSecCred_t* GetCredResourceDataByCredId(const uint16_t credId);
+OicSecCred_t* GetCredEntryByCredId(const uint16_t credId);
 
 /**
  * This function converts credential data into CBOR format.

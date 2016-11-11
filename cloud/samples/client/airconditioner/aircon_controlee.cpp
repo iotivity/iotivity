@@ -85,7 +85,6 @@ class Resource
                 pResponse->setResourceRepresentation(getRepresentation(), DEFAULT_INTERFACE);
             }
 
-            pResponse->setErrorCode(200);
             pResponse->setResponseResult(OC_EH_OK);
 
             return OCPlatform::sendResponse(pResponse);
@@ -98,7 +97,6 @@ class Resource
                 shared_ptr<OCResourceResponse> resourceResponse =
                 { make_shared<OCResourceResponse>() };
 
-                resourceResponse->setErrorCode(200);
                 resourceResponse->setResourceRepresentation(getRepresentation(), DEFAULT_INTERFACE);
 
                 return OCPlatform::notifyListOfObservers(m_handle,

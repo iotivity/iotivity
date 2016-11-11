@@ -95,14 +95,12 @@ public class DoorResource extends Resource implements OcPlatform.EntityHandler {
 
                     switch (ocResourceRequest.getRequestType()) {
                         case GET:
-                            response.setErrorCode(SUCCESS);
                             updateRepresentationValues();
                             response.setResourceRepresentation(mRepresentation);
                             response.setResponseResult(EntityHandlerResult.OK);
                             OcPlatform.sendResponse(response);
                             break;
                         case PUT:
-                            response.setErrorCode(SUCCESS);
                             put(ocResourceRequest.getResourceRepresentation());
                             updateRepresentationValues();
                             response.setResourceRepresentation(mRepresentation);
@@ -111,7 +109,6 @@ public class DoorResource extends Resource implements OcPlatform.EntityHandler {
                             break;
                         case DELETE:
                             response.setResponseResult(EntityHandlerResult.RESOURCE_DELETED);
-                            response.setErrorCode(204);
                             OcPlatform.sendResponse(response);
                             break;
                     }

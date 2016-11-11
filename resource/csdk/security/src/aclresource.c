@@ -46,7 +46,7 @@
 
 #include "security_internals.h"
 
-#define TAG  "SRM-ACL"
+#define TAG  "OIC_SRM_ACL"
 #define NUMBER_OF_SEC_PROV_RSCS 4
 #define NUMBER_OF_DEFAULT_SEC_RSCS 2
 #define STRING_UUID_SIZE (UUID_LENGTH * 2 + 5)
@@ -131,6 +131,10 @@ static void FreeACE(OicSecAce_t *ace)
         OICFree(validity);
         validity = NULL;
     }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    OICFree(ace->eownerID);
+#endif
 
     //Clean ACE
     OICFree(ace);
@@ -251,6 +255,18 @@ OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
                 }
             }
         }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+        if (ace->eownerID)
+        {
+            if (NULL == newAce->eownerID)
+            {
+                newAce->eownerID = (OicUuid_t*)OICCalloc(1, sizeof(OicUuid_t));
+                VERIFY_NON_NULL(TAG, (newAce->eownerID), ERROR);
+            }
+            memcpy(newAce->eownerID->id, ace->eownerID->id, sizeof(ace->eownerID->id));
+        }
+#endif
 
         newAce->next = NULL;
     }
@@ -625,7 +641,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
     if (CborNoError == cborEncoderResult)
     {
         OIC_LOG(DEBUG, TAG, "AclToCBORPayload Successed");
-        *size = encoder.ptr - outPayload;
+        *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
         *payload = outPayload;
         ret = OC_STACK_OK;
     }
@@ -637,7 +653,7 @@ exit:
         // reallocate and try again!
         OICFree(outPayload);
         // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         cborEncoderResult = CborNoError;
         ret = AclToCBORPayload(secAcl, payload, &cborLen);
         *size = cborLen;
@@ -1686,6 +1702,21 @@ static bool IsSameValidities(OicSecValidity_t* validities1, OicSecValidity_t* va
     return false;
 }
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+static bool IsSameEowner(OicUuid_t* eowner1, OicUuid_t* eowner2)
+{
+    if(NULL != eowner1 && NULL != eowner2)
+    {
+        if (memcmp(eowner1->id, eowner2->id, sizeof(eowner1->id)) == 0)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+#endif
+
 static bool IsSameACE(OicSecAce_t* ace1, OicSecAce_t* ace2)
 {
     if(ace1 && ace2)
@@ -1709,6 +1740,13 @@ static bool IsSameACE(OicSecAce_t* ace1, OicSecAce_t* ace2)
         {
             return false;
         }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+        if(false == IsSameEowner(ace1->eownerID, ace2->eownerID))
+        {
+            return false;
+        }
+#endif
 
         return true;
     }
@@ -2317,7 +2355,7 @@ const OicSecAce_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAce_t **
     OicSecAce_t *ace = NULL;
     OicSecAce_t *begin = NULL;
 
-    if (NULL == subjectId)
+    if (NULL == subjectId || NULL == savePtr || NULL == gAcl)
     {
         return NULL;
     }
@@ -2441,7 +2479,7 @@ void printACL(const OicSecAcl_t* acl)
     }
 }
 
-OCStackResult InstallNewACL2(const OicSecAcl_t* acl)
+OCStackResult AppendACL2(const OicSecAcl_t* acl)
 {
     OCStackResult ret = OC_STACK_ERROR;
 
@@ -2480,12 +2518,83 @@ OCStackResult InstallNewACL2(const OicSecAcl_t* acl)
     return ret;
 }
 
-OCStackResult InstallNewACL(const uint8_t *cborPayload, const size_t size)
+OCStackResult AppendACL(const uint8_t *cborPayload, const size_t size)
 {
     // Convert CBOR format to ACL data. This will also validate the ACL data received.
     OicSecAcl_t* newAcl = CBORPayloadToAcl(cborPayload, size);
 
-    return InstallNewACL2(newAcl);
+    return AppendACL2(newAcl);
+}
+
+OCStackResult InstallACL(const OicSecAcl_t* acl)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+
+    if (!acl)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    bool isNewAce = true;
+    OicSecAce_t* existAce = NULL;
+    OicSecAce_t* newAce = NULL;
+    OicSecAce_t* tempAce1 = NULL;
+    OicSecAce_t* tempAce2 = NULL;
+    OicSecAcl_t* newInstallAcl = NULL;
+
+    LL_FOREACH_SAFE(acl->aces, newAce, tempAce1)
+    {
+        isNewAce = true;
+        LL_FOREACH_SAFE(gAcl->aces, existAce, tempAce2)
+        {
+            if(IsSameACE(newAce, existAce))
+            {
+                OIC_LOG(DEBUG, TAG, "Duplicated ACE dectected.");
+                ret = OC_STACK_DUPLICATE_REQUEST;
+                isNewAce = false;
+            }
+        }
+        if(isNewAce)
+        {
+            // Append new ACE to existing ACL
+            OIC_LOG(DEBUG, TAG, "NEW ACE dectected.");
+
+            OicSecAce_t* insertAce = DuplicateACE(newAce);
+            if(insertAce)
+            {
+                OIC_LOG(DEBUG, TAG, "Appending new ACE..");
+
+                if (!newInstallAcl)
+                {
+                    newInstallAcl = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
+                    if (NULL == newInstallAcl)
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to acllocate ACL");
+                        return OC_STACK_NO_MEMORY;
+                    }
+                }
+                LL_PREPEND(newInstallAcl->aces, insertAce);
+            }
+            else
+            {
+                OIC_LOG(ERROR, TAG, "Failed to duplicate ACE");
+                DeleteACLList(newInstallAcl);
+                return OC_STACK_ERROR;
+            }
+        }
+    }
+
+    if (newInstallAcl)
+    {
+        ret = AppendACL2(newInstallAcl);
+        if (OC_STACK_OK != ret)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to append ACL");
+        }
+        OICFree(newInstallAcl);
+    }
+
+    return ret;
 }
 
 /**

@@ -111,7 +111,6 @@ private:
         {
             std::string request = requests->getRequestType();
 
-            response->setErrorCode(200);
             response->setResponseResult(OC_EH_OK);
 
             if (request == "GET")
@@ -241,7 +240,6 @@ private:
             auto response = std::make_shared<OC::OCResourceResponse>();
             response->setRequestHandle(requests->getRequestHandle());
             response->setResourceHandle(requests->getResourceHandle());
-            response->setErrorCode(200);
             response->setResponseResult(OC_EH_OK);
             response->setResourceRepresentation(rep);
 

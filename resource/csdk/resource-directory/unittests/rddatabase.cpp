@@ -55,6 +55,7 @@ using namespace std;
 namespace itst = iotivity::test;
 
 #define DEFAULT_CONTEXT_VALUE 0x99
+#define DEFAULT_MESSAGE_TYPE "application/json"
 
 //-----------------------------------------------------------------------------
 // Private variables

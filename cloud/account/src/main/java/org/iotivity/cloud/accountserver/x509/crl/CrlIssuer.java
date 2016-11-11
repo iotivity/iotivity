@@ -36,7 +36,7 @@ import java.util.Date;
 import static org.iotivity.cloud.accountserver.resources.credprov.cert.CertificateConstants.CA_ISSUER;
 
 /**
- * Class is used for generating CRL with specified parameters.
+ * Class is used for generating CRLs with specified parameters.
  */
 public final class CrlIssuer {
     /**
@@ -45,7 +45,7 @@ public final class CrlIssuer {
     public static final CrlIssuer CRL_ISSUER = new CrlIssuer();
 
     /**
-     * Creates new instance of CRL issuer.
+     * Private constructor to make class non-instantiable.
      */
     private CrlIssuer() {
     }
@@ -55,7 +55,6 @@ public final class CrlIssuer {
      */
     public byte[] generate(Date thisUpdate, Date nextUpdate, Collection<? extends X509CRLEntry> certs,
                            String... serialNumbers) throws IOException, OperatorCreationException {
-        byte[] crl;
         X509v2CRLBuilder crlBuilder = new X509v2CRLBuilder(CA_ISSUER,
                 thisUpdate);
         crlBuilder.setNextUpdate(nextUpdate);
@@ -67,8 +66,8 @@ public final class CrlIssuer {
         for (String serialNumber : serialNumbers) {
             crlBuilder.addCRLEntry(new BigInteger(serialNumber), new Date(), 0);
         }
-        crl = crlBuilder.build(CertificateBuilder.SIGNER_BUILDER.
+        return crlBuilder.build(CertificateBuilder.SIGNER_BUILDER.
                 build(CertificateStorage.ROOT_PRIVATE_KEY)).getEncoded();
-        return crl;
     }
+
 }

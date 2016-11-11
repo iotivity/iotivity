@@ -216,66 +216,89 @@ int main(int argc, char *argv[])
     {
         cin >> cmd;
 
-        QueryParamsMap query;
-        OCRepresentation rep;
-        string      topicType;
-
-        switch (cmd[0])
+        try
         {
-            case '0':
-                gTopicList.clear();
-                cout << "Discovering topics" << endl;
-                result = g_mqBrokerResource->discoveryMQTopics(query, &discoverTopicCB, QualityOfService::LowQos);
-                break;
 
-            case '1':
-                gTopicList.clear();
-                cout << "Put topic type to discover: ";
-                cin >> cmd;
-                query["rt"] = cmd;
-                result = g_mqBrokerResource->discoveryMQTopics(query, &discoverTopicCB, QualityOfService::LowQos);
-                break;
+            QueryParamsMap query;
+            OCRepresentation rep;
+            string      topicType;
 
-            case '2':
-                cout << "Put discovered topic index to select: ";
-                cin >> cmd;
-                g_mqSelectedTopicResource = gTopicList[atoi(cmd.c_str())];
-                cout << g_mqSelectedTopicResource->uri() << " selected" << endl;
-                break;
+            switch (cmd[0])
+            {
+                case '0':
+                    gTopicList.clear();
+                    cout << "Discovering topics" << endl;
+                    result = g_mqBrokerResource->discoveryMQTopics(query, &discoverTopicCB, QualityOfService::LowQos);
+                    break;
 
-            case '3':
-                cout << "Put message to selected topic: ";
-                cin >> cmd;
-                rep["message"] = cmd;
-                result = g_mqSelectedTopicResource->publishMQTopic(rep, query, &publishMessageCB,
-                         QualityOfService::LowQos);
-                break;
+                case '1':
+                    gTopicList.clear();
+                    cout << "Put topic type to discover: ";
+                    cin >> cmd;
+                    query["rt"] = cmd;
+                    result = g_mqBrokerResource->discoveryMQTopics(query, &discoverTopicCB, QualityOfService::LowQos);
+                    break;
 
-            case '4':
-                cout << "Put topic uri to create: ";
-                cin >> cmd;
-                result = g_mqBrokerResource->createMQTopic(rep, cmd, query, &createTopicCB,
-                         QualityOfService::LowQos);
-                break;
+                case '2':
+                    cout << "Put discovered topic index to select: ";
+                    cin >> cmd;
+                    {
+                        int index = atoi(cmd.c_str());
+                        if (index < 0 || (unsigned int) index >= gTopicList.size())
+                        {
+                            cout << "invalid topic index selected" << endl;
+                            continue;
+                        }
 
-            case '5':
-                cout << "Put topic uri to create: ";
-                cin >> cmd;
-                cout << "Put topic type: ";
-                cin >> topicType;
-                query["rt"] = topicType;
-                result = g_mqBrokerResource->createMQTopic(rep, cmd, query, &createTopicCB,
-                         QualityOfService::LowQos);
-                break;
+                        g_mqSelectedTopicResource = gTopicList[index];
+                        cout << g_mqSelectedTopicResource->uri() << " selected" << endl;
+                    }
+                    break;
 
-            case 'q':
-                goto exit;
-                break;
+                case '3':
+                    if (g_mqSelectedTopicResource == nullptr)
+                    {
+                        cout << "Topic is not selected." << endl;
+                        continue;
+                    }
+
+                    cout << "Put message to selected topic: ";
+                    cin >> cmd;
+                    rep["message"] = cmd;
+                    result = g_mqSelectedTopicResource->publishMQTopic(rep, query, &publishMessageCB,
+                             QualityOfService::LowQos);
+                    break;
+
+                case '4':
+                    cout << "Put topic uri to create: ";
+                    cin >> cmd;
+                    result = g_mqBrokerResource->createMQTopic(rep, cmd, query, &createTopicCB,
+                             QualityOfService::LowQos);
+                    break;
+
+                case '5':
+                    cout << "Put topic uri to create: ";
+                    cin >> cmd;
+                    cout << "Put topic type: ";
+                    cin >> topicType;
+                    query["rt"] = topicType;
+                    result = g_mqBrokerResource->createMQTopic(rep, cmd, query, &createTopicCB,
+                             QualityOfService::LowQos);
+                    break;
+
+                case 'q':
+                    goto exit;
+                    break;
+            }
+
+            if (result != OC_STACK_OK)
+            {
+                cout << "Error, return code: " << result << endl;
+            }
         }
-
-        if (result != OC_STACK_OK)
+        catch (const exception &e)
         {
-            cout << "Error, return code: " << result << endl;
+            cout << "Precondition failed: " << e.what() << endl;
         }
     }
 

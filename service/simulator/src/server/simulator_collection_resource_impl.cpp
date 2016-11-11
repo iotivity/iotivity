@@ -500,7 +500,6 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorCollectionResourceImpl::request
         // Construct the representation
         OC::OCRepresentation ocRep = m_resModel.asOCRepresentation();
         response = std::make_shared<OC::OCResourceResponse>();
-        response->setErrorCode(200);
         response->setResponseResult(OC_EH_OK);
         response->setResourceRepresentation(ocRep);
         std::string resPayload = getPayloadString(ocRep);
@@ -542,7 +541,6 @@ std::shared_ptr<OC::OCResourceResponse> SimulatorCollectionResourceImpl::request
         response = std::make_shared<OC::OCResourceResponse>();
         response->setRequestHandle(request->getRequestHandle());
         response->setResourceHandle(request->getResourceHandle());
-        response->setErrorCode(200);
         response->setResponseResult(OC_EH_OK);
         response->setResourceRepresentation(ocRep);
         std::string resPayload = getPayloadString(ocRep);
@@ -563,7 +561,6 @@ void SimulatorCollectionResourceImpl::sendNotification(OC::ObservationIds &obser
 {
     std::lock_guard<std::recursive_mutex> lock(m_objectLock);
     std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse());
-    response->setErrorCode(200);
     response->setResponseResult(OC_EH_OK);
 
     OC::OCRepresentation ocRep = m_resModel.asOCRepresentation();
@@ -637,7 +634,6 @@ OCEntityHandlerResult SimulatorCollectionResourceImpl::sendResponse(
     std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse());
     response->setRequestHandle(request->getRequestHandle());
     response->setResourceHandle(request->getResourceHandle());
-    response->setErrorCode(errorCode);
     response->setResponseResult(responseResult);
     if (OC_STACK_OK != OC::OCPlatform::sendResponse(response))
     {

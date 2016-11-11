@@ -66,6 +66,12 @@ namespace OIC
             LOST_SIGNAL, /**< Failed to reach the resource. */
         };
 
+        enum class CacheMode
+        {
+            OBSERVE_ONLY,
+            OBSERVE_WITH_POLLING
+        };
+
         /**
          * The states of monitoring.
          *
@@ -343,6 +349,7 @@ namespace OIC
              * updates the cached data accordingly.
              *
              * @param cb If non-empty function, it will be invoked whenever the cache updated.
+             * @param mode if CacheMode is OBSERVE_ONLY, it will be invoked when receive observe response only.
              *
              * @throws BadRequestException If caching is already started.
              *
@@ -355,7 +362,7 @@ namespace OIC
              * @see getCachedAttribute(const std::string&) const
              *
              */
-            void startCaching(CacheUpdatedCallback cb);
+            void startCaching(CacheUpdatedCallback cb, CacheMode mode = CacheMode::OBSERVE_WITH_POLLING);
 
             /**
              * Stops caching.

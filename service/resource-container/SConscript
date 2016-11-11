@@ -41,6 +41,8 @@ SConscript('#service/third_party_libs.scons', exports = 'lib_env')
 
 resource_container_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
+rd_mode = env.get('RD_MODE')
+
 ######################################################################
 # Build flags
 ######################################################################
@@ -236,6 +238,9 @@ Command("examples/ResourceContainerConfig.xml","examples/ResourceContainerConfig
 Ignore("examples/ResourceContainerConfig.xml", "examples/ResourceContainerConfig.xml")
 
 containersample_env.AppendUnique(LIBS = ['rcs_container'])
+
+if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
+	containersample_env.AppendUnique(LIBS = ['resource_directory'])
 
 containersampleapp_src =  ['examples/ContainerSample.cpp']
 containersampleapp = containersample_env.Program('ContainerSample',containersampleapp_src)

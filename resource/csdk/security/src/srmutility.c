@@ -26,7 +26,7 @@
 #include "oic_malloc.h"
 #include "base64.h"
 
-#define TAG  "SRM-UTILITY"
+#define TAG  "OIC_SRM_UTILITY"
 
 void ParseQueryIterInit(const unsigned char * query, OicParseQueryIter_t * parseIter)
 {

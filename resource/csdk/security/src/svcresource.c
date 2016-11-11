@@ -22,6 +22,7 @@
 
 #include "ocstack.h"
 #include "ocpayload.h"
+#include "ocpayloadcbor.h"
 #include "oic_malloc.h"
 #include "utlist.h"
 #include "payload_logging.h"
@@ -33,7 +34,7 @@
 
 #include "security_internals.h"
 
-#define TAG  "SRM-SVC"
+#define TAG  "OIC_SRM_SVC"
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */
@@ -157,7 +158,7 @@ OCStackResult SVCToCBORPayload(const OicSecSvc_t *svc, uint8_t **cborPayload,
     if (CborNoError == cborEncoderResult)
     {
         *cborPayload = outPayload;
-        *cborSize = encoder.ptr - outPayload;
+        *cborSize = cbor_encoder_get_buffer_size(&encoder, outPayload);
         ret = OC_STACK_OK;
     }
 
@@ -168,7 +169,7 @@ exit:
         OICFree(outPayload);
         outPayload = NULL;
         // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         cborEncoderResult = CborNoError;
         ret = SVCToCBORPayload(svc, cborPayload, &cborLen);
         *cborSize = cborLen;

@@ -101,7 +101,7 @@ void receivedPlatformInfo(const OCRepresentation& rep)
         "st",   "Manufacturer system time       "
     };
 
-    for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]) ; i += 2)
+    for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]); i += 2)
     {
         if(rep.getValue(values[i], value))
         {
@@ -195,12 +195,13 @@ void WinUIClientApp::foundResource(std::shared_ptr<OCResource> resource)
             {
                 std::cout << "\t\t" << resourceInterfaces << std::endl;
             }
-            
+
             OCStackResult ret;
             std::cout << "Querying for platform information... " << std::endl;
 
-            ret = OCPlatform::getPlatformInfo("", platformDiscoveryURI, CT_ADAPTER_IP,
-                    &receivedPlatformInfo);
+            ret = OCPlatform::getPlatformInfo(resource->host(), platformDiscoveryURI,
+                                              resource->connectivityType(),
+                                              &receivedPlatformInfo);
 
             if (ret == OC_STACK_OK)
             {
@@ -213,8 +214,10 @@ void WinUIClientApp::foundResource(std::shared_ptr<OCResource> resource)
 
             std::cout << "Querying for device information... " << std::endl;
 
-            ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI, CT_ADAPTER_IP,
-                    &receivedDeviceInfo);
+            ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI,
+                                            resource->connectivityType(),
+                                            &receivedDeviceInfo);
+
 
             if (ret == OC_STACK_OK)
             {
@@ -224,7 +227,7 @@ void WinUIClientApp::foundResource(std::shared_ptr<OCResource> resource)
             {
                 std::cout << "Getting device information failed." << std::endl;
             }
-   
+
             if (resourceURI == "/a/media")
             {
                 curResource = resource;

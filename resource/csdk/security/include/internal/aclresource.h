@@ -111,24 +111,35 @@ void FreeRsrc(OicSecRsrc_t *rsrc);
  */
 OicSecAce_t* DuplicateACE(const OicSecAce_t* ace);
 
+
 /**
- * This function installs a new ACL.
+ * This function check the duplication with pre-installed ACL and installs only new ACEs.
+ *
+ * @param acl  acl to install.
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult InstallACL(const OicSecAcl_t* acl);
+
+/**
+ * This function appends a new ACL.
  *
  * @param payload cbor value representing a new ACL.
  * @param size of the cbor payload.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult InstallNewACL(const uint8_t* payload, const size_t size);
+OCStackResult AppendACL(const uint8_t* payload, const size_t size);
 
 /**
- * This function installs a new ACL.
+ * This function appends a new ACL.
  *
- * @param acl  new acl to install.
+ * @param acl  new acl to append.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value
  */
-OCStackResult InstallNewACL2(const OicSecAcl_t* acl);
+OCStackResult AppendACL2(const OicSecAcl_t* acl);
+
 /**
  * This function updates default ACE which is required for ownership transfer.
  * This function should be invoked after OTM is complete to prevent anonymous user access.

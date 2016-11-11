@@ -104,7 +104,8 @@ static int32_t g_scanIntervalTime = WAIT_TIME_SCAN_INTERVAL_DEFAULT;
 static int32_t g_scanIntervalTimePrev = WAIT_TIME_SCAN_INTERVAL_DEFAULT;
 static int32_t g_intervalCount = 0;
 static bool g_isWorkingScanThread = false;
-static CALEScanState_t g_scanningStep = BLE_SCAN_DISABLE;
+static CALEScanState_t g_curScanningStep = BLE_SCAN_DISABLE;
+static CALEScanState_t g_nextScanningStep = BLE_SCAN_ENABLE;
 
 static CABLEDataReceivedCallback g_CABLEClientDataReceivedCallback = NULL;
 
@@ -135,10 +136,11 @@ static bool CALECheckConnectionStateValue(jint state)
     }
 }
 
-void CALEClientSetScanInterval(int32_t intervalTime, int32_t workingCount)
+void CALEClientSetScanInterval(int32_t intervalTime, int32_t workingCount,
+                               CALEScanState_t nextScanningStep)
 {
-    OIC_LOG_V(DEBUG, TAG, "CALEClientSetScanInterval : %d -> %d",
-              g_scanIntervalTime, intervalTime);
+    OIC_LOG_V(DEBUG, TAG, "CALEClientSetScanInterval : %d -> %d, next scan state will be %d",
+              g_scanIntervalTime, intervalTime, nextScanningStep);
 
     // previous time should be stored.
     if (0 < workingCount)
@@ -147,12 +149,21 @@ void CALEClientSetScanInterval(int32_t intervalTime, int32_t workingCount)
     }
     g_scanIntervalTime = intervalTime;
     g_intervalCount = workingCount;
+    g_nextScanningStep = nextScanningStep;
 }
 
-void CALERestartScanWithInterval(int32_t intervalTime, int32_t workingCount)
+void CALERestartScanWithInterval(int32_t intervalTime, int32_t workingCount,
+                                 CALEScanState_t nextScanningStep)
 {
-    // restart scan with interval
-    CALEClientSetScanInterval(intervalTime, workingCount);
+    if (intervalTime == g_scanIntervalTime
+            && workingCount == g_intervalCount
+            && nextScanningStep == g_nextScanningStep)
+    {
+        OIC_LOG(DEBUG, TAG, "setting duplicate interval time");
+        return;
+    }
+
+    CALEClientSetScanInterval(intervalTime, workingCount, nextScanningStep);
     oc_cond_signal(g_threadScanIntervalCond);
 }
 
@@ -180,7 +191,7 @@ static void CALEScanThread(void* object)
     while(g_isWorkingScanThread)
     {
         OIC_LOG(DEBUG, TAG, "scan waiting time out");
-        if (BLE_SCAN_ENABLE == g_scanningStep)
+        if (BLE_SCAN_ENABLE == g_curScanningStep)
         {
             //stop scan
             CAResult_t ret = CALEClientStopScan();
@@ -206,27 +217,34 @@ static void CALEScanThread(void* object)
         {
             // called signal scan thread will be terminated
             OIC_LOG(DEBUG, TAG, "signal scanInterval waiting");
-            g_scanningStep = BLE_SCAN_DISABLE;
+            if (BLE_SCAN_DISABLE == g_nextScanningStep)
+            {
+                g_curScanningStep = BLE_SCAN_ENABLE;
+            }
+            else
+            {
+                g_curScanningStep = BLE_SCAN_DISABLE;
+            }
         }
         else
         {
-           if (BLE_SCAN_ENABLE == g_scanningStep)
+           if (BLE_SCAN_ENABLE == g_curScanningStep)
            {
                if (g_intervalCount > 0)
                {
                    if (g_intervalCount == 1)
                    {
                        OIC_LOG(DEBUG, TAG, "reset default time");
-                       CALEClientSetScanInterval(g_scanIntervalTimePrev, 0);
+                       CALEClientSetScanInterval(g_scanIntervalTimePrev, 0, BLE_SCAN_ENABLE);
                    }
                    g_intervalCount--;
                    OIC_LOG_V(DEBUG, TAG, "interval count : %d", g_intervalCount);
                }
-               g_scanningStep = BLE_SCAN_DISABLE;
+               g_curScanningStep = BLE_SCAN_DISABLE;
            }
            else
            {
-               g_scanningStep = BLE_SCAN_ENABLE;
+               g_curScanningStep = BLE_SCAN_ENABLE;
            }
         }
     }
@@ -249,10 +267,11 @@ CAResult_t CALEClientStartScanWithInterval()
     }
 
     // initialize scan flags
-    g_scanningStep = BLE_SCAN_DISABLE;
+    g_curScanningStep = BLE_SCAN_DISABLE;
     g_isWorkingScanThread = true;
     g_intervalCount = 0;
     g_scanIntervalTime = g_scanIntervalTimePrev;
+    g_nextScanningStep = BLE_SCAN_ENABLE;
 
     if (CA_STATUS_OK != ca_thread_pool_add_task(g_threadPoolHandle,
                                                 CALEScanThread, NULL))
@@ -497,6 +516,13 @@ void CALEClientTerminate()
         isAttached = true;
     }
 
+    // stop scan
+    CAResult_t ret = CALEClientStopScan();
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(INFO, TAG, "CALEClientStopScan has failed");
+    }
+
     if (g_leScanCallback)
     {
         (*env)->DeleteGlobalRef(env, g_leScanCallback);
@@ -521,7 +547,7 @@ void CALEClientTerminate()
         g_uuidList = NULL;
     }
 
-    CAResult_t ret = CALEClientRemoveAllDeviceState();
+    ret = CALEClientRemoveAllDeviceState();
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "CALEClientRemoveAllDeviceState has failed");
@@ -766,7 +792,7 @@ CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address)
             2 * MICROSECS_PER_SEC;  // Microseconds
 
         // set scan interval and start scan
-        CALERestartScanWithInterval(WAIT_TIME_SCANNED_CHECKING, 1);
+        CALERestartScanWithInterval(WAIT_TIME_SCANNED_CHECKING, 1, BLE_SCAN_ENABLE);
 
         bool devicesDiscovered = false;
         for (size_t i = 0; i < RETRIES; ++i)
@@ -819,7 +845,7 @@ CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address)
         }
 
         // reset scan interval time after checking scanned devices
-        CALERestartScanWithInterval(g_scanIntervalTimePrev, 0);
+        CALERestartScanWithInterval(0, 0, BLE_SCAN_DISABLE);
 
         // time out for scanning devices
         if (!devicesDiscovered)
@@ -945,7 +971,7 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
     {
         OIC_LOG(DEBUG, TAG, "waiting send finish signal");
         oc_cond_wait(g_threadCond, g_threadMutex);
-        OIC_LOG(DEBUG, TAG, "the data was sent");
+        OIC_LOG(DEBUG, TAG, "connection / send is finished for unicast");
     }
     oc_mutex_unlock(g_threadMutex);
 
@@ -959,10 +985,12 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
     if (CALEClientIsValidState(address, CA_LE_SEND_STATE,
                                STATE_SEND_SUCCESS))
     {
+        OIC_LOG(INFO, TAG, "send success");
         ret = CA_STATUS_OK;
     }
     else
     {
+        OIC_LOG(ERROR, TAG, "send failure");
         ret = CA_SEND_FAILED;
     }
 
@@ -1050,7 +1078,7 @@ CAResult_t CALEClientSendMulticastMessageImpl(JNIEnv *env, const uint8_t* data,
     {
         OIC_LOG(DEBUG, TAG, "waiting send finish signal");
         oc_cond_wait(g_threadCond, g_threadMutex);
-        OIC_LOG(DEBUG, TAG, "the data was sent");
+        OIC_LOG(DEBUG, TAG, "connection / send is finished for multicast");
     }
     oc_mutex_unlock(g_threadMutex);
     oc_mutex_unlock(g_threadSendMutex);
@@ -1085,6 +1113,22 @@ CAResult_t CALEClientSendData(JNIEnv *env, jobject device)
         oc_mutex_lock(g_deviceStateListMutex);
         state = CALEClientGetStateInfo(address);
         oc_mutex_unlock(g_deviceStateListMutex);
+    }
+
+    // Since disconnect event can be caused from BT stack while connection step is running.
+    // DeviceState has to have current status for processing send failure.
+    OIC_LOG(INFO, TAG, "set STATE_SEND_PREPARING");
+    CAResult_t res = CALEClientUpdateDeviceStateWithBtDevice(env, device,
+                                                             CA_LE_SEND_STATE,
+                                                             STATE_SEND_PREPARING);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceStateWithBtDevice has failed");
+        if (address)
+        {
+            (*env)->ReleaseStringUTFChars(env, jni_address, address);
+        }
+        return CA_STATUS_FAILED;
     }
 
     if (!state)
@@ -1729,6 +1773,9 @@ jobject CALEClientConnect(JNIEnv *env, jobject bluetoothDevice, jboolean autocon
     OIC_LOG(DEBUG, TAG, "CALEClientConnect");
     VERIFY_NON_NULL_RET(env, TAG, "env is null", NULL);
     VERIFY_NON_NULL_RET(bluetoothDevice, TAG, "bluetoothDevice is null", NULL);
+
+    // reset scan interval time after checking scanned devices
+    CALERestartScanWithInterval(0, 0, BLE_SCAN_DISABLE);
 
     // get gatt object from Bluetooth Device object for closeProfileProxy(..)
     jstring jni_address = CALEClientGetLEAddressFromBTDevice(env, bluetoothDevice);
@@ -3387,13 +3434,48 @@ jstring CALEClientGetLEAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
 /**
  * BT State List
  */
+CAResult_t CALEClientUpdateDeviceStateWithBtDevice(JNIEnv *env,
+                                                   jobject device,
+                                                   uint16_t state_type,
+                                                   uint16_t target_state)
+{
+    VERIFY_NON_NULL(device, TAG, "device is null");
+
+    // get Bluetooth Address
+    jstring jni_Address = CALEGetAddressFromBTDevice(env, device);
+    if (!jni_Address)
+    {
+        OIC_LOG(ERROR, TAG, "CALEGetAddressFromBTDevice has failed");
+        return CA_STATUS_FAILED;
+    }
+
+    const char* address = (*env)->GetStringUTFChars(env, jni_Address, NULL);
+    if (!address)
+    {
+        OIC_LOG(ERROR, TAG, "targetAddress is not available");
+        return CA_STATUS_FAILED;
+    }
+
+    if (CALEClientIsValidState(address, state_type, target_state))
+    {
+        return CA_STATUS_OK;
+    }
+
+    CAResult_t res = CALEClientUpdateDeviceState(address, state_type,
+                                                 target_state);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+    }
+    (*env)->ReleaseStringUTFChars(env, jni_Address, address);
+
+    return res;
+}
 
 CAResult_t CALEClientUpdateDeviceState(const char* address, uint16_t state_type,
                                        uint16_t target_state)
 {
     VERIFY_NON_NULL(address, TAG, "address is null");
-    VERIFY_NON_NULL(address, TAG, "state_type is null");
-    VERIFY_NON_NULL(address, TAG, "target_state is null");
 
     if (!g_deviceStateList)
     {
@@ -3753,6 +3835,10 @@ void CALEClientUpdateSendCnt(JNIEnv *env)
         CALEClientSetSendFinishFlag(true);
         OIC_LOG(DEBUG, TAG, "set signal for send data");
     }
+
+    // reset interval scan logic
+    CALERestartScanWithInterval(g_scanIntervalTimePrev, 0, BLE_SCAN_ENABLE);
+
     // mutex unlock
     oc_mutex_unlock(g_threadMutex);
 }
@@ -4207,6 +4293,17 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
     {
         OIC_LOG(DEBUG, TAG, "LE is disconnected");
 
+        if (CALEClientIsValidState(address, CA_LE_SEND_STATE, STATE_SEND_PREPARING))
+        {
+            OIC_LOG(INFO, TAG, "current state is STATE_SEND_PREPARING");
+            CAResult_t res = CALEClientUpdateDeviceState(address, CA_LE_SEND_STATE,
+                                                         STATE_SEND_FAIL);
+            if (CA_STATUS_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+            }
+        }
+
         CAResult_t res = CALEClientUpdateDeviceState(address,
                                                      CA_LE_CONNECTION_STATE,
                                                      STATE_DISCONNECTED);
@@ -4350,6 +4447,9 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
             goto error_exit;
         }
     }
+
+    // reset interval scan logic
+    CALERestartScanWithInterval(g_scanIntervalTimePrev, 0, BLE_SCAN_ENABLE);
 
     OIC_LOG(INFO, TAG, "ServicesDiscovery is successful");
     (*env)->ReleaseStringUTFChars(env, jni_address, address);

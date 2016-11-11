@@ -201,7 +201,7 @@ static void LedCB(void *ctx, OCDoHandle UNUSED,
 
 static void inputPinCB(char* pin, size_t len)
 {
-    if(!pin || OXM_RANDOM_PIN_SIZE>=len)
+    if(!pin || OXM_RANDOM_PIN_MAX_SIZE>=len)
     {
         OIC_LOG(ERROR, TAG, "inputPinCB invalid parameters");
         return;
@@ -210,7 +210,7 @@ static void inputPinCB(char* pin, size_t len)
     printf("   > INPUT PIN: ");
     for(int ret=0; 1!=ret; )
     {
-        ret = scanf("%8s", pin);
+        ret = scanf("%32s", pin);
         for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                     // '0x20<=code' is character region
     }
@@ -328,7 +328,8 @@ static int multipleOwnershipTransfer(void)
         if(OIC_PRECONFIG_PIN == dev->doxm->oxmSel)
         {
             //Pre-Configured PIN initialization
-            if(OC_STACK_OK != OCAddPreconfigPIN(dev, "12341234", OXM_PRECONFIG_PIN_SIZE))
+            const char* testPreconfigPin = "12341234";
+            if(OC_STACK_OK != OCAddPreconfigPin(dev, testPreconfigPin, strlen(testPreconfigPin)))
             {
                 printf("\n\n\n*** %60s ***\n", "WARNNING : Failed to save the pre-configured PIN");
                 printf("*** %60s ***\n\n\n", "WARNNING : You can't use the pre-configured PIN OxM for MOT");
@@ -557,14 +558,7 @@ static OicSecAcl_t* createAclForLEDAccess(const OicUuid_t* subject)
         goto CRACL_ERROR;
     }
 
-    //fill the eowner id as my deviceID.
-    OicUuid_t myUuid = {.id={0}};
-    if(OC_STACK_OK != GetDoxmDeviceID(&myUuid))
-    {
-        OIC_LOG(ERROR, TAG, "createAcl: GetDoxmDeviceID error return");
-        goto CRACL_ERROR;
-    }
-    memcpy(ace->eownerID->id, myUuid.id, sizeof(myUuid.id));
+    memcpy(ace->eownerID->id, subject->id, sizeof(subject->id));
 
     return acl;
 
@@ -616,22 +610,14 @@ static int provisionAclForLed()
         goto PVACL_ERROR;
     }
 
-    OicUuid_t subjectUuid;
-    OCStackResult rst = GetDoxmDeviceID(&subjectUuid);
-    if(OC_STACK_OK != rst)
-    {
-        OIC_LOG_V(ERROR, TAG, "GetDoxmDeviceID API error: %d", rst);
-        goto PVACL_ERROR;
-    }
-
-    acl = createAclForLEDAccess(&subjectUuid);
+    acl = createAclForLEDAccess(&dev->doxm->subOwners->uuid);
     if(NULL == acl)
     {
         OIC_LOG(ERROR, TAG, "provisionAcl: Failed to create ACL for LED");
         return -1;
     }
 
-    rst = OCProvisionACL((void*) g_ctx, dev, acl, provisionAclCB);
+    OCStackResult rst = OCProvisionACL((void*) g_ctx, dev, acl, provisionAclCB);
     if(OC_STACK_OK != rst)
     {
         OIC_LOG_V(ERROR, TAG, "OCProvisionACL API error: %d", rst);

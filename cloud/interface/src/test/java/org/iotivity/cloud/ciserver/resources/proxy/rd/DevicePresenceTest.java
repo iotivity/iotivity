@@ -56,18 +56,16 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class DevicePresenceTest {
-    public static final String DEVICE_PRS_REQ_URI  = Constants.DEVICE_PRESENCE_FULL_URI;
-    public static final String DEVICE_LIST_KEY     = "devices";
-    public static final String RES_PRS_URI         = Constants.RESOURCE_PRESENCE_FULL_URI;
-    private String             mDi                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
-    private CoapDevice         mMockDevice         = mock(CoapDevice.class);
-    private IRequest           mReq                = null;
-    private DeviceServerSystem mDeviceServerSystem = new DeviceServerSystem();
-    final CountDownLatch       mLatch              = new CountDownLatch(1);
+    private static final String DEVICE_PRS_REQ_URI  = Constants.DEVICE_PRESENCE_FULL_URI;
+    private String              mDi                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
+    private CoapDevice          mMockDevice         = mock(CoapDevice.class);
+    private IRequest            mReq                = null;
+    private DeviceServerSystem  mDeviceServerSystem = new DeviceServerSystem();
+    final CountDownLatch        mLatch              = new CountDownLatch(1);
     @Mock
-    private IRequestChannel    mRequestChannel;
+    private IRequestChannel     mRequestChannel;
     @InjectMocks
-    private DevicePresence     mPrsHandler         = new DevicePresence();
+    private DevicePresence      mPrsHandler         = new DevicePresence();
 
     @Before
     public void setUp() throws Exception {

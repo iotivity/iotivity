@@ -22,6 +22,7 @@
 #define OC_PAYLOAD_CBOR_H
 
 #include "octypes.h"
+#include <cbor.h>
 
 #ifdef __cplusplus
 extern "C"

@@ -9,8 +9,28 @@
         android:id="@+id/inputView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Input Server IP and Port"
+        android:text="Enter the server information"
         android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <RadioGroup
+        android:id="@+id/radioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone">
+
+        <RadioButton
+            android:id="@+id/radioIP"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Use IP and Port" />
+
+        <RadioButton
+            android:id="@+id/radioDomain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Use Domain and Port" />
+    </RadioGroup>
 
     <EditText
         android:id="@+id/inputText"
