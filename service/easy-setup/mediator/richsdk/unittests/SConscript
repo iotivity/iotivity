@@ -44,7 +44,6 @@ gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
 
 easysetup_test_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
-rd_mode = env.get('RD_MODE')
 
 ######################################################################
 # Build flags
@@ -74,14 +73,6 @@ easysetup_test_env.AppendUnique(CPPPATH = [ src_dir + '/resource/include',
 if env.get('SECURED') == '1':
 	if env.get('WITH_TCP') == True:
 		easysetup_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
-
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-    if 'CLIENT' in rd_mode:
-        easysetup_test_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
-    if 'SERVER' in rd_mode:
-        easysetup_test_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
-    easysetup_test_env.AppendUnique(LIBS = ['resource_directory'])
-
 ######################################################################
 # Build Test
 ######################################################################

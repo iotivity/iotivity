@@ -33,7 +33,6 @@ rcs_common_env = lib_env.Clone()
 target_os = rcs_common_env.get('TARGET_OS')
 release = rcs_common_env.get('RELEASE')
 src_dir = rcs_common_env.get('SRC_DIR')
-rd_mode = rcs_common_env.get('RD_MODE')
 
 ######################################################################
 # Build flags
@@ -69,9 +68,6 @@ if not release:
 if rcs_common_env.get('SECURED') == '1':
 	if rcs_common_env.get('WITH_TCP') == True:
 		rcs_common_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
-
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	rcs_common_env.AppendUnique(LIBS = ['resource_directory'])
 
 ######################################################################
 # Source files and Targets

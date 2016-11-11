@@ -28,7 +28,6 @@ src_dir = provisiontests_env.get('SRC_DIR')
 target_os = provisiontests_env.get('TARGET_OS')
 with_ra = provisiontests_env.get('WITH_RA')
 with_ra_ibb = provisiontests_env.get('WITH_RA_IBB')
-rd_mode = provisiontests_env.get('RD_MODE')
 
 ######################################################################
 # Build flags
@@ -81,9 +80,6 @@ if provisiontests_env.get('SECURED') == '1':
 
 if provisiontests_env.get('LOGGING'):
 	provisiontests_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
-
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	provisiontests_env.AppendUnique(LIBS = ['resource_directory'])
 
 ######################################################################
 # Source files and Targets

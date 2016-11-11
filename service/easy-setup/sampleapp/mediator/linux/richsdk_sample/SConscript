@@ -23,7 +23,6 @@ Import('env')
 mediator_env = env.Clone()
 
 target_os = env.get('TARGET_OS')
-rd_mode = env.get('RD_MODE')
 
 ######################################################################
 # Build flags
@@ -43,9 +42,6 @@ env.AppendUnique(CPPDEFINES = ['CPP_MEDIATOR'])
 
 if target_os not in ['windows']:
     mediator_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
-
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-    mediator_env.AppendUnique(LIBS = ['resource_directory'])
 
 mediator_env.PrependUnique(CPPPATH = [
             env.get('SRC_DIR') + '/resource/include',
