@@ -115,7 +115,10 @@ namespace OIC
             }
 
             m_attributes = rep.getAttributes();
-            m_reportCB(m_wpResource.lock(), m_attributes);
+            if (m_reportCB)
+            {
+                m_reportCB(m_wpResource.lock(), m_attributes);
+            }
         }
 
         void ObserveCache::verifyObserveCB(const HeaderOptions &_hos,
