@@ -446,11 +446,9 @@ static OCEntityHandlerResult HandleAmaclGetRequest (const OCEntityHandlerRequest
     OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
 
     // Send response payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, cborPayload, size))
-    {
-        ehRet = OC_EH_ERROR;
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleAmaclGetRequest");
-    }
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, cborPayload, size)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
+
     OICFree(cborPayload);
 
     OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
