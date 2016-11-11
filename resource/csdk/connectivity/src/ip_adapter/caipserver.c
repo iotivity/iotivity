@@ -1111,8 +1111,7 @@ static void applyMulticastToInterface4(uint32_t ifindex)
 
 static void applyMulticast6(int fd, struct in6_addr *addr, uint32_t ifindex)
 {
-    struct ipv6_mreq mreq = {.ipv6mr_multiaddr = {0},
-                             .ipv6mr_interface = ifindex };
+    struct ipv6_mreq mreq = { .ipv6mr_interface = ifindex };
 
     // VS2013 has problems with struct copies inside struct initializers, so copy separately.
     mreq.ipv6mr_multiaddr = *addr;
