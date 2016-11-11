@@ -55,6 +55,7 @@ import org.iotivity.base.OcPresenceHandle;
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.OcResource;
 import org.iotivity.base.OcResourceHandle;
+import org.iotivity.base.OcRDClient;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ResourceProperty;
@@ -723,8 +724,8 @@ public class CloudFragment extends Fragment implements
     // End of the Account Manager specific code
     // ******************************************************************************
 
-    OcPlatform.OnPublishResourceListener resourcePublishListener =
-            new OcPlatform.OnPublishResourceListener() {
+    OcRDClient.OnPublishResourceListener resourcePublishListener =
+            new OcRDClient.OnPublishResourceListener() {
                 @Override
                 public void onPublishResourceCompleted(OcRepresentation ocRepresentation) {
                     msg("onPublishResourceCompleted");
@@ -744,8 +745,8 @@ public class CloudFragment extends Fragment implements
                 }
             };
 
-    OcPlatform.OnDeleteResourceListener resourceDeleteListener =
-            new OcPlatform.OnDeleteResourceListener() {
+    OcRDClient.OnDeleteResourceListener resourceDeleteListener =
+            new OcRDClient.OnDeleteResourceListener() {
                 @Override
                 public void onDeleteResourceCompleted(int resultCode) {
                     msg("onDeleteResourceCompleted, result is " + resultCode);
@@ -777,14 +778,14 @@ public class CloudFragment extends Fragment implements
         try {
             // Publish Virtual Resource to Resource-Directory.
             Log.d(TAG, "Publish Virtual Resource to Resource-Directory.");
-            OcPlatform.publishResourceToRD(
+            OcRDClient.publishResourceToRD(
                     Common.HOST, EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP),
                     resourcePublishListener
             );
 
             // Publish Local Resource to Resource-Directory.
             Log.d(TAG, "Publish Local Resource to Resource-Directory.");
-            OcPlatform.publishResourceToRD(
+            OcRDClient.publishResourceToRD(
                     Common.HOST, EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP), mResourceHandleList,
                     resourcePublishListener
             );
@@ -797,7 +798,7 @@ public class CloudFragment extends Fragment implements
         try {
             // Delete Resource from Resource-Directory.
             Log.d(TAG, "Delete Resource from Resource-Directory.");
-            OcPlatform.deleteResourceFromRD(
+            OcRDClient.deleteResourceFromRD(
                     Common.HOST, EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP),
                     resourceDeleteListener
             );

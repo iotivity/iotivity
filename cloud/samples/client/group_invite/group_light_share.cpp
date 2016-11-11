@@ -9,7 +9,7 @@
 
 #include "ocstack.h"
 #include "ocpayload.h"
-#include "rd_client.h"
+#include "RDClient.h"
 
 #include <OCApi.h>
 #include <OCPlatform.h>
@@ -383,7 +383,7 @@ int main(int argc, char **argv)
     ResourceHandles resourceHandles;
     resourceHandles.push_back(lightResource.m_resourceHandle);
 
-    OCPlatform::publishResourceToRD(g_host, OCConnectivityType::CT_ADAPTER_TCP, resourceHandles,
+    RDClient::Instance().publishResourceToRD(g_host, OCConnectivityType::CT_ADAPTER_TCP, resourceHandles,
             &onPublish);
     g_callbackLock.wait(lock);
 /* TODO: need to modify the below according to the OCAccountManager API changed.

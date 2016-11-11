@@ -26,7 +26,6 @@ gtest_env = SConscript('#extlibs/gtest/SConscript')
 srmtest_env = gtest_env.Clone()
 src_dir = srmtest_env.get('SRC_DIR')
 target_os = srmtest_env.get('TARGET_OS')
-rd_mode = srmtest_env.get('RD_MODE')
 
 ######################################################################
 # Build flags
@@ -78,9 +77,6 @@ else:
 	# TODO: Implement feature check.
 	srmtest_env.AppendUnique(CPPDEFINES = ['HAVE_LOCALTIME_R'])
 	srmtest_env.AppendUnique(LIBS = ['octbstack'])
-
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	srmtest_env.PrependUnique(LIBS = ['resource_directory'])
 
 ######################################################################
 # Source files and Targets
