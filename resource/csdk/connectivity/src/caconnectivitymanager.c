@@ -476,33 +476,41 @@ CAResult_t CAHandleRequestResponse()
     return CA_STATUS_OK;
 }
 
-#if defined (__WITH_DTLS__) || defined(__WITH_TLS__)
 CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
 {
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
     OIC_LOG_V(DEBUG, TAG, "cipher : %d , CATransportAdapter : %d", cipher, adapter);
-    if (CA_STATUS_OK != CAsetTlsCipherSuite(cipher))
+    CAResult_t res = CA_STATUS_FAILED;
+#if defined (__WITH_DTLS__) || defined(__WITH_TLS__)
+    res = CAsetTlsCipherSuite(cipher);
+    if (CA_STATUS_OK != res)
     {
-        OIC_LOG_V(ERROR, TAG, "Out %s", __func__);
-        return CA_STATUS_FAILED;
+        OIC_LOG_V(ERROR, TAG, "Failed to CAsetTlsCipherSuite : %d", res);
     }
+#else
+    OIC_LOG(ERROR, TAG, "Method not supported");
+#endif
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-    return CA_STATUS_OK;
+    return res;
 }
 
 CAResult_t CAEnableAnonECDHCipherSuite(const bool enable)
 {
     OIC_LOG_V(DEBUG, TAG, "CAEnableAnonECDHCipherSuite");
-
+    CAResult_t res = CA_STATUS_FAILED;
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     // TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256    0xFF00 replaces 0xC018
     // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256    0xC037
-    if (CA_STATUS_OK != CAsetTlsCipherSuite(enable ? 0xFF00 : 0xC037))
+    res = CAsetTlsCipherSuite(enable ? 0xFF00 : 0xC037);
+    if (CA_STATUS_OK != res)
     {
-        return CA_STATUS_FAILED;
+        OIC_LOG_V(ERROR, TAG, "Failed to CAsetTlsCipherSuite : %d", res);
     }
+#else
+    OIC_LOG(ERROR, TAG, "Method not supported");
 #endif
-    return CA_STATUS_OK;
+    OIC_LOG_V(ERROR, TAG, "Out %s", __func__);
+    return res;
 }
 
 CAResult_t CAGenerateOwnerPSK(const CAEndpoint_t* endpoint,
@@ -512,9 +520,8 @@ CAResult_t CAGenerateOwnerPSK(const CAEndpoint_t* endpoint,
                     uint8_t* ownerPSK, const size_t ownerPskSize)
 {
     OIC_LOG_V(DEBUG, TAG, "IN : CAGenerateOwnerPSK");
-
-    CAResult_t res = CA_STATUS_OK;
-
+    CAResult_t res = CA_STATUS_FAILED;
+#if defined (__WITH_DTLS__) || defined(__WITH_TLS__)
     //newOwnerLabel and prevOwnerLabe can be NULL
     if (!endpoint || !label || 0 == labelLen || !ownerPSK || 0 == ownerPskSize)
     {
@@ -525,22 +532,22 @@ CAResult_t CAGenerateOwnerPSK(const CAEndpoint_t* endpoint,
                                       rsrcServerDeviceID, rsrcServerDeviceIDLen,
                                       provServerDeviceID, provServerDeviceIDLen,
                                       ownerPSK, ownerPskSize);
-
     if (CA_STATUS_OK != res)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to CAGenerateOwnerPSK : %d", res);
     }
-
+#else
+    OIC_LOG(ERROR, TAG, "Method not supported");
+#endif
     OIC_LOG_V(DEBUG, TAG, "OUT : CAGenerateOwnerPSK");
-
     return res;
 }
 
 CAResult_t CAInitiateHandshake(const CAEndpoint_t *endpoint)
 {
     OIC_LOG_V(DEBUG, TAG, "IN : CAInitiateHandshake");
-    CAResult_t res = CA_STATUS_OK;
-
+    CAResult_t res = CA_STATUS_FAILED;
+#if defined (__WITH_DTLS__) || defined(__WITH_TLS__)
     if (!endpoint)
     {
         return CA_STATUS_INVALID_PARAM;
@@ -551,17 +558,18 @@ CAResult_t CAInitiateHandshake(const CAEndpoint_t *endpoint)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to CAinitiateSslHandshake : %d", res);
     }
-
+#else
+        OIC_LOG(ERROR, TAG, "Method not supported");
+#endif
     OIC_LOG_V(DEBUG, TAG, "OUT : CAInitiateHandshake");
-
     return res;
 }
 
 CAResult_t CAcloseSslSession(const CAEndpoint_t *endpoint)
 {
     OIC_LOG_V(DEBUG, TAG, "IN : CAcloseSslSession");
-    CAResult_t res = CA_STATUS_OK;
-
+    CAResult_t res = CA_STATUS_FAILED;
+#if defined (__WITH_DTLS__) || defined(__WITH_TLS__)
     if (!endpoint)
     {
         return CA_STATUS_INVALID_PARAM;
@@ -572,13 +580,12 @@ CAResult_t CAcloseSslSession(const CAEndpoint_t *endpoint)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to CAsslClose : %d", res);
     }
-
+#else
+    OIC_LOG(ERROR, TAG, "Method not supported");
+#endif
     OIC_LOG_V(DEBUG, TAG, "OUT : CAcloseSslSession");
-
     return res;
 }
-
-#endif /* __WITH_DTLS__ */
 
 #ifdef TCP_ADAPTER
 void CARegisterKeepAliveHandler(CAKeepAliveConnectionCallback ConnHandler)
