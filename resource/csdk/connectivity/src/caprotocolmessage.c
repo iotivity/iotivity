@@ -179,7 +179,7 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
     return pdu;
 }
 
-coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
+coap_pdu_t *CAParsePDU(const char *data, size_t length, uint32_t *outCode,
                        const CAEndpoint_t *endpoint)
 {
     VERIFY_NON_NULL_RET(data, TAG, "data", NULL);
@@ -193,7 +193,8 @@ coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
     }
 #endif
 
-    coap_pdu_t *outpdu = coap_new_pdu2(transport, length);
+    coap_pdu_t *outpdu =
+        coap_pdu_init2(0, 0, ntohs(COAP_INVALID_TID), length, transport);
     if (NULL == outpdu)
     {
         OIC_LOG(ERROR, TAG, "outpdu is null");

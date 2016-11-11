@@ -215,7 +215,7 @@ CAResult_t CASetAdapterRAInfo(const CARAInfo_t *caraInfo)
 #endif
 
 static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
-                                     const void *data, uint32_t dataLen)
+                                     const void *data, size_t dataLen)
 {
     if (g_networkPacketReceivedCallback != NULL)
     {
@@ -265,7 +265,7 @@ static void CAConnectionChangedCallback(const CAEndpoint_t *info, bool isConnect
 #endif
 
 static void CAAdapterErrorHandleCallback(const CAEndpoint_t *endpoint,
-                                         const void *data, uint32_t dataLen,
+                                         const void *data, size_t dataLen,
                                          CAResult_t result)
 {
     OIC_LOG(DEBUG, TAG, "received error from adapter in interfacecontroller");
