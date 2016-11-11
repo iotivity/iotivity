@@ -22,10 +22,12 @@ Import('env')
 
 import os
 import sys
+import subprocess
 
 target_os = env.get('TARGET_OS')
 root_dir = env.get('SRC_DIR')
 mbedtls_dir = os.path.join(root_dir, 'extlibs','mbedtls','mbedtls/')
+start_dir = os.getcwd()
 # Right now this script assumes the revision is a tag, and not a branch or an arbitrary
 # commit. If this changes, update the check below, or else the script will always conclude
 # the repo is not up to date because a tag with that name doesn't exist.
@@ -39,13 +41,17 @@ if not os.path.exists(mbedtls_dir):
 ***********************************************************************************
  '''
     Exit(1)
+#cd extlib/mbedtls/mbedtls
+os.chdir(mbedtls_dir)
 
 # Tizen uses its own process to prepare the mbedTLS repo in gbsbuild.sh. Make sure
 # the mbedtls_revision tag selected is the same as in extlibs/mbedtls/prep.sh.
 # This code also assumes mbedtls_revision is a tag; if it changes to
 # a branch or an arbitrary commit, disable this check below.
 if target_os != 'tizen':
-    if not os.path.exists(os.path.join(mbedtls_dir, '.git', 'refs', 'tags', mbedtls_revision)):
+    out = subprocess.check_output('git tag -l ' + mbedtls_revision, shell = True)
+    if mbedtls_revision not in out:
+        print out
         print '''
 *********************************** Error: ****************************************
 * Your mbedTLS repo is not up to date with the latest version we require. Please  *
@@ -56,8 +62,7 @@ if target_os != 'tizen':
  '''
         Exit(1)
 
-start_dir = os.getcwd()
-os.chdir(mbedtls_dir)
+
 # Apply ocf patch on git revision
 if os.path.exists('.git/HEAD'):
     cmd = 'git checkout development && git reset --hard ' + mbedtls_revision + ' && git apply --whitespace=fix ../ocf.patch'

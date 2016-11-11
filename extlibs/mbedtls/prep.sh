@@ -15,7 +15,7 @@ if [ ! -d ${mbedtls_dir} ]; then
     echo "***********************************************************************************"
     echo ""
     exit
-elif [ -d ${mbedtls_dir}/.git -a ! -f ${mbedtls_dir}/.git/refs/tags/${mbedtls_revision} ]; then
+elif [ ! -z $(git tag -l $mbedtls_revision) ]; then
     echo ""
     echo "*********************************** Error: ****************************************"
     echo "* mbedTLS repo is out of date. Please update mbedtls using the following commands:*"
