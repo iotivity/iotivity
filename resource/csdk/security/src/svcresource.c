@@ -324,11 +324,8 @@ static OCEntityHandlerResult HandleSVCGetRequest(const OCEntityHandlerRequest * 
     OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
 
     // Send response payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, cborSvc, size))
-    {
-        ehRet = OC_EH_ERROR;
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleSVCGetRequest");
-    }
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, cborSvc, size)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
 
     OICFree(cborSvc);
     OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);
