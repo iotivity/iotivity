@@ -115,7 +115,8 @@ LOCAL_SRC_FILES :=  JniOcStack.cpp \
                     JniOnDirectPairingListener.cpp \
                     JniOcDirectPairDevice.cpp \
                     JniOnPublishResourceListener.cpp \
-                    JniOnDeleteResourceListener.cpp
+                    JniOnDeleteResourceListener.cpp \
+                    JniOcRDClient.cpp
 
 ifeq ($(MQ_FLAG), 1)
     LOCAL_SRC_FILES +=  JniOnMQTopicFoundListener.cpp \
@@ -155,6 +156,7 @@ ifeq ($(SECURED), 1)
 LOCAL_STATIC_LIBRARIES += android-ocprovision
 LOCAL_STATIC_LIBRARIES += android-ocpmapi
 endif
+LOCAL_SHARED_LIBRARIES += android-rd
 
 ifeq "$(RD_MODE)" "CLIENT"
 LOCAL_CPPFLAGS += -DRD_CLIENT
@@ -167,6 +169,7 @@ LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/c_common/oic_string/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/c_common/oic_malloc/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/stack/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/ocsocket/include
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/resource-directory/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/oc_logger/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/../extlibs/boost/boost_1_58_0
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/../extlibs/cjson

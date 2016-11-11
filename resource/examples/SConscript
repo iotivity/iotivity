@@ -110,12 +110,11 @@ if target_os not in ['windows', 'msys_nt']:
 		'lightserver',
 		'threadingsample',
 		]
-
-if 'CLIENT' in examples_env.get('RD_MODE'):
-	examples_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
-	example_names += [
-		'rdclient'
-		]
+	if 'CLIENT' in examples_env.get('RD_MODE'):
+		examples_env.AppendUnique(CPPPATH = ['../csdk/resource-directory/include'])
+		examples_env.AppendUnique(LIBS = ['resource_directory'])
+		examples_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+		example_names += ['rdclient']
 
 examples = map(make_single_file_cpp_program, example_names)
 

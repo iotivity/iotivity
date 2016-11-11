@@ -9,7 +9,7 @@
 
 #include "ocstack.h"
 #include "ocpayload.h"
-#include "rd_client.h"
+#include "RDClient.h"
 
 #include <OCApi.h>
 #include <OCPlatform.h>
@@ -639,7 +639,7 @@ int main(int argc, char *argv[])
 
     OCPlatform::registerDeviceInfo(devInfoAirConditioner);
 
-    result = OCPlatform::publishResourceToRD(host, OCConnectivityType::CT_ADAPTER_TCP,
+    result = RDClient::Instance().publishResourceToRD(host, OCConnectivityType::CT_ADAPTER_TCP,
              resourceHandles,
              &onPublish);
 
@@ -647,7 +647,7 @@ int main(int argc, char *argv[])
 
     resourceHandles.push_back(airConditioner.m_handle);
 
-    result = OCPlatform::publishResourceToRD(host, OCConnectivityType::CT_ADAPTER_TCP,
+    result = RDClient::Instance().publishResourceToRD(host, OCConnectivityType::CT_ADAPTER_TCP,
              resourceHandles,
              &onPublish);
 
