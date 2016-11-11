@@ -257,16 +257,15 @@ static void CAFindReadyMessage()
         OIC_LOG_V(DEBUG, TAG, "Packet receiver Stop request received.");
         return;
     }
-    if (0 >= ret)
-    {
-        if (0 > ret)
-        {
-            OIC_LOG_V(FATAL, TAG, "select error %s", strerror(errno));
-        }
-        return;
-    }
 
-    CASelectReturned(&readFds);
+    if (0 < ret)
+    {
+        CASelectReturned(&readFds);
+    }
+    else if (0 > ret)
+    {
+        OIC_LOG_V(FATAL, TAG, "select error %s", strerror(errno));
+    }
 }
 
 static void CASelectReturned(fd_set *readFds)
