@@ -37,11 +37,13 @@ OCBindResourceTypeToResource
 OCCancel
 OCCreateOCStringLL
 OCCreateResource
+OCDecodeAddressForRFC6874
 OCDeleteResource
 OCDiscoverDirectPairingDevices
 OCDoDirectPairing
 OCDoResource
 OCDoResponse
+OCEncodeAddressForRFC6874
 OCFreeOCStringLL
 OCGetDirectPairedDevices
 OCGetNumberOfResources
