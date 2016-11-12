@@ -266,13 +266,26 @@ bool DPGenerateQuery(bool isSecure,
             switch(connType & CT_MASK_FLAGS & ~CT_FLAG_SECURE)
             {
                 case CT_IP_USE_V4:
-                        snRet = snprintf(buffer, bufferSize, "%s%s:%d%s",
-                                         prefix, address, port, uri);
+                    snRet = snprintf(buffer, bufferSize, "%s%s:%d%s",
+                                     prefix, address, port, uri);
                     break;
                 case CT_IP_USE_V6:
-                        snRet = snprintf(buffer, bufferSize, "%s[%s]:%d%s",
-                                         prefix, address, port, uri);
+                {
+                    char addressEncoded[CA_MAX_URI_LENGTH] = {0};
+
+                    OCStackResult result = OCEncodeAddressForRFC6874(addressEncoded,
+                                                                     sizeof(addressEncoded),
+                                                                     address);
+                    if (OC_STACK_OK != result)
+                    {
+                        OIC_LOG_V(ERROR, TAG, "DPGenerateQuery : encoding error %d\n", result);
+                        return false;
+                    }
+
+                    snRet = snprintf(buffer, bufferSize, "%s[%s]:%d%s",
+                                     prefix, addressEncoded, port, uri);
                     break;
+                }
                 default:
                     OIC_LOG(ERROR, TAG, "Unknown address format.");
                     return false;

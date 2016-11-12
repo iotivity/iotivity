@@ -1815,7 +1815,7 @@ TEST(StackUri, Rfc6874_Noop_1)
     char bytes[100] = {0};
     strncpy(bytes, validIPv6Address, sizeof(bytes));
 
-    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
+    OCStackResult result = OCEncodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
 
     // No % sign, should do nothing
     EXPECT_STREQ(bytes, validIPv6Address);
@@ -1827,7 +1827,7 @@ TEST(StackUri, Rfc6874_Noop_2)
     char validIPv6Address[] = "3812:a61::4:1";
     char bytes[100] = {0};
 
-    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
+    OCStackResult result = OCEncodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
 
     // No % sign, should do nothing
     EXPECT_STREQ(bytes, validIPv6Address);
@@ -1841,7 +1841,7 @@ TEST(StackUri, Rfc6874_WithEncoding)
     char bytes[100] = "";
     strncpy(bytes, validIPv6Address, sizeof(bytes));
 
-    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
+    OCStackResult result = OCEncodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
 
     // Encoding should have occured
     EXPECT_STREQ(bytes, validIPv6AddressEncoded);
@@ -1853,7 +1853,7 @@ TEST(StackUri, Rfc6874_WithEncoding_ExtraPercent)
     char validIPv6Address[] = "fe80::dafe:e3ff:fe00:ebfa%%wlan0";
     char bytes[100] = {0};
 
-    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
+    OCStackResult result = OCEncodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6Address);
 
     // Encoding should have failed due to extra '%' character
     EXPECT_STREQ(bytes, "");
@@ -1865,7 +1865,7 @@ TEST(StackUri, Rfc6874_AlreadyEncoded)
     char validIPv6AddressEncoded[] = "fe80::dafe:e3ff:fe00:ebfa%25wlan0";
     char bytes[100] = {0};
 
-    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6AddressEncoded);
+    OCStackResult result = OCEncodeAddressForRFC6874(bytes, sizeof(bytes), validIPv6AddressEncoded);
 
     // Encoding should have failed due to extra '%' character
     EXPECT_STREQ(bytes, "");
@@ -1883,7 +1883,7 @@ TEST(StackUri, Rfc6874_NoOverflow)
     addrBuffer[sizeof(addrBuffer) - sizeof(validIPv6Address) - 3] = '\0';
     strcat(addrBuffer, validIPv6Address);
 
-    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), addrBuffer);
+    OCStackResult result = OCEncodeAddressForRFC6874(bytes, sizeof(bytes), addrBuffer);
 
     // Encoding should have succeeded
     EXPECT_EQ(OC_STACK_OK, result);
@@ -1900,7 +1900,7 @@ TEST(StackUri, Rfc6874_NoOverflow_2)
     addrBuffer[sizeof(addrBuffer) - sizeof(validIPv6Address) - 1] = '\0';
     strcat(addrBuffer, validIPv6Address);
 
-    OCStackResult result = encodeAddressForRFC6874(bytes, sizeof(bytes), addrBuffer);
+    OCStackResult result = OCEncodeAddressForRFC6874(bytes, sizeof(bytes), addrBuffer);
 
     // Encoding should have failed due to output size limitations
     EXPECT_STREQ(bytes, "");

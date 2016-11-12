@@ -1208,6 +1208,16 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
         return OC_STACK_ERROR;
     }
 
+    char addressEncoded[CA_MAX_URI_LENGTH] = {0};
+    OCStackResult result = OCEncodeAddressForRFC6874(addressEncoded,
+                                                     sizeof(addressEncoded),
+                                                     destDev->endpoint.addr);
+    if (OC_STACK_OK != result)
+    {
+        OIC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : encoding error %d\n", result);
+        return OC_STACK_ERROR;
+    }
+
     char reqBuf[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     int snRet = 0;
                     //coaps://0.0.0.0:5684/oic/sec/cred?subjectid=(Canonical ENCODED UUID)
@@ -1218,7 +1228,8 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
         srpUri = SRP_FORM_DELETE_CREDENTIAL_TCP;
     }
 #endif
-    snRet = snprintf(reqBuf, sizeof(reqBuf), srpUri, destDev->endpoint.addr,
+
+    snRet = snprintf(reqBuf, sizeof(reqBuf), srpUri, addressEncoded,
                      destDev->securePort, OIC_RSRC_CRED_URI, OIC_JSON_SUBJECTID_NAME, subID);
     OICFree(subID);
     if (snRet < 0)
@@ -1273,10 +1284,21 @@ static OCStackResult SendDeleteACLRequest(void* ctx,
         return OC_STACK_ERROR;
     }
 
+    char addressEncoded[CA_MAX_URI_LENGTH] = {0};
+    OCStackResult result = OCEncodeAddressForRFC6874(addressEncoded,
+                                                     sizeof(addressEncoded),
+                                                     destDev->endpoint.addr);
+    if (OC_STACK_OK != result)
+    {
+        OIC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : encoding error %d\n", result);
+        return OC_STACK_ERROR;
+    }
+
+
     char reqBuf[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     int snRet = 0;
                     //coaps://0.0.0.0:5684/oic/sec/acl?subjectuuid=(Canonical ENCODED UUID)
-    snRet = snprintf(reqBuf, sizeof(reqBuf), SRP_FORM_DELETE_CREDENTIAL, destDev->endpoint.addr,
+    snRet = snprintf(reqBuf, sizeof(reqBuf), SRP_FORM_DELETE_CREDENTIAL, addressEncoded,
                      destDev->securePort, OIC_RSRC_ACL_URI, OIC_JSON_SUBJECTID_NAME, subID);
     OICFree(subID);
     if (snRet < 0)

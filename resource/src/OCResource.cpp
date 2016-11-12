@@ -33,6 +33,7 @@
 #ifdef HAVE_IN6ADDR_H
 #include <in6addr.h>
 #endif
+#include "ocstack.h"
 
 namespace OC {
 
@@ -199,10 +200,17 @@ void OCResource::setHost(const std::string& host)
                 m_interfaces.empty(), m_clientWrapper.expired(), false, false);
         }
 
-        ip6Addr.copy(m_devAddr.addr, sizeof(m_devAddr.addr));
-        m_devAddr.addr[ip6Addr.length()] = '\0';
+        OCStackResult result = OCDecodeAddressForRFC6874(m_devAddr.addr,
+            sizeof(m_devAddr.addr), ip6Addr.c_str(), nullptr);
+
+        if (OC_STACK_OK != result)
+        {
+            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+        }
+
         m_devAddr.port = static_cast<uint16_t>(port);
-        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags & OC_IP_USE_V6);
+        m_devAddr.flags = static_cast<OCTransportFlags>(m_devAddr.flags | OC_IP_USE_V6);
     }
     else if (host_token[0] == ':')
     {
@@ -539,7 +547,17 @@ std::string OCResource::host() const
 
     if (m_devAddr.flags & OC_IP_USE_V6)
     {
-        ss << '[' << m_devAddr.addr << ']';
+        char addressEncoded[128] = {0};
+
+        OCStackResult result = OCEncodeAddressForRFC6874(addressEncoded,
+                                                         sizeof(addressEncoded),
+                                                         m_devAddr.addr);
+        if (OC_STACK_OK != result)
+        {
+            throw ResourceInitException(m_uri.empty(), m_resourceTypes.empty(),
+                m_interfaces.empty(), m_clientWrapper.expired(), false, false);
+        }
+        ss << '[' << addressEncoded << ']';
     }
     else
     {
