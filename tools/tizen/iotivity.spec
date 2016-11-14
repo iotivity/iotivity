@@ -61,6 +61,7 @@ Source1002: %{name}-test.manifest
 # Default values to be eventually overiden BEFORE or as gbs params:
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
 %{!?LOGGING: %define LOGGING 1}
+%{!?RD_MODE: %define RD_MODE CLIENT}
 %{!?RELEASE: %define RELEASE 1}
 %{!?ROUTING: %define ROUTING EP}
 %{!?SECURED: %define SECURED 0}
@@ -162,6 +163,7 @@ scons %{JOB} --prefix=%{_prefix} \
     ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} \
     LIB_INSTALL_DIR=%{_libdir} \
     LOGGING=%{LOGGING} \
+    RD_MODE=%{RD_MODE} \
     RELEASE=%{RELEASE} \
     ROUTING=%{ROUTING} \
     SECURED=%{SECURED} \
@@ -184,6 +186,7 @@ scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
     ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} \
     LIB_INSTALL_DIR=%{_libdir} \
     LOGGING=%{LOGGING} \
+    RD_MODE=%{RD_MODE} \
     RELEASE=%{RELEASE} \
     ROUTING=%{ROUTING} \
     SECURED=%{SECURED} \
