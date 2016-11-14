@@ -2099,6 +2099,12 @@ int main()
         goto PMCLT_ERROR;
     }
 
+    // Client can choose a allowed/not-allowed OxM method.
+    if(OC_STACK_OK != OCSetOxmAllowStatus(OIC_DECENTRALIZED_PUBLIC_KEY, false))
+    {
+        OIC_LOG(WARNING, TAG, "Failed to disable OIC_DECENTRALIZED_PUBLIC_KEY OxM");
+    }
+
 #ifdef _ENABLE_MULTIPLE_OWNER_
     SetPreconfigPin("12341234", 8);
 #endif //_ENABLE_MULTIPLE_OWNER_

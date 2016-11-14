@@ -230,6 +230,19 @@ OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t*
     return OTMSetOwnershipTransferCallbackData(oxm, callbackData);
 }
 
+/**
+ * API to set a allow status of OxM
+ *
+ * @param[in] oxm Owership transfer method (ref. OicSecOxm_t)
+ * @param[in] allowStatus allow status (true = allow, false = not allow)
+ *
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus)
+{
+    return OTMSetOxmAllowStatus(oxm, allowStatus);
+}
+
 OCStackResult OCDoOwnershipTransfer(void* ctx,
                                       OCProvisionDev_t *targetDevices,
                                       OCProvisionResultCB resultCallback)

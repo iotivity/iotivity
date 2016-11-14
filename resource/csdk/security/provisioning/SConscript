@@ -104,6 +104,7 @@ provisioning_src = [
 	'src/ocprovisioningmanager.c',
 	'src/oxmjustworks.c',
 	'src/oxmrandompin.c',
+	'src/oxmmanufacturercert.c',
 	'src/provisioningdatabasemanager.c' ]
 
 if provisioning_env.get('MULTIPLE_OWNER') == '1':

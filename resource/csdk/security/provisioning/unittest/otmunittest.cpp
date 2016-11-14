@@ -29,6 +29,7 @@
 #include "ocprovisioningmanager.h"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
+#include "oxmmanufacturercert.h"
 #include "securevirtualresourcetypes.h"
 #include "provisioningdatabasemanager.h"
 #ifdef _ENABLE_MULTIPLE_OWNER_
@@ -115,6 +116,40 @@ TEST(RandomPinOxMTest, NullParam)
     EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
 }
 
+TEST(ManufacturerCertOxMTest, NullParam)
+{
+    OTMContext_t* otmCtx = NULL;
+    OCStackResult res = OC_STACK_ERROR;
+    uint8_t *payloadRes = NULL;
+    size_t size = 0;
+
+    res = PrepareMCertificateCallback(otmCtx);
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
+
+    res = CreateSecureSessionMCertificateCallback(otmCtx);
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
+
+    res = CreateMCertificateBasedSelectOxmPayload(otmCtx, &payloadRes, &size);
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
+
+    res = CreateMCertificateBasedOwnerTransferPayload(otmCtx, &payloadRes, &size);
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
+
+    OTMContext_t otmCtx2;
+    otmCtx2.selectedDeviceInfo = NULL;
+
+    res = InputPinCodeCallback(&otmCtx2);
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
+
+    res = CreateSecureSessionMCertificateCallback(&otmCtx2);
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
+
+    res = CreateMCertificateBasedSelectOxmPayload(&otmCtx2, &payloadRes, &size);
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
+
+    res = CreateMCertificateBasedOwnerTransferPayload(&otmCtx2, &payloadRes, &size);
+    EXPECT_TRUE(OC_STACK_INVALID_PARAM == res);
+}
 
 /****************************************
  * Test the OTM modules with sample server

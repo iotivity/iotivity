@@ -52,6 +52,10 @@
 #include "srmutility.h"
 #include "pinoxmcommon.h"
 
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+#include "pkix_interface.h"
+#endif
+
 #define TAG  "OIC_SRM_DOXM"
 #define CHAR_ZERO ('0')
 
@@ -1227,6 +1231,30 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                     }
 #endif // __WITH_DTLS__ or __WITH_TLS__
                 }
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+                else if (OIC_MANUFACTURER_CERTIFICATE ==  newDoxm->oxmSel)
+                {
+                    //Save the owner's UUID to derive owner credential
+                    memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
+                    gDoxm->oxmSel = newDoxm->oxmSel;
+                    //Update new state in persistent storage
+                    if (UpdatePersistentStorage(gDoxm))
+                    {
+                        ehRet = OC_EH_OK;
+                    }
+                    else
+                    {
+                        OIC_LOG(WARNING, TAG, "Failed to update DOXM in persistent storage");
+                        ehRet = OC_EH_ERROR;
+                    }
+                    CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
+                    VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+                    OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+
+                    VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterPkixInfoHandler(GetManufacturerPkixInfo), ERROR);
+                    VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterGetCredentialTypesHandler(InitManufacturerCipherSuiteList), ERROR);
+                }
+#endif // __WITH_DTLS__ or __WITH_TLS__
             }
 
             /*
@@ -1297,6 +1325,13 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                     OIC_LOG(ERROR, TAG, "Failed to update DOXM in persistent storage");
                     ehRet = OC_EH_ERROR;
                 }
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+                if (OIC_MANUFACTURER_CERTIFICATE == gDoxm->oxmSel)
+                {
+                    CAregisterPkixInfoHandler(GetPkixInfo);
+                    CAregisterGetCredentialTypesHandler(InitCipherSuiteList);
+                }
+#endif // __WITH_DTLS__ or __WITH_TLS__
             }
         }
     }

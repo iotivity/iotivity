@@ -81,6 +81,16 @@ OCStackResult OCDoOwnershipTransfer(void* ctx,
                                     OCProvisionDev_t *targetDevices,
                                     OCProvisionResultCB resultCallback);
 
+/**
+ * API to set a allow status of OxM
+ *
+ * @param[in] oxm Owership transfer method (ref. OicSecOxm_t)
+ * @param[in] allowStatus allow status (true = allow, false = not allow)
+ *
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus);
+
 #ifdef _ENABLE_MULTIPLE_OWNER_
 /**
  * API to perfrom multiple ownership transfer for MOT enabled device.

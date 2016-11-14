@@ -103,6 +103,7 @@ if target_os in ['linux', 'tizen']:
 provisioningclient = provisioning_env.Program('provisioningclient', 'provisioningclient.c')
 sampleserver_justworks = provisioning_env.Program('sampleserver_justworks', 'sampleserver_justworks.cpp')
 sampleserver_randompin = provisioning_env.Program('sampleserver_randompin', 'sampleserver_randompin.cpp')
+sampleserver_mfg = provisioning_env.Program('sampleserver_mfg', 'sampleserver_mfg.cpp')
 
 if provisioning_env.get('MULTIPLE_OWNER') == '1':
 	subownerclient = provisioning_env.Program('subownerclient', 'subownerclient.c')
@@ -127,6 +128,8 @@ justworksdat = provisioning_env.Install(sec_provisioning_build_dir,
                                     sec_provisioning_src_dir + 'oic_svr_db_server_justworks.dat')
 randompindat = provisioning_env.Install(sec_provisioning_build_dir,
                                     sec_provisioning_src_dir+ 'oic_svr_db_server_randompin.dat')
+mfgdat = provisioning_env.Install(sec_provisioning_build_dir,
+                                    sec_provisioning_src_dir+ 'oic_svr_db_server_mfg.dat')
 randompin_with_emptyuuid_dat = provisioning_env.Install(sec_provisioning_build_dir,
                                     sec_provisioning_src_dir+ 'oic_svr_db_randompin_with_empty_deviceid.dat')
 
@@ -145,16 +148,16 @@ if provisioning_env.get('WITH_TCP') == True:
 if provisioning_env.get('MULTIPLE_OWNER') == '1':
 	Alias("samples", [
 					provisioningclient, subownerclient,
-					sampleserver_justworks, sampleserver_randompin,
+					sampleserver_justworks, sampleserver_randompin, sampleserver_mfg,
 					clientdat, subownerclientdat,
-					justworksdat, randompindat, randompin_with_emptyuuid_dat
+					justworksdat, randompindat, mfgdat, randompin_with_emptyuuid_dat
 				])
 else:
 	Alias("samples", [
 					provisioningclient,
-					sampleserver_justworks, sampleserver_randompin,
+					sampleserver_justworks, sampleserver_randompin, sampleserver_mfg,
 					clientdat,
-					justworksdat, randompindat, randompin_with_emptyuuid_dat
+					justworksdat, randompindat, mfgdat, randompin_with_emptyuuid_dat
 				])
 
 provisioning_env.AppendTarget('samples')
