@@ -3019,6 +3019,7 @@ CAResult_t CALEClientAddGattobjToList(JNIEnv *env, jobject gatt)
     if (!remoteAddress)
     {
         OIC_LOG(ERROR, TAG, "remoteAddress is null");
+        (*env)->DeleteLocalRef(env, jni_remoteAddress);
         oc_mutex_unlock(g_gattObjectMutex);
         return CA_STATUS_FAILED;
     }
@@ -3032,6 +3033,7 @@ CAResult_t CALEClientAddGattobjToList(JNIEnv *env, jobject gatt)
     }
 
     (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
+    (*env)->DeleteLocalRef(env, jni_remoteAddress);
     oc_mutex_unlock(g_gattObjectMutex);
     return CA_STATUS_OK;
 }
@@ -3045,7 +3047,6 @@ bool CALEClientIsGattObjInList(JNIEnv *env, const char* remoteAddress)
     uint32_t length = u_arraylist_length(g_gattObjectList);
     for (uint32_t index = 0; index < length; index++)
     {
-
         jobject jarrayObj = (jobject) u_arraylist_get(g_gattObjectList, index);
         if (!jarrayObj)
         {
@@ -3064,6 +3065,7 @@ bool CALEClientIsGattObjInList(JNIEnv *env, const char* remoteAddress)
         if (!setAddress)
         {
             OIC_LOG(ERROR, TAG, "setAddress is null");
+            (*env)->DeleteLocalRef(env, jni_setAddress);
             return true;
         }
 
@@ -3071,13 +3073,11 @@ bool CALEClientIsGattObjInList(JNIEnv *env, const char* remoteAddress)
         {
             OIC_LOG(DEBUG, TAG, "the device is already set");
             (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
+            (*env)->DeleteLocalRef(env, jni_setAddress);
             return true;
         }
-        else
-        {
-            (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
-            continue;
-        }
+        (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
+        (*env)->DeleteLocalRef(env, jni_setAddress);
     }
 
     OIC_LOG(DEBUG, TAG, "There are no GATT object in list. it can be added");
@@ -3114,6 +3114,7 @@ jobject CALEClientGetGattObjInList(JNIEnv *env, const char* remoteAddress)
         if (!setAddress)
         {
             OIC_LOG(ERROR, TAG, "setAddress is null");
+            (*env)->DeleteLocalRef(env, jni_setAddress);
             oc_mutex_unlock(g_gattObjectMutex);
             return NULL;
         }
@@ -3126,6 +3127,7 @@ jobject CALEClientGetGattObjInList(JNIEnv *env, const char* remoteAddress)
             return jarrayObj;
         }
         (*env)->ReleaseStringUTFChars(env, jni_setAddress, setAddress);
+        (*env)->DeleteLocalRef(env, jni_setAddress);
     }
 
     oc_mutex_unlock(g_gattObjectMutex);
@@ -3390,6 +3392,7 @@ jstring CALEClientGetLEAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
             oc_mutex_unlock(g_gattObjectMutex);
             OIC_LOG(ERROR, TAG, "CALEGetAddressFromBTDevice has failed");
             (*env)->ReleaseStringUTFChars(env, jni_btTargetAddress, targetAddress);
+            (*env)->DeleteLocalRef(env, jni_obj_device);
             return NULL;
         }
 
@@ -3399,6 +3402,8 @@ jstring CALEClientGetLEAddressFromBTDevice(JNIEnv *env, jobject bluetoothDevice)
             oc_mutex_unlock(g_gattObjectMutex);
             OIC_LOG(ERROR, TAG, "btAddress is not available");
             (*env)->ReleaseStringUTFChars(env, jni_btTargetAddress, targetAddress);
+            (*env)->DeleteLocalRef(env, jni_btAddress);
+            (*env)->DeleteLocalRef(env, jni_obj_device);
             return NULL;
         }
 
@@ -3453,11 +3458,13 @@ CAResult_t CALEClientUpdateDeviceStateWithBtDevice(JNIEnv *env,
     if (!address)
     {
         OIC_LOG(ERROR, TAG, "targetAddress is not available");
+        (*env)->DeleteLocalRef(env, jni_Address);
         return CA_STATUS_FAILED;
     }
 
     if (CALEClientIsValidState(address, state_type, target_state))
     {
+        (*env)->DeleteLocalRef(env, jni_Address);
         return CA_STATUS_OK;
     }
 
@@ -3468,6 +3475,7 @@ CAResult_t CALEClientUpdateDeviceStateWithBtDevice(JNIEnv *env,
         OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
     }
     (*env)->ReleaseStringUTFChars(env, jni_Address, address);
+    (*env)->DeleteLocalRef(env, jni_Address);
 
     return res;
 }
