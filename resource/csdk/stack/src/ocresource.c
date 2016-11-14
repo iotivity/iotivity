@@ -51,7 +51,7 @@
 #include "cainterface.h"
 #include "ocpayload.h"
 #include "platform_features.h"
-
+#include "payload_logging.h"
 #ifdef ROUTING_GATEWAY
 #include "routingmanager.h"
 #endif
@@ -700,22 +700,22 @@ static OCStackResult findResourceAtRD(const OCResource* resource, const char *in
  *
  * @param payload  payload that will have memory alllocated and device id information added.
  *
- * @return The memory allocated of the payload. If already allocated  it will return same payload. If
- * failed allocated memory then NULL.
+ * @return ::OC_STACK_OK if successful in allocating memory and adding ID information.
+ * ::OC_STACK_NO_MEMORY if failed allocating the memory.
  */
-static OCDiscoveryPayload* discoveryPayloadCreateAndAddDeviceId(OCPayload *payload)
+static OCStackResult discoveryPayloadCreateAndAddDeviceId(OCPayload **payload)
 {
-    if (payload)
+    if (*payload)
     {
-        OIC_LOG_V(ERROR, TAG, "Discovery payload is already allocated.");
-        return ((OCDiscoveryPayload *)payload);
+        OIC_LOG_V(DEBUG, TAG, "Payload is already allocated");
+        return OC_STACK_OK;
     }
 
-    payload = (OCPayload *)OCDiscoveryPayloadCreate();
-    VERIFY_PARAM_NON_NULL(TAG, payload, "Failed creating Discovery Payload.");
+    *payload = (OCPayload *) OCDiscoveryPayloadCreate();
+    VERIFY_PARAM_NON_NULL(TAG, *payload, "Failed adding device id to discovery payload.");
 
     {
-        OCDiscoveryPayload *discPayload = (OCDiscoveryPayload *)payload;
+        OCDiscoveryPayload *discPayload = (OCDiscoveryPayload *)*payload;
         discPayload->sid = (char *)OICCalloc(1, UUID_STRING_SIZE);
         VERIFY_PARAM_NON_NULL(TAG, discPayload->sid, "Failed adding device id to discovery payload.");
 
@@ -725,11 +725,11 @@ static OCDiscoveryPayload* discoveryPayloadCreateAndAddDeviceId(OCPayload *paylo
             memcpy(discPayload->sid, uid, UUID_STRING_SIZE);
         }
 
-        return discPayload;
     }
+    return OC_STACK_OK;
 exit:
-    OCPayloadDestroy(payload);
-    return NULL;
+    OCPayloadDestroy(*payload);
+    return OC_STACK_NO_MEMORY;
 }
 
 /**
@@ -815,9 +815,11 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         }
         if (interfaceQuery)
         {
-            OCDiscoveryPayload *discPayload = discoveryPayloadCreateAndAddDeviceId(payload);
-            VERIFY_PARAM_NON_NULL(TAG, discPayload, "Failed creating discovery payload.");
+            discoveryResult = discoveryPayloadCreateAndAddDeviceId(&payload);
+            VERIFY_PARAM_NON_NULL(TAG, payload, "Failed creating Discovery Payload.");
+            VERIFY_SUCCESS(discoveryResult, OC_STACK_OK);
 
+            OCDiscoveryPayload *discPayload = (OCDiscoveryPayload *)payload;
             if (baselineQuery)
             {
                 discoveryResult = addDiscoveryBaselineCommonProperties(discPayload);
@@ -839,6 +841,10 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                     {
                         discoveryResult = BuildVirtualResourceResponse(resource, discPayload,
                             &request->devAddr);
+                    }
+                    else
+                    {
+                        discoveryResult = OC_STACK_OK;
                     }
                 }
             }
@@ -942,6 +948,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         if (OC_KEEPALIVE_RESOURCE_URI != virtualUriInRequest)
 #endif
         {
+            OIC_LOG_PAYLOAD(DEBUG, payload);
             if(discoveryResult == OC_STACK_OK)
             {
                 SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
