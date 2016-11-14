@@ -836,7 +836,8 @@ static void CARegisterForAddressChanges()
     caglobals.ip.netlinkFd = OC_INVALID_SOCKET;
 #ifdef __linux__
     // create NETLINK fd for interface change notifications
-    struct sockaddr_nl sa = { AF_NETLINK, 0, 0, RTMGRP_LINK };
+    struct sockaddr_nl sa = { AF_NETLINK, 0, 0,
+                              RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR };
 
     caglobals.ip.netlinkFd = socket(AF_NETLINK, SOCK_RAW|SOCK_CLOEXEC, NETLINK_ROUTE);
     if (caglobals.ip.netlinkFd == OC_INVALID_SOCKET)
