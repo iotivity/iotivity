@@ -982,6 +982,7 @@ typedef enum
      * This error is pushed from DTLS interface when handshake failure happens
      */
     OC_STACK_AUTHENTICATION_FAILURE,
+    OC_STACK_NOT_ALLOWED_OXM,
 
     /** Insert all new error codes here!.*/
 #ifdef WITH_PRESENCE

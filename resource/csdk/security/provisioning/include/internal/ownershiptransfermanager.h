@@ -47,6 +47,17 @@ typedef struct OTMContext OTMContext_t;
 OCStackResult OTMDoOwnershipTransfer(void* ctx,
                                      OCProvisionDev_t* selectedDeviceList, OCProvisionResultCB resultCB);
 
+/**
+ * API to set a allow status of OxM
+ *
+ * @param[in] oxm Owership transfer method (ref. OicSecOxm_t)
+ * @param[in] allowStatus allow status (true = allow, false = not allow)
+ *
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OTMSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus);
+
+
 /*
  *Callback for load secret for temporal secure session
  *
