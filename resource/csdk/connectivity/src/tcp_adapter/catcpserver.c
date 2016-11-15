@@ -1125,6 +1125,7 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
     // close the socket and remove TCP connection info in list
     if (svritem->fd >= 0)
     {
+        shutdown(svritem->fd, SHUT_RDWR);
         close(svritem->fd);
     }
     u_arraylist_remove(caglobals.tcp.svrlist, index);
