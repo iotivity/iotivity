@@ -1519,7 +1519,7 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
 
     //the newCred is not valid if it is empty
 
-    if (memcmp(&(newCred->subject.id), &emptyOwner, UUID_IDENTITY_SIZE) == 0)
+    if (memcmp(&(newCred->subject), &emptyOwner, sizeof(OicUuid_t)) == 0)
     {
         validFlag = false;
     }
@@ -1553,8 +1553,10 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
     {
         LL_APPEND(gCred, newCred);
     }
-
-    memcpy(&(gCred->rownerID), &(newCred->rownerID), sizeof(OicUuid_t));
+    if (memcmp(&(newCred->rownerID), &emptyOwner, sizeof(OicUuid_t)) != 0)
+    {
+        memcpy(&(gCred->rownerID), &(newCred->rownerID), sizeof(OicUuid_t));
+    }
     if (UpdatePersistentStorage(gCred))
     {
         ret = OC_STACK_OK;
