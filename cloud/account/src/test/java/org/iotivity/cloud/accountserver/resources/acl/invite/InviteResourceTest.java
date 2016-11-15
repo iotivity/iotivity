@@ -401,20 +401,16 @@ public class InviteResourceTest {
             String parent) throws Exception {
         System.out.println("-----Create Group");
         IRequest request = null;
-        request = createGroupRequest(uid, gname, parent);
-        mGroupResource.onDefaultRequestReceived(device, request);
-    }
-
-    private IRequest createGroupRequest(String uid, String gname,
-            String parent) {
-        IRequest request = null;
         HashMap<String, Object> payloadData = new HashMap<String, Object>();
-        payloadData.put(Constants.REQ_UUID_ID, uid);
         payloadData.put(Constants.KEYFIELD_GROUP_NAME, gname);
         payloadData.put(Constants.KEYFIELD_GROUP_PARENT, parent);
+        payloadData.put(Constants.KEYFIELD_GROUP_MEMBERS,
+                new ArrayList<String>(Arrays.asList(uid)));
+        payloadData.put(Constants.KEYFIELD_OID, uid);
         request = MessageBuilder.createRequest(RequestMethod.POST, GROUP_URI,
-                null, ContentFormat.APPLICATION_CBOR,
+                Constants.KEYFIELD_UID + "=" + uid,
+                ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(payloadData));
-        return request;
+        mGroupResource.onDefaultRequestReceived(device, request);
     }
 }

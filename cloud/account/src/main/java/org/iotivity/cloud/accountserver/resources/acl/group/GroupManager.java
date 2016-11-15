@@ -156,17 +156,18 @@ public class GroupManager {
      *            member uuid list
      */
     public void deleteMembersFromGroup(String gid, ArrayList<String> members) {
-        // delete devices owned by deleted members
         GroupTable groupTable = getGroupTable(gid);
         ArrayList<String> devices = groupTable.getDevices();
-        ArrayList<String> deletedDevices = new ArrayList<String>();
-        for (String device : devices) {
-            if (members.contains(findDeviceOwner(device))) {
-                deletedDevices.add(device);
+        if (devices != null) {
+            // delete devices owned by deleted members
+            ArrayList<String> deletedDevices = new ArrayList<String>();
+            for (String device : devices) {
+                if (members.contains(findDeviceOwner(device))) {
+                    deletedDevices.add(device);
+                }
             }
+            deleteDevicesFromGroup(gid, deletedDevices);
         }
-        deleteDevicesFromGroup(gid, deletedDevices);
-
         deleteProperties(gid, Constants.KEYFIELD_GROUP_MEMBERS, members);
         deleteProperties(gid, Constants.KEYFIELD_GROUP_MASTERS, members);
     }
@@ -292,6 +293,9 @@ public class GroupManager {
     public <T> ArrayList<T> getAddPropertyValues(String gid, String property,
             ArrayList<T> values) {
         GroupTable groupTable = getGroupTable(gid);
+        if (groupTable == null) {
+            throw new BadRequestException("group " + gid + " does not exist");
+        }
         ArrayList<T> propertyValues = groupTable.getPropertyValue(property);
         ArrayList<T> addedValues = new ArrayList<>();
         for (int i = 0; i < values.size(); i++) {
@@ -316,6 +320,9 @@ public class GroupManager {
     public <T> ArrayList<T> getDeletePropertyValues(String gid, String property,
             ArrayList<T> values) {
         GroupTable groupTable = getGroupTable(gid);
+        if (groupTable == null) {
+            throw new BadRequestException("group " + gid + " does not exist");
+        }
         ArrayList<T> propertyValues = groupTable.getPropertyValue(property);
         ArrayList<T> deletedValues = new ArrayList<>();
         for (int i = 0; i < propertyValues.size(); i++) {
@@ -335,7 +342,7 @@ public class GroupManager {
      *            user uuid
      */
     public void verifyGetRequestAuthz(String gid, String mid) {
-        verifyMemberExistanceInGroup(gid, mid);
+        verifyMemberExistenceInGroup(gid, mid);
     }
 
     /**
@@ -368,8 +375,8 @@ public class GroupManager {
         String parentGid = groupTable.getParent();
         // delete subgroup ID of the parent group
         if (parentGid != null && !parentGid.isEmpty()) {
-            ArrayList<Object> gidList = new ArrayList<Object>();
-            gidList.add(gid);
+            ArrayList<Object> gidList = new ArrayList<Object>(
+                    Arrays.asList(gid));
             deleteProperties(parentGid, Constants.KEYFIELD_GROUP_SUBGROUPS,
                     gidList);
         }
@@ -555,8 +562,11 @@ public class GroupManager {
         }
     }
 
-    private void verifyMemberExistanceInGroup(String gid, String mid) {
+    private void verifyMemberExistenceInGroup(String gid, String mid) {
         GroupTable groupTable = getGroupTable(gid);
+        if (groupTable == null) {
+            throw new BadRequestException("group " + gid + " does not exist");
+        }
         if (!groupTable.getMembers().contains(mid)) {
             throw new BadRequestException("uid is not a member of the group");
         }
@@ -573,7 +583,7 @@ public class GroupManager {
                 case Constants.KEYFIELD_GROUP_DEVICES:
                     verifyDeviceOwner(mid,
                             (ArrayList<String>) properties.get(key));
-                    verifyExistanceInParentGroup(gid, key,
+                    verifyExistenceInParentGroup(gid, key,
                             (ArrayList<Object>) properties.get(key));
                     break;
                 case Constants.KEYFIELD_GROUP_RESOURCES:
@@ -586,8 +596,8 @@ public class GroupManager {
                     verifyResourceOwner(mid,
                             (ArrayList<HashMap<String, Object>>) properties
                                     .get(key));
-                    verifyExistanceInParentGroup(gid, key,
-                            filterResourceExistanceInParentGroupDeviceProperty(
+                    verifyExistenceInParentGroup(gid, key,
+                            filterResourceExistenceInParentGroupDeviceProperty(
                                     gid,
                                     (ArrayList<HashMap<String, Object>>) properties
                                             .get(key)));
@@ -596,7 +606,7 @@ public class GroupManager {
                 case Constants.KEYFIELD_GROUP_MASTERS:
                     // TODO verify if members are registered to the Account user
                     // DB
-                    verifyExistanceInParentGroup(gid,
+                    verifyExistenceInParentGroup(gid,
                             Constants.KEYFIELD_GROUP_MEMBERS,
                             (ArrayList<Object>) properties.get(key));
                     break;
@@ -651,7 +661,7 @@ public class GroupManager {
                         throw new BadRequestException("cannot remove owner Id");
                     }
                 case Constants.KEYFIELD_GROUP_MASTERS:
-                    verifyExistanceInParentGroup(gid, key,
+                    verifyExistenceInParentGroup(gid, key,
                             (ArrayList<Object>) properties.get(key));
                     break;
                 default:
@@ -661,7 +671,7 @@ public class GroupManager {
         }
     }
 
-    private ArrayList<HashMap<String, Object>> filterResourceExistanceInParentGroupDeviceProperty(
+    private ArrayList<HashMap<String, Object>> filterResourceExistenceInParentGroupDeviceProperty(
             String gid, ArrayList<HashMap<String, Object>> resources) {
         GroupTable parentGroupTable = getParentGroupTable(gid);
         if (parentGroupTable == null) {
@@ -690,7 +700,7 @@ public class GroupManager {
         }
     }
 
-    private <T> void verifyExistanceInParentGroup(String gid, String property,
+    private <T> void verifyExistenceInParentGroup(String gid, String property,
             ArrayList<T> values) {
         GroupTable parentGroupTable = getParentGroupTable(gid);
         if (parentGroupTable == null) {
@@ -701,11 +711,11 @@ public class GroupManager {
                 .getPropertyValue(property);
         if (groupValues == null) {
             throw new BadRequestException(
-                    "verifying parent group existance failed");
+                    "verifying parent group Existence failed");
         }
         if (!groupValues.containsAll(values)) {
             throw new BadRequestException(
-                    "verifying parent group existance failed");
+                    "verifying parent group Existence failed");
 
         }
     }
