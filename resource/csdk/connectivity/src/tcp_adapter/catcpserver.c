@@ -406,16 +406,133 @@ static bool CAIsTlsMessage(const unsigned char* data, size_t length)
  *
  * @param[in/out] item - socket state data
  */
-static void CACleanData(CATCPSessionInfo_t *svritem)
+void CACleanData(CATCPSessionInfo_t *svritem)
 {
     if (svritem)
     {
         OICFree(svritem->data);
         svritem->data = NULL;
         svritem->len = 0;
+        svritem->tlsLen = 0;
         svritem->totalLen = 0;
         svritem->protocol = UNKNOWN;
     }
+}
+
+/**
+ * Construct CoAP header and payload from buffer
+ *
+ * @param[in] svritem - used socket, buffer, current received message length and protocol
+ * @param[in/out]  data  - data buffer, this value is updated as data is copied to svritem
+ * @param[in/out]  dataLength  - length of data, this value decreased as data is copied to svritem
+ * @return             - CA_STATUS_OK or appropriate error code
+ */
+CAResult_t CAConstructCoAP(CATCPSessionInfo_t *svritem, unsigned char **data,
+                          size_t *dataLength)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    if (NULL == svritem || NULL == data || NULL == dataLength)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid input parameter(NULL)");
+        return CA_STATUS_INVALID_PARAM;
+    }
+
+    unsigned char *inBuffer = *data;
+    size_t inLen = *dataLength;
+    OIC_LOG_V(DEBUG, TAG, "before-datalength : %u", *dataLength);
+
+    if (NULL == svritem->data && inLen > 0)
+    {
+        // allocate memory for message header (CoAP header size because it is bigger)
+        svritem->data = (unsigned char *) OICCalloc(1, COAP_MAX_HEADER_SIZE);
+        if (NULL == svritem->data)
+        {
+            OIC_LOG(ERROR, TAG, "OICCalloc - out of memory");
+            return CA_MEMORY_ALLOC_FAILED;
+        }
+
+        // copy 1 byte to parse coap header length
+        memcpy(svritem->data, inBuffer, 1);
+        svritem->len = 1;
+        inBuffer++;
+        inLen--;
+    }
+
+    //if not enough data received - read them on next CAFillHeader() call
+    if (0 == inLen)
+    {
+        return CA_STATUS_OK;
+    }
+
+    //if enough data received - parse header
+    svritem->protocol = COAP;
+
+    //seems CoAP data received. read full coap header.
+    coap_transport_t transport = coap_get_tcp_header_type_from_initbyte(svritem->data[0] >> 4);
+    size_t headerLen = coap_get_tcp_header_length_for_transport(transport);
+    size_t copyLen = 0;
+
+    // HEADER
+    if (svritem->len < headerLen)
+    {
+        copyLen = headerLen - svritem->len;
+        if (inLen < copyLen)
+        {
+            copyLen = inLen;
+        }
+
+        //read required bytes to have full CoAP header
+        memcpy(svritem->data + svritem->len, inBuffer, copyLen);
+        svritem->len += copyLen;
+        inBuffer += copyLen;
+        inLen -= copyLen;
+
+        //if not enough data received - read them on next CAFillHeader() call
+        if (svritem->len < headerLen)
+        {
+            *data = inBuffer;
+            *dataLength = inLen;
+            OIC_LOG(DEBUG, TAG, "CoAP header received partially. Wait for rest header data");
+            return CA_STATUS_OK;
+        }
+
+        //calculate CoAP message length
+        svritem->totalLen = CAGetTotalLengthFromHeader(svritem->data);
+
+        // allocate required memory
+        unsigned char *buffer = OICRealloc(svritem->data, svritem->totalLen);
+        if (NULL == buffer)
+        {
+            OIC_LOG(ERROR, TAG, "OICRealloc - out of memory");
+            return CA_MEMORY_ALLOC_FAILED;
+        }
+        svritem->data = buffer;
+    }
+
+    // PAYLOAD
+    if (inLen > 0)
+    {
+        // read required bytes to have full CoAP payload
+        copyLen = svritem->totalLen - svritem->len;
+        if (inLen < copyLen)
+        {
+            copyLen = inLen;
+        }
+
+        //read required bytes to have full CoAP header
+        memcpy(svritem->data + svritem->len, inBuffer, copyLen);
+        svritem->len += copyLen;
+        inBuffer += copyLen;
+        inLen -= copyLen;
+    }
+
+    *data = inBuffer;
+    *dataLength = inLen;
+
+    OIC_LOG_V(DEBUG, TAG, "after-datalength : %u", *dataLength);
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    return CA_STATUS_OK;
 }
 
 /**
@@ -586,20 +703,87 @@ static void CAReceiveMessage(int fd)
         return;
     }
 
-    //totalLen filled only when header fully read and parsed
-    if (0 == svritem->totalLen)
+    // read data
+    int len = 0;
+
+    if (svritem->sep.endpoint.flags & CA_SECURE)
     {
-        res = CAReadHeader(svritem);
+        svritem->protocol = TLS;
+
+#ifdef __WITH_TLS__
+        size_t nbRead = 0;
+        size_t tlsLength = 0;
+
+        if (TLS_HEADER_SIZE > svritem->tlsLen)
+        {
+            nbRead = TLS_HEADER_SIZE - svritem->tlsLen;
+        }
+        else
+        {
+            //[3][4] bytes in tls header are tls payload length
+            tlsLength = TLS_HEADER_SIZE +
+                            (size_t)((svritem->tlsdata[3] << 8) | svritem->tlsdata[4]);
+            OIC_LOG_V(DEBUG, TAG, "toal tls length = %u", tlsLength);
+            if (tlsLength > sizeof(svritem->tlsdata))
+            {
+                OIC_LOG_V(ERROR, TAG, "toal tls length is too big (buffer size : %u)",
+                                    sizeof(svritem->tlsdata));
+                return CA_STATUS_FAILED;
+            }
+            nbRead = tlsLength - svritem->tlsLen;
+        }
+
+        len = recv(fd, svritem->tlsdata + svritem->tlsLen, nbRead, 0);
+        if (len < 0)
+        {
+            OIC_LOG_V(ERROR, TAG, "recv failed %s", strerror(errno));
+            res = CA_RECEIVE_FAILED;
+        }
+        else if (0 == len)
+        {
+            OIC_LOG(INFO, TAG, "Received disconnect from peer. Close connection");
+            res = CA_DESTINATION_DISCONNECTED;
+        }
+        else
+        {
+            svritem->tlsLen += len;
+            OIC_LOG_V(DEBUG, TAG, "nb_read : %u bytes , recv() : %d bytes, svritem->tlsLen : %u bytes",
+                                nbRead, len, svritem->tlsLen);
+            if (tlsLength > 0 && tlsLength == svritem->tlsLen)
+            {
+                //when successfully read data - pass them to callback.
+                res = CAdecryptSsl(&svritem->sep, (uint8_t *)svritem->tlsdata, svritem->tlsLen);
+                svritem->tlsLen = 0;
+                OIC_LOG_V(DEBUG, TAG, "%s: CAdecryptSsl returned %d", __func__, res);
+            }
+        }
+#endif
+
     }
     else
     {
-        res = CAReadPayload(svritem);
+        unsigned char buffer[65535] = {0,}; // 65535 is the maximum size of ip packet
+        svritem->protocol = COAP;
 
-        //when successfully read all required data - pass them to upper layer.
-        if (CA_STATUS_OK == res && svritem->len == svritem->totalLen)
+        len = recv(fd, buffer, sizeof(buffer), 0);
+        if (len < 0)
         {
-            CAExecuteRequest(svritem);
-            CACleanData(svritem);
+            OIC_LOG_V(ERROR, TAG, "recv failed %s", strerror(errno));
+            res = CA_RECEIVE_FAILED;
+        }
+        else if (0 == len)
+        {
+            OIC_LOG(INFO, TAG, "Received disconnect from peer. Close connection");
+            res = CA_DESTINATION_DISCONNECTED;
+        }
+        else
+        {
+            OIC_LOG_V(DEBUG, TAG, "recv() : %d bytes", len);
+            //when successfully read data - pass them to callback.
+            if (g_packetReceivedCallback)
+            {
+                g_packetReceivedCallback(&svritem->sep, buffer, len);
+            }
         }
     }
 

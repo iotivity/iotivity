@@ -39,6 +39,7 @@
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/pkcs12.h"
 #include "mbedtls/ssl_internal.h"
+#include "mbedtls/net.h"
 #ifdef __WITH_DTLS__
 #include "mbedtls/timing.h"
 #include "mbedtls/ssl_cookie.h"
@@ -1557,15 +1558,29 @@ CAResult_t CAencryptSsl(const CAEndpoint_t *endpoint,
 
     if (MBEDTLS_SSL_HANDSHAKE_OVER == tep->ssl.state)
     {
-        ret = mbedtls_ssl_write(&tep->ssl, (unsigned char *) data, dataLen);
+        unsigned char *dataBuf = (unsigned char *)data;
+        size_t written = 0;
 
-        if(ret < 0)
+        do
         {
-            OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedTLS write returned %d", ret);
-            RemovePeerFromList(&tep->sep.endpoint);
-            ca_mutex_unlock(g_sslContextMutex);
-            return CA_STATUS_FAILED;
-        }
+            ret = mbedtls_ssl_write(&tep->ssl, dataBuf, dataLen - written);
+            if (ret < 0)
+            {
+                if (MBEDTLS_ERR_SSL_WANT_WRITE != ret)
+                {
+                    OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedTLS write failed! returned 0x%x", -ret);
+                    RemovePeerFromList(&tep->sep.endpoint);
+                    ca_mutex_unlock(g_sslContextMutex);
+                    return CA_STATUS_FAILED;
+                }
+                continue;
+            }
+            OIC_LOG_V(DEBUG, NET_SSL_TAG, "mbedTLS write returned with sent bytes[%d]", ret);
+
+            dataBuf += ret;
+            written += ret;
+        } while (dataLen > written);
+
     }
     else
     {
@@ -1602,16 +1617,27 @@ static void SendCacheMessages(SslEndPoint_t * tep)
         SslCacheMessage_t * msg = (SslCacheMessage_t *) u_arraylist_get(tep->cacheList, listIndex);
         if (NULL != msg && NULL != msg->data && 0 != msg->len)
         {
+            unsigned char *dataBuf = (unsigned char *)msg->data;
+            size_t written = 0;
+
             do
             {
-                ret = mbedtls_ssl_write(&tep->ssl, (unsigned char *) msg->data, msg->len);
-            }
-            while(MBEDTLS_ERR_SSL_WANT_WRITE == ret);
+                ret = mbedtls_ssl_write(&tep->ssl, dataBuf, msg->len - written);
+                if (ret < 0)
+                {
+                    if (MBEDTLS_ERR_SSL_WANT_WRITE != ret)
+                    {
+                        OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedTLS write failed! returned -0x%x", -ret);
+                        break;
+                    }
+                    continue;
+                }
+                OIC_LOG_V(DEBUG, NET_SSL_TAG, "mbedTLS write returned with sent bytes[%d]", ret);
 
-            if(ret < 0)
-            {
-                OIC_LOG_V(ERROR, NET_SSL_TAG,"mbedTLS write returned %d", ret );
-            }
+                dataBuf += ret;
+                written += ret;
+            } while (msg->len > written);
+
             if (u_arraylist_remove(tep->cacheList, listIndex))
             {
                 DeleteCacheMessage(msg);
@@ -1746,6 +1772,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
                 if (NULL != uuidPos)
                 {
                     memcpy(uuid, (char*) uuidPos + sizeof(UUID_PREFIX) - 1, UUID_LENGTH * 2 + 4);
+                    OIC_LOG_V(DEBUG, NET_SSL_TAG, "certificate uuid string: %s" , uuid);
                     ret = OCConvertStringToUuid(uuid, peer->sep.identity.id);
                     SSL_CHECK_FAIL(peer, ret, "Failed to convert subject", 1,
                                           CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT);

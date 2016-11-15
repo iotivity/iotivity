@@ -241,6 +241,24 @@ CAResult_t CASearchAndDeleteTCPSession(const CAEndpoint_t *endpoint);
  */
 size_t CACheckPayloadLengthFromHeader(const void *data, size_t dlen);
 
+/**
+ * Construct CoAP header and payload from buffer
+ *
+ * @param[in] svritem - used socket, buffer, current received message length and protocol
+ * @param[in/out]  data  - data buffer, this value is updated as data is copied to svritem
+ * @param[in/out]  dataLength  - length of data, this value decreased as data is copied to svritem
+ * @return             - CA_STATUS_OK or appropriate error code
+ */
+CAResult_t CAConstructCoAP(CATCPSessionInfo_t *svritem, unsigned char **data,
+                          size_t *dataLength);
+
+/**
+ * Clean socket state data
+ *
+ * @param[in/out] svritem - socket state data
+ */
+void CACleanData(CATCPSessionInfo_t *svritem);
+
 #ifdef __cplusplus
 }
 #endif
