@@ -1375,6 +1375,7 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
     // close the socket and remove TCP connection info in list
     if (svritem->fd >= 0)
     {
+        shutdown(svritem->fd, SHUT_RDWR);
         close(svritem->fd);
         svritem->fd = -1;
         OIC_LOG(DEBUG, TAG, "close socket");
