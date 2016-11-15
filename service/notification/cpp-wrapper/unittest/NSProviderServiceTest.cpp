@@ -199,7 +199,7 @@ TEST_F(NotificationProviderServiceTest,
     std::unique_lock< std::mutex > lock { mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_NE((void*)g_consumer, (void*)NULL);
+    EXPECT_NE((void *)g_consumer, (void *)NULL);
 }
 
 TEST_F(NotificationProviderServiceTest, NeverCallNotifyOnConsumerByAcceptIsFalse)
@@ -208,7 +208,7 @@ TEST_F(NotificationProviderServiceTest, NeverCallNotifyOnConsumerByAcceptIsFalse
     int msgID = 0;
 
     mocks.OnCallFunc(MessageCallbackFromConsumerEmpty).Do(
-        [& expectTrue, &msgID](const int & id, const std::string &, const std::string &,
+        [& expectTrue, &msgID](const int &id, const std::string &, const std::string &,
                                const std::string &)
     {
         if (id == msgID)
@@ -246,7 +246,7 @@ TEST_F(NotificationProviderServiceTest, ExpectCallNotifyOnConsumerByAcceptIsTrue
     int msgID = 0;
 
     mocks.ExpectCallFunc(MessageCallbackFromConsumerEmpty).Do(
-        [&msgID](const int & id, const std::string &, const std::string &, const std::string &)
+        [&msgID](const int &id, const std::string &, const std::string &, const std::string &)
     {
         if (id == msgID)
         {
@@ -275,7 +275,7 @@ TEST_F(NotificationProviderServiceTest, ExpectCallbackSyncOnReadToConsumer)
     int id = 0;
 
     mocks.ExpectCallFunc(SyncCallbackFromConsumerEmpty).Do(
-        [& id](int & type, int & syncId)
+        [& id](int &type, int &syncId)
     {
         std::cout << "MessageSynchronizedCallbackEmpty" << std::endl;
         if (syncId == id &&
@@ -363,7 +363,7 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualAddedTopicsAndRegisteredTopic
 
     OIC::Service::NSProviderService::getInstance()->unregisterTopic(str1);
     OIC::Service::NSProviderService::getInstance()->unregisterTopic(str2);
-    if(topicList != nullptr)
+    if (topicList != nullptr)
     {
         delete topicList;
     }
@@ -400,7 +400,7 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualUnregisteredTopicsAndRegister
     EXPECT_EQ(isSame, true);
 
     OIC::Service::NSProviderService::getInstance()->unregisterTopic(str1);
-    if(topicList != nullptr)
+    if (topicList != nullptr)
     {
         delete topicList;
     }
@@ -448,7 +448,7 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualSetConsumerTopicsAndGetConsum
 
     OIC::Service::NSProviderService::getInstance()->unregisterTopic(str1);
     OIC::Service::NSProviderService::getInstance()->unregisterTopic(str2);
-    if(topicList != nullptr)
+    if (topicList != nullptr)
     {
         delete topicList;
     }
@@ -498,8 +498,8 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualUnSetConsumerTopicsAndGetCons
 
     OIC::Service::NSProviderService::getInstance()->unregisterTopic(str1);
     OIC::Service::NSProviderService::getInstance()->unregisterTopic(str2);
-    
-    if(topicList != nullptr)
+
+    if (topicList != nullptr)
     {
         delete topicList;
     }
