@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 
@@ -33,7 +34,8 @@ import org.mockito.stubbing.Answer;
 public class GroupBrokerTest {
 
     private String                        GROUP_URI         = Constants.GROUP_FULL_URI;
-    private String                        UID_QUERY         = "uid=";
+    private String                        UID_QUERY         = Constants.KEYFIELD_UID
+            + "=";
     private String                        mGid1             = "g1";
     private String                        mGid2             = "g2";
     private String                        mGname1           = "myHome";
@@ -91,6 +93,8 @@ public class GroupBrokerTest {
         assertTrue(responseCodeCheck(mResponse, ResponseStatus.CHANGED));
         assertTrue(checkProperty(mResponse, Constants.KEYFIELD_GID));
         assertTrue(checkProperty(mResponse, Constants.KEYFIELD_GROUP_NAME));
+        assertTrue(checkProperty(mResponse, Constants.KEYFIELD_GROUP_OWNER));
+        assertTrue(checkProperty(mResponse, Constants.KEYFIELD_GROUP_MEMBERS));
         assertTrue(mLatch.await(2L, SECONDS));
     }
 
@@ -103,6 +107,9 @@ public class GroupBrokerTest {
         assertTrue(responseCodeCheck(mResponse, ResponseStatus.CHANGED));
         assertTrue(checkProperty(mResponse, Constants.KEYFIELD_GID));
         assertTrue(checkProperty(mResponse, Constants.KEYFIELD_GROUP_NAME));
+        assertTrue(checkProperty(mResponse, Constants.KEYFIELD_GROUP_OWNER));
+        assertTrue(checkProperty(mResponse, Constants.KEYFIELD_GROUP_MEMBERS));
+        assertTrue(checkProperty(mResponse, Constants.KEYFIELD_GROUP_PARENT));
         assertTrue(mLatch.await(2L, SECONDS));
     }
 
@@ -116,7 +123,9 @@ public class GroupBrokerTest {
     @Test
     public void testGetGroupList() throws Exception {
         getTestMethodName();
-        GroupBrokerManager.getInstance().createGroup(mUid1, mGid1, null, null);
+        sendCreateGroupRequest(mMockDevice, mUid1, mGname1, null);
+        String gid = getProperty(mResponse, Constants.KEYFIELD_GID).toString();
+        sendCreateGroupRequest(mMockDevice, mUid1, null, gid);
         sendGetGroupResquest(mMockDevice, mUid1);
         assertTrue(responseCodeCheck(mResponse, ResponseStatus.CONTENT));
     }
@@ -149,11 +158,14 @@ public class GroupBrokerTest {
             String gname, String parent) {
         IRequest request = null;
         HashMap<String, Object> payloadData = new HashMap<String, Object>();
-        payloadData.put(Constants.REQ_UUID_ID, uid);
         payloadData.put(Constants.KEYFIELD_GROUP_NAME, gname);
         payloadData.put(Constants.KEYFIELD_GROUP_PARENT, parent);
+        payloadData.put(Constants.KEYFIELD_GROUP_MEMBERS,
+                new ArrayList<String>(Arrays.asList(uid)));
+        payloadData.put(Constants.KEYFIELD_OID, uid);
         request = MessageBuilder.createRequest(RequestMethod.POST, GROUP_URI,
-                null, ContentFormat.APPLICATION_CBOR,
+                Constants.KEYFIELD_UID + "=" + uid,
+                ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(payloadData));
         mGroupResource.onDefaultRequestReceived(device, request);
     }
@@ -161,7 +173,8 @@ public class GroupBrokerTest {
     private void sendGetGroupResquest(CoapDevice device, String uid) {
         IRequest request = null;
         request = MessageBuilder.createRequest(RequestMethod.GET, GROUP_URI,
-                UID_QUERY + uid);
+                UID_QUERY + uid + ";" + Constants.KEYFIELD_GROUP_MEMBERS + "="
+                        + uid);
         mGroupResource.onDefaultRequestReceived(device, request);
     }
 
@@ -169,7 +182,8 @@ public class GroupBrokerTest {
             Observe obs) {
         IRequest request = null;
         request = MessageBuilder.createRequest(RequestMethod.GET, GROUP_URI,
-                UID_QUERY + uid);
+                UID_QUERY + uid + ";" + Constants.KEYFIELD_GROUP_MEMBERS + "="
+                        + uid);
         ((CoapRequest) request).setObserve(obs);
         mGroupResource.onDefaultRequestReceived(device, request);
     }

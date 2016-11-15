@@ -29,7 +29,6 @@ import org.iotivity.cloud.accountserver.Constants;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 
 public class GroupTable {
-    // TODO add doxygen
     private String            gid       = null;
     private String            gname     = null;
     private String            owner     = null;
