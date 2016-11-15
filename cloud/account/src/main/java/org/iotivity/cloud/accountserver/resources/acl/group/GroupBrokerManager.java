@@ -167,14 +167,20 @@ public class GroupBrokerManager {
         }
 
         storeGroupInfo(uid, gid, gname, parent);
-        return makePostResponse(gid, gname);
+        return makePostResponse(uid, gid, gname, parent);
     }
 
-    private HashMap<String, Object> makePostResponse(String gid, String gname) {
+    private HashMap<String, Object> makePostResponse(String uid, String gid,
+            String gname, String parent) {
 
         HashMap<String, Object> response = new HashMap<>();
         response.put(Constants.KEYFIELD_GID, gid);
         response.put(Constants.KEYFIELD_GROUP_NAME, gname);
+        response.put(Constants.KEYFIELD_GROUP_OWNER, uid);
+        response.put(Constants.KEYFIELD_GROUP_MEMBERS, Arrays.asList(uid));
+        if (parent != null) {
+            response.put(Constants.KEYFIELD_GROUP_PARENT, parent);
+        }
 
         Log.d("Group post response : " + response.toString());
 

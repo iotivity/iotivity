@@ -89,10 +89,15 @@ public class GroupResource extends Resource {
         HashMap<String, Object> parsedPayload = mCbor
                 .parsePayloadFromCbor(payload, HashMap.class);
 
-        checkPayloadException(Arrays.asList(Constants.REQ_UUID_ID),
+        checkQueryException(Arrays.asList(Constants.KEYFIELD_UID),
+                request.getUriQueryMap());
+
+        checkPayloadException(Arrays.asList(Constants.KEYFIELD_GROUP_MEMBERS),
                 parsedPayload);
 
-        String uid = parsedPayload.get(Constants.REQ_UUID_ID).toString();
+        // get user id
+        String uid = request.getUriQueryMap().get(Constants.KEYFIELD_UID)
+                .get(0);
 
         if (uid == null || uid.isEmpty()) {
             throw new BadRequestException(
@@ -105,8 +110,8 @@ public class GroupResource extends Resource {
                 Constants.KEYFIELD_GROUP_PARENT);
 
         if (parent != null) {
-            ArrayList<String> properties = new ArrayList<>();
-            properties.add(Constants.KEYFIELD_GROUP);
+            ArrayList<String> properties = new ArrayList<>(
+                    Arrays.asList(Constants.KEYFIELD_GROUP));
             GroupBrokerManager.getInstance().verifyAuthorization(uid, parent,
                     properties, UserOperation.ADD);
         }
@@ -128,11 +133,16 @@ public class GroupResource extends Resource {
             IRequest request) {
         HashMap<String, List<String>> queryMap = request.getUriQueryMap();
 
-        checkQueryException(Arrays.asList(Constants.REQ_UUID_ID), queryMap);
+        checkQueryException(Arrays.asList(Constants.REQ_UUID_ID,
+                Constants.KEYFIELD_GROUP_MEMBERS), queryMap);
 
-        List<String> deviceList = queryMap.get(Constants.REQ_UUID_ID);
-        String uid = deviceList.get(0);
-
+        String uid = queryMap.get(Constants.REQ_UUID_ID).get(0);
+        if (!uid.equals(
+                queryMap.get(Constants.KEYFIELD_GROUP_MEMBERS).get(0))) {
+            throw new BadRequestException(
+                    Constants.REQ_UUID_ID + "query value should be equal to "
+                            + Constants.KEYFIELD_GROUP_MEMBERS + "query value");
+        }
         switch (request.getObserve()) {
             case SUBSCRIBE:
                 GroupBrokerManager.getInstance().addObserver(uid, srcDevice,
@@ -186,13 +196,20 @@ public class GroupResource extends Resource {
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
-        // check if the payload has the key "uid"
-        checkPayloadException(Constants.REQ_UUID_ID, payloadData);
+        // TODO to be deleted
+        if (payloadData.containsKey(Constants.KEYFIELD_UID)) {
+            throw new BadRequestException(
+                    " uid key is not supported in the payload");
+        }
 
-        // get "uid" value
-        String mid = (String) payloadData.get(Constants.REQ_UUID_ID);
+        checkQueryException(Arrays.asList(Constants.KEYFIELD_UID),
+                request.getUriQueryMap());
 
-        if (mid == null || mid.isEmpty()) {
+        // get user id
+        String uid = request.getUriQueryMap().get(Constants.KEYFIELD_UID)
+                .get(0);
+
+        if (uid == null || uid.isEmpty()) {
             throw new BadRequestException(
                     Constants.REQ_UUID_ID + " is null or empty");
         }
@@ -200,11 +217,10 @@ public class GroupResource extends Resource {
         String gid = request.getUriPathSegments()
                 .get(getUriPathSegments().size());
 
-        payloadData.remove(Constants.REQ_UUID_ID);
-
         // process POST oic/acl/group/<gid> to update group info
-        if (request.getUriQuery() == null) {
-            handlePostUpdateRequest(gid, mid, payloadData);
+        if (!request.getUriQueryMap()
+                .containsKey(Constants.REQ_GROUP_QUERY_OPERATION)) {
+            handlePostUpdateRequest(gid, uid, payloadData);
         } else {
             checkQueryException(Constants.REQ_GROUP_QUERY_OPERATION,
                     request.getUriQueryMap());
@@ -214,10 +230,10 @@ public class GroupResource extends Resource {
 
             switch (postOption) {
                 case Constants.REQ_GROUP_QUERY_ADD:
-                    handlePostAddRequest(gid, mid, payloadData);
+                    handlePostAddRequest(gid, uid, payloadData);
                     break;
                 case Constants.REQ_GROUP_QUERY_DELETE:
-                    handlePostDeleteRequest(gid, mid, payloadData);
+                    handlePostDeleteRequest(gid, uid, payloadData);
                     break;
                 default:
                     throw new PreconditionFailedException(
@@ -378,13 +394,20 @@ public class GroupResource extends Resource {
 
     private IResponse handleGroupGetRequest(IRequest request)
             throws ServerException {
-        checkQueryException(Constants.REQ_UUID_ID, request.getUriQueryMap());
+        HashMap<String, List<String>> queryMap = request.getUriQueryMap();
 
-        HashMap<String, Object> responsePayload = null;
+        checkQueryException(Arrays.asList(Constants.REQ_UUID_ID,
+                Constants.KEYFIELD_GROUP_MEMBERS), queryMap);
 
-        String mid = request.getUriQueryMap().get(Constants.REQ_UUID_ID).get(0);
+        String uid = queryMap.get(Constants.REQ_UUID_ID).get(0);
+        if (!uid.equals(
+                queryMap.get(Constants.KEYFIELD_GROUP_MEMBERS).get(0))) {
+            throw new BadRequestException(
+                    Constants.REQ_UUID_ID + "query value should be equal to "
+                            + Constants.KEYFIELD_GROUP_MEMBERS + "query value");
+        }
 
-        if (mid == null || mid.isEmpty()) {
+        if (uid == null || uid.isEmpty()) {
             throw new BadRequestException(
                     Constants.REQ_UUID_ID + " is null or empty");
         }
@@ -392,7 +415,9 @@ public class GroupResource extends Resource {
         String gid = request.getUriPathSegments()
                 .get(getUriPathSegments().size());
 
-        GroupManager.getInstance().verifyGetRequestAuthz(gid, mid);
+        GroupManager.getInstance().verifyGetRequestAuthz(gid, uid);
+
+        HashMap<String, Object> responsePayload = null;
 
         switch (request.getObserve()) {
             case NOTHING:
@@ -413,12 +438,20 @@ public class GroupResource extends Resource {
     private IResponse handleGroupDeleteRequest(IRequest request)
             throws ServerException {
 
-        checkQueryException(Arrays.asList(Constants.REQ_UUID_ID),
-                request.getUriQueryMap());
+        HashMap<String, List<String>> queryMap = request.getUriQueryMap();
 
-        String mid = request.getUriQueryMap().get(Constants.REQ_UUID_ID).get(0);
+        checkQueryException(Arrays.asList(Constants.REQ_UUID_ID,
+                Constants.KEYFIELD_GROUP_OWNER), queryMap);
 
-        if (mid == null || mid.isEmpty()) {
+        String uid = queryMap.get(Constants.REQ_UUID_ID).get(0);
+        if (!uid.equals(queryMap.get(Constants.KEYFIELD_GROUP_OWNER).get(0))) {
+            throw new BadRequestException(
+                    Constants.REQ_UUID_ID + "query value should be equal to "
+                            + Constants.KEYFIELD_GROUP_OWNER
+                            + "query value to delete group");
+        }
+
+        if (uid == null || uid.isEmpty()) {
             throw new BadRequestException(
                     Constants.REQ_UUID_ID + " is null or empty");
         }
@@ -426,7 +459,7 @@ public class GroupResource extends Resource {
         String gid = request.getUriPathSegments()
                 .get(getUriPathSegments().size());
 
-        GroupManager.getInstance().verifyDeleteRequestAuthz(gid, mid);
+        GroupManager.getInstance().verifyDeleteRequestAuthz(gid, uid);
 
         String parent = GroupManager.getInstance().getGroupTable(gid)
                 .getParent();

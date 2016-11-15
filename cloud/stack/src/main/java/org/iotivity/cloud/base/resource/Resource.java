@@ -98,7 +98,7 @@ public class Resource implements IRequestEventHandler {
         for (String property : propertyList) {
             if (!queryData.containsKey(property))
                 throw new PreconditionFailedException(
-                        property + " property is not include");
+                        "query does not contatin " + property + " property");
             if (queryData.get(property) == null)
                 throw new PreconditionFailedException(
                         property + " param is null");
@@ -120,10 +120,10 @@ public class Resource implements IRequestEventHandler {
         for (String property : propertyList) {
             if (!payloadData.containsKey(property))
                 throw new PreconditionFailedException(
-                        property + " property is not include");
+                        "payload does not contain" + property + " property");
             if (payloadData.get(property) == null)
                 throw new PreconditionFailedException(
-                        property + " param is null");
+                        property + " param is null in the payload");
         }
         return true;
     }
