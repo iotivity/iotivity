@@ -65,7 +65,9 @@ import io.netty.channel.ChannelPromise;
 
 public class DeviceServerSystem extends ServerSystem {
 
-    IRequestChannel mRDServer = null;
+    private Cbor<HashMap<String, Object>> mCbor     = new Cbor<HashMap<String, Object>>();
+
+    IRequestChannel                       mRDServer = null;
 
     public DeviceServerSystem() {
         mRDServer = ConnectorPool.getConnection("rd");
@@ -190,8 +192,41 @@ public class DeviceServerSystem extends ServerSystem {
                     ctx.close();
                 }
             }
-
             ctx.fireChannelRead(msg);
+        }
+
+        @Override
+        public void write(ChannelHandlerContext ctx, Object msg,
+                ChannelPromise promise) throws Exception {
+
+            if (!(msg instanceof CoapResponse)) {
+                throw new BadRequestException(
+                        "this msg type is not CoapResponse");
+            }
+            // This is CoapResponse
+            // Once the response is valid, add this to deviceList
+            CoapResponse response = (CoapResponse) msg;
+
+            switch (response.getUriPath()) {
+                case OICConstants.ACCOUNT_SESSION_FULL_URI:
+                    if (response.getStatus() != ResponseStatus.CHANGED) {
+                        throw new UnAuthorizedException();
+                    }
+
+                    if (response.getPayload() != null) {
+                        break;
+                    }
+
+                    ctx.close();
+                    break;
+                case OICConstants.ACCOUNT_FULL_URI:
+                    if (response.getStatus() != ResponseStatus.DELETED) {
+                        break;
+                    }
+                    ctx.close();
+                    break;
+            }
+            ctx.writeAndFlush(msg);
         }
 
         @Override
@@ -251,7 +286,6 @@ public class DeviceServerSystem extends ServerSystem {
 
     @Sharable
     class CoapAuthHandler extends ChannelDuplexHandler {
-        private Cbor<HashMap<String, Object>> mCbor = new Cbor<HashMap<String, Object>>();
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) {
@@ -294,7 +328,7 @@ public class DeviceServerSystem extends ServerSystem {
                         ((CoapDevice) device).setExpiredPolicy(remainTime);
 
                         // Remove current auth handler and replace to
-                        // LifeCycleHandler
+                        // LifeCycleHandle
                         ctx.channel().pipeline().replace(this,
                                 "LifeCycleHandler", mLifeCycleHandler);
 
@@ -398,9 +432,10 @@ public class DeviceServerSystem extends ServerSystem {
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
 
             /*
-             * The parameter msg has been translated from HTTP request to CoAP request
-             * according to https://tools.ietf.org/html/draft-ietf-core-http-mapping-13
-             * by the previous handler: HCProxyHandler.
+             * The parameter msg has been translated from HTTP request to CoAP
+             * request according to
+             * https://tools.ietf.org/html/draft-ietf-core-http-mapping-13 by
+             * the previous handler: HCProxyHandler.
              */
 
             try {
@@ -445,7 +480,8 @@ public class DeviceServerSystem extends ServerSystem {
                             }
 
                             ((HttpDevice) device).updateDevice(
-                                    (String) authPayload.get(Constants.DEVICE_ID),
+                                    (String) authPayload
+                                            .get(Constants.DEVICE_ID),
                                     (String) authPayload.get(Constants.USER_ID),
                                     (String) authPayload
                                             .get(Constants.ACCESS_TOKEN));
@@ -471,8 +507,9 @@ public class DeviceServerSystem extends ServerSystem {
                                 if (isValidSid && httpDevice != null) {
                                     // if the session timeout is passed,
                                     // then remove the session
-                                    if (httpDevice.getSessionExpiredTime()
-                                            <= System.currentTimeMillis()) {
+                                    if (httpDevice
+                                            .getSessionExpiredTime() <= System
+                                                    .currentTimeMillis()) {
                                         isExpiredSid = true;
 
                                         HttpServer.httpDeviceMap
@@ -512,8 +549,8 @@ public class DeviceServerSystem extends ServerSystem {
                         ? ((ServerException) t).getErrorResponse()
                         : ResponseStatus.UNAUTHORIZED;
                 /*
-                 * The CoAP response will be translated into HTTP response
-                 * by the next handler: HCProxyHandler.
+                 * The CoAP response will be translated into HTTP response by
+                 * the next handler: HCProxyHandler.
                  */
                 ctx.writeAndFlush(MessageBuilder
                         .createResponse((CoapRequest) msg, responseStatus));
@@ -538,8 +575,8 @@ public class DeviceServerSystem extends ServerSystem {
                                     .parsePayloadFromCbor(response.getPayload(),
                                             HashMap.class);
 
-                            if (response.getStatus()
-                                    != ResponseStatus.CHANGED) {
+                            if (response
+                                    .getStatus() != ResponseStatus.CHANGED) {
                                 throw new UnAuthorizedException();
                             }
 
