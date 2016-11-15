@@ -42,7 +42,7 @@
 #include "mbedtls/ssl_cookie.h"
 #endif
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(TB_LOG)
 #include "mbedtls/debug.h"
 #include "mbedtls/version.h"
 #endif
@@ -288,7 +288,7 @@ static int GetAlertCode(uint32_t flags)
     return 0;
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(TB_LOG)
 /**
  * Pass a message to the OIC logger.
  *
@@ -1213,7 +1213,7 @@ static int InitConfig(mbedtls_ssl_config * conf, int transport, int mode)
     mbedtls_ssl_conf_renegotiation(conf, MBEDTLS_SSL_RENEGOTIATION_DISABLED);
     mbedtls_ssl_conf_authmode(conf, MBEDTLS_SSL_VERIFY_REQUIRED);
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(TB_LOG)
     mbedtls_ssl_conf_dbg(conf, DebugSsl, NULL);
     mbedtls_debug_set_threshold(MBED_TLS_DEBUG_LEVEL);
 #endif
@@ -1311,7 +1311,7 @@ CAResult_t CAinitSslAdapter()
 
     /* Initialize TLS library
      */
-#ifndef NDEBUG
+#if !defined(NDEBUG) || defined(TB_LOG)
     char version[MBED_TLS_VERSION_LEN];
     mbedtls_version_get_string(version);
     OIC_LOG_V(INFO, NET_SSL_TAG, "mbed TLS version: %s", version);
