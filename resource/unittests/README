@@ -10,7 +10,7 @@ directory. The build steps used in continuous integration can be found
 in auto_build.sh which is also in the the repository root directory.
 
 To dynamically link with the Google Unit test library,
-add <src_dir>/extlibs/gtest/gtest-1.7.0/lib/.libs/ to LD_LIBRARY_PATH
+add <src_dir>/extlibs/gtest/googletest-release-1.7.0/lib/.libs/ to LD_LIBRARY_PATH
 
 //---------------------------------------------------------------------
 
@@ -27,7 +27,7 @@ It is not a system or end-to-end test.
 
 2. Export LD_LIBRARY_PATH before running the unit tests.
    Example:
-   export LD_LIBRARY_PATH=/home/tester/Documents/iotivity/extlibs/gtest/gtest-1.7.0/lib/.libs/
+   export LD_LIBRARY_PATH=/home/tester/Documents/iotivity/extlibs/gtest/googletest-release-1.7.0/lib/.libs/
 
 3. Run the unit test by issuing the following command from root 'iotivity' folder:
    ./out/<TARGET_OS>/<TARGET_ARCH>/<release/debug>/resource/unittests/unittests
