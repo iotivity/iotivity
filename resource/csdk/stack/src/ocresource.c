@@ -805,31 +805,34 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         }
 
         bool baselineQuery = false;
-        if (0 != strcmp(interfaceQuery, OC_RSRVD_INTERFACE_LL))
+        if (interfaceQuery && 0 != strcmp(interfaceQuery, OC_RSRVD_INTERFACE_LL))
         {
             baselineQuery = true;
         }
-        if (interfaceQuery)
-        {
-            discoveryResult = discoveryPayloadCreateAndAddDeviceId(&payload);
-            VERIFY_PARAM_NON_NULL(TAG, payload, "Failed creating Discovery Payload.");
-            VERIFY_SUCCESS(discoveryResult, OC_STACK_OK);
 
-            OCDiscoveryPayload *discPayload = (OCDiscoveryPayload *)payload;
-            if (baselineQuery)
-            {
-                discoveryResult = addDiscoveryBaselineCommonProperties(discPayload);
-                VERIFY_SUCCESS(discoveryResult, OC_STACK_OK);
-            }
-            OCResourceProperty prop = OC_DISCOVERABLE;
+        discoveryResult = discoveryPayloadCreateAndAddDeviceId(&payload);
+        VERIFY_PARAM_NON_NULL(TAG, payload, "Failed creating Discovery Payload.");
+        VERIFY_SUCCESS(discoveryResult, OC_STACK_OK);
+
+        OCDiscoveryPayload *discPayload = (OCDiscoveryPayload *)payload;
+        if (baselineQuery)
+        {
+            discoveryResult = addDiscoveryBaselineCommonProperties(discPayload);
+            VERIFY_SUCCESS(discoveryResult, OC_STACK_OK);
+        }
+        OCResourceProperty prop = OC_DISCOVERABLE;
 #ifdef MQ_BROKER
-            prop = (OC_MQ_BROKER_URI == virtualUriInRequest) ? OC_MQ_BROKER : prop;
+        prop = (OC_MQ_BROKER_URI == virtualUriInRequest) ? OC_MQ_BROKER : prop;
 #endif
-            for (; resource && discoveryResult == OC_STACK_OK; resource = resource->next)
+        for (; resource && discoveryResult == OC_STACK_OK; resource = resource->next)
+        {
+            discoveryResult = findResourceAtRD(resource, interfaceQuery, resourceTypeQuery,
+                discPayload);
+            if (OC_STACK_NO_RESOURCE == discoveryResult)
             {
-                discoveryResult = findResourceAtRD(resource, interfaceQuery, resourceTypeQuery,
-                    discPayload);
-                if (OC_STACK_NO_RESOURCE == discoveryResult)
+                if ((!baselineQuery && (resource->resourceProperties & prop)) ||
+                    (baselineQuery && (includeThisResourceInResponse(resource, interfaceQuery,
+                                                                     resourceTypeQuery))))
                 {
                     if ((!baselineQuery && (resource->resourceProperties & prop)) ||
                         (baselineQuery && (includeThisResourceInResponse(resource, interfaceQuery,
@@ -844,10 +847,10 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                     }
                 }
             }
-            if (discPayload->resources == NULL)
-            {
-                discoveryResult = OC_STACK_NO_RESOURCE;
-            }
+        }
+        if (discPayload->resources == NULL)
+        {
+            discoveryResult = OC_STACK_NO_RESOURCE;
         }
     }
     else if (virtualUriInRequest == OC_DEVICE_URI)
