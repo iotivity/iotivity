@@ -135,19 +135,16 @@ public class AccountManager {
         // find token information corresponding to the uuid and did
         HashMap<String, Object> condition = new HashMap<>();
         condition.put(Constants.KEYFIELD_UUID, uuid);
+        condition.put(Constants.KEYFIELD_DID, did);
 
-        ArrayList<HashMap<String, Object>> recordList = findRecord(
-                AccountDBManager.getInstance()
-                        .selectRecord(Constants.TOKEN_TABLE, condition),
-                Constants.KEYFIELD_DID, did);
+        ArrayList<HashMap<String, Object>> recordList = AccountDBManager
+                .getInstance().selectRecord(Constants.TOKEN_TABLE, condition);
 
         if (recordList.isEmpty()) {
             throw new UnAuthorizedException("access token doesn't exist");
         }
 
-        HashMap<String, Object> record = recordList.get(0);
-
-        TokenTable tokenInfo = castMapToTokenTable(record);
+        TokenTable tokenInfo = castMapToTokenTable(recordList.get(0));
 
         // token verification to check if the accesstoken is expired
         if (verifyToken(tokenInfo, accessToken)) {
@@ -558,7 +555,7 @@ public class AccountManager {
         return searchType;
     }
 
-    public void deleteDevice(String uid, String di) {
+    public boolean deleteDevice(String uid, String di, String accetoken) {
 
         HashSet<String> diSet = new HashSet<String>();
         diSet.add(di);
@@ -568,11 +565,25 @@ public class AccountManager {
         condition.put(Constants.KEYFIELD_UUID, uid);
         condition.put(Constants.KEYFIELD_DID, di);
 
+        ArrayList<HashMap<String, Object>> recordList = AccountDBManager
+                .getInstance().selectRecord(Constants.TOKEN_TABLE, condition);
+
+        if (recordList.isEmpty()) {
+            throw new UnAuthorizedException("access token doesn't exist");
+        }
+
+        TokenTable tokenInfo = castMapToTokenTable(recordList.get(0));
+
+        if (!verifyToken(tokenInfo, accetoken)) {
+            return false;
+        }
+
         // delete Token information from the DB
         AccountDBManager.getInstance().deleteRecord(Constants.TOKEN_TABLE,
                 condition);
         // delete device ID from all groups in the DB
         GroupManager.getInstance().deleteDevicesFromAllGroup(di);
-    }
 
+        return true;
+    }
 }

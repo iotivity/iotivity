@@ -26,10 +26,10 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.iotivity.cloud.accountserver.Constants;
-import org.iotivity.cloud.accountserver.resources.acl.id.AclManager;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
+import org.iotivity.cloud.base.exception.ServerException.UnAuthorizedException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
@@ -153,13 +153,16 @@ public class AccountResource extends Resource {
 
         HashMap<String, List<String>> queryMap = request.getUriQueryMap();
 
-        if (checkQueryException(
-                Arrays.asList(Constants.REQ_UUID_ID, Constants.REQ_DEVICE_ID),
+        if (checkQueryException(Arrays.asList(Constants.REQ_UUID_ID,
+                Constants.REQ_DEVICE_ID, Constants.REQ_ACCESS_TOKEN),
                 queryMap)) {
 
             String uid = queryMap.get(Constants.REQ_UUID_ID).get(0);
             String did = queryMap.get(Constants.REQ_DEVICE_ID).get(0);
-            mAsManager.deleteDevice(uid, did);
+            String accesstoken = queryMap.get(Constants.REQ_ACCESS_TOKEN)
+                    .get(0);
+            if (!mAsManager.deleteDevice(uid, did, accesstoken))
+                throw new UnAuthorizedException("accesstoken is not valid");
         }
 
         return MessageBuilder.createResponse(request, ResponseStatus.DELETED);

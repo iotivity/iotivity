@@ -169,6 +169,7 @@ public class InviteResource extends Resource {
 
             String acceptStr = queryParams.get(Constants.REQ_INVITE_ACCEPT)
                     .get(0);
+
             boolean accepted = false;
             if (acceptStr.equals(Constants.INVITE_ACCEPT)) {
                 accepted = true;

@@ -72,6 +72,7 @@ public class DevicePresenceTest {
         MockitoAnnotations.initMocks(this);
         mDeviceServerSystem.addResource(mPrsHandler);
         Mockito.doReturn("mockDeviceId").when(mMockDevice).getDeviceId();
+        Mockito.doReturn("mockUserId").when(mMockDevice).getUserId();
         Mockito.doAnswer(new Answer<Object>() {
             @Override
             public CoapRequest answer(InvocationOnMock invocation)
@@ -140,9 +141,11 @@ public class DevicePresenceTest {
         mDeviceServerSystem.onRequestReceived(mMockDevice, request);
         assertTrue(mLatch.await(1L, SECONDS));
         HashMap<String, List<String>> queryMap = mReq.getUriQueryMap();
-        assertTrue(queryMap.containsKey("mid"));
+        assertTrue(queryMap.containsKey("uid"));
+        assertTrue(queryMap.containsKey("members"));
         assertTrue(mReq.getMethod().equals(RequestMethod.GET));
-        assertEquals(mReq.getUriPath(), Constants.GROUP_FULL_URI + "/null");
+        assertEquals(mReq.getUriPath(),
+                Constants.GROUP_FULL_URI + "/mockUserId");
     }
 
     // @InjectMocks for testPresenceDeregisterSpecificDeviceOnRequestReceived
@@ -175,8 +178,10 @@ public class DevicePresenceTest {
         assertTrue(mLatch.await(1L, SECONDS));
         assertTrue(mReq.getMethod().equals(RequestMethod.GET));
         HashMap<String, List<String>> queryMap = mReq.getUriQueryMap();
-        assertTrue(queryMap.containsKey("mid"));
-        assertEquals(mReq.getUriPath(), Constants.GROUP_FULL_URI + "/null");
+        assertTrue(queryMap.containsKey("uid"));
+        assertTrue(queryMap.containsKey("members"));
+        assertEquals(mReq.getUriPath(),
+                Constants.GROUP_FULL_URI + "/mockUserId");
     }
 
     public IRequest makePresenceEntireDevice() {
@@ -215,15 +220,15 @@ public class DevicePresenceTest {
         deviceList.add("device1");
         deviceList.add("device2");
         deviceList.add("device3");
-        responsePayload.put("dilist", deviceList);
+        responsePayload.put("devices", deviceList);
         responsePayload.put("gid", "g0001");
         responsePayload.put("gmid", "u0001");
         ArrayList<String> midList = new ArrayList<String>();
         midList.add("u0001");
-        responsePayload.put("midlist", midList);
+        responsePayload.put("members", midList);
         IRequest requestFromCitoAs = MessageBuilder.createRequest(
                 RequestMethod.GET, Constants.GROUP_FULL_URI + "/g0001",
-                "mid=null");
+                "uid=mockUserId;members=mockUserId");
         IResponse response = MessageBuilder.createResponse(requestFromCitoAs,
                 ResponseStatus.CONTENT, ContentFormat.APPLICATION_CBOR,
                 cbor.encodingPayloadToCbor(responsePayload));

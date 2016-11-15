@@ -68,6 +68,9 @@ public class ResourceDirectory extends Resource {
                 HashMap<String, Object> payloadData = mCbor
                         .parsePayloadFromCbor(request.getPayload(),
                                 HashMap.class);
+                StringBuffer query = new StringBuffer();
+                query.append("op=add;");
+                query.append(Constants.USER_ID + "=" + srcDevice.getUserId());
 
                 StringBuffer uriPath = new StringBuffer();
                 uriPath.append(Constants.PREFIX_OIC + "/");
@@ -76,14 +79,13 @@ public class ResourceDirectory extends Resource {
                 uriPath.append(srcDevice.getUserId());
 
                 String di = payloadData.get(Constants.REQ_DEVICE_ID).toString();
-
                 HashMap<String, Object> requestPayload = new HashMap<>();
-                requestPayload.put(Constants.USER_ID, srcDevice.getUserId());
+
                 requestPayload.put(Constants.REQ_GROUP_DEVICES,
                         Arrays.asList(di));
                 IRequest requestToAS = MessageBuilder.createRequest(
-                        RequestMethod.POST, uriPath.toString(), "op=add",
-                        ContentFormat.APPLICATION_CBOR,
+                        RequestMethod.POST, uriPath.toString(),
+                        query.toString(), ContentFormat.APPLICATION_CBOR,
                         mCbor.encodingPayloadToCbor(requestPayload));
 
                 mASServer.sendRequest(requestToAS,

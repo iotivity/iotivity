@@ -52,20 +52,21 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class AclGroupTest {
-    private static final String  TEST_RESOURCE_GROUP_URI = Constants.GROUP_FULL_URI;
+    private static final String   TEST_RESOURCE_GROUP_URI = Constants.GROUP_FULL_URI;
 
-    private CoapDevice           mMockDevice             = mock(
+    private CoapDevice            mMockDevice             = mock(
             CoapDevice.class);
-    private IRequest             mReq                    = null;
-    private DeviceServerSystem   mDeviceServerSystem     = new DeviceServerSystem();
-    private final CountDownLatch mLatch                  = new CountDownLatch(
+    private IRequest              mReq                    = null;
+    private DeviceServerSystem    mDeviceServerSystem     = new DeviceServerSystem();
+    private final CountDownLatch  mLatch                  = new CountDownLatch(
             1);
+    Cbor<HashMap<Object, Object>> mCbor                   = new Cbor<>();
 
     @Mock
-    private IRequestChannel      mRequestChannel;
+    private IRequestChannel       mRequestChannel;
 
     @InjectMocks
-    private AclGroup             mAclGroupHandler        = new AclGroup();
+    private AclGroup              mAclGroupHandler        = new AclGroup();
 
     @Before
     public void setUp() throws Exception {
@@ -100,18 +101,23 @@ public class AclGroupTest {
                 "\t--------------OnRequestReceived(AS) Create Group Test------------");
 
         HashMap<String, Object> payloadData = new HashMap<>();
-        payloadData.put("gtype", "public");
-        Cbor<HashMap<Object, Object>> cbor = new Cbor<>();
+        payloadData.put("owner", "u1");
+        payloadData.put("members", Arrays.asList("ui"));
+        payloadData.put("gname", Arrays.asList("home"));
+
         IRequest request = MessageBuilder.createRequest(RequestMethod.POST,
                 TEST_RESOURCE_GROUP_URI, null, ContentFormat.APPLICATION_CBOR,
-                cbor.encodingPayloadToCbor(payloadData));
+                mCbor.encodingPayloadToCbor(payloadData));
         mAclGroupHandler.onRequestReceived(mMockDevice, request);
 
         assertTrue(mLatch.await(1L, SECONDS));
-        assertTrue(cbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
-                .containsKey("gtype"));
-        assertTrue(cbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
-                .containsKey("gmid"));
+        assertTrue(mCbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
+                .containsKey("owner"));
+        assertTrue(mCbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
+                .containsKey("members"));
+        assertTrue(mCbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
+                .containsKey("gname"));
+        assertTrue(mReq.getUriQueryMap().containsKey("uid"));
         assertEquals(mReq.getUriPath(), TEST_RESOURCE_GROUP_URI);
     }
 
@@ -121,16 +127,18 @@ public class AclGroupTest {
                 "\t--------------OnRequestReceived(AS) Add Member Test------------");
 
         HashMap<String, Object> payloadData = new HashMap<>();
-        Cbor<HashMap<Object, Object>> cbor = new Cbor<>();
+        payloadData.put("members", Arrays.asList("sampleMember"));
         IRequest request = MessageBuilder.createRequest(RequestMethod.POST,
-                TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup", null,
+                TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup", "op=add",
                 ContentFormat.APPLICATION_CBOR,
-                cbor.encodingPayloadToCbor(payloadData));
+                mCbor.encodingPayloadToCbor(payloadData));
         mAclGroupHandler.onRequestReceived(mMockDevice, request);
 
         assertTrue(mLatch.await(1L, SECONDS));
-        assertTrue(cbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
-                .containsKey("midlist"));
+        assertTrue(mCbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
+                .containsKey("members"));
+        assertTrue(mReq.getUriQueryMap().containsKey("op"));
+        assertTrue(mReq.getUriQueryMap().containsKey("uid"));
         assertEquals(mReq.getUriPath(),
                 TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup");
     }
@@ -141,17 +149,18 @@ public class AclGroupTest {
                 "\t--------------OnRequestReceived(AS) Add Device Test------------");
 
         HashMap<String, Object> payloadData = new HashMap<>();
-        payloadData.put("dilist", Arrays.asList("sampleDevice"));
-        Cbor<HashMap<Object, Object>> cbor = new Cbor<>();
+        payloadData.put("devices", Arrays.asList("sampleDevice"));
         IRequest request = MessageBuilder.createRequest(RequestMethod.POST,
-                TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup", null,
+                TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup", "op=add",
                 ContentFormat.APPLICATION_CBOR,
-                cbor.encodingPayloadToCbor(payloadData));
+                mCbor.encodingPayloadToCbor(payloadData));
         mAclGroupHandler.onRequestReceived(mMockDevice, request);
 
         assertTrue(mLatch.await(1L, SECONDS));
-        assertTrue(cbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
-                .containsKey("dilist"));
+        assertTrue(mCbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
+                .containsKey("devices"));
+        assertTrue(mReq.getUriQueryMap().containsKey("op"));
+        assertTrue(mReq.getUriQueryMap().containsKey("uid"));
         assertEquals(mReq.getUriPath(),
                 TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup");
     }
@@ -163,11 +172,12 @@ public class AclGroupTest {
                 "\t--------------OnRequestReceived(AS) Get Group List & Get Group Info Test------------");
 
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
-                TEST_RESOURCE_GROUP_URI, null, null, null);
+                TEST_RESOURCE_GROUP_URI, "members=u1", null, null);
         mAclGroupHandler.onRequestReceived(mMockDevice, request);
 
         assertTrue(mLatch.await(1L, SECONDS));
-        assertTrue(mReq.getUriQueryMap().containsKey("mid"));
+        assertTrue(mReq.getUriQueryMap().containsKey("members"));
+        assertTrue(mReq.getUriQueryMap().containsKey("uid"));
         assertEquals(mReq.getUriPath(), TEST_RESOURCE_GROUP_URI);
     }
 
@@ -177,27 +187,32 @@ public class AclGroupTest {
                 "\t--------------OnRequestReceived(AS) Delete Group Test------------");
 
         IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
-                TEST_RESOURCE_GROUP_URI, "gid=samplegid", null, null);
+                TEST_RESOURCE_GROUP_URI + "/g1", "owner=u1", null, null);
         mAclGroupHandler.onRequestReceived(mMockDevice, request);
 
         assertTrue(mLatch.await(1L, SECONDS));
-        assertTrue(mReq.getUriQueryMap().containsKey("gid"));
-        assertTrue(mReq.getUriQueryMap().containsKey("gmid"));
-        assertEquals(mReq.getUriPath(), TEST_RESOURCE_GROUP_URI);
+        assertTrue(mReq.getUriQueryMap().containsKey("owner"));
+        assertTrue(mReq.getUriQueryMap().containsKey("uid"));
+        assertEquals(mReq.getUriPath(), TEST_RESOURCE_GROUP_URI + "/g1");
     }
 
     @Test
     public void testDeleteMemberRequestReceived() throws Exception {
         System.out.println(
                 "\t--------------OnRequestReceived(AS) Delete Member Test------------");
-
-        IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
-                TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup", null, null,
-                null);
+        HashMap<String, Object> payloadData = new HashMap<>();
+        payloadData.put("members", Arrays.asList("sampleMember"));
+        IRequest request = MessageBuilder.createRequest(RequestMethod.POST,
+                TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup", "op=delete",
+                ContentFormat.APPLICATION_CBOR,
+                mCbor.encodingPayloadToCbor(payloadData));
         mAclGroupHandler.onRequestReceived(mMockDevice, request);
 
         assertTrue(mLatch.await(1L, SECONDS));
-        assertTrue(mReq.getUriQueryMap().containsKey("midlist"));
+        assertTrue(mCbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
+                .containsKey("members"));
+        assertTrue(mReq.getUriQueryMap().containsKey("op"));
+        assertTrue(mReq.getUriQueryMap().containsKey("uid"));
         assertEquals(mReq.getUriPath(),
                 TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup");
     }
@@ -206,14 +221,19 @@ public class AclGroupTest {
     public void testDeleteDeviceRequestReceived() throws Exception {
         System.out.println(
                 "\t--------------OnRequestReceived(AS) Delete Member Test------------");
-
-        IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
-                TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup",
-                "dilist=sampledi", null, null);
+        HashMap<String, Object> payloadData = new HashMap<>();
+        payloadData.put("devices", Arrays.asList("sampleDevice"));
+        IRequest request = MessageBuilder.createRequest(RequestMethod.POST,
+                TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup", "op=delete",
+                ContentFormat.APPLICATION_CBOR,
+                mCbor.encodingPayloadToCbor(payloadData));
         mAclGroupHandler.onRequestReceived(mMockDevice, request);
 
         assertTrue(mLatch.await(1L, SECONDS));
-        assertTrue(mReq.getUriQueryMap().containsKey("dilist"));
+        assertTrue(mCbor.parsePayloadFromCbor(mReq.getPayload(), HashMap.class)
+                .containsKey("devices"));
+        assertTrue(mReq.getUriQueryMap().containsKey("op"));
+        assertTrue(mReq.getUriQueryMap().containsKey("uid"));
         assertEquals(mReq.getUriPath(),
                 TEST_RESOURCE_GROUP_URI + "/" + "sampleGroup");
     }

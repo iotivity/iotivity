@@ -30,6 +30,7 @@ import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.protocols.IRequest;
+import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.util.Cbor;
@@ -73,6 +74,12 @@ public class AclGroup extends Resource {
                 throw new BadRequestException(
                         request.getMethod() + " request type is not support");
         }
-        mAuthServer.sendRequest(request, srcDevice);
+        StringBuffer additionalQuery = new StringBuffer();
+        additionalQuery.append(Constants.USER_ID + "=" + srcDevice.getUserId());
+        String uriQuery = additionalQuery.toString()
+                + (request.getUriQuery() != null ? (";" + request.getUriQuery())
+                        : "");
+        mAuthServer.sendRequest(MessageBuilder.modifyRequest(request, null,
+                uriQuery, null, null), srcDevice);
     }
 }

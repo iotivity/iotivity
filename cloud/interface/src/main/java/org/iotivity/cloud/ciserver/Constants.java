@@ -41,9 +41,9 @@ public class Constants extends OICConstants {
 
     public static final String REQ_GROUP_MASTER_ID = "gmid";
     public static final String REQ_MEMBER_ID       = "mid";
-    public static final String REQ_MEMBER_LIST     = "midlist";
+    public static final String REQ_MEMBER_LIST     = "members";
     public static final String REQ_DEVICE_ID       = "di";
-    public static final String REQ_DEVICE_LIST     = "dilist";
+    public static final String REQ_DEVICE_LIST     = "devices";
     public static final String REQ_INVITE          = "invite";
     public static final String REQ_PING_ARRAY      = "inarray";
     public static final String REQ_PING            = "in";
@@ -60,7 +60,4 @@ public class Constants extends OICConstants {
     public static final String REQ_LINKS           = "links";
     public static final String REQ_HREF            = "href";
     public static final String REQ_CRL             = "crl";
-
-    public static final String KEYFIELD_GROUPS     = "groups";
-    public static final String KEYFIELD_DEVICES    = "devices";
 }
