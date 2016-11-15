@@ -244,8 +244,8 @@ int main(void)
                                     provider->sendSyncInfo(mainMessageId,
                                                            OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
                                 }
-                                break;
                             }
+                            break;
                         case 2:
                             {
                                 std::cout << "Sending Delete Sync" << std::endl;
@@ -256,8 +256,8 @@ int main(void)
                                     provider->sendSyncInfo(mainMessageId,
                                                            OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_DELETED);
                                 }
-                                break;
                             }
+                            break;
                         default:
                             {
                                 cout << "Invalid Input!. sending default Read Sync";

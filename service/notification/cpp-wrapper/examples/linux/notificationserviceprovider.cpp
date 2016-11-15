@@ -280,15 +280,15 @@ int main()
                                 std::cout << "Sending Read Sync" << std::endl;
                                 NSProviderService::getInstance()->sendSyncInfo(mainMessageId,
                                         OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
-                                break;
                             }
+                            break;
                         case 2:
                             {
                                 std::cout << "Sending Delete Sync" << std::endl;
                                 NSProviderService::getInstance()->sendSyncInfo(mainMessageId,
                                         OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_DELETED);
-                                break;
                             }
+                            break;
                         default:
                             {
                                 cout << "Invalid Input!. sending default Read Sync";
