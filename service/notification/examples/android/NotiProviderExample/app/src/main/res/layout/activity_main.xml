@@ -9,6 +9,10 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.sec.notificationexample.MainActivity">
 
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fillViewport="true">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -74,7 +78,51 @@
 
             </RadioGroup>
         </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:orientation="horizontal"
+            android:weightSum="1">
 
+            <Button
+                android:layout_height="wrap_content"
+                android:layout_width="100dp"
+                android:id="@+id/signup"
+                android:text="Sign Up"/>
+
+            <Button
+                android:layout_height="wrap_content"
+                android:layout_width="100dp"
+                android:id="@+id/signin"
+                android:text="Sign In" />
+            <Button
+                android:layout_height="wrap_content"
+                android:layout_width="100dp"
+                android:id="@+id/signout"
+                android:text="Sign Out" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:orientation="horizontal"
+            android:weightSum="1">
+
+            <Button
+                android:layout_height="wrap_content"
+                android:layout_width="150dp"
+                android:id="@+id/remoteService"
+                android:text="Enable Remote Service"/>
+
+            <Button
+                android:layout_height="wrap_content"
+                android:layout_width="150dp"
+                android:id="@+id/subscribeMQService"
+                android:text="Subscribe MQ Service" />
+        </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -208,5 +256,5 @@
         </ScrollView>
 
     </LinearLayout>
-
+    </ScrollView>
 </RelativeLayout>

@@ -18,6 +18,7 @@
 
 package com.sec.noticonsumerexample;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -28,12 +29,32 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.iotivity.base.ErrorCode;
+import org.iotivity.base.OcAccountManager;
+import org.iotivity.base.OcConnectivityType;
+import org.iotivity.base.OcException;
+import org.iotivity.base.OcHeaderOption;
+import org.iotivity.base.OcPlatform;
+import org.iotivity.base.OcRepresentation;
+import org.iotivity.base.OcResource;
 import org.iotivity.service.ns.common.TopicsList;
 import org.iotivity.service.ns.common.Topic;
 
-public class MainActivity extends Activity
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+
+public class MainActivity extends Activity  implements OcAccountManager.OnPostListener
 {
     private final String TAG = "NS_MAIN_ACTIVITY";
+    private final int REQUEST_LOGIN = 1;
+
+    public static final String deviceID = "9E09F4FE-978A-4BC3-B356-1F93BCA37829";
+    public static final String CIServer = "coap+tcp://52.40.216.160:5683";
+    public static final String RemoteAddress = "52.40.216.160:5683";
+    public static final String MQCloudAddress = "52.78.151.180:5683";
+    public static final String MQCloudTopic = "/oic/ps/notification";
 
     private Button btnStart;
     private Button btnStop;
@@ -43,10 +64,18 @@ public class MainActivity extends Activity
     private Button btnUpdateTopicList;
     private Button btnClearLog;
     private static TextView TvLog;
+    private Button signUp, signIn, signOut;
+    private Button subscribeMQ;
 
     private boolean isStarted = false;
 
     private ConsumerSample mConsumerSample = null;
+    private OcAccountManager mAccountManager;
+    String mAuthCode;
+    String mAuthProvider;
+    String mRefreshtoken;
+    String mUserID;
+    String mAccessToken;
 
     private static final int PROVIDER_DISCOVERED = 1;
     private static final int STATE_CHANGED = 2;
@@ -138,6 +167,10 @@ public class MainActivity extends Activity
         btnUpdateTopicList = (Button) findViewById(R.id.BtnUpdateTopicList);
         btnClearLog = (Button) findViewById(R.id.BtnClearLog);
 
+        signUp = (Button) findViewById(R.id.signup);
+        signIn = (Button) findViewById(R.id.signin);
+        signOut = (Button) findViewById(R.id.signout);
+        subscribeMQ = (Button) findViewById(R.id.subscribeMQService);
         TvLog = (TextView) findViewById(R.id.TvLog);
 
         btnStart.setOnClickListener(mClickListener);
@@ -147,6 +180,15 @@ public class MainActivity extends Activity
         btnGetTopicList.setOnClickListener(mClickListener);
         btnUpdateTopicList.setOnClickListener(mClickListener);
         btnClearLog.setOnClickListener(mClickListener);
+
+        signIn.setEnabled(false);
+        signOut.setEnabled(false);
+        btnEnableRemoteService.setEnabled(false);
+
+        signUp.setOnClickListener(mClickListener);
+        signIn.setOnClickListener(mClickListener);
+        signOut.setOnClickListener(mClickListener);
+        subscribeMQ.setOnClickListener(mClickListener);
 
         mConsumerSample = new ConsumerSample(getApplicationContext());
         mConsumerSample.setHandler(mHandler);
@@ -218,10 +260,7 @@ public class MainActivity extends Activity
                             break;
                         }
                         TvLog.append("EnableRemoteService NS-Consumer\n");
-
-                        //TODO: Update to read the serverAddress from UI
-                        String serverAddress = new String();
-                        mConsumerSample.enableRemoteService(serverAddress);
+                        mConsumerSample.enableRemoteService(RemoteAddress);
                     }
                     break;
                 case R.id.BtnGetTopicList:
@@ -265,7 +304,247 @@ public class MainActivity extends Activity
                     TvLog.setText("");
                 }
                 break;
+                case R.id.signup: {
+                    if(isStarted == false) {
+                        Log.e(TAG, "Fail to Sign Up");
+                        showToast("Start ConsumerService First");
+                        break;
+                    }
+                    TvLog.append("Initiating SignUp\n");
+                    signUp();
+                }
+                break;
+                case R.id.signin: {
+                    if(isStarted == false) {
+                        Log.e(TAG, "Fail to Sign In");
+                        showToast("Start ConsumerService First");
+                        break;
+                    }
+                    TvLog.append("Initiating SignIn\n");
+                    signIn();
+                }
+                break;
+                case R.id.signout: {
+                    if(isStarted == false) {
+                        Log.e(TAG, "Fail to Sign out");
+                        showToast("Start ConsumerService First");
+                        break;
+                    }
+                    TvLog.append("Initiating SignOut\n");
+                    signOut();
+                }
+                break;
+                case R.id.subscribeMQService: {
+                    if(isStarted == false) {
+                        Log.e(TAG, "Fail to SubscribeMQService");
+                        showToast("Start ProviderService First");
+                        break;
+                    }
+                    int result = mConsumerSample.subscribeMQService(MQCloudAddress, MQCloudTopic);
+                    TvLog.append("SubscribeMQService Result : " + result + "\n");
+                }
+                break;
             }
         }
     };
+    public void logMessage(final String text) {
+        runOnUiThread(new Runnable() {
+            public void run() {
+                Message msg = new Message();
+                msg.obj = text;
+                TvLog.append(text + "\n");
+            }
+        });
+        Log.i(TAG, text);
+    }
+    OcAccountManager.OnPostListener onSignUp = new OcAccountManager.OnPostListener() {
+        @Override
+        public synchronized void onPostCompleted(List<OcHeaderOption> list,
+                                                 OcRepresentation ocRepresentation) {
+            logMessage("signUp was successful");
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    signIn.setEnabled(true);
+                    signUp.setEnabled(false);
+                }
+            });
+            try {
+                mUserID = ocRepresentation.getValue("uid");
+                mAccessToken = ocRepresentation.getValue("accesstoken");
+                mRefreshtoken = ocRepresentation.getValue("refreshtoken");
+
+                logMessage("\tuserID: " + mUserID);
+                logMessage("\taccessToken: " + mAccessToken);
+                logMessage("\trefreshToken: " + mRefreshtoken);
+
+                if (ocRepresentation.hasAttribute("expiresin")) {
+                    int expiresIn = ocRepresentation.getValue("expiresin");
+                    logMessage("\texpiresIn: " + expiresIn);
+                }
+            } catch (OcException e) {
+                Log.e(TAG, e.toString());
+            }
+        }
+
+
+        @Override
+        public synchronized void onPostFailed(Throwable throwable) {
+            logMessage("Failed to signUp");
+            if (throwable instanceof OcException) {
+                OcException ocEx = (OcException) throwable;
+                Log.e(TAG, ocEx.toString());
+                ErrorCode errCode = ocEx.getErrorCode();
+                logMessage("Error code: " + errCode);
+            }
+        }
+    };
+    OcAccountManager.OnPostListener onSignIn = new OcAccountManager.OnPostListener() {
+        @Override
+        public synchronized void onPostCompleted(List<OcHeaderOption> list,
+                                                 OcRepresentation ocRepresentation) {
+            logMessage("signIn was successful");
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    signIn.setEnabled(false);
+                    signOut.setEnabled(true);
+                    btnEnableRemoteService.setEnabled(true);
+                }
+            });
+
+        }
+
+        @Override
+        public synchronized void onPostFailed(Throwable throwable) {
+            logMessage("Failed to signIn");
+            if (throwable instanceof OcException) {
+                OcException ocEx = (OcException) throwable;
+                Log.e(TAG, ocEx.toString());
+                ErrorCode errCode = ocEx.getErrorCode();
+                logMessage("Error code: " + errCode);
+                if (ErrorCode.UNAUTHORIZED_REQ != errCode) {
+                    RefreshToken();
+                }
+            }
+        }
+    };
+    @Override
+    public void onPostCompleted(List<OcHeaderOption> ocHeaderOptions, OcRepresentation ocRepresentation) {
+
+    }
+
+    @Override
+    public void onPostFailed(Throwable throwable) {
+
+    }
+    private void signIn() {
+        try {
+            if(mAccountManager==null)
+            {
+                mAccountManager = OcPlatform.constructAccountManagerObject(CIServer,
+                        EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP));
+            }
+
+            mAccountManager.signIn(mUserID, mAccessToken, onSignIn);
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void signOut() {
+        try {
+            logMessage("signOut");
+            if(mAccountManager==null)
+            {
+                try {
+                    mAccountManager = OcPlatform.constructAccountManagerObject(CIServer,
+                            EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP));
+                } catch (OcException e) {
+                    e.printStackTrace();
+                }
+            }
+            mAccountManager.signOut(this);
+            signIn.setEnabled(false);
+            signUp.setEnabled(true);
+            btnEnableRemoteService.setEnabled(false);
+            logMessage("signOut Successful");
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void signUp() {
+        try {
+            mAccountManager = OcPlatform.constructAccountManagerObject(CIServer,
+                    EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP));
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+
+        Intent intentLogin = new Intent(this,LoginActivity.class);
+        startActivityForResult(intentLogin, REQUEST_LOGIN);
+    }
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == Activity.RESULT_OK && requestCode == REQUEST_LOGIN) {
+            mAuthCode = data.getStringExtra("authCode");
+            mAuthProvider = data.getStringExtra("authProvider");
+            logMessage("authCode: " + mAuthCode);
+            logMessage("authProvider: " + mAuthProvider);
+
+            try {
+                mAccountManager = OcPlatform.constructAccountManagerObject(CIServer,
+                        EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP));
+                logMessage("Calling signup API");
+
+                mAccountManager.signUp(mAuthProvider, mAuthCode, onSignUp);
+            } catch (OcException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    OcResource.OnPostListener onRefreshTokenPost = new OcResource.OnPostListener() {
+        @Override
+        public void onPostCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
+            logMessage("RefreshToken Completed.");
+            try {
+                mAccessToken = ocRepresentation.getValue("accesstoken");
+                mRefreshtoken = ocRepresentation.getValue("refreshtoken");
+            }
+            catch (OcException e)
+            {
+                e.printStackTrace();
+            }
+            signIn();
+        }
+
+        @Override
+        public void onPostFailed(Throwable throwable) {
+            logMessage("RefreshToken failed.");
+            Log.d(TAG, "onRefreshTokenPost failed..");
+        }
+    };
+    public void RefreshToken() {
+        try {
+            OcResource authResource = OcPlatform.constructResourceObject(CIServer, "/.well-known/ocf/account/tokenrefresh",
+                    EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP, OcConnectivityType.CT_IP_USE_V4),
+                    false, Arrays.asList("oic.wk.account"), Arrays.asList(OcPlatform.DEFAULT_INTERFACE));
+            OcRepresentation rep = new OcRepresentation();
+
+            showToast("RefreshToken in progress..");
+            logMessage("RefreshToken in progress..");
+            rep.setValue("di", deviceID);
+            rep.setValue("granttype", "refresh_token");
+            rep.setValue("refreshtoken", mRefreshtoken);
+            rep.setValue("uid", mUserID);
+            authResource.post(rep, new HashMap<String, String>(), onRefreshTokenPost);
+        }
+        catch(OcException e)
+        {
+            e.printStackTrace();
+        }
+
+        Log.d(TAG, "No error while executing login");
+    }
 }

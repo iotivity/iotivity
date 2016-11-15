@@ -37,17 +37,32 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.app.Activity;
 
-import org.iotivity.service.ns.common.MediaContents;
+import org.iotivity.base.ErrorCode;
+import org.iotivity.base.OcAccountManager;
+import org.iotivity.base.OcConnectivityType;
+import org.iotivity.base.OcException;
+import org.iotivity.base.OcHeaderOption;
+import org.iotivity.base.OcPlatform;
+import org.iotivity.base.OcRepresentation;
+import org.iotivity.base.OcResource;
 
-import java.text.DateFormat;
-import java.util.Date;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity  implements OcAccountManager.OnPostListener {
 
     private final String TAG = "NS_MAIN_ACTIVITY";
     private static final int CONSUMER_SUBSCRIBED = 1;
     private static final int MESSAGE_SYNC = 2;
-    private static final int MESSAGE_NOTIFICATION = 3;
+    private final int REQUEST_LOGIN = 1;
+
+    public static final String deviceID = "9E09F4FE-978A-4BC3-B356-1F93BCA37829";
+    public static final String CIServer = "coap+tcp://52.40.216.160:5683";
+    public static final String RemoteAddress = "52.40.216.160:5683";
+    public static final String MQCloudAddress = "52.78.151.180:5683";
+    public static final String MQCloudTopic = "/oic/ps/notification";
 
     private Button btnTitle;
     private Button btnBody;
@@ -58,6 +73,8 @@ public class MainActivity extends Activity {
     private Button btnSet;
     private Button btnStop;
     private Button btnLog;
+    private Button signUp, signIn, signOut;
+    private Button remoteService, subscribeMQ;
     private EditText editTextTitle;
     private EditText editTextBody;
     private EditText editTextTopic;
@@ -65,11 +82,17 @@ public class MainActivity extends Activity {
     private RadioButton radioConsumer;
     private static TextView TvLog;
 
+    private OcAccountManager mAccountManager;
+    String mAuthCode;
+    String mAuthProvider;
+    String mRefreshtoken;
+    String mUserID;
+    String mAccessToken;
+
     private static int notiId = 100;
-    private static int subCnt = 0;
     private boolean isStarted = false;
-    private String consumerId;
     private boolean gAcceptor = true;
+    private boolean gRemoteService = true;
 
     private NotiListener mNotiListener = null;
     private ProviderSample mProviderSample = null;
@@ -122,6 +145,12 @@ public class MainActivity extends Activity {
         btnLog = (Button) findViewById(R.id.BtnLog);
         btnStop = (Button) findViewById(R.id.BtnStop);
 
+        signUp = (Button) findViewById(R.id.signup);
+        signIn = (Button) findViewById(R.id.signin);
+        signOut = (Button) findViewById(R.id.signout);
+        remoteService = (Button) findViewById(R.id.remoteService);
+        subscribeMQ = (Button) findViewById(R.id.subscribeMQService);
+
         editTextTitle = (EditText) findViewById(R.id.EditTextTitle);
         editTextBody = (EditText) findViewById(R.id.EditTextBody);
         editTextTopic = (EditText) findViewById(R.id.EditTextTopic);
@@ -135,6 +164,10 @@ public class MainActivity extends Activity {
         btnBody.setEnabled(false);
         btnTopic.setEnabled(false);
 
+        signIn.setEnabled(false);
+        signOut.setEnabled(false);
+        remoteService.setEnabled(false);
+
         btnSend.setOnClickListener(mClickListener);
         btnStart.setOnClickListener(mClickListener);
         btnRegister.setOnClickListener(mClickListener);
@@ -144,11 +177,17 @@ public class MainActivity extends Activity {
         radioProvider.setOnClickListener(mClickListener);
         radioConsumer.setOnClickListener(mClickListener);
 
+        signUp.setOnClickListener(mClickListener);
+        signIn.setOnClickListener(mClickListener);
+        signOut.setOnClickListener(mClickListener);
+
+        remoteService.setOnClickListener(mClickListener);
+        subscribeMQ.setOnClickListener(mClickListener);
+
         mProviderSample = new ProviderSample(getApplicationContext());
         mProviderSample.setHandler(mHandler);
 
         mNotiListener = new NotiListener(this);
-
         Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
         startActivity(intent);
     }
@@ -285,8 +324,274 @@ public class MainActivity extends Activity {
 
                     TvLog.setText("");
                 }
-                break;  }
+                break;
+                case R.id.signup: {
+                    if(isStarted == false) {
+                        Log.e(TAG, "Fail to Sign Up");
+                        showToast("Start ProviderService First");
+                        break;
+                    }
+                    TvLog.append("Initiating SignUp\n");
+                    signUp();
+                }
+                break;
+                case R.id.signin: {
+                    if(isStarted == false) {
+                        Log.e(TAG, "Fail to Sign In");
+                        showToast("Start ProviderService First");
+                        break;
+                    }
+                    TvLog.append("Initiating SignIn\n");
+                    signIn();
+                }
+                break;
+                case R.id.signout: {
+                    if(isStarted == false) {
+                        Log.e(TAG, "Fail to Sign out");
+                        showToast("Start ProviderService First");
+                        break;
+                    }
+                    TvLog.append("Initiating SignOut\n");
+                    signOut();
+                }
+                break;
+                case R.id.remoteService: {
+                    remoteService.setEnabled(false);
+                    if(isStarted == false) {
+                        Log.e(TAG, "Fail to Enable/Disable RemoteService");
+                        showToast("Start ProviderService First");
+                        break;
+                    }
+                    if(gRemoteService){
+                        TvLog.append("Enable Remote Service\n");
+                        int result = mProviderSample.EnableRemoteService(RemoteAddress);
+                        remoteService.setText(R.string.disableRemoteService);
+                        gRemoteService = false;
+                        remoteService.setEnabled(true);
+                        TvLog.append("EnableRemoteService Result : " + result + "\n");
+                    }
+                    else {
+                        TvLog.append("Disable Remote Service\n");
+                        int result = mProviderSample.DisableRemoteService(RemoteAddress);
+                        remoteService.setText(R.string.enableRemoteService);
+                        gRemoteService = true;
+                        remoteService.setEnabled(true);
+                        TvLog.append("DisableRemoteService Result : " + result + "\n");
+                    }
+                }
+                break;
+                case R.id.subscribeMQService: {
+                    if(isStarted == false) {
+                        Log.e(TAG, "Fail to SubscribeMQService");
+                        showToast("Start ProviderService First");
+                        break;
+                    }
+                    int result = mProviderSample.subscribeMQService(MQCloudAddress, MQCloudTopic);
+                    TvLog.append("SubscribeMQService Result : " + result + "\n");
+                }
+                break;
             }
+        }
     };
+    public void logMessage(final String text) {
+        runOnUiThread(new Runnable() {
+            public void run() {
+                Message msg = new Message();
+                msg.obj = text;
+                TvLog.append(text + "\n");
+            }
+        });
+        Log.i(TAG, text);
+    }
+    OcAccountManager.OnPostListener onSignUp = new OcAccountManager.OnPostListener() {
+        @Override
+        public synchronized void onPostCompleted(List<OcHeaderOption> list,
+                                                 OcRepresentation ocRepresentation) {
+            logMessage("signUp was successful");
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    signIn.setEnabled(true);
+                    signUp.setEnabled(false);
+                }
+            });
+            try {
+                mUserID = ocRepresentation.getValue("uid");
+                mAccessToken = ocRepresentation.getValue("accesstoken");
+                mRefreshtoken = ocRepresentation.getValue("refreshtoken");
+
+                logMessage("\tuserID: " + mUserID);
+                logMessage("\taccessToken: " + mAccessToken);
+                logMessage("\trefreshToken: " + mRefreshtoken);
+
+                if (ocRepresentation.hasAttribute("expiresin")) {
+                    int expiresIn = ocRepresentation.getValue("expiresin");
+                    logMessage("\texpiresIn: " + expiresIn);
+                }
+            } catch (OcException e) {
+                Log.e(TAG, e.toString());
+            }
+        }
+
+
+        @Override
+        public synchronized void onPostFailed(Throwable throwable) {
+            logMessage("Failed to signUp");
+            if (throwable instanceof OcException) {
+                OcException ocEx = (OcException) throwable;
+                Log.e(TAG, ocEx.toString());
+                ErrorCode errCode = ocEx.getErrorCode();
+                logMessage("Error code: " + errCode);
+            }
+        }
+    };
+    OcAccountManager.OnPostListener onSignIn = new OcAccountManager.OnPostListener() {
+        @Override
+        public synchronized void onPostCompleted(List<OcHeaderOption> list,
+                                                 OcRepresentation ocRepresentation) {
+            logMessage("signIn was successful");
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    signIn.setEnabled(false);
+                    signOut.setEnabled(true);
+                    remoteService.setEnabled(true);
+                }
+            });
+
+        }
+
+        @Override
+        public synchronized void onPostFailed(Throwable throwable) {
+            logMessage("Failed to signIn");
+            if (throwable instanceof OcException) {
+                OcException ocEx = (OcException) throwable;
+                Log.e(TAG, ocEx.toString());
+                ErrorCode errCode = ocEx.getErrorCode();
+                logMessage("Error code: " + errCode);
+                if (ErrorCode.UNAUTHORIZED_REQ != errCode) {
+                    RefreshToken();
+                }
+            }
+        }
+    };
+    @Override
+    public void onPostCompleted(List<OcHeaderOption> ocHeaderOptions, OcRepresentation ocRepresentation) {
+
+    }
+
+    @Override
+    public void onPostFailed(Throwable throwable) {
+
+    }
+    private void signIn() {
+        try {
+            if(mAccountManager==null)
+            {
+                mAccountManager = OcPlatform.constructAccountManagerObject(CIServer,
+                        EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP));
+            }
+
+            mAccountManager.signIn(mUserID, mAccessToken, onSignIn);
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void signOut() {
+        try {
+            logMessage("signOut");
+            if(mAccountManager==null)
+            {
+                try {
+                    mAccountManager = OcPlatform.constructAccountManagerObject(CIServer,
+                            EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP));
+                } catch (OcException e) {
+                    e.printStackTrace();
+                }
+            }
+            mAccountManager.signOut(this);
+            signIn.setEnabled(false);
+            signUp.setEnabled(true);
+            remoteService.setEnabled(false);
+            logMessage("signOut Successful");
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void signUp() {
+        try {
+            mAccountManager = OcPlatform.constructAccountManagerObject(CIServer,
+                    EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP));
+        } catch (OcException e) {
+            e.printStackTrace();
+        }
+
+        Intent intentLogin = new Intent(this, LoginActivity.class);
+        startActivityForResult(intentLogin, REQUEST_LOGIN);
+    }
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == Activity.RESULT_OK && requestCode == REQUEST_LOGIN) {
+            mAuthCode = data.getStringExtra("authCode");
+            mAuthProvider = data.getStringExtra("authProvider");
+            logMessage("authCode: " + mAuthCode);
+            logMessage("authProvider: " + mAuthProvider);
+
+            try {
+                mAccountManager = OcPlatform.constructAccountManagerObject(CIServer,
+                        EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP));
+                logMessage("Calling signup API");
+
+                mAccountManager.signUp(mAuthProvider, mAuthCode, onSignUp);
+            } catch (OcException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    OcResource.OnPostListener onRefreshTokenPost = new OcResource.OnPostListener() {
+        @Override
+        public void onPostCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
+            logMessage("RefreshToken Completed.");
+            try {
+                mAccessToken = ocRepresentation.getValue("accesstoken");
+                mRefreshtoken = ocRepresentation.getValue("refreshtoken");
+            }
+            catch (OcException e)
+            {
+                e.printStackTrace();
+            }
+            signIn();
+        }
+
+        @Override
+        public void onPostFailed(Throwable throwable) {
+            logMessage("RefreshToken failed.");
+            Log.d(TAG, "onRefreshTokenPost failed..");
+        }
+    };
+    public void RefreshToken() {
+        try {
+            OcResource authResource = OcPlatform.constructResourceObject(CIServer, "/.well-known/ocf/account/tokenrefresh",
+                    EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP, OcConnectivityType.CT_IP_USE_V4),
+                    false, Arrays.asList("oic.wk.account"), Arrays.asList(OcPlatform.DEFAULT_INTERFACE));
+            OcRepresentation rep = new OcRepresentation();
+
+            showToast("RefreshToken in progress..");
+            logMessage("RefreshToken in progress..");
+            rep.setValue("di", deviceID);
+            rep.setValue("granttype", "refresh_token");
+            rep.setValue("refreshtoken", mRefreshtoken);
+            rep.setValue("uid", mUserID);
+            authResource.post(rep, new HashMap<String, String>(), onRefreshTokenPost);
+        }
+        catch(OcException e)
+        {
+            e.printStackTrace();
+        }
+
+        Log.d(TAG, "No error while executing login");
+    }
 }
 

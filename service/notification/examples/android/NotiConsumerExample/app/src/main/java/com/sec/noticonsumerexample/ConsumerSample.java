@@ -135,7 +135,19 @@ public class ConsumerSample
             Log.e(TAG, "NSException: enableRemoteService : " + e);
         }
     }
+    public int subscribeMQService(String servAdd, String topicName) {
+        Log.i(TAG, "SubscribeMQService  - IN");
+        int result = 0;
+        try{
+            result = consumerService.subscribeMQService(servAdd, topicName);
+            Log.i(TAG, "Notification SubscribeMQService: "+ result );
+        }
+        catch(Exception e) {
 
+        }
+        Log.i(TAG, "SubscribeMQService  - OUT");
+        return result;
+    }
     public void rescanProvider()
     {
         try
