@@ -274,4 +274,16 @@ CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount)
     return CA_NOT_SUPPORTED;
 #endif
 }
+
+CAResult_t CAUtilStopLEScan()
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilStopLEScan");
+#ifdef LE_ADAPTER
+    CAManagerLEStopScan();
+    return CA_STATUS_OK;
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
+#endif
+}
 #endif
