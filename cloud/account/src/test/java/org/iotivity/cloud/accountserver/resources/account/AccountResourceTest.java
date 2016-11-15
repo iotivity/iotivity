@@ -325,7 +325,8 @@ public class AccountResourceTest {
 
     private IRequest deleteDeviceRequest(String deviceId, String uid) {
         IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
-                REGISTER_URI, "di=" + deviceId + ";uid=" + uid);
+                REGISTER_URI,
+                "accesstoken=at0001" + ";di=" + deviceId + ";uid=" + uid);
         return request;
     }
 

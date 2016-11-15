@@ -61,10 +61,13 @@ public class AccountSession extends Resource {
         checkPayloadException(Constants.REQ_LOGIN, payloadData);
 
         if (payloadData.get(Constants.REQ_LOGIN).toString().equals("false")) {
-            payloadData.put(Constants.USER_ID, srcDevice.getUserId());
-            payloadData.put(Constants.DEVICE_ID, srcDevice.getDeviceId());
-            payloadData.put(Constants.ACCESS_TOKEN, srcDevice.getAccessToken());
-            request = MessageBuilder.modifyRequest(request, null, null,
+            StringBuffer additionalQuery = new StringBuffer();
+            additionalQuery
+                    .append(Constants.USER_ID + "=" + srcDevice.getUserId());
+            String uriQuery = additionalQuery.toString()
+                    + (request.getUriQuery() != null
+                            ? (";" + request.getUriQuery()) : "");
+            request = MessageBuilder.modifyRequest(request, null, uriQuery,
                     ContentFormat.APPLICATION_CBOR,
                     mCbor.encodingPayloadToCbor(payloadData));
         }

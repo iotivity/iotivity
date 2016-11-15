@@ -116,10 +116,10 @@ public class AccountSessionTest {
         // assertion : request msg to the AS is identical to the request msg
         // from the client
         assertTrue(mLatch.await(1L, SECONDS));
-        assertTrue(hashmapCheck(mReq, Constants.USER_ID));
-        assertTrue(hashmapCheck(mReq, Constants.DEVICE_ID));
-        assertTrue(hashmapCheck(mReq, Constants.ACCESS_TOKEN));
-        assertTrue(hashmapCheck(mReq, Constants.REQ_LOGIN));
+        assertTrue(queryCheck(mReq, Constants.USER_ID));
+        assertTrue(payloadCheck(mReq, Constants.DEVICE_ID));
+        assertTrue(payloadCheck(mReq, Constants.ACCESS_TOKEN));
+        assertTrue(payloadCheck(mReq, Constants.REQ_LOGIN));
     }
 
     private IRequest makeSignInRequest() {
@@ -142,17 +142,27 @@ public class AccountSessionTest {
         IRequest request = null;
         HashMap<String, Object> payloadData = new HashMap<>();
         payloadData.put(Constants.REQ_LOGIN, false);
+        payloadData.put(Constants.DEVICE_ID, mDi);
+        payloadData.put(Constants.ACCESS_TOKEN,
+                "1689c70ffa245effc563017fee36d250");
         request = MessageBuilder.createRequest(RequestMethod.POST, SESSION_URI,
                 null, ContentFormat.APPLICATION_CBOR,
                 cbor.encodingPayloadToCbor(payloadData));
         return request;
     }
 
-    private boolean hashmapCheck(IRequest request, String propertyName) {
+    private boolean payloadCheck(IRequest request, String propertyName) {
         Cbor<HashMap<String, Object>> mCbor = new Cbor<>();
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
         if (payloadData.get(propertyName) != null)
+            return true;
+        else
+            return false;
+    }
+
+    private boolean queryCheck(IRequest request, String propertyName) {
+        if (request.getUriQueryMap().get(propertyName) != null)
             return true;
         else
             return false;
