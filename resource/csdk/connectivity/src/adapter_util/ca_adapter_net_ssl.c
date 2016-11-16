@@ -28,6 +28,7 @@
 #include "oic_malloc.h"
 #include "byte_array.h"
 #include "octhread.h"
+#include "timer.h"
 
 // headers required for mbed TLS
 #include "mbedtls/platform.h"
@@ -130,6 +131,13 @@
  * @param[in] peer remote peer
  * @param[in] ret used internaly
  */
+
+/**
+ * @var RETRANSMISSION_TIME
+ * @brief Maximum timeout value (in seconds) to start DTLS retransmission.
+ */
+#define RETRANSMISSION_TIME 1
+
 #define SSL_CLOSE_NOTIFY(peer, ret)                                                                \
 do                                                                                                 \
 {                                                                                                  \
@@ -370,10 +378,7 @@ typedef struct SslContext
     mbedtls_ssl_config serverTlsConf;
     mbedtls_ssl_config clientDtlsConf;
     mbedtls_ssl_config serverDtlsConf;
-#ifdef __WITH_DTLS__
-    mbedtls_ssl_cookie_ctx cookie_ctx;
-    mbedtls_timing_delay_context timer;
-#endif // __WITH_DTLS__
+
     AdapterCipher_t cipher;
     SslCallbacks_t adapterCallbacks[MAX_SUPPORTED_ADAPTERS];
     mbedtls_x509_crl crl;
@@ -440,8 +445,8 @@ typedef struct SslEndPoint
     uint8_t random[2*RANDOM_LEN];
 #ifdef __WITH_DTLS__
     mbedtls_ssl_cookie_ctx cookieCtx;
-#endif
-
+    mbedtls_timing_delay_context timer;
+#endif // __WITH_DTLS__
 } SslEndPoint_t;
 
 void CAsetPskCredentialsCallback(CAgetPskCredentialsHandler credCallback)
@@ -989,7 +994,7 @@ static SslEndPoint_t * NewSslEndPoint(const CAEndpoint_t * endpoint, mbedtls_ssl
     mbedtls_ssl_set_bio(&tep->ssl, tep, SendCallBack, RecvCallBack, NULL);
     if (MBEDTLS_SSL_TRANSPORT_DATAGRAM == config->transport)
     {
-        mbedtls_ssl_set_timer_cb(&tep->ssl, &g_caSslContext->timer,
+        mbedtls_ssl_set_timer_cb(&tep->ssl, &tep->timer,
                                   mbedtls_timing_set_delay, mbedtls_timing_get_delay);
         if (MBEDTLS_SSL_IS_SERVER == config->endpoint)
         {
@@ -1216,6 +1221,52 @@ static int InitConfig(mbedtls_ssl_config * conf, int transport, int mode)
     return 0;
 }
 
+/**
+ * Starts DTLS retransmission.
+ */
+static void StartRetransmit()
+{
+    static int timerId = -1;
+    uint32_t listIndex = 0;
+    uint32_t listLength = 0;
+    SslEndPoint_t *tep = NULL;
+    if (timerId != -1)
+    {
+        //clear previous timer
+        unregisterTimer(timerId);
+
+        oc_mutex_lock(g_sslContextMutex);
+
+        //stop retransmission if context is invalid
+        if(NULL == g_caSslContext)
+        {
+            OIC_LOG(ERROR, NET_SSL_TAG, "Context is NULL. Stop retransmission");
+            oc_mutex_unlock(g_sslContextMutex);
+            return;
+        }
+
+        listLength = u_arraylist_length(g_caSslContext->peerList);
+        for (listIndex = 0; listIndex < listLength; listIndex++)
+        {
+            tep = (SslEndPoint_t *) u_arraylist_get(g_caSslContext->peerList, listIndex);
+            if (NULL == tep
+                || MBEDTLS_SSL_TRANSPORT_STREAM == tep->ssl.conf->transport
+                || MBEDTLS_SSL_HANDSHAKE_OVER == tep->ssl.state)
+            {
+                continue;
+            }
+            int ret = mbedtls_ssl_handshake_step(&tep->ssl);
+            if (0 != ret && MBEDTLS_ERR_SSL_CONN_EOF != ret)
+            {
+                OIC_LOG_V(ERROR, NET_SSL_TAG, "Retransmission error: -0x%x", -ret);
+            }
+        }
+        oc_mutex_unlock(g_sslContextMutex);
+    }
+    //start new timer
+    registerTimer(RETRANSMISSION_TIME, &timerId, (void *) StartRetransmit);
+}
+
 CAResult_t CAinitSslAdapter()
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
@@ -1356,6 +1407,10 @@ CAResult_t CAinitSslAdapter()
     mbedtls_x509_crt_init(&g_caSslContext->crt);
     mbedtls_pk_init(&g_caSslContext->pkey);
     mbedtls_x509_crl_init(&g_caSslContext->crl);
+
+#ifdef __WITH_DTLS__
+    StartRetransmit();
+#endif
 
     oc_mutex_unlock(g_sslContextMutex);
 

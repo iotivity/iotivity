@@ -36,3 +36,6 @@ OCUnlinkDevices
 SetGeneratePinCB
 SetInputPinCB
 SetRandomPinPolicy
+
+registerTimer
+unregisterTimer
