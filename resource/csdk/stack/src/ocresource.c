@@ -657,7 +657,7 @@ OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCRes
 
     return OCDoResponse(&response);
 }
-
+#ifdef RD_SERVER
 /**
  * Find resource at the resource directory server. This resource is not local resource but a
  * remote resource.
@@ -673,7 +673,6 @@ OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCRes
 static OCStackResult findResourceAtRD(const OCResource* resource, const char *interfaceQuery,
     const char *resourceTypeQuery, OCDiscoveryPayload *discPayload)
 {
-#ifdef RD_SERVER
     if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
     {
         if (OC_STACK_OK == OCRDDatabaseCheckResources(interfaceQuery, resourceTypeQuery, discPayload))
@@ -681,14 +680,10 @@ static OCStackResult findResourceAtRD(const OCResource* resource, const char *in
             return OC_STACK_OK;
         }
     }
-#else
-    OC_UNUSED(resource);
-    OC_UNUSED(interfaceQuery);
-    OC_UNUSED(resourceTypeQuery);
-    OC_UNUSED(discPayload);
-#endif
+
     return OC_STACK_NO_RESOURCE;
 }
+#endif
 
 /**
  * Creates a discovery payload and add device id information. This information is included in all
@@ -826,25 +821,23 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 #endif
         for (; resource && discoveryResult == OC_STACK_OK; resource = resource->next)
         {
+            discoveryResult = OC_STACK_NO_RESOURCE;
+#ifdef RD_SERVER
             discoveryResult = findResourceAtRD(resource, interfaceQuery, resourceTypeQuery,
                 discPayload);
+#endif
             if (OC_STACK_NO_RESOURCE == discoveryResult)
             {
                 if ((!baselineQuery && (resource->resourceProperties & prop)) ||
                     (baselineQuery && (includeThisResourceInResponse(resource, interfaceQuery,
                                                                      resourceTypeQuery))))
                 {
-                    if ((!baselineQuery && (resource->resourceProperties & prop)) ||
-                        (baselineQuery && (includeThisResourceInResponse(resource, interfaceQuery,
-                                                                         resourceTypeQuery))))
-                    {
-                        discoveryResult = BuildVirtualResourceResponse(resource, discPayload,
-                            &request->devAddr);
-                    }
-                    else
-                    {
-                        discoveryResult = OC_STACK_OK;
-                    }
+                    discoveryResult = BuildVirtualResourceResponse(resource, discPayload,
+                        &request->devAddr);
+                }
+                else
+                {
+                    discoveryResult = OC_STACK_OK;
                 }
             }
         }
