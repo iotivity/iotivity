@@ -191,8 +191,6 @@ u_arraylist_t *CAFindInterfaceChange()
 CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
                                    CATransportAdapter_t adapter)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     if (!g_adapterCallbackList)
     {
         // Initialize Wifi service.
@@ -218,6 +216,7 @@ CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
         }
     }
 
+    OIC_LOG(DEBUG, TAG, "Initialize network monitoring successfully");
     return CAIPSetNetworkMonitorCallback(callback, adapter);
 }
 
@@ -253,6 +252,7 @@ CAResult_t CAIPStopNetworkMonitor(CATransportAdapter_t adapter)
         }
     }
 
+    OIC_LOG(DEBUG, TAG, "Network monitoring terminated successfully");
     return CA_STATUS_OK;
 }
 
