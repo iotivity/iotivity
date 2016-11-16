@@ -1180,6 +1180,7 @@ size_t CACheckPayloadLengthFromHeader(const void *data, size_t dlen)
 static ssize_t sendData(const CAEndpoint_t *endpoint, const void *data,
                         size_t dlen, const char *fam)
 {
+    OIC_LOG_V(DEBUG, TAG, "%s", __func__);
     // #1. get TCP Server object from list
     size_t index = 0;
     CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(endpoint, &index);
@@ -1229,6 +1230,7 @@ static ssize_t sendData(const CAEndpoint_t *endpoint, const void *data,
 
 ssize_t CATCPSendData(CAEndpoint_t *endpoint, const void *data, size_t datalen)
 {
+    OIC_LOG_V(DEBUG, TAG, "%s", __func__);
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint is NULL", -1);
     VERIFY_NON_NULL_RET(data, TAG, "data is NULL", -1);
 
@@ -1304,6 +1306,7 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
 
 CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
 {
+    OIC_LOG_V(DEBUG, TAG, "%s", __func__);
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint is NULL", NULL);
 
     // #1. create TCP server object
@@ -1358,6 +1361,7 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
 
 CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
 {
+    OIC_LOG_V(DEBUG, TAG, "%s", __func__);
     VERIFY_NON_NULL(svritem, TAG, "svritem is NULL");
 
     oc_mutex_lock(g_mutexObjectList);
@@ -1366,6 +1370,8 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
     if (svritem->fd >= 0)
     {
         close(svritem->fd);
+        svritem->fd = -1;
+        OIC_LOG(DEBUG, TAG, "close socket");
     }
     u_arraylist_remove(caglobals.tcp.svrlist, index);
     OICFree(svritem->data);
@@ -1440,7 +1446,7 @@ CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint
             return svritem;
         }
     }
-
+    OIC_LOG(DEBUG, TAG, "there is no session info in the svrlist");
     return NULL;
 }
 
