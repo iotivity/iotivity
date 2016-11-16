@@ -118,6 +118,8 @@ extlibs/tinydtls/dtls-client
 extlibs/tinydtls/dtls-server
 extlibs/bluez/bluez
 extlibs/mbedtls/mbedtls
+extlibs/raxmpp/raxmpp
+extlibs/yaml/yaml
 
 # Ignore editor (e.g. Emacs) backup and autosave files
 *~
