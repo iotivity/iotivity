@@ -865,6 +865,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         payload = (OCPayload*) OCDevicePayloadCreate(deviceId, savedDeviceInfo.deviceName,
             savedDeviceInfo.types, savedDeviceInfo.specVersion, dataModelVersions);
         VERIFY_PARAM_NON_NULL(TAG, payload, "Failed adding device payload.");
+        discoveryResult = OC_STACK_OK;
     }
     else if (virtualUriInRequest == OC_PLATFORM_URI)
     {
@@ -880,6 +881,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         discoveryResult = OC_STACK_NO_MEMORY;
         payload = (OCPayload *)OCPlatformPayloadCreate(&savedPlatformInfo);
         VERIFY_PARAM_NON_NULL(TAG, payload, "Failed adding platform payload.");
+        discoveryResult = OC_STACK_OK;
    }
 #ifdef ROUTING_GATEWAY
     else if (OC_GATEWAY_URI == virtualUriInRequest)
