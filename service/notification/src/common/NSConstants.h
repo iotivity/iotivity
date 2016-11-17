@@ -203,7 +203,7 @@
         } \
     }
 
-#define VERSION        "1.2.0"
+#define VERSION        "1.2.1"
 
 #define NS_ATTRIBUTE_VERSION "x.org.iotivity.ns.version"
 #define NS_ATTRIBUTE_POLICY "x.org.iotivity.ns.subcontrollability"
