@@ -310,7 +310,10 @@ static void CASelectReturned(fd_set *readFds)
                 if (FD_ISSET(svritem->fd, readFds))
                 {
                     CAReceiveMessage(svritem->fd);
-                    FD_CLR(svritem->fd, readFds);
+                    if (-1 != svritem->fd)
+                    {
+                        FD_CLR(svritem->fd, readFds);
+                    }
                 }
             }
         }
@@ -1125,6 +1128,7 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
     {
         shutdown(svritem->fd, SHUT_RDWR);
         close(svritem->fd);
+        svritem->fd = -1;
     }
     u_arraylist_remove(caglobals.tcp.svrlist, index);
     OICFree(svritem->data);
@@ -1137,6 +1141,7 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
     }
 
     OICFree(svritem);
+    svritem = NULL;
     return CA_STATUS_OK;
 }
 
