@@ -642,20 +642,25 @@ CAResult_t CASendBlockMessage(const coap_pdu_t *pdu, CAMessageType_t msgType,
     }
     else
     {
-        // if the received response message type is CON, send empty message.
-        // and then, send next block request message with new messagId.
-        if (msgType == CA_MSG_CONFIRM)
-        {
-            CASendDirectEmptyResponse(data->remoteEndpoint,
-                                      data->requestInfo->info.messageId);
-            sentMsgType = CA_MSG_CONFIRM;
-        }
-
         if (data->requestInfo)
         {
+            // if the received response message type is CON, send empty message.
+            // and then, send next block request message with new messagId.
+            if (msgType == CA_MSG_CONFIRM)
+            {
+                CASendDirectEmptyResponse(data->remoteEndpoint,
+                                          data->requestInfo->info.messageId);
+                sentMsgType = CA_MSG_CONFIRM;
+            }
+
             OIC_LOG(DEBUG, TAG, "need new msgID");
             data->requestInfo->info.messageId = 0;
             data->requestInfo->info.type = sentMsgType;
+        }
+        else if (data->responseInfo)
+        {
+            data->responseInfo->info.messageId = pdu->transport_hdr->udp.id;
+            data->responseInfo->info.type = sentMsgType;
         }
     }
 
@@ -1863,7 +1868,11 @@ uint8_t CACheckBlockErrorType(CABlockData_t *currData, coap_block_t *receivedBlo
                 OIC_LOG(ERROR, TAG, "it didn't order");
                 return CA_BLOCK_INCOMPLETE;
             }
-            return CA_BLOCK_RECEIVED_ALREADY;
+            else
+            {
+                OIC_LOG(ERROR, TAG, "already received this block");
+                return CA_BLOCK_RECEIVED_ALREADY;
+            }
         }
     }
 
@@ -2606,8 +2615,14 @@ void CADestroyDataSet(CAData_t* data)
     VERIFY_NON_NULL_VOID(data, TAG, "data");
 
     CAFreeEndpoint(data->remoteEndpoint);
-    CADestroyRequestInfoInternal(data->requestInfo);
-    CADestroyResponseInfoInternal(data->responseInfo);
+    if (data->requestInfo)
+    {
+        CADestroyRequestInfoInternal(data->requestInfo);
+    }
+    if (data->responseInfo)
+    {
+        CADestroyResponseInfoInternal(data->responseInfo);
+    }
     OICFree(data);
 }
 
