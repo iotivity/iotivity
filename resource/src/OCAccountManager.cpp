@@ -188,7 +188,7 @@ OCStackResult OCAccountManager::searchUser(const std::string& userUuid,
                                            const QueryParamsMap& queryParams,
                                            GetCallback cloudConnectHandler)
 {
-    std::string uri = m_host + OC_RSRVD_ACCOUNT_URI;
+    std::string uri = m_host + OC_RSRVD_ACCOUNT_USER_URI;
 
     QueryParamsMap fullQuery = {};
 
