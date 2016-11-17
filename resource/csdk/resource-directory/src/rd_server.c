@@ -103,7 +103,7 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
         return OC_EH_ERROR;
     }
 
-    OIC_LOG_V(DEBUG, TAG, "Received OC_REST_PUT from client with query: %s.", ehRequest->query);
+    OIC_LOG_V(DEBUG, TAG, "Received OC_REST_POST from client with query: %s.", ehRequest->query);
 
     OCRepPayload *payload = (OCRepPayload *)ehRequest->payload;
     OCRepPayload *resPayload = NULL;
@@ -166,10 +166,10 @@ static OCEntityHandlerResult rdEntityHandler(OCEntityHandlerFlag flag,
         {
             case OC_REST_GET:
             case OC_REST_DISCOVER:
-                handleGetRequest(ehRequest);
+                ehRet = handleGetRequest(ehRequest);
                 break;
             case OC_REST_POST:
-                handlePublishRequest(ehRequest);
+                ehRet = handlePublishRequest(ehRequest);
                 break;
             case OC_REST_DELETE:
                 ehRet = handleDeleteRequest(ehRequest);
