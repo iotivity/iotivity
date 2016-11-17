@@ -171,12 +171,7 @@ OCStackApplicationResult NSConsumerMQListener(
     NS_LOG_V(DEBUG, "MQ OBS response Transport Type : %d",
                     clientResponse->devAddr.adapter);
 
-    OCRepPayload * payload = NULL;
-    OCRepPayloadGetPropObject((OCRepPayload *)clientResponse->payload, NS_ATTRIBUTE_MQ_MESSAGE,
-                              & payload);
-    NS_VERIFY_NOT_NULL(payload, OC_STACK_KEEP_TRANSACTION);
-
-    NSMessage * newMsg = NSGetMessage(payload);
+    NSMessage * newMsg = NSGetMessage((OCRepPayload *)clientResponse->payload);
     NS_VERIFY_NOT_NULL(newMsg, OC_STACK_KEEP_TRANSACTION);
 
     NSTask * task = NULL;
