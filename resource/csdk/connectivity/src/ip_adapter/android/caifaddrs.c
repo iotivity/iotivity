@@ -19,6 +19,8 @@
  ******************************************************************/
 
 #include "caifaddrs.h"
+#include "oic_malloc.h"
+#include "oic_string.h"
 
 #include <stdbool.h>
 #include <string.h>
@@ -27,6 +29,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <net/if_arp.h>
+#include <net/if.h>
 #include <netinet/in.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
@@ -206,7 +209,6 @@ CAResult_t CAGetIfaddrsUsingNetlink(struct ifaddrs **ifap)
             }
         }
     }
-
 
 exit:
     // release all resources

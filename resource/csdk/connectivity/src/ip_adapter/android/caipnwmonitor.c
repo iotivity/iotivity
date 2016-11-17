@@ -32,6 +32,7 @@
 #include <coap/utlist.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
+#include <net/if.h>
 
 #include "caadapterutils.h"
 #include "caipnwmonitor.h"
