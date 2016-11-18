@@ -155,8 +155,13 @@ const char * OIC_JSON_SEC_V_NAME = "secv";
 
 const char * OIC_JSON_EMPTY_STRING = "";
 
+// Certificates provided by Cloud
 const char * TRUST_CA = "trust_ca";
 const char * PRIMARY_CERT = "primary_cert";
+
+// Certificates provided by manufacturer
+const char * MF_TRUST_CA = "mfg_trust_ca";
+const char * MF_PRIMARY_CERT = "mfg_primary_cert";
 
 OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
 OicUuid_t WILDCARD_SUBJECT_B64_ID = { .id = {'2', '2', '2', '2', '2', '2', '2', '2',

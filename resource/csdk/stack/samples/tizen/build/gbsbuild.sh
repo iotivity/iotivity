@@ -89,21 +89,8 @@ cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp/
 cd $sourcedir/tmp
 
 echo `pwd`
-
-# Apply OCF patch on upstream's git only once
-# Note, If building from scratch using GBS, git patches are more convenient
-mbedtls_revision="ad249f509fd62a3bbea7ccd1fef605dbd482a7bd"
-mbedtls_dir="./extlibs/mbedtls/mbedtls/"
-if [ -f "${mbedtls_dir}/.git/HEAD" ];then
-    cd "${mbedtls_dir}"
-    git reset --hard "${mbedtls_revision}"
-    git apply --whitespace=fix "../ocf.patch"
-    cd -
-    rm -rf "${mbedtls_dir}/.git"
-else
-    echo "tizen: Checking if ocf.patch is applied in ${mbedtls_dir}"
-    grep -r 'TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256' "${mbedtls_dir}"
-fi
+# Prepare mbedTLS dependency
+$SHELL ./extlibs/mbedtls/prep.sh
 
 whoami
 # Initialize Git repository

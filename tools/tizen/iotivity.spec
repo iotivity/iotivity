@@ -65,6 +65,7 @@ Source1002: %{name}-test.manifest
 # Default values to be eventually overiden BEFORE or as gbs params:
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
 %{!?LOGGING: %define LOGGING 1}
+%{!?RD_MODE: %define RD_MODE CLIENT}
 %{!?ROUTING: %define ROUTING EP}
 %{!?SECURED: %define SECURED 0}
 %{!?TARGET_ARCH: %define TARGET_ARCH %{_arch}}
@@ -165,6 +166,7 @@ scons %{JOB} --prefix=%{_prefix} \
     ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} \
     LIB_INSTALL_DIR=%{_libdir} \
     LOGGING=%{LOGGING} \
+    RD_MODE=%{RD_MODE} \
     RELEASE=%{RELEASE} \
     ROUTING=%{ROUTING} \
     SECURED=%{SECURED} \
@@ -187,6 +189,7 @@ scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
     ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} \
     LIB_INSTALL_DIR=%{_libdir} \
     LOGGING=%{LOGGING} \
+    RD_MODE=%{RD_MODE} \
     RELEASE=%{RELEASE} \
     ROUTING=%{ROUTING} \
     SECURED=%{SECURED} \
@@ -277,6 +280,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %{_libdir}/liboc_logger_core.so
 %{_libdir}/liboctbstack.so
 %{_libdir}/libconnectivity_abstraction.so
+%{_libdir}/libresource_directory.so
 
 %files service
 %manifest %{name}.manifest
@@ -291,6 +295,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %{_libdir}/librcs_container.so
 %{_libdir}/librcs_server.so
 %{_libdir}/libESEnrolleeSDK.so
+%{_libdir}/libnotification*.so
 %if 0%{?WITH_PROXY} == 1
 %{_libdir}/libcoap_http_proxy.so
 %endif

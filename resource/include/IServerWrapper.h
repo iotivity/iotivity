@@ -74,19 +74,6 @@ namespace OC
         virtual OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler) = 0;
 
         virtual OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse) = 0;
-#ifdef RD_CLIENT
-        virtual OCStackResult publishResourceToRD(const std::string& host,
-                                                  OCConnectivityType connectivityType,
-                                                  ResourceHandles& resourceHandles,
-                                                  PublishResourceCallback& callback,
-                                                  OCQualityOfService qos) = 0;
-
-        virtual OCStackResult deleteResourceFromRD(const std::string& host,
-                                                   OCConnectivityType connectivityType,
-                                                   ResourceHandles& resourceHandles,
-                                                   DeleteResourceCallback& callback,
-                                                   OCQualityOfService qos) = 0;
-#endif
     };
 }
 

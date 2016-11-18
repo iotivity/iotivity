@@ -54,6 +54,9 @@ if target_os in ['msys_nt', 'windows']:
     tools_env.AppendUnique(LIBS = ['ws2_32', 'bcrypt', 'iphlpapi',
                                    'coap', 'tinydtls', 'mbedtls', 'mbedx509', 'mbedcrypto',
                                    'octbstack_static', 'ocsrm', 'connectivity_abstraction'])
+elif target_os in ['darwin']:
+    tools_env.AppendUnique(LIBS = ['coap', 'tinydtls', 'mbedtls', 'mbedx509', 'mbedcrypto',
+                                   'octbstack', 'ocsrm', 'connectivity_abstraction'])
 else:
     tools_env.PrependUnique(LIBS = ['oc', 'octbstack'])
 

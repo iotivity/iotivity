@@ -220,16 +220,19 @@ static void CAFindReadyMessage()
         return;
     }
 
-    if (ret <= 0)
+    if (0 == ret)
     {
-        if (ret < 0)
-        {
-            OIC_LOG_V(FATAL, TAG, "select error %s", CAIPS_GET_ERROR);
-        }
         return;
     }
-
-    CASelectReturned(&readFds, ret);
+    else if (0 < ret)
+    {
+        CASelectReturned(&readFds, ret);
+    }
+    else // if (0 > ret)
+    {
+        OIC_LOG_V(FATAL, TAG, "select error %s", CAIPS_GET_ERROR);
+        return;
+    }
 }
 
 static void CASelectReturned(fd_set *readFds, int ret)
@@ -250,6 +253,7 @@ static void CASelectReturned(fd_set *readFds, int ret)
         else ISSET(m4s, readFds, CA_MULTICAST | CA_IPV4 | CA_SECURE)
         else if ((caglobals.ip.netlinkFd != OC_INVALID_SOCKET) && FD_ISSET(caglobals.ip.netlinkFd, readFds))
         {
+            OIC_LOG_V(DEBUG, TAG, "Netlink event detacted");
             u_arraylist_t *iflist = CAFindInterfaceChange();
             if (iflist)
             {
@@ -1111,8 +1115,7 @@ static void applyMulticastToInterface4(uint32_t ifindex)
 
 static void applyMulticast6(int fd, struct in6_addr *addr, uint32_t ifindex)
 {
-    struct ipv6_mreq mreq = {.ipv6mr_multiaddr = {0},
-                             .ipv6mr_interface = ifindex };
+    struct ipv6_mreq mreq = { .ipv6mr_interface = ifindex };
 
     // VS2013 has problems with struct copies inside struct initializers, so copy separately.
     mreq.ipv6mr_multiaddr = *addr;
@@ -1189,12 +1192,12 @@ CAResult_t CAIPStartListenServer()
         }
         if (ifitem->family == AF_INET)
         {
-            OIC_LOG_V(DEBUG, TAG, "Adding IPv4 interface %i to multicast group", ifitem->index);
+            OIC_LOG_V(DEBUG, TAG, "Adding IPv4 interface(%i) to multicast group", ifitem->index);
             applyMulticastToInterface4(ifitem->index);
         }
         if (ifitem->family == AF_INET6)
         {
-            OIC_LOG_V(DEBUG, TAG, "Adding IPv6 interface %i to multicast group", ifitem->index);
+            OIC_LOG_V(DEBUG, TAG, "Adding IPv6 interface(%i) to multicast group", ifitem->index);
             applyMulticastToInterface6(ifitem->index);
         }
     }
@@ -1254,10 +1257,12 @@ void CAProcessNewInterface(CAInterface_t *ifitem)
 
     if (ifitem->family == AF_INET6)
     {
+        OIC_LOG_V(DEBUG, TAG, "Adding a new IPv6 interface(%i) to multicast group", ifitem->index);
         applyMulticastToInterface6(ifitem->index);
     }
     if (ifitem->family == AF_INET)
     {
+        OIC_LOG_V(DEBUG, TAG, "Adding a new IPv4 interface(%i) to multicast group", ifitem->index);
         applyMulticastToInterface4(ifitem->index);
     }
 }

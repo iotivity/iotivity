@@ -817,11 +817,11 @@ static int saveTrustCert(void)
         size_t fsize;
         if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)) >= 0)
         {
-            trustCertChainArray.data = (uint8_t*)OICMalloc(fsize);
+            trustCertChainArray.data = (uint8_t*)OICCalloc(1, fsize);
             trustCertChainArray.len = fsize;
             if (NULL == trustCertChainArray.data)
             {
-                OIC_LOG(ERROR,TAG,"malloc");
+                OIC_LOG(ERROR,TAG,"Failed to allocate memory");
                 fclose(fp);
                 return -1;
             }

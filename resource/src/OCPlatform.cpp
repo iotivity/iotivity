@@ -321,86 +321,7 @@ namespace OC
                                                                              connectivityType);
         }
 #endif // WITH_CLOUD
-#ifdef RD_CLIENT
-        OCStackResult publishResourceToRD(const std::string& host,
-                                          OCConnectivityType connectivityType,
-                                          PublishResourceCallback callback)
-        {
-            ResourceHandles resourceHandles;
-            return OCPlatform_impl::Instance().publishResourceToRD(host, connectivityType,
-                                                                   resourceHandles,
-                                                                   callback);
-        }
 
-        OCStackResult publishResourceToRD(const std::string& host,
-                                          OCConnectivityType connectivityType,
-                                          PublishResourceCallback callback,
-                                          QualityOfService QoS)
-        {
-            ResourceHandles resourceHandles;
-            return OCPlatform_impl::Instance().publishResourceToRD(host, connectivityType,
-                                                                   resourceHandles,
-                                                                   callback, QoS);
-        }
-
-        OCStackResult publishResourceToRD(const std::string& host,
-                                          OCConnectivityType connectivityType,
-                                          ResourceHandles& resourceHandles,
-                                          PublishResourceCallback callback)
-        {
-            return OCPlatform_impl::Instance().publishResourceToRD(host, connectivityType,
-                                                                   resourceHandles,
-                                                                   callback);
-        }
-
-        OCStackResult publishResourceToRD(const std::string& host,
-                                          OCConnectivityType connectivityType,
-                                          ResourceHandles& resourceHandles,
-                                          PublishResourceCallback callback, QualityOfService QoS)
-        {
-            return OCPlatform_impl::Instance().publishResourceToRD(host, connectivityType,
-                                                                   resourceHandles,
-                                                                   callback, QoS);
-        }
-
-        OCStackResult deleteResourceFromRD(const std::string& host,
-                                           OCConnectivityType connectivityType,
-                                           DeleteResourceCallback callback)
-        {
-            ResourceHandles resourceHandles;
-            return OCPlatform_impl::Instance().deleteResourceFromRD(host, connectivityType,
-                                                                    resourceHandles, callback);
-        }
-
-        OCStackResult deleteResourceFromRD(const std::string& host,
-                                           OCConnectivityType connectivityType,
-                                           DeleteResourceCallback callback,
-                                           QualityOfService QoS)
-        {
-            ResourceHandles resourceHandles;
-            return OCPlatform_impl::Instance().deleteResourceFromRD(host, connectivityType,
-                                                                    resourceHandles, callback, QoS);
-        }
-
-        OCStackResult deleteResourceFromRD(const std::string& host,
-                                           OCConnectivityType connectivityType,
-                                           ResourceHandles& resourceHandles,
-                                           DeleteResourceCallback callback)
-        {
-            return OCPlatform_impl::Instance().deleteResourceFromRD(host, connectivityType,
-                                                                    resourceHandles, callback);
-        }
-
-        OCStackResult deleteResourceFromRD(const std::string& host,
-                                           OCConnectivityType connectivityType,
-                                           ResourceHandles& resourceHandles,
-                                           DeleteResourceCallback callback, QualityOfService QoS)
-        {
-            return OCPlatform_impl::Instance().deleteResourceFromRD(host, connectivityType,
-                                                                    resourceHandles, callback,
-                                                                    QoS);
-        }
-#endif
         OCStackResult getDeviceId(OCUUIdentity *deviceId)
         {
             return OCPlatform_impl::Instance().getDeviceId(deviceId);
@@ -412,4 +333,3 @@ namespace OC
         }
     } // namespace OCPlatform
 } //namespace OC
-

@@ -505,6 +505,14 @@ void CATCPSendDataThread(void *threadData)
         return;
     }
 
+    if (caglobals.tcp.terminate)
+    {
+        OIC_LOG(DEBUG, TAG, "Adapter is not enabled");
+        CATCPErrorHandler(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen,
+                          CA_SEND_FAILED);
+        return;
+    }
+
     if (tcpData->isMulticast)
     {
         //Processing for sending multicast

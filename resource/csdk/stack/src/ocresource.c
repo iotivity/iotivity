@@ -51,7 +51,7 @@
 #include "cainterface.h"
 #include "ocpayload.h"
 #include "platform_features.h"
-
+#include "payload_logging.h"
 #ifdef ROUTING_GATEWAY
 #include "routingmanager.h"
 #endif
@@ -657,7 +657,7 @@ OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCRes
 
     return OCDoResponse(&response);
 }
-
+#ifdef RD_SERVER
 /**
  * Find resource at the resource directory server. This resource is not local resource but a
  * remote resource.
@@ -673,7 +673,6 @@ OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCRes
 static OCStackResult findResourceAtRD(const OCResource* resource, const char *interfaceQuery,
     const char *resourceTypeQuery, OCDiscoveryPayload *discPayload)
 {
-#ifdef RD_SERVER
     if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
     {
         if (OC_STACK_OK == OCRDDatabaseCheckResources(interfaceQuery, resourceTypeQuery, discPayload))
@@ -681,14 +680,10 @@ static OCStackResult findResourceAtRD(const OCResource* resource, const char *in
             return OC_STACK_OK;
         }
     }
-#else
-    OC_UNUSED(resource);
-    OC_UNUSED(interfaceQuery);
-    OC_UNUSED(resourceTypeQuery);
-    OC_UNUSED(discPayload);
-#endif
+
     return OC_STACK_NO_RESOURCE;
 }
+#endif
 
 /**
  * Creates a discovery payload and add device id information. This information is included in all
@@ -696,22 +691,22 @@ static OCStackResult findResourceAtRD(const OCResource* resource, const char *in
  *
  * @param payload  payload that will have memory alllocated and device id information added.
  *
- * @return The memory allocated of the payload. If already allocated  it will return same payload. If
- * failed allocated memory then NULL.
+ * @return ::OC_STACK_OK if successful in allocating memory and adding ID information.
+ * ::OC_STACK_NO_MEMORY if failed allocating the memory.
  */
-static OCDiscoveryPayload* discoveryPayloadCreateAndAddDeviceId(OCPayload *payload)
+static OCStackResult discoveryPayloadCreateAndAddDeviceId(OCPayload **payload)
 {
-    if (payload)
+    if (*payload)
     {
-        OIC_LOG_V(ERROR, TAG, "Discovery payload is already allocated.");
-        return ((OCDiscoveryPayload *)payload);
+        OIC_LOG_V(DEBUG, TAG, "Payload is already allocated");
+        return OC_STACK_OK;
     }
 
-    payload = (OCPayload *)OCDiscoveryPayloadCreate();
-    VERIFY_PARAM_NON_NULL(TAG, payload, "Failed creating Discovery Payload.");
+    *payload = (OCPayload *) OCDiscoveryPayloadCreate();
+    VERIFY_PARAM_NON_NULL(TAG, *payload, "Failed adding device id to discovery payload.");
 
     {
-        OCDiscoveryPayload *discPayload = (OCDiscoveryPayload *)payload;
+        OCDiscoveryPayload *discPayload = (OCDiscoveryPayload *)*payload;
         discPayload->sid = (char *)OICCalloc(1, UUID_STRING_SIZE);
         VERIFY_PARAM_NON_NULL(TAG, discPayload->sid, "Failed adding device id to discovery payload.");
 
@@ -721,11 +716,11 @@ static OCDiscoveryPayload* discoveryPayloadCreateAndAddDeviceId(OCPayload *paylo
             memcpy(discPayload->sid, uid, UUID_STRING_SIZE);
         }
 
-        return discPayload;
     }
+    return OC_STACK_OK;
 exit:
-    OCPayloadDestroy(payload);
-    return NULL;
+    OCPayloadDestroy(*payload);
+    return OC_STACK_NO_MEMORY;
 }
 
 /**
@@ -805,43 +800,50 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         }
 
         bool baselineQuery = false;
-        if (0 != strcmp(interfaceQuery, OC_RSRVD_INTERFACE_LL))
+        if (interfaceQuery && 0 != strcmp(interfaceQuery, OC_RSRVD_INTERFACE_LL))
         {
             baselineQuery = true;
         }
-        if (interfaceQuery)
-        {
-            OCDiscoveryPayload *discPayload = discoveryPayloadCreateAndAddDeviceId(payload);
-            VERIFY_PARAM_NON_NULL(TAG, discPayload, "Failed creating discovery payload.");
 
-            if (baselineQuery)
-            {
-                discoveryResult = addDiscoveryBaselineCommonProperties(discPayload);
-                VERIFY_SUCCESS(discoveryResult, OC_STACK_OK);
-            }
-            OCResourceProperty prop = OC_DISCOVERABLE;
+        discoveryResult = discoveryPayloadCreateAndAddDeviceId(&payload);
+        VERIFY_PARAM_NON_NULL(TAG, payload, "Failed creating Discovery Payload.");
+        VERIFY_SUCCESS(discoveryResult, OC_STACK_OK);
+
+        OCDiscoveryPayload *discPayload = (OCDiscoveryPayload *)payload;
+        if (baselineQuery)
+        {
+            discoveryResult = addDiscoveryBaselineCommonProperties(discPayload);
+            VERIFY_SUCCESS(discoveryResult, OC_STACK_OK);
+        }
+        OCResourceProperty prop = OC_DISCOVERABLE;
 #ifdef MQ_BROKER
-            prop = (OC_MQ_BROKER_URI == virtualUriInRequest) ? OC_MQ_BROKER : prop;
+        prop = (OC_MQ_BROKER_URI == virtualUriInRequest) ? OC_MQ_BROKER : prop;
 #endif
-            for (; resource && discoveryResult == OC_STACK_OK; resource = resource->next)
+        for (; resource && discoveryResult == OC_STACK_OK; resource = resource->next)
+        {
+            discoveryResult = OC_STACK_NO_RESOURCE;
+#ifdef RD_SERVER
+            discoveryResult = findResourceAtRD(resource, interfaceQuery, resourceTypeQuery,
+                discPayload);
+#endif
+            if (OC_STACK_NO_RESOURCE == discoveryResult)
             {
-                discoveryResult = findResourceAtRD(resource, interfaceQuery, resourceTypeQuery,
-                    discPayload);
-                if (OC_STACK_NO_RESOURCE == discoveryResult)
+                if ((!baselineQuery && (resource->resourceProperties & prop)) ||
+                    (baselineQuery && (includeThisResourceInResponse(resource, interfaceQuery,
+                                                                     resourceTypeQuery))))
                 {
-                    if ((!baselineQuery && (resource->resourceProperties & prop)) ||
-                        (baselineQuery && (includeThisResourceInResponse(resource, interfaceQuery,
-                                                                         resourceTypeQuery))))
-                    {
-                        discoveryResult = BuildVirtualResourceResponse(resource, discPayload,
-                            &request->devAddr);
-                    }
+                    discoveryResult = BuildVirtualResourceResponse(resource, discPayload,
+                        &request->devAddr);
+                }
+                else
+                {
+                    discoveryResult = OC_STACK_OK;
                 }
             }
-            if (discPayload->resources == NULL)
-            {
-                discoveryResult = OC_STACK_NO_RESOURCE;
-            }
+        }
+        if (discPayload->resources == NULL)
+        {
+            discoveryResult = OC_STACK_NO_RESOURCE;
         }
     }
     else if (virtualUriInRequest == OC_DEVICE_URI)
@@ -863,6 +865,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         payload = (OCPayload*) OCDevicePayloadCreate(deviceId, savedDeviceInfo.deviceName,
             savedDeviceInfo.types, savedDeviceInfo.specVersion, dataModelVersions);
         VERIFY_PARAM_NON_NULL(TAG, payload, "Failed adding device payload.");
+        discoveryResult = OC_STACK_OK;
     }
     else if (virtualUriInRequest == OC_PLATFORM_URI)
     {
@@ -878,6 +881,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         discoveryResult = OC_STACK_NO_MEMORY;
         payload = (OCPayload *)OCPlatformPayloadCreate(&savedPlatformInfo);
         VERIFY_PARAM_NON_NULL(TAG, payload, "Failed adding platform payload.");
+        discoveryResult = OC_STACK_OK;
    }
 #ifdef ROUTING_GATEWAY
     else if (OC_GATEWAY_URI == virtualUriInRequest)
@@ -938,6 +942,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         if (OC_KEEPALIVE_RESOURCE_URI != virtualUriInRequest)
 #endif
         {
+            OIC_LOG_PAYLOAD(DEBUG, payload);
             if(discoveryResult == OC_STACK_OK)
             {
                 SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);

@@ -301,10 +301,6 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
         OICFree(strUuid );
         strUuid  = NULL;
 
-        if (roParsed)
-        {
-            *roParsed = true;
-        }
     }
     else
     {
@@ -603,6 +599,7 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
             gPstat->om = pstat->om;
             gPstat->tm = pstat->tm;
             gPstat->cm = pstat->cm;
+            memcpy(&(gPstat->deviceID), &(pstat->deviceID), sizeof(OicUuid_t));
             memcpy(&(gPstat->rownerID), &(pstat->rownerID), sizeof(OicUuid_t));
 
             // Convert pstat data into CBOR for update to persistent storage

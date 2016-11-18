@@ -1,4 +1,5 @@
 import os, string, sys, subprocess
+import SCons.Errors
 
 Import('env')
 

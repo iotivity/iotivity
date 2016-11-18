@@ -190,7 +190,7 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
         if (CADropSecondMessage(&caglobals.ca.requestHistory, endpoint, reqInfo->info.messageId,
                                 reqInfo->info.token, reqInfo->info.tokenLength))
         {
-            OIC_LOG(ERROR, TAG, "Second Request with same Token, Drop it");
+            OIC_LOG(INFO, TAG, "Second Request with same Token, Drop it");
             CADestroyRequestInfoInternal(reqInfo);
             goto exit;
         }
@@ -588,7 +588,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
             else
 #endif
 #ifdef ROUTING_GATEWAY
-            if(!skipRetransmission)
+            if (!skipRetransmission)
 #endif
             {
                 // for retransmission

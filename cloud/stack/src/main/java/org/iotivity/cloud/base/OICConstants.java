@@ -95,6 +95,14 @@ public class OICConstants {
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACCOUNT_URI + "/"
             + OICConstants.TOKEN_REFRESH_URI;
 
+    public static final String ACL_ID_FULL_URI                = "/"
+            + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI + "/"
+            + OICConstants.ID_URI;
+
+    public static final String ACL_VERIFY_FULL_URI                = "/"
+            + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI + "/"
+            + OICConstants.VERIFY_URI;
+
     public static final String GROUP_FULL_URI                = "/"
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI + "/"
             + OICConstants.GROUP_URI;

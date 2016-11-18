@@ -335,10 +335,15 @@ u_arraylist_t *CAFindInterfaceChange()
         }
 
         struct ifinfomsg *ifi = (struct ifinfomsg *)NLMSG_DATA(nh);
+        if (!ifi)
+        {
+            OIC_LOG_V(ERROR, TAG, "ifi is NULL");
+            return NULL;
+        }
 
         int ifiIndex = ifi->ifi_index;
 
-        if ((!ifi || (ifi->ifi_flags & IFF_LOOPBACK) || !(ifi->ifi_flags & IFF_RUNNING)))
+        if ((ifi->ifi_flags & IFF_LOOPBACK) || !(ifi->ifi_flags & IFF_RUNNING))
         {
             bool isFound = CACmpNetworkList(ifiIndex);
             if (isFound)

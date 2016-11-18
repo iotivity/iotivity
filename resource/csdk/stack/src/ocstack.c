@@ -868,22 +868,9 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
     }
 }
 
-/**
- * Encode an address string to match RFC 6874.
- *
- * @param outputAddress    a char array to be written with the encoded string.
- *
- * @param outputSize       size of outputAddress buffer.
- *
- * @param inputAddress     a char array of size <= CA_MAX_URI_LENGTH
- *                         containing a valid IPv6 address string.
- *
- * @return                 OC_STACK_OK if encoding succeeded.
- *                         Else an error occured.
- */
- OCStackResult encodeAddressForRFC6874(char *outputAddress,
-                                       size_t outputSize,
-                                       const char *inputAddress)
+OCStackResult OCEncodeAddressForRFC6874(char *outputAddress,
+                                        size_t outputSize,
+                                        const char *inputAddress)
 {
     VERIFY_NON_NULL(inputAddress,  FATAL, OC_STACK_INVALID_PARAM);
     VERIFY_NON_NULL(outputAddress, FATAL, OC_STACK_INVALID_PARAM);
@@ -896,7 +883,7 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
     if (inputSize > outputSize)
     {
         OIC_LOG_V(ERROR, TAG,
-                  "encodeAddressForRFC6874 failed: "
+                  "OCEncodeAddressForRFC6874 failed: "
                   "outputSize (%zu) < inputSize (%zu)",
                   outputSize, inputSize);
 
@@ -924,21 +911,21 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
     // If no string follows the first '%', then the input was invalid.
     if (scopeIdPart[0] == '\0')
     {
-        OIC_LOG(ERROR, TAG, "encodeAddressForRFC6874 failed: Invalid input string: no scope ID!");
+        OIC_LOG(ERROR, TAG, "OCEncodeAddressForRFC6874 failed: Invalid input string: no scope ID!");
         return OC_STACK_ERROR;
     }
 
     // Check to see if the string is already encoded
     if ((scopeIdPart[0] == '2') && (scopeIdPart[1] == '5'))
     {
-        OIC_LOG(ERROR, TAG, "encodeAddressForRFC6874 failed: Input string is already encoded");
+        OIC_LOG(ERROR, TAG, "OCEncodeAddressForRFC6874 failed: Input string is already encoded");
         return OC_STACK_ERROR;
     }
 
     // Fail if we don't have room for encoded string's two additional chars
     if (outputSize < (inputSize + 2))
     {
-        OIC_LOG(ERROR, TAG, "encodeAddressForRFC6874 failed: encoded output will not fit!");
+        OIC_LOG(ERROR, TAG, "OCEncodeAddressForRFC6874 failed: encoded output will not fit!");
         return OC_STACK_ERROR;
     }
 
@@ -946,6 +933,41 @@ OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr)
     OICStrcpy(outputAddress, scopeIdPart - addressPart, addressPart);
     strcat(outputAddress, "%25");
     strcat(outputAddress, scopeIdPart);
+
+    return OC_STACK_OK;
+}
+
+OCStackResult OCDecodeAddressForRFC6874(char *outputAddress,
+                                        size_t outputSize,
+                                        const char *inputAddress,
+                                        const char *end)
+{
+    VERIFY_NON_NULL(inputAddress,  FATAL, OC_STACK_INVALID_PARAM);
+    VERIFY_NON_NULL(outputAddress, FATAL, OC_STACK_INVALID_PARAM);
+
+    if (NULL == end)
+    {
+        end = inputAddress + strlen(inputAddress);
+    }
+    size_t inputLength = end - inputAddress;
+
+    const char *percent = strchr(inputAddress, '%');
+    if (!percent || (percent > end))
+    {
+        OICStrcpyPartial(outputAddress, outputSize, inputAddress, inputLength);
+    }
+    else
+    {
+        if (percent[1] != '2' || percent[2] != '5')
+        {
+            return OC_STACK_INVALID_URI;
+        }
+
+        size_t addrlen = percent - inputAddress + 1;
+        OICStrcpyPartial(outputAddress, outputSize, inputAddress, addrlen);
+        OICStrcpyPartial(outputAddress + addrlen, outputSize - addrlen,
+                         percent + 3, end - percent - 3);
+    }
 
     return OC_STACK_OK;
 }
@@ -980,9 +1002,9 @@ static int FormCanonicalPresenceUri(const CAEndpoint_t *endpoint,
             {
                 char addressEncoded[CA_MAX_URI_LENGTH] = {0};
 
-                OCStackResult result = encodeAddressForRFC6874(addressEncoded,
-                                                               sizeof(addressEncoded),
-                                                               ep->addr);
+                OCStackResult result = OCEncodeAddressForRFC6874(addressEncoded,
+                                                                 sizeof(addressEncoded),
+                                                                 ep->addr);
 
                 if (OC_STACK_OK != result)
                 {
@@ -1071,7 +1093,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     {
         return OC_STACK_INVALID_URI;
     }
-    OIC_LOG(ERROR, TAG, "check for unicast presence");
+    OIC_LOG(INFO, TAG, "check for unicast presence");
     cbNode = GetClientCB(NULL, 0, NULL, presenceUri);
     if (cbNode)
     {
@@ -1080,7 +1102,7 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
     else
     {
         // check for multicast presence
-        OIC_LOG(ERROR, TAG, "check for multicast presence");
+        OIC_LOG(INFO, TAG, "check for multicast presence");
         cbNode = GetClientCB(NULL, 0, NULL, OC_RSRVD_PRESENCE_URI);
         if (cbNode)
         {
@@ -1090,7 +1112,8 @@ OCStackResult HandlePresenceResponse(const CAEndpoint_t *endpoint,
 
     if (!presenceSubscribe && !multicastPresenceSubscribe)
     {
-        OIC_LOG(ERROR, TAG, "Received a presence notification, but no callback, ignoring");
+        OIC_LOG(INFO, TAG, "Received a presence notification, "
+                "but need to register presence callback, ignoring");
         goto exit;
     }
 
@@ -2514,23 +2537,11 @@ static OCStackResult ParseRequestUri(const char *fullUri,
         }
 
         // Decode address per RFC 6874.
-        char *percent = strchr(start, '%');
-        if (!percent || (percent > end))
+        result = OCDecodeAddressForRFC6874(da->addr, sizeof(da->addr), start, end);
+        if (result != OC_STACK_OK)
         {
-            OICStrcpyPartial(da->addr, sizeof(da->addr), start, len);
-        }
-        else
-        {
-            if (percent[1] != '2' || percent[2] != '5')
-            {
-                OICFree(*devAddr);
-                return OC_STACK_INVALID_URI;
-            }
-
-            int addrlen = percent - start + 1;
-            OICStrcpyPartial(da->addr, sizeof(da->addr), start, addrlen);
-            OICStrcpyPartial(da->addr + addrlen, sizeof(da->addr) - addrlen,
-                             percent + 3, end - percent - 3);
+             OICFree(*devAddr);
+             return result;
         }
 
         da->port = port;

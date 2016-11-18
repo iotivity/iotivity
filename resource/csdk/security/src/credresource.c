@@ -215,6 +215,7 @@ static void FreeCred(OicSecCred_t *cred)
 #endif /* __WITH_DTLS__ ||  __WITH_TLS__*/
 
     //Clean PrivateData
+    OICClearMemory(cred->privateData.data, cred->privateData.len);
     OICFree(cred->privateData.data);
 
     //Clean Period
@@ -1287,6 +1288,7 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
             {
                 ret = true;
             }
+            OICClearMemory(payload, size);
             OICFree(payload);
         }
     }
@@ -1336,6 +1338,8 @@ static int CmpCredId(const OicSecCred_t * first, const OicSecCred_t *second)
 static uint16_t GetCredId()
 {
     //Sorts credential list in incremental order of credId
+    /** @todo: Remove pragma for VS2013 warning; Investigate fixing LL_SORT macro */
+    #pragma warning(suppress:4133)
     LL_SORT(gCred, CmpCredId);
 
     OicSecCred_t *currentCred = NULL, *credTmp = NULL;
@@ -1519,7 +1523,7 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
 
     //the newCred is not valid if it is empty
 
-    if (memcmp(&(newCred->subject.id), &emptyOwner, UUID_IDENTITY_SIZE) == 0)
+    if (memcmp(&(newCred->subject), &emptyOwner, sizeof(OicUuid_t)) == 0)
     {
         validFlag = false;
     }
@@ -1553,8 +1557,10 @@ OCStackResult AddCredential(OicSecCred_t * newCred)
     {
         LL_APPEND(gCred, newCred);
     }
-
-    memcpy(&(gCred->rownerID), &(newCred->rownerID), sizeof(OicUuid_t));
+    if (memcmp(&(newCred->rownerID), &emptyOwner, sizeof(OicUuid_t)) != 0)
+    {
+        memcpy(&(gCred->rownerID), &(newCred->rownerID), sizeof(OicUuid_t));
+    }
     if (UpdatePersistentStorage(gCred))
     {
         ret = OC_STACK_OK;
@@ -1669,6 +1675,8 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
 {
     //Derive OwnerPSK locally
     const char* oxmLabel = GetOxmString(doxm->oxmSel);
+    char* b64Buf = NULL;
+    size_t b64BufSize = 0;
     VERIFY_NON_NULL(TAG, oxmLabel, ERROR);
 
     uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = {0};
@@ -1694,18 +1702,23 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
     }
     else if(OIC_ENCODING_BASE64 == receviedCred->privateData.encoding)
     {
+        B64Result b64res = B64_OK;
         uint32_t b64OutSize = 0;
-        size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
-        char* b64Buf = OICCalloc(1, b64BufSize);
+        b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
+        b64Buf = OICCalloc(1, b64BufSize);
         VERIFY_NON_NULL(TAG, b64Buf, ERROR);
 
-        b64Encode(ownerPSK, OWNER_PSK_LENGTH_128, b64Buf, b64BufSize, &b64OutSize);
+        b64res = b64Encode(ownerPSK, OWNER_PSK_LENGTH_128, b64Buf, b64BufSize, &b64OutSize);
+        VERIFY_SUCCESS(TAG, B64_OK == b64res, ERROR);
 
         receviedCred->privateData.data = (uint8_t *)OICCalloc(1, b64OutSize + 1);
         VERIFY_NON_NULL(TAG, receviedCred->privateData.data, ERROR);
         receviedCred->privateData.len = b64OutSize;
         strncpy((char*)receviedCred->privateData.data, b64Buf, b64OutSize);
         receviedCred->privateData.data[b64OutSize] = '\0';
+        OICClearMemory(b64Buf, b64BufSize);
+        OICFree(b64Buf);
+        b64Buf = NULL;
     }
     else
     {
@@ -1714,11 +1727,16 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
 
     OIC_LOG(INFO, TAG, "PrivateData of OwnerPSK was calculated successfully");
 
+    OICClearMemory(ownerPSK, sizeof(ownerPSK));
+
     //Verify OwnerPSK information
     return (memcmp(&(receviedCred->subject), &(doxm->owner), sizeof(OicUuid_t)) == 0 &&
             receviedCred->credType == SYMMETRIC_PAIR_WISE_KEY);
 exit:
     //receviedCred->privateData.data will be deallocated when deleting credential.
+    OICClearMemory(ownerPSK, sizeof(ownerPSK));
+    OICClearMemory(b64Buf, b64BufSize);
+    OICFree(b64Buf);
     return false;
 }
 
@@ -2076,6 +2094,7 @@ static OCEntityHandlerResult HandleGetRequest (const OCEntityHandlerRequest * eh
     //Send payload to request originator
     ehRet = ((SendSRMResponse(ehRequest, ehRet, payload, size)) == OC_STACK_OK) ?
                        OC_EH_OK : OC_EH_ERROR;
+    OICClearMemory(payload, size);
     OICFree(payload);
     return ehRet;
 }
@@ -2213,6 +2232,7 @@ OCStackResult InitCredResource()
 
     //Instantiate 'oic.sec.cred'
     ret = CreateCredResource();
+    OICClearMemory(data, size);
     OICFree(data);
     return ret;
 }
@@ -2556,6 +2576,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
 
     cred = GenerateCredential(tmpSubject, credType, NULL,
                               &privKey, rownerID, NULL);
+    OICClearMemory(privData, sizeof(privData));
     if(NULL == cred)
     {
         OIC_LOG(ERROR, TAG, "GeneratePskWithPIN() : Failed to generate credential");
@@ -2632,23 +2653,22 @@ OCStackResult GetCredRownerId(OicUuid_t *rowneruuid)
 }
 
 #if defined (__WITH_TLS__) || defined(__WITH_DTLS__)
-void GetDerCaCert(ByteArray_t * crt)
+void GetDerCaCert(ByteArray_t * crt, const char * usage)
 {
-    if (NULL == crt)
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    if (NULL == crt || NULL == usage)
     {
+        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
-    uint8_t *data = NULL;
     crt->len = 0;
-    OCStackResult ret = OC_STACK_ERROR;
-    OicSecCred_t * cred;
     OicSecCred_t * temp = NULL;
-    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
     LL_FOREACH(gCred, temp)
     {
-        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), TRUST_CA, strlen(TRUST_CA) + 1))
+        if (SIGNED_ASYMMETRIC_KEY == temp->credType &&
+            0 == strcmp(temp->credUsage, usage))
         {
-            OIC_LOG_V(DEBUG, TAG, "len: %d, crt len: %d", temp->optionalData.len, crt->len);
             if(OIC_ENCODING_BASE64 == temp->optionalData.encoding)
             {
                 size_t bufSize = B64DECODE_OUT_SAFESIZE((temp->optionalData.len + 1));
@@ -2676,84 +2696,82 @@ void GetDerCaCert(ByteArray_t * crt)
                 memcpy(crt->data + crt->len, temp->optionalData.data, temp->optionalData.len);
                 crt->len += temp->optionalData.len;
             }
-            OIC_LOG_V(DEBUG, TAG, "Trust CA Found!! %d", crt->len);
+            OIC_LOG_V(DEBUG, TAG, "%s found", usage);
         }
     }
     if(0 == crt->len)
     {
-        OIC_LOG(DEBUG, TAG, "Trust CA Not Found!!");
+        OIC_LOG_V(WARNING, TAG, "%s not found", usage);
     }
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return;
 }
 
-void GetDerOwnCert(ByteArray_t * crt)
+void GetDerOwnCert(ByteArray_t * crt, const char * usage)
 {
-    if (NULL == crt)
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    if (NULL == crt || NULL == usage)
     {
+        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
     crt->len = 0;
-    uint8_t *data = NULL;
     OicSecCred_t * temp = NULL;
-    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
     LL_FOREACH(gCred, temp)
     {
-        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), PRIMARY_CERT, strlen(PRIMARY_CERT) + 1))
+        if (SIGNED_ASYMMETRIC_KEY == temp->credType &&
+            0 == strcmp(temp->credUsage, usage))
         {
-            OIC_LOG_V(DEBUG, TAG, "len: %d, crt len: %d", temp->publicData.len, crt->len);
             crt->data = OICRealloc(crt->data, crt->len + temp->publicData.len);
             memcpy(crt->data + crt->len, temp->publicData.data, temp->publicData.len);
             crt->len += temp->publicData.len;
-
-            OIC_LOG_V(DEBUG, TAG, "Trust CA Found!! %d", crt->len);
+            OIC_LOG_V(DEBUG, TAG, "%s found", usage);
         }
     }
     if(0 == crt->len)
     {
-        OIC_LOG(DEBUG, TAG, "Trust CA Not Found!!");
+        OIC_LOG_V(WARNING, TAG, "%s not found", usage);
     }
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return;
 }
 
-void GetDerKey(ByteArray_t * key)
+void GetDerKey(ByteArray_t * key, const char * usage)
 {
-    if (NULL == key)
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    if (NULL == key || NULL == usage)
     {
+        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
 
-    uint8_t *data = NULL;
     OicSecCred_t * temp = NULL;
     key->len = 0;
-    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
     LL_FOREACH(gCred, temp)
     {
-        if (SIGNED_ASYMMETRIC_KEY == temp->credType && 0 == memcmp((temp->credUsage), PRIMARY_CERT, strlen(PRIMARY_CERT) + 1))
+        if (SIGNED_ASYMMETRIC_KEY == temp->credType &&
+            0 == strcmp(temp->credUsage, usage))
         {
-            OIC_LOG_V(DEBUG, TAG, "len: %d, key len: %d", temp->privateData.len, key->len);
             key->data = OICRealloc(key->data, key->len + temp->privateData.len);
             memcpy(key->data + key->len, temp->privateData.data, temp->privateData.len);
             key->len += temp->privateData.len;
-
-            OIC_LOG_V(DEBUG, TAG, "Key Found!! %d", key->len);
+            OIC_LOG_V(DEBUG, TAG, "Key for %s found", usage);
         }
     }
     if(0 == key->len)
     {
-        OIC_LOG(DEBUG, TAG, "Key Not Found!!");
+        OIC_LOG_V(WARNING, TAG, "Key for %s not found", usage);
     }
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
 
-void InitCipherSuiteList(bool * list)
+void InitCipherSuiteListInternal(bool * list, const char * usage)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
-    if (NULL == list)
+    if (NULL == list || NULL == usage)
     {
+        OIC_LOG(DEBUG, TAG, "NULL passed");
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        OIC_LOG(DEBUG, TAG, "NULL list param");
         return;
     }
     OicSecCred_t * temp = NULL;
@@ -2775,8 +2793,11 @@ void InitCipherSuiteList(bool * list)
             }
             case SIGNED_ASYMMETRIC_KEY:
             {
-                list[1] = true;
-                OIC_LOG(DEBUG, TAG, "SIGNED_ASYMMETRIC_KEY found");
+                if (0 == strcmp(temp->credUsage, usage))
+                {
+                    list[1] = true;
+                    OIC_LOG_V(DEBUG, TAG, "SIGNED_ASYMMETRIC_KEY found for %s", usage);
+                }
                 break;
             }
             case SYMMETRIC_GROUP_KEY:

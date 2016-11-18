@@ -59,6 +59,7 @@ withtcp=0
 withcloud=0
 withproxy=0
 withmq=OFF
+rdmode=CLIENT
 secured=0
 for ARGUMENT_VALUE in $*
 do
@@ -79,6 +80,10 @@ do
        withmq=PUB,SUB,BROKER
    fi
 
+   if [ "RD_MODE" = $ARGUMENT_VALUE ];then
+       rdmode=CLIENT,SERVER
+   fi
+
    if [ "SECURED" = $ARGUMENT_VALUE ];then
        secured=1
    fi
@@ -86,21 +91,8 @@ done
 
 if [ $secured -eq 1 ];then
   echo `pwd`
-  if [ -d ./extlibs/mbedtls/mbedtls ];then
-      cd ./extlibs/mbedtls/mbedtls
-      git reset --hard ad249f509fd62a3bbea7ccd1fef605dbd482a7bd ; git apply ../ocf.patch
-      cd -
-      rm -rf ./extlibs/mbedtls/mbedtls/.git*
-
-  else
-      echo ""
-      echo "*********************************** Error: ****************************************"
-      echo "* Please download mbedtls using the following command:                            *"
-      echo "*     $ git clone https://github.com/ARMmbed/mbedtls.git extlibs/mbedtls/mbedtls  *"
-      echo "***********************************************************************************"
-      echo ""
-      exit
-  fi
+  # Prepare mbedTLS dependency
+  $SHELL ./extlibs/mbedtls/prep.sh
 fi
 
 rm -rf ./extlibs/tinycbor/tinycbor/.git*
@@ -115,7 +107,7 @@ if [ ! -d .git ]; then
 fi
 
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l --define 'WITH_TCP $withtcp' --define 'WITH_CLOUD $withcloud' --define 'WITH_PROXY $withproxy' --define 'WITH_MQ $withmq' --define 'SECURED $secured' -B ~/GBS-ROOT-OIC --include-all --repository ./"
+gbscommand="gbs build -A armv7l --define 'WITH_TCP $withtcp' --define 'WITH_CLOUD $withcloud' --define 'WITH_PROXY $withproxy' --define 'WITH_MQ $withmq' --define 'RD_MODE $rdmode' --define 'SECURED $secured' -B ~/GBS-ROOT-OIC --include-all --repository ./"
 echo $gbscommand
 if eval $gbscommand; then
     echo "Build is successful"

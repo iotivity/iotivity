@@ -161,8 +161,13 @@ extern const char * OIC_JSON_SEC_V_NAME;
 
 extern const char * OIC_JSON_EMPTY_STRING;
 
+// Certificates provided by Cloud
 extern const char * TRUST_CA;
 extern const char * PRIMARY_CERT;
+
+// Certificates provided by manufacturer
+extern const char * MF_TRUST_CA;
+extern const char * MF_PRIMARY_CERT;
 
 extern OicUuid_t WILDCARD_SUBJECT_ID;
 extern OicUuid_t WILDCARD_SUBJECT_B64_ID;

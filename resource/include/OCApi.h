@@ -307,11 +307,6 @@ namespace OC
 
     typedef std::function<void(const int, const std::string&,
                                std::shared_ptr<OCResource>)> MQTopicCallback;
-#ifdef RD_CLIENT
-    typedef std::function<void(const OCRepresentation&, const int)> PublishResourceCallback;
-
-    typedef std::function<void(const int)> DeleteResourceCallback;
-#endif
 } // namespace OC
 
 #endif
