@@ -72,15 +72,15 @@ if env.get('WITH_CLOUD') == True:
 
 with_mq = env.get('WITH_MQ')
 if 'SUB' in with_mq:
-    notification_env.AppendUnique(CPPDEFINES = ['MQ_SUBSCRIBER', 'WITH_MQ'])
+    notification_sample_env.AppendUnique(CPPDEFINES = ['MQ_SUBSCRIBER', 'WITH_MQ'])
     print "MQ SUB support"
 
 if 'PUB' in with_mq:
-    notification_env.AppendUnique(CPPDEFINES = ['MQ_PUBLISHER', 'WITH_MQ'])
+    notification_sample_env.AppendUnique(CPPDEFINES = ['MQ_PUBLISHER', 'WITH_MQ'])
     print "MQ PUB support"
 
 if 'BROKER' in with_mq:
-    notification_env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
+    notification_sample_env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
     print "MQ Broker support"
 
 if env.get('WITH_TCP') == True:
