@@ -1683,7 +1683,6 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
         doxm->owner.id, sizeof(doxm->owner.id),
         doxm->deviceID.id, sizeof(doxm->deviceID.id),
         ownerPSK, OWNER_PSK_LENGTH_128);
-    OICClearMemory(ownerPSK, sizeof(ownerPSK));
     VERIFY_SUCCESS(TAG, pskRet == CA_STATUS_OK, ERROR);
 
     OIC_LOG(DEBUG, TAG, "OwnerPSK dump :");
@@ -1726,11 +1725,14 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
 
     OIC_LOG(INFO, TAG, "PrivateData of OwnerPSK was calculated successfully");
 
+    OICClearMemory(ownerPSK, sizeof(ownerPSK));
+
     //Verify OwnerPSK information
     return (memcmp(&(receviedCred->subject), &(doxm->owner), sizeof(OicUuid_t)) == 0 &&
             receviedCred->credType == SYMMETRIC_PAIR_WISE_KEY);
 exit:
     //receviedCred->privateData.data will be deallocated when deleting credential.
+    OICClearMemory(ownerPSK, sizeof(ownerPSK));
     OICClearMemory(b64Buf, b64BufSize);
     OICFree(b64Buf);
     return false;
