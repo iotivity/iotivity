@@ -138,7 +138,7 @@ NSResult NSSendNotification(NSMessage *msg)
 #ifdef WITH_MQ
     if (NSGetMQServerInfo())
     {
-        NSProviderPublishTopic(payload, NSProviderPublishTopicCB);
+        NSProviderPublishTopic(payload, NSProviderPublishMQResponseCB);
     }
 #endif
 

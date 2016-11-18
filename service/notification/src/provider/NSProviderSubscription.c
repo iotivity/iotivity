@@ -356,7 +356,7 @@ void NSProviderMQSubscription(NSMQTopicAddress * topicAddr)
 
     OCDevAddr * addr = NSChangeAddress(serverUri);
     OCCallbackData cbdata = { NULL, NULL, NULL };
-    cbdata.cb = NSProviderIntrospectMQTopic;
+    cbdata.cb = NSProviderGetMQResponseCB;
     cbdata.context = OICStrdup(topicName);
     cbdata.cd = OICFree;
 

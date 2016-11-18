@@ -396,10 +396,10 @@ OCStackApplicationResult NSProviderMQListener(void * ctx, OCDoHandle handle,
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-OCStackApplicationResult NSProviderIntrospectMQTopic(void * ctx, OCDoHandle handle,
+OCStackApplicationResult NSProviderGetMQResponseCB(void * ctx, OCDoHandle handle,
         OCClientResponse * clientResponse)
 {
-    NS_LOG(DEBUG, "NSProviderIntrospectMQTopic - IN");
+    NS_LOG(DEBUG, "NSProviderGetMQResponseCB - IN");
 
     (void) handle;
 
@@ -450,11 +450,11 @@ OCStackApplicationResult NSProviderIntrospectMQTopic(void * ctx, OCDoHandle hand
         }
     }
 
-    NS_LOG(DEBUG, "NSProviderIntrospectMQTopic - OUT");
+    NS_LOG(DEBUG, "NSProviderGetMQResponseCB - OUT");
     return OC_STACK_KEEP_TRANSACTION;
 }
 
-OCStackApplicationResult NSProviderPublishTopicCB(void *ctx, OCDoHandle handle,
+OCStackApplicationResult NSProviderPublishMQResponseCB(void *ctx, OCDoHandle handle,
         OCClientResponse *clientResponse)
 {
     (void) ctx;
