@@ -952,7 +952,7 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
 #endif //_ENABLE_MULTIPLE_OWNER_
 #endif // defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 
-static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest * ehRequest)
+static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRequest)
 {
     OIC_LOG (DEBUG, TAG, "Doxm EntityHandle  processing POST request");
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
@@ -1168,7 +1168,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                                 ehRet = OC_EH_ERROR;
                             }
                         }
-                        else if(previousMsgId != ehRequest->messageID)
+                        else if(OC_ADAPTER_TCP == ehRequest->devAddr.adapter)
                         {
                             if(OC_STACK_OK == GeneratePin(ranPin, sizeof(ranPin)))
                             {
@@ -1327,12 +1327,17 @@ exit:
         */
         if(gDoxm)
         {
-            if(!gDoxm->owned && previousMsgId != ehRequest->messageID)
+            if(!gDoxm->owned)
             {
-                OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request,"\
-                                    "DOXM will be reverted.");
-                RestoreDoxmToInitState();
-                RestorePstatToInitState();
+                OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request");
+
+                if((OC_ADAPTER_IP == ehRequest->devAddr.adapter && previousMsgId != ehRequest->messageID)
+                   || OC_ADAPTER_TCP == ehRequest->devAddr.adapter)
+                {
+                    RestoreDoxmToInitState();
+                    RestorePstatToInitState();
+                    OIC_LOG(WARNING, TAG, "DOXM will be reverted.");
+                }
             }
         }
         else
@@ -1342,7 +1347,7 @@ exit:
     }
     else
     {
-        previousMsgId = ehRequest->messageID;
+        previousMsgId = ehRequest->messageID++;
     }
 
     //Send payload to request originator

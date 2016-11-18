@@ -1378,7 +1378,8 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             {
                 int start = 0;
                 //First option always with option ID is COAP_OPTION_OBSERVE if it is available.
-                if(responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
+                if(responseInfo->info.options
+                   && responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
                 {
                     size_t i;
                     uint32_t observationOption;
@@ -1408,8 +1409,11 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 
                 for (uint8_t i = start; i < responseInfo->info.numOptions; i++)
                 {
-                    memcpy (&(response.rcvdVendorSpecificHeaderOptions[i-start]),
-                            &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
+                    if(&(responseInfo->info.options[i]))
+                    {
+                        memcpy (&(response.rcvdVendorSpecificHeaderOptions[i-start]),
+                                &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
+                    }
                 }
             }
 
@@ -1953,7 +1957,7 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         return;
     }
     serverRequest.numRcvdVendorSpecificHeaderOptions = tempNum;
-    if (serverRequest.numRcvdVendorSpecificHeaderOptions)
+    if (serverRequest.numRcvdVendorSpecificHeaderOptions && requestInfo->info.options)
     {
         memcpy (&(serverRequest.rcvdVendorSpecificHeaderOptions), requestInfo->info.options,
             sizeof(CAHeaderOption_t)*tempNum);
