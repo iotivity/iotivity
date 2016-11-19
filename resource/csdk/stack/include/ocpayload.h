@@ -280,7 +280,7 @@ OCStringLL* OCCreateOCStringLL(const char* text);
 /**
  * This function creates a string from a list (with separated contents if several)
  * @param ll           Pointer to list
- * @return newly allocated string
+ * @return newly allocated string. Caller takes ownership and must later free this memory with OICFree.
  * @note separator is ',' (according to rfc4180)
  **/
 char* OCCreateString(const OCStringLL* ll);

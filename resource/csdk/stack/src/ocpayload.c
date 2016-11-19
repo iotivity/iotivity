@@ -1501,7 +1501,7 @@ char* OCCreateString(const OCStringLL* ll)
         len += strlen(it->value) + 1;
     }
     len--; // remove trailing separator (just added above)
-    str = (char*) malloc(len + 1);
+    str = (char*) OICMalloc(len + 1);
     if (!str)
     {
         return NULL;
@@ -1515,7 +1515,7 @@ char* OCCreateString(const OCStringLL* ll)
         count = snprintf(pos, len + 1, "%s", it->value);
         if ((size_t)count < sublen)
         {
-            free(str);
+            OICFree(str);
             return NULL;
         }
         len -= sublen;
