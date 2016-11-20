@@ -52,12 +52,6 @@ void OCPayloadDestroy(OCPayload* payload)
         case PAYLOAD_TYPE_DISCOVERY:
             OCDiscoveryPayloadDestroy((OCDiscoveryPayload*)payload);
             break;
-        case PAYLOAD_TYPE_DEVICE:
-            OCDevicePayloadDestroy((OCDevicePayload*)payload);
-            break;
-        case PAYLOAD_TYPE_PLATFORM:
-            OCPlatformPayloadDestroy((OCPlatformPayload*)payload);
-            break;
         case PAYLOAD_TYPE_PRESENCE:
             OCPresencePayloadDestroy((OCPresencePayload*)payload);
             break;
@@ -70,6 +64,7 @@ void OCPayloadDestroy(OCPayload* payload)
             break;
     }
 }
+
 OCRepPayload* OCRepPayloadCreate()
 {
     OCRepPayload* payload = (OCRepPayload*)OICCalloc(1, sizeof(OCRepPayload));
@@ -1804,9 +1799,10 @@ void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource
 
 bool OCResourcePayloadAddStringLL(OCStringLL **stringLL, const char *value)
 {
-    char *dup = OICStrdup(value);
-    VERIFY_PARAM_NON_NULL(TAG, dup, "Failed copying string");
+    char *dup = NULL;
     VERIFY_PARAM_NON_NULL(TAG, value, "Invalid Parameters");
+    dup = OICStrdup(value);
+    VERIFY_PARAM_NON_NULL(TAG, dup, "Failed copying string");
 
     if (!*stringLL)
     {
@@ -1882,169 +1878,6 @@ void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
     OCFreeOCStringLL(payload->iface);
     OCDiscoveryResourceDestroy(payload->resources);
     OCDiscoveryPayloadDestroy(payload->next);
-    OICFree(payload);
-}
-
-OCDevicePayload* OCDevicePayloadCreate(const char* sid, const char* dname,
-        const OCStringLL *types, const char* specVer, const char* dmVer)
-{
-
-    OCDevicePayload* payload = (OCDevicePayload*)OICCalloc(1, sizeof(OCDevicePayload));
-
-    if (!payload)
-    {
-        return NULL;
-    }
-
-    payload->base.type = PAYLOAD_TYPE_DEVICE;
-    payload->sid = OICStrdup(sid);
-    if (sid && !payload->sid)
-    {
-        goto exit;
-    }
-
-    payload->deviceName = OICStrdup(dname);
-    if (dname && !payload->deviceName)
-    {
-        goto exit;
-    }
-
-    payload->specVersion = OICStrdup(specVer);
-    if (specVer && !payload->specVersion)
-    {
-        goto exit;
-    }
-
-    payload->dataModelVersions = OCCreateOCStringLL(dmVer);
-    if (!payload->dataModelVersions || (dmVer && !payload->dataModelVersions->value))
-    {
-        goto exit;
-    }
-
-    OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_DEFAULT);
-    OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_READ);
-
-    payload->types = CloneOCStringLL((OCStringLL *)types);
-    if (types && !payload->types)
-    {
-        goto exit;
-    }
-
-    return payload;
-
-exit:
-    OCDevicePayloadDestroy((OCDevicePayload*)payload);
-    return NULL;
-}
-
-void OCDevicePayloadDestroy(OCDevicePayload* payload)
-{
-    if (!payload)
-    {
-        return;
-    }
-
-    OICFree(payload->sid);
-    OICFree(payload->deviceName);
-    OICFree(payload->specVersion);
-    OCFreeOCStringLL(payload->dataModelVersions);
-    OCFreeOCStringLL(payload->types);
-    OCFreeOCStringLL(payload->interfaces);
-    OICFree(payload);
-}
-
-static void OCCopyPlatformInfo(const OCPlatformInfo* platformInfo, OCPlatformPayload* target)
-{
-    if (!platformInfo || !target)
-    {
-        return;
-    }
-
-    target->info.platformID = OICStrdup(platformInfo->platformID);
-    target->info.manufacturerName = OICStrdup(platformInfo->manufacturerName);
-    target->info.manufacturerUrl = OICStrdup(platformInfo->manufacturerUrl);
-    target->info.modelNumber = OICStrdup(platformInfo->modelNumber);
-    target->info.dateOfManufacture = OICStrdup(platformInfo->dateOfManufacture);
-    target->info.platformVersion = OICStrdup(platformInfo->platformVersion);
-    target->info.operatingSystemVersion = OICStrdup(platformInfo->operatingSystemVersion);
-    target->info.hardwareVersion = OICStrdup(platformInfo->hardwareVersion);
-    target->info.firmwareVersion = OICStrdup(platformInfo->firmwareVersion);
-    target->info.supportUrl = OICStrdup(platformInfo->supportUrl);
-    target->info.systemTime = OICStrdup(platformInfo->systemTime);
-}
-
-OCPlatformPayload* OCPlatformPayloadCreateAsOwner(OCPlatformInfo* platformInfo)
-{
-    OCPlatformPayload* payload = (OCPlatformPayload*)OICCalloc(1, sizeof(OCPlatformPayload));
-    if (!payload)
-    {
-        return NULL;
-    }
-
-    payload->base.type = PAYLOAD_TYPE_PLATFORM;
-
-    payload->interfaces = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-    if (!payload->interfaces)
-    {
-        return NULL;
-    }
-    payload->interfaces->value = OICStrdup(OC_RSRVD_INTERFACE_READ);
-    payload->rt = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-    if (!payload->rt)
-    {
-        return NULL;
-    }
-    payload->rt->value = OICStrdup(OC_RSRVD_RESOURCE_TYPE_PLATFORM);
-    payload->info = *platformInfo;
-
-    return payload;
-}
-
-OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo)
-{
-    OCPlatformPayload* payload = (OCPlatformPayload*)OICCalloc(1, sizeof(OCPlatformPayload));
-
-    if (!payload)
-    {
-        return NULL;
-    }
-
-    payload->base.type = PAYLOAD_TYPE_PLATFORM;
-    OCResourcePayloadAddStringLL(&payload->rt, OC_RSRVD_RESOURCE_TYPE_PLATFORM);
-
-    OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_DEFAULT);
-    OCResourcePayloadAddStringLL(&payload->interfaces, OC_RSRVD_INTERFACE_READ);
-
-    OCCopyPlatformInfo(platformInfo, payload);
-
-    return payload;
-}
-
-void OCPlatformInfoDestroy(OCPlatformInfo *info)
-{
-    OICFree(info->platformID);
-    OICFree(info->manufacturerName);
-    OICFree(info->manufacturerUrl);
-    OICFree(info->modelNumber);
-    OICFree(info->dateOfManufacture);
-    OICFree(info->platformVersion);
-    OICFree(info->operatingSystemVersion);
-    OICFree(info->hardwareVersion);
-    OICFree(info->firmwareVersion);
-    OICFree(info->supportUrl);
-    OICFree(info->systemTime);
-}
-
-void OCPlatformPayloadDestroy(OCPlatformPayload* payload)
-{
-    if (!payload)
-    {
-        return;
-    }
-    OICFree(payload->uri);
-    OCPlatformInfoDestroy(&payload->info);
-    OCFreeOCStringLL(payload->rt);
-    OCFreeOCStringLL(payload->interfaces);
     OICFree(payload);
 }
 

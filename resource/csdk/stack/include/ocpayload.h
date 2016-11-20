@@ -249,17 +249,6 @@ OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload, si
 void OCDiscoveryResourceDestroy(OCResourcePayload* payload);
 void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload);
 
-// Device Payload
-OCDevicePayload* OCDevicePayloadCreate(const char* sid, const char* dname,
-        const OCStringLL *types, const char* specVer, const char* dmVer);
-void OCDevicePayloadDestroy(OCDevicePayload* payload);
-
-// Platform Payload
-OCPlatformPayload* OCPlatformPayloadCreate(const OCPlatformInfo* platformInfo);
-OCPlatformPayload* OCPlatformPayloadCreateAsOwner(OCPlatformInfo* platformInfo);
-void OCPlatformInfoDestroy(OCPlatformInfo *info);
-void OCPlatformPayloadDestroy(OCPlatformPayload* payload);
-
 // Presence Payload
 OCPresencePayload* OCPresencePayloadCreate(uint32_t seqNum, uint32_t maxAge,
         OCPresenceTrigger trigger, const char* resourceType);

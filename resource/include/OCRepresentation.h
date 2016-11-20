@@ -61,10 +61,6 @@ namespace OC
         public:
             void setPayload(const OCPayload* rep);
 
-            void setPayload(const OCDevicePayload* rep);
-
-            void setPayload(const OCPlatformPayload* rep);
-
             void setPayload(const OCRepPayload* rep);
 
             OCRepPayload* getPayload() const;
