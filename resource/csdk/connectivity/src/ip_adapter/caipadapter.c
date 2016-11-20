@@ -77,10 +77,10 @@ static CAAdapterChangeCallback g_networkChangeCallback = NULL;
 static CAErrorHandleCallback g_errorCallback = NULL;
 
 static void CAIPPacketReceivedCB(const CASecureEndpoint_t *endpoint,
-                                 const void *data, uint32_t dataLength);
+                                 const void *data, size_t dataLength);
 #ifdef __WITH_DTLS__
-static int32_t CAIPPacketSendCB(CAEndpoint_t *endpoint,
-                                const void *data, uint32_t dataLength);
+static ssize_t CAIPPacketSendCB(CAEndpoint_t *endpoint,
+                                const void *data, size_t dataLength);
 #endif
 
 #ifndef SINGLE_THREAD
@@ -151,7 +151,7 @@ void CAIPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
 }
 
 #ifdef __WITH_DTLS__
-static int32_t CAIPPacketSendCB(CAEndpoint_t *endpoint, const void *data, uint32_t dataLength)
+static ssize_t CAIPPacketSendCB(CAEndpoint_t *endpoint, const void *data, size_t dataLength)
 {
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint is NULL", -1);
     VERIFY_NON_NULL_RET(data, TAG, "data is NULL", -1);
@@ -163,7 +163,7 @@ static int32_t CAIPPacketSendCB(CAEndpoint_t *endpoint, const void *data, uint32
 
 
 void CAIPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
-                          uint32_t dataLength)
+                          size_t dataLength)
 {
     VERIFY_NON_NULL_VOID(sep, TAG, "sep is NULL");
     VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
