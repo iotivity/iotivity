@@ -41,16 +41,9 @@
 // Discovery Links Map Length.
 #define LINKS_MAP_LEN 4
 
-// Default data model versions in CVS form
-#define DEFAULT_DATA_MODEL_VERSIONS "res.1.1.0,sh.1.1.0"
-
 // Functions all return either a CborError, or a negative version of the OC_STACK return values
 static int64_t OCConvertPayloadHelper(OCPayload *payload, uint8_t *outPayload, size_t *size);
 static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *outPayload,
-        size_t *size);
-static int64_t OCConvertDevicePayload(OCDevicePayload *payload, uint8_t *outPayload,
-        size_t *size);
-static int64_t OCConvertPlatformPayload(OCPlatformPayload *payload, uint8_t *outPayload,
         size_t *size);
 static int64_t OCConvertRepPayload(OCRepPayload *payload, uint8_t *outPayload, size_t *size);
 static int64_t OCConvertRepMap(CborEncoder *map, const OCRepPayload *payload);
@@ -148,10 +141,6 @@ static int64_t OCConvertPayloadHelper(OCPayload* payload, uint8_t* outPayload, s
     {
         case PAYLOAD_TYPE_DISCOVERY:
             return OCConvertDiscoveryPayload((OCDiscoveryPayload*)payload, outPayload, size);
-        case PAYLOAD_TYPE_DEVICE:
-            return OCConvertDevicePayload((OCDevicePayload*)payload, outPayload, size);
-        case PAYLOAD_TYPE_PLATFORM:
-            return OCConvertPlatformPayload((OCPlatformPayload*)payload, outPayload, size);
         case PAYLOAD_TYPE_REPRESENTATION:
             return OCConvertRepPayload((OCRepPayload*)payload, outPayload, size);
         case PAYLOAD_TYPE_PRESENCE:
@@ -390,162 +379,6 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
     // Close the final root array.
     err |= cbor_encoder_close_container(&encoder, &rootArray);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing root array");
-
-exit:
-    return checkError(err, &encoder, outPayload, size);
-}
-
-static int64_t OCConvertDevicePayload(OCDevicePayload *payload, uint8_t *outPayload,
-        size_t *size)
-{
-    if (!payload)
-    {
-        return CborUnknownError;
-    }
-    int64_t err = CborNoError;
-    CborEncoder encoder;
-    char *dataModelVersions = 0;
-
-    cbor_encoder_init(&encoder, outPayload, *size, 0);
-    CborEncoder repMap;
-    err |= cbor_encoder_create_map(&encoder, &repMap, CborIndefiniteLength);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating device map");
-
-    // Resource Type
-    if (payload->types)
-    {
-        OIC_LOG(INFO, TAG, "Payload has types");
-        err |= OCStringLLJoin(&repMap, OC_RSRVD_RESOURCE_TYPE, payload->types);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding resource type tag/value.");
-    }
-
-    if (payload->interfaces)
-    {
-        OIC_LOG(INFO, TAG, "Payload has interface");
-        err |= OCStringLLJoin(&repMap, OC_RSRVD_INTERFACE, payload->interfaces);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding interface type tag/value.");
-    }
-
-    // Device ID
-    err |= AddTextStringToMap(&repMap, OC_RSRVD_DEVICE_ID, sizeof(OC_RSRVD_DEVICE_ID) - 1 , payload->sid);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding device id");
-
-    // Device Name
-    err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_DEVICE_NAME,
-            sizeof(OC_RSRVD_DEVICE_NAME) - 1, payload->deviceName);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding device name");
-
-    // Device Spec Version
-    err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_SPEC_VERSION,
-            sizeof(OC_RSRVD_SPEC_VERSION) - 1, payload->specVersion);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding data spec version");
-
-    // Device data Model Versions
-    if (payload->dataModelVersions)
-    {
-        OIC_LOG(INFO, TAG, "Payload has data model versions");
-        dataModelVersions = OCCreateString(payload->dataModelVersions);
-    }
-    else
-    {
-        dataModelVersions = OICStrdup(DEFAULT_DATA_MODEL_VERSIONS);
-    }
-    err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_DATA_MODEL_VERSION,
-        sizeof(OC_RSRVD_DATA_MODEL_VERSION) - 1, dataModelVersions);
-    OICFree(dataModelVersions);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding data model versions");
-
-    err |= cbor_encoder_close_container(&encoder, &repMap);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing device map");
-
-exit:
-    return checkError(err, &encoder, outPayload, size);
-}
-
-static int64_t OCConvertPlatformPayload(OCPlatformPayload *payload, uint8_t *outPayload,
-        size_t *size)
-{
-    int64_t err = CborNoError;
-    CborEncoder encoder;
-
-    cbor_encoder_init(&encoder, outPayload, *size, 0);
-
-    CborEncoder repMap;
-    err |= cbor_encoder_create_map(&encoder, &repMap, CborIndefiniteLength);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating platform map");
-
-    // Platform ID
-    err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_PLATFORM_ID,
-            sizeof(OC_RSRVD_PLATFORM_ID) - 1, payload->info.platformID);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding platform id");
-
-    // MFG Name
-    err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MFG_NAME,
-        sizeof(OC_RSRVD_MFG_NAME) - 1, payload->info.manufacturerName);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding mfg name");
-
-    // MFG Url
-    err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MFG_URL,
-        sizeof(OC_RSRVD_MFG_URL) - 1, payload->info.manufacturerUrl);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding mfg url");
-
-    // Model Num
-    err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MODEL_NUM,
-            sizeof(OC_RSRVD_MODEL_NUM) -1, payload->info.modelNumber);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding model num");
-
-    // Date of Mfg
-    err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_MFG_DATE,
-            sizeof(OC_RSRVD_MFG_DATE) - 1, payload->info.dateOfManufacture);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding mfg date");
-
-    // Platform Version
-    err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_PLATFORM_VERSION,
-            sizeof(OC_RSRVD_PLATFORM_VERSION) - 1, payload->info.platformVersion);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding platform version");
-
-    // OS Version
-    err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_OS_VERSION,
-            sizeof(OC_RSRVD_OS_VERSION) - 1, payload->info.operatingSystemVersion);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding OS version");
-
-    // Hardware Version
-    err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_HARDWARE_VERSION,
-            sizeof(OC_RSRVD_HARDWARE_VERSION) - 1, payload->info.hardwareVersion);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding HW version");
-
-    // Firmware Version
-    err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_FIRMWARE_VERSION,
-            sizeof(OC_RSRVD_FIRMWARE_VERSION) - 1, payload->info.firmwareVersion);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding firmware version");
-
-    // Support URL
-    err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_SUPPORT_URL,
-            sizeof(OC_RSRVD_SUPPORT_URL) - 1, payload->info.supportUrl);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding support url");
-
-    // System Time
-    err |= ConditionalAddTextStringToMap(&repMap, OC_RSRVD_SYSTEM_TIME,
-            sizeof(OC_RSRVD_SYSTEM_TIME) - 1, payload->info.systemTime);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding system time");
-
-    // Resource type
-    if (payload->rt)
-    {
-        err |= OCStringLLJoin(&repMap, OC_RSRVD_RESOURCE_TYPE, payload->rt);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding resource type.");
-    }
-
-    // Resource interfaces
-    if (payload->interfaces)
-    {
-        err |= OCStringLLJoin(&repMap, OC_RSRVD_INTERFACE, payload->interfaces);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding platform interface type.");
-    }
-
-    // Close Map
-    err |= cbor_encoder_close_container(&encoder, &repMap);
-    VERIFY_CBOR_SUCCESS(TAG, err, "Failed closing rep map");
 
 exit:
     return checkError(err, &encoder, outPayload, size);

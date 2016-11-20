@@ -29,6 +29,7 @@ calcDimTotal
 ConvertStrToUuid
 convertTriggerEnumToString
 
+FindResourceByUri
 OCBindResource
 OCBindResourceHandler
 OCBindResourceInsToResource
@@ -45,10 +46,13 @@ OCDoResource
 OCDoResponse
 OCEncodeAddressForRFC6874
 OCFreeOCStringLL
+OCGetDeviceId
 OCGetDirectPairedDevices
+OCGetHeaderOption
 OCGetNumberOfResources
 OCGetNumberOfResourceInterfaces
 OCGetNumberOfResourceTypes
+OCGetPropertyValue
 OCGetResourceHandle
 OCGetResourceHandleAtUri
 OCGetResourceHandleFromCollection
@@ -99,15 +103,13 @@ OCRepPayloadSetUri
 OCResourcePayloadAddStringLL
 OCSecurityPayloadCreate
 OCSetDefaultDeviceEntityHandler
+OCSetDeviceId
 OCSetDeviceInfo
+OCSetHeaderOption
 OCSetPlatformInfo
+OCSetPropertyValue
 OCStartPresence
 OCStop
 OCStopPresence
 OCStopMulticastServer
 OCUnBindResource
-OCSetHeaderOption
-OCGetHeaderOption
-FindResourceByUri
-OCGetDeviceId
-OCSetDeviceId

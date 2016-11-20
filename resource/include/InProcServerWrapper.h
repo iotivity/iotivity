@@ -69,6 +69,9 @@ namespace OC
 
         virtual OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
 
+        virtual OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag, const std::string& value);
+        virtual OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag, std::string& value);
+
     private:
         void processFunc();
         std::thread m_processThread;
