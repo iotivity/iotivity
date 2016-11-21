@@ -6,7 +6,7 @@
 import os
 import platform
 
-project_version = '1.2.0'
+project_version = '1.2.1'
 
 # Map of host os and allowed target os (host: allowed target os)
 host_target_map = {
@@ -26,7 +26,7 @@ os_arch_map = {
 		'darwin': ['i386', 'x86_64'],
 		'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
 		'arduino': ['avr', 'arm'],
-		'yocto': ['i586', 'i686', 'x86_64', 'arm', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
+		'yocto': ['i586', 'i686', 'x86_64', 'arm', 'aarch64', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
 		}
 
 host = platform.system().lower()
@@ -336,8 +336,14 @@ elif env.get('ROUTING') == 'EP':
     defines.append('-DROUTING_EP=1')
 
 libs = []
+if env.get('WITH_TCP'):
+    defines.append('-DTCP_ADAPTER=1')
+    if env.get('SECURED'):
+        defines.append('-D__WITH_TLS__=1')
+
 if env.get('SECURED'):
     libs.append('-locpmapi')
+    defines.append('-D_WITH_DTLS_=1')
 
 pc_vars = {
     '\@VERSION\@': project_version,

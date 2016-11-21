@@ -360,14 +360,13 @@ JNIEXPORT jint JNICALL Java_org_iotivity_ca_CaInterface_setCipherSuiteImpl
   (JNIEnv *env, jclass clazz, jint cipherSuite, jint adapter)
 {
     LOGI("setCipherSuiteImpl");
-#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     (void)env;
     (void)clazz;
     CAResult_t ret = CASelectCipherSuite(cipherSuite, (CATransportAdapter_t) adapter);
+    if (CA_STATUS_OK != ret)
+    {
+        LOGE("CASelectCipherSuite has failed");
+    }
     return ret;
-#else
-    LOGE("Method not supported");
-    return -1;
-#endif //  __WITH_DTLS__ || __WITH_TLS__
 }
 

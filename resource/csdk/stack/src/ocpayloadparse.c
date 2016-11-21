@@ -898,8 +898,7 @@ static CborError OCParseArray(OCRepPayload *out, const char *name, CborValue *co
         res = OCRepPayloadSetNull(out, name);
         err = (CborError) !res;
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting value");
-        err = cbor_value_advance(container);
-        VERIFY_CBOR_SUCCESS(TAG, err, "Failed advancing container");
+        container = container + 1;
         return err;
     }
 

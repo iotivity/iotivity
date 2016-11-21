@@ -19,6 +19,9 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "rd_client.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "octypes.h"
@@ -125,7 +128,12 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
     }
     OCRepPayloadSetPropInt(rdPayload, OC_RSRVD_DEVICE_TTL, OIC_RD_PUBLISH_TTL);
 
-    const OCRepPayload *linkArr[nPubResHandles];
+    OCRepPayload **linkArr = OICCalloc(nPubResHandles, sizeof(OCRepPayload *));
+    if (!linkArr)
+    {
+       OCRepPayloadDestroy(rdPayload);
+       return OC_STACK_NO_MEMORY;
+    }
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = {nPubResHandles, 0, 0};
 
     for (uint8_t j = 0; j < nPubResHandles; j++)
@@ -152,7 +160,7 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
                     OIC_LOG_V(DEBUG, TAG, "value: %s", value);
                     rt[i] = OICStrdup(value);
                 }
-                OCRepPayloadSetStringArray(link, OC_RSRVD_RESOURCE_TYPE, (const char **)rt, rtDim);
+                OCRepPayloadSetStringArrayAsOwner(link, OC_RSRVD_RESOURCE_TYPE, rt, rtDim);
             }
 
             numElement = 0;
@@ -166,7 +174,7 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
                     OIC_LOG_V(DEBUG, TAG, "value: %s", value);
                     itf[i] = OICStrdup(value);
                 }
-                OCRepPayloadSetStringArray(link, OC_RSRVD_INTERFACE, (const char **)itf, ifDim);
+                OCRepPayloadSetStringArrayAsOwner(link, OC_RSRVD_INTERFACE, itf, ifDim);
             }
 
             uint8_t ins = 0;
@@ -178,8 +186,7 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
             size_t mtDim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
             char **mediaType = (char **)OICMalloc(sizeof(char *) * 1);
             mediaType[0] = OICStrdup(DEFAULT_MESSAGE_TYPE);
-            OCRepPayloadSetStringArray(link, OC_RSRVD_MEDIA_TYPE, (const char **)mediaType,
-            mtDim);
+            OCRepPayloadSetStringArrayAsOwner(link, OC_RSRVD_MEDIA_TYPE, mediaType, mtDim);
 
             OCResourceProperty p = OCGetResourceProperties(handle);
             p = (OCResourceProperty) ((p & OC_DISCOVERABLE) | (p & OC_OBSERVABLE));
@@ -191,8 +198,14 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
         }
     }
 
-    OCRepPayloadSetPropObjectArray(rdPayload, OC_RSRVD_LINKS, linkArr, dimensions);
+    OCRepPayloadSetPropObjectArray(rdPayload, OC_RSRVD_LINKS, (const OCRepPayload **)linkArr, dimensions);
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
+
+    for (uint8_t i = 0; i < nPubResHandles; i++)
+    {
+        OCRepPayloadDestroy(linkArr[i]);
+    }
+    OICFree(linkArr);
 
     return OCDoResource(NULL, OC_REST_POST, targetUri, NULL, (OCPayload *)rdPayload,
                         connectivityType, qos, cbData, NULL, 0);

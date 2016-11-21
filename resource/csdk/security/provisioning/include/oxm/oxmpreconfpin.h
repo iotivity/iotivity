@@ -38,7 +38,7 @@ extern "C" {
  *
  * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
  */
-OCStackResult LoadPreconfPinCodeCallback(OTMContext_t *otmCtx);
+OCStackResult LoadPreconfigPinCodeCallback(OTMContext_t *otmCtx);
 
 /**
  * Callback implementation to establish a secure channel with PSK cipher suite.
@@ -47,7 +47,7 @@ OCStackResult LoadPreconfPinCodeCallback(OTMContext_t *otmCtx);
  *
  * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
  */
-OCStackResult CreateSecureSessionPreconfPinCallback(OTMContext_t *otmCtx);
+OCStackResult CreateSecureSessionPreconfigPinCallback(OTMContext_t *otmCtx);
 
 /**
  * Generate payload for select OxM request.
@@ -59,8 +59,8 @@ OCStackResult CreateSecureSessionPreconfPinCallback(OTMContext_t *otmCtx);
  *
  * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
  */
-OCStackResult CreatePreconfPinBasedSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
-                                             size_t *cborSize);
+OCStackResult CreatePreconfigPinBasedSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
+                                               size_t *cborSize);
 
 /**
  * Generate payload for owner transfer request.
@@ -72,8 +72,8 @@ OCStackResult CreatePreconfPinBasedSelectOxmPayload(OTMContext_t *otmCtx, uint8_
  *
  * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
  */
-OCStackResult CreatePreconfPinBasedOwnerTransferPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
-                                                 size_t *cborSize);
+OCStackResult CreatePreconfigPinBasedOwnerTransferPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
+                                                   size_t *cborSize);
 
 #ifdef __cplusplus
 }

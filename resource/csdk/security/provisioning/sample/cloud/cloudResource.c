@@ -93,14 +93,14 @@ static OCEntityHandlerResult ProcessRequest (OCEntityHandlerRequest *request,
 
     *payload = getPayload(gResourceUri, currLEDResource->power, currLEDResource->state);
 
-    return OC_EH_OK;
+    return (*payload)? OC_EH_OK : OC_EH_ERROR;
 }
 
 static OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *request,
         char *resourceUri, OCRepPayload **payload)
 {
     OCRepPayload *answer = NULL;
-    OCEntityHandlerResult result = OC_EH_OK;
+    OCEntityHandlerResult result = OC_EH_ERROR;
 
     /*
      * The entity handler determines how to process a POST request.
@@ -142,7 +142,7 @@ static OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *request
                 gLedInstance[gCurrLedInstance].power = 0;
                 gCurrLedInstance++;
                 strncpy(resourceUri, uri, MAX_URI_LENGTH);
-                result = OC_EH_RESOURCE_CREATED;
+                result = OC_EH_OK;
             }
         }
         else
@@ -162,15 +162,9 @@ static OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *request
         }
     }
 
-    if (answer)
+    if (OC_EH_OK == result)
     {
         *payload = answer;
-        result = OC_EH_OK;
-    }
-    else
-    {
-        OIC_LOG_V (INFO, TAG, "Payload was NULL");
-        result = OC_EH_ERROR;
     }
 
     return result;

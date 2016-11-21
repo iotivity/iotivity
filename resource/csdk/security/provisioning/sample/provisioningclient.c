@@ -1256,13 +1256,13 @@ static int changeMultipleOwnershipTrnasferMode(void)
     }
 
     OCProvisionDev_t* motDev = getDevInst(g_own_list, dev_num);
-    if(OC_STACK_OK == MOTChangeMode(NULL, motDev, (OicSecMomType_t)dev_num, updateDoxmForMOTCB))
+    if(OC_STACK_OK == OCChangeMOTMode(NULL, motDev, (OicSecMomType_t)dev_num, updateDoxmForMOTCB))
     {
         g_doneCB = false;
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "MOTChangeMode API error");
+        OIC_LOG(ERROR, TAG, "OCChangeMOTMode API error");
         return -1;
     }
 
@@ -1327,13 +1327,13 @@ static int selectMultipleOwnershipTrnasferMethod(void)
     }
 
     OCProvisionDev_t* motDev = getDevInst(g_mot_enable_list, dev_num);
-    if(OC_STACK_OK ==  MOTSelectMOTMethod(NULL, motDev, (OicSecOxm_t)oxm, updateDoxmForMOTCB))
+    if(OC_STACK_OK ==  OCSelectMOTMethod(NULL, motDev, (OicSecOxm_t)oxm, updateDoxmForMOTCB))
     {
         g_doneCB = false;
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "MOTSelectMOTMethod API error");
+        OIC_LOG(ERROR, TAG, "OCSelectMOTMethod API error");
         return -1;
     }
 
@@ -1374,23 +1374,23 @@ static int provisionPreconfigPIN()
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
-    char preconfPIN[9] = {0};
-    printf("   > Input the PreconfigPIN (e.g. 12341234) : ");
+    char preconfigPin[9] = {0};
+    printf("   > Input the PreconfigPin (e.g. 12341234) : ");
     for(int ret=0; 1!=ret; )
     {
-        ret = scanf("%8s", preconfPIN);
+        ret = scanf("%8s", preconfigPin);
         for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                     // '0x20<=code' is character region
     }
 
     OCProvisionDev_t* motDev = getDevInst(g_mot_enable_list, dev_num);
-    if(OC_STACK_OK == OCProvisionPreconfPin(NULL, motDev, preconfPIN, strlen(preconfPIN), provisionCredCB))
+    if(OC_STACK_OK == OCProvisionPreconfigPin(NULL, motDev, preconfigPin, strlen(preconfigPin), provisionCredCB))
     {
         g_doneCB = false;
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionPreconfPin API error");
+        OIC_LOG(ERROR, TAG, "OCProvisionPreconfigPin API error");
         return -1;
     }
 
@@ -1722,9 +1722,22 @@ static OicSecAcl_t* createSimpleAcl(const OicUuid_t uuid)
     size_t arrLen = 1;
     rsrc->typeLen = arrLen;
     rsrc->types = (char**)OICCalloc(arrLen, sizeof(char*));
+    if(!rsrc->types)
+    {
+        OIC_LOG(DEBUG, TAG,  "OICCalloc error return");
+        OCDeleteACLList(acl);
+        return NULL;
+    }
+    rsrc->types[0] = OICStrdup("");   // ignore
+
     rsrc->interfaceLen = 1;
     rsrc->interfaces = (char**)OICCalloc(arrLen, sizeof(char*));
-    rsrc->types[0] = OICStrdup("");   // ignore
+    if(!rsrc->interfaces)
+    {
+        OIC_LOG(DEBUG, TAG,  "OICCalloc error return");
+        OCDeleteACLList(acl);
+        return NULL;
+    }
     rsrc->interfaces[0] = OICStrdup("oic.if.baseline");  // ignore
 
     LL_APPEND(ace->resources, rsrc);
@@ -2084,6 +2097,12 @@ int main()
     {
         OIC_LOG(ERROR, TAG, "ProvisionClient init error");
         goto PMCLT_ERROR;
+    }
+
+    // Client can choose a allowed/not-allowed OxM method.
+    if(OC_STACK_OK != OCSetOxmAllowStatus(OIC_DECENTRALIZED_PUBLIC_KEY, false))
+    {
+        OIC_LOG(WARNING, TAG, "Failed to disable OIC_DECENTRALIZED_PUBLIC_KEY OxM");
     }
 
 #ifdef _ENABLE_MULTIPLE_OWNER_

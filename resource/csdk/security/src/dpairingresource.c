@@ -51,7 +51,7 @@
 #include "global.h"
 #endif
 
-#define TAG  "SRM-DPAIRING"
+#define TAG  "OIC_SRM_DPAIRING"
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */
@@ -147,13 +147,14 @@ OCStackResult SavePairingPSK(OCDevAddr *endpoint,
 
     if (CA_STATUS_OK == pskRet)
     {
-        OIC_LOG(INFO, TAG, "pairingPSK dump:\n");
-        OIC_LOG_BUFFER(INFO, TAG, pairingPSK, OWNER_PSK_LENGTH_128);
+        OIC_LOG(DEBUG, TAG, "pairingPSK dump:\n");
+        OIC_LOG_BUFFER(DEBUG, TAG, pairingPSK, OWNER_PSK_LENGTH_128);
         //Generating new credential for direct-pairing client
 
         OicSecCred_t *cred = GenerateCredential(peerDevID,
                 SYMMETRIC_PAIR_WISE_KEY, NULL,
                 &pairingKey, owner, NULL);
+        OICClearMemory(pairingPSK, sizeof(pairingPSK));
         VERIFY_NON_NULL(TAG, cred, ERROR);
 
         res = AddCredential(cred);
@@ -243,7 +244,7 @@ OCStackResult DpairingToCBORPayload(const OicSecDpairing_t *dpair, uint8_t **pay
 
      if (CborNoError == cborEncoderResult)
     {
-        *size = encoder.ptr - outPayload;
+        *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
         *payload = outPayload;
         ret = OC_STACK_OK;
     }
@@ -254,7 +255,7 @@ exit:
        // reallocate and try again!
        OICFree(outPayload);
        // Since the allocated initial memory failed, double the memory.
-       cborLen += encoder.ptr - encoder.end;
+       cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
        cborEncoderResult = CborNoError;
        ret = DpairingToCBORPayload(dpair, payload, &cborLen);
        *size = cborLen;

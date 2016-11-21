@@ -898,7 +898,7 @@ static void CALEDataReceiverHandler(void *threadData)
                 bleData->dataLen - (CA_BLE_HEADER_SIZE + CA_BLE_LENGTH_HEADER_SIZE);
             OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Total data to be accumulated [%u] bytes",
                       newSender->totalDataLen);
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "data received in the first packet [%u] bytes",
+            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "data received in the first packet [%zu] bytes",
                       dataOnlyLen);
 
             newSender->defragData = OICCalloc(newSender->totalDataLen + 1,
@@ -965,7 +965,7 @@ static void CALEDataReceiverHandler(void *threadData)
             if (senderInfo->recvDataLen + dataOnlyLen > senderInfo->totalDataLen)
             {
                 OIC_LOG_V(ERROR, CALEADAPTER_TAG,
-                          "Data Length exceeding error!! Receiving [%d] total length [%d]",
+                          "Data Length exceeding error!! Receiving [%zu] total length [%u]",
                           senderInfo->recvDataLen + dataOnlyLen, senderInfo->totalDataLen);
                 u_arraylist_remove(bleData->senderInfo, senderIndex);
                 OICFree(senderInfo->defragData);
@@ -973,7 +973,7 @@ static void CALEDataReceiverHandler(void *threadData)
                 ca_mutex_unlock(g_bleReceiveDataMutex);
                 return;
             }
-            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Copying the data of length [%d]",
+            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Copying the data of length [%zu]",
                       dataOnlyLen);
             memcpy(senderInfo->defragData + senderInfo->recvDataLen,
                    bleData->data + CA_BLE_HEADER_SIZE,
@@ -1049,12 +1049,12 @@ static void CALEServerSendDataThread(void *threadData)
     }
 
     OIC_LOG_V(DEBUG, CALEADAPTER_TAG,
-              "Packet info: data size[%d] midPacketCount[%d] remainingLen[%d] totalLength[%d]",
+              "Packet info: data size[%d] midPacketCount[%u] remainingLen[%zu] totalLength[%zu]",
               bleData->dataLen, midPacketCount, remainingLen, totalLength);
 
     OIC_LOG_V(DEBUG,
               CALEADAPTER_TAG,
-              "Server total Data length with header is [%u]",
+              "Server total Data length with header is [%zu]",
               totalLength);
 
     uint8_t dataSegment[CA_SUPPORTED_BLE_MTU_SIZE] = {0};
@@ -1247,7 +1247,7 @@ static void CALEServerSendDataThread(void *threadData)
                 return;
             }
             OIC_LOG_V(DEBUG, CALEADAPTER_TAG,
-                      "Server Sent data length [%d]", remainingLen + CA_BLE_HEADER_SIZE);
+                      "Server Sent data length [%zu]", remainingLen + CA_BLE_HEADER_SIZE);
         }
      }
     else
@@ -1342,7 +1342,7 @@ static void CALEServerSendDataThread(void *threadData)
                 return;
             }
             OIC_LOG_V(DEBUG, CALEADAPTER_TAG,
-                      "Server Sent data length [%d]", remainingLen + CA_BLE_HEADER_SIZE);
+                      "Server Sent data length [%zu]", remainingLen + CA_BLE_HEADER_SIZE);
         }
     }
 
@@ -1379,7 +1379,7 @@ static void CALEClientSendDataThread(void *threadData)
     }
 
     OIC_LOG_V(DEBUG, CALEADAPTER_TAG,
-              "Packet info: data size[%d] midPacketCount[%d] remainingLen[%d] totalLength[%d]",
+              "Packet info: data size[%d] midPacketCount[%u] remainingLen[%zu] totalLength[%zu]",
               bleData->dataLen, midPacketCount, remainingLen, totalLength);
 
     uint8_t dataSegment[CA_SUPPORTED_BLE_MTU_SIZE] = {0};
@@ -1567,7 +1567,7 @@ static void CALEClientSendDataThread(void *threadData)
                 return;
             }
             OIC_LOG_V(DEBUG, CALEADAPTER_TAG,
-                      "Client Sent Data length  is [%d]", remainingLen + CA_BLE_HEADER_SIZE);
+                      "Client Sent Data length  is [%zu]", remainingLen + CA_BLE_HEADER_SIZE);
         }
     }
     else
@@ -1664,7 +1664,7 @@ static void CALEClientSendDataThread(void *threadData)
                 return;
             }
             OIC_LOG_V(DEBUG, CALEADAPTER_TAG,
-                      "Client Sent Data length  is [%d]", remainingLen + CA_BLE_HEADER_SIZE);
+                      "Client Sent Data length  is [%zu]", remainingLen + CA_BLE_HEADER_SIZE);
         }
     }
 
@@ -3374,7 +3374,7 @@ static void CALERemoveReceiveQueueData(u_arraylist_t *dataInfoList, const char* 
         uint32_t arrayLength = u_arraylist_length(portList);
         for (uint32_t i = 0; i < arrayLength; i++)
         {
-            uint16_t port = u_arraylist_get(portList, i);
+            uint16_t port = (uint16_t)(uintptr_t)u_arraylist_get(portList, i);
             OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "port : %X", port);
 
             if (CA_STATUS_OK == CALEGetSenderInfo(address, port,
@@ -3419,7 +3419,7 @@ static CAResult_t CALEGetPortsFromSenderInfo(const char *leAddress,
 
         if (!strncmp(info->remoteEndpoint->addr, leAddress, addrLength))
         {
-            u_arraylist_add(portList, (void *)info->remoteEndpoint->port);
+            u_arraylist_add(portList, (void *)(uintptr_t)info->remoteEndpoint->port);
         }
     }
 

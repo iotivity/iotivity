@@ -46,7 +46,7 @@
 
 #include "security_internals.h"
 
-#define TAG  "SRM-ACL"
+#define TAG  "OIC_SRM_ACL"
 #define NUMBER_OF_SEC_PROV_RSCS 4
 #define NUMBER_OF_DEFAULT_SEC_RSCS 2
 #define STRING_UUID_SIZE (UUID_LENGTH * 2 + 5)
@@ -131,6 +131,10 @@ static void FreeACE(OicSecAce_t *ace)
         OICFree(validity);
         validity = NULL;
     }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+    OICFree(ace->eownerID);
+#endif
 
     //Clean ACE
     OICFree(ace);
@@ -251,6 +255,18 @@ OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
                 }
             }
         }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+        if (ace->eownerID)
+        {
+            if (NULL == newAce->eownerID)
+            {
+                newAce->eownerID = (OicUuid_t*)OICCalloc(1, sizeof(OicUuid_t));
+                VERIFY_NON_NULL(TAG, (newAce->eownerID), ERROR);
+            }
+            memcpy(newAce->eownerID->id, ace->eownerID->id, sizeof(ace->eownerID->id));
+        }
+#endif
 
         newAce->next = NULL;
     }
@@ -625,7 +641,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
     if (CborNoError == cborEncoderResult)
     {
         OIC_LOG(DEBUG, TAG, "AclToCBORPayload Successed");
-        *size = encoder.ptr - outPayload;
+        *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
         *payload = outPayload;
         ret = OC_STACK_OK;
     }
@@ -637,7 +653,7 @@ exit:
         // reallocate and try again!
         OICFree(outPayload);
         // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         cborEncoderResult = CborNoError;
         ret = AclToCBORPayload(secAcl, payload, &cborLen);
         *size = cborLen;
@@ -1686,6 +1702,21 @@ static bool IsSameValidities(OicSecValidity_t* validities1, OicSecValidity_t* va
     return false;
 }
 
+#ifdef _ENABLE_MULTIPLE_OWNER_
+static bool IsSameEowner(OicUuid_t* eowner1, OicUuid_t* eowner2)
+{
+    if(NULL != eowner1 && NULL != eowner2)
+    {
+        if (memcmp(eowner1->id, eowner2->id, sizeof(eowner1->id)) == 0)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+#endif
+
 static bool IsSameACE(OicSecAce_t* ace1, OicSecAce_t* ace2)
 {
     if(ace1 && ace2)
@@ -1709,6 +1740,13 @@ static bool IsSameACE(OicSecAce_t* ace1, OicSecAce_t* ace2)
         {
             return false;
         }
+
+#ifdef _ENABLE_MULTIPLE_OWNER_
+        if(false == IsSameEowner(ace1->eownerID, ace2->eownerID))
+        {
+            return false;
+        }
+#endif
 
         return true;
     }
@@ -2317,7 +2355,7 @@ const OicSecAce_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAce_t **
     OicSecAce_t *ace = NULL;
     OicSecAce_t *begin = NULL;
 
-    if (NULL == subjectId)
+    if (NULL == subjectId || NULL == savePtr || NULL == gAcl)
     {
         return NULL;
     }

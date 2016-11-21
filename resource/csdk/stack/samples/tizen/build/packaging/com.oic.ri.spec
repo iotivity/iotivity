@@ -5,7 +5,7 @@
 %define DEST_LIB_DIR  %{buildroot}/%{_libdir}
 
 Name: com-oic-ri
-Version:    1.2.0
+Version:    1.2.1
 Release:    0
 Summary: Tizen oicri application
 Group: Network & Connectivity / IoT Connectivity
@@ -75,7 +75,7 @@ cp -f %{ROOTDIR}/resource/csdk/connectivity/src/libconnectivity_abstraction.so %
 cp -f %{ROOTDIR}/extlibs/libcoap/libcoap.a %{buildroot}/%{_libdir}
 # Renamed to avoid colision with system package
 # I suppose it was added to be used along Tizen SDK which does not ship it
-cp /usr/lib/libuuid.so.1 %{buildroot}%{_libdir}/libuuid1.so
+cp -av /usr/lib*/libuuid.so.1 %{buildroot}%{_libdir}/libuuid1.so ||:
 
 if echo %{SECURED}|grep -qi '1'; then
 	cp -f %{ROOTDIR}/out/tizen/*/*/extlibs/tinydtls/libtinydtls.a %{buildroot}/%{_libdir}

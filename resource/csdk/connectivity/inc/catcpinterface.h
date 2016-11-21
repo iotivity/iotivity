@@ -48,7 +48,7 @@ extern "C"
  */
 typedef void (*CATCPPacketReceivedCallback)(const CASecureEndpoint_t *endpoint,
                                             const void *data,
-                                            uint32_t dataLength);
+                                            size_t dataLength);
 
 /**
   * Callback to notify error in the TCP adapter.
@@ -60,7 +60,7 @@ typedef void (*CATCPPacketReceivedCallback)(const CASecureEndpoint_t *endpoint,
   * @pre  Callback must be registered using CAIPSetPacketReceiveCallback().
  */
 typedef void (*CATCPErrorHandleCallback)(const CAEndpoint_t *endpoint, const void *data,
-                                         uint32_t dataLength, CAResult_t result);
+                                         size_t dataLength, CAResult_t result);
 
 /**
   * Callback to notify connection information in the TCP adapter.
@@ -153,10 +153,9 @@ void CATCPSetConnectionChangedCallback(CATCPConnectionHandleCallback connHandler
  * @param[in]  endpoint          complete network address to send to.
  * @param[in]  data              Data to be send.
  * @param[in]  dataLength        Length of data in bytes.
- * @param[in]  isMulticast       Whether data needs to be sent to multicast ip.
+ * @return  Sent data length or -1 on error.
  */
-void CATCPSendData(CAEndpoint_t *endpoint, const void *data, uint32_t dataLength,
-                   bool isMulticast);
+ssize_t CATCPSendData(CAEndpoint_t *endpoint, const void *data, size_t dataLength);
 
 /**
  * Get a list of CAInterface_t items.
@@ -213,6 +212,16 @@ size_t CAGetTotalLengthFromHeader(const unsigned char *recvBuffer);
  * @return  TCP Server Information structure.
  */
 CATCPSessionInfo_t *CAGetSessionInfoFromFD(int fd, size_t *index);
+
+/**
+ * Find the session with endpoint info and remove it from list.
+ *
+ * @param[in]   endpoint    Remote Endpoint information (like ipaddress,
+ *                          port, reference uri and transport type) to
+ *                          which the unicast data has to be sent.
+ * @return  ::CA_STATUS_OK or Appropriate error code.
+ */
+CAResult_t CASearchAndDeleteTCPSession(const CAEndpoint_t *endpoint);
 
 /**
  * Get total payload length from CoAP over TCP header.

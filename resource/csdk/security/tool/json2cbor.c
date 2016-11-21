@@ -41,7 +41,7 @@
 #include "svcresource.h"
 #include "security_internals.h"
 
-#define TAG  "JSON2CBOR"
+#define TAG  "OIC_JSON2CBOR"
 #define MAX_RANGE   ((size_t)-1)
 //SVR database buffer block size
 static const size_t DB_FILE_SIZE_BLOCK = 1023;
@@ -276,7 +276,7 @@ static void ConvertJsonToCBOR(const char *jsonFileName, const char *cborFileName
     cborEncoderResult = cbor_encoder_close_container(&encoder, &map);
     VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Container.");
 
-    size_t s = encoder.ptr - outPayload;
+    size_t s = cbor_encoder_get_buffer_size(&encoder, outPayload);
     OIC_LOG_V(DEBUG, TAG, "Payload size %zu", s);
 
     fp1 = fopen(cborFileName, "w");

@@ -94,6 +94,7 @@ void printMenu()
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     std::cout << "  13. Save the Trust Cert. Chain into Cred of SVR"<<std::endl;
     std::cout << "  14. Provision the Trust Cert. Chain"<<std::endl;
+    std::cout << "  15. Read trust cert chain"<<std::endl;
 #endif // __WITH_DTLS__ || __WITH_TLS__
     std::cout << "  99. Exit loop"<<std::endl;
 }
@@ -816,11 +817,11 @@ static int saveTrustCert(void)
         size_t fsize;
         if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)) >= 0)
         {
-            trustCertChainArray.data = (uint8_t*)OICMalloc(fsize);
+            trustCertChainArray.data = (uint8_t*)OICCalloc(1, fsize);
             trustCertChainArray.len = fsize;
             if (NULL == trustCertChainArray.data)
             {
-                OIC_LOG(ERROR,TAG,"malloc");
+                OIC_LOG(ERROR,TAG,"Failed to allocate memory");
                 fclose(fp);
                 return -1;
             }
@@ -844,6 +845,12 @@ static int saveTrustCert(void)
     printf("CredId of Saved Trust Cert. Chain into Cred of SVR : %d.\n", g_credId);
 
     return 0;
+}
+
+void certChainCallBack(uint16_t credId, uint8_t *trustCertChain,size_t chainSize)
+{
+    OIC_LOG_V(INFO, TAG, "trustCertChain Changed for credId %u", credId);
+    return;
 }
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
@@ -1286,10 +1293,14 @@ int main(void)
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
                 case 13:
                     {
+                        std::cout<< "registering cert chain change notifier"<<std::endl;
+                        OCSecure::registerTrustCertChangeNotifier(certChainCallBack);
                         if(saveTrustCert())
                         {
                             std::cout<<"Error in saving cert"<<std::endl;
                         }
+                        std::cout<< "Unregister notifier"<<std::endl;
+                        OCSecure::removeTrustCertChangeNotifier();
                         break;
                     }
                 case 14:
@@ -1308,6 +1319,27 @@ int main(void)
                         {
                             ask = 1;
                             std::cout <<"provision cert is failed"<< std::endl;
+                        }
+                        break;
+                    }
+                case 15:
+                    {
+                        if (0==g_credId)
+                        {
+                            std::cout<<"please save cert using option 13.";
+                        }
+                        else
+                        {
+                            uint8_t *trustCertChain = NULL;
+                            size_t chainSize = 0;
+                            if (OC_STACK_OK != OCSecure::readTrustCertChain(g_credId, &trustCertChain,&chainSize))
+                            {
+                                std::cout <<"issue in read trust chain"<< std::endl;
+                            }
+                            else
+                            {
+                                std::cout<<"size of cert : "<<chainSize<<std::endl;
+                            }
                         }
                         break;
                     }

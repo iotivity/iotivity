@@ -1,6 +1,4 @@
 ; Windows octbstack.dll exports that are required just for tests.
 
-encodeAddressForRFC6874
-
 OCConvertPayload
 OCParsePayload

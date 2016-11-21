@@ -52,7 +52,11 @@
 #include "srmutility.h"
 #include "pinoxmcommon.h"
 
-#define TAG  "SRM-DOXM"
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+#include "pkix_interface.h"
+#endif
+
+#define TAG  "OIC_SRM_DOXM"
 #define CHAR_ZERO ('0')
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
@@ -345,7 +349,7 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
 
     if (CborNoError == cborEncoderResult)
     {
-        *size = encoder.ptr - outPayload;
+        *size = cbor_encoder_get_buffer_size(&encoder, outPayload);
         *payload = outPayload;
         ret = OC_STACK_OK;
     }
@@ -356,7 +360,7 @@ exit:
         // reallocate and try again!
         OICFree(outPayload);
         // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         OIC_LOG_V(DEBUG, TAG, "Doxm reallocation size : %zd.", cborLen);
         cborEncoderResult = CborNoError;
         ret = DoxmToCBORPayload(doxm, payload, &cborLen, rwOnly);
@@ -543,11 +547,6 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
         OICFree(strUuid);
         strUuid  = NULL;
-
-        if (roParsed)
-        {
-            *roParsed = true;
-        }
     }
     else
     {
@@ -873,6 +872,9 @@ static void updateWriteableProperty(const OicSecDoxm_t* src, OicSecDoxm_t* dst)
         //update rowner
         memcpy(&(dst->rownerID), &(src->rownerID), sizeof(OicUuid_t));
 
+        //update deviceuuid
+        memcpy(&(dst->deviceID), &(src->deviceID), sizeof(OicUuid_t));
+
         //Update owned status
         if(dst->owned != src->owned)
         {
@@ -930,15 +932,30 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
         const CASecureEndpoint_t* authenticatedSubOwnerInfo = CAGetSecureEndpointData(object);
         if(authenticatedSubOwnerInfo)
         {
-            OicSecSubOwner_t* subOwnerInst = (OicSecSubOwner_t*)OICMalloc(sizeof(OicSecSubOwner_t));
-            if(subOwnerInst)
+            OicSecSubOwner_t* subOwnerInst = NULL;
+            LL_FOREACH(gDoxm->subOwners, subOwnerInst)
             {
-                OIC_LOG(DEBUG, TAG, "Adding New SubOwner");
-                memcpy(subOwnerInst->uuid.id, authenticatedSubOwnerInfo->identity.id, authenticatedSubOwnerInfo->identity.id_length);
-                LL_APPEND(gDoxm->subOwners, subOwnerInst);
-                if(!UpdatePersistentStorage(gDoxm))
+                if(0 == memcmp(subOwnerInst->uuid.id,
+                               authenticatedSubOwnerInfo->identity.id,
+                               authenticatedSubOwnerInfo->identity.id_length))
                 {
-                    OIC_LOG(ERROR, TAG, "Failed to register SubOwner UUID into Doxm");
+                    break;
+                }
+            }
+
+            if(NULL == subOwnerInst)
+            {
+                subOwnerInst = (OicSecSubOwner_t*)OICCalloc(1, sizeof(OicSecSubOwner_t));
+                if(subOwnerInst)
+                {
+                    OIC_LOG(DEBUG, TAG, "Adding New SubOwner");
+                    memcpy(subOwnerInst->uuid.id, authenticatedSubOwnerInfo->identity.id,
+                           authenticatedSubOwnerInfo->identity.id_length);
+                    LL_APPEND(gDoxm->subOwners, subOwnerInst);
+                    if(!UpdatePersistentStorage(gDoxm))
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to register SubOwner UUID into Doxm");
+                    }
                 }
             }
         }
@@ -1214,6 +1231,30 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                     }
 #endif // __WITH_DTLS__ or __WITH_TLS__
                 }
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+                else if (OIC_MANUFACTURER_CERTIFICATE ==  newDoxm->oxmSel)
+                {
+                    //Save the owner's UUID to derive owner credential
+                    memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
+                    gDoxm->oxmSel = newDoxm->oxmSel;
+                    //Update new state in persistent storage
+                    if (UpdatePersistentStorage(gDoxm))
+                    {
+                        ehRet = OC_EH_OK;
+                    }
+                    else
+                    {
+                        OIC_LOG(WARNING, TAG, "Failed to update DOXM in persistent storage");
+                        ehRet = OC_EH_ERROR;
+                    }
+                    CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
+                    VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+                    OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+
+                    VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterPkixInfoHandler(GetManufacturerPkixInfo), ERROR);
+                    VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterGetCredentialTypesHandler(InitManufacturerCipherSuiteList), ERROR);
+                }
+#endif // __WITH_DTLS__ or __WITH_TLS__
             }
 
             /*
@@ -1284,6 +1325,13 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                     OIC_LOG(ERROR, TAG, "Failed to update DOXM in persistent storage");
                     ehRet = OC_EH_ERROR;
                 }
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+                if (OIC_MANUFACTURER_CERTIFICATE == gDoxm->oxmSel)
+                {
+                    CAregisterPkixInfoHandler(GetPkixInfo);
+                    CAregisterGetCredentialTypesHandler(InitCipherSuiteList);
+                }
+#endif // __WITH_DTLS__ or __WITH_TLS__
             }
         }
     }

@@ -33,7 +33,7 @@
 #include "payload_logging.h"
 #include "cacommonutil.h"
 
-#define TAG "CLOUD-CRL"
+#define TAG "OIC_CLOUD_CRL"
 
 /**
  * CRL GET request received data handler

@@ -17,69 +17,85 @@
 // limitations under the License.
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#include "OCApi.h"
-#include "OCPlatform.h"
+#include <iostream>
+#include "octypes.h"
+#include "ocstack.h"
+#include "payload_logging.h"
 
 bool g_foundResource = true;
 static int count = 0;
-using namespace OC;
+#define DEFAULT_CONTEXT_VALUE       (0x99)
 
-void foundResource(std::shared_ptr< OC::OCResource > resource)
+OCStackApplicationResult foundResource(void* ctx,
+                OCDoHandle handle,
+                OCClientResponse *clientResponse)
 {
-    try
+    (void)handle;
+    (void) ctx;
+    if (clientResponse == NULL)
     {
-        std::cout << "Found resource response." << std::endl;
-        if (resource)
-        {
-            // if (resource->uri() == "/a/light")
-            {
-                std::cout << "Found Resource at @ URI: " << resource->uri() << "\tHost Address: " <<
-                          resource->host() << std::endl;
-            }
-            count++;
-        }
-        else
-        {
-            std::cout << "Resource is invalid " << resource->uri() << std::endl;
-        }
-        if (count == 3)
-        {
-            g_foundResource = false;
-            exit(0);
-        }
+        std::cout << "foundResource received NULL clientResponse" << std::endl;
+        return   OC_STACK_DELETE_TRANSACTION;
     }
-    catch (std::exception &ex)
+
+    std::cout << "Found resource response." << std::endl;
+    OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
+    count++;
+
+    if (count == 3)
     {
-        std::cout << "Exception: " << ex.what() << " in foundResource" << std::endl;
-        exit(1);
+        g_foundResource = false;
+        exit(0);
     }
+    return OC_STACK_KEEP_TRANSACTION;
+}
+
+OCStackResult findResource(std::string str, OCClientResponseHandler cb)
+{
+    OCCallbackData cbData;
+    cbData.context = (void *)DEFAULT_CONTEXT_VALUE;
+    cbData.cb = cb;
+
+    return OCDoResource(nullptr, OC_REST_DISCOVER,
+             str.c_str(), nullptr, nullptr, CT_DEFAULT,
+             static_cast<OCQualityOfService>(OC_LOW_QOS),
+             &cbData, nullptr, 0);
 }
 
 int main()
 {
-    OC::PlatformConfig cfg;
-    OC::OCPlatform::Configure(cfg);
     bool sendRequest = true;
+    std::cout << "Initializing IoTivity Platform" << std::endl;
+    OCStackResult result = OCInit(NULL, 0, OC_CLIENT_SERVER);
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "OCInit Failed" << result << std::endl;
+        return -1;
+    }
 
     std::cout << "Created Platform..." << std::endl;
 
     while (g_foundResource)
     {
-        try
+        if (sendRequest)
         {
-            if (sendRequest)
+            sendRequest = false;
+            std::cout << "Finding Resource light" << std::endl;
+            if (OC_STACK_OK != findResource("/oic/res?rt=core.light", foundResource))
             {
-                sendRequest = false;
-                std::cout << "Finding Resource light" << std::endl;
-                OC::OCPlatform::findResource("",  "/oic/res?rt=core.light", CT_DEFAULT, &foundResource);
-                OC::OCPlatform::findResource("",  "/oic/res?if=oic.if.baseline", CT_DEFAULT, &foundResource);
-                OC::OCPlatform::findResource("",  "/oic/res", CT_DEFAULT, &foundResource);
+                std::cout << "Exception finding resources : " << std::endl;
+                sendRequest = true;
             }
-        }
-        catch (OC::OCException &ex)
-        {
-            sendRequest = true;
-            std::cout << "Exception finding resources : " << ex.reason() << std::endl;
+            if (OC_STACK_OK != findResource("/oic/res?if=oic.if.baseline", foundResource))
+            {
+                std::cout << "Exception finding resources : " << std::endl;
+                sendRequest = true;
+            }
+            if (OC_STACK_OK != findResource("/oic/res", foundResource))
+            {
+                std::cout << "Exception finding resources : " << std::endl;
+                sendRequest = true;
+            }
         }
     }
 }

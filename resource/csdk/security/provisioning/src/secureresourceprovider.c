@@ -49,7 +49,7 @@
 #include "crlresource.h"
 #endif // WITH_X509__
 
-#define TAG "SRPAPI"
+#define TAG "OIC_SRPAPI"
 
 /**
  * Macro to verify argument is not equal to NULL.
@@ -64,6 +64,9 @@
  */
 #define VERIFY_SUCCESS(tag, op, logLevel, retValue) { if (!(op)) \
             {OIC_LOG((logLevel), tag, #op " failed!!"); return retValue;} }
+
+
+trustCertChainContext_t g_trustCertChainNotifier;
 
 /**
  * Structure to carry credential data to callback.
@@ -338,6 +341,7 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
                         query, sizeof(query), OIC_RSRC_CRED_URI))
     {
         OIC_LOG(ERROR, TAG, "DeviceDiscoveryHandler : Failed to generate query");
+        OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -452,6 +456,26 @@ static OCStackResult provisionCertCred(const OicSecCred_t *cred,
     return ret;
 }
 
+OCStackResult SRPRegisterTrustCertChainNotifier(void *ctx, TrustCertChainChangeCB callback)
+{
+    if (g_trustCertChainNotifier.callback)
+    {
+        OIC_LOG(ERROR, TAG, "Can't register Notifier, Unregister previous one");
+        return OC_STACK_ERROR;
+    }
+
+    g_trustCertChainNotifier.callback = callback;
+    g_trustCertChainNotifier.context = ctx;
+    return OC_STACK_OK;
+}
+
+void SRPRemoveTrustCertChainNotifier()
+{
+    g_trustCertChainNotifier.callback = NULL;
+    g_trustCertChainNotifier.context = NULL;
+    return;
+}
+
 /**
  * Callback handler for handling callback of certificate provisioning device.
  *
@@ -541,6 +565,7 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
                         query, sizeof(query), OIC_RSRC_CRED_URI))
     {
         OIC_LOG(ERROR, TAG, "SRPProvisionTrustCertChain : Failed to generate query");
+        OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_ERROR;
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
@@ -551,6 +576,7 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
     if (NULL == certData)
     {
         OIC_LOG(ERROR, TAG, "Memory allocation problem");
+        OCPayloadDestroy((OCPayload *)secPayload);
         return OC_STACK_NO_MEMORY;
     }
     certData->deviceInfo = selectedDeviceInfo;
@@ -628,6 +654,16 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
         return res;
     }
     *credId = cred->credId;
+
+    if (g_trustCertChainNotifier.callback)
+    {
+        uint8_t *certChain = (uint8_t*)OICCalloc(1, sizeof(uint8_t) * chainSize);
+        VERIFY_NON_NULL(TAG, certChain, ERROR, OC_STACK_NO_MEMORY);
+        memcpy(certChain, trustCertChain, chainSize);
+        g_trustCertChainNotifier.callback(g_trustCertChainNotifier.context, credId,
+                certChain, chainSize);
+        OICFree(certChain);
+    }
 
     OIC_LOG(DEBUG, TAG, "OUT SRPSaveTrustCertChain");
 
@@ -1172,6 +1208,16 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
         return OC_STACK_ERROR;
     }
 
+    char addressEncoded[CA_MAX_URI_LENGTH] = {0};
+    OCStackResult result = OCEncodeAddressForRFC6874(addressEncoded,
+                                                     sizeof(addressEncoded),
+                                                     destDev->endpoint.addr);
+    if (OC_STACK_OK != result)
+    {
+        OIC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : encoding error %d\n", result);
+        return OC_STACK_ERROR;
+    }
+
     char reqBuf[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     int snRet = 0;
                     //coaps://0.0.0.0:5684/oic/sec/cred?subjectid=(Canonical ENCODED UUID)
@@ -1182,7 +1228,8 @@ static OCStackResult SendDeleteCredentialRequest(void* ctx,
         srpUri = SRP_FORM_DELETE_CREDENTIAL_TCP;
     }
 #endif
-    snRet = snprintf(reqBuf, sizeof(reqBuf), srpUri, destDev->endpoint.addr,
+
+    snRet = snprintf(reqBuf, sizeof(reqBuf), srpUri, addressEncoded,
                      destDev->securePort, OIC_RSRC_CRED_URI, OIC_JSON_SUBJECTID_NAME, subID);
     OICFree(subID);
     if (snRet < 0)
@@ -1237,10 +1284,21 @@ static OCStackResult SendDeleteACLRequest(void* ctx,
         return OC_STACK_ERROR;
     }
 
+    char addressEncoded[CA_MAX_URI_LENGTH] = {0};
+    OCStackResult result = OCEncodeAddressForRFC6874(addressEncoded,
+                                                     sizeof(addressEncoded),
+                                                     destDev->endpoint.addr);
+    if (OC_STACK_OK != result)
+    {
+        OIC_LOG_V(ERROR, TAG, "SendDeleteCredentialRequest : encoding error %d\n", result);
+        return OC_STACK_ERROR;
+    }
+
+
     char reqBuf[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     int snRet = 0;
                     //coaps://0.0.0.0:5684/oic/sec/acl?subjectuuid=(Canonical ENCODED UUID)
-    snRet = snprintf(reqBuf, sizeof(reqBuf), SRP_FORM_DELETE_CREDENTIAL, destDev->endpoint.addr,
+    snRet = snprintf(reqBuf, sizeof(reqBuf), SRP_FORM_DELETE_CREDENTIAL, addressEncoded,
                      destDev->securePort, OIC_RSRC_ACL_URI, OIC_JSON_SUBJECTID_NAME, subID);
     OICFree(subID);
     if (snRet < 0)
@@ -2669,4 +2727,25 @@ OCStackResult SRPGetACLResource(void *ctx, const OCProvisionDev_t *selectedDevic
     OIC_LOG(DEBUG, TAG, "OUT SRPGetACLResource");
 
     return OC_STACK_OK;
+}
+
+OCStackResult SRPReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
+                                     size_t *chainSize)
+{
+    OIC_LOG(DEBUG, TAG, "IN SRPReadTrustCertChain");
+
+    OCStackResult res = OC_STACK_ERROR;
+    int secureFlag = 0;
+    OicSecCred_t* credData = GetCredEntryByCredId(credId);
+    if(credData)
+    {
+        res = CredToCBORPayload((const OicSecCred_t*) credData, trustCertChain,
+                                chainSize, secureFlag);
+        if(OC_STACK_OK != res)
+        {
+            OIC_LOG(INFO, TAG, "CredToCBORPayload failed");
+        }
+    }
+    DeleteCredList(credData);
+    return res;
 }

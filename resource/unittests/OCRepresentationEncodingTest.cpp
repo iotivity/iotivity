@@ -301,11 +301,22 @@ namespace OCRepresentationEncodingTest
     {
         OC::OCRepresentation startRep;
         std::vector<int> iarr {};
-        startRep["iarr"] = {};
+        std::vector<double> darr {};
+        std::vector<bool> barr {};
+        std::vector<std::string> strarr {};
+        std::vector<OC::OCRepresentation> objarr {};
+        std::vector<OCByteString> bytestrarr {{NULL, 0}};
+        startRep.setValue("StringAttr", std::string(""));
+        startRep["iarr"] = iarr;
+        startRep["darr"] = darr;
+        startRep["barr"] = barr;
+        startRep["strarr"] = strarr;
+        startRep["objarr"] = objarr;
+        startRep["bytestrarr"] = bytestrarr;
+        startRep.setValue("StringAttr2", std::string("String attr"));
 
         OC::MessageContainer mc1;
         mc1.addRepresentation(startRep);
-
         OCRepPayload* cstart = mc1.getPayload();
         EXPECT_EQ(PAYLOAD_TYPE_REPRESENTATION, cstart->base.type);
 
@@ -323,9 +334,21 @@ namespace OCRepresentationEncodingTest
         EXPECT_EQ(1u, mc2.representations().size());
         const OC::OCRepresentation& r = mc2.representations()[0];
 
+        EXPECT_STREQ("", r.getValue<std::string>("StringAttr").c_str());
         std::vector<int> iarr2 = r["iarr"];
-
         EXPECT_EQ(iarr, iarr2);
+        std::vector<double> darr2 = r["darr"];
+        EXPECT_EQ(darr, darr2);
+        std::vector<bool> barr2 = r["barr"];
+        EXPECT_EQ(barr, barr2);
+        std::vector<std::string> strarr2 = r["strarr"];
+        EXPECT_EQ(strarr, strarr2);
+        std::vector<OC::OCRepresentation> objarr2 = r["objarr"];
+        EXPECT_EQ(objarr, objarr2);
+        std::vector<uint8_t> binAttr = r.getValue<std::vector<uint8_t>>("BinaryAttr");
+        EXPECT_EQ(bytestrarr[0].len, binAttr.size());
+        EXPECT_STREQ("String attr", r.getValue<std::string>("StringAttr2").c_str());
+        OIC_LOG_PAYLOAD(DEBUG, cparsed);
         OCPayloadDestroy(cparsed);
     }
 

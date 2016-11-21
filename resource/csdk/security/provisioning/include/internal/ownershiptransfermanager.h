@@ -47,6 +47,17 @@ typedef struct OTMContext OTMContext_t;
 OCStackResult OTMDoOwnershipTransfer(void* ctx,
                                      OCProvisionDev_t* selectedDeviceList, OCProvisionResultCB resultCB);
 
+/**
+ * API to set a allow status of OxM
+ *
+ * @param[in] oxm Owership transfer method (ref. OicSecOxm_t)
+ * @param[in] allowStatus allow status (true = allow, false = not allow)
+ *
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OTMSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus);
+
+
 /*
  *Callback for load secret for temporal secure session
  *
@@ -54,7 +65,6 @@ OCStackResult OTMDoOwnershipTransfer(void* ctx,
  *       in case of X.509 based, input the certificate through this callback
  */
 typedef OCStackResult (*OTMLoadSecret)(OTMContext_t* otmCtx);
-
 
 /*
  * Callback for create secure channel using secret inputed from OTMLoadSecret callback
@@ -89,6 +99,7 @@ struct OTMContext{
     OCProvisionResult_t* ctxResultArray;      /**< Result array having result of all device. */
     size_t ctxResultArraySize;                /**< No of elements in result array. */
     bool ctxHasError;                         /**< Does OT process have any error. */
+    OCDoHandle ocDoHandle;                    /** <A handle for latest request message*/
     OTMCallbackData_t otmCallback; /**< OTM callbacks to perform the OT/MOT. **/
     int attemptCnt;
 };

@@ -18,9 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include <iostream>
+#include <sstream>
+#include <limits>
 
-#include "OCPlatform.h"
-#include "OCApi.h"
 #include "oic_string.h"
 
 #include "rd_client.h"
@@ -29,46 +29,40 @@
 #define TAG ("RD_PublishClient")
 #define DEFAULT_CONTEXT_VALUE 0x99
 
-using namespace OC;
-
 OCResourceHandle handles[2];
 std::ostringstream rdAddress;
 
-
-void registerLocalResources()
+OCStackResult registerLocalResources()
 {
     std::string resourceURI_thermostat = "/a/thermostat";
     std::string resourceTypeName_thermostat = "core.thermostat";
     std::string resourceURI_light = "/a/light";
     std::string resourceTypeName_light = "core.light";
-    std::string resourceInterface = DEFAULT_INTERFACE;
+    std::string resourceInterface = OC_RSRVD_INTERFACE_DEFAULT;
     uint8_t resourceProperty = OC_DISCOVERABLE;
 
-    OCStackResult result = OCPlatform::registerResource(handles[0],
-                           resourceURI_thermostat,
-                           resourceTypeName_thermostat,
-                           resourceInterface,
-                           NULL,
-                           resourceProperty);
+    OCStackResult result = OCCreateResource(&handles[0],
+                                           resourceTypeName_thermostat.c_str(),
+                                           resourceInterface.c_str(),
+                                           resourceURI_thermostat.c_str(),
+                                           NULL,
+                                           NULL,
+                                           resourceProperty);
 
     if (OC_STACK_OK != result)
     {
-        throw std::runtime_error(
-            std::string("Device Resource failed to start") + std::to_string(result));
+        return result;
     }
 
-    result = OCPlatform::registerResource(handles[1],
-                                          resourceURI_light,
-                                          resourceTypeName_light,
-                                          resourceInterface,
-                                          NULL,
-                                          resourceProperty);
+    result = OCCreateResource(&handles[1],
+                              resourceTypeName_light.c_str(),
+                              resourceInterface.c_str(),
+                              resourceURI_light.c_str(),
+                              NULL,
+                              NULL,
+                              resourceProperty);
 
-    if (OC_STACK_OK != result)
-    {
-        throw std::runtime_error(
-            std::string("Device Resource failed to start") + std::to_string(result));
-    }
+    return result;
 }
 
 void printHelp()
@@ -106,33 +100,31 @@ static OCStackApplicationResult handlePublishCB(__attribute__((unused))void *ctx
 
 int main()
 {
-    int in;
-    PlatformConfig cfg;
-
-    OCPlatform::Configure(cfg);
+    std::cout << "Initializing IoTivity Platform" << std::endl;
+    OCStackResult result = OCInit(NULL, 0, OC_CLIENT_SERVER);
+    if (OC_STACK_OK != result)
+    {
+        std::cout << "OCInit Failed" << result << std::endl;
+        return -1;
+    }
 
     std::cout << "Created Platform..." << std::endl;
-
-    try
+    result = registerLocalResources();
+    if (OC_STACK_OK != result)
     {
-        registerLocalResources();
-    }
-    catch (std::runtime_error e)
-    {
-        std::cout << "Caught OCException [Code: " << e.what() << std::endl;
+        std::cout << "Could not create the resource " << result << std::endl;
+        return -1;
     }
 
     while (1)
     {
-        sleep(2);
-
         if (handles[0] == NULL || handles[1] == NULL)
         {
             continue;
         }
         printHelp();
 
-        in = 0;
+        int in = 0;
         std::cin >> in;
 
         if (std::cin.fail())
@@ -143,40 +135,33 @@ int main()
             continue;
         }
 
-        try
+        switch ((int)in)
         {
-            switch ((int)in)
+            case 1:
             {
-                case 1:
-                {
-                    OCCallbackData cbData;
-                    cbData.cb = &handleDiscoveryCB;;
-                    cbData.cd = NULL;
-                    cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
-                    OCRDDiscover(CT_ADAPTER_IP, &cbData, OC_LOW_QOS);
-                    break;
-                }
-                case 2:
-                {
-                    OCCallbackData cbData;
-                    cbData.cb = &handlePublishCB;
-                    cbData.cd = NULL;
-                    cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
-                    std::string address = rdAddress.str();
-                    OCRDPublish(address.c_str(), CT_ADAPTER_IP, handles,
-                                2, &cbData, OC_LOW_QOS);
-                    break;
-                }
-                case 3:
-                    break;
-                default:
-                    std::cout << "Invalid input, please try again" << std::endl;
-                    break;
+                OCCallbackData cbData;
+                cbData.cb = &handleDiscoveryCB;;
+                cbData.cd = NULL;
+                cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
+                OCRDDiscover(CT_ADAPTER_IP, &cbData, OC_LOW_QOS);
+                break;
             }
-        }
-        catch (OCException e)
-        {
-            std::cout << "Caught OCException [Code: " << e.code() << " Reason: " << e.reason() << std::endl;
+            case 2:
+            {
+                OCCallbackData cbData;
+                cbData.cb = &handlePublishCB;
+                cbData.cd = NULL;
+                cbData.context = (void*) DEFAULT_CONTEXT_VALUE;
+                std::string address = rdAddress.str();
+                OCRDPublish(address.c_str(), CT_ADAPTER_IP, handles,
+                            2, &cbData, OC_LOW_QOS);
+                break;
+            }
+            case 3:
+                break;
+            default:
+                std::cout << "Invalid input, please try again" << std::endl;
+                break;
         }
     }
     return 0;

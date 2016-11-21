@@ -370,6 +370,9 @@ extern "C" {
 /** Account URI.*/
 #define OC_RSRVD_ACCOUNT_URI               "/oic/account"
 
+/** Account user URI.*/
+#define OC_RSRVD_ACCOUNT_USER_URI          "/oic/account/user"
+
 /** Account session URI.*/
 #define OC_RSRVD_ACCOUNT_SESSION_URI       "/oic/account/session"
 
@@ -406,32 +409,32 @@ extern "C" {
 /** Defines user UUID. */
 #define OC_RSRVD_USER_UUID                 "uid"
 
-/** Defines user ID. */
-#define OC_RSRVD_USER_ID                   "userid"
-
 /** Defines group ID. */
 #define OC_RSRVD_GROUP_ID                  "gid"
-
-/** Defines group Master ID. */
-#define OC_RSRVD_GROUP_MASTER_ID           "gmid"
-
-/** Defines group type. */
-#define OC_RSRVD_GROUP_TYPE                "gtype"
 
 /** Defines member of group ID. */
 #define OC_RSRVD_MEMBER_ID                 "mid"
 
-/** Defines device ID list. */
-#define OC_RSRVD_DEVICE_ID_LIST            "dilist"
-
-/** Defines public. */
-#define OC_RSRVD_PUBLIC                    "Public"
-
-/** Defines private. */
-#define OC_RSRVD_PRIVATE                   "Private"
-
 /** Defines invite. */
 #define OC_RSRVD_INVITE                    "invite"
+
+/** Defines accept. */
+#define OC_RSRVD_ACCEPT                    "accept"
+
+/** Defines operation. */
+#define OC_RSRVD_OPERATION                 "op"
+
+/** Defines add. */
+#define OC_RSRVD_ADD                       "add"
+
+/** Defines delete. */
+#define OC_RSRVD_DELETE                    "delete"
+
+/** Defines owner. */
+#define OC_RSRVD_OWNER                     "owner"
+
+/** Defines members. */
+#define OC_RSRVD_MEMBERS                   "members"
 
 /** To represent grant type with refresh token. */
 #define OC_RSRVD_GRANT_TYPE_REFRESH_TOKEN  "refresh_token"
@@ -981,6 +984,7 @@ typedef enum
      * This error is pushed from DTLS interface when handshake failure happens
      */
     OC_STACK_AUTHENTICATION_FAILURE,
+    OC_STACK_NOT_ALLOWED_OXM,
 
     /** Insert all new error codes here!.*/
 #ifdef WITH_PRESENCE
@@ -1693,6 +1697,28 @@ typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
  */
 typedef void (*OCDirectPairingCB)(void *ctx, OCDPDev_t *peer, OCStackResult result);
 //#endif // DIRECT_PAIRING
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+/**
+ * Callback function definition for Change in TrustCertChain
+ *
+ * @param[IN] ctx - user context returned in the callback.
+ * @param[IN] credId - trustCertChain changed for this ID
+ * @param[IN] trustCertChain - trustcertchain binary blob.
+ * @param[IN] chainSize - size of trustchain
+ */
+typedef void (*TrustCertChainChangeCB)(void *ctx, uint16_t credId, uint8_t *trustCertChain,
+        size_t chainSize);
+
+/**
+ * certChain context structure.
+ */
+typedef struct trustCertChainContext
+{
+    TrustCertChainChangeCB callback;
+    void *context;
+} trustCertChainContext_t;
+#endif
 
 #ifdef __cplusplus
 }

@@ -652,6 +652,42 @@ OCStackResult OCGetDeviceId(OCUUIdentity *deviceId);
  * @return Returns ::OC_STACK_OK if success.
  */
 OCStackResult OCSetDeviceId(const OCUUIdentity *deviceId);
+
+/**
+ * Encode an address string to match RFC 6874.
+ *
+ * @param outputAddress    a char array to be written with the encoded string.
+ *
+ * @param outputSize       size of outputAddress buffer.
+ *
+ * @param inputAddress     a char array of size <= CA_MAX_URI_LENGTH
+ *                         containing a valid IPv6 address string.
+ *
+ * @return ::OC_STACK_OK on success and other value otherwise.
+ */
+OCStackResult OCEncodeAddressForRFC6874(char* outputAddress,
+                                        size_t outputSize,
+                                        const char* inputAddress);
+
+/**
+ * Decode an address string according to RFC 6874.
+ *
+ * @param outputAddress    a char array to be written with the decoded string.
+ *
+ * @param outputSize       size of outputAddress buffer.
+ *
+ * @param inputAddress     a valid percent-encoded address string.
+ *
+ * @param end              NULL if the entire entire inputAddress is a null-terminated percent-
+ *                         encoded address string.  Otherwise, a pointer to the first byte that
+ *                         is not part of the address string (e.g., ']' in a URI).
+ *
+ * @return ::OC_STACK_OK on success and other value otherwise.
+ */
+OCStackResult OCDecodeAddressForRFC6874(char* outputAddress,
+                                        size_t outputSize,
+                                        const char* inputAddress,
+                                        const char* end);
 #ifdef __cplusplus
 }
 #endif // __cplusplus

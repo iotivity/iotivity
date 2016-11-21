@@ -144,7 +144,7 @@ static void CASelectReturned(fd_set *readFds, int ret);
 #else
 static void CAEventReturned(CASocketFd_t socket);
 #endif
-static void CAProcessNewInterface(CAInterface_t *ifchanged);
+
 static CAResult_t CAReceiveMessage(CASocketFd_t fd, CATransportFlags_t flags);
 
 static void CAReceiveHandler(void *data)
@@ -246,11 +246,19 @@ static void CASelectReturned(fd_set *readFds, int ret)
         else ISSET(m4s, readFds, CA_MULTICAST | CA_IPV4 | CA_SECURE)
         else if ((caglobals.ip.netlinkFd != OC_INVALID_SOCKET) && FD_ISSET(caglobals.ip.netlinkFd, readFds))
         {
-            CAInterface_t *ifchanged = CAFindInterfaceChange();
-            if (ifchanged)
+            u_arraylist_t *iflist = CAFindInterfaceChange();
+            if (iflist)
             {
-                CAProcessNewInterface(ifchanged);
-                OICFree(ifchanged);
+                uint32_t listLength = u_arraylist_length(iflist);
+                for (uint32_t i = 0; i < listLength; i++)
+                {
+                    CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
+                    if (ifitem)
+                    {
+                        CAProcessNewInterface(ifitem);
+                    }
+                }
+                u_arraylist_destroy(iflist);
             }
             break;
         }
@@ -400,7 +408,7 @@ static void CAFindReadyMessage()
                         OIC_LOG_V(ERROR, TAG, "WSAResetEvent failed 0x%08x", WSAGetLastError());
                     }
 
-                    // Break out if shutdownEvent is triggered
+                    // Break out if shutdownEvent is triggered.
                     if ((caglobals.ip.shutdownEvent != WSA_INVALID_EVENT) &&
                         (caglobals.ip.shutdownEvent == eventArray[eventIndex]))
                     {
@@ -1165,7 +1173,7 @@ CAResult_t CAIPStopListenServer()
     return CA_STATUS_OK;
 }
 
-static void CAProcessNewInterface(CAInterface_t *ifitem)
+void CAProcessNewInterface(CAInterface_t *ifitem)
 {
     if (!ifitem)
     {

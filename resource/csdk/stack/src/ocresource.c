@@ -50,7 +50,8 @@
 #include "cacommon.h"
 #include "cainterface.h"
 #include "ocpayload.h"
-
+#include "platform_features.h"
+#include "payload_logging.h"
 #ifdef ROUTING_GATEWAY
 #include "routingmanager.h"
 #endif
@@ -64,11 +65,6 @@
 
 #define VERIFY_SUCCESS(op, successCode) { if (op != successCode) \
             {OIC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
-
-#define VERIFY_NON_NULL(arg, logLevel, retVal) { if (!(arg)) { OIC_LOG((logLevel), \
-             TAG, #arg " is NULL"); return (retVal); } }
-
-#include "platform_features.h"
 
 extern OCResource *headResource;
 static OCPlatformInfo savedPlatformInfo = {0};
@@ -599,9 +595,9 @@ static bool resourceMatchesIFFilter(OCResource *resource, char *interfaceFilter)
 
     while (interfacePtr)
     {
-        if ((strcmp (interfacePtr->name, interfaceFilter) == 0) &&
-            (strcmp (OC_RSRVD_INTERFACE_LL, interfaceFilter) == 0 ||
-             strcmp (OC_RSRVD_INTERFACE_DEFAULT, interfaceFilter) == 0))
+        if (strcmp (interfacePtr->name, interfaceFilter) == 0 ||
+            strcmp (OC_RSRVD_INTERFACE_LL, interfaceFilter) == 0 ||
+            strcmp (OC_RSRVD_INTERFACE_DEFAULT, interfaceFilter) == 0)
         {
             return true;
         }
@@ -665,6 +661,105 @@ OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCRes
 
     return OCDoResponse(&response);
 }
+#ifdef RD_SERVER
+/**
+ * Find resource at the resource directory server. This resource is not local resource but a
+ * remote resource.
+ *
+ * @param resource The resource to check the matching resource URI.
+ * @param interfaceQuery The interface query parameter.
+ * @param resourceTypeQuery The resourceType query parameter.
+ * @param discPayload The payload that will be added with the resource information if found at RD.
+ *
+ * @return ::OC_STACK_OK if the resource is found else ::OC_STACK_NO_RESOURCE.
+ * In case if build is not with flag RD_SERVER, it returns ::OC_STACK_NO_RESOURCE.
+ */
+static OCStackResult findResourceAtRD(const OCResource* resource, const char *interfaceQuery,
+    const char *resourceTypeQuery, OCDiscoveryPayload *discPayload)
+{
+    if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
+    {
+        if (OC_STACK_OK == OCRDDatabaseCheckResources(interfaceQuery, resourceTypeQuery, discPayload))
+        {
+            return OC_STACK_OK;
+        }
+    }
+
+    return OC_STACK_NO_RESOURCE;
+}
+#endif
+
+/**
+ * Creates a discovery payload and add device id information. This information is included in all
+ * /oic/res response.
+ *
+ * @param payload  payload that will have memory alllocated and device id information added.
+ *
+ * @return ::OC_STACK_OK if successful in allocating memory and adding ID information.
+ * ::OC_STACK_NO_MEMORY if failed allocating the memory.
+ */
+static OCStackResult discoveryPayloadCreateAndAddDeviceId(OCPayload **payload)
+{
+    if (*payload)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Payload is already allocated");
+        return OC_STACK_OK;
+    }
+
+    *payload = (OCPayload *) OCDiscoveryPayloadCreate();
+    VERIFY_PARAM_NON_NULL(TAG, *payload, "Failed adding device id to discovery payload.");
+
+    {
+        OCDiscoveryPayload *discPayload = (OCDiscoveryPayload *)*payload;
+        discPayload->sid = (char *)OICCalloc(1, UUID_STRING_SIZE);
+        VERIFY_PARAM_NON_NULL(TAG, discPayload->sid, "Failed adding device id to discovery payload.");
+
+        const char* uid = OCGetServerInstanceIDString();
+        if (uid)
+        {
+            memcpy(discPayload->sid, uid, UUID_STRING_SIZE);
+        }
+
+    }
+    return OC_STACK_OK;
+exit:
+    OCPayloadDestroy(*payload);
+    return OC_STACK_NO_MEMORY;
+}
+
+/**
+ * Add the common properties to the payload, they are only included in case of oic.if.baseline response.
+ *
+ * @param discPayload payload that will have the baseline information included.
+ *
+ * @return ::OC_STACK_OK if successful in adding all the information. ::OC_STACK_NO_MEMORY if failed
+ * allocating the memory for the baseline information.
+ */
+static OCStackResult addDiscoveryBaselineCommonProperties(OCDiscoveryPayload *discPayload)
+{
+    discPayload->uri = OICStrdup(OC_RSRVD_WELL_KNOWN_URI);
+    VERIFY_PARAM_NON_NULL(TAG, discPayload->uri, "Failed adding href to discovery payload.");
+
+    if (savedDeviceInfo.deviceName)
+    {
+        discPayload->name = OICStrdup(savedDeviceInfo.deviceName);
+        VERIFY_PARAM_NON_NULL(TAG, discPayload->name, "Failed adding name to discovery payload.");
+    }
+
+    discPayload->type = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
+    VERIFY_PARAM_NON_NULL(TAG, discPayload->type, "Failed adding rt to discovery payload.");
+    discPayload->type->value = OICStrdup(OC_RSRVD_RESOURCE_TYPE_RES);
+    VERIFY_PARAM_NON_NULL(TAG, discPayload->type, "Failed adding rt value to discovery payload.");
+
+    OCResourcePayloadAddStringLL(&discPayload->iface, OC_RSRVD_INTERFACE_LL);
+    OCResourcePayloadAddStringLL(&discPayload->iface, OC_RSRVD_INTERFACE_DEFAULT);
+    VERIFY_PARAM_NON_NULL(TAG, discPayload->iface, "Failed adding if to discovery payload.");
+
+    return OC_STACK_OK;
+
+exit:
+    return OC_STACK_NO_MEMORY;
+}
 
 static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource* resource)
 {
@@ -675,6 +770,9 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 
     OCStackResult discoveryResult = OC_STACK_ERROR;
     OCPayload* payload = NULL;
+    char *interfaceQuery = NULL;
+    char *resourceTypeQuery = NULL;
+    char *dataModelVersions = NULL;
 
     OIC_LOG(INFO, TAG, "Entering HandleVirtualResource");
 
@@ -687,198 +785,114 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 #endif
             )
     {
-        if (request->method == OC_REST_PUT || request->method == OC_REST_POST || request->method == OC_REST_DELETE)
+        if (request->method == OC_REST_PUT || request->method == OC_REST_POST ||
+            request->method == OC_REST_DELETE)
         {
-            OIC_LOG_V(ERROR, TAG, "Resource : %s not permitted for method: %d", request->resourceUrl, request->method);
-            return OC_STACK_UNAUTHORIZED_REQ;
+            OIC_LOG_V(ERROR, TAG, "Resource : %s not permitted for method: %d",
+                request->resourceUrl, request->method);
+            discoveryResult = OC_STACK_UNAUTHORIZED_REQ;
+            goto exit;
         }
-
-        char *interfaceQuery = NULL;
-        char *resourceTypeQuery = NULL;
 
         discoveryResult = getQueryParamsForFiltering (virtualUriInRequest, request->query,
                 &interfaceQuery, &resourceTypeQuery);
-        bool interfaceQueryAllocated = false;
+        VERIFY_SUCCESS(discoveryResult, OC_STACK_OK);
         if (!interfaceQuery && !resourceTypeQuery)
         {
-            interfaceQueryAllocated = true;
+            // If no query is sent, default interface is used i.e. oic.if.ll.
             interfaceQuery = OICStrdup(OC_RSRVD_INTERFACE_LL);
         }
 
-        if (discoveryResult == OC_STACK_OK)
+        bool baselineQuery = false;
+        if (interfaceQuery && 0 != strcmp(interfaceQuery, OC_RSRVD_INTERFACE_LL))
         {
-            payload = (OCPayload *)OCDiscoveryPayloadCreate();
+            baselineQuery = true;
+        }
 
-            if (payload)
-            {
-                OCDiscoveryPayload *discPayload = (OCDiscoveryPayload *)payload;
-                bool foundResourceAtRD = false;
+        discoveryResult = discoveryPayloadCreateAndAddDeviceId(&payload);
+        VERIFY_PARAM_NON_NULL(TAG, payload, "Failed creating Discovery Payload.");
+        VERIFY_SUCCESS(discoveryResult, OC_STACK_OK);
 
-                if (!resourceTypeQuery && interfaceQuery && (0 == strcmp(interfaceQuery, OC_RSRVD_INTERFACE_LL)))
-                {
-                    OCResourceProperty prop = OC_DISCOVERABLE;
+        OCDiscoveryPayload *discPayload = (OCDiscoveryPayload *)payload;
+        if (baselineQuery)
+        {
+            discoveryResult = addDiscoveryBaselineCommonProperties(discPayload);
+            VERIFY_SUCCESS(discoveryResult, OC_STACK_OK);
+        }
+        OCResourceProperty prop = OC_DISCOVERABLE;
 #ifdef MQ_BROKER
-                    if (OC_MQ_BROKER_URI == virtualUriInRequest)
-                    {
-                        prop = OC_MQ_BROKER;
-                    }
+        prop = (OC_MQ_BROKER_URI == virtualUriInRequest) ? OC_MQ_BROKER : prop;
 #endif
-
-                    for (; resource && discoveryResult == OC_STACK_OK; resource = resource->next)
-                    {
-                        foundResourceAtRD = false;
+        for (; resource && discoveryResult == OC_STACK_OK; resource = resource->next)
+        {
+            discoveryResult = OC_STACK_NO_RESOURCE;
 #ifdef RD_SERVER
-                        if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
-                        {
-                            if (OC_STACK_OK == OCRDDatabaseCheckResources(interfaceQuery, resourceTypeQuery, discPayload))
-                            {
-                                foundResourceAtRD = true;
-                                discoveryResult = OC_STACK_OK;
-                            }
-                        }
+            discoveryResult = findResourceAtRD(resource, interfaceQuery, resourceTypeQuery,
+                discPayload);
 #endif
-                        if (!foundResourceAtRD && (resource->resourceProperties & prop))
-                        {
-                            discoveryResult = BuildVirtualResourceResponse(resource, discPayload, &request->devAddr);
-                        }
-                    }
+            if (OC_STACK_NO_RESOURCE == discoveryResult)
+            {
+                if ((!baselineQuery && (resource->resourceProperties & prop)) ||
+                    (baselineQuery && (includeThisResourceInResponse(resource, interfaceQuery,
+                                                                     resourceTypeQuery))))
+                {
+                    discoveryResult = BuildVirtualResourceResponse(resource, discPayload,
+                        &request->devAddr);
                 }
                 else
                 {
-                    if (interfaceQuery && (0 != strcmp(interfaceQuery, OC_RSRVD_INTERFACE_LL)))
-                    {
-                        discPayload->uri = OICStrdup(OC_RSRVD_WELL_KNOWN_URI);
-                        VERIFY_NON_NULL(discPayload->uri, ERROR, OC_STACK_NO_MEMORY);
-                        if (savedDeviceInfo.deviceName)
-                        {
-                            discPayload->name = OICStrdup(savedDeviceInfo.deviceName);
-                            VERIFY_NON_NULL(discPayload->name, ERROR, OC_STACK_NO_MEMORY);
-                        }
-                        discPayload->type = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
-                        VERIFY_NON_NULL(discPayload->type, ERROR, OC_STACK_NO_MEMORY);
-                        discPayload->type->value = OICStrdup(OC_RSRVD_RESOURCE_TYPE_RES);
-                        VERIFY_NON_NULL(discPayload->type->value, ERROR, OC_STACK_NO_MEMORY);
-                        OCResourcePayloadAddStringLL(&discPayload->iface, OC_RSRVD_INTERFACE_LL);
-                        OCResourcePayloadAddStringLL(&discPayload->iface, OC_RSRVD_INTERFACE_DEFAULT);
-                        VERIFY_NON_NULL(discPayload->iface, ERROR, OC_STACK_NO_MEMORY);
-                    }
-                    for (;resource && discoveryResult == OC_STACK_OK; resource = resource->next)
-                    {
-#ifdef RD_SERVER
-                        if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
-                        {
-                            if (OC_STACK_OK == OCRDDatabaseCheckResources(interfaceQuery, resourceTypeQuery, discPayload))
-                            {
-                                foundResourceAtRD = true;
-                                discoveryResult = OC_STACK_OK;
-                            }
-                        }
-#endif
-                        if (!foundResourceAtRD && includeThisResourceInResponse(resource, interfaceQuery, resourceTypeQuery))
-                        {
-                            discoveryResult = BuildVirtualResourceResponse(resource, discPayload, &request->devAddr);
-                        }
-                    }
-                    // Set discoveryResult appropriately if no 'valid' resources are available
-                    if (discPayload->resources == NULL && !foundResourceAtRD)
-                    {
-                        discoveryResult = OC_STACK_NO_RESOURCE;
-                    }
-                }
-                if (discoveryResult == OC_STACK_OK && foundResourceAtRD == false)
-                {
-                    discPayload->sid = (char *)OICCalloc(1, UUID_STRING_SIZE);
-                    VERIFY_NON_NULL(discPayload->sid, ERROR, OC_STACK_NO_MEMORY);
-
-                    const char* uid = OCGetServerInstanceIDString();
-                    if (uid)
-                    {
-                        memcpy(discPayload->sid, uid, UUID_STRING_SIZE);
-                    }
+                    discoveryResult = OC_STACK_OK;
                 }
             }
-            else
-            {
-                discoveryResult = OC_STACK_NO_MEMORY;
-            }
-
         }
-        else
+        if (discPayload->resources == NULL)
         {
-            OIC_LOG_V(ERROR, TAG, "Error (%d) parsing query.", discoveryResult);
-        }
-
-        if (interfaceQuery)
-        {
-            OICFree(interfaceQuery);
-        }
-
-        if (resourceTypeQuery)
-        {
-            OICFree(resourceTypeQuery);
+            discoveryResult = OC_STACK_NO_RESOURCE;
         }
     }
     else if (virtualUriInRequest == OC_DEVICE_URI)
     {
-        if (request->method == OC_REST_PUT || request->method == OC_REST_POST || request->method == OC_REST_DELETE)
+        if (request->method == OC_REST_PUT || request->method == OC_REST_POST ||
+            request->method == OC_REST_DELETE)
         {
-            OIC_LOG_V(ERROR, TAG, "Resource : %s not permitted for method: %d", request->resourceUrl, request->method);
-            return OC_STACK_UNAUTHORIZED_REQ;
+            OIC_LOG_V(ERROR, TAG, "Resource : %s not permitted for method: %d",
+                request->resourceUrl, request->method);
+            discoveryResult = OC_STACK_UNAUTHORIZED_REQ;
+            goto exit;
         }
 
         const char* deviceId = OCGetServerInstanceIDString();
-        if (!deviceId)
-        {
-            discoveryResult = OC_STACK_ERROR;
-        }
-        else
-        {
-            char *dataModelVersions = OCCreateString(savedDeviceInfo.dataModelVersions);
-            if (!dataModelVersions)
-            {
-                discoveryResult = OC_STACK_NO_MEMORY;
-            }
-            else
-            {
-                payload = (OCPayload*) OCDevicePayloadCreate(deviceId, savedDeviceInfo.deviceName,
-                    savedDeviceInfo.types, savedDeviceInfo.specVersion, dataModelVersions);
-                if (!payload)
-                {
-                     discoveryResult = OC_STACK_NO_MEMORY;
-                }
-                else
-                {
-                     discoveryResult = OC_STACK_OK;
-                }
-                OICFree(dataModelVersions);
-            }
-        }
+        VERIFY_PARAM_NON_NULL(TAG, deviceId, "Failed retrieving device id.");
+        discoveryResult = OC_STACK_NO_MEMORY;
+        dataModelVersions = OCCreateString(savedDeviceInfo.dataModelVersions);
+        VERIFY_PARAM_NON_NULL(TAG, dataModelVersions, "Failed adding data model version.");
+        payload = (OCPayload*) OCDevicePayloadCreate(deviceId, savedDeviceInfo.deviceName,
+            savedDeviceInfo.types, savedDeviceInfo.specVersion, dataModelVersions);
+        VERIFY_PARAM_NON_NULL(TAG, payload, "Failed adding device payload.");
+        discoveryResult = OC_STACK_OK;
     }
     else if (virtualUriInRequest == OC_PLATFORM_URI)
     {
-        if (request->method == OC_REST_PUT || request->method == OC_REST_POST || request->method == OC_REST_DELETE)
+        if (request->method == OC_REST_PUT || request->method == OC_REST_POST ||
+            request->method == OC_REST_DELETE)
         {
-            OIC_LOG_V(ERROR, TAG, "Resource : %s not permitted for method: %d", request->resourceUrl, request->method);
-            return OC_STACK_UNAUTHORIZED_REQ;
+            OIC_LOG_V(ERROR, TAG, "Resource : %s not permitted for method: %d",
+                request->resourceUrl, request->method);
+            discoveryResult = OC_STACK_UNAUTHORIZED_REQ;
+            goto exit;
         }
 
-        payload = (OCPayload*)OCPlatformPayloadCreate(&savedPlatformInfo);
-        if (!payload)
-        {
-            discoveryResult = OC_STACK_NO_MEMORY;
-        }
-        else
-        {
-            discoveryResult = OC_STACK_OK;
-        }
-    }
+        discoveryResult = OC_STACK_NO_MEMORY;
+        payload = (OCPayload *)OCPlatformPayloadCreate(&savedPlatformInfo);
+        VERIFY_PARAM_NON_NULL(TAG, payload, "Failed adding platform payload.");
+        discoveryResult = OC_STACK_OK;
+   }
 #ifdef ROUTING_GATEWAY
     else if (OC_GATEWAY_URI == virtualUriInRequest)
     {
         // Received request for a gateway
         OIC_LOG(INFO, TAG, "Request is for Gateway Virtual Request");
         discoveryResult = RMHandleGatewayRequest(request, resource);
-
     }
 #endif
 #ifdef TCP_ADAPTER
@@ -932,6 +946,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         if (OC_KEEPALIVE_RESOURCE_URI != virtualUriInRequest)
 #endif
         {
+            OIC_LOG_PAYLOAD(DEBUG, payload);
             if(discoveryResult == OC_STACK_OK)
             {
                 SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
@@ -957,9 +972,22 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         }
     }
 
-    OCPayloadDestroy(payload);
+exit:
+    if (interfaceQuery)
+    {
+        OICFree(interfaceQuery);
+    }
 
-    return OC_STACK_OK;
+    if (resourceTypeQuery)
+    {
+        OICFree(resourceTypeQuery);
+    }
+    OCPayloadDestroy(payload);
+    if (dataModelVersions)
+    {
+        OICFree(dataModelVersions);
+    }
+    return discoveryResult;
 }
 
 static OCStackResult
@@ -1013,6 +1041,8 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
                                  OCResource *resource,
                                  uint8_t collectionResource)
 {
+    OC_UNUSED(collectionResource);
+
     if(!request || ! resource)
     {
         return OC_STACK_INVALID_PARAM;

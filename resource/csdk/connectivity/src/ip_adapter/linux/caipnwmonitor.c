@@ -311,9 +311,9 @@ static CAInterface_t *CANewInterfaceItem(int index, const char *name, int family
     return ifitem;
 }
 
-CAInterface_t *CAFindInterfaceChange()
+u_arraylist_t *CAFindInterfaceChange()
 {
-    CAInterface_t *foundNewInterface = NULL;
+    u_arraylist_t *iflist = NULL;
 #ifdef __linux__
     char buf[4096] = { 0 };
     struct nlmsghdr *nh = NULL;
@@ -325,7 +325,7 @@ CAInterface_t *CAFindInterfaceChange()
                           .msg_iov = &iov,
                           .msg_iovlen = 1 };
 
-    size_t len = recvmsg(caglobals.ip.netlinkFd, &msg, 0);
+    ssize_t len = recvmsg(caglobals.ip.netlinkFd, &msg, 0);
 
     for (nh = (struct nlmsghdr *)buf; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len))
     {
@@ -335,11 +335,15 @@ CAInterface_t *CAFindInterfaceChange()
         }
 
         struct ifinfomsg *ifi = (struct ifinfomsg *)NLMSG_DATA(nh);
+        if (!ifi)
+        {
+            OIC_LOG_V(ERROR, TAG, "ifi is NULL");
+            return NULL;
+        }
 
         int ifiIndex = ifi->ifi_index;
-        u_arraylist_t *iflist = CAIPGetInterfaceInformation(ifiIndex);
 
-        if ((!ifi || (ifi->ifi_flags & IFF_LOOPBACK) || !(ifi->ifi_flags & IFF_RUNNING)))
+        if ((ifi->ifi_flags & IFF_LOOPBACK) || !(ifi->ifi_flags & IFF_RUNNING))
         {
             bool isFound = CACmpNetworkList(ifiIndex);
             if (isFound)
@@ -350,34 +354,16 @@ CAInterface_t *CAFindInterfaceChange()
             continue;
         }
 
+        iflist = CAIPGetInterfaceInformation(ifiIndex);
+
         if (!iflist)
         {
             OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));
             return NULL;
         }
-
-        uint32_t listLength = u_arraylist_length(iflist);
-        for (uint32_t i = 0; i < listLength; i++)
-        {
-            CAInterface_t *ifitem = (CAInterface_t *)u_arraylist_get(iflist, i);
-            if (!ifitem)
-            {
-                continue;
-            }
-
-            if ((int)ifitem->index != ifiIndex)
-            {
-                continue;
-            }
-
-            foundNewInterface = CANewInterfaceItem(ifitem->index, ifitem->name, ifitem->family,
-                                                   ifitem->addr, ifitem->flags);
-            break;    // we found the one we were looking for
-        }
-        u_arraylist_destroy(iflist);
     }
 #endif
-    return foundNewInterface;
+    return iflist;
 }
 
 u_arraylist_t *CAIPGetInterfaceInformation(int desiredIndex)

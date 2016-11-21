@@ -71,10 +71,10 @@ int CAGetPollingInterval(int interval)
  * Not used in win32, but caipserver currently requires this function
  * be defined. not critical.
  */
-CAInterface_t *CAFindInterfaceChange()
+u_arraylist_t *CAFindInterfaceChange()
 {
-    CAInterface_t *foundNewInterface = NULL;
-    return foundNewInterface;
+    u_arraylist_t *iflist = NULL;
+    return iflist;
 }
 
 /**

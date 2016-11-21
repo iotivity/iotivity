@@ -36,7 +36,7 @@
 #include "oic_string.h"
 #include "caremotehandler.h"
 
-#define TAG "SRM-AMSMGR"
+#define TAG "OIC_SRM_AMSMGR"
 
  //Callback for AMS service multicast discovery request.
 static OCStackApplicationResult AmsMgrDiscoveryCallback(void *ctx, OCDoHandle handle,

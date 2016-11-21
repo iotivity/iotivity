@@ -41,7 +41,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 21
         versionCode 1
-        versionName "1.2.0"
+        versionName "1.2.1"
         buildConfigField 'int', 'SECURED', SECURED
         buildConfigField 'int', 'WITH_TCP', WITH_TCP
         buildConfigField 'int', 'WITH_CLOUD', WITH_CLOUD

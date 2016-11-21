@@ -36,7 +36,7 @@
 #include "aclresource.h" //Note: SRM internal header
 #include "pconfresource.h"
 
-#define TAG "OCPMAPI"
+#define TAG "OIC_OCPMAPI"
 
 typedef struct Linkdata Linkdata_t;
 struct Linkdata
@@ -182,15 +182,16 @@ OCStackResult OCDiscoverMultipleOwnedDevices(unsigned short timeout, OCProvision
  * API to add preconfigured PIN to local SVR DB.
  *
  * @param[in] targetDeviceInfo Selected target device.
- * @param[in] preconfPIN Preconfig PIN which is used while multiple owner authentication
- * @param[in] preconfPINLen Byte length of preconfig PIN
+ * @param[in] preconfigPin Preconfig PIN which is used while multiple owner authentication
+ * @param[in] preconfigPinLen Byte length of preconfigPin
  *
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult OCAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
-                                 const char* preconfPIN, size_t preconfPINLen)
+OCStackResult OCAddPreconfigPin(const OCProvisionDev_t *targetDeviceInfo,
+                                const char *preconfigPin,
+                                size_t preconfigPinLen)
 {
-    return MOTAddPreconfigPIN( targetDeviceInfo, preconfPIN, preconfPINLen);
+    return MOTAddPreconfigPIN(targetDeviceInfo, preconfigPin, preconfigPinLen);
 }
 
 
@@ -227,6 +228,19 @@ OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t*
     }
 
     return OTMSetOwnershipTransferCallbackData(oxm, callbackData);
+}
+
+/**
+ * API to set a allow status of OxM
+ *
+ * @param[in] oxm Owership transfer method (ref. OicSecOxm_t)
+ * @param[in] allowStatus allow status (true = allow, false = not allow)
+ *
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus)
+{
+    return OTMSetOxmAllowStatus(oxm, allowStatus);
 }
 
 OCStackResult OCDoOwnershipTransfer(void* ctx,
@@ -312,6 +326,12 @@ OCStackResult OCGetACLResource(void* ctx, const OCProvisionDev_t *selectedDevice
     return SRPGetACLResource(ctx, selectedDeviceInfo, resultCallback);
 }
 
+
+OCStackResult OCReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
+                                     size_t *chainSize)
+{
+    return SRPReadTrustCertChain(credId, trustCertChain, chainSize);
+}
 /**
  * function to provision credential to devices.
  *
@@ -364,10 +384,11 @@ static void AddPreconfPinOxMCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, 
     }
 }
 
-OCStackResult OCProvisionPreconfPin(void* ctx,
-                                               OCProvisionDev_t *targetDeviceInfo,
-                                               const char * preconfPin, size_t preconfPinLen,
-                                               OCProvisionResultCB resultCallback)
+OCStackResult OCProvisionPreconfigPin(void *ctx,
+                                      OCProvisionDev_t *targetDeviceInfo,
+                                      const char *preconfigPin,
+                                      size_t preconfigPinLen,
+                                      OCProvisionResultCB resultCallback)
 {
     if( NULL == targetDeviceInfo )
     {
@@ -375,7 +396,7 @@ OCStackResult OCProvisionPreconfPin(void* ctx,
     }
     if (NULL == resultCallback)
     {
-        OIC_LOG(INFO, TAG, "OCProvisionPreconfPINCredential : NULL Callback");
+        OIC_LOG(INFO, TAG, "OCProvisionPreconfigPinCredential : NULL Callback");
         return OC_STACK_INVALID_CALLBACK;
     }
 
@@ -386,8 +407,8 @@ OCStackResult OCProvisionPreconfPin(void* ctx,
     }
     provCtx->ctx = ctx;
     provCtx->devInfo = targetDeviceInfo;
-    provCtx->pin = preconfPin;
-    provCtx->pinLen = preconfPinLen;
+    provCtx->pin = preconfigPin;
+    provCtx->pinLen = preconfigPinLen;
     provCtx->resultCallback = resultCallback;
     /*
      * First of all, update OxMs to support preconfigured PIN OxM.
@@ -496,7 +517,7 @@ static OCStackResult RemoveDeviceInfoFromLocal(const OCProvisionDev_t* pTargetDe
      * Change the device status as stale status.
      * If all request are successed, this device information will be deleted.
      */
-    res = PDMSetDeviceStale(&pTargetDev->doxm->deviceID);
+    res = PDMSetDeviceState(&pTargetDev->doxm->deviceID, PDM_DEVICE_STALE);
     if (res != OC_STACK_OK)
     {
         OIC_LOG(WARNING, TAG, "OCRemoveDevice : Failed to set device status as stale");
@@ -1286,5 +1307,24 @@ OCStackResult OCSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
     return SRPSaveTrustCertChain(trustCertChain, chainSize, encodingType, credId);
 }
 
+/**
+ * function to register notifier for Trustcertchain change.
+ *
+ * @param[in] ctx user context.
+ * @param[in] TrustCertChainChangeCB notification callback fucntion.
+ * @return    OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCRegisterTrustCertChainNotifier(void *ctx, TrustCertChainChangeCB Callback)
+{
+    return SRPRegisterTrustCertChainNotifier(ctx, Callback);
+}
+
+/**
+ * function to de-register notifier for Trustcertchain change.
+ */
+void OCRemoveTrustCertChainNotifier()
+{
+    SRPRemoveTrustCertChainNotifier();
+}
 #endif // __WITH_DTLS__ || __WITH_TLS__
 

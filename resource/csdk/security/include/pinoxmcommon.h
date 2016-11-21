@@ -72,15 +72,6 @@ void SetGeneratePinCB(GeneratePinCallback pinCB);
  */
 void SetInputPinCB(InputPinCallback pinCB);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
-/**
- * Function to save the preconfig PIN getter from user.
- *
- * @param pinCB implementation of preconfig PIN function.
- */
-void SetGetPreconfigPinCB(InputPinCallback pinCB);
-#endif //_ENABLE_MULTIPLE_OWNER_
-
 /**
  * Function to unset the input PIN callback.
  * NOTE : Do not call this function while PIN based ownership transfer.
@@ -123,17 +114,7 @@ OCStackResult InputPin(char* pinBuffer, size_t bufferSize);
  *
  * @return ::OC_STACK_SUCCESS in case of success or other value in ccase of error.
  */
-OCStackResult SetPreconfigPin(const char* pinBuffer, size_t pinLength);
-
-/**
- * Function to read preconfig PIN.
- *
- * @param[in,out] pinBuffer is the reference to the buffer to store the preconfigured PIN.
- * @param[in] bufferSize is the size of buffer.
- *
- * @return ::OC_STACK_SUCCESS in case of success or other value in ccase of error.
- */
-OCStackResult GetPreconfigPin(char* pinBuffer, size_t bufferSize);
+OCStackResult SetPreconfigPin(const char *pinBuffer, size_t pinLength);
 #endif
 
 /**

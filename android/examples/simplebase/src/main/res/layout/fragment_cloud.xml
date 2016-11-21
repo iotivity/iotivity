@@ -103,18 +103,49 @@
                     android:text="CREATE\nGROUP" />
 
                 <Button
+                    android:id="@+id/deletegroup_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="DELETE\nGROUP" />
+
+                <Button
                     android:id="@+id/invite_button"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="INVITE\nUSER" />
 
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="2dp"
+                android:gravity="center_horizontal"
+                android:orientation="horizontal">
+
                 <Button
-                    android:id="@+id/leavegroup_button"
+                    android:id="@+id/addpropertyvalue_button"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="LEAVE\nGROUP" />
+                    android:text="ADD VALUE\nTO GROUP" />
+
+                <Button
+                    android:id="@+id/deletepropertyvalue_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="DELETE VALUE\nFROM GROUP" />
+
+                <Button
+                    android:id="@+id/updatepropertyvalue_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="UPDATE VALUE\nON GROUP" />
             </LinearLayout>
         </LinearLayout>
 

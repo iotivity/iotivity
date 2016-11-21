@@ -34,7 +34,7 @@
 
 #include "security_internals.h"
 
-#define TAG  "SRM-SVC"
+#define TAG  "OIC_SRM_SVC"
 
 /** Default cbor payload size. This value is increased in case of CborErrorOutOfMemory.
  * The value of payload size is increased until reaching belox max cbor size. */
@@ -158,7 +158,7 @@ OCStackResult SVCToCBORPayload(const OicSecSvc_t *svc, uint8_t **cborPayload,
     if (CborNoError == cborEncoderResult)
     {
         *cborPayload = outPayload;
-        *cborSize = encoder.ptr - outPayload;
+        *cborSize = cbor_encoder_get_buffer_size(&encoder, outPayload);
         ret = OC_STACK_OK;
     }
 
@@ -169,7 +169,7 @@ exit:
         OICFree(outPayload);
         outPayload = NULL;
         // Since the allocated initial memory failed, double the memory.
-        cborLen += encoder.ptr - encoder.end;
+        cborLen += cbor_encoder_get_buffer_size(&encoder, encoder.end);
         cborEncoderResult = CborNoError;
         ret = SVCToCBORPayload(svc, cborPayload, &cborLen);
         *cborSize = cborLen;
@@ -324,11 +324,8 @@ static OCEntityHandlerResult HandleSVCGetRequest(const OCEntityHandlerRequest * 
     OCEntityHandlerResult ehRet = (res == OC_STACK_OK) ? OC_EH_OK : OC_EH_ERROR;
 
     // Send response payload to request originator
-    if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, cborSvc, size))
-    {
-        ehRet = OC_EH_ERROR;
-        OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleSVCGetRequest");
-    }
+    ehRet = ((SendSRMResponse(ehRequest, ehRet, cborSvc, size)) == OC_STACK_OK) ?
+                   OC_EH_OK : OC_EH_ERROR;
 
     OICFree(cborSvc);
     OIC_LOG_V (DEBUG, TAG, "%s RetVal %d", __func__ , ehRet);

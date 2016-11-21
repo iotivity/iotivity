@@ -32,7 +32,11 @@ OCRemoveDeviceWithUuid
 OCResetDevice
 OCSetOwnerTransferCallbackData
 OCUnlinkDevices
+OCSetOxmAllowStatus
 
 SetGeneratePinCB
 SetInputPinCB
 SetRandomPinPolicy
+
+registerTimer
+unregisterTimer

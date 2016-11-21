@@ -80,7 +80,7 @@ namespace OCResourceTest
 
     TEST(ConstructResourceTest, ConstructResourceObjectWithValidHost3)
     {
-        EXPECT_NO_THROW(ConstructResourceObject("coap://[ffff::ffff%eth0]:5000", "/resource"));
+        EXPECT_NO_THROW(ConstructResourceObject("coap://[ffff::ffff%25eth0]:5000", "/resource"));
     }
 
     TEST(ConstructResourceTest, ConstructResourceObject)
@@ -121,6 +121,11 @@ namespace OCResourceTest
     TEST(ConstructResourceTest, ConstructResourceObjectInvalidHost3)
     {
         EXPECT_ANY_THROW(ConstructResourceObject("coap://[ffff:::ffff]:5000", "/resource"));
+    }
+
+    TEST(ConstructResourceTest, ConstructResourceObjectInvalidHost4)
+    {
+        EXPECT_ANY_THROW(ConstructResourceObject("coap://[ffff::ffff%eth0]:5000", "/resource"));
     }
 
     TEST(ConstructResourceTest, ConstructResourceObjectInvalidUri)
@@ -498,6 +503,13 @@ namespace OCResourceTest
         OCResource::Ptr resource = ConstructResourceObject("coap://192.168.1.2:5000", "/resource");
         EXPECT_TRUE(resource != NULL);
         EXPECT_TRUE(resource->host() == "coap://192.168.1.2:5000");
+    }
+
+    TEST(HostTest, Host2)
+    {
+        OCResource::Ptr resource = ConstructResourceObject("coap://[ffff::ffff%25eth0]:5000", "/resource");
+        EXPECT_TRUE(resource != NULL);
+        EXPECT_TRUE(resource->host() == "coap://[ffff::ffff%25eth0]:5000");
     }
 
     //Uri Test
