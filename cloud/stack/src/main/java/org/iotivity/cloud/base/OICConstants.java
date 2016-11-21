@@ -58,6 +58,8 @@ public class OICConstants {
 
     public static final String INVITE_URI                    = "invite";
 
+    public static final String SEARCH_URI                    = "search";
+
     /* resource uri to publish, update, delete resource info */
     public static final String RD_URI                        = "rd";
 
@@ -88,6 +90,10 @@ public class OICConstants {
 
     public static final String ACCOUNT_FULL_URI              = "/"
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACCOUNT_URI;
+
+    public static final String ACCOUNT_SEARCH_FULL_URI       = "/"
+            + OICConstants.PREFIX_OIC + "/" + OICConstants.ACCOUNT_URI + "/"
+            + OICConstants.SEARCH_URI;
 
     public static final String ACCOUNT_SESSION_FULL_URI      = "/"
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACCOUNT_URI + "/"
