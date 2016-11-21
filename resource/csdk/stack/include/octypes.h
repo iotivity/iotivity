@@ -371,7 +371,7 @@ extern "C" {
 #define OC_RSRVD_ACCOUNT_URI               "/oic/account"
 
 /** Account user URI.*/
-#define OC_RSRVD_ACCOUNT_USER_URI          "/oic/account/user"
+#define OC_RSRVD_ACCOUNT_SEARCH_URI        "/oic/account/search"
 
 /** Account session URI.*/
 #define OC_RSRVD_ACCOUNT_SESSION_URI       "/oic/account/session"

@@ -53,7 +53,6 @@ public:
     OCStackResult signOut(JNIEnv* env, const std::string& accessToken, jobject jListener);
     OCStackResult refreshAccessToken(JNIEnv* env, const std::string& userUuid,
                                      const std::string& refreshToken, jobject jListener);
-    OCStackResult searchUser(JNIEnv* env, const std::string& userUuid, jobject jListener);
     OCStackResult searchUser(JNIEnv* env, const QueryParamsMap& queryMap, jobject jListener);
     OCStackResult deleteDevice(JNIEnv* env, const std::string& accessToken,
                                const std::string& deviceId, jobject jListener);
@@ -163,17 +162,9 @@ extern "C" {
     /*
     * Class:     org_iotivity_base_OcAccountManager
     * Method:    searchUser0
-    * Signature: (Ljava/lang/String;Lorg/iotivity/base/OcAccountManager/OnGetListener;)V
-    */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_searchUser0
-        (JNIEnv *, jobject, jstring, jobject);
-
-    /*
-    * Class:     org_iotivity_base_OcAccountManager
-    * Method:    searchUser1
     * Signature: (Ljava/util/Map;Lorg/iotivity/base/OcAccountManager/OnGetListener;)V
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_searchUser1
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_searchUser0
         (JNIEnv *, jobject, jobject, jobject);
 
     /*

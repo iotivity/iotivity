@@ -170,16 +170,7 @@ namespace OCAccountManagerTest
     }
 
     // SearchUser Test
-    TEST(SearchUserTest, DISABLED_SearchUserWithUserUuidForValid)
-    {
-        std::string host("coap://192.168.1.2:5000");
-        std::string userId("AnyUserId");
-        OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
-        EXPECT_TRUE(NULL != accountManager);
-        EXPECT_EQ(OC_STACK_OK, accountManager->searchUser(userId, &accountHandler));
-    }
-
-    TEST(SearchUserTest, DISABLED_SearchUserWithQueryForValid)
+    TEST(SearchUserTest, DISABLED_SearchUserForValid)
     {
         std::string host("coap://192.168.1.2:5000");
         std::string key("AnyKey");
@@ -194,10 +185,13 @@ namespace OCAccountManagerTest
     TEST(SearchUserTest, SearchUserWithNullCallback)
     {
         std::string host("coap://192.168.1.2:5000");
-        std::string userId("AnyUserId");
+        std::string key("AnyKey");
+        std::string value("AnyValue");
+        QueryParamsMap query = {};
+        query.insert(std::pair<std::string, std::string>(key, value));
         OCAccountManager::Ptr accountManager = ConstructAccountManagerObject(host);
         EXPECT_TRUE(NULL != accountManager);
-        EXPECT_ANY_THROW(accountManager->searchUser(userId, nullptr));
+        EXPECT_ANY_THROW(accountManager->searchUser(query, nullptr));
     }
 
     // DeleteDevice Test
