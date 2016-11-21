@@ -95,7 +95,8 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
         gResourceUri = (char *) "/a/led/1";
     }
 
-    if(OC_REST_PUT == ehRequest->method)
+    if(OC_REST_PUT == ehRequest->method
+        || OC_REST_POST == ehRequest->method)
     {
         // Get pointer to query
         int64_t pow;
@@ -168,7 +169,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
      * resource is created with default representation (if representation is included in
      * POST payload it can be used as initial values) as long as the instance is
      * lesser than max new instance count. Once max instance count is reached, POST on
-     * /a/led updated the representation of /a/led (just like PUT)
+     * /a/led updated the representation of /a/led.
      */
 
     if (ehRequest->resource == LED.handle)

@@ -47,9 +47,14 @@ uint16_t GetPermissionFromCAMethod_t(const CAMethod_t method)
         case CA_GET:
             perm = (uint16_t)PERMISSION_READ;
             break;
-        case CA_POST: // For now we treat all PUT & POST as Write
-        case CA_PUT:  // because we don't know if resource exists yet.
+        case CA_POST: // Treat all POST as Write (Update) because
+                      // we don't know if resource exists yet.
+                      // This will be addressed in IoTivity impl of OCF 1.0
             perm = (uint16_t)PERMISSION_WRITE;
+            break;
+        case CA_PUT: // Per convention, OIC/OCF uses PUT only for Create,
+                     // never for Update.
+            perm = (uint16_t)PERMISSION_CREATE;
             break;
         case CA_DELETE:
             perm = (uint16_t)PERMISSION_DELETE;

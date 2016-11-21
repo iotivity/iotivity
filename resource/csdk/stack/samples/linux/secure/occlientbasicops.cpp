@@ -204,12 +204,12 @@ OCStackApplicationResult discoveryReqCB(void*, OCDoHandle,
                     case TEST_NON_CON_OP:
                         InitGetRequest(OC_LOW_QOS);
                         InitPutRequest(OC_LOW_QOS);
-                        //InitPostRequest(OC_LOW_QOS);
+                        InitPostRequest(OC_LOW_QOS);
                         break;
                     case TEST_CON_OP:
                         InitGetRequest(OC_HIGH_QOS);
                         InitPutRequest(OC_HIGH_QOS);
-                        //InitPostRequest(OC_HIGH_QOS);
+                        InitPostRequest(OC_HIGH_QOS);
                         break;
                 }
             }
@@ -219,7 +219,6 @@ OCStackApplicationResult discoveryReqCB(void*, OCDoHandle,
     return (UnicastDiscovery) ? OC_STACK_DELETE_TRANSACTION : OC_STACK_KEEP_TRANSACTION ;
 
 }
-
 int InitPutRequest(OCQualityOfService qos)
 {
     OIC_LOG_V(INFO, TAG, "Executing %s", __func__);
@@ -241,6 +240,10 @@ int InitPostRequest(OCQualityOfService qos)
     OIC_LOG_V(INFO, TAG, "Executing %s", __func__);
     std::ostringstream query;
     query << coapServerResource;
+    if(WithTcp)
+    {
+        endpoint.adapter = OC_ADAPTER_TCP;
+    }
     endpoint.flags = (OCTransportFlags)(endpoint.flags|OC_SECURE);
 
     // First POST operation (to create an LED instance)
@@ -262,10 +265,16 @@ int InitPostRequest(OCQualityOfService qos)
         OIC_LOG(INFO, TAG, "Second POST call did not succeed");
     }
 
-    // This POST operation will update the original resourced /a/led
-    return (InvokeOCDoResource(query, OC_REST_POST, &endpoint,
-                ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
-                postReqCB, NULL, 0));
+    // This POST operation will update the original resourced /a/led (as long as
+    // the server is set to max 2 /lcd resources)
+    result = InvokeOCDoResource(query, OC_REST_POST, &endpoint,
+            ((qos == OC_HIGH_QOS) ? OC_HIGH_QOS: OC_LOW_QOS),
+            postReqCB, NULL, 0);
+    if (OC_STACK_OK != result)
+    {
+        OIC_LOG(INFO, TAG, "Third POST call did not succeed");
+    }
+    return result;
 }
 
 int InitGetRequest(OCQualityOfService qos)
