@@ -88,15 +88,6 @@ OCStackResult NSProviderPublishTopic(OCRepPayload * payload, OCClientResponseHan
     cbData.cd = NULL;
     cbData.context = NULL;
 
-    OCRepPayload *publishPayload = OCRepPayloadCreate();
-    if (!publishPayload)
-    {
-        OCRepPayloadDestroy(publishPayload);
-        return OC_STACK_NO_MEMORY;
-    }
-
-    OCRepPayloadSetPropObject(publishPayload, NS_ATTRIBUTE_MQ_MESSAGE, payload);
-
     NSMQServerInfo * serverInfo = NSGetMQServerInfo();
 
     if (!serverInfo)
@@ -108,8 +99,7 @@ OCStackResult NSProviderPublishTopic(OCRepPayload * payload, OCClientResponseHan
     NS_LOG(DEBUG, "NSProviderPublishTopic - OUT");
 
     return OCDoResource(NULL, OC_REST_POST, serverInfo->serverUri, serverInfo->devAddr,
-            (OCPayload *)publishPayload,
-                        CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
+            (OCPayload *)payload, CT_ADAPTER_TCP, OC_LOW_QOS, &cbData, NULL, 0);
 }
 #endif
 
