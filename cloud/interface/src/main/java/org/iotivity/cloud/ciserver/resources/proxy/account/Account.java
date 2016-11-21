@@ -85,15 +85,31 @@ public class Account extends Resource {
     @Override
     public void onDefaultRequestReceived(Device srcDevice, IRequest request)
             throws ServerException {
-        if (request.getMethod().equals(RequestMethod.DELETE)) {
-            StringBuffer additionalQuery = new StringBuffer();
-            additionalQuery
-                    .append(Constants.USER_ID + "=" + srcDevice.getUserId());
-            String uriQuery = additionalQuery.toString()
-                    + (request.getUriQuery() != null
-                            ? (";" + request.getUriQuery()) : "");
-            request = MessageBuilder.modifyRequest(request, null, uriQuery,
-                    null, null);
+        switch (request.getMethod()) {
+            case GET:
+                if (request.getUriQuery() == null) {
+                    StringBuffer additionalQuery = new StringBuffer();
+                    additionalQuery.append(
+                            Constants.USER_ID + "=" + srcDevice.getUserId());
+                    String uriQuery = additionalQuery.toString()
+                            + (request.getUriQuery() != null
+                                    ? (";" + request.getUriQuery()) : "");
+                    request = MessageBuilder.modifyRequest(request, null,
+                            uriQuery, null, null);
+                }
+                break;
+            case DELETE:
+                StringBuffer additionalQuery = new StringBuffer();
+                additionalQuery.append(
+                        Constants.USER_ID + "=" + srcDevice.getUserId());
+                String uriQuery = additionalQuery.toString()
+                        + (request.getUriQuery() != null
+                                ? (";" + request.getUriQuery()) : "");
+                request = MessageBuilder.modifyRequest(request, null, uriQuery,
+                        null, null);
+                break;
+            default:
+                break;
         }
         mASServer.sendRequest(request,
                 new AccountReceiveHandler(request, srcDevice));
