@@ -250,7 +250,8 @@ int main(int argc, char *argv[])
             case 1:
                 cout << "Put userUUID to search:" << endl;
                 cin >> cmd;
-                result = accountMgr->searchUser(cmd, &ocPost);
+                query["uid"] = cmd;
+                result = accountMgr->searchUser(query, &ocPost);
                 break;
 
             case 2:

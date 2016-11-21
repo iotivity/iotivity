@@ -127,17 +127,6 @@ namespace OC
         /**
          * Function to get information of the user to account server.
          *
-         * @param userUuid Identifier of the user to get information.
-         * @param cloudConnectHandler Callback function that will get the result of the operation.
-         *
-         * @return Returns ::OC_STACK_OK if success
-         */
-        OCStackResult searchUser(const std::string& userUuid,
-                                 GetCallback cloudConnectHandler);
-
-        /**
-         * Overload
-         *
          * @param queryParams Map that has a query key and value for specific users.
          *                    Account server can response information of more than one user.
          * @param cloudConnectHandler Callback function that will get the result of the operation.
@@ -360,10 +349,6 @@ namespace OC
                                 const std::string& accessToken,
                                 bool isSignIn,
                                 PostCallback cloudConnectHandler);
-
-        OCStackResult searchUser(const std::string& userUuid,
-                                 const QueryParamsMap& queryParams,
-                                 GetCallback cloudConnectHandler);
     };
 } // namespace OC
 

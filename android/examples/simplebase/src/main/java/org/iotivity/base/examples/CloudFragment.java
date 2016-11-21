@@ -489,8 +489,11 @@ public class CloudFragment extends Fragment implements
                                     msg("\t\t-GroupID : " + mGroupId);
                                     msg("\t\t InviterID : " + mGroupMasterId);
                                 }
+
                                 msg("searchUser");
-                                mAccountManager.searchUser(mGroupMasterId, onSearchUserForInvitee);
+                                Map<String, String> option = new HashMap<>();
+                                option.put("uid", mGroupMasterId);
+                                mAccountManager.searchUser(option, onSearchUserForInvitee);
                             }
                         }
                     } catch (OcException e) {
