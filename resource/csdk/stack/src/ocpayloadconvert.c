@@ -244,8 +244,13 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
     */
 
     // Open the main root array
+    size_t arrayCount = 0;
+    for (OCDiscoveryPayload *temp = payload; temp; temp = temp->next)
+    {
+        arrayCount++;
+    }
     CborEncoder rootArray;
-    err |= cbor_encoder_create_array(&encoder, &rootArray, 1);
+    err |= cbor_encoder_create_array(&encoder, &rootArray, arrayCount);
     VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating discovery root array");
 
     while (payload && payload->resources)

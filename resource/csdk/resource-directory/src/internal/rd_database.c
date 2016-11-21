@@ -181,6 +181,7 @@ static int storeResourceType(char **link, size_t size, uint8_t rowid)
         }
         if (sqlite3_step(stmtRT) != SQLITE_DONE)
         {
+            sqlite3_exec(gRDDB, "ROLLBACK", NULL, NULL, NULL);
             sqlite3_finalize(stmtRT);
             return res;
         }
@@ -215,6 +216,7 @@ static int storeInterfaceType(char **link, size_t size, uint8_t rowid)
         }
         if (sqlite3_step(stmtIF) != SQLITE_DONE)
         {
+            sqlite3_exec(gRDDB, "ROLLBACK", NULL, NULL, NULL);
             res = sqlite3_finalize(stmtIF);
             return res;
         }
@@ -280,6 +282,7 @@ static int storeLinkPayload(OCRepPayload *rdPayload, int64_t rowid)
 
             if (sqlite3_step(stmt) != SQLITE_DONE)
             {
+                sqlite3_exec(gRDDB, "ROLLBACK", NULL, NULL, NULL);
                 sqlite3_finalize(stmt);
                 return res;
             }
@@ -344,6 +347,7 @@ OCStackResult OCRDDatabaseStoreResources(OCRepPayload *payload, const OCDevAddr 
 
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
+        sqlite3_exec(gRDDB, "ROLLBACK", NULL, NULL, NULL);
         sqlite3_finalize(stmt);
         return OC_STACK_ERROR;
     }

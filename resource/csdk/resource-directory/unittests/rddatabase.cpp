@@ -96,9 +96,9 @@ TEST_F(RDDatabaseTests, PublishDatabase)
     // itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseInit(NULL));
     OCRepPayload *repPayload = OCRepPayloadCreate();
-    EXPECT_TRUE(repPayload != NULL);
-    const char *deviceId = OCGetServerInstanceIDString();
-    EXPECT_TRUE(deviceId != NULL);
+    ASSERT_TRUE(repPayload != NULL);
+    const char *deviceId = "7a960f46-a52e-4837-bd83-460b1a6dd56b";
+    ASSERT_TRUE(deviceId != NULL);
     EXPECT_TRUE(OCRepPayloadSetPropString(repPayload, OC_RSRVD_DEVICE_ID, deviceId));
     EXPECT_TRUE(OCRepPayloadSetPropInt(repPayload, OC_RSRVD_DEVICE_TTL, 86400));
     OCDevAddr address;
@@ -155,19 +155,21 @@ TEST_F(RDDatabaseTests, PublishDatabase)
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *)repPayload);
 
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload, &address));
-    OCDiscoveryPayload *discPayload = OCDiscoveryPayloadCreate();
-    EXPECT_TRUE(discPayload != NULL);
-    EXPECT_EQ(discPayload->base.type, PAYLOAD_TYPE_DISCOVERY);
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseCheckResources(NULL, "core.light", discPayload));
+
+    OCDiscoveryPayload *discPayload = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(NULL, "core.light", &discPayload));
     OCDiscoveryPayloadDestroy(discPayload);
-    OCDiscoveryPayload *discPayload1 = OCDiscoveryPayloadCreate();
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseCheckResources(OC_RSRVD_INTERFACE_DEFAULT, NULL, discPayload1));
-    OCDiscoveryPayloadDestroy(discPayload1);
-    OCDiscoveryPayload *discPayload2 = OCDiscoveryPayloadCreate();
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseCheckResources(NULL, "core.light", discPayload2));
-    OCDiscoveryPayloadDestroy(discPayload2);
-    OCDiscoveryPayload *discPayload3 = OCDiscoveryPayloadCreate();
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseCheckResources(OC_RSRVD_INTERFACE_DEFAULT, "core.light", discPayload3));
+    discPayload = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(OC_RSRVD_INTERFACE_DEFAULT, NULL, &discPayload));
+    OCDiscoveryPayloadDestroy(discPayload);
+    discPayload = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(NULL, "core.light", &discPayload));
+    OCDiscoveryPayloadDestroy(discPayload);
+    discPayload = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(OC_RSRVD_INTERFACE_DEFAULT, "core.light", &discPayload));
+    OCDiscoveryPayloadDestroy(discPayload);
+    discPayload = NULL;
+
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDeleteDevice(deviceId));
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseClose());
 }

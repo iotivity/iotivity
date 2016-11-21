@@ -708,13 +708,13 @@ OCResourceHandle OCGetResourceHandleAtUri(const char *uri);
 *
 * @param interfaceType is the interface type that is queried.
 * @param resourceType is the resource type that is queried.
-* @param discPayload is NULL if no resource found or else OCDiscoveryPayload with the details
-* about the resource.
+* @param discPayload NULL if no resource found or else OCDiscoveryPayload with the details
+* about the resources.
 *
 * @return ::OC_STACK_OK in case of success or else other value.
 */
-OCStackResult OCRDDatabaseCheckResources(const char *interfaceType, const char *resourceType,
-    OCDiscoveryPayload *discPayload);
+OCStackResult OCRDDatabaseDiscoveryPayloadCreate(const char *interfaceType, const char *resourceType,
+    OCDiscoveryPayload **discPayload);
 #endif
 //#endif // DIRECT_PAIRING
 

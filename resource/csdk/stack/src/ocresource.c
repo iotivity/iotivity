@@ -1260,29 +1260,30 @@ static OCStackResult EHRequest(OCEntityHandlerRequest *ehRequest, OCPayloadType 
 
 #ifdef RD_SERVER
 /**
- * Find resource at the resource directory server. This resource is not local resource but a
- * remote resource.
+ * Find resources at the resource directory server. These resources are not local resources but
+ * remote resources.
  *
- * @param resource The resource to check the matching resource URI.
  * @param interfaceQuery The interface query parameter.
  * @param resourceTypeQuery The resourceType query parameter.
  * @param discPayload The payload that will be added with the resource information if found at RD.
  *
- * @return ::OC_STACK_OK if the resource is found else ::OC_STACK_NO_RESOURCE.
- * In case if build is not with flag RD_SERVER, it returns ::OC_STACK_NO_RESOURCE.
+ * @return ::OC_STACK_OK if any resources are found else ::OC_STACK_NO_RESOURCE.
+ * In case if RD server is not started, it returns ::OC_STACK_NO_RESOURCE.
  */
-static OCStackResult findResourceAtRD(const OCResource* resource, const char *interfaceQuery,
-    const char *resourceTypeQuery, OCDiscoveryPayload *discPayload)
+static OCStackResult findResourcesAtRD(const char *interfaceQuery,
+                                       const char *resourceTypeQuery, OCDiscoveryPayload **discPayload)
 {
-    if (strcmp(resource->uri, OC_RSRVD_RD_URI) == 0)
+    OCStackResult result = OC_STACK_NO_RESOURCE;
+    if (OCGetResourceHandleAtUri(OC_RSRVD_RD_URI) != NULL)
     {
-        if (OC_STACK_OK == OCRDDatabaseCheckResources(interfaceQuery, resourceTypeQuery, discPayload))
-        {
-            return OC_STACK_OK;
-        }
+        result = OCRDDatabaseDiscoveryPayloadCreate(interfaceQuery, resourceTypeQuery,
+            (*discPayload) ? &(*discPayload)->next : discPayload);
     }
-
-    return OC_STACK_NO_RESOURCE;
+    if ((*discPayload) && (*discPayload)->resources)
+    {
+        result = OC_STACK_OK;
+    }
+    return result;
 }
 #endif
 
@@ -1476,12 +1477,17 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         if (discPayload->resources == NULL)
         {
             discoveryResult = OC_STACK_NO_RESOURCE;
+            OCPayloadDestroy(payload);
+            payload = NULL;
         }
 
         if (networkInfo)
         {
             OICFree(networkInfo);
         }
+#ifdef RD_SERVER
+        discoveryResult = findResourcesAtRD(interfaceQuery, resourceTypeQuery, (OCDiscoveryPayload **)&payload);
+#endif
     }
     else if (virtualUriInRequest == OC_DEVICE_URI)
     {
