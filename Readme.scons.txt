@@ -31,6 +31,10 @@ message to install tinycbor)
 ('<iotivity>' is the path to 'iotivity' project. If your device is x86, arm,
 or arm64, please change 'x86_64' to the proper arch)
 
+3. To build and test IoTivity with Security enabled (required for certification) 
+follow the instructions found in:
+  <iotivity>/resource/csdk/security/README-building-and-running-secure-IoTivity-stack.txt
+
 == How to build IoTivity projects ==
 
 IoTivity includes a series of projects. You can find all these projects here:
