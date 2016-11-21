@@ -356,43 +356,29 @@ OCStackApplicationResult NSProviderMQListener(void * ctx, OCDoHandle handle,
     NS_LOG_V(DEBUG, "MQ OBS response Transport Type : %d",
                     clientResponse->devAddr.adapter);
 
-    OCRepPayload * payload = NULL;
-    OCRepPayloadGetPropObject((OCRepPayload *)clientResponse->payload, NS_ATTRIBUTE_MQ_MESSAGE,
-                              & payload);
+    OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
     NS_VERIFY_NOT_NULL(payload, OC_STACK_KEEP_TRANSACTION);
 
-    char * pId = NULL;
-    bool getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, &pId);
-    NS_LOG_V (DEBUG, "provider id: %s", pId);
+    NSMessageType type = -1;
+    bool getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_TYPE, (int64_t *) &type);
+    NS_LOG_V (DEBUG, "message sync type : %d", (int) type);
 
-    if (strcmp(pId, NSGetProviderInfo()->providerId) == 0)
+    if (!getResult && (type == NS_MESSAGE_READ || type == NS_MESSAGE_DELETED))
     {
-        NSMessageType type = -1;
-        getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_TYPE, (int64_t *) &type);
+        char * pId = NULL;
+        getResult = OCRepPayloadGetPropString(payload, NS_ATTRIBUTE_PROVIDER_ID, &pId);
+        NS_LOG_V (DEBUG, "provider id: %s", pId);
 
-        if (getResult && (type == NS_MESSAGE_READ || type == NS_MESSAGE_DELETED))
+        if (getResult && strcmp(pId, NSGetProviderInfo()->providerId) == 0)
         {
             NSSyncInfo * syncInfo = (NSSyncInfo *)OICMalloc(sizeof(NSSyncInfo));
-            NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(syncInfo,
-                                  OC_STACK_KEEP_TRANSACTION, NSFreeSync(syncInfo));
-
-            bool getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID,
-                    (int64_t *) &(syncInfo->messageId));
             syncInfo->state = (type == NS_MESSAGE_READ) ? NS_SYNC_READ : NS_SYNC_DELETED;
             OICStrcpy(syncInfo->providerId, NS_UUID_STRING_SIZE, pId);
-
-            if (getResult)
-            {
-                NSPushQueue(NOTIFICATION_SCHEDULER, TASK_RECV_READ, (void*) syncInfo);
-            }
-            else
-            {
-                NSFreeSync(syncInfo);
-            }
+            OICFree(pId);
+            NSPushQueue(NOTIFICATION_SCHEDULER, TASK_RECV_READ, (void*) syncInfo);
         }
     }
 
-    OCRepPayloadDestroy(payload);
     return OC_STACK_KEEP_TRANSACTION;
 }
 

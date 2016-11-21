@@ -128,7 +128,7 @@ NSResult NSSendNotification(NSMessage *msg)
 #ifdef WITH_MQ
     if (NSGetMQServerInfo())
     {
-        NSProviderPublishTopic(payload, NSProviderPublishMQResponseCB);
+        NSProviderPublishTopic(OCRepPayloadClone(payload), NSProviderPublishMQResponseCB);
     }
 #endif
 
@@ -268,12 +268,32 @@ NSResult NSSendSync(NSSyncInfo *sync)
         it = it->next;
     }
 
-    OCRepPayload* payload;
+    OCRepPayload* payload = NULL;
     if (NSSetSyncPayload(sync, &payload) != NS_OK)
     {
         NS_LOG(ERROR, "Failed to allocate payload");
         return NS_ERROR;
     }
+
+#ifdef WITH_MQ
+    if (NSGetMQServerInfo())
+    {
+        OCRepPayload* MQPayload = OCRepPayloadClone(payload);
+        NSMessageType MQType = 0;
+
+        if (sync->state == NS_SYNC_READ)
+        {
+            MQType = NS_MESSAGE_READ;
+        }
+        else if (sync->state == NS_SYNC_DELETED)
+        {
+            MQType = NS_MESSAGE_DELETED;
+        }
+
+        OCRepPayloadSetPropInt(MQPayload, NS_ATTRIBUTE_TYPE, (int64_t) MQType);
+        NSProviderPublishTopic(MQPayload, NSProviderPublishMQResponseCB);
+    }
+#endif
 
     for (i = 0; i < obCount; ++i)
     {
