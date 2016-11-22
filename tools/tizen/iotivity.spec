@@ -252,7 +252,6 @@ cp resource/c_common/*.h %{buildroot}%{_includedir}
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
 
-cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
 cp service/easy-setup/inc/*.h %{buildroot}%{_includedir}
 cp service/easy-setup/enrollee/inc/*.h %{buildroot}%{_includedir}
 
@@ -284,7 +283,6 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %license LICENSE
 %{_libdir}/libBMISensorBundle.so
 %{_libdir}/libDISensorBundle.so
-%{_libdir}/libTGMSDKLibrary.so
 %{_libdir}/libHueBundle.so
 %{_libdir}/librcs_client.so
 %{_libdir}/librcs_common.so
