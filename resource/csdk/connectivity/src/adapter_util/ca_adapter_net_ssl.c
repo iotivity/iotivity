@@ -26,6 +26,7 @@
 #include "cacommon.h"
 #include "caipinterface.h"
 #include "oic_malloc.h"
+#include "ocrandom.h"
 #include "byte_array.h"
 #include "camutex.h"
 #include "timer.h"
@@ -1634,55 +1635,6 @@ void CAsetSslHandshakeCallback(CAErrorCallback tlsHandshakeCallback)
     g_sslCallback = tlsHandshakeCallback;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
 }
-// TODO move ConvertStrToUuid function to common module
-/*
- * Converts string UUID to CARemoteId_t
- *
- * @param strUuid Device UUID in string format
- * @param uuid converted UUID in CARemoteId_t format
- *
- * @return 0 for success.
- * */
-static int ConvertStrToUuid(const char* strUuid, CARemoteId_t* uuid)
-{
-    if(NULL == strUuid || NULL == uuid)
-    {
-        OIC_LOG(ERROR, NET_SSL_TAG, "ConvertStrToUuid : Invalid param");
-        return -1;
-    }
-
-    size_t urnIdx = 0;
-    size_t uuidIdx = 0;
-    size_t strUuidLen = 0;
-    char convertedUuid[UUID_LENGTH * 2] = {0};
-
-    strUuidLen = strlen(strUuid);
-    if(0 == strUuidLen)
-    {
-        OIC_LOG(INFO, NET_SSL_TAG, "The empty string detected, The UUID will be converted to "\
-                           "\"00000000-0000-0000-0000-000000000000\"");
-    }
-    else if(UUID_LENGTH * 2 + 4 == strUuidLen)
-    {
-        for(uuidIdx=0, urnIdx=0; uuidIdx < UUID_LENGTH ; uuidIdx++, urnIdx+=2)
-        {
-            if(*(strUuid + urnIdx) == '-')
-            {
-                urnIdx++;
-            }
-            sscanf(strUuid + urnIdx, "%2hhx", &convertedUuid[uuidIdx]);
-        }
-    }
-    else
-    {
-        OIC_LOG(ERROR, NET_SSL_TAG, "Invalid string uuid format");
-        return -1;
-    }
-
-    memcpy(uuid->id, convertedUuid, UUID_LENGTH);
-    uuid->id_length = UUID_LENGTH;
-    return 0;
-}
 
 /* Read data from TLS connection
  */
@@ -1790,7 +1742,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
                 if (NULL != uuidPos)
                 {
                     memcpy(uuid, (char*) uuidPos + sizeof(UUID_PREFIX) - 1, UUID_LENGTH * 2 + 4);
-                    ret = ConvertStrToUuid(uuid, &peer->sep.identity);
+                    ret = OCConvertStringToUuid(uuid, peer->sep.identity.id);
                     SSL_CHECK_FAIL(peer, ret, "Failed to convert subject", 1,
                                           CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT);
                 }
@@ -1804,7 +1756,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
                 if (NULL != userIdPos)
                 {
                     memcpy(uuid, (char*) userIdPos + sizeof(USERID_PREFIX) - 1, UUID_LENGTH * 2 + 4);
-                    ret = ConvertStrToUuid(uuid, &peer->sep.userId);
+                    ret = OCConvertStringToUuid(uuid, peer->sep.userId.id);
                     SSL_CHECK_FAIL(peer, ret, "Failed to convert subject alt name", 1,
                                       CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT);
                 }
