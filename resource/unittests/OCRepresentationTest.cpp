@@ -1444,4 +1444,28 @@ namespace OCRepresentationTest
             }
         }
     }
+
+    TEST(OCRepresentationHostTest, ValidHost)
+    {
+        OCDevAddr addr = {OC_DEFAULT_ADAPTER, OC_IP_USE_V6};
+        addr.port = 5000;
+        strcpy(addr.addr, "fe80::1%eth0");
+
+        OCRepresentation rep;
+        rep.setDevAddr(addr);
+        std::string host = rep.getHost();
+        std::string expected = "coap://[fe80::1%25eth0]:5000";
+        EXPECT_EQ(host, expected);
+    }
+
+    TEST(OCRepresentationHostTest, InvalidHost)
+    {
+        OCDevAddr addr = {OC_DEFAULT_ADAPTER, OC_IP_USE_V6};
+        addr.port = 5000;
+        strcpy(addr.addr, "fe80::1%%");
+
+        OCRepresentation rep;
+        EXPECT_ANY_THROW(rep.setDevAddr(addr));
+    }
+
 }
