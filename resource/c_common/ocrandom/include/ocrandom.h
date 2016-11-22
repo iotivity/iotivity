@@ -124,6 +124,19 @@ OCRandomUuidResult OCGenerateUuidString(char uuidString[UUID_STRING_SIZE]);
 OCRandomUuidResult OCConvertUuidToString(const uint8_t uuid[UUID_SIZE],
         char uuidString[UUID_STRING_SIZE]);
 
+/**
+ * Convert a C style string to a UUID based on RFC 4122
+ *
+ * @param[in] uuidString
+ *              a 37 byte length string to fill with the string
+ *              representation of the passed UUID.
+ * @param[out]  uuid
+ *              The 16 byte array filled with UUID data
+ * @retval RAND_UUID_OK for success, otherwise an error value
+ */
+OCRandomUuidResult OCConvertStringToUuid(const char uuidString[UUID_STRING_SIZE],
+                                         uint8_t uuid[UUID_SIZE]);
+
 #ifdef __cplusplus
 }
 #endif
