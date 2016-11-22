@@ -83,6 +83,9 @@ typedef struct
     /** the requested payload format. */
     OCPayloadFormat acceptFormat;
 
+    /** the requested payload format. */
+    uint16_t acceptVersion;
+
     /** resourceUrl will be filled in occoap using the path options in received request PDU.*/
     char resourceUrl[MAX_URI_LENGTH];
 

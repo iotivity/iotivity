@@ -1697,7 +1697,7 @@ HandleResourceWithEntityHandler(OCServerRequest *request,
                 (const char *)(request->query),
                 ehRequest.obsInfo.obsId, request->requestToken, request->tokenLength,
                 resource, request->qos, request->acceptFormat,
-                &request->devAddr);
+                request->acceptVersion, &request->devAddr);
 
         if(result == OC_STACK_OK)
         {

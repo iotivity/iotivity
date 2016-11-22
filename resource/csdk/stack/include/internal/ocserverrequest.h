@@ -50,6 +50,9 @@ typedef struct OCServerRequest
     /** Accept format retrieved from the received request PDU. */
     OCPayloadFormat acceptFormat;
 
+    /** Accept version retrieved from the received request PDU. */
+    uint16_t acceptVersion;
+
     /** resourceUrl will be filled in occoap using the path options in received request PDU.*/
     char resourceUrl[MAX_URI_LENGTH];
 
@@ -208,6 +211,7 @@ OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle)
  * @param resourceUrl                           URL of resource.
  * @param reqTotalSize                          Total size of the request.
  * @param acceptFormat                          The format requested for the payload encoding.
+ * @param acceptVersion                         The content version requested for the payload encoding.
  * @param devAddr                               Device Address.
  *
  * @return
@@ -222,6 +226,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         uint8_t tokenLength,
         char * resourceUrl, size_t reqTotalSize,
         OCPayloadFormat acceptFormat,
+        uint16_t acceptVersion,
         const OCDevAddr *devAddr);
 
 /**
@@ -230,13 +235,17 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
  * @param entityHandlerRequest      pointer to the OCEntityHandlerRequest struct that is created.
  * @param request                   Request handle.
  * @param method                    RESTful method.
+ * @param endpoint                  Device address of the requester.
  * @param resource                  Resource handle.
  * @param queryBuf                  Resource query of request.
- * @param bufReqPayload             JSON payload of request.
+ * @param payloadType               Type of payload.
+ * @param payload                   cbor value of the payload.
+ * @param payloadSize               Size of payload.
  * @param numVendorOptions          Number of vendor options.
  * @param vendorOptions             Vendor options.
  * @param observeAction             Observe action flag.
  * @param observeID                 Observe ID.
+ * @param messageID                 Message ID.
  *
  * @return
  *     OCStackResult

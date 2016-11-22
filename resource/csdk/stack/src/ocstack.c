@@ -525,8 +525,38 @@ static OCStackResult OCSendRequest(const CAEndpoint_t *object, CARequestInfo_t *
     }
 #endif
 
-    // OC stack prefer CBOR encoded payloads.
-    requestInfo->info.acceptFormat = CA_FORMAT_APPLICATION_CBOR;
+    uint16_t acceptVersion = OC_SPEC_VERSION_VALUE;
+    // From OCF onwards, check settings of version option.
+    if (DEFAULT_ACCEPT_VERSION_VALUE <= acceptVersion)
+    {
+        if (requestInfo->info.numOptions > 0 && requestInfo->info.options)
+        {
+            for (uint8_t i = 0; i < requestInfo->info.numOptions; i++)
+            {
+                if (COAP_OPTION_ACCEPT_VERSION == requestInfo->info.options[i].protocolID)
+                {
+                    acceptVersion = requestInfo->info.options[i].optionData[0];
+                    break;
+                }
+                else if (COAP_OPTION_CONTENT_VERSION == requestInfo->info.options[i].protocolID)
+                {
+                    acceptVersion = requestInfo->info.options[i].optionData[0];
+                    break;
+                }
+            }
+        }
+    }
+
+    if (DEFAULT_CONTENT_VERSION_VALUE <= acceptVersion)
+    {
+        requestInfo->info.acceptFormat = CA_FORMAT_APPLICATION_VND_OCF_CBOR;
+        requestInfo->info.acceptVersion = acceptVersion;
+    }
+    else
+    {
+      requestInfo->info.acceptFormat = CA_FORMAT_APPLICATION_CBOR;
+    }
+
     CAResult_t result = CASendRequest(object, requestInfo);
     if(CA_STATUS_OK != result)
     {
@@ -1282,10 +1312,19 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 //      app that at least the request was received at the server?
             }
         }
-        else if(responseInfo->result == CA_RETRANSMIT_TIMEOUT)
+        else if (CA_RETRANSMIT_TIMEOUT == responseInfo->result
+                || CA_NOT_ACCEPTABLE == responseInfo->result)
         {
-            OIC_LOG(INFO, TAG, "Receiving A Timeout for this token");
-            OIC_LOG(INFO, TAG, "Calling into application address space");
+            if (CA_RETRANSMIT_TIMEOUT == responseInfo->result)
+            {
+                OIC_LOG(INFO, TAG, "Receiving A Timeout for this token");
+                OIC_LOG(INFO, TAG, "Calling into application address space");
+            }
+            else
+            {
+                OIC_LOG(INFO, TAG, "Server doesn't support the requested payload format");
+                OIC_LOG(INFO, TAG, "Calling into application address space");
+            }
 
             OCClientResponse *response = NULL;
 
@@ -1875,7 +1914,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
                 protocolRequest->payload, protocolRequest->requestToken,
                 protocolRequest->tokenLength, protocolRequest->resourceUrl,
                 protocolRequest->reqTotalSize, protocolRequest->acceptFormat,
-                &protocolRequest->devAddr);
+                protocolRequest->acceptVersion, &protocolRequest->devAddr);
         if (OC_STACK_OK != result)
         {
             OIC_LOG(ERROR, TAG, "Error adding server request");
@@ -2046,6 +2085,9 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     {
         case CA_FORMAT_APPLICATION_CBOR:
             serverRequest.acceptFormat = OC_FORMAT_CBOR;
+            break;
+        case CA_FORMAT_APPLICATION_VND_OCF_CBOR:
+            serverRequest.acceptFormat = OC_FORMAT_VND_OCF_CBOR;
             break;
         case CA_FORMAT_UNDEFINED:
             serverRequest.acceptFormat = OC_FORMAT_UNDEFINED;
@@ -2936,7 +2978,7 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
 
     CopyDevAddrToEndpoint(devAddr, &endpoint);
 
-    if(payload)
+    if (payload)
     {
         if((result =
             OCConvertPayload(payload, &requestInfo.info.payload, &requestInfo.info.payloadSize))
@@ -2945,7 +2987,38 @@ OCStackResult OCDoRequest(OCDoHandle *handle,
             OIC_LOG(ERROR, TAG, "Failed to create CBOR Payload");
             goto exit;
         }
-        requestInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
+
+        uint16_t payloadVersion = OC_SPEC_VERSION_VALUE;
+        // From OCF onwards, check version option settings
+        if (DEFAULT_CONTENT_VERSION_VALUE <= payloadVersion)
+        {
+            if (numOptions > 0 && options)
+            {
+                for (uint8_t i = 0; i < numOptions; i++)
+                {
+                    if (COAP_OPTION_CONTENT_VERSION == options[i].optionID)
+                    {
+                        payloadVersion = options[i].optionData[0];
+                        break;
+                    }
+                    else if (COAP_OPTION_ACCEPT_VERSION == options[i].optionID)
+                    {
+                        payloadVersion = options[i].optionData[0];
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (DEFAULT_CONTENT_VERSION_VALUE <= payloadVersion)
+        {
+            requestInfo.info.payloadFormat = CA_FORMAT_APPLICATION_VND_OCF_CBOR;
+            requestInfo.info.payloadVersion = payloadVersion;
+        }
+        else
+        {
+            requestInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
+        }
     }
     else
     {
@@ -3334,7 +3407,8 @@ OCStackResult OCStartPresence(const uint32_t ttl)
         }
 
         AddObserver(OC_RSRVD_PRESENCE_URI, NULL, 0, caToken, tokenLength,
-                (OCResource *)presenceResource.handle, OC_LOW_QOS, OC_FORMAT_UNDEFINED, &devAddr);
+                (OCResource *) presenceResource.handle, OC_LOW_QOS, OC_FORMAT_UNDEFINED,
+                OC_SPEC_VERSION_VALUE, &devAddr);
         CADestroyToken(caToken);
     }
 

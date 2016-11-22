@@ -94,6 +94,9 @@ typedef struct ResourceObserver
     /** requested payload encoding format. */
     OCPayloadFormat acceptFormat;
 
+    /** requested payload content version. */
+    uint16_t acceptVersion;
+
 } ResourceObserver;
 
 #ifdef WITH_PRESENCE
@@ -166,6 +169,8 @@ OCStackResult GenerateObserverId (OCObservationId *observationId);
  * @param tokenLength     Length of token.
  * @param resHandle       Resource handle.
  * @param qos             Quality of service of observation.
+ * @param acceptFormat    Accept payload format.
+ * @param acceptVersion   Accept payload version.
  * @param devAddr         Device address.
  *
  * @return ::OC_STACK_OK on success, some other value upon failure.
@@ -178,6 +183,7 @@ OCStackResult AddObserver (const char         *resUri,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
                            OCPayloadFormat    acceptFormat,
+                           uint16_t           acceptVersion,
                            const OCDevAddr    *devAddr);
 
 /**

@@ -320,6 +320,9 @@ extern "C" {
 /** Device specification version.*/
 #define OC_SPEC_VERSION                 "core.1.1.0"
 
+/** Integer value of spec version.*/
+#define OC_SPEC_VERSION_VALUE           0
+
 /** Device Data Model version.*/
 #define OC_DATA_MODEL_VERSION           "res.1.1.0,sh.1.1.0"
 
@@ -911,6 +914,7 @@ typedef enum
 typedef enum
 {
     OC_FORMAT_CBOR,
+    OC_FORMAT_VND_OCF_CBOR,
     OC_FORMAT_JSON,
     OC_FORMAT_UNDEFINED,
     OC_FORMAT_UNSUPPORTED,

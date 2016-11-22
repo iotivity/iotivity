@@ -117,7 +117,7 @@ static OCStackResult SendObserveNotification(ResourceObserver *observer,
                               observer->query, NULL, NULL,
                               observer->token, observer->tokenLength,
                               observer->resUri, 0, observer->acceptFormat,
-                              &observer->devAddr);
+                              observer->acceptVersion, &observer->devAddr);
 
     if (request)
     {
@@ -202,7 +202,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                         NULL, NULL,
                         resourceObserver->token, resourceObserver->tokenLength,
                         resourceObserver->resUri, 0, resourceObserver->acceptFormat,
-                        &resourceObserver->devAddr);
+                        resourceObserver->acceptVersion, &resourceObserver->devAddr);
 
                 if (result == OC_STACK_OK)
                 {
@@ -289,7 +289,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                         0, resource->sequenceNum, qos, observer->query,
                         NULL, NULL, observer->token, observer->tokenLength,
                         observer->resUri, 0, observer->acceptFormat,
-                        &observer->devAddr);
+                        observer->acceptVersion, &observer->devAddr);
 
                 if (request)
                 {
@@ -392,6 +392,7 @@ OCStackResult AddObserver (const char         *resUri,
                            OCResource         *resHandle,
                            OCQualityOfService qos,
                            OCPayloadFormat    acceptFormat,
+                           uint16_t           acceptVersion,
                            const OCDevAddr    *devAddr)
 {
     // Check if resource exists and is observable.
@@ -419,6 +420,7 @@ OCStackResult AddObserver (const char         *resUri,
 
         obsNode->qos = qos;
         obsNode->acceptFormat = acceptFormat;
+        obsNode->acceptVersion = acceptVersion;
         if (query)
         {
             obsNode->query = OICStrdup(query);

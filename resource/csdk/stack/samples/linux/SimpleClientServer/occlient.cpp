@@ -401,6 +401,14 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
     {
         OIC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
 
+        if (OC_STACK_NOT_ACCEPTABLE == clientResponse->result)
+        {
+            // Re-initiate discovery with OIC format. This is applicable for the case that
+            // a OCF 1.x client speaks to a OIC 1.1 server.
+            InitDiscovery(OC_LOW_QOS, 1);
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
         std::string connectionType = getConnectivityType (clientResponse->connType);
         OIC_LOG_V(INFO, TAG, "Discovered on %s", connectionType.c_str());
         OIC_LOG_V(INFO, TAG,
@@ -852,7 +860,7 @@ int InitIntrospectionDiscovery(OCQualityOfService qos)
     return ret;
 }
 
-int InitDiscovery(OCQualityOfService qos)
+int InitDiscovery(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions)
 {
     OCStackResult ret;
     OCCallbackData cbData;
@@ -864,9 +872,32 @@ int InitDiscovery(OCQualityOfService qos)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
-                      (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
-                      &cbData, NULL, 0);
+    if (withVendorSpecificHeaderOptions)
+    {
+        OCHeaderOption options[MAX_HEADER_OPTIONS];
+        memset(options, 0, sizeof(OCHeaderOption) * MAX_HEADER_OPTIONS);
+        size_t numOptions = 0;
+
+        uint8_t option0[] = {0};
+        uint16_t optionID = 2049;
+        size_t optionDataSize = sizeof(option0);
+        OCSetHeaderOption(options, &numOptions, optionID, option0, optionDataSize);
+
+        uint8_t option1[] = {0};
+        optionID = 2053;
+        optionDataSize = sizeof(option1);
+        OCSetHeaderOption(options, &numOptions, optionID, option1, optionDataSize);
+
+        ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+                              (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+                              &cbData, options, 2);
+    }
+    else
+    {
+        ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+                           (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+                           &cbData, NULL, 0);
+    }
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -1075,7 +1106,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-        InitDiscovery(OC_LOW_QOS);
+        InitDiscovery(OC_LOW_QOS, 0);
     }
 
     // Break from loop with Ctrl+C

@@ -115,7 +115,7 @@ int InitDeleteRequest(OCQualityOfService qos);
 int InitGetRequest(OCQualityOfService qos);
 int InitDeviceDiscovery(OCQualityOfService qos);
 int InitPlatformDiscovery(OCQualityOfService qos);
-int InitDiscovery(OCQualityOfService qos);
+int InitDiscovery(OCQualityOfService qos, uint8_t withVendorSpecificHeaderOptions);
 int InitGetRequestWithCoap(OCDiscoveryPayload* dis, bool isUdp);
 int InitIntrospection(OCDiscoveryPayload* dis);
 

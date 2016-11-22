@@ -263,7 +263,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
         OCHeaderOption * rcvdVendorSpecificHeaderOptions,
         uint8_t * payload, CAToken_t requestToken, uint8_t tokenLength,
         char * resourceUrl, size_t reqTotalSize, OCPayloadFormat acceptFormat,
-        const OCDevAddr *devAddr)
+        uint16_t acceptVersion, const OCDevAddr *devAddr)
 {
     if (!request)
     {
@@ -289,6 +289,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     serverRequest->observeResult = OC_STACK_ERROR;
     serverRequest->qos = qos;
     serverRequest->acceptFormat = acceptFormat;
+    serverRequest->acceptVersion = acceptVersion;
     serverRequest->ehResponseHandler = HandleSingleResponse;
     serverRequest->numResponses = 1;
 
@@ -631,6 +632,7 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
             case OC_FORMAT_UNDEFINED:
                 // No preference set by the client, so default to CBOR then
             case OC_FORMAT_CBOR:
+            case OC_FORMAT_VND_OCF_CBOR:
                 if((result = OCConvertPayload(ehResponse->payload, &responseInfo.info.payload,
                                 &responseInfo.info.payloadSize))
                         != OC_STACK_OK)
@@ -642,7 +644,20 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
                 // Add CONTENT_FORMAT OPT if payload exist
                 if (responseInfo.info.payloadSize > 0)
                 {
-                    responseInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
+                    if (OC_FORMAT_VND_OCF_CBOR == serverRequest->acceptFormat)
+                    {
+                        responseInfo.info.payloadFormat = CA_FORMAT_APPLICATION_VND_OCF_CBOR;
+                        if (!serverRequest->acceptVersion)
+                        {
+                            serverRequest->acceptVersion = DEFAULT_ACCEPT_VERSION_VALUE;
+                        }
+                        // Add CONTENT_VERSION OPT for this format.
+                        responseInfo.info.payloadVersion = serverRequest->acceptVersion;
+                    }
+                    else
+                    {
+                        responseInfo.info.payloadFormat = CA_FORMAT_APPLICATION_CBOR;
+                    }
                 }
                 break;
             default:

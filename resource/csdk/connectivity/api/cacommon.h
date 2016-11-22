@@ -129,6 +129,19 @@ extern "C"
 #define CA_OPTION_LOCATION_QUERY 20
 
 /**
+* TODO: Move these COAP defines to CoAP lib once approved.
+*/
+#define COAP_OPTION_ACCEPT_VERSION 2049
+#define COAP_OPTION_CONTENT_VERSION 2053
+#define COAP_MEDIATYPE_APPLICATION_VND_OCF_CBOR 10000 // application/vnd.ocf+cbor
+
+#define CA_OPTION_ACCEPT_VERSION 2049
+#define CA_OPTION_CONTENT_VERSION 2053
+
+#define DEFAULT_ACCEPT_VERSION_VALUE 2048   // OCF version 1.0.0
+#define DEFAULT_CONTENT_VERSION_VALUE 2048  // OCF version 1.0.0
+
+/**
  * Payload information from resource model.
  */
 typedef uint8_t *CAPayload_t;
@@ -411,6 +424,7 @@ typedef enum
     CA_FORMAT_APPLICATION_EXI,
     CA_FORMAT_APPLICATION_JSON,
     CA_FORMAT_APPLICATION_CBOR,
+    CA_FORMAT_APPLICATION_VND_OCF_CBOR,
     CA_FORMAT_UNSUPPORTED
 } CAPayloadFormat_t;
 
@@ -451,6 +465,8 @@ typedef struct
     size_t payloadSize;         /**< size in bytes of the payload */
     CAPayloadFormat_t payloadFormat;    /**< encoding format of the request payload */
     CAPayloadFormat_t acceptFormat;     /**< accept format for the response payload */
+    uint16_t payloadVersion;    /**< version of the payload */
+    uint16_t acceptVersion;     /**< expected version for the response payload */
     CAURI_t resourceUri;        /**< Resource URI information **/
     CARemoteId_t identity;      /**< endpoint identity */
     CADataType_t dataType;      /**< data type */
