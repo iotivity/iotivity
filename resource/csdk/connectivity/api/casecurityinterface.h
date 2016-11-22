@@ -104,11 +104,12 @@ typedef struct
 } PkiInfo_t;
 
 /**
- * Register callback to receive credential types.
- * @param[in] credTypesCallback callback to get cerdential types
- * @return ::CA_STATUS_OK
+ * Register callback to get types of TLS suites.
+ * @param[in]   getCredTypesHandler    Get types of TLS suites callback.
+ * @return  ::CA_STATUS_OK or appropriate error code.
  */
-CAResult_t CAregisterGetCredentialTypesCallback(CAgetCredentialTypesHandler credTypesCallback);
+CAResult_t CAregisterGetCredentialTypesHandler(CAgetCredentialTypesHandler getCredTypesHandler);
+
 /**
  * Register callback to receive the result of TLS handshake.
  * @param[in] tlsHandshakeCallback callback for get tls handshake result
@@ -138,12 +139,6 @@ typedef void (*CAgetPkixInfoHandler)(PkiInfo_t * inf);
  * @return  ::CA_STATUS_OK or appropriate error code.
  */
 CAResult_t CAregisterPkixInfoHandler(CAgetPkixInfoHandler getPkixInfoHandler);
-/**
- * Register callback to get types of TLS suites.
- * @param[in]   getCredTypesHandler    Get types of TLS suites callback.
- * @return  ::CA_STATUS_OK or appropriate error code.
- */
-CAResult_t CAregisterGetCredentialTypesHandler(CAgetCredentialTypesHandler getCredTypesHandler);
 
 /**
  * Select the cipher suite for dtls handshake.
