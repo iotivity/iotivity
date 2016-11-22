@@ -267,7 +267,7 @@ public class InviteResourceTest {
     @Test
     public void testDeleteInvitationForAccept() throws Exception {
 
-        createGroup(TEST_INVITE_USER, "Public");
+        createGroup(mMockDevice, TEST_INVITE_USER, "Public", null);
         sendInvitation(mInvitedGroupId, TEST_INVITED_USER);
 
         deleteInvitationWithQuery(mInvitedGroupId, TEST_INVITED_USER, true);
@@ -280,7 +280,7 @@ public class InviteResourceTest {
     @Test
     public void testDeleteInvitationForDeny() throws Exception {
 
-        createGroup(TEST_INVITE_USER, "Public");
+        createGroup(mMockDevice, TEST_INVITE_USER, "Public", null);
         sendInvitation(mInvitedGroupId, TEST_INVITED_USER);
 
         deleteInvitationWithQuery(mInvitedGroupId, TEST_INVITED_USER, false);
@@ -397,25 +397,24 @@ public class InviteResourceTest {
         mInviteResource.onDefaultRequestReceived(mMockDevice, request);
     }
 
-    private void createGroup(String gmid, String gtype) {
-
-        IRequest request = createGroupRequest(gmid, gtype);
-
-        mGroupResource.onDefaultRequestReceived(mMockDevice, request);
+    private void createGroup(CoapDevice device, String uid, String gname,
+            String parent) throws Exception {
+        System.out.println("-----Create Group");
+        IRequest request = null;
+        request = createGroupRequest(uid, gname, parent);
+        mGroupResource.onDefaultRequestReceived(device, request);
     }
 
-    private IRequest createGroupRequest(String uuid, String gtype) {
-
+    private IRequest createGroupRequest(String uid, String gname,
+            String parent) {
         IRequest request = null;
-
         HashMap<String, Object> payloadData = new HashMap<String, Object>();
-        payloadData.put("gmid", uuid);
-        payloadData.put("gtype", gtype);
-
+        payloadData.put(Constants.REQ_UUID_ID, uid);
+        payloadData.put(Constants.KEYFIELD_GROUP_NAME, gname);
+        payloadData.put(Constants.KEYFIELD_GROUP_PARENT, parent);
         request = MessageBuilder.createRequest(RequestMethod.POST, GROUP_URI,
                 null, ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(payloadData));
-
         return request;
     }
 }

@@ -18,8 +18,6 @@
 *
 ******************************************************************/
 
-#include "caipinterface.h"
-
 #include <sys/types.h>
 #include <ifaddrs.h>
 #include <net/if.h>
@@ -29,12 +27,14 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <wifi.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <wifi.h>
+#include <net_connection.h>
 
+#include "caipinterface.h"
 #include "caipnwmonitor.h"
 #include "caadapterutils.h"
 #include "logger.h"
@@ -42,11 +42,17 @@
 #include "oic_string.h"
 #include <coap/utlist.h>
 
-#define TAG "IP_MONITOR"
+#define TAG "OIC_CA_IP_MONITOR"
+
 #define NETLINK_MESSAGE_LENGTH  (4096)
 #define IFC_LABEL_LOOP          "lo"
 #define IFC_ADDR_LOOP_IPV4      "127.0.0.1"
 #define IFC_ADDR_LOOP_IPV6      "::1"
+
+/**
+ * Used to storing a connection handle for managing data connections.
+ */
+static connection_h connection = NULL;
 
 /**
  * Used to storing adapter changes callback interface.
@@ -73,13 +79,7 @@ static void CAIPPassNetworkChangesToAdapter(CANetworkStatus_t status);
 /**
  * Callback function to received connection state changes.
  */
-static void CAWIFIConnectionStateChangedCb(wifi_connection_state_e state, wifi_ap_h ap,
-                                           void *userData);
-
-/**
- * Callback function to received device state changes.
- */
-static void CAWIFIDeviceStateChangedCb(wifi_device_state_e state, void *userData);
+static void CAIPConnectionStateChangedCb(connection_type_e type, void* userData);
 
 int CAGetPollingInterval(int interval)
 {
@@ -195,29 +195,27 @@ CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
 
     if (!g_adapterCallbackList)
     {
-        // Initialize Wifi service
-       wifi_error_e ret = wifi_initialize();
-       if (WIFI_ERROR_NONE != ret)
-       {
-           OIC_LOG(ERROR, TAG, "wifi_initialize failed");
-           return CA_STATUS_FAILED;
-       }
+        // Initialize Wifi service.
+        if (WIFI_ERROR_NONE != wifi_initialize())
+        {
+            OIC_LOG(ERROR, TAG, "wifi_initialize failed");
+        }
 
-       // Set callback for receiving state changes
-       ret = wifi_set_device_state_changed_cb(CAWIFIDeviceStateChangedCb, NULL);
-       if (WIFI_ERROR_NONE != ret)
-       {
-           OIC_LOG(ERROR, TAG, "wifi_set_device_state_changed_cb failed");
-           return CA_STATUS_FAILED;
-       }
+        // Initialize Connections.
+        connection_error_e ret = connection_create(&connection);
+        if (CONNECTION_ERROR_NONE != ret)
+        {
+            OIC_LOG(ERROR, TAG, "connection_create failed");
+            return CA_STATUS_FAILED;
+        }
 
-       // Set callback for receiving connection state changes
-       ret = wifi_set_connection_state_changed_cb(CAWIFIConnectionStateChangedCb, NULL);
-       if (WIFI_ERROR_NONE != ret)
-       {
-           OIC_LOG(ERROR, TAG, "wifi_set_connection_state_changed_cb failed");
-           return CA_STATUS_FAILED;
-       }
+        // Set callback for receiving state changes.
+        ret = connection_set_type_changed_cb(connection, CAIPConnectionStateChangedCb, NULL);
+        if (CONNECTION_ERROR_NONE != ret)
+        {
+            OIC_LOG(ERROR, TAG, "connection_set_type_changed_cb failed");
+            return CA_STATUS_FAILED;
+        }
     }
 
     return CAIPSetNetworkMonitorCallback(callback, adapter);
@@ -230,26 +228,29 @@ CAResult_t CAIPStopNetworkMonitor(CATransportAdapter_t adapter)
     CAIPUnSetNetworkMonitorCallback(adapter);
     if (!g_adapterCallbackList)
     {
-        // Reset callback for receiving state changes
-       wifi_error_e ret = wifi_unset_device_state_changed_cb();
-       if (WIFI_ERROR_NONE != ret)
-       {
-           OIC_LOG(ERROR, TAG, "wifi_unset_device_state_changed_cb failed");
-       }
+        // Deinitialize Wifi service.
+        if (WIFI_ERROR_NONE != wifi_deinitialize())
+        {
+            OIC_LOG(ERROR, TAG, "wifi_deinitialize failed");
+        }
 
-       // Reset callback for receiving connection state changes
-       ret = wifi_unset_connection_state_changed_cb();
-       if (WIFI_ERROR_NONE != ret)
-       {
-           OIC_LOG(ERROR, TAG, "wifi_unset_connection_state_changed_cb failed");
-       }
+        // Reset callback for receiving state changes.
+        if (connection)
+        {
+            connection_error_e ret = connection_unset_type_changed_cb(connection);
+            if (CONNECTION_ERROR_NONE != ret)
+            {
+                OIC_LOG(ERROR, TAG, "connection_unset_type_changed_cb failed");
+            }
 
-       // Deinitialize Wifi service
-       ret = wifi_deinitialize();
-       if (WIFI_ERROR_NONE != ret)
-       {
-           OIC_LOG(ERROR, TAG, "wifi_deinitialize failed");
-       }
+            // Deinitialize Wifi service.
+            ret = connection_destroy(connection);
+            if (CONNECTION_ERROR_NONE != ret)
+            {
+                OIC_LOG(ERROR, TAG, "connection_destroy failed");
+            }
+            connection = NULL;
+        }
     }
 
     return CA_STATUS_OK;
@@ -392,43 +393,27 @@ static CAInterface_t *CANewInterfaceItem(int index, char *name, int family,
     return ifitem;
 }
 
-void CAWIFIConnectionStateChangedCb(wifi_connection_state_e state, wifi_ap_h ap,
-                                    void *userData)
+void CAIPConnectionStateChangedCb(connection_type_e type, void* userData)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
-    if (WIFI_CONNECTION_STATE_ASSOCIATION == state
-        || WIFI_CONNECTION_STATE_CONFIGURATION == state)
+    switch (type)
     {
-        OIC_LOG(DEBUG, TAG, "Connection is in Association State");
-        return;
+        case CONNECTION_TYPE_DISCONNECTED:
+            OIC_LOG(DEBUG, TAG, "Connection is in CONNECTION_TYPE_DISCONNECTED");
+            CAIPPassNetworkChangesToAdapter(CA_INTERFACE_DOWN);
+            break;
+        case CONNECTION_TYPE_ETHERNET:
+            OIC_LOG(DEBUG, TAG, "Connection is in CONNECTION_TYPE_ETHERNET");
+            CAIPPassNetworkChangesToAdapter(CA_INTERFACE_UP);
+            break;
+        case CONNECTION_TYPE_WIFI:
+            OIC_LOG(DEBUG, TAG, "Connection is in CONNECTION_TYPE_WIFI");
+            CAIPPassNetworkChangesToAdapter(CA_INTERFACE_UP);
+            break;
+        case CONNECTION_TYPE_CELLULAR:
+            OIC_LOG(DEBUG, TAG, "Connection is in CONNECTION_TYPE_CELLULAR");
+            CAIPPassNetworkChangesToAdapter(CA_INTERFACE_UP);
+            break;
+        default:
+            break;
     }
-
-    if (WIFI_CONNECTION_STATE_CONNECTED == state)
-    {
-        CAIPPassNetworkChangesToAdapter(CA_INTERFACE_UP);
-    }
-    else
-    {
-        CAIPPassNetworkChangesToAdapter(CA_INTERFACE_DOWN);
-    }
-
-    OIC_LOG(DEBUG, TAG, "OUT");
-}
-
-void CAWIFIDeviceStateChangedCb(wifi_device_state_e state, void *userData)
-{
-    OIC_LOG(DEBUG, TAG, "IN");
-
-    if (WIFI_DEVICE_STATE_ACTIVATED == state)
-    {
-        OIC_LOG(DEBUG, TAG, "Wifi is in Activated State");
-    }
-    else
-    {
-        CAWIFIConnectionStateChangedCb(WIFI_CONNECTION_STATE_DISCONNECTED, NULL, NULL);
-        OIC_LOG(DEBUG, TAG, "Wifi is in Deactivated State");
-    }
-
-    OIC_LOG(DEBUG, TAG, "OUT");
 }

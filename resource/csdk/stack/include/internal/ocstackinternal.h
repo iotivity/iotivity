@@ -301,6 +301,14 @@ OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
                                               const OCClientResponse *response);
 #endif
 
+/**
+ * Get the CoAP ticks after the specified number of milli-seconds.
+ *
+ * @param milliSeconds Milli-seconds.
+ * @return CoAP ticks
+ */
+uint32_t GetTicks(uint32_t milliSeconds);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

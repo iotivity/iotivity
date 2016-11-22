@@ -240,7 +240,9 @@ public class RDManager {
     private void readResource(List<String> diList,
             HashMap<String, Object> condition, ArrayList<Object> response) {
 
-        for (String di : diList) {
+        ArrayList<String> onDiList = getPresenceOnDevices(diList);
+
+        for (String di : onDiList) {
             condition.put(Constants.DEVICE_ID, di);
             ArrayList<HashMap<String, Object>> records = DBManager.getInstance()
                     .selectRecord(Constants.RD_TABLE, condition);
@@ -250,6 +252,24 @@ public class RDManager {
             }
 
         }
+    }
+
+    private ArrayList<String> getPresenceOnDevices(List<String> diList) {
+        ArrayList<String> onDiList = new ArrayList<>();
+        HashMap<String, Object> condition = new HashMap<>();
+
+        for (String di : diList) {
+            condition.put(Constants.DEVICE_ID, di);
+            HashMap<String, Object> record = DBManager.getInstance()
+                    .selectOneRecord(Constants.PRESENCE_TABLE, condition);
+
+            if (!record.isEmpty() && record.get(Constants.PRESENCE_STATE)
+                    .equals(Constants.PRESENCE_ON)) {
+                onDiList.add(di);
+            }
+
+        }
+        return onDiList;
     }
 
     private HashMap<String, Object> makeDiscoverResponseSegment(

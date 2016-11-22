@@ -31,6 +31,8 @@ public class OICConstants {
 
     public static final String RS_INTERFACE                  = "if";
 
+    public static final String RS_RESOURCE_TYPE              = "rt";
+
     /* resource url for account */
     public static final String ACCOUNT_URI                   = "account";
 
@@ -110,6 +112,10 @@ public class OICConstants {
     public static final String INVITE_FULL_URI               = "/"
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI + "/"
             + OICConstants.INVITE_URI;
+
+    public static final String ACL_VERIFY_FULL_URI           = "/"
+            + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI + "/"
+            + OICConstants.VERIFY_URI;
 
     public static final String KEEP_ALIVE_FULL_URI           = "/" + PREFIX_OIC
             + "/" + OICConstants.KEEP_ALIVE_URI;

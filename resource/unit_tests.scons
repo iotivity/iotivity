@@ -66,6 +66,9 @@ elif target_os == 'windows' and env.get('TEST') == '1':
 	# get it and install it
 	SConscript('#extlibs/gtest/SConscript')
 
+	# Build Common unit tests
+	SConscript('c_common/windows/test/SConscript')
+
 	# Build C stack's unit tests.
 	SConscript('csdk/stack/test/SConscript')
 	SConscript('csdk/connectivity/test/SConscript')

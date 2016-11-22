@@ -81,9 +81,6 @@ if target_os in ['msys_nt', 'windows']:
 if examples_env.get('LOGGING'):
 	examples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	examples_env.AppendUnique(LIBS = ['resource_directory'])
-
 def make_single_file_cpp_program(program_name):
 	return examples_env.Program(program_name, program_name + ".cpp")
 
@@ -110,12 +107,10 @@ if target_os not in ['windows', 'msys_nt']:
 		'lightserver',
 		'threadingsample',
 		]
-
-if 'CLIENT' in examples_env.get('RD_MODE'):
-	examples_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
-	example_names += [
-		'rdclient'
-		]
+	if 'CLIENT' in examples_env.get('RD_MODE'):
+		examples_env.AppendUnique(CPPPATH = ['../csdk/resource-directory/include'])
+		example_names += ['rdclient']
+		examples_env.AppendUnique(LIBS = ['resource_directory'])
 
 examples = map(make_single_file_cpp_program, example_names)
 

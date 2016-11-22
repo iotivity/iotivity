@@ -409,47 +409,6 @@ namespace OC
         return checked_guard(m_server, &IServerWrapper::sendResponse,
                              pResponse);
     }
-#ifdef RD_CLIENT
-    OCStackResult OCPlatform_impl::publishResourceToRD(const std::string& host,
-                                                       OCConnectivityType connectivityType,
-                                                       ResourceHandles& resourceHandles,
-                                                       PublishResourceCallback callback)
-    {
-        return publishResourceToRD(host, connectivityType, resourceHandles,
-                                   callback, m_cfg.QoS);
-    }
-
-    OCStackResult OCPlatform_impl::publishResourceToRD(const std::string& host,
-                                                       OCConnectivityType connectivityType,
-                                                       ResourceHandles& resourceHandles,
-                                                       PublishResourceCallback callback,
-                                                       QualityOfService qos)
-    {
-        return checked_guard(m_server, &IServerWrapper::publishResourceToRD,
-                             host, connectivityType, resourceHandles, callback,
-                             static_cast<OCQualityOfService>(qos));
-    }
-
-    OCStackResult OCPlatform_impl::deleteResourceFromRD(const std::string& host,
-                                                        OCConnectivityType connectivityType,
-                                                        ResourceHandles& resourceHandles,
-                                                        DeleteResourceCallback callback)
-    {
-        return deleteResourceFromRD(host, connectivityType, resourceHandles, callback,
-                                    m_cfg.QoS);
-    }
-
-    OCStackResult OCPlatform_impl::deleteResourceFromRD(const std::string& host,
-                                                        OCConnectivityType connectivityType,
-                                                        ResourceHandles& resourceHandles,
-                                                        DeleteResourceCallback callback,
-                                                        QualityOfService qos)
-    {
-        return checked_guard(m_server, &IServerWrapper::deleteResourceFromRD,
-                             host, connectivityType, resourceHandles, callback,
-                             static_cast<OCQualityOfService>(qos));
-    }
-#endif
     std::weak_ptr<std::recursive_mutex> OCPlatform_impl::csdkLock()
     {
         return m_csdkLock;
@@ -504,4 +463,3 @@ namespace OC
         return OCSetDeviceId(myUuid);
     }
 } //namespace OC
-

@@ -310,7 +310,10 @@ static void CASelectReturned(fd_set *readFds)
                 if (FD_ISSET(svritem->fd, readFds))
                 {
                     CAReceiveMessage(svritem->fd);
-                    FD_CLR(svritem->fd, readFds);
+                    if (-1 != svritem->fd)
+                    {
+                        FD_CLR(svritem->fd, readFds);
+                    }
                 }
             }
         }
@@ -601,8 +604,8 @@ static void CAReceiveMessage(int fd)
             OIC_LOG(ERROR, TAG, "Failed to close TLS session");
         }
 #endif
-        CADisconnectTCPSession(svritem, index);
-        CACleanData(svritem);
+        CASearchAndDeleteTCPSession(&(svritem->sep.endpoint));
+        return;
     }
 }
 
@@ -1120,13 +1123,12 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
 {
     VERIFY_NON_NULL(svritem, TAG, "svritem is NULL");
 
-    ca_mutex_lock(g_mutexObjectList);
-
-    // close the socket and remove TCP connection info in list
+    // close the socket and remove TCP connection info in list.
     if (svritem->fd >= 0)
     {
         shutdown(svritem->fd, SHUT_RDWR);
         close(svritem->fd);
+        svritem->fd = -1;
     }
     u_arraylist_remove(caglobals.tcp.svrlist, index);
     OICFree(svritem->data);
@@ -1139,8 +1141,7 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
     }
 
     OICFree(svritem);
-    ca_mutex_unlock(g_mutexObjectList);
-
+    svritem = NULL;
     return CA_STATUS_OK;
 }
 
@@ -1231,6 +1232,8 @@ CATCPSessionInfo_t *CAGetSessionInfoFromFD(int fd, size_t *index)
 
 CAResult_t CASearchAndDeleteTCPSession(const CAEndpoint_t *endpoint)
 {
+    ca_mutex_lock(g_mutexObjectList);
+
     CAResult_t result = CA_STATUS_OK;
     size_t index = 0;
     CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(endpoint, &index);
@@ -1243,6 +1246,7 @@ CAResult_t CASearchAndDeleteTCPSession(const CAEndpoint_t *endpoint)
         }
     }
 
+    ca_mutex_unlock(g_mutexObjectList);
     return result;
 }
 

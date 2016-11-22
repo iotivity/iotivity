@@ -39,7 +39,9 @@ import org.iotivity.cloud.accountserver.db.AccountDBManager;
 import org.iotivity.cloud.accountserver.db.TokenTable;
 import org.iotivity.cloud.accountserver.db.UserTable;
 import org.iotivity.cloud.accountserver.oauth.OAuthProviderFactory;
+import org.iotivity.cloud.accountserver.resources.acl.group.GroupBrokerManager;
 import org.iotivity.cloud.accountserver.resources.acl.group.GroupManager;
+import org.iotivity.cloud.accountserver.resources.acl.id.AclResource;
 import org.iotivity.cloud.accountserver.util.TypeCastingManager;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.exception.ServerException.InternalServerErrorException;
@@ -106,7 +108,9 @@ public class AccountManager {
 
         // store token information and user information to the DB
         // private group creation and store group information to the DB
-        storeUserTokenInfo(userUuid, userInfo, tokenInfo, did);
+        userUuid = storeUserTokenInfo(userUuid, userInfo, tokenInfo, did);
+
+        AclResource.getInstance().createAcl(userUuid, did);
 
         // make response
         HashMap<String, Object> response = makeSignUpResponse(tokenInfo);
@@ -214,7 +218,7 @@ public class AccountManager {
         return response;
     }
 
-    private void storeUserTokenInfo(String userUuid, UserTable userInfo,
+    private String storeUserTokenInfo(String userUuid, UserTable userInfo,
             TokenTable tokenInfo, String did) {
         // store db
         // the user table is created
@@ -226,12 +230,13 @@ public class AccountManager {
                     castUserTableToMap(userInfo));
 
             // make my private group
-            GroupManager.getInstance().createGroup(userInfo.getUuid(),
-                    Constants.REQ_GTYPE_PRIVATE);
+            GroupBrokerManager.getInstance().createGroup(userInfo.getUuid(),
+                    userInfo.getUuid(), null, null);
         }
         tokenInfo.setUuid(userUuid);
         AccountDBManager.getInstance().insertAndReplaceRecord(
                 Constants.TOKEN_TABLE, castTokenTableToMap(tokenInfo));
+        return userUuid;
     }
 
     private String checkAuthProviderName(String authProvider) {
@@ -567,9 +572,7 @@ public class AccountManager {
         AccountDBManager.getInstance().deleteRecord(Constants.TOKEN_TABLE,
                 condition);
         // delete device ID from all groups in the DB
-        GroupManager.getInstance().removeGroupDeviceinEveryGroup(uid, di);
-
-        // TODO remove device record from the ACL table
+        GroupManager.getInstance().deleteDevicesFromAllGroup(di);
     }
 
 }

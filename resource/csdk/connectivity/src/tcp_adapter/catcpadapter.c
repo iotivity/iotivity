@@ -180,11 +180,6 @@ static ssize_t CATCPPacketSendCB(CAEndpoint_t *endpoint, const void *data, size_
     OIC_LOG_BUFFER(DEBUG, TAG, data, dataLength);
 
     ssize_t ret = CATCPSendData(endpoint, data, dataLength);
-    if (-1 == ret)
-    {
-        CASearchAndDeleteTCPSession(endpoint);
-        CATCPErrorHandler(endpoint, data, dataLength, CA_SEND_FAILED);
-    }
     OIC_LOG_V(DEBUG, TAG, "Out %s : %d bytes sent", __func__, ret);
     return ret;
 }
@@ -547,6 +542,9 @@ void CATCPSendDataThread(void *threadData)
              if (CA_STATUS_OK != result)
              {
                  OIC_LOG(ERROR, TAG, "CAAdapterNetDtlsEncrypt failed!");
+                 CASearchAndDeleteTCPSession(tcpData->remoteEndpoint);
+                 CATCPErrorHandler(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen,
+                                   CA_SEND_FAILED);
              }
              OIC_LOG_V(DEBUG, TAG,
                        "CAAdapterNetDtlsEncrypt returned with result[%d]", result);
@@ -557,6 +555,7 @@ void CATCPSendDataThread(void *threadData)
          ssize_t dlen = CATCPSendData(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen);
          if (-1 == dlen)
          {
+             OIC_LOG(ERROR, TAG, "CATCPSendData failed");
              CASearchAndDeleteTCPSession(tcpData->remoteEndpoint);
              CATCPErrorHandler(tcpData->remoteEndpoint, tcpData->data, tcpData->dataLen,
                                CA_SEND_FAILED);
