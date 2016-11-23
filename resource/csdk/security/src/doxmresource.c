@@ -305,13 +305,6 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     OICFree(strUuid);
     strUuid = NULL;
 
-    //x.org.iotivity.dpc -- not Mandatory(vendor-specific), but this type is boolean, so instance always has a value.
-    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DPC_NAME,
-        strlen(OIC_JSON_DPC_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding DPC Tag.");
-    cborEncoderResult = cbor_encode_boolean(&doxmMap, doxm->dpc);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding DPC Value.");
-
     //RT -- Mandatory
     CborEncoder rtArray;
     cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_RT_NAME,
@@ -524,18 +517,6 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     {
         VERIFY_NON_NULL(TAG, gDoxm, ERROR);
         doxm->owned = gDoxm->owned;
-    }
-
-    cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_DPC_NAME, &doxmMap);
-    if (CborNoError == cborFindResult && cbor_value_is_boolean(&doxmMap))
-    {
-        cborFindResult = cbor_value_get_boolean(&doxmMap, &doxm->dpc);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding DPC Value.")
-    }
-    else // PUT/POST JSON may not have dpc so set it to the gDomx->dpc
-    {
-        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
-        doxm->dpc = gDoxm->dpc;
     }
 
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_DEVICE_ID_NAME, &doxmMap);

@@ -76,7 +76,6 @@
         "owned": false,
         "deviceuuid": "64706169-7269-6e67-4465-765555494430",
         "devowneruuid": "",
-        "rowneruuid": "64706169-7269-6e67-4465-765555494430",
-        "x.org.iotivity.dpc": false
+        "rowneruuid": "64706169-7269-6e67-4465-765555494430"
     }
 }

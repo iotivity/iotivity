@@ -97,8 +97,7 @@
         "owned": true,
         "deviceuuid": "646f6f72-4465-7669-6365-555549443030",
         "devowneruuid": "61646d69-6e44-6576-6963-655575696430",
-        "rowneruuid": "61646d69-6e44-6576-6963-655575696430",
-        "x.org.iotivity.dpc": false
+        "rowneruuid": "61646d69-6e44-6576-6963-655575696430"
     },
     "pconf": {
         "edp": false,
