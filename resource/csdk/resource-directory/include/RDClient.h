@@ -46,9 +46,15 @@ class RDClient
 {
 private:
     OCQualityOfService m_qos;
+    std::shared_ptr<std::recursive_mutex> _csdkLock;
+    std::weak_ptr<std::recursive_mutex> m_csdkLock;
+
 public:
-    RDClient(OCQualityOfService qos = OC_NA_QOS) : m_qos(qos)
+    RDClient(OCQualityOfService qos = OC_NA_QOS)
+        : m_qos(qos),
+        _csdkLock{ std::make_shared<std::recursive_mutex>() }
     {
+        m_csdkLock = _csdkLock;
     }
 
     static RDClient& Instance()
