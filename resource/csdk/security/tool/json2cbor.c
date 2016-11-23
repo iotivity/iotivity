@@ -608,14 +608,6 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
         doxm->owned = jsonObj->valueint;
     }
 
-    //DPC -- Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DPC_NAME);
-    if (jsonObj)
-    {
-        VERIFY_SUCCESS(TAG, (cJSON_True == jsonObj->type || cJSON_False == jsonObj->type), ERROR);
-        doxm->dpc = jsonObj->valueint;
-    }
-
 #ifdef _ENABLE_MULTIPLE_OWNER_
     //mom -- Not Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_MOM_NAME);
