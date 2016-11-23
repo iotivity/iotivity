@@ -44,7 +44,6 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "logger.h"
-#include "cJSON.h"
 #include "ocpayload.h"
 #include "secureresourcemanager.h"
 #include "cacommon.h"

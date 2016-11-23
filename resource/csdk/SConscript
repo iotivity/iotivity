@@ -52,7 +52,6 @@ else:
 	liboctbstack_env.PrependUnique(CPPPATH = ['connectivity/lib/libcoap-4.1.1/include'])
 
 liboctbstack_env.PrependUnique(CPPPATH = [
-		'../../extlibs/cjson/',
 		'../../extlibs/timer/',
 		'logger/include',
 		'stack/include',
@@ -165,7 +164,6 @@ if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
 ######################################################################
 OCTBSTACK_SRC = 'stack/src/'
 liboctbstack_src = [
-	'../../extlibs/cjson/cJSON.c',
 	'../../extlibs/timer/timer.c',
 	OCTBSTACK_SRC + 'ocstack.c',
 	OCTBSTACK_SRC + 'ocpayload.c',

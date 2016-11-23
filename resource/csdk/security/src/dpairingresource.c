@@ -25,7 +25,6 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "cJSON.h"
 #include "base64.h"
 #include "resourcemanager.h"
 #include "dpairingresource.h"

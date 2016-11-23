@@ -53,7 +53,6 @@ sptest_env.PrependUnique(CPPPATH = [
 		'../../../../oc_logger/include',
 		'../include/oxm',
 		'../../../../../extlibs/tinydtls',
-		'../../../../../extlibs/cjson',
 		'../../../../../extlibs/base64',
 		'../../../connectivity/inc',
 		'../../../connectivity/inc/pkix',
@@ -126,4 +125,3 @@ if sptest_env.get('TEST') == '1':
 		sptest_env.AppendENVPath('PATH', sptest_env.get('BUILD_DIR'))
 		ut = sptest_env.Command ('ut', None, out_dir + '/resource/csdk/security/provisioning/unittest/unittest')
 		AlwaysBuild ('ut')
-

@@ -34,7 +34,6 @@
 #include "oic_string.h"
 #include "oic_time.h"
 #include "logger.h"
-#include "cJSON.h"
 #include "utlist.h"
 #include "ocpayload.h"
 
@@ -401,55 +400,6 @@ OCStackResult PMTimeout(unsigned short waittime, bool waitForStackResponse)
         }
     }
     return res;
-}
-
-/**
- * Extract secure port information from payload of discovery response.
- *
- * @param[in] jsonStr response payload of /oic/res discovery.
- *
- * @return Secure port
- */
-uint16_t GetSecurePortFromJSON(char* jsonStr)
-{
-    // TODO: Modify error handling
-    if (NULL == jsonStr)
-    {
-        return 0;
-    }
-    cJSON *jsonProp = NULL;
-    cJSON *jsonP = NULL;
-    cJSON *jsonPort = NULL;
-
-    cJSON *jsonRoot = cJSON_Parse(jsonStr);
-    if(!jsonRoot)
-    {
-        // TODO: Add error log & return default secure port
-        return 0;
-    }
-
-    jsonProp = cJSON_GetObjectItem(jsonRoot, "prop");
-    if(!jsonProp)
-    {
-        // TODO: Add error log & return default secure port
-        return 0;
-    }
-
-    jsonP = cJSON_GetObjectItem(jsonProp, "p");
-    if(!jsonP)
-    {
-        // TODO: Add error log & return default secure port
-        return 0;
-    }
-
-    jsonPort = cJSON_GetObjectItem(jsonP, "port");
-    if(!jsonPort)
-    {
-        // TODO: Add error log & return default secure port
-        return 0;
-    }
-
-    return (uint16_t)jsonPort->valueint;
 }
 
 bool PMGenerateQuery(bool isSecure,

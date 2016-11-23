@@ -38,7 +38,6 @@ samples_env.PrependUnique(CPPPATH = [
 		'../../../../logger/include',
 		'../../../../stack/include',
 		'../../../../security/include',
-		'../../../../../../extlibs/cjson',
 		'../../../../../../extlibs/boost/boost',
 		'../../../../../oc_logger/include',
 		])
@@ -93,5 +92,3 @@ if with_ra:
 Alias("samples", list_of_samples)
 
 samples_env.AppendTarget('samples')
-
-

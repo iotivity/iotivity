@@ -39,7 +39,6 @@ examples_env = lib_env.Clone()
 examples_env.AppendUnique(CPPPATH = [
         '../../include/',
         '../../csdk/stack/include',
-        '../../../extlibs/cjson',
         '../../csdk/logger/include',
         '../../oc_logger/include',
         '../../csdk/connectivity/api',
@@ -113,4 +112,3 @@ if examples_env.get('WITH_TCP') == True:
 
 Alias("examples", [provisioningclient, clientjson,clientdat])
 examples_env.AppendTarget('examples')
-

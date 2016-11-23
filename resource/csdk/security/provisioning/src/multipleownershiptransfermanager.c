@@ -37,7 +37,6 @@
 #include "cacommon.h"
 #include "cainterface.h"
 #include "base64.h"
-#include "cJSON.h"
 #include "global.h"
 
 #include "srmresourcestrings.h"

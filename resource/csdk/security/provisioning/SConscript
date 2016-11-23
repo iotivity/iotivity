@@ -47,7 +47,6 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'include/cloud',
 		'include/oxm',
 		'../../resource/csdk/security/include',
-		'../../../../extlibs/cjson/',
 		'../../../../extlibs/tinydtls/',
 		'../../connectivity/inc',
 		'../../connectivity/inc/pkix',
@@ -141,4 +140,3 @@ provisioning_env.UserInstallTargetLib(provisioningserver, 'ocpmapi')
 
 if target_os in ['linux', 'msys_nt', 'windows', 'tizen']:
 	SConscript('sample/SConscript')
-

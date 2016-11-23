@@ -36,14 +36,14 @@ raml_env.Append( RPATH = env.Literal('\\$$ORIGIN'))
 
 raml_env.AppendUnique(CPPPATH = ['../../../extlibs/cjson/'])
 raml_env.PrependUnique(LIBS = ['octbstack', 'YamlParser'])
-raml_env.AppendUnique(LIBS = ['pthread'])
+raml_env.AppendUnique(LIBS = ['pthread', 'm'])
 
 raml_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-raml_src = [env.Glob('raml/model/*.cpp'), env.Glob('raml/jsonSchemaParser/*.cpp'), env.Glob('raml/*.cpp')]
+raml_src = ['#extlibs/cjson/cJSON.c', env.Glob('raml/model/*.cpp'), env.Glob('raml/jsonSchemaParser/*.cpp'), env.Glob('raml/*.cpp')]
 ramlsdk = raml_env.SharedLibrary('RamlParser', raml_src)
 
 raml_env.InstallTarget(ramlsdk, 'libRaml')

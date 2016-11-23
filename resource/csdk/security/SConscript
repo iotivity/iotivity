@@ -48,7 +48,6 @@ else:
 	libocsrm_env.AppendUnique(CPPPATH = ['../connectivity/lib/libcoap-4.1.1/include'])
 
 libocsrm_env.PrependUnique(CPPPATH = [
-		'../../../extlibs/cjson/',
 		'../../../extlibs/tinydtls/',
 		'../logger/include',
 		'../../c_common/ocrandom/include',

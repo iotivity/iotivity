@@ -50,7 +50,6 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../include/cloud',
 		'../../include',
 		'../../../../../extlibs/tinydtls',
-		'../../../../../extlibs/cjson',
 		'../../../../../extlibs/base64',
 		'../../../connectivity/inc',
 		'../../../connectivity/inc/pkix',
@@ -161,4 +160,3 @@ else:
 				])
 
 provisioning_env.AppendTarget('samples')
-
