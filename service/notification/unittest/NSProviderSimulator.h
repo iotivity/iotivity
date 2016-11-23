@@ -123,11 +123,11 @@ private:
                     std::string syncUri = m_notificationUri + m_syncUri;
                     std::string topicUri = m_notificationUri + m_topicUri;
                     std::string providerId = "123456789012345678901234567890123456";
-                    rep.setValue("subControllability", m_accepter);
-                    rep.setValue("messageUri", msgUri);
-                    rep.setValue("syncUri", syncUri);
-                    rep.setValue("topicUri", topicUri);
-                    rep.setValue("providerId", providerId);
+                    rep.setValue("subcontrollability", m_accepter);
+                    rep.setValue("messageuri", msgUri);
+                    rep.setValue("syncuri", syncUri);
+                    rep.setValue("topicuri", topicUri);
+                    rep.setValue("providerid", providerId);
                 }
                 else if (type == requestType::NS_SYNC)
                 {
@@ -157,14 +157,14 @@ private:
                         [& topicArr](const NS_TopicState & topicState)
                         {
                             OC::OCRepresentation topic;
-                            topic.setValue("topicName", topicState.first);
-                            topic.setValue("topicState", (int) topicState.second);
+                            topic.setValue("topicname", topicState.first);
+                            topic.setValue("topicstate", (int) topicState.second);
                             topicArr.push_back(topic);
                         }
                     );
 
                     rep.setValue<std::vector<OC::OCRepresentation>>
-                        ("topicList", topicArr);
+                        ("topiclist", topicArr);
                 }
                 else
                 {
@@ -182,7 +182,7 @@ private:
                     m_syncRep = requests->getResourceRepresentation();
 
                     std::cout << "Receive POST for Sync" << std::endl;
-                    std::cout << "provider Id : " << m_syncRep.getValueToString("providerId") << std::endl;
+                    std::cout << "provider Id : " << m_syncRep.getValueToString("providerid") << std::endl;
                     std::cout << "Sync State : " << m_syncRep.getValueToString("state") << std::endl;
 
                     response->setResourceRepresentation(m_syncRep);
@@ -195,15 +195,15 @@ private:
                 {
                     auto receivePayload =
                             requests->getResourceRepresentation()
-                            .getValue<std::vector<OC::OCRepresentation>>("topicList");
+                            .getValue<std::vector<OC::OCRepresentation>>("topiclist");
 
                     std::for_each (receivePayload.begin(), receivePayload.end(),
                           [this](const OC::OCRepresentation & rep)
                           {
-                              auto tmp = m_allowedTopicList.find(rep.getValueToString("topicName"));
+                              auto tmp = m_allowedTopicList.find(rep.getValueToString("topicname"));
                               if (tmp != m_allowedTopicList.end())
                               {
-                                  tmp->second = (TopicAllowState) rep.getValue<int>("topicState");
+                                  tmp->second = (TopicAllowState) rep.getValue<int>("topicstate");
                               }
                           }
                     );
@@ -234,8 +234,8 @@ private:
         {
             OC::OCRepresentation rep;
             std::string providerId = "123456789012345678901234567890123456";
-            rep.setValue<int>("messageId", (int)messageType::NS_ALLOW);
-            rep.setValue("providerId", providerId);
+            rep.setValue<int>("messageid", (int)messageType::NS_ALLOW);
+            rep.setValue("providerid", providerId);
 
             auto response = std::make_shared<OC::OCResourceResponse>();
             response->setRequestHandle(requests->getRequestHandle());
@@ -306,27 +306,27 @@ public:
     void sendRead(const uint64_t & id)
     {
         std::string providerId = "123456789012345678901234567890123456";
-        m_syncRep.setValue<int>("messageId", id);
+        m_syncRep.setValue<int>("messageid", id);
         m_syncRep.setValue("state", (int)1);
-        m_syncRep.setValue("providerId", providerId);
+        m_syncRep.setValue("providerid", providerId);
         OC::OCPlatform::notifyAllObservers(m_syncHandle);
     }
     void sendDismiss(const uint64_t & id)
     {
         std::string providerId = "123456789012345678901234567890123456";
-        m_syncRep.setValue<int>("messageId", id);
+        m_syncRep.setValue<int>("messageid", id);
         m_syncRep.setValue("state", (int)2);
-        m_syncRep.setValue("providerId", providerId);
+        m_syncRep.setValue("providerid", providerId);
         OC::OCPlatform::notifyAllObservers(m_syncHandle);
     }
 
     void setMessage(const uint64_t & id, const std::string & title, const std::string & content)
     {
         std::string providerId = "123456789012345678901234567890123456";
-        m_messageRep.setValue<int>("messageId", id);
+        m_messageRep.setValue<int>("messageid", id);
         m_messageRep.setValue("title", title);
-        m_messageRep.setValue("contentText", content);
-        m_messageRep.setValue("providerId", providerId);
+        m_messageRep.setValue("contenttext", content);
+        m_messageRep.setValue("providerid", providerId);
     }
 
     void setTopics(const NS_TopicList & topics)
