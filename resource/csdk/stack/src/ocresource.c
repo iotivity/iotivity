@@ -391,6 +391,12 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
         resAttrib = resAttrib->next;
     }
 
+    OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)resourcePtr);
+    p = (OCResourceProperty) ((p & OC_DISCOVERABLE) | (p & OC_OBSERVABLE));
+    OCRepPayload *policy = OCRepPayloadCreate();
+    OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP, p);
+    OCRepPayloadSetPropObjectAsOwner(tempPayload, OC_RSRVD_POLICY, policy);
+
     if(!*payload)
     {
         *payload = tempPayload;
