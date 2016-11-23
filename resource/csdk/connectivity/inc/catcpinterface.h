@@ -168,18 +168,17 @@ u_arraylist_t *CATCPGetInterfaceInformation(int desiredIndex);
  * Connect to TCP Server.
  *
  * @param[in]   endpoint    remote endpoint information.
- * @return  TCP Session Information structure.
+ * @return  Created socket file descriptor.
  */
-CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint);
+CASocketFd_t CAConnectTCPSession(const CAEndpoint_t *endpoint);
 
 /**
  * Disconnect from TCP Server.
  *
- * @param[in]   svritem     TCP session information.
  * @param[in]   index       current session index in list.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index);
+CAResult_t CADisconnectTCPSession(size_t index);
 
 /**
  * Disconnect all connection from TCP Server.
@@ -214,9 +213,19 @@ size_t CAGetTotalLengthFromHeader(const unsigned char *recvBuffer);
 CATCPSessionInfo_t *CAGetSessionInfoFromFD(int fd, size_t *index);
 
 /**
+ * Get socket file descriptor from remote device information.
+ *
+ * @param[in]   endpoint    Remote Endpoint information (such as ipaddress,
+ *                          port, reference uri and transport type) to
+ *                          which the unicast data has to be sent.
+ * @return  Created socket file descriptor.
+ */
+CASocketFd_t CAGetSocketFDFromEndpoint(const CAEndpoint_t *endpoint);
+
+/**
  * Find the session with endpoint info and remove it from list.
  *
- * @param[in]   endpoint    Remote Endpoint information (like ipaddress,
+ * @param[in]   endpoint    Remote Endpoint information (such as ipaddress,
  *                          port, reference uri and transport type) to
  *                          which the unicast data has to be sent.
  * @return  ::CA_STATUS_OK or Appropriate error code.
@@ -237,3 +246,4 @@ size_t CACheckPayloadLengthFromHeader(const void *data, size_t dlen);
 #endif
 
 #endif /* CA_TCP_INTERFACE_H_ */
+
