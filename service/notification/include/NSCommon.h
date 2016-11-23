@@ -80,6 +80,7 @@ typedef enum
     NS_MESSAGE_NOTICE = 2,
     NS_MESSAGE_EVENT = 3,
     NS_MESSAGE_INFO = 4,
+    NS_MESSAGE_WARNING = 5,
 
 } NSMessageType;
 

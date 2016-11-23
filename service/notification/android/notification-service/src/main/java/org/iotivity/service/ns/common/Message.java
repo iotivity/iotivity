@@ -33,10 +33,11 @@ public class Message
 
     public enum MessageType
     {
-        ALERT(0),
-        NOTICE(1),
-        EVENT(2),
-        INFO(3);
+        ALERT(1),
+        NOTICE(2),
+        EVENT(3),
+        INFO(4),
+        WARNING(5);
         private int type;
 
         private MessageType(int type)
