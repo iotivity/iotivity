@@ -5042,6 +5042,21 @@ void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, bool isCon
     {
        g_connectionHandler(info, isConnected);
     }
+
+    /*
+     * If the client observes one or more resources over a reliable connection,
+     * then the CoAP server (or intermediary in the role of the CoAP server)
+     * MUST remove all entries associated with the client endpoint from the lists
+     * of observers when the connection is either closed or times out.
+     */
+    if (!isConnected)
+    {
+        OCDevAddr devAddr = { OC_DEFAULT_ADAPTER };
+        CopyEndpointToDevAddr(info, &devAddr);
+
+        // remove observer list with remote device address.
+        DeleteObserverUsingDevAddr(&devAddr);
+    }
 }
 
 void OCSetNetworkMonitorHandler(CAAdapterStateChangedCB adapterHandler,
