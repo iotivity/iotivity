@@ -310,6 +310,7 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
         return OC_STACK_ADAPTER_NOT_ENABLED;
     }
 
+#ifdef EDR_ADAPTER
     if (parsedAdapter == OC_ADAPTER_RFCOMM_BTEDR)
     {
         // copy addr
@@ -322,6 +323,7 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
         out->port = 0;
     }
     else
+#endif
     {
         // first check epl has square bracket
         tmp = strchr(origin, OC_ENDPOINT_BRACKET_START);
