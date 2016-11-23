@@ -158,7 +158,7 @@ NSResult NSCreateResource(char *uri)
     }
     else if (strcmp(uri, NS_COLLECTION_SYNC_URI) == 0)
     {
-        NotificationSyncResource.id = NULL;
+        NotificationSyncResource.messageId = 0;
         (NotificationSyncResource.providerId)[0] = '\0';
         NotificationSyncResource.state = NULL;
         NotificationSyncResource.handle = NULL;

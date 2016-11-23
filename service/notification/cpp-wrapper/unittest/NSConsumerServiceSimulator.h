@@ -67,8 +67,8 @@ class NSConsumerSimulator
             }
 
             OC::OCRepresentation rep;
-            rep.setValue("providerId", providerID);
-            rep.setValue("messageId", id);
+            rep.setValue("providerid", providerID);
+            rep.setValue("messageid", id);
             rep.setValue("state", type);
 
             m_syncResource->post(rep, OC::QueryParamsMap(), &onPost, OC::QualityOfService::LowQos);
@@ -115,7 +115,7 @@ class NSConsumerSimulator
         {
 
             OC::QueryParamsMap map;
-            map.insert(std::pair<std::string, std::string>(std::string("consumerId"),
+            map.insert(std::pair<std::string, std::string>(std::string("consumerid"),
                        std::string("123456789012345678901234567890123456")));
 
             try
@@ -160,14 +160,14 @@ class NSConsumerSimulator
                        std::shared_ptr<OC::OCResource> )
         {
 
-            if (rep.getUri() == "/notification/message" && rep.hasAttribute("messageId")
-                && rep.getValue<int>("messageId") != 1)
+            if (rep.getUri() == "/notification/message" && rep.hasAttribute("messageid")
+                && rep.getValue<int>("messageid") != 1)
             {
-                m_messageFunc(int(rep.getValue<int>("messageId")),
+                m_messageFunc(int(rep.getValue<int>("messageid")),
                               std::string(rep.getValueToString("title")),
-                              std::string(rep.getValueToString("contentText")),
+                              std::string(rep.getValueToString("contenttext")),
                               std::string(rep.getValueToString("source")));
-                if (rep.getValue<int>("messageId") == 3)
+                if (rep.getValue<int>("messageid") == 3)
                 {
                     m_topicResource->get(OC::QueryParamsMap(),
                                          std::bind(&NSConsumerSimulator::onTopicGet, this, std::placeholders::_1,
@@ -177,7 +177,7 @@ class NSConsumerSimulator
             }
             else if (rep.getUri() == "/notification/sync")
             {
-                m_syncFunc(int(rep.getValue<int>("state")), int(rep.getValue<int>("messageId")));
+                m_syncFunc(int(rep.getValue<int>("state")), int(rep.getValue<int>("messageid")));
             }
         }
         void onTopicGet(const OC::HeaderOptions &/*headerOption*/,
