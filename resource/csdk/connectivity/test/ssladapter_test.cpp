@@ -181,7 +181,21 @@ unsigned char caCert[] = {
 };
 int caCertLen = sizeof(caCert);
 
-unsigned char control_server_message[] = {
+unsigned char control_server_message_ccm[] = {
+    0x48, 0x54, 0x54, 0x50, 0x2f, 0x31, 0x2e, 0x30, 0x20, 0x32, 0x30, 0x30, 0x20, 0x4f, 0x4b, 0x0d,
+    0x0a, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x2d, 0x54, 0x79, 0x70, 0x65, 0x3a, 0x20, 0x74,
+    0x65, 0x78, 0x74, 0x2f, 0x68, 0x74, 0x6d, 0x6c, 0x0d, 0x0a, 0x0d, 0x0a, 0x3c, 0x68, 0x32, 0x3e,
+    0x6d, 0x62, 0x65, 0x64, 0x20, 0x54, 0x4c, 0x53, 0x20, 0x54, 0x65, 0x73, 0x74, 0x20, 0x53, 0x65,
+    0x72, 0x76, 0x65, 0x72, 0x3c, 0x2f, 0x68, 0x32, 0x3e, 0x0d, 0x0a, 0x54, 0x45, 0x53, 0x54, 0x20,
+    0x4d, 0x45, 0x53, 0x53, 0x41, 0x47, 0x45, 0x0d, 0x0a, 0x3c, 0x70, 0x3e, 0x53, 0x75, 0x63, 0x63,
+    0x65, 0x73, 0x73, 0x66, 0x75, 0x6c, 0x20, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x6f,
+    0x6e, 0x20, 0x75, 0x73, 0x69, 0x6e, 0x67, 0x3a, 0x20, 0x54, 0x4c, 0x53, 0x2d, 0x45, 0x43, 0x44,
+    0x48, 0x45, 0x2d, 0x45, 0x43, 0x44, 0x53, 0x41, 0x2d, 0x57, 0x49, 0x54, 0x48, 0x2d, 0x41, 0x45,
+    0x53, 0x2d, 0x31, 0x32, 0x38, 0x2d, 0x43, 0x43, 0x4d, 0x3c, 0x2f, 0x70, 0x3e, 0x0d, 0x0a
+};
+int control_server_message_ccm_len = sizeof(control_server_message_ccm);
+
+unsigned char control_server_message_ccm8[] = {
     0x48, 0x54, 0x54, 0x50, 0x2f, 0x31, 0x2e, 0x30, 0x20, 0x32, 0x30, 0x30, 0x20, 0x4f, 0x4b, 0x0d,
     0x0a, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x2d, 0x54, 0x79, 0x70, 0x65, 0x3a, 0x20, 0x74,
     0x65, 0x78, 0x74, 0x2f, 0x68, 0x74, 0x6d, 0x6c, 0x0d, 0x0a, 0x0d, 0x0a, 0x3c, 0x68, 0x32, 0x3e,
@@ -194,7 +208,22 @@ unsigned char control_server_message[] = {
     0x53, 0x2d, 0x31, 0x32, 0x38, 0x2d, 0x43, 0x43, 0x4d, 0x2d, 0x38, 0x3c, 0x2f, 0x70, 0x3e, 0x0d,
     0x0a
 };
-int control_server_message_len = sizeof(control_server_message);
+int control_server_message_ccm8_len = sizeof(control_server_message_ccm8);
+
+unsigned char control_server_message_cbc[] = {
+    0x48, 0x54, 0x54, 0x50, 0x2f, 0x31, 0x2e, 0x30, 0x20, 0x32, 0x30, 0x30, 0x20, 0x4f, 0x4b, 0x0d,
+    0x0a, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x2d, 0x54, 0x79, 0x70, 0x65, 0x3a, 0x20, 0x74,
+    0x65, 0x78, 0x74, 0x2f, 0x68, 0x74, 0x6d, 0x6c, 0x0d, 0x0a, 0x0d, 0x0a, 0x3c, 0x68, 0x32, 0x3e,
+    0x6d, 0x62, 0x65, 0x64, 0x20, 0x54, 0x4c, 0x53, 0x20, 0x54, 0x65, 0x73, 0x74, 0x20, 0x53, 0x65,
+    0x72, 0x76, 0x65, 0x72, 0x3c, 0x2f, 0x68, 0x32, 0x3e, 0x0d, 0x0a, 0x54, 0x45, 0x53, 0x54, 0x20,
+    0x4d, 0x45, 0x53, 0x53, 0x41, 0x47, 0x45, 0x0d, 0x0a, 0x3c, 0x70, 0x3e, 0x53, 0x75, 0x63, 0x63,
+    0x65, 0x73, 0x73, 0x66, 0x75, 0x6c, 0x20, 0x63, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x6f,
+    0x6e, 0x20, 0x75, 0x73, 0x69, 0x6e, 0x67, 0x3a, 0x20, 0x54, 0x4c, 0x53, 0x2d, 0x45, 0x43, 0x44,
+    0x48, 0x45, 0x2d, 0x45, 0x43, 0x44, 0x53, 0x41, 0x2d, 0x57, 0x49, 0x54, 0x48, 0x2d, 0x41, 0x45,
+    0x53, 0x2d, 0x31, 0x32, 0x38, 0x2d, 0x43, 0x42, 0x43, 0x2d, 0x53, 0x48, 0x41, 0x32, 0x35, 0x36,
+	0x3c, 0x2f, 0x70, 0x3e, 0x0d, 0x0a
+};
+int control_server_message_cbc_len = sizeof(control_server_message_cbc);
 
 unsigned char control_client_message[] = {
     0x47, 0x45, 0x54, 0x20, 0x2f, 0x20, 0x48, 0x54, 0x54, 0x50, 0x2f, 0x31, 0x2e, 0x30, 0x0d, 0x0a,
@@ -1236,7 +1265,7 @@ TEST(TLSAdaper, Test_2)
 unsigned char predictedClientHello[] = {
     0x16, 0x03, 0x01, 0x00, 0x63, 0x01, 0x00, 0x00, 0x5f, 0x03, 0x03, 0x57, 0xf2, 0x5f, 0x21, 0x04,
     0xb1, 0x3b, 0xda, 0x55, 0xa4, 0x8e, 0xcc, 0x3f, 0xe9, 0x45, 0x5c, 0xaf, 0xcb, 0x19, 0x2e, 0x1f,
-    0x4b, 0xd5, 0x84, 0x5c, 0x4b, 0xd7, 0x7d, 0x38, 0xa2, 0xfa, 0x3d, 0x00, 0x00, 0x06, 0xc0, 0xae,
+    0x4b, 0xd5, 0x84, 0x5c, 0x4b, 0xd7, 0x7d, 0x38, 0xa2, 0xfa, 0x3d, 0x00, 0x00, 0x06, 0xc0, 0xac,
     0xc0, 0xae, 0x00, 0xff, 0x01, 0x00, 0x00, 0x30, 0x00, 0x0d, 0x00, 0x16, 0x00, 0x14, 0x06, 0x03,
     0x06, 0x01, 0x05, 0x03, 0x05, 0x01, 0x04, 0x03, 0x04, 0x01, 0x03, 0x03, 0x03, 0x01, 0x02, 0x03,
     0x02, 0x01, 0x00, 0x0a, 0x00, 0x04, 0x00, 0x02, 0x00, 0x17, 0x00, 0x0b, 0x00, 0x02, 0x01, 0x00,
@@ -1307,10 +1336,10 @@ static void * test0CAinitiateSslHandshake(void * arg)
 
     // CAsetTlsCipherSuite
     mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientTlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8]);
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM]);
     mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverTlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8]);
-    g_caSslContext->cipher = ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM]);
+    g_caSslContext->cipher = ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM;
 
     CAsetPskCredentialsCallback(GetDtlsPskCredentials);
 
@@ -1465,7 +1494,18 @@ static void * testCAencryptSsl(void * arg)
     // CAsetCredentialTypesCallback
     g_getCredentialTypesCallback = clutch;
 
-    CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+    if (*((int*)arg) == 0)
+    {
+        CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM);
+    }
+    if (*((int*)arg) == 1)
+    {
+        CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+    }
+    else if (*((int*)arg) == 2)
+    {
+        CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256);
+    }
     CAsetPskCredentialsCallback(GetDtlsPskCredentials);
 
     socketConnect();
@@ -1512,7 +1552,41 @@ static void * testCAencryptSsl(void * arg)
 
     socketClose();
 
-    if (control_server_message_len == msglen && memcmp(msg, control_server_message, control_server_message_len) == 0)
+    if (*((int*)arg) == 0)
+    {
+        if (control_server_message_ccm_len == msglen && memcmp(msg, control_server_message_ccm, control_server_message_ccm_len) == 0)
+        {
+            ret = 0;
+        }
+        else
+        {
+            ret = 1;
+        }
+    }
+    if (*((int*)arg) == 1)
+    {
+        if (control_server_message_ccm8_len == msglen && memcmp(msg, control_server_message_ccm8, control_server_message_ccm8_len) == 0)
+        {
+            ret = 0;
+        }
+        else
+        {
+            ret = 1;
+        }
+    }
+    else if (*((int*)arg) == 2)
+    {
+        if (control_server_message_cbc_len == msglen && memcmp(msg, control_server_message_cbc, control_server_message_cbc_len) == 0)
+        {
+            ret = 0;
+        }
+        else
+        {
+            ret = 1;
+        }
+    }
+
+    if (ret == 0)
     {
         *((int*)arg) = 0;
         return NULL;
@@ -1525,11 +1599,67 @@ static void * testCAencryptSsl(void * arg)
 }
 
 // CAencryptSsl()
-TEST(TLSAdaper, Test_4)
+TEST(TLSAdaper, Test_4_0)
+{
+    pthread_t thread1, thread2;
+    int ret = 0;
+    int arg = 0;
+
+    ret = pthread_create( &thread1, NULL, server, (void*) NULL);
+    if(ret)
+    {
+        fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
+        exit(EXIT_FAILURE);
+    }
+
+    sleep(5);
+
+    ret = pthread_create( &thread2, NULL, testCAencryptSsl, &arg);
+    if(ret)
+    {
+        fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
+        exit(EXIT_FAILURE);
+    }
+
+    sleep(5);
+
+    EXPECT_EQ(0, arg);
+}
+
+// CAencryptSsl()
+TEST(TLSAdaper, Test_4_1)
 {
     pthread_t thread1, thread2;
     int ret = 0;
     int arg = 1;
+
+    ret = pthread_create( &thread1, NULL, server, (void*) NULL);
+    if(ret)
+    {
+        fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
+        exit(EXIT_FAILURE);
+    }
+
+    sleep(5);
+
+    ret = pthread_create( &thread2, NULL, testCAencryptSsl, &arg);
+    if(ret)
+    {
+        fprintf(stderr,"Error - pthread_create() return code: %d\n", ret);
+        exit(EXIT_FAILURE);
+    }
+
+    sleep(5);
+
+    EXPECT_EQ(0, arg);
+}
+
+// CAencryptSsl()
+TEST(TLSAdaper, Test_4_2)
+{
+    pthread_t thread1, thread2;
+    int ret = 0;
+    int arg = 2;
 
     ret = pthread_create( &thread1, NULL, server, (void*) NULL);
     if(ret)
@@ -1612,7 +1742,7 @@ static void * testCAdecryptSsl(void * arg)
     // CAsetCredentialTypesCallback
     g_getCredentialTypesCallback = clutch;
 
-    CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+    CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM);
 
     CAsetPskCredentialsCallback(GetDtlsPskCredentials);
 
@@ -1658,8 +1788,8 @@ static void * testCAdecryptSsl(void * arg)
 
     socketClose();
 
-    if (control_server_message_len == msglen && memcmp(msg, control_server_message,
-                                                                 control_server_message_len) == 0)
+    if (control_server_message_ccm_len == msglen && memcmp(msg, control_server_message_ccm,
+                                                                 control_server_message_ccm_len) == 0)
     {
         *((int*)arg) = 0;
         return NULL;
@@ -1755,10 +1885,10 @@ static int testCAdeinitSslAdapter()
 
     // CAsetTlsCipherSuite
     mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientTlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8]);
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM]);
     mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverTlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8]);
-    g_caSslContext->cipher = ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM]);
+    g_caSslContext->cipher = ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM;
 
     CAdeinitSslAdapter();
 
@@ -1810,7 +1940,7 @@ static void * testServer(void * arg)
     // CAsetCredentialTypesCallback
     g_getCredentialTypesCallback = clutch;
 
-    CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+    CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM);
 
     CAsetPskCredentialsCallback(GetDtlsPskCredentials);
 
@@ -1986,8 +2116,14 @@ static int testCAsetTlsCipherSuite()
         ret += 1;
     }
 
-    status = CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
-    if (ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 != g_caSslContext->cipher || status != CA_STATUS_OK)
+    status = CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM);
+    if (ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM != g_caSslContext->cipher || status != CA_STATUS_OK)
+    {
+        ret += 1;
+    }
+
+    status = CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256);
+    if (ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256 != g_caSslContext->cipher || status != CA_STATUS_OK)
     {
         ret += 1;
     }
@@ -2108,7 +2244,7 @@ static void * testCAsslGenerateOwnerPsk(void * arg)
     // CAsetCredentialTypesCallback
     g_getCredentialTypesCallback = clutch;
 
-    CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
+    CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM);
 
     CAsetPskCredentialsCallback(GetDtlsPskCredentials);
 
