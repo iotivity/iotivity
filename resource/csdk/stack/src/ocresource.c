@@ -112,7 +112,7 @@ static OCStackResult GetSecurePortInfo(OCDevAddr *endpoint, uint16_t *port)
 
 #ifdef TCP_ADAPTER
 /* This method will retrieve the tcp port */
-static OCStackResult GetTCPPortInfo(OCDevAddr *endpoint, uint16_t *port)
+static OCStackResult GetTCPPortInfo(OCDevAddr *endpoint, uint16_t *port, bool secured)
 {
     uint16_t p = 0;
 
@@ -120,11 +120,11 @@ static OCStackResult GetTCPPortInfo(OCDevAddr *endpoint, uint16_t *port)
     {
         if (endpoint->flags & OC_IP_USE_V4)
         {
-            p = caglobals.tcp.ipv4.port;
+            p = secured ? caglobals.tcp.ipv4s.port : caglobals.tcp.ipv4.port;
         }
         else if (endpoint->flags & OC_IP_USE_V6)
         {
-            p = caglobals.tcp.ipv6.port;
+            p = secured ? caglobals.tcp.ipv6s.port : caglobals.tcp.ipv6.port;
         }
     }
 
@@ -538,10 +538,8 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
     }
 #ifdef TCP_ADAPTER
     uint16_t tcpPort = 0;
-    if (GetTCPPortInfo(devAddr, &tcpPort) != OC_STACK_OK)
-    {
-        tcpPort = 0;
-    }
+    GetTCPPortInfo(devAddr, &tcpPort, (resourcePtr->resourceProperties & OC_SECURE));
+
     OCDiscoveryPayloadAddResourceWithEps(payload, resourcePtr, securePort,
                                          isVirtual, networkInfo, infoSize, devAddr, tcpPort);
 #else

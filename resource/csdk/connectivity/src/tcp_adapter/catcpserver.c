@@ -237,7 +237,9 @@ static void CAFindReadyMessage()
 
     FD_ZERO(&readFds);
     CA_FD_SET(ipv4, &readFds);
+    CA_FD_SET(ipv4s, &readFds);
     CA_FD_SET(ipv6, &readFds);
+    CA_FD_SET(ipv6s, &readFds);
 
     if (OC_INVALID_SOCKET != caglobals.tcp.shutdownFds[0])
     {
@@ -291,9 +293,19 @@ static void CASelectReturned(fd_set *readFds)
         CAAcceptConnection(CA_IPV4, &caglobals.tcp.ipv4);
         return;
     }
+    else if (caglobals.tcp.ipv4s.fd != -1 && FD_ISSET(caglobals.tcp.ipv4s.fd, readFds))
+    {
+        CAAcceptConnection(CA_IPV4 | CA_SECURE, &caglobals.tcp.ipv4s);
+        return;
+    }
     else if (caglobals.tcp.ipv6.fd != -1 && FD_ISSET(caglobals.tcp.ipv6.fd, readFds))
     {
         CAAcceptConnection(CA_IPV6, &caglobals.tcp.ipv6);
+        return;
+    }
+    else if (caglobals.tcp.ipv6s.fd != -1 && FD_ISSET(caglobals.tcp.ipv6s.fd, readFds))
+    {
+        CAAcceptConnection(CA_IPV6 | CA_SECURE, &caglobals.tcp.ipv6s);
         return;
     }
     else if (-1 != caglobals.tcp.connectionFds[0] &&
@@ -1086,11 +1098,17 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
     if (caglobals.server)
     {
         NEWSOCKET(AF_INET, ipv4);
+        NEWSOCKET(AF_INET, ipv4s);
         NEWSOCKET(AF_INET6, ipv6);
+        NEWSOCKET(AF_INET6, ipv6s);
         OIC_LOG_V(DEBUG, TAG, "IPv4 socket fd=%d, port=%d",
                   caglobals.tcp.ipv4.fd, caglobals.tcp.ipv4.port);
+        OIC_LOG_V(DEBUG, TAG, "IPv4 secure socket fd=%d, port=%d",
+                  caglobals.tcp.ipv4s.fd, caglobals.tcp.ipv4s.port);
         OIC_LOG_V(DEBUG, TAG, "IPv6 socket fd=%d, port=%d",
                   caglobals.tcp.ipv6.fd, caglobals.tcp.ipv6.port);
+        OIC_LOG_V(DEBUG, TAG, "IPv6 secure socket fd=%d, port=%d",
+                  caglobals.tcp.ipv6s.fd, caglobals.tcp.ipv6s.port);
     }
 
     // create pipe for fast shutdown
@@ -1144,7 +1162,9 @@ void CATCPStopServer()
 
     // close accept socket.
     CLOSE_SOCKET(ipv4);
+    CLOSE_SOCKET(ipv4s);
     CLOSE_SOCKET(ipv6);
+    CLOSE_SOCKET(ipv6s);
 
     if (caglobals.tcp.started)
     {
