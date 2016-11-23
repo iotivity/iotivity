@@ -94,6 +94,21 @@ cmdBuildApi=jdk_env.Gradle(target="base/objs", source="base/src/main/java/org/io
 
 jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' build -b' + 'android/examples/build.gradle -DWITH_TRANSPORT_EDR=%s -DWITH_TRANSPORT_BLE=%s -DWITH_TRANSPORT_NFC=%s -PTARGET_ARCH=%s -PRELEASE=%s -PSECURED=%s -DSECURE=%s -PWITH_CLOUD=%s -PRD_MODE=%s -PWITH_MQ_PUB=%s -PWITH_MQ_SUB=%s -PWITH_MQ_BROKER=%s -PWITH_TCP=%s --stacktrace' %(ANDROID_TRANSPORT_EDR, ANDROID_TRANSPORT_BLE, ANDROID_TRANSPORT_NFC, ANDROID_TARGET_ARCH, ANDROID_RELEASE, ANDROID_SECURED, ANDROID_SECURED, ANDROID_CLOUD, ANDROID_RD_MODE, ANDROID_MQ_PUB, ANDROID_MQ_SUB, ANDROID_MQ_BROKER, ANDROID_TCP))
 cmdBuildExamples=jdk_env.Gradle(target="../examples/devicediscoveryclient/apk", source="../examples/devicediscoveryclient/src/main/java/org/iotivity/base/examples/DeviceDiscoveryClient.java")
+# clean up the files built by Gradle builder
+jdk_env.Clean(cmdBuildExamples, '../examples/build')
+jdk_env.Clean(cmdBuildExamples, '../examples/devicediscoveryclient/build')
+jdk_env.Clean(cmdBuildExamples, '../examples/devicediscoveryserver/build')
+jdk_env.Clean(cmdBuildExamples, '../examples/fridgeclient/build')
+jdk_env.Clean(cmdBuildExamples, '../examples/fridgegroupclient/build')
+jdk_env.Clean(cmdBuildExamples, '../examples/fridgegroupserver/build')
+jdk_env.Clean(cmdBuildExamples, '../examples/fridgeserver/build')
+jdk_env.Clean(cmdBuildExamples, '../examples/groupclient/build')
+jdk_env.Clean(cmdBuildExamples, '../examples/groupserver/build')
+jdk_env.Clean(cmdBuildExamples, '../examples/presenceclient/build')
+jdk_env.Clean(cmdBuildExamples, '../examples/presenceserver/build')
+jdk_env.Clean(cmdBuildExamples, '../examples/simpleclient/build')
+jdk_env.Clean(cmdBuildExamples, '../examples/simpleserver/build')
+
 
 # android examples require android api to be built before being invoked
 Depends(cmdBuildExamples, cmdBuildApi)

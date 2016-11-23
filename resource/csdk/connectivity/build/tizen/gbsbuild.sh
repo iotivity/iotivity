@@ -87,12 +87,8 @@ cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp/
 cd $sourcedir/tmp
 
 echo `pwd`
-if [ -d ./extlibs/mbedtls/mbedtls ];then
-    cd ./extlibs/mbedtls/mbedtls
-    git reset --hard ad249f509fd62a3bbea7ccd1fef605dbd482a7bd ; git apply --whitespace=fix ../ocf.patch
-    cd -
-    rm -rf ./extlibs/mbedtls/mbedtls/.git*
-fi
+# Prepare mbedTLS dependency
+$SHELL ./extlibs/mbedtls/prep.sh
 
 whoami
 # Initialize Git repository

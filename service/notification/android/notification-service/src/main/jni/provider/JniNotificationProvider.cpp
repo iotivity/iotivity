@@ -214,35 +214,40 @@ OIC::Service::NSMessage *getNativeMessage(JNIEnv *env, jobject jMsg)
         return nullptr;
     }
     jobject jmedia = env->GetObjectField( jMsg, fid_media);
+    OIC::Service::NSMediaContents *media = nullptr;
     if (jmedia == NULL)
     {
-        LOGE("Error: jmedia object of MediaContents inside Message is null");
-        return nullptr;
-    }
-    jclass cls_MediaContents = (jclass) (env->NewLocalRef(g_cls_MediaContents));
-    if (!cls_MediaContents)
-    {
-        LOGE ("Failed to Get ObjectClass for class MediaContents");
-        return nullptr;
-    }
-    jfieldID fid_icon = env->GetFieldID( cls_MediaContents, "mIconImage", "Ljava/lang/String;");
-    if (fid_icon == NULL)
-    {
-        LOGE("Error: jfieldID for iconImage is null");
-        return nullptr;
-    }
-    jstring jiconImage = (jstring)env->GetObjectField( jmedia, fid_icon);
-    const char *iconImage = "";
-    if (jiconImage)
-    {
-        iconImage = env->GetStringUTFChars( jiconImage, NULL);
+        LOGD("Info: jmedia object of MediaContents inside Message is null");
     }
     else
     {
-        LOGD("Info: iconImage is null");
+        jclass cls_MediaContents = (jclass) (env->NewLocalRef(g_cls_MediaContents));
+        if (!cls_MediaContents)
+        {
+            LOGE ("Failed to Get ObjectClass for class MediaContents");
+            return nullptr;
+        }
+        jfieldID fid_icon = env->GetFieldID( cls_MediaContents, "mIconImage", "Ljava/lang/String;");
+        if (fid_icon == NULL)
+        {
+            LOGE("Error: jfieldID for iconImage is null");
+            return nullptr;
+        }
+        jstring jiconImage = (jstring)env->GetObjectField( jmedia, fid_icon);
+        const char *iconImage = "";
+        if (jiconImage)
+        {
+            iconImage = env->GetStringUTFChars( jiconImage, NULL);
+            media = new OIC::Service::NSMediaContents(std::string(iconImage));
+            env->ReleaseStringUTFChars(jiconImage, iconImage);
+        }
+        else
+        {
+            LOGD("Info: iconImage is null");
+        }
+        env->DeleteLocalRef(cls_MediaContents);
+        LOGD("iconImage: %s\n", iconImage);
     }
-
-    LOGD("iconImage: %s\n", iconImage);
 
     // Message ExtraInfo
     jfieldID fid_extraInfo = env->GetFieldID( cls, "mExtraInfo",
@@ -270,7 +275,7 @@ OIC::Service::NSMessage *getNativeMessage(JNIEnv *env, jobject jMsg)
             LOGE("Failed to get native object OcRepresentation");
         }
     }
-    OIC::Service::NSMediaContents *media = new OIC::Service::NSMediaContents(std::string(iconImage));
+
     OIC::Service::NSMessage *nsMsg;
     jfieldID nativeHandle = env->GetFieldID(cls, "mNativeHandle", "J");
     if (!nativeHandle)
@@ -295,7 +300,10 @@ OIC::Service::NSMessage *getNativeMessage(JNIEnv *env, jobject jMsg)
     nsMsg->setTitle(std::string(messageTitle));
     nsMsg->setContentText(std::string(messageBody));
     nsMsg->setSourceName(std::string(messageSource));
-    nsMsg->setMediaContents(media);
+    if(media != nullptr)
+    {
+        nsMsg->setMediaContents(media);
+    }
     nsMsg->setTopic(std::string(topic));
     if (representation != nullptr)
     {
@@ -303,7 +311,6 @@ OIC::Service::NSMessage *getNativeMessage(JNIEnv *env, jobject jMsg)
     }
 
     env->DeleteLocalRef(cls_messageType);
-    env->DeleteLocalRef(cls_MediaContents);
 
     if (jtime)
     {
@@ -324,10 +331,6 @@ OIC::Service::NSMessage *getNativeMessage(JNIEnv *env, jobject jMsg)
     if (jtopic)
     {
         env->ReleaseStringUTFChars(jtopic, topic);
-    }
-    if (jiconImage)
-    {
-        env->ReleaseStringUTFChars(jiconImage, iconImage);
     }
 
     LOGD("JNIProviderService: getMessage - OUT");
@@ -547,30 +550,27 @@ jobject getJavaTopicState(JNIEnv *env, OIC::Service::NSTopic::NSTopicState nsSta
         return NULL;
     }
 
-    jobject obj_topicState;
     switch (nsState)
     {
         case OIC::Service::NSTopic::NSTopicState::UNSUBSCRIBED:
             {
                 static jfieldID fieldID = env->GetStaticFieldID(cls_topicState,
                                           "UNSUBSCRIBED", "Lorg/iotivity/service/ns/common/Topic$TopicState;");
-                obj_topicState = env->GetStaticObjectField(cls_topicState, fieldID);
+                return env->GetStaticObjectField(cls_topicState, fieldID);
             }
         case OIC::Service::NSTopic::NSTopicState::SUBSCRIBED:
             {
                 static jfieldID fieldID = env->GetStaticFieldID(cls_topicState,
                                           "SUBSCRIBED", "Lorg/iotivity/service/ns/common/Topic$TopicState;");
-                obj_topicState = env->GetStaticObjectField(cls_topicState, fieldID);
+                return env->GetStaticObjectField(cls_topicState, fieldID);
             }
+        default:
+            return NULL;
 
     }
-    if (obj_topicState == NULL)
-    {
-        LOGE("Error: object of field  TopicState  is null");
-    }
-    env->DeleteLocalRef(cls_topicState);
+
     LOGD("JNIProviderService: getJavaTopicState - OUT");
-    return obj_topicState;
+    return NULL;
 }
 
 jobject getJavaTopicsList(JNIEnv *env, OIC::Service::NSTopicsList *topicList)

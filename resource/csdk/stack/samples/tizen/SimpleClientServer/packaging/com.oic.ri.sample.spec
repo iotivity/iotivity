@@ -12,10 +12,12 @@ License: Apache-2.0
 Group: Applications/OICSample
 BuildRequires: pkgconfig(dlog)
 BuildRequires: pkgconfig(glib-2.0)
+BuildRequires: pkgconfig(uuid)
 BuildRequires: boost-devel
 BuildRequires: boost-thread
 BuildRequires: boost-system
 BuildRequires: boost-filesystem
+BuildRequires: pkgconfig(capi-network-connection)
 BuildRequires: pkgconfig(capi-network-wifi)
 BuildRequires: pkgconfig(capi-network-bluetooth)
 BuildRequires: scons

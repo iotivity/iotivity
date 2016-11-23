@@ -36,7 +36,7 @@
 #include "ownershiptransfermanager.h"
 #include "pinoxmcommon.h"
 
-#define TAG "OXM_RandomPIN"
+#define TAG "OIC_OXM_RandomPIN"
 
 OCStackResult CreatePinBasedSelectOxmPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
 {
@@ -78,9 +78,9 @@ OCStackResult InputPinCodeCallback(OTMContext_t *otmCtx)
         return OC_STACK_INVALID_PARAM;
     }
 
-    uint8_t pinData[OXM_RANDOM_PIN_SIZE + 1];
+    uint8_t pinData[OXM_RANDOM_PIN_MAX_SIZE + 1] = {0};
 
-    OCStackResult res = InputPin((char*)pinData, OXM_RANDOM_PIN_SIZE + 1);
+    OCStackResult res = InputPin((char*)pinData, sizeof(pinData));
     if (OC_STACK_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Failed to input PIN");

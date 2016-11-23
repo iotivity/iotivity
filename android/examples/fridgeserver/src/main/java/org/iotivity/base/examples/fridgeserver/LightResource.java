@@ -91,7 +91,6 @@ public class LightResource extends Resource implements OcPlatform.EntityHandler 
 
                     switch (ocResourceRequest.getRequestType()) {
                         case GET:
-                            response.setErrorCode(SUCCESS);
                             updateRepresentationValues();
                             response.setResourceRepresentation(mRepresentation);
                             response.setResponseResult(EntityHandlerResult.OK);
@@ -99,7 +98,6 @@ public class LightResource extends Resource implements OcPlatform.EntityHandler 
                             result = EntityHandlerResult.OK;
                             break;
                         case PUT:
-                            response.setErrorCode(SUCCESS);
                             put(ocResourceRequest.getResourceRepresentation());
                             updateRepresentationValues();
                             response.setResourceRepresentation(mRepresentation);

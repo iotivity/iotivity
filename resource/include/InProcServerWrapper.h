@@ -28,22 +28,6 @@
 
 namespace OC
 {
-#ifdef RD_CLIENT
-    namespace ServerCallbackContext
-    {
-        struct PublishContext
-        {
-            PublishResourceCallback callback;
-            PublishContext(PublishResourceCallback cb) : callback(cb){}
-        };
-
-        struct DeleteContext
-        {
-            DeleteResourceCallback callback;
-            DeleteContext(DeleteResourceCallback cb) : callback(cb){}
-        };
-    }
-#endif
     class InProcServerWrapper : public IServerWrapper
     {
     public:
@@ -84,19 +68,7 @@ namespace OC
         virtual OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler);
 
         virtual OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
-#ifdef RD_CLIENT
-        virtual OCStackResult publishResourceToRD(const std::string& host,
-                                                  OCConnectivityType connectivityType,
-                                                  ResourceHandles& resourceHandles,
-                                                  PublishResourceCallback& callback,
-                                                  OCQualityOfService qos);
 
-        virtual OCStackResult deleteResourceFromRD(const std::string& host,
-                                                   OCConnectivityType connectivityType,
-                                                   ResourceHandles& resourceHandles,
-                                                   DeleteResourceCallback& callback,
-                                                   OCQualityOfService qos);
-#endif
     private:
         void processFunc();
         std::thread m_processThread;

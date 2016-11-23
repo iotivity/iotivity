@@ -113,7 +113,10 @@ if target_os in ['windows', 'msys_nt']:
 	if env.get('SECURED') == '1':
 		# octbstack.dll is exporting ocpmapi APIs on Windows - there is no ocpmapi.dll.
 		liboctbstack_env.PrependUnique(LIBS = ['ocpmapi'])
-		liboctbstack_env.Textfile(target = 'octbstack.def', source = [File('octbstack_product.def'), File('octbstack_product_secured.def')])
+		if env.get('MULTIPLE_OWNER') == '1':
+			liboctbstack_env.Textfile(target = 'octbstack.def', source = [File('octbstack_product.def'), File('octbstack_product_secured.def'), File('octbstack_product_secured_mot.def')])
+		else:
+			liboctbstack_env.Textfile(target = 'octbstack.def', source = [File('octbstack_product.def'), File('octbstack_product_secured.def')])
 	else:
 		liboctbstack_env.Textfile(target = 'octbstack.def', source = [File('octbstack_product.def')])
 
@@ -123,7 +126,6 @@ else:
 
 if target_os in ['tizen', 'linux']:
 	liboctbstack_env.ParseConfig("pkg-config --cflags --libs uuid")
-if target_os in ['tizen']:
 	liboctbstack_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 
 if target_os == 'arduino':
@@ -147,6 +149,17 @@ liboctbstack_env.Append(LIBS = ['c_common'])
 if liboctbstack_env.get('ROUTING') in ['GW', 'EP']:
 	liboctbstack_env.Prepend(LIBS = ['routingmanager'])
 
+if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
+	liboctbstack_env.PrependUnique(CPPPATH = ['resource-directory/include'])
+	if 'CLIENT' in rd_mode:
+		liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+	if 'SERVER' in rd_mode:
+		liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
+		if target_os in ['tizen']:
+			liboctbstack_env.ParseConfig('pkg-config --cflags --libs sqlite3')
+		else:
+			liboctbstack_env.AppendUnique(CPPPATH = ['#extlibs/sqlite3'])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -163,21 +176,17 @@ liboctbstack_src = [
 	OCTBSTACK_SRC + 'ocobserve.c',
 	OCTBSTACK_SRC + 'ocserverrequest.c',
 	OCTBSTACK_SRC + 'occollection.c',
-	OCTBSTACK_SRC + 'oicgroup.c'
+	OCTBSTACK_SRC + 'oicgroup.c',
+	OCTBSTACK_SRC + 'ocendpoint.c'
 	]
-
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	if 'CLIENT' in rd_mode:
-		liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
-	if 'SERVER' in rd_mode:
-		liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
-	if target_os in ['linux', 'android']:
-		liboctbstack_env.Prepend(LIBS = ['resource_directory'])
-		liboctbstack_env.PrependUnique(CPPPATH = [env.get('BUILD_DIR') + 'resource/csdk/resource-directory/include'])
-		liboctbstack_env.PrependUnique(LIBPATH = [env.get('BUILD_DIR') + 'resource/csdk/resource-directory/include'])
 
 if with_tcp == True:
 	liboctbstack_src.append(OCTBSTACK_SRC + 'oickeepalive.c')
+
+if 'SERVER' in rd_mode:
+    liboctbstack_src.append(OCTBSTACK_SRC + 'oicresourcedirectory.c')
+    if target_os not in ['tizen']:
+        liboctbstack_src.append('#extlibs/sqlite3/sqlite3.c')
 
 if target_os in ['linux']:
     # Linux uses a Shared library because SCons chooses the shared library on Linux

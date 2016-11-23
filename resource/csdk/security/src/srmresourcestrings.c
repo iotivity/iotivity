@@ -155,8 +155,13 @@ const char * OIC_JSON_SEC_V_NAME = "secv";
 
 const char * OIC_JSON_EMPTY_STRING = "";
 
+// Certificates provided by Cloud
 const char * TRUST_CA = "trust_ca";
 const char * PRIMARY_CERT = "primary_cert";
+
+// Certificates provided by manufacturer
+const char * MF_TRUST_CA = "mfg_trust_ca";
+const char * MF_PRIMARY_CERT = "mfg_primary_cert";
 
 OicUuid_t WILDCARD_SUBJECT_ID = {"*"};
 OicUuid_t WILDCARD_SUBJECT_B64_ID = { .id = {'2', '2', '2', '2', '2', '2', '2', '2',
@@ -169,7 +174,7 @@ const char * OXM_JUST_WORKS = "oic.sec.doxm.jw";
 const char * OXM_RANDOM_DEVICE_PIN = "oic.sec.doxm.rdp";
 const char * OXM_MANUFACTURER_CERTIFICATE = "oic.sec.doxm.mfgcert";
 #ifdef _ENABLE_MULTIPLE_OWNER_
-const char * OXM_PRECONF_PIN = "oic.sec.doxm.pcp";
+const char * OXM_PRECONF_PIN = "x.org.iotivity.doxm.pcp";
 #endif //_ENABLE_MULTIPLE_OWNER_
 
 //Credential data encoding methods

@@ -49,7 +49,7 @@
 
 #include "srmutility.h"
 
-#define TAG ("PM-UTILITY")
+#define TAG ("OIC_PM_UTILITY")
 
 typedef struct _DiscoveryInfo{
     OCProvisionDev_t    **ppDevicesList;
@@ -474,13 +474,26 @@ bool PMGenerateQuery(bool isSecure,
             switch(connType & CT_MASK_FLAGS & ~CT_FLAG_SECURE)
             {
                 case CT_IP_USE_V4:
-                        snRet = snprintf(buffer, bufferSize, "%s%s:%d%s",
-                                         prefix, address, port, uri);
+                    snRet = snprintf(buffer, bufferSize, "%s%s:%d%s",
+                                     prefix, address, port, uri);
                     break;
                 case CT_IP_USE_V6:
-                        snRet = snprintf(buffer, bufferSize, "%s[%s]:%d%s",
-                                         prefix, address, port, uri);
+                {
+                    char addressEncoded[128] = {0};
+
+                    OCStackResult result = OCEncodeAddressForRFC6874(addressEncoded,
+                                                                     sizeof(addressEncoded),
+                                                                     address);
+                    if (OC_STACK_OK != result)
+                    {
+                        OIC_LOG_V(ERROR, TAG, "PMGenerateQuery : encoding error %d\n", result);
+                        return false;
+                    }
+
+                    snRet = snprintf(buffer, bufferSize, "%s[%s]:%d%s",
+                                     prefix, addressEncoded, port, uri);
                     break;
+                }
                 default:
                     OIC_LOG(ERROR, TAG, "Unknown address format.");
                     return false;
@@ -1301,11 +1314,19 @@ static OCStackResult SecurePortDiscovery(DiscoveryInfo* discoveryInfo,
     }
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
+    // Set filter query with rt=oic.r.doxm
+    const char RES_DOXM_QUERY_FMT[] = "%s?%s=%s";
+    char uri[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
+    snprintf(uri, sizeof(uri), RES_DOXM_QUERY_FMT, query,
+            OC_RSRVD_RESOURCE_TYPE, OIC_RSRC_TYPE_SEC_DOXM);
+
+    OIC_LOG_V(DEBUG, TAG, "URI=%s", uri);
+
     OCCallbackData cbData;
     cbData.cb = &SecurePortDiscoveryHandler;
     cbData.context = (void*)discoveryInfo;
     cbData.cd = NULL;
-    OCStackResult ret = OCDoResource(&pDev->handle, OC_REST_DISCOVER, query, 0, 0,
+    OCStackResult ret = OCDoResource(&pDev->handle, OC_REST_DISCOVER, uri, 0, 0,
             pDev->connType, OC_HIGH_QOS, &cbData, NULL, 0);
     if(OC_STACK_OK != ret)
     {

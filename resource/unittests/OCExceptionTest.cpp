@@ -73,7 +73,10 @@ namespace OC
                 OC_STACK_PDM_IS_NOT_INITIALIZED,
                 OC_STACK_DUPLICATE_UUID,
                 OC_STACK_INCONSISTENT_DB,
-                OC_STACK_AUTHENTICATION_FAILURE
+                OC_STACK_AUTHENTICATION_FAILURE,
+                OC_STACK_NOT_ALLOWED_OXM,
+                OC_STACK_FORBIDDEN_REQ,
+                OC_STACK_INTERNAL_SERVER_ERROR
             };
 
             std::string resultMessages[]=
@@ -118,7 +121,10 @@ namespace OC
                 OC::Exception::PDM_DB_NOT_INITIALIZED,
                 OC::Exception::DUPLICATE_UUID,
                 OC::Exception::INCONSISTENT_DB,
-                OC::Exception::AUTHENTICATION_FAILURE
+                OC::Exception::AUTHENTICATION_FAILURE,
+                OC::Exception::NOT_ALLOWED_OXM,
+                OC::Exception::FORBIDDEN_REQ,
+                OC::Exception::INTERNAL_SERVER_ERROR
             };
             TEST(OCExceptionTest, ReasonCodeMatches)
             {

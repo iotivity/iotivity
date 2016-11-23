@@ -28,6 +28,7 @@
 
 #include "CacheTypes.h"
 #include "DataCache.h"
+#include "ObserveCache.h"
 
 namespace OIC
 {
@@ -36,12 +37,6 @@ namespace OIC
         class ResourceCacheManager
         {
             public:
-                class InvalidParameterException: public RCSException
-                {
-                    public:
-                        InvalidParameterException(std::string &&what)
-                            : RCSException { std::move(what) } {}
-                };
                 class HasNoCachedDataException: public RCSException
                 {
                     public:
@@ -54,26 +49,23 @@ namespace OIC
                 // throw InvalidParameterException;
                 CacheID requestResourceCache(
                     PrimitiveResourcePtr pResource, CacheCB func = NULL,
+                    CACHE_METHOD cm = CACHE_METHOD::ITERATED_GET,
                     REPORT_FREQUENCY rf = REPORT_FREQUENCY::NONE, long time = 0l);
 
                 // throw InvalidParameterException;
                 void cancelResourceCache(CacheID id);
 
                 // throw InvalidParameterException;
-                void updateResourceCache(PrimitiveResourcePtr pResource) const;
                 void updateResourceCache(CacheID id) const;
 
                 // throw InvalidParameterException;
                 // throw HasNoCachedDataException;
-                const RCSResourceAttributes getCachedData(PrimitiveResourcePtr pResource) const;
                 const RCSResourceAttributes getCachedData(CacheID id) const;
 
                 // throw InvalidParameterException;
-                CACHE_STATE getResourceCacheState(PrimitiveResourcePtr pResource) const;
                 CACHE_STATE getResourceCacheState(CacheID id) const;
 
                 // throw InvalidParameterException;
-                bool isCachedData(PrimitiveResourcePtr pResource) const;
                 bool isCachedData(CacheID id) const;
 
             private:
@@ -82,6 +74,9 @@ namespace OIC
                 static std::mutex s_mutexForCreation;
                 static std::unique_ptr<std::list<DataCachePtr>> s_cacheDataList;
                 std::map<CacheID, DataCachePtr> cacheIDmap;
+
+                std::list<ObserveCache::Ptr> m_observeCacheList;
+                std::map<CacheID, ObserveCache::Ptr> observeCacheIDmap;
 
                 ResourceCacheManager() = default;
                 ~ResourceCacheManager();

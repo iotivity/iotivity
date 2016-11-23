@@ -1,3 +1,22 @@
+/* *****************************************************************
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * *****************************************************************/
 #include <string.h>
 #include "cloudCommon.h"
 #include "ocstack.h"
@@ -36,11 +55,15 @@ static OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
 static OCEntityHandlerResult ProcessRequest (OCEntityHandlerRequest *request,
         OCRepPayload **payload)
 {
-    if(!request || !request->payload || request->payload->type != PAYLOAD_TYPE_REPRESENTATION)
+    OIC_LOG_V(DEBUG, TAG, "%s: IN",  __func__);
+
+    if(!request)
     {
-        OIC_LOG(ERROR, TAG, "Incoming payload not a representation");
+        OIC_LOG_V(ERROR, TAG, "%s: OUT: request is NULL",__func__);
         return OC_EH_ERROR;
     }
+
+    OIC_LOG_V(DEBUG, TAG, "%s: method: %d",  __func__, request->method);
 
     LEDResource *currLEDResource = &LED;
 
@@ -57,6 +80,12 @@ static OCEntityHandlerResult ProcessRequest (OCEntityHandlerRequest *request,
 
     if(OC_REST_PUT == request->method)
     {
+        if (!request->payload || request->payload->type != PAYLOAD_TYPE_REPRESENTATION)
+        {
+            OIC_LOG_V(ERROR, TAG, "%s: OUT: Incoming payload type(%d) is not a representation",
+                      __func__, request->payload ? request->payload->type : 0);
+            return OC_EH_ERROR;
+        }
         OCRepPayload* input = (OCRepPayload*)request->payload;
         // Get pointer to query
         int64_t pow;
@@ -74,14 +103,16 @@ static OCEntityHandlerResult ProcessRequest (OCEntityHandlerRequest *request,
 
     *payload = getPayload(gResourceUri, currLEDResource->power, currLEDResource->state);
 
-    return OC_EH_OK;
+    OIC_LOG_V(DEBUG, TAG, "%s: OUT",  __func__);
+
+    return (*payload) ? OC_EH_OK : OC_EH_ERROR;
 }
 
 static OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *request,
         char *resourceUri, OCRepPayload **payload)
 {
     OCRepPayload *answer = NULL;
-    OCEntityHandlerResult result = OC_EH_OK;
+    OCEntityHandlerResult result = OC_EH_ERROR;
 
     /*
      * The entity handler determines how to process a POST request.
@@ -123,7 +154,7 @@ static OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *request
                 gLedInstance[gCurrLedInstance].power = 0;
                 gCurrLedInstance++;
                 strncpy(resourceUri, uri, MAX_URI_LENGTH);
-                result = OC_EH_RESOURCE_CREATED;
+                result = OC_EH_OK;
             }
         }
         else
@@ -143,15 +174,9 @@ static OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *request
         }
     }
 
-    if (answer)
+    if (OC_EH_OK == result)
     {
         *payload = answer;
-        result = OC_EH_OK;
-    }
-    else
-    {
-        OIC_LOG_V (INFO, TAG, "Payload was NULL");
-        result = OC_EH_ERROR;
     }
 
     return result;

@@ -27,6 +27,7 @@ import os
 gtest_env = SConscript('#extlibs/gtest/SConscript')
 lib_env = gtest_env.Clone()
 target_os = lib_env.get('TARGET_OS')
+rd_mode = lib_env.get('RD_MODE')
 
 if lib_env.get('RELEASE'):
     lib_env.AppendUnique(CCFLAGS = ['-Os'])
@@ -74,6 +75,10 @@ ThingsManager_gtest_env.PrependUnique(LIBS = [
 if ThingsManager_gtest_env.get('SECURED') == '1':
 	if ThingsManager_gtest_env.get('WITH_TCP') == True:
 		ThingsManager_gtest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+
+if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
+    ThingsManager_gtest_env.AppendUnique(LIBS = ['resource_directory'])
+
 ######################################################################
 # Build Test
 ######################################################################

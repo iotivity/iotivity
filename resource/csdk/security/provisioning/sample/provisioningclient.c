@@ -56,6 +56,7 @@ extern "C"
 #define _32_PROVIS_ACL_             32
 #define _33_PROVIS_DP_              33
 #define _34_CHECK_LINK_STATUS_      34
+#define _35_SAVE_ACL_               35
 #define _40_UNLINK_PAIR_DEVS_       40
 #define _50_REMOVE_SELEC_DEV_       50
 #define _51_REMOVE_DEV_WITH_UUID_   51
@@ -109,6 +110,7 @@ static void setDevProtocol(OCProvisionDev_t* dev_lst);
 #endif
 // function declaration(s) for calling them before implementing
 static OicSecAcl_t* createAcl(const int);
+static OicSecAcl_t* createSimpleAcl(const OicUuid_t uuid);
 static OicSecPdAcl_t* createPdAcl(const int);
 static OCProvisionDev_t* getDevInst(const OCProvisionDev_t*, const int);
 static int printDevList(const OCProvisionDev_t*);
@@ -278,7 +280,7 @@ static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, 
 
 static void inputPinCB(char* pin, size_t len)
 {
-    if(!pin || OXM_RANDOM_PIN_SIZE>=len)
+    if(!pin || OXM_RANDOM_PIN_MIN_SIZE > len)
     {
         OIC_LOG(ERROR, TAG, "inputPinCB invalid parameters");
         return;
@@ -287,7 +289,7 @@ static void inputPinCB(char* pin, size_t len)
     printf("   > INPUT PIN: ");
     for(int ret=0; 1!=ret; )
     {
-        ret = scanf("%8s", pin);
+        ret = scanf("%32s", pin);
         for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                     // '0x20<=code' is character region
     }
@@ -873,6 +875,79 @@ CKLST_ERROR:
     return -1;
 }
 
+static int saveAcl(void)
+{
+    // create ACL to save into local SVR DB
+    OicSecAcl_t* acl = NULL;
+    OicUuid_t uuid =   {.id={0}};
+    char strUuid[64] = {0};
+
+    printf("[1] Use a test UUID [11111111-2222-3333-4444-555555555555]\n");
+    printf("[2] Use a user input\n");
+    int sel_num = 0;
+    for( ; ; )
+    {
+        printf("   > Select Number, for Subject UUID of new ACE: ");
+        for(int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &sel_num);
+            for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+        }
+        if(1 == sel_num)
+        {
+            OICStrcpy(strUuid, sizeof(strUuid), "11111111-2222-3333-4444-555555555555");
+            break;
+        }
+        else if(2 == sel_num)
+        {
+            printf("   > Input the UUID : ");
+            for(int ret=0; 1!=ret; )
+            {
+                ret = scanf("%64s", strUuid);
+                for( ; 0x20<=getchar(); );  // for removing overflow garbages
+                                        // '0x20<=code' is character region
+            }
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+
+
+    printf("Selected Subject UUID : %s\n", strUuid);
+    OCStackResult rst = ConvertStrToUuid(strUuid, &uuid);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "ConvertStrToUuid API error: %d", rst);
+        goto SVACL_ERROR;
+    }
+
+    acl = createSimpleAcl(uuid);
+    if(!acl)
+    {
+        OIC_LOG(ERROR, TAG, "createAcl error return");
+        goto SVACL_ERROR;
+    }
+
+    // call |OCSaveACL| API actually
+    rst = OCSaveACL(acl);
+    if(OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCSaveACL API error: %d", rst);
+        goto SVACL_ERROR;
+    }
+    OCDeleteACLList(acl);  // after here |acl| points nothing
+
+    // display the ACL-provisioned result
+    printf("   > Saved Selected ACL\n");
+
+    return 0;
+
+SVACL_ERROR:
+    OCDeleteACLList(acl);  // after here |acl| points nothing
+    return -1;
+}
+
 static int getCred(void)
 {
     // check |own_list| for checking selected link status on PRVN DB
@@ -1181,13 +1256,13 @@ static int changeMultipleOwnershipTrnasferMode(void)
     }
 
     OCProvisionDev_t* motDev = getDevInst(g_own_list, dev_num);
-    if(OC_STACK_OK == MOTChangeMode(NULL, motDev, (OicSecMomType_t)mom, updateDoxmForMOTCB))
+    if(OC_STACK_OK == OCChangeMOTMode(NULL, motDev, (OicSecMomType_t)mom, updateDoxmForMOTCB))
     {
         g_doneCB = false;
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "MOTChangeMode API error");
+        OIC_LOG(ERROR, TAG, "OCChangeMOTMode API error");
         return -1;
     }
 
@@ -1228,13 +1303,15 @@ static int selectMultipleOwnershipTrnasferMethod(void)
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
+    const int preconfOxm = 4;
     int oxm = 0;
     for( ; ; )
     {
-        printf("   0. (Not Supported)\n");
-        printf("   1. Random PIN OxM\n");
-        printf("   2. (Not Supported)\n");
-        printf("   3. Pre-Configured PIN OxM\n");
+        printf("   %d. (Not Supported)\n", OIC_JUST_WORKS);
+        printf("   %d. Random PIN OxM\n", OIC_RANDOM_DEVICE_PIN);
+        printf("   %d. (Not Supported)\n", OIC_MANUFACTURER_CERTIFICATE);
+        printf("   %d. (Not Supported)\n", OIC_DECENTRALIZED_PUBLIC_KEY);
+        printf("   %d. Pre-Configured PIN OxM\n", OIC_PRECONFIG_PIN);
         printf("   > Enter Number of  OxM for Multiple Ownership Transfer : ");
         for(int ret=0; 1!=ret; )
         {
@@ -1250,13 +1327,13 @@ static int selectMultipleOwnershipTrnasferMethod(void)
     }
 
     OCProvisionDev_t* motDev = getDevInst(g_mot_enable_list, dev_num);
-    if(OC_STACK_OK ==  MOTSelectMOTMethod(NULL, motDev, (OicSecOxm_t)oxm, updateDoxmForMOTCB))
+    if(OC_STACK_OK == OCSelectMOTMethod(NULL, motDev, (OicSecOxm_t)oxm, updateDoxmForMOTCB))
     {
         g_doneCB = false;
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "MOTSelectMOTMethod API error");
+        OIC_LOG(ERROR, TAG, "OCSelectMOTMethod API error");
         return -1;
     }
 
@@ -1297,23 +1374,23 @@ static int provisionPreconfigPIN()
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
-    char preconfPIN[9] = {0};
-    printf("   > Input the PreconfigPIN (e.g. 12341234) : ");
+    char preconfigPin[9] = {0};
+    printf("   > Input the PreconfigPin (e.g. 12341234) : ");
     for(int ret=0; 1!=ret; )
     {
-        ret = scanf("%8s", preconfPIN);
+        ret = scanf("%8s", preconfigPin);
         for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                     // '0x20<=code' is character region
     }
 
     OCProvisionDev_t* motDev = getDevInst(g_mot_enable_list, dev_num);
-    if(OC_STACK_OK == OCProvisionPreconfPin(NULL, motDev, preconfPIN, strlen(preconfPIN), provisionCredCB))
+    if(OC_STACK_OK == OCProvisionPreconfigPin(NULL, motDev, preconfigPin, strlen(preconfigPin), provisionCredCB))
     {
         g_doneCB = false;
     }
     else
     {
-        OIC_LOG(ERROR, TAG, "OCProvisionPreconfPin API error");
+        OIC_LOG(ERROR, TAG, "OCProvisionPreconfigPin API error");
         return -1;
     }
 
@@ -1602,6 +1679,76 @@ CRACL_ERROR:
     return NULL;
 }
 
+static OicSecAcl_t* createSimpleAcl(const OicUuid_t uuid)
+{
+    OIC_LOG(DEBUG, TAG, "createSimpleAcl IN");
+
+    // allocate memory for |acl| struct
+    OicSecAcl_t* acl = (OicSecAcl_t*) OICCalloc(1, sizeof(OicSecAcl_t));
+    if(!acl)
+    {
+        OIC_LOG(DEBUG, TAG, "OICCalloc error return");
+        return NULL;  // not need to 'goto' |ERROR| before allocating |acl|
+    }
+    OicSecAce_t* ace = (OicSecAce_t*) OICCalloc(1, sizeof(OicSecAce_t));
+    if(!ace)
+    {
+        OIC_LOG(DEBUG, TAG,  "OICCalloc error return");
+        return NULL;  // not need to 'goto' |ERROR| before allocating |acl|
+    }
+    LL_APPEND(acl->aces, ace);
+
+    memcpy(&ace->subjectuuid, &uuid, UUID_LENGTH);
+
+    OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+    if(!rsrc)
+    {
+        OIC_LOG(DEBUG, TAG, "OICCalloc error return");
+        OCDeleteACLList(acl);
+        return NULL;
+    }
+
+    char href[] = "*";
+    size_t len = strlen(href)+1;  // '1' for null termination
+    rsrc->href = (char*) OICCalloc(len, sizeof(char));
+    if(!rsrc->href)
+    {
+        OIC_LOG(DEBUG, TAG,  "OICCalloc error return");
+        OCDeleteACLList(acl);
+        return NULL;
+    }
+    OICStrcpy(rsrc->href, len, href);
+
+    size_t arrLen = 1;
+    rsrc->typeLen = arrLen;
+    rsrc->types = (char**)OICCalloc(arrLen, sizeof(char*));
+    if(!rsrc->types)
+    {
+        OIC_LOG(DEBUG, TAG,  "OICCalloc error return");
+        OCDeleteACLList(acl);
+        return NULL;
+    }
+    rsrc->types[0] = OICStrdup("");   // ignore
+
+    rsrc->interfaceLen = 1;
+    rsrc->interfaces = (char**)OICCalloc(arrLen, sizeof(char*));
+    if(!rsrc->interfaces)
+    {
+        OIC_LOG(DEBUG, TAG,  "OICCalloc error return");
+        OCDeleteACLList(acl);
+        return NULL;
+    }
+    rsrc->interfaces[0] = OICStrdup("oic.if.baseline");  // ignore
+
+    LL_APPEND(ace->resources, rsrc);
+
+    ace->permission = 31;   // R/W/U/D
+
+    OIC_LOG(DEBUG, TAG, "createSimpleAcl OUT");
+
+    return acl;
+}
+
 static OicSecPdAcl_t* createPdAcl(const int dev_num)
 {
     if(0>=dev_num || g_own_cnt<dev_num)
@@ -1886,7 +2033,8 @@ static void printMenu(void)
     printf("** 31. Provision Credentials for Pairwise Things\n");
     printf("** 32. Provision the Selected Access Control List(ACL)\n");
     printf("** 33. Provision Direct-Pairing Configuration\n");
-    printf("** 34. Check Linked Status of the Selected Device on PRVN DB\n\n");
+    printf("** 34. Check Linked Status of the Selected Device on PRVN DB\n");
+    printf("** 35. Save the Selected Access Control List(ACL) into local SVR DB\n\n");
 
     printf("** [D] UNLINK PAIRWISE THINGS\n");
     printf("** 40. Unlink Pairwise Things\n\n");
@@ -1949,6 +2097,12 @@ int main()
     {
         OIC_LOG(ERROR, TAG, "ProvisionClient init error");
         goto PMCLT_ERROR;
+    }
+
+    // Client can choose a allowed/not-allowed OxM method.
+    if(OC_STACK_OK != OCSetOxmAllowStatus(OIC_DECENTRALIZED_PUBLIC_KEY, false))
+    {
+        OIC_LOG(WARNING, TAG, "Failed to disable OIC_DECENTRALIZED_PUBLIC_KEY OxM");
     }
 
 #ifdef _ENABLE_MULTIPLE_OWNER_
@@ -2031,6 +2185,12 @@ int main()
             if(checkLinkedStatus())
             {
                 OIC_LOG(ERROR, TAG, "_34_CHECK_LINK_STATUS_: error");
+            }
+            break;
+        case _35_SAVE_ACL_:
+            if(saveAcl())
+            {
+                OIC_LOG(ERROR, TAG, "_35_SAVE_ACL_: error");
             }
             break;
         case _40_UNLINK_PAIR_DEVS_:

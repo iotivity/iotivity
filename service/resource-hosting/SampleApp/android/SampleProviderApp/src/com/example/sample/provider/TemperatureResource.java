@@ -156,8 +156,6 @@ public class TemperatureResource implements IMessageLogger {
                             logMessage("GET");
                             ocResourceResponse
                                     .setResponseResult(EntityHandlerResult.OK);
-                            ocResourceResponse
-                                    .setErrorCode(StringConstants.ERROR_CODE);
                             ocResourceResponse.setResourceRepresentation(get());
                             OcPlatform.sendResponse(ocResourceResponse);
                             break;
@@ -167,8 +165,6 @@ public class TemperatureResource implements IMessageLogger {
                             OcRepresentation rep = request
                                     .getResourceRepresentation();
                             put(rep);
-                            ocResourceResponse
-                                    .setErrorCode(StringConstants.ERROR_CODE);
                             ocResourceResponse
                                     .setResponseResult(EntityHandlerResult.OK);
                             ocResourceResponse.setResourceRepresentation(get());
@@ -229,7 +225,6 @@ public class TemperatureResource implements IMessageLogger {
             // if observationList is not empty, call notifyListOfObservers
             if (mObservationIds.size() > 0) {
                 OcResourceResponse ocResourceResponse = new OcResourceResponse();
-                ocResourceResponse.setErrorCode(StringConstants.ERROR_CODE);
                 ocResourceResponse.setResponseResult(EntityHandlerResult.OK);
                 OcRepresentation r = get();
                 ocResourceResponse.setResourceRepresentation(r,

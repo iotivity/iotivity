@@ -9,7 +9,7 @@
 
 #include "ocstack.h"
 #include "ocpayload.h"
-#include "rd_client.h"
+#include "RDClient.h"
 
 #include <OCApi.h>
 #include <OCPlatform.h>
@@ -85,7 +85,6 @@ class Resource
                 pResponse->setResourceRepresentation(getRepresentation(), DEFAULT_INTERFACE);
             }
 
-            pResponse->setErrorCode(200);
             pResponse->setResponseResult(OC_EH_OK);
 
             return OCPlatform::sendResponse(pResponse);
@@ -98,7 +97,6 @@ class Resource
                 shared_ptr<OCResourceResponse> resourceResponse =
                 { make_shared<OCResourceResponse>() };
 
-                resourceResponse->setErrorCode(200);
                 resourceResponse->setResourceRepresentation(getRepresentation(), DEFAULT_INTERFACE);
 
                 return OCPlatform::notifyListOfObservers(m_handle,
@@ -641,7 +639,7 @@ int main(int argc, char *argv[])
 
     OCPlatform::registerDeviceInfo(devInfoAirConditioner);
 
-    result = OCPlatform::publishResourceToRD(host, OCConnectivityType::CT_ADAPTER_TCP,
+    result = RDClient::Instance().publishResourceToRD(host, OCConnectivityType::CT_ADAPTER_TCP,
              resourceHandles,
              &onPublish);
 
@@ -649,7 +647,7 @@ int main(int argc, char *argv[])
 
     resourceHandles.push_back(airConditioner.m_handle);
 
-    result = OCPlatform::publishResourceToRD(host, OCConnectivityType::CT_ADAPTER_TCP,
+    result = RDClient::Instance().publishResourceToRD(host, OCConnectivityType::CT_ADAPTER_TCP,
              resourceHandles,
              &onPublish);
 

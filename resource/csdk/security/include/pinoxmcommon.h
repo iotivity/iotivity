@@ -28,9 +28,25 @@
  extern "C" {
 #endif // __cplusplus
 
-#define OXM_RANDOM_PIN_SIZE (8)
-#define OXM_PRECONFIG_PIN_SIZE (OXM_RANDOM_PIN_SIZE)
+#define OXM_RANDOM_PIN_DEFAULT_SIZE (8)
+#define OXM_RANDOM_PIN_DEFAULT_PIN_TYPE (NUM_PIN | LOWERCASE_CHAR_PIN | UPPERCASE_CHAR_PIN)
+#define OXM_RANDOM_PIN_MIN_SIZE (4)
+#define OXM_RANDOM_PIN_MAX_SIZE (32)
+#define OXM_PRECONFIG_PIN_MAX_SIZE (OXM_RANDOM_PIN_MAX_SIZE)
 
+/** Number of PIN type */
+#define OXM_PIN_TYPE_COUNT 3
+
+/**
+ * PIN type definition.
+ * This type supports multiple bit set.
+ * e.g.) NUM_PIN | UPPERCASE_CHAR_PIN
+ */
+typedef enum OicSecPinType{
+    NUM_PIN            = (0x1 << 0),    //Numeric PIN
+    UPPERCASE_CHAR_PIN = (0x1 << 1),    //uppercase character PIN
+    LOWERCASE_CHAR_PIN = (0x1 << 2)     //lowercase character PIN
+}OicSecPinType_t;
 
 /**
  * Function pointer to print pin code.
@@ -56,14 +72,17 @@ void SetGeneratePinCB(GeneratePinCallback pinCB);
  */
 void SetInputPinCB(InputPinCallback pinCB);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
 /**
- * Function to save the preconfig PIN getter from user.
- *
- * @param pinCB implementation of preconfig PIN function.
+ * Function to unset the input PIN callback.
+ * NOTE : Do not call this function while PIN based ownership transfer.
  */
-void SetGetPreconfigPinCB(InputPinCallback pinCB);
-#endif //_ENABLE_MULTIPLE_OWNER_
+void UnsetInputPinCB();
+
+/**
+ * Function to unset the PIN generation callback.
+ * NOTE : Do not call this function while PIN based ownership transfer.
+ */
+void UnsetGeneratePinCB();
 
 /**
  * Function to generate random PIN.
@@ -72,7 +91,7 @@ void SetGetPreconfigPinCB(InputPinCallback pinCB);
  * @param pinBuffer is the reference to the buffer to store the generated PIN data.
  * @param bufferSize is the size of buffer.
  *
- * @return ::OC_STACK_SUCCESS in case of success or other value in case of error.
+ * @return ::OC_STACK_OK in case of success or other value in case of error.
  */
 OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize);
 
@@ -82,10 +101,9 @@ OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize);
  * @param[in,out] pinBuffer is the reference to the buffer to store the inputed PIN data.
  * @param[in] bufferSize is the size of buffer.
  *
- * @return ::OC_STACK_SUCCESS in case of success or other value in ccase of error.
+ * @return ::OC_STACK_OK in case of success or other value in ccase of error.
  */
 OCStackResult InputPin(char* pinBuffer, size_t bufferSize);
-
 
 #ifdef _ENABLE_MULTIPLE_OWNER_
 /**
@@ -96,18 +114,18 @@ OCStackResult InputPin(char* pinBuffer, size_t bufferSize);
  *
  * @return ::OC_STACK_SUCCESS in case of success or other value in ccase of error.
  */
-OCStackResult SetPreconfigPin(const char* pinBuffer, size_t pinLength);
+OCStackResult SetPreconfigPin(const char *pinBuffer, size_t pinLength);
+#endif
 
 /**
- * Function to read preconfig PIN.
+ * Function to setting the policy for random PIN generation
  *
- * @param[in,out] pinBuffer is the reference to the buffer to store the preconfigured PIN.
- * @param[in] bufferSize is the size of buffer.
+ * @param[in] pinSize Byte length of random PIN
+ * @param[in] pinType Type of random PIN (ref OicSecPinType)
  *
- * @return ::OC_STACK_SUCCESS in case of success or other value in ccase of error.
+ * @return ::OC_STACK_OK in case of success or other value in case of error.
  */
-OCStackResult GetPreconfigPin(char* pinBuffer, size_t bufferSize);
-#endif
+OCStackResult SetRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType);
 
 #ifdef __WITH_DTLS__
 

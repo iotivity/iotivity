@@ -25,6 +25,7 @@
 #include "NSCommon.h"
 #include "NSConstants.h"
 #include "oic_string.h"
+#include "oic_malloc.h"
 
 namespace OIC
 {
@@ -72,6 +73,7 @@ namespace OIC
             {
                 NS_LOG(DEBUG, "Provider with same Id exists. updating the old Provider data");
                 auto changeCallback = oldProvider->getProviderStateReceivedCb();
+                auto prevState = oldProvider->getProviderState();
                 oldProvider->setProviderState((NSProviderState)state);
                 if (state == NS_ALLOW)
                 {
@@ -80,6 +82,14 @@ namespace OIC
                     {
                         NS_LOG(DEBUG, "initiating the callback for Response : NS_ALLOW");
                         changeCallback((NSProviderState)state);
+                    }
+                    else
+                    {
+                        oldProvider->setProviderSubscribedState(NSProviderSubscribedState::SUBSCRIBED);
+                        auto discoveredCallback = NSConsumerService::getInstance()->getProviderDiscoveredCb();
+                        discoveredCallback(oldProvider);
+                        auto changeCallback = oldProvider->getProviderStateReceivedCb();
+                        changeCallback(prevState);
                     }
                 }
                 else if (state == NS_DENY)
@@ -101,6 +111,23 @@ namespace OIC
                     {
                         NS_LOG(DEBUG, "initiating the callback for Response : NS_TOPIC");
                         changeCallback((NSProviderState)state);
+                    }
+                    if (topicLL)
+                    {
+                        NSTopicLL *iter = topicLL;
+                        NSTopicLL *following = NULL;
+
+                        while (iter)
+                        {
+                            following = iter->next;
+                            if (iter)
+                            {
+                                NSOICFree(iter->topicName);
+                                iter->next = NULL;
+                                NSOICFree(iter);
+                            }
+                            iter = following;
+                        }
                     }
                 }
                 else if (state == NS_STOPPED)

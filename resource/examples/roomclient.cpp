@@ -31,7 +31,6 @@
 
 using namespace OC;
 
-const int SUCCESS_RESPONSE = 0;
 std::shared_ptr<OCResource> curResource;
 std::mutex resourceLock;
 
@@ -88,7 +87,7 @@ void printRoomRepresentation(const OCRepresentation& rep)
 void onGet(const HeaderOptions& /*headerOptions*/,
         const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE)
+    if (eCode == OC_STACK_OK)
     {
         std::cout << "GET request was successful" << std::endl;
 
@@ -106,7 +105,7 @@ void onGet(const HeaderOptions& /*headerOptions*/,
 void onGet1(const HeaderOptions& /*headerOptions*/,
         const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE)
+    if (eCode == OC_STACK_OK)
     {
         std::cout << "GET request was successful" << std::endl;
 
@@ -152,7 +151,7 @@ void putRoomRepresentation(std::shared_ptr<OCResource> resource)
 // callback handler on PUT request
 void onPut(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, const int eCode)
 {
-    if(eCode == SUCCESS_RESPONSE)
+    if (eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CHANGED)
     {
         std::cout << "PUT request was successful" << std::endl;
 
@@ -164,6 +163,55 @@ void onPut(const HeaderOptions& /*headerOptions*/, const OCRepresentation& rep, 
     {
         std::cout << "onPut Response error: " << eCode << std::endl;
         std::exit(-1);
+    }
+}
+
+void receivedPlatformInfo(const OCRepresentation& rep)
+{
+    std::cout << "\nPlatform Information received ---->\n";
+    std::string value;
+    std::string values[] =
+    {
+        "pi",   "Platform ID                    ",
+        "mnmn", "Manufacturer name              ",
+        "mnml", "Manufacturer url               ",
+        "mnmo", "Manufacturer Model No          ",
+        "mndt", "Manufactured Date              ",
+        "mnpv", "Manufacturer Platform Version  ",
+        "mnos", "Manufacturer OS version        ",
+        "mnhw", "Manufacturer hardware version  ",
+        "mnfv", "Manufacturer firmware version  ",
+        "mnsl", "Manufacturer support url       ",
+        "st",   "Manufacturer system time       "
+    };
+
+    for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]); i += 2)
+    {
+        if(rep.getValue(values[i], value))
+        {
+            std::cout << values[i + 1] << " : "<< value << std::endl;
+        }
+    }
+}
+
+void receivedDeviceInfo(const OCRepresentation& rep)
+{
+    std::cout << "\nDevice Information received ---->\n";
+    std::string value;
+    std::string values[] =
+    {
+        "di",  "Device ID        ",
+        "n",   "Device name      ",
+        "lcv", "Spec version url ",
+        "dmv", "Data Model Model ",
+    };
+
+    for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]); i += 2)
+    {
+        if (rep.getValue(values[i], value))
+        {
+            std::cout << values[i + 1] << " : " << value << std::endl;
+        }
     }
 }
 
@@ -210,31 +258,40 @@ void foundResource(std::shared_ptr<OCResource> resource)
             }
 
             OCStackResult ret;
-            std::cout << "Querying for platform information... " << std::endl;
 
-            ret = OCPlatform::getPlatformInfo("", platformDiscoveryURI, CT_ADAPTER_IP, NULL);
-
-            if (ret == OC_STACK_OK)
+            if (0 == strcmp(resourceURI.c_str(), platformDiscoveryURI.c_str()))
             {
-                std::cout << "Get platform information is done." << std::endl;
+                std::cout << "Querying for platform information... " << std::endl;
+
+                ret = OCPlatform::getPlatformInfo(resource->host(), platformDiscoveryURI,
+                                                  resource->connectivityType(),
+                                                  &receivedPlatformInfo);
+
+                if (ret == OC_STACK_OK)
+                {
+                    std::cout << "Get platform information is done." << std::endl;
+                }
+                else
+                {
+                    std::cout << "Get platform information failed." << std::endl;
+                }
             }
-            else
-            {
-                std::cout << "Get platform information failed." << std::endl;
-            }
 
-            std::cout << "Querying for device information... " << std::endl;
-
-            ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI, CT_ADAPTER_IP,
-                    NULL);
-
-            if (ret == OC_STACK_OK)
+            if (0 == strcmp(resourceURI.c_str(), deviceDiscoveryURI.c_str()))
             {
-                std::cout << "Getting device information is done." << std::endl;
-            }
-            else
-            {
-                std::cout << "Getting device information failed." << std::endl;
+                std::cout << "Querying for device information... " << std::endl;
+
+                ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI,
+                                                resource->connectivityType(),
+                                                &receivedDeviceInfo);
+                if (ret == OC_STACK_OK)
+                {
+                    std::cout << "Getting device information is done." << std::endl;
+                }
+                else
+                {
+                    std::cout << "Getting device information failed." << std::endl;
+                }
             }
 
             if(resourceURI == "/a/room")

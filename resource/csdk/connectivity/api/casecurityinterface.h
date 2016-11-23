@@ -132,8 +132,18 @@ CAResult_t CAregisterPskCredentialsHandler(CAgetPskCredentialsHandler getTlsCred
  */
 typedef void (*CAgetPkixInfoHandler)(PkiInfo_t * inf);
 
-//TODO
+/**
+ * Register callback to get PKIX related info.
+ * @param[in]   getPkixInfoHandler    Get PKIX related info callback.
+ * @return  ::CA_STATUS_OK or appropriate error code.
+ */
 CAResult_t CAregisterPkixInfoHandler(CAgetPkixInfoHandler getPkixInfoHandler);
+/**
+ * Register callback to get types of TLS suites.
+ * @param[in]   getCredTypesHandler    Get types of TLS suites callback.
+ * @return  ::CA_STATUS_OK or appropriate error code.
+ */
+CAResult_t CAregisterGetCredentialTypesHandler(CAgetCredentialTypesHandler getCredTypesHandler);
 
 /**
  * Select the cipher suite for dtls handshake.
@@ -228,6 +238,12 @@ CAResult_t CAinitiateSslHandshake(const CAEndpoint_t *endpoint);
  * @retval  ::CA_STATUS_FAILED Operation failed.
  */
 CAResult_t CAcloseSslConnection(const CAEndpoint_t *endpoint);
+
+
+/**
+ * Close All of DTLS sessions.
+ */
+void CAcloseSslConnectionAll();
 
 #ifdef __cplusplus
 } /* extern "C" */

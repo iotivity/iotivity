@@ -74,6 +74,7 @@ if target_os == 'android':
 
 if target_os == 'tizen':
 	oclib_env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
+if target_os in ['linux', 'tizen']:
 	oclib_env.ParseConfig('pkg-config --cflags --libs sqlite3')
 
 if target_os in ['linux'] and oclib_env.get('SIMULATOR', False):
@@ -98,18 +99,6 @@ if 'PUB' in with_mq:
 
 if 'BROKER' in with_mq:
 	oclib_env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
-
-if target_os in ['linux', 'android'] and oclib_env.get('RD_MODE'):
-	rd_mode = oclib_env.get('RD_MODE')
-	oclib_env.AppendUnique(LIBPATH = [os.path.join(oclib_env.get('BUILD_DIR'), 'resource', 'csdk','resource-directory')])
-	oclib_env.AppendUnique(CPPPATH = ['../csdk/resource-directory/include'])
-	oclib_env.AppendUnique(LIBS=['resource_directory'])
-
-	if 'CLIENT' in rd_mode:
-	 	oclib_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
-
-	if 'SERVER' in rd_mode:
-		oclib_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
 
 ######################################################################
 # Source files and Targets

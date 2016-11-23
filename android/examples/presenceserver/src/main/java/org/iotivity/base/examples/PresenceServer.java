@@ -48,6 +48,8 @@ import java.util.EnumSet;
  */
 public class PresenceServer extends Activity {
     private OcResourceHandle mResourceHandle;
+    private int mPresenceCount = 0;
+    private final int mMaxCount = 10;
 
     private void startPresenceServer() {
         Context context = this;
@@ -78,6 +80,18 @@ public class PresenceServer extends Activity {
         }
         printLine();
         enableStartStopButton();
+    }
+
+    private void startPresence()
+    {
+        try {
+            msg("Starting presence notifications (" + mPresenceCount + " / " + mMaxCount + ")");
+            OcPlatform.startPresence(OcPlatform.DEFAULT_PRESENCE_TTL);
+            sleep(3);
+        } catch (OcException e) {
+            Log.e(TAG, e.toString());
+            msg("Error: " + e.toString());
+        }
     }
 
     /**
@@ -145,11 +159,19 @@ public class PresenceServer extends Activity {
                         new Thread(new Runnable() {
                             public void run() {
                                 startPresenceServer();
+
+                                mPresenceCount = 0;
+                                while(mPresenceCount++ < mMaxCount)
+                                {
+                                    startPresence();
+                                }
+                                stopPresenceServer();
                             }
                         }).start();
                     } else {
                         new Thread(new Runnable() {
                             public void run() {
+                                mPresenceCount = 10;
                                 stopPresenceServer();
                             }
                         }).start();

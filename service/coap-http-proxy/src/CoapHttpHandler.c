@@ -22,7 +22,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "logger.h"
-#include "pdu.h"
+#include <coap/pdu.h>
 #include "ocpayload.h"
 #include "uarraylist.h"
 #include "CoapHttpParser.h"
@@ -194,7 +194,7 @@ OCEntityHandlerResult CHPEntityHandler(OCEntityHandlerFlag flag,
                                        void* callbackParam)
 {
     OIC_LOG(INFO, TAG, "Proxy request received");
-    UNUSED(callbackParam);
+    OC_UNUSED(callbackParam);
 
     if (!g_isCHProxyInitialized)
     {

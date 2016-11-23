@@ -3,12 +3,19 @@ Version: 1.2.0
 Release: 0
 Summary: IoT Connectivity sponsored by the OCF
 Group: Network & Connectivity/Other
-License: Apache-2.0
+License: Apache-2.0 and BSD-2-Clause and (MIT or BSL-1.0) and MIT
 URL: https://www.iotivity.org/
 Source0: %{name}-%{version}.tar.bz2
 Source1001: %{name}.manifest
 Source1002: %{name}-test.manifest
 
+%if "%{tizen}" == "2.3"
+%define TARGET_TRANSPORT IP
+%endif
+
+%if "%{profile}" == "ivi"
+%define TARGET_TRANSPORT IP
+%endif
 
 %if "%{TARGET_OS}" == "linux"
 %define TARGET_TRANSPORT IP
@@ -58,6 +65,7 @@ Source1002: %{name}-test.manifest
 # Default values to be eventually overiden BEFORE or as gbs params:
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
 %{!?LOGGING: %define LOGGING 1}
+%{!?RD_MODE: %define RD_MODE CLIENT}
 %{!?ROUTING: %define ROUTING EP}
 %{!?SECURED: %define SECURED 0}
 %{!?TARGET_ARCH: %define TARGET_ARCH %{_arch}}
@@ -83,6 +91,7 @@ BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(sqlite3)
 %if "%{TARGET_OS}" == "tizen"
 BuildRequires:  pkgconfig(dlog)
+BuildRequires:  pkgconfig(capi-network-connection)
 BuildRequires:  pkgconfig(capi-network-wifi)
 BuildRequires:  pkgconfig(capi-network-bluetooth) >= 0.1.52
 %endif
@@ -157,6 +166,7 @@ scons %{JOB} --prefix=%{_prefix} \
     ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} \
     LIB_INSTALL_DIR=%{_libdir} \
     LOGGING=%{LOGGING} \
+    RD_MODE=%{RD_MODE} \
     RELEASE=%{RELEASE} \
     ROUTING=%{ROUTING} \
     SECURED=%{SECURED} \
@@ -179,6 +189,7 @@ scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
     ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} \
     LIB_INSTALL_DIR=%{_libdir} \
     LOGGING=%{LOGGING} \
+    RD_MODE=%{RD_MODE} \
     RELEASE=%{RELEASE} \
     ROUTING=%{ROUTING} \
     SECURED=%{SECURED} \
@@ -226,7 +237,9 @@ cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/service/coap-http-proxy/samples
 mkdir -p %{ex_install_dir}/provisioning
 mkdir -p %{ex_install_dir}/provision-sample
 
-cp ./resource/csdk/security/include/pinoxmcommon.h %{buildroot}%{_includedir}
+
+cp ./resource/csdk/security/include/*.h %{buildroot}%{_includedir}
+cp ./resource/csdk/connectivity/api/*.h %{buildroot}%{_includedir}/
 cp ./resource/csdk/security/provisioning/include/oxm/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/internal/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/security/provisioning/include/*.h %{buildroot}%{_includedir}
@@ -267,6 +280,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %{_libdir}/liboc_logger_core.so
 %{_libdir}/liboctbstack.so
 %{_libdir}/libconnectivity_abstraction.so
+%{_libdir}/libresource_directory.so
 
 %files service
 %manifest %{name}.manifest
@@ -281,6 +295,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %{_libdir}/librcs_container.so
 %{_libdir}/librcs_server.so
 %{_libdir}/libESEnrolleeSDK.so
+%{_libdir}/libnotification*.so
 %if 0%{?WITH_PROXY} == 1
 %{_libdir}/libcoap_http_proxy.so
 %endif

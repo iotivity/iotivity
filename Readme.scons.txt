@@ -252,32 +252,38 @@ IOS:
     -> Building for a specific transport :
     $ scons TARGET_OS=ios TARGET_ARCH=xxx SYS_VERSION=yyy
 
+Windows:
+ * Possible values for <TARGET_ARCH> are: x86, amd64
+
+For convenience to build projects supported on Windows a batch file (run.bat) is provided
+to run many build combinations with TARGET_OS to 'windows'.
+
+1. Go to root directory
+    $ cd <top directory of the project>
+2. To clean before building:
+      $ run clean
+3. To build debug amd64 binaries:
+      $ run build
+4. To build x86 release/retail binaries and run unit tests:
+      $ run build -arch x86 -release
+See run.bat for more example usage parameters
+
 * Additional options
  * VERBOSE=true or false (Show compilation)
  * RELEASE=true or false (Build for release?)
  * LOGGING=true or false (Enable stack logging)
  * SECURED=1 or 0 (Build with DTLS)
  * TEST=1 or 0 (Run unit tests)
- * SECURED=1 or 0 (Build with DTLS)
  * BUILD_SAMPLE=ON or OFF (Build with sample)
  * ROUTING=GW or EP (Enable routing)
  * WITH_TCP=true or false (Enable CoAP over TCP Transport, arduino is not supported)
  * WITH_RA=true or false (Build with Remote Access module)
- * WITH_RD=1 or 0 (Build including Resource Directory)
+ * RD_MODE=CLIENT or SERVER (Build including Resource Directory)
  * SIMULATOR=true or false (Build with simulator module)
  * Possible values for <WITH_MQ> are: PUB,SUB,BROKER (Build including Message Queue)
    -> PUB : publisher, SUB : subscriber, BROKER : MQ broker(not supported yet)
 
-Note1: Currently most IoTivity project doesn't support Windows, so you can't set
-TARGET_OS to 'windows' except the project support Windows.
-
-That's to say if the project doesn't support Windows, run:
-      $ scons TARGET_OS=windows ....
-or run on Windows
-      $ scons
-may always fail.
-
-Note2:
+Note:
 1) for convenience, a script (auto_build.sh) is provided to run possible build
 at once. Following is the usage:
 

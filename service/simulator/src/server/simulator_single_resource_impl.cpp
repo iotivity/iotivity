@@ -605,7 +605,6 @@ void SimulatorSingleResourceImpl::notify(int observerID, const SimulatorResource
         return;
 
     std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse);
-    response->setErrorCode(200);
     response->setResponseResult(OC_EH_OK);
     response->setResourceRepresentation(resModel.asOCRepresentation(), m_interfaces[0]);
 
@@ -629,7 +628,6 @@ void SimulatorSingleResourceImpl::notifyAll(const SimulatorResourceModel &resMod
         return;
 
     std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse);
-    response->setErrorCode(200);
     response->setResponseResult(OC_EH_OK);
     response->setResourceRepresentation(resModel.asOCRepresentation(), m_interfaces[0]);
 
@@ -933,7 +931,6 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::sendResponse(
     std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse());
     response->setRequestHandle(request->getRequestHandle());
     response->setResourceHandle(request->getResourceHandle());
-    response->setErrorCode(errorCode);
     response->setResponseResult(responseResult);
     if (OC_STACK_OK != OC::OCPlatform::sendResponse(response))
     {
@@ -956,7 +953,6 @@ OCEntityHandlerResult SimulatorSingleResourceImpl::sendResponse(
     std::shared_ptr<OC::OCResourceResponse> response(new OC::OCResourceResponse());
     response->setRequestHandle(request->getRequestHandle());
     response->setResourceHandle(request->getResourceHandle());
-    response->setErrorCode(errorCode);
     response->setResponseResult(responseResult);
     response->setResourceRepresentation(payload, interfaceType);
     if (OC_STACK_OK != OC::OCPlatform::sendResponse(response))

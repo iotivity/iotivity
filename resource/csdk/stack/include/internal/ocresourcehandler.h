@@ -71,14 +71,19 @@ typedef enum
     /** "/oic/gateway" .*/
     OC_GATEWAY_URI,
 #endif
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     /** "/oic/ad" .*/
     OC_PRESENCE,
-    #endif
+#endif
 
 #ifdef MQ_BROKER
     /** "/oic/ps" .*/
     OC_MQ_BROKER_URI,
+#endif
+
+#ifdef TCP_ADAPTER
+    /** "/oic/ping" .*/
+    OC_KEEPALIVE_RESOURCE_URI,
 #endif
 
     /** Max items in the list */

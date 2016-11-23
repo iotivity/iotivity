@@ -57,6 +57,16 @@ void JniOnPublishResourceListener::onPublishResourceCallback(
         return;
     }
 
+    if (nullptr == m_jwListener)
+    {
+        LOGE("listener is not available");
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm->DetachCurrentThread();
+        }
+        return;
+    }
+
     jobject jListener = env->NewLocalRef(m_jwListener);
     if (!jListener)
     {

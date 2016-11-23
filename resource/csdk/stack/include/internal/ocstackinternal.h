@@ -230,6 +230,14 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
 OCStackResult BindResourceTypeToResource(OCResource* resource,
                                             const char *resourceTypeName);
 
+/**
+ * Convert OCStackResult to CAResponseResult_t.
+ *
+ * @param ocCode OCStackResult code.
+ * @param method OCMethod method the return code replies to.
+ * @return ::CA_CONTENT on OK, some other value upon failure.
+ */
+CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method);
 
 /**
  * Converts a CAResult_t type to a OCStackResult type.
@@ -275,13 +283,31 @@ const char *convertTriggerEnumToString(OCPresenceTrigger trigger);
 
 OCPresenceTrigger convertTriggerStringToEnum(const char * triggerStr);
 
-OCStackResult encodeAddressForRFC6874(char * outputAddress,
-                                      size_t outputSize,
-                                      const char * inputAddress);
-
 void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out);
 
 void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out);
+
+/**
+ * Get the CoAP ticks after the specified number of milli-seconds.
+ *
+ * @param milliSeconds Milli-seconds.
+ * @return CoAP ticks
+ */
+uint32_t GetTicks(uint32_t milliSeconds);
+
+#if defined(RD_CLIENT) || defined(RD_SERVER)
+/**
+ * This function binds an resource unique ins value to the resource. This can be only called
+ * when stack is received response from resource-directory.
+ *
+ * @param requestUri URI of the resource.
+ * @param response Response from queries to remote servers.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
+                                              const OCClientResponse *response);
+#endif
 
 #ifdef __cplusplus
 }

@@ -246,27 +246,6 @@ namespace OC
                         const std::vector<std::string>& resourceTypes,
                         const std::vector<std::string>& interfaces);
         OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
-#ifdef RD_CLIENT
-        OCStackResult publishResourceToRD(const std::string& host,
-                                          OCConnectivityType connectivityType,
-                                          ResourceHandles& resourceHandles,
-                                          PublishResourceCallback callback);
-
-        OCStackResult publishResourceToRD(const std::string& host,
-                                          OCConnectivityType connectivityType,
-                                          ResourceHandles& resourceHandles,
-                                          PublishResourceCallback callback, QualityOfService qos);
-
-        OCStackResult deleteResourceFromRD(const std::string& host,
-                                           OCConnectivityType connectivityType,
-                                           ResourceHandles& resourceHandles,
-                                           DeleteResourceCallback callback);
-
-        OCStackResult deleteResourceFromRD(const std::string& host,
-                                           OCConnectivityType connectivityType,
-                                           ResourceHandles& resourceHandles,
-                                           DeleteResourceCallback callback, QualityOfService qos);
-#endif
         std::weak_ptr<std::recursive_mutex> csdkLock();
 
         OCStackResult findDirectPairingDevices(unsigned short waittime,
@@ -320,6 +299,3 @@ namespace OC
 }
 
 #endif //__OCPLATFORM_IMPL_H
-
-
-

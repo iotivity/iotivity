@@ -45,13 +45,6 @@ public class OcResourceResponse {
     }
 
     /**
-     * This API sets the error code for this response
-     *
-     * @param eCode error code to set
-     */
-    public native void setErrorCode(int eCode);
-
-    /**
      * Gets new resource uri
      *
      * @return new resource uri

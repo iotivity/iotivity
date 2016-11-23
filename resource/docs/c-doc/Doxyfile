@@ -660,9 +660,6 @@ WARN_LOGFILE           = ./doxygen.log
 # with spaces.
 
 INPUT                  = . \
-             ../../csdk/security/provisioning/include/ocprovisioningmanager.h \
-             ../../csdk/security/provisioning/include/pmtypes.h \
-             ../../csdk/security/provisioning/include/pmutility.h \
              ../../csdk/stack/include/ocstack.h \
              ../../csdk/stack/include/octypes.h \
              ../../csdk/stack/include/ocpayload.h \
@@ -679,18 +676,23 @@ INPUT                  = . \
              ../../csdk/stack/include/internal/ocstackinternal.h \
              ../../csdk/stack/include/internal/oicgroup.h \
              ../../csdk/stack/include/internal/oickeepalive.h \
+             ../../csdk/connectivity/api \
              guides \
              ../../csdk/security/include \
              ../../csdk/security/include\internal \
              ../../csdk/security/provisioning/include \
+             ../../csdk/security/provisioning/include/ocprovisioningmanager.h \
+             ../../csdk/security/provisioning/include/pmtypes.h \
+             ../../csdk/security/provisioning/include/pmutility.h \
              ../../csdk/security/provisioning/include/internal \
              ../../csdk/security/provisioning/include/oxm \
              ../../csdk/security/provisioning/include/cloud \
-             ../../csdk/security/provisioning/sample/cloudAuth.h \
-             ../../csdk/security/provisioning/sample/cloudWrapper.h \
+             ../../csdk/resource-directory/include \
+             ../../csdk/routing/include \
              ../../../service/easy-setup/inc \
              ../../../service/easy-setup/enrollee/inc \
-             ../../../service/resource-directory/include \
+             ../../../service/notification/include \
+             ../../../service/coap-http-proxy/include \
 
 
 # This tag can be used to specify the character encoding of the source files

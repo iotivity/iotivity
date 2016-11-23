@@ -30,6 +30,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,6 +39,8 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -59,6 +62,7 @@ import org.iotivity.base.OcResource;
 import org.iotivity.base.OcResourceHandle;
 import org.iotivity.base.OcResourceRequest;
 import org.iotivity.base.OcResourceResponse;
+import org.iotivity.base.OcRDClient;
 import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.RequestHandlerFlag;
@@ -66,6 +70,8 @@ import org.iotivity.base.RequestType;
 import org.iotivity.base.ResourceProperty;
 import org.iotivity.base.ServiceType;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -87,13 +93,7 @@ public class CloudFragment extends Fragment implements
 
     private static final String TAG = "OIC_SIMPLE_CLOUD";
     private final String EOL = System.getProperties().getProperty("line.separator");
-    private final Pattern ADDRESS_PORT
-            = Pattern.compile(
-            "((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9])" +
-                    "\\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)" +
-                    "\\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)" +
-                    "\\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[0-9])" +
-                    ":([0-9]{1,5}))");
+    private final Pattern PORT_NUMBER = Pattern.compile("(\\d{1,5})");
 
     private Activity mActivity;
     private Context mContext;
@@ -667,8 +667,8 @@ public class CloudFragment extends Fragment implements
     // End of the Account Manager specific code
     // ******************************************************************************
 
-    OcPlatform.OnPublishResourceListener resourcePublishListener =
-            new OcPlatform.OnPublishResourceListener() {
+    OcRDClient.OnPublishResourceListener resourcePublishListener =
+            new OcRDClient.OnPublishResourceListener() {
                 @Override
                 public void onPublishResourceCompleted(OcRepresentation ocRepresentation) {
                     msg("onPublishResourceCompleted");
@@ -688,8 +688,8 @@ public class CloudFragment extends Fragment implements
                 }
             };
 
-    OcPlatform.OnDeleteResourceListener resourceDeleteListener =
-            new OcPlatform.OnDeleteResourceListener() {
+    OcRDClient.OnDeleteResourceListener resourceDeleteListener =
+            new OcRDClient.OnDeleteResourceListener() {
                 @Override
                 public void onDeleteResourceCompleted(int resultCode) {
                     msg("onDeleteResourceCompleted, result is " + resultCode);
@@ -785,7 +785,6 @@ public class CloudFragment extends Fragment implements
         OcResourceResponse response = new OcResourceResponse();
         response.setRequestHandle(request.getRequestHandle());
         response.setResourceHandle(request.getResourceHandle());
-        response.setErrorCode(Common.SUCCESS);
         response.setResponseResult(EntityHandlerResult.OK);
         response.setResourceRepresentation(getOcRepresentation());
         return sendResponse(response);
@@ -799,7 +798,6 @@ public class CloudFragment extends Fragment implements
         setOcRepresentation(request.getResourceRepresentation());
         response.setResourceRepresentation(getOcRepresentation());
         response.setResponseResult(EntityHandlerResult.OK);
-        response.setErrorCode(Common.SUCCESS);
         return sendResponse(response);
     }
 
@@ -909,14 +907,14 @@ public class CloudFragment extends Fragment implements
         try {
             // Publish Virtual Resource to Resource-Directory.
             Log.d(TAG, "Publish Virtual Resource to Resource-Directory.");
-            OcPlatform.publishResourceToRD(
+            OcRDClient.publishResourceToRD(
                     Common.HOST, EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP),
                     resourcePublishListener
             );
 
             // Publish Local Resource to Resource-Directory.
             Log.d(TAG, "Publish Local Resource to Resource-Directory.");
-            OcPlatform.publishResourceToRD(
+            OcRDClient.publishResourceToRD(
                     Common.HOST, EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP), mResourceHandleList,
                     resourcePublishListener
             );
@@ -929,7 +927,7 @@ public class CloudFragment extends Fragment implements
         try {
             // Delete Resource from Resource-Directory.
             Log.d(TAG, "Delete Resource from Resource-Directory.");
-            OcPlatform.deleteResourceFromRD(
+            OcRDClient.deleteResourceFromRD(
                     Common.HOST, EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP),
                     resourceDeleteListener
             );
@@ -1317,8 +1315,14 @@ public class CloudFragment extends Fragment implements
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(mActivity);
         alertDialogBuilder.setView(inputView);
 
+        final RadioGroup radioGroup = (RadioGroup) inputView.getRootView().findViewById(R.id.radioGroup);
+        final RadioButton radioIP = (RadioButton) inputView.getRootView().findViewById(R.id.radioIP);
         final EditText editText = (EditText) inputView.getRootView().findViewById(R.id.inputText);
         final CheckBox isSecured = (CheckBox) inputView.getRootView().findViewById(R.id.secured);
+
+        radioGroup.setVisibility(View.VISIBLE);
+        isSecured.setVisibility(View.VISIBLE);
+        isSecured.setChecked(mSecured);
 
         StringBuilder sb = new StringBuilder();
         sb.append(Common.TCP_ADDRESS);
@@ -1326,36 +1330,74 @@ public class CloudFragment extends Fragment implements
         sb.append(Common.TCP_PORT);
         editText.setText(sb.toString());
 
-        isSecured.setVisibility(View.VISIBLE);
-        isSecured.setChecked(mSecured);
-
         alertDialogBuilder
                 .setCancelable(true)
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        if (editText.getText().length() != 0) {
-                            final String hosts = editText.getText().toString();
-                            boolean isValid = ADDRESS_PORT.matcher(hosts).matches();
-                            if (isValid) {
-                                final String host[] = hosts.split(Common.PORT_SEPARATOR);
-                                Common.TCP_ADDRESS = host[0];
-                                Common.TCP_PORT = host[1];
-                                mSecured = isSecured.isChecked();
 
-                                StringBuilder sb = new StringBuilder();
-                                if (mSecured) {
-                                    sb.append(Common.COAPS_TCP);
+                        final String hosts = editText.getText().toString();
+                        boolean isValid = false;
+
+                        if (!hosts.isEmpty() && hosts.contains(Common.PORT_SEPARATOR)) {
+                            isValid = true;
+                        }
+
+                        if (isValid) {
+                            final String host[] = hosts.split(Common.PORT_SEPARATOR);
+                            mSecured = isSecured.isChecked();
+
+                            if (2 > host.length || !PORT_NUMBER.matcher(host[1]).matches()) {
+                                isValid = false;
+                            } else if (radioIP.isChecked()) {
+                                if (Patterns.IP_ADDRESS.matcher(host[0]).matches()) {
+                                    Common.TCP_ADDRESS = host[0];
+                                    Common.TCP_PORT = host[1];
                                 } else {
-                                    sb.append(Common.COAP_TCP);
+                                    isValid = false;
                                 }
-                                sb.append(Common.TCP_ADDRESS);
-                                sb.append(Common.PORT_SEPARATOR);
-                                sb.append(Common.TCP_PORT);
-                                Common.HOST = sb.toString();
                             } else {
-                                Toast.makeText(mContext, "Invalid IP", Toast.LENGTH_SHORT).show();
-                                showTCPInput();
+                                if (Patterns.DOMAIN_NAME.matcher(host[0]).matches()
+                                        && !Patterns.IP_ADDRESS.matcher(host[0]).matches()) {
+                                    Thread thread = new Thread() {
+                                        @Override
+                                        public void run() {
+                                            try {
+                                                Common.TCP_ADDRESS = InetAddress
+                                                        .getByName(host[0]).getHostAddress();
+                                                Common.TCP_PORT = host[1];
+                                            } catch (UnknownHostException e) {
+                                                e.printStackTrace();
+                                                msg("Failed to get host address.");
+                                            }
+                                        }
+                                    };
+                                    thread.start();
+                                    try {
+                                        thread.join();
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                } else {
+                                    isValid = false;
+                                }
                             }
+                        }
+
+                        if (isValid) {
+                            StringBuilder sb = new StringBuilder();
+                            if (mSecured) {
+                                sb.append(Common.COAPS_TCP);
+                            } else {
+                                sb.append(Common.COAP_TCP);
+                            }
+                            sb.append(Common.TCP_ADDRESS);
+                            sb.append(Common.PORT_SEPARATOR);
+                            sb.append(Common.TCP_PORT);
+                            Common.HOST = sb.toString();
+                            msg("Set Host : " + Common.HOST);
+                        } else {
+                            Toast.makeText(mContext, "Invalid input", Toast.LENGTH_SHORT).show();
+                            showTCPInput();
                         }
                     }
                 })

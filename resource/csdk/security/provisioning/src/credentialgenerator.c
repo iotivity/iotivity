@@ -30,7 +30,7 @@
 #include "stdbool.h"
 #include "securevirtualresourcetypes.h"
 
-#define TAG "SRPAPI-CG"
+#define TAG "OIC_SRPAPI_CG"
 
 OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySize,
         const OicUuid_t *ptDeviceId, const OicUuid_t *firstDeviceId,
@@ -72,6 +72,7 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
     res = OC_STACK_OK;
 
 exit:
+    OICClearMemory(privData, privDataKeySize);
     OICFree(privData);
 
     if(res != OC_STACK_OK)

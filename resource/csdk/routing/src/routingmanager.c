@@ -1244,7 +1244,7 @@ OCStackResult RMHandleRequest(CARequestInfo_t *message, const CAEndpoint_t *send
 {
     if (!g_isRMInitialized)
     {
-        OIC_LOG(ERROR, TAG, "RM not initialized");
+        OIC_LOG(INFO, TAG, "RM not initialized");
         *selfDestination = true;
         return OC_STACK_OK;
     }
@@ -1257,7 +1257,7 @@ OCStackResult RMHandleResponse(CAResponseInfo_t *message, const CAEndpoint_t *se
 {
     if (!g_isRMInitialized)
     {
-        OIC_LOG(ERROR, TAG, "RM not initialized");
+        OIC_LOG(INFO, TAG, "RM not initialized");
         *selfDestination = true;
         return OC_STACK_OK;
     }

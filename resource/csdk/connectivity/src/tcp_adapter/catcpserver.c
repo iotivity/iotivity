@@ -258,16 +258,20 @@ static void CAFindReadyMessage()
         OIC_LOG_V(DEBUG, TAG, "Packet receiver Stop request received.");
         return;
     }
-    if (0 >= ret)
+
+    if (0 == ret)
     {
-        if (0 > ret)
-        {
-            OIC_LOG_V(FATAL, TAG, "select error %s", strerror(errno));
-        }
         return;
     }
-
-    CASelectReturned(&readFds);
+    else if (0 < ret)
+    {
+        CASelectReturned(&readFds);
+    }
+    else // if (0 > ret)
+    {
+        OIC_LOG_V(FATAL, TAG, "select error %s", strerror(errno));
+        return;
+    }
 }
 
 static void CASelectReturned(fd_set *readFds)
@@ -596,6 +600,12 @@ static void CAReceiveMessage(int fd)
     //disconnect session and clean-up data if any error occurs
     if (res != CA_STATUS_OK)
     {
+#ifdef __WITH_TLS__
+        if (CA_STATUS_OK != CAcloseSslConnection(&svritem->sep.endpoint))
+        {
+            OIC_LOG(ERROR, TAG, "Failed to close TLS session");
+        }
+#endif
         CADisconnectTCPSession(svritem, index);
         CACleanData(svritem);
     }
@@ -947,7 +957,7 @@ void CATCPSetConnectionChangedCallback(CATCPConnectionHandleCallback connHandler
     g_connectionCallback = connHandler;
 }
 
-static size_t CACheckPayloadLength(const void *data, size_t dlen)
+size_t CACheckPayloadLengthFromHeader(const void *data, size_t dlen)
 {
     VERIFY_NON_NULL_RET(data, TAG, "data", -1);
 
@@ -983,8 +993,8 @@ static size_t CACheckPayloadLength(const void *data, size_t dlen)
     return payloadLen;
 }
 
-static void sendData(const CAEndpoint_t *endpoint, const void *data,
-                     size_t dlen, const char *fam)
+static ssize_t sendData(const CAEndpoint_t *endpoint, const void *data,
+                        size_t dlen, const char *fam)
 {
     // #1. get TCP Server object from list
     size_t index = 0;
@@ -996,43 +1006,19 @@ static void sendData(const CAEndpoint_t *endpoint, const void *data,
         if (!svritem)
         {
             OIC_LOG(ERROR, TAG, "Failed to create TCP server object");
-            if (g_tcpErrorHandler)
-            {
-                g_tcpErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
-            }
-            return;
+            return -1;
         }
     }
 
-    // #2. check payload length
-#ifdef __WITH_TLS__
-    if (false == CAIsTlsMessage(data, dlen))
-#endif
-    {
-        size_t payloadLen = CACheckPayloadLength(data, dlen);
-        // if payload length is zero, disconnect from TCP server
-        if (!payloadLen)
-        {
-            OIC_LOG(DEBUG, TAG, "payload length is zero, disconnect from remote device");
-            CADisconnectTCPSession(svritem, index);
-            return;
-        }
-    }
-
-    // #3. check connection state
+    // #2. check connection state
     if (svritem->fd < 0)
     {
         // if file descriptor value is wrong, remove TCP Server info from list
         OIC_LOG(ERROR, TAG, "Failed to connect to TCP server");
-        CADisconnectTCPSession(svritem, index);
-        if (g_tcpErrorHandler)
-        {
-            g_tcpErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
-        }
-        return;
+        return -1;
     }
 
-    // #4. send data to TCP Server
+    // #3. send data to TCP Server
     ssize_t remainLen = dlen;
     do
     {
@@ -1042,11 +1028,7 @@ static void sendData(const CAEndpoint_t *endpoint, const void *data,
             if (EWOULDBLOCK != errno)
             {
                 OIC_LOG_V(ERROR, TAG, "unicast ipv4tcp sendTo failed: %s", strerror(errno));
-                if (g_tcpErrorHandler)
-                {
-                    g_tcpErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
-                }
-                return;
+                return len;
             }
             continue;
         }
@@ -1058,25 +1040,23 @@ static void sendData(const CAEndpoint_t *endpoint, const void *data,
     (void)fam;
 #endif
     OIC_LOG_V(INFO, TAG, "unicast %stcp sendTo is successful: %zu bytes", fam, dlen);
+    return dlen;
 }
 
-void CATCPSendData(CAEndpoint_t *endpoint, const void *data, uint32_t datalen,
-                   bool isMulticast)
+ssize_t CATCPSendData(CAEndpoint_t *endpoint, const void *data, size_t datalen)
 {
-    VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint is NULL");
-    VERIFY_NON_NULL_VOID(data, TAG, "data is NULL");
+    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint is NULL", -1);
+    VERIFY_NON_NULL_RET(data, TAG, "data is NULL", -1);
 
-    if (!isMulticast)
+    if (caglobals.tcp.ipv6tcpenabled && (endpoint->flags & CA_IPV6))
     {
-        if (caglobals.tcp.ipv6tcpenabled && (endpoint->flags & CA_IPV6))
-        {
-            sendData(endpoint, data, datalen, "ipv6");
-        }
-        if (caglobals.tcp.ipv4tcpenabled && (endpoint->flags & CA_IPV4))
-        {
-            sendData(endpoint, data, datalen, "ipv4");
-        }
+        return sendData(endpoint, data, datalen, "ipv6");
     }
+    if (caglobals.tcp.ipv4tcpenabled && (endpoint->flags & CA_IPV4))
+    {
+        return sendData(endpoint, data, datalen, "ipv4");
+    }
+    return -1;
 }
 
 CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
@@ -1110,7 +1090,7 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
         }
 
         ep[j].adapter = CA_ADAPTER_TCP;
-        ep[j].ifindex = 0;
+        ep[j].ifindex = ifitem->index;
 
         if (ifitem->family == AF_INET6)
         {
@@ -1198,13 +1178,6 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
 
     oc_mutex_lock(g_mutexObjectList);
 
-#ifdef __WITH_TLS__
-    if (CA_STATUS_OK != CAcloseSslConnection(&svritem->sep.endpoint))
-    {
-        OIC_LOG(ERROR, TAG, "Failed to close TLS session");
-    }
-#endif
-
     // close the socket and remove TCP connection info in list
     if (svritem->fd >= 0)
     {
@@ -1230,16 +1203,12 @@ void CATCPDisconnectAll()
 {
     oc_mutex_lock(g_mutexObjectList);
     uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);
-
     CATCPSessionInfo_t *svritem = NULL;
     for (size_t i = 0; i < length; i++)
     {
         svritem = (CATCPSessionInfo_t *) u_arraylist_get(caglobals.tcp.svrlist, i);
         if (svritem && svritem->fd >= 0)
         {
-#ifdef __WITH_TLS__
-            CAcloseSslConnection(&svritem->sep.endpoint);
-#endif
             shutdown(svritem->fd, SHUT_RDWR);
             close(svritem->fd);
             OICFree(svritem->data);
@@ -1255,6 +1224,11 @@ void CATCPDisconnectAll()
     u_arraylist_destroy(caglobals.tcp.svrlist);
     caglobals.tcp.svrlist = NULL;
     oc_mutex_unlock(g_mutexObjectList);
+
+#ifdef __WITH_TLS__
+    CAcloseSslConnectionAll();
+#endif
+
 }
 
 CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint, size_t *index)
@@ -1308,6 +1282,23 @@ CATCPSessionInfo_t *CAGetSessionInfoFromFD(int fd, size_t *index)
     oc_mutex_unlock(g_mutexObjectList);
 
     return NULL;
+}
+
+CAResult_t CASearchAndDeleteTCPSession(const CAEndpoint_t *endpoint)
+{
+    CAResult_t result = CA_STATUS_OK;
+    size_t index = 0;
+    CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(endpoint, &index);
+    if (svritem)
+    {
+        result = CADisconnectTCPSession(svritem, index);
+        if (CA_STATUS_OK != result)
+        {
+            OIC_LOG_V(ERROR, TAG, "CADisconnectTCPSession failed, result[%d]", result);
+        }
+    }
+
+    return result;
 }
 
 size_t CAGetTotalLengthFromHeader(const unsigned char *recvBuffer)

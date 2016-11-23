@@ -37,7 +37,7 @@ namespace OIC
     {
         static const char ES_BASE_RES_URI[] = "/oic/res";
         #define ES_REMOTE_ENROLLEE_TAG "ES_REMOTE_ENROLLEE"
-        #define DISCOVERY_TIMEOUT 5
+        #define DISCOVERY_TIMEOUT 1
 
         RemoteEnrollee::RemoteEnrollee(const std::shared_ptr< OC::OCResource > resource)
         {
@@ -120,6 +120,17 @@ namespace OIC
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "cloudPropProvisioningStatusHandler OUT");
         }
 
+        void RemoteEnrollee::onDiscoveredCallback(const std::shared_ptr<OC::OCResource> resource,
+            std::weak_ptr<RemoteEnrollee> this_ptr)
+        {
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"onDiscoveredCallback()");
+            std::shared_ptr<RemoteEnrollee> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                Ptr->onDeviceDiscovered(resource);
+            }
+        }
+
         void RemoteEnrollee::onDeviceDiscovered(std::shared_ptr<OC::OCResource> resource)
         {
             OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_TAG, "onDeviceDiscovered IN");
@@ -180,11 +191,11 @@ namespace OIC
 
             m_discoveryResponse = false;
 
-            std::function< void (std::shared_ptr<OC::OCResource>) > onDeviceDiscoveredCb =
-                    std::bind(&RemoteEnrollee::onDeviceDiscovered, this,
-                                                    std::placeholders::_1);
-            OCStackResult result = OC::OCPlatform::findResource("", query, CT_DEFAULT,
-                    onDeviceDiscoveredCb);
+            onDeviceDiscoveredCb cb = std::bind(&RemoteEnrollee::onDiscoveredCallback,
+                                                std::placeholders::_1,
+                                                shared_from_this());
+
+            OCStackResult result = OC::OCPlatform::findResource("", query, CT_DEFAULT, cb);
 
             if (result != OCStackResult::OC_STACK_OK)
             {

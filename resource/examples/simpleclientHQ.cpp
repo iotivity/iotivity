@@ -321,7 +321,7 @@ void receivedPlatformInfo(const OCRepresentation& rep)
         "st",   "Manufacturer system time       "
     };
 
-    for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]) ; i += 2)
+    for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]); i += 2)
     {
         if(rep.getValue(values[i], value))
         {
@@ -394,35 +394,41 @@ void foundResource(std::shared_ptr<OCResource> resource)
             std::cout << "\tHost address of the resource: " << hostAddress << std::endl;
 
             OCStackResult ret;
-
-            std::cout << "Querying for platform information... " << std::endl;
-
-            ret = OCPlatform::getPlatformInfo("", platformDiscoveryURI, CT_ADAPTER_IP,
-                    &receivedPlatformInfo);
-
-            if (ret == OC_STACK_OK)
+            if (0 == strcmp(resourceURI.c_str(), platformDiscoveryURI.c_str()))
             {
-                std::cout << "Get platform information is done." << std::endl;
-            }
-            else
-            {
-                std::cout << "Get platform information failed." << std::endl;
+                std::cout << "Querying for platform information... " << std::endl;
+
+                ret = OCPlatform::getPlatformInfo(resource->host(), platformDiscoveryURI,
+                                                  resource->connectivityType(),
+                                                  &receivedPlatformInfo);
+
+                if (ret == OC_STACK_OK)
+                {
+                    std::cout << "Get platform information is done." << std::endl;
+                }
+                else
+                {
+                    std::cout << "Get platform information failed." << std::endl;
+                }
             }
 
-            std::cout << "Querying for device information... " << std::endl;
-
-            ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI, CT_ADAPTER_IP,
-                    &receivedDeviceInfo);
-
-            if (ret == OC_STACK_OK)
+            if (0 == strcmp(resourceURI.c_str(), deviceDiscoveryURI.c_str()))
             {
-                std::cout << "Getting device information is done." << std::endl;
+                std::cout << "Querying for device information... " << std::endl;
+
+                ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI,
+                                           resource->connectivityType(), &receivedDeviceInfo);
+
+                if (ret == OC_STACK_OK)
+                {
+                    std::cout << "Getting device information is done." << std::endl;
+                }
+                else
+                {
+                    std::cout << "Getting device information failed." << std::endl;
+                }
             }
-            else
-            {
-                std::cout << "Getting device information failed." << std::endl;
-            }
-  
+
             // Get the resource types
             std::cout << "\tList of resource types: " << std::endl;
             for(auto &resourceTypes : resource->getResourceTypes())

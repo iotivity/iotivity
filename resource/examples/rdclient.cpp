@@ -20,6 +20,7 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
+#include "RDClient.h"
 
 #include <functional>
 #include <iostream>
@@ -113,9 +114,8 @@ public:
          * Publish Resource of Resource-Server to RD.
          */
 
-        OCStackResult result = OCPlatform::publishResourceToRD(rdAddress, connectivityType,
-                                                               m_publishedResourceHandles,
-                                                               &onPublish);
+        OCStackResult result = RDClient::Instance().publishResourceToRD(rdAddress, connectivityType,
+                                                                         m_publishedResourceHandles, &onPublish);
         if (OC_STACK_OK != result)
         {
             cout << "Resource publish was unsuccessful\n";
@@ -130,9 +130,8 @@ public:
          * if resource-server want to delete all resources from RD.
          * Ex.) OCPlatform::deleteResourceFromRD(rdAddress, connectivityType, &onDelete);
          */
-        OCStackResult result = OCPlatform::deleteResourceFromRD(rdAddress, connectivityType,
-                                                                m_publishedResourceHandles,
-                                                                &onDelete);
+        OCStackResult result = RDClient::Instance().deleteResourceFromRD(rdAddress, connectivityType,
+                                                                          m_publishedResourceHandles, &onDelete);
         if (OC_STACK_OK != result)
         {
             cout << "Resource delete was unsuccessful\n";

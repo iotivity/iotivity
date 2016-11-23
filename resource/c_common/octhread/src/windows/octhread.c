@@ -32,6 +32,7 @@
 #include <oic_malloc.h>
 
 #include "logger.h"
+#include "iotivity_debug.h"
 
 static const uint64_t USECS_PER_MSEC = 1000;
 
@@ -85,7 +86,7 @@ OCThreadResult_t oc_thread_free(oc_thread t)
     oc_thread_internal *threadInfo = (oc_thread_internal*) t;
     if (threadInfo)
     {
-        CloseHandle(threadInfo->handle);
+        OC_VERIFY(CloseHandle(threadInfo->handle));
         OICFree(threadInfo);
         res = OC_THREAD_SUCCESS;
     }
@@ -101,14 +102,11 @@ OCThreadResult_t oc_thread_wait(oc_thread t)
     OCThreadResult_t res = OC_THREAD_SUCCESS;
     oc_thread_internal *threadInfo = (oc_thread_internal*) t;
     DWORD joinres = WaitForSingleObject(threadInfo->handle, INFINITE);
+    assert(WAIT_OBJECT_0 == joinres);
     if (WAIT_OBJECT_0 != joinres)
     {
         OIC_LOG(ERROR, TAG, "Failed to join thread");
         res = OC_THREAD_WAIT_FAILURE;
-    }
-    else
-    {
-        CloseHandle(threadInfo->handle);
     }
     return res;
 }

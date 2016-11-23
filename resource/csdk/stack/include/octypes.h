@@ -71,6 +71,9 @@ extern "C" {
 /** MQ Broker URI.*/
 #define OC_RSRVD_WELL_KNOWN_MQ_URI            "/oic/ps"
 
+/** KeepAlive URI.*/
+#define OC_RSRVD_KEEPALIVE_URI                "/oic/ping"
+
 
 /** Presence */
 
@@ -220,6 +223,15 @@ extern "C" {
 
 /** For Server instance ID.*/
 #define OC_RSRVD_SERVER_INSTANCE_ID     "sid"
+
+/** To represent endpoints.*/
+#define OC_RSRVD_ENDPOINTS              "eps"
+
+/** To represent endpoint.*/
+#define OC_RSRVD_ENDPOINT               "ep"
+
+/** To represent priority.*/
+#define OC_RSRVD_PRIORITY               "pri"
 
 /**
  *  Platform.
@@ -688,9 +700,10 @@ typedef struct
 
     /** usually zero for default interface.*/
     uint32_t                ifindex;
-#if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
-    char                    routeData[MAX_ADDR_STR_SIZE]; //destination GatewayID:ClientId
-#endif
+
+    /** destination GatewayID:ClientId.*/
+    char                    routeData[MAX_ADDR_STR_SIZE];
+
 } OCDevAddr;
 
 /**
@@ -978,6 +991,7 @@ typedef enum
      * This error is pushed from DTLS interface when handshake failure happens
      */
     OC_STACK_AUTHENTICATION_FAILURE,
+    OC_STACK_NOT_ALLOWED_OXM,
 
     /** Insert all new error codes here!.*/
 #ifdef WITH_PRESENCE
@@ -1201,6 +1215,42 @@ typedef struct
     OCStringLL *dataModelVersions;
 } OCDeviceInfo;
 
+/**
+ *  This enum type for indicate Transport Protocol Suites
+ */
+typedef enum
+{
+    /** For initialize */
+    OC_NO_TPS         = 0,
+
+    /** coap + udp */
+    OC_COAP           = 1,
+
+    /** coaps + udp */
+    OC_COAPS          = (1 << 1),
+
+#ifdef TCP_ADAPTER
+    /** coap + tcp */
+    OC_COAP_TCP       = (1 << 2),
+
+    /** coaps + tcp */
+    OC_COAPS_TCP      = (1 << 3),
+#endif
+#ifdef HTTP_ADAPTER
+    /** http + tcp */
+    OC_HTTP           = (1 << 4),
+
+    /** https + tcp */
+    OC_HTTPS          = (1 << 5),
+#endif
+#ifdef EDR_ADAPTER
+    /** coap + rfcomm */
+    OC_COAP_RFCOMM    = (1 << 6),
+#endif
+    /** Allow all endpoint.*/
+    OC_ALL       = 0xffff
+} OCTpsSchemeFlags;
+
 #ifdef RA_ADAPTER
 /**
  * callback for bound JID
@@ -1330,6 +1380,17 @@ typedef struct OCRepPayload
     struct OCRepPayload* next;
 } OCRepPayload;
 
+// used inside a resource payload
+typedef struct OCEndpointPayload
+{
+    char* tps;
+    char* addr;
+    OCTransportFlags family;
+    uint16_t port;
+    uint16_t pri;
+    struct OCEndpointPayload* next;
+} OCEndpointPayload;
+
 // used inside a discovery payload
 typedef struct OCResourcePayload
 {
@@ -1343,6 +1404,7 @@ typedef struct OCResourcePayload
     uint16_t tcpPort;
 #endif
     struct OCResourcePayload* next;
+    OCEndpointPayload* eps;
 } OCResourcePayload;
 
 typedef struct OCDiscoveryPayload
@@ -1690,6 +1752,28 @@ typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
  */
 typedef void (*OCDirectPairingCB)(void *ctx, OCDPDev_t *peer, OCStackResult result);
 //#endif // DIRECT_PAIRING
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+/**
+ * Callback function definition for Change in TrustCertChain
+ *
+ * @param[IN] ctx - user context returned in the callback.
+ * @param[IN] credId - trustCertChain changed for this ID
+ * @param[IN] trustCertChain - trustcertchain binary blob.
+ * @param[IN] chainSize - size of trustchain
+ */
+typedef void (*TrustCertChainChangeCB)(void *ctx, uint16_t credId, uint8_t *trustCertChain,
+        size_t chainSize);
+
+/**
+ * certChain context structure.
+ */
+typedef struct trustCertChainContext
+{
+    TrustCertChainChangeCB callback;
+    void *context;
+} trustCertChainContext_t;
+#endif
 
 #ifdef __cplusplus
 }

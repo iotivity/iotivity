@@ -121,7 +121,6 @@ public class DeviceResource extends Resource implements OcPlatform.EntityHandler
 
                         switch (ocResourceRequest.getRequestType()) {
                             case GET:
-                                response.setErrorCode(SUCCESS);
                                 response.setResponseResult(EntityHandlerResult.OK);
                                 updateRepresentationValues();
                                 response.setResourceRepresentation(mRepresentation);

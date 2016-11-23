@@ -72,7 +72,7 @@ static CAErrorCallback g_errorHandler = NULL;
 static CANetworkMonitorCallback g_nwMonitorHandler = NULL;
 
 static void CAErrorHandler(const CAEndpoint_t *endpoint,
-                           const void *data, uint32_t dataLen,
+                           const void *data, size_t dataLen,
                            CAResult_t result);
 
 static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
@@ -190,7 +190,7 @@ static CAData_t* CAGenerateHandlerData(const CAEndpoint_t *endpoint,
         if (CADropSecondMessage(&caglobals.ca.requestHistory, endpoint, reqInfo->info.messageId,
                                 reqInfo->info.token, reqInfo->info.tokenLength))
         {
-            OIC_LOG(ERROR, TAG, "Second Request with same Token, Drop it");
+            OIC_LOG(INFO, TAG, "Second Request with same Token, Drop it");
             CADestroyRequestInfoInternal(reqInfo);
             goto exit;
         }
@@ -307,7 +307,7 @@ static void CATimeoutCallback(const CAEndpoint_t *endpoint, const void *pdu, uin
     if (CAIsSupportedBlockwiseTransfer(endpoint->adapter))
     {
         res = CARemoveBlockDataFromListWithSeed(resInfo->info.token, resInfo->info.tokenLength,
-                                                endpoint->port);
+                                                endpoint->addr, endpoint->port);
         if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "CARemoveBlockDataFromListWithSeed failed");
@@ -588,7 +588,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
             else
 #endif
 #ifdef ROUTING_GATEWAY
-            if(!skipRetransmission)
+            if (!skipRetransmission)
 #endif
             {
                 // for retransmission
@@ -698,7 +698,7 @@ static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, ui
     {
         CAHistoryItem_t *item = &(history->items[i]);
         if (id == item->messageId && tokenLength == item->tokenLength
-            && memcmp(item->token, token, tokenLength) == 0)
+            && ep->ifindex == item->ifindex && memcmp(item->token, token, tokenLength) == 0)
         {
             if ((familyFlags ^ item->flags) == CA_IPFAMILY_MASK)
             {
@@ -712,6 +712,7 @@ static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, ui
 
     history->items[history->nextIndex].flags = familyFlags;
     history->items[history->nextIndex].messageId = id;
+    history->items[history->nextIndex].ifindex = ep->ifindex;
     if (token && tokenLength)
     {
         memcpy(history->items[history->nextIndex].token, token, tokenLength);
@@ -727,7 +728,7 @@ static bool CADropSecondMessage(CAHistory_t *history, const CAEndpoint_t *ep, ui
 }
 
 static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
-                                     const void *data, uint32_t dataLen)
+                                     const void *data, size_t dataLen)
 {
     VERIFY_NON_NULL_VOID(sep, TAG, "remoteEndpoint");
     VERIFY_NON_NULL_VOID(data, TAG, "data");
@@ -1281,7 +1282,7 @@ static void CALogPayloadInfo(CAInfo_t *info)
 }
 
 void CAErrorHandler(const CAEndpoint_t *endpoint,
-                    const void *data, uint32_t dataLen,
+                    const void *data, size_t dataLen,
                     CAResult_t result)
 {
     OIC_LOG(DEBUG, TAG, "CAErrorHandler IN");

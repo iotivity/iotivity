@@ -132,7 +132,7 @@ static void CHPFreeContext(CHPContext_t *ctxt)
 static void *CHPParserExecuteMultiHandle(void* data)
 {
     OIC_LOG_V(DEBUG, TAG, "%s IN", __func__);
-    UNUSED(data);
+    OC_UNUSED(data);
     /*
      * These fd sets will be fetched from curl multi handle and monitored to execute
      * curl_multi_perform()
@@ -242,7 +242,7 @@ static void *CHPParserExecuteMultiHandle(void* data)
                 {
                     char buf[20] = {0};
                     ssize_t len = read(g_refreshFds[0], buf, sizeof(buf));
-                    UNUSED(len);
+                    OC_UNUSED(len);
                     // new easy handles added, call multi_perform and refresh fds.
                     OIC_LOG(ERROR, TAG, "New easy handle added");
                 }

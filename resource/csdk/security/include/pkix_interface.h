@@ -33,6 +33,27 @@ extern "C" {
  *
  */
 void GetPkixInfo(PkiInfo_t * inf);
+/**
+ * This method is used by mbedTLS/SRM to retrieve manufacturer PKIX related info
+ *
+ * @param[out] inf structure with certificate, private key and crl to be filled.
+ *
+ */
+void GetManufacturerPkixInfo(PkiInfo_t * inf);
+
+/**
+ * Used by CA to retrieve credential types
+ *
+ * @param[out] list TLS suites boolean map.
+ */
+void InitCipherSuiteList(bool * list);
+
+/**
+ * Used by CA to retrieve manufacturer credential types
+ *
+ * @param[out] list TLS suites boolean map.
+ */
+void InitManufacturerCipherSuiteList(bool * list);
 #ifdef __cplusplus
 }
 #endif

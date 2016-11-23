@@ -162,7 +162,6 @@ OCStackResult sendResponse(std::shared_ptr< OCResourceRequest > pRequest)
     pResponse->setRequestHandle(pRequest->getRequestHandle());
     pResponse->setResourceHandle(pRequest->getResourceHandle());
     pResponse->setResourceRepresentation(myBootstrapResource.getBootstrapRepresentation());
-    pResponse->setErrorCode(200);
     pResponse->setResponseResult(OC_EH_OK);
 
     return OCPlatform::sendResponse(pResponse);

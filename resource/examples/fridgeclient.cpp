@@ -73,6 +73,55 @@ class ClientFridge
     }
 
     private:
+    void receivedPlatformInfo(const OCRepresentation& rep)
+    {
+        std::cout << "\nPlatform Information received ---->\n";
+        std::string value;
+        std::string values[] =
+        {
+            "pi",   "Platform ID                    ",
+            "mnmn", "Manufacturer name              ",
+            "mnml", "Manufacturer url               ",
+            "mnmo", "Manufacturer Model No          ",
+            "mndt", "Manufactured Date              ",
+            "mnpv", "Manufacturer Platform Version  ",
+            "mnos", "Manufacturer OS version        ",
+            "mnhw", "Manufacturer hardware version  ",
+            "mnfv", "Manufacturer firmware version  ",
+            "mnsl", "Manufacturer support url       ",
+            "st",   "Manufacturer system time       "
+        };
+
+        for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]); i += 2)
+        {
+            if(rep.getValue(values[i], value))
+            {
+                std::cout << values[i + 1] << " : "<< value << std::endl;
+            }
+        }
+    }
+
+    void receivedDeviceInfo(const OCRepresentation& rep)
+    {
+        std::cout << "\nDevice Information received ---->\n";
+        std::string value;
+        std::string values[] =
+        {
+            "di",  "Device ID        ",
+            "n",   "Device name      ",
+            "lcv", "Spec version url ",
+            "dmv", "Data Model Model ",
+        };
+
+        for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]); i += 2)
+        {
+            if (rep.getValue(values[i], value))
+            {
+                std::cout << values[i + 1] << " : " << value << std::endl;
+            }
+        }
+    }
+
     void foundDevice(std::shared_ptr<OCResource> resource)
     {
         using namespace OC::OCPlatform;
@@ -87,32 +136,43 @@ class ClientFridge
 
         OCStackResult ret;
 
-        std::cout << "Querying for platform information... " << std::endl;
-
-        ret = OCPlatform::getPlatformInfo("", platformDiscoveryURI, CT_ADAPTER_IP, NULL);
-
-        if (ret == OC_STACK_OK)
+        if (0 == strcmp(resource->uri().c_str(), platformDiscoveryURI.c_str()))
         {
-            std::cout << "Get platform information is done." << std::endl;
-        }
-        else
-        {
-            std::cout << "Get platform information failed." << std::endl;
-        }
+            std::cout << "Querying for platform information... " << std::endl;
 
-        std::cout << "Querying for device information... " << std::endl;
+            ret = OCPlatform::getPlatformInfo(resource->host(), platformDiscoveryURI,
+                                              resource->connectivityType(),
+                                              std::bind(&ClientFridge::receivedPlatformInfo,
+                                                        this, PH::_1));
 
-        ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI, CT_ADAPTER_IP, NULL);
-
-        if (ret == OC_STACK_OK)
-        {
-            std::cout << "Getting device information is done." << std::endl;
-        }
-        else
-        {
-            std::cout << "Getting device information failed." << std::endl;
+            if (ret == OC_STACK_OK)
+            {
+                std::cout << "Get platform information is done." << std::endl;
+            }
+            else
+            {
+                std::cout << "Get platform information failed." << std::endl;
+            }
         }
 
+        if (0 == strcmp(resource->uri().c_str(), deviceDiscoveryURI.c_str()))
+        {
+            std::cout << "Querying for device information... " << std::endl;
+
+            ret = OCPlatform::getDeviceInfo(resource->host(), deviceDiscoveryURI,
+                                            resource->connectivityType(),
+                                            std::bind(&ClientFridge::receivedDeviceInfo,
+                                                      this, PH::_1));
+
+            if (ret == OC_STACK_OK)
+            {
+                std::cout << "Getting device information is done." << std::endl;
+            }
+            else
+            {
+                std::cout << "Getting device information failed." << std::endl;
+            }
+        }
         // we have now found a resource, so lets create a few resource objects
         // for the other resources that we KNOW are associated with the intel.fridge
         // server, and query them.

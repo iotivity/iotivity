@@ -36,7 +36,7 @@ if lib_env.get('LOGGING'):
     lib_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 # Add third party libraries
-SConscript('#service/third_party_libs.scons', 'lib_env')
+SConscript('#resource/third_party_libs.scons', 'lib_env')
 
 if target_os in ['linux']:
     # Verify that 'hippomocks' mocking code is installed.  If not,
@@ -57,16 +57,14 @@ rd_test_env.AppendUnique(
         CPPPATH = [
                 src_dir + '/extlibs/hippomocks-master',
                 '../include',
-                '../../stack/test/',
-        ])
+                src_dir + '/resource/include',
+                src_dir + '/resource/csdk/stack/include',
+                src_dir + '/resource/csdk/stack/test/',
+                src_dir + '/resource/oc_logger/include',])
 
-rd_test_env.PrependUnique(LIBS = [
-    'connectivity_abstraction',
-    'oc_logger',
-    'oc_logger_core',
-    'octbstack',
-    'oc',
-    'resource_directory'])
+rd_test_env.AppendUnique(LIBPATH = [lib_env.get('BUILD_DIR')])
+rd_test_env.AppendUnique(RPATH = [lib_env.get('BUILD_DIR')])
+rd_test_env.PrependUnique(LIBS = ['resource_directory', 'octbstack' ])
 
 if rd_test_env.get('RD_MODE'):
     rd_mode = rd_test_env.get('RD_MODE')
