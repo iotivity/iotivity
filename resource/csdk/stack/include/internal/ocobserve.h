@@ -191,6 +191,16 @@ OCStackResult AddObserver (const char         *resUri,
  */
  OCStackResult DeleteObserverUsingToken (CAToken_t token, uint8_t tokenLength);
 
+ /**
+  * Delete observer with device address from list of observers.
+  * Free memory that was allocated for the observer in the list.
+  *
+  * @param devAddr Device's address.
+  *
+  * @return ::OC_STACK_OK on success, some other value upon failure.
+  */
+OCStackResult DeleteObserverUsingDevAddr(const OCDevAddr *devAddr);
+
 /**
  * Search the list of observers for the specified token.
  *

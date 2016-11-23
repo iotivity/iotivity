@@ -364,6 +364,12 @@ static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
         oc_mutex_unlock(g_mutexObjectList);
 
         CHECKFD(sockfd);
+
+        // pass the connection information to CA Common Layer.
+        if (g_connectionCallback)
+        {
+            g_connectionCallback(&(svritem->sep.endpoint), true);
+        }
     }
 }
 
