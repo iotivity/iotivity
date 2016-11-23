@@ -528,7 +528,9 @@ typedef struct
     struct tcpports
     {
         uint16_t u4;    /**< unicast IPv4 socket port */
+        uint16_t u4s;   /**< unicast IPv6 socket secure port */
         uint16_t u6;    /**< unicast IPv6 socket port */
+        uint16_t u6s;   /**< unicast IPv6 socket secure port */
     } tcp;
 #endif
 } CAPorts_t;
@@ -591,7 +593,9 @@ typedef struct
     {
         void *threadpool;       /**< threadpool between Initialize and Start */
         CASocket_t ipv4;        /**< IPv4 accept socket */
+        CASocket_t ipv4s;       /**< IPv4 accept socket secure */
         CASocket_t ipv6;        /**< IPv6 accept socket */
+        CASocket_t ipv6s;       /**< IPv6 accept socket secure */
         void *svrlist;          /**< unicast IPv4 TCP server information*/
         int selectTimeout;      /**< in seconds */
         int listenBacklog;      /**< backlog counts*/
