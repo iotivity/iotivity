@@ -1736,12 +1736,11 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
         if(PDM_DEVICE_STALE == state)
         {
             OIC_LOG(INFO, TAG, "Detected duplicated UUID in stale status, "
-                               "this UUID will be removed from PDM");
-
-            res = PDMDeleteDevice(&selectedDevice->doxm->deviceID);
+                               "device status will revert back to initial status.");
+            res = PDMSetDeviceState(&selectedDevice->doxm->deviceID, PDM_DEVICE_INIT);
             if(OC_STACK_OK != res)
             {
-                OIC_LOG(ERROR, TAG, "Internal error in PDMDeleteDevice");
+                OIC_LOG(ERROR, TAG, "Internal error in PDMSetDeviceState");
                 OICFree(strUuid);
                 SetResult(otmCtx, res);
                 return res;
