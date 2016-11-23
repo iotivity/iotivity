@@ -156,7 +156,7 @@ static CborError OCParseStringLL(CborValue *map, char *type, OCStringLL **resour
                     }
                     curPtr = strtok_r(NULL, " ", &savePtr);
                 }
-                OICFree(input);
+                free(input);  // Free *TinyCBOR allocated* string.
             }
             if (cbor_value_is_text_string(&txtStr))
             {
@@ -822,7 +822,7 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
                     (0 == strcmp(OC_RSRVD_INTERFACE, name))))
                 {
                     err = cbor_value_advance(&repMap);
-                    OICFree(name);
+                    free(name);  // Free *TinyCBOR allocated* string.
                     continue;
                 }
             }
