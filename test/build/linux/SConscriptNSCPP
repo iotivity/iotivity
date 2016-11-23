@@ -37,7 +37,6 @@ TARGET = env_linux['VARIANT_DIR']
 ENV_HOME = '../../..'
 PROJECT_HOME = '../../'
 EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
-SRC_HOME = ENV_HOME + '/IotivitySECDevSource'
 ORG_SRC = ''
 
 if env_linux.get('RELEASE'):
@@ -55,28 +54,32 @@ ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release
 COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
 
 ######################################################################
-# Initializing TM Dir
+# Initializing NS Dir
 ######################################################################
 
-TM_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
-TM_RESOURCE_INCLUDE = TM_RESOURCE_DIR + '/include'
-TM_C_COMMON = TM_RESOURCE_DIR + '/c_common'
-TM_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
-TM_RESOURCE_CSDK_LIB = TM_RESOURCE_LIB
-TM_RESOURCE_STACK = TM_RESOURCE_DIR + '/csdk/stack/include'
-TM_RESOURCE_SOCKET = TM_RESOURCE_DIR + '/csdk/ocsocket/include'
-TM_RESOURCE_RANDOM = TM_RESOURCE_DIR + '/csdk/ocrandom/include'
-TM_RESOURCE_LOGGER = TM_RESOURCE_DIR + '/csdk/logger/include'
-TM_RESOURCE_OC_LOGGER = TM_RESOURCE_DIR + '/oc_logger/include'
-TM_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
-TM_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
-TM_RESOURCE_OC_LOGGER_LIB = TM_RESOURCE_LIB
-TM_DIR = ORG_SRC_HOME + '/service/things-manager'
-TM_INCLUDE = TM_DIR + '/sdk/inc'
-TM_SDK_INCLUDE = TM_DIR + '/sdk/src'
-TM_LIB = TM_RESOURCE_LIB
-TM_LIB_TIMER = TM_RESOURCE_LIB + '/extlibs/timer/'
+NS_RESOURCE_DIR = ORG_SRC_HOME + '/resource'
+NS_RESOURCE_INCLUDE = NS_RESOURCE_DIR + '/include'
+NS_C_COMMON = NS_RESOURCE_DIR + '/c_common'
+NS_C_STRING = NS_C_COMMON + '/oic_string/include'
+NS_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
+NS_RESOURCE_CSDK_LIB = NS_RESOURCE_LIB
+NS_RESOURCE_STACK = NS_RESOURCE_DIR + '/csdk/stack/include'
+NS_RESOURCE_SOCKET = NS_RESOURCE_DIR + '/csdk/ocsocket/include'
+NS_RESOURCE_RANDOM = NS_RESOURCE_DIR + '/csdk/ocrandom/include'
+NS_RESOURCE_LOGGER = NS_RESOURCE_DIR + '/csdk/logger/include'
+NS_RESOURCE_OC_LOGGER = NS_RESOURCE_DIR + '/oc_logger/include'
+NS_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
+NS_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
+NS_RESOURCE_OC_LOGGER_LIB = NS_RESOURCE_LIB
+NS_DIR = ORG_SRC_HOME + '/service/notification/cpp-wrapper'
+NS_COMMON_INCLUDE = NS_DIR + '/common'
+NS_CONSUMER_INCLUDE = NS_DIR + '/consumer/inc'
+NS_PROVIDER_INCLUDE = NS_DIR + '/provider/inc'
+NS_INCLUDE = ORG_SRC_HOME  + '/service/notification/include'
+NS_LIB = NS_RESOURCE_LIB
+NS_LIB_TIMER = NS_RESOURCE_LIB + '/extlibs/timer/'
 LOGGER_INC_DIR = ORG_SRC_HOME + '/resource/csdk/logger/include'
+
 
 ######################################################################
 
@@ -103,7 +106,7 @@ GTEST_LIB = GTEST_BIN + '/libgtest.a'
 
 RESOURCE_LIB_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
 
-TC_DIR = PROJECT_HOME +  TARGET + 'tc' + '/tm/gtest/src'
+TC_DIR = PROJECT_HOME +  TARGET + 'tc' + '/ns/gtest/cpp/src'
 STC_DIR = TC_DIR + '/stc'
 BTC_DIR = TC_DIR + '/btc'
 TESTAPP_DIR = PROJECT_HOME +  TARGET + 'testapp'
@@ -114,12 +117,11 @@ COMMON_DIR = PROJECT_HOME +  TARGET + 'common'
 COMMON_UTIL_DIR = PROJECT_HOME +  TARGET + 'common/commonutil/c_cpp'
 CALL_GRAPH_CPP = COMMON_UTIL_DIR + '/trace.c'
 TC_COMMON_DIR = COMMON_DIR + '/testcase'
-TM_COMMON_DIR = COMMON_DIR + '/testcase/tm/gtest'
-TESTAPP_COMMON_DIR = COMMON_DIR + '/testapp/c_cpp'
+#TESTAPP_COMMON_DIR = COMMON_DIR + '/testapp/c_cpp'
 
-INCLUDE_DIR = PROJECT_HOME + '/src/tc/tm/gtest/include'
+INCLUDE_DIR = PROJECT_HOME + '/src/tc/ns/gtest/cpp/include'
 TC_INCLUDE_DIR = INCLUDE_DIR + '/testcase'
-TM_INCLUDE_DIR = INCLUDE_DIR + '/testcase/tm'
+NS_INCLUDE_DIR = INCLUDE_DIR + '/testcase/ns'
 
 
 #COMMON_UTIL_INCLUDE_DIR = INCLUDE_DIR + '/commonutil'
@@ -137,10 +139,9 @@ TESTAPP_INCLUDE_DIR = INCLUDE_DIR + '/testapp'
 env_linux['CC'] = 'g++'
 
 COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -Wall -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D __WITH_DTLS__  -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs')
-
 PKG_FLAGS = Split('`pkg-config --cflags --libs uuid`')
 
-TM_CFLAGS = [COMMON_FLAGS]
+NS_CFLAGS = [COMMON_FLAGS]
 
 ######################################################################
 
@@ -149,9 +150,7 @@ TM_CFLAGS = [COMMON_FLAGS]
 
 COMMON_CINCLUDE = [GTEST_INCLUDE, COMMON_UTIL_INCLUDE_DIR, INCLUDE_DIR, TC_INCLUDE_DIR, LOGGER_INC_DIR]
 
-
-TM_CINCLUDE = [COMMON_CINCLUDE, TM_RESOURCE_INCLUDE, TM_RESOURCE_STACK, TM_RESOURCE_SOCKET, TM_RESOURCE_RANDOM, TM_RESOURCE_OC_LOGGER, TM_INCLUDE, TM_RESOURCE_CEREAL, TM_RESOURCE_TIMER, TM_LIB_TIMER, TM_SDK_INCLUDE, TM_INCLUDE_DIR, TM_C_COMMON]
-
+NS_CINCLUDE = [COMMON_CINCLUDE, NS_RESOURCE_INCLUDE, NS_RESOURCE_STACK, NS_RESOURCE_SOCKET, NS_RESOURCE_RANDOM, NS_RESOURCE_OC_LOGGER, NS_COMMON_INCLUDE, NS_CONSUMER_INCLUDE, NS_PROVIDER_INCLUDE, NS_RESOURCE_CEREAL, NS_RESOURCE_TIMER, NS_LIB_TIMER, NS_INCLUDE_DIR, NS_C_COMMON, NS_C_STRING, NS_INCLUDE]
 
 ######################################################################
 
@@ -159,14 +158,18 @@ TM_CINCLUDE = [COMMON_CINCLUDE, TM_RESOURCE_INCLUDE, TM_RESOURCE_STACK, TM_RESOU
 ######################################################################
 
 COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR, CA_LIB_DIR, '/usr/local/lib/', CA_LIB_DIR + '/resource/c_common']
-TM_LIB_LOCATION = [COMMON_LIB_LOCATION, TM_RESOURCE_LIB, TM_RESOURCE_CSDK_LIB, TM_RESOURCE_OC_LOGGER_LIB, TM_LIB]
+NS_LIB_LOCATION = [COMMON_LIB_LOCATION, NS_RESOURCE_LIB, NS_RESOURCE_CSDK_LIB, NS_RESOURCE_OC_LOGGER_LIB, NS_LIB]
 
 COMMON_STATIC_LIBS = [GTEST_LIB]
-COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat liboc  liboc_logger liboc_logger_core pthread libglib-2.0 uuid gcov')
+COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat libresource_directory liboc liboc_logger liboc_logger_core pthread libglib-2.0 uuid gcov')
+NS_PROVIDER_SHARED_LIBS = Split('libnotification_provider_wrapper libnotification_provider')
+NS_CONSUMER_SHARED_LIBS = Split('libnotification_consumer_wrapper libnotification_consumer')
 
-TM_STATIC_LIBS = [TM_LIB + '/libTGMSDKLibrary.a']
-TM_STATIC_RESOURCE_LIBS = []
-TM_LIBS = COMMON_SHARED_LIBS
+NS_STATIC_LIBS = []
+NS_STATIC_RESOURCE_LIBS = []
+NS_PROVIDER_LIBS = [COMMON_SHARED_LIBS, NS_PROVIDER_SHARED_LIBS]
+NS_CONSUMER_LIBS = [COMMON_SHARED_LIBS, NS_CONSUMER_SHARED_LIBS]
+NS_LIBS = [COMMON_SHARED_LIBS, NS_CONSUMER_SHARED_LIBS, NS_PROVIDER_SHARED_LIBS]
 
 ######################################################################
 
@@ -174,14 +177,11 @@ TM_LIBS = COMMON_SHARED_LIBS
 ######################################################################
 
 
-TM_ITC_BIN = 'iotivity_tm_test'
+NS_PROVIDER_TEST_BIN = 'iotivity_ns_provider_cpp_test'
+NS_CONSUMER_TEST_BIN = 'iotivity_ns_consumer_cpp_test'
 
-TEST_SERVER_BIN = 'testserver'
-UNSUPPORTIVE_SERVER_BIN = 'unsupportivetestserver'
-BOOTSTRAP_SERVER_BIN = 'bootstrapserver'
-TEST_COLLECTION_BIN = 'testcollection'
-TM_TESTAPP_BIN = "tm_testapp"
-
+NS_PROVIDER_TESTAPP_BIN = 'ns_provider_testapp'
+NS_CONSUMER_TESTAPP_BIN = 'ns_consumer_testapp'
 
 ######################################################################
 
@@ -191,45 +191,34 @@ TM_TESTAPP_BIN = "tm_testapp"
 COMMON_CPP = Glob(COMMON_UTIL_DIR + '/*.cpp')
 COMMON_TC_CPP = Glob(COMMON_DIR + '/testcase/*.cpp')
 
-TM_HELPER_CPP = Glob(TC_DIR + '/helper/*.cpp')
-
+NS_PROVIDER_HELPER_CPP = Glob(TC_DIR + '/helper/*ProviderCppHelper.cpp')
+NS_CONSUMER_HELPER_CPP = Glob(TC_DIR + '/helper/*ConsumerCppHelper.cpp')
 
 COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
-RESOURCE_HELPER_CPP = COMMON_UTIL_DIR + '/ResourceHelper.cpp'
-
-RESOURCE_SERVER_CPP = COMMON_UTIL_DIR + '/ResourceServer.cpp'
-SAMPLE_RESOURCE_CPP = COMMON_UTIL_DIR + '/SampleResource.cpp'
-UNSUPPORTIVE_RESOURCE_CPP = COMMON_UTIL_DIR + '/UnsupportiveResource.cpp'
-
-TEST_SERVER_CPP = TESTAPP_DIR + '/tm/c_cpp/src/testservers.cpp'
-UNSUPPORTIVE_TEST_SERVER_CPP = TESTAPP_DIR + '/tm/c_cpp/src/unsupportivetestservers.cpp'
-BOOTSTRAP_SERVER_CPP = TESTAPP_DIR + '/tm/c_cpp/src/bootstrapserver.cpp'
-TEST_COLLECTION_CPP = TESTAPP_DIR + '/tm/c_cpp/src/testcollections.cpp'
-
 
 TEST_MAIN = [PROJECT_HOME +  TARGET + 'common/testcase/gtest' + '/IotivitySECTestMain.cpp'] 
 
+NS_CONSUMER_STC_CPP = Glob(STC_DIR + '/*ConsumerCppTest.cpp')
+NS_CONSUMER_BTC_CPP = Glob(BTC_DIR + '/*ConsumerCppTest.cpp')
 
-TM_ITC_CPP = Glob(STC_DIR + '/*.cpp')
-TM_UTC_CPP = Glob(BTC_DIR + '/*.cpp')
+NS_PROVIDER_STC_CPP = Glob(STC_DIR + '/*ProviderCppTest.cpp')
+NS_PROVIDER_BTC_CPP = Glob(BTC_DIR + '/*ProviderCppTest.cpp')
 
+NS_CPP = [TEST_MAIN, COMMON_UTIL_CPP, CALL_GRAPH_CPP]
 
-TM_CPP = [TEST_MAIN, COMMON_UTIL_CPP, TM_HELPER_CPP, CALL_GRAPH_CPP]
+NS_PROVIDER_TC_SRC = [NS_CPP, NS_PROVIDER_HELPER_CPP, NS_PROVIDER_BTC_CPP, NS_PROVIDER_STC_CPP, COMMON_STATIC_LIBS, NS_STATIC_LIBS, NS_STATIC_RESOURCE_LIBS]
+NS_CONSUMER_TC_SRC = [NS_CPP, NS_CONSUMER_HELPER_CPP, NS_CONSUMER_BTC_CPP, NS_CONSUMER_STC_CPP, COMMON_STATIC_LIBS, NS_STATIC_LIBS, NS_STATIC_RESOURCE_LIBS]
 
+NS_TESTAPP_INC = [PROJECT_HOME + TARGET + 'iBtestapp/modules/ns/c_cpp/csdk/include', NS_CINCLUDE]
+NS_PROVIDER_APP_SRC = [PROJECT_HOME +  TARGET + 'iBtestapp/modules/ns/c_cpp/csdk/src/NSProviderApp.cpp']
+NS_CONSUMER_APP_SRC = [PROJECT_HOME +  TARGET + 'iBtestapp/modules/ns/c_cpp/csdk/src/NSConsumerApp.cpp']
 
-TM_ITC_SRC = [TM_CPP, TM_ITC_CPP, TM_UTC_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
-TM_UTC_SRC = [TM_CPP, TM_UTC_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
-
-TEST_SERVER_SRC = [TEST_SERVER_CPP, COMMON_UTIL_CPP, RESOURCE_HELPER_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
-
-UNSUPPORTIVE_SERVER_SRC = [UNSUPPORTIVE_TEST_SERVER_CPP, COMMON_UTIL_CPP, RESOURCE_HELPER_CPP, UNSUPPORTIVE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
-
-BOOTSTRAP_SERVER_SRC = [BOOTSTRAP_SERVER_CPP, COMMON_UTIL_CPP, RESOURCE_HELPER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
-
-TEST_COLLECTION_SRC = [TEST_COLLECTION_CPP, COMMON_UTIL_CPP, RESOURCE_HELPER_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, TM_STATIC_LIBS, TM_STATIC_RESOURCE_LIBS]
-
-TM_TESTAPP_SRC = Glob(PROJECT_HOME +  TARGET + '/iBtestapp/modules/tm/c_cpp/bootstrapserver.cpp')
-
+### NS Simulator ###
+NS_PROVIDER_SIMULATOR_BIN = 'ns_provider_cpp_simulator'
+NS_CONSUMER_SIMULATOR_BIN = 'ns_consumer_cpp_simulator'
+SIMULATOR_INC = [PROJECT_HOME + TARGET + 'testapp/ns/cpp/include', NS_CINCLUDE, COMMON_CINCLUDE]
+PROVIDER_SIMUTALOR_SRC = [COMMON_UTIL_CPP, COMMON_STATIC_LIBS, PROJECT_HOME + TARGET + 'testapp/ns/cpp/src/NSProviderCppSimulator.cpp']
+CONSUMER_SIMUTALOR_SRC = [COMMON_UTIL_CPP, COMMON_STATIC_LIBS, PROJECT_HOME + TARGET + 'testapp/ns/cpp/src/NSConsumerCppSimulator.cpp']
 
 ######################################################################
 
@@ -240,17 +229,14 @@ env_linux.ParseConfig("pkg-config --cflags --libs uuid")
 
 create_target_dir = env_linux.Command('target.out', [], Mkdir(TARGET))
 
-tm_itc = env_linux.Program(source = TM_ITC_SRC, target = TM_ITC_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
+ns_provider_tc_build = env_linux.Program(source = NS_PROVIDER_TC_SRC, target = NS_PROVIDER_TEST_BIN, CPPPATH = NS_CINCLUDE, LIBS = NS_PROVIDER_LIBS, LIBPATH = NS_LIB_LOCATION, CPPFLAGS = NS_CFLAGS, RPATH = NS_RESOURCE_LIB)
+ns_consumer_tc_build = env_linux.Program(source = NS_CONSUMER_TC_SRC, target = NS_CONSUMER_TEST_BIN, CPPPATH = NS_CINCLUDE, LIBS = NS_CONSUMER_LIBS, LIBPATH = NS_LIB_LOCATION, CPPFLAGS = NS_CFLAGS, RPATH = NS_RESOURCE_LIB)
 
-test_server = env_linux.Program(source = TEST_SERVER_SRC, target = TEST_SERVER_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
+ns_provider_simulator = env_linux.Program(source = PROVIDER_SIMUTALOR_SRC, target = NS_PROVIDER_SIMULATOR_BIN, CPPPATH = SIMULATOR_INC, LIBS = NS_PROVIDER_LIBS, LIBPATH = NS_LIB_LOCATION, CPPFLAGS = NS_CFLAGS, RPATH = NS_RESOURCE_LIB)
+ns_consumer_simulator = env_linux.Program(source = CONSUMER_SIMUTALOR_SRC, target = NS_CONSUMER_SIMULATOR_BIN, CPPPATH = SIMULATOR_INC, LIBS = NS_CONSUMER_LIBS, LIBPATH = NS_LIB_LOCATION, CPPFLAGS = NS_CFLAGS, RPATH = NS_RESOURCE_LIB)
 
-unsupportive_server = env_linux.Program(source = UNSUPPORTIVE_SERVER_SRC, target = UNSUPPORTIVE_SERVER_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
-
-bootstrap_server = env_linux.Program(source = BOOTSTRAP_SERVER_SRC, target = BOOTSTRAP_SERVER_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
-
-test_collection = env_linux.Program(source = TEST_COLLECTION_SRC, target = TEST_COLLECTION_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
-
-tm_testapp = env_linux.Program(source = TM_TESTAPP_SRC, target = TM_TESTAPP_BIN, CPPPATH = TM_CINCLUDE, LIBS = TM_LIBS, LIBPATH = TM_LIB_LOCATION, CPPFLAGS = TM_CFLAGS)
+ns_provider_app = env_linux.Program(source = NS_PROVIDER_APP_SRC, target = NS_PROVIDER_TESTAPP_BIN, CPPPATH = NS_TESTAPP_INC, LIBS = NS_PROVIDER_LIBS, LIBPATH = NS_LIB_LOCATION, CPPFLAGS = NS_CFLAGS, RPATH = NS_RESOURCE_LIB)
+ns_consumer_app = env_linux.Program(source = NS_CONSUMER_APP_SRC, target = NS_CONSUMER_TESTAPP_BIN, CPPPATH = NS_TESTAPP_INC, LIBS = NS_CONSUMER_LIBS, LIBPATH = NS_LIB_LOCATION, CPPFLAGS = NS_CFLAGS, RPATH = NS_RESOURCE_LIB)
 
 env_linux.AppendUnique(CPPFLAGS = PKG_FLAGS)
 
@@ -276,17 +262,17 @@ print "target_transport = " + target_transport
 print "---------------service--------------" + target_service + target_test
 
 
-if 'tm' in target_service or 'all' in target_service:
-    install_targets += [test_server, unsupportive_server, bootstrap_server, test_collection]
-    
+if 'ns' in target_service or 'all' in target_service:
     if 'tc' in target_test or 'all' in target_test:
-        print '---------------TM TC Build Selected---------------'
-        install_targets += tm_itc
+        print '---------------NS Build Selected---------------'
+        install_targets += ns_provider_tc_build
+        install_targets += ns_consumer_tc_build
+        install_targets += ns_provider_simulator
+        install_targets += ns_consumer_simulator
     if 'app' in target_test or 'all' in target_test:
-        print '---------------TM TEST APP Build Selected---------------'
-        install_targets += [tm_testapp]
-
-
+        print '---------------NS TEST APP Build Selected---------------'
+        #install_targets += [ns_provider_app]
+        #install_targets += [ns_consumer_app]
 
 install = env_linux.Install(PROJECT_HOME + TARGET, install_targets)
 

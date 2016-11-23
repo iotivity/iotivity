@@ -42,12 +42,6 @@ EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
 SRC_HOME = ENV_HOME + '/IotivitySECDevSource'
 ORG_SRC = ''
 
-target_source = env_linux.get('TARGET_SOURCE')
-iotivity_directory = env_linux.get('IOTIVITY_DIR')
-
-print "target source is --------------------------------" + target_source
-print "iotivity root is --------------------------------" + iotivity_directory
-
 if env_linux.get('RELEASE'):
 	target_release = 'release'
 else:

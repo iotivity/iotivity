@@ -39,10 +39,7 @@ PROJECT_HOME = '../../'
 EXT_LIB_HOME = PROJECT_HOME + '/extlibs'
 ORG_SRC = ''
 
-iotivity_directory = env_linux.get('IOTIVITY_DIR')
 SECURED = env_linux.get('SECURED')
-
-print "iotivity root is --------------------------------" + iotivity_directory
 
 if env_linux.get('RELEASE'):
     target_release = 'release'
