@@ -69,12 +69,11 @@ IOTIVITY_INCLUDE_PATH = [
                             IOTIVITY_ROOT + '/resource/csdk/security/include',
                             IOTIVITY_ROOT + '/resource/csdk/security/provisioning/include',
                             IOTIVITY_ROOT + '/resource/csdk/security/provisioning/include/internal',
-                            IOTIVITY_ROOT + '/resource/csdk/security/include/internal',
                             IOTIVITY_ROOT + '/resource/csdk/security/provisioning/include/oxm',
                             IOTIVITY_ROOT + '/resource/include',
                             IOTIVITY_ROOT + '/resource/csdk/stack/include',
                             IOTIVITY_ROOT + '/resource/csdk/ocrandom/include',
-                            IOTIVITY_ROOT + '/resource/csdk/logger/include',                                                        
+                            IOTIVITY_ROOT + '/resource/csdk/logger/include',
                             IOTIVITY_ROOT + '/resource/csdk/connectivity/inc',
                             IOTIVITY_ROOT + '/resource/csdk/connectivity/common/inc',
                             IOTIVITY_ROOT + '/resource/csdk/connectivity/lib/libcoap-4.1.1',
@@ -82,7 +81,7 @@ IOTIVITY_INCLUDE_PATH = [
                             IOTIVITY_ROOT + '/resource/c_common/oic_malloc/include',
                             IOTIVITY_ROOT + '/resource/c_common',
                             IOTIVITY_ROOT + '/resource/c_common/oic_string/include',
-                            IOTIVITY_ROOT + '/resource/c_common/oic_string/include',                                                       
+                            IOTIVITY_ROOT + '/resource/c_common/oic_string/include',
                             IOTIVITY_ROOT + '/extlibs/tinydtls',
                             IOTIVITY_ROOT + '/extlibs/cjson',
                             IOTIVITY_ROOT + '/extlibs/base64',
@@ -105,12 +104,13 @@ PM_CERT_INCLUDE_PATH = [
                             IOTIVITY_ROOT + '/extlibs/asn1cert/'
                             ]
 
+
 TC_INCLUDE_PATH = [
                     PROJECT_HOME + '/include',
                     PROJECT_HOME + '/src/tc/pm/gtest/pmcpp/include',
                     PROJECT_HOME + '/extlibs/gtest-1.7.0/include',
                   ]
-                  
+
 TEST_APP_INCLUDE_PATH = [PROJECT_HOME + 'src/iBtestapp/modules/pm/c_cpp/cpp/include']
 
 SIMULATOR_INCLUDE_PATH = []
@@ -124,7 +124,7 @@ LIB_PATH_LIST = [
                     IOTIVITY_LIB_PATH + '/resource/csdk/routing/',
                     PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/linux'
                 ]
-                
+
 TC_SRC_LIST = [
                 Glob( IOTIVITY_LIB_PATH + '/resource/csdk/security/src/*.o'),
                 Glob(IOTIVITY_ROOT + '/extlibs/asn1cert/*.o'),
@@ -136,7 +136,7 @@ TC_SRC_LIST = [
                 Glob(PROJECT_HOME + '/src/tc/pm/gtest/pmcpp/src/btc/*.cpp'),
                 Glob(PROJECT_HOME + '/src/tc/pm/gtest/pmcpp/src/stc/*.cpp')
                 ]
-                
+
 TEST_APP_SRC_LIST = [
                 Glob( IOTIVITY_LIB_PATH + '/resource/csdk/security/src/*.o'),
                 Glob(IOTIVITY_ROOT + '/extlibs/asn1cert/*.o'),
@@ -147,70 +147,75 @@ TEST_APP_SRC_LIST = [
                 ]
 
 
-lib_list = Split('boost_system boost_filesystem boost_thread c_common coap connectivity_abstraction dl expat gcov gio-2.0 gobject-2.0 glib-2.0 m logger oc oc_logger octbstack ocpmapi ocprovision ocsrm octbstack pthread rt uuid mbedtls mbedx509 mbedcrypto routingmanager')
-CPPDEFINES1 = ['__LINUX__', '_ENABLE_MULTIPLE_OWNER_' 'RD_CLIENT', 'WITH_CLOUD', 'NDEBUG', 'WITH_POSIX', '__linux__', 'TCP_ADAPTER', 'IP_ADAPTER', 'NO_EDR_ADAPTER', 'LE_ADAPTER', 'MQ_SUBSCRIBER', 'WITH_MQ', 'MQ_PUBLISHER', 'SHA2_USE_INTTYPES_H', '__WITH_DTLS__', '__WITH_TLS__', '_ENABLE_MULTIPLE_OWNER_', 'ROUTING_EP', 'WITH_BWT', 'CA_DBUS_GATT_SERVICE_NAME', 'GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_2_32', 'WITH_TCP'] 
+lib_list = Split('boost_system boost_filesystem boost_thread c_common coap connectivity_abstraction dl expat gcov gio-2.0 gobject-2.0 glib-2.0 m logger oc oc_logger octbstack ocpmapi ocprovision ocsrm octbstack pthread rt uuid tinydtls mbedtls mbedx509 mbedcrypto routingmanager')
+CPPDEFINES1 = ['__LINUX__', 'RD_CLIENT', 'WITH_CLOUD', 'NDEBUG', 'WITH_POSIX', '__linux__', 'TCP_ADAPTER', 'IP_ADAPTER', 'NO_EDR_ADAPTER', 'LE_ADAPTER', 'MQ_SUBSCRIBER', 'WITH_MQ', 'MQ_PUBLISHER', 'SHA2_USE_INTTYPES_H', '__WITH_DTLS__', '__WITH_TLS__', '_ENABLE_MULTIPLE_OWNER_', 'ROUTING_EP', 'WITH_BWT', 'CA_DBUS_GATT_SERVICE_NAME', 'GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_2_32', 'WITH_TCP']
 CPPFLAGS1 = ['-w', '-s', '-pthread', '-march=native', '-pthread', '-fpermissive', '-ftest-coverage', '-fprofile-arcs']
 
 if DP_ENABLED == 1:
     CPPDEFINES1.append(['-D__DIRECTPAIRING__'])
-    
+
 if CLOUD_ENABLED == 1:
     CPPDEFINES1.append(['-D__CLOUD__'])
-    
-if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:    
 
-    pmcpp_tc = env_linux.Program(source = TC_SRC_LIST + [ PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/linux/libgtest.a' ], 
-                        target = 'iotivity_pmcpp_test', 
-                        CPPPATH = IOTIVITY_INCLUDE_PATH + PM_CERT_INCLUDE_PATH + TC_INCLUDE_PATH, 
-                        LIBS = lib_list, 
-                        LIBPATH = LIB_PATH_LIST, 
+if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:
+
+    pmcpp_tc = env_linux.Program(source = TC_SRC_LIST + [ PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/linux/libgtest.a' ],
+                        target = 'iotivity_pmcpp_test',
+                        CPPPATH = IOTIVITY_INCLUDE_PATH + PM_CERT_INCLUDE_PATH + TC_INCLUDE_PATH,
+                        LIBS = lib_list,
+                        LIBPATH = LIB_PATH_LIST,
+                        RPATH =  LIB_PATH_LIST,
                         CXXFLAGS = ['-std=c++0x', '-Wall'],
                         CPPDEFINES = CPPDEFINES1,
-                        CPPFLAGS = CPPFLAGS1)           
-                        
+                        CPPFLAGS = CPPFLAGS1)
+
     install_targets += pmcpp_tc
-    
-    pmcpp_jw_simulator = env_linux.Program(source = PROJECT_HOME + '/src/testapp/pm/test_server.cpp', 
-                    target = 'test_server', 
-                    CPPPATH = IOTIVITY_INCLUDE_PATH, 
-                    LIBS = lib_list, 
-                    LIBPATH = LIB_PATH_LIST, 
+
+    pmcpp_jw_simulator = env_linux.Program(source = PROJECT_HOME + '/src/testapp/pm/justworks_simulator.cpp',
+                    target = 'sampleserver_justworks',
+                    CPPPATH = IOTIVITY_INCLUDE_PATH,
+                    LIBS = lib_list,
+                    LIBPATH = LIB_PATH_LIST,
+                    RPATH =  LIB_PATH_LIST,
                     CXXFLAGS = ['-std=c++0x', '-Wall'],
                     CPPDEFINES = CPPDEFINES1,
-                    CPPFLAGS = CPPFLAGS1)      
-    
+                    CPPFLAGS = CPPFLAGS1)
+
     install_targets += pmcpp_jw_simulator
 
-if TARGET_TEST == None or 'app' in TARGET_TEST or 'all' in TARGET_TEST:
-    
-    pmcpp_test_app = env_linux.Program(source = TEST_APP_SRC_LIST + [ PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/linux/libgtest.a' ], 
-                target = 'pmcpp_test_app', 
-                CPPPATH = IOTIVITY_INCLUDE_PATH + PM_CERT_INCLUDE_PATH + TC_INCLUDE_PATH + TEST_APP_INCLUDE_PATH, 
-                LIBS = lib_list, 
-                LIBPATH = LIB_PATH_LIST, 
+    pmcpp_rndmpin_simulator = env_linux.Program(source = PROJECT_HOME + '/src/testapp/pm/randompin_simulator.cpp',
+                target = 'sampleserver_randompin',
+                CPPPATH = IOTIVITY_INCLUDE_PATH,
+                LIBS = lib_list,
+                LIBPATH = LIB_PATH_LIST,
+                RPATH =  LIB_PATH_LIST,
                 CXXFLAGS = ['-std=c++0x', '-Wall'],
                 CPPDEFINES = CPPDEFINES1,
-                CPPFLAGS = CPPFLAGS1)      
+                CPPFLAGS = CPPFLAGS1)
+
+    install_targets += pmcpp_rndmpin_simulator
+
+if TARGET_TEST == None or 'app' in TARGET_TEST or 'all' in TARGET_TEST:
+
+    pmcpp_test_app = env_linux.Program(source = TEST_APP_SRC_LIST + [ PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/linux/libgtest.a' ],
+                target = 'pmcpp_test_app',
+                CPPPATH = IOTIVITY_INCLUDE_PATH + PM_CERT_INCLUDE_PATH + TC_INCLUDE_PATH + TEST_APP_INCLUDE_PATH,
+                LIBS = lib_list,
+                LIBPATH = LIB_PATH_LIST,
+                RPATH =  LIB_PATH_LIST,
+                CXXFLAGS = ['-std=c++0x', '-Wall'],
+                CPPDEFINES = CPPDEFINES1,
+                CPPFLAGS = CPPFLAGS1)
 
     install_targets += pmcpp_test_app
 
 
 if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:
-    cert_lib_path = PROJECT_HOME + '/res/cert_data'
     pm_resource_path = PROJECT_HOME + '/res/pm_resource'
-    
-    cert_resource_list = Glob(cert_lib_path + '/*.*')
     pm_resource_list = Glob(pm_resource_path + '/*.*')
-    
     default_targets += [create_target_dir]
-    
     i = 0
-    for cert_resource in cert_resource_list:
-        copy_cert_dir = env_linux.Command('copy_cert_dir' + str(i), [], Copy(VARIANT_DIR, cert_resource))
-        print(cert_resource)
-        i = i + 1
-        default_targets += [copy_cert_dir]
-        
+
     for pm_resource in pm_resource_list:
         pm_resource_backup = env_linux.Command('pm_resource_backup' + str(i), [], Copy(VARIANT_DIR, pm_resource))
         pm_bin_dir = env_linux.Command('pm_bin_dir' + str(i), [], Copy(VARIANT_DIR + '../', pm_resource))
@@ -224,7 +229,7 @@ i = 0
 for delete_target in install_targets:
     delete_bin += '0'
     delete_bin[i] = Command(str(i), [], Delete(delete_target))
-    i = i + 1    
+    i = i + 1
 
 default_targets += install_targets + install + delete_bin
 

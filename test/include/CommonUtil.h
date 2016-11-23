@@ -38,6 +38,8 @@
 #include "gtest_custom.h"
 #include "gtest/gtest.h"
 
+#define APP_START_STOP_TIMEOUT 2
+
 using namespace std;
 
 typedef enum
@@ -83,12 +85,13 @@ public:
      *
      *
      * @param app - App binary path.
+     * @param withGnome - Open in gnome terminal
      *
      * @return none
      *
      * NOTE: This API will be support other platforms
      */
-    static void launchApp(std::string app);
+    static void launchApp(std::string app, bool withGnome = false);
 
     /**
      * API for kill App
