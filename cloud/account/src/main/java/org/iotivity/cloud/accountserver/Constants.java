@@ -174,8 +174,6 @@ public class Constants extends OICConstants {
 
     public static final String REQ_SEARCH_USER_ID         = "sid";
 
-    public static final String REQ_SEARCH_CRITERIA        = "search";
-
     public static final String REQ_GROUP_ID               = "gid";
 
     public static final String REQ_GROUP_MASTER_ID        = "gmid";
@@ -205,6 +203,8 @@ public class Constants extends OICConstants {
     public static final String REQ_INVITE                 = "invite";
 
     public static final String REQ_INVITE_ACCEPT          = "accept";
+
+    public static final String SEARCH_USER_LIST           = "ulist";
 
     // Response key
 

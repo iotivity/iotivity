@@ -52,6 +52,33 @@ public class Account extends Resource {
         mASServer = ConnectorPool.getConnection("account");
     }
 
+    class RDReceiveHandler implements IResponseEventHandler {
+
+        private Device    mSrcDevice;
+        private IResponse mResponse;
+        private IRequest  mRequest;
+
+        public RDReceiveHandler(IRequest request, IResponse response,
+                Device srcDevice) {
+            mSrcDevice = srcDevice;
+            mRequest = request;
+            mResponse = response;
+        }
+
+        @Override
+        public void onResponseReceived(IResponse response)
+                throws ClientException {
+            switch (response.getStatus()) {
+                case DELETED:
+                    mSrcDevice.sendResponse(mResponse);
+                    break;
+                default:
+                    mSrcDevice.sendResponse(MessageBuilder.createResponse(
+                            mRequest, ResponseStatus.BAD_REQUEST));
+            }
+        }
+    }
+
     class AccountReceiveHandler implements IResponseEventHandler {
 
         IRequestChannel  mRDServer = null;
@@ -75,7 +102,8 @@ public class Account extends Resource {
                     mRDServer.sendRequest(
                             MessageBuilder.createRequest(RequestMethod.DELETE,
                                     uriPath.toString(), mRequest.getUriQuery()),
-                            mSrcDevice);
+                            new RDReceiveHandler(mRequest, response,
+                                    mSrcDevice));
                     break;
                 case CHANGED:
                 case CONTENT:
@@ -91,14 +119,31 @@ public class Account extends Resource {
     @Override
     public void onDefaultRequestReceived(Device srcDevice, IRequest request)
             throws ServerException {
-        if (request.getMethod().equals(RequestMethod.DELETE)) {
-            StringBuffer additionalQuery = new StringBuffer();
-            additionalQuery
-                    .append(Constants.USER_ID + "=" + srcDevice.getUserId());
-            String uriQuery = request.getUriQuery() + ";"
-                    + additionalQuery.toString();
-            request = MessageBuilder.modifyRequest(request, null, uriQuery,
-                    null, null);
+        switch (request.getMethod()) {
+            case GET:
+                if (request.getUriQuery() == null) {
+                    StringBuffer additionalQuery = new StringBuffer();
+                    additionalQuery.append(
+                            Constants.USER_ID + "=" + srcDevice.getUserId());
+                    String uriQuery = additionalQuery.toString()
+                            + (request.getUriQuery() != null
+                                    ? (";" + request.getUriQuery()) : "");
+                    request = MessageBuilder.modifyRequest(request, null,
+                            uriQuery, null, null);
+                }
+                break;
+            case DELETE:
+                StringBuffer additionalQuery = new StringBuffer();
+                additionalQuery.append(
+                        Constants.USER_ID + "=" + srcDevice.getUserId());
+                String uriQuery = additionalQuery.toString()
+                        + (request.getUriQuery() != null
+                                ? (";" + request.getUriQuery()) : "");
+                request = MessageBuilder.modifyRequest(request, null, uriQuery,
+                        null, null);
+                break;
+            default:
+                break;
         }
         mASServer.sendRequest(request,
                 new AccountReceiveHandler(request, srcDevice));

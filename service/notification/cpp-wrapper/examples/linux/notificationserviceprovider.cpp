@@ -58,6 +58,7 @@ void *OCProcessThread(void *ptr)
     (void) ptr;
     while (!isExit)
     {
+        usleep(2000);
         if (OCProcess() != OC_STACK_OK)
         {
             std::cout << "OCStack process error" << std::endl;
@@ -90,22 +91,25 @@ OIC::Service::NSConsumer *printAvailableConsumers()
     std::cout << "Choose the Consumer ID for operation" << std::endl;
     int pos = 1;
     unsigned int option = 0;
-    for(auto it: discoveredConsumers)
+    for (auto it : discoveredConsumers)
     {
-        std::cout << pos << ". " << it <<std::endl;
+        std::cout << pos << ". " << it << std::endl;
         pos++;
     }
-    while(!(std::cin >> option)){
-        std::cout << "Bad value!" <<std::endl;;
+    while (!(std::cin >> option))
+    {
+        std::cout << "Bad value!" << std::endl;;
         std::cin.clear();
         std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
     option--;
     if (option > discoveredConsumers.size())
+    {
         return NULL;
+    }
     std::string consumerId = discoveredConsumers[option];
     OIC::Service::NSConsumer *consumer = NSProviderService::getInstance()->getConsumer(
-                                            consumerId);
+            consumerId);
     return consumer;
 }
 
@@ -233,13 +237,13 @@ int main()
                     msg->setTopic(topic);
                     msg->setTTL(40);
                     msg->setTime("12:30");
-                    OIC::Service::NSMediaContents *mediaContents = 
-                                            new OIC::Service::NSMediaContents("iconImage");
+                    OIC::Service::NSMediaContents *mediaContents =
+                        new OIC::Service::NSMediaContents("iconImage");
                     msg->setMediaContents(mediaContents);
 
                     OC::OCRepresentation rep;
-                    rep.setValue("Key1","Value1");
-                    rep.setValue("Key2","Value2");
+                    rep.setValue("Key1", "Value1");
+                    rep.setValue("Key2", "Value2");
                     msg->setExtraInfo(rep);
 
                     mainMessageId = msg->getMessageId();
@@ -247,7 +251,7 @@ int main()
                     std::cout << "MessageID for Message : " << msg->getMessageId() << std::endl;
 
                     NSProviderService::getInstance()->sendMessage(msg);
-                    delete mediaContents;
+                    delete msg;
                     break;
                 }
             case 6:
@@ -255,7 +259,7 @@ int main()
                     std::cout << "------------------------------------" << std::endl;
                     std::cout <<  "SendSyncInfo" << std::endl;
                     std::cout << "------------------------------------" << std::endl;
-                    if(!mainMessageId)
+                    if (!mainMessageId)
                     {
                         std::cout <<  "Message ID is empty" << std::endl;
                         break;
@@ -263,53 +267,56 @@ int main()
                     std::cout << "1. Send Read Sync" << std::endl;
                     std::cout << "2. Send Delete Sync" << std::endl;
                     int syn = 0;
-                    while(!(std::cin >> syn)){
-                        std::cout << "Bad value!" <<std::endl;;
+                    while (!(std::cin >> syn))
+                    {
+                        std::cout << "Bad value!" << std::endl;;
                         std::cin.clear();
                         std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
                     }
                     switch (syn)
                     {
                         case 1:
-                        {
-                            std::cout << "Sending Read Sync" << std::endl;
-                            NSProviderService::getInstance()->sendSyncInfo(mainMessageId,
-                                OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
-                        }
-                        break;
-                        case 2:
-                        {
-                            std::cout << "Sending Delete Sync" << std::endl;
-                            NSProviderService::getInstance()->sendSyncInfo(mainMessageId,
-                                    OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_DELETED);
-                        }
-                        break;
-                        default:
-                        {
-                            cout << "Invalid Input!. sending default Read Sync";
-                            NSProviderService::getInstance()->sendSyncInfo(mainMessageId,
-                                OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
-                            std::cin.clear();
-                            std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                            {
+                                std::cout << "Sending Read Sync" << std::endl;
+                                NSProviderService::getInstance()->sendSyncInfo(mainMessageId,
+                                        OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
+                            }
                             break;
-                        }
+                        case 2:
+                            {
+                                std::cout << "Sending Delete Sync" << std::endl;
+                                NSProviderService::getInstance()->sendSyncInfo(mainMessageId,
+                                        OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_DELETED);
+                            }
+                            break;
+                        default:
+                            {
+                                cout << "Invalid Input!. sending default Read Sync";
+                                NSProviderService::getInstance()->sendSyncInfo(mainMessageId,
+                                        OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
+                                std::cin.clear();
+                                std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                                break;
+                            }
                     }
                     break;
                 }
 
             case 7:
-                std::cout <<  "RegisterTopic" << std::endl;
-                NSProviderService::getInstance()->registerTopic("OCF_TOPIC1");
-                NSProviderService::getInstance()->registerTopic("OCF_TOPIC2");
-                NSProviderService::getInstance()->registerTopic("OCF_TOPIC3");
-                NSProviderService::getInstance()->registerTopic("OCF_TOPIC4");
-                break;
-
+                {
+                    std::cout <<  "RegisterTopic" << std::endl;
+                    NSProviderService::getInstance()->registerTopic("OCF_TOPIC1");
+                    NSProviderService::getInstance()->registerTopic("OCF_TOPIC2");
+                    NSProviderService::getInstance()->registerTopic("OCF_TOPIC3");
+                    NSProviderService::getInstance()->registerTopic("OCF_TOPIC4");
+                    break;
+                }
             case 8:
-                std::cout <<  "UnregisterTopic" << std::endl;
-                NSProviderService::getInstance()->unregisterTopic("OCF_TOPIC2");
-                break;
-
+                {
+                    std::cout <<  "UnregisterTopic" << std::endl;
+                    NSProviderService::getInstance()->unregisterTopic("OCF_TOPIC2");
+                    break;
+                }
             case 9:
                 {
                     std::cout <<  "SetTopic" << std::endl;
@@ -389,19 +396,25 @@ int main()
                 }
 #endif
             case 15:
-                std::cout << "Stop the Notification Provider" << std::endl;
-                NSProviderService::getInstance()->stop();
-                break;
+                {
+                    std::cout << "Stop the Notification Provider" << std::endl;
+                    NSProviderService::getInstance()->stop();
+                    break;
+                }
             case 16:
-                std::cout << "Exit()" << std::endl;
-                NSProviderService::getInstance()->stop();
-                isExit = true;
-                break;
+                {
+                    std::cout << "Exit()" << std::endl;
+                    NSProviderService::getInstance()->stop();
+                    isExit = true;
+                    break;
+                }
             default:
-                std::cout << "Under Construction" << std::endl;
-                std::cin.clear();
-                std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                break;
+                {
+                    std::cout << "Under Construction" << std::endl;
+                    std::cin.clear();
+                    std::cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    break;
+                }
         }
 
         std::cout << std::endl;

@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 
 import org.iotivity.cloud.base.device.CoapDevice;
-import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
@@ -116,17 +115,6 @@ public class KeepAliveResourceTest {
                 cbor.encodingPayloadToCbor(payloadData));
         keepAliveResource.onDefaultRequestReceived(mockDevice, request);
         assertTrue(methodCheck(mRes, ResponseStatus.VALID));
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void testOnDefaultExceptionRequestReceived() {
-        HashMap<String, Integer> payloadData = new HashMap<>();
-        Cbor<HashMap<String, Object>> cbor = new Cbor<>();
-        payloadData.put("in", 8);
-        IRequest request = MessageBuilder.createRequest(RequestMethod.POST,
-                "/oic/ping", null, ContentFormat.APPLICATION_CBOR,
-                cbor.encodingPayloadToCbor(payloadData));
-        keepAliveResource.onDefaultRequestReceived(mockDevice, request);
     }
 
     private boolean methodCheck(IResponse response,

@@ -26,10 +26,11 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.iotivity.cloud.accountserver.Constants;
-import org.iotivity.cloud.accountserver.resources.acl.id.AclManager;
+import org.iotivity.cloud.accountserver.resources.account.AccountManager.SearchOperation;
 import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.exception.ServerException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
+import org.iotivity.cloud.base.exception.ServerException.UnAuthorizedException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
@@ -123,26 +124,30 @@ public class AccountResource extends Resource {
     }
 
     private IResponse handleGetSearch(IRequest request) {
-        HashMap<String, Object> responsePayload = null;
+
+        if (!request.getUriPath().equals(Constants.ACCOUNT_SEARCH_FULL_URI)) {
+            throw new BadRequestException("invalid request uri");
+        }
 
         HashMap<String, List<String>> queryData = request.getUriQueryMap();
 
         if (queryData == null) {
             throw new BadRequestException("query is null");
         }
-        List<String> suid = queryData.get(Constants.REQ_UUID_ID);
-        List<String> criteria = queryData.get(Constants.REQ_SEARCH_CRITERIA);
 
-        if (suid != null) {
-            responsePayload = mAsManager.searchUserAboutUuid(suid.get(0));
-        } else if (criteria != null) {
-            responsePayload = mAsManager
-                    .searchUserAboutCriteria(criteria.get(0));
+        HashMap<String, Object> responsePayload = null;
 
+        // AND or OR operation to find users
+        if (request.getUriQuery().contains(",")) {
+            queryData = mAsManager.getQueryMap(request.getUriQuery(), ",");
+            responsePayload = (mAsManager.searchUserUsingCriteria(queryData,
+                    SearchOperation.AND));
         } else {
-            throw new BadRequestException(
-                    "uid and search query param are null");
+            responsePayload = (mAsManager.searchUserUsingCriteria(queryData,
+                    SearchOperation.OR));
         }
+
+        Log.d("Search criteria query : " + queryData);
 
         return MessageBuilder.createResponse(request, ResponseStatus.CONTENT,
                 ContentFormat.APPLICATION_CBOR,
@@ -153,13 +158,16 @@ public class AccountResource extends Resource {
 
         HashMap<String, List<String>> queryMap = request.getUriQueryMap();
 
-        if (checkQueryException(
-                Arrays.asList(Constants.REQ_UUID_ID, Constants.REQ_DEVICE_ID),
+        if (checkQueryException(Arrays.asList(Constants.REQ_UUID_ID,
+                Constants.REQ_DEVICE_ID, Constants.REQ_ACCESS_TOKEN),
                 queryMap)) {
 
             String uid = queryMap.get(Constants.REQ_UUID_ID).get(0);
             String did = queryMap.get(Constants.REQ_DEVICE_ID).get(0);
-            mAsManager.deleteDevice(uid, did);
+            String accesstoken = queryMap.get(Constants.REQ_ACCESS_TOKEN)
+                    .get(0);
+            if (!mAsManager.deleteDevice(uid, did, accesstoken))
+                throw new UnAuthorizedException("accesstoken is not valid");
         }
 
         return MessageBuilder.createResponse(request, ResponseStatus.DELETED);

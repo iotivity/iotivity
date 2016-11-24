@@ -28,7 +28,7 @@ constexpr int DEFAULT_SPEED = 30;
 constexpr int UP_SPEED = 50;
 constexpr int DOWN_SPEED = 10;
 
-constexpr int DEFALUT_SERVER = 1;
+constexpr int DEFAULT_SERVER = 1;
 constexpr int CUSTOM_SERVER = 2;
 constexpr int STOP = 3;
 
@@ -263,7 +263,7 @@ int selectServerMenu()
 {
     switch (processUserInput())
     {
-        case DEFALUT_SERVER:
+        case DEFAULT_SERVER:
             // Creation of Resource & Auto control for all requests from Client.
             initServer();
             return CORRECT_INPUT;

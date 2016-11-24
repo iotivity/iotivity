@@ -1644,6 +1644,104 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerPlatformInfo0(
         }
 }
 
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setPropertyValue0
+    (JNIEnv *env, jclass clazz, jint jType, jstring jPropName, jobjectArray jPropValue)
+{
+    try
+    {
+        OCPayloadType type = (OCPayloadType)jType;
+        std::string propName;
+        std::vector<std::string> propValue;
+        if (jPropName)
+        {
+            propName = env->GetStringUTFChars(jPropName, nullptr);
+        }
+        if (jPropValue)
+        {
+            JniUtils::convertJavaStrArrToStrVector(env, jPropValue, propValue);
+        }
+        OCStackResult result = OCPlatform::setPropertyValue(type, propName, propValue);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Failed to set property");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("Error is due to %s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
+* Method:    setPropertyValue0
+* Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setPropertyValue1
+    (JNIEnv *env, jclass clazz, jint jType, jstring jPropName, jstring jPropValue)
+{
+    try
+    {
+        OCPayloadType type = (OCPayloadType)jType;
+        std::string propName;
+        std::string propValue;
+        if (jPropName)
+        {
+            propName = env->GetStringUTFChars(jPropName, nullptr);
+        }
+        if (jPropValue)
+        {
+            propValue = env->GetStringUTFChars(jPropValue, nullptr);
+        }
+        OCStackResult result = OCPlatform::setPropertyValue(type, propName, propValue);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Failed to set property");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("Error is due to %s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
+* Method:    getPropertyValue
+* Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPropertyValue0
+    (JNIEnv *env, jclass clazz, jint jType, jstring jPropName, jstring jPropValue)
+{
+    try
+    {
+        OCPayloadType type = (OCPayloadType) jType;
+        std::string propName;
+        std::string propValue;
+
+        if (jPropName)
+        {
+            propName = env->GetStringUTFChars(jPropName, nullptr);
+        }
+        OCStackResult result = OCPlatform::getPropertyValue(type, propName, propValue);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Failed to get property value.");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("Error is due to %s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+}
+
 /*
 * Class:     org_iotivity_base_OcPlatform
 * Method:    unregisterResource0

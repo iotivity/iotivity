@@ -74,7 +74,6 @@
         "owned": false,
         "deviceuuid": "",
         "devowneruuid": "",
-        "rowneruuid": "",
-        "x.org.iotivity.dpc": true
+        "rowneruuid": ""
     }
 }

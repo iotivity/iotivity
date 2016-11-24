@@ -26,6 +26,7 @@ extern "C"
     #include "ocstackinternal.h"
     #include "logger.h"
     #include "oic_malloc.h"
+    #include "oic_string.h"
 }
 
 #include "gtest/gtest.h"
@@ -62,8 +63,6 @@ static const char TAG[] = "TestHarness";
 
 char gDeviceUUID[] = "myDeviceUUID";
 char gManufacturerName[] = "myName";
-char gTooLongManufacturerName[] = "extremelylongmanufacturername";
-char gManufacturerUrl[] = "www.foooooooooooooooo.baaaaaaaaaaaaar";
 static OCPrm_t pmSel;
 static char pinNumber;
 static OCDPDev_t peer;
@@ -112,7 +111,7 @@ extern "C" OCStackApplicationResult discoveryCallback(void* ctx,
     OCDiscoveryPayload *discoveryPayload = ((OCDiscoveryPayload *) clientResponse->payload);
     EXPECT_TRUE(discoveryPayload != NULL);
     OCResourcePayload *res = discoveryPayload->resources;
-    size_t count = 0;
+    int count = 0;
     for (OCResourcePayload *res1 = discoveryPayload->resources; res1; res1 = res1->next)
     {
         count++;
@@ -280,7 +279,7 @@ TEST(StackStart, SetPlatformInfoWithClientMode)
         gManufacturerName,
         0, 0, 0, 0, 0, 0, 0, 0, 0
     };
-    EXPECT_EQ(OC_STACK_ERROR, OCSetPlatformInfo(info));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
@@ -335,7 +334,12 @@ TEST(StackStart, SetPlatformInfoWithTooLongManufacName)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
-
+    char gTooLongManufacturerName[MAX_PLATFORM_NAME_LENGTH+2];
+    for (int i = 0; i <= MAX_PLATFORM_NAME_LENGTH; i++ )
+    {
+        gTooLongManufacturerName[i] = 'a';
+    }
+    gTooLongManufacturerName[MAX_PLATFORM_NAME_LENGTH+1] = '\0';
     OCPlatformInfo info =
     {
         gDeviceUUID,
@@ -351,6 +355,12 @@ TEST(StackStart, SetPlatformInfoWithTooLongManufacURL)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    char gManufacturerUrl[MAX_PLATFORM_URL_LENGTH+2];
+    for (int i = 0; i <= MAX_PLATFORM_URL_LENGTH; i++ )
+    {
+        gManufacturerUrl[i] = 'a';
+    }
+    gManufacturerUrl[MAX_PLATFORM_URL_LENGTH+1] = '\0';
     OCPlatformInfo info =
     {
         gDeviceUUID,
@@ -360,6 +370,186 @@ TEST(StackStart, SetPlatformInfoWithTooLongManufacURL)
     };
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, SetPlatformInfoWithOCSetPropertyValueAPI)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_ID, gDeviceUUID));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_NAME, gManufacturerName));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_URL, "http://www.iotivity.org"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MODEL_NUM, "S777"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_DATE, "15 Nov, 2016"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_OS_VERSION, "1.1"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_VERSION, "14"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_HARDWARE_VERSION, "0.1"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_FIRMWARE_VERSION, "0.1"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SUPPORT_URL, "http://www.iotivity.org"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SYSTEM_TIME, ""));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, "x.org.iotivity.AAAA", "value"));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, NULL, ""));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPropertyValue(PAYLOAD_TYPE_INVALID, NULL, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPropertyValue(PAYLOAD_TYPE_INVALID, NULL, NULL));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, GetPlatformInfoWithOCGetPropertyValueAPI)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_ID, gDeviceUUID));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_NAME, gManufacturerName));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_URL, "http://www.iotivity.org"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MODEL_NUM, "S777"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_DATE, "15 Nov, 2016"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_OS_VERSION, "1.1"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_VERSION, "14"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_HARDWARE_VERSION, "0.1"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_FIRMWARE_VERSION, "0.1"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SUPPORT_URL, "http://www.iotivity.org"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SYSTEM_TIME, ""));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, "x.org.iotivity.AAAA", "value"));
+
+    void *value = NULL;
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_ID, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ(gDeviceUUID, (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_NAME, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ(gManufacturerName, (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_URL, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("http://www.iotivity.org", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MODEL_NUM, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("S777", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_DATE, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("15 Nov, 2016", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_OS_VERSION, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("1.1", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_VERSION, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("14", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_HARDWARE_VERSION, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("0.1", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_FIRMWARE_VERSION, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("0.1", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SUPPORT_URL, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("http://www.iotivity.org", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SYSTEM_TIME, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK,OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, "x.org.iotivity.AAAA", &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("value", (char *)value);
+    OICFree(value);
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, SetDeviceInfoAPI)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, "Sample"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, "specVersion"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, "x.org.iotivity.newproperty", "value"));
+    OCStringLL *dataModelVersions = OCCreateOCStringLL("Data Model Version");
+    EXPECT_TRUE(dataModelVersions != NULL);
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, dataModelVersions));
+    OCFreeOCStringLL(dataModelVersions);
+    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    EXPECT_TRUE(handle != NULL);
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "oic.wk.tv"));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPropertyValue(PAYLOAD_TYPE_INVALID, NULL, NULL));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPropertyValue(PAYLOAD_TYPE_INVALID, "", NULL));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, GetDeviceInfoAPI)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, "Sample"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, "specVersion"));
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, "x.org.iotivity.newproperty", "value"));
+    OCStringLL *dataModelVersions = OCCreateOCStringLL("Data Model Version");
+    EXPECT_TRUE(dataModelVersions != NULL);
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, dataModelVersions));
+    OCFreeOCStringLL(dataModelVersions);
+    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    EXPECT_TRUE(handle != NULL);
+    EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "oic.wk.tv"));
+
+    void *value = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("Sample", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("specVersion", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, "x.org.iotivity.newproperty", &value));
+    ASSERT_TRUE(value != NULL);
+    EXPECT_STREQ("value", (char *)value);
+    OICFree(value);
+    value = NULL;
+
+    EXPECT_EQ(OC_STACK_OK, OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, &value));
+    ASSERT_TRUE(value != NULL);
+    ASSERT_TRUE(((OCStringLL *)value)->value);
+    EXPECT_STREQ("Data Model Version", ((OCStringLL *)value)->value);
+    OCFreeOCStringLL((OCStringLL *) value);
+    value = NULL;
+
+    EXPECT_STREQ("oic.wk.d", OCGetResourceTypeName(handle, 0));
+    EXPECT_STREQ("oic.wk.tv", OCGetResourceTypeName(handle, 1));
+
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 

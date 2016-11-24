@@ -221,25 +221,6 @@ OCStackResult JniOcAccountManager::refreshAccessToken(JNIEnv* env, const std::st
     return m_sharedAccountManager->refreshAccessToken(userUuid, refreshToken, postCallback);
 }
 
-OCStackResult JniOcAccountManager::searchUser(JNIEnv* env, const std::string& userUuid,
-                                              jobject jListener)
-{
-    JniOnGetListener *onGetListener = addOnGetListener(env, jListener);
-    if (nullptr == onGetListener)
-    {
-        LOGE("onGetListener is null");
-        return OC_STACK_ERROR;
-    }
-
-    GetCallback getCallback = [onGetListener](const HeaderOptions& opts,
-        const OCRepresentation& rep, const int eCode)
-    {
-        onGetListener->onGetCallback(opts, rep, eCode);
-    };
-
-    return m_sharedAccountManager->searchUser(userUuid, getCallback);
-}
-
 OCStackResult JniOcAccountManager::searchUser(JNIEnv* env, const QueryParamsMap& queryMap,
                                               jobject jListener)
 {
@@ -834,51 +815,9 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_refreshAccessToke
 /*
 * Class:     org_iotivity_base_OcAccountManager
 * Method:    searchUser0
-* Signature: (Ljava/lang/String;Lorg/iotivity/base/OcAccountManager/OnGetListener;)V
-*/
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_searchUser0
-    (JNIEnv *env, jobject thiz, jstring jUserUuid, jobject jListener)
-{
-    LOGD("OcAccountManager_searchUser");
-    VERIFY_NON_NULL_THROW_EXCEPTION(jUserUuid, "userUuid cannot be null", OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL_THROW_EXCEPTION(jListener, "onGetListener cannot be null",
-                                    OC_STACK_INVALID_PARAM);
-
-    JniOcAccountManager *accountManager = JniOcAccountManager::getJniOcAccountManagerPtr(env,
-                                                                                         thiz);
-    if (!accountManager)
-    {
-        return;
-    }
-
-    const char *charUserUuid = env->GetStringUTFChars(jUserUuid, nullptr);
-    VERIFY_NON_NULL_THROW_EXCEPTION(charUserUuid, "charUserUuid is null", JNI_EXCEPTION);
-    std::string userUuid(charUserUuid);
-    env->ReleaseStringUTFChars(jUserUuid, charUserUuid);
-
-    try
-    {
-        OCStackResult result = accountManager->searchUser(env,
-                                                          userUuid,
-                                                          jListener);
-        if (OC_STACK_OK != result)
-        {
-            ThrowOcException(result, "OcAccountManager_searchUser");
-        }
-    }
-    catch (OCException& e)
-    {
-        LOGE("%s", e.reason().c_str());
-        ThrowOcException(e.code(), e.reason().c_str());
-    }
-}
-
-/*
-* Class:     org_iotivity_base_OcAccountManager
-* Method:    searchUser1
 * Signature: (Ljava/util/Map;Lorg/iotivity/base/OcAccountManager/OnGetListener;)V
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_searchUser1
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_searchUser0
     (JNIEnv *env, jobject thiz, jobject jQueryMap, jobject jListener)
 {
     LOGD("OcAccountManager_searchUser");

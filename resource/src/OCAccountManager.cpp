@@ -181,48 +181,15 @@ OCStackResult OCAccountManager::refreshAccessToken(const std::string& userUuid,
                          m_connType, cloudConnectHandler, m_defaultQos);
 }
 
-OCStackResult OCAccountManager::searchUser(const std::string& userUuid,
-                                           GetCallback cloudConnectHandler)
-{
-    VERIFY_NON_EMPTY(userUuid, "userUuid cannot be empty.", OC_STACK_INVALID_PARAM);
-
-    return result_guard(searchUser(userUuid, QueryParamsMap(), cloudConnectHandler));
-}
-
 OCStackResult OCAccountManager::searchUser(const QueryParamsMap& queryParams,
                                            GetCallback cloudConnectHandler)
 {
     VERIFY_NON_EMPTY(queryParams, "queryParams cannot be empty.", OC_STACK_INVALID_PARAM);
 
-    return result_guard(searchUser("", queryParams, cloudConnectHandler));
-}
-
-OCStackResult OCAccountManager::searchUser(const std::string& userUuid,
-                                           const QueryParamsMap& queryParams,
-                                           GetCallback cloudConnectHandler)
-{
-    std::string uri = m_host + OC_RSRVD_ACCOUNT_USER_URI;
-
-    QueryParamsMap fullQuery = {};
-
-    if (!userUuid.empty())
-    {
-        fullQuery.insert(std::make_pair(OC_RSRVD_USER_UUID, userUuid));
-    }
-
-    if (!queryParams.empty())
-    {
-        std::string searchQuery;
-        for (auto iter : queryParams)
-        {
-            searchQuery.append(iter.first + ":" + iter.second + ",");
-        }
-        searchQuery.resize(searchQuery.size() - 1);
-        fullQuery.insert(std::make_pair(OC_RSRVD_SEARCH, searchQuery));
-    }
+    std::string uri = m_host + OC_RSRVD_ACCOUNT_SEARCH_URI;
 
     return checked_guard(m_clientWrapper.lock(), &IClientWrapper::GetResourceRepresentation,
-                         OCDevAddr(), uri, fullQuery, HeaderOptions(),
+                         OCDevAddr(), uri, queryParams, HeaderOptions(),
                          m_connType, cloudConnectHandler, m_defaultQos);
 }
 

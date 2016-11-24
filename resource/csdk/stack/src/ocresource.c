@@ -63,12 +63,10 @@
 /// Module Name
 #define TAG "OIC_RI_RESOURCE"
 
-#define VERIFY_SUCCESS(op, successCode) { if (op != successCode) \
+#define VERIFY_SUCCESS(op) { if (op != (OC_STACK_OK)) \
             {OIC_LOG_V(FATAL, TAG, "%s failed!!", #op); goto exit;} }
 
 extern OCResource *headResource;
-static OCPlatformInfo savedPlatformInfo = {0};
-static OCDeviceInfo savedDeviceInfo = {0};
 
 /**
  * Prepares a Payload for response.
@@ -316,6 +314,34 @@ static OCStackResult getQueryParamsForFiltering (OCVirtualResources uri, char *q
     return result;
 }
 
+bool appendOCStringLL(OCRepPayload *device, OCStringLL *dmv)
+{
+    int size = 0;
+    for (OCStringLL *ll = dmv; ll; ll = ll->next, size++);
+    size_t dim[MAX_REP_ARRAY_DEPTH] = {size, 0, 0};
+    char **dt = (char **)OICMalloc(sizeof(char *) * size);
+    int i = 0;
+    VERIFY_PARAM_NON_NULL(TAG, dt, "Data Model Version allocation failed.");
+    for (OCStringLL *ll = dmv; ll; ll = ll->next, i++)
+    {
+        dt[i] = OICStrdup(ll->value);
+        VERIFY_PARAM_NON_NULL(TAG, dt[i], "Data Model Version adding failed.");
+    }
+    if (!OCRepPayloadSetStringArrayAsOwner(device, OC_RSRVD_DATA_MODEL_VERSION, dt, dim))
+    {
+        goto exit;
+    }
+    return true;
+
+exit:
+    for (int i = 0; i < size; i++)
+    {
+        OICFree(dt[i]);
+    }
+    OICFree(dt);
+    return false;
+}
+
 OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
                     OCRepPayload** payload)
 {
@@ -351,10 +377,25 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
     OCAttribute *resAttrib = resourcePtr->rsrcAttributes;
     while(resAttrib)
     {
-        OCRepPayloadSetPropString(tempPayload, resAttrib->attrName,
-                                resAttrib->attrValue);
+        if (resAttrib->attrName && resAttrib->attrValue)
+        {
+            if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, resAttrib->attrName))
+            {
+                appendOCStringLL(tempPayload, (OCStringLL *)resAttrib->attrValue);
+            }
+            else
+            {
+                OCRepPayloadSetPropString(tempPayload, resAttrib->attrName, (char *)resAttrib->attrValue);
+            }
+        }
         resAttrib = resAttrib->next;
     }
+
+    OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)resourcePtr);
+    p = (OCResourceProperty) ((p & OC_DISCOVERABLE) | (p & OC_OBSERVABLE));
+    OCRepPayload *policy = OCRepPayloadCreate();
+    OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP, p);
+    OCRepPayloadSetPropObjectAsOwner(tempPayload, OC_RSRVD_POLICY, policy);
 
     if(!*payload)
     {
@@ -740,11 +781,8 @@ static OCStackResult addDiscoveryBaselineCommonProperties(OCDiscoveryPayload *di
     discPayload->uri = OICStrdup(OC_RSRVD_WELL_KNOWN_URI);
     VERIFY_PARAM_NON_NULL(TAG, discPayload->uri, "Failed adding href to discovery payload.");
 
-    if (savedDeviceInfo.deviceName)
-    {
-        discPayload->name = OICStrdup(savedDeviceInfo.deviceName);
-        VERIFY_PARAM_NON_NULL(TAG, discPayload->name, "Failed adding name to discovery payload.");
-    }
+    OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, "deviceName", (void **)&discPayload->name);
+    VERIFY_PARAM_NON_NULL(TAG, discPayload->name, "Failed adding name to discovery payload.");
 
     discPayload->type = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
     VERIFY_PARAM_NON_NULL(TAG, discPayload->type, "Failed adding rt to discovery payload.");
@@ -769,6 +807,14 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     }
 
     OCStackResult discoveryResult = OC_STACK_ERROR;
+    if (request->method == OC_REST_PUT || request->method == OC_REST_POST ||
+        request->method == OC_REST_DELETE)
+    {
+        OIC_LOG_V(ERROR, TAG, "Resource : %s not permitted for method: %d",
+            request->resourceUrl, request->method);
+        return OC_STACK_UNAUTHORIZED_REQ;
+    }
+
     OCPayload* payload = NULL;
     char *interfaceQuery = NULL;
     char *resourceTypeQuery = NULL;
@@ -785,18 +831,9 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 #endif
             )
     {
-        if (request->method == OC_REST_PUT || request->method == OC_REST_POST ||
-            request->method == OC_REST_DELETE)
-        {
-            OIC_LOG_V(ERROR, TAG, "Resource : %s not permitted for method: %d",
-                request->resourceUrl, request->method);
-            discoveryResult = OC_STACK_UNAUTHORIZED_REQ;
-            goto exit;
-        }
-
         discoveryResult = getQueryParamsForFiltering (virtualUriInRequest, request->query,
                 &interfaceQuery, &resourceTypeQuery);
-        VERIFY_SUCCESS(discoveryResult, OC_STACK_OK);
+        VERIFY_SUCCESS(discoveryResult);
         if (!interfaceQuery && !resourceTypeQuery)
         {
             // If no query is sent, default interface is used i.e. oic.if.ll.
@@ -811,13 +848,13 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 
         discoveryResult = discoveryPayloadCreateAndAddDeviceId(&payload);
         VERIFY_PARAM_NON_NULL(TAG, payload, "Failed creating Discovery Payload.");
-        VERIFY_SUCCESS(discoveryResult, OC_STACK_OK);
+        VERIFY_SUCCESS(discoveryResult);
 
         OCDiscoveryPayload *discPayload = (OCDiscoveryPayload *)payload;
         if (baselineQuery)
         {
             discoveryResult = addDiscoveryBaselineCommonProperties(discPayload);
-            VERIFY_SUCCESS(discoveryResult, OC_STACK_OK);
+            VERIFY_SUCCESS(discoveryResult);
         }
         OCResourceProperty prop = OC_DISCOVERABLE;
 #ifdef MQ_BROKER
@@ -852,41 +889,16 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     }
     else if (virtualUriInRequest == OC_DEVICE_URI)
     {
-        if (request->method == OC_REST_PUT || request->method == OC_REST_POST ||
-            request->method == OC_REST_DELETE)
-        {
-            OIC_LOG_V(ERROR, TAG, "Resource : %s not permitted for method: %d",
-                request->resourceUrl, request->method);
-            discoveryResult = OC_STACK_UNAUTHORIZED_REQ;
-            goto exit;
-        }
-
-        const char* deviceId = OCGetServerInstanceIDString();
-        VERIFY_PARAM_NON_NULL(TAG, deviceId, "Failed retrieving device id.");
-        discoveryResult = OC_STACK_NO_MEMORY;
-        dataModelVersions = OCCreateString(savedDeviceInfo.dataModelVersions);
-        VERIFY_PARAM_NON_NULL(TAG, dataModelVersions, "Failed adding data model version.");
-        payload = (OCPayload*) OCDevicePayloadCreate(deviceId, savedDeviceInfo.deviceName,
-            savedDeviceInfo.types, savedDeviceInfo.specVersion, dataModelVersions);
-        VERIFY_PARAM_NON_NULL(TAG, payload, "Failed adding device payload.");
-        discoveryResult = OC_STACK_OK;
+        OCResource *resourcePtr = FindResourceByUri(OC_RSRVD_DEVICE_URI);
+        VERIFY_PARAM_NON_NULL(TAG, resourcePtr, "Device URI not found.");
+        discoveryResult = BuildResponseRepresentation(resourcePtr, (OCRepPayload **)&payload);
     }
     else if (virtualUriInRequest == OC_PLATFORM_URI)
     {
-        if (request->method == OC_REST_PUT || request->method == OC_REST_POST ||
-            request->method == OC_REST_DELETE)
-        {
-            OIC_LOG_V(ERROR, TAG, "Resource : %s not permitted for method: %d",
-                request->resourceUrl, request->method);
-            discoveryResult = OC_STACK_UNAUTHORIZED_REQ;
-            goto exit;
-        }
-
-        discoveryResult = OC_STACK_NO_MEMORY;
-        payload = (OCPayload *)OCPlatformPayloadCreate(&savedPlatformInfo);
-        VERIFY_PARAM_NON_NULL(TAG, payload, "Failed adding platform payload.");
-        discoveryResult = OC_STACK_OK;
-   }
+        OCResource *resourcePtr = FindResourceByUri(OC_RSRVD_PLATFORM_URI);
+        VERIFY_PARAM_NON_NULL(TAG, resourcePtr, "Platform URI not found.");
+        discoveryResult = BuildResponseRepresentation(resourcePtr, (OCRepPayload **)&payload);
+    }
 #ifdef ROUTING_GATEWAY
     else if (OC_GATEWAY_URI == virtualUriInRequest)
     {
@@ -1016,7 +1028,7 @@ HandleDefaultDeviceEntityHandler (OCServerRequest *request)
                                         (OCObserveAction)request->observationOption,
                                         (OCObservationId)0,
                                         request->coapID);
-    VERIFY_SUCCESS(result, OC_STACK_OK);
+    VERIFY_SUCCESS(result);
 
     // At this point we know for sure that defaultDeviceHandler exists
     ehResult = defaultDeviceHandler(OC_REQUEST_FLAG, &ehRequest,
@@ -1078,7 +1090,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
                                         (OCObserveAction)request->observationOption,
                                         0,
                                         request->coapID);
-    VERIFY_SUCCESS(result, OC_STACK_OK);
+    VERIFY_SUCCESS(result);
 
     if(ehRequest.obsInfo.action == OC_OBSERVE_NO_OPTION)
     {
@@ -1108,7 +1120,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         }
 
         result = GenerateObserverId(&ehRequest.obsInfo.obsId);
-        VERIFY_SUCCESS(result, OC_STACK_OK);
+        VERIFY_SUCCESS(result);
 
         result = AddObserver ((const char*)(request->resourceUrl),
                 (const char *)(request->query),
@@ -1282,224 +1294,237 @@ ProcessRequest(ResourceHandling resHandling, OCResource *resource, OCServerReque
     return ret;
 }
 
-void DeletePlatformInfo()
+OCStackResult OCSetPlatformInfo(OCPlatformInfo info)
 {
-    OIC_LOG(INFO, TAG, "Deleting platform info.");
-
-    OICFree(savedPlatformInfo.platformID);
-    savedPlatformInfo.platformID = NULL;
-
-    OICFree(savedPlatformInfo.manufacturerName);
-    savedPlatformInfo.manufacturerName = NULL;
-
-    OICFree(savedPlatformInfo.manufacturerUrl);
-    savedPlatformInfo.manufacturerUrl = NULL;
-
-    OICFree(savedPlatformInfo.modelNumber);
-    savedPlatformInfo.modelNumber = NULL;
-
-    OICFree(savedPlatformInfo.dateOfManufacture);
-    savedPlatformInfo.dateOfManufacture = NULL;
-
-    OICFree(savedPlatformInfo.platformVersion);
-    savedPlatformInfo.platformVersion = NULL;
-
-    OICFree(savedPlatformInfo.operatingSystemVersion);
-    savedPlatformInfo.operatingSystemVersion = NULL;
-
-    OICFree(savedPlatformInfo.hardwareVersion);
-    savedPlatformInfo.hardwareVersion = NULL;
-
-    OICFree(savedPlatformInfo.firmwareVersion);
-    savedPlatformInfo.firmwareVersion = NULL;
-
-    OICFree(savedPlatformInfo.supportUrl);
-    savedPlatformInfo.supportUrl = NULL;
-
-    OICFree(savedPlatformInfo.systemTime);
-    savedPlatformInfo.systemTime = NULL;
-}
-
-static OCStackResult DeepCopyPlatFormInfo(OCPlatformInfo info)
-{
-    savedPlatformInfo.platformID = OICStrdup(info.platformID);
-    savedPlatformInfo.manufacturerName = OICStrdup(info.manufacturerName);
-    savedPlatformInfo.manufacturerUrl = OICStrdup(info.manufacturerUrl);
-    savedPlatformInfo.modelNumber = OICStrdup(info.modelNumber);
-    savedPlatformInfo.dateOfManufacture = OICStrdup(info.dateOfManufacture);
-    savedPlatformInfo.platformVersion = OICStrdup(info.platformVersion);
-    savedPlatformInfo.operatingSystemVersion = OICStrdup(info.operatingSystemVersion);
-    savedPlatformInfo.hardwareVersion = OICStrdup(info.hardwareVersion);
-    savedPlatformInfo.firmwareVersion = OICStrdup(info.firmwareVersion);
-    savedPlatformInfo.supportUrl = OICStrdup(info.supportUrl);
-    savedPlatformInfo.systemTime = OICStrdup(info.systemTime);
-
-    if ((!savedPlatformInfo.platformID && info.platformID)||
-        (!savedPlatformInfo.manufacturerName && info.manufacturerName)||
-        (!savedPlatformInfo.manufacturerUrl && info.manufacturerUrl)||
-        (!savedPlatformInfo.modelNumber && info.modelNumber)||
-        (!savedPlatformInfo.dateOfManufacture && info.dateOfManufacture)||
-        (!savedPlatformInfo.platformVersion && info.platformVersion)||
-        (!savedPlatformInfo.operatingSystemVersion && info.operatingSystemVersion)||
-        (!savedPlatformInfo.hardwareVersion && info.hardwareVersion)||
-        (!savedPlatformInfo.firmwareVersion && info.firmwareVersion)||
-        (!savedPlatformInfo.supportUrl && info.supportUrl)||
-        (!savedPlatformInfo.systemTime && info.systemTime))
+    OCResource *resource = NULL;
+    if (!info.platformID || !info.manufacturerName)
     {
-        DeletePlatformInfo();
-        return OC_STACK_INVALID_PARAM;
+        OIC_LOG(ERROR, TAG, "No value specified.");
+        goto exit;
+    }
+    if (0 == strlen(info.platformID) || 0 == strlen(info.manufacturerName))
+    {
+        OIC_LOG(ERROR, TAG, "The passed value cannot be empty");
+        goto exit;
+    }
+    if ((info.manufacturerName && strlen(info.manufacturerName) > MAX_PLATFORM_NAME_LENGTH) ||
+        (info.manufacturerUrl && strlen(info.manufacturerUrl) > MAX_PLATFORM_URL_LENGTH) ||
+        (info.modelNumber && strlen(info.modelNumber) > MAX_PLATFORM_NAME_LENGTH) ||
+        (info.platformVersion && strlen(info.platformVersion) > MAX_PLATFORM_NAME_LENGTH) ||
+        (info.operatingSystemVersion && strlen(info.operatingSystemVersion) > MAX_PLATFORM_NAME_LENGTH) ||
+        (info.hardwareVersion && strlen(info.hardwareVersion) > MAX_PLATFORM_NAME_LENGTH) ||
+        (info.firmwareVersion && strlen(info.firmwareVersion) > MAX_PLATFORM_NAME_LENGTH) ||
+        (info.supportUrl && strlen(info.supportUrl) > MAX_PLATFORM_URL_LENGTH))
+    {
+        OIC_LOG(ERROR, TAG, "The passed value is bigger than permitted.");
+        goto exit;
     }
 
+    resource = FindResourceByUri(OC_RSRVD_PLATFORM_URI);
+    if (!resource)
+    {
+        OIC_LOG(ERROR, TAG, "Platform Resource does not exist.");
+        goto exit;
+    }
+    OIC_LOG(INFO, TAG, "Entering OCSetPlatformInfo");
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_ID, info.platformID));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_NAME, info.manufacturerName));
+    OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_URL, info.manufacturerUrl);
+    OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MODEL_NUM, info.modelNumber);
+    OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MFG_DATE, info.dateOfManufacture);
+    OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_PLATFORM_VERSION, info.platformVersion);
+    OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_OS_VERSION, info.operatingSystemVersion);
+    OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_HARDWARE_VERSION, info.hardwareVersion);
+    OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_FIRMWARE_VERSION, info.firmwareVersion);
+    OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SUPPORT_URL, info.supportUrl);
+    OCSetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_SYSTEM_TIME, info.systemTime);
+    OIC_LOG(INFO, TAG, "Platform parameter initialized successfully.");
     return OC_STACK_OK;
 
+exit:
+    return OC_STACK_INVALID_PARAM;
 }
 
-OCStackResult SavePlatformInfo(OCPlatformInfo info)
+OCStackResult OCSetDeviceInfo(OCDeviceInfo info)
 {
-    DeletePlatformInfo();
-
-    OCStackResult res = DeepCopyPlatFormInfo(info);
-
-    if (res != OC_STACK_OK)
+    OCStringLL *dataModelVersion = NULL;
+    OCResource *resource = FindResourceByUri(OC_RSRVD_DEVICE_URI);
+    if (!resource)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to save platform info. errno(%d)", res);
+        OIC_LOG(ERROR, TAG, "Device Resource does not exist.");
+        goto exit;
     }
-    else
+    if (!info.deviceName || info.deviceName[0] == '\0')
     {
-        OIC_LOG(INFO, TAG, "Platform info saved.");
+        OIC_LOG(ERROR, TAG, "Null or empty device name.");
+       return OC_STACK_INVALID_PARAM;
     }
-
-    return res;
-}
-
-void DeleteDeviceInfo()
-{
-    OIC_LOG(INFO, TAG, "Deleting device info.");
-
-    OICFree(savedDeviceInfo.deviceName);
-    OCFreeOCStringLL(savedDeviceInfo.types);
-    OICFree(savedDeviceInfo.specVersion);
-    OCFreeOCStringLL(savedDeviceInfo.dataModelVersions);
-    savedDeviceInfo.deviceName = NULL;
-    savedDeviceInfo.specVersion = NULL;
-    savedDeviceInfo.dataModelVersions = NULL;
-}
-
-static OCStackResult DeepCopyDeviceInfo(OCDeviceInfo info)
-{
-    savedDeviceInfo.deviceName = OICStrdup(info.deviceName);
-
-    if(!savedDeviceInfo.deviceName && info.deviceName)
-    {
-        DeleteDeviceInfo();
-        return OC_STACK_NO_MEMORY;
-    }
-
-    if (info.types)
-    {
-        savedDeviceInfo.types = CloneOCStringLL(info.types);
-        OCStringLL *type = info.types;
-        bool found = false;
-        while (type)
-        {
-            if (type && type->value && 0 == strcmp(type->value, OC_RSRVD_RESOURCE_TYPE_DEVICE))
-            {
-                found = true;
-            }
-            type = type->next;
-        }
-        if (!found)
-        {
-            // Append the oic.wk.d at the start of rt link parameter value.
-            OCStringLL *dest = (OCStringLL*)OICCalloc (1, sizeof (OCStringLL));
-            if (!dest)
-            {
-                DeleteDeviceInfo();
-                return OC_STACK_NO_MEMORY;
-            }
-            dest->value = OICStrdup (OC_RSRVD_RESOURCE_TYPE_DEVICE);
-            if (!dest->value)
-            {
-                DeleteDeviceInfo();
-                return OC_STACK_NO_MEMORY;
-            }
-            dest->next = savedDeviceInfo.types;
-            savedDeviceInfo.types = dest;
-        }
-        if(!savedDeviceInfo.types && info.types)
-        {
-            DeleteDeviceInfo();
-            return OC_STACK_NO_MEMORY;
-        }
-    }
-
-    if (info.specVersion)
-    {
-        savedDeviceInfo.specVersion = OICStrdup(info.specVersion);
-        if(!savedDeviceInfo.specVersion && info.specVersion)
-        {
-            DeleteDeviceInfo();
-            return OC_STACK_NO_MEMORY;
-        }
-    }
-    else
-    {
-        savedDeviceInfo.specVersion = OICStrdup(OC_SPEC_VERSION);
-        if(!savedDeviceInfo.specVersion && OC_SPEC_VERSION)
-        {
-            DeleteDeviceInfo();
-            return OC_STACK_NO_MEMORY;
-        }
-    }
-
-    if (info.dataModelVersions)
-    {
-        savedDeviceInfo.dataModelVersions = CloneOCStringLL(info.dataModelVersions);
-        if(!savedDeviceInfo.dataModelVersions && info.dataModelVersions)
-        {
-            DeleteDeviceInfo();
-            return OC_STACK_NO_MEMORY;
-        }
-    }
-    else
-    {
-        savedDeviceInfo.dataModelVersions = (OCStringLL *)OICCalloc(1,sizeof(OCStringLL));
-        if (!savedDeviceInfo.dataModelVersions)
-        {
-            return OC_STACK_NO_MEMORY;
-        }
-        savedDeviceInfo.dataModelVersions->value = OICStrdup(OC_DATA_MODEL_VERSION);
-        if(!savedDeviceInfo.dataModelVersions->value && OC_DATA_MODEL_VERSION)
-        {
-            DeleteDeviceInfo();
-            return OC_STACK_NO_MEMORY;
-        }
-    }
-
-    return OC_STACK_OK;
-}
-
-OCStackResult SaveDeviceInfo(OCDeviceInfo info)
-{
-    OCStackResult res = OC_STACK_OK;
-
-    DeleteDeviceInfo();
-
-    res = DeepCopyDeviceInfo(info);
-
-    VERIFY_SUCCESS(res, OC_STACK_OK);
 
     if (OCGetServerInstanceIDString() == NULL)
     {
         OIC_LOG(INFO, TAG, "Device ID generation failed");
-        res =  OC_STACK_ERROR;
         goto exit;
     }
 
-    OIC_LOG(INFO, TAG, "Device initialized successfully.");
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, info.deviceName));
+    for (OCStringLL *temp = info.types; temp; temp = temp->next)
+    {
+        if (temp->value)
+        {
+            VERIFY_SUCCESS(OCBindResourceTypeToResource(resource, temp->value));
+        }
+    }
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, info.specVersion ?
+        info.specVersion: OC_SPEC_VERSION));
+    if (info.dataModelVersions)
+    {
+        VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, info.dataModelVersions));
+    }
+    else
+    {
+        dataModelVersion = OCCreateOCStringLL(OC_DATA_MODEL_VERSION);
+        VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, dataModelVersion));
+    }
+    OIC_LOG(INFO, TAG, "Device parameter initialized successfully.");
     return OC_STACK_OK;
 
 exit:
-    DeleteDeviceInfo();
+    if (dataModelVersion)
+    {
+        OCFreeOCStringLL(dataModelVersion);
+    }
+    return OC_STACK_ERROR;
+}
+
+OCStackResult OCGetAttribute(const OCResource *resource, const char *attribute, void **value)
+{
+    if (!resource || !attribute)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (0 == strlen(attribute))
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    for (OCAttribute *temp = resource->rsrcAttributes; temp; temp = temp->next)
+    {
+        if (0 == strcmp(attribute, temp->attrName))
+        {
+            // A special case as this type return OCStringLL
+            if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, attribute))
+            {
+                *value = CloneOCStringLL((OCStringLL *)temp->attrValue);
+                return OC_STACK_OK;
+            }
+            else
+            {
+                *value = OICStrdup((char *)temp->attrValue);
+                return OC_STACK_OK;
+            }
+        }
+    }
+    return OC_STACK_NO_RESOURCE;
+}
+
+OCStackResult OCGetPropertyValue(OCPayloadType type, const char *prop, void **value)
+{
+    if (!prop || *value)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (strlen(prop) == 0)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    OCStackResult res =  OC_STACK_NO_RESOURCE;
+    if (PAYLOAD_TYPE_DEVICE == type || PAYLOAD_TYPE_PLATFORM == type)
+    {
+        const char *pathType = (type == PAYLOAD_TYPE_DEVICE) ? OC_RSRVD_DEVICE_URI : OC_RSRVD_PLATFORM_URI;
+        OCResource *resource = FindResourceByUri(pathType);
+        if (!resource)
+        {
+            return OC_STACK_NO_RESOURCE;
+        }
+
+        res = OCGetAttribute(resource, prop, value);
+    }
+    return res;
+}
+
+OCStackResult OCSetAttribute(OCResource* resource, const char* attribute, const void* value)
+{
+    OCAttribute *resAttrib = (OCAttribute *)OICCalloc(1, sizeof(OCAttribute));
+    VERIFY_PARAM_NON_NULL(TAG, resAttrib, "Failed allocation OCAttribute");
+    resAttrib->attrName = OICStrdup(attribute);
+    VERIFY_PARAM_NON_NULL(TAG, resAttrib->attrName, "Failed allocating attribute name");
+    // A special case when value is of type OCStringLL
+    if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, attribute))
+    {
+        resAttrib->attrValue = CloneOCStringLL((OCStringLL *)value);
+    }
+    else
+    {
+        resAttrib->attrValue = OICStrdup((char *)value);
+    }
+    VERIFY_PARAM_NON_NULL(TAG, resAttrib->attrValue, "Failed allocating attribute value");
+    resAttrib->next = NULL;
+
+    if (!resource->rsrcAttributes)
+    {
+        resource->rsrcAttributes = resAttrib;
+    }
+    else
+    {
+        OCAttribute *temp = resource->rsrcAttributes;
+        for (; temp->next; temp = temp->next)
+        {
+            if (0 == strcmp(attribute, temp->attrName))
+            {
+                if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, temp->attrName))
+                {
+                    OCFreeOCStringLL((OCStringLL *)temp->attrValue);
+                }
+                 {
+                    OICFree((char *)temp->attrValue);
+                }
+                break;
+            }
+        }
+        temp->next = resAttrib;
+    }
+    return OC_STACK_OK;
+
+exit:
+    OCDeleteResourceAttributes(resAttrib);
+    return OC_STACK_NO_MEMORY;
+
+}
+
+OCStackResult OCSetPropertyValue(OCPayloadType type, const char *prop, const void *value)
+{
+    if (!prop)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (strlen(prop) == 0)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    OCStackResult res = OC_STACK_ERROR;
+    if (PAYLOAD_TYPE_DEVICE == type || PAYLOAD_TYPE_PLATFORM == type)
+    {
+        const char *pathType = (type == PAYLOAD_TYPE_DEVICE) ? OC_RSRVD_DEVICE_URI : OC_RSRVD_PLATFORM_URI;
+        OCResource *resource = FindResourceByUri(pathType);
+        if (!resource)
+        {
+            OIC_LOG(ERROR, TAG, "Resource does not exist.");
+        }
+        if (value)
+        {
+            res = OCSetAttribute(resource, prop, value);
+        }
+    }
+
     return res;
 }

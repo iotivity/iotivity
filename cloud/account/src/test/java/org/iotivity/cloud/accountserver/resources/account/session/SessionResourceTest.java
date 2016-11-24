@@ -313,9 +313,11 @@ public class SessionResourceTest {
         payloadData.put("accesstoken", accessToken);
         payloadData.put("login", false);
         payloadData.put("di", deviceId);
-        payloadData.put("uid", USER_UUID);
+        StringBuffer query = new StringBuffer();
+        query.append("uid=" + USER_UUID);
         request = MessageBuilder.createRequest(RequestMethod.POST,
-                DEFAULT_AUTH_LOGOUT, null, ContentFormat.APPLICATION_CBOR,
+                DEFAULT_AUTH_LOGOUT, query.toString(),
+                ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(payloadData));
         return request;
     }

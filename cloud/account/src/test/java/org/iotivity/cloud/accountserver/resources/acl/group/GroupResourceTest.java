@@ -399,6 +399,21 @@ public class GroupResourceTest {
     }
 
     @Test(expected = ServerException.BadRequestException.class)
+    public void testGetNonExistongGroup() throws Exception {
+        getTestMethodName();
+        HashMap<String, Object> properties = new HashMap<>();
+        ArrayList<String> members = new ArrayList<>();
+        members.add(mUid2);
+        members.add(mUid3);
+        properties.put(Constants.KEYFIELD_GROUP_MEMBERS, members);
+        // add members to the parent group
+        GroupManager.getInstance().addMembersToGroup(mGid1, members);
+        getGroupInfo(mMockDevice, mGid1 + "notExist", mUid1);
+        assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
+        assertTrue(mLatch.await(2L, SECONDS));
+    }
+
+    @Test(expected = ServerException.BadRequestException.class)
     public void testGetGroupByNonExistingUser() throws Exception {
         getTestMethodName();
         HashMap<String, Object> properties = new HashMap<>();
@@ -497,6 +512,15 @@ public class GroupResourceTest {
         getTestMethodName();
         setExampleGroup();
         deleteGroup(mMockDevice, mGid1, mUid1);
+        assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
+        assertTrue(mLatch.await(2L, SECONDS));
+    }
+
+    @Test(expected = ServerException.BadRequestException.class)
+    public void testDeleteNonExistingGroup() throws Exception {
+        getTestMethodName();
+        setExampleGroup();
+        deleteGroup(mMockDevice, mGid1 + "notExist", mUid1);
         assertTrue(methodCheck(mResponse, ResponseStatus.DELETED));
         assertTrue(mLatch.await(2L, SECONDS));
     }
@@ -601,6 +625,33 @@ public class GroupResourceTest {
         assertTrue(mLatch.await(2L, SECONDS));
     }
 
+    @Test(expected = ServerException.BadRequestException.class)
+    public void testUpdatePropertiesToNonExistingGroup() throws Exception {
+        getTestMethodName();
+        setExampleGroup();
+        HashMap<String, Object> properties = new HashMap<>();
+        ArrayList<HashMap<String, Object>> resources = new ArrayList<>();
+        // add resource 1
+        resources.add(makeResources("/di/" + mDi1 + "/a/switch/1",
+                Arrays.asList("core.switch"),
+                Arrays.asList("oic.if.baseline")));
+        properties.put(Constants.KEYFIELD_GROUP_RESOURCES, resources);
+
+        ArrayList<String> members = new ArrayList<>();
+        members.add(mUid1);
+        members.add(mUid2);
+
+        properties.put(Constants.KEYFIELD_GROUP_MEMBERS, members);
+
+        ArrayList<String> masters = new ArrayList<>();
+        masters.add(mUid3);
+        properties.put(Constants.KEYFIELD_GROUP_MASTERS, masters);
+
+        updateProperties(mMockDevice, mGid1 + "nonExists", mUid1, properties);
+        assertTrue(methodCheck(mResponse, ResponseStatus.CHANGED));
+        assertTrue(mLatch.await(2L, SECONDS));
+    }
+
     private HashMap<String, Object> setExampleGroup() throws Exception {
         HashMap<String, Object> properties = new HashMap<>();
         ArrayList<HashMap<String, Object>> resources = new ArrayList<>();
@@ -635,6 +686,7 @@ public class GroupResourceTest {
         subgroupProperties.put(Constants.KEYFIELD_GROUP_RESOURCES,
                 subgroupResources);
         addProperties(mMockDevice, mGid2, mUid1, subgroupProperties);
+        System.out.println("---------- set Example Group END");
         return properties;
     }
 
@@ -642,7 +694,8 @@ public class GroupResourceTest {
             throws Exception {
         System.out.println("-----Get group, gid : " + gid);
         IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
-                GROUP_URI + "/" + gid, Constants.REQ_UUID_ID + "=" + uid);
+                GROUP_URI + "/" + gid, Constants.REQ_UUID_ID + "=" + uid + ";"
+                        + Constants.KEYFIELD_GROUP_OWNER + "=" + uid);
         mGroupResource.onDefaultRequestReceived(device, request);
     }
 
@@ -686,17 +739,20 @@ public class GroupResourceTest {
             throws Exception {
         System.out.println("-----Get group, gid : " + gid);
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
-                GROUP_URI + "/" + gid, Constants.REQ_UUID_ID + "=" + uid);
+                GROUP_URI + "/" + gid, Constants.REQ_UUID_ID + "=" + uid + ";"
+                        + Constants.KEYFIELD_GROUP_MEMBERS + "=" + uid);
         mGroupResource.onDefaultRequestReceived(device, request);
     }
 
     private void addProperties(CoapDevice device, String gid, String uid,
             HashMap<String, Object> properties) throws Exception {
         System.out.println("-----Add properties");
-        properties.put(Constants.REQ_UUID_ID, uid);
         IRequest request = null;
         request = MessageBuilder.createRequest(RequestMethod.POST,
-                GROUP_URI + "/" + gid, "op=" + Constants.REQ_GROUP_QUERY_ADD,
+                GROUP_URI + "/" + gid,
+                Constants.KEYFIELD_UID + "=" + uid + ";"
+                        + Constants.REQ_GROUP_QUERY_OPERATION + "="
+                        + Constants.REQ_GROUP_QUERY_ADD,
                 ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(properties));
         mGroupResource.onDefaultRequestReceived(device, request);
@@ -705,10 +761,10 @@ public class GroupResourceTest {
     private void updateProperties(CoapDevice device, String gid, String uid,
             HashMap<String, Object> properties) throws Exception {
         System.out.println("-----Update properties");
-        properties.put(Constants.REQ_UUID_ID, uid);
         IRequest request = null;
         request = MessageBuilder.createRequest(RequestMethod.POST,
-                GROUP_URI + "/" + gid, null, ContentFormat.APPLICATION_CBOR,
+                GROUP_URI + "/" + gid, Constants.KEYFIELD_UID + "=" + uid,
+                ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(properties));
         mGroupResource.onDefaultRequestReceived(device, request);
     }
@@ -716,10 +772,12 @@ public class GroupResourceTest {
     private void deleteProperties(CoapDevice device, String gid, String uid,
             HashMap<String, Object> properties) throws Exception {
         System.out.println("-----Delete properties");
-        properties.put(Constants.REQ_UUID_ID, uid);
         IRequest request = null;
         request = MessageBuilder.createRequest(RequestMethod.POST,
-                GROUP_URI + "/" + gid, "op=" + Constants.REQ_GROUP_QUERY_DELETE,
+                GROUP_URI + "/" + gid,
+                Constants.KEYFIELD_UID + "=" + uid + ";"
+                        + Constants.REQ_GROUP_QUERY_OPERATION + "="
+                        + Constants.REQ_GROUP_QUERY_DELETE,
                 ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(properties));
         mGroupResource.onDefaultRequestReceived(device, request);
@@ -729,21 +787,17 @@ public class GroupResourceTest {
             String parent) throws Exception {
         System.out.println("-----Create Group");
         IRequest request = null;
-        request = createGroupRequest(uid, gname, parent);
-        mGroupResource.onDefaultRequestReceived(device, request);
-    }
-
-    private IRequest createGroupRequest(String uid, String gname,
-            String parent) {
-        IRequest request = null;
         HashMap<String, Object> payloadData = new HashMap<String, Object>();
-        payloadData.put(Constants.REQ_UUID_ID, uid);
         payloadData.put(Constants.KEYFIELD_GROUP_NAME, gname);
         payloadData.put(Constants.KEYFIELD_GROUP_PARENT, parent);
+        payloadData.put(Constants.KEYFIELD_GROUP_MEMBERS,
+                new ArrayList<String>(Arrays.asList(uid)));
+        payloadData.put(Constants.KEYFIELD_OID, uid);
         request = MessageBuilder.createRequest(RequestMethod.POST, GROUP_URI,
-                null, ContentFormat.APPLICATION_CBOR,
+                Constants.KEYFIELD_UID + "=" + uid,
+                ContentFormat.APPLICATION_CBOR,
                 mCbor.encodingPayloadToCbor(payloadData));
-        return request;
+        mGroupResource.onDefaultRequestReceived(device, request);
     }
 
     private boolean hashmapCheck(IResponse response, String propertyName) {

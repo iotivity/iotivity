@@ -126,7 +126,7 @@ typedef struct
 typedef struct
 {
     OCResourceHandle handle;
-    char * id;
+    uint64_t messageId;
     char providerId[NS_UUID_STRING_SIZE];
     char * state;
 } NSSyncResource;

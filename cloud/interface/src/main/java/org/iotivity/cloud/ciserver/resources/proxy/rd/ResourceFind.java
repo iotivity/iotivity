@@ -86,12 +86,8 @@ public class ResourceFind extends Resource {
                         return;
                     }
 
-                    ArrayList<String> devices = new ArrayList<>();
-
-                    devices = (ArrayList<String>) payloadData
-                            .get(Constants.KEYFIELD_DEVICES);
-
-                    System.out.println("devices : " + devices);
+                    ArrayList<String> devices = (ArrayList<String>) getResponseDeviceList(
+                            payloadData);
 
                     if (mRequest.getUriQuery() != null
                             && mRequest.getUriQueryMap()
@@ -103,15 +99,15 @@ public class ResourceFind extends Resource {
                                             ResponseStatus.BAD_REQUEST));
                         }
                     } else {
-                        String additionalQuery = makeAdditionalQuery(devices);
+                        StringBuilder additionalQuery = makeAdditionalQuery(
+                                devices);
+                        String uriQuery = (additionalQuery != null
+                                ? additionalQuery.toString() : "")
+                                + (mRequest.getUriQuery() != null
+                                        ? (";" + mRequest.getUriQuery()) : "");
                         mRequest = MessageBuilder.modifyRequest(mRequest, null,
-                                (mRequest.getUriQuery() != null
-                                        ? mRequest.getUriQuery() : "")
-                                        + (additionalQuery == null ? ""
-                                                : ";" + additionalQuery),
-                                null, null);
+                                uriQuery, null, null);
                     }
-
                     mRDServer.sendRequest(mRequest, mSrcDevice);
                     break;
                 default:
@@ -120,7 +116,8 @@ public class ResourceFind extends Resource {
             }
         }
 
-        private String makeAdditionalQuery(ArrayList<String> deviceList) {
+        private StringBuilder makeAdditionalQuery(
+                ArrayList<String> deviceList) {
 
             StringBuilder additionalQuery = new StringBuilder();
 
@@ -139,15 +136,17 @@ public class ResourceFind extends Resource {
                     additionalQuery.append(";");
                 }
             }
-            return additionalQuery.toString();
+            return additionalQuery;
         }
 
         @SuppressWarnings("unchecked")
         private List<String> getResponseDeviceList(
                 HashMap<String, Object> payloadData) {
-            List<String> deviceList = (List<String>) payloadData
-                    .get(Constants.REQ_DEVICE_LIST);
-
+            ArrayList<String> deviceList = new ArrayList<>();
+            if (payloadData.containsKey(Constants.REQ_DEVICE_LIST)) {
+                deviceList = (ArrayList<String>) payloadData
+                        .get(Constants.REQ_DEVICE_LIST);
+            }
             return deviceList;
         }
     }
@@ -160,9 +159,16 @@ public class ResourceFind extends Resource {
 
             mRDServer.sendRequest(request, srcDevice);
         } else {
-            StringBuffer uriQuery = new StringBuffer();
-            uriQuery.append(Constants.USER_ID + "=" + srcDevice.getUserId());
+            StringBuffer additionalQuery = new StringBuffer();
+            additionalQuery
+                    .append(Constants.USER_ID + "=" + srcDevice.getUserId());
+            additionalQuery.append(";");
+            additionalQuery.append(
+                    Constants.REQ_MEMBER_LIST + "=" + srcDevice.getUserId());
 
+            String uriQuery = additionalQuery.toString()
+                    + (request.getUriQuery() != null
+                            ? (";" + request.getUriQuery()) : "");
             StringBuffer uriPath = new StringBuffer();
             uriPath.append(Constants.PREFIX_OIC + "/");
             uriPath.append(Constants.ACL_URI + "/");
@@ -170,7 +176,7 @@ public class ResourceFind extends Resource {
             uriPath.append(srcDevice.getUserId());
 
             IRequest requestToAS = MessageBuilder.createRequest(
-                    RequestMethod.GET, uriPath.toString(), uriQuery.toString());
+                    RequestMethod.GET, uriPath.toString(), uriQuery);
 
             mASServer.sendRequest(requestToAS,
                     new AccountReceiveHandler(request, srcDevice));

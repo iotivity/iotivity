@@ -309,6 +309,13 @@ OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
  */
 uint32_t GetTicks(uint32_t milliSeconds);
 
+/**
+ * Delete all of the dynamically allocated elements that were created for the resource attributes.
+ *
+ * @param resourceAttr Specified resource attribute.
+ */
+void OCDeleteResourceAttributes(OCAttribute *rsrcAttributes);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

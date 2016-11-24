@@ -36,6 +36,7 @@ def call_scons(build_options, extra_option_str):
     cmd_line += " " + str(extra_option_str)
 
     print ("Running : " + cmd_line)
+    sys.stdout.flush()
     exit_code = subprocess.Popen([cmd_line], shell=True).wait()
     if exit_code != 0:
         exit(exit_code)

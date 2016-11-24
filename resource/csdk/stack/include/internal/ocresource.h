@@ -155,10 +155,10 @@ typedef struct attr_t {
     /** The name of the attribute; used to look up the attribute in list.
      *  for a given attribute SHOULD not be changed once assigned.
      */
-    const char *attrName;
+    char *attrName;
 
-    /** value of the attribute as string.*/
-    char *attrValue;
+    /** value of the attribute as void. To support both string and @OCStringLL value*/
+    void *attrValue;
 } OCAttribute;
 
 /**

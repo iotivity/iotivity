@@ -841,12 +841,12 @@ OCStackResult SetPlatformInfo(const char* platformID, const char *manufacturerNa
 
     bool success = true;
 
-    if(manufacturerName != NULL && (strlen(manufacturerName) > MAX_MANUFACTURER_NAME_LENGTH))
+    if(manufacturerName != NULL && (strlen(manufacturerName) > MAX_PLATFORM_NAME_LENGTH))
     {
         return OC_STACK_INVALID_PARAM;
     }
 
-    if(manufacturerUrl != NULL && (strlen(manufacturerUrl) > MAX_MANUFACTURER_URL_LENGTH))
+    if(manufacturerUrl != NULL && (strlen(manufacturerUrl) > MAX_PLATFORM_URL_LENGTH))
     {
         return OC_STACK_INVALID_PARAM;
     }

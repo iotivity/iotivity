@@ -47,9 +47,14 @@ uint16_t GetPermissionFromCAMethod_t(const CAMethod_t method)
         case CA_GET:
             perm = (uint16_t)PERMISSION_READ;
             break;
-        case CA_POST: // For now we treat all PUT & POST as Write
-        case CA_PUT:  // because we don't know if resource exists yet.
+        case CA_POST: // Treat all POST as Write (Update) because
+                      // we don't know if resource exists yet.
+                      // This will be addressed in IoTivity impl of OCF 1.0
             perm = (uint16_t)PERMISSION_WRITE;
+            break;
+        case CA_PUT: // Per convention, OIC/OCF uses PUT only for Create,
+                     // never for Update.
+            perm = (uint16_t)PERMISSION_CREATE;
             break;
         case CA_DELETE:
             perm = (uint16_t)PERMISSION_DELETE;
@@ -99,7 +104,6 @@ void SetPolicyEngineState(PEContext_t *context, const PEState_t state)
     memset(&context->subject, 0, sizeof(context->subject));
     memset(&context->resource, 0, sizeof(context->resource));
     context->permission = 0x0;
-    context->matchingAclFound = false;
     context->amsProcessing = false;
     context->retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
 
@@ -508,7 +512,6 @@ static void ProcessAccessRequest(PEContext_t *context)
                 if (IsResourceInAce(context->resource, currentAce))
                 {
                     OIC_LOG_V(INFO, TAG, "%s:found matching resource in ACE" ,__func__);
-                    context->matchingAclFound = true;
 
                     // Found the resource, so it's down to valid period & permission.
                     context->retVal = ACCESS_DENIED_INVALID_PERIOD;
@@ -526,7 +529,7 @@ static void ProcessAccessRequest(PEContext_t *context)
             {
                 OIC_LOG_V(INFO, TAG, "%s:no ACL found matching subject for resource %s",__func__, context->resource);
             }
-        } while ((NULL != currentAce) && (false == context->matchingAclFound));
+        } while ((NULL != currentAce) && (ACCESS_GRANTED != context->retVal));
 
         if (IsAccessGranted(context->retVal))
         {
@@ -608,8 +611,9 @@ SRMAccessResponse_t CheckPermission(PEContext_t     *context,
 
             ProcessAccessRequest(context);
 
-            // If matching ACL not found, and subject != wildcard, try wildcard.
-            if ((false == context->matchingAclFound) && \
+            // If access not already granted, and requested subject != wildcard,
+            // try looking for a wildcard ACE that grants access.
+            if ((ACCESS_GRANTED != context->retVal) && \
               (false == IsWildCardSubject(&context->subject)))
             {
                 //Saving subject for Amacl check

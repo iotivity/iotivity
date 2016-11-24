@@ -103,12 +103,11 @@ public class ResourcePresence extends Resource {
                                             ResponseStatus.BAD_REQUEST));
                             return;
                         }
+                        String uriQuery = additionalQuery.toString()
+                                + (mRequest.getUriQuery() != null
+                                        ? (";" + mRequest.getUriQuery()) : "");
                         mRequest = MessageBuilder.modifyRequest(mRequest, null,
-                                additionalQuery
-                                        + (mRequest.getUriQuery() != null
-                                                ? ";" + mRequest.getUriQuery()
-                                                : ""),
-                                null, null);
+                                uriQuery, null, null);
                     }
 
                     mRDServer.sendRequest(mRequest, mSrcDevice);
@@ -153,9 +152,15 @@ public class ResourcePresence extends Resource {
     @Override
     public void onDefaultRequestReceived(Device srcDevice, IRequest request)
             throws ServerException {
-        StringBuffer uriQuery = new StringBuffer();
-        uriQuery.append(Constants.REQ_MEMBER_ID + "=" + srcDevice.getUserId());
+        StringBuffer additionalQuery = new StringBuffer();
+        additionalQuery.append(Constants.USER_ID + "=" + srcDevice.getUserId());
+        additionalQuery.append(";");
+        additionalQuery.append(
+                Constants.REQ_MEMBER_LIST + "=" + srcDevice.getUserId());
 
+        String uriQuery = additionalQuery.toString()
+                + (request.getUriQuery() != null ? (";" + request.getUriQuery())
+                        : "");
         StringBuffer uriPath = new StringBuffer();
         uriPath.append(Constants.PREFIX_OIC + "/");
         uriPath.append(Constants.ACL_URI + "/");
@@ -163,7 +168,7 @@ public class ResourcePresence extends Resource {
         uriPath.append(srcDevice.getUserId());
 
         IRequest requestToAS = MessageBuilder.createRequest(RequestMethod.GET,
-                uriPath.toString(), uriQuery.toString());
+                uriPath.toString(), uriQuery);
 
         mASServer.sendRequest(requestToAS,
                 new AccountReceiveHandler(request, srcDevice));

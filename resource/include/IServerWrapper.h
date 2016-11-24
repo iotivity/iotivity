@@ -74,6 +74,9 @@ namespace OC
         virtual OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler) = 0;
 
         virtual OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse) = 0;
+
+        virtual OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag, const std::string& value) = 0;
+        virtual OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag, std::string& value) = 0;
     };
 }
 

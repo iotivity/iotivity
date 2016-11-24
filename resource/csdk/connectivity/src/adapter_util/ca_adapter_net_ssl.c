@@ -26,6 +26,7 @@
 #include "cacommon.h"
 #include "caipinterface.h"
 #include "oic_malloc.h"
+#include "ocrandom.h"
 #include "byte_array.h"
 #include "camutex.h"
 #include "timer.h"
@@ -166,7 +167,7 @@ if (g_sslCallback)                                                              
  * @param[in] ret error code
  * @param[in] str debug string
  * @param[in] mutex ca mutex
- * @param[in] return error code
+ * @param[in] if code does not equal to -1 returns error code
  * @param[in] msg allert message
  */
 #define SSL_CHECK_FAIL(peer, ret, str, mutex, error, msg)                                          \
@@ -195,7 +196,10 @@ if (0 != (ret) && MBEDTLS_ERR_SSL_WANT_READ != (int) (ret) &&                   
         ca_mutex_unlock(g_sslContextMutex);                                                        \
     }                                                                                              \
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);                                             \
-    return (error);                                                                                \
+    if (-1 != error)                                                                               \
+    {                                                                                              \
+        return (error);                                                                            \
+    }                                                                                              \
 }
 /** @def CHECK_MBEDTLS_RET(f, ...)
  * A macro that checks \a f function return code
@@ -382,6 +386,10 @@ typedef struct SslContext
     mbedtls_x509_crl crl;
     bool cipherFlag[2];
     int selectedCipher;
+
+#ifdef __WITH_DTLS__
+    int timerId;
+#endif
 
 } SslContext_t;
 
@@ -1192,7 +1200,18 @@ static SslEndPoint_t * InitiateTlsHandshake(const CAEndpoint_t *endpoint)
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return tep;
 }
-
+#ifdef __WITH_DTLS__
+/**
+ * Stops DTLS retransmission.
+ */
+static void StopRetransmit()
+{
+    if (g_caSslContext)
+    {
+        unregisterTimer(g_caSslContext->timerId);
+    }
+}
+#endif
 void CAdeinitSslAdapter()
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
@@ -1219,7 +1238,9 @@ void CAdeinitSslAdapter()
 #endif // __WITH_DTLS__
     mbedtls_ctr_drbg_free(&g_caSslContext->rnd);
     mbedtls_entropy_free(&g_caSslContext->entropy);
-
+#ifdef __WITH_DTLS__
+    StopRetransmit();
+#endif
     // De-initialize tls Context
     OICFree(g_caSslContext);
     g_caSslContext = NULL;
@@ -1257,30 +1278,25 @@ static int InitConfig(mbedtls_ssl_config * conf, int transport, int mode)
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return 0;
 }
-
+#ifdef __WITH_DTLS__
 /**
  * Starts DTLS retransmission.
  */
-static void StartRetransmit()
+static int StartRetransmit()
 {
-    static int timerId = -1;
     uint32_t listIndex = 0;
     uint32_t listLength = 0;
     SslEndPoint_t *tep = NULL;
-    if (timerId != -1)
+    if (NULL == g_caSslContext)
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "Context is NULL. Stop retransmission");
+        return -1;
+    }
+    ca_mutex_lock(g_sslContextMutex);
+    if (g_caSslContext->timerId != -1)
     {
         //clear previous timer
-        unregisterTimer(timerId);
-
-        ca_mutex_lock(g_sslContextMutex);
-
-        //stop retransmission if context is invalid
-        if(NULL == g_caSslContext)
-        {
-            OIC_LOG(ERROR, NET_SSL_TAG, "Context is NULL. Stop retransmission");
-            ca_mutex_unlock(g_sslContextMutex);
-            return;
-        }
+        unregisterTimer(g_caSslContext->timerId);
 
         listLength = u_arraylist_length(g_caSslContext->peerList);
         for (listIndex = 0; listIndex < listLength; listIndex++)
@@ -1293,16 +1309,20 @@ static void StartRetransmit()
                 continue;
             }
             int ret = mbedtls_ssl_handshake_step(&tep->ssl);
-            if (0 != ret && MBEDTLS_ERR_SSL_CONN_EOF != ret)
+
+            if (MBEDTLS_ERR_SSL_CONN_EOF != ret)
             {
-                OIC_LOG_V(ERROR, NET_SSL_TAG, "Retransmission error: -0x%x", -ret);
+                SSL_CHECK_FAIL(tep, ret, "Retransmission", NULL, -1,
+                MBEDTLS_SSL_ALERT_MSG_HANDSHAKE_FAILURE);
             }
         }
-        ca_mutex_unlock(g_sslContextMutex);
     }
     //start new timer
-    registerTimer(RETRANSMISSION_TIME, &timerId, (void *) StartRetransmit);
+    registerTimer(RETRANSMISSION_TIME, &g_caSslContext->timerId, (void *) StartRetransmit);
+    ca_mutex_unlock(g_sslContextMutex);
+    return 0;
 }
+#endif
 
 CAResult_t CAinitSslAdapter()
 {
@@ -1446,10 +1466,13 @@ CAResult_t CAinitSslAdapter()
     mbedtls_x509_crl_init(&g_caSslContext->crl);
 
 #ifdef __WITH_DTLS__
-    StartRetransmit();
+    g_caSslContext->timerId = -1;
 #endif
 
-    ca_mutex_unlock(g_sslContextMutex);
+   ca_mutex_unlock(g_sslContextMutex);
+#ifdef __WITH_DTLS__
+    StartRetransmit();
+#endif
 
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return CA_STATUS_OK;
@@ -1612,55 +1635,6 @@ void CAsetSslHandshakeCallback(CAErrorCallback tlsHandshakeCallback)
     g_sslCallback = tlsHandshakeCallback;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
 }
-// TODO move ConvertStrToUuid function to common module
-/*
- * Converts string UUID to CARemoteId_t
- *
- * @param strUuid Device UUID in string format
- * @param uuid converted UUID in CARemoteId_t format
- *
- * @return 0 for success.
- * */
-static int ConvertStrToUuid(const char* strUuid, CARemoteId_t* uuid)
-{
-    if(NULL == strUuid || NULL == uuid)
-    {
-        OIC_LOG(ERROR, NET_SSL_TAG, "ConvertStrToUuid : Invalid param");
-        return -1;
-    }
-
-    size_t urnIdx = 0;
-    size_t uuidIdx = 0;
-    size_t strUuidLen = 0;
-    char convertedUuid[UUID_LENGTH * 2] = {0};
-
-    strUuidLen = strlen(strUuid);
-    if(0 == strUuidLen)
-    {
-        OIC_LOG(INFO, NET_SSL_TAG, "The empty string detected, The UUID will be converted to "\
-                           "\"00000000-0000-0000-0000-000000000000\"");
-    }
-    else if(UUID_LENGTH * 2 + 4 == strUuidLen)
-    {
-        for(uuidIdx=0, urnIdx=0; uuidIdx < UUID_LENGTH ; uuidIdx++, urnIdx+=2)
-        {
-            if(*(strUuid + urnIdx) == '-')
-            {
-                urnIdx++;
-            }
-            sscanf(strUuid + urnIdx, "%2hhx", &convertedUuid[uuidIdx]);
-        }
-    }
-    else
-    {
-        OIC_LOG(ERROR, NET_SSL_TAG, "Invalid string uuid format");
-        return -1;
-    }
-
-    memcpy(uuid->id, convertedUuid, UUID_LENGTH);
-    uuid->id_length = UUID_LENGTH;
-    return 0;
-}
 
 /* Read data from TLS connection
  */
@@ -1768,7 +1742,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
                 if (NULL != uuidPos)
                 {
                     memcpy(uuid, (char*) uuidPos + sizeof(UUID_PREFIX) - 1, UUID_LENGTH * 2 + 4);
-                    ret = ConvertStrToUuid(uuid, &peer->sep.identity);
+                    ret = OCConvertStringToUuid(uuid, peer->sep.identity.id);
                     SSL_CHECK_FAIL(peer, ret, "Failed to convert subject", 1,
                                           CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT);
                 }
@@ -1782,7 +1756,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
                 if (NULL != userIdPos)
                 {
                     memcpy(uuid, (char*) userIdPos + sizeof(USERID_PREFIX) - 1, UUID_LENGTH * 2 + 4);
-                    ret = ConvertStrToUuid(uuid, &peer->sep.userId);
+                    ret = OCConvertStringToUuid(uuid, peer->sep.userId.id);
                     SSL_CHECK_FAIL(peer, ret, "Failed to convert subject alt name", 1,
                                       CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT);
                 }

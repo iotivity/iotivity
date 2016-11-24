@@ -152,22 +152,6 @@ public final class OcAccountManager {
     /**
      * Method to get information of the user to account server
      *
-     * @param userUuid      Identifier of the user to get information.
-     * @param onGetListener The event handler will be invoked with a map of attribute name and
-     *                      values. It will also have the result from this Get operation.
-     * @throws OcException if failure
-     */
-    public void searchUser(String userUuid,
-                           OnGetListener onGetListener) throws OcException {
-        this.searchUser0(userUuid, onGetListener);
-    }
-
-    private native void searchUser0(String userUuid,
-                                    OnGetListener onGetListener) throws OcException;
-
-    /**
-     * Method to get information of the user to account server
-     *
      * @param queryMap       Map which can have the query key and value for specific users.
      *                       account server can response information of more than one user.
      * @param onGetListener  The event handler will be invoked with a map of attribute name and
@@ -176,10 +160,10 @@ public final class OcAccountManager {
      */
     public void searchUser(Map<String, String> queryMap,
                            OnGetListener onGetListener) throws OcException {
-        this.searchUser1(queryMap, onGetListener);
+        this.searchUser0(queryMap, onGetListener);
     }
 
-    private native void searchUser1(Map<String, String> queryMap,
+    private native void searchUser0(Map<String, String> queryMap,
                                     OnGetListener onGetListener) throws OcException;
 
     /**

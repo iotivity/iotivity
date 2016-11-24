@@ -95,12 +95,12 @@ public class AccountResourceTest {
                     HashMap<String, Object> payloadData = mCbor
                             .parsePayloadFromCbor(resp.getPayload(),
                                     HashMap.class);
+                    System.out.println("\t----payload : " + payloadData);
                     if (payloadData.containsKey("gid")) {
                         mGroupId = (String) payloadData.get("gid");
                     }
                 }
-                System.out
-                        .println("\t----payload : " + resp.getPayloadString());
+
                 System.out
                         .println("\t----responsestatus : " + resp.getStatus());
                 mResponse = resp;
@@ -176,10 +176,11 @@ public class AccountResourceTest {
             throws Exception {
         getTestMethodName();
         String uuid = "u0001Search";
+        String userId = "userId";
         // register TokenInfo and UserInfo to the DB
-        registerTokenUserInfo(uuid, DEVICE_ID);
+        registerTokenUserInfo(uuid, DEVICE_ID, userId, mAuthProvider);
         // request uuid using search criteria
-        getUserInfoSearch("search=userid:userId");
+        getUserInfoSearch("uid=" + uuid);
         Cbor<HashMap<String, ArrayList<HashMap<String, Object>>>> cbor = new Cbor<>();
         HashMap<String, ArrayList<HashMap<String, Object>>> payloadData = cbor
                 .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
@@ -190,13 +191,58 @@ public class AccountResourceTest {
     }
 
     @Test
+    public void testGetMultipleUserInfoSearchOnDefaultRequestReceived()
+            throws Exception {
+        getTestMethodName();
+        String uuid = "u0001Search";
+        String userId = "user";
+        // register TokenInfo and UserInfo to the DB
+        registerTokenUserInfo(uuid, DEVICE_ID + "1", userId + "1",
+                mAuthProvider);
+        uuid = "u0002Search";
+        registerTokenUserInfo(uuid, DEVICE_ID + "2", userId + "2",
+                mAuthProvider);
+        uuid = "u0003Search";
+        registerTokenUserInfo(uuid, DEVICE_ID + "3", userId + "3",
+                mAuthProvider);
+        // request uuid using search criteria
+        getUserInfoSearch("uid=u0001Search;userid=user2;userid=user3");
+        Cbor<HashMap<String, ArrayList<HashMap<String, Object>>>> cbor = new Cbor<>();
+        HashMap<String, ArrayList<HashMap<String, Object>>> payloadData = cbor
+                .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
+
+        assertTrue(payloadData.get("ulist").size() == 3);
+    }
+
+    @Test
+    public void testGetMultipleConditionSearchOnDefaultRequestReceived()
+            throws Exception {
+        getTestMethodName();
+        String uuid = "u0001Search";
+        String userId = "user";
+        // register TokenInfo and UserInfo to the DB
+        registerTokenUserInfo(uuid, DEVICE_ID + "1", userId, "Samsung");
+        uuid = "u0002Search";
+        registerTokenUserInfo(uuid, DEVICE_ID + "2", userId, "Github");
+        uuid = "u0003Search";
+        registerTokenUserInfo(uuid, DEVICE_ID + "3", userId, "Google");
+        // request uuid using search criteria
+        getUserInfoSearch("userid=user,provider=Github");
+        Cbor<HashMap<String, ArrayList<HashMap<String, Object>>>> cbor = new Cbor<>();
+        HashMap<String, ArrayList<HashMap<String, Object>>> payloadData = cbor
+                .parsePayloadFromCbor(mResponse.getPayload(), HashMap.class);
+        assertTrue(payloadData.get("ulist").size() == 1);
+    }
+
+    @Test
     public void testDeleteDeviceInEveryGroupOnDefaultRequestReceived()
             throws Exception {
         getTestMethodName();
         // register the token table and user table for three resource servers to
         // the DB
         String uuid = "u0001DeleteEveryGroup";
-        registerTokenUserInfo(uuid, DEVICE_ID);
+        String userId = "userId";
+        registerTokenUserInfo(uuid, DEVICE_ID, userId, mAuthProvider);
         registerTokenInfo(uuid, DEVICE_ID + "2");
         registerTokenInfo(uuid, DEVICE_ID + "3");
         registerTokenInfo(uuid, DEVICE_ID + "4");
@@ -250,10 +296,12 @@ public class AccountResourceTest {
         getTestMethodName();
         // register the token table and user table to the DB
         String uuid = "u0001Get";
+        String userId = "user1";
+        String authProvider = "Github";
         HashMap<String, Object> tokenInfo = mTokenTableCastingManager
                 .convertObjectToMap(makeTokenTable(uuid, DEVICE_ID));
         HashMap<String, Object> userInfo = mUserTableCastingManager
-                .convertObjectToMap(makeUserTable(uuid));
+                .convertObjectToMap(makeUserTable(uuid, userId, authProvider));
         AccountDBManager.getInstance()
                 .insertAndReplaceRecord(Constants.TOKEN_TABLE, tokenInfo);
         AccountDBManager.getInstance().insertRecord(Constants.USER_TABLE,
@@ -262,9 +310,10 @@ public class AccountResourceTest {
         assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
     }
 
-    private void registerTokenUserInfo(String uuid, String deviceId) {
+    private void registerTokenUserInfo(String uuid, String deviceId,
+            String userId, String authProvider) {
         registerTokenInfo(uuid, deviceId);
-        registerUserInfo(uuid);
+        registerUserInfo(uuid, userId, authProvider);
     }
 
     private void registerTokenInfo(String uuid, String deviceId) {
@@ -274,9 +323,10 @@ public class AccountResourceTest {
                 .insertAndReplaceRecord(Constants.TOKEN_TABLE, tokenInfo);
     }
 
-    private void registerUserInfo(String uuid) {
+    private void registerUserInfo(String uuid, String userId,
+            String authProvider) {
         HashMap<String, Object> userInfo = mUserTableCastingManager
-                .convertObjectToMap(makeUserTable(uuid));
+                .convertObjectToMap(makeUserTable(uuid, userId, authProvider));
         AccountDBManager.getInstance().insertRecord(Constants.USER_TABLE,
                 userInfo);
     }
@@ -296,7 +346,7 @@ public class AccountResourceTest {
 
     private IRequest getUserInfoUsingUuidRequest(String uuid) {
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
-                REGISTER_URI, "uid=" + uuid);
+                Constants.ACCOUNT_SEARCH_FULL_URI, "uid=" + uuid);
         return request;
     }
 
@@ -325,7 +375,8 @@ public class AccountResourceTest {
 
     private IRequest deleteDeviceRequest(String deviceId, String uid) {
         IRequest request = MessageBuilder.createRequest(RequestMethod.DELETE,
-                REGISTER_URI, "di=" + deviceId + ";uid=" + uid);
+                REGISTER_URI,
+                "accesstoken=at0001" + ";di=" + deviceId + ";uid=" + uid);
         return request;
     }
 
@@ -354,7 +405,7 @@ public class AccountResourceTest {
     private void getUserInfoSearch(String query) {
         System.out.println("-----get User Info Search using query: " + query);
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
-                REGISTER_URI, query);
+                Constants.ACCOUNT_SEARCH_FULL_URI, query);
         mAccountResource.onDefaultRequestReceived(mMockDevice, request);
     }
 
@@ -402,11 +453,12 @@ public class AccountResourceTest {
         return tokenInfo;
     }
 
-    private UserTable makeUserTable(String uuid) {
+    private UserTable makeUserTable(String uuid, String userId,
+            String authProvider) {
         UserTable userInfo = new UserTable();
         userInfo.setUuid(uuid);
-        userInfo.setProvider(mAuthProvider);
-        userInfo.setUserid("userId");
+        userInfo.setProvider(authProvider);
+        userInfo.setUserid(userId);
         return userInfo;
     }
 

@@ -107,7 +107,7 @@ void Middle::startPlatform()
 
 void Middle::provideHelp()
 {
-    static const char usage[] = "\nUsage:  IOCMiddle args\n"
+    static const char usage[] = "\nUsage:  OICMiddle args\n"
                 "    where args may include any of these:\n"
                 "\t-client      Run OIC client\n"
                 "\t-server      Run OIC server\n"

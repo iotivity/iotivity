@@ -58,6 +58,8 @@ public class OICConstants {
 
     public static final String INVITE_URI                    = "invite";
 
+    public static final String SEARCH_URI                    = "search";
+
     /* resource uri to publish, update, delete resource info */
     public static final String RD_URI                        = "rd";
 
@@ -89,6 +91,10 @@ public class OICConstants {
     public static final String ACCOUNT_FULL_URI              = "/"
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACCOUNT_URI;
 
+    public static final String ACCOUNT_SEARCH_FULL_URI       = "/"
+            + OICConstants.PREFIX_OIC + "/" + OICConstants.ACCOUNT_URI + "/"
+            + OICConstants.SEARCH_URI;
+
     public static final String ACCOUNT_SESSION_FULL_URI      = "/"
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACCOUNT_URI + "/"
             + OICConstants.SESSION_URI;
@@ -97,11 +103,11 @@ public class OICConstants {
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACCOUNT_URI + "/"
             + OICConstants.TOKEN_REFRESH_URI;
 
-    public static final String ACL_ID_FULL_URI                = "/"
+    public static final String ACL_ID_FULL_URI               = "/"
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI + "/"
             + OICConstants.ID_URI;
 
-    public static final String ACL_VERIFY_FULL_URI                = "/"
+    public static final String ACL_VERIFY_FULL_URI           = "/"
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI + "/"
             + OICConstants.VERIFY_URI;
 
@@ -112,10 +118,6 @@ public class OICConstants {
     public static final String INVITE_FULL_URI               = "/"
             + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI + "/"
             + OICConstants.INVITE_URI;
-
-    public static final String ACL_VERIFY_FULL_URI           = "/"
-            + OICConstants.PREFIX_OIC + "/" + OICConstants.ACL_URI + "/"
-            + OICConstants.VERIFY_URI;
 
     public static final String KEEP_ALIVE_FULL_URI           = "/" + PREFIX_OIC
             + "/" + OICConstants.KEEP_ALIVE_URI;

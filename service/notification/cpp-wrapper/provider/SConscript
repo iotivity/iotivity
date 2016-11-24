@@ -52,6 +52,7 @@ notification_env.AppendUnique(CPPPATH = ['../../src/common'])
 notification_env.PrependUnique(LIBS = [
 	'oc_logger',
 	'oc',
+	'octbstack',
 	'notification_provider'
 	])
 notification_env.AppendUnique(CXXFLAGS = ['-std=c++0x','-frtti'])

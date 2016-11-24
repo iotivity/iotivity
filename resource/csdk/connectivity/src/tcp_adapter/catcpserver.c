@@ -99,7 +99,7 @@ static void CAFindReadyMessage();
 static void CASelectReturned(fd_set *readFds);
 static void CAReceiveMessage(int fd);
 static void CAReceiveHandler(void *data);
-static int CATCPCreateSocket(int family, CATCPSessionInfo_t *tcpServerInfo);
+static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *tcpServerInfo);
 
 #define CHECKFD(FD) \
     if (FD > caglobals.tcp.maxfd) \
@@ -140,6 +140,7 @@ static CAResult_t CARecv(CATCPSessionInfo_t *item, size_t length, int flags)
     else if (0 == len)
     {
         OIC_LOG(INFO, TAG, "Received disconnect from peer. Close connection");
+        item->state = DISCONNECTED;
         return CA_DESTINATION_DISCONNECTED;
     }
 
@@ -244,7 +245,7 @@ static void CAFindReadyMessage()
     {
         CATCPSessionInfo_t *svritem =
                 (CATCPSessionInfo_t *) u_arraylist_get(caglobals.tcp.svrlist, i);
-        if (svritem && 0 <= svritem->fd)
+        if (svritem && 0 <= svritem->fd && CONNECTED == svritem->state)
         {
             FD_SET(svritem->fd, &readFds);
         }
@@ -257,16 +258,15 @@ static void CAFindReadyMessage()
         OIC_LOG_V(DEBUG, TAG, "Packet receiver Stop request received.");
         return;
     }
-    if (0 >= ret)
-    {
-        if (0 > ret)
-        {
-            OIC_LOG_V(FATAL, TAG, "select error %s", strerror(errno));
-        }
-        return;
-    }
 
-    CASelectReturned(&readFds);
+    if (0 < ret)
+    {
+        CASelectReturned(&readFds);
+    }
+    else if (0 > ret)
+    {
+        OIC_LOG_V(FATAL, TAG, "select error %s", strerror(errno));
+    }
 }
 
 static void CASelectReturned(fd_set *readFds)
@@ -346,6 +346,7 @@ static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
         svritem->fd = sockfd;
         svritem->sep.endpoint.flags = flag;
         svritem->sep.endpoint.adapter = CA_ADAPTER_TCP;
+        svritem->state = CONNECTED;
         CAConvertAddrToName((struct sockaddr_storage *)&clientaddr, clientlen,
                             svritem->sep.endpoint.addr, &svritem->sep.endpoint.port);
 
@@ -609,7 +610,7 @@ static void CAReceiveMessage(int fd)
     }
 }
 
-static void CAWakeUpForReadFdsUpdate(const char *host)
+static ssize_t CAWakeUpForReadFdsUpdate(const char *host)
 {
     if (caglobals.tcp.connectionFds[1] != -1)
     {
@@ -623,7 +624,9 @@ static void CAWakeUpForReadFdsUpdate(const char *host)
         {
             OIC_LOG_V(DEBUG, TAG, "write failed: %s", strerror(errno));
         }
+        return len;
     }
+    return -1;
 }
 
 static CAResult_t CATCPConvertNameToAddr(int family, const char *host, uint16_t port,
@@ -665,15 +668,16 @@ static CAResult_t CATCPConvertNameToAddr(int family, const char *host, uint16_t 
     return CA_STATUS_OK;
 }
 
-static int CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
+static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
 {
     // #1. create tcp socket.
     int fd = socket(family, SOCK_STREAM, IPPROTO_TCP);
     if (-1 == fd)
     {
         OIC_LOG_V(ERROR, TAG, "create socket failed: %s", strerror(errno));
-        return -1;
+        return CA_SOCKET_OPERATION_FAILED;
     }
+    svritem->fd = fd;
 
     // #2. convert address from string to binary.
     struct sockaddr_storage sa = { .ss_family = family };
@@ -681,8 +685,7 @@ static int CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
                                             svritem->sep.endpoint.port, &sa);
     if (CA_STATUS_OK != res)
     {
-        close(fd);
-        return -1;
+        return CA_SOCKET_OPERATION_FAILED;
     }
 
     // #3. set socket length.
@@ -705,13 +708,18 @@ static int CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
     if (connect(fd, (struct sockaddr *)&sa, socklen) < 0)
     {
         OIC_LOG_V(ERROR, TAG, "failed to connect socket, %s", strerror(errno));
-        close(fd);
-        return -1;
+        return CA_SOCKET_OPERATION_FAILED;
     }
 
     OIC_LOG(DEBUG, TAG, "connect socket success");
-    CAWakeUpForReadFdsUpdate(svritem->sep.endpoint.addr);
-    return fd;
+    svritem->state = CONNECTED;
+    CHECKFD(svritem->fd);
+    ssize_t len = CAWakeUpForReadFdsUpdate(svritem->sep.endpoint.addr);
+    if (-1 == len)
+    {
+        return CA_SOCKET_OPERATION_FAILED;
+    }
+    return CA_STATUS_OK;
 }
 
 static int CACreateAcceptSocket(int family, CASocket_t *sock)
@@ -1081,18 +1089,9 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
     svritem->sep.endpoint.port = endpoint->port;
     svritem->sep.endpoint.flags = endpoint->flags;
     svritem->sep.endpoint.ifindex = endpoint->ifindex;
+    svritem->state = CONNECTING;
 
-    // #2. create the socket and connect to TCP server
-    int family = (svritem->sep.endpoint.flags & CA_IPV6) ? AF_INET6 : AF_INET;
-    int fd = CATCPCreateSocket(family, svritem);
-    if (-1 == fd)
-    {
-        OICFree(svritem);
-        return NULL;
-    }
-
-    // #3. add TCP connection info to list
-    svritem->fd = fd;
+    // #2. add TCP connection info to list
     ca_mutex_lock(g_mutexObjectList);
     if (caglobals.tcp.svrlist)
     {
@@ -1108,9 +1107,14 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
     }
     ca_mutex_unlock(g_mutexObjectList);
 
-    CHECKFD(fd);
+    // #3. create the socket and connect to TCP server
+    int family = (svritem->sep.endpoint.flags & CA_IPV6) ? AF_INET6 : AF_INET;
+    if (CA_STATUS_OK != CATCPCreateSocket(family, svritem))
+    {
+        return NULL;
+    }
 
-    // pass the connection information to CA Common Layer.
+    // #4. pass the connection information to CA Common Layer.
     if (g_connectionCallback)
     {
         g_connectionCallback(&(svritem->sep.endpoint), true);
@@ -1129,16 +1133,17 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
         shutdown(svritem->fd, SHUT_RDWR);
         close(svritem->fd);
         svritem->fd = -1;
+        svritem->state = (CONNECTED == svritem->state) ? DISCONNECTED : svritem->state;
+
+        // pass the connection information to CA Common Layer.
+        if (g_connectionCallback && DISCONNECTED == svritem->state)
+        {
+            g_connectionCallback(&(svritem->sep.endpoint), false);
+        }
     }
     u_arraylist_remove(caglobals.tcp.svrlist, index);
     OICFree(svritem->data);
     svritem->data = NULL;
-
-    // pass the connection information to CA Common Layer.
-    if (g_connectionCallback)
-    {
-        g_connectionCallback(&(svritem->sep.endpoint), false);
-    }
 
     OICFree(svritem);
     svritem = NULL;
@@ -1148,6 +1153,7 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
 void CATCPDisconnectAll()
 {
     ca_mutex_lock(g_mutexObjectList);
+
     uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);
     CATCPSessionInfo_t *svritem = NULL;
     for (size_t i = 0; i < length; i++)
@@ -1159,9 +1165,10 @@ void CATCPDisconnectAll()
             close(svritem->fd);
             OICFree(svritem->data);
             svritem->data = NULL;
+            svritem->state = (CONNECTED == svritem->state) ? DISCONNECTED : svritem->state;
 
             // pass the connection information to CA Common Layer.
-            if (g_connectionCallback)
+            if (g_connectionCallback && DISCONNECTED == svritem->state)
             {
                 g_connectionCallback(&(svritem->sep.endpoint), false);
             }

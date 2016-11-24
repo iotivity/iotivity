@@ -29,9 +29,12 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 
 import org.iotivity.cloud.accountserver.Constants;
@@ -135,19 +138,16 @@ public class AccountManager {
         // find token information corresponding to the uuid and did
         HashMap<String, Object> condition = new HashMap<>();
         condition.put(Constants.KEYFIELD_UUID, uuid);
+        condition.put(Constants.KEYFIELD_DID, did);
 
-        ArrayList<HashMap<String, Object>> recordList = findRecord(
-                AccountDBManager.getInstance()
-                        .selectRecord(Constants.TOKEN_TABLE, condition),
-                Constants.KEYFIELD_DID, did);
+        ArrayList<HashMap<String, Object>> recordList = AccountDBManager
+                .getInstance().selectRecord(Constants.TOKEN_TABLE, condition);
 
         if (recordList.isEmpty()) {
             throw new UnAuthorizedException("access token doesn't exist");
         }
 
-        HashMap<String, Object> record = recordList.get(0);
-
-        TokenTable tokenInfo = castMapToTokenTable(record);
+        TokenTable tokenInfo = castMapToTokenTable(recordList.get(0));
 
         // token verification to check if the accesstoken is expired
         if (verifyToken(tokenInfo, accessToken)) {
@@ -498,18 +498,6 @@ public class AccountManager {
         return tokenInfo;
     }
 
-    public HashMap<String, Object> searchUserAboutUuid(String uuid) {
-        // search user info about uuid
-        HashMap<String, Object> condition = new HashMap<>();
-        condition.put(Constants.KEYFIELD_UUID, uuid);
-
-        ArrayList<HashMap<String, Object>> recordList = AccountDBManager
-                .getInstance().selectRecord(Constants.USER_TABLE, condition);
-        HashMap<String, Object> response = makeSearchUserResponse(recordList);
-
-        return response;
-    }
-
     private HashMap<String, Object> makeSearchUserResponse(
             ArrayList<HashMap<String, Object>> recordList) {
         HashMap<String, Object> response = new HashMap<>();
@@ -520,7 +508,7 @@ public class AccountManager {
             String uid = record.get(Constants.KEYFIELD_UUID).toString();
             uInfo.put(Constants.RESP_UUID, uid);
             record.remove(Constants.KEYFIELD_UUID);
-            uInfo.put(Constants.RESP_USER_INFO, record);
+            uInfo.putAll(record);
             ulist.add(uInfo);
         }
 
@@ -530,26 +518,38 @@ public class AccountManager {
         return response;
     }
 
-    // TODO: It will be changed
-    public HashMap<String, Object> searchUserAboutCriteria(String criteria) {
-        // parse criteria
-        String[] searchType = getSearchType(criteria);
+    public HashMap<String, List<String>> getQueryMap(String queryString,
+            String splitOption) {
+        HashMap<String, List<String>> result = new HashMap<>();
 
-        // search user info about criteria
-        HashMap<String, Object> condition = new HashMap<>();
-        condition.put(searchType[0], searchType[1]);
+        ArrayList<String> parsedQuery = new ArrayList<String>(
+                Arrays.asList(queryString.split(splitOption)));
 
-        ArrayList<HashMap<String, Object>> recordList = AccountDBManager
-                .getInstance().selectRecord(Constants.USER_TABLE, condition);
-        HashMap<String, Object> response = makeSearchUserResponse(recordList);
-        return response;
+        for (String query : parsedQuery) {
+            ArrayList<String> searchType = getSearchType(query);
+
+            ArrayList<String> values = (ArrayList<String>) result
+                    .get(searchType.get(0));
+
+            if (values == null) {
+                result.put(searchType.get(0), new ArrayList<String>(
+                        Arrays.asList(searchType.get(1))));
+            } else {
+                values.removeAll(Arrays.asList(searchType.get(1)));
+                values.addAll(Arrays.asList(searchType.get(1)));
+
+                result.put(searchType.get(0), values);
+            }
+        }
+        return result;
     }
 
-    // TODO: It will be changed
-    private String[] getSearchType(String criteria) {
-        String[] searchType = criteria.split(":");
-        String searchKey = searchType[0];
-        String searchValue = searchType[1];
+    private ArrayList<String> getSearchType(String criteria) {
+        ArrayList<String> searchType = new ArrayList<String>(
+                Arrays.asList(criteria.split("=")));
+
+        String searchKey = searchType.get(0);
+        String searchValue = searchType.get(1);
 
         if (searchKey == null || searchValue == null) {
             throw new BadRequestException("search key or value is null");
@@ -558,7 +558,59 @@ public class AccountManager {
         return searchType;
     }
 
-    public void deleteDevice(String uid, String di) {
+    public enum SearchOperation {
+        AND, OR
+    }
+
+    public HashMap<String, Object> searchUserUsingCriteria(
+            HashMap<String, List<String>> criteria, SearchOperation operation) {
+        ArrayList<HashMap<String, Object>> recordList = new ArrayList<>();
+        Iterator<String> keys = criteria.keySet().iterator();
+        HashMap<String, Object> condition = new HashMap<>();
+        switch (operation) {
+            case AND:
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    List<String> searchValues = criteria.get(key);
+                    for (String searchValue : searchValues) {
+                        if (key.equals(Constants.KEYFIELD_UID)) {
+                            condition.put(Constants.KEYFIELD_UUID, searchValue);
+                        } else {
+                            condition.put(key, searchValue);
+                        }
+                    }
+                }
+                recordList = AccountDBManager.getInstance()
+                        .selectRecord(Constants.USER_TABLE, condition);
+                break;
+            case OR:
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    List<String> searchValues = criteria.get(key);
+                    for (String searchValue : searchValues) {
+                        condition = new HashMap<>();
+                        // TODO arrange "uid" and "uuid" in the DB
+                        if (key.equals(Constants.KEYFIELD_UID)) {
+                            condition.put(Constants.KEYFIELD_UUID, searchValue);
+                        } else {
+                            condition.put(key, searchValue);
+                        }
+                        ArrayList<HashMap<String, Object>> record = AccountDBManager
+                                .getInstance()
+                                .selectRecord(Constants.USER_TABLE, condition);
+                        recordList.removeAll(record);
+                        recordList.addAll(record);
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+        HashMap<String, Object> response = makeSearchUserResponse(recordList);
+        return response;
+    }
+
+    public boolean deleteDevice(String uid, String di, String accetoken) {
 
         HashSet<String> diSet = new HashSet<String>();
         diSet.add(di);
@@ -568,11 +620,25 @@ public class AccountManager {
         condition.put(Constants.KEYFIELD_UUID, uid);
         condition.put(Constants.KEYFIELD_DID, di);
 
+        ArrayList<HashMap<String, Object>> recordList = AccountDBManager
+                .getInstance().selectRecord(Constants.TOKEN_TABLE, condition);
+
+        if (recordList.isEmpty()) {
+            throw new UnAuthorizedException("access token doesn't exist");
+        }
+
+        TokenTable tokenInfo = castMapToTokenTable(recordList.get(0));
+
+        if (!verifyToken(tokenInfo, accetoken)) {
+            return false;
+        }
+
         // delete Token information from the DB
         AccountDBManager.getInstance().deleteRecord(Constants.TOKEN_TABLE,
                 condition);
         // delete device ID from all groups in the DB
         GroupManager.getInstance().deleteDevicesFromAllGroup(di);
-    }
 
+        return true;
+    }
 }

@@ -469,9 +469,6 @@ static CAResult_t CAProcessMulticastData(const CAData_t *data)
 
     CALogPDUInfo(pdu, data->remoteEndpoint);
 
-    OIC_LOG(DEBUG, TAG, "pdu to send :");
-    OIC_LOG_BUFFER(DEBUG, TAG,  (uint8_t*)pdu->transport_hdr, pdu->length);
-
     res = CASendMulticastData(data->remoteEndpoint, pdu->transport_hdr, pdu->length, data->dataType);
     if (CA_STATUS_OK != res)
     {
@@ -1224,26 +1221,21 @@ void CALogPDUInfo(coap_pdu_t *pdu, const CAEndpoint_t *endpoint)
     VERIFY_NON_NULL_VOID(pdu, TAG, "pdu");
     VERIFY_NON_NULL_VOID(endpoint, TAG, "endpoint");
 
-    OIC_LOG_V(DEBUG, TAG, "PDU Maker - payload : %s", pdu->data);
-
-#ifdef WITH_TCP
-    if (CAIsSupportedCoAPOverTCP(endpoint->adapter))
-    {
-        OIC_LOG(DEBUG, TAG, "pdu header data :");
-        OIC_LOG_BUFFER(DEBUG, TAG,  (const uint8_t *) pdu->transport_hdr, pdu->length);
-    }
-    else
-#endif
+#ifdef WITH_BWT
+    if (CAIsSupportedBlockwiseTransfer(endpoint->adapter))
     {
         OIC_LOG_V(DEBUG, TAG, "PDU Maker - type : %d", pdu->transport_hdr->udp.type);
 
         OIC_LOG_V(DEBUG, TAG, "PDU Maker - code : %d", pdu->transport_hdr->udp.code);
-
-        OIC_LOG(DEBUG, TAG, "PDU Maker - token :");
-
-        OIC_LOG_BUFFER(DEBUG, TAG, pdu->transport_hdr->udp.token,
-                       pdu->transport_hdr->udp.token_length);
     }
+#endif
+
+    OIC_LOG(DEBUG, TAG, "PDU Maker - token :");
+    OIC_LOG_BUFFER(DEBUG, TAG, pdu->transport_hdr->udp.token,
+                   pdu->transport_hdr->udp.token_length);
+
+    OIC_LOG(DEBUG, TAG, "PDU Maker - payload :");
+    OIC_LOG_BUFFER(DEBUG, TAG,  (const uint8_t *) pdu->transport_hdr, pdu->length);
 }
 
 static void CALogPayloadInfo(CAInfo_t *info)

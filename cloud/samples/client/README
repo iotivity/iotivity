@@ -4,7 +4,7 @@ ex) scons WITH_TCP=yes TARGET_TRANSPORT=IP WITH_CLOUD=yes WITH_MQ=PUB,SUB
 
 Cloud clients runs over CoAP over TCP transport. So you should declare WITH_TCP option.
 
-Once you get samples which file name is 'aircon_controlee' and 'aircon_controller', you need 'Auth Code' to register resources on cloud with account scenario.
+Once you get samples (where the file names are 'aircon_controlee', 'aircon_controller', 'group_invite_sample', 'mq_publisher', 'mq_subscriber', and 'thin_room_light', you need 'Auth Code' to register resources on cloud with account scenario.
 
 Cloud stack has sample github and google oauth2 adaptor.
 

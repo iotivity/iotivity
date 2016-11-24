@@ -24,13 +24,28 @@
 #define __PRINTLOG 0
 #define __NS_FILE__ ( strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__ )
 
-#ifdef TB_LOG
 #include "logger.h"
+
+#ifdef TB_LOG
+#ifdef __TIZEN__
+#include <dlog.h>
+#ifdef LOG_TAG
+#undef LOG_TAG
+#endif // LOG_TAG
+#define LOG_TAG "NotificationService"
+#define NS_CONVERT_LEVEL(level) ( \
+        ((level) == 0) ? DLOG_DEBUG : \
+        ((level) == 1) ? DLOG_INFO : \
+        ((level) == 2) ? DLOG_WARN : \
+    ((level) == 3) ? DLOG_ERROR : DLOG_ERROR)
+#define NS_LOG_V(level, format, ...) (dlog_print(NS_CONVERT_LEVEL(level), LOG_TAG, (format), __VA_ARGS__))
+#define NS_LOG(level, msg) (dlog_print(NS_CONVERT_LEVEL(level), LOG_TAG, (msg)))
+#else // __TIZEN__
 #define NS_LOG_V(level, format, ...) (OIC_LOG_V((level), __NS_FILE__, (format), __VA_ARGS__))
 #define NS_LOG(level, msg) (OIC_LOG((level), __NS_FILE__, (msg)))
-#else
+#endif // __TIZEN__
+#else // TB_LOG
 #if (__PRINTLOG == 1)
-#include "logger.h"
 #define NS_CONVERT_LEVEL(level) ( \
         ((level) == 0) ? "DEBUG" : \
         ((level) == 1) ? "INFO" : \
@@ -48,12 +63,12 @@
         printf((msg)); \
         printf("\n"); \
     }
-#else
+#else // (__PRINTLOG == 1)
 #define NS_CONVERT_LEVEL(level)
 #define NS_LOG(level, msg)
 #define NS_LOG_V(level, format, ...) NS_LOG((level), ((format), __VA_ARGS__))
-#endif
-#endif
+#endif // (__PRINTLOG == 1)
+#endif // TB_LOG
 
 #define NS_TAG                     "IOT_NOTI"
 
@@ -63,7 +78,7 @@
 // NOTIOBJ //
 #define NOTIOBJ_TITLE_KEY          "title"
 #define NOTIOBJ_ID_KEY             "id"
-#define NOTOOBJ_CONTENT_KEY        "contentText"
+#define NOTOOBJ_CONTENT_KEY        "contenttext"
 
 #define DISCOVERY_TAG              "NS_PROVIDER_DISCOVERY"
 #define SUBSCRIPTION_TAG           "NS_PROVIDER_SUBSCRIPTION"
@@ -91,8 +106,8 @@
 #define NS_QUERY_SEPARATOR         "&;"
 #define NS_KEY_VALUE_DELIMITER     "="
 
-#define NS_QUERY_CONSUMER_ID       "consumerId"
-#define NS_QUERY_PROVIDER_ID       "providerId"
+#define NS_QUERY_CONSUMER_ID       "consumerid"
+#define NS_QUERY_PROVIDER_ID       "providerid"
 #define NS_QUERY_INTERFACE         "if"
 
 #define NS_QUERY_ID_SIZE           10
@@ -186,25 +201,25 @@
 #define VERSION        "1.2.1"
 
 #define NS_ATTRIBUTE_VERSION "version"
-#define NS_ATTRIBUTE_POLICY "subControllability"
-#define NS_ATTRIBUTE_MESSAGE "messageUri"
-#define NS_ATTRIBUTE_SYNC "syncUri"
-#define NS_ATTRIBUTE_TOPIC "topicUri"
-#define NS_ATTRIBUTE_MESSAGE_ID "messageId"
-#define NS_ATTRIBUTE_PROVIDER_ID "providerId"
-#define NS_ATTRIBUTE_CONSUMER_ID "consumerId"
-#define NS_ATTRIBUTE_TOPIC_LIST "topicList"
-#define NS_ATTRIBUTE_TOPIC_NAME "topicName"
-#define NS_ATTRIBUTE_TOPIC_SELECTION "topicState"
+#define NS_ATTRIBUTE_POLICY "subcontrollability"
+#define NS_ATTRIBUTE_MESSAGE "messageuri"
+#define NS_ATTRIBUTE_SYNC "syncuri"
+#define NS_ATTRIBUTE_TOPIC "topicuri"
+#define NS_ATTRIBUTE_MESSAGE_ID "messageid"
+#define NS_ATTRIBUTE_PROVIDER_ID "providerid"
+#define NS_ATTRIBUTE_CONSUMER_ID "consumerid"
+#define NS_ATTRIBUTE_TOPIC_LIST "topiclist"
+#define NS_ATTRIBUTE_TOPIC_NAME "topicname"
+#define NS_ATTRIBUTE_TOPIC_SELECTION "topicstate"
 #define NS_ATTRIBUTE_TITLE "title"
-#define NS_ATTRIBUTE_TEXT "contentText"
+#define NS_ATTRIBUTE_TEXT "contenttext"
 #define NS_ATTRIBUTE_SOURCE "source"
 #define NS_ATTRIBUTE_STATE "state"
 #define NS_ATTRIBUTE_DEVICE "device"
 #define NS_ATTRIBUTE_TYPE "type"
-#define NS_ATTRIBUTE_DATETIME "dateTime"
+#define NS_ATTRIBUTE_DATETIME "datetime"
 #define NS_ATTRIBUTE_TTL "ttl"
-#define NS_ATTRIBUTE_ICON_IMAGE "iconImage"
+#define NS_ATTRIBUTE_ICON_IMAGE "iconimage"
 
 typedef enum eConnectionState
 {

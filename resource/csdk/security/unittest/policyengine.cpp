@@ -113,6 +113,5 @@ TEST(PolicyEngineCore, DeInitPolicyEngine)
     DeInitPolicyEngine(&g_peContext);
     EXPECT_EQ(STOPPED, g_peContext.state);
     EXPECT_EQ((uint16_t)0, g_peContext.permission);
-    EXPECT_FALSE(g_peContext.matchingAclFound);
     EXPECT_EQ(ACCESS_DENIED_POLICY_ENGINE_ERROR, g_peContext.retVal);
 }

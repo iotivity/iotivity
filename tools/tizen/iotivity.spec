@@ -9,6 +9,12 @@ Source0: http://mirrors.kernel.org/%{name}/%{version}/%{name}-%{version}.tar.gz
 Source1001: %{name}.manifest
 Source1002: %{name}-test.manifest
 
+%if 0%{?tizen:1}
+%define TARGET_OS tizen
+%else
+%define TARGET_OS linux
+%endif
+
 %if "%{tizen}" == "2.3"
 %define TARGET_TRANSPORT IP
 %endif
@@ -54,13 +60,18 @@ Source1002: %{name}-test.manifest
 
 %define ex_install_dir %{buildroot}%{_bindir}
 
-%if ! %{?license:0}
+%if ! 0%{?license:0}
 %define license %doc
+%endif
+
+%if ! 0%{?manifest:0}
+%define manifest %doc
 %endif
 
 # Default values to be eventually overiden BEFORE or as gbs params:
 %{!?ES_TARGET_ENROLLEE: %define ES_TARGET_ENROLLEE tizen}
 %{!?LOGGING: %define LOGGING 1}
+%{!?RD_MODE: %define RD_MODE CLIENT}
 %{!?RELEASE: %define RELEASE 1}
 %{!?ROUTING: %define ROUTING EP}
 %{!?SECURED: %define SECURED 0}
@@ -73,7 +84,7 @@ Source1002: %{name}-test.manifest
 %{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?WITH_TCP: %define WITH_TCP 0}
 
-BuildRequires:  gettext-tools, expat-devel
+BuildRequires:  expat-devel
 BuildRequires:  python, libcurl-devel
 BuildRequires:  scons
 BuildRequires:  openssl-devel
@@ -81,15 +92,20 @@ BuildRequires:  boost-devel
 BuildRequires:  boost-thread
 BuildRequires:  boost-system
 BuildRequires:  boost-filesystem
-BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(uuid)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(sqlite3)
 %if "%{TARGET_OS}" == "tizen"
+BuildRequires:  gettext-tools
 BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(capi-network-connection)
 BuildRequires:  pkgconfig(capi-network-wifi)
 BuildRequires:  pkgconfig(capi-network-bluetooth) >= 0.1.52
+%else
+%if 0%{?fedora:1}
+BuildRequires:  sqlite-devel
+BuildRequires:  gettext-devel
+%endif
 %endif
 Requires(postun): /sbin/ldconfig
 Requires(post): /sbin/ldconfig
@@ -162,6 +178,7 @@ scons %{JOB} --prefix=%{_prefix} \
     ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} \
     LIB_INSTALL_DIR=%{_libdir} \
     LOGGING=%{LOGGING} \
+    RD_MODE=%{RD_MODE} \
     RELEASE=%{RELEASE} \
     ROUTING=%{ROUTING} \
     SECURED=%{SECURED} \
@@ -184,6 +201,7 @@ scons install --install-sandbox=%{buildroot} --prefix=%{_prefix} \
     ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} \
     LIB_INSTALL_DIR=%{_libdir} \
     LOGGING=%{LOGGING} \
+    RD_MODE=%{RD_MODE} \
     RELEASE=%{RELEASE} \
     ROUTING=%{ROUTING} \
     SECURED=%{SECURED} \
@@ -249,7 +267,6 @@ cp resource/c_common/*.h %{buildroot}%{_includedir}
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
 
-cp service/things-manager/sdk/inc/*.h %{buildroot}%{_includedir}
 cp service/easy-setup/inc/*.h %{buildroot}%{_includedir}
 cp service/easy-setup/enrollee/inc/*.h %{buildroot}%{_includedir}
 
@@ -281,7 +298,6 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %license LICENSE
 %{_libdir}/libBMISensorBundle.so
 %{_libdir}/libDISensorBundle.so
-%{_libdir}/libTGMSDKLibrary.so
 %{_libdir}/libHueBundle.so
 %{_libdir}/librcs_client.so
 %{_libdir}/librcs_common.so
@@ -289,6 +305,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %{_libdir}/librcs_server.so
 %{_libdir}/libresource_directory.so
 %{_libdir}/libESEnrolleeSDK.so
+%{_libdir}/libnotification*.so
 %if 0%{?WITH_PROXY} == 1
 %{_libdir}/libcoap_http_proxy.so
 %endif

@@ -216,16 +216,14 @@ static void CAFindReadyMessage()
         return;
     }
 
-    if (ret <= 0)
+    if (0 < ret)
     {
-        if (ret < 0)
-        {
-            OIC_LOG_V(FATAL, TAG, "select error %s", CAIPS_GET_ERROR);
-        }
-        return;
+        CASelectReturned(&readFds, ret);
     }
-
-    CASelectReturned(&readFds, ret);
+    else if (0 > ret)
+    {
+        OIC_LOG_V(FATAL, TAG, "select error %s", CAIPS_GET_ERROR);
+    }
 }
 
 static void CASelectReturned(fd_set *readFds, int ret)
@@ -782,7 +780,8 @@ static void CAInitializeNetlink()
     caglobals.ip.netlinkFd = OC_INVALID_SOCKET;
 #ifdef __linux__
     // create NETLINK fd for interface change notifications
-    struct sockaddr_nl sa = { AF_NETLINK, 0, 0, RTMGRP_LINK };
+    struct sockaddr_nl sa = { AF_NETLINK, 0, 0,
+                              RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR };
 
     caglobals.ip.netlinkFd = socket(AF_NETLINK, SOCK_RAW|SOCK_CLOEXEC, NETLINK_ROUTE);
     if (caglobals.ip.netlinkFd == OC_INVALID_SOCKET)
@@ -1118,12 +1117,12 @@ CAResult_t CAIPStartListenServer()
         }
         if (ifitem->family == AF_INET)
         {
-            OIC_LOG_V(DEBUG, TAG, "Adding IPv4 interface %i to multicast group", ifitem->index);
+            OIC_LOG_V(DEBUG, TAG, "Adding IPv4 interface(%d) to multicast group", ifitem->index);
             applyMulticastToInterface4(ifitem->index);
         }
         if (ifitem->family == AF_INET6)
         {
-            OIC_LOG_V(DEBUG, TAG, "Adding IPv6 interface %i to multicast group", ifitem->index);
+            OIC_LOG_V(DEBUG, TAG, "Adding IPv6 interface(%d) to multicast group", ifitem->index);
             applyMulticastToInterface6(ifitem->index);
         }
     }
@@ -1183,10 +1182,12 @@ void CAProcessNewInterface(CAInterface_t *ifitem)
 
     if (ifitem->family == AF_INET6)
     {
+        OIC_LOG_V(DEBUG, TAG, "Adding a new IPv6 interface(%d) to multicast group", ifitem->index);
         applyMulticastToInterface6(ifitem->index);
     }
     if (ifitem->family == AF_INET)
     {
+        OIC_LOG_V(DEBUG, TAG, "Adding a new IPv4 interface(%d) to multicast group", ifitem->index);
         applyMulticastToInterface4(ifitem->index);
     }
 }
