@@ -21,7 +21,7 @@
 */
 
 #include "JniOcStack.h"
-#include "OCCloudProvisioning.h"
+#include "OCCloudProvisioning.hpp"
 #include "JniOcCloudResultListener.h"
 #include "JniGetAclIdByDeviceListener.h"
 #include <mutex>

@@ -21,7 +21,7 @@
 #define OC_CLOUD_WRAPPER_H
 
 #include "occloudprovisioning.h"
-#include "OCCloudProvisioning.h"
+#include "OCCloudProvisioning.hpp"
 
 using namespace OC;
 /**

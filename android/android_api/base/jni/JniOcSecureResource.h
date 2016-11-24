@@ -22,7 +22,7 @@
 
 #include "JniOcStack.h"
 #include "JniProvisionResultListner.h"
-#include "OCProvisioningManager.h"
+#include "OCProvisioningManager.hpp"
 #include <mutex>
 
 #ifndef _Included_org_iotivity_base_OcSecureResource

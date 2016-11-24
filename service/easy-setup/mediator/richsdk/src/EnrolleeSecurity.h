@@ -26,7 +26,7 @@
 #include <condition_variable>
 
 #include "ESRichCommon.h"
-#include "OCProvisioningManager.h"
+#include "OCProvisioningManager.hpp"
 
 namespace OIC
 {

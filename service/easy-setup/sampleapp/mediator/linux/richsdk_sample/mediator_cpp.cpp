@@ -23,7 +23,7 @@
 
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "OCProvisioningManager.h"
+#include "OCProvisioningManager.hpp"
 
 #include "EasySetup.h"
 #include "ESRichCommon.h"

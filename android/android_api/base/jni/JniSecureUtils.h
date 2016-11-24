@@ -21,7 +21,7 @@
 */
 
 #include "JniOcStack.h"
-#include "OCProvisioningManager.h"
+#include "OCProvisioningManager.hpp"
 
 class JniSecureUtils
 {

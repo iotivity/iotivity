@@ -33,7 +33,7 @@
 #include "oic_string.h"
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "OCProvisioningManager.h"
+#include "OCProvisioningManager.hpp"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
 #include "aclresource.h"
