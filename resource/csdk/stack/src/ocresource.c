@@ -778,7 +778,6 @@ static OCStackResult addDiscoveryBaselineCommonProperties(OCDiscoveryPayload *di
     VERIFY_PARAM_NON_NULL(TAG, discPayload->uri, "Failed adding href to discovery payload.");
 
     OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, "deviceName", (void **)&discPayload->name);
-    VERIFY_PARAM_NON_NULL(TAG, discPayload->name, "Failed adding name to discovery payload.");
 
     discPayload->type = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
     VERIFY_PARAM_NON_NULL(TAG, discPayload->type, "Failed adding rt to discovery payload.");
@@ -837,7 +836,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         }
 
         bool baselineQuery = false;
-        if (interfaceQuery && 0 != strcmp(interfaceQuery, OC_RSRVD_INTERFACE_LL))
+        if (interfaceQuery && 0 == strcmp(interfaceQuery, OC_RSRVD_INTERFACE_DEFAULT))
         {
             baselineQuery = true;
         }
@@ -865,12 +864,14 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 #endif
             if (OC_STACK_NO_RESOURCE == discoveryResult)
             {
-                if ((!baselineQuery && (resource->resourceProperties & prop)) ||
-                    (baselineQuery && (includeThisResourceInResponse(resource, interfaceQuery,
-                                                                     resourceTypeQuery))))
+                // This case will handle when no resource type and it is oic.if.ll.
+                if (!resourceTypeQuery && !baselineQuery && (resource->resourceProperties & prop))
                 {
-                    discoveryResult = BuildVirtualResourceResponse(resource, discPayload,
-                        &request->devAddr);
+                    discoveryResult = BuildVirtualResourceResponse(resource, discPayload, &request->devAddr);
+                }
+                else if (includeThisResourceInResponse(resource, interfaceQuery, resourceTypeQuery))
+                {
+                    discoveryResult = BuildVirtualResourceResponse(resource, discPayload, &request->devAddr);
                 }
                 else
                 {
