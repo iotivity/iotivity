@@ -72,7 +72,13 @@ void NSHandleMQSubscription(NSMQTopicAddress * topicAddr)
                         NSOICFree(topicAddr->serverAddr);
                         NSOICFree(topicAddr->topicName);
                     });
-    OCStackResult ret = NSInvokeRequest(NULL, OC_REST_GET, addr, serverUri, NULL,
+
+    char requestUri[100] = "coap+tcp://";
+    OICStrcat(requestUri, strlen(requestUri)+strlen(serverUri)+1, serverUri);
+    OICStrcat(requestUri, strlen(requestUri)+ strlen("/oic/ps") + 1, "/oic/ps");
+    NS_LOG_V(DEBUG, "requestUri = %s", requestUri);
+
+    OCStackResult ret = NSInvokeRequest(NULL, OC_REST_GET, addr, requestUri, NULL,
                       NSConsumerIntrospectMQTopic, topicName, OICFree, CT_DEFAULT);
     NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(NSOCResultToSuccess(ret) == true ? (void *)1 : NULL,
                    {
