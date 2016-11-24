@@ -70,7 +70,7 @@ if target_os == 'android':
     notification_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
     notification_env.PrependUnique(LIBS = ['gnustl_shared', 'log'])
 
-if not env.get('RELEASE'):
+if not env.get('RELEASE') and target_os not in ['ios']:
     notification_env.PrependUnique(LIBS = ['gcov'])
     notification_env.AppendUnique(CCFLAGS = ['--coverage'])
 
@@ -88,9 +88,10 @@ Import('notificationCommonSharedObjs')
 notification_consumer_src = [
 	env.Glob('src/*.cpp'),notificationCommonSharedObjs]
 
-consumersdk = notification_env.SharedLibrary('notification_consumer_wrapper', notification_consumer_src)
-notification_env.InstallTarget(consumersdk, 'libnotification_consumer_wrapper')
-notification_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer_wrapper')
+if target_os not in ['ios']:
+	consumersdk = notification_env.SharedLibrary('notification_consumer_wrapper', notification_consumer_src)
+	notification_env.InstallTarget(consumersdk, 'libnotification_consumer_wrapper')
+	notification_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer_wrapper')
 
 notification_consumer_src = [
 	env.Glob('src/*.cpp'),notificationCommonStaticObjs]

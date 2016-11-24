@@ -29,7 +29,7 @@ if es_target in ['linux']:
    SConscript('mediator/SConscript')
    SConscript('enrollee/SConscript')
 
-if es_target in ['android']:
+if es_target in ['android','ios']:
    SConscript('mediator/SConscript')
 
 if es_target in ['tizen']:

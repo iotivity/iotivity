@@ -20,7 +20,10 @@
 
 Import('env')
 
-ocprovision_env = env.Clone()
+lib_env = env.Clone()
+SConscript(lib_env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
+
+ocprovision_env = lib_env.Clone()
 
 ######################################################################
 # Build flags
@@ -78,7 +81,10 @@ if ocprovision_env.get('WITH_TCP') == True:
 	'src/OCCloudProvisioning.cpp'
 	]
 
-ocprovision = ocprovision_env.SharedLibrary('ocprovision', ocprovision_src)
+if target_os not in ['ios']:
+    ocprovision = ocprovision_env.SharedLibrary('ocprovision', ocprovision_src)
+else:
+    ocprovision = ocprovision_env.StaticLibrary('ocprovision', ocprovision_src)
 ocprovision_env.InstallTarget(ocprovision, 'libocprovision')
 ocprovision_env.UserInstallTargetLib(ocprovision, 'libocprovision')
 
