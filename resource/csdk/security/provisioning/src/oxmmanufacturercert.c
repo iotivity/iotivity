@@ -78,6 +78,11 @@ OCStackResult PrepareMCertificateCallback(OTMContext_t *otmCtx)
 {
     OIC_LOG(INFO, TAG, "IN PrepareMCertificateCallback");
 
+    if (!otmCtx || !otmCtx->selectedDeviceInfo)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
     if (CA_STATUS_OK != CAregisterPkixInfoHandler(GetManufacturerPkixInfo))
     {
         OIC_LOG(ERROR, TAG, "Failed to register PkixInfohandler");
