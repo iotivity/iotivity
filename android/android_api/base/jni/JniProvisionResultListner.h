@@ -21,7 +21,7 @@
 */
 #include <jni.h>
 #include "JniOcStack.h"
-#include "OCProvisioningManager.h"
+#include "OCProvisioningManager.hpp"
 
 #ifndef _Included_org_iotivity_base_OcProvisioning_JniProvisionResultListner
 #define _Included_org_iotivity_base_OcProvisioning_JniProvisionResultListner

@@ -19,7 +19,7 @@
  * *****************************************************************/
 
 #include "ocstack.h"
-#include "OCCloudProvisioning.h"
+#include "OCCloudProvisioning.hpp"
 
 namespace OC
 {

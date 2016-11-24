@@ -21,7 +21,7 @@
 */
 
 #include "JniOcStack.h"
-#include "OCProvisioningManager.h"
+#include "OCProvisioningManager.hpp"
 
 #ifndef _Included_org_iotivity_base_PinCheckListener
 #define _Included_org_iotivity_base_PinCheckListener
