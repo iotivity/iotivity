@@ -89,7 +89,7 @@ if ocprovision_env.get('WITH_TCP') == True:
 	]
         ocprovision_env.UserInstallTargetHeader('../include/OCCloudProvisioning.hpp', 'resource', 'OCCloudProvisioning.hpp')
 
-if target_os not in ['windows']:
+if target_os not in ['ios', 'windows']:
     ocprovision = ocprovision_env.SharedLibrary('ocprovision', ocprovision_src)
 else:
     ocprovision = ocprovision_env.StaticLibrary('ocprovision', ocprovision_src)

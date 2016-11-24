@@ -54,7 +54,7 @@ if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
 # Build liboctbstack
 SConscript('csdk/SConscript')
 
-if target_os not in ['arduino','darwin','ios']:
+if target_os not in ['arduino','darwin']:
 	# Build liboc_logger
 	SConscript('oc_logger/SConscript')
 

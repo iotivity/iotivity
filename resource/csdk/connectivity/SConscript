@@ -66,7 +66,7 @@ else:
 		env.AppendUnique(CPPDEFINES = ['NO_IP_ADAPTER'])
 
 	if with_tcp == True:
-		if target_os in ['linux', 'tizen', 'android', 'arduino', 'windows']:
+		if target_os in ['linux', 'tizen', 'android', 'arduino', 'ios', 'windows']:
 			env.AppendUnique(CPPDEFINES = ['TCP_ADAPTER', 'WITH_TCP'])
 			print "CA Transport is TCP"
 		else:

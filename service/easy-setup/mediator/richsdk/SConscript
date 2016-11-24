@@ -85,7 +85,7 @@ if target_os in ['linux','tizen']:
 	if env.get('SECURED') == '1':
 		easy_setup_env.AppendUnique(LIBS = ['ocpmapi', 'ocprovision'])
 
-if target_os in ['android','linux','tizen']:
+if target_os in ['android','ios','linux','tizen']:
 	easy_setup_env.PrependUnique(CPPPATH = [
 		env.get('SRC_DIR') + '/resource/c_common/oic_malloc/include',
 		env.get('SRC_DIR') + '/resource/include',
@@ -116,7 +116,7 @@ if target_os in ['android','linux','tizen']:
 		if env.get('WITH_TCP') == True:
 			easy_setup_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
-if not env.get('RELEASE'):
+if not env.get('RELEASE') and target_os not in ['ios']:
     easy_setup_env.PrependUnique(LIBS = ['gcov'])
     easy_setup_env.AppendUnique(CCFLAGS = ['--coverage'])
 
@@ -128,7 +128,7 @@ print"easysetup_path %s" % easysetup_path
 
 es_src = None
 
-if target_os in ['android','linux','tizen']:
+if target_os in ['android','ios','linux','tizen']:
 	if env.get('SECURED') == '1':
 		env.AppendUnique(es_src = [os.path.join(easysetup_path, 'src/EnrolleeSecurity.cpp')])
 
@@ -140,10 +140,12 @@ if target_os in ['android','linux','tizen']:
 
 	env.AppendUnique(es_src = es_common_src)
 
-	es_sdk_shared = easy_setup_env.SharedLibrary('ESMediatorRich', env.get('es_src'))
 	es_sdk_static = easy_setup_env.StaticLibrary('ESMediatorRich', env.get('es_src'))
-	easy_setup_env.InstallTarget([es_sdk_shared, es_sdk_static], 'libESMediatorRich')
-	easy_setup_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libESMediatorRich.so'])
+	easy_setup_env.InstallTarget(es_sdk_static, 'libESMediatorRich')
+	if target_os not in ['ios']:
+		es_sdk_shared = easy_setup_env.SharedLibrary('ESMediatorRich', env.get('es_src'))
+		easy_setup_env.InstallTarget(es_sdk_shared, 'libESMediatorRich')
+		easy_setup_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libESMediatorRich.so'])
 
 filenames = [ 'ESException.h', 'ESRichCommon.h', 'EasySetup.hpp', 'RemoteEnrollee.h' ]
 for filename in filenames:

@@ -120,13 +120,13 @@ notification_provider_src = [
 notification_consumer_src = [
 	env.Glob('src/consumer/*.c'), notification_common_obj]
 
-providersdk = notification_provider_env.SharedLibrary('notification_provider', notification_provider_src)
-notification_provider_env.InstallTarget(providersdk, 'libnotification_provider')
-notification_provider_env.UserInstallTargetLib(providersdk, 'libnotification_provider')
-
-consumersdk = notification_consumer_env.SharedLibrary('notification_consumer', notification_consumer_src)
-notification_consumer_env.InstallTarget(consumersdk, 'libnotification_consumer')
-notification_consumer_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer')
+if target_os not in ['ios']:
+	providersdk = notification_provider_env.SharedLibrary('notification_provider', notification_provider_src)
+	notification_provider_env.InstallTarget(providersdk, 'libnotification_provider')
+	notification_provider_env.UserInstallTargetLib(providersdk, 'libnotification_provider')
+	consumersdk = notification_consumer_env.SharedLibrary('notification_consumer', notification_consumer_src)
+	notification_consumer_env.InstallTarget(consumersdk, 'libnotification_consumer')
+	notification_consumer_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer')
 
 providersdk = notification_provider_env.StaticLibrary('notification_provider', notification_provider_src)
 notification_provider_env.InstallTarget(providersdk, 'libnotification_provider')

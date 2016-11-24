@@ -78,10 +78,13 @@ if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
 server_builder_src = server_builder_env.Glob('src/*.cpp')
 
 server_builder_static = server_builder_env.StaticLibrary('rcs_server', server_builder_src)
-server_builder_shared = server_builder_env.SharedLibrary('rcs_server', server_builder_src)
-
-server_builder_env.InstallTarget([server_builder_static, server_builder_shared], 'rcs_server')
-server_builder_env.UserInstallTargetLib([server_builder_static, server_builder_shared], 'rcs_server')
+if target_os not in ['ios']:
+    server_builder_shared = server_builder_env.SharedLibrary('rcs_server', server_builder_src)
+    server_builder_env.InstallTarget([server_builder_static, server_builder_shared], 'rcs_server')
+    server_builder_env.UserInstallTargetLib([server_builder_static, server_builder_shared], 'rcs_server')
+else:
+    server_builder_env.InstallTarget([server_builder_static], 'rcs_server')
+    server_builder_env.UserInstallTargetLib([server_builder_static], 'rcs_server')
 
 ######################################################################
 # Build Test

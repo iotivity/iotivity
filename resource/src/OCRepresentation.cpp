@@ -229,7 +229,7 @@ namespace OC
         ((int64_t*)array)[pos] = item;
     }
 
-#if !defined(_MSC_VER)
+#if !(defined(_MSC_VER) || defined(__APPLE__))
     template<>
     void get_payload_array::copy_to_array(std::_Bit_reference br, void* array, size_t pos)
     {

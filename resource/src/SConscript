@@ -121,7 +121,7 @@ oclib_src = [
 if with_cloud:
 	oclib_src = oclib_src + ['OCAccountManager.cpp']
 
-if target_os in ['windows']:
+if target_os in ['windows', 'ios']:
 	oclib_src = oclib_src + ['OCApi.cpp']
 	# TODO: Add OC_EXPORT prefixes to enable DLL generation
 	oclib = oclib_env.StaticLibrary('oc', oclib_src)
@@ -163,5 +163,5 @@ if with_cloud:
 	oclib_env.UserInstallTargetHeader(header_dir + 'OCAccountManager.h', 'resource', 'OCAccountManager.h')
 
 # Add Provisioning library
-if target_os in ['linux', 'android', 'tizen', 'windows'] and secured == '1':
+if target_os in ['linux', 'android', 'tizen', 'ios', 'windows'] and secured == '1':
         SConscript('../provisioning/SConscript')
