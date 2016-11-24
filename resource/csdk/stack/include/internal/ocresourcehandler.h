@@ -186,7 +186,7 @@ void DeleteDeviceInfo();
  * Prepare payload for resource representation.
  */
 OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
-                    OCRepPayload** payload);
+                    OCRepPayload** payload, OCDevAddr *devAddr);
 
 /**
  * A helper function that Maps an @ref OCEntityHandlerResult type to an
@@ -198,4 +198,3 @@ OCStackResult EntityHandlerCodeToOCStackCode(OCEntityHandlerResult ehResult);
 }
 #endif // __cplusplus
 #endif //OC_RESOURCEHANDLER_H
-
