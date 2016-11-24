@@ -5,13 +5,14 @@ set -e
 # Keep cborRevision in sync with extlibs/tinycbor/SConscript's setting. Right now this script
 # assumes cborRevision is a tag; comment out the second clause if cborRevision becomes
 # a branch or a specific commit.
+cborUrl="https://github.com/01org/tinycbor"
 cborDir="./extlibs/tinycbor/tinycbor"
 cborRevision="v0.4"
 if [ ! -d ${cborDir} ]; then
     echo ""
     echo "*********************************** Error: ****************************************"
     echo "* Please download TinyCBOR using the following command:                           *"
-    echo "*     $ git clone https://github.com/01org/tinycbor.git extlibs/tinycbor/tinycbor *"
+    echo "*     $ git clone ${cborUrl} ${cborDir} -b ${cborRevision} "
     echo "***********************************************************************************"
     echo ""
     exit
