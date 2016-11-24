@@ -37,9 +37,9 @@ if not os.path.exists(mbedtls_dir):
     print '''
 *********************************** Error: ****************************************
 * Please download mbedtls using the following command:                            *
-*     $ git clone https://github.com/ARMmbed/mbedtls.git extlibs/mbedtls/mbedtls  *
+*     $ git clone https://github.com/ARMmbed/mbedtls.git extlibs/mbedtls/mbedtls %s
 ***********************************************************************************
- '''
+ ''' % mbedtls_revision
     Exit(1)
 #cd extlib/mbedtls/mbedtls
 os.chdir(mbedtls_dir)
