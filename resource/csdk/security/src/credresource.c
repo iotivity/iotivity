@@ -1837,7 +1837,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
             {
                 case SYMMETRIC_PAIR_WISE_KEY:
                 {
-                    OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
+                    OCServerRequest *request = GetServerRequestUsingHandle(ehRequest->requestHandle);
                     if(FillPrivateDataOfOwnerPSK(cred, (CAEndpoint_t *)&request->devAddr, doxm))
                     {
                         if(OC_STACK_RESOURCE_DELETED == RemoveCredential(&cred->subject))
@@ -1954,7 +1954,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
             {
                 case SYMMETRIC_PAIR_WISE_KEY:
                 {
-                    OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
+                    OCServerRequest *request = GetServerRequestUsingHandle(ehRequest->requestHandle);
                     if(FillPrivateDataOfSubOwnerPSK(cred, (CAEndpoint_t *)&request->devAddr, doxm, &cred->subject))
                     {
                         if(OC_STACK_RESOURCE_DELETED == RemoveCredential(&cred->subject))

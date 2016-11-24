@@ -337,7 +337,12 @@ HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
                 if (ehResult == OC_EH_SLOW)
                 {
                     OIC_LOG(INFO, TAG, "This is a slow resource");
-                    ((OCServerRequest *)ehRequest->requestHandle)->slowFlag = 1;
+                    OCServerRequest *request =
+                            GetServerRequestUsingHandle(ehRequest->requestHandle);
+                    if (request)
+                    {
+                        request->slowFlag = 1;
+                    }
                     stackRet = EntityHandlerCodeToOCStackCode(ehResult);
                 }
             }
@@ -421,15 +426,19 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                     return HandleLinkedListInterface(ehRequest, STACK_RES_DISCOVERY_NOFILTER, NULL);
 
                 case STACK_IF_BATCH:
+                {
                     OIC_LOG(INFO, TAG, "STACK_IF_BATCH");
-                    ((OCServerRequest *)ehRequest->requestHandle)->ehResponseHandler =
-                                                                            HandleAggregateResponse;
-
-                    ((OCServerRequest *)ehRequest->requestHandle)->numResponses =
+                    OCServerRequest *request =
+                            GetServerRequestUsingHandle(ehRequest->requestHandle);
+                    if (request)
+                    {
+                        request->ehResponseHandler = HandleAggregateResponse;
+                        request->numResponses =
                             GetNumOfResourcesInCollection((OCResource *)ehRequest->resource) + 1;
+                    }
 
                     return HandleBatchInterface(ehRequest);
-
+                }
                 case STACK_IF_GROUP:
                     return BuildCollectionGroupActionCBORResponse(OC_REST_GET/*flag*/,
                             (OCResource *) ehRequest->resource, ehRequest);
@@ -450,12 +459,17 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                     return OC_STACK_ERROR;
 
                 case STACK_IF_BATCH:
-                    ((OCServerRequest *)ehRequest->requestHandle)->ehResponseHandler =
-                                                                            HandleAggregateResponse;
-                    ((OCServerRequest *)ehRequest->requestHandle)->numResponses =
+                {
+                    OCServerRequest *request =
+                            GetServerRequestUsingHandle(ehRequest->requestHandle);
+                    if (request)
+                    {
+                        request->ehResponseHandler = HandleAggregateResponse;
+                        request->numResponses =
                             GetNumOfResourcesInCollection((OCResource *)ehRequest->resource) + 1;
+                    }
                     return HandleBatchInterface(ehRequest);
-
+                }
                 case STACK_IF_GROUP:
                     OIC_LOG(INFO, TAG, "IF_COLLECTION PUT with request ::\n");
                     OIC_LOG_PAYLOAD(INFO, ehRequest->payload);
@@ -478,11 +492,17 @@ OCStackResult DefaultCollectionEntityHandler (OCEntityHandlerFlag flag,
                     return OC_STACK_ERROR;
 
                 case STACK_IF_BATCH:
-                    ((OCServerRequest *)ehRequest->requestHandle)->ehResponseHandler =
-                                                                            HandleAggregateResponse;
-                    ((OCServerRequest *)ehRequest->requestHandle)->numResponses =
+                {
+                    OCServerRequest *request =
+                            GetServerRequestUsingHandle(ehRequest->requestHandle);
+                    if (request)
+                    {
+                        request->ehResponseHandler = HandleAggregateResponse;
+                        request->numResponses =
                             GetNumOfResourcesInCollection((OCResource *)ehRequest->resource) + 1;
+                    }
                     return HandleBatchInterface(ehRequest);
+                }
 
                 case STACK_IF_GROUP:
                     OIC_LOG(INFO, TAG, "IF_COLLECTION POST with request ::\n");

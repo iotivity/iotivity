@@ -102,17 +102,18 @@ namespace OCResourceResponseTest
         request.qos = OC_LOW_QOS;
         request.coapID = 0;
         request.delayedResNeeded = 0;
+        request.requestId = 0x1234;
 
-        OCRequestHandle handle = static_cast<OCRequestHandle>(&request);
-        EXPECT_EQ(NULL, response.getRequestHandle());
+        OCRequestHandle handle = request.requestId;
+        EXPECT_EQ(0, response.getRequestHandle());
         EXPECT_NO_THROW(response.setRequestHandle(handle));
-        EXPECT_NE(static_cast<OCRequestHandle>(NULL), response.getRequestHandle());
+        EXPECT_NE(0, response.getRequestHandle());
     }
 
     TEST(RequestHandleTest, SetGetRequestHandleNullHandle)
     {
         OCResourceResponse response;
-        OCRequestHandle handle = nullptr;
+        OCRequestHandle handle = 0;
 
         EXPECT_EQ(NULL, response.getRequestHandle());
         EXPECT_NO_THROW(response.setRequestHandle(handle));

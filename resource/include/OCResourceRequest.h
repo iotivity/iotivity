@@ -54,7 +54,7 @@ namespace OC
             m_messageID(0),
             m_representation(OCRepresentation()),
             m_headerOptions(HeaderOptions()),
-            m_requestHandle(nullptr),
+            m_requestHandle(0),
             m_resourceHandle(nullptr)
         {
             m_observationInfo.action = ObserveAction::ObserveRegister;

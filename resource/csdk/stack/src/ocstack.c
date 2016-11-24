@@ -548,7 +548,7 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
         if(observer)
         {
             result = FormOCEntityHandlerRequest(&ehRequest,
-                                                (OCRequestHandle)NULL,
+                                                0,
                                                 OC_REST_NOMETHOD,
                                                 &observer->devAddr,
                                                 (OCResourceHandle)NULL,
@@ -600,7 +600,7 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
             if(observer->failedCommCount >= MAX_OBSERVER_FAILED_COMM)
             {
                 result = FormOCEntityHandlerRequest(&ehRequest,
-                                                    (OCRequestHandle)NULL,
+                                                    0,
                                                     OC_REST_NOMETHOD,
                                                     &observer->devAddr,
                                                     (OCResourceHandle)NULL,
@@ -4030,7 +4030,7 @@ OCStackResult OCDoResponse(OCEntityHandlerResponse *ehResponse)
 
     // Normal response
     // Get pointer to request info
-    serverRequest = GetServerRequestUsingHandle((OCServerRequest *)ehResponse->requestHandle);
+    serverRequest = GetServerRequestUsingHandle(ehResponse->requestHandle);
     if(serverRequest)
     {
         // response handler in ocserverrequest.c. Usually HandleSingleResponse.

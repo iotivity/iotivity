@@ -413,8 +413,7 @@ protected:
     }
 };
 
-const OCRequestHandle ResourceObjectHandlingRequestTest::fakeRequestHandle =
-    reinterpret_cast<OCRequestHandle>(0x1234);
+const OCRequestHandle ResourceObjectHandlingRequestTest::fakeRequestHandle = 0x1234;
 const OCResourceHandle  ResourceObjectHandlingRequestTest::fakeResourceHandle =
     reinterpret_cast<OCResourceHandle>(0x4321);
 

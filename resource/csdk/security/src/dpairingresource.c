@@ -547,7 +547,7 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
         VERIFY_NON_NULL(TAG, pconf, ERROR);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-        OCServerRequest * request = (OCServerRequest *)ehRequest->requestHandle;
+        OCServerRequest *request = GetServerRequestUsingHandle(ehRequest->requestHandle);
         VERIFY_SUCCESS(TAG, (request->devAddr.flags | OC_FLAG_SECURE), ERROR);
 
         //Generate new credential

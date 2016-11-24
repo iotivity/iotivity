@@ -51,7 +51,7 @@ namespace OC
             m_headerOptions{},
             m_interface{},
             m_representation{},
-            m_requestHandle{nullptr},
+            m_requestHandle{0},
             m_resourceHandle{nullptr},
             m_responseResult{}
         {

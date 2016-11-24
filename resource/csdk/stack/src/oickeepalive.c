@@ -415,9 +415,9 @@ OCStackResult SendKeepAliveResponse(OCServerRequest *request,
         AddResourceInterfaceNameToPayload(payload);
     }
 
-    OCEntityHandlerResponse ehResponse = { .ehResult = result, 
-                                           .payload = (OCPayload*) payload, 
-                                           .requestHandle = request,
+    OCEntityHandlerResponse ehResponse = { .ehResult = result,
+                                           .payload = (OCPayload*) payload,
+                                           .requestHandle = request->requestId,
                                            .resourceHandle = g_keepAliveHandle };
     OICStrcpy(ehResponse.resourceUri, sizeof(ehResponse.resourceUri), KEEPALIVE_RESOURCE_URI);
 

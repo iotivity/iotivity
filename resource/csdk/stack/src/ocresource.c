@@ -711,7 +711,7 @@ OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCRes
     response.ehResult = ehResult;
     response.payload = discoveryPayload;
     response.persistentBufferFlag = 0;
-    response.requestHandle = (OCRequestHandle) request;
+    response.requestHandle = (OCRequestHandle) request->requestId;
     response.resourceHandle = (OCResourceHandle) resource;
 
     return OCDoResponse(&response);
@@ -1031,7 +1031,7 @@ HandleDefaultDeviceEntityHandler (OCServerRequest *request)
 
     OIC_LOG(INFO, TAG, "Entering HandleResourceWithDefaultDeviceEntityHandler");
     result = FormOCEntityHandlerRequest(&ehRequest,
-                                        (OCRequestHandle) request,
+                                        (OCRequestHandle) request->requestId,
                                         request->method,
                                         &request->devAddr,
                                         (OCResourceHandle) NULL, request->query,
@@ -1088,11 +1088,10 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
     if (request && request->resourceUrl && SRMIsSecurityResourceURI(request->resourceUrl))
     {
         type = PAYLOAD_TYPE_SECURITY;
-
     }
 
     result = FormOCEntityHandlerRequest(&ehRequest,
-                                        (OCRequestHandle)request,
+                                        (OCRequestHandle)request->requestId,
                                         request->method,
                                         &request->devAddr,
                                         (OCResourceHandle)resource,
@@ -1236,7 +1235,7 @@ HandleCollectionResourceDefaultEntityHandler (OCServerRequest *request,
     OCEntityHandlerRequest ehRequest = {0};
 
     result = FormOCEntityHandlerRequest(&ehRequest,
-                                        (OCRequestHandle)request,
+                                        (OCRequestHandle)request->requestId,
                                         request->method,
                                         &request->devAddr,
                                         (OCResourceHandle)resource,

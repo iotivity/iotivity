@@ -1016,7 +1016,7 @@ typedef void * OCResourceHandle;
 /**
  * Handle to an OCRequest object owned by the OCStack.
  */
-typedef void * OCRequestHandle;
+typedef uint32_t OCRequestHandle;
 
 /**
  * Unique identifier for each observation request. Used when observations are
