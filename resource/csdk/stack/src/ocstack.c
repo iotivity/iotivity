@@ -484,6 +484,7 @@ void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out)
     out->adapter = (CATransportAdapter_t)in->adapter;
     out->flags = OCToCATransportFlags(in->flags);
     OICStrcpy(out->addr, sizeof(out->addr), in->addr);
+    OICStrcpy(out->deviceId, sizeof(out->deviceId), in->deviceId);
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     /* This assert is to prevent accidental mismatch between address size macros defined in
      * RI and CA and cause crash here. */
@@ -1436,6 +1437,22 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     OCUpdateResourceInsWithResponse(cbNode->requestUri, &response);
                 }
 #endif
+                // set deviceId into OCClientResponse callback parameter
+                if (OC_REST_DISCOVER == cbNode->method)
+                {
+                    OCDiscoveryPayload *payload = (OCDiscoveryPayload*) response.payload;
+                    if (!payload)
+                    {
+                        OIC_LOG(INFO, TAG, "discovery payload is invalid");
+                        return;
+                    }
+
+                    OICStrcpy(response.devAddr.deviceId, sizeof(response.devAddr.deviceId),
+                              payload->sid);
+                    OIC_LOG_V(INFO, TAG, "Device ID of response : %s",
+                              response.devAddr.deviceId);
+                }
+
                 OCStackApplicationResult appFeedback = cbNode->callBack(cbNode->context,
                                                                         cbNode->handle,
                                                                         &response);
@@ -2713,7 +2730,13 @@ OCStackResult OCDoResource(OCDoHandle *handle,
             result = OC_STACK_NO_MEMORY;
             goto exit;
         }
+        OIC_LOG(DEBUG, TAG, "devAddr is set as destination");
         *devAddr = *destination;
+    }
+
+    if (devAddr)
+    {
+        OIC_LOG_V(DEBUG, TAG, "DeviceID of devAddr : %s", devAddr->deviceId);
     }
 
     resHandle = GenerateInvocationHandle();

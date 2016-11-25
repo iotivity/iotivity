@@ -18,6 +18,7 @@ include $(CLEAR_VARS)
 OIC_LIB_PATH := ../../../../out/android/$(APP_ABI)/$(APP_OPTIM)
 LOCAL_MODULE := libandroid-octbstack
 LOCAL_SRC_FILES := $(OIC_LIB_PATH)/liboctbstack.so
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/c_common/ocrandom/include
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -60,6 +61,7 @@ LOCAL_STATIC_LIBRARIES := libandroid-ca
 LOCAL_LDLIBS := -llog
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/connectivity/api
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/c_common
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/c_common/ocrandom/include
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -167,6 +169,7 @@ LOCAL_C_INCLUDES := $(OIC_SRC_PATH)/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/c_common
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/c_common/oic_string/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/c_common/oic_malloc/include
+LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/c_common/ocrandom/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/stack/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/ocsocket/include
 LOCAL_C_INCLUDES += $(OIC_SRC_PATH)/csdk/resource-directory/include
