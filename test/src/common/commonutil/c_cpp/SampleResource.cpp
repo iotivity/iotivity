@@ -471,23 +471,42 @@ void SampleResource::handleGetRequest(QueryParamsMap &queryParamsMap,
         for (const auto &eachQuery : queryParamsMap)
         {
             string key = eachQuery.first;
-            if (key.compare("if") == 0)
+            string queryValue = eachQuery.second;
+            if (key.compare(INTERFACE_KEY) == 0)
             {
                 responseInterface = key;
-                string queryValue = eachQuery.second;
+                vector< string > interfaceList = getResourceInterfaces();
                 if (queryValue.compare(DEFAULT_INTERFACE) == 0)
                 {
                     cout << "Found baseline query, adding rt & if into response payload" << endl;
-                    rep.setResourceInterfaces(getResourceInterfaces());
+                    rep.setResourceInterfaces(interfaceList);
                     rep.setResourceTypes(getResourceTypes());
                     p_resourceHelper->printRepresentation(rep);
 
                 }
-                else
+                else if (p_resourceHelper->containsElement(interfaceList, queryValue))
                 {
                     cout << "Ignoring if query other than baseline" << endl;
                 }
+                else
+                {
+                    cout << "The interface  used in query is not supported by this resource"
+                            << endl;
+                    shouldReturnError = true;
+                    break;
+                }
+
                 continue;
+            }
+            else if (key.compare(RESOURCE_TYPE_KEY) == 0)
+            {
+                vector< string > resourceTypeList = getResourceTypes();
+                if (p_resourceHelper->containsElement(resourceTypeList, queryValue) == false)
+                {
+                    cout << "The resource type  used in query is not supported by resource" << endl;
+                    shouldReturnError = true;
+                    break;
+                }
             }
             if (rep.hasAttribute(key))
             {
@@ -499,9 +518,10 @@ void SampleResource::handleGetRequest(QueryParamsMap &queryParamsMap,
                     break;
                 }
             }
-            if ((key.compare("if") != 0) && (rep.hasAttribute(key) == false))
+            if ((key.compare(INTERFACE_KEY) != 0) && (rep.hasAttribute(key) == false))
             {
-                cout << "This query is not supported: " << eachQuery.first << "=" << eachQuery.second << endl;
+                cout << "This query is not supported: " << eachQuery.first << "="
+                        << eachQuery.second << endl;
                 shouldReturnError = true;
                 break;
             }
@@ -739,6 +759,34 @@ bool SampleResource::updateRepresentation(string key, OCRepresentation incomingR
         result = false;
         response->setErrorCode(COAP_RESPONSE_CODE_ERROR);
         response->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+    }
+
+    return result;
+}
+
+
+bool SampleResource::updateRepresentation(string key, OCRepresentation incomingRep)
+{
+    bool result = false;
+    OCRepresentation rep = getRepresentation();
+
+    string targetValue = "";
+    AttributeValue incomingValue;
+    incomingRep.getAttributeValue(key, incomingValue);
+
+    cout << "Updating Representation... " << endl;
+    string configurationKey = key;
+    AttributeValue configurationValue;
+    rep.setValue(configurationKey, incomingValue);
+    if (rep.getAttributeValue(configurationKey, configurationValue))
+    {
+        setResourceRepresentation(rep);
+        result = true;
+
+    }
+    else
+    {
+        result = false;
     }
 
     return result;

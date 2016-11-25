@@ -108,8 +108,8 @@ void ResourceHelper::initializeResultMap(void)
     m_resultMap[OC_STACK_ERROR] = "OC_STACK_ERROR";
 }
 
-bool ResourceHelper::waitForResourceFound(
-        vector< shared_ptr< OCResource > > &foundResourceList, int timeOut)
+bool ResourceHelper::waitForResourceFound(vector< shared_ptr< OCResource > > &foundResourceList,
+        int timeOut)
 {
     bool isTimeOut = false;
     int passedTime = 0;
@@ -257,4 +257,18 @@ void ResourceHelper::duplicateString(char ** targetString, string sourceString)
 {
     *targetString = new char[sourceString.length() + 1];
     strncpy(*targetString, sourceString.c_str(), (sourceString.length() + 1));
+}
+
+bool ResourceHelper::containsElement(vector< string > list, string target)
+{
+    bool isFound = false;
+    for (string element : list)
+    {
+        if (element.find(target) != string::npos)
+        {
+            isFound = true;
+            break;
+        }
+    }
+    return isFound;
 }

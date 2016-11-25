@@ -64,6 +64,9 @@ SampleResource *g_acAirFlowResource;
 SampleResource *g_acTemperatureResource;
 SampleResource *g_acTimerResource;
 SampleResource *g_acSwingResource;
+SampleResource *g_acSwitchResourceHidden;
+SampleResource *g_acAirFlowResourceHidden;
+SampleResource *g_acTemperatureResourceHidden;
 
 bool g_isSecuredClient = false;
 bool g_isSecuredServer = false;
@@ -84,9 +87,15 @@ ResourceHelper *g_resourceHelper;
 static mutex s_mutex;
 static const char CRED_FILE_SERVER[] = "oic_svr_db_server.dat";
 static const char CRED_FILE_CLIENT[] = "oic_svr_db_client.dat";
+static const string JUST_WORKS_DI = "6A757374-776F-726B-4465-765575696430";
+static const string RANDOM_PIN_DI = "72616E64-5069-6E44-6576-557569643030";
 static const int CLIENT_MODE = 1;
 static const int SERVER_MODE = 2;
+static int g_modeType;
+static int g_securityType;
 static const char sourceFileNames[][100] = { "../../oic_svr_db_server_justworks.dat", "../../oic_svr_db_server_randompin.dat" };
+string g_di = "";
+string g_collectionName = GROUP_NAME;
 
 void onObserve(const HeaderOptions headerOptions, const OCRepresentation &rep, const int &eCode,
         const int &sequenceNumber);
@@ -170,16 +179,16 @@ void replaceDatFile(int modeType, int securityType)
     FILE *source;
 
     source = fopen(sourceFileNames[securityType], "rb");
-    if(source == NULL)
+    if (source == NULL)
     {
-      cout << "Unable to read source file " << endl;
-      exit(-1);
+        cout << "Unable to read source file " << endl;
+        exit(-1);
     }
 
     if (modeType == CLIENT_MODE)
     {
         FILE *clientFile = fopen(CRED_FILE_CLIENT, "wb");
-        if(clientFile == NULL)
+        if (clientFile == NULL)
         {
             fclose(source);
             cout << "Unable to write client dat file " << endl;
@@ -194,10 +203,10 @@ void replaceDatFile(int modeType, int securityType)
         cout << "Dat File copied successfully" << endl;
         fclose(clientFile);
     }
-    else if(modeType == SERVER_MODE)
+    else if (modeType == SERVER_MODE)
     {
         FILE *serverFile = fopen(CRED_FILE_SERVER, "wb");
-        if(serverFile == NULL)
+        if (serverFile == NULL)
         {
             fclose(source);
             cout << "Unable to write server dat file " << endl;
@@ -219,7 +228,7 @@ void replaceDatFile(int modeType, int securityType)
 
 void generatePinCB(char* pin, size_t pinSize)
 {
-    if(NULL == pin || pinSize <= 0)
+    if (NULL == pin || pinSize <= 0)
     {
         cout << "Invalid PIN" << endl;
     }
@@ -312,24 +321,19 @@ int main(int argc, char* argv[])
         try
         {
             int optionSelected = stoi(argv[3]);
+            g_securityType = optionSelected % 2;
 
             if (optionSelected == 0 || optionSelected == 1)
             {
                 cout << "Using secured client...." << endl;
                 g_isSecuredClient = true;
-#ifdef SECURED
-                SetGeneratePinCB(generatePinCB);
-#endif
-                replaceDatFile(CLIENT_MODE, optionSelected%2);
+                g_modeType = CLIENT_MODE;
             }
             else if (optionSelected == 2 || optionSelected == 3)
             {
                 cout << "Using secured server...." << endl;
                 g_isSecuredServer = true;
-#ifdef SECURED
-                SetGeneratePinCB(generatePinCB);
-#endif
-                replaceDatFile(SERVER_MODE, optionSelected%2);
+                g_modeType = SERVER_MODE;
             }
             else
             {
@@ -338,14 +342,21 @@ int main(int argc, char* argv[])
 
             if (optionSelected >= 0 && optionSelected <= 3)
             {
-                if(optionSelected%2)
+#ifdef __SECURED__
+                SetGeneratePinCB(generatePinCB);
+#endif
+                if (g_securityType)
                 {
                     cout << "Supported Security Mode: randompin" << endl;
+                    g_di = RANDOM_PIN_DI;
                 }
                 else
                 {
                     cout << "Supported Security Mode: justworks" << endl;
+                    g_di = JUST_WORKS_DI;
                 }
+
+                replaceDatFile(g_modeType, g_securityType);
             }
         }
         catch (std::exception&)
@@ -398,6 +409,428 @@ int main(int argc, char* argv[])
     cout << "Quitting Conformance Simulator App.... Done!!" << endl;
 
     return 0;
+}
+
+OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest > request)
+{
+    OCEntityHandlerResult result = OC_EH_OK;
+    cout << "\tIn COllection entity handler:\n";
+
+    if (request)
+    {
+
+        auto pResponse = make_shared< OC::OCResourceResponse >();
+        pResponse->setRequestHandle(request->getRequestHandle());
+        pResponse->setResourceHandle(request->getResourceHandle());
+
+        // Get the request type and request flag
+        string requestType = request->getRequestType();
+        RequestHandlerFlag requestFlag = (RequestHandlerFlag) request->getRequestHandlerFlag();
+
+        if (requestFlag == RequestHandlerFlag::RequestFlag
+                || requestFlag == RequestHandlerFlag::ObserverFlag)
+        {
+            cout << "\t\trequestFlag : Request\n";
+            cout << "\t\t\trequestType : " << requestType << endl;
+            QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+            // If the request type is GET
+            if (requestType == "GET" || requestFlag == RequestHandlerFlag::ObserverFlag)
+            {
+                // Check for query params (if any)
+
+                cout << "Inside handleGetRequest... " << endl;
+                OCStackResult result = OC_STACK_ERROR;
+                bool shouldReturnError = false;
+                string responseInterface = DEFAULT_INTERFACE;
+                OCRepresentation rep;
+                OCRepresentation interimRep;
+                OCRepresentation linkRep;
+
+                vector< OCRepresentation > allChild;
+                vector< OCRepresentation > allChildren;
+                interimRep.setValue(URI_KEY, g_acSwitchResourceHidden->getUri());
+                interimRep.setValue("di", g_di);
+                interimRep.setValue(RESOURCE_TYPE_KEY,
+                        g_acSwitchResourceHidden->getResourceTypes());
+                interimRep.setValue(INTERFACE_KEY,
+                        g_acSwitchResourceHidden->getResourceInterfaces());
+                linkRep = interimRep;
+                allChildren.push_back(interimRep);
+
+                interimRep.setValue(URI_KEY, g_acTemperatureResourceHidden->getUri());
+                interimRep.setValue(RESOURCE_TYPE_KEY,
+                        g_acTemperatureResourceHidden->getResourceTypes());
+                interimRep.setValue(INTERFACE_KEY,
+                        g_acTemperatureResourceHidden->getResourceInterfaces());
+                allChild.push_back(interimRep);
+                allChildren.push_back(interimRep);
+
+                interimRep.setValue(URI_KEY, g_acAirFlowResourceHidden->getUri());
+                interimRep.setValue(RESOURCE_TYPE_KEY,
+                        g_acAirFlowResourceHidden->getResourceTypes());
+                interimRep.setValue(INTERFACE_KEY,
+                        g_acAirFlowResourceHidden->getResourceInterfaces());
+                allChild.push_back(interimRep);
+                allChildren.push_back(interimRep);
+                rep.setValue("links", allChildren);
+
+                linkRep.setChildren(allChild);
+                OCRepresentation links;
+
+
+                pResponse->setErrorCode(COAP_RESPONSE_CODE_RETRIEVED);
+                cout << "Current Resource Representation to send : " << endl;
+
+                if (queryParamsMap.size() > 0)
+                {
+                    for (const auto &eachQuery : queryParamsMap)
+                    {
+                        string key = eachQuery.first;
+                        string queryValue = eachQuery.second;
+                        if (key.compare(INTERFACE_KEY) == 0)
+                        {
+                            responseInterface = key;
+                            vector< string > interfaceList;
+                            vector< string > resourceTypeList;
+                            interfaceList.push_back(LINK_INTERFACE);
+                            interfaceList.push_back(BATCH_INTERFACE);
+                            interfaceList.push_back(DEFAULT_INTERFACE);
+
+                            resourceTypeList.push_back(GROUP_TYPE_ROOM);
+                            if (queryValue.compare(DEFAULT_INTERFACE) == 0)
+                            {
+                                cout << "Found baseline query, adding rt & if into response payload"
+                                        << endl;
+
+                                rep.setValue(NAME_KEY, g_collectionName);
+                                rep.setResourceInterfaces(interfaceList);
+                                rep.setResourceTypes(resourceTypeList);
+                                links.addChild(linkRep);
+
+                                pResponse->setResourceRepresentation(rep, responseInterface);
+
+                            }
+                            else if (queryValue.compare(LINK_INTERFACE) == 0)
+                            {
+                                cout << "Responding to linked list interface query" << endl;
+                                pResponse->setResourceRepresentation(rep, responseInterface);
+                            }
+                            else if (queryValue.compare(BATCH_INTERFACE) == 0)
+                            {
+                                cout << "Responding to batch interface query" << endl;
+                                OCRepresentation batchRep;
+                                batchRep.setValue(URI_KEY, g_acSwitchResourceHidden->getUri());
+                                batchRep.setValue(REPRESENTATION_KEY,
+                                        g_acSwitchResourceHidden->getRepresentation());
+
+                                OCRepresentation tempRep;
+                                vector< OCRepresentation > tempRepList;
+                                tempRep.setValue(URI_KEY, g_acTemperatureResourceHidden->getUri());
+                                tempRep.setValue(REPRESENTATION_KEY,
+                                        g_acTemperatureResourceHidden->getRepresentation());
+                                tempRepList.push_back(tempRep);
+
+                                tempRep.setValue(URI_KEY, g_acAirFlowResourceHidden->getUri());
+                                tempRep.setValue(REPRESENTATION_KEY,
+                                        g_acAirFlowResourceHidden->getRepresentation());
+                                tempRepList.push_back(tempRep);
+
+                                batchRep.setChildren(tempRepList);
+
+                                pResponse->setResourceRepresentation(batchRep, responseInterface);
+                            }
+                            else
+                            {
+                                cout
+                                        << "The interface  used in query is not supported by this resource"
+                                        << endl;
+                                shouldReturnError = true;
+                                break;
+                            }
+
+                            continue;
+                        }
+                        else if (key.compare(RESOURCE_TYPE_KEY) == 0)
+                        {
+                            vector< string > resourceTypeList;
+                            if ((queryValue.compare(GROUP_TYPE_ROOM) == 0)
+                                    || (queryValue.compare(GROUP_TYPE_AIRCON) == 0))
+                            {
+                                cout << "The resource type  used in query is oic.wk.col" << endl;
+                                pResponse->setResourceRepresentation(linkRep, responseInterface);
+                            }
+                            else
+                            {
+                                shouldReturnError = true;
+                            }
+                        }
+
+                    }
+                }
+                else
+                {
+                    cout << "No query found!!" << endl;
+
+                    pResponse->setResourceRepresentation(rep, responseInterface);
+                }
+
+                if (shouldReturnError)
+                {
+                    cout << "sending forbidden GET response" << endl;
+                    pResponse->setResourceRepresentation(OCRepresentation(), responseInterface);
+                    pResponse->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+                }
+                else
+                {
+                    cout << "sending normal GET response" << endl;
+                    pResponse->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
+                }
+
+                try
+                {
+                    result = OCPlatform::sendResponse(pResponse);
+                }
+                catch (exception& e)
+                {
+                    cout << "Exception occurred while sending response. Exception is: " << e.what()
+                            << endl;
+                }
+                if (result != OC_STACK_OK)
+                {
+                    cerr << "Unable to send response for GET Request" << endl;
+                }
+
+
+            }
+            else if (requestType == "PUT")
+            {
+                OCRepresentation incomingRepresentation = request->getResourceRepresentation();
+
+                // Check for query params (if any)
+                QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+            }
+            else if (requestType == "POST")
+            {
+                // POST request operations
+                OCRepresentation incomingRepresentation = request->getResourceRepresentation();
+                cout << "Inside handlePostRequest... " << endl;
+                OCStackResult result = OC_STACK_ERROR;
+                bool shouldReturnError = false;
+                string responseInterface = DEFAULT_INTERFACE;
+                OCRepresentation rep;
+                OCRepresentation interimRep;
+                OCRepresentation linkRep;
+
+                vector< OCRepresentation > allChild;
+                vector< OCRepresentation > allChildren;
+                OCRepresentation links;
+
+
+                pResponse->setErrorCode(COAP_RESPONSE_CODE_RETRIEVED);
+                cout << "Current Resource Representation to send : " << endl;
+
+                if (queryParamsMap.size() > 0)
+                {
+                    for (const auto &eachQuery : queryParamsMap)
+                    {
+                        string key = eachQuery.first;
+                        string queryValue = eachQuery.second;
+                        if (key.compare(INTERFACE_KEY) == 0)
+                        {
+                            responseInterface = key;
+                            vector< string > interfaceList;
+                            vector< string > resourceTypeList;
+                            interfaceList.push_back(LINK_INTERFACE);
+                            interfaceList.push_back(BATCH_INTERFACE);
+                            interfaceList.push_back(DEFAULT_INTERFACE);
+
+                            resourceTypeList.push_back(GROUP_TYPE_ROOM);
+                            if (queryValue.compare(DEFAULT_INTERFACE) == 0)
+                            {
+                                cout << "Found baseline query, adding rt & if into response payload"
+                                        << endl;
+
+                                if (incomingRepresentation.hasAttribute(NAME_KEY))
+                                {
+                                    incomingRepresentation.getValue(NAME_KEY, g_collectionName);
+                                    rep.setValue(NAME_KEY, g_collectionName);
+                                    pResponse->setResourceRepresentation(rep, responseInterface);
+                                }
+                                else
+                                {
+                                    shouldReturnError = true;
+                                }
+
+                            }
+                            else if (queryValue.compare(LINK_INTERFACE) == 0)
+                            {
+                                cout << "linked list interface query is not supported for update"
+                                        << endl;
+                                shouldReturnError = true;
+                            }
+                            else if (queryValue.compare(BATCH_INTERFACE) == 0)
+                            {
+                                cout << "Responding to batch interface query" << endl;
+                                OCRepresentation batchRep;
+                                bool isFirstTime = true;
+                                bool isUpdated = false;
+
+                                if (incomingRepresentation.hasAttribute(ON_OFF_KEY))
+                                {
+                                    isUpdated = g_acSwitchResourceHidden->updateRepresentation(
+                                            ON_OFF_KEY, incomingRepresentation);
+                                    if (isUpdated)
+                                    {
+                                        batchRep.setValue(URI_KEY,
+                                                g_acSwitchResourceHidden->getUri());
+                                        batchRep.setValue(REPRESENTATION_KEY,
+                                                g_acSwitchResourceHidden->getRepresentation());
+                                        isFirstTime = false;
+                                    }
+                                }
+
+                                OCRepresentation tempRep;
+                                vector< OCRepresentation > tempRepList;
+                                isUpdated = false;
+                                if (incomingRepresentation.hasAttribute(TEMPERATURE_KEY))
+                                {
+                                    isUpdated = g_acTemperatureResourceHidden->updateRepresentation(
+                                    TEMPERATURE_KEY, incomingRepresentation);
+                                    if (isUpdated && isFirstTime)
+                                    {
+                                        batchRep.setValue(URI_KEY,
+                                                g_acTemperatureResourceHidden->getUri());
+                                        batchRep.setValue(REPRESENTATION_KEY,
+                                                g_acTemperatureResourceHidden->getRepresentation());
+                                        isFirstTime = false;
+                                    }
+                                    else if (isUpdated && !isFirstTime)
+                                    {
+                                        tempRep.setValue(URI_KEY,
+                                                g_acTemperatureResourceHidden->getUri());
+                                        tempRep.setValue(REPRESENTATION_KEY,
+                                                g_acTemperatureResourceHidden->getRepresentation());
+                                        tempRepList.push_back(tempRep);
+                                    }
+                                }
+
+                                isUpdated = false;
+                                if (incomingRepresentation.hasAttribute(SPEED_KEY)
+                                        || incomingRepresentation.hasAttribute(DIRECTION_KEY))
+                                {
+
+                                    if (incomingRepresentation.hasAttribute(SPEED_KEY))
+                                    {
+                                        isUpdated = g_acAirFlowResourceHidden->updateRepresentation(
+                                        SPEED_KEY, incomingRepresentation);
+                                    }
+                                    if (incomingRepresentation.hasAttribute(DIRECTION_KEY))
+                                    {
+                                        isUpdated = g_acAirFlowResourceHidden->updateRepresentation(
+                                        DIRECTION_KEY, incomingRepresentation);
+                                    }
+                                    if (isUpdated && isFirstTime)
+                                    {
+                                        batchRep.setValue(URI_KEY,
+                                                g_acAirFlowResourceHidden->getUri());
+                                        batchRep.setValue(REPRESENTATION_KEY,
+                                                g_acAirFlowResourceHidden->getRepresentation());
+                                        isFirstTime = false;
+                                    }
+                                    else if (isUpdated && !isFirstTime)
+                                    {
+                                        tempRep.setValue(URI_KEY,
+                                                g_acAirFlowResourceHidden->getUri());
+                                        tempRep.setValue(REPRESENTATION_KEY,
+                                                g_acAirFlowResourceHidden->getRepresentation());
+                                        tempRepList.push_back(tempRep);
+                                    }
+                                }
+
+                                if (tempRepList.size() > 0)
+                                {
+                                    batchRep.setChildren(tempRepList);
+                                }
+
+                                if (isFirstTime)
+                                {
+                                    shouldReturnError = true;
+                                }
+                                else
+                                {
+                                    pResponse->setResourceRepresentation(batchRep,
+                                            responseInterface);
+                                }
+
+                            }
+                            else
+                            {
+                                cout
+                                        << "The interface  used in query is not supported by this resource"
+                                        << endl;
+                                shouldReturnError = true;
+                                break;
+                            }
+
+                            continue;
+                        }
+                    }
+                }
+                else
+                {
+                    cout << "No query found!!" << endl;
+                    shouldReturnError = true;
+                }
+
+                if (shouldReturnError)
+                {
+                    cout << "sending forbidden POST response" << endl;
+                    pResponse->setResourceRepresentation(OCRepresentation(), responseInterface);
+                    pResponse->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+                }
+                else
+                {
+                    cout << "sending normal POST response" << endl;
+                    pResponse->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
+                }
+
+                try
+                {
+                    result = OCPlatform::sendResponse(pResponse);
+                }
+                catch (exception& e)
+                {
+                    cout << "Exception occurred while sending response. Exception is: " << e.what()
+                            << endl;
+                }
+                if (result != OC_STACK_OK)
+                {
+                    cerr << "Unable to send response for GET Request" << endl;
+                }
+
+//                handlePostRequest(queryParamsMap, incomingRepresentation, request, pResponse); // Process query params and do required operations ..
+            }
+            else if (requestType == "DELETE")
+            {
+                // DELETE request operations
+                OCRepresentation incomingRepresentation = request->getResourceRepresentation();
+                // Check for query params (if any)
+                QueryParamsMap queryParamsMap = request->getQueryParameters();
+
+//                handleDeleteRequest(queryParamsMap, incomingRepresentation, request, pResponse); // Process query params and do required operations ..
+            }
+        }
+
+        result = OC_EH_OK;
+    }
+    else
+    {
+        cerr << "Request invalid" << endl;
+    }
+
+    return result;
 }
 
 void onResourceFound(shared_ptr< OCResource > resource)
@@ -474,7 +907,7 @@ void onDeviceInfoReceived(const OCRepresentation& rep)
     cout << "\nDevice Information received ---->\n";
     string value;
     string values[] =
-    { "di", "Device ID        ", "n", "Device name      ", "lcv", "Spec version url ", "dmv",
+    { "di", "Device ID        ", NAME_KEY, "Device name      ", "lcv", "Spec version url ", "dmv",
             "Data Model Model ", };
 
     for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]); i += 2)
@@ -537,7 +970,8 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
 // callback handler on PUT request
 void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
-    if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED || eCode == OC_STACK_RESOURCE_CHANGED)
+    if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_CHANGED
+            || eCode == OC_STACK_RESOURCE_CREATED)
     {
         cout << "Response: PUT request was successful" << endl;
         cout << "THe PUT response has the following representation:" << endl;
@@ -553,7 +987,8 @@ void onPut(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
 // callback handler on POST request
 void onPost(const HeaderOptions &headerOptions, const OCRepresentation &rep, const int eCode)
 {
-    if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_OK || eCode == OC_STACK_RESOURCE_CREATED || eCode == OC_STACK_RESOURCE_CHANGED)
+    if (eCode == SUCCESS_RESPONSE || eCode == OC_STACK_RESOURCE_CHANGED
+            || eCode == OC_STACK_RESOURCE_CREATED)
     {
         cout << "Response: POST request was successful" << endl;
         cout << "THe POST Response has the following representation:" << endl;
@@ -671,7 +1106,7 @@ void createResource()
 
         g_createdFanResource = new SampleResource();
         g_createdFanResource->setResourceProperties(FAN_1_URI, RESOURCE_TYPE_FAN,
-                ACTUATOR_INTERFACE);
+        ACTUATOR_INTERFACE);
         g_createdFanResource->setAsDiscoverableResource();
         result = g_createdFanResource->startResource();
 
@@ -710,7 +1145,7 @@ void createTvDevice(bool isSecured)
         SWITCH_RESOURCE_INTERFACE);
         OCRepresentation switchRep;
         string value = "";
-        switchRep.setValue("value", true);
+        switchRep.setValue(ON_OFF_KEY, true);
         g_tvSwitchResource->setResourceRepresentation(switchRep);
 
         result = g_tvSwitchResource->startResource(resourceProperty);
@@ -799,30 +1234,38 @@ void createAirConDevice(bool isSecured)
     OCStackResult result = OC_STACK_ERROR;
     cout << "Creating AirCon Device Resources!!" << endl;
     uint8_t resourceProperty = OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE;
+    uint8_t resourcePropertyHidden = OC_ACTIVE | OC_OBSERVABLE;
     if (isSecured)
     {
         resourceProperty = resourceProperty | OC_SECURE;
+        resourcePropertyHidden = resourcePropertyHidden | OC_SECURE;
     }
     if (g_isAirConDeviceCreated == false)
     {
         SampleResource::setDeviceInfo("Vendor Smart Home AirCon Device", Device_TYPE_AC);
 
         g_acSwitchResource = new SampleResource();
+        g_acSwitchResourceHidden = new SampleResource();
         g_acSwitchResource->setResourceProperties(AC_SWITCH_URI, SWITCH_RESOURCE_TYPE,
-        SWITCH_RESOURCE_INTERFACE);
+                SWITCH_RESOURCE_INTERFACE);
+        g_acSwitchResourceHidden->setResourceProperties(AC_SWITCH_URI_CHILD, SWITCH_RESOURCE_TYPE,
+                SWITCH_RESOURCE_INTERFACE);
         OCRepresentation switchRep;
         string value = "";
         vector< int > range;
         vector< double > rangeTemperature;
-        switchRep.setValue("value", true);
+        switchRep.setValue(ON_OFF_KEY, true);
         g_acSwitchResource->setResourceRepresentation(switchRep);
+        g_acSwitchResourceHidden->setResourceRepresentation(switchRep);
 
         result = g_acSwitchResource->startResource(resourceProperty);
+        result = g_acSwitchResourceHidden->startResource(resourcePropertyHidden);
 
         if (result == OC_STACK_OK)
         {
             cout << "AirConditioner Binary Switch Resource created successfully" << endl;
             g_createdResourceList.push_back(g_acSwitchResource);
+            g_createdResourceList.push_back(g_acSwitchResourceHidden);
             g_isAirConDeviceCreated = true;
         }
         else
@@ -831,9 +1274,11 @@ void createAirConDevice(bool isSecured)
         }
 
         g_acTemperatureResource = new SampleResource();
+        g_acTemperatureResourceHidden = new SampleResource();
         g_acTemperatureResource->setResourceProperties(AC_TEMPERATURE_URI,
-        TEMPERATURE_RESOURCE_TYPE,
-        TEMPERATURE_RESOURCE_INTERFACE);
+                TEMPERATURE_RESOURCE_TYPE, TEMPERATURE_RESOURCE_INTERFACE);
+        g_acTemperatureResourceHidden->setResourceProperties(AC_TEMPERATURE_URI_CHILD,
+                TEMPERATURE_RESOURCE_TYPE, TEMPERATURE_RESOURCE_INTERFACE);
         OCRepresentation temperatureRep;
         value = "C";
         temperatureRep.setValue("units", value);
@@ -843,14 +1288,17 @@ void createAirConDevice(bool isSecured)
         temperatureRep.setValue("range", rangeTemperature);
         g_acTemperatureResource->setAsReadOnly("range");
         double temperature = 24.50;
-        temperatureRep.setValue("temperature", temperature);
+        temperatureRep.setValue(TEMPERATURE_KEY, temperature);
         g_acTemperatureResource->setResourceRepresentation(temperatureRep);
+        g_acTemperatureResourceHidden->setResourceRepresentation(temperatureRep);
         result = g_acTemperatureResource->startResource(resourceProperty);
+        result = g_acTemperatureResourceHidden->startResource(resourcePropertyHidden);
 
         if (result == OC_STACK_OK)
         {
             cout << "Air Conditioner Temperature Resource created successfully" << endl;
             g_createdResourceList.push_back(g_acTemperatureResource);
+            g_createdResourceList.push_back(g_acTemperatureResourceHidden);
             g_isAirConDeviceCreated = true;
         }
         else
@@ -859,23 +1307,28 @@ void createAirConDevice(bool isSecured)
         }
 
         g_acAirFlowResource = new SampleResource();
+        g_acAirFlowResourceHidden = new SampleResource();
         setlocale(LC_ALL, "");
         g_acAirFlowResource->setResourceProperties(AC_AIR_FLOW_URI, AIR_FLOW_RESOURCE_TYPE,
-        AIR_FLOW_RESOURCE_INTERFACE);
+                AIR_FLOW_RESOURCE_INTERFACE);
+        g_acAirFlowResourceHidden->setResourceProperties(AC_AIR_FLOW_URI_CHILD,
+                AIR_FLOW_RESOURCE_TYPE, AIR_FLOW_RESOURCE_INTERFACE);
 
         OCRepresentation airFlowRep;
         int speed = 10;
         value = "up";
-        airFlowRep.setValue("direction", value);
-        airFlowRep.setValue("speed", speed);
+        airFlowRep.setValue(DIRECTION_KEY, value);
+        airFlowRep.setValue(SPEED_KEY, speed);
         range.clear();
         range.push_back(0);
         range.push_back(30);
         airFlowRep.setValue("range", range);
         g_acAirFlowResource->setAsReadOnly("range");
         g_acAirFlowResource->setResourceRepresentation(airFlowRep);
+        g_acAirFlowResourceHidden->setResourceRepresentation(airFlowRep);
 
         result = g_acAirFlowResource->startResource(resourceProperty);
+        result = g_acAirFlowResourceHidden->startResource(resourcePropertyHidden);
 
         if (result == OC_STACK_OK)
         {
@@ -931,7 +1384,8 @@ void createAirConDevice(bool isSecured)
         swingRep.setValue("x.com.vendor.swing.on", false);
         value = "horizontal";
         swingRep.setValue("x.com.vendor.swing.direction", value);
-        string supportedDirection[2] = {"horizontal", "vertical" };
+        string supportedDirection[2] =
+        { "horizontal", "vertical" };
         swingRep.setValue("x.com.vendor.swing.supported.direction", supportedDirection);
         g_acAirFlowResource->setAsReadOnly("x.com.vendor.swing.supported.direction");
 
@@ -1172,13 +1626,12 @@ void createGroup(string groupType)
             }
 
             OCPlatform::registerResource(g_collectionHandle, resourceURI, groupType,
-                    resourceInterface, NULL,
+                    resourceInterface, &entityHandlerCollection,
                     collectionProperty);
 
             cout << "Create Group is called." << endl;
 
             OCPlatform::bindInterfaceToResource(g_collectionHandle, BATCH_INTERFACE);
-            OCPlatform::bindInterfaceToResource(g_collectionHandle, GROUP_INTERFACE);
             OCPlatform::bindInterfaceToResource(g_collectionHandle, DEFAULT_INTERFACE);
 
             g_isGroupCreated = true;
@@ -1369,7 +1822,7 @@ void findResource(string resourceType, string host)
         // makes it so that all boolean values are printed as 'true/false' in this stream
         std::cout.setf(std::ios::boolalpha);
         // Find all resources
-        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=" << resourceType;
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << resourceType;
 
         OCPlatform::findResource(host, requestURI.str(), OCConnectivityType::CT_DEFAULT,
                 &onResourceFound, g_qos);
@@ -1836,6 +2289,59 @@ void updateLocalResource()
     }
 }
 
+void updateLocalResourceAutomatically()
+{
+    static bool binaryValue = false;
+    static double temperatureValue = 25;
+    static string directionValue = "left";
+
+    int selection = selectLocalResource();
+    if (selection != -1)
+    {
+        string key = "";
+        AttributeValue value;
+
+        string uri = g_createdResourceList.at(selection)->getUri();
+
+        if (!uri.compare(AC_SWITCH_URI))
+        {
+            key = string(ON_OFF_KEY);
+            value = binaryValue = !binaryValue;
+        }
+        else if (!uri.compare(AC_TEMPERATURE_URI))
+        {
+            key = string(TEMPERATURE_KEY);
+            value = temperatureValue =
+                    temperatureValue > 0 ? (temperatureValue - 26) : (temperatureValue + 26);
+        }
+        else if (!uri.compare(AC_AIR_FLOW_URI))
+        {
+            key = string(DIRECTION_KEY);
+            value = directionValue = directionValue.compare("left") ? "left" : "right";
+        }
+
+        OCRepresentation rep = g_createdResourceList.at(selection)->getRepresentation();
+        if (rep.hasAttribute(key))
+        {
+            rep.setValue(key, value);
+            g_createdResourceList.at(selection)->setResourceRepresentation(rep);
+            cout << "Successfully updated resource attribute!!" << endl;
+            ResourceHelper::getInstance()->printRepresentation(rep);
+            g_createdResourceList.at(selection)->notifyObservers(
+                    g_createdResourceList.at(selection));
+        }
+        else
+        {
+            cout << "The resource does not have the mentioned attribute" << endl;
+        }
+
+    }
+    else
+    {
+        cout << "No resource to Update!!" << endl;
+    }
+}
+
 void sendPostRequestUpdateUserInput()
 {
     int selection = selectResource();
@@ -1853,6 +2359,7 @@ void sendPostRequestUpdateUserInput()
         // Invoke resource's put API with rep, query map and the callback parameter
         cout << "Sending Partial Update Message(POST)..." << endl;
         QueryParamsMap query;
+        query[INTERFACE_KEY] = DEFAULT_INTERFACE;
         g_foundResourceList.at(selection)->post(rep, query, &onPost, g_qos);
         cout << "POST request sent!!" << endl;
         waitForCallback();
@@ -2113,7 +2620,7 @@ int selectLocalResource()
 void showMenu(int argc, char* argv[])
 {
     cout << "Please Select an option from the menu and press Enter" << endl;
-    cout << "\t\t 0. Quit IUT Simulator" << endl;
+    cout << "\t\t 0. Quit IUT Emulator App" << endl;
     cout << "\t Server Operations:" << endl;
     cout << "\t\t 1. Create Normal Resource" << endl;
     cout << "\t\t 2. Create Invisible Resource" << endl;
@@ -2148,14 +2655,18 @@ void showMenu(int argc, char* argv[])
     cout << "\t\t 32. Find Group" << endl;
     cout << "\t\t 32. Join Found Resource To Found Group" << endl;
     cout << "\t\t 33. Update Collection" << endl;
-    cout << "\t\t 34. Update Local Resource" << endl;
-    cout << "\t\t 35. Set Quality of Service - CON(Confirmable)" << endl;
-    cout << "\t\t 36. Set Quality of Service - NON(Non-Confirmable)" << endl;
+    cout << "\t\t 34. Update Local Resource Manually" << endl;
+    cout << "\t\t 35. Update Local Resource Automatically" << endl;
+    cout << "\t\t 36. Set Quality of Service - CON(Confirmable)" << endl;
+    cout << "\t\t 37. Set Quality of Service - NON(Non-Confirmable)" << endl;
+    cout << "\t\t 38. Reset Secure Storage" << endl;
     cout << "\t Smart Home Vertical Resource Creation:" << endl;
     cout << "\t\t 101. Create Smart TV Device" << endl;
     cout << "\t\t 102. Create Air Conditioner Device" << endl;
+#ifdef __SECURED__
     cout << "\t\t 103. Create Secured Smart TV Device" << endl;
     cout << "\t\t 104. Create Secured Air Conditioner Device" << endl;
+#endif
 
     g_hasCallbackArrived = false;
     handleMenu(argc, argv);
@@ -2184,7 +2695,14 @@ void handleMenu(int argc, char* argv[])
     }
 
     long int choice = strtol(userInput.c_str(), NULL, 10);
-    if ((choice > 36 && choice < 101) || choice < 0 || (choice > 8 && choice < 10) || choice > 104)
+
+    int totalSecuredMenu = 0;
+#ifdef __SECURED__
+    totalSecuredMenu = 2;
+#endif
+
+    if ((choice > 38 && choice < 101) || choice < 0 || (choice > 8 && choice < 10)
+            || (choice > 102 + totalSecuredMenu))
     {
         cout << "Invalid Input. Please input your choice again" << endl;
     }
@@ -2238,6 +2756,7 @@ void handleMenu(int argc, char* argv[])
             case 11:
                 cout << "Please type the Resource Type to find, then press Enter: ";
                 cin >> userResourceType;
+                userResourceType = "?rt=" + userResourceType;
                 findResource(userResourceType);
                 if (g_foundResourceList.size() == 0)
                 {
@@ -2266,6 +2785,7 @@ void handleMenu(int argc, char* argv[])
                 resourceHost = getHost();
                 cout << "Please type the Resource Type to find, then press Enter: ";
                 cin >> userResourceType;
+                userResourceType = "?rt=" + userResourceType;
                 findResource(userResourceType, resourceHost);
                 if (g_foundResourceList.size() == 0)
                 {
@@ -2413,13 +2933,22 @@ void handleMenu(int argc, char* argv[])
                 break;
 
             case 35:
+                updateLocalResourceAutomatically();
+                break;
+
+            case 36:
                 g_qos = QualityOfService::HighQos;
                 cout << "CON Type Message Selected for Client" << endl;
                 break;
 
-            case 36:
+            case 37:
                 g_qos = QualityOfService::LowQos;
                 cout << "NON Type Message Selected for Client" << endl;
+                break;
+
+            case 38:
+                replaceDatFile(g_modeType, g_securityType);
+                cout << "Replaced Secure Storage" << endl;
                 break;
 
             case 101:

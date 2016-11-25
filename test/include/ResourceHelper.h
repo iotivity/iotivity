@@ -46,6 +46,9 @@ namespace PH = std::placeholders;
 #define AC_SWITCH_URI "/BinarySwitchResURI"
 #define AC_TEMPERATURE_URI "/TemperatureResURI"
 #define AC_AIR_FLOW_URI "/AirFlowResURI"
+#define AC_SWITCH_URI_CHILD "/BinarySwitchResURI/Child"
+#define AC_TEMPERATURE_URI_CHILD "/TemperatureResURI/Child"
+#define AC_AIR_FLOW_URI_CHILD "/AirFlowResURI/Child"
 #define AC_TIMER_URI "/Vendor/AirConditioner/TimerClock"
 #define AC_CHILD_LOCK_URI "/Vendor/AirConditioner/ChildLock"
 #define AC_SWING_URI "/Vendor/AirConditioner/Swinger"
@@ -87,6 +90,8 @@ namespace PH = std::placeholders;
 #define RESOURCE_TYPE_LIGHT "core.light core.brightlight"
 #define RESOURCE_TYPE_FAN "core.fan core.table-fan"
 #define GROUP_TYPE_ROOM "oic.wk.col"
+#define GROUP_TYPE_AIRCON "x.com.vendor.aircon.collection"
+#define GROUP_NAME "AirCon Collection"
 #define RESOURCE_TYPE_ROOM "core.room"
 #define SERVER_IP_V4 "0.0.0.0"
 #define SERVER_IP_V6 ":::::"
@@ -117,6 +122,7 @@ const int SUCCESS_RESPONSE = 0;
 #define DEFAULT_ACCURACY 0.85
 #define DEFAULT_CRUDN_SUPPORT true
 
+#define REPRESENTATION_KEY "rep"
 #define URI_KEY "href"
 #define POWER_KEY "power"
 #define INTENSITY_KEY "intensity"
@@ -135,6 +141,12 @@ const int SUCCESS_RESPONSE = 0;
 #define CRUDN_SUPPORT_KEY "isCRUDN"
 #define RESOURCE_TYPE_KEY "rt"
 #define INTERFACE_KEY "if"
+#define NAME_KEY "n"
+#define TEMPERATURE_KEY "temperature"
+#define SPEED_KEY "speed"
+#define DIRECTION_KEY "direction"
+#define ON_OFF_KEY "value"
+
 
 #define PLATFORM_ID "436f6e66-6f72-6d61-6e63-6553696d756c"
 #define MANUFACTURER_NAME DEFAULT_MANUFACTURER
@@ -267,6 +279,8 @@ public:
      *
      */
     static void duplicateString(char ** targetString, string sourceString);
+
+    bool containsElement(vector< string > list, string target);
 
 };
 

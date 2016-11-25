@@ -79,6 +79,7 @@ public:
     OCStackResult addArrayAttribute(string key, OCRepresentation arrayRep);
 
     void notifyObservers(void *param);
+    bool updateRepresentation(string key, OCRepresentation incomingRep);
 
 private:
     void handleRecursiveActionSet();
