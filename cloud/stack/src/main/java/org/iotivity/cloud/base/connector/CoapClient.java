@@ -42,12 +42,14 @@ public class CoapClient implements IRequestChannel, IResponseEventHandler {
 
     private class RequestInfo {
         private byte[]                originToken     = null;
+        private IRequest              originRequest   = null;
         private IResponseEventHandler responseHandler = null;
         private Observe               observe         = Observe.NOTHING;
 
-        public RequestInfo(byte[] originToken,
+        public RequestInfo(byte[] originToken, IRequest originRequest,
                 IResponseEventHandler responseHandler, Observe observe) {
             this.originToken = originToken;
+            this.originRequest = originRequest;
             this.responseHandler = responseHandler;
             this.observe = observe;
         }
@@ -104,7 +106,7 @@ public class CoapClient implements IRequestChannel, IResponseEventHandler {
 
             coapRequest.setToken(Bytes.longTo8Bytes(newToken));
             mTokenExchanger.put(newToken,
-                    new RequestInfo(token, responseEvent, observe));
+                    new RequestInfo(token, request, responseEvent, observe));
 
             mChannel.writeAndFlush(request);
 
@@ -130,9 +132,10 @@ public class CoapClient implements IRequestChannel, IResponseEventHandler {
                     + Bytes.bytesToLong(coapResponse.getToken()));
         }
 
+        ((CoapRequest) reqInfo.originRequest).setToken(reqInfo.originToken);
+
         // Subscription response should stored
-        if (reqInfo.observe != Observe.SUBSCRIBE
-                || coapResponse.getSequenceNumber() == -1) {
+        if (reqInfo.observe != Observe.SUBSCRIBE) {
             mTokenExchanger.remove(Bytes.bytesToLong(coapResponse.getToken()));
             if (mSubscription
                     .containsKey(Bytes.bytesToLong(reqInfo.originToken))) {
@@ -140,16 +143,18 @@ public class CoapClient implements IRequestChannel, IResponseEventHandler {
             }
         }
 
-        coapResponse.setToken(reqInfo.originToken);
-        reqInfo.responseHandler.onResponseReceived(coapResponse);
+        if (reqInfo.responseHandler != null) {
+            coapResponse.setToken(reqInfo.originToken);
+            reqInfo.responseHandler.onResponseReceived(coapResponse);
+        }
     }
 
-    private void addObserve(long token, long newtoken) {
+    public void addObserve(long token, long newtoken) {
 
         mSubscription.put(token, newtoken);
     }
 
-    private Long removeObserve(long token) {
+    public Long removeObserve(long token) {
 
         Long getToken = mSubscription.remove(token);
         return getToken;

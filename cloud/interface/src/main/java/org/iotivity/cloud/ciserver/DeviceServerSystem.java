@@ -109,8 +109,7 @@ public class DeviceServerSystem extends ServerSystem {
             Iterator<String> iterator = mMapDevice.keySet().iterator();
             while (iterator.hasNext()) {
                 String deviceId = iterator.next();
-                CoapDevice getDevice = (CoapDevice) mDevicePool
-                        .queryDevice(deviceId);
+                CoapDevice getDevice = (CoapDevice) queryDevice(deviceId);
                 getDevice.removeObserveChannel(
                         ((CoapDevice) device).getRequestChannel());
             }
@@ -154,11 +153,14 @@ public class DeviceServerSystem extends ServerSystem {
 
                     CoapRequest coapRequest = (CoapRequest) msg;
                     IRequestChannel targetChannel = null;
-                    if (coapRequest.getUriPathSegments()
-                            .contains(Constants.REQ_DEVICE_ID)) {
+                    if (coapRequest.getUriPath()
+                            .contains(Constants.ROUTE_FULL_URI)) {
+
+                        int RouteResourcePathSize = Constants.ROUTE_FULL_URI
+                                .split("/").length;
                         CoapDevice targetDevice = (CoapDevice) mDevicePool
                                 .queryDevice(coapRequest.getUriPathSegments()
-                                        .get(1));
+                                        .get(RouteResourcePathSize - 1));
                         targetChannel = targetDevice.getRequestChannel();
                     }
                     switch (coapRequest.getObserve()) {
@@ -194,34 +196,32 @@ public class DeviceServerSystem extends ServerSystem {
         public void write(ChannelHandlerContext ctx, Object msg,
                 ChannelPromise promise) throws Exception {
 
-            if (!(msg instanceof CoapResponse)) {
-                throw new BadRequestException(
-                        "this msg type is not CoapResponse");
-            }
-            // This is CoapResponse
-            // Once the response is valid, add this to deviceList
-            CoapResponse response = (CoapResponse) msg;
+            boolean bCloseConnection = false;
 
-            switch (response.getUriPath()) {
-                case OICConstants.ACCOUNT_SESSION_FULL_URI:
-                    if (response.getStatus() != ResponseStatus.CHANGED) {
-                        throw new UnAuthorizedException();
-                    }
+            if (msg instanceof CoapResponse) {
+                // This is CoapResponse
+                // Once the response is valid, add this to deviceList
+                CoapResponse response = (CoapResponse) msg;
 
-                    if (response.getPayload() != null) {
+                switch (response.getUriPath()) {
+                    case OICConstants.ACCOUNT_SESSION_FULL_URI:
+                        if (response.getStatus() != ResponseStatus.CHANGED) {
+                            bCloseConnection = true;
+                        }
                         break;
-                    }
-
-                    ctx.close();
-                    break;
-                case OICConstants.ACCOUNT_FULL_URI:
-                    if (response.getStatus() != ResponseStatus.DELETED) {
+                    case OICConstants.ACCOUNT_FULL_URI:
+                        if (response.getStatus() == ResponseStatus.DELETED) {
+                            bCloseConnection = true;
+                        }
                         break;
-                    }
-                    ctx.close();
-                    break;
+                }
             }
+
             ctx.writeAndFlush(msg);
+
+            if (bCloseConnection == true) {
+                ctx.close();
+            }
         }
 
         @Override

@@ -33,9 +33,6 @@ import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.device.IResponseEventHandler;
 import org.iotivity.cloud.base.exception.ServerException;
-import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
-import org.iotivity.cloud.base.exception.ServerException.NotFoundException;
-import org.iotivity.cloud.base.exception.ServerException.PreconditionFailedException;
 import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
@@ -54,32 +51,26 @@ import org.iotivity.cloud.util.Cbor;
  * device
  *
  */
-public class DiResource extends Resource {
+public class RouteResource extends Resource {
 
     private CoapDevicePool                mDevicePool = null;
     private IRequestChannel               mASServer   = null;
     private Cbor<HashMap<String, Object>> mCbor       = new Cbor<>();
 
-    public DiResource(CoapDevicePool devicePool) {
-        super(Arrays.asList(Constants.REQ_DEVICE_ID));
+    public RouteResource(CoapDevicePool devicePool) {
+        super(Arrays.asList(Constants.PREFIX_OIC, Constants.REQ_DEVICE_ROUTE));
         mASServer = ConnectorPool.getConnection("account");
         mDevicePool = devicePool;
     }
 
     private IRequestChannel getTargetDeviceChannel(IRequest request)
             throws ServerException {
-        List<String> uriPathSegment = request.getUriPathSegments();
 
-        if (uriPathSegment.size() < 2) {
-            throw new PreconditionFailedException();
-        }
-
-        String deviceId = uriPathSegment.get(1);
         CoapDevice targetDevice = (CoapDevice) mDevicePool
-                .queryDevice(deviceId);
+                .queryDevice(getDeviceId(request));
 
         if (targetDevice == null) {
-            throw new NotFoundException();
+            return null;
         }
 
         // Do request and receive response
@@ -90,7 +81,9 @@ public class DiResource extends Resource {
         List<String> uriPathSegment = request.getUriPathSegments();
 
         // Remove prefix path
-        uriPathSegment.remove(0);
+        for (String path : getUriPathSegments()) {
+            uriPathSegment.remove(path);
+        }
         uriPathSegment.remove(0);
 
         StringBuilder uriPath = new StringBuilder();
@@ -107,12 +100,22 @@ public class DiResource extends Resource {
 
         CoapResponse coapResponse = (CoapResponse) response;
 
+        StringBuilder uriPath = new StringBuilder();
+        for (String path : getUriPathSegments()) {
+            uriPath.append("/" + path);
+        }
+
         if (coapResponse.getUriPath().isEmpty() == false) {
-            convertedUri = "/di/" + di + "/" + coapResponse.getUriPath();
+            convertedUri = uriPath.toString() + "/" + di
+                    + coapResponse.getUriPath();
         }
 
         return MessageBuilder.modifyResponse(response, convertedUri, null,
                 null);
+    }
+
+    private String getDeviceId(IRequest request) {
+        return request.getUriPathSegments().get(getUriPathSegments().size());
     }
 
     /**
@@ -125,30 +128,40 @@ public class DiResource extends Resource {
         private Cbor<List<HashMap<String, Object>>> mCbor      = new Cbor<>();
         private String                              mTargetDI  = null;
         private Device                              mSrcDevice = null;
+        private IRequest                            mRequest   = null;
 
-        public LinkInterfaceHandler(String targetDI, Device srcDevice) {
+        public LinkInterfaceHandler(String targetDI, Device srcDevice,
+                IRequest request) {
             mTargetDI = targetDI;
             mSrcDevice = srcDevice;
+            mRequest = request;
         }
 
         private void convertHref(List<HashMap<String, Object>> linkPayload) {
+
+            StringBuilder uriPath = new StringBuilder();
+            for (String path : getUriPathSegments()) {
+                uriPath.append("/" + path);
+            }
+
             for (HashMap<String, Object> link : linkPayload) {
-                link.put("href", "/di/" + mTargetDI + link.get("href"));
+                link.put("href", uriPath.toString() + "/" + mTargetDI
+                        + link.get("href"));
             }
         }
 
         @Override
         public void onResponseReceived(IResponse response) {
             List<HashMap<String, Object>> linkPayload = null;
-            if (response.getStatus() == ResponseStatus.CONTENT) {
+            if (response.getStatus().equals(ResponseStatus.CONTENT)) {
                 linkPayload = mCbor.parsePayloadFromCbor(response.getPayload(),
                         ArrayList.class);
                 if (linkPayload == null) {
-                    throw new BadRequestException("payload is null");
+                    mSrcDevice.sendResponse(MessageBuilder.createResponse(
+                            mRequest, ResponseStatus.NOT_FOUND));
                 }
                 convertHref(linkPayload);
             }
-
             mSrcDevice.sendResponse(MessageBuilder.modifyResponse(
                     convertReponseUri(response, mTargetDI),
                     ContentFormat.APPLICATION_CBOR, linkPayload != null
@@ -194,9 +207,9 @@ public class DiResource extends Resource {
                             .get(Constants.RESP_GRANT_POLICY);
                     verifyRequest(mSrcDevice, mRequest, gp);
                     break;
+
                 default:
-                    mSrcDevice.sendResponse(MessageBuilder.createResponse(
-                            mRequest, ResponseStatus.BAD_REQUEST));
+                    mSrcDevice.sendResponse(response);
             }
 
         }
@@ -205,42 +218,35 @@ public class DiResource extends Resource {
     private void verifyRequest(Device srcDevice, IRequest request,
             String grantPermisson) {
         switch (grantPermisson) {
+            case Constants.RESP_ACL_DENIED:
+                srcDevice.sendResponse(MessageBuilder.createResponse(request,
+                        ResponseStatus.UNAUTHORIZED));
+                break;
+
             case Constants.RESP_ACL_ALLOWED:
                 IRequestChannel requestChannel = getTargetDeviceChannel(
                         request);
 
                 if (requestChannel == null) {
-                    throw new NotFoundException();
+                    srcDevice.sendResponse(MessageBuilder
+                            .createResponse(request, ResponseStatus.NOT_FOUND));
+                    break;
                 }
 
-                String deviceId = request.getUriPathSegments().get(1);
-
-                IResponseEventHandler responseHandler = null;
-                if (request.getUriQuery() != null && checkQueryException(
-                        Constants.RS_INTERFACE, request.getUriQueryMap())) {
-                    boolean hasLinkInterface = request.getUriQuery()
-                            .contains(Constants.LINK_INTERFACE);
-                    if (hasLinkInterface) {
-                        responseHandler = new LinkInterfaceHandler(deviceId,
-                                srcDevice);
-                    }
-                } else {
-                    responseHandler = new DefaultResponseHandler(deviceId,
-                            srcDevice);
+                IResponseEventHandler responseHandler = new DefaultResponseHandler(
+                        getDeviceId(request), srcDevice);
+                if (request.getUriQuery() != null && request.getUriQuery()
+                        .contains(Constants.LINK_INTERFACE)) {
+                    responseHandler = new LinkInterfaceHandler(
+                            getDeviceId(request), srcDevice, request);
                 }
 
                 String uriPath = extractTargetUriPath(request);
                 IRequest requestToResource = MessageBuilder
                         .modifyRequest(request, uriPath, null, null, null);
+
                 requestChannel.sendRequest(requestToResource, responseHandler);
                 break;
-            case Constants.RESP_ACL_DENIED:
-                srcDevice.sendResponse(MessageBuilder.createResponse(request,
-                        ResponseStatus.UNAUTHORIZED));
-                break;
-            default:
-                srcDevice.sendResponse(MessageBuilder.createResponse(request,
-                        ResponseStatus.BAD_REQUEST));
         }
     }
 
@@ -251,8 +257,8 @@ public class DiResource extends Resource {
         StringBuffer uriQuery = new StringBuffer();
         uriQuery.append(Constants.REQ_SEARCH_USER_ID + "="
                 + srcDevice.getUserId() + ";");
-        uriQuery.append(Constants.REQ_DEVICE_ID + "="
-                + request.getUriPathSegments().get(1) + ";");
+        uriQuery.append(
+                Constants.REQ_DEVICE_ID + "=" + getDeviceId(request) + ";");
         uriQuery.append(
                 Constants.REQ_REQUEST_METHOD + "=" + request.getMethod() + ";");
         uriQuery.append(Constants.REQ_REQUEST_URI + "="

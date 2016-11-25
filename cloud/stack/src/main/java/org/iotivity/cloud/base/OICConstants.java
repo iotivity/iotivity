@@ -56,6 +56,8 @@ public class OICConstants {
 
     public static final String ID_URI                        = "id";
 
+    public static final String ROUTE_URI                     = "route";
+
     public static final String INVITE_URI                    = "invite";
 
     /* resource uri to publish, update, delete resource info */
@@ -119,6 +121,9 @@ public class OICConstants {
 
     public static final String KEEP_ALIVE_FULL_URI           = "/" + PREFIX_OIC
             + "/" + OICConstants.KEEP_ALIVE_URI;
+
+    public static final String ROUTE_FULL_URI                = "/" + PREFIX_OIC
+            + "/" + OICConstants.ROUTE_URI;
 
     public static final String MQ_BROKER_FULL_URI            = "/"
             + OICConstants.PREFIX_OIC + "/" + OICConstants.MQ_BROKER_URI;

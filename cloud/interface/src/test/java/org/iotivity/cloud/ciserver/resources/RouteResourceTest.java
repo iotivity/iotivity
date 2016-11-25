@@ -44,9 +44,9 @@ import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.ciserver.DeviceServerSystem;
 import org.iotivity.cloud.ciserver.DeviceServerSystem.CoapDevicePool;
-import org.iotivity.cloud.ciserver.resources.DiResource.AccountReceiveHandler;
-import org.iotivity.cloud.ciserver.resources.DiResource.DefaultResponseHandler;
-import org.iotivity.cloud.ciserver.resources.DiResource.LinkInterfaceHandler;
+import org.iotivity.cloud.ciserver.resources.RouteResource.AccountReceiveHandler;
+import org.iotivity.cloud.ciserver.resources.RouteResource.DefaultResponseHandler;
+import org.iotivity.cloud.ciserver.resources.RouteResource.LinkInterfaceHandler;
 import org.iotivity.cloud.util.Cbor;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,7 +57,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-public class DiResourceTest {
+public class RouteResourceTest {
     private static final String           RELAY_URI                          = "/di";
     private static final String           RESOURCE_URI                       = "/a/light/0";
     private static final String           VERIFY_URI                         = "/oic/acl/verify";
@@ -85,19 +85,19 @@ public class DiResourceTest {
     IRequestChannel                       requestChannel;
 
     @InjectMocks
-    DiResource                            diHandler                          = new DiResource(
+    RouteResource                            diHandler                          = new RouteResource(
             coapDevicePool);
+
+    IRequest                              requestDefault                     = makePutRequest();
+    IRequest                              requestLinkInterface               = makePutLinkInterfaceRequest();
 
     @InjectMocks
     LinkInterfaceHandler                  linkInterfaceHandler               = diHandler.new LinkInterfaceHandler(
-            "targetDeviceId", mSourceDevice);
+            "targetDeviceId", mSourceDevice, requestLinkInterface);
 
     @InjectMocks
     DefaultResponseHandler                defaultResponseHandler             = diHandler.new DefaultResponseHandler(
             "targetDeviceId", mSourceDevice);
-
-    IRequest                              requestDefault                     = makePutRequest();
-    IRequest                              requestLinkInterface               = makePutLinkInterfaceRequest();
 
     @InjectMocks
     AccountReceiveHandler                 accountDefaultReceiveHandler       = diHandler.new AccountReceiveHandler(
