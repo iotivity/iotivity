@@ -80,12 +80,6 @@ public class DevicePresence extends Resource {
                             .parsePayloadFromCbor(response.getPayload(),
                                     HashMap.class);
 
-                    if (payloadData == null) {
-                        mSrcDevice.sendResponse(MessageBuilder.createResponse(
-                                mRequest, ResponseStatus.BAD_REQUEST));
-                        return;
-                    }
-
                     ArrayList<String> devices = (ArrayList<String>) getResponseDeviceList(
                             payloadData);
 
@@ -101,12 +95,7 @@ public class DevicePresence extends Resource {
                     } else {
                         String additionalQuery = makeAdditionalQuery(
                                 payloadData, mSrcDevice.getDeviceId());
-                        if (additionalQuery == null) {
-                            mSrcDevice.sendResponse(
-                                    MessageBuilder.createResponse(mRequest,
-                                            ResponseStatus.BAD_REQUEST));
-                            return;
-                        }
+
                         String uriQuery = additionalQuery.toString()
                                 + (mRequest.getUriQuery() != null
                                         ? (";" + mRequest.getUriQuery()) : "");
@@ -116,9 +105,9 @@ public class DevicePresence extends Resource {
 
                     mRDServer.sendRequest(mRequest, mSrcDevice);
                     break;
+
                 default:
-                    mSrcDevice.sendResponse(MessageBuilder.createResponse(
-                            mRequest, ResponseStatus.BAD_REQUEST));
+                    mSrcDevice.sendResponse(response);
             }
         }
 

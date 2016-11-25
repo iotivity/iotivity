@@ -37,7 +37,6 @@ import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
-import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.util.Cbor;
@@ -95,6 +94,7 @@ public class ResourceDirectory extends Resource {
             case DELETE:
                 mRDServer.sendRequest(request, srcDevice);
                 break;
+
             default:
                 throw new BadRequestException(
                         request.getMethod() + " request type is not support");
@@ -116,15 +116,8 @@ public class ResourceDirectory extends Resource {
 
             switch (response.getStatus()) {
                 case CHANGED:
-
                     byte[] convertedPayload = convertPublishHref(mRequest,
                             mSrcDevice);
-
-                    if (convertedPayload == null) {
-
-                        mSrcDevice.sendResponse(MessageBuilder.createResponse(
-                                mRequest, ResponseStatus.PRECONDITION_FAILED));
-                    }
 
                     mRequest = MessageBuilder.modifyRequest(mRequest, null,
                             null, ContentFormat.APPLICATION_CBOR,
@@ -135,8 +128,7 @@ public class ResourceDirectory extends Resource {
                     break;
 
                 default:
-                    mSrcDevice.sendResponse(MessageBuilder.createResponse(
-                            mRequest, ResponseStatus.BAD_REQUEST));
+                    mSrcDevice.sendResponse(response);
             }
         }
 
@@ -147,18 +139,14 @@ public class ResourceDirectory extends Resource {
             HashMap<String, Object> payload = cbor
                     .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
-            if (verifyPublishPayload(payload) == false) {
-
-                return null;
-            }
-
             ArrayList<HashMap<String, Object>> links = (ArrayList<HashMap<String, Object>>) payload
                     .get(Constants.REQ_LINKS);
 
             for (HashMap<String, Object> link : links) {
 
                 String href = (String) link.get(Constants.REQ_HREF);
-                href = "/di/" + device.getDeviceId() + href;
+                href = Constants.ROUTE_FULL_URI + "/" + device.getDeviceId()
+                        + href;
 
                 link.put(Constants.REQ_HREF, href);
             }
@@ -166,28 +154,6 @@ public class ResourceDirectory extends Resource {
             payload.put(Constants.REQ_LINKS, links);
 
             return cbor.encodingPayloadToCbor(payload);
-        }
-
-        @SuppressWarnings("unchecked")
-        private boolean verifyPublishPayload(HashMap<String, Object> payload) {
-
-            ArrayList<HashMap<String, Object>> links = (ArrayList<HashMap<String, Object>>) payload
-                    .get(Constants.REQ_LINKS);
-
-            if (links == null || links.isEmpty()) {
-                return false;
-            }
-
-            for (HashMap<String, Object> link : links) {
-
-                String href = (String) link.get(Constants.REQ_HREF);
-
-                if (href == null || href.isEmpty()) {
-                    return false;
-                }
-            }
-
-            return true;
         }
     }
 
@@ -207,13 +173,11 @@ public class ResourceDirectory extends Resource {
 
             switch (response.getStatus()) {
                 case CHANGED:
-
                     response = MessageBuilder.modifyResponse(response,
                             ContentFormat.APPLICATION_CBOR,
                             convertResponseHref(response));
 
                 default:
-
                     mSrcDevice.sendResponse(response);
             }
         }
@@ -235,9 +199,14 @@ public class ResourceDirectory extends Resource {
                 // remove prefix
                 ArrayList<String> hrefSegments = new ArrayList<>(
                         Arrays.asList(href.split("/")));
-                for (int i = 0; i < 3; i++) {
-                    hrefSegments.remove(0);
+
+                ArrayList<String> RouteResourceSegment = new ArrayList<>(
+                        Arrays.asList(Constants.ROUTE_FULL_URI.split("/")));
+
+                for (String path : RouteResourceSegment) {
+                    hrefSegments.remove(path);
                 }
+                hrefSegments.remove(0);
 
                 StringBuilder newHref = new StringBuilder();
                 for (String path : hrefSegments) {

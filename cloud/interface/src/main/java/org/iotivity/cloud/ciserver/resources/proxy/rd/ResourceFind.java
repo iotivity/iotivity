@@ -36,7 +36,6 @@ import org.iotivity.cloud.base.protocols.IRequest;
 import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
-import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
 import org.iotivity.cloud.base.resource.Resource;
 import org.iotivity.cloud.ciserver.Constants;
 import org.iotivity.cloud.util.Cbor;
@@ -80,39 +79,23 @@ public class ResourceFind extends Resource {
                             .parsePayloadFromCbor(response.getPayload(),
                                     HashMap.class);
 
-                    if (payloadData == null) {
-                        mSrcDevice.sendResponse(MessageBuilder.createResponse(
-                                mRequest, ResponseStatus.BAD_REQUEST));
-                        return;
-                    }
-
                     ArrayList<String> devices = (ArrayList<String>) getResponseDeviceList(
                             payloadData);
 
-                    if (mRequest.getUriQuery() != null
-                            && mRequest.getUriQueryMap()
-                                    .containsKey(Constants.REQ_DEVICE_ID)) {
-                        if (!devices.containsAll(mRequest.getUriQueryMap()
-                                .get(Constants.REQ_DEVICE_ID))) {
-                            mSrcDevice.sendResponse(
-                                    MessageBuilder.createResponse(mRequest,
-                                            ResponseStatus.BAD_REQUEST));
-                        }
-                    } else {
-                        StringBuilder additionalQuery = makeAdditionalQuery(
-                                devices);
-                        String uriQuery = (additionalQuery != null
-                                ? additionalQuery.toString() : "")
-                                + (mRequest.getUriQuery() != null
-                                        ? (";" + mRequest.getUriQuery()) : "");
-                        mRequest = MessageBuilder.modifyRequest(mRequest, null,
-                                uriQuery, null, null);
-                    }
+                    StringBuilder additionalQuery = makeAdditionalQuery(
+                            devices);
+                    String uriQuery = (additionalQuery != null
+                            ? additionalQuery.toString() : "")
+                            + (mRequest.getUriQuery() != null
+                                    ? (";" + mRequest.getUriQuery()) : "");
+                    mRequest = MessageBuilder.modifyRequest(mRequest, null,
+                            uriQuery, null, null);
+
                     mRDServer.sendRequest(mRequest, mSrcDevice);
                     break;
+
                 default:
-                    mSrcDevice.sendResponse(MessageBuilder.createResponse(
-                            mRequest, ResponseStatus.BAD_REQUEST));
+                    mSrcDevice.sendResponse(response);
             }
         }
 
@@ -158,6 +141,7 @@ public class ResourceFind extends Resource {
                 .containsKey(Constants.REQ_DEVICE_ID)) {
 
             mRDServer.sendRequest(request, srcDevice);
+
         } else {
             StringBuffer additionalQuery = new StringBuffer();
             additionalQuery

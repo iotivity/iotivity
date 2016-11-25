@@ -27,7 +27,7 @@ import java.util.Scanner;
 import org.iotivity.cloud.base.connector.ConnectorPool;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.ciserver.DeviceServerSystem.CoapDevicePool;
-import org.iotivity.cloud.ciserver.resources.DiResource;
+import org.iotivity.cloud.ciserver.resources.RouteResource;
 import org.iotivity.cloud.ciserver.resources.KeepAliveResource;
 import org.iotivity.cloud.ciserver.resources.proxy.account.Account;
 import org.iotivity.cloud.ciserver.resources.proxy.account.AccountSession;
@@ -113,7 +113,7 @@ public class CloudInterfaceServer {
 
         deviceServer.addResource(resKeepAlive);
 
-        deviceServer.addResource(new DiResource(devicePool));
+        deviceServer.addResource(new RouteResource(devicePool));
 
         deviceServer.addServer(new CoapServer(
                 new InetSocketAddress(Integer.parseInt(args[0]))));

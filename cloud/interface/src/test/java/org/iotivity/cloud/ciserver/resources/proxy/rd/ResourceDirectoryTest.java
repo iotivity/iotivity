@@ -55,9 +55,7 @@ import org.mockito.stubbing.Answer;
 
 public class ResourceDirectoryTest {
     private static final String TEST_RD_URI         = Constants.RD_FULL_URI;
-    public static final String  DEVICE_PRS_REQ_URI  = Constants.DEVICE_PRESENCE_FULL_URI;
     public static final String  DEVICE_LIST_KEY     = "devices";
-    public static final String  RES_PRS_URI         = Constants.RESOURCE_PRESENCE_FULL_URI;
 
     private String              mDi                 = "B371C481-38E6-4D47-8320-7688D8A5B58C";
     String                      mUserId             = "testuser";
@@ -153,8 +151,8 @@ public class ResourceDirectoryTest {
                 rdPublishRequest, mMockDevice);
 
         IRequest request = makeResourcePublishRequest();
-        accountReceiveHandler.onResponseReceived(MessageBuilder.createResponse(
-                request, ResponseStatus.CHANGED));
+        accountReceiveHandler.onResponseReceived(
+                MessageBuilder.createResponse(request, ResponseStatus.CHANGED));
 
         assertEquals(mReqRDServer, rdPublishRequest);
         assertTrue(mLatch.await(1L, SECONDS));
@@ -167,11 +165,11 @@ public class ResourceDirectoryTest {
                 rdPublishRequest, mMockDevice);
 
         IRequest request = makeResourcePublishRequest();
-        accountReceiveHandler.onResponseReceived(MessageBuilder.createResponse(
-                request, ResponseStatus.CHANGED));
+        accountReceiveHandler.onResponseReceived(
+                MessageBuilder.createResponse(request, ResponseStatus.CHANGED));
 
         assertEquals(getHrefInTestPublishPayload(mReqRDServer.getPayload()),
-                "/di/" + mDi + "/a/light");
+                "/oic/route/" + mDi + "/a/light");
     }
 
     @Test
@@ -233,7 +231,7 @@ public class ResourceDirectoryTest {
         payload.put(Constants.DEVICE_ID, mDi);
         ArrayList<HashMap<Object, Object>> publishLinks = new ArrayList<>();
         HashMap<Object, Object> link = new HashMap<>();
-        link.put("href", "/di/" + mDi + "/a/light");
+        link.put("href", "/oic/route/" + mDi + "/a/light");
         ArrayList<String> rt = new ArrayList<String>();
         rt.add("core.light");
         ArrayList<String> itf = new ArrayList<String>();
@@ -262,8 +260,8 @@ public class ResourceDirectoryTest {
     private String getHrefInTestPublishPayload(byte[] payload) {
 
         Cbor<HashMap<String, Object>> cbor = new Cbor<>();
-        HashMap<String, Object> parsedPayload = cbor.parsePayloadFromCbor(
-                payload, HashMap.class);
+        HashMap<String, Object> parsedPayload = cbor
+                .parsePayloadFromCbor(payload, HashMap.class);
 
         @SuppressWarnings("unchecked")
         ArrayList<HashMap<String, Object>> links = (ArrayList<HashMap<String, Object>>) parsedPayload

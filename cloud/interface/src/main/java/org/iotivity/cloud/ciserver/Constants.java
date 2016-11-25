@@ -43,6 +43,7 @@ public class Constants extends OICConstants {
     public static final String REQ_MEMBER_ID       = "mid";
     public static final String REQ_MEMBER_LIST     = "members";
     public static final String REQ_DEVICE_ID       = "di";
+    public static final String REQ_DEVICE_ROUTE    = "route";
     public static final String REQ_DEVICE_LIST     = "devices";
     public static final String REQ_INVITE          = "invite";
     public static final String REQ_PING_ARRAY      = "inarray";
