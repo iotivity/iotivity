@@ -343,7 +343,7 @@ exit:
 }
 
 OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
-                    OCRepPayload** payload, OCDevAddr *devAddr)
+                    OCRepPayload** payload, OCDevAddr *devAddr, bool addDeviceId)
 {
     OCRepPayload *tempPayload = OCRepPayloadCreate();
 
@@ -359,7 +359,16 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
     }
 
     OCRepPayloadSetUri(tempPayload, resourcePtr->uri);
-
+    if (addDeviceId)
+    {
+        const char *deviceId = OCGetServerInstanceIDString();
+        if (!deviceId)
+        {
+            OIC_LOG(ERROR, TAG, "Failed retrieving device id.");
+            return OC_STACK_ERROR;
+        }
+        OCRepPayloadSetPropString(tempPayload, OC_RSRVD_DEVICE_ID, deviceId);
+    }
     OCResourceType *resType = resourcePtr->rsrcType;
     while(resType)
     {
@@ -381,7 +390,12 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
         {
             if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, resAttrib->attrName))
             {
-                appendOCStringLL(tempPayload, (OCStringLL *)resAttrib->attrValue);
+                char *dmv = OCCreateString((OCStringLL *)resAttrib->attrValue);
+                if (dmv)
+                {
+                    OCRepPayloadSetPropString(tempPayload, resAttrib->attrName, dmv);
+                    OICFree(dmv);
+                }
             }
             else
             {
@@ -391,25 +405,28 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
         resAttrib = resAttrib->next;
     }
 
-    OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)resourcePtr);
-    OCRepPayload *policy = OCRepPayloadCreate();
-    if (!policy)
+    if (devAddr)
     {
-        OCPayloadDestroy((OCPayload *)tempPayload);
-        return OC_STACK_NO_MEMORY;
-    }
-    OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP, ((p & OC_DISCOVERABLE) | (p & OC_OBSERVABLE)));
-    if (p & OC_SECURE)
-    {
-        OCRepPayloadSetPropBool(policy, OC_RSRVD_SECURE, p & OC_SECURE);
-        uint16_t securePort = 0;
-        if (GetSecurePortInfo(devAddr, &securePort) != OC_STACK_OK)
+        OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)resourcePtr);
+        OCRepPayload *policy = OCRepPayloadCreate();
+        if (!policy)
         {
-            securePort = 0;
+            OCPayloadDestroy((OCPayload *)tempPayload);
+            return OC_STACK_NO_MEMORY;
         }
-        OCRepPayloadSetPropInt(policy, OC_RSRVD_HOSTING_PORT, securePort);
+        OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP, ((p & OC_DISCOVERABLE) | (p & OC_OBSERVABLE)));
+        if (p & OC_SECURE)
+        {
+            OCRepPayloadSetPropBool(policy, OC_RSRVD_SECURE, p & OC_SECURE);
+            uint16_t securePort = 0;
+            if (GetSecurePortInfo(devAddr, &securePort) != OC_STACK_OK)
+            {
+                securePort = 0;
+            }
+            OCRepPayloadSetPropInt(policy, OC_RSRVD_HOSTING_PORT, securePort);
+        }
+        OCRepPayloadSetPropObjectAsOwner(tempPayload, OC_RSRVD_POLICY, policy);
     }
-    OCRepPayloadSetPropObjectAsOwner(tempPayload, OC_RSRVD_POLICY, policy);
 
     if(!*payload)
     {
@@ -906,13 +923,14 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     {
         OCResource *resourcePtr = FindResourceByUri(OC_RSRVD_DEVICE_URI);
         VERIFY_PARAM_NON_NULL(TAG, resourcePtr, "Device URI not found.");
-        discoveryResult = BuildResponseRepresentation(resourcePtr, (OCRepPayload **)&payload, &request->devAddr);
+        discoveryResult = BuildResponseRepresentation(resourcePtr, (OCRepPayload **)&payload, NULL, true);
+
     }
     else if (virtualUriInRequest == OC_PLATFORM_URI)
     {
         OCResource *resourcePtr = FindResourceByUri(OC_RSRVD_PLATFORM_URI);
         VERIFY_PARAM_NON_NULL(TAG, resourcePtr, "Platform URI not found.");
-        discoveryResult = BuildResponseRepresentation(resourcePtr, (OCRepPayload **)&payload, &request->devAddr);
+        discoveryResult = BuildResponseRepresentation(resourcePtr, (OCRepPayload **)&payload, NULL, false);
     }
 #ifdef ROUTING_GATEWAY
     else if (OC_GATEWAY_URI == virtualUriInRequest)
