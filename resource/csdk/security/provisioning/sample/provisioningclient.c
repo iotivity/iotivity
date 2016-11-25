@@ -62,6 +62,7 @@ extern "C"
 #define _50_REMOVE_SELEC_DEV_       50
 #define _51_REMOVE_DEV_WITH_UUID_   51
 #define _52_RESET_SELEC_DEV_        52
+#define _53_RESET_SVR_DB_           53
 #define _60_GET_CRED_               60
 #define _61_GET_ACL_                61
 #ifdef MULTIPLE_OWNER
@@ -1503,6 +1504,18 @@ static int resetDevice(void)
     return 0;
 }
 
+static int resetSVRDB(void)
+{
+    printf("   Resetting SVR DB..\n");
+    OCStackResult rst = OCResetSVRDB();
+    if (OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "OCResetSVRDB API error: %d", rst);
+        return -1;
+    }
+    return 0;
+}
+
 static OicSecAcl_t* createAcl(const int dev_num)
 {
     if(0>=dev_num || g_own_cnt<dev_num)
@@ -2113,7 +2126,8 @@ static void printMenu(void)
     printf("** [E] REMOVE THE SELECTED DEVICE\n");
     printf("** 50. Remove the Selected Device\n");
     printf("** 51. Remove Device with UUID (UUID input is required)\n");
-    printf("** 52. Reset the Selected Device\n\n");
+    printf("** 52. Reset the Selected Device\n");
+    printf("** 53. Reset SVR DB\n\n");
 
     printf("** [F] GET SECURITY RESOURCE FOR DEBUGGING ONLY\n");
     printf("** 60. Get the Credential resources of the Selected Device\n");
@@ -2291,6 +2305,12 @@ int main()
             if(resetDevice())
             {
                 OIC_LOG(ERROR, TAG, "_52_RESET_SELEC_DEV_: error");
+            }
+            break;
+        case _53_RESET_SVR_DB_:
+            if(resetSVRDB())
+            {
+                OIC_LOG(ERROR, TAG, "_53_RESET_SVR_DB_: error");
             }
             break;
         case _60_GET_CRED_:

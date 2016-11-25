@@ -35,6 +35,7 @@
 #include "utlist.h"
 #include "aclresource.h" //Note: SRM internal header
 #include "pconfresource.h"
+#include "psinterface.h"
 
 #define TAG "OIC_OCPMAPI"
 
@@ -813,6 +814,16 @@ OCStackResult OCResetDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDisc
     }
     OIC_LOG(INFO, TAG, "OUT OCResetDevice");
     return res;
+}
+
+/**
+ * This function resets SVR DB to its factory setting.
+ *
+ * @return OC_STACK_OK in case of successful reset and other value otherwise.
+ */
+OCStackResult OCResetSVRDB(void)
+{
+    return ResetSecureResourceInPS();
 }
 
 /**
