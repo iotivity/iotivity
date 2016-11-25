@@ -19,9 +19,12 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include "ResourcePresence.h"
-
+#if (defined(__APPLE__) && defined(TARGET_OS_IPHONE))
+#include <atomic>
+#else
 #include <bits/atomic_base.h>
 #include <bits/shared_ptr_base.h>
+#endif
 #include <time.h>
 #include <unistd.h>
 #include <cstdbool>

@@ -221,6 +221,8 @@ typedef enum
     ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
     ADAPTER_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA_256,
     ADAPTER_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256,
+    ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM,
+    ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
     ADAPTER_CIPHER_MAX
 } AdapterCipher_t;
 
@@ -235,7 +237,9 @@ int tlsCipher[ADAPTER_CIPHER_MAX][2] =
     {MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA, 0},
     {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8, 0},
     {MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256, 0},
-    {MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, 0}
+    {MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, 0},
+    {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM, 0},
+    {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, 0}
 };
 
 static int g_cipherSuitesList[ADAPTER_CIPHER_MAX];
@@ -1943,6 +1947,50 @@ CAResult_t CAsetTlsCipherSuite(const uint32_t cipher)
                                           tlsCipher[ADAPTER_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256]);
 #endif
             g_caSslContext->cipher = ADAPTER_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256;
+            break;
+        }
+        case MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM:
+        {
+            if (false == g_caSslContext->cipherFlag[1])
+            {
+                OIC_LOG(ERROR, NET_SSL_TAG, "No Credential for ECC");
+                return CA_STATUS_FAILED;
+            }
+#ifdef __WITH_TLS__
+            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientTlsConf,
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM]);
+            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverTlsConf,
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM]);
+#endif
+#ifdef __WITH_DTLS__
+            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientDtlsConf,
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM]);
+            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverDtlsConf,
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM]);
+#endif
+            g_caSslContext->cipher = ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM;
+            break;
+        }
+        case MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256:
+        {
+            if (false == g_caSslContext->cipherFlag[1])
+            {
+                OIC_LOG(ERROR, NET_SSL_TAG, "No Credential for ECC");
+                return CA_STATUS_FAILED;
+            }
+#ifdef __WITH_TLS__
+            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientTlsConf,
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256]);
+            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverTlsConf,
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256]);
+#endif
+#ifdef __WITH_DTLS__
+            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientDtlsConf,
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256]);
+            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverDtlsConf,
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256]);
+#endif
+            g_caSslContext->cipher = ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
             break;
         }
         default:

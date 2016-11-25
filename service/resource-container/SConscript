@@ -130,10 +130,13 @@ if int(containerJavaSupport):
 res_container_src = [ Glob('src/*.cpp') ]
 
 res_container_static = resource_container_env.StaticLibrary('rcs_container', res_container_src)
-res_container_shared = resource_container_env.SharedLibrary('rcs_container', res_container_src)
-
-resource_container_env.InstallTarget([res_container_static,res_container_shared], 'libResContainer')
-resource_container_env.UserInstallTargetLib([res_container_static,res_container_shared], 'libResContainer')
+if target_os not in ['ios']:
+    res_container_shared = resource_container_env.SharedLibrary('rcs_container', res_container_src)
+    resource_container_env.InstallTarget([res_container_static,res_container_shared], 'libResContainer')
+    resource_container_env.UserInstallTargetLib([res_container_static,res_container_shared], 'libResContainer')
+else:
+    resource_container_env.InstallTarget([res_container_static], 'libResContainer')
+    resource_container_env.UserInstallTargetLib([res_container_static], 'libResContainer')
 
 resource_container_env.UserInstallTargetHeader('include/RCSBundleInfo.h', 'service/resource-container', 'RCSBundleInfo.h')
 resource_container_env.UserInstallTargetHeader('include/RCSResourceContainer.h', 'service/resource-container', 'RCSResourceContainer.h')
@@ -228,30 +231,31 @@ if target_os in ['linux']:
 ######################################################################
 # Build Container Sample
 ######################################################################
-containersample_env = resource_container_env.Clone();
-containersample_env.AppendUnique(LINKFLAGS=["-rdynamic"])
+if target_os not in ['ios']:
+    containersample_env = resource_container_env.Clone();
+    containersample_env.AppendUnique(LINKFLAGS=["-rdynamic"])
 
-# Copy test configuration
-Command("examples/ResourceContainerConfig.xml","examples/ResourceContainerConfig.xml", Copy("$TARGET", "$SOURCE"))
-Ignore("examples/ResourceContainerConfig.xml", "examples/ResourceContainerConfig.xml")
+    # Copy test configuration
+    Command("examples/ResourceContainerConfig.xml","examples/ResourceContainerConfig.xml", Copy("$TARGET", "$SOURCE"))
+    Ignore("examples/ResourceContainerConfig.xml", "examples/ResourceContainerConfig.xml")
 
-containersample_env.AppendUnique(LIBS = ['rcs_container'])
+    containersample_env.AppendUnique(LIBS = ['rcs_container','resource_directory'])
 
-containersampleapp_src =  ['examples/ContainerSample.cpp']
-containersampleapp = containersample_env.Program('ContainerSample',containersampleapp_src)
-Alias("containersample", containersampleapp)
-env.AppendTarget('containersample')
+    containersampleapp_src =  ['examples/ContainerSample.cpp']
+    containersampleapp = containersample_env.Program('ContainerSample',containersampleapp_src)
+    Alias("containersample", containersampleapp)
+    env.AppendTarget('containersample')
 
 ######################################################################
 # Build Container Sample Client
 ######################################################################
-containersampleclient_env = resource_container_env.Clone();
+    containersampleclient_env = resource_container_env.Clone();
 
-containersample_env.AppendUnique(LIBS = ['rcs_container'])
-containersampleclient_src =  ['examples/ContainerSampleClient.cpp']
-containersampleclientapp = containersample_env.Program('ContainerSampleClient',containersampleclient_src)
-Alias("containersampleclient", containersampleclientapp)
-env.AppendTarget('containersampleclient')
+    containersample_env.AppendUnique(LIBS = ['rcs_container'])
+    containersampleclient_src =  ['examples/ContainerSampleClient.cpp']
+    containersampleclientapp = containersample_env.Program('ContainerSampleClient',containersampleclient_src)
+    Alias("containersampleclient", containersampleclientapp)
+    env.AppendTarget('containersampleclient')
 
 ######################################################################
 # Build Container Java SDK

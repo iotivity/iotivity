@@ -5,13 +5,16 @@ set -e
 # Keep mbedtls_revision in sync with extlibs/mbedtls/SConscript's setting. Right now this script
 # assumes mbedtls_revision is a tag; comment out the second clause if mbedtls_revision becomes
 # a branch or a specific commit.
+mbedtls_url="https://github.com/ARMmbed/mbedtls"
 mbedtls_dir=`dirname -- "$(readlink -f "$0")"`/mbedtls
+mbedtls_reldir="extlibs/mbedtls/mbedtls"
+
 mbedtls_revision="mbedtls-2.4.0"
 if [ ! -d ${mbedtls_dir} ]; then
     echo ""
     echo "*********************************** Error: ****************************************"
     echo "* Please download mbedTLS using the following command:                            *"
-    echo "*     $ git clone https://github.com/ARMmbed/mbedtls.git extlibs/mbedtls/mbedtls  *"
+    echo "*     $ git clone ${mbedtls_url} ${mbedtls_reldir} -b ${mbedtls_revision}"
     echo "***********************************************************************************"
     echo ""
     exit

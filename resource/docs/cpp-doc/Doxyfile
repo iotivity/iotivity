@@ -666,7 +666,7 @@ INPUT                  = . \
                          ../../include/OCResourceRequest.h \
                          ../../include/OCResourceResponse.h \
                          ../../include/OCResource.h \
-                         ../../include/OCProvisioningManager.h \
+                         ../../include/OCProvisioningManager.hpp \
                          ../../csdk/stack/include/octypes.h \
                          ../../csdk/stack/include/ocstackconfig.h \
                          guides \

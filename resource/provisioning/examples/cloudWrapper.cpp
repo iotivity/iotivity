@@ -22,7 +22,7 @@
 
 #include "logger.h"
 #include "occloudprovisioning.h"
-#include "OCCloudProvisioning.h"
+#include "OCCloudProvisioning.hpp"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "utils.h"

@@ -180,7 +180,7 @@ if 'BLE' in ca_transport:
 if 'NFC' in ca_transport:
 	env.SConscript(os.path.join(ca_path, 'nfc_adapter/SConscript'))
 
-if ca_os in ['linux', 'tizen', 'android']:
+if ca_os in ['linux', 'tizen', 'android', 'ios']:
 	if with_tcp == True:
 		env.SConscript(os.path.join(ca_path, 'tcp_adapter/SConscript'))
 		env.AppendUnique(CPPDEFINES = ['WITH_TCP'])

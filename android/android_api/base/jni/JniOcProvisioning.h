@@ -20,7 +20,7 @@
 * //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */
 #include "JniOcStack.h"
-#include "OCProvisioningManager.h"
+#include "OCProvisioningManager.hpp"
 #include "JniSecureUtils.h"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"

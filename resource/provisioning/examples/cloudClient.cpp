@@ -33,7 +33,7 @@
 #include "cloudAuth.h"
 #include "cloudWrapper.h"
 #include "OCApi.h"
-#include "OCCloudProvisioning.h"
+#include "OCCloudProvisioning.hpp"
 
 #ifdef __unix__
 #include <unistd.h> //for unlink

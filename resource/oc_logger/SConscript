@@ -52,7 +52,7 @@ if target_os not in ['darwin', 'ios', 'windows', 'msys_nt']:
 
 oc_logger_libs = []
 
-if target_os in ['windows', 'msys_nt']:
+if target_os in ['windows', 'msys_nt','ios']:
 	# If oc_logger APIs have to be exported from a Windows DLL, these functions
 	# should be exported from octbstack.dll. Building a separate oc_logger.dll here
 	# would result in duplicated code and data across these two DLLs. Using just
