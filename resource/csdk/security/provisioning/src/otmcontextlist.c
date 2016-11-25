@@ -40,8 +40,6 @@ void RemoveOTMContext(const char* addr, uint16_t port)
     }
 
     OIC_LOG(DEBUG, TAG, "OUT RemoveOTMContext");
-
-    return retCtx;
 }
 
 OCStackResult AddOTMContext(OTMContext_t* ctx, const char* addr, uint16_t port)

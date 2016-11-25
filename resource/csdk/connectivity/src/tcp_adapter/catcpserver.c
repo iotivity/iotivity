@@ -746,7 +746,7 @@ static void CAReceiveMessage(int fd)
             {
                 OIC_LOG_V(ERROR, TAG, "toal tls length is too big (buffer size : %u)",
                                     sizeof(svritem->tlsdata));
-                return CA_STATUS_FAILED;
+                return;
             }
             nbRead = tlsLength - svritem->tlsLen;
         }

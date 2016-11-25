@@ -73,7 +73,7 @@ elif target_os in ['windows']:
 	boost_path = os.path.join(src_dir,'extlibs','boost','boost')
 	lib_env.AppendUnique(CPPPATH = [boost_path])
 elif target_os == 'ios':
-	lib_env.AppendUnique(FRAMEWORKPATH = ['#extlibs/boost/ios/framework'])
+	lib_env.AppendUnique(FRAMEWORKPATH = [src_dir + '/extlibs/boost/ios/framework'])
 	lib_env.AppendUnique(FRAMEWORKS = ['boost'])
 elif target_os == 'darwin':
 	lib_env.AppendUnique(CPPPATH = ['/usr/local/include'])

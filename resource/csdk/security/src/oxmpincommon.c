@@ -31,6 +31,7 @@
 #include "doxmresource.h"
 #include "credresource.h"
 #include "cainterface.h"
+#include "oic_string.h"
 
 #define TAG "OIC_PIN_OXM_COMMON"
 
