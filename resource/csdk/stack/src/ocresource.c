@@ -49,6 +49,7 @@
 #include "cacommon.h"
 #include "cainterface.h"
 #include "ocpayload.h"
+#include "oickeepalive.h"
 #include "platform_features.h"
 #include "payload_logging.h"
 #include "ocendpoint.h"
