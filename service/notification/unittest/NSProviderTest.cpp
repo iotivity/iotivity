@@ -208,13 +208,15 @@ TEST_F(NotificationProviderTest, ExpectCallbackWhenReceiveSubscribeRequestWithAc
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_NE((void*)g_consumerID, (void*)NULL);
+    ASSERT_NE(nullptr, g_consumerID) << "error: discovery failure";
 }
 
 TEST_F(NotificationProviderTest, NeverCallNotifyOnConsumerByAcceptIsFalse)
 {
     bool expectTrue = true;
     int msgID;
+
+    ASSERT_NE(nullptr, g_consumerID) << "error: discovery failure";
 
     mocks.OnCallFunc(NSMessageCallbackFromConsumerEmpty).Do(
             [& expectTrue, &msgID](const int &id, const std::string&, const std::string&, const std::string&)
@@ -254,6 +256,8 @@ TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
 {
     int msgID;
 
+    ASSERT_NE(nullptr, g_consumerID) << "error: discovery failure";
+
     mocks.ExpectCallFunc(NSMessageCallbackFromConsumerEmpty).Do(
             [&msgID](const int &id, const std::string&, const std::string&, const std::string&)
             {
@@ -280,6 +284,8 @@ TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
 TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadToConsumer)
 {
     int id;
+
+    ASSERT_NE(nullptr, g_consumerID) << "error: discovery failure";
 
     mocks.ExpectCallFunc(NSSyncCallbackFromConsumerEmpty).Do(
             [& id](int & type, int &syncId)
@@ -308,6 +314,9 @@ TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadFromConsumer)
 {
     int type = NS_SYNC_READ;
     int id;
+
+    ASSERT_NE(nullptr, g_consumerID) << "error: discovery failure";
+
     mocks.ExpectCallFunc(NSSyncCallbackEmpty).Do(
             [& id](NSSyncInfo * sync)
             {
@@ -441,6 +450,9 @@ TEST_F(NotificationProviderTest, ExpectEqualUnSetConsumerTopicsAndGetConsumerTop
     responseCon.wait_for(lock, g_waitForResponse);
 
     bool isSame = false;
+
+    ASSERT_NE(nullptr, g_consumerID) << "error: discovery failure";
+
     NSTopicLL * topics = NSProviderGetConsumerTopics(g_consumerID);
 
     if(!topics)
