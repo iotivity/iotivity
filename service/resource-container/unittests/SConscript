@@ -50,9 +50,6 @@ else:
 if lib_env.get('LOGGING'):
     lib_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-
-
-
 # Add third party libraries
 SConscript(src_dir + '/service/third_party_libs.scons', 'lib_env')
 
@@ -136,8 +133,9 @@ if int(containerJavaSupport):
         print ''
 
 if container_gtest_env.get('SECURED') == '1':
-	if container_gtest_env.get('WITH_TCP') == True:
-		container_gtest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    container_gtest_env.AppendUnique(CPPDEFINES = ['SECURED'])
+    if container_gtest_env.get('WITH_TCP') == True:
+        container_gtest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # build test bundle
@@ -162,7 +160,10 @@ test_bundle_env.InstallTarget(TestBundle, 'libTestBundle')
 ######################################################################
 # Build Test
 ######################################################################
-container_gtest_src = container_gtest_env.Glob('./*.cpp')
+if 'g++' in container_gtest_env.get('CXX'):
+    container_gtest_env.AppendUnique(CXXFLAGS = ['-std=c++0x'])
+
+container_gtest_src = container_gtest_env.Glob('./ResourceContainerTest.cpp')
 
 container_test = container_gtest_env.Program('container_test', container_gtest_src)
 Alias("container_test", container_test)

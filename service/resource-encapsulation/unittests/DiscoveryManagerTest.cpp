@@ -40,6 +40,19 @@ constexpr char RESOURCE_URI[]{ "/a/TemperatureSensor" };
 constexpr char RESOURCE_TYPE[]{ "resource.type" };
 constexpr char SECOND_RESOURCETYPE[]{ "resource.type.second" };
 
+#ifdef SECURED
+const char * SVR_DB_FILE_NAME = "./oic_svr_db_re_client.dat";
+//OCPersistent Storage Handlers
+static FILE* client_open(const char * /*path*/, const char *mode)
+{
+    std::string file_name = SVR_DB_FILE_NAME;
+#ifndef LOCAL_RUNNING
+    file_name = "./service/resource-encapsulation/unittests/oic_svr_db_re_client.dat";
+#endif
+    return fopen(file_name.c_str(), mode);
+}
+#endif
+
 void onResourceDiscovered(RCSRemoteResourceObject::Ptr)
 {
 
@@ -75,6 +88,14 @@ private:
 
 TEST(DiscoveryManagerTest, ThrowIfDiscoverWithEmptyCallback)
 {
+#ifdef SECURED
+    OCPersistentStorage gps {client_open, fread, fwrite, fclose, unlink };
+    OC::PlatformConfig cfg
+    { OC::ServiceType::InProc, OC::ModeType::Both, "0.0.0.0", 0,
+            OC::QualityOfService::LowQos, &gps };
+    OC::OCPlatform::Configure(cfg);
+#endif
+
     EXPECT_THROW(RCSDiscoveryManager::getInstance()->discoverResource(RCSAddress::multicast(), { }),
             RCSInvalidParameterException);
 }
