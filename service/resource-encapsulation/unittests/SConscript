@@ -73,8 +73,12 @@ rcs_test_env.PrependUnique(LIBS = [
     'rcs_common'])
 
 if lib_env.get('SECURED') == '1':
-	if lib_env.get('WITH_TCP') == True:
-		rcs_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    rcs_test_env.AppendUnique(CPPDEFINES = ['SECURED'])
+    if lib_env.get('WITH_TCP') == True:
+        rcs_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+
+if 'g++' in rcs_test_env.get('CXX'):
+    rcs_test_env.AppendUnique(CXXFLAGS = ['-std=c++0x'])
 
 ######################################################################
 # Build Test
@@ -87,11 +91,19 @@ rcs_test_env.AppendTarget('rcs_client_test')
 
 # TODO: fix this test on linux and remove commented lines
 if rcs_test_env.get('TEST') == '1':
-    target_os = rcs_test_env.get('TARGET_OS')
-    if target_os in ['linux'] and rcs_test_env.get('SECURED') != '1':
+    if target_os in ['linux']:
         from tools.scons.RunTest import run_test
         run_test(rcs_test_env,
 #                'service_resource-encapsulation_unittests_rcs_client_test.memcheck',
                  '',
-                 'service/resource-encapsulation/unittests/rcs_client_test',
-                 rcs_client_test)
+                 'service/resource-encapsulation/unittests/rcs_client_test')
+else:
+    rcs_test_env.AppendUnique(CPPDEFINES = ['LOCAL_RUNNING'])
+    if lib_env.get('SECURED') == '1':
+        src_dir = rcs_test_env.get('SRC_DIR')
+        svr_db_src_dir = os.path.join(src_dir, 'service/resource-encapsulation/unittests/')
+        svr_db_build_dir = os.path.join(rcs_test_env.get('BUILD_DIR'), 'service', 'resource-encapsulation', 'unittests') + os.sep
+        rcs_test_env.Alias("install",
+            rcs_test_env.Install(svr_db_build_dir,
+                  os.path.join(svr_db_src_dir,
+                               'oic_svr_db_re_client.dat')))
