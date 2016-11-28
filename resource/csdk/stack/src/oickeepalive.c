@@ -385,6 +385,10 @@ OCStackResult HandleKeepAliveRequest(OCServerRequest *request,
     }
 
     OCStackResult ret = SendKeepAliveResponse(request, result);
+    if (OC_STACK_OK != ret)
+    {
+        OIC_LOG_V(ERROR, TAG, "SendKeepAliveResponse failed with result %u", ret);
+    }
 
     OIC_LOG(DEBUG, TAG, "HandleKeepAliveRequest OUT");
     return ret;
