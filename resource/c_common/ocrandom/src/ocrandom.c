@@ -41,6 +41,11 @@
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
+#ifdef HAVE_STRING_H
+#include <string.h>
+#elif defined(HAVE_STRINGS_H)
+#include <strings.h>
+#endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -375,3 +380,39 @@ OCRandomUuidResult OCConvertUuidToString(const uint8_t uuid[UUID_SIZE],
 
     return RAND_UUID_OK;
 }
+
+OCRandomUuidResult OCConvertStringToUuid(const char uuidString[UUID_STRING_SIZE],
+                                         uint8_t uuid[UUID_SIZE])
+{
+    if(NULL == uuidString || NULL == uuid)
+    {
+        return RAND_UUID_INVALID_PARAM;
+    }
+
+    size_t urnIdx = 0;
+    size_t uuidIdx = 0;
+    size_t strUuidLen = 0;
+    char convertedUuid[UUID_SIZE * 2] = {0};
+
+    strUuidLen = strlen(uuidString);
+    if((UUID_STRING_SIZE - 1) == strUuidLen)
+    {
+        for(uuidIdx=0, urnIdx=0; uuidIdx < UUID_SIZE ; uuidIdx++, urnIdx+=2)
+        {
+            if(*(uuidString + urnIdx) == '-')
+            {
+                urnIdx++;
+            }
+            sscanf(uuidString + urnIdx, "%2hhx", &convertedUuid[uuidIdx]);
+        }
+    }
+    else
+    {
+        return RAND_UUID_CONVERT_ERROR;
+    }
+
+    memcpy(uuid, convertedUuid, UUID_SIZE);
+
+    return RAND_UUID_OK;
+}
+

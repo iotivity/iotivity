@@ -24,6 +24,7 @@
 #include "cautilinterface.h"
 #include "cacommon.h"
 #include "oic_string.h"
+#include "oic_malloc.h"
 
 #define CA_TRANSPORT_ADAPTER_SCOPE  1000
 
@@ -311,7 +312,7 @@ TEST_F(CATests, SendResponseTestWithInvalidCode)
     memset(&responseData, 0, sizeof(CAInfo_t));
     responseData.type = CA_MSG_RESET;
     responseData.messageId = 1;
-    responseData.payload = (CAPayload_t)malloc(sizeof("response payload"));
+    responseData.payload = (CAPayload_t)OICMalloc(sizeof("response payload"));
     responseData.dataType = CA_RESPONSE_DATA;
 
     EXPECT_TRUE(responseData.payload != NULL);
@@ -330,7 +331,7 @@ TEST_F(CATests, SendResponseTestWithInvalidCode)
 
         CADestroyToken(tempToken);
         CADestroyEndpoint(tempRep);
-        free(responseData.payload);
+        OICFree(responseData.payload);
         tempRep = NULL;
     }
 }

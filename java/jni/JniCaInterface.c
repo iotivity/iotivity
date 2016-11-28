@@ -402,6 +402,15 @@ Java_org_iotivity_ca_CaInterface_setLeScanIntervalTimeImpl(JNIEnv *env, jclass c
     CAUtilSetLEScanInterval(intervalTime, workignCount);
 }
 
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaInterface_stopLeScanImpl(JNIEnv *env, jclass clazz)
+{
+    LOGI("stopLeScan");
+    (void)env;
+    (void)clazz;
+    CAUtilStopLEScan();
+}
+
 JNIEXPORT jint JNICALL Java_org_iotivity_ca_CaInterface_setCipherSuiteImpl
   (JNIEnv *env, jclass clazz, jint cipherSuite, jint adapter)
 {

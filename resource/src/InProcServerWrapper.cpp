@@ -337,6 +337,32 @@ namespace OC
         return result;
     }
 
+    OCStackResult InProcServerWrapper::setPropertyValue(OCPayloadType type, const std::string& propName,
+        const std::string& propValue)
+    {
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result = OC_STACK_ERROR;
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCSetPropertyValue(type, propName.c_str(), (void *)propValue.c_str());
+        }
+        return result;
+    }
+
+    OCStackResult InProcServerWrapper::getPropertyValue(OCPayloadType type, const std::string& propName,
+        std::string& propValue)
+    {
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result = OC_STACK_ERROR;
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCGetPropertyValue(type, propName.c_str(), (void **)propValue.c_str());
+        }
+        return result;
+    }
+
     OCStackResult InProcServerWrapper::registerResource(
                     OCResourceHandle& resourceHandle,
                     std::string& resourceURI,

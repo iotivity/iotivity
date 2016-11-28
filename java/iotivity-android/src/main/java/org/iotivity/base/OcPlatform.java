@@ -563,6 +563,49 @@ public final class OcPlatform {
     ) throws OcException;
 
     /**
+     * Set param Info
+     *
+     * @param ocDeviceInfo object containing all the device specific information
+     * @throws OcException if failure
+     */
+    public static void setPropertyValue(
+            int path, String propName, String propValue) throws OcException {
+        OcPlatform.initCheck();
+        OcPlatform.setPropertyValue0(path, propName, propValue);
+    }
+
+    public static void setPropertyValue(
+            int path, String propName, List<String> propValue) throws OcException {
+        OcPlatform.initCheck();
+        OcPlatform.setPropertyValue1(path, propName, propValue.toArray(new String[propValue.size()]));
+    }
+
+    public static void getPropertyValue(
+            int path, String propName, String propValue) throws OcException {
+        OcPlatform.initCheck();
+        OcPlatform.getPropertyValue0(path, propName, propValue);
+    }
+
+    private static native void setPropertyValue0(
+            int path,
+            String propName,
+            String propValue
+    ) throws OcException;
+
+
+    private static native void setPropertyValue1(
+            int path,
+            String propName,
+            String[] propValue
+    ) throws OcException;
+
+    private static native void getPropertyValue0(
+            int path,
+            String propName,
+            String propValue
+    ) throws OcException;
+
+    /**
      * Register Platform Info
      *
      * @param ocPlatformInfo object containing all the platform specific information

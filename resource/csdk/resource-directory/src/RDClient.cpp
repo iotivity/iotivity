@@ -33,8 +33,6 @@
 #include "OCException.h"
 #include "ocpayload.h"
 
-std::weak_ptr<std::recursive_mutex> m_csdkLock;
-
 using namespace OC;
 
 

@@ -44,7 +44,6 @@ src_dir = lib_env.get('SRC_DIR')
 
 hosting_test_env = lib_env.Clone()
 target_os = hosting_test_env.get('TARGET_OS')
-rd_mode = lib_env.get('RD_MODE')
 
 ######################################################################
 # Build flags
@@ -67,9 +66,6 @@ hosting_test_env.AppendUnique(CPPPATH = ['../../resource-encapsulation/src/commo
 if hosting_test_env.get('SECURED') == '1':
 	if hosting_test_env.get('WITH_TCP') == True:
 		hosting_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
-
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	hosting_test_env.AppendUnique(LIBS = ['resource_directory'])
 
 ######################################################################
 # Build Test

@@ -19,12 +19,15 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 import os
+import subprocess
 
 Import('env')
 
 src_dir = env.get('SRC_DIR')
+target_os = env.get('TARGET_OS')
 
 cborDir = os.path.join(src_dir, 'extlibs','tinycbor','tinycbor')
+cborRevision = 'v0.4'
 
 if not os.path.exists(cborDir):
     print '''
@@ -34,6 +37,37 @@ if not os.path.exists(cborDir):
 ***********************************************************************************
 '''
     Exit(1)
+
+start_dir = os.getcwd()
+os.chdir(cborDir)
+
+# Tizen uses a separate process to sync to a particular revision of TinyCBOR.
+# Make sure tinycbor_revision stays in sync with extlibs/tinycbor/prep.sh.
+# This code also assumes tinycbor_revision is a tag; if it changes to a branch
+# or an arbitrary commit, disable this check below.
+if target_os != 'tizen' and os.path.exists('.git/HEAD'):
+    out = subprocess.check_output('git tag -l ' + cborRevision, shell = True)
+    if cborRevision not in out:
+        print out
+        print '''
+*********************************** Error: ****************************************
+* Your TinyCBOR repo is not up to date with the latest version we require. Please *
+* update with the following commands:                                             *
+*     $ cd extlibs/tinycbor/tinycbor                                              *
+*     $ git fetch                                                                 *
+***********************************************************************************
+ '''
+        Exit(1)
+
+
+# Point TinyCBOR repo to desired release tag
+if os.path.exists('.git/HEAD'):
+    cmd = 'git reset --hard ' + cborRevision
+    os.system(cmd)
+else:
+    print 'Assume TinyCBOR is on tag ', cborRevision
+
+os.chdir(start_dir)
 
 cbor_src = [
     os.path.join(cborDir,'src/cborparser.c'),

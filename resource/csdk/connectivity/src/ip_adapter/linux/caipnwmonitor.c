@@ -325,7 +325,7 @@ u_arraylist_t *CAFindInterfaceChange()
                           .msg_iov = &iov,
                           .msg_iovlen = 1 };
 
-    size_t len = recvmsg(caglobals.ip.netlinkFd, &msg, 0);
+    ssize_t len = recvmsg(caglobals.ip.netlinkFd, &msg, 0);
 
     for (nh = (struct nlmsghdr *)buf; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len))
     {

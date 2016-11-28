@@ -398,7 +398,7 @@ void ProcessAMSRequest(PEContext_t *context)
     OIC_LOG_V(INFO, TAG, "Entering %s", __func__);
     if (NULL != context)
     {
-        if((false == context->matchingAclFound) && (false == context->amsProcessing))
+        if((ACCESS_GRANTED != context->retVal) && (false == context->amsProcessing))
         {
             context->amsProcessing = true;
 

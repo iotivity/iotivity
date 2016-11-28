@@ -53,7 +53,9 @@ typedef struct
     int fd;                             /**< file descriptor info */
     unsigned char* data;                /**< received data from remote device */
     size_t len;                         /**< received data length */
-    size_t totalLen;                    /**< total data length required to receive */
+    size_t totalLen;                    /**< total coap data length required to receive */
+    unsigned char tlsdata[18437];     /**< tls data(rfc5246: TLSCiphertext max (2^14+2048+5)) */
+    size_t tlsLen;                         /**< received tls data length */
     CAProtocol_t protocol;              /**< application-level protocol */
 } CATCPSessionInfo_t;
 

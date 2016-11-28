@@ -163,10 +163,55 @@ void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
 
     OIC_LOG_V(DEBUG, TAG, "Address: %s, port:%d", sep->endpoint.addr, sep->endpoint.port);
 
+#ifdef SINGLE_THREAD
     if (g_networkPacketCallback)
     {
         g_networkPacketCallback(sep, data, dataLength);
     }
+#else
+    unsigned char *buffer = (unsigned char*)data;
+    size_t bufferLen = dataLength;
+    size_t index = 0;
+
+    //get remote device information from file descriptor.
+    CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(&sep->endpoint, &index);
+    if (!svritem)
+    {
+        OIC_LOG(ERROR, TAG, "there is no connection information in list");
+        return;
+    }
+    if (UNKNOWN == svritem->protocol)
+    {
+        OIC_LOG(ERROR, TAG, "invalid protocol type");
+        return;
+    }
+
+    //totalLen filled only when header fully read and parsed
+    while (0 != bufferLen)
+    {
+        CAResult_t res = CAConstructCoAP(svritem, &buffer, &bufferLen);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "CAConstructCoAP return error : %d", res);
+            return;
+        }
+
+        //when successfully read all required data - pass them to upper layer.
+        if (svritem->len == svritem->totalLen)
+        {
+            if (g_networkPacketCallback)
+            {
+                g_networkPacketCallback(sep, svritem->data, svritem->totalLen);
+            }
+            CACleanData(svritem);
+        }
+        else
+        {
+            OIC_LOG_V(DEBUG, TAG, "%u bytes required for complete CoAP",
+                                svritem->totalLen - svritem->len);
+        }
+    }
+#endif
 }
 
 #ifdef __WITH_TLS__

@@ -46,7 +46,6 @@ typedef struct PEContext
     char        resource[MAX_URI_LENGTH];
     OicSecSvrType_t resourceType;
     uint16_t    permission;
-    bool        matchingAclFound;
     bool        amsProcessing;
     SRMAccessResponse_t retVal;
     AmsMgrContext_t     *amsMgrContext;

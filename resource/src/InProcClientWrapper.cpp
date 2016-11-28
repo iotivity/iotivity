@@ -101,8 +101,6 @@ namespace OC
     {
         if (clientResponse->payload == nullptr ||
                 (
-                    clientResponse->payload->type != PAYLOAD_TYPE_DEVICE &&
-                    clientResponse->payload->type != PAYLOAD_TYPE_PLATFORM &&
                     clientResponse->payload->type != PAYLOAD_TYPE_REPRESENTATION
                 )
           )

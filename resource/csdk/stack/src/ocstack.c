@@ -1296,12 +1296,13 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 #endif
                     else if (strcmp(cbNode->requestUri, OC_RSRVD_DEVICE_URI) == 0)
                     {
-                        type = PAYLOAD_TYPE_DEVICE;
+                        type = PAYLOAD_TYPE_REPRESENTATION;
                     }
                     else if (strcmp(cbNode->requestUri, OC_RSRVD_PLATFORM_URI) == 0)
                     {
-                        type = PAYLOAD_TYPE_PLATFORM;
+                        type = PAYLOAD_TYPE_REPRESENTATION;
                     }
+
 #ifdef ROUTING_GATEWAY
                     else if (strcmp(cbNode->requestUri, OC_RSRVD_GATEWAY_URI) == 0)
                     {
@@ -1310,7 +1311,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 #endif
                     else if (strcmp(cbNode->requestUri, OC_RSRVD_RD_URI) == 0)
                     {
-                        type = PAYLOAD_TYPE_REPRESENTATION ;
+                        type = PAYLOAD_TYPE_REPRESENTATION;
                     }
 #ifdef TCP_ADAPTER
                     else if (strcmp(cbNode->requestUri, KEEPALIVE_RESOURCE_URI) == 0)
@@ -1334,13 +1335,13 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 {
                     if (cbNode->requestUri)
                     {
-                        if (strcmp(OC_RSRVD_PLATFORM_URI, cbNode->requestUri) == 0)
+                        if (0 == strcmp(OC_RSRVD_PLATFORM_URI, cbNode->requestUri))
                         {
-                            type = PAYLOAD_TYPE_PLATFORM;
+                            type = PAYLOAD_TYPE_REPRESENTATION;
                         }
-                        else if (strcmp(OC_RSRVD_DEVICE_URI, cbNode->requestUri) == 0)
+                        else if (0 == strcmp(OC_RSRVD_DEVICE_URI, cbNode->requestUri))
                         {
-                            type = PAYLOAD_TYPE_DEVICE;
+                            type = PAYLOAD_TYPE_REPRESENTATION;
                         }
                         if (type == PAYLOAD_TYPE_INVALID)
                         {
@@ -1378,7 +1379,8 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             {
                 int start = 0;
                 //First option always with option ID is COAP_OPTION_OBSERVE if it is available.
-                if(responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
+                if(responseInfo->info.options
+                   && responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
                 {
                     size_t i;
                     uint32_t observationOption;
@@ -1408,8 +1410,11 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 
                 for (uint8_t i = start; i < responseInfo->info.numOptions; i++)
                 {
-                    memcpy (&(response.rcvdVendorSpecificHeaderOptions[i-start]),
-                            &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
+                    if(&(responseInfo->info.options[i]))
+                    {
+                        memcpy (&(response.rcvdVendorSpecificHeaderOptions[i-start]),
+                                &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
+                    }
                 }
             }
 
@@ -1953,7 +1958,7 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         return;
     }
     serverRequest.numRcvdVendorSpecificHeaderOptions = tempNum;
-    if (serverRequest.numRcvdVendorSpecificHeaderOptions)
+    if (serverRequest.numRcvdVendorSpecificHeaderOptions && requestInfo->info.options)
     {
         memcpy (&(serverRequest.rcvdVendorSpecificHeaderOptions), requestInfo->info.options,
             sizeof(CAHeaderOption_t)*tempNum);
@@ -2063,42 +2068,6 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         OCHandleRequests(endPoint, requestInfo);
     }
     OIC_LOG(INFO, TAG, "Exit HandleCARequests");
-}
-
-bool validatePlatformInfo(OCPlatformInfo info)
-{
-
-    if (!info.platformID)
-    {
-        OIC_LOG(ERROR, TAG, "No platform ID found.");
-        return false;
-    }
-
-    if (info.manufacturerName)
-    {
-        size_t lenManufacturerName = strlen(info.manufacturerName);
-
-        if(lenManufacturerName == 0 || lenManufacturerName > MAX_MANUFACTURER_NAME_LENGTH)
-        {
-            OIC_LOG(ERROR, TAG, "Manufacturer name fails length requirements.");
-            return false;
-        }
-    }
-    else
-    {
-        OIC_LOG(ERROR, TAG, "No manufacturer name present");
-        return false;
-    }
-
-    if (info.manufacturerUrl)
-    {
-        if(strlen(info.manufacturerUrl) > MAX_MANUFACTURER_URL_LENGTH)
-        {
-            OIC_LOG(ERROR, TAG, "Manufacturer url fails length requirements.");
-            return false;
-        }
-    }
-    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -2322,8 +2291,6 @@ OCStackResult OCStop()
 
     // Free memory dynamically allocated for resources
     deleteAllResources();
-    DeleteDeviceInfo();
-    DeletePlatformInfo();
     CATerminate();
     TerminateScheduleResourceList();
     // Remove all observers
@@ -3225,55 +3192,6 @@ OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandle
     defaultDeviceHandlerCallbackParameter = callbackParameter;
 
     return OC_STACK_OK;
-}
-
-OCStackResult OCSetPlatformInfo(OCPlatformInfo platformInfo)
-{
-    OIC_LOG(INFO, TAG, "Entering OCSetPlatformInfo");
-
-    if(myStackMode ==  OC_SERVER || myStackMode == OC_CLIENT_SERVER || myStackMode == OC_GATEWAY)
-    {
-        if (validatePlatformInfo(platformInfo))
-        {
-            return SavePlatformInfo(platformInfo);
-        }
-        else
-        {
-            return OC_STACK_INVALID_PARAM;
-        }
-    }
-    else
-    {
-        return OC_STACK_ERROR;
-    }
-}
-
-OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
-{
-    OIC_LOG(INFO, TAG, "Entering OCSetDeviceInfo");
-
-    if (!deviceInfo.deviceName || deviceInfo.deviceName[0] == '\0')
-    {
-        OIC_LOG(ERROR, TAG, "Null or empty device name.");
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    if (deviceInfo.types)
-    {
-        OCStringLL *type =  deviceInfo.types;
-        OCResource *resource = findResource((OCResource *) deviceResource);
-        if (!resource)
-        {
-            return OC_STACK_INVALID_PARAM;
-        }
-
-        while (type)
-        {
-            OCBindResourceTypeToResource(deviceResource, type->value);
-            type = type->next;
-        }
-    }
-    return SaveDeviceInfo(deviceInfo);
 }
 
 OCStackResult OCCreateResource(OCResourceHandle *handle,
@@ -4424,6 +4342,7 @@ void deleteResourceElements(OCResource *resource)
     OICFree(resource->uri);
     deleteResourceType(resource->rsrcType);
     deleteResourceInterface(resource->rsrcInterface);
+    OCDeleteResourceAttributes(resource->rsrcAttributes);
 }
 
 void deleteResourceType(OCResourceType *resourceType)
@@ -4451,6 +4370,25 @@ void deleteResourceInterface(OCResourceInterface *resourceInterface)
         OICFree(pointer->name);
         OICFree(pointer);
         pointer = next;
+    }
+}
+
+void OCDeleteResourceAttributes(OCAttribute *rsrcAttributes)
+{
+    OCAttribute *next = NULL;
+    for (OCAttribute *pointer = rsrcAttributes; pointer; pointer = next)
+    {
+        next = pointer->next;
+        if (pointer->attrName && 0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, pointer->attrName))
+        {
+            OCFreeOCStringLL((OCStringLL *)pointer->attrValue);
+        }
+        else
+        {
+            OICFree(pointer->attrValue);
+        }
+        OICFree(pointer->attrName);
+        OICFree(pointer);
     }
 }
 
@@ -4732,13 +4670,13 @@ const char* OCGetServerInstanceIDString(void)
     static bool generated = false;
     static char sidStr[UUID_STRING_SIZE];
 
-    if(generated)
+    if (generated)
     {
         return sidStr;
     }
 
     const OicUuid_t *sid = OCGetServerInstanceID();
-    if(OCConvertUuidToString(sid->id, sidStr) != RAND_UUID_OK)
+    if (sid && OCConvertUuidToString(sid->id, sidStr) != RAND_UUID_OK)
     {
         OIC_LOG(FATAL, TAG, "Generate UUID String for Server Instance failed!");
         return NULL;

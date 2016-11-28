@@ -8,6 +8,6 @@ import os.path
 env.AppendUnique(CPPPATH = [ os.path.join(src_dir, 'android') ])
 
 src_files = [ 'caipnwmonitor.c',
-              'ifaddrs.c' ]
+              'caifaddrs.c' ]
 
 Return('src_files')

@@ -186,13 +186,20 @@ public class CaInterface {
      *  @param intervalTime                  interval time(Seconds).
      *  @param workingCount                  working count with interval time.
      */
-
     public synchronized static void setLeScanIntervalTime(int intervalTime, int workingCount){
         CaInterface.setLeScanIntervalTimeImpl(intervalTime, workingCount);
     }
-
     private static native void setLeScanIntervalTimeImpl(int intervalTime, int workingCount);
 
+    /**
+     *  stop BLE scan.
+     *  if you want to start scan, it can be triggered by setLeScanIntervalTime or
+     *  other request API like findResource.
+     */
+    public synchronized static void stopLeScan(){
+        CaInterface.stopLeScanImpl();
+    }
+    private static native void stopLeScanImpl();
 
     public synchronized static int setCipherSuite(OicCipher cipher, OcConnectivityType connType){
         return CaInterface.setCipherSuiteImpl(cipher.getValue(), connType.getValue());

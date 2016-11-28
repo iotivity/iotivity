@@ -191,7 +191,7 @@ CAResult_t CAGetInfoFromPDU(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
  * @param[in]   endpoint            endpoint information.
  * @return  coap_pdu_t value.
  */
-coap_pdu_t *CAParsePDU(const char *data, uint32_t length, uint32_t *outCode,
+coap_pdu_t *CAParsePDU(const char *data, size_t length, uint32_t *outCode,
                        const CAEndpoint_t *endpoint);
 
 /**

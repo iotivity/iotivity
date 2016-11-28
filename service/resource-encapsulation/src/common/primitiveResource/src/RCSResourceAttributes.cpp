@@ -206,7 +206,7 @@ namespace
     };
 
     template< typename VARIANT, int POS >
-    constexpr inline std::vector< TypeInfo > getTypeInfo(Int2Type< POS >) noexcept
+    inline std::vector< TypeInfo > getTypeInfo(Int2Type< POS >) noexcept
     {
         auto vec = getTypeInfo< VARIANT >(Int2Type< POS - 1 >{ });
         vec.push_back(TypeInfo::get< VARIANT, POS >());
@@ -214,7 +214,7 @@ namespace
     }
 
     template< typename VARIANT >
-    constexpr inline std::vector< TypeInfo > getTypeInfo(Int2Type< 0 >) noexcept
+    inline std::vector< TypeInfo > getTypeInfo(Int2Type< 0 >) noexcept
     {
         return { TypeInfo::get< VARIANT, 0 >() };
     }

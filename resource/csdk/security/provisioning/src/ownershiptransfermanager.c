@@ -60,8 +60,9 @@
 #include "ownershiptransfermanager.h"
 #include "securevirtualresourcetypes.h"
 #include "oxmjustworks.h"
-#ifdef _ENABLE_MULTIPLE_OWNER_
 #include "oxmrandompin.h"
+#include "oxmmanufacturercert.h"
+#ifdef _ENABLE_MULTIPLE_OWNER_
 #include "oxmpreconfpin.h"
 #endif //_ENABLE_MULTIPLE_OWNER_
 #include "otmcontextlist.h"
@@ -69,11 +70,21 @@
 #include "pmutility.h"
 #include "srmutility.h"
 #include "provisioningdatabasemanager.h"
-#include "oxmrandompin.h"
 #include "ocpayload.h"
 #include "payload_logging.h"
+#include "pkix_interface.h"
 
 #define TAG "OIC_OTM"
+
+
+#define ALLOWED_OXM         1
+#define NOT_ALLOWED_OXM     0
+
+/**
+ * List of allowed oxm list.
+ * All oxm methods are allowed as default.
+ */
+static uint8_t g_OxmAllowStatus[OIC_OXM_COUNT] = {ALLOWED_OXM, ALLOWED_OXM, ALLOWED_OXM, NOT_ALLOWED_OXM};
 
 /**
  * Variables for pointing the OTMContext to be used in the DTLS handshake result callback.
@@ -108,8 +119,11 @@ OCStackResult OTMSetOTCallback(OicSecOxm_t oxm, OTMCallbackData_t* callbacks)
         callbacks->createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload;
         break;
     case OIC_MANUFACTURER_CERTIFICATE:
-        OIC_LOG(ERROR, TAG, "OIC_MANUFACTURER_CERTIFICATE not supported yet.");
-        return OC_STACK_INVALID_METHOD;
+        callbacks->loadSecretCB = PrepareMCertificateCallback;
+        callbacks->createSecureSessionCB = CreateSecureSessionMCertificateCallback;
+        callbacks->createSelectOxmPayloadCB = CreateMCertificateBasedSelectOxmPayload;
+        callbacks->createOwnerTransferPayloadCB = CreateMCertificateBasedOwnerTransferPayload;
+        break;
     case OIC_DECENTRALIZED_PUBLIC_KEY:
         OIC_LOG(ERROR, TAG, "OIC_DECENTRALIZED_PUBLIC_KEY not supported yet.");
         return OC_STACK_INVALID_METHOD;
@@ -144,6 +158,8 @@ exit:
 static OCStackResult SelectProvisioningMethod(const OicSecOxm_t *supportedMethods,
         size_t numberOfMethods, OicSecOxm_t *selectedMethod)
 {
+    bool isOxmSelected = false;
+
     OIC_LOG(DEBUG, TAG, "IN SelectProvisioningMethod");
 
     if(numberOfMethods == 0 || !supportedMethods)
@@ -152,10 +168,25 @@ static OCStackResult SelectProvisioningMethod(const OicSecOxm_t *supportedMethod
         return OC_STACK_ERROR;
     }
 
-    *selectedMethod  = supportedMethods[0];
     for(size_t i = 0; i < numberOfMethods; i++)
     {
-        if(*selectedMethod < supportedMethods[i])
+        if(ALLOWED_OXM == g_OxmAllowStatus[supportedMethods[i]])
+        {
+            *selectedMethod  = supportedMethods[i];
+            isOxmSelected = true;
+            break;
+        }
+    }
+    if(!isOxmSelected)
+    {
+        OIC_LOG(ERROR, TAG, "Can not find the allowed OxM.");
+        return OC_STACK_NOT_ALLOWED_OXM;
+    }
+
+    for(size_t i = 0; i < numberOfMethods; i++)
+    {
+        if(*selectedMethod < supportedMethods[i] &&
+           ALLOWED_OXM == g_OxmAllowStatus[supportedMethods[i]])
         {
             *selectedMethod =  supportedMethods[i];
         }
@@ -319,6 +350,18 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
         }
         OicUuid_t emptyUuid = { .id={0}};
         SetUuidForPinBasedOxm(&emptyUuid);
+    }
+    else if(OIC_MANUFACTURER_CERTIFICATE == otmCtx->selectedDeviceInfo->doxm->oxmSel)
+    {
+        //Revert back certificate related callbacks.
+        if(CA_STATUS_OK != CAregisterPkixInfoHandler(GetPkixInfo))
+        {
+            OIC_LOG(WARNING, TAG, "Failed to revert PkixInfoHandler.");
+        }
+        if(CA_STATUS_OK != CAregisterGetCredentialTypesHandler(InitCipherSuiteList))
+        {
+            OIC_LOG(WARNING, TAG, "Failed to revert CredentialTypesHandler.");
+        }
     }
 
     for(size_t i = 0; i < otmCtx->ctxResultArraySize; i++)
@@ -799,7 +842,6 @@ static OCStackApplicationResult OperationModeUpdateHandler(void *ctx, OCDoHandle
     if  (OC_STACK_RESOURCE_CHANGED == clientResponse->result)
     {
         OCStackResult res = OC_STACK_ERROR;
-        OicSecOxm_t selOxm = otmCtx->selectedDeviceInfo->doxm->oxmSel;
 
         //DTLS Handshake
         //Load secret for temporal secure session.
@@ -1399,7 +1441,6 @@ static OCStackResult PostOwnerTransferModeToResource(OTMContext_t* otmCtx)
     }
 
     OCProvisionDev_t* deviceInfo = otmCtx->selectedDeviceInfo;
-    OicSecOxm_t selectedOxm = deviceInfo->doxm->oxmSel;
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
 
     if(!PMGenerateQuery(false,
@@ -1695,12 +1736,11 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
         if(PDM_DEVICE_STALE == state)
         {
             OIC_LOG(INFO, TAG, "Detected duplicated UUID in stale status, "
-                               "this UUID will be removed from PDM");
-
-            res = PDMDeleteDevice(&selectedDevice->doxm->deviceID);
+                               "device status will revert back to initial status.");
+            res = PDMSetDeviceState(&selectedDevice->doxm->deviceID, PDM_DEVICE_INIT);
             if(OC_STACK_OK != res)
             {
-                OIC_LOG(ERROR, TAG, "Internal error in PDMDeleteDevice");
+                OIC_LOG(ERROR, TAG, "Internal error in PDMSetDeviceState");
                 OICFree(strUuid);
                 SetResult(otmCtx, res);
                 return res;
@@ -1863,6 +1903,23 @@ error:
     OICFree(otmCtx->ctxResultArray);
     OICFree(otmCtx);
     return res;
+}
+
+OCStackResult OTMSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus)
+{
+    OIC_LOG_V(INFO, TAG, "IN %s : oxm=%d, allow status=%s",
+              __func__, oxm, (allowStatus ? "true" : "false"));
+
+    if(OIC_OXM_COUNT <= oxm)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    g_OxmAllowStatus[oxm] = (allowStatus ? ALLOWED_OXM : NOT_ALLOWED_OXM);
+
+    OIC_LOG_V(INFO, TAG, "OUT %s", __func__);
+
+    return OC_STACK_OK;
 }
 
 OCStackResult PostProvisioningStatus(OTMContext_t* otmCtx)

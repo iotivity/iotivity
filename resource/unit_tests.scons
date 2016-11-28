@@ -38,11 +38,13 @@ if target_os in ['linux', 'windows']:
 	# get it and install it
 	SConscript('#extlibs/hippomocks.scons')
 
-    # Build Common unit tests
+	# Build Common unit tests
 	SConscript('c_common/oic_string/test/SConscript')
 	SConscript('c_common/oic_malloc/test/SConscript')
 	SConscript('c_common/oic_time/test/SConscript')
 	SConscript('c_common/ocrandom/test/SConscript')
+	if target_os == 'windows':
+		SConscript('c_common/windows/test/SConscript')
 
 	# Build C unit tests
 	SConscript('csdk/stack/test/SConscript')

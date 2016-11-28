@@ -32,6 +32,7 @@ OCRemoveDeviceWithUuid
 OCResetDevice
 OCSetOwnerTransferCallbackData
 OCUnlinkDevices
+OCSetOxmAllowStatus
 
 SetGeneratePinCB
 SetInputPinCB

@@ -26,6 +26,7 @@
 #include "cacommon.h"
 #include "caipinterface.h"
 #include "oic_malloc.h"
+#include "ocrandom.h"
 #include "byte_array.h"
 #include "octhread.h"
 #include "timer.h"
@@ -37,6 +38,7 @@
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/pkcs12.h"
 #include "mbedtls/ssl_internal.h"
+#include "mbedtls/net.h"
 #ifdef __WITH_DTLS__
 #include "mbedtls/timing.h"
 #include "mbedtls/ssl_cookie.h"
@@ -219,6 +221,8 @@ typedef enum
     ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
     ADAPTER_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA_256,
     ADAPTER_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256,
+    ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM,
+    ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
     ADAPTER_CIPHER_MAX
 } AdapterCipher_t;
 
@@ -233,7 +237,9 @@ int tlsCipher[ADAPTER_CIPHER_MAX][2] =
     {MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA, 0},
     {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8, 0},
     {MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256, 0},
-    {MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, 0}
+    {MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, 0},
+    {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM, 0},
+    {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, 0}
 };
 
 static int g_cipherSuitesList[ADAPTER_CIPHER_MAX];
@@ -1531,15 +1537,29 @@ CAResult_t CAencryptSsl(const CAEndpoint_t *endpoint,
 
     if (MBEDTLS_SSL_HANDSHAKE_OVER == tep->ssl.state)
     {
-        ret = mbedtls_ssl_write(&tep->ssl, (unsigned char *) data, dataLen);
+        unsigned char *dataBuf = (unsigned char *)data;
+        size_t written = 0;
 
-        if(ret < 0)
+        do
         {
-            OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedTLS write returned %d", ret);
-            RemovePeerFromList(&tep->sep.endpoint);
-            oc_mutex_unlock(g_sslContextMutex);
-            return CA_STATUS_FAILED;
-        }
+            ret = mbedtls_ssl_write(&tep->ssl, dataBuf, dataLen - written);
+            if (ret < 0)
+            {
+                if (MBEDTLS_ERR_SSL_WANT_WRITE != ret)
+                {
+                    OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedTLS write failed! returned 0x%x", -ret);
+                    RemovePeerFromList(&tep->sep.endpoint);
+                    oc_mutex_unlock(g_sslContextMutex);
+                    return CA_STATUS_FAILED;
+                }
+                continue;
+            }
+            OIC_LOG_V(DEBUG, NET_SSL_TAG, "mbedTLS write returned with sent bytes[%d]", ret);
+
+            dataBuf += ret;
+            written += ret;
+        } while (dataLen > written);
+
     }
     else
     {
@@ -1576,16 +1596,27 @@ static void SendCacheMessages(SslEndPoint_t * tep)
         SslCacheMessage_t * msg = (SslCacheMessage_t *) u_arraylist_get(tep->cacheList, listIndex);
         if (NULL != msg && NULL != msg->data && 0 != msg->len)
         {
+            unsigned char *dataBuf = (unsigned char *)msg->data;
+            size_t written = 0;
+
             do
             {
-                ret = mbedtls_ssl_write(&tep->ssl, (unsigned char *) msg->data, msg->len);
-            }
-            while(MBEDTLS_ERR_SSL_WANT_WRITE == ret);
+                ret = mbedtls_ssl_write(&tep->ssl, dataBuf, msg->len - written);
+                if (ret < 0)
+                {
+                    if (MBEDTLS_ERR_SSL_WANT_WRITE != ret)
+                    {
+                        OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedTLS write failed! returned -0x%x", -ret);
+                        break;
+                    }
+                    continue;
+                }
+                OIC_LOG_V(DEBUG, NET_SSL_TAG, "mbedTLS write returned with sent bytes[%d]", ret);
 
-            if(ret < 0)
-            {
-                OIC_LOG_V(ERROR, NET_SSL_TAG,"mbedTLS write returned %d", ret );
-            }
+                dataBuf += ret;
+                written += ret;
+            } while (msg->len > written);
+
             if (u_arraylist_remove(tep->cacheList, listIndex))
             {
                 DeleteCacheMessage(msg);
@@ -1612,55 +1643,6 @@ void CAsetSslHandshakeCallback(CAErrorCallback tlsHandshakeCallback)
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     g_sslCallback = tlsHandshakeCallback;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
-}
-// TODO move ConvertStrToUuid function to common module
-/*
- * Converts string UUID to CARemoteId_t
- *
- * @param strUuid Device UUID in string format
- * @param uuid converted UUID in CARemoteId_t format
- *
- * @return 0 for success.
- * */
-static int ConvertStrToUuid(const char* strUuid, CARemoteId_t* uuid)
-{
-    if(NULL == strUuid || NULL == uuid)
-    {
-        OIC_LOG(ERROR, NET_SSL_TAG, "ConvertStrToUuid : Invalid param");
-        return -1;
-    }
-
-    size_t urnIdx = 0;
-    size_t uuidIdx = 0;
-    size_t strUuidLen = 0;
-    char convertedUuid[UUID_LENGTH * 2] = {0};
-
-    strUuidLen = strlen(strUuid);
-    if(0 == strUuidLen)
-    {
-        OIC_LOG(INFO, NET_SSL_TAG, "The empty string detected, The UUID will be converted to "\
-                           "\"00000000-0000-0000-0000-000000000000\"");
-    }
-    else if(UUID_LENGTH * 2 + 4 == strUuidLen)
-    {
-        for(uuidIdx=0, urnIdx=0; uuidIdx < UUID_LENGTH ; uuidIdx++, urnIdx+=2)
-        {
-            if(*(strUuid + urnIdx) == '-')
-            {
-                urnIdx++;
-            }
-            sscanf(strUuid + urnIdx, "%2hhx", &convertedUuid[uuidIdx]);
-        }
-    }
-    else
-    {
-        OIC_LOG(ERROR, NET_SSL_TAG, "Invalid string uuid format");
-        return -1;
-    }
-
-    memcpy(uuid->id, convertedUuid, UUID_LENGTH);
-    uuid->id_length = UUID_LENGTH;
-    return 0;
 }
 
 /* Read data from TLS connection
@@ -1769,7 +1751,8 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
                 if (NULL != uuidPos)
                 {
                     memcpy(uuid, (char*) uuidPos + sizeof(UUID_PREFIX) - 1, UUID_LENGTH * 2 + 4);
-                    ret = ConvertStrToUuid(uuid, &peer->sep.identity);
+                    OIC_LOG_V(DEBUG, NET_SSL_TAG, "certificate uuid string: %s" , uuid);
+                    ret = OCConvertStringToUuid(uuid, peer->sep.identity.id);
                     SSL_CHECK_FAIL(peer, ret, "Failed to convert subject", 1,
                                           CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT);
                 }
@@ -1783,7 +1766,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
                 if (NULL != userIdPos)
                 {
                     memcpy(uuid, (char*) userIdPos + sizeof(USERID_PREFIX) - 1, UUID_LENGTH * 2 + 4);
-                    ret = ConvertStrToUuid(uuid, &peer->sep.userId);
+                    ret = OCConvertStringToUuid(uuid, peer->sep.userId.id);
                     SSL_CHECK_FAIL(peer, ret, "Failed to convert subject alt name", 1,
                                       CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT);
                 }
@@ -1970,6 +1953,50 @@ CAResult_t CAsetTlsCipherSuite(const uint32_t cipher)
                                           tlsCipher[ADAPTER_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256]);
 #endif
             g_caSslContext->cipher = ADAPTER_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256;
+            break;
+        }
+        case MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM:
+        {
+            if (false == g_caSslContext->cipherFlag[1])
+            {
+                OIC_LOG(ERROR, NET_SSL_TAG, "No Credential for ECC");
+                return CA_STATUS_FAILED;
+            }
+#ifdef __WITH_TLS__
+            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientTlsConf,
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM]);
+            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverTlsConf,
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM]);
+#endif
+#ifdef __WITH_DTLS__
+            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientDtlsConf,
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM]);
+            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverDtlsConf,
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM]);
+#endif
+            g_caSslContext->cipher = ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM;
+            break;
+        }
+        case MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256:
+        {
+            if (false == g_caSslContext->cipherFlag[1])
+            {
+                OIC_LOG(ERROR, NET_SSL_TAG, "No Credential for ECC");
+                return CA_STATUS_FAILED;
+            }
+#ifdef __WITH_TLS__
+            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientTlsConf,
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256]);
+            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverTlsConf,
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256]);
+#endif
+#ifdef __WITH_DTLS__
+            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientDtlsConf,
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256]);
+            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverDtlsConf,
+                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256]);
+#endif
+            g_caSslContext->cipher = ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
             break;
         }
         default:

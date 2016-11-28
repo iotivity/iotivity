@@ -279,6 +279,32 @@ namespace OC
         return checked_guard(m_server, &IServerWrapper::registerPlatformInfo, platformInfo);
     }
 
+    OCStackResult OCPlatform_impl::setPropertyValue(OCPayloadType type, const std::string& tag, const std::string& value)
+    {
+
+        return checked_guard(m_server, &IServerWrapper::setPropertyValue, type, tag, value);
+    }
+
+    OCStackResult OCPlatform_impl::setPropertyValue(OCPayloadType type, const std::string& tag, const std::vector<std::string>& value)
+    {
+        for (const auto& h : value)
+        {
+           OCStackResult r;
+
+           if (OC_STACK_OK != (r = result_guard(setPropertyValue(type, tag, h))))
+           {
+               return r;
+           }
+        }
+
+        return OC_STACK_OK;
+    }
+
+    OCStackResult OCPlatform_impl::getPropertyValue(OCPayloadType type, const std::string& tag, std::string& value)
+    {
+        return checked_guard(m_server, &IServerWrapper::getPropertyValue, type, tag, value);
+    }
+
     OCStackResult OCPlatform_impl::registerResource(OCResourceHandle& resourceHandle,
                                             const std::shared_ptr< OCResource > resource)
     {

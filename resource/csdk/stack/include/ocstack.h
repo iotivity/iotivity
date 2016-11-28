@@ -586,16 +586,16 @@ OCStackResult OCBindResourceInsToResource(OCResourceHandle handle, uint8_t ins);
  */
 OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins);
 
-/**
- * This function gets a resource handle by resource uri.
- *
- * @param uri   Uri of Resource to get Resource handle.
- *
- * @return Found  resource handle or NULL if not found.
- */
-OCResourceHandle OCGetResourceHandleAtUri(const char *uri);
-
 #endif
+
+/**
+* This function gets a resource handle by resource uri.
+*
+* @param uri   Uri of Resource to get Resource handle.
+*
+* @return Found  resource handle or NULL if not found.
+*/
+OCResourceHandle OCGetResourceHandleAtUri(const char *uri);
 
 #ifdef RD_SERVER
 /**
@@ -702,6 +702,31 @@ OCStackResult OCDecodeAddressForRFC6874(char* outputAddress,
                                         size_t outputSize,
                                         const char* inputAddress,
                                         const char* end);
+
+/**
+ * Set the value of /oic/d and /oic/p properties. This function is a generic function that sets for
+ * all OCF defined properties.
+ *
+ * @param type the payload type for device and platform as defined in @ref OCPayloadType.
+ * @param propName the pre-defined property as per OCF spec.
+ * @param value the value of the property to be set.
+ *
+ * @return ::OC_STACK_OK on success and other value otherwise.
+ */
+OCStackResult OCSetPropertyValue(OCPayloadType type, const char *propName, const void *value);
+
+/**
+ * Get the value of /oic/d and /oic/p properties. This function is a generic function that get value
+ * for all OCF defined properties.
+ *
+ * @param type the payload type for device and platform as defined in @ref OCPayloadType.
+ * @param propName the pre-defined as per OCF spec.
+ * @param value this holds the return value.  In case of error will be set to NULL.
+ *
+ * @return ::OC_STACK_OK on success and other value otherwise.
+ */
+OCStackResult OCGetPropertyValue(OCPayloadType type, const char *propName, void **value);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

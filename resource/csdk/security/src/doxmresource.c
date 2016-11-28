@@ -52,6 +52,10 @@
 #include "srmutility.h"
 #include "pinoxmcommon.h"
 
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+#include "pkix_interface.h"
+#endif
+
 #define TAG  "OIC_SRM_DOXM"
 #define CHAR_ZERO ('0')
 
@@ -301,13 +305,6 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     OICFree(strUuid);
     strUuid = NULL;
 
-    //x.org.iotivity.dpc -- not Mandatory(vendor-specific), but this type is boolean, so instance always has a value.
-    cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DPC_NAME,
-        strlen(OIC_JSON_DPC_NAME));
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding DPC Tag.");
-    cborEncoderResult = cbor_encode_boolean(&doxmMap, doxm->dpc);
-    VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding DPC Value.");
-
     //RT -- Mandatory
     CborEncoder rtArray;
     cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_RT_NAME,
@@ -520,18 +517,6 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     {
         VERIFY_NON_NULL(TAG, gDoxm, ERROR);
         doxm->owned = gDoxm->owned;
-    }
-
-    cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_DPC_NAME, &doxmMap);
-    if (CborNoError == cborFindResult && cbor_value_is_boolean(&doxmMap))
-    {
-        cborFindResult = cbor_value_get_boolean(&doxmMap, &doxm->dpc);
-        VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding DPC Value.")
-    }
-    else // PUT/POST JSON may not have dpc so set it to the gDomx->dpc
-    {
-        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
-        doxm->dpc = gDoxm->dpc;
     }
 
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_DEVICE_ID_NAME, &doxmMap);
@@ -877,23 +862,6 @@ static void updateWriteableProperty(const OicSecDoxm_t* src, OicSecDoxm_t* dst)
             dst->owned = src->owned;
         }
 
-        //update oxms
-        if(0 < src->oxmLen)
-        {
-            OicSecOxm_t* tempOxm = (OicSecOxm_t*)OICMalloc(sizeof(OicSecOxm_t) * src->oxmLen);
-            if(NULL != tempOxm)
-            {
-                for(size_t i = 0; i < src->oxmLen; i++)
-                {
-                    tempOxm[i] = src->oxm[i];
-                }
-                OICFree(dst->oxm);
-
-                dst->oxm = tempOxm;
-                dst->oxmLen = src->oxmLen;
-            }
-        }
-
 #ifdef _ENABLE_MULTIPLE_OWNER_
         if(src->mom)
         {
@@ -967,7 +935,46 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
 #endif //_ENABLE_MULTIPLE_OWNER_
 #endif // defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 
-static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest * ehRequest)
+/**
+ * Function to validate oxmsel with oxms.
+ *
+ * @param[in] supportedMethods   Array of supported methods
+ * @param[in] numberOfMethods   number of supported methods
+ * @param[out]  selectedMethod         Selected methods
+ * @return  TRUE on success
+ */
+static bool ValidateOxmsel(const OicSecOxm_t *supportedMethods,
+        size_t numberOfMethods, OicSecOxm_t *selectedMethod)
+{
+    bool isValidOxmsel = false;
+
+    OIC_LOG(DEBUG, TAG, "IN ValidateOxmsel");
+    if (numberOfMethods == 0 || !supportedMethods)
+    {
+        OIC_LOG(WARNING, TAG, "Could not find a supported OxM.");
+        return isValidOxmsel;
+    }
+
+    for (size_t i = 0; i < numberOfMethods; i++)
+    {
+            if (*selectedMethod  == supportedMethods[i])
+            {
+                isValidOxmsel = true;
+                break;
+            }
+    }
+    if (!isValidOxmsel)
+    {
+        OIC_LOG(ERROR, TAG, "Not allowed Oxmsel.");
+        return isValidOxmsel;
+    }
+
+    OIC_LOG(DEBUG, TAG, "OUT ValidateOxmsel");
+
+    return isValidOxmsel;
+}
+
+static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRequest)
 {
     OIC_LOG (DEBUG, TAG, "Doxm EntityHandle  processing POST request");
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
@@ -1083,6 +1090,13 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
             // in unowned state
             if ((false == gDoxm->owned) && (false == newDoxm->owned))
             {
+                if (false == ValidateOxmsel(gDoxm->oxm, gDoxm->oxmLen, &newDoxm->oxmSel))
+                {
+                    OIC_LOG(ERROR, TAG, "Not acceptable request because oxmsel does not support on Server");
+                    ehRet = OC_EH_NOT_ACCEPTABLE;
+                    goto exit;
+                }
+
                 if (OIC_JUST_WORKS == newDoxm->oxmSel)
                 {
                     /*
@@ -1183,7 +1197,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                                 ehRet = OC_EH_ERROR;
                             }
                         }
-                        else if(previousMsgId != ehRequest->messageID)
+                        else if(OC_ADAPTER_TCP == ehRequest->devAddr.adapter)
                         {
                             if(OC_STACK_OK == GeneratePin(ranPin, sizeof(ranPin)))
                             {
@@ -1227,6 +1241,30 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                     }
 #endif // __WITH_DTLS__ or __WITH_TLS__
                 }
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+                else if (OIC_MANUFACTURER_CERTIFICATE ==  newDoxm->oxmSel)
+                {
+                    //Save the owner's UUID to derive owner credential
+                    memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
+                    gDoxm->oxmSel = newDoxm->oxmSel;
+                    //Update new state in persistent storage
+                    if (UpdatePersistentStorage(gDoxm))
+                    {
+                        ehRet = OC_EH_OK;
+                    }
+                    else
+                    {
+                        OIC_LOG(WARNING, TAG, "Failed to update DOXM in persistent storage");
+                        ehRet = OC_EH_ERROR;
+                    }
+                    CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
+                    VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+                    OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+
+                    VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterPkixInfoHandler(GetManufacturerPkixInfo), ERROR);
+                    VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterGetCredentialTypesHandler(InitManufacturerCipherSuiteList), ERROR);
+                }
+#endif // __WITH_DTLS__ or __WITH_TLS__
             }
 
             /*
@@ -1297,6 +1335,13 @@ static OCEntityHandlerResult HandleDoxmPostRequest(const OCEntityHandlerRequest 
                     OIC_LOG(ERROR, TAG, "Failed to update DOXM in persistent storage");
                     ehRet = OC_EH_ERROR;
                 }
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+                if (OIC_MANUFACTURER_CERTIFICATE == gDoxm->oxmSel)
+                {
+                    CAregisterPkixInfoHandler(GetPkixInfo);
+                    CAregisterGetCredentialTypesHandler(InitCipherSuiteList);
+                }
+#endif // __WITH_DTLS__ or __WITH_TLS__
             }
         }
     }
@@ -1311,12 +1356,17 @@ exit:
         */
         if(gDoxm)
         {
-            if(!gDoxm->owned && previousMsgId != ehRequest->messageID)
+            if(!gDoxm->owned)
             {
-                OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request,"\
-                                    "DOXM will be reverted.");
-                RestoreDoxmToInitState();
-                RestorePstatToInitState();
+                OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request");
+
+                if((OC_ADAPTER_IP == ehRequest->devAddr.adapter && previousMsgId != ehRequest->messageID)
+                   || OC_ADAPTER_TCP == ehRequest->devAddr.adapter)
+                {
+                    RestoreDoxmToInitState();
+                    RestorePstatToInitState();
+                    OIC_LOG(WARNING, TAG, "DOXM will be reverted.");
+                }
             }
         }
         else
@@ -1326,7 +1376,7 @@ exit:
     }
     else
     {
-        previousMsgId = ehRequest->messageID;
+        previousMsgId = ehRequest->messageID++;
     }
 
     //Send payload to request originator

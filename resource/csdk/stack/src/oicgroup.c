@@ -773,7 +773,7 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
         goto exit;
     }
 
-    actionTypeStr = (char *)malloc(1024);
+    actionTypeStr = (char *)OICMalloc(1024);
     if(actionTypeStr != NULL)
     {
         sprintf(actionTypeStr, "%ld %u", actionset->timesteps, actionset->type);
@@ -783,11 +783,11 @@ OCStackResult BuildStringFromActionSet(OCActionSet* actionset, char** desc)
             remaining -= strlen(actionTypeStr);
             strncat(temp, ACTION_DELIMITER, strlen(ACTION_DELIMITER));
             remaining -= strlen(ACTION_DELIMITER);
-            free(actionTypeStr);
+            OICFree(actionTypeStr);
         }
         else
         {
-            free(actionTypeStr);
+            OICFree(actionTypeStr);
             res = OC_STACK_ERROR;
             goto exit;
         }

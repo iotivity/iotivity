@@ -150,6 +150,35 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
                 }
             }
     };
+
+    OcAccountManager.OnPostListener onSignOut = new OcAccountManager.OnPostListener() {
+        @Override
+            public synchronized void onPostCompleted(List<OcHeaderOption> list,
+                    OcRepresentation ocRepresentation) {
+                logMessage("signOut was successful");
+                runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                        lyt1.setVisibility(View.GONE);
+                        lyt2.setVisibility(View.GONE);
+                        signinLyt.setVisibility(View.VISIBLE);
+                        }
+                        });
+
+            }
+
+        @Override
+            public synchronized void onPostFailed(Throwable throwable) {
+                logMessage("Failed to signOut");
+                if (throwable instanceof OcException) {
+                    OcException ocEx = (OcException) throwable;
+                    Log.e(TAG, ocEx.toString());
+                    ErrorCode errCode = ocEx.getErrorCode();
+                    logMessage("Error code: " + errCode);
+                }
+            }
+    };
+
     OcCloudProvisioning.GetIndividualAclInfoListener getIndividualAclInfoListener =
         new OcCloudProvisioning.GetIndividualAclInfoListener() {
             @Override
@@ -382,10 +411,7 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
                         EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP));
             }
 
-            mAccountManager.signOut(CloudProvisioningClient.this);
-            lyt1.setVisibility(View.GONE);
-            lyt2.setVisibility(View.GONE);
-            signinLyt.setVisibility(View.VISIBLE);
+            mAccountManager.signOut(settingPreference.getString("accesstoken", ""),onSignOut);
         } catch (OcException e) {
             e.printStackTrace();
         }

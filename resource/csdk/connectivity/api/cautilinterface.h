@@ -163,10 +163,15 @@ void CAUtilSetFoundDeviceListener(jobject listener);
  * @param[in]  intervalTime         interval time(Seconds).
  * @param[in]  workingCount         working cycle for selected interval time.
  *
- * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
+ * @return  ::CA_STATUS_OK or ::CA_NOT_SUPPORTED
  */
 CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount);
 
+/**
+ * stop LE scan.
+ * @return  ::CA_STATUS_OK or ::CA_NOT_SUPPORTED
+ */
+CAResult_t CAUtilStopLEScan();
 #endif //__JAVA__
 
 #ifdef __cplusplus

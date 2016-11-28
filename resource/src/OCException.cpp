@@ -109,6 +109,8 @@ std::string OC::OCException::reason(const OCStackResult sr)
             return OC::Exception::INCONSISTENT_DB;
         case OC_STACK_AUTHENTICATION_FAILURE:
             return OC::Exception::AUTHENTICATION_FAILURE;
+        case OC_STACK_NOT_ALLOWED_OXM:
+            return OC::Exception::NOT_ALLOWED_OXM;
         case OC_STACK_FORBIDDEN_REQ:
             return OC::Exception::FORBIDDEN_REQ;
         case OC_STACK_INTERNAL_SERVER_ERROR:
