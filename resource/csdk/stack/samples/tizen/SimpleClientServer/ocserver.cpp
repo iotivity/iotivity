@@ -524,7 +524,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     cout << "\nInside entity handler - flags: " << flag;
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
-    OCEntityHandlerResponse response;
+    OCEntityHandlerResponse response = { 0, 0, OC_EH_ERROR, 0, 0, { },{ 0 }, false };
 
     // Validate pointer
     if (!entityHandlerRequest)
