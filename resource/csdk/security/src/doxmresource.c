@@ -1033,6 +1033,12 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
             // in owned state
             if (true == gDoxm->owned)
             {
+                if (false == ValidateOxmsel(gDoxm->oxm, gDoxm->oxmLen, &newDoxm->oxmSel))
+                {
+                    OIC_LOG(ERROR, TAG, "Not acceptable request because oxmsel does not support on Server");
+                    ehRet = OC_EH_NOT_ACCEPTABLE;
+                    goto exit;
+                }
                 //Update gDoxm based on newDoxm
                 updateWriteableProperty(newDoxm, gDoxm);
 
