@@ -4523,6 +4523,8 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicWriteCallback(
             {
                 jint length = (*env)->GetArrayLength(env, data);
                 g_clientErrorCallback(address, data, length, CA_SEND_FAILED);
+                CALogSendStateInfo(CA_ADAPTER_GATT_BTLE, address, 0, length,
+                                   false, "writeChar failure");
             }
 
             (*env)->ReleaseStringUTFChars(env, jni_address, address);
@@ -4544,6 +4546,10 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattCharacteristicWriteCallback(
         g_isSignalSetFlag = true;
         oc_cond_signal(g_threadWriteCharacteristicCond);
         oc_mutex_unlock(g_threadWriteCharacteristicMutex);
+
+        CALogSendStateInfo(CA_ADAPTER_GATT_BTLE, address, 0,
+                           (*env)->GetArrayLength(env, data),
+                           true, "writeChar success");
     }
 
     (*env)->ReleaseStringUTFChars(env, jni_address, address);

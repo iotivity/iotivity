@@ -2375,6 +2375,21 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerNotificationSentCallback(
     OIC_LOG_V(DEBUG, TAG, "Gatt Server Notification Sent Callback (status : %d)",
               status);
 
+    jstring jni_address = CALEGetAddressFromBTDevice(env, device);
+    if (!jni_address)
+    {
+        OIC_LOG(ERROR, TAG, "jni_address is null");
+        return;
+    }
+
+    const char* address = (*env)->GetStringUTFChars(env, jni_address, NULL);
+    if (!address)
+    {
+        OIC_LOG(ERROR, TAG, "address is not available");
+        (*env)->DeleteLocalRef(env, jni_address);
+        return;
+    }
+
     jint gatt_success = CALEGetConstantsValue(env, CLASSPATH_BT_GATT, "GATT_SUCCESS");
     if (gatt_success != status) // error case
     {
@@ -2395,8 +2410,14 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerNotificationSentCallback(
             g_isSignalSetFlag = true;
             oc_cond_signal(g_threadSendNotifyCond);
             oc_mutex_unlock(g_threadSendNotifyMutex);
+
+            (*env)->ReleaseStringUTFChars(env, jni_address, address);
+            (*env)->DeleteLocalRef(env, jni_address);
             return;
         }
+
+        CALogSendStateInfo(CA_ADAPTER_GATT_BTLE, address, 0, -1,
+                           false, "notifyChar failure");
     }
     else
     {
@@ -2414,7 +2435,12 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerNotificationSentCallback(
         g_isSignalSetFlag = true;
         oc_cond_signal(g_threadSendNotifyCond);
         oc_mutex_unlock(g_threadSendNotifyMutex);
+
+        CALogSendStateInfo(CA_ADAPTER_GATT_BTLE, address, 0, -1,
+                           true, "notifyChar success");
     }
+    (*env)->ReleaseStringUTFChars(env, jni_address, address);
+    (*env)->DeleteLocalRef(env, jni_address);
 
 }
 
