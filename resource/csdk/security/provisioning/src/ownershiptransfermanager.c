@@ -62,9 +62,9 @@
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
 #include "oxmmanufacturercert.h"
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 #include "oxmpreconfpin.h"
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 #include "otmcontextlist.h"
 #include "pmtypes.h"
 #include "pmutility.h"
@@ -98,11 +98,11 @@ OCStackResult OTMSetOTCallback(OicSecOxm_t oxm, OTMCallbackData_t* callbacks)
     OIC_LOG(INFO, TAG, "IN OTMSetOTCallback");
 
     VERIFY_NON_NULL(TAG, callbacks, ERROR);
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     VERIFY_SUCCESS(TAG, (OIC_OXM_COUNT > oxm || OIC_PRECONFIG_PIN == oxm), ERROR);
 #else
     VERIFY_SUCCESS(TAG, (OIC_OXM_COUNT > oxm), ERROR);
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     switch(oxm)
     {
@@ -127,14 +127,14 @@ OCStackResult OTMSetOTCallback(OicSecOxm_t oxm, OTMCallbackData_t* callbacks)
     case OIC_DECENTRALIZED_PUBLIC_KEY:
         OIC_LOG(ERROR, TAG, "OIC_DECENTRALIZED_PUBLIC_KEY not supported yet.");
         return OC_STACK_INVALID_METHOD;
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     case OIC_PRECONFIG_PIN:
         callbacks->loadSecretCB = LoadPreconfigPinCodeCallback;
         callbacks->createSecureSessionCB = CreateSecureSessionPreconfigPinCallback;
         callbacks->createSelectOxmPayloadCB = CreatePreconfigPinBasedSelectOxmPayload;
         callbacks->createOwnerTransferPayloadCB = CreatePreconfigPinBasedOwnerTransferPayload;
         break;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
     default:
         OIC_LOG_V(ERROR, TAG, "Unknown OxM : %d", (int)oxm);
         return OC_STACK_INVALID_PARAM;

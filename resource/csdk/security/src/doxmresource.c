@@ -82,10 +82,10 @@ static OicSecDoxm_t gDefaultDoxm =
     {.id = {0}},            /* OicUuid_t deviceID */
     false,                  /* bool dpc */
     {.id = {0}},            /* OicUuid_t owner */
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     NULL,                   /* OicSecSubOwner_t sub-owner list */
     NULL,                   /* OicSecMomType_t multiple owner mode */
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
     {.id = {0}},            /* OicUuid_t rownerID */
 };
 
@@ -111,7 +111,7 @@ void DeleteDoxmBinData(OicSecDoxm_t* doxm)
         //clean oxm
         OICFree(doxm->oxm);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         //clean mom
         OICFree(doxm->mom);
 
@@ -126,7 +126,7 @@ void DeleteDoxmBinData(OicSecDoxm_t* doxm)
                 OICFree(subowner);
             }
         }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
         //Clean doxm itself
         OICFree(doxm);
@@ -240,7 +240,7 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
         strUuid = NULL;
     }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     //Device SubOwnerID -- Not Mandatory
     if(doxm->subOwners)
     {
@@ -281,7 +281,7 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
         cborEncoderResult = cbor_encode_int(&doxmMap, (int64_t)doxm->mom->mode);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding mom Value.");
     }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     //devownerid -- Mandatory
     cborEncoderResult = cbor_encode_text_string(&doxmMap, OIC_JSON_DEVOWNERID_NAME,
@@ -551,7 +551,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
         memcpy(doxm->owner.id, gDoxm->owner.id, sizeof(doxm->owner.id));
     }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_MOM_NAME, &doxmMap);
     if(CborNoError == cborFindResult && cbor_value_is_integer(&doxmMap))
     {
@@ -625,7 +625,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
             LL_APPEND(doxm->subOwners, subOwnerId);
         }
     }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_ROWNERID_NAME, &doxmMap);
     if (CborNoError == cborFindResult && cbor_value_is_text_string(&doxmMap))
@@ -712,10 +712,10 @@ static bool ValidateQuery(const char * query)
     bool bDeviceIDMatch = false;    // does 'deviceid' query matches with doxm.deviceid ?
     bool bInterfaceQry = false;      // does querystring contains 'if' query ?
     bool bInterfaceMatch = false;    // does 'if' query matches with oic.if.baseline ?
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     bool bMotQry = false;         // does querystring contains 'mom' and 'owned' query ?
     bool bMotMatch = false;       // does 'mom' query value is not '0' && does query value matches with doxm.owned status?
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     OicParseQueryIter_t parseIter = {.attrPos = NULL};
 
@@ -738,7 +738,7 @@ static bool ValidateQuery(const char * query)
             }
         }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         if (strncasecmp((char *)parseIter.attrPos, OIC_JSON_MOM_NAME, strlen(OIC_JSON_MOM_NAME)) == 0)
         {
             bMotQry = true;
@@ -759,7 +759,7 @@ static bool ValidateQuery(const char * query)
             }
             return bMotMatch;
         }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
         if (strncasecmp((char *)parseIter.attrPos, OIC_JSON_DEVICE_ID_NAME, parseIter.attrLen) == 0)
         {
@@ -784,14 +784,14 @@ static bool ValidateQuery(const char * query)
         }
     }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     return ((bOwnedQry ? bOwnedMatch : true) &&
             (bDeviceIDQry ? bDeviceIDMatch : true) &&
             (bMotQry ? bMotMatch : true));
 #else
     return ((bOwnedQry ? bOwnedMatch : true) &&
             (bDeviceIDQry ? bDeviceIDMatch : true));
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 }
 
 static OCEntityHandlerResult HandleDoxmGetRequest (const OCEntityHandlerRequest * ehRequest)
@@ -862,7 +862,7 @@ static void updateWriteableProperty(const OicSecDoxm_t* src, OicSecDoxm_t* dst)
             dst->owned = src->owned;
         }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         if(src->mom)
         {
             OIC_LOG(DEBUG, TAG, "dectected 'mom' property");
@@ -875,12 +875,12 @@ static void updateWriteableProperty(const OicSecDoxm_t* src, OicSecDoxm_t* dst)
                 }
             }
         }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
     }
 }
 
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * Callback function to handle MOT DTLS handshake result.
  * @param[out]   object           remote device information.
@@ -932,7 +932,7 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
 
     OIC_LOG(DEBUG, TAG, "OUT MultipleOwnerDTLSHandshakeCB");
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 #endif // defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 
 /**
@@ -1016,7 +1016,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                 updateWriteableProperty(newDoxm, gDoxm);
 
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
                 //handle mom
                 if(gDoxm->mom)
                 {
@@ -1077,7 +1077,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                         LL_APPEND(gDoxm->subOwners, subowner);
                     }
                 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 #endif // defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 
                 //Update new state in persistent storage
@@ -1505,7 +1505,7 @@ const OicSecDoxm_t* GetDoxmResourceData()
     return gDoxm;
 }
 
-#if defined(__WITH_DTLS__) && defined(_ENABLE_MULTIPLE_OWNER_)
+#if defined(__WITH_DTLS__) && defined(MULTIPLE_OWNER)
 /**
  * Internal API to prepare MOT
  */
@@ -1551,7 +1551,7 @@ static void PrepareMOT(const OicSecDoxm_t* doxm)
 exit:
     OIC_LOG(WARNING, TAG, "Error in PrepareMOT");
 }
-#endif //defined(__WITH_DTLS__) && defined(_ENABLE_MULTIPLE_OWNER_)
+#endif //defined(__WITH_DTLS__) && defined(MULTIPLE_OWNER)
 
 OCStackResult InitDoxmResource()
 {
@@ -1601,13 +1601,13 @@ OCStackResult InitDoxmResource()
     }
     OICFree(data);
 
-#if defined(__WITH_DTLS__) && defined(_ENABLE_MULTIPLE_OWNER_)
+#if defined(__WITH_DTLS__) && defined(MULTIPLE_OWNER)
     //if MOT is enabled, MOT should be prepared.
     if(gDoxm && gDoxm->owned)
     {
         PrepareMOT(gDoxm);
     }
-#endif // defined(__WITH_DTLS__) && defined(_ENABLE_MULTIPLE_OWNER_)
+#endif // defined(__WITH_DTLS__) && defined(MULTIPLE_OWNER)
 
     return ret;
 }
@@ -1737,7 +1737,7 @@ OCStackResult GetDoxmRownerId(OicUuid_t *rowneruuid)
     return retVal;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * Compare the UUID to SubOwner.
  *
@@ -1767,7 +1767,7 @@ bool IsSubOwner(const OicUuid_t* uuid)
     }
     return retVal;
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /**
  * Function to restore doxm resurce to initial status.

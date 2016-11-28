@@ -24,9 +24,9 @@
 #include "octypes.h"
 #include "pmtypes.h"
 #include "ownershiptransfermanager.h"
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 #include "securevirtualresourcetypes.h"
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 #ifdef __cplusplus
 extern "C" {
@@ -91,7 +91,7 @@ OCStackResult OCDoOwnershipTransfer(void* ctx,
  */
 OCStackResult OCSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * API to perfrom multiple ownership transfer for MOT enabled device.
  *
@@ -103,7 +103,7 @@ OCStackResult OCSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus)
 OCStackResult OCDoMultipleOwnershipTransfer(void* ctx,
                                       OCProvisionDev_t *targetDevices,
                                       OCProvisionResultCB resultCallback);
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /**
  * API to register for particular OxM.
@@ -125,7 +125,7 @@ OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t*
  */
 OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * The function is responsible for discovery of MOT enabled device is current subnet.
  *
@@ -145,7 +145,7 @@ OCStackResult OCDiscoverMultipleOwnerEnabledDevices(unsigned short timeout, OCPr
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OCDiscoverMultipleOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList);
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /**
  * API to provision credentials between two devices and ACLs for the devices who act as a server.
@@ -239,7 +239,7 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
                                       const OCProvisionDev_t *pDev2,
                                       OCProvisionResultCB resultCallback);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * API to provision preconfigured PIN to device(NOT LIST).
  * If device does not support the Preconfigured PIN OxM,
@@ -295,7 +295,7 @@ OCStackResult OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInf
  */
 OCStackResult OCSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
                                  const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback);
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /**
  * Function to unlink devices.

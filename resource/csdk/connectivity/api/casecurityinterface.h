@@ -67,7 +67,7 @@ typedef int (*CAgetPskCredentialsHandler)(CADtlsPskCredType_t type,
               uint8_t *result, size_t result_length);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * API to get a secure connected peer information
  *
@@ -76,7 +76,7 @@ typedef int (*CAgetPskCredentialsHandler)(CADtlsPskCredType_t type,
  * @return  secure connected peer information on success, otherwise NULL
  */
 const CASecureEndpoint_t *CAGetSecureEndpointData(const CAEndpoint_t *peer);
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 #endif
 
 /**

@@ -86,12 +86,15 @@ if target_os in ['darwin', 'ios']:
 
 if target_os == 'tizen':
     examples_env.AppendUnique(CPPDEFINES = ['__TIZEN__'])
-
+if examples_env.get('MULTIPLE_OWNER') == '1':
+    examples_env.AppendUnique(CPPDEFINES = ['MULTIPLE_OWNER'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
 provisioningclient = examples_env.Program('provisioningclient', 'provisioningclient.cpp')
+if examples_env.get('MULTIPLE_OWNER') == '1':
+	subownerclient = examples_env.Program('subownerclient', 'subownerclient.cpp')
 
 if examples_env.get('WITH_TCP') == True:
 	cloudClient = examples_env.Program('cloudClient',['cloudClient.cpp', 'cloudAuth.cpp', 'cloudWrapper.cpp'])
@@ -102,6 +105,12 @@ svr_db_build_dir = examples_env.get('BUILD_DIR') +'/resource/provisioning/exampl
 
 clientjson = examples_env.Install(svr_db_build_dir, svr_db_src_dir + 'oic_svr_db_client.json')
 clientdat = examples_env.Install(svr_db_build_dir, svr_db_src_dir + 'oic_svr_db_client.dat')
+
+if examples_env.get('MULTIPLE_OWNER') == '1':
+	subownerclientdat = examples_env.Install(svr_db_build_dir,
+		svr_db_src_dir + 'oic_svr_db_subowner_client.dat')
+	Alias("subowner", [subownerclientdat, subownerclient])
+	examples_env.AppendTarget("subowner")
 
 if examples_env.get('WITH_TCP') == True:
 	clouddat = examples_env.Install(svr_db_build_dir,

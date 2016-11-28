@@ -133,10 +133,10 @@ const char* GetOxmString(OicSecOxm_t oxmType)
             return OXM_RANDOM_DEVICE_PIN;
         case OIC_MANUFACTURER_CERTIFICATE:
             return OXM_MANUFACTURER_CERTIFICATE;
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         case OIC_PRECONFIG_PIN:
             return OXM_PRECONF_PIN;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
         default:
             return NULL;
     }

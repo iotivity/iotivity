@@ -88,7 +88,7 @@ if ((secured == '1') and (with_tcp == True)):
 	env.AppendUnique(CPPDEFINES = ['__WITH_TLS__'])
 
 if (multiple_owner == '1'):
-	env.AppendUnique(CPPDEFINES=['_ENABLE_MULTIPLE_OWNER_'])
+	env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
 
 
 ca_common_src = None

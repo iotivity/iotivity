@@ -68,7 +68,7 @@ if srmtest_env.get('LOGGING') == '1':
 	srmtest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if srmtest_env.get('MULTIPLE_OWNER') == '1':
-	srmtest_env.AppendUnique(CPPDEFINES=['_ENABLE_MULTIPLE_OWNER_'])
+	srmtest_env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
 
 if target_os == 'windows':
 	srmtest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])

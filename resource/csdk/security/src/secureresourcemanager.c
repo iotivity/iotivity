@@ -204,14 +204,14 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
             }
         }
     }
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     /*
      * In case of ACL and CRED, The payload required to verify the payload.
      * Payload information will be used for subowner's permission verification.
      */
     g_policyEngineContext.payload = (uint8_t*)requestInfo->info.payload;
     g_policyEngineContext.payloadSize = requestInfo->info.payloadSize;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     //New request are only processed if the policy engine state is AWAITING_REQUEST.
     if (AWAITING_REQUEST == g_policyEngineContext.state)

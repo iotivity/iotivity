@@ -209,16 +209,12 @@ namespace OIC
 
             OCStackResult result = OC_STACK_ERROR;
 
-            OTMCallbackData_t justWorksCBData;
-            justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
-            justWorksCBData.createSecureSessionCB = CreateSecureSessionJustWorksCallback;
-            justWorksCBData.createSelectOxmPayloadCB = CreateJustWorksSelectOxmPayload;
-            justWorksCBData.createOwnerTransferPayloadCB =
-                    CreateJustWorksOwnerTransferPayload;
-            OCSecure::setOwnerTransferCallbackData(OIC_JUST_WORKS, &justWorksCBData, NULL);
-
             OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Transfering ownership for : %s ",
                     m_securedResource->getDeviceID().c_str());
+
+            //In case of random pin, argument should be inputPinCallback func.
+            // for justwork, not required(NULL)
+            OCSecure::setInputPinCallback(NULL);
 
             OC::ResultCallBack ownershipTransferCb = std::bind(
                     &EnrolleeSecurity::ownershipTransferCb, this, std::placeholders::_1,

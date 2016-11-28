@@ -321,7 +321,7 @@ static int multipleOwnershipTransfer(void)
     // for error checking, the return value saved and printed
     g_doneCB = false;
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     OCProvisionDev_t* dev = NULL;
     LL_FOREACH(g_motdev_list, dev)
     {
@@ -337,7 +337,7 @@ static int multipleOwnershipTransfer(void)
             }
         }
     }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     if(OC_STACK_OK != OCDoMultipleOwnershipTransfer(g_ctx, g_motdev_list, multipleOwnershipTransferCB))
     {

@@ -89,7 +89,7 @@ if env.get('LOGGING'):
 	libocsrm_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if env.get('MULTIPLE_OWNER') == '1':
-	libocsrm_env.AppendUnique(CPPDEFINES=['_ENABLE_MULTIPLE_OWNER_'])
+	libocsrm_env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
 
 ######################################################################
 # Source files and Targets

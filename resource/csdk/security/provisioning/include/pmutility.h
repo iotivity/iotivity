@@ -67,7 +67,7 @@ OCStackResult PMSingleDeviceDiscovery(unsigned short waittime, const OicUuid_t* 
  */
 OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisionDev_t **ppList);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * Discover multiple OTM enabled devices in the same IP subnet.
  *
@@ -78,7 +78,7 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
  * @return OC_STACK_OK on success otherwise error.
  */
 OCStackResult PMMultipleOwnerDeviceDiscovery(unsigned short waittime, bool isMultipleOwned, OCProvisionDev_t **ppDevicesList);
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /**
  * This function deletes list of provision target devices

@@ -24,9 +24,9 @@
 #include "pmutility.h"
 #include "srmutility.h"
 #include "ownershiptransfermanager.h"
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 #include "multipleownershiptransfermanager.h"
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 #include "oic_malloc.h"
 #include "logger.h"
 #include "secureresourceprovider.h"
@@ -53,7 +53,7 @@ struct Linkdata
 
 };
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 typedef struct ProvPreconfPINCtx ProvPreconfPINCtx_t;
 struct ProvPreconfPINCtx
 {
@@ -63,7 +63,7 @@ struct ProvPreconfPINCtx
     size_t pinLen;
     OCProvisionResultCB resultCallback;
 };
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /**
  * The function is responsible for initializaton of the provisioning manager. It will load
@@ -140,7 +140,7 @@ OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **
     return PMDeviceDiscovery(timeout, true, ppList);
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * The function is responsible for discovery of MOT enabled device is current subnet.
  *
@@ -211,7 +211,7 @@ OCStackResult OCDoMultipleOwnershipTransfer(void* ctx,
     return MOTDoOwnershipTransfer(ctx, targetDevices, resultCallback);
 }
 
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /**
  * API to register for particular OxM.
@@ -369,7 +369,7 @@ OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *select
     return SRPProvisionDirectPairing(ctx, selectedDeviceInfo, pconf, resultCallback);
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 static void AddPreconfPinOxMCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
     ProvPreconfPINCtx_t* provCtx = (ProvPreconfPINCtx_t*)ctx;
@@ -419,7 +419,7 @@ OCStackResult OCProvisionPreconfigPin(void *ctx,
      */
     return MOTAddMOTMethod((void*)provCtx, targetDeviceInfo, OIC_PRECONFIG_PIN, AddPreconfPinOxMCB);
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /*
 * Function to unlink devices.
@@ -1240,7 +1240,7 @@ void OCDeletePdAclList(OicSecPdAcl_t* pPdAcl)
     FreePdAclList(pPdAcl);
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * API to update 'doxm.mom' to resource server.
  *
@@ -1270,7 +1270,7 @@ OCStackResult OCSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceI
 {
     return MOTSelectMOTMethod(ctx, targetDeviceInfo, oxmSelValue, resultCallback);
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 /**

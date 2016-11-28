@@ -221,7 +221,7 @@ static void FreeCred(OicSecCred_t *cred)
     //Clean Period
     OICFree(cred->period);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     //Clean eowner
     OICFree(cred->eownerID);
 #endif
@@ -334,12 +334,12 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         }
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         if(cred->eownerID)
         {
             mapSize++;
         }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
         if (SIGNED_ASYMMETRIC_KEY == cred->credType && cred->publicData.data)
         {
@@ -611,7 +611,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding Period Name Value.");
         }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         // Eownerid -- Not Mandatory
         if(cred->eownerID)
         {
@@ -625,7 +625,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding eownerId Value.");
             OICFree(eowner);
         }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
         cborEncoderResult = cbor_encoder_close_container(&credArray, &credMap);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Cred Map.");
@@ -1051,7 +1051,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding Period.");
                             }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
                             // Eowner uuid -- Not Mandatory
                             if (strcmp(OIC_JSON_EOWNERID_NAME, name)  == 0 && cbor_value_is_text_string(&credMap))
                             {
@@ -1067,7 +1067,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 OICFree(eowner);
                                 VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
                             }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
                             if (cbor_value_is_valid(&credMap))
                             {
@@ -1125,7 +1125,7 @@ exit:
     return ret;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 bool IsValidCredentialAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPayload, size_t size)
 {
     OicSecCred_t* cred = NULL;
@@ -1149,7 +1149,7 @@ exit:
     return isValidCred;
 
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t credType,
                                   const OicSecCert_t * publicData, const OicSecKey_t* privateData,
@@ -1217,14 +1217,14 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     VERIFY_NON_NULL(TAG, rownerID, ERROR);
     memcpy(&cred->rownerID, rownerID, sizeof(OicUuid_t));
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     if(eownerID)
     {
         cred->eownerID = (OicUuid_t*)OICCalloc(1, sizeof(OicUuid_t));
         VERIFY_NON_NULL(TAG, cred->eownerID, ERROR);
         memcpy(cred->eownerID->id, eownerID->id, sizeof(eownerID->id));
     }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     ret = OC_STACK_OK;
 
@@ -1739,7 +1739,7 @@ exit:
 }
 
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * Internal function to fill private data of SubOwner PSK.
  *
@@ -1810,7 +1810,7 @@ exit:
     OICFree(b64Buf);
     return false;
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
 static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehRequest)
@@ -1949,7 +1949,7 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
                 }
             }
         }
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         // In case SubOwner Credential
         else if(doxm && doxm->owned && doxm->mom &&
                 OIC_MULTIPLE_OWNER_DISABLE != doxm->mom->mode &&
@@ -2004,7 +2004,7 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
                 }
             }
         }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
         else
         {
             if(IsEmptyCred(cred))
@@ -2444,7 +2444,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                 }
                 OIC_LOG(DEBUG, TAG, "Can not find subject matched credential.");
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
                 const OicSecDoxm_t* doxm = GetDoxmResourceData();
                 if(doxm && doxm->mom && OIC_MULTIPLE_OWNER_DISABLE != doxm->mom->mode)
                 {
@@ -2540,7 +2540,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                         }
                     }
                 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
             }
             break;
     }
