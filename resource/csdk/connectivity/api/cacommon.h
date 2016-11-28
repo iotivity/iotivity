@@ -55,6 +55,11 @@ extern "C"
 #endif
 
 /**
+ * TAG of Analyzer log.
+ */
+#define ANALYZER_TAG "Analyzer"
+
+/**
  * IP address Length.
  */
 #define CA_IPADDR_SIZE 16

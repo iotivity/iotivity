@@ -238,6 +238,7 @@ static void CAIPPassNetworkChangesToAdapter(CANetworkStatus_t status)
         if (cbitem && cbitem->adapter)
         {
             cbitem->callback(cbitem->adapter, status);
+            CALogAdapterStateInfo(cbitem->adapter, status);
         }
     }
 }

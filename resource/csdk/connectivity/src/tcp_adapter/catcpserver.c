@@ -891,6 +891,8 @@ static int CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
     if (connect(fd, (struct sockaddr *)&sa, socklen) < 0)
     {
         OIC_LOG_V(ERROR, TAG, "failed to connect socket, %s", strerror(errno));
+        CALogSendStateInfo(svritem->sep.endpoint.adapter, svritem->sep.endpoint.addr,
+                           svritem->sep.endpoint.port, 0, false, strerror(errno));
         close(fd);
         return -1;
     }
@@ -1213,6 +1215,8 @@ static ssize_t sendData(const CAEndpoint_t *endpoint, const void *data,
             if (EWOULDBLOCK != errno)
             {
                 OIC_LOG_V(ERROR, TAG, "unicast ipv4tcp sendTo failed: %s", strerror(errno));
+                CALogSendStateInfo(endpoint->adapter, endpoint->addr, endpoint->port,
+                                   len, false, strerror(errno));
                 return len;
             }
             continue;
@@ -1225,6 +1229,8 @@ static ssize_t sendData(const CAEndpoint_t *endpoint, const void *data,
     (void)fam;
 #endif
     OIC_LOG_V(INFO, TAG, "unicast %stcp sendTo is successful: %zu bytes", fam, dlen);
+    CALogSendStateInfo(endpoint->adapter, endpoint->addr, endpoint->port,
+                       dlen, true, NULL);
     return dlen;
 }
 

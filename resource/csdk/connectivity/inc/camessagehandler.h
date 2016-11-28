@@ -96,13 +96,6 @@ void CAHandleRequestResponseCallbacks();
  */
 void CASetNetworkMonitorCallback(CANetworkMonitorCallback nwMonitorHandler);
 
-/**
- * To log the PDU data.
- * @param[in] pdu    pdu data.
- * @param[in] endpoint  endpoint
- */
-void CALogPDUInfo(coap_pdu_t *pdu, const CAEndpoint_t *endpoint);
-
 #ifdef WITH_BWT
 /**
  * Add the data to the send queue thread.
