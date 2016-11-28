@@ -72,19 +72,6 @@ RemoteResourceUnit::Ptr RemoteResourceUnit::createRemoteResourceInfo(
     return retRemoteResourceUnit;
 }
 
-RemoteResourceUnit::Ptr RemoteResourceUnit::createRemoteResourceInfoWithStateCB(
-    RCSRemoteResourceObject::Ptr ptr, UpdatedCBFromServer updatedCB,
-    RCSRemoteResourceObject::StateChangedCallback stateCB)
-{
-    RemoteResourceUnit::Ptr retRemoteResourceUnit = std::make_shared<RemoteResourceUnit>();
-    retRemoteResourceUnit->remoteObject = ptr;
-    retRemoteResourceUnit->pUpdatedCB = updatedCB;
-
-    retRemoteResourceUnit->pStateChangedCB = stateCB;
-
-    return retRemoteResourceUnit;
-}
-
 RemoteResourceUnit::Ptr RemoteResourceUnit::createRemoteResourceInfoWithCacheCB(
     RCSRemoteResourceObject::Ptr ptr, UpdatedCBFromServer updatedCB,
     RCSRemoteResourceObject::CacheUpdatedCallback cacheCB)
