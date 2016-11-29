@@ -170,11 +170,12 @@ COMMON_LIB_LOCATION = [GTEST, RESOURCE_LIB_DIR, CA_LIB_DIR, '/usr/local/lib/', C
 ES_LIB_LOCATION = [COMMON_LIB_LOCATION, ES_RESOURCE_LIB, ES_RESOURCE_CSDK_LIB, ES_RESOURCE_OC_LOGGER_LIB, ES_LIB]
 
 COMMON_STATIC_LIBS = [GTEST_LIB]
-COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat liboc  liboc_logger liboc_logger_core pthread libglib-2.0 uuid gcov')
+COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat liboc  liboc_logger pthread libglib-2.0 uuid gcov libresource_directory')
 
 #ES_STATIC_LIBS = [ES_LIB + '/libTGMSDKLibrary.a']
 ES_ENROLLEE_LIB =  [ES_LIB + '/service/easy-setup/enrollee/libESEnrolleeSDK.so']
 ES_MEDIATOR_LIB = [ES_LIB + '/service/easy-setup/mediator/richsdk/libESMediatorRich.so']
+ES_MEDIATOR_SECURED_LIB = [ES_LIB + '/libocprovision.so']
 ES_STATIC_RESOURCE_LIBS = []
 ES_LIBS = COMMON_SHARED_LIBS
 
@@ -220,7 +221,7 @@ ES_ENROLLEE_CPP = [TEST_MAIN, COMMON_UTIL_CPP, CALL_GRAPH_CPP, ES_ENROLLEE_HELPE
 ES_MEDIATOR_CPP = [TEST_MAIN, COMMON_UTIL_CPP, CALL_GRAPH_CPP, ES_MEDIATOR_HELPER_CPP]
 
 ES_ENROLLEE_TC_SRC = [ES_ENROLLEE_CPP, ES_ENROLLEE_STC_CPP, ES_ENROLLEE_BTC_CPP, COMMON_STATIC_LIBS, ES_ENROLLEE_LIB, ES_STATIC_RESOURCE_LIBS]
-ES_MEDIATOR_TC_SRC = [ES_MEDIATOR_CPP, ES_MEDIATOR_STC_CPP, ES_MEDIATOR_BTC_CPP, COMMON_STATIC_LIBS, ES_MEDIATOR_LIB, ES_STATIC_RESOURCE_LIBS]
+ES_MEDIATOR_TC_SRC = [ES_MEDIATOR_CPP, ES_MEDIATOR_STC_CPP, ES_MEDIATOR_BTC_CPP, COMMON_STATIC_LIBS, ES_MEDIATOR_LIB, ES_MEDIATOR_SECURED_LIB]
 
 ######################################################################
 
