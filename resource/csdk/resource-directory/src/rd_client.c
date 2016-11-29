@@ -121,11 +121,7 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
         return OC_STACK_NO_MEMORY;
     }
 
-    const char *deviceId = OCGetServerInstanceIDString();
-    if (deviceId)
-    {
-        OCRepPayloadSetPropString(rdPayload, OC_RSRVD_DEVICE_ID, deviceId);
-    }
+    OCRepPayloadSetPropString(rdPayload, OC_RSRVD_DEVICE_ID, id);
     OCRepPayloadSetPropInt(rdPayload, OC_RSRVD_DEVICE_TTL, OIC_RD_PUBLISH_TTL);
 
     OCRepPayload **linkArr = OICCalloc(nPubResHandles, sizeof(OCRepPayload *));
