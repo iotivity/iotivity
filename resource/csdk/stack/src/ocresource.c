@@ -1565,11 +1565,37 @@ OCStackResult OCGetPropertyValue(OCPayloadType type, const char *prop, void **va
 
 OCStackResult OCSetAttribute(OCResource* resource, const char* attribute, const void* value)
 {
-    OCAttribute *resAttrib = (OCAttribute *)OICCalloc(1, sizeof(OCAttribute));
-    VERIFY_PARAM_NON_NULL(TAG, resAttrib, "Failed allocation OCAttribute");
-    resAttrib->attrName = OICStrdup(attribute);
-    VERIFY_PARAM_NON_NULL(TAG, resAttrib->attrName, "Failed allocating attribute name");
-    // A special case when value is of type OCStringLL
+    // See if the attribute already exists in the list.
+    OCAttribute *resAttrib;
+    for (resAttrib = resource->rsrcAttributes; resAttrib; resAttrib = resAttrib->next)
+    {
+        if (0 == strcmp(attribute, resAttrib->attrName))
+        {
+            // Found, free the old value.
+            if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, resAttrib->attrName))
+            {
+                OCFreeOCStringLL((OCStringLL *)resAttrib->attrValue);
+            }
+            else
+            {
+                OICFree((char *)resAttrib->attrValue);
+            }
+            break;
+        }
+    }
+
+    // If not already in the list, add it.
+    if (NULL == resAttrib)
+    {
+        resAttrib = (OCAttribute *)OICCalloc(1, sizeof(OCAttribute));
+        VERIFY_PARAM_NON_NULL(TAG, resAttrib, "Failed allocating OCAttribute");
+        resAttrib->attrName = OICStrdup(attribute);
+        VERIFY_PARAM_NON_NULL(TAG, resAttrib->attrName, "Failed allocating attribute name");
+        resAttrib->next = resource->rsrcAttributes;
+        resource->rsrcAttributes = resAttrib;
+    }
+
+    // Fill in the new value.
     if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, attribute))
     {
         resAttrib->attrValue = CloneOCStringLL((OCStringLL *)value);
@@ -1579,31 +1605,7 @@ OCStackResult OCSetAttribute(OCResource* resource, const char* attribute, const 
         resAttrib->attrValue = OICStrdup((char *)value);
     }
     VERIFY_PARAM_NON_NULL(TAG, resAttrib->attrValue, "Failed allocating attribute value");
-    resAttrib->next = NULL;
 
-    if (!resource->rsrcAttributes)
-    {
-        resource->rsrcAttributes = resAttrib;
-    }
-    else
-    {
-        OCAttribute *temp = resource->rsrcAttributes;
-        for (; temp->next; temp = temp->next)
-        {
-            if (0 == strcmp(attribute, temp->attrName))
-            {
-                if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, temp->attrName))
-                {
-                    OCFreeOCStringLL((OCStringLL *)temp->attrValue);
-                }
-                 {
-                    OICFree((char *)temp->attrValue);
-                }
-                break;
-            }
-        }
-        temp->next = resAttrib;
-    }
     return OC_STACK_OK;
 
 exit:
