@@ -115,7 +115,7 @@ if target_os not in ['windows']:
 Alias("test", [unittest])
 
 sptest_env.AppendTarget('test')
-if sptest_env.get('TEST') == '1':
+if sptest_env.get('TEST') == '1' and sptest_env.get('SECURED') != '1':
 	if target_os in ['linux', 'windows']:
 		out_dir = sptest_env.get('BUILD_DIR')
 		result_dir = os.path.join(sptest_env.get('BUILD_DIR'), 'test_out') + os.sep
