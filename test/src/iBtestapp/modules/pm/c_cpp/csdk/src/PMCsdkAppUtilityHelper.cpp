@@ -19,10 +19,21 @@
  *
  ******************************************************************/
 
+#include "../include/PMCsdkAppUtilityHelper.h"
 #include "PMCsdkHelper.h"
-#include "PMCsdkUtilityHelper.h"
 
-OCProvisionDev_t* PMCsdkUtilityHelper::getDevInst(OCProvisionDev_t* dev_lst, const int dev_num)
+OCDevAddr getOCDevAddrEndPoint()
+{
+    OCDevAddr endPoint;
+
+    memset(&endPoint, 0, sizeof(endPoint));
+    strncpy(endPoint.addr, DEFAULT_HOST, sizeof(endPoint.addr));
+    endPoint.port = OC_MULTICAST_PORT;
+
+    return endPoint;
+}
+
+OCProvisionDev_t* getDevInst(OCProvisionDev_t* dev_lst, const int dev_num)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getDevInst IN");
 
@@ -48,7 +59,7 @@ OCProvisionDev_t* PMCsdkUtilityHelper::getDevInst(OCProvisionDev_t* dev_lst, con
     return NULL; // in here |lst| is always |NULL|
 }
 
-int PMCsdkUtilityHelper::printDevList(OCProvisionDev_t* dev_lst)
+int printDevList(OCProvisionDev_t* dev_lst)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printDevList IN");
 
@@ -74,7 +85,7 @@ int PMCsdkUtilityHelper::printDevList(OCProvisionDev_t* dev_lst)
     return lst_cnt;
 }
 
-size_t PMCsdkUtilityHelper::printUuidList(const OCUuidList_t* uid_lst)
+size_t printUuidList(const OCUuidList_t* uid_lst)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printUuidList IN");
 
@@ -100,7 +111,7 @@ size_t PMCsdkUtilityHelper::printUuidList(const OCUuidList_t* uid_lst)
     return lst_cnt;
 }
 
-int PMCsdkUtilityHelper::printResultList(const OCProvisionResult_t* rslt_lst, const int rslt_cnt)
+int printResultList(const OCProvisionResult_t* rslt_lst, const int rslt_cnt)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printResultList IN");
 
@@ -115,7 +126,7 @@ int PMCsdkUtilityHelper::printResultList(const OCProvisionResult_t* rslt_lst, co
     {
         printf("     [%d] ", lst_cnt + 1);
         printUuid((const OicUuid_t*) &rslt_lst[lst_cnt].deviceId);
-        printf(" - result: %s\n", PMCsdkUtilityHelper::getOCStackResult(rslt_lst[lst_cnt].res));
+        printf(" - result: %s\n", getOCStackResult(rslt_lst[lst_cnt].res));
     }
     printf("\n");
 
@@ -123,7 +134,7 @@ int PMCsdkUtilityHelper::printResultList(const OCProvisionResult_t* rslt_lst, co
     return lst_cnt;
 }
 
-void PMCsdkUtilityHelper::printUuid(const OicUuid_t* uid)
+void printUuid(const OicUuid_t* uid)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printUuid IN");
 
@@ -140,7 +151,7 @@ void PMCsdkUtilityHelper::printUuid(const OicUuid_t* uid)
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printUuid OUT");
 }
 
-char* PMCsdkUtilityHelper::getOCStackResult(OCStackResult ocstackresult)
+char* getOCStackResult(OCStackResult ocstackresult)
 {
     char* resultString = NULL;
 
@@ -205,36 +216,20 @@ char* PMCsdkUtilityHelper::getOCStackResult(OCStackResult ocstackresult)
             break;
         default:
             resultString = (char*) "UNKNOWN_STATE";
-            break;
     }
 
     return resultString;
 }
 
-void PMCsdkUtilityHelper::removeAllResFile() {
-    CommonUtil::rmFile(JUSTWORKS_SERVER1_CBOR);
-    CommonUtil::rmFile(JUSTWORKS_SERVER2_CBOR);
-    CommonUtil::rmFile(RANDOMPIN_SERVER_CBOR);
-    CommonUtil::rmFile(PRECONFIG_SERVER1_CBOR);
-    CommonUtil::rmFile(PRECONFIG_SERVER2_CBOR);
-
-    CommonUtil::rmFile(CLIENT_DATABASE);
-    CommonUtil::rmFile(CLIENT_CBOR);
-
-    CommonUtil::rmFile(MOT_CLIENT_DATABASE);
-    CommonUtil::rmFile(MOT_CLIENT_CBOR);
-}
-
 /**
  * Function to set failure message
  */
-std::string PMCsdkUtilityHelper::setFailureMessage(OCStackResult actualResult,
-        OCStackResult expectedResult)
+std::string setFailureMessage(OCStackResult actualResult, OCStackResult expectedResult)
 {
     std::string errorMessage("\033[1;31m[Error] Expected : ");
-    errorMessage.append(PMCsdkUtilityHelper::getOCStackResult(expectedResult));
+    errorMessage.append(getOCStackResult(expectedResult));
     errorMessage.append("\033[0m  \033[1;31mActual : ");
-    errorMessage.append(PMCsdkUtilityHelper::getOCStackResult(actualResult));
+    errorMessage.append(getOCStackResult(actualResult));
     errorMessage.append("\033[0m");
     return errorMessage;
 }
@@ -242,7 +237,7 @@ std::string PMCsdkUtilityHelper::setFailureMessage(OCStackResult actualResult,
 /**
  * Function to set failure message
  */
-std::string PMCsdkUtilityHelper::setFailureMessage(std::string errorMessage)
+std::string setFailureMessage(std::string errorMessage)
 {
     std::string retErrorMessage("\033[1;31m[Error] Expected : ");
     retErrorMessage.append(errorMessage);

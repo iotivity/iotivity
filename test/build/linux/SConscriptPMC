@@ -49,14 +49,11 @@ if env_linux.get('RELEASE'):
 else:
     RELEASE_DIR = 'debug'
 
-
 IOTIVITY_LIB_PATH = IOTIVITY_ROOT + '/out/linux/' + TARGET_ARCH + '/' + RELEASE_DIR
 
 #Features Configuration
-CERT_ENABLED = 0
+CERT_ENABLED = 1
 MOT_ENABLED = 1
-CLOUD_ENABLED = 1
-DP_ENABLED = 0
 
 arch_flag = ''
 if TARGET_ARCH in ['x86']:
@@ -90,13 +87,13 @@ IOTIVITY_INCLUDE_PATH = [
                             IOTIVITY_ROOT + '/resource/c_common/oic_string/include',
                             IOTIVITY_ROOT + '/resource/c_common/oic_string/include',
                             IOTIVITY_ROOT + '/resource/oc_logger/include',
+                            IOTIVITY_ROOT + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include/',
+                            IOTIVITY_ROOT + '/resource/csdk/resource-directory/include',
                             IOTIVITY_ROOT + '/extlibs/tinydtls',
                             IOTIVITY_ROOT + '/extlibs/cjson',
                             IOTIVITY_ROOT + '/extlibs/base64',
                             IOTIVITY_ROOT + '/extlibs/tinycbor/tinycbor/src',
-                            IOTIVITY_ROOT + '/resource/csdk/security/provisioning/sample/cloud',
-                            IOTIVITY_ROOT + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include/',
-                            IOTIVITY_ROOT + '/resource/csdk/resource-directory/include'
+                            IOTIVITY_ROOT + '/extlibs/mbedtls/mbedtls/include/mbedtls'
                             ]
 
 PM_CERT_INCLUDE_PATH = [
@@ -118,16 +115,16 @@ TC_INCLUDE_PATH = [
 
 TEST_APP_INCLUDE_PATH = [PROJECT_HOME + 'src/iBtestapp/modules/pm/c_cpp/csdk/include']
 
-SIMULATOR_INCLUDE_PATH = []
+SIMULATOR_INCLUDE_PATH = [PROJECT_HOME + '/include']
 
 LIB_PATH_LIST = [
                     IOTIVITY_LIB_PATH,
                     IOTIVITY_LIB_PATH + '/resource/csdk/logger',
-                    IOTIVITY_LIB_PATH + '/resource/csdk/security/provisioning/ck_manager',
                     IOTIVITY_LIB_PATH + '/resource/csdk/security',
                     IOTIVITY_LIB_PATH + '/resource/c_common/',
                     IOTIVITY_LIB_PATH + '/resource/csdk/routing/',
-                    PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/linux'
+                    PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/linux/',
+                    IOTIVITY_ROOT + '/extlibs/mbedtls/'
                     ]
 
 TC_SRC_LIST = [
@@ -151,24 +148,16 @@ TEST_APP_SRC_LIST = [
                 Glob(PROJECT_HOME + '/src/iBtestapp/modules/pm/c_cpp/csdk/src/*.cpp')
                 ]
 
-PM_CPPFLAGS = Split('-w -s -pthread -march=native -std=gnu++0x -pthread -Wall -DTCP_ADAPTER -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D__WITH_DTLS__ -D__WITH_TLS__ -DWITH_TCP -finstrument-functions -ftest-coverage -fprofile-arcs  -ftest-coverage -fprofile-arcs')
-PM_CXXFLAGS = ['-std=c++11','-c','-std=gnu99','-D_ENABLE_MULTIPLE_OWNER_', '-D__WITH_DTLS__','-DWITH_CLOUD', '-DRD_CLIENT', '-std=c99','-Os','-Wall','-Wextra','-fPIC', arch_flag,'-pthread','-DNDEBUG','-DWITH_POSIX','-D__linux__','-DIP_ADAPTER','-DNO_EDR_ADAPTER','-DLE_ADAPTER','-DHAVE_SYS_TIME_H','-DDTLSV12','-DWITH_SHA256','-DDTLS_CHECK_CONTENTTYPE','-DSHA2_USE_INTTYPES_H','-DROUTING_EP','-DWITH_BWT','-D__WITH_DTLS__','-DCA_DBUS_GATT_SERVICE_NAME="org.iotivity.gatt.service"','-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_32','-DTB_LOG', '-ftest-coverage' , '-fprofile-arcs']
+PM_CPPFLAGS = Split('-s -pthread -march=native -std=gnu++0x -pthread -DCA_DBUS_GATT_SERVICE_NAME -DWITH_SHA256 -DDTLS_CHECK_CONTENTTYPE -DROUTING_EP -DGLIB_VERSION_MIN_REQUIRED -DTB_LOG -D__WITH_DTLS__ -DWITH_BWT -DROUTING_EP -DSHA2_USE_INTTYPES_H -DGLIB_VERSION_2_32 -DWITH_BWT -DTB_LOG -DIP_ADAPTER -DLE_ADAPTER -DNO_EDR_ADAPTER -DHAVE_SYS_TIME_H -DDTLSV12 -DRD_CLIENT -DWITH_CLOUD -D_ENABLE_MULTIPLE_OWNER_ -DWITH_POSIX -DNDEBUG -DTCP_ADAPTER -DLINUX -fpermissive -D__TC_PLATFORM_LINUUX__ -D__LINUX__ -D__WITH_DTLS__ -D__WITH_TLS__ -DWITH_TCP')
+PM_CXXFLAGS = ['-std=c++11', '-c', '-Os', '-Wextra', '-fPIC', arch_flag, '-pthread', '-ftest-coverage' , '-fprofile-arcs']
 
-lib_list = Split('boost_system boost_filesystem boost_thread c_common coap connectivity_abstraction dl expat gcov gio-2.0 gobject-2.0 glib-2.0 m oc oc_logger octbstack ocpmapi ocprovision ocsrm octbstack pthread rt uuid tinydtls')
+lib_list = Split('boost_system boost_filesystem boost_thread c_common coap connectivity_abstraction dl expat gcov gio-2.0 gobject-2.0 glib-2.0 m oc oc_logger logger octbstack ocpmapi ocprovision ocsrm octbstack pthread rt uuid tinydtls resource_directory mbedtls mbedcrypto mbedx509')
 
 if CERT_ENABLED == 1:
-    lib_list.append(['asn1', 'CKManager'])
     PM_CPPFLAGS.append('-D__CERT__')
 
 if MOT_ENABLED == 1:
     PM_CPPFLAGS.append('-D__MOT__')
-
-if CLOUD_ENABLED == 1:
-	PM_CPPFLAGS.append(['-D__CLOUD__'])
-	PM_CXXFLAGS.append(['-O2', '-g', '-std=c++0x'])
-
-if DP_ENABLED == 1:
-    PM_CPPFLAGS.append(['-D__DIRECTPAIRING__'])
 
 if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:
 
@@ -177,32 +166,23 @@ if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:
                         CPPPATH = IOTIVITY_INCLUDE_PATH + PM_CERT_INCLUDE_PATH + TC_INCLUDE_PATH,
                         LIBS = lib_list,
                         LIBPATH = LIB_PATH_LIST,
-                        RPATH =  LIB_PATH_LIST,
+                        RPATH = IOTIVITY_LIB_PATH,
                         CPPFLAGS = PM_CPPFLAGS,
                         CXXFLAGS = PM_CXXFLAGS)
 
     install_targets += pmc_tc
 
-    pmc_jw_simulator = env_linux.Program(source = PROJECT_HOME + '/src/testapp/pm/justworks_simulator.cpp',
-                    target = 'sampleserver_justworks',
-                    CPPPATH = IOTIVITY_INCLUDE_PATH,
+    pmc_simulator = env_linux.Program(source = PROJECT_HOME + '/src/testapp/pm/test_server.cpp',
+                    target = 'test_server',
+                    CPPPATH = IOTIVITY_INCLUDE_PATH + SIMULATOR_INCLUDE_PATH,
                     LIBS = lib_list,
-                    RPATH =  LIB_PATH_LIST,
                     LIBPATH = LIB_PATH_LIST,
-                    CPPFLAGS = PM_CPPFLAGS)
+                    RPATH = IOTIVITY_LIB_PATH,
+                    CPPFLAGS = PM_CPPFLAGS,
+                    CPPDEFINES = ['__WITH_DTLS__', '__WITH_TLS__'] )
 
-    install_targets += pmc_jw_simulator
+    install_targets += pmc_simulator
 
-    pmc_rndmpin_simulator = env_linux.Program(source = PROJECT_HOME + '/src/testapp/pm/randompin_simulator.cpp',
-                target = 'sampleserver_randompin',
-                CPPPATH = IOTIVITY_INCLUDE_PATH,
-                LIBS = lib_list,
-                LIBPATH = LIB_PATH_LIST,
-                RPATH =  LIB_PATH_LIST,
-                CPPFLAGS = PM_CPPFLAGS,
-                CXXFLAGS = PM_CXXFLAGS)
-
-    install_targets += pmc_rndmpin_simulator
 
 if TARGET_TEST == None or 'app' in TARGET_TEST or 'all' in TARGET_TEST:
 
@@ -211,16 +191,19 @@ if TARGET_TEST == None or 'app' in TARGET_TEST or 'all' in TARGET_TEST:
                 CPPPATH = IOTIVITY_INCLUDE_PATH + PM_CERT_INCLUDE_PATH + TC_INCLUDE_PATH + TEST_APP_INCLUDE_PATH,
                 LIBS = lib_list,
                 LIBPATH = LIB_PATH_LIST,
-                RPATH =  LIB_PATH_LIST,
+                RPATH = IOTIVITY_LIB_PATH,
                 CPPFLAGS = PM_CPPFLAGS,
                 CXXFLAGS = PM_CXXFLAGS)
 
     install_targets += pmc_test_app
 
 if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:
+
     pm_resource_path = PROJECT_HOME + '/res/pm_resource'
     pm_resource_list = Glob(pm_resource_path + '/*.*')
+
     default_targets += [create_target_dir]
+
     i = 0
     for pm_resource in pm_resource_list:
         pm_resource_backup = env_linux.Command('pm_resource_backup' + str(i), [], Copy(VARIANT_DIR, pm_resource))

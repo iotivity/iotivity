@@ -20,23 +20,10 @@
  ******************************************************************/
 #ifndef PMCsdkAppHelper_H_
 #define PMCsdkAppHelper_H_
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-
-#include "utlist.h"
-#include "logger.h"
-#include "oic_malloc.h"
-#include "oic_string.h"
-#include "ocprovisioningmanager.h"
-#include "oxmjustworks.h"
-#include "oxmrandompin.h"
-#include "securevirtualresourcetypes.h"
-#include "srmutility.h"
-#include "pmtypes.h"
 
 #include "CommonUtil.h"
 #include "IotivityTest_Logger.h"
+#include "PMCsdkAppUtilityHelper.h"
 
 #define DASH "-"
 #define g_ctx "Provision Manager Client Application Context"
@@ -76,13 +63,6 @@
 #define ACL_RES_IF_TYPE_NAME "sensor"
 
 /*
- * Callback Releated Resources
- */
-#define CALLBACK_TIMEOUT    60  // 1 min
-#define CALLBACK_INVOKED 1
-#define CALLBACK_NOT_INVOKED 0
-
-/*
  * Ownership Transfer Related Resource
  */
 #define OTM_INVALID_LOBV -1
@@ -107,32 +87,15 @@
 #define CLIENT_CBOR "./oic_svr_db_client.dat"
 #define DATABASE_PDM "./PDM.db"
 
-/**
- *  Time Related Resources
- */
-#define DELAY_SHORT 1
-#define DELAY_MEDIUM 5
-#define DELAY_LONG 10
-#define DISCOVERY_TIMEOUT 10
-#define DISCOVERY_TIMEOUT_ZERO 0
-#define DISCOVERY_TIMEOUT_ONE 1
-#define DISCOVERY_TIMEOUT_TWO 2
-#define DISCOVERY_TIMEOUT_INVALID -1
-
 static const OicSecPrm_t SUPPORTED_PRMS[1] =
 { PRM_PRE_CONFIGURED, };
 
 // function declaration(s) for calling them before implementing
 FILE* fopenProvManager(const char*, const char*);
-char *getOCStackResult(OCStackResult ocstackresult);
-int printDevList(OCProvisionDev_t*);
-int printResultList(const OCProvisionResult_t*, const int);
+
 int waitCallbackRet(void);
-size_t printUuidList(const OCUuidList_t*);
-void printUuid(const OicUuid_t*);
 OicSecAcl_t* createAcl(const int dev_num, int permission, OCProvisionDev_t** m_own_list);
 OicSecPdAcl_t* createPdAcl(const int dev_num);
-OCProvisionDev_t* getDevInst(OCProvisionDev_t*, const int);
 OTMCallbackData_t otmCbRegister(int otmType);
 
 /**
@@ -146,9 +109,6 @@ bool discoverUnownedDevices(int nTime, OCProvisionDev_t** unown_list, OCStackRes
 bool discoverOwnedDevices(int nTime, OCProvisionDev_t** own_list, OCStackResult expectedResult);
 bool doOwnerShipTransfer(void *ctx, OCProvisionDev_t** unown_list,
         OCProvisionResultCB resultCallback, OCStackResult expectedResult);
-bool proivisioningDirectPairing(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
-        OicSecPconf_t *pconf, OCProvisionResultCB resultCallback, OCStackResult expectedResult);
-void deletePdAclList(OicSecPdAcl_t* pPdAcl);
 bool provisionACL(void* ctx, const OCProvisionDev_t* selectedDeviceInfo, OicSecAcl_t *acl,
         OCProvisionResultCB resultCallback, OCStackResult expectedResult);
 bool provisionCredentials(void *ctx, OicSecCredType_t type, size_t keySize,

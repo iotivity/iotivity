@@ -27,126 +27,11 @@ bool g_CBInvoked = CALLBACK_NOT_INVOKED;
 
 FILE* fopenProvManager(const char* path, const char* mode)
 {
+    OC_UNUSED(path);
     return fopen(SVR_DB_FILE_NAME, mode);
 }
 
-OCProvisionDev_t* getDevInst(OCProvisionDev_t* dev_lst, const int dev_num)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getDevInst IN");
-
-    if (!dev_lst || 0 >= dev_num)
-    {
-        IOTIVITYTEST_LOG(ERROR, "[PMHelper] Device List is Empty");
-        return NULL;
-    }
-
-    OCProvisionDev_t* lst = (OCProvisionDev_t*) dev_lst;
-
-    for (int i = 0; lst;)
-    {
-        if (dev_num == ++i)
-        {
-            return lst;
-        }
-        lst = lst->next;
-    }
-
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getDevInst OUT");
-    return NULL; // in here |lst| is always |NULL|
-}
-
-int printDevList(OCProvisionDev_t* dev_lst)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printDevList IN");
-
-    if (!dev_lst)
-    {
-        IOTIVITYTEST_LOG(INFO, "[PMHelper] Device List is Empty...");
-        return 0;
-    }
-
-    OCProvisionDev_t* lst = (OCProvisionDev_t*) dev_lst;
-    int lst_cnt = 0;
-
-    for (; lst;)
-    {
-        printf("     [%d] ", ++lst_cnt);
-        printUuid((const OicUuid_t*) &lst->doxm->deviceID);
-        printf("\n");
-        lst = lst->next;
-    }
-    printf("\n");
-
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printDevList IN");
-    return lst_cnt;
-}
-
-static size_t printUuidList(const OCUuidList_t* uid_lst)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printUuidList IN");
-
-    if (!uid_lst)
-    {
-        IOTIVITYTEST_LOG(INFO, "[PMHelper] Device List is Empty...");
-        return 0;
-    }
-
-    OCUuidList_t* lst = (OCUuidList_t*) uid_lst;
-    size_t lst_cnt = 0;
-
-    for (; lst;)
-    {
-        printf("     [%zu] ", ++lst_cnt);
-        printUuid((const OicUuid_t*) &lst->dev);
-        printf("\n");
-        lst = lst->next;
-    }
-    printf("\n");
-
-    return lst_cnt;
-}
-
-static int printResultList(const OCProvisionResult_t* rslt_lst, const int rslt_cnt)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] [PMHelper] printResultList IN");
-
-    if (!rslt_lst || 0 >= rslt_cnt)
-    {
-        IOTIVITYTEST_LOG(INFO, "[PMHelper] Device List is Empty...");
-        return 0;
-    }
-
-    int lst_cnt = 0;
-    for (; rslt_cnt > lst_cnt; ++lst_cnt)
-    {
-        printf("     [%d] ", lst_cnt + 1);
-        printUuid((const OicUuid_t*) &rslt_lst[lst_cnt].deviceId);
-        printf(" - result: %s\n", getOCStackResult(rslt_lst[lst_cnt].res));
-    }
-    printf("\n");
-
-    IOTIVITYTEST_LOG(INFO, "[PMHelper] [PMHelper] printResultList IN");
-    return lst_cnt;
-}
-
-static void printUuid(const OicUuid_t* uid)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printUuid IN");
-
-    for (int i = 0; i < UUID_LENGTH;)
-    {
-        printf("%02X", (*uid).id[i++]);
-        if (i == 4 || i == 6 || i == 8 || i == 10) // canonical format for UUID has '8-4-4-4-12'
-        {
-            printf(DASH);
-        }
-    }
-    printf("\n");
-
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] printUuid OUT");
-}
-
-static int waitCallbackRet(void)
+int waitCallbackRet(void)
 {
     IOTIVITYTEST_LOG(DEBUG, "waitCallbackRet IN");
 
@@ -172,19 +57,18 @@ static int waitCallbackRet(void)
     return CALLBACK_NOT_INVOKED;
 }
 
-static void ownershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+void ownershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if (!hasError)
     {
         IOTIVITYTEST_LOG(DEBUG, "Ownership Transfer SUCCEEDED - ctx: %s", (char* ) ctx);
+        g_CBInvoked = true;
     }
     else
     {
         IOTIVITYTEST_LOG(DEBUG, "Ownership Transfer FAILED - ctx: %s", (char* ) ctx);
         printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
-
-    g_CBInvoked = true;
 }
 
 void provisionPairwiseCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
@@ -192,29 +76,13 @@ void provisionPairwiseCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool h
     if (!hasError)
     {
         IOTIVITYTEST_LOG(DEBUG, "Provision Pairwise SUCCEEDED - ctx: %s\n", (char* ) ctx);
+        g_CBInvoked = true;
     }
     else
     {
         IOTIVITYTEST_LOG(DEBUG, "Provision Pairwise Failed - ctx: %s", (char* ) ctx);
         printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
-
-    g_CBInvoked = true;
-}
-
-void provisionDPCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
-{
-    if (!hasError)
-    {
-        IOTIVITYTEST_LOG(DEBUG, "Provision Direct Pairing SUCCEEDED - ctx: %s\n", (char* ) ctx);
-    }
-    else
-    {
-        IOTIVITYTEST_LOG(DEBUG, "Provision Direct Pairing Failed - ctx: %s", (char* ) ctx);
-        printResultList((const OCProvisionResult_t*) arr, nOfRes);
-    }
-
-    g_CBInvoked = true;
 }
 
 void provisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
@@ -222,14 +90,13 @@ void provisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasEr
     if (!hasError)
     {
         IOTIVITYTEST_LOG(DEBUG, "Provision Credential SUCCEEDED - ctx: %s", (char* ) ctx);
+        g_CBInvoked = true;
     }
     else
     {
         IOTIVITYTEST_LOG(DEBUG, "Provision Credential FAILED - ctx: %s", (char* ) ctx);
         printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
-
-    g_CBInvoked = true;
 }
 
 void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
@@ -237,14 +104,13 @@ void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasErr
     if (!hasError)
     {
         IOTIVITYTEST_LOG(DEBUG, "Provision ACL SUCCEEDED - ctx: %s", (char* ) ctx);
+        g_CBInvoked = true;
     }
     else
     {
         IOTIVITYTEST_LOG(DEBUG, "Provision ACL FAILED - ctx: %s", (char* ) ctx);
         printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
-
-    g_CBInvoked = true;
 }
 
 void unlinkDevicesCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
@@ -252,14 +118,13 @@ void unlinkDevicesCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasEr
     if (!hasError)
     {
         IOTIVITYTEST_LOG(DEBUG, "Unlink Devices SUCCEEDED - ctx: %s", (char* ) ctx);
+        g_CBInvoked = true;
     }
     else
     {
         IOTIVITYTEST_LOG(DEBUG, "Unlink Devices FAILED - ctx: %s", (char* ) ctx);
         printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
-
-    g_CBInvoked = true;
 }
 
 void removeDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
@@ -267,19 +132,18 @@ void removeDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasErr
     if (!hasError)
     {
         IOTIVITYTEST_LOG(DEBUG, "Remove Devices SUCCEEDED - ctx: %s", (char* ) ctx);
+        g_CBInvoked = true;
     }
     else
     {
         IOTIVITYTEST_LOG(DEBUG, "Remove Devices FAILED - ctx: %s", (char* ) ctx);
         printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
-
-    g_CBInvoked = true;
 }
 
 static void inputPinCB(char* pin, size_t len)
 {
-    if (!pin || OXM_RANDOM_PIN_SIZE >= len)
+    if (!pin || OXM_RANDOM_PIN_MIN_SIZE >= len)
     {
         IOTIVITYTEST_LOG(ERROR, "inputPinCB invalid parameters");
         return;
@@ -532,49 +396,6 @@ bool provisionACL(void* ctx, const OCProvisionDev_t* selectedDeviceInfo, OicSecA
 }
 
 /**
- * Helper Method for OCProvisionDirectPairing
- */
-bool proivisioningDirectPairing(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
-        OicSecPconf_t *pconf, OCProvisionResultCB resultCallback, OCStackResult expectedResult)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] proivisioningDirectPairing IN");
-
-    g_CBInvoked = false;
-
-    OCStackResult res = OCProvisionDirectPairing(ctx, selectedDeviceInfo, pconf, resultCallback);
-    IOTIVITYTEST_LOG(INFO, "[PMHelper]  OCProvisionDirectPairing API returns: %s\n",
-            getOCStackResult(res));
-
-    if (expectedResult != res)
-    {
-        IOTIVITYTEST_LOG(ERROR, "[PMHelper]  Expected Error : %s Actual Error : %s\n",
-                getOCStackResult(expectedResult), getOCStackResult(res));
-        return false;
-    }
-
-    if (res == OC_STACK_OK)
-    {
-        if (CALLBACK_NOT_INVOKED == waitCallbackRet())
-        {
-            IOTIVITYTEST_LOG(ERROR, "[PMHelper]  Callback Not Invoked\n");
-            return false;
-        }
-    }
-
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] proivisioningDirectPairing OUT");
-    return true;
-}
-
-/**
- * Helper Method for OCDeletePdAclList
- */
-void deletePdAclList(OicSecPdAcl_t* pPdAcl)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper]  OCDeletePdAclList API In");
-    OCDeletePdAclList(pPdAcl);
-}
-
-/**
  * Helper Method for OCProvisionCredentials
  */
 bool provisionCredentials(void *ctx, OicSecCredType_t type, size_t keySize,
@@ -654,7 +475,9 @@ bool getLinkedStatus(const OicUuid_t* uuidOfDevice, OCUuidList_t** uuidList, siz
 
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getLinkedStatus IN");
 
-    OCStackResult res = OCGetLinkedStatus(uuidOfDevice, uuidList, numOfDevices);
+    OCStackResult res;
+
+    res = OCGetLinkedStatus(uuidOfDevice, uuidList, numOfDevices);
 
     IOTIVITYTEST_LOG(INFO, "[PMHelper]  OCGetLinkedStatus API returns: %s\n",
             getOCStackResult(res));
@@ -781,7 +604,7 @@ OicSecAcl_t* createAcl(const int dev_num, int permission, OCProvisionDev_t** m_o
 
     int num = (dev_num == DEVICE_INDEX_TWO) ? DEVICE_INDEX_ONE : DEVICE_INDEX_TWO;
 
-    OCProvisionDev_t* dev = getDevInst((const OCProvisionDev_t*) *m_own_list, num);
+    OCProvisionDev_t* dev = getDevInst((OCProvisionDev_t*) *m_own_list, num);
 
     printDevList(dev);
 
@@ -792,27 +615,27 @@ OicSecAcl_t* createAcl(const int dev_num, int permission, OCProvisionDev_t** m_o
     }
 
     num = 1;
-    char rsrc_in[ACL_RESRC_MAX_LEN+1] = {0};  // '1' for null termination
-    for(int i = 0; num > i; ++i)
+
+    for (int i = 0; num > i; ++i)
     {
-        OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
+        OicSecRsrc_t* rsrc = (OicSecRsrc_t*) OICCalloc(1, sizeof(OicSecRsrc_t));
 
         // Resource URI
-        size_t len = strlen(LIGHT_RESOURCE_URI_01)+1;  // '1' for null termination
+        size_t len = strlen(LIGHT_RESOURCE_URI_01) + 1; // '1' for null termination
         rsrc->href = (char*) OICCalloc(len, sizeof(char));
         OICStrcpy(rsrc->href, len, LIGHT_RESOURCE_URI_01);
 
         // Resource Type
         rsrc->typeLen = 1;
-        rsrc->types = (char**)OICCalloc(rsrc->typeLen, sizeof(char*));
-        for(int i = 0; i < rsrc->typeLen; i++)
+        rsrc->types = (char**) OICCalloc(rsrc->typeLen, sizeof(char*));
+        for (size_t i = 0; i < rsrc->typeLen; i++)
         {
             rsrc->types[i] = OICStrdup(LIGHT_RESOURCE_URI_01);
         }
 
         rsrc->interfaceLen = 1;
-        rsrc->interfaces = (char**)OICCalloc(rsrc->typeLen, sizeof(char*));
-        for(int i = 0; i < rsrc->interfaceLen; i++)
+        rsrc->interfaces = (char**) OICCalloc(rsrc->typeLen, sizeof(char*));
+        for (size_t i = 0; i < rsrc->interfaceLen; i++)
         {
             rsrc->interfaces[i] = OICStrdup(LIGHT_RESOURCE_URI_01);
         }
@@ -822,132 +645,6 @@ OicSecAcl_t* createAcl(const int dev_num, int permission, OCProvisionDev_t** m_o
 
     ace->permission = permission;
 
-
-
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createAcl Out");
     return acl;
 }
-
-OicSecPdAcl_t* createPdAcl(const int dev_num)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createPdAcl IN");
-
-    OicSecPdAcl_t* pdAcl = (OicSecPdAcl_t*) OICCalloc(1, sizeof(OicSecPdAcl_t));
-
-    if (!pdAcl)
-    {
-        IOTIVITYTEST_LOG(ERROR, "[PMHelper] createPdAcl: OICCalloc error return");
-        return NULL; // not need to 'goto' |ERROR| before allocating |acl|
-    }
-
-    // number of resources
-    char rsrc_in[][ACL_RESRC_MAX_LEN + 1] =
-    { "*", "/rsrc/*" };
-    pdAcl->resourcesLen = 1;
-
-    // resource
-    int num = pdAcl->resourcesLen;
-    pdAcl->resources = (char**) OICCalloc(num, sizeof(char*));
-
-    if (!pdAcl->resources)
-    {
-        IOTIVITYTEST_LOG(ERROR, "[PMHelper] createPdAcl: OICCalloc error return");
-        goto CRPDACL_ERROR;
-    }
-
-    for (int i = 0; num > i; ++i)
-    {
-        size_t len = strlen(rsrc_in[i]) + 1; // '1' for null termination
-        char* rsrc = (char*) OICCalloc(len, sizeof(char));
-        if (!rsrc)
-        {
-            IOTIVITYTEST_LOG(ERROR, "[PMHelper] createPdAcl: OICCalloc error return");
-            goto CRPDACL_ERROR;
-        }
-        OICStrcpy(rsrc, len, rsrc_in[i]);
-        pdAcl->resources[i] = rsrc; // after here, |rsrc| points nothing
-    }
-
-    // permission
-    pdAcl->permission = FULL_PERMISSION;
-
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createPdAcl OUT");
-    return pdAcl;
-
-    CRPDACL_ERROR: OCDeletePdAclList(pdAcl);
-
-    IOTIVITYTEST_LOG(ERROR, "[PMHelper] createPdAcl OUT");
-    return NULL;
-}
-
-char *getOCStackResult(OCStackResult ocstackresult)
-{
-    char* resultString = NULL;
-
-    switch (ocstackresult)
-    {
-        case OC_STACK_OK:
-            resultString = (char*) "OC_STACK_OK";
-            break;
-        case OC_STACK_RESOURCE_CREATED:
-            resultString = (char*) "OC_STACK_RESOURCE_CREATED";
-            break;
-        case OC_STACK_RESOURCE_DELETED:
-            resultString = (char*) "OC_STACK_RESOURCE_DELETED";
-            break;
-        case OC_STACK_INVALID_URI:
-            resultString = (char*) "OC_STACK_INVALID_URI";
-            break;
-        case OC_STACK_INVALID_QUERY:
-            resultString = (char*) "OC_STACK_INVALID_QUERY";
-            break;
-        case OC_STACK_INVALID_IP:
-            resultString = (char*) "OC_STACK_INVALID_IP";
-            break;
-        case OC_STACK_INVALID_PORT:
-            resultString = (char*) "OC_STACK_INVALID_PORT";
-            break;
-        case OC_STACK_INVALID_CALLBACK:
-            resultString = (char*) "OC_STACK_INVALID_CALLBACK";
-            break;
-        case OC_STACK_INVALID_METHOD:
-            resultString = (char*) "OC_STACK_INVALID_METHOD";
-            break;
-        case OC_STACK_INVALID_PARAM:
-            resultString = (char*) "OC_STACK_INVALID_PARAM";
-            break;
-        case OC_STACK_INVALID_OBSERVE_PARAM:
-            resultString = (char*) "OC_STACK_INVALID_OBSERVE_PARAM";
-            break;
-        case OC_STACK_NO_MEMORY:
-            resultString = (char*) "OC_STACK_NO_MEMORY";
-            break;
-        case OC_STACK_COMM_ERROR:
-            resultString = (char*) "OC_STACK_COMM_ERROR";
-            break;
-        case OC_STACK_TIMEOUT:
-            resultString = (char*) "OC_STACK_TIMEOUT";
-            break;
-        case OC_STACK_ADAPTER_NOT_ENABLED:
-            resultString = (char*) "OC_STACK_ADAPTER_NOT_ENABLED";
-            break;
-        case OC_STACK_NOTIMPL:
-            resultString = (char*) "OC_STACK_NOTIMPL";
-            break;
-        case OC_STACK_NO_RESOURCE:
-            resultString = (char*) "OC_STACK_NO_RESOURCE";
-            break;
-        case OC_STACK_UNAUTHORIZED_REQ:
-            resultString = (char*) "OC_STACK_UNAUTHORIZED_REQ";
-            break;
-        case OC_STACK_ERROR:
-            resultString = (char*) "OC_STACK_ERROR";
-            break;
-        default:
-            resultString = (char*) "UNKNOWN_STATE";
-            break;
-    }
-
-    return resultString;
-}
-

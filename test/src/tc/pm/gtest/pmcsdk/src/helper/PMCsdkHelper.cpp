@@ -20,18 +20,20 @@
  ******************************************************************/
 #include "PMCsdkHelper.h"
 #include "PMCsdkUtilityHelper.h"
-#include <sstream>
+
 int g_OwnDevCount = 0;
 int g_UnownDevCount = 0;
 int g_motPMDevCount = 0;
 bool g_CBInvoked = CALLBACK_NOT_INVOKED;
+bool g_inputPinCbInvoked = CALLBACK_NOT_INVOKED;
 
 FILE* fopenProvManager(const char* path, const char* mode)
 {
+    OC_UNUSED(path);
     return fopen(SVR_DB_FILE_NAME, mode);
 }
 
-static int waitCallbackRet(void)
+int waitCallbackRet(void)
 {
     IOTIVITYTEST_LOG(DEBUG, "waitCallbackRet IN");
 
@@ -57,51 +59,34 @@ static int waitCallbackRet(void)
     return CALLBACK_NOT_INVOKED;
 }
 
-static void PMCsdkHelper::ownershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t* arr,
-        bool hasError)
+void PMCsdkHelper::ownershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t* arr,
+bool hasError)
 {
     if (!hasError)
     {
         IOTIVITYTEST_LOG(INFO, "Ownership Transfer SUCCEEDED - ctx: %s", (char* ) ctx);
+        g_CBInvoked = true;
     }
     else
     {
         IOTIVITYTEST_LOG(ERROR, "Ownership Transfer FAILED - ctx: %s", (char* ) ctx);
         PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
-
-    g_CBInvoked = true;
 }
 
 void PMCsdkHelper::provisionPairwiseCB(void* ctx, int nOfRes, OCProvisionResult_t* arr,
-        bool hasError)
+bool hasError)
 {
     if (!hasError)
     {
         IOTIVITYTEST_LOG(INFO, "Provision Pairwise SUCCEEDED - ctx: %s\n", (char* ) ctx);
+        g_CBInvoked = true;
     }
     else
     {
         IOTIVITYTEST_LOG(ERROR, "Provision Pairwise Failed - ctx: %s", (char* ) ctx);
         PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
-
-    g_CBInvoked = true;
-}
-
-void PMCsdkHelper::provisionDPCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
-{
-    if (!hasError)
-    {
-        IOTIVITYTEST_LOG(INFO, "Provision Direct Pairing SUCCEEDED - ctx: %s\n", (char* ) ctx);
-    }
-    else
-    {
-        IOTIVITYTEST_LOG(ERROR, "Provision Direct Pairing Failed - ctx: %s", (char* ) ctx);
-        PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t*) arr, nOfRes);
-    }
-
-    g_CBInvoked = true;
 }
 
 void PMCsdkHelper::getAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
@@ -109,14 +94,13 @@ void PMCsdkHelper::getAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, boo
     if (!hasError)
     {
         IOTIVITYTEST_LOG(INFO, "Get ACL Req Failed- ctx: %s\n", (char* ) ctx);
+        g_CBInvoked = true;
     }
     else
     {
         IOTIVITYTEST_LOG(ERROR, "Get ACL Req Success- ctx: %s", (char* ) ctx);
         PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
-
-    g_CBInvoked = true;
 }
 
 void PMCsdkHelper::getCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
@@ -124,14 +108,13 @@ void PMCsdkHelper::getCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bo
     if (!hasError)
     {
         IOTIVITYTEST_LOG(INFO, "Get Credential Req SUCCEEDED - ctx: %s\n", (char* ) ctx);
+        g_CBInvoked = true;
     }
     else
     {
         IOTIVITYTEST_LOG(ERROR, "Get Credential Req - ctx: %s", (char* ) ctx);
         PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
-
-    g_CBInvoked = true;
 }
 
 void PMCsdkHelper::provisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
@@ -139,14 +122,13 @@ void PMCsdkHelper::provisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t* a
     if (!hasError)
     {
         IOTIVITYTEST_LOG(INFO, "Provision Credential SUCCEEDED - ctx: %s", (char* ) ctx);
+        g_CBInvoked = true;
     }
     else
     {
         IOTIVITYTEST_LOG(ERROR, "Provision Credential FAILED - ctx: %s", (char* ) ctx);
         PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
-
-    g_CBInvoked = true;
 }
 
 void PMCsdkHelper::provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
@@ -154,14 +136,13 @@ void PMCsdkHelper::provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* ar
     if (!hasError)
     {
         IOTIVITYTEST_LOG(DEBUG, "Provision ACL SUCCEEDED - ctx: %s", (char* ) ctx);
+        g_CBInvoked = true;
     }
     else
     {
         IOTIVITYTEST_LOG(DEBUG, "Provision ACL FAILED - ctx: %s", (char* ) ctx);
         PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
-
-    g_CBInvoked = true;
 }
 
 void PMCsdkHelper::unlinkDevicesCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
@@ -169,14 +150,13 @@ void PMCsdkHelper::unlinkDevicesCB(void* ctx, int nOfRes, OCProvisionResult_t* a
     if (!hasError)
     {
         IOTIVITYTEST_LOG(DEBUG, "Unlink Devices SUCCEEDED - ctx: %s", (char* ) ctx);
+        g_CBInvoked = true;
     }
     else
     {
         IOTIVITYTEST_LOG(DEBUG, "Unlink Devices FAILED - ctx: %s", (char* ) ctx);
         PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
-
-    g_CBInvoked = true;
 }
 
 void PMCsdkHelper::removeDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
@@ -184,14 +164,13 @@ void PMCsdkHelper::removeDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* ar
     if (!hasError)
     {
         IOTIVITYTEST_LOG(DEBUG, "Remove Devices SUCCEEDED - ctx: %s", (char* ) ctx);
+        g_CBInvoked = true;
     }
     else
     {
         IOTIVITYTEST_LOG(DEBUG, "Remove Devices FAILED - ctx: %s", (char* ) ctx);
         PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t*) arr, nOfRes);
     }
-
-    g_CBInvoked = true;
 }
 
 static void inputPinCB(char* pin, size_t len)
@@ -201,7 +180,7 @@ static void inputPinCB(char* pin, size_t len)
     CommonUtil::waitInSecond(DELAY_LONG);
     char buff[PIN_MAX_SIZE];
 
-    if (!pin || OXM_RANDOM_PIN_SIZE >= len)
+    if (!pin || OXM_RANDOM_PIN_MIN_SIZE >= len)
     {
         IOTIVITYTEST_LOG(ERROR, "[PMHelper] Invalid PIN");
         return;
@@ -209,12 +188,19 @@ static void inputPinCB(char* pin, size_t len)
 
     FILE *fp;
     fp = fopen(RANDOM_PIN_TEXT_FILE, "r");
-    fgets(buff, PIN_MAX_SIZE, (FILE*) fp);
+
+    if(NULL == fp){
+        IOTIVITYTEST_LOG(ERROR, "[PMHelper] ERROR Opening File");
+    }
+
+    if (NULL == fgets(buff, PIN_MAX_SIZE, (FILE*) fp)) {
+        IOTIVITYTEST_LOG(ERROR, "[PMHelper] Unable to Get input from File");
+    }
+
     fclose(fp);
 
     IOTIVITYTEST_LOG(DEBUG, "[PIN CODE] %s\n\n", buff);
     strcpy(pin, (const char*) buff);
-
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] inputPinCB Out");
 }
 
@@ -225,8 +211,7 @@ PMCsdkHelper::PMCsdkHelper()
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] Constructor");
 }
 
-bool PMCsdkHelper::initProvisionClient(int clientOTMType = OTM_JUSTWORK, char* chDBPath =
-        (char*) PRVN_DB_FILE_NAME)
+bool PMCsdkHelper::initProvisionClient(int clientOTMType, char* chDBPath)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] initProvisionClient IN");
 
@@ -318,7 +303,7 @@ bool PMCsdkHelper::discoverAllDevices(int nTime, OCProvisionDev_t** own_list,
 
     if (expectedResult != res)
     {
-        m_failureMessage = setFailureMessage(res, expectedResult);
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(res, expectedResult);
         return false;
     }
 
@@ -350,7 +335,7 @@ bool PMCsdkHelper::discoverUnownedDevices(int nTime, OCProvisionDev_t** unown_li
 
     if (expectedResult != res)
     {
-        m_failureMessage = setFailureMessage(res, expectedResult);
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(res, expectedResult);
         return false;
     }
 
@@ -378,7 +363,7 @@ bool PMCsdkHelper::discoverOwnedDevices(int nTime, OCProvisionDev_t** own_list,
 
     if (expectedResult != res)
     {
-        m_failureMessage = setFailureMessage(res, expectedResult);
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(res, expectedResult);
         return false;
     }
 
@@ -396,7 +381,7 @@ bool PMCsdkHelper::discoverOwnedDevices(int nTime, OCProvisionDev_t** own_list,
  * Helper Method for OCDoOwnershipTransfer
  */
 bool PMCsdkHelper::doOwnerShipTransfer(void* ctx, OCProvisionDev_t** unown_list,
-        OCProvisionResultCB resultCallback, OCStackResult expectedResult)
+        OCProvisionResultCB resultCallback, OCStackResult expectedResult, bool checkCallback)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] doOwnerShipTransfer IN");
 
@@ -411,15 +396,15 @@ bool PMCsdkHelper::doOwnerShipTransfer(void* ctx, OCProvisionDev_t** unown_list,
 
     if (expectedResult != res)
     {
-        m_failureMessage = setFailureMessage(res, expectedResult);
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(res, expectedResult);
         return false;
     }
 
-    if (OC_STACK_OK == res)
+    if (OC_STACK_OK == res && true == checkCallback)
     {
         if (CALLBACK_NOT_INVOKED == waitCallbackRet())
         {
-            m_failureMessage = setFailureMessage("CALLBACK Not invoked");
+            m_failureMessage = PMCsdkUtilityHelper::setFailureMessage("CALLBACK Not invoked");
             return false;
         }
     }
@@ -444,7 +429,7 @@ bool PMCsdkHelper::provisionACL(void* ctx, const OCProvisionDev_t* selectedDevic
 
     if (expectedResult != res)
     {
-        m_failureMessage = setFailureMessage(res, expectedResult);
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(res, expectedResult);
         return false;
     }
 
@@ -452,55 +437,13 @@ bool PMCsdkHelper::provisionACL(void* ctx, const OCProvisionDev_t* selectedDevic
     {
         if (CALLBACK_NOT_INVOKED == waitCallbackRet())
         {
-            m_failureMessage = setFailureMessage("CALLBACK Not invoked");
+            m_failureMessage = PMCsdkUtilityHelper::setFailureMessage("CALLBACK Not invoked");
             return false;
         }
     }
 
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] OCProvisionACL Out");
     return true;
-}
-
-/**
- * Helper Method for OCProvisionDirectPairing
- */
-bool PMCsdkHelper::proivisioningDirectPairing(void* ctx, const OCProvisionDev_t *selectedDeviceInfo,
-        OicSecPconf_t *pconf, OCProvisionResultCB resultCallback, OCStackResult expectedResult)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] proivisioningDirectPairing IN");
-
-    g_CBInvoked = false;
-
-    OCStackResult res = OCProvisionDirectPairing(ctx, selectedDeviceInfo, pconf, resultCallback);
-    IOTIVITYTEST_LOG(INFO, "[PMHelper]  OCProvisionDirectPairing API returns: %s---- %d\n",
-            PMCsdkUtilityHelper::getOCStackResult(res), res);
-
-    if (expectedResult != res)
-    {
-        m_failureMessage = setFailureMessage(res, expectedResult);
-        return false;
-    }
-
-    if (res == OC_STACK_OK)
-    {
-        if (CALLBACK_NOT_INVOKED == waitCallbackRet())
-        {
-            m_failureMessage = setFailureMessage("CALLBACK Not invoked");
-            return false;
-        }
-    }
-
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] proivisioningDirectPairing OUT");
-    return true;
-}
-
-/**
- * Helper Method for OCDeletePdAclList
- */
-void PMCsdkHelper::deletePdAclList(OicSecPdAcl_t* pPdAcl)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper]  OCDeletePdAclList API In");
-    OCDeletePdAclList(pPdAcl);
 }
 
 /**
@@ -520,7 +463,7 @@ bool PMCsdkHelper::provisionCredentials(void *ctx, OicSecCredType_t type, size_t
 
     if (expectedResult != res)
     {
-        m_failureMessage = setFailureMessage(res, expectedResult);
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(res, expectedResult);
         return false;
     }
 
@@ -528,7 +471,7 @@ bool PMCsdkHelper::provisionCredentials(void *ctx, OicSecCredType_t type, size_t
     {
         if (CALLBACK_NOT_INVOKED == waitCallbackRet())
         {
-            m_failureMessage = setFailureMessage("CALLBACK Not invoked");
+            m_failureMessage = PMCsdkUtilityHelper::setFailureMessage("CALLBACK Not invoked");
             return false;
         }
     }
@@ -555,7 +498,7 @@ bool PMCsdkHelper::provisionPairwiseDevices(void* ctx, OicSecCredType_t type, si
 
     if (expectedResult != res)
     {
-        m_failureMessage = setFailureMessage(res, expectedResult);
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(res, expectedResult);
         return false;
     }
 
@@ -563,7 +506,7 @@ bool PMCsdkHelper::provisionPairwiseDevices(void* ctx, OicSecCredType_t type, si
     {
         if (CALLBACK_NOT_INVOKED == waitCallbackRet())
         {
-            m_failureMessage = setFailureMessage("CALLBACK Not invoked");
+            m_failureMessage = PMCsdkUtilityHelper::setFailureMessage("CALLBACK Not invoked");
             return false;
         }
     }
@@ -588,7 +531,7 @@ bool PMCsdkHelper::getCredResource(void* ctx, const OCProvisionDev_t *selectedDe
 
     if (expectedResult != res)
     {
-        m_failureMessage = setFailureMessage(res, expectedResult);
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(res, expectedResult);
         return false;
     }
 
@@ -596,7 +539,7 @@ bool PMCsdkHelper::getCredResource(void* ctx, const OCProvisionDev_t *selectedDe
     {
         if (CALLBACK_NOT_INVOKED == waitCallbackRet())
         {
-            m_failureMessage = setFailureMessage("CALLBACK Not invoked");
+            m_failureMessage = PMCsdkUtilityHelper::setFailureMessage("CALLBACK Not invoked");
             return false;
         }
     }
@@ -621,7 +564,7 @@ bool PMCsdkHelper::getACLResource(void* ctx, const OCProvisionDev_t *selectedDev
 
     if (expectedResult != res)
     {
-        m_failureMessage = setFailureMessage(res, expectedResult);
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(res, expectedResult);
         return false;
     }
 
@@ -629,7 +572,7 @@ bool PMCsdkHelper::getACLResource(void* ctx, const OCProvisionDev_t *selectedDev
     {
         if (CALLBACK_NOT_INVOKED == waitCallbackRet())
         {
-            m_failureMessage = setFailureMessage("CALLBACK Not invoked");
+            m_failureMessage = PMCsdkUtilityHelper::setFailureMessage("CALLBACK Not invoked");
             return false;
         }
     }
@@ -655,7 +598,7 @@ bool PMCsdkHelper::getLinkedStatus(const OicUuid_t* uuidOfDevice, OCUuidList_t**
 
     if (expectedResult != res)
     {
-        m_failureMessage = setFailureMessage(res, expectedResult);
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(res, expectedResult);
         return false;
     }
 
@@ -686,7 +629,7 @@ bool PMCsdkHelper::unlinkDevices(void* ctx, const OCProvisionDev_t* pTargetDev1,
 
     if (expectedResult != res)
     {
-        m_failureMessage = setFailureMessage(res, expectedResult);
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(res, expectedResult);
         return false;
     }
 
@@ -694,7 +637,7 @@ bool PMCsdkHelper::unlinkDevices(void* ctx, const OCProvisionDev_t* pTargetDev1,
     {
         if (CALLBACK_NOT_INVOKED == waitCallbackRet())
         {
-            m_failureMessage = setFailureMessage("CALLBACK Not invoked");
+            m_failureMessage = PMCsdkUtilityHelper::setFailureMessage("CALLBACK Not invoked");
             return false;
         }
     }
@@ -721,7 +664,7 @@ bool PMCsdkHelper::removeDevice(void* ctx, unsigned short waitTimeForOwnedDevice
 
     if (expectedResult != res)
     {
-        m_failureMessage = setFailureMessage(res, expectedResult);
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(res, expectedResult);
         return false;
     }
 
@@ -729,7 +672,7 @@ bool PMCsdkHelper::removeDevice(void* ctx, unsigned short waitTimeForOwnedDevice
     {
         if (CALLBACK_NOT_INVOKED == waitCallbackRet())
         {
-            m_failureMessage = setFailureMessage("CALLBACK Not invoked");
+            m_failureMessage = PMCsdkUtilityHelper::setFailureMessage("CALLBACK Not invoked");
             return false;
         }
     }
@@ -737,171 +680,6 @@ bool PMCsdkHelper::removeDevice(void* ctx, unsigned short waitTimeForOwnedDevice
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] OCRemoveDevice OUT");
     return true;
 }
-
-#if defined(__MOT__)
-bool PMCsdkHelper::discoverMultipleOwnerEnabledDevices(int nTime, OCProvisionDev_t** motdev_list,
-        OCStackResult expectedResult)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] discoverMultipleOwnerEnabledDevices IN");
-
-    OCStackResult res = OCDiscoverMultipleOwnerEnabledDevices(nTime, motdev_list);
-    IOTIVITYTEST_LOG(INFO, "[PMHelper] OCDiscoverMultipleOwnerEnabledDevices API returns: %s\n", PMCsdkUtilityHelper::getOCStackResult(res));
-
-    if (expectedResult != res)
-    {
-        m_failureMessage = setFailureMessage(res, expectedResult);
-        return false;
-    }
-
-    IOTIVITYTEST_LOG(INFO, "[PMHelper] Discovered Multiple Owner Enabled Devices List :");
-
-    if (motdev_list != NULL)
-    {
-        g_motPMDevCount = PMCsdkUtilityHelper::printDevList(*motdev_list);
-    }
-
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] discoverMultipleOwnerEnabledDevices OUT");
-    return true;
-}
-
-bool PMCsdkHelper::provisionPreconfPin(void* ctx, OCProvisionDev_t *targetDeviceInfo,
-        const char * preconfPin, size_t preconfPinLen, OCProvisionResultCB resultCallback,
-        OCStackResult expectedResult)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] OCProvisionPreconfPin IN");
-
-    g_CBInvoked = false;
-
-    OCStackResult res = OCProvisionPreconfPin(ctx, targetDeviceInfo, preconfPin, preconfPinLen,
-            resultCallback);
-    IOTIVITYTEST_LOG(INFO, "[PMHelper] OCProvisionPreconfPin API returns: %s\n",
-            PMCsdkUtilityHelper::getOCStackResult(res));
-
-    if (expectedResult != res)
-    {
-        m_failureMessage = setFailureMessage(res, expectedResult);
-        return false;
-    }
-
-    if (OC_STACK_OK == res)
-    {
-        if (CALLBACK_NOT_INVOKED == waitCallbackRet())
-        {
-            m_failureMessage = setFailureMessage("CALLBACK Not invoked");
-            return false;
-        }
-    }
-
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] OCProvisionPreconfPin OUT");
-    return true;
-}
-
-bool PMCsdkHelper::changeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
-        const OicSecMomType_t momType, OCProvisionResultCB resultCallback,
-        OCStackResult expectedResult)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] OCChangeMOTMode IN");
-
-    g_CBInvoked = false;
-
-    OCStackResult res = OCChangeMOTMode(ctx, targetDeviceInfo, momType, resultCallback);
-    IOTIVITYTEST_LOG(INFO, "[PMHelper]  OCChangeMOTMode API returns: %s\n", PMCsdkUtilityHelper::getOCStackResult(res));
-
-    if (expectedResult != res)
-    {
-        m_failureMessage = setFailureMessage(res, expectedResult);
-        return false;
-    }
-
-    if (OC_STACK_OK == res)
-    {
-        if (CALLBACK_NOT_INVOKED == waitCallbackRet())
-        {
-            m_failureMessage = setFailureMessage("CALLBACK Not invoked");
-            return false;
-        }
-    }
-
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] OCChangeMOTMode OUT");
-    return true;
-}
-
-bool PMCsdkHelper::selectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
-        const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback,
-        OCStackResult expectedResult)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] OCSelectMOTMethod IN");
-
-    g_CBInvoked = false;
-
-    OCStackResult res = OCSelectMOTMethod(ctx, targetDeviceInfo, oxmSelValue, resultCallback);
-    IOTIVITYTEST_LOG(INFO, "[PMHelper] OCSelectMOTMethod API returns: %s\n", PMCsdkUtilityHelper::getOCStackResult(res));
-
-    if (expectedResult != res)
-    {
-        m_failureMessage = setFailureMessage(res, expectedResult);
-        return false;
-    }
-
-    if (OC_STACK_OK == res)
-    {
-        if (CALLBACK_NOT_INVOKED == waitCallbackRet())
-        {
-            m_failureMessage = setFailureMessage("CALLBACK Not invoked");
-            return false;
-        }
-    }
-
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] OCSelectMOTMethod OUT");
-    return true;
-}
-
-void PMCsdkHelper::provisionPreconfPinCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
-{
-    if (!hasError)
-    {
-        IOTIVITYTEST_LOG(INFO, "provisionPreconfPinCB SUCCEEDED - ctx: %s", (char* ) ctx);
-    }
-    else
-    {
-        IOTIVITYTEST_LOG(ERROR, "provisionPreconfPinCB - ctx: %s", (char* ) ctx);
-        PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t*) arr, nOfRes);
-    }
-
-    g_CBInvoked = true;
-}
-
-void PMCsdkHelper::changeMOTModeCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
-{
-    if (!hasError)
-    {
-        IOTIVITYTEST_LOG(INFO, "changeMOTModeCB SUCCEEDED - ctx: %s", (char* ) ctx);
-    }
-    else
-    {
-        IOTIVITYTEST_LOG(ERROR, "changeMOTModeCB FAILED - ctx: %s", (char* ) ctx);
-        PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t*) arr, nOfRes);
-    }
-
-    g_CBInvoked = true;
-}
-
-void PMCsdkHelper::selectMOTMethodCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
-{
-    if (!hasError)
-    {
-        IOTIVITYTEST_LOG(INFO, "selectMOTMethodCB SUCCEEDED - ctx: %s", (char* ) ctx);
-    }
-    else
-    {
-        IOTIVITYTEST_LOG(ERROR, "selectMOTMethodCB FAILED - ctx: %s", (char* ) ctx);
-        PMCsdkUtilityHelper::printResultList((const OCProvisionResult_t*) arr, nOfRes);
-    }
-
-    g_CBInvoked = true;
-}
-
-#endif /*#if defined(__MOT__)*/
 
 bool PMCsdkHelper::provisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId,
         const OCProvisionDev_t *selectedDeviceInfo, OCProvisionResultCB resultCallback,
@@ -916,7 +694,7 @@ bool PMCsdkHelper::provisionTrustCertChain(void *ctx, OicSecCredType_t type, uin
 
     if (expectedResult != result)
     {
-        m_failureMessage = setFailureMessage(result, expectedResult);
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(result, expectedResult);
         return false;
     }
 
@@ -933,39 +711,6 @@ bool PMCsdkHelper::provisionTrustCertChain(void *ctx, OicSecCredType_t type, uin
     return true;
 }
 
-ByteArray PMCsdkHelper::getTrustCertChainArray()
-{
-
-    IOTIVITYTEST_LOG(INFO, "Save Trust Cert. Chain into Cred of SVR");
-
-    ByteArray trustCertChainArray =
-    { 0, 0 };
-
-    FILE *fp = fopen(ROOT_CERT_FILE, "rb+");
-
-    if (fp)
-    {
-        size_t fsize;
-        if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)))
-        {
-            trustCertChainArray.data = OICCalloc(1, fsize + 1);
-            trustCertChainArray.len = fsize + 1;
-            if (NULL == trustCertChainArray.data)
-            {
-                IOTIVITYTEST_LOG(ERROR, "OICCalloc Error");
-                fclose(fp);
-            }
-            rewind(fp);
-            fsize = fread(trustCertChainArray.data, 1, fsize, fp);
-            fclose(fp);
-        }
-    }
-
-    //OIC_LOG_BUFFER(DEBUG, "CLOUD ACL", trustCertChainArray.data, trustCertChainArray.len);
-
-    return trustCertChainArray;
-}
-
 bool PMCsdkHelper::saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
         OicEncodingType_t encodingType, uint16_t *credId, OCStackResult expectedResult)
 {
@@ -980,13 +725,108 @@ bool PMCsdkHelper::saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
 
     if (expectedResult != result)
     {
-        m_failureMessage = setFailureMessage(result, expectedResult);
+        m_failureMessage = PMCsdkUtilityHelper::setFailureMessage(result, expectedResult);
         return false;
     }
 
     IOTIVITYTEST_LOG(DEBUG, "saveTrustCertChain OUT");
     return true;
 }
+
+
+bool readFile(const char *name, OCByteString *out)
+{
+    FILE *file = NULL;
+    int length = 0;
+    uint8_t *buffer = NULL;
+    bool result = false;
+    size_t count, realCount;
+    //Open file
+    file = fopen(name, "rb");
+    if (!file)
+    {
+        IOTIVITYTEST_LOG(ERROR, "Unable to open file %s", name);
+        return result;
+    }
+
+    //Get file length
+    if (fseek(file, 0, SEEK_END))
+    {
+        IOTIVITYTEST_LOG(ERROR, "Failed to SEEK_END");
+        goto exit;
+    }
+
+    length = ftell(file);
+    if (length < 0)
+    {
+        IOTIVITYTEST_LOG(ERROR, "Failed to ftell");
+        goto exit;
+    }
+
+    if (fseek(file, 0, SEEK_SET))
+    {
+        IOTIVITYTEST_LOG(ERROR, "Failed to SEEK_SET");
+        goto exit;
+    }
+
+    //Allocate memory
+    buffer = (uint8_t *) malloc(length);
+    if (!buffer)
+    {
+        IOTIVITYTEST_LOG(ERROR, "Failed to allocate buffer");
+        goto exit;
+    }
+
+    //Read file contents into buffer
+    count = 1;
+    realCount = fread(buffer, length, count, file);
+    if (realCount != count)
+    {
+        IOTIVITYTEST_LOG(ERROR, "Read %d bytes %zu times instead of %zu", length, realCount, count);
+        goto exit;
+    }
+
+    out->bytes = buffer;
+    out->len = length;
+
+    result = true;
+    exit: fclose(file);
+    return result;
+}
+
+ByteArray_t PMCsdkHelper::getTrustCertChainArray()
+{
+    IOTIVITYTEST_LOG(INFO, "Save Trust Cert. Chain into Cred of SVR");
+
+    ByteArray trustCertChainArray =
+    { 0, 0 };
+
+    FILE *fp = fopen(ROOT_CERT_FILE, "rb+");
+
+    if (fp)
+    {
+        size_t fsize;
+        if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)))
+        {
+            trustCertChainArray.data = (uint8_t*)OICCalloc(1, fsize + 1);
+            trustCertChainArray.len = fsize + 1;
+            if (NULL == trustCertChainArray.data)
+            {
+                IOTIVITYTEST_LOG(ERROR, "OICCalloc");
+                fclose(fp);
+            }
+            rewind(fp);
+            fsize = fread(trustCertChainArray.data, 1, fsize, fp);
+            fclose(fp);
+        }
+    }
+
+    //OIC_LOG_BUFFER(DEBUG, "CLOUD ACL", trustCertChainArray.data, trustCertChainArray.len);
+
+    return trustCertChainArray;
+}
+
+
 
 OTMCallbackData_t otmCbRegister(int otmType)
 {
@@ -999,14 +839,13 @@ OTMCallbackData_t otmCbRegister(int otmType)
             otmcb.createSecureSessionCB = CreateSecureSessionRandomPinCallback;
             otmcb.createSelectOxmPayloadCB = CreatePinBasedSelectOxmPayload;
             otmcb.createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload;
-
             break;
+
         default: // JUSTWORK
             otmcb.loadSecretCB = LoadSecretJustWorksCallback;
             otmcb.createSecureSessionCB = CreateSecureSessionJustWorksCallback;
             otmcb.createSelectOxmPayloadCB = CreateJustWorksSelectOxmPayload;
             otmcb.createOwnerTransferPayloadCB = CreateJustWorksOwnerTransferPayload;
-            break;
     }
 
     return otmcb;
@@ -1022,10 +861,12 @@ OicSecAcl_t* createAcl(const int dev_num, int permission, OCProvisionDev_t** m_o
 
     int num = (dev_num == DEVICE_INDEX_TWO) ? DEVICE_INDEX_ONE : DEVICE_INDEX_TWO;
 
-    OCProvisionDev_t* dev = PMCsdkUtilityHelper::getDevInst((const OCProvisionDev_t*) *m_own_list,
+    OCProvisionDev_t* dev = PMCsdkUtilityHelper::getDevInst((OCProvisionDev_t*) *m_own_list,
             num);
 
     PMCsdkUtilityHelper::printDevList(dev);
+
+    memcpy(&ace->subjectuuid, &dev->doxm->deviceID, UUID_LENGTH);
 
     if (!dev || !dev->doxm)
     {
@@ -1034,30 +875,28 @@ OicSecAcl_t* createAcl(const int dev_num, int permission, OCProvisionDev_t** m_o
     }
 
     num = 1;
-    char rsrc_in[ACL_RESRC_MAX_LEN + 1] =
-    { 0 }; // '1' for null termination
     for (int i = 0; num > i; ++i)
     {
         OicSecRsrc_t* rsrc = (OicSecRsrc_t*) OICCalloc(1, sizeof(OicSecRsrc_t));
 
         // Resource URI
-        size_t len = strlen(LIGHT_RESOURCE_URI_01) + 1; // '1' for null termination
+        size_t len = strlen(DEAFULT_RESOURCE_URI) + 1; // '1' for null termination
         rsrc->href = (char*) OICCalloc(len, sizeof(char));
-        OICStrcpy(rsrc->href, len, LIGHT_RESOURCE_URI_01);
+        OICStrcpy(rsrc->href, len, DEAFULT_RESOURCE_URI);
 
         // Resource Type
         rsrc->typeLen = 1;
         rsrc->types = (char**) OICCalloc(rsrc->typeLen, sizeof(char*));
-        for (int i = 0; i < rsrc->typeLen; i++)
+        for (size_t i = 0; i < rsrc->typeLen; i++)
         {
-            rsrc->types[i] = OICStrdup(LIGHT_RESOURCE_URI_01);
+            rsrc->types[i] = OICStrdup(DEFAULT_RESOURCE_TYPE);
         }
 
         rsrc->interfaceLen = 1;
         rsrc->interfaces = (char**) OICCalloc(rsrc->typeLen, sizeof(char*));
-        for (int i = 0; i < rsrc->interfaceLen; i++)
+        for (size_t i = 0; i < rsrc->interfaceLen; i++)
         {
-            rsrc->interfaces[i] = OICStrdup(LIGHT_RESOURCE_URI_01);
+            rsrc->interfaces[i] = OICStrdup(DEAFULT_INTERFACE_TYPE);
         }
 
         LL_APPEND(ace->resources, rsrc);
@@ -1069,78 +908,8 @@ OicSecAcl_t* createAcl(const int dev_num, int permission, OCProvisionDev_t** m_o
     return acl;
 }
 
-OicSecPdAcl_t* createPdAcl(int nPermission)
-{
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createPdAcl IN");
-
-    OicSecPdAcl_t* pdAcl = (OicSecPdAcl_t*) OICCalloc(1, sizeof(OicSecPdAcl_t));
-
-    if (!pdAcl)
-    {
-        IOTIVITYTEST_LOG(ERROR, "[PMHelper] createPdAcl: OICCalloc error return");
-        return NULL; // not need to 'goto' |ERROR| before allocating |acl|
-    }
-
-    // number of resources
-    char rsrc_in[][ACL_RESRC_MAX_LEN + 1] =
-    { "*", "/rsrc/*" };
-    pdAcl->resourcesLen = 1;
-
-    // resource
-    int num = pdAcl->resourcesLen;
-    pdAcl->resources = (char**) OICCalloc(num, sizeof(char*));
-
-    if (!pdAcl->resources)
-    {
-        IOTIVITYTEST_LOG(ERROR, "[PMHelper] createPdAcl: OICCalloc error return");
-    }
-
-    for (int i = 0; num > i; ++i)
-    {
-        size_t len = strlen(rsrc_in[i]) + 1; // '1' for null termination
-        char* rsrc = (char*) OICCalloc(len, sizeof(char));
-        if (!rsrc)
-        {
-            IOTIVITYTEST_LOG(ERROR, "[PMHelper] createPdAcl: OICCalloc error return");
-        }
-        OICStrcpy(rsrc, len, rsrc_in[i]);
-        pdAcl->resources[i] = rsrc; // after here, |rsrc| points nothing
-    }
-
-    // permission
-    pdAcl->permission = nPermission;
-
-    IOTIVITYTEST_LOG(DEBUG, "[PMHelper] createPdAcl OUT");
-    return pdAcl;
-}
-
 std::string PMCsdkHelper::getFailureMessage()
 {
     return m_failureMessage;
 }
 
-/**
- * Function to set failure message
- */
-std::string PMCsdkHelper::setFailureMessage(OCStackResult actualResult,
-        OCStackResult expectedResult)
-{
-    std::string errorMessage("\033[1;31m[Error] Expected : ");
-    errorMessage.append(PMCsdkUtilityHelper::getOCStackResult(expectedResult));
-    errorMessage.append("\033[0m  \033[1;31mActual : ");
-    errorMessage.append(PMCsdkUtilityHelper::getOCStackResult(actualResult));
-    errorMessage.append("\033[0m");
-    return errorMessage;
-}
-
-/**
- * Function to set failure message
- */
-std::string PMCsdkHelper::setFailureMessage(std::string errorMessage)
-{
-    std::string retErrorMessage("\033[1;31m[Error] Expected : ");
-    retErrorMessage.append(errorMessage);
-    retErrorMessage.append("\033[0m");
-
-    return retErrorMessage;
-}

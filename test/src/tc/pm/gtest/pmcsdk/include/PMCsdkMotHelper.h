@@ -20,37 +20,12 @@
  ******************************************************************/
 #ifndef PMCsdkMotHelper_H_
 #define PMCsdkMotHelper_H_
+#if defined(__MOT__)
+#include "PMCsdkUtilityHelper.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <iostream>
-
-#include "ocprovisioningmanager.h"
-#include "oxmjustworks.h"
-#include "oxmrandompin.h"
-#include "securevirtualresourcetypes.h"
-#include "srmutility.h"
-#include "pmtypes.h"
-#include "oic_malloc.h"
-#include "oic_string.h"
-#include "utlist.h"
-
-#include "CommonUtil.h"
-#include "IotivityTest_Logger.h"
-
-/**
- *  Server and Client Resources
- */
-
-#define JUSTWORKS_SERVER "./sampleserver_justworks"
-#define JUSTWORKS_SERVER7 "./sampleserver_justworks 7"
-#define JUSTWORKS_SERVER2 "./sampleserver_justworks 2"
-#define JUSTWORKS_SERVER7_CBOR "./mot_preconfig_pin_server.dat"
-#define JUSTWORKS_SERVER2_CBOR "./oic_svr_db_server_justworks.dat"
-#define JUSTWORKS_SERVER7_CBOR_BACKUP "../mot_preconfig_pin_server.dat"
-#define JUSTWORKS_SERVER2_CBOR_BACKUP "../oic_svr_db_server_justworks.dat"
-#define RANDOMPIN_SERVER "./sampleserver_randompin"
+#define ctxProvisionPreconfPin "ProvisionPreconfPin Context"
+#define ctxChangeMOTMode "OCChangeMOTMode Context"
+#define ctxSelectMOTMethod "OCSelectMOTMethod Context"
 
 class PMCsdkMotHelper
 {
@@ -72,6 +47,13 @@ public:
     bool doMultipleOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices,
             OCProvisionResultCB resultCallback, OCStackResult expectedResult);
 
+    bool provisionPreconfPin(void* ctx, OCProvisionDev_t *targetDeviceInfo, const char * preconfPin, size_t preconfPinLen, OCProvisionResultCB resultCallback, OCStackResult expectedResult);
+    bool changeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecMomType_t momType, OCProvisionResultCB resultCallback, OCStackResult expectedResult);
+    bool selectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback, OCStackResult expectedResult);
+    static void provisionPreconfPinCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
+    static void changeMOTModeCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
+    static void selectMOTMethodCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError);
+
     /**
      * Callback Methods
      */
@@ -82,9 +64,7 @@ public:
      * All Utility Methods for Provision Manager
      */
     std::string getFailureMessage();
-    std::string setFailureMessage(OCStackResult actualResult, OCStackResult expectedResult);
-    std::string setFailureMessage(std::string errorMessage);
     int waitCallbackRet(void);
-
 };
+#endif /*_MOT_*/
 #endif

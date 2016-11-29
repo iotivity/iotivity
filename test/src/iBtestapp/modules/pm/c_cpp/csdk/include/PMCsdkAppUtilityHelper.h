@@ -19,43 +19,36 @@
  *
  ******************************************************************/
 
-#ifndef PMCsdkUtilityHelper_H_
-#define PMCsdkUtilityHelper_H_
+#ifndef PMCsdkAppUtilityHelper_H_
+#define PMCsdkAppUtilityHelper_H_
 
-#ifdef __GNUC__
-#pragma GCC system_header
-#endif
-
-#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <string>
-#include "casecurityinterface.h"
-#include "cathreadpool.h"
-#include "occloudprovisioning.h"
-#include "ocpayload.h"
-#include "ocprovisioningmanager.h"
-#include "ocstack.h"
+#include <signal.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <iostream>
+#include <sstream>
+
+// OCStack
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "utlist.h"
+#include "ocstack.h"
+#include "ocpayload.h"
+
+// Provisioning
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
-#include "OCAccountManager.h"
-#include "OCApi.h"
-#include "OCPlatform.h"
-#include "OCPlatform_impl.h"
-#include "payload_logging.h"
-#include "pmtypes.h"
-#include "rd_client.h"
 #include "securevirtualresourcetypes.h"
 #include "srmutility.h"
-#include "ssl_ciphersuites.h"
-#include "utils.h"
-#include "utlist.h"
+#include "pmtypes.h"
+#include "ocprovisioningmanager.h"
 
 #include "CommonUtil.h"
 #include "IotivityTest_Logger.h"
-
-using namespace std;
-using namespace OC;
 
 /**
  * DEVICE INDEX
@@ -74,6 +67,7 @@ using namespace OC;
 #define DISCOVERY_TIMEOUT_ONE 1
 #define DISCOVERY_TIMEOUT_TWO 2
 #define DISCOVERY_TIMEOUT_INVALID -1
+#define CRED_ID_NEGATIVE -1;
 
 /*
  * Callback Releated Resources
@@ -85,19 +79,18 @@ using namespace OC;
 /**
  * Secured Resource
  */
-static const OicSecPrm_t SUPPORTED_PRMS[1] =
-{ PRM_PRE_CONFIGURED, };
-
+//static const OicSecPrm_t SUPPORTED_PRMS[1] =
+//{ PRM_PRE_CONFIGURED, };
 /**
  *  Server and Client Resources
  */
-#define KILL_SERVERS "server"
+#define KILL_SERVERS "./test_server"
 
 #define SVR_DB_FILE_NAME "oic_svr_db_client.dat"
 #define PRVN_DB_FILE_NAME "oic_prvn_mng.db"
 #define JUSTWORKS_SERVER1 "./test_server oic_svr_db_server.dat 1"
 #define JUSTWORKS_SERVER2 "./test_server oic_svr_db_server_justworks.dat 1"
-#define RANDOMPIN_SERVER "./test_server oic_svr_db_server_randompin.dat 2"
+#define  RANDOMPIN_SERVER "./test_server oic_svr_db_server_randompin.dat 2"
 
 #define JUSTWORKS_SERVER1_CBOR "./oic_svr_db_server.dat"
 #define JUSTWORKS_SERVER1_CBOR_BACKUP "../oic_svr_db_server.dat"
@@ -110,6 +103,17 @@ static const OicSecPrm_t SUPPORTED_PRMS[1] =
 #define CLIENT_DATABASE "./oic_prvn_mng.db"
 #define DATABASE_PDM "./PDM.db"
 
+/*
+ * Direct Pairing Resource
+ */
+#if defined(__DIRECTPAIRING__)
+#define JUSTWORKS_SERVER_DP_C_DAT "./justworks_server_dp_c.dat"
+#define JUSTWORKS_SERVER_DP_DAT_C_BACKUP "../justworks_server_dp_c.dat"
+#define DIRECT_PAIRING_CLIENT_C_DAT "./direct_pairing_c.dat"
+#define DIRECT_PAIRING_CLIENT_DAT_C_BACKUP "../direct_pairing_c.dat"
+#define JUSTWORKS_SERVER_DP "./test_server justworks_server_dp_c.dat 1"
+#endif /*__DIRECTPAIRING__*/
+
 /**
  * MOT Resources
  */
@@ -120,13 +124,6 @@ static const OicSecPrm_t SUPPORTED_PRMS[1] =
 #define JUSTWORKS_SERVER2_CBOR "./oic_svr_db_server_justworks.dat"
 #define JUSTWORKS_SERVER2_CBOR_BACKUP "../oic_svr_db_server_justworks.dat"
 
-#define PRECONFIG_SERVER1 "./test_server preconfig_server_1.dat 3"
-#define PRECONFIG_SERVER2 "./test_server preconfig_server_2.dat 3"
-#define PRECONFIG_SERVER1_CBOR "./preconfig_server_1.dat"
-#define PRECONFIG_SERVER1_CBOR_BACKUP "../preconfig_server_1.dat"
-#define PRECONFIG_SERVER2_CBOR "../preconfig_server_2.dat"
-#define PRECONFIG_SERVER2_CBOR_BACKUP "../preconfig_server_2.dat"
-
 #define MOT_CTX "MOT Context"
 #define MOT_CBOR_FILE "oic_svr_db_subowner_client.dat"
 #define MOT_PRVN_DB_FILE_NAME "oic_pdm_subowner.db"
@@ -136,31 +133,63 @@ static const OicSecPrm_t SUPPORTED_PRMS[1] =
 #define MOT_DEFAULT_PRE_CONFIG_PIN "12341234"
 #define OIC_MULTIPLE_OWNER_UOBV 10
 
-#define CTX_CERT_REQ_ISSUE "Cert Request Context"
-#define CTX_PROV_TRUST_CERT "Trust Cert Context"
-#define CRED_ID_NEGATIVE -1
+/**
+ * CLoud Acl Resource
+ */
+#define CLOUD_ACL_CONTROLLER_DAT "./cloud.dat"
+#define CLOUD_ACL_CONTROLLER_DAT_BACKUP "../cloud.dat"
 #define ROOT_CERT_FILE "rootca.crt"
 #define ROOT_CERT_FILE_BACKUP "../rootca.crt"
-const int CERT_ID_ONE = 1;
 
-class PMCsdkUtilityHelper
-{
+#define DEFAULT_HOST "127.0.0.1"//"127.0.0.1"
+#define DEFAULT_PORT 5683
+#define DEFAULT_AUTH_PROVIDER "github"
+#define CLOUD_ACL_CONTROLLER_DAT "./cloud.dat"
+#define ROOT_CERT_FILE "rootca.crt"
+#define DEFAULT_ACL_ID "a67f3f95-162a-45d7-aea1-1c43a0a019fb"
 
-public:
+#define DEFAULT_DEV_ID "9cfbeb8e-5a1e-4d1c-9d01-2ae6fdb"
+#define DEFAULT_OWNER_ID "1123e4567-e89b-12d3-a456-4266554"
+#define UUID_EXAMPLE_3 "987e6543-e21b-12d3-a456-4266554"
+#define SUBJECT_ID_EXAMPLE "72616E64-5069-6E44-6576-557569643030"
 
-    static OCDevAddr getOCDevAddrEndPoint();
-    static cloudAce_t* createCloudAces();
-    static char *getOCStackResult(OCStackResult ocstackresult);
-    static OCProvisionDev_t* getDevInst(OCProvisionDev_t* dev_lst, const int dev_num);
-    static int printDevList(OCProvisionDev_t*);
-    static int printResultList(const OCProvisionResult_t*, const int);
-    static int waitCallbackRet(void);
-    static size_t printUuidList(const OCUuidList_t*);
-    static void printUuid(const OicUuid_t*);
-    static void removeAllResFile();
+#define CTX_CERT_REQ_ISSUE "Cert Request Context"
+#define CTX_GET_ACL_ID_BY_DEV "Get Acl Id By Dev Context"
+#define CTX_INDIVIDUAL_GET__INFO "Individual Get Info"
+#define CTX_INDIVIDUAL_UPDATE_ACE "Individual Update Ace"
+#define CTX_PROV_TRUST_CERT "Provision Trust Cert"
+#define CTX_GET_CRL "Get CRL"
 
-    static std::string setFailureMessage(OCStackResult actualResult, OCStackResult expectedResult);
-    static std::string setFailureMessage(std::string errorMessage);
-};
+/*
+ * Aces
+ */
+#define MAX_ID_LENGTH       (64)
+#define MAX_STRING_LENGTH   (256)
+#define UUID_EXAMPLE_1 "9cfbeb8e-5a1e-4d1c-9d01-2ae6fdb"
+#define UUID_EXAMPLE_2 "123e4567-e89b-12d3-a456-4266554"
+#define UUID_EXAMPLE_3 "987e6543-e21b-12d3-a456-4266554"
+#define SUBJECT_ID_EXAMPLE "72616E64-5069-6E44-6576-557569643030"
+
+#define ACL_ID_EXAMPLE "0b3fe9e1-9173-4ad2-af4d-a060cf08fef5"
+#define ACE_ID_EXAMPLE "test1"
+
+#define ID_EXAMPLE_1   "78f98b4f25f21e2487e8"
+#define ID_EXAMPLE_2   "6caa7009386290fd3681"
+
+#define RESOURCE_URI_EXAMPLE "/a/light/0"
+#define RESOURCE_TYPE_EXAMPLE "core.light"
+#define INTERFACE_EXAMPLE "oic.if.baseline"
+
+OCDevAddr getOCDevAddrEndPoint();
+char *getOCStackResult(OCStackResult ocstackresult);
+OCProvisionDev_t* getDevInst(OCProvisionDev_t* dev_lst, const int dev_num);
+int printDevList(OCProvisionDev_t*);
+int printResultList(const OCProvisionResult_t*, const int);
+int waitCallbackRet(void);
+size_t printUuidList(const OCUuidList_t*);
+void printUuid(const OicUuid_t*);
+
+std::string setFailureMessage(OCStackResult actualResult, OCStackResult expectedResult);
+std::string setFailureMessage(std::string errorMessage);
 
 #endif /* PMCsdkUtilityHelper_H_ */

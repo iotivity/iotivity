@@ -32,16 +32,13 @@ protected:
     virtual void SetUp()
     {
         CommonUtil::runCommonTCSetUpPart();
-        CommonUtil::killApp(JUSTWORKS_SERVER);
-        CommonUtil::killApp(RANDOMPIN_SERVER);
+        CommonUtil::killApp(KILL_SERVERS);
         CommonUtil::waitInSecond(DELAY_MEDIUM);
-        CommonUtil::rmFile(CLIENT_DATABASE);
-        CommonUtil::rmFile(JUSTWORKS_SERVER1_CBOR);
-        CommonUtil::rmFile(JUSTWORKS_SERVER2_CBOR);
-        CommonUtil::rmFile(CLIENT_CBOR);
+        PMCsdkUtilityHelper::removeAllResFile();
         CommonUtil::waitInSecond(DELAY_LONG);
         CommonUtil::copyFile(JUSTWORKS_SERVER1_CBOR_BACKUP, JUSTWORKS_SERVER1_CBOR);
         CommonUtil::copyFile(JUSTWORKS_SERVER2_CBOR_BACKUP, JUSTWORKS_SERVER2_CBOR);
+        CommonUtil::copyFile(RANDOMPIN_SERVER_CBOR_BACKUP, RANDOMPIN_SERVER_CBOR);
         CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
         CommonUtil::launchApp(JUSTWORKS_SERVER1);
         CommonUtil::launchApp(JUSTWORKS_SERVER2);
@@ -54,8 +51,7 @@ protected:
     virtual void TearDown()
     {
         CommonUtil::runCommonTCTearDownPart();
-        CommonUtil::killApp(JUSTWORKS_SERVER);
-        CommonUtil::killApp(RANDOMPIN_SERVER);
+        CommonUtil::killApp(KILL_SERVERS);
     }
 };
 
@@ -90,7 +86,6 @@ TEST_F(PMCsdkTest_btc, OCDiscoverUnownedDevices_RV_SRC_P)
                     &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -126,7 +121,6 @@ TEST_F(PMCsdkTest_btc, OCDiscoverUnownedDevicesTime_LBV_P)
                     &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -162,7 +156,6 @@ TEST_F(PMCsdkTest_btc, OCDiscoverUnownedDevices_LOBV_N)
                     &m_UnownList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -198,7 +191,6 @@ TEST_F(PMCsdkTest_btc, OCDiscoverUnownedDevices_ECRC_NV_N)
                     NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -233,7 +225,6 @@ TEST_F(PMCsdkTest_btc, OCDiscoverOwnedDevices_RV_SRC_P)
     if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -268,7 +259,6 @@ TEST_F(PMCsdkTest_btc, OCDiscoverOwnedDevicesTime_LBV_P)
     if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT_ONE, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -303,7 +293,6 @@ TEST_F(PMCsdkTest_btc, OCDiscoverOwnedDevicesTime_ECRC_LOBV_N)
     if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT_ZERO, &m_OwnList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -338,7 +327,6 @@ TEST_F(PMCsdkTest_btc, OCDiscoverOwnedDevices_NV_N)
     if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT_ZERO, NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -373,7 +361,6 @@ TEST_F(PMCsdkTest_btc, OCGetDevInfoFromNetwork_SRC_RV_P)
     if(!m_PMHelper.discoverAllDevices(DISCOVERY_TIMEOUT, &m_OwnList, &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -408,7 +395,6 @@ TEST_F(PMCsdkTest_btc, OCGetDevInfoFromNetwork_LBV_P)
     if(!m_PMHelper.discoverAllDevices(DISCOVERY_TIMEOUT_TWO, &m_OwnList, &m_UnownList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -443,7 +429,6 @@ TEST_F(PMCsdkTest_btc, OCGetDevInfoFromNetwork_LOBV_ECRC_N)
     if(!m_PMHelper.discoverAllDevices(DISCOVERY_TIMEOUT_ONE, &m_OwnList, &m_UnownList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -478,7 +463,6 @@ TEST_F(PMCsdkTest_btc, OCGetDevInfoFromNetworkOwned_NV_N)
     if(!m_PMHelper.discoverAllDevices(DISCOVERY_TIMEOUT_ONE, &m_OwnList, NULL, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -513,7 +497,6 @@ TEST_F(PMCsdkTest_btc, OCGetDevInfoFromNetworkUnowned_NV_N)
     if(!m_PMHelper.discoverAllDevices(DISCOVERY_TIMEOUT_ONE, NULL, &m_UnownList, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -582,7 +565,7 @@ TEST_F(PMCsdkTest_btc, OCSetOwnerTransferCallbackDataJustWork_REV_P)
     OTMCallbackData_t otmcb = otmCbRegister(OTM_JUSTWORK);
 
     OCStackResult expectedResult = OC_STACK_OK;
-    OCStackResult actualResult = OCSetOwnerTransferCallbackData(OTM_JUSTWORK, &otmcb);
+    OCStackResult actualResult = OCSetOwnerTransferCallbackData((OicSecOxm_t)OTM_JUSTWORK, &otmcb);
 
     ASSERT_EQ(expectedResult, actualResult);
 }
@@ -676,7 +659,7 @@ TEST_F(PMCsdkTest_btc, OCSetOwnerTransferCallbackData_LOBV_N)
     }
 
     OCStackResult expectedResult = OC_STACK_INVALID_CALLBACK;
-    OCStackResult actualResult = OCSetOwnerTransferCallbackData(OTM_INVALID_LOBV, NULL);
+    OCStackResult actualResult = OCSetOwnerTransferCallbackData((OicSecOxm_t)OTM_INVALID_LOBV, NULL);
 
     ASSERT_EQ(expectedResult, actualResult);
 }
@@ -714,7 +697,7 @@ TEST_F(PMCsdkTest_btc, OCSetOwnerTransferCallbackData_UOBV_N)
     otmcb.createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload;
 
     OCStackResult expectedResult = OC_STACK_INVALID_PARAM;
-    OCStackResult actualResult = OCSetOwnerTransferCallbackData(OTM_INVALID_UOBV, &otmcb);
+    OCStackResult actualResult = OCSetOwnerTransferCallbackData((OicSecOxm_t)OTM_INVALID_UOBV, &otmcb);
 
     ASSERT_EQ(expectedResult, actualResult);
 }
@@ -829,7 +812,6 @@ TEST_F(PMCsdkTest_btc, OCDoOwnershipTransferJustWork_RSV_SRC_P)
                     PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -857,7 +839,7 @@ TEST_F(PMCsdkTest_btc, OCDoOwnershipTransferJustWork_RSV_SRC_P)
 TEST_F(PMCsdkTest_btc, OCDoOwnershipTransferRandomPin_SRC_P)
 {
 
-    CommonUtil::killApp(JUSTWORKS_SERVER);
+    CommonUtil::killApp(KILL_SERVERS);
     CommonUtil::launchApp(RANDOMPIN_SERVER);
     CommonUtil::waitInSecond(DELAY_LONG);
 
@@ -884,7 +866,6 @@ TEST_F(PMCsdkTest_btc, OCDoOwnershipTransferRandomPin_SRC_P)
     if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -934,364 +915,7 @@ TEST_F(PMCsdkTest_btc, OCDoOwnershipTransferCB_NV_N)
     if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
-}
-#endif
-
-/**
- * @since           2015-03-12
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             OCStackResult OCInitPM(const char* dbPath)
- * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
- * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)*
- * @objective       Test OCProvisionDirectPairing positively.
- * @target          OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecPconf_t *pconf, OCProvisionResultCB resultCallback)
- * @objective       Test OCProvisionDirectPairing positively.
- * @test_data       Regular data for OCProvisionDirectPairing
- * @pre_condition   Start two justworks simulators
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call OCInitPM
- *                  4. call OCSetOwnerTransferCallbackData
- *                  5. call OCDiscoverUnownedDevices
- *                  6. call OCDoOwnershipTransfer
- *                  7. call OCDiscoverOwnedDevices
- *                  8. call OCProvisionDirectPairing
- * @post_condition  None
- * @expected        OCProvisionDirectPairing will return OC_STACK_OK
- */
-#if defined(__LINUX__)
-TEST_F(PMCsdkTest_btc, OCProvisionDirectPairing_SRC_RV_P)
-{
-    if (!m_PMHelper.initProvisionClient())
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    OCProvisionDev_t *device1 = m_OwnList;
-    OicSecPconf_t pconf;
-    memset(&pconf, 0, sizeof(OicSecPconf_t));
-    pconf.edp = true;
-
-    // set default supported PRM types
-    pconf.prmLen = sizeof(SUPPORTED_PRMS)/sizeof(OicSecPrm_t);
-    pconf.prm = (OicSecPrm_t *)OICCalloc(pconf.prmLen, sizeof(OicSecPrm_t));
-
-    if(pconf.prm)
-    {
-        for (size_t i=0; i<pconf.prmLen; i++)
-        {
-            pconf.prm[i] = SUPPORTED_PRMS[i];
-        }
-    }
-
-    memcpy(pconf.pin.val, DEFAULT_DP_PROVSIONING_PIN, DP_PIN_LENGTH);
-
-    // set default pdacl
-    pconf.pdacls = createPdAcl(FULL_PERMISSION);
-
-    if (!m_PMHelper.proivisioningDirectPairing((void*)ctxProvDirectPairing, device1,
-                    &pconf, m_PMHelper.provisionDPCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-
-/**
- * @since           2015-03-12
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             OCStackResult OCInitPM(const char* dbPath)
- * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
- * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)* @objective Test OCProvisionDirectPairing negatively with Callback NULL.
- * @target          OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecPconf_t *pconf, OCProvisionResultCB resultCallback)
- * @objective       Test OCProvisionDirectPairing negatively with resultCallback as NULL
- * @test_data       resultCallback = NULL
- * @pre_condition   Start two justworks simulators
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call OCInitPM
- *                  4. call OCSetOwnerTransferCallbackData
- *                  5. call OCDiscoverUnownedDevices
- *                  6. call OCDoOwnershipTransfer
- *                  7. call OCDiscoverOwnedDevices
- *                  8. call OCProvisionDirectPairing
- * @post_condition  None
- * @expected        OCProvisionDirectPairing will return OC_STACK_INVALID_CALLBACK
- */
-#if defined(__LINUX__)
-TEST_F(PMCsdkTest_btc, OCProvisionDirectPairingCB_NV_N)
-{
-    if (!m_PMHelper.initProvisionClient())
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    OCProvisionDev_t *device1 = m_OwnList;
-
-    OicSecPconf_t pconf;
-    memset(&pconf, 0, sizeof(OicSecPconf_t));
-    pconf.edp = true;
-
-    // set default supported PRM types
-    memcpy(pconf.pin.val, DEFAULT_DP_PROVSIONING_PIN, DP_PIN_LENGTH);
-
-    if(pconf.prm)
-    {
-        for (size_t i=0; i<pconf.prmLen; i++)
-        {
-            pconf.prm[i] = SUPPORTED_PRMS[i];
-        }
-    }
-
-    // set default pin
-    const char DP_DEFAULT_PIN[] = DEFAULT_DP_PROVSIONING_PIN;
-    memcpy(pconf.pin.val, DP_DEFAULT_PIN, DP_PIN_LENGTH);
-
-    // set default pdacl
-    pconf.pdacls = createPdAcl(FULL_PERMISSION);
-
-    if (!m_PMHelper.proivisioningDirectPairing((void*)ctxProvDirectPairing, device1,
-                    &pconf, NULL, OC_STACK_INVALID_CALLBACK))
-    {
-
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-
-/**
- * @since           2015-03-12
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             OCStackResult OCInitPM(const char* dbPath)
- * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
- * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)* @objective Test OCProvisionDirectPairing negatively with DeviceInfo as NULL.
- * @target          OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecPconf_t *pconf, OCProvisionResultCB resultCallback);
- * @objective       Test OCProvisionDirectPairing negatively with selectedDeviceInfo as NULL
- * @test_data       selectedDeviceInfo = NULL
- * @pre_condition   Start two justworks simulators
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call OCInitPM
- *                  4. call OCSetOwnerTransferCallbackData
- *                  5. call OCDiscoverUnownedDevices
- *                  6. call OCDoOwnershipTransfer
- *                  7. call OCDiscoverOwnedDevices
- *                  8. call OCProvisionDirectPairing
- * @post_condition  None
- * @expected        OCProvisionDirectPairing will return OC_STACK_INVALID_PARAM
- */
-#if defined(__LINUX__)
-TEST_F(PMCsdkTest_btc, OCProvisionDirectPairingDeviceInfo_NV_N)
-{
-    if (!m_PMHelper.initProvisionClient())
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    OicSecPconf_t pconf;
-    memset(&pconf, 0, sizeof(OicSecPconf_t));
-    pconf.edp = true;
-
-    // set default supported PRM types
-    pconf.prmLen = sizeof(SUPPORTED_PRMS)/sizeof(OicSecPrm_t);
-    pconf.prm = (OicSecPrm_t *)OICCalloc(pconf.prmLen, sizeof(OicSecPrm_t));
-
-    if(pconf.prm)
-    {
-        for (size_t i=0; i<pconf.prmLen; i++)
-        {
-            pconf.prm[i] = SUPPORTED_PRMS[i];
-        }
-    }
-
-    // set default pin
-    memcpy(pconf.pin.val, DEFAULT_DP_PROVSIONING_PIN, DP_PIN_LENGTH);
-
-    // set default pdacl
-    pconf.pdacls = createPdAcl(FULL_PERMISSION);
-
-    if (!m_PMHelper.proivisioningDirectPairing((void*)ctxProvDirectPairing, NULL,
-                    &pconf, m_PMHelper.provisionDPCB, OC_STACK_INVALID_PARAM))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-
-/**
- * @since           2015-03-12
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             OCStackResult OCInitPM(const char* dbPath)
- * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
- * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)* @objective Test OCProvisionDirectPairing negatively with acl as NULL.
- * @target          OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *selectedDeviceInfo, OicSecPconf_t *pconf, OCProvisionResultCB resultCallback);
- * @objective       Test OCProvisionDirectPairing negatively with pconf as NULL
- * @test_data       pconf = NULL
- * @pre_condition   Start two justworks simulators
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call OCInitPM
- *                  4. call OCSetOwnerTransferCallbackData
- *                  5. call OCDiscoverUnownedDevices
- *                  6. call OCDoOwnershipTransfer
- *                  7. call OCDiscoverOwnedDevices
- *                  8. call OCProvisionDirectPairing
- * @post_condition  None
- * @expected        OCProvisionDirectPairing will return OC_STACK_INVALID_PARAM
- */
-#if defined(__LINUX__)
-TEST_F(PMCsdkTest_btc, OCProvisionDirectPairingPAcl_NV_N)
-{
-    if (!m_PMHelper.initProvisionClient())
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    OCProvisionDev_t *device1 = m_OwnList;
-
-    if (!m_PMHelper.proivisioningDirectPairing((void*)ctxProvDirectPairing, device1,
-                    NULL, m_PMHelper.provisionDPCB, OC_STACK_INVALID_PARAM))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-
-/**
- * @since           2015-03-12
- * @objective       Test OCDeletePdAclList positively
- * @target          void OCDeletePdAclList(OicSecPdAcl_t* pPdAcl)
- * @test_data       regular data for pPdAcl
- * @pre_condition   Start two justworks simulators
- * @procedure       call  OCDeletePdAclList
- * @post_condition  None
- * @expected        OCDeletePdAclList will return OC_STACK_OK
- */
-#if defined(__LINUX__)
-TEST_F(PMCsdkTest_btc, OCDeletePdAclList_SRC_P)
-{
-    OicSecPconf_t pconf;
-    memset(&pconf, 0, sizeof(OicSecPconf_t));
-    pconf.edp = true;
-
-    // set default supported PRM types
-    pconf.prmLen = sizeof(SUPPORTED_PRMS)/sizeof(OicSecPrm_t);
-    pconf.prm = (OicSecPrm_t *)OICCalloc(pconf.prmLen, sizeof(OicSecPrm_t));
-
-    if(pconf.prm)
-    {
-        for (size_t i=0; i<pconf.prmLen; i++)
-        {
-            pconf.prm[i] = SUPPORTED_PRMS[i];
-        }
-    }
-
-    // set default pin
-    memcpy(pconf.pin.val, DEFAULT_DP_PROVSIONING_PIN, DP_PIN_LENGTH);
-
-    // set default pdacl
-    pconf.pdacls = createPdAcl(FULL_PERMISSION);
-
-    m_PMHelper.deletePdAclList(pconf.pdacls);
-
 }
 #endif
 
@@ -1356,7 +980,6 @@ TEST_F(PMCsdkTest_btc, ProvisionCredential_SRC_RV_P)
                     device2, PMCsdkHelper::provisionCredCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1422,7 +1045,6 @@ TEST_F(PMCsdkTest_btc, ProvisionCredentialCredType_REV_P)
                     device2, PMCsdkHelper::provisionCredCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1488,7 +1110,6 @@ TEST_F(PMCsdkTest_btc, ProvisionCredentialKeySize_UBV_P)
                     device2, PMCsdkHelper::provisionCredCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1554,7 +1175,6 @@ TEST_F(PMCsdkTest_btc, ProvisionCredentialCB_ECRC_NV_N)
                     device2, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1619,7 +1239,6 @@ TEST_F(PMCsdkTest_btc, ProvisionCredentialDev1_NV_N)
                     device2, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1684,7 +1303,6 @@ TEST_F(PMCsdkTest_btc, ProvisionCredentialDev2_NV_N)
                     NULL, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1751,7 +1369,6 @@ TEST_F(PMCsdkTest_btc, ProvisionCredentialKeysize_LOBV_N)
                     device2, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1818,7 +1435,6 @@ TEST_F(PMCsdkTest_btc, ProvisionCredentialKeysize_UOBV_N)
                     device2, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1884,7 +1500,6 @@ TEST_F(PMCsdkTest_btc, ProvisionCredentialCredType_LOBV_N)
                     device2, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -1950,7 +1565,6 @@ TEST_F(PMCsdkTest_btc, ProvisionCredentialCredType_UOBV_N)
                     device2, PMCsdkHelper::provisionCredCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2013,7 +1627,6 @@ TEST_F(PMCsdkTest_btc, ProvisionAcl_SRC_RV_P)
                     m_PMHelper.provisionAclCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2076,7 +1689,6 @@ TEST_F(PMCsdkTest_btc, ProvisionAclDeviceList_ECRC_NV_N)
                     m_PMHelper.provisionAclCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2137,7 +1749,6 @@ TEST_F(PMCsdkTest_btc, ProvisionAclAcl_NV_N)
                     m_PMHelper.provisionAclCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2200,7 +1811,6 @@ TEST_F(PMCsdkTest_btc, ProvisionAclCB_NV_N)
                     NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2271,7 +1881,6 @@ TEST_F(PMCsdkTest_btc, ProvisionAclMultipleTime_P)
                     m_PMHelper.provisionAclCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2345,7 +1954,6 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevices_SRC_RV_P)
                     device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2413,7 +2021,6 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesKeySize_UBV_P)
                     device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2480,7 +2087,6 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesAcl1_NV_P)
                     device1, NULL, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2547,7 +2153,6 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesAcl2_NV_P)
                     device1, m_Acl1, device2, NULL, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2615,7 +2220,6 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesCB_NV_N)
                     device1, m_Acl1, device2, m_Acl2, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2682,7 +2286,6 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesDev1_NV_N)
                     NULL, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2750,7 +2353,6 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesDev2_NV_N)
                     device1, m_Acl1, NULL, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2818,7 +2420,6 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesDeviceKeySize_LOBV_N)
                     device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2886,7 +2487,6 @@ TEST_F(PMCsdkTest_btc, ProvisionPairwiseDevicesDeviceKeySize_UOBV_N)
                     device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -2963,7 +2563,6 @@ TEST_F(PMCsdkTest_btc, UnlinkDevices_RSV_SRC_P)
                     PMCsdkHelper::unlinkDevicesCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -3040,7 +2639,6 @@ TEST_F(PMCsdkTest_btc, UnlinkDevicesDev1_NV_N)
                     PMCsdkHelper::unlinkDevicesCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -3117,7 +2715,6 @@ TEST_F(PMCsdkTest_btc, UnlinkDevicesDev2_NV_N)
                     PMCsdkHelper::unlinkDevicesCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -3194,7 +2791,6 @@ TEST_F(PMCsdkTest_btc, UnlinkDevicesCB_NV_N)
                     NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -3271,7 +2867,6 @@ TEST_F(PMCsdkTest_btc, RemoveDevice_SRC_RV_P)
                     PMCsdkHelper::removeDeviceCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -3348,7 +2943,6 @@ TEST_F(PMCsdkTest_btc, RemoveDeviceTime_LBV_P)
                     PMCsdkHelper::removeDeviceCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -3426,7 +3020,6 @@ TEST_F(PMCsdkTest_btc, RemoveDevice_LOBV_N)
                     PMCsdkHelper::removeDeviceCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -3489,10 +3082,8 @@ TEST_F(PMCsdkTest_btc, RemoveDeviceTargetDev_NV_N)
     OCProvisionDev_t *device2 = m_OwnList->next;
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
+    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
                     device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
@@ -3503,7 +3094,6 @@ TEST_F(PMCsdkTest_btc, RemoveDeviceTargetDev_NV_N)
                     PMCsdkHelper::removeDeviceCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -3566,10 +3156,8 @@ TEST_F(PMCsdkTest_btc, RemoveDeviceCB_NV_N)
     OCProvisionDev_t *device2 = m_OwnList->next;
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
+    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
                     device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
@@ -3580,7 +3168,6 @@ TEST_F(PMCsdkTest_btc, RemoveDeviceCB_NV_N)
                     NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -3643,10 +3230,8 @@ TEST_F(PMCsdkTest_btc, OCGetLinkedStatus_RSV_SRC_P)
     OCProvisionDev_t *device2 = m_OwnList->next;
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
+    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
                     device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
@@ -3659,7 +3244,6 @@ TEST_F(PMCsdkTest_btc, OCGetLinkedStatus_RSV_SRC_P)
     if (!m_PMHelper.getLinkedStatus(&device1->doxm->deviceID, &uuidList, &numOfDevices, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -3738,7 +3322,6 @@ TEST_F(PMCsdkTest_btc, OCGetLinkedStatusDeviceID_NV_N)
     if (!m_PMHelper.getLinkedStatus(NULL, &uuidList, &numOfDevices, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -3801,10 +3384,8 @@ TEST_F(PMCsdkTest_btc, OCGetLinkedStatusUuidListNV_N)
     OCProvisionDev_t *device2 = m_OwnList->next;
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
+    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
                     device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
@@ -3816,7 +3397,6 @@ TEST_F(PMCsdkTest_btc, OCGetLinkedStatusUuidListNV_N)
     if (!m_PMHelper.getLinkedStatus(&device1->doxm->deviceID, NULL, &numOfDevices, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -3879,10 +3459,8 @@ TEST_F(PMCsdkTest_btc, OCGetLinkedStatusNumDev_NV_N)
     OCProvisionDev_t *device2 = m_OwnList->next;
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
+    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
                     device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
@@ -3894,7 +3472,6 @@ TEST_F(PMCsdkTest_btc, OCGetLinkedStatusNumDev_NV_N)
     if (!m_PMHelper.getLinkedStatus(&device1->doxm->deviceID, &uuidList, NULL ,OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -3957,10 +3534,8 @@ TEST_F(PMCsdkTest_btc, OCGetCredResource_RV_SRC_P)
     OCProvisionDev_t *device2 = m_OwnList->next;
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
+    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
                     device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
@@ -3970,7 +3545,6 @@ TEST_F(PMCsdkTest_btc, OCGetCredResource_RV_SRC_P)
     if (!m_PMHelper.getCredResource(NULL, device1, PMCsdkHelper::getCredCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -4033,10 +3607,8 @@ TEST_F(PMCsdkTest_btc, OCGetCredResourceDev_NV_N)
     OCProvisionDev_t *device2 = m_OwnList->next;
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
+    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
                     device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
@@ -4046,7 +3618,6 @@ TEST_F(PMCsdkTest_btc, OCGetCredResourceDev_NV_N)
     if (!m_PMHelper.getCredResource(NULL, NULL, PMCsdkHelper::getCredCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -4109,10 +3680,8 @@ TEST_F(PMCsdkTest_btc, OCGetCredResourceCb_NV_N)
     OCProvisionDev_t *device2 = m_OwnList->next;
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
+    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
                     device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
@@ -4122,7 +3691,6 @@ TEST_F(PMCsdkTest_btc, OCGetCredResourceCb_NV_N)
     if (!m_PMHelper.getCredResource(NULL, device1, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -4185,10 +3753,8 @@ TEST_F(PMCsdkTest_btc, OCGetACLResource_RV_SRC_P)
     OCProvisionDev_t *device2 = m_OwnList->next;
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
+    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
                     device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
@@ -4198,7 +3764,6 @@ TEST_F(PMCsdkTest_btc, OCGetACLResource_RV_SRC_P)
     if (!m_PMHelper.getACLResource(NULL, device1, PMCsdkHelper::getAclCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -4261,10 +3826,8 @@ TEST_F(PMCsdkTest_btc, OCGetACLResource_NV_N)
     OCProvisionDev_t *device2 = m_OwnList->next;
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
+    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
                     device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
@@ -4274,7 +3837,6 @@ TEST_F(PMCsdkTest_btc, OCGetACLResource_NV_N)
     if (!m_PMHelper.getACLResource(NULL, NULL, PMCsdkHelper::getAclCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
@@ -4337,10 +3899,8 @@ TEST_F(PMCsdkTest_btc, OCGetACLResourceCb_NV_N)
     OCProvisionDev_t *device2 = m_OwnList->next;
     m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
     m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
 
-    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, type, keySize,
+    if (!m_PMHelper.provisionPairwiseDevices((void*)ctxProvPairwise, SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128,
                     device1, m_Acl1, device2, m_Acl2, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
@@ -4350,923 +3910,6 @@ TEST_F(PMCsdkTest_btc, OCGetACLResourceCb_NV_N)
     if (!m_PMHelper.getACLResource(NULL, device1, NULL, OC_STACK_INVALID_CALLBACK))
     {
         SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
     }
 }
 #endif
-
-#if defined(__MOT__)
-/**
- * @since           2016-09-10
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             OCStackResult OCInitPM(const char* dbPath)
- * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
- * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
- * @objective       Test OCChangeMOTMode positively with regular data
- * @target          OCStackResult OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecMomType_t momType, OCProvisionResultCB resultCallback)
- * @test_data       regular data for the target API
- * @pre_condition   Start two justworks simulators
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call OCInitPM
- *                  4. call OCSetOwnerTransferCallbackData
- *                  5. call OCDiscoverUnownedDevices
- *                  6. call OCDoOwnershipTransfer
- *                  7. call OCDiscoverOwnedDevices
- *                  8. call OCChangeMOTMode
- * @post_condition  None
- * @expected        OCChangeMOTMode will return OC_STACK_OK
- */
-#if defined(__LINUX__)
-TEST_F(PMCsdkTest_btc, OCChangeMOTMode_RV_SRC_P)
-{
-    if (!m_PMHelper.initProvisionClient())
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    OCProvisionDev_t* targetDev = PMCsdkUtilityHelper::getDevInst((const OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
-
-    if (!m_PMHelper.changeMOTMode((void*)ctxChangeMOTMode, targetDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkHelper::changeMOTModeCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-
-/**
- * @since           2016-09-10
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             OCStackResult OCInitPM(const char* dbPath)
- * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
- * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
- * @objective       Test OCChangeMOTMode positively with momType = OIC_MULTIPLE_OWNER_DISABLE
- * @target          OCStackResult OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecMomType_t momType, OCProvisionResultCB resultCallback)
- * @test_data       momType = OIC_MULTIPLE_OWNER_DISABLE
- * @pre_condition   Start two justworks simulators
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call OCInitPM
- *                  4. call OCSetOwnerTransferCallbackData
- *                  5. call OCDiscoverUnownedDevices
- *                  6. call OCDoOwnershipTransfer
- *                  7. call OCDiscoverOwnedDevices
- *                  8. call OCChangeMOTMode
- * @post_condition  None
- * @expected        OCChangeMOTMode will return OC_STACK_OK
- */
-#if defined(__LINUX__)
-TEST_F(PMCsdkTest_btc, OCChangeMOTMode_CLU_P)
-{
-    if (!m_PMHelper.initProvisionClient())
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    OCProvisionDev_t* targetDev = PMCsdkUtilityHelper::getDevInst((const OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
-
-    if (!m_PMHelper.changeMOTMode((void*)ctxChangeMOTMode, targetDev, OIC_MULTIPLE_OWNER_DISABLE, PMCsdkHelper::changeMOTModeCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-
-/**
- * @since           2016-09-10
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             OCStackResult OCInitPM(const char* dbPath)
- * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
- * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
- * @objective       Test OCChangeMOTMode negatively with momType greater Upper Boundary Value
- * @target          OCStackResult OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecMomType_t momType, OCProvisionResultCB resultCallback)
- * @test_data       momType greater Upper Boundary Value
- * @pre_condition   Start two justworks simulators
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call OCInitPM
- *                  4. call OCSetOwnerTransferCallbackData
- *                  5. call OCDiscoverUnownedDevices
- *                  6. call OCDoOwnershipTransfer
- *                  7. call OCDiscoverOwnedDevices
- *                  8. call OCChangeMOTMode
- * @post_condition  None
- * @expected        OCChangeMOTMode will return OC_STACK_INVALID_PARAM
- */
-#if defined(__LINUX__)
-TEST_F(PMCsdkTest_btc, OCChangeMOTMode_CLU_UOBV_N)
-{
-    if (!m_PMHelper.initProvisionClient())
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    OCProvisionDev_t* targetDev = PMCsdkUtilityHelper::getDevInst((const OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
-
-    if (!m_PMHelper.changeMOTMode((void*)ctxChangeMOTMode, targetDev, (const OicSecMomType_t) OIC_MULTIPLE_OWNER_UOBV, PMCsdkHelper::changeMOTModeCB, OC_STACK_INVALID_PARAM))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-
-/**
- * @since           2016-09-10
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             OCStackResult OCInitPM(const char* dbPath)
- * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
- * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
- * @objective       Test OCChangeMOTMode negatively with resultCallback = NULL
- * @target          OCStackResult OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecMomType_t momType, OCProvisionResultCB resultCallback)
- * @test_data       resultCallback = NULL
- * @pre_condition   Start two justworks simulators
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call OCInitPM
- *                  4. call OCSetOwnerTransferCallbackData
- *                  5. call OCDiscoverUnownedDevices
- *                  6. call OCDoOwnershipTransfer
- *                  7. call OCDiscoverOwnedDevices
- *                  8. call OCChangeMOTMode
- * @post_condition  None
- * @expected        OCChangeMOTMode will return OC_STACK_INVALID_CALLBACK
- */
-#if defined(__LINUX__)
-TEST_F(PMCsdkTest_btc, OCChangeMOTModeCb_NV_N)
-{
-    if (!m_PMHelper.initProvisionClient())
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    OCProvisionDev_t* targetDev = PMCsdkUtilityHelper::getDevInst((const OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
-
-    if (!m_PMHelper.changeMOTMode((void*)ctxChangeMOTMode, targetDev, OIC_MULTIPLE_OWNER_ENABLE, NULL, OC_STACK_INVALID_CALLBACK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-
-/**
- * @since           2016-09-10
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             OCStackResult OCInitPM(const char* dbPath)
- * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
- * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
- * @objective       Test OCChangeMOTMode negatively with targetDeviceInfo = NULL
- * @target          OCStackResult OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecMomType_t momType, OCProvisionResultCB resultCallback)
- * @test_data       targetDeviceInfo = NULL
- * @pre_condition   Start two justworks simulators
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call OCInitPM
- *                  4. call OCSetOwnerTransferCallbackData
- *                  5. call OCDiscoverUnownedDevices
- *                  6. call OCDoOwnershipTransfer
- *                  7. call OCDiscoverOwnedDevices
- *                  8. call OCChangeMOTMode
- * @post_condition  None
- * @expected        OCChangeMOTMode will return OC_STACK_INVALID_PARAM
- */
-#if defined(__LINUX__)
-TEST_F(PMCsdkTest_btc, OCChangeMOTModeDev_NV_N)
-{
-    if (!m_PMHelper.initProvisionClient())
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.changeMOTMode((void*)ctxChangeMOTMode, NULL, OIC_MULTIPLE_OWNER_DISABLE, PMCsdkHelper::changeMOTModeCB, OC_STACK_INVALID_PARAM))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-
-/**
- * @since           2016-09-10
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             OCStackResult OCInitPM(const char* dbPath)
- * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
- * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
- * @see             OCStackResult OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecMomType_t momType, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverMultipleOwnerEnabledDevices(unsigned short timeout, OCProvisionDev_t **ppList)
- * @objective       Test OCProvisionPreconfPin positively with regular data
- * @target          OCStackResult OCProvisionPreconfPin(void* ctx, OCProvisionDev_t *targetDeviceInfo, const char * preconfPin, size_t preconfPinLen, OCProvisionResultCB resultCallback)
- * @test_data       regular data for the target API
- * @pre_condition   Start two justworks simulators
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call OCInitPM
- *                  4. call OCSetOwnerTransferCallbackData
- *                  5. call OCDiscoverUnownedDevices
- *                  6. call OCDoOwnershipTransfer
- *                  7. call OCDiscoverOwnedDevices
- *                  8. call OCChangeMOTMode
- *                  9. call OCDiscoverMultipleOwnerEnabledDevices
- *                  10. call OCProvisionPreconfPin
- * @post_condition  None
- * @expected        OCProvisionPreconfPin will return OC_STACK_OK
- */
-#if defined(__LINUX__)
-TEST_F(PMCsdkTest_btc, OCProvisionPreconfPin_RV_SRC_P)
-{
-    if (!m_PMHelper.initProvisionClient())
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    OCProvisionDev_t* targetOwnedDev = PMCsdkUtilityHelper::getDevInst((const OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
-
-    if (!m_PMHelper.changeMOTMode((void*)ctxChangeMOTMode, targetOwnedDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkHelper::changeMOTModeCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    OCProvisionDev_t* targetMotDev = PMCsdkUtilityHelper::getDevInst((const OCProvisionDev_t*) m_motEnabledDevList, DEVICE_INDEX_ONE);
-
-    if (!m_PMHelper.provisionPreconfPin((void*)ctxProvisionPreconfPin, targetMotDev, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_SIZE, PMCsdkHelper::provisionPreconfPinCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-
-/**
- * @since           2016-09-10
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             OCStackResult OCInitPM(const char* dbPath)
- * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
- * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
- * @see             OCStackResult OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecMomType_t momType, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverMultipleOwnerEnabledDevices(unsigned short timeout, OCProvisionDev_t **ppList)
- * @see             OCStackResult OCProvisionPreconfPin(void* ctx, OCProvisionDev_t *targetDeviceInfo, const char * preconfPin, size_t preconfPinLen, OCProvisionResultCB resultCallback)
- * @objective       Test OCSelectMOTMethod positively with regular data
- * @target          OCStackResult OCSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback)
- * @test_data       regular data for the target API
- * @pre_condition   Start two justworks simulators
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call OCInitPM
- *                  4. call OCSetOwnerTransferCallbackData
- *                  5. call OCDiscoverUnownedDevices
- *                  6. call OCDoOwnershipTransfer
- *                  7. call OCDiscoverOwnedDevices
- *                  8. call OCChangeMOTMode
- *                  9. call OCDiscoverMultipleOwnerEnabledDevices
- *                  10. call OCProvisionPreconfPin
- *                  11. call OCSelectMOTMethod
- * @post_condition  None
- * @expected        OCSelectMOTMethod will return OC_STACK_OK
- */
-#if defined(__LINUX__)
-TEST_F(PMCsdkTest_btc, OCSelectMOTMethod_RV_SRC_P)
-{
-    if (!m_PMHelper.initProvisionClient())
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    OCProvisionDev_t* targetOwnedDev = PMCsdkUtilityHelper::getDevInst((const OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
-
-    if (!m_PMHelper.changeMOTMode((void*)ctxChangeMOTMode, targetOwnedDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkHelper::changeMOTModeCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    OCProvisionDev_t* targetMotDev = PMCsdkUtilityHelper::getDevInst((const OCProvisionDev_t*) m_motEnabledDevList, DEVICE_INDEX_ONE);
-
-    if (!m_PMHelper.provisionPreconfPin((void*)ctxProvisionPreconfPin, targetMotDev, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_SIZE, PMCsdkHelper::provisionPreconfPinCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.selectMOTMethod((void*)ctxSelectMOTMethod, targetMotDev, OIC_PRECONFIG_PIN, PMCsdkHelper::selectMOTMethodCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-
-/**
- * @since           2016-09-10
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             OCStackResult OCInitPM(const char* dbPath)
- * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
- * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
- * @see             OCStackResult OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecMomType_t momType, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverMultipleOwnerEnabledDevices(unsigned short timeout, OCProvisionDev_t **ppList)
- * @see             OCStackResult OCProvisionPreconfPin(void* ctx, OCProvisionDev_t *targetDeviceInfo, const char * preconfPin, size_t preconfPinLen, OCProvisionResultCB resultCallback)
- * @objective       Test OCSelectMOTMethod negatively with targetDeviceInfo as NULL
- * @target          OCStackResult OCSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback)
- * @test_data       targetDeviceInfo = NULL
- * @pre_condition   Start two justworks simulators
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call OCInitPM
- *                  4. call OCSetOwnerTransferCallbackData
- *                  5. call OCDiscoverUnownedDevices
- *                  6. call OCDoOwnershipTransfer
- *                  7. call OCDiscoverOwnedDevices
- *                  8. call OCChangeMOTMode
- *                  9. call OCDiscoverMultipleOwnerEnabledDevices
- *                  10. call OCProvisionPreconfPin
- *                  11. call OCSelectMOTMethod
- * @post_condition  None
- * @expected        OCSelectMOTMethod will return OC_STACK_INVALID_PARAM
- */
-#if defined(__LINUX__)
-TEST_F(PMCsdkTest_btc, OCSelectMOTMethodDev_NV_N)
-{
-    if (!m_PMHelper.initProvisionClient())
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    OCProvisionDev_t* targetOwnedDev = PMCsdkUtilityHelper::getDevInst((const OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
-
-    if (!m_PMHelper.changeMOTMode((void*)ctxChangeMOTMode, targetOwnedDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkHelper::changeMOTModeCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    OCProvisionDev_t* targetMotDev = PMCsdkUtilityHelper::getDevInst((const OCProvisionDev_t*) m_motEnabledDevList, DEVICE_INDEX_ONE);
-
-    if (!m_PMHelper.provisionPreconfPin((void*)ctxProvisionPreconfPin, targetMotDev, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_SIZE, PMCsdkHelper::provisionPreconfPinCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.selectMOTMethod((void*)ctxSelectMOTMethod, NULL, OIC_PRECONFIG_PIN, PMCsdkHelper::selectMOTMethodCB, OC_STACK_INVALID_PARAM))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-
-/**
- * @since           2016-09-10
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             OCStackResult OCInitPM(const char* dbPath)
- * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
- * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
- * @see             OCStackResult OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecMomType_t momType, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverMultipleOwnerEnabledDevices(unsigned short timeout, OCProvisionDev_t **ppList)
- * @see             OCStackResult OCProvisionPreconfPin(void* ctx, OCProvisionDev_t *targetDeviceInfo, const char * preconfPin, size_t preconfPinLen, OCProvisionResultCB resultCallback)
- * @objective       Test OCSelectMOTMethod negatively with resultCallback = NULL
- * @target          OCStackResult OCSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceInfo, const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback)
- * @test_data       resultCallback = NULL
- * @pre_condition   Start two justworks simulators
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call OCInitPM
- *                  4. call OCSetOwnerTransferCallbackData
- *                  5. call OCDiscoverUnownedDevices
- *                  6. call OCDoOwnershipTransfer
- *                  7. call OCDiscoverOwnedDevices
- *                  8. call OCChangeMOTMode
- *                  9. call OCDiscoverMultipleOwnerEnabledDevices
- *                  10. call OCProvisionPreconfPin
- *                  11. call OCSelectMOTMethod
- * @post_condition  None
- * @expected        OCSelectMOTMethod will return OC_STACK_INVALID_CALLBACK
- */
-#if defined(__LINUX__)
-TEST_F(PMCsdkTest_btc, OCSelectMOTMethodCb_NV_N)
-{
-    if (!m_PMHelper.initProvisionClient())
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    OCProvisionDev_t* targetOwnedDev = PMCsdkUtilityHelper::getDevInst((const OCProvisionDev_t*) m_OwnList, DEVICE_INDEX_ONE);
-
-    if (!m_PMHelper.changeMOTMode((void*)ctxChangeMOTMode, targetOwnedDev, OIC_MULTIPLE_OWNER_ENABLE, PMCsdkHelper::changeMOTModeCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT,
-                    &m_motEnabledDevList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    OCProvisionDev_t* targetMotDev = PMCsdkUtilityHelper::getDevInst((const OCProvisionDev_t*) m_motEnabledDevList, DEVICE_INDEX_ONE);
-
-    if (!m_PMHelper.provisionPreconfPin((void*)ctxProvisionPreconfPin, targetMotDev, MOT_DEFAULT_PRE_CONFIG_PIN, OXM_PRECONFIG_PIN_SIZE, PMCsdkHelper::provisionPreconfPinCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.selectMOTMethod((void*)ctxSelectMOTMethod, targetMotDev, OIC_PRECONFIG_PIN, NULL, OC_STACK_INVALID_CALLBACK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-#endif /*MOT*/
-
-#if defined(__CLOUD__)
-#if defined(__LINUX__)
-/**
- * @since           2016-10-19
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             OCStackResult OCInitPM(const char* dbPath)
- * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
- * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
- * @objective       Test OCProvisionTrustCertChain positively with regular data
- * @target          OCStackResult OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId, const OCProvisionDev_t *selectedDeviceInfo, OCProvisionResultCB resultCallback)
- * @test_data       Regular data for the API
- * @pre_condition   Start two justworks simulators
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call OCInitPM
- *                  4. call OCSetOwnerTransferCallbackData
- *                  5. call OCDiscoverUnownedDevices
- *                  6. call OCDoOwnershipTransfer
- *                  7. call OCDiscoverOwnedDevices
- *                  8. call OCProvisionTrustCertChain
- * @post_condition  None
- * @expected        OCProvisionTrustCertChain will return OC_STACK_OK
- */
-TEST_F(PMCsdkTest_btc, ProvisionTrustCertChain_SRC_RV_P)
-{
-    if (!m_PMHelper.initProvisionClient())
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    ByteArray trustCertChainArray = PMCsdkHelper::getTrustCertChainArray();
-
-    OCProvisionDev_t *device1 = m_OwnList;
-
-    if (!m_PMHelper.provisionTrustCertChain((void*)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY, 1, device1, PMCsdkHelper::provisionPairwiseCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-
-/**
- * @since           2016-10-19
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             OCStackResult OCInitPM(const char* dbPath)
- * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
- * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
- * @objective       Test OCProvisionTrustCertChain negatively with regular data
- * @target          OCStackResult OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId, const OCProvisionDev_t *selectedDeviceInfo, OCProvisionResultCB resultCallback)
- * @test_data       OCProvisionDev_t = NULL
- * @pre_condition   Start two justworks simulators
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call OCInitPM
- *                  4. call OCSetOwnerTransferCallbackData
- *                  5. call OCDiscoverUnownedDevices
- *                  6. call OCDoOwnershipTransfer
- *                  7. call OCDiscoverOwnedDevices
- *                  8. call OCProvisionTrustCertChain
- * @post_condition  None
- * @expected        OCProvisionTrustCertChain will return OC_STACK_INVALID_PARAM
- */
-#if defined(__LINUX__)
-TEST_F(PMCsdkTest_btc, ProvisionTrustCertChainDev_NV_N)
-{
-    if (!m_PMHelper.initProvisionClient())
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    ByteArray trustCertChainArray = PMCsdkHelper::getTrustCertChainArray();
-
-    if (!m_PMHelper.provisionTrustCertChain((void*)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY, 1, NULL, PMCsdkHelper::provisionPairwiseCB, OC_STACK_INVALID_PARAM))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-
-/**
- * @since           2016-10-19
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             OCStackResult OCInitPM(const char* dbPath)
- * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
- * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
- * @objective       Test OCProvisionTrustCertChain negatively with credId as -1
- * @target          OCStackResult OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId, const OCProvisionDev_t *selectedDeviceInfo, OCProvisionResultCB resultCallback)
- * @test_data       credId = -1
- * @pre_condition   Start two justworks simulators
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call OCInitPM
- *                  4. call OCSetOwnerTransferCallbackData
- *                  5. call OCDiscoverUnownedDevices
- *                  6. call OCDoOwnershipTransfer
- *                  7. call OCDiscoverOwnedDevices
- *                  8. call OCProvisionTrustCertChain
- * @post_condition  None
- * @expected        OCProvisionTrustCertChain will return OC_STACK_NO_RESOURCE
- */
-#if defined(__LINUX__)
-TEST_F(PMCsdkTest_btc, ProvisionTrustCertChainCredId_LOBV_NV_N)
-{
-    if (!m_PMHelper.initProvisionClient())
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    ByteArray trustCertChainArray = PMCsdkHelper::getTrustCertChainArray();
-    OCProvisionDev_t *device1 = m_OwnList;
-
-    if (!m_PMHelper.provisionTrustCertChain((void*)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY, CRED_ID_NEGATIVE, device1, PMCsdkHelper::provisionPairwiseCB, OC_STACK_NO_RESOURCE))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-
-/**
- * @since           2016-10-19
- * @see             OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
- * @see             OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see             OCStackResult OCInitPM(const char* dbPath)
- * @see             OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData)
- * @see             OCStackResult OCDoOwnershipTransfer(void* ctx, OCProvisionDev_t *targetDevices, OCProvisionResultCB resultCallback)
- * @see             OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList)
- * @objective       Test OCProvisionTrustCertChain negatively with resultCallback as NULL
- * @target          OCStackResult OCProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint16_t credId, const OCProvisionDev_t *selectedDeviceInfo, OCProvisionResultCB resultCallback)
- * @test_data       resultCallback = NULL
- * @pre_condition   Start two justworks simulators
- * @procedure       1. call OCRegisterPersistentStorageHandler
- *                  2. call OCInit
- *                  3. call OCInitPM
- *                  4. call OCSetOwnerTransferCallbackData
- *                  5. call OCDiscoverUnownedDevices
- *                  6. call OCDoOwnershipTransfer
- *                  7. call OCDiscoverOwnedDevices
- *                  8. call OCProvisionTrustCertChain
- * @post_condition  None
- * @expected        OCProvisionTrustCertChain will return OC_STACK_INVALID_CALLBACK
- */
-#if defined(__LINUX__)
-TEST_F(PMCsdkTest_btc, ProvisionTrustCertChainCb_NV_N)
-{
-    if (!m_PMHelper.initProvisionClient())
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT,
-                    &m_UnownList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if (!m_PMHelper.doOwnerShipTransfer((void*)g_ctx, &m_UnownList,
-                    PMCsdkHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT, &m_OwnList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-
-    OCProvisionDev_t *device1 = m_OwnList;
-    OCProvisionDev_t *device2 = m_OwnList->next;
-    m_Acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, &m_OwnList);
-    m_Acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, &m_OwnList);
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
-
-    if (!m_PMHelper.provisionTrustCertChain((void*)CTX_PROV_TRUST_CERT, SIGNED_ASYMMETRIC_KEY, 1, device1, NULL, OC_STACK_INVALID_CALLBACK))
-    {
-        SET_FAILURE(m_PMHelper.getFailureMessage());
-        return;
-    }
-}
-#endif
-#endif /*__CLOUD__*/
