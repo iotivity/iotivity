@@ -74,10 +74,10 @@ error_msg =  """
 #   ERROR... If you Set TARGET_OS=all, You to have Set TARGET_ARCH=all or you can just          #
 #   avoid this Argument. In this case it will automatically assign TARGET_ARCH like following   #
 #                           linux = x86/x86_64(depending on host)                               #
-#                                   tizen = armv7l                                              # 
+#                                   tizen = armv7l                                              #
 #                                  android = armeabi                                            #
 #                                    arduino = avr                                              #
-#                                    windows = x86                                              #  
+#                                    windows = x86                                              #
 #################################################################################################
 
 """
@@ -102,7 +102,7 @@ help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', False))
 help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map[host]))
 help_vars.Add(EnumVariable('TARGET_TRANSPORT', 'Target transport', 'NONE', ['ALL', 'BT', 'BLE', 'IP', 'ETH', 'WIFI', 'TCP', 'NONE']))
 help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
-help_vars.Add(EnumVariable('TARGET_SERVICE', 'Target Service', 'all', allowed_values=('all', 'ca', 'ci', 're', 'tm', 'pm', 'pmc', 'pmcpp', 'rd', 'phy', 'is', 'cert', 'rc', 'rh','ps', 'sm', 'ricsdk', 'ricpp', 'nscsdk', 'nscpp', 'es', 'cloud', 'iut')))
+help_vars.Add(EnumVariable('TARGET_SERVICE', 'Target Service', 'all', allowed_values=('all', 'ca', 'ci', 're', 'tm', 'pmc', 'pmcpp', 'csc', 'cscpp', 'rd', 'phy', 'is', 'rc', 'rh','ps', 'sm', 'ricsdk', 'ricpp', 'nscsdk', 'nscpp', 'es', 'cloud', 'iut')))
 help_vars.Add(EnumVariable('TARGET_TEST', 'Target TEST Type', 'all', allowed_values=('all', 'tc', 'app')))
 help_vars.Add(EnumVariable('TARGET_FRAMEWORK', 'Target Framework Type', 'all', allowed_values=('all', 'gtest', 'junit', 'arduinojunit')))
 help_vars.Add(EnumVariable('ES_ROLE', 'Target ES Role', 'all', allowed_values=('all', 'mediator', 'enrollee')))
@@ -121,6 +121,8 @@ help_vars.Add(PathVariable('ANDROID_NDK', 'Android NDK path', None, PathVariable
 help_vars.Add(PathVariable('ANDROID_GRADLE', 'Gradle binary file', None, PathVariable.PathIsFile))
 help_vars.Add('SECURITY_MODE', 'Set the name of provisiong security mode', 'justworks')
 help_vars.Add(BoolVariable('PUSH', 'To push binary to device', True))
+help_vars.Add(BoolVariable('CLOUD', 'Build with cloud', False))
+help_vars.Add(BoolVariable('TLS_MODE', 'Build with cloud', False))
 
 targets_support_cc = ['linux', 'arduino', 'tizen', 'android']
 
