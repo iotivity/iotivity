@@ -308,37 +308,6 @@ TEST_F(RICsdkServerTest_btc, OCSetDeviceInfo_SRC_FSV_P)
  * @since 2016-07-19
  * @see OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
  * @see OCStackResult OCStop()
- * @objective Test OCSetDeviceInfo with negative basic way using deviceInfo without setting device information
- * @target OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
- * @test_data deviceInfo Structure containing the device information
- * @pre_condition Call OCInit() API
- * @procedure Call OCSetDeviceInfo() API
- * @post_condition Call OCStop()
- * @expected Should return OC_STACK_INVALID_PARAM
- */
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(RICsdkServerTest_btc, OCSetDeviceInfo_USV_N)
-{
-    try
-    {
-        m_result = m_pRICsdkHelper->initServer();
-        ASSERT_EQ(OC_STACK_OK,m_result) << "OCInit failed for server. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
-
-        OCDeviceInfo deviceInfo;
-        m_result = OCSetDeviceInfo(deviceInfo);
-        ASSERT_EQ(OC_STACK_INVALID_PARAM,m_result) << "OCSetDeviceInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
-    }
-    catch(exception &e)
-    {
-        SET_FAILURE("Exception occured. Exception is " + std::string(e.what()));
-    }
-}
-#endif
-
-/**
- * @since 2016-07-19
- * @see OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
- * @see OCStackResult OCStop()
  * @objective Test OCCreateResource with positive basic way
  * @target OCStackResult OCCreateResource(OCResourceHandle *handle,
  *       const char *resourceTypeName,

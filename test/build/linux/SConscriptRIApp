@@ -19,6 +19,7 @@
 *
 ******************************************************************/
 '''
+
 ##
 # Build script for Linux
 #
@@ -66,11 +67,10 @@ RI_RESOURCE_LIB = ORG_SRC_HOME + ORG_SRC_OUT_DIR
 RI_RESOURCE_STACK = RI_RESOURCE_DIR + '/csdk/stack/include'
 RI_RESOURCE_SOCKET = RI_RESOURCE_DIR + '/csdk/ocsocket/include'
 RI_RESOURCE_RANDOM = RI_RESOURCE_DIR + '/csdk/ocrandom/include'
-RI_RESOURCE_LOGGER = RI_RESOURCE_DIR + '/csdk/logger/include'
 RI_RESOURCE_COMMON = RI_RESOURCE_DIR + '/c_common/'
 RI_RESOURCE_OC_LOGGER = RI_RESOURCE_DIR + '/oc_logger/include'
-RI_RESOURCE_CEREAL = ORG_SRC_HOME + '/extlibs/cereal/include/'
-RI_RESOURCE_TIMER = ORG_SRC_HOME + '/extlibs/timer/'
+CBOR_INC_DIR = ORG_SRC_HOME + '/extlibs/tinycbor/tinycbor/src'
+SECURE_VIRTUAL_RESOURCE_INC = ORG_SRC_HOME + '/resource/csdk/security/include'
 
 ######################################################################
 # Initializing Project Dir
@@ -98,7 +98,7 @@ RI_CFLAGS = [COMMON_FLAGS]
 ######################################################################
 
 COMMON_CINCLUDE = [INCLUDE_DIR]
-RI_CINCLUDE = [COMMON_CINCLUDE, RI_RESOURCE_INCLUDE, RI_RESOURCE_STACK, RI_RESOURCE_SOCKET, RI_RESOURCE_RANDOM, RI_RESOURCE_OC_LOGGER, INCLUDE_DIR, RI_RESOURCE_COMMON]
+RI_CINCLUDE = [COMMON_CINCLUDE, RI_RESOURCE_INCLUDE, RI_RESOURCE_STACK, RI_RESOURCE_SOCKET, RI_RESOURCE_RANDOM, RI_RESOURCE_OC_LOGGER, INCLUDE_DIR, RI_RESOURCE_COMMON, CBOR_INC_DIR, SECURE_VIRTUAL_RESOURCE_INC]
 
 ######################################################################
 # Initializing Libraries
