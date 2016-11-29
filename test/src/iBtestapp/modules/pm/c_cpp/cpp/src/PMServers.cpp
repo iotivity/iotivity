@@ -19,8 +19,8 @@
  *
  ******************************************************************/
 #include "ocpayload.h"
-#include "../include/PMCppAppHelper.h"
-#include "../include/PMCppDPAppHelper.h"
+#include "PMCppAppHelper.h"
+
 #define TAG "SAMPLE_JUSTWORKS"
 #define LED_RESOURCE_URI "/a/led/"
 #define LED_RESOURCE_URI_01 "/a/led/0"
@@ -32,8 +32,7 @@ int gQuitFlag = 0;
 /* Structure to represent a LED resource */
 typedef struct LEDRESOURCE
 {
-    OCResourceHandle handle;
-    bool state;
+    OCResourceHandle handle;bool state;
     int power;
 } LEDResource;
 
@@ -120,7 +119,7 @@ const char *getResult(OCStackResult result)
         case OC_STACK_NO_OBSERVERS:
             return "OC_STACK_NO_OBSERVERS";
 #ifdef WITH_PRESENCE
-            case OC_STACK_PRESENCE_STOPPED:
+        case OC_STACK_PRESENCE_STOPPED:
             return "OC_STACK_PRESENCE_STOPPED";
 #endif
         case OC_STACK_ERROR:
@@ -162,12 +161,12 @@ OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest)
     if (ehRequest->resource == gLedInstance[0].handle)
     {
         currLEDResource = &gLedInstance[0];
-        gResourceUri = LED_RESOURCE_URI_01;
+        strcpy(gResourceUri,LED_RESOURCE_URI_01);
     }
     else if (ehRequest->resource == gLedInstance[1].handle)
     {
         currLEDResource = &gLedInstance[1];
-        gResourceUri = LED_RESOURCE_URI_02;
+        strcpy(gResourceUri,LED_RESOURCE_URI_02);
     }
 
     if (OC_REST_PUT == ehRequest->method)
@@ -486,7 +485,7 @@ int createLEDResource(char *uri, LEDResource *ledResource, bool resourceState, i
     ledResource->state = resourceState;
     ledResource->power = resourcePower;
     OCStackResult res = OCCreateResource(&(ledResource->handle), RESOURCE_TYPE_LED,
-            OC_RSRVD_INTERFACE_DEFAULT, uri, OCEntityHandlerCb, NULL,
+    OC_RSRVD_INTERFACE_DEFAULT, uri, OCEntityHandlerCb, NULL,
             OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
     IOTIVITYTEST_LOG(INFO, "Created LED resource with result: %s", getResult(res));
 

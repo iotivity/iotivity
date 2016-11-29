@@ -22,17 +22,6 @@
 #include "PMCppHelper.h"
 #include "PMCppUtilityHelper.h"
 
-OCDevAddr PMCppUtilityHelper::getOCDevAddrEndPoint()
-{
-    OCDevAddr endPoint;
-
-    memset(&endPoint, 0, sizeof(endPoint));
-    strncpy(endPoint.addr, DEFAULT_HOST, sizeof(endPoint.addr));
-    endPoint.port = OC_MULTICAST_PORT;
-
-    return endPoint;
-}
-
 OCProvisionDev_t* PMCppUtilityHelper::getDevInst(OCProvisionDev_t* dev_lst, const int dev_num)
 {
     IOTIVITYTEST_LOG(DEBUG, "[PMHelper] getDevInst IN");
@@ -143,7 +132,7 @@ void PMCppUtilityHelper::printUuid(const OicUuid_t* uid)
         printf("%02X", (*uid).id[i++]);
         if (i == 4 || i == 6 || i == 8 || i == 10) // canonical format for UUID has '8-4-4-4-12'
         {
-            printf(DASH);
+            printf("%c", DASH);
         }
     }
     printf("\n");
@@ -220,3 +209,30 @@ char* PMCppUtilityHelper::getOCStackResult(OCStackResult ocstackresult)
 
     return resultString;
 }
+
+/**
+ * Function to set failure message
+ */
+std::string PMCppUtilityHelper::setFailureMessage(OCStackResult actualResult,
+        OCStackResult expectedResult)
+{
+    std::string errorMessage("\033[1;31m[Error] Expected : ");
+    errorMessage.append(PMCppUtilityHelper::getOCStackResult(expectedResult));
+    errorMessage.append("\033[0m  \033[1;31mActual : ");
+    errorMessage.append(PMCppUtilityHelper::getOCStackResult(actualResult));
+    errorMessage.append("\033[0m");
+    return errorMessage;
+}
+
+/**
+ * Function to set failure message
+ */
+std::string PMCppUtilityHelper::setFailureMessage(std::string errorMessage)
+{
+    std::string retErrorMessage("\033[1;31m[Error] Expected : ");
+    retErrorMessage.append(errorMessage);
+    retErrorMessage.append("\033[0m");
+
+    return retErrorMessage;
+}
+

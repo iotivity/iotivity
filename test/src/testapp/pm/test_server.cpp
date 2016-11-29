@@ -25,14 +25,18 @@
 #include <unistd.h>
 #include <signal.h>
 #include <pthread.h>
+
 #include "ocstack.h"
 #include "logger.h"
 #include "ocpayload.h"
+#include "srmutility.h"
+#include "doxmresource.h"
+#include "pinoxmcommon.h"
+
+#include "IotivityTest_Logger.h"
 
 #define TAG "SAMPLE_JUSTWORKS"
 #define SAMPLE_MAX_NUM_POST_INSTANCE  2
-
-int gQuitFlag = 0;
 
 /* Structure to represent a LED resource */
 typedef struct LEDRESOURCE
@@ -45,20 +49,13 @@ typedef struct LEDRESOURCE
 static LEDResource LED;
 // This variable determines instance number of the LED resource.
 // Used by POST method to create a new instance of LED resource.
+int gQuitFlag = 0;
 static int gCurrLedInstance = 0;
-static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
 char *gResourceUri = (char *) "/a/led";
+static char fileName[256] = "oic_svr_db_server.dat";
+static char g_serverType[256] = "JustWorks Server";
+static LEDResource gLedInstance[SAMPLE_MAX_NUM_POST_INSTANCE];
 
-//Secure Virtual Resource database for Iotivity Server
-//It contains Server's Identity and the PSK credentials
-//of other devices which the server trusts
-static char CRED_FILE1[] = "oic_svr_db_server.dat";
-static char CRED_FILE2[] = "oic_svr_db_server_justworks.dat";
-static char CRED_FILE3[] = "oic_svr_db_server_randompin.dat";
-static char CRED_FILE5[] = "justworks_server_dp_cpp.dat";
-static char CRED_FILE6[] = "justworks_server_dp_c.dat";
-static char CRED_FILE7[] = "mot_preconfig_pin_server.dat";
-static int gCurrentIndex = 0;
 /* Function that creates a new LED resource by calling the
  * OCCreateResource() method.
  */
@@ -134,8 +131,7 @@ OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
     {
-        fprintf(stdout, "Failed to allocate Payload\n");
-        fflush (stdout);
+        IOTIVITYTEST_LOG(ERROR, "Failed to allocate Payload");
         return NULL;
     }
 
@@ -151,9 +147,7 @@ OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest)
 {
     if (ehRequest->payload && ehRequest->payload->type != PAYLOAD_TYPE_REPRESENTATION)
     {
-        // OIC_LOG(ERROR, TAG, "Incoming payload not a representation");
-        fprintf(stdout, "Incoming payload not a representation\n");
-        fflush (stdout);
+        IOTIVITYTEST_LOG(INFO, "Incoming payload not a representation");
         return NULL;
     }
 
@@ -262,8 +256,7 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
 
             if (0 == createLEDResource(newLedUri, &gLedInstance[gCurrLedInstance], false, 0))
             {
-                fprintf(stdout, "Created new LED instance\n");
-                fflush (stdout);
+                IOTIVITYTEST_LOG(INFO, "Created new LED instance");
                 gLedInstance[gCurrLedInstance].state = 0;
                 gLedInstance[gCurrLedInstance].power = 0;
                 gCurrLedInstance++;
@@ -302,8 +295,7 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
     }
     else
     {
-        fprintf(stdout, "Payload was NULL\n");
-        fflush (stdout);
+        IOTIVITYTEST_LOG(INFO, "Payload was NULL");
         ehResult = OC_EH_ERROR;
     }
 
@@ -313,8 +305,7 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest,
 OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
         OCEntityHandlerRequest *entityHandlerRequest, void* callbackParam)
 {
-    fprintf(stdout, "Inside entity handler - flags: 0x%x\n", flag);
-    fflush (stdout);
+    IOTIVITYTEST_LOG(INFO, "Inside entity handler - flags: 0x%x\n", flag);
     (void) callbackParam;
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
 
@@ -324,9 +315,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
     // Validate pointer
     if (!entityHandlerRequest)
     {
-        fprintf(stdout, "Invalid request pointer\n");
-        fflush(stdout);
-
+        IOTIVITYTEST_LOG(ERROR, "Invalid request pointer");
         return OC_EH_ERROR;
     }
 
@@ -334,32 +323,30 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
 
     if (flag & OC_REQUEST_FLAG)
     {
-        fprintf(stdout, "Flag includes OC_REQUEST_FLAG\n");
-
+        IOTIVITYTEST_LOG(INFO, "Flag includes OC_REQUEST_FLAG");
         if (entityHandlerRequest)
         {
             if (OC_REST_GET == entityHandlerRequest->method)
             {
-                fprintf(stdout, "Received OC_REST_POST from client\n");
+                IOTIVITYTEST_LOG(INFO, "Received OC_REST_GET from client");
                 ehResult = ProcessGetRequest(entityHandlerRequest, &payload);
             }
             else if (OC_REST_PUT == entityHandlerRequest->method)
             {
-                fprintf(stdout, "Received OC_REST_POST from client\n");
+                IOTIVITYTEST_LOG(INFO, "Received OC_REST_PUT from client");
                 ehResult = ProcessPutRequest(entityHandlerRequest, &payload);
             }
             else if (OC_REST_POST == entityHandlerRequest->method)
             {
-                fprintf(stdout, "Received OC_REST_POST from client\n");
+                IOTIVITYTEST_LOG(INFO, "Received OC_REST_POST from client");
                 ehResult = ProcessPostRequest(entityHandlerRequest, &response, &payload);
             }
             else
             {
-                fprintf(stdout, "Received unsupported method %d from client\n",
+                IOTIVITYTEST_LOG(INFO, "Received unsupported method %d from client",
                         entityHandlerRequest->method);
                 ehResult = OC_EH_ERROR;
             }
-            fflush(stdout);
 
             if (ehResult == OC_EH_OK && ehResult != OC_EH_FORBIDDEN)
             {
@@ -378,8 +365,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
                 // Send the response
                 if (OCDoResponse(&response) != OC_STACK_OK)
                 {
-                    fprintf(stdout, "Error sending response\n");
-                    fflush(stdout);
+                    IOTIVITYTEST_LOG(ERROR, "Error sending response");
                     ehResult = OC_EH_ERROR;
                 }
             }
@@ -399,62 +385,39 @@ void handleSigInt(int signum)
     }
 }
 
+void create_file(char* pin)
+{
+    FILE *fp;
+    fp = fopen("server_pincode.txt", "w+");
+    fprintf(fp, "%s", pin);
+    fclose(fp);
+}
+
+void GeneratePinCB(char* pin, size_t pinSize)
+{
+    IOTIVITYTEST_LOG(INFO, "===GeneratePinCB in Server===");
+    if (NULL == pin || pinSize <= 0)
+    {
+        IOTIVITYTEST_LOG(ERROR, "Invalid PIN");
+        return;
+    }
+
+    IOTIVITYTEST_LOG(INFO, "============================");
+    IOTIVITYTEST_LOG(INFO, "    PIN CODE : %s", pin);
+    IOTIVITYTEST_LOG(INFO, "============================");
+    create_file(pin);
+}
+
 FILE* server_fopen(const char *path, const char *mode)
 {
-
-    if (gCurrentIndex == 1)
-    {
-        return fopen(CRED_FILE1, mode);
-    }
-    else if (gCurrentIndex == 2)
-    {
-        return fopen(CRED_FILE2, mode);
-    }
-    else if (gCurrentIndex == 5)
-    {
-        return fopen(CRED_FILE5, mode);
-    }
-    else if (gCurrentIndex == 6)
-    {
-        return fopen(CRED_FILE6, mode);
-    }
-    else if (gCurrentIndex == 7)
-    {
-        return fopen(CRED_FILE7, mode);
-    }
-    else
-    {
-        return fopen(CRED_FILE3, mode);
-    }
+    return fopen(fileName, mode);
 }
 
 int main(int argc, char **argv)
 {
     struct timespec timeout;
 
-    if (!strcmp(argv[1], "1"))
-    {
-        gCurrentIndex = 1;
-    }
-    else if (!strcmp(argv[1], "5"))
-    {
-        gCurrentIndex = 5;
-    }
-    else if (!strcmp(argv[1], "6"))
-    {
-        gCurrentIndex = 6;
-    }
-    else if (!strcmp(argv[1], "7"))
-    {
-        gCurrentIndex = 7;
-    }
-    else
-    {
-        gCurrentIndex = 2;
-    }
-
-    fprintf(stdout, "[OCServer_JustWorks %d] is starting...\n", gCurrentIndex);
-    fflush (stdout);
+    strcpy(fileName, argv[1]);
 
     // Initialize Persistent Storage for SVR database
     OCPersistentStorage ps =
@@ -464,10 +427,42 @@ int main(int argc, char **argv)
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {
-        fprintf(stdout, "OCStack init error\n");
-        fflush(stdout);
+        IOTIVITYTEST_LOG(ERROR, "OCStack init error");
         return 0;
     }
+
+    char *deviceId = NULL;
+    OicUuid_t uuid;
+
+    memset(&uuid, 0, sizeof(uuid));
+    if (OC_STACK_OK != GetDoxmDeviceID(&uuid))
+    {
+        IOTIVITYTEST_LOG(ERROR, "Error getting device ID");
+    }
+
+    if (OC_STACK_OK != ConvertUuidToStr(&uuid, &deviceId))
+    {
+        IOTIVITYTEST_LOG(ERROR, "Error converting device ID");
+    }
+
+    /**
+     * If server supported random pin based ownership transfer,
+     * callback of print PIN should be registered before runing server.
+     */
+
+    if (!strcmp(argv[2], "2"))
+    {
+        SetGeneratePinCB(&GeneratePinCB);
+        strcpy(g_serverType, "RandomPin Server");
+    } else if (!strcmp(argv[2], "3")) {
+        strcpy(g_serverType, "Pre-Config Server");
+    } else {
+        strcpy(g_serverType, "JustWorks Server");
+    }
+
+    IOTIVITYTEST_LOG(INFO, "%s is starting...", g_serverType);
+    IOTIVITYTEST_LOG(INFO, "Server Device ID: %s", deviceId);
+    IOTIVITYTEST_LOG(INFO, "Server's persistance storge : %s", fileName);
 
     /*
      * Declare and create the example resource: LED
@@ -478,28 +473,22 @@ int main(int argc, char **argv)
     timeout.tv_nsec = 100000000L;
 
     // Break from loop with Ctrl-C
-    fprintf(stdout, "Entering ocserver main loop...\n");
-    fflush(stdout);
+    IOTIVITYTEST_LOG(INFO, "Entering ocserver main loop...");
 
     signal(SIGINT, handleSigInt);
     while (!gQuitFlag)
     {
         if (OCProcess() != OC_STACK_OK)
         {
-            fprintf(stdout, "OCStack process error\n");
-            fflush(stdout);
+            IOTIVITYTEST_LOG(ERROR, "OCStack process error");
             return 0;
         }
         nanosleep(&timeout, NULL);
     }
 
-    fprintf(stdout, "Exiting ocserver main loop...\n");
-    fflush(stdout);
-
     if (OCStop() != OC_STACK_OK)
     {
-        fprintf(stdout, "OCStack process error\n");
-        fflush(stdout);
+        IOTIVITYTEST_LOG(ERROR, "OCStack process error");
     }
 
     return 0;
@@ -509,20 +498,17 @@ int createLEDResource(char *uri, LEDResource *ledResource, bool resourceState, i
 {
     if (!uri)
     {
-        fprintf(stdout, "Resource URI cannot be NULL\n");
-        fflush (stdout);
+        IOTIVITYTEST_LOG(ERROR, "Resource URI cannot be NULL");
         return -1;
     }
 
     ledResource->state = resourceState;
     ledResource->power = resourcePower;
-    OCStackResult res = OCCreateResource(&(ledResource->handle), "core.led",
+    OCStackResult res = OCCreateResource(&(ledResource->handle), "core.test",
             OC_RSRVD_INTERFACE_DEFAULT, uri, OCEntityHandlerCb, NULL,
             OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
 
-    fprintf(stdout, "[Server %d] Created LED resource with result: %s\n", gCurrentIndex,
-            getResult(res));
-    fflush (stdout);
+    IOTIVITYTEST_LOG(INFO, "Created LED resource with result: %s", getResult(res));
 
     return 0;
 }

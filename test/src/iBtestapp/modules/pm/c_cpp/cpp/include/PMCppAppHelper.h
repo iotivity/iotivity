@@ -36,16 +36,13 @@
 #include "oic_string.h"
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "OCProvisioningManager.h"
+#include "OCProvisioningManager.hpp"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
 #include "utlist.h"
 
-
 #include "CommonUtil.h"
 #include "IotivityTest_Logger.h"
-
-
 
 using namespace OC;
 
@@ -157,21 +154,16 @@ bool provisionCredentials(DeviceList_t& deviceList, const Credential &cred,
 bool provisionPairwiseDevices(DeviceList_t& deviceList, const Credential &cred,
         const OicSecAcl_t* acl1, const OCSecureResource &device2, const OicSecAcl_t* acl2,
         ResultCallBack resultCallback, OCStackResult expectedResult);
-bool provisionDirectPairing(DeviceList_t& deviceList, const OicSecPconf_t pconf,
-        ResultCallBack resultCallback, OCStackResult expectedResult);
 bool getLinkedDevices(DeviceList_t& deviceList, UuidList_t &uuidList, OCStackResult expectedResult);
 bool unlinkDevices(DeviceList_t& deviceList, const OCSecureResource &device2,
         ResultCallBack resultCallback, OCStackResult expectedResult);
 bool removeDevice(DeviceList_t& deviceList, unsigned short waitTimeForOwnedDeviceDiscovery,
-        ResultCallBack resultCallback, OCStackResult expectedResult);
-bool removeDeviceWithUuid(unsigned short waitTimeForOwnedDeviceDiscovery, std::string uuid,
         ResultCallBack resultCallback, OCStackResult expectedResult);
 
 void ownershipTransferCB(PMResultList_t *result, int hasError);
 void provisionCB(PMResultList_t *result, int hasError);
 
 std::string getFailureMessage();
-static std::string setFailureMessage(OCStackResult expectedResult, OCStackResult actualResult);
 OCProvisionDev_t* getDevInst(const OCProvisionDev_t* dev_lst, const int dev_num);
 int waitCallbackRet();
 #endif

@@ -18,15 +18,12 @@
  *
  *
  ******************************************************************/
-#include "../include/PMCppAppHelper.h"
-#include "../include/PMCppDPAppHelper.h"
+#include "PMCppAppHelper.h"
 
 static int g_userInput = 0;
 static DeviceList_t s_unOwnedDevList, s_ownedDevList;
 static OCPersistentStorage s_pmPs;
-static OCPersistentStorage s_dpPs;
 static PlatformConfig s_pmCfg;
-static PlatformConfig s_dpCfg;
 static OTMCallbackData_t s_justWorksCBDataDp, s_pinBasedCBDataDp;
 
 /*
@@ -46,14 +43,9 @@ typedef enum
     PROVISION_ACL,
     PROVISION_CREDENTIAL,
     PROVISIONING_PAIRWISE_DEVICES,
-    PROVISION_DIRECT_PAIRING,
     GET_LINKED_DEVICES,
     UNLINK_DEVICE,
     REMOVE_DEVICES,
-
-    DO_DIRECT_PAIRING = 31,
-    GET_DIRECT_PAIRING_DEV
-
 } menu;
 
 void clearScreen()
@@ -78,16 +70,13 @@ static void printMenu(void)
     printf("%d. Provision Access Control List (ACL)\n", PROVISION_ACL);
     printf("%d. Provision Credential\n", PROVISION_CREDENTIAL);
     printf("%d. Provision Pairwise Devices\n", PROVISIONING_PAIRWISE_DEVICES);
-    printf("%d. Provision Direct Pairing\n", PROVISION_DIRECT_PAIRING);
     printf("%d. Get Linked Devices\n", GET_LINKED_DEVICES);
     printf("%d. Unlink Devices\n", UNLINK_DEVICE);
     printf("%d. Remove Devices\n\n", REMOVE_DEVICES);
 
-    printf("====================DP CLIENT=========================\n");
-    printf("%d. Do Direct Pairing\n", DO_DIRECT_PAIRING);
-    printf("%d. Get Direct Pairing Devices\n\n", GET_DIRECT_PAIRING_DEV);
     printf("%d. Exit\n", EXIT);
     printf("Enter Input: ");
+
 }
 
 void doAction(int userInput)
@@ -126,7 +115,7 @@ void doAction(int userInput)
 
             break;
 
-        case JUSTWORKS_OWNERSHIP_TRANSFER:
+            case JUSTWORKS_OWNERSHIP_TRANSFER:
             s_unOwnedDevList.clear();
 
             discoverUnownedDevices(DISCOVERY_TIMEOUT, s_unOwnedDevList, OC_STACK_OK);
@@ -160,7 +149,7 @@ void doAction(int userInput)
 
             break;
 
-        case PROVISION_ACL:
+            case PROVISION_ACL:
             s_ownedDevList.clear();
             discoverOwnedDevices(DISCOVERY_TIMEOUT, s_ownedDevList, OC_STACK_OK);
 
@@ -171,7 +160,7 @@ void doAction(int userInput)
 
             break;
 
-        case PROVISION_CREDENTIAL:
+            case PROVISION_CREDENTIAL:
             s_ownedDevList.clear();
             discoverOwnedDevices(DISCOVERY_TIMEOUT, s_ownedDevList, OC_STACK_OK);
 
@@ -185,7 +174,7 @@ void doAction(int userInput)
             }
             break;
 
-        case PROVISIONING_PAIRWISE_DEVICES:
+            case PROVISIONING_PAIRWISE_DEVICES:
             s_ownedDevList.clear();
             discoverOwnedDevices(DISCOVERY_TIMEOUT, s_ownedDevList, OC_STACK_OK);
             {
@@ -202,15 +191,7 @@ void doAction(int userInput)
 
             break;
 
-        case PROVISION_DIRECT_PAIRING:
-            s_ownedDevList.clear();
-            discoverOwnedDevices(DISCOVERY_TIMEOUT, s_ownedDevList, OC_STACK_OK);
-
-            OicSecPconf_t p_conf;
-            provisionDirectPairing(s_ownedDevList, p_conf, NULL, OC_STACK_OK);
-            break;
-
-        case GET_LINKED_DEVICES:
+            case GET_LINKED_DEVICES:
             s_ownedDevList.clear();
             discoverOwnedDevices(DISCOVERY_TIMEOUT, s_ownedDevList, OC_STACK_OK);
             {
@@ -225,32 +206,13 @@ void doAction(int userInput)
             unlinkDevices(s_ownedDevList, *s_ownedDevList[1].get(), provisionCB, OC_STACK_OK);
             break;
 
-        case REMOVE_DEVICES:
+            case REMOVE_DEVICES:
             s_ownedDevList.clear();
             discoverOwnedDevices(DISCOVERY_TIMEOUT, s_ownedDevList, OC_STACK_OK);
             removeDevice(s_ownedDevList, DISCOVERY_TIMEOUT, provisionCB, OC_STACK_OK);
             break;
 
-        case DO_DIRECT_PAIRING:
-            s_dpPs =
-            {   clientDpCppOpen, fread, fwrite, fclose, unlink};
-
-            s_dpCfg =
-            {   OC::ServiceType::InProc, OC::ModeType::Both, "0.0.0.0", 0,
-                OC::QualityOfService::LowQos, &s_dpPs};
-
-            OCPlatform::Configure(s_dpCfg);
-
-            findDirectPairingDevices(DP_DISCOVERY_TIMEOUT,
-                    findCallback, OC_STACK_OK);
-
-            doDirectPairing(DP_DEV_INSTANCE_ONE, DP_PRE_CONFIGURED, DP_PRECONFIG_PIN, resultCallback, OC_STACK_OK);
-            break;
-
-        case GET_DIRECT_PAIRING_DEV:
-            getDirectPairedDevices(pairedDevListCB, OC_STACK_OK);
-            break;
-        default:
+            default:
             printf("Wrong Input, Please provide Input Again");
             return;
 
@@ -262,11 +224,16 @@ int main()
     for (;;)
     {
         printMenu();
-        scanf("%d", &g_userInput);
+
+        if(scanf("%d", &g_userInput)){
+            printf("Wrong Input, Please provide Input Again");
+        }
+
         if (!g_userInput)
         {
             break;
         }
+
         doAction(g_userInput);
     }
 }

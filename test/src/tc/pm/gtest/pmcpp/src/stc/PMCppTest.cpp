@@ -20,7 +20,7 @@
  ******************************************************************/
 
 #include "PMCppHelper.h"
-
+#include "PMCppUtilityHelper.h"
 class PMCppTest_stc: public ::testing::Test
 {
 protected:
@@ -30,8 +30,7 @@ protected:
     virtual void SetUp()
     {
         CommonUtil::runCommonTCSetUpPart();
-        CommonUtil::killApp(JUSTWORKS_SERVER);
-        CommonUtil::killApp(RANDOMPIN_SERVER);
+        CommonUtil::killApp(KILL_SERVERS);
         CommonUtil::waitInSecond(DELAY_MEDIUM);
         CommonUtil::rmFile(DATABASE_PDM);
         CommonUtil::rmFile(JUSTWORKS_SERVER1_CBOR);
@@ -53,8 +52,7 @@ protected:
     virtual void TearDown()
     {
         CommonUtil::runCommonTCTearDownPart();
-        CommonUtil::killApp(JUSTWORKS_SERVER);
-        CommonUtil::killApp(RANDOMPIN_SERVER);
+        CommonUtil::killApp(KILL_SERVERS);
     }
 };
 
@@ -114,7 +112,7 @@ TEST_F(PMCppTest_stc, ProvisionAclPermisison_UBV_P)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, MAX_PERMISSION_RANGE, m_OwnedDevList);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, MAX_PERMISSION_RANGE, m_OwnedDevList);
 
     if(!m_PMCppHelper.provisionACL(m_OwnedDevList, acl1, PMCppHelper::provisionCB, OC_STACK_OK))
     {
@@ -179,7 +177,7 @@ TEST_F(PMCppTest_stc, ProvisionAclPermisison_LBV_P)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, NO_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, NO_PERMISSION, m_OwnedDevList);
 
     if(!m_PMCppHelper.provisionACL(m_OwnedDevList, acl1, PMCppHelper::provisionCB, OC_STACK_OK))
     {
@@ -244,7 +242,7 @@ TEST_F(PMCppTest_stc, ProvisionCredentialsCredType_REV_P)
         return;
     }
 
-    OicSecCredType_t type = 1;
+    OicSecCredType_t type = (OicSecCredType_t)1;
     size_t keySize = OWNER_PSK_LENGTH_256;
     Credential cred(type, keySize);
 
@@ -312,7 +310,7 @@ TEST_F(PMCppTest_stc, ProvisionAclCBAcl_NV_N)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     if(!m_PMCppHelper.provisionACL(m_OwnedDevList, acl1, PMCppHelper::provisionCB, OC_STACK_OK))
     {
@@ -384,7 +382,7 @@ TEST_F(PMCppTest_stc, ProvisionAclMultipleTimes_SQV_P)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     if(!m_PMCppHelper.provisionACL(m_OwnedDevList, acl1, PMCppHelper::provisionCB, OC_STACK_OK))
     {
@@ -530,11 +528,9 @@ TEST_F(PMCppTest_stc, ProvisionPairwiseDevicesMultipleTimes_EG_N)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
-    OicSecAcl_t *acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
-    Credential cred(type , keySize);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl2 = PMCppHelper::createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
+    Credential cred(SYMMETRIC_PAIR_WISE_KEY , OWNER_PSK_LENGTH_128);
 
     if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, acl1, *m_OwnedDevList[1].get(), acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
@@ -543,90 +539,6 @@ TEST_F(PMCppTest_stc, ProvisionPairwiseDevicesMultipleTimes_EG_N)
     }
 
     if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, acl1, *m_OwnedDevList[1].get(), acl2, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
-    {
-        SET_FAILURE(m_PMCppHelper.getFailureMessage());
-    }
-}
-#endif
-
-/**
- * @since           2016-07-26
- * @see             static OCStackResult provisionInit(const std::string& dbPath)
- * @see             static OCStackResult setOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData, InputPinCallback inputPin)
- * @see             static OCStackResult discoverUnownedDevices(unsigned short timeout, DeviceList_t &list)
- * @see             OCStackResult doOwnershipTransfer(ResultCallBack resultCallback)
- * @see             static OCStackResult discoverOwnedDevices(unsigned short timeout, DeviceList_t &list)
- * @see             OCStackResult provisionPairwiseDevices(const Credential &cred, const OicSecAcl_t* acl1, const OCSecureResource &device2, const OicSecAcl_t* acl2, ResultCallBack resultCallback)
- * @objective       test unlinkDevices  negatively calling the API multiple times.
- * @target          OCStackResult unlinkDevices(const OCSecureResource &device2, ResultCallBack resultCallback)
- * @test_data       Regular data for removeDevice
- * @pre_condition   start two justworks simulators
- * @procedure       1. call provisionInit
- *                  2. call discoverUnownedDevices
- *                  3. call setOwnerTransferCallbackData
- *                  4. call doOwnershipTransfer
- *                  5. call discoverOwnedDevices
- *                  6. call provisionPairwiseDevices
- *                  7. call unlinkDevices
- *                  8. call unlinkDevices
- * @post_condition  None
- * @expected        unlinkDevices will return OC_STACK_INVALID_PARAM while calling for the second time.
- */
-#if defined(__LINUX__)
-TEST_F(PMCppTest_stc, UnlinkDeviceMultipleTimes_EG_N)
-{
-    if(!m_PMCppHelper.discoverUnownedDevices(DISCOVERY_TIMEOUT, m_UnownedDevList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
-    }
-
-    OTMCallbackData_t justWorksCBData;
-    justWorksCBData.loadSecretCB = LoadSecretJustWorksCallback;
-    justWorksCBData.createSecureSessionCB =
-    CreateSecureSessionJustWorksCallback;
-    justWorksCBData.createSelectOxmPayloadCB =
-    CreateJustWorksSelectOxmPayload;
-    justWorksCBData.createOwnerTransferPayloadCB =
-    CreateJustWorksOwnerTransferPayload;
-
-    if(!m_PMCppHelper.setOwnerTransferCallbackData(OIC_JUST_WORKS, justWorksCBData, NULL, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMCppHelper.doOwnershipTransfer(m_UnownedDevList, PMCppHelper::ownershipTransferCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMCppHelper.discoverOwnedDevices(DISCOVERY_TIMEOUT,m_OwnedDevList, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
-    }
-
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
-    OicSecAcl_t *acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
-    Credential cred(type, keySize);
-
-    if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, acl1, *m_OwnedDevList[1].get(), acl2, PMCppHelper::provisionCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMCppHelper.unlinkDevices(m_OwnedDevList, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_OK))
-    {
-        SET_FAILURE(m_PMCppHelper.getFailureMessage());
-        return;
-    }
-
-    if(!m_PMCppHelper.unlinkDevices(m_OwnedDevList, *m_OwnedDevList[1].get(), PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
     }

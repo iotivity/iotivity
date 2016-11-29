@@ -24,8 +24,6 @@ print '\n---------------Started Building PM Module for Linux---------------\n'
 Import('env_linux')
 import os
 
-env_linux['CC'] = 'g++'
-
 PROJECT_HOME = '../../'
 
 VARIANT_DIR = env_linux['VARIANT_DIR']
@@ -45,14 +43,11 @@ if env_linux.get('RELEASE'):
 else:
     RELEASE_DIR = 'debug'
 
-
 IOTIVITY_LIB_PATH = IOTIVITY_ROOT + '/out/linux/' + TARGET_ARCH + '/' + RELEASE_DIR
 
 #Features Configuration
-CERT_ENABLED = 0
-MOT_ENABLED = 0
-CLOUD_ENABLED = 1
-DP_ENABLED = 0
+CERT_ENABLED = 1
+MOT_ENABLED = 1
 
 arch_flag = ''
 if TARGET_ARCH in ['x86']:
@@ -69,6 +64,7 @@ IOTIVITY_INCLUDE_PATH = [
                             IOTIVITY_ROOT + '/resource/csdk/security/include',
                             IOTIVITY_ROOT + '/resource/csdk/security/provisioning/include',
                             IOTIVITY_ROOT + '/resource/csdk/security/provisioning/include/internal',
+                            IOTIVITY_ROOT + '/resource/csdk/security/include/internal',
                             IOTIVITY_ROOT + '/resource/csdk/security/provisioning/include/oxm',
                             IOTIVITY_ROOT + '/resource/include',
                             IOTIVITY_ROOT + '/resource/csdk/stack/include',
@@ -104,7 +100,6 @@ PM_CERT_INCLUDE_PATH = [
                             IOTIVITY_ROOT + '/extlibs/asn1cert/'
                             ]
 
-
 TC_INCLUDE_PATH = [
                     PROJECT_HOME + '/include',
                     PROJECT_HOME + '/src/tc/pm/gtest/pmcpp/include',
@@ -113,7 +108,7 @@ TC_INCLUDE_PATH = [
 
 TEST_APP_INCLUDE_PATH = [PROJECT_HOME + 'src/iBtestapp/modules/pm/c_cpp/cpp/include']
 
-SIMULATOR_INCLUDE_PATH = []
+SIMULATOR_INCLUDE_PATH = [PROJECT_HOME + '/include']
 
 LIB_PATH_LIST = [
                     IOTIVITY_LIB_PATH,
@@ -147,53 +142,36 @@ TEST_APP_SRC_LIST = [
                 ]
 
 
-lib_list = Split('boost_system boost_filesystem boost_thread c_common coap connectivity_abstraction dl expat gcov gio-2.0 gobject-2.0 glib-2.0 m logger oc oc_logger octbstack ocpmapi ocprovision ocsrm octbstack pthread rt uuid tinydtls mbedtls mbedx509 mbedcrypto routingmanager')
-CPPDEFINES1 = ['__LINUX__', 'RD_CLIENT', 'WITH_CLOUD', 'NDEBUG', 'WITH_POSIX', '__linux__', 'TCP_ADAPTER', 'IP_ADAPTER', 'NO_EDR_ADAPTER', 'LE_ADAPTER', 'MQ_SUBSCRIBER', 'WITH_MQ', 'MQ_PUBLISHER', 'SHA2_USE_INTTYPES_H', '__WITH_DTLS__', '__WITH_TLS__', '_ENABLE_MULTIPLE_OWNER_', 'ROUTING_EP', 'WITH_BWT', 'CA_DBUS_GATT_SERVICE_NAME', 'GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_2_32', 'WITH_TCP']
+lib_list = Split('boost_system boost_filesystem boost_thread c_common coap connectivity_abstraction dl expat gcov gio-2.0 gobject-2.0 glib-2.0 m logger oc oc_logger octbstack ocpmapi ocprovision ocsrm octbstack pthread rt uuid mbedtls mbedx509 mbedcrypto routingmanager resource_directory')
+CPPDEFINES1 = ['WITH_CLOUD', 'LINUX ', '__LINUX__', 'RD_CLIENT', 'WITH_CLOUD', 'NDEBUG', 'WITH_POSIX', '__linux__', 'TCP_ADAPTER', 'IP_ADAPTER', 'NO_EDR_ADAPTER', 'LE_ADAPTER', 'MQ_SUBSCRIBER', 'WITH_MQ', 'MQ_PUBLISHER', 'SHA2_USE_INTTYPES_H', '__WITH_DTLS__', '__WITH_TLS__', '_ENABLE_MULTIPLE_OWNER_', 'ROUTING_EP', 'WITH_BWT', 'CA_DBUS_GATT_SERVICE_NAME', 'GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_2_32', 'WITH_TCP']
 CPPFLAGS1 = ['-w', '-s', '-pthread', '-march=native', '-pthread', '-fpermissive', '-ftest-coverage', '-fprofile-arcs']
-
-if DP_ENABLED == 1:
-    CPPDEFINES1.append(['-D__DIRECTPAIRING__'])
-
-if CLOUD_ENABLED == 1:
-    CPPDEFINES1.append(['-D__CLOUD__'])
+CXXFLAGS1 = ['-std=c++0x']
 
 if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:
-
     pmcpp_tc = env_linux.Program(source = TC_SRC_LIST + [ PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/linux/libgtest.a' ],
                         target = 'iotivity_pmcpp_test',
-                        CPPPATH = IOTIVITY_INCLUDE_PATH + PM_CERT_INCLUDE_PATH + TC_INCLUDE_PATH,
+                        CPPPATH = IOTIVITY_INCLUDE_PATH + TC_INCLUDE_PATH,
                         LIBS = lib_list,
                         LIBPATH = LIB_PATH_LIST,
-                        RPATH =  LIB_PATH_LIST,
-                        CXXFLAGS = ['-std=c++0x', '-Wall'],
+                        RPATH = IOTIVITY_LIB_PATH,
+                        CXXFLAGS = CXXFLAGS1,
                         CPPDEFINES = CPPDEFINES1,
                         CPPFLAGS = CPPFLAGS1)
 
     install_targets += pmcpp_tc
 
-    pmcpp_jw_simulator = env_linux.Program(source = PROJECT_HOME + '/src/testapp/pm/justworks_simulator.cpp',
-                    target = 'sampleserver_justworks',
-                    CPPPATH = IOTIVITY_INCLUDE_PATH,
+    pmcpp_simulator = env_linux.Program(source = PROJECT_HOME + '/src/testapp/pm/test_server.cpp',
+                    target = 'test_server',
+                    CPPPATH = IOTIVITY_INCLUDE_PATH + SIMULATOR_INCLUDE_PATH,
                     LIBS = lib_list,
                     LIBPATH = LIB_PATH_LIST,
-                    RPATH =  LIB_PATH_LIST,
-                    CXXFLAGS = ['-std=c++0x', '-Wall'],
+                    RPATH = IOTIVITY_LIB_PATH,
+                    CXXFLAGS = CXXFLAGS1,
                     CPPDEFINES = CPPDEFINES1,
                     CPPFLAGS = CPPFLAGS1)
 
-    install_targets += pmcpp_jw_simulator
+    install_targets += pmcpp_simulator
 
-    pmcpp_rndmpin_simulator = env_linux.Program(source = PROJECT_HOME + '/src/testapp/pm/randompin_simulator.cpp',
-                target = 'sampleserver_randompin',
-                CPPPATH = IOTIVITY_INCLUDE_PATH,
-                LIBS = lib_list,
-                LIBPATH = LIB_PATH_LIST,
-                RPATH =  LIB_PATH_LIST,
-                CXXFLAGS = ['-std=c++0x', '-Wall'],
-                CPPDEFINES = CPPDEFINES1,
-                CPPFLAGS = CPPFLAGS1)
-
-    install_targets += pmcpp_rndmpin_simulator
 
 if TARGET_TEST == None or 'app' in TARGET_TEST or 'all' in TARGET_TEST:
 
@@ -202,13 +180,12 @@ if TARGET_TEST == None or 'app' in TARGET_TEST or 'all' in TARGET_TEST:
                 CPPPATH = IOTIVITY_INCLUDE_PATH + PM_CERT_INCLUDE_PATH + TC_INCLUDE_PATH + TEST_APP_INCLUDE_PATH,
                 LIBS = lib_list,
                 LIBPATH = LIB_PATH_LIST,
-                RPATH =  LIB_PATH_LIST,
-                CXXFLAGS = ['-std=c++0x', '-Wall'],
+                RPATH = IOTIVITY_LIB_PATH,
+                CXXFLAGS = CXXFLAGS1,
                 CPPDEFINES = CPPDEFINES1,
                 CPPFLAGS = CPPFLAGS1)
 
     install_targets += pmcpp_test_app
-
 
 if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:
     pm_resource_path = PROJECT_HOME + '/res/pm_resource'

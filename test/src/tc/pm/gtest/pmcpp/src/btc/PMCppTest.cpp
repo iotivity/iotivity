@@ -31,19 +31,19 @@ protected:
     virtual void SetUp()
     {
         CommonUtil::runCommonTCSetUpPart();
-        CommonUtil::killApp(JUSTWORKS_SERVER);
+        CommonUtil::killApp(KILL_SERVERS);
         CommonUtil::waitInSecond(DELAY_MEDIUM);
         CommonUtil::rmFile(DATABASE_PDM);
         CommonUtil::rmFile(JUSTWORKS_SERVER1_CBOR);
         CommonUtil::rmFile(JUSTWORKS_SERVER2_CBOR);
         CommonUtil::rmFile(CLIENT_CBOR);
-        CommonUtil::waitInSecond(DELAY_LONG);
+        CommonUtil::waitInSecond(DELAY_MEDIUM);
         CommonUtil::copyFile(JUSTWORKS_SERVER1_CBOR_BACKUP, JUSTWORKS_SERVER1_CBOR);
         CommonUtil::copyFile(JUSTWORKS_SERVER2_CBOR_BACKUP, JUSTWORKS_SERVER2_CBOR);
         CommonUtil::copyFile(CLIENT_CBOR_BACKUP, CLIENT_CBOR);
         CommonUtil::launchApp(JUSTWORKS_SERVER1);
         CommonUtil::launchApp(JUSTWORKS_SERVER2);
-        CommonUtil::waitInSecond(DELAY_LONG);
+        CommonUtil::waitInSecond(DELAY_MEDIUM);
         m_UnownedDevList.clear();
         m_OwnedDevList.clear();
 
@@ -53,7 +53,7 @@ protected:
     virtual void TearDown()
     {
         CommonUtil::runCommonTCTearDownPart();
-        CommonUtil::killApp(JUSTWORKS_SERVER);
+        CommonUtil::killApp(KILL_SERVERS);
     }
 };
 
@@ -372,6 +372,7 @@ TEST_F(PMCppTest_btc, SetOwnerTransferCBDataJustWorkInvalidParam_N)
 
 /**
  * @since           2015-11-30
+ * @see             OCStackResult provisionInit(const std::string& dbPath)
  * @objective       test setOwnerTransferCallbackData negatively with Outer Upper Boundary Value of oxm
  * @target          static OCStackResult setOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData, InputPinCallback inputPin)
  * @test_data       oxm = Outer Upper Boundary Value of oxm
@@ -424,11 +425,11 @@ TEST_F(PMCppTest_btc, SetOwnerTransferCBDataRanDomPin_P)
     pinBasedCBData.createOwnerTransferPayloadCB =
     CreatePinBasedOwnerTransferPayload;
     OCSecure::setOwnerTransferCallbackData(OIC_RANDOM_DEVICE_PIN,
-            &pinBasedCBData, InputPinCB);
+            &pinBasedCBData, PMCppHelper::InputPinCB);
 
     OCStackResult expetedResult = OC_STACK_OK;
     OCStackResult actualResult = OCSecure::setOwnerTransferCallbackData(OIC_RANDOM_DEVICE_PIN,
-            &pinBasedCBData, InputPinCB);
+            &pinBasedCBData, PMCppHelper::InputPinCB);
 
     ASSERT_EQ(expetedResult, actualResult);
 }
@@ -458,7 +459,7 @@ TEST_F(PMCppTest_btc, SetOwnerTransferCBDataRanDomPinCB_NV_N)
     pinBasedCBData.createOwnerTransferPayloadCB =
     CreatePinBasedOwnerTransferPayload;
     OCSecure::setOwnerTransferCallbackData(OIC_RANDOM_DEVICE_PIN,
-            &pinBasedCBData, InputPinCB);
+            &pinBasedCBData, PMCppHelper::InputPinCB);
 
     OCStackResult expetedResult = OC_STACK_INVALID_PARAM;
     OCStackResult actualResult = OCSecure::setOwnerTransferCallbackData(OIC_RANDOM_DEVICE_PIN,
@@ -485,7 +486,7 @@ TEST_F(PMCppTest_btc, SetOwnerTransferCBDataRanDomPinData_NV_N)
 {
     OCStackResult expetedResult = OC_STACK_INVALID_PARAM;
     OCStackResult actualResult = OCSecure::setOwnerTransferCallbackData(OIC_RANDOM_DEVICE_PIN,
-            NULL, InputPinCB);
+            NULL, PMCppHelper::InputPinCB);
 
     ASSERT_EQ(expetedResult, actualResult);
 }
@@ -594,7 +595,7 @@ TEST_F(PMCppTest_btc, ProvisionAcl_RV_P)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     if(!m_PMCppHelper.provisionACL(m_OwnedDevList, acl1, PMCppHelper::provisionCB, OC_STACK_OK))
     {
@@ -658,8 +659,6 @@ TEST_F(PMCppTest_btc, ProvisionAcl_NV_N)
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
-
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     if(!m_PMCppHelper.provisionACL(m_OwnedDevList, NULL, PMCppHelper::provisionCB, OC_STACK_INVALID_PARAM))
     {
@@ -725,7 +724,7 @@ TEST_F(PMCppTest_btc, ProvisionAclCB_NV_N)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     if(!m_PMCppHelper.provisionACL(m_OwnedDevList, acl1, PMCppHelper::provisionCB, OC_STACK_OK))
     {
@@ -932,7 +931,7 @@ TEST_F(PMCppTest_btc, ProvisionCredentialsCB_NV_N)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     if(!m_PMCppHelper.provisionACL(m_OwnedDevList, acl1, PMCppHelper::provisionCB, OC_STACK_OK))
     {
@@ -1344,11 +1343,9 @@ TEST_F(PMCppTest_btc, ProvisionPairwiseDevicesKeySize_LBV_P)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
-    OicSecAcl_t *acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
-    Credential cred(type , keySize);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl2 = PMCppHelper::createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
+    Credential cred(SYMMETRIC_PAIR_WISE_KEY , OWNER_PSK_LENGTH_128);
 
     if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, acl1, *m_OwnedDevList[1].get(), acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
@@ -1413,11 +1410,9 @@ TEST_F(PMCppTest_btc, ProvisionPairwiseDevicesKeySize_FSV_UBV_P)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
-    OicSecAcl_t *acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_256;
-    Credential cred(type, keySize);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl2 = PMCppHelper::createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
+    Credential cred(SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_256);
 
     if(!m_PMCppHelper.provisionPairwiseDevices(m_OwnedDevList, cred, acl1, *m_OwnedDevList[1].get(), acl2, PMCppHelper::provisionCB, OC_STACK_OK))
     {
@@ -1482,8 +1477,8 @@ TEST_F(PMCppTest_btc, ProvisionPairwiseDevicesKeySize_LOBV_N)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
-    OicSecAcl_t *acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl2 = PMCppHelper::createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128-1;
     Credential cred(type, keySize);
@@ -1551,8 +1546,8 @@ TEST_F(PMCppTest_btc, ProvisionPairwiseDevicesKeySize_UOBV_N)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
-    OicSecAcl_t *acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl2 = PMCppHelper::createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_256+1;
     Credential cred(type, keySize);
@@ -1620,8 +1615,8 @@ TEST_F(PMCppTest_btc, ProvisionPairwiseDevicesCB_NV_N)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
-    OicSecAcl_t *acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl2 = PMCppHelper::createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_256;
     Credential cred(type, keySize);
@@ -1689,7 +1684,7 @@ TEST_F(PMCppTest_btc, ProvisionPairwiseDevicesAcl1_NV_P)
         return;
     }
 
-    OicSecAcl_t *acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl2 = PMCppHelper::createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_256;
     Credential cred(type, keySize);
@@ -1757,7 +1752,7 @@ TEST_F(PMCppTest_btc, ProvisionPairwiseDevicesAcl2_NV_P)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_256;
     Credential cred(type, keySize);
@@ -1827,8 +1822,8 @@ TEST_F(PMCppTest_btc, GetLinkedDevices_FSV_P)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
-    OicSecAcl_t *acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl2 = PMCppHelper::createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
@@ -1846,8 +1841,6 @@ TEST_F(PMCppTest_btc, GetLinkedDevices_FSV_P)
         SET_FAILURE(m_PMCppHelper.getFailureMessage());
         return;
     }
-
-    SUCCEED();
 }
 #endif
 
@@ -1909,8 +1902,8 @@ TEST_F(PMCppTest_btc, UnlinkDevices_RV_P)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
-    OicSecAcl_t *acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl2 = PMCppHelper::createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
@@ -1986,8 +1979,8 @@ TEST_F(PMCppTest_btc, UnlinkDevicesCB_NV_N)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
-    OicSecAcl_t *acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl2 = PMCppHelper::createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
@@ -2063,8 +2056,8 @@ TEST_F(PMCppTest_btc, RemoveDeviceTime_LOBV_N)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
-    OicSecAcl_t *acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl2 = PMCppHelper::createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
@@ -2140,8 +2133,8 @@ TEST_F(PMCppTest_btc, RemoveDeviceCB_NV_N)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
-    OicSecAcl_t *acl2 = createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl2 = PMCppHelper::createAcl(DEVICE_INDEX_TWO, FULL_PERMISSION, m_OwnedDevList);
     OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
     size_t keySize = OWNER_PSK_LENGTH_128;
     Credential cred(type, keySize);
@@ -2344,7 +2337,7 @@ TEST_F(PMCppTest_btc, GetOwnedStatusOwned_SRCC_P)
         return;
     }
 
-    OicSecAcl_t *acl1 = createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
+    OicSecAcl_t *acl1 = PMCppHelper::createAcl(DEVICE_INDEX_ONE, FULL_PERMISSION, m_OwnedDevList);
 
     if(!m_PMCppHelper.provisionACL(m_OwnedDevList, acl1, PMCppHelper::provisionCB, OC_STACK_OK))
     {
@@ -2395,6 +2388,7 @@ TEST_F(PMCppTest_btc, GetDevPtr_SRC_P)
 
 /**
  * @since 2016-02-29
+ * @see None
  * @objective Test getCredentialType
  * @target OicSecCredType_t getCredentialType() const
  * @test_data getCredentialType
@@ -2431,9 +2425,7 @@ TEST_F(PMCppTest_btc, GetCredentialType_SRC_P)
 #if defined(__LINUX__)
 TEST_F(PMCppTest_btc, GetCredentialKeySize_SRC_P)
 {
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
-    Credential cred(type, keySize);
+    Credential cred(SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128);
 
     if (OWNER_PSK_LENGTH_128 != cred.getCredentialKeySize())
     {
@@ -2456,10 +2448,7 @@ TEST_F(PMCppTest_btc, GetCredentialKeySize_SRC_P)
 #if defined(__LINUX__)
 TEST_F(PMCppTest_btc, SetCredentialType_SRC_P)
 {
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
-    Credential cred(type, keySize);
-
+    Credential cred(SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128);
     cred.setCredentialType(SYMMETRIC_GROUP_KEY);
 
     if (SYMMETRIC_GROUP_KEY != cred.getCredentialType())
@@ -2484,10 +2473,7 @@ TEST_F(PMCppTest_btc, SetCredentialType_SRC_P)
 #if defined(__LINUX__)
 TEST_F(PMCppTest_btc, SetCredentialKeySize_SRC_P)
 {
-    OicSecCredType_t type = SYMMETRIC_PAIR_WISE_KEY;
-    size_t keySize = OWNER_PSK_LENGTH_128;
-    Credential cred(type, keySize);
-
+    Credential cred(SYMMETRIC_PAIR_WISE_KEY, OWNER_PSK_LENGTH_128);
     cred.setCredentialKeySize(OWNER_PSK_LENGTH_256);
 
     if (OWNER_PSK_LENGTH_256 != cred.getCredentialKeySize())
@@ -2521,7 +2507,8 @@ TEST_F(PMCppTest_btc, SetDisplayPinCB_N)
     }
 }
 #endif
-#if defined(__CLOUD__)
+
+#ifdef __CLOUD__
 
 /**
  * @since           2016-10-24
@@ -2532,7 +2519,7 @@ TEST_F(PMCppTest_btc, SetDisplayPinCB_N)
  * @see             static OCStackResult discoverOwnedDevices(unsigned short timeout, DeviceList_t &list)
  * @objective       test provisionTrustCertChain positively
  * @target          OCStackResult provisionTrustCertChain(OicSecCredType_t type, uint16_t credId, ResultCallBack resultCallback)
- * @test_data       Regular data for getLinkedDevices
+ * @test_data       Regular data for provisionTrustCertChain
  * @pre_condition   start two justworks simulators
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
@@ -2595,7 +2582,7 @@ TEST_F(PMCppTest_btc, ProvisionTrustCertChain_RV_SRC_P)
  * @see             static OCStackResult discoverOwnedDevices(unsigned short timeout, DeviceList_t &list)
  * @objective       test provisionTrustCertChain negatively with OicSecCredType_t as SYMMETRIC_PAIR_WISE_KEY
  * @target          OCStackResult provisionTrustCertChain(OicSecCredType_t type, uint16_t credId, ResultCallBack resultCallback)
- * @test_data       Regular data for getLinkedDevices
+ * @test_data       OicSecCredType_t as SYMMETRIC_PAIR_WISE_KEY
  * @pre_condition   start two justworks simulators
  * @procedure       1. call provisionInit
  *                  2. call discoverUnownedDevices
@@ -2649,6 +2636,26 @@ TEST_F(PMCppTest_btc, ProvisionTrustCertChainCredType_EG_N)
 }
 #endif
 
+/**
+ * @since           2016-10-24
+ * @see             static OCStackResult provisionInit(const std::string& dbPath)
+ * @see             static OCStackResult setOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData, InputPinCallback inputPin)
+ * @see             static OCStackResult discoverUnownedDevices(unsigned short timeout, DeviceList_t &list)
+ * @see             OCStackResult doOwnershipTransfer(ResultCallBack resultCallback)
+ * @see             static OCStackResult discoverOwnedDevices(unsigned short timeout, DeviceList_t &list)
+ * @objective       test provisionTrustCertChain negatively with resultCallback as NULL
+ * @target          OCStackResult provisionTrustCertChain(OicSecCredType_t type, uint16_t credId, ResultCallBack resultCallback)
+ * @test_data       resultCallback as NULL
+ * @pre_condition   start two justworks simulators
+ * @procedure       1. call provisionInit
+ *                  2. call discoverUnownedDevices
+ *                  3. call setOwnerTransferCallbackData
+ *                  4. call doOwnershipTransfer
+ *                  5. call discoverOwnedDevices
+ *                  6. call provisionTrustCertChain
+ * @post_condition  None
+ * @expected        provisionTrustCertChain will return OC_STACK_INVALID_CALLBACK
+ */
 #if defined(__LINUX__)
 TEST_F(PMCppTest_btc, ProvisionTrustCertChainCb_NV_N)
 {
