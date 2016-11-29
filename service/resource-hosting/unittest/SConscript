@@ -21,6 +21,8 @@
 ##
 # ResourceHosting Unit Test build script
 ##
+from tools.scons.RunTest import run_test
+
 # SConscript file for Local PKI google tests
 gtest_env = SConscript('#extlibs/gtest/SConscript')
 lib_env = gtest_env.Clone()
@@ -78,5 +80,6 @@ hosting_test_env.AppendTarget('hosting_test')
 if hosting_test_env.get('TEST') == '1':
     target_os = hosting_test_env.get('TARGET_OS')
     if target_os in ['linux']:
-            from tools.scons.RunTest import *
-            run_test(hosting_test_env, '', 'service/resource-hosting/unittest/hosting_test')
+        run_test(hosting_test_env,
+                 'service_resource-hosting_unittest_hosting_test.memcheck',
+                 'service/resource-hosting/unittest/hosting_test')

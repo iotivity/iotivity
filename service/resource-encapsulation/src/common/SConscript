@@ -22,6 +22,7 @@
 # rcs_common (primitiveResource and expiryTimer) build script
 ##
 import os
+from tools.scons.RunTest import run_test
 
 # SConscript file for Local PKI google tests
 gtest_env = SConscript('#extlibs/gtest/SConscript')
@@ -121,6 +122,8 @@ if target_os in ['linux']:
 	rcs_common_test_env.AppendTarget('rcs_common_test')
 
 	if rcs_common_test_env.get('TEST') == '1':
-		from tools.scons.RunTest import *
-		run_test(rcs_common_test_env, '',
+		run_test(rcs_common_test_env,
+# TODO: fix test on linux
+			'',
+#			'service_resource-encapsulation_src_common_rcs_common_test.memcheck',
 			'service/resource-encapsulation/src/common/rcs_common_test')
