@@ -1898,11 +1898,6 @@ OCStackResult OTMDoOwnershipTransfer(void* ctx,
 
     OIC_LOG(DEBUG, TAG, "OUT OTMDoOwnershipTransfer");
     return OC_STACK_OK;
-
-error:
-    OICFree(otmCtx->ctxResultArray);
-    OICFree(otmCtx);
-    return res;
 }
 
 OCStackResult OTMSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus)

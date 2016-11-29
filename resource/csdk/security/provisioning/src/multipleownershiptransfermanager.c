@@ -541,7 +541,10 @@ static void SetMOTResult(OTMContext_t* motCtx, const OCStackResult res)
         //If there is a request being performed, cancel it to prevent retransmission.
         if(motCtx->ocDoHandle)
         {
-            OCCancel(motCtx->ocDoHandle, OC_HIGH_QOS, NULL, 0);
+            if (OC_STACK_OK !=  OCCancel(motCtx->ocDoHandle, OC_HIGH_QOS, NULL, 0))
+            {
+                OIC_LOG(ERROR, TAG, "Failed to remove registered callback");
+            }
             motCtx->ocDoHandle = NULL;
         }
 
