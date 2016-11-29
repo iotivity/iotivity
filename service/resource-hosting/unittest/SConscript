@@ -76,8 +76,12 @@ hosting_test = hosting_test_env.Program('hosting_test', hosting_test_src)
 Alias("hosting_test", hosting_test)
 hosting_test_env.AppendTarget('hosting_test')
 
+# TODO: fix this test on linux and remove commented lines
 if hosting_test_env.get('TEST') == '1':
     target_os = hosting_test_env.get('TARGET_OS')
     if target_os in ['linux']:
-            from tools.scons.RunTest import *
-            run_test(hosting_test_env, '', 'service/resource-hosting/unittest/hosting_test')
+        from tools.scons.RunTest import run_test
+        run_test(hosting_test_env,
+#                'service_resource-hosting_unittest_hosting_test.memcheck',
+                 '',
+                 'service/resource-hosting/unittest/hosting_test')

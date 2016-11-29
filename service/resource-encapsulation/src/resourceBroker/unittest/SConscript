@@ -83,8 +83,10 @@ Alias("broker_test", broker_test)
 broker_test_env.AppendTarget('broker_test')
 
 if broker_test_env.get('TEST') == '1':
-        if target_os in ['linux']:
-                from tools.scons.RunTest import *
-                run_test(broker_test_env,
-                         '',
-                         'service/resource-encapsulation/src/resourceBroker/unittest/broker_test')
+    if target_os in ['linux']:
+        from tools.scons.RunTest import run_test
+        run_test(broker_test_env,
+# TODO: fix this test on linux and remove commented lines
+#                'service_resource-encapsulation_src_resourceBroker_unittest_broker_test.memcheck',
+                 '',
+                 'service/resource-encapsulation/src/resourceBroker/unittest/broker_test')
