@@ -313,39 +313,6 @@ OCEntityHandlerResult RICsdkHelper::OCEntityHandlerCb(OCEntityHandlerFlag flag,
             // Indicate that response is NOT in a persistent buffer
             response.persistentBufferFlag = 0;
 
-            // Handle vendor specific options
-            if (entityHandlerRequest->rcvdVendorSpecificHeaderOptions
-                    && entityHandlerRequest->numRcvdVendorSpecificHeaderOptions)
-            {
-                IOTIVITYTEST_LOG(INFO, "Received vendor specific options");
-                uint8_t i = 0;
-                OCHeaderOption * rcvdOptions = entityHandlerRequest->rcvdVendorSpecificHeaderOptions;
-                for (i = 0; i < entityHandlerRequest->numRcvdVendorSpecificHeaderOptions; i++)
-                {
-                    if (((OCHeaderOption) rcvdOptions[i]).protocolID == OC_COAP_ID)
-                    {
-                        IOTIVITYTEST_LOG(INFO, "Received option with OC_COAP_ID and ID %u with",
-                                ((OCHeaderOption ) rcvdOptions[i]).optionID);
-
-                        //OIC_LOG_BUFFER(INFO, TAG, ((OCHeaderOption) rcvdOptions[i]).optionData,
-                        //        MAX_HEADER_OPTION_DATA_LENGTH);
-                    }
-                }
-                OCHeaderOption * sendOptions = response.sendVendorSpecificHeaderOptions;
-                uint8_t option2[] =
-                { 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
-                uint8_t option3[] =
-                { 31, 32, 33, 34, 35, 36, 37, 38, 39, 40 };
-                sendOptions[0].protocolID = OC_COAP_ID;
-                sendOptions[0].optionID = 2248;
-                memcpy(sendOptions[0].optionData, option2, sizeof(option2));
-                sendOptions[0].optionLength = 10;
-                sendOptions[1].protocolID = OC_COAP_ID;
-                sendOptions[1].optionID = 2600;
-                memcpy(sendOptions[1].optionData, option3, sizeof(option3));
-                sendOptions[1].optionLength = 10;
-                response.numSendVendorSpecificHeaderOptions = 2;
-            }
             if (OCDoResponse(&response) != OC_STACK_OK)
             {
                 IOTIVITYTEST_LOG(INFO, "Error sending response");
@@ -395,111 +362,217 @@ OCStackResult RICsdkHelper::initClient()
     return OCInit(m_ClientIp, m_ClientPort, OC_CLIENT);
 }
 
-bool RICsdkHelper::payloadLogPlatform(OCPlatformPayload* payload)
+bool RICsdkHelper::payloadLogPlatform(OCRepPayload* payload)
 {
-    s_failureMsg = s_failureMsg + "Client: Platform Payload: ";
+    s_failureMsg = s_failureMsg + "Client: Platform INFO: ";
 
-    if (payload->info.dateOfManufacture == NULL)
+    OCRepPayload* rep = payload;
+    int i = 1;
+    while (rep)
     {
-        s_failureMsg = s_failureMsg + "Payload does not have any information. ";
-        IOTIVITYTEST_LOG(INFO, "Payload does not have any information. ");
-        return false;
-    }
+        IOTIVITYTEST_LOG(INFO, "\tResource #%d", i);
+        IOTIVITYTEST_LOG(INFO, "\tURI:%s", rep->uri);
+        IOTIVITYTEST_LOG(INFO, "\tResource Types:");
+        OCStringLL* strll = rep->types;
+        while (strll)
+        {
+            IOTIVITYTEST_LOG(INFO, "\t\t%s", strll->value);
+            strll = strll->next;
+        }
+        IOTIVITYTEST_LOG(INFO, "\tInterfaces:");
+        strll = rep->interfaces;
+        while (strll)
+        {
+            IOTIVITYTEST_LOG(INFO, "\t\t%s", strll->value);
+            strll = strll->next;
+        }
 
-    IOTIVITYTEST_LOG(INFO, "\t Date of Mfg: %s", payload->info.dateOfManufacture);
-    IOTIVITYTEST_LOG(INFO, "\t Firmware Version: %s", payload->info.firmwareVersion);
-    IOTIVITYTEST_LOG(INFO, "\t Manufacturer Name: %s", payload->info.manufacturerName);
-    IOTIVITYTEST_LOG(INFO, "\t OS Version: %s", payload->info.operatingSystemVersion);
-    IOTIVITYTEST_LOG(INFO, "\t HW Version: %s", payload->info.hardwareVersion);
-    IOTIVITYTEST_LOG(INFO, "\t Platform ID: %s", payload->info.platformID);
-    IOTIVITYTEST_LOG(INFO, "\t Manufacturer Url: %s", payload->info.manufacturerUrl);
-    IOTIVITYTEST_LOG(INFO, "\t Model Number: %s", payload->info.modelNumber);
-    IOTIVITYTEST_LOG(INFO, "\t Platform Version: %s", payload->info.platformVersion);
-    IOTIVITYTEST_LOG(INFO, "\t Support Url: %s", payload->info.supportUrl);
-    IOTIVITYTEST_LOG(INFO, "\t System Time: %s", payload->info.systemTime);
+        OCRepPayloadValue* val = rep->values;
 
-    if (strcmp(payload->info.dateOfManufacture, MANUFACTURE_DATE) != 0)
-    {
-        s_failureMsg = s_failureMsg + "Date of Mfg Doesn't match. ";
-        return false;
+        IOTIVITYTEST_LOG(INFO, "\tValues:");
+
+        while (val)
+        {
+            switch (val->type)
+            {
+                case OCREP_PROP_STRING:
+                    IOTIVITYTEST_LOG(INFO, "\t\t%s(string):%s", val->name, val->str);
+                    if (strcmp(val->name, KEY_PLATFORM_ID) == 0)
+                    {
+                        if (strcmp(val->str, PLATFORM_ID) != 0)
+                        {
+                            IOTIVITYTEST_LOG(INFO, "PLATFORM_ID is not correct");
+                            s_failureMsg = s_failureMsg + "PLATFORM_ID is not correct. ";
+                            return false;
+                        }
+                    }
+                    else if (strcmp(val->name, KEY_MANUFACTURER_NAME) == 0)
+                    {
+                        if (strcmp(val->str, MANUFACTURER_NAME) != 0)
+                        {
+                            IOTIVITYTEST_LOG(INFO, "MANUFACTURER_NAME is not correct");
+                            s_failureMsg = s_failureMsg + "MANUFACTURER_NAME is not correct. ";
+                            return false;
+                        }
+                    }
+                    else if (strcmp(val->name, KEY_MANUFACTURER_URL) == 0)
+                    {
+                        if (strcmp(val->str, MANUFACTURER_URL) != 0)
+                        {
+                            IOTIVITYTEST_LOG(INFO, "MANUFACTURER_URL is not correct");
+                            s_failureMsg = s_failureMsg + "MANUFACTURER_URL is not correct. ";
+                            return false;
+                        }
+                    }
+                    else if (strcmp(val->name, KEY_MODEL_NUMBER) == 0)
+                    {
+                        if (strcmp(val->str, MODEL_NO) != 0)
+                        {
+                            IOTIVITYTEST_LOG(INFO, "MODEL_NO is not correct");
+                            s_failureMsg = s_failureMsg + "MODEL_NO is not correct. ";
+                            return false;
+                        }
+                    }
+                    else if (strcmp(val->name, KEY_DATE_OF_MANUFACTURE) == 0)
+                    {
+                        if (strcmp(val->str, MANUFACTURE_DATE) != 0)
+                        {
+                            IOTIVITYTEST_LOG(INFO, "MANUFACTURE_DATE is not correct");
+                            s_failureMsg = s_failureMsg + "MANUFACTURE_DATE is not correct. ";
+                            return false;
+                        }
+                    }
+                    else if (strcmp(val->name, KEY_PLATFORM_VERSION) == 0)
+                    {
+                        if (strcmp(val->str, PLATFORM_VERSION) != 0)
+                        {
+                            IOTIVITYTEST_LOG(INFO, "PLATFORM_VERSION is not correct");
+                            s_failureMsg = s_failureMsg + "PLATFORM_VERSION is not correct. ";
+                            return false;
+                        }
+                    }
+                    else if (strcmp(val->name, KEY_OPERATING_SYSTEM) == 0)
+                    {
+                        if (strcmp(val->str, OS_VERSION) != 0)
+                        {
+                            IOTIVITYTEST_LOG(INFO, "OS_VERSION is not correct");
+                            s_failureMsg = s_failureMsg + "OS_VERSION is not correct. ";
+                            return false;
+                        }
+                    }
+                    else if (strcmp(val->name, KEY_HARDWARE_VERSION) == 0)
+                    {
+                        if (strcmp(val->str, HW_VERSION) != 0)
+                        {
+                            IOTIVITYTEST_LOG(INFO, "HW_VERSION is not correct");
+                            s_failureMsg = s_failureMsg + "HW_VERSION is not correct. ";
+                            return false;
+                        }
+                    }
+                    else if (strcmp(val->name, KEY_FIRMWARE_VERSION) == 0)
+                    {
+                        if (strcmp(val->str, FIRMWARE_VERSION) != 0)
+                        {
+                            IOTIVITYTEST_LOG(INFO, "FIRMWARE_VERSION is not correct");
+                            s_failureMsg = s_failureMsg + "FIRMWARE_VERSION is not correct. ";
+                            return false;
+                        }
+                    }
+                    else if (strcmp(val->name, KEY_SUPPORT_URL) == 0)
+                    {
+                        if (strcmp(val->str, SUPPORT_URL) != 0)
+                        {
+                            IOTIVITYTEST_LOG(INFO, "SUPPORT_URL is not correct");
+                            s_failureMsg = s_failureMsg + "SUPPORT_URL is not correct. ";
+                            return false;
+                        }
+                    }
+                    else if (strcmp(val->name, KEY_SYSTEM_TIME) == 0)
+                    {
+                        if (strcmp(val->str, SYSTEM_TIME) != 0)
+                        {
+                            IOTIVITYTEST_LOG(INFO, "SYSTEM_TIME is not correct");
+                            s_failureMsg = s_failureMsg + "SYSTEM_TIME is not correct. ";
+                            return false;
+                        }
+                    }
+                    break;
+                default:
+                    IOTIVITYTEST_LOG(INFO, "\t\t%s <-- Unknown type!", val->name);
+                    break;
+            }
+            val = val->next;
+        }
+        ++i;
+        rep = rep->next;
     }
-    if (strcmp(payload->info.firmwareVersion, FIRMWARE_VERSION) != 0)
-    {
-        s_failureMsg = s_failureMsg + "Firmware Version Doesn't match. ";
-        return false;
-    }
-    if (strcmp(payload->info.manufacturerName, MANUFACTURER_NAME) != 0)
-    {
-        s_failureMsg = s_failureMsg + "Manufacturer Name Doesn't match. ";
-        return false;
-    }
-    if (strcmp(payload->info.operatingSystemVersion, OS_VERSION) != 0)
-    {
-        s_failureMsg = s_failureMsg + "OS Version Doesn't match. ";
-        return false;
-    }
-    if (strcmp(payload->info.hardwareVersion, HW_VERSION) != 0)
-    {
-        s_failureMsg = s_failureMsg + "HW Version Doesn't match. ";
-        return false;
-    }
-    if (strcmp(payload->info.platformID, PLATFORM_ID) != 0)
-    {
-        s_failureMsg = s_failureMsg + "Platform ID Doesn't match. ";
-        return false;
-    }
-    if (strcmp(payload->info.manufacturerUrl, MANUFACTURER_URL) != 0)
-    {
-        s_failureMsg = s_failureMsg + "Manufacturer Url Doesn't match. ";
-        return false;
-    }
-    if (strcmp(payload->info.modelNumber, MODEL_NO) != 0)
-    {
-        s_failureMsg = s_failureMsg + "Model Number Doesn't match. ";
-        return false;
-    }
-    if (strcmp(payload->info.platformVersion, PLATFORM_VERSION) != 0)
-    {
-        s_failureMsg = s_failureMsg + "Platform Version Doesn't match. ";
-        return false;
-    }
-    if (strcmp(payload->info.supportUrl, SUPPORT_URL) != 0)
-    {
-        s_failureMsg = s_failureMsg + "Support Url Doesn't match. ";
-        return false;
-    }
-    if (strcmp(payload->info.systemTime, SYSTEM_TIME) != 0)
-    {
-        s_failureMsg = s_failureMsg + "System Time Doesn't match. ";
-        return false;
-    }
+    return true;
 }
 
-bool RICsdkHelper::payloadLogDevice(OCDevicePayload* payload)
+bool RICsdkHelper::payloadLogDevice(OCRepPayload* payload)
 {
-    s_failureMsg = s_failureMsg + "Client: Device Payload: ";
+    s_failureMsg = s_failureMsg + "Client: DEVICE INFO: ";
 
-    if (payload->deviceName == NULL)
+    OCRepPayload* rep = payload;
+    int i = 1;
+    while (rep)
     {
-        s_failureMsg = s_failureMsg + "Payload does not have any information. ";
-        IOTIVITYTEST_LOG(INFO, "Payload does not have any information. ");
-        return false;
-    }
+        IOTIVITYTEST_LOG(INFO, "\tResource #%d", i);
+        IOTIVITYTEST_LOG(INFO, "\tURI:%s", rep->uri);
+        IOTIVITYTEST_LOG(INFO, "\tResource Types:");
+        OCStringLL* strll = rep->types;
+        while (strll)
+        {
+            IOTIVITYTEST_LOG(INFO, "\t\t%s", strll->value);
+            strll = strll->next;
+        }
+        IOTIVITYTEST_LOG(INFO, "\tInterfaces:");
+        strll = rep->interfaces;
+        while (strll)
+        {
+            IOTIVITYTEST_LOG(INFO, "\t\t%s", strll->value);
+            strll = strll->next;
+        }
 
-    IOTIVITYTEST_LOG(INFO, "\t Device Name: %s", payload->deviceName);
-    IOTIVITYTEST_LOG(INFO, "\t Spec Version: %s", payload->specVersion);
+        OCRepPayloadValue* val = rep->values;
 
-    if (strcmp(payload->deviceName, DEVICE_NAME) != 0)
-    {
-        s_failureMsg = s_failureMsg + "Device Name Doesn't match. ";
-        return false;
-    }
+        IOTIVITYTEST_LOG(INFO, "\tValues:");
 
-    if (strcmp(payload->specVersion, SPEC_VERSION) != 0)
-    {
-        s_failureMsg = s_failureMsg + "Spec Version Doesn't match. ";
-        return false;
+        while (val)
+        {
+            switch (val->type)
+            {
+                case OCREP_PROP_STRING:
+                    IOTIVITYTEST_LOG(INFO, "\t\t%s(string):%s", val->name, val->str);
+                    if (strcmp(val->name, KEY_DEVICE_NAME) == 0)
+                    {
+                        if (strcmp(val->str, DEVICE_NAME) != 0)
+                        {
+                            IOTIVITYTEST_LOG(INFO, "DEVICE_NAME is not correct");
+                            s_failureMsg = s_failureMsg + "DEVICE_NAME is not correct. ";
+                            return false;
+                        }
+                    }
+                    else if (strcmp(val->name, KEY_SPEC_VERSION) == 0)
+                    {
+                        if (strcmp(val->str, SPEC_VERSION) != 0)
+                        {
+                            IOTIVITYTEST_LOG(INFO, "SPEC_VERSION is not correct");
+                            s_failureMsg = s_failureMsg + "SPEC_VERSION is not correct. ";
+                            return false;
+                        }
+                    }
+                    break;
+                default:
+                    IOTIVITYTEST_LOG(INFO, "\t\t%s <-- Unknown type!", val->name);
+                    break;
+            }
+            val = val->next;
+        }
+        ++i;
+        rep = rep->next;
     }
+    return true;
 }
 
 bool RICsdkHelper::payloadLogDiscovery(OCDiscoveryPayload* payload)
@@ -569,7 +642,7 @@ bool RICsdkHelper::payloadLogDiscovery(OCDiscoveryPayload* payload)
     return false;
 }
 
-bool RICsdkHelper::payloadLogRep(OCRepPayload* payload)
+bool RICsdkHelper::payloadLogRepResource(OCRepPayload* payload)
 {
     s_failureMsg = s_failureMsg + "Client: Representation Payload: ";
     IOTIVITYTEST_LOG(INFO, "Payload Type: Representation");
@@ -584,6 +657,14 @@ bool RICsdkHelper::payloadLogRep(OCRepPayload* payload)
         OCStringLL* strll = rep->types;
         while (strll)
         {
+            if (strcmp(strll->value, RESOURCE_TYPE_PLATFORM) == 0)
+            {
+                return payloadLogPlatform(rep);
+            }
+            else if (strcmp(strll->value, RESOURCE_TYPE_DEVICE) == 0)
+            {
+                return payloadLogDevice(rep);
+            }
             IOTIVITYTEST_LOG(INFO, "\t\t%s", strll->value);
             strll = strll->next;
         }
@@ -712,7 +793,7 @@ void RICsdkHelper::getPayloadData(OCClientResponse * clientResponse)
     {
         case PAYLOAD_TYPE_REPRESENTATION:
             IOTIVITYTEST_LOG(INFO, "PAYLOAD_TYPE: PAYLOAD_TYPE_REPRESENTATION");
-            checkPayload = payloadLogRep((OCRepPayload*) (clientResponse->payload));
+            checkPayload = payloadLogRepResource((OCRepPayload*) (clientResponse->payload));
             if (checkPayload)
             {
                 IOTIVITYTEST_LOG(INFO, "received payload is correct");
@@ -727,34 +808,6 @@ void RICsdkHelper::getPayloadData(OCClientResponse * clientResponse)
         case PAYLOAD_TYPE_DISCOVERY:
             IOTIVITYTEST_LOG(INFO, "PAYLOAD_TYPE: PAYLOAD_TYPE_DISCOVERY");
             checkPayload = payloadLogDiscovery((OCDiscoveryPayload*) (clientResponse->payload));
-            if (checkPayload)
-            {
-                IOTIVITYTEST_LOG(INFO, "received payload is correct");
-                s_isPayloadCorrect = true;
-            }
-            else
-            {
-                s_isPayloadCorrect = false;
-                IOTIVITYTEST_LOG(INFO, "received payload is not correct");
-            }
-            break;
-        case PAYLOAD_TYPE_DEVICE:
-            IOTIVITYTEST_LOG(INFO, "PAYLOAD_TYPE_DEVICE");
-            checkPayload = payloadLogDevice((OCDevicePayload*) (clientResponse->payload));
-            if (checkPayload)
-            {
-                IOTIVITYTEST_LOG(INFO, "received payload is correct");
-                s_isPayloadCorrect = true;
-            }
-            else
-            {
-                s_isPayloadCorrect = false;
-                IOTIVITYTEST_LOG(INFO, "received payload is not correct");
-            }
-            break;
-        case PAYLOAD_TYPE_PLATFORM:
-            IOTIVITYTEST_LOG(INFO, "PAYLOAD_TYPE_PLATFORM");
-            checkPayload = payloadLogPlatform((OCPlatformPayload*) (clientResponse->payload));
             if (checkPayload)
             {
                 IOTIVITYTEST_LOG(INFO, "received payload is correct");

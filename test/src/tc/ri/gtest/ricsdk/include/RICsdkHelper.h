@@ -95,6 +95,10 @@ constexpr char RESOURCE_TYPE_FAN[]
 { "core.fan" };
 constexpr char RESOURCE_TYPE_TEMPERATURE[]
 { "oic.r.temperature" };
+constexpr char RESOURCE_TYPE_PLATFORM[]
+{ "oic.wk.p" };
+constexpr char RESOURCE_TYPE_DEVICE[]
+{ "oic.wk.d" };
 constexpr char RESOURCE_URI_LIGHT[]
 { "/a/light" };
 constexpr char RESOURCE_URI_FAN[]
@@ -112,6 +116,34 @@ constexpr char KEY_UNITS[]
 { "units" };
 constexpr char KEY_HOUR[]
 { "x.samsung.hour" };
+
+constexpr char KEY_DEVICE_NAME[]
+{ "n" };
+constexpr char KEY_SPEC_VERSION[]
+{ "lcv" };
+
+constexpr char KEY_PLATFORM_ID[]
+{ "pi" };
+constexpr char KEY_MANUFACTURER_NAME[]
+{ "mnmn" };
+constexpr char KEY_MANUFACTURER_URL[]
+{ "mnml" };
+constexpr char KEY_MODEL_NUMBER[]
+{ "mnmo" };
+constexpr char KEY_DATE_OF_MANUFACTURE[]
+{ "mndt" };
+constexpr char KEY_PLATFORM_VERSION[]
+{ "mnpv" };
+constexpr char KEY_OPERATING_SYSTEM[]
+{ "mnos" };
+constexpr char KEY_HARDWARE_VERSION[]
+{ "mnhw" };
+constexpr char KEY_FIRMWARE_VERSION[]
+{ "mnfv" };
+constexpr char KEY_SUPPORT_URL[]
+{ "mnsl" };
+constexpr char KEY_SYSTEM_TIME[]
+{ "st" };
 
 class RICsdkHelper
 {
@@ -212,9 +244,9 @@ public:
     static OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest);
     static void getPayloadData(OCClientResponse * clientResponse);
     static bool payloadLogDiscovery(OCDiscoveryPayload* payload);
-    static bool payloadLogDevice(OCDevicePayload* payload);
-    static bool payloadLogPlatform(OCPlatformPayload* payload);
-    static bool payloadLogRep(OCRepPayload* payload);
+    static bool payloadLogDevice(OCRepPayload* payload);
+    static bool payloadLogPlatform(OCRepPayload* payload);
+    static bool payloadLogRepResource(OCRepPayload* payload);
 
     //failure message get
     string getFailureMessage();
