@@ -1,22 +1,22 @@
 /******************************************************************
-*
-* Copyright 2016 Samsung Electronics All Rights Reserved.
-*
-*
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-******************************************************************/
+ *
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
+ *
+ *
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ ******************************************************************/
 
 #include <vector>
 #include <iostream>
@@ -35,6 +35,8 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 #include "pinoxmcommon.h"
+#include "cautilinterface.h"
+#include "cacommon.h"
 
 using namespace OC;
 using namespace std;
@@ -51,8 +53,10 @@ SampleResource *g_invisibleLightResource;
 SampleResource *g_invisibleFanResource;
 OCResourceHandle g_childHandle = NULL;
 OCResourceHandle g_collectionHandle = NULL;
+OCResourceHandle g_collectionHandleVendor = NULL;
 SampleResource* g_manyResources[MAX_LIGHT_RESOURCE_COUNT];
 OCRepresentation g_resourceRepresentation;
+OCConnectivityType g_ipVer = CT_DEFAULT;
 
 SampleResource *g_tvDevice;
 SampleResource *g_acDevice;
@@ -67,9 +71,8 @@ SampleResource *g_acSwingResource;
 SampleResource *g_acSwitchResourceHidden;
 SampleResource *g_acAirFlowResourceHidden;
 SampleResource *g_acTemperatureResourceHidden;
-
-bool g_isSecuredClient = false;
-bool g_isSecuredServer = false;
+SampleResource *g_acTimerResourceHidden;
+SampleResource *g_acSwingResourceHidden;
 
 bool g_hasCallbackArrived = false;
 bool g_isObservingResource = false;
@@ -80,6 +83,8 @@ bool g_isManyLightCreated = false;
 bool g_isInvisibleResourceCreated = false;
 bool g_isTvDeviceCreated = false;
 bool g_isAirConDeviceCreated = false;
+bool g_isSecuredClient = false;
+bool g_isSecuredServer = false;
 
 QualityOfService g_qos = QualityOfService::LowQos;
 ResourceHelper *g_resourceHelper;
@@ -93,7 +98,8 @@ static const int CLIENT_MODE = 1;
 static const int SERVER_MODE = 2;
 static int g_modeType;
 static int g_securityType;
-static const char sourceFileNames[][100] = { "../../oic_svr_db_server_justworks.dat", "../../oic_svr_db_server_randompin.dat" };
+static const char sourceFileNames[][100] =
+{ "../../oic_svr_db_server_justworks.dat", "../../oic_svr_db_server_randompin.dat" };
 string g_di = "";
 string g_collectionName = GROUP_NAME;
 
@@ -107,11 +113,14 @@ void onDeviceInfoReceived(const OCRepresentation& rep);
 void onPlatformInfoReceived(const OCRepresentation& rep);
 void onCollectionFound(shared_ptr< OCResource > collection);
 void onResourceFound(shared_ptr< OCResource > resource);
+OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest > request);
 
 void handleMenu(int argc, char* argv[]);
 void showMenu(int argc, char* argv[]);
+void selectMenu(int choice);
 void createTvDevice(bool isSecured = false);
 void createAirConDevice(bool isSecured = false);
+void createSingleAirConResource(bool isSecured = false);
 void createResource(void);
 void createSecuredResource(void);
 void createInvisibleResource(void);
@@ -184,45 +193,42 @@ void replaceDatFile(int modeType, int securityType)
         cout << "Unable to read source file " << endl;
         exit(-1);
     }
+    else
+    {
+        cout << "Successfully open " << sourceFileNames[securityType] << endl;
+    }
 
+    FILE *destFile;
     if (modeType == CLIENT_MODE)
     {
-        FILE *clientFile = fopen(CRED_FILE_CLIENT, "wb");
-        if (clientFile == NULL)
-        {
-            fclose(source);
-            cout << "Unable to write client dat file " << endl;
-            exit(-1);
-        }
-
-        while ((num = fread(buffer, sizeof(char), sizeof(buffer), source)) != 0)
-        {
-            fwrite(buffer, sizeof(char), num, clientFile);
-        }
-
-        cout << "Dat File copied successfully" << endl;
-        fclose(clientFile);
+        destFile = fopen(CRED_FILE_CLIENT, "wb");
+        cout << "Copy to" << CRED_FILE_CLIENT << endl;
     }
     else if (modeType == SERVER_MODE)
     {
-        FILE *serverFile = fopen(CRED_FILE_SERVER, "wb");
-        if (serverFile == NULL)
-        {
-            fclose(source);
-            cout << "Unable to write server dat file " << endl;
-            exit(-1);
-        }
-
-        while ((num = fread(buffer, sizeof(char), sizeof(buffer), source)) != 0)
-        {
-            fwrite(buffer, sizeof(char), num, serverFile);
-        }
-
-        cout << "Dat File copied successfully" << endl;
-
-        fclose(serverFile);
+        destFile = fopen(CRED_FILE_SERVER, "wb");
+        cout << "Copy to " << CRED_FILE_SERVER << endl;
+    }
+    else
+    {
+        cout << "No mode found" << endl;
     }
 
+    if (destFile == NULL)
+    {
+        fclose(source);
+        cout << "Unable to write dat file" << endl;
+        exit(-1);
+    }
+
+    while ((num = fread(buffer, sizeof(char), sizeof(buffer), source)) != 0)
+    {
+        fwrite(buffer, sizeof(char), num, destFile);
+    }
+
+    cout << "Dat File copy successfully" << endl;
+
+    fclose(destFile);
     fclose(source);
 }
 
@@ -250,8 +256,6 @@ int main(int argc, char* argv[])
 
     OCStackResult result = OC_STACK_OK;
     string serverIp = SERVER_IP_V6;
-    OCConnectivityType ipVer = CT_DEFAULT;
-
 
     if (argc > 1)
     {
@@ -292,12 +296,12 @@ int main(int argc, char* argv[])
             if (optionSelected == 6)
             {
                 cout << "Using IP version: IPv6" << endl;
-                ipVer = CT_IP_USE_V6;
+                g_ipVer = CT_IP_USE_V6;
             }
             else if (optionSelected == 4)
             {
                 cout << "Using IP version: IPv4" << endl;
-                ipVer = CT_IP_USE_V4;
+                g_ipVer = CT_IP_USE_V4;
                 serverIp = SERVER_IP_V6;
             }
             else
@@ -374,7 +378,7 @@ int main(int argc, char* argv[])
         OCPersistentStorage ps =
         { client_fopen, fread, fwrite, fclose, unlink };
         PlatformConfig cfg
-        { OC::ServiceType::InProc, OC::ModeType::Both, ipVer, ipVer, g_qos, &ps };
+        { OC::ServiceType::InProc, OC::ModeType::Both, g_ipVer, g_ipVer, g_qos, &ps };
         result = SampleResource::constructServer(cfg);
     }
     else if (g_isSecuredServer)
@@ -382,13 +386,14 @@ int main(int argc, char* argv[])
         OCPersistentStorage ps =
         { server_fopen, fread, fwrite, fclose, unlink };
         PlatformConfig cfg
-        { OC::ServiceType::InProc, OC::ModeType::Server, ipVer, ipVer, g_qos, &ps };
+        { OC::ServiceType::InProc, OC::ModeType::Server, g_ipVer, g_ipVer, g_qos, &ps };
         result = SampleResource::constructServer(cfg);
     }
     else
     {
         PlatformConfig cfg
-        { OC::ServiceType::InProc, OC::ModeType::Both, ipVer, ipVer, g_qos };
+        { OC::ServiceType::InProc, OC::ModeType::Both, g_ipVer, g_ipVer, g_qos };
+        //    { OC::ServiceType::InProc, OC::ModeType::Both, g_ipVer, CT_DEFAULT, serverIp, (uint16_t) SERVER_PORT, g_qos };
         result = SampleResource::constructServer(cfg);
     }
 
@@ -403,6 +408,13 @@ int main(int argc, char* argv[])
     }
 
     cout << "Conformance Simulator started successfully" << endl << endl;
+
+    for (int i = 4; i < argc; i++)
+    {
+        int choice = atoi(argv[i]);
+        selectMenu(choice);
+    }
+
     showMenu(argc, argv);
 
     cout << "Iotivity Server stopped successfully" << endl;
@@ -446,15 +458,37 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                 OCRepresentation rep;
                 OCRepresentation interimRep;
                 OCRepresentation linkRep;
+                OCRepresentation pRep;
+
+                uint8_t bm = 2;
+                pRep.setValue(BITMASK_KEY, bm);
+                pRep.setValue(SECURITY_KEY, g_isSecuredServer);
+                CATransportFlags_t flag = CA_DEFAULT_FLAGS;
+
+                if (g_isSecuredServer)
+                {
+                    flag = (CATransportFlags_t) ( flag | CA_SECURE );
+                }
+
+                if (g_ipVer == CT_IP_USE_V4)
+                {
+                    flag =  (CATransportFlags_t) ( flag | CA_IPV4 );
+                }
+                else
+                {
+                    flag =  (CATransportFlags_t) ( flag | CA_IPV6 );
+                }
+                pRep.setValue(PORT_KEY, CAGetAssignedPortNumber(CA_ADAPTER_IP, flag));
 
                 vector< OCRepresentation > allChild;
                 vector< OCRepresentation > allChildren;
                 interimRep.setValue(URI_KEY, g_acSwitchResourceHidden->getUri());
-                interimRep.setValue("di", g_di);
+                interimRep.setValue(DEVICE_ID_KEY, g_di);
                 interimRep.setValue(RESOURCE_TYPE_KEY,
                         g_acSwitchResourceHidden->getResourceTypes());
                 interimRep.setValue(INTERFACE_KEY,
                         g_acSwitchResourceHidden->getResourceInterfaces());
+                interimRep.setValue(POLICY_KEY, pRep);
                 linkRep = interimRep;
                 allChildren.push_back(interimRep);
 
@@ -473,11 +507,10 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                         g_acAirFlowResourceHidden->getResourceInterfaces());
                 allChild.push_back(interimRep);
                 allChildren.push_back(interimRep);
-                rep.setValue("links", allChildren);
+                rep.setValue(LINKS_KEY, allChildren);
 
                 linkRep.setChildren(allChild);
                 OCRepresentation links;
-
 
                 pResponse->setErrorCode(COAP_RESPONSE_CODE_RETRIEVED);
                 cout << "Current Resource Representation to send : " << endl;
@@ -626,7 +659,6 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                 vector< OCRepresentation > allChild;
                 vector< OCRepresentation > allChildren;
                 OCRepresentation links;
-
 
                 pResponse->setErrorCode(COAP_RESPONSE_CODE_RETRIEVED);
                 cout << "Current Resource Representation to send : " << endl;
@@ -932,10 +964,9 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
         vector< string > interfacelist = rep.getResourceInterfaces();
 
         bool isCollection = false;
-        for (auto interface = interfacelist.begin(); interface != interfacelist.end(); interface++)
+        for (auto interface : interfacelist)
         {
-            if (((*interface).compare(GROUP_INTERFACE) == 0)
-                    || ((*interface).compare(BATCH_INTERFACE) == 0))
+            if (interface.compare(BATCH_INTERFACE) == 0)
             {
                 isCollection = true;
                 break;
@@ -947,9 +978,9 @@ void onGet(const HeaderOptions &headerOptions, const OCRepresentation &rep, cons
             vector< OCRepresentation > children = rep.getChildren();
 
             cout << "\nCHILD RESOURCE OF GROUP" << endl;
-            for (auto iter = children.begin(); iter != children.end(); ++iter)
+            for (auto child : children)
             {
-                cout << "\tURI :: " << (*iter).getUri() << endl;
+                cout << "\tURI :: " << child.getUri() << endl;
             }
             cout << endl;
         }
@@ -1228,6 +1259,49 @@ void createTvDevice(bool isSecured)
     }
 }
 
+void createSingleAirConResource(bool isSecured)
+{
+
+    OCStackResult result = OC_STACK_ERROR;
+    cout << "Creating AirCon Device Resources!!" << endl;
+    uint8_t resourceProperty = OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE;
+    if (isSecured)
+    {
+        resourceProperty = resourceProperty | OC_SECURE;
+    }
+    if (g_isAirConDeviceCreated == false)
+    {
+        SampleResource::setDeviceInfo("Vendor Smart Home AirCon Device", Device_TYPE_AC);
+
+        g_acSwitchResource = new SampleResource();
+        g_acSwitchResource->setResourceProperties(AC_SWITCH_URI, SWITCH_RESOURCE_TYPE,
+        SWITCH_RESOURCE_INTERFACE);
+        OCRepresentation switchRep;
+        string value = "";
+        vector< int > range;
+        vector< double > rangeTemperature;
+        switchRep.setValue(ON_OFF_KEY, true);
+        g_acSwitchResource->setResourceRepresentation(switchRep);
+
+        result = g_acSwitchResource->startResource(resourceProperty);
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "AirConditioner Binary Switch Resource created successfully" << endl;
+            g_createdResourceList.push_back(g_acSwitchResource);
+            g_isAirConDeviceCreated = true;
+        }
+        else
+        {
+            cout << "Unable to create AirConditioner Binary Switch resource" << endl;
+        }
+    }
+    else
+    {
+        cout << "Already Smart Home AirCon Device Resources are  created!!" << endl;
+    }
+}
+
 void createAirConDevice(bool isSecured)
 {
 
@@ -1324,6 +1398,7 @@ void createAirConDevice(bool isSecured)
         range.push_back(30);
         airFlowRep.setValue("range", range);
         g_acAirFlowResource->setAsReadOnly("range");
+        g_acAirFlowResourceHidden->setAsReadOnly("range");
         g_acAirFlowResource->setResourceRepresentation(airFlowRep);
         g_acAirFlowResourceHidden->setResourceRepresentation(airFlowRep);
 
@@ -1334,6 +1409,7 @@ void createAirConDevice(bool isSecured)
         {
             cout << "Air Conditioner AirFlow Resource created successfully" << endl;
             g_createdResourceList.push_back(g_acAirFlowResource);
+            g_createdResourceList.push_back(g_acAirFlowResourceHidden);
             g_isAirConDeviceCreated = true;
         }
         else
@@ -1346,9 +1422,13 @@ void createAirConDevice(bool isSecured)
         {
             resourceProperty = resourceProperty | OC_SECURE;
         }
+
         g_acTimerResource = new SampleResource();
+        g_acTimerResourceHidden = new SampleResource();
         setlocale(LC_ALL, "");
         g_acTimerResource->setResourceProperties(AC_TIMER_URI, TIMER_RESOURCE_TYPE,
+        TIMER_RESOURCE_INTERFACE);
+        g_acTimerResourceHidden->setResourceProperties(AC_TIMER_URI_CHILD, TIMER_RESOURCE_TYPE,
         TIMER_RESOURCE_INTERFACE);
 
         OCRepresentation clockRep;
@@ -1360,14 +1440,17 @@ void createAirConDevice(bool isSecured)
         clockRep.setValue("x.com.vendor.timer.reset", false);
 
         g_acTimerResource->setResourceRepresentation(clockRep);
+        g_acTimerResourceHidden->setResourceRepresentation(clockRep);
 
         result = g_acTimerResource->startResource(resourceProperty);
+        result = g_acTimerResourceHidden->startResource(resourcePropertyHidden);
         g_acTimerResource->setAsSlowResource();
 
         if (result == OC_STACK_OK)
         {
             cout << "Air Conditioner Timer Resource created successfully" << endl;
             g_createdResourceList.push_back(g_acTimerResource);
+            g_createdResourceList.push_back(g_acTimerResourceHidden);
             g_isAirConDeviceCreated = true;
         }
         else
@@ -1377,7 +1460,10 @@ void createAirConDevice(bool isSecured)
 
         resourceProperty = OC_ACTIVE | OC_DISCOVERABLE;
         g_acSwingResource = new SampleResource();
+        g_acSwingResourceHidden = new SampleResource();
         g_acSwingResource->setResourceProperties(AC_SWING_URI, SWING_RESOURCE_TYPE,
+        SWING_RESOURCE_INTERFACE);
+        g_acSwingResourceHidden->setResourceProperties(AC_SWING_URI_CHILD, SWING_RESOURCE_TYPE,
         SWING_RESOURCE_INTERFACE);
 
         OCRepresentation swingRep;
@@ -1387,16 +1473,21 @@ void createAirConDevice(bool isSecured)
         string supportedDirection[2] =
         { "horizontal", "vertical" };
         swingRep.setValue("x.com.vendor.swing.supported.direction", supportedDirection);
-        g_acAirFlowResource->setAsReadOnly("x.com.vendor.swing.supported.direction");
 
         g_acSwingResource->setResourceRepresentation(swingRep);
+        g_acSwingResourceHidden->setResourceRepresentation(swingRep);
+
+        g_acSwingResource->setAsReadOnly("x.com.vendor.swing.supported.direction");
+        g_acSwingResourceHidden->setAsReadOnly("x.com.vendor.swing.supported.direction");
 
         result = g_acSwingResource->startResource(resourceProperty);
+        result = g_acSwingResourceHidden->startResource(resourcePropertyHidden);
 
         if (result == OC_STACK_OK)
         {
             cout << "Air Conditioner Swing Resource created successfully" << endl;
             g_createdResourceList.push_back(g_acSwingResource);
+            g_createdResourceList.push_back(g_acSwingResourceHidden);
             g_isAirConDeviceCreated = true;
         }
         else
@@ -1618,21 +1709,35 @@ void createGroup(string groupType)
         try
         {
             string resourceURI = COLLECTION_RESOURCE_URI;
-            string resourceInterface = LINK_INTERFACE;
-            uint8_t collectionProperty = OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE;
+            string resourceInterface = BATCH_INTERFACE;
+            uint8_t collectionProperty = OC_ACTIVE | OC_DISCOVERABLE;
             if (g_isSecuredServer)
             {
                 collectionProperty = collectionProperty | OC_SECURE;
             }
 
-            OCPlatform::registerResource(g_collectionHandle, resourceURI, groupType,
-                    resourceInterface, &entityHandlerCollection,
+            OCPlatform::registerResource(g_collectionHandle, resourceURI, groupType, LINK_INTERFACE,
+                    NULL,
                     collectionProperty);
 
-            cout << "Create Group is called." << endl;
+            cout << "Create Group is called for IoTivity Handler" << endl;
 
+
+            OCPlatform::bindTypeToResource(g_collectionHandle, GROUP_TYPE_AIRCON);
             OCPlatform::bindInterfaceToResource(g_collectionHandle, BATCH_INTERFACE);
             OCPlatform::bindInterfaceToResource(g_collectionHandle, DEFAULT_INTERFACE);
+
+
+            resourceURI = COLLECTION_RESOURCE_URI_VENDOR;
+            OCPlatform::registerResource(g_collectionHandleVendor, resourceURI, groupType, LINK_INTERFACE,
+                    &entityHandlerCollection, // entityHandler
+                    collectionProperty);
+
+            cout << "Create Group is called for Vendor handler." << endl;
+
+            OCPlatform::bindTypeToResource(g_collectionHandleVendor, GROUP_TYPE_AIRCON_VENDOR);
+            OCPlatform::bindInterfaceToResource(g_collectionHandleVendor, BATCH_INTERFACE);
+            OCPlatform::bindInterfaceToResource(g_collectionHandleVendor, DEFAULT_INTERFACE);
 
             g_isGroupCreated = true;
             cout << "Successfully Created Group!!" << endl;
@@ -1640,7 +1745,16 @@ void createGroup(string groupType)
             {
                 for (SampleResource* resource : g_createdResourceList)
                 {
-                    joinGroup(g_collectionHandle, resource->getResourceHandle());
+                    if (resource->getUri().find("Children") != string::npos)
+                    {
+                        cout << "Joining resource " << resource->getUri() << " to iotivity handled group" << endl;
+                        joinGroup(g_collectionHandle, resource->getResourceHandle());
+                    }
+                    else if (resource->getUri().find("Child") != string::npos)
+                    {
+                        cout << "Joining resource " << resource->getUri() << " to vendor handled group" << endl;
+                        joinGroup(g_collectionHandleVendor, resource->getResourceHandle());
+                    }
                 }
 
             }
@@ -2634,7 +2748,7 @@ void showMenu(int argc, char* argv[])
     cout << "\t\t 10. Find Resource using Interface Query" << endl;
     cout << "\t\t 11. Find Specific Type Of Resource" << endl;
     cout << "\t\t 12. Find All Resources" << endl;
-    cout << "\t\t 13. Find core.light Type Resource - Unicast" << endl;
+    cout << "\t\t 13. Find All Resources using Baseline Query - Unicast" << endl;
     cout << "\t\t 14. Find Specific Type Of Resource - Unicast" << endl;
     cout << "\t\t 15. Find All Resources - Unicast" << endl;
     cout << "\t\t 16. Join Found Resource To The Group" << endl;
@@ -2666,15 +2780,15 @@ void showMenu(int argc, char* argv[])
 #ifdef __SECURED__
     cout << "\t\t 103. Create Secured Smart TV Device" << endl;
     cout << "\t\t 104. Create Secured Air Conditioner Device" << endl;
+    cout << "\t\t 105. Create Secured Air Conditioner Single Resource" << endl;
 #endif
 
     g_hasCallbackArrived = false;
     handleMenu(argc, argv);
 }
 
-void handleMenu(int argc, char* argv[])
+void selectMenu(int choice)
 {
-    string userInput;
     string userResourceType;
     string userInterfaceType;
     string resourceHost = "";
@@ -2685,306 +2799,308 @@ void handleMenu(int argc, char* argv[])
     OCRepresentation linkRep;
     bool isMulticast = false;
 
-    if (argc > 4)
-    {
-        userInput = string(argv[4]);
-    }
-    else
-    {
-        cin >> userInput;
-    }
-
-    long int choice = strtol(userInput.c_str(), NULL, 10);
-
     int totalSecuredMenu = 0;
 #ifdef __SECURED__
-    totalSecuredMenu = 2;
+    totalSecuredMenu = 3;
 #endif
 
     if ((choice > 38 && choice < 101) || choice < 0 || (choice > 8 && choice < 10)
             || (choice > 102 + totalSecuredMenu))
     {
         cout << "Invalid Input. Please input your choice again" << endl;
+        return;
     }
-    else
+
+    switch (choice)
     {
-        switch (choice)
-        {
-            case 1:
-                createResource();
-                break;
+        case 1:
+            createResource();
+            break;
 
-            case 2:
-                createInvisibleResource();
-                break;
+        case 2:
+            createInvisibleResource();
+            break;
 
-            case 3:
-                createResourceWithUrl();
-                break;
+        case 3:
+            createResourceWithUrl();
+            break;
 
-            case 4:
-                createSecuredResource();
-                break;
+        case 4:
+            createSecuredResource();
+            break;
 
-            case 5:
-                createManyLightResources();
-                break;
+        case 5:
+            createManyLightResources();
+            break;
 
-            case 6:
-                createGroup(GROUP_TYPE_ROOM);
-                break;
+        case 6:
+            createGroup(GROUP_TYPE_ROOM);
+            break;
 
-            case 7:
-                deleteResource();
-                break;
+        case 7:
+            deleteResource();
+            break;
 
-            case 8:
-                deleteGroup();
-                break;
+        case 8:
+            deleteGroup();
+            break;
 
-            case 10:
-                cout << "Please type query(key=value), then press Enter: ";
-                cin >> userInterfaceType;
-                resourceHost = "";
-                findAllResources(resourceHost, userInterfaceType);
-                if (g_foundResourceList.size() == 0)
-                {
-                    cout << "No resource found!!" << endl;
-                }
-                break;
+        case 10:
+            cout << "Please type query(key=value), then press Enter: ";
+            cin >> userInterfaceType;
+            resourceHost = "";
+            findAllResources(resourceHost, userInterfaceType);
+            if (g_foundResourceList.size() == 0)
+            {
+                cout << "No resource found!!" << endl;
+            }
+            break;
 
-            case 11:
-                cout << "Please type the Resource Type to find, then press Enter: ";
-                cin >> userResourceType;
-                userResourceType = "?rt=" + userResourceType;
-                findResource(userResourceType);
-                if (g_foundResourceList.size() == 0)
-                {
-                    cout << "No resource found!!" << endl;
-                }
-                break;
+        case 11:
+            cout << "Please type the Resource Type to find, then press Enter: ";
+            cin >> userResourceType;
+            userResourceType = "?rt=" + userResourceType;
+            findResource(userResourceType);
+            if (g_foundResourceList.size() == 0)
+            {
+                cout << "No resource found!!" << endl;
+            }
+            break;
 
-            case 12:
-                findAllResources();
-                if (g_foundResourceList.size() == 0)
-                {
-                    cout << "No resource found!!" << endl;
-                }
-                break;
+        case 12:
+            findAllResources();
+            if (g_foundResourceList.size() == 0)
+            {
+                cout << "No resource found!!" << endl;
+            }
+            break;
 
-            case 13:
-                resourceHost = getHost();
-                findResource(RESOURCE_TYPE_LIGHT, resourceHost);
-                if (g_foundResourceList.size() == 0)
-                {
-                    cout << "No resource found!!" << endl;
-                }
-                break;
+        case 13:
+            resourceHost = getHost();
+            findResource("?if=oic.if.baseline", resourceHost);
+            if (g_foundResourceList.size() == 0)
+            {
+                cout << "No resource found!!" << endl;
+            }
+            break;
 
-            case 14:
-                resourceHost = getHost();
-                cout << "Please type the Resource Type to find, then press Enter: ";
-                cin >> userResourceType;
-                userResourceType = "?rt=" + userResourceType;
-                findResource(userResourceType, resourceHost);
-                if (g_foundResourceList.size() == 0)
-                {
-                    cout << "No resource found!!" << endl;
-                }
-                break;
+        case 14:
+            resourceHost = getHost();
+            cout << "Please type the Resource Type to find, then press Enter: ";
+            cin >> userResourceType;
+            userResourceType = "?rt=" + userResourceType;
+            findResource(userResourceType, resourceHost);
+            if (g_foundResourceList.size() == 0)
+            {
+                cout << "No resource found!!" << endl;
+            }
+            break;
 
-            case 15:
-                resourceHost = getHost();
-                findAllResources(resourceHost);
-                if (g_foundResourceList.size() == 0)
-                {
-                    cout << "No resource found!!" << endl;
-                }
-                break;
+        case 15:
+            resourceHost = getHost();
+            findAllResources(resourceHost);
+            if (g_foundResourceList.size() == 0)
+            {
+                cout << "No resource found!!" << endl;
+            }
+            break;
 
-            case 16:
-//                joinGroup();
-                break;
+        case 16:
+            break;
 
-            case 17:
-                sendGetRequest();
-                break;
+        case 17:
+            sendGetRequest();
+            break;
 
-            case 18:
-                cout << "Please type query key, then press Enter: ";
-                cin >> queryKey;
-                cout << "Please type query value, then press Enter: ";
-                cin >> queryValue;
-                sendGetRequestWithQuery(queryKey, queryValue);
-                break;
+        case 18:
+            cout << "Please type query key, then press Enter: ";
+            cin >> queryKey;
+            cout << "Please type query value, then press Enter: ";
+            cin >> queryValue;
+            sendGetRequestWithQuery(queryKey, queryValue);
+            break;
 
-            case 19:
-                sendPutRequestCreate();
-                break;
+        case 19:
+            sendPutRequestCreate();
+            break;
 
-            case 20:
-                sendPutRequestUpdate();
-                break;
+        case 20:
+            sendPutRequestUpdate();
+            break;
 
-            case 21:
-                sendPostRequestUpdate();
-                break;
+        case 21:
+            sendPostRequestUpdate();
+            break;
 
-            case 22:
-                sendPostRequestUpdateUserInput();
-                break;
+        case 22:
+            sendPostRequestUpdateUserInput();
+            break;
 
-            case 23:
-                sendPostRequestCreate();
-                break;
+        case 23:
+            sendPostRequestCreate();
+            break;
 
-            case 24:
-                sendDeleteRequest();
-                break;
+        case 24:
+            sendDeleteRequest();
+            break;
 
-            case 25:
-                observeResource();
-                break;
+        case 25:
+            observeResource();
+            break;
 
-            case 26:
-                try
-                {
-                    cancelObserveResource();
-                }
-                catch (exception& e)
-                {
-                    cout << "Unable to cancel observing resource." << endl;
-                    cout << "Error is: " << e.what() << endl;
-                }
+        case 26:
+            try
+            {
+                cancelObserveResource();
+            }
+            catch (exception& e)
+            {
+                cout << "Unable to cancel observing resource." << endl;
+                cout << "Error is: " << e.what() << endl;
+            }
 
-                break;
+            break;
 
-            case 27:
-                cancelObservePassively();
-                break;
+        case 27:
+            cancelObservePassively();
+            break;
 
-            case 28:
-                isMulticast = false;
-                discoverDevice(isMulticast);
-                break;
+        case 28:
+            isMulticast = false;
+            discoverDevice(isMulticast);
+            break;
 
-            case 29:
-                isMulticast = true;
-                discoverDevice(isMulticast);
-                break;
+        case 29:
+            isMulticast = true;
+            discoverDevice(isMulticast);
+            break;
 
-            case 30:
-                discoverPlatform();
-                break;
+        case 30:
+            discoverPlatform();
+            break;
 
-            case 31:
-                collectionType = GROUP_TYPE_ROOM;
+        case 31:
+            collectionType = GROUP_TYPE_ROOM;
+            findCollection(collectionType);
+            if (g_foundCollectionList.size() == 0)
+            {
+                cout << "No collection found!!" << endl;
+            }
+            break;
+
+        case 32:
+            collectionType = GROUP_TYPE_ROOM;
+            if (g_foundCollectionList.size() == 0)
+            {
+                cout << "No Group available, starting find Group." << endl;
                 findCollection(collectionType);
                 if (g_foundCollectionList.size() == 0)
                 {
-                    cout << "No collection found!!" << endl;
-                }
-                break;
-
-            case 32:
-                collectionType = GROUP_TYPE_ROOM;
-                if (g_foundCollectionList.size() == 0)
-                {
-                    cout << "No Group available, starting find Group." << endl;
-                    findCollection(collectionType);
-                    if (g_foundCollectionList.size() == 0)
-                    {
-                        cout << "Still no Resource found, quitting join resource to group." << endl;
-                        break;
-                    }
-                    else
-                    {
-                        g_hasCallbackArrived = false;
-                    }
-                }
-
-                g_foundResourceList.at(0)->get(QueryParamsMap(), onGet);
-                waitForCallback();
-
-                if (g_resourceRepresentation.hasAttribute("links"))
-                {
-                    cout << "link is available." << endl;
-                    g_resourceRepresentation.getAttributeValue("links", attrVal);
-                    linkRep["links"] = attrVal;
+                    cout << "Still no Resource found, quitting join resource to group." << endl;
+                    break;
                 }
                 else
                 {
-                    cout << "link is not available. creating link..." << endl;
-                    linkRep.setValue("links",
-                            (string) "[{\"href\":\"/device/light-1\",\"rt\":\"core.light\",\"if\":\"oic.if.baseline\",\"ins\":\"123\",\"p\":{\"bm\":3}}]");
+                    g_hasCallbackArrived = false;
                 }
+            }
 
-                g_foundResourceList.at(0)->post(collectionType, LINK_INTERFACE, linkRep,
-                        QueryParamsMap(), onPost, g_qos);
+            g_foundResourceList.at(0)->get(QueryParamsMap(), onGet);
+            waitForCallback();
 
-                break;
+            if (g_resourceRepresentation.hasAttribute("links"))
+            {
+                cout << "link is available." << endl;
+                g_resourceRepresentation.getAttributeValue("links", attrVal);
+                linkRep["links"] = attrVal;
+            }
+            else
+            {
+                cout << "link is not available. creating link..." << endl;
+                linkRep.setValue("links",
+                        (string) "[{\"href\":\"/device/light-1\",\"rt\":\"core.light\",\"if\":\"oic.if.baseline\",\"ins\":\"123\",\"p\":{\"bm\":3}}]");
+            }
 
-            case 33:
-                updateGroup();
-                break;
+            g_foundResourceList.at(0)->post(collectionType, LINK_INTERFACE, linkRep,
+                    QueryParamsMap(), onPost, g_qos);
 
-            case 34:
-                updateLocalResource();
-                break;
+            break;
 
-            case 35:
-                updateLocalResourceAutomatically();
-                break;
+        case 33:
+            updateGroup();
+            break;
 
-            case 36:
-                g_qos = QualityOfService::HighQos;
-                cout << "CON Type Message Selected for Client" << endl;
-                break;
+        case 34:
+            updateLocalResource();
+            break;
 
-            case 37:
-                g_qos = QualityOfService::LowQos;
-                cout << "NON Type Message Selected for Client" << endl;
-                break;
+        case 35:
+            updateLocalResourceAutomatically();
+            break;
 
-            case 38:
-                replaceDatFile(g_modeType, g_securityType);
-                cout << "Replaced Secure Storage" << endl;
-                break;
+        case 36:
+            g_qos = QualityOfService::HighQos;
+            cout << "CON Type Message Selected for Client" << endl;
+            break;
 
-            case 101:
-                createTvDevice();
-                break;
+        case 37:
+            g_qos = QualityOfService::LowQos;
+            cout << "NON Type Message Selected for Client" << endl;
+            break;
 
-            case 102:
-                createAirConDevice();
-                break;
+        case 38:
+            replaceDatFile(g_modeType, g_securityType);
+            cout << "Replaced Secure Storage" << endl;
+            break;
 
-            case 103:
-                createTvDevice(true);
-                break;
+        case 101:
+            createTvDevice();
+            break;
 
-            case 104:
-                createAirConDevice(true);
-                break;
+        case 102:
+            createAirConDevice();
+            break;
 
-            case 0:
-                if (g_createdResourceList.size() > 0)
-                {
-                    deleteResource();
-                }
-                if (g_isGroupCreated)
-                {
-                    deleteGroup();
-                }
-                if (g_childHandle != NULL)
-                {
-                    OCPlatform::unregisterResource(g_childHandle);
-                }
-                g_createdResourceList.clear();
-                g_foundResourceList.clear();
-                return;
-                break;
-        }
+        case 103:
+            createTvDevice(true);
+            break;
+
+        case 104:
+            createAirConDevice(true);
+            break;
+
+        case 105:
+            createSingleAirConResource(true);
+            break;
+
+        case 0:
+            if (g_createdResourceList.size() > 0)
+            {
+                deleteResource();
+            }
+            if (g_isGroupCreated)
+            {
+                deleteGroup();
+            }
+            if (g_childHandle != NULL)
+            {
+                OCPlatform::unregisterResource(g_childHandle);
+            }
+            g_createdResourceList.clear();
+            g_foundResourceList.clear();
+            exit(0);
     }
+}
+
+void handleMenu(int argc, char* argv[])
+{
+    string userInput;
+
+    cin >> userInput;
+
+    long int choice = strtol(userInput.c_str(), NULL, 10);
+
+    selectMenu(choice);
+
     showMenu(0, NULL);
 }

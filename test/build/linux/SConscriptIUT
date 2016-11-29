@@ -71,7 +71,7 @@ COMMON_FLAGS = Split('-s -pthread -march=native -std=gnu++0x -Wall -DLINUX -fper
 IUT_CFLAGS = [COMMON_FLAGS]
 
 if SECURED == '1':
-    IUT_CFLAGS.append('-DSECURED')
+    IUT_CFLAGS.append('-D__SECURED__')
     IUT_CFLAGS.append('-D__WITH_DTLS__')
 
 IUT_CINCLUDE = [

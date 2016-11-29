@@ -40,7 +40,8 @@ namespace PH = std::placeholders;
 #define TV_AUDIO_URI "/AudioResURI"
 #define TV_MEDIA_SOURCE_LIST_URI "/mediaSourceListResURI"
 
-#define COLLECTION_RESOURCE_URI "/vendor/aircon/collection"
+#define COLLECTION_RESOURCE_URI "/vendor/aircon/collection/extra"
+#define COLLECTION_RESOURCE_URI_VENDOR "/vendor/aircon/collection"
 
 #define AC_Device_URI  "/AirCon-1"
 #define AC_SWITCH_URI "/BinarySwitchResURI"
@@ -52,6 +53,8 @@ namespace PH = std::placeholders;
 #define AC_TIMER_URI "/Vendor/AirConditioner/TimerClock"
 #define AC_CHILD_LOCK_URI "/Vendor/AirConditioner/ChildLock"
 #define AC_SWING_URI "/Vendor/AirConditioner/Swinger"
+#define AC_TIMER_URI_CHILD "/Vendor/AirConditioner/TimerClock/Children"
+#define AC_SWING_URI_CHILD "/Vendor/AirConditioner/Swinger/Children"
 
 #define Device_TYPE_TV "oic.d.tv"
 #define Device_TYPE_AC "oic.d.airconditioner"
@@ -90,7 +93,8 @@ namespace PH = std::placeholders;
 #define RESOURCE_TYPE_LIGHT "core.light core.brightlight"
 #define RESOURCE_TYPE_FAN "core.fan core.table-fan"
 #define GROUP_TYPE_ROOM "oic.wk.col"
-#define GROUP_TYPE_AIRCON "x.com.vendor.aircon.collection"
+#define GROUP_TYPE_AIRCON "x.com.vendor.aircon.collection.extra"
+#define GROUP_TYPE_AIRCON_VENDOR "x.com.vendor.aircon.collection"
 #define GROUP_NAME "AirCon Collection"
 #define RESOURCE_TYPE_ROOM "core.room"
 #define SERVER_IP_V4 "0.0.0.0"
@@ -146,7 +150,12 @@ const int SUCCESS_RESPONSE = 0;
 #define SPEED_KEY "speed"
 #define DIRECTION_KEY "direction"
 #define ON_OFF_KEY "value"
-
+#define BITMASK_KEY "bm"
+#define PORT_KEY "port"
+#define POLICY_KEY "p"
+#define SECURITY_KEY "sec"
+#define DEVICE_ID_KEY "di"
+#define LINKS_KEY "links"
 
 #define PLATFORM_ID "436f6e66-6f72-6d61-6e63-6553696d756c"
 #define MANUFACTURER_NAME DEFAULT_MANUFACTURER
