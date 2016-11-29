@@ -20,6 +20,7 @@
 
 import os
 import os.path
+from tools.scons.RunTest import run_test
 
 # SConscript file for Local PKI google tests
 gtest_env = SConscript('#extlibs/gtest/SConscript')
@@ -120,5 +121,6 @@ if sptest_env.get('TEST') == '1':
 		sptest_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
 		sptest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
 		sptest_env.AppendENVPath('PATH', sptest_env.get('BUILD_DIR'))
-		ut = sptest_env.Command ('ut', None, out_dir + '/resource/csdk/security/provisioning/unittest/unittest')
-		AlwaysBuild ('ut')
+		run_test(sptest_env,
+				 'resource_csdk_security_provisioning_unittest.memcheck',
+				 'resource/csdk/security/provisioning/unittest/unittest')
