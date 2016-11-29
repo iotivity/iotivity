@@ -1,0 +1,10 @@
+{
+    "role": "Client",
+    "supportedVerticalProfile": [""],
+    "supportedDeviceTypes": ["oic.d.airconditioner"],
+    "icv": "core.1.1.0",
+    "dmv": "res.1.1.0,sh.1.2.0",
+    "resources": [ "oic.r.doxm", "oic.r.pstat" ],
+    "jurisdictionSwitch": false,
+    "OTM":["oic.sec.doxm.jw","oic.sec.doxm.rdp"]
+}

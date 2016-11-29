@@ -588,10 +588,10 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                         {
                             vector< string > resourceTypeList;
                             if ((queryValue.compare(GROUP_TYPE_ROOM) == 0)
-                                    || (queryValue.compare(GROUP_TYPE_AIRCON) == 0))
+                                    || (queryValue.compare(GROUP_TYPE_AIRCON_VENDOR) == 0))
                             {
                                 cout << "The resource type  used in query is oic.wk.col" << endl;
-                                pResponse->setResourceRepresentation(linkRep, responseInterface);
+                                pResponse->setResourceRepresentation(rep, responseInterface);
                             }
                             else
                             {
