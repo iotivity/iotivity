@@ -67,7 +67,7 @@ std::string  systemTime = "2016-01-15T11.01";
 // Set of strings for each of device info fields
 std::string  deviceName = "IoTivity Simple Server";
 std::string  specVersion = "core.1.1.0";
-std::string  dataModelVersions = "res.1.1.0";
+std::string  dataModelVersions = "res.1.1.0,sh.1.1.0";
 
 // OCPlatformInfo Contains all the platform info to be stored
 OCPlatformInfo platformInfo;

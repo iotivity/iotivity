@@ -349,12 +349,14 @@ exit:
 
 static OCStackResult BuildDevicePlatformPayload(const OCResource *resourcePtr, OCRepPayload** payload, bool addDeviceId)
 {
+    OCRepPayload *tempPayload = OCRepPayloadCreate();
+
     if (!resourcePtr)
     {
+        OCRepPayloadDestroy(tempPayload);
         return OC_STACK_INVALID_PARAM;
     }
 
-    OCRepPayload *tempPayload = OCRepPayloadCreate();
     if (!tempPayload)
     {
         return OC_STACK_NO_MEMORY;
@@ -1097,13 +1099,13 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     {
         OCResource *resourcePtr = FindResourceByUri(OC_RSRVD_DEVICE_URI);
         VERIFY_PARAM_NON_NULL(TAG, resourcePtr, "Device URI not found.");
-        discoveryResult = BuildResponseRepresentation(resourcePtr, (OCRepPayload **)&payload, &request->devAddr);
+        discoveryResult = BuildDevicePlatformPayload(resourcePtr, (OCRepPayload **)&payload, true);
     }
     else if (virtualUriInRequest == OC_PLATFORM_URI)
     {
         OCResource *resourcePtr = FindResourceByUri(OC_RSRVD_PLATFORM_URI);
         VERIFY_PARAM_NON_NULL(TAG, resourcePtr, "Platform URI not found.");
-        discoveryResult = BuildResponseRepresentation(resourcePtr, (OCRepPayload **)&payload, &request->devAddr);
+        discoveryResult = BuildDevicePlatformPayload(resourcePtr, (OCRepPayload **)&payload, false);
     }
 #ifdef ROUTING_GATEWAY
     else if (OC_GATEWAY_URI == virtualUriInRequest)
