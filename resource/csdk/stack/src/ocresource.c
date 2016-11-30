@@ -319,35 +319,8 @@ static OCStackResult getQueryParamsForFiltering (OCVirtualResources uri, char *q
     return result;
 }
 
-bool appendOCStringLL(OCRepPayload *device, OCStringLL *dmv)
-{
-    int size = 0;
-    for (OCStringLL *ll = dmv; ll; ll = ll->next, size++);
-    size_t dim[MAX_REP_ARRAY_DEPTH] = {size, 0, 0};
-    char **dt = (char **)OICMalloc(sizeof(char *) * size);
-    int i = 0;
-    VERIFY_PARAM_NON_NULL(TAG, dt, "Data Model Version allocation failed.");
-    for (OCStringLL *ll = dmv; ll; ll = ll->next, i++)
-    {
-        dt[i] = OICStrdup(ll->value);
-        VERIFY_PARAM_NON_NULL(TAG, dt[i], "Data Model Version adding failed.");
-    }
-    if (!OCRepPayloadSetStringArrayAsOwner(device, OC_RSRVD_DATA_MODEL_VERSION, dt, dim))
-    {
-        goto exit;
-    }
-    return true;
-
-exit:
-    for (int i = 0; i < size; i++)
-    {
-        OICFree(dt[i]);
-    }
-    OICFree(dt);
-    return false;
-}
-
-static OCStackResult BuildDevicePlatformPayload(const OCResource *resourcePtr, OCRepPayload** payload, bool addDeviceId)
+static OCStackResult BuildDevicePlatformPayload(const OCResource *resourcePtr, OCRepPayload** payload,
+    bool addDeviceId)
 {
     OCRepPayload *tempPayload = OCRepPayloadCreate();
 
@@ -373,22 +346,18 @@ static OCStackResult BuildDevicePlatformPayload(const OCResource *resourcePtr, O
         OCRepPayloadSetPropString(tempPayload, OC_RSRVD_DEVICE_ID, deviceId);
     }
 
-    OCResourceType *resType = resourcePtr->rsrcType;
-    while(resType)
+    for (OCResourceType *resType = resourcePtr->rsrcType; resType; resType = resType->next)
     {
         OCRepPayloadAddResourceType(tempPayload, resType->resourcetypename);
-        resType = resType->next;
     }
 
-    OCResourceInterface *resInterface = resourcePtr->rsrcInterface;
-    while(resInterface)
+    for (OCResourceInterface *resInterface = resourcePtr->rsrcInterface; resInterface;
+        resInterface = resInterface->next)
     {
         OCRepPayloadAddInterface(tempPayload, resInterface->name);
-        resInterface = resInterface->next;
     }
 
-    OCAttribute *resAttrib = resourcePtr->rsrcAttributes;
-    while(resAttrib)
+    for (OCAttribute *resAttrib = resourcePtr->rsrcAttributes; resAttrib; resAttrib = resAttrib->next)
     {
         if (resAttrib->attrName && resAttrib->attrValue)
         {
@@ -406,10 +375,9 @@ static OCStackResult BuildDevicePlatformPayload(const OCResource *resourcePtr, O
                 OCRepPayloadSetPropString(tempPayload, resAttrib->attrName, (char *)resAttrib->attrValue);
             }
         }
-        resAttrib = resAttrib->next;
     }
 
-    if(!*payload)
+    if (!*payload)
     {
         *payload = tempPayload;
     }
@@ -471,14 +439,7 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
     {
         if (resAttrib->attrName && resAttrib->attrValue)
         {
-            if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, resAttrib->attrName))
-            {
-                appendOCStringLL(tempPayload, (OCStringLL *)resAttrib->attrValue);
-            }
-            else
-            {
-                OCRepPayloadSetPropString(tempPayload, resAttrib->attrName, (char *)resAttrib->attrValue);
-            }
+            OCRepPayloadSetPropString(tempPayload, resAttrib->attrName, (char *)resAttrib->attrValue);
         }
     }
 
