@@ -211,8 +211,8 @@ void CAEDRSocketConnectionStateCallback(int result, bt_socket_connection_state_e
                 while (device->pendingDataList)
                 {
                     EDRData *edrData = device->pendingDataList->data;
-                    res = CAEDRSendData(device->socketFD, edrData->data,
-                                        edrData->dataLength);
+                    res = CAEDRSendData(device->socketFD, device->remoteAddress,
+                                        edrData->data, edrData->dataLength);
                     if (CA_STATUS_OK != res)
                     {
                         OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to send pending data [%s]",
@@ -753,7 +753,7 @@ CAResult_t CAEDRClientSendUnicastData(const char *remoteAddress,
     }
     else
     {
-        result = CAEDRSendData(device->socketFD, data, dataLength);
+        result = CAEDRSendData(device->socketFD, device->remoteAddress, data, dataLength);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Failed to send data!");
@@ -826,7 +826,7 @@ CAResult_t CAEDRClientSendMulticastData(const uint8_t *data,
         }
         else
         {
-            result = CAEDRSendData(device->socketFD, data, dataLength);
+            result = CAEDRSendData(device->socketFD, device->remoteAddress ,data, dataLength);
             if (CA_STATUS_OK != result)
             {
                 OIC_LOG_V(ERROR, EDR_ADAPTER_TAG, "Failed to send data to [%s] !",
