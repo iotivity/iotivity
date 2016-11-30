@@ -877,6 +877,16 @@ OCStackResult AddResourceTypeNameToPayload(OCRepPayload *payload)
             const char *value = OCGetResourceTypeName(g_keepAliveHandle, i);
             OIC_LOG_V(DEBUG, TAG, "value: %s", value);
             rt[i] = OICStrdup(value);
+            if (NULL == rt[i])
+            {
+                OIC_LOG_V(ERROR, TAG, "Creating duplicate string for rt failed!");
+                for (uint8_t j = 0; j < i; ++j)
+                {
+                    OICFree(rt[j]);
+                }
+                OICFree(rt);
+                return OC_STACK_NO_MEMORY;
+            }
         }
         OCRepPayloadSetStringArray(payload, OC_RSRVD_RESOURCE_TYPE, (const char **) rt, rtDim);
         for (uint8_t i = 0; i < numElement; ++i)
@@ -902,6 +912,16 @@ OCStackResult AddResourceInterfaceNameToPayload(OCRepPayload *payload)
             const char *value = OCGetResourceInterfaceName(g_keepAliveHandle, i);
             OIC_LOG_V(DEBUG, TAG, "value: %s", value);
             itf[i] = OICStrdup(value);
+            if (NULL == itf[i])
+            {
+                OIC_LOG_V(ERROR, TAG, "Creating duplicate string for itf failed!");
+                for (uint8_t j = 0; j < i; ++j)
+                {
+                    OICFree(itf[j]);
+                }
+                OICFree(itf);
+                return OC_STACK_NO_MEMORY;
+            }
         }
         OCRepPayloadSetStringArray(payload, OC_RSRVD_INTERFACE, (const char **) itf, ifDim);
         for (uint8_t i = 0; i < numElement; ++i)
