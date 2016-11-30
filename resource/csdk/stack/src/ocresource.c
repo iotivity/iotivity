@@ -339,8 +339,82 @@ exit:
     return false;
 }
 
+static OCStackResult BuildDevicePlatformPayload(const OCResource *resourcePtr, OCRepPayload** payload, bool addDeviceId)
+{
+    OCRepPayload *tempPayload = OCRepPayloadCreate();
+
+    if (!resourcePtr)
+    {
+        OCRepPayloadDestroy(tempPayload);
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if (!tempPayload)
+    {
+        return OC_STACK_NO_MEMORY;
+    }
+
+    if (addDeviceId)
+    {
+        const char *deviceId = OCGetServerInstanceIDString();
+        if (!deviceId)
+        {
+            OIC_LOG(ERROR, TAG, "Failed retrieving device id.");
+            return OC_STACK_ERROR;
+        }
+        OCRepPayloadSetPropString(tempPayload, OC_RSRVD_DEVICE_ID, deviceId);
+    }
+
+    OCResourceType *resType = resourcePtr->rsrcType;
+    while(resType)
+    {
+        OCRepPayloadAddResourceType(tempPayload, resType->resourcetypename);
+        resType = resType->next;
+    }
+
+    OCResourceInterface *resInterface = resourcePtr->rsrcInterface;
+    while(resInterface)
+    {
+        OCRepPayloadAddInterface(tempPayload, resInterface->name);
+        resInterface = resInterface->next;
+    }
+
+    OCAttribute *resAttrib = resourcePtr->rsrcAttributes;
+    while(resAttrib)
+    {
+        if (resAttrib->attrName && resAttrib->attrValue)
+        {
+            if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, resAttrib->attrName))
+            {
+                char *dmv = OCCreateString((OCStringLL *)resAttrib->attrValue);
+                if (dmv)
+                {
+                    OCRepPayloadSetPropString(tempPayload, resAttrib->attrName, dmv);
+                    OICFree(dmv);
+                }
+            }
+            else
+            {
+                OCRepPayloadSetPropString(tempPayload, resAttrib->attrName, (char *)resAttrib->attrValue);
+            }
+        }
+        resAttrib = resAttrib->next;
+    }
+
+    if(!*payload)
+    {
+        *payload = tempPayload;
+    }
+    else
+    {
+        OCRepPayloadAppend(*payload, tempPayload);
+    }
+
+    return OC_STACK_OK;
+}
+
 OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
-                    OCRepPayload** payload, OCDevAddr *devAddr, bool addDeviceId)
+                    OCRepPayload** payload, OCDevAddr *devAddr)
 {
     OCRepPayload *tempPayload = OCRepPayloadCreate();
 
@@ -356,16 +430,6 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
     }
 
     OCRepPayloadSetUri(tempPayload, resourcePtr->uri);
-    if (addDeviceId)
-    {
-        const char *deviceId = OCGetServerInstanceIDString();
-        if (!deviceId)
-        {
-            OIC_LOG(ERROR, TAG, "Failed retrieving device id.");
-            return OC_STACK_ERROR;
-        }
-        OCRepPayloadSetPropString(tempPayload, OC_RSRVD_DEVICE_ID, deviceId);
-    }
     OCResourceType *resType = resourcePtr->rsrcType;
     while(resType)
     {
@@ -927,14 +991,13 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
     {
         OCResource *resourcePtr = FindResourceByUri(OC_RSRVD_DEVICE_URI);
         VERIFY_PARAM_NON_NULL(TAG, resourcePtr, "Device URI not found.");
-        discoveryResult = BuildResponseRepresentation(resourcePtr, (OCRepPayload **)&payload, NULL, true);
-
+        discoveryResult = BuildDevicePlatformPayload(resourcePtr, (OCRepPayload **)&payload, true);
     }
     else if (virtualUriInRequest == OC_PLATFORM_URI)
     {
         OCResource *resourcePtr = FindResourceByUri(OC_RSRVD_PLATFORM_URI);
         VERIFY_PARAM_NON_NULL(TAG, resourcePtr, "Platform URI not found.");
-        discoveryResult = BuildResponseRepresentation(resourcePtr, (OCRepPayload **)&payload, NULL, false);
+        discoveryResult = BuildDevicePlatformPayload(resourcePtr, (OCRepPayload **)&payload, false);
     }
 #ifdef ROUTING_GATEWAY
     else if (OC_GATEWAY_URI == virtualUriInRequest)

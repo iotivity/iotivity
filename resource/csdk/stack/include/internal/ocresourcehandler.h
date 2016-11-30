@@ -186,7 +186,7 @@ void DeleteDeviceInfo();
  * Prepare payload for resource representation.
  */
 OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
-                    OCRepPayload** payload, OCDevAddr *devAddr, bool addDeviceId);
+                    OCRepPayload** payload, OCDevAddr *devAddr);
 
 /**
  * A helper function that Maps an @ref OCEntityHandlerResult type to an

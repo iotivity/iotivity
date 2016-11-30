@@ -247,7 +247,7 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
         return OC_STACK_INVALID_PARAM;
     }
 
-    OCStackResult ret = BuildResponseRepresentation(collResource, &payload, &ehRequest->devAddr, false);
+    OCStackResult ret = BuildResponseRepresentation(collResource, &payload, &ehRequest->devAddr);
     if (ret == OC_STACK_OK)
     {
         tempChildResource = collResource->rsrcChildResourcesHead;
@@ -258,7 +258,7 @@ HandleLinkedListInterface(OCEntityHandlerRequest *ehRequest,
             {
                 //TODO : Add resource type filtering once collections
                 // start supporting queries.
-                ret = BuildResponseRepresentation(temp, &payload, &ehRequest->devAddr, false);
+                ret = BuildResponseRepresentation(temp, &payload, &ehRequest->devAddr);
             }
 
             tempChildResource = tempChildResource->next;

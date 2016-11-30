@@ -286,7 +286,7 @@ extern "C" {
 #define OC_SPEC_VERSION                 "core.1.1.0"
 
 /** Device Data Model version.*/
-#define OC_DATA_MODEL_VERSION           "res.1.1.0,sh.1.2.0"
+#define OC_DATA_MODEL_VERSION           "res.1.1.0,sh.1.1.0"
 /**
  *  These provide backward compatibility - their use is deprecated.
  */
