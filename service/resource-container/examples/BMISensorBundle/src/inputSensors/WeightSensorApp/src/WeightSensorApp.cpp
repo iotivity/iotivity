@@ -53,7 +53,7 @@ OCResourceHandle WeightResource::getHandle()
 
 void WeightResource::setResourceRepresentation(OCRepresentation &rep)
 {
-    double tempWeight;
+    double tempWeight = 0.0;
 
     rep.getValue("weight", tempWeight);
 
@@ -80,7 +80,7 @@ void *TestSensorVal(void *param)
 
     bool bFlag = true;
     int nSleep_time = INTERVAL_FOR_CHECK;
-    double nWeight;
+    double nWeight = 0.0;
 
     std::cout << "[WeightSensorAPP] ::" << __func__ << " is called."
               << std::endl;
@@ -182,7 +182,7 @@ OCEntityHandlerResult entityHandler(std::shared_ptr< OCResourceRequest > request
 
         if (requestFlag & RequestHandlerFlag::ObserverFlag)
         {
-            pthread_t threadId;
+            pthread_t threadId = {};
 
             cout << "\t\trequestFlag : Observer\n";
             g_Observation = 1;

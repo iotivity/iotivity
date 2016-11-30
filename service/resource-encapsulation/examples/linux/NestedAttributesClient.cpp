@@ -183,7 +183,7 @@ std::vector< std::vector< RCSResourceAttributes > > createNestedAttribute(int sp
 
 int processUserInput()
 {
-    int userInput;
+    int userInput = 0;
     std::cin >> userInput;
     if (std::cin.fail())
     {
@@ -201,7 +201,8 @@ void getAttributeFromRemoteServer()
 
 void setAttributeToRemoteServer()
 {
-    int speed, airc;
+    int speed = 0;
+    int airc = 0;
 
     std::cout << "\tEnter the Fan Speed you want to set : ";
     std::cin >> speed;

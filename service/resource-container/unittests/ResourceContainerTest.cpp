@@ -48,7 +48,7 @@ string CONFIG_FILE = "ResourceContainerTestConfig.xml";
 
 void getCurrentPath(std::string *pPath)
 {
-    char buffer[MAX_PATH];
+    char buffer[MAX_PATH] = {0,};
 
 #if defined(__linux__)
     char *strPath = NULL;
