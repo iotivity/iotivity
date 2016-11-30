@@ -155,6 +155,9 @@ extern "C" {
 /** To represent resource type with platform.*/
 #define OC_RSRVD_RESOURCE_TYPE_PLATFORM "oic.wk.p"
 
+/** To represent resource type with collection.*/
+#define OC_RSRVD_RESOURCE_TYPE_COLLECTION "oic.wk.col"
+
 /** To represent resource type with RES.*/
 #define OC_RSRVD_RESOURCE_TYPE_RES      "oic.wk.res"
 
