@@ -68,8 +68,9 @@ void u_arraylist_free(u_arraylist_t **list);
  * entries.
  * @param list the list to operate on.
  * @param count the size to attempt to reserve room for.
+ * @return true if success, false otherwise.
  */
-void u_arraylist_reserve(u_arraylist_t *list, size_t count);
+bool u_arraylist_reserve(u_arraylist_t *list, size_t count);
 
 /**
  * Request that the storage in the list be reduced to fit its current length.

@@ -159,22 +159,36 @@ CAResult_t ca_thread_pool_add_task(ca_thread_pool_t thread_pool, ca_thread_func 
     info->func = method;
     info->data = data;
 
+    oc_mutex_lock(thread_pool->details->list_lock);
+    if (thread_pool->details->threads_list->capacity <= thread_pool->details->threads_list->length)
+    {
+        size_t new_capacity = ((thread_pool->details->threads_list->capacity * 3) + 1) / 2;
+        bool reserveResult = u_arraylist_reserve(thread_pool->details->threads_list, new_capacity);
+        if (!reserveResult)
+        {
+            oc_mutex_unlock(thread_pool->details->list_lock);
+            OIC_LOG(ERROR, TAG, "Arraylist reserve failed");
+            return CA_STATUS_FAILED;
+        }
+    }
+
     oc_thread thread;
     int thrRet = oc_thread_new(&thread, ca_thread_pool_pthreads_delegate, info);
     if (thrRet != 0)
     {
+        oc_mutex_unlock(thread_pool->details->list_lock);
         OIC_LOG_V(ERROR, TAG, "Thread start failed with error %d", thrRet);
         OICFree(info);
         return CA_STATUS_FAILED;
     }
 
-    oc_mutex_lock(thread_pool->details->list_lock);
     bool addResult = u_arraylist_add(thread_pool->details->threads_list, (void*)thread);
     oc_mutex_unlock(thread_pool->details->list_lock);
 
     if(!addResult)
     {
-        OIC_LOG_V(ERROR, TAG, "Arraylist Add failed, may not be properly joined: %d", addResult);
+        // Note that this is considered non-fatal.
+        OIC_LOG(ERROR, TAG, "Arraylist add failed");
         oc_thread_free(thread);
         return CA_STATUS_FAILED;
     }
