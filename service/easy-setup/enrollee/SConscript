@@ -46,6 +46,7 @@ enrollee_env.PrependUnique(CPPPATH = [
                 enrollee_env.get('SRC_DIR') + '/resource/csdk/stack/include',
                 enrollee_env.get('SRC_DIR') + '/resource/csdk/logger/include',
 		enrollee_env.get('SRC_DIR') + '/resource/csdk/security/include',
+		enrollee_env.get('SRC_DIR') + '/resource/csdk/connectivity/api',
 		enrollee_env.get('SRC_DIR') + '/extlibs/cjson',
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/inc',
 		enrollee_env.get('SRC_DIR') + '/service/easy-setup/enrollee/inc',

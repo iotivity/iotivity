@@ -75,8 +75,18 @@ public class EnrolleeConf
             {
                 try
                 {
-                    if(child.hasAttribute(ESConstants.OC_RSRVD_ES_DEVNAME)) {
-                        return (String) child.getValue(ESConstants.OC_RSRVD_ES_DEVNAME);
+                    OcRepresentation rep;
+                    if(child.hasAttribute(ESConstants.OC_RSRVD_REPRESENTATION))
+                    {
+                        rep = (OcRepresentation)child.getValue(ESConstants.OC_RSRVD_REPRESENTATION);
+                    }
+                    else
+                    {
+                        return null;
+                    }
+
+                    if(rep.hasAttribute(ESConstants.OC_RSRVD_ES_DEVNAME)) {
+                        return (String) rep.getValue(ESConstants.OC_RSRVD_ES_DEVNAME);
                     }
                 } catch (OcException e) {
                     Log.e(TAG, "getWiFiModes is failed.");
@@ -105,8 +115,18 @@ public class EnrolleeConf
             {
                 try
                 {
-                    if(child.hasAttribute(ESConstants.OC_RSRVD_ES_MODELNUMBER)) {
-                        return (String) child.getValue(ESConstants.OC_RSRVD_ES_MODELNUMBER);
+                    OcRepresentation rep;
+                    if(child.hasAttribute(ESConstants.OC_RSRVD_REPRESENTATION))
+                    {
+                        rep = (OcRepresentation)child.getValue(ESConstants.OC_RSRVD_REPRESENTATION);
+                    }
+                    else
+                    {
+                        return null;
+                    }
+
+                    if(rep.hasAttribute(ESConstants.OC_RSRVD_ES_MODELNUMBER)) {
+                        return (String) rep.getValue(ESConstants.OC_RSRVD_ES_MODELNUMBER);
                     }
                 } catch (OcException e) {
                     Log.e(TAG, "getModelNumber is failed.");
@@ -134,8 +154,18 @@ public class EnrolleeConf
             if(child.getUri().indexOf(ESConstants.OC_RSRVD_ES_URI_WIFI) != -1)
             {
                 try {
-                    if (child.hasAttribute(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIMODE)) {
-                        int modes_int[] = child.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIMODE);
+                    OcRepresentation rep;
+                    if(child.hasAttribute(ESConstants.OC_RSRVD_REPRESENTATION))
+                    {
+                        rep = (OcRepresentation)child.getValue(ESConstants.OC_RSRVD_REPRESENTATION);
+                    }
+                    else
+                    {
+                        return null;
+                    }
+
+                    if (rep.hasAttribute(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIMODE)) {
+                        int modes_int[] = rep.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIMODE);
                         for (int i = 0 ; i < modes_int.length ; ++i) {
                             modes.add(WIFI_MODE.fromInt(modes_int[i]));
                         }
@@ -166,9 +196,19 @@ public class EnrolleeConf
             if(child.getUri().indexOf(ESConstants.OC_RSRVD_ES_URI_WIFI) != -1)
             {
                 try{
-                    if(child.hasAttribute(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
+                    OcRepresentation rep;
+                    if(child.hasAttribute(ESConstants.OC_RSRVD_REPRESENTATION))
+                    {
+                        rep = (OcRepresentation)child.getValue(ESConstants.OC_RSRVD_REPRESENTATION);
+                    }
+                    else
+                    {
+                        return null;
+                    }
+
+                    if(rep.hasAttribute(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
                         return WIFI_FREQ.fromInt(
-                                (int)child.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
+                                (int)rep.getValue(ESConstants.OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
                 } catch (OcException e) {
                     Log.e(TAG, "getWiFiFreq is failed.");
                 }
