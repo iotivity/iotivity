@@ -59,6 +59,8 @@ typedef enum
     TEST_UNKNOWN_RESOURCE_GET_DEFAULT,
     TEST_UNKNOWN_RESOURCE_GET_BATCH,
     TEST_UNKNOWN_RESOURCE_GET_LINK_LIST,
+    TEST_GET_EMPTY,
+    TEST_GET_NULL,
     MAX_TESTS
 } CLIENT_TEST;
 
@@ -92,6 +94,8 @@ testToTextMap queryInterface[] = {
         {"?if=oic.if.baseline", TEST_PUT_DEFAULT},
         {"?if=oic.if.b", TEST_PUT_BATCH},
         {"?if=oic.if.ll", TEST_PUT_LINK_LIST},
+        {"", TEST_GET_EMPTY},
+        {NULL, TEST_GET_NULL},
 };
 
 
@@ -162,6 +166,11 @@ void PrintUsage()
                  "unavailable resource using batch interface.");
     OIC_LOG(INFO, TAG, "Test Case 9 : Discover Resources && Initiate GET Request on an "\
                  "unavailable resource using link list interface.");
+    OIC_LOG(INFO, TAG, "Test Case 10 : Discover Resources && Initiate GET Request on an "\
+                 "empty resource.");
+    OIC_LOG(INFO, TAG, "Test Case 11 : Discover Resources && Initiate GET Request on an "\
+                 "NULL resource.");
+
 }
 
 OCStackApplicationResult putReqCB(void* ctx, OCDoHandle /*handle*/,
@@ -448,4 +457,3 @@ std::string getQueryStrForGetPut()
 {
     return "/a/room";
 }
-

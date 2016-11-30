@@ -44,7 +44,6 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "logger.h"
-#include "cJSON.h"
 #include "ocpayload.h"
 #include "secureresourcemanager.h"
 #include "cacommon.h"
@@ -137,8 +136,13 @@ static OCStackResult GetTCPPortInfo(OCDevAddr *endpoint, uint16_t *port, bool se
  * Resource and device filters in the SAME query are NOT validated
  * and resources will likely not clear filters.
  */
-static OCStackResult ExtractFiltersFromQuery(char *query, char **filterOne, char **filterTwo)
+OCStackResult ExtractFiltersFromQuery(const char *query, char **filterOne, char **filterTwo)
 {
+    if (!query)
+    {
+        OIC_LOG_V(ERROR, TAG, "Query is empty!");
+        return OC_STACK_INVALID_QUERY;
+    }
     char *key = NULL;
     char *value = NULL;
     char *queryDup = NULL;
@@ -292,14 +296,14 @@ static OCStackResult getQueryParamsForFiltering (OCVirtualResources uri, char *q
     *filterOne = NULL;
     *filterTwo = NULL;
 
-    #ifdef WITH_PRESENCE
+#ifdef WITH_PRESENCE
     if (uri == OC_PRESENCE)
     {
         //Nothing needs to be done, except for pass a OC_PRESENCE query through as OC_STACK_OK.
         OIC_LOG(INFO, TAG, "OC_PRESENCE Request for virtual resource.");
         return OC_STACK_OK;
     }
-    #endif
+#endif
 
     OCStackResult result = OC_STACK_OK;
 
@@ -341,14 +345,12 @@ exit:
 
 static OCStackResult BuildDevicePlatformPayload(const OCResource *resourcePtr, OCRepPayload** payload, bool addDeviceId)
 {
-    OCRepPayload *tempPayload = OCRepPayloadCreate();
-
     if (!resourcePtr)
     {
-        OCRepPayloadDestroy(tempPayload);
         return OC_STACK_INVALID_PARAM;
     }
 
+    OCRepPayload *tempPayload = OCRepPayloadCreate();
     if (!tempPayload)
     {
         return OC_STACK_NO_MEMORY;
@@ -429,23 +431,37 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
         return OC_STACK_NO_MEMORY;
     }
 
-    OCRepPayloadSetUri(tempPayload, resourcePtr->uri);
-    OCResourceType *resType = resourcePtr->rsrcType;
-    while(resType)
+    OCRepPayloadSetPropString(tempPayload, OC_RSRVD_HREF, resourcePtr->uri);
+
+    uint8_t numElement = 0;
+    if (OC_STACK_OK == OCGetNumberOfResourceTypes((OCResource *)resourcePtr, &numElement))
     {
-        OCRepPayloadAddResourceType(tempPayload, resType->resourcetypename);
-        resType = resType->next;
+        size_t rtDim[MAX_REP_ARRAY_DEPTH] = {numElement, 0, 0};
+        char **rt = (char **)OICMalloc(sizeof(char *) * numElement);
+        for (uint8_t i = 0; i < numElement; ++i)
+        {
+            const char *value = OCGetResourceTypeName((OCResource *)resourcePtr, i);
+            OIC_LOG_V(DEBUG, TAG, "value: %s", value);
+            rt[i] = OICStrdup(value);
+        }
+        OCRepPayloadSetStringArrayAsOwner(tempPayload, OC_RSRVD_RESOURCE_TYPE, rt, rtDim);
     }
 
-    OCResourceInterface *resInterface = resourcePtr->rsrcInterface;
-    while(resInterface)
+    numElement = 0;
+    if (OC_STACK_OK == OCGetNumberOfResourceInterfaces((OCResource *)resourcePtr, &numElement))
     {
-        OCRepPayloadAddInterface(tempPayload, resInterface->name);
-        resInterface = resInterface->next;
+        size_t ifDim[MAX_REP_ARRAY_DEPTH] = {numElement, 0, 0};
+        char **itf = (char **)OICMalloc(sizeof(char *) * numElement);
+        for (uint8_t i = 0; i < numElement; ++i)
+        {
+            const char *value = OCGetResourceInterfaceName((OCResource *)resourcePtr, i);
+            OIC_LOG_V(DEBUG, TAG, "value: %s", value);
+            itf[i] = OICStrdup(value);
+        }
+        OCRepPayloadSetStringArrayAsOwner(tempPayload, OC_RSRVD_INTERFACE, itf, ifDim);
     }
 
-    OCAttribute *resAttrib = resourcePtr->rsrcAttributes;
-    while(resAttrib)
+    for (OCAttribute *resAttrib = resourcePtr->rsrcAttributes; resAttrib; resAttrib = resAttrib->next)
     {
         if (resAttrib->attrName && resAttrib->attrValue)
         {
@@ -463,7 +479,6 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
                 OCRepPayloadSetPropString(tempPayload, resAttrib->attrName, (char *)resAttrib->attrValue);
             }
         }
-        resAttrib = resAttrib->next;
     }
 
     if (devAddr)
@@ -489,7 +504,7 @@ OCStackResult BuildResponseRepresentation(const OCResource *resourcePtr,
         OCRepPayloadSetPropObjectAsOwner(tempPayload, OC_RSRVD_POLICY, policy);
     }
 
-    if(!*payload)
+    if (!*payload)
     {
         *payload = tempPayload;
     }
@@ -529,21 +544,6 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
     return OC_STACK_OK;
 }
 
-uint8_t IsCollectionResource (OCResource *resource)
-{
-    if(!resource)
-    {
-        return 0;
-    }
-
-    if(resource->rsrcChildResourcesHead != NULL)
-    {
-        return 1;
-    }
-
-    return 0;
-}
-
 OCResource *FindResourceByUri(const char* resourceUri)
 {
     if(!resourceUri)
@@ -563,7 +563,6 @@ OCResource *FindResourceByUri(const char* resourceUri)
     OIC_LOG_V(INFO, TAG, "Resource %s not found", resourceUri);
     return NULL;
 }
-
 
 OCStackResult DetermineResourceHandling (const OCServerRequest *request,
                                          ResourceHandling *handling,
@@ -608,7 +607,7 @@ OCStackResult DetermineResourceHandling (const OCServerRequest *request,
             return OC_STACK_NO_RESOURCE;
         }
 
-        if (IsCollectionResource (resourcePtr))
+        if (resourcePtr && resourcePtr->rsrcChildResourcesHead != NULL)
         {
             // Collection resource
             if (resourcePtr->entityHandler != defaultResourceEHandler)
@@ -694,15 +693,12 @@ static bool resourceMatchesRTFilter(OCResource *resource, char *resourceTypeFilt
         return true;
     }
 
-    OCResourceType *resourceTypePtr = resource->rsrcType;
-
-    while (resourceTypePtr)
+    for (OCResourceType *rtPtr = resource->rsrcType; rtPtr; rtPtr = rtPtr->next)
     {
-        if (strcmp (resourceTypePtr->resourcetypename, resourceTypeFilter) == 0)
+        if (0 == strcmp(rtPtr->resourcetypename, resourceTypeFilter))
         {
             return true;
         }
-        resourceTypePtr = resourceTypePtr->next;
     }
 
     OIC_LOG_V(INFO, TAG, "%s does not contain rt=%s.", resource->uri, resourceTypeFilter);
@@ -722,17 +718,14 @@ static bool resourceMatchesIFFilter(OCResource *resource, char *interfaceFilter)
         return true;
     }
 
-    OCResourceInterface *interfacePtr = resource->rsrcInterface;
-
-    while (interfacePtr)
+    for (OCResourceInterface *ifPtr = resource->rsrcInterface; ifPtr; ifPtr = ifPtr->next)
     {
-        if (strcmp (interfacePtr->name, interfaceFilter) == 0 ||
-            strcmp (OC_RSRVD_INTERFACE_LL, interfaceFilter) == 0 ||
-            strcmp (OC_RSRVD_INTERFACE_DEFAULT, interfaceFilter) == 0)
+        if (0 == strcmp(ifPtr->name, interfaceFilter) ||
+            0 == strcmp(OC_RSRVD_INTERFACE_LL, interfaceFilter) ||
+            0 == strcmp(OC_RSRVD_INTERFACE_DEFAULT, interfaceFilter))
         {
             return true;
         }
-        interfacePtr = interfacePtr->next;
     }
 
     OIC_LOG_V(INFO, TAG, "%s does not contain if=%s.", resource->uri, interfaceFilter);
@@ -762,12 +755,12 @@ static bool includeThisResourceInResponse(OCResource *resource,
          */
         if (!(resourceTypeFilter && *resourceTypeFilter))
         {
-            OIC_LOG_V(INFO, TAG, "%s no query string for EXPLICIT_DISCOVERABLE \
+            OIC_LOG_V(INFO, TAG, "%s no query string for EXPLICIT_DISCOVERABLE\
                 resource", resource->uri);
             return false;
         }
     }
-    else if ( !(resource->resourceProperties & OC_ACTIVE) ||
+    else if (!(resource->resourceProperties & OC_ACTIVE) ||
          !(resource->resourceProperties & OC_DISCOVERABLE))
     {
         OIC_LOG_V(INFO, TAG, "%s not ACTIVE or DISCOVERABLE", resource->uri);
@@ -776,7 +769,6 @@ static bool includeThisResourceInResponse(OCResource *resource,
 
     return resourceMatchesIFFilter(resource, interfaceFilter) &&
            resourceMatchesRTFilter(resource, resourceTypeFilter);
-
 }
 
 OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCResource *resource,
@@ -792,6 +784,26 @@ OCStackResult SendNonPersistantDiscoveryResponse(OCServerRequest *request, OCRes
 
     return OCDoResponse(&response);
 }
+
+static OCStackResult EHRequest(OCEntityHandlerRequest *ehRequest, OCPayloadType type,
+    OCServerRequest *request, OCResource *resource)
+{
+    return FormOCEntityHandlerRequest(ehRequest,
+                                     (OCRequestHandle)request->requestId,
+                                     request->method,
+                                     &request->devAddr,
+                                     (OCResourceHandle)resource,
+                                     request->query,
+                                     type,
+                                     request->payload,
+                                     request->payloadSize,
+                                     request->numRcvdVendorSpecificHeaderOptions,
+                                     request->rcvdVendorSpecificHeaderOptions,
+                                     (OCObserveAction)request->observationOption,
+                                     (OCObservationId)0,
+                                     request->coapID);
+}
+
 #ifdef RD_SERVER
 /**
  * Find resource at the resource directory server. This resource is not local resource but a
@@ -929,7 +941,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 #endif
             )
     {
-        discoveryResult = getQueryParamsForFiltering (virtualUriInRequest, request->query,
+        discoveryResult = getQueryParamsForFiltering(virtualUriInRequest, request->query,
                 &interfaceQuery, &resourceTypeQuery);
         VERIFY_SUCCESS(discoveryResult);
         if (!interfaceQuery && !resourceTypeQuery)
@@ -1090,31 +1102,17 @@ exit:
 }
 
 static OCStackResult
-HandleDefaultDeviceEntityHandler (OCServerRequest *request)
+HandleDefaultDeviceEntityHandler(OCServerRequest *request)
 {
-    if(!request)
+    if (!request)
     {
         return OC_STACK_INVALID_PARAM;
     }
 
-    OCStackResult result = OC_STACK_OK;
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
     OCEntityHandlerRequest ehRequest = {0};
-
     OIC_LOG(INFO, TAG, "Entering HandleResourceWithDefaultDeviceEntityHandler");
-    result = FormOCEntityHandlerRequest(&ehRequest,
-                                        (OCRequestHandle) request->requestId,
-                                        request->method,
-                                        &request->devAddr,
-                                        (OCResourceHandle) NULL, request->query,
-                                        PAYLOAD_TYPE_REPRESENTATION,
-                                        request->payload,
-                                        request->payloadSize,
-                                        request->numRcvdVendorSpecificHeaderOptions,
-                                        request->rcvdVendorSpecificHeaderOptions,
-                                        (OCObserveAction)request->observationOption,
-                                        (OCObservationId)0,
-                                        request->coapID);
+    OCStackResult result = EHRequest(&ehRequest, PAYLOAD_TYPE_REPRESENTATION, request, NULL);
     VERIFY_SUCCESS(result);
 
     // At this point we know for sure that defaultDeviceHandler exists
@@ -1136,12 +1134,9 @@ exit:
 }
 
 static OCStackResult
-HandleResourceWithEntityHandler (OCServerRequest *request,
-                                 OCResource *resource,
-                                 uint8_t collectionResource)
+HandleResourceWithEntityHandler(OCServerRequest *request,
+                                OCResource *resource)
 {
-    OC_UNUSED(collectionResource);
-
     if(!request || ! resource)
     {
         return OC_STACK_INVALID_PARAM;
@@ -1162,20 +1157,7 @@ HandleResourceWithEntityHandler (OCServerRequest *request,
         type = PAYLOAD_TYPE_SECURITY;
     }
 
-    result = FormOCEntityHandlerRequest(&ehRequest,
-                                        (OCRequestHandle)request->requestId,
-                                        request->method,
-                                        &request->devAddr,
-                                        (OCResourceHandle)resource,
-                                        request->query,
-                                        type,
-                                        request->payload,
-                                        request->payloadSize,
-                                        request->numRcvdVendorSpecificHeaderOptions,
-                                        request->rcvdVendorSpecificHeaderOptions,
-                                        (OCObserveAction)request->observationOption,
-                                        0,
-                                        request->coapID);
+    result = EHRequest(&ehRequest, type, request, resource);
     VERIFY_SUCCESS(result);
 
     if(ehRequest.obsInfo.action == OC_OBSERVE_NO_OPTION)
@@ -1294,32 +1276,16 @@ exit:
     return result;
 }
 
-static OCStackResult
-HandleCollectionResourceDefaultEntityHandler (OCServerRequest *request,
-                                              OCResource *resource)
+static OCStackResult HandleCollectionResourceDefaultEntityHandler(OCServerRequest *request,
+                                                                  OCResource *resource)
 {
-    if(!request || !resource)
+    if (!request || !resource)
     {
         return OC_STACK_INVALID_PARAM;
     }
 
-    OCStackResult result = OC_STACK_ERROR;
     OCEntityHandlerRequest ehRequest = {0};
-
-    result = FormOCEntityHandlerRequest(&ehRequest,
-                                        (OCRequestHandle)request->requestId,
-                                        request->method,
-                                        &request->devAddr,
-                                        (OCResourceHandle)resource,
-                                        request->query,
-                                        PAYLOAD_TYPE_REPRESENTATION,
-                                        request->payload,
-                                        request->payloadSize,
-                                        request->numRcvdVendorSpecificHeaderOptions,
-                                        request->rcvdVendorSpecificHeaderOptions,
-                                        (OCObserveAction)request->observationOption,
-                                        (OCObservationId)0,
-                                        request->coapID);
+    OCStackResult result = EHRequest(&ehRequest, PAYLOAD_TYPE_REPRESENTATION, request, resource);
     if(result == OC_STACK_OK)
     {
         result = DefaultCollectionEntityHandler (OC_REQUEST_FLAG, &ehRequest);
@@ -1353,12 +1319,12 @@ ProcessRequest(ResourceHandling resHandling, OCResource *resource, OCServerReque
         }
         case OC_RESOURCE_NOT_COLLECTION_WITH_ENTITYHANDLER:
         {
-            ret = HandleResourceWithEntityHandler (request, resource, 0);
+            ret = HandleResourceWithEntityHandler (request, resource);
             break;
         }
         case OC_RESOURCE_COLLECTION_WITH_ENTITYHANDLER:
         {
-            ret = HandleResourceWithEntityHandler (request, resource, 1);
+            ret = HandleResourceWithEntityHandler (request, resource);
             break;
         }
         case OC_RESOURCE_COLLECTION_DEFAULT_ENTITYHANDLER:

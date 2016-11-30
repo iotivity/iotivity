@@ -287,6 +287,25 @@ void CopyEndpointToDevAddr(const CAEndpoint_t *in, OCDevAddr *out);
 
 void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out);
 
+/**
+ * Get the CoAP ticks after the specified number of milli-seconds.
+ *
+ * @param milliSeconds Milli-seconds.
+ * @return CoAP ticks
+ */
+uint32_t GetTicks(uint32_t milliSeconds);
+
+/**
+ * Extract interface and resource type from the query.
+ *
+ * @param query is the request received from the client
+ * @param filterOne will include result if the interface is included in the query.
+ * @param filterTwo will include result if the resource type is included in the query.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure
+ */
+OCStackResult ExtractFiltersFromQuery(const char *query, char **filterOne, char **filterTwo);
+
 #if defined(RD_CLIENT) || defined(RD_SERVER)
 /**
  * This function binds an resource unique ins value to the resource. This can be only called
