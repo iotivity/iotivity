@@ -66,7 +66,7 @@ void u_arraylist_free(u_arraylist_t **list)
     *list = NULL;
 }
 
-void u_arraylist_reserve(u_arraylist_t *list, size_t count)
+bool u_arraylist_reserve(u_arraylist_t *list, size_t count)
 {
     if (list && (count > list->capacity))
     {
@@ -74,7 +74,7 @@ void u_arraylist_reserve(u_arraylist_t *list, size_t count)
         if (!tmp)
         {
             OIC_LOG(DEBUG, TAG, "Memory reallocation failed.");
-            // Note that this is considered non-fatal.
+            return false;
         }
         else
         {
@@ -82,6 +82,7 @@ void u_arraylist_reserve(u_arraylist_t *list, size_t count)
             list->capacity = count;
         }
     }
+    return true;
 }
 
 void u_arraylist_shrink_to_fit(u_arraylist_t *list)

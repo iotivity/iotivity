@@ -1046,8 +1046,6 @@ CAResult_t CAInitializeMessageHandler()
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Failed to Initialize send queue thread");
-        ca_thread_pool_free(g_threadPoolHandle);
-        g_threadPoolHandle = NULL;
         return res;
     }
 
@@ -1056,9 +1054,6 @@ CAResult_t CAInitializeMessageHandler()
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "thread start error(send thread).");
-        ca_thread_pool_free(g_threadPoolHandle);
-        g_threadPoolHandle = NULL;
-        CAQueueingThreadDestroy(&g_sendThread);
         return res;
     }
 
@@ -1068,9 +1063,6 @@ CAResult_t CAInitializeMessageHandler()
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Failed to Initialize receive queue thread");
-        ca_thread_pool_free(g_threadPoolHandle);
-        g_threadPoolHandle = NULL;
-        CAQueueingThreadDestroy(&g_sendThread);
         return res;
     }
 
@@ -1080,10 +1072,6 @@ CAResult_t CAInitializeMessageHandler()
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "thread start error(receive thread).");
-        ca_thread_pool_free(g_threadPoolHandle);
-        g_threadPoolHandle = NULL;
-        CAQueueingThreadDestroy(&g_sendThread);
-        CAQueueingThreadDestroy(&g_receiveThread);
         return res;
     }
 #endif // SINGLE_HANDLE
@@ -1094,10 +1082,6 @@ CAResult_t CAInitializeMessageHandler()
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Failed to Initialize Retransmission.");
-        ca_thread_pool_free(g_threadPoolHandle);
-        g_threadPoolHandle = NULL;
-        CAQueueingThreadDestroy(&g_sendThread);
-        CAQueueingThreadDestroy(&g_receiveThread);
         return res;
     }
 
@@ -1107,11 +1091,6 @@ CAResult_t CAInitializeMessageHandler()
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Failed to Initialize BlockWiseTransfer.");
-        ca_thread_pool_free(g_threadPoolHandle);
-        g_threadPoolHandle = NULL;
-        CAQueueingThreadDestroy(&g_sendThread);
-        CAQueueingThreadDestroy(&g_receiveThread);
-        CARetransmissionDestroy(&g_retransmissionContext);
         return res;
     }
 #endif
@@ -1121,11 +1100,6 @@ CAResult_t CAInitializeMessageHandler()
     if (CA_STATUS_OK != res)
     {
         OIC_LOG(ERROR, TAG, "thread start error(retransmission thread).");
-        ca_thread_pool_free(g_threadPoolHandle);
-        g_threadPoolHandle = NULL;
-        CAQueueingThreadDestroy(&g_sendThread);
-        CAQueueingThreadDestroy(&g_receiveThread);
-        CARetransmissionDestroy(&g_retransmissionContext);
         return res;
     }
 

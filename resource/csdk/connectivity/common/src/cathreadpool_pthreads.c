@@ -162,36 +162,35 @@ CAResult_t ca_thread_pool_add_task(ca_thread_pool_t thread_pool, ca_thread_func 
     info->func = method;
     info->data = data;
 
+    ca_mutex_lock(thread_pool->details->list_lock);
+    if (thread_pool->details->threads_list->capacity <= thread_pool->details->threads_list->length)
+    {
+        size_t new_capacity = ((thread_pool->details->threads_list->capacity * 3) + 1) / 2;
+        bool reserveResult = u_arraylist_reserve(thread_pool->details->threads_list, new_capacity);
+        if (!reserveResult)
+        {
+            ca_mutex_unlock(thread_pool->details->list_lock);
+            OIC_LOG(ERROR, TAG, "Arraylist reserve failed");
+            return CA_STATUS_FAILED;
+        }
+    }
+
     pthread_t threadHandle;
     int result = pthread_create(&threadHandle, NULL, ca_thread_pool_pthreads_delegate, info);
-
-    if(result != 0)
+    if (result != 0)
     {
+        ca_mutex_unlock(thread_pool->details->list_lock);
         OIC_LOG_V(ERROR, TAG, "Thread start failed with error %d", result);
         return CA_STATUS_FAILED;
     }
 
-    ca_mutex_lock(thread_pool->details->list_lock);
     bool addResult = u_arraylist_add(thread_pool->details->threads_list, (void*)threadHandle);
     ca_mutex_unlock(thread_pool->details->list_lock);
 
     if (!addResult)
     {
-        OIC_LOG_V(ERROR, TAG, "Arraylist Add failed, may not be properly joined: %d", addResult);
-#if defined(_WIN32)
-        DWORD joinres = WaitForSingleObject(threadHandle, INFINITE);
-        if (WAIT_OBJECT_0 != joinres)
-        {
-            OIC_LOG_V(ERROR, TAG, "Failed to join thread with error %d", joinres);
-        }
-        CloseHandle(threadHandle);
-#else
-        int joinres = pthread_join(threadHandle, NULL);
-        if (0 != joinres)
-        {
-            OIC_LOG_V(ERROR, TAG, "Failed to join thread with error %d", joinres);
-        }
-#endif
+        // Note that this is considered non-fatal.
+        OIC_LOG(ERROR, TAG, "Arraylist add failed");
         return CA_STATUS_FAILED;
     }
 
@@ -223,7 +222,7 @@ void ca_thread_pool_free(ca_thread_pool_t thread_pool)
         CloseHandle(tid);
 #else
         int joinres = pthread_join(tid, NULL);
-        if(0 != joinres)
+        if (0 != joinres)
         {
             OIC_LOG_V(ERROR, TAG, "Failed to join thread at index %u with error %d", i, joinres);
         }
