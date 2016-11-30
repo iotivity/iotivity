@@ -522,9 +522,19 @@ namespace OIC
                 {
                     if(child->getUri().find(OC_RSRVD_ES_URI_DEVCONF) != std::string::npos)
                     {
-                        if(child->hasAttribute(OC_RSRVD_ES_DEVNAME))
+                        OCRepresentation rep;
+                        if(child->hasAttribute(OC_RSRVD_REPRESENTATION))
                         {
-                            return child->getValue<std::string>(OC_RSRVD_ES_DEVNAME);
+                            rep = child->getValue<OCRepresentation>(OC_RSRVD_REPRESENTATION);
+                        }
+                        else
+                        {
+                            return std::string("");
+                        }
+
+                        if(rep.hasAttribute(OC_RSRVD_ES_DEVNAME))
+                        {
+                            return rep.getValue<std::string>(OC_RSRVD_ES_DEVNAME);
                         }
                     }
                 }
@@ -543,9 +553,19 @@ namespace OIC
                 {
                     if(child->getUri().find(OC_RSRVD_ES_URI_DEVCONF) != std::string::npos)
                     {
-                        if(child->hasAttribute(OC_RSRVD_ES_MODELNUMBER))
+                        OCRepresentation rep;
+                        if(child->hasAttribute(OC_RSRVD_REPRESENTATION))
                         {
-                            return child->getValue<std::string>(OC_RSRVD_ES_MODELNUMBER);
+                            rep = child->getValue<OCRepresentation>(OC_RSRVD_REPRESENTATION);
+                        }
+                        else
+                        {
+                            return std::string("");
+                        }
+
+                        if(rep.hasAttribute(OC_RSRVD_ES_MODELNUMBER))
+                        {
+                            return rep.getValue<std::string>(OC_RSRVD_ES_MODELNUMBER);
                         }
                     }
                 }
@@ -569,9 +589,19 @@ namespace OIC
                 {
                     if(child->getUri().find(OC_RSRVD_ES_URI_WIFI) != std::string::npos)
                     {
-                        if(child->hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
+                        OCRepresentation rep;
+                        if(child->hasAttribute(OC_RSRVD_REPRESENTATION))
                         {
-                            for(auto it : child->getValue
+                            rep = child->getValue<OCRepresentation>(OC_RSRVD_REPRESENTATION);
+                        }
+                        else
+                        {
+                            return modes;
+                        }
+
+                        if(rep.hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
+                        {
+                            for(auto it : rep.getValue
                                         <std::vector<int>>(OC_RSRVD_ES_SUPPORTEDWIFIMODE))
                             {
                                 modes.push_back(static_cast<WIFI_MODE>(it));
@@ -596,10 +626,20 @@ namespace OIC
                 {
                     if(child->getUri().find(OC_RSRVD_ES_URI_WIFI) != std::string::npos)
                     {
-                        if(child->hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
+                        OCRepresentation rep;
+                        if(child->hasAttribute(OC_RSRVD_REPRESENTATION))
+                        {
+                            rep = child->getValue<OCRepresentation>(OC_RSRVD_REPRESENTATION);
+                        }
+                        else
+                        {
+                            return WIFI_FREQ_NONE;
+                        }
+
+                        if(rep.hasAttribute(OC_RSRVD_ES_SUPPORTEDWIFIFREQ))
                         {
                             return static_cast<WIFI_FREQ>(
-                                        child->getValue<int>(OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
+                                        rep.getValue<int>(OC_RSRVD_ES_SUPPORTEDWIFIFREQ));
                         }
                     }
                 }

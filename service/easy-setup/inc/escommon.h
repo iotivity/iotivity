@@ -30,6 +30,12 @@ extern "C"
 #endif
 
 // Defines
+#define OC_RSRVD_ES_RES_TYPE_COL          "oic.wk.col"
+#define OC_RSRVD_ES_INTERFACE             "if"
+#define OC_RSRVD_ES_RES_TYPE              "rt"
+
+
+
 #define OIC_STRING_MAX_VALUE    64
 #define MAX_WEBLINKLEN          3
 #define NUM_WIFIMODE            5

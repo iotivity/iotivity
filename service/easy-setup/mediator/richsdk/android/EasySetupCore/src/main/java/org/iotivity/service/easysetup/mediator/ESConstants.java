@@ -22,6 +22,8 @@ package org.iotivity.service.easysetup.mediator;
 
 public class ESConstants {
 
+    public static final String OC_RSRVD_REPRESENTATION = "rep";
+
     public static final String OC_RSRVD_ES_PROVSTATUS = "ps";
     public static final String OC_RSRVD_ES_LAST_ERRORCODE = "lec";
     public static final String OC_RSRVD_ES_LINKS = "links";
