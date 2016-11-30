@@ -53,7 +53,7 @@ int processUserInput(int min, int max)
 {
     assert(min <= max);
 
-    int input;
+    int input = 0;
 
     std::cin >> input;
 
@@ -178,7 +178,7 @@ void runResourceTypeSelection(int resourceMode)
     std::cout << "========================================================\n";
 
     int resourceType = processUserInput(RESOURCE_TEMP, RESOURCE_LIGHT);
-    DisplayControlMenuFunc displayMenuFunc;
+    DisplayControlMenuFunc displayMenuFunc = nullptr;
     std::string attrKey;
 
     switch (resourceType)

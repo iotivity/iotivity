@@ -223,7 +223,7 @@ void initServer()
 
 int processUserInput()
 {
-    int userInput;
+    int userInput = 0;
     std::cin >> userInput;
     if (std::cin.fail())
     {

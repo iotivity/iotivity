@@ -51,7 +51,7 @@ int DiscomfortIndexSensor::executeDISensorLogic(std::map<std::string, std::strin
     std::cout << "[DiscomfortIndexSensor] DiscomfortIndexSensor::" << __func__ << " is called."
               << std::endl;
 
-    DIResult result;
+    DIResult result = ERROR;
 
     m_temperature = pInputData->at("temperature");
     m_humidity = pInputData->at("humidity");
