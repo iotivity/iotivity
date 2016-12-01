@@ -242,7 +242,7 @@ namespace OIC
 
             std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
                             std::make_shared< SecProvisioningStatus >(m_enrolleeSecurity->getUUID(), res);
-            m_securityProvStatusCb(securityProvisioningStatus);
+            securityProvStatusCb(securityProvisioningStatus);
             m_enrolleeSecurity.reset();
 #else
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG,"Mediator is unsecured built.");
