@@ -113,9 +113,8 @@ if target_os not in ['windows']:
 Alias("test", [unittest])
 
 sptest_env.AppendTarget('test')
-# TODO: fix this test on linux and remove this comment line
 if sptest_env.get('TEST') == '1':
-	if target_os in ['windows']:
+	if target_os in ['linux', 'windows']:
 		out_dir = sptest_env.get('BUILD_DIR')
 		result_dir = os.path.join(sptest_env.get('BUILD_DIR'), 'test_out') + os.sep
 		if not os.path.isdir(result_dir):
