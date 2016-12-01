@@ -316,8 +316,6 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %endif
 %if "%{TARGET_OS}" == "linux"
 %{_libdir}/libnotification*.so
-%else
-%{_libdir}/libresource_hosting.so
 %endif
 
 %files test
