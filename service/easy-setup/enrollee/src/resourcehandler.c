@@ -996,7 +996,6 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             if(nextPayload != NULL)
             {
                 payload->next = nextPayload;
-                payload = payload->next;
             }
 
             payload = head;
