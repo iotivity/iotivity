@@ -25,6 +25,7 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "base64.h"
+#include "ocrandom.h"
 
 #define TAG  "OIC_SRM_UTILITY"
 
@@ -139,44 +140,6 @@ exit:
 
 OCStackResult ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid)
 {
-    if(NULL == strUuid || NULL == uuid)
-    {
-        OIC_LOG(ERROR, TAG, "ConvertStrToUuid : Invalid param");
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    size_t urnIdx = 0;
-    size_t uuidIdx = 0;
-    size_t strUuidLen = 0;
-    char convertedUuid[UUID_LENGTH * 2] = {0};
-
-    strUuidLen = strlen(strUuid);
-    if(0 == strUuidLen)
-    {
-        OIC_LOG(INFO, TAG, "The empty string detected, The UUID will be converted to "\
-                           "\"00000000-0000-0000-0000-000000000000\"");
-    }
-    else if(UUID_LENGTH * 2 + 4 == strUuidLen)
-    {
-        for(uuidIdx=0, urnIdx=0; uuidIdx < UUID_LENGTH ; uuidIdx++, urnIdx+=2)
-        {
-            if(*(strUuid + urnIdx) == '-')
-            {
-                urnIdx++;
-            }
-            sscanf(strUuid + urnIdx, "%2hhx", &convertedUuid[uuidIdx]);
-        }
-    }
-    else
-    {
-        OIC_LOG(ERROR, TAG, "Invalid string uuid format, Please set the uuid as correct format");
-        OIC_LOG(ERROR, TAG, "e.g) \"72616E64-5069-6E44-6576-557569643030\" (4-2-2-2-6)");
-        OIC_LOG(ERROR, TAG, "e.g) \"\"");
-
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    memcpy(uuid->id, convertedUuid, UUID_LENGTH);
-
-    return OC_STACK_OK;
+    OCRandomUuidResult result = OCConvertStringToUuid(strUuid, uuid->id);
+    return (result == RAND_UUID_OK) ? OC_STACK_OK : OC_STACK_INVALID_PARAM;
 }

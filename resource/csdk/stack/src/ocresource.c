@@ -1432,6 +1432,18 @@ OCStackResult OCSetPlatformInfo(OCPlatformInfo info)
         goto exit;
     }
 
+    /*
+     * @todo (IOT-1541) There are several versions of a UUID structure and conversion
+     * methods scattered around the IoTivity code base.  They need to be combined
+     * into one PAL API.
+     */
+    uint8_t uuid[UUID_SIZE];
+    if (OCConvertStringToUuid(info.platformID, uuid) != RAND_UUID_OK)
+    {
+        OIC_LOG(ERROR, TAG, "Platform ID is not a UUID.");
+        goto exit;
+    }
+
     resource = FindResourceByUri(OC_RSRVD_PLATFORM_URI);
     if (!resource)
     {

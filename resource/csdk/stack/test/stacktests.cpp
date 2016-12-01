@@ -63,7 +63,7 @@ namespace itst = iotivity::test;
 //-----------------------------------------------------------------------------
 static const char TAG[] = "TestHarness";
 
-char gDeviceUUID[] = "myDeviceUUID";
+char gDeviceUUID[] = "fe3f9a68-4931-4cb0-9ea4-81702b43116c";
 char gManufacturerName[] = "myName";
 static OCPrm_t pmSel;
 static char pinNumber;
@@ -294,6 +294,22 @@ TEST(StackStart, SetPlatformInfoWithNoPlatformID)
      {
          0,
          gDeviceUUID,
+         0, 0, 0, 0, 0, 0, 0, 0, 0
+     };
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackStart, SetPlatformInfoWithBadPlatformID)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
+
+    OCPlatformInfo info =
+     {
+         "myDeviceUUID",
+         gManufacturerName,
          0, 0, 0, 0, 0, 0, 0, 0, 0
      };
 
