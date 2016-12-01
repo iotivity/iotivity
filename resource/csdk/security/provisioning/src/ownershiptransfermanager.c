@@ -373,6 +373,16 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
             if(OC_STACK_OK != res && OC_STACK_CONTINUE != res && OC_STACK_DUPLICATE_REQUEST != res)
             {
                 otmCtx->ctxHasError = true;
+                if (OC_STACK_OK != PDMDeleteDevice(&otmCtx->ctxResultArray[i].deviceId))
+                {
+                    OIC_LOG(WARNING, TAG, "Internal error in PDMDeleteDevice");
+                }
+                CAEndpoint_t* endpoint = (CAEndpoint_t *)&otmCtx->selectedDeviceInfo->endpoint;
+                endpoint->port = otmCtx->selectedDeviceInfo->securePort;
+                if (CA_STATUS_OK != CAcloseSslConnection(endpoint))
+                {
+                    OIC_LOG(WARNING, TAG, "Failed to close Secure session");
+                }
             }
         }
     }
