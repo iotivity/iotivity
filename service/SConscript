@@ -27,9 +27,6 @@ Import('env')
 target_os = env.get('TARGET_OS')
 
 if target_os not in ['arduino','darwin', 'ios', 'windows']:
-    # Build resource-hosting project
-    SConscript('resource-hosting/SConscript')
-
     # Build resource-encapsulation project
     SConscript('resource-encapsulation/SConscript')
 
