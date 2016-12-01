@@ -156,6 +156,7 @@ void updateGroup(void);
 void updateLocalResource(void);
 void sendSpecialPost(void);
 vector< OCRepresentation > createLinkRepresentation();
+void addIntoLinksArray(vector<OCRepresentation>& childrenList, SampleResource* resource);
 string getHost();
 FILE* server_fopen(const char*, const char*);
 FILE* client_fopen(const char*, const char*);
@@ -423,6 +424,42 @@ int main(int argc, char* argv[])
     return 0;
 }
 
+void addIntoLinksArray(vector<OCRepresentation>& childrenList, SampleResource* resource){
+    OCRepresentation interimRep;
+    OCRepresentation pRep;
+
+    uint8_t bm = 2;
+    pRep.setValue(BITMASK_KEY, bm);
+    pRep.setValue(SECURITY_KEY, g_isSecuredServer);
+    CATransportFlags_t flag = CA_DEFAULT_FLAGS;
+
+    if (g_isSecuredServer)
+    {
+        flag = (CATransportFlags_t) ( flag | CA_SECURE );
+    }
+
+    if (g_ipVer == CT_IP_USE_V4)
+    {
+        flag =  (CATransportFlags_t) ( flag | CA_IPV4 );
+    }
+    else
+    {
+        flag =  (CATransportFlags_t) ( flag | CA_IPV6 );
+    }
+    pRep.setValue(PORT_KEY, CAGetAssignedPortNumber(CA_ADAPTER_IP, flag));
+
+    vector< OCRepresentation > allChild;
+    vector< OCRepresentation > allChildren;
+    interimRep.setValue(URI_KEY, resource->getUri());
+    interimRep.setValue(DEVICE_ID_KEY, g_di);
+    interimRep.setValue(RESOURCE_TYPE_KEY,
+            resource->getResourceTypes());
+    interimRep.setValue(INTERFACE_KEY,
+            resource->getResourceInterfaces());
+    interimRep.setValue(POLICY_KEY, pRep);
+    childrenList.push_back(interimRep);
+}
+
 OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest > request)
 {
     OCEntityHandlerResult result = OC_EH_OK;
@@ -430,7 +467,6 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
 
     if (request)
     {
-
         auto pResponse = make_shared< OC::OCResourceResponse >();
         pResponse->setRequestHandle(request->getRequestHandle());
         pResponse->setResourceHandle(request->getResourceHandle());
@@ -456,61 +492,13 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                 bool shouldReturnError = false;
                 string responseInterface = DEFAULT_INTERFACE;
                 OCRepresentation rep;
-                OCRepresentation interimRep;
-                OCRepresentation linkRep;
-                OCRepresentation pRep;
 
-                uint8_t bm = 2;
-                pRep.setValue(BITMASK_KEY, bm);
-                pRep.setValue(SECURITY_KEY, g_isSecuredServer);
-                CATransportFlags_t flag = CA_DEFAULT_FLAGS;
-
-                if (g_isSecuredServer)
-                {
-                    flag = (CATransportFlags_t) ( flag | CA_SECURE );
-                }
-
-                if (g_ipVer == CT_IP_USE_V4)
-                {
-                    flag =  (CATransportFlags_t) ( flag | CA_IPV4 );
-                }
-                else
-                {
-                    flag =  (CATransportFlags_t) ( flag | CA_IPV6 );
-                }
-                pRep.setValue(PORT_KEY, CAGetAssignedPortNumber(CA_ADAPTER_IP, flag));
-
-                vector< OCRepresentation > allChild;
                 vector< OCRepresentation > allChildren;
-                interimRep.setValue(URI_KEY, g_acSwitchResourceHidden->getUri());
-                interimRep.setValue(DEVICE_ID_KEY, g_di);
-                interimRep.setValue(RESOURCE_TYPE_KEY,
-                        g_acSwitchResourceHidden->getResourceTypes());
-                interimRep.setValue(INTERFACE_KEY,
-                        g_acSwitchResourceHidden->getResourceInterfaces());
-                interimRep.setValue(POLICY_KEY, pRep);
-                linkRep = interimRep;
-                allChildren.push_back(interimRep);
 
-                interimRep.setValue(URI_KEY, g_acTemperatureResourceHidden->getUri());
-                interimRep.setValue(RESOURCE_TYPE_KEY,
-                        g_acTemperatureResourceHidden->getResourceTypes());
-                interimRep.setValue(INTERFACE_KEY,
-                        g_acTemperatureResourceHidden->getResourceInterfaces());
-                allChild.push_back(interimRep);
-                allChildren.push_back(interimRep);
-
-                interimRep.setValue(URI_KEY, g_acAirFlowResourceHidden->getUri());
-                interimRep.setValue(RESOURCE_TYPE_KEY,
-                        g_acAirFlowResourceHidden->getResourceTypes());
-                interimRep.setValue(INTERFACE_KEY,
-                        g_acAirFlowResourceHidden->getResourceInterfaces());
-                allChild.push_back(interimRep);
-                allChildren.push_back(interimRep);
+                addIntoLinksArray(allChildren, g_acSwitchResourceHidden);
+                addIntoLinksArray(allChildren, g_acTemperatureResourceHidden);
+                addIntoLinksArray(allChildren, g_acAirFlowResourceHidden);
                 rep.setValue(LINKS_KEY, allChildren);
-
-                linkRep.setChildren(allChild);
-                OCRepresentation links;
 
                 pResponse->setErrorCode(COAP_RESPONSE_CODE_RETRIEVED);
                 cout << "Current Resource Representation to send : " << endl;
@@ -539,7 +527,6 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                                 rep.setValue(NAME_KEY, g_collectionName);
                                 rep.setResourceInterfaces(interfaceList);
                                 rep.setResourceTypes(resourceTypeList);
-                                links.addChild(linkRep);
 
                                 pResponse->setResourceRepresentation(rep, responseInterface);
 
@@ -587,11 +574,35 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                         else if (key.compare(RESOURCE_TYPE_KEY) == 0)
                         {
                             vector< string > resourceTypeList;
-                            if ((queryValue.compare(GROUP_TYPE_ROOM) == 0)
-                                    || (queryValue.compare(GROUP_TYPE_AIRCON_VENDOR) == 0))
+                            if (queryValue.compare(SWITCH_RESOURCE_TYPE) == 0)
                             {
-                                cout << "The resource type  used in query is oic.wk.col" << endl;
-                                pResponse->setResourceRepresentation(rep, responseInterface);
+                                vector< OCRepresentation > requiredChild;
+                                OCRepresentation requiredResponse;
+                                addIntoLinksArray(requiredChild, g_acSwitchResourceHidden);
+                                cout << "The resource type  used in query is " << SWITCH_RESOURCE_TYPE << endl;
+                                requiredResponse.setValue(LINKS_KEY, requiredChild);
+                                pResponse->setResourceRepresentation(requiredResponse, responseInterface);
+
+                            }
+                            else if (queryValue.compare(TEMPERATURE_RESOURCE_TYPE) == 0)
+                            {
+                                vector< OCRepresentation > requiredChild;
+                                OCRepresentation requiredResponse;
+                                addIntoLinksArray(requiredChild, g_acTemperatureResourceHidden);
+                                cout << "The resource type  used in query is " << TEMPERATURE_RESOURCE_TYPE << endl;
+                                requiredResponse.setValue(LINKS_KEY, requiredChild);
+                                pResponse->setResourceRepresentation(requiredResponse, responseInterface);
+
+                            }
+                            else if (queryValue.compare(AIR_FLOW_RESOURCE_TYPE) == 0)
+                            {
+                                vector< OCRepresentation > requiredChild;
+                                OCRepresentation requiredResponse;
+                                addIntoLinksArray(requiredChild, g_acAirFlowResourceHidden);
+                                cout << "The resource type  used in query is " << AIR_FLOW_RESOURCE_TYPE << endl;
+                                requiredResponse.setValue(LINKS_KEY, requiredChild);
+                                pResponse->setResourceRepresentation(requiredResponse, responseInterface);
+
                             }
                             else
                             {
@@ -1357,10 +1368,12 @@ void createAirConDevice(bool isSecured)
         value = "C";
         temperatureRep.setValue("units", value);
         g_acTemperatureResource->setAsReadOnly("units");
+        g_acTemperatureResourceHidden->setAsReadOnly("units");
         rangeTemperature.push_back(10.01);
         rangeTemperature.push_back(40.99);
         temperatureRep.setValue("range", rangeTemperature);
         g_acTemperatureResource->setAsReadOnly("range");
+        g_acTemperatureResourceHidden->setAsReadOnly("range");
         double temperature = 24.50;
         temperatureRep.setValue(TEMPERATURE_KEY, temperature);
         g_acTemperatureResource->setResourceRepresentation(temperatureRep);
