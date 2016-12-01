@@ -36,6 +36,8 @@ import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
+import org.iotivity.cloud.rdserver.Constants;
+import org.iotivity.cloud.rdserver.db.DBManager;
 import org.iotivity.cloud.rdserver.resources.directory.rd.ResourceDirectoryResource;
 import org.iotivity.cloud.rdserver.resources.directory.res.DiscoveryResource;
 import org.iotivity.cloud.util.Cbor;
@@ -92,6 +94,13 @@ public class DiscoveryResourceTest {
 
     @Test
     public void testHandleGetRequest_existValue() throws Exception {
+        // add presence state on
+        HashMap<String, Object> presenceinfo = new HashMap<>();
+        presenceinfo.put(Constants.DEVICE_ID, RDServerTestUtils.DI);
+        presenceinfo.put(Constants.PRESENCE_STATE, Constants.PRESENCE_ON);
+        DBManager.getInstance().insertRecord(Constants.PRESENCE_TABLE,
+                presenceinfo);
+
         IRequest request = MessageBuilder.createRequest(RequestMethod.GET,
                 RDServerTestUtils.DISCOVERY_REQ_URI,
                 "rt=core.light;di=" + RDServerTestUtils.DI);
