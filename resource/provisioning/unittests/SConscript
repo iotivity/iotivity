@@ -99,7 +99,8 @@ unittests = provisiontests_env.Program('provisiontests', ocprovisiontest_src)
 Alias("provisiontests", [unittests])
 
 provisiontests_env.AppendTarget('provisiontests')
-if provisiontests_env.get('TEST') == '1':
+# TODO: fix this test on linux and remove this comment line
+if provisiontests_env.get('TEST') == '1' and provisiontests_env.get('SECURED') != '1' :
 	if target_os in ['linux']:
 		out_dir = provisiontests_env.get('BUILD_DIR')
 		result_dir = os.path.join(provisiontests_env.get('BUILD_DIR'), 'test_out') + os.sep
@@ -108,9 +109,7 @@ if provisiontests_env.get('TEST') == '1':
 		provisiontests_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
 		provisiontests_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
 		run_test(provisiontests_env,
-# TODO: fix this test on linux and remove this comment line
-#				 'resource_provisioning_unittests.memcheck',
-				 '',
+				 'resource_provisioning_unittests.memcheck',
 				 'resource/provisioning/unittests/provisiontests')
 
 src_dir = provisiontests_env.get('SRC_DIR')
