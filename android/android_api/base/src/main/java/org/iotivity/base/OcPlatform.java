@@ -600,13 +600,13 @@ public final class OcPlatform {
     public static void setPropertyValue(
             int path, String propName, String propValue) throws OcException {
         OcPlatform.initCheck();
-        OcPlatform.setPropertyValue0(path, propName, propValue);
+        OcPlatform.setPropertyValue1(path, propName, propValue);
     }
 
     public static void setPropertyValue(
             int path, String propName, List<String> propValue) throws OcException {
         OcPlatform.initCheck();
-        OcPlatform.setPropertyValue1(path, propName, propValue.toArray(new String[propValue.size()]));
+        OcPlatform.setPropertyValue0(path, propName, propValue.toArray(new String[propValue.size()]));
     }
 
     public static void getPropertyValue(
@@ -615,14 +615,14 @@ public final class OcPlatform {
         OcPlatform.getPropertyValue0(path, propName, propValue);
     }
 
-    private static native void setPropertyValue0(
+    private static native void setPropertyValue1(
             int path,
             String propName,
             String propValue
     ) throws OcException;
 
 
-    private static native void setPropertyValue1(
+    private static native void setPropertyValue0(
             int path,
             String propName,
             String[] propValue
