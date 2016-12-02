@@ -23,12 +23,17 @@
 #include "JniOcProvisioning.h"
 #include "JniPinCheckListener.h"
 #include "JniDisplayPinListener.h"
+#include "oxmverifycommon.h"
+#include "JniDisplayVerifyNumListener.h"
+#include "JniConfirmNumListener.h"
 
 using namespace OC;
 namespace PH = std::placeholders;
 
 static JniPinCheckListener *jniPinListener = nullptr;
 static JniDisplayPinListener *jniDisplayPinListener = nullptr;
+static JniDisplayVerifyNumListener *jniDisplayMutualVerifyNumListener = nullptr;
+static JniConfirmNumListener *jniConfirmMutualVerifyNumListener = nullptr;
 
 void Callback(char *buf, size_t size)
 {
@@ -52,6 +57,38 @@ void displayPinCB(char *pinBuf, size_t pinSize)
     {
         LOGE("DisplayPinListener is null");
     }
+}
+
+OCStackResult displayMutualVerifNumCB(uint8_t *verifyNum)
+{
+    OCStackResult res;
+
+    if (jniDisplayMutualVerifyNumListener)
+    {
+        res = jniDisplayMutualVerifyNumListener->displayMutualVerifNumCallback(verifyNum);
+    }
+    else
+    {
+        res = OC_STACK_ERROR;
+        LOGE("DisplayMutualVerifyNumListener is null");
+    }
+    return res;
+}
+
+OCStackResult confirmMutualVerifNumCB()
+{
+    OCStackResult res;
+
+    if (jniConfirmMutualVerifyNumListener)
+    {
+        res = jniConfirmMutualVerifyNumListener->confirmMutualVerifNumCallback();
+    }
+    else
+    {
+        res = OC_STACK_ERROR;
+        LOGE("ConfirmMutualVerifyNumListener is null");
+    }
+    return res;
 }
 
 /*
@@ -243,6 +280,136 @@ JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_getDeviceSt
         return nullptr;
     }
 }
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    setDisplayNumListener
+ * Signature: (Lorg/iotivity/base/OcProvisioning/DisplayNumListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayNumListener
+  (JNIEnv *env, jclass clazz, jobject jListener)
+{
+    LOGI("OcProvisioning_setDisplayNumListener");
+
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Listner can't be null");
+        return;
+    }
+    delete jniDisplayMutualVerifyNumListener;
+    jniDisplayMutualVerifyNumListener = new JniDisplayVerifyNumListener(env, jListener);
+
+    try
+    {
+        OCStackResult result = OCSecure::registerDisplayNumCallback(displayMutualVerifNumCB);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Failed to set Listner");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        return;
+    }
+}
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    unsetDisplayNumListener
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_unsetDisplayNumListener
+  (JNIEnv * env, jclass clazz)
+{
+    LOGI("OcProvisioning_unsetDisplayNumListener");
+
+    OCStackResult result = OCSecure::deregisterDisplayNumCallback();
+
+    if (OC_STACK_OK != result)
+    {
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Failed to unset Listener");
+    }
+
+    return result;
+}
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    setConfirmNumListener
+ * Signature: (Lorg/iotivity/base/OcProvisioning/ConfirmNumListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setConfirmNumListener
+  (JNIEnv *env, jclass clazz, jobject jListener)
+{
+    LOGI("OcProvisioning_setConfirmNumListener");
+
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Listner can't be null");
+        return;
+    }
+    delete jniConfirmMutualVerifyNumListener;
+    jniConfirmMutualVerifyNumListener = new JniConfirmNumListener(env, jListener);
+
+    try
+    {
+        OCStackResult result = OCSecure::registerUserConfirmCallback(confirmMutualVerifNumCB);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Failed to set Listner");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+        return;
+    }
+}
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    unsetConfirmNumListener
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_unsetConfirmNumListener
+  (JNIEnv *env, jclass clazz)
+{
+    LOGI("OcProvisioning_unsetConfirmNumListener");
+
+    OCStackResult result = OCSecure::deregisterUserConfirmCallback();
+
+    if (OC_STACK_OK != result)
+    {
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Failed to unser Listener");
+    }
+
+    return result;
+}
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    setMVJustWorksOptions0
+ * Signature: (I)I
+ */
+JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setMVJustWorksOptions0
+  (JNIEnv *env, jclass clazz, jint options)
+{
+    LOGI("OcProvisioning_setMVJustWorksOptions0");
+
+    OCStackResult result = OCSecure::setVerifyOptionMask((VerifyOptionBitmask_t)options);
+
+    if (OC_STACK_OK != result)
+    {
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "setMVJustWorksOptions Failed");
+    }
+
+    return result;
+}
+
 
 /*
  * Class:     org_iotivity_base_OcProvisioning

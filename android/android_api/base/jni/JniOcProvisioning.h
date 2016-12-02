@@ -80,11 +80,52 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListen
 
 /*
  * Class:     org_iotivity_base_OcProvisioning
+ * Method:    setDisplayNumListener
+ * Signature: (Lorg/iotivity/base/OcProvisioning/DisplayNumListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayNumListener
+  (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    unsetDisplayNumListener
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_unsetDisplayNumListener
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    setConfirmNumListener
+ * Signature: (Lorg/iotivity/base/OcProvisioning/ConfirmNumListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setConfirmNumListener
+  (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    unsetConfirmNumListener
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_unsetConfirmNumListener
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    setMVJustWorksOptions0
+ * Signature: (I)I
+ */
+JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setMVJustWorksOptions0
+  (JNIEnv *, jclass, jint);
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
  * Method:    getDevicestatusLists
  * Signature: (I)[Lorg/iotivity/base/OcSecureResource;
  */
 JNIEXPORT jobjectArray JNICALL Java_org_iotivity_base_OcProvisioning_getDeviceStatusList1
   (JNIEnv *, jclass, jint);
+
 /*
  * Class:     org_iotivity_base_OcProvisioning
  * Method:    saveTrustCertChain1
