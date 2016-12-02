@@ -27,6 +27,7 @@
 #include "ocprovisioningmanager.h"
 #include "OCApi.h"
 #include "OCPlatform_impl.h"
+#include "oxmverifycommon.h"
 
 namespace OC
 {
@@ -38,6 +39,8 @@ namespace OC
     typedef std::function<void(PMResultList_t *result, int hasError)> ResultCallBack;
     typedef std::function<void(uint16_t credId, uint8_t *trustCertChain,
             size_t chainSize)>CertChainCallBack;
+    typedef std::function<OCStackResult(uint8_t verifNum[])> DisplayNumCB;
+    typedef std::function<OCStackResult()> UserConfirmNumCB;
 
     struct ProvisionContext
     {
@@ -50,6 +53,19 @@ namespace OC
         CertChainCallBack callback;
         TrustCertChainContext(CertChainCallBack cb) : callback(cb){}
     };
+
+    struct DisplayNumContext
+    {
+        DisplayNumCB callback;
+        DisplayNumContext(DisplayNumCB cb) : callback(cb){}
+    };
+
+    struct UserConfirmNumContext
+    {
+        UserConfirmNumCB callback;
+        UserConfirmNumContext(UserConfirmNumCB cb) : callback(cb){}
+    };
+
     /**
      * This class is for credential's to be set to devices.
      * The types supported are
@@ -246,6 +262,59 @@ namespace OC
              * @return  OC_STACK_OK in case of success and other value otherwise.
              */
             static OCStackResult saveACL(const OicSecAcl_t* acl);
+
+            /**
+             *  api to register Callback for displaying verifNum in verification Just-Works
+             *
+             * @param displayNumCB Callback which is to be registered.
+             * @return  OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult registerDisplayNumCallback(DisplayNumCB displayNumCB);
+
+             /**
+             * API to De-register Callback for displaying verifNum in verification Just-Works
+             *
+             * @return  OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult deregisterDisplayNumCallback();
+
+            /**
+             * API to reister Callback for getting user confirmation in verification Just-Works
+             *@param userConfirmCB Callback which is to be registered.
+             * @return  OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult registerUserConfirmCallback(UserConfirmNumCB userConfirmCB);
+
+             /**
+             * API to De-register Callback for getting user confirmation in verification Just-Works
+             *
+             * @return  OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult deregisterUserConfirmCallback();
+
+             /*
+             * Set option for Mutual Verified Just-Works
+             * The default is both display PIN and get user confirmation.
+             */
+            static OCStackResult setVerifyOptionMask(VerifyOptionBitmask_t optionMask);
+
+            /**
+             * Callback function to display Verification Number.
+             *
+             * @param[in] ctx  User context returned in callback
+             * @param[in] verifNum  Array of MUTUAL_VERIF_NUM_LEN size bytes
+             *
+             * @return OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult displayNumCallbackWrapper(void* ctx,
+                    uint8_t verifNum[MUTUAL_VERIF_NUM_LEN]);
+
+             /**
+             * Callback function to get 'Num' verification result.
+             *
+             * @return OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult confirmUserCallbackWrapper(void* ctx);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
             /**
