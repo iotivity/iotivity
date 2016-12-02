@@ -129,7 +129,9 @@ ifeq ($(SECURED), 1)
                         JniSecureUtils.cpp \
                         JniProvisionResultListner.cpp \
                         JniPinCheckListener.cpp \
-                        JniDisplayPinListener.cpp
+                        JniDisplayPinListener.cpp \
+                        JniDisplayVerifyNumListener.cpp \
+                        JniConfirmNumListener.cpp
 endif
 
 ifeq ($(WITH_CLOUD), 1)
