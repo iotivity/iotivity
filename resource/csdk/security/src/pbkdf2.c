@@ -22,7 +22,7 @@
 #include "mbedtls/pkcs5.h"
 #include "mbedtls/md.h"
 
-#define TAG "OCF_PBDKF2"
+#define TAG "OIC_SEC_PBDKF2"
 
 int DeriveCryptoKeyFromPassword(const unsigned char *passwd, size_t pLen,
     const uint8_t *salt, const size_t saltLen,
@@ -31,7 +31,7 @@ int DeriveCryptoKeyFromPassword(const unsigned char *passwd, size_t pLen,
 {
     mbedtls_md_context_t sha_ctx;
     const mbedtls_md_info_t *info_sha;
-    int ret = -1; 
+    int ret = -1;
 
     /* Setup the hash/HMAC function, for the PBKDF2 function. */
     mbedtls_md_init(&sha_ctx);
@@ -53,7 +53,7 @@ int DeriveCryptoKeyFromPassword(const unsigned char *passwd, size_t pLen,
     ret = mbedtls_pkcs5_pbkdf2_hmac(&sha_ctx, passwd, pLen, salt, saltLen, iterations, keyLen, derivedKey);
     if (ret != 0)
     {
-        OIC_LOG(ERROR, TAG, "Call to mbedtls PBKDF2 function failed");    
+        OIC_LOG(ERROR, TAG, "Call to mbedtls PBKDF2 function failed");
     }
 
     mbedtls_md_free(&sha_ctx);

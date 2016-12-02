@@ -75,7 +75,7 @@ void DeleteCrl(OicSecCrl_t *crl)
     }
 }
 
-void printCrl(OicSecCrl_t *crl)
+void printCrl(const OicSecCrl_t *crl)
 {
     if (NULL == crl)
     {
@@ -811,7 +811,6 @@ void GetDerCrl(ByteArray_t* out)
 
     out->len = 0;
 
-    char *str = "Can't allocate memory for out->data";
     out->data = OICMalloc(crl->len);
     if (out->data)
     {
@@ -820,7 +819,7 @@ void GetDerCrl(ByteArray_t* out)
     }
     else
     {
-        OIC_LOG_V(ERROR, TAG, "%s", str);
+        OIC_LOG(ERROR, TAG, "Can't allocate memory for out->data");
     }
     DeleteCrl(crlRes);
 }

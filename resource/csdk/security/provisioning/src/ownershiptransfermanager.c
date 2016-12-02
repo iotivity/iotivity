@@ -95,11 +95,6 @@ static uint8_t g_OxmAllowStatus[OXM_IDX_COUNT] = {ALLOWED_OXM, ALLOWED_OXM, ALLO
                                                   ALLOWED_OXM, ALLOWED_OXM, NOT_ALLOWED_OXM};
 #endif
 
-/**
- * Variables for pointing the OTMContext to be used in the DTLS handshake result callback.
- */
-static OTMContext_t* g_otmCtx = NULL;
-
 OCStackResult OTMSetOTCallback(OicSecOxm_t oxm, OTMCallbackData_t* callbacks)
 {
     OCStackResult res = OC_STACK_INVALID_PARAM;
@@ -211,7 +206,6 @@ OCStackResult OTMSelectOwnershipTransferMethod(const OicSecOxm_t *supportedMetho
         size_t numberOfMethods, OicSecOxm_t *selectedMethod, OwnerType_t ownerType)
 {
     bool isOxmSelected = false;
-    OxmAllowTableIdx_t oxmIdx = OXM_IDX_UNKNOWN;
     OxmAllowTableIdx_t selectedOxmIdx = OXM_IDX_UNKNOWN;
 
     OIC_LOG(DEBUG, TAG, "IN SelectProvisioningMethod");
@@ -695,7 +689,7 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
     }
 
     uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = {0};
-    OicSecKey_t ownerKey = {ownerPSK, OWNER_PSK_LENGTH_128};
+    OicSecKey_t ownerKey = {.data=ownerPSK, .len=OWNER_PSK_LENGTH_128, .encoding=OIC_ENCODING_RAW};
 
     //Generating OwnerPSK
     CAResult_t pskRet = CAGenerateOwnerPSK(&endpoint,
@@ -716,14 +710,9 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
         OICClearMemory(ownerPSK, sizeof(ownerPSK));
         VERIFY_NON_NULL(TAG, cred, ERROR);
 
-        // TODO: Added as workaround. Will be replaced soon.
-        cred->privateData.encoding = OIC_ENCODING_RAW;
-
-#if 1
-        // NOTE: Test codes to use BASE64 encoded owner PSK.
         uint32_t outSize = 0;
         size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
-        char* b64Buf = (uint8_t *)OICCalloc(1, b64BufSize);
+        char* b64Buf = (char *)OICCalloc(1, b64BufSize);
         VERIFY_NON_NULL(TAG, b64Buf, ERROR);
         b64Encode(cred->privateData.data, cred->privateData.len, b64Buf, b64BufSize, &outSize);
 
@@ -731,16 +720,15 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
         cred->privateData.data = (uint8_t *)OICCalloc(1, outSize + 1);
         VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
 
-        strncpy(cred->privateData.data, b64Buf, outSize);
+        strncpy((char*)(cred->privateData.data), b64Buf, outSize);
         cred->privateData.data[outSize] = '\0';
         cred->privateData.encoding = OIC_ENCODING_BASE64;
         cred->privateData.len = outSize;
         OICFree(b64Buf);
-#endif //End of Test codes
 
         //Finding previous ownerPSK.
         const OicSecCred_t* credList = GetCredList();
-        OicSecCred_t* prevCred = NULL;
+        const OicSecCred_t* prevCred = NULL;
         uint16_t credId = 0;
         LL_FOREACH(credList, prevCred)
         {
@@ -942,7 +930,10 @@ static OCStackApplicationResult OwnerUuidUpdateHandler(void *ctx, OCDoHandle UNU
                 res = VerifyOwnershipTransfer(NULL, USER_CONFIRM);
                 if (OC_STACK_OK != res)
                 {
-                    SRPResetDevice(otmCtx->selectedDeviceInfo, otmCtx->ctxResultCallback);
+                    if (OC_STACK_OK != SRPResetDevice(otmCtx->selectedDeviceInfo, otmCtx->ctxResultCallback))
+                    {
+                        OIC_LOG(WARNING, TAG, "OwnerUuidUpdateHandler : SRPResetDevice error");
+                    }
                 }
             }
 
@@ -1387,7 +1378,7 @@ static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
         memcpy(&(newCredential.subject), &credSubjectId, sizeof(OicUuid_t));
 
         //Fill private data as empty string
-        newCredential.privateData.data = "";
+        newCredential.privateData.data = (uint8_t*)"";
         newCredential.privateData.len = 0;
         newCredential.privateData.encoding = ownerCredential->privateData.encoding;
 
@@ -2042,7 +2033,6 @@ OCStackResult OTMDoOwnershipTransfer(void* ctx,
     }
     pCurDev = selectedDevicelist;
 
-    OCStackResult res = OC_STACK_OK;
     //Fill the device UUID for result array.
     for(size_t devIdx = 0; devIdx < otmCtx->ctxResultArraySize; devIdx++)
     {
@@ -2053,10 +2043,11 @@ OCStackResult OTMDoOwnershipTransfer(void* ctx,
         pCurDev = pCurDev->next;
     }
 
-    StartOwnershipTransfer(otmCtx, selectedDevicelist);
+    OCStackResult res = StartOwnershipTransfer(otmCtx, selectedDevicelist);
 
     OIC_LOG(DEBUG, TAG, "OUT OTMDoOwnershipTransfer");
-    return OC_STACK_OK;
+
+    return res;
 }
 
 OCStackResult OTMSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus)

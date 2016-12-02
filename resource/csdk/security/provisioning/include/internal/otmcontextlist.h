@@ -65,7 +65,7 @@ OCStackResult AddOTMContext(OTMContext_t* ctx, const char* addr, uint16_t port);
  *
  * @return OTMContext in case of context found, otherwise NULL.
  */
-const OTMContext_t* GetOTMContext(const char* addr, uint16_t port);
+OTMContext_t* GetOTMContext(const char* addr, uint16_t port);
 
 #ifdef __cplusplus
 }

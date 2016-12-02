@@ -26,7 +26,7 @@
 #include "utlist.h"
 #include "otmcontextlist.h"
 
-#define TAG "OTM_CTX_LIST"
+#define TAG "OIC_OTM_CTX"
 
 /**
  * List for saving the OTMContext to be used while ownership transfer.
@@ -35,8 +35,6 @@ static OTMContextItem_t* g_otmCtxList = NULL;
 
 void RemoveOTMContext(const char* addr, uint16_t port)
 {
-    OTMContext_t* retCtx = NULL;
-
     OIC_LOG(DEBUG, TAG, "IN RemoveOTMContext");
 
     if (NULL != addr && 0 != port)
@@ -50,7 +48,6 @@ void RemoveOTMContext(const char* addr, uint16_t port)
                 port == item->endpoint.port)
             {
                 OIC_LOG_V(DEBUG, TAG, "Remove [%s:%d]'s context from OTMContext list", addr, port);
-                retCtx = item->otmCtx;
                 item->otmCtx = NULL;
                 LL_DELETE(g_otmCtxList, item);
                 OICFree(item);
@@ -105,7 +102,7 @@ OCStackResult AddOTMContext(OTMContext_t* ctx, const char* addr, uint16_t port)
     return OC_STACK_OK;
 }
 
-const OTMContext_t* GetOTMContext(const char* addr, uint16_t port)
+OTMContext_t* GetOTMContext(const char* addr, uint16_t port)
 {
     OIC_LOG(DEBUG, TAG, "IN GetOTMContext");
 
