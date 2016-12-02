@@ -275,6 +275,7 @@ static CAResult_t CALEStateConnectedCallback(JNIEnv *env, jstring jni_address,
             if (!address)
             {
                 OIC_LOG(ERROR, TAG, "address is null");
+                CACheckJNIException(env);
                 return CA_STATUS_FAILED;
             }
 
@@ -415,6 +416,7 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattNWConnectionStateChangeCallback
         if (!address)
         {
             OIC_LOG(ERROR, TAG, "address is null");
+            CACheckJNIException(env);
             return;
         }
 
@@ -456,6 +458,7 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerNWConnectionStateChangeCa
             if (!address)
             {
                 OIC_LOG(ERROR, TAG, "address is null");
+                CACheckJNIException(env);
                 return;
             }
 

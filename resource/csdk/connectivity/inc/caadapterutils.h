@@ -277,6 +277,13 @@ jmethodID CAGetJNIMethodID(JNIEnv *env, const char* className,
                            const char* methodFormat);
 
 /**
+ * check JNI exception occurrence
+ * @param[in]   env              JNI interface pointer.
+ * @return  true(occurrence) or false(no occurrence).
+ */
+bool CACheckJNIException(JNIEnv *env);
+
+/**
  * To Delete other Global References
  * Called during CATerminate to remove global references
  */

@@ -296,6 +296,7 @@ jmethodID CAGetJNIMethodID(JNIEnv *env, const char* className,
     if (!jni_cid)
     {
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "jni_cid [%s] is null", className);
+        CACheckJNIException(env);
         return NULL;
     }
 
@@ -303,12 +304,24 @@ jmethodID CAGetJNIMethodID(JNIEnv *env, const char* className,
     if (!jni_midID)
     {
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "jni_midID [%s] is null", methodName);
+        CACheckJNIException(env);
         (*env)->DeleteLocalRef(env, jni_cid);
         return NULL;
     }
 
     (*env)->DeleteLocalRef(env, jni_cid);
     return jni_midID;
+}
+
+bool CACheckJNIException(JNIEnv *env)
+{
+    if ((*env)->ExceptionCheck(env))
+    {
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        return true;
+    }
+    return false;
 }
 
 void CADeleteGlobalReferences(JNIEnv *env)
