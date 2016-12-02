@@ -1621,7 +1621,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
             printf("         Enter Number of resource type for [%s] : ", rsrc->href);
             for(int ret=0; 1!=ret; )
             {
-                ret = scanf("%d", &arrLen);
+                ret = scanf("%zu", &arrLen);
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
@@ -1640,9 +1640,9 @@ static OicSecAcl_t* createAcl(const int dev_num)
             goto CRACL_ERROR;
         }
 
-        for(int i = 0; i < arrLen; i++)
+        for(size_t i = 0; i < arrLen; i++)
         {
-            printf("         Enter ResourceType[%d] Name (e.g. core.led): ", i+1);
+            printf("         Enter ResourceType[%zu] Name (e.g. core.led): ", i+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN
@@ -1662,7 +1662,7 @@ static OicSecAcl_t* createAcl(const int dev_num)
             printf("         Enter Number of interface for [%s]: ", rsrc->href);
             for(int ret=0; 1!=ret; )
             {
-                ret = scanf("%d", &arrLen);
+                ret = scanf("%zu", &arrLen);
                 for( ; 0x20<=getchar(); );  // for removing overflow garbages
                                             // '0x20<=code' is character region
             }
@@ -1681,9 +1681,9 @@ static OicSecAcl_t* createAcl(const int dev_num)
             goto CRACL_ERROR;
         }
 
-        for(int i = 0; i < arrLen; i++)
+        for(size_t i = 0; i < arrLen; i++)
         {
-            printf("         Enter Interface[%d] Name (e.g. oic.if.baseline): ", i+1);
+            printf("         Enter Interface[%zu] Name (e.g. oic.if.baseline): ", i+1);
             for(int ret=0; 1!=ret; )
             {
                 ret = scanf("%128s", rsrc_in);  // '128' is ACL_RESRC_MAX_LEN

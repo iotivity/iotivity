@@ -70,17 +70,6 @@ typedef struct _DiscoveryInfo{
 static OCStackResult SecurePortDiscovery(DiscoveryInfo* discoveryInfo,
                                          const OCClientResponse *clientResponse);
 
-/*
- * Function to discover security version information through unicast
- *
- * @param[in] discoveryInfo The pointer of discovery information to matain result of discovery
- * @param[in] clientResponse  Response information(It will contain payload)
- *
- * @return OC_STACK_OK on success otherwise error.
- */
-static OCStackResult SecurityVersionDiscovery(DiscoveryInfo* discoveryInfo,
-                                              const OCClientResponse *clientResponse);
-
 /**
  * Callback handler for PMDeviceDiscovery API.
  *
@@ -92,6 +81,22 @@ static OCStackResult SecurityVersionDiscovery(DiscoveryInfo* discoveryInfo,
  */
 static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse);
+
+/*
+ * Since security version discovery does not used anymore, disable security version discovery.
+ * Need to discussion to removing all version discovery related codes.
+ */
+#if 0
+/*
+ * Function to discover security version information through unicast
+ *
+ * @param[in] discoveryInfo The pointer of discovery information to matain result of discovery
+ * @param[in] clientResponse  Response information(It will contain payload)
+ *
+ * @return OC_STACK_OK on success otherwise error.
+ */
+static OCStackResult SecurityVersionDiscovery(DiscoveryInfo* discoveryInfo,
+                                              const OCClientResponse *clientResponse);
 
 /**
  * Callback handler for getting secure port information using /oic/res discovery.
@@ -105,7 +110,13 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
  */
 static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
                                  OCClientResponse *clientResponse);
+#endif
 
+/*
+ * Since security version discovery does not used anymore, disable security version discovery.
+ * Need to discussion to removing all version discovery related codes.
+ */
+#if 0
 /**
  * Callback handler for security version discovery.
  *
@@ -117,6 +128,7 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
  */
 static OCStackApplicationResult SecVersionDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse);
+#endif
 
 /**
  * Function to search node in linked list that matches given IP and port.
@@ -478,6 +490,11 @@ bool PMGenerateQuery(bool isSecure,
     return true;
 }
 
+/*
+ * Since security version discovery does not used anymore, disable security version discovery.
+ * Need to discussion to removing all version discovery related codes.
+ */
+#if 0
 static OCStackApplicationResult SecurityVersionDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse)
 {
@@ -550,6 +567,7 @@ static OCStackApplicationResult SecurityVersionDiscoveryHandler(void *ctx, OCDoH
 
     return  OC_STACK_DELETE_TRANSACTION;
 }
+#endif
 
 static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
                                  OCClientResponse *clientResponse)
@@ -656,7 +674,6 @@ static OCStackApplicationResult SecurePortDiscoveryHandler(void *ctx, OCDoHandle
                 return OC_STACK_DELETE_TRANSACTION;
             }
 #endif
-
             OIC_LOG(INFO, TAG, "Exiting SecurePortDiscoveryHandler.");
         }
 
@@ -1389,6 +1406,11 @@ static OCStackResult SecurePortDiscovery(DiscoveryInfo* discoveryInfo,
     return ret;
 }
 
+/*
+ * Since security version discovery does not used anymore, disable security version discovery.
+ * Need to discussion to removing all version discovery related codes.
+ */
+#if 0
 static OCStackResult SecurityVersionDiscovery(DiscoveryInfo* discoveryInfo,
                                               const OCClientResponse *clientResponse)
 {
@@ -1431,6 +1453,7 @@ static OCStackResult SecurityVersionDiscovery(DiscoveryInfo* discoveryInfo,
 
     return ret;
 }
+#endif
 
 /**
  * Function to print OCProvisionDev_t for debug purpose.

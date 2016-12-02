@@ -1214,28 +1214,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
         VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
         memcpy(cred->privateData.data, privateData->data, privateData->len);
         cred->privateData.len = privateData->len;
-
-        // TODO: Added as workaround. Will be replaced soon.
         cred->privateData.encoding = OIC_ENCODING_RAW;
-
-#if 0
-        // NOTE: Test codes to use base64 for credential.
-        uint32_t outSize = 0;
-        size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((privateData->len + 1));
-        char* b64Buf = (uint8_t *)OICCalloc(1, b64BufSize);
-        VERIFY_NON_NULL(TAG, b64Buf, ERROR);
-        b64Encode(privateData->data, privateData->len, b64Buf, b64BufSize, &outSize);
-
-        OICFree( cred->privateData.data );
-        cred->privateData.data = (uint8_t *)OICCalloc(1, outSize + 1);
-        VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
-
-        strcpy(cred->privateData.data, b64Buf);
-        cred->privateData.encoding = OIC_ENCODING_BASE64;
-        cred->privateData.len = outSize;
-        OICFree(b64Buf);
-#endif //End of Test codes
-
     }
 
     VERIFY_NON_NULL(TAG, rownerID, ERROR);
@@ -1248,7 +1227,9 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
         VERIFY_NON_NULL(TAG, cred->eownerID, ERROR);
         memcpy(cred->eownerID->id, eownerID->id, sizeof(eownerID->id));
     }
-#endif //MULTIPLE_OWNER
+#else
+    (void)(eownerID);
+#endif //MULTIPLE_OWNER_
 
     ret = OC_STACK_OK;
 
@@ -1339,7 +1320,7 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
         // This added '512' is arbitrary value that is added to cover the name of the resource, map addition and ending
         size_t size = GetCredKeyDataSize(cred);
         size += (512 * OicSecCredCount(cred));
-        OIC_LOG_V(DEBUG, TAG, "cred size: %" PRIu64, size);
+        OIC_LOG_V(DEBUG, TAG, "cred size: %zu", size);
 
         int secureFlag = 0;
         OCStackResult res = CredToCBORPayload(cred, &payload, &size, secureFlag);
@@ -2828,7 +2809,8 @@ void GetDerCaCert(ByteArray_t * crt, const char * usage)
                     return;
                 }
                 uint32_t outSize;
-                if(B64_OK != b64Decode(temp->optionalData.data, temp->optionalData.len, buf, bufSize, &outSize))
+                if(B64_OK != b64Decode((char*)(temp->optionalData.data),
+                                       temp->optionalData.len, buf, bufSize, &outSize))
                 {
                     OICFree(buf);
                     OIC_LOG(ERROR, TAG, "Failed to decode base64 data");

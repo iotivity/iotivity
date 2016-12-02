@@ -125,7 +125,7 @@ OCStackResult getLastUpdateFromDB(char **lastUpdate);
  *
  * @param crl  crl object
  */
-void printCrl(OicSecCrl_t *crl);
+void printCrl(const OicSecCrl_t *crl);
 
 #ifdef __cplusplus
 }

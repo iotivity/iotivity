@@ -239,8 +239,8 @@ OCStackResult InputPin(char* pinBuffer, size_t bufferSize)
     if(gInputPinCallback)
     {
         gInputPinCallback(pinBuffer, bufferSize);
-        OICStrcpy(g_PinOxmData.pinData, OXM_RANDOM_PIN_MAX_SIZE + 1, pinBuffer);
-        g_PinOxmData.pinSize = strlen(g_PinOxmData.pinData);
+        OICStrcpy((char*)(g_PinOxmData.pinData), OXM_RANDOM_PIN_MAX_SIZE + 1, pinBuffer);
+        g_PinOxmData.pinSize = strlen((char*)(g_PinOxmData.pinData));
     }
     else
     {
