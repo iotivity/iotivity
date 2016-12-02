@@ -169,8 +169,7 @@ static void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool
 }
 
 // response handler for LED requests.
-static void LedCB(void *ctx, OCDoHandle UNUSED,
-                                                    OCClientResponse *clientResponse)
+static OCStackApplicationResult LedCB(void *ctx, OCDoHandle UNUSED, OCClientResponse *clientResponse)
 {
     if(clientResponse)
     {
@@ -197,6 +196,7 @@ static void LedCB(void *ctx, OCDoHandle UNUSED,
     }
 
     g_doneCB = true;
+    return OC_STACK_OK;
 }
 
 static void inputPinCB(char* pin, size_t len)
