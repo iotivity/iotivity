@@ -318,7 +318,12 @@ namespace OC
 
         OCStackResult res = OCStop();
 
-        return res;
+        if (OC_STACK_OK != res)
+        {
+           throw InitializeException(OC::InitException::STACK_TERMINATE_ERROR, res);
+        }
+
+        return OC_STACK_OK;
     }
 
     void InProcServerWrapper::processFunc()
@@ -656,6 +661,13 @@ namespace OC
 
     InProcServerWrapper::~InProcServerWrapper()
     {
-        stop();
+        try
+        {
+            stop();
+        }
+        catch (InitializeException &e)
+        {
+            oclog() << "Exception in stop"<< e.what() << std::flush;
+        }
     }
 }
