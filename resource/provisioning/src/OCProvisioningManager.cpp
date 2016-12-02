@@ -393,6 +393,136 @@ namespace OC
         return result;
     }
 
+    OCStackResult OCSecure::displayNumCallbackWrapper(void* ctx,
+            uint8_t verifNum[MUTUAL_VERIF_NUM_LEN])
+    {
+        OCStackResult result;
+
+        DisplayNumContext* context = static_cast<DisplayNumContext*>(ctx);
+        uint8_t *number = new uint8_t[MUTUAL_VERIF_NUM_LEN];
+        memcpy(number, verifNum, MUTUAL_VERIF_NUM_LEN);
+        result = context->callback(number);
+        delete context;
+        return result;
+    }
+
+    OCStackResult OCSecure::registerDisplayNumCallback(DisplayNumCB displayNumCB)
+    {
+        if(!displayNumCB)
+        {
+            oclog() << "Failed to register callback for display.";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            DisplayNumContext* context = new DisplayNumContext(displayNumCB);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            SetDisplayNumCB(static_cast<void*>(context), &OCSecure::displayNumCallbackWrapper);
+            result = OC_STACK_OK;
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+    OCStackResult OCSecure::deregisterDisplayNumCallback()
+    {
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            UnsetDisplayNumCB();
+            result = OC_STACK_OK;
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+    OCStackResult OCSecure::confirmUserCallbackWrapper(void* ctx)
+    {
+        OCStackResult result;
+
+        UserConfirmNumContext* context = static_cast<UserConfirmNumContext*>(ctx);
+        result = context->callback();
+        delete context;
+        return result;
+    }
+
+    OCStackResult OCSecure::registerUserConfirmCallback(UserConfirmNumCB userConfirmCB)
+    {
+        if(!userConfirmCB)
+        {
+            oclog() << "Failed to set callback for confirming verifying callback.";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+        if (cLock)
+        {
+            UserConfirmNumContext* context = new UserConfirmNumContext(userConfirmCB);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            SetUserConfirmCB(static_cast<void*>(context), &OCSecure::confirmUserCallbackWrapper);
+            result = OC_STACK_OK;
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+    OCStackResult OCSecure::deregisterUserConfirmCallback()
+    {
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            UnsetUserConfirmCB();
+            result = OC_STACK_OK;
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+    OCStackResult OCSecure::setVerifyOptionMask(VerifyOptionBitmask_t optionMask)
+    {
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            SetVerifyOption(optionMask);
+            result = OC_STACK_OK;
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     OCStackResult OCSecure::saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
                                         OicEncodingType_t encodingType, uint16_t *credId)
