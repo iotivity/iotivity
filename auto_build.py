@@ -92,7 +92,7 @@ def build_linux_unsecured_with_java(flag, extra_option_str):
     print ("*********** Build for linux with Java support ************")
     build_options = {
                         'RELEASE':flag,
-                        'BUILD_JAVA': 'ON',
+                        'BUILD_JAVA': 1,
                         'TARGET_TRANSPORT': 'IP',
                     }
     call_scons(build_options, extra_option_str)
@@ -101,7 +101,7 @@ def build_linux_secured_with_java(flag, extra_option_str):
     print ("*********** Build for linux with Java support and secured ************")
     build_options = {
                         'RELEASE':flag,
-                        'BUILD_JAVA': 'ON',
+                        'BUILD_JAVA': 1,
                         'TARGET_TRANSPORT': 'IP',
                         'SECURED': 1,
                     }

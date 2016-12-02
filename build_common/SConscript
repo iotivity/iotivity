@@ -129,7 +129,7 @@ if target_os == 'windows':
 	# Default value is None, meaning that SCons has to choose automatically a VS version.
 	help_vars.Add(EnumVariable('MSVC_VERSION', 'MSVC compiler version - Windows', None, allowed_values=('12.0', '14.0')))
 
-help_vars.Add(EnumVariable('BUILD_JAVA', 'Build Java bindings', 'OFF', allowed_values=('ON', 'OFF')))
+help_vars.Add(BoolVariable('BUILD_JAVA', 'Build Java bindings', False))
 help_vars.Add(PathVariable('JAVA_HOME', 'JDK directory', os.environ.get('JAVA_HOME'), PathVariable.PathAccept))
 
 AddOption('--prefix',

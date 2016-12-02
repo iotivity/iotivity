@@ -10,7 +10,7 @@ print "Reading linux configuration script"
 
 SConscript('../external_libs.scons')
 help_vars = Variables()
-if env.get('BUILD_JAVA') == 'ON':
+if env.get('BUILD_JAVA') == True:
     if not env.get('ANDROID_GRADLE'):
         SConscript('../../extlibs/android/gradle/SConscript')
         help_vars.Add(PathVariable('ANDROID_GRADLE', 'Android Gradle directory', os.path.join(env.get('SRC_DIR'), 'extlibs', 'android', 'gradle', 'gradle-2.2.1/bin/gradle')))

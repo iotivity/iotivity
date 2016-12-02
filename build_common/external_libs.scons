@@ -40,7 +40,7 @@ if target_os == 'darwin':
 	env.AppendUnique(CPPPATH = ['/usr/local/include'])
 	env.AppendUnique(LIBPATH = ['/usr/local/lib'])
 
-if env.get('BUILD_JAVA') == 'ON' and target_os != 'android':
+if env.get('BUILD_JAVA') == True and target_os != 'android':
 	if env.get('JAVA_HOME') != None:
 			env.AppendUnique(CCFLAGS = ['-D__JAVA__'])
 			env.AppendUnique(CPPPATH = [
@@ -48,7 +48,7 @@ if env.get('BUILD_JAVA') == 'ON' and target_os != 'android':
 			env.get('JAVA_HOME') + '/include/' + target_os
 		])
 	else:
-		raise SCons.Errors.StopError( 'BUILD_JAVA is ON, but JAVA_HOME is not set.')
+		raise SCons.Errors.StopError( 'BUILD_JAVA is specified, but JAVA_HOME is not set.')
 
 
 # External library include files are in <src_dir>/deps/<target_os>/include
