@@ -25,8 +25,7 @@ import org.iotivity.service.ns.common.*;
 import java.util.Vector;
 
 /**
-  * @class   ConsumerService
-  * @brief   This class provides a set of Java APIs for Notification Consumer.
+  * This class provides a set of Java APIs for Notification Consumer.
   */
 public class ConsumerService
 {
@@ -82,8 +81,7 @@ public class ConsumerService
 
     /**
       * Request to publish resource to cloud server
-      * @param[in]  serverAddress combined with IP address and port number using delimiter :
-      * @return  result code
+      * @param serverAddress combined with IP address and port number using delimiter [in]
       */
     public void enableRemoteService(String serverAddress) throws NSException
     {

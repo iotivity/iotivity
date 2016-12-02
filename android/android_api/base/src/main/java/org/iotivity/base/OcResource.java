@@ -484,7 +484,7 @@ public class OcResource {
     /**
      * Method to set header options
      *
-     * @param headerOptionList List<OcHeaderOption> where header information(header optionID and
+     * @param headerOptionList List OcHeaderOption where header information(header optionID and
      *                         optionData is passed
      * @throws OcException
      */
@@ -524,7 +524,7 @@ public class OcResource {
     /**
      * Method to get the connectivity type of this resource
      *
-     * @return EnumSet<OcConnectivityType></OcConnectivityType> connectivity type set
+     * @return EnumSet OcConnectivityType connectivity type set
      */
     public EnumSet<OcConnectivityType> getConnectivityTypeSet() {
         return OcConnectivityType.convertToEnumSet(

@@ -23,9 +23,8 @@ package org.iotivity.service.ns.common;
 import android.util.Log;
 
 /**
-  * @class   MediaContents
-  * @brief   This class provides implementation of Notification MediaContents object.
-  */
+ * This class provides implementation of Notification MediaContents object.
+ */
 public class MediaContents
 {
     private static final String LOG_TAG = "NotificationService_MediaContents";

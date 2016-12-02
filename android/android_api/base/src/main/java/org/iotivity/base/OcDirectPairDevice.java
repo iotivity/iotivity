@@ -66,7 +66,7 @@ public class OcDirectPairDevice {
     /**
      * Method to get the connectivity type of this resource
      *
-     * @return EnumSet<OcConnectivityType></OcConnectivityType> connectivity type set
+     * @return EnumSet OcConnectivityType connectivity type set
      */
     public EnumSet<OcConnectivityType> getConnectivityTypeSet() {
         return OcConnectivityType.convertToEnumSet(
@@ -80,7 +80,7 @@ public class OcDirectPairDevice {
     /**
      *  Method to get list of all paired devices for a given device.
      *
-     *  @param GetDirectPairedListener Callback function, which will receive the list of direct paired devices.
+     *  @param getDirectPairedListener Callback function, which will receive the list of direct paired devices.
      *  @throws OcException
      */
 
@@ -93,7 +93,7 @@ public class OcDirectPairDevice {
     /**
      *  Method to perform direct pairing between two devices.
      *
-     *  @param DirectPairingListener Callback function, which will be called after
+     *  @param directPairingListener Callback function, which will be called after
      *                                      completion of direct pairing.
      *  @throws OcException
      */

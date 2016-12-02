@@ -23,9 +23,8 @@ import android.util.Log;
 import java.util.Vector;
 import java.util.Iterator;
 /**
-  * @class   TopicsList
-  * @brief   This class provides implementation of Topics List
-  */
+ * provides implementation of Topics List
+ */
 public class TopicsList
 {
     private static final String LOG_TAG = "NotificationService_TopicList";

@@ -42,7 +42,7 @@ public final class OcAccountManager {
     /**
      * Method to get the connectivity type for account server
      *
-     * @return EnumSet<OcConnectivityType></OcConnectivityType> connectivity type set
+     * @return EnumSet OcConnectivityType connectivity type set
      */
     public EnumSet<OcConnectivityType> getConnectivityTypeSet() {
         return OcConnectivityType.convertToEnumSet(

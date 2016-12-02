@@ -27,7 +27,7 @@ package org.iotivity.base;
  */
 public enum ResourceProperty {
     /**
-     * When none of the bits are set, the resource is non-discoverable &
+     * When none of the bits are set, the resource is non-discoverable and
      * non-observable by the client.
      */
     RES_PROP_NONE(0),

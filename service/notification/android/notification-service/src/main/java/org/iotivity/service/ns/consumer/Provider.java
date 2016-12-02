@@ -25,8 +25,7 @@ import org.iotivity.service.ns.common.*;
 import java.util.Vector;
 
 /**
-  * @class   Provider
-  * @brief   This class provides implementation of Notification Provider object.
+  * This class provides implementation of Notification Provider object.
   */
 public class Provider
 {
