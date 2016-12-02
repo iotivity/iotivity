@@ -40,7 +40,6 @@ extern "C" {
 #define OC_JSON_SUFFIX_LEN                 (sizeof(OC_JSON_SUFFIX) - 1)
 #define OC_JSON_SEPARATOR                  ','
 #define OC_JSON_SEPARATOR_STR              ","
-#define OC_KEY_VALUE_DELIMITER             "="
 
 /**
  * Static values for various JSON attributes.

@@ -175,7 +175,7 @@ static int storeResourceType(char **link, size_t size, uint8_t rowid)
         if (link[i])
         {
             VERIFY_SQLITE(sqlite3_bind_text(stmtRT, rt_value_index, link[i],
-                    strlen(link[i])+1, SQLITE_STATIC));
+                                            strlen(link[i]), SQLITE_STATIC));
 
             VERIFY_SQLITE(sqlite3_bind_int(stmtRT, rt_link_id_index, rowid));
         }
@@ -211,7 +211,7 @@ static int storeInterfaceType(char **link, size_t size, uint8_t rowid)
 
         if (link[i])
         {
-            VERIFY_SQLITE(sqlite3_bind_text(stmtIF, if_value_index, link[i], strlen(link[i])+1, SQLITE_STATIC));
+            VERIFY_SQLITE(sqlite3_bind_text(stmtIF, if_value_index, link[i], strlen(link[i]), SQLITE_STATIC));
             VERIFY_SQLITE(sqlite3_bind_int(stmtIF, if_link_id_index, rowid));
         }
         if (sqlite3_step(stmtIF) != SQLITE_DONE)
@@ -231,22 +231,36 @@ static int storeInterfaceType(char **link, size_t size, uint8_t rowid)
 
 static int storeLinkPayload(OCRepPayload *rdPayload, int64_t rowid)
 {
-    OCRepPayload **links = NULL;
-    size_t dimensions[MAX_REP_ARRAY_DEPTH];
     int res = 1 ;
     size_t j = 0;
 
-    if (OCRepPayloadGetPropObjectArray(rdPayload, OC_RSRVD_LINKS, &links, dimensions))
+    /*
+     * Iterate over the properties manually rather than OCRepPayloadGetPropObjectArray to avoid
+     * the clone since we want to insert the 'ins' values into the payload.
+     */
+    OCRepPayloadValue *links;
+    for (links = rdPayload->values; links; links = links->next)
+    {
+        if (0 == strcmp(links->name, OC_RSRVD_LINKS))
+        {
+            if (links->type != OCREP_PROP_ARRAY || links->arr.type != OCREP_PROP_OBJECT)
+            {
+                links = NULL;
+            }
+            break;
+        }
+    }
+    if (links != NULL)
     {
         const char *insertDeviceLLList = "INSERT INTO RD_DEVICE_LINK_LIST VALUES(?,?,?,?,?,?,?,?)";
         sqlite3_stmt *stmt = 0;
 
-        for (size_t i = 0; i < dimensions[0]; i++)
+        for (size_t i = 0; i < links->arr.dimensions[0]; i++)
         {
             VERIFY_SQLITE(sqlite3_prepare_v2(gRDDB, insertDeviceLLList, strlen(insertDeviceLLList) + 1, &stmt, NULL));
             VERIFY_SQLITE(sqlite3_exec(gRDDB, "BEGIN TRANSACTION", NULL, NULL, NULL));
 
-            OCRepPayload *link = links[i];
+            OCRepPayload *link = links->arr.objArray[i];
             char *uri = NULL;
             if (OCRepPayloadGetPropString(link, OC_RSRVD_HREF, &uri))
             {
@@ -267,7 +281,7 @@ static int storeLinkPayload(OCRepPayload *rdPayload, int64_t rowid)
             char **mediaType = NULL;
             if (OCRepPayloadGetStringArray(link, OC_RSRVD_MEDIA_TYPE, &mediaType, mtDim))
             {
-                VERIFY_SQLITE(sqlite3_bind_text(stmt, mt_index, mediaType[0], mtDim[0], SQLITE_STATIC));
+                VERIFY_SQLITE(sqlite3_bind_text(stmt, mt_index, mediaType[0], strlen(mediaType[0]), SQLITE_STATIC));
             }
 
             VERIFY_SQLITE(sqlite3_bind_int(stmt, d_index, rowid));
@@ -289,6 +303,11 @@ static int storeLinkPayload(OCRepPayload *rdPayload, int64_t rowid)
             VERIFY_SQLITE(sqlite3_exec(gRDDB, "COMMIT", NULL, NULL, NULL));
 
             int64_t ins = sqlite3_last_insert_rowid(gRDDB);
+            if (!OCRepPayloadSetPropInt(link, OC_RSRVD_INS, ins))
+            {
+                OIC_LOG_V(ERROR, TAG, "Error setting 'ins' value");
+                return OC_STACK_ERROR;
+            }
             VERIFY_SQLITE(storeResourceType(rt, rtDim[0], ins));
             VERIFY_SQLITE(storeInterfaceType(itf, itfDim[0], ins));
             OICFree(uri);
@@ -331,7 +350,7 @@ OCStackResult OCRDDatabaseStoreResources(OCRepPayload *payload, const OCDevAddr 
     char *deviceid = NULL;
     if (OCRepPayloadGetPropString(payload, OC_RSRVD_DEVICE_ID, &deviceid))
     {
-        VERIFY_SQLITE(sqlite3_bind_text(stmt, device_index, deviceid, strlen(deviceid) + 1, SQLITE_STATIC));
+        VERIFY_SQLITE(sqlite3_bind_text(stmt, device_index, deviceid, strlen(deviceid), SQLITE_STATIC));
     }
 
     int64_t ttl = 0;
@@ -343,7 +362,7 @@ OCStackResult OCRDDatabaseStoreResources(OCRepPayload *payload, const OCDevAddr 
     char rdAddress[MAX_URI_LENGTH];
     snprintf(rdAddress, MAX_URI_LENGTH, "%s:%d", address->addr, address->port);
     OIC_LOG_V(DEBUG, TAG, "Address: %s", rdAddress);
-    VERIFY_SQLITE(sqlite3_bind_text(stmt, address_index, rdAddress, strlen(rdAddress) + 1, SQLITE_STATIC));
+    VERIFY_SQLITE(sqlite3_bind_text(stmt, address_index, rdAddress, strlen(rdAddress), SQLITE_STATIC));
 
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
@@ -364,17 +383,52 @@ OCStackResult OCRDDatabaseStoreResources(OCRepPayload *payload, const OCDevAddr 
     return OC_STACK_OK;
 }
 
-OCStackResult OCRDDatabaseDeleteDevice(const char *deviceId)
+OCStackResult OCRDDatabaseDeleteResources(const char *deviceId, const uint8_t *instanceIds, uint8_t nInstanceIds)
 {
     CHECK_DATABASE_INIT;
+
     VERIFY_SQLITE(sqlite3_exec(gRDDB, "BEGIN TRANSACTION", NULL, NULL, NULL));
-
     sqlite3_stmt *stmt = 0;
-    char *delDevice = "DELETE FROM RD_DEVICE_LIST WHERE "XSTR(OC_RSRVD_DEVICE_ID)" = ?";
-    VERIFY_SQLITE(sqlite3_prepare_v2(gRDDB, delDevice, strlen(delDevice) + 1, &stmt, NULL));
+    if (!instanceIds || !nInstanceIds)
+    {
+        char *delDevice = "DELETE FROM RD_DEVICE_LIST WHERE "XSTR(OC_RSRVD_DEVICE_ID)" = ?";
+        VERIFY_SQLITE(sqlite3_prepare_v2(gRDDB, delDevice, strlen(delDevice) + 1, &stmt, NULL));
 
-    VERIFY_SQLITE(sqlite3_bind_text(stmt, 1, deviceId, strlen(deviceId) + 1, SQLITE_STATIC));
+        VERIFY_SQLITE(sqlite3_bind_text(stmt, 1, deviceId, strlen(deviceId), SQLITE_STATIC));
+    }
+    else
+    {
+        const char pre[] = "DELETE FROM RD_DEVICE_LINK_LIST "
+            "WHERE ins IN ("
+            "SELECT RD_DEVICE_LINK_LIST.ins FROM RD_DEVICE_LINK_LIST "
+            "INNER JOIN RD_DEVICE_LIST ON RD_DEVICE_LINK_LIST.DEVICE_ID=RD_DEVICE_LIST.ID "
+            "WHERE RD_DEVICE_LIST.di = ? AND RD_DEVICE_LINK_LIST.ins IN (";
+        size_t inLen = nInstanceIds + (nInstanceIds - 1);
+        const char post[] = "))";
+        size_t len = sizeof(pre) + inLen + sizeof(post);
+        char *delResource = OICCalloc(len, 1);
+        if (!delResource)
+        {
+            OIC_LOG(ERROR, TAG, "SQL query is NULL");
+            return OC_STACK_ERROR;
+        }
+        OICStrcat(delResource, len, pre);
+        OICStrcat(delResource, len, "?");
+        for (uint8_t i = 1; i < nInstanceIds; ++i)
+        {
+            OICStrcat(delResource, len, ",?");
+        }
+        OICStrcat(delResource, len, post);
+        int prepareResult = sqlite3_prepare_v2(gRDDB, delResource, strlen(delResource) + 1, &stmt, NULL);
+        OICFree(delResource);
+        VERIFY_SQLITE(prepareResult);
 
+        VERIFY_SQLITE(sqlite3_bind_text(stmt, 1, deviceId, strlen(deviceId), SQLITE_STATIC));
+        for (uint8_t i = 0; i < nInstanceIds; ++i)
+        {
+            VERIFY_SQLITE(sqlite3_bind_int(stmt, 2 + i, instanceIds[i]));
+        }
+    }
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
         sqlite3_exec(gRDDB, "ROLLBACK", NULL, NULL, NULL);

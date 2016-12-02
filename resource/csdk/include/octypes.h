@@ -98,6 +98,9 @@ extern "C" {
 /** Separator for multiple query string.*/
 #define OC_QUERY_SEPARATOR                    "&;"
 
+/** Delimeter for keys and values in query string.*/
+#define OC_KEY_VALUE_DELIMITER                "="
+
 /**
  *  OC_DEFAULT_PRESENCE_TTL_SECONDS sets the default time to live (TTL) for presence.
  */

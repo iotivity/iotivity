@@ -75,30 +75,22 @@ class RDDatabaseTests : public testing::Test {
     protected:
     virtual void SetUp()
     {
+        remove("RD.db");
         OCInit("127.0.0.1", 5683, OC_CLIENT_SERVER);
+        EXPECT_EQ(OC_STACK_OK, OCRDDatabaseInit(NULL));
     }
 
     virtual void TearDown()
     {
+        EXPECT_EQ(OC_STACK_OK, OCRDDatabaseClose());
         OCStop();
     }
 };
 
-TEST_F(RDDatabaseTests, CreateDatabase)
+static OCRepPayload *CreateResources(const char *deviceId)
 {
-    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseInit(NULL));
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseClose());
-}
-
-TEST_F(RDDatabaseTests, PublishDatabase)
-{
-    // itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseInit(NULL));
     OCRepPayload *repPayload = OCRepPayloadCreate();
-    ASSERT_TRUE(repPayload != NULL);
-    const char *deviceId = "7a960f46-a52e-4837-bd83-460b1a6dd56b";
-    ASSERT_TRUE(deviceId != NULL);
+    EXPECT_TRUE(repPayload != NULL);
     EXPECT_TRUE(OCRepPayloadSetPropString(repPayload, OC_RSRVD_DEVICE_ID, deviceId));
     EXPECT_TRUE(OCRepPayloadSetPropInt(repPayload, OC_RSRVD_DEVICE_TTL, 86400));
     OCDevAddr address;
@@ -153,6 +145,22 @@ TEST_F(RDDatabaseTests, PublishDatabase)
     OCRepPayloadSetPropObjectArray(repPayload, OC_RSRVD_LINKS, linkArr, dimensions);
 
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *)repPayload);
+    return repPayload;
+}
+
+TEST_F(RDDatabaseTests, Create)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+}
+
+TEST_F(RDDatabaseTests, StoreResources)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    const char *deviceId = "7a960f46-a52e-4837-bd83-460b1a6dd56b";
+    OCRepPayload *repPayload = CreateResources(deviceId);
+    OCDevAddr address;
+    address.port = 54321;
+    OICStrcpy(address.addr,MAX_ADDR_STR_SIZE, "192.168.1.1");
 
     EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(repPayload, &address));
 
@@ -170,6 +178,48 @@ TEST_F(RDDatabaseTests, PublishDatabase)
     OCDiscoveryPayloadDestroy(discPayload);
     discPayload = NULL;
 
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDeleteDevice(deviceId));
-    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseClose());
+    OCPayloadDestroy((OCPayload *)repPayload);
+}
+
+TEST_F(RDDatabaseTests, DeleteResourcesDevice)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    const char *deviceIds[2] =
+    {
+        "7a960f46-a52e-4837-bd83-460b1a6dd56b",
+        "983656a7-c7e5-49c2-a201-edbeb7606fb5",
+    };
+    OCRepPayload *payloads[2];
+    payloads[0] = CreateResources(deviceIds[0]);
+    payloads[1] = CreateResources(deviceIds[1]);
+    OCDevAddr address;
+    address.port = 54321;
+    OICStrcpy(address.addr,MAX_ADDR_STR_SIZE, "192.168.1.1");
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(payloads[0], &address));
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseStoreResources(payloads[1], &address));
+
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDeleteResources(deviceIds[0], NULL, 0));
+
+    OCDiscoveryPayload *discPayload = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCRDDatabaseDiscoveryPayloadCreate(OC_RSRVD_INTERFACE_LL, NULL, &discPayload));
+    bool found0 = false;
+    bool found1 = false;
+    for (OCDiscoveryPayload *payload = discPayload; payload; payload = payload->next)
+    {
+        if (!strcmp((const char *) deviceIds[0], payload->sid))
+        {
+            found0 = true;
+        }
+        if (!strcmp((const char *) deviceIds[1], payload->sid))
+        {
+            found1 = true;
+        }
+    }
+    EXPECT_FALSE(found0);
+    EXPECT_TRUE(found1);
+    OCDiscoveryPayloadDestroy(discPayload);
+    discPayload = NULL;
+
+    OCPayloadDestroy((OCPayload *)payloads[0]);
+    OCPayloadDestroy((OCPayload *)payloads[1]);
 }

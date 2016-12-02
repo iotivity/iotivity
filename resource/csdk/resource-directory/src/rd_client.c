@@ -51,6 +51,68 @@ OCStackResult OCRDDiscover(OCConnectivityType connectivityType, OCCallbackData *
                         cbBiasFactor, NULL, 0);
 }
 
+static void RDPublishContextDeleter(void *ctx)
+{
+    OCCallbackData *cbData = (OCCallbackData*)ctx;
+    if (cbData->cd)
+    {
+        cbData->cd(cbData->context);
+    }
+    OICFree(cbData);
+}
+
+OCStackApplicationResult RDPublishCallback(void *ctx,
+                                           OCDoHandle handle,
+                                           OCClientResponse *clientResponse)
+{
+    OCCallbackData *cbData = (OCCallbackData*)ctx;
+
+    // Update resource unique id in stack.
+    OCRepPayload **links = NULL;
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {0};
+    if (clientResponse && clientResponse->payload)
+    {
+        OCRepPayload *rdPayload = (OCRepPayload *) clientResponse->payload;
+        if (!OCRepPayloadGetPropObjectArray(rdPayload, OC_RSRVD_LINKS, &links, dimensions))
+        {
+            OIC_LOG_V(DEBUG, TAG, "No links in publish response");
+            goto exit;
+        }
+        for(size_t i = 0; i < dimensions[0]; i++)
+        {
+            char *uri = NULL;
+            if (!OCRepPayloadGetPropString(links[i], OC_RSRVD_HREF, &uri))
+            {
+                OIC_LOG_V(ERROR, TAG, "Missing 'href' in publish response");
+                goto next;
+            }
+            OCResourceHandle handle = OCGetResourceHandleAtUri(uri);
+            if (handle == NULL)
+            {
+                OIC_LOG_V(ERROR, TAG, "No resource exists with uri: %s", uri);
+                goto next;
+            }
+            int64_t ins = 0;
+            if (!OCRepPayloadGetPropInt(links[i], OC_RSRVD_INS, &ins))
+            {
+                OIC_LOG_V(ERROR, TAG, "Missing 'ins' in publish response");
+                goto next;
+            }
+            OCBindResourceInsToResource(handle, ins);
+        next:
+            OICFree(uri);
+        }
+    }
+
+exit:
+    for (size_t i = 0; i < dimensions[0]; i++)
+    {
+        OCRepPayloadDestroy(links[i]);
+    }
+    OICFree(links);
+    return cbData->cb(cbData->context, handle, clientResponse);
+}
+
 OCStackResult OCRDPublish(const char *host, OCConnectivityType connectivityType,
                           OCResourceHandle *resourceHandles, uint8_t nHandles,
                           OCCallbackData *cbData, OCQualityOfService qos)
@@ -190,12 +252,6 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
                 OCRepPayloadSetStringArrayAsOwner(link, OC_RSRVD_INTERFACE, itf, ifDim);
             }
 
-            uint8_t ins = 0;
-            if (OC_STACK_OK == OCGetResourceIns(handle, &ins))
-            {
-                OCRepPayloadSetPropInt(link, OC_RSRVD_INS, ins);
-            }
-
             size_t mtDim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
             char **mediaType = (char **)OICMalloc(sizeof(char *) * 1);
             if (!mediaType)
@@ -234,8 +290,18 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
     }
     OICFree(linkArr);
 
+    OCCallbackData *rdPublishContext = (OCCallbackData*)OICMalloc(sizeof(OCCallbackData));
+    if (!rdPublishContext)
+    {
+        return OC_STACK_NO_MEMORY;
+    }
+    memcpy(rdPublishContext, cbData, sizeof(OCCallbackData));
+    OCCallbackData rdPublishCbData;
+    rdPublishCbData.context = rdPublishContext;
+    rdPublishCbData.cb = RDPublishCallback;
+    rdPublishCbData.cd = RDPublishContextDeleter;
     return OCDoResource(NULL, OC_REST_POST, targetUri, NULL, (OCPayload *)rdPayload,
-                        connectivityType, qos, cbData, NULL, 0);
+                        connectivityType, qos, &rdPublishCbData, NULL, 0);
 }
 
 OCStackResult OCRDDelete(const char *host, OCConnectivityType connectivityType,
