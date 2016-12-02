@@ -23,7 +23,7 @@
 package org.iotivity.base;
 
 import org.iotivity.ca.CaInterface;
-import org.iotivity.base.BuildConfig;
+import org.iotivity.base.*;
 
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -479,8 +479,8 @@ public final class OcPlatform {
 
     /**
      * This API registers a resource with the server
-     * <p/>
-     * Note: This API applies to server & client side.
+     * <p>
+     * Note: This API applies to server and client side.
      * </P>
      *
      * @param ocResource The instance of OcResource with all data filled
@@ -498,7 +498,7 @@ public final class OcPlatform {
 
     /**
      * This API registers a resource with the server NOTE: This API applies to server side only.
-     * <p/>
+     * <p>
      * Note: This API applies to server side only.
      * </P>
      *
@@ -564,8 +564,7 @@ public final class OcPlatform {
     /**
      * Set param Info
      *
-     * @param ocDeviceInfo object containing all the device specific information
-     * @throws OcException if failure
+     * @throws OcException on failure
      */
     public static void setPropertyValue(
             int path, String propName, String propValue) throws OcException {
@@ -1002,7 +1001,7 @@ public final class OcPlatform {
      *  Method to find all devices which are eligible for direct pairing and return the list.
      *
      *  @param timeout timeout for discovering direct pair devices.
-     *  @param FindDirectPairingListener Callback function, which will receive the list of direct
+     *  @param onFindDirectPairingListener Callback function, which will receive the list of direct
      *                                  pairable devices.
      *  @throws OcException
      */
@@ -1012,7 +1011,7 @@ public final class OcPlatform {
     /**
      *  Method to get list of all paired devices for a given device.
      *
-     *  @param GetDirectPairedListener Callback function, which will receive the list of direct
+     *  @param onGetDirectPairedListener Callback function, which will receive the list of direct
      *                                 paired devices.
      *  @throws OcException
      */
@@ -1025,7 +1024,7 @@ public final class OcPlatform {
      *  @param peer  Target peer
      *  @param prmType Pairing Method to be used for Pairing
      *  @param pin pin
-     *  @param DirectPairingListener Callback function, which will be called after
+     *  @param onDirectPairingListener Callback function, which will be called after
      *                                      completion of direct pairing.
      *  @throws OcException
      */
@@ -1110,7 +1109,7 @@ public final class OcPlatform {
      * An EntityHandler can be registered via the OcPlatform.registerResource call.
      * Event listeners are notified asynchronously
      *
-     * @note entityhandler callback :
+     * Note: entityhandler callback :
      * When you set specific return value like EntityHandlerResult.OK, SLOW
      * and etc in entity handler callback,
      * ocstack will be not send response automatically to client
@@ -1144,7 +1143,7 @@ public final class OcPlatform {
      * You can only create this object if OCPlatform was initialized to be a Client or
      * Client/Server. Otherwise, this will return an empty shared ptr.
      *
-     * @note For now, OCPlatform SHOULD be initialized to be a Client/Server(Both) for the
+     * Nnote For now, OCPlatform SHOULD be initialized to be a Client/Server(Both) for the
      *       methods of this object to work since device id is not generated on Client mode.
      *
      * @param host                Host IP Address of a account server.

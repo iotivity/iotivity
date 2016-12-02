@@ -24,9 +24,8 @@ import android.util.Log;
 import org.iotivity.base.OcRepresentation;
 
 /**
-  * @class   Message
-  * @brief   This class provides implementation of Notification Message object.
-  */
+ *  This class provides implementation of Notification Message object.
+ */
 public class Message
 {
     private static final String LOG_TAG = "NotificationService_Message";

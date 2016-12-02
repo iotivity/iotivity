@@ -180,7 +180,7 @@ public class CaInterface {
 
     /**
      *  set BLE scan interval time and working count.
-     *  scanning logic (start scan -> stop scan) will be worked repeatly for workingCount.
+     *  scanning logic ("start scan" to "stop scan") will be worked repeatly for workingCount.
      *  and if you choose '0' value for workingCount parameter,
      *  scanning will be worked continually as interval time.
      *  @param intervalTime                  interval time(Seconds).

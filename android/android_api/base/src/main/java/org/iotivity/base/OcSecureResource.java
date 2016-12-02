@@ -35,7 +35,7 @@ public class OcSecureResource {
     /**
      *  Method to Start Ownership Transfer of an un-owned device.
      *
-     *  @param DoOwnershipTransferListener  Callback function, which will be called after
+     *  @param doOwnershipTransferListener  Callback function, which will be called after
      *                                      completion of ownership Transfer.
      *  @throws OcException
      */
@@ -46,7 +46,7 @@ public class OcSecureResource {
      *  Method removes device credential from all devices in subnet
      *
      *  @param timeout
-     *  @param RemoveDeviceListener         Callback function, which will be called after
+     *  @param removeDeviceListener         Callback function, which will be called after
      *                                      completion of removing device.
      *  @throws OcException
      */
@@ -54,10 +54,10 @@ public class OcSecureResource {
         throws OcException;
 
     /**
-     *  Method removes the credential & relationship between the two devices.
+     *  Method removes the credential and relationship between the two devices.
      *
-     *  @param jobject                      Second device
-     *  @param UnlinkDevicesListener        Callback function, which will be called after
+     *  @param device2                      Second device
+     *  @param unlinkDevicesListener        Callback function, which will be called after
      *                                      completion of removing device.
      *  @throws OcException
      */
@@ -65,12 +65,12 @@ public class OcSecureResource {
         throws OcException;
 
     /**
-     *  Method removes the credential & relationship between the two devices.
+     *  Method removes the credential and relationship between the two devices.
      *
-     *  @param EnumSet<CredType>            OR'ed Cred Types
-     *  @param KeySize                          keySize
-     *  @param Object                       Second device
-     *  @param ProvisionCredentialsListener Callback function, which will be called after
+     *  @param credTypeSet OR'ed Cred Types
+     *  @param keysize
+     *  @param device2 Second device
+     *  @param provisionCredentialsListener Callback function, which will be called after
      *                                      completion of removing device.
      *  @throws OcException
      */
@@ -92,9 +92,9 @@ public class OcSecureResource {
     /**
      *  Method to provision the Trust certificate chain to secured device.
      *
-     *  @param EnumSet<CredType>            OR'ed Cred Types
-     *  @param int                          credId
-     *  @param ProvisionTrustCertChainListener Callback function, which will be called after
+     *  @param credTypeSet           OR'ed Cred Types
+     *  @param credId
+     *  @param provisionTrustCertChainListener Callback function, which will be called after
      *                                      proviosion trust certificate chain.
      *  @throws OcException
      */
@@ -116,8 +116,8 @@ public class OcSecureResource {
     /**
      *  Method send ACL information to resource.
      *
-     *  @param jobject                      Acl
-     *  @param ProvisionAclListener         Callback function, which will be called after
+     *  @param acl object
+     *  @param provisionACLListener         Callback function, which will be called after
      *                                      completion of removing device.
      *  @throws OcException
      */
@@ -129,12 +129,12 @@ public class OcSecureResource {
      *  Method provisions credentials between two devices and ACLs for the devices who
      *  act as a server.
      *
-     *  @param EnumSet<CredType>            OR'ed Cred Types
-     *  @param KeySize                      keySize
-     *  @param Object                       First acl
-     *  @param Object                       Second device
-     *  @param Object                       Second acl
-     *  @param ProvisionPairwiseDevicesListener Callback function, which will be called after
+     *  @param credTypeSet OR'ed Cred Types
+     *  @param keysize keySize
+     *  @param acl1 First acl
+     *  @param device2 Second device
+     *  @param acl2 Second acl
+     *  @param provisionPairwiseDevicesListener Callback function, which will be called after
      *                                      completion of removing device.
      *  @throws OcException
      */
@@ -161,7 +161,7 @@ public class OcSecureResource {
      *  @param pdacls                   Array of Device Pairing Access Control List
      *  @param type                     List of supported OcPrmType
      *  @param edp                      enable (1) / disable (0)
-     *  @param ProvisionDirectPairing   Callback function, which will be called after completion
+     *  @param provisionDirectPairingListener   Callback function, which will be called after completion
      *                                  of Direct Pairing.
      *  @throws OcException
      */

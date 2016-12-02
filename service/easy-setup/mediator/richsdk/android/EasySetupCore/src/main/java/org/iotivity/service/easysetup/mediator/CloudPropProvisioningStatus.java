@@ -24,8 +24,8 @@ import org.iotivity.service.easysetup.mediator.enums.ESCloudProvState;
 import org.iotivity.service.easysetup.mediator.enums.ESResult;
 
 /**
- * This interface facilitates Application to get progress & result of Cloud provisioning
- * process in easy setup
+ * This interface facilitates Application
+ * to get progress and result of Cloud provisioning process in easy setup
  */
 public class CloudPropProvisioningStatus
 {
@@ -35,10 +35,10 @@ public class CloudPropProvisioningStatus
      * Constructor
      *
      * @param result a result of cloud property provisioning
-     * @param state a state of cloud property provisioning.
+     * <p> state a state of cloud property provisioning.
      *              ES_CLOUD_PROVISIONING_ERROR(-1), ES_CLOUD_PROVISIONING_SUCCESS(0),
      *              ES_CLOUD_ENROLLEE_FOUND(1), ES_CLOUD_ENROLLEE_NOT_FOUND(2)
-     *
+     * </p>
      * @see ESCloudProvState
      */
     public CloudPropProvisioningStatus(int result)
@@ -49,7 +49,7 @@ public class CloudPropProvisioningStatus
     /**
      * Get a result of cloud property provisioning
      *
-     * @result ESResult a result of cloud property provisioning
+     * @return ESResult a result of cloud property provisioning
      */
     public ESResult getESResult()
     {

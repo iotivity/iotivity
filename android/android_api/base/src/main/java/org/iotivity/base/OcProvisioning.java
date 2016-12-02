@@ -90,7 +90,7 @@ public class OcProvisioning {
     /**
      * Server API to set Callback for Displaying stack generated PIN.
      *
-     * @param DisplayPinListener Pin callback Listener to be registered.
+     * @param displayPinListener Pin callback Listener to be registered.
      * @throws OcException
      */
     public static native void setDisplayPinListener(DisplayPinListener displayPinListener)
@@ -104,7 +104,7 @@ public class OcProvisioning {
      * Method to get Array of owned and un-owned devices in the current subnet.
      *
      * @param timeout    timeout in sec for the API to return.
-     * @retrun           Array of OcSecureResource class objects.
+     * @return           Array of OcSecureResource class objects.
      *                   be provisioned.
      * @throws OcException
      */
@@ -116,8 +116,8 @@ public class OcProvisioning {
     /**
      *  Method to save the Trust certificate chain to SVR.
      *
-     *  @param byte[]            trustCertChain
-     *  @param EncodingType                          encodingType
+     *  @param trustCertChain
+     *  @param encodingType
      *  @throws OcException
      */
     public static int saveTrustCertChain(byte[] trustCertChain, EncodingType encodingType) throws OcException {
