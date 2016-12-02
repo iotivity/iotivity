@@ -926,7 +926,7 @@ OCStackApplicationResult ActionSetCB(void* context, OCDoHandle handle,
         }
 
         // Format the response.  Note this requires some info about the request
-        response.requestHandle = info->ehRequest;
+        response.requestHandle = info->ehRequest->requestId;
         response.resourceHandle = info->collResource;
         response.payload = clientResponse->payload;
         response.numSendVendorSpecificHeaderOptions = 0;
@@ -1317,6 +1317,14 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                 else
                 {
                     OIC_LOG(INFO, TAG, "Group Action[POST].");
+                    OCServerRequest *request =
+                            GetServerRequestUsingHandle(ehRequest->requestHandle);
+                    if (NULL == request)
+                    {
+                        stackRet = OC_STACK_ERROR;
+                        goto exit;
+                    }
+
                     if (actionset->type == NONE)
                     {
                         OIC_LOG_V(INFO, TAG, "Execute ActionSet : %s",
@@ -1324,13 +1332,11 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                         unsigned int num = GetNumOfTargetResource(
                                 actionset->head);
 
-                        ((OCServerRequest *) ehRequest->requestHandle)->ehResponseHandler =
-                                HandleAggregateResponse;
-                        ((OCServerRequest *) ehRequest->requestHandle)->numResponses =
-                                num + 1;
+                        request->ehResponseHandler = HandleAggregateResponse;
+                        request->numResponses = num + 1;
 
-                        DoAction(resource, actionset,
-                                (OCServerRequest*) ehRequest->requestHandle);
+                        DoAction(resource, actionset, request);
+
                         stackRet = OC_STACK_OK;
                     }
                     else
@@ -1353,8 +1359,8 @@ OCStackResult BuildCollectionGroupActionCBORResponse(
                             MUTEX_LOCK(&g_scheduledResourceLock);
                             schedule->resource = resource;
                             schedule->actionset = actionset;
-                            schedule->ehRequest =
-                                    (OCServerRequest*) ehRequest->requestHandle;
+                            schedule->ehRequest = request;
+
                             MUTEX_UNLOCK(&g_scheduledResourceLock);
                             if (delay > 0)
                             {

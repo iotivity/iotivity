@@ -222,12 +222,12 @@ OCServerRequest * GetServerRequestUsingToken (const CAToken_t token, uint8_t tok
  * @return
  *     OCServerRequest*
  */
-OCServerRequest * GetServerRequestUsingHandle (const OCServerRequest * handle)
+OCServerRequest * GetServerRequestUsingHandle (const OCRequestHandle handle)
 {
     OCServerRequest * out = NULL;
     LL_FOREACH (serverRequestList, out)
     {
-        if(out == handle)
+        if(out->requestId == handle)
         {
             return out;
         }
@@ -244,7 +244,7 @@ OCServerRequest * GetServerRequestUsingHandle (const OCServerRequest * handle)
  * @return
  *     OCServerResponse*
  */
-OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle)
+OCServerResponse * GetServerResponseUsingHandle (const OCRequestHandle handle)
 {
     OCServerResponse * out = NULL;
     LL_FOREACH (serverResponseList, out)
@@ -293,6 +293,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     serverRequest->acceptFormat = acceptFormat;
     serverRequest->ehResponseHandler = HandleSingleResponse;
     serverRequest->numResponses = 1;
+    serverRequest->requestId = OCGetRandom();
 
     if(query)
     {
@@ -306,7 +307,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     }
     if(payload && reqTotalSize)
     {
-       // destination is at least 1 greater than the source, so a NULL always exists in the
+        // destination is at least 1 greater than the source, so a NULL always exists in the
         // last character
         memcpy(serverRequest->payload, payload, reqTotalSize);
         serverRequest->payloadSize = reqTotalSize;
@@ -315,15 +316,14 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
     serverRequest->requestComplete = 0;
     if(requestToken)
     {
-        // If tokenLength is zero, the return value depends on the
-        // particular library implementation (it may or may not be a null pointer).
+         // If tokenLength is zero, the return value depends on the
+         // particular library implementation (it may or may not be a null pointer).
         if (tokenLength)
         {
             serverRequest->requestToken = (CAToken_t) OICMalloc(tokenLength);
             VERIFY_NON_NULL(serverRequest->requestToken);
             memcpy(serverRequest->requestToken, requestToken, tokenLength);
         }
-
     }
     serverRequest->tokenLength = tokenLength;
 
@@ -343,6 +343,7 @@ OCStackResult AddServerRequest (OCServerRequest ** request, uint16_t coapID,
 exit:
     if (serverRequest)
     {
+        OICFree(serverRequest->requestToken);
         OICFree(serverRequest);
         serverRequest = NULL;
     }
@@ -511,7 +512,12 @@ OCStackResult HandleSingleResponse(OCEntityHandlerResponse * ehResponse)
         return OC_STACK_ERROR;
     }
 
-    OCServerRequest *serverRequest = (OCServerRequest *)ehResponse->requestHandle;
+    OCServerRequest *serverRequest = GetServerRequestUsingHandle(ehResponse->requestHandle);
+    if (NULL == serverRequest)
+    {
+        OIC_LOG(ERROR, TAG, "No serverRequest matching with ehResponse");
+        return OC_STACK_ERROR;
+    }
 
     CopyDevAddrToEndpoint(&serverRequest->devAddr, &responseEndpoint);
 
@@ -742,10 +748,8 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
 
     OIC_LOG(INFO, TAG, "Inside HandleAggregateResponse");
 
-    OCServerRequest *serverRequest = GetServerRequestUsingHandle((OCServerRequest *)
-                                                                 ehResponse->requestHandle);
-    OCServerResponse *serverResponse = GetServerResponseUsingHandle((OCServerRequest *)
-                                                                    ehResponse->requestHandle);
+    OCServerRequest *serverRequest = GetServerRequestUsingHandle(ehResponse->requestHandle);
+    OCServerResponse *serverResponse = GetServerResponseUsingHandle(ehResponse->requestHandle);
 
     OCStackResult stackRet = OC_STACK_ERROR;
     if(serverRequest)
@@ -769,7 +773,7 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
             goto exit;
         }
 
-        OCRepPayload *newPayload = OCRepPayloadClone((OCRepPayload *)ehResponse->payload);
+        OCRepPayload *newPayload = OCRepPayloadBatchClone((OCRepPayload *)ehResponse->payload);
 
         if(!serverResponse->payload)
         {
@@ -787,6 +791,7 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
         {
             OIC_LOG(INFO, TAG, "This is the last response fragment");
             ehResponse->payload = serverResponse->payload;
+            ehResponse->ehResult = OC_EH_OK;
             stackRet = HandleSingleResponse(ehResponse);
             //Delete the request and response
             FindAndDeleteServerRequest(serverRequest);
@@ -799,5 +804,6 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
         }
     }
 exit:
+
     return stackRet;
 }

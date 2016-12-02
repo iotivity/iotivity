@@ -1813,7 +1813,7 @@ exit:
 #endif //_ENABLE_MULTIPLE_OWNER_
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
-static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * ehRequest)
+static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehRequest)
 {
     OCEntityHandlerResult ret = OC_EH_ERROR;
     OIC_LOG(DEBUG, TAG, "HandleCREDPostRequest IN");
@@ -1837,7 +1837,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
             {
                 case SYMMETRIC_PAIR_WISE_KEY:
                 {
-                    OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
+                    OCServerRequest *request = GetServerRequestUsingHandle(ehRequest->requestHandle);
                     if(FillPrivateDataOfOwnerPSK(cred, (CAEndpoint_t *)&request->devAddr, doxm))
                     {
                         if(OC_STACK_RESOURCE_DELETED == RemoveCredential(&cred->subject))
@@ -1930,12 +1930,17 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
                 const OicSecDoxm_t* doxm =  GetDoxmResourceData();
                 if(doxm)
                 {
-                    if(!doxm->owned && previousMsgId != ehRequest->messageID)
+                    if(!doxm->owned)
                     {
-                        OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request,"\
-                                            "DOXM will be reverted.");
-                        RestoreDoxmToInitState();
-                        RestorePstatToInitState();
+                        OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request");
+
+                        if((OC_ADAPTER_IP == ehRequest->devAddr.adapter && previousMsgId != ehRequest->messageID)
+                           || OC_ADAPTER_TCP == ehRequest->devAddr.adapter)
+                        {
+                            RestoreDoxmToInitState();
+                            RestorePstatToInitState();
+                            OIC_LOG(WARNING, TAG, "DOXM will be reverted.");
+                        }
                     }
                 }
                 else
@@ -1954,7 +1959,7 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
             {
                 case SYMMETRIC_PAIR_WISE_KEY:
                 {
-                    OCServerRequest *request = (OCServerRequest *)ehRequest->requestHandle;
+                    OCServerRequest *request = GetServerRequestUsingHandle(ehRequest->requestHandle);
                     if(FillPrivateDataOfSubOwnerPSK(cred, (CAEndpoint_t *)&request->devAddr, doxm, &cred->subject))
                     {
                         if(OC_STACK_RESOURCE_DELETED == RemoveCredential(&cred->subject))
@@ -2056,7 +2061,10 @@ static OCEntityHandlerResult HandlePostRequest(const OCEntityHandlerRequest * eh
     }
     else
     {
-        previousMsgId = ehRequest->messageID;
+        if(OC_ADAPTER_IP == ehRequest->devAddr.adapter)
+        {
+            previousMsgId = ehRequest->messageID++;
+        }
     }
     //Send response to request originator
     ret = ((SendSRMResponse(ehRequest, ret, NULL, 0)) == OC_STACK_OK) ?

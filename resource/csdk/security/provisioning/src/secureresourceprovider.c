@@ -29,6 +29,7 @@
 #include "secureresourceprovider.h"
 #include "logger.h"
 #include "oic_malloc.h"
+#include "oic_string.h"
 #include "aclresource.h"
 #include "pstatresource.h"
 #include "srmresourcestrings.h"
@@ -44,6 +45,7 @@
 #include "base64.h"
 #include "utlist.h"
 #include "ocpayload.h"
+#include "srmutility.h"
 
 #ifdef __WITH_DTLS__
 #include "crlresource.h"

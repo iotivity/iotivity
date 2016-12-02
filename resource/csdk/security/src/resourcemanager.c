@@ -48,11 +48,11 @@ OCStackResult SendSRMResponse(const OCEntityHandlerRequest *ehRequest,
         OCEntityHandlerResult ehRet, uint8_t *cborPayload, size_t size)
 {
     OIC_LOG(DEBUG, TAG, "SRM sending SRM response");
-    OCEntityHandlerResponse response = {.requestHandle = NULL};
     OCStackResult ret = OC_STACK_ERROR;
 
     if (ehRequest)
     {
+        OCEntityHandlerResponse response = {.requestHandle = 0};
         OCSecurityPayload ocPayload = {.base = {.type = PAYLOAD_TYPE_INVALID}};
 
         response.requestHandle = ehRequest->requestHandle;

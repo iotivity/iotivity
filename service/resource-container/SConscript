@@ -239,7 +239,7 @@ if target_os not in ['ios']:
     Command("examples/ResourceContainerConfig.xml","examples/ResourceContainerConfig.xml", Copy("$TARGET", "$SOURCE"))
     Ignore("examples/ResourceContainerConfig.xml", "examples/ResourceContainerConfig.xml")
 
-    containersample_env.AppendUnique(LIBS = ['rcs_container','resource_directory'])
+    containersample_env.AppendUnique(LIBS = ['rcs_container'])
 
     containersampleapp_src =  ['examples/ContainerSample.cpp']
     containersampleapp = containersample_env.Program('ContainerSample',containersampleapp_src)

@@ -107,5 +107,8 @@ if target_os in ['linux']:
 
 	if server_builder_test_env.get('TEST') == '1':
 		from tools.scons.RunTest import *
-		run_test(server_builder_test_env, '',
+		run_test(server_builder_test_env,
+# TODO: fix this test on linux and remove this comment line
+			'',
+#			'service_resource-encapsulation_src_serverBuilder_rcs_server_test.memcheck',
 			'service/resource-encapsulation/src/serverBuilder/rcs_server_test')

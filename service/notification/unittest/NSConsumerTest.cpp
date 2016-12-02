@@ -255,6 +255,8 @@ TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsu
     responseCon.wait_for(lock, g_waitForResponse);
 
     EXPECT_EQ(NS_DISCOVERED, revState);
+
+    ASSERT_NE(nullptr, g_provider) << "error: discovery failure";
 }
 
 TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenRescan)
@@ -282,6 +284,9 @@ TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenRescan)
 TEST_F(NotificationConsumerTest, ExpectSubscribeSuccess)
 {
     NSProviderState revState = NS_DENY;
+
+    ASSERT_NE(nullptr, g_provider) << "error: discovery failure";
+
     mocks.OnCallFunc(NSProviderChangedCallback).Do(
             [this, & revState](NSProvider * , NSProviderState state)
             {
@@ -303,7 +308,6 @@ TEST_F(NotificationConsumerTest, ExpectReceiveNotification)
     uint64_t id = 10;
     std::string title = "title";
     std::string msg = "msg";
-
     uint64_t revId = 0;
 
     mocks.OnCallFunc(NSNotificationReceivedCallbackEmpty).Do(
@@ -526,6 +530,8 @@ TEST_F(NotificationConsumerTest, ExpectCallbackDismissCheckWhenConsumerPostSync)
 
 TEST_F(NotificationConsumerTest, ExpectGetProviderSuccessWithValidProviderId)
 {
+    ASSERT_NE(nullptr, g_provider) << "error: discovery failure";
+
     NSProvider * provider = NSConsumerGetProvider(g_provider->providerId);
     int ret = strcmp(provider->providerId, g_provider->providerId);
     EXPECT_EQ(0, ret);
@@ -546,6 +552,8 @@ TEST_F(NotificationConsumerTest, ExpectGetProviderSuccessWithNULL)
 
 TEST_F(NotificationConsumerTest, ExpectGetTopicListIsNULL)
 {
+    ASSERT_NE(nullptr, g_provider) << "error: discovery failure";
+
     NSTopicLL * currentTopics = NSConsumerGetTopicList(g_provider->providerId);
     EXPECT_EQ(NULL, currentTopics);
 }
@@ -583,6 +591,8 @@ TEST_F(NotificationConsumerTest, ExpectEQTopicList)
     topics.push_back("2");
     topics.push_back("3");
 
+    ASSERT_NE(nullptr, g_provider) << "error: discovery failure";
+
     NSTopicLL * retTopic = NSConsumerGetTopicList(g_provider->providerId);
     std::for_each (topics.begin(), topics.end(),
             [this, & retTopic, & isSame](const std::string & str)
@@ -596,6 +606,8 @@ TEST_F(NotificationConsumerTest, ExpectEQTopicList)
 
 TEST_F(NotificationConsumerTest, ExpectFailUpdateTopicOnConsumer)
 {
+    ASSERT_NE(nullptr, g_provider) << "error: discovery failure";
+
     NSTopicLL * retTopic = NSConsumerGetTopicList(g_provider->providerId);
     for (; retTopic; retTopic = retTopic->next)
     {

@@ -1705,12 +1705,17 @@ static bool IsSameValidities(OicSecValidity_t* validities1, OicSecValidity_t* va
 #ifdef _ENABLE_MULTIPLE_OWNER_
 static bool IsSameEowner(OicUuid_t* eowner1, OicUuid_t* eowner2)
 {
-    if(NULL != eowner1 && NULL != eowner2)
+    if (NULL != eowner1 && NULL != eowner2)
     {
         if (memcmp(eowner1->id, eowner2->id, sizeof(eowner1->id)) == 0)
         {
             return true;
         }
+    }
+    else if (NULL == eowner1 && NULL == eowner2)
+    {
+        OIC_LOG(DEBUG, TAG, "Both eowner1 and eowner2 are NULL");
+        return true;
     }
 
     return false;

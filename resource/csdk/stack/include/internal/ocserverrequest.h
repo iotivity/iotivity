@@ -58,7 +58,6 @@ typedef struct OCServerRequest
     OCQualityOfService qos;
 
     /** Observe option field.*/
-
     uint32_t observationOption;
 
     /** Observe Result field.*/
@@ -108,6 +107,9 @@ typedef struct OCServerRequest
 
     /** payload is retrieved from the payload of the received request PDU.*/
     uint8_t payload[1];
+
+    /** The ID of server request*/
+    uint32_t requestId;
 
     // WARNING: Do NOT add attributes after payload as they get overwritten
     // when payload content gets copied over!
@@ -175,7 +177,7 @@ OCServerRequest * GetServerRequestUsingToken (const CAToken_t token, uint8_t tok
  * @return
  *     OCServerRequest*
  */
-OCServerRequest * GetServerRequestUsingHandle (const OCServerRequest * handle);
+OCServerRequest * GetServerRequestUsingHandle (const OCRequestHandle handle);
 
 /**
  * Get a server response from the server response list using the specified handle
@@ -185,7 +187,7 @@ OCServerRequest * GetServerRequestUsingHandle (const OCServerRequest * handle);
  * @return
  *     OCServerResponse*
  */
-OCServerResponse * GetServerResponseUsingHandle (const OCServerRequest * handle);
+OCServerResponse * GetServerResponseUsingHandle (const OCRequestHandle handle);
 
 /**
  * Add a server request to the server request list

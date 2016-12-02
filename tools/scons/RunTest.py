@@ -62,6 +62,7 @@ def run_test(env, xml_file, test):
 
         # Set up to run the test under Valgrind.
         test_cmd = '%s valgrind --leak-check=full --suppressions=%s --xml=yes --xml-file=%s %s' % (valgrind_environment, suppression_file, xml_file, test_cmd)
-
+    if env.get('TARGET_OS') in ['linux']:
+        env.Depends('ut' + test , os.path.join(build_dir, test))
     ut = env.Command('ut' + test, None, test_cmd)
     env.AlwaysBuild('ut' + test)

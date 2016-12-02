@@ -154,6 +154,9 @@ extern "C" {
 /** To represent resource type with platform.*/
 #define OC_RSRVD_RESOURCE_TYPE_PLATFORM "oic.wk.p"
 
+/** To represent resource type with collection.*/
+#define OC_RSRVD_RESOURCE_TYPE_COLLECTION "oic.wk.col"
+
 /** To represent resource type with RES.*/
 #define OC_RSRVD_RESOURCE_TYPE_RES      "oic.wk.res"
 
@@ -220,6 +223,9 @@ extern "C" {
 
 /** TCP Port. */
 #define OC_RSRVD_TCP_PORT               "tcp"
+
+/** TLS Port. */
+#define OC_RSRVD_TLS_PORT               "tls"
 
 /** For Server instance ID.*/
 #define OC_RSRVD_SERVER_INSTANCE_ID     "sid"
@@ -1016,7 +1022,7 @@ typedef void * OCResourceHandle;
 /**
  * Handle to an OCRequest object owned by the OCStack.
  */
-typedef void * OCRequestHandle;
+typedef uint32_t OCRequestHandle;
 
 /**
  * Unique identifier for each observation request. Used when observations are

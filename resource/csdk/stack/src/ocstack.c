@@ -548,7 +548,7 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
         if(observer)
         {
             result = FormOCEntityHandlerRequest(&ehRequest,
-                                                (OCRequestHandle)NULL,
+                                                0,
                                                 OC_REST_NOMETHOD,
                                                 &observer->devAddr,
                                                 (OCResourceHandle)NULL,
@@ -600,7 +600,7 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
             if(observer->failedCommCount >= MAX_OBSERVER_FAILED_COMM)
             {
                 result = FormOCEntityHandlerRequest(&ehRequest,
-                                                    (OCRequestHandle)NULL,
+                                                    0,
                                                     OC_REST_NOMETHOD,
                                                     &observer->devAddr,
                                                     (OCResourceHandle)NULL,
@@ -1313,7 +1313,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                         type = PAYLOAD_TYPE_REPRESENTATION;
                     }
 #ifdef TCP_ADAPTER
-                    else if (strcmp(cbNode->requestUri, KEEPALIVE_RESOURCE_URI) == 0)
+                    else if (strcmp(cbNode->requestUri, OC_RSRVD_KEEPALIVE_URI) == 0)
                     {
                         type = PAYLOAD_TYPE_REPRESENTATION;
                     }
@@ -1378,7 +1378,8 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             {
                 int start = 0;
                 //First option always with option ID is COAP_OPTION_OBSERVE if it is available.
-                if(responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
+                if(responseInfo->info.options
+                   && responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
                 {
                     size_t i;
                     uint32_t observationOption;
@@ -1408,8 +1409,11 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 
                 for (uint8_t i = start; i < responseInfo->info.numOptions; i++)
                 {
-                    memcpy (&(response.rcvdVendorSpecificHeaderOptions[i-start]),
-                            &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
+                    if(&(responseInfo->info.options[i]))
+                    {
+                        memcpy (&(response.rcvdVendorSpecificHeaderOptions[i-start]),
+                                &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
+                    }
                 }
             }
 
@@ -1953,7 +1957,7 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         return;
     }
     serverRequest.numRcvdVendorSpecificHeaderOptions = tempNum;
-    if (serverRequest.numRcvdVendorSpecificHeaderOptions)
+    if (serverRequest.numRcvdVendorSpecificHeaderOptions && requestInfo->info.options)
     {
         memcpy (&(serverRequest.rcvdVendorSpecificHeaderOptions), requestInfo->info.options,
             sizeof(CAHeaderOption_t)*tempNum);
@@ -4030,7 +4034,7 @@ OCStackResult OCDoResponse(OCEntityHandlerResponse *ehResponse)
 
     // Normal response
     // Get pointer to request info
-    serverRequest = GetServerRequestUsingHandle((OCServerRequest *)ehResponse->requestHandle);
+    serverRequest = GetServerRequestUsingHandle(ehResponse->requestHandle);
     if(serverRequest)
     {
         // response handler in ocserverrequest.c. Usually HandleSingleResponse.
@@ -5037,6 +5041,21 @@ void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, bool isCon
     if (g_connectionHandler)
     {
        g_connectionHandler(info, isConnected);
+    }
+
+    /*
+     * If the client observes one or more resources over a reliable connection,
+     * then the CoAP server (or intermediary in the role of the CoAP server)
+     * MUST remove all entries associated with the client endpoint from the lists
+     * of observers when the connection is either closed or times out.
+     */
+    if (!isConnected)
+    {
+        OCDevAddr devAddr = { OC_DEFAULT_ADAPTER };
+        CopyEndpointToDevAddr(info, &devAddr);
+
+        // remove observer list with remote device address.
+        DeleteObserverUsingDevAddr(&devAddr);
     }
 }
 

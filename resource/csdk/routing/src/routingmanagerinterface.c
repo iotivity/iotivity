@@ -196,7 +196,7 @@ OCStackResult RMSendResponse(const OCServerRequest *request, const OCResource *r
     OCEntityHandlerResponse response = {.ehResult = OC_EH_OK,
                                         .payload = (OCPayload *)payload,
                                         .persistentBufferFlag = 0,
-                                        .requestHandle = (OCRequestHandle) request,
+                                        .requestHandle = (OCRequestHandle) request->requestId,
                                         .resourceHandle = (OCResourceHandle) resource
                                         };
     OIC_LOG(DEBUG, TAG, "RMSendResponse OUT");

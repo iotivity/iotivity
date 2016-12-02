@@ -158,15 +158,14 @@ if liboctbstack_env.get('ROUTING') in ['GW', 'EP']:
 	liboctbstack_env.Prepend(LIBS = ['routingmanager'])
 
 if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	liboctbstack_env.PrependUnique(CPPPATH = ['resource-directory/include'])
-	if 'CLIENT' in rd_mode:
-		liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
-	if 'SERVER' in rd_mode:
-		liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
-		if target_os in ['tizen']:
-			liboctbstack_env.ParseConfig('pkg-config --cflags --libs sqlite3')
-		else:
-			liboctbstack_env.AppendUnique(CPPPATH = ['#extlibs/sqlite3'])
+    if 'CLIENT' in rd_mode:
+        liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
+    if 'SERVER' in rd_mode:
+        liboctbstack_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
+        if target_os in ['tizen']:
+            liboctbstack_env.ParseConfig('pkg-config --cflags --libs sqlite3')
+        else:
+            liboctbstack_env.AppendUnique(CPPPATH = ['#extlibs/sqlite3'])
 
 ######################################################################
 # Source files and Targets
@@ -191,9 +190,19 @@ if with_tcp == True:
 	liboctbstack_src.append(OCTBSTACK_SRC + 'oickeepalive.c')
 
 if 'SERVER' in rd_mode:
-	liboctbstack_src.append(OCTBSTACK_SRC + 'oicresourcedirectory.c')
-	if target_os not in ['tizen']:
-		liboctbstack_src.append('#extlibs/sqlite3/sqlite3.c')
+    liboctbstack_src.append(OCTBSTACK_SRC + 'oicresourcedirectory.c')
+    if target_os not in ['tizen']:
+        liboctbstack_src.append('#extlibs/sqlite3/sqlite3.c')
+
+if target_os in ['linux']:
+    # Linux uses a Shared library because SCons chooses the shared library on Linux
+    # when only 'octbstack' is added to the LIBS.
+    # TODO: Switch Linux to use a Static library for testing like every other OS.
+    test_liboctbstack = liboctbstack_env.SharedLibrary('octbstack_test', liboctbstack_src)
+else:
+    test_liboctbstack = liboctbstack_env.StaticLibrary('octbstack_test', liboctbstack_src)
+
+octbstack_libs = Flatten(test_liboctbstack)
 
 if target_os in ['windows', 'msys_nt']:
 	# Avoid a name conflict with the octbstack.lib target of the SharedLibrary.

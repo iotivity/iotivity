@@ -126,7 +126,7 @@ static OCStackResult SendObserveNotification(ResourceObserver *observer,
         {
             result = FormOCEntityHandlerRequest(
                         &ehRequest,
-                        (OCRequestHandle) request,
+                        (OCRequestHandle) request->requestId,
                         request->method,
                         &request->devAddr,
                         (OCResourceHandle) observer->resource,
@@ -222,7 +222,7 @@ OCStackResult SendAllObserverNotification (OCMethod method, OCResource *resPtr, 
                         ehResponse.ehResult = OC_EH_OK;
                         ehResponse.payload = (OCPayload*)presenceResBuf;
                         ehResponse.persistentBufferFlag = 0;
-                        ehResponse.requestHandle = (OCRequestHandle) request;
+                        ehResponse.requestHandle = (OCRequestHandle) request->requestId;
                         ehResponse.resourceHandle = (OCResourceHandle) resPtr;
                         OICStrcpy(ehResponse.resourceUri, sizeof(ehResponse.resourceUri),
                                 resourceObserver->resUri);
@@ -308,7 +308,7 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                         }
                         memcpy(ehResponse.payload, payload, sizeof(*payload));
                         ehResponse.persistentBufferFlag = 0;
-                        ehResponse.requestHandle = (OCRequestHandle) request;
+                        ehResponse.requestHandle = (OCRequestHandle) request->requestId;
                         ehResponse.resourceHandle = (OCResourceHandle) resource;
                         result = OCDoResponse(&ehResponse);
                         if (result == OC_STACK_OK)
@@ -551,6 +551,32 @@ OCStackResult DeleteObserverUsingToken (CAToken_t token, uint8_t tokenLength)
         OICFree(obsNode);
     }
     // it is ok if we did not find the observer...
+    return OC_STACK_OK;
+}
+
+OCStackResult DeleteObserverUsingDevAddr(const OCDevAddr *devAddr)
+{
+    if (!devAddr)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    ResourceObserver *out = NULL;
+    ResourceObserver *tmp = NULL;
+    LL_FOREACH_SAFE(g_serverObsList, out, tmp)
+    {
+        if (out)
+        {
+            if ((strcmp(out->devAddr.addr, devAddr->addr) == 0)
+                    && out->devAddr.port == devAddr->port)
+            {
+                OIC_LOG_V(INFO, TAG, "deleting observer id  %u with %s:%u",
+                          out->observeId, out->devAddr.addr, out->devAddr.port);
+                OCStackFeedBack(out->token, out->tokenLength, OC_OBSERVER_NOT_INTERESTED);
+            }
+        }
+    }
+
     return OC_STACK_OK;
 }
 

@@ -163,10 +163,55 @@ void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
 
     OIC_LOG_V(DEBUG, TAG, "Address: %s, port:%d", sep->endpoint.addr, sep->endpoint.port);
 
+#ifdef SINGLE_THREAD
     if (g_networkPacketCallback)
     {
         g_networkPacketCallback(sep, data, dataLength);
     }
+#else
+    unsigned char *buffer = (unsigned char*)data;
+    size_t bufferLen = dataLength;
+    size_t index = 0;
+
+    //get remote device information from file descriptor.
+    CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(&sep->endpoint, &index);
+    if (!svritem)
+    {
+        OIC_LOG(ERROR, TAG, "there is no connection information in list");
+        return;
+    }
+    if (UNKNOWN == svritem->protocol)
+    {
+        OIC_LOG(ERROR, TAG, "invalid protocol type");
+        return;
+    }
+
+    //totalLen filled only when header fully read and parsed
+    while (0 != bufferLen)
+    {
+        CAResult_t res = CAConstructCoAP(svritem, &buffer, &bufferLen);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "CAConstructCoAP return error : %d", res);
+            return;
+        }
+
+        //when successfully read all required data - pass them to upper layer.
+        if (svritem->len == svritem->totalLen)
+        {
+            if (g_networkPacketCallback)
+            {
+                g_networkPacketCallback(sep, svritem->data, svritem->totalLen);
+            }
+            CACleanData(svritem);
+        }
+        else
+        {
+            OIC_LOG_V(DEBUG, TAG, "%u bytes required for complete CoAP",
+                                svritem->totalLen - svritem->len);
+        }
+    }
+#endif
 }
 
 #ifdef __WITH_TLS__
@@ -249,7 +294,16 @@ void CATCPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
 static void CAInitializeTCPGlobals()
 {
     caglobals.tcp.ipv4.fd = -1;
+    caglobals.tcp.ipv4s.fd = -1;
     caglobals.tcp.ipv6.fd = -1;
+    caglobals.tcp.ipv6s.fd = -1;
+
+    // Set the port number received from application.
+    caglobals.tcp.ipv4.port = caglobals.ports.tcp.u4;
+    caglobals.tcp.ipv4s.port = caglobals.ports.tcp.u4s;
+    caglobals.tcp.ipv6.port = caglobals.ports.tcp.u6;
+    caglobals.tcp.ipv6s.port = caglobals.ports.tcp.u6s;
+
     caglobals.tcp.selectTimeout = CA_TCP_SELECT_TIMEOUT;
     caglobals.tcp.listenBacklog = CA_TCP_LISTEN_BACKLOG;
     caglobals.tcp.svrlist = NULL;
@@ -332,10 +386,6 @@ CAResult_t CAStartTCP()
 
     // Start network monitoring to receive adapter status changes.
     CAIPStartNetworkMonitor(CATCPAdapterHandler, CA_ADAPTER_TCP);
-
-    // Set the port number received from application.
-    caglobals.tcp.ipv4.port = caglobals.ports.tcp.u4;
-    caglobals.tcp.ipv6.port = caglobals.ports.tcp.u6;
 
 #ifndef SINGLE_THREAD
     if (CA_STATUS_OK != CATCPInitializeQueueHandles())

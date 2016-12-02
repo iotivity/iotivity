@@ -401,7 +401,12 @@ def unit_tests():
                         'SECURED':1,
                         'RELEASE':'false',
                     }
-    extra_option_str = "resource"
+    call_scons(build_options, extra_option_str)
+    build_options = {
+                        'TEST':1,
+                        'SECURED':1,
+                        'RELEASE':'false',
+                    }
     call_scons(build_options, extra_option_str)
 
     print ("*********** Unit test Stop *************")

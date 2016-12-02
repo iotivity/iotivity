@@ -175,9 +175,23 @@ CAResult_t ca_thread_pool_add_task(ca_thread_pool_t thread_pool, ca_thread_func 
     bool addResult = u_arraylist_add(thread_pool->details->threads_list, (void*)threadHandle);
     ca_mutex_unlock(thread_pool->details->list_lock);
 
-    if(!addResult)
+    if (!addResult)
     {
         OIC_LOG_V(ERROR, TAG, "Arraylist Add failed, may not be properly joined: %d", addResult);
+#if defined(_WIN32)
+        DWORD joinres = WaitForSingleObject(threadHandle, INFINITE);
+        if (WAIT_OBJECT_0 != joinres)
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to join thread with error %d", joinres);
+        }
+        CloseHandle(threadHandle);
+#else
+        int joinres = pthread_join(threadHandle, NULL);
+        if (0 != joinres)
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to join thread with error %d", joinres);
+        }
+#endif
         return CA_STATUS_FAILED;
     }
 

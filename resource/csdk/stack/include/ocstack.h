@@ -599,6 +599,7 @@ OCStackResult OCGetResourceIns(OCResourceHandle handle, uint8_t *ins);
 */
 OCResourceHandle OCGetResourceHandleAtUri(const char *uri);
 
+
 #ifdef RD_SERVER
 /**
 * Search the RD database for queries.

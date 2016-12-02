@@ -121,6 +121,9 @@ if target_os in ['linux']:
 	rcs_common_test_env.AppendTarget('rcs_common_test')
 
 	if rcs_common_test_env.get('TEST') == '1':
-		from tools.scons.RunTest import *
-		run_test(rcs_common_test_env, '',
+		from tools.scons.RunTest import run_test
+		run_test(rcs_common_test_env,
+# TODO: fix test on linux
+			'',
+#			'service_resource-encapsulation_src_common_rcs_common_test.memcheck',
 			'service/resource-encapsulation/src/common/rcs_common_test')

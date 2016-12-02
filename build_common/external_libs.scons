@@ -141,9 +141,6 @@ env.AddMethod(__download, "Download")
 env.AddMethod(__install_head_file, "InstallHeadFile")
 env.AddMethod(__install_lib, "InstallLib")
 
-if env.get('SECURED') == '1' and target_os not in ['linux', 'tizen']:
-	SConscript(os.path.join(env.get('SRC_DIR'), 'extlibs', 'sqlite3', 'SConscript'))
-
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-        if target_os not in ['linux', 'tizen']:
-                SConscript(os.path.join(env.get('SRC_DIR'), 'extlibs', 'sqlite3', 'SConscript'))
+if env.get('SECURED') == '1' or 'SERVER' in rd_mode:
+	if target_os not in ['linux', 'tizen']:
+		SConscript('#extlibs/sqlite3/SConscript')

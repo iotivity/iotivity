@@ -47,7 +47,6 @@ typedef struct PROVRESOURCE
     OCResourceHandle handle;
     ProvStatus status; // provisiong status
     ESErrorCode lastErrCode;
-    char ocfWebLinks[MAX_WEBLINKLEN];
 } ProvResource;
 
 typedef struct

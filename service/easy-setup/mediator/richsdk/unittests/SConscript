@@ -21,7 +21,7 @@
 ##
 # Notification Unit Test build script
 ##
-
+from tools.scons.RunTest import run_test
 Import('env')
 
 if env.get('RELEASE'):
@@ -87,7 +87,9 @@ Alias("easysetup_mediator_test", easysetup_mediator_test)
 env.AppendTarget('easysetup_mediator_test')
 
 if env.get('TEST') == '1':
-    if target_os == 'linux':
-            from tools.scons.RunTest import *
-            run_test(easysetup_mediator_test_env, '', 'service/easy-setup/mediator/richsdk/unittests/easysetup_mediator_test')
-
+    if target_os in ['linux']:
+        run_test(easysetup_mediator_test_env,
+# TODO: fix this test
+#                'service_easy-setup_mediator_richsdk_unittests_easysetup_mediator_test.memcheck',
+                 '',
+                 'service/easy-setup/mediator/richsdk/unittests/easysetup_mediator_test')
