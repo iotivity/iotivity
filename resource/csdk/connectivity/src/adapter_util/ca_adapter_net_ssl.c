@@ -236,7 +236,9 @@ int tlsCipher[ADAPTER_CIPHER_MAX][2] =
 {
     {MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA, 0},
     {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8, 0},
+#ifdef MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256
     {MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256, 0},
+#endif
     {MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, 0},
     {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM, 0},
     {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, 0}
@@ -1943,6 +1945,7 @@ CAResult_t CAsetTlsCipherSuite(const uint32_t cipher)
             g_caSslContext->cipher = ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
             break;
         }
+#ifdef MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256
         case MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256:
         {
 #ifdef __WITH_TLS__
@@ -1960,6 +1963,7 @@ CAResult_t CAsetTlsCipherSuite(const uint32_t cipher)
             g_caSslContext->cipher = ADAPTER_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA_256;
             break;
         }
+#endif
         case MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256:
         {
 #if 0 // PIN OTM
