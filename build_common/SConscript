@@ -338,10 +338,10 @@ elif env.get('ROUTING') == 'EP':
 libs = []
 if env.get('WITH_TCP'):
     defines.append('-DTCP_ADAPTER=1')
-    if env.get('SECURED'):
+    if env.get('SECURED') == '1':
         defines.append('-D__WITH_TLS__=1')
 
-if env.get('SECURED'):
+if env.get('SECURED') == '1':
     libs.append('-locpmapi')
     defines.append('-D_WITH_DTLS_=1')
 
