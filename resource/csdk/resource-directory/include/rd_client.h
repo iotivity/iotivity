@@ -122,7 +122,11 @@ OCStackResult OCRDDelete(const char *host, OCConnectivityType connectivityType,
  *               received.
  * @param qos Quality of service.
  *
- * @return ::OC_STACK_OK on success, some other value upon failure.
+ * @return
+ *   - ::OC_STACK_OK on success
+ *   - ::OC_STACK_INVALID_CALLBACK host, id, or cbData has not been provided
+ *   - ::OC_STACK_INVALID_URI generated URI exceeds MAX_URI_LENGTH try fewer resourceHandles
+ *   - some other value upon failure.
  */
 OCStackResult OCRDDeleteWithDeviceId(const char *host, const unsigned char *id,
                                      OCConnectivityType connectivityType,
