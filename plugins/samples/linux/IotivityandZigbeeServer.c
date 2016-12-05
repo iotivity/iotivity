@@ -84,6 +84,15 @@ int main()
     }
     else
     {
+        OIC_LOG(INFO, TAG, "Performing Zigbee discovery. This process takes 15 seconds.");
+
+        result = PISetup(plugin);
+        if (result != OC_STACK_OK)
+        {
+            OIC_LOG_V(ERROR, TAG, "Zigbee Plugin Discovery Failed: %d", result);
+            goto IotivityStop;
+        }
+
         OIC_LOG(INFO, TAG, "Zigbee Plugin started correctly, press Ctrl-C to terminate application");
         // Loop until sigint
         while (!processSignal(false) && result == OC_STACK_OK)
