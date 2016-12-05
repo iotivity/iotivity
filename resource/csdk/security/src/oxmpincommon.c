@@ -248,7 +248,7 @@ OCStackResult InputPin(char* pinBuffer, size_t bufferSize)
     return OC_STACK_OK;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 OCStackResult SetPreconfigPin(const char *pinBuffer, size_t pinLength)
 {
     if(NULL == pinBuffer || OXM_PRECONFIG_PIN_MAX_SIZE < pinLength)
@@ -261,7 +261,7 @@ OCStackResult SetPreconfigPin(const char *pinBuffer, size_t pinLength)
 
     return OC_STACK_OK;
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 #ifdef __WITH_DTLS__
 
@@ -348,7 +348,7 @@ int32_t GetDtlsPskForRandomPinOxm( CADtlsPskCredType_t type,
     return ret;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 int32_t GetDtlsPskForMotRandomPinOxm( CADtlsPskCredType_t type,
               const unsigned char *UNUSED1, size_t UNUSED2,
               unsigned char *result, size_t result_length)
@@ -611,6 +611,6 @@ int32_t GetDtlsPskForMotPreconfPinOxm( CADtlsPskCredType_t type,
 
     return ret;
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 #endif //__WITH_DTLS__

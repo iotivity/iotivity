@@ -792,7 +792,7 @@ static SslEndPoint_t *GetSslPeer(const CAEndpoint_t *peer)
     return NULL;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * Gets CA secure endpoint info corresponding for endpoint.
  *

@@ -47,9 +47,9 @@ extern "C"
 #define _10_DISCOV_ALL_DEVS_        10
 #define _11_DISCOV_UNOWN_DEVS_      11
 #define _12_DISCOV_OWN_DEVS_        12
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 #define _13_MOT_DISCOV_DEV_         13
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 #define _20_REGIST_DEVS_            20
 #define _30_PROVIS_PAIR_DEVS_       30
 #define _31_PROVIS_CRED_            31
@@ -63,11 +63,11 @@ extern "C"
 #define _52_RESET_SELEC_DEV_        52
 #define _60_GET_CRED_               60
 #define _61_GET_ACL_                61
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 #define _70_MOT_CHANGE_MOM_         70
 #define _71_MOT_PROV_PRECONF_PIN_   71
 #define _72_MOT_OXM_SEL_            72
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 #define _80_SELECT_PROTOCOL_        80
 #define _99_EXIT_PRVN_CLT_          99
 
@@ -98,10 +98,10 @@ static OCProvisionDev_t* g_own_list;
 static OCProvisionDev_t* g_unown_list;
 static int g_own_cnt;
 static int g_unown_cnt;
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 static OCProvisionDev_t* g_mot_enable_list;
 static int g_mot_enable_cnt;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 static bool g_doneCB;
 #ifdef __WITH_TLS__
@@ -262,7 +262,7 @@ static void syncDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool h
     g_doneCB = true;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
@@ -276,7 +276,7 @@ static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, 
     }
     g_doneCB = true;
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 static void inputPinCB(char* pin, size_t len)
 {
@@ -431,7 +431,7 @@ static int discoverOwnedDevices(void)
     return 0;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 static int discoverMOTEnabledDevices(void)
 {
     // delete owned device list before updating it
@@ -455,7 +455,7 @@ static int discoverMOTEnabledDevices(void)
 
     return 0;
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 static int registerDevices(void)
 {
@@ -1206,7 +1206,7 @@ static int removeDeviceWithUuid(void)
     return 0;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 static int changeMultipleOwnershipTrnasferMode(void)
 {
     // check |own_list| for removing device
@@ -1402,7 +1402,7 @@ static int provisionPreconfigPIN()
 
     return 0;
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 static int resetDevice(void)
 {
@@ -2018,12 +2018,12 @@ static void printMenu(void)
     printf("** [A] DISCOVER DEVICES ON NETWORK\n");
     printf("** 10. Discover All Un/Owned Devices on Network\n");
     printf("** 11. Discover Only Unowned Devices on Network\n");
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     printf("** 12. Discover Only Owned Devices on Network\n");
     printf("** 13. Discover Multiple Ownership Transfer Enabled Devices on Network\n\n");
 #else
     printf("** 12. Discover Only Owned Devices on Network\n\n");
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     printf("** [B] REGISTER/OWN ALL DISCOVERED UNOWNED DEVICES\n");
     printf("** 20. Register/Own All Discovered Unowned Devices\n\n");
@@ -2048,12 +2048,12 @@ static void printMenu(void)
     printf("** 60. Get the Credential resources of the Selected Device\n");
     printf("** 61. Get the ACL resources of the Selected Device\n\n");
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     printf("** [G] UPDATE THE MULTIPLE OWNERSHIP TRANSFER RELATED VALUE\n");
     printf("** 70. Change the Multiple Ownership transfer MODE(update mom)\n");
     printf("** 71. Provision Preconfigured PIN\n");
     printf("** 72. Change the Multiple Ownership transfer METHOD(update oxmsel)\n\n");
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 #ifdef __WITH_TLS__
     printf("** [H] SELECT SECURE PROTOCOL DTLS/TLS\n");
@@ -2105,9 +2105,9 @@ int main()
         OIC_LOG(WARNING, TAG, "Failed to disable OIC_DECENTRALIZED_PUBLIC_KEY OxM");
     }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     SetPreconfigPin("12341234", 8);
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     // main loop for provisioning manager
     int mn_num = 0;
@@ -2143,14 +2143,14 @@ int main()
                 OIC_LOG(ERROR, TAG, "_12_DISCOV_OWN_DEVS_: error");
             }
             break;
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         case _13_MOT_DISCOV_DEV_:
             if(discoverMOTEnabledDevices())
             {
                 OIC_LOG(ERROR, TAG, "_13_MOT_DISCOV_DEV_: error");
             }
             break;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
         case _20_REGIST_DEVS_:
             if(registerDevices())
             {
@@ -2229,7 +2229,7 @@ int main()
                 OIC_LOG(ERROR, TAG, "_61_GET_ACL_: error");
             }
             break;
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         case _70_MOT_CHANGE_MOM_:
             if(changeMultipleOwnershipTrnasferMode())
             {
@@ -2248,7 +2248,7 @@ int main()
                 OIC_LOG(ERROR, TAG, "_72_MOT_OXM_SEL_: error");
             }
             break;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 #ifdef __WITH_TLS__
         case  _80_SELECT_PROTOCOL_:
             selectSecureProtocol();
@@ -2269,9 +2269,9 @@ PMCLT_ERROR:
     }
     OCDeleteDiscoveredDevices(g_own_list);  // after here |g_own_list| points nothing
     OCDeleteDiscoveredDevices(g_unown_list);  // after here |g_unown_list| points nothing
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     OCDeleteDiscoveredDevices(g_mot_enable_list);  // after here |g_motdev_list| points nothing
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     if(g_svr_fname)
     {

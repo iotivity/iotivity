@@ -105,7 +105,7 @@ OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize);
  */
 OCStackResult InputPin(char* pinBuffer, size_t bufferSize);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * Function to save the Pre-configured PIN.
  *
@@ -153,7 +153,7 @@ int32_t GetDtlsPskForRandomPinOxm( CADtlsPskCredType_t type,
               const unsigned char *UNUSED1, size_t UNUSED2,
               unsigned char *result, size_t result_length);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * This internal callback is used while Random PIN based MOT.
  * This callback will be used to establish a temporary secure session according to
@@ -210,7 +210,7 @@ int32_t GetDtlsPskForMotPreconfPinOxm( CADtlsPskCredType_t type,
               const unsigned char *UNUSED1, size_t UNUSED2,
               unsigned char *result, size_t result_length);
 
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 
 /**

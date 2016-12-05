@@ -166,16 +166,40 @@ namespace OC
                     const OicUuid_t* deviceID,
                     std::shared_ptr<OCSecureResource> &foundDevice);
 
-            /**
-             * API for registering Ownership transfer methods for a particular transfer Type.
+#ifdef MULTIPLE_OWNER
+             /**
+             * API is responsible for discovery of MOT(Mutilple Owner Transfer)
+             * devices in current subnet.
              *
-             * @param oxm Ownership transfer method.
-             * @param callbackData CallbackData Methods for ownership transfer.
-             * @param inputPin Callback method to input pin for verification.
+             * @param timeout Timeout in seconds, time until which function will listen to
+             *                    responses from server before returning the list of devices.
+             * @param list List of MOT enabled devices.
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */
-            static OCStackResult setOwnerTransferCallbackData(OicSecOxm_t oxm,
-                    OTMCallbackData_t* callbackData, InputPinCallback inputPin);
+            static OCStackResult discoverMultipleOwnerEnabledDevices(unsigned short timeout,
+                    DeviceList_t &list);
+
+             /**
+             * API is responsible for discovery of Multiple owned device in
+             * current subnet.
+             *
+             * @param timeout Timeout in seconds, time until which function will listen to
+             *                    responses from server before returning the list of devices.
+             * @param list List of Multiple Owned devices.
+             * @return ::OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult discoverMultipleOwnedDevices(unsigned short timeout,
+                    DeviceList_t &list);
+
+#endif
+
+            /**
+             * API for registering Pin Callback.
+             *
+             * @param InputPinCallback inputPin caaback function.
+             * @return ::OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult setInputPinCallback(InputPinCallback inputPin);
 
             /**
              * API to get status of all the devices in current subnet. The status include endpoint
@@ -437,6 +461,62 @@ namespace OC
              */
             static void callbackWrapper(void* ctx, int nOfRes,
                     OCProvisionResult_t *arr, bool hasError);
+
+#ifdef MULTIPLE_OWNER
+            /**
+             * API to update 'doxm.oxmsel' to resource server.
+             *
+             * @param resultCallback Callback provided by API user, callback will be
+             *            called when credential revocation is finished.
+             * @param oxmSelVal Method of multiple ownership transfer (ref. oic.sec.oxm)
+             * @return  ::OC_STACK_OK in case of success and other value otherwise.
+             */
+            OCStackResult selectMOTMethod( const OicSecOxm_t oxmSelVal,
+                    ResultCallBack resultCallback);
+
+            /**
+             * API to update 'doxm.mom' to resource server.
+             *
+             * @param resultCallback Callback provided by API user, callback will be
+             *            called when credential revocation is finished.
+             * @param momType Mode of multiple ownership transfer (ref. oic.sec.mom)
+             * @return  ::OC_STACK_OK in case of success and other value otherwise.
+             */
+             OCStackResult changeMOTMode( const OicSecMomType_t momType,
+                    ResultCallBack resultCallback);
+
+            /**
+             * API to add preconfigured PIN to local SVR DB.
+             *
+             * @param preconfPIN Preconfig PIN which is used while multiple owner authentication
+             * @param preconfPINLength Byte length of preconfig PIN
+             * @return  ::OC_STACK_OK in case of success and other value otherwise.
+             */
+             OCStackResult addPreconfigPIN(const char* preconfPIN,
+                    size_t preconfPINLength);
+
+            /**
+             * API to provision preconfigured PIN.
+             *
+             * @param resultCallback Callback provided by API user, callback will be called when
+             *            credential revocation is finished.
+             * @param preconfPin Preconfig PIN which is used while multiple owner authentication
+             * @param preconfPinLength Byte length of preconfig PIN
+             * @return  ::OC_STACK_OK in case of success and other value otherwise.
+             */
+             OCStackResult provisionPreconfPin(const char * preconfPin,
+                    size_t preconfPinLength, ResultCallBack resultCallback);
+
+             /**
+             * API to do multiple ownership transfer for MOT enabled device.
+             *
+             * @param resultCallback Result callback function to be invoked when
+             *                           multiple ownership transfer finished.
+             * @return ::OC_STACK_OK in case of success and other value otherwise.
+             */
+            OCStackResult doMultipleOwnershipTransfer(ResultCallBack resultCallback);
+
+#endif // MULTIPLE_OWNER
 
         private:
             void validateSecureResource();

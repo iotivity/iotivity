@@ -142,7 +142,7 @@ const char *getResult(OCStackResult result) {
     }
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 
 #include <assert.h>
 #include <thread>
@@ -177,7 +177,7 @@ static void StopOCProcessThread()
     g_LoopFlag = false;
     oc_process_thread->join();
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
 {
@@ -500,7 +500,7 @@ int main()
     OIC_LOG(INFO, TAG, "Entering ocserver main loop...");
     signal(SIGINT, handleSigInt);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     StartOCProcessThread();
 
     while(!gQuitFlag)
@@ -534,7 +534,7 @@ int main()
         }
         nanosleep(&timeout, NULL);
     }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     OIC_LOG(INFO, TAG, "Exiting ocserver main loop...");
 

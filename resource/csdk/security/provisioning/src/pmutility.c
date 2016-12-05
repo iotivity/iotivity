@@ -999,7 +999,7 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
     return res;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 static OCStackApplicationResult MOTDeviceDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse)
 {
@@ -1232,7 +1232,7 @@ OCStackResult PMMultipleOwnerDeviceDiscovery(unsigned short waittime, bool isMul
     return res;
 }
 
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 static OCStackResult SecurePortDiscovery(DiscoveryInfo* discoveryInfo,
                                          const OCClientResponse *clientResponse)

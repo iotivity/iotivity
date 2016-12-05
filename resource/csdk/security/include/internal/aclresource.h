@@ -62,7 +62,7 @@ const OicSecAce_t* GetACLResourceData(const OicUuid_t* subjectId, OicSecAce_t **
  */
 OCStackResult AclToCBORPayload(const OicSecAcl_t * acl, uint8_t **outPayload, size_t *size);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * Function to check the ACL access of SubOwner
  *
@@ -73,7 +73,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t * acl, uint8_t **outPayload, si
  * @return ::true for valid access, otherwise invalid access
  */
 bool IsValidAclAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPayload, const size_t size);
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 
 /**

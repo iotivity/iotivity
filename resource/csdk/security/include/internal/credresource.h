@@ -82,7 +82,7 @@ OicSecCred_t* GetCredEntryByCredId(const uint16_t credId);
 OCStackResult CredToCBORPayload(const OicSecCred_t* cred, uint8_t **cborPayload,
                                 size_t *cborSize, int secureFlag);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * Function to check the credential access of SubOwner
  *
@@ -93,7 +93,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t* cred, uint8_t **cborPayload,
  * @return ::true for valid access, otherwise invalid access
  */
 bool IsValidCredentialAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPayload, size_t size);
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /**
  * This function generates the bin credential data.

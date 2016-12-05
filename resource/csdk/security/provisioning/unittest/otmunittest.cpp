@@ -32,9 +32,9 @@
 #include "oxmmanufacturercert.h"
 #include "securevirtualresourcetypes.h"
 #include "provisioningdatabasemanager.h"
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 #include "multipleownershiptransfermanager.h"
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 #include "srmutility.h"
 #include "doxmresource.h"
 #include "pmtypes.h"
@@ -240,10 +240,10 @@ static pid_t g_myPID2;
 static const char* g_otmCtx = "Test User Context";
 static OCProvisionDev_t* g_unownedDevices = NULL;
 static OCProvisionDev_t* g_ownedDevices = NULL;
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 static OCProvisionDev_t* g_motEnabledDevices = NULL;
 static OCProvisionDev_t* g_multiplOwnedDevices = NULL;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 static void GetCurrentWorkingDirectory(char* buf, size_t bufsize)
 {
@@ -303,7 +303,7 @@ static void ownershipTransferCB(void* ctx, int UNUSED1, OCProvisionResult_t* UNU
     g_doneCB = true;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
@@ -331,7 +331,7 @@ static void provisionPreconfiguredPinCB(void* ctx, int nOfRes, OCProvisionResult
     g_callbackResult = !hasError;
     g_doneCB = true;
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 // callback function(s) for provisioning client using C-level provisioning API
 static void removeDeviceCB(void* ctx, int UNUSED1, OCProvisionResult_t* UNUSED2, bool hasError)
@@ -646,7 +646,7 @@ TEST(PerformUnlinkDevices, NullParam)
     EXPECT_EQ(OC_STACK_OK, result);
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 TEST(RegisterPreconfiguredPIN, NullParam)
 {
     OCStackResult result = SetPreconfigPin("12341234", strlen("12341234"));
@@ -759,7 +759,7 @@ TEST(DiscoverMultipleOwnedDevices, NullParam)
     EXPECT_TRUE(NULL != g_multiplOwnedDevices);
 }*/
 
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 TEST(PerformRemoveDevice, NullParam)
 {

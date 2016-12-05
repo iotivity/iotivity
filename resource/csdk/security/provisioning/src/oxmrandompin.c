@@ -101,7 +101,7 @@ OCStackResult InputPinCodeCallback(OTMContext_t *otmCtx)
             res = OC_STACK_ERROR;
         }
     }
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     //in case of MOT
     else if(otmCtx->selectedDeviceInfo->doxm->owned &&
             otmCtx->selectedDeviceInfo->doxm->mom &&
@@ -113,7 +113,7 @@ OCStackResult InputPinCodeCallback(OTMContext_t *otmCtx)
             res = OC_STACK_ERROR;
         }
     }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     //Set the device id to derive temporal PSK
     SetUuidForPinBasedOxm(&(otmCtx->selectedDeviceInfo->doxm->deviceID));

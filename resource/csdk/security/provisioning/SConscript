@@ -89,7 +89,7 @@ if provisioning_env.get('LOGGING'):
     provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if provisioning_env.get('MULTIPLE_OWNER') == '1':
-	provisioning_env.AppendUnique(CPPDEFINES=['_ENABLE_MULTIPLE_OWNER_'])
+	provisioning_env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
 
 ######################################################################
 # Source files and Targets
