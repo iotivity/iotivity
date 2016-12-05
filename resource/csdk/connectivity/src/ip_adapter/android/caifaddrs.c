@@ -34,7 +34,7 @@
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include "logger.h"
-#define TAG "OIC_CA_ifaddrs"
+#define TAG "OIC_CA_IFADDRS"
 #define VERIFY_NON_NULL(arg) { if (!arg) {OIC_LOG(ERROR, TAG, #arg " is NULL"); goto exit;} }
 
 #define NETLINK_MESSAGE_LENGTH  (4096)

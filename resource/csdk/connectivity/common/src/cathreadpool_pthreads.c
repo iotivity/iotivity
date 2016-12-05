@@ -39,7 +39,7 @@
 #include "octhread.h"
 #include "platform_features.h"
 
-#define TAG PCF("UTHREADPOOL")
+#define TAG PCF("OIC_CA_UTHREADPOOL")
 
 /**
  * empty struct to represent the details.  This implementation has no data

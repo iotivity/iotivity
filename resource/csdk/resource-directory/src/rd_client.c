@@ -29,7 +29,7 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 
-#define TAG "RD_CLIENT"
+#define TAG "OIC_RD_CLIENT"
 
 #ifdef RD_CLIENT
 

@@ -30,7 +30,7 @@
 
 #ifdef RD_SERVER
 
-#define TAG "RD_DATABASE"
+#define TAG "OIC_RD_DATABASE"
 #define RD_PATH "RD.db"
 
 static sqlite3 *gRDDB = NULL;

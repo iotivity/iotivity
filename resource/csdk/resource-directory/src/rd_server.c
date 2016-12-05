@@ -25,7 +25,7 @@
 #include "ocpayload.h"
 #include "octypes.h"
 
-#define TAG  PCF("RDServer")
+#define TAG PCF("OIC_RD_SERVER")
 
 #ifdef RD_SERVER
 
