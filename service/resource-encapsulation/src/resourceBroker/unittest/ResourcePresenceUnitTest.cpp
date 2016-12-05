@@ -97,7 +97,7 @@ TEST_F(ResourcePresenceTest,timeoutCB_TimeOverWhenIsRequestGet)
     MockingFunc();
     instance->initializeResourcePresence(pResource);
     std::cout<<"wait while done timeout requestGet\n";
-    BROKER_STATE state;
+    BROKER_STATE state = BROKER_STATE::NONE;
     state = instance->getResourceState();
     sleep((BROKER_DEVICE_PRESENCE_TIMEROUT/1000)+1);
     ASSERT_EQ(state,instance->getResourceState());

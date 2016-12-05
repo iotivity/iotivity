@@ -108,7 +108,7 @@ TEST_F(ResourceBrokerTest,CancelHostResource_NoThrowIfNormalParams)
 
     MockingFunc();
 
-    BrokerID ret;
+    BrokerID ret = 0;
     ret = brokerInstance->hostResource(pResource,cb);
 
     ASSERT_NO_THROW(brokerInstance->cancelHostResource(ret));
@@ -137,7 +137,7 @@ TEST_F(ResourceBrokerTest,getResourceState_ReturnNormalValueIfNormalId)
 
     MockingFunc();
 
-    BrokerID ret;
+    BrokerID ret = 0;
     ret = brokerInstance->hostResource(pResource,cb);
 
     ASSERT_NE(brokerInstance->getResourceState(ret),BROKER_STATE::NONE);
@@ -160,7 +160,7 @@ TEST_F(ResourceBrokerTest,getResourceState_ReturnNormalValueIfNormalResource)
 
     MockingFunc();
 
-    BrokerID ret;
+    BrokerID ret = 0;
     ret = brokerInstance->hostResource(pResource,cb);
 
     ASSERT_NE(brokerInstance->getResourceState(pResource),BROKER_STATE::NONE);
@@ -181,8 +181,8 @@ TEST_F(ResourceBrokerTest,getResourceState_NormalErrorHandlingIfAbnormalResource
 
     MockingFunc();
 
-    PrimitiveResource::Ptr resource[3];
-    BrokerID id[3];
+    PrimitiveResource::Ptr resource[3] = {nullptr,};
+    BrokerID id[3] = {0,};
 
     for(int i=0;i!=3;i++)
     {

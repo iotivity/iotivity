@@ -53,7 +53,6 @@ sptest_env.PrependUnique(CPPPATH = [
 		'../../../../oc_logger/include',
 		'../include/oxm',
 		'../../../../../extlibs/tinydtls',
-		'../../../../../extlibs/cjson',
 		'../../../../../extlibs/base64',
 		'../../../connectivity/inc',
 		'../../../connectivity/inc/pkix',
@@ -78,7 +77,7 @@ if not sptest_env.get('RELEASE'):
 	sptest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if sptest_env.get('MULTIPLE_OWNER') == '1':
-	sptest_env.AppendUnique(CPPDEFINES=['_ENABLE_MULTIPLE_OWNER_'])
+	sptest_env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
 
 if target_os in ['msys_nt', 'windows']:
     sptest_env.AppendUnique(LIBS = ['ws2_32',
@@ -126,4 +125,3 @@ if sptest_env.get('TEST') == '1':
 		sptest_env.AppendENVPath('PATH', sptest_env.get('BUILD_DIR'))
 		ut = sptest_env.Command ('ut', None, out_dir + '/resource/csdk/security/provisioning/unittest/unittest')
 		AlwaysBuild ('ut')
-

@@ -97,7 +97,7 @@ TEST_F(ExpiryTimerImplTest, CallbackBeInvokedWithinTolerance)
 
 TEST_F(ExpiryTimerImplTest, CallbackBeInvokedWithTimerId)
 {
-    ExpiryTimerImpl::Id returnedId;
+    ExpiryTimerImpl::Id returnedId = 0;
     FunctionObject* functor = mocks.Mock< FunctionObject >();
 
     mocks.ExpectCall(functor, FunctionObject::execute).Match(
@@ -236,7 +236,7 @@ TEST_F(ExpiryTimerTest, CallbackBeInvokedWithinTolerance)
 
 TEST_F(ExpiryTimerTest, CallbackBeInvokedWithTimerId)
 {
-    ExpiryTimer::Id returnedId;
+    ExpiryTimer::Id returnedId = 0;
     FunctionObject* functor = mocks.Mock< FunctionObject >();
 
     mocks.ExpectCall(functor, FunctionObject::execute).Match(

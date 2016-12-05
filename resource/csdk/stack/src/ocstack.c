@@ -60,6 +60,7 @@
 #include "ocpayloadcbor.h"
 #include "cautilinterface.h"
 #include "oicgroup.h"
+#include "ocendpoint.h"
 
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
 #include "routingutility.h"
@@ -484,6 +485,7 @@ void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out)
     out->adapter = (CATransportAdapter_t)in->adapter;
     out->flags = OCToCATransportFlags(in->flags);
     OICStrcpy(out->addr, sizeof(out->addr), in->addr);
+    OICStrcpy(out->deviceId, sizeof(out->deviceId), in->deviceId);
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     /* This assert is to prevent accidental mismatch between address size macros defined in
      * RI and CA and cause crash here. */
@@ -751,6 +753,8 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
         case OC_STACK_INTERNAL_SERVER_ERROR:
             ret = CA_INTERNAL_SERVER_ERROR;
             break;
+        case OC_STACK_BAD_ENDPOINT:
+            ret = CA_BAD_REQ;
         default:
             break;
     }
@@ -1436,6 +1440,22 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     OCUpdateResourceInsWithResponse(cbNode->requestUri, &response);
                 }
 #endif
+                // set deviceId into OCClientResponse callback parameter
+                if (OC_REST_DISCOVER == cbNode->method)
+                {
+                    OCDiscoveryPayload *payload = (OCDiscoveryPayload*) response.payload;
+                    if (!payload)
+                    {
+                        OIC_LOG(INFO, TAG, "discovery payload is invalid");
+                        return;
+                    }
+
+                    OICStrcpy(response.devAddr.deviceId, sizeof(response.devAddr.deviceId),
+                              payload->sid);
+                    OIC_LOG_V(INFO, TAG, "Device ID of response : %s",
+                              response.devAddr.deviceId);
+                }
+
                 OCStackApplicationResult appFeedback = cbNode->callBack(cbNode->context,
                                                                         cbNode->handle,
                                                                         &response);
@@ -1966,9 +1986,8 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
 
     requestResult = HandleStackRequests (&serverRequest);
 
-    // Send ACK to client as precursor to slow response
     if (requestResult == OC_STACK_SLOW_RESOURCE)
-    {
+    {   // Send ACK to client as precursor to slow response
         if (requestInfo->info.type == CA_MSG_CONFIRM)
         {
             SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_EMPTY,
@@ -2258,7 +2277,7 @@ OCStackResult OCStop()
     }
     else if (stackState != OC_STACK_INITIALIZED)
     {
-        OIC_LOG(ERROR, TAG, "Stack not initialized");
+        OIC_LOG(INFO, TAG, "Stack not initialized");
         return OC_STACK_ERROR;
     }
 
@@ -2713,7 +2732,13 @@ OCStackResult OCDoResource(OCDoHandle *handle,
             result = OC_STACK_NO_MEMORY;
             goto exit;
         }
+        OIC_LOG(DEBUG, TAG, "devAddr is set as destination");
         *devAddr = *destination;
+    }
+
+    if (devAddr)
+    {
+        OIC_LOG_V(DEBUG, TAG, "DeviceID of devAddr : %s", devAddr->deviceId);
     }
 
     resHandle = GenerateInvocationHandle();
@@ -3194,12 +3219,34 @@ OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandle
     return OC_STACK_OK;
 }
 
+OCTpsSchemeFlags OCGetSupportedEndpointTpsFlags()
+{
+    return OCGetSupportedTpsFlags();
+}
+
 OCStackResult OCCreateResource(OCResourceHandle *handle,
         const char *resourceTypeName,
         const char *resourceInterfaceName,
         const char *uri, OCEntityHandler entityHandler,
-        void* callbackParam,
+        void *callbackParam,
         uint8_t resourceProperties)
+{
+    return OCCreateResourceWithEp(handle,
+                                  resourceTypeName,
+                                  resourceInterfaceName,
+                                  uri, entityHandler,
+                                  callbackParam,
+                                  resourceProperties,
+                                  OC_ALL);
+}
+
+OCStackResult OCCreateResourceWithEp(OCResourceHandle *handle,
+        const char *resourceTypeName,
+        const char *resourceInterfaceName,
+        const char *uri, OCEntityHandler entityHandler,
+        void *callbackParam,
+        uint8_t resourceProperties,
+        OCTpsSchemeFlags resourceTpsTypes)
 {
 
     OCResource *pointer = NULL;
@@ -3245,6 +3292,26 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
                ))
     {
         OIC_LOG(ERROR, TAG, "Invalid property");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    // Checking resourceTpsTypes param
+    OCTpsSchemeFlags validTps = OC_NO_TPS;
+    validTps = (OCTpsSchemeFlags)(validTps | OC_COAP | OC_COAPS);
+#ifdef TCP_ADAPTER
+    validTps = (OCTpsSchemeFlags)(validTps | OC_COAP_TCP | OC_COAPS_TCP);
+#endif
+#ifdef HTTP_ADAPTER
+    validTps = (OCTpsSchemeFlags)(validTps | OC_HTTP | OC_HTTP);
+#endif
+#ifdef EDR_ADAPTER
+    validTps = (OCTpsSchemeFlags)(validTps | OC_COAP_RFCOMM);
+#endif
+
+    if ((resourceTpsTypes < OC_COAP) || ((resourceTpsTypes != OC_ALL) &&
+                                         (resourceTpsTypes > validTps)))
+    {
+        OIC_LOG(ERROR, TAG, "Invalid TPS Types OC_ALL");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -3300,6 +3367,13 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     if (result != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "Error adding resourceinterface");
+        goto exit;
+    }
+
+    result = BindTpsTypeToResource(pointer, resourceTpsTypes);
+    if (result != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "Error adding resource TPS types");
         goto exit;
     }
 
@@ -3628,6 +3702,37 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
         OICFree(str);
     }
 
+    return result;
+}
+
+OCStackResult BindTpsTypeToResource(OCResource* resource,
+                                    OCTpsSchemeFlags resourceTpsTypes)
+{
+    if (!resource)
+    {
+        OIC_LOG(ERROR, TAG, "Resource pointer is NULL!!!");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    OCTpsSchemeFlags supportedTps = OC_NO_TPS;
+    OCStackResult result = OCGetSupportedEndpointFlags(resourceTpsTypes,
+                                                       &supportedTps);
+
+    if (result != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "Failed at get supported endpoint flags");
+        return result;
+    }
+
+    // If there isn`t any enabled flag, return error for notify to user.
+    if (OC_NO_TPS == supportedTps)
+    {
+        OIC_LOG_V(ERROR, TAG, "There isn`t any enabled flag on resource %s", resource->uri);
+        return OC_STACK_BAD_ENDPOINT;
+    }
+
+    OIC_LOG_V(INFO, TAG, "Binding %d TPS flags to %s", supportedTps, resource->uri);
+    resource->endpointType = supportedTps;
     return result;
 }
 

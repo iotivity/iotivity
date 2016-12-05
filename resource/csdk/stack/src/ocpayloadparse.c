@@ -29,15 +29,21 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include "ocpayload.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
-#include "ocpayload.h"
 #include "ocpayloadcbor.h"
 #include "ocstackinternal.h"
 #include "payload_logging.h"
 #include "platform_features.h"
+#include "ocendpoint.h"
 
 #define TAG "OIC_RI_PAYLOADPARSE"
+
+/*
+ * The length of UINT64_MAX as a decimal string.
+ */
+#define UINT64_MAX_STRLEN 20
 
 static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *arrayVal);
 static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *repParent, bool isRoot);
@@ -155,7 +161,7 @@ static CborError OCParseStringLL(CborValue *map, char *type, OCStringLL **resour
                     }
                     curPtr = strtok_r(NULL, " ", &savePtr);
                 }
-                OICFree(input);
+                free(input);  // Free *TinyCBOR allocated* string.
             }
             if (cbor_value_is_text_string(&txtStr))
             {
@@ -175,6 +181,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
     OCDiscoveryPayload *temp = NULL;
     OCDiscoveryPayload *rootPayload = NULL;
     OCDiscoveryPayload *curPayload = NULL;
+    OCEndpointPayload *endpoint = NULL;
     size_t len = 0;
     CborError err = CborNoError;
     *outPayload = NULL;
@@ -345,6 +352,64 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
                     resource->tcpPort = (uint16_t)tcpPort;
                 }
 #endif
+                // Endpoints
+                CborValue epsMap;
+                err = cbor_value_map_find_value(&resourceMap, OC_RSRVD_ENDPOINTS, &epsMap);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find eps tag");
+
+                if (cbor_value_is_valid(&epsMap))
+                {
+                    CborValue epMap;
+                    err = cbor_value_enter_container(&epsMap, &epMap);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "to enter endpoint map");
+
+                    while (cbor_value_is_map(&epMap))
+                    {
+                        endpoint = NULL;
+                        int pri = 0;
+                        char *endpointStr = NULL;
+                        OCStackResult ret = OC_STACK_ERROR;
+                        endpoint = (OCEndpointPayload *)OICCalloc(1, sizeof(OCEndpointPayload));
+                        VERIFY_PARAM_NON_NULL(TAG, endpoint, "Failed allocating endpoint payload");
+
+                        // ep
+                        err = cbor_value_map_find_value(&epMap, OC_RSRVD_ENDPOINT, &curVal);
+                        VERIFY_CBOR_SUCCESS(TAG, err, "to find endpoint tag");
+                        err = cbor_value_dup_text_string(&curVal, &endpointStr, &len, NULL);
+                        VERIFY_CBOR_SUCCESS(TAG, err, "to find endpoint value");
+
+                        ret = OCParseEndpointString(endpointStr, endpoint);
+                        OICFree(endpointStr);
+
+                        if (OC_STACK_OK == ret)
+                        {
+                            // pri
+                            err = cbor_value_map_find_value(&epMap, OC_RSRVD_PRIORITY, &curVal);
+                            VERIFY_CBOR_SUCCESS(TAG, err, "to find priority tag");
+                            err = cbor_value_get_int(&curVal, &pri);
+                            VERIFY_CBOR_SUCCESS(TAG, err, "to find priority value");
+                            endpoint->pri = (uint16_t)pri;
+                            OCResourcePayloadAddNewEndpoint(resource, endpoint);
+                            endpoint = NULL;
+                        }
+                        else
+                        {
+                            if (OC_STACK_ADAPTER_NOT_ENABLED == ret)
+                            {
+                                OIC_LOG(ERROR, TAG, "Ignore unrecognized endpoint info");
+                            }
+                            // destroy endpoint
+                            OCDiscoveryEndpointDestroy(endpoint);
+                            endpoint = NULL;
+                        }
+
+                        err = cbor_value_advance(&epMap);
+                        VERIFY_CBOR_SUCCESS(TAG, err, "to advance endpoint map");
+                    }
+
+                    err = cbor_value_leave_container(&epsMap, &epMap);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "to leave eps map");
+                }
 
                 err = cbor_value_advance(&resourceMap);
                 VERIFY_CBOR_SUCCESS(TAG, err, "to advance resource map");
@@ -386,6 +451,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
     return OC_STACK_OK;
 
 exit:
+    OCDiscoveryEndpointDestroy(endpoint);
     OCDiscoveryResourceDestroy(resource);
     OCDiscoveryPayloadDestroy(rootPayload);
     return ret;
@@ -416,6 +482,7 @@ static OCRepPayloadPropType DecodeCborType(CborType type)
             return OCREP_PROP_NULL;
     }
 }
+
 static CborError OCParseArrayFindDimensionsAndType(const CborValue *parent,
         size_t dimensions[MAX_REP_ARRAY_DEPTH], OCRepPayloadPropType *type)
 {
@@ -728,7 +795,7 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
     VERIFY_PARAM_NON_NULL(TAG, outPayload, "Invalid Parameter outPayload");
     VERIFY_PARAM_NON_NULL(TAG, objMap, "Invalid Parameter objMap");
 
-    if (cbor_value_is_map(objMap))
+    if (cbor_value_is_map(objMap) || cbor_value_is_array(objMap))
     {
         if (!*outPayload)
         {
@@ -741,6 +808,7 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
 
         OCRepPayload *curPayload = *outPayload;
 
+        uint64_t arrayIndex = 0;
         size_t len = 0;
         CborValue repMap;
         err = cbor_value_enter_container(objMap, &repMap);
@@ -748,7 +816,7 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
 
         while (!err && cbor_value_is_valid(&repMap))
         {
-            if (cbor_value_is_text_string(&repMap))
+            if (cbor_value_is_map(objMap) && cbor_value_is_text_string(&repMap))
             {
                 err = cbor_value_dup_text_string(&repMap, &name, &len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, err, "Failed finding tag name in the map");
@@ -761,9 +829,33 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
                     (0 == strcmp(OC_RSRVD_INTERFACE, name))))
                 {
                     err = cbor_value_advance(&repMap);
+                    free(name);  // Free *TinyCBOR allocated* string.
+                    continue;
+                }
+            }
+            else if (cbor_value_is_array(objMap))
+            {
+                name = (char*)OICCalloc(UINT64_MAX_STRLEN + 1, sizeof(char));
+                VERIFY_PARAM_NON_NULL(TAG, name, "Failed allocating tag name in the map");
+#ifdef PRIu64
+                snprintf(name, UINT64_MAX_STRLEN + 1, "%" PRIu64, arrayIndex);
+#else
+                /*
+                 * Some libc implementations do not support the PRIu64 format
+                 * specifier.  Since we don't expect huge heterogeneous arrays,
+                 * we should never hit the error path below in practice.
+                 */
+                if (arrayIndex <= UINT32_MAX)
+                {
+                    snprintf(name, UINT64_MAX_STRLEN + 1, "%" PRIu32, (uint32_t)arrayIndex);
+                }
+                else
+                {
+                    err = CborErrorDataTooLarge;
                     OICFree(name);
                     continue;
                 }
+#endif
             }
             CborType type = cbor_value_get_type(&repMap);
             switch (type)
@@ -822,6 +914,15 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
                     break;
                 case CborArrayType:
                     err = OCParseArray(curPayload, name, &repMap);
+                    if (err != CborNoError)
+                    {
+                        // OCParseArray will fail if the array contains mixed types, try
+                        // to parse as payload with non-negative integer value names
+                        OCRepPayload *pl = NULL;
+                        err = OCParseSingleRepPayload(&pl, &repMap, false);
+                        VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting parse single rep");
+                        res = OCRepPayloadSetPropObjectAsOwner(curPayload, name, pl);
+                    }
                     break;
                 default:
                     OIC_LOG_V(ERROR, TAG, "Parsing rep property, unknown type %d", repMap.type);
@@ -840,6 +941,7 @@ static CborError OCParseSingleRepPayload(OCRepPayload **outPayload, CborValue *o
             }
             OICFree(name);
             name = NULL;
+            ++arrayIndex;
         }
         if (cbor_value_is_container(objMap))
         {

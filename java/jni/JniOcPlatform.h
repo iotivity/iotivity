@@ -85,6 +85,22 @@ extern "C" {
 
     /*
     * Class:     org_iotivity_base_OcPlatform
+    * Method:    stop
+    * Signature: ()V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_stop
+        (JNIEnv *, jclass);
+
+    /*
+    * Class:     org_iotivity_base_OcPlatform
+    * Method:    start
+    * Signature: ()V
+    */
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_start
+        (JNIEnv *, jclass);
+
+    /*
+    * Class:     org_iotivity_base_OcPlatform
     * Method:    notifyAllObservers0
     * Signature: (Lorg/iotivity/base/OcResourceHandle;)V
     */

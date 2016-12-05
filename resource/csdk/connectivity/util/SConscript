@@ -31,3 +31,10 @@ if target_os == 'android':
 	if (('BT' in ca_transport) or ('ALL' in ca_transport)):
 			env.AppendUnique(CA_SRC = [
 			os.path.join(src_dir, 'btpairing' ,'android', 'cabtpairing.c')])
+
+env.AppendUnique(CA_SRC = [
+		os.path.join(src_dir, 'camanager', 'caconnectionmanager.c'),
+		os.path.join(src_dir, 'camanager', 'camanagerutil.c'),
+		os.path.join(src_dir, 'camanager', 'camessagearbiter.c'),
+		os.path.join(src_dir, 'camanager', 'capolicymanager.c')])
+

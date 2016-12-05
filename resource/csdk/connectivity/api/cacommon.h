@@ -47,10 +47,17 @@
 #include <mswsock.h>
 #endif
 
+#include "ocrandom.h"
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+/**
+ * TAG of Analyzer log.
+ */
+#define ANALYZER_TAG "Analyzer"
 
 /**
  * IP address Length.
@@ -280,6 +287,7 @@ typedef struct
     uint16_t                port;       // for IP
     char                    addr[MAX_ADDR_STR_SIZE_CA]; // address for all
     uint32_t                ifindex;    // usually zero for default interface
+    char                    deviceId[UUID_STRING_SIZE]; // device ID of remote device
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     char                    routeData[MAX_ADDR_STR_SIZE_CA]; /**< GatewayId:ClientId of
                                                                     destination. **/

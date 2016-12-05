@@ -1452,20 +1452,24 @@ CAResult_t CAAddBlockOption(coap_pdu_t **pdu, const CAInfo_t *info,
             {
                 OIC_LOG_V(DEBUG, TAG, "[%s] opt will be added.",
                           COAP_OPTION_DATA(*(coap_option *) opt->data));
-
                 OIC_LOG_V(DEBUG, TAG, "[%d] pdu length", (*pdu)->length);
-                coap_add_option(*pdu, COAP_OPTION_KEY(*(coap_option *) opt->data),
-                                COAP_OPTION_LENGTH(*(coap_option *) opt->data),
-                                COAP_OPTION_DATA(*(coap_option *) opt->data));
+
+                if (0 == coap_add_option(*pdu, COAP_OPTION_KEY(*(coap_option *) opt->data),
+                                         COAP_OPTION_LENGTH(*(coap_option *) opt->data),
+                                         COAP_OPTION_DATA(*(coap_option *) opt->data)))
+                {
+                    OIC_LOG(ERROR, TAG, "coap_add_option has failed");
+                    res = CA_STATUS_FAILED;
+                    goto exit;
+                }
             }
         }
-
         OIC_LOG_V(DEBUG, TAG, "[%d] pdu length after option", (*pdu)->length);
 
         // if response data is so large. it have to send as block transfer
         if (!coap_add_data(*pdu, dataLength, (const unsigned char *) info->payload))
         {
-            OIC_LOG(INFO, TAG, "it have to use block");
+            OIC_LOG(INFO, TAG, "it has to use block");
             res = CA_STATUS_FAILED;
             goto exit;
         }

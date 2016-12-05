@@ -77,6 +77,10 @@ namespace OC
 
         virtual OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag, const std::string& value) = 0;
         virtual OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag, std::string& value) = 0;
+
+        virtual OCStackResult stop() = 0;
+
+        virtual OCStackResult start() = 0;
     };
 }
 

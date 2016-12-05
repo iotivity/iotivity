@@ -31,7 +31,6 @@
 #include "ocstackinternal.h"
 #include "ocresourcehandler.h"
 #include "logger.h"
-#include "cJSON.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "ocpayload.h"

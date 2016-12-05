@@ -70,13 +70,8 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_ownershipTransferCB
         OTMCallbackData_t CBData = {0};
         if (OIC_JUST_WORKS == (OicSecOxm_t)OxmType)
         {
-            CBData.loadSecretCB = LoadSecretJustWorksCallback;
-            CBData.createSecureSessionCB = CreateSecureSessionJustWorksCallback;
-            CBData.createSelectOxmPayloadCB = CreateJustWorksSelectOxmPayload;
-            CBData.createOwnerTransferPayloadCB = CreateJustWorksOwnerTransferPayload;
-
-            result = OCSecure::setOwnerTransferCallbackData((OicSecOxm_t)OxmType,
-                    &CBData, NULL);
+            /*NO callback required for JUST_WORKS*/
+            result = OCSecure::setInputPinCallback(NULL);
         }
         if (OIC_RANDOM_DEVICE_PIN == (OicSecOxm_t)OxmType)
         {
@@ -84,12 +79,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_ownershipTransferCB
             {
                 delete jniPinListener;
                 jniPinListener = new JniPinCheckListener(env, jListener);
-                CBData.loadSecretCB = InputPinCodeCallback;
-                CBData.createSecureSessionCB = CreateSecureSessionRandomPinCallback;
-                CBData.createSelectOxmPayloadCB = CreatePinBasedSelectOxmPayload;
-                CBData.createOwnerTransferPayloadCB = CreatePinBasedOwnerTransferPayload;
-                result = OCSecure::setOwnerTransferCallbackData((OicSecOxm_t)OxmType,
-                        &CBData, Callback);
+                result = OCSecure::setInputPinCallback(Callback);
             }
             else
             {

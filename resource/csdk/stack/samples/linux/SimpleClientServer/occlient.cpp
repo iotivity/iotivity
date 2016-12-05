@@ -140,6 +140,12 @@ static void PrintUsage()
             "add  vendor specific header options");
     OIC_LOG(INFO, TAG, "-t 19 :  Discover Platform");
     OIC_LOG(INFO, TAG, "-t 20 :  Discover Devices");
+    OIC_LOG(INFO, TAG, "-t 21 :  Discover Resources and Display endpoints of the server information");
+    OIC_LOG(INFO, TAG, "-t 22 :  Discover Resources and Perform Get Requests by IPv4 + COAP + UDP "\
+            "using server's endpoints information");
+    OIC_LOG(INFO, TAG, "-t 23 :  Discover Resources and Perform Get Requests by IPv4 + COAP + TCP "\
+            "using server's endpoints information");
+
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -472,6 +478,15 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
                 break;
             case TEST_DISCOVER_DEV_REQ:
                 InitDeviceDiscovery(OC_LOW_QOS);
+                break;
+            case TEST_DISCOVER_REQ_SHOW_EPS:
+                showEndpointsInfo(resource);
+                break;
+            case TEST_GET_REQ_UDP:
+                InitGetRequestWithCoap(payload, true);
+                break;
+            case TEST_GET_REQ_TCP:
+                InitGetRequestWithCoap(payload, false);
                 break;
             default:
                 PrintUsage();
@@ -810,6 +825,98 @@ int InitDiscovery(OCQualityOfService qos)
         OIC_LOG(ERROR, TAG, "OCStack resource error");
     }
     return ret;
+}
+
+int InitGetRequestWithCoap(OCDiscoveryPayload* dis, bool isUdp)
+{
+    if (!dis)
+    {
+        OIC_LOG(INFO, TAG, "Given payload is NULL!!!");
+        return -1;
+    }
+
+    // copy query
+    std::ostringstream query;
+    query << coapServerResource;
+
+    // server addr
+    OCDevAddr dev;
+
+    // find endpoint with ipv4, UDP or TCP
+    OCResourcePayload* res = dis->resources;
+    while (res)
+    {
+        OCEndpointPayload* eps = res->eps;
+        while (eps)
+        {
+            if (strcmp(eps->tps, (isUdp ? COAP_UDP : COAP_TCP)) == 0 &&
+                strlen(eps->addr) < MAX_LENGTH_IPv4_ADDR)
+            {
+                OIC_LOG_V(INFO, TAG, "%s found!!!", (isUdp ? COAP_UDP : COAP_TCP));
+                dev.adapter = (isUdp ? OC_ADAPTER_IP : OC_ADAPTER_TCP);
+                dev.flags = OC_IP_USE_V4;
+                dev.port = eps->port;
+                memcpy(dev.addr, eps->addr, sizeof(dev.addr));
+            }
+            eps = eps->next;
+        }
+        res = res->next;
+    }
+
+    if (dev.adapter == (isUdp ? OC_ADAPTER_IP : OC_ADAPTER_TCP) && dev.flags == OC_IP_USE_V4)
+    {
+        OIC_LOG_V(INFO, TAG, "dev addr is %s", dev.addr);
+        OIC_LOG_V(INFO, TAG, "dev port is %d", dev.port);
+        OIC_LOG_V(INFO, TAG, "dev flags is %d", dev.flags);
+        OIC_LOG_V(INFO, TAG, "dev adapter is %d", dev.adapter);
+
+        // send ocdoresource
+        return (InvokeOCDoResource(query, &dev, OC_REST_GET,
+                OC_LOW_QOS, getReqCB, NULL, 0));
+    }
+    else
+    {
+        OIC_LOG(INFO, TAG, "Endpoints infomation not found on given payload!!!");
+        return -1;
+    }
+}
+
+void showEndpointsInfo(OCResourcePayload* res)
+{
+    if (!res)
+    {
+        OIC_LOG(INFO, TAG, "No endpoints information in given payload");
+        return;
+    }
+
+    if (!res->eps)
+    {
+        OIC_LOG(INFO, TAG, "No endpoints information in given payload");
+        return;
+    }
+
+    OCEndpointPayload* eps = res->eps;
+
+    while (eps)
+    {
+        if (eps->family == OC_IP_USE_V6)
+        {
+            OIC_LOG_V(INFO, TAG, "Resource [%s] has endpoint [%s://[%s]:%d]",
+                      res->uri, eps->tps, eps->addr, eps->port);
+        }
+        else if (eps->family == OC_IP_USE_V4)
+        {
+            OIC_LOG_V(INFO, TAG, "Resource [%s] has endpoint [%s://%s:%d]",
+                      res->uri, eps->tps, eps->addr, eps->port);
+        }
+        else
+        {
+            OIC_LOG_V(INFO, TAG, "Resource [%s] has endpoint [%s://%s]",
+                      res->uri, eps->tps, eps->addr);
+        }
+
+        eps = eps->next;
+    }
 }
 
 int main(int argc, char* argv[])

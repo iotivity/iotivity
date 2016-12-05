@@ -74,7 +74,7 @@ jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') +
 jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
 cmdBuildEasysetup=jdk_env.Gradle(target="EasySetupCore/objs",
     source="EasySetupCore/src/main/java/org/iotivity/service/easysetup/mediator/EasySetup.java")
-
+jdk_env.Clean(cmdBuildEasysetup, './build')
 Depends(cmdBuildEasysetup, env.get('baseAAR'))
 
 env.AppendUnique(easysetupAAR = cmdBuildEasysetup)

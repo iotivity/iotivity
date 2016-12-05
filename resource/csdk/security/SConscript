@@ -48,7 +48,6 @@ else:
 	libocsrm_env.AppendUnique(CPPPATH = ['../connectivity/lib/libcoap-4.1.1/include'])
 
 libocsrm_env.PrependUnique(CPPPATH = [
-		'../../../extlibs/cjson/',
 		'../../../extlibs/tinydtls/',
 		'../logger/include',
 		'../../c_common/ocrandom/include',
@@ -89,7 +88,7 @@ if env.get('LOGGING'):
 	libocsrm_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if env.get('MULTIPLE_OWNER') == '1':
-	libocsrm_env.AppendUnique(CPPDEFINES=['_ENABLE_MULTIPLE_OWNER_'])
+	libocsrm_env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
 
 ######################################################################
 # Source files and Targets

@@ -240,12 +240,21 @@ void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource
 void OCDiscoveryPayloadAddResource(OCDiscoveryPayload* payload, const OCResource* res,
                                    uint16_t securePort, uint16_t tcpPort);
 #endif
-void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload, OCResourcePayload* res);
+void OCDiscoveryPayloadAddNewResource(OCDiscoveryPayload* payload,
+                                      OCResourcePayload* res);
 bool OCResourcePayloadAddStringLL(OCStringLL **payload, const char* type);
 
 size_t OCDiscoveryPayloadGetResourceCount(OCDiscoveryPayload* payload);
-OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload, size_t index);
+OCResourcePayload* OCDiscoveryPayloadGetResource(OCDiscoveryPayload* payload,
+                                                 size_t index);
 
+size_t OCEndpointPayloadGetEndpointCount(OCEndpointPayload* payload);
+OCEndpointPayload* OCEndpointPayloadGetEndpoint(OCEndpointPayload* payload,
+                                                size_t index);
+
+void OCResourcePayloadAddNewEndpoint(OCResourcePayload* payload,
+                                     OCEndpointPayload* endpoint);
+void OCDiscoveryEndpointDestroy(OCEndpointPayload* payload);
 void OCDiscoveryResourceDestroy(OCResourcePayload* payload);
 void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload);
 

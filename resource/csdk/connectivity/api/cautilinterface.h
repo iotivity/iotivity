@@ -31,6 +31,28 @@ extern "C"
 #endif
 
 /**
+ * this level depends on transmission time.
+ * unicast based UDP will be checked by caretransmission.
+ */
+typedef enum
+{
+    HIGH_SPEED = 0,
+    NORMAL_SPEED
+} CMSpeedLevel_t;
+
+typedef struct
+{
+    /** address for all **/
+    char addr[MAX_ADDR_STR_SIZE_CA];
+
+    /** adapter priority of all transmissions. **/
+    CATransportAdapter_t adapter;
+
+    /** level about speed of response. **/
+    CMSpeedLevel_t level;
+} CMConfigureInfo_t;
+
+/**
  * Callback function type for connection status changes delivery.
  * @param[out]   info           Remote endpoint information.
  * @param[out]   isConnected    Current connection status info.

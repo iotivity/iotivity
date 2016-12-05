@@ -90,54 +90,6 @@ void presenceHandler(OCStackResult result, const unsigned int nonce, const std::
     }
 }
 
-void receivedPlatformInfo(const OCRepresentation& rep)
-{
-    std::cout << "\nPlatform Information received ---->\n";
-    std::string value;
-    std::string values[] =
-    {
-        "pi",   "Platform ID                    ",
-        "mnmn", "Manufacturer name              ",
-        "mnml", "Manufacturer url               ",
-        "mnmo", "Manufacturer Model No          ",
-        "mndt", "Manufactured Date              ",
-        "mnpv", "Manufacturer Platform Version  ",
-        "mnos", "Manufacturer OS version        ",
-        "mnhw", "Manufacturer hardware version  ",
-        "mnfv", "Manufacturer firmware version  ",
-        "mnsl", "Manufacturer support url       ",
-        "st",   "Manufacturer system time       "
-    };
-
-    for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]) ; i += 2)
-    {
-        if(rep.getValue(values[i], value))
-        {
-            std::cout << values[i + 1] << " : "<< value << std::endl;
-        }
-    }
-}
-
-void receivedDeviceInfo(const OCRepresentation& rep)
-{
-    std::cout << "\nDevice Information received ---->\n";
-    std::string value;
-    std::string values[] =
-    {
-        "di",  "Device ID        ",
-        "n",   "Device name      ",
-        "lcv", "Spec version url ",
-        "dmv", "Data Model Model ",
-    };
-
-    for (unsigned int i = 0; i < sizeof(values) / sizeof(values[0]); i += 2)
-    {
-        if (rep.getValue(values[i], value))
-        {
-            std::cout << values[i + 1] << " : " << value << std::endl;
-        }
-    }
-}
 // Callback to found resources
 void foundResource(std::shared_ptr<OCResource> resource)
 {
@@ -150,9 +102,6 @@ void foundResource(std::shared_ptr<OCResource> resource)
 
     std::string resourceURI;
     std::string hostAddress;
-    std::string platformDiscoveryURI = "/oic/p";
-    std::string deviceDiscoveryURI   = "/oic/d";
-
     try
     {
         // Do some operations with resource object.
@@ -179,43 +128,6 @@ void foundResource(std::shared_ptr<OCResource> resource)
             for(auto &resourceInterfaces : resource->getResourceInterfaces())
             {
                 std::cout << "\t\t" << resourceInterfaces << std::endl;
-            }
-
-            if (0 == strcmp(resourceURI.c_str(), platformDiscoveryURI.c_str()))
-            {
-                std::cout << "Querying for platform information... " << std::endl;
-
-                OCStackResult ret = OCPlatform::getPlatformInfo("", platformDiscoveryURI,
-                                                                resource->connectivityType(),
-                                                                &receivedPlatformInfo);
-
-                if (ret == OC_STACK_OK)
-                {
-                    std::cout << "Get platform information is done." << std::endl;
-                }
-                else
-                {
-                    std::cout << "Get platform information failed." << std::endl;
-                }
-            }
-
-            if (0 == strcmp(resourceURI.c_str(), deviceDiscoveryURI.c_str()))
-            {
-                std::cout << "Querying for device information... " << std::endl;
-
-                OCStackResult ret = OCPlatform::getDeviceInfo(resource->host(),
-                                                              deviceDiscoveryURI,
-                                                              resource->connectivityType(),
-                                                              &receivedDeviceInfo);
-
-                if (ret == OC_STACK_OK)
-                {
-                    std::cout << "Getting device information is done." << std::endl;
-                }
-                else
-                {
-                    std::cout << "Getting device information failed." << std::endl;
-                }
             }
 
             if(resourceURI == "/a/light")

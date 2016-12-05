@@ -247,7 +247,7 @@ void CADeleteGlobalReferences(JNIEnv *env)
         (*env)->DeleteGlobalRef(env, g_Activity);
         g_Activity = NULL;
     }
-#endif
+#endif //__ANDROID__
 }
 
 jmethodID CAGetJNIMethodID(JNIEnv *env, const char* className,
@@ -263,6 +263,7 @@ jmethodID CAGetJNIMethodID(JNIEnv *env, const char* className,
     if (!jni_cid)
     {
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "jni_cid [%s] is null", className);
+        CACheckJNIException(env);
         return NULL;
     }
 
@@ -270,12 +271,24 @@ jmethodID CAGetJNIMethodID(JNIEnv *env, const char* className,
     if (!jni_midID)
     {
         OIC_LOG_V(ERROR, CA_ADAPTER_UTILS_TAG, "jni_midID [%s] is null", methodName);
+        CACheckJNIException(env);
         (*env)->DeleteLocalRef(env, jni_cid);
         return NULL;
     }
 
     (*env)->DeleteLocalRef(env, jni_cid);
     return jni_midID;
+}
+
+bool CACheckJNIException(JNIEnv *env)
+{
+    if ((*env)->ExceptionCheck(env))
+    {
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        return true;
+    }
+    return false;
 }
 
 #ifdef __ANDROID__
@@ -328,5 +341,67 @@ jobject *CANativeGetActivity()
 {
     return g_Activity;
 }
-#endif
+#endif //__ANDROID__
+#endif //JAVA__
+
+#ifndef WITH_ARDUINO
+void CALogAdapterStateInfo(CATransportAdapter_t adapter, CANetworkStatus_t state)
+{
+    OIC_LOG(DEBUG, CA_ADAPTER_UTILS_TAG, "CALogAdapterStateInfo");
+    OIC_LOG(DEBUG, ANALYZER_TAG, "=================================================");
+    CALogAdapterTypeInfo(adapter);
+    if (CA_INTERFACE_UP == state)
+    {
+        OIC_LOG(DEBUG, ANALYZER_TAG, "adapter status is changed to CA_INTERFACE_UP");
+    }
+    else
+    {
+        OIC_LOG(DEBUG, ANALYZER_TAG, "adapter status is changed to CA_INTERFACE_DOWN");
+    }
+    OIC_LOG(DEBUG, ANALYZER_TAG, "=================================================");
+}
+
+void CALogSendStateInfo(CATransportAdapter_t adapter,
+                        const char *addr, uint16_t port, ssize_t sentLen,
+                        bool isSuccess, const char* message)
+{
+    OIC_LOG(DEBUG, CA_ADAPTER_UTILS_TAG, "CALogSendStateInfo");
+    OIC_LOG(DEBUG, ANALYZER_TAG, "=================================================");
+
+    if (true == isSuccess)
+    {
+        OIC_LOG_V(DEBUG, ANALYZER_TAG, "Send Success, sent length = [%d]", sentLen);
+    }
+    else
+    {
+        OIC_LOG_V(DEBUG, ANALYZER_TAG, "Send Failure, error message  = [%s]",
+                  message != NULL ? message : "no message");
+    }
+
+    CALogAdapterTypeInfo(adapter);
+    OIC_LOG_V(DEBUG, ANALYZER_TAG, "Address = [%s]:[%d]", addr, port);
+    OIC_LOG(DEBUG, ANALYZER_TAG, "=================================================");
+}
+
+void CALogAdapterTypeInfo(CATransportAdapter_t adapter)
+{
+    switch(adapter)
+    {
+        case CA_ADAPTER_IP:
+            OIC_LOG(DEBUG, ANALYZER_TAG, "Transport Type = [OC_ADAPTER_IP]");
+            break;
+        case CA_ADAPTER_TCP:
+            OIC_LOG(DEBUG, ANALYZER_TAG, "Transport Type = [OC_ADAPTER_TCP]");
+            break;
+        case CA_ADAPTER_GATT_BTLE:
+            OIC_LOG(DEBUG, ANALYZER_TAG, "Transport Type = [OC_ADAPTER_GATT_BTLE]");
+            break;
+        case CA_ADAPTER_RFCOMM_BTEDR:
+            OIC_LOG(DEBUG, ANALYZER_TAG, "Transport Type = [OC_ADAPTER_RFCOMM_BTEDR]");
+            break;
+        default:
+            OIC_LOG_V(DEBUG, ANALYZER_TAG, "Transport Type = [%d]", adapter);
+            break;
+    }
+}
 #endif

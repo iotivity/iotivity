@@ -269,8 +269,11 @@ namespace OC
 
         OCStackResult setDeviceId(const OCUUIdentity *myUuid);
 
+        OCStackResult stop();
+        OCStackResult start();
     private:
         PlatformConfig m_cfg;
+        OCMode m_modeType;
 
     private:
         std::unique_ptr<WrapperFactory> m_WrapperInstance;

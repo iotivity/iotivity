@@ -130,7 +130,7 @@ namespace OCPlatformTest
     OCResourceHandle RegisterResource(std::string uri, std::string type, std::string iface)
     {
         PlatformConfig cfg
-        { OC::ServiceType::OutOfProc, OC::ModeType::Server, "0.0.0.0", 0,
+        { OC::ServiceType::InProc, OC::ModeType::Server, "0.0.0.0", 0,
                 OC::QualityOfService::LowQos, &gps };
         OCPlatform::Configure(cfg);
         EXPECT_EQ(OC_STACK_OK,OCPlatform::registerResource(
@@ -142,7 +142,7 @@ namespace OCPlatformTest
     OCResourceHandle RegisterResource(std::string uri, std::string type)
     {
         PlatformConfig cfg
-        { OC::ServiceType::OutOfProc, OC::ModeType::Server, "0.0.0.0", 0,
+        { OC::ServiceType::InProc, OC::ModeType::Server, "0.0.0.0", 0,
                 OC::QualityOfService::LowQos, &gps };
         OCPlatform::Configure(cfg);
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(
@@ -154,7 +154,7 @@ namespace OCPlatformTest
     OCResourceHandle RegisterResource(std::string uri)
     {
         PlatformConfig cfg
-        { OC::ServiceType::OutOfProc, OC::ModeType::Server, "0.0.0.0", 0,
+        { OC::ServiceType::InProc, OC::ModeType::Server, "0.0.0.0", 0,
                 OC::QualityOfService::LowQos, &gps };
         OCPlatform::Configure(cfg);
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerResource(

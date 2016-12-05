@@ -74,48 +74,6 @@ OicParseQueryIter_t * GetNextQuery(OicParseQueryIter_t * parseIter)
     return NULL;
 }
 
-// TODO This functionality is replicated in all SVR's and therefore we need
-// to encapsulate it in a common method. However, this may not be the right
-// file for this method.
-OCStackResult AddUuidArray(const cJSON* jsonRoot, const char* arrayItem,
-                           size_t *numUuids, OicUuid_t** uuids)
-{
-    size_t idxx = 0;
-    cJSON* jsonObj = cJSON_GetObjectItem((cJSON *)jsonRoot, arrayItem);
-    VERIFY_NON_NULL(TAG, jsonObj, ERROR);
-    VERIFY_SUCCESS(TAG, cJSON_Array == jsonObj->type, ERROR);
-
-    *numUuids = (size_t)cJSON_GetArraySize(jsonObj);
-    VERIFY_SUCCESS(TAG, *numUuids > 0, ERROR);
-    *uuids = (OicUuid_t*)OICCalloc(*numUuids, sizeof(OicUuid_t));
-    VERIFY_NON_NULL(TAG, *uuids, ERROR);
-
-    do
-    {
-        unsigned char base64Buff[sizeof(((OicUuid_t*)0)->id)] = {0};
-        uint32_t outLen = 0;
-        B64Result b64Ret = B64_OK;
-
-        cJSON *jsonOwnr = cJSON_GetArrayItem(jsonObj, idxx);
-        VERIFY_NON_NULL(TAG, jsonOwnr, ERROR);
-        VERIFY_SUCCESS(TAG, cJSON_String == jsonOwnr->type, ERROR);
-
-        outLen = 0;
-        b64Ret = b64Decode(jsonOwnr->valuestring, strlen(jsonOwnr->valuestring), base64Buff,
-               sizeof(base64Buff), &outLen);
-
-        VERIFY_SUCCESS(TAG, (b64Ret == B64_OK && outLen <= sizeof((*uuids)[idxx].id)),
-               ERROR);
-        memcpy((*uuids)[idxx].id, base64Buff, outLen);
-    } while ( ++idxx < *numUuids);
-
-    return OC_STACK_OK;
-
-exit:
-    return OC_STACK_ERROR;
-
-}
-
 /**
  * Function to getting string of ownership transfer method
  *
@@ -133,10 +91,10 @@ const char* GetOxmString(OicSecOxm_t oxmType)
             return OXM_RANDOM_DEVICE_PIN;
         case OIC_MANUFACTURER_CERTIFICATE:
             return OXM_MANUFACTURER_CERTIFICATE;
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         case OIC_PRECONFIG_PIN:
             return OXM_PRECONF_PIN;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
         default:
             return NULL;
     }

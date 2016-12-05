@@ -59,7 +59,7 @@ if target_os not in ['windows']:
     local_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra'])
 
 if target_os in ['linux', 'tizen']:
-    local_env.AppendUnique(LIBS = ['pthread', 'curl'])
+    local_env.AppendUnique(LIBS = ['pthread', 'curl', 'm'])
 
 if target_os == 'android':
     local_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
@@ -72,6 +72,7 @@ if target_os == 'android':
 ######################################################################
 
 proxy_src = [
+	'../../extlibs/cjson/cJSON.c',
 	'./src/CoapHttpHandler.c',
 	'./src/CoapHttpMap.c',
 	'./src/CoapHttpParser.c',

@@ -79,5 +79,5 @@ jdk_env['BUILD_DIR'] = env.get('BUILD_DIR')
 cmdBuildNotificationConsumerApp=jdk_env.Gradle(target="app/apk", 
     source=["app/src/main/java/com/sec/noticonsumerexample/MainActivity.java",
             "app/src/main/java/com/sec/noticonsumerexample/ConsumerSample.java"])
-
+jdk_env.Clean(cmdBuildNotificationConsumerApp, '#/service/notification/examples/android/NotiConsumerExample/build')
 Depends(cmdBuildNotificationConsumerApp, env.get('notificationAAR'))

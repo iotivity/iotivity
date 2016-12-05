@@ -50,10 +50,10 @@ typedef struct PEContext
     SRMAccessResponse_t retVal;
     AmsMgrContext_t     *amsMgrContext;
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     uint8_t* payload;
     size_t payloadSize;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 } PEContext_t;
 
 /**

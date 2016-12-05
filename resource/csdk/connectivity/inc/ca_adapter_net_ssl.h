@@ -172,7 +172,7 @@ CAResult_t CAsslGenerateOwnerPsk(const CAEndpoint_t *endpoint,
                     const uint8_t* provServerDeviceId, const size_t provServerDeviceIdLen,
                     uint8_t* ownerPsk, const size_t ownerPskSize);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * Gets CA secure endpoint info corresponding for endpoint.
  *

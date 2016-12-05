@@ -50,7 +50,6 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../include/cloud',
 		'../../include',
 		'../../../../../extlibs/tinydtls',
-		'../../../../../extlibs/cjson',
 		'../../../../../extlibs/base64',
 		'../../../connectivity/inc',
 		'../../../connectivity/inc/pkix',
@@ -87,7 +86,7 @@ if env.get('SECURED') == '1':
 
 
 if env.get('MULTIPLE_OWNER') == '1':
-	provisioning_env.AppendUnique(CPPDEFINES = ['_ENABLE_MULTIPLE_OWNER_'])
+	provisioning_env.AppendUnique(CPPDEFINES = ['MULTIPLE_OWNER'])
 
 provisioning_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
@@ -161,4 +160,3 @@ else:
 				])
 
 provisioning_env.AppendTarget('samples')
-

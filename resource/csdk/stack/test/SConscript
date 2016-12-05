@@ -40,7 +40,6 @@ stacktest_env.PrependUnique(CPPPATH = [
 		'../../connectivity/api',
 		'../../connectivity/inc/pkix',
 		'../../connectivity/external/inc',
-		'../../extlibs/cjson',
 		'../../../oc_logger/include',
 		])
 

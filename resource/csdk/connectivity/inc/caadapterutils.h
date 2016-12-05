@@ -247,6 +247,13 @@ jmethodID CAGetJNIMethodID(JNIEnv *env, const char* className,
                            const char* methodFormat);
 
 /**
+ * check JNI exception occurrence
+ * @param[in]   env              JNI interface pointer.
+ * @return  true(occurrence) or false(no occurrence).
+ */
+bool CACheckJNIException(JNIEnv *env);
+
+/**
  * To Delete other Global References
  * Called during CATerminate to remove global references
  */
@@ -283,6 +290,34 @@ jobject CANativeJNIGetContext();
  */
 jobject *CANativeGetActivity();
 #endif
+#endif
+
+#ifndef WITH_ARDUINO
+/**
+ * print send state in the adapter.
+ * @param[in]   adapter          transport adapter type.
+ * @param[in]   addr             remote address.
+ * @param[in]   port             port.
+ * @param[in]   sentLen          sent data length.
+ * @param[in]   isSuccess        sent state.
+ * @param[in]   message          detailed message.
+ */
+void CALogSendStateInfo(CATransportAdapter_t adapter,
+                        const char *addr, uint16_t port, ssize_t sentLen,
+                        bool isSuccess, const char* message);
+
+/**
+ * print adapter state in the adapter.
+ * @param[in]   adapter          transport adapter type.
+ * @param[in]   state            adapter state.
+ */
+void CALogAdapterStateInfo(CATransportAdapter_t adapter, CANetworkStatus_t state);
+
+/**
+ * print adapter type name in the adapter.
+ * @param[in]   adapter          transport adapter type.
+ */
+void CALogAdapterTypeInfo(CATransportAdapter_t adapter);
 #endif
 
 #ifdef __cplusplus

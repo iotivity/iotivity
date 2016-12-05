@@ -31,6 +31,7 @@
 #include "canetworkconfigurator.h"
 #include "cainterfacecontroller.h"
 #include "logger.h"
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 #include "ca_adapter_net_ssl.h"
 #endif // __WITH_DTLS__ or __WITH_TLS__
@@ -142,7 +143,7 @@ void CARegisterHandler(CARequestCallback ReqHandler, CAResponseCallback RespHand
 }
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 const CASecureEndpoint_t *CAGetSecureEndpointData(const CAEndpoint_t *peer)
 {
     OIC_LOG(DEBUG, TAG, "IN CAGetSecurePeerInfo");
@@ -156,7 +157,7 @@ const CASecureEndpoint_t *CAGetSecureEndpointData(const CAEndpoint_t *peer)
     OIC_LOG(DEBUG, TAG, "OUT CAGetSecurePeerInfo");
     return GetCASecureEndpointData(peer);
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 CAResult_t CAregisterSslHandshakeCallback(CAErrorCallback tlsHandshakeCallback)
 {
@@ -478,6 +479,7 @@ CAResult_t CAHandleRequestResponse()
 
 CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapter)
 {
+    (void)(adapter); // prevent unused-parameter warning when building release variant
     OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
     OIC_LOG_V(DEBUG, TAG, "cipher : %d , CATransportAdapter : %d", cipher, adapter);
     CAResult_t res = CA_STATUS_FAILED;
@@ -488,6 +490,7 @@ CAResult_t CASelectCipherSuite(const uint16_t cipher, CATransportAdapter_t adapt
         OIC_LOG_V(ERROR, TAG, "Failed to CAsetTlsCipherSuite : %d", res);
     }
 #else
+    (void)(cipher); // prevent unused-parameter warning
     OIC_LOG(ERROR, TAG, "Method not supported");
 #endif
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
@@ -507,6 +510,7 @@ CAResult_t CAEnableAnonECDHCipherSuite(const bool enable)
         OIC_LOG_V(ERROR, TAG, "Failed to CAsetTlsCipherSuite : %d", res);
     }
 #else
+    (void)(enable); // prevent unused-parameter compiler warning
     OIC_LOG(ERROR, TAG, "Method not supported");
 #endif
     OIC_LOG_V(ERROR, TAG, "Out %s", __func__);
@@ -537,6 +541,15 @@ CAResult_t CAGenerateOwnerPSK(const CAEndpoint_t* endpoint,
         OIC_LOG_V(ERROR, TAG, "Failed to CAGenerateOwnerPSK : %d", res);
     }
 #else
+    (void)(endpoint); // prevent unused-parameter compiler warnings
+    (void)(label);
+    (void)(labelLen);
+    (void)(rsrcServerDeviceID);
+    (void)(rsrcServerDeviceIDLen);
+    (void)(provServerDeviceID);
+    (void)(provServerDeviceIDLen);
+    (void)(ownerPSK);
+    (void)(ownerPskSize);
     OIC_LOG(ERROR, TAG, "Method not supported");
 #endif
     OIC_LOG_V(DEBUG, TAG, "OUT : CAGenerateOwnerPSK");
@@ -559,7 +572,8 @@ CAResult_t CAInitiateHandshake(const CAEndpoint_t *endpoint)
         OIC_LOG_V(ERROR, TAG, "Failed to CAinitiateSslHandshake : %d", res);
     }
 #else
-        OIC_LOG(ERROR, TAG, "Method not supported");
+    (void)(endpoint); // prevent unused-parameter compiler warning
+    OIC_LOG(ERROR, TAG, "Method not supported");
 #endif
     OIC_LOG_V(DEBUG, TAG, "OUT : CAInitiateHandshake");
     return res;
@@ -581,6 +595,7 @@ CAResult_t CAcloseSslSession(const CAEndpoint_t *endpoint)
         OIC_LOG_V(ERROR, TAG, "Failed to CAsslClose : %d", res);
     }
 #else
+    (void)(endpoint); // prevent unused-parameter compiler warning
     OIC_LOG(ERROR, TAG, "Method not supported");
 #endif
     OIC_LOG_V(DEBUG, TAG, "OUT : CAcloseSslSession");

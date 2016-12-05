@@ -1317,10 +1317,14 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
             g_ipErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
         }
         OIC_LOG_V(ERROR, TAG, "%s%s %s sendTo failed: %s", secure, cast, fam, strerror(errno));
+        CALogSendStateInfo(endpoint->adapter, endpoint->addr, endpoint->port,
+                           len, false, strerror(errno));
     }
     else
     {
         OIC_LOG_V(INFO, TAG, "%s%s %s sendTo is successful: %zd bytes", secure, cast, fam, len);
+        CALogSendStateInfo(endpoint->adapter, endpoint->addr, endpoint->port,
+                           len, true, NULL);
     }
 #else
     int err = 0;

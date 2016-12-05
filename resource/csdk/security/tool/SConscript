@@ -58,11 +58,13 @@ elif target_os in ['darwin']:
     tools_env.AppendUnique(LIBS = ['coap', 'tinydtls', 'mbedtls', 'mbedx509', 'mbedcrypto',
                                    'octbstack', 'ocsrm', 'connectivity_abstraction'])
 else:
-    tools_env.PrependUnique(LIBS = ['oc', 'octbstack'])
+    tools_env.PrependUnique(LIBS = ['oc', 'octbstack', 'm'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-json2cbor = tools_env.Program('json2cbor', ['json2cbor.c'])
+json2cbor_src = ['../../../../extlibs/cjson/cJSON.c',
+                 'json2cbor.c',]
+json2cbor = tools_env.Program('json2cbor', json2cbor_src)
 Alias("json2cbor", [json2cbor])
 env.AppendTarget('json2cbor')

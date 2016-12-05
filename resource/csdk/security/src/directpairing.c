@@ -38,7 +38,6 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "logger.h"
-#include "cJSON.h"
 #include "utlist.h"
 #include "ocpayload.h"
 #include "payload_logging.h"

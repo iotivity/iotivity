@@ -104,6 +104,9 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint", NULL);
     VERIFY_NON_NULL_RET(optlist, TAG, "optlist", NULL);
 
+    OIC_LOG_V(DEBUG, TAG, "generate pdu for [%d]adapter, [%d]flags",
+              endpoint->adapter, endpoint->flags);
+
     coap_pdu_t *pdu = NULL;
 
     // RESET have to use only 4byte (empty message)
@@ -133,6 +136,8 @@ coap_pdu_t *CAGeneratePDU(uint32_t code, const CAInfo_t *info, const CAEndpoint_
     {
         if (info->resourceUri)
         {
+            OIC_LOG_V(DEBUG, TAG, "uri : %s", info->resourceUri);
+
             uint32_t length = strlen(info->resourceUri);
             if (CA_MAX_URI_LENGTH < length)
             {
@@ -394,8 +399,6 @@ CAResult_t CAParseURI(const char *uriInfo, coap_list_t **optlist)
 {
     VERIFY_NON_NULL(uriInfo, TAG, "uriInfo");
     VERIFY_NON_NULL(optlist, TAG, "optlist");
-
-    OIC_LOG_V(DEBUG, TAG, "url : %s", uriInfo);
 
     /* split arg into Uri-* options */
     coap_uri_t uri;

@@ -152,7 +152,7 @@ static bool IsRequestFromDevOwner(PEContext_t *context)
 }
 
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * Compare the request's subject to SubOwner.
  *
@@ -237,7 +237,7 @@ static bool IsValidRequestFromSubOwner(PEContext_t *context)
 
     return isValidRequest;
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 
 // TODO - remove these function placeholders as they are implemented
@@ -587,7 +587,7 @@ SRMAccessResponse_t CheckPermission(PEContext_t     *context,
         {
             context->retVal = ACCESS_GRANTED;
         }
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         //Then check if request from SubOwner
         else if(IsRequestFromSubOwner(context))
         {
@@ -596,7 +596,7 @@ SRMAccessResponse_t CheckPermission(PEContext_t     *context,
                 context->retVal = ACCESS_GRANTED;
             }
         }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
         // If not granted via DevOwner status and not a subowner,
         // then check if request is for a SVR and coming from rowner
         else if (IsRequestFromResourceOwner(context))

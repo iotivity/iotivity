@@ -35,6 +35,7 @@
 #include "ocrandom.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "ocstack.h"
 
 namespace OC
 {
@@ -649,7 +650,16 @@ namespace OC
         }
         if (m_devAddr.flags & OC_IP_USE_V6)
         {
-            ss << '[' << m_devAddr.addr << ']';
+            char addressEncoded[128] = {0};
+
+            OCStackResult result = OCEncodeAddressForRFC6874(addressEncoded,
+                                                             sizeof(addressEncoded),
+                                                             m_devAddr.addr);
+            if (OC_STACK_OK != result)
+            {
+                throw OC::OCException("Invalid address in setDevAddr");
+            }
+            ss << '[' << addressEncoded << ']';
         }
         else
         {

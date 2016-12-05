@@ -75,6 +75,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH) \
 					$(LOCAL_PATH)/../../../../../../../../../resource/c_common \
 					$(LOCAL_PATH)/../../../../../../../../../resource/oc_logger/include \
 					$(LOCAL_PATH)/../../../../../../../../../resource/c_common/oic_malloc/include \
+					$(LOCAL_PATH)/../../../../../../../../../resource/c_common/ocrandom/include \
 					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/connectivity/api \
 					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/stack/include \
 					$(LOCAL_PATH)/../../../../../../../../../resource/csdk/logger/include \

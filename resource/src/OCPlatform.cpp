@@ -37,6 +37,16 @@ namespace OC
             OCPlatform_impl::Configure(config);
         }
 
+        OCStackResult start()
+        {
+            return OCPlatform_impl::Instance().start();
+        }
+
+        OCStackResult stop()
+        {
+            return OCPlatform_impl::Instance().stop();
+        }
+
         OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler)
         {
             return OCPlatform_impl::Instance().setDefaultDeviceEntityHandler(entityHandler);

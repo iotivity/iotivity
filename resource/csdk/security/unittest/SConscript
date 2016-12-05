@@ -50,7 +50,6 @@ srmtest_env.PrependUnique(CPPPATH = [
 		'../../stack/include',
 		'../../stack/include/internal',
 		'../../../oc_logger/include',
-		'../../../../extlibs/cjson/',
 		'../provisioning/include',
 		'../include'
 		])
@@ -70,7 +69,7 @@ if srmtest_env.get('LOGGING') == '1':
 	srmtest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if srmtest_env.get('MULTIPLE_OWNER') == '1':
-	srmtest_env.AppendUnique(CPPDEFINES=['_ENABLE_MULTIPLE_OWNER_'])
+	srmtest_env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
 
 if target_os == 'windows':
 	srmtest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
@@ -127,7 +126,7 @@ srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
     unittest_src_dir + 'oic_svr_db_prov.dat'))
 srmtest_env.Alias("install", srmtest_env.Install( unittest_build_dir,
     unittest_src_dir + 'oic_svr_db.dat'))
-    
+
 srmtest_env.AppendTarget('test')
 if srmtest_env.get('TEST') == '1':
 	if target_os in ['linux', 'windows']:

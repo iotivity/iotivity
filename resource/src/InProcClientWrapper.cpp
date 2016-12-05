@@ -25,6 +25,10 @@
 #include "OCResource.h"
 #include "ocpayload.h"
 #include <OCSerialization.h>
+#include "logger.h"
+
+#define TAG "OIC_CLIENT_WRAPPER"
+
 using namespace std;
 
 namespace OC
@@ -36,7 +40,17 @@ namespace OC
     {
         // if the config type is server, we ought to never get called.  If the config type
         // is both, we count on the server to run the thread and do the initialize
+        start();
+    }
 
+    InProcClientWrapper::~InProcClientWrapper()
+    {
+        stop();
+    }
+
+    OCStackResult InProcClientWrapper::start()
+    {
+        OIC_LOG(INFO, TAG, "start ocplatform");
         if (m_cfg.mode == ModeType::Client)
         {
             OCTransportFlags serverFlags =
@@ -50,25 +64,37 @@ namespace OC
                 throw InitializeException(OC::InitException::STACK_INIT_ERROR, result);
             }
 
-            m_threadRun = true;
-            m_listeningThread = std::thread(&InProcClientWrapper::listeningFunc, this);
+            if (false == m_threadRun)
+            {
+                m_threadRun = true;
+                m_listeningThread = std::thread(&InProcClientWrapper::listeningFunc, this);
+            }
         }
+        return OC_STACK_OK;
     }
 
-    InProcClientWrapper::~InProcClientWrapper()
+    OCStackResult InProcClientWrapper::stop()
     {
+        OIC_LOG(INFO, TAG, "stop ocplatform");
+
         if (m_threadRun && m_listeningThread.joinable())
         {
             m_threadRun = false;
             m_listeningThread.join();
         }
 
-        // only stop if we are the ones who actually called 'init'.  We are counting
+        // only stop if we are the ones who actually called 'start'.  We are counting
         // on the server to do the stop.
         if (m_cfg.mode == ModeType::Client)
         {
-            OCStop();
+            OCStackResult result = OCStop();
+
+            if (OC_STACK_OK != result)
+           {
+               throw InitializeException(OC::InitException::STACK_TERMINATE_ERROR, result);
+           }
         }
+        return OC_STACK_OK;
     }
 
     void InProcClientWrapper::listeningFunc()

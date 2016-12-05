@@ -578,6 +578,56 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_configure
 
 /*
 * Class:     org_iotivity_base_OcPlatform
+* Method:    stop
+* Signature: ()V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_stop
+(JNIEnv *env, jclass clazz)
+{
+    LOGI("OcPlatform.stop");
+
+    try {
+        OCStackResult result = OCPlatform::stop();
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Failed to stop ocplatform");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
+* Method:    start
+* Signature: ()V
+*/
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_start
+(JNIEnv *env, jclass clazz)
+{
+    LOGI("OcPlatform.start");
+
+    try {
+        OCStackResult result = OCPlatform::start();
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "Failed to start ocplatform");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+}
+
+/*
+* Class:     org_iotivity_base_OcPlatform
 * Method:    notifyAllObservers0
 * Signature: (Lorg/iotivity/base/OcResourceHandle;)V
 */
