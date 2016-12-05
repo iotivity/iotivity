@@ -185,8 +185,14 @@ static OCStackResult SelectProvisioningMethod(const OicSecOxm_t *supportedMethod
 
     for(size_t i = 0; i < numberOfMethods; i++)
     {
-        if(*selectedMethod < supportedMethods[i] &&
-           ALLOWED_OXM == g_OxmAllowStatus[supportedMethods[i]])
+#ifdef MULTIPLE_OWNER
+        if (OIC_PRECONFIG_PIN != supportedMethods[i] &&
+            *selectedMethod < supportedMethods[i] &&
+            ALLOWED_OXM == g_OxmAllowStatus[supportedMethods[i]])
+#else
+        if (*selectedMethod < supportedMethods[i] &&
+            ALLOWED_OXM == g_OxmAllowStatus[supportedMethods[i]])
+#endif
         {
             *selectedMethod =  supportedMethods[i];
         }
