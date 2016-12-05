@@ -945,6 +945,11 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
 
         size_t interfacesDimensions[MAX_REP_ARRAY_DEPTH] = {3, 0, 0};
         char **interfaces = (char **)OICMalloc(3 * sizeof(char*));
+        if(!interfaces)
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+            return NULL;
+        }
 
         interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
         interfaces[1] = OICStrdup(OC_RSRVD_INTERFACE_LL);
@@ -954,6 +959,11 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
 
         size_t resourceTypesDimensions[MAX_REP_ARRAY_DEPTH] = {2, 0, 0};
         char **resourceTypes = (char **)OICMalloc(2 * sizeof(char*));
+        if(!resourceTypes)
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+            return NULL;
+        }
 
         resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_PROV);
         resourceTypes[1] = OICStrdup(OC_RSRVD_ES_RES_TYPE_COL);
