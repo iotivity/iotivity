@@ -520,7 +520,7 @@ OCStackResult GetIntrospectionDataFromPS(char **data, size_t *size)
     size_t fileSize = 0;
     OCStackResult ret = OC_STACK_ERROR;
     OCPersistentStorage *ps = NULL;
-    
+
     if (!data || *data || !size)
     {
         return OC_STACK_INVALID_PARAM;
@@ -538,7 +538,7 @@ OCStackResult GetIntrospectionDataFromPS(char **data, size_t *size)
     if (fileSize)
     {
         // allocate one more byte to accomodate null terminator for string we are reading.
-        fsData = (uint8_t *)OICCalloc(1, fileSize + 1); 
+        fsData = (uint8_t *)OICCalloc(1, fileSize + 1);
         if (!fsData)
         {
             OIC_LOG(ERROR, TAG, "Could not allocate memory for introspection data");
@@ -641,7 +641,7 @@ OCRepPayload *BuildUrlInfoWithProtocol(const char *protocol)
         result = OC_STACK_ERROR;
         goto exit;
     }
-    
+
 exit:
     if (result != OC_STACK_OK)
     {
@@ -665,8 +665,8 @@ OCStackResult AddProtocolToLL(OCStringLL **protoLL, const char *protocol)
     }
     if (cur)
     {
-        // The intent of the protocol list is to collect all unique protocols available on this 
-        // endpoint. Set an error that can be used to skip processing this protocol further as 
+        // The intent of the protocol list is to collect all unique protocols available on this
+        // endpoint. Set an error that can be used to skip processing this protocol further as
         // it already exists in the list.
         return OC_STACK_INVALID_PARAM;
     }
@@ -840,9 +840,9 @@ OCStackResult BuildIntrospectionResponseRepresentation(const OCResource *resourc
                 proto = proto->next;
                 i++;
             }
-            if (!OCRepPayloadSetPropObjectArrayAsOwner(tempPayload, 
-                                                       OC_RSRVD_INTROSPECTION_URL_INFO, 
-                                                       urlInfoPayload, 
+            if (!OCRepPayloadSetPropObjectArrayAsOwner(tempPayload,
+                                                       OC_RSRVD_INTROSPECTION_URL_INFO,
+                                                       urlInfoPayload,
                                                        dimensions))
             {
                 OIC_LOG_V(ERROR, TAG, "Unable to add urlInfo object to introspection payload ");
@@ -876,7 +876,7 @@ exit:
         }
     }
     FreeProtocolLL(protoLL);
-    
+
     return OC_STACK_OK;
 }
 
@@ -1114,10 +1114,18 @@ static bool resourceMatchesRTFilter(OCResource *resource, char *resourceTypeFilt
         return false;
     }
 
-    // Null or empty is analogous to no filter.
-    if (resourceTypeFilter == NULL || *resourceTypeFilter == 0)
+    // Null is analogous to no filter.i.e. query is of form /oic/res?if=oic.if.baseline or /oic/res,
+    // without rt query.
+    if (NULL == resourceTypeFilter)
     {
         return true;
+    }
+
+    // Empty resourceType filter is analogous to error query
+    // It is an error as query is of form /oic/res?rt=
+    if (0 == strlen(resourceTypeFilter))
+    {
+        return false;
     }
 
     for (OCResourceType *rtPtr = resource->rsrcType; rtPtr; rtPtr = rtPtr->next)
@@ -1139,10 +1147,18 @@ static bool resourceMatchesIFFilter(OCResource *resource, char *interfaceFilter)
         return false;
     }
 
-    // Null or empty is analogous to no filter.
-    if (interfaceFilter == NULL || *interfaceFilter == 0)
+    // Null is analogous to no filter i.e. query is of form /oic/res?rt=core.light or /oic/res,
+    // without if query.
+    if (NULL == interfaceFilter)
     {
         return true;
+    }
+
+    // Empty interface filter is analogous to error query
+    // It is an error as query is of form /oic/res?if=
+    if (0 == strlen(interfaceFilter))
+    {
+        return false;
     }
 
     for (OCResourceInterface *ifPtr = resource->rsrcInterface; ifPtr; ifPtr = ifPtr->next)
@@ -1282,7 +1298,7 @@ static OCStackResult discoveryPayloadCreateAndAddDeviceId(OCPayload **payload)
 {
     if (*payload)
     {
-        OIC_LOG_V(DEBUG, TAG, "Payload is already allocated");
+        OIC_LOG(DEBUG, TAG, "Payload is already allocated");
         return OC_STACK_OK;
     }
 
@@ -1317,10 +1333,13 @@ exit:
  */
 static OCStackResult addDiscoveryBaselineCommonProperties(OCDiscoveryPayload *discPayload)
 {
-    discPayload->uri = OICStrdup(OC_RSRVD_WELL_KNOWN_URI);
-    VERIFY_PARAM_NON_NULL(TAG, discPayload->uri, "Failed adding href to discovery payload.");
+    if (!discPayload)
+    {
+        OIC_LOG(ERROR, TAG, "Payload is not allocated");
+        return OC_STACK_INVALID_PARAM;
+    }
 
-    OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, "deviceName", (void **)&discPayload->name);
+    OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, (void **)&discPayload->name);
 
     discPayload->type = (OCStringLL*)OICCalloc(1, sizeof(OCStringLL));
     VERIFY_PARAM_NON_NULL(TAG, discPayload->type, "Failed adding rt to discovery payload.");
@@ -1335,6 +1354,14 @@ static OCStackResult addDiscoveryBaselineCommonProperties(OCDiscoveryPayload *di
 
 exit:
     return OC_STACK_NO_MEMORY;
+}
+
+static bool isUnicast(OCServerRequest *request)
+{
+    bool isMulticast = request->devAddr.flags & OC_MULTICAST;
+    return (isMulticast == false &&
+           (request->devAddr.adapter != OC_ADAPTER_RFCOMM_BTEDR) &&
+           (request->devAddr.adapter != OC_ADAPTER_GATT_BTLE));
 }
 
 static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource* resource)
@@ -1378,15 +1405,6 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 #endif
             )
     {
-        if (request->method == OC_REST_PUT || request->method == OC_REST_POST ||
-            request->method == OC_REST_DELETE)
-        {
-            OIC_LOG_V(ERROR, TAG, "Resource : %s not permitted for method: %d",
-                request->resourceUrl, request->method);
-            discoveryResult = OC_STACK_UNAUTHORIZED_REQ;
-            goto exit;
-        }
-
         char *interfaceQuery = NULL;
         char *resourceTypeQuery = NULL;
 
@@ -1403,16 +1421,11 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         discoveryResult = getQueryParamsForFiltering (virtualUriInRequest, request->query,
                 &interfaceQuery, &resourceTypeQuery);
         VERIFY_SUCCESS(discoveryResult);
+
         if (!interfaceQuery && !resourceTypeQuery)
         {
             // If no query is sent, default interface is used i.e. oic.if.ll.
             interfaceQuery = OICStrdup(OC_RSRVD_INTERFACE_LL);
-        }
-
-        bool baselineQuery = false;
-        if (interfaceQuery && 0 == strcmp(interfaceQuery, OC_RSRVD_INTERFACE_DEFAULT))
-        {
-            baselineQuery = true;
         }
 
         discoveryResult = discoveryPayloadCreateAndAddDeviceId(&payload);
@@ -1420,7 +1433,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         VERIFY_SUCCESS(discoveryResult);
 
         OCDiscoveryPayload *discPayload = (OCDiscoveryPayload *)payload;
-        if (baselineQuery)
+        if (interfaceQuery && 0 == strcmp(interfaceQuery, OC_RSRVD_INTERFACE_DEFAULT))
         {
             discoveryResult = addDiscoveryBaselineCommonProperties(discPayload);
             VERIFY_SUCCESS(discoveryResult);
@@ -1431,15 +1444,13 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
 #endif
         for (; resource && discoveryResult == OC_STACK_OK; resource = resource->next)
         {
-            discoveryResult = OC_STACK_NO_RESOURCE;
-#ifdef RD_SERVER
-            discoveryResult = findResourceAtRD(resource, interfaceQuery, resourceTypeQuery,
-                discPayload);
-#endif
-            if (OC_STACK_NO_RESOURCE == discoveryResult)
+            // This case will handle when no resource type and it is oic.if.ll.
+            // Do not assume check if the query is ll
+            if (!resourceTypeQuery &&
+                (interfaceQuery && 0 == strcmp(interfaceQuery, OC_RSRVD_INTERFACE_LL)))
             {
-                // This case will handle when no resource type and it is oic.if.ll.
-                if (!resourceTypeQuery && !baselineQuery && (resource->resourceProperties & prop))
+                // Only include discoverable type
+                if (resource->resourceProperties & prop)
                 {
                     discoveryResult = BuildVirtualResourceResponse(resource,
                                                                    discPayload,
@@ -1447,18 +1458,18 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
                                                                    networkInfo,
                                                                    infoSize);
                 }
-                else if (includeThisResourceInResponse(resource, interfaceQuery, resourceTypeQuery))
-                {
-                    discoveryResult = BuildVirtualResourceResponse(resource,
-                                                                   discPayload,
-                                                                   &request->devAddr,
-                                                                   networkInfo,
-                                                                   infoSize);
-                }
-                else
-                {
-                    discoveryResult = OC_STACK_OK;
-                }
+            }
+            else if (includeThisResourceInResponse(resource, interfaceQuery, resourceTypeQuery))
+            {
+                discoveryResult = BuildVirtualResourceResponse(resource,
+                                                               discPayload,
+                                                               &request->devAddr,
+                                                               networkInfo,
+                                                               infoSize);
+            }
+            else
+            {
+                discoveryResult = OC_STACK_OK;
             }
         }
         if (discPayload->resources == NULL)
@@ -1548,25 +1559,28 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         OIC_LOG_PAYLOAD(DEBUG, payload);
         if(discoveryResult == OC_STACK_OK)
         {
+
             SendNonPersistantDiscoveryResponse(request, resource, payload, OC_EH_OK);
         }
-        else if(((request->devAddr.flags &  OC_MULTICAST) == false) &&
-            (request->devAddr.adapter != OC_ADAPTER_RFCOMM_BTEDR) &&
-            (request->devAddr.adapter != OC_ADAPTER_GATT_BTLE))
+        else // Error handling
         {
-            OIC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d) discovery request",
-                discoveryResult, virtualUriInRequest);
-            SendNonPersistantDiscoveryResponse(request, resource, NULL,
-                (discoveryResult == OC_STACK_NO_RESOURCE) ?
+            if (isUnicast(request))
+            {
+                OIC_LOG_V(ERROR, TAG, "Sending a (%d) error to (%d) discovery request",
+                    discoveryResult, virtualUriInRequest);
+                SendNonPersistantDiscoveryResponse(request, resource, NULL,
+                    (discoveryResult == OC_STACK_NO_RESOURCE) ?
                         OC_EH_RESOURCE_NOT_FOUND : OC_EH_ERROR);
-        }
-        else
-        {
-            // Ignoring the discovery request as per RFC 7252, Section #8.2
-            OIC_LOG(INFO, TAG, "Silently ignoring the request since no useful data to send.");
-            // the request should be removed.
-            // since it never remove and causes a big memory waste.
-            FindAndDeleteServerRequest(request);
+            }
+            else // Multicast
+            {
+                // Ignoring the discovery request as per RFC 7252, Section #8.2
+                OIC_LOG(INFO, TAG, "Silently ignoring the request since no useful data to send.");
+                // the request should be removed.
+                // since it never remove and causes a big memory waste.
+                FindAndDeleteServerRequest(request);
+            }
+            discoveryResult = OC_STACK_CONTINUE;
         }
     }
 
@@ -1585,6 +1599,7 @@ exit:
     {
         OICFree(dataModelVersions);
     }
+    // To ignore the message, OC_STACK_CONTINUE is sent
     return discoveryResult;
 }
 

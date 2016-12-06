@@ -27,6 +27,7 @@ extern "C"
     #include "logger.h"
     #include "oic_malloc.h"
     #include "oic_string.h"
+    #include "oic_time.h"
 }
 
 #include "gtest/gtest.h"
@@ -70,6 +71,7 @@ static char pinNumber;
 static OCDPDev_t peer;
 
 std::chrono::seconds const SHORT_TEST_TIMEOUT = std::chrono::seconds(5);
+std::chrono::seconds const LONG_TEST_TIMEOUT = std::chrono::seconds(450);
 
 //-----------------------------------------------------------------------------
 // Callback functions
@@ -176,6 +178,60 @@ uint8_t InitResourceIndex()
     return 0;
 #endif
 }
+
+class Callback
+{
+    public:
+        Callback(OCClientResponseHandler cb) : m_cb(cb), m_called(false)
+        {
+            m_cbData.cb = &Callback::handler;
+            m_cbData.cd = NULL;
+            m_cbData.context = this;
+        }
+        void Wait(long waitTime)
+        {
+            uint64_t startTime = OICGetCurrentTime(TIME_IN_MS);
+            while (!m_called)
+            {
+                uint64_t currTime = OICGetCurrentTime(TIME_IN_MS);
+                long elapsed = (long)((currTime - startTime) / MS_PER_SEC);
+                if (elapsed > waitTime)
+                {
+                    m_called = true;
+                }
+                OCProcess();
+            }
+        }
+        operator OCCallbackData *()
+        {
+            return &m_cbData;
+        }
+    private:
+        OCCallbackData m_cbData;
+        OCClientResponseHandler m_cb;
+        bool m_called;
+        static OCStackApplicationResult handler(void *ctx, OCDoHandle handle, OCClientResponse *clientResponse)
+        {
+            Callback *callback = (Callback *) ctx;
+            OCStackApplicationResult result = callback->m_cb(NULL, handle, clientResponse);
+            callback->m_called = true;
+            return result;
+        }
+};
+
+class OCDiscoverTests : public testing::Test
+{
+    protected:
+        virtual void SetUp()
+        {
+            EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_CLIENT_SERVER));
+        }
+
+        virtual void TearDown()
+        {
+            OCStop();
+        }
+};
 //-----------------------------------------------------------------------------
 //  Tests
 //-----------------------------------------------------------------------------
@@ -2240,4 +2296,214 @@ TEST(StackEndpoints, OCGetSupportedEndpointTpsFlags)
     EXPECT_LE(INVALID_TPS_FLAGS_ZERO, OCGetSupportedEndpointTpsFlags());
 
     EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+static OCStackApplicationResult DiscoverBaselineResource(void *ctx, OCDoHandle handle,
+    OCClientResponse *response)
+{
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
+    EXPECT_EQ(OC_STACK_OK, response->result);
+    EXPECT_TRUE(NULL != response->payload);
+    if (NULL != response->payload)
+    {
+        EXPECT_EQ(PAYLOAD_TYPE_DISCOVERY, response->payload->type);
+
+        OCDiscoveryPayload *payload = (OCDiscoveryPayload *)response->payload;
+        EXPECT_TRUE(NULL != payload->sid);
+        EXPECT_STREQ("StackTest", payload->name);
+        EXPECT_STREQ(OC_RSRVD_RESOURCE_TYPE_RES, payload->type->value);
+        EXPECT_STREQ(OC_RSRVD_INTERFACE_LL, payload->iface->value);
+        EXPECT_STREQ(OC_RSRVD_INTERFACE_DEFAULT, payload->iface->next->value);
+
+        for (OCResourcePayload *resource = payload->resources; resource; resource = resource->next)
+        {
+            if (0 == strcmp("/a/light", resource->uri))
+            {
+                EXPECT_STREQ("/a/light", resource->uri);
+                EXPECT_STREQ("core.light", resource->types->value);
+                EXPECT_EQ(NULL, resource->types->next);
+                EXPECT_STREQ("oic.if.baseline", resource->interfaces->value);
+                EXPECT_EQ(NULL, resource->interfaces->next);
+                EXPECT_TRUE(resource->bitmap & OC_DISCOVERABLE);
+                EXPECT_FALSE(resource->secure);
+                EXPECT_EQ(0, resource->port);
+                EXPECT_EQ(NULL, resource->next);
+            }
+        }
+    }
+
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+static OCStackApplicationResult DiscoverLinkedListResource(void *ctx, OCDoHandle handle,
+    OCClientResponse *response)
+{
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
+    EXPECT_EQ(OC_STACK_OK, response->result);
+    EXPECT_TRUE(NULL != response->payload);
+    if (NULL != response->payload)
+    {
+        EXPECT_EQ(PAYLOAD_TYPE_DISCOVERY, response->payload->type);
+
+        OCDiscoveryPayload *payload = (OCDiscoveryPayload *)response->payload;
+        EXPECT_NE((char *)NULL, payload->sid);
+        EXPECT_EQ(NULL, payload->name);
+        EXPECT_EQ(NULL, payload->type);
+        EXPECT_EQ(NULL, payload->iface);
+
+        for (OCResourcePayload *resource = payload->resources; resource; resource = resource->next)
+        {
+            if (0 == strcmp("/a/light", resource->uri))
+            {
+                EXPECT_STREQ("/a/light", resource->uri);
+                EXPECT_STREQ("core.light", resource->types->value);
+                EXPECT_EQ(NULL, resource->types->next);
+                EXPECT_STREQ("oic.if.baseline", resource->interfaces->value);
+                EXPECT_EQ(NULL, resource->interfaces->next);
+                EXPECT_TRUE(resource->bitmap & OC_DISCOVERABLE);
+                EXPECT_FALSE(resource->secure);
+                EXPECT_EQ(0, resource->port);
+                EXPECT_EQ(NULL, resource->next);
+            }
+        }
+    }
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+
+static OCStackApplicationResult DiscoverResourceTypeResponse(void *ctx, OCDoHandle handle,
+    OCClientResponse *response)
+{
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
+    EXPECT_EQ(OC_STACK_OK, response->result);
+    EXPECT_TRUE(NULL != response->payload);
+    if (NULL != response->payload)
+    {
+        EXPECT_EQ(PAYLOAD_TYPE_DISCOVERY, response->payload->type);
+
+        OCDiscoveryPayload *payload = (OCDiscoveryPayload *)response->payload;
+        EXPECT_NE((char *)NULL, payload->sid);
+        EXPECT_EQ(NULL, payload->name);
+        EXPECT_EQ(NULL, payload->type);
+        EXPECT_EQ(NULL, payload->iface);
+        EXPECT_TRUE(NULL != payload->resources);
+
+        OCResourcePayload *resource = payload->resources;
+
+        if (0 == strcmp("/a/light", resource->uri))
+        {
+            EXPECT_STREQ("/a/light", resource->uri);
+            EXPECT_STREQ("core.light", resource->types->value);
+            EXPECT_EQ(NULL, resource->types->next);
+            EXPECT_STREQ("oic.if.baseline", resource->interfaces->value);
+            EXPECT_EQ(NULL, resource->interfaces->next);
+            EXPECT_TRUE(resource->bitmap & OC_DISCOVERABLE);
+            EXPECT_FALSE(resource->secure);
+            EXPECT_EQ(0, resource->port);
+            EXPECT_EQ(NULL, resource->next);
+        }
+    }
+
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+static OCStackApplicationResult DiscoverUnicastErrorResponse(void *ctx, OCDoHandle handle,
+    OCClientResponse *response)
+{
+    OC_UNUSED(ctx);
+    OC_UNUSED(handle);
+    EXPECT_NE(OC_STACK_OK, response->result);
+    EXPECT_TRUE(NULL == response->payload);
+
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+TEST_F(OCDiscoverTests, DiscoverResourceWithValidQueries)
+{
+    itst::DeadmanTimer killSwitch(LONG_TEST_TIMEOUT);
+
+    OCResourceHandle handles;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles, "core.light", "oic.if.baseline", "/a/light",
+        entityHandler, NULL, OC_DISCOVERABLE));
+    OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, "StackTest");
+
+    Callback discoverBaselineCB(&DiscoverBaselineResource);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?if=oic.if.baseline", NULL,
+        0, CT_DEFAULT, OC_HIGH_QOS, discoverBaselineCB, NULL, 0));
+    discoverBaselineCB.Wait(100);
+
+    Callback discoverDefaultCB(&DiscoverLinkedListResource);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res", NULL, 0, CT_DEFAULT,
+        OC_HIGH_QOS, discoverDefaultCB, NULL, 0));
+    discoverDefaultCB.Wait(100);
+
+    Callback discoverLinkedListCB(&DiscoverLinkedListResource);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?if=oic.if.ll", NULL, 0,
+        CT_DEFAULT, OC_HIGH_QOS, discoverLinkedListCB, NULL, 0));
+    discoverLinkedListCB.Wait(100);
+
+    Callback discoverRTCB(&DiscoverResourceTypeResponse);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=core.light", NULL, 0,
+        CT_DEFAULT, OC_HIGH_QOS, discoverRTCB, NULL, 0));
+    discoverRTCB.Wait(100);
+}
+
+TEST_F(OCDiscoverTests, DiscoverResourceWithInvalidQueries)
+{
+    itst::DeadmanTimer killSwitch(LONG_TEST_TIMEOUT);
+
+    OCResourceHandle handles;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handles, "core.light", "oic.if.baseline", "/a/light",
+        entityHandler, NULL, OC_DISCOVERABLE));
+    OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, "deviceName", "StackTest");
+
+    Callback discoverRTInvalidCB(&DiscoverUnicastErrorResponse);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=invalid", NULL, 0,
+    CT_DEFAULT, OC_HIGH_QOS, discoverRTInvalidCB, NULL, 0));
+    discoverRTInvalidCB.Wait(10);
+
+    Callback discoverRTEmptyCB(&DiscoverUnicastErrorResponse);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?rt=", NULL, 0, CT_DEFAULT,
+    OC_HIGH_QOS, discoverRTEmptyCB, NULL, 0));
+    discoverRTEmptyCB.Wait(10);
+
+    Callback discoverIfInvalidCB(&DiscoverUnicastErrorResponse);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?if=invalid", NULL, 0,
+        CT_DEFAULT, OC_HIGH_QOS, discoverIfInvalidCB, NULL, 0));
+    discoverIfInvalidCB.Wait(10);
+
+    Callback discoverIfEmptyCB(&DiscoverUnicastErrorResponse);
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, "/oic/res?if=", NULL, 0, CT_DEFAULT,
+    OC_HIGH_QOS, discoverIfEmptyCB, NULL, 0));
+    discoverIfEmptyCB.Wait(10);
+
+    // Unicast
+    char targetUri[MAX_URI_LENGTH * 2] ={ 0, };
+
+    Callback discoverUnicastIfInvalidCB(&DiscoverUnicastErrorResponse);
+    snprintf(targetUri, MAX_URI_LENGTH * 2, "127.0.0.1/oic/res?if=invalid");
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, targetUri, NULL, 0,
+    CT_DEFAULT, OC_HIGH_QOS, discoverUnicastIfInvalidCB, NULL, 0));
+    discoverUnicastIfInvalidCB.Wait(10);
+
+    Callback discoverUnicastIfEmptyCB(&DiscoverUnicastErrorResponse);
+    snprintf(targetUri, MAX_URI_LENGTH * 2, "127.0.0.1/oic/res?if=");
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, targetUri, NULL, 0, CT_DEFAULT,
+    OC_HIGH_QOS, discoverUnicastIfEmptyCB, NULL, 0));
+    discoverUnicastIfEmptyCB.Wait(10);
+
+    Callback discoverUnicastRTInvalidCB(&DiscoverUnicastErrorResponse);
+    snprintf(targetUri, MAX_URI_LENGTH * 2, "127.0.0.1/oic/res?rt=invalid");
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, targetUri, NULL, 0,
+    CT_DEFAULT, OC_HIGH_QOS, discoverUnicastRTInvalidCB, NULL, 0));
+    discoverUnicastRTInvalidCB.Wait(10);
+
+    Callback discoverUnicastRTEmptyCB(&DiscoverUnicastErrorResponse);
+    snprintf(targetUri, MAX_URI_LENGTH * 2, "127.0.0.1/oic/res?rt=");
+    EXPECT_EQ(OC_STACK_OK, OCDoResource(NULL, OC_REST_DISCOVER, targetUri, NULL, 0, CT_DEFAULT,
+    OC_HIGH_QOS, discoverUnicastRTEmptyCB, NULL, 0));
+    discoverUnicastRTEmptyCB.Wait(10);
 }

@@ -1350,7 +1350,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 OIC_LOG(ERROR, TAG, "Allocating memory for response failed");
                 return;
             }
-            
+
             response->devAddr.adapter = OC_DEFAULT_ADAPTER;
             response->sequenceNumber = MAX_SEQUENCE_NUMBER + 1;
             CopyEndpointToDevAddr(endPoint, &response->devAddr);
@@ -1460,16 +1460,22 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     OICFree(response);
                     return;
                 }
-
-                if(OC_STACK_OK != OCParsePayload(&response->payload,
+                // In case of error, still want application to receive the error message.
+                if (OCResultToSuccess(response->result))
+                {
+                    if (OC_STACK_OK != OCParsePayload(&response->payload,
                             type,
                             responseInfo->info.payload,
                             responseInfo->info.payloadSize))
+                    {
+                        OIC_LOG(ERROR, TAG, "Error converting payload");
+                        OCPayloadDestroy(response->payload);
+                        return;
+                    }
+                }
+                else
                 {
-                    OIC_LOG(ERROR, TAG, "Error converting payload");
-                    OCPayloadDestroy(response->payload);
-                    OICFree(response);
-                    return;
+                    response->resourceUri = OICStrdup(cbNode->requestUri);
                 }
             }
 
@@ -1536,16 +1542,14 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 if (OC_REST_DISCOVER == cbNode->method)
                 {
                     OCDiscoveryPayload *payload = (OCDiscoveryPayload*) response->payload;
-                    if (!payload)
+                    // Payload can be empty in case of error message.
+                    if (payload && payload->sid)
                     {
-                        OIC_LOG(INFO, TAG, "discovery payload is invalid");
-                        return;
+                        OICStrcpy(response->devAddr.remoteId, sizeof(response->devAddr.remoteId),
+                                  payload->sid);
+                        OIC_LOG_V(INFO, TAG, "Device ID of response : %s",
+                                  response->devAddr.remoteId);
                     }
-
-                    OICStrcpy(response->devAddr.remoteId, sizeof(response->devAddr.remoteId),
-                              payload->sid);
-                    OIC_LOG_V(INFO, TAG, "Device ID of response : %s",
-                              response->devAddr.remoteId);
                 }
 
                 OCStackApplicationResult appFeedback = cbNode->callBack(cbNode->context,
@@ -4628,6 +4632,7 @@ OCStackResult deleteResource(OCResource *resource)
 
             deleteResourceElements(temp);
             OICFree(temp);
+            temp = NULL;
             return OC_STACK_OK;
         }
         else
@@ -4647,37 +4652,54 @@ void deleteResourceElements(OCResource *resource)
         return;
     }
 
-    OICFree(resource->uri);
-    deleteResourceType(resource->rsrcType);
-    deleteResourceInterface(resource->rsrcInterface);
-    OCDeleteResourceAttributes(resource->rsrcAttributes);
+    if (resource->uri)
+    {
+        OICFree(resource->uri);
+    }
+    if (resource->rsrcType)
+    {
+        deleteResourceType(resource->rsrcType);
+    }
+    if (resource->rsrcInterface)
+    {
+        deleteResourceInterface(resource->rsrcInterface);
+    }
+    if (resource->rsrcChildResourcesHead)
+    {
+        OICFree(resource->rsrcChildResourcesHead);
+    }
+    if (resource->rsrcAttributes)
+    {
+        OCDeleteResourceAttributes(resource->rsrcAttributes);
+    }
 }
 
 void deleteResourceType(OCResourceType *resourceType)
 {
-    OCResourceType *pointer = resourceType;
     OCResourceType *next = NULL;
 
-    while (pointer)
+    for (OCResourceType *pointer = resourceType; pointer; pointer = next)
     {
         next = pointer->next;
-        OICFree(pointer->resourcetypename);
+        if (pointer->resourcetypename)
+        {
+            OICFree(pointer->resourcetypename);
+        }
         OICFree(pointer);
-        pointer = next;
     }
 }
 
 void deleteResourceInterface(OCResourceInterface *resourceInterface)
 {
-    OCResourceInterface *pointer = resourceInterface;
     OCResourceInterface *next = NULL;
-
-    while (pointer)
+    for (OCResourceInterface *pointer = resourceInterface; pointer; pointer = next)
     {
         next = pointer->next;
-        OICFree(pointer->name);
+        if (pointer->name)
+        {
+            OICFree(pointer->name);
+        }
         OICFree(pointer);
-        pointer = next;
     }
 }
 
@@ -4691,11 +4713,14 @@ void OCDeleteResourceAttributes(OCAttribute *rsrcAttributes)
         {
             OCFreeOCStringLL((OCStringLL *)pointer->attrValue);
         }
-        else
+        else if (pointer->attrValue)
         {
             OICFree(pointer->attrValue);
         }
-        OICFree(pointer->attrName);
+        if (pointer->attrName)
+        {
+            OICFree(pointer->attrName);
+        }
         OICFree(pointer);
     }
 }
@@ -5439,4 +5464,3 @@ OCStackResult OCGetDeviceOwnedState(bool *isOwned)
     }
     return ret;
 }
-

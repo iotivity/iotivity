@@ -121,7 +121,7 @@ OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t*
 
     if (err == CborNoError)
     {
-        if ((curSize < INIT_SIZE) && 
+        if ((curSize < INIT_SIZE) &&
             (PAYLOAD_TYPE_SECURITY != payload->type))
         {
             uint8_t *out2 = (uint8_t *)OICRealloc(out, curSize);

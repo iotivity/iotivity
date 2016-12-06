@@ -203,13 +203,21 @@ INLINE_API void OCPayloadLogRep(LogLevel level, OCRepPayload* payload)
     }
 }
 
+static void OCStringLLPrint(LogLevel level, OCStringLL *type)
+{
+    for (OCStringLL *strll = type; strll; strll = strll->next)
+    {
+        OIC_LOG_V(level, PL_TAG, "\t\t %s", strll->value);
+    }
+}
+
 INLINE_API void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* payload)
 {
     OIC_LOG(level, PL_TAG, "Payload Type: Discovery");
 
     while(payload && payload->resources)
     {
-        OIC_LOG_V(level, PL_TAG, "\tSID: %s", payload->sid);
+        OIC_LOG_V(level, PL_TAG, "\tDI: %s", payload->sid);
         if (payload->baseURI)
         {
             OIC_LOG_V(level, PL_TAG, "\tBase URI:%s", payload->baseURI);
@@ -218,21 +226,17 @@ INLINE_API void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* payloa
         {
             OIC_LOG_V(level, PL_TAG, "\tNAME: %s", payload->name);
         }
-        if (payload->uri)
-        {
-            OIC_LOG_V(level, PL_TAG, "\tURI: %s", payload->uri);
-        }
+
         if (payload->type)
         {
-            for (OCStringLL *strll = payload->type; strll; strll = strll->next)
-            {
-                OIC_LOG_V(level, PL_TAG, "\tResource Type: %s", strll->value);
-            }
+            OIC_LOG(level, PL_TAG, "\tResource Type:");
+            OCStringLLPrint(level, payload->type);
         }
-        OIC_LOG(level, PL_TAG, "\tInterface:");
-        for (OCStringLL *itf = payload->iface; itf; itf = itf->next)
+
+        if (payload->iface)
         {
-            OIC_LOG_V(level, PL_TAG, "\t\t%s", itf->value);
+            OIC_LOG(level, PL_TAG, "\tInterface:");
+            OCStringLLPrint(level, payload->iface);
         }
 
         OCResourcePayload* res = payload->resources;
@@ -240,7 +244,7 @@ INLINE_API void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* payloa
         uint32_t i = 1;
         while(res)
         {
-            OIC_LOG_V(level, PL_TAG, "\tResource #%d", i);
+            OIC_LOG_V(level, PL_TAG, "\tLink#%d", i);
             OIC_LOG_V(level, PL_TAG, "\tURI:%s", res->uri);
             OIC_LOG(level, PL_TAG, "\tResource Types:");
             OCStringLL* strll =  res->types;
