@@ -361,7 +361,7 @@ int InitDiscovery()
     /* Start a discovery query*/
     char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
 
-    OICStrcpy(szQueryUri, sizeof(RESOURCE_DISCOVERY_QUERY), RESOURCE_DISCOVERY_QUERY);
+    OICStrcpy(szQueryUri, sizeof(szQueryUri), RESOURCE_DISCOVERY_QUERY);
 
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
