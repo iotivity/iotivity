@@ -30,6 +30,7 @@
 #endif
 #include <stdint.h>
 #include <stdbool.h>
+#include <inttypes.h>
 
 #include "cainterface.h"
 #include "payload_logging.h"
@@ -1244,7 +1245,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     OIC_LOG_BUFFER(DEBUG, TAG, cred->subject.id, sizeof(cred->subject.id));
     if (cred->privateData.data)
     {
-        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : privateData len: %d", cred->privateData.len);
+        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : privateData len: %"PRIuPTR, cred->privateData.len);
         OIC_LOG_BUFFER(DEBUG, TAG, cred->privateData.data, cred->privateData.len);
     }
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
