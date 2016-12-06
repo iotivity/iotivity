@@ -192,11 +192,20 @@ extern "C" {
 /** To represent read-only interface.*/
 #define OC_RSRVD_INTERFACE_READ         "oic.if.r"
 
+/** To represent read-write interface.*/
+#define OC_RSRVD_INTERFACE_READ_WRITE   "oic.if.rw"
+
 /** To represent ll interface.*/
 #define OC_RSRVD_INTERFACE_LL           "oic.if.ll"
 
 /** To represent batch interface.*/
 #define OC_RSRVD_INTERFACE_BATCH        "oic.if.b"
+
+/** To represent actuator interface.*/
+#define OC_RSRVD_INTERFACE_ACTUATOR     "oic.if.a"
+
+/** To represent sensor interface.*/
+#define OC_RSRVD_INTERFACE_SENSOR       "oic.if.s"
 
 /** To represent interface group.*/
 #define OC_RSRVD_INTERFACE_GROUP        "oic.mi.grp"

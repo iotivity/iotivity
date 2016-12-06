@@ -45,7 +45,7 @@ extern "C"
 /**
  * Name of resource interface.
  */
-#define KEEPALIVE_RESOURCE_INTF_NAME "oic.if.rw"
+#define KEEPALIVE_RESOURCE_INTF_NAME OC_RSRVD_INTERFACE_READ_WRITE
 
 /**
  * URI of the resource.
