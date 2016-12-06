@@ -95,6 +95,10 @@ const char* GetOxmString(OicSecOxm_t oxmType)
         case OIC_PRECONFIG_PIN:
             return OXM_PRECONF_PIN;
 #endif //MULTIPLE_OWNER
+        case OIC_MV_JUST_WORKS:
+            return OXM_MV_JUST_WORKS;
+        case OIC_CON_MFG_CERT:
+            return OXM_CON_MFG_CERT;
         default:
             return NULL;
     }

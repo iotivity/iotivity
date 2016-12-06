@@ -51,6 +51,7 @@
 #include "credresource.h"
 #include "srmutility.h"
 #include "pinoxmcommon.h"
+#include "oxmverifycommon.h"
 
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
 #include "pkix_interface.h"
@@ -1097,7 +1098,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                     goto exit;
                 }
 
-                if (OIC_JUST_WORKS == newDoxm->oxmSel)
+                if (OIC_JUST_WORKS == newDoxm->oxmSel || OIC_MV_JUST_WORKS == newDoxm->oxmSel)
                 {
                     /*
                      * If current state of the device is un-owned, enable
@@ -1106,6 +1107,17 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                      */
                     if (memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) == 0)
                     {
+                        gDoxm->oxmSel = newDoxm->oxmSel;
+                        //Update new state in persistent storage
+                        if ((UpdatePersistentStorage(gDoxm) == true))
+                        {
+                            ehRet = OC_EH_OK;
+                        }
+                        else
+                        {
+                            OIC_LOG(WARNING, TAG, "Failed to update DOXM in persistent storage");
+                            ehRet = OC_EH_ERROR;
+                        }
                         OIC_LOG (INFO, TAG, "Doxm EntityHandle  enabling AnonECDHCipherSuite");
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
                         ehRet = (CAEnableAnonECDHCipherSuite(true) == CA_STATUS_OK) ? OC_EH_OK : OC_EH_ERROR;
@@ -1137,6 +1149,55 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                         caRes = CAEnableAnonECDHCipherSuite(false);
                         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
                         OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+
+                        //In case of Mutual Verified Just-Works, verify mutualVerifNum
+                        if (OIC_MV_JUST_WORKS == newDoxm->oxmSel && false == newDoxm->owned &&
+                                        previousMsgId != ehRequest->messageID)
+                        {
+                            uint8_t preMutualVerifNum[OWNER_PSK_LENGTH_128] = {0};
+                            uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN] = {0};
+                            OicUuid_t deviceID = {.id = {0}};
+
+                            //Generate mutualVerifNum
+                            OCServerRequest * request = GetServerRequestUsingHandle(ehRequest->requestHandle);
+
+                            char label[LABEL_LEN] = {0};
+                            snprintf(label, LABEL_LEN, "%s%s", MUTUAL_VERIF_NUM, OXM_MV_JUST_WORKS);
+                            if (OC_STACK_OK != GetDoxmDeviceID(&deviceID))
+                            {
+                                OIC_LOG(ERROR, TAG, "Error while retrieving Owner's device ID");
+                                ehRet = OC_EH_ERROR;
+                                goto exit;
+
+                            }
+
+                            CAResult_t pskRet = CAGenerateOwnerPSK((CAEndpoint_t *)&request->devAddr,
+                                    (uint8_t *)label,
+                                    strlen(label),
+                                    gDoxm->owner.id, sizeof(gDoxm->owner.id),
+                                    gDoxm->deviceID.id, sizeof(gDoxm->deviceID.id),
+                                    preMutualVerifNum, OWNER_PSK_LENGTH_128);
+                            if (CA_STATUS_OK != pskRet)
+                            {
+                                OIC_LOG(WARNING, TAG, "Failed to remove the invaild owner credential");
+                                ehRet = OC_EH_ERROR;
+                                goto exit;
+
+                            }
+
+                            memcpy(mutualVerifNum, preMutualVerifNum + OWNER_PSK_LENGTH_128 - sizeof(mutualVerifNum),
+                                    sizeof(mutualVerifNum));
+
+                            //Wait for user confirmation
+                            if (OC_STACK_OK != VerifyOwnershipTransfer(mutualVerifNum, DISPLAY_NUM | USER_CONFIRM))
+                            {
+                                ehRet = OC_EH_NOT_ACCEPTABLE;
+                            }
+                            else
+                            {
+                                ehRet = OC_EH_OK;
+                            }
+                        }
 
 #endif // __WITH_DTLS__ or __WITH_TLS__
                     }
@@ -1242,27 +1303,47 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
 #endif // __WITH_DTLS__ or __WITH_TLS__
                 }
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
-                else if (OIC_MANUFACTURER_CERTIFICATE ==  newDoxm->oxmSel)
+                else if (OIC_MANUFACTURER_CERTIFICATE ==  newDoxm->oxmSel || OIC_CON_MFG_CERT == newDoxm->oxmSel)
                 {
-                    //Save the owner's UUID to derive owner credential
-                    memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
-                    gDoxm->oxmSel = newDoxm->oxmSel;
-                    //Update new state in persistent storage
-                    if (UpdatePersistentStorage(gDoxm))
+                    if (memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) == 0)
                     {
-                        ehRet = OC_EH_OK;
+                        //Save the owner's UUID to derive owner credential
+                        memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
+                        gDoxm->oxmSel = newDoxm->oxmSel;
+                        //Update new state in persistent storage
+                        if (UpdatePersistentStorage(gDoxm))
+                        {
+                            ehRet = OC_EH_OK;
+                        }
+                        else
+                        {
+                            OIC_LOG(WARNING, TAG, "Failed to update DOXM in persistent storage");
+                            ehRet = OC_EH_ERROR;
+                        }
+                        CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
+                        VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+                        OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+
+                        VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterPkixInfoHandler(GetManufacturerPkixInfo), ERROR);
+                        VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterGetCredentialTypesHandler(InitManufacturerCipherSuiteList), ERROR);
                     }
                     else
                     {
-                        OIC_LOG(WARNING, TAG, "Failed to update DOXM in persistent storage");
-                        ehRet = OC_EH_ERROR;
+                        //In case of Confirm Manufacturer Cert, get user confirmation
+                        if (OIC_CON_MFG_CERT == newDoxm->oxmSel && false == newDoxm->owned &&
+                                        previousMsgId != ehRequest->messageID)
+                        {
+                            if (OC_STACK_OK != VerifyOwnershipTransfer(NULL, USER_CONFIRM))
+                            {
+                                ehRet = OC_EH_NOT_ACCEPTABLE;
+                            }
+                            else
+                            {
+                                ehRet = OC_EH_OK;
+                            }
+                        }
                     }
-                    CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
-                    VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-                    OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
 
-                    VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterPkixInfoHandler(GetManufacturerPkixInfo), ERROR);
-                    VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterGetCredentialTypesHandler(InitManufacturerCipherSuiteList), ERROR);
                 }
 #endif // __WITH_DTLS__ or __WITH_TLS__
             }

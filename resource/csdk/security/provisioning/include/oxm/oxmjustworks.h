@@ -74,6 +74,20 @@ OCStackResult CreateJustWorksSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **cb
  */
 OCStackResult CreateJustWorksOwnerTransferPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
                                                   size_t *cborSize);
+
+/**
+ * Generate payload for select OxM request for Mutual Verified Just-Works.
+ *
+ * @param otmCtx Context of OTM, It includes current device information.
+ * @param cborPayload is the DOXM CBOR payload including the selected OxM.
+ * @note Returned memory should be deallocated by caller.
+ * @param cborSize is the size of the cborPayload.
+ *
+ * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ */
+OCStackResult CreateMVJustWorksSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
+                                             size_t *cborSize);
+
 #ifdef __cplusplus
 }
 #endif

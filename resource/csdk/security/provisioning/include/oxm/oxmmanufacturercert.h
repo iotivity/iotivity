@@ -62,6 +62,19 @@ OCStackResult CreateMCertificateBasedSelectOxmPayload(OTMContext_t *otmCtx, uint
                                              size_t *cborSize);
 
 /**
+ * Generate payload for select OxM request for confirmed manufactrer certificate method.
+ *
+ * @param otmCtx Context of OTM, It includes current device information.
+ * @param cborPayload is the DOXM CBOR payload including the selected OxM.
+ * @note Returned memory should be deallocated by caller.
+ * @param cborSize is the size of the cborPayload.
+ *
+ * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ */
+OCStackResult CreateConMCertificateBasedSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
+                                             size_t *cborSize);
+
+/**
  * Generate payload for owner transfer request.
  *
  * @param otmCtx Context of OTM, It includes current device information.

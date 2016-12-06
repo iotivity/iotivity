@@ -174,8 +174,13 @@ const char * OXM_JUST_WORKS = "oic.sec.doxm.jw";
 const char * OXM_RANDOM_DEVICE_PIN = "oic.sec.doxm.rdp";
 const char * OXM_MANUFACTURER_CERTIFICATE = "oic.sec.doxm.mfgcert";
 #ifdef MULTIPLE_OWNER
-const char * OXM_PRECONF_PIN = "oic.sec..doxm.pcp";
+const char * OXM_PRECONF_PIN = "oic.sec.doxm.pcp";
 #endif //MULTIPLE_OWNER
+const char * OXM_MV_JUST_WORKS = "oic.sec.doxm.mvjw";
+const char * OXM_CON_MFG_CERT = "oic.sec.doxm.conmfgcert";
+
+//Mutual Verified Just-Works Message Prefix
+const char * MUTUAL_VERIF_NUM = "mutualVerifNum";
 
 //Credential data encoding methods
 const char * OIC_SEC_ENCODING_BASE64 = "oic.sec.encoding.base64";

@@ -72,6 +72,7 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 #include "pkix_interface.h"
+#include "oxmverifycommon.h"
 
 #define TAG "OIC_OTM"
 
@@ -83,7 +84,14 @@
  * List of allowed oxm list.
  * All oxm methods are allowed as default.
  */
-static uint8_t g_OxmAllowStatus[OIC_OXM_COUNT] = {ALLOWED_OXM, ALLOWED_OXM, ALLOWED_OXM, NOT_ALLOWED_OXM};
+#ifdef MULTIPLE_OWNER
+static uint8_t g_OxmAllowStatus[OXM_IDX_COUNT] = {ALLOWED_OXM, ALLOWED_OXM, ALLOWED_OXM,
+                                                  ALLOWED_OXM, ALLOWED_OXM, ALLOWED_OXM,
+                                                  NOT_ALLOWED_OXM};
+#else
+static uint8_t g_OxmAllowStatus[OXM_IDX_COUNT] = {ALLOWED_OXM, ALLOWED_OXM, ALLOWED_OXM,
+                                                  ALLOWED_OXM, ALLOWED_OXM, NOT_ALLOWED_OXM};
+#endif
 
 /**
  * Variables for pointing the OTMContext to be used in the DTLS handshake result callback.
@@ -97,11 +105,13 @@ OCStackResult OTMSetOTCallback(OicSecOxm_t oxm, OTMCallbackData_t* callbacks)
     OIC_LOG(INFO, TAG, "IN OTMSetOTCallback");
 
     VERIFY_NON_NULL(TAG, callbacks, ERROR);
+
 #ifdef MULTIPLE_OWNER
-    VERIFY_SUCCESS(TAG, (OIC_OXM_COUNT > oxm || OIC_PRECONFIG_PIN == oxm), ERROR);
+    VERIFY_SUCCESS(TAG, (OIC_OXM_COUNT > oxm || OIC_PRECONFIG_PIN == oxm || OIC_MV_JUST_WORKS == oxm
+                    || OIC_CON_MFG_CERT == oxm), ERROR);
 #else
-    VERIFY_SUCCESS(TAG, (OIC_OXM_COUNT > oxm), ERROR);
-#endif //MULTIPLE_OWNER
+    VERIFY_SUCCESS(TAG, (OIC_OXM_COUNT > oxm || OIC_MV_JUST_WORKS == oxm || OIC_CON_MFG_CERT == oxm), ERROR);
+#endif // MULTIPLE_OWNER
 
     switch(oxm)
     {
@@ -134,6 +144,18 @@ OCStackResult OTMSetOTCallback(OicSecOxm_t oxm, OTMCallbackData_t* callbacks)
         callbacks->createOwnerTransferPayloadCB = CreatePreconfigPinBasedOwnerTransferPayload;
         break;
 #endif //MULTIPLE_OWNER
+    case OIC_MV_JUST_WORKS:
+        callbacks->loadSecretCB = LoadSecretJustWorksCallback;
+        callbacks->createSecureSessionCB = CreateSecureSessionJustWorksCallback;
+        callbacks->createSelectOxmPayloadCB = CreateMVJustWorksSelectOxmPayload;
+        callbacks->createOwnerTransferPayloadCB = CreateJustWorksOwnerTransferPayload;
+        break;
+    case OIC_CON_MFG_CERT:
+        callbacks->loadSecretCB = PrepareMCertificateCallback;
+        callbacks->createSecureSessionCB = CreateSecureSessionMCertificateCallback;
+        callbacks->createSelectOxmPayloadCB = CreateConMCertificateBasedSelectOxmPayload;
+        callbacks->createOwnerTransferPayloadCB = CreateMCertificateBasedOwnerTransferPayload;
+        break;
     default:
         OIC_LOG_V(ERROR, TAG, "Unknown OxM : %d", (int)oxm);
         return OC_STACK_INVALID_PARAM;
@@ -144,6 +166,34 @@ OCStackResult OTMSetOTCallback(OicSecOxm_t oxm, OTMCallbackData_t* callbacks)
 exit:
     OIC_LOG(INFO, TAG, "OUT OTMSetOTCallback");
     return res;
+}
+
+/**
+ * Internal API to convert OxM value to index of oxm allow table.
+ */
+static OxmAllowTableIdx_t GetOxmAllowTableIdx(OicSecOxm_t oxm)
+{
+    switch(oxm)
+    {
+        case OIC_JUST_WORKS:
+            return OXM_IDX_JUST_WORKS;
+        case OIC_RANDOM_DEVICE_PIN:
+            return OXM_IDX_RANDOM_DEVICE_PIN;
+        case OIC_MANUFACTURER_CERTIFICATE:
+            return OXM_IDX_MANUFACTURER_CERTIFICATE;
+        case OIC_DECENTRALIZED_PUBLIC_KEY:
+            return OXM_IDX_DECENTRALIZED_PUBLIC_KEY;
+        case OIC_MV_JUST_WORKS:
+            return OXM_IDX_MV_JUST_WORKS;
+        case OIC_CON_MFG_CERT:
+            return OXM_IDX_CON_MFG_CERT;
+#ifdef MULTIPLE_OWNER
+        case OIC_PRECONFIG_PIN:
+            return OXM_IDX_PRECONFIG_PIN;
+#endif
+        default:
+            return OXM_IDX_UNKNOWN;
+    }
 }
 
 /**
@@ -158,6 +208,8 @@ static OCStackResult SelectProvisioningMethod(const OicSecOxm_t *supportedMethod
         size_t numberOfMethods, OicSecOxm_t *selectedMethod)
 {
     bool isOxmSelected = false;
+    OxmAllowTableIdx_t oxmIdx = OXM_IDX_UNKNOWN;
+    OxmAllowTableIdx_t selectedOxmIdx = OXM_IDX_UNKNOWN;
 
     OIC_LOG(DEBUG, TAG, "IN SelectProvisioningMethod");
 
@@ -169,11 +221,22 @@ static OCStackResult SelectProvisioningMethod(const OicSecOxm_t *supportedMethod
 
     for(size_t i = 0; i < numberOfMethods; i++)
     {
-        if(ALLOWED_OXM == g_OxmAllowStatus[supportedMethods[i]])
+        selectedOxmIdx = GetOxmAllowTableIdx(supportedMethods[i]);
+        if(OXM_IDX_COUNT <= selectedOxmIdx)
+        {
+            OIC_LOG(ERROR, TAG, "Invalid oxm index to access OxM allow table");
+            return OC_STACK_ERROR;
+        }
+
+#ifdef MULTIPLE_OWNER
+        if(ALLOWED_OXM == g_OxmAllowStatus[selectedOxmIdx] &&
+           OXM_IDX_PRECONFIG_PIN != selectedOxmIdx)
+#else
+        if(ALLOWED_OXM == g_OxmAllowStatus[selectedOxmIdx])
+#endif //MULTIPLE_OWNER
         {
             *selectedMethod  = supportedMethods[i];
             isOxmSelected = true;
-            break;
         }
     }
     if(!isOxmSelected)
@@ -182,19 +245,11 @@ static OCStackResult SelectProvisioningMethod(const OicSecOxm_t *supportedMethod
         return OC_STACK_NOT_ALLOWED_OXM;
     }
 
-    for(size_t i = 0; i < numberOfMethods; i++)
-    {
-        if(*selectedMethod < supportedMethods[i] &&
-           ALLOWED_OXM == g_OxmAllowStatus[supportedMethods[i]])
-        {
-            *selectedMethod =  supportedMethods[i];
-        }
-    }
-
     OIC_LOG(DEBUG, TAG, "OUT SelectProvisioningMethod");
 
     return OC_STACK_OK;
 }
+
 
 /**
  * Function to select operation mode.This function will return most secure common operation mode.
@@ -465,6 +520,52 @@ void DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
                        false == newDevDoxm->owned &&
                        memcmp(&(newDevDoxm->owner), &emptyUuid, sizeof(OicUuid_t)) == 0)
                     {
+                        //In case of Mutual Verified Just-Works, display mutualVerifNum
+                        if (OIC_MV_JUST_WORKS == newDevDoxm->oxmSel)
+                        {
+                            uint8_t preMutualVerifNum[OWNER_PSK_LENGTH_128] = {0};
+                            uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN] = {0};
+                            OicUuid_t deviceID = {.id = {0}};
+
+                            //Generate mutualVerifNum
+                            char label[LABEL_LEN] = {0};
+                            snprintf(label, LABEL_LEN, "%s%s", MUTUAL_VERIF_NUM, OXM_MV_JUST_WORKS);
+                            if (OC_STACK_OK != GetDoxmDeviceID(&deviceID))
+                            {
+                                OIC_LOG(ERROR, TAG, "Error while retrieving Owner's device ID");
+                                return;
+                            }
+
+                            CAResult_t pskRet = CAGenerateOwnerPSK(endpoint,
+                                    (uint8_t *)label,
+                                    strlen(label),
+                                    deviceID.id, sizeof(deviceID.id),
+                                    newDevDoxm->deviceID.id, sizeof(newDevDoxm->deviceID.id),
+                                    preMutualVerifNum, OWNER_PSK_LENGTH_128);
+                            if (CA_STATUS_OK != pskRet)
+                            {
+                                OIC_LOG(WARNING, TAG, "Failed to remove the invaild owner credential");
+                                return;
+                            }
+
+                            memcpy(mutualVerifNum, preMutualVerifNum + OWNER_PSK_LENGTH_128 - sizeof(mutualVerifNum),
+                                    sizeof(mutualVerifNum));
+                            if (OC_STACK_OK != VerifyOwnershipTransfer(mutualVerifNum, DISPLAY_NUM))
+                            {
+                                OIC_LOG(ERROR, TAG, "Error while displaying mutualVerifNum");
+                                return;
+                            }
+                        }
+                        //In case of confirmed manufacturer cert, display message
+                        else if (OIC_CON_MFG_CERT == newDevDoxm->oxmSel)
+                        {
+                            if (OC_STACK_OK != VerifyOwnershipTransfer(NULL, DISPLAY_NUM))
+                            {
+                                OIC_LOG(ERROR, TAG, "Error while displaying message");
+                                return;
+                            }
+                        }
+
                         //Send request : POST /oic/sec/doxm [{... , "devowner":"PT's UUID"}]
                         res = PostOwnerUuid(otmCtx);
                         if(OC_STACK_OK != res)
@@ -796,6 +897,16 @@ static OCStackApplicationResult OwnerUuidUpdateHandler(void *ctx, OCDoHandle UNU
     {
         if(otmCtx && otmCtx->selectedDeviceInfo)
         {
+            //In case of Mutual Verified Just-Works, wait for user confirmation
+            if (OIC_MV_JUST_WORKS == otmCtx->selectedDeviceInfo->doxm->oxmSel)
+            {
+                res = VerifyOwnershipTransfer(NULL, USER_CONFIRM);
+                if (OC_STACK_OK != res)
+                {
+                    SRPResetDevice(otmCtx->selectedDeviceInfo, otmCtx->ctxResultCallback);
+                }
+            }
+
             res = SaveOwnerPSK(otmCtx->selectedDeviceInfo);
             if(OC_STACK_OK != res)
             {
@@ -1914,12 +2025,22 @@ OCStackResult OTMSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus
     OIC_LOG_V(INFO, TAG, "IN %s : oxm=%d, allow status=%s",
               __func__, oxm, (allowStatus ? "true" : "false"));
 
-    if(OIC_OXM_COUNT <= oxm)
+#ifdef MULTIPLE_OWNER
+    if(OIC_OXM_COUNT <= oxm && OIC_MV_JUST_WORKS != oxm && OIC_PRECONFIG_PIN != oxm && OIC_CON_MFG_CERT != oxm)
+#else
+    if(OIC_OXM_COUNT <= oxm && OIC_MV_JUST_WORKS != oxm && OIC_CON_MFG_CERT != oxm)
+#endif
     {
         return OC_STACK_INVALID_PARAM;
     }
 
-    g_OxmAllowStatus[oxm] = (allowStatus ? ALLOWED_OXM : NOT_ALLOWED_OXM);
+    OxmAllowTableIdx_t oxmIdx = GetOxmAllowTableIdx(oxm);
+    if(OXM_IDX_COUNT <= oxmIdx)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid oxm index to access oxm allow table.");
+        return OC_STACK_ERROR;
+    }
+    g_OxmAllowStatus[oxmIdx] = (allowStatus ? ALLOWED_OXM : NOT_ALLOWED_OXM);
 
     OIC_LOG_V(INFO, TAG, "OUT %s", __func__);
 
