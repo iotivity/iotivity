@@ -291,6 +291,11 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %{_libdir}/liboc_logger_core.so
 %{_libdir}/liboctbstack.so
 %{_libdir}/libconnectivity_abstraction.so
+%if 0%{?SECURED} == 1
+%{_libdir}/libocpmapi.so
+%{_libdir}/libocprovision.so
+%{_libdir}/oic_svr_db_server.dat
+%endif
 
 %files service
 %manifest %{name}.manifest
@@ -308,11 +313,6 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %{_libdir}/libnotification*.so
 %if 0%{?WITH_PROXY} == 1
 %{_libdir}/libcoap_http_proxy.so
-%endif
-%if 0%{?SECURED} == 1
-%{_libdir}/libocpmapi.so
-%{_libdir}/libocprovision.so
-%{_libdir}/oic_svr_db_server.dat
 %endif
 %if "%{TARGET_OS}" == "linux"
 %{_libdir}/libnotification*.so
