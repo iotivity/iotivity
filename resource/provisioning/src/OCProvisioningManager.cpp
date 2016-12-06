@@ -160,6 +160,49 @@ namespace OC
         return result;
     }
 
+    OCStackResult OCSecure::discoverSingleDeviceInUnicast(unsigned short timeout,
+            const OicUuid_t* deviceID,
+            const std::string& hostAddress,
+            OCConnectivityType connType,
+            std::shared_ptr<OCSecureResource> &foundDevice)
+    {
+        OCStackResult result = OC_STACK_ERROR;
+        OCProvisionDev_t *pDev = nullptr;
+        auto csdkLock = OCPlatform_impl::Instance().csdkLock();
+        auto cLock = csdkLock.lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCDiscoverSingleDeviceInUnicast(timeout, deviceID, hostAddress.c_str(),
+                            connType, &pDev);
+
+            if (result == OC_STACK_OK)
+            {
+                if (pDev)
+                {
+                    foundDevice.reset(new OCSecureResource(csdkLock, pDev));
+                }
+                else
+                {
+                    oclog() <<"Not found Secure resource!";
+                    foundDevice.reset();
+                }
+            }
+            else
+            {
+                oclog() <<"Secure resource discovery failed!";
+            }
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
 #ifdef MULTIPLE_OWNER
     OCStackResult OCSecure::discoverMultipleOwnerEnabledDevices(unsigned short timeout,
             DeviceList_t &list)
