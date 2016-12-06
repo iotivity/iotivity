@@ -20,10 +20,12 @@
 
 import os
 import os.path
+from tools.scons.RunTest import *
+
+Import('test_env')
 
 # SConscript file for Local PKI google tests
-gtest_env = SConscript('#extlibs/gtest/SConscript')
-srmtest_env = gtest_env.Clone()
+srmtest_env = test_env.Clone()
 src_dir = srmtest_env.get('SRC_DIR')
 target_os = srmtest_env.get('TARGET_OS')
 rd_mode = srmtest_env.get('RD_MODE')
@@ -73,7 +75,7 @@ if srmtest_env.get('MULTIPLE_OWNER') == '1':
 
 if target_os == 'windows':
 	srmtest_env.AppendUnique(LINKFLAGS = ['/subsystem:CONSOLE'])
-	srmtest_env.AppendUnique(LIBS = ['advapi32', 'bcrypt', 'crypt32', 'kernel32', 'ws2_32', 'iphlpapi', 'octbstack_static'])
+	srmtest_env.AppendUnique(LIBS = ['octbstack_static'])
 else:
 	# TODO: Implement feature check.
 	srmtest_env.AppendUnique(CPPDEFINES = ['HAVE_LOCALTIME_R'])
@@ -137,5 +139,4 @@ if srmtest_env.get('TEST') == '1':
 			os.makedirs(result_dir)
 		srmtest_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
 		srmtest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
-		from tools.scons.RunTest import *
 		run_test(srmtest_env,'ut','resource/csdk/security/unittest/unittest')

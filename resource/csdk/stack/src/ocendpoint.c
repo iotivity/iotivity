@@ -25,9 +25,10 @@
  #include <string.h>
  #include "cainterface.h"
 
- #define VERIFY_NON_NULL(arg) { if (!arg) {OIC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
- #define VERIFY_GT_ZERO(arg) { if (arg < 1) {OIC_LOG(FATAL, TAG, #arg " < 1"); goto exit;} }
- #define TAG  "OIC_RI_ENDPOINT"
+#define VERIFY_NON_NULL(arg) { if (!arg) {OIC_LOG(FATAL, TAG, #arg " is NULL"); goto exit;} }
+#define VERIFY_GT_ZERO(arg) { if (arg < 1) {OIC_LOG(FATAL, TAG, #arg " < 1"); goto exit;} }
+#define VERIFY_GT(arg1, arg2) { if (arg1 <= arg2) {OIC_LOG(FATAL, TAG, #arg1 " <= " #arg2); goto exit;} }
+#define TAG  "OIC_RI_ENDPOINT"
 
 OCStackResult OCGetSupportedEndpointFlags(const OCTpsSchemeFlags givenFlags, OCTpsSchemeFlags* out)
 {
@@ -240,11 +241,13 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
     }
 
     char* tmp = NULL;
-    char* ret = NULL;
+    void* ret = NULL;
     char* tps = NULL;
     char* addr = NULL;
     char* origin = NULL;
     char* tokPos = NULL;
+    size_t tpsCharsToWrite = 0;
+    size_t addrCharsToWrite = 0;
     OCStackResult isEnabledAdapter = OC_STACK_ADAPTER_NOT_ENABLED;
     OCTransportAdapter parsedAdapter = OC_DEFAULT_ADAPTER;
 
@@ -262,8 +265,10 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
     VERIFY_NON_NULL(tokPos);
 
     // copy tps
-    VERIFY_GT_ZERO(tokPos - origin);
-    ret = strncpy(tps, origin, tokPos - origin);
+    tpsCharsToWrite = tokPos - origin;
+    VERIFY_GT_ZERO(tpsCharsToWrite);
+    VERIFY_GT((size_t)OC_MAX_TPS_STR_SIZE, tpsCharsToWrite);
+    ret = memcpy(tps, origin, tpsCharsToWrite);
     VERIFY_NON_NULL(ret);
     OIC_LOG_V(INFO, TAG, "parsed tps is:%s", tps);
 
@@ -332,19 +337,20 @@ OCStackResult OCParseEndpointString(const char* endpointStr, OCEndpointPayload* 
             out->family = OC_IP_USE_V6;
             tokPos = tokPos + 4;
             tmp = strrchr(origin, OC_ENDPOINT_BRACKET_END);
-            VERIFY_NON_NULL(tmp);
         }
         else
         {
             out->family = OC_IP_USE_V4;
             tokPos = tokPos + 3;
             tmp = strrchr(origin, OC_ENDPOINT_ADDR_TOKEN);
-            VERIFY_NON_NULL(tmp);
         }
+        VERIFY_NON_NULL(tmp);
 
         // copy addr
-        VERIFY_GT_ZERO(tmp - tokPos);
-        ret = strncpy(addr, tokPos, tmp - tokPos);
+        addrCharsToWrite = tmp - tokPos;
+        VERIFY_GT_ZERO(addrCharsToWrite);
+        VERIFY_GT((size_t)OC_MAX_ADDR_STR_SIZE, addrCharsToWrite);
+        ret = memcpy(addr, tokPos, addrCharsToWrite);
         VERIFY_NON_NULL(ret);
         OIC_LOG_V(INFO, TAG, "parsed addr is:%s", addr);
 

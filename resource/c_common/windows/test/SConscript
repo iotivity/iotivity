@@ -19,13 +19,11 @@
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 import os.path
+from tools.scons.RunTest import *
 
-######################################################################
-# Build the gtest framework
-######################################################################
-gtest_env = SConscript('#extlibs/gtest/SConscript')
+Import('test_env')
 
-c_common_windows_test_env = gtest_env.Clone()
+c_common_windows_test_env = test_env.Clone()
 
 ######################################################################
 # Build flags
@@ -47,7 +45,7 @@ Alias("test", [c_common_windows_tests])
 
 c_common_windows_test_env.AppendTarget('test')
 
-from tools.scons.RunTest import *
-run_test(c_common_windows_test_env,
-         'resource_c_common_windows_test.memcheck',
-         'resource/c_common/windows/test/c_common_windows_tests')
+if c_common_windows_test_env.get('TEST') == '1':
+    run_test(c_common_windows_test_env,
+             'resource_c_common_windows_test.memcheck',
+             'resource/c_common/windows/test/c_common_windows_tests')

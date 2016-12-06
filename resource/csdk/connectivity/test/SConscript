@@ -20,10 +20,12 @@
 
 import os
 import os.path
+from tools.scons.RunTest import *
+
+Import('test_env')
 
 # SConscript file for Local PKI google tests
-gtest_env = SConscript('#extlibs/gtest/SConscript')
-catest_env = gtest_env.Clone()
+catest_env = test_env.Clone()
 target_os = catest_env.get('TARGET_OS')
 target_transport = catest_env.get('TARGET_TRANSPORT')
 rd_mode = catest_env.get('RD_MODE')
@@ -54,12 +56,7 @@ if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
 if catest_env.get('LOGGING'):
 	catest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-if target_os in ['msys_nt', 'windows']:
-	catest_env.AppendUnique(LIBS = ['ws2_32',
-                                        'advapi32',
-                                        'bcrypt',
-                                        'iphlpapi'])
-else:
+if target_os not in ['msys_nt', 'windows']:
 	catest_env.AppendUnique(LIBS = ['m'])
 
 ######################################################################
@@ -92,7 +89,6 @@ catest_env.AppendTarget('test')
 if catest_env.get('TEST') == '1' and catest_env.get('SECURED') != '1':
         if target_os in ['linux', 'windows']:
                 catest_env.AppendENVPath('PATH', catest_env.get('BUILD_DIR'))
-                from tools.scons.RunTest import *
                 run_test(catest_env,
                          'resource_csdk_connectivity_test.memcheck',
                          'resource/csdk/connectivity/test/catests')

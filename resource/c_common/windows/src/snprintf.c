@@ -23,8 +23,13 @@
 
 int vs12_snprintf(char *buffer, size_t count, const char *format, ...)
 {
-    // These three values are invalid when calling _vsnprintf
-    if ((buffer == NULL) || (count == 0) || (format == NULL))
+    // The first three values are invalid when calling _vsnprintf.
+    // Last check is to make sure the buffer is small enough for the
+    // return value to make sense.
+    if ((buffer == NULL) ||
+        (count == 0) ||
+        (format == NULL) ||
+        (count > INT_MAX))
     {
         return -1;
     }
@@ -39,7 +44,7 @@ int vs12_snprintf(char *buffer, size_t count, const char *format, ...)
     int length = _vsnprintf(buffer, count, format, args);
     va_end(args);
 
-    if ((length == -1) || (length == count))
+    if ((length == -1) || (length == (int)count))
     {
         // Add the missing zero character terminator.
         buffer[count - 1] = '\0';

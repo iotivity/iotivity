@@ -20,10 +20,12 @@
 
 import os
 import os.path
+from tools.scons.RunTest import *
+
+Import('test_env')
 
 # SConscript file for Local PKI google tests
-gtest_env = SConscript('#extlibs/gtest/SConscript')
-stacktest_env = gtest_env.Clone()
+stacktest_env = test_env.Clone()
 target_os = stacktest_env.get('TARGET_OS')
 rd_mode = stacktest_env.get('RD_MODE')
 
@@ -58,9 +60,7 @@ if stacktest_env.get('SECURED') == '1':
 if stacktest_env.get('LOGGING'):
 	stacktest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
-if target_os in ['msys_nt', 'windows']:
-	stacktest_env.AppendUnique(LIBS = ['ws2_32', 'iphlpapi', 'kernel32', 'bcrypt', 'advapi32', 'crypt32'])
-else:
+if target_os not in ['msys_nt', 'windows']:
 	stacktest_env.PrependUnique(LIBS = ['m'])
 
 if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
@@ -79,7 +79,6 @@ stacktest_env.AppendTarget('test')
 # TODO: fix test in all supported configurations
 if stacktest_env.get('TEST') == '1' and stacktest_env.get('SECURED') != '1':
 	if target_os in ['linux', 'windows']:
-                from tools.scons.RunTest import *
                 run_test(stacktest_env,
                          'resource_csdk_stack_test.memcheck',
                          'resource/csdk/stack/test/stacktests')

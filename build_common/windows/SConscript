@@ -35,6 +35,17 @@ if env['CC'] == 'cl':
     env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
     env.AppendUnique(PATH = os.environ['PATH'])
 
+    # Add Windows-specific libraries
+    env.AppendUnique(LIBS = ['bcrypt', 'ws2_32', 'advapi32', 'iphlpapi', 'crypt32', 'kernel32'])
+
+    # Visual Studio compiler complains that functions like strncpy are unsafe. We
+    # are aware that it's possible to create a non-null terminated string using the
+    # strncpy function.  However, the str*_s functions are not standard and thus
+    # will not work on all systems supported by IoTivity. This will prevent Visual
+    # Studio from displaying unwanted warnings.
+    # See https://msdn.microsoft.com/en-us/library/ttcz0bys.aspx for more details.
+    env.AppendUnique(CPPDEFINES=['_CRT_SECURE_NO_WARNINGS', '_CRT_NONSTDC_NO_WARNINGS'])
+
 elif env['CC'] == 'gcc':
     print "\nError: gcc not supported on Windows.  Use Visual Studio!\n"
     Exit(1);

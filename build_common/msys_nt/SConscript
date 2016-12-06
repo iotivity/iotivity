@@ -11,6 +11,9 @@ if env['TARGET_OS'] == 'msys_nt':
 
 env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 
+# Add MinGW-specific libraries
+env.AppendUnique(LIBS = ['bcrypt', 'ws2_32', 'advapi32', 'iphlpapi', 'crypt32', 'kernel32'])
+
 target_arch = env.get('TARGET_ARCH')
 
 if env['CC'] == 'gcc':

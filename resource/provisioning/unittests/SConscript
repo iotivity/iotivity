@@ -22,9 +22,10 @@ import os
 import os.path
 from tools.scons.RunTest import run_test
 
+Import('test_env')
+
 # SConscript file for Local PKI google tests
-gtest_env = SConscript('#extlibs/gtest/SConscript')
-provisiontests_env = gtest_env.Clone()
+provisiontests_env = test_env.Clone()
 src_dir = provisiontests_env.get('SRC_DIR')
 target_os = provisiontests_env.get('TARGET_OS')
 with_ra = provisiontests_env.get('WITH_RA')

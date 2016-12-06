@@ -22,9 +22,10 @@ import os
 import os.path
 from tools.scons.RunTest import run_test
 
+Import('test_env')
+
 # SConscript file for Local PKI google tests
-gtest_env = SConscript('#extlibs/gtest/SConscript')
-sptest_env = gtest_env.Clone()
+sptest_env = test_env.Clone()
 src_dir = sptest_env.get('SRC_DIR')
 target_os = sptest_env.get('TARGET_OS')
 rd_mode = sptest_env.get('RD_MODE')
@@ -81,12 +82,7 @@ if sptest_env.get('MULTIPLE_OWNER') == '1':
 	sptest_env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
 
 if target_os in ['msys_nt', 'windows']:
-    sptest_env.AppendUnique(LIBS = ['ws2_32',
-                                    'advapi32',
-                                    'bcrypt',
-                                    'crypt32',
-                                    'octbstack_static',
-                                    'iphlpapi'])
+    sptest_env.AppendUnique(LIBS = ['octbstack_static'])
 else:
 	sptest_env.AppendUnique(LIBS = ['octbstack'])
 

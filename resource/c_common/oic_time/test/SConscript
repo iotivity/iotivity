@@ -20,10 +20,12 @@
 
 import os
 import os.path
+from tools.scons.RunTest import *
+
+Import('test_env')
 
 # SConscript file for Local PKI google tests
-gtest_env = SConscript('#extlibs/gtest/SConscript')
-timetest_env = gtest_env.Clone()
+timetest_env = test_env.Clone()
 target_os = timetest_env.get('TARGET_OS')
 
 ######################################################################
@@ -48,7 +50,6 @@ Alias("test", [timetests])
 timetest_env.AppendTarget('test')
 if timetest_env.get('TEST') == '1':
     if target_os in ['linux', 'windows']:
-                from tools.scons.RunTest import *
                 run_test(timetest_env,
                          'resource_ccommon_time_test.memcheck',
                          'resource/c_common/oic_time/test/timetests')

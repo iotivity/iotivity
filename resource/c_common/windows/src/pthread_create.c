@@ -30,6 +30,7 @@ int pthread_create(
     void *(*start_routine)(void *),
     void *arg)
 {
+    UNREFERENCED_PARAMETER(attr);
     *thread = CreateThread(NULL, 0, (PTHREAD_START_ROUTINE)start_routine, arg, 0, NULL);
     return (*thread == NULL) ? GetLastError() : 0;
 }

@@ -46,7 +46,7 @@ char *OICStrdup(const char *str);
 void OICStringToLower(char* str);
 
 /**
- * Copies a C string into destination buffer.  Ensures that the destination
+ * Copies a C string into destination buffer. Ensures that the destination
  * is null terminated.
  *
  * @param dest Destination C buffer.

@@ -118,8 +118,6 @@ if target_os in ['windows', 'msys_nt']:
 			liboctbstack_env.Textfile(target = 'octbstack.def', source = [File('octbstack_product.def'), File('octbstack_product_secured.def')])
 	else:
 		liboctbstack_env.Textfile(target = 'octbstack.def', source = [File('octbstack_product.def')])
-
-	liboctbstack_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi', 'bcrypt', 'crypt32'])
 else:
 	liboctbstack_env.AppendUnique(LIBS = ['m'])
 
