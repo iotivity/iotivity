@@ -258,6 +258,13 @@ static void deleteResourceType(OCResourceType *resourceType);
 static void deleteResourceInterface(OCResourceInterface *resourceInterface);
 
 /**
+ * Delete all child resources.
+ *
+ * @param resourceChild Specified binded resource is deleted from parent.
+ */
+static void deleteResourceChild(OCChildResource *resourceChild);
+
+/**
  * Delete all of the dynamically allocated elements that were created for the resource.
  *
  * @param resource Specified resource.
@@ -1375,15 +1382,22 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                             cbNode->method, cbNode->requestUri);
                     return;
                 }
-
-                if(OC_STACK_OK != OCParsePayload(&response.payload,
+                // In case of error, still want application to receive the error message.
+                if (OCResultToSuccess(response.result))
+                {
+                    if(OC_STACK_OK != OCParsePayload(&response.payload,
                             type,
                             responseInfo->info.payload,
                             responseInfo->info.payloadSize))
+                    {
+                        OIC_LOG(ERROR, TAG, "Error converting payload");
+                        OCPayloadDestroy(response.payload);
+                        return;
+                    }
+                }
+                else
                 {
-                    OIC_LOG(ERROR, TAG, "Error converting payload");
-                    OCPayloadDestroy(response.payload);
-                    return;
+                    response.resourceUri = OICStrdup(cbNode->requestUri);
                 }
             }
 
@@ -1449,6 +1463,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     OCUpdateResourceInsWithResponse(cbNode->requestUri, &response);
                 }
 #endif
+
                 OCStackApplicationResult appFeedback = cbNode->callBack(cbNode->context,
                                                                         cbNode->handle,
                                                                         &response);
@@ -4350,37 +4365,77 @@ void deleteResourceElements(OCResource *resource)
         return;
     }
 
-    OICFree(resource->uri);
-    deleteResourceType(resource->rsrcType);
-    deleteResourceInterface(resource->rsrcInterface);
-    OCDeleteResourceAttributes(resource->rsrcAttributes);
+    if (resource->uri)
+    {
+        OICFree(resource->uri);
+        resource->uri = NULL;
+    }
+    if (resource->rsrcType)
+    {
+        deleteResourceType(resource->rsrcType);
+        resource->rsrcType = NULL;
+    }
+    if (resource->rsrcInterface)
+    {
+        deleteResourceInterface(resource->rsrcInterface);
+        resource->rsrcInterface = NULL;
+    }
+    if (resource->rsrcChildResourcesHead)
+    {
+        deleteResourceChild(resource->rsrcChildResourcesHead);
+        resource->rsrcChildResourcesHead = NULL;
+    }
+    if (resource->rsrcAttributes)
+    {
+        OCDeleteResourceAttributes(resource->rsrcAttributes);
+        resource->rsrcAttributes = NULL;
+    }
+    resource = NULL;
 }
 
 void deleteResourceType(OCResourceType *resourceType)
 {
-    OCResourceType *pointer = resourceType;
     OCResourceType *next = NULL;
 
-    while (pointer)
+    for (OCResourceType *pointer = resourceType; pointer; pointer = next)
     {
-        next = pointer->next;
-        OICFree(pointer->resourcetypename);
+        next = pointer->next ? pointer->next : NULL;
+        if (pointer->resourcetypename)
+        {
+            OICFree(pointer->resourcetypename);
+            pointer->resourcetypename = NULL;
+        }
         OICFree(pointer);
-        pointer = next;
     }
 }
 
 void deleteResourceInterface(OCResourceInterface *resourceInterface)
 {
-    OCResourceInterface *pointer = resourceInterface;
     OCResourceInterface *next = NULL;
-
-    while (pointer)
+    for (OCResourceInterface *pointer = resourceInterface; pointer; pointer = next)
     {
-        next = pointer->next;
-        OICFree(pointer->name);
+        next = pointer->next ? pointer->next : NULL;
+        if (pointer->name)
+        {
+            OICFree(pointer->name);
+            pointer->name = NULL;
+        }
         OICFree(pointer);
-        pointer = next;
+    }
+}
+
+void deleteResourceChild(OCChildResource *resourceChild)
+{
+    OCChildResource *next = NULL;
+    for (OCChildResource *pointer = resourceChild; pointer; pointer = next)
+    {
+        next = pointer->next ? pointer->next : NULL;
+        if (pointer->rsrcResource)
+        {
+            deleteResourceElements(pointer->rsrcResource);
+            pointer->rsrcResource = NULL;
+        }
+        OICFree(pointer);
     }
 }
 
@@ -4389,16 +4444,22 @@ void OCDeleteResourceAttributes(OCAttribute *rsrcAttributes)
     OCAttribute *next = NULL;
     for (OCAttribute *pointer = rsrcAttributes; pointer; pointer = next)
     {
-        next = pointer->next;
+        next = pointer->next ? pointer->next : NULL;
         if (pointer->attrName && 0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, pointer->attrName))
         {
             OCFreeOCStringLL((OCStringLL *)pointer->attrValue);
+            pointer->attrValue = NULL;
         }
-        else
+        else if (pointer->attrValue)
         {
             OICFree(pointer->attrValue);
+            pointer->attrValue = NULL;
         }
-        OICFree(pointer->attrName);
+        if (pointer->attrName)
+        {
+            OICFree(pointer->attrName);
+            pointer->attrName = NULL;
+        }
         OICFree(pointer);
     }
 }
@@ -5135,4 +5196,3 @@ OCStackResult OCGetDeviceOwnedState(bool *isOwned)
     }
     return ret;
 }
-

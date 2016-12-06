@@ -1382,9 +1382,6 @@ typedef struct OCDiscoveryPayload
     /** Name */
     char *name;
 
-    /** HREF */
-    char *uri;
-
     /** Resource Type */
     OCStringLL *type;
 

@@ -1894,7 +1894,6 @@ void OCDiscoveryPayloadDestroy(OCDiscoveryPayload* payload)
     }
     OICFree(payload->sid);
     OICFree(payload->baseURI);
-    OICFree(payload->uri);
     OCFreeOCStringLL(payload->type);
     OICFree(payload->name);
     OCFreeOCStringLL(payload->iface);

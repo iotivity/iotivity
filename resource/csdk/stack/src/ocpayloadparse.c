@@ -223,20 +223,12 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find base uri value");
             }
 
-            // HREF - Not a mandatory field
-            err = cbor_value_map_find_value(&rootMap, OC_RSRVD_HREF, &curVal);
-            if (cbor_value_is_valid(&curVal))
-            {
-                err = cbor_value_dup_text_string(&curVal, &(temp->uri), &len, NULL);
-                VERIFY_CBOR_SUCCESS(TAG, err, "to find uri value");
-            }
-
             // RT - Not a mandatory field
             err = cbor_value_map_find_value(&rootMap, OC_RSRVD_RESOURCE_TYPE, &curVal);
             if (cbor_value_is_valid(&curVal))
             {
                 err = OCParseStringLL(&rootMap, OC_RSRVD_RESOURCE_TYPE, &temp->type);
-                VERIFY_CBOR_SUCCESS(TAG, err, "to find base uri value");
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find resource type");
             }
 
             // IF - Not a mandatory field
@@ -244,13 +236,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
             if (cbor_value_is_valid(&curVal))
             {
                 err =  OCParseStringLL(&rootMap, OC_RSRVD_INTERFACE, &temp->iface);
-            }
-            if (!temp->iface)
-            {
-                if (!OCResourcePayloadAddStringLL(&temp->iface, OC_RSRVD_INTERFACE_LL))
-                {
-                    err = CborErrorOutOfMemory;
-                }
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find interface");
             }
 
             // Name - Not a mandatory field

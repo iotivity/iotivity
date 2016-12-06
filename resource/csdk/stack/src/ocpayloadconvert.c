@@ -100,12 +100,14 @@ OCStackResult OCConvertPayload(OCPayload* payload, uint8_t** outPayload, size_t*
         // reallocate "out" and try again!
         uint8_t *out2 = (uint8_t *)OICRealloc(out, curSize);
         VERIFY_PARAM_NON_NULL(TAG, out2, "Failed to increase payload size");
+        memset(out2, 0, curSize);
         out = out2;
         err = OCConvertPayloadHelper(payload, out, &curSize);
         while (err == CborErrorOutOfMemory)
         {
             uint8_t *out2 = (uint8_t *)OICRealloc(out, curSize);
             VERIFY_PARAM_NON_NULL(TAG, out2, "Failed to increase payload size");
+            memset(out2, 0, curSize);
             out = out2;
             err = OCConvertPayloadHelper(payload, out, &curSize);
         }
