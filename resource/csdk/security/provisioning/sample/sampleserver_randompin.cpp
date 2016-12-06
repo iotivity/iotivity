@@ -447,7 +447,7 @@ FILE* server_fopen(const char *path, const char *mode)
     return fopen(CRED_FILE, mode);
 }
 
-void GeneratePinCB(char* pin, size_t pinSize)
+void DisplayPinCB(char *pin, size_t pinSize, void *context)
 {
     if(NULL == pin || pinSize <= 0)
     {
@@ -475,10 +475,10 @@ int main()
     }
 
    /**
-     * If server supported random pin based ownership transfer,
-     * callback of print PIN should be registered before runing server.
+     * If the server supports random pin based ownership transfer, the callback
+     * to display a PIN should be registered before running the server.
      */
-    SetGeneratePinCB(GeneratePinCB);
+    SetDisplayPinWithContextCB(DisplayPinCB, NULL);
 
     /**
      * Random PIN generation policy can be changed through SetRandomPinPolicy() API.

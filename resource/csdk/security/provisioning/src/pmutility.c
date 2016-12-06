@@ -48,6 +48,8 @@
 
 #include "srmutility.h"
 
+static const uint64_t USECS_PER_MSEC = 1000;
+
 #define TAG ("OIC_PM_UTILITY")
 
 typedef struct _DiscoveryInfo{
@@ -1163,7 +1165,8 @@ static OCStackApplicationResult MOTDeviceDiscoveryHandler(void *ctx, OCDoHandle 
                 // Get my device ID from doxm resource
                 OicUuid_t myId;
                 memset(&myId, 0, sizeof(myId));
-                OCStackResult res = GetDoxmDevOwnerId(&myId);
+
+                res = GetDoxmDeviceID(&myId);
                 if(OC_STACK_OK != res)
                 {
                     OIC_LOG(ERROR, TAG, "Error while getting my device ID.");
@@ -1171,16 +1174,18 @@ static OCStackApplicationResult MOTDeviceDiscoveryHandler(void *ctx, OCDoHandle 
                     return OC_STACK_KEEP_TRANSACTION;
                 }
 
-                res = GetDoxmDeviceID(&myId);
-                if(OC_STACK_OK != res)
+                //if targetId and discovered deviceID are different, discard it
+                if ((pDInfo->isSingleDiscovery) &&
+                    (0 != memcmp(&ptrDoxm->deviceID.id, &pDInfo->targetId->id, sizeof(pDInfo->targetId->id))))
                 {
-                    OIC_LOG(ERROR, TAG, "Error while getting my UUID.");
+                    OIC_LOG(DEBUG, TAG, "Discovered device is not target device");
                     DeleteDoxmBinData(ptrDoxm);
                     return OC_STACK_KEEP_TRANSACTION;
                 }
+
                 //if this is owned discovery and this is PT's reply, discard it
-                if((pDInfo->isOwnedDiscovery) &&
-                        (0 == memcmp(&ptrDoxm->deviceID.id, &myId.id, sizeof(myId.id))) )
+                if (((pDInfo->isSingleDiscovery) || (pDInfo->isOwnedDiscovery)) &&
+                    (0 == memcmp(&ptrDoxm->deviceID.id, &myId.id, sizeof(myId.id))))
                 {
                     OIC_LOG(DEBUG, TAG, "discarding provision tool's reply");
                     DeleteDoxmBinData(ptrDoxm);
@@ -1268,6 +1273,101 @@ static OCStackApplicationResult MOTDeviceDiscoveryHandler(void *ctx, OCDoHandle 
     return  OC_STACK_DELETE_TRANSACTION;
 }
 
+/**
+ * The function is responsible for the discovery of an MOT-enabled device with the specified deviceID.
+ * The function will return when security information for device with deviceID has been obtained or the
+ * timeout has been exceeded.
+ *
+ * @param[in]  timeoutSeconds  Maximum time, in seconds, this function will listen for responses from
+ *                             servers before returning.
+ * @param[in]  deviceID        deviceID of target device.
+ * @param[out] ppFoundDevice   OCProvisionDev_t of found device. Caller should use PMDeleteDeviceList 
+ *                             to delete the device.
+ *
+ * @return OC_STACK_OK on success otherwise error.
+ *         OC_STACK_INVALID_PARAM when deviceID is NULL or ppFoundDevice is not initailized.
+ */
+OCStackResult PMMultipleOwnerSingleDeviceDiscovery(unsigned short timeoutSeconds,
+                                                   const OicUuid_t* deviceID,
+                                                   OCProvisionDev_t **ppFoundDevice)
+{
+    OIC_LOG(DEBUG, TAG, "IN PMMultipleOwnerSingleDeviceDiscovery");
+
+    if ((NULL == ppFoundDevice) || (NULL == deviceID))
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    DiscoveryInfo discoveryInfo;
+    discoveryInfo.ppDevicesList = ppFoundDevice;
+    discoveryInfo.pCandidateList = NULL;
+    discoveryInfo.isOwnedDiscovery = false;
+    discoveryInfo.isSingleDiscovery = true;
+    discoveryInfo.isFound = false;
+    discoveryInfo.targetId = deviceID;
+
+    OCCallbackData cbData;
+    cbData.cb = &MOTDeviceDiscoveryHandler;
+    cbData.context = (void *)&discoveryInfo;
+    cbData.cd = NULL;
+
+    OCStackResult res = OC_STACK_ERROR;
+    const char query[] = "/oic/sec/doxm?mom!=0&owned=TRUE";
+
+    OCDoHandle handle = NULL;
+    res = OCDoResource(&handle, OC_REST_DISCOVER, query, 0, 0, CT_DEFAULT, OC_HIGH_QOS, &cbData, NULL, 0);
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
+        return res;
+    }
+
+    //Waiting for each response.
+    uint64_t startTime = OICGetCurrentTime(TIME_IN_MS);
+    while ((OC_STACK_OK == res) && !discoveryInfo.isFound)
+    {
+        uint64_t currTime = OICGetCurrentTime(TIME_IN_MS);
+        if (currTime >= startTime)
+        {
+            long elapsed = (long)((currTime - startTime) / MS_PER_SEC);
+            if (elapsed > timeoutSeconds)
+            {
+                break;
+            }
+
+            // Sleep for 100 ms to free up the CPU
+            usleep(100 * USECS_PER_MSEC);
+
+            res = OCProcess();
+        }
+        else
+        {
+            // System time has changed so we cannot reliably continue processing.
+            // Function returns with no device discovered.
+            break;
+        }
+    }
+
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Failed while waiting for a secure discovery response.");
+        OCStackResult resCancel = OCCancel(handle, OC_HIGH_QOS, NULL, 0);
+        if (OC_STACK_OK != resCancel)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to remove registered callback");
+        }
+        return res;
+    }
+
+    res = OCCancel(handle, OC_HIGH_QOS, NULL, 0);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to remove the registered callback");
+        return res;
+    }
+    OIC_LOG(DEBUG, TAG, "OUT PMMultipleOwnerSingleDeviceDiscovery");
+    return res;
+}
 
 /**
  * Discover multiple OTM enabled devices in the same IP subnet.
@@ -1345,6 +1445,46 @@ OCStackResult PMMultipleOwnerDeviceDiscovery(unsigned short waittime, bool isMul
     return res;
 }
 
+/**
+ * The function is responsible for determining if the caller is a subowner of the specified device.
+ *
+ * @param[in] device       MOT enabled device that contains a list of subowners
+ * @param[out] isSubowner  Bool indicating whether the caller is a subowner of device
+ *
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult PMIsSubownerOfDevice(OCProvisionDev_t *device, bool *isSubowner)
+{  
+    if ((NULL == device) || (NULL == isSubowner))
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    OicUuid_t myId;
+    memset(&myId, 0, sizeof(myId));
+    OicSecSubOwner_t* subOwner = NULL;
+
+    *isSubowner = false;
+
+    OCStackResult result = GetDoxmDeviceID(&myId);
+    if (OC_STACK_OK == result)
+    {
+        LL_FOREACH(device->doxm->subOwners, subOwner)
+        {
+            if (memcmp(myId.id, subOwner->uuid.id, sizeof(myId.id)) == 0)
+            {
+                *isSubowner = true;
+                break;
+            }
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Error while getting my UUID.");
+    }
+
+    return result;
+}
 #endif //MULTIPLE_OWNER
 
 static OCStackResult SecurePortDiscovery(DiscoveryInfo* discoveryInfo,

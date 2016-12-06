@@ -41,6 +41,8 @@ namespace OC
             size_t chainSize)>CertChainCallBack;
     typedef std::function<OCStackResult(uint8_t verifNum[])> DisplayNumCB;
     typedef std::function<OCStackResult()> UserConfirmNumCB;
+    typedef std::function<void(char* pinData, size_t pinSize)> DisplayPinCB;
+    typedef std::function<void(OicUuid_t deviceId, char* pinBuffer, size_t pinBufferSize)> InputPinCB;
 
     struct ProvisionContext
     {
@@ -54,6 +56,18 @@ namespace OC
         TrustCertChainContext(CertChainCallBack cb) : callback(cb){}
     };
 
+    struct DisplayPinContext
+    {
+        DisplayPinCB callback;
+        DisplayPinContext(DisplayPinCB cb) : callback(cb) {}
+    };
+
+    struct InputPinContext
+    {
+        InputPinCB callback;
+        InputPinContext(InputPinCB cb) : callback(cb) {}
+    };
+
     struct DisplayNumContext
     {
         DisplayNumCB callback;
@@ -65,6 +79,9 @@ namespace OC
         UserConfirmNumCB callback;
         UserConfirmNumContext(UserConfirmNumCB cb) : callback(cb){}
     };
+
+    typedef InputPinContext* InputPinCallbackHandle;
+    typedef DisplayPinContext* DisplayPinCallbackHandle;
 
     /**
      * This class is for credential's to be set to devices.
@@ -227,22 +244,114 @@ namespace OC
             static OCStackResult discoverMultipleOwnedDevices(unsigned short timeout,
                     DeviceList_t &list);
 
+            /**
+             * API is responsible for discovery of a MOT enabled device with a specified deviceID.
+             * The function will return when security information for device with deviceID has been
+             * obtained or the timeout has been exceeded.
+             *
+             * @param timeout      Maximum time, in seconds, this function will listen for responses
+             *                     from servers before returning.
+             * @param deviceID     deviceID of target device
+             * @param foundDevice  OCSecureResource object of found device.
+             * @return ::OC_STACK_OK in case of success and other value otherwise.
+             *         ::OC_STACK_INVALID_PARAM when deviceID is NULL or ppFoundDevice is not
+             *                                  initailized.
+             */
+            static OCStackResult discoverMultipleOwnerEnabledDevice(unsigned short timeout,
+                    const OicUuid_t* deviceID,
+                    std::shared_ptr<OCSecureResource> &foundDevice);
+
 #endif
 
             /**
-             * API for registering Pin Callback.
+             * API for registering a pin input callback. Only one input pin callback is allowed
+             * to be registered at a time by setInputPinCallback and registerInputPinCallback. 
+             * Use unsetInputPinCallback to unregister a callback set by setInputPinCallback. 
              *
-             * @param InputPinCallback inputPin caaback function.
-             * @return ::OC_STACK_OK in case of success and other value otherwise.
+             * @deprecated Use registerInputPinCallback instead.
+             *
+             * @param InputPinCallback inputPin callback function.
+             * @return OC_STACK_OK in case of success and other value otherwise.
+             *         OC_STACK_INVALID_CALLBACK if inputPin is invalid.
+             *         OC_STACK_DUPLICATE_REQUEST if an input pin callback has already been set.
              */
             static OCStackResult setInputPinCallback(InputPinCallback inputPin);
 
             /**
-             * API for de-registering Pin Callback.
+             * API for de-registering a pin callback.
+             *
+             * @deprecated Use deregisterInputPinCallback instead.
              *
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */
             static OCStackResult unsetInputPinCallback();
+
+            /**
+             * API to register for a callback to input a pin. Only one input pin callback is allowed
+             * to be registered at a time by setInputPinCallback and registerInputPinCallback. Use 
+             * deregisterInputPinCallback to unregister a callback set by registerInputPinCallback.
+             *
+             * @param inputPinCB             Callback which is to be registered.
+             * @param inputPinCallbackHandle Pointer to a handle that can be used to deregister the callback.
+             * @return  OC_STACK_OK in case of success and other values otherwise.
+             *          OC_STACK_INVALID_CALLBACK if inputPinCB is invalid.
+             *          OC_STACK_INVALID_PARAM if inputPinCallbackHandle is invalid.
+             *          OC_STACK_DUPLICATE_REQUEST if an input pin callback has already been set.
+             */
+            static OCStackResult registerInputPinCallback(InputPinCB inputPinCB, InputPinCallbackHandle* inputPinCallbackHandle);
+
+            /**
+             * API to de-register the callback to input a pin.
+             *
+             * @param inputPinCallbackHandle Handle specifying which callback to deregister.
+             * @return OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult deregisterInputPinCallback(InputPinCallbackHandle inputPinCallbackHandle);
+
+            /**
+             * API to register a callback to display the stack generated PIN. Only one display pin callback
+             * is allowed to be registered at a time by setDisplayPinCB and registerDisplayPinCallback.
+             * Use unsetDisplayPinCB to unregister a callback set by setDisplayPinCB.
+             *
+             * @deprecated Use registerDisplayPinCallback instead.
+             *
+             * @param displayPin Callback method to display a generated pin.
+             * @return OC_STACK_OK in case of success and other value otherwise.
+             *         OC_STACK_INVALID_CALLBACK if displayPin is invalid.
+             *         OC_STACK_DUPLICATE_REQUEST if a display pin callback has already been set.
+             */
+            static OCStackResult setDisplayPinCB(GeneratePinCallback displayPin);
+
+            /**
+             * API for de-registering the display pin callback.
+             *
+             * @deprecated Use deregisterDisplayPinCallback instead.
+             *
+             * @return ::OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult unsetDisplayPinCB();
+
+            /**
+             * API to register for a callback to display a pin. Only one display pin callback is
+             * allowed to be registered at a time by setDisplayPinCB and registerDisplayPinCallback.
+             * Use deregisterDisplayPinCallback to unregister a callback set by registerDisplayPinCallback.
+             *
+             * @param displayPinCB             Callback which is to be registered.
+             * @param displayPinCallbackHandle Pointer to a handle that can be used to deregister the callback.
+             * @return  OC_STACK_OK in case of success and other value otherwise.
+             *          OC_STACK_INVALID_CALLBACK if displayPinCB is invalid.
+             *          OC_STACK_INVALID_PARAM if displayPinCallbackHandle is invalid.
+             *          OC_STACK_DUPLICATE_REQUEST if a display pin callback has already been set.
+             */
+            static OCStackResult registerDisplayPinCallback(DisplayPinCB displayPinCB, DisplayPinCallbackHandle* displayPinCallbackHandle);
+
+            /**
+             * API to de-register the callback to display a pin.
+             *
+             * @param displayPinCallbackHandle Handle used to deregister the callback.
+             * @return  OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult deregisterDisplayPinCallback(DisplayPinCallbackHandle displayPinCallbackHandle);
 
             /**
              * API to get status of all the devices in current subnet. The status include endpoint
@@ -260,13 +369,6 @@ namespace OC
             static OCStackResult getDevInfoFromNetwork(unsigned short timeout,
                     DeviceList_t &ownedDevList,
                     DeviceList_t &unownedDevList);
-            /**
-             * Server API to register callback to display stack generated PIN.
-             *
-             * @param displayPin Callback Method to Display generated PIN.
-             * @return ::OC_STACK_OK in case of success and other value otherwise.
-             */
-            static OCStackResult setDisplayPinCB(GeneratePinCallback displayPin);
 
             /**
              * API to remove device credential and ACL from all devices in subnet.
@@ -560,6 +662,12 @@ namespace OC
             bool getOwnedStatus();
 
             /**
+             * This function provides the selected ownership transfer method of the device.
+             * @return Selected ownership transfer method.
+             */
+            OicSecOxm_t getSelectedOwnershipTransferMethod();
+
+            /**
              * API to get the proper OxM for OT.
              *
              * @param oxm Address to save the selected OxM.
@@ -629,6 +737,15 @@ namespace OC
             OCStackResult doMultipleOwnershipTransfer(ResultCallBack resultCallback);
 
             /**
+             * API to check if the caller is a subowner of the MOT device.
+             *
+             * @param subowner  Bool indicating if the caller is a subowner.
+             *
+             * @return ::OC_STACK_OK in case of success and other values otherwise.
+             */
+            OCStackResult isSubownerOfDevice(bool* subowner);
+
+            /**
              * API to get the proper OxM for MOT.
              *
              * @param oxm Address to save the selected OxM.
@@ -650,7 +767,6 @@ namespace OC
              * @return ::true in case of MOT enabled.
              */
             bool isMOTEnabled();
-
 
 #endif // MULTIPLE_OWNER
 

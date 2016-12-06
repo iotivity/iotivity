@@ -20,7 +20,10 @@
 
 Import('env')
 
-ocprovision_env = env.Clone()
+lib_env = env.Clone()
+SConscript(lib_env.get('SRC_DIR') + '/resource/third_party_libs.scons', 'lib_env')
+
+ocprovision_env = lib_env.Clone()
 
 ######################################################################
 # Build flags
@@ -66,6 +69,13 @@ if target_os in ['darwin', 'ios']:
 	ocprovision_env.AppendUnique(LIBPATH = [ocprovision_env.get('BUILD_DIR')])
 	ocprovision_env.AppendUnique(LIBS = ['octbstack', 'oc_logger'])
 
+if target_os in ['windows']:
+	ocprovision_env.PrependUnique(LIBS = [
+        'oc',
+        'octbstack',
+        'oc_logger',
+        ])
+
 ######################################################################
 # Source files and Targets
 ######################################################################
@@ -79,7 +89,10 @@ if ocprovision_env.get('WITH_TCP') == True:
 	]
         ocprovision_env.UserInstallTargetHeader('../include/OCCloudProvisioning.hpp', 'resource', 'OCCloudProvisioning.hpp')
 
-ocprovision = ocprovision_env.SharedLibrary('ocprovision', ocprovision_src)
+if target_os not in ['windows']:
+    ocprovision = ocprovision_env.SharedLibrary('ocprovision', ocprovision_src)
+else:
+    ocprovision = ocprovision_env.StaticLibrary('ocprovision', ocprovision_src)
 ocprovision_env.InstallTarget(ocprovision, 'libocprovision')
 ocprovision_env.UserInstallTargetLib(ocprovision, 'libocprovision')
 ocprovision_env.UserInstallTargetHeader('../include/OCProvisioningManager.hpp', 'resource', 'OCProvisioningManager.hpp')

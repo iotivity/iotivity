@@ -170,6 +170,30 @@ OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **
 
 #ifdef MULTIPLE_OWNER
 /**
+ * The function is responsible for the discovery of an MOT-enabled device with the specified deviceID.
+ * The function will return when security information for device with deviceID has been obtained or the
+ * timeout has been exceeded.
+ *
+ * @param[in]  timeoutSeconds  Maximum time, in seconds, this function will listen for responses from 
+ *                             servers before returning.
+ * @param[in]  deviceID        deviceID of target device.
+ * @param[out] ppFoundDevice   OCProvisionDev_t of discovered device. Caller should use
+ *                             OCDeleteDiscoveredDevices to delete the device.
+ * @return OC_STACK_OK in case of success and other values otherwise.
+ */
+OCStackResult OCDiscoverMultipleOwnerEnabledSingleDevice(unsigned short timeoutSeconds,
+                                                         const OicUuid_t* deviceID, 
+                                                         OCProvisionDev_t **ppFoundDevice)
+{
+    if ((NULL == ppFoundDevice) || (NULL != *ppFoundDevice) || (0 == timeoutSeconds) || (NULL == deviceID))
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    return PMMultipleOwnerSingleDeviceDiscovery(timeoutSeconds, deviceID, ppFoundDevice);
+}
+
+/**
  * The function is responsible for discovery of MOT enabled device is current subnet.
  *
  * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
@@ -211,7 +235,6 @@ OCStackResult OCDiscoverMultipleOwnedDevices(unsigned short timeout, OCProvision
  * @param[in] targetDeviceInfo Selected target device.
  * @param[in] preconfigPin Preconfig PIN which is used while multiple owner authentication
  * @param[in] preconfigPinLen Byte length of preconfigPin
- *
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OCAddPreconfigPin(const OCProvisionDev_t *targetDeviceInfo,
@@ -237,6 +260,22 @@ OCStackResult OCDoMultipleOwnershipTransfer(void* ctx,
     return MOTDoOwnershipTransfer(ctx, targetDevices, resultCallback);
 }
 
+/**
+ * The function is responsible for determining if the caller is a subowner of the specified device.
+ *
+ * @param[in]  device      MOT enabled device that contains a list of subowners
+ * @param[out] isSubowner  Bool indicating whether the caller is a subowner of device
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCIsSubownerOfDevice(OCProvisionDev_t *device, bool *isSubowner)
+{
+    if ((NULL == device) || (NULL == isSubowner))
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    return PMIsSubownerOfDevice(device, isSubowner);
+}
 #endif //MULTIPLE_OWNER
 
 /**

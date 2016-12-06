@@ -37,8 +37,28 @@
 #define NUMBER_OF_PINNUM (10)
 #define NUMBER_OF_ALPHABET (26)
 
-static GeneratePinCallback gGenPinCallback = NULL;
-static InputPinCallback gInputPinCallback = NULL;
+/**
+ * Callbacks for displaying a pin.
+ */
+typedef struct DisplayPinCallbacks
+{
+    GeneratePinCallback callback;
+    DisplayPinCallbackWithContext contextCallback;
+    void* context;
+} DisplayPinCallbacks_t;
+
+/**
+ * Callbacks for pin input.
+ */
+typedef struct InputPinCallbacks
+{
+    InputPinCallback callback;
+    InputPinCallbackWithContext contextCallback;
+    void* context;
+} InputPinCallbacks_t;
+
+static DisplayPinCallbacks_t g_displayPinCallbacks = { .callback = NULL, .contextCallback = NULL, .context = NULL };
+static InputPinCallbacks_t g_inputPinCallbacks = { .callback = NULL, .contextCallback = NULL, .context = NULL };
 
 typedef struct PinOxmData {
     uint8_t pinData[OXM_RANDOM_PIN_MAX_SIZE + 1];
@@ -94,8 +114,34 @@ void SetInputPinCB(InputPinCallback pinCB)
         OIC_LOG(ERROR, TAG, "Failed to set callback for input pin.");
         return;
     }
+    
+    if ((NULL != g_inputPinCallbacks.callback) || (NULL != g_inputPinCallbacks.contextCallback))
+    {
+        OIC_LOG(ERROR, TAG, "Callback for input pin is already set.");
+        return;
+    }
 
-    gInputPinCallback = pinCB;
+    g_inputPinCallbacks.callback = pinCB;
+}
+
+OCStackResult SetInputPinWithContextCB(InputPinCallbackWithContext inputPinCB, void* context)
+{
+    if (NULL == inputPinCB)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to set callback for input pin.");
+        return OC_STACK_INVALID_PARAM;
+    }
+    
+    if ((NULL != g_inputPinCallbacks.callback) || (NULL != g_inputPinCallbacks.contextCallback))
+    {
+        OIC_LOG(ERROR, TAG, "Callback for input pin is already set.");
+        return OC_STACK_DUPLICATE_REQUEST;
+    }
+
+    g_inputPinCallbacks.contextCallback = inputPinCB;
+    g_inputPinCallbacks.context = context;
+
+    return OC_STACK_OK;
 }
 
 void SetGeneratePinCB(GeneratePinCallback pinCB)
@@ -106,12 +152,57 @@ void SetGeneratePinCB(GeneratePinCallback pinCB)
         return;
     }
 
-    gGenPinCallback = pinCB;
+    if ((NULL != g_displayPinCallbacks.callback) || (NULL != g_displayPinCallbacks.contextCallback))
+    {
+        OIC_LOG(ERROR, TAG, "Callback for generate pin is already set.");
+        return;
+    }
+
+    g_displayPinCallbacks.callback = pinCB;
+}
+
+OCStackResult SetDisplayPinWithContextCB(DisplayPinCallbackWithContext displayPinCB, void* context)
+{
+    if (NULL == displayPinCB)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to set a callback for displaying a pin.");
+        return OC_STACK_INVALID_PARAM;
+    }
+    
+    if ((NULL != g_displayPinCallbacks.callback) || (NULL != g_displayPinCallbacks.contextCallback))
+    {
+        OIC_LOG(ERROR, TAG, "Callback for displaying a pin is already set.");
+        return OC_STACK_DUPLICATE_REQUEST;
+    }
+
+    g_displayPinCallbacks.contextCallback = displayPinCB;
+    g_displayPinCallbacks.context = context;
+
+    return OC_STACK_OK;
 }
 
 void UnsetInputPinCB()
 {
-    gInputPinCallback = NULL;
+    UnsetInputPinWithContextCB();
+}
+
+void UnsetInputPinWithContextCB()
+{
+    g_inputPinCallbacks.callback = NULL;
+    g_inputPinCallbacks.contextCallback = NULL;
+    g_inputPinCallbacks.context = NULL;
+}
+
+void UnsetGeneratePinCB()
+{
+    UnsetDisplayPinWithContextCB();
+}
+
+void UnsetDisplayPinWithContextCB()
+{
+    g_displayPinCallbacks.callback = NULL;
+    g_displayPinCallbacks.contextCallback = NULL;
+    g_displayPinCallbacks.context = NULL;
 }
 
 /**
@@ -187,9 +278,13 @@ OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize)
     pinBuffer[g_PinOxmData.pinSize] = '\0';
     g_PinOxmData.pinData[g_PinOxmData.pinSize] = '\0';
 
-    if(gGenPinCallback)
+    if(g_displayPinCallbacks.callback)
     {
-        gGenPinCallback(pinBuffer, g_PinOxmData.pinSize);
+        g_displayPinCallbacks.callback(pinBuffer, g_PinOxmData.pinSize);
+    }
+    else if (g_displayPinCallbacks.contextCallback)
+    {
+        g_displayPinCallbacks.contextCallback(pinBuffer, g_PinOxmData.pinSize, g_displayPinCallbacks.context);
     }
     else
     {
@@ -223,7 +318,7 @@ OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize)
     return OC_STACK_OK;
 }
 
-OCStackResult InputPin(char* pinBuffer, size_t bufferSize)
+OCStackResult InputPin(OicUuid_t deviceId, char* pinBuffer, size_t bufferSize)
 {
     if(!pinBuffer)
     {
@@ -236,9 +331,15 @@ OCStackResult InputPin(char* pinBuffer, size_t bufferSize)
         return OC_STACK_INVALID_PARAM;
     }
 
-    if(gInputPinCallback)
+    if(g_inputPinCallbacks.callback)
     {
-        gInputPinCallback(pinBuffer, bufferSize);
+        g_inputPinCallbacks.callback(pinBuffer, bufferSize);
+        OICStrcpy((char*)(g_PinOxmData.pinData), OXM_RANDOM_PIN_MAX_SIZE + 1, pinBuffer);
+        g_PinOxmData.pinSize = strlen((char*)(g_PinOxmData.pinData));
+    }
+    else if (g_inputPinCallbacks.contextCallback)
+    {
+        g_inputPinCallbacks.contextCallback(deviceId, pinBuffer, bufferSize, g_inputPinCallbacks.context);
         OICStrcpy((char*)(g_PinOxmData.pinData), OXM_RANDOM_PIN_MAX_SIZE + 1, pinBuffer);
         g_PinOxmData.pinSize = strlen((char*)(g_PinOxmData.pinData));
     }

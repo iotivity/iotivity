@@ -25,6 +25,20 @@
 
 namespace OC
 {
+    /**
+     * Prevent multiple registrations of the input pin callback since the 
+     * underlying IoTivity stack can only handle having one callback set
+     * at a time.
+     */
+    bool g_inputPinCallbackRegistered = false;
+
+    /**
+     * Prevent multiple registrations of the display pin callback since the
+     * underlying IoTivity stack can only handle having one callback set
+     * at a time.
+     */
+    bool g_displayPinCallbackRegistered = false;
+
     OCStackResult OCSecure::provisionInit(const std::string& dbPath)
     {
         OCStackResult result;
@@ -280,17 +294,65 @@ namespace OC
         return result;
     }
 
+    OCStackResult OCSecure::discoverMultipleOwnerEnabledDevice(unsigned short timeout, const OicUuid_t* deviceID, std::shared_ptr<OCSecureResource> &foundDevice)
+    {
+        OCStackResult result;
+        OCProvisionDev_t *pDev = nullptr;
+        auto csdkLock = OCPlatform_impl::Instance().csdkLock();
+        auto cLock = csdkLock.lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCDiscoverMultipleOwnerEnabledSingleDevice(timeout, deviceID, &pDev);
+            if (result == OC_STACK_OK)
+            {
+                if (pDev)
+                {
+                    foundDevice.reset(new OCSecureResource(csdkLock, pDev));
+                }
+                else
+                {
+                    oclog() << "Not found Secure resource!";
+                    foundDevice.reset();
+                }
+            }
+            else
+            {
+                oclog() << "Secure resource discovery failed!";
+            }
+        }
+        else
+        {
+            oclog() << "Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
 #endif
     OCStackResult OCSecure::setInputPinCallback(InputPinCallback inputPin)
     {
-        OCStackResult result;
+        if (!inputPin)
+        {
+            oclog() << "inputPin can't be null";
+            return OC_STACK_INVALID_PARAM;
+        }
+        else if (g_inputPinCallbackRegistered)
+        {
+            oclog() << "Callback for pin input already registered.";
+            return OC_STACK_DUPLICATE_REQUEST;
+        }
+
+        OCStackResult result = OC_STACK_OK;
         auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
 
         if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             SetInputPinCB(inputPin);
-            result = OC_STACK_OK;
+            g_inputPinCallbackRegistered = true;
         }
         else
         {
@@ -303,18 +365,104 @@ namespace OC
 
     OCStackResult OCSecure::unsetInputPinCallback()
     {
-        OCStackResult result;
+        OCStackResult result = OC_STACK_OK;
         auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
 
         if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             UnsetInputPinCB();
-            result = OC_STACK_OK;
+            g_inputPinCallbackRegistered = false;
         }
         else
         {
-            oclog() <<"Mutex not found";
+            oclog() << "Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+    
+    static void inputPinCallbackWrapper(OicUuid_t deviceId, char* pinBuffer, size_t pinBufferSize, void* context)
+    {
+        (static_cast<InputPinContext*>(context))->callback(deviceId, pinBuffer, pinBufferSize);
+    }
+
+    OCStackResult OCSecure::registerInputPinCallback(InputPinCB inputPinCB, InputPinCallbackHandle* inputPinCallbackHandle)
+    {
+        OCStackResult result = OC_STACK_ERROR;
+
+        if (!inputPinCB)
+        {
+            oclog() << "Failed to register callback for pin input.";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+        else if (!inputPinCallbackHandle)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
+        else if (g_inputPinCallbackRegistered)
+        {
+            oclog() << "Callback for pin input already registered.";
+            return OC_STACK_DUPLICATE_REQUEST;
+        }
+
+        *inputPinCallbackHandle = nullptr;
+
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            InputPinContext* inputPinContext = new InputPinContext(inputPinCB);
+            if (nullptr != inputPinContext)
+            {
+                std::lock_guard<std::recursive_mutex> lock(*cLock);
+                result = SetInputPinWithContextCB(&inputPinCallbackWrapper, static_cast<void*>(inputPinContext));
+                if (OC_STACK_OK == result)
+                {
+                    g_inputPinCallbackRegistered = true;
+                    *inputPinCallbackHandle = inputPinContext;
+                }
+                else
+                {
+                    if (nullptr != inputPinContext)
+                    {
+                        delete inputPinContext;
+                    }
+                }
+            }
+            else
+            {
+                result = OC_STACK_NO_MEMORY;
+            }
+        }
+        else
+        {
+            oclog() << "Mutex not found";
+        }
+
+        return result;
+    }
+
+    OCStackResult OCSecure::deregisterInputPinCallback(InputPinCallbackHandle inputPinCallbackHandle)
+    {
+        OCStackResult result = OC_STACK_OK;
+
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            UnsetInputPinWithContextCB();
+            if (nullptr != inputPinCallbackHandle)
+            {
+                delete inputPinCallbackHandle;
+            }
+            g_inputPinCallbackRegistered = false;
+        }
+        else
+        {
+            oclog() << "Mutex not found";
             result = OC_STACK_ERROR;
         }
 
@@ -375,6 +523,11 @@ namespace OC
             oclog() <<"displayPin can't be null";
             return OC_STACK_INVALID_PARAM;
         }
+        else if (g_displayPinCallbackRegistered)
+        {
+            oclog() << "Callback for pin display already registered.";
+            return OC_STACK_DUPLICATE_REQUEST;
+        }
 
         OCStackResult result = OC_STACK_OK;
         auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
@@ -383,10 +536,116 @@ namespace OC
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             SetGeneratePinCB(displayPin);
+            g_displayPinCallbackRegistered = true;
         }
         else
         {
             oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
+    OCStackResult OCSecure::unsetDisplayPinCB()
+    {
+        OCStackResult result = OC_STACK_OK;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            UnsetGeneratePinCB();
+            g_displayPinCallbackRegistered = false;
+        }
+        else
+        {
+            oclog() << "Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
+    static void displayPinCallbackWrapper(char* pinData, size_t pinDataSize, void* context)
+    {
+        (static_cast<DisplayPinContext*>(context))->callback(pinData, pinDataSize);
+    }
+
+    OCStackResult OCSecure::registerDisplayPinCallback(DisplayPinCB displayPinCB, DisplayPinCallbackHandle* displayPinCallbackHandle)
+    {
+        OCStackResult result = OC_STACK_ERROR;
+
+        if (!displayPinCB)
+        {
+            oclog() << "Failed to register callback for pin display.";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+        else if (!displayPinCallbackHandle)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
+        else if (g_displayPinCallbackRegistered)
+        {
+            oclog() << "Callback for pin display already registered.";
+            return OC_STACK_DUPLICATE_REQUEST;
+        }
+
+        *displayPinCallbackHandle = nullptr;
+
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            DisplayPinContext* displayPinContext = new DisplayPinContext(displayPinCB);
+            if (nullptr != displayPinContext)
+            {
+                std::lock_guard<std::recursive_mutex> lock(*cLock);
+                result = SetDisplayPinWithContextCB(&displayPinCallbackWrapper, static_cast<void*>(displayPinContext));
+                if (OC_STACK_OK == result)
+                {
+                    *displayPinCallbackHandle = displayPinContext;
+                    g_displayPinCallbackRegistered = true;
+                }
+                else
+                {
+                    if (nullptr != displayPinContext)
+                    {
+                        delete displayPinContext;
+                    }
+                }
+            }
+            else
+            {
+                result = OC_STACK_NO_MEMORY;
+            }
+        }
+        else
+        {
+            oclog() << "Mutex not found";
+        }
+
+        return result;
+    }
+
+    OCStackResult OCSecure::deregisterDisplayPinCallback(DisplayPinCallbackHandle displayPinCallbackHandle)
+    {
+        OCStackResult result = OC_STACK_OK;
+
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            UnsetDisplayPinWithContextCB();
+            if (nullptr != displayPinCallbackHandle)
+            {
+                delete displayPinCallbackHandle;
+            }
+            g_displayPinCallbackRegistered = false;
+        }
+        else
+        {
+            oclog() << "Mutex not found";
             result = OC_STACK_ERROR;
         }
 
@@ -813,6 +1072,30 @@ namespace OC
         return result;
     }
 
+    OCStackResult OCSecureResource::isSubownerOfDevice(bool* subowner)
+    {
+        if (!subowner)
+        {
+            oclog() << "Subowner cannot be null";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+
+        OCStackResult result;
+        auto cLock = m_csdkLock.lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCIsSubownerOfDevice(devPtr, subowner);
+        }
+        else
+        {
+            oclog() << "Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
 #endif
     OCStackResult OCSecureResource::provisionACL( const OicSecAcl_t* acl,
             ResultCallBack resultCallback)
@@ -1111,6 +1394,12 @@ namespace OC
     {
         validateSecureResource();
         return devPtr->doxm->owned;
+    }
+
+    OicSecOxm_t OCSecureResource::getSelectedOwnershipTransferMethod()
+    {
+        validateSecureResource();
+        return devPtr->doxm->oxmSel;
     }
 
     void OCSecureResource::validateSecureResource()

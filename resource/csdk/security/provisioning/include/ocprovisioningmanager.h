@@ -144,6 +144,22 @@ OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **
 
 #ifdef MULTIPLE_OWNER
 /**
+ * The function is responsible for the discovery of an MOT-enabled device with the specified deviceID.
+ * The function will return when security information for device with deviceID has been obtained or the 
+ * timeout has been exceeded.
+ *
+ * @param[in]  timeoutSeconds  Maximum time, in seconds, this function will listen for responses from 
+ *                             servers before returning.
+ * @param[in]  deviceID        deviceID of target device.
+ * @param[out] ppFoundDevice   OCProvisionDev_t of discovered device. Caller should use
+ *                             OCDeleteDiscoveredDevices to delete the device.
+ * @return OC_STACK_OK in case of success and other values otherwise.
+ */
+OCStackResult OCDiscoverMultipleOwnerEnabledSingleDevice(unsigned short timeoutSeconds,
+                                                         const OicUuid_t *deviceID, 
+                                                         OCProvisionDev_t **ppFoundDevice);
+
+/**
  * The function is responsible for discovery of MOT enabled device is current subnet.
  *
  * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
@@ -162,6 +178,15 @@ OCStackResult OCDiscoverMultipleOwnerEnabledDevices(unsigned short timeout, OCPr
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OCDiscoverMultipleOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList);
+
+/**
+ * The function is responsible for determining if the caller is a subowner of the specified device.
+ *
+ * @param[in]  device      MOT enabled device that contains a list of subowners.
+ * @param[out] isSubowner  Bool indicating whether the caller is a subowner of device.
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCIsSubownerOfDevice(OCProvisionDev_t *device, bool *isSubowner);
 #endif //MULTIPLE_OWNER
 
 /**

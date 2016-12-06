@@ -49,9 +49,14 @@ typedef enum OicSecPinType{
 }OicSecPinType_t;
 
 /**
- * Function pointer to print pin code.
+ * Function pointer to display pin code.
  */
 typedef void (*GeneratePinCallback)(char* pinData, size_t pinSize);
+
+/**
+ * Function pointer to display pin code, with context.
+ */
+typedef void(*DisplayPinCallbackWithContext)(char* pinData, size_t pinSize, void* context);
 
 /**
  * Function pointer to input pin code.
@@ -59,34 +64,86 @@ typedef void (*GeneratePinCallback)(char* pinData, size_t pinSize);
 typedef void (*InputPinCallback)(char* pinBuf, size_t bufSize);
 
 /**
- * Function to setting generate PIN callback from user.
+ * Function pointer to input pin code, with context and device information.
+ */
+typedef void(*InputPinCallbackWithContext)(OicUuid_t deviceId, char* pinBuffer, size_t pinBufferSize, void* context);
+
+/**
+ * Function to set the display PIN callback from the user.
+ *
+ * @deprecated Use SetDisplayPinWithContextCB instead.
  *
  * @param pinCB implementation of generate PIN callback.
  */
 void SetGeneratePinCB(GeneratePinCallback pinCB);
 
 /**
- * Function to setting input PIN callback from user.
+ * Function to set the display PIN callback from the user with context.
+ *
+ * @param displayPinCB  implementation of display PIN callback.
+ * @param context       context to return in the callback.
+ *
+ * @return OC_STACK_OK in case of success or other value in case of error.
+ *         OC_STACK_INVALID_PARAM if pinCB is invalid.
+ *         OC_STACK_DUPLICATE_REQUEST if a display pin callback has already been set.
+ */
+OCStackResult SetDisplayPinWithContextCB(DisplayPinCallbackWithContext displayPinCB, void* context);
+
+/**
+ * Function to set the input PIN callback from the user.
+ *
+ * @deprecated Use SetInputPinWithContextCB instead.
  *
  * @param pinCB implementation of input PIN callback.
  */
 void SetInputPinCB(InputPinCallback pinCB);
 
 /**
+ * Function to set the input PIN callback from the user with context.
+ *
+ * @param inputPinCB  implementation of input PIN callback.
+ * @param context     context to return in the callback.
+ *
+ * @return OC_STACK_OK in case of success or other value in case of error.
+ *         OC_STACK_INVALID_PARAM if pinCB is invalid. 
+ *         OC_STACK_DUPLICATE_REQUEST if an input pin callback has already been set.
+ */
+OCStackResult SetInputPinWithContextCB(InputPinCallbackWithContext inputPinCB, void* context);
+
+/**
  * Function to unset the input PIN callback.
- * NOTE : Do not call this function while PIN based ownership transfer.
+ * NOTE : Do not call this function while PIN based ownership transfer is in progress.
+ *
+ * @deprecated Use UnsetInputPinWithContextCB instead.
+ *
  */
 void UnsetInputPinCB();
 
 /**
+ * Function to unset the input PIN callback.
+ * NOTE : Do not call this function while PIN based ownership transfer is in progress.
+ */
+void UnsetInputPinWithContextCB();
+
+/**
  * Function to unset the PIN generation callback.
- * NOTE : Do not call this function while PIN based ownership transfer.
+ * NOTE : Do not call this function while PIN based ownership transfer is in progress.
+ *
+ * @deprecated Use UnsetDisplayPinWithContextCB instead.
+ *
  */
 void UnsetGeneratePinCB();
 
 /**
- * Function to generate random PIN.
- * This function will send generated PIN to user via callback.
+ * Function to unset the PIN display callback.
+ * NOTE : Do not call this function while PIN based ownership transfer is in progress.
+ */
+void UnsetDisplayPinWithContextCB();
+
+/**
+ * Function to generate a random PIN.
+ * This function will send a generated PIN to the user via the callback that was set in
+ * SetGeneratePinCB or SetGeneratePinWithContextCB.
  *
  * @param pinBuffer is the reference to the buffer to store the generated PIN data.
  * @param bufferSize is the size of buffer.
@@ -96,14 +153,17 @@ void UnsetGeneratePinCB();
 OCStackResult GeneratePin(char* pinBuffer, size_t bufferSize);
 
 /**
- * Function to input PIN callback via input callback.
+ * Function to get a pin for a device.
+ * This function will acquire a pin from the user via the callback that was set in 
+ * SetInputPinCB or SetInputPinWithContextCB. 
  *
+ * @param[in] deviceId is the device that is requesting a pin
  * @param[in,out] pinBuffer is the reference to the buffer to store the inputed PIN data.
  * @param[in] bufferSize is the size of buffer.
  *
  * @return ::OC_STACK_OK in case of success or other value in ccase of error.
  */
-OCStackResult InputPin(char* pinBuffer, size_t bufferSize);
+OCStackResult InputPin(OicUuid_t deviceId, char* pinBuffer, size_t bufferSize);
 
 #ifdef MULTIPLE_OWNER
 /**
@@ -118,7 +178,7 @@ OCStackResult SetPreconfigPin(const char *pinBuffer, size_t pinLength);
 #endif
 
 /**
- * Function to setting the policy for random PIN generation
+ * Function to set the policy for random PIN generation
  *
  * @param[in] pinSize Byte length of random PIN
  * @param[in] pinType Type of random PIN (ref OicSecPinType)

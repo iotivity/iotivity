@@ -50,6 +50,7 @@ extern "C"
 #define _12_DISCOV_OWN_DEVS_        12
 #ifdef MULTIPLE_OWNER
 #define _13_MOT_DISCOV_DEV_         13
+#define _14_MOT_DISCOV_SINGLE_DEV_  14
 #endif //MULTIPLE_OWNER
 #define _20_REGIST_DEVS_            20
 #define _30_PROVIS_PAIR_DEVS_       30
@@ -281,7 +282,7 @@ static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, 
 }
 #endif //MULTIPLE_OWNER
 
-static void inputPinCB(char* pin, size_t len)
+static void inputPinCB(OicUuid_t deviceId, char *pin, size_t len, void *context)
 {
     if(!pin || OXM_RANDOM_PIN_MIN_SIZE > len)
     {
@@ -342,7 +343,7 @@ static int initProvisionClient(void)
         return -1;
     }
 
-    SetInputPinCB(inputPinCB);
+    SetInputPinWithContextCB(inputPinCB, NULL);
 
     return 0;
 }
@@ -361,7 +362,7 @@ static int discoverAllDevices(void)
         g_unown_list = NULL;
     }
 
-    // call |OCGetDevInfoFromNetwork| API actually
+    // call |OCGetDevInfoFromNetwork| API
     printf("   Discovering All Un/Owned Devices on Network..\n");
     if(OC_STACK_OK != OCGetDevInfoFromNetwork(DISCOVERY_TIMEOUT, &g_own_list, &g_unown_list))
     {
@@ -391,7 +392,7 @@ static int discoverUnownedDevices(void)
         g_unown_list = NULL;
     }
 
-    // call |OCDiscoverUnownedDevices| API actually
+    // call |OCDiscoverUnownedDevices| API
     printf("   Discovering Only Unowned Devices on Network..\n");
     if(OC_STACK_OK != OCDiscoverUnownedDevices(DISCOVERY_TIMEOUT, &g_unown_list))
     {
@@ -417,7 +418,7 @@ static int discoverOwnedDevices(void)
         g_own_list = NULL;
     }
 
-    // call |OCDiscoverOwnedDevices| API actually
+    // call |OCDiscoverOwnedDevices| API
     printf("   Discovering Only Owned Devices on Network..\n");
     if(OC_STACK_OK != OCDiscoverOwnedDevices(DISCOVERY_TIMEOUT, &g_own_list))
     {
@@ -444,7 +445,7 @@ static int discoverMOTEnabledDevices(void)
         g_mot_enable_list = NULL;
     }
 
-    // call |OCDiscoverOwnedDevices| API actually
+    // call |OCDiscoverOwnedDevices| API
     printf("   Discovering Multiple Ownership Transfer Enabled Devices on Network..\n");
     if(OC_STACK_OK != OCDiscoverMultipleOwnerEnabledDevices(DISCOVERY_TIMEOUT, &g_mot_enable_list))
     {
@@ -454,6 +455,50 @@ static int discoverMOTEnabledDevices(void)
 
     // display the discovered owned list
     printf("   > Discovered Multiple Ownership Transfer Enabled Devices\n");
+    g_mot_enable_cnt = printDevList(g_mot_enable_list);
+
+    return 0;
+}
+
+static int discoverSingleMOTEnabledDevice(void)
+{
+    OicUuid_t uuid = { .id = { 0 } };
+    char strUuid[64] = { 0 };
+
+    // Delete owned device list before updating it
+    if (g_mot_enable_list)
+    {
+        OCDeleteDiscoveredDevices(g_mot_enable_list);
+        g_mot_enable_list = NULL;
+    }
+
+    // Get the device id
+    printf("   Specify the Multiple Ownership Transfer enabled device to discover on the network\n");
+    printf("   > Input the UUID : ");
+    for (int ret = 0; 1 != ret; )
+    {
+        ret = scanf("%64s", strUuid);
+        for (; 0x20 <= getchar(); );  // for removing overflow garbages
+                                      // '0x20<=code' is character region
+    }
+
+    OCStackResult rst = ConvertStrToUuid(strUuid, &uuid);
+    if (OC_STACK_OK != rst)
+    {
+        OIC_LOG_V(ERROR, TAG, "ConvertStrToUuid API error: %d", rst);
+        return -1;
+    }
+
+    // Call |OCDiscoverMultipleOwnerEnabledSingleDevice| API
+    printf("   Discovering the Multiple Ownership Transfer enabled device on the network..\n");
+    if (OC_STACK_OK != OCDiscoverMultipleOwnerEnabledSingleDevice(DISCOVERY_TIMEOUT, &uuid, &g_mot_enable_list))
+    {
+        OIC_LOG(ERROR, TAG, "OCDiscoverMultipleOwnerEnabledSingleDevice API error");
+        return -1;
+    }
+
+    // Display the discovered owned list
+    printf("   > Discovered Multiple Ownership Transfer Enabled Device\n");
     g_mot_enable_cnt = printDevList(g_mot_enable_list);
 
     return 0;
@@ -470,7 +515,7 @@ static int registerDevices(void)
         return 0;  // normal case
     }
 
-    // call |OCDoOwnershipTransfer| API actually
+    // call |OCDoOwnershipTransfer| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -524,7 +569,7 @@ static int provisionPairwise(void)
         }
     }
 
-    // call |OCProvisionPairwiseDevices| API actually
+    // call |OCProvisionPairwiseDevices| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -611,7 +656,7 @@ static int provisionCred(void)
     }
 
 
-    // call |OCProvisionCredentials| API actually
+    // call |OCProvisionCredentials| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -677,7 +722,7 @@ static int provisionAcl(void)
         goto PVACL_ERROR;
     }
 
-    // call |OCProvisionACL| API actually
+    // call |OCProvisionACL| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -775,7 +820,7 @@ static int provisionDirectPairing(void)
         goto PVDP_ERROR;
     }
 
-    // call |OCProvisionDirectPairing| API actually
+    // call |OCProvisionDirectPairing| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -837,7 +882,7 @@ static int checkLinkedStatus(void)
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
-    // call |OCGetLinkedStatus| API actually
+    // call |OCGetLinkedStatus| API
     printf("   Checking Selected Link Status on PRVN DB..\n");
     OCUuidList_t* dvid_lst = NULL;
     size_t dvid_cnt = 0;
@@ -932,7 +977,7 @@ static int saveAcl(void)
         goto SVACL_ERROR;
     }
 
-    // call |OCSaveACL| API actually
+    // call |OCSaveACL| API
     rst = OCSaveACL(acl);
     if(OC_STACK_OK != rst)
     {
@@ -979,7 +1024,7 @@ static int getCred(void)
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
-    // call |getDevInst| API actually
+    // call |getDevInst| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -1038,7 +1083,7 @@ static int getAcl(void)
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
-    // call |getDevInst| API actually
+    // call |getDevInst| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -1088,7 +1133,7 @@ static int unlinkPairwise(void)
         return -1;
     }
 
-    // call |OCUnlinkDevices| API actually
+    // call |OCUnlinkDevices| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -1144,7 +1189,7 @@ static int removeDevice(void)
         printf("     Entered Wrong Number. Please Enter Again\n");
     }
 
-    // call |OCRemoveDevice| API actually
+    // call |OCRemoveDevice| API
     // calling this API with callback actually acts like blocking
     // for error checking, the return value saved and printed
     g_doneCB = false;
@@ -2104,7 +2149,8 @@ static void printMenu(void)
     printf("** 11. Discover Only Unowned Devices on Network\n");
 #ifdef MULTIPLE_OWNER
     printf("** 12. Discover Only Owned Devices on Network\n");
-    printf("** 13. Discover Multiple Ownership Transfer Enabled Devices on Network\n\n");
+    printf("** 13. Discover Multiple Ownership Transfer Enabled Devices on Network\n");
+    printf("** 14. Discover Specific Multiple Ownership Transfer Enabled Device on Network\n\n");
 #else
     printf("** 12. Discover Only Owned Devices on Network\n\n");
 #endif //MULTIPLE_OWNER
@@ -2238,6 +2284,12 @@ int main()
             if(discoverMOTEnabledDevices())
             {
                 OIC_LOG(ERROR, TAG, "_13_MOT_DISCOV_DEV_: error");
+            }
+            break;
+        case _14_MOT_DISCOV_SINGLE_DEV_:
+            if (discoverSingleMOTEnabledDevice())
+            {
+                OIC_LOG(ERROR, TAG, "_14_MOT_DISCOV_SINGLE_DEV_: error");
             }
             break;
 #endif //MULTIPLE_OWNER

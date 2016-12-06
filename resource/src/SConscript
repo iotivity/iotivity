@@ -161,5 +161,5 @@ if with_cloud:
 	oclib_env.UserInstallTargetHeader(header_dir + 'OCAccountManager.h', 'resource', 'OCAccountManager.h')
 
 # Add Provisioning library
-if target_os in ['linux', 'android', 'tizen'] and secured == '1':
+if target_os in ['linux', 'android', 'tizen', 'windows'] and secured == '1':
         SConscript('../provisioning/SConscript')

@@ -21,6 +21,7 @@
 #include "gtest/gtest.h"
 #include "time.h"
 
+// Test function hooks
 #define CAcloseSslConnection CAcloseSslConnectionTest
 #define CAdecryptSsl CAdecryptSslTest
 #define CAdeinitSslAdapter CAdeinitSslAdapterTest
@@ -33,6 +34,9 @@
 #define CAsetTlsCipherSuite CAsetTlsCipherSuiteTest
 #define CAsslGenerateOwnerPsk CAsslGenerateOwnerPskTest
 #define CAcloseSslConnectionAll CAcloseSslConnectionAllTest
+#ifdef MULTIPLE_OWNER
+#define GetCASecureEndpointData GetCASecureEndpointDataTest
+#endif
 
 #include "../src/adapter_util/ca_adapter_net_ssl.c"
 

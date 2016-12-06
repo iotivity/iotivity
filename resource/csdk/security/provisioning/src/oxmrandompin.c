@@ -80,7 +80,7 @@ OCStackResult InputPinCodeCallback(OTMContext_t *otmCtx)
 
     uint8_t pinData[OXM_RANDOM_PIN_MAX_SIZE + 1] = {0};
 
-    OCStackResult res = InputPin((char*)pinData, sizeof(pinData));
+    OCStackResult res = InputPin(otmCtx->selectedDeviceInfo->doxm->deviceID, (char*)pinData, sizeof(pinData));
     if (OC_STACK_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Failed to input PIN");

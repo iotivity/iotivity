@@ -11,7 +11,9 @@ OCAddPreconfigPin
 OCChangeMOTMode
 OCDiscoverMultipleOwnedDevices
 OCDiscoverMultipleOwnerEnabledDevices
+OCDiscoverMultipleOwnerEnabledSingleDevice
 OCDoMultipleOwnershipTransfer
+OCIsSubownerOfDevice
 OCProvisionPreconfigPin
 OCSelectMOTMethod
 

@@ -113,7 +113,7 @@ void moveTransferredDevice()
     pUnownedDevList.erase(pUnownedDevList.begin() + transferDevIdx);
 }
 
-void InputPinCB(char* pinBuf, size_t bufSize)
+void OnInputPinCB(OicUuid_t deviceId, char* pinBuf, size_t bufSize)
 {
     if(pinBuf)
     {
@@ -853,7 +853,6 @@ OCStackResult confirmMutualVerifNumCB(void)
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 static int saveTrustCert(void)
 {
-
     // call |OCSaveTrustCertChainBin| API actually
     printf("   Save Trust Cert. Chain into Cred of SVR.\n");
 
@@ -937,12 +936,19 @@ int main(void)
 
     try
     {
+        InputPinCallbackHandle callbackHandle = nullptr;
         int choice;
         OicSecAcl_t *acl1 = nullptr, *acl2 = nullptr;
         if (OCSecure::provisionInit("") != OC_STACK_OK)
         {
             std::cout <<"PM Init failed"<< std::endl;
             return 1;
+        }
+
+        result = OCSecure::registerInputPinCallback(OnInputPinCB, &callbackHandle);
+        if (result != OC_STACK_OK)
+        {
+            std::cout << "!!Error - registerInputPinCallback failed." << std::endl;
         }
 
         result = OCSecure::registerDisplayNumCallback(displayMutualVerifNumCB);
@@ -1049,11 +1055,7 @@ int main(void)
                             break;
                         }
                         transferDevIdx = devNum - 1;
-
-                        //register callbacks for JUST WORKS and PIN methods
-                        std::cout <<"Registering OTM Methods: 1. JUST WORKS and 2. PIN"<<std::endl;
-                        OCSecure::setInputPinCallback(InputPinCB);
-
+                    
                         ask = 0;
                         std::cout << "Transfering ownership for : "<<
                             pUnownedDevList[devNum-1]->getDeviceID()<<std::endl;
@@ -1663,6 +1665,9 @@ int main(void)
                     break;
             }
         }
+
+        // Unregister the input pin callback
+        OCSecure::deregisterInputPinCallback(callbackHandle);
     }
     catch(OCException& e)
     {

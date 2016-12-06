@@ -86,7 +86,7 @@ void moveTransferredDevice()
     pMOTEnabledDeviceList.erase(pMOTEnabledDeviceList.begin() + transferDevIdx);
 }
 
-void InputPinCB(char* pinBuf, size_t bufSize)
+void OnInputPinCB(OicUuid_t deviceId, char* pinBuf, size_t bufSize)
 {
     if(pinBuf)
     {
@@ -184,6 +184,8 @@ void putCallback(const HeaderOptions& /*headerOptions*/, const OCRepresentation&
 
 int main(void)
 {
+    InputPinCallbackHandle callbackHandle = nullptr;
+
     OCPersistentStorage ps {client_open, fread, fwrite, fclose, unlink };
 
     // Create PlatformConfig object
@@ -198,8 +200,11 @@ int main(void)
 
     OCPlatform::Configure(cfg);
 
-    //set Input Pin callback
-    OCSecure::setInputPinCallback(InputPinCB);
+    // Set Input Pin callback
+    if (OC_STACK_OK != OCSecure::registerInputPinCallback(OnInputPinCB, &callbackHandle))
+    {
+        std::cout << "!!Error - registerInputPinCallback failed." << std::endl;
+    }
 
     try
     {
@@ -389,6 +394,9 @@ int main(void)
     {
         oclog() << "Exception in main: "<<e.what();
     }
+
+    // Unregister input pin callback
+    OCSecure::deregisterInputPinCallback(callbackHandle);
 
     return 0;
 }

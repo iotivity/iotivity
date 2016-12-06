@@ -1,6 +1,8 @@
 ; Windows octbstack.dll exports that are required for both products and tests,
 ; but only when building with SECURED=1.
 
+ConvertUuidToStr
+
 CreateJustWorksOwnerTransferPayload
 CreateJustWorksSelectOxmPayload
 CreateMVJustWorksSelectOxmPayload
@@ -18,6 +20,7 @@ OCDeleteDiscoveredDevices
 OCDeletePdAclList
 OCDeleteUuidList
 OCDiscoverOwnedDevices
+OCDiscoverSingleDevice
 OCDiscoverUnownedDevices
 OCDoOwnershipTransfer
 OCGetACLResource
@@ -30,16 +33,27 @@ OCSaveACL
 OCProvisionCredentials
 OCProvisionDirectPairing
 OCProvisionPairwiseDevices
+OCProvisionTrustCertChain
+OCReadTrustCertChain
+OCRegisterTrustCertChainNotifier
 OCRemoveDevice
 OCRemoveDeviceWithUuid
+OCRemoveTrustCertChainNotifier
 OCResetDevice
 OCResetSVRDB
+OCSaveTrustCertChain
 OCSetOwnerTransferCallbackData
 OCUnlinkDevices
 OCSetOxmAllowStatus
 
+SetDisplayPinWithContextCB
+UnsetDisplayPinWithContextCB
 SetGeneratePinCB
+UnsetGeneratePinCB
 SetInputPinCB
+SetInputPinWithContextCB
+UnsetInputPinCB
+UnsetInputPinWithContextCB
 SetRandomPinPolicy
 SetDisplayNumCB
 UnsetDisplayNumCB
