@@ -101,7 +101,7 @@ OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amaclS, uint8_t **cborPayl
 
     const OicSecAmacl_t *amacl = amaclS;
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     // Create AMACL Map
@@ -305,7 +305,7 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
 
                     // TODO : Need to check data structure of OicSecAmacl_t based on RAML spec.
                     headAmacl->resources = (char **) OICCalloc(headAmacl->resourcesLen, sizeof(*headAmacl->resources));
-                    VERIFY_NON_NULL(TAG, headAmacl->resources, ERROR);
+                    VERIFY_NOT_NULL(TAG, headAmacl->resources, ERROR);
 
                     while (cbor_value_is_valid(&rsrcArray))
                     {
@@ -388,7 +388,7 @@ OCStackResult CBORPayloadToAmacl(const uint8_t *cborPayload, size_t size,
             cborFindResult = cbor_value_enter_container(&amaclMap, &amsArray);
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering AMS Array Container.");
             headAmacl->amss = (OicUuid_t *)OICCalloc(headAmacl->amssLen, sizeof(*headAmacl->amss));
-            VERIFY_NON_NULL(TAG, headAmacl->amss, ERROR);
+            VERIFY_NOT_NULL(TAG, headAmacl->amss, ERROR);
             while (cbor_value_is_valid(&amsArray) && cbor_value_is_text_string(&amsArray))
             {
                 char *amssId = NULL;
@@ -601,8 +601,8 @@ OCStackResult AmaclGetAmsDeviceId(const char *resource, OicUuid_t *amsDeviceId)
 {
     OicSecAmacl_t *amacl = NULL;
 
-    VERIFY_NON_NULL(TAG, resource, ERROR);
-    VERIFY_NON_NULL(TAG, amsDeviceId, ERROR);
+    VERIFY_NOT_NULL(TAG, resource, ERROR);
+    VERIFY_NOT_NULL(TAG, amsDeviceId, ERROR);
 
     LL_FOREACH(gAmacl, amacl)
     {

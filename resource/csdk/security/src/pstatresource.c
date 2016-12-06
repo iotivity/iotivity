@@ -112,7 +112,7 @@ OCStackResult PstatToCBORPayload(const OicSecPstat_t *pstat, uint8_t **payload, 
     int64_t cborEncoderResult = CborNoError;
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     if (false == writableOnly)
@@ -275,7 +275,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding PSTAT Map.");
 
     pstat = (OicSecPstat_t *)OICCalloc(1, sizeof(OicSecPstat_t));
-    VERIFY_NON_NULL(TAG, pstat, ERROR);
+    VERIFY_NOT_NULL(TAG, pstat, ERROR);
 
     cborFindResult = cbor_value_map_find_value(&pstatCbor, OIC_JSON_ISOP_NAME, &pstatMap);
     if (CborNoError == cborFindResult && cbor_value_is_boolean(&pstatMap))
@@ -369,7 +369,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
     }
     else
     {
-        VERIFY_NON_NULL(TAG, gPstat, ERROR);
+        VERIFY_NOT_NULL(TAG, gPstat, ERROR);
         pstat->smLen = gPstat->smLen;
         pstat->sm = (OicSecDpom_t*)OICCalloc(pstat->smLen, sizeof(OicSecDpom_t));
         *pstat->sm = *gPstat->sm;
@@ -388,7 +388,7 @@ static OCStackResult CBORPayloadToPstatBin(const uint8_t *cborPayload, const siz
     }
     else
     {
-        VERIFY_NON_NULL(TAG, gPstat, ERROR);
+        VERIFY_NOT_NULL(TAG, gPstat, ERROR);
         memcpy(pstat->rownerID.id, gPstat->rownerID.id, sizeof(gPstat->rownerID.id));
         cborFindResult = CborNoError;
     }
@@ -521,11 +521,11 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
     {
         uint8_t *payload = ((OCSecurityPayload *) ehRequest->payload)->securityData;
         size_t size = ((OCSecurityPayload *) ehRequest->payload)->payloadSize;
-        VERIFY_NON_NULL(TAG, payload, ERROR);
+        VERIFY_NOT_NULL(TAG, payload, ERROR);
 
         bool roParsed = false;
         OCStackResult ret = CBORPayloadToPstatBin(payload, size, &pstat, &roParsed);
-        VERIFY_NON_NULL(TAG, pstat, ERROR);
+        VERIFY_NOT_NULL(TAG, pstat, ERROR);
         if (OC_STACK_OK == ret)
         {
             bool validReq = false;
@@ -771,7 +771,7 @@ OCStackResult InitPstatResource()
     {
         gPstat = GetPstatDefault();
     }
-    VERIFY_NON_NULL(TAG, gPstat, FATAL);
+    VERIFY_NOT_NULL(TAG, gPstat, FATAL);
 
     //In case of Pstat's device id is empty, fill the device id as doxm's device id.
     if(0 == memcmp(&gPstat->deviceID, &emptyUuid, sizeof(OicUuid_t)))

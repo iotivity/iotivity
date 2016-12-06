@@ -154,7 +154,7 @@ OCStackResult SavePairingPSK(OCDevAddr *endpoint,
                 SYMMETRIC_PAIR_WISE_KEY, NULL,
                 &pairingKey, owner, NULL);
         OICClearMemory(pairingPSK, sizeof(pairingPSK));
-        VERIFY_NON_NULL(TAG, cred, ERROR);
+        VERIFY_NOT_NULL(TAG, cred, ERROR);
 
         res = AddCredential(cred);
         if(res != OC_STACK_OK)
@@ -199,7 +199,7 @@ OCStackResult DpairingToCBORPayload(const OicSecDpairing_t *dpair, uint8_t **pay
     uint8_t mapSize = DPAIR_MAP_SIZE;
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     cborEncoderResult = cbor_encoder_create_map(&encoder, &dpairMap, mapSize);
@@ -294,7 +294,7 @@ OCStackResult CBORPayloadToDpair(const uint8_t *cborPayload, size_t size,
     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering DPairing Map");
 
     dpair = (OicSecDpairing_t *)OICCalloc(1, sizeof(*dpair));
-    VERIFY_NON_NULL(TAG, dpair, ERROR);
+    VERIFY_NOT_NULL(TAG, dpair, ERROR);
 
     while (cbor_value_is_valid(&dpairMap) && cbor_value_is_text_string(&dpairMap))
     {
@@ -543,7 +543,7 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
         VERIFY_SUCCESS(TAG, PRM_NOT_ALLOWED == newDpair->spm, ERROR);
 
         const OicSecPconf_t *pconf = GetPconfResourceData();
-        VERIFY_NON_NULL(TAG, pconf, ERROR);
+        VERIFY_NOT_NULL(TAG, pconf, ERROR);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         OCServerRequest * request = (OCServerRequest *)ehRequest->requestHandle;
@@ -562,10 +562,10 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
         LL_FOREACH(pconf->pdacls, pdAcl)
         {
             OicSecAcl_t* acl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
-            VERIFY_NON_NULL(TAG, acl, ERROR);
+            VERIFY_NOT_NULL(TAG, acl, ERROR);
 
             OicSecAce_t* ace = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
-            VERIFY_NON_NULL(TAG, ace, ERROR);
+            VERIFY_NOT_NULL(TAG, ace, ERROR);
 
             LL_APPEND(acl->aces, ace);
 
@@ -574,7 +574,7 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
             for(size_t i = 0; i < pdAcl->resourcesLen; i++)
             {
                 OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-                VERIFY_NON_NULL(TAG, rsrc, ERROR);
+                VERIFY_NOT_NULL(TAG, rsrc, ERROR);
                 LL_APPEND(ace->resources, rsrc);
 
                 //href
@@ -584,16 +584,16 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
                 // if
                 rsrc->interfaceLen = 1;
                 rsrc->interfaces = (char**)OICCalloc(rsrc->interfaceLen, sizeof(char));
-                VERIFY_NON_NULL(TAG, (rsrc->interfaces), ERROR);
+                VERIFY_NOT_NULL(TAG, (rsrc->interfaces), ERROR);
                 rsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-                VERIFY_NON_NULL(TAG, (rsrc->interfaces[0]), ERROR);
+                VERIFY_NOT_NULL(TAG, (rsrc->interfaces[0]), ERROR);
 
                 //rt
                 rsrc->typeLen = 1;
                 rsrc->types = (char**)OICCalloc(rsrc->typeLen, sizeof(char));
-                VERIFY_NON_NULL(TAG, (rsrc->types), ERROR);
+                VERIFY_NOT_NULL(TAG, (rsrc->types), ERROR);
                 rsrc->types[0] = OICStrdup("oic.core");
-                VERIFY_NON_NULL(TAG, (rsrc->types[0]), ERROR);
+                VERIFY_NOT_NULL(TAG, (rsrc->types[0]), ERROR);
             }
 
             ace->permission = pdAcl->permission;
@@ -602,13 +602,13 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
             if(pdAcl->periods || pdAcl->recurrences)
             {
                 OicSecValidity_t* validity = (OicSecValidity_t*)OICCalloc(1, sizeof(OicSecValidity_t));
-                VERIFY_NON_NULL(TAG, validity, ERROR);
+                VERIFY_NOT_NULL(TAG, validity, ERROR);
 
                 if(pdAcl->periods && pdAcl->periods[0])
                 {
                     size_t periodLen = strlen(pdAcl->periods[0]) + 1;
                     validity->period = (char*)OICMalloc(periodLen * sizeof(char));
-                    VERIFY_NON_NULL(TAG, (validity->period), ERROR);
+                    VERIFY_NOT_NULL(TAG, (validity->period), ERROR);
                     OICStrcpy(validity->period, periodLen, pdAcl->periods[0]);
                 }
 
@@ -616,13 +616,13 @@ static OCEntityHandlerResult HandleDpairingPutRequest (const OCEntityHandlerRequ
                 {
                     validity->recurrenceLen = pdAcl->prdRecrLen;
                     validity->recurrences = (char**)OICMalloc(sizeof(char*) * pdAcl->prdRecrLen);
-                    VERIFY_NON_NULL(TAG, (validity->recurrences), ERROR);
+                    VERIFY_NOT_NULL(TAG, (validity->recurrences), ERROR);
 
                     for(size_t i = 0; i < pdAcl->prdRecrLen; i++)
                     {
                         size_t recurrenceLen = strlen(pdAcl->recurrences[i]) + 1;
                         validity->recurrences[i] = (char*)OICMalloc(recurrenceLen  * sizeof(char));
-                        VERIFY_NON_NULL(TAG, (validity->recurrences[i]), ERROR);
+                        VERIFY_NOT_NULL(TAG, (validity->recurrences[i]), ERROR);
 
                         OICStrcpy(validity->recurrences[i], recurrenceLen, pdAcl->recurrences[i]);
                     }

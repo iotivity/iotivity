@@ -234,9 +234,9 @@ bool printPairingMethod(const OCDPDev_t* pDev)
     }
 
     bool bAvailable = true;
-    for(size_t i=0; i<pDev->prmLen; i++)
+    for (size_t i = 0; i < pDev->prmLen; i++)
     {
-        printf("     [%ld] ", i+1);
+        printf("     [%" PRIuPTR "] ", i + 1);
         switch (pDev->prm[i])
         {
             case DP_PRE_CONFIGURED:

@@ -17,9 +17,11 @@
 # limitations under the License.
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Import('env')
 
-thread_env = SConscript('#build_common/thread.scons')
-samples_env = thread_env.Clone()
+samples_env = env.Clone()
+SConscript('#build_common/thread.scons', exports = {'thread_env' : samples_env})
+
 target_os = samples_env.get('TARGET_OS')
 with_ra = samples_env.get ('WITH_RA')
 

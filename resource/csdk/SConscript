@@ -23,9 +23,10 @@
 ##
 Import('env')
 
-lib_env = env.Clone()
+# Build libocsrm
+SConscript('security/SConscript')
 
-liboctbstack_env = lib_env.Clone()
+liboctbstack_env = env.Clone()
 
 target_os = env.get('TARGET_OS')
 rd_mode = env.get('RD_MODE')
@@ -137,7 +138,6 @@ if target_os == 'arduino':
 elif target_os not in ['darwin','ios', 'msys_nt', 'windows']:
 	liboctbstack_env.AppendUnique(CFLAGS = ['-fPIC'])
 if target_os in ['darwin', 'ios']:
-	env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 	liboctbstack_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
 	liboctbstack_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 if target_os not in ['arduino', 'windows']:

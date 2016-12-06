@@ -118,7 +118,7 @@ OCStackResult ConvertUuidToStr(const OicUuid_t* uuid, char** strUuid)
     size_t urnIdx = 0;
     const size_t urnBufSize = (UUID_LENGTH * 2) + 4 + 1;
     char* convertedUrn = (char*)OICCalloc(urnBufSize, sizeof(char));
-    VERIFY_NON_NULL(TAG, convertedUrn, ERROR);
+    VERIFY_NOT_NULL(TAG, convertedUrn, ERROR);
 
     for(uuidIdx=0, urnIdx=0;  uuidIdx < UUID_LENGTH && urnIdx < urnBufSize; uuidIdx++, urnIdx+=2)
     {

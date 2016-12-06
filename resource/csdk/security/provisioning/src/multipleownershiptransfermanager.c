@@ -80,9 +80,9 @@ static OCStackApplicationResult MOTUpdateSecurityResourceCB(void *ctx, OCDoHandl
     OIC_LOG_V(INFO, TAG, "Inside MOTUpdateMomCB.");
     (void)UNUSED;
     OTMContext_t *motCtx = (OTMContext_t*)ctx;
-    VERIFY_NON_NULL(TAG, motCtx, ERROR);
-    VERIFY_NON_NULL(TAG, motCtx->ctxResultCallback, ERROR);
-    VERIFY_NON_NULL(TAG, motCtx->ctxResultArray, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx->ctxResultCallback, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx->ctxResultArray, ERROR);
 
     if(clientResponse)
     {
@@ -130,13 +130,14 @@ static OCStackResult MOTSendPostDoxm(void *ctx,
     OCStackResult postMomRes = OC_STACK_ERROR;
     OCSecurityPayload* secPayload = NULL;
     OTMContext_t *motCtx = NULL;
+    OCProvisionDev_t *localTargetDeviceInfo = NULL;
     bool freeFlag = true;
 
     OIC_LOG(DEBUG, TAG, "IN MOTSendPostDoxm");
 
     //Generate the security payload using updated doxm
     secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    VERIFY_NON_NULL(TAG, secPayload, ERROR);
+    VERIFY_NOT_NULL(TAG, secPayload, ERROR);
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
 
     postMomRes = DoxmToCBORPayload(doxm, &secPayload->securityData, &secPayload->payloadSize, true);
@@ -154,16 +155,19 @@ static OCStackResult MOTSendPostDoxm(void *ctx,
     VERIFY_SUCCESS(TAG, (true == queryGenRes), ERROR);
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
+    localTargetDeviceInfo = PMCloneOCProvisionDev(targetDeviceInfo);
+    VERIFY_NOT_NULL(TAG, localTargetDeviceInfo, ERROR);
+
     //Create the MOT Context to handle the response message
     motCtx = (OTMContext_t*)OICCalloc(1, sizeof(OTMContext_t));
-    VERIFY_NON_NULL(TAG, motCtx, ERROR);
-    motCtx->selectedDeviceInfo = targetDeviceInfo;
+    VERIFY_NOT_NULL(TAG, motCtx, ERROR);
+    motCtx->selectedDeviceInfo = localTargetDeviceInfo;
     motCtx->ctxResultCallback = resultCallback;
     motCtx->ctxResultArraySize = 1;
     motCtx->ctxHasError = false;
     motCtx->userCtx = ctx;
     motCtx->ctxResultArray= (OCProvisionResult_t*)OICCalloc(1, sizeof(OCProvisionResult_t));
-    VERIFY_NON_NULL(TAG, motCtx->ctxResultArray, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx->ctxResultArray, ERROR);
 
     //Send POST request
     OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
@@ -185,6 +189,11 @@ exit:
     {
         OICFree(motCtx->ctxResultArray);
         OICFree(motCtx);
+    }
+
+    if (localTargetDeviceInfo)
+    {
+        PMDeleteDeviceList(localTargetDeviceInfo);
     }
 
     return postMomRes;
@@ -210,9 +219,9 @@ OCStackResult MOTChangeMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
     OIC_LOG(DEBUG, TAG, "IN MOTChangeMode");
 
     VERIFY_SUCCESS(TAG, (OIC_NUMBER_OF_MOM_TYPE > momType), ERROR);
-    VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
+    VERIFY_NOT_NULL(TAG, targetDeviceInfo, ERROR);
     postMomRes = OC_STACK_INVALID_CALLBACK;
-    VERIFY_NON_NULL(TAG, resultCallback, ERROR);
+    VERIFY_NOT_NULL(TAG, resultCallback, ERROR);
 
     //Dulpicate doxm resource to update the 'mom' property
     postMomRes = DoxmToCBORPayload(targetDeviceInfo->doxm, &doxmPayload, &doxmPayloadLen, false);
@@ -220,13 +229,13 @@ OCStackResult MOTChangeMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
 
     postMomRes = CBORPayloadToDoxm(doxmPayload, doxmPayloadLen, &doxm);
     VERIFY_SUCCESS(TAG, (OC_STACK_OK == postMomRes), ERROR);
-    VERIFY_NON_NULL(TAG, doxm, ERROR);
+    VERIFY_NOT_NULL(TAG, doxm, ERROR);
 
     if(NULL == doxm->mom)
     {
         postMomRes = OC_STACK_NO_MEMORY;
         doxm->mom = (OicSecMom_t*)OICCalloc(1, sizeof(OicSecMom_t));
-        VERIFY_NON_NULL(TAG, (doxm->mom), ERROR);
+        VERIFY_NOT_NULL(TAG, (doxm->mom), ERROR);
     }
     doxm->mom->mode = momType;
 
@@ -262,9 +271,9 @@ OCStackResult MOTAddMOTMethod(void *ctx, OCProvisionDev_t *targetDeviceInfo,
     OIC_LOG(DEBUG, TAG, "IN MOTAddMOTMethod");
 
     VERIFY_SUCCESS(TAG, (OIC_OXM_COUNT > newOxm || OIC_PRECONFIG_PIN == newOxm), ERROR);
-    VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
+    VERIFY_NOT_NULL(TAG, targetDeviceInfo, ERROR);
     postOxmRes = OC_STACK_INVALID_CALLBACK;
-    VERIFY_NON_NULL(TAG, resultCallback, ERROR);
+    VERIFY_NOT_NULL(TAG, resultCallback, ERROR);
     postOxmRes = OC_STACK_NO_MEMORY;
 
     for(size_t i = 0; i < targetDeviceInfo->doxm->oxmLen; i++)
@@ -273,7 +282,7 @@ OCStackResult MOTAddMOTMethod(void *ctx, OCProvisionDev_t *targetDeviceInfo,
         {
             OIC_LOG_V(INFO, TAG, "[%d] OxM already supported", (int)newOxm);
             OCProvisionResult_t* resArr = (OCProvisionResult_t*)OICCalloc(1, sizeof(OCProvisionResult_t));
-            VERIFY_NON_NULL(TAG, resArr, ERROR);
+            VERIFY_NOT_NULL(TAG, resArr, ERROR);
             resArr->res = OC_STACK_OK;
             memcpy(resArr->deviceId.id, targetDeviceInfo->doxm->deviceID.id, sizeof(resArr->deviceId.id));
             resultCallback(ctx, 1, resArr, false);
@@ -282,7 +291,7 @@ OCStackResult MOTAddMOTMethod(void *ctx, OCProvisionDev_t *targetDeviceInfo,
     }
 
     newOxms = (OicSecOxm_t*)OICMalloc(sizeof(OicSecOxm_t) * (targetDeviceInfo->doxm->oxmLen + 1));
-    VERIFY_NON_NULL(TAG, newOxms , ERROR);
+    VERIFY_NOT_NULL(TAG, newOxms , ERROR);
 
     for(size_t i = 0; i < targetDeviceInfo->doxm->oxmLen; i++)
     {
@@ -323,9 +332,9 @@ OCStackResult MOTSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDevice
 
     OIC_LOG(DEBUG, TAG, "IN MOTSelectOTMethod");
 
-    VERIFY_NON_NULL(TAG, resultCallback, ERROR);
+    VERIFY_NOT_NULL(TAG, resultCallback, ERROR);
     postMomRes = OC_STACK_INVALID_PARAM;
-    VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
+    VERIFY_NOT_NULL(TAG, targetDeviceInfo, ERROR);
 
     bool isValidOxmsel = false;
     for(size_t i = 0; i < targetDeviceInfo->doxm->oxmLen; i++)
@@ -344,7 +353,7 @@ OCStackResult MOTSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDevice
 
     postMomRes = CBORPayloadToDoxm(doxmPayload, doxmPayloadLen, &doxm);
     VERIFY_SUCCESS(TAG, (OC_STACK_OK == postMomRes), ERROR);
-    VERIFY_NON_NULL(TAG, doxm, ERROR);
+    VERIFY_NOT_NULL(TAG, doxm, ERROR);
 
     doxm->oxmSel = oxmSelValue;
 
@@ -378,23 +387,24 @@ OCStackResult MOTProvisionPreconfigPIN(void *ctx, const OCProvisionDev_t *target
     OCSecurityPayload* secPayload = NULL;
     OTMContext_t *motCtx = NULL;
     OicSecCred_t* pinCred = NULL;
+    OCProvisionDev_t* localTargetDeviceInfo = NULL;
 
     OIC_LOG(DEBUG, TAG, "IN MOTProvisionPreconfigPIN");
 
-    VERIFY_NON_NULL(TAG, resultCallback, ERROR);
+    VERIFY_NOT_NULL(TAG, resultCallback, ERROR);
     postCredRes = OC_STACK_INVALID_PARAM;
-    VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
-    VERIFY_NON_NULL(TAG, preconfPIN, ERROR);
+    VERIFY_NOT_NULL(TAG, targetDeviceInfo, ERROR);
+    VERIFY_NOT_NULL(TAG, preconfPIN, ERROR);
     VERIFY_SUCCESS(TAG, (0 != preconfPINLen), ERROR);
     VERIFY_SUCCESS(TAG, (0 != preconfPINLen && OXM_PRECONFIG_PIN_MAX_SIZE >= preconfPINLen), ERROR);
 
     postCredRes = OC_STACK_NO_MEMORY;
     //Generate PIN based credential
     pinCred = (OicSecCred_t*)OICCalloc(1, sizeof(OicSecCred_t));
-    VERIFY_NON_NULL(TAG, pinCred, ERROR);
+    VERIFY_NOT_NULL(TAG, pinCred, ERROR);
 
     pinCred->privateData.data = (uint8_t*)OICMalloc(preconfPINLen + 1);
-    VERIFY_NON_NULL(TAG, pinCred->privateData.data, ERROR);
+    VERIFY_NOT_NULL(TAG, pinCred->privateData.data, ERROR);
 
     memcpy(pinCred->privateData.data, preconfPIN, preconfPINLen);
     pinCred->privateData.data[preconfPINLen] = '\0';
@@ -405,7 +415,7 @@ OCStackResult MOTProvisionPreconfigPIN(void *ctx, const OCProvisionDev_t *target
 
     //Generate the security payload using updated doxm
     secPayload = (OCSecurityPayload*)OICCalloc(1, sizeof(OCSecurityPayload));
-    VERIFY_NON_NULL(TAG, secPayload, ERROR);
+    VERIFY_NOT_NULL(TAG, secPayload, ERROR);
     secPayload->base.type = PAYLOAD_TYPE_SECURITY;
 
     postCredRes = CredToCBORPayload(pinCred, &secPayload->securityData, &secPayload->payloadSize, false);
@@ -423,16 +433,19 @@ OCStackResult MOTProvisionPreconfigPIN(void *ctx, const OCProvisionDev_t *target
     VERIFY_SUCCESS(TAG, (true == queryGenRes), ERROR);
     OIC_LOG_V(DEBUG, TAG, "Query=%s", query);
 
+    localTargetDeviceInfo = PMCloneOCProvisionDev(targetDeviceInfo);
+    VERIFY_NOT_NULL(TAG, localTargetDeviceInfo, ERROR);
+
     //Create the MOT Context to handle the response message
     motCtx = (OTMContext_t*)OICCalloc(1, sizeof(OTMContext_t));
-    VERIFY_NON_NULL(TAG, motCtx, ERROR);
-    motCtx->selectedDeviceInfo= targetDeviceInfo;
+    VERIFY_NOT_NULL(TAG, motCtx, ERROR);
+    motCtx->selectedDeviceInfo= localTargetDeviceInfo;
     motCtx->ctxResultCallback = resultCallback;
     motCtx->ctxResultArraySize =1;
     motCtx->ctxHasError = false;
     motCtx->userCtx = ctx;
     motCtx->ctxResultArray = (OCProvisionResult_t*)OICCalloc(1, sizeof(OCProvisionResult_t));
-    VERIFY_NON_NULL(TAG, motCtx->ctxResultArray, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx->ctxResultArray, ERROR);
 
     //Send POST request
     OCCallbackData cbData =  {.context=NULL, .cb=NULL, .cd=NULL};
@@ -462,6 +475,12 @@ exit:
         OICFree(pinCred->privateData.data);
         OICFree(pinCred);
     }
+
+    if (localTargetDeviceInfo)
+    {
+        PMDeleteDeviceList(localTargetDeviceInfo);
+    }
+
     return postCredRes;
 }
 
@@ -497,7 +516,7 @@ static bool IsComplete(OTMContext_t* otmCtx)
 static void SetMOTResult(OTMContext_t* motCtx, const OCStackResult res)
 {
     OIC_LOG_V(DEBUG, TAG, "IN SetMOTResult : %d ", res);
-    VERIFY_NON_NULL(TAG, motCtx, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx, ERROR);
 
     if(motCtx->selectedDeviceInfo)
     {
@@ -590,8 +609,8 @@ OCStackResult MOTAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
 
     OIC_LOG(DEBUG, TAG, "IN MOTAddPreconfigPIN");
 
-    VERIFY_NON_NULL(TAG, targetDeviceInfo, ERROR);
-    VERIFY_NON_NULL(TAG, preconfPIN, ERROR);
+    VERIFY_NOT_NULL(TAG, targetDeviceInfo, ERROR);
+    VERIFY_NOT_NULL(TAG, preconfPIN, ERROR);
     VERIFY_SUCCESS(TAG, (0 != preconfPINLen), ERROR);
     VERIFY_SUCCESS(TAG, (0 != preconfPINLen && OXM_PRECONFIG_PIN_MAX_SIZE >= preconfPINLen), ERROR);
 
@@ -605,10 +624,10 @@ OCStackResult MOTAddPreconfigPIN(const OCProvisionDev_t *targetDeviceInfo,
     addCredRes = OC_STACK_NO_MEMORY;
     //Generate PIN based credential
     pinCred = (OicSecCred_t*)OICCalloc(1, sizeof(OicSecCred_t));
-    VERIFY_NON_NULL(TAG, pinCred, ERROR);
+    VERIFY_NOT_NULL(TAG, pinCred, ERROR);
 
     pinCred->privateData.data = (uint8_t*)OICMalloc(preconfPINLen + 1);
-    VERIFY_NON_NULL(TAG, pinCred->privateData.data, ERROR);
+    VERIFY_NOT_NULL(TAG, pinCred->privateData.data, ERROR);
 
     memcpy(pinCred->privateData.data, preconfPIN, preconfPINLen);
     pinCred->privateData.data[preconfPINLen] = '\0';
@@ -678,17 +697,17 @@ static OCStackResult SaveSubOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
         OicSecCred_t *cred = GenerateCredential(&selectedDeviceInfo->doxm->deviceID,
                                       SYMMETRIC_PAIR_WISE_KEY, NULL,
                                       &ownerKey, &ownerDeviceID, &ownerDeviceID);
-        VERIFY_NON_NULL(TAG, cred, ERROR);
+        VERIFY_NOT_NULL(TAG, cred, ERROR);
 
-        uint32_t outSize = 0;
+        size_t outSize = 0;
         size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
         char* b64Buf = (uint8_t *)OICCalloc(1, b64BufSize);
-        VERIFY_NON_NULL(TAG, b64Buf, ERROR);
+        VERIFY_NOT_NULL(TAG, b64Buf, ERROR);
         b64Encode(cred->privateData.data, cred->privateData.len, b64Buf, b64BufSize, &outSize);
 
         OICFree( cred->privateData.data );
         cred->privateData.data = (uint8_t *)OICCalloc(1, outSize + 1);
-        VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
+        VERIFY_NOT_NULL(TAG, cred->privateData.data, ERROR);
 
         strncpy(cred->privateData.data, b64Buf, outSize);
         cred->privateData.data[outSize] = '\0';
@@ -727,8 +746,8 @@ exit:
 static OCStackApplicationResult SubOwnerCredentialHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse)
 {
-    VERIFY_NON_NULL(TAG, clientResponse, WARNING);
-    VERIFY_NON_NULL(TAG, ctx, WARNING);
+    VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
+    VERIFY_NOT_NULL(TAG, ctx, WARNING);
 
     OIC_LOG(DEBUG, TAG, "IN SubOwnerCredentialHandler");
     (void)UNUSED;
@@ -986,9 +1005,9 @@ static OCStackResult StartMultipleOwnershipTransfer(OTMContext_t* motCtx,
     OCStackResult res = OC_STACK_INVALID_PARAM;
     OicUuid_t myUuid = {.id={0}};
 
-    VERIFY_NON_NULL(TAG, motCtx, ERROR);
-    VERIFY_NON_NULL(TAG, selectedDevice, ERROR);
-    VERIFY_NON_NULL(TAG, selectedDevice->doxm, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx, ERROR);
+    VERIFY_NOT_NULL(TAG, selectedDevice, ERROR);
+    VERIFY_NOT_NULL(TAG, selectedDevice->doxm, ERROR);
     motCtx->selectedDeviceInfo = selectedDevice;
 
     res = GetDoxmDeviceID(&myUuid);
@@ -1082,8 +1101,8 @@ static OCStackResult StartMultipleOwnershipTransfer(OTMContext_t* motCtx,
         return res;
     }
     //Only two functions required for MOT
-    VERIFY_NON_NULL(TAG, motCtx->otmCallback.loadSecretCB, ERROR);
-    VERIFY_NON_NULL(TAG, motCtx->otmCallback.createSecureSessionCB, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx->otmCallback.loadSecretCB, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx->otmCallback.createSecureSessionCB, ERROR);
 
     if(OIC_RANDOM_DEVICE_PIN == oxmSel)
     {
@@ -1118,12 +1137,12 @@ OCStackResult MOTDoOwnershipTransfer(void* ctx,
     OTMContext_t* motCtx = NULL;
     OCProvisionDev_t* pCurDev = NULL;
 
-    VERIFY_NON_NULL(TAG, selectedDevicelist, ERROR);
-    VERIFY_NON_NULL(TAG, resultCallback, ERROR);
+    VERIFY_NOT_NULL(TAG, selectedDevicelist, ERROR);
+    VERIFY_NOT_NULL(TAG, resultCallback, ERROR);
 
     res = OC_STACK_NO_MEMORY;
     motCtx = (OTMContext_t*)OICCalloc(1,sizeof(OTMContext_t));
-    VERIFY_NON_NULL(TAG, motCtx, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx, ERROR);
 
     motCtx->ctxResultCallback = resultCallback;
     motCtx->ctxHasError = false;
@@ -1136,7 +1155,7 @@ OCStackResult MOTDoOwnershipTransfer(void* ctx,
 
     motCtx->ctxResultArray =
         (OCProvisionResult_t*)OICCalloc(motCtx->ctxResultArraySize, sizeof(OCProvisionResult_t));
-    VERIFY_NON_NULL(TAG, motCtx->ctxResultArray, ERROR);
+    VERIFY_NOT_NULL(TAG, motCtx->ctxResultArray, ERROR);
 
     //Fill the device UUID for result array.
     size_t devIdx = 0;

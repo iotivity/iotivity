@@ -52,9 +52,9 @@ extern "C"
  * @return  0 on success
  */
 int DeriveCryptoKeyFromPassword(const unsigned char* passwd, size_t pLen,
-                                const uint8_t* salt, const size_t saltLen,
-                                const size_t iterations,
-                                const size_t keyLen, uint8_t* derivedKey);
+                                const uint8_t* salt, size_t saltLen,
+                                size_t iterations,
+                                size_t keyLen, uint8_t* derivedKey);
 
 #ifdef __cplusplus
 }

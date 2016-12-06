@@ -55,27 +55,27 @@ static bool AddResourceToACE(OicSecAce_t* ace, const char* rsrcName,
 {
     OicSecRsrc_t* rsrc = NULL;
 
-    VERIFY_NON_NULL(TAG, ace, ERROR);
-    VERIFY_NON_NULL(TAG, rsrcName, ERROR);
-    VERIFY_NON_NULL(TAG, interfaceName, ERROR);
-    VERIFY_NON_NULL(TAG, typeName, ERROR);
+    VERIFY_NOT_NULL(TAG, ace, ERROR);
+    VERIFY_NOT_NULL(TAG, rsrcName, ERROR);
+    VERIFY_NOT_NULL(TAG, interfaceName, ERROR);
+    VERIFY_NOT_NULL(TAG, typeName, ERROR);
 
     rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-    VERIFY_NON_NULL(TAG, rsrc, ERROR);
+    VERIFY_NOT_NULL(TAG, rsrc, ERROR);
     rsrc->href = OICStrdup(rsrcName);
-    VERIFY_NON_NULL(TAG, rsrc->href, ERROR);
+    VERIFY_NOT_NULL(TAG, rsrc->href, ERROR);
 
     rsrc->typeLen = 1;
     rsrc->types = (char**)OICCalloc(1, sizeof(char*));
-    VERIFY_NON_NULL(TAG, rsrc->types, ERROR);
+    VERIFY_NOT_NULL(TAG, rsrc->types, ERROR);
     rsrc->types[0] = OICStrdup(typeName);
-    VERIFY_NON_NULL(TAG, rsrc->types[0], ERROR);
+    VERIFY_NOT_NULL(TAG, rsrc->types[0], ERROR);
 
     rsrc->interfaceLen = 1;
     rsrc->interfaces = (char**)OICCalloc(1, sizeof(char*));
-    VERIFY_NON_NULL(TAG, rsrc->interfaces, ERROR);
+    VERIFY_NOT_NULL(TAG, rsrc->interfaces, ERROR);
     rsrc->interfaces[0] = OICStrdup(interfaceName);
-    VERIFY_NON_NULL(TAG, rsrc->interfaces[0], ERROR);
+    VERIFY_NOT_NULL(TAG, rsrc->interfaces[0], ERROR);
 
     LL_APPEND(ace->resources, rsrc);
     return true;
@@ -380,7 +380,7 @@ static OCStackResult  populateAcl(OicSecAcl_t *acl,  int numRsrc)
 {
     OCStackResult ret = OC_STACK_ERROR;
     OicSecAce_t* ace = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
-    VERIFY_NON_NULL(TAG, ace, ERROR);
+    VERIFY_NOT_NULL(TAG, ace, ERROR);
 
     memcpy(ace->subjectuuid.id, "2222222222222222", sizeof(ace->subjectuuid.id));
     EXPECT_EQ(true, AddResourceToACE(ace, "/a/led", "oic.core", "oic.if.r"));

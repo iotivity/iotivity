@@ -134,7 +134,7 @@ typedef enum OxmAllowTableIdx {
  * @param[OUT} hasError - If there is no error, it's returned with 'false' but if there is a single
  *                        or more error is/are occured during operation, it will be 'true'.
  */
-typedef void (*OCProvisionResultCB)(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError);
+typedef void (*OCProvisionResultCB)(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError);
 
 
 /**

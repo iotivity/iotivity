@@ -554,9 +554,9 @@ SRMAccessResponse_t CheckPermission(PEContext_t     *context,
 {
     SRMAccessResponse_t retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
 
-    VERIFY_NON_NULL(TAG, context, ERROR);
-    VERIFY_NON_NULL(TAG, subjectId, ERROR);
-    VERIFY_NON_NULL(TAG, resource, ERROR);
+    VERIFY_NOT_NULL(TAG, context, ERROR);
+    VERIFY_NOT_NULL(TAG, subjectId, ERROR);
+    VERIFY_NOT_NULL(TAG, resource, ERROR);
 
     // Each state machine context can only be processing one request at a time.
     // Therefore if the context is not in AWAITING_REQUEST or AWAITING_AMS_RESPONSE

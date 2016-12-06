@@ -435,7 +435,7 @@ OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *select
 }
 
 #ifdef MULTIPLE_OWNER
-static void AddPreconfPinOxMCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+static void AddPreconfPinOxMCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
     ProvPreconfPINCtx_t* provCtx = (ProvPreconfPINCtx_t*)ctx;
     if(provCtx)
@@ -925,7 +925,7 @@ static void UpdateLinkResults(Linkdata_t *link, int device, OCStackResult stackr
 /**
  * Callback to handle ACL provisioning for device 2.
  */
-static void AclProv2CB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+static void AclProv2CB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
 
     if (NULL == ctx)
@@ -961,7 +961,7 @@ static void AclProv2CB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool has
 /**
  * Callback to handle ACL provisioning for device 1
  */
-static void AclProv1CB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+static void AclProv1CB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
 
     if (NULL == ctx)
@@ -1012,7 +1012,7 @@ static void AclProv1CB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool has
 /**
  * Callback to handle credential provisioning.
  */
-static void ProvisionCredsCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+static void ProvisionCredsCB(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
     if (NULL == ctx)
     {

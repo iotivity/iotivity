@@ -69,6 +69,7 @@
 
 #ifdef HAVE_WINDOWS_H
 #include <wincrypt.h>
+#include <intsafe.h>
 #endif
 
 
@@ -92,6 +93,17 @@ typedef enum CredCompareResult{
     CRED_CMP_ERROR = 2
 }CredCompareResult_t;
 
+static bool ValueWithinBounds(uint64_t value, uint64_t maxValue)
+{
+    if (value > maxValue)
+    {
+        OIC_LOG_V(ERROR, TAG, "The value (%ull) is greater than allowed maximum of %ull.", value, maxValue);
+        return false;
+    }
+
+    return true;
+}
+
 /**
  * Internal function to check credential
  */
@@ -102,7 +114,7 @@ static bool IsValidCredential(const OicSecCred_t* cred)
 
     OIC_LOG(DEBUG, TAG, "IN IsValidCredential");
 
-    VERIFY_NON_NULL(TAG, cred, ERROR);
+    VERIFY_NOT_NULL(TAG, cred, ERROR);
     VERIFY_SUCCESS(TAG, 0 != cred->credId, ERROR);
     OIC_LOG_V(DEBUG, TAG, "Cred ID = %d", cred->credId);
 
@@ -115,7 +127,7 @@ static bool IsValidCredential(const OicSecCred_t* cred)
         case SYMMETRIC_GROUP_KEY:
         case PIN_PASSWORD:
         {
-            VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
+            VERIFY_NOT_NULL(TAG, cred->privateData.data, ERROR);
             VERIFY_SUCCESS(TAG, 0 != cred->privateData.len, ERROR);
             VERIFY_SUCCESS(TAG, \
                            (OIC_ENCODING_RAW == cred->privateData.encoding || \
@@ -125,7 +137,7 @@ static bool IsValidCredential(const OicSecCred_t* cred)
         }
         case ASYMMETRIC_KEY:
         {
-            VERIFY_NON_NULL(TAG, cred->publicData.data, ERROR);
+            VERIFY_NOT_NULL(TAG, cred->publicData.data, ERROR);
             VERIFY_SUCCESS(TAG, 0 != cred->publicData.len, ERROR);
             VERIFY_SUCCESS(TAG, \
                            (OIC_ENCODING_UNKNOW < cred->publicData.encoding && \
@@ -149,7 +161,7 @@ static bool IsValidCredential(const OicSecCred_t* cred)
         }
         case ASYMMETRIC_ENCRYPTION_KEY:
         {
-            VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
+            VERIFY_NOT_NULL(TAG, cred->privateData.data, ERROR);
             VERIFY_SUCCESS(TAG, 0 != cred->privateData.len, ERROR);
             VERIFY_SUCCESS(TAG, \
                            (OIC_ENCODING_UNKNOW < cred->privateData.encoding && \
@@ -565,7 +577,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
     }
 
     outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     // Create CRED Root Map (creds, rownerid)
@@ -883,7 +895,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                         temp->next = cred;
                     }
 
-                    VERIFY_NON_NULL(TAG, cred, ERROR);
+                    VERIFY_NOT_NULL(TAG, cred, ERROR);
 
                     while(cbor_value_is_valid(&credMap) && cbor_value_is_text_string(&credMap))
                     {
@@ -982,7 +994,7 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                 if(NULL == cred->eownerID)
                                 {
                                     cred->eownerID = (OicUuid_t*)OICCalloc(1, sizeof(OicUuid_t));
-                                    VERIFY_NON_NULL(TAG, cred->eownerID, ERROR);
+                                    VERIFY_NOT_NULL(TAG, cred->eownerID, ERROR);
                                 }
                                 ret = ConvertStrToUuid(eowner, cred->eownerID);
                                 OICFree(eowner);
@@ -1054,12 +1066,12 @@ bool IsValidCredentialAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cb
 
     OIC_LOG_BUFFER(DEBUG, TAG, cborPayload, size);
 
-    VERIFY_NON_NULL(TAG, uuid, ERROR);
-    VERIFY_NON_NULL(TAG, cborPayload, ERROR);
+    VERIFY_NOT_NULL(TAG, uuid, ERROR);
+    VERIFY_NOT_NULL(TAG, cborPayload, ERROR);
     VERIFY_SUCCESS(TAG, 0 != size, ERROR);
     VERIFY_SUCCESS(TAG, OC_STACK_OK == CBORPayloadToCred(cborPayload, size, &cred), ERROR);
-    VERIFY_NON_NULL(TAG, cred, ERROR);
-    VERIFY_NON_NULL(TAG, cred->eownerID, ERROR);
+    VERIFY_NOT_NULL(TAG, cred, ERROR);
+    VERIFY_NOT_NULL(TAG, cred->eownerID, ERROR);
     VERIFY_SUCCESS(TAG, (memcmp(cred->eownerID->id, uuid->id, sizeof(uuid->id)) == 0), ERROR);
 
     isValidCred = true;
@@ -1082,13 +1094,13 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     OCStackResult ret = OC_STACK_ERROR;
 
     OicSecCred_t *cred = (OicSecCred_t *)OICCalloc(1, sizeof(*cred));
-    VERIFY_NON_NULL(TAG, cred, ERROR);
+    VERIFY_NOT_NULL(TAG, cred, ERROR);
 
     //CredId is assigned before appending new cred to the existing
     //credential list and updating svr database in AddCredential().
     cred->credId = 0;
 
-    VERIFY_NON_NULL(TAG, subject, ERROR);
+    VERIFY_NOT_NULL(TAG, subject, ERROR);
     memcpy(cred->subject.id, subject->id , sizeof(cred->subject.id));
 
     VERIFY_SUCCESS(TAG, credType < (NO_SECURITY_MODE | SYMMETRIC_PAIR_WISE_KEY |
@@ -1099,7 +1111,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     if (publicData && publicData->data)
     {
         cred->publicData.data = (uint8_t *)OICCalloc(1, publicData->len);
-        VERIFY_NON_NULL(TAG, cred->publicData.data, ERROR);
+        VERIFY_NOT_NULL(TAG, cred->publicData.data, ERROR);
         memcpy(cred->publicData.data, publicData->data, publicData->len);
         cred->publicData.len = publicData->len;
     }
@@ -1108,20 +1120,20 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     if (privateData && privateData->data)
     {
         cred->privateData.data = (uint8_t *)OICCalloc(1, privateData->len);
-        VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
+        VERIFY_NOT_NULL(TAG, cred->privateData.data, ERROR);
         memcpy(cred->privateData.data, privateData->data, privateData->len);
         cred->privateData.len = privateData->len;
         cred->privateData.encoding = OIC_ENCODING_RAW;
     }
 
-    VERIFY_NON_NULL(TAG, rownerID, ERROR);
+    VERIFY_NOT_NULL(TAG, rownerID, ERROR);
     memcpy(&cred->rownerID, rownerID, sizeof(OicUuid_t));
 
 #ifdef MULTIPLE_OWNER
     if(eownerID)
     {
         cred->eownerID = (OicUuid_t*)OICCalloc(1, sizeof(OicUuid_t));
-        VERIFY_NON_NULL(TAG, cred->eownerID, ERROR);
+        VERIFY_NOT_NULL(TAG, cred->eownerID, ERROR);
         memcpy(cred->eownerID->id, eownerID->id, sizeof(eownerID->id));
     }
 #else
@@ -1225,9 +1237,18 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
         /* On Windows, keep the credential resource encrypted on disk to protect symmetric and private keys. Only the
          * current user on this system will be able to decrypt it later, to help prevent credential theft.
          */
+        DWORD dwordSize;
+
+        if (FAILED(SizeTToDWord(size, &dwordSize)))
+        {
+            OIC_LOG(DEBUG, TAG, "Cred size too large.");
+            res = OC_STACK_ERROR;
+            ret = false;
+        }
+
         if ((OC_STACK_OK == res) && payload)
         {
-            DATA_BLOB decryptedPayload = { .cbData = size, .pbData = payload };
+            DATA_BLOB decryptedPayload = { .cbData = dwordSize, .pbData = payload };
             DATA_BLOB encryptedPayload = { .cbData = 0, .pbData = NULL };
 
             if (CryptProtectData(
@@ -1355,8 +1376,8 @@ static OicSecCred_t* GetCredDefault()
 
 static bool IsSameSecOpt(const OicSecOpt_t* sk1, const OicSecOpt_t* sk2)
 {
-    VERIFY_NON_NULL(TAG, sk1, WARNING);
-    VERIFY_NON_NULL(TAG, sk2, WARNING);
+    VERIFY_NOT_NULL(TAG, sk1, WARNING);
+    VERIFY_NOT_NULL(TAG, sk2, WARNING);
 
     VERIFY_SUCCESS(TAG, (sk1->len == sk2->len), INFO);
     VERIFY_SUCCESS(TAG, (sk1->encoding == sk2->encoding), INFO);
@@ -1368,8 +1389,8 @@ exit:
 
 static bool IsSameSecKey(const OicSecKey_t* sk1, const OicSecKey_t* sk2)
 {
-    VERIFY_NON_NULL(TAG, sk1, WARNING);
-    VERIFY_NON_NULL(TAG, sk2, WARNING);
+    VERIFY_NOT_NULL(TAG, sk1, WARNING);
+    VERIFY_NOT_NULL(TAG, sk2, WARNING);
 
     VERIFY_SUCCESS(TAG, (sk1->len == sk2->len), INFO);
     VERIFY_SUCCESS(TAG, (sk1->encoding == sk2->encoding), INFO);
@@ -1393,8 +1414,8 @@ static CredCompareResult_t CompareCredential(const OicSecCred_t * l, const OicSe
     bool isCompared = false;
     OIC_LOG(DEBUG, TAG, "IN CompareCredetial");
 
-    VERIFY_NON_NULL(TAG, l, ERROR);
-    VERIFY_NON_NULL(TAG, r, ERROR);
+    VERIFY_NOT_NULL(TAG, l, ERROR);
+    VERIFY_NOT_NULL(TAG, r, ERROR);
 
     cmpResult = CRED_CMP_NOT_EQUAL;
 
@@ -1654,7 +1675,7 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
     const char* oxmLabel = GetOxmString(doxm->oxmSel);
     char* b64Buf = NULL;
     size_t b64BufSize = 0;
-    VERIFY_NON_NULL(TAG, oxmLabel, ERROR);
+    VERIFY_NOT_NULL(TAG, oxmLabel, ERROR);
 
     uint8_t ownerPSK[OWNER_PSK_LENGTH_128] = {0};
     CAResult_t pskRet = CAGenerateOwnerPSK(ownerAddr,
@@ -1673,23 +1694,23 @@ static bool FillPrivateDataOfOwnerPSK(OicSecCred_t* receviedCred, const CAEndpoi
     if(OIC_ENCODING_RAW == receviedCred->privateData.encoding)
     {
         receviedCred->privateData.data = (uint8_t *)OICCalloc(1, OWNER_PSK_LENGTH_128);
-        VERIFY_NON_NULL(TAG, receviedCred->privateData.data, ERROR);
+        VERIFY_NOT_NULL(TAG, receviedCred->privateData.data, ERROR);
         receviedCred->privateData.len = OWNER_PSK_LENGTH_128;
         memcpy(receviedCred->privateData.data, ownerPSK, OWNER_PSK_LENGTH_128);
     }
     else if(OIC_ENCODING_BASE64 == receviedCred->privateData.encoding)
     {
         B64Result b64res = B64_OK;
-        uint32_t b64OutSize = 0;
+        size_t b64OutSize = 0;
         b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
         b64Buf = OICCalloc(1, b64BufSize);
-        VERIFY_NON_NULL(TAG, b64Buf, ERROR);
+        VERIFY_NOT_NULL(TAG, b64Buf, ERROR);
 
         b64res = b64Encode(ownerPSK, OWNER_PSK_LENGTH_128, b64Buf, b64BufSize, &b64OutSize);
         VERIFY_SUCCESS(TAG, B64_OK == b64res, ERROR);
 
         receviedCred->privateData.data = (uint8_t *)OICCalloc(1, b64OutSize + 1);
-        VERIFY_NON_NULL(TAG, receviedCred->privateData.data, ERROR);
+        VERIFY_NOT_NULL(TAG, receviedCred->privateData.data, ERROR);
         receviedCred->privateData.len = b64OutSize;
         strncpy((char*)receviedCred->privateData.data, b64Buf, b64OutSize);
         receviedCred->privateData.data[b64OutSize] = '\0';
@@ -1736,7 +1757,7 @@ static bool FillPrivateDataOfSubOwnerPSK(OicSecCred_t* receivedCred, const CAEnd
     char* b64Buf = NULL;
     //Derive OwnerPSK locally
     const char* oxmLabel = GetOxmString(doxm->oxmSel);
-    VERIFY_NON_NULL(TAG, oxmLabel, ERROR);
+    VERIFY_NOT_NULL(TAG, oxmLabel, ERROR);
 
     uint8_t subOwnerPSK[OWNER_PSK_LENGTH_128] = {0};
     CAResult_t pskRet = CAGenerateOwnerPSK(ownerAddr,
@@ -1754,23 +1775,23 @@ static bool FillPrivateDataOfSubOwnerPSK(OicSecCred_t* receivedCred, const CAEnd
     if(OIC_ENCODING_RAW == receivedCred->privateData.encoding)
     {
         receivedCred->privateData.data = (uint8_t *)OICCalloc(1, OWNER_PSK_LENGTH_128);
-        VERIFY_NON_NULL(TAG, receivedCred->privateData.data, ERROR);
+        VERIFY_NOT_NULL(TAG, receivedCred->privateData.data, ERROR);
         receivedCred->privateData.len = OWNER_PSK_LENGTH_128;
         memcpy(receivedCred->privateData.data, subOwnerPSK, OWNER_PSK_LENGTH_128);
     }
     else if(OIC_ENCODING_BASE64 == receivedCred->privateData.encoding)
     {
-        uint32_t b64OutSize = 0;
+        size_t b64OutSize = 0;
         size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
         b64Buf = OICCalloc(1, b64BufSize);
-        VERIFY_NON_NULL(TAG, b64Buf, ERROR);
+        VERIFY_NOT_NULL(TAG, b64Buf, ERROR);
 
         VERIFY_SUCCESS(TAG, \
                        B64_OK == b64Encode(subOwnerPSK, OWNER_PSK_LENGTH_128, b64Buf, b64BufSize, &b64OutSize), \
                        ERROR);
 
         receivedCred->privateData.data = (uint8_t *)OICCalloc(1, b64OutSize + 1);
-        VERIFY_NON_NULL(TAG, receivedCred->privateData.data, ERROR);
+        VERIFY_NOT_NULL(TAG, receivedCred->privateData.data, ERROR);
         receivedCred->privateData.len = b64OutSize;
         strncpy((char*)receivedCred->privateData.data, b64Buf, b64OutSize);
         receivedCred->privateData.data[b64OutSize] = '\0';
@@ -2192,9 +2213,17 @@ OCStackResult InitCredResource()
 
 #ifdef HAVE_WINDOWS_H
         /* On Windows, if the credential payload isn't cleartext CBOR, it is encrypted. Decrypt and retry. */
+        DWORD dwordSize;
+
+        if (FAILED(SizeTToDWord(size, &dwordSize)))
+        {
+            OIC_LOG(DEBUG, TAG, "Cred size too large.");
+            ret = OC_STACK_ERROR;
+        }
+
         if (ret != OC_STACK_OK)
         {
-            DATA_BLOB encryptedPayload = { .cbData = size, .pbData = data };
+            DATA_BLOB encryptedPayload = { .cbData = dwordSize, .pbData = data };
             DATA_BLOB decryptedPayload = { .cbData = 0, .pbData = NULL };
 
             if (CryptUnprotectData(
@@ -2300,7 +2329,7 @@ OicSecCred_t* GetCredEntryByCredId(const uint16_t credId)
         if(tmpCred->credId == credId)
         {
             cred = (OicSecCred_t*)OICCalloc(1, sizeof(OicSecCred_t));
-            VERIFY_NON_NULL(TAG, cred, ERROR);
+            VERIFY_NOT_NULL(TAG, cred, ERROR);
 
             // common
             cred->next = NULL;
@@ -2317,7 +2346,7 @@ OicSecCred_t* GetCredEntryByCredId(const uint16_t credId)
             if (tmpCred->privateData.data)
             {
                 cred->privateData.data = (uint8_t *)OICCalloc(1, tmpCred->privateData.len);
-                VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
+                VERIFY_NOT_NULL(TAG, cred->privateData.data, ERROR);
 
                 memcpy(cred->privateData.data, tmpCred->privateData.data, tmpCred->privateData.len);
                 cred->privateData.len = tmpCred->privateData.len;
@@ -2327,7 +2356,7 @@ OicSecCred_t* GetCredEntryByCredId(const uint16_t credId)
             else if (tmpCred->publicData.data)
             {
                 cred->publicData.data = (uint8_t *)OICCalloc(1, tmpCred->publicData.len);
-                VERIFY_NON_NULL(TAG, cred->publicData.data, ERROR);
+                VERIFY_NOT_NULL(TAG, cred->publicData.data, ERROR);
 
                 memcpy(cred->publicData.data, tmpCred->publicData.data, tmpCred->publicData.len);
                 cred->publicData.len = tmpCred->publicData.len;
@@ -2335,7 +2364,7 @@ OicSecCred_t* GetCredEntryByCredId(const uint16_t credId)
             else if (tmpCred->optionalData.data)
             {
                 cred->optionalData.data = (uint8_t *)OICCalloc(1, tmpCred->optionalData.len);
-                VERIFY_NON_NULL(TAG, cred->optionalData.data, ERROR);
+                VERIFY_NOT_NULL(TAG, cred->optionalData.data, ERROR);
 
                 memcpy(cred->optionalData.data, tmpCred->optionalData.data, tmpCred->optionalData.len);
                 cred->optionalData.len = tmpCred->optionalData.len;
@@ -2423,14 +2452,17 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                         // TODO: Added as workaround. Will be replaced soon.
                         if(OIC_ENCODING_RAW == cred->privateData.encoding)
                         {
-                            ret = cred->privateData.len;
-                            memcpy(result, cred->privateData.data, ret);
+                            if (ValueWithinBounds(cred->privateData.len, INT32_MAX))
+                            {
+                                ret = (int32_t)cred->privateData.len;
+                                memcpy(result, cred->privateData.data, ret);
+                            }
                         }
                         else if(OIC_ENCODING_BASE64 == cred->privateData.encoding)
                         {
                             size_t outBufSize = B64DECODE_OUT_SAFESIZE((cred->privateData.len + 1));
                             uint8_t* outKey = OICCalloc(1, outBufSize);
-                            uint32_t outKeySize;
+                            size_t outKeySize;
                             if(NULL == outKey)
                             {
                                 OIC_LOG (ERROR, TAG, "Failed to allocate memory.");
@@ -2439,12 +2471,15 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
 
                             if(B64_OK == b64Decode((char*)cred->privateData.data, cred->privateData.len, outKey, outBufSize, &outKeySize))
                             {
-                                memcpy(result, outKey, outKeySize);
-                                ret = outKeySize;
+                                if (ValueWithinBounds(outKeySize, INT32_MAX))
+                                {
+                                    memcpy(result, outKey, outKeySize);
+                                    ret = (int32_t)outKeySize;
+                                }
                             }
                             else
                             {
-                                OIC_LOG (ERROR, TAG, "Failed to base64 decoding.");
+                                OIC_LOG (ERROR, TAG, "Failed base64 decoding.");
                             }
 
                             OICFree(outKey);
@@ -2470,7 +2505,7 @@ int32_t GetDtlsPskCredentials(CADtlsPskCredType_t type,
                             {
                                 //Read PIN/PW
                                 char* pinBuffer = NULL;
-                                uint32_t pinLength = 0;
+                                size_t pinLength = 0;
                                 if(OIC_ENCODING_RAW == wildCardCred->privateData.encoding)
                                 {
                                     pinBuffer = OICCalloc(1, wildCardCred->privateData.len + 1);
@@ -2684,7 +2719,7 @@ void GetDerCaCert(ByteArray_t * crt, const char * usage)
                     OIC_LOG(ERROR, TAG, "Failed to allocate memory");
                     return;
                 }
-                uint32_t outSize;
+                size_t outSize;
                 if(B64_OK != b64Decode((char*)(temp->optionalData.data),
                                        temp->optionalData.len, buf, bufSize, &outSize))
                 {

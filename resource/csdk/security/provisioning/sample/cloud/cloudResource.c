@@ -131,7 +131,7 @@ static OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *request
         {
             // Create new LED instance
             char uri[15] = "/a/led/";
-            int length = strlen(uri);
+            size_t length = strlen(uri);
             snprintf (uri + length, sizeof(uri) - length, "%d", gCurrLedInstance);
 
             answer = OCRepPayloadCreate();

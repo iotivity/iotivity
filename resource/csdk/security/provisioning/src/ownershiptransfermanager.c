@@ -57,6 +57,7 @@
 #include "credresource.h"
 #include "aclresource.h"
 #include "ownershiptransfermanager.h"
+#include "secureresourceprovider.h"
 #include "securevirtualresourcetypes.h"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
@@ -100,7 +101,7 @@ OCStackResult OTMSetOTCallback(OicSecOxm_t oxm, OTMCallbackData_t* callbacks)
 
     OIC_LOG(INFO, TAG, "IN OTMSetOTCallback");
 
-    VERIFY_NON_NULL(TAG, callbacks, ERROR);
+    VERIFY_NOT_NULL(TAG, callbacks, ERROR);
 
 #ifdef MULTIPLE_OWNER
     VERIFY_SUCCESS(TAG, (OIC_OXM_COUNT > oxm || OIC_PRECONFIG_PIN == oxm || OIC_MV_JUST_WORKS == oxm
@@ -757,17 +758,17 @@ static OCStackResult SaveOwnerPSK(OCProvisionDev_t *selectedDeviceInfo)
                                   SYMMETRIC_PAIR_WISE_KEY, NULL,
                                   &ownerKey, &ownerDeviceID, NULL);
         OICClearMemory(ownerPSK, sizeof(ownerPSK));
-        VERIFY_NON_NULL(TAG, cred, ERROR);
+        VERIFY_NOT_NULL(TAG, cred, ERROR);
 
-        uint32_t outSize = 0;
+        size_t outSize = 0;
         size_t b64BufSize = B64ENCODE_OUT_SAFESIZE((OWNER_PSK_LENGTH_128 + 1));
         char* b64Buf = (char *)OICCalloc(1, b64BufSize);
-        VERIFY_NON_NULL(TAG, b64Buf, ERROR);
+        VERIFY_NOT_NULL(TAG, b64Buf, ERROR);
         b64Encode(cred->privateData.data, cred->privateData.len, b64Buf, b64BufSize, &outSize);
 
         OICFree( cred->privateData.data );
         cred->privateData.data = (uint8_t *)OICCalloc(1, outSize + 1);
-        VERIFY_NON_NULL(TAG, cred->privateData.data, ERROR);
+        VERIFY_NOT_NULL(TAG, cred->privateData.data, ERROR);
 
         strncpy((char*)(cred->privateData.data), b64Buf, outSize);
         cred->privateData.data[outSize] = '\0';
@@ -841,8 +842,8 @@ static OCStackApplicationResult OwnerTransferModeHandler(void *ctx, OCDoHandle U
 {
     OIC_LOG(DEBUG, TAG, "IN OwnerTransferModeHandler");
 
-    VERIFY_NON_NULL(TAG, clientResponse, WARNING);
-    VERIFY_NON_NULL(TAG, ctx, WARNING);
+    VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
+    VERIFY_NOT_NULL(TAG, ctx, WARNING);
 
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
     otmCtx->ocDoHandle = NULL;
@@ -885,8 +886,8 @@ static OCStackApplicationResult ListMethodsHandler(void *ctx, OCDoHandle UNUSED,
 {
     OIC_LOG(DEBUG, TAG, "IN ListMethodsHandler");
 
-    VERIFY_NON_NULL(TAG, clientResponse, WARNING);
-    VERIFY_NON_NULL(TAG, ctx, WARNING);
+    VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
+    VERIFY_NOT_NULL(TAG, ctx, WARNING);
 
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
     otmCtx->ocDoHandle = NULL;
@@ -960,8 +961,8 @@ exit:
 static OCStackApplicationResult OwnerUuidUpdateHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse)
 {
-    VERIFY_NON_NULL(TAG, clientResponse, WARNING);
-    VERIFY_NON_NULL(TAG, ctx, WARNING);
+    VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
+    VERIFY_NOT_NULL(TAG, ctx, WARNING);
 
     OIC_LOG(DEBUG, TAG, "IN OwnerUuidUpdateHandler");
     (void)UNUSED;
@@ -1032,8 +1033,8 @@ static OCStackApplicationResult OperationModeUpdateHandler(void *ctx, OCDoHandle
 {
     OIC_LOG(DEBUG, TAG, "IN OperationModeUpdateHandler");
 
-    VERIFY_NON_NULL(TAG, clientResponse, WARNING);
-    VERIFY_NON_NULL(TAG, ctx, WARNING);
+    VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
+    VERIFY_NOT_NULL(TAG, ctx, WARNING);
 
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
     otmCtx->ocDoHandle = NULL;
@@ -1101,8 +1102,8 @@ exit:
 static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse)
 {
-    VERIFY_NON_NULL(TAG, clientResponse, WARNING);
-    VERIFY_NON_NULL(TAG, ctx, WARNING);
+    VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
+    VERIFY_NOT_NULL(TAG, ctx, WARNING);
 
     OIC_LOG(DEBUG, TAG, "IN OwnerCredentialHandler");
     (void)UNUSED;
@@ -1195,8 +1196,8 @@ exit:
 static OCStackApplicationResult OwnerAclHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse)
 {
-    VERIFY_NON_NULL(TAG, clientResponse, WARNING);
-    VERIFY_NON_NULL(TAG, ctx, WARNING);
+    VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
+    VERIFY_NOT_NULL(TAG, ctx, WARNING);
 
     OIC_LOG(DEBUG, TAG, "IN OwnerAclHandler");
     (void)UNUSED;
@@ -1243,8 +1244,8 @@ exit:
 static OCStackApplicationResult OwnershipInformationHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse)
 {
-    VERIFY_NON_NULL(TAG, clientResponse, WARNING);
-    VERIFY_NON_NULL(TAG, ctx, WARNING);
+    VERIFY_NOT_NULL(TAG, clientResponse, WARNING);
+    VERIFY_NOT_NULL(TAG, ctx, WARNING);
 
     OIC_LOG(DEBUG, TAG, "IN OwnershipInformationHandler");
     (void)UNUSED;
@@ -1294,8 +1295,8 @@ static OCStackApplicationResult ProvisioningStatusHandler(void *ctx, OCDoHandle 
 {
     OIC_LOG_V(INFO, TAG, "IN ProvisioningStatusHandler.");
 
-    VERIFY_NON_NULL(TAG, clientResponse, ERROR);
-    VERIFY_NON_NULL(TAG, ctx, ERROR);
+    VERIFY_NOT_NULL(TAG, clientResponse, ERROR);
+    VERIFY_NOT_NULL(TAG, ctx, ERROR);
 
     OTMContext_t* otmCtx = (OTMContext_t*) ctx;
     otmCtx->ocDoHandle = NULL;
@@ -1342,8 +1343,8 @@ static OCStackApplicationResult ReadyForNomalStatusHandler(void *ctx, OCDoHandle
 {
     OIC_LOG_V(INFO, TAG, "IN ReadyForNomalStatusHandler.");
 
-    VERIFY_NON_NULL(TAG, clientResponse, ERROR);
-    VERIFY_NON_NULL(TAG, ctx, ERROR);
+    VERIFY_NOT_NULL(TAG, clientResponse, ERROR);
+    VERIFY_NOT_NULL(TAG, ctx, ERROR);
 
     OTMContext_t* otmCtx = (OTMContext_t*) ctx;
     otmCtx->ocDoHandle = NULL;
@@ -1898,8 +1899,8 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
     OIC_LOG(INFO, TAG, "IN StartOwnershipTransfer");
     OCStackResult res = OC_STACK_INVALID_PARAM;
 
-    VERIFY_NON_NULL(TAG, selectedDevice, ERROR);
-    VERIFY_NON_NULL(TAG, selectedDevice->doxm, ERROR);
+    VERIFY_NOT_NULL(TAG, selectedDevice, ERROR);
+    VERIFY_NOT_NULL(TAG, selectedDevice->doxm, ERROR);
 
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
     otmCtx->selectedDeviceInfo = selectedDevice;

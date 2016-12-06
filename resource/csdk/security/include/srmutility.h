@@ -63,12 +63,26 @@ struct OicParseQueryIter
             {OIC_LOG((logLevel), tag, #op " failed!!"); goto exit; } }while(0)
 
 /**
+ * Macro to verify success of operation.
+ * eg: VERIFY_SUCCESS_RETURN(TAG, OC_STACK_OK == foo(), ERROR, OC_STACK_ERROR);
+ */
+#define VERIFY_SUCCESS_RETURN(tag, op, logLevel, retValue) do { if (!(op)) \
+            {OIC_LOG((logLevel), tag, #op " failed!!"); return retValue;} } while(0)
+
+/**
  * Macro to verify argument is not equal to NULL.
- * eg: VERIFY_NON_NULL(TAG, ptrData, ERROR);
+ * eg: VERIFY_NOT_NULL(TAG, ptrData, ERROR);
  * @note Invoking function must define "exit:" label for goto functionality to work correctly.
  */
-#define VERIFY_NON_NULL(tag, arg, logLevel) do{ if (NULL == (arg)) \
+#define VERIFY_NOT_NULL(tag, arg, logLevel) do{ if (NULL == (arg)) \
             { OIC_LOG((logLevel), tag, #arg " is NULL"); goto exit; } }while(0)
+
+/**
+ * Macro to verify argument is not equal to NULL.
+ * eg: VERIFY_NOT_NULL_RETURN(TAG, ptrData, ERROR, OC_STACK_ERROR);
+ */
+#define VERIFY_NOT_NULL_RETURN(tag, arg, logLevel, retValue) do { if (NULL == (arg)) \
+            { OIC_LOG((logLevel), tag, #arg " is NULL"); return retValue; } } while(0)
 
 /**
  * This method initializes the @ref OicParseQueryIter_t struct.

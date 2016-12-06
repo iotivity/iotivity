@@ -59,7 +59,7 @@ OCStackResult DiscoverAmsService(PEContext_t *context)
     char uri[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     OCCallbackData cbData = {.context=NULL};
 
-    VERIFY_NON_NULL(TAG, context, ERROR);
+    VERIFY_NOT_NULL(TAG, context, ERROR);
     snprintf(uri, sizeof(uri), DOXM_DEVICEID_QUERY_FMT, OIC_RSRC_DOXM_URI,
                                        OIC_JSON_DEVICE_ID_NAME,
                                        context->amsMgrContext->amsDeviceId.id);
@@ -231,8 +231,8 @@ OCStackResult SendAclReq(PEContext_t *context, OCDevAddr *devAddr, OCConnectivit
     OCDevAddr destAddr = {.adapter = OC_ADAPTER_IP};
     char *subID = NULL;
 
-    VERIFY_NON_NULL(TAG, context, ERROR);
-    VERIFY_NON_NULL(TAG, devAddr, ERROR);
+    VERIFY_NOT_NULL(TAG, context, ERROR);
+    VERIFY_NOT_NULL(TAG, devAddr, ERROR);
 
     ret = ConvertUuidToStr(&context->subject, &subID);
     if(OC_STACK_OK != ret)
@@ -323,7 +323,7 @@ OCStackResult UpdateAmsMgrContext(PEContext_t *context, const CAEndpoint_t *endp
                         const CARequestInfo_t *requestInfo)
 {
     OCStackResult ret = OC_STACK_INVALID_PARAM;
-    VERIFY_NON_NULL(TAG, context->amsMgrContext, ERROR);
+    VERIFY_NOT_NULL(TAG, context->amsMgrContext, ERROR);
     ret = OC_STACK_ERROR;
 
     //The AmsMgr context endpoint and requestInfo will be free from ,
@@ -334,7 +334,7 @@ OCStackResult UpdateAmsMgrContext(PEContext_t *context, const CAEndpoint_t *endp
         context->amsMgrContext->endpoint = NULL;
     }
     context->amsMgrContext->endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof(CAEndpoint_t ));
-    VERIFY_NON_NULL(TAG, context->amsMgrContext->endpoint, ERROR);
+    VERIFY_NOT_NULL(TAG, context->amsMgrContext->endpoint, ERROR);
     *context->amsMgrContext->endpoint = *endpoint;
 
     if (context->amsMgrContext->requestInfo)
@@ -343,7 +343,7 @@ OCStackResult UpdateAmsMgrContext(PEContext_t *context, const CAEndpoint_t *endp
         context->amsMgrContext->requestInfo = NULL;
     }
     context->amsMgrContext->requestInfo = CACloneRequestInfo(requestInfo);
-    VERIFY_NON_NULL(TAG, context->amsMgrContext->requestInfo, ERROR);
+    VERIFY_NOT_NULL(TAG, context->amsMgrContext->requestInfo, ERROR);
     ret = OC_STACK_OK;
 exit:
     return ret;
@@ -371,7 +371,7 @@ bool FoundAmaclForRequest(PEContext_t *context)
     OIC_LOG_V(INFO, TAG, "%s:no ACL found. Searching for AMACL",__func__);
 
     bool ret = false;
-    VERIFY_NON_NULL(TAG, context, ERROR);
+    VERIFY_NOT_NULL(TAG, context, ERROR);
     memset(&context->amsMgrContext->amsDeviceId, 0, sizeof(context->amsMgrContext->amsDeviceId));
 
     //Call amacl resource function to get the AMS service deviceID for the resource

@@ -990,7 +990,7 @@ namespace OC
     }
 #endif // __WITH_DTLS__ || __WITH_TLS__
 
-    void OCSecureResource::callbackWrapper(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
+    void OCSecureResource::callbackWrapper(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError)
     {
         PMResultList_t *results = nullptr;
         ProvisionContext* context = static_cast<ProvisionContext*>(ctx);
@@ -1005,7 +1005,7 @@ namespace OC
             return;
         }
 
-        for (int i = 0; i < nOfRes; i++)
+        for (size_t i = 0; i < nOfRes; i++)
         {
             results->push_back(arr[i]);
         }

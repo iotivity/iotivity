@@ -37,6 +37,7 @@
 #include "pconfresource.h"
 #include "credentialgenerator.h"
 #include "cainterface.h"
+#include "oic_string.h"
 #include "pmtypes.h"
 #include "pmutility.h"
 #include "srmutility.h"
@@ -44,27 +45,13 @@
 #include "base64.h"
 #include "utlist.h"
 #include "ocpayload.h"
+#include "srmutility.h"
 
 #ifdef __WITH_DTLS__
 #include "crlresource.h"
 #endif // WITH_X509__
 
 #define TAG "OIC_SRPAPI"
-
-/**
- * Macro to verify argument is not equal to NULL.
- * eg: VERIFY_NON_NULL_RET(TAG, ptrData, ERROR,OC_STACK_ERROR);
- */
-#define VERIFY_NON_NULL_RET(tag, arg, logLevel, retValue) { if (NULL == (arg)) \
-            { OIC_LOG((logLevel), tag, #arg " is NULL"); return retValue; } }
-
-/**
- * Macro to verify success of operation.
- * eg: VERIFY_SUCCESS_RET(TAG, OC_STACK_OK == foo(), ERROR, OC_STACK_ERROR);
- */
-#define VERIFY_SUCCESS_RET(tag, op, logLevel, retValue) { if (!(op)) \
-            {OIC_LOG((logLevel), tag, #op " failed!!"); return retValue;} }
-
 
 trustCertChainContext_t g_trustCertChainNotifier;
 
@@ -161,7 +148,6 @@ static OCStackResult provisionCredentials(const OicSecCred_t *cred,
         const OCProvisionDev_t *deviceInfo, CredentialData_t *credData,
         OCClientResponseHandler responseHandler);
 
-
 /**
  * Internal function to update result in result array.
  */
@@ -196,7 +182,7 @@ static void registerResultForCredProvisioning(CredentialData_t *credData,
 static OCStackApplicationResult provisionCredentialCB2(void *ctx, OCDoHandle UNUSED,
                                                        OCClientResponse *clientResponse)
 {
-    VERIFY_NON_NULL_RET(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
     CredentialData_t *credData = (CredentialData_t *) ctx;
     (void)UNUSED;
 
@@ -247,7 +233,7 @@ static OCStackApplicationResult provisionCredentialCB2(void *ctx, OCDoHandle UNU
 static OCStackApplicationResult provisionCredentialCB1(void *ctx, OCDoHandle UNUSED,
                                                        OCClientResponse *clientResponse)
 {
-    VERIFY_NON_NULL_RET(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
     (void)UNUSED;
     CredentialData_t* credData = (CredentialData_t*) ctx;
     OICFree(credData->credInfoFirst);
@@ -299,7 +285,6 @@ static OCStackApplicationResult provisionCredentialCB1(void *ctx, OCDoHandle UNU
     }
     return OC_STACK_DELETE_TRANSACTION;
 }
-
 
 
 /**
@@ -425,7 +410,7 @@ void SRPRemoveTrustCertChainNotifier()
 static OCStackApplicationResult provisionCertCB(void *ctx, OCDoHandle UNUSED,
                                                        OCClientResponse *clientResponse)
 {
-    VERIFY_NON_NULL_RET(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
     CertData_t *certData = (CertData_t *) ctx;
     (void)UNUSED;
 
@@ -459,8 +444,8 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
         const OCProvisionDev_t *selectedDeviceInfo, OCProvisionResultCB resultCallback)
 {
     OIC_LOG(INFO, TAG, "In SRPProvisionTrustCertChain");
-    VERIFY_NON_NULL_RET(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL_RET(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
+    VERIFY_NOT_NULL_RETURN(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
     if (SIGNED_ASYMMETRIC_KEY != type)
     {
         OIC_LOG(INFO, TAG, "Invalid key type");
@@ -545,7 +530,7 @@ OCStackResult SRPProvisionTrustCertChain(void *ctx, OicSecCredType_t type, uint1
         OICFree(certData);
     }
 
-    VERIFY_SUCCESS_RET(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
+    VERIFY_SUCCESS_RETURN(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
     return OC_STACK_OK;
 }
 
@@ -553,18 +538,18 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
                                             OicEncodingType_t encodingType, uint16_t *credId)
 {
     OIC_LOG(DEBUG, TAG, "IN SRPSaveTrustCertChain");
-    VERIFY_NON_NULL_RET(TAG, trustCertChain, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL_RET(TAG, credId, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, trustCertChain, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, credId, ERROR,  OC_STACK_INVALID_PARAM);
 
     OCStackResult res = OC_STACK_ERROR;
 
     OicSecCred_t *cred = (OicSecCred_t *)OICCalloc(1, sizeof(*cred));
-    VERIFY_NON_NULL_RET(TAG, cred, ERROR, OC_STACK_NO_MEMORY);
+    VERIFY_NOT_NULL_RETURN(TAG, cred, ERROR, OC_STACK_NO_MEMORY);
 
     memcpy(cred->subject.id, &WILDCARD_SUBJECT_ID, WILDCARD_SUBJECT_ID_LEN);
 
     cred->credUsage= (char *)OICCalloc(1, strlen(TRUST_CA)+1 );
-    VERIFY_NON_NULL_RET(TAG, cred->credUsage, ERROR, OC_STACK_NO_MEMORY);
+    VERIFY_NOT_NULL_RETURN(TAG, cred->credUsage, ERROR, OC_STACK_NO_MEMORY);
     OICStrcpy(cred->credUsage, strlen(TRUST_CA) + 1, TRUST_CA);
 
     cred->credType = SIGNED_ASYMMETRIC_KEY;
@@ -572,13 +557,13 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
     if (encodingType == OIC_ENCODING_PEM)
     {
         cred->optionalData.data = (uint8_t *)OICCalloc(1, chainSize + 1);
-        VERIFY_NON_NULL_RET(TAG, cred->optionalData.data, ERROR, OC_STACK_NO_MEMORY);
+        VERIFY_NOT_NULL_RETURN(TAG, cred->optionalData.data, ERROR, OC_STACK_NO_MEMORY);
         cred->optionalData.len = chainSize + 1;
     }
     else
     {
         cred->optionalData.data = (uint8_t *)OICCalloc(1, chainSize);
-        VERIFY_NON_NULL_RET(TAG, cred->optionalData.data, ERROR, OC_STACK_NO_MEMORY);
+        VERIFY_NOT_NULL_RETURN(TAG, cred->optionalData.data, ERROR, OC_STACK_NO_MEMORY);
         cred->optionalData.len = chainSize;
     }
     memcpy(cred->optionalData.data, trustCertChain, chainSize);
@@ -596,7 +581,7 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
     if (g_trustCertChainNotifier.callback)
     {
         uint8_t *certChain = (uint8_t*)OICCalloc(1, sizeof(uint8_t) * chainSize);
-        VERIFY_NON_NULL_RET(TAG, certChain, ERROR, OC_STACK_NO_MEMORY);
+        VERIFY_NOT_NULL_RETURN(TAG, certChain, ERROR, OC_STACK_NO_MEMORY);
         memcpy(certChain, trustCertChain, chainSize);
         g_trustCertChainNotifier.callback(g_trustCertChainNotifier.context, *credId,
                 certChain, chainSize);
@@ -608,20 +593,19 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
     return res;
 }
 
-
 OCStackResult SRPSaveOwnCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16_t *credId)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
-    VERIFY_NON_NULL_RET(TAG, cert, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL_RET(TAG, cert->data, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL_RET(TAG, key, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL_RET(TAG, key->data, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL_RET(TAG, credId, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, cert, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, cert->data, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, key, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, key->data, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, credId, ERROR,  OC_STACK_INVALID_PARAM);
 
     OCStackResult res = OC_STACK_ERROR;
 
     OicSecCred_t *cred = (OicSecCred_t *)OICCalloc(1, sizeof(*cred));
-    VERIFY_NON_NULL_RET(TAG, cred, ERROR, OC_STACK_NO_MEMORY);
+    VERIFY_NOT_NULL_RETURN(TAG, cred, ERROR, OC_STACK_NO_MEMORY);
 
     OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
 
@@ -631,21 +615,21 @@ OCStackResult SRPSaveOwnCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16_
     }
 
     cred->credUsage= (char *)OICCalloc(1, strlen(PRIMARY_CERT)+1 );
-    VERIFY_NON_NULL_RET(TAG, cred->credUsage, ERROR, OC_STACK_NO_MEMORY);
+    VERIFY_NOT_NULL_RETURN(TAG, cred->credUsage, ERROR, OC_STACK_NO_MEMORY);
     OICStrcpy(cred->credUsage, strlen(PRIMARY_CERT) + 1, PRIMARY_CERT) ;
 
     cred->credType = SIGNED_ASYMMETRIC_KEY;
 
     OicSecKey_t *publicData = &cred->publicData;
     publicData->data = (uint8_t *)OICCalloc(1, cert->len);
-    VERIFY_NON_NULL_RET(TAG, publicData->data, ERROR, OC_STACK_NO_MEMORY);
+    VERIFY_NOT_NULL_RETURN(TAG, publicData->data, ERROR, OC_STACK_NO_MEMORY);
     memcpy(publicData->data, cert->data, cert->len);
     publicData->len = cert->len;
     publicData->encoding = cert->encoding;
 
     OicSecKey_t *privateData = &cred->privateData;
     privateData->data = (uint8_t *)OICCalloc(1, key->len);
-    VERIFY_NON_NULL_RET(TAG, privateData->data, ERROR, OC_STACK_NO_MEMORY);
+    VERIFY_NOT_NULL_RETURN(TAG, privateData->data, ERROR, OC_STACK_NO_MEMORY);
     memcpy(privateData->data, key->data, key->len);
     privateData->len = key->len;
     privateData->encoding = key->encoding;
@@ -669,10 +653,10 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
                                       const OCProvisionDev_t *pDev2,
                                       OCProvisionResultCB resultCallback)
 {
-    VERIFY_NON_NULL_RET(TAG, pDev1, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, pDev1, ERROR,  OC_STACK_INVALID_PARAM);
     if (SYMMETRIC_PAIR_WISE_KEY == type)
     {
-        VERIFY_NON_NULL_RET(TAG, pDev2, ERROR,  OC_STACK_INVALID_PARAM);
+        VERIFY_NOT_NULL_RETURN(TAG, pDev2, ERROR,  OC_STACK_INVALID_PARAM);
     }
     if (!resultCallback)
     {
@@ -731,7 +715,7 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
             OCStackResult res = PMGeneratePairWiseCredentials(type, keySize, &provTooldeviceID,
                     &firstDevice->doxm->deviceID, &secondDevice->doxm->deviceID,
                     &firstCred, &secondCred);
-            VERIFY_SUCCESS_RET(TAG, (res==OC_STACK_OK), ERROR, OC_STACK_ERROR);
+            VERIFY_SUCCESS_RETURN(TAG, (res==OC_STACK_OK), ERROR, OC_STACK_ERROR);
             OIC_LOG(INFO, TAG, "Credentials generated successfully");
             CredentialData_t *credData =
                 (CredentialData_t *) OICCalloc(1, sizeof(CredentialData_t));
@@ -771,7 +755,7 @@ OCStackResult SRPProvisionCredentials(void *ctx, OicSecCredType_t type, size_t k
                 OICFree(credData);
             }
             OIC_LOG_V(INFO, TAG, "provisionCredentials returned: %d",res);
-            VERIFY_SUCCESS_RET(TAG, (res==OC_STACK_OK), ERROR, OC_STACK_ERROR);
+            VERIFY_SUCCESS_RETURN(TAG, (res==OC_STACK_OK), ERROR, OC_STACK_ERROR);
             return res;
         }
         default:
@@ -811,7 +795,7 @@ static OCStackApplicationResult SRPProvisionACLCB(void *ctx, OCDoHandle UNUSED,
 {
     OIC_LOG_V(INFO, TAG, "Inside SRPProvisionACLCB.");
     (void)UNUSED;
-    VERIFY_NON_NULL_RET(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
     ACLData_t *aclData = (ACLData_t*)ctx;
     OCProvisionResultCB resultCallback = aclData->resultCallback;
 
@@ -841,9 +825,9 @@ static OCStackApplicationResult SRPProvisionACLCB(void *ctx, OCDoHandle UNUSED,
 OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
         OicSecAcl_t *acl, OCProvisionResultCB resultCallback)
 {
-    VERIFY_NON_NULL_RET(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL_RET(TAG, acl, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL_RET(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
+    VERIFY_NOT_NULL_RETURN(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, acl, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
 
     // if rowneruuid is empty, set it to device ID
     OicUuid_t emptyOwner = {.id = {0} };
@@ -928,14 +912,14 @@ OCStackResult SRPProvisionACL(void *ctx, const OCProvisionDev_t *selectedDeviceI
         OICFree(aclData->resArr);
         OICFree(aclData);
     }
-    VERIFY_SUCCESS_RET(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
+    VERIFY_SUCCESS_RETURN(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
     return OC_STACK_OK;
 }
 
 OCStackResult SRPSaveACL(const OicSecAcl_t *acl)
 {
     OIC_LOG(DEBUG, TAG, "IN SRPSaveACL");
-    VERIFY_NON_NULL_RET(TAG, acl, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, acl, ERROR,  OC_STACK_INVALID_PARAM);
 
     OCStackResult res =  InstallACL(acl);
 
@@ -971,7 +955,7 @@ static OCStackApplicationResult SRPProvisionDirectPairingCB(void *ctx, OCDoHandl
 {
     OIC_LOG_V(INFO, TAG, "Inside SRPProvisionDirectPairingCB.");
     (void)UNUSED;
-    VERIFY_NON_NULL_RET(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
     PconfData_t *pconfData = (PconfData_t*)ctx;
     OCProvisionResultCB resultCallback = pconfData->resultCallback;
 
@@ -1001,9 +985,9 @@ static OCStackApplicationResult SRPProvisionDirectPairingCB(void *ctx, OCDoHandl
 OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
         OicSecPconf_t *pconf, OCProvisionResultCB resultCallback)
 {
-    VERIFY_NON_NULL_RET(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL_RET(TAG, pconf, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL_RET(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
+    VERIFY_NOT_NULL_RETURN(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, pconf, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
 
     // check direct-pairing capability
     if (true != selectedDeviceInfo->doxm->dpc)
@@ -1037,7 +1021,6 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
     }
     OIC_LOG(DEBUG, TAG, "Created payload for pconf set");
     OIC_LOG_BUFFER(DEBUG, TAG, secPayload->securityData, secPayload->payloadSize);
-
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
@@ -1087,7 +1070,7 @@ OCStackResult SRPProvisionDirectPairing(void *ctx, const OCProvisionDev_t *selec
         OICFree(pconfData->resArr);
         OICFree(pconfData);
     }
-    VERIFY_SUCCESS_RET(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
+    VERIFY_SUCCESS_RETURN(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
     return OC_STACK_OK;
 }
 
@@ -1233,7 +1216,6 @@ static OCStackResult SendDeleteACLRequest(void* ctx,
         return OC_STACK_ERROR;
     }
 
-
     char reqBuf[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     int snRet = 0;
                     //coaps://0.0.0.0:5684/oic/sec/acl?subjectuuid=(Canonical ENCODED UUID)
@@ -1286,7 +1268,7 @@ static OCStackApplicationResult SRPUnlinkDevice2CB(void *unlinkCtx, OCDoHandle h
 {
     (void) handle;
     OIC_LOG(DEBUG, TAG, "IN SRPUnlinkDevice2CB");
-    VERIFY_NON_NULL_RET(TAG, unlinkCtx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, unlinkCtx, ERROR, OC_STACK_DELETE_TRANSACTION);
     UnlinkData_t* unlinkData = (UnlinkData_t*)unlinkCtx;
 
     if (clientResponse)
@@ -1349,7 +1331,7 @@ static OCStackApplicationResult SRPUnlinkDevice1CB(void *unlinkCtx, OCDoHandle h
         OCClientResponse *clientResponse)
 {
     OIC_LOG_V(INFO, TAG, "Inside SRPUnlinkDevice1CB ");
-    VERIFY_NON_NULL_RET(TAG, unlinkCtx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, unlinkCtx, ERROR, OC_STACK_DELETE_TRANSACTION);
     UnlinkData_t* unlinkData = (UnlinkData_t*)unlinkCtx;
     (void) handle;
 
@@ -1455,7 +1437,7 @@ OCStackResult SRPUnlinkDevices(void* ctx,
     }
 
     UnlinkData_t* unlinkData = (UnlinkData_t*)OICCalloc(1, sizeof(UnlinkData_t));
-    VERIFY_NON_NULL_RET(TAG, unlinkData, ERROR, OC_STACK_NO_MEMORY);
+    VERIFY_NOT_NULL_RETURN(TAG, unlinkData, ERROR, OC_STACK_NO_MEMORY);
 
     //Initialize unlink data
     unlinkData->ctx = ctx;
@@ -1589,7 +1571,7 @@ static OCStackApplicationResult SRPRemoveDeviceCB(void *delDevCtx, OCDoHandle ha
     //Save the deleted status in delDevCtx
     (void)handle;
     OIC_LOG_V(INFO, TAG, "Inside SRPRemoveDeviceCB.");
-    VERIFY_NON_NULL_RET(TAG, delDevCtx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, delDevCtx, ERROR, OC_STACK_DELETE_TRANSACTION);
     OCStackResult res = OC_STACK_ERROR;
 
     RemoveData_t* removeData = (RemoveData_t*)delDevCtx;
@@ -1648,7 +1630,6 @@ static OCStackApplicationResult SRPRemoveDeviceCB(void *delDevCtx, OCDoHandle ha
         OIC_LOG(ERROR, TAG, "SRPRemoveDevices received Null clientResponse");
     }
 
-
     return OC_STACK_DELETE_TRANSACTION;
 }
 
@@ -1668,7 +1649,7 @@ static OCStackApplicationResult SRPSyncDeviceCredCB(void *delDevCtx, OCDoHandle 
     //Save the deleted status in delDevCtx
     (void)handle;
     OIC_LOG_V(INFO, TAG, "Inside SRPSyncDeviceCredCB.");
-    VERIFY_NON_NULL_RET(TAG, delDevCtx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, delDevCtx, ERROR, OC_STACK_DELETE_TRANSACTION);
     OCStackResult res = OC_STACK_ERROR;
 
     RemoveData_t* removeData = (RemoveData_t*)delDevCtx;
@@ -2459,7 +2440,7 @@ static OCStackApplicationResult SRPGetCredResourceCB(void *ctx, OCDoHandle UNUSE
 {
     OIC_LOG_V(INFO, TAG, "Inside SRPGetCredResourceCB.");
     (void)UNUSED;
-    VERIFY_NON_NULL_RET(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
     GetSecData_t *GetSecData = (GetSecData_t*)ctx;
     OCProvisionResultCB resultCallback = GetSecData->resultCallback;
 
@@ -2495,12 +2476,11 @@ static OCStackApplicationResult SRPGetCredResourceCB(void *ctx, OCDoHandle UNUSE
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-
 OCStackResult SRPGetCredResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
         OCProvisionResultCB resultCallback)
 {
-    VERIFY_NON_NULL_RET(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL_RET(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
+    VERIFY_NOT_NULL_RETURN(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
@@ -2548,7 +2528,7 @@ OCStackResult SRPGetCredResource(void *ctx, const OCProvisionDev_t *selectedDevi
         OICFree(GetSecData->resArr);
         OICFree(GetSecData);
     }
-    VERIFY_SUCCESS_RET(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
+    VERIFY_SUCCESS_RETURN(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
     OIC_LOG(DEBUG, TAG, "OUT SRPGetCredResource");
 
     return OC_STACK_OK;
@@ -2582,7 +2562,7 @@ static OCStackApplicationResult SRPGetACLResourceCB(void *ctx, OCDoHandle UNUSED
 {
     OIC_LOG_V(INFO, TAG, "Inside SRPGetACLResourceCB.");
     (void)UNUSED;
-    VERIFY_NON_NULL_RET(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
+    VERIFY_NOT_NULL_RETURN(TAG, ctx, ERROR, OC_STACK_DELETE_TRANSACTION);
     GetSecData_t *GetSecData = (GetSecData_t*)ctx;
     OCProvisionResultCB resultCallback = GetSecData->resultCallback;
 
@@ -2618,12 +2598,11 @@ static OCStackApplicationResult SRPGetACLResourceCB(void *ctx, OCDoHandle UNUSED
     return OC_STACK_DELETE_TRANSACTION;
 }
 
-
 OCStackResult SRPGetACLResource(void *ctx, const OCProvisionDev_t *selectedDeviceInfo,
         OCProvisionResultCB resultCallback)
 {
-    VERIFY_NON_NULL_RET(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
-    VERIFY_NON_NULL_RET(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
+    VERIFY_NOT_NULL_RETURN(TAG, selectedDeviceInfo, ERROR,  OC_STACK_INVALID_PARAM);
+    VERIFY_NOT_NULL_RETURN(TAG, resultCallback, ERROR,  OC_STACK_INVALID_CALLBACK);
 
     char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH] = {0};
     if(!PMGenerateQuery(true,
@@ -2671,7 +2650,7 @@ OCStackResult SRPGetACLResource(void *ctx, const OCProvisionDev_t *selectedDevic
         OICFree(GetSecData->resArr);
         OICFree(GetSecData);
     }
-    VERIFY_SUCCESS_RET(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
+    VERIFY_SUCCESS_RETURN(TAG, (OC_STACK_OK == ret), ERROR, OC_STACK_ERROR);
     OIC_LOG(DEBUG, TAG, "OUT SRPGetACLResource");
 
     return OC_STACK_OK;

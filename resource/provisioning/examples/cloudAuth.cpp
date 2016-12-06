@@ -104,7 +104,7 @@ OCStackResult SessionParsePayload(OCRepPayload *payload)
 {
     OIC_LOG_V(DEBUG, TAG, "IN: %s", __func__);
 
-    VERIFY_NON_NULL(TAG, payload, ERROR);
+    VERIFY_NOT_NULL(TAG, payload, ERROR);
 
     SessionInit();
 

@@ -99,7 +99,7 @@ OCStackResult SVCToCBORPayload(const OicSecSvc_t *svc, uint8_t **cborPayload,
     CborEncoder svcArray;
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
 
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
@@ -214,7 +214,7 @@ OCStackResult CBORPayloadToSVC(const uint8_t *cborPayload, size_t size,
     {
         CborValue svcMap = { .parser = NULL };
         OicSecSvc_t *svc = (OicSecSvc_t *) OICCalloc(1, sizeof(OicSecSvc_t));
-        VERIFY_NON_NULL(TAG, svc, ERROR);
+        VERIFY_NOT_NULL(TAG, svc, ERROR);
         cborFindResult = cbor_value_enter_container(&svcArray, &svcMap);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Enter SVC Map.");
 
@@ -260,7 +260,7 @@ OCStackResult CBORPayloadToSVC(const uint8_t *cborPayload, size_t size,
                 cborFindResult = cbor_value_enter_container(&svcMap, &owners);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to Enter Owner Array.");
                 svc->owners = (OicUuid_t *)OICCalloc(svc->ownersLen, sizeof(*svc->owners));
-                VERIFY_NON_NULL(TAG, svc->owners, ERROR);
+                VERIFY_NOT_NULL(TAG, svc->owners, ERROR);
 
                 while (cbor_value_is_valid(&owners) && cbor_value_is_byte_string(&owners))
                 {

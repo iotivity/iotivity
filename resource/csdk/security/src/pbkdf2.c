@@ -21,17 +21,30 @@
 #include "logger.h"
 #include "mbedtls/pkcs5.h"
 #include "mbedtls/md.h"
+#include <inttypes.h>
 
 #define TAG "OIC_SEC_PBDKF2"
 
 int DeriveCryptoKeyFromPassword(const unsigned char *passwd, size_t pLen,
-    const uint8_t *salt, const size_t saltLen,
-    const size_t iterations,
-    const size_t keyLen, uint8_t *derivedKey)
+    const uint8_t *salt, size_t saltLen,
+    size_t iterations,
+    size_t keyLen, uint8_t *derivedKey)
 {
     mbedtls_md_context_t sha_ctx;
     const mbedtls_md_info_t *info_sha;
     int ret = -1;
+
+    if (iterations > UINT_MAX)
+    {
+        OIC_LOG_V(ERROR, TAG, "Number of iterations over maximum %u", UINT_MAX);
+        return ret;
+    }
+
+    if (keyLen > UINT32_MAX)
+    {
+        OIC_LOG_V(ERROR, TAG, "Key length over maximum %u", UINT32_MAX);
+        return ret;
+    }
 
     /* Setup the hash/HMAC function, for the PBKDF2 function. */
     mbedtls_md_init(&sha_ctx);
@@ -50,7 +63,11 @@ int DeriveCryptoKeyFromPassword(const unsigned char *passwd, size_t pLen,
         return ret;
     }
 
-    ret = mbedtls_pkcs5_pbkdf2_hmac(&sha_ctx, passwd, pLen, salt, saltLen, iterations, keyLen, derivedKey);
+    ret = mbedtls_pkcs5_pbkdf2_hmac(&sha_ctx,
+                                    passwd, pLen,
+                                    salt, saltLen,
+                                    (unsigned int)iterations,
+                                    (uint32_t)keyLen, derivedKey);
     if (ret != 0)
     {
         OIC_LOG(ERROR, TAG, "Call to mbedtls PBKDF2 function failed");

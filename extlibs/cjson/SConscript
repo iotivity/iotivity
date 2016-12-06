@@ -18,17 +18,8 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-##
-# Script for building unit tests and libs.
-##
+Import('env')
 
-Import('test_env')
+libcjson = env.StaticLibrary('cjsonLibrary', ['cJSON.c'])
+env.InstallTarget(libcjson, 'libCjson');
 
-target_os = test_env.get('TARGET_OS')
-
-SConscript('../stack/test/SConscript', 'test_env')
-SConscript('../connectivity/test/SConscript', 'test_env')
-
-# Build Security Resource Manager and Provisioning API unit test
-if (target_os in ['linux', 'windows']) and (test_env.get('SECURED') == '1'):
-    SConscript('../security/unittests/SConscript', 'test_env')

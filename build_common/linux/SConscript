@@ -30,6 +30,10 @@ if env.get('BUILD_JAVA') == True:
 help_vars.Update(env)
 Help(help_vars.GenerateHelpText(env))
 
+# Add the default lib directory
+build_dir = env.get('BUILD_DIR')
+env.AppendUnique(LIBPATH = [build_dir])
+env.AppendENVPath('LD_LIBRARY_PATH', [build_dir])
 
 # Set release/debug flags
 if env.get('RELEASE'):

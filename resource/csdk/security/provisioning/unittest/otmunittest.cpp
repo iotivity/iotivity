@@ -290,11 +290,11 @@ static FILE* fopen_prvnMng(const char* path, const char* mode)
 }
 
 // callback function(s) for provisioning client using C-level provisioning API
-static void ownershipTransferCB(void* ctx, int UNUSED1, OCProvisionResult_t* UNUSED2, bool hasError)
+static void ownershipTransferCB(void* ctx, size_t UNUSED1, OCProvisionResult_t* UNUSED2, bool hasError)
 {
-    (void)UNUSED1;
-    (void)UNUSED2;
-    (void)ctx;
+    OC_UNUSED(UNUSED1);
+    OC_UNUSED(UNUSED2);
+    OC_UNUSED(ctx);
 
     if(!hasError)
     {
@@ -309,8 +309,10 @@ static void ownershipTransferCB(void* ctx, int UNUSED1, OCProvisionResult_t* UNU
 }
 
 #ifdef MULTIPLE_OWNER
-static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void updateDoxmForMOTCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
+    OC_UNUSED(nOfRes);
+
     if(!hasError)
     {
         OIC_LOG_V(INFO, TAG, "POST 'doxm' SUCCEEDED - ctx: %s", (char*) ctx);
@@ -323,8 +325,10 @@ static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, 
     g_doneCB = true;
 }
 
-static void provisionPreconfiguredPinCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void provisionPreconfiguredPinCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
+    OC_UNUSED(nOfRes);
+
     if(!hasError)
     {
         OIC_LOG_V(INFO, TAG, "Provision Preconfigured-PIN SUCCEEDED - ctx: %s", (char*) ctx);
@@ -339,11 +343,11 @@ static void provisionPreconfiguredPinCB(void* ctx, int nOfRes, OCProvisionResult
 #endif //MULTIPLE_OWNER
 
 // callback function(s) for provisioning client using C-level provisioning API
-static void removeDeviceCB(void* ctx, int UNUSED1, OCProvisionResult_t* UNUSED2, bool hasError)
+static void removeDeviceCB(void* ctx, size_t UNUSED1, OCProvisionResult_t* UNUSED2, bool hasError)
 {
-    (void)UNUSED1;
-    (void)UNUSED2;
-    (void)ctx;
+    OC_UNUSED(UNUSED1);
+    OC_UNUSED(UNUSED2);
+    OC_UNUSED(ctx);
 
     if(!hasError)
     {
@@ -455,13 +459,13 @@ TEST(InitForOTM, NullParam)
     {
         snprintf(server1_path, sizeof(server1_path), "%ssample_server1", cwd);
         status1 = system(server1_path);
-        (void)status1;
+        OC_UNUSED(status1);
     }
     if(0 == (g_myPID2 = fork()))
     {
         snprintf(server2_path, sizeof(server2_path), "%ssample_server2", cwd);
-        status2= system(server2_path);
-        (void)status2;
+        status2 = system(server2_path);
+        OC_UNUSED(status2);
     }
 
     //Waiting for sample server initialization.

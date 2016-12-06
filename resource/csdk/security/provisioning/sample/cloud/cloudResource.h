@@ -23,7 +23,7 @@
 typedef struct LEDRESOURCE{
     OCResourceHandle handle;
     bool state;
-    int power;
+    int64_t power;
 } LEDResource;
 
 /**

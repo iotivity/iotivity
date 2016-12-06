@@ -54,6 +54,35 @@ static SPResponseCallback gSPResponseHandler = NULL;
  */
 PEContext_t g_policyEngineContext;
 
+
+/**
+ * Function to retrieve the length of the resource URI address part.
+ *
+ * @param resourceUri   A null-terminated string representing the resource URI.
+ *
+ * @return  Length of the resource URI address or -1, if failed.
+ */
+static int GetResourceUriAddressLength(CAURI_t resourceUri)
+{
+    if (!resourceUri)
+    {
+        OIC_LOG(ERROR, TAG, "Missing resource URI");
+        return -1;
+    }
+
+    size_t resourceUriLength = strlen(resourceUri);
+    if (resourceUriLength > MAX_URI_LENGTH)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid resource URI length");
+        return -1;
+    }
+
+    //Check the URI has the query and skip it before checking the permission
+    char *uri = strstr(resourceUri, "?");
+
+    return uri ? (int)(uri - resourceUri) : (int)resourceUriLength;
+}
+
 /**
  * Function to register provisoning API's response callback.
  * @param respHandler response handler callback.
@@ -149,32 +178,17 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
         isRequestOverSecureChannel = true;
     }
 
-    //Check the URI has the query and skip it before checking the permission
-    if (NULL == requestInfo->info.resourceUri)
+    CAURI_t resourceUri = requestInfo->info.resourceUri;
+    int resourceUriAddressLength = GetResourceUriAddressLength(resourceUri);
+
+    if (resourceUriAddressLength < 0)
     {
-        OIC_LOG(ERROR, TAG, "Invalid resourceUri");
         return;
     }
 
-    char *uri = strstr(requestInfo->info.resourceUri, "?");
-    int position = 0;
-    if (uri)
-    {
-        //Skip query and pass the resource uri
-        position = uri - requestInfo->info.resourceUri;
-    }
-    else
-    {
-        position = strlen(requestInfo->info.resourceUri);
-    }
-    if (MAX_URI_LENGTH < position  || 0 > position)
-    {
-        OIC_LOG(ERROR, TAG, "Incorrect URI length");
-        return;
-    }
     SRMAccessResponse_t response = ACCESS_DENIED;
     char newUri[MAX_URI_LENGTH + 1];
-    OICStrcpyPartial(newUri, MAX_URI_LENGTH + 1, requestInfo->info.resourceUri, position);
+    OICStrcpyPartial(newUri, MAX_URI_LENGTH + 1, resourceUri, resourceUriAddressLength);
 
     SetResourceRequestType(&g_policyEngineContext, newUri);
 
@@ -221,14 +235,14 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     if (AWAITING_REQUEST == g_policyEngineContext.state)
     {
         OIC_LOG_V(DEBUG, TAG, "Processing request with uri, %s for method, %d",
-                requestInfo->info.resourceUri, requestInfo->method);
+                resourceUri, requestInfo->method);
         response = CheckPermission(&g_policyEngineContext, &subjectId, newUri,
                 GetPermissionFromCAMethod_t(requestInfo->method));
     }
     else
     {
         OIC_LOG_V(INFO, TAG, "PE state %d. Ignoring request with uri, %s for method, %d",
-                g_policyEngineContext.state, requestInfo->info.resourceUri, requestInfo->method);
+                g_policyEngineContext.state, resourceUri, requestInfo->method);
     }
 
     if (IsAccessGranted(response) && gRequestHandler)
@@ -237,7 +251,7 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
         return;
     }
 
-    VERIFY_NON_NULL(TAG, gRequestHandler, ERROR);
+    VERIFY_NOT_NULL(TAG, gRequestHandler, ERROR);
 
     if (ACCESS_WAITING_FOR_AMS == response)
     {

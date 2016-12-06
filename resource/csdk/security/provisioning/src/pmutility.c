@@ -48,7 +48,7 @@
 
 #include "srmutility.h"
 
-static const uint64_t USECS_PER_MSEC = 1000;
+static const unsigned int USECS_PER_MSEC = 1000;
 
 #define TAG ("OIC_PM_UTILITY")
 
@@ -334,14 +334,14 @@ OCProvisionDev_t* PMCloneOCProvisionDev(const OCProvisionDev_t* src)
 
     // TODO: Consider use VERIFY_NON_NULL instead of if ( null check ) { goto exit; }
     OCProvisionDev_t* newDev = (OCProvisionDev_t*)OICCalloc(1, sizeof(OCProvisionDev_t));
-    VERIFY_NON_NULL(TAG, newDev, ERROR);
+    VERIFY_NOT_NULL(TAG, newDev, ERROR);
 
     memcpy(&newDev->endpoint, &src->endpoint, sizeof(OCDevAddr));
 
     if (src->pstat)
     {
         newDev->pstat= (OicSecPstat_t*)OICCalloc(1, sizeof(OicSecPstat_t));
-        VERIFY_NON_NULL(TAG, newDev->pstat, ERROR);
+        VERIFY_NOT_NULL(TAG, newDev->pstat, ERROR);
 
         memcpy(newDev->pstat, src->pstat, sizeof(OicSecPstat_t));
         // We have to assign NULL for not necessary information to prevent memory corruption.
@@ -351,7 +351,7 @@ OCProvisionDev_t* PMCloneOCProvisionDev(const OCProvisionDev_t* src)
     if (src->doxm)
     {
         newDev->doxm = (OicSecDoxm_t*)OICCalloc(1, sizeof(OicSecDoxm_t));
-        VERIFY_NON_NULL(TAG, newDev->doxm, ERROR);
+        VERIFY_NOT_NULL(TAG, newDev->doxm, ERROR);
 
         memcpy(newDev->doxm, src->doxm, sizeof(OicSecDoxm_t));
         // We have to assign NULL for not necessary information to prevent memory corruption.

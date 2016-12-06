@@ -165,7 +165,7 @@ OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
     if(ace)
     {
         newAce = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
-        VERIFY_NON_NULL(TAG, newAce, ERROR);
+        VERIFY_NOT_NULL(TAG, newAce, ERROR);
 
         //Subject uuid
         memcpy(&newAce->subjectuuid, &ace->subjectuuid, sizeof(OicUuid_t));
@@ -174,21 +174,21 @@ OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
         LL_FOREACH(ace->resources, rsrc)
         {
             OicSecRsrc_t* newRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-            VERIFY_NON_NULL(TAG, newRsrc, ERROR);
+            VERIFY_NOT_NULL(TAG, newRsrc, ERROR);
             LL_APPEND(newAce->resources, newRsrc);
 
             //href is mandatory
-            VERIFY_NON_NULL(TAG, rsrc->href, ERROR);
+            VERIFY_NOT_NULL(TAG, rsrc->href, ERROR);
             allocateSize = strlen(rsrc->href) + 1;
             newRsrc->href = (char*)OICMalloc(sizeof(char) * allocateSize);
-            VERIFY_NON_NULL(TAG, newRsrc->href, ERROR);
+            VERIFY_NOT_NULL(TAG, newRsrc->href, ERROR);
             OICStrcpy(newRsrc->href, allocateSize, rsrc->href);
 
             if(rsrc->rel)
             {
                 allocateSize = strlen(rsrc->rel) + 1;
                 newRsrc->rel = (char*)OICMalloc(sizeof(char) * allocateSize);
-                VERIFY_NON_NULL(TAG, newRsrc->rel, ERROR);
+                VERIFY_NOT_NULL(TAG, newRsrc->rel, ERROR);
                 OICStrcpy(newRsrc->rel, allocateSize, rsrc->rel);
             }
 
@@ -196,11 +196,11 @@ OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
             {
                 newRsrc->typeLen = rsrc->typeLen;
                 newRsrc->types = (char**)OICCalloc(rsrc->typeLen, sizeof(char*));
-                VERIFY_NON_NULL(TAG, (newRsrc->types), ERROR);
+                VERIFY_NOT_NULL(TAG, (newRsrc->types), ERROR);
                 for(size_t i = 0; i < rsrc->typeLen; i++)
                 {
                     newRsrc->types[i] = OICStrdup(rsrc->types[i]);
-                    VERIFY_NON_NULL(TAG, (newRsrc->types[i]), ERROR);
+                    VERIFY_NOT_NULL(TAG, (newRsrc->types[i]), ERROR);
                 }
             }
 
@@ -208,11 +208,11 @@ OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
             {
                 newRsrc->interfaceLen = rsrc->interfaceLen;
                 newRsrc->interfaces = (char**)OICCalloc(rsrc->interfaceLen, sizeof(char*));
-                VERIFY_NON_NULL(TAG, (newRsrc->interfaces), ERROR);
+                VERIFY_NOT_NULL(TAG, (newRsrc->interfaces), ERROR);
                 for(size_t i = 0; i < rsrc->interfaceLen; i++)
                 {
                     newRsrc->interfaces[i] = OICStrdup(rsrc->interfaces[i]);
-                    VERIFY_NON_NULL(TAG, (newRsrc->interfaces[i]), ERROR);
+                    VERIFY_NOT_NULL(TAG, (newRsrc->interfaces[i]), ERROR);
                 }
             }
         }
@@ -227,14 +227,14 @@ OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
             LL_FOREACH(ace->validities, validity)
             {
                 OicSecValidity_t* newValidity = (OicSecValidity_t*)OICCalloc(1, sizeof(OicSecValidity_t));
-                VERIFY_NON_NULL(TAG, newValidity, ERROR);
+                VERIFY_NOT_NULL(TAG, newValidity, ERROR);
                 LL_APPEND(newAce->validities, newValidity);
 
                 if(validity->period)
                 {
                     allocateSize = strlen(validity->period) + 1;
                     newValidity->period = (char*)OICMalloc(sizeof(char) * allocateSize);
-                    VERIFY_NON_NULL(TAG, newValidity->period, ERROR);
+                    VERIFY_NOT_NULL(TAG, newValidity->period, ERROR);
                     OICStrcpy(newValidity->period, allocateSize, validity->period);
                 }
 
@@ -243,13 +243,13 @@ OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
                     newValidity->recurrenceLen = validity->recurrenceLen;
 
                     newValidity->recurrences = (char**)OICMalloc(sizeof(char*) * validity->recurrenceLen);
-                    VERIFY_NON_NULL(TAG, newValidity->recurrences, ERROR);
+                    VERIFY_NOT_NULL(TAG, newValidity->recurrences, ERROR);
 
                     for(size_t i = 0; i < validity->recurrenceLen; i++)
                     {
                         allocateSize = strlen(validity->recurrences[i]) + 1;
                         newValidity->recurrences[i] = (char*)OICMalloc(sizeof(char) * allocateSize);
-                        VERIFY_NON_NULL(TAG, (newValidity->recurrences[i]), ERROR);
+                        VERIFY_NOT_NULL(TAG, (newValidity->recurrences[i]), ERROR);
                         OICStrcpy(newValidity->recurrences[i], allocateSize, validity->recurrences[i]);
                     }
                 }
@@ -262,7 +262,7 @@ OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
             if (NULL == newAce->eownerID)
             {
                 newAce->eownerID = (OicUuid_t*)OICCalloc(1, sizeof(OicUuid_t));
-                VERIFY_NON_NULL(TAG, (newAce->eownerID), ERROR);
+                VERIFY_NOT_NULL(TAG, (newAce->eownerID), ERROR);
             }
             memcpy(newAce->eownerID->id, ace->eownerID->id, sizeof(ace->eownerID->id));
         }
@@ -320,7 +320,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
     }
 
     outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     // Create ACL Map (aclist, rownerid)
@@ -428,7 +428,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding Resource Map.");
 
                 //href -- Mandatory
-                VERIFY_NON_NULL(TAG, rsrc->href, ERROR);
+                VERIFY_NOT_NULL(TAG, rsrc->href, ERROR);
                 cborEncoderResult = cbor_encode_text_string(&rMap, OIC_JSON_HREF_NAME,
                         strlen(OIC_JSON_HREF_NAME));
                 VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding HREF Name Tag.");
@@ -724,10 +724,10 @@ OicSecAcl_t* CBORPayloadToAcl2(const uint8_t *cborPayload, const size_t size)
 
                     OicSecAce_t *ace = NULL;
                     ace = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
-                    VERIFY_NON_NULL(TAG, ace, ERROR);
+                    VERIFY_NOT_NULL(TAG, ace, ERROR);
                     LL_APPEND(acl->aces, ace);
 
-                    VERIFY_NON_NULL(TAG, acl, ERROR);
+                    VERIFY_NOT_NULL(TAG, acl, ERROR);
 
                     while (cbor_value_is_valid(&aceMap))
                     {
@@ -777,7 +777,7 @@ OicSecAcl_t* CBORPayloadToAcl2(const uint8_t *cborPayload, const size_t size)
                                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Resource Map");
 
                                     OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-                                    VERIFY_NON_NULL(TAG, rsrc, ERROR);
+                                    VERIFY_NOT_NULL(TAG, rsrc, ERROR);
                                     LL_APPEND(ace->resources, rsrc);
 
                                     while(cbor_value_is_valid(&rMap))
@@ -804,7 +804,7 @@ OicSecAcl_t* CBORPayloadToAcl2(const uint8_t *cborPayload, const size_t size)
                                             VERIFY_SUCCESS(TAG, (0 != rsrc->typeLen), ERROR);
 
                                             rsrc->types = (char**)OICCalloc(rsrc->typeLen, sizeof(char*));
-                                            VERIFY_NON_NULL(TAG, rsrc->types, ERROR);
+                                            VERIFY_NOT_NULL(TAG, rsrc->types, ERROR);
 
                                             CborValue resourceTypes;
                                             cborFindResult = cbor_value_enter_container(&rMap, &resourceTypes);
@@ -828,7 +828,7 @@ OicSecAcl_t* CBORPayloadToAcl2(const uint8_t *cborPayload, const size_t size)
                                             VERIFY_SUCCESS(TAG, (0 != rsrc->interfaceLen), ERROR);
 
                                             rsrc->interfaces = (char**)OICCalloc(rsrc->interfaceLen, sizeof(char*));
-                                            VERIFY_NON_NULL(TAG, rsrc->interfaces, ERROR);
+                                            VERIFY_NOT_NULL(TAG, rsrc->interfaces, ERROR);
 
                                             CborValue interfaces;
                                             cborFindResult = cbor_value_enter_container(&rMap, &interfaces);
@@ -892,7 +892,7 @@ OicSecAcl_t* CBORPayloadToAcl2(const uint8_t *cborPayload, const size_t size)
                                 while(cbor_value_is_valid(&validitiesMap))
                                 {
                                     OicSecValidity_t* validity = (OicSecValidity_t*)OICCalloc(1, sizeof(OicSecValidity_t));
-                                    VERIFY_NON_NULL(TAG, validity, ERROR);
+                                    VERIFY_NOT_NULL(TAG, validity, ERROR);
                                     LL_APPEND(ace->validities, validity);
 
                                     CborValue validityMap  = {.parser = NULL};
@@ -913,7 +913,7 @@ OicSecAcl_t* CBORPayloadToAcl2(const uint8_t *cborPayload, const size_t size)
                                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Adding Recurrence Array.");
 
                                     validity->recurrences = (char**)OICCalloc(validity->recurrenceLen, sizeof(char*));
-                                    VERIFY_NON_NULL(TAG, validity->recurrences, ERROR);
+                                    VERIFY_NOT_NULL(TAG, validity->recurrences, ERROR);
 
                                     for(size_t i = 0; cbor_value_is_text_string(&recurrenceMap) && i < validity->recurrenceLen; i++)
                                     {
@@ -995,7 +995,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
     cbor_parser_init(cborPayload, size, 0, &parser, &aclCbor);
 
     OicSecAcl_t *acl = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
-    VERIFY_NON_NULL(TAG, acl, ERROR);
+    VERIFY_NOT_NULL(TAG, acl, ERROR);
 
     // Enter ACL Map
     cborFindResult = cbor_value_enter_container(&aclCbor, &aclMap);
@@ -1054,7 +1054,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
 
                                 OicSecAce_t *ace = NULL;
                                 ace = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
-                                VERIFY_NON_NULL(TAG, ace, ERROR);
+                                VERIFY_NOT_NULL(TAG, ace, ERROR);
                                 LL_APPEND(acl->aces, ace);
 
                                 while (cbor_value_is_valid(&aceMap))
@@ -1104,7 +1104,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering Resource Map");
 
                                                 OicSecRsrc_t* rsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-                                                VERIFY_NON_NULL(TAG, rsrc, ERROR);
+                                                VERIFY_NOT_NULL(TAG, rsrc, ERROR);
                                                 LL_APPEND(ace->resources, rsrc);
 
                                                 while(cbor_value_is_valid(&rMap))
@@ -1131,7 +1131,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                                         VERIFY_SUCCESS(TAG, (0 != rsrc->typeLen), ERROR);
 
                                                         rsrc->types = (char**)OICCalloc(rsrc->typeLen, sizeof(char*));
-                                                        VERIFY_NON_NULL(TAG, rsrc->types, ERROR);
+                                                        VERIFY_NOT_NULL(TAG, rsrc->types, ERROR);
 
                                                         CborValue resourceTypes;
                                                         cborFindResult = cbor_value_enter_container(&rMap, &resourceTypes);
@@ -1154,7 +1154,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                                         VERIFY_SUCCESS(TAG, (0 != rsrc->interfaceLen), ERROR);
 
                                                         rsrc->interfaces = (char**)OICCalloc(rsrc->interfaceLen, sizeof(char*));
-                                                        VERIFY_NON_NULL(TAG, rsrc->interfaces, ERROR);
+                                                        VERIFY_NOT_NULL(TAG, rsrc->interfaces, ERROR);
 
                                                         CborValue interfaces;
                                                         cborFindResult = cbor_value_enter_container(&rMap, &interfaces);
@@ -1217,7 +1217,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                             while(cbor_value_is_valid(&validitiesMap))
                                             {
                                                 OicSecValidity_t* validity = (OicSecValidity_t*)OICCalloc(1, sizeof(OicSecValidity_t));
-                                                VERIFY_NON_NULL(TAG, validity, ERROR);
+                                                VERIFY_NOT_NULL(TAG, validity, ERROR);
                                                 LL_APPEND(ace->validities, validity);
 
                                                 CborValue validityMap  = {.parser = NULL};
@@ -1238,7 +1238,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Adding Recurrence Array.");
 
                                                 validity->recurrences = (char**)OICCalloc(validity->recurrenceLen, sizeof(char*));
-                                                VERIFY_NON_NULL(TAG, validity->recurrences, ERROR);
+                                                VERIFY_NOT_NULL(TAG, validity->recurrences, ERROR);
 
                                                 for(size_t i = 0; cbor_value_is_text_string(&recurrenceMap) && i < validity->recurrenceLen; i++)
                                                 {
@@ -1264,7 +1264,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                             if(NULL == ace->eownerID)
                                             {
                                                 ace->eownerID = (OicUuid_t*)OICCalloc(1, sizeof(OicUuid_t));
-                                                VERIFY_NON_NULL(TAG, ace->eownerID, ERROR);
+                                                VERIFY_NOT_NULL(TAG, ace->eownerID, ERROR);
                                             }
                                             ret = ConvertStrToUuid(eowner, ace->eownerID);
                                             OICFree(eowner);
@@ -1339,12 +1339,12 @@ bool IsValidAclAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPaylo
     bool retValue = false;
     OicSecAcl_t* acl = NULL;
 
-    VERIFY_NON_NULL(TAG, uuid, ERROR);
-    VERIFY_NON_NULL(TAG, cborPayload, ERROR);
+    VERIFY_NOT_NULL(TAG, uuid, ERROR);
+    VERIFY_NOT_NULL(TAG, cborPayload, ERROR);
     VERIFY_SUCCESS(TAG, 0 != size, ERROR);
 
     acl = CBORPayloadToAcl(cborPayload, size);
-    VERIFY_NON_NULL(TAG, acl, ERROR);
+    VERIFY_NOT_NULL(TAG, acl, ERROR);
 
     OicSecAce_t* ace = NULL;
     OicSecAce_t* tempAce = NULL;
@@ -1353,7 +1353,7 @@ bool IsValidAclAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPaylo
         OicSecRsrc_t* rsrc = NULL;
         OicSecRsrc_t* tempRsrc = NULL;
 
-        VERIFY_NON_NULL(TAG, ace->eownerID, ERROR);
+        VERIFY_NOT_NULL(TAG, ace->eownerID, ERROR);
         VERIFY_SUCCESS(TAG, memcmp(ace->eownerID->id, uuid->id, sizeof(uuid->id)) == 0, ERROR);
 
         LL_FOREACH_SAFE(ace->resources, rsrc, tempRsrc)
@@ -2021,7 +2021,7 @@ static OCEntityHandlerResult HandleACLDeleteRequest(const OCEntityHandlerRequest
     OicUuid_t subject = { .id= { 0 } };
     char resource[MAX_URI_LENGTH] = { 0 };
 
-    VERIFY_NON_NULL(TAG, ehRequest->query, ERROR);
+    VERIFY_NOT_NULL(TAG, ehRequest->query, ERROR);
 
     // If 'Subject' field exist, processing a querystring in REST request.
     if(GetSubjectFromQueryString(ehRequest->query, &subject))
@@ -2148,11 +2148,11 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     }
 
     acl = (OicSecAcl_t *) OICCalloc(1, sizeof(OicSecAcl_t));
-    VERIFY_NON_NULL(TAG, acl, ERROR);
+    VERIFY_NOT_NULL(TAG, acl, ERROR);
 
     // Default ACE allowing read-only access, for discovery
     readOnlyAce = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
-    VERIFY_NON_NULL(TAG, readOnlyAce, ERROR);
+    VERIFY_NOT_NULL(TAG, readOnlyAce, ERROR);
 
     // Subject -- Mandatory
     memcpy(readOnlyAce->subjectuuid.id, &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t));
@@ -2160,60 +2160,60 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     // Resources -- Mandatory
     // /oic/res
     resRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-    VERIFY_NON_NULL(TAG, resRsrc, ERROR);
+    VERIFY_NOT_NULL(TAG, resRsrc, ERROR);
     LL_APPEND(readOnlyAce->resources, resRsrc);
     resRsrc->href = OICStrdup(OC_RSRVD_WELL_KNOWN_URI);
-    VERIFY_NON_NULL(TAG, (resRsrc->href), ERROR);
+    VERIFY_NOT_NULL(TAG, (resRsrc->href), ERROR);
     resRsrc->typeLen = 1;
     resRsrc->types = (char**)OICCalloc(1, sizeof(char*));
-    VERIFY_NON_NULL(TAG, resRsrc->types, ERROR);
+    VERIFY_NOT_NULL(TAG, resRsrc->types, ERROR);
     resRsrc->types[0] = OICStrdup(OC_RSRVD_RESOURCE_TYPE_RES);
-    VERIFY_NON_NULL(TAG, resRsrc->types[0], ERROR);
+    VERIFY_NOT_NULL(TAG, resRsrc->types[0], ERROR);
     resRsrc->interfaceLen = 2;
     resRsrc->interfaces = (char**)OICCalloc(resRsrc->interfaceLen, sizeof(char*));
-    VERIFY_NON_NULL(TAG, resRsrc->interfaces, ERROR);
+    VERIFY_NOT_NULL(TAG, resRsrc->interfaces, ERROR);
     resRsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-    VERIFY_NON_NULL(TAG, resRsrc->interfaces[0], ERROR);
+    VERIFY_NOT_NULL(TAG, resRsrc->interfaces[0], ERROR);
     resRsrc->interfaces[1] = OICStrdup(OC_RSRVD_INTERFACE_READ);
-    VERIFY_NON_NULL(TAG, resRsrc->interfaces[1], ERROR);
+    VERIFY_NOT_NULL(TAG, resRsrc->interfaces[1], ERROR);
 
     // /oic/d
     deviceRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-    VERIFY_NON_NULL(TAG, deviceRsrc, ERROR);
+    VERIFY_NOT_NULL(TAG, deviceRsrc, ERROR);
     LL_APPEND(readOnlyAce->resources, deviceRsrc);
     deviceRsrc->href = OICStrdup(OC_RSRVD_DEVICE_URI);
-    VERIFY_NON_NULL(TAG, (deviceRsrc->href), ERROR);
+    VERIFY_NOT_NULL(TAG, (deviceRsrc->href), ERROR);
     deviceRsrc->typeLen = 1;
     deviceRsrc->types = (char**)OICCalloc(1, sizeof(char*));
-    VERIFY_NON_NULL(TAG, deviceRsrc->types, ERROR);
+    VERIFY_NOT_NULL(TAG, deviceRsrc->types, ERROR);
     deviceRsrc->types[0] = OICStrdup(OC_RSRVD_RESOURCE_TYPE_DEVICE);
-    VERIFY_NON_NULL(TAG, deviceRsrc->types[0], ERROR);
+    VERIFY_NOT_NULL(TAG, deviceRsrc->types[0], ERROR);
     deviceRsrc->interfaceLen = 2;
     deviceRsrc->interfaces = (char**)OICCalloc(deviceRsrc->interfaceLen, sizeof(char*));
-    VERIFY_NON_NULL(TAG, deviceRsrc->interfaces, ERROR);
+    VERIFY_NOT_NULL(TAG, deviceRsrc->interfaces, ERROR);
     deviceRsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-    VERIFY_NON_NULL(TAG, deviceRsrc->interfaces[0], ERROR);
+    VERIFY_NOT_NULL(TAG, deviceRsrc->interfaces[0], ERROR);
     deviceRsrc->interfaces[1] = OICStrdup(OC_RSRVD_INTERFACE_READ);
-    VERIFY_NON_NULL(TAG, deviceRsrc->interfaces[1], ERROR);
+    VERIFY_NOT_NULL(TAG, deviceRsrc->interfaces[1], ERROR);
 
     // /oic/p
     platformRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-    VERIFY_NON_NULL(TAG, platformRsrc, ERROR);
+    VERIFY_NOT_NULL(TAG, platformRsrc, ERROR);
     LL_APPEND(readOnlyAce->resources, platformRsrc);
     platformRsrc->href = OICStrdup(OC_RSRVD_PLATFORM_URI);
-    VERIFY_NON_NULL(TAG, (platformRsrc->href), ERROR);
+    VERIFY_NOT_NULL(TAG, (platformRsrc->href), ERROR);
     platformRsrc->typeLen = 1;
     platformRsrc->types = (char**)OICCalloc(1, sizeof(char*));
-    VERIFY_NON_NULL(TAG, platformRsrc->types, ERROR);
+    VERIFY_NOT_NULL(TAG, platformRsrc->types, ERROR);
     platformRsrc->types[0] = OICStrdup(OC_RSRVD_RESOURCE_TYPE_PLATFORM);
-    VERIFY_NON_NULL(TAG, platformRsrc->types[0], ERROR);
+    VERIFY_NOT_NULL(TAG, platformRsrc->types[0], ERROR);
     platformRsrc->interfaceLen = 2;
     platformRsrc->interfaces = (char**)OICCalloc(platformRsrc->interfaceLen, sizeof(char*));
-    VERIFY_NON_NULL(TAG, platformRsrc->interfaces, ERROR);
+    VERIFY_NOT_NULL(TAG, platformRsrc->interfaces, ERROR);
     platformRsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-    VERIFY_NON_NULL(TAG, platformRsrc->interfaces[0], ERROR);
+    VERIFY_NOT_NULL(TAG, platformRsrc->interfaces[0], ERROR);
     platformRsrc->interfaces[1] = OICStrdup(OC_RSRVD_INTERFACE_READ);
-    VERIFY_NON_NULL(TAG, platformRsrc->interfaces[1], ERROR);
+    VERIFY_NOT_NULL(TAG, platformRsrc->interfaces[1], ERROR);
 
     readOnlyAce->permission = PERMISSION_READ;
     readOnlyAce->validities = NULL;
@@ -2224,7 +2224,7 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
 
     // Default ACE allowing read + write access, for ownership transfer
     readWriteAce = (OicSecAce_t *) OICCalloc(1, sizeof(OicSecAce_t));
-    VERIFY_NON_NULL(TAG, readWriteAce, ERROR);
+    VERIFY_NOT_NULL(TAG, readWriteAce, ERROR);
 
     // Subject -- Mandatory
     memcpy(readWriteAce->subjectuuid.id, &WILDCARD_SUBJECT_ID, sizeof(OicUuid_t));
@@ -2232,56 +2232,56 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     // Resources -- Mandatory
     // /oic/sec/doxm
     doxmRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-    VERIFY_NON_NULL(TAG, doxmRsrc, ERROR);
+    VERIFY_NOT_NULL(TAG, doxmRsrc, ERROR);
     LL_APPEND(readWriteAce->resources, doxmRsrc);
     doxmRsrc->href = OICStrdup(OIC_RSRC_DOXM_URI);
-    VERIFY_NON_NULL(TAG, (doxmRsrc->href), ERROR);
+    VERIFY_NOT_NULL(TAG, (doxmRsrc->href), ERROR);
     doxmRsrc->typeLen = 1;
     doxmRsrc->types = (char**)OICCalloc(1, sizeof(char*));
-    VERIFY_NON_NULL(TAG, doxmRsrc->types, ERROR);
+    VERIFY_NOT_NULL(TAG, doxmRsrc->types, ERROR);
     doxmRsrc->types[0] = OICStrdup(OIC_RSRC_TYPE_SEC_DOXM);
-    VERIFY_NON_NULL(TAG, doxmRsrc->types[0], ERROR);
+    VERIFY_NOT_NULL(TAG, doxmRsrc->types[0], ERROR);
     doxmRsrc->interfaceLen = 1;
     doxmRsrc->interfaces = (char**)OICCalloc(doxmRsrc->interfaceLen, sizeof(char*));
-    VERIFY_NON_NULL(TAG, doxmRsrc->interfaces, ERROR);
+    VERIFY_NOT_NULL(TAG, doxmRsrc->interfaces, ERROR);
     doxmRsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-    VERIFY_NON_NULL(TAG, doxmRsrc->interfaces[0], ERROR);
+    VERIFY_NOT_NULL(TAG, doxmRsrc->interfaces[0], ERROR);
 
     // /oic/sec/pstat
     pstatRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-    VERIFY_NON_NULL(TAG, pstatRsrc, ERROR);
+    VERIFY_NOT_NULL(TAG, pstatRsrc, ERROR);
     LL_APPEND(readWriteAce->resources, pstatRsrc);
     pstatRsrc->href = OICStrdup(OIC_RSRC_PSTAT_URI);
-    VERIFY_NON_NULL(TAG, (pstatRsrc->href), ERROR);
+    VERIFY_NOT_NULL(TAG, (pstatRsrc->href), ERROR);
     pstatRsrc->typeLen = 1;
     pstatRsrc->types = (char**)OICCalloc(1, sizeof(char*));
-    VERIFY_NON_NULL(TAG, pstatRsrc->types, ERROR);
+    VERIFY_NOT_NULL(TAG, pstatRsrc->types, ERROR);
     pstatRsrc->types[0] = OICStrdup(OIC_RSRC_TYPE_SEC_PSTAT);
-    VERIFY_NON_NULL(TAG, pstatRsrc->types[0], ERROR);
+    VERIFY_NOT_NULL(TAG, pstatRsrc->types[0], ERROR);
     pstatRsrc->interfaceLen = 1;
     pstatRsrc->interfaces = (char**)OICCalloc(pstatRsrc->interfaceLen, sizeof(char*));
-    VERIFY_NON_NULL(TAG, pstatRsrc->interfaces, ERROR);
+    VERIFY_NOT_NULL(TAG, pstatRsrc->interfaces, ERROR);
     pstatRsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-    VERIFY_NON_NULL(TAG, pstatRsrc->interfaces[0], ERROR);
+    VERIFY_NOT_NULL(TAG, pstatRsrc->interfaces[0], ERROR);
 
     // /oic/sec/cred
     resRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-    VERIFY_NON_NULL(TAG, resRsrc, ERROR);
+    VERIFY_NOT_NULL(TAG, resRsrc, ERROR);
     LL_APPEND(readWriteAce->resources, resRsrc);
     resRsrc->href = OICStrdup(OIC_RSRC_CRED_URI);
-    VERIFY_NON_NULL(TAG, (resRsrc->href), ERROR);
+    VERIFY_NOT_NULL(TAG, (resRsrc->href), ERROR);
     resRsrc->typeLen = 1;
     resRsrc->types = (char**)OICCalloc(1, sizeof(char*));
-    VERIFY_NON_NULL(TAG, resRsrc->types, ERROR);
+    VERIFY_NOT_NULL(TAG, resRsrc->types, ERROR);
     resRsrc->types[0] = OICStrdup(OIC_RSRC_TYPE_SEC_CRED);
-    VERIFY_NON_NULL(TAG, resRsrc->types[0], ERROR);
+    VERIFY_NOT_NULL(TAG, resRsrc->types[0], ERROR);
     resRsrc->interfaceLen = 2;
     resRsrc->interfaces = (char**)OICCalloc(resRsrc->interfaceLen, sizeof(char*));
-    VERIFY_NON_NULL(TAG, resRsrc->interfaces, ERROR);
+    VERIFY_NOT_NULL(TAG, resRsrc->interfaces, ERROR);
     resRsrc->interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
-    VERIFY_NON_NULL(TAG, resRsrc->interfaces[0], ERROR);
+    VERIFY_NOT_NULL(TAG, resRsrc->interfaces[0], ERROR);
     resRsrc->interfaces[1] = OICStrdup(OC_RSRVD_INTERFACE_READ);
-    VERIFY_NON_NULL(TAG, resRsrc->interfaces[1], ERROR);
+    VERIFY_NOT_NULL(TAG, resRsrc->interfaces[1], ERROR);
 
     readWriteAce->permission = PERMISSION_READ | PERMISSION_WRITE;
     readWriteAce->validities = NULL;
@@ -2358,7 +2358,7 @@ OCStackResult InitACLResource()
         }
         // TODO Needs to update persistent storage
     }
-    VERIFY_NON_NULL(TAG, gAcl, FATAL);
+    VERIFY_NOT_NULL(TAG, gAcl, FATAL);
 
     // Instantiate 'oic.sec.acl'
     ret = CreateACLResource();
@@ -2652,7 +2652,7 @@ static OicSecAce_t* GetSecDefaultACE()
 
     //Generate default ACE
     OicSecAce_t* newAce = (OicSecAce_t*)OICCalloc(1, sizeof(OicSecAce_t));
-    VERIFY_NON_NULL(TAG, newAce, ERROR);
+    VERIFY_NOT_NULL(TAG, newAce, ERROR);
 
     // Subject -- Mandatory
     memcpy(newAce->subjectuuid.id, &WILDCARD_SUBJECT_ID, WILDCARD_SUBJECT_ID_LEN);
@@ -2660,54 +2660,54 @@ static OicSecAce_t* GetSecDefaultACE()
     //Resources -- Mandatory
     //Add doxm
     doxmRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-    VERIFY_NON_NULL(TAG, doxmRsrc, ERROR);
+    VERIFY_NOT_NULL(TAG, doxmRsrc, ERROR);
     LL_APPEND(newAce->resources, doxmRsrc);
     // pstat-href
     doxmRsrc->href = OICStrdup(OIC_RSRC_DOXM_URI);
-    VERIFY_NON_NULL(TAG, (doxmRsrc->href), ERROR);
+    VERIFY_NOT_NULL(TAG, (doxmRsrc->href), ERROR);
     // pstat-rt
     doxmRsrc->typeLen = NUM_OF_DOXM_RT;
     doxmRsrc->types = (char**)OICCalloc(NUM_OF_DOXM_RT, sizeof(char*));
-    VERIFY_NON_NULL(TAG, (doxmRsrc->types), ERROR);
+    VERIFY_NOT_NULL(TAG, (doxmRsrc->types), ERROR);
     for(int i = 0; i < NUM_OF_DOXM_RT; i++)
     {
         doxmRsrc->types[i] = OICStrdup(doxmRt[i]);
-        VERIFY_NON_NULL(TAG, (doxmRsrc->types[i]), ERROR);
+        VERIFY_NOT_NULL(TAG, (doxmRsrc->types[i]), ERROR);
     }
     // pstat-if
     doxmRsrc->interfaceLen = NUM_OF_DOXM_IF;
     doxmRsrc->interfaces = (char**)OICCalloc(NUM_OF_DOXM_IF, sizeof(char*));
-    VERIFY_NON_NULL(TAG, (doxmRsrc->interfaces), ERROR);
+    VERIFY_NOT_NULL(TAG, (doxmRsrc->interfaces), ERROR);
     for(int i = 0; i < NUM_OF_DOXM_IF; i++)
     {
         doxmRsrc->interfaces[i] = OICStrdup(doxmIf[i]);
-        VERIFY_NON_NULL(TAG, (doxmRsrc->interfaces[i]), ERROR);
+        VERIFY_NOT_NULL(TAG, (doxmRsrc->interfaces[i]), ERROR);
     }
 
     //Add pstat
     pstatRsrc = (OicSecRsrc_t*)OICCalloc(1, sizeof(OicSecRsrc_t));
-    VERIFY_NON_NULL(TAG, pstatRsrc, ERROR);
+    VERIFY_NOT_NULL(TAG, pstatRsrc, ERROR);
     LL_APPEND(newAce->resources, pstatRsrc);
     //pstat-href
     pstatRsrc->href = OICStrdup(OIC_RSRC_PSTAT_URI);
-    VERIFY_NON_NULL(TAG, (pstatRsrc->href), ERROR);
+    VERIFY_NOT_NULL(TAG, (pstatRsrc->href), ERROR);
     //pstat-rt
     pstatRsrc->typeLen = NUM_OF_PSTAT_RT;
     pstatRsrc->types = (char**)OICCalloc(NUM_OF_PSTAT_RT, sizeof(char*));
-    VERIFY_NON_NULL(TAG, (pstatRsrc->types), ERROR);
+    VERIFY_NOT_NULL(TAG, (pstatRsrc->types), ERROR);
     for(int i = 0; i < NUM_OF_PSTAT_RT; i++)
     {
         pstatRsrc->types[i] = OICStrdup(pstatRt[i]);
-        VERIFY_NON_NULL(TAG, (pstatRsrc->types[i]), ERROR);
+        VERIFY_NOT_NULL(TAG, (pstatRsrc->types[i]), ERROR);
     }
     // pstat-if
     pstatRsrc->interfaceLen = NUM_OF_PSTAT_IF;
     pstatRsrc->interfaces = (char**)OICCalloc(NUM_OF_PSTAT_IF, sizeof(char*));
-    VERIFY_NON_NULL(TAG, (pstatRsrc->interfaces), ERROR);
+    VERIFY_NOT_NULL(TAG, (pstatRsrc->interfaces), ERROR);
     for(int i = 0; i < NUM_OF_PSTAT_IF; i++)
     {
         pstatRsrc->interfaces[i] = OICStrdup(pstatIf[i]);
-        VERIFY_NON_NULL(TAG, (pstatRsrc->interfaces[i]), ERROR);
+        VERIFY_NOT_NULL(TAG, (pstatRsrc->interfaces[i]), ERROR);
     }
 
     // Permissions -- Mandatory

@@ -72,7 +72,6 @@
 #    include "windows/include/vs12_snprintf.h"
 #  endif
 #  define ssize_t SSIZE_T
-#  define F_OK                0
 #  define SHUT_RDWR           SD_BOTH
 #  define sleep(SECS)         Sleep(1000*(SECS))
 #  ifdef __cplusplus

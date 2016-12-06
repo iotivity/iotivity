@@ -101,17 +101,17 @@ OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **dat
     OCStackResult ret = OC_STACK_ERROR;
 
     OCPersistentStorage *ps = SRMGetPersistentStorageHandler();
-    VERIFY_NON_NULL(TAG, ps, ERROR);
+    VERIFY_NOT_NULL(TAG, ps, ERROR);
 
     fileSize = GetSVRDatabaseSize(ps);
     OIC_LOG_V(DEBUG, TAG, "File Read Size: %zu", fileSize);
     if (fileSize)
     {
         fsData = (uint8_t *) OICCalloc(1, fileSize);
-        VERIFY_NON_NULL(TAG, fsData, ERROR);
+        VERIFY_NOT_NULL(TAG, fsData, ERROR);
 
         fp = ps->open(SVR_DB_DAT_FILE_NAME, "rb");
-        VERIFY_NON_NULL(TAG, fp, ERROR);
+        VERIFY_NOT_NULL(TAG, fp, ERROR);
         if (ps->read(fsData, 1, fileSize, fp) == fileSize)
         {
             if (rsrcName)
@@ -134,7 +134,7 @@ OCStackResult GetSecureVirtualDatabaseFromPS(const char *rsrcName, uint8_t **dat
             {
                 *size = fileSize;
                 *data = (uint8_t *) OICCalloc(1, fileSize);
-                VERIFY_NON_NULL(TAG, *data, ERROR);
+                VERIFY_NOT_NULL(TAG, *data, ERROR);
                 memcpy(*data, fsData, fileSize);
                 ret = OC_STACK_OK;
             }
@@ -280,7 +280,7 @@ OCStackResult UpdateSecureResourceInPS(const char *rsrcName, const uint8_t *psPa
             // This added '255' is arbitrary value that is added to cover the name of the resource, map addition and ending
 
             outPayload = (uint8_t *) OICCalloc(1, size);
-            VERIFY_NON_NULL(TAG, outPayload, ERROR);
+            VERIFY_NOT_NULL(TAG, outPayload, ERROR);
             CborEncoder encoder;  // will be initialized in |cbor_parser_init|
             cbor_encoder_init(&encoder, outPayload, size, 0);
             CborEncoder secRsrc;  // will be initialized in |cbor_encoder_create_map|
@@ -369,7 +369,7 @@ OCStackResult UpdateSecureResourceInPS(const char *rsrcName, const uint8_t *psPa
         // This added '255' is arbitrary value that is added to cover the name of the resource, map addition and ending
 
         outPayload = (uint8_t *) OICCalloc(1, size);
-        VERIFY_NON_NULL(TAG, outPayload, ERROR);
+        VERIFY_NOT_NULL(TAG, outPayload, ERROR);
         CborEncoder encoder;  // will be initialized in |cbor_parser_init|
         cbor_encoder_init(&encoder, outPayload, size, 0);
         CborEncoder secRsrc;  // will be initialized in |cbor_encoder_create_map|
@@ -517,7 +517,7 @@ OCStackResult ResetSecureResourceInPS(void)
             // This added '255' is arbitrary value added to cover the name of the resource, map addition, and ending
 
             outPayload = (uint8_t *) OICCalloc(1, size);
-            VERIFY_NON_NULL(TAG, outPayload, ERROR);
+            VERIFY_NOT_NULL(TAG, outPayload, ERROR);
             CborEncoder encoder;
             cbor_encoder_init(&encoder, outPayload, size, 0);
             CborEncoder secRsrc;
@@ -668,7 +668,7 @@ OCStackResult CreateResetProfile(void)
         {
             size_t size = aclCborLen + credCborLen + pstatCborLen + doxmCborLen + 255;
             resetPfCbor = (uint8_t *) OICCalloc(1, size);
-            VERIFY_NON_NULL(TAG, resetPfCbor, ERROR);
+            VERIFY_NOT_NULL(TAG, resetPfCbor, ERROR);
             CborEncoder encoder;  // will be initialized in |cbor_parser_init|
             cbor_encoder_init(&encoder, resetPfCbor, size, 0);
             CborEncoder secRsrc;  // will be initialized in |cbor_encoder_create_map|

@@ -319,7 +319,7 @@ OCStackResult CrlToCBORPayload(const OicSecCrl_t *crl, uint8_t **payload, size_t
     CborError cborEncoderResult = CborNoError;
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     cborEncoderResult = cbor_encoder_create_map(&encoder, &crlMap, mapSize);
@@ -405,7 +405,7 @@ OCStackResult CBORPayloadToCrl(const uint8_t *cborPayload, const size_t size,
     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to enter Crl map");
 
     crl = (OicSecCrl_t *)OICCalloc(1, sizeof(OicSecCrl_t));
-    VERIFY_NON_NULL(TAG, crl, ERROR);
+    VERIFY_NOT_NULL(TAG, crl, ERROR);
 
     cborFindResult = cbor_value_map_find_value(&crlCbor, OC_RSRVD_CRL_ID, &crlMap);
     if (CborNoError == cborFindResult && cbor_value_is_integer(&crlMap))
@@ -510,7 +510,7 @@ static OCEntityHandlerResult HandleCRLPostRequest(const OCEntityHandlerRequest *
     {
         OIC_LOG(INFO, TAG, "Update SVR DB...");
         CBORPayloadToCrl(payload, size, &crl);
-        VERIFY_NON_NULL(TAG, crl, ERROR);
+        VERIFY_NOT_NULL(TAG, crl, ERROR);
 
         if (OC_STACK_OK == UpdateCRLResource(crl))
         {
@@ -794,7 +794,7 @@ void GetDerCrl(ByteArray_t* out)
             OIC_LOG(ERROR, TAG, "Can't allocate memory for base64 str");
             return;
         }
-        uint32_t len = 0;
+        size_t len = 0;
 
         if(B64_OK == b64Decode((char*)crl->data, crl->len, out, outSize, &len))
         {

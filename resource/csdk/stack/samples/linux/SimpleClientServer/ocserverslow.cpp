@@ -201,6 +201,9 @@ OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest
 void AlarmHandler(int sig);
 int WINAPI AlarmThread(void *seconds)
 {
+// Explicit casts didn't remove this warning and we're guaranteed to be within
+// bounds expected by sleep().
+#pragma warning( suppress : 4311 )
     sleep((unsigned int)seconds);
     AlarmHandler(0);
     return 0;
@@ -208,6 +211,8 @@ int WINAPI AlarmThread(void *seconds)
 
 void alarm(unsigned int seconds)
 {
+// Explicit casts didn't remove this warning.
+#pragma warning( suppress : 4312 )
     CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AlarmThread, (void*)seconds, 0, NULL);
 }
 #endif

@@ -71,7 +71,7 @@ bool ReadCBORFile(const char* filename, const char* rsrcname, uint8_t **payload,
     uint8_t *data = NULL;
     size_t size = 0;
 
-    int len = strlen(STRINGIZE(SECURITY_BUILD_UNITTEST_DIR)) + strlen(filename) + 1;
+    size_t len = strlen(STRINGIZE(SECURITY_BUILD_UNITTEST_DIR)) + strlen(filename) + 1;
     char *filepath = (char *)OICCalloc(1, len);
     if (!filepath)
     {
@@ -81,7 +81,7 @@ bool ReadCBORFile(const char* filename, const char* rsrcname, uint8_t **payload,
     int ret = snprintf(filepath, len, "%s%s", STRINGIZE(SECURITY_BUILD_UNITTEST_DIR), filename);
     printf("Root build path: %s \n", filepath);
 
-    if (ret == len-1)
+    if (ret == (len - 1))
     {
         FILE *fp = fopen(filepath, "rb");
         if (fp)
@@ -151,7 +151,7 @@ void SetPersistentHandler(OCPersistentStorage *ps, bool set)
         ps->read = fread;
         ps->write = fwrite;
         ps->close = fclose;
-        ps->unlink = unlink;
+        ps->unlink = remove;
     }
     else
     {

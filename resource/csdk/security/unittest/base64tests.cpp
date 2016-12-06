@@ -27,9 +27,8 @@
 TEST(B64EncodeTest, ValidInputForEncoding)
 {
     char buf[128];
-    uint32_t outputLength;
-    uint32_t expectedLength;
-    uint32_t i=0;
+    size_t outputLength = 0;
+    size_t i = 0;
     B64Result res = B64_OK;
 
     const char* input = "IoTivity base64~!@#$%^&*()-=0123456789<>?;:'[]{},.\"\\|";
@@ -92,11 +91,11 @@ TEST(B64EncodeTest, ValidInputForEncoding)
         "SW9UaXZpdHkgYmFzZTY0fiFAIyQlXiYqKCktPTAxMjM0NTY3ODk8Pj87OidbXXt9LC4iXHw="
     };
 
-    for(i=0; i< strlen(input); i++)
+    for (i = 0; i < strlen(input); i++)
     {
         memset(buf, 0, sizeof(buf));
 
-        expectedLength = strlen(expectedOutput[i]);
+        size_t expectedLength = strlen(expectedOutput[i]);
 
         res = b64Encode((uint8_t*)input, i + 1, buf, 128, &outputLength);
 
@@ -110,8 +109,8 @@ TEST(B64EncodeTest, ValidInputForEncoding)
 TEST(B64DeodeTest, ValidInputForDecoding)
 {
     uint8_t buf[128];
-    uint32_t outputLength;
-    uint32_t i=0;
+    size_t outputLength = 0;
+    size_t i = 0;
     B64Result res = B64_OK;
 
     const char* input[53] = {
@@ -171,7 +170,7 @@ TEST(B64DeodeTest, ValidInputForDecoding)
     };
     const char* expectedOutput = "IoTivity base64~!@#$%^&*()-=0123456789<>?;:'[]{},.\"\\|";
 
-    for(i=0; i< (sizeof(input)/sizeof(char*)); i++)
+    for (i = 0; i < (sizeof(input) / sizeof(char*)); i++)
     {
         memset(buf, 0, sizeof(buf));
 
@@ -187,8 +186,8 @@ TEST(B64DeodeTest, ValidInputForDecoding)
 TEST(B64DeodeTest, InvalidInputForDecoding)
 {
     uint8_t buf[128] = {0,};
-    uint32_t outputLength;
-    uint32_t i=0;
+    size_t outputLength = 0;
+    size_t i = 0;
 
     const char* input[53] = {
         "SQ=",
@@ -247,11 +246,11 @@ TEST(B64DeodeTest, InvalidInputForDecoding)
     };
     const char* expectedOutput = "IoTivity base64~!@#$%^&*()-=0123456789<>?;:'[]{},.\"\\|";
 
-    for(i=0; i< (sizeof(input)/sizeof(char*)); i++)
+    for (i = 0; i < (sizeof(input) / sizeof(char*)); i++)
     {
         memset(buf, 0, sizeof(buf));
 
-        if( B64_OK == b64Decode(input[i], strlen(input[i]), buf, 128, &outputLength) )
+        if (B64_OK == b64Decode(input[i], strlen(input[i]), buf, 128, &outputLength))
         {
             EXPECT_NE(0, memcmp(expectedOutput, buf, i + 1));
         }

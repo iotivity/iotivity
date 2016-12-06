@@ -186,7 +186,7 @@ OCStackResult PconfToCBORPayload(const OicSecPconf_t *pconf,uint8_t **payload,si
     }
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
 
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
     cborEncoderResult = cbor_encoder_create_map(&encoder, &pconfMap, mapSize);
@@ -468,7 +468,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
     cborFindResult = cbor_value_enter_container(&pconfCbor, &pconfMap);
     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to enter map");
     pconf = (OicSecPconf_t *)OICCalloc(1, sizeof(*pconf));
-    VERIFY_NON_NULL(TAG, pconf, ERROR);
+    VERIFY_NOT_NULL(TAG, pconf, ERROR);
     while (cbor_value_is_valid(&pconfMap))
     {
         char *name = NULL;
@@ -499,7 +499,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                 VERIFY_SUCCESS(TAG, pconf->prmLen != 0, ERROR);
 
                 pconf->prm = (OicSecPrm_t *)OICCalloc(pconf->prmLen, sizeof(OicSecPrm_t));
-                VERIFY_NON_NULL(TAG, pconf->prm, ERROR);
+                VERIFY_NOT_NULL(TAG, pconf->prm, ERROR);
                 cborFindResult = cbor_value_enter_container(&pconfMap, &prm);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to eneter array");
 
@@ -537,7 +537,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                 {
                     CborValue pdAclMap = { .parser = NULL};
                     OicSecPdAcl_t *pdacl = (OicSecPdAcl_t *) OICCalloc(1, sizeof(OicSecPdAcl_t));
-                    VERIFY_NON_NULL(TAG, pdacl, ERROR);
+                    VERIFY_NOT_NULL(TAG, pdacl, ERROR);
 
                     cborFindResult = cbor_value_enter_container(&pdAclArray, &pdAclMap);
                     VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to enter");
@@ -569,7 +569,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to enter");
                                 pdacl->resources = (char **) OICCalloc(pdacl->resourcesLen,
                                         sizeof(char*));
-                                VERIFY_NON_NULL(TAG, pdacl->resources, ERROR);
+                                VERIFY_NOT_NULL(TAG, pdacl->resources, ERROR);
 
                                 while (cbor_value_is_valid(&resources))
                                 {
@@ -660,7 +660,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                                 cborFindResult = cbor_value_enter_container(&pdAclMap, &period);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to enter");
                                 pdacl->periods = (char **) OICCalloc(pdacl->prdRecrLen, sizeof(char*));
-                                VERIFY_NON_NULL(TAG, pdacl->periods, ERROR);
+                                VERIFY_NOT_NULL(TAG, pdacl->periods, ERROR);
 
                                 while (cbor_value_is_text_string(&period) && cbor_value_is_text_string(&period))
                                 {
@@ -683,7 +683,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                                 cborFindResult = cbor_value_enter_container(&pdAclMap, &recurrences);
                                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to enter");
                                 pdacl->recurrences = (char **) OICCalloc(pdacl->prdRecrLen, sizeof(char*));
-                                VERIFY_NON_NULL(TAG, pdacl->recurrences, ERROR);
+                                VERIFY_NOT_NULL(TAG, pdacl->recurrences, ERROR);
 
                                 while (cbor_value_is_text_string(&recurrences) && cbor_value_is_text_string(&recurrences))
                                 {
@@ -737,7 +737,7 @@ OCStackResult CBORPayloadToPconf(const uint8_t *cborPayload, size_t size, OicSec
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed to enter");
 
                 pconf->pddevs = (OicUuid_t *)OICMalloc(pconf->pddevLen * sizeof(OicUuid_t));
-                VERIFY_NON_NULL(TAG, pconf->pddevs, ERROR);
+                VERIFY_NOT_NULL(TAG, pconf->pddevs, ERROR);
                 while (cbor_value_is_valid(&pddevs) && cbor_value_is_text_string(&pddevs))
                 {
                     char *pddev = NULL;
@@ -1080,7 +1080,7 @@ OCStackResult InitPconfResource()
         VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
         memcpy(&gPconf->deviceID, &deviceId, sizeof(OicUuid_t));
     }
-    VERIFY_NON_NULL(TAG, gPconf, ERROR);
+    VERIFY_NOT_NULL(TAG, gPconf, ERROR);
 
     // Instantiate 'oic.sec.pconf'
     ret = CreatePconfResource();

@@ -101,7 +101,6 @@ OCStackResult OCWrapperAclIndividualUpdateAce(const OCDevAddr *endPoint, OCCloud
  * @param[in] callback          result callback
  * @return  OCStackResult application result
  */
-
 OCStackResult OCWrapperAclIndividualUpdate(const OCDevAddr *endPoint, OCCloudResponseCB callback);
 
 /**

@@ -24,16 +24,9 @@
 Import('env')
 import os
 
-lib_env = env.Clone()
-
-libocsrm_env = lib_env.Clone()
+libocsrm_env = env.Clone()
 
 target_os = libocsrm_env.get('TARGET_OS')
-# As in the source code, it includes arduino Time library (C++)
-# It requires compile the .c with g++
-if target_os == 'arduino':
-	libocsrm_env.Replace(CC = libocsrm_env.get('CXX'))
-	libocsrm_env.Replace(CFLAGS = libocsrm_env.get('CXXFLAGS'))
 
 ######################################################################
 # Build flags
@@ -44,24 +37,40 @@ if with_upstream_libcoap == '1':
 	libocsrm_env.AppendUnique(CPPPATH = ['#extlibs/libcoap/libcoap/include'])
 else:
 	# For bring up purposes only, the forked version will live here.
-	libocsrm_env.AppendUnique(CPPPATH = ['../connectivity/lib/libcoap-4.1.1/include'])
+	libocsrm_env.AppendUnique(CPPPATH = ['#/resource/connectivity/lib/libcoap-4.1.1/include'])
 
 libocsrm_env.PrependUnique(CPPPATH = [
-		'../../../extlibs/tinydtls/',
-		'../logger/include',
-		'../../c_common/ocrandom/include',
-		'../include',
-		'../stack/include',
-		'../stack/include/internal',
-		'../../oc_logger/include',
-		'../connectivity/external/inc',
-		'../connectivity/common/inc',
-		'../connectivity/inc',
-		'../connectivity/api',
-		'../security/include',
-		'../security/include/internal',
-		'../security/provisioning/include'
+		'#/extlibs/tinydtls',
+		'#/resource/csdk/logger/include',
+		'#/resource/c_common/ocrandom/include',
+		'#/resource/csdk/include',
+		'#/resource/csdk/stack/include',
+		'#/resource/csdk/stack/include/internal',
+		'#/resource/oc_logger/include',
+		'#/resource/csdk/connectivity/external/inc',
+		'#/resource/csdk/connectivity/common/inc',
+		'#/resource/csdk/connectivity/inc',
+		'#/resource/csdk/connectivity/api',
+		'#/resource/csdk/security/include',
+		'#/resource/csdk/security/include/internal',
+		'#/resource/csdk/security/provisioning/include'
 		])
+
+if target_os in ['windows', 'msys_nt']:
+	libocsrm_env.AppendUnique(LIBPATH = [os.path.join(libocsrm_env.get('BUILD_DIR'), 'resource', 'oc_logger')])
+	libocsrm_env.AppendUnique(CCFLAGS=['/W3', '/WX'])
+
+if target_os in ['linux', 'android', 'tizen', 'msys_nt', 'windows'] and libocsrm_env.get('SECURED') == '1':
+	SConscript('provisioning/SConscript', 'libocsrm_env')
+
+if target_os in ['linux', 'windows', 'darwin'] and libocsrm_env.get('SECURED') == '1':
+	SConscript('tool/SConscript', 'libocsrm_env')
+
+# As in the source code, it includes arduino Time library (C++)
+# It requires compile the .c with g++
+if target_os == 'arduino':
+	libocsrm_env.Replace(CC = libocsrm_env.get('CXX'))
+	libocsrm_env.Replace(CFLAGS = libocsrm_env.get('CXXFLAGS'))
 
 if target_os not in ['arduino', 'windows']:
 	libocsrm_env.AppendUnique(CPPDEFINES  = ['WITH_POSIX', '_GNU_SOURCE'])
@@ -76,13 +85,8 @@ elif target_os not in ['windows', 'msys_nt']:
 	libocsrm_env.AppendUnique(CFLAGS = ['-fPIC'])
 	libocsrm_env.AppendUnique(LIBS = ['m'])
 
-if target_os in ['windows', 'msys_nt']:
-	libocsrm_env.AppendUnique(LIBPATH = [os.path.join(libocsrm_env.get('BUILD_DIR'), 'resource', 'oc_logger')])
-
 if target_os in ['darwin', 'ios']:
 	libocsrm_env.AppendUnique(CPPDEFINES = ['_DARWIN_C_SOURCE'])
-	libocsrm_env.AppendUnique(LIBPATH = [libocsrm_env.get('BUILD_DIR')])
-	libocsrm_env.AppendUnique(LIBS = ['coap'])
 
 if env.get('LOGGING'):
 	libocsrm_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
@@ -140,9 +144,3 @@ libocsrm_env = libocsrm_conf.Finish()
 libocsrm = libocsrm_env.StaticLibrary('ocsrm', libocsrm_src)
 
 libocsrm_env.InstallTarget(libocsrm, 'ocsrm')
-
-if target_os in ['linux', 'android', 'tizen', 'msys_nt', 'windows'] and libocsrm_env.get('SECURED') == '1':
-	SConscript('provisioning/SConscript')
-
-if target_os in ['linux', 'windows', 'darwin'] and libocsrm_env.get('SECURED') == '1':
-	SConscript('tool/SConscript')

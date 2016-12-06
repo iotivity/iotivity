@@ -64,7 +64,7 @@ typedef enum
  * @return ::B64_OK for Success, otherwise some error value.
  */
 B64Result b64Encode(const uint8_t* in, const size_t inLen,
-               char* outBuf, const size_t outBufSize, uint32_t *outLen);
+               char* outBuf, const size_t outBufSize, size_t* outLen);
 
 /**
  * Decode the encoded message in base64.
@@ -79,7 +79,7 @@ B64Result b64Encode(const uint8_t* in, const size_t inLen,
  * @return ::B64_OK for Success, otherwise some error value.
  */
 B64Result b64Decode(const char* in, const size_t inLen,
-               uint8_t* outBuf, size_t outBufSize, uint32_t *outLen);
+               uint8_t* outBuf, size_t outBufSize, size_t* outLen);
 
 #ifdef __cplusplus
 }

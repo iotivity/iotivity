@@ -170,7 +170,7 @@ OCStackResult DoxmToCBORPayload(const OicSecDoxm_t *doxm, uint8_t **payload, siz
     int64_t cborEncoderResult = CborNoError;
 
     uint8_t *outPayload = (uint8_t *)OICCalloc(1, cborLen);
-    VERIFY_NON_NULL(TAG, outPayload, ERROR);
+    VERIFY_NOT_NULL(TAG, outPayload, ERROR);
     cbor_encoder_init(&encoder, outPayload, cborLen, 0);
 
     cborEncoderResult = cbor_encoder_create_map(&encoder, &doxmMap, CborIndefiniteLength);
@@ -411,7 +411,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     cbor_parser_init(cborPayload, size, 0, &parser, &doxmCbor);
     CborValue doxmMap;
     OicSecDoxm_t *doxm = (OicSecDoxm_t *)OICCalloc(1, sizeof(*doxm));
-    VERIFY_NON_NULL(TAG, doxm, ERROR);
+    VERIFY_NOT_NULL(TAG, doxm, ERROR);
 
     cborFindResult = cbor_value_map_find_value(&doxmCbor, OIC_JSON_OXM_TYPE_NAME, &doxmMap);
     //OxmType -- not Mandatory
@@ -424,7 +424,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
         VERIFY_SUCCESS(TAG, doxm->oxmTypeLen != 0, ERROR);
 
         doxm->oxmType = (OicUrn_t *)OICCalloc(doxm->oxmTypeLen, sizeof(*doxm->oxmType));
-        VERIFY_NON_NULL(TAG, doxm->oxmType, ERROR);
+        VERIFY_NOT_NULL(TAG, doxm->oxmType, ERROR);
 
         cborFindResult = cbor_value_enter_container(&doxmMap, &oxmType);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering oxmType Array.")
@@ -451,7 +451,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
         VERIFY_SUCCESS(TAG, doxm->oxmLen != 0, ERROR);
 
         doxm->oxm = (OicSecOxm_t *)OICCalloc(doxm->oxmLen, sizeof(*doxm->oxm));
-        VERIFY_NON_NULL(TAG, doxm->oxm, ERROR);
+        VERIFY_NOT_NULL(TAG, doxm->oxm, ERROR);
 
         cborFindResult = cbor_value_enter_container(&doxmMap, &oxm);
         VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Entering oxmName Array.")
@@ -475,9 +475,9 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     }
     else
     {
-        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
+        VERIFY_NOT_NULL(TAG, gDoxm, ERROR);
         doxm->oxm = (OicSecOxm_t *) OICCalloc(gDoxm->oxmLen, sizeof(*doxm->oxm));
-        VERIFY_NON_NULL(TAG, doxm->oxm, ERROR);
+        VERIFY_NOT_NULL(TAG, doxm->oxm, ERROR);
         doxm->oxmLen = gDoxm->oxmLen;
         for (size_t i = 0; i < gDoxm->oxmLen; i++)
         {
@@ -496,7 +496,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     }
     else // PUT/POST JSON may not have oxmsel so set it to the gDoxm->oxmSel
     {
-        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
+        VERIFY_NOT_NULL(TAG, gDoxm, ERROR);
         doxm->oxmSel = gDoxm->oxmSel;
     }
 
@@ -516,7 +516,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     }
     else // PUT/POST JSON may not have sct so set it to the gDoxm->sct
     {
-        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
+        VERIFY_NOT_NULL(TAG, gDoxm, ERROR);
         doxm->sct = gDoxm->sct;
     }
 
@@ -528,7 +528,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     }
     else // PUT/POST JSON may not have owned so set it to the gDomx->owned
     {
-        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
+        VERIFY_NOT_NULL(TAG, gDoxm, ERROR);
         doxm->owned = gDoxm->owned;
     }
 
@@ -544,7 +544,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     }
     else
     {
-        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
+        VERIFY_NOT_NULL(TAG, gDoxm, ERROR);
         memcpy(doxm->deviceID.id, &gDoxm->deviceID.id, sizeof(doxm->deviceID.id));
     }
 
@@ -560,7 +560,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     }
     else
     {
-        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
+        VERIFY_NOT_NULL(TAG, gDoxm, ERROR);
         memcpy(doxm->owner.id, gDoxm->owner.id, sizeof(doxm->owner.id));
     }
 
@@ -574,7 +574,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
         if(NULL == doxm->mom)
         {
             doxm->mom = (OicSecMom_t*)OICCalloc(1, sizeof(OicSecMom_t));
-            VERIFY_NON_NULL(TAG, doxm->mom, ERROR);
+            VERIFY_NOT_NULL(TAG, doxm->mom, ERROR);
         }
         doxm->mom->mode = (OicSecMomType_t)mode;
     }
@@ -584,7 +584,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
         if(NULL == doxm->mom)
         {
             doxm->mom = (OicSecMom_t*)OICCalloc(1, sizeof(OicSecMom_t));
-            VERIFY_NON_NULL(TAG, doxm->mom, ERROR);
+            VERIFY_NOT_NULL(TAG, doxm->mom, ERROR);
         }
         doxm->mom->mode = gDoxm->mom->mode;
     }
@@ -612,7 +612,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
             VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding SubOwnerId Value");
 
             subOwner = (OicSecSubOwner_t*)OICCalloc(1, sizeof(OicSecSubOwner_t));
-            VERIFY_NON_NULL(TAG, subOwner, ERROR);
+            VERIFY_NOT_NULL(TAG, subOwner, ERROR);
 
             convertRes = ConvertStrToUuid(strUuid, &subOwner->uuid);
             VERIFY_SUCCESS(TAG, OC_STACK_OK == convertRes, ERROR);
@@ -630,7 +630,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
         LL_FOREACH(gDoxm->subOwners, subOwnerItor)
         {
             OicSecSubOwner_t* subOwnerId = (OicSecSubOwner_t*)OICCalloc(1, sizeof(OicSecSubOwner_t));
-            VERIFY_NON_NULL(TAG, subOwnerId, ERROR);
+            VERIFY_NOT_NULL(TAG, subOwnerId, ERROR);
 
             memcpy(&subOwnerId->uuid, &subOwnerItor->uuid, sizeof(OicUuid_t));
             subOwnerId->status = MOT_STATUS_DONE;
@@ -652,7 +652,7 @@ static OCStackResult CBORPayloadToDoxmBin(const uint8_t *cborPayload, size_t siz
     }
     else
     {
-        VERIFY_NON_NULL(TAG, gDoxm, ERROR);
+        VERIFY_NOT_NULL(TAG, gDoxm, ERROR);
         memcpy(doxm->rownerID.id, gDoxm->rownerID.id, sizeof(doxm->rownerID.id));
     }
 
@@ -1661,7 +1661,7 @@ const OicSecDoxm_t* GetDoxmResourceData()
 static void PrepareMOT(const OicSecDoxm_t* doxm)
 {
     OIC_LOG(INFO, TAG, "IN PrepareMOT");
-    VERIFY_NON_NULL(TAG, doxm, ERROR);
+    VERIFY_NOT_NULL(TAG, doxm, ERROR);
 
     if(true == doxm->owned && NULL != doxm->mom && OIC_MULTIPLE_OWNER_DISABLE != doxm->mom->mode)
     {

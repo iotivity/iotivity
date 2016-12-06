@@ -21,6 +21,13 @@
 #include "gtest/gtest.h"
 #include "provisioningdatabasemanager.h"
 
+#ifdef _MSC_VER
+#include <io.h>
+
+#define F_OK 0
+#define access _access_s
+#endif
+
 #define DB_FILE "PDM.db"
 const char ID_1 [] = "1111111111111111";
 const char ID_2 [] = "2111111111111111";
@@ -41,7 +48,7 @@ TEST(CallPDMAPIbeforeInit, BeforeInit)
 {
     if (0 == access(DB_FILE, F_OK))
     {
-        EXPECT_EQ(0, unlink(DB_FILE));
+        EXPECT_EQ(0, remove(DB_FILE));
     }
     EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMAddDevice(NULL));
     EXPECT_EQ(OC_STACK_PDM_IS_NOT_INITIALIZED, PDMIsDuplicateDevice(NULL,NULL));

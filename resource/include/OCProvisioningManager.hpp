@@ -703,7 +703,7 @@ namespace OC
             /**
              * Common callback wrapper, which will be called from OC-APIs.
              */
-            static void callbackWrapper(void* ctx, int nOfRes,
+            static void callbackWrapper(void* ctx, size_t nOfRes,
                     OCProvisionResult_t *arr, bool hasError);
 
 #ifdef MULTIPLE_OWNER

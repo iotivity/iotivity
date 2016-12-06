@@ -18,11 +18,13 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+Import('env')
+
 ##
 # Examples build script
 ##
-thread_env = SConscript('#build_common/thread.scons')
-lib_env = thread_env.Clone()
+lib_env = env.Clone()
+SConscript('#build_common/thread.scons', exports = {'thread_env' : lib_env})
 
 # Add third party libraries
 SConscript('#resource/third_party_libs.scons', 'lib_env')

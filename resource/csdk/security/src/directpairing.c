@@ -647,7 +647,7 @@ static OCStackApplicationResult DirectPairingHandler(void *ctx, OCDoHandle UNUSE
 
             // initiate dtls
             CAEndpoint_t *endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));
-            VERIFY_NON_NULL(TAG, endpoint, FATAL);
+            VERIFY_NOT_NULL(TAG, endpoint, FATAL);
             memcpy(endpoint,&dpairData->peer->endpoint,sizeof(CAEndpoint_t));
             endpoint->port = dpairData->peer->securePort;
             OIC_LOG_V(INFO, TAG, "Initiate DTLS handshake to %s(%d)", endpoint->addr,
@@ -1005,7 +1005,7 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
 
     int clock_res = -1;
 #if defined(_MSC_VER)
-    time_t startTime = NULL;
+    time_t startTime = 0;
     clock_res = (time(&startTime) == -1);
 #else
     struct timespec startTime = {.tv_sec=0, .tv_nsec=0};
@@ -1026,7 +1026,7 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
     while (1)
     {
 #if defined(_MSC_VER)
-        time_t currTime = NULL;
+        time_t currTime = 0;
         clock_res = (time(&currTime) == -1);
 #else
         struct timespec currTime  = {.tv_sec=0, .tv_nsec=0};
@@ -1041,9 +1041,9 @@ OCStackResult DPDeviceDiscovery(unsigned short waittime)
             break;
         }
 #if defined(_MSC_VER)
-        long elapsed = currTime - startTime;
+        time_t elapsed = currTime - startTime;
 #else
-        long elapsed = (currTime.tv_sec - startTime.tv_sec);
+        time_t elapsed = (currTime.tv_sec - startTime.tv_sec);
 #endif
         if (elapsed > waittime)
         {

@@ -51,9 +51,6 @@ if env.get('ROUTING') in ['GW', 'EP']:
 if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
     SConscript('csdk/resource-directory/SConscript')
 
-# Build libocsrm
-SConscript('csdk/security/SConscript')
-
 # Build liboctbstack
 SConscript('csdk/SConscript')
 

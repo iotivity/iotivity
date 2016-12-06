@@ -38,6 +38,13 @@
 #include "pmtypes.h"
 #include "oxmverifycommon.h"
 
+#ifdef _MSC_VER
+#include <io.h>
+
+#define F_OK 0
+#define access _access_s
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -97,7 +104,7 @@ static const OicSecPrm_t  SUPPORTED_PRMS[1] =
 // |g_ctx| means provision manager application context and
 // the following, includes |un/own_list|, could be variables, which |g_ctx| has,
 // for accessing all function(s) for these, they are declared on global domain
-static const char* g_ctx = "Provision Manager Client Application Context";
+static char* g_ctx = "Provision Manager Client Application Context";
 static char* g_svr_fname;
 static char* g_prvn_fname;
 static OCProvisionDev_t* g_own_list;
@@ -121,14 +128,14 @@ static OicSecPdAcl_t* createPdAcl(const int);
 static OCProvisionDev_t* getDevInst(const OCProvisionDev_t*, const int);
 static int printDevList(const OCProvisionDev_t*);
 static size_t printUuidList(const OCUuidList_t*);
-static int printResultList(const OCProvisionResult_t*, const int);
+static size_t printResultList(const OCProvisionResult_t*, const size_t);
 static void printUuid(const OicUuid_t*);
 static FILE* fopen_prvnMng(const char*, const char*);
 static int waitCallbackRet(void);
 static int selectTwoDiffNum(int*, int*, const int, const char*);
 
 // callback function(s) for provisioning client using C-level provisioning API
-static void ownershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void ownershipTransferCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -142,7 +149,7 @@ static void ownershipTransferCB(void* ctx, int nOfRes, OCProvisionResult_t* arr,
     g_doneCB = true;
 }
 
-static void provisionPairwiseCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void provisionPairwiseCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -156,7 +163,7 @@ static void provisionPairwiseCB(void* ctx, int nOfRes, OCProvisionResult_t* arr,
     g_doneCB = true;
 }
 
-static void provisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void provisionCredCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -170,7 +177,7 @@ static void provisionCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, boo
     g_doneCB = true;
 }
 
-static void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void provisionAclCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -184,7 +191,7 @@ static void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool
     g_doneCB = true;
 }
 
-static void getCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void getCredCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -198,7 +205,7 @@ static void getCredCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasE
     g_doneCB = true;
 }
 
-static void getAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void getAclCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -212,7 +219,7 @@ static void getAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasEr
     g_doneCB = true;
 }
 
-static void provisionDPCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void provisionDPCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -226,7 +233,7 @@ static void provisionDPCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool 
     g_doneCB = true;
 }
 
-static void unlinkDevicesCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void unlinkDevicesCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -240,7 +247,7 @@ static void unlinkDevicesCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, boo
     g_doneCB = true;
 }
 
-static void removeDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void removeDeviceCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -254,7 +261,7 @@ static void removeDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool
     g_doneCB = true;
 }
 
-static void syncDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void syncDeviceCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -269,7 +276,7 @@ static void syncDeviceCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool h
 }
 
 #ifdef MULTIPLE_OWNER
-static void updateDoxmForMOTCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool hasError)
+static void updateDoxmForMOTCB(void* ctx, size_t nOfRes, OCProvisionResult_t* arr, bool hasError)
 {
     if(!hasError)
     {
@@ -311,7 +318,7 @@ static int initProvisionClient(void)
         .read = fread,
         .write = fwrite,
         .close = fclose,
-        .unlink = unlink
+        .unlink = remove
     };
     if(OC_STACK_OK != OCRegisterPersistentStorageHandler(&pstStr))
     {
@@ -1879,16 +1886,16 @@ static OicSecPdAcl_t* createPdAcl(const int dev_num)
     pdAcl->resourcesLen = 1;
 
     // resource
-    int num = pdAcl->resourcesLen;
+    size_t num = pdAcl->resourcesLen;
     pdAcl->resources = (char**) OICCalloc(num, sizeof(char*));
     if(!pdAcl->resources)
     {
         OIC_LOG(ERROR, TAG, "createPdAcl: OICCalloc error return");
         goto CRPDACL_ERROR;
     }
-    for(int i=0; num>i; ++i)
+    for (size_t i = 0; num > i; ++i)
     {
-        size_t len = strlen(rsrc_in[i])+1;  // '1' for null termination
+        size_t len = strlen(rsrc_in[i]) + 1;  // '1' for null termination
         char* rsrc = (char*) OICCalloc(len, sizeof(char));
         if(!rsrc)
         {
@@ -1974,19 +1981,19 @@ static size_t printUuidList(const OCUuidList_t* uid_lst)
     return lst_cnt;
 }
 
-static int printResultList(const OCProvisionResult_t* rslt_lst, const int rslt_cnt)
+static size_t printResultList(const OCProvisionResult_t* rslt_lst, const size_t rslt_cnt)
 {
-    if(!rslt_lst || 0>=rslt_cnt)
+    if (!rslt_lst || (0 == rslt_cnt))
     {
         printf("     Device List is Empty..\n\n");
         return 0;
     }
 
-    int lst_cnt = 0;
-    for( ; rslt_cnt>lst_cnt; ++lst_cnt)
+    size_t lst_cnt = 0;
+    for (; rslt_cnt > lst_cnt; ++lst_cnt)
     {
-        printf("     [%d] ", lst_cnt+1);
-        printUuid((const OicUuid_t*) &rslt_lst[lst_cnt].deviceId);
+        printf("     [%" PRIuPTR "] ", lst_cnt + 1);
+        printUuid((const OicUuid_t*)&rslt_lst[lst_cnt].deviceId);
         printf(" - result: %d\n", rslt_lst[lst_cnt].res);
     }
     printf("\n");

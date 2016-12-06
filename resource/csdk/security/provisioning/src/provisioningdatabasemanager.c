@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "sqlite3.h"
 #include "logger.h"
@@ -59,24 +60,76 @@
 #define PDM_SQLITE_TRANSACTION_BEGIN "BEGIN TRANSACTION;"
 #define PDM_SQLITE_TRANSACTION_COMMIT "COMMIT;"
 #define PDM_SQLITE_TRANSACTION_ROLLBACK "ROLLBACK;"
+
+#ifdef __GNUC__
+#if ((__GNUC__ >= 4) && (__GNUC_MINOR__ >= 6))
+#define static_assert(value, message) _Static_assert((value) ? 1 : 0, message)
+#else
+#define static_assert(value, message)
+#endif
+#endif
+#define PDM_VERIFY_STATEMENT_SIZE(stmt) \
+    static_assert(sizeof(stmt) < INT_MAX, #stmt " must be shorter than INT_MAX.")
+
 #define PDM_SQLITE_GET_STALE_INFO "SELECT ID,ID2 FROM T_DEVICE_LINK_STATE WHERE STATE = ?"
+#define PDM_SQLITE_GET_STALE_INFO_SIZE (int)sizeof(PDM_SQLITE_GET_STALE_INFO)
+PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_GET_STALE_INFO);
+
 #define PDM_SQLITE_INSERT_T_DEVICE_LIST "INSERT INTO T_DEVICE_LIST VALUES(?,?,?)"
+#define PDM_SQLITE_INSERT_T_DEVICE_LIST_SIZE (int)sizeof(PDM_SQLITE_INSERT_T_DEVICE_LIST)
+PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_INSERT_T_DEVICE_LIST);
+
 #define PDM_SQLITE_GET_ID "SELECT ID FROM T_DEVICE_LIST WHERE UUID like ?"
+#define PDM_SQLITE_GET_ID_SIZE (int)sizeof(PDM_SQLITE_GET_ID)
+PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_GET_ID);
+
 #define PDM_SQLITE_INSERT_LINK_DATA "INSERT INTO T_DEVICE_LINK_STATE VALUES(?,?,?)"
+#define PDM_SQLITE_INSERT_LINK_DATA_SIZE (int)sizeof(PDM_SQLITE_INSERT_LINK_DATA)
+PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_INSERT_LINK_DATA);
+
 #define PDM_SQLITE_DELETE_LINK "DELETE FROM T_DEVICE_LINK_STATE WHERE ID = ? and ID2 = ?"
-#define PDM_SQLITE_DELETE_DEVICE_LINK "DELETE FROM T_DEVICE_LINK_STATE WHERE ID = ? or ID2 = ?"
+#define PDM_SQLITE_DELETE_LINK_SIZE (int)sizeof(PDM_SQLITE_DELETE_LINK)
+PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_DELETE_LINK);
+
 #define PDM_SQLITE_DELETE_DEVICE "DELETE FROM T_DEVICE_LIST  WHERE ID = ?"
+#define PDM_SQLITE_DELETE_DEVICE_SIZE (int)sizeof(PDM_SQLITE_DELETE_DEVICE)
+PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_DELETE_DEVICE);
+
 #define PDM_SQLITE_UPDATE_LINK "UPDATE T_DEVICE_LINK_STATE SET STATE = ?  WHERE ID = ? and ID2 = ?"
+#define PDM_SQLITE_UPDATE_LINK_SIZE (int)sizeof(PDM_SQLITE_UPDATE_LINK)
+PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_UPDATE_LINK);
+
 #define PDM_SQLITE_LIST_ALL_UUID "SELECT UUID FROM T_DEVICE_LIST WHERE STATE = 0"
+#define PDM_SQLITE_LIST_ALL_UUID_SIZE (int)sizeof(PDM_SQLITE_LIST_ALL_UUID)
+PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_LIST_ALL_UUID);
+
 #define PDM_SQLITE_GET_UUID "SELECT UUID,STATE FROM T_DEVICE_LIST WHERE ID = ?"
+#define PDM_SQLITE_GET_UUID_SIZE (int)sizeof(PDM_SQLITE_GET_UUID)
+PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_GET_UUID);
+
 #define PDM_SQLITE_GET_LINKED_DEVICES "SELECT ID,ID2 FROM T_DEVICE_LINK_STATE WHERE \
                                            (ID = ? or ID2 = ?) and state = 0"
+#define PDM_SQLITE_GET_LINKED_DEVICES_SIZE (int)sizeof(PDM_SQLITE_GET_LINKED_DEVICES)
+PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_GET_LINKED_DEVICES);
+
 #define PDM_SQLITE_GET_DEVICE_LINKS "SELECT ID,ID2 FROM T_DEVICE_LINK_STATE WHERE \
                                           ID = ? and ID2 = ? and state = 0"
+#define PDM_SQLITE_GET_DEVICE_LINKS_SIZE (int)sizeof(PDM_SQLITE_GET_DEVICE_LINKS)
+PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_GET_DEVICE_LINKS);
+
 #define PDM_SQLITE_UPDATE_DEVICE "UPDATE T_DEVICE_LIST SET STATE = ?  WHERE UUID like ?"
+#define PDM_SQLITE_UPDATE_DEVICE_SIZE (int)sizeof(PDM_SQLITE_UPDATE_DEVICE)
+PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_UPDATE_DEVICE);
+
 #define PDM_SQLITE_GET_DEVICE_STATUS "SELECT STATE FROM T_DEVICE_LIST WHERE UUID like ?"
+#define PDM_SQLITE_GET_DEVICE_STATUS_SIZE (int)sizeof(PDM_SQLITE_GET_DEVICE_STATUS)
+PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_GET_DEVICE_STATUS);
+
 #define PDM_SQLITE_UPDATE_LINK_STALE_FOR_STALE_DEVICE "UPDATE T_DEVICE_LINK_STATE SET STATE = 1\
                                                           WHERE ID = ? or ID2 = ?"
+#define PDM_SQLITE_UPDATE_LINK_STALE_FOR_STALE_DEVICE_SIZE (int)sizeof(PDM_SQLITE_UPDATE_LINK_STALE_FOR_STALE_DEVICE)
+PDM_VERIFY_STATEMENT_SIZE(PDM_SQLITE_UPDATE_LINK_STALE_FOR_STALE_DEVICE);
+
 
 #define ASCENDING_ORDER(id1, id2) do{if( (id1) > (id2) )\
   { int temp; temp = id1; id1 = id2; id2 = temp; }}while(0)
@@ -194,7 +247,7 @@ OCStackResult PDMAddDevice(const OicUuid_t *UUID)
     sqlite3_stmt *stmt = 0;
     int res =0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_INSERT_T_DEVICE_LIST,
-                              strlen(PDM_SQLITE_INSERT_T_DEVICE_LIST) + 1, &stmt, NULL);
+                              PDM_SQLITE_INSERT_T_DEVICE_LIST_SIZE, &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_SECOND, UUID, UUID_LENGTH, SQLITE_STATIC);
@@ -228,7 +281,8 @@ static OCStackResult getIdForUUID(const OicUuid_t *UUID , int *id)
 {
     sqlite3_stmt *stmt = 0;
     int res = 0;
-    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_ID, strlen(PDM_SQLITE_GET_ID) + 1, &stmt, NULL);
+    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_ID, PDM_SQLITE_GET_ID_SIZE,
+                             &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_FIRST, UUID, UUID_LENGTH, SQLITE_STATIC);
@@ -261,7 +315,8 @@ OCStackResult PDMIsDuplicateDevice(const OicUuid_t* UUID, bool *result)
     }
     sqlite3_stmt *stmt = 0;
     int res = 0;
-    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_ID, strlen(PDM_SQLITE_GET_ID) + 1, &stmt, NULL);
+    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_ID, PDM_SQLITE_GET_ID_SIZE,
+                             &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_blob(stmt, PDM_BIND_INDEX_FIRST, UUID, UUID_LENGTH, SQLITE_STATIC);
@@ -288,7 +343,7 @@ static OCStackResult addlink(int id1, int id2)
     sqlite3_stmt *stmt = 0;
     int res = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_INSERT_LINK_DATA,
-                              strlen(PDM_SQLITE_INSERT_LINK_DATA) + 1, &stmt, NULL);
+                              PDM_SQLITE_INSERT_LINK_DATA_SIZE, &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, id1);
@@ -367,7 +422,8 @@ static OCStackResult removeLink(int id1, int id2)
 {
     int res = 0;
     sqlite3_stmt *stmt = 0;
-    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_DELETE_LINK, strlen(PDM_SQLITE_DELETE_LINK) + 1, &stmt, NULL);
+    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_DELETE_LINK,
+                             PDM_SQLITE_DELETE_LINK_SIZE, &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, id1);
@@ -417,7 +473,7 @@ static OCStackResult removeFromDeviceList(int id)
     sqlite3_stmt *stmt = 0;
     int res = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_DELETE_DEVICE,
-                              strlen(PDM_SQLITE_DELETE_DEVICE) + 1, &stmt, NULL);
+                              PDM_SQLITE_DELETE_DEVICE_SIZE, &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, id);
@@ -463,7 +519,7 @@ static OCStackResult updateLinkState(int id1, int id2, int state)
     sqlite3_stmt *stmt = 0;
     int res = 0 ;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_UPDATE_LINK,
-                              strlen(PDM_SQLITE_UPDATE_LINK) + 1, &stmt, NULL);
+                              PDM_SQLITE_UPDATE_LINK_SIZE, &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, state);
@@ -522,7 +578,7 @@ OCStackResult PDMGetOwnedDevices(OCUuidList_t **uuidList, size_t *numOfDevices)
     sqlite3_stmt *stmt = 0;
     int res = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_LIST_ALL_UUID,
-                              strlen(PDM_SQLITE_LIST_ALL_UUID) + 1, &stmt, NULL);
+                              PDM_SQLITE_LIST_ALL_UUID_SIZE, &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     size_t counter  = 0;
@@ -551,7 +607,7 @@ static OCStackResult getUUIDforId(int id, OicUuid_t *uid, bool *result)
     sqlite3_stmt *stmt = 0;
     int res = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_UUID,
-                              strlen(PDM_SQLITE_GET_UUID) + 1, &stmt, NULL);
+                              PDM_SQLITE_GET_UUID_SIZE, &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, id);
@@ -619,7 +675,7 @@ OCStackResult PDMGetLinkedDevices(const OicUuid_t *UUID, OCUuidList_t **UUIDLIST
     sqlite3_stmt *stmt = 0;
     int res = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_LINKED_DEVICES,
-                              strlen(PDM_SQLITE_GET_LINKED_DEVICES) + 1, &stmt, NULL);
+                              PDM_SQLITE_GET_LINKED_DEVICES_SIZE, &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, id);
@@ -672,7 +728,7 @@ OCStackResult PDMGetToBeUnlinkedDevices(OCPairList_t **staleDevList, size_t *num
     sqlite3_stmt *stmt = 0;
     int res = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_STALE_INFO,
-                              strlen(PDM_SQLITE_GET_STALE_INFO) + 1, &stmt, NULL);
+                              PDM_SQLITE_GET_STALE_INFO_SIZE, &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, PDM_DEVICE_STALE);
@@ -791,7 +847,7 @@ OCStackResult PDMIsLinkExists(const OicUuid_t* uuidOfDevice1, const OicUuid_t* u
     sqlite3_stmt *stmt = 0;
     int res = 0;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_DEVICE_LINKS,
-                              strlen(PDM_SQLITE_GET_DEVICE_LINKS) + 1, &stmt, NULL);
+                              PDM_SQLITE_GET_DEVICE_LINKS_SIZE, &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, id1);
@@ -816,7 +872,7 @@ static OCStackResult updateDeviceState(const OicUuid_t *uuid, PdmDeviceState_t s
     sqlite3_stmt *stmt = 0;
     int res = 0 ;
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_UPDATE_DEVICE,
-                              strlen(PDM_SQLITE_UPDATE_DEVICE) + 1, &stmt, NULL);
+                              PDM_SQLITE_UPDATE_DEVICE_SIZE, &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
     res = sqlite3_bind_int(stmt, PDM_BIND_INDEX_FIRST, state);
@@ -848,7 +904,7 @@ static OCStackResult updateLinkForStaleDevice(const OicUuid_t *devUuid)
     }
 
     res = sqlite3_prepare_v2(g_db, PDM_SQLITE_UPDATE_LINK_STALE_FOR_STALE_DEVICE,
-                              strlen(PDM_SQLITE_UPDATE_LINK_STALE_FOR_STALE_DEVICE) + 1,
+                              PDM_SQLITE_UPDATE_LINK_STALE_FOR_STALE_DEVICE_SIZE,
                                &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 
@@ -912,7 +968,7 @@ OCStackResult PDMGetDeviceState(const OicUuid_t *uuid, PdmDeviceState_t* result)
 
     sqlite3_stmt *stmt = 0;
     int res = 0;
-    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_DEVICE_STATUS, strlen(PDM_SQLITE_GET_DEVICE_STATUS) + 1,
+    res = sqlite3_prepare_v2(g_db, PDM_SQLITE_GET_DEVICE_STATUS, PDM_SQLITE_GET_DEVICE_STATUS_SIZE,
                               &stmt, NULL);
     PDM_VERIFY_SQLITE_OK(TAG, res, ERROR, OC_STACK_ERROR);
 

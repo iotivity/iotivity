@@ -53,7 +53,7 @@ int gQuitFlag = 0;
 typedef struct LEDRESOURCE{
     OCResourceHandle handle;
     bool state;
-    int power;
+    int64_t power;
 } LEDResource;
 
 static LEDResource LED;
@@ -73,7 +73,7 @@ static char CRED_FILE[] = "oic_svr_db_server_randompin.dat";
 /* Function that creates a new LED resource by calling the
  * OCCreateResource() method.
  */
-int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int resourcePower);
+int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int64_t resourcePower);
 
 /* This method converts the payload to JSON format */
 OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest);
@@ -225,7 +225,7 @@ OCRepPayload* constructResponse (OCEntityHandlerRequest *ehRequest)
         int64_t pow;
         if(OCRepPayloadGetPropInt(input, "power", &pow))
         {
-            currLEDResource->power =pow;
+            currLEDResource->power = pow;
         }
 
         bool state;
@@ -301,7 +301,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
         {
             // Create new LED instance
             char newLedUri[15] = "/a/led/";
-            int newLedUriLength = strlen(newLedUri);
+            size_t newLedUriLength = strlen(newLedUri);
             snprintf (newLedUri + newLedUriLength, sizeof(newLedUri)-newLedUriLength, "%d", gCurrLedInstance);
 
             respPLPost_led = OCRepPayloadCreate();
@@ -472,7 +472,7 @@ int main()
     OIC_LOG(DEBUG, TAG, "OCServer is starting...");
 
     // Initialize Persistent Storage for SVR database
-    OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, unlink};
+    OCPersistentStorage ps = {server_fopen, fread, fwrite, fclose, remove};
     OCRegisterPersistentStorageHandler(&ps);
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
@@ -553,7 +553,7 @@ int main()
     return 0;
 }
 
-int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int resourcePower)
+int createLEDResource (char *uri, LEDResource *ledResource, bool resourceState, int64_t resourcePower)
 {
     if (!uri)
     {
