@@ -567,6 +567,9 @@ public class GroupManager {
         if (groupTable == null) {
             throw new BadRequestException("group " + gid + " does not exist");
         }
+        if (groupTable.getMembers() == null) {
+            throw new BadRequestException("there are no members in the group");
+        }
         if (!groupTable.getMembers().contains(mid)) {
             throw new BadRequestException("uid is not a member of the group");
         }

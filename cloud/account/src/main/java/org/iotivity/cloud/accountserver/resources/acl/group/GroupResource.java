@@ -193,6 +193,9 @@ public class GroupResource extends Resource {
 
     private IResponse handleGroupPostRequest(IRequest request)
             throws ServerException {
+        if (request.getPayload() == null) {
+            throw new BadRequestException("payload is null");
+        }
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(request.getPayload(), HashMap.class);
 
@@ -400,16 +403,17 @@ public class GroupResource extends Resource {
                 Constants.KEYFIELD_GROUP_MEMBERS), queryMap);
 
         String uid = queryMap.get(Constants.REQ_UUID_ID).get(0);
+
+        if (uid == null || uid.isEmpty()) {
+            throw new BadRequestException(
+                    Constants.REQ_UUID_ID + " is null or empty");
+        }
+
         if (!uid.equals(
                 queryMap.get(Constants.KEYFIELD_GROUP_MEMBERS).get(0))) {
             throw new BadRequestException(
                     Constants.REQ_UUID_ID + "query value should be equal to "
                             + Constants.KEYFIELD_GROUP_MEMBERS + "query value");
-        }
-
-        if (uid == null || uid.isEmpty()) {
-            throw new BadRequestException(
-                    Constants.REQ_UUID_ID + " is null or empty");
         }
 
         String gid = request.getUriPathSegments()
@@ -444,16 +448,17 @@ public class GroupResource extends Resource {
                 Constants.KEYFIELD_GROUP_OWNER), queryMap);
 
         String uid = queryMap.get(Constants.REQ_UUID_ID).get(0);
+
+        if (uid == null || uid.isEmpty()) {
+            throw new BadRequestException(
+                    Constants.REQ_UUID_ID + " is null or empty");
+        }
+
         if (!uid.equals(queryMap.get(Constants.KEYFIELD_GROUP_OWNER).get(0))) {
             throw new BadRequestException(
                     Constants.REQ_UUID_ID + "query value should be equal to "
                             + Constants.KEYFIELD_GROUP_OWNER
                             + "query value to delete group");
-        }
-
-        if (uid == null || uid.isEmpty()) {
-            throw new BadRequestException(
-                    Constants.REQ_UUID_ID + " is null or empty");
         }
 
         String gid = request.getUriPathSegments()
