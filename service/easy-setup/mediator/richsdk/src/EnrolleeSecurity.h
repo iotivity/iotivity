@@ -76,6 +76,7 @@ namespace OIC
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError);
             void convertUUIDToString(const uint8_t uuid[UUID_SIZE],
                                                 std::string& uuidString);
+            std::string getResourceDeviceAddress(const std::string& host);
 
 #if defined(__WITH_DTLS__) && defined(__WITH_TLS__)
         public:

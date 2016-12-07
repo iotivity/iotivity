@@ -31,11 +31,21 @@
 #include "oic_string.h"
 #include "utlist.h"
 #include "srmutility.h"
+#include "internal/doxmresource.h"
 
 namespace OIC
 {
     namespace Service
     {
+        namespace
+        {
+            static const char COAP[] = "coap://";
+            static const char COAPS[] = "coaps://";
+            static const char COAP_TCP[] = "coap+tcp://";
+            static const char COAP_GATT[] = "coap+gatt://";
+            static const char COAP_RFCOMM[] = "coap+rfcomm://";
+        }
+
         #define MAX_PERMISSION_LENGTH (5)
         #define CREATE (1)
         #define READ (2)
@@ -77,6 +87,69 @@ namespace OIC
             uuidString = uuidArray;
         }
 
+        std::string EnrolleeSecurity::getResourceDeviceAddress(const std::string& host)
+        {
+            size_t prefix_len = 0;
+
+            if (host.compare(0, sizeof(COAP) - 1, COAP) == 0)
+            {
+                prefix_len = sizeof(COAP) - 1;
+            }
+            else if (host.compare(0, sizeof(COAPS) - 1, COAPS) == 0)
+            {
+                prefix_len = sizeof(COAPS) - 1;
+            }
+            else if (host.compare(0, sizeof(COAP_TCP) - 1, COAP_TCP) == 0)
+            {
+                prefix_len = sizeof(COAP_TCP) - 1;
+            }
+            else if (host.compare(0, sizeof(COAP_GATT) - 1, COAP_GATT) == 0)
+            {
+                prefix_len = sizeof(COAP_GATT) - 1;
+            }
+            else if (host.compare(0, sizeof(COAP_RFCOMM) - 1, COAP_RFCOMM) == 0)
+            {
+                prefix_len = sizeof(COAP_RFCOMM) - 1;
+            }
+            else
+            {
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
+                    "Well-known prefix for connectivity is not found. Please check OCResource::setHost");
+                return {};
+            }
+
+            // remove prefix
+            std::string host_token = host.substr(prefix_len);
+
+            if (host_token[0] == '[') // IPv6
+            {
+                size_t bracket = host_token.find(']');
+
+                // extract the ipv6 address
+                return host_token.substr(0, bracket + 1);
+            }
+            else
+            {
+                size_t dot = host_token.find('.');
+                if (std::string::npos == dot) // MAC
+                {
+                    size_t semi_count = std::count(host_token.begin(), host_token.end(), ':');
+                    if (semi_count > 5) {
+                        size_t found_semi = host_token.find_last_of(':');
+                        host_token = host_token.substr(0, found_semi);
+                    }
+                    return host_token;
+                }
+                else // IPv4
+                {
+                    size_t colon = host_token.find(':');
+
+                    // extract the ipv4 address
+                    return host_token.substr(0, colon);
+                }
+            }
+        }
+
         void EnrolleeSecurity::ownershipTransferCb(OC::PMResultList_t *result, int hasError)
         {
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "ownershipTransferCb IN");
@@ -112,9 +185,33 @@ namespace OIC
                 return res;
             }
 
-            result = OCSecure::discoverSingleDevice(ES_SEC_DISCOVERY_TIMEOUT,
-                                                    &uuid,
-                                                    m_securedResource);
+            // If a discovered resource uses BLE transport, unicast for secure resource discovery is
+            // used.
+            if( m_ocResource->connectivityType() & CT_ADAPTER_GATT_BTLE )
+            {
+                std::string GattAddress = getResourceDeviceAddress(m_ocResource->host());
+                if(!GattAddress.empty())
+                {
+                    result = OCSecure::discoverSingleDeviceInUnicast(ES_SEC_DISCOVERY_TIMEOUT,
+                                                            &uuid,
+                                                            GattAddress,
+                                                            m_ocResource->connectivityType(),
+                                                            m_securedResource);
+                }
+                else
+                {
+                    OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "GATT BTLE address format is wrong.");
+                    res = ESResult:: ES_ERROR;
+                    return res;
+                }
+            }
+            else
+            {
+                result = OCSecure::discoverSingleDevice(ES_SEC_DISCOVERY_TIMEOUT,
+                                                        &uuid,
+                                                        m_securedResource);
+            }
+
             if (result != OC_STACK_OK)
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Secure Resource Discovery failed.");
@@ -314,10 +411,33 @@ namespace OIC
                 return res;
             }
 
+            // If a discovered resource uses BLE transport, unicast for secure resource discovery is
+            // used.
+            if( m_ocResource->connectivityType() & CT_ADAPTER_GATT_BTLE )
+            {
+                std::string GattAddress = getResourceDeviceAddress(m_ocResource->host());
+                if(!GattAddress.empty())
+                {
+                    result = OCSecure::discoverSingleDeviceInUnicast(ES_SEC_DISCOVERY_TIMEOUT,
+                                                            &uuid,
+                                                            GattAddress,
+                                                            m_ocResource->connectivityType(),
+                                                            ownedDevice);
+                }
+                else
+                {
+                    OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "GATT BTLE address format is wrong.");
+                    res = ESResult:: ES_ERROR;
+                    return res;
+                }
+            }
+            else
+            {
+                result = OCSecure::discoverSingleDevice(ES_SEC_DISCOVERY_TIMEOUT,
+                                                        &uuid,
+                                                        ownedDevice);
+            }
 
-            result = OCSecure::discoverSingleDevice(ES_SEC_DISCOVERY_TIMEOUT,
-                                                    &uuid,
-                                                    ownedDevice);
             if (result != OC_STACK_OK)
             {
                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "secureResource Discovery failed.");
