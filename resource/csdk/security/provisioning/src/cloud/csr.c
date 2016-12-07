@@ -59,11 +59,10 @@ static OCByteString g_privateKey = {0, 0};
 #define MAX_STRING_LEN 254
 
 /**
- * @def SEED
- * @brief Seed for initialization RNG
+ * @def PERSONALIZATION_STRING
+ * @brief Personalization string for the mbedtls RNG
  */
-
-#define SEED "IOTIVITY_RND"
+#define PERSONALIZATION_STRING "IOTIVITY_RND"
 
 typedef struct
 {
@@ -108,40 +107,17 @@ static int ecdsaGenKeypair(mbedtls_pk_context * pk)
 
     VERIFY_NON_NULL_RET(pk, TAG, "Param pk is NULL", -1);
 
-    // Entropy seeding
-#ifdef __unix__
-    unsigned char seed[sizeof(SEED)] = {0};
-    int urandomFd = -2;
-    urandomFd = open("/dev/urandom", O_RDONLY);
-    if(urandomFd == -1)
-    {
-        OIC_LOG(ERROR, TAG, "Fails open /dev/urandom!");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
-    }
-    if(0 > read(urandomFd, seed, sizeof(seed)))
-    {
-        OIC_LOG(ERROR, TAG, "Fails read from /dev/urandom!");
-        close(urandomFd);
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
-    }
-    close(urandomFd);
-
-#else
-    unsigned char * seed = (unsigned char*) SEED;
-#endif
-    // Initialize and seed DRBG context
+    // Initialize the DRBG context
     mbedtls_ctr_drbg_init(&ctr_drbg);
     mbedtls_entropy_init(&entropy);
     if (0 != mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func,
-                                   &entropy, seed, sizeof(SEED)))
+                                   &entropy, PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING)))
     {
         OIC_LOG(ERROR, TAG, "Seed initialization failed!");
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return -1;
     }
-    mbedtls_ctr_drbg_set_prediction_resistance(&ctr_drbg, MBEDTLS_CTR_DRBG_PR_OFF);
+    mbedtls_ctr_drbg_set_prediction_resistance(&ctr_drbg, MBEDTLS_CTR_DRBG_PR_ON);
     // Initialize l context
     mbedtls_pk_init(pk);
     if (0 > mbedtls_pk_setup(pk, mbedtls_pk_info_from_type(MBEDTLS_PK_ECKEY)))
@@ -229,40 +205,17 @@ static int GenerateCSR(char *subject, OCByteString *csr)
         return -1;
     }
 
-    // Entropy seeding
-#ifdef __unix__
-    unsigned char seed[sizeof(SEED)] = {0};
-    int urandomFd = -2;
-    urandomFd = open("/dev/urandom", O_RDONLY);
-    if(urandomFd == -1)
-    {
-        OIC_LOG(ERROR, TAG, "Fails open /dev/urandom!");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
-    }
-    if(0 > read(urandomFd, seed, sizeof(seed)))
-    {
-        OIC_LOG(ERROR, TAG, "Fails read from /dev/urandom!");
-        close(urandomFd);
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return -1;
-    }
-    close(urandomFd);
-
-#else
-    unsigned char * seed = (unsigned char *) SEED;
-#endif
-    // Initialize and seed DRBG context
+    // Initialize the DRBG context
     mbedtls_ctr_drbg_init(&ctr_drbg);
     mbedtls_entropy_init(&entropy);
     if (0 != mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func,
-                                   &entropy, seed, sizeof(SEED)))
+                                   &entropy, PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING)))
     {
         OIC_LOG(ERROR, TAG, "Seed initialization failed!");
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return -1;
     }
-    mbedtls_ctr_drbg_set_prediction_resistance(&ctr_drbg, MBEDTLS_CTR_DRBG_PR_OFF);
+    mbedtls_ctr_drbg_set_prediction_resistance(&ctr_drbg, MBEDTLS_CTR_DRBG_PR_ON);
 
     // Create CSR
     buf = (unsigned char *)OICMalloc(bufsize * sizeof(unsigned char));

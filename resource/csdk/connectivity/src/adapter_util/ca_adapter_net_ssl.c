@@ -63,11 +63,11 @@
  * @brief mbedTLS version string length
  */
 #define MBED_TLS_VERSION_LEN (16)
-/**
- * @def SEED
- * @brief Seed for initialization RNG
+ /**
+ * @def PERSONALIZATION_STRING
+ * @brief Personalization string for the mbedtls RNG
  */
-#define SEED "IOTIVITY_RND"
+#define PERSONALIZATION_STRING "IOTIVITY_RND"
 /**
  * @def UUID_PREFIX
  * @brief uuid prefix in certificate subject field
@@ -1383,40 +1383,16 @@ CAResult_t CAinitSslAdapter()
      */
     mbedtls_entropy_init(&g_caSslContext->entropy);
     mbedtls_ctr_drbg_init(&g_caSslContext->rnd);
-
-#ifdef __unix__
-    unsigned char seed[sizeof(SEED)] = {0};
-    int urandomFd = -2;
-    urandomFd = open("/dev/urandom", O_RDONLY);
-    if(urandomFd == -1)
-    {
-        OIC_LOG(ERROR, NET_SSL_TAG, "Fails open /dev/urandom!");
-        ca_mutex_unlock(g_sslContextMutex);
-        CAdeinitSslAdapter();
-        return CA_STATUS_FAILED;
-    }
-    if(0 > read(urandomFd, seed, sizeof(seed)))
-    {
-        OIC_LOG(ERROR, NET_SSL_TAG, "Fails read from /dev/urandom!");
-        close(urandomFd);
-        ca_mutex_unlock(g_sslContextMutex);
-        CAdeinitSslAdapter();
-        return CA_STATUS_FAILED;
-    }
-    close(urandomFd);
-
-#else
-    unsigned char * seed = (unsigned char*) SEED;
-#endif
     if(0 != mbedtls_ctr_drbg_seed(&g_caSslContext->rnd, mbedtls_entropy_func,
-                                  &g_caSslContext->entropy, seed, sizeof(SEED)))
+                                  &g_caSslContext->entropy, 
+                                  (const unsigned char*) PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING)))
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Seed initialization failed!");
         ca_mutex_unlock(g_sslContextMutex);
         CAdeinitSslAdapter();
         return CA_STATUS_FAILED;
     }
-    mbedtls_ctr_drbg_set_prediction_resistance(&g_caSslContext->rnd, MBEDTLS_CTR_DRBG_PR_OFF);
+    mbedtls_ctr_drbg_set_prediction_resistance(&g_caSslContext->rnd, MBEDTLS_CTR_DRBG_PR_ON);
 
 #ifdef __WITH_TLS__
     if (0 != InitConfig(&g_caSslContext->clientTlsConf,
