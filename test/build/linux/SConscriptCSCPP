@@ -1,0 +1,169 @@
+'''
+/******************************************************************
+*
+* Copyright 2016 Samsung Electronics All Rights Reserved.
+*
+*
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*
+******************************************************************/
+'''
+print '\n---------------Started Building CS CPP Module for Linux---------------\n'
+
+Import('env_linux')
+import os
+
+env_linux['CC'] = 'g++'
+
+PROJECT_HOME = '../../'
+
+VARIANT_DIR = env_linux['VARIANT_DIR']
+IOTIVITY_ROOT = env_linux['ORG_SRC']
+TARGET_ARCH = env_linux.get('TARGET_ARCH')
+TARGET_TRANSPORT = env_linux.get('TARGET_TRANSPORT')
+TARGET_TEST = env_linux.get('TARGET_TEST')
+SECURED = env_linux.get('SECURED')
+
+create_target_dir = env_linux.Command('target.out', [], Mkdir(VARIANT_DIR))
+pre_job = [create_target_dir]
+default_targets = [pre_job]
+install_targets = []
+
+if env_linux.get('RELEASE'):
+    RELEASE_DIR = 'release'
+else:
+    RELEASE_DIR = 'debug'
+
+IOTIVITY_LIB_PATH = IOTIVITY_ROOT + '/out/linux/' + TARGET_ARCH + '/' + RELEASE_DIR
+
+#Features Configuration
+TLS_MODE = env_linux.get('TLS_MODE')
+
+arch_flag = ''
+if TARGET_ARCH in ['x86']:
+    env_linux.AppendUnique(CCFLAGS = ['-m32'])
+    env_linux.AppendUnique(LINKFLAGS = ['-m32'])
+    arch_flag = '-m32'
+elif TARGET_ARCH in ['x86_64']:
+    env_linux.AppendUnique(CCFLAGS = ['-m64'])
+    env_linux.AppendUnique(LINKFLAGS = ['-m64'])
+    arch_flag = '-m64'
+
+IOTIVITY_INCLUDE_PATH = [
+    IOTIVITY_ROOT + '/resource/csdk',
+    IOTIVITY_ROOT + '/resource/csdk/security/include',
+    IOTIVITY_ROOT + '/resource/csdk/security/provisioning/include',
+    IOTIVITY_ROOT + '/resource/csdk/security/provisioning/include/internal',
+    IOTIVITY_ROOT + '/resource/csdk/security/include/internal',
+    IOTIVITY_ROOT + '/resource/csdk/security/provisioning/include/oxm',
+    IOTIVITY_ROOT + '/resource/include',
+    IOTIVITY_ROOT + '/resource/csdk/stack/include',
+    IOTIVITY_ROOT + '/resource/csdk/ocrandom/include',
+    IOTIVITY_ROOT + '/resource/csdk/logger/include',
+    IOTIVITY_ROOT + '/resource/csdk/connectivity/inc',
+    IOTIVITY_ROOT + '/resource/csdk/connectivity/common/inc',
+    IOTIVITY_ROOT + '/resource/csdk/connectivity/lib/libcoap-4.1.1',
+    IOTIVITY_ROOT + '/resource/csdk/connectivity/api',
+    IOTIVITY_ROOT + '/resource/c_common/oic_malloc/include',
+    IOTIVITY_ROOT + '/resource/c_common',
+    IOTIVITY_ROOT + '/resource/c_common/oic_string/include',
+    IOTIVITY_ROOT + '/resource/c_common/oic_string/include',
+    IOTIVITY_ROOT + '/extlibs/tinydtls',
+    IOTIVITY_ROOT + '/extlibs/cjson',
+    IOTIVITY_ROOT + '/extlibs/base64',
+    IOTIVITY_ROOT + '/extlibs/tinycbor/tinycbor/src',
+    IOTIVITY_ROOT + '/resource/oc_logger/include',
+    IOTIVITY_ROOT + '/resource/provisioning/examples',
+    IOTIVITY_ROOT + '/resource/csdk/security/provisioning/include/cloud',
+    IOTIVITY_ROOT + '/resource/csdk/connectivity/lib/libcoap-4.1.1/include/',
+    IOTIVITY_ROOT + '/resource/csdk/connectivity/inc/pkix',
+    IOTIVITY_ROOT + '/resource/csdk/resource-directory/include',
+    IOTIVITY_ROOT + '/extlibs/mbedtls/mbedtls/include/mbedtls'
+]
+
+TC_INCLUDE_PATH = [
+    PROJECT_HOME + '/include',
+    PROJECT_HOME + '/src/tc/cs/gtest/cscpp/include',
+    PROJECT_HOME + '/extlibs/gtest-1.7.0/include',
+]
+
+LIB_PATH_LIST = [
+    IOTIVITY_LIB_PATH,
+    IOTIVITY_LIB_PATH + '/resource/csdk/logger',
+    IOTIVITY_LIB_PATH + '/resource/csdk/security',
+    IOTIVITY_LIB_PATH + '/resource/c_common/',
+    IOTIVITY_LIB_PATH + '/resource/csdk/routing/',
+    PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/linux'
+]
+
+TC_SRC_LIST = [
+	Glob( IOTIVITY_LIB_PATH + '/resource/csdk/security/src/*.o'),
+	Glob(IOTIVITY_ROOT + '/extlibs/asn1cert/*.o'),
+	Glob(IOTIVITY_LIB_PATH + '/resource/csdk/connectivity/src/adapter_util/pkix/*.o'),
+	Glob(PROJECT_HOME + '/src/common/commonutil/c_cpp/CommonUtil.cpp'),
+	Glob(PROJECT_HOME + '/src/common/commonutil/c_cpp/trace.c'),
+	Glob(PROJECT_HOME + '/src/common/testcase/gtest/IotivitySECTestMain.cpp'),
+	Glob(PROJECT_HOME + '/src/tc/cs/gtest/cscpp/src/helper/*.cpp'),
+	Glob(PROJECT_HOME + '/src/tc/cs/gtest/cscpp/src/btc/*.cpp'),
+	Glob(PROJECT_HOME + '/src/tc/cs/gtest/cscpp/src/stc/*.cpp')
+]
+
+lib_list = Split('boost_system boost_filesystem boost_thread c_common coap connectivity_abstraction dl expat gcov gio-2.0 gobject-2.0 glib-2.0 m logger oc oc_logger octbstack ocpmapi ocprovision ocsrm octbstack pthread rt uuid mbedtls mbedx509 mbedcrypto routingmanager resource_directory')
+CPPDEFINES1 = ['__CLOUD__', 'CA_DBUS_GATT_SERVICE_NAME', 'GLIB_VERSION_2_32', 'GLIB_VERSION_MIN_REQUIRED', 'IP_ADAPTER', 'LE_ADAPTER', 'LINUX ', 'MQ_PUBLISHER', 'MQ_SUBSCRIBER', 'NDEBUG', 'NO_EDR_ADAPTER', 'RD_CLIENT', 'ROUTING_EP', 'SHA2_USE_INTTYPES_H', 'TCP_ADAPTER', 'WITH_BWT', 'WITH_CLOUD', 'WITH_MQ', 'WITH_POSIX', 'WITH_TCP', '_ENABLE_MULTIPLE_OWNER_', '__LINUX__', '__WITH_DTLS__', '__WITH_TLS__', '__linux__']
+CPPFLAGS1 = ['-s', '-pthread', '-march=native', '-pthread', '-fpermissive', '-ftest-coverage', '-fprofile-arcs']
+CXXFLAGS1 = ['-std=c++11']
+
+if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:
+
+    target_binary = 'iotivity_cscpp_tlsoff_test'
+    if TLS_MODE == 1:
+        CPPDEFINES1.append(['-D__TLS_ON__'])
+        target_binary = 'iotivity_cscpp_tlson_test'
+
+    cscpp_tc = env_linux.Program(source = TC_SRC_LIST + [ PROJECT_HOME + '/extlibs/gtest-1.7.0/bin/linux/libgtest.a' ],
+                        target = target_binary,
+                        CPPPATH = IOTIVITY_INCLUDE_PATH + TC_INCLUDE_PATH,
+                        LIBS = lib_list,
+                        LIBPATH = LIB_PATH_LIST,
+                        RPATH = IOTIVITY_LIB_PATH,
+                        CXXFLAGS = CXXFLAGS1,
+                        CPPDEFINES = CPPDEFINES1,
+                        CPPFLAGS = CPPFLAGS1)
+
+    install_targets += cscpp_tc
+
+if TARGET_TEST == None or 'tc' in TARGET_TEST or 'all' in TARGET_TEST:
+    cs_resource_path = PROJECT_HOME + '/res/cs_resource'
+    cs_resource_list = Glob(cs_resource_path + '/*.*')
+    default_targets += [create_target_dir]
+    i = 0
+
+    for cs_resource in cs_resource_list:
+        cs_resource_backup = env_linux.Command('cs_resource_backup' + str(i), [], Copy(VARIANT_DIR, cs_resource))
+        cs_bin_dir = env_linux.Command('cs_bin_dir' + str(i), [], Copy(VARIANT_DIR + '../', cs_resource))
+        i = i + 1
+        default_targets += [cs_resource_backup, cs_bin_dir]
+
+install = env_linux.Install(PROJECT_HOME + VARIANT_DIR, install_targets)
+
+delete_bin = []
+i = 0
+for delete_target in install_targets:
+    delete_bin += '0'
+    delete_bin[i] = Command(str(i), [], Delete(delete_target))
+    i = i + 1
+
+default_targets += install_targets + install + delete_bin
+
+env_linux.Default(default_targets)
