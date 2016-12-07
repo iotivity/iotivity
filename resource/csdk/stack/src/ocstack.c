@@ -2711,6 +2711,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         requestInfo.method = CA_DELETE;
         break;
     case OC_REST_DISCOVER:
+        // intentional fall through don't add break
 #ifdef WITH_PRESENCE
     case OC_REST_PRESENCE:
 #endif

@@ -259,6 +259,7 @@ bool DPGenerateQuery(bool isSecure,
 #ifndef WITH_ARDUINO
         case CT_ADAPTER_TCP:
             prefix = (isSecure == true) ? QPREFIX_COAPS_TCP : QPREFIX_COAP_TCP;
+            // intentional fall through don't add break
 #endif
 #endif
         case CT_ADAPTER_IP:
