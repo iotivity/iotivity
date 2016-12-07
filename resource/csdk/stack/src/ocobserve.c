@@ -370,7 +370,12 @@ OCStackResult GenerateObserverId (OCObservationId *observationId)
 
     do
     {
-        *observationId = OCGetRandomByte();
+        if (!OCGetRandomBytes((uint8_t*)observationId, sizeof(OCObservationId)))
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to generate random observationId");
+            goto exit;
+        }
+
         // Check if observation Id already exists
         resObs = GetObserverUsingId (*observationId);
     } while (NULL != resObs);

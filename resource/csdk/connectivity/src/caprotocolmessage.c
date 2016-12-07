@@ -1046,7 +1046,11 @@ CAResult_t CAGenerateTokenInternal(CAToken_t *token, uint8_t tokenLength)
         return CA_MEMORY_ALLOC_FAILED;
     }
 
-    OCFillRandomMem((uint8_t *)temp, tokenLength);
+    if (!OCGetRandomBytes((uint8_t *)temp, tokenLength))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to generate random token");
+        return CA_STATUS_FAILED;
+    }
 
     // save token
     *token = temp;

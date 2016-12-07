@@ -321,7 +321,12 @@ int32_t GetDtlsPskForRandomPinOxm( CADtlsPskCredType_t type,
                  * At this point, The server generate random hint and
                  * provide it to client through server key exchange message.
                  */
-                OCFillRandomMem(result, result_length);
+                if (!OCGetRandomBytes(result, result_length))
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to generate random PSK hint");
+                    ret = -1;
+                    break;
+                }
                 ret = result_length;
 
                 OIC_LOG(DEBUG, TAG, "PSK HINT : ");
@@ -437,7 +442,12 @@ int32_t GetDtlsPskForPreconfPinOxm( CADtlsPskCredType_t type,
                      * At this point, The server generate random hint and
                      * provide it to client through server key exchange message.
                      */
-                    OCFillRandomMem(result, result_length);
+                    if (!OCGetRandomBytes(result, result_length))
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to generate random PSK hint");
+                        ret = -1;
+                        break;
+                    }
                     ret = result_length;
 
                     OIC_LOG(DEBUG, TAG, "PSK HINT : ");

@@ -1773,7 +1773,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
                 {
                     memcpy(uuid, (char*) uuidPos + sizeof(UUID_PREFIX) - 1, UUID_LENGTH * 2 + 4);
                     OIC_LOG_V(DEBUG, NET_SSL_TAG, "certificate uuid string: %s" , uuid);
-                    ret = OCConvertStringToUuid(uuid, peer->sep.identity.id);
+                    ret = (OCConvertStringToUuid(uuid, peer->sep.identity.id)) ? 0 : -1;
                     SSL_CHECK_FAIL(peer, ret, "Failed to convert subject", 1,
                                           CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT);
                 }
@@ -1787,7 +1787,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
                 if (NULL != userIdPos)
                 {
                     memcpy(uuid, (char*) userIdPos + sizeof(USERID_PREFIX) - 1, UUID_LENGTH * 2 + 4);
-                    ret = OCConvertStringToUuid(uuid, peer->sep.userId.id);
+                    ret = (OCConvertStringToUuid(uuid, peer->sep.userId.id)) ? 0 : -1;
                     SSL_CHECK_FAIL(peer, ret, "Failed to convert subject alt name", 1,
                                       CA_STATUS_FAILED, MBEDTLS_SSL_ALERT_MSG_UNSUPPORTED_CERT);
                 }
