@@ -905,12 +905,16 @@ typedef enum
 
 #ifdef WITH_MQ
     /** When this bit is set, the resource is allowed to be published */
-    ,OC_MQ_PUBLISHER     = (1 << 6)
+    // @todo
+    // Since this property is not defined on OCF Spec. it should be set 0 until define it
+    ,OC_MQ_PUBLISHER     = (0)
 #endif
 
 #ifdef MQ_BROKER
     /** When this bit is set, the resource is allowed to be notified as MQ broker.*/
-    ,OC_MQ_BROKER        = (1 << 7)
+    // @todo
+    // Since this property is not defined on OCF Spec. it should be set 0 until define it
+    ,OC_MQ_BROKER        = (0)
 #endif
 } OCResourceProperty;
 
