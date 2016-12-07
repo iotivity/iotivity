@@ -587,6 +587,12 @@ SRMAccessResponse_t CheckPermission(PEContext_t     *context,
         {
             context->retVal = ACCESS_GRANTED;
         }
+        // If not granted via DevOwner status and not a subowner,
+        // then check if request is for a SVR and coming from rowner
+        else if (IsRequestFromResourceOwner(context))
+        {
+            context->retVal = ACCESS_GRANTED;
+        }
 #ifdef MULTIPLE_OWNER
         //Then check if request from SubOwner
         else if(IsRequestFromSubOwner(context))
@@ -597,12 +603,6 @@ SRMAccessResponse_t CheckPermission(PEContext_t     *context,
             }
         }
 #endif //MULTIPLE_OWNER
-        // If not granted via DevOwner status and not a subowner,
-        // then check if request is for a SVR and coming from rowner
-        else if (IsRequestFromResourceOwner(context))
-        {
-            context->retVal = ACCESS_GRANTED;
-        }
         // Else request is a "normal" request that must be tested against ACL
         else
         {

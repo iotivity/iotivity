@@ -897,6 +897,13 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
         const CASecureEndpoint_t* authenticatedSubOwnerInfo = CAGetSecureEndpointData(object);
         if(authenticatedSubOwnerInfo)
         {
+            if (0 == memcmp(authenticatedSubOwnerInfo->identity.id, gDoxm->owner.id,
+                            authenticatedSubOwnerInfo->identity.id_length))
+            {
+                OIC_LOG(WARNING, TAG, "Super owner tried MOT, this request will be ignored.");
+                return;
+            }
+
             OicSecSubOwner_t* subOwnerInst = NULL;
             LL_FOREACH(gDoxm->subOwners, subOwnerInst)
             {
@@ -913,9 +920,16 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
                 subOwnerInst = (OicSecSubOwner_t*)OICCalloc(1, sizeof(OicSecSubOwner_t));
                 if(subOwnerInst)
                 {
-                    OIC_LOG(DEBUG, TAG, "Adding New SubOwner");
+                    char* strUuid = NULL;
                     memcpy(subOwnerInst->uuid.id, authenticatedSubOwnerInfo->identity.id,
                            authenticatedSubOwnerInfo->identity.id_length);
+                    if(OC_STACK_OK != ConvertUuidToStr(&subOwnerInst->uuid, &strUuid))
+                    {
+                        OIC_LOG(ERROR, TAG, "Failed to allocate memory.");
+                        return;
+                    }
+                    OIC_LOG_V(DEBUG, TAG, "Adding New SubOwner(%s)", strUuid);
+                    OICFree(strUuid);
                     LL_APPEND(gDoxm->subOwners, subOwnerInst);
                     if(!UpdatePersistentStorage(gDoxm))
                     {
@@ -1824,17 +1838,22 @@ bool IsSubOwner(const OicUuid_t* uuid)
 {
     bool retVal = false;
 
-    if(NULL == uuid)
+    if (NULL == uuid)
     {
         return retVal;
     }
 
     if (gDoxm && gDoxm->subOwners)
     {
+        if (memcmp(gDoxm->owner.id, uuid->id, sizeof(gDoxm->owner.id)) == 0)
+        {
+            return false;
+        }
+
         OicSecSubOwner_t* subOwner = NULL;
         LL_FOREACH(gDoxm->subOwners, subOwner)
         {
-            if(memcmp(subOwner->uuid.id, uuid->id, sizeof(uuid->id)) == 0)
+            if (memcmp(subOwner->uuid.id, uuid->id, sizeof(uuid->id)) == 0)
             {
                 return true;
             }

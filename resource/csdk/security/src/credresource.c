@@ -2041,7 +2041,9 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
         // In case SubOwner Credential
         else if(doxm && doxm->owned && doxm->mom &&
                 OIC_MULTIPLE_OWNER_DISABLE != doxm->mom->mode &&
-                0 == cred->privateData.len)
+                0 == cred->privateData.len &&
+                0 == cred->optionalData.len &&
+                0 == cred->publicData.len )
         {
             switch(cred->credType)
             {
