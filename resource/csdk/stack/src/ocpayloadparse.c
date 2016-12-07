@@ -278,6 +278,15 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
                 err = cbor_value_dup_text_string(&curVal, &(resource->uri), &len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find href value");
 
+                // Rel - Not a mandatory field
+                err = cbor_value_map_find_value(&resourceMap, OC_RSRVD_REL, &curVal);
+                VERIFY_CBOR_SUCCESS(TAG, err, "to find rel tag");
+                if (cbor_value_is_valid(&curVal))
+                {
+                    err = cbor_value_dup_text_string(&curVal, &(resource->rel), &len, NULL);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "to find rel value");
+                }
+
                 // ResourceTypes
                 err =  OCParseStringLL(&resourceMap, OC_RSRVD_RESOURCE_TYPE, &resource->types);
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find resource type tag/value");

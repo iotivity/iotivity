@@ -124,6 +124,12 @@ typedef enum
 } ResourceHandling;
 
 /**
+ * This function returns the virtual resource of the given URI.
+ * @return the virtual resource or ::OC_UNKNOWN_URI
+ */
+OCVirtualResources GetTypeOfVirtualURI(const char* resourceUri);
+
+/**
  * Default entity handler (ie. callback) to be used for resources with
  * no entity handler.
  */

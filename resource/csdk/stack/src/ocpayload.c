@@ -1769,6 +1769,18 @@ static OCResourcePayload* OCCopyResource(const OCResource* res, uint16_t secureP
         return NULL;
     }
 
+    // relation is always the default unless the resource is the well known URI
+    if (0 == strcmp(res->uri, OC_RSRVD_WELL_KNOWN_URI))
+    {
+        pl->rel = OICStrdup("self");
+
+        if (!pl->rel)
+        {
+            OCDiscoveryResourceDestroy(pl);
+            return NULL;
+        }
+    }
+
     // types
     OCResourceType* typePtr = res->rsrcType;
 
@@ -2049,6 +2061,7 @@ void OCDiscoveryResourceDestroy(OCResourcePayload* payload)
     }
 
     OICFree(payload->uri);
+    OICFree(payload->rel);
     OCFreeOCStringLL(payload->types);
     OCFreeOCStringLL(payload->interfaces);
     OCDiscoveryEndpointDestroy(payload->eps);

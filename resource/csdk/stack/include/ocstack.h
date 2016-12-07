@@ -511,6 +511,28 @@ const char *OCGetResourceUri(OCResourceHandle handle);
 OCResourceProperty OCGetResourceProperties(OCResourceHandle handle);
 
 /**
+ * This function sets the properties of the resource specified by handle.
+ *
+ * @param handle                Handle of resource.
+ * @param resourceProperties    Properties supported by resource.
+ *                              Example: ::OC_DISCOVERABLE|::OC_OBSERVABLE.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCSetResourceProperties(OCResourceHandle handle, uint8_t resourceProperties);
+
+/**
+ * This function removes the properties of the resource specified by handle.
+ *
+ * @param handle                Handle of resource.
+ * @param resourceProperties    Properties not supported by resource.
+ *                              Example: ::OC_DISCOVERABLE|::OC_OBSERVABLE.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCClearResourceProperties(OCResourceHandle handle, uint8_t resourceProperties);
+
+/**
  * This function gets the number of resource types of the resource.
  *
  * @param handle            Handle of resource.

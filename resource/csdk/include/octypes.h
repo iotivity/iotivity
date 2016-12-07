@@ -1514,6 +1514,7 @@ typedef struct OCEndpointPayload
 typedef struct OCResourcePayload
 {
     char* uri;
+    char* rel;
     OCStringLL* types;
     OCStringLL* interfaces;
     uint8_t bitmap;

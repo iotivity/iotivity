@@ -123,6 +123,7 @@ static OCResourceHandle platformResource = {0};
 static OCResourceHandle deviceResource = {0};
 static OCResourceHandle introspectionResource = {0};
 static OCResourceHandle introspectionPayloadResource = {0};
+static OCResourceHandle wellKnownResource = {0};
 #ifdef MQ_BROKER
 static OCResourceHandle brokerResource = {0};
 #endif
@@ -4100,6 +4101,34 @@ OCResourceProperty OCGetResourceProperties(OCResourceHandle handle)
     return (OCResourceProperty)-1;
 }
 
+OCStackResult OCSetResourceProperties(OCResourceHandle handle, uint8_t resourceProperties)
+{
+    OCResource *resource = NULL;
+
+    resource = findResource((OCResource *) handle);
+    if (resource == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Resource not found");
+        return OC_STACK_NO_RESOURCE;
+    }
+    resource->resourceProperties = (OCResourceProperty) (resource->resourceProperties | resourceProperties);
+    return OC_STACK_OK;
+}
+
+OCStackResult OCClearResourceProperties(OCResourceHandle handle, uint8_t resourceProperties)
+{
+    OCResource *resource = NULL;
+
+    resource = findResource((OCResource *) handle);
+    if (resource == NULL)
+    {
+        OIC_LOG(ERROR, TAG, "Resource not found");
+        return OC_STACK_NO_RESOURCE;
+    }
+    resource->resourceProperties = (OCResourceProperty) (resource->resourceProperties & ~resourceProperties);
+    return OC_STACK_OK;
+}
+
 OCStackResult OCGetNumberOfResourceTypes(OCResourceHandle handle,
         uint8_t *numResourceTypes)
 {
@@ -4511,6 +4540,22 @@ OCStackResult initResources()
 
     if(result == OC_STACK_OK)
     {
+        result = OCCreateResource(&wellKnownResource,
+                                  OC_RSRVD_RESOURCE_TYPE_RES,
+                                  OC_RSRVD_INTERFACE_LL,
+                                  OC_RSRVD_WELL_KNOWN_URI,
+                                  NULL,
+                                  NULL,
+                                  0);
+        if(result == OC_STACK_OK)
+        {
+            result = BindResourceInterfaceToResource((OCResource *)wellKnownResource,
+                                                     OC_RSRVD_INTERFACE_DEFAULT);
+        }
+    }
+
+    if(result == OC_STACK_OK)
+    {
         CreateResetProfile();
         result = OCCreateResource(&deviceResource,
                                   OC_RSRVD_RESOURCE_TYPE_DEVICE,
@@ -4627,6 +4672,7 @@ void deleteAllResources()
     }
     memset(&platformResource, 0, sizeof(platformResource));
     memset(&deviceResource, 0, sizeof(deviceResource));
+    memset(&wellKnownResource, 0, sizeof(wellKnownResource));
 #ifdef MQ_BROKER
     memset(&brokerResource, 0, sizeof(brokerResource));
 #endif

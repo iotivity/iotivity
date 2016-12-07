@@ -1241,6 +1241,60 @@ TEST(StackResource, GetResourceProperties)
     EXPECT_EQ(OC_STACK_OK, OCStop());
 }
 
+TEST(StackResource, SetResourceProperties)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    OIC_LOG(INFO, TAG, "Starting SetResourceProperties test");
+    InitStack(OC_SERVER);
+
+    OCResourceHandle handle;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led",
+                                            0,
+                                            NULL,
+                                            0));
+
+    EXPECT_EQ(OC_STACK_OK, OCSetResourceProperties(handle, OC_DISCOVERABLE|OC_OBSERVABLE));
+#ifdef MQ_PUBLISHER
+    EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE|OC_MQ_PUBLISHER, OCGetResourceProperties(handle));
+#else
+    EXPECT_EQ(OC_ACTIVE|OC_DISCOVERABLE|OC_OBSERVABLE, OCGetResourceProperties(handle));
+#endif
+
+    EXPECT_EQ(OC_STACK_OK, OCDeleteResource(handle));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
+TEST(StackResource, ClearResourceProperties)
+{
+    itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
+    OIC_LOG(INFO, TAG, "Starting ClearResourceProperties test");
+    InitStack(OC_SERVER);
+
+    OCResourceHandle handle;
+    EXPECT_EQ(OC_STACK_OK, OCCreateResource(&handle,
+                                            "core.led",
+                                            "core.rw",
+                                            "/a/led",
+                                            0,
+                                            NULL,
+                                            OC_DISCOVERABLE|OC_OBSERVABLE));
+
+    EXPECT_EQ(OC_STACK_OK, OCClearResourceProperties(handle, OC_DISCOVERABLE|OC_OBSERVABLE));
+#ifdef MQ_PUBLISHER
+    EXPECT_EQ(OC_ACTIVE|OC_MQ_PUBLISHER, OCGetResourceProperties(handle));
+#else
+    EXPECT_EQ(OC_ACTIVE, OCGetResourceProperties(handle));
+#endif
+
+    EXPECT_EQ(OC_STACK_OK, OCDeleteResource(handle));
+
+    EXPECT_EQ(OC_STACK_OK, OCStop());
+}
+
 TEST(StackResource, StackTestResourceDiscoverOneResourceBad)
 {
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);

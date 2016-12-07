@@ -245,7 +245,7 @@ exit:
     return eCode;
 }
 
-static OCVirtualResources GetTypeOfVirtualURI(const char *uriInRequest)
+OCVirtualResources GetTypeOfVirtualURI(const char *uriInRequest)
 {
     if (strcmp(uriInRequest, OC_RSRVD_WELL_KNOWN_URI) == 0)
     {
@@ -1253,7 +1253,8 @@ static OCStackResult EHRequest(OCEntityHandlerRequest *ehRequest, OCPayloadType 
                                      request->payloadSize,
                                      request->numRcvdVendorSpecificHeaderOptions,
                                      request->rcvdVendorSpecificHeaderOptions,
-                                     (OCObserveAction)request->observationOption,
+                                     (OCObserveAction)(request->notificationFlag ? OC_OBSERVE_NO_OPTION :
+                                                       request->observationOption),
                                      (OCObservationId)0,
                                      request->coapID);
 }
@@ -1398,6 +1399,22 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         OIC_LOG_V(ERROR, TAG, "Resource : %s not permitted for method: %d",
             request->resourceUrl, request->method);
         return OC_STACK_UNAUTHORIZED_REQ;
+    }
+
+    discoveryResult = HandleVirtualObserveRequest(request);
+    if (discoveryResult == OC_STACK_DUPLICATE_REQUEST)
+    {
+        // server requests are usually free'd when the response is sent out
+        // for the request in ocserverrequest.c : HandleSingleResponse()
+        // Since we are making an early return and not responding, the server request
+        // needs to be deleted.
+        FindAndDeleteServerRequest (request);
+        discoveryResult = OC_STACK_OK;
+        goto exit;
+    }
+    else if (discoveryResult != OC_STACK_OK)
+    {
+        goto exit;
     }
 
     // Step 1: Generate the response to discovery request

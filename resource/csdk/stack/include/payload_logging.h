@@ -246,6 +246,10 @@ INLINE_API void OCPayloadLogDiscovery(LogLevel level, OCDiscoveryPayload* payloa
         {
             OIC_LOG_V(level, PL_TAG, "\tLink#%d", i);
             OIC_LOG_V(level, PL_TAG, "\tURI:%s", res->uri);
+            if (res->rel)
+            {
+                OIC_LOG_V(level, PL_TAG, "\tRelation:%s", res->rel);
+            }
             OIC_LOG(level, PL_TAG, "\tResource Types:");
             OCStringLL* strll =  res->types;
             while(strll)

@@ -298,26 +298,32 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
         for (size_t i = 0; i < resourceCount; ++i)
         {
             CborEncoder linkMap;
+            size_t linkMapLen;
             OCResourcePayload *resource = OCDiscoveryPayloadGetResource(payload, i);
             VERIFY_PARAM_NON_NULL(TAG, resource, "Failed retrieving resource");
 
             // resource map inside the links array.
-            if (resource->eps)
+            linkMapLen = resource->eps ? LINKS_MAP_LEN_WITH_EPS : LINKS_MAP_LEN_WITHOUT_EPS;
+            if (resource->rel)
             {
-                err |= cbor_encoder_create_map(&linkArray, &linkMap, LINKS_MAP_LEN_WITH_EPS);
-                VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating links map");
+                ++linkMapLen;
             }
-            else
-            {
-                err |= cbor_encoder_create_map(&linkArray, &linkMap, LINKS_MAP_LEN_WITHOUT_EPS);
-                VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating links map");
-            }
+            err |= cbor_encoder_create_map(&linkArray, &linkMap, linkMapLen);
+            VERIFY_CBOR_SUCCESS(TAG, err, "Failed creating links map");
 
             // Below are insertions of the resource properties into the map.
             // Uri
             err |= AddTextStringToMap(&linkMap, OC_RSRVD_HREF, sizeof(OC_RSRVD_HREF) - 1,
                     resource->uri);
             VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding uri to links map");
+
+            // Rel - Not a mandatory field
+            if (resource->rel)
+            {
+                err |= AddTextStringToMap(&linkMap, OC_RSRVD_REL, sizeof(OC_RSRVD_REL) - 1,
+                        resource->rel);
+                VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding rel to links map");
+            }
 
             // Resource Type
             if (resource->types)
