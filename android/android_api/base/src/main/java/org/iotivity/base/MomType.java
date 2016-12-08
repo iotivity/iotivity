@@ -1,7 +1,7 @@
 /*
  *******************************************************************
  *
- * Copyright 2015 Samsung Electronics All Rights Reserved.
+ * Copyright 2016 Samsung Electronics All Rights Reserved.
  *
  *-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  *
@@ -22,16 +22,15 @@
 
 package org.iotivity.base;
 
-public enum OxmType {
-    OIC_JUST_WORKS(0),
-    OIC_RANDOM_DEVICE_PIN(1),
-    OIC_MANUFACTURER_CERTIFICATE(2),
-    OIC_PRECONFIG_PIN(65280),
-    OIC_OXM_COUNT(3);
+public enum MomType {
+    OIC_MULTIPLE_OWNER_DISABLE(0),
+        OIC_MULTIPLE_OWNER_ENABLE(1),
+        OIC_MULTIPLE_OWNER_TIMELY_ENABLE(2),
+        OIC_NUMBER_OF_MOM_TYPE(3);
 
     private int value;
 
-    private OxmType(int value) {
+    private MomType(int value) {
         this.value = value;
     }
 

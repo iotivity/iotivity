@@ -185,6 +185,116 @@ public class OcSecureResource {
         throws OcException;
 
     /**
+     * API to select OTM method.
+     *
+     * @param OxmType Method to be selected
+     * @param SelectOTMMethodListener Callback function, which will be called after completion
+     *
+     * @throws OcException
+     */
+    public void selectMOTMethod(OxmType oxmType,
+            SelectOTMMethodListener selectOTMMethodListener) throws OcException {
+        this.selectMOTMethod0(oxmType.getValue(), selectOTMMethodListener);
+    }
+
+    private native void selectMOTMethod0(int oxmType,
+            SelectOTMMethodListener selectOTMMethodListener) throws OcException;
+
+    /**
+     * API to change Multiple Owner Transfer(MOT) mode.
+     *
+     * @param MomType MOT mode to be selected.
+     * @param ChangeMOTModeListener Callback function, which will be called after completion
+     *
+     * @throws OcException
+     */
+    public void changeMOTMode(MomType momType,
+            ChangeMOTModeListener changeMOTModeListener) throws OcException {
+        this.changeMOTMode0(momType.getValue(), changeMOTModeListener);
+    }
+
+    private native void changeMOTMode0(int momType,
+            ChangeMOTModeListener changeMOTModeListener) throws OcException;
+
+    /**
+     * API to Add preConfigured PIN to local SVR DB.
+     *
+     * @param String pin string to be saved in svr db.
+     *
+     * @throws OcException
+     */
+    public void addPreConfigPIN(String pin) throws OcException {
+        this.addPreConfigPIN0(pin, pin.length());
+    }
+
+    private native void addPreConfigPIN0(String pin, int pinLength) throws OcException;
+
+    /**
+     * API to provision preConfigured PIN.
+     *
+     * @param String PIN to be used while authentication.
+     * @param ProvisionPreConfigPINListener Callback function, which will be called after
+     *                                      completion
+     *
+     * @throws OcException
+     */
+    public void  provisionPreConfigPIN(String pin,
+            ProvisionPreConfigPINListener provisionPreConfigPINListener) throws OcException {
+        this.provisionPreConfigPIN0(pin, pin.length(), provisionPreConfigPINListener);
+    }
+
+    private native void provisionPreConfigPIN0(String pin, int pinLength,
+            ProvisionPreConfigPINListener provisionPreConfigPINListener) throws OcException;
+
+    /**
+     * API to  do Multiple Ownership Transfer for MOT enabled devices.
+     *
+     * @param MultipleOwnershipTransferListener Callback function, which will
+     *                                          be called after completion.
+     *
+     * @throws OcException
+     */
+    public native void doMultipleOwnershipTransfer(
+            DoMultipleOwnershipTransferListener doMultipleOwnershipTransferListener);
+
+    /**
+     * selectOTMMethodListener can be registered with selectOTMMethod call.
+     * Listener notified asynchronously.
+     */
+    public interface SelectOTMMethodListener {
+        public void selectOTMMethodListener(List<ProvisionResult> provisionResultList,
+                int hasError);
+    }
+
+    /**
+     * changeMOTModeListener can be registered with changeMOTMode call.
+     * Listener notified asynchronously.
+     */
+    public interface ChangeMOTModeListener {
+        public void changeMOTModeListener(List<ProvisionResult> provisionResultList,
+                int hasError);
+    }
+
+    /**
+     * provisionPreConfigPINListener can be registered with ProvisionPreConfigPIN call.
+     * Listener notified asynchronously.
+     */
+    public interface ProvisionPreConfigPINListener {
+        public void provisionPreConfigPINListener(List<ProvisionResult> provisionResultList,
+                int hasError);
+    }
+
+    /**
+     * doMultipleOwnershipTransferListener can be registered with doMultipleOwnershipTransfer
+     * call.
+     * Listener notified asynchronously.
+     */
+    public interface DoMultipleOwnershipTransferListener {
+        public void doMultipleOwnershipTransferListener(List<ProvisionResult> provisionResultList,
+                int hasError);
+    }
+
+    /**
      * provisionDirectPairingListener can be registered with doOwnershipTransfer
      * call.
      * Listener notified asynchronously.
@@ -243,7 +353,7 @@ public class OcSecureResource {
         public void provisionTrustCertChainListener(List<ProvisionResult> provisionResultList,
                 int hasError);
     }
-	
+
     /**
      * provisionAclListener can be registered with provisionAclListener
      * call.

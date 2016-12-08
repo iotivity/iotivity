@@ -409,6 +409,68 @@ OCStackResult JniOcSecureResource::provisionPairwiseDevices(JNIEnv* env, jint ty
     }
     return ret;
 }
+#if defined(MULTIPLE_OWNER)
+OCStackResult JniOcSecureResource::selectMOTMethod(JNIEnv* env, jint oxmSel, jobject jListener)
+{
+    OCStackResult ret;
+    JniProvisionResultListner *resultListener = AddProvisionResultListener(env, jListener);
+
+    ResultCallBack resultCallback = [resultListener](PMResultList_t *result, int hasError)
+    {
+        resultListener->ProvisionResultCallback(result, hasError, ListenerFunc::SELECT_OTM_METHOD);
+    };
+    ret = m_sharedSecureResource->selectMOTMethod((const OicSecOxm_t)oxmSel, resultCallback);
+    return ret;
+}
+
+OCStackResult JniOcSecureResource::changeMOTMode(JNIEnv* env, jint momType, jobject jListener)
+{
+    OCStackResult ret;
+    JniProvisionResultListner *resultListener = AddProvisionResultListener(env, jListener);
+
+    ResultCallBack resultCallback = [resultListener](PMResultList_t *result, int hasError)
+    {
+        resultListener->ProvisionResultCallback(result, hasError, ListenerFunc::CHANGE_MOT_MODE);
+    };
+    ret = m_sharedSecureResource->changeMOTMode((const OicSecMomType_t)momType, resultCallback);
+    return ret;
+}
+
+OCStackResult JniOcSecureResource::addPreconfigPIN(JNIEnv* env, std::string pin, int size)
+{
+    OCStackResult ret;
+    ret = m_sharedSecureResource->addPreconfigPIN(pin.c_str(), (size_t) size);
+    return ret;
+}
+
+OCStackResult JniOcSecureResource::provisionPreconfPin(JNIEnv* env, std::string pin,
+        int size, jobject jListener)
+{
+    OCStackResult ret;
+    JniProvisionResultListner *resultListener = AddProvisionResultListener(env, jListener);
+
+    ResultCallBack resultCallback = [resultListener](PMResultList_t *result, int hasError)
+    {
+        resultListener->ProvisionResultCallback(result, hasError,
+                ListenerFunc::PROVISION_PRE_CONFIG_PIN);
+    };
+    ret = m_sharedSecureResource->provisionPreconfPin(pin.c_str(), (size_t)size, resultCallback);
+    return ret;
+}
+
+OCStackResult JniOcSecureResource::doMultipleOwnershipTransfer(JNIEnv* env, jobject jListener)
+{
+    OCStackResult ret;
+    JniProvisionResultListner *resultListener = AddProvisionResultListener(env, jListener);
+
+    ResultCallBack resultCallback = [resultListener](PMResultList_t *result, int hasError)
+    {
+        resultListener->ProvisionResultCallback(result, hasError, ListenerFunc::MULTIPLE_OXM);
+    };
+    ret = m_sharedSecureResource->doMultipleOwnershipTransfer(resultCallback);
+    return ret;
+}
+#endif
 
 /*
  * Class:     org_iotivity_base_OcSecureResource
@@ -763,6 +825,229 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionDirectPa
         LOGE("%s", e.reason().c_str());
         ThrowOcException(e.code(), e.reason().c_str());
     }
+}
+
+/*
+ * Class:     org_iotivity_base_OcSecureResource
+ * Method:    selectMOTMethod0
+ * Signature: (ILorg/iotivity/base/OcSecureResource/SelectOTMMethodListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_selectMOTMethod0
+  (JNIEnv *env, jobject thiz, jint oxmSelVal, jobject jListener)
+{
+    LOGD("OcSecureResource_selectMOTMethod0");
+#if defined(MULTIPLE_OWNER)
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Invalid Callback");
+        return;
+    }
+
+    JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
+    if (!secureResource)
+    {
+        ThrowOcException(OC_STACK_ERROR, "getJniOcSecureResourcePtr failed");
+        return;
+    }
+
+    try
+    {
+        OCStackResult result = secureResource->selectMOTMethod(env, oxmSelVal, jListener);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcSecureResource_selectMOTMethod0");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+#else
+    ThrowOcException(OC_STACK_INVALID_PARAM, "MULTIPLE_OWNER not enabled");
+    return;
+#endif
+}
+
+/*
+ * Class:     org_iotivity_base_OcSecureResource
+ * Method:    changeMOTMode0
+ * Signature: (ILorg/iotivity/base/OcSecureResource/ChangeMOTModeListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_changeMOTMode0
+  (JNIEnv *env, jobject thiz, jint momType, jobject jListener)
+{
+    LOGD("OcSecureResource_changeMOTMode0");
+#if defined(MULTIPLE_OWNER)
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Invalid Callback");
+        return;
+    }
+
+    JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
+    if (!secureResource)
+    {
+        ThrowOcException(OC_STACK_ERROR, "getJniOcSecureResourcePtr failed");
+        return;
+    }
+
+    try
+    {
+        OCStackResult result = secureResource->changeMOTMode(env, momType, jListener);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcSecureResource_changeMOTMode0");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+#else
+    ThrowOcException(OC_STACK_INVALID_PARAM, "MULTIPLE_OWNER not enabled");
+    return;
+#endif
+}
+/*
+ * Class:     org_iotivity_base_OcSecureResource
+ * Method:    addPreConfigPIN0
+ * Signature: (Ljava/lang/String;I)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_addPreConfigPIN0
+  (JNIEnv *env, jobject thiz, jstring jPin, jint pinSize)
+{
+    LOGD("OcSecureResource_addPreConfigPIN0");
+#if defined(MULTIPLE_OWNER)
+    if (!jPin)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "Invalid Parameters");
+        return;
+    }
+
+    std::string pin = env->GetStringUTFChars(jPin, nullptr);
+
+    JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
+    if (!secureResource)
+    {
+        ThrowOcException(OC_STACK_ERROR, "getJniOcSecureResourcePtr failed");
+        return;
+    }
+
+    try
+    {
+        OCStackResult result = secureResource->addPreconfigPIN(env, pin, pinSize);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcSecureResource_addPreConfigPIN0");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+#else
+    ThrowOcException(OC_STACK_INVALID_PARAM, "MULTIPLE_OWNER not enabled");
+    return;
+#endif
+}
+
+/*
+ * Class:     org_iotivity_base_OcSecureResource
+ * Method:    provisionPreConfigPIN0
+ * Signature: (Ljava/lang/String;ILorg/iotivity/base/OcSecureResource/ProvisionPreConfigPINListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_provisionPreConfigPIN0
+  (JNIEnv *env, jobject thiz, jstring jPin, jint  pinSize, jobject jListener)
+{
+    LOGD("OcSecureResource_provisionPreConfigPIN0");
+#if defined(MULTIPLE_OWNER)
+    if (!jPin)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "Invalid Parameters");
+        return;
+    }
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Invalid callback");
+        return;
+    }
+
+    std::string pin = env->GetStringUTFChars(jPin, nullptr);
+
+    JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
+    if (!secureResource)
+    {
+        ThrowOcException(OC_STACK_ERROR, "getJniOcSecureResourcePtr failed");
+        return;
+    }
+
+    try
+    {
+        OCStackResult result = secureResource->provisionPreconfPin(env, pin, pinSize, jListener);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcSecureResource_provisionPreConfigPIN0");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+#else
+    ThrowOcException(OC_STACK_INVALID_PARAM, "MULTIPLE_OWNER not enabled");
+    return;
+#endif
+}
+
+/*
+ * Class:     org_iotivity_base_OcSecureResource
+ * Method:    doMultipleOwnershipTransfer
+ * Signature: (Lorg/iotivity/base/OcSecureResource/DoMultipleOwnershipTransferListener;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcSecureResource_doMultipleOwnershipTransfer
+  (JNIEnv *env, jobject thiz, jobject jListener)
+{
+    LOGD("OcSecureResource_doMultipleOwnershipTransfer");
+#if defined(MULTIPLE_OWNER)
+    if (!jListener)
+    {
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "doMultipleOwnershipTransfer cannot be null");
+        return;
+    }
+
+    JniOcSecureResource *secureResource = JniOcSecureResource::getJniOcSecureResourcePtr(env, thiz);
+    if (!secureResource)
+    {
+        ThrowOcException(OC_STACK_ERROR, "getJniOcSecureResourcePtr failed");
+        return;
+    }
+
+    try
+    {
+        OCStackResult result = secureResource->doMultipleOwnershipTransfer(env, jListener);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OcSecureResource_doMultipleOwnershipTransfer");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(e.code(), e.reason().c_str());
+    }
+#else
+    ThrowOcException(OC_STACK_INVALID_PARAM, "MULTIPLE_OWNER not enabled");
+    return;
+#endif
 }
 
 /*
