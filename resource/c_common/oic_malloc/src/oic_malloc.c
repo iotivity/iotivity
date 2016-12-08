@@ -126,6 +126,15 @@ void *OICRealloc(void* ptr, size_t size)
 #endif
 }
 
+void OICFreeAndSetToNull(void **ptr)
+{
+    if (*ptr)
+    {
+        OICFree(*ptr);
+        *ptr = NULL;
+    }
+}
+
 void OICFree(void *ptr)
 {
 #ifdef ENABLE_MALLOC_DEBUG

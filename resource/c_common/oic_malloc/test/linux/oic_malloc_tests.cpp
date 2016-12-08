@@ -141,3 +141,19 @@ TEST(OICCalloc, CallocFail4)
     EXPECT_TRUE(NULL == pBuffer);
     OICFree(pBuffer);
 }
+
+TEST(OICFreeAndSetToNull, FreeAndSetToNullPass1)
+{
+    // Try to deallocate a block of memory
+    pBuffer = (uint8_t *)OICCalloc(1, 1);
+    OICFreeAndSetToNull((void**)&pBuffer);
+    EXPECT_TRUE(NULL == pBuffer);
+}
+
+TEST(OICFreeAndSetToNull, FreeAndSetToNullPass2)
+{
+    // Try to deallocate a block of NULL
+    pBuffer = NULL;
+    OICFreeAndSetToNull((void**)&pBuffer);
+    EXPECT_TRUE(NULL == pBuffer);
+}

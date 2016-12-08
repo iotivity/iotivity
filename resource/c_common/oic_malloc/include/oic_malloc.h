@@ -101,7 +101,16 @@ void *OICRealloc(void *ptr, size_t size);
 void *OICCalloc(size_t num, size_t size);
 
 /**
- * Deallocate a block of memory previously allocated by a call to OCMalloc
+ * Deallocate a block of memory previously allocated by a call to OICMalloc.
+ * Furthermore the pointer is set value to NULL.
+ *
+ * @param ptr - Double Pointer to block of memory previously allocated by OICMalloc.
+ *              If ptr is a null pointer, the function does nothing.
+ */
+void OICFreeAndSetToNull(void **ptr);
+
+/**
+ * Deallocate a block of memory previously allocated by a call to OICMalloc.
  *
  * NOTE: This function is intended to be used internally by the TB Stack.
  *       It is not intended to be used by applications.
