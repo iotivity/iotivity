@@ -258,6 +258,26 @@ namespace OC
         return result;
     }
 
+    OCStackResult OCSecure::unsetInputPinCallback()
+    {
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            UnsetInputPinCB();
+            result = OC_STACK_OK;
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
     OCStackResult OCSecure::getDevInfoFromNetwork(unsigned short timeout,
             DeviceList_t &ownedDevList,
             DeviceList_t &unownedDevList)
