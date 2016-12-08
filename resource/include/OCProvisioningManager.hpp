@@ -218,6 +218,13 @@ namespace OC
             static OCStackResult setInputPinCallback(InputPinCallback inputPin);
 
             /**
+             * API for de-registering Pin Callback.
+             *
+             * @return ::OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult unsetInputPinCallback();
+
+            /**
              * API to get status of all the devices in current subnet. The status include endpoint
              * information and doxm information which can be extracted during owned and unowned
              * discovery. Along with this information, API will provide information about
