@@ -104,7 +104,7 @@ static int32_t g_scanIntervalTime = WAIT_TIME_SCAN_INTERVAL_DEFAULT;
 static int32_t g_scanIntervalTimePrev = WAIT_TIME_SCAN_INTERVAL_DEFAULT;
 static int32_t g_intervalCount = 0;
 static bool g_isWorkingScanThread = false;
-static CALEScanState_t g_curScanningStep = BLE_SCAN_DISABLE;
+static CALEScanState_t g_curScanningStep = BLE_SCAN_NONE;
 static CALEScanState_t g_nextScanningStep = BLE_SCAN_ENABLE;
 
 static CABLEDataReceivedCallback g_CABLEClientDataReceivedCallback = NULL;
@@ -200,7 +200,7 @@ static void CALEScanThread(void* object)
                 OIC_LOG(INFO, TAG, "CALEClientStopScan has failed");
             }
         }
-        else
+        else if (BLE_SCAN_DISABLE == g_curScanningStep)
         {
             //start scan
             CAResult_t ret = CALEClientStartScan();
@@ -208,6 +208,12 @@ static void CALEScanThread(void* object)
             {
                 OIC_LOG(INFO, TAG, "CALEClientStartScan has failed");
             }
+        }
+        else
+        {
+            OIC_LOG(DEBUG, TAG, "scan thread is started");
+            // standby scanning
+            CALERestartScanWithInterval(0, 0, BLE_SCAN_DISABLE);
         }
 
         OIC_LOG_V(DEBUG, TAG, "wait for Scan Interval Time during %d sec", g_scanIntervalTime);
@@ -267,7 +273,7 @@ CAResult_t CALEClientStartScanWithInterval()
     }
 
     // initialize scan flags
-    g_curScanningStep = BLE_SCAN_DISABLE;
+    g_curScanningStep = BLE_SCAN_NONE;
     g_isWorkingScanThread = true;
     g_intervalCount = 0;
     g_scanIntervalTime = g_scanIntervalTimePrev;
