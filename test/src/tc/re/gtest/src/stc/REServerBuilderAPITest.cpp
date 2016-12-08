@@ -109,6 +109,9 @@ TEST_F(REServerBuilderAPITest_stc, BuildResourcePointer_SQV_P)
     {
         SET_FAILURE("Unable to build Resource Object");
     }
+
+    delete pBuilder;
+    pBuilder = NULL;
 }
 #endif
 
