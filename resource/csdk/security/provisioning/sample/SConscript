@@ -1,4 +1,4 @@
-# //******************************************************************
+7# //******************************************************************
 # //
 # // Copyright 2015 Samsung Electronics All Rights Reserved.
 # //
@@ -107,6 +107,7 @@ sampleserver_mvjustworks = provisioning_env.Program('sampleserver_mvjustworks', 
 
 if provisioning_env.get('MULTIPLE_OWNER') == '1':
 	subownerclient = provisioning_env.Program('subownerclient', 'subownerclient.c')
+	sampleserver_preconfpin = provisioning_env.Program('sampleserver_preconfpin', 'sampleserver_preconfpin.cpp')
 
 if provisioning_env.get('WITH_TCP') == True:
     cloud_src = [
@@ -138,6 +139,8 @@ mvjustworksdat = provisioning_env.Install(sec_provisioning_build_dir,
 if provisioning_env.get('MULTIPLE_OWNER') == '1':
 	subownerclientdat = provisioning_env.Install(sec_provisioning_build_dir,
 	                                        sec_provisioning_src_dir + 'oic_svr_db_subowner_client.dat')
+	preconfserverdat = provisioning_env.Install(sec_provisioning_build_dir,
+	                                        sec_provisioning_src_dir + 'oic_svr_db_server_preconfpin.dat')
 
 if provisioning_env.get('WITH_TCP') == True:
     clouddat = provisioning_env.Install(sec_provisioning_build_dir,
