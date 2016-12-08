@@ -47,6 +47,7 @@ OCDoResponse
 OCEncodeAddressForRFC6874
 OCFreeOCStringLL
 OCGetDeviceId
+OCGetDeviceOwnedState
 OCGetDirectPairedDevices
 OCGetHeaderOption
 OCGetNumberOfResources
