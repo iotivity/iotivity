@@ -65,5 +65,14 @@ int main(int argc, char* argv[])
     testing::InitGoogleTest(&argc, argv);
     testing::AddGlobalTestEnvironment(new IotivityTestEnv());
 
-    return RUN_ALL_TESTS();
+    int result = 1;
+    try
+    {
+    	result = RUN_ALL_TESTS();
+    }
+    catch (std::exception& e)
+    {
+    	std::cerr << "Exception occurred during test case run, exception message is: " << e.what() << std::endl;
+    }
+    return result;
 }

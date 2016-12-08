@@ -53,6 +53,7 @@ protected:
     std::vector<std::string> m_resourceTypeNames;
     std::string m_resourceInterface;
     std::vector<std::string> m_resourceInterfaces;
+    std::vector<ResourceServer*> m_childResourceList;
     OCResourceHandle m_resourceHandle;
     PlatformConfig m_platformConfig;
     bool m_isRegisteredForPresence;

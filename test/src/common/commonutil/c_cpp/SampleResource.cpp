@@ -844,6 +844,7 @@ void SampleResource::createResource(string initialUri, OCRepresentation incoming
             try
             {
                 newResource = new SampleResource();
+                m_childResourceList.push_back(newResource);
                 cout << "constructor called!!" << endl;
                 result = (OCStackResult) ((int) result
                         + (int) newResource->setResourceProperties(resourceUri, resourceType,

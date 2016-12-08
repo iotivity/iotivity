@@ -39,10 +39,12 @@ ResourceServer::ResourceServer(void) :
     m_resourceInterface = DEFAULT_INTERFACE;
     m_isServerRunning = false;
     m_isServerConstructed = false;
+    m_isRegisteredForPresence = false;
     m_isSlowResource = false;
     m_resourceProperty = OC_ACTIVE;
     m_resourceTypeNames.clear();
     m_resourceInterfaces.clear();
+    m_childResourceList.clear();
 }
 
 ResourceServer::~ResourceServer(void)
@@ -108,7 +110,7 @@ OCEntityHandlerResult ResourceServer::entityHandler(std::shared_ptr< OCResourceR
     {
         if (m_isSlowResource)
         {
-            std::thread t(bind(&ResourceServer::handleSlowResponse, this, PH::_1), request);
+            thread t(bind(&ResourceServer::handleSlowResponse, this, PH::_1), request);
             t.detach();
             result = OC_EH_SLOW;
         }
@@ -205,7 +207,7 @@ OCStackResult ResourceServer::startResource(uint8_t resourceProperty)
 
     // This will internally create and register the resource.
     result = OCPlatform::registerResource(m_resourceHandle, m_resourceURI, m_resourceTypeName,
-            m_resourceInterface, std::bind(&ResourceServer::entityHandler, this, PH::_1),
+            m_resourceInterface, bind(&ResourceServer::entityHandler, this, PH::_1),
             m_resourceProperty);
     if (m_resourceTypeNames.size() > 1)
     {
@@ -266,7 +268,7 @@ OCStackResult ResourceServer::stopResource(void)
     //stop presence
     if (m_isRegisteredForPresence)
     {
-        OCPlatform::stopPresence();
+        result = OCPlatform::stopPresence();
     }
 
     //stop server
@@ -275,6 +277,12 @@ OCStackResult ResourceServer::stopResource(void)
     if (result == OC_STACK_OK)
     {
         m_isServerRunning = false;
+        for (auto resource : m_childResourceList)
+        {
+        	resource->stopResource();
+        	delete resource;
+        	resource = nullptr;
+        }
     }
     else
     {
