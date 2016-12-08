@@ -315,7 +315,10 @@ static void CASelectReturned(fd_set *readFds)
                 if (FD_ISSET(svritem->fd, readFds))
                 {
                     CAReceiveMessage(svritem->fd);
-                    FD_CLR(svritem->fd, readFds);
+                    if (-1 != svritem->fd)
+                    {
+                        FD_CLR(svritem->fd, readFds);
+                    }
                 }
             }
         }
@@ -1395,6 +1398,8 @@ CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
     }
 
     OICFree(svritem);
+    svritem = NULL;
+
     return CA_STATUS_OK;
 }
 
