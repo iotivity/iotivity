@@ -5219,3 +5219,21 @@ OCStackResult OCSetDeviceId(const OCUUIdentity *deviceId)
     ret = SetDoxmDeviceID(&oicUuid);
     return ret;
 }
+
+OCStackResult OCGetDeviceOwnedState(bool *isOwned)
+{
+    bool isDeviceOwned = true;
+    OCStackResult ret = OC_STACK_ERROR;
+
+    ret = GetDoxmIsOwned(&isDeviceOwned);
+    if (OC_STACK_OK == ret)
+    {
+        *isOwned = isDeviceOwned;
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Device Owned State Get error");
+    }
+    return ret;
+}
+

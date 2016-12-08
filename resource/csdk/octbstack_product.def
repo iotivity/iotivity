@@ -49,6 +49,7 @@ OCEndpointPayloadGetEndpoint
 OCEndpointPayloadGetEndpointCount
 OCFreeOCStringLL
 OCGetDeviceId
+OCGetDeviceOwnedState
 OCGetDirectPairedDevices
 OCGetHeaderOption
 OCGetNumberOfResources
