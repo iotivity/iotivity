@@ -73,6 +73,17 @@ namespace OIC
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "securityStatusHandlr OUT");
         }
 
+        ESOwnershipTransferData RemoteEnrollee::securityStatusWithOptionHandler(
+                const std::shared_ptr< SecProvisioningStatus > status) const
+        {
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "securityStatusWithOptionHandler IN");
+            OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_TAG, "UUID = %s, ESResult = %d",
+                    status->getDeviceUUID().c_str(), status->getESResult());
+
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "securityStatusWithOptionHandler OUT");
+            return m_securityProvStatusCbWithOption(status);
+        }
+
         void RemoteEnrollee::getStatusHandler(
                 const std::shared_ptr< GetEnrolleeStatus > status) const
         {
@@ -238,11 +249,53 @@ namespace OIC
                 m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
             }
 
-            res = m_enrolleeSecurity->provisionOwnership();
+            res = m_enrolleeSecurity->provisionOwnership(NULL);
 
             std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
                             std::make_shared< SecProvisioningStatus >(m_enrolleeSecurity->getUUID(), res);
             securityProvStatusCb(securityProvisioningStatus);
+            m_enrolleeSecurity.reset();
+#else
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG,"Mediator is unsecured built.");
+
+            if(!callback)
+            {
+                throw ESInvalidParameterException("Callback is empty");
+            }
+            std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
+                     std::make_shared< SecProvisioningStatus >
+                                   ("", ESResult::ES_SEC_OPERATION_IS_NOT_SUPPORTED);
+            callback(securityProvisioningStatus);
+#endif
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "provisionSecurity OUT");
+        }
+
+        void RemoteEnrollee::provisionSecurity(const SecurityProvStatusCbWithOption callback)
+        {
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "provisionSecurity IN");
+#ifdef __WITH_DTLS__
+            ESResult res = ESResult::ES_ERROR;
+            if(!callback)
+            {
+                throw ESInvalidParameterException("Callback is empty");
+            }
+            m_securityProvStatusCbWithOption = callback;
+
+            SecurityProvStatusCbWithOption securityProvStatusCbWithOption = std::bind(
+                                    &RemoteEnrollee::securityStatusWithOptionHandler,
+                                    this,
+                                    std::placeholders::_1);
+
+            if(!m_enrolleeSecurity.get())
+            {
+                m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+            }
+
+            res = m_enrolleeSecurity->provisionOwnership(securityProvStatusCbWithOption);
+
+            std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
+                            std::make_shared< SecProvisioningStatus >(m_enrolleeSecurity->getUUID(), res);
+            securityProvStatusCbWithOption(securityProvisioningStatus);
             m_enrolleeSecurity.reset();
 #else
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG,"Mediator is unsecured built.");
@@ -380,13 +433,6 @@ namespace OIC
             }
 
             m_cloudPropProvStatusCb = callback;
-
-            if(cloudProp.getAuthCode().empty() ||
-                cloudProp.getAuthProvider().empty() ||
-                cloudProp.getCiServer().empty())
-            {
-                throw ESBadRequestException ("Invalid Cloud Provisiong Info.");
-            }
 
             try
             {

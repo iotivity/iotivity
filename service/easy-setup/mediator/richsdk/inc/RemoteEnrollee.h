@@ -76,7 +76,7 @@ namespace OIC
              */
             void getConfiguration(const GetConfigurationStatusCb callback);
 
-             /**
+            /**
              * Do security provisioning such as ownership tranfer to Enrollee.
              *
              * @param callback will give the result if the security provisioning succeeds or fails for some reasons
@@ -86,6 +86,19 @@ namespace OIC
              * @see SecurityProvStatusCb
              */
             void provisionSecurity(const SecurityProvStatusCb callback);
+
+            /**
+             * Do security provisioning such as ownership tranfer to Enrollee which may require more
+             * specific user selections like a type of ownership transfer method or pre-configured
+             * pin number used to Pre-configured pin-based MOT.
+             *
+             * @param callback will give the result if the security provisioning succeeds or fails for some reasons.
+             *
+             * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
+             *
+             * @see SecurityProvStatusCb
+             */
+            void provisionSecurity(const SecurityProvStatusCbWithOption callback);
 
             /**
              * Provision WiFi AP information and device configuration to Enrollee
@@ -143,6 +156,8 @@ namespace OIC
                 (const std::shared_ptr< CloudPropProvisioningStatus > status) const;
             void securityStatusHandler
                 (const std::shared_ptr< SecProvisioningStatus > status) const;
+            ESOwnershipTransferData securityStatusWithOptionHandler
+                (const std::shared_ptr< SecProvisioningStatus > status) const;
 
         private:
             std::shared_ptr< OC::OCResource > m_ocResource;
@@ -157,6 +172,7 @@ namespace OIC
             std::condition_variable m_cond;
 
             SecurityProvStatusCb m_securityProvStatusCb;
+            SecurityProvStatusCbWithOption m_securityProvStatusCbWithOption;
             GetStatusCb m_getStatusCb;
             GetConfigurationStatusCb m_getConfigurationStatusCb;
             SecurityPinCb m_securityPinCb;

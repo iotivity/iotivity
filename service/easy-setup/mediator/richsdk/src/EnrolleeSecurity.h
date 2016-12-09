@@ -52,7 +52,7 @@ namespace OIC
         public:
             EnrolleeSecurity(std::shared_ptr< OC::OCResource > resource,
             const std::string secDbPath);
-            ESResult provisionOwnership();
+            ESResult provisionOwnership(SecurityProvStatusCbWithOption callback);
             std::string getUUID() const;
 
         private:
@@ -64,15 +64,25 @@ namespace OIC
             std::mutex m_mtx;
             std::condition_variable m_cond;
             std::atomic<bool> OTMResult;
+            std::atomic<bool> MOTMethodProvResult;
+            std::atomic<bool> PreConfigPinProvResult;
             std::atomic<bool> removeDeviceResult;
             std::atomic<bool> aclResult;
             std::atomic<bool> certResult;
 
             std::shared_ptr< OC::OCSecureResource > m_securedResource;
 
+            ESOwnershipTransferData m_ownershipTransferData;
+
             ESResult performOwnershipTransfer();
             bool isOwnedDeviceRegisteredInSVRDB();
             void removeDeviceWithUuidCB(OC::PMResultList_t *result, int hasError);
+#ifdef MULTIPLE_OWNER
+            ESResult performMultipleOwnershipTransfer();
+            void SelectMOTMethodCB(PMResultList_t *result, int hasError);
+            void PreconfigPinProvCB(PMResultList_t *result, int hasError);
+            void MultipleOwnershipTransferCb(OC::PMResultList_t *result, int hasError);
+#endif
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError);
             void convertUUIDToString(const uint8_t uuid[UUID_SIZE],
                                                 std::string& uuidString);

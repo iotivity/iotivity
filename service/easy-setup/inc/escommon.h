@@ -136,6 +136,11 @@ typedef enum
     ES_OK = 0,
 
     /**
+     * Secure resource is discovered.
+     */
+    ES_SECURE_RESOURCE_IS_DISCOVERED = 1,
+
+    /**
      * Enrollee discovery fails in cloud provisioning
      */
     ES_ENROLLEE_DISCOVERY_FAILURE = 11,
@@ -174,6 +179,16 @@ typedef enum
      * Or any response for the provisioning request is not arrived at Mediator
      */
     ES_CERT_PROVISIONING_FAILURE,
+
+    /**
+     * MOT method selection is failed
+     */
+    ES_MOT_METHOD_SELECTION_FAILURE,
+
+    /**
+     * A provisioning of Pre-configured pin number for MOT is failed
+     */
+    ES_PRE_CONFIG_PIN_PROVISIONING_FAILURE,
 
     /**
      * Provisioning fails for some reason.

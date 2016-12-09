@@ -24,6 +24,7 @@
 #include "OCPlatform.h"
 #include "OCApi.h"
 #include "OCProvisioningManager.hpp"
+#include "securevirtualresourcetypes.h"
 
 #include "EasySetup.h"
 #include "ESRichCommon.h"
@@ -88,18 +89,38 @@ void printStatus(EnrolleeStatus status)
     cout << "===========================================" << endl;
 }
 
-void provisionSecurityStatusCallback(std::shared_ptr<SecProvisioningStatus> secProvisioningStatus)
+ESOwnershipTransferData provisionSecurityStatusCallback(std::shared_ptr<SecProvisioningStatus> secProvisioningStatus)
 {
-    if(secProvisioningStatus->getESResult() != ES_OK)
+    cout << "provisionSecurityStatusCallback IN" << endl;
+    cout << "ESResult : " << secProvisioningStatus->getESResult() << std::endl;
+    cout << "Device ID : " << secProvisioningStatus->getDeviceUUID() << std::endl;
+
+    if(secProvisioningStatus->getESResult() == ES_SECURE_RESOURCE_IS_DISCOVERED)
     {
-      cout << "provisionSecurity is failed." << endl;
-      return;
+#if defined(__WITH_DTLS__) && defined(MULTIPLE_OWNER)
+        cout << "Owned Status : " << secProvisioningStatus->isOwnedDevice() << std::endl;
+        cout << "OT Method : " << secProvisioningStatus->getSelectedOTMethod() << std::endl;
+
+        // TEST
+        ESOwnershipTransferData OTData;
+        OTData.setMOTMethod(OIC_PRECONFIG_PIN, "12345678");
+
+        cout << "Enter!" << std::endl;
+        getchar();
+
+        return OTData;
+#endif
+    }
+    else if(secProvisioningStatus->getESResult() == ES_OK)
+    {
+        cout << "provisionSecurity is success." << std::endl;
     }
     else
     {
-      cout << "provisionSecurity is success." << endl;
-      cout << "uuid : " << secProvisioningStatus->getDeviceUUID()<< endl;
+        cout << "provisionSecurity is failed." << endl;
     }
+
+    return {};
 }
 
 void provisionSecurity()
@@ -112,7 +133,7 @@ void provisionSecurity()
 
     try
     {
-        remoteEnrollee->provisionSecurity(provisionSecurityStatusCallback);
+        remoteEnrollee->provisionSecurity((SecurityProvStatusCbWithOption)provisionSecurityStatusCallback);
     }
     catch (OCException &e)
     {
