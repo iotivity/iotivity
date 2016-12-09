@@ -20,13 +20,13 @@
 #include "ICHelper.h"
 
 using namespace OC;
-using namespace OC::OCPlatform;
 using namespace std;
 
-class ICRDClientTest: public ::testing::Test
+class ICRDClientTest_stc: public ::testing::Test
 {
 public:
     ResourceHandles m_resourceHandles;
+    RDClient m_rdClient;
     OCPresenceHandle m_ocPresenceHandle = nullptr;
     QueryParamsList m_queryParams =
     { };
@@ -39,7 +39,7 @@ public:
     ICHelper* m_ICHelper;
 
 protected:
-    ICRDClientTest()
+    ICRDClientTest_stc()
     {
         m_isCallbackInvoked = false;
         m_ICHelper = nullptr;
@@ -53,6 +53,7 @@ protected:
         m_ICHelper = ICHelper::getInstance();
         m_actualResult = OC_STACK_ERROR;
         m_isCallbackInvoked = false;
+        m_rdClient = RDClient::Instance();
 
         if (!ICHelper::isSignedUp)
         {
@@ -77,9 +78,9 @@ protected:
                     CT_ADAPTER_TCP);
             cout << "OCPlatform::constructAccountManagerObject successull..." << endl;
 
-            string authCode = "";
-            cout << "Please enter authcode: " << endl;
-            cin >> authCode;
+			char* authCode = "";
+
+			authCode = m_ICHelper->getGitLoginAuthCodeMain();
 
             m_actualResult = m_accountManager->signUp(AUTH_PROVIDER, authCode, onCloudConnect);
 
@@ -357,7 +358,6 @@ public:
             else
             {
                 std::cout << "Founded resource is invalid.." << std::endl;
-                //g_foundResource = false;
             }
 
         }
@@ -365,7 +365,6 @@ public:
         {
             cout << "Exception in rcFoundResourceCB: " << e.what() << std::endl;
         }
-
     }
 
     static void onGetCollectionResource(const HeaderOptions &, const OCRepresentation &rep,
@@ -378,6 +377,8 @@ public:
         host += IC_CLOUD_INTERFACE_HOST_ADDRESS;
 
         cout << "Resource get: " << ecode << endl;
+
+        //printResource(rep);
 
         vector< OCRepresentation > children = rep.getChildren();
 
@@ -451,7 +452,7 @@ public:
  */
 
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICRDClientTest, PostResquestToICRD_SRC_FSV_P)
+TEST_F(ICRDClientTest_stc, PostResquestToICRD_SRC_FSV_P)
 {
     try
     {
@@ -461,22 +462,22 @@ TEST_F(ICRDClientTest, PostResquestToICRD_SRC_FSV_P)
         m_actualResult = OC_STACK_ERROR;
         m_actualResult = m_accountManager->signIn(ICHelper::UID, ICHelper::ACCESS_TOKEN,&onCloudConnect);
         ASSERT_EQ(OC_STACK_OK, m_actualResult) << "SignIn API does not sign-in to account server!";
-		
+
 		cout << "\nRegister resources..." << endl;
 		ICHelper::isServerResponsed = false;
 		bool isResourceResistered = false;
 		isResourceResistered = m_ICHelper->isResourceRegistered();
 		ICHelper::waitForServerResponse();
 		ASSERT_TRUE(isResourceResistered) << "Resource is not registered." << endl;
-		
+
 		m_actualResult = OC_STACK_ERROR;
-		ICHelper::isServerResponsed = false;		
-	    m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS, OCConnectivityType::CT_ADAPTER_TCP,ICHelper::g_ResourceHandles,
+		ICHelper::isServerResponsed = false;
+	    m_actualResult = m_rdClient.publishResourceToRD(IC_HOST_ADDRESS, OCConnectivityType::CT_ADAPTER_TCP,ICHelper::g_ResourceHandles,
 							&onPublish);
 		ICHelper::waitForServerResponse();
 	    ASSERT_EQ(OC_STACK_OK, m_actualResult) << "Resource Published successfully..!";
-	    
-	    
+
+
         cout << "\nFinding airconditioner: " << endl;
         ICHelper::isServerResponsed = false;
         m_actualResult = OC_STACK_ERROR;

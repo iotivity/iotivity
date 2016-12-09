@@ -20,12 +20,12 @@
 #include "ICHelper.h"
 
 using namespace OC;
-using namespace OC::OCPlatform;
 using namespace std;
 
 class ICRDServerTest_stc: public ::testing::Test
 {
 public:
+	RDClient m_rdClient;
     ResourceHandles m_resourceHandles;
     OCPresenceHandle m_ocPresenceHandle = nullptr;
     QueryParamsList m_queryParams =
@@ -51,6 +51,7 @@ protected:
         CommonUtil::runCommonTCSetUpPart();
 
         m_ICHelper = ICHelper::getInstance();
+        m_rdClient = RDClient::Instance();
         m_actualResult = OC_STACK_ERROR;
         m_isCallbackInvoked = false;
 
@@ -77,9 +78,9 @@ protected:
                     CT_ADAPTER_TCP);
             cout << "OCPlatform::constructAccountManagerObject successull..." << endl;
 
-            string authCode = "";
-            cout << "Please enter authcode: " << endl;
-            cin >> authCode;
+			char* authCode = "";
+
+			authCode = m_ICHelper->getGitLoginAuthCodeMain();
 
             m_actualResult = m_accountManager->signUp(AUTH_PROVIDER, authCode, onCloudConnect);
 
@@ -170,7 +171,7 @@ TEST_F(ICRDServerTest_stc, PublishResourcesToRD_SRC_FSV_P)
         ASSERT_TRUE(!ICHelper::g_ResourceHandles.empty()) << "Resource handler is null";
 
         ICHelper::isServerResponsed = false;
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,
+        m_actualResult = m_rdClient.publishResourceToRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,
                 ICHelper::g_ResourceHandles,&onPublish,IC_OC_QUALITY_OF_SERVICE);
 
         ICHelper::waitForServerResponse();
@@ -222,7 +223,7 @@ TEST_F(ICRDServerTest_stc, DeleteResourcesToRD_SRC_FSV_P)
 
         ICHelper::isServerResponsed = false;
         m_actualResult = OC_STACK_ERROR;
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,
+        m_actualResult = m_rdClient.publishResourceToRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,
                 ICHelper::g_ResourceHandles,&onPublish,IC_OC_QUALITY_OF_SERVICE);
 
         ICHelper::waitForServerResponse();
@@ -232,7 +233,7 @@ TEST_F(ICRDServerTest_stc, DeleteResourcesToRD_SRC_FSV_P)
 
         ICHelper::isServerResponsed = false;
         m_actualResult = OC_STACK_ERROR;
-        m_actualResult = OCPlatform::deleteResourceFromRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,ICHelper::g_ResourceHandles,
+        m_actualResult = m_rdClient.deleteResourceFromRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,ICHelper::g_ResourceHandles,
                 &onDelete,IC_OC_QUALITY_OF_SERVICE);
 
         ICHelper::waitForServerResponse();

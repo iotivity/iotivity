@@ -24,8 +24,6 @@ using namespace OCPlatform;
 using namespace std;
 
 #define HOST            "coap://192.168.1.2:5000"
-#define AUTH_PROVIDER   "AnyAuthProvider"
-#define AUTH_CODE       "AnyAuthCode"
 #define ACCESS_TOKEN    "AnyAccessToken"
 #define REFRESH_TOKEN   "AnyRefreshToken"
 #define USER_ID         "AnyUserId"
@@ -46,6 +44,7 @@ public:
 	OCAccountManager::Ptr m_accountManager;
 
 	QueryParamsMap m_queryParams;
+	OCRepresentation m_propertyValue;
 
 	static void cloudConnectHandler(const HeaderOptions&,
 			const OCRepresentation&, const int) {
@@ -88,7 +87,8 @@ protected:
 		m_accountManager = OCPlatform::constructAccountManagerObject(HOST,
 				CT_DEFAULT);
 
-		m_queryParams = {{KEY,VALUE}};
+		m_queryParams = { {KEY,VALUE}};
+		m_accountManager->signIn(USER_ID, ACCESS_TOKEN, &cloudConnectHandler);
 	}
 
 	virtual void TearDown() {
@@ -362,7 +362,7 @@ TEST_F(ICCloudConnectorTest_btc, SignIn_ESV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICCloudConnectorTest_btc, SignOut_SRC_P)
 {
-	EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut(&cloudConnectHandler))<<"SignOut API does not sign-out to account server!";
+	EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut(ACCESS_TOKEN, &cloudConnectHandler))<<"SignOut API does not sign-out to account server!";
 }
 #endif
 
@@ -380,7 +380,43 @@ TEST_F(ICCloudConnectorTest_btc, SignOut_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICCloudConnectorTest_btc, SignOutNULLcallback_NV_N)
 {
-	EXPECT_ANY_THROW(m_accountManager->signOut(nullptr))<<"SignOut API sign-out to account server with NULL callback!";
+	EXPECT_ANY_THROW(m_accountManager->signOut(ACCESS_TOKEN, nullptr))<<"SignOut API sign-out to account server with NULL callback!";
+}
+#endif
+
+/**
+ * @since 2016-08-24
+ * @see None
+ * @objective Test 'signOut' function with valid PostCallback and empty accessToken
+ * @target OCStackResult signOut(PostCallback cloudConnectHandler)
+ * @test_data cloudConnectHandler
+ * @pre_condition constructAccountManagerObject(host, connectivity_type) API
+ * @procedure Perform OCStackResult signOut(PostCallback cloudConnectHandler) API
+ * @post_condition None
+ * @expected signOut will throw Exception.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ICCloudConnectorTest_btc, SignOut_ESV_N)
+{
+	EXPECT_ANY_THROW(m_accountManager->signOut(EMPTY_VALUE, &cloudConnectHandler))<<"SignOut API does sign-out to account server!";
+}
+#endif
+
+/**
+ * @since 2016-08-24
+ * @see None
+ * @objective Test 'signOut' function with valid PostCallback and invalid accessToken
+ * @target OCStackResult signOut(PostCallback cloudConnectHandler)
+ * @test_data cloudConnectHandler
+ * @pre_condition constructAccountManagerObject(host, connectivity_type) API
+ * @procedure Perform OCStackResult signOut(PostCallback cloudConnectHandler) API
+ * @post_condition None
+ * @expected signOut will throw Exception.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ICCloudConnectorTest_btc, SignOut_USV_N)
+{
+	EXPECT_ANY_THROW(m_accountManager->signOut(INVALID_PARAMETER, &cloudConnectHandler))<<"SignOut API does sign-out to account server!";
 }
 #endif
 
@@ -459,78 +495,6 @@ TEST_F(ICCloudConnectorTest_btc, RefreshAccessToken_USV_N)
 /**
  * @since 2016-08-25
  * @see None
- * @objective Test 'searchUser' function with user ID and getCallback
- * @target OCStackResult searchUser(const std::string& userUuid,GetCallback cloudConnectHandler);
- * @test_data userId and cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform searchUser(const std::string& userUuid,GetCallback cloudConnectHandler) API
- * @post_condition None
- * @expected searchUser provide OC_STACK_OK.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, SearchUserWithUserID_SRC_P)
-{
-	EXPECT_EQ(OC_STACK_OK, m_accountManager->searchUser(USER_ID, &cloudConnectHandler))<<"SearchUser API does not get information of the user to account server!";
-}
-#endif
-
-/**
- * @since 2016-08-25
- * @see None
- * @objective Test 'searchUser' function with user ID and NULL getCallback
- * @target OCStackResult searchUser(const std::string& userUuid,GetCallback cloudConnectHandler);
- * @test_data userId and NULL cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform searchUser(const std::string& userUuid,GetCallback cloudConnectHandler) API
- * @post_condition None
- * @expected searchUser will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, SearchUserWithUserID_NV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->searchUser(USER_ID, nullptr))<<"SearchUser API is getting information of the user to account server with NULL callback!";
-}
-#endif
-
-/**
- * @since 2016-08-25
- * @see None
- * @objective Test 'searchUser' function with empty user ID and valid getCallback
- * @target OCStackResult searchUser(const std::string& userUuid,GetCallback cloudConnectHandler);
- * @test_data empty string and cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform searchUser(const std::string& userUuid,GetCallback cloudConnectHandler) API
- * @post_condition None
- * @expected searchUser will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, SearchUserWithUserID_ESV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->searchUser(EMPTY_VALUE, &cloudConnectHandler))<<"SearchUser API is getting information of the user to account server with empty parameter!";
-}
-#endif
-
-/**
- * @since 2016-08-25
- * @see None
- * @objective Test 'searchUser' function with invalid user ID and valid getCallback
- * @target OCStackResult searchUser(const std::string& userUuid,GetCallback cloudConnectHandler);
- * @test_data invalid parameter and cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform searchUser(const std::string& userUuid,GetCallback cloudConnectHandler) API
- * @post_condition None
- * @expected searchUser will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, SearchUserWithUserID_USV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->searchUser(INVALID_PARAMETER, &cloudConnectHandler))<<"SearchUser API is getting information of the user to account server with invalid parameter!";
-}
-#endif
-
-/**
- * @since 2016-08-25
- * @see None
  * @objective Test 'searchUser' function with query param and getCallback
  * @target OCStackResult searchUser(const std::string& userUuid,GetCallback cloudConnectHandler);
  * @test_data queryParams and cloudConnectHandler
@@ -567,42 +531,6 @@ TEST_F(ICCloudConnectorTest_btc, SearchUserWithQueryParam_NV_N)
 /**
  * @since 2016-08-25
  * @see None
- * @objective Test 'searchUser' function with empty query param and valid getCallback
- * @target OCStackResult searchUser(const std::string& userUuid,GetCallback cloudConnectHandler);
- * @test_data empty string and cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform searchUser API
- * @post_condition None
- * @expected searchUser will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, SearchUserWithQueryParam_ESV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->searchUser(EMPTY_VALUE, &cloudConnectHandler))<<"SearchUser API is getting information of the user to account server with empty string!";
-}
-#endif
-
-/**
- * @since 2016-08-25
- * @see None
- * @objective Test 'searchUser' function with invalid query param and valid getCallback
- * @target OCStackResult searchUser(const std::string& userUuid,GetCallback cloudConnectHandler);
- * @test_data invalid parameter and cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform searchUser API
- * @post_condition None
- * @expected searchUser will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, SearchUserWithQueryParam_USV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->searchUser(INVALID_PARAMETER, &cloudConnectHandler))<<"SearchUser API is getting information of the user to account server with invalid parameter!";
-}
-#endif
-
-/**
- * @since 2016-08-25
- * @see None
  * @objective Test 'deleteDevice' function with deviceID and deleteCallback
  * @target OCStackResult deleteDevice(const std::string& deviceId, DeleteCallback cloudConnectHandler);
  * @test_data deviceId and cloudConnectHandler
@@ -614,7 +542,7 @@ TEST_F(ICCloudConnectorTest_btc, SearchUserWithQueryParam_USV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICCloudConnectorTest_btc, DeleteDevice_SRC_P)
 {
-	EXPECT_EQ(OC_STACK_OK, m_accountManager->deleteDevice(DEVICE_ID, &cloudConnectHandlerDelete))<<"DeleteDevice API is not deleteting the device registered on the account signed-in!";
+	EXPECT_EQ(OC_STACK_OK, m_accountManager->deleteDevice(ACCESS_TOKEN, DEVICE_ID, &cloudConnectHandlerDelete))<<"DeleteDevice API is not deleteting the device registered on the account signed-in!";
 }
 #endif
 
@@ -632,7 +560,7 @@ TEST_F(ICCloudConnectorTest_btc, DeleteDevice_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICCloudConnectorTest_btc, DeleteDevice_NV_N)
 {
-	EXPECT_ANY_THROW(m_accountManager->deleteDevice(DEVICE_ID, nullptr))<<"DeleteDevice API is deleteting the device registered on the account signed-in with NULL callback!";
+	EXPECT_ANY_THROW(m_accountManager->deleteDevice( ACCESS_TOKEN, DEVICE_ID, nullptr))<<"DeleteDevice API is deleteting the device registered on the account signed-in with NULL callback!";
 }
 #endif
 
@@ -650,7 +578,7 @@ TEST_F(ICCloudConnectorTest_btc, DeleteDevice_NV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICCloudConnectorTest_btc, DeleteDevice_ESV_N)
 {
-	EXPECT_ANY_THROW(m_accountManager->deleteDevice(EMPTY_VALUE, &cloudConnectHandlerDelete))<<"DeleteDevice API is deleteting the device registered on the account signed-in with empty parameter!";
+	EXPECT_ANY_THROW(m_accountManager->deleteDevice(EMPTY_VALUE, EMPTY_VALUE, &cloudConnectHandlerDelete))<<"DeleteDevice API is deleteting the device registered on the account signed-in with empty parameter!";
 }
 #endif
 
@@ -668,7 +596,7 @@ TEST_F(ICCloudConnectorTest_btc, DeleteDevice_ESV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICCloudConnectorTest_btc, DeleteDevice_USV_N)
 {
-	EXPECT_ANY_THROW(m_accountManager->deleteDevice(INVALID_PARAMETER, &cloudConnectHandlerDelete))<<"DeleteDevice API is deleteting the device registered on the account signed-in with invalid parameter!";
+	EXPECT_ANY_THROW(m_accountManager->deleteDevice(INVALID_PARAMETER, INVALID_PARAMETER, &cloudConnectHandlerDelete))<<"DeleteDevice API is deleteting the device registered on the account signed-in with invalid parameter!";
 }
 #endif
 
@@ -686,25 +614,7 @@ TEST_F(ICCloudConnectorTest_btc, DeleteDevice_USV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICCloudConnectorTest_btc, CreateGroup_SRC_P)
 {
-	EXPECT_EQ(OC_STACK_OK, m_accountManager->createGroup(AclGroupType::PUBLIC, &cloudConnectHandlerPostCallback))<<"CreateGroup API is not getting a list of groups joined from account server!";
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see None
- * @objective Test 'createGroup' function with AclGroupType groupType and PostCallback cloudConnectHandler
- * @target OCStackResult createGroup(AclGroupType groupType, PostCallback cloudConnectHandler);
- * @test_data private groupType and cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform createGroup API
- * @post_condition None
- * @expected createGroup provide OC_STACK_OK.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, CreateGroupPrivate_SRC_P)
-{
-	EXPECT_EQ(OC_STACK_OK, m_accountManager->createGroup(AclGroupType::PRIVATE, &cloudConnectHandlerPostCallback))<<"CreateGroup API is not getting a list of groups joined from account server!";
+	EXPECT_EQ(OC_STACK_OK, m_accountManager->createGroup(&cloudConnectHandlerPostCallback))<<"CreateGroup API is not getting a list of groups joined from account server!";
 }
 #endif
 
@@ -722,61 +632,43 @@ TEST_F(ICCloudConnectorTest_btc, CreateGroupPrivate_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICCloudConnectorTest_btc, CreateGroup_NV_N)
 {
-	EXPECT_ANY_THROW(m_accountManager->createGroup(AclGroupType::PUBLIC, nullptr))<<"CreateGroup API is getting a list of groups joined from account server!";
+	EXPECT_ANY_THROW(m_accountManager->createGroup(nullptr))<<"CreateGroup API is getting a list of groups joined from account server!";
 }
 #endif
 
 /**
  * @since 2016-09-07
  * @see None
- * @objective Test 'createGroup' function with AclGroupType groupType and NULL PostCallback cloudConnectHandler
+ * @objective Test 'createGroup' function with QueryPramsMap and PostCallback cloudConnectHandler
  * @target OCStackResult createGroup(AclGroupType groupType, PostCallback cloudConnectHandler);
- * @test_data private groupType and cloudConnectHandler
+ * @test_data groupType and cloudConnectHandler
  * @pre_condition constructAccountManagerObject(host, connectivity_type) API
  * @procedure Perform createGroup API
  * @post_condition None
- * @expected createGroup will throw Exception.
+ * @expected createGroup provide OC_STACK_OK.
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, CreateGroupPrivate_NV_N)
+TEST_F(ICCloudConnectorTest_btc, CreateGroupWithQueryPramsMap_SRC_P)
 {
-	EXPECT_ANY_THROW(m_accountManager->createGroup(AclGroupType::PRIVATE, nullptr))<<"CreateGroup API is getting a list of groups joined from account server!";
+	EXPECT_EQ(OC_STACK_OK, m_accountManager->createGroup(m_queryParams, &cloudConnectHandlerPostCallback))<<"CreateGroup API is not getting a list of groups joined from account server!";
 }
 #endif
 
 /**
  * @since 2016-09-07
  * @see None
- * @objective Test 'getGroupList' function with GetCallback cloudConnectHandler
- * @target OCStackResult getGroupList(GetCallback cloudConnectHandler);
- * @test_data cloudConnectHandlerGetCallback
+ * @objective Test 'createGroup' function with QueryPramsMap and PostCallback cloudConnectHandler
+ * @target OCStackResult createGroup(AclGroupType groupType, PostCallback cloudConnectHandler);
+ * @test_data groupType and cloudConnectHandler
  * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform getGroupList API
+ * @procedure Perform createGroup API
  * @post_condition None
- * @expected getGroupList provide OC_STACK_OK.
+ * @expected createGroup provide OC_STACK_OK.
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, GetGroupList_SRC_P)
+TEST_F(ICCloudConnectorTest_btc, CreateGroupWithQueryPramsMap_NV_N)
 {
-	EXPECT_EQ(OC_STACK_OK, m_accountManager->getGroupList(&cloudConnectHandlerGetCallback))<<"GetGroupList API is getting a list of groups joined from account server!";
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see None
- * @objective Test 'getGroupList' function with NULL GetCallback cloudConnectHandler
- * @target OCStackResult getGroupList(GetCallback cloudConnectHandler);
- * @test_data cloudConnectHandlerGetCallback
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform getGroupList API
- * @post_condition None
- * @expected getGroupList will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, GetGroupList_NV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->getGroupList(nullptr))<<"GetGroupList API is getting a list of groups joined from account server!";
+	EXPECT_ANY_THROW(m_accountManager->createGroup(m_queryParams, nullptr))<<"CreateGroup API is not getting a list of groups joined from account server!";
 }
 #endif
 
@@ -855,150 +747,6 @@ TEST_F(ICCloudConnectorTest_btc, DeleteGroup_ESV_N)
 /**
  * @since 2016-09-07
  * @see None
- * @objective Test 'joinGroup' function with const std::string& groupId and PostCallback cloudConnectHandler
- * @target OCStackResult joinGroup(const std::string& groupId and PostCallback cloudConnectHandler);
- * @test_data groupId and PostCallback cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform joinGroup API
- * @post_condition None
- * @expected joinGroup provide OC_STACK_OK.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, JoinGroup_SRC_P)
-{
-	EXPECT_EQ(OC_STACK_OK, m_accountManager->joinGroup(GROUP_ID, &cloudConnectHandlerPostCallback))<<"joinGroup API is not to join the group on account server!";
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see None
- * @objective Test 'joinGroup' function with const std::string& groupId and NULL PostCallback cloudConnectHandler
- * @target OCStackResult joinGroup(const std::string& groupId and PostCallback cloudConnectHandler);
- * @test_data groupId and PostCallback cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform joinGroup API
- * @post_condition None
- * @expected joinGroup will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, JoinGroup_NV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->joinGroup(GROUP_ID, nullptr))<<"joinGroup API is to join the group on account server!";
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see None
- * @objective Test 'joinGroup' function with invalid groupId and valid PostCallback cloudConnectHandler
- * @target OCStackResult joinGroup(const std::string& groupId and PostCallback cloudConnectHandler);
- * @test_data groupId and PostCallback cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform joinGroup API
- * @post_condition None
- * @expected joinGroup will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, JoinGroup_USV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->joinGroup(INVALID_PARAMETER, &cloudConnectHandlerPostCallback))<<"joinGroup API is to join the group on account server!";
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see None
- * @objective Test 'joinGroup' function with empty groupId and valid PostCallback cloudConnectHandler
- * @target OCStackResult joinGroup(const std::string& groupId and PostCallback cloudConnectHandler);
- * @test_data groupId and PostCallback cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform joinGroup API
- * @post_condition None
- * @expected joinGroup will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, JoinGroup_ESV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->joinGroup(EMPTY_VALUE, &cloudConnectHandlerPostCallback))<<"joinGroup API is to join the group on account server!";
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see None
- * @objective Test 'addDeviceToGroup' function with const std::string& groupId,const std::vector<std::string>& deviceId and PostCallback cloudConnectHandler
- * @target OCStackResult addDeviceToGroup(const std::string& groupId, const std::vector<std::string>& deviceId and PostCallback cloudConnectHandler);
- * @test_data groupId, deviceId and PostCallback cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform addDeviceToGroup API
- * @post_condition None
- * @expected addDeviceToGroup provide OC_STACK_OK.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, AddDeviceToGroup_SRC_P)
-{
-	EXPECT_EQ(OC_STACK_OK, m_accountManager->addDeviceToGroup(GROUP_ID, m_deviceId, &cloudConnectHandlerPostCallback))<<"addDeviceToGroup API is not to add devices to the group on account server!";
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see None
- * @objective Test 'addDeviceToGroup' function with const std::string& groupId,const std::vector<std::string>& deviceId and NULL PostCallback cloudConnectHandler
- * @target OCStackResult addDeviceToGroup(const std::string& groupId, const std::vector<std::string>& deviceId and PostCallback cloudConnectHandler);
- * @test_data groupId, deviceId and PostCallback cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform addDeviceToGroup API
- * @post_condition None
- * @expected addDeviceToGroup will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, AddDeviceToGroup_NV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->addDeviceToGroup(GROUP_ID, m_deviceId, nullptr))<<"addDeviceToGroup API is to add devices to the group on account server!";
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see None
- * @objective Test 'addDeviceToGroup' function with invalid groupId,valid deviceId and NULL PostCallback cloudConnectHandler
- * @target OCStackResult addDeviceToGroup(const std::string& groupId, const std::vector<std::string>& deviceId and PostCallback cloudConnectHandler);
- * @test_data groupId, deviceId and PostCallback cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform addDeviceToGroup API
- * @post_condition None
- * @expected addDeviceToGroup will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, AddDeviceToGroup_USV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->addDeviceToGroup(INVALID_PARAMETER, m_deviceId, &cloudConnectHandlerPostCallback))<<"addDeviceToGroup API is to add devices to the group on account server!";
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see None
- * @objective Test 'addDeviceToGroup' function with empty groupId,valid deviceId and NULL PostCallback cloudConnectHandler
- * @target OCStackResult addDeviceToGroup(const std::string& groupId, const std::vector<std::string>& deviceId and PostCallback cloudConnectHandler);
- * @test_data groupId, deviceId and PostCallback cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform addDeviceToGroup API
- * @post_condition None
- * @expected addDeviceToGroup will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, AddDeviceToGroup_ESV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->addDeviceToGroup(EMPTY_VALUE, m_deviceId, &cloudConnectHandlerPostCallback))<<"addDeviceToGroup API is to add devices to the group on account server!";
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see None
  * @objective Test 'getGroupInfo' function with const std::string& groupId and GetCallback cloudConnectHandler
  * @target OCStackResult getGroupInfo(const std::string& groupId and GetCallback cloudConnectHandler);
  * @test_data groupId and GetCallback cloudConnectHandler
@@ -1069,146 +817,266 @@ TEST_F(ICCloudConnectorTest_btc, GetGroupInfo_ESV_N)
 #endif
 
 /**
- * @since 2016-09-07
+ * @since 2017-01-18
  * @see None
- * @objective Test 'leaveGroup' function with const std::string& groupId and DeleteCallback cloudConnectHandler
- * @target OCStackResult leaveGroup(const std::string& groupId and DeleteCallback cloudConnectHandler);
- * @test_data groupId and DeleteCallback cloudConnectHandler
+ * @objective Test 'addPropertyValueToGroup' API positively
+ * @target OCStackResult addPropertyValueToGroup(const std::string& groupId,
+ * 		 const OCRepresentation propertyValue, PostCallback cloudConnectHandler)
+ * @test_data groupId, propertyValue and GetCallback cloudConnectHandler
  * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform leaveGroup API
+ * @procedure Perform addPropertyValueToGroup API
  * @post_condition None
- * @expected leaveGroup provide OC_STACK_OK.
+ * @expected getGroupInfo provide OC_STACK_OK.
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, LeaveGroup_SRC_P)
+TEST_F(ICCloudConnectorTest_btc, AddPropertyValueToGroup_SRC_P)
 {
-	EXPECT_EQ(OC_STACK_OK, m_accountManager->leaveGroup(GROUP_ID, &cloudConnectHandlerDeleteCallback))<<"leaveGroup API is not to leave the group joined on account server!";
+	EXPECT_EQ(OC_STACK_OK, m_accountManager->addPropertyValueToGroup(GROUP_ID, m_propertyValue, &cloudConnectHandlerGetCallback))<<"getGroupInfo API is not to get information of the group from account server!";
+}
+#endif
+
+/**
+ * @since 2017-01-18
+ * @see None
+ * @objective Test 'addPropertyValueToGroup' API negatively
+ * @target OCStackResult addPropertyValueToGroup(const std::string& groupId,
+ * 		 const OCRepresentation propertyValue, PostCallback cloudConnectHandler)
+ * @test_data Empty value, propertyValue and GetCallback cloudConnectHandler
+ * @pre_condition constructAccountManagerObject(host, connectivity_type) API
+ * @procedure Perform addPropertyValueToGroup API
+ * @post_condition None
+ * @expected getGroupInfo will throw Exception.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ICCloudConnectorTest_btc, AddPropertyValueToGroup_ESV_N)
+{
+	EXPECT_ANY_THROW(m_accountManager->addPropertyValueToGroup(EMPTY_VALUE, m_propertyValue, &cloudConnectHandlerGetCallback))<<"getGroupInfo API is to get information of the group from account server!";
+}
+#endif
+
+/**
+ * @since 2017-01-18
+ * @see None
+ * @objective Test 'addPropertyValueToGroup' API negatively
+ * @target OCStackResult addPropertyValueToGroup(const std::string& groupId,
+ * 		 const OCRepresentation propertyValue, PostCallback cloudConnectHandler)
+ * @test_data Empty value, propertyValue and GetCallback cloudConnectHandler
+ * @pre_condition constructAccountManagerObject(host, connectivity_type) API
+ * @procedure Perform addPropertyValueToGroup API
+ * @post_condition None
+ * @expected getGroupInfo will throw Exception.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ICCloudConnectorTest_btc, AddPropertyValueToGroup_USV_N)
+{
+	EXPECT_ANY_THROW(m_accountManager->addPropertyValueToGroup(INVALID_PARAMETER, m_propertyValue, &cloudConnectHandlerGetCallback))<<"getGroupInfo API is to get information of the group from account server!";
+}
+#endif
+
+/**
+ * @since 2017-01-18
+ * @see None
+ * @objective Test 'addPropertyValueToGroup' API negatively
+ * @target OCStackResult addPropertyValueToGroup(const std::string& groupId,
+ * 		 const OCRepresentation propertyValue, PostCallback cloudConnectHandler)
+ * @test_data Empty value, propertyValue and GetCallback cloudConnectHandler
+ * @pre_condition constructAccountManagerObject(host, connectivity_type) API
+ * @procedure Perform addPropertyValueToGroup API
+ * @post_condition None
+ * @expected getGroupInfo will throw Exception.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ICCloudConnectorTest_btc, AddPropertyValueToGroup_NV_N)
+{
+	EXPECT_ANY_THROW(m_accountManager->addPropertyValueToGroup(GROUP_ID, m_propertyValue, nullptr))<<"getGroupInfo API is to get information of the group from account server!";
+}
+#endif
+
+/**
+ * @since 2017-01-18
+ * @see None
+ * @objective Test 'deletePropertyValueFromGroup' API positively
+ * @target OCStackResult deletePropertyValueFromGroup(const std::string& groupId,
+ * 		 const OCRepresentation propertyValue, PostCallback cloudConnectHandler)
+ * @test_data groupId, propertyValue and GetCallback cloudConnectHandler
+ * @pre_condition constructAccountManagerObject(host, connectivity_type) API
+ * @procedure Perform deletePropertyValueFromGroup API
+ * @post_condition None
+ * @expected getGroupInfo provide OC_STACK_OK.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ICCloudConnectorTest_btc, DeletePropertyValueFromGroup_SRC_P)
+{
+	EXPECT_EQ(OC_STACK_OK, m_accountManager->deletePropertyValueFromGroup(GROUP_ID, m_propertyValue, &cloudConnectHandlerGetCallback))<<"getGroupInfo API is not to get information of the group from account server!";
+}
+#endif
+
+/**
+ * @since 2017-01-18
+ * @see None
+ * @objective Test 'deletePropertyValueFromGroup' API negatively
+ * @target OCStackResult deletePropertyValueFromGroup(const std::string& groupId,
+ * 		 const OCRepresentation propertyValue, PostCallback cloudConnectHandler)
+ * @test_data Empty value, propertyValue and GetCallback cloudConnectHandler
+ * @pre_condition constructAccountManagerObject(host, connectivity_type) API
+ * @procedure Perform deletePropertyValueFromGroup API
+ * @post_condition None
+ * @expected getGroupInfo will throw Exception.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ICCloudConnectorTest_btc, DeletePropertyValueFromGroup_ESV_N)
+{
+	EXPECT_ANY_THROW(m_accountManager->deletePropertyValueFromGroup(EMPTY_VALUE, m_propertyValue, &cloudConnectHandlerGetCallback))<<"getGroupInfo API is to get information of the group from account server!";
+}
+#endif
+
+/**
+ * @since 2017-01-18
+ * @see None
+ * @objective Test 'deletePropertyValueFromGroup' API negatively
+ * @target OCStackResult deletePropertyValueFromGroup(const std::string& groupId,
+ * 		 const OCRepresentation propertyValue, PostCallback cloudConnectHandler)
+ * @test_data Empty value, propertyValue and GetCallback cloudConnectHandler
+ * @pre_condition constructAccountManagerObject(host, connectivity_type) API
+ * @procedure Perform deletePropertyValueFromGroup API
+ * @post_condition None
+ * @expected getGroupInfo will throw Exception.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ICCloudConnectorTest_btc, DeletePropertyValueFromGroup_USV_N)
+{
+	EXPECT_ANY_THROW(m_accountManager->deletePropertyValueFromGroup(INVALID_PARAMETER, m_propertyValue, &cloudConnectHandlerGetCallback))<<"getGroupInfo API is to get information of the group from account server!";
+}
+#endif
+
+/**
+ * @since 2017-01-18
+ * @see None
+ * @objective Test 'deletePropertyValueFromGroup' API negatively
+ * @target OCStackResult deletePropertyValueFromGroup(const std::string& groupId,
+ * 		 const OCRepresentation propertyValue, PostCallback cloudConnectHandler)
+ * @test_data Empty value, propertyValue and GetCallback cloudConnectHandler
+ * @pre_condition constructAccountManagerObject(host, connectivity_type) API
+ * @procedure Perform deletePropertyValueFromGroup API
+ * @post_condition None
+ * @expected getGroupInfo will throw Exception.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ICCloudConnectorTest_btc, DeletePropertyValueFromGroup_NV_N)
+{
+	EXPECT_ANY_THROW(m_accountManager->deletePropertyValueFromGroup(GROUP_ID, m_propertyValue, nullptr))<<"getGroupInfo API is to get information of the group from account server!";
+}
+#endif
+
+/**
+ * @since 2017-01-18
+ * @see None
+ * @objective Test 'updatePropertyValueOnGroup' API positively
+ * @target OCStackResult updatePropertyValueOnGroup(const std::string& groupId,
+ * 		 const OCRepresentation propertyValue, PostCallback cloudConnectHandler)
+ * @test_data groupId, propertyValue and GetCallback cloudConnectHandler
+ * @pre_condition constructAccountManagerObject(host, connectivity_type) API
+ * @procedure Perform updatePropertyValueOnGroup API
+ * @post_condition None
+ * @expected getGroupInfo provide OC_STACK_OK.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ICCloudConnectorTest_btc, UpdatePropertyValueOnGroup_SRC_P)
+{
+	EXPECT_EQ(OC_STACK_OK, m_accountManager->updatePropertyValueOnGroup(GROUP_ID, m_propertyValue, &cloudConnectHandlerGetCallback))<<"getGroupInfo API is not to get information of the group from account server!";
+}
+#endif
+
+/**
+ * @since 2017-01-18
+ * @see None
+ * @objective Test 'updatePropertyValueOnGroup' API negatively
+ * @target OCStackResult updatePropertyValueOnGroup(const std::string& groupId,
+ * 		 const OCRepresentation propertyValue, PostCallback cloudConnectHandler)
+ * @test_data Empty value, propertyValue and GetCallback cloudConnectHandler
+ * @pre_condition constructAccountManagerObject(host, connectivity_type) API
+ * @procedure Perform updatePropertyValueOnGroup API
+ * @post_condition None
+ * @expected getGroupInfo will throw Exception.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ICCloudConnectorTest_btc, UpdatePropertyValueOnGroup_ESV_N)
+{
+	EXPECT_ANY_THROW(m_accountManager->updatePropertyValueOnGroup(EMPTY_VALUE, m_propertyValue, &cloudConnectHandlerGetCallback))<<"getGroupInfo API is to get information of the group from account server!";
+}
+#endif
+
+/**
+ * @since 2017-01-18
+ * @see None
+ * @objective Test 'updatePropertyValueOnGroup' API negatively
+ * @target OCStackResult updatePropertyValueOnGroup(const std::string& groupId,
+ * 		 const OCRepresentation propertyValue, PostCallback cloudConnectHandler)
+ * @test_data Empty value, propertyValue and GetCallback cloudConnectHandler
+ * @pre_condition constructAccountManagerObject(host, connectivity_type) API
+ * @procedure Perform updatePropertyValueOnGroup API
+ * @post_condition None
+ * @expected getGroupInfo will throw Exception.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ICCloudConnectorTest_btc, UpdatePropertyValueOnGroup_USV_N)
+{
+	EXPECT_ANY_THROW(m_accountManager->updatePropertyValueOnGroup(INVALID_PARAMETER, m_propertyValue, &cloudConnectHandlerGetCallback))<<"getGroupInfo API is to get information of the group from account server!";
+}
+#endif
+
+/**
+ * @since 2017-01-18
+ * @see None
+ * @objective Test 'updatePropertyValueOnGroup' API negatively
+ * @target OCStackResult updatePropertyValueOnGroup(const std::string& groupId,
+ * 		 const OCRepresentation propertyValue, PostCallback cloudConnectHandler)
+ * @test_data Empty value, propertyValue and GetCallback cloudConnectHandler
+ * @pre_condition constructAccountManagerObject(host, connectivity_type) API
+ * @procedure Perform updatePropertyValueOnGroup API
+ * @post_condition None
+ * @expected getGroupInfo will throw Exception.
+ **/
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ICCloudConnectorTest_btc, UpdatePropertyValueOnGroup_NV_N)
+{
+	EXPECT_ANY_THROW(m_accountManager->updatePropertyValueOnGroup(GROUP_ID, m_propertyValue, nullptr))<<"getGroupInfo API is to get information of the group from account server!";
 }
 #endif
 
 /**
  * @since 2016-09-07
  * @see None
- * @objective Test 'leaveGroup' function with const std::string& groupId and NULL DeleteCallback cloudConnectHandler
- * @target OCStackResult leaveGroup(const std::string& groupId and DeleteCallback cloudConnectHandler);
- * @test_data groupId and DeleteCallback cloudConnectHandler
+ * @objective Test 'getGroupInfo' function with GetCallback cloudConnectHandler
+ * @target OCStackResult getGroupInfo(const std::string& groupId and GetCallback cloudConnectHandler);
+ * @test_data groupId and GetCallback cloudConnectHandler
  * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform leaveGroup API
+ * @procedure Perform getGroupInfo API
  * @post_condition None
- * @expected leaveGroup will throw Exception.
+ * @expected getGroupInfo provide OC_STACK_OK.
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, LeaveGroup_NV_N)
+TEST_F(ICCloudConnectorTest_btc, GetGroupInfoAll_SRC_P)
 {
-	EXPECT_ANY_THROW(m_accountManager->leaveGroup(GROUP_ID, nullptr))<<"leaveGroup API is to leave the group joined on account server!";
+	EXPECT_EQ(OC_STACK_OK, m_accountManager->getGroupInfoAll(&cloudConnectHandlerGetCallback))<<"getGroupInfo API is not to get information of the group from account server!";
 }
 #endif
 
 /**
  * @since 2016-09-07
  * @see None
- * @objective Test 'leaveGroup' function with invalid groupId and valid DeleteCallback cloudConnectHandler
- * @target OCStackResult leaveGroup(const std::string& groupId and DeleteCallback cloudConnectHandler);
- * @test_data groupId and DeleteCallback cloudConnectHandler
+ * @objective Test 'getGroupInfo' function with NULL GetCallback cloudConnectHandler
+ * @target OCStackResult getGroupInfo(const std::string& groupId and GetCallback cloudConnectHandler);
+ * @test_data groupId and GetCallback cloudConnectHandler
  * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform leaveGroup API
+ * @procedure Perform getGroupInfo API
  * @post_condition None
- * @expected leaveGroup will throw Exception.
+ * @expected getGroupInfo will throw Exception.
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, LeaveGroup_USV_N)
+TEST_F(ICCloudConnectorTest_btc, GetGroupInfoAll_NV_N)
 {
-	EXPECT_ANY_THROW(m_accountManager->leaveGroup(INVALID_PARAMETER, &cloudConnectHandlerDeleteCallback))<<"leaveGroup API is to leave the group joined on account server!";
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see None
- * @objective Test 'leaveGroup' function with empty groupId and valid DeleteCallback cloudConnectHandler
- * @target OCStackResult leaveGroup(const std::string& groupId and DeleteCallback cloudConnectHandler);
- * @test_data groupId and DeleteCallback cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform leaveGroup API
- * @post_condition None
- * @expected leaveGroup will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, LeaveGroup_ESV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->leaveGroup(EMPTY_VALUE, &cloudConnectHandlerDeleteCallback))<<"leaveGroup API is to leave the group joined on account server!";
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see None
- * @objective Test 'deleteDeviceFromGroup' function with const std::string& groupId,const std::vector<std::string>& deviceId and DeleteCallback cloudConnectHandler
- * @target OCStackResult deleteDeviceFromGroup(const std::string& groupId, const std::vector<std::string>& deviceId and DeleteCallback cloudConnectHandler);
- * @test_data groupId, deviceId and DeleteCallback cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform deleteDeviceFromGroup API
- * @post_condition None
- * @expected deleteDeviceFromGroup provide OC_STACK_OK.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, DeleteDeviceFromGroup_SRC_P)
-{
-	EXPECT_EQ(OC_STACK_OK, m_accountManager->deleteDeviceFromGroup(GROUP_ID, m_deviceId, &cloudConnectHandlerDeleteCallback))<<"deleteDeviceFromGroup API is not to delete devices from the group on account server!";
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see None
- * @objective Test 'deleteDeviceFromGroup' function with valid groupId, deviceId and NULL DeleteCallback cloudConnectHandler
- * @target OCStackResult deleteDeviceFromGroup(const std::string& groupId, const std::vector<std::string>& deviceId and DeleteCallback cloudConnectHandler);
- * @test_data groupId, deviceId and DeleteCallback cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform deleteDeviceFromGroup API
- * @post_condition None
- * @expected deleteDeviceFromGroup will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, DeleteDeviceFromGroup_NV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->deleteDeviceFromGroup(GROUP_ID, m_deviceId, nullptr))<<"deleteDeviceFromGroup API is to delete devices from the group on account server!";
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see None
- * @objective Test 'deleteDeviceFromGroup' function with invalid groupId, deviceId and valid DeleteCallback cloudConnectHandler
- * @target OCStackResult deleteDeviceFromGroup(const std::string& groupId, const std::vector<std::string>& deviceId and DeleteCallback cloudConnectHandler);
- * @test_data groupId, deviceId and DeleteCallback cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform deleteDeviceFromGroup API
- * @post_condition None
- * @expected deleteDeviceFromGroup will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, DeleteDeviceFromGroup_USV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->deleteDeviceFromGroup(INVALID_PARAMETER, m_deviceId, &cloudConnectHandlerDeleteCallback))<<"deleteDeviceFromGroup API is to delete devices from the group on account server!";
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see None
- * @objective Test 'deleteDeviceFromGroup' function with empty groupId, deviceId and valid DeleteCallback cloudConnectHandler
- * @target OCStackResult deleteDeviceFromGroup(const std::string& groupId, const std::vector<std::string>& deviceId and DeleteCallback cloudConnectHandler);
- * @test_data groupId, deviceId and DeleteCallback cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform deleteDeviceFromGroup API
- * @post_condition None
- * @expected deleteDeviceFromGroup will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, DeleteDeviceFromGroup_ESV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->deleteDeviceFromGroup(EMPTY_VALUE, m_deviceId, &cloudConnectHandlerDeleteCallback))<<"deleteDeviceFromGroup API is to delete devices from the group on account server!";
+	EXPECT_ANY_THROW(m_accountManager->getGroupInfoAll(nullptr))<<"getGroupInfo API is to get information of the group from account server!";
 }
 #endif
 
@@ -1226,7 +1094,7 @@ TEST_F(ICCloudConnectorTest_btc, DeleteDeviceFromGroup_ESV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICCloudConnectorTest_btc, ObserveGroup_SRC_P)
 {
-	EXPECT_EQ(OC_STACK_OK, m_accountManager->observeGroup(GROUP_ID, &cloudConnectHandlerObserveCallback))<<"observeGroup API is not to register observe to the group on account server!";
+	EXPECT_EQ(OC_STACK_OK, m_accountManager->observeGroup(&cloudConnectHandlerObserveCallback))<<"observeGroup API is not to register observe to the group on account server!";
 }
 #endif
 
@@ -1244,43 +1112,7 @@ TEST_F(ICCloudConnectorTest_btc, ObserveGroup_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICCloudConnectorTest_btc, ObserveGroup_NV_N)
 {
-	EXPECT_ANY_THROW(m_accountManager->observeGroup(GROUP_ID, nullptr))<<"observeGroup API is to register observe to the group on account server!";
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see None
- * @objective Test 'observeGroup' function with invalid groupId and valid ObserveCallback cloudConnectHandler
- * @target OCStackResult observeGroup(const std::string& groupId and ObserveCallback cloudConnectHandler);
- * @test_data groupId and ObserveCallback cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform observeGroup API
- * @post_condition None
- * @expected observeGroup will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, ObserveGroup_USV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->observeGroup(INVALID_PARAMETER, &cloudConnectHandlerObserveCallback))<<"observeGroup API is to register observe to the group on account server!";
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see None
- * @objective Test 'observeGroup' function with empty groupId and valid ObserveCallback cloudConnectHandler
- * @target OCStackResult observeGroup(const std::string& groupId and ObserveCallback cloudConnectHandler);
- * @test_data groupId and ObserveCallback cloudConnectHandler
- * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform observeGroup API
- * @post_condition None
- * @expected observeGroup will throw Exception.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, ObserveGroup_ESV_N)
-{
-	EXPECT_ANY_THROW(m_accountManager->observeGroup(EMPTY_VALUE, &cloudConnectHandlerObserveCallback))<<"observeGroup API is to register observe to the group on account server!";
+	EXPECT_ANY_THROW(m_accountManager->observeGroup(nullptr))<<"observeGroup API is to register observe to the group on account server!";
 }
 #endif
 
@@ -1298,8 +1130,8 @@ TEST_F(ICCloudConnectorTest_btc, ObserveGroup_ESV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICCloudConnectorTest_btc, CancelObserveGroup_SRC_P)
 {
-	EXPECT_EQ(OC_STACK_OK, m_accountManager->observeGroup(GROUP_ID, &cloudConnectHandlerObserveCallback))<<"observeGroup API is not to register observe to the group on account server!";
-	EXPECT_EQ(OC_STACK_OK, m_accountManager->cancelObserveGroup(GROUP_ID))<<"cancelObserveGroup API is not to cancel observe to the group on account server!";
+	EXPECT_EQ(OC_STACK_OK, m_accountManager->observeGroup(&cloudConnectHandlerObserveCallback))<<"observeGroup API is not to register observe to the group on account server!";
+	EXPECT_EQ(OC_STACK_OK, m_accountManager->cancelObserveGroup())<<"cancelObserveGroup API is not to cancel observe to the group on account server!";
 }
 #endif
 
@@ -1317,7 +1149,8 @@ TEST_F(ICCloudConnectorTest_btc, CancelObserveGroup_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICCloudConnectorTest_btc, CancelObserveGroup_USV_N)
 {
-	EXPECT_ANY_THROW(m_accountManager->cancelObserveGroup(INVALID_PARAMETER))<<"cancelObserveGroup API is to cancel observe to the group on account server!";
+	EXPECT_ANY_THROW(m_accountManager->observeGroup(nullptr))<<"observeGroup API is not to register observe to the group on account server!";
+	EXPECT_ANY_THROW(m_accountManager->cancelObserveGroup())<<"cancelObserveGroup API is to cancel observe to the group on account server!";
 }
 #endif
 
@@ -1335,7 +1168,7 @@ TEST_F(ICCloudConnectorTest_btc, CancelObserveGroup_USV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(ICCloudConnectorTest_btc, CancelObserveGroup_ESV_N)
 {
-	EXPECT_ANY_THROW(m_accountManager->cancelObserveGroup(EMPTY_VALUE))<<"cancelObserveGroup API is to cancel observe to the group on account server!";
+	EXPECT_ANY_THROW(m_accountManager->cancelObserveGroup())<<"cancelObserveGroup API is to cancel observe to the group on account server!";
 }
 #endif
 
@@ -1541,71 +1374,80 @@ TEST_F(ICCloudConnectorTest_btc, CancelInvitation_ESV_N)
 /**
  * @since 2016-09-07
  * @see None
- * @objective Test 'deleteInvitation' function with const std::string& groupId and DeleteCallback cloudConnectHandler
- * @target OCStackResult deleteInvitation(const std::string& groupId, DeleteCallback cloudConnectHandler);
- * @test_data groupId and PostCallback cloudConnectHandler
+ * @objective Test 'replyToInvitation' function with const std::string& groupId, const std::string& userUuid and DeleteCallback cloudConnectHandler
+ * @target OCStackResult OCStackResult replyToInvitation(const std::string& groupId,
+                                        const bool accept,
+                                        DeleteCallback cloudConnectHandler)
+ * @test_data groupId, accept and PostCallback cloudConnectHandler
  * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform deleteInvitation API
+ * @procedure Perform replyToInvitation API
  * @post_condition None
- * @expected deleteInvitation provide OC_STACK_OK.
+ * @expected replyToInvitation provide OC_STACK_OK.
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, DeleteInvitation_SRC_P)
+TEST_F(ICCloudConnectorTest_btc, ReplyToInvitation_SRC_P)
 {
-	EXPECT_EQ(OC_STACK_OK, m_accountManager->deleteInvitation(GROUP_ID, &cloudConnectHandlerDeleteCallback))<<"deleteInvitation API is not to delete a invitation on account server that user has received!";
+	EXPECT_EQ(OC_STACK_OK, m_accountManager->replyToInvitation(GROUP_ID, true, &cloudConnectHandlerDeleteCallback))<<"replyToInvitation API is not to replay to invitation for true accept value!";
+	EXPECT_EQ(OC_STACK_OK, m_accountManager->replyToInvitation(GROUP_ID, false, &cloudConnectHandlerDeleteCallback))<<"replyToInvitation API is not to replay to invitation for false accecpt!";
 }
 #endif
 
 /**
- * @since 2016-09-07
+ * @since 2017-01-19
  * @see None
- * @objective Test 'deleteInvitation' function with valid groupId and NULL DeleteCallback cloudConnectHandler
- * @target OCStackResult deleteInvitation(const std::string& groupId, DeleteCallback cloudConnectHandler);
- * @test_data groupId and PostCallback cloudConnectHandler
+ * @objective Test 'replyToInvitation' function with valid groupId, accept and NULL DeleteCallback cloudConnectHandler
+ * @target OCStackResult OCStackResult replyToInvitation(const std::string& groupId,
+                                        const bool accept,
+                                        DeleteCallback cloudConnectHandler)
+ * @test_data groupId, userUuId and PostCallback cloudConnectHandler
  * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform deleteInvitation API
+ * @procedure Perform replyToInvitation API
  * @post_condition None
- * @expected deleteInvitation will throw Exception.
+ * @expected replyToInvitation will throw Exception.
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, DeleteInvitation_NV_N)
+TEST_F(ICCloudConnectorTest_btc, ReplyToInvitation_NV_N)
 {
-	EXPECT_ANY_THROW(m_accountManager->deleteInvitation(GROUP_ID, nullptr))<<"deleteInvitation API is to delete a invitation on account server that user has received!";
+	EXPECT_ANY_THROW(m_accountManager->replyToInvitation(GROUP_ID, true, nullptr))<<"replyToInvitation API is not invita on account server that user has received!";
 }
 #endif
 
 /**
- * @since 2016-09-07
+ * @since 2017-01-19
  * @see None
- * @objective Test 'deleteInvitation' function with invalid groupId and valid DeleteCallback cloudConnectHandler
- * @target OCStackResult deleteInvitation(const std::string& groupId, DeleteCallback cloudConnectHandler);
- * @test_data groupId and PostCallback cloudConnectHandler
+ * @objective Test 'replyToInvitation' function with invalid groupId, userUuid and valid DeleteCallback cloudConnectHandler
+ * @target OCStackResult OCStackResult replyToInvitation(const std::string& groupId,
+                                        const bool accept,
+                                        DeleteCallback cloudConnectHandler)
+ * @test_data groupId, userUuId and PostCallback cloudConnectHandler
  * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform deleteInvitation API
+ * @procedure Perform replyToInvitation API
  * @post_condition None
- * @expected deleteInvitation will throw Exception.
+ * @expected cancelInvitation will throw Exception.
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, DeleteInvitation_USV_N)
+TEST_F(ICCloudConnectorTest_btc, ReplyToInvitation_USV_N)
 {
-	EXPECT_ANY_THROW(m_accountManager->deleteInvitation(INVALID_PARAMETER, &cloudConnectHandlerDeleteCallback))<<"deleteInvitation API is to delete a invitation on account server that user has received!";
+	EXPECT_ANY_THROW(m_accountManager->replyToInvitation(INVALID_PARAMETER, true, &cloudConnectHandlerDeleteCallback))<<"replyToInvitation API do not work for invalid GID!";
 }
 #endif
 
 /**
- * @since 2016-09-07
+ * @since 2017-01-19
  * @see None
- * @objective Test 'deleteInvitation' function with empty groupId and valid DeleteCallback cloudConnectHandler
- * @target OCStackResult deleteInvitation(const std::string& groupId, DeleteCallback cloudConnectHandler);
- * @test_data groupId and PostCallback cloudConnectHandler
+ * @objective Test 'replyToInvitation' function with empty groupId, userUuid and valid DeleteCallback cloudConnectHandler
+ * @target OCStackResult replyToInvitation(const std::string& groupId,
+                                        const bool accept,
+                                        DeleteCallback cloudConnectHandler)
+ * @test_data groupId, userUuId and PostCallback cloudConnectHandler
  * @pre_condition constructAccountManagerObject(host, connectivity_type) API
- * @procedure Perform deleteInvitation API
+ * @procedure Perform replyToInvitation API
  * @post_condition None
- * @expected deleteInvitation will throw Exception.
+ * @expected cancelInvitation will throw Exception.
  **/
 #if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICCloudConnectorTest_btc, DeleteInvitation_ESV_N)
+TEST_F(ICCloudConnectorTest_btc, ReplyToInvitation_ESV_N)
 {
-	EXPECT_ANY_THROW(m_accountManager->deleteInvitation(EMPTY_VALUE, &cloudConnectHandlerDeleteCallback))<<"deleteInvitation API is to delete a invitation on account server that user has received!";
+	EXPECT_ANY_THROW(m_accountManager->replyToInvitation(EMPTY_VALUE, true, &cloudConnectHandlerDeleteCallback))<<"replyToInvitation API is not work for empty value!";
 }
 #endif

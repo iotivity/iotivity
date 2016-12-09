@@ -18,19 +18,18 @@
  *
  ******************************************************************/
 #include "ICHelper.h"
-
 #define maxSequenceNumber 0xFFFFFF
 #define TRUE true
 #define FALSE false
 #define PUBLIC_GROUP_TYPE_CHECK "Public"
 #define PRIVATE_GROUP_TYPE_CHECK "Private"
 
-#define USER_UID "b8603ce2-6cd5-4bbd-bbf0-764e6ca5d804"
+#define USER_UID "0b81892a-7244-42b8-a485-be12e5a61d46"
 #define NAME "Mohammad Sahinur Hossen"
-#define EMAIL "sahin07cse@gmail.com"
+#define EMAIL "iotsrbd@gmail.com"
 #define PHONE "+8801710321734"
 #define EMPTY_STRING ""
-#define INVALID "invalid@gmail.com"
+#define INVALID "invalid#mail.b"
 
 using namespace OC;
 using namespace OCPlatform;
@@ -208,6 +207,7 @@ protected:
 		m_ICHelper = ICHelper::getInstance();
 		m_actualResult = OC_STACK_ERROR;
 		m_queryParams = { };
+//		ICHelper::DEVICE_ID = {};
 
 		m_isCallbackInvoked = false;
 		m_isGetSuccessful = false;
@@ -244,9 +244,9 @@ protected:
 			IOTIVITYTEST_LOG(INFO,"OCPlatform::constructAccountManagerObject successull..." );
 
 
-			string authCode = "";
-			cout << "Please enter authcode: " << endl;
-			cin >> authCode;
+			char* authCode = "";
+
+			authCode = m_ICHelper->getGitLoginAuthCodeMain();
 
 			m_actualResult =  m_accountManager->signUp(AUTH_PROVIDER, authCode,
 								std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3));
@@ -263,6 +263,7 @@ protected:
 	}
 
 	virtual void TearDown() {
+		ICHelper::waitForServerResponse();
 	}
 
 };
@@ -284,55 +285,19 @@ protected:
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CIOCAccountManagerTest_stc, SignUpSignInSignOut_SRC_P)
 {
+	string l_accessToken = ICHelper::ACCESS_TOKEN;
 	try
 	    {
+		cout<<"ICHelper::ACCESS_TOKEN :"<<ICHelper::ACCESS_TOKEN<<endl;
+
 		EXPECT_EQ(OC_STACK_OK, m_accountManager->signIn(ICHelper::UID, ICHelper::ACCESS_TOKEN,
 				std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignIn API does not sign-in to account server!";
 
 		ICHelper::waitForServerResponse();
 
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
+		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut(ICHelper::ACCESS_TOKEN, std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
 
 		ICHelper::waitForServerResponse();
-	}
-	catch(OCException ex)
-	{
-		FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-	}
-
-	SUCCEED();
-
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see none
- * @objective Test 'searchUser' API With valid scenario
- * @target string searchUser() API
- * @test_data None
- * @pre_condition constructAccountManagerObject(host, connectivity_type), SignUp(), SignIn() API
- * @procedure Perform string host() API
- * @post_condition SignOut()
- * @expected 'SearchUser' API will provides OC_STACK_OK.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(CIOCAccountManagerTest_stc, SearchUserWithUUID_SRC_P)
-{
-	try
-	    {
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->signIn(ICHelper::UID, ICHelper::ACCESS_TOKEN,
-				std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignIn API does not sign-in to account server!";
-
-		ICHelper::waitForServerResponse();
-
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->searchUser( ICHelper::UID, std::bind(&CIOCAccountManagerTest_stc::cloudConnectGetHandler,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"searchUser API is not getting information of the user to account server!";
-
-		ICHelper::waitForServerResponse();
-
-		EXPECT_EQ(ICHelper::UID, USER_UID);
-
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
 	}
 	catch(OCException ex)
 	{
@@ -358,6 +323,7 @@ TEST_F(CIOCAccountManagerTest_stc, SearchUserWithUUID_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CIOCAccountManagerTest_stc, SearchUserWithQueryParamsMapEmail_SRC_P)
 {
+	string l_accessToken = ICHelper::ACCESS_TOKEN;
 	try
 	    {
 		EXPECT_EQ(OC_STACK_OK, m_accountManager->signIn(ICHelper::UID, ICHelper::ACCESS_TOKEN,
@@ -371,7 +337,7 @@ TEST_F(CIOCAccountManagerTest_stc, SearchUserWithQueryParamsMapEmail_SRC_P)
 
 		EXPECT_EQ(true, m_isGetSuccessful);
 
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
+		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( l_accessToken, std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
 	}
 	catch(OCException ex)
 	{
@@ -397,6 +363,8 @@ TEST_F(CIOCAccountManagerTest_stc, SearchUserWithQueryParamsMapEmail_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CIOCAccountManagerTest_stc, SearchUserWithQueryParamsMapName_SRC_P)
 {
+	string l_accessToken = ICHelper::ACCESS_TOKEN;
+
 	try
 	    {
 		EXPECT_EQ(OC_STACK_OK, m_accountManager->signIn(ICHelper::UID, ICHelper::ACCESS_TOKEN,
@@ -410,7 +378,7 @@ TEST_F(CIOCAccountManagerTest_stc, SearchUserWithQueryParamsMapName_SRC_P)
 
 		EXPECT_EQ(true, m_isGetSuccessful);
 
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
+		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( l_accessToken, std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
 	}
 	catch(OCException ex)
 	{
@@ -436,6 +404,8 @@ TEST_F(CIOCAccountManagerTest_stc, SearchUserWithQueryParamsMapName_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CIOCAccountManagerTest_stc, SearchUserWithQueryParamsMapPhone_SRC_P)
 {
+	string l_accessToken = ICHelper::ACCESS_TOKEN;
+
 	try
 	    {
 		EXPECT_EQ(OC_STACK_OK, m_accountManager->signIn(ICHelper::UID, ICHelper::ACCESS_TOKEN,
@@ -449,7 +419,7 @@ TEST_F(CIOCAccountManagerTest_stc, SearchUserWithQueryParamsMapPhone_SRC_P)
 
 		EXPECT_EQ(true, m_isGetSuccessful);
 
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
+		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( l_accessToken, std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
 	}
 	catch(OCException ex)
 	{
@@ -475,6 +445,7 @@ TEST_F(CIOCAccountManagerTest_stc, SearchUserWithQueryParamsMapPhone_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CIOCAccountManagerTest_stc, SearchUserWithQueryParamsMapEmail_ESV_N)
 {
+	string l_accessToken = ICHelper::ACCESS_TOKEN;
 	try
 	    {
 		EXPECT_EQ(OC_STACK_OK, m_accountManager->signIn(ICHelper::UID, ICHelper::ACCESS_TOKEN,
@@ -488,7 +459,7 @@ TEST_F(CIOCAccountManagerTest_stc, SearchUserWithQueryParamsMapEmail_ESV_N)
 
 		EXPECT_EQ(false, m_isGetSuccessful)<<"Item should not be found! ";
 
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
+		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( l_accessToken, std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
 	}
 	catch(OCException ex)
 	{
@@ -514,6 +485,7 @@ TEST_F(CIOCAccountManagerTest_stc, SearchUserWithQueryParamsMapEmail_ESV_N)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CIOCAccountManagerTest_stc, SearchUserWithQueryParamsMapEmail_USV_N)
 {
+	string l_accessToken = ICHelper::ACCESS_TOKEN;
 	try
 	    {
 		EXPECT_EQ(OC_STACK_OK, m_accountManager->signIn(ICHelper::UID, ICHelper::ACCESS_TOKEN,
@@ -527,41 +499,7 @@ TEST_F(CIOCAccountManagerTest_stc, SearchUserWithQueryParamsMapEmail_USV_N)
 
 		EXPECT_EQ(false, m_isGetSuccessful)<<"Item should not be found! ";
 
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
-	}
-	catch(OCException ex)
-	{
-		FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-	}
-
-	SUCCEED();
-
-}
-#endif
-
-/**
- * @since 2016-09-07
- * @see none
- * @objective Test 'searchUser' API With valid scenario
- * @target string searchUser() API
- * @test_data None
- * @pre_condition constructAccountManagerObject(host, connectivity_type), SignUp(), SignIn() API
- * @procedure Perform string host() API
- * @post_condition SignOut()
- * @expected 'SearchUser' API will provides OC_STACK_OK.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(CIOCAccountManagerTest_stc, DeleteDeviceWithDeviceID_SRC_P)
-{
-	try
-	    {
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->signIn(ICHelper::UID, ICHelper::ACCESS_TOKEN,
-				std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignIn API does not sign-in to account server!";
-		ICHelper::waitForServerResponse();
-
-		EXPECT_EQ(true, m_isDeleteSuccessful);
-
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
+		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut(l_accessToken, std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
 	}
 	catch(OCException ex)
 	{
@@ -587,6 +525,8 @@ TEST_F(CIOCAccountManagerTest_stc, DeleteDeviceWithDeviceID_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CIOCAccountManagerTest_stc, CreateAndGetGroup_SRC_P)
 {
+	string l_accessToken = ICHelper::ACCESS_TOKEN;
+
 	try
 	    {
 
@@ -595,19 +535,19 @@ TEST_F(CIOCAccountManagerTest_stc, CreateAndGetGroup_SRC_P)
 
 		ICHelper::waitForServerResponse();
 
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->createGroup(AclGroupType::PUBLIC, std::bind(&CIOCAccountManagerTest_stc::cloudConnectGetHandler,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"createGroup API is not creating a group on account server!";
+		EXPECT_EQ(OC_STACK_OK, m_accountManager->createGroup(std::bind(&CIOCAccountManagerTest_stc::cloudConnectGetHandler,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"createGroup API is not creating a group on account server!";
 
 		ICHelper::waitForServerResponse();
 
 		EXPECT_EQ(true, m_isGetSuccessful)<<"CreateGroup API is not creating a group on account server!! ";
 
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->getGroupList(std::bind(&CIOCAccountManagerTest_stc::cloudConnectGetHandler,this, placeholders::_1, placeholders::_2,placeholders::_3)))<<"GetGroupList API is getting a list of groups joined from account server!";
+		EXPECT_EQ(OC_STACK_OK, m_accountManager->getGroupInfoAll(std::bind(&CIOCAccountManagerTest_stc::cloudConnectGetHandler,this, placeholders::_1, placeholders::_2,placeholders::_3)))<<"GetGroupList API is getting a list of groups joined from account server!";
 
 		ICHelper::waitForServerResponse();
 
 		EXPECT_EQ(true, m_isGetSuccessful)<<"getGroupList API is not getting a list of groups joined from account server! ";
 
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
+		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( l_accessToken, std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
 
 	}
 	catch(OCException ex)
@@ -634,13 +574,14 @@ TEST_F(CIOCAccountManagerTest_stc, CreateAndGetGroup_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CIOCAccountManagerTest_stc, CreateAndGetGroupInfo_SRC_P)
 {
+	string l_accessToken = ICHelper::ACCESS_TOKEN;
 	try
 	    {
 		EXPECT_EQ(OC_STACK_OK, m_accountManager->signIn(ICHelper::UID, ICHelper::ACCESS_TOKEN,
 						std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignIn API does not sign-in to account server!";
 		ICHelper::waitForServerResponse();
 
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->createGroup(AclGroupType::PUBLIC, std::bind(&CIOCAccountManagerTest_stc::cloudConnectGetHandler,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"createGroup API is not creating a group on account server!";
+		EXPECT_EQ(OC_STACK_OK, m_accountManager->createGroup(std::bind(&CIOCAccountManagerTest_stc::cloudConnectGetHandler,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"createGroup API is not creating a group on account server!";
 		ICHelper::waitForServerResponse();
 
 		EXPECT_EQ(TRUE, m_isGetSuccessful)<<"createGroup API is not creating a group on account server! ";
@@ -650,10 +591,10 @@ TEST_F(CIOCAccountManagerTest_stc, CreateAndGetGroupInfo_SRC_P)
 
 		EXPECT_NE(EMPTY_STRING, ICHelper::GROUP_ID);
 
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->getGroupList(std::bind(&CIOCAccountManagerTest_stc::cloudConnectGetHandler,this, placeholders::_1, placeholders::_2,placeholders::_3)))<<"getGroupInfo API is not to get information of the group from account server!";
+		EXPECT_EQ(OC_STACK_OK, m_accountManager->getGroupInfoAll(std::bind(&CIOCAccountManagerTest_stc::cloudConnectGetHandler,this, placeholders::_1, placeholders::_2,placeholders::_3)))<<"GetGroupList API is getting a list of groups joined from account server!";
 		ICHelper::waitForServerResponse();
 
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
+		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( l_accessToken, std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
 
 	}
 	catch(OCException ex)
@@ -680,73 +621,31 @@ TEST_F(CIOCAccountManagerTest_stc, CreateAndGetGroupInfo_SRC_P)
 #if defined(__LINUX__) || defined(__TIZEN__)
 TEST_F(CIOCAccountManagerTest_stc, ObserveAndGetGroupList_SRC_P)
 {
+	string l_accessToken = ICHelper::ACCESS_TOKEN;
 	try
 	    {
 		EXPECT_EQ(OC_STACK_OK, m_accountManager->signIn(ICHelper::UID, ICHelper::ACCESS_TOKEN,
 						std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignIn API does not sign-in to account server!";
 		ICHelper::waitForServerResponse();
 
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->createGroup(AclGroupType::PUBLIC, std::bind(&CIOCAccountManagerTest_stc::cloudConnectGetHandler,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"createGroup API is not creating a group on account server!";
+		EXPECT_EQ(OC_STACK_OK, m_accountManager->createGroup(std::bind(&CIOCAccountManagerTest_stc::cloudConnectGetHandler,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"createGroup API is not creating a group on account server!";
 		ICHelper::waitForServerResponse();
 
 		EXPECT_EQ(TRUE, m_isGetSuccessful)<<"createGroup API is not creating a group on account server! ";
 
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->observeGroup(ICHelper::GROUP_ID, std::bind(&CIOCAccountManagerTest_stc::cloudConnectObserveHandler,this, placeholders::_1, placeholders::_2,placeholders::_3,placeholders::_4)))<<"ObserveGroup API is not register observe to the group on account server!";
+		EXPECT_EQ(OC_STACK_OK, m_accountManager->observeGroup(std::bind(&CIOCAccountManagerTest_stc::cloudConnectObserveHandler,this, placeholders::_1, placeholders::_2,placeholders::_3,placeholders::_4)))<<"ObserveGroup API is not register observe to the group on account server!";
 		ICHelper::waitForServerResponse();
 
 		EXPECT_EQ(TRUE, m_isObserveSuccessful)<<"ObserveGroup API is not register observe to the group on account server! ";
 
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->getGroupList(std::bind(&CIOCAccountManagerTest_stc::cloudConnectGetHandler,this, placeholders::_1, placeholders::_2,placeholders::_3)))<<"getGroupInfo API is not to get information of the group from account server!";
+		EXPECT_EQ(OC_STACK_OK, m_accountManager->getGroupInfoAll(std::bind(&CIOCAccountManagerTest_stc::cloudConnectGetHandler,this, placeholders::_1, placeholders::_2,placeholders::_3)))<<"GetGroupList API is getting a list of groups joined from account server!";
 		ICHelper::waitForServerResponse();
 
 		EXPECT_EQ(TRUE, m_isGetSuccessful)<<"createGroup API is not creating a group on account server! ";
 
 		EXPECT_NE(EMPTY_STRING, ICHelper::GROUP_ID);
 
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
-
-	}
-	catch(OCException ex)
-	{
-		FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-	}
-
-	SUCCEED();
-
-}
-#endif
-
- /**
- * @since 2016-09-07
- * @see none
- * @objective Test 'createGroup' API With valid scenario
- * @target string createGroup() API
- * @test_data None
- * @pre_condition constructAccountManagerObject(host, connectivity_type), SignUp(), SignIn() API
- * @procedure Perform string host() API
- * @post_condition SignOut()
- * @expected 'createGroup' API will provides OC_STACK_OK.
- **/
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(CIOCAccountManagerTest_stc, JoinAndLeaveGroup_SRC_P)
-{
-	try
-	    {
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->signIn(ICHelper::UID, ICHelper::ACCESS_TOKEN,
-						std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignIn API does not sign-in to account server!";
-		ICHelper::waitForServerResponse();
-
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->createGroup(AclGroupType::PUBLIC, std::bind(&CIOCAccountManagerTest_stc::cloudConnectGetHandler,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"createGroup API is not creating a group on account server!";
-		ICHelper::waitForServerResponse();
-
-		EXPECT_EQ(TRUE, m_isGetSuccessful)<<"createGroup API is not creating a group on account server! ";
-
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->joinGroup(ICHelper::GROUP_ID, std::bind(&CIOCAccountManagerTest_stc::cloudConnectPostHandler,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"joinGroup API is not to join the group on account server!";
-		ICHelper::waitForServerResponse();
-
-		EXPECT_EQ(TRUE, m_isPostSuccessful)<<"joinGroup API is not to join the group on account server! ";
-
-		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
+		EXPECT_EQ(OC_STACK_OK, m_accountManager->signOut( l_accessToken, std::bind(&CIOCAccountManagerTest_stc::handleLoginoutCB,this, placeholders::_1, placeholders::_2,placeholders::_3))) <<"SignOut API does not sign-in to account server!";
 
 	}
 	catch(OCException ex)

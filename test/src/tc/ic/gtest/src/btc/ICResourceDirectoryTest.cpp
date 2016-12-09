@@ -1,4 +1,4 @@
-/******************************************************************
+/*******************************************************************
  *
  * Copyright 2016 Samsung Electronics All Rights Reserved.
  *
@@ -21,6 +21,9 @@
 
 using namespace OC;
 using namespace OC::OCPlatform;
+
+#define INVALID_PARAMETER ""
+#define EMPTY_VALUE       ""
 
 class ICResourceDirectoryTest_btc: public ::testing::Test
 {
@@ -76,1118 +79,7 @@ public:
     }
 };
 
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'publishResourceToRD' positively to Publish Virtual Resource to RD
- * @target          publishResourceToRD(const std::string& host,OCConnectivityType connectivityType,
- *                             PublishResourceCallback callback)
- * @test_data       1. host                 Host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onPublish as callback
- * @pre_condition   none
- * @procedure       1. Call publishResourceToRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will Publish Virtual Resource to Resource Directory & return OC_STACK_OK
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRD_SRC_FSV_P)
-{
-    try
-    {
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,
-                std::bind(&ICResourceDirectoryTest_btc::onPublish,this, placeholders::_1, placeholders::_2));
-        EXPECT_EQ(OC_STACK_OK,m_actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
 /**
- * @since           2015-11-30
- * @see             static OCStackResult provisionInit(const std::string& dbPath)
- * @see             static OCStackResult setOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData, InputPinCallback inputPin)
- * @see             static OCStackResult discoverUnownedDevices(unsigned short timeout, DeviceList_t &list)
- * @see             OCStackResult doOwnershipTransfer(ResultCallBack resultCallback)
- * @see             static OCStackResult discoverOwnedDevices(unsigned short timeout, DeviceList_t &list)
- * @objective       test provisionACL positively with minimum range of Acl permission
- * @target          OCStackResult provisionACL(const OicSecAcl_t* acl, ResultCallBack resultCallback)
- * @test_data       Acl permission with minimum Range
- * @pre_condition   start two justworks simulators
- * @procedure       1. call provisionInit
- *                  2. call discoverUnownedDevices
- *                  3. call setOwnerTransferCallbackData
- *                  4. call doOwnershipTransfer
- *                  5. call discoverOwnedDevices
- *                  6. call provisionACL
- * @post_condition  None
- * @expected        provisionACL will return OC_STACK_OK
- */
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDwithInvalidHost_USV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS_INVALID, IC_CONNECTIVITY_TYPE,
-                std::bind(&ICResourceDirectoryTest_btc::onPublish,this, placeholders::_1, placeholders::_2));
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_URI, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'publishResourceToRD' negatively with Empty string value
- * @target          publishResourceToRD(const std::string& host,OCConnectivityType connectivityType,
- *                             PublishResourceCallback callback)
- * @test_data       1. host                 empty host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onPublish as callback
- * @pre_condition   none
- * @procedure       1. Call publishResourceToRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_PARAM
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDwithEmptyHost_ESV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS_EMPTY, IC_CONNECTIVITY_TYPE,
-                std::bind(&ICResourceDirectoryTest_btc::onPublish,this, placeholders::_1, placeholders::_2));
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'publishResourceToRD' negatively with NULL string value but API handled
- *                  null callback properly
- * @target          publishResourceToRD(const std::string& host,OCConnectivityType connectivityType,
- *                             PublishResourceCallback callback)
- * @test_data       1. host                 invalid host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             null as callback
- * @pre_condition   none
- * @procedure       1. Call publishResourceToRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will success & return OC_STACK_OK
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDwithNullCallback_NV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,IC_CALLBACK_HANDLER_NULL);
-        ASSERT_EQ(OC_STACK_OK,m_actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'publishResourceToRD' positively to Publish Resource to RD
- * @target          publishResourceToRD(const std::string& host,OCConnectivityType connectivityType,
- *                             PublishResourceCallback callback,QualityOfService QoS)
- * @test_data       1. host                 host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onPublish as callback
- *                  4. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call publishResourceToRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will Publish Resource to Resource Directory & return OC_STACK_OK
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithQOS_SRC_FSV_P)
-{
-    try
-    {
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,
-                std::bind(&ICResourceDirectoryTest_btc::onPublish,this, placeholders::_1, placeholders::_2),IC_OC_QUALITY_OF_SERVICE);
-        EXPECT_EQ(OC_STACK_OK,m_actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'publishResourceToRD' negatively with Unformatted value
- * @target          publishResourceToRD(const std::string& host,OCConnectivityType connectivityType,
- *                                      PublishResourceCallback callback,QualityOfService QoS)
- * @test_data       1. host                 invalid host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onPublish as callback
- *                  4. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call publishResourceToRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_URI
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithQOSWithInvalidHost_USV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS_INVALID, IC_CONNECTIVITY_TYPE,
-                std::bind(&ICResourceDirectoryTest_btc::onPublish,this, placeholders::_1, placeholders::_2),IC_OC_QUALITY_OF_SERVICE);
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_URI, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'publishResourceToRD' negatively with Empty IC_HOST_ADDRESS value
- * @target          publishResourceToRD(const std::string& host,OCConnectivityType connectivityType,
- *                             PublishResourceCallback callback,QualityOfService QoS)
- * @test_data       1. host                 empty address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onPublish as callback
- *                  4. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call publishResourceToRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_PARAM
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithQOSWithEmptyHost_ESV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS_EMPTY, IC_CONNECTIVITY_TYPE,
-                std::bind(&ICResourceDirectoryTest_btc::onPublish,this, placeholders::_1, placeholders::_2),IC_OC_QUALITY_OF_SERVICE);
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'publishResourceToRD' negatively with NULL string value but API handled
- *                  null callback properly
- * @target          publishResourceToRD(const std::string& host,OCConnectivityType connectivityType,
- *                             PublishResourceCallback callback,QualityOfService QoS)
- * @test_data       1. host                 host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             null as callback
- *                  4. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call publishResourceToRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will success & return OC_STACK_OK
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithQOSWithNullCallback_NV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,IC_CALLBACK_HANDLER_NULL,IC_OC_QUALITY_OF_SERVICE);
-        ASSERT_EQ(OC_STACK_OK,m_actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'publishResourceToRD' positively to Publish Virtual Resource to RD
- * @target          publishResourceToRD(const std::string& host,OCConnectivityType connectivityType,
- *                                      ResourceHandles& resourceHandles,PublishResourceCallback callback)
- * @test_data       1. host                 host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onPublish as callback
- *                  4. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call publishResourceToRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will Publish Virtual Resource to Resource Directory & return OC_STACK_OK
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandle_SRC_FSV_P)
-{
-    try
-    {
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,m_resourceHandles,
-                std::bind(&ICResourceDirectoryTest_btc::onPublish,this, placeholders::_1, placeholders::_2));
-        EXPECT_EQ(OC_STACK_OK,m_actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'publishResourceToRD' negatively with Unformatted value
- * @target          publishResourceToRD(const std::string& host,OCConnectivityType connectivityType,
- *                                      ResourceHandles& resourceHandles,PublishResourceCallback callback)
- * @test_data       1. host                 invalid host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onPublish as callback
- *                  4. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call publishResourceToRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_URI
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleWithInvalidHost_USV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS_INVALID, IC_CONNECTIVITY_TYPE,m_resourceHandles,
-                std::bind(&ICResourceDirectoryTest_btc::onPublish,this, placeholders::_1, placeholders::_2));
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_URI, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'publishResourceToRD' negatively with Empty string value
- * @target          publishResourceToRD(const std::string& host,OCConnectivityType connectivityType,
- *                                      ResourceHandles& resourceHandles,PublishResourceCallback callback)
- * @test_data       1. host                 empty address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onPublish as callback
- *                  4. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call publishResourceToRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_PARAM
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleWithEmptyHost_ESV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS_EMPTY, IC_CONNECTIVITY_TYPE,m_resourceHandles,
-                std::bind(&ICResourceDirectoryTest_btc::onPublish,this, placeholders::_1, placeholders::_2));
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'publishResourceToRD' negatively with NULL string value but API handled
- *                  null callback properly
- * @target          publishResourceToRD(const std::string& host,OCConnectivityType connectivityType,
- *                                      ResourceHandles& resourceHandles,PublishResourceCallback callback)
- * @test_data       1. host                 host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             null as callback
- *                  4. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call publishResourceToRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will success & return OC_STACK_OK
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleWithNullCallback_NV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,m_resourceHandles,
-                IC_CALLBACK_HANDLER_NULL);
-        ASSERT_EQ(OC_STACK_OK,m_actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'publishResourceToRD' positively to Publish Resource to RD
- * @target          publishResourceToRD(const std::string& host,OCConnectivityType connectivityType,
- *                                      ResourceHandles& resourceHandles,PublishResourceCallback callback,QualityOfService QoS)
- * @test_data       1. host                 host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onPublish as callback
- *                  4. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call publishResourceToRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will Publish Resource to Resource Directory & return OC_STACK_OK
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleAndWithQOS_SRC_FSV_P)
-{
-    try
-    {
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,m_resourceHandles,
-                std::bind(&ICResourceDirectoryTest_btc::onPublish,this, placeholders::_1, placeholders::_2),IC_OC_QUALITY_OF_SERVICE);
-        EXPECT_EQ(OC_STACK_OK,m_actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'publishResourceToRD' negatively with Unformatted value
- * @target          publishResourceToRD(const std::string& host,OCConnectivityType connectivityType,
- *                                      ResourceHandles& resourceHandles,PublishResourceCallback callback,QualityOfService QoS)
- * @test_data       1. host                 invalid host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onPublish as callback
- *                  4. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call publishResourceToRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_URI
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleAndWithQOSWithInvalidHost_USV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS_INVALID, IC_CONNECTIVITY_TYPE,m_resourceHandles,
-                std::bind(&ICResourceDirectoryTest_btc::onPublish,this, placeholders::_1, placeholders::_2),IC_OC_QUALITY_OF_SERVICE);
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_URI, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'publishResourceToRD' negatively with Empty IC_HOST_ADDRESS value
- * @target          publishResourceToRD(const std::string& host,OCConnectivityType connectivityType,
- *                                      ResourceHandles& resourceHandles,PublishResourceCallback callback,QualityOfService QoS)
- * @test_data       1. host                 host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onPublish as callback
- *                  4. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call publishResourceToRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_PARAM
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleAndWithQOSWithEmptyHost_ESV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS_EMPTY, IC_CONNECTIVITY_TYPE,m_resourceHandles,
-                std::bind(&ICResourceDirectoryTest_btc::onPublish,this, placeholders::_1, placeholders::_2),IC_OC_QUALITY_OF_SERVICE);
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'publishResourceToRD' negatively with NULL string value but API handled
- *                  null callback properly
- * @target          publishResourceToRD(const std::string& host,OCConnectivityType connectivityType,
- *                                      ResourceHandles& resourceHandles,PublishResourceCallback callback,QualityOfService QoS)
- * @test_data       1. host                 host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onPublish as callback
- *                  4. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call publishResourceToRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will success & return OC_STACK_OK
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, PublishResourceToRDWithResourceHandleAndWithQOSWithNullCallback_NV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::publishResourceToRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,m_resourceHandles,
-                IC_CALLBACK_HANDLER_NULL,IC_OC_QUALITY_OF_SERVICE);
-        ASSERT_EQ(OC_STACK_OK,m_actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'deleteResourceFromRD' positively to delete Published Resource from RD
- * @target          deleteResourceFromRD(const std::string& host,OCConnectivityType connectivityType,
- *                              DeleteResourceCallback callback)
- * @test_data       1. host                 host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onDelete as callback
- * @pre_condition   none
- * @procedure       1. Call deleteResourceFromRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will delete Published Resource from Resource Directory & return OC_STACK_OK
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRD_SRC_FSV_P)
-{
-    try
-    {
-        m_actualResult = OCPlatform::deleteResourceFromRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,
-                std::bind(&ICResourceDirectoryTest_btc::onDelete,this, placeholders::_1));
-        ASSERT_EQ(OC_STACK_OK,m_actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'deleteResourceFromRD' negatively with Unformatted value
- * @target          deleteResourceFromRD(const std::string& host,OCConnectivityType connectivityType,
- *                                       DeleteResourceCallback callback)
- * @test_data       1. host                 invalid host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onDelete as callback
- * @pre_condition   none
- * @procedure       1. Call deleteResourceFromRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_URI
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithInvalidHost_USV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::deleteResourceFromRD(IC_HOST_ADDRESS_INVALID, IC_CONNECTIVITY_TYPE,
-                std::bind(&ICResourceDirectoryTest_btc::onDelete,this, placeholders::_1));
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_URI, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'deleteResourceFromRD' negatively with Empty string value
- * @target          deleteResourceFromRD(const std::string& host,OCConnectivityType connectivityType,
- *                                       DeleteResourceCallback callback)
- * @test_data       1. host                 empty host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onDelete as callback
- * @pre_condition   none
- * @procedure       1. Call deleteResourceFromRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_PARAM
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithEmptyHost_ESV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::deleteResourceFromRD(IC_HOST_ADDRESS_EMPTY, IC_CONNECTIVITY_TYPE, std::bind(&ICResourceDirectoryTest_btc::onDelete,
-                        this, placeholders::_1));
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'deleteResourceFromRD' negatively with NULL string value
- * @target          deleteResourceFromRD(const std::string& host,OCConnectivityType connectivityType,
- *                                       DeleteResourceCallback callback)
- * @test_data       1. host                 host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             null as callback
- * @pre_condition   none
- * @procedure       1. Call deleteResourceFromRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_PARAM
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDDWithNullCallback_NV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::deleteResourceFromRD(IC_HOST_ADDRESS_EMPTY, IC_CONNECTIVITY_TYPE,IC_CALLBACK_HANDLER_NULL);
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'deleteResourceFromRD' positively to delete Published Resource from RD
- * @target          deleteResourceFromRD(const std::string& host,OCConnectivityType connectivityType,
- *                                       DeleteResourceCallback callback,QualityOfService QoS)
- * @test_data       1. host                 host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onDelete as callback
- *                  4. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call deleteResourceFromRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will delete Published Resource from Resource Directory & return OC_STACK_OK
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithQOS_SRC_FSV_P)
-{
-    try
-    {
-        m_actualResult = OCPlatform::deleteResourceFromRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,
-                std::bind(&ICResourceDirectoryTest_btc::onDelete,this, placeholders::_1),IC_OC_QUALITY_OF_SERVICE);
-        ASSERT_EQ(OC_STACK_OK,m_actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'deleteResourceFromRD' negatively with Unformatted value
- * @target          deleteResourceFromRD(const std::string& host,OCConnectivityType connectivityType,
- *                                       DeleteResourceCallback callback,QualityOfService QoS)
- * @test_data       1. host                 invalid host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onDelete as callback
- *                  4. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call deleteResourceFromRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_URI
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithQOSWithInvalidHost_USV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::deleteResourceFromRD(IC_HOST_ADDRESS_INVALID, IC_CONNECTIVITY_TYPE,
-                std::bind(&ICResourceDirectoryTest_btc::onDelete,this, placeholders::_1),IC_OC_QUALITY_OF_SERVICE);
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_URI, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'deleteResourceFromRD' negatively with Empty string value
- * @target          deleteResourceFromRD(const std::string& host,OCConnectivityType connectivityType,
- *                                       DeleteResourceCallback callback,QualityOfService QoS)
- * @test_data       1. host                 epmty host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             onDelete as callback
- *                  4. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call deleteResourceFromRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_PARAM
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithQOSWithEmptyHost_ESV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::deleteResourceFromRD(IC_HOST_ADDRESS_EMPTY, IC_CONNECTIVITY_TYPE, std::bind(&ICResourceDirectoryTest_btc::onDelete,
-                        this, placeholders::_1),IC_OC_QUALITY_OF_SERVICE);
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'deleteResourceFromRD' negatively with NULL string value
- * @target          deleteResourceFromRD(const std::string& host,OCConnectivityType connectivityType,
- *                                       DeleteResourceCallback callback,QualityOfService QoS)
- * @test_data       1. host                 host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. callback             null as callback
- *                  4. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call deleteResourceFromRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_PARAM
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithQOSWithNullCallback_NV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::deleteResourceFromRD(IC_HOST_ADDRESS_EMPTY, IC_CONNECTIVITY_TYPE,IC_CALLBACK_HANDLER_NULL,IC_OC_QUALITY_OF_SERVICE);
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'deleteResourceFromRD' positively to delete Published Resource from RD
- * @target          deleteResourceFromRD(const std::string& host,OCConnectivityType connectivityType,
- *                                       ResourceHandles& resourceHandles,DeleteResourceCallback callback)
- * @test_data       1. host                 host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. resourceHandles      ResourceHandles
- *                  4. callback             onDelete as callback
- * @pre_condition   none
- * @procedure       1. Call deleteResourceFromRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will delete Published Resource from Resource Directory & return OC_STACK_OK
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHandler_SRC_FSV_P)
-{
-    try
-    {
-        m_actualResult = OCPlatform::deleteResourceFromRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,m_resourceHandles,
-                std::bind(&ICResourceDirectoryTest_btc::onDelete,this, placeholders::_1));
-        ASSERT_EQ(OC_STACK_OK,m_actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'deleteResourceFromRD' negatively with Unformatted value
- * @target          deleteResourceFromRD(const std::string& host,OCConnectivityType connectivityType,
- *                                       ResourceHandles& resourceHandles,DeleteResourceCallback callback)
- * @test_data       1. host                 invalid host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. resourceHandles      ResourceHandles
- *                  4. callback             onDelete as callback
- * @pre_condition   none
- * @procedure       1. Call deleteResourceFromRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_URI
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHandlerWithInvalidHost_USV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::deleteResourceFromRD(IC_HOST_ADDRESS_INVALID, IC_CONNECTIVITY_TYPE,m_resourceHandles,
-                std::bind(&ICResourceDirectoryTest_btc::onDelete,this, placeholders::_1));
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_URI, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'deleteResourceFromRD' negatively with Empty string value
- * @target          deleteResourceFromRD(const std::string& host,OCConnectivityType connectivityType,
- *                                       ResourceHandles& resourceHandles,DeleteResourceCallback callback)
- * @test_data       1. host                 empty host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. resourceHandles      ResourceHandles
- *                  4. callback             onDelete as callback
- * @pre_condition   none
- * @procedure       1. Call deleteResourceFromRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_PARAM
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHandlerWithEmptyHost_ESV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::deleteResourceFromRD(IC_HOST_ADDRESS_EMPTY, IC_CONNECTIVITY_TYPE,m_resourceHandles,
-                std::bind(&ICResourceDirectoryTest_btc::onDelete,this, placeholders::_1));
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'deleteResourceFromRD' negatively with NULL string value
- * @target          deleteResourceFromRD(const std::string& host,OCConnectivityType connectivityType,
- *                                       ResourceHandles& resourceHandles,DeleteResourceCallback callback)
- * @test_data       1. host                 host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. resourceHandles      ResourceHandles
- *                  4. callback             null as callback
- * @pre_condition   none
- * @procedure       1. Call deleteResourceFromRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_PARAM
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHandlerWithNullCallback_NV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::deleteResourceFromRD(IC_HOST_ADDRESS_EMPTY, IC_CONNECTIVITY_TYPE,m_resourceHandles,IC_CALLBACK_HANDLER_NULL);
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'deleteResourceFromRD' positively to delete Published Resource from RD
- * @target          deleteResourceFromRD(const std::string& host,OCConnectivityType connectivityType,
- *                                       ResourceHandles& resourceHandles,DeleteResourceCallback callback, QualityOfService QoS)
- * @test_data       1. host                 host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. resourceHandles      ResourceHandles
- *                  4. callback             onDelete as callback
- *                  5. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call deleteResourceFromRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will delete Published Resource from Resource Directory & return OC_STACK_OK
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHanlderAndQOS_SRC_FSV_P)
-{
-    try
-    {
-        m_actualResult = OCPlatform::deleteResourceFromRD(IC_HOST_ADDRESS, IC_CONNECTIVITY_TYPE,m_resourceHandles,
-                std::bind(&ICResourceDirectoryTest_btc::onDelete,this, placeholders::_1),IC_OC_QUALITY_OF_SERVICE);
-        ASSERT_EQ(OC_STACK_OK,m_actualResult) << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'deleteResourceFromRD' negatively with Unformatted value
- * @target          deleteResourceFromRD(const std::string& host,OCConnectivityType connectivityType,
- *                                       ResourceHandles& resourceHandles,DeleteResourceCallback callback, QualityOfService QoS)
- * @test_data       1. host                 invalid host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. resourceHandles      ResourceHandles
- *                  4. callback             onDelete as callback
- *                  5. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call deleteResourceFromRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_URI
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHanlderAndQOSWithInvalidHost_USV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::deleteResourceFromRD(IC_HOST_ADDRESS_INVALID, IC_CONNECTIVITY_TYPE,m_resourceHandles,
-                std::bind(&ICResourceDirectoryTest_btc::onDelete,this, placeholders::_1),IC_OC_QUALITY_OF_SERVICE);
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_URI, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             OCConnectivityType connectivityType
- * @objective       Test 'deleteResourceFromRD' negatively with Empty string value
- * @target          deleteResourceFromRD(const std::string& host,OCConnectivityType connectivityType,
- *                                       ResourceHandles& resourceHandles,DeleteResourceCallback callback, QualityOfService QoS)
- * @test_data       1. host                 empty host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. resourceHandles      ResourceHandles
- *                  4. callback             onDelete as callback
- *                  5. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call deleteResourceFromRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_PARAM
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHanlderAndQOSWithEmptyHost_ESV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::deleteResourceFromRD(IC_HOST_ADDRESS_EMPTY, IC_CONNECTIVITY_TYPE,m_resourceHandles,
-                std::bind(&ICResourceDirectoryTest_btc::onDelete,this, placeholders::_1),IC_OC_QUALITY_OF_SERVICE);
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
- * @since           2016-08-24
- * @see             none
- * @objective       Test 'deleteResourceFromRD' negatively with NULL string value
- * @target          deleteResourceFromRD(const std::string& host,OCConnectivityType connectivityType,
- *                                       ResourceHandles& resourceHandles,DeleteResourceCallback callback, QualityOfService QoS)
- * @test_data       1. host                 host address
- *                  2. connectivityType     CT_DEFAULT as connectivity
- *                  3. resourceHandles      ResourceHandles
- *                  4. callback             null as callback
- *                  5. QoS                  QualityOfService::HighQos
- * @pre_condition   none
- * @procedure       1. Call deleteResourceFromRD API
- *                  2. Check it's return value
- * @post_condition  none
- * @expected        It will not success & return OC_STACK_INVALID_PARAM
- */
-
-#if defined(__LINUX__) || defined(__TIZEN__)
-TEST_F(ICResourceDirectoryTest_btc, DeleteResourceFromRDWithResourceHanlderAndQOSWithNullCallback_NV_N)
-{
-    try
-    {
-        m_actualResult = OCPlatform::deleteResourceFromRD(IC_HOST_ADDRESS_EMPTY, IC_CONNECTIVITY_TYPE,m_resourceHandles,
-                IC_CALLBACK_HANDLER_NULL,IC_OC_QUALITY_OF_SERVICE);
-        FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
-    }
-    catch(OCException ex)
-    {
-        EXPECT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
-    }
-
-    SUCCEED();
-}
-#endif
-
-/*
  * @since           2016-08-25
  * @see             none
  * @objective       Test 'subscribeDevicePresence' positively to subscribes to a server's device presence change events
@@ -1223,7 +115,8 @@ TEST_F(ICResourceDirectoryTest_btc, SubscribeDevicePresenceWithValidParameters_S
 }
 #endif
 
-/*
+
+/**
  * @since           2016-08-25
  * @see             none
  * @objective       Test 'subscribeDevicePresence' negatively with Invalid Host address
@@ -1259,7 +152,7 @@ TEST_F(ICResourceDirectoryTest_btc, SubscribeDevicePresenceWithInvalidHostAddres
 }
 #endif
 
-/*
+/**
  * @since           2016-08-25
  * @see             none
  * @objective       Test 'subscribeDevicePresence' negatively with Empty IC_HOST_ADDRESS
@@ -1295,7 +188,7 @@ TEST_F(ICResourceDirectoryTest_btc, SubscribeDevicePresenceWithEmptyHost_ESV_N)
 }
 #endif
 
-/*
+/**
  * @since           2016-08-25
  * @see             none
  * @objective       Test 'subscribeDevicePresence' negatively with null OnObserve
@@ -1331,7 +224,7 @@ TEST_F(ICResourceDirectoryTest_btc, SubscribeDevicePresenceWithNullCallback_NV_N
 }
 #endif
 
-/*
+/**
  * @since           2016-08-25
  * @see             subscribeDevicePresence(OCPresenceHandle& presenceHandle,const std::string& host,const std::vector<std::string>& di,
  *                                          OCConnectivityType connectivityType,ObserveCallback callback)
@@ -1369,7 +262,7 @@ TEST_F(ICResourceDirectoryTest_btc, UnsubscribePresenceWithValidParameters_SRC_F
 }
 #endif
 
-/*
+/**
  * @since           2016-08-25
  * @see             none
  * @objective       Test 'subscribeDevicePresence' negatively with Invalid Host address
@@ -1393,6 +286,99 @@ TEST_F(ICResourceDirectoryTest_btc, UnSubscribeDevicePresenceWithInvalidOCPresen
     catch(OCException ex)
     {
         ASSERT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
+    }
+
+    SUCCEED();
+}
+#endif
+
+/**
+ * @since           2017-01-19
+ * @see             OCAccountManager::Ptr constructAccountManagerObject(const std::string& host,
+                                                            OCConnectivityType connectivityType)
+ * @objective       Test 'constructAccountManagerObject' with positive value
+ * @target          constructAccountManagerObject(OCPresenceHandle presenceHandle)
+ * @test_data       1. presenceHandle       OCPresenceHandle
+ * @pre_condition   none
+ * @procedure       1. Call constructAccountManagerObject API
+ *                  2. Check it's return value
+ *                
+ * @post_condition  none
+ * @expected        It will return an object
+ */
+
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ICResourceDirectoryTest_btc, ConstructAccountManagerObjectWithValidParameters_SRC_FSV_P)
+{
+    try
+    {
+    	ASSERT_NE(nullptr, OCPlatform::constructAccountManagerObject(IC_HOST_ADDRESS,IC_CONNECTIVITY_TYPE));
+    }
+    catch(OCException ex)
+    {
+        FAIL() << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
+    }
+
+    SUCCEED();
+}
+#endif
+
+/**
+ * @since           2016-08-25
+ * @see             none
+ * @objective       Test 'constructAccountManagerObject' negatively with Invalid Host address
+ * @target          OCAccountManager::Ptr constructAccountManagerObject(const std::string& host,
+                                                            OCConnectivityType connectivityType)
+ * @test_data       1. presenceHandle       EMPTY_VALUE as host and connectivityType
+ * @pre_condition   none
+ * @procedure       1. Call constructAccountManagerObject API
+ *                  2. Check it's return value
+ * @post_condition  none
+ * @expected        It will not return OC_STACK_INVALID_PARAM
+ */
+
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ICResourceDirectoryTest_btc, ConstructAccountManagerObjectWithEmptyHost_ESV_N)
+{
+    try
+    {
+    	OCPlatform::constructAccountManagerObject(EMPTY_VALUE, IC_CONNECTIVITY_TYPE);
+    	FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
+    }
+    catch(OCException ex)
+    {
+    	ASSERT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
+    }
+
+    SUCCEED();
+}
+#endif
+
+/**
+ * @since           2016-08-25
+ * @see             none
+ * @objective       Test 'constructAccountManagerObject' negatively with Invalid Host address
+ * @target          OCAccountManager::Ptr constructAccountManagerObject(const std::string& host,
+                                                            OCConnectivityType connectivityType)
+ * @test_data       1. presenceHandle       INVALID_PARAMETER as host and connectivityType
+ * @pre_condition   none
+ * @procedure       1. Call constructAccountManagerObject API
+ *                  2. Check it's return value
+ * @post_condition  none
+ * @expected        It will not return OC_STACK_INVALID_PARAM
+ */
+
+#if defined(__LINUX__) || defined(__TIZEN__)
+TEST_F(ICResourceDirectoryTest_btc, ConstructAccountManagerObjectWithInvalidHost_ESV_N)
+{
+    try
+    {
+    	OCPlatform::constructAccountManagerObject(INVALID_PARAMETER, IC_CONNECTIVITY_TYPE);
+    	FAIL() << "Actual result string : " << CommonUtil::s_OCStackResultString.at(m_actualResult);
+    }
+    catch(OCException ex)
+    {
+    	ASSERT_EQ(OC_STACK_INVALID_PARAM, ex.code()) << "OCException result string : " << CommonUtil::s_OCStackResultString.at(ex.code());
     }
 
     SUCCEED();

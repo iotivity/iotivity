@@ -51,7 +51,7 @@ ORG_SRC = env_linux['ORG_SRC']
 ORG_SRC_HOME = env_linux['ORG_SRC_HOME']
 
 target_arch = env_linux.get('TARGET_ARCH')
-ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release 
+ORG_SRC_OUT_DIR = '/out/linux/' + target_arch + '/' + target_release
 COMMON_RELEASE_DIR = ORG_SRC_HOME + ORG_SRC_OUT_DIR
 
 ######################################################################
@@ -166,7 +166,6 @@ IC_LIB_LOCATION = [COMMON_LIB_LOCATION, IC_RESOURCE_LIB, IC_RESOURCE_CSDK_LIB, I
 COMMON_STATIC_LIBS = [GTEST_LIB]
 COMMON_SHARED_LIBS = Split('libconnectivity_abstraction liboctbstack libcoap libboost_system libboost_filesystem libboost_thread libdl libexpat libresource_directory liboc liboc_logger liboc_logger_core pthread libglib-2.0 uuid gcov curl')
 
-IC_STATIC_LIBS = [IC_LIB + '/libTGMSDKLibrary.a']
 IC_STATIC_RESOURCE_LIBS = []
 IC_LIBS = COMMON_SHARED_LIBS
 
@@ -199,7 +198,7 @@ IC_HELPER_CPP = Glob(PROJECT_HOME + '/src/tc/ic/gtest/src/helper/*.cpp')
 
 COMMON_UTIL_CPP = COMMON_UTIL_DIR + '/CommonUtil.cpp'
 
-TEST_MAIN = [PROJECT_HOME +  TARGET + 'common/testcase/gtest' + '/IotivitySECTestMain.cpp'] 
+TEST_MAIN = [PROJECT_HOME +  TARGET + 'common/testcase/gtest' + '/IotivitySECTestMain.cpp']
 
 
 IC_STC_CPP = Glob(STC_DIR + '/*.cpp')
@@ -209,7 +208,7 @@ IC_BTC_CPP = Glob(BTC_DIR + '/*.cpp')
 IC_CPP = [TEST_MAIN, COMMON_UTIL_CPP, IC_HELPER_CPP, CALL_GRAPH_CPP]
 
 
-IC_TC_SRC = [IC_CPP, IC_STC_CPP, IC_BTC_CPP, COMMON_STATIC_LIBS, IC_STATIC_LIBS, IC_STATIC_RESOURCE_LIBS]
+IC_TC_SRC = [IC_CPP, IC_STC_CPP, IC_BTC_CPP, COMMON_STATIC_LIBS, IC_STATIC_RESOURCE_LIBS]
 
 #TEST_SERVER_SRC = [TEST_SERVER_CPP, COMMON_UTIL_CPP, SAMPLE_RESOURCE_CPP, RESOURCE_SERVER_CPP, COMMON_STATIC_LIBS, IC_STATIC_LIBS, IC_STATIC_RESOURCE_LIBS]
 
