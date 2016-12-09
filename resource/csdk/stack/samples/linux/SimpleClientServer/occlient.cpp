@@ -304,29 +304,33 @@ OCStackApplicationResult obsReqCB(void* ctx, OCDoHandle handle,
 
             OIC_LOG_V(INFO, TAG, "StackResult: %s",  getResult(clientResponse->result));
             OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
-            OIC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d",
-                    gNumObserveNotifies);
-            OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
-            OIC_LOG(INFO, TAG, ("=============> Obs Response"));
-            gNumObserveNotifies++;
 
-            if (gNumObserveNotifies > 15) //large number to test observing in DELETE case.
+            if (clientResponse->result == OC_STACK_OK)
             {
-                if (TestCase == TEST_OBS_REQ_NON || TestCase == TEST_OBS_REQ_CON)
+                OIC_LOG_V(INFO, TAG, "Callback Context for OBSERVE notification recvd successfully %d",
+                        gNumObserveNotifies);
+                OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
+                OIC_LOG(INFO, TAG, ("=============> Obs Response"));
+                gNumObserveNotifies++;
+
+                if (gNumObserveNotifies > 15) //large number to test observing in DELETE case.
                 {
-                    OIC_LOG(ERROR, TAG, "Cancelling with LOW QOS");
-                    if (OCCancel (handle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
+                    if (TestCase == TEST_OBS_REQ_NON || TestCase == TEST_OBS_REQ_CON)
                     {
-                        OIC_LOG(ERROR, TAG, "Observe cancel error");
+                        OIC_LOG(ERROR, TAG, "Cancelling with LOW QOS");
+                        if (OCCancel (handle, OC_LOW_QOS, NULL, 0) != OC_STACK_OK)
+                        {
+                            OIC_LOG(ERROR, TAG, "Observe cancel error");
+                        }
+                        return OC_STACK_DELETE_TRANSACTION;
                     }
-                    return OC_STACK_DELETE_TRANSACTION;
-                }
-                else if (TestCase == TEST_OBS_REQ_NON_CANCEL_IMM)
-                {
-                    OIC_LOG(ERROR, TAG, "Cancelling with HIGH QOS");
-                    if (OCCancel (handle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+                    else if (TestCase == TEST_OBS_REQ_NON_CANCEL_IMM)
                     {
-                        OIC_LOG(ERROR, TAG, "Observe cancel error");
+                        OIC_LOG(ERROR, TAG, "Cancelling with HIGH QOS");
+                        if (OCCancel (handle, OC_HIGH_QOS, NULL, 0) != OC_STACK_OK)
+                        {
+                            OIC_LOG(ERROR, TAG, "Observe cancel error");
+                        }
                     }
                 }
             }

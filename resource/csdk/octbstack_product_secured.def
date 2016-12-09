@@ -3,6 +3,8 @@
 
 CreateJustWorksOwnerTransferPayload
 CreateJustWorksSelectOxmPayload
+CreateMVJustWorksSelectOxmPayload
+CreateConMCertificateBasedSelectOxmPayload
 CreatePinBasedSelectOxmPayload
 CreatePinBasedOwnerTransferPayload
 CreateSecureSessionJustWorksCallback
@@ -37,6 +39,12 @@ OCSetOxmAllowStatus
 SetGeneratePinCB
 SetInputPinCB
 SetRandomPinPolicy
+SetDisplayNumCB
+UnsetDisplayNumCB
+SetUserConfirmCB
+UnsetUserConfirmCB
+SetVerifyOption
+VerifyOwnershipTransfer
 
 registerTimer
 unregisterTimer

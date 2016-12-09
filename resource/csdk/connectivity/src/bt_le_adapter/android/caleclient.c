@@ -3919,8 +3919,10 @@ void CALEClientUpdateSendCnt(JNIEnv *env)
         OIC_LOG(DEBUG, TAG, "set signal for send data");
     }
 
+#ifdef SCAN_INTERVAL
     // reset interval scan logic
     CALERestartScanWithInterval(g_scanIntervalTimePrev, 0, BLE_SCAN_ENABLE);
+#endif
 
     // mutex unlock
     oc_mutex_unlock(g_threadMutex);
@@ -4535,8 +4537,10 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
         }
     }
 
+#ifdef SCAN_INTERVAL
     // reset interval scan logic
     CALERestartScanWithInterval(g_scanIntervalTimePrev, 0, BLE_SCAN_ENABLE);
+#endif
 
     OIC_LOG(INFO, TAG, "ServicesDiscovery is successful");
     (*env)->ReleaseStringUTFChars(env, jni_address, address);

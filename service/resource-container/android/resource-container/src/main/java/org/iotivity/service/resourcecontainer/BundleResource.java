@@ -107,8 +107,6 @@ public abstract class BundleResource {
     /**
      * Set the attribute (map to a send command for the according protocol)
      * 
-     * @param key
-     *            name of the attribute to be set
      * @param value
      *            new value of the attribute
      */
@@ -137,11 +135,6 @@ public abstract class BundleResource {
 
     /**
      * Retrieve the attribute (map to read command)
-     * 
-     * @param key
-     *            name of the attribute to be set
-     * @param value
-     *            new value of the attribute
      */
     public abstract RcsResourceAttributes handleGetAttributesRequest();
 

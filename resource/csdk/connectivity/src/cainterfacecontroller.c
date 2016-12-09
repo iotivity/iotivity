@@ -752,6 +752,19 @@ CAResult_t CAStartDiscoveryServerAdapters()
     return result;
 }
 
+bool CAIsLocalEndpoint(const CAEndpoint_t *ep)
+{
+#ifdef IP_ADAPTER
+    if (ep->adapter & CA_ADAPTER_IP)
+    {
+        return CAIPIsLocalEndpoint(ep);
+    }
+#endif /* IP_ADAPTER */
+
+    //TODO: implement for the other adapters(EDR/LE/NFC)
+    return false;
+}
+
 void CATerminateAdapters()
 {
     for (uint32_t index = 0; index < g_numberOfAdapters; index++)

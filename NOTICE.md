@@ -8,7 +8,7 @@ Tools and Utilities
 ===================
 
 Software construction is provided by SCons a python-based software
-constrution tools which is open source software with copyright
+construction tools which is open source software with copyright
 by The SCons Foundation with an MIT license. The original software
 is available from
   http://scons.org/download.php

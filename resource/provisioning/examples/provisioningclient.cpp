@@ -33,7 +33,7 @@
 #include "oic_string.h"
 #include "OCPlatform.h"
 #include "OCApi.h"
-#include "OCProvisioningManager.h"
+#include "OCProvisioningManager.hpp"
 #include "oxmjustworks.h"
 #include "oxmrandompin.h"
 #include "aclresource.h"
@@ -808,6 +808,47 @@ PVDP_ERROR:
     ask = 1;
 }
 
+OCStackResult displayMutualVerifNumCB(uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
+{
+    OIC_LOG(INFO, TAG, "IN displayMutualVerifNumCB");
+    OIC_LOG(INFO, TAG, "############ mutualVerifNum ############");
+    OIC_LOG_BUFFER(INFO, TAG, mutualVerifNum, MUTUAL_VERIF_NUM_LEN);
+    OIC_LOG(INFO, TAG, "############ mutualVerifNum ############");
+    OIC_LOG(INFO, TAG, "OUT displayMutualVerifNumCB");
+    return OC_STACK_OK;
+}
+
+OCStackResult confirmMutualVerifNumCB(void)
+{
+    for (;;)
+    {
+        int userConfirm;
+
+        printf("   > Press 1 if the mutual verification numbers are the same\n");
+        printf("   > Press 0 if the mutual verification numbers are not the same\n");
+
+        for (int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &userConfirm);
+            for (; 0x20<=getchar(); );  // for removing overflow garbage
+                                        // '0x20<=code' is character region
+        }
+        if (1 == userConfirm)
+        {
+            break;
+        }
+        else if (0 == userConfirm)
+        {
+            return OC_STACK_USER_DENIED_REQ;
+        }
+        printf("   Entered Wrong Number. Please Enter Again\n");
+    }
+    return OC_STACK_OK;
+}
+
+
+
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 static int saveTrustCert(void)
 {
@@ -878,6 +919,7 @@ void MOTMethodCB(PMResultList_t *result, int hasError)
 
 int main(void)
 {
+    OCStackResult result;
     OCPersistentStorage ps {client_open, fread, fwrite, fclose, unlink };
 
     // Create PlatformConfig object
@@ -900,6 +942,18 @@ int main(void)
         {
             std::cout <<"PM Init failed"<< std::endl;
             return 1;
+        }
+
+        result = OCSecure::registerDisplayNumCallback(displayMutualVerifNumCB);
+        if (result != OC_STACK_OK)
+        {
+            std::cout<< "!!Error - setDisplayVerifNumCB failed."<<std::endl;
+        }
+
+        result = OCSecure::registerUserConfirmCallback(confirmMutualVerifNumCB);
+        if (result != OC_STACK_OK)
+        {
+            std::cout<< "!!Error - setConfirmVerifNumCB failed."<<std::endl;
         }
 
         for (int out = 0; !out;)
@@ -1428,7 +1482,7 @@ int main(void)
                             }
                             else
                             {
-                                if(OC_STACK_OK != pMOTEnabledDeviceList[(dev_num - 
+                                if(OC_STACK_OK != pMOTEnabledDeviceList[(dev_num -
                                 pOwnedDevList.size() - 1)]->changeMOTMode(momType,
                                 MOTMethodCB))
                                 {

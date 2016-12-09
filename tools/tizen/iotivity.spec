@@ -9,6 +9,12 @@ Source0: %{name}-%{version}.tar.bz2
 Source1001: %{name}.manifest
 Source1002: %{name}-test.manifest
 
+%if 0%{?tizen:1}
+%define TARGET_OS tizen
+%else
+%define TARGET_OS linux
+%endif
+
 %if "%{tizen}" == "2.3"
 %define TARGET_TRANSPORT IP
 %endif
@@ -29,13 +35,9 @@ Source1002: %{name}-test.manifest
 %en_speedpython
 %endif
 
-## If tizen 2.x, RELEASE follows tizen_build_binary_release_type_eng. ##
-## and if tizen 3.0, RELEASE follows tizen_build_devel_mode. ##
-%if 0%{?tizen_build_devel_mode} == 1 || 0%{?tizen_build_binary_release_type_eng} == 1
-%define RELEASE False
-%else
+# default is RELEASE mode.
+# If DEBUG mode is needed, please use tizen_build_devel_mode
 %define RELEASE True
-%endif
 # For Example
 %if %{RELEASE} == "True"
 %define build_mode release
@@ -58,8 +60,12 @@ Source1002: %{name}-test.manifest
 
 %define ex_install_dir %{buildroot}%{_bindir}
 
-%if ! %{?license:0}
+%if ! 0%{?license:0}
 %define license %doc
+%endif
+
+%if ! 0%{?manifest:0}
+%define manifest %doc
 %endif
 
 # Default values to be eventually overiden BEFORE or as gbs params:
@@ -77,7 +83,7 @@ Source1002: %{name}-test.manifest
 %{!?WITH_PROXY: %define WITH_PROXY 0}
 %{!?WITH_TCP: %define WITH_TCP 0}
 
-BuildRequires:  gettext-tools, expat-devel
+BuildRequires:  expat-devel
 BuildRequires:  python, libcurl-devel
 BuildRequires:  scons
 BuildRequires:  openssl-devel
@@ -85,15 +91,20 @@ BuildRequires:  boost-devel
 BuildRequires:  boost-thread
 BuildRequires:  boost-system
 BuildRequires:  boost-filesystem
-BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(uuid)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(sqlite3)
 %if "%{TARGET_OS}" == "tizen"
+BuildRequires:  gettext-tools
 BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(capi-network-connection)
 BuildRequires:  pkgconfig(capi-network-wifi)
 BuildRequires:  pkgconfig(capi-network-bluetooth) >= 0.1.52
+%else
+%if 0%{?fedora:1}
+BuildRequires:  sqlite-devel
+BuildRequires:  gettext-devel
+%endif
 %endif
 Requires(postun): /sbin/ldconfig
 Requires(post): /sbin/ldconfig
@@ -295,6 +306,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %{_libdir}/librcs_common.so
 %{_libdir}/librcs_container.so
 %{_libdir}/librcs_server.so
+%{_libdir}/libresource_directory.so
 %{_libdir}/libESEnrolleeSDK.so
 %{_libdir}/libnotification*.so
 %if 0%{?WITH_PROXY} == 1

@@ -150,16 +150,16 @@ if "!RUN_ARG!"=="server" (
   scons VERBOSE=1 %BUILD_OPTIONS% -c clean
   rd /s /q out
   del .sconsign.dblite
-  del extlibs\gtest\gtest*.lib
-  del extlibs\gtest\gtest-1.7.0\src\gtest*.obj
+  del extlibs\gtest\googletest*.lib
+  del extlibs\gtest\googletest-release-1.7.0\src\gtest*.obj
   erase /s *.obj
   erase resource\c_common\iotivity_config.h
   erase extlibs\libcoap\coap.lib
   erase extlibs\libcoap\libcoap\include\coap\coap_config.h
   erase extlibs\mbedtls\mbed*.lib
 ) else if "!RUN_ARG!"=="cleangtest" (
-  rd /s /q extlibs\gtest\gtest-1.7.0
-  del extlibs\gtest\gtest-1.7.0.zip
+  rd /s /q extlibs\gtest\googletest-release-1.7.0
+  del extlibs\gtest\release-1.7.0.zip
 ) else (
     echo.%0 - Script requires a valid argument!
     goto :EOF

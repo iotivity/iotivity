@@ -47,7 +47,7 @@ unittests_env.PrependUnique(CPPPATH = [
 		])
 
 if target_os in ['windows']:
-	unittests_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi', 'bcrypt'])
+	unittests_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi', 'bcrypt', 'crypt32'])
 	unittests_env.AppendUnique(CPPPATH = ['#extlibs/boost/boost'])
 
 if unittests_env.get('SECURED') == '1':

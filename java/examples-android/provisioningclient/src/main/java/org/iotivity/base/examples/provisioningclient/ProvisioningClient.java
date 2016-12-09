@@ -1,6 +1,8 @@
 package org.iotivity.base.examples.provisioningclient;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +16,10 @@ import android.util.Log;
 import android.view.Gravity;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.os.Environment;
+import android.widget.Toast;
 
 import org.iotivity.base.CredType;
 import org.iotivity.base.EncodingType;
@@ -23,6 +29,7 @@ import org.iotivity.base.ModeType;
 import org.iotivity.base.OcException;
 import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcProvisioning;
+import org.iotivity.base.MVJustWorksOptionMask;
 import org.iotivity.base.OcSecureResource;
 import org.iotivity.base.OicSecAcl;
 import org.iotivity.base.OicSecAce;
@@ -38,6 +45,7 @@ import org.iotivity.base.ServiceType;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,6 +53,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.nio.channels.FileChannel;
 
 import org.iotivity.ca.OicCipher;
 import org.iotivity.base.OcConnectivityType;
@@ -57,6 +66,8 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
     private static final String TAG = "Provisioning Client: ";
     private static final int BUFFER_SIZE = 1024;
     private int credId=0;
+    private int verifyVal=1;
+    private String verifyNumber;
     int unownedDevCount = StringConstants.NUMBER_ZERO;
     OcProvisioning.PinCallbackListener pinCallbackListener =
         new OcProvisioning.PinCallbackListener() {
@@ -92,6 +103,72 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
                     }
                 }
         };
+
+    OcProvisioning.DisplayNumListener displayNumListener = new OcProvisioning.DisplayNumListener() {
+        @Override
+            public int displayNumListener(String verifyNum) {
+                Log.d(TAG, "Inside verifySecretListener ");
+                logMessage(TAG + "DisplayMutualVerifyNumListener verify Number = " + verifyNum);
+                verifyNumber = verifyNum;
+                return 0;
+            }
+    };
+
+    OcProvisioning.ConfirmNumListener confirmNumListener = new OcProvisioning.ConfirmNumListener() {
+        @Override
+        public int confirmNumListener() {
+            Log.d(TAG, "Inside confirmMutualVerifyNumListener ");
+            final String message = "Is number matches with " + verifyNumber;
+            final Object lock = new Object();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+
+                    AlertDialog.Builder alertDialog = new AlertDialog.Builder(ProvisioningClient.this);
+                    alertDialog.setTitle("Confirm Number");
+                    alertDialog.setMessage(message);
+                    alertDialog.setCancelable(false);
+                    alertDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            try {
+                                synchronized (lock) {
+                                    verifyVal = 0;
+                                    lock.notifyAll();
+                                }
+                            } catch (Exception e) {
+                                Log.d(TAG, e + "");
+                            }
+                        }
+                    });
+                    alertDialog.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            try {
+                                synchronized (lock) {
+                                    lock.notifyAll();
+                                }
+                            } catch (Exception e) {
+                                Log.d(TAG, e + "");
+                            }
+                        }
+                    }).show();
+                }
+            });
+            synchronized (lock) {
+                try {
+                    lock.wait();
+                } catch (InterruptedException e) {
+                    Log.d(TAG, e + "");
+                }
+            }
+            Log.d(TAG, "VerifyVal after submit =" + verifyVal);
+            logMessage(TAG + " confirmMutualVerifyNumListener " + verifyVal);
+            return verifyVal;
+        }
+    };
 
     OcSecureResource.ProvisionAclListener provisionAclListener =
         new OcSecureResource.ProvisionAclListener() {
@@ -207,18 +284,21 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
         OcPlatform.Configure(cfg);
 
         //Get deviceId
-        byte [] deviceIdBytes= OcPlatform.getDeviceId();
-        String devId = new String(deviceIdBytes);
-        Log.d(TAG, "Get Device Id "+devId);
+        /*byte [] deviceIdBytes= OcPlatform.getDeviceId();
+          String devId = new String(deviceIdBytes);
+          Log.d(TAG, "Get Device Id "+devId);
         //Set deviceId
         try {
-            String setId = "adminDeviceUuid1";
-            OcPlatform.setDeviceId(setId.getBytes());
-            Log.d(TAG, "Set Device Id done");
+        String setId = "adminDeviceUuid1";
+        OcPlatform.setDeviceId(setId.getBytes());
+        Log.d(TAG, "Set Device Id done");
+        setId = "adminDeviceUuid0";
+        OcPlatform.setDeviceId(setId.getBytes());
+        Log.d(TAG, "Set Device Id Reverted");
         }
         catch (OcException e) {
-            Log.d(TAG, e.getMessage());
-        }
+        Log.d(TAG, e.getMessage());
+        }*/
 
         try {
             /*
@@ -234,6 +314,15 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
             }
             Log.d(TAG, "Sql db directory exists at " + sqlDbPath);
             OcProvisioning.provisionInit(sqlDbPath + StringConstants.OIC_SQL_DB_FILE);
+
+            try {
+                OcProvisioning.setMVJustWorksOptions(EnumSet.of(MVJustWorksOptionMask.DISPLAY_MUTUAL_VERIF_NUM,
+                            MVJustWorksOptionMask.CONFIRM_MUTUAL_VERIF_NUM));
+                OcProvisioning.setDisplayNumListener(displayNumListener);
+                OcProvisioning.setConfirmNumListener(confirmNumListener);
+            } catch (OcException e) {
+                e.printStackTrace();
+            }
         } catch (OcException e) {
             logMessage(TAG + "provisionInit error: " + e.getMessage());
             Log.e(TAG, e.getMessage());
@@ -794,6 +883,45 @@ OcSecureResource.DoOwnershipTransferListener, OcSecureResource.ProvisionPairwise
                 }
 
             }
+    }
+
+    @Override
+        public boolean onCreateOptionsMenu(Menu menu) {
+            // Inflate the menu; this adds items to the action bar if it is present.
+            getMenuInflater().inflate(R.menu.menu_secure_provision_client, menu);
+            return true;
+        }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+
+        if (id == R.id.export_dat) {
+            try {
+                File sd = Environment.getExternalStorageDirectory();
+                File data = Environment.getDataDirectory();
+                if (sd.canWrite()) {
+                    String currentDBPath = "/data/data/" + getPackageName() + "/files/" + StringConstants.OIC_CLIENT_CBOR_DB_FILE;
+
+                    File currentDB = new File(currentDBPath);
+                    File backupDB = new File(sd, StringConstants.OIC_CLIENT_CBOR_DB_FILE);
+                    if (currentDB.exists()) {
+                        FileChannel src = new FileInputStream(currentDB).getChannel();
+                        FileChannel dst = new FileOutputStream(backupDB).getChannel();
+                        dst.transferFrom(src, 0, src.size());
+                        src.close();
+                        dst.close();
+                    }
+                }
+            } catch (Exception e) {
+                Toast.makeText(ProvisioningClient.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+
+            Toast.makeText(ProvisioningClient.this, StringConstants.OIC_CLIENT_CBOR_DB_FILE + " File export to sdcard", Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     /**

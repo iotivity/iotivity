@@ -133,3 +133,19 @@ OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx)
     OIC_LOG(INFO, TAG, "OUT CreateSecureSessionJustWorksCallback");
     return OC_STACK_OK;
 }
+
+OCStackResult CreateMVJustWorksSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
+                                             size_t *cborSize)
+{
+    if (!otmCtx || !otmCtx->selectedDeviceInfo || !cborPayload || *cborPayload || !cborSize)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    otmCtx->selectedDeviceInfo->doxm->oxmSel = OIC_MV_JUST_WORKS;
+    *cborPayload = NULL;
+    *cborSize = 0;
+
+    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, cborPayload, cborSize, true);
+}
+

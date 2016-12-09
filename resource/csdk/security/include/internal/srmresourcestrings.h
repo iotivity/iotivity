@@ -181,6 +181,11 @@ extern const char * OXM_MANUFACTURER_CERTIFICATE;
 #ifdef MULTIPLE_OWNER
 extern const char * OXM_PRECONF_PIN;
 #endif //MULTIPLE_OWNER
+extern const char * OXM_MV_JUST_WORKS;
+extern const char * OXM_CON_MFG_CERT;
+
+//Mutual Verified Just-Works Message Prefix
+extern const char * MUTUAL_VERIF_NUM;
 
 extern const char * OIC_SEC_ENCODING_BASE64;
 extern const char * OIC_SEC_ENCODING_RAW;

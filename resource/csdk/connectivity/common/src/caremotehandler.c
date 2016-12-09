@@ -25,7 +25,7 @@
 #include "caremotehandler.h"
 #include "logger.h"
 
-#define TAG "CA"
+#define TAG "OIC_CA_REMOTE_HANDLER"
 
 CAEndpoint_t *CACloneEndpoint(const CAEndpoint_t *rep)
 {

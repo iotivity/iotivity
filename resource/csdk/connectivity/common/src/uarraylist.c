@@ -24,7 +24,7 @@
 #include "logger.h"
 #include "oic_malloc.h"
 
-#define TAG "UARRAYLIST"
+#define TAG "OIC_UARRAYLIST"
 
 /**
  * Use this default capacity when initialized

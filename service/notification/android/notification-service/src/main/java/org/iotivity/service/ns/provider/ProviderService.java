@@ -21,9 +21,8 @@ package org.iotivity.service.ns.provider;
 import org.iotivity.service.ns.common.*;
 import java.util.Vector;
 /**
-  * @class   ProviderService
-  * @brief   This class provides a set of Java APIs for Notification ProviderService.
-  */
+ * Provides a set of Java APIs for Notification ProviderService.
+ */
 public class ProviderService
 {
 
@@ -119,7 +118,7 @@ public class ProviderService
 
     /**
       * Request to publish resource to cloud server
-      * @param[in]  servAdd combined with IP address and port number using delimiter :
+      * @param servAdd combined with IP address and port number using delimiter [in]
       * @return  result code
       */
     public int   enableRemoteService(String servAdd) throws NSException
@@ -129,7 +128,7 @@ public class ProviderService
 
     /**
       * Request to cancel remote service using cloud server
-      * @param[in]  servAdd combined with IP address and port number using delimiter :
+      * @param servAdd combined with IP address and port number using delimiter :
       * @return  result code
       */
     public int  disableRemoteService(String servAdd) throws NSException

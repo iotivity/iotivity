@@ -161,6 +161,12 @@ CAResult_t CAStopListeningServerAdapters();
 CAResult_t CAStartDiscoveryServerAdapters();
 
 /**
+ * Check whether the endpoint is my own or not.
+ * @return  true or false.
+ */
+bool CAIsLocalEndpoint(const CAEndpoint_t *ep);
+
+/**
  * Terminates the adapters which are initialized during the initialization.
  */
 void CATerminateAdapters();

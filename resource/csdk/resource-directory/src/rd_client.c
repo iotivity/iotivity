@@ -29,7 +29,7 @@
 #include "ocpayload.h"
 #include "payload_logging.h"
 
-#define TAG "RD_CLIENT"
+#define TAG "OIC_RD_CLIENT"
 
 #ifdef RD_CLIENT
 
@@ -121,11 +121,24 @@ OCStackResult OCRDPublishWithDeviceId(const char *host, const unsigned char *id,
         return OC_STACK_NO_MEMORY;
     }
 
-    const char *deviceId = OCGetServerInstanceIDString();
-    if (deviceId)
+    OCRepPayloadSetPropString(rdPayload, OC_RSRVD_DEVICE_ID, (const char *) id);
+
+    char *deviceName = NULL;
+    OCGetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, (void **) &deviceName);
+    if (deviceName)
     {
-        OCRepPayloadSetPropString(rdPayload, OC_RSRVD_DEVICE_ID, deviceId);
+        OCRepPayloadSetPropString(rdPayload, OC_RSRVD_DEVICE_NAME, deviceName);
+        OICFree(deviceName);
     }
+
+    char *platformModelName = NULL;
+    OCGetPropertyValue(PAYLOAD_TYPE_PLATFORM, OC_RSRVD_MODEL_NUM, (void **) &platformModelName);
+    if (platformModelName)
+    {
+        OCRepPayloadSetPropString(rdPayload, OC_DATA_MODEL_NUMBER, platformModelName);
+        OICFree(platformModelName);
+    }
+
     OCRepPayloadSetPropInt(rdPayload, OC_RSRVD_DEVICE_TTL, OIC_RD_PUBLISH_TTL);
 
     OCRepPayload **linkArr = OICCalloc(nPubResHandles, sizeof(OCRepPayload *));

@@ -708,6 +708,14 @@ OCStackResult OCGetDeviceId(OCUUIdentity *deviceId);
  */
 OCStackResult OCSetDeviceId(const OCUUIdentity *deviceId);
 
+ /**
+ * Gets the bool state of "isOwned" property on the doxm resource.
+ *
+ * @param isOwned a pointer to be assigned to isOwned property
+ * @return Returns ::OC_STACK_OK if success.
+ */
+OCStackResult OCGetDeviceOwnedState(bool *isOwned);
+
 /**
  * Encode an address string to match RFC 6874.
  *

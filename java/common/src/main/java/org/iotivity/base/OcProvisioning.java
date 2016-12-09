@@ -25,6 +25,7 @@ package org.iotivity.base;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.EnumSet;
 
 /**
  * OcProvisionig represents functions corresponding to the provisioing of
@@ -90,7 +91,7 @@ public class OcProvisioning {
     /**
      * Server API to set Callback for Displaying stack generated PIN.
      *
-     * @param DisplayPinListener Pin callback Listener to be registered.
+     * @param displayPinListener Pin callback Listener to be registered.
      * @throws OcException
      */
     public static native void setDisplayPinListener(DisplayPinListener displayPinListener)
@@ -101,10 +102,72 @@ public class OcProvisioning {
     }
 
     /**
+     * API to Set callback for displaying verifNum in verified Just-Works.
+     *
+     *@param DisplayNumListener callback Listener to be registered for
+                                            displaying VerifyNUm.
+     *@throws OcException
+     */
+    public static native void setDisplayNumListener(
+            DisplayNumListener displayNumListener) throws OcException;
+
+    public static interface DisplayNumListener {
+        public int displayNumListener(String verifyNum);
+    }
+
+    /**
+     * API to unregister DisplayNumListener Listener
+     *
+     *@return  0 on success, 1 on failure
+     *@throws OcException
+     */
+    public static native int unsetDisplayNumListener() throws OcException;
+
+    /**
+     * API to Set callback for getting user confirmation in verified
+     * Just-Works
+     *
+     *@param ConfirmNumListener callback Listener to be registered for getting user confirmation.
+     *@throws OcException
+     */
+    public static native void setConfirmNumListener(ConfirmNumListener
+            confirmNumListener) throws OcException;
+
+    public static interface ConfirmNumListener {
+        public int confirmNumListener();
+    }
+
+    /**
+     * API to unregister ConfirmMutualVerifyNum Listener
+     *
+     *@return  0 on success, 1 on failure
+     *@throws OcException
+     */
+    public static native int unsetConfirmNumListener() throws OcException;
+
+    /**
+     * API to set options for Mutual Verified Just-works
+     * Default is  for both screen PIN display and get user confirmation.
+     *
+     */
+    public static int setMVJustWorksOptions(EnumSet<MVJustWorksOptionMask> optionMask) throws OcException {
+
+        int optionMaskInt = 0;
+
+        for (MVJustWorksOptionMask ops : MVJustWorksOptionMask.values()) {
+            if (optionMask.contains(ops))
+                optionMaskInt |= ops.getValue();
+        }
+        return setMVJustWorksOptions0(optionMaskInt);
+    }
+
+    private static native int setMVJustWorksOptions0(int optionsMask) throws OcException;
+
+    /**
      * Method to get Array of owned and un-owned devices in the current subnet.
      *
      * @param timeout    timeout in sec for the API to return.
-     * @retrun           Array of OcSecureResource class objects.
+     * @return           Array of OcSecureResource class objects.
      *                   be provisioned.
      * @throws OcException
      */
@@ -116,8 +179,8 @@ public class OcProvisioning {
     /**
      *  Method to save the Trust certificate chain to SVR.
      *
-     *  @param byte[]            trustCertChain
-     *  @param EncodingType                          encodingType
+     *  @param trustCertChain
+     *  @param encodingType
      *  @throws OcException
      */
     public static int saveTrustCertChain(byte[] trustCertChain, EncodingType encodingType) throws OcException {

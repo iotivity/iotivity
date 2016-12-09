@@ -36,6 +36,9 @@ extern "C" {
 
 #define DEFAULT_MESSAGE_TYPE "application/json"
 
+/** Platform Model Number.*/
+#define OC_DATA_MODEL_NUMBER            "x.model"
+
 /**
  * Discover Local RD across the network.
  *

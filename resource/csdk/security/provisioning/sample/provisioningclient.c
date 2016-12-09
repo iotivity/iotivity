@@ -36,6 +36,7 @@
 #include "securevirtualresourcetypes.h"
 #include "srmutility.h"
 #include "pmtypes.h"
+#include "oxmverifycommon.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -69,6 +70,7 @@ extern "C"
 #define _72_MOT_OXM_SEL_            72
 #endif //MULTIPLE_OWNER
 #define _80_SELECT_PROTOCOL_        80
+#define _81_SELECT_VERIF_METHOD_    81
 #define _99_EXIT_PRVN_CLT_          99
 
 #define ACL_RESRC_MAX_NUM   16
@@ -1206,6 +1208,51 @@ static int removeDeviceWithUuid(void)
     return 0;
 }
 
+OCStackResult displayNumCB(void * ctx, uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN])
+{
+    OIC_LOG(INFO, TAG, "IN displayMutualVerifNumCB");
+    if (NULL != mutualVerifNum)
+    {
+        OIC_LOG(INFO, TAG, "############ mutualVerifNum ############");
+        OIC_LOG_BUFFER(INFO, TAG, mutualVerifNum, MUTUAL_VERIF_NUM_LEN);
+        OIC_LOG(INFO, TAG, "############ mutualVerifNum ############");
+        OIC_LOG(INFO, TAG, "OUT displayMutualVerifNumCB");
+    }
+    else
+    {
+        OIC_LOG(INFO, TAG, "############ Confirm on the Server side ############");
+    }
+    return OC_STACK_OK;
+}
+
+OCStackResult confirmNumCB(void * ctx)
+{
+    for (;;)
+    {
+        int userConfirm;
+
+        printf("   > Press 1 if the mutual verification numbers are the same\n");
+        printf("   > Press 0 if the mutual verification numbers are not the same\n");
+
+        for (int ret=0; 1!=ret; )
+        {
+            ret = scanf("%d", &userConfirm);
+            for (; 0x20<=getchar(); );  // for removing overflow garbage
+                                        // '0x20<=code' is character region
+        }
+        if (1 == userConfirm)
+        {
+            break;
+        }
+        else if (0 == userConfirm)
+        {
+            return OC_STACK_USER_DENIED_REQ;
+        }
+        printf("   Entered Wrong Number. Please Enter Again\n");
+    }
+    return OC_STACK_OK;
+}
+
 #ifdef MULTIPLE_OWNER
 static int changeMultipleOwnershipTrnasferMode(void)
 {
@@ -2009,6 +2056,30 @@ static void selectSecureProtocol()
 }
 #endif
 
+static void selectVerifMethod()
+{
+    int option;
+    printf("   Select verification method for ownership transfer\n");
+    printf("   0 - No verification\n");
+    printf("   1 - Display only\n");
+    printf("   2 - Confirm only\n");
+    printf("   3 - Both Display and Confirm\n");
+
+    for(int ret=0; 1!=ret; )
+    {
+        ret = scanf("%d",&option);
+        for( ; 0x20<=getchar(); );  // for removing overflow garbages
+        // '0x20<=code' is character region
+    }
+
+    if(0 > option || 3 < option)
+    {
+        printf("Invalid option!");
+    }
+    SetVerifyOption((VerifyOptionBitmask_t) option);
+    printf("Option %d chosen!", option);
+}
+
 static void printMenu(void)
 {
     printf("************************************************************\n");
@@ -2056,13 +2127,14 @@ static void printMenu(void)
 #endif //MULTIPLE_OWNER
 
 #ifdef __WITH_TLS__
-    printf("** [H] SELECT SECURE PROTOCOL DTLS/TLS\n");
-    printf("** 80. Select secure protocol(default DTLS)\n\n");
-
-    printf("** [I] EXIT PROVISIONING CLIENT\n");
+    printf("** [H] SELECT SECURE PROTOCOL DTLS/TLS AND OTHERS\n");
+    printf("** 80. Select secure protocol(default DTLS)\n");
+    printf("** 81. Select verification method\n\n");
 #else
-    printf("** [H] EXIT PROVISIONING CLIENT\n");
+    printf("** [H] SELECT VERIFICATION OPTION\n");
+    printf("** 81. Select verification method\n\n");
 #endif
+    printf("** [I] EXIT PROVISIONING CLIENT\n");
 
     printf("** 99. Exit Provisionong Client\n\n");
 
@@ -2104,6 +2176,10 @@ int main()
     {
         OIC_LOG(WARNING, TAG, "Failed to disable OIC_DECENTRALIZED_PUBLIC_KEY OxM");
     }
+
+    // set callbacks for verification options
+    SetDisplayNumCB(NULL, displayNumCB);
+    SetUserConfirmCB(NULL, confirmNumCB);
 
 #ifdef MULTIPLE_OWNER
     SetPreconfigPin("12341234", 8);
@@ -2254,6 +2330,9 @@ int main()
             selectSecureProtocol();
             break;
 #endif
+        case _81_SELECT_VERIF_METHOD_:
+            selectVerifMethod();
+            break;
         case _99_EXIT_PRVN_CLT_:
             goto PMCLT_ERROR;
         default:

@@ -142,7 +142,9 @@ if env.get('SECURED') == '1':
 				'JniSecureUtils.cpp',
 				'JniProvisionResultListner.cpp',
 				'JniPinCheckListener.cpp',
-				'JniDisplayPinListener.cpp'
+				'JniDisplayPinListener.cpp',
+				'JniDisplayVerifyNumListener.cpp',
+				'JniConfirmNumListener.cpp'
 			]
 if env.get('WITH_CLOUD'):
 	ocstack_files += [

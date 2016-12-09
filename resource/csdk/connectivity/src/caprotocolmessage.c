@@ -378,9 +378,14 @@ coap_pdu_t *CAGeneratePDUImpl(code_t code, const CAInfo_t *info,
                       COAP_OPTION_DATA(*(coap_option *) opt->data));
 
             OIC_LOG_V(DEBUG, TAG, "[%d] pdu length", pdu->length);
-            coap_add_option2(pdu, COAP_OPTION_KEY(*(coap_option *) opt->data),
-                             COAP_OPTION_LENGTH(*(coap_option *) opt->data),
-                             COAP_OPTION_DATA(*(coap_option *) opt->data), *transport);
+            if (0 == coap_add_option2(pdu, COAP_OPTION_KEY(*(coap_option *) opt->data),
+                                      COAP_OPTION_LENGTH(*(coap_option *) opt->data),
+                                      COAP_OPTION_DATA(*(coap_option *) opt->data), *transport))
+            {
+                OIC_LOG(ERROR, TAG, "coap_add_option2 has failed");
+                coap_delete_pdu(pdu);
+                return NULL;
+            }
         }
     }
 

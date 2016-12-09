@@ -1432,6 +1432,18 @@ OCStackResult OCSetPlatformInfo(OCPlatformInfo info)
         goto exit;
     }
 
+    /*
+     * @todo (IOT-1541) There are several versions of a UUID structure and conversion
+     * methods scattered around the IoTivity code base.  They need to be combined
+     * into one PAL API.
+     */
+    uint8_t uuid[UUID_SIZE];
+    if (OCConvertStringToUuid(info.platformID, uuid) != RAND_UUID_OK)
+    {
+        OIC_LOG(ERROR, TAG, "Platform ID is not a UUID.");
+        goto exit;
+    }
+
     resource = FindResourceByUri(OC_RSRVD_PLATFORM_URI);
     if (!resource)
     {
@@ -1566,7 +1578,7 @@ OCStackResult OCGetPropertyValue(OCPayloadType type, const char *prop, void **va
 OCStackResult OCSetAttribute(OCResource* resource, const char* attribute, const void* value)
 {
     // See if the attribute already exists in the list.
-    OCAttribute *resAttrib;
+    OCAttribute *resAttrib = NULL;
     for (resAttrib = resource->rsrcAttributes; resAttrib; resAttrib = resAttrib->next)
     {
         if (0 == strcmp(attribute, resAttrib->attrName))
@@ -1616,7 +1628,7 @@ exit:
 
 OCStackResult OCSetPropertyValue(OCPayloadType type, const char *prop, const void *value)
 {
-    if (!prop)
+    if (!prop || !value)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -1634,7 +1646,7 @@ OCStackResult OCSetPropertyValue(OCPayloadType type, const char *prop, const voi
         {
             OIC_LOG(ERROR, TAG, "Resource does not exist.");
         }
-        if (value)
+        else
         {
             res = OCSetAttribute(resource, prop, value);
         }

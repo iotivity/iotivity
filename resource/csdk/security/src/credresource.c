@@ -30,6 +30,7 @@
 #endif
 #include <stdint.h>
 #include <stdbool.h>
+#include <inttypes.h>
 
 #include "cainterface.h"
 #include "payload_logging.h"
@@ -65,6 +66,11 @@
 #endif
 
 #define TAG  "OIC_SRM_CREDL"
+
+#ifdef HAVE_WINDOWS_H
+#include <wincrypt.h>
+#endif
+
 
 /** Max credential types number used for TLS */
 #define MAX_TYPE 2
@@ -735,6 +741,11 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
     CborError cborFindResult = CborNoError;
     cbor_parser_init(cborPayload, size, 0, &parser, &credCbor);
 
+    if (!cbor_value_is_container(&credCbor))
+    {
+        return OC_STACK_ERROR;
+    }
+
     OicSecCred_t *headCred = (OicSecCred_t *) OICCalloc(1, sizeof(OicSecCred_t));
 
     // Enter CRED Root Map
@@ -1234,7 +1245,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     OIC_LOG_BUFFER(DEBUG, TAG, cred->subject.id, sizeof(cred->subject.id));
     if (cred->privateData.data)
     {
-        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : privateData len: %d", cred->privateData.len);
+        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : privateData len: %"PRIuPTR, cred->privateData.len);
         OIC_LOG_BUFFER(DEBUG, TAG, cred->privateData.data, cred->privateData.len);
     }
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
@@ -1266,6 +1277,43 @@ exit:
     return cred;
 }
 
+#ifdef HAVE_WINDOWS_H
+/* Helper for UpdatePersistentStorage. */
+static OCStackResult CopyPayload(uint8_t **payload, size_t *payloadSize, const DATA_BLOB *source)
+{
+    OCStackResult res = OC_STACK_OK;
+
+    if (source->cbData > *payloadSize)
+    {
+        /* Need more memory to copy encrypted payload out. */
+        OICClearMemory(*payload, *payloadSize);
+        OICFree(*payload);
+        *payload = OICMalloc(source->cbData);
+
+        if (NULL == *payload)
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to OICMalloc for encrypted payload: %u", GetLastError());
+            res = OC_STACK_NO_MEMORY;
+        }
+    }
+    else if (source->cbData < *payloadSize)
+    {
+        /* Zero portion of payload we won't overwrite with the encrypted version. The
+         * later call to OICClearMemory won't cover this part of the buffer.
+         */
+        OICClearMemory(*payload + source->cbData, *payloadSize - source->cbData);
+    }
+
+    if (OC_STACK_OK == res)
+    {
+        memcpy(*payload, source->pbData, source->cbData);
+        *payloadSize = source->cbData;
+    }
+
+    return res;
+}
+#endif
+
 static bool UpdatePersistentStorage(const OicSecCred_t *cred)
 {
     bool ret = false;
@@ -1282,15 +1330,53 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
 
         int secureFlag = 0;
         OCStackResult res = CredToCBORPayload(cred, &payload, &size, secureFlag);
+#ifdef HAVE_WINDOWS_H
+        /* On Windows, keep the credential resource encrypted on disk to protect symmetric and private keys. Only the
+         * current user on this system will be able to decrypt it later, to help prevent credential theft.
+         */
+        if ((OC_STACK_OK == res) && payload)
+        {
+            DATA_BLOB decryptedPayload = { .cbData = size, .pbData = payload };
+            DATA_BLOB encryptedPayload = { .cbData = 0, .pbData = NULL };
+
+            if (CryptProtectData(
+                &decryptedPayload,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                CRYPTPROTECT_UI_FORBIDDEN,
+                &encryptedPayload))
+            {
+                res = CopyPayload(&payload, &size, &encryptedPayload);
+                ret = (OC_STACK_OK == res);
+
+                /* For the returned data from CryptProtectData, LocalFree must be used to free. Don't use OICFree. */
+                if (NULL != LocalFree(encryptedPayload.pbData))
+                {
+                    OIC_LOG_V(ERROR, TAG, "LocalFree failed on output from CryptProtectData; memory may be corrupted or leaked. Last error: %u.", GetLastError());
+                    assert(!"LocalFree failed");
+                }
+            }
+            else
+            {
+                OIC_LOG_V(ERROR, TAG, "Failed to CryptProtectData cred resource: %u", GetLastError());
+                res = OC_STACK_ERROR;
+                ret = false;
+            }
+        }
+#endif
+
         if ((OC_STACK_OK == res) && payload)
         {
             if (OC_STACK_OK == UpdateSecureResourceInPS(OIC_JSON_CRED_NAME, payload, size))
             {
                 ret = true;
             }
-            OICClearMemory(payload, size);
-            OICFree(payload);
         }
+
+        OICClearMemory(payload, size);
+        OICFree(payload);
     }
     else //Empty cred list
     {
@@ -1299,6 +1385,7 @@ static bool UpdatePersistentStorage(const OicSecCred_t *cred)
             ret = true;
         }
     }
+
     OIC_LOG(DEBUG, TAG, "OUT Cred UpdatePersistentStorage");
     return ret;
 }
@@ -1955,7 +2042,9 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
         // In case SubOwner Credential
         else if(doxm && doxm->owned && doxm->mom &&
                 OIC_MULTIPLE_OWNER_DISABLE != doxm->mom->mode &&
-                0 == cred->privateData.len)
+                0 == cred->privateData.len &&
+                0 == cred->optionalData.len &&
+                0 == cred->publicData.len )
         {
             switch(cred->credType)
             {
@@ -2212,10 +2301,46 @@ OCStackResult InitCredResource()
     {
         OIC_LOG (DEBUG, TAG, "ReadSVDataFromPS failed");
     }
-    if (data)
+
+    if ((ret == OC_STACK_OK) && data)
     {
         // Read ACL resource from PS
         ret = CBORPayloadToCred(data, size, &gCred);
+
+#ifdef HAVE_WINDOWS_H
+        /* On Windows, if the credential payload isn't cleartext CBOR, it is encrypted. Decrypt and retry. */
+        if (ret != OC_STACK_OK)
+        {
+            DATA_BLOB encryptedPayload = { .cbData = size, .pbData = data };
+            DATA_BLOB decryptedPayload = { .cbData = 0, .pbData = NULL };
+
+            if (CryptUnprotectData(
+                &encryptedPayload,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                CRYPTPROTECT_UI_FORBIDDEN,
+                &decryptedPayload))
+            {
+                ret = CBORPayloadToCred(decryptedPayload.pbData, decryptedPayload.cbData, &gCred);
+
+                /* For the returned data from CryptUnprotectData, LocalFree must be used to free. Don't use OICFree. */
+                OICClearMemory(decryptedPayload.pbData, decryptedPayload.cbData);
+                if (NULL != LocalFree(decryptedPayload.pbData))
+                {
+                    OIC_LOG_V(ERROR, TAG, "LocalFree failed on output from CryptUnprotectData; memory may be corrupted or leaked. Last error: %u.", GetLastError());
+                    assert(!"LocalFree failed");
+                }
+            }
+            else
+            {
+                /* Credential resource is corrupted, or we no longer have access to the encryption key to decrypt it. */
+                OIC_LOG_V(ERROR, TAG, "Failed to CryptUnprotectData cred resource: %u", GetLastError());
+                ret = OC_STACK_ERROR;
+            }
+        }
+#endif
     }
 
     /*
@@ -2610,9 +2735,6 @@ exit:
 OCStackResult SetCredRownerId(const OicUuid_t* newROwner)
 {
     OCStackResult ret = OC_STACK_ERROR;
-    uint8_t *cborPayload = NULL;
-    size_t size = 0;
-    int secureFlag = 0;
     OicUuid_t prevId = {.id={0}};
 
     if(NULL == newROwner)
@@ -2624,27 +2746,19 @@ OCStackResult SetCredRownerId(const OicUuid_t* newROwner)
         ret = OC_STACK_NO_RESOURCE;
     }
 
-    if(newROwner && gCred)
+    if (newROwner && gCred)
     {
         memcpy(prevId.id, gCred->rownerID.id, sizeof(prevId.id));
         memcpy(gCred->rownerID.id, newROwner->id, sizeof(newROwner->id));
 
-        // This added '256' is arbitrary value that is added to cover the name of the resource, map addition and ending
-        size = GetCredKeyDataSize(gCred);
-        size += (256 * OicSecCredCount(gCred));
-        ret = CredToCBORPayload(gCred, &cborPayload, &size, secureFlag);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+        VERIFY_SUCCESS(TAG, UpdatePersistentStorage(gCred), ERROR);
 
-        ret = UpdateSecureResourceInPS(OIC_JSON_CRED_NAME, cborPayload, size);
-        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
-
-        OICFree(cborPayload);
+        ret = OC_STACK_OK;
     }
 
     return ret;
 
 exit:
-    OICFree(cborPayload);
     memcpy(gCred->rownerID.id, prevId.id, sizeof(prevId.id));
     return ret;
 }

@@ -1228,6 +1228,11 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
     if(cbNode)
     {
         OIC_LOG(INFO, TAG, "There is a cbNode associated with the response token");
+        uint32_t obsHeaderOpt = OC_OBSERVE_NO_OPTION;
+        uint8_t tempNumOpt = responseInfo->info.numOptions;
+        GetObserveHeaderOption(&obsHeaderOpt, responseInfo->info.options,
+                               &tempNumOpt);
+
         if(responseInfo->result == CA_EMPTY)
         {
             OIC_LOG(INFO, TAG, "Receiving A ACK/RESET for this token");
@@ -1257,6 +1262,25 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             response.result = CAResponseToOCStackResult(responseInfo->result);
             cbNode->callBack(cbNode->context,
                     cbNode->handle, &response);
+            FindAndDeleteClientCB(cbNode);
+        }
+        else if ((cbNode->method == OC_REST_OBSERVE || cbNode->method == OC_REST_OBSERVE_ALL)
+                && (responseInfo->result == CA_CONTENT)
+                && (obsHeaderOpt == OC_OBSERVE_NO_OPTION))
+        {
+            OCClientResponse response =
+                {.devAddr = {.adapter = OC_DEFAULT_ADAPTER}};
+            CopyEndpointToDevAddr(endPoint, &response.devAddr);
+            FixUpClientResponse(&response);
+            response.resourceUri = responseInfo->info.resourceUri;
+            memcpy(response.identity.id, responseInfo->info.identity.id,
+                                    sizeof (response.identity.id));
+            response.identity.id_length = responseInfo->info.identity.id_length;
+            response.result = OC_STACK_UNAUTHORIZED_REQ;
+
+            cbNode->callBack(cbNode->context,
+                             cbNode->handle,
+                             &response);
             FindAndDeleteClientCB(cbNode);
         }
         else
@@ -5155,6 +5179,21 @@ void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, bool isCon
     {
        g_connectionHandler(info, isConnected);
     }
+
+    /*
+     * If the client observes one or more resources over a reliable connection,
+     * then the CoAP server (or intermediary in the role of the CoAP server)
+     * MUST remove all entries associated with the client endpoint from the lists
+     * of observers when the connection is either closed or times out.
+     */
+    if (!isConnected)
+    {
+        OCDevAddr devAddr = { OC_DEFAULT_ADAPTER };
+        CopyEndpointToDevAddr(info, &devAddr);
+
+        // remove observer list with remote device address.
+        DeleteObserverUsingDevAddr(&devAddr);
+    }
 }
 
 void OCSetNetworkMonitorHandler(CAAdapterStateChangedCB adapterHandler,
@@ -5195,3 +5234,21 @@ OCStackResult OCSetDeviceId(const OCUUIdentity *deviceId)
     ret = SetDoxmDeviceID(&oicUuid);
     return ret;
 }
+
+OCStackResult OCGetDeviceOwnedState(bool *isOwned)
+{
+    bool isDeviceOwned = true;
+    OCStackResult ret = OC_STACK_ERROR;
+
+    ret = GetDoxmIsOwned(&isDeviceOwned);
+    if (OC_STACK_OK == ret)
+    {
+        *isOwned = isDeviceOwned;
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Device Owned State Get error");
+    }
+    return ret;
+}
+

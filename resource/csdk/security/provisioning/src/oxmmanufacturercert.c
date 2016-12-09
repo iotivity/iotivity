@@ -53,6 +53,18 @@ OCStackResult CreateMCertificateBasedSelectOxmPayload(OTMContext_t* otmCtx, uint
     return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
 }
 
+OCStackResult CreateConMCertificateBasedSelectOxmPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
+{
+    if (!otmCtx || !otmCtx->selectedDeviceInfo || !payload || *payload || !size)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    otmCtx->selectedDeviceInfo->doxm->oxmSel = OIC_CON_MFG_CERT;
+
+    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
+}
+
 OCStackResult CreateMCertificateBasedOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
 {
     if (!otmCtx || !otmCtx->selectedDeviceInfo || !payload || *payload || !size)

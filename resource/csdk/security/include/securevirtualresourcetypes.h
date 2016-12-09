@@ -276,6 +276,8 @@ typedef enum
 #ifdef MULTIPLE_OWNER
     OIC_PRECONFIG_PIN                       = 0xFF00,
 #endif //MULTIPLE_OWNER
+    OIC_MV_JUST_WORKS                       = 0xFF01,
+    OIC_CON_MFG_CERT                        = 0xFF02,
 }OicSecOxm_t;
 
 typedef enum

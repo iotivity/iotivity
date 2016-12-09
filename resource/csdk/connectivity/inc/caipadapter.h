@@ -134,6 +134,12 @@ CAResult_t CAReadIPData();
 CAResult_t CAStopIP();
 
 /**
+ * Check whether the endpoint is my own or not.
+ * @return  true or false.
+ */
+bool CAIPIsLocalEndpoint(const CAEndpoint_t *ep);
+
+/**
  * Terminate the IP connectivity adapter.
  * Configuration information will be deleted from further use.
  */
