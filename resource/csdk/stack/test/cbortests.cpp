@@ -84,7 +84,7 @@ TEST_F(CborByteStringTest, ByteStringSetGetTest)
 
     OCByteString quakedata_out = { NULL, 0};
     ASSERT_EQ(true, OCRepPayloadGetPropByteString(payload_in, "quakedata", &quakedata_out));
-
+    ASSERT_NE((uint8_t*)NULL, quakedata_out.bytes);
     EXPECT_EQ(quakedata_in.len, quakedata_out.len);
     EXPECT_EQ(0, memcmp(quakedata_in.bytes, quakedata_out.bytes, quakedata_in.len));
 
@@ -127,6 +127,7 @@ TEST_F(CborByteStringTest, ByteStringConvertParseTest)
     ASSERT_EQ(true, OCRepPayloadGetPropByteString((OCRepPayload*)payload_out, "quakedata", &quakedata_out));
 
     // Compare input and output data
+    ASSERT_NE((uint8_t*)NULL, quakedata_out.bytes);
     EXPECT_EQ(quakedata_in.len, quakedata_out.len);
     EXPECT_EQ(0, memcmp(quakedata_in.bytes, quakedata_out.bytes, quakedata_in.len));
 
