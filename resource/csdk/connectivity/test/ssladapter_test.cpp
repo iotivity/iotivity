@@ -432,8 +432,8 @@ static int32_t GetDtlsPskCredentials( CADtlsPskCredType_t,
 #if !defined(MBEDTLS_BIGNUM_C) || !defined(MBEDTLS_ENTROPY_C) ||  \
     !defined(MBEDTLS_SSL_TLS_C) || !defined(MBEDTLS_SSL_CLI_C) || \
     !defined(MBEDTLS_NET_C) || !defined(MBEDTLS_RSA_C) ||         \
-    !defined(MBEDTLS_CERTS_C) || !defined(MBEDTLS_PEM_PARSE_C) || \
-    !defined(MBEDTLS_CTR_DRBG_C) || !defined(MBEDTLS_X509_CRT_PARSE_C)
+    !defined(MBEDTLS_PEM_PARSE_C) ||!defined(MBEDTLS_CTR_DRBG_C) || \
+    !defined(MBEDTLS_X509_CRT_PARSE_C)
 static int client( void )
 {
     mbedtls_printf("MBEDTLS_BIGNUM_C and/or MBEDTLS_ENTROPY_C and/or "
@@ -445,13 +445,13 @@ static int client( void )
 }
 #else
 
-#include "mbedtls/net.h"
+#include "mbedtls/net_sockets.h"
 #include "mbedtls/debug.h"
 #include "mbedtls/ssl.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/error.h"
-#include "mbedtls/certs.h"
+
 
 #include <string.h>
 
@@ -704,7 +704,7 @@ exit:
 }
 #endif /* MBEDTLS_BIGNUM_C && MBEDTLS_ENTROPY_C && MBEDTLS_SSL_TLS_C &&
           MBEDTLS_SSL_CLI_C && MBEDTLS_NET_C && MBEDTLS_RSA_C &&
-          MBEDTLS_CERTS_C && MBEDTLS_PEM_PARSE_C && MBEDTLS_CTR_DRBG_C &&
+          MBEDTLS_PEM_PARSE_C && MBEDTLS_CTR_DRBG_C &&
           MBEDTLS_X509_CRT_PARSE_C */
 
 /* **************************
@@ -730,15 +730,15 @@ exit:
 #define mbedtls_printf     printf
 #endif
 
-#if !defined(MBEDTLS_BIGNUM_C) || !defined(MBEDTLS_CERTS_C) ||    \
+#if !defined(MBEDTLS_BIGNUM_C) || !defined(MBEDTLS_PEM_PARSE_C)|| \
     !defined(MBEDTLS_ENTROPY_C) || !defined(MBEDTLS_SSL_TLS_C) || \
     !defined(MBEDTLS_SSL_SRV_C) || !defined(MBEDTLS_NET_C) ||     \
     !defined(MBEDTLS_RSA_C) || !defined(MBEDTLS_CTR_DRBG_C) ||    \
-    !defined(MBEDTLS_X509_CRT_PARSE_C) || !defined(MBEDTLS_FS_IO) || \
-    !defined(MBEDTLS_PEM_PARSE_C)
+    !defined(MBEDTLS_X509_CRT_PARSE_C) || !defined(MBEDTLS_FS_IO) 
+
 /* int */void * server( void )
 {
-    mbedtls_printf("MBEDTLS_BIGNUM_C and/or MBEDTLS_CERTS_C and/or MBEDTLS_ENTROPY_C "
+    mbedtls_printf("MBEDTLS_BIGNUM_C and/or MBEDTLS_ENTROPY_C "
            "and/or MBEDTLS_SSL_TLS_C and/or MBEDTLS_SSL_SRV_C and/or "
            "MBEDTLS_NET_C and/or MBEDTLS_RSA_C and/or "
            "MBEDTLS_CTR_DRBG_C and/or MBEDTLS_X509_CRT_PARSE_C "
@@ -752,10 +752,9 @@ exit:
 
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
-#include "mbedtls/certs.h"
 #include "mbedtls/x509.h"
 #include "mbedtls/ssl.h"
-#include "mbedtls/net.h"
+#include "mbedtls/net_sockets.h"
 #include "mbedtls/error.h"
 #include "mbedtls/debug.h"
 
@@ -1090,7 +1089,7 @@ exit:
 
     return NULL;
 }
-#endif /* MBEDTLS_BIGNUM_C && MBEDTLS_CERTS_C && MBEDTLS_ENTROPY_C &&
+#endif /* MBEDTLS_BIGNUM_C && MBEDTLS_ENTROPY_C &&
           MBEDTLS_SSL_TLS_C && MBEDTLS_SSL_SRV_C && MBEDTLS_NET_C &&
           MBEDTLS_RSA_C && MBEDTLS_CTR_DRBG_C && MBEDTLS_X509_CRT_PARSE_C
           && MBEDTLS_FS_IO && MBEDTLS_PEM_PARSE_C */
@@ -1192,8 +1191,7 @@ static int testCAsetSslAdapterCallbacks()
                           &g_caSslContext->rnd);
     mbedtls_ssl_conf_curves(&g_caSslContext->clientTlsConf, curve[ADAPTER_CURVE_SECP256R1]);
     mbedtls_ssl_conf_min_version(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_MAJOR_VERSION_3,
-                                 MBEDTLS_SSL_MINOR_VERSION_1);
-    mbedtls_ssl_conf_renegotiation(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_RENEGOTIATION_DISABLED);
+                                 MBEDTLS_SSL_MINOR_VERSION_3);
     mbedtls_ssl_conf_authmode(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_VERIFY_REQUIRED);
     CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256);
     mbedtls_x509_crt_init(&g_caSslContext->ca);
@@ -1315,8 +1313,7 @@ static void * test0CAinitiateSslHandshake(void * arg)
                           &g_caSslContext->rnd);
     mbedtls_ssl_conf_curves(&g_caSslContext->clientTlsConf, curve[ADAPTER_CURVE_SECP256R1]);
     mbedtls_ssl_conf_min_version(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_MAJOR_VERSION_3,
-                                 MBEDTLS_SSL_MINOR_VERSION_1);
-    mbedtls_ssl_conf_renegotiation(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_RENEGOTIATION_DISABLED);
+                                 MBEDTLS_SSL_MINOR_VERSION_3);
     mbedtls_ssl_conf_authmode(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_VERIFY_REQUIRED);
     mbedtls_x509_crt_init(&g_caSslContext->ca);
     mbedtls_x509_crt_init(&g_caSslContext->crt);
@@ -1477,8 +1474,7 @@ static void * testCAencryptSsl(void * arg)
                           &g_caSslContext->rnd);
     mbedtls_ssl_conf_curves(&g_caSslContext->clientTlsConf, curve[ADAPTER_CURVE_SECP256R1]);
     mbedtls_ssl_conf_min_version(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_MAJOR_VERSION_3,
-                                 MBEDTLS_SSL_MINOR_VERSION_1);
-    mbedtls_ssl_conf_renegotiation(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_RENEGOTIATION_DISABLED);
+                                 MBEDTLS_SSL_MINOR_VERSION_3);
     mbedtls_ssl_conf_authmode(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_VERIFY_REQUIRED);
     CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256);
     mbedtls_x509_crt_init(&g_caSslContext->ca);
@@ -1723,8 +1719,7 @@ static void * testCAdecryptSsl(void * arg)
                           &g_caSslContext->rnd);
     mbedtls_ssl_conf_curves(&g_caSslContext->clientTlsConf, curve[ADAPTER_CURVE_SECP256R1]);
     mbedtls_ssl_conf_min_version(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_MAJOR_VERSION_3,
-                                 MBEDTLS_SSL_MINOR_VERSION_1);
-    mbedtls_ssl_conf_renegotiation(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_RENEGOTIATION_DISABLED);
+                                 MBEDTLS_SSL_MINOR_VERSION_3);
     mbedtls_ssl_conf_authmode(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_VERIFY_REQUIRED);
     CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256);
     mbedtls_x509_crt_init(&g_caSslContext->ca);
@@ -1867,8 +1862,7 @@ static int testCAdeinitSslAdapter()
                           &g_caSslContext->rnd);
     mbedtls_ssl_conf_curves(&g_caSslContext->clientTlsConf, curve[ADAPTER_CURVE_SECP256R1]);
     mbedtls_ssl_conf_min_version(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_MAJOR_VERSION_3,
-                                 MBEDTLS_SSL_MINOR_VERSION_1);
-    mbedtls_ssl_conf_renegotiation(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_RENEGOTIATION_DISABLED);
+                                 MBEDTLS_SSL_MINOR_VERSION_3);
     mbedtls_ssl_conf_authmode(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_VERIFY_REQUIRED);
     mbedtls_x509_crt_init(&g_caSslContext->ca);
     mbedtls_x509_crt_init(&g_caSslContext->crt);
@@ -2225,8 +2219,7 @@ static void * testCAsslGenerateOwnerPsk(void * arg)
                           &g_caSslContext->rnd);
     mbedtls_ssl_conf_curves(&g_caSslContext->clientTlsConf, curve[ADAPTER_CURVE_SECP256R1]);
     mbedtls_ssl_conf_min_version(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_MAJOR_VERSION_3,
-                                 MBEDTLS_SSL_MINOR_VERSION_1);
-    mbedtls_ssl_conf_renegotiation(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_RENEGOTIATION_DISABLED);
+                                 MBEDTLS_SSL_MINOR_VERSION_3);
     mbedtls_ssl_conf_authmode(&g_caSslContext->clientTlsConf, MBEDTLS_SSL_VERIFY_REQUIRED);
     CAsetTlsCipherSuite(MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256);
     mbedtls_x509_crt_init(&g_caSslContext->ca);

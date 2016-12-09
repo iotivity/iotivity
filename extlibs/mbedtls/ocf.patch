@@ -44,49 +44,6 @@ index 27abbd9..fa4db26 100644
  #define TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA MBEDTLS_TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA
  #define TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA MBEDTLS_TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA
  #define TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256 MBEDTLS_TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256
-diff --git a/include/mbedtls/config.h b/include/mbedtls/config.h
-index 6fc9c77..9798b39 100644
---- a/include/mbedtls/config.h
-+++ b/include/mbedtls/config.h
-@@ -648,6 +648,21 @@
- #define MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED
- 
- /**
-+ * \def MBEDTLS_KEY_EXCHANGE_ECDH_ANON_ENABLED
-+ *
-+ * Enable the ECDHE-ANON based ciphersuite modes in SSL / TLS.
-+ *
-+ * Requires: MBEDTLS_ECDH_C
-+ *
-+ *
-+ * This enables the following ciphersuites (if other requisites are
-+ * enabled as well):
-+ *      MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256
-+ */
-+#define MBEDTLS_KEY_EXCHANGE_ECDH_ANON_ENABLED
-+
-+
-+/**
-  * \def MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
-  *
-  * Enable the ECDHE-ECDSA based ciphersuite modes in SSL / TLS.
-@@ -1233,7 +1248,7 @@
-  *
-  * Comment this macro to disable support for SSL session tickets
-  */
--#define MBEDTLS_SSL_SESSION_TICKETS
-+//#define MBEDTLS_SSL_SESSION_TICKETS
- 
- /**
-  * \def MBEDTLS_SSL_EXPORT_KEYS
-@@ -1473,6 +1488,7 @@
-  *      MBEDTLS_TLS_PSK_WITH_AES_128_GCM_SHA256
-  *      MBEDTLS_TLS_PSK_WITH_AES_128_CBC_SHA256
-  *      MBEDTLS_TLS_PSK_WITH_AES_128_CBC_SHA
-+ *      MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256
-  *
-  * PEM_PARSE uses AES for decrypting encrypted keys.
-  */
 diff --git a/include/mbedtls/ssl.h b/include/mbedtls/ssl.h
 index ba499d2..8046e6e 100644
 --- a/include/mbedtls/ssl.h

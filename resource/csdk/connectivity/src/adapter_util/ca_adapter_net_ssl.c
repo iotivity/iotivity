@@ -38,7 +38,7 @@
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/pkcs12.h"
 #include "mbedtls/ssl_internal.h"
-#include "mbedtls/net.h"
+#include "mbedtls/net_sockets.h"
 #ifdef __WITH_DTLS__
 #include "mbedtls/timing.h"
 #include "mbedtls/ssl_cookie.h"
@@ -1250,12 +1250,17 @@ static int InitConfig(mbedtls_ssl_config * conf, int transport, int mode)
         return -1;
     }
 
+    /*
+     * Configure mbedTLS runtime options. Many options are configured at build
+     * time, see extlibs/mbedtls/config-iotivity.h
+     */
     mbedtls_ssl_conf_psk_cb(conf, GetPskCredentialsCallback, NULL);
     mbedtls_ssl_conf_rng(conf, mbedtls_ctr_drbg_random, &g_caSslContext->rnd);
     mbedtls_ssl_conf_curves(conf, curve[ADAPTER_CURVE_SECP256R1]);
-    mbedtls_ssl_conf_min_version(conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
-    mbedtls_ssl_conf_renegotiation(conf, MBEDTLS_SSL_RENEGOTIATION_DISABLED);
     mbedtls_ssl_conf_authmode(conf, MBEDTLS_SSL_VERIFY_REQUIRED);
+
+    /* Set TLS 1.2 as the minimum allowed version. */
+    mbedtls_ssl_conf_min_version(conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
 
 #if !defined(NDEBUG) || defined(TB_LOG)
     mbedtls_ssl_conf_dbg(conf, DebugSsl, NULL);
