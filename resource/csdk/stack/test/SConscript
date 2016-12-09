@@ -75,10 +75,8 @@ cbortests = stacktest_env.Program('cbortests', ['cbortests.cpp'])
 
 Alias("test", [stacktests, cbortests])
 
-
 stacktest_env.AppendTarget('test')
-# TODO: fix test in all supported configurations
-if stacktest_env.get('TEST') == '1' and stacktest_env.get('SECURED') != '1':
+if stacktest_env.get('TEST') == '1':
 	if target_os in ['linux', 'windows']:
                 run_test(stacktest_env,
                          'resource_csdk_stack_test.memcheck',
