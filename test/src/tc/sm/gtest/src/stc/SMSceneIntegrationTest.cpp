@@ -81,6 +81,9 @@ public:
         CommonUtil::killApp(LIGHT_SERVER);
         CommonUtil::waitInSecond(MAX_SLEEP_TIME);
 
+        delete m_pSMHelper;
+        m_pSMHelper = nullptr;
+
         CommonUtil::runCommonTCTearDownPart();
     }
 };

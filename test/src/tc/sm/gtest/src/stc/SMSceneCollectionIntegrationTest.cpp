@@ -52,6 +52,9 @@ public:
     virtual void TearDown() {
         IOTIVITYTEST_LOG(INFO, "TearDown IN");
 
+        delete m_pSMHelper;
+        m_pSMHelper = nullptr;
+
         CommonUtil::runCommonTCTearDownPart();
     }
 };
