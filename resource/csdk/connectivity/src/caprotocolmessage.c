@@ -560,18 +560,18 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
                         (char *)buf);
                 break;
             default:
-                OIC_LOG_V(ERROR, TAG, "format option:[%d] not supported", info->payloadFormat);
+                OIC_LOG_V(ERROR, TAG, "Content format option:[%d] not supported", info->payloadFormat);
         }
         if (!node)
         {
-            OIC_LOG(ERROR, TAG, "format option not created");
+            OIC_LOG(ERROR, TAG, "Content format option not created");
             return CA_STATUS_INVALID_PARAM;
         }
         int ret = coap_insert(optlist, node, CAOrderOpts);
         if (ret <= 0)
         {
             coap_delete(node);
-            OIC_LOG(ERROR, TAG, "format option not inserted in header");
+            OIC_LOG(ERROR, TAG, "Content format option not inserted in header");
             return CA_STATUS_INVALID_PARAM;
         }
     }
@@ -588,18 +588,18 @@ CAResult_t CAParseHeadOption(uint32_t code, const CAInfo_t *info, coap_list_t **
                         (char *)buf);
                 break;
             default:
-                OIC_LOG_V(ERROR, TAG, "format option:[%d] not supported", info->acceptFormat);
+                OIC_LOG_V(ERROR, TAG, "Accept format option:[%d] not supported", info->acceptFormat);
         }
         if (!node)
         {
-            OIC_LOG(ERROR, TAG, "format option not created");
+            OIC_LOG(ERROR, TAG, "Accept format option not created");
             return CA_STATUS_INVALID_PARAM;
         }
         int ret = coap_insert(optlist, node, CAOrderOpts);
         if (ret <= 0)
         {
             coap_delete(node);
-            OIC_LOG(ERROR, TAG, "format option not inserted in header");
+            OIC_LOG(ERROR, TAG, "Accept format option not inserted in header");
             return CA_STATUS_INVALID_PARAM;
         }
     }
