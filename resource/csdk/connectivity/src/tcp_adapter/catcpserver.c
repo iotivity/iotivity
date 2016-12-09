@@ -94,17 +94,30 @@ static CAResult_t CATCPCreateMutex();
 static void CATCPDestroyMutex();
 static CAResult_t CATCPCreateCond();
 static void CATCPDestroyCond();
-static int CACreateAcceptSocket(int family, CASocket_t *sock);
+static CASocketFd_t CACreateAcceptSocket(int family, CASocket_t *sock);
 static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock);
 static void CAFindReadyMessage();
 static void CASelectReturned(fd_set *readFds);
 static void CAReceiveMessage(int fd);
 static void CAReceiveHandler(void *data);
-static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *tcpServerInfo);
+static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem);
 
 #define CHECKFD(FD) \
     if (FD > caglobals.tcp.maxfd) \
         caglobals.tcp.maxfd = FD;
+
+#define CLOSE_SOCKET(TYPE) \
+    if (caglobals.tcp.TYPE.fd != OC_INVALID_SOCKET) \
+    { \
+        close(caglobals.tcp.TYPE.fd); \
+        caglobals.tcp.TYPE.fd = OC_INVALID_SOCKET; \
+    }
+
+#define CA_FD_SET(TYPE, FDS) \
+    if (caglobals.tcp.TYPE.fd != OC_INVALID_SOCKET) \
+    { \
+        FD_SET(caglobals.tcp.TYPE.fd, FDS); \
+    }
 
 /**
  * Read length amount of data from socket item->fd
@@ -223,20 +236,14 @@ static void CAFindReadyMessage()
     struct timeval timeout = { .tv_sec = caglobals.tcp.selectTimeout };
 
     FD_ZERO(&readFds);
+    CA_FD_SET(ipv4, &readFds);
+    CA_FD_SET(ipv6, &readFds);
 
-    if (-1 != caglobals.tcp.ipv4.fd)
-    {
-        FD_SET(caglobals.tcp.ipv4.fd, &readFds);
-    }
-    if (-1 != caglobals.tcp.ipv6.fd)
-    {
-        FD_SET(caglobals.tcp.ipv6.fd, &readFds);
-    }
-    if (-1 != caglobals.tcp.shutdownFds[0])
+    if (OC_INVALID_SOCKET != caglobals.tcp.shutdownFds[0])
     {
         FD_SET(caglobals.tcp.shutdownFds[0], &readFds);
     }
-    if (-1 != caglobals.tcp.connectionFds[0])
+    if (OC_INVALID_SOCKET != caglobals.tcp.connectionFds[0])
     {
         FD_SET(caglobals.tcp.connectionFds[0], &readFds);
     }
@@ -337,8 +344,8 @@ static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
         clientlen = sizeof(struct sockaddr_in6);
     }
 
-    int sockfd = accept(sock->fd, (struct sockaddr *)&clientaddr, &clientlen);
-    if (-1 != sockfd)
+    CASocketFd_t sockfd = accept(sock->fd, (struct sockaddr *)&clientaddr, &clientlen);
+    if (OC_INVALID_SOCKET != sockfd)
     {
         CATCPSessionInfo_t *svritem =
                 (CATCPSessionInfo_t *) OICCalloc(1, sizeof (*svritem));
@@ -866,7 +873,7 @@ static CAResult_t CATCPConvertNameToAddr(int family, const char *host, uint16_t 
 
 static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
 {
-    VERIFY_NON_NULL_RET(svritem, TAG, "svritem", -1);
+    VERIFY_NON_NULL(svritem, TAG, "svritem is NULL");
 
     OIC_LOG_V(DEBUG, TAG, "try to connect with [%s:%u]",
               svritem->sep.endpoint.addr, svritem->sep.endpoint.port);
@@ -886,6 +893,7 @@ static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
                                             svritem->sep.endpoint.port, &sa);
     if (CA_STATUS_OK != res)
     {
+        OIC_LOG(ERROR, TAG, "convert name to sockaddr failed");
         return CA_SOCKET_OPERATION_FAILED;
     }
 
@@ -915,16 +923,17 @@ static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
     ssize_t len = CAWakeUpForReadFdsUpdate(svritem->sep.endpoint.addr);
     if (-1 == len)
     {
+        OIC_LOG(ERROR, TAG, "wakeup receive thread failed");
         return CA_SOCKET_OPERATION_FAILED;
     }
     return CA_STATUS_OK;
 }
 
-static int CACreateAcceptSocket(int family, CASocket_t *sock)
+static CASocketFd_t CACreateAcceptSocket(int family, CASocket_t *sock)
 {
     VERIFY_NON_NULL_RET(sock, TAG, "sock", -1);
 
-    if (sock->fd != -1)
+    if (OC_INVALID_SOCKET != sock->fd)
     {
         OIC_LOG(DEBUG, TAG, "accept socket created already");
         return sock->fd;
@@ -934,7 +943,7 @@ static int CACreateAcceptSocket(int family, CASocket_t *sock)
     struct sockaddr_storage server = { .ss_family = family };
 
     int fd = socket(family, SOCK_STREAM, IPPROTO_TCP);
-    if (fd < 0)
+    if (OC_INVALID_SOCKET == fd)
     {
         OIC_LOG(ERROR, TAG, "Failed to create socket");
         goto exit;
@@ -996,7 +1005,7 @@ exit:
     {
         close(fd);
     }
-    return -1;
+    return OC_INVALID_SOCKET;
 }
 
 static void CAInitializePipe(int *fds)
@@ -1043,6 +1052,7 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
 {
     if (caglobals.tcp.started)
     {
+        OIC_LOG(DEBUG, TAG, "Adapter is started already");
         return CA_STATUS_OK;
     }
 
@@ -1108,22 +1118,33 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
 
 void CATCPStopServer()
 {
+    if (caglobals.tcp.terminate)
+    {
+        OIC_LOG(DEBUG, TAG, "Adapter is not enabled");
+        return;
+    }
+
     // mutex lock
     oc_mutex_lock(g_mutexObjectList);
 
-    // set terminate flag
+    // set terminate flag.
     caglobals.tcp.terminate = true;
 
     if (caglobals.tcp.shutdownFds[1] != -1)
     {
         close(caglobals.tcp.shutdownFds[1]);
+        caglobals.tcp.shutdownFds[1] = OC_INVALID_SOCKET;
         // receive thread will stop immediately
     }
-
     if (caglobals.tcp.connectionFds[1] != -1)
     {
         close(caglobals.tcp.connectionFds[1]);
+        caglobals.tcp.connectionFds[1] = OC_INVALID_SOCKET;
     }
+
+    // close accept socket.
+    CLOSE_SOCKET(ipv4);
+    CLOSE_SOCKET(ipv6);
 
     if (caglobals.tcp.started)
     {
@@ -1134,21 +1155,11 @@ void CATCPStopServer()
     // mutex unlock
     oc_mutex_unlock(g_mutexObjectList);
 
-    if (-1 != caglobals.tcp.ipv4.fd)
-    {
-        close(caglobals.tcp.ipv4.fd);
-        caglobals.tcp.ipv4.fd = -1;
-    }
-
-    if (-1 != caglobals.tcp.ipv6.fd)
-    {
-        close(caglobals.tcp.ipv6.fd);
-        caglobals.tcp.ipv6.fd = -1;
-    }
-
     CATCPDisconnectAll();
     CATCPDestroyMutex();
     CATCPDestroyCond();
+
+    OIC_LOG(DEBUG, TAG, "Adapter terminated successfully");
 }
 
 void CATCPSetPacketReceiveCallback(CATCPPacketReceivedCallback callback)
@@ -1200,34 +1211,26 @@ size_t CACheckPayloadLengthFromHeader(const void *data, size_t dlen)
 static ssize_t sendData(const CAEndpoint_t *endpoint, const void *data,
                         size_t dlen, const char *fam)
 {
-    OIC_LOG_V(DEBUG, TAG, "%s", __func__);
-    // #1. get TCP Server object from list
-    size_t index = 0;
-    CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(endpoint, &index);
-    if (!svritem)
+    OIC_LOG_V(INFO, TAG, "The length of data that needs to be sent is %zu bytes", dlen);
+
+    // #1. find a session info from list.
+    CASocketFd_t sockFd = CAGetSocketFDFromEndpoint(endpoint);
+    if (OC_INVALID_SOCKET == sockFd)
     {
-        // if there is no connection info, connect to TCP Server
-        svritem = CAConnectTCPSession(endpoint);
-        if (!svritem)
+        // if there is no connection info, connect to remote device.
+        sockFd = CAConnectTCPSession(endpoint);
+        if (OC_INVALID_SOCKET == sockFd)
         {
-            OIC_LOG(ERROR, TAG, "Failed to create TCP server object");
+            OIC_LOG(ERROR, TAG, "Failed to create tcp session object");
             return -1;
         }
     }
 
-    // #2. check connection state
-    if (svritem->fd < 0)
-    {
-        // if file descriptor value is wrong, remove TCP Server info from list
-        OIC_LOG(ERROR, TAG, "Failed to connect to TCP server");
-        return -1;
-    }
-
-    // #3. send data to TCP Server
+    // #2. send data to remote device.
     ssize_t remainLen = dlen;
     do
     {
-        ssize_t len = send(svritem->fd, data, remainLen, 0);
+        ssize_t len = send(sockFd, data, remainLen, 0);
         if (-1 == len)
         {
             if (EWOULDBLOCK != errno)
@@ -1266,6 +1269,8 @@ ssize_t CATCPSendData(CAEndpoint_t *endpoint, const void *data, size_t datalen)
     {
         return sendData(endpoint, data, datalen, "ipv4");
     }
+
+    OIC_LOG(ERROR, TAG, "Not supported transport flags");
     return -1;
 }
 
@@ -1328,17 +1333,17 @@ CAResult_t CAGetTCPInterfaceInformation(CAEndpoint_t **info, uint32_t *size)
     return CA_STATUS_OK;
 }
 
-CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
+CASocketFd_t CAConnectTCPSession(const CAEndpoint_t *endpoint)
 {
     OIC_LOG_V(DEBUG, TAG, "%s", __func__);
-    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint is NULL", NULL);
+    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint is NULL", OC_INVALID_SOCKET);
 
     // #1. create TCP server object
     CATCPSessionInfo_t *svritem = (CATCPSessionInfo_t *) OICCalloc(1, sizeof (*svritem));
     if (!svritem)
     {
         OIC_LOG(ERROR, TAG, "Out of memory");
-        return NULL;
+        return OC_INVALID_SOCKET;
     }
     memcpy(svritem->sep.endpoint.addr, endpoint->addr, sizeof(svritem->sep.endpoint.addr));
     svritem->sep.endpoint.adapter = endpoint->adapter;
@@ -1358,7 +1363,7 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
             close(svritem->fd);
             OICFree(svritem);
             oc_mutex_unlock(g_mutexObjectList);
-            return NULL;
+            return OC_INVALID_SOCKET;
         }
     }
     oc_mutex_unlock(g_mutexObjectList);
@@ -1367,7 +1372,7 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
     int family = (svritem->sep.endpoint.flags & CA_IPV6) ? AF_INET6 : AF_INET;
     if (CA_STATUS_OK != CATCPCreateSocket(family, svritem))
     {
-        return NULL;
+        return OC_INVALID_SOCKET;
     }
 
     // #4. pass the connection information to CA Common Layer.
@@ -1376,36 +1381,43 @@ CATCPSessionInfo_t *CAConnectTCPSession(const CAEndpoint_t *endpoint)
         g_connectionCallback(&(svritem->sep.endpoint), true);
     }
 
-    return svritem;
+    return svritem->fd;
 }
 
-CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *svritem, size_t index)
+CAResult_t CADisconnectTCPSession(size_t index)
 {
     OIC_LOG_V(DEBUG, TAG, "%s", __func__);
-    VERIFY_NON_NULL(svritem, TAG, "svritem is NULL");
 
-    // close the socket and remove TCP connection info in list.
-    if (svritem->fd >= 0)
+    CATCPSessionInfo_t *removedData = u_arraylist_remove(caglobals.tcp.svrlist, index);
+    if (!removedData)
     {
-        shutdown(svritem->fd, SHUT_RDWR);
-        close(svritem->fd);
-        svritem->fd = -1;
+        OIC_LOG(DEBUG, TAG, "there is no data to be removed");
+        return CA_STATUS_OK;
+    }
+
+    // close the socket and remove session info in list.
+    if (removedData->fd >= 0)
+    {
+        shutdown(removedData->fd, SHUT_RDWR);
+        close(removedData->fd);
+        removedData->fd = -1;
         OIC_LOG(DEBUG, TAG, "close socket");
-        svritem->state = (CONNECTED == svritem->state) ? DISCONNECTED : svritem->state;
+        removedData->state = (CONNECTED == removedData->state) ?
+                                    DISCONNECTED : removedData->state;
 
         // pass the connection information to CA Common Layer.
-        if (g_connectionCallback && DISCONNECTED == svritem->state)
+        if (g_connectionCallback && DISCONNECTED == removedData->state)
         {
-            g_connectionCallback(&(svritem->sep.endpoint), false);
+            g_connectionCallback(&(removedData->sep.endpoint), false);
         }
     }
-    u_arraylist_remove(caglobals.tcp.svrlist, index);
-    OICFree(svritem->data);
-    svritem->data = NULL;
+    OICFree(removedData->data);
+    removedData->data = NULL;
 
-    OICFree(svritem);
-    svritem = NULL;
+    OICFree(removedData);
+    removedData = NULL;
 
+    OIC_LOG(DEBUG, TAG, "data is removed from session list");
     return CA_STATUS_OK;
 }
 
@@ -1414,27 +1426,15 @@ void CATCPDisconnectAll()
     oc_mutex_lock(g_mutexObjectList);
 
     uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);
-    CATCPSessionInfo_t *svritem = NULL;
-    for (size_t i = 0; i < length; i++)
+    for (ssize_t index = length; index > 0; index--)
     {
-        svritem = (CATCPSessionInfo_t *) u_arraylist_get(caglobals.tcp.svrlist, i);
-        if (svritem && svritem->fd >= 0)
-        {
-            shutdown(svritem->fd, SHUT_RDWR);
-            close(svritem->fd);
-            OICFree(svritem->data);
-            svritem->data = NULL;
-            svritem->state = (CONNECTED == svritem->state) ? DISCONNECTED : svritem->state;
-
-            // pass the connection information to CA Common Layer.
-            if (g_connectionCallback && DISCONNECTED == svritem->state)
-            {
-                g_connectionCallback(&(svritem->sep.endpoint), false);
-            }
-        }
+        // disconnect session from remote device.
+        CADisconnectTCPSession(index - 1);
     }
+
     u_arraylist_destroy(caglobals.tcp.svrlist);
     caglobals.tcp.svrlist = NULL;
+
     oc_mutex_unlock(g_mutexObjectList);
 
 #ifdef __WITH_TLS__
@@ -1447,6 +1447,8 @@ CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint
 {
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint is NULL", NULL);
     VERIFY_NON_NULL_RET(index, TAG, "index is NULL", NULL);
+
+    OIC_LOG_V(DEBUG, TAG, "Looking for [%s:%d]", endpoint->addr, endpoint->port);
 
     // get connection info from list
     uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);
@@ -1464,12 +1466,48 @@ CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint
                 && (svritem->sep.endpoint.port == endpoint->port)
                 && (svritem->sep.endpoint.flags & endpoint->flags))
         {
+            OIC_LOG(DEBUG, TAG, "Found in session list");
             *index = i;
             return svritem;
         }
     }
-    OIC_LOG(DEBUG, TAG, "there is no session info in the svrlist");
+
+    OIC_LOG(DEBUG, TAG, "Session not found");
     return NULL;
+}
+
+CASocketFd_t CAGetSocketFDFromEndpoint(const CAEndpoint_t *endpoint)
+{
+    VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint is NULL", OC_INVALID_SOCKET);
+
+    OIC_LOG_V(DEBUG, TAG, "Looking for [%s:%d]", endpoint->addr, endpoint->port);
+
+    // get connection info from list.
+    oc_mutex_lock(g_mutexObjectList);
+    uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);
+    for (size_t i = 0; i < length; i++)
+    {
+        CATCPSessionInfo_t *svritem = (CATCPSessionInfo_t *) u_arraylist_get(
+                caglobals.tcp.svrlist, i);
+        if (!svritem)
+        {
+            continue;
+        }
+
+        if (!strncmp(svritem->sep.endpoint.addr, endpoint->addr,
+                     sizeof(svritem->sep.endpoint.addr))
+                && (svritem->sep.endpoint.port == endpoint->port)
+                && (svritem->sep.endpoint.flags & endpoint->flags))
+        {
+            oc_mutex_unlock(g_mutexObjectList);
+            OIC_LOG(DEBUG, TAG, "Found in session list");
+            return svritem->fd;
+        }
+    }
+
+    oc_mutex_unlock(g_mutexObjectList);
+    OIC_LOG(DEBUG, TAG, "Session not found");
+    return OC_INVALID_SOCKET;
 }
 
 CATCPSessionInfo_t *CAGetSessionInfoFromFD(int fd, size_t *index)
@@ -1505,7 +1543,7 @@ CAResult_t CASearchAndDeleteTCPSession(const CAEndpoint_t *endpoint)
     CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(endpoint, &index);
     if (svritem)
     {
-        result = CADisconnectTCPSession(svritem, index);
+        result = CADisconnectTCPSession(index);
         if (CA_STATUS_OK != result)
         {
             OIC_LOG_V(ERROR, TAG, "CADisconnectTCPSession failed, result[%d]", result);
@@ -1538,3 +1576,4 @@ void CATCPSetErrorHandler(CATCPErrorHandleCallback errorHandleCallback)
 {
     g_tcpErrorHandler = errorHandleCallback;
 }
+
