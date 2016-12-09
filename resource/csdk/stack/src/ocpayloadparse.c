@@ -735,7 +735,6 @@ static CborError OCParseArray(OCRepPayload *out, const char *name, CborValue *co
         res = OCRepPayloadSetNull(out, name);
         err = (CborError) !res;
         VERIFY_CBOR_SUCCESS(TAG, err, "Failed setting value");
-        container = container + 1;
         return err;
     }
 
