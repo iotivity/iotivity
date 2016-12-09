@@ -90,9 +90,9 @@ namespace RAML
 
         cJSON *jsonAdditionalProperties = cJSON_GetObjectItem(m_cjson, "additionalProperties");
         if (jsonAdditionalProperties)
-            m_additionalProperties = jsonAdditionalProperties->type;
+            m_additionalProperties = (jsonAdditionalProperties->type == cJSON_True);
         else
-            m_additionalProperties = cJSON_True;
+            m_additionalProperties = true;
 
         cJSON *jsonReference = cJSON_GetObjectItem(m_cjson, "$ref");
         if (jsonReference)
@@ -230,11 +230,11 @@ namespace RAML
         std::string attType;
         if (propertyType)
         {
-            if (propertyType->type == 4)
+            if (propertyType->type == cJSON_String)
             {
                 attType = propertyType->valuestring;
             }
-            else if (propertyType->type == 5)
+            else if (propertyType->type == cJSON_Array)
             {
                 attType = cJSON_GetArrayItem(propertyType, 0)->valuestring;
             }
@@ -260,22 +260,22 @@ namespace RAML
     void JsonSchema::readDefaultValue(cJSON *defaultValue,  PropertiesPtr &property,
                                       const std::string &attType)
     {
-        if (defaultValue->type == 4)
+        if (defaultValue->type == cJSON_String)
         {
             property->setValue((std::string)defaultValue->valuestring);
         }
-        else if (defaultValue->type == 3)
+        else if (defaultValue->type == cJSON_Number)
         {
             if (attType == "number")
                 property->setValue((double)defaultValue->valuedouble);
             else
                 property->setValue((int)defaultValue->valueint );
         }
-        else if (defaultValue->type == 1)
+        else if (defaultValue->type == cJSON_True)
         {
             property->setValue((bool)true);
         }
-        else if (defaultValue->type == 0)
+        else if (defaultValue->type == cJSON_False)
         {
             property->setValue((bool)false);
         }
@@ -284,7 +284,7 @@ namespace RAML
     void JsonSchema::readAllowedValues(cJSON *allowedvalues,  PropertiesPtr &property,
                                        std::string &attType)
     {
-        if ((cJSON_GetArrayItem(allowedvalues, 0)->type) == 4)
+        if ((cJSON_GetArrayItem(allowedvalues, 0)->type) == cJSON_String)
         {
             int size = cJSON_GetArraySize(allowedvalues);
             int idx = 0;
@@ -298,7 +298,7 @@ namespace RAML
             if (attType.empty())
                 attType = "string";
         }
-        else if ((cJSON_GetArrayItem(allowedvalues, 0)->type) == 3)
+        else if ((cJSON_GetArrayItem(allowedvalues, 0)->type) == cJSON_Number)
         {
             int size = cJSON_GetArraySize(allowedvalues);
             int idx = 0;
@@ -325,15 +325,15 @@ namespace RAML
                     attType = "integer";
             }
         }
-        else if (((cJSON_GetArrayItem(allowedvalues, 0)->type) == 1)
-                 || ((cJSON_GetArrayItem(allowedvalues, 0)->type) == 0))
+        else if (((cJSON_GetArrayItem(allowedvalues, 0)->type) == cJSON_True)
+                 || ((cJSON_GetArrayItem(allowedvalues, 0)->type) == cJSON_False))
         {
             int size = cJSON_GetArraySize(allowedvalues);
             int idx = 0;
             std::vector<bool> allwdValues;
             do
             {
-                if (cJSON_GetArrayItem(allowedvalues, idx)->type)
+                if (cJSON_GetArrayItem(allowedvalues, idx)->type != cJSON_False)
                     allwdValues.push_back(true);
                 else
                     allwdValues.push_back(false);
@@ -508,7 +508,7 @@ namespace RAML
         cJSON *itemValues = cJSON_GetObjectItem(childProperties, "items");
         if (itemValues)
         {
-            if (itemValues->type == 5)
+            if (itemValues->type == cJSON_Array)
             {
                 //int item_size = cJSON_GetArraySize(itemValues);
                 int item_index = 0;
@@ -527,7 +527,7 @@ namespace RAML
         }
         cJSON *itemsMax = cJSON_GetObjectItem(childProperties, "maxItems");
         int min = INT_MIN, max = INT_MAX;
-        bool unique = cJSON_False, addItems = cJSON_False;
+        bool unique = false, addItems = false;
         if (itemsMax)
         {
             cJSON *exclusiveMax = cJSON_GetObjectItem(childProperties, "exclusiveMaximum");
@@ -558,12 +558,12 @@ namespace RAML
         cJSON *uniqueItems = cJSON_GetObjectItem(childProperties, "uniqueItems");
         if (uniqueItems)
         {
-            unique = uniqueItems->type;
+            unique = (uniqueItems->type == cJSON_True);
         }
         cJSON *additionalItems = cJSON_GetObjectItem(childProperties, "additionalItems");
         if (additionalItems)
         {
-            addItems = additionalItems->type;
+            addItems = (additionalItems->type == cJSON_True);
         }
         property->setValueProperty(std::make_shared<ValueProperty>
                                    (ValueProperty::Type::ARRAY, min, max, unique, addItems));
