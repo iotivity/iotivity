@@ -31,6 +31,10 @@
 #include "OCPlatform.h"
 #include "ocstack.h"
 #include "octypes.h"
+#ifdef __WITH_DTLS__
+#include "securevirtualresourcetypes.h"
+#include "OCProvisioningManager.hpp"
+#endif
 
 #include "escommon.h"
 
@@ -454,13 +458,48 @@ namespace OIC
             SecProvisioningStatus(string deviceUUID, ESResult result) :
                 m_devUUID(deviceUUID), m_result(result)
             {
+#ifdef __WITH_DTLS__
+                m_selectedOTMethod = OIC_JUST_WORKS;
+                m_isMOTEnabled = false;
+                m_isOwned = false;
+#endif
+            }
+#ifdef __WITH_DTLS__
+            SecProvisioningStatus(std::shared_ptr<OCSecureResource> resource, ESResult result) :
+                m_result(result)
+            {
+                m_isMOTEnabled = false;
+                if(resource.get() != nullptr)
+                {
+                    m_devUUID = resource->getDeviceID();
+                    m_isOwned = resource->getOwnedStatus();
+
+                    // TODO
+                    // When severAPIs in OCSecureResource for getting a list of supported methods or
+                    // status of MOT support, a code for setting this information will be implemeted.
+                    m_selectedOTMethod = OIC_JUST_WORKS;
+                }
             }
 
-            const string getDeviceUUID()
+            OicSecOxm_t getSelectedOTMethod() const
+            {
+                return m_selectedOTMethod;
+            }
+
+            bool isMOTEnabled() const
+            {
+                return m_isMOTEnabled;
+            }
+
+            bool isOwnedDevice() const
+            {
+                return m_isOwned;
+            }
+#endif
+            const std::string getDeviceUUID()
             {
                 return m_devUUID;
             }
-
             /**
              * Get a result for about security provisioning is success or not.
              *
@@ -477,6 +516,11 @@ namespace OIC
         private:
             string m_devUUID;
             ESResult m_result;
+#ifdef __WITH_DTLS__
+            OicSecOxm_t m_selectedOTMethod;
+            bool m_isMOTEnabled;
+            bool m_isOwned;
+#endif
         };
 
         /**
@@ -854,6 +898,73 @@ namespace OIC
             ESResult m_result;
         };
 
+        class ESOwnershipTransferData
+        {
+        public:
+#ifdef __WITH_DTLS__
+            ESOwnershipTransferData() :
+                m_MOTMethod(OIC_JUST_WORKS), m_preconfiguredPin("")
+            {
+            }
+
+            ESOwnershipTransferData(const ESOwnershipTransferData& data) :
+                m_MOTMethod(data.getMOTMethod()),
+                m_preconfiguredPin(data.getPreConfiguredPin())
+            {
+            }
+
+            ESResult setMOTMethod(OicSecOxm_t method)
+            {
+#ifdef MULTIPLE_OWNER
+                if(OIC_RANDOM_DEVICE_PIN != method)
+                {
+                    return ES_ERROR;
+                }
+
+                m_MOTMethod = method;
+                return ES_OK;
+#else
+                (void) method;
+
+                return ES_ERROR;
+#endif
+            }
+
+            ESResult setMOTMethod(OicSecOxm_t method, const std::string& pin)
+            {
+#ifdef MULTIPLE_OWNER
+                if(OIC_PRECONFIG_PIN != method || pin.empty())
+                {
+                    return ES_ERROR;
+                }
+
+                m_preconfiguredPin = pin;
+                m_MOTMethod = method;
+                return ES_OK;
+#else
+                (void) method;
+                (void) pin;
+
+                return ES_ERROR;
+#endif
+            }
+
+            OicSecOxm_t getMOTMethod() const
+            {
+                return m_MOTMethod;
+            }
+
+            std::string getPreConfiguredPin() const
+            {
+                return m_preconfiguredPin;
+            }
+
+        private:
+            OicSecOxm_t m_MOTMethod;
+            std::string m_preconfiguredPin;
+#endif
+        };
+
         /**
          * Callback function definition for providing Enrollee status
          */
@@ -878,6 +989,14 @@ namespace OIC
          * Callback function definition for providing Enrollee security provisioning status
          */
         typedef function< void(shared_ptr<SecProvisioningStatus>) > SecurityProvStatusCb;
+
+        /**
+         * Callback function definition for providing Enrollee security provisioning status.
+         * This callback is an overloaded version of SecurityProvStatusCb, which has
+         * ESOwnershipTransferData as a return value.
+         */
+        typedef function< ESOwnershipTransferData(shared_ptr<SecProvisioningStatus>) >
+                                                                    SecurityProvStatusCbWithOption;
 
         /**
          * Callback definition to be invoked when the security stack expects a pin from application
