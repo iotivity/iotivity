@@ -191,7 +191,7 @@ if with_tcp == True:
 
 if 'SERVER' in rd_mode:
     liboctbstack_src.append(OCTBSTACK_SRC + 'oicresourcedirectory.c')
-    if target_os not in ['tizen']:
+    if target_os not in ['linux', 'tizen']:
         liboctbstack_src.append('#extlibs/sqlite3/sqlite3.c')
 
 if target_os in ['linux']:
