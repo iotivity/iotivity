@@ -202,7 +202,7 @@ ESResult ESSetState(ESEnrolleeState esState)
 {
     OIC_LOG(INFO, ES_ENROLLEE_TAG, "ESSetState IN");
 
-    if(esState < ES_STATE_INIT || esState > ES_STATE_EOF)
+    if(esState < ES_STATE_INIT || esState >= ES_STATE_EOF)
     {
         OIC_LOG_V(ERROR, ES_ENROLLEE_TAG, "Invalid ESEnrolleeState : %d", esState);
         return ES_ERROR;
