@@ -82,11 +82,6 @@ static OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestH
     return OC_STACK_OK;
 
 exit:
-    if (serverResponse)
-    {
-        OICFree(serverResponse);
-        serverResponse = NULL;
-    }
     *response = NULL;
     return OC_STACK_NO_MEMORY;
 }
