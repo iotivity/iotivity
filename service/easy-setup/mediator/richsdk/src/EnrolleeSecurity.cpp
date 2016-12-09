@@ -135,7 +135,8 @@ namespace OIC
                 if (std::string::npos == dot) // MAC
                 {
                     size_t semi_count = std::count(host_token.begin(), host_token.end(), ':');
-                    if (semi_count > 5) {
+                    if (semi_count > 5)
+                    {
                         size_t found_semi = host_token.find_last_of(':');
                         host_token = host_token.substr(0, found_semi);
                     }
