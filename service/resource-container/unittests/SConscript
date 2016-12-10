@@ -176,10 +176,10 @@ Ignore("./ResourceContainerInvalidConfig.xml", "./ResourceContainerInvalidConfig
 Command("./TestBundleJava/hue-0.1-jar-with-dependencies.jar","./TestBundleJava/hue-0.1-jar-with-dependencies.jar", Copy("$TARGET", "$SOURCE"))
 Ignore("./TestBundleJava/hue-0.1-jar-with-dependencies.jar", "./TestBundleJava/hue-0.1-jar-with-dependencies.jar")
 
+# TODO: Fix this test
 if container_gtest_env.get('TEST') == '1':
-# TODO: fix this test on linux and remove this comment line
-    if target_os in ['']:
+    if target_os in ['linux'] and container_gtest_env.get('SECURED') != '1':
         run_test(container_gtest_env,
-            '',
 #           'service_resource-container_unittests_container_test.memcheck',
+            '',
             'service/resource-container/unittests/container_test')
