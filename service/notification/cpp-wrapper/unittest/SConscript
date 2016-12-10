@@ -114,19 +114,16 @@ notification_provider_wrapper_internaltest = notification_provider_wrapper_test_
 Alias("notification_provider_wrapper_internaltest", notification_provider_wrapper_internaltest)
 env.AppendTarget('notification_provider_wrapper_test')
 
+# TODO: Fix this test for more configs and remove this commented line
 if env.get('TEST') == '1':
     if env.get('SECURED') != '1':
-# TODO: fix this test for MLK and remove this comment line
-        if target_os in ['linux'] and env.get('SECURED') != '1':
+        if target_os in ['linux']:
             from tools.scons.RunTest import *
             run_test(notification_consumer_wrapper_test_env,
-                     '',
-#                    'service_notification_cpp-wrapper_unittest_notification_consumer_wrapper_test.memcheck',
-
+                     'service_notification_cpp-wrapper_unittest_notification_consumer_wrapper_test.memcheck',
                      'service/notification/cpp-wrapper/unittest/notification_consumer_wrapper_test',
                      notification_consumer_wrapper_test)
-            run_test(notification_provider_wrapper_test_env, 
-                     '',
-#                    'service_notification_cpp-wrapper_unittest_notification_provider_wrapper_test.memcheck',
+            run_test(notification_provider_wrapper_test_env,
+                     'service_notification_cpp-wrapper_unittest_notification_provider_wrapper_test.memcheck',
                      'service/notification/cpp-wrapper/unittest/notification_provider_wrapper_test',
                      notification_provider_wrapper_test)
