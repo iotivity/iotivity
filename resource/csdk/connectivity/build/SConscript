@@ -40,8 +40,6 @@ if target_os not in host_target_map[host]:
 	Exit(1)
 
 default_arch = platform.machine()
-if default_arch not in os_arch_map[target_os]:
-	default_arch = os_arch_map[target_os][0].lower()
 
 target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch) # target arch
 
