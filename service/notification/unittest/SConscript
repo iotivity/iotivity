@@ -92,15 +92,14 @@ notification_provider_test = notification_provider_test_env.Program('notificatio
 Alias("notification_provider_test", notification_provider_test)
 env.AppendTarget('notification_provider_test')
 
+# TODO: Fix this test
 if env.get('TEST') == '1':
-    if env.get('SECURED') == '0':
-# TODO: fix this test on linux and remove this comment line
-        if target_os in ['']:
-            run_test(notification_consumer_test_env,
-                     '',
-#                    'service_notification_unittest_notification_consumer_test.memcheck',
-                     'service/notification/unittest/notification_consumer_test')
-            run_test(notification_provider_test_env,
-                     '',
-#                    'service_notification_unittest_notification_provider_test.memcheck',
-                     'service/notification/unittest/notification_provider_test')
+    if target_os in ['linux'] and env.get('SECURED') != '1':
+        run_test(notification_consumer_test_env,
+#                'service_notification_unittest_notification_consumer_test.memcheck',
+                 '',
+                 'service/notification/unittest/notification_consumer_test')
+        run_test(notification_provider_test_env,
+#                'service_notification_unittest_notification_provider_test.memcheck',
+                 '',
+                 'service/notification/unittest/notification_provider_test')
