@@ -85,10 +85,11 @@ easysetup_mediator_test = easysetup_mediator_test_env.Program('easysetup_mediato
 Alias("easysetup_mediator_test", easysetup_mediator_test)
 env.AppendTarget('easysetup_mediator_test')
 
+# TODO: Fix this test
 if env.get('TEST') == '1':
-    if target_os in ['']:
+    if target_os in ['linux']:
+        from tools.scons.RunTest import run_test
         run_test(easysetup_mediator_test_env,
-# TODO: fix this test for linux
-#                'service_easy-setup_mediator_richsdk_unittests_easysetup_mediator_test.memcheck',
                  '',
+#                'service_easy-setup_mediator_richsdk_unittests_easysetup_mediator_test.memcheck',
                  'service/easy-setup/mediator/richsdk/unittests/easysetup_mediator_test')
