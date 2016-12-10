@@ -86,9 +86,10 @@ easysetup_enrollee_test = easysetup_enrollee_test_env.Program('easysetup_enrolle
 Alias("easysetup_enrollee_test", easysetup_enrollee_test)
 env.AppendTarget('easysetup_enrollee_test')
 
+# TODO: Fix this test and remove following commented lines
 if env.get('TEST') == '1':
-# TODO: fix this test on linux and remove this comment line
-    if target_os in ['']:
+    if target_os in ['linux'] and env.get('SECURED') != '1':
         run_test(easysetup_enrollee_test_env,
-                 'service_easy-setup_enrollee_unittests_easysetup_enrollee_test.memcheck',
+#               'service_easy-setup_enrollee_unittests_easysetup_enrollee_test.memcheck',
+                 '',
                  'service/easy-setup/enrollee/unittests/easysetup_enrollee_test')
