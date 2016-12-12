@@ -256,6 +256,24 @@ namespace OIC
             return result;
         }
 
+        NSResult NSConsumerService::subscribeMQService(const std::string &serverAddress,
+                const std::string &topicName)
+        {
+            NS_LOG(DEBUG, "subscribeMQService - IN");
+            NS_LOG_V(DEBUG, "Server Address : %s", serverAddress.c_str());
+            NSResult result = NSResult::ERROR;
+#ifdef WITH_MQ
+            result = (NSResult) NSConsumerSubscribeMQService(
+                         serverAddress.c_str(), topicName.c_str());
+#else
+            NS_LOG(ERROR, "MQ Services feature is not enabled in the Build");
+            (void) serverAddress;
+            (void) topicName;
+#endif
+            NS_LOG(DEBUG, "subscribeMQService - OUT");
+            return result;
+        }
+
         void NSConsumerService::rescanProvider()
         {
             NS_LOG(DEBUG, "rescanProvider - IN");

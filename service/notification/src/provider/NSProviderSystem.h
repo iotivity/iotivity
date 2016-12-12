@@ -41,6 +41,11 @@ void NSSetPolicy(bool policy);
 bool NSGetResourceSecurity();
 void NSSetResourceSecurity(bool secured);
 
+#ifdef WITH_MQ
+void NSSetMQServerInfo(const char * serverUri, OCDevAddr * devAddr);
+NSMQServerInfo * NSGetMQServerInfo();
+#endif
+
 #if (defined WITH_CLOUD && defined RD_CLIENT)
 void NSSetRemoteServerAddress(char *serverAddress);
 void NSDeleteRemoteServerAddress(char *serverAddress);

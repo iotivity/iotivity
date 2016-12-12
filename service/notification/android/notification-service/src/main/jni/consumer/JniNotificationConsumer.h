@@ -55,6 +55,15 @@ Java_org_iotivity_service_ns_consumer_ConsumerService_nativeEnableRemoteService
 
 /*
  * Class:     org_iotivity_service_ns_consumer_ConsumerService
+ * Method:    nativeSubscribeMQService
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL
+Java_org_iotivity_service_ns_consumer_ConsumerService_nativeSubscribeMQService
+(JNIEnv *, jobject, jstring, jstring);
+
+/*
+ * Class:     org_iotivity_service_ns_consumer_ConsumerService
  * Method:    nativeRescanProvider
  * Signature: ()V
  */

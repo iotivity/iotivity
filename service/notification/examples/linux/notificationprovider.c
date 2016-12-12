@@ -46,6 +46,11 @@ char UID[50] = {'\0',};
 char ACCESS_TOKEN[50] = {'\0',};
 #endif
 
+#ifdef WITH_MQ
+char CLOUD_ADDRESS[100] = "10.113.64.52:5686";
+char CLOUD_TOPIC[100] = "/oic/ps/notification";
+#endif
+
 char mainConsumer[37] = {'\0',};
 
 extern char *strdup(const char *s);
@@ -181,7 +186,8 @@ int main()
         printf("8.  NSProviderUnselectTopic(); \n");
         printf("9.  NSProviderGetConsumerTopics(); \n");
         printf("10. NSProviderGetTopics(); \n");
-        printf("11. NSStopProvider() \n");
+        printf("11. NSProviderSubscribeMQService() \n");
+        printf("0. NSStopProvider() \n");
 #ifdef WITH_CLOUD
         printf("21. NSProviderEnableRemoteService (after login) \n");
         printf("22. NSProviderDisableRemoteService (after login) \n");
@@ -249,6 +255,7 @@ int main()
                 input(body);
 
                 printf("topic : ");
+
                 input(topic);
 
                 printf("app - mTitle : %s \n", title);
@@ -321,9 +328,20 @@ int main()
                 }
                 break;
 
+#if WITH_MQ
             case 11:
-                NSStopProvider();
+                printf("11. Subscribe MQ Service\n");
+
+                printf("Remote Server Address: ");
+                //input(CLOUD_ADDRESS);
+
+                printf("Topic[notificationtest]: ");
+                //input(CLOUD_TOPIC);
+
+                NSProviderSubscribeMQService(CLOUD_ADDRESS, CLOUD_TOPIC);
                 break;
+#endif
+
 #ifdef WITH_CLOUD
             case 21:
                 printf("Enable Remote Service\n");

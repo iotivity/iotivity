@@ -117,6 +117,11 @@
 
 #define NS_RD_PUBLISH_QUERY        "/oic/rd?rt=oic.wk.rdpub"
 
+#ifdef WITH_MQ
+#define NS_ATTRIBUTE_MQ_MESSAGE "message"
+#define NS_ATTIRBUTE_MQ_TOPICLIST "topiclist"
+#endif
+
 #define NS_VERIFY_NOT_NULL_V(obj) \
     { \
         if ((obj) == NULL) \
@@ -240,6 +245,10 @@ typedef enum eSchedulerType
 
 typedef enum eTaskType
 {
+#ifdef WITH_MQ
+    TASK_MQ_REQ_SUBSCRIBE = 20001,
+#endif
+
     TASK_REGISTER_RESOURCE = 1000,
     TASK_PUBLISH_RESOURCE = 1001,
 

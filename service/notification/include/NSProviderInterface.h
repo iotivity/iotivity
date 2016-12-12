@@ -35,7 +35,6 @@ extern "C"
 #include "NSCommon.h"
 #include <stdbool.h>
 #include <stdint.h>
-
 /**
  * Invoked when provider receives the subscription request of consumer.
  * @param[in] consumer  Consumer who subscribes the notification message resource
@@ -98,6 +97,16 @@ NSResult NSProviderEnableRemoteService(char * serverAddress);
  * @return ::NS_OK if the action is requested succesfully or NS_FAIL if wrong parameter is set.
  */
 NSResult NSProviderDisableRemoteService(char * serverAddress);
+
+#ifdef WITH_MQ
+/**
+ * Request to subscribe to remote MQ address as parameter.
+ * @param[in] server address combined with IP address and port number and MQ broker uri using delimiter :
+ * @param[in] topicName the interest Topic name for subscription.
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSProviderSubscribeMQService(const char * serverAddress, const char * topicName);
+#endif
 
 /**
  * Send notification message to all subscribers

@@ -87,6 +87,15 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeDisableRemoteService
 
 /*
  * Class:     org_iotivity_service_ns_provider_ProviderService
+ * Method:    nativeSubscribeMQService
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL
+Java_org_iotivity_service_ns_provider_ProviderService_nativeSubscribeMQService
+(JNIEnv *, jobject, jstring, jstring);
+
+/*
+ * Class:     org_iotivity_service_ns_provider_ProviderService
  * Method:    nativeRegisterTopic
  * Signature: (Ljava/lang/String;)I
  */

@@ -82,7 +82,17 @@ NSResult NSStopConsumer();
  * @param[in] server address combined with IP address and port number using delimiter :
  * @return ::NS_OK or result code of NSResult
  */
-NSResult NSConsumerEnableRemoteService(const char *serverAddress);
+NSResult NSConsumerEnableRemoteService(const char * serverAddress);
+
+#ifdef WITH_MQ
+/**
+ * Request to subscribe to remote MQ address as parameter.
+ * @param[in] server address combined with IP address and port number and MQ broker uri using delimiter :
+ * @param[in] topicName the interest MQ Topic name for subscription.
+ * @return ::NS_OK or result code of NSResult
+ */
+NSResult NSConsumerSubscribeMQService(const char * serverAddress, const char * topicName);
+#endif
 
 /**
  * Request discovery manually

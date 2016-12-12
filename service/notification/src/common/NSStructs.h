@@ -156,4 +156,20 @@ typedef struct
 
 } NSProviderInfo;
 
+#ifdef WITH_MQ
+typedef struct
+{
+    char * serverAddr;
+    char * topicName;
+
+} NSMQTopicAddress;
+
+typedef struct
+{
+    char * serverUri;
+    OCDevAddr * devAddr;
+
+} NSMQServerInfo;
+#endif
+
 #endif /* _NS_STRUCTS_H_ */

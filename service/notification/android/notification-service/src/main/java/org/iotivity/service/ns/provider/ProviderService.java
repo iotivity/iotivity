@@ -137,6 +137,17 @@ public class ProviderService
     }
 
     /**
+      * Request to subscribe to MQ server
+      * @param servAdd -  servAdd combined with IP address and port number  and MQ broker uri using delimiter :
+      * @param topicName - the interest Topic name for subscription
+      * @return  result code
+      */
+    public int  subscribeMQService(String servAdd, String topicName) throws NSException
+    {
+        return nativeSubscribeMQService(servAdd, topicName);
+    }
+
+    /**
       * Add topic to topic list
       * @param  topicName - Topic name to add
       * @return :: result code
@@ -201,6 +212,7 @@ public class ProviderService
     public native Message nativeCreateMessage() throws NSException;
     public native int  nativeEnableRemoteService(String servAdd) throws NSException;
     public native int  nativeDisableRemoteService(String servAdd) throws NSException;
+    public native int  nativeSubscribeMQService(String servAdd, String topicName) throws NSException;
     public native int  nativeRegisterTopic(String topicName) throws NSException;
     public native int  nativeUnregisterTopic(String topicName) throws NSException;
     public native TopicsList  nativeGetRegisteredTopicList() throws NSException;

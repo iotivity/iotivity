@@ -24,6 +24,10 @@
 static char NSRemoteServerAddress[MAX_SERVER_ADDRESS] = {0,};
 #endif
 
+#ifdef WITH_MQ
+static NSMQServerInfo * mqServerInfo = NULL;
+#endif
+
 static NSConnectionState NSProviderConnectionState;
 
 NSProviderInfo * providerInfo;
@@ -146,3 +150,22 @@ const char * NSGetUserInfo()
 {
     return providerInfo->userInfo;
 }
+
+#ifdef WITH_MQ
+void NSSetMQServerInfo(const char * serverUri, OCDevAddr * devAddr)
+{
+    if (!mqServerInfo)
+    {
+        NS_LOG(DEBUG, "setMqServer");
+        mqServerInfo = (NSMQServerInfo *)OICMalloc(sizeof(NSMQServerInfo));
+        mqServerInfo->serverUri = OICStrdup(serverUri);
+        mqServerInfo->devAddr = (OCDevAddr *)OICMalloc(sizeof(OCDevAddr));
+        memcpy(mqServerInfo->devAddr, devAddr, sizeof(OCDevAddr));
+    }
+}
+
+NSMQServerInfo * NSGetMQServerInfo()
+{
+    return mqServerInfo;
+}
+#endif
