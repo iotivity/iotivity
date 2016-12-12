@@ -34,7 +34,6 @@ import org.iotivity.cloud.base.protocols.IResponse;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
-import org.iotivity.cloud.mqserver.Constants;
 import org.iotivity.cloud.mqserver.kafka.KafkaConsumerWrapper;
 import org.iotivity.cloud.mqserver.kafka.KafkaProducerWrapper;
 import org.iotivity.cloud.util.Cbor;
@@ -88,8 +87,6 @@ public class Topic {
                 kafka_broker, this);
 
         HashMap<String, Object> data = new HashMap<>();
-        data.put(Constants.MQ_MESSAGE, null);
-
         mLatestData = mCbor.encodingPayloadToCbor(data);
     }
 
