@@ -396,6 +396,7 @@ def unit_tests():
                         'SECURED':0,
                         'RELEASE':'false',
                     }
+    extra_option_str = ""
     call_scons(build_options, extra_option_str)
 
     build_options = {
