@@ -387,6 +387,13 @@ OCStackResult OCResetDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDisc
 OCStackResult OCResetSVRDB(void);
 
 /**
+ * This function configures SVR DB as self-ownership.
+ *
+ *@return OC_STACK_OK in case of successful configue and other value otherwise.
+ */
+OCStackResult OCConfigSelfOwnership(void);
+
+/**
  * API to get status of all the devices in current subnet. The status include endpoint information
  * and doxm information which can be extracted duing owned and unowned discovery. Along with this
  * information. The API will provide information about devices' status

@@ -80,6 +80,7 @@ typedef enum {
     USE_RSA = 8,
     SAVE_TRUST_CERT = 9,
     USE_SECURE_CONN = 10,
+    CONFIG_SELF_OWNERSHIP = 11,
 
     DISCOVERY     = 13,
     GET           = 14,
@@ -144,6 +145,7 @@ static void printMenu(OCMode mode)
     printf("** %d - Change TLS cipher suite (ECDSA/RSA)\n", USE_RSA);
     printf("** %d - Save Trust Cert. Chain into Cred of SVR\n", SAVE_TRUST_CERT);
     printf("** %d - Change Protocol type (CoAP/CoAPs)\n", USE_SECURE_CONN);
+    printf("** %d - Configure SVRdb as Self-OwnerShip\n", CONFIG_SELF_OWNERSHIP);
 
     if (OC_CLIENT == mode)
     {
@@ -360,6 +362,25 @@ static OCStackResult saveTrustCert(void)
     return res;
 }
 
+static OCStackResult configSelfOwnership(void)
+{
+    OCStackResult res = OC_STACK_ERROR;
+    OIC_LOG(INFO, TAG, "Configures SVR DB as self-ownership.");
+
+    res = OCConfigSelfOwnership();
+
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "OCConfigSelfOwnership API error. Please check SVR DB");
+    }
+    else
+    {
+        OIC_LOG(INFO, TAG, "Success to configures SVR DB as self-ownership");
+    }
+
+    return res;
+}
+
 static void wrongRequest()
 {
     printf(">> Entered Wrong Menu Number. Please Enter Again\n\n");
@@ -542,6 +563,10 @@ static void userRequests(void *data)
             setCoapPrefix(0 == tmp ? false : true);
             sendDataToServer = false;
         }
+            break;
+        case CONFIG_SELF_OWNERSHIP:
+            configSelfOwnership();
+            sendDataToServer = false;
             break;
         case EXIT:
             ca_mutex_free(mutex);

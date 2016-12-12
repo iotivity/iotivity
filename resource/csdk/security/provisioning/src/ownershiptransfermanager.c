@@ -74,6 +74,7 @@
 #include "payload_logging.h"
 #include "pkix_interface.h"
 #include "oxmverifycommon.h"
+#include "psinterface.h"
 
 #define TAG "OIC_OTM"
 
@@ -2196,6 +2197,84 @@ OCStackResult PostNormalOperationStatus(OTMContext_t* otmCtx)
     }
 
     OIC_LOG(INFO, TAG, "OUT PostNormalOperationStatus");
+
+    return ret;
+}
+
+OCStackResult ConfigSelfOwnership(void)
+{
+    OIC_LOG(INFO, TAG, "IN ConfigSelfOwnership");
+
+    bool isDeviceOwned = true;
+    if (OC_STACK_OK != GetDoxmIsOwned(&isDeviceOwned))
+    {
+        OIC_LOG (ERROR, TAG, "Unable to retrieve doxm owned state");
+        return OC_STACK_ERROR;
+    }
+    if( (true == isDeviceOwned) ||(true == GetPstatIsop()) )
+    {
+        OIC_LOG(ERROR, TAG, "The state of device is not Ready for Ownership transfer.");
+        return OC_STACK_ERROR;
+    }
+    OicUuid_t deviceID = {.id={0}};
+    if ( OC_STACK_OK != GetDoxmDeviceID(&deviceID) )
+    {
+        OIC_LOG (ERROR, TAG, "Unable to retrieve doxm Device ID");
+        return OC_STACK_ERROR;
+    }
+
+    OCStackResult ret = OC_STACK_OK;
+    //Update the pstat resource as Normal Operation.
+    ret = SetPstatSelfOwnership(&deviceID);
+    if(OC_STACK_OK != ret)
+    {
+        OIC_LOG (ERROR, TAG, "Unable to update pstat resource as Normal Operation");
+        goto exit;
+    }
+    //Update the doxm resource as Normal Operation.
+    ret = SetDoxmSelfOwnership(&deviceID);
+    if(OC_STACK_OK != ret)
+    {
+        OIC_LOG (ERROR, TAG, "Unable to update doxm resource as Normal Operation");
+        goto exit;
+    }
+    //Update default ACE of security resource to prevent anonymous user access.
+    ret = UpdateDefaultSecProvACE();
+    if(OC_STACK_OK != ret)
+    {
+        OIC_LOG (ERROR, TAG, "Unable to update default ace in ConfigSelfOwnership");
+        goto exit;
+    }
+    //Update the acl resource owner as owner device.
+    ret = SetAclRownerId(&deviceID);
+    if(OC_STACK_OK != ret)
+    {
+        OIC_LOG (ERROR, TAG, "Unable to update acl resource in ConfigSelfOwnership");
+        goto exit;
+    }
+    //Update the cred resource owner as owner device.
+    ret = SetCredRownerId(&deviceID);
+    if(OC_STACK_OK != ret)
+    {
+        // Cred resouce may be empty in Ready for Ownership transfer state.
+        if (OC_STACK_NO_RESOURCE == ret)
+        {
+            OIC_LOG (INFO, TAG, "Cred resource is empty");
+            ret = OC_STACK_OK;
+            goto exit;
+        }
+        OIC_LOG (ERROR, TAG, "Unable to update cred resource in ConfigSelfOwnership");
+    }
+
+exit:
+    if(OC_STACK_OK != ret)
+    {
+        /*
+         * If some error is occured while configure self-ownership,
+         * ownership related resource should be revert back to initial status.
+        */
+        ResetSecureResourceInPS();
+    }
 
     return ret;
 }
