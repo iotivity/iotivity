@@ -351,6 +351,19 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
                     VERIFY_CBOR_SUCCESS(TAG, err, "to find tcp port value");
                     resource->tcpPort = (uint16_t)tcpPort;
                 }
+
+#ifdef __WITH_TLS__
+                // TLS Port
+                err = cbor_value_map_find_value(&policyMap, OC_RSRVD_TLS_PORT, &curVal);
+                if (cbor_value_is_valid(&curVal))
+                {
+                    int tlsPort;
+
+                    err = cbor_value_get_int(&curVal, &tlsPort);
+                    VERIFY_CBOR_SUCCESS(TAG, err, "to find tcp tls port value");
+                    resource->tcpPort = (uint16_t)tlsPort;
+                }
+#endif
 #endif
                 // Endpoints
                 CborValue epsMap;

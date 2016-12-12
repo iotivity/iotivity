@@ -999,6 +999,106 @@ OCStackResult PMDeviceDiscovery(unsigned short waittime, bool isOwned, OCProvisi
     return res;
 }
 
+OCStackResult PMSingleDeviceDiscoveryInUnicast(unsigned short waittime, const OicUuid_t* deviceID,
+                                 const char* hostAddress, OCConnectivityType connType,
+                                 OCProvisionDev_t **ppFoundDevice)
+{
+    OIC_LOG(DEBUG, TAG, "IN PMSingleDeviceDiscoveryInUnicast");
+
+    if (NULL != *ppFoundDevice)
+    {
+        OIC_LOG(ERROR, TAG, "List is not null can cause memory leak");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    if (NULL == deviceID)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid device ID");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    DiscoveryInfo *pDInfo = (DiscoveryInfo*)OICCalloc(1, sizeof(DiscoveryInfo));
+    if (NULL == pDInfo)
+    {
+        OIC_LOG(ERROR, TAG, "PMSingleDeviceDiscoveryInUnicast : Memory allocation failed.");
+        return OC_STACK_NO_MEMORY;
+    }
+
+    pDInfo->ppDevicesList = ppFoundDevice;
+    pDInfo->pCandidateList = NULL;
+    pDInfo->isOwnedDiscovery = false;
+    pDInfo->isSingleDiscovery = true;
+    pDInfo->isFound = false;
+    pDInfo->targetId = deviceID;
+
+    OCCallbackData cbData;
+    cbData.cb = &DeviceDiscoveryHandler;
+    cbData.context = (void *)pDInfo;
+    cbData.cd = &DeviceDiscoveryDeleteHandler;
+
+    OCStackResult res = OC_STACK_ERROR;
+
+    char query[MAX_URI_LENGTH + MAX_QUERY_LENGTH + 1] = { '\0' };
+    if (hostAddress == NULL)
+    {
+        hostAddress = "";
+    }
+    snprintf(query, MAX_URI_LENGTH + MAX_QUERY_LENGTH + 1, "%s/oic/sec/doxm", hostAddress);
+    connType = connType & CT_MASK_ADAPTER;
+
+    OCDoHandle handle = NULL;
+    res = OCDoResource(&handle, OC_REST_DISCOVER, query, 0, 0,
+            connType, OC_HIGH_QOS, &cbData, NULL, 0);
+
+    if (res != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack resource error");
+        OICFree(pDInfo);
+        pDInfo = NULL;
+        return res;
+    }
+
+    res = OC_STACK_OK;
+    uint64_t startTime = OICGetCurrentTime(TIME_IN_MS);
+    while (OC_STACK_OK == res && !pDInfo->isFound)
+    {
+        uint64_t currTime = OICGetCurrentTime(TIME_IN_MS);
+
+        long elapsed = (long)((currTime - startTime) / MS_PER_SEC);
+        if (elapsed > waittime)
+        {
+            break;
+        }
+        res = OCProcess();
+    }
+
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG (ERROR, TAG, "Failed to wait response for secure discovery.");
+        OICFree(pDInfo);
+        pDInfo = NULL;
+        OCStackResult resCancel = OCCancel(handle, OC_HIGH_QOS, NULL, 0);
+        if (OC_STACK_OK !=  resCancel)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to remove registered callback");
+        }
+        return res;
+    }
+
+    res = OCCancel(handle, OC_HIGH_QOS, NULL, 0);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to remove registered callback");
+        OICFree(pDInfo);
+        pDInfo = NULL;
+        return res;
+    }
+    OIC_LOG(DEBUG, TAG, "OUT PMSingleDeviceDiscoveryInUnicast");
+    OICFree(pDInfo);
+    pDInfo = NULL;
+    return res;
+}
+
 #ifdef MULTIPLE_OWNER
 static OCStackApplicationResult MOTDeviceDiscoveryHandler(void *ctx, OCDoHandle UNUSED,
                                 OCClientResponse *clientResponse)

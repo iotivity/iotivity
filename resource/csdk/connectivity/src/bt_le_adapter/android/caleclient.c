@@ -104,7 +104,7 @@ static int32_t g_scanIntervalTime = WAIT_TIME_SCAN_INTERVAL_DEFAULT;
 static int32_t g_scanIntervalTimePrev = WAIT_TIME_SCAN_INTERVAL_DEFAULT;
 static int32_t g_intervalCount = 0;
 static bool g_isWorkingScanThread = false;
-static CALEScanState_t g_curScanningStep = BLE_SCAN_DISABLE;
+static CALEScanState_t g_curScanningStep = BLE_SCAN_NONE;
 static CALEScanState_t g_nextScanningStep = BLE_SCAN_ENABLE;
 
 static CABLEDataReceivedCallback g_CABLEClientDataReceivedCallback = NULL;
@@ -200,7 +200,7 @@ static void CALEScanThread(void* object)
                 OIC_LOG(INFO, TAG, "CALEClientStopScan has failed");
             }
         }
-        else
+        else if (BLE_SCAN_DISABLE == g_curScanningStep)
         {
             //start scan
             CAResult_t ret = CALEClientStartScan();
@@ -208,6 +208,12 @@ static void CALEScanThread(void* object)
             {
                 OIC_LOG(INFO, TAG, "CALEClientStartScan has failed");
             }
+        }
+        else
+        {
+            OIC_LOG(DEBUG, TAG, "scan thread is started");
+            // standby scanning
+            CALERestartScanWithInterval(0, 0, BLE_SCAN_DISABLE);
         }
 
         OIC_LOG_V(DEBUG, TAG, "wait for Scan Interval Time during %d sec", g_scanIntervalTime);
@@ -267,7 +273,7 @@ CAResult_t CALEClientStartScanWithInterval()
     }
 
     // initialize scan flags
-    g_curScanningStep = BLE_SCAN_DISABLE;
+    g_curScanningStep = BLE_SCAN_NONE;
     g_isWorkingScanThread = true;
     g_intervalCount = 0;
     g_scanIntervalTime = g_scanIntervalTimePrev;
@@ -1880,36 +1886,73 @@ jobject CALEClientGattConnect(JNIEnv *env, jobject bluetoothDevice, jboolean aut
         return NULL;
     }
 
-    // get BluetoothDevice method
-    OIC_LOG(DEBUG, TAG, "get BluetoothDevice method");
-    jmethodID jni_mid_connectGatt = CAGetJNIMethodID(env, "android/bluetooth/BluetoothDevice",
-                                                     "connectGatt",
-                                                     "(Landroid/content/Context;ZLandroid/"
-                                                     "bluetooth/BluetoothGattCallback;)"
-                                                     "Landroid/bluetooth/BluetoothGatt;");
-    if (!jni_mid_connectGatt)
+    jobject jni_obj_connectGatt = NULL;
+    jint jni_int_sdk = CALEGetBuildVersion(env);
+    OIC_LOG_V(INFO, TAG, "API level is %d", jni_int_sdk);
+    if (jni_int_sdk >= 23) // upper than API level 23
     {
-        OIC_LOG(ERROR, TAG, "bleConnect: jni_mid_connectGatt is null");
-        return NULL;
+        jmethodID jni_mid_connectGatt = CAGetJNIMethodID(env, "android/bluetooth/BluetoothDevice",
+                                                         "connectGatt",
+                                                         "(Landroid/content/Context;ZLandroid/"
+                                                         "bluetooth/BluetoothGattCallback;I)"
+                                                         "Landroid/bluetooth/BluetoothGatt;");
+        if (!jni_mid_connectGatt)
+        {
+            OIC_LOG(ERROR, TAG, "bleConnect: jni_mid_connectGatt is null");
+            return NULL;
+        }
+
+        jint jni_transport_le = CALEGetConstantsValue(env, CLASSPATH_BT_DEVICE, "TRANSPORT_LE");
+        OIC_LOG_V(INFO, TAG, "CALL API - connectGatt with transport LE(%d)", jni_transport_le);
+        jni_obj_connectGatt = (*env)->CallObjectMethod(env, bluetoothDevice,
+                                                       jni_mid_connectGatt, NULL,
+                                                       autoconnect, g_leGattCallback,
+                                                       jni_transport_le);
+        if (!jni_obj_connectGatt)
+        {
+            OIC_LOG(ERROR, TAG, "connectGatt was failed..it will be removed");
+            CACheckJNIException(env);
+            CALEClientRemoveDeviceInScanDeviceList(env, jni_address);
+            CALEClientUpdateSendCnt(env);
+            return NULL;
+        }
+        else
+        {
+            OIC_LOG(DEBUG, TAG, "le connecting..please wait..");
+        }
+    }
+    else // lower than API level 23
+    {
+        jmethodID jni_mid_connectGatt = CAGetJNIMethodID(env, "android/bluetooth/BluetoothDevice",
+                                                         "connectGatt",
+                                                         "(Landroid/content/Context;ZLandroid/"
+                                                         "bluetooth/BluetoothGattCallback;)"
+                                                         "Landroid/bluetooth/BluetoothGatt;");
+        if (!jni_mid_connectGatt)
+        {
+            OIC_LOG(ERROR, TAG, "bleConnect: jni_mid_connectGatt is null");
+            return NULL;
+        }
+
+        OIC_LOG(INFO, TAG, "CALL API - connectGatt");
+        jni_obj_connectGatt = (*env)->CallObjectMethod(env, bluetoothDevice,
+                                                               jni_mid_connectGatt,
+                                                               NULL,
+                                                               autoconnect, g_leGattCallback);
+        if (!jni_obj_connectGatt)
+        {
+            OIC_LOG(ERROR, TAG, "connectGatt was failed..it will be removed");
+            CACheckJNIException(env);
+            CALEClientRemoveDeviceInScanDeviceList(env, jni_address);
+            CALEClientUpdateSendCnt(env);
+            return NULL;
+        }
+        else
+        {
+            OIC_LOG(DEBUG, TAG, "le connecting..please wait..");
+        }
     }
 
-    OIC_LOG(INFO, TAG, "CALL API - connectGatt");
-    jobject jni_obj_connectGatt = (*env)->CallObjectMethod(env, bluetoothDevice,
-                                                           jni_mid_connectGatt,
-                                                           NULL,
-                                                           autoconnect, g_leGattCallback);
-    if (!jni_obj_connectGatt)
-    {
-        OIC_LOG(ERROR, TAG, "connectGatt was failed..it will be removed");
-        CACheckJNIException(env);
-        CALEClientRemoveDeviceInScanDeviceList(env, jni_address);
-        CALEClientUpdateSendCnt(env);
-        return NULL;
-    }
-    else
-    {
-        OIC_LOG(DEBUG, TAG, "le connecting..please wait..");
-    }
     return jni_obj_connectGatt;
 }
 

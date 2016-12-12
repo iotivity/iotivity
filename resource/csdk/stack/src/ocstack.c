@@ -1342,7 +1342,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                         type = PAYLOAD_TYPE_REPRESENTATION;
                     }
 #ifdef TCP_ADAPTER
-                    else if (strcmp(cbNode->requestUri, KEEPALIVE_RESOURCE_URI) == 0)
+                    else if (strcmp(cbNode->requestUri, OC_RSRVD_KEEPALIVE_URI) == 0)
                     {
                         type = PAYLOAD_TYPE_REPRESENTATION;
                     }
@@ -1403,12 +1403,11 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             }
 
             response.numRcvdVendorSpecificHeaderOptions = 0;
-            if(responseInfo->info.numOptions > 0)
+            if((responseInfo->info.numOptions > 0) && (responseInfo->info.options != NULL))
             {
                 int start = 0;
                 //First option always with option ID is COAP_OPTION_OBSERVE if it is available.
-                if(responseInfo->info.options
-                   && responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
+                if(responseInfo->info.options[0].optionID == COAP_OPTION_OBSERVE)
                 {
                     size_t i;
                     uint32_t observationOption;
@@ -1438,11 +1437,8 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 
                 for (uint8_t i = start; i < responseInfo->info.numOptions; i++)
                 {
-                    if(&(responseInfo->info.options[i]))
-                    {
-                        memcpy (&(response.rcvdVendorSpecificHeaderOptions[i-start]),
-                                &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
-                    }
+                    memcpy (&(response.rcvdVendorSpecificHeaderOptions[i-start]),
+                            &(responseInfo->info.options[i]), sizeof(OCHeaderOption));
                 }
             }
 

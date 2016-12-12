@@ -58,7 +58,8 @@ typedef struct le_state_info
 typedef enum
 {
     BLE_SCAN_ENABLE = 0, /**< BLE scan is working */
-    BLE_SCAN_DISABLE     /**< BLE scan is not working */
+    BLE_SCAN_DISABLE,    /**< BLE scan is not working */
+    BLE_SCAN_NONE        /**< Initialize State */
 } CALEScanState_t;
 
 /**

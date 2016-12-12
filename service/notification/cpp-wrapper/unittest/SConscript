@@ -98,7 +98,8 @@ Alias("notification_provider_wrapper_test", notification_provider_wrapper_test)
 env.AppendTarget('notification_provider_wrapper_test')
 
 if env.get('TEST') == '1':
-    if target_os == 'linux':
-            from tools.scons.RunTest import *
-            run_test(notification_consumer_wrapper_test_env, '', 'service/notification/cpp-wrapper/unittest/notification_consumer_wrapper_test')
-            run_test(notification_provider_wrapper_test_env, '', 'service/notification/cpp-wrapper/unittest/notification_provider_wrapper_test')
+    if env.get('SECURED') == '0':
+        if target_os == 'linux':
+                from tools.scons.RunTest import *
+                run_test(notification_consumer_wrapper_test_env, '', 'service/notification/cpp-wrapper/unittest/notification_consumer_wrapper_test')
+                run_test(notification_provider_wrapper_test_env, '', 'service/notification/cpp-wrapper/unittest/notification_provider_wrapper_test')

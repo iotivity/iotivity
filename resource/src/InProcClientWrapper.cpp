@@ -45,7 +45,14 @@ namespace OC
 
     InProcClientWrapper::~InProcClientWrapper()
     {
-        stop();
+        try
+        {
+            stop();
+        }
+        catch (InitializeException &e)
+        {
+            oclog() << "Exception in stop"<< e.what() << std::flush;
+        }
     }
 
     OCStackResult InProcClientWrapper::start()
@@ -90,9 +97,9 @@ namespace OC
             OCStackResult result = OCStop();
 
             if (OC_STACK_OK != result)
-           {
+            {
                throw InitializeException(OC::InitException::STACK_TERMINATE_ERROR, result);
-           }
+            }
         }
         return OC_STACK_OK;
     }

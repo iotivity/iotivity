@@ -1319,44 +1319,41 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
                 else if (OIC_MANUFACTURER_CERTIFICATE ==  newDoxm->oxmSel || OIC_CON_MFG_CERT == newDoxm->oxmSel)
                 {
-                    if (memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) == 0)
+                    //Save the owner's UUID to derive owner credential
+                    memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
+                    gDoxm->oxmSel = newDoxm->oxmSel;
+                    //Update new state in persistent storage
+                    if (UpdatePersistentStorage(gDoxm))
                     {
-                        //Save the owner's UUID to derive owner credential
-                        memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
-                        gDoxm->oxmSel = newDoxm->oxmSel;
-                        //Update new state in persistent storage
-                        if (UpdatePersistentStorage(gDoxm))
-                        {
-                            ehRet = OC_EH_OK;
-                        }
-                        else
-                        {
-                            OIC_LOG(WARNING, TAG, "Failed to update DOXM in persistent storage");
-                            ehRet = OC_EH_ERROR;
-                        }
-                        CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
-                        VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-                        OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
-
-                        VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterPkixInfoHandler(GetManufacturerPkixInfo), ERROR);
-                        VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterGetCredentialTypesHandler(InitManufacturerCipherSuiteList), ERROR);
+                        ehRet = OC_EH_OK;
                     }
                     else
                     {
-                        //In case of Confirm Manufacturer Cert, get user confirmation
-                        if (OIC_CON_MFG_CERT == newDoxm->oxmSel && false == newDoxm->owned &&
-                                        previousMsgId != ehRequest->messageID)
+                        OIC_LOG(WARNING, TAG, "Failed to update DOXM in persistent storage");
+                        ehRet = OC_EH_ERROR;
+                    }
+                    CAResult_t caRes = CAEnableAnonECDHCipherSuite(false);
+                    VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
+                    OIC_LOG(INFO, TAG, "ECDH_ANON CipherSuite is DISABLED");
+
+                    VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterPkixInfoHandler(GetManufacturerPkixInfo), ERROR);
+                    VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterGetCredentialTypesHandler(InitManufacturerCipherSuiteList), ERROR);
+
+                    //In case of Confirm Manufacturer Cert, get user confirmation
+                    if (OIC_CON_MFG_CERT == newDoxm->oxmSel && false == newDoxm->owned &&
+                                    previousMsgId != ehRequest->messageID &&
+                                    memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) != 0)
+                    {
+                        if (OC_STACK_OK != VerifyOwnershipTransfer(NULL, USER_CONFIRM))
                         {
-                            if (OC_STACK_OK != VerifyOwnershipTransfer(NULL, USER_CONFIRM))
-                            {
-                                ehRet = OC_EH_NOT_ACCEPTABLE;
-                            }
-                            else
-                            {
-                                ehRet = OC_EH_OK;
-                            }
+                            ehRet = OC_EH_NOT_ACCEPTABLE;
+                        }
+                        else
+                        {
+                            ehRet = OC_EH_OK;
                         }
                     }
+
 
                 }
 #endif // __WITH_DTLS__ or __WITH_TLS__

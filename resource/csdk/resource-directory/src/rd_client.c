@@ -273,17 +273,32 @@ OCStackResult OCRDDeleteWithDeviceId(const char *host, const unsigned char *id,
     OIC_LOG_V(DEBUG, TAG, "Delete Resource to RD with device id [%s]", id);
 
     char targetUri[MAX_URI_LENGTH] = { 0 };
-    snprintf(targetUri, MAX_URI_LENGTH, "%s%s?di=%s", host, OC_RSRVD_RD_URI, id);
+    int targetUriBufferRequired = snprintf(targetUri, MAX_URI_LENGTH, "%s%s?di=%s", host, OC_RSRVD_RD_URI, id);
+    if (targetUriBufferRequired >= MAX_URI_LENGTH || targetUriBufferRequired < 0)
+    {
+        return OC_STACK_INVALID_URI;
+    }
 
-    uint8_t len = 0;
+
+    int queryLength = 0;
     char queryParam[MAX_URI_LENGTH] = { 0 };
     for (uint8_t j = 0; j < nHandles; j++)
     {
         OCResource *handle = (OCResource *) resourceHandles[j];
         uint8_t ins = 0;
         OCGetResourceIns(handle, &ins);
-        len += snprintf(queryParam + len, MAX_URI_LENGTH, "&ins=%d", ins);
+        int lenBufferRequired = snprintf(queryParam + queryLength, MAX_URI_LENGTH - queryLength, "&ins=%d", ins);
+        if (lenBufferRequired >= (MAX_URI_LENGTH - queryLength) || lenBufferRequired < 0)
+        {
+            return OC_STACK_INVALID_URI;
+        }
+        queryLength += lenBufferRequired;
         OIC_LOG_V(DEBUG, TAG, "queryParam [%s]", queryParam);
+    }
+
+    if (targetUriBufferRequired + queryLength + 1 > MAX_URI_LENGTH)
+    {
+        return OC_STACK_INVALID_URI;
     }
 
     OICStrcatPartial(targetUri, sizeof(targetUri), queryParam, strlen(queryParam));

@@ -44,21 +44,21 @@ namespace OC
         virtual ~OCAccountManager(void);
 
         /**
-        * Function to get the host address of account server
+        * Function to get the host address of account server.
         *
         * @return std::string host address
         */
         std::string host() const;
 
         /**
-        * Function to get the connectivity type for account server
+        * Function to get the connectivity type for account server.
         *
         * @return enum connectivity type (flags and adapter)
         */
         OCConnectivityType connectivityType() const;
 
         /**
-         * Function for account registration to account server
+         * Function for account registration to account server.
          *
          * @param authProvider Provider name used for authentication.
          * @param authCode The authorization code obtained by using an authorization server
@@ -88,7 +88,7 @@ namespace OC
                              PostCallback cloudConnectHandler);
 
         /**
-         * Function for sign-in to account server
+         * Function for sign-in to account server.
          *
          * @param userUuid Identifier of the user obtained by account registration.
          * @param accessToken Identifier of the resource obtained by account registration.
@@ -101,16 +101,18 @@ namespace OC
                              PostCallback cloudConnectHandler);
 
         /**
-         * Function for sign-out to account server
+         * Function for sign-out to account server.
          *
+         * @param accessToken Identifier of the resource obtained by account registration.
          * @param cloudConnectHandler Callback function that will get the result of the operation.
          *
          * @return Returns ::OC_STACK_OK if success
          */
-        OCStackResult signOut(PostCallback cloudConnectHandler);
+        OCStackResult signOut(const std::string& accessToken,
+                              PostCallback cloudConnectHandler);
 
         /**
-         * Function for refresh access token to account server
+         * Function for refresh access token to account server.
          *
          * @param userUuid Identifier of the user obtained by account registration.
          * @param refreshToken Refresh token used for access token refresh.
@@ -123,21 +125,10 @@ namespace OC
                                          PostCallback cloudConnectHandler);
 
         /**
-         * Function to get information of the user to account server
+         * Function to get information of the user to account server.
          *
-         * @param userUuid Identifier of the user to get information.
-         * @param cloudConnectHandler Callback function that will get the result of the operation.
-         *
-         * @return Returns ::OC_STACK_OK if success
-         */
-        OCStackResult searchUser(const std::string& userUuid,
-                                 GetCallback cloudConnectHandler);
-
-        /**
-         * Overload
-         *
-         * @param queryParams Map which can have the query key and value for specific users.
-         *                    account server can response information of more than one user.
+         * @param queryParams Map that has a query key and value for specific users.
+         *                    Account server can response information of more than one user.
          * @param cloudConnectHandler Callback function that will get the result of the operation.
          *
          * @return Returns ::OC_STACK_OK if success
@@ -146,38 +137,42 @@ namespace OC
                                  GetCallback cloudConnectHandler);
 
         /**
-         * Function to delete the device registered on the account signed-in
+         * Function to delete the device registered on the account signed-in.
          *
+         * @param accessToken Identifier of the resource obtained by account registration.
          * @param deviceId Device ID to delete.
          * @param cloudConnectHandler Callback function that will get the result of the operation.
          *
          * @return Returns ::OC_STACK_OK if success
          */
-        OCStackResult deleteDevice(const std::string& deviceId,
+        OCStackResult deleteDevice(const std::string& accessToken,
+                                   const std::string& deviceId,
                                    DeleteCallback cloudConnectHandler);
 
         /**
-         * Function to create a group on account server
+         * Function to create a group on account server.
          *
-         * @param groupType Group type that can be used for referencing default group ACL creation.
          * @param cloudConnectHandler Callback function that will get the result of the operation.
          *
          * @return Returns ::OC_STACK_OK if success
          */
-        OCStackResult createGroup(AclGroupType groupType,
+        OCStackResult createGroup(PostCallback cloudConnectHandler);
+
+        /**
+         * Overload
+         *
+         * @param queryParams Map that has optional properties and values to create a group.
+         *                    Defined properties on the OCF spec are [gname, parent] so far.
+         *                    (2016/10/19)
+         * @param cloudConnectHandler Callback function that will get the result of the operation.
+         *
+         * @return Returns ::OC_STACK_OK if success
+         */
+        OCStackResult createGroup(const QueryParamsMap& queryParams,
                                   PostCallback cloudConnectHandler);
 
         /**
-         * Function to get a list of groups joined from account server
-         *
-         * @param cloudConnectHandler Callback function that will get the result of the operation.
-         *
-         * @return Returns ::OC_STACK_OK if success
-         */
-        OCStackResult getGroupList(GetCallback cloudConnectHandler);
-
-        /**
-         * Function to delete the group from account server
+         * Function to delete the group from account server.
          *
          * @param groupId Group ID to delete.
          * @param cloudConnectHandler Callback function that will get the result of the operation.
@@ -188,31 +183,17 @@ namespace OC
                                   DeleteCallback cloudConnectHandler);
 
         /**
-         * Function to join the group on account server
+         * Function to get infomation of all your group from account server.
          *
-         * @param groupId Group ID to join
          * @param cloudConnectHandler Callback function that will get the result of the operation.
          *
          * @return Returns ::OC_STACK_OK if success
          */
-        OCStackResult joinGroup(const std::string& groupId,
-                                PostCallback cloudConnectHandler);
+
+        OCStackResult getGroupInfoAll(GetCallback cloudConnectHandler);
 
         /**
-         * Function to add devices to the group on account server
-         *
-         * @param groupId Group ID to add devices.
-         * @param deviceId List of devices to add.
-         * @param cloudConnectHandler Callback function that will get the result of the operation.
-         *
-         * @return Returns ::OC_STACK_OK if success
-         */
-        OCStackResult addDeviceToGroup(const std::string& groupId,
-                                       const std::vector<std::string>& deviceId,
-                                       PostCallback cloudConnectHandler);
-
-        /**
-         * Function to get information of the group from account server
+         * Function to get information of the specific group from account server.
          *
          * @param groupId Group ID to get information.
          * @param cloudConnectHandler Callback function that will get the result of the operation.
@@ -223,55 +204,75 @@ namespace OC
                                    GetCallback cloudConnectHandler);
 
         /**
-         * Function to leave the group joined on account server
+         * Function to add values for properties to the group on account server.
          *
-         * @param groupId Group ID to leave.
+         * @param groupId Group ID to add property values.
+         * @param propertyValue OCRepresentation info that has pairs of property and value.
+         *                      Defined properties on the OCF spec are [members, masters, devices,
+         *                      resources, links] so far. (2016/10/19)
          * @param cloudConnectHandler Callback function that will get the result of the operation.
          *
          * @return Returns ::OC_STACK_OK if success
          */
-        OCStackResult leaveGroup(const std::string& groupId,
-                                 DeleteCallback cloudConnectHandler);
+        OCStackResult addPropertyValueToGroup(const std::string& groupId,
+                                              const OCRepresentation propertyValue,
+                                              PostCallback cloudConnectHandler);
 
         /**
-         * Function to delete devices from the group on account server
+         * Function to delete values for properties from the group on account server.
          *
-         * @param groupId Group ID to delete devices.
-         * @param deviceId List of devices to delete.
+         * @param groupId Group ID to delete information.
+         * @param propertyValue OCRepresentation info that has pairs of property and value.
+         *                      Defined properties on the OCF spec are [members, masters, devices,
+         *                      resources, links] so far. (2016/10/19)
          * @param cloudConnectHandler Callback function that will get the result of the operation.
          *
          * @return Returns ::OC_STACK_OK if success
          */
-        OCStackResult deleteDeviceFromGroup(const std::string& groupId,
-                                            const std::vector<std::string>& deviceId,
-                                            DeleteCallback cloudConnectHandler);
+        OCStackResult deletePropertyValueFromGroup(const std::string& groupId,
+                                                   const OCRepresentation propertyValue,
+                                                   PostCallback cloudConnectHandler);
 
         /**
-         * Function to register observe to the group on account server
-         * User can receive a notify when the group get changed (eg. new user/device added)
+         * Function to update values for properties on the group on account server.
+         * It completely replaces existing values for specific properties.
          *
-         * @param groupId Group ID to observe.
+         * @param groupId Group ID to add devices.
+         * @param propertyValue OCRepresentation info that has pairs of property and value.
+         *                      Defined properties on the OCF spec are [members, gname, owner,
+         *                      masters, devices, resources, latitude, longitude, radius,
+         *                      backgroundImage] so far. (2016/10/19)
          * @param cloudConnectHandler Callback function that will get the result of the operation.
          *
          * @return Returns ::OC_STACK_OK if success
          */
-        OCStackResult observeGroup(const std::string& groupId,
-                                   ObserveCallback cloudConnectHandler);
+        OCStackResult updatePropertyValueOnGroup(const std::string& groupId,
+                                                 const OCRepresentation propertyValue,
+                                                 PostCallback cloudConnectHandler);
 
         /**
-         * Function to cancel observe to the group on account server
+         * Function to register observe to group resource on account server.
+         * You can receive a notify when any value of property get changed in the group you joined.
          *
-         * @param groupId Group ID to observe.
+         * @param cloudConnectHandler Callback function that will get the result of the operation.
          *
          * @return Returns ::OC_STACK_OK if success
          */
-        OCStackResult cancelObserveGroup(const std::string& groupId);
+        OCStackResult observeGroup(ObserveCallback cloudConnectHandler);
 
         /**
-         * Function to register observe to invitation resource on account server
-         * User can receive a invitation which is including group ID to join
-         * Once receive a invitation, user should call 'deleteInvitation' to delete a invitation
-         * on account server.
+         * Function to cancel observe to group resource on account server.
+         *
+         * @return Returns ::OC_STACK_OK if success
+         */
+        OCStackResult cancelObserveGroup();
+
+        /**
+         * Function to register observe to invitation resource on account server.
+         * You can receive a notify when you send or receive a invitation.
+         * Sending a invitation will be notified as 'invite' and Receiving will be as 'invited'.
+         * If you receive a invitation from other user, you should call 'replyToInvitation' to
+         * delete the invitation on account server, otherwise it will remain on the server.
          *
          * @param cloudConnectHandler Callback function that will get the result of the operation.
          *
@@ -280,14 +281,14 @@ namespace OC
         OCStackResult observeInvitation(ObserveCallback cloudConnectHandler);
 
         /**
-         * Function to cancel observe to invitation resource on account server
+         * Function to cancel observe to invitation resource on account server.
          *
          * @return Returns ::OC_STACK_OK if success
          */
         OCStackResult cancelObserveInvitation();
 
         /**
-         * Function to send a invitation to invite a user into a group
+         * Function to send a invitation to invite a user into a group.
          *
          * @param groupId Group ID for inviting.
          * @param userUuid Identifier of the user to invite.
@@ -300,7 +301,8 @@ namespace OC
                                      PostCallback cloudConnectHandler);
 
         /**
-         * Function to cancel a invitation on account server that user has sent
+         * Function to cancel a invitation you has sent on account server before the invited user
+         * replies.
          *
          * @param groupId Group ID to cancel a invitation.
          * @param userUuid Identifier of the user to cancel a invitation.
@@ -313,22 +315,28 @@ namespace OC
                                        DeleteCallback cloudConnectHandler);
 
         /**
-         * Function to delete a invitation on account server that user has received
+         * Function to reply to the invitation that you has received.
+         * If you set accept as true, you will join the group as a member and the invitation
+         * will be deleted on account server.
+         * If false, only the invitation will be deleted.
          *
          * @param groupId Group ID to delete a invitation.
+         * @param accept boolean whether to join the group or not.
          * @param cloudConnectHandler Callback function that will get the result of the operation.
          *
          * @return Returns ::OC_STACK_OK if success
          */
-        OCStackResult deleteInvitation(const std::string& groupId,
-                                       DeleteCallback cloudConnectHandler);
+        OCStackResult replyToInvitation(const std::string& groupId,
+                                        const bool accept,
+                                        DeleteCallback cloudConnectHandler);
 
     private:
         std::weak_ptr<IClientWrapper> m_clientWrapper;
         std::string m_deviceID;
         std::string m_host;
+        std::string m_userUuid;
         OCDoHandle m_invitationObserveHandle;
-        mutable std::map<std::string, OCDoHandle> m_groupObserveHandles;
+        OCDoHandle m_groupObserveHandle;
         OCConnectivityType m_connType;
         QualityOfService m_defaultQos;
 
@@ -341,10 +349,6 @@ namespace OC
                                 const std::string& accessToken,
                                 bool isSignIn,
                                 PostCallback cloudConnectHandler);
-
-        OCStackResult searchUser(const std::string& userUuid,
-                                 const QueryParamsMap& queryParams,
-                                 GetCallback cloudConnectHandler);
     };
 } // namespace OC
 

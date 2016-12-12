@@ -38,6 +38,21 @@
         android:layout_height="wrap_content"
         android:padding="@dimen/activity_vertical_margin" />
 
+    <TextView
+        android:id="@+id/inputView2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Input Server IP and Port"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:visibility="gone" />
+
+    <EditText
+        android:id="@+id/inputText2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/activity_vertical_margin"
+        android:visibility="gone" />
+
     <CheckBox
         android:id="@+id/secured"
         android:layout_width="match_parent"
