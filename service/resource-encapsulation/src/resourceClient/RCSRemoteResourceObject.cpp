@@ -211,7 +211,7 @@ namespace OIC
 
             OC::OCResource::Ptr ocResource = OC::OCPlatform::constructResourceObject(rcsResource->getAddress(),
                 rcsResource->getUri(),
-                CT_DEFAULT,
+                rcsResource->m_primitiveResource->getConnectivityType(),
                 rcsResource->isObservable(),
                 rcsResource->getTypes(),
                 rcsResource->getInterfaces());
