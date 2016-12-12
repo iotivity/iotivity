@@ -1137,6 +1137,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                         {
                             OIC_LOG(WARNING, TAG, "Failed to update DOXM in persistent storage");
                             ehRet = OC_EH_ERROR;
+                            goto exit;
                         }
                         OIC_LOG (INFO, TAG, "Doxm EntityHandle  enabling AnonECDHCipherSuite");
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
@@ -1159,6 +1160,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                         {
                             OIC_LOG(ERROR, TAG, "Failed to update DOXM in persistent storage");
                             ehRet = OC_EH_ERROR;
+                            goto exit;
                         }
 
                         /*
