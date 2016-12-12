@@ -226,6 +226,14 @@ CAResult_t CALEClientStartScan();
 CAResult_t CALEClientStartScanImpl(JNIEnv *env, jobject callback);
 
 /**
+ * start to scan whole bluetooth devices for android API level 21 (implement).
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   callback              callback to receive device object by scanning.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientStartScanImplForV21(JNIEnv *env, jobject callback);
+
+/**
  * start to scan target bluetooth devices for service uuid (implement).
  * @param[in]   env                   JNI interface pointer.
  * @param[in]   uuids                 target UUID.
@@ -234,6 +242,16 @@ CAResult_t CALEClientStartScanImpl(JNIEnv *env, jobject callback);
  */
 CAResult_t CALEClientStartScanWithUUIDImpl(JNIEnv *env, jobjectArray uuids,
                                            jobject callback);
+
+/**
+ * start to scan target bluetooth devices for service uuid for android API level 21 (implement).
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   uuids                 target UUID.
+ * @param[in]   callback              callback to receive device object by scanning.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientStartScanWithUUIDImplForV21(JNIEnv *env, jobjectArray uuids,
+                                                 jobject callback);
 
 /**
  * get uuid object.
@@ -256,6 +274,14 @@ CAResult_t CALEClientStopScan();
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback);
+
+/**
+ * stop scan for android API level 21(implement).
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   callback              callback to receive device object by scanning.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CALEClientStopScanImplForV21(JNIEnv *env, jobject callback);
 
 /**
  * connect to gatt server hosted.
