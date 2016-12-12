@@ -854,6 +854,16 @@ OCStackResult OCResetSVRDB(void)
 }
 
 /**
+ * This function configures SVR DB as self-ownership.
+ *
+ *@return OC_STACK_OK in case of successful configue and other value otherwise.
+ */
+OCStackResult OCConfigSelfOwnership(void)
+{
+    return ConfigSelfOwnership();
+}
+
+/**
  * Internal Function to update result in link result array.
  */
 static void UpdateLinkResults(Linkdata_t *link, int device, OCStackResult stackresult)

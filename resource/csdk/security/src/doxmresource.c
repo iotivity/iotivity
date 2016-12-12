@@ -1883,3 +1883,38 @@ void RestoreDoxmToInitState()
         }
     }
 }
+
+OCStackResult SetDoxmSelfOwnership(const OicUuid_t* newROwner)
+{
+    OCStackResult ret = OC_STACK_ERROR;
+    uint8_t *cborPayload = NULL;
+    size_t size = 0;
+
+    if(NULL == gDoxm)
+    {
+        ret = OC_STACK_NO_RESOURCE;
+        return ret;
+    }
+
+    if( newROwner && (false == gDoxm->owned) )
+    {
+        gDoxm->owned = true;
+        memcpy(gDoxm->owner.id, newROwner->id, sizeof(newROwner->id));
+        memcpy(gDoxm->rownerID.id, newROwner->id, sizeof(newROwner->id));
+
+        ret = DoxmToCBORPayload(gDoxm, &cborPayload, &size, false);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+        ret = UpdateSecureResourceInPS(OIC_JSON_DOXM_NAME, cborPayload, size);
+        VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+        OICFree(cborPayload);
+    }
+
+    return ret;
+
+exit:
+    OICFree(cborPayload);
+    return ret;
+}
+

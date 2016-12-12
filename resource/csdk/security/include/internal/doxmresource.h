@@ -154,6 +154,15 @@ void MultipleOwnerDTLSHandshakeCB(const CAEndpoint_t *object,
                                 const CAErrorInfo_t *errorInfo);
 #endif //__WITH_DTLS__ && MULTIPLE_OWNER
 
+/**
+ * Internal function to change doxm resource to Ready for Normal Operation.
+ *
+ * @param newROwner new owner
+ *
+ * @retval ::OC_STACK_OK for Success, otherwise some error value
+ */
+OCStackResult SetDoxmSelfOwnership(const OicUuid_t* newROwner);
+
 #ifdef __cplusplus
 }
 #endif

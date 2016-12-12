@@ -12,6 +12,7 @@ CreateSecureSessionRandomPinCallback
 InputPinCodeCallback
 LoadSecretJustWorksCallback
 
+OCConfigSelfOwnership
 OCDeleteACLList
 OCDeleteDiscoveredDevices
 OCDeletePdAclList

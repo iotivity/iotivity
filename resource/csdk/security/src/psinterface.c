@@ -588,7 +588,7 @@ exit:
  * Creates Reset Profile from the initial secure virtual resources.
  * This function copies the secure resources
  * and creates the Reset Profile in the Persistent Storage.
- * Device ID in doxm and pstat are left empty as it will be renewed after reset.
+ * Device ID in doxm and pstat remains as same after reset.
  *
  * @return OCStackResult - result of updating Secure Virtual Resource(s)
  */
@@ -638,38 +638,6 @@ OCStackResult CreateResetProfile(void)
                 cborFindResult = cbor_value_dup_byte_string(&curVal, &doxmCbor, &doxmCborLen, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult,  "Failed Finding DOXM Name Value.");
             }
-        }
-
-        // Set the Device ID in doxm and pstat to empty
-        if (pstatCbor)
-        {
-            OicSecPstat_t *pstat = NULL;
-            ret = CBORPayloadToPstat(pstatCbor, pstatCborLen, &pstat);
-            OICFree(pstatCbor);
-            pstatCbor = NULL;
-            pstatCborLen = 0;
-
-            OicUuid_t emptyUuid = {.id = {0} };
-            memcpy(&pstat->deviceID, &emptyUuid, sizeof(OicUuid_t));
-            memcpy(&pstat->rownerID, &emptyUuid, sizeof(OicUuid_t));
-
-            ret = PstatToCBORPayload(pstat, &pstatCbor, &pstatCborLen, false);
-            DeletePstatBinData(pstat);
-        }
-        if (doxmCbor)
-        {
-            OicSecDoxm_t *doxm = NULL;
-            ret = CBORPayloadToDoxm(doxmCbor, doxmCborLen, &doxm);
-            OICFree(doxmCbor);
-            doxmCbor = NULL;
-            doxmCborLen = 0;
-
-            OicUuid_t emptyUuid = {.id = {0} };
-            memcpy(&doxm->deviceID, &emptyUuid, sizeof(OicUuid_t));
-            memcpy(&doxm->rownerID, &emptyUuid, sizeof(OicUuid_t));
-
-            ret = DoxmToCBORPayload(doxm, &doxmCbor, &doxmCborLen, false);
-            DeleteDoxmBinData(doxm);
         }
 
         {

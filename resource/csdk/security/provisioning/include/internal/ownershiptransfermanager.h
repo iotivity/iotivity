@@ -135,6 +135,13 @@ OCStackResult OTMSetOTCallback(OicSecOxm_t oxm, OTMCallbackData_t* callbacks);
 OCStackResult OTMSelectOwnershipTransferMethod(const OicSecOxm_t *supportedMethods,
         size_t numberOfMethods, OicSecOxm_t *selectedMethod, OwnerType_t ownerType);
 
+/**
+ * This function configures SVR DB as self-ownership.
+ *
+ *@return OC_STACK_OK in case of successful configue and other value otherwise.
+ */
+OCStackResult ConfigSelfOwnership(void);
+
 #ifdef __cplusplus
 }
 #endif
