@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.StringTokenizer;
 
-public abstract class Message implements IRequest, IResponse {
+public abstract class Message implements IRequest, IResponse, ISignaling {
     protected List<byte[]> uri_path  = null;
     protected List<byte[]> uri_query = null;
     protected byte[]       payload   = null;

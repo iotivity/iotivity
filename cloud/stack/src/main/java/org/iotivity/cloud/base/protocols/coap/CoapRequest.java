@@ -21,8 +21,10 @@
  */
 package org.iotivity.cloud.base.protocols.coap;
 
+import org.iotivity.cloud.base.exception.ServerException.MethodNotAllowedException;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
+import org.iotivity.cloud.base.protocols.enums.SignalingMethod;
 
 public class CoapRequest extends CoapMessage {
     private RequestMethod mRequestMethod;
@@ -46,7 +48,9 @@ public class CoapRequest extends CoapMessage {
                 mRequestMethod = RequestMethod.DELETE;
                 break;
             default:
-                throw new IllegalArgumentException("Invalid CoapRequest code");
+                // unrecognized or unsupported Method Code MUST generate
+                // a 4.05 (Method Not Allowed) piggybacked response. (RFC7252)
+                throw new MethodNotAllowedException("Invalid CoapRequest code");
         }
     }
 
@@ -77,5 +81,11 @@ public class CoapRequest extends CoapMessage {
     @Override
     public ResponseStatus getStatus() {
         return ResponseStatus.METHOD_NOT_ALLOWED;
+    }
+
+    // This request object does not support signaling status
+    @Override
+    public SignalingMethod getSignalingMethod() {
+        return null;
     }
 }

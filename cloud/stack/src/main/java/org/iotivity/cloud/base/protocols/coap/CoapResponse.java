@@ -23,6 +23,7 @@ package org.iotivity.cloud.base.protocols.coap;
 
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
+import org.iotivity.cloud.base.protocols.enums.SignalingMethod;
 
 public class CoapResponse extends CoapMessage {
     private ResponseStatus mResponseStatus;
@@ -97,7 +98,9 @@ public class CoapResponse extends CoapMessage {
                 mResponseStatus = ResponseStatus.PROXY_NOT_SUPPORTED;
                 break;
             default:
-                throw new IllegalArgumentException("Invalid CoapResponse code");
+                // unrecognized response code is treated as being equivalent to
+                // the generic response code of 4.00 (RFC7252)
+                mResponseStatus = ResponseStatus.BAD_REQUEST;
         }
     }
 
@@ -162,5 +165,11 @@ public class CoapResponse extends CoapMessage {
     @Override
     public ResponseStatus getStatus() {
         return mResponseStatus;
+    }
+
+    // This response object does not support signaling method
+    @Override
+    public SignalingMethod getSignalingMethod() {
+        return null;
     }
 }
