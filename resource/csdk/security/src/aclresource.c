@@ -2477,6 +2477,7 @@ void printACL(const OicSecAcl_t* acl)
             {
                 OIC_LOG_V(INFO, TAG, "recurrences[%zu] = %s", i, vals->recurrences[i]);
             }
+            vals = vals->next;
         }
 
         ace = ace->next;
