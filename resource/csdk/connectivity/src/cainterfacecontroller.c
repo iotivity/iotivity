@@ -391,10 +391,8 @@ void CAStopAdapter(CATransportAdapter_t transportType)
 
 CAResult_t CAGetNetworkInfo(CAEndpoint_t **info, uint32_t *size)
 {
-    if (info == NULL || size == NULL)
-    {
-        return CA_STATUS_INVALID_PARAM;
-    }
+    VERIFY_NON_NULL(info, TAG, "info is null");
+    VERIFY_NON_NULL(size, TAG, "size is null");
 
     CAEndpoint_t **tempInfo = (CAEndpoint_t**) OICCalloc(g_numberOfAdapters, sizeof(*tempInfo));
     if (!tempInfo)
@@ -501,12 +499,7 @@ memory_error_exit:
 CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length,
                              CADataType_t dataType)
 {
-    if (endpoint == NULL)
-    {
-        OIC_LOG(DEBUG, TAG, "Invalid endpoint");
-        return CA_STATUS_INVALID_PARAM;
-    }
-
+    VERIFY_NON_NULL(endpoint, TAG, "endpoint is null");
 
     u_arraylist_t *list = CAGetSelectedNetworkList();
     if (!list)
@@ -564,6 +557,8 @@ CAResult_t CASendUnicastData(const CAEndpoint_t *endpoint, const void *data, uin
 CAResult_t CASendMulticastData(const CAEndpoint_t *endpoint, const void *data, uint32_t length,
                                CADataType_t dataType)
 {
+    VERIFY_NON_NULL(endpoint, TAG, "endpoint is null");
+
     u_arraylist_t *list = CAGetSelectedNetworkList();
     if (!list)
     {
@@ -754,6 +749,8 @@ CAResult_t CAStartDiscoveryServerAdapters()
 
 bool CAIsLocalEndpoint(const CAEndpoint_t *ep)
 {
+    VERIFY_NON_NULL_RET(ep, TAG, "ep is null", false);
+
 #ifdef IP_ADAPTER
     if (ep->adapter & CA_ADAPTER_IP)
     {
