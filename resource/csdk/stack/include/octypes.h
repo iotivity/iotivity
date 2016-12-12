@@ -155,6 +155,9 @@ extern "C" {
 /** To represent resource type with platform.*/
 #define OC_RSRVD_RESOURCE_TYPE_PLATFORM "oic.wk.p"
 
+/** To represent resource type with collection.*/
+#define OC_RSRVD_RESOURCE_TYPE_COLLECTION "oic.wk.col"
+
 /** To represent resource type with RES.*/
 #define OC_RSRVD_RESOURCE_TYPE_RES      "oic.wk.res"
 
@@ -221,6 +224,9 @@ extern "C" {
 
 /** TCP Port. */
 #define OC_RSRVD_TCP_PORT               "x.org.iotivity.tcp"
+
+/** TLS Port. */
+#define OC_RSRVD_TLS_PORT               "tls"
 
 /** For Server instance ID.*/
 #define OC_RSRVD_SERVER_INSTANCE_ID     "sid"
@@ -381,6 +387,9 @@ extern "C" {
 /** Account URI.*/
 #define OC_RSRVD_ACCOUNT_URI               "/oic/account"
 
+/** Account user URI.*/
+#define OC_RSRVD_ACCOUNT_SEARCH_URI        "/oic/account/search"
+
 /** Account session URI.*/
 #define OC_RSRVD_ACCOUNT_SESSION_URI       "/oic/account/session"
 
@@ -417,32 +426,32 @@ extern "C" {
 /** Defines user UUID. */
 #define OC_RSRVD_USER_UUID                 "uid"
 
-/** Defines user ID. */
-#define OC_RSRVD_USER_ID                   "userid"
-
 /** Defines group ID. */
 #define OC_RSRVD_GROUP_ID                  "gid"
-
-/** Defines group Master ID. */
-#define OC_RSRVD_GROUP_MASTER_ID           "gmid"
-
-/** Defines group type. */
-#define OC_RSRVD_GROUP_TYPE                "gtype"
 
 /** Defines member of group ID. */
 #define OC_RSRVD_MEMBER_ID                 "mid"
 
-/** Defines device ID list. */
-#define OC_RSRVD_DEVICE_ID_LIST            "dilist"
-
-/** Defines public. */
-#define OC_RSRVD_PUBLIC                    "Public"
-
-/** Defines private. */
-#define OC_RSRVD_PRIVATE                   "Private"
-
 /** Defines invite. */
 #define OC_RSRVD_INVITE                    "invite"
+
+/** Defines accept. */
+#define OC_RSRVD_ACCEPT                    "accept"
+
+/** Defines operation. */
+#define OC_RSRVD_OPERATION                 "op"
+
+/** Defines add. */
+#define OC_RSRVD_ADD                       "add"
+
+/** Defines delete. */
+#define OC_RSRVD_DELETE                    "delete"
+
+/** Defines owner. */
+#define OC_RSRVD_OWNER                     "owner"
+
+/** Defines members. */
+#define OC_RSRVD_MEMBERS                   "members"
 
 /** To represent grant type with refresh token. */
 #define OC_RSRVD_GRANT_TYPE_REFRESH_TOKEN  "refresh_token"
@@ -910,12 +919,16 @@ typedef enum
 
 #ifdef WITH_MQ
     /** When this bit is set, the resource is allowed to be published */
-    ,OC_MQ_PUBLISHER     = (1 << 6)
+    // @todo
+    // Since this property is not defined on OCF Spec. it should be set 0 until define it
+    ,OC_MQ_PUBLISHER     = (0)
 #endif
 
 #ifdef MQ_BROKER
     /** When this bit is set, the resource is allowed to be notified as MQ broker.*/
-    ,OC_MQ_BROKER        = (1 << 7)
+    // @todo
+    // Since this property is not defined on OCF Spec. it should be set 0 until define it
+    ,OC_MQ_BROKER        = (0)
 #endif
 } OCResourceProperty;
 

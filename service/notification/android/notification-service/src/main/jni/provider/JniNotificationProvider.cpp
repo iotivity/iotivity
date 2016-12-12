@@ -60,6 +60,7 @@ static JNIEnv *GetJNIEnv(jint *ret)
             }
         case JNI_EVERSION:
             LOGE ("JNI version is not supported");
+            return NULL;
         default:
             LOGE ("Failed to get the environment");
             return NULL;
@@ -127,7 +128,7 @@ OIC::Service::NSMessage *getNativeMessage(JNIEnv *env, jobject jMsg)
 
     jlong jttl = (jlong) env->GetLongField( jMsg, fid_ttl);
     uint64_t  ttl = jttl;
-    LOGD("TTL: %d\n", ttl);
+    LOGD("TTL: %lld\n", ttl);
 
     // Message Title
     jfieldID fid_title = env->GetFieldID( cls, "mTitle", "Ljava/lang/String;");
@@ -276,7 +277,7 @@ OIC::Service::NSMessage *getNativeMessage(JNIEnv *env, jobject jMsg)
         }
     }
 
-    OIC::Service::NSMessage *nsMsg;
+    OIC::Service::NSMessage *nsMsg = nullptr;
     jfieldID nativeHandle = env->GetFieldID(cls, "mNativeHandle", "J");
     if (!nativeHandle)
     {
@@ -657,15 +658,21 @@ void onSubscribeListenerCb(OIC::Service::NSConsumer *consumer)
 {
     LOGD("JNIProviderService_onSubscribeListenerCb - IN");
 
-    jint envRet;
+    jint envRet = 0;;
     JNIEnv *env = GetJNIEnv(&envRet);
-    if (NULL == env) return ;
+    if (NULL == env)
+    {
+        return ;
+    }
 
     jobject jSubscriptionListener = (jobject) env->NewLocalRef(g_obj_subscriptionListener);
     if (!jSubscriptionListener)
     {
         LOGE ("Failed to Get jSubscriptionListener");
-        if (JNI_EDETACHED == envRet) g_jvm_provider->DetachCurrentThread();
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm_provider->DetachCurrentThread();
+        }
         return ;
     }
 
@@ -677,7 +684,10 @@ void onSubscribeListenerCb(OIC::Service::NSConsumer *consumer)
     if (!cls_consumer)
     {
         LOGE ("Failed to Get ObjectClass for Consumer");
-        if (JNI_EDETACHED == envRet) g_jvm_provider->DetachCurrentThread();
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm_provider->DetachCurrentThread();
+        }
         return ;
     }
 
@@ -688,7 +698,10 @@ void onSubscribeListenerCb(OIC::Service::NSConsumer *consumer)
     if (!mid_consumer)
     {
         LOGE ("Failed to Get MethodID for Consumer<init>");
-        if (JNI_EDETACHED == envRet) g_jvm_provider->DetachCurrentThread();
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm_provider->DetachCurrentThread();
+        }
         return ;
     }
     jobject obj_consumer = env->NewObject( cls_consumer, mid_consumer, jConsumerId);
@@ -697,7 +710,10 @@ void onSubscribeListenerCb(OIC::Service::NSConsumer *consumer)
     if (!cls)
     {
         LOGE("Failed to Get ObjectClass of jSubscriptionListener");
-        if (JNI_EDETACHED == envRet) g_jvm_provider->DetachCurrentThread();
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm_provider->DetachCurrentThread();
+        }
         return;
     }
     jmethodID mid = env->GetMethodID(
@@ -707,14 +723,20 @@ void onSubscribeListenerCb(OIC::Service::NSConsumer *consumer)
     if (!mid)
     {
         LOGE("Failed to Get MethodID of onConsumerSubscribed");
-        if (JNI_EDETACHED == envRet) g_jvm_provider->DetachCurrentThread();
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm_provider->DetachCurrentThread();
+        }
         return;
     }
 
     env->CallVoidMethod( jSubscriptionListener, mid, obj_consumer);
     env->DeleteLocalRef(jSubscriptionListener);
     env->DeleteLocalRef(cls_consumer);
-    if (JNI_EDETACHED == envRet) g_jvm_provider->DetachCurrentThread();
+    if (JNI_EDETACHED == envRet)
+    {
+        g_jvm_provider->DetachCurrentThread();
+    }
     LOGD("JNIProviderService_onSubscribeListenerCb - OUT");
     return;
 }
@@ -723,15 +745,21 @@ void onSyncInfoListenerCb(OIC::Service::NSSyncInfo *sync)
 {
     LOGD("JNIProviderService_onSyncInfoListenerCb - IN");
 
-    jint envRet;
+    jint envRet = 0;;
     JNIEnv *env = GetJNIEnv(&envRet);
-    if (NULL == env) return ;
+    if(NULL == env)
+    {
+        return ;
+    }
 
     jobject jSyncListener = (jobject) env->NewLocalRef(g_obj_syncListener);
     if (!jSyncListener)
     {
         LOGE ("Failed to Get jSyncListener");
-        if (JNI_EDETACHED == envRet) g_jvm_provider->DetachCurrentThread();
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm_provider->DetachCurrentThread();
+        }
         return ;
     }
 
@@ -744,14 +772,20 @@ void onSyncInfoListenerCb(OIC::Service::NSSyncInfo *sync)
     if (!syncType)
     {
         LOGE ("Failed to Get syncType for SyncInfo");
-        if (JNI_EDETACHED == envRet) g_jvm_provider->DetachCurrentThread();
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm_provider->DetachCurrentThread();
+        }
         return ;
     }
     jclass cls_SyncInfo = (jclass) (env->NewLocalRef(g_cls_SyncInfo));
     if (!cls_SyncInfo)
     {
         LOGE ("Failed to Get ObjectClass for SyncInfo");
-        if (JNI_EDETACHED == envRet) g_jvm_provider->DetachCurrentThread();
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm_provider->DetachCurrentThread();
+        }
         return ;
     }
     jmethodID mid_syncInfo = env->GetMethodID(
@@ -761,7 +795,10 @@ void onSyncInfoListenerCb(OIC::Service::NSSyncInfo *sync)
     if (!mid_syncInfo)
     {
         LOGE ("Failed to Get MethodID for SyncInfo");
-        if (JNI_EDETACHED == envRet) g_jvm_provider->DetachCurrentThread();
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm_provider->DetachCurrentThread();
+        }
         return ;
     }
 
@@ -770,7 +807,10 @@ void onSyncInfoListenerCb(OIC::Service::NSSyncInfo *sync)
     if (!obj_syncInfo)
     {
         LOGE ("Failed to Get Object for SyncInfo");
-        if (JNI_EDETACHED == envRet) g_jvm_provider->DetachCurrentThread();
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm_provider->DetachCurrentThread();
+        }
         return ;
     }
 
@@ -778,8 +818,11 @@ void onSyncInfoListenerCb(OIC::Service::NSSyncInfo *sync)
     if (!cls)
     {
         LOGE("Failed to Get ObjectClass");
-        if (JNI_EDETACHED == envRet) g_jvm_provider->DetachCurrentThread();
-        return;
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm_provider->DetachCurrentThread();
+        }
+        return ;
     }
     jmethodID mid = env->GetMethodID(
                         cls,
@@ -788,15 +831,20 @@ void onSyncInfoListenerCb(OIC::Service::NSSyncInfo *sync)
     if (!mid)
     {
         LOGE("Failed to Get MethodID");
-        if (JNI_EDETACHED == envRet) g_jvm_provider->DetachCurrentThread();
-        return;
+        if (JNI_EDETACHED == envRet)
+        {
+            g_jvm_provider->DetachCurrentThread();
+        }
+        return ;
     }
     env->CallVoidMethod( jSyncListener, mid, obj_syncInfo);
 
     env->DeleteLocalRef(jSyncListener);
     env->DeleteLocalRef(cls_SyncInfo);
-    if (JNI_EDETACHED == envRet) g_jvm_provider->DetachCurrentThread();
-
+    if (JNI_EDETACHED == envRet)
+    {
+        g_jvm_provider->DetachCurrentThread();
+    }
     LOGD("JNIProviderService: OnSyncInfoListenerCb - OUT");
     return;
 
@@ -1037,6 +1085,7 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeGetRegisteredTopicLi
     }
 
     jobject obj_topicList = getJavaTopicsList(env, topicList);
+    delete topicList;
 
     LOGD("JNIProviderService: nativeGetRegisteredTopicList - OUT");
     return obj_topicList;
@@ -1058,7 +1107,9 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeAcce
     OIC::Service::NSConsumer *consumer =
         OIC::Service::NSProviderService::getInstance()->getConsumer(consumerId);
     if (consumer)
+    {
         return (jint) consumer->acceptSubscription((bool)jAccepted);
+    }
 
     LOGE("Couldn't find consumer");
     LOGD("JNIProviderService: nativeAcceptSubscription - OUT");
@@ -1153,6 +1204,8 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_provider_Consumer_nativeG
         return NULL;
     }
     jobject obj_topicList = getJavaTopicsList(env, topicList);
+    delete topicList;
+
     LOGD("JNIProviderService: nativeGetConsumerTopicList - OUT");
     return obj_topicList;
 }
@@ -1163,7 +1216,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
     LOGD("ProviderService_JNI_OnLoad");
     g_jvm_provider = jvm;
 
-    JNIEnv *env;
+    JNIEnv *env = NULL;
     if (jvm->GetEnv((void **)&env, JNI_CURRENT_VERSION) != JNI_OK)
     {
         LOGE("Failed to get the environment using GetEnv()");
@@ -1334,7 +1387,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved)
 {
     LOGD("ProviderService_JNI_OnUnload");
-    JNIEnv *env;
+    JNIEnv *env = NULL;
 
     if (jvm->GetEnv((void **)&env, JNI_CURRENT_VERSION) != JNI_OK)
     {

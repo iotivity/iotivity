@@ -217,21 +217,20 @@ int main(int argc, char *argv[])
     cout << "     2 - searchUser using email" << endl;
     cout << "     3 - searchUser using phone" << endl;
     cout << "     4 - deleteDevice" << endl;
-    cout << "     5 - createGroup" << endl;
-    cout << "     6 - observeGroup" << endl;
-    cout << "     7 - getGroupList" << endl;
-    cout << "     8 - deleteGroup" << endl;
-    cout << "     9 - joinGroup" << endl;
-    cout << "    10 - addDeviceToGroup" << endl;
-    cout << "    11 - getGroupInfo" << endl;
-    cout << "    12 - leaveGroup" << endl;
-    cout << "    13 - deleteDeviceFromGroup" << endl;
-    cout << "    14 - observeInvitation" << endl;
-    cout << "    15 - sendInvitation" << endl;
-    cout << "    16 - cancelInvitation" << endl;
-    cout << "    17 - deleteInvitation" << endl;
-    cout << "    18 - cancelObserveGroup" << endl;
-    cout << "    19 - cancelObserveInvitation" << endl;
+    cout << "     5 - observeGroup" << endl;
+    cout << "     6 - createGroup" << endl;
+    cout << "     7 - deleteGroup" << endl;
+    cout << "     8 - getGroupInfoAll" << endl;
+    cout << "     9 - getGroupInfo" << endl;
+    cout << "    10 - addPropertyValueToGroup" << endl;
+    cout << "    11 - deletePropertyValueFromGroup" << endl;
+    cout << "    12 - updatePropertyValueOnGroup" << endl;
+    cout << "    13 - observeInvitation" << endl;
+    cout << "    14 - sendInvitation" << endl;
+    cout << "    15 - cancelInvitation" << endl;
+    cout << "    16 - deleteInvitation" << endl;
+    cout << "    17 - cancelObserveGroup" << endl;
+    cout << "    18 - cancelObserveInvitation" << endl;
     cout << "    20 - exit" << endl;
 
     string cmd;
@@ -247,134 +246,197 @@ int main(int argc, char *argv[])
             OCRepresentation rep;
 
             switch (atoi(cmd.c_str()))
+        {
+            case 1:
+                cout << "Put userUUID to search:" << endl;
+                cin >> cmd;
+                query["uid"] = cmd;
+                result = accountMgr->searchUser(query, &ocPost);
+                break;
+
+            case 2:
+                cout << "Put email to search:" << endl;
+                cin >> cmd;
+                query["email"] = cmd;
+                result = accountMgr->searchUser(query, &ocPost);
+                break;
+
+            case 3:
+                cout << "Put phone number to search:" << endl;
+                cin >> cmd;
+                query["phone"] = cmd;
+                result = accountMgr->searchUser(query, &ocPost);
+                break;
+
+            case 4:
             {
-                case 1:
-                    cout << "Put userUUID to search:" << endl;
-                    cin >> cmd;
-                    result = accountMgr->searchUser(cmd, &ocPost);
-                    break;
+                string accessToken, deviceId;
 
-                case 2:
-                    cout << "Put email to search:" << endl;
-                    cin >> cmd;
-                    query["email"] = cmd;
-                    result = accountMgr->searchUser(query, &ocPost);
-                    break;
+                cout << "PUT accessToken:";
+                cin >> accessToken;
 
-                case 3:
-                    cout << "Put phone number to search:" << endl;
-                    cin >> cmd;
-                    query["phone"] = cmd;
-                    result = accountMgr->searchUser(query, &ocPost);
-                    break;
+                cout << "PUT deviceID to delete:";
+                cin >> deviceId;
 
-                case 4:
-                    cout << "PUT deviceID to delete:";
-                    cin >> cmd;
-                    result = accountMgr->deleteDevice(cmd, &onDelete);
-                    break;
+                result = accountMgr->deleteDevice(accessToken, deviceId, &onDelete);
+                break;
+            }
 
-                case 5:
-                    result = accountMgr->createGroup(OC::AclGroupType::PUBLIC, &ocPost);
-                    break;
+            case 5:
+                result = accountMgr->observeGroup(&onObserve);
+                break;
 
-                case 6:
-                    cout << "PUT groupId to observe:";
-                    cin >> cmd;
-                    result = accountMgr->observeGroup(cmd, &onObserve);
-                    break;
+            case 6:
+                result = accountMgr->createGroup(&ocPost);
+                break;
 
-                case 7:
-                    result = accountMgr->getGroupList(&ocPost);
-                    break;
+            case 7:
+                cout << "PUT groupId to delete:";
+                cin >> cmd;
+                result = accountMgr->deleteGroup(cmd, &onDelete);
+                break;
 
-                case 8:
-                    cout << "PUT groupId to delete:";
-                    cin >> cmd;
-                    result = accountMgr->deleteGroup(cmd, &onDelete);
-                    break;
+            case 8:
+                result = accountMgr->getGroupInfoAll(&ocPost);
+                break;
 
-                case 9:
-                    cout << "PUT groupId to join:";
-                    cin >> cmd;
-                    result = accountMgr->joinGroup(cmd, &ocPost);
-                    break;
+            case 9:
+                cout << "PUT groupId to get info:";
+                cin >> cmd;
+                result = accountMgr->getGroupInfo(cmd, &ocPost);
+                break;
 
-                case 10:
-                    cout << "PUT groupId to add device:";
-                    cin >> cmd;
-                    cout << "PUT deviceId to add to group:";
-                    cin >> cmd2;
-                    {
-                        vector<string> deviceIds;
-                        deviceIds.push_back(cmd2);
-                        result = accountMgr->addDeviceToGroup(cmd, deviceIds, &ocPost);
-                    }
-                    break;
+            case 10:
+            {
+                string groupId, property, value;
+                vector<string> values;
+                OCRepresentation propertyValue;
 
-                case 11:
-                    cout << "PUT groupId to get info:";
-                    cin >> cmd;
-                    result = accountMgr->getGroupInfo(cmd, &ocPost);
-                    break;
+                cout << "PUT groupId to add property values:";
+                cin >> groupId;
 
-                case 12:
-                    cout << "PUT groupId to leave:";
-                    cin >> cmd;
-                    result = accountMgr->leaveGroup(cmd, &onDelete);
-                    break;
+                cout << "PUT property name:";
+                cin >> property;
 
-                case 13:
-                    cout << "PUT groupId to remove device:";
-                    cin >> cmd;
-                    cout << "PUT deviceId to remove from group:";
-                    cin >> cmd2;
-                    {
-                        vector<string> deviceIds;
-                        deviceIds.push_back(cmd2);
-                        result = accountMgr->deleteDeviceFromGroup(cmd, deviceIds, &onDelete);
-                    }
-                    break;
+                cout << "PUT value:";
+                cin >> value;
 
-                case 14:
-                    result = accountMgr->observeInvitation(&onObserve);
-                    break;
+                values.push_back(value);
+                propertyValue.setValue<vector<string>>(property, values);
 
-                case 15:
-                    cout << "PUT groupId to invite:";
-                    cin >> cmd;
-                    cout << "PUT userUUID to invite:";
-                    cin >> cmd2;
-                    result = accountMgr->sendInvitation(cmd, cmd2, &ocPost);
-                    break;
+                accountMgr->addPropertyValueToGroup(groupId, propertyValue, &ocPost);
+                break;
+            }
 
-                case 16:
-                    cout << "PUT groupId to cancel invitation:";
-                    cin >> cmd;
-                    cout << "PUT userUUID to cancel invitation:";
-                    cin >> cmd2;
-                    result = accountMgr->cancelInvitation(cmd, cmd2, &onDelete);
-                    break;
+            case 11:
+            {
+                string groupId, property, value;
+                vector<string> values;
+                OCRepresentation propertyValue;
 
-                case 17:
-                    cout << "PUT groupId to delete invitation:";
-                    cin >> cmd;
-                    result = accountMgr->deleteInvitation(cmd, &onDelete);
-                    break;
+                cout << "PUT groupId to delete property values:";
+                cin >> groupId;
 
-                case 18:
-                    cout << "PUT groupId to cancel observe:";
-                    cin >> cmd;
-                    result = accountMgr->cancelObserveGroup(cmd);
-                    break;
+                cout << "PUT property name:";
+                cin >> property;
 
-                case 19:
-                    result = accountMgr->cancelObserveInvitation();
-                    break;
+                cout << "PUT value:";
+                cin >> value;
 
-                case 20:
-                    goto exit;
+                values.push_back(value);
+                propertyValue.setValue<vector<string>>(property, values);
+
+                accountMgr->deletePropertyValueFromGroup(groupId, propertyValue, &ocPost);
+                break;
+            }
+
+            case 12:
+            {
+                string groupId, property, value;
+                OCRepresentation propertyValue;
+
+                cout << "PUT groupId to update property values:";
+                cin >> groupId;
+
+                cout << "PUT property name:";
+                cin >> property;
+
+                int type;
+                cout << "PUT value type(1:string / 2:array):";
+                cin >> type;
+
+                cout << "PUT value:";
+                cin >> value;
+
+                if (1 == type)
+                {
+                    propertyValue.setValue<string>(property, value);
+                }
+                else if (2 == type)
+                {
+                    vector<string> values;
+                    values.push_back(value);
+                    propertyValue.setValue<vector<string>>(property, values);
+                }
+                else
+                {
                     break;
+                }
+
+                accountMgr->updatePropertyValueOnGroup(groupId, propertyValue, &ocPost);
+                break;
+            }
+
+            case 13:
+                result = accountMgr->observeInvitation(&onObserve);
+                break;
+
+            case 14:
+                cout << "PUT groupId to invite:";
+                cin >> cmd;
+                cout << "PUT userUUID to invite:";
+                cin >> cmd2;
+                result = accountMgr->sendInvitation(cmd, cmd2, &ocPost);
+                break;
+
+            case 15:
+                cout << "PUT groupId to cancel invitation:";
+                cin >> cmd;
+                cout << "PUT userUUID to cancel invitation:";
+                cin >> cmd2;
+                result = accountMgr->cancelInvitation(cmd, cmd2, &onDelete);
+                break;
+
+            case 16:
+                cout << "PUT groupId to reply to invitation:";
+                cin >> cmd;
+                cout << "accept to invitation? (1:yes)";
+                cin >> cmd2;
+
+                if (cmd2 == "1")
+                {
+                    result = accountMgr->replyToInvitation(cmd, true, &onDelete);
+                }
+                else
+                {
+                    result = accountMgr->replyToInvitation(cmd, false, &onDelete);
+                }
+                break;
+
+            case 17:
+                result = accountMgr->cancelObserveGroup();
+                break;
+
+            case 18:
+                result = accountMgr->cancelObserveInvitation();
+                break;
+
+            case 20:
+                goto exit;
+                break;
+
+            default:
+                break;
             }
 
             if (result != OC_STACK_OK)

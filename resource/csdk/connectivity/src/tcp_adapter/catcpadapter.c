@@ -294,7 +294,16 @@ void CATCPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
 static void CAInitializeTCPGlobals()
 {
     caglobals.tcp.ipv4.fd = -1;
+    caglobals.tcp.ipv4s.fd = -1;
     caglobals.tcp.ipv6.fd = -1;
+    caglobals.tcp.ipv6s.fd = -1;
+
+    // Set the port number received from application.
+    caglobals.tcp.ipv4.port = caglobals.ports.tcp.u4;
+    caglobals.tcp.ipv4s.port = caglobals.ports.tcp.u4s;
+    caglobals.tcp.ipv6.port = caglobals.ports.tcp.u6;
+    caglobals.tcp.ipv6s.port = caglobals.ports.tcp.u6s;
+
     caglobals.tcp.selectTimeout = CA_TCP_SELECT_TIMEOUT;
     caglobals.tcp.listenBacklog = CA_TCP_LISTEN_BACKLOG;
     caglobals.tcp.svrlist = NULL;
@@ -377,10 +386,6 @@ CAResult_t CAStartTCP()
 
     // Start network monitoring to receive adapter status changes.
     CAIPStartNetworkMonitor(CATCPAdapterHandler, CA_ADAPTER_TCP);
-
-    // Set the port number received from application.
-    caglobals.tcp.ipv4.port = caglobals.ports.tcp.u4;
-    caglobals.tcp.ipv6.port = caglobals.ports.tcp.u6;
 
 #ifndef SINGLE_THREAD
     if (CA_STATUS_OK != CATCPInitializeQueueHandles())

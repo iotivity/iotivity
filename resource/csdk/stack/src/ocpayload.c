@@ -1582,6 +1582,29 @@ OCRepPayload* OCRepPayloadClone (const OCRepPayload* payload)
     return clone;
 }
 
+OCRepPayload* OCRepPayloadBatchClone(const OCRepPayload* repPayload)
+{
+    OCRepPayload *newPayload = OCRepPayloadCreate();
+    if (!newPayload)
+    {
+        return NULL;
+    }
+
+    newPayload->uri = OICStrdup(repPayload->uri);
+    OCRepPayload *clone = OCRepPayloadCreate();
+    if (!clone)
+    {
+        OCPayloadDestroy((OCPayload *)newPayload);
+        return NULL;
+    }
+
+    clone->types  = CloneOCStringLL(repPayload->types);
+    clone->interfaces  = CloneOCStringLL(repPayload->interfaces);
+    clone->values = OCRepPayloadValueClone(repPayload->values);
+    OCRepPayloadSetPropObjectAsOwner(newPayload, OC_RSRVD_REPRESENTATION, clone);
+
+    return newPayload;
+}
 
 void OCRepPayloadDestroy(OCRepPayload* payload)
 {

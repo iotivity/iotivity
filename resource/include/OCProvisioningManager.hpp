@@ -182,6 +182,26 @@ namespace OC
                     const OicUuid_t* deviceID,
                     std::shared_ptr<OCSecureResource> &foundDevice);
 
+            /**
+             * API is responsible for discovery of devices in specified endpoint/deviceID.
+             * And this function will only return the specified device's response.
+             *
+             * @param timeout Timeout in seconds, time until which function will listen to
+             *                    responses from server before returning the specified device.
+             * @param deviceID  deviceID of target device.
+             * @param hostAddress  MAC address of target device.
+             * @param connType  ConnectivityType for discovery.
+             * @param foundDevice OCSecureResource object of found device.
+             * @return ::OC_STACK_OK in case of success and other value otherwise.
+             *         ::OC_STACK_INVALID_PARAM when deviceID is NULL or ppFoundDevice is not
+             *                                  initailized.
+             */
+            static OCStackResult discoverSingleDeviceInUnicast(unsigned short timeout,
+                    const OicUuid_t* deviceID,
+                    const std::string& hostAddress,
+                    OCConnectivityType connType,
+                    std::shared_ptr<OCSecureResource> &foundDevice);
+
 #ifdef MULTIPLE_OWNER
              /**
              * API is responsible for discovery of MOT(Mutilple Owner Transfer)
@@ -216,6 +236,13 @@ namespace OC
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */
             static OCStackResult setInputPinCallback(InputPinCallback inputPin);
+
+            /**
+             * API for de-registering Pin Callback.
+             *
+             * @return ::OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult unsetInputPinCallback();
 
             /**
              * API to get status of all the devices in current subnet. The status include endpoint

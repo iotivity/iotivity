@@ -74,6 +74,8 @@ size_t calcDimTotal(const size_t dimensions[MAX_REP_ARRAY_DEPTH]);
 
 OCRepPayload* OCRepPayloadClone(const OCRepPayload* payload);
 
+OCRepPayload* OCRepPayloadBatchClone(const OCRepPayload* repPayload);
+
 void OCRepPayloadAppend(OCRepPayload* parent, OCRepPayload* child);
 
 bool OCRepPayloadSetUri(OCRepPayload* payload, const char* uri);

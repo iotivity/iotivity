@@ -93,7 +93,8 @@ Alias("notification_provider_test", notification_provider_test)
 env.AppendTarget('notification_provider_test')
 
 if env.get('TEST') == '1':
-    if target_os == 'linux':
-            from tools.scons.RunTest import *
-            run_test(notification_consumer_test_env, '', 'service/notification/unittest/notification_consumer_test')
-            run_test(notification_provider_test_env, '', 'service/notification/unittest/notification_provider_test')
+    if env.get('SECURED') == '0':
+        if target_os == 'linux':
+                from tools.scons.RunTest import *
+                run_test(notification_consumer_test_env, '', 'service/notification/unittest/notification_consumer_test')
+                run_test(notification_provider_test_env, '', 'service/notification/unittest/notification_provider_test')

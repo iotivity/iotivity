@@ -61,19 +61,6 @@ typedef struct PRESENCERESOURCE{
 struct rsrc_t;
 
 /**
- * Typedefs for stack interface
- * IF here stands for Interface
- */
-
-typedef enum {
-    STACK_IF_DEFAULT = 0,
-    STACK_IF_LL,
-    STACK_IF_BATCH,
-    STACK_IF_GROUP,
-    STACK_IF_INVALID
-} OCStackIfTypes;
-
-/**
  * following structure will be created in occollection.
  */
 

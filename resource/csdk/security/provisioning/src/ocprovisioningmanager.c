@@ -35,6 +35,7 @@
 #include "utlist.h"
 #include "aclresource.h" //Note: SRM internal header
 #include "pconfresource.h"
+#include "psinterface.h"
 
 #define TAG "OIC_OCPMAPI"
 
@@ -99,6 +100,33 @@ OCStackResult OCDiscoverSingleDevice(unsigned short timeout, const OicUuid_t* de
     }
 
     return PMSingleDeviceDiscovery(timeout, deviceID, ppFoundDevice);
+}
+
+/**
+ * The function is responsible for discovery of owned/unowned device is specified endpoint/deviceID.
+ * And this function will only return the specified device's response.
+ *
+ * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
+ *                    server before returning the device.
+ * @param[in] deviceID         deviceID of target device.
+ * @param[in] hostAddress       MAC address of target device.
+ * @param[in] connType       ConnectivityType for discovery.
+ * @param[out] ppFoundDevice     OCProvisionDev_t of found device.
+ * @return OTM_SUCCESS in case of success and other value otherwise.
+ */
+OCStackResult OCDiscoverSingleDeviceInUnicast(unsigned short timeout, const OicUuid_t* deviceID,
+                             const char* hostAddress, OCConnectivityType connType,
+                             OCProvisionDev_t **ppFoundDevice)
+{
+    if( NULL == ppFoundDevice || NULL != *ppFoundDevice || 0 == timeout || NULL == deviceID ||
+            NULL == hostAddress)
+    {
+        OIC_LOG(ERROR, TAG, "OCDiscoverSingleDeviceInUnicast : Invalid Parameter");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    return PMSingleDeviceDiscoveryInUnicast(timeout, deviceID, hostAddress, connType,
+            ppFoundDevice);
 }
 
 /**
@@ -813,6 +841,16 @@ OCStackResult OCResetDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDisc
     }
     OIC_LOG(INFO, TAG, "OUT OCResetDevice");
     return res;
+}
+
+/**
+ * This function resets SVR DB to its factory setting.
+ *
+ * @return OC_STACK_OK in case of successful reset and other value otherwise.
+ */
+OCStackResult OCResetSVRDB(void)
+{
+    return ResetSecureResourceInPS();
 }
 
 /**

@@ -71,6 +71,7 @@ CAResult_t CAInitialize()
         if (res != CA_STATUS_OK)
         {
             OIC_LOG(ERROR, TAG, "CAInitialize has failed");
+            CATerminateMessageHandler();
             return res;
         }
         g_isInitialized = true;
