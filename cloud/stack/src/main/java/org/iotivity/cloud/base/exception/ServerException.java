@@ -32,6 +32,18 @@ public class ServerException extends RuntimeException {
         }
     }
 
+    public static class BadOptionException extends ServerException {
+        private static final long serialVersionUID = -1133293352997486233L;
+
+        public BadOptionException() {
+            super(ResponseStatus.BAD_OPTION);
+        }
+
+        public BadOptionException(String msg) {
+            super(ResponseStatus.BAD_OPTION, msg);
+        }
+    }
+
     public static class NotFoundException extends ServerException {
         private static final long serialVersionUID = 775328915430229701L;
 
@@ -65,6 +77,18 @@ public class ServerException extends RuntimeException {
 
         public InternalServerErrorException(String msg) {
             super(ResponseStatus.INTERNAL_SERVER_ERROR, msg);
+        }
+    }
+
+    public static class MethodNotAllowedException extends ServerException {
+        private static final long serialVersionUID = -3491771205478082847L;
+
+        public MethodNotAllowedException() {
+            super(ResponseStatus.METHOD_NOT_ALLOWED);
+        }
+
+        public MethodNotAllowedException(String msg) {
+            super(ResponseStatus.METHOD_NOT_ALLOWED, msg);
         }
     }
 

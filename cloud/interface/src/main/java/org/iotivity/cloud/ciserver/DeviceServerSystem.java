@@ -32,14 +32,17 @@ import org.iotivity.cloud.base.device.Device;
 import org.iotivity.cloud.base.device.IRequestChannel;
 import org.iotivity.cloud.base.exception.ClientException;
 import org.iotivity.cloud.base.exception.ServerException;
+import org.iotivity.cloud.base.exception.ServerException.BadOptionException;
 import org.iotivity.cloud.base.exception.ServerException.BadRequestException;
 import org.iotivity.cloud.base.exception.ServerException.UnAuthorizedException;
 import org.iotivity.cloud.base.protocols.MessageBuilder;
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
+import org.iotivity.cloud.base.protocols.coap.CoapSignaling;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
+import org.iotivity.cloud.base.protocols.enums.SignalingMethod;
 import org.iotivity.cloud.base.server.CoapServer;
 import org.iotivity.cloud.base.server.HttpServer;
 import org.iotivity.cloud.base.server.Server;
@@ -50,6 +53,7 @@ import org.iotivity.cloud.util.Log;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 
 /**
@@ -60,9 +64,10 @@ import io.netty.channel.ChannelPromise;
 
 public class DeviceServerSystem extends ServerSystem {
 
-    private Cbor<HashMap<String, Object>> mCbor     = new Cbor<HashMap<String, Object>>();
+    private Cbor<HashMap<String, Object>>                 mCbor     = new Cbor<HashMap<String, Object>>();
+    private HashMap<ChannelHandlerContext, CoapSignaling> mCsmMap   = new HashMap<>();
 
-    IRequestChannel                       mRDServer = null;
+    IRequestChannel                                       mRDServer = null;
 
     public DeviceServerSystem() {
         mRDServer = ConnectorPool.getConnection("rd");
@@ -239,6 +244,7 @@ public class DeviceServerSystem extends ServerSystem {
         public void channelInactive(ChannelHandlerContext ctx)
                 throws ClientException {
             Device device = ctx.channel().attr(keyDevice).get();
+
             // Some cases, this event occurs after new device connected using
             // same di.
             // So compare actual value, and remove if same.
@@ -290,7 +296,6 @@ public class DeviceServerSystem extends ServerSystem {
         @Override
         public void write(ChannelHandlerContext ctx, Object msg,
                 ChannelPromise promise) {
-
             try {
 
                 if (!(msg instanceof CoapResponse)) {
@@ -299,6 +304,7 @@ public class DeviceServerSystem extends ServerSystem {
                 }
                 // This is CoapResponse
                 // Once the response is valid, add this to deviceList
+
                 CoapResponse response = (CoapResponse) msg;
 
                 switch (response.getUriPath()) {
@@ -343,7 +349,6 @@ public class DeviceServerSystem extends ServerSystem {
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
-
             try {
                 if (!(msg instanceof CoapRequest)) {
                     throw new BadRequestException(
@@ -421,9 +426,108 @@ public class DeviceServerSystem extends ServerSystem {
         }
     }
 
+    @Sharable
+    class CoapSignalingHandler extends ChannelInboundHandlerAdapter {
+
+        @Override
+        public void channelInactive(ChannelHandlerContext ctx)
+                throws Exception {
+            // delete csm information from the map
+            mCsmMap.remove(ctx);
+            ctx.fireChannelInactive();
+        }
+
+        @Override
+        public void channelActive(ChannelHandlerContext ctx) {
+            Device device = ctx.channel().attr(keyDevice).get();
+            mDevicePool.addDevice(device);
+            device.onConnected();
+            // Authenticated device connected
+            // Actual channel active should decided after authentication.
+            CoapSignaling signaling = (CoapSignaling) MessageBuilder
+                    .createSignaling(SignalingMethod.CSM);
+            signaling.setCsmMaxMessageSize(4294967295L);
+            ctx.writeAndFlush(signaling);
+        }
+
+        @Override
+        public void channelRead(ChannelHandlerContext ctx, Object msg) {
+            try {
+                if (msg instanceof CoapSignaling) {
+                    CoapSignaling signaling = (CoapSignaling) msg;
+                    switch (signaling.getSignalingMethod()) {
+                        case CSM:
+                            // get existing CSM from the map
+                            CoapSignaling existingCsm = mCsmMap.get(ctx);
+                            if (existingCsm == null) {
+                                existingCsm = signaling;
+                            } else {
+                                // replace and cumulate CSM options
+                                existingCsm.setCsmBlockWiseTransfer(
+                                        signaling.getCsmBlockWiseTransfer());
+                                existingCsm.setCsmMaxMessageSize(
+                                        signaling.getCsmMaxMessageSize());
+                                existingCsm.setCsmServerName(
+                                        signaling.getCsmServerName());
+                            }
+                            mCsmMap.put(ctx, existingCsm);
+                            break;
+                        case PING:
+                            // TODO process PING signaling option
+                            break;
+                        case PONG:
+                            // TODO process PONG signaling option
+                            break;
+                        case RELEASE:
+                        case ABORT:
+                            mCsmMap.remove(ctx);
+                            ctx.close();
+                            break;
+                        default:
+                            throw new BadOptionException(
+                                    "unsupported CoAP Signaling option");
+                    }
+
+                    ctx.fireChannelRead(msg);
+                } else {
+                    ctx.fireChannelRead(msg);
+                    // TODO annotated codes must be removed to follow
+                    // the CSM specification of draft-ietf-core-coap-tcp-tls-05
+
+                    // if (mCsmMap.get(ctx) != null) {
+                    // ctx.fireChannelRead(msg);
+                    // } else {
+                    // // send ABORT signaling and close the connection
+                    // ctx.writeAndFlush(MessageBuilder.createSignaling(
+                    // SignalingMethod.ABORT,
+                    // new String(
+                    // "Capability and Settings message (CSM) is not received
+                    // yet")
+                    // .getBytes()));
+                    // ctx.close();
+                    // }
+                }
+            } catch (Throwable t) {
+                ResponseStatus responseStatus = t instanceof ServerException
+                        ? ((ServerException) t).getErrorResponse()
+                        : ResponseStatus.BAD_OPTION;
+                if (msg instanceof CoapRequest) {
+                    ctx.writeAndFlush(MessageBuilder
+                            .createResponse((CoapRequest) msg, responseStatus));
+                } else if (msg instanceof CoapSignaling) {
+                    ctx.writeAndFlush(MessageBuilder.createSignalingResponse(
+                            (CoapSignaling) msg, responseStatus));
+                }
+                Log.f(ctx.channel(), t);
+            }
+        }
+
+    }
+
     @Override
     public void addServer(Server server) {
         if (server instanceof CoapServer) {
+            server.addHandler(new CoapSignalingHandler());
             server.addHandler(new CoapAuthHandler());
         }
 

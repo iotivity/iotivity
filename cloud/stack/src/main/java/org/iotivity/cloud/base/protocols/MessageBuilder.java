@@ -23,9 +23,11 @@ package org.iotivity.cloud.base.protocols;
 
 import org.iotivity.cloud.base.protocols.coap.CoapRequest;
 import org.iotivity.cloud.base.protocols.coap.CoapResponse;
+import org.iotivity.cloud.base.protocols.coap.CoapSignaling;
 import org.iotivity.cloud.base.protocols.enums.ContentFormat;
 import org.iotivity.cloud.base.protocols.enums.RequestMethod;
 import org.iotivity.cloud.base.protocols.enums.ResponseStatus;
+import org.iotivity.cloud.base.protocols.enums.SignalingMethod;
 
 public class MessageBuilder {
 
@@ -33,6 +35,29 @@ public class MessageBuilder {
             ResponseStatus responseStatus) {
         return createResponse(request, responseStatus, ContentFormat.NO_CONTENT,
                 null);
+    }
+
+    public static IResponse createSignalingResponse(ISignaling signaling,
+            ResponseStatus responseStatus) {
+        return createSignalingResponse(signaling, responseStatus, null);
+    }
+
+    public static IResponse createSignalingResponse(ISignaling signaling,
+            ResponseStatus responseStatus, byte[] payload) {
+        IResponse response = null;
+
+        if (signaling instanceof CoapSignaling) {
+            CoapSignaling coapSignaling = (CoapSignaling) signaling;
+            CoapResponse coapResponse = new CoapResponse(responseStatus);
+            coapResponse.setToken(coapSignaling.getToken());
+            if (payload != null) {
+                coapResponse.setPayload(payload);
+            }
+
+            response = coapResponse;
+        }
+
+        return response;
     }
 
     public static IResponse createResponse(IRequest request,
@@ -73,6 +98,26 @@ public class MessageBuilder {
             String uriPath, String uriQuery) {
         return createRequest(requestMethod, uriPath, uriQuery,
                 ContentFormat.NO_CONTENT, null);
+    }
+
+    public static ISignaling createSignaling(SignalingMethod signalingMethod,
+            byte[] diagnosticPayload) {
+
+        CoapSignaling coapSignaling = null;
+
+        coapSignaling = new CoapSignaling(signalingMethod);
+        // TODO: Random token generation required
+        coapSignaling.setToken("tmptoken".getBytes());
+
+        if (diagnosticPayload != null) {
+            coapSignaling.setPayload(diagnosticPayload);
+        }
+
+        return coapSignaling;
+    }
+
+    public static ISignaling createSignaling(SignalingMethod signalingMethod) {
+        return createSignaling(signalingMethod, null);
     }
 
     public static IRequest createRequest(RequestMethod requestMethod,
