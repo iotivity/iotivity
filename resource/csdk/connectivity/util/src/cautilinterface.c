@@ -36,6 +36,14 @@ CAResult_t CARegisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateC
     return CA_STATUS_OK;
 }
 
+CAResult_t CAUnregisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateCB,
+                                             CAConnectionStateChangedCB connStateCB)
+{
+    OIC_LOG(DEBUG, TAG, "CAUnregisterNetworkMonitorHandler");
+
+    return CAUnsetNetworkMonitorCallbacks(adapterStateCB, connStateCB);
+}
+
 CAResult_t CASetAutoConnectionDeviceInfo(const char *address)
 {
     OIC_LOG(DEBUG, TAG, "CASetAutoConnectionDeviceInfo");

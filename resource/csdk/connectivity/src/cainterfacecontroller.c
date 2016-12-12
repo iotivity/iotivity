@@ -331,6 +331,18 @@ void CASetNetworkMonitorCallbacks(CAAdapterStateChangedCB adapterCB,
     }
 }
 
+CAResult_t CAUnsetNetworkMonitorCallbacks(CAAdapterStateChangedCB adapterCB,
+                                          CAConnectionStateChangedCB connCB)
+{
+    OIC_LOG(DEBUG, TAG, "Unset network monitoring callback");
+    CAResult_t res = RemoveNetworkStateChangedCallback(adapterCB, connCB);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "RemoveNetworkStateChangedCallback has failed");
+    }
+    return res;
+}
+
 void CASetErrorHandleCallback(CAErrorHandleCallback errorCallback)
 {
     OIC_LOG(DEBUG, TAG, "Set error handle callback");

@@ -56,6 +56,16 @@ CAResult_t CARegisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateC
                                            CAConnectionStateChangedCB connStateCB);
 
 /**
+ * Unregister network monitoring callback.
+ * @param[in]   adapterStateCB  Adapter state monitoring callback.
+ * @param[in]   connStateCB     Connection state monitoring callback.
+ *
+ * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
+ */
+CAResult_t CAUnregisterNetworkMonitorHandler(CAAdapterStateChangedCB adapterStateCB,
+                                             CAConnectionStateChangedCB connStateCB);
+
+/**
  * Set device to handle for auto connection.
  * @param[in]   address         LE address to set.
  *
