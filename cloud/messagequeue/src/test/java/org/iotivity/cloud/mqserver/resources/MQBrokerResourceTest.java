@@ -35,11 +35,6 @@ import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import kafka.admin.TopicCommand;
-import kafka.admin.TopicCommand.TopicCommandOptions;
-import kafka.utils.ZKStringSerializer$;
-import kafka.utils.ZkUtils;
-
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.ZkConnection;
 import org.iotivity.cloud.base.device.CoapDevice;
@@ -63,6 +58,11 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+
+import kafka.admin.TopicCommand;
+import kafka.admin.TopicCommand.TopicCommandOptions;
+import kafka.utils.ZKStringSerializer$;
+import kafka.utils.ZkUtils;
 
 public class MQBrokerResourceTest {
     private final String     MQ_BROKER_URI     = Constants.MQ_BROKER_FULL_URI;
@@ -180,9 +180,9 @@ public class MQBrokerResourceTest {
                 Object[] args = invocation.getArguments();
                 CoapResponse resp = (CoapResponse) args[0];
                 // assertion: if the response status is "CONTENT"
-                // assertion: if the response payload has the "message" property
+                // assertion: if the response payload has data
                 assertTrue(methodCheck(resp, ResponseStatus.CONTENT));
-                assertTrue(hashmapCheck(resp, "message"));
+                assertTrue(payloadCheck(resp));
                 return resp;
             }
         }).when(mockSubscriber).sendResponse(Mockito.anyObject());
@@ -211,10 +211,9 @@ public class MQBrokerResourceTest {
                 CoapResponse resp = (CoapResponse) args[0];
                 latchSubscriber.countDown();
                 if (latchSubscriber.getCount() == 0) {
-                    // assertion: if the response payload has the "message"
-                    // property
+                    // assertion: if the response payload has data
                     assertTrue(methodCheck(resp, ResponseStatus.CONTENT));
-                    assertTrue(hashmapCheck(resp, "message"));
+                    assertTrue(payloadCheck(resp));
                 }
                 return resp;
             }
@@ -277,7 +276,7 @@ public class MQBrokerResourceTest {
                 // assertion for subscriber
                 if (latchSubscriber.getCount() == 0) {
                     assertTrue(methodCheck(resp, ResponseStatus.CONTENT));
-                    assertTrue(hashmapCheck(resp, "message"));
+                    assertTrue(payloadCheck(resp));
 
                     DeleteTopic(mMockDevice, topic);
                 }
@@ -337,9 +336,9 @@ public class MQBrokerResourceTest {
         // read topic
         ReadTopic(topic);
         // assertion1 : if the response status is "CONTENT"
-        // assertion2 : if the response payload has the "message" property
+        // assertion2 : if the response payload has data
         assertTrue(methodCheck(mResponse, ResponseStatus.CONTENT));
-        assertTrue(hashmapCheck(mResponse, "message"));
+        assertTrue(payloadCheck(mResponse));
     }
 
     @Test(expected = NotFoundException.class)
@@ -523,16 +522,14 @@ public class MQBrokerResourceTest {
 
     private IRequest PublishTopicRequest(String topicName) {
         IRequest request = null;
-        HashMap<String, Object> tags = new HashMap<String, Object>();
         HashMap<String, Object> message = new HashMap<String, Object>();
         message.put("status", "on");
         message.put("brightness", 20);
-        tags.put("message", message);
         Cbor<HashMap<String, Object>> cbor = new Cbor<HashMap<String, Object>>();
         String uri = MQ_BROKER_URI + "/" + topicName;
         request = MessageBuilder.createRequest(RequestMethod.POST, uri, null,
                 ContentFormat.APPLICATION_CBOR,
-                cbor.encodingPayloadToCbor(tags));
+                cbor.encodingPayloadToCbor(message));
         return request;
     }
 
@@ -677,13 +674,14 @@ public class MQBrokerResourceTest {
         mMqBrokerResource.onDefaultRequestReceived(mMockDevice, readRequest);
     }
 
-    private boolean hashmapCheck(IResponse response, String propertyName) {
+    private boolean payloadCheck(IResponse response) {
         Cbor<HashMap<String, Object>> mCbor = new Cbor<>();
         HashMap<String, Object> payloadData = mCbor
                 .parsePayloadFromCbor(response.getPayload(), HashMap.class);
-        if (payloadData.get(propertyName) != null)
+        if (payloadData != null && payloadData.containsKey("status")
+                && payloadData.containsKey("brightness")) {
             return true;
-        else
+        } else
             return false;
     }
 
