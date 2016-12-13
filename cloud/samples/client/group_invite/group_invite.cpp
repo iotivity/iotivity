@@ -433,7 +433,6 @@ int main(int argc, char *argv[])
 
             case 20:
                 goto exit;
-                break;
 
             default:
                 break;
