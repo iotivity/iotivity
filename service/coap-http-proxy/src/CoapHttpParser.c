@@ -781,7 +781,7 @@ static OCStackResult CHPInitializeEasyHandle(CURL** easyHandle, HttpRequest_t *r
             handleContext->payloadLength = req->payloadLength;
             handleContext->payload = req->payload;
             req->payloadCached = true;
-            break;;
+            break;
         case CHP_DELETE:
             OIC_LOG(DEBUG, TAG, "Sending DELETE request");
             /* libcurl don't have direct option for sending DELETE */

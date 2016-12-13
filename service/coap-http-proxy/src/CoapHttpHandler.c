@@ -133,8 +133,8 @@ OCStackResult CHPTerminate()
 
     g_proxyHandle = NULL;
     g_isCHProxyInitialized = false;
-    return result;
     OIC_LOG_V(DEBUG, TAG, "%s OUT", __func__);
+    return result;
 }
 
 static void CHPGetProxyURI(OCHeaderOption* options, uint8_t *numOptions, char* uri,
