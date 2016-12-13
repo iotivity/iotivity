@@ -516,7 +516,6 @@ bool PMGenerateQuery(bool isSecure,
         case CT_ADAPTER_RFCOMM_BTEDR:
             OIC_LOG(ERROR, TAG, "Not supported connectivity adapter.");
             return false;
-            break;
         default:
             OIC_LOG(ERROR, TAG, "Unknown connectivity adapter.");
             return false;
@@ -726,118 +725,111 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
         return OC_STACK_KEEP_TRANSACTION;
     }
     (void)UNUSED;
-    if (clientResponse)
-    {
-        if  (NULL == clientResponse->payload)
-        {
-            OIC_LOG(INFO, TAG, "Skiping Null payload");
-            return OC_STACK_KEEP_TRANSACTION;
-        }
-        if (OC_STACK_OK != clientResponse->result)
-        {
-            OIC_LOG(INFO, TAG, "Error in response");
-            return OC_STACK_KEEP_TRANSACTION;
-        }
-        else
-        {
-            if (PAYLOAD_TYPE_SECURITY != clientResponse->payload->type)
-            {
-                OIC_LOG(INFO, TAG, "Unknown payload type");
-                return OC_STACK_KEEP_TRANSACTION;
-            }
 
-            OicSecDoxm_t *ptrDoxm = NULL;
-            uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData;
-            size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
-
-            OCStackResult res = CBORPayloadToDoxm(payload, size, &ptrDoxm);
-            if ((NULL == ptrDoxm) || (OC_STACK_OK != res))
-            {
-                OIC_LOG(INFO, TAG, "Ignoring malformed CBOR");
-                return OC_STACK_KEEP_TRANSACTION;
-            }
-            else
-            {
-                OIC_LOG(DEBUG, TAG, "Successfully converted doxm cbor to bin.");
-
-                //If this is owend device discovery we have to filter out the responses.
-                DiscoveryInfo* pDInfo = (DiscoveryInfo*)ctx;
-                OCProvisionDev_t **ppDevicesList = &pDInfo->pCandidateList;
-
-                // Get my device ID from doxm resource
-                OicUuid_t myId;
-                memset(&myId, 0, sizeof(myId));
-                OCStackResult res = GetDoxmDevOwnerId(&myId);
-                if(OC_STACK_OK != res)
-                {
-                    OIC_LOG(ERROR, TAG, "Error while getting my device ID.");
-                    DeleteDoxmBinData(ptrDoxm);
-                    return OC_STACK_KEEP_TRANSACTION;
-                }
-
-                // If this is owned discovery response but owner is not me then discard it.
-                if( (pDInfo->isOwnedDiscovery) &&
-                    (0 != memcmp(&ptrDoxm->owner.id, &myId.id, sizeof(myId.id))) )
-                {
-                    OIC_LOG(DEBUG, TAG, "Discovered device is not owend by me");
-                    DeleteDoxmBinData(ptrDoxm);
-                    return OC_STACK_KEEP_TRANSACTION;
-                }
-
-                res = GetDoxmDeviceID(&myId);
-                if(OC_STACK_OK != res)
-                {
-                    OIC_LOG(ERROR, TAG, "Error while getting my UUID.");
-                    DeleteDoxmBinData(ptrDoxm);
-                    return OC_STACK_KEEP_TRANSACTION;
-                }
-                //if targetId and discovered deviceID are different, discard it
-                if ((pDInfo->isSingleDiscovery) &&
-                    (0 != memcmp(&ptrDoxm->deviceID.id, &pDInfo->targetId->id, sizeof(pDInfo->targetId->id))) )
-                {
-                    OIC_LOG(DEBUG, TAG, "Discovered device is not target device");
-                    DeleteDoxmBinData(ptrDoxm);
-                    return OC_STACK_KEEP_TRANSACTION;
-                }
-                //if this is owned discovery and this is PT's reply, discard it
-                if (((pDInfo->isSingleDiscovery) || (pDInfo->isOwnedDiscovery)) &&
-                        (0 == memcmp(&ptrDoxm->deviceID.id, &myId.id, sizeof(myId.id))) )
-                {
-                    OIC_LOG(DEBUG, TAG, "discarding provision tool's reply");
-                    DeleteDoxmBinData(ptrDoxm);
-                    return OC_STACK_KEEP_TRANSACTION;
-                }
-
-                res = AddDevice(ppDevicesList, &clientResponse->devAddr,
-                        clientResponse->connType, ptrDoxm);
-                if (OC_STACK_OK != res)
-                {
-                    OIC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
-                    DeleteDoxmBinData(ptrDoxm);
-                    return OC_STACK_KEEP_TRANSACTION;
-                }
-
-                res = SecurePortDiscovery(pDInfo, clientResponse);
-                if(OC_STACK_OK != res)
-                {
-                    OIC_LOG(ERROR, TAG, "Failed to SecurePortDiscovery");
-                    DeleteDoxmBinData(ptrDoxm);
-                    return OC_STACK_KEEP_TRANSACTION;
-                }
-
-                OIC_LOG(INFO, TAG, "Exiting ProvisionDiscoveryHandler.");
-            }
-
-            return  OC_STACK_KEEP_TRANSACTION;
-        }
-    }
-    else
+    if (!clientResponse)
     {
         OIC_LOG(INFO, TAG, "Skiping Null response");
         return OC_STACK_KEEP_TRANSACTION;
     }
 
-    return  OC_STACK_DELETE_TRANSACTION;
+    if (NULL == clientResponse->payload)
+    {
+        OIC_LOG(INFO, TAG, "Skiping Null payload");
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    if (OC_STACK_OK != clientResponse->result)
+    {
+        OIC_LOG(INFO, TAG, "Error in response");
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    if (PAYLOAD_TYPE_SECURITY != clientResponse->payload->type)
+    {
+        OIC_LOG(INFO, TAG, "Unknown payload type");
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    OicSecDoxm_t *ptrDoxm = NULL;
+    uint8_t *payload = ((OCSecurityPayload*)clientResponse->payload)->securityData;
+    size_t size = ((OCSecurityPayload*)clientResponse->payload)->payloadSize;
+
+    OCStackResult res = CBORPayloadToDoxm(payload, size, &ptrDoxm);
+    if ((NULL == ptrDoxm) || (OC_STACK_OK != res))
+    {
+        OIC_LOG(INFO, TAG, "Ignoring malformed CBOR");
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    OIC_LOG(DEBUG, TAG, "Successfully converted doxm cbor to bin.");
+
+    //If this is owend device discovery we have to filter out the responses.
+    DiscoveryInfo* pDInfo = (DiscoveryInfo*)ctx;
+    OCProvisionDev_t **ppDevicesList = &pDInfo->pCandidateList;
+
+    // Get my device ID from doxm resource
+    OicUuid_t myId;
+    memset(&myId, 0, sizeof(myId));
+    res = GetDoxmDevOwnerId(&myId);
+    if(OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Error while getting my device ID.");
+        DeleteDoxmBinData(ptrDoxm);
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    // If this is owned discovery response but owner is not me then discard it.
+    if((pDInfo->isOwnedDiscovery) &&
+        (0 != memcmp(&ptrDoxm->owner.id, &myId.id, sizeof(myId.id))))
+    {
+        OIC_LOG(DEBUG, TAG, "Discovered device is not owend by me");
+        DeleteDoxmBinData(ptrDoxm);
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    res = GetDoxmDeviceID(&myId);
+    if(OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Error while getting my UUID.");
+        DeleteDoxmBinData(ptrDoxm);
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+    //if targetId and discovered deviceID are different, discard it
+    if ((pDInfo->isSingleDiscovery) &&
+        (0 != memcmp(&ptrDoxm->deviceID.id, &pDInfo->targetId->id, sizeof(pDInfo->targetId->id))))
+    {
+        OIC_LOG(DEBUG, TAG, "Discovered device is not target device");
+        DeleteDoxmBinData(ptrDoxm);
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+    //if this is owned discovery and this is PT's reply, discard it
+    if (((pDInfo->isSingleDiscovery) || (pDInfo->isOwnedDiscovery)) &&
+            (0 == memcmp(&ptrDoxm->deviceID.id, &myId.id, sizeof(myId.id))))
+    {
+        OIC_LOG(DEBUG, TAG, "discarding provision tool's reply");
+        DeleteDoxmBinData(ptrDoxm);
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    res = AddDevice(ppDevicesList, &clientResponse->devAddr,
+            clientResponse->connType, ptrDoxm);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Error while adding data to linkedlist.");
+        DeleteDoxmBinData(ptrDoxm);
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    res = SecurePortDiscovery(pDInfo, clientResponse);
+    if(OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to SecurePortDiscovery");
+        DeleteDoxmBinData(ptrDoxm);
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    OIC_LOG(INFO, TAG, "Exiting ProvisionDiscoveryHandler.");
+    return  OC_STACK_KEEP_TRANSACTION;
 }
 
 static void DeviceDiscoveryDeleteHandler(void *ctx)

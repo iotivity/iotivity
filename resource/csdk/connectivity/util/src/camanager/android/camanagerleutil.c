@@ -154,7 +154,7 @@ bool CAManagerIsDeviceBonded(JNIEnv *env, jobject btDevice)
     if (!id_bonded)
     {
         OIC_LOG(ERROR, TAG, "id_bonded is null");
-        return false;;
+        return false;
     }
 
     jint jni_bonded_const = (*env)->GetStaticIntField(env, jni_cid_BTDevice, id_bonded);

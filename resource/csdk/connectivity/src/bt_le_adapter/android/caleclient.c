@@ -3703,20 +3703,16 @@ bool CALEClientIsValidState(const char* remoteAddress, uint16_t state_type,
         default:
             break;
     }
+    ca_mutex_unlock(g_deviceStateListMutex);
 
     if (target_state == curValue)
     {
-        ca_mutex_unlock(g_deviceStateListMutex);
         return true;
     }
     else
     {
-        ca_mutex_unlock(g_deviceStateListMutex);
         return false;
     }
-
-    ca_mutex_unlock(g_deviceStateListMutex);
-    return false;
 }
 
 void CALEClientCreateDeviceList()
@@ -4263,12 +4259,6 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattConnectionStateChangeCallback(J
             OIC_LOG(INFO, TAG, "unknown status or manual disconnected state");
             CALEClientUpdateSendCnt(env);
             return;
-        }
-
-        if (g_sendBuffer)
-        {
-            (*env)->DeleteGlobalRef(env, g_sendBuffer);
-            g_sendBuffer = NULL;
         }
     }
     return;

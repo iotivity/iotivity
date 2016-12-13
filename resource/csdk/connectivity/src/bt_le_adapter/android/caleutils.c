@@ -127,8 +127,6 @@ bool CALEIsBondedDevice(JNIEnv *env, jobject bluetoothDevice)
         OIC_LOG(DEBUG, TAG, "remote device is not bonded");
         return false;
     }
-
-    return false;
 }
 
 jobjectArray CALEGetBondedDevices(JNIEnv *env)
