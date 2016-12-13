@@ -86,8 +86,6 @@ std::shared_ptr<AttributeProperty> ResourceModelSchemaBuilder::buildAttribute(
             OIC_LOG(ERROR, TAG, "Unknown type!");
             return nullptr;
     }
-
-    return nullptr;
 }
 
 std::shared_ptr<IntegerProperty> ResourceModelSchemaBuilder::buildIntegerAttribute(
