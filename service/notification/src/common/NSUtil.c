@@ -312,9 +312,9 @@ NSResult NSGenerateUUIDStr(char uuidStr[UUID_STRING_SIZE])
 {
     uint8_t uuid[UUID_SIZE] = { 0, };
 
-    if (RAND_UUID_OK == OCGenerateUuid(uuid))
+    if (OCGenerateUuid(uuid))
     {
-        if (RAND_UUID_OK == OCConvertUuidToString(uuid, uuidStr))
+        if (OCConvertUuidToString(uuid, uuidStr))
         {
             return NS_OK;
         }

@@ -2277,8 +2277,7 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     }
     else
     {
-        OCRandomUuidResult rdm = OCGenerateUuid(ownerId.id);
-        VERIFY_SUCCESS(TAG, RAND_UUID_OK == rdm, FATAL);
+        VERIFY_SUCCESS(TAG, OCGenerateUuid(ownerId.id), FATAL);
     }
 
     memcpy(&acl->rownerID, &ownerId, sizeof(OicUuid_t));

@@ -1555,10 +1555,10 @@ static OCStackResult CheckDeviceID()
 
     if (!validId)
     {
-        if (OCGenerateUuid(gDoxm->deviceID.id) != RAND_UUID_OK)
+        if (!OCGenerateUuid(gDoxm->deviceID.id))
         {
             OIC_LOG(FATAL, TAG, "Generate UUID for Server Instance failed!");
-            return ret;
+            return OC_STACK_ERROR;
         }
         ret = OC_STACK_OK;
 

@@ -1,3 +1,4 @@
+
 //******************************************************************
 //
 // Copyright 2014 Intel Mobile Communications GmbH All Rights Reserved.
@@ -18,8 +19,6 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-
-
 extern "C" {
     #include "ocrandom.h"
 }
@@ -27,7 +26,6 @@ extern "C" {
 #include "gtest/gtest.h"
 #include "math.h"
 
-#define ARR_SIZE (20)
 
 TEST(RandomGeneration,OCGetRandom) {
     uint32_t value = OCGetRandom();
@@ -36,10 +34,11 @@ TEST(RandomGeneration,OCGetRandom) {
 }
 
 TEST(RandomGeneration,OCGetRandomBytes) {
-    uint8_t array[ARR_SIZE] = {};
+    uint16_t ARR_SIZE = 20;
+    uint8_t array[ARR_SIZE]={};
     EXPECT_TRUE(OCGetRandomBytes(array + 1, ARR_SIZE - 2));
 
-    for (int i = 1; i <= ARR_SIZE - 2; i++) {
+    for (int i = 1; i < ARR_SIZE - 2; i++) {
         uint8_t value = array[i];
         EXPECT_LE((uint8_t )0, value);
         EXPECT_GT(pow(2, 8), value);
@@ -50,7 +49,7 @@ TEST(RandomGeneration,OCGetRandomBytes) {
 
 TEST(RandomGeneration, OCGenerateUuid)
 {
-    EXPECT_FALSE(OCGenerateUuid(NULL));
+    EXPECT_EQ(RAND_UUID_INVALID_PARAM, OCGenerateUuid(NULL));
 
     uint8_t uuid[UUID_SIZE] = {};
 
@@ -68,12 +67,12 @@ TEST(RandomGeneration, OCGenerateUuid)
 
 TEST(RandomGeneration, OCGenerateUuidString)
 {
-    char uuidString[UUID_STRING_SIZE] = {};
+    char uuidString[UUID_STRING_SIZE] ={};
     uint8_t uuid[UUID_SIZE] = {};
 
     EXPECT_TRUE(OCGenerateUuid(uuid));
     EXPECT_TRUE(OCConvertUuidToString(uuid, uuidString));
-    EXPECT_EQ('\0', uuidString[36]);
+    EXPECT_EQ(0, uuidString[36]);
     EXPECT_EQ('-', uuidString[8]);
     EXPECT_EQ('-', uuidString[13]);
     EXPECT_EQ('-', uuidString[18]);

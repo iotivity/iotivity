@@ -140,6 +140,6 @@ exit:
 
 OCStackResult ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid)
 {
-    OCRandomUuidResult result = OCConvertStringToUuid(strUuid, uuid->id);
-    return (result == RAND_UUID_OK) ? OC_STACK_OK : OC_STACK_INVALID_PARAM;
+    bool result = OCConvertStringToUuid(strUuid, uuid->id);
+    return (result) ? OC_STACK_OK : OC_STACK_INVALID_PARAM;
 }

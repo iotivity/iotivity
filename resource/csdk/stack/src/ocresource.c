@@ -1475,7 +1475,7 @@ OCStackResult OCSetPlatformInfo(OCPlatformInfo info)
      * into one PAL API.
      */
     uint8_t uuid[UUID_SIZE];
-    if (OCConvertStringToUuid(info.platformID, uuid) != RAND_UUID_OK)
+    if (!OCConvertStringToUuid(info.platformID, uuid))
     {
         OIC_LOG(ERROR, TAG, "Platform ID is not a UUID.");
         goto exit;

@@ -4228,7 +4228,11 @@ static OCDoHandle GenerateInvocationHandle()
     handle = (OCDoHandle) OICMalloc(sizeof(uint8_t[CA_MAX_TOKEN_LEN]));
     if (handle)
     {
-        OCFillRandomMem((uint8_t*)handle, sizeof(uint8_t[CA_MAX_TOKEN_LEN]));
+        if (!OCGetRandomBytes((uint8_t*)handle, sizeof(uint8_t[CA_MAX_TOKEN_LEN])))
+        {
+            OICFree(handle);
+            return NULL;
+        }
     }
 
     return handle;
@@ -4802,7 +4806,7 @@ const char* OCGetServerInstanceIDString(void)
     }
 
     const OicUuid_t *sid = OCGetServerInstanceID();
-    if (sid && OCConvertUuidToString(sid->id, sidStr) != RAND_UUID_OK)
+    if(sid && !OCConvertUuidToString(sid->id, sidStr))
     {
         OIC_LOG(FATAL, TAG, "Generate UUID String for Server Instance failed!");
         return NULL;
