@@ -44,6 +44,7 @@
 #include "mbedtls/timing.h"
 #include "mbedtls/ssl_cookie.h"
 #endif
+#include "pkix_interface.h"
 
 #if !defined(NDEBUG) || defined(TB_LOG)
 #include "mbedtls/debug.h"
@@ -422,6 +423,13 @@ static CAgetCredentialTypesHandler g_getCredentialTypesCallback = NULL;
 static CAgetPkixInfoHandler g_getPkixInfoCallback = NULL;
 
 /**
+ * @var g_setupPkContextCallback
+ *
+ * @brief callback to setup PK context handler for H/W based Public Key Infrastructure
+ */
+static CAsetupPkContextHandler g_setupPkContextCallback = NULL;
+
+/**
  * @var g_dtlsContextMutex
  * @brief Mutex to synchronize access to g_caSslContext.
  */
@@ -474,6 +482,14 @@ void CAsetPkixInfoCallback(CAgetPkixInfoHandler infoCallback)
     g_getPkixInfoCallback = infoCallback;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
 }
+
+void CAsetSetupPkContextCallback(CAsetupPkContextHandler setupPkCtxCallback)
+{
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
+    g_setupPkContextCallback = setupPkCtxCallback;
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
+}
+
 void CAsetCredentialTypesCallback(CAgetCredentialTypesHandler credTypesCallback)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
@@ -651,7 +667,6 @@ static int InitPKIX(CATransportAdapter_t adapter)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(g_getPkixInfoCallback, NET_SSL_TAG, "PKIX info callback is NULL", -1);
-    g_getPkixInfoCallback(&g_pkiInfo);
 
     mbedtls_x509_crt_free(&g_caSslContext->ca);
     mbedtls_x509_crt_free(&g_caSslContext->crt);
@@ -667,15 +682,30 @@ static int InitPKIX(CATransportAdapter_t adapter)
                                    &g_caSslContext->serverDtlsConf : &g_caSslContext->serverTlsConf);
     mbedtls_ssl_config * clientConf = (adapter == CA_ADAPTER_IP ?
                                    &g_caSslContext->clientDtlsConf : &g_caSslContext->clientTlsConf);
-    // optional
+
+    // load pk key, cert, trust chain and crl
+    g_getPkixInfoCallback(&g_pkiInfo);
+
+    // parse own certficate (optional)
     int ret = ParseChain(&g_caSslContext->crt, g_pkiInfo.crt.data, g_pkiInfo.crt.len);
     if (0 != ret)
     {
         OIC_LOG(WARNING, NET_SSL_TAG, "Own certificate chain parsing error");
         goto required;
     }
-    ret =  mbedtls_pk_parse_key(&g_caSslContext->pkey, g_pkiInfo.key.data, g_pkiInfo.key.len,
-                                                                               NULL, 0);
+
+    // parse private key if hw is not supported (optional)
+    if(NULL == g_setupPkContextCallback)
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "g_setupPkContextCallback is NULL");
+        ret =  mbedtls_pk_parse_key(&g_caSslContext->pkey, g_pkiInfo.key.data, g_pkiInfo.key.len,
+                                                                                   NULL, 0);
+    }
+    else
+    {
+        // setup hw pk context (optional)
+        ret = g_setupPkContextCallback(&g_caSslContext->pkey);
+    }
     if (0 != ret)
     {
         OIC_LOG(WARNING, NET_SSL_TAG, "Key parsing error");

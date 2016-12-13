@@ -81,7 +81,7 @@ cp -av /usr/lib*/libuuid.so.1 %{buildroot}%{_libdir}/libuuid1.so ||:
 if echo %{SECURED}|grep -qi '1'; then
 	cp -f %{ROOTDIR}/out/tizen/*/*/extlibs/tinydtls/libtinydtls.a %{buildroot}/%{_libdir}
 	cp -f %{ROOTDIR}/out/tizen/*/*/libmbedcrypto.a %{buildroot}/%{_libdir}
-	cp -f %{ROOTDIR}/out/tizen/*/*/libmbedtls.a %{buildroot}/%{_libdir}
+	cp -f %{ROOTDIR}/out/tizen/*/*/libmbedtls.so %{buildroot}/%{_libdir}
 	cp -f %{ROOTDIR}/out/tizen/*/*/libmbedx509.a %{buildroot}/%{_libdir}
 fi
 
@@ -115,3 +115,7 @@ cp -rf %{ROOTDIR}/com.oic.ri.pc %{DEST_LIB_DIR}/pkgconfig/
 %{_libdir}/lib*.a*
 %{_includedir}/OICHeaders/*
 %{_libdir}/pkgconfig/*.pc
+%if 0%{?SECURED} == 1
+%{_libdir}/libmbedtls.so
+%endif
+

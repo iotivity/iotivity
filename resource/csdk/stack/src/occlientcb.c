@@ -20,7 +20,6 @@
 
 #include "iotivity_config.h"
 #include "occlientcb.h"
-#include <coap/coap.h>
 #include "logger.h"
 #include "oic_malloc.h"
 #include <string.h>
@@ -34,6 +33,7 @@
 
 #include "cacommon.h"
 #include "cainterface.h"
+#include <coap/coap.h>
 
 /// Module Name
 #define TAG "OIC_RI_CLIENTCB"

@@ -47,5 +47,8 @@ UnsetUserConfirmCB
 SetVerifyOption
 VerifyOwnershipTransfer
 
+SetHwPkixCallbacks
+SetupHwPkContext
+
 registerTimer
 unregisterTimer

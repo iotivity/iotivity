@@ -27,6 +27,7 @@ from shutil import copyfile
 
 target_os = env.get('TARGET_OS')
 root_dir = env.get('SRC_DIR')
+static_lib = env.get('WITH_MBEDTLS_STATIC_LIB');
 mbedtls_dir = os.path.join(root_dir, 'extlibs','mbedtls','mbedtls/')
 start_dir = os.getcwd()
 # Right now this script assumes the revision is a tag, and not a branch or an arbitrary
@@ -183,7 +184,19 @@ mbex509_env.AppendUnique(LIBS = ['mbedcrypto'])
 static_libmbedx509 = mbex509_env.StaticLibrary('mbedx509', mbeX509_src)
 mbex509_env.InstallTarget(static_libmbedx509, 'mbedx509')
 
-
-mbedtls_env.AppendUnique(LIBS = ['mbedx509', 'mbedcrypto'])
-static_libmbedtls = mbedtls_env.StaticLibrary('mbedtls', mbedtls_src)
-mbedtls_env.InstallTarget(static_libmbedtls, 'mbedtls')
+if static_lib == '1':
+	mbedtls_env.AppendUnique(LIBS = ['mbedx509', 'mbedcrypto'])
+	static_libmbedtls = mbedtls_env.StaticLibrary('mbedtls', mbedtls_src)
+	mbedtls_env.InstallTarget(static_libmbedtls, 'mbedtls')
+else:
+	if target_os in ['windows', 'msys_nt', 'ios']:
+		mbedtls_env.AppendUnique(LIBS = ['mbedx509', 'mbedcrypto'])
+		static_libmbedtls = mbedtls_env.StaticLibrary('mbedtls', mbedtls_src)
+		mbedtls_env.InstallTarget(static_libmbedtls, 'mbedtls')
+	else:
+		mbedtls_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
+		mbedtls_env.AppendUnique(LIBS = ['mbedx509', 'mbedcrypto'])
+		static_libmbedtls = mbedtls_env.StaticLibrary('mbedtls', mbedtls_src)
+		shared_libmbedtls = mbedtls_env.SharedLibrary('mbedtls', mbedtls_src)
+		mbedtls_env.InstallTarget([static_libmbedtls, shared_libmbedtls], 'mbedtls')
+		mbedtls_env.UserInstallTargetLib([static_libmbedtls, shared_libmbedtls], 'mbedtls')

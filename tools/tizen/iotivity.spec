@@ -249,7 +249,7 @@ cp out/%{TARGET_OS}/%{TARGET_ARCH}/%{build_mode}/service/coap-http-proxy/samples
 mkdir -p %{ex_install_dir}/provisioning
 mkdir -p %{ex_install_dir}/provision-sample
 
-
+cp -R ./extlibs/mbedtls/mbedtls/include/mbedtls/ %{buildroot}%{_includedir}/mbedtls
 cp ./resource/csdk/security/include/*.h %{buildroot}%{_includedir}
 cp ./resource/csdk/connectivity/api/*.h %{buildroot}%{_includedir}/
 cp ./resource/csdk/security/provisioning/include/oxm/*.h %{buildroot}%{_includedir}
@@ -292,6 +292,7 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %{_libdir}/liboctbstack.so
 %{_libdir}/libconnectivity_abstraction.so
 %if 0%{?SECURED} == 1
+%{_libdir}/libmbedtls.so
 %{_libdir}/libocpmapi.so
 %{_libdir}/libocprovision.so
 %{_libdir}/oic_svr_db_server.dat
@@ -327,6 +328,9 @@ rm -rfv out %{buildroot}/out %{buildroot}/${HOME} ||:
 %files devel
 %defattr(-,root,root,-)
 %license LICENSE
-%{_libdir}/lib*.a
+%if 0%{?SECURED} == 1
+%{_libdir}/libmbedtls.so
+%endif
+%{_libdir}/*.a
 %{_libdir}/pkgconfig/%{name}.pc
 %{_includedir}/*

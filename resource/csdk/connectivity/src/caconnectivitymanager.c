@@ -51,6 +51,7 @@ static bool g_isInitialized = false;
 extern void CAsetPkixInfoCallback(CAgetPkixInfoHandler infCallback);
 extern void CAsetPskCredentialsCallback(CAgetPskCredentialsHandler credCallback);
 extern void CAsetCredentialTypesCallback(CAgetCredentialTypesHandler credCallback);
+extern void CAsetSetupPkContextCallback(CAsetupPkContextHandler setupPkCtxCallback);
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
 
@@ -201,6 +202,19 @@ CAResult_t CAregisterGetCredentialTypesHandler(CAgetCredentialTypesHandler getCr
         return CA_STATUS_NOT_INITIALIZED;
     }
     CAsetCredentialTypesCallback(getCredTypesHandler);
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    return CA_STATUS_OK;
+}
+
+CAResult_t CAregisterSetupPkContextHandler(CAsetupPkContextHandler setupPkContextCallback)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    if (!g_isInitialized)
+    {
+        return CA_STATUS_NOT_INITIALIZED;
+    }
+    CAsetSetupPkContextCallback(setupPkContextCallback);
     OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
     return CA_STATUS_OK;
 }

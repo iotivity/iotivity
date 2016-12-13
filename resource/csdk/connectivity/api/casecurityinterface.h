@@ -27,7 +27,9 @@
 #ifndef CA_SECURITY_INTERFACE_H_
 #define CA_SECURITY_INTERFACE_H_
 
-
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+#include "mbedtls/ssl.h"
+#endif //__WITH_DTLS__ or __WITH_TLS__
 #include "cacommon.h"
 #include "byte_array.h"
 
@@ -131,6 +133,24 @@ CAResult_t CAregisterPskCredentialsHandler(CAgetPskCredentialsHandler getTlsCred
  * @return  NONE
  */
 typedef void (*CAgetPkixInfoHandler)(PkiInfo_t * inf);
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+/**
+ * @brief   Callback function type for setup PK context
+ *
+ * @param   pkCtx[in]   mbedtls's PK context
+ *
+ * @return  0 on success
+ */
+typedef int (*CAsetupPkContextHandler)(mbedtls_pk_context * pkCtx);
+
+/**
+ * Register callback to setup PK Context
+ * @param[in]   setupPkContextCallback    Callback function to setup PK context.
+ * @return  ::CA_STATUS_OK or appropriate error code.
+ */
+CAResult_t CAregisterSetupPkContextHandler(CAsetupPkContextHandler setupPkContextHandler);
+#endif //__WITH_DTLS__ or __WITH_TLS__
 
 /**
  * Register callback to get PKIX related info.
