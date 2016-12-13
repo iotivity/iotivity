@@ -23,7 +23,7 @@ android {
 }
 repositories {
     flatDir {
-        dirs "../../android_api/base/build/outputs/aar/"
+        dirs "../../iotivity-android/build/outputs/aar/"
     }
 }
 
