@@ -123,6 +123,7 @@ public class SmokeTest extends InstrumentationTestCase {
         final String resourceType = "unit.test.resource" +
                 new Date().getTime();
         final CountDownLatch signal = new CountDownLatch(1);
+        final Object waitLock = new Object();
 
         OcPlatform.EntityHandler entityHandler = new OcPlatform.EntityHandler() {
             @Override
@@ -150,6 +151,10 @@ public class SmokeTest extends InstrumentationTestCase {
                                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                                     presenceListener
                             );
+
+                            synchronized (waitLock) {
+                                waitLock.notify();
+                            }
 
                             //wait for onPresence event
                             assertTrue(signal.await(60, TimeUnit.SECONDS));
@@ -186,13 +191,12 @@ public class SmokeTest extends InstrumentationTestCase {
                     resourceFoundListener);
 
             //server
-            //wait 2 seconds for the client's resourceFoundListener to set the presenceListener.
+            //wait for the client's resourceFoundListener to set the presenceListener.
             //the presenceListener must be set before startPresence() is called to get notified.
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                Log.e(TAG, e.getMessage());
+            synchronized (waitLock) {
+                waitLock.wait(2000);
             }
+
             OcPlatform.startPresence(OcPlatform.DEFAULT_PRESENCE_TTL);
 
             //wait for onPresence event
@@ -1030,9 +1034,8 @@ public class SmokeTest extends InstrumentationTestCase {
         };
 
         OcPlatformInfo platformInfo = null;
-
-        platformInfo = new OcPlatformInfo("myPlatformID", "myManuName", "myManuUrl");
-
+        String myPlatformId = "00112233-4455-6677-8899-AABBCCDDEEFF"; // platform id must be a uuid
+        platformInfo = new OcPlatformInfo(myPlatformId, "myManuName", "myManuUrl");
         platformInfo.setModelNumber("myModelNumber");
         platformInfo.setDateOfManufacture("myDateOfManufacture");
         platformInfo.setPlatformVersion("myPlatformVersion");
