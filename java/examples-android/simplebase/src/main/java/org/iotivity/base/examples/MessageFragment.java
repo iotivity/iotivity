@@ -169,6 +169,17 @@ public class MessageFragment extends Fragment implements OcResource.OnGetListene
                                 OcPlatform.WELL_KNOWN_QUERY,
                                 EnumSet.of(OcConnectivityType.CT_ADAPTER_IP),
                                 resourceFoundListener, mQos);
+                    } else if (OcConnectivityType.CT_ADAPTER_GATT_BTLE == connectivityType) {
+                        if (null != Common.getLeAddress())
+                        {
+                            OcPlatform.findResource("",
+                                    Common.getLeAddress() + OcPlatform.WELL_KNOWN_QUERY,
+                                    EnumSet.of(OcConnectivityType.CT_ADAPTER_GATT_BTLE),
+                                    resourceFoundListener, QualityOfService.LOW);
+                        } else {
+                            Common.showToast(mContext, "Please scan ble device");
+                            Log.e(TAG, "invalid ble device");
+                        }
                     } else {
                         OcPlatform.findResource("",
                                 OcPlatform.WELL_KNOWN_QUERY,

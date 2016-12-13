@@ -24,6 +24,7 @@ package org.iotivity.base.examples;
 
 import android.content.Context;
 import android.widget.Toast;
+import android.util.Log;
 
 import org.iotivity.base.OcPlatform;
 import org.iotivity.base.ResourceProperty;
@@ -39,6 +40,7 @@ import java.util.Locale;
  */
 public class Common {
 
+    private static final String TAG               = "OIC_SIMPLE_COMMON";
     public static final int    DATA_SIZE          = 3000;
     public static String       HOST               = "coap+tcp://192.168.0.1:5683";
     public static final String COAP_TCP           = "coap+tcp://";
@@ -67,6 +69,8 @@ public class Common {
     public final static String MQ_DEFAULT_TOPIC_URI = "/oic/ps/cleanroom";
     public final static String MQ_BROKER_URI = "/oic/ps";
 
+    private static String mLeAddress = null;
+
     public static String getDateCurrentTimeZone() {
         StringBuilder sb = new StringBuilder();
         try {
@@ -85,6 +89,18 @@ public class Common {
 
     public static void showToast(Context context, String msg) {
         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    public static void setLeAddress(String address)
+    {
+        Log.i(TAG, "setLeAddress : " + address.toString());
+        mLeAddress = address;
+    }
+
+    public static String getLeAddress()
+    {
+        Log.i(TAG, "getLeAddress : " + mLeAddress);
+        return mLeAddress;
     }
 }
 

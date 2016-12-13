@@ -266,6 +266,7 @@ public class BluetoothFragment extends Fragment implements
                 sb.append("Set Connect with : ");
                 try {
                     final String address = mBluetoothDevices.get(pos).getAddress();
+                    Common.setLeAddress(address);
                     CaInterface.setAutoConnectionDevice(address);
                     OcPlatform.OnResourceFoundListener resourceFoundListener =
                             new OcPlatform.OnResourceFoundListener() {
