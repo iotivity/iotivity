@@ -146,7 +146,6 @@ void JniProvisionResultListner::ProvisionResultCallback(PMResultList_t *result, 
             }
             return;
         }
-        return;
     }
 
     jmethodID midL = env->GetMethodID(clsL, calledFunc.c_str(), "(Ljava/util/List;I)V");
