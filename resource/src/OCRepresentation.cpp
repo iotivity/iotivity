@@ -432,14 +432,12 @@ namespace OC
     std::string OCRepresentation::payload_array_helper_copy<std::string>(
             size_t index, const OCRepPayloadValue* pl)
     {
-        if (pl->arr.strArray[index])
+        if (pl && pl->arr.strArray[index])
         {
             return std::string(pl->arr.strArray[index]);
         }
-        else
-        {
-            return std::string{};
-        }
+
+        return std::string{};
     }
 
     template<>

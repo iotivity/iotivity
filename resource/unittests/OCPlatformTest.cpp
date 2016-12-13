@@ -105,6 +105,11 @@ namespace OCPlatformTest
 
     bool OCResourcePayloadAddStringLL(OCStringLL **stringLL, std::string value)
     {
+        if (!stringLL)
+        {
+            return false;
+        }
+
         char *dup = NULL;
         DuplicateString(&dup, value);
         if (!*stringLL)
@@ -124,7 +129,6 @@ namespace OCPlatformTest
             temp->next->value = dup;
             return true;
         }
-        return false;
     }
 
     OCResourceHandle RegisterResource(std::string uri, std::string type, std::string iface)

@@ -309,7 +309,6 @@ bool DPGenerateQuery(bool isSecure,
         case CT_ADAPTER_RFCOMM_BTEDR:
             OIC_LOG(ERROR, TAG, "Not supported connectivity adapter.");
             return false;
-            break;
 #endif
         default:
             OIC_LOG(ERROR, TAG, "Unknown connectivity adapter.");
