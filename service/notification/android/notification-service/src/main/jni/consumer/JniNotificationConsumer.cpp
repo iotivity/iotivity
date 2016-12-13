@@ -73,37 +73,45 @@ static JNIEnv *GetJNIEnv(jint *ret)
 jobject getJavaProviderState(JNIEnv *env, OIC::Service::NSProviderState state)
 {
     LOGD ("ConsumerService_getJavaProviderState - IN");
+    jobject providerState = NULL;
     switch (state)
     {
         case OIC::Service::NSProviderState::ALLOW:
             {
                 static jfieldID fieldID = env->GetStaticFieldID(g_cls_ProviderState,
                                           "ALLOW", "Lorg/iotivity/service/ns/consumer/Provider$ProviderState;");
-                return env->GetStaticObjectField(g_cls_ProviderState, fieldID);
+                providerState = env->GetStaticObjectField(g_cls_ProviderState, fieldID);
+                break;
             }
         case OIC::Service::NSProviderState::DENY:
             {
                 static jfieldID fieldID = env->GetStaticFieldID(g_cls_ProviderState,
                                           "DENY", "Lorg/iotivity/service/ns/consumer/Provider$ProviderState;");
-                return env->GetStaticObjectField(g_cls_ProviderState, fieldID);
+                providerState = env->GetStaticObjectField(g_cls_ProviderState, fieldID);
+                break;
             }
         case OIC::Service::NSProviderState::TOPIC:
             {
                 static jfieldID fieldID = env->GetStaticFieldID(g_cls_ProviderState,
                                           "TOPIC", "Lorg/iotivity/service/ns/consumer/Provider$ProviderState;");
-                return env->GetStaticObjectField(g_cls_ProviderState, fieldID);
+                providerState = env->GetStaticObjectField(g_cls_ProviderState, fieldID);
+                break;
             }
         case OIC::Service::NSProviderState::STOPPED:
             {
                 static jfieldID fieldID = env->GetStaticFieldID(g_cls_ProviderState,
                                           "STOPPED", "Lorg/iotivity/service/ns/consumer/Provider$ProviderState;");
-                return env->GetStaticObjectField(g_cls_ProviderState, fieldID);
+                providerState = env->GetStaticObjectField(g_cls_ProviderState, fieldID);
+                break;
             }
         default:
-            return NULL;
+            {
+                providerState = NULL;
+                break;
+            }
     }
     LOGD ("ConsumerService_getJavaProviderState - OUT");
-    return NULL;
+    return providerState;
 }
 
 jobject getJavaSyncType(JNIEnv *env, OIC::Service::NSSyncInfo::NSSyncType nsType)
@@ -117,32 +125,39 @@ jobject getJavaSyncType(JNIEnv *env, OIC::Service::NSSyncInfo::NSSyncType nsType
         LOGE ("Failed to Get ObjectClass for SyncType");
         return NULL;
     }
+    jobject syncType = NULL;
     switch (nsType)
     {
         case OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_UNREAD:
             {
                 static jfieldID fieldID = env->GetStaticFieldID(cls_SyncType,
                                           "UNREAD", "Lorg/iotivity/service/ns/common/SyncInfo$SyncType;");
-                return env->GetStaticObjectField(cls_SyncType, fieldID);
+                syncType = env->GetStaticObjectField(cls_SyncType, fieldID);
+                break;
             }
         case OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ :
             {
                 static jfieldID fieldID = env->GetStaticFieldID(cls_SyncType,
                                           "READ", "Lorg/iotivity/service/ns/common/SyncInfo$SyncType;");
-                return env->GetStaticObjectField(cls_SyncType, fieldID);
+                syncType = env->GetStaticObjectField(cls_SyncType, fieldID);
+                break;
             }
         case OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_DELETED :
             {
                 static jfieldID fieldID = env->GetStaticFieldID(cls_SyncType,
                                           "DELETED", "Lorg/iotivity/service/ns/common/SyncInfo$SyncType;");
-                return env->GetStaticObjectField(cls_SyncType, fieldID);
+                syncType = env->GetStaticObjectField(cls_SyncType, fieldID);
+                break;
             }
         default:
-            return NULL;
+            {
+                syncType = NULL;
+                break;
+            }
     }
 
     LOGD ("ConsumerService_getJavaSyncType - OUT");
-    return NULL;
+    return syncType;
 }
 
 jobject getJavaTopicState(JNIEnv *env, OIC::Service::NSTopic::NSTopicState nsState)
@@ -156,6 +171,7 @@ jobject getJavaTopicState(JNIEnv *env, OIC::Service::NSTopic::NSTopicState nsSta
         LOGE ("Failed to Get ObjectClass for TopicState Type");
         return NULL;
     }
+    jobject topicState = NULL;
 
     switch (nsState)
     {
@@ -163,20 +179,25 @@ jobject getJavaTopicState(JNIEnv *env, OIC::Service::NSTopic::NSTopicState nsSta
             {
                 static jfieldID fieldID = env->GetStaticFieldID(cls_topicState,
                                           "UNSUBSCRIBED", "Lorg/iotivity/service/ns/common/Topic$TopicState;");
-                return env->GetStaticObjectField(cls_topicState, fieldID);
+                topicState = env->GetStaticObjectField(cls_topicState, fieldID);
+                break;
             }
         case OIC::Service::NSTopic::NSTopicState::SUBSCRIBED:
             {
                 static jfieldID fieldID = env->GetStaticFieldID(cls_topicState,
                                           "SUBSCRIBED", "Lorg/iotivity/service/ns/common/Topic$TopicState;");
-                return env->GetStaticObjectField(cls_topicState, fieldID);
+                topicState = env->GetStaticObjectField(cls_topicState, fieldID);
+                break;
             }
         default:
-            return NULL;
+            {
+                topicState = NULL;
+                break;
+            }
     }
 
     LOGD ("ConsumerService_getJavaTopicState - OUT");
-    return NULL;
+    return topicState;
 }
 
 jobject getJavaTopicsList(JNIEnv *env, OIC::Service::NSTopicsList *topicList)
@@ -437,37 +458,45 @@ jobject getJavaProvider(JNIEnv *env, OIC::Service::NSProvider *provider)
 jobject getJavaMessageType(JNIEnv *env, OIC::Service::NSMessage::NSMessageType type)
 {
     LOGD ("ConsumerService_getJavaMessageType - IN");
+    jobject messageType = NULL;
     switch (type)
     {
         case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_ALERT:
             {
                 static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message_Type,
                                           "ALERT", "Lorg/iotivity/service/ns/common/Message$MessageType;");
-                return env->GetStaticObjectField(g_cls_Message_Type, fieldID);
+                messageType = env->GetStaticObjectField(g_cls_Message_Type, fieldID);
+                break;
             }
         case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_NOTICE:
             {
                 static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message_Type,
                                           "NOTICE", "Lorg/iotivity/service/ns/common/Message$MessageType;");
-                return env->GetStaticObjectField(g_cls_Message_Type, fieldID);
+                messageType = env->GetStaticObjectField(g_cls_Message_Type, fieldID);
+                break;
             }
         case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_EVENT:
             {
                 static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message_Type,
                                           "EVENT", "Lorg/iotivity/service/ns/common/Message$MessageType;");
-                return env->GetStaticObjectField(g_cls_Message_Type, fieldID);
+                messageType = env->GetStaticObjectField(g_cls_Message_Type, fieldID);
+                break;
             }
         case OIC::Service::NSMessage::NSMessageType::NS_MESSAGE_INFO:
             {
                 static jfieldID fieldID = env->GetStaticFieldID(g_cls_Message_Type,
                                           "INFO", "Lorg/iotivity/service/ns/common/Message$MessageType;");
-                return env->GetStaticObjectField(g_cls_Message_Type, fieldID);
+                messageType = env->GetStaticObjectField(g_cls_Message_Type, fieldID);
+                break;
             }
         default:
-            return NULL;
+            {
+                messageType = NULL;
+                break;
+            }
     }
     LOGD ("ConsumerService_getJavaMessageType - OUT");
-    return NULL;
+    return messageType;
 }
 
 jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
