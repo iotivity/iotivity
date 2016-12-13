@@ -112,7 +112,6 @@ void JniOcCloudResultListener::CloudResultListenerCB(int result, void *data,
                 }
                 return;
             }
-            return;
     }
 
     jmethodID midL = env->GetMethodID(clsL, calledFunc.c_str(), "(Z)V");

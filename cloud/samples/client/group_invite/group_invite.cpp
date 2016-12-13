@@ -933,8 +933,6 @@ int main(int argc, char *argv[])
                 }
                 case 50:
                     goto exit;
-                    break;
-
                 default:
                     break;
             }
@@ -949,6 +947,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    exit: return 0;
+exit:
+    return 0;
 }
 
