@@ -89,7 +89,10 @@ namespace OIC
                         auto discoveredCallback = NSConsumerService::getInstance()->getProviderDiscoveredCb();
                         discoveredCallback(oldProvider);
                         auto changeCallback = oldProvider->getProviderStateReceivedCb();
-                        changeCallback(prevState);
+                        if (changeCallback != NULL)
+                        {
+                            changeCallback(prevState);
+                        }
                     }
                 }
                 else if (state == NS_DENY)
