@@ -39,7 +39,11 @@ pthread_t thread_handle = NULL;
  * It contains Server's Identity and the PSK credentials
  * of other devices which the server trusts
  */
+#ifdef MULTIPLE_OWNER
+static char CRED_FILE[] = "oic_svr_db_server_MOT.dat";
+#else
 static char CRED_FILE[] = "oic_svr_db_server.dat";
+#endif
 
 OCPersistentStorage ps;
 
