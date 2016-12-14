@@ -178,6 +178,7 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
     OIC_LOG(DEBUG, TAG, "CAUtilClientInitialize");
 
     CAResult_t res = CA_STATUS_OK;
+
 #ifdef LE_ADAPTER
     if (CA_STATUS_OK != CAManagerLEClientInitialize(env, jvm, context))
     {
@@ -201,7 +202,7 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
 #endif
     return res;
 }
-#else
+#else //__ANDROID__
 /**
  * initialize client connection manager
  * @param[in]   env                   JNI interface pointer.
@@ -210,15 +211,9 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm, jobject context)
 CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm)
 {
     OIC_LOG(DEBUG, TAG, "CAUtilClientInitialize");
-
+    (void) env;
+    (void) jvm;
     CAResult_t res = CA_STATUS_OK;
-#ifdef LE_ADAPTER
-    if (CA_STATUS_OK != CAManagerLEClientInitialize(env, jvm))
-    {
-        OIC_LOG(ERROR, TAG, "CAManagerLEClientInitialize has failed");
-        res = CA_STATUS_FAILED;
-    }
-#endif
 
 #ifdef EDR_ADAPTER
     if (CA_STATUS_OK != CABTPairingInitialize(env, jvm))
@@ -239,7 +234,7 @@ CAResult_t CAUtilClientInitialize(JNIEnv *env, JavaVM *jvm)
 CAResult_t CAUtilClientTerminate(JNIEnv *env)
 {
     OIC_LOG(DEBUG, TAG, "CAUtilClientTerminate");
-#ifdef LE_ADAPTER
+#if defined(LE_ADAPTER) && defined(__ANDROID__)
     return CAManagerLEClientTerminate(env);
 #else
     OIC_LOG(DEBUG, TAG, "it is not supported");
@@ -295,7 +290,7 @@ void CAUtilSetFoundDeviceListener(jobject listener)
 CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount)
 {
     OIC_LOG(DEBUG, TAG, "CAUtilSetLEScanInterval");
-#ifdef LE_ADAPTER
+#if defined(LE_ADAPTER) && defined(__ANDROID__)
     CAManagerLESetScanInterval(intervalTime, workingCount);
     return CA_STATUS_OK;
 #else
@@ -309,7 +304,7 @@ CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount)
 CAResult_t CAUtilStopLEScan()
 {
     OIC_LOG(DEBUG, TAG, "CAUtilStopLEScan");
-#ifdef LE_ADAPTER
+#if defined(LE_ADAPTER) && defined(__ANDROID__)
     CAManagerLEStopScan();
     return CA_STATUS_OK;
 #else
