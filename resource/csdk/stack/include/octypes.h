@@ -210,9 +210,6 @@ extern "C" {
 /** To represent interface group.*/
 #define OC_RSRVD_INTERFACE_GROUP        "oic.mi.grp"
 
-/** To represent MFG date.*/
-#define OC_RSRVD_MFG_DATE               "mndt"
-
 /** To represent FW version.*/
 #define OC_RSRVD_FW_VERSION             "mnfv"
 
