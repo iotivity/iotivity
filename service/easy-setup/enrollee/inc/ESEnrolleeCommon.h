@@ -58,6 +58,8 @@ typedef struct
 typedef struct
 {
     char authCode[OIC_STRING_MAX_VALUE];        /**< Auth code issued by OAuth2.0-compatible account server **/
+    char accessToken[OIC_STRING_MAX_VALUE];     /**< Access token resolved with an auth code **/
+    OAUTH_TOKENTYPE accessTokenType;            /**< Access token type **/
     char authProvider[OIC_STRING_MAX_VALUE];    /**< Auth provider ID **/
     char ciServer[OIC_STRING_MAX_VALUE];        /**< Cloud interface server URL which an Enrollee is going to registered **/
     void *userdata;                             /**< Vender-specific data**/

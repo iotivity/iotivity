@@ -34,6 +34,8 @@ public class ESConstants {
     public static final String OC_RSRVD_ES_AUTHTYPE = "wat";
     public static final String OC_RSRVD_ES_ENCTYPE = "wet";
     public static final String OC_RSRVD_ES_AUTHCODE = "ac";
+    public static final String OC_RSRVD_ES_ACCESSTOKEN = "at";
+    public static final String OC_RSRVD_ES_ACCESSTOKEN_TYPE = "att";
     public static final String OC_RSRVD_ES_AUTHPROVIDER = "apn";
     public static final String OC_RSRVD_ES_CISERVER = "cis";
     public static final String OC_RSRVD_ES_SERVERID = "sid";
