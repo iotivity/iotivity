@@ -103,6 +103,7 @@ void printMenu()
     std::cout << "  19. Provision pre configure PIN for Multiple Ownership Transfer Mode"<<std::endl;
     std::cout << "  20. Add pre configure PIN for Multiple Ownership Transfer Mode"<<std::endl;
 #endif
+    std::cout << "  21. Configure SVRdb as Self-OwnerShip"<<std::endl;
     std::cout << "  99. Exit loop"<<std::endl;
 }
 
@@ -1642,6 +1643,20 @@ int main(void)
                         break;
                     }
 #endif //MULTIPLE_OWNER
+                case 21:
+                    {
+                        OCStackResult result;
+                        result = OCSecure::configSelfOwnership();
+                        if (OC_STACK_OK != result)
+                        {
+                            std::cout<<"configSelfOwnership API error. Please check SVR DB"<<std::endl;
+                        }
+                        else
+                        {
+                            std::cout<<"Success to configures SVR DB as self-ownership"<<std::endl;
+                        }
+                        break;
+                    }
                 case 99:
                 default:
                     out = 1;
