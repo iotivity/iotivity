@@ -1194,6 +1194,12 @@ static SslEndPoint_t * InitiateTlsHandshake(const CAEndpoint_t *endpoint)
         {
             break;
         }
+        else if (-1 == ret)
+        {
+            OIC_LOG(ERROR, NET_SSL_TAG, "Handshake failed due to socket error");
+            RemovePeerFromList(&tep->sep.endpoint);
+            return NULL;
+        }
         SSL_CHECK_FAIL(tep, ret, "Handshake error", 0, NULL, MBEDTLS_SSL_ALERT_MSG_HANDSHAKE_FAILURE);
     }
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
@@ -1816,17 +1822,20 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
             oc_mutex_unlock(g_sslContextMutex);
             return CA_STATUS_FAILED;
         }
-        int adapterIndex = GetAdapterIndex(peer->sep.endpoint.adapter);
-        if (0 == adapterIndex || adapterIndex == 1)
+        else if (0 < ret)
         {
-            g_caSslContext->adapterCallbacks[adapterIndex].recvCallback(&peer->sep, decryptBuffer, ret);
-        }
-        else
-        {
-            OIC_LOG(ERROR, NET_SSL_TAG, "Unsuported adapter");
-            RemovePeerFromList(&peer->sep.endpoint);
-            oc_mutex_unlock(g_sslContextMutex);
-            return CA_STATUS_FAILED;
+            int adapterIndex = GetAdapterIndex(peer->sep.endpoint.adapter);
+            if (0 == adapterIndex || adapterIndex == 1)
+            {
+                g_caSslContext->adapterCallbacks[adapterIndex].recvCallback(&peer->sep, decryptBuffer, ret);
+            }
+            else
+            {
+                OIC_LOG(ERROR, NET_SSL_TAG, "Unsuported adapter");
+                RemovePeerFromList(&peer->sep.endpoint);
+                oc_mutex_unlock(g_sslContextMutex);
+                return CA_STATUS_FAILED;
+            }
         }
     }
 
