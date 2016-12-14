@@ -34,7 +34,8 @@ extern "C" {
 
 #define OIC_RD_DEFAULT_RESOURCE 2
 
-#define DEFAULT_MESSAGE_TYPE "application/json"
+/** JSON media type. */
+#define OC_MEDIA_TYPE_APPLICATION_JSON   "application/json"
 
 /** Platform Model Number.*/
 #define OC_DATA_MODEL_NUMBER            "x.model"

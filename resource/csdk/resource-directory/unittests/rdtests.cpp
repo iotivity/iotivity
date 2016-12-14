@@ -564,7 +564,7 @@ TEST_F(RDDiscoverTests, ResourceQueryMatchesRemoteOnly)
     SetStringArray(link, OC_RSRVD_RESOURCE_TYPE, resourceTypeName_light.c_str());
     SetStringArray(link, OC_RSRVD_INTERFACE, OC_RSRVD_INTERFACE_DEFAULT);
     OCRepPayloadSetPropInt(link, OC_RSRVD_INS, 0);
-    SetStringArray(link, OC_RSRVD_MEDIA_TYPE, DEFAULT_MESSAGE_TYPE);
+    SetStringArray(link, OC_RSRVD_MEDIA_TYPE, OC_MEDIA_TYPE_APPLICATION_JSON);
     OCRepPayload *policy = OCRepPayloadCreate();
     OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP, OC_DISCOVERABLE);
     OCRepPayloadSetPropObjectAsOwner(link, OC_RSRVD_POLICY, policy);
