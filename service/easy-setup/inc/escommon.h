@@ -53,6 +53,8 @@ extern "C"
 #define OC_RSRVD_ES_AUTHTYPE               "wat"
 #define OC_RSRVD_ES_ENCTYPE                "wet"
 #define OC_RSRVD_ES_AUTHCODE               "ac"
+#define OC_RSRVD_ES_ACCESSTOKEN            "at"
+#define OC_RSRVD_ES_ACCESSTOKEN_TYPE       "att"
 #define OC_RSRVD_ES_AUTHPROVIDER           "apn"
 #define OC_RSRVD_ES_CISERVER               "cis"
 #define OC_RSRVD_ES_SERVERID               "sid"
@@ -124,6 +126,16 @@ typedef enum
     AES,                /**< AES **/
     TKIP_AES            /**< TKIP-AES **/
 } WIFI_ENCTYPE;
+
+/**
+ * @brief OAuth Access Token Types. "bearer" and "mac" types are supported.
+ */
+typedef enum
+{
+    NONE_OAUTH_TOKENTYPE = 0,
+    OAUTH_TOKENTYPE_BEARER,
+    OAUTH_TOKENTYPE_MAC
+} OAUTH_TOKENTYPE;
 
 /**
  * @brief A result of Easy Setup

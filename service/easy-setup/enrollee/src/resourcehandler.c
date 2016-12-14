@@ -225,6 +225,8 @@ OCStackResult initCloudServerResource(bool isSecured)
     OCStackResult res = OC_STACK_ERROR;
 
     OICStrcpy(gCloudResource.authCode, sizeof(gCloudResource.authCode), "");
+    OICStrcpy(gCloudResource.accessToken, sizeof(gCloudResource.accessToken), "");
+    gCloudResource.accessTokenType = NONE_OAUTH_TOKENTYPE;
     OICStrcpy(gCloudResource.authProvider, sizeof(gCloudResource.authProvider), "");
     OICStrcpy(gCloudResource.ciServer, sizeof(gCloudResource.ciServer), "");
 
@@ -379,6 +381,8 @@ void updateCloudResource(OCRepPayload* input)
     }
 
     memset(cloudData->authCode, 0, OIC_STRING_MAX_VALUE);
+    memset(cloudData->accessToken, 0, OIC_STRING_MAX_VALUE);
+    gCloudResource.accessTokenType = NONE_OAUTH_TOKENTYPE;
     memset(cloudData->authProvider, 0, OIC_STRING_MAX_VALUE);
     memset(cloudData->ciServer, 0, OIC_STRING_MAX_VALUE);
     cloudData->userdata = NULL;
@@ -389,6 +393,22 @@ void updateCloudResource(OCRepPayload* input)
         OICStrcpy(gCloudResource.authCode, sizeof(gCloudResource.authCode), authCode);
         OICStrcpy(cloudData->authCode, sizeof(cloudData->authCode), authCode);
         OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.authCode %s", gCloudResource.authCode);
+    }
+
+    char *accessToken = NULL;
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_ACCESSTOKEN, &accessToken))
+    {
+        OICStrcpy(gCloudResource.accessToken, sizeof(gCloudResource.accessToken), accessToken);
+        OICStrcpy(cloudData->accessToken, sizeof(cloudData->accessToken), accessToken);
+        OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.accessToken %s", gCloudResource.accessToken);
+    }
+
+    int64_t accessTokenType = -1;
+    if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_ACCESSTOKEN_TYPE, &accessTokenType))
+    {
+        gCloudResource.accessTokenType = accessTokenType;
+        cloudData->accessTokenType = gCloudResource.accessTokenType;
+        OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.accessTokenType %d", gCloudResource.accessTokenType);
     }
 
     char *authProvider = NULL;
@@ -412,7 +432,7 @@ void updateCloudResource(OCRepPayload* input)
         gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER, &cloudData->userdata);
     }
 
-    if(authCode || authProvider || ciServer)
+    if(authCode || accessToken || authProvider || ciServer)
     {
         OIC_LOG(INFO, ES_RH_TAG, "Send CloudRsrc Callback To ES");
 
@@ -633,6 +653,8 @@ OCRepPayload* constructResponseOfCloud(char *interface)
     }
 
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHCODE, gCloudResource.authCode);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_ACCESSTOKEN, gCloudResource.accessToken);
+    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_ACCESSTOKEN_TYPE, (int)gCloudResource.accessTokenType);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHPROVIDER, gCloudResource.authProvider);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CISERVER, gCloudResource.ciServer);
 

@@ -170,6 +170,26 @@ namespace OIC
             }
 
             /**
+             * Set CloudServer resource properties with Access token to be delivered to Enrollee
+             *
+             * @param accessToken  Access token which is given in a return of auth code issued by
+             *                     OAuth2.0-compatible account server
+             * @param tokenType Access token type, i.e. "bearer"
+             * @param authProvider Auth provider ID
+             * @param ciServer Cloud interface server URL which an Enrollee is going to registered
+             *
+             * @see OAUTH_TOKENTYPE
+             */
+            void setCloudPropWithAccessToken(string accessToken, OAUTH_TOKENTYPE tokenType,
+                                                string authProvider, string ciServer)
+            {
+                m_rep.setValue(OC_RSRVD_ES_ACCESSTOKEN, accessToken);
+                m_rep.setValue(OC_RSRVD_ES_ACCESSTOKEN_TYPE, tokenType);
+                m_rep.setValue(OC_RSRVD_ES_AUTHPROVIDER, authProvider);
+                m_rep.setValue(OC_RSRVD_ES_CISERVER, ciServer);
+            }
+
+            /**
              * Set CloudServer's UUID
              *
              * @param cloudID Cloud Interface server's UUID
@@ -249,6 +269,36 @@ namespace OIC
             int getCredID() const
             {
                 return m_credID;
+            }
+
+            /**
+             * Get an access token to be delivered.
+             *
+             * @return an access token to be delivered.
+             */
+            std::string getAccessToken() const
+            {
+                if(m_rep.hasAttribute(OC_RSRVD_ES_ACCESSTOKEN))
+                {
+                    return m_rep.getValue<std::string>(OC_RSRVD_ES_ACCESSTOKEN);
+                }
+                return std::string("");
+            }
+
+            /**
+             * Get an access token type to be delivered.
+             *
+             * @return an access token type to be delivered.
+             */
+            OAUTH_TOKENTYPE getAccessTokenType() const
+            {
+
+                if(m_rep.hasAttribute(OC_RSRVD_ES_ACCESSTOKEN_TYPE))
+                {
+                    return static_cast<OAUTH_TOKENTYPE>(
+                                m_rep.getValue<int>(OC_RSRVD_ES_ACCESSTOKEN_TYPE));
+                }
+                return NONE_OAUTH_TOKENTYPE;
             }
 
             /**
