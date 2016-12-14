@@ -100,9 +100,11 @@ ESOwnershipTransferData provisionSecurityStatusCallback(std::shared_ptr<SecProvi
 
     if(secProvisioningStatus->getESResult() == ES_SECURE_RESOURCE_IS_DISCOVERED)
     {
-#if defined(__WITH_DTLS__) && defined(MULTIPLE_OWNER)
+#ifdef __WITH_DTLS__
         cout << "Owned Status : " << secProvisioningStatus->isOwnedDevice() << std::endl;
         cout << "OT Method : " << secProvisioningStatus->getSelectedOTMethod() << std::endl;
+#ifdef MULTIPLE_OWNER
+        cout << "MOT Enabled : " << secProvisioningStatus->isMOTEnabled() << std::endl;
 
         // TEST
         ESOwnershipTransferData OTData;
@@ -113,6 +115,8 @@ ESOwnershipTransferData provisionSecurityStatusCallback(std::shared_ptr<SecProvi
 
         return OTData;
 #endif
+#endif
+
     }
     else if(secProvisioningStatus->getESResult() == ES_OK)
     {
