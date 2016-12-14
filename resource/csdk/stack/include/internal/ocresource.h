@@ -195,7 +195,7 @@ typedef struct OCResource {
     /** Resource interface(s); linked list.*/
     OCResourceInterface *rsrcInterface;
 
-    /** Resource interface(s); linked list.*/
+    /** Resource attributes; linked list.*/
     OCAttribute *rsrcAttributes;
 
     /** Array of pointers to resources; can be used to represent a container of resources.
