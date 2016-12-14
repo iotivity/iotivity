@@ -42,12 +42,6 @@
                             "rel": ""
                         },
                         {
-                            "href": "/oic/sec/acl",
-                            "rt": ["oic.r.acl"],
-                            "if": ["oic.if.baseline"],
-                            "rel": ""
-                        },
-                        {
                             "href": "/oic/sec/cred",
                             "rt": ["oic.r.cred"],
                             "if": ["oic.if.baseline"],

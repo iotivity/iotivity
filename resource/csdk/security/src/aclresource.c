@@ -47,7 +47,7 @@
 #include "security_internals.h"
 
 #define TAG  "OIC_SRM_ACL"
-#define NUMBER_OF_SEC_PROV_RSCS 4
+#define NUMBER_OF_SEC_PROV_RSCS 3
 #define NUMBER_OF_DEFAULT_SEC_RSCS 2
 #define STRING_UUID_SIZE (UUID_LENGTH * 2 + 5)
 
@@ -2749,8 +2749,6 @@ OCStackResult UpdateDefaultSecProvACE()
                                strlen(OIC_RSRC_DOXM_URI) + 1) == 0 ||
                        strncmp(rsrc->href, OIC_RSRC_CRED_URI,
                                strlen(OIC_RSRC_CRED_URI) + 1) == 0 ||
-                       strncmp(rsrc->href, OIC_RSRC_ACL_URI,
-                               strlen(OIC_RSRC_ACL_URI) + 1) == 0 ||
                        strncmp(rsrc->href, OIC_RSRC_PSTAT_URI,
                                strlen(OIC_RSRC_PSTAT_URI) + 1) == 0)
                     {
