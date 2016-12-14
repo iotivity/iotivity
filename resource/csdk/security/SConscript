@@ -18,7 +18,7 @@
 # //
 # //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
-# libocsrm (share library) build script
+# libocsrm (static library) build script
 ##
 
 Import('env')
