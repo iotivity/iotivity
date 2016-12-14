@@ -125,6 +125,25 @@ void *u_arraylist_get(const u_arraylist_t *list, uint32_t index)
     return NULL;
 }
 
+bool u_arraylist_get_index(const u_arraylist_t *list, const void *data, uint32_t *index)
+{
+    if (!list || !data)
+    {
+        return false;
+    }
+
+    for (uint32_t i = 0; i < list->length; i++)
+    {
+        if (data == list->data[i])
+        {
+            *index = i;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool u_arraylist_add(u_arraylist_t *list, void *data)
 {
     if (!list)
