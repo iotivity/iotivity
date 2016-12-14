@@ -424,7 +424,8 @@ namespace OIC
                             return res;
                         }
 #ifdef MULTIPLE_OWNER
-                        if( // m_securedResource->isMOTSupported() && //not provided, yet
+                        if( m_securedResource->isMOTSupported() &&
+                            m_securedResource->isMOTEnabled() &&
                             OIC_PRECONFIG_PIN == m_ownershipTransferData.getMOTMethod() &&
                                 !m_ownershipTransferData.getPreConfiguredPin().empty())
                         {
@@ -456,9 +457,10 @@ namespace OIC
                             }
                         }
 
-                        if(// m_securedResource->isMOTSupported() && //not provided, yet
-                            OIC_PRECONFIG_PIN == m_ownershipTransferData.getMOTMethod() ||
-                            OIC_RANDOM_DEVICE_PIN == m_ownershipTransferData.getMOTMethod())
+                        if( m_securedResource->isMOTSupported() &&
+                            m_securedResource->isMOTEnabled() &&
+                            (OIC_PRECONFIG_PIN == m_ownershipTransferData.getMOTMethod() ||
+                                OIC_RANDOM_DEVICE_PIN == m_ownershipTransferData.getMOTMethod()))
                         {
                             OC::ResultCallBack selectMOTMethodCB = std::bind(
                                     &EnrolleeSecurity::onEnrolleeSecuritySafetyCB,

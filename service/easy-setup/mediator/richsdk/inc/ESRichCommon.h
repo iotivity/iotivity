@@ -523,11 +523,14 @@ namespace OIC
                 {
                     m_devUUID = resource->getDeviceID();
                     m_isOwned = resource->getOwnedStatus();
+#ifdef MULTIPLE_OWNER
+                    m_isMOTEnabled = resource->isMOTEnabled();
+#endif
 
-                    // TODO
-                    // When severAPIs in OCSecureResource for getting a list of supported methods or
-                    // status of MOT support, a code for setting this information will be implemeted.
-                    m_selectedOTMethod = OIC_JUST_WORKS;
+                    if( OC_STACK_OK != resource->getOTMethod(&m_selectedOTMethod) )
+                    {
+                        m_selectedOTMethod = OIC_OXM_COUNT; // Out-of-range
+                    }
                 }
             }
 
