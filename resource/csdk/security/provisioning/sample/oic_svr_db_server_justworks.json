@@ -40,12 +40,6 @@
                             "if": ["oic.if.baseline"]
                         },
                         {
-                            "href": "/oic/sec/acl",
-                            "rel": "",
-                            "rt": ["oic.r.acl"],
-                            "if": ["oic.if.baseline"]
-                        },
-                        {
                             "href": "/oic/sec/cred",
                             "rel": "",
                             "rt": ["oic.r.cred"],
