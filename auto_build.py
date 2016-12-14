@@ -385,10 +385,7 @@ def unit_tests():
     build_options = {
                         'RELEASE':'false',
                     }
-    extra_option_str = "-c resource"
-    call_scons(build_options, extra_option_str)
-
-    extra_option_str = "resource"
+    extra_option_str = "-c ."
     call_scons(build_options, extra_option_str)
 
     build_options = {
