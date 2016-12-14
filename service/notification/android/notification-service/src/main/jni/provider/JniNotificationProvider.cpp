@@ -1027,6 +1027,40 @@ Java_org_iotivity_service_ns_provider_ProviderService_nativeDisableRemoteService
     return (jint) result;
 }
 
+JNIEXPORT jint JNICALL
+Java_org_iotivity_service_ns_provider_ProviderService_nativeSubscribeMQService
+(JNIEnv *env, jobject jObj, jstring jserverAddress, jstring jTopicName)
+{
+    LOGD("JNIProviderService: nativeSubscribeMQService - IN");
+    if (!jserverAddress)
+    {
+        ThrowNSException(NS_ERROR, "Server Address Can't be NULL");
+        return (jint) OIC::Service::NSResult::ERROR;
+    }
+    if (!jTopicName)
+    {
+        ThrowNSException(NS_ERROR, "TopicName Can't be NULL");
+        return (jint) OIC::Service::NSResult::ERROR;
+    }
+
+    const char *address = env->GetStringUTFChars( jserverAddress, NULL);
+    std::string servAddress(address);
+    const char *topic = env->GetStringUTFChars( jTopicName, NULL);
+    std::string topicName(topic);
+
+    OIC::Service::NSResult result  =
+        OIC::Service::NSProviderService::getInstance()->subscribeMQService(
+            servAddress, topicName);
+    if (result !=  OIC::Service::NSResult::OK)
+    {
+        LOGE("Fail to Subscribe to MQ Service");
+    }
+    env->ReleaseStringUTFChars(jserverAddress, address);
+    env->ReleaseStringUTFChars(jTopicName, topic);
+    LOGD("JNIProviderService: nativeSubscribeMQService - OUT");
+    return (jint) result;
+}
+
 JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_provider_ProviderService_nativeRegisterTopic
 (JNIEnv *env, jobject jObj, jstring jTopicName)
 {

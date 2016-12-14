@@ -114,12 +114,16 @@ void NSSetConsumerId(char * cId);
 char * NSMakeRequestUriWithConsumerId(const char * uri);
 
 NSTask * NSMakeTask(NSTaskType, void *);
-
 NSResult NSConsumerPushEvent(NSTask *);
 
+NSMessage * NSGetMessage(OCRepPayload * payload);
 NSMessage * NSCopyMessage(NSMessage *);
 void NSRemoveMessage(NSMessage *);
 
+void NSGetProviderPostClean(
+        char * pId, char * mUri, char * sUri, char * tUri, NSProviderConnectionInfo * connection);
+
+NSProvider_internal * NSGetProvider(OCClientResponse * clientResponse);
 NSProviderConnectionInfo * NSCreateProviderConnections(OCDevAddr *);
 NSProviderConnectionInfo * NSCopyProviderConnections(NSProviderConnectionInfo *);
 void NSRemoveConnections(NSProviderConnectionInfo *);

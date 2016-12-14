@@ -212,30 +212,46 @@ public class ProviderSample
         }
     }
 
-    public void EnableRemoteService(String servAdd) {
+    public int EnableRemoteService(String servAdd) {
         Log.i(TAG, "EnableRemoteService ProviderService - IN");
+        int result = 0;
         try{
-            int result = ioTNotification.enableRemoteService(servAdd);
+            result = ioTNotification.enableRemoteService(servAdd);
             Log.i(TAG, "Notification EnableRemoteService: "+ result );
         }
         catch(Exception e) {
 
         }
         Log.i(TAG, "EnableRemoteService ProviderService - OUT");
+        return result;
     }
 
-    public void DisableRemoteService(String servAdd) {
+    public int DisableRemoteService(String servAdd) {
         Log.i(TAG, "DisableRemoteService ProviderService - IN");
+        int result = 0;
         try{
-            int result = ioTNotification.disableRemoteService(servAdd);
+            result = ioTNotification.disableRemoteService(servAdd);
             Log.i(TAG, "Notification DisableRemoteService: "+ result );
         }
         catch(Exception e) {
 
         }
         Log.i(TAG, "DisableRemoteService ProviderService - OUT");
+        return result;
     }
+    public int subscribeMQService(String servAdd, String topicName) {
+        Log.i(TAG, "SubscribeMQService ProviderService - IN");
+        int result = 0;
+        try{
+            result = ioTNotification.subscribeMQService(servAdd, topicName);
+            Log.i(TAG, "Notification SubscribeMQService: "+ result );
+        }
+        catch(Exception e) {
 
+        }
+        Log.i(TAG, "SubscribeMQService ProviderService - OUT");
+        return result;
+    }
     public void AcceptSubscription(Consumer consumer, boolean accepted)
     {
         Log.i(TAG,"AcceptSubscription ProviderService - IN");

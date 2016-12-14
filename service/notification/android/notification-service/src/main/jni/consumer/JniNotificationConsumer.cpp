@@ -1004,6 +1004,40 @@ Java_org_iotivity_service_ns_consumer_ConsumerService_nativeEnableRemoteService
     return (jint) res;
 }
 
+JNIEXPORT jint JNICALL
+Java_org_iotivity_service_ns_consumer_ConsumerService_nativeSubscribeMQService
+(JNIEnv *env, jobject jObj, jstring jserverAddress, jstring jTopicName)
+{
+    LOGD("ConsumerService: nativeSubscribeMQService - IN");
+    if (!jserverAddress)
+    {
+        ThrowNSException(NS_ERROR, "Server Address Can't be NULL");
+        return (jint) OIC::Service::NSResult::ERROR;
+    }
+    if (!jTopicName)
+    {
+        ThrowNSException(NS_ERROR, "TopicName Can't be NULL");
+        return (jint) OIC::Service::NSResult::ERROR;
+    }
+
+    const char *address = env->GetStringUTFChars( jserverAddress, NULL);
+    std::string servAddress(address);
+    const char *topic = env->GetStringUTFChars( jTopicName, NULL);
+    std::string topicName(topic);
+
+    OIC::Service::NSResult result  =
+        OIC::Service::NSConsumerService::getInstance()->subscribeMQService(
+            servAddress, topicName);
+    if (result !=  OIC::Service::NSResult::OK)
+    {
+        LOGE("Fail to Subscribe to MQ Service");
+    }
+    env->ReleaseStringUTFChars(jserverAddress, address);
+    env->ReleaseStringUTFChars(jTopicName, topic);
+    LOGD("ConsumerService: nativeSubscribeMQService - OUT");
+    return (jint) result;
+}
+
 JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_nativeRescanProvider
 (JNIEnv *env, jobject jObj)
 {

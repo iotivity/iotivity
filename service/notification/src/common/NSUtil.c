@@ -481,3 +481,86 @@ NSTopicList * NSInitializeTopicList()
     return topicList;
 }
 
+char * NSGetQueryAddress(const char * serverFullAddress)
+{
+    if (strstr(serverFullAddress, "coap+tcp://"))
+    {
+        return OICStrdup(serverFullAddress+11);
+    }
+    else if (strstr(serverFullAddress, "coap://"))
+    {
+        return OICStrdup(serverFullAddress+7);
+    }
+    else
+    {
+        return OICStrdup(serverFullAddress);
+    }
+}
+
+OCDevAddr * NSChangeAddress(const char * address)
+{
+    NS_VERIFY_NOT_NULL(address, NULL);
+    OCDevAddr * retAddr = NULL;
+
+    int index = 0;
+    while(address[index] != '\0')
+    {
+        if (address[index] == ':')
+        {
+            break;
+        }
+        index++;
+    }
+
+    if (address[index] == '\0')
+    {
+        return NULL;
+    }
+
+    int tmp = index + 1;
+    uint16_t port = address[tmp++] - '0';
+
+    while(true)
+    {
+        if (address[tmp] == '\0' || address[tmp] > '9' || address[tmp] < '0')
+        {
+            break;
+        }
+        port *= 10;
+        port += address[tmp++] - '0';
+    }
+
+    retAddr = (OCDevAddr *) OICMalloc(sizeof(OCDevAddr));
+    NS_VERIFY_NOT_NULL(retAddr, NULL);
+
+    retAddr->adapter = OC_ADAPTER_TCP;
+    OICStrcpy(retAddr->addr, index + 1, address);
+    retAddr->addr[index] = '\0';
+    retAddr->port = port;
+    retAddr->flags = OC_IP_USE_V6;
+
+    NS_LOG(DEBUG, "Change Address for TCP request");
+    NS_LOG_V(DEBUG, "Origin : %s", address);
+    NS_LOG_V(DEBUG, "Changed Addr : %s", retAddr->addr);
+    NS_LOG_V(DEBUG, "Changed Port : %d", retAddr->port);
+
+    return retAddr;
+}
+
+bool NSOCResultToSuccess(OCStackResult ret)
+{
+    switch (ret)
+    {
+        case OC_STACK_OK:
+        case OC_STACK_RESOURCE_CREATED:
+        case OC_STACK_RESOURCE_DELETED:
+        case OC_STACK_PRESENCE_STOPPED:
+        case OC_STACK_CONTINUE:
+        case OC_STACK_RESOURCE_CHANGED:
+            return true;
+        default:
+            NS_LOG_V(DEBUG, "OCStackResult : %d", (int)ret);
+            return false;
+    }
+}
+

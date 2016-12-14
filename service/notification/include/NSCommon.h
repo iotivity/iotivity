@@ -31,7 +31,7 @@
 #include <octypes.h>
 
 #define NS_UUID_STRING_SIZE 37
-
+//#define WITH_MQ
 /**
  * Result code of notification service
  */
@@ -82,6 +82,8 @@ typedef enum
     NS_MESSAGE_EVENT = 3,
     NS_MESSAGE_INFO = 4,
     NS_MESSAGE_WARNING = 5,
+    NS_MESSAGE_READ = 11,
+    NS_MESSAGE_DELETED = 12
 
 } NSMessageType;
 
