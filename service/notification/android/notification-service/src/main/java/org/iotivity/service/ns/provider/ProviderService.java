@@ -18,16 +18,18 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 package org.iotivity.service.ns.provider;
+
 import org.iotivity.service.ns.common.*;
 import java.util.Vector;
-/**
- * Provides a set of Java APIs for Notification ProviderService.
- */
-public class ProviderService
-{
 
-    static
-    {
+/**
+ *
+ * This class provides a set of Java APIs for Notification ProviderService.
+ *
+ */
+public class ProviderService {
+
+    static {
         System.loadLibrary("gnustl_shared");
         System.loadLibrary("oc_logger");
         System.loadLibrary("connectivity_abstraction");
@@ -42,178 +44,231 @@ public class ProviderService
 
     private static ProviderService instance;
 
-    static
-    {
+    static {
         instance = new ProviderService();
     }
 
     /**
-      * API for getting instance of ProviderService
-      * @return ProviderService singleton instance created
-      */
-    public static ProviderService getInstance()
-    {
+     * API for getting instance of ProviderService
+     *
+     * @return ProviderService singleton instance created
+     */
+    public static ProviderService getInstance() {
         return instance;
     }
 
     /**
-      * Start ProviderService
-      * @param subscribedListener - OnConsumerSubscribedListener Callback
-      * @param messageSynchronized - OnMessageSynchronizedListener Callback
-      * @param subControllability - Set the policy for notification servcie which checks whether
-      * provider is capable of denying the subscription of notification message from consumer and
-      * getting controllabliity to set consumer topic list.
-      * If true, provider is able to control subscription request and consumer topic list.
-      * Otherwise(policy is false), consumer can do the same.
-      * @param userInfo -  User defined information such as device friendly name
-      * @param resourceSecurity -  Set on/off for secure resource channel setting
-      * @return :: result code  100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
-      */
-    public int start(OnConsumerSubscribedListener  subscribedListener,
-                     OnMessageSynchronizedListener  messageSynchronized,
-                     boolean subControllability, String userInfo,
-                     boolean resourceSecurity) throws NSException
-    {
+     * Start ProviderService
+     *
+     * @param subscribedListener
+     *            OnConsumerSubscribedListener Callback
+     * @param messageSynchronized
+     *            OnMessageSynchronizedListener Callback
+     * @param subControllability
+     *            Set the policy for notification servcie which checks whether
+     *            provider is capable of denying the subscription of
+     *            notification message from consumer and getting controllabliity
+     *            to set consumer topic list. If true, provider is able to
+     *            control subscription request and consumer topic list.
+     *            Otherwise(policy is false), consumer can do the same.
+     * @param userInfo
+     *            User defined information such as device friendly name
+     * @param resourceSecurity
+     *            Set on/off for secure resource channel setting
+     *
+     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     *
+     * @throws NSException
+     *             if any callback parameter passed is null
+     */
+    public int start(OnConsumerSubscribedListener subscribedListener,
+            OnMessageSynchronizedListener messageSynchronized,
+            boolean subControllability, String userInfo,
+            boolean resourceSecurity) throws NSException {
         return nativeStart(subscribedListener, messageSynchronized,
-                            subControllability, userInfo, resourceSecurity);
+                subControllability, userInfo, resourceSecurity);
     }
 
     /**
-      * Stop ProviderService
-      * @return :: result code
-      */
-    public int stop() throws NSException
-    {
+     * Stop ProviderService
+     *
+     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     */
+    public int stop() throws NSException {
         return nativeStop();
     }
 
     /**
-      * Send notification message to all subscribers
-      * @param  message - Notification message including id, title, contentText
-      * @return :: result code
-      */
-    public int   sendMessage(Message message) throws NSException
-    {
+     * Send notification message to all subscribers
+     *
+     * @param message
+     *            Notification message including id, title, contentText
+     *
+     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     */
+    public int sendMessage(Message message) throws NSException {
         return nativeSendMessage(message);
     }
 
     /**
-      * Send read-check to provider in order to synchronize notification status with other consumers
-      * @param  messageId -  ID of Notification message to synchronize the status
-      * @param  syncType - SyncType of the SyncInfo message
-      */
-    public void sendSyncInfo ( long messageId , SyncInfo.SyncType syncType) throws NSException
-    {
+     * Send read-check to provider in order to synchronize notification status
+     * with other consumers
+     *
+     * @param messageId
+     *            unique Id of Notification message to synchronize the status
+     * @param syncType
+     *            SyncType of the SyncInfo message
+     */
+    public void sendSyncInfo(long messageId, SyncInfo.SyncType syncType)
+            throws NSException {
         nativeSendSyncInfo(messageId, syncType.ordinal());
     }
 
     /**
-      * Initialize Message class, Mandatory fields which are messge id and provider(device) id are filled with.
-      * @return Message
-      */
-    public Message createMessage () throws NSException
-    {
+     * Initialize Message class, Mandatory fields which are messge id and
+     * provider(device) id are filled with
+     *
+     * @return Message
+     */
+    public Message createMessage() throws NSException {
         return nativeCreateMessage();
     }
 
     /**
-      * Request to publish resource to cloud server
-      * @param servAdd combined with IP address and port number using delimiter [in]
-      * @return  result code
-      */
-    public int   enableRemoteService(String servAdd) throws NSException
-    {
+     * Request to publish resource to cloud server
+     *
+     * @param servAdd
+     *            servAdd combined with IP address and port number using
+     *            delimiter
+     *
+     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     */
+    public int enableRemoteService(String servAdd) throws NSException {
         return nativeEnableRemoteService(servAdd);
     }
 
     /**
-      * Request to cancel remote service using cloud server
-      * @param servAdd combined with IP address and port number using delimiter :
-      * @return  result code
-      */
-    public int  disableRemoteService(String servAdd) throws NSException
-    {
+     * Request to cancel remote service using cloud server
+     *
+     * @param servAdd
+     *            servAdd combined with IP address and port number using
+     *            delimiter
+     *
+     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     */
+    public int disableRemoteService(String servAdd) throws NSException {
         return nativeDisableRemoteService(servAdd);
     }
 
     /**
-      * Request to subscribe to MQ server
-      * @param servAdd -  servAdd combined with IP address and port number  and MQ broker uri using delimiter :
-      * @param topicName - the interest Topic name for subscription
-      * @return  result code
-      */
-    public int  subscribeMQService(String servAdd, String topicName) throws NSException
-    {
+     * Request to subscribe to MQ server
+     *
+     * @param servAdd
+     *            servAdd combined with IP address and port number and MQ broker
+     *            uri using delimiter
+     * @param topicName
+     *            the interest Topic name for subscription
+     *
+     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     */
+    public int subscribeMQService(String servAdd, String topicName)
+            throws NSException {
         return nativeSubscribeMQService(servAdd, topicName);
     }
 
     /**
-      * Add topic to topic list
-      * @param  topicName - Topic name to add
-      * @return :: result code
-      */
-    public int registerTopic(String topicName) throws NSException
-    {
+     * Add topic to topic list
+     *
+     * @param topicName
+     *            Topic name to add
+     *
+     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     */
+    public int registerTopic(String topicName) throws NSException {
         return nativeRegisterTopic(topicName);
     }
 
     /**
-      * Delete topic from topic list
-      * @param  topicName - Topic name to add
-      * @return :: result code
-      */
-    public int unregisterTopic(String topicName) throws NSException
-    {
+     * Delete topic from topic list
+     *
+     * @param topicName
+     *            Topic name to add
+     *
+     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     */
+    public int unregisterTopic(String topicName) throws NSException {
         return nativeUnregisterTopic(topicName);
     }
 
     /**
-      * Request topics list already registered by provider user
-      * @return :: Topic list
-      */
-    public TopicsList getRegisteredTopicList() throws NSException
-    {
+     * Request topics list already registered by provider user
+     *
+     * 
+     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     */
+    public TopicsList getRegisteredTopicList() throws NSException {
         return nativeGetRegisteredTopicList();
     }
 
     /**
-      * Interface to implement callback function to receive subscription request of consumer
-      */
-    public interface OnConsumerSubscribedListener
-    {
+     * Interface to implement callback function to receive subscription request
+     * of consumer
+     */
+    public interface OnConsumerSubscribedListener {
 
         /**
-          * Callback function to receive subscription request of consumer
-          * @param consumer - Consumer who subscribes the notification message resource
-          */
+         * Callback function to receive subscription request of consumer
+         *
+         * @param consumer
+         *            Consumer who subscribes the notification message resource
+         */
         public void onConsumerSubscribed(Consumer consumer);
     }
 
     /**
-      * Interface to implement callback function to receive the status of the message synchronization
-      */
-    public interface OnMessageSynchronizedListener
-    {
+     * Interface to implement callback function to receive the status of the
+     * message synchronization
+     */
+    public interface OnMessageSynchronizedListener {
 
         /**
-          * Callback function to receive the status of the message synchronization
-          * @param syncInfo - Synchronization information of the notification message
-          */
+         * Callback function to receive the status of the message
+         * synchronization
+         *
+         * @param syncInfo
+         *            Synchronization information of the notification message
+         */
         public void onMessageSynchronized(SyncInfo syncInfo);
     }
 
-    public native int  nativeStart(OnConsumerSubscribedListener subscribedListener,
-                                                 OnMessageSynchronizedListener messageSynchronized,
-                                                 boolean subControllability, String userInfo,
-                                                 boolean resourceSecurity) throws NSException;
-    public native int  nativeStop() throws NSException;
-    public native int  nativeSendMessage(Message message) throws NSException;
-    public native void  nativeSendSyncInfo( long messageId , int type) throws NSException;
+    public native int nativeStart(
+            OnConsumerSubscribedListener subscribedListener,
+            OnMessageSynchronizedListener messageSynchronized,
+            boolean subControllability, String userInfo,
+            boolean resourceSecurity) throws NSException;
+
+    public native int nativeStop() throws NSException;
+
+    public native int nativeSendMessage(Message message) throws NSException;
+
+    public native void nativeSendSyncInfo(long messageId, int type)
+            throws NSException;
+
     public native Message nativeCreateMessage() throws NSException;
-    public native int  nativeEnableRemoteService(String servAdd) throws NSException;
-    public native int  nativeDisableRemoteService(String servAdd) throws NSException;
-    public native int  nativeSubscribeMQService(String servAdd, String topicName) throws NSException;
-    public native int  nativeRegisterTopic(String topicName) throws NSException;
-    public native int  nativeUnregisterTopic(String topicName) throws NSException;
-    public native TopicsList  nativeGetRegisteredTopicList() throws NSException;
+
+    public native int nativeEnableRemoteService(String servAdd)
+            throws NSException;
+
+    public native int nativeDisableRemoteService(String servAdd)
+            throws NSException;
+
+    public native int nativeSubscribeMQService(String servAdd, String topicName)
+            throws NSException;
+
+    public native int nativeRegisterTopic(String topicName) throws NSException;
+
+    public native int nativeUnregisterTopic(String topicName)
+            throws NSException;
+
+    public native TopicsList nativeGetRegisteredTopicList() throws NSException;
 }

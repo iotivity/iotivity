@@ -25,14 +25,15 @@ import org.iotivity.service.ns.common.*;
 import java.util.Vector;
 
 /**
-  * This class provides a set of Java APIs for Notification Consumer.
-  */
-public class ConsumerService
-{
+ *
+ * This class provides a set of Java APIs for Notification ConsumerService.
+ *
+ */
+public class ConsumerService {
+
     private static final String LOG_TAG = "ConsumerService";
 
-    static
-    {
+    static {
         System.loadLibrary("gnustl_shared");
         System.loadLibrary("oc_logger");
         System.loadLibrary("connectivity_abstraction");
@@ -46,85 +47,99 @@ public class ConsumerService
     }
 
     private static ConsumerService instance;
-    static
-    {
+    static {
         instance = new ConsumerService();
     }
 
     /**
-      * API for getting instance of ConsumerService
-      * @return ConsumerService singleton instance created
-      */
-    public static ConsumerService getInstance()
-    {
+     * API for getting instance of ConsumerService
+     *
+     * @return ConsumerService singleton instance created
+     */
+    public static ConsumerService getInstance() {
         return instance;
     }
 
-   /**
-     * Start ConsumerService
-     * @param onProviderDiscoveredListener - OnProviderDiscoveredListener Callback Interface
+    /**
+     * This API will Start ConsumerService
+     *
+     * @param onProviderDiscoveredListener
+     *            OnProviderDiscoveredListener Callback Interface
+     *
+     * @throws NSException
+     *             if the parameter passed is null
      */
-    public void start(
-        OnProviderDiscoveredListener onProviderDiscoveredListener
-    ) throws NSException
-    {
+    public void start(OnProviderDiscoveredListener onProviderDiscoveredListener)
+            throws NSException {
         nativeStart(onProviderDiscoveredListener);
     }
 
     /**
-      * Stop ConsumerService
-      */
-    public void stop() throws NSException
-    {
+     * This API will Stop ConsumerService
+     */
+    public void stop() throws NSException {
         nativeStop();
     }
 
     /**
-      * Request to publish resource to cloud server
-      * @param serverAddress combined with IP address and port number using delimiter [in]
-      */
-    public void enableRemoteService(String serverAddress) throws NSException
-    {
+     * Request to publish resource to cloud server
+     *
+     * @param serverAddress
+     *            serverAddress combined with IP address and port number using
+     *            delimiter
+     */
+    public void enableRemoteService(String serverAddress) throws NSException {
         nativeEnableRemoteService(serverAddress);
     }
 
     /**
-      * Request to subscribe to MQ server
-      * @param servAdd -  servAdd combined with IP address and port number  and MQ broker uri using delimiter :
-      * @param topicName - the interest Topic name for subscription
-      * @return  result code
-      */
-    public int  subscribeMQService(String servAdd, String topicName) throws NSException
-    {
+     * Request to subscribe to MQ server
+     *
+     * @param servAdd
+     *            servAdd combined with IP address and port number and MQ broker
+     *            uri using delimiter
+     * @param topicName
+     *            the interest Topic name for subscription
+     *
+     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     */
+    public int subscribeMQService(String servAdd, String topicName)
+            throws NSException {
         return nativeSubscribeMQService(servAdd, topicName);
     }
 
     /**
-      * Request discovery manually
-      */
-    public void rescanProvider() throws NSException
-    {
+     * This API is called to request discovery manually
+     */
+    public void rescanProvider() throws NSException {
         nativeRescanProvider();
     }
 
     /**
-      * Interface to implement callback function to receive provider on discovery
-      */
-    public interface OnProviderDiscoveredListener
-    {
+     * Interface to implement callback function to receive provider on discovery
+     */
+    public interface OnProviderDiscoveredListener {
+
         /**
-          * Callback function to receive provider on discovery
-          * @param provider - Provider object
-          */
+         * Callback function to receive provider on discovery
+         *
+         * @param provider
+         *            Provider object
+         */
         public void onProviderDiscovered(Provider provider);
     }
 
-    private native void nativeStart (
-        OnProviderDiscoveredListener onProviderDiscoveredListener
-    ) throws NSException;
+    private native void nativeStart(
+            OnProviderDiscoveredListener onProviderDiscoveredListener)
+            throws NSException;
 
     private native void nativeStop() throws NSException;
-    private native void nativeEnableRemoteService(String serverAddress) throws NSException;
-    private native int  nativeSubscribeMQService(String servAdd, String topicName) throws NSException;
-   private native void nativeRescanProvider() throws NSException;
+
+    private native void nativeEnableRemoteService(String serverAddress)
+            throws NSException;
+
+    private native int nativeSubscribeMQService(String servAdd,
+            String topicName) throws NSException;
+
+    private native void nativeRescanProvider() throws NSException;
 }
