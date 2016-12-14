@@ -29,10 +29,13 @@ OCEntityHandlerRequest *NSCopyOCEntityHandlerRequest(OCEntityHandlerRequest *ent
 
     if (copyOfRequest)
     {
-        // Do shallow copy
         memcpy(copyOfRequest, entityHandlerRequest, sizeof(OCEntityHandlerRequest));
+        copyOfRequest->payload = NULL;
+        copyOfRequest->query = NULL;
+        copyOfRequest->numRcvdVendorSpecificHeaderOptions = 0;
+        copyOfRequest->rcvdVendorSpecificHeaderOptions = NULL;
 
-        if (copyOfRequest->query)
+        if (entityHandlerRequest->query)
         {
             copyOfRequest->query = OICStrdup(entityHandlerRequest->query);
             if (!copyOfRequest->query)
@@ -48,10 +51,6 @@ OCEntityHandlerRequest *NSCopyOCEntityHandlerRequest(OCEntityHandlerRequest *ent
             copyOfRequest->payload = (OCPayload *)
                     (OCRepPayloadClone ((OCRepPayload*) entityHandlerRequest->payload));
         }
-
-        // Ignore vendor specific header options for example
-        copyOfRequest->numRcvdVendorSpecificHeaderOptions = 0;
-        copyOfRequest->rcvdVendorSpecificHeaderOptions = NULL;
     }
 
     if (copyOfRequest)

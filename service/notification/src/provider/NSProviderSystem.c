@@ -32,7 +32,7 @@ static NSConnectionState NSProviderConnectionState;
 
 NSProviderInfo * providerInfo;
 bool NSPolicy = true;
-bool NSResourceSecurity = true;
+bool NSResourceSecurity = false;
 
 void NSSetProviderConnectionState(NSConnectionState state)
 {
