@@ -160,6 +160,24 @@ namespace OCProvisioningTest
         size_t PinLength = 4;
         EXPECT_EQ(OC_STACK_INVALID_CALLBACK, device.provisionPreconfPin(pin, PinLength, NULL));
     }
+
+    TEST(isMOTEnabledTest, isMOTEnabledWithoutDeviceInst)
+    {
+        OCSecureResource device;
+        EXPECT_EQ(false, device.isMOTEnabled());
+    }
+
+    TEST(isMOTSupportedTest, isMOTSupportedWithoutDeviceInst)
+    {
+        OCSecureResource device;
+        EXPECT_EQ(false, device.isMOTSupported());
+    }
+
+    TEST(getMOTMethodTest, getMOTMethodNullOxM)
+    {
+        OCSecureResource device;
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, device.getMOTMethod(NULL));
+    }
 #endif
 
     TEST(DeviceInfoTest, DevInfoFromNetwork)

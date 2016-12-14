@@ -36,21 +36,6 @@ extern "C" {
 typedef struct OTMCallbackData OTMCallbackData_t;
 typedef struct OTMContext OTMContext_t;
 
-
-typedef enum OxmAllowTableIdx {
-    OXM_IDX_JUST_WORKS = 0,
-    OXM_IDX_MV_JUST_WORKS,
-#ifdef MULTIPLE_OWNER
-    OXM_IDX_PRECONFIG_PIN,
-#endif
-    OXM_IDX_RANDOM_DEVICE_PIN,
-    OXM_IDX_MANUFACTURER_CERTIFICATE,
-    OXM_IDX_CON_MFG_CERT,
-    OXM_IDX_DECENTRALIZED_PUBLIC_KEY,
-    OXM_IDX_COUNT,
-    OXM_IDX_UNKNOWN
-}OxmAllowTableIdx_t;
-
 /**
  * Do ownership transfer for the unowned devices.
  *
@@ -137,6 +122,18 @@ OCStackResult OTMSetOwnershipTransferCallbackData(OicSecOxm_t oxm, OTMCallbackDa
  * @return  OC_STACK_OK on success
  */
 OCStackResult OTMSetOTCallback(OicSecOxm_t oxm, OTMCallbackData_t* callbacks);
+
+/**
+ * Function to select appropriate security provisioning method.
+ *
+ * @param[in] supportedMethods   Array of supported methods
+ * @param[in] numberOfMethods   number of supported methods
+ * @param[out]  selectedMethod         Selected methods
+ * @param[in] ownerType type of owner device (SUPER_OWNER or SUB_OWNER)
+ * @return  OC_STACK_OK on success
+ */
+OCStackResult OTMSelectOwnershipTransferMethod(const OicSecOxm_t *supportedMethods,
+        size_t numberOfMethods, OicSecOxm_t *selectedMethod, OwnerType_t ownerType);
 
 #ifdef __cplusplus
 }

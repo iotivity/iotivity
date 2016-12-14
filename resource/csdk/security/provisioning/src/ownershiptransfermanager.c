@@ -203,10 +203,11 @@ static OxmAllowTableIdx_t GetOxmAllowTableIdx(OicSecOxm_t oxm)
  * @param[in] supportedMethods   Array of supported methods
  * @param[in] numberOfMethods   number of supported methods
  * @param[out]  selectedMethod         Selected methods
+ * @param[in] ownerType type of owner device (SUPER_OWNER or SUB_OWNER)
  * @return  OC_STACK_OK on success
  */
-static OCStackResult SelectProvisioningMethod(const OicSecOxm_t *supportedMethods,
-        size_t numberOfMethods, OicSecOxm_t *selectedMethod)
+OCStackResult OTMSelectOwnershipTransferMethod(const OicSecOxm_t *supportedMethods,
+        size_t numberOfMethods, OicSecOxm_t *selectedMethod, OwnerType_t ownerType)
 {
     bool isOxmSelected = false;
     OxmAllowTableIdx_t oxmIdx = OXM_IDX_UNKNOWN;
@@ -214,33 +215,70 @@ static OCStackResult SelectProvisioningMethod(const OicSecOxm_t *supportedMethod
 
     OIC_LOG(DEBUG, TAG, "IN SelectProvisioningMethod");
 
-    if(numberOfMethods == 0 || !supportedMethods)
+    if (numberOfMethods == 0 || !supportedMethods)
     {
         OIC_LOG(WARNING, TAG, "Could not find a supported OxM.");
         return OC_STACK_ERROR;
     }
 
-    for(size_t i = 0; i < numberOfMethods; i++)
+    switch(ownerType)
     {
-        selectedOxmIdx = GetOxmAllowTableIdx(supportedMethods[i]);
-        if(OXM_IDX_COUNT <= selectedOxmIdx)
+        case SUPER_OWNER:
         {
-            OIC_LOG(ERROR, TAG, "Invalid oxm index to access OxM allow table");
-            return OC_STACK_ERROR;
-        }
+            for (size_t i = 0; i < numberOfMethods; i++)
+            {
+                selectedOxmIdx = GetOxmAllowTableIdx(supportedMethods[i]);
+                if (OXM_IDX_COUNT <= selectedOxmIdx)
+                {
+                    OIC_LOG(WARNING, TAG, "Invalid oxm index to access OxM allow table");
+                    continue;
+                }
 
 #ifdef MULTIPLE_OWNER
-        if(ALLOWED_OXM == g_OxmAllowStatus[selectedOxmIdx] &&
-           OXM_IDX_PRECONFIG_PIN != selectedOxmIdx)
+                if (ALLOWED_OXM == g_OxmAllowStatus[selectedOxmIdx] &&
+                   OXM_IDX_PRECONFIG_PIN != selectedOxmIdx)
 #else
-        if(ALLOWED_OXM == g_OxmAllowStatus[selectedOxmIdx])
+                if (ALLOWED_OXM == g_OxmAllowStatus[selectedOxmIdx])
 #endif //MULTIPLE_OWNER
+                {
+                    *selectedMethod  = supportedMethods[i];
+                    isOxmSelected = true;
+                }
+            }
+        }
+        break;
+#ifdef MULTIPLE_OWNER
+        case SUB_OWNER:
         {
-            *selectedMethod  = supportedMethods[i];
-            isOxmSelected = true;
+            for (size_t i = 0; i < numberOfMethods; i++)
+            {
+                selectedOxmIdx = GetOxmAllowTableIdx(supportedMethods[i]);
+                if (OXM_IDX_COUNT <= selectedOxmIdx)
+                {
+                    OIC_LOG(WARNING, TAG, "Invalid oxm index to access OxM allow table");
+                    continue;
+                }
+
+                //in case of MOT, only Random PIN & Preconfigured PIN based OxM is allowed
+                if (ALLOWED_OXM == g_OxmAllowStatus[selectedOxmIdx] &&
+                    (OXM_IDX_RANDOM_DEVICE_PIN == selectedOxmIdx ||
+                     OXM_IDX_PRECONFIG_PIN == selectedOxmIdx))
+                {
+                    *selectedMethod  = supportedMethods[i];
+                    isOxmSelected = true;
+                }
+            }
+        }
+        break;
+#endif
+        default:
+        {
+            OIC_LOG_V(ERROR, TAG, "Unknown owner type or Not supported owner type : %d", ownerType);
+            return OC_STACK_INVALID_PARAM;
         }
     }
-    if(!isOxmSelected)
+
+    if (!isOxmSelected)
     {
         OIC_LOG(ERROR, TAG, "Can not find the allowed OxM.");
         return OC_STACK_NOT_ALLOWED_OXM;
@@ -250,7 +288,6 @@ static OCStackResult SelectProvisioningMethod(const OicSecOxm_t *supportedMethod
 
     return OC_STACK_OK;
 }
-
 
 /**
  * Function to select operation mode.This function will return most secure common operation mode.
@@ -393,7 +430,6 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
                              otmCtx->selectedDeviceInfo->securePort))
     {
         OIC_LOG(WARNING, TAG, "Current OTM Process has already ended.");
-        return;
     }
 
     //Revert psk_info callback and new deivce uuid in case of random PIN OxM
@@ -1893,11 +1929,11 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
         }
     }
 
-
-    //Set to the lowest level OxM, and then find more higher level OxM.
-    res = SelectProvisioningMethod(selectedDevice->doxm->oxm,
-                                   selectedDevice->doxm->oxmLen,
-                                   &selectedDevice->doxm->oxmSel);
+    //Select the OxM to performing ownership transfer
+    res = OTMSelectOwnershipTransferMethod(selectedDevice->doxm->oxm,
+                                          selectedDevice->doxm->oxmLen,
+                                          &selectedDevice->doxm->oxmSel,
+                                          SUPER_OWNER);
     if(OC_STACK_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Failed to select the provisioning method");

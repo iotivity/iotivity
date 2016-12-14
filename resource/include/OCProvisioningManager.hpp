@@ -550,6 +550,14 @@ namespace OC
              */
             bool getOwnedStatus();
 
+            /**
+             * API to get the proper OxM for OT.
+             *
+             * @param oxm Address to save the selected OxM.
+             *
+             * @return ::OC_STACK_OK in case of success and other value otherwise.
+             */
+            OCStackResult getOTMethod(OicSecOxm_t* oxm);
 
             /**
              * Common callback wrapper, which will be called from OC-APIs.
@@ -610,6 +618,30 @@ namespace OC
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */
             OCStackResult doMultipleOwnershipTransfer(ResultCallBack resultCallback);
+
+            /**
+             * API to get the proper OxM for MOT.
+             *
+             * @param oxm Address to save the selected OxM.
+             *
+             * @return ::OC_STACK_OK in case of success and other value otherwise.
+             */
+            OCStackResult getMOTMethod( OicSecOxm_t* oxm);
+
+            /**
+             * API to check whether MOT is supported.
+             *
+             * @return ::true in case of MOT supported.
+             */
+            bool isMOTSupported();
+
+            /**
+             * API to check whether MOT is enabled.
+             *
+             * @return ::true in case of MOT enabled.
+             */
+            bool isMOTEnabled();
+
 
 #endif // MULTIPLE_OWNER
 
