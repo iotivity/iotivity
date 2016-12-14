@@ -81,9 +81,7 @@ if target_os in ['linux'] and oclib_env.get('SIMULATOR', False):
     oclib_env.Append( RPATH = oclib_env.Literal('\\$$ORIGIN'))
 
 if target_os in ['msys_nt', 'windows']:
-	oclib_env.AppendUnique(LIBPATH = [os.path.join(oclib_env.get('BUILD_DIR'), 'resource', 'oc_logger')])
-	oclib_env.AppendUnique(LIBPATH = [os.path.join(oclib_env.get('BUILD_DIR'), 'resource', 'csdk')])
-	oclib_env.AppendUnique(LIBS=['octbstack', 'logger', 'oc_logger','connectivity_abstraction', 'ocsrm', 'c_common', 'routingmanager'])
+	oclib_env.AppendUnique(LIBS=['logger', 'c_common', 'routingmanager'])
 	oclib_env.AppendUnique(LIBS=[ 'coap', 'ws2_32' ,'iphlpapi'])
 	if secured == '1':
 		oclib_env.AppendUnique(LIBS=['mbedtls', 'mbedx509','mbedcrypto'])
