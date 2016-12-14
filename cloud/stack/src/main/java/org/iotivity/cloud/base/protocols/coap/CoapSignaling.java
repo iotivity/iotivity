@@ -204,12 +204,16 @@ public class CoapSignaling extends CoapMessage {
     }
 
     public void setCsmServerName(String serverName) {
-        addOption(1, serverName.getBytes(StandardCharsets.UTF_8));
+        if (serverName != null && !serverName.isEmpty()) {
+            addOption(1, serverName.getBytes(StandardCharsets.UTF_8));
+        }
     }
 
     public void setCsmMaxMessageSize(long maxMessageSize) {
-        ByteBuffer buf = ByteBuffer.wrap(new byte[4]);
-        max_message_size = buf.putInt(0, (int) maxMessageSize).array();
+        if (maxMessageSize != 0) {
+            ByteBuffer buf = ByteBuffer.wrap(new byte[4]);
+            max_message_size = buf.putInt(0, (int) maxMessageSize).array();
+        }
     }
 
     public void setCsmBlockWiseTransfer(boolean blockWiseTransferOption) {
@@ -218,7 +222,7 @@ public class CoapSignaling extends CoapMessage {
 
     public String getCsmServerName() {
         if (server_name == null)
-            return "";
+            return new String();
         return new String(server_name, Charset.forName("UTF-8"));
     }
 
@@ -315,10 +319,12 @@ public class CoapSignaling extends CoapMessage {
     }
 
     private static final long unsignedIntToLong(byte[] b) {
-        long value = 0;
-        for (byte data : b) {
-            value <<= 8;
-            value += data & 0xFF;
+        long value = 0L;
+        if (b != null) {
+            for (byte data : b) {
+                value <<= 8;
+                value += data & 0xFF;
+            }
         }
         return value;
     }

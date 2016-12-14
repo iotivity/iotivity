@@ -438,22 +438,17 @@ public class DeviceServerSystem extends ServerSystem {
         }
 
         @Override
-        public void channelActive(ChannelHandlerContext ctx) {
-            Device device = ctx.channel().attr(keyDevice).get();
-            mDevicePool.addDevice(device);
-            device.onConnected();
-            // Authenticated device connected
-            // Actual channel active should decided after authentication.
-            CoapSignaling signaling = (CoapSignaling) MessageBuilder
-                    .createSignaling(SignalingMethod.CSM);
-            signaling.setCsmMaxMessageSize(4294967295L);
-            ctx.writeAndFlush(signaling);
-        }
-
-        @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
             try {
                 if (msg instanceof CoapSignaling) {
+                    if (mCsmMap.get(ctx) == null) {
+                        // In the server, the CSM message is sent to the device
+                        // once
+                        CoapSignaling inicialCsm = (CoapSignaling) MessageBuilder
+                                .createSignaling(SignalingMethod.CSM);
+                        inicialCsm.setCsmMaxMessageSize(4294967295L);
+                        ctx.writeAndFlush(inicialCsm);
+                    }
                     CoapSignaling signaling = (CoapSignaling) msg;
                     switch (signaling.getSignalingMethod()) {
                         case CSM:
