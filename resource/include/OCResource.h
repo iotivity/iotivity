@@ -538,8 +538,6 @@ namespace OC
         /**
         * Function to get a string representation of the resource's server ID.
         * This is unique per- server independent on how it was discovered.
-        * @note The format of the return value is subject to change and will
-        * likely change both in size and contents in the future.
         */
         std::string sid() const;
 
