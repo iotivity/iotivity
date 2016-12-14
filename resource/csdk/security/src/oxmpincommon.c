@@ -157,6 +157,10 @@ static char GenerateRandomPinElement(OicSecPinType_t pinType)
     {
         return defaultRetValue;
     }
+    else
+    {
+        curIndex -= 1;
+    }
 
     return allowedCharacters[OCGetRandomRange(0, curIndex)];
 }
