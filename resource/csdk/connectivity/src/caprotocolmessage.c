@@ -246,6 +246,8 @@ coap_pdu_t *CAParsePDU(const char *data, size_t length, uint32_t *outCode,
     return outpdu;
 
 exit:
+    OIC_LOG(DEBUG, TAG, "data :");
+    OIC_LOG_BUFFER(DEBUG, TAG,  data, length);
     coap_delete_pdu(outpdu);
     return NULL;
 }
@@ -1173,6 +1175,7 @@ CAPayloadFormat_t CAConvertFormat(uint8_t format)
 #ifdef WITH_BWT
 bool CAIsSupportedBlockwiseTransfer(CATransportAdapter_t adapter)
 {
+    OIC_LOG_V(INFO, TAG, "adapter value is %d", adapter);
     if (CA_ADAPTER_IP & adapter || CA_ADAPTER_NFC & adapter
             || CA_DEFAULT_ADAPTER == adapter)
     {
@@ -1185,6 +1188,7 @@ bool CAIsSupportedBlockwiseTransfer(CATransportAdapter_t adapter)
 #ifdef WITH_TCP
 bool CAIsSupportedCoAPOverTCP(CATransportAdapter_t adapter)
 {
+    OIC_LOG_V(INFO, TAG, "adapter value is %d", adapter);
     if (CA_ADAPTER_GATT_BTLE & adapter || CA_ADAPTER_RFCOMM_BTEDR & adapter
             || CA_ADAPTER_TCP & adapter || CA_DEFAULT_ADAPTER == adapter)
     {

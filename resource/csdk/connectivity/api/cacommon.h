@@ -57,7 +57,7 @@ extern "C"
 /**
  * TAG of Analyzer log.
  */
-#define ANALYZER_TAG "Analyzer"
+#define ANALYZER_TAG "OIC_ANALYZER"
 
 /**
  * IP address Length.
