@@ -509,6 +509,18 @@ void OCRemoveTrustCertChainNotifier(void);
 OCStackResult OCReadTrustCertChain(uint16_t credId, uint8_t **trustCertChain,
                                      size_t *chainSize);
 
+/**
+ * Function to select appropriate security provisioning method.
+ *
+ * @param[in] supportedMethods   Array of supported methods
+ * @param[in] numberOfMethods   number of supported methods
+ * @param[out]  selectedMethod         Selected methods
+ * @param[in] ownerType type of owner device (SUPER_OWNER or SUB_OWNER)
+ * @return  OC_STACK_OK on success
+ */
+OCStackResult OCSelectOwnershipTransferMethod(const OicSecOxm_t *supportedMethods,
+        size_t numberOfMethods, OicSecOxm_t *selectedMethod, OwnerType_t ownerType);
+
 #endif // __WITH_DTLS__ || __WITH_TLS__
 
 

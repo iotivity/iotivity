@@ -1102,7 +1102,81 @@ namespace OC
         }
     }
 
+    OCStackResult OCSecureResource::getOTMethod(OicSecOxm_t* oxm)
+    {
+        if(!oxm)
+        {
+            oclog() << "Null param";
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        OCStackResult result = OC_STACK_ERROR;
+        auto cLock = m_csdkLock.lock();
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            if(devPtr && devPtr->doxm)
+            {
+                result = OCSelectOwnershipTransferMethod(devPtr->doxm->oxm, devPtr->doxm->oxmLen,
+                                                  oxm, SUPER_OWNER);
+            }
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+        }
+        return result;
+    }
+
+
 #ifdef MULTIPLE_OWNER
+    OCStackResult OCSecureResource::getMOTMethod( OicSecOxm_t* oxm)
+    {
+        if (!oxm)
+        {
+            oclog() << "Null param";
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        OCStackResult result = OC_STACK_ERROR;
+        auto cLock = m_csdkLock.lock();
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            if (devPtr && devPtr->doxm)
+            {
+                result = OCSelectOwnershipTransferMethod(devPtr->doxm->oxm, devPtr->doxm->oxmLen,
+                                                  oxm, SUB_OWNER);
+            }
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+        }
+        return result;
+    }
+
+    bool OCSecureResource::isMOTSupported()
+    {
+        if (devPtr && devPtr->doxm)
+        {
+            return (devPtr->doxm->mom ? true : false);
+        }
+        return false;
+    }
+
+    bool OCSecureResource::isMOTEnabled()
+    {
+        if (devPtr && devPtr->doxm && devPtr->doxm->mom)
+        {
+            if (OIC_MULTIPLE_OWNER_DISABLE != devPtr->doxm->mom->mode)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     OCStackResult OCSecureResource::selectMOTMethod( const OicSecOxm_t oxmSelVal,
             ResultCallBack resultCallback)
     {

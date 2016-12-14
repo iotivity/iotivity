@@ -555,6 +555,7 @@ static void SetMOTResult(OTMContext_t* motCtx, const OCStackResult res)
 
             OICFree(motCtx->ctxResultArray);
             OICFree(motCtx);
+            motCtx = NULL;
         }
         else
         {
@@ -981,11 +982,27 @@ static OCStackResult StartMultipleOwnershipTransfer(OTMContext_t* motCtx,
 {
     OIC_LOG(INFO, TAG, "IN StartMultipleOwnershipTransfer");
     OCStackResult res = OC_STACK_INVALID_PARAM;
+    OicUuid_t myUuid = {.id={0}};
 
     VERIFY_NON_NULL(TAG, motCtx, ERROR);
     VERIFY_NON_NULL(TAG, selectedDevice, ERROR);
     VERIFY_NON_NULL(TAG, selectedDevice->doxm, ERROR);
     motCtx->selectedDeviceInfo = selectedDevice;
+
+    res = GetDoxmDeviceID(&myUuid);
+    if(OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to GetDoxmDeviceID");
+        SetMOTResult(motCtx, res);
+        return res;
+    }
+    if(memcmp(selectedDevice->doxm->owner.id, myUuid.id, sizeof(myUuid.id)) == 0)
+    {
+        res = OC_STACK_INVALID_DEVICE_INFO;
+        OIC_LOG(ERROR, TAG, "Owner cannot be registered as sub-owner.");
+        SetMOTResult(motCtx, res);
+        return res;
+    }
 
     //Checking duplication of Device ID.
     char* strUuid = NULL;
@@ -1124,10 +1141,9 @@ OCStackResult MOTDoOwnershipTransfer(void* ctx,
 
     motCtx->selectedDeviceInfo = selectedDevicelist;
     res = StartMultipleOwnershipTransfer(motCtx, selectedDevicelist);
-    VERIFY_SUCCESS(TAG, OC_STACK_OK == res, ERROR);
 
     OIC_LOG(DEBUG, TAG, "OUT MOTDoOwnershipTransfer");
-
+    return res;
 exit:
     if(OC_STACK_OK != res)
     {

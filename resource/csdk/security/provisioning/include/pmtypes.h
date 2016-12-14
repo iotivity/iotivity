@@ -101,6 +101,31 @@ typedef struct OCPMResult{
 }OCProvisionResult_t;
 
 /**
+ * Owner device type
+ */
+typedef enum OwnerType{
+    SUPER_OWNER = 0,
+    SUB_OWNER = 1
+}OwnerType_t;
+
+/**
+ * Index value to access OxM allow table
+ */
+typedef enum OxmAllowTableIdx {
+    OXM_IDX_JUST_WORKS = 0,
+    OXM_IDX_MV_JUST_WORKS,
+#ifdef MULTIPLE_OWNER
+    OXM_IDX_PRECONFIG_PIN,
+#endif
+    OXM_IDX_RANDOM_DEVICE_PIN,
+    OXM_IDX_MANUFACTURER_CERTIFICATE,
+    OXM_IDX_CON_MFG_CERT,
+    OXM_IDX_DECENTRALIZED_PUBLIC_KEY,
+    OXM_IDX_COUNT,
+    OXM_IDX_UNKNOWN
+}OxmAllowTableIdx_t;
+
+/**
  * Callback function definition of provisioning API
  *
  * @param[OUT] ctx - If user set his/her context, it will be returned here.
