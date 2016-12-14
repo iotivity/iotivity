@@ -52,10 +52,11 @@ TEST(RandomGeneration,OCGetRandomBytes) {
 // random number generator.
 TEST(RandomGeneration,OCFillRandomMem_GeneratedDataIsDifferent) {
     uint8_t array[ARR_SIZE] = {};
-    uint8_t matchingByte = OCGetRandomByte();
     bool foundNonMatchingByte = false;
+    uint8_t matchingByte;
+    EXPECT_TRUE(OCGetRandomBytes(&matchingByte, 1));
 
-    OCFillRandomMem(array, ARR_SIZE);
+    EXPECT_TRUE(OCGetRandomBytes(array, sizeof(array)));
 
     // Note: this test can flag a false-failure, but this is
     // statistically very unlikely to fail.  In a uniformly distributed
