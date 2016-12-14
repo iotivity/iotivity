@@ -397,6 +397,14 @@ namespace OC
                                 size_t chainSize);
 #endif // __WITH_DTLS__ || __WITH_TLS__
 
+
+            /**
+             * This function configures SVR DB as self-ownership.
+             *
+             *@return OC_STACK_OK in case of successful configue and other value otherwise.
+             */
+            static OCStackResult configSelfOwnership();
+
     };
 
     /**
