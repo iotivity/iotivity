@@ -31,6 +31,7 @@
 #include "oic_string.h"
 #include "utlist.h"
 #include "srmutility.h"
+#include "aclresource.h"
 #include "internal/doxmresource.h"
 
 namespace OIC
@@ -807,7 +808,7 @@ namespace OIC
             {
                 res = ESResult::ES_OK;
             }
-
+            OCDeleteACLList(acl);
             return res;
         }
 
@@ -836,6 +837,7 @@ namespace OIC
             if(!rsrc)
             {
                 OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "createAcl: OICCalloc error return");
+                FreeRsrc(rsrc);
                 OCDeleteACLList(acl);
                 return NULL;
             }
@@ -846,6 +848,7 @@ namespace OIC
             if(!rsrc->href)
             {
                 OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,  "createAcl: OICCalloc error return");
+                FreeRsrc(rsrc);
                 OCDeleteACLList(acl);
                 return NULL;
             }
@@ -854,10 +857,39 @@ namespace OIC
             size_t arrLen = 1;
             rsrc->typeLen = arrLen;
             rsrc->types = (char**)OICCalloc(arrLen, sizeof(char*));
+            if(!rsrc->types)
+            {
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,  "createAcl: OICCalloc error return");
+                FreeRsrc(rsrc);
+                OCDeleteACLList(acl);
+                return NULL;
+            }
+            rsrc->types[0] = OICStrdup("rt");   // ignore
+            if(!rsrc->types[0])
+            {
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,  "createAcl: OICStrdup error return");
+                FreeRsrc(rsrc);
+                OCDeleteACLList(acl);
+                return NULL;
+            }
+
             rsrc->interfaceLen = 1;
             rsrc->interfaces = (char**)OICCalloc(arrLen, sizeof(char*));
-            rsrc->types[0] = OICStrdup("rt");   // ignore
+            if(!rsrc->interfaces)
+            {
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,  "createAcl: OICCalloc error return");
+                FreeRsrc(rsrc);
+                OCDeleteACLList(acl);
+                return NULL;
+            }
             rsrc->interfaces[0] = OICStrdup("if");  // ignore
+            if(!rsrc->interfaces[0])
+            {
+                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,  "createAcl: OICStrdup error return");
+                FreeRsrc(rsrc);
+                OCDeleteACLList(acl);
+                return NULL;
+            }
 
             LL_APPEND(ace->resources, rsrc);
 

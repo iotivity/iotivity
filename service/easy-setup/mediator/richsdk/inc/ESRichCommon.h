@@ -77,7 +77,7 @@ namespace OIC
              *
              * @return a provisioning status property of Enrollee
              */
-            ProvStatus getProvStatus()
+            ProvStatus getProvStatus() const
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_PROVSTATUS))
                 {
@@ -92,7 +92,7 @@ namespace OIC
              *
              * @return a last error code property of Enrollee.
              */
-            ESErrorCode getLastErrCode()
+            ESErrorCode getLastErrCode() const
             {
                 if(m_rep.hasAttribute(OC_RSRVD_ES_LAST_ERRORCODE))
                 {
