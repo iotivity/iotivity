@@ -837,7 +837,6 @@ namespace OIC
             if(!rsrc)
             {
                 OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "createAcl: OICCalloc error return");
-                FreeRsrc(rsrc);
                 OCDeleteACLList(acl);
                 return NULL;
             }
