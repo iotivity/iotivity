@@ -52,12 +52,15 @@ int processUserInput(int min = std::numeric_limits<int>::min(),
 {
     assert(min <= max);
 
-    int input;
+    int input = 0;
 
     std::cin >> input;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-    if (!std::cin.fail() && min <= input && input <= max) return input;
+    if (!std::cin.fail() && min <= input && input <= max)
+    {
+        return input;
+    }
 
     std::cin.clear();
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -65,7 +68,7 @@ int processUserInput(int min = std::numeric_limits<int>::min(),
     throw std::runtime_error("Invalid Input, please try again");
 }
 
-void printConfiguration(EnrolleeConf conf)
+void printConfiguration(const EnrolleeConf& conf)
 {
     cout << "===========================================" << endl;
     cout << "\tDevice Name : " << conf.getDeviceName() << endl;
@@ -81,7 +84,7 @@ void printConfiguration(EnrolleeConf conf)
     cout << "===========================================" << endl;
 }
 
-void printStatus(EnrolleeStatus status)
+void printStatus(const EnrolleeStatus& status)
 {
     cout << "===========================================" << endl;
     cout << "\tProvStatus : " << status.getProvStatus() << endl;
@@ -439,7 +442,7 @@ int main()
             return -1;
         }
 #endif
-    }catch(OCException& e)
+    }catch (const std::exception& e)
     {
         std::cout << "Exception in main: "<<e.what();
     }
