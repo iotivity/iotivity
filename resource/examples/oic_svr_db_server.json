@@ -60,7 +60,7 @@
                             "if": ["oic.if.baseline"]
                         }
                     ],
-                    "permission": 6
+                    "permission": 7
                 }
             ]
         },
