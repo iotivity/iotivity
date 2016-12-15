@@ -68,8 +68,11 @@ typedef struct
 /**
  * Callback function to pass the connection information from CA to RI.
  * @param[out]   object           remote device information.
+ * @param[out]   isConnected      Whether keepalive message needs to be sent.
+ * @param[out]   isClient         Host Mode of Operation.
  */
-typedef void (*CAKeepAliveConnectionCallback)(const CAEndpoint_t *object, bool isConnected);
+typedef void (*CAKeepAliveConnectionCallback)(const CAEndpoint_t *object, bool isConnected,
+                                              bool isClient);
 
 /**
  * Register connection status changes callback to process KeepAlive.

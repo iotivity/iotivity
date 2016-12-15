@@ -83,9 +83,11 @@ OCStackResult HandleKeepAliveRequest(OCServerRequest *request,
 
 /**
  * API to handle the connected device for KeepAlive.
- * @return  Current Time.
+ * @param[in]   endpoint        Remote endpoint information.
+ * @param[in]   isConnected     Whether keepalive message needs to be sent.
+ * @param[in]   isClient        Host Mode of Operation.
  */
-void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint, bool isConnected);
+void HandleKeepAliveConnCB(const CAEndpoint_t *endpoint, bool isConnected, bool isClient);
 
 #ifdef __cplusplus
 } // extern "C"
