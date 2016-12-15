@@ -118,7 +118,6 @@ if provisioning_env.get('WITH_TCP') == True:
     cloudServer = provisioning_env.Program('cloudServer', cloud_src + ['cloudServer.c', 'cloud/cloudResource.c'])
 
 src_dir = provisioning_env.get('SRC_DIR')
-cloud_cert_dir = src_dir + '/cloud/certificate/'
 sec_provisioning_src_dir = src_dir + '/resource/csdk/security/provisioning/sample/'
 sec_provisioning_build_dir = env.get('BUILD_DIR') +'/resource/csdk/security/provisioning/sample/'
 
@@ -146,7 +145,7 @@ if provisioning_env.get('WITH_TCP') == True:
     clouddat = provisioning_env.Install(sec_provisioning_build_dir,
                                         sec_provisioning_src_dir + 'cloud.dat')
     rootcert = provisioning_env.Install(sec_provisioning_build_dir,
-                                        cloud_cert_dir + 'rootca.crt')
+                                        sec_provisioning_src_dir + 'rootca.crt')
     Alias("cloud", [clouddat, rootcert, cloudClient, cloudServer])
     provisioning_env.AppendTarget("cloud")
 
