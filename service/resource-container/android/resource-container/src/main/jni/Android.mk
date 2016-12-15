@@ -37,7 +37,6 @@ LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/csdk/stack/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/csdk/logger/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/oc_logger/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/c_common
-LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/c_common/ocrandom/include
 
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/extlibs/
 

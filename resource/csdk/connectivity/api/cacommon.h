@@ -47,8 +47,6 @@
 #include <mswsock.h>
 #endif
 
-#include "ocrandom.h"
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -113,7 +111,12 @@ extern "C"
 /**
  *Maximum length of the remoteEndpoint identity.
  */
-#define CA_MAX_ENDPOINT_IDENTITY_LEN  UUID_STRING_SIZE
+#define CA_MAX_ENDPOINT_IDENTITY_LEN  CA_MAX_IDENTITY_SIZE
+
+/**
+ * Max identity size.
+ */
+#define CA_MAX_IDENTITY_SIZE (37)
 
 /**
  * option types - the highest option number 63.
@@ -287,7 +290,7 @@ typedef struct
     uint16_t                port;       // for IP
     char                    addr[MAX_ADDR_STR_SIZE_CA]; // address for all
     uint32_t                ifindex;    // usually zero for default interface
-    char                    deviceId[UUID_STRING_SIZE]; // device ID of remote device
+    char                    deviceId[CA_MAX_IDENTITY_SIZE]; // device ID of remote device
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     char                    routeData[MAX_ADDR_STR_SIZE_CA]; /**< GatewayId:ClientId of
                                                                     destination. **/
