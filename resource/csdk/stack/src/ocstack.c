@@ -546,8 +546,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
     {
     case OC_OBSERVER_NOT_INTERESTED:
         OIC_LOG(DEBUG, TAG, "observer not interested in our notifications");
-        observer = GetObserverUsingToken (token, tokenLength);
-        if(observer)
+        observer = GetObserverUsingToken(token, tokenLength);
+        if (observer)
         {
             result = FormOCEntityHandlerRequest(&ehRequest,
                                                 (OCRequestHandle)NULL,
@@ -559,16 +559,20 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                 OC_OBSERVE_DEREGISTER,
                                                 observer->observeId,
                                                 0);
-            if(result != OC_STACK_OK)
+            if (result != OC_STACK_OK)
             {
                 return result;
             }
-            observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest,
-                            observer->resource->entityHandlerCallbackParam);
+
+            if (observer->resource && observer->resource->entityHandler)
+            {
+                observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest,
+                                                  observer->resource->entityHandlerCallbackParam);
+            }
         }
 
-        result = DeleteObserverUsingToken (token, tokenLength);
-        if(result == OC_STACK_OK)
+        result = DeleteObserverUsingToken(token, tokenLength);
+        if (result == OC_STACK_OK)
         {
             OIC_LOG(DEBUG, TAG, "Removed observer successfully");
         }
@@ -581,8 +585,8 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
 
     case OC_OBSERVER_STILL_INTERESTED:
         OIC_LOG(DEBUG, TAG, "observer still interested, reset the failedCount");
-        observer = GetObserverUsingToken (token, tokenLength);
-        if(observer)
+        observer = GetObserverUsingToken(token, tokenLength);
+        if (observer)
         {
             observer->forceHighQos = 0;
             observer->failedCommCount = 0;
@@ -597,9 +601,9 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
     case OC_OBSERVER_FAILED_COMM:
         OIC_LOG(DEBUG, TAG, "observer is unreachable");
         observer = GetObserverUsingToken (token, tokenLength);
-        if(observer)
+        if (observer)
         {
-            if(observer->failedCommCount >= MAX_OBSERVER_FAILED_COMM)
+            if (observer->failedCommCount >= MAX_OBSERVER_FAILED_COMM)
             {
                 result = FormOCEntityHandlerRequest(&ehRequest,
                                                     (OCRequestHandle)NULL,
@@ -611,15 +615,19 @@ OCStackResult OCStackFeedBack(CAToken_t token, uint8_t tokenLength, uint8_t stat
                                                     OC_OBSERVE_DEREGISTER,
                                                     observer->observeId,
                                                     0);
-                if(result != OC_STACK_OK)
+                if (result != OC_STACK_OK)
                 {
                     return OC_STACK_ERROR;
                 }
-                observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest,
-                                    observer->resource->entityHandlerCallbackParam);
 
-                result = DeleteObserverUsingToken (token, tokenLength);
-                if(result == OC_STACK_OK)
+                if (observer->resource && observer->resource->entityHandler)
+                {
+                    observer->resource->entityHandler(OC_OBSERVE_FLAG, &ehRequest,
+                                        observer->resource->entityHandlerCallbackParam);
+                }
+
+                result = DeleteObserverUsingToken(token, tokenLength);
+                if (result == OC_STACK_OK)
                 {
                     OIC_LOG(DEBUG, TAG, "Removed observer successfully");
                 }
@@ -2286,9 +2294,9 @@ exit:
     if(result != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "Stack initialization error");
+        TerminateScheduleResourceList();
         deleteAllResources();
         CATerminate();
-        TerminateScheduleResourceList();
         stackState = OC_STACK_UNINITIALIZED;
     }
     return result;
@@ -2336,19 +2344,19 @@ OCStackResult OCStop()
         OIC_LOG(ERROR, TAG, "CAUnregisterNetworkMonitorHandler has failed");
     }
 
-    // Free memory dynamically allocated for resources
-    deleteAllResources();
-    CATerminate();
     TerminateScheduleResourceList();
     // Remove all observers
     DeleteObserverList();
+    // Free memory dynamically allocated for resources
+    deleteAllResources();
     // Remove all the client callbacks
     DeleteClientCBList();
+    // Terminate connectivity-abstraction layer.
+    CATerminate();
 
     // De-init the SRM Policy Engine
     // TODO after BeachHead delivery: consolidate into single SRMDeInit()
     SRMDeInitPolicyEngine();
-
 
     stackState = OC_STACK_UNINITIALIZED;
     return OC_STACK_OK;
