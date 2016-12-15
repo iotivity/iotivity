@@ -64,10 +64,11 @@ typedef struct
     unsigned char* data;                /**< received data from remote device */
     size_t len;                         /**< received data length */
     size_t totalLen;                    /**< total coap data length required to receive */
-    unsigned char tlsdata[18437];     /**< tls data(rfc5246: TLSCiphertext max (2^14+2048+5)) */
-    size_t tlsLen;                         /**< received tls data length */
+    unsigned char tlsdata[18437];       /**< tls data(rfc5246: TLSCiphertext max (2^14+2048+5)) */
+    size_t tlsLen;                      /**< received tls data length */
     CAProtocol_t protocol;              /**< application-level protocol */
     CATCPConnectionState_t state;       /**< current tcp session state */
+    bool isClient;                      /**< Host Mode of Operation. */
 } CATCPSessionInfo_t;
 
 /**

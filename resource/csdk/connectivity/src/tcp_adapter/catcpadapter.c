@@ -88,16 +88,16 @@ static CAConnectionChangeCallback g_connectionChangeCallback = NULL;
  */
 static CAErrorHandleCallback g_errorCallback = NULL;
 
+/**
+ * KeepAlive Connected or Disconnected Callback to CA adapter.
+ */
+static CAKeepAliveConnectionCallback g_connKeepAliveCallback = NULL;
+
 static void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep,
                                   const void *data, uint32_t dataLength);
 
 static void CATCPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
                               size_t dataLength, CAResult_t result);
-
-/**
- * KeepAlive Connected or Disconnected Callback to CA adapter.
- */
-static CAKeepAliveConnectionCallback g_connKeepAliveCallback = NULL;
 
 static CAResult_t CATCPInitializeQueueHandles();
 
@@ -242,12 +242,12 @@ static void CATCPErrorHandler(const CAEndpoint_t *endpoint, const void *data,
     }
 }
 
-static void CATCPConnectionHandler(const CAEndpoint_t *endpoint, bool isConnected)
+static void CATCPConnectionHandler(const CAEndpoint_t *endpoint, bool isConnected, bool isClient)
 {
     // Pass the changed connection status to RI Layer for keepalive.
     if (g_connKeepAliveCallback)
     {
-        g_connKeepAliveCallback(endpoint, isConnected);
+        g_connKeepAliveCallback(endpoint, isConnected, isClient);
     }
 
     // Pass the changed connection status to CAUtil.

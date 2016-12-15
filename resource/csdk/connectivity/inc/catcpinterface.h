@@ -67,9 +67,11 @@ typedef void (*CATCPErrorHandleCallback)(const CAEndpoint_t *endpoint, const voi
   *
   * @param[in]  endpoint        network endpoint description.
   * @param[in]  isConnected     Whether keepalive message needs to be sent.
+  * @param[in]  isClient        Host Mode of Operation.
   * @see  Callback must be registered using CATCPSetKeepAliveCallback().
  */
-typedef void (*CATCPConnectionHandleCallback)(const CAEndpoint_t *endpoint, bool isConnected);
+typedef void (*CATCPConnectionHandleCallback)(const CAEndpoint_t *endpoint, bool isConnected,
+                                              bool isClient);
 
 /**
  * set error callback to notify error in TCP adapter.
