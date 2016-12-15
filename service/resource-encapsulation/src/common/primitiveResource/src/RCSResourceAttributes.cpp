@@ -78,6 +78,14 @@ namespace
             m_stream << "\"" + value + "\"";
         }
 
+        void operator()(const RCSByteString& value)
+        {
+            for (size_t i = 0; i < value.size(); ++i)
+            {
+                m_stream << "\\x" << std::hex << (int)value[i];
+            }
+        }
+
         void operator()(const RCSResourceAttributes& attrs)
         {
             m_stream << "{";
@@ -152,6 +160,13 @@ namespace
     {
         static constexpr RCSResourceAttributes::TypeId typeId =
                 RCSResourceAttributes::TypeId::STRING;
+    };
+
+    template< >
+    struct TypeInfoConverter< RCSByteString >
+    {
+        static constexpr RCSResourceAttributes::TypeId typeId =
+                RCSResourceAttributes::TypeId::BYTESTRING;
     };
 
     template< >
@@ -231,7 +246,6 @@ namespace
 
         return typeInfos[which];
     }
-
 } // unnamed namespace
 
 
@@ -239,7 +253,6 @@ namespace OIC
 {
     namespace Service
     {
-
         RCSResourceAttributes::Value::ComparisonHelper::ComparisonHelper(const Value& v) :
                 m_valueRef(v)
         {

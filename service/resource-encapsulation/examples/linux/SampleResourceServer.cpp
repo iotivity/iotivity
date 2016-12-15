@@ -19,6 +19,7 @@
  ******************************************************************/
 
 #include "RCSResourceObject.h"
+#include "RCSRequest.h"
 #include "OCPlatform.h"
 
 using namespace OC::OCPlatform;
@@ -102,7 +103,7 @@ void printAttributes(const RCSResourceAttributes& attrs)
     }
 }
 
-RCSGetResponse requestHandlerForGet(const RCSRequest&, RCSResourceAttributes& attrs)
+RCSGetResponse requestHandlerForGet(const RCSRequest & req, RCSResourceAttributes& attrs)
 {
     std::cout << "Received a Get request from Client" << std::endl;
     printAttributes(attrs);
@@ -110,10 +111,21 @@ RCSGetResponse requestHandlerForGet(const RCSRequest&, RCSResourceAttributes& at
     {
         RCSResourceObject::LockGuard lock(g_resource);
         std::cout << "\nSending response to Client : " << std::endl;
-        printAttributes(g_resource->getAttributes());
+        if (req.getInterface() == CUSTOM_INTERFACE)
+        {
+            auto attr = g_resource->getAttributes();
+            static RCSByteString::DataType binval {0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8,
+                                                   0x9, 0x0, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
+            attr["blob"] = RCSByteString {binval};
+            printAttributes(attr);
+            return RCSGetResponse::create(attr);
+        }
+        else
+        {
+            printAttributes(g_resource->getAttributes());
+            return RCSGetResponse::defaultAction();
+        }
     }
-
-    return RCSGetResponse::defaultAction();
 }
 
 RCSSetResponse requestHandlerForSet(const RCSRequest&, RCSResourceAttributes& attrs)
