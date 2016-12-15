@@ -257,7 +257,7 @@ namespace OC
 {
     InProcServerWrapper::InProcServerWrapper(
         std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg)
-     : m_csdkLock(csdkLock),
+     : m_threadRun(false), m_csdkLock(csdkLock),
        m_cfg { cfg }
     {
         start();
