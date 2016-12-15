@@ -113,6 +113,7 @@ else:
 help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
 help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))
 help_vars.Add(EnumVariable('MULTIPLE_OWNER', 'Enable multiple owner', '0', allowed_values=('0', '1')))
+help_vars.Add(EnumVariable('EXC_PROV_SUPPORT', 'Except OCPMAPI library(libocpmapi.so)', '0', allowed_values=('0', '1')))
 help_vars.Add(EnumVariable('TEST', 'Run unit tests', '0', allowed_values=('0', '1')))
 help_vars.Add(BoolVariable('LOGGING', 'Enable stack logging', logging_default))
 help_vars.Add(BoolVariable('UPLOAD', 'Upload binary ? (For Arduino)', require_upload))
@@ -350,8 +351,9 @@ if env.get('WITH_TCP'):
         defines.append('-D__WITH_TLS__=1')
 
 if env.get('SECURED') == '1':
-    libs.append('-locpmapi')
     defines.append('-D_WITH_DTLS_=1')
+    if not env.get('EXC_PROV_SUPPORT'):
+        libs.append('-locpmapi')
 
 pc_vars = {
     '\@VERSION\@': project_version,
