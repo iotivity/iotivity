@@ -442,9 +442,9 @@ int main()
             return -1;
         }
 #endif
-    }catch (const std::exception& e)
+    }catch (...)
     {
-        std::cout << "Exception in main: "<<e.what();
+        std::cout << "Exception in main: " << std::endl;
     }
 
     while (true)
@@ -453,9 +453,9 @@ int main()
         {
             DisplayMenu();
         }
-        catch (const std::exception& e)
+        catch (...)
         {
-            std::cout << "Exception caught in main " << e.what() << std::endl;
+            std::cout << "Exception caught in main " << std::endl;
         }
     }
 
