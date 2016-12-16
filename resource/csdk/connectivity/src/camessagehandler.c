@@ -737,6 +737,12 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
     VERIFY_NON_NULL_VOID(sep, TAG, "remoteEndpoint");
     VERIFY_NON_NULL_VOID(data, TAG, "data");
 
+    if (0 == dataLen)
+    {
+        OIC_LOG(ERROR, TAG, "dataLen is zero");
+        return;
+    }
+
     uint32_t code = CA_NOT_FOUND;
     CAData_t *cadata = NULL;
 
@@ -1249,11 +1255,16 @@ void CAErrorHandler(const CAEndpoint_t *endpoint,
                     CAResult_t result)
 {
     OIC_LOG(DEBUG, TAG, "CAErrorHandler IN");
-
-#ifndef SINGLE_THREAD
     VERIFY_NON_NULL_VOID(endpoint, TAG, "remoteEndpoint");
     VERIFY_NON_NULL_VOID(data, TAG, "data");
 
+    if (0 == dataLen)
+    {
+        OIC_LOG(ERROR, TAG, "dataLen is zero");
+        return;
+    }
+
+#ifndef SINGLE_THREAD
     uint32_t code = CA_NOT_FOUND;
     //Do not free remoteEndpoint and data. Currently they will be freed in data thread
     //Get PDU data
@@ -1276,6 +1287,8 @@ void CAErrorHandler(const CAEndpoint_t *endpoint,
 
     CAQueueingThreadAddData(&g_receiveThread, cadata, sizeof(CAData_t));
     coap_delete_pdu(pdu);
+#else
+    (void)result;
 #endif
 
     OIC_LOG(DEBUG, TAG, "CAErrorHandler OUT");
