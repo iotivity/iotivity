@@ -1228,10 +1228,19 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
     if(cbNode)
     {
         OIC_LOG(INFO, TAG, "There is a cbNode associated with the response token");
-        uint32_t obsHeaderOpt = OC_OBSERVE_NO_OPTION;
-        uint8_t tempNumOpt = responseInfo->info.numOptions;
-        GetObserveHeaderOption(&obsHeaderOpt, responseInfo->info.options,
-                               &tempNumOpt);
+
+        // check obs header option
+        bool obsHeaderOpt = false;
+        CAHeaderOption_t *options = responseInfo->info.options;
+        for (uint8_t i = 0; i< responseInfo->info.numOptions; i++)
+        {
+            if (options && options[i].protocolID == CA_COAP_ID &&
+                           options[i].optionID == COAP_OPTION_OBSERVE)
+            {
+                obsHeaderOpt = true;
+                break;
+            }
+        }
 
         if(responseInfo->result == CA_EMPTY)
         {
@@ -1265,8 +1274,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             FindAndDeleteClientCB(cbNode);
         }
         else if ((cbNode->method == OC_REST_OBSERVE || cbNode->method == OC_REST_OBSERVE_ALL)
-                && (responseInfo->result == CA_CONTENT)
-                && (obsHeaderOpt == OC_OBSERVE_NO_OPTION))
+                && (responseInfo->result == CA_CONTENT) && !obsHeaderOpt)
         {
             OCClientResponse response =
                 {.devAddr = {.adapter = OC_DEFAULT_ADAPTER}};
