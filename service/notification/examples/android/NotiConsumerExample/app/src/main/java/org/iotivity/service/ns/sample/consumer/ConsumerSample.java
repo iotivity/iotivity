@@ -16,7 +16,7 @@
  * limitations under the License.
  ******************************************************************/
 
-package com.sec.noticonsumerexample;
+package org.iotivity.service.ns.sample.consumer;
 
 import android.content.Context;
 import android.os.Handler;

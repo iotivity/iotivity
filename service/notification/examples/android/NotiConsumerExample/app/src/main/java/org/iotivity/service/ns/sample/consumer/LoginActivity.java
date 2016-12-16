@@ -20,7 +20,7 @@
  * -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 
-package com.sec.notiproviderexample;
+package org.iotivity.service.ns.sample.consumer;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.UrlQuerySanitizer;

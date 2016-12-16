@@ -13,7 +13,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "sample.notification.service.iotivity.org.notificationsample"
+        applicationId "sample.notification.service.iotivity.org.notificationprovidersample"
         minSdkVersion 21
         targetSdkVersion 21
         versionCode 1

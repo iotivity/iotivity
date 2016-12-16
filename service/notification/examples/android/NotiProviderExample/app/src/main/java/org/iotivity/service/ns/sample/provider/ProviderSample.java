@@ -20,7 +20,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
  */
 
-package com.sec.notiproviderexample;
+package org.iotivity.service.ns.sample.provider;
 
 import android.content.Context;
 import android.os.*;

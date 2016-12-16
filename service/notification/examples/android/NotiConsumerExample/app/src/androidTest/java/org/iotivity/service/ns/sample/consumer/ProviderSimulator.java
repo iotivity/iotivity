@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-package com.sec.noticonsumerexample;
+package org.iotivity.service.ns.sample.consumer;
 
 import android.util.Log;
 

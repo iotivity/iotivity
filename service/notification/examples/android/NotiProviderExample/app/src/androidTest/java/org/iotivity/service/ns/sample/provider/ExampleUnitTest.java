@@ -14,7 +14,7 @@
 * limitations under the License.
 */
 
-package com.sec.notiproviderexample;
+package org.iotivity.service.ns.sample.provider;
 
 import java.util.Iterator;
 import java.util.Vector;
