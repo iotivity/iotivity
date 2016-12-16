@@ -500,7 +500,8 @@ Java_org_iotivity_ca_CaLeClientInterface_caManagerLeServicesDiscoveredCallback(J
     {
         if (!g_connectedDeviceSet)
         {
-            OIC_LOG(ERROR, TAG, "g_connectedDeviceSet is null");
+            OIC_LOG(INFO, TAG, "g_connectedDeviceSet is needed for CM. "
+                    "please call CAManagerLEClientInitialize");
             return;
         }
 

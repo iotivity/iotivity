@@ -3872,7 +3872,7 @@ bool CALEClientIsValidState(const char* remoteAddress, uint16_t state_type,
     CALEState_t* state = CALEClientGetStateInfo(remoteAddress);
     if (NULL == state)
     {
-        OIC_LOG(ERROR, TAG, "state is null");
+        OIC_LOG(DEBUG, TAG, "state is not updated yet");
         oc_mutex_unlock(g_deviceStateListMutex);
         return false;
     }
