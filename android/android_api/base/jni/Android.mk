@@ -41,6 +41,12 @@ include $(PREBUILT_SHARED_LIBRARY)
 ifeq ($(SECURED), 1)
 include $(CLEAR_VARS)
 OIC_LIB_PATH := ../../../../out/android/$(APP_ABI)/$(APP_OPTIM)
+LOCAL_MODULE := libandroid-mbedtls
+LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libmbedtls.so
+include $(PREBUILT_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
+OIC_LIB_PATH := ../../../../out/android/$(APP_ABI)/$(APP_OPTIM)
 LOCAL_MODULE := libandroid-ocprovision
 LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libocprovision.so
 include $(PREBUILT_SHARED_LIBRARY)
@@ -156,6 +162,7 @@ LOCAL_STATIC_LIBRARIES += android_cpp11_compat
 ifeq ($(SECURED), 1)
 LOCAL_STATIC_LIBRARIES += android-ocprovision
 LOCAL_STATIC_LIBRARIES += android-ocpmapi
+LOCAL_STATIC_LIBRARIES += libandroid-mbedtls
 endif
 LOCAL_SHARED_LIBRARIES += android-rd
 
