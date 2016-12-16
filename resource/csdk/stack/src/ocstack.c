@@ -485,7 +485,7 @@ void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out)
     out->adapter = (CATransportAdapter_t)in->adapter;
     out->flags = OCToCATransportFlags(in->flags);
     OICStrcpy(out->addr, sizeof(out->addr), in->addr);
-    OICStrcpy(out->deviceId, sizeof(out->deviceId), in->deviceId);
+    OICStrcpy(out->remoteId, sizeof(out->remoteId), in->remoteId);
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     /* This assert is to prevent accidental mismatch between address size macros defined in
      * RI and CA and cause crash here. */
@@ -1468,7 +1468,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     OCUpdateResourceInsWithResponse(cbNode->requestUri, &response);
                 }
 #endif
-                // set deviceId into OCClientResponse callback parameter
+                // set remoteID(device ID) into OCClientResponse callback parameter
                 if (OC_REST_DISCOVER == cbNode->method)
                 {
                     OCDiscoveryPayload *payload = (OCDiscoveryPayload*) response.payload;
@@ -1478,10 +1478,10 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                         return;
                     }
 
-                    OICStrcpy(response.devAddr.deviceId, sizeof(response.devAddr.deviceId),
+                    OICStrcpy(response.devAddr.remoteId, sizeof(response.devAddr.remoteId),
                               payload->sid);
                     OIC_LOG_V(INFO, TAG, "Device ID of response : %s",
-                              response.devAddr.deviceId);
+                              response.devAddr.remoteId);
                 }
 
                 OCStackApplicationResult appFeedback = cbNode->callBack(cbNode->context,
@@ -2767,7 +2767,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
 
     if (devAddr)
     {
-        OIC_LOG_V(DEBUG, TAG, "DeviceID of devAddr : %s", devAddr->deviceId);
+        OIC_LOG_V(DEBUG, TAG, "remoteId of devAddr : %s", devAddr->remoteId);
     }
 
     resHandle = GenerateInvocationHandle();
