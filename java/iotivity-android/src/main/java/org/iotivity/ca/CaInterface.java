@@ -67,6 +67,9 @@ public class CaInterface {
      *  Method set device information for Auto-Connection.
      *  this method has to be called before FindResource is called.
      *  @param address                      LE address of scanned bluetooth device.
+     *
+     *  @throws OcException If the connection manager is not initalized.
+     *                      Check that startManagerService was called.
      */
     public synchronized static void setAutoConnectionDevice(String address)
             throws OcException {
@@ -77,6 +80,9 @@ public class CaInterface {
     /**
      *  Method unset device information for Auto-Connection.
      *  @param address                      LE address of scanned bluetooth device.
+     *
+     *  @throws OcException  If the connection manager is not initalized.
+     *                       Check that startManagerService was called.
      */
     public synchronized static void unsetAutoConnectionDevice(String address)
             throws OcException {
@@ -110,7 +116,8 @@ public class CaInterface {
 
     /**
      *  start bluetooth pairing service.
-     *  @param context                      application context
+     *  @param context    application context
+     *  @param listener   listener callback called when the bluetooth device is found
      */
     public synchronized static void startBtPairingService(Context context,
             OnBtDeviceFoundListener listener) {
@@ -134,6 +141,9 @@ public class CaInterface {
 
     /**
      *  start bluetooth device scan.
+     *
+     *  @throws OcException If bluetooth pairing has not been initialized.
+     *                      Check that startBtPairingService has been called.
      */
     public synchronized static void startScan()
             throws OcException {
@@ -143,6 +153,9 @@ public class CaInterface {
 
     /**
      *  stop bluetooth device scan.
+     *
+     *  @throws OcException If bluetooth pairing has not been initialized.
+     *                      Check that startBtPairingService has been called.
      */
     public synchronized static void stopScan()
             throws OcException {
@@ -152,6 +165,10 @@ public class CaInterface {
 
     /**
      *  create bond
+     *
+     *  @param device  bluetooth device
+     *  @throws OcException If bluetooth pairing has not been initialized.
+     *                      Check that startBtPairingService has been called.
      */
     public synchronized static void createBond(BluetoothDevice device)
             throws OcException {
