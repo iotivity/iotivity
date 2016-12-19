@@ -170,6 +170,15 @@ void CAIPAdapterHandler(CATransportAdapter_t adapter, CANetworkStatus_t status)
     {
         OIC_LOG(ERROR, TAG, "g_networkChangeCallback is NULL");
     }
+
+    if (CA_INTERFACE_DOWN == status)
+    {
+        OIC_LOG(DEBUG, TAG, "Network status for IP is down");
+#ifdef __WITH_DTLS__
+        OIC_LOG(DEBUG, TAG, "close all ssl session");
+        CAcloseSslConnectionAll();
+#endif
+    }
 }
 
 static void CAUpdateStoredIPAddressInfo(CANetworkStatus_t status)
