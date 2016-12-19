@@ -27,13 +27,6 @@ Source1002: %{name}-test.manifest
 %define TARGET_TRANSPORT IP
 %endif
 
-%define JOB "-j4"
-%if 0%{?speedpython}
-%define JOB %{?_smp_mflags}
-%endif
-%if 0%{?speedpython:1} && 0%{?en_speedpython:1}
-%en_speedpython
-%endif
 
 # default is RELEASE mode.
 # If DEBUG mode is needed, please use tizen_build_devel_mode
@@ -46,9 +39,11 @@ Source1002: %{name}-test.manifest
 %endif
 
 %ifarch armv7l armv7hl armv7nhl armv7tnhl armv7thl
+BuildRequires: python-accel-armv7l-cross-arm
 %define TARGET_ARCH "armeabi-v7a"
 %endif
 %ifarch aarch64
+BuildRequires: python-accel-aarch64-cross-aarch64
 %define TARGET_ARCH "arm64"
 %endif
 %ifarch x86_64
@@ -174,7 +169,7 @@ cp %{SOURCE1001} ./%{name}-test.manifest
 %endif
 
 %build
-scons %{JOB} --prefix=%{_prefix} \
+scons %{?_smp_mflags} --prefix=%{_prefix} \
     ES_TARGET_ENROLLEE=%{ES_TARGET_ENROLLEE} \
     LIB_INSTALL_DIR=%{_libdir} \
     LOGGING=%{LOGGING} \
