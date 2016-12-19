@@ -68,8 +68,7 @@ scene_test_env.AppendUnique(CPPPATH = ['../../resource-encapsulation/src/common/
 scene_test_env.AppendUnique(CPPPATH = ['../../resource-encapsulation/src/common/utils/include'])
 
 if scene_test_env.get('SECURED') == '1':
-	if scene_test_env.get('WITH_TCP') == True:
-		scene_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    scene_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 ######################################################################
 # Build Test
 ######################################################################

@@ -72,8 +72,7 @@ if 'g++' in compiler:
     broker_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 if broker_test_env.get('SECURED') == '1':
-	if broker_test_env.get('WITH_TCP') == True:
-		broker_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    broker_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # Build Test

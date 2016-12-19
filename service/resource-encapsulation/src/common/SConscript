@@ -66,8 +66,7 @@ if not release:
     rcs_common_env.PrependUnique(LIBS = ['gcov'])
 
 if rcs_common_env.get('SECURED') == '1':
-	if rcs_common_env.get('WITH_TCP') == True:
-		rcs_common_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    rcs_common_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 ######################################################################
 # Source files and Targets
 ######################################################################

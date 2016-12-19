@@ -72,8 +72,7 @@ easysetup_test_env.AppendUnique(CPPPATH = [src_dir + '/resource/include',
 					   src_dir + '/service/easy-setup/mediator/richsdk/inc'])
 
 if easysetup_test_env.get('SECURED') == '1':
-	if easysetup_test_env.get('WITH_TCP') == True:
-		easysetup_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    easysetup_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # Build Test
