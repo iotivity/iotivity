@@ -77,7 +77,7 @@
 #if !defined(ARDUINO_ARCH_SAM)
 #define OC_arduino_srandom_function srandom
 #define OC_arduino_random_function random
-#elif
+#else
 #define OC_arduino_srandom_function srand
 #define OC_arduino_random_function rand
 #endif
