@@ -59,8 +59,7 @@ enrollee_env.PrependUnique(CPPPATH = [
 enrollee_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'ocsrm', 'pthread', 'connectivity_abstraction','coap', 'ESEnrolleeSDK'])
 if enrollee_env.get('SECURED') == '1':
 	enrollee_env.PrependUnique(LIBS = ['ocpmapi', 'ocprovision'])
-	if enrollee_env.get('WITH_TCP') == True:
-		enrollee_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+	enrollee_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 enrollee = enrollee_env.Program('enrollee', ['enrolleewifi.c', 'easysetup_x.c'])
 

@@ -63,8 +63,7 @@ if 'g++' in compiler:
     cache_test_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-fmessage-length=0', '-std=c++0x'])
 
 if cache_test_env.get('SECURED') == '1':
-	if cache_test_env.get('WITH_TCP') == True:
-		cache_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+    cache_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # Build Test

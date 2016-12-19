@@ -86,8 +86,8 @@ if 'BROKER' in with_mq:
 
 if env.get('WITH_TCP') == True:
 	notification_sample_env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
-	if env.get('SECURED') == '1':
-		notification_sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+if env.get('SECURED') == '1':
+	notification_sample_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ####################################################################
 # Source files and Targets
