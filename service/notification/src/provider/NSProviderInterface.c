@@ -125,10 +125,10 @@ NSResult NSStopProvider()
     if (initProvider)
     {
         NSPushQueue(DISCOVERY_SCHEDULER, TASK_STOP_PRESENCE, NULL);
-        NSDeinitProviderInfo();
-        NSUnRegisterResource();
         NSRegisterSubscribeRequestCb((NSSubscribeRequestCallback)NULL);
         NSRegisterSyncCb((NSProviderSyncInfoCallback)NULL);
+        NSUnRegisterResource();
+        NSDeinitProviderInfo();
         NSStopScheduler();
         NSDeinitailize();
 
