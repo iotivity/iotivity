@@ -91,6 +91,7 @@ namespace OIC
             virtual std::string getHost() const = 0;
             virtual std::vector< std::string > getTypes() const = 0;
             virtual std::vector< std::string > getInterfaces() const = 0;
+            virtual OCConnectivityType getConnectivityType() const = 0;
 
             virtual bool isObservable() const = 0;
 

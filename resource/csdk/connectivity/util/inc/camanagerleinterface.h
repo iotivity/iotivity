@@ -74,6 +74,11 @@ CAResult_t CAManagerLEClientTerminate(JNIEnv *env);
  */
 void CAManagerLESetScanInterval(jint intervalTime, jint workingCount);
 
+/**
+ * stop BLE scan.
+ */
+void CAManagerLEStopScan();
+
 #endif
 
 #ifdef __cplusplus

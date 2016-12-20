@@ -32,6 +32,16 @@ namespace OC
                                PlatformConfig /*cfg*/)
         {}
 
+        virtual OCStackResult stop()
+        {
+            return OC_STACK_NOTIMPL;
+        }
+
+        virtual OCStackResult start()
+        {
+            return OC_STACK_NOTIMPL;
+        }
+
         virtual OCStackResult ListenForResource(const std::string& /*servUrl*/,
                                                 const std::string& /*rsrcType*/,
                                                 OCConnectivityType /*connType*/,

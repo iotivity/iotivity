@@ -171,13 +171,12 @@ u_arraylist_t *CAFindInterfaceChange()
 
     for (struct nlmsghdr *nh = (struct nlmsghdr *)buf; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len))
     {
-        if (nh != NULL && nh->nlmsg_type != RTM_NEWLINK)
+        if (nh != NULL && (nh->nlmsg_type != RTM_DELADDR && nh->nlmsg_type != RTM_NEWADDR))
         {
             continue;
         }
         struct ifinfomsg *ifi = (struct ifinfomsg *)NLMSG_DATA(nh);
-
-        if ((!ifi || (ifi->ifi_flags & IFF_LOOPBACK) || !(ifi->ifi_flags & IFF_RUNNING)))
+        if (!ifi)
         {
             continue;
         }
@@ -185,7 +184,6 @@ u_arraylist_t *CAFindInterfaceChange()
         int ifiIndex = ifi->ifi_index;
 
         iflist = CAIPGetInterfaceInformation(ifiIndex);
-
         if (!iflist)
         {
             OIC_LOG_V(ERROR, TAG, "get interface info failed: %s", strerror(errno));
@@ -198,8 +196,6 @@ u_arraylist_t *CAFindInterfaceChange()
 CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
                                    CATransportAdapter_t adapter)
 {
-    OIC_LOG(DEBUG, TAG, "IN");
-
     if (!g_adapterCallbackList)
     {
         // Initialize Wifi service.
@@ -225,6 +221,7 @@ CAResult_t CAIPStartNetworkMonitor(CAIPAdapterStateChangeCallback callback,
         }
     }
 
+    OIC_LOG(DEBUG, TAG, "Initialize network monitoring successfully");
     return CAIPSetNetworkMonitorCallback(callback, adapter);
 }
 
@@ -260,6 +257,7 @@ CAResult_t CAIPStopNetworkMonitor(CATransportAdapter_t adapter)
         }
     }
 
+    OIC_LOG(DEBUG, TAG, "Network monitoring terminated successfully");
     return CA_STATUS_OK;
 }
 

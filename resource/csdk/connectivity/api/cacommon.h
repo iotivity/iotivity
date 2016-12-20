@@ -47,10 +47,17 @@
 #include <mswsock.h>
 #endif
 
+#include "ocrandom.h"
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+/**
+ * TAG of Analyzer log.
+ */
+#define ANALYZER_TAG "OIC_ANALYZER"
 
 /**
  * IP address Length.
@@ -106,7 +113,7 @@ extern "C"
 /**
  *Maximum length of the remoteEndpoint identity.
  */
-#define CA_MAX_ENDPOINT_IDENTITY_LEN   (32)
+#define CA_MAX_ENDPOINT_IDENTITY_LEN  UUID_STRING_SIZE
 
 /**
  * option types - the highest option number 63.
@@ -280,6 +287,7 @@ typedef struct
     uint16_t                port;       // for IP
     char                    addr[MAX_ADDR_STR_SIZE_CA]; // address for all
     uint32_t                ifindex;    // usually zero for default interface
+    char                    deviceId[UUID_STRING_SIZE]; // device ID of remote device
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     char                    routeData[MAX_ADDR_STR_SIZE_CA]; /**< GatewayId:ClientId of
                                                                     destination. **/
@@ -529,7 +537,9 @@ typedef struct
     struct tcpports
     {
         uint16_t u4;    /**< unicast IPv4 socket port */
+        uint16_t u4s;   /**< unicast IPv6 socket secure port */
         uint16_t u6;    /**< unicast IPv6 socket port */
+        uint16_t u6s;   /**< unicast IPv6 socket secure port */
     } tcp;
 #endif
 } CAPorts_t;
@@ -593,7 +603,9 @@ typedef struct
     {
         void *threadpool;       /**< threadpool between Initialize and Start */
         CASocket_t ipv4;        /**< IPv4 accept socket */
+        CASocket_t ipv4s;       /**< IPv4 accept socket secure */
         CASocket_t ipv6;        /**< IPv6 accept socket */
+        CASocket_t ipv6s;       /**< IPv6 accept socket secure */
         void *svrlist;          /**< unicast IPv4 TCP server information*/
         int selectTimeout;      /**< in seconds */
         int listenBacklog;      /**< backlog counts*/

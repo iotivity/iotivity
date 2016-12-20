@@ -34,7 +34,7 @@ PROJECT_NAME           = "IoTivity C SDK"
 
 PROJECT_NUMBER         =
 
-# Using the PROJECT_BRIEF tag one can provide an optional one line description
+# Using the PROJECT_BRIEF tag one can provide an optional one line descriptifon
 # for a project that appears at the top of each page and should give viewer
 # a quick idea about the purpose of the project. Keep the description short.
 
@@ -676,6 +676,10 @@ INPUT                  = . \
              ../../csdk/stack/include/internal/ocstackinternal.h \
              ../../csdk/stack/include/internal/oicgroup.h \
              ../../csdk/stack/include/internal/oickeepalive.h \
+             ../../c_common/ocrandom/include/ocrandom.h \
+             ../../c_common/oic_malloc/include/oic_malloc.h \
+             ../../c_common/oic_string/include/oic_string.h \
+             ../../c_common/oic_time/include/oic_time.h \
              ../../csdk/connectivity/api \
              guides \
              ../../csdk/security/include \

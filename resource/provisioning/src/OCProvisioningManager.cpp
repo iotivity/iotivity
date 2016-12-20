@@ -21,7 +21,7 @@
 #include "ocstack.h"
 #include "srmutility.h"
 #include "base64.h"
-#include "OCProvisioningManager.h"
+#include "OCProvisioningManager.hpp"
 
 namespace OC
 {
@@ -160,31 +160,38 @@ namespace OC
         return result;
     }
 
-    OCStackResult OCSecure::setOwnerTransferCallbackData(OicSecOxm_t oxm,
-            OTMCallbackData_t* callbackData, InputPinCallback inputPin)
+    OCStackResult OCSecure::discoverSingleDeviceInUnicast(unsigned short timeout,
+            const OicUuid_t* deviceID,
+            const std::string& hostAddress,
+            OCConnectivityType connType,
+            std::shared_ptr<OCSecureResource> &foundDevice)
     {
-        if (NULL == callbackData || oxm >= OIC_OXM_COUNT)
-        {
-            oclog() <<"Invalid callbackData or OXM type";
-            return OC_STACK_INVALID_PARAM;
-        }
-
-        if ((OIC_RANDOM_DEVICE_PIN == oxm) && !inputPin)
-        {
-            oclog() <<"for OXM type DEVICE_PIN, inputPin callback can't be null";
-            return OC_STACK_INVALID_PARAM;
-        }
-
-        OCStackResult result;
-        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+        OCStackResult result = OC_STACK_ERROR;
+        OCProvisionDev_t *pDev = nullptr;
+        auto csdkLock = OCPlatform_impl::Instance().csdkLock();
+        auto cLock = csdkLock.lock();
 
         if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-            result = OCSetOwnerTransferCallbackData(oxm, callbackData);
-            if (result == OC_STACK_OK && (OIC_RANDOM_DEVICE_PIN == oxm))
+            result = OCDiscoverSingleDeviceInUnicast(timeout, deviceID, hostAddress.c_str(),
+                            connType, &pDev);
+
+            if (result == OC_STACK_OK)
             {
-                SetInputPinCB(inputPin);
+                if (pDev)
+                {
+                    foundDevice.reset(new OCSecureResource(csdkLock, pDev));
+                }
+                else
+                {
+                    oclog() <<"Not found Secure resource!";
+                    foundDevice.reset();
+                }
+            }
+            else
+            {
+                oclog() <<"Secure resource discovery failed!";
             }
         }
         else
@@ -194,7 +201,124 @@ namespace OC
         }
 
         return result;
+    }
 
+#ifdef MULTIPLE_OWNER
+    OCStackResult OCSecure::discoverMultipleOwnerEnabledDevices(unsigned short timeout,
+            DeviceList_t &list)
+    {
+        OCStackResult result;
+        OCProvisionDev_t *pDevList = nullptr, *pCurDev = nullptr, *tmp = nullptr;
+        auto csdkLock = OCPlatform_impl::Instance().csdkLock();
+        auto cLock = csdkLock.lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCDiscoverMultipleOwnerEnabledDevices(timeout, &pDevList);
+            if (result == OC_STACK_OK)
+            {
+                pCurDev = pDevList;
+                while (pCurDev)
+                {
+                    tmp = pCurDev;
+                    list.push_back(std::shared_ptr<OCSecureResource>(
+                                new OCSecureResource(csdkLock, pCurDev)));
+                    pCurDev = pCurDev->next;
+                    tmp->next = nullptr;
+                }
+            }
+            else
+            {
+                oclog() <<"MultipleOwner Enabled device discovery failed!";
+            }
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
+    OCStackResult OCSecure::discoverMultipleOwnedDevices(unsigned short timeout,
+            DeviceList_t &list)
+    {
+        OCStackResult result;
+        OCProvisionDev_t *pDevList = nullptr, *pCurDev = nullptr, *tmp = nullptr;
+        auto csdkLock = OCPlatform_impl::Instance().csdkLock();
+        auto cLock = csdkLock.lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCDiscoverMultipleOwnedDevices(timeout, &pDevList);
+            if (result == OC_STACK_OK)
+            {
+                pCurDev = pDevList;
+                while (pCurDev)
+                {
+                    tmp = pCurDev;
+                    list.push_back(std::shared_ptr<OCSecureResource>(
+                                new OCSecureResource(csdkLock, pCurDev)));
+                    pCurDev = pCurDev->next;
+                    tmp->next = nullptr;
+                }
+            }
+            else
+            {
+                oclog() <<"Multiple Owned device discovery failed!";
+            }
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
+#endif
+    OCStackResult OCSecure::setInputPinCallback(InputPinCallback inputPin)
+    {
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            SetInputPinCB(inputPin);
+            result = OC_STACK_OK;
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
+    }
+
+    OCStackResult OCSecure::unsetInputPinCallback()
+    {
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            UnsetInputPinCB();
+            result = OC_STACK_OK;
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+
+        return result;
     }
 
     OCStackResult OCSecure::getDevInfoFromNetwork(unsigned short timeout,
@@ -323,6 +447,136 @@ namespace OC
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCSaveACL(const_cast<OicSecAcl_t*>(acl));
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+    OCStackResult OCSecure::displayNumCallbackWrapper(void* ctx,
+            uint8_t verifNum[MUTUAL_VERIF_NUM_LEN])
+    {
+        OCStackResult result;
+
+        DisplayNumContext* context = static_cast<DisplayNumContext*>(ctx);
+        uint8_t *number = new uint8_t[MUTUAL_VERIF_NUM_LEN];
+        memcpy(number, verifNum, MUTUAL_VERIF_NUM_LEN);
+        result = context->callback(number);
+        delete context;
+        return result;
+    }
+
+    OCStackResult OCSecure::registerDisplayNumCallback(DisplayNumCB displayNumCB)
+    {
+        if(!displayNumCB)
+        {
+            oclog() << "Failed to register callback for display.";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            DisplayNumContext* context = new DisplayNumContext(displayNumCB);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            SetDisplayNumCB(static_cast<void*>(context), &OCSecure::displayNumCallbackWrapper);
+            result = OC_STACK_OK;
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+    OCStackResult OCSecure::deregisterDisplayNumCallback()
+    {
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            UnsetDisplayNumCB();
+            result = OC_STACK_OK;
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+    OCStackResult OCSecure::confirmUserCallbackWrapper(void* ctx)
+    {
+        OCStackResult result;
+
+        UserConfirmNumContext* context = static_cast<UserConfirmNumContext*>(ctx);
+        result = context->callback();
+        delete context;
+        return result;
+    }
+
+    OCStackResult OCSecure::registerUserConfirmCallback(UserConfirmNumCB userConfirmCB)
+    {
+        if(!userConfirmCB)
+        {
+            oclog() << "Failed to set callback for confirming verifying callback.";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+        if (cLock)
+        {
+            UserConfirmNumContext* context = new UserConfirmNumContext(userConfirmCB);
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            SetUserConfirmCB(static_cast<void*>(context), &OCSecure::confirmUserCallbackWrapper);
+            result = OC_STACK_OK;
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+    OCStackResult OCSecure::deregisterUserConfirmCallback()
+    {
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            UnsetUserConfirmCB();
+            result = OC_STACK_OK;
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+    OCStackResult OCSecure::setVerifyOptionMask(VerifyOptionBitmask_t optionMask)
+    {
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            SetVerifyOption(optionMask);
+            result = OC_STACK_OK;
         }
         else
         {
@@ -512,6 +766,35 @@ namespace OC
         return result;
     }
 
+#ifdef MULTIPLE_OWNER
+    OCStackResult OCSecureResource::doMultipleOwnershipTransfer(ResultCallBack resultCallback)
+    {
+        if (!resultCallback)
+        {
+            oclog() <<"Result callback can't be null";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+
+        OCStackResult result;
+        auto cLock = m_csdkLock.lock();
+
+        if (cLock)
+        {
+            ProvisionContext* context = new ProvisionContext(resultCallback);
+
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCDoMultipleOwnershipTransfer(static_cast<void*>(context),
+                    devPtr, &OCSecureResource::callbackWrapper);
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+#endif
     OCStackResult OCSecureResource::provisionACL( const OicSecAcl_t* acl,
             ResultCallBack resultCallback)
     {
@@ -818,4 +1101,134 @@ namespace OC
             throw OCException("Incomplete secure resource", OC_STACK_RESOURCE_ERROR);
         }
     }
+
+#ifdef MULTIPLE_OWNER
+    OCStackResult OCSecureResource::selectMOTMethod( const OicSecOxm_t oxmSelVal,
+            ResultCallBack resultCallback)
+    {
+        if (!resultCallback)
+        {
+            oclog() <<"result callback can not be null";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+
+        OCStackResult result;
+        auto cLock = m_csdkLock.lock();
+
+        if (cLock)
+        {
+            ProvisionContext* context = new ProvisionContext(resultCallback);
+
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCSelectMOTMethod(static_cast<void*>(context),
+                    devPtr, oxmSelVal,
+                    &OCSecureResource::callbackWrapper);
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+    OCStackResult OCSecureResource::changeMOTMode( const OicSecMomType_t momType,
+            ResultCallBack resultCallback)
+    {
+        if (!resultCallback)
+        {
+            oclog() <<"result callback can not be null";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+
+        OCStackResult result;
+        auto cLock = m_csdkLock.lock();
+
+        if (cLock)
+        {
+            ProvisionContext* context = new ProvisionContext(resultCallback);
+
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCChangeMOTMode(static_cast<void*>(context),
+                    devPtr, momType,
+                    &OCSecureResource::callbackWrapper);
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+
+    OCStackResult OCSecureResource::addPreconfigPIN(const char* preconfPIN,
+            size_t preconfPINLength)
+    {
+        if (!preconfPIN)
+        {
+            oclog() <<"pre config pin can not be null";
+            return OC_STACK_INVALID_PARAM;
+        }
+        if (preconfPINLength <= 0)
+        {
+            oclog() <<"pre config pin length can not be zero or less";
+            return OC_STACK_INVALID_PARAM;
+        }
+        OCStackResult result;
+        auto cLock = m_csdkLock.lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCAddPreconfigPin(devPtr, preconfPIN,
+                    preconfPINLength);
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+    OCStackResult OCSecureResource::provisionPreconfPin(const char * preconfPin,
+            size_t preconfPinLength, ResultCallBack resultCallback)
+    {
+        if (!resultCallback)
+        {
+            oclog() <<"result callback can not be null";
+            return OC_STACK_INVALID_CALLBACK;
+        }
+        if (!preconfPin)
+        {
+            oclog() <<"pre config pin can not be null";
+            return OC_STACK_INVALID_PARAM;
+        }
+        if (preconfPinLength <= 0)
+        {
+            oclog() <<"pre config pin length can not be zero or less";
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        OCStackResult result;
+        auto cLock = m_csdkLock.lock();
+
+        if (cLock)
+        {
+            ProvisionContext* context = new ProvisionContext(resultCallback);
+
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCProvisionPreconfigPin(static_cast<void*>(context),
+                    devPtr, preconfPin, preconfPinLength,
+                    &OCSecureResource::callbackWrapper);
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+#endif // MULTIPLE_OWNER
 }

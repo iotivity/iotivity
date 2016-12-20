@@ -18,7 +18,7 @@ allprojects {
 
         flatDir {
             dirs '../../../../android/service/build/outputs/aar'
-            dirs '../../../../../../android/android_api/base/build/outputs/aar'
+            dirs '../../../../../../java/iotivity-android/build/outputs/aar/'
         }
     }
 }

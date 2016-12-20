@@ -143,7 +143,8 @@ void OICFree(void *ptr)
 
 void OICClearMemory(void *buf, size_t n)
 {
-    if (NULL != buf) {
+    if (NULL != buf)
+    {
 #ifdef HAVE_WINDOWS_H
         SecureZeroMemory(buf, n);
 #else

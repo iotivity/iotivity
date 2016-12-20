@@ -164,7 +164,7 @@ TEST_F(RemoteResourceObjectTest, SetRemoteAttributesSetsAttributesOfServer)
     object->setRemoteAttributes(newAttrs, setRemoteAttributesCallback);
     Wait();
 
-    ASSERT_EQ(newValue, server->getAttributeValue(ATTR_KEY));
+    ASSERT_EQ(newValue, server->getAttributeValue(ATTR_KEY).get<int>());
 }
 
 TEST_F(RemoteResourceObjectTest, SetRemoteRepresentationDoesNotAllowEmptyFunction)
@@ -190,7 +190,7 @@ TEST_F(RemoteResourceObjectTest, SetRemoteRepresentationSetsRepresentationOfServ
     object->set(queryParams, rcsRep, setRemoteRepresentationCallback);
     Wait();
 
-    ASSERT_EQ(newValue, server->getAttributeValue(ATTR_KEY));
+    ASSERT_EQ(newValue, server->getAttributeValue(ATTR_KEY).get<int>());
 }
 
 TEST_F(RemoteResourceObjectTest, QueryParamsForGetWillBePassedToBase)

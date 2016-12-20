@@ -31,7 +31,8 @@ extern "C"
 
 /**
  * The number of iterations desired to derived key.
- * (Recommened by RFC 2898)
+ * As specified in the OCF Security Specification. This choice is required for 
+ * interoperability in the Random PIN OTM. 
  */
 #define PBKDF_ITERATIONS 1000
 

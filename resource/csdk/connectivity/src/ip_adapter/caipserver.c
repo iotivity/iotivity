@@ -836,7 +836,8 @@ static void CARegisterForAddressChanges()
     caglobals.ip.netlinkFd = OC_INVALID_SOCKET;
 #ifdef __linux__
     // create NETLINK fd for interface change notifications
-    struct sockaddr_nl sa = { AF_NETLINK, 0, 0, RTMGRP_LINK };
+    struct sockaddr_nl sa = { AF_NETLINK, 0, 0,
+                              RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR };
 
     caglobals.ip.netlinkFd = socket(AF_NETLINK, SOCK_RAW|SOCK_CLOEXEC, NETLINK_ROUTE);
     if (caglobals.ip.netlinkFd == OC_INVALID_SOCKET)
@@ -1317,10 +1318,14 @@ static void sendData(int fd, const CAEndpoint_t *endpoint,
             g_ipErrorHandler(endpoint, data, dlen, CA_SEND_FAILED);
         }
         OIC_LOG_V(ERROR, TAG, "%s%s %s sendTo failed: %s", secure, cast, fam, strerror(errno));
+        CALogSendStateInfo(endpoint->adapter, endpoint->addr, endpoint->port,
+                           len, false, strerror(errno));
     }
     else
     {
         OIC_LOG_V(INFO, TAG, "%s%s %s sendTo is successful: %zd bytes", secure, cast, fam, len);
+        CALogSendStateInfo(endpoint->adapter, endpoint->addr, endpoint->port,
+                           len, true, NULL);
     }
 #else
     int err = 0;

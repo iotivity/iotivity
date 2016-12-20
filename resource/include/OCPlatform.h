@@ -50,6 +50,21 @@ namespace OC
         typedef OCDoHandle OCPresenceHandle;
 
         /**
+         * API for stop Base layer including resource and connectivity abstraction.
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult stop();
+
+        /**
+         * API for start Base layer including resource and connectivity abstraction.
+         * OCInit will be invoked.
+         *
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult start();
+
+        /**
          * API for notifying base that resource's attributes have changed.
          *
          * @param resourceHandle resource handle of the resource
@@ -177,6 +192,10 @@ namespace OC
                     OCConnectivityType connectivityType, FindResListCallback resourceHandler,
                     QualityOfService QoS = QualityOfService::LowQos);
 
+        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag, const std::string& value);
+        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag, const std::vector<std::string>& value);
+        OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag, std::string& value);
+        OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag, std::vector<std::string>& value);
         /**
          * API for Device Discovery
          *

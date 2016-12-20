@@ -49,6 +49,13 @@ extern "C"
 
 #include "gtest_helper.h"
 
+//-----------------------------------------------------------------------------
+// CBOR_BIN_STRING_DEBUG may be defined when compiling to save the output of
+// the OC payload conversion to CBOR to a file for further examination with any
+// CBOR related tools.
+//-----------------------------------------------------------------------------
+//#define CBOR_BIN_STRING_DEBUG
+
 class CborByteStringTest : public ::testing::Test {
     protected:
         virtual void SetUp() {
@@ -77,7 +84,7 @@ TEST_F(CborByteStringTest, ByteStringSetGetTest)
 
     OCByteString quakedata_out = { NULL, 0};
     ASSERT_EQ(true, OCRepPayloadGetPropByteString(payload_in, "quakedata", &quakedata_out));
-
+    ASSERT_NE((uint8_t*)NULL, quakedata_out.bytes);
     EXPECT_EQ(quakedata_in.len, quakedata_out.len);
     EXPECT_EQ(0, memcmp(quakedata_in.bytes, quakedata_out.bytes, quakedata_in.len));
 
@@ -120,6 +127,7 @@ TEST_F(CborByteStringTest, ByteStringConvertParseTest)
     ASSERT_EQ(true, OCRepPayloadGetPropByteString((OCRepPayload*)payload_out, "quakedata", &quakedata_out));
 
     // Compare input and output data
+    ASSERT_NE((uint8_t*)NULL, quakedata_out.bytes);
     EXPECT_EQ(quakedata_in.len, quakedata_out.len);
     EXPECT_EQ(0, memcmp(quakedata_in.bytes, quakedata_out.bytes, quakedata_in.len));
 
@@ -221,4 +229,80 @@ TEST_F(CborByteStringTest, ByteStringArrayConvertParseTest )
     OICFree(quakedata_out);
 
     OCPayloadDestroy((OCPayload*)payload_out);
+}
+
+TEST(CborHeterogeneousArrayTest, ConvertParseTest)
+{
+    OCRepPayload *arr = OCRepPayloadCreate();
+    ASSERT_TRUE(arr != NULL);
+    EXPECT_TRUE(OCRepPayloadSetPropString(arr, "0", "string"));
+    EXPECT_TRUE(OCRepPayloadSetPropDouble(arr, "1", 1.0));
+    OCRepPayload *obj = OCRepPayloadCreate();
+    ASSERT_TRUE(obj != NULL);
+    EXPECT_TRUE(OCRepPayloadSetPropString(obj, "member", "value"));
+    EXPECT_TRUE(OCRepPayloadSetPropObjectAsOwner(arr, "2", obj));
+    const char *strArray[] = { "string" };
+    size_t dim[MAX_REP_ARRAY_DEPTH] = { 1, 0, 0 };
+    EXPECT_TRUE(OCRepPayloadSetStringArray(arr, "3", strArray, dim));
+
+    OCRepPayload* payload_in = OCRepPayloadCreate();
+    ASSERT_TRUE(payload_in != NULL);
+    EXPECT_TRUE(OCRepPayloadSetPropObjectAsOwner(payload_in, "property", arr));
+
+    // Convert OCPayload to CBOR
+    uint8_t *payload_cbor = NULL;
+    size_t payload_cbor_size = 0;
+    EXPECT_EQ(OC_STACK_OK, OCConvertPayload((OCPayload*) payload_in, &payload_cbor, &payload_cbor_size));
+#ifdef CBOR_BIN_STRING_DEBUG
+    FILE *fp = fopen("binstringhetarr.cbor", "wb+");
+    if (fp)
+    {
+        fwrite(payload_cbor, 1, payload_cbor_size, fp);
+        fclose(fp);
+    }
+#endif //CBOR_BIN_STRING_DEBUG
+    OCRepPayloadDestroy(payload_in);
+
+    // Compare that array encoding was used
+    uint8_t binstring[] = {
+        0xbf, 0x68, 0x70, 0x72, 0x6f, 0x70, 0x65, 0x72, 0x74, 0x79, 0x84, 0x66, 0x73, 0x74, 0x72, 0x69,
+        0x6e, 0x67, 0xfb, 0x3f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xbf, 0x66, 0x6d, 0x65, 0x6d,
+        0x62, 0x65, 0x72, 0x65, 0x76, 0x61, 0x6c, 0x75, 0x65, 0xff, 0x81, 0x66, 0x73, 0x74, 0x72, 0x69,
+        0x6e, 0x67, 0xff
+    };
+    ASSERT_EQ(sizeof(binstring), payload_cbor_size);
+    EXPECT_EQ(0, memcmp(binstring, payload_cbor, payload_cbor_size));
+
+    // Parse CBOR back to OCPayload
+    OCPayload* payload_out = NULL;
+    EXPECT_EQ(OC_STACK_OK, OCParsePayload(&payload_out, PAYLOAD_TYPE_REPRESENTATION,
+                                          payload_cbor, payload_cbor_size));
+
+    // Compare values
+    EXPECT_TRUE(OCRepPayloadGetPropObject((OCRepPayload*) payload_out, "property", &arr));
+    char *str;
+    EXPECT_TRUE(OCRepPayloadGetPropString(arr, "0", &str));
+    EXPECT_STREQ("string", str);
+    OICFree(str);
+    double d;
+    EXPECT_TRUE(OCRepPayloadGetPropDouble(arr, "1", &d));
+    EXPECT_EQ(1.0, d);
+    EXPECT_TRUE(OCRepPayloadGetPropObject(arr, "2", &obj));
+    OCRepPayloadDestroy(obj);
+    char **strArr;
+    EXPECT_TRUE(OCRepPayloadGetStringArray(arr, "3", &strArr, dim));
+    EXPECT_EQ(1u, dim[0]);
+    EXPECT_EQ(0u, dim[1]);
+    EXPECT_EQ(0u, dim[2]);
+    EXPECT_STREQ("string", strArr[0]);
+    for (size_t i = 0; i < dim[0]; ++i)
+    {
+        OICFree(strArr[i]);
+    }
+    OICFree(strArr);
+    OCRepPayloadDestroy(arr);
+
+    // Cleanup
+    OICFree(payload_cbor);
+    OCPayloadDestroy(payload_out);
 }

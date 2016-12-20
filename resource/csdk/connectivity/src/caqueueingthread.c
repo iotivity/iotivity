@@ -181,9 +181,14 @@ CAResult_t CAQueueingThreadStart(CAQueueingThread_t *thread)
     oc_mutex_unlock(thread->threadMutex);
 
     CAResult_t res = ca_thread_pool_add_task(thread->threadPool, CAQueueingThreadBaseRoutine,
-                                            thread);
+                                             thread);
     if (res != CA_STATUS_OK)
     {
+        // update thread status.
+        oc_mutex_lock(thread->threadMutex);
+        thread->isStop = true;
+        oc_mutex_unlock(thread->threadMutex);
+
         OIC_LOG(ERROR, TAG, "thread pool add task error(send thread).");
     }
 
@@ -201,7 +206,6 @@ CAResult_t CAQueueingThreadAddData(CAQueueingThread_t *thread, void *data, uint3
     if (NULL == data || 0 == size)
     {
         OIC_LOG(ERROR, TAG, "data is empty..");
-
         return CA_STATUS_INVALID_PARAM;
     }
 

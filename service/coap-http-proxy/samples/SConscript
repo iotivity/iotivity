@@ -37,6 +37,9 @@ proxy_sample_app_env.AppendUnique(CPPPATH = ['../include'])
 
 if target_os not in ['windows']:
     proxy_sample_app_env.AppendUnique(CXXFLAGS = ['-O2', '-g', '-Wall', '-Wextra', '-std=c++0x'])
+else:
+    proxy_sample_app_env.PrependUnique(LIBS = ['m'])
+
 proxy_sample_app_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 proxy_sample_app_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 proxy_sample_app_env.PrependUnique(LIBS = ['coap_http_proxy', 'oc', 'octbstack', 'curl', 'connectivity_abstraction'])

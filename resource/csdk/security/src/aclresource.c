@@ -132,7 +132,7 @@ static void FreeACE(OicSecAce_t *ace)
         validity = NULL;
     }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     OICFree(ace->eownerID);
 #endif
 
@@ -256,7 +256,7 @@ OicSecAce_t* DuplicateACE(const OicSecAce_t* ace)
             }
         }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         if (ace->eownerID)
         {
             if (NULL == newAce->eownerID)
@@ -364,12 +364,12 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
             }
         }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         if(ace->eownerID)
         {
             aclMapSize++;
         }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
         cborEncoderResult = cbor_encoder_create_map(&acesArray, &oicSecAclMap, aclMapSize);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Creating ACES Map");
@@ -561,7 +561,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing Validities Array.");
         }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         // Eownerid -- Not Mandatory
         if(ace->eownerID)
         {
@@ -575,7 +575,7 @@ OCStackResult AclToCBORPayload(const OicSecAcl_t *secAcl, uint8_t **payload, siz
             OICFree(eowner);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Addding eownerId Value.");
         }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
         cborEncoderResult = cbor_encoder_close_container(&acesArray, &oicSecAclMap);
         VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing ACES Map.");
@@ -1254,7 +1254,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                             }
                                         }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
                                         // eowner uuid -- Not Mandatory
                                         if (strcmp(name, OIC_JSON_EOWNERID_NAME)  == 0)
                                         {
@@ -1270,7 +1270,7 @@ OicSecAcl_t* CBORPayloadToAcl(const uint8_t *cborPayload, const size_t size)
                                             OICFree(eowner);
                                             VERIFY_SUCCESS(TAG, OC_STACK_OK == ret , ERROR);
                                         }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
                                         OICFree(name);
                                     }
 
@@ -1333,7 +1333,7 @@ exit:
     return acl;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 bool IsValidAclAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cborPayload, const size_t size)
 {
     bool retValue = false;
@@ -1373,7 +1373,7 @@ exit:
 
     return retValue;
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /**
  * This method removes ACE for the subject and resource from the ACL
@@ -1702,15 +1702,20 @@ static bool IsSameValidities(OicSecValidity_t* validities1, OicSecValidity_t* va
     return false;
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 static bool IsSameEowner(OicUuid_t* eowner1, OicUuid_t* eowner2)
 {
-    if(NULL != eowner1 && NULL != eowner2)
+    if (NULL != eowner1 && NULL != eowner2)
     {
         if (memcmp(eowner1->id, eowner2->id, sizeof(eowner1->id)) == 0)
         {
             return true;
         }
+    }
+    else if (NULL == eowner1 && NULL == eowner2)
+    {
+        OIC_LOG(DEBUG, TAG, "Both eowner1 and eowner2 are NULL");
+        return true;
     }
 
     return false;
@@ -1741,7 +1746,7 @@ static bool IsSameACE(OicSecAce_t* ace1, OicSecAce_t* ace2)
             return false;
         }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
         if(false == IsSameEowner(ace1->eownerID, ace2->eownerID))
         {
             return false;
@@ -2272,8 +2277,7 @@ OCStackResult GetDefaultACL(OicSecAcl_t** defaultAcl)
     }
     else
     {
-        OCRandomUuidResult rdm = OCGenerateUuid(ownerId.id);
-        VERIFY_SUCCESS(TAG, RAND_UUID_OK == rdm, FATAL);
+        VERIFY_SUCCESS(TAG, OCGenerateUuid(ownerId.id), FATAL);
     }
 
     memcpy(&acl->rownerID, &ownerId, sizeof(OicUuid_t));

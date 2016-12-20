@@ -52,7 +52,6 @@ mkdir ./tmp/extlibs/
 mkdir ./tmp/packaging
 cp -LR ./extlibs/tinycbor $sourcedir/tmp/extlibs
 cp -Rf ./extlibs/mbedtls $sourcedir/tmp/extlibs
-cp -R ./extlibs/cjson $sourcedir/tmp/extlibs
 cp -R ./extlibs/tinydtls $sourcedir/tmp/extlibs
 cp -R ./extlibs/timer $sourcedir/tmp/extlibs
 cp -R ./extlibs/rapidxml $sourcedir/tmp/extlibs

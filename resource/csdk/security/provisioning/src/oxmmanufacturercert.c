@@ -53,6 +53,18 @@ OCStackResult CreateMCertificateBasedSelectOxmPayload(OTMContext_t* otmCtx, uint
     return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
 }
 
+OCStackResult CreateConMCertificateBasedSelectOxmPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
+{
+    if (!otmCtx || !otmCtx->selectedDeviceInfo || !payload || *payload || !size)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    otmCtx->selectedDeviceInfo->doxm->oxmSel = OIC_CON_MFG_CERT;
+
+    return DoxmToCBORPayload(otmCtx->selectedDeviceInfo->doxm, payload, size, true);
+}
+
 OCStackResult CreateMCertificateBasedOwnerTransferPayload(OTMContext_t* otmCtx, uint8_t **payload, size_t *size)
 {
     if (!otmCtx || !otmCtx->selectedDeviceInfo || !payload || *payload || !size)
@@ -77,6 +89,11 @@ OCStackResult CreateMCertificateBasedOwnerTransferPayload(OTMContext_t* otmCtx, 
 OCStackResult PrepareMCertificateCallback(OTMContext_t *otmCtx)
 {
     OIC_LOG(INFO, TAG, "IN PrepareMCertificateCallback");
+
+    if (!otmCtx || !otmCtx->selectedDeviceInfo)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
 
     if (CA_STATUS_OK != CAregisterPkixInfoHandler(GetManufacturerPkixInfo))
     {
@@ -112,14 +129,14 @@ OCStackResult CreateSecureSessionMCertificateCallback(OTMContext_t* otmCtx)
     }
     OIC_LOG(INFO, TAG, "Anonymous cipher suite disabled.");
 
-    caresult  = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
+    caresult  = CASelectCipherSuite(MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
                                     otmCtx->selectedDeviceInfo->endpoint.adapter);
     if (CA_STATUS_OK != caresult)
     {
-        OIC_LOG_V(ERROR, TAG, "Failed to select TLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8");
+        OIC_LOG_V(ERROR, TAG, "Failed to select TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256");
         return OC_STACK_ERROR;
     }
-    OIC_LOG(INFO, TAG, "TLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 cipher suite selected.");
+    OIC_LOG(INFO, TAG, "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256 cipher suite selected.");
 
     OCProvisionDev_t* selDevInfo = otmCtx->selectedDeviceInfo;
     CAEndpoint_t *endpoint = (CAEndpoint_t *)OICCalloc(1, sizeof (CAEndpoint_t));

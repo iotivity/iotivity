@@ -609,15 +609,7 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
         doxm->owned = jsonObj->valueint;
     }
 
-    //DPC -- Mandatory
-    jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DPC_NAME);
-    if (jsonObj)
-    {
-        VERIFY_SUCCESS(TAG, (cJSON_True == jsonObj->type || cJSON_False == jsonObj->type), ERROR);
-        doxm->dpc = jsonObj->valueint;
-    }
-
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     //mom -- Not Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_MOM_NAME);
     if (jsonObj)
@@ -627,7 +619,7 @@ OicSecDoxm_t* JSONToDoxmBin(const char * jsonStr)
         VERIFY_NON_NULL(TAG, doxm->mom, ERROR);
         doxm->mom->mode = (OicSecMomType_t)jsonObj->valueint;
     }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     //DeviceId -- Mandatory
     jsonObj = cJSON_GetObjectItem(jsonDoxm, OIC_JSON_DEVICE_ID_NAME);

@@ -502,9 +502,9 @@ void PrintUsage()
     cout << "    4 - Non-secure resource, GET slow response, notify all observers\n";
 }
 
-static FILE* client_open(const char* /*path*/, const char *mode)
+static FILE* client_open(const char* /*path*/, const char* mode)
 {
-    return fopen("./oic_svr_db_server.json", mode);
+    return fopen("./oic_svr_db_server.dat", mode);
 }
 
 void playPause()

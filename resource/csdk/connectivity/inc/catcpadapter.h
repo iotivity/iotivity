@@ -45,6 +45,16 @@ typedef enum CAProtocol
 } CAProtocol_t;
 
 /**
+ * TCP Connection State.
+ */
+typedef enum
+{
+    CONNECTING = 0,
+    CONNECTED,
+    DISCONNECTED
+} CATCPConnectionState_t;
+
+/**
  * TCP Session Information for IPv4 TCP transport
  */
 typedef struct
@@ -53,8 +63,11 @@ typedef struct
     int fd;                             /**< file descriptor info */
     unsigned char* data;                /**< received data from remote device */
     size_t len;                         /**< received data length */
-    size_t totalLen;                    /**< total data length required to receive */
+    size_t totalLen;                    /**< total coap data length required to receive */
+    unsigned char tlsdata[18437];     /**< tls data(rfc5246: TLSCiphertext max (2^14+2048+5)) */
+    size_t tlsLen;                         /**< received tls data length */
     CAProtocol_t protocol;              /**< application-level protocol */
+    CATCPConnectionState_t state;       /**< current tcp session state */
 } CATCPSessionInfo_t;
 
 /**

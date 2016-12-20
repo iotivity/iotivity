@@ -400,8 +400,14 @@ static OCEntityHandlerResult SVCEntityHandler(OCEntityHandlerFlag flag,
                 break;
 
             default:
-                ehRet = OC_EH_ERROR;
-                SendSRMResponse(ehRequest, ehRet, NULL, 0);
+                if (OC_STACK_OK != SendSRMResponse(ehRequest, ehRet, NULL, 0))
+                {
+                    OIC_LOG(ERROR, TAG, "SendSRMResponse failed in HandleSVCPostRequest");
+                }
+                else
+                {
+                    ehRet = OC_EH_OK;
+                }
         }
     }
 

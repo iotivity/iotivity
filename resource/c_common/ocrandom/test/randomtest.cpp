@@ -25,38 +25,83 @@ extern "C" {
 }
 
 #include "gtest/gtest.h"
+#include "math.h"
 
 #define ARR_SIZE (20)
 
-TEST(RandomGeneration,OCSeedRandom) {
-    EXPECT_EQ(0, OCSeedRandom());
-}
-
-TEST(RandomGeneration,OCGetRandomByte) {
-    EXPECT_NO_THROW(OCGetRandomByte());
-}
-
 TEST(RandomGeneration,OCGetRandom) {
-    EXPECT_NO_THROW(OCGetRandom());
+    uint32_t value = OCGetRandom();
+    EXPECT_LE((uint8_t )0, value);
+    EXPECT_GT(pow(2, 32), value);
 }
 
-TEST(RandomGeneration,OCFillRandomMem_BoundsCheck) {
+TEST(RandomGeneration,OCGetRandomBytes) {
     uint8_t array[ARR_SIZE] = {};
+    EXPECT_TRUE(OCGetRandomBytes(array + 1, ARR_SIZE - 2));
 
-    // Ignore the first and last bytes of the array
-    OCFillRandomMem(array + 1, ARR_SIZE - 2);
-
+    for (int i = 1; i <= ARR_SIZE - 2; i++) {
+        uint8_t value = array[i];
+        EXPECT_LE((uint8_t )0, value);
+        EXPECT_GT(pow(2, 8), value);
+    }
     EXPECT_EQ((uint8_t )0, array[0]);
     EXPECT_EQ((uint8_t )0, array[ARR_SIZE - 1]);
 }
 
+// This test attempts to prevent developers from plugging in a memset as a
+// random number generator.
+TEST(RandomGeneration,OCFillRandomMem_GeneratedDataIsDifferent) {
+    uint8_t array[ARR_SIZE] = {};
+    bool foundNonMatchingByte = false;
+    uint8_t matchingByte;
+    EXPECT_TRUE(OCGetRandomBytes(&matchingByte, 1));
+
+    EXPECT_TRUE(OCGetRandomBytes(array, sizeof(array)));
+
+    // Note: this test can flag a false-failure, but this is
+    // statistically very unlikely to fail.  In a uniformly distributed
+    // random function, we can expect that:
+    //
+    //   P(array is all matchingByte) = 1 in 2^(ARR_SIZE_IN_BITS)
+    //
+    // Let us assume that this test will only be run by CI or
+    // a developer once per second. In our case, our quantities are:
+    //
+    //   Array size in bits = 160 bits
+    //   Number of combinations = 2 ^ 160 ~= 1.46 * 10^48
+    //   Test frequency        = 1 minute
+    //   Seconds in 1000 years = 3.154 * 10 ^ 10
+    //
+    // If we ran this every second, our expected number of failures
+    // is very insignificant.
+    //
+    //   Number of combinations >>> Seconds in 1000 years
+    //
+    // After crunching the numbers, after 1000 years we can expect to see:
+    //
+    //   (Seconds in 1000 years) / (Number of combinations) = False-fail count
+    //
+    //   Expect count of false-failures = 2.158 * 10 ^ -38 ~= 0
+    //
+    for (int i = 0; i < ARR_SIZE; i++)
+    {
+        if (matchingByte != array[i])
+        {
+            foundNonMatchingByte = true;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(foundNonMatchingByte);
+}
+
 TEST(RandomGeneration, OCGenerateUuid)
 {
-    EXPECT_EQ(RAND_UUID_INVALID_PARAM, OCGenerateUuid(NULL));
+    EXPECT_FALSE(OCGenerateUuid(NULL));
 
-    uint8_t uuid[16] = {};
+    uint8_t uuid[UUID_SIZE] = {};
 
-    EXPECT_EQ(RAND_UUID_OK, OCGenerateUuid(uuid));
+    EXPECT_TRUE(OCGenerateUuid(uuid));
 
     EXPECT_FALSE(uuid[0] == '0' && uuid[1] == '0' &&
                  uuid[2] == '0' && uuid[3] == '0' &&
@@ -70,11 +115,11 @@ TEST(RandomGeneration, OCGenerateUuid)
 
 TEST(RandomGeneration, OCGenerateUuidString)
 {
-    EXPECT_EQ(RAND_UUID_INVALID_PARAM, OCGenerateUuidString(NULL));
+    char uuidString[UUID_STRING_SIZE] = {};
+    uint8_t uuid[UUID_SIZE] = {};
 
-    char uuidString[37] = {};
-
-    EXPECT_EQ(RAND_UUID_OK, OCGenerateUuidString(uuidString));
+    EXPECT_TRUE(OCGenerateUuid(uuid));
+    EXPECT_TRUE(OCConvertUuidToString(uuid, uuidString));
     EXPECT_EQ('\0', uuidString[36]);
     EXPECT_EQ('-', uuidString[8]);
     EXPECT_EQ('-', uuidString[13]);

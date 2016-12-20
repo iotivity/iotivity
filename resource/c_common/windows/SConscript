@@ -29,5 +29,5 @@ win_helper_env.UserInstallTargetHeader('include/win_sleep.h', 'c_common/windows/
 win_helper_env.UserInstallTargetHeader('include/pthread_create.h', 'c_common/windows/include', 'pthread_create.h')
 win_helper_env.UserInstallTargetHeader('include/vs12_snprintf.h', 'c_common/windows/include', 'vs12_snprintf.h')
 
-env.AppendUnique(LIBS = ['win_helper'])
+env.AppendUnique(LIBS = ['win_helper', 'bcrypt'])
 

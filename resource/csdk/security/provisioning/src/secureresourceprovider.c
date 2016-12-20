@@ -37,7 +37,6 @@
 #include "pconfresource.h"
 #include "credentialgenerator.h"
 #include "cainterface.h"
-#include "cJSON.h"
 #include "pmtypes.h"
 #include "pmutility.h"
 #include "provisioningdatabasemanager.h"

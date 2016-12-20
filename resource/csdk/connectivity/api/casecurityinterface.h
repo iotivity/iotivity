@@ -67,7 +67,7 @@ typedef int (*CAgetPskCredentialsHandler)(CADtlsPskCredType_t type,
               uint8_t *result, size_t result_length);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * API to get a secure connected peer information
  *
@@ -76,7 +76,7 @@ typedef int (*CAgetPskCredentialsHandler)(CADtlsPskCredType_t type,
  * @return  secure connected peer information on success, otherwise NULL
  */
 const CASecureEndpoint_t *CAGetSecureEndpointData(const CAEndpoint_t *peer);
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 #endif
 
 /**
@@ -104,11 +104,12 @@ typedef struct
 } PkiInfo_t;
 
 /**
- * Register callback to receive credential types.
- * @param[in] credTypesCallback callback to get cerdential types
- * @return ::CA_STATUS_OK
+ * Register callback to get types of TLS suites.
+ * @param[in]   getCredTypesHandler    Get types of TLS suites callback.
+ * @return  ::CA_STATUS_OK or appropriate error code.
  */
-CAResult_t CAregisterGetCredentialTypesCallback(CAgetCredentialTypesHandler credTypesCallback);
+CAResult_t CAregisterGetCredentialTypesHandler(CAgetCredentialTypesHandler getCredTypesHandler);
+
 /**
  * Register callback to receive the result of TLS handshake.
  * @param[in] tlsHandshakeCallback callback for get tls handshake result
@@ -138,12 +139,6 @@ typedef void (*CAgetPkixInfoHandler)(PkiInfo_t * inf);
  * @return  ::CA_STATUS_OK or appropriate error code.
  */
 CAResult_t CAregisterPkixInfoHandler(CAgetPkixInfoHandler getPkixInfoHandler);
-/**
- * Register callback to get types of TLS suites.
- * @param[in]   getCredTypesHandler    Get types of TLS suites callback.
- * @return  ::CA_STATUS_OK or appropriate error code.
- */
-CAResult_t CAregisterGetCredentialTypesHandler(CAgetCredentialTypesHandler getCredTypesHandler);
 
 /**
  * Select the cipher suite for dtls handshake.

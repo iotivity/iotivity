@@ -199,7 +199,7 @@ TEST_F(NotificationProviderServiceTest,
     std::unique_lock< std::mutex > lock { mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
-    EXPECT_NE((void *)g_consumer, (void *)NULL);
+    ASSERT_NE(nullptr, g_consumer) << "error: discovery failure";
 }
 
 TEST_F(NotificationProviderServiceTest, NeverCallNotifyOnConsumerByAcceptIsFalse)
@@ -218,6 +218,8 @@ TEST_F(NotificationProviderServiceTest, NeverCallNotifyOnConsumerByAcceptIsFalse
         }
         responseCon.notify_all();
     });
+
+    ASSERT_NE(nullptr, g_consumer) << "error: discovery failure";
 
     g_consumer->acceptSubscription(false);
 
@@ -244,6 +246,8 @@ TEST_F(NotificationProviderServiceTest, NeverCallNotifyOnConsumerByAcceptIsFalse
 TEST_F(NotificationProviderServiceTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
 {
     int msgID = 0;
+
+    ASSERT_NE(nullptr, g_consumer) << "error: discovery failure";
 
     mocks.ExpectCallFunc(MessageCallbackFromConsumerEmpty).Do(
         [&msgID](const int &id, const std::string &, const std::string &, const std::string &)
@@ -413,6 +417,9 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualSetConsumerTopicsAndGetConsum
     std::string str2("TEST2");
     OIC::Service::NSProviderService::getInstance()->registerTopic(str1);
     OIC::Service::NSProviderService::getInstance()->registerTopic(str2);
+
+    ASSERT_NE(nullptr, g_consumer) << "error: discovery failure";
+
     g_consumer->setTopic(str1);
 
     std::unique_lock< std::mutex > lock { mutexForCondition };
@@ -461,6 +468,9 @@ TEST_F(NotificationProviderServiceTest, ExpectEqualUnSetConsumerTopicsAndGetCons
     std::string str2("TEST2");
     OIC::Service::NSProviderService::getInstance()->registerTopic(str1);
     OIC::Service::NSProviderService::getInstance()->registerTopic(str2);
+
+    ASSERT_NE(nullptr, g_consumer) << "error: discovery failure";
+
     g_consumer->setTopic(str1);
     g_consumer->setTopic(str2);
     g_consumer->unsetTopic(str1);

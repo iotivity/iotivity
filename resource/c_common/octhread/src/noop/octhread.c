@@ -32,7 +32,7 @@
  * TAG
  * Logging tag for module name
  */
-#define TAG "UMUTEX"
+#define TAG "OIC_UMUTEX"
 
 typedef struct _tagMutexInfo_t
 {

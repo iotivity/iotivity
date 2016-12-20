@@ -21,8 +21,7 @@ package org.iotivity.service.ns.provider;
 import org.iotivity.service.ns.common.*;
 import java.util.Vector;
 /**
-  * @class   Consumer
-  * @brief   This class provides implementation of Notification Consumer object.
+  * Provides implementation of Notification Consumer object.
   */
 public class Consumer
 {

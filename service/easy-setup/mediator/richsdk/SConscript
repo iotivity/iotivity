@@ -68,7 +68,7 @@ if target_os in ['linux']:
 if target_os in ['android']:
 	easy_setup_env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
 	if env.get('SECURED') == '1':
-		easy_setup_env.AppendUnique(LIBPATH = [env.get('SRC_DIR')+'/android/android_api/base/libs/armeabi'])
+		easy_setup_env.AppendUnique(LIBPATH = [env.get('SRC_DIR')+'/java/iotivity-android/build/native-libs/armeabi'])
 	easy_setup_env.AppendUnique(RPATH = [env.get('BUILD_DIR')])
 	easy_setup_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
 	easy_setup_env.PrependUnique(LIBS = ['oc', 'octbstack', 'oc_logger', 'connectivity_abstraction', 'gnustl_shared'])
@@ -149,6 +149,7 @@ print "Files path is %s" % env.get('es_src')
 ######################################################################
 # Generate RichSDK Mediator AAR
 ################################################ ######################
+
 if target_os in ['android']:
 	SConscript('android/SConscript')
 
@@ -158,6 +159,7 @@ if target_os in ['android']:
 if target_os in ['linux']:
 	SConscript('../../sampleapp/mediator/linux/richsdk_sample/SConscript')
 
+ 
 if target_os in ['android']:
 	SConscript('../../sampleapp/mediator/android/SConscript')
 

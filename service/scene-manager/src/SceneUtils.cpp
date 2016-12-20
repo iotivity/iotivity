@@ -35,9 +35,9 @@ namespace OIC
         {
             uint8_t uuid[UUID_SIZE] = { 0, };
             char uuidStr[UUID_STRING_SIZE] = { 0, };
-            if (RAND_UUID_OK == OCGenerateUuid(uuid))
+            if (OCGenerateUuid(uuid))
             {
-                if (RAND_UUID_OK == OCConvertUuidToString(uuid, uuidStr))
+                if (OCConvertUuidToString(uuid, uuidStr))
                 {
                     return std::string(uuidStr);
                 }

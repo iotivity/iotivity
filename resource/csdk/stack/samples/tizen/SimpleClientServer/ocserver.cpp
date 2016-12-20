@@ -78,7 +78,7 @@ const char *supportLink = "https://www.iotivity.org";
 const char *version = "myVersion";
 const char *systemTime = "2015-05-15T11.04";
 const char *specVersion = "core.1.1.0";
-const char *dataModelVersions = "res.1.1.0";
+const char *dataModelVersions = "res.1.1.0,sh.1.1.0";
 
 // Entity handler should check for resourceTypeName and ResourceInterface in order to GET
 // the existence of a known resource
@@ -524,7 +524,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
     cout << "\nInside entity handler - flags: " << flag;
 
     OCEntityHandlerResult ehResult = OC_EH_OK;
-    OCEntityHandlerResponse response;
+    OCEntityHandlerResponse response = { 0, 0, OC_EH_ERROR, 0, 0, { },{ 0 }, false };
 
     // Validate pointer
     if (!entityHandlerRequest)
@@ -841,12 +841,12 @@ OCStackResult SetPlatformInfo(const char* platformID, const char *manufacturerNa
 
     bool success = true;
 
-    if(manufacturerName != NULL && (strlen(manufacturerName) > MAX_MANUFACTURER_NAME_LENGTH))
+    if(manufacturerName != NULL && (strlen(manufacturerName) > MAX_PLATFORM_NAME_LENGTH))
     {
         return OC_STACK_INVALID_PARAM;
     }
 
-    if(manufacturerUrl != NULL && (strlen(manufacturerUrl) > MAX_MANUFACTURER_URL_LENGTH))
+    if(manufacturerUrl != NULL && (strlen(manufacturerUrl) > MAX_PLATFORM_URL_LENGTH))
     {
         return OC_STACK_INVALID_PARAM;
     }

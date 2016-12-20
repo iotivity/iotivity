@@ -34,7 +34,8 @@
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include "logger.h"
-#define TAG "OIC_CA_ifaddrs"
+#define TAG "OIC_CA_IFADDRS"
+#define VERIFY_NON_NULL(arg) { if (!arg) {OIC_LOG(ERROR, TAG, #arg " is NULL"); goto exit;} }
 
 #define NETLINK_MESSAGE_LENGTH  (4096)
 #define IFC_LABEL_LOOP          "lo"
@@ -61,7 +62,10 @@ void CAFreeIfAddrs(struct ifaddrs *ifa)
     {
         cur = ifa;
         ifa = ifa->ifa_next;
-        free(cur);
+        OICFree(cur->ifa_name);
+        OICFree(cur->ifa_addr);
+        OICFree(cur);
+        cur = NULL;
     }
 }
 
@@ -77,10 +81,14 @@ static struct ifaddrs *CAParsingAddr(struct nlmsghdr *recvMsg)
     int ifaddrmsgLen = IFA_PAYLOAD(recvMsg);
 
     struct ifaddrs *node = (struct ifaddrs *)OICCalloc(1, sizeof(struct ifaddrs));
+    VERIFY_NON_NULL(node);
+
     char nameBuf[IFNAMSIZ] = { 0 };
     node->ifa_next = NULL;
     if_indextoname(ifaddrmsgData->ifa_index, nameBuf);
     node->ifa_name = (char *)OICCalloc(strlen(nameBuf)+1, sizeof(char));
+    VERIFY_NON_NULL(node->ifa_name);
+
     OICStrcpy(node->ifa_name, strlen(nameBuf)+1, nameBuf);
     node->ifa_flags = ifaddrmsgData->ifa_flags;
     node->ifa_flags |= (IFF_UP|IFF_RUNNING);
@@ -93,11 +101,8 @@ static struct ifaddrs *CAParsingAddr(struct nlmsghdr *recvMsg)
         {
             case IFA_ADDRESS:
                 ss = (struct sockaddr_storage*)OICCalloc(1, sizeof(struct sockaddr_storage));
-                if (!ss)
-                {
-                    OIC_LOG(ERROR, TAG, "Memory allocation failed!");
-                    return NULL;
-                }
+                VERIFY_NON_NULL(ss);
+
                 ss->ss_family = ifaddrmsgData-> ifa_family;
 
                 if (ifaddrmsgData-> ifa_family == AF_INET)
@@ -121,6 +126,9 @@ static struct ifaddrs *CAParsingAddr(struct nlmsghdr *recvMsg)
     }
 
     return node;
+exit:
+    CAFreeIfAddrs(node);
+    return NULL;
 }
 
 CAResult_t CAGetIfaddrsUsingNetlink(struct ifaddrs **ifap)
@@ -133,7 +141,7 @@ CAResult_t CAGetIfaddrsUsingNetlink(struct ifaddrs **ifap)
     *ifap = NULL;
 
     int netlinkFd = socket(AF_NETLINK, SOCK_RAW|SOCK_CLOEXEC, NETLINK_ROUTE);
-    int state = -1;
+    CAResult_t state = CA_STATUS_FAILED;
     if (-1 == netlinkFd)
     {
         OIC_LOG_V(ERROR, TAG, "netlink socket failed: %s", strerror(errno));
@@ -152,6 +160,7 @@ CAResult_t CAGetIfaddrsUsingNetlink(struct ifaddrs **ifap)
     if (!CASendNetlinkMessage(netlinkFd, &req, req.msgInfo.nlmsg_len))
     {
         OIC_LOG(ERROR, TAG, "netlink send failed");
+        state = CA_SOCKET_OPERATION_FAILED;
         goto exit;
     }
 
@@ -178,17 +187,20 @@ CAResult_t CAGetIfaddrsUsingNetlink(struct ifaddrs **ifap)
             {
                 case NLMSG_DONE:
                     OIC_LOG(DEBUG, TAG, "NLMSG_DONE");
-                    state = 0;
+                    state = CA_STATUS_OK;
                     goto exit;
 
                 case NLMSG_ERROR:
                     OIC_LOG(ERROR, TAG, "NLMSG is invalid");
-                    state = -1;
+                    state = CA_SOCKET_OPERATION_FAILED;
                     goto exit;
 
                 case RTM_NEWADDR:
                     OIC_LOG(DEBUG, TAG, "RTM_NEWADDR");
                     node = CAParsingAddr(recvMsg);
+                    state = CA_MEMORY_ALLOC_FAILED;
+                    VERIFY_NON_NULL(node);
+                    state = CA_STATUS_OK;
 
                     if (*ifap == NULL)
                     {
@@ -199,6 +211,7 @@ CAResult_t CAGetIfaddrsUsingNetlink(struct ifaddrs **ifap)
                         node->ifa_next = *ifap;
                         *ifap = node;
                     }
+                    node = NULL;
 
                     break;
 
@@ -213,10 +226,10 @@ CAResult_t CAGetIfaddrsUsingNetlink(struct ifaddrs **ifap)
 exit:
     // release all resources
     close(netlinkFd);
-    if (state == -1)
+    if (state != CA_STATUS_OK)
     {
         CAFreeIfAddrs(*ifap);
-        return CA_SOCKET_OPERATION_FAILED;
     }
-    return CA_STATUS_OK;
+
+    return state;
 }

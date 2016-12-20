@@ -317,7 +317,6 @@ OCStackResult SendListObserverNotification (OCResource * resource,
                             numSentNotification++;
 
                             OICFree(ehResponse.payload);
-                            FindAndDeleteServerRequest(request);
                         }
                         else
                         {
@@ -368,7 +367,12 @@ OCStackResult GenerateObserverId (OCObservationId *observationId)
 
     do
     {
-        *observationId = OCGetRandomByte();
+        if (!OCGetRandomBytes((uint8_t*)observationId, sizeof(OCObservationId)))
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to generate random observationId");
+            goto exit;
+        }
+
         // Check if observation Id already exists
         resObs = GetObserverUsingId (*observationId);
     } while (NULL != resObs);
@@ -552,6 +556,32 @@ OCStackResult DeleteObserverUsingToken (CAToken_t token, uint8_t tokenLength)
     return OC_STACK_OK;
 }
 
+OCStackResult DeleteObserverUsingDevAddr(const OCDevAddr *devAddr)
+{
+    if (!devAddr)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    ResourceObserver *out = NULL;
+    ResourceObserver *tmp = NULL;
+    LL_FOREACH_SAFE(g_serverObsList, out, tmp)
+    {
+        if (out)
+        {
+            if ((strcmp(out->devAddr.addr, devAddr->addr) == 0)
+                    && out->devAddr.port == devAddr->port)
+            {
+                OIC_LOG_V(INFO, TAG, "deleting observer id  %u with %s:%u",
+                          out->observeId, out->devAddr.addr, out->devAddr.port);
+                OCStackFeedBack(out->token, out->tokenLength, OC_OBSERVER_NOT_INTERESTED);
+            }
+        }
+    }
+
+    return OC_STACK_OK;
+}
+
 void DeleteObserverList()
 {
     ResourceObserver *out = NULL;
@@ -651,4 +681,3 @@ GetObserveHeaderOption (uint32_t * observationOption,
     }
     return OC_STACK_OK;
 }
-

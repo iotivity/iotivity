@@ -511,12 +511,12 @@ static OCEntityHandlerResult HandlePstatGetRequest (const OCEntityHandlerRequest
  * resource or create a new resource.
  * For pstat, it updates only tm and om.
  */
-static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest *ehRequest)
+static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRequest)
 {
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OIC_LOG(INFO, TAG, "HandlePstatPostRequest  processing POST request");
     OicSecPstat_t *pstat = NULL;
-    static uint16_t prevMsgId = 0;
+    static uint16_t previousMsgId = 0;
 
     if (ehRequest->payload && NULL != gPstat)
     {
@@ -637,10 +637,17 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
          const OicSecDoxm_t* doxm = GetDoxmResourceData();
          if(doxm)
          {
-             if(!doxm->owned && prevMsgId !=  ehRequest->messageID)
+             if(!doxm->owned)
              {
-                 RestoreDoxmToInitState();
-                 RestorePstatToInitState();
+                OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request");
+
+                if((OC_ADAPTER_IP == ehRequest->devAddr.adapter && previousMsgId != ehRequest->messageID)
+                   || OC_ADAPTER_TCP == ehRequest->devAddr.adapter)
+                {
+                    RestoreDoxmToInitState();
+                    RestorePstatToInitState();
+                    OIC_LOG(WARNING, TAG, "DOXM will be reverted.");
+                }
              }
          }
          else
@@ -650,7 +657,10 @@ static OCEntityHandlerResult HandlePstatPostRequest(const OCEntityHandlerRequest
      }
      else
      {
-         prevMsgId = ehRequest->messageID;
+        if(ehRequest->devAddr.adapter == OC_ADAPTER_IP)
+        {
+            previousMsgId = ehRequest->messageID++;
+        }
      }
 
     // Send response payload to request originator

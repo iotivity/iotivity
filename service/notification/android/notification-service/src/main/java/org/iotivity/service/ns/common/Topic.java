@@ -21,9 +21,8 @@
 package org.iotivity.service.ns.common;
 import android.util.Log;
 /**
-  * @class   Topic
-  * @brief   This class provides implementation of Notification Topic object.
-  */
+ * Provides implementation of Notification Topic object.
+ */
 public class Topic
 {
     private static final String LOG_TAG = "NotificationService_Topic";

@@ -43,6 +43,7 @@ extern "C" {
 #define WITH_PRESENCE
 
 #include "ocpresence.h"
+#include "ocrandom.h"
 //-----------------------------------------------------------------------------
 // Defines
 //-----------------------------------------------------------------------------
@@ -154,6 +155,9 @@ extern "C" {
 /** To represent resource type with platform.*/
 #define OC_RSRVD_RESOURCE_TYPE_PLATFORM "oic.wk.p"
 
+/** To represent resource type with collection.*/
+#define OC_RSRVD_RESOURCE_TYPE_COLLECTION "oic.wk.col"
+
 /** To represent resource type with RES.*/
 #define OC_RSRVD_RESOURCE_TYPE_RES      "oic.wk.res"
 
@@ -219,7 +223,10 @@ extern "C" {
 #define OC_RSRVD_HOSTING_PORT           "port"
 
 /** TCP Port. */
-#define OC_RSRVD_TCP_PORT               "x.org.iotivity.tcp"
+#define OC_RSRVD_TCP_PORT               "tcp"
+
+/** TLS Port. */
+#define OC_RSRVD_TLS_PORT               "tls"
 
 /** For Server instance ID.*/
 #define OC_RSRVD_SERVER_INSTANCE_ID     "sid"
@@ -270,6 +277,8 @@ extern "C" {
 /** System time for the platform. */
 #define OC_RSRVD_SYSTEM_TIME            "st"
 
+/** VID for the platform. */
+#define OC_RSRVD_VID                    "vid"
 /**
  *  Device.
  */
@@ -290,8 +299,7 @@ extern "C" {
 #define OC_SPEC_VERSION                 "core.1.1.0"
 
 /** Device Data Model version.*/
-#define OC_DATA_MODEL_VERSION           "res.1.1.0"
-
+#define OC_DATA_MODEL_VERSION           "res.1.1.0,sh.1.1.0"
 /**
  *  These provide backward compatibility - their use is deprecated.
  */
@@ -323,9 +331,6 @@ extern "C" {
 
 /** Blocks of MAC address */
 #define MAC_ADDR_BLOCKS (6)
-
-/** Max identity size. */
-#define MAX_IDENTITY_SIZE (37)
 
 /** Universal unique identity size. */
 #define UUID_IDENTITY_SIZE (128/8)
@@ -379,6 +384,9 @@ extern "C" {
 /** Account URI.*/
 #define OC_RSRVD_ACCOUNT_URI               "/oic/account"
 
+/** Account user URI.*/
+#define OC_RSRVD_ACCOUNT_SEARCH_URI        "/oic/account/search"
+
 /** Account session URI.*/
 #define OC_RSRVD_ACCOUNT_SESSION_URI       "/oic/account/session"
 
@@ -415,32 +423,32 @@ extern "C" {
 /** Defines user UUID. */
 #define OC_RSRVD_USER_UUID                 "uid"
 
-/** Defines user ID. */
-#define OC_RSRVD_USER_ID                   "userid"
-
 /** Defines group ID. */
 #define OC_RSRVD_GROUP_ID                  "gid"
-
-/** Defines group Master ID. */
-#define OC_RSRVD_GROUP_MASTER_ID           "gmid"
-
-/** Defines group type. */
-#define OC_RSRVD_GROUP_TYPE                "gtype"
 
 /** Defines member of group ID. */
 #define OC_RSRVD_MEMBER_ID                 "mid"
 
-/** Defines device ID list. */
-#define OC_RSRVD_DEVICE_ID_LIST            "dilist"
-
-/** Defines public. */
-#define OC_RSRVD_PUBLIC                    "Public"
-
-/** Defines private. */
-#define OC_RSRVD_PRIVATE                   "Private"
-
 /** Defines invite. */
 #define OC_RSRVD_INVITE                    "invite"
+
+/** Defines accept. */
+#define OC_RSRVD_ACCEPT                    "accept"
+
+/** Defines operation. */
+#define OC_RSRVD_OPERATION                 "op"
+
+/** Defines add. */
+#define OC_RSRVD_ADD                       "add"
+
+/** Defines delete. */
+#define OC_RSRVD_DELETE                    "delete"
+
+/** Defines owner. */
+#define OC_RSRVD_OWNER                     "owner"
+
+/** Defines members. */
+#define OC_RSRVD_MEMBERS                   "members"
 
 /** To represent grant type with refresh token. */
 #define OC_RSRVD_GRANT_TYPE_REFRESH_TOKEN  "refresh_token"
@@ -668,7 +676,7 @@ typedef struct
     uint16_t id_length;
 
     /** Array of end point identity.*/
-    unsigned char id[MAX_IDENTITY_SIZE];
+    unsigned char id[UUID_STRING_SIZE];
 } OCIdentity;
 
 /**
@@ -703,6 +711,9 @@ typedef struct
 
     /** destination GatewayID:ClientId.*/
     char                    routeData[MAX_ADDR_STR_SIZE];
+
+    /** destination DeviceID.*/
+    char                    deviceId[UUID_STRING_SIZE];
 
 } OCDevAddr;
 
@@ -905,12 +916,16 @@ typedef enum
 
 #ifdef WITH_MQ
     /** When this bit is set, the resource is allowed to be published */
-    ,OC_MQ_PUBLISHER     = (1 << 6)
+    // @todo
+    // Since this property is not defined on OCF Spec. it should be set 0 until define it
+    ,OC_MQ_PUBLISHER     = (0)
 #endif
 
 #ifdef MQ_BROKER
     /** When this bit is set, the resource is allowed to be notified as MQ broker.*/
-    ,OC_MQ_BROKER        = (1 << 7)
+    // @todo
+    // Since this property is not defined on OCF Spec. it should be set 0 until define it
+    ,OC_MQ_BROKER        = (0)
 #endif
 } OCResourceProperty;
 
@@ -993,12 +1008,18 @@ typedef enum
     OC_STACK_AUTHENTICATION_FAILURE,
     OC_STACK_NOT_ALLOWED_OXM,
 
+    /** Request come from endpoint which is not mapped to the resource. */
+    OC_STACK_BAD_ENDPOINT,
+
     /** Insert all new error codes here!.*/
 #ifdef WITH_PRESENCE
     OC_STACK_PRESENCE_STOPPED = 128,
     OC_STACK_PRESENCE_TIMEOUT,
     OC_STACK_PRESENCE_DO_NOT_HANDLE,
 #endif
+
+    /** Request is denied by the user*/
+    OC_STACK_USER_DENIED_REQ,
 
     /** ERROR code from server */
     OC_STACK_FORBIDDEN_REQ,          /** 403*/
@@ -1160,6 +1181,7 @@ typedef struct OCHeaderOption
 /**
  * This structure describes the platform properties. All non-Null properties will be
  * included in a platform discovery request.
+ * @deprecated: Use OCSetPropertyValue  to set platform value.
  */
 typedef struct
 {
@@ -1202,6 +1224,7 @@ typedef struct
  * This structure is expected as input for device properties.
  * device name is mandatory and expected from the application.
  * device id of type UUID will be generated by the stack.
+ * @deprecated: Use OCSetPropertyValue  to set device value.
  */
 typedef struct
 {
@@ -1282,9 +1305,9 @@ typedef enum
     PAYLOAD_TYPE_INVALID,
     /** The payload is an OCDiscoveryPayload */
     PAYLOAD_TYPE_DISCOVERY,
-    /** The payload is an OCDevicePayload */
+    /** The payload of the device */
     PAYLOAD_TYPE_DEVICE,
-    /** The payload is an OCPlatformPayload */
+    /** The payload type of the platform */
     PAYLOAD_TYPE_PLATFORM,
     /** The payload is an OCRepPayload */
     PAYLOAD_TYPE_REPRESENTATION,
@@ -1436,26 +1459,6 @@ typedef struct OCDiscoveryPayload
     struct OCDiscoveryPayload *next;
 
 } OCDiscoveryPayload;
-
-typedef struct
-{
-    OCPayload base;
-    char *sid;
-    char* deviceName;
-    char* specVersion;
-    OCStringLL *dataModelVersions;
-    OCStringLL *interfaces;
-    OCStringLL *types;
-} OCDevicePayload;
-
-typedef struct
-{
-    OCPayload base;
-    char* uri;
-    OCPlatformInfo info;
-    OCStringLL* rt;
-    OCStringLL* interfaces;
-} OCPlatformPayload;
 
 typedef struct
 {

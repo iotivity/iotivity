@@ -23,6 +23,7 @@ Import('env')
 import os
 import sys
 import subprocess
+from shutil import copyfile
 
 target_os = env.get('TARGET_OS')
 root_dir = env.get('SRC_DIR')
@@ -71,11 +72,27 @@ else:
     print 'mbedtls: Assume ocf.patch (TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256) was applied in %s' % mbedtls_dir
 os.chdir(start_dir)
 
+# Copy IoTivity's version of the mbedtls build configuration file
+# from extlibs/mbedtls/iotivity-config.h
+# to extlibs/mbedtls/mbedtls/include/mbedtls/config.h
+iotivity_config = os.path.join(root_dir, 'extlibs', 'mbedtls', 'config-iotivity.h')
+mbedtls_config = os.path.join(root_dir, 'extlibs', 'mbedtls', 'mbedtls', 'include', 'mbedtls', 'config.h')
+
+try:
+    copyfile(iotivity_config, mbedtls_config)
+except:
+    print 'mbedtls SConscript: cannot copy ' + iotivity_config + ' to ' + mbedtls_config
+    Exit(1)
+else:
+    print 'Copied IoTivity version of config.h to ' + mbedtls_config
 
 mbedtls_env = env.Clone()
 mbedtls_env.PrependUnique(CPPPATH = [mbedtls_dir])
 mbedtls_env.AppendUnique(CPPPATH = [mbedtls_dir+'include/'])
-mbedtls_env.AppendUnique(CFLAGS = ['-fPIC', '-Wall'])
+mbedtls_env.AppendUnique(CFLAGS = ['-Wall'])
+
+if mbedtls_env['CC'] != 'cl':
+    mbedtls_env.AppendUnique(CFLAGS = ['-fPIC'])
 
 ######################################################################
 # Source files and Target(s)

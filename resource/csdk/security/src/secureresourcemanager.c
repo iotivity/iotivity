@@ -144,11 +144,8 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
 
     // Copy the subjectID
     OicUuid_t subjectId = {.id = {0}};
-    OicUuid_t nullSubjectId = {.id = {0}};
     memcpy(subjectId.id, requestInfo->info.identity.id, sizeof(subjectId.id));
-
-    // if subject id is null that means request is sent thru coap.
-    if (memcmp(subjectId.id, nullSubjectId.id, sizeof(subjectId.id)) != 0)
+    if (endPoint->flags & CA_SECURE)
     {
         OIC_LOG(INFO, TAG, "request over secure channel");
         isRequestOverSecureChannel = true;
@@ -207,14 +204,14 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
             }
         }
     }
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     /*
      * In case of ACL and CRED, The payload required to verify the payload.
      * Payload information will be used for subowner's permission verification.
      */
     g_policyEngineContext.payload = (uint8_t*)requestInfo->info.payload;
     g_policyEngineContext.payloadSize = requestInfo->info.payloadSize;
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     //New request are only processed if the policy engine state is AWAITING_REQUEST.
     if (AWAITING_REQUEST == g_policyEngineContext.state)

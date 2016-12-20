@@ -24,9 +24,9 @@
 #include "pmutility.h"
 #include "srmutility.h"
 #include "ownershiptransfermanager.h"
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 #include "multipleownershiptransfermanager.h"
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 #include "oic_malloc.h"
 #include "logger.h"
 #include "secureresourceprovider.h"
@@ -35,6 +35,7 @@
 #include "utlist.h"
 #include "aclresource.h" //Note: SRM internal header
 #include "pconfresource.h"
+#include "psinterface.h"
 
 #define TAG "OIC_OCPMAPI"
 
@@ -53,7 +54,7 @@ struct Linkdata
 
 };
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 typedef struct ProvPreconfPINCtx ProvPreconfPINCtx_t;
 struct ProvPreconfPINCtx
 {
@@ -63,7 +64,7 @@ struct ProvPreconfPINCtx
     size_t pinLen;
     OCProvisionResultCB resultCallback;
 };
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /**
  * The function is responsible for initializaton of the provisioning manager. It will load
@@ -99,6 +100,33 @@ OCStackResult OCDiscoverSingleDevice(unsigned short timeout, const OicUuid_t* de
     }
 
     return PMSingleDeviceDiscovery(timeout, deviceID, ppFoundDevice);
+}
+
+/**
+ * The function is responsible for discovery of owned/unowned device is specified endpoint/deviceID.
+ * And this function will only return the specified device's response.
+ *
+ * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
+ *                    server before returning the device.
+ * @param[in] deviceID         deviceID of target device.
+ * @param[in] hostAddress       MAC address of target device.
+ * @param[in] connType       ConnectivityType for discovery.
+ * @param[out] ppFoundDevice     OCProvisionDev_t of found device.
+ * @return OTM_SUCCESS in case of success and other value otherwise.
+ */
+OCStackResult OCDiscoverSingleDeviceInUnicast(unsigned short timeout, const OicUuid_t* deviceID,
+                             const char* hostAddress, OCConnectivityType connType,
+                             OCProvisionDev_t **ppFoundDevice)
+{
+    if( NULL == ppFoundDevice || NULL != *ppFoundDevice || 0 == timeout || NULL == deviceID ||
+            NULL == hostAddress)
+    {
+        OIC_LOG(ERROR, TAG, "OCDiscoverSingleDeviceInUnicast : Invalid Parameter");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    return PMSingleDeviceDiscoveryInUnicast(timeout, deviceID, hostAddress, connType,
+            ppFoundDevice);
 }
 
 /**
@@ -140,7 +168,7 @@ OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **
     return PMDeviceDiscovery(timeout, true, ppList);
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * The function is responsible for discovery of MOT enabled device is current subnet.
  *
@@ -208,7 +236,8 @@ OCStackResult OCDoMultipleOwnershipTransfer(void* ctx,
     }
     return MOTDoOwnershipTransfer(ctx, targetDevices, resultCallback);
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+
+#endif //MULTIPLE_OWNER
 
 /**
  * API to register for particular OxM.
@@ -366,7 +395,7 @@ OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *select
     return SRPProvisionDirectPairing(ctx, selectedDeviceInfo, pconf, resultCallback);
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 static void AddPreconfPinOxMCB(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
 {
     ProvPreconfPINCtx_t* provCtx = (ProvPreconfPINCtx_t*)ctx;
@@ -416,7 +445,7 @@ OCStackResult OCProvisionPreconfigPin(void *ctx,
      */
     return MOTAddMOTMethod((void*)provCtx, targetDeviceInfo, OIC_PRECONFIG_PIN, AddPreconfPinOxMCB);
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /*
 * Function to unlink devices.
@@ -812,6 +841,16 @@ OCStackResult OCResetDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDisc
     }
     OIC_LOG(INFO, TAG, "OUT OCResetDevice");
     return res;
+}
+
+/**
+ * This function resets SVR DB to its factory setting.
+ *
+ * @return OC_STACK_OK in case of successful reset and other value otherwise.
+ */
+OCStackResult OCResetSVRDB(void)
+{
+    return ResetSecureResourceInPS();
 }
 
 /**
@@ -1237,7 +1276,7 @@ void OCDeletePdAclList(OicSecPdAcl_t* pPdAcl)
     FreePdAclList(pPdAcl);
 }
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * API to update 'doxm.mom' to resource server.
  *
@@ -1267,7 +1306,7 @@ OCStackResult OCSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceI
 {
     return MOTSelectMOTMethod(ctx, targetDeviceInfo, oxmSelValue, resultCallback);
 }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 /**

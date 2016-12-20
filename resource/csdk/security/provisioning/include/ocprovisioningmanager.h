@@ -24,9 +24,9 @@
 #include "octypes.h"
 #include "pmtypes.h"
 #include "ownershiptransfermanager.h"
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 #include "securevirtualresourcetypes.h"
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,6 +55,23 @@ OCStackResult OCInitPM(const char* dbPath);
  * @return OTM_SUCCESS in case of success and other value otherwise.
  */
 OCStackResult OCDiscoverSingleDevice(unsigned short timeout, const OicUuid_t* deviceID,
+                             OCProvisionDev_t **ppFoundDevice);
+
+/**
+ * The function is responsible for discovery of owned/unowned device is specified endpoint/MAC
+ * address.
+ * It will return the found device even though timeout is not exceeded.
+ *
+ * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
+ *                    server before returning the device.
+ * @param[in] deviceID         deviceID of target device.
+ * @param[in] hostAddress       MAC address of target device.
+ * @param[in] connType       ConnectivityType for discovery.
+ * @param[out] ppFoundDevice     OCProvisionDev_t of found device.
+ * @return OTM_SUCCESS in case of success and other value otherwise.
+ */
+OCStackResult OCDiscoverSingleDeviceInUnicast(unsigned short timeout, const OicUuid_t* deviceID,
+                             const char* hostAddress, OCConnectivityType connType,
                              OCProvisionDev_t **ppFoundDevice);
 
 /**
@@ -91,7 +108,7 @@ OCStackResult OCDoOwnershipTransfer(void* ctx,
  */
 OCStackResult OCSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * API to perfrom multiple ownership transfer for MOT enabled device.
  *
@@ -103,7 +120,7 @@ OCStackResult OCSetOxmAllowStatus(const OicSecOxm_t oxm, const bool allowStatus)
 OCStackResult OCDoMultipleOwnershipTransfer(void* ctx,
                                       OCProvisionDev_t *targetDevices,
                                       OCProvisionResultCB resultCallback);
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /**
  * API to register for particular OxM.
@@ -125,7 +142,7 @@ OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t*
  */
 OCStackResult OCDiscoverOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * The function is responsible for discovery of MOT enabled device is current subnet.
  *
@@ -145,7 +162,7 @@ OCStackResult OCDiscoverMultipleOwnerEnabledDevices(unsigned short timeout, OCPr
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OCDiscoverMultipleOwnedDevices(unsigned short timeout, OCProvisionDev_t **ppList);
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /**
  * API to provision credentials between two devices and ACLs for the devices who act as a server.
@@ -239,7 +256,7 @@ OCStackResult OCProvisionCredentials(void *ctx, OicSecCredType_t type, size_t ke
                                       const OCProvisionDev_t *pDev2,
                                       OCProvisionResultCB resultCallback);
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
 /**
  * API to provision preconfigured PIN to device(NOT LIST).
  * If device does not support the Preconfigured PIN OxM,
@@ -295,7 +312,7 @@ OCStackResult OCChangeMOTMode(void *ctx, const OCProvisionDev_t *targetDeviceInf
  */
 OCStackResult OCSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
                                  const OicSecOxm_t oxmSelValue, OCProvisionResultCB resultCallback);
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
 /**
  * Function to unlink devices.
@@ -361,6 +378,13 @@ OCStackResult OCRemoveDeviceWithUuid(void* ctx,
 OCStackResult OCResetDevice(void* ctx, unsigned short waitTimeForOwnedDeviceDiscovery,
                             const OCProvisionDev_t* pTargetDev,
                             OCProvisionResultCB resultCallback);
+
+/**
+ * This function resets SVR DB to its factory setting.
+ *
+ *@return OC_STACK_OK in case of successful reset and other value otherwise.
+ */
+OCStackResult OCResetSVRDB(void);
 
 /**
  * API to get status of all the devices in current subnet. The status include endpoint information

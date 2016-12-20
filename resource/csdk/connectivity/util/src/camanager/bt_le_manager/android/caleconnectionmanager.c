@@ -286,6 +286,12 @@ void CAManagerLESetScanInterval(jint interval, jint count)
     CALERestartScanWithInterval(interval, count, BLE_SCAN_ENABLE);
 }
 
+void CAManagerLEStopScan()
+{
+    OIC_LOG(DEBUG, TAG, "CAManagerLEStopScan");
+    CALERestartScanWithInterval(0, 0, BLE_SCAN_DISABLE);
+}
+
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeClientInterface_caManagerAdapterStateChangedCallback(
         JNIEnv *env, jobject obj, jint state)

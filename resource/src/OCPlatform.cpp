@@ -37,6 +37,16 @@ namespace OC
             OCPlatform_impl::Configure(config);
         }
 
+        OCStackResult start()
+        {
+            return OCPlatform_impl::Instance().start();
+        }
+
+        OCStackResult stop()
+        {
+            return OCPlatform_impl::Instance().stop();
+        }
+
         OCStackResult setDefaultDeviceEntityHandler(EntityHandler entityHandler)
         {
             return OCPlatform_impl::Instance().setDefaultDeviceEntityHandler(entityHandler);
@@ -195,6 +205,21 @@ namespace OC
         OCStackResult registerPlatformInfo(const OCPlatformInfo platformInfo)
         {
             return OCPlatform_impl::Instance().registerPlatformInfo(platformInfo);
+        }
+
+        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag, const std::string& value)
+        {
+            return OCPlatform_impl::Instance().setPropertyValue(type, tag, value);
+        }
+
+        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag, const std::vector<std::string>& value)
+        {
+            return OCPlatform_impl::Instance().setPropertyValue(type, tag, value);
+        }
+
+        OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag, std::string& value)
+        {
+            return OCPlatform_impl::Instance().getPropertyValue(type, tag, value);
         }
 
         OCStackResult unregisterResource(const OCResourceHandle& resourceHandle)

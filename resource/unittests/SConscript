@@ -27,7 +27,6 @@ unittests_env = gtest_env.Clone()
 src_dir = unittests_env.get('SRC_DIR')
 target_os = unittests_env.get('TARGET_OS')
 with_mq = unittests_env.get('WITH_MQ')
-rd_mode = unittests_env.get('RD_MODE')
 
 ######################################################################
 # Build flags
@@ -48,10 +47,10 @@ unittests_env.PrependUnique(CPPPATH = [
 		])
 
 if target_os in ['windows']:
-	unittests_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi', 'bcrypt'])
+	unittests_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi', 'bcrypt', 'crypt32'])
 	unittests_env.AppendUnique(CPPPATH = ['#extlibs/boost/boost'])
-
-if unittests_env.get('SECURED') == '1':
+	# On Windows, octbstack_test is a static LIB, that makes calls into static LIB ocsrm.
+	# On other platforms, octbstack_test is a shared LIB, that includes static LIB ocsrm.
 	unittests_env.AppendUnique(LIBS = ['ocsrm'])
 
 unittests_env.AppendUnique(LIBPATH = [unittests_env.get('BUILD_DIR')])
@@ -72,9 +71,6 @@ if unittests_env.get('LOGGING'):
 
 if unittests_env.get('WITH_CLOUD'):
 	unittests_env.AppendUnique(CPPDEFINES = ['WITH_CLOUD'])
-
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	unittests_env.AppendUnique(LIBS = ['resource_directory'])
 
 ######################################################################
 # Source files and Targets

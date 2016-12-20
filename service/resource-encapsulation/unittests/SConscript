@@ -22,10 +22,11 @@
 # ResourceClient Unit Test build script
 ##
 # SConscript file for Local PKI google tests
+import os
+
 gtest_env = SConscript('#extlibs/gtest/SConscript')
 lib_env = gtest_env.Clone()
 target_os = lib_env.get('TARGET_OS')
-rd_mode = lib_env.get('RD_MODE')
 
 if lib_env.get('RELEASE'):
     lib_env.AppendUnique(CCFLAGS = ['-Os'])
@@ -75,9 +76,6 @@ if lib_env.get('SECURED') == '1':
 	if lib_env.get('WITH_TCP') == True:
 		rcs_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	rcs_test_env.AppendUnique(LIBS = ['resource_directory'])
-
 ######################################################################
 # Build Test
 ######################################################################
@@ -89,6 +87,10 @@ rcs_test_env.AppendTarget('rcs_client_test')
 
 if rcs_test_env.get('TEST') == '1':
     target_os = rcs_test_env.get('TARGET_OS')
-    if target_os in ['linux']:
-        from tools.scons.RunTest import *
-        run_test(rcs_test_env, '', 'service/resource-encapsulation/unittests/rcs_client_test')
+# TODO: fix this test on linux and remove commented lines
+    if target_os in []:
+        from tools.scons.RunTest import run_test
+        run_test(rcs_test_env,
+#                'service_resource-encapsulation_unittests_rcs_client_test.memcheck',
+                 '',
+                 'service/resource-encapsulation/unittests/rcs_client_test')

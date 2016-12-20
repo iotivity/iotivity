@@ -36,14 +36,46 @@ namespace OC
                 bool missingClientWrapper,
                 bool invalidPort,
                 bool invalidIp)
-        : m_missingUri(missingUri),
+        : m_whatMessage(),
+          m_missingUri(missingUri),
           m_missingType(missingType),
           m_missingInterface(missingInterface),
           m_missingClientWrapper(missingClientWrapper),
           m_invalidPort(invalidPort),
           m_invalidIp(invalidIp)
         {
+            if(isUriMissing())
+            {
+                m_whatMessage += OC::InitException::MISSING_URI;
+            }
+
+            if(isTypeMissing())
+            {
+                m_whatMessage += OC::InitException::MISSING_TYPE;
+            }
+
+            if(isInterfaceMissing())
+            {
+                m_whatMessage += OC::InitException::MISSING_INTERFACE;
+            }
+
+            if(isClientWrapperMissing())
+            {
+                m_whatMessage += OC::InitException::MISSING_CLIENT_WRAPPER;
+            }
+
+            if(isInvalidPort())
+            {
+                m_whatMessage += OC::InitException::INVALID_PORT;
+            }
+
+            if(isInvalidIp())
+            {
+                m_whatMessage += OC::InitException::INVALID_IP;
+            }
         }
+
+        virtual ~ResourceInitException() throw() {}
 
         bool isInvalidPort() const
         {
@@ -77,43 +109,11 @@ namespace OC
 
         virtual const char* what() const BOOST_NOEXCEPT
         {
-            std::string ret;
-
-            if(isUriMissing())
-            {
-                ret += OC::InitException::MISSING_URI;
-            }
-
-            if(isTypeMissing())
-            {
-                ret += OC::InitException::MISSING_TYPE;
-            }
-
-            if(isInterfaceMissing())
-            {
-                ret += OC::InitException::MISSING_INTERFACE;
-            }
-
-            if(isClientWrapperMissing())
-            {
-                ret += OC::InitException::MISSING_CLIENT_WRAPPER;
-            }
-
-            if(isInvalidPort())
-            {
-                ret += OC::InitException::INVALID_PORT;
-            }
-
-            if(isInvalidIp())
-            {
-                ret += OC::InitException::INVALID_IP;
-            }
-
-            return ret.c_str();
+            return m_whatMessage.c_str();
         }
 
     private:
-
+        std::string m_whatMessage;
         bool m_missingUri;
         bool m_missingType;
         bool m_missingInterface;

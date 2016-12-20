@@ -51,18 +51,20 @@ tools_env.AppendUnique(RPATH = [tools_env.get('BUILD_DIR')])
 
 if target_os in ['msys_nt', 'windows']:
     # octbstack.dll doesn't export all the functions called by this app, so use static LIBs instead.
-    tools_env.AppendUnique(LIBS = ['ws2_32', 'bcrypt', 'iphlpapi',
+    tools_env.AppendUnique(LIBS = ['ws2_32', 'bcrypt', 'iphlpapi', 'crypt32',
                                    'coap', 'tinydtls', 'mbedtls', 'mbedx509', 'mbedcrypto',
                                    'octbstack_static', 'ocsrm', 'connectivity_abstraction'])
 elif target_os in ['darwin']:
     tools_env.AppendUnique(LIBS = ['coap', 'tinydtls', 'mbedtls', 'mbedx509', 'mbedcrypto',
                                    'octbstack', 'ocsrm', 'connectivity_abstraction'])
 else:
-    tools_env.PrependUnique(LIBS = ['oc', 'octbstack'])
+    tools_env.PrependUnique(LIBS = ['oc', 'octbstack', 'm'])
 
 ######################################################################
 # Source files and Targets
 ######################################################################
-json2cbor = tools_env.Program('json2cbor', ['json2cbor.c'])
+json2cbor_src = ['../../../../extlibs/cjson/cJSON.c',
+                 'json2cbor.c',]
+json2cbor = tools_env.Program('json2cbor', json2cbor_src)
 Alias("json2cbor", [json2cbor])
 env.AppendTarget('json2cbor')

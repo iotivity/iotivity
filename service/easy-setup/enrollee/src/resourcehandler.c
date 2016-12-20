@@ -23,6 +23,7 @@
 #include "ocpayload.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
+#include "cautilinterface.h"
 
 /**
  * @var ES_RH_TAG
@@ -140,7 +141,6 @@ OCStackResult initProvResource(bool isSecured)
 {
     gProvResource.status = ES_STATE_INIT;
     gProvResource.lastErrCode = ES_ERRCODE_NO_ERROR;
-    OICStrcpy(gProvResource.ocfWebLinks, MAX_WEBLINKLEN, "");
 
     OCStackResult res = OC_STACK_ERROR;
     if (isSecured)
@@ -159,6 +159,13 @@ OCStackResult initProvResource(bool isSecured)
     if(res)
     {
         OIC_LOG_V(INFO, ES_RH_TAG, "Created Prov resource with result: %s", getResult(res));
+        return res;
+    }
+
+    res = OCBindResourceTypeToResource(gProvResource.handle, OC_RSRVD_ES_RES_TYPE_COL);
+    if(res)
+    {
+        OIC_LOG_V(INFO, ES_RH_TAG, "Binding Resource type with result: %s", getResult(res));
         return res;
     }
 
@@ -218,6 +225,8 @@ OCStackResult initCloudServerResource(bool isSecured)
     OCStackResult res = OC_STACK_ERROR;
 
     OICStrcpy(gCloudResource.authCode, sizeof(gCloudResource.authCode), "");
+    OICStrcpy(gCloudResource.accessToken, sizeof(gCloudResource.accessToken), "");
+    gCloudResource.accessTokenType = NONE_OAUTH_TOKENTYPE;
     OICStrcpy(gCloudResource.authProvider, sizeof(gCloudResource.authProvider), "");
     OICStrcpy(gCloudResource.ciServer, sizeof(gCloudResource.ciServer), "");
 
@@ -295,8 +304,8 @@ void updateWiFiResource(OCRepPayload* input)
         return ;
     }
 
-    memset(wiFiData->ssid, 0, MAX_WEBLINKLEN);
-    memset(wiFiData->pwd, 0, MAX_WEBLINKLEN);
+    memset(wiFiData->ssid, 0, OIC_STRING_MAX_VALUE);
+    memset(wiFiData->pwd, 0, OIC_STRING_MAX_VALUE);
     wiFiData->authtype = NONE_AUTH;
     wiFiData->enctype = NONE_AUTH;
     wiFiData->userdata = NULL;
@@ -372,6 +381,8 @@ void updateCloudResource(OCRepPayload* input)
     }
 
     memset(cloudData->authCode, 0, OIC_STRING_MAX_VALUE);
+    memset(cloudData->accessToken, 0, OIC_STRING_MAX_VALUE);
+    gCloudResource.accessTokenType = NONE_OAUTH_TOKENTYPE;
     memset(cloudData->authProvider, 0, OIC_STRING_MAX_VALUE);
     memset(cloudData->ciServer, 0, OIC_STRING_MAX_VALUE);
     cloudData->userdata = NULL;
@@ -382,6 +393,22 @@ void updateCloudResource(OCRepPayload* input)
         OICStrcpy(gCloudResource.authCode, sizeof(gCloudResource.authCode), authCode);
         OICStrcpy(cloudData->authCode, sizeof(cloudData->authCode), authCode);
         OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.authCode %s", gCloudResource.authCode);
+    }
+
+    char *accessToken = NULL;
+    if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_ACCESSTOKEN, &accessToken))
+    {
+        OICStrcpy(gCloudResource.accessToken, sizeof(gCloudResource.accessToken), accessToken);
+        OICStrcpy(cloudData->accessToken, sizeof(cloudData->accessToken), accessToken);
+        OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.accessToken %s", gCloudResource.accessToken);
+    }
+
+    int64_t accessTokenType = -1;
+    if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_ACCESSTOKEN_TYPE, &accessTokenType))
+    {
+        gCloudResource.accessTokenType = accessTokenType;
+        cloudData->accessTokenType = gCloudResource.accessTokenType;
+        OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.accessTokenType %d", gCloudResource.accessTokenType);
     }
 
     char *authProvider = NULL;
@@ -405,7 +432,7 @@ void updateCloudResource(OCRepPayload* input)
         gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER, &cloudData->userdata);
     }
 
-    if(authCode || authProvider || ciServer)
+    if(authCode || accessToken || authProvider || ciServer)
     {
         OIC_LOG(INFO, ES_RH_TAG, "Send CloudRsrc Callback To ES");
 
@@ -493,7 +520,7 @@ void updateDevConfResource(OCRepPayload* input)
     OICFree(devConfData);
 }
 
-OCRepPayload* constructResponseOfWiFi()
+OCRepPayload* constructResponseOfWiFi(char *interface)
 {
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
@@ -510,8 +537,40 @@ OCRepPayload* constructResponseOfWiFi()
 
     OIC_LOG(INFO, ES_RH_TAG, "constructResponse wifi res");
     OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_WIFI);
-    OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
-    OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_WIFI);
+
+    OCRepPayload* repPayload = NULL;
+    OCRepPayload* tempPayload = NULL;
+    if(!strcmp(interface, OC_RSRVD_INTERFACE_BATCH))
+    {
+        repPayload = OCRepPayloadCreate();
+        if (!repPayload)
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+            return NULL;
+        }
+
+        tempPayload = payload;
+        payload = repPayload;
+
+        size_t interfacesDimensions[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
+        char **interfaces = (char **)OICMalloc(3 * sizeof(char*));
+
+        interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
+
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_INTERFACE, (char **)interfaces, interfacesDimensions);
+
+        size_t resourceTypesDimensions[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
+        char **resourceTypes = (char **)OICMalloc(2 * sizeof(char*));
+
+        resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_WIFI);
+
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_RES_TYPE, (char **)resourceTypes, resourceTypesDimensions);
+    }
+    else
+    {
+        OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
+        OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_WIFI);
+    }
 
     size_t dimensions[MAX_REP_ARRAY_DEPTH] = {gWiFiResource.numMode, 0, 0};
     int64_t *modes_64 = (int64_t *)OICMalloc(gWiFiResource.numMode * sizeof(int64_t));
@@ -532,10 +591,16 @@ OCRepPayload* constructResponseOfWiFi()
         gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_WIFI);
     }
 
+    if(!strcmp(interface, OC_RSRVD_INTERFACE_BATCH))
+    {
+        payload = tempPayload;
+        OCRepPayloadSetPropObject(payload, OC_RSRVD_REPRESENTATION, repPayload);
+    }
+
     return payload;
 }
 
-OCRepPayload* constructResponseOfCloud()
+OCRepPayload* constructResponseOfCloud(char *interface)
 {
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
@@ -552,10 +617,44 @@ OCRepPayload* constructResponseOfCloud()
 
     OIC_LOG(INFO, ES_RH_TAG, "constructResponse cloudserver res");
     OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_CLOUDSERVER);
-    OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
-    OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER);
+
+    OCRepPayload* repPayload = NULL;
+    OCRepPayload* tempPayload = NULL;
+    if(!strcmp(interface, OC_RSRVD_INTERFACE_BATCH))
+    {
+        repPayload = OCRepPayloadCreate();
+        if (!repPayload)
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+            return NULL;
+        }
+
+        tempPayload = payload;
+        payload = repPayload;
+
+        size_t interfacesDimensions[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
+        char **interfaces = (char **)OICMalloc(3 * sizeof(char*));
+
+        interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
+
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_INTERFACE, (char **)interfaces, interfacesDimensions);
+
+        size_t resourceTypesDimensions[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
+        char **resourceTypes = (char **)OICMalloc(2 * sizeof(char*));
+
+        resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_CLOUDSERVER);
+
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_RES_TYPE, (char **)resourceTypes, resourceTypesDimensions);
+    }
+    else
+    {
+        OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
+        OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER);
+    }
 
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHCODE, gCloudResource.authCode);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_ACCESSTOKEN, gCloudResource.accessToken);
+    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_ACCESSTOKEN_TYPE, (int)gCloudResource.accessTokenType);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHPROVIDER, gCloudResource.authProvider);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CISERVER, gCloudResource.ciServer);
 
@@ -564,10 +663,16 @@ OCRepPayload* constructResponseOfCloud()
         gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER);
     }
 
+    if(!strcmp(interface, OC_RSRVD_INTERFACE_BATCH))
+    {
+        payload = tempPayload;
+        OCRepPayloadSetPropObject(payload, OC_RSRVD_REPRESENTATION, repPayload);
+    }
+
     return payload;
 }
 
-OCRepPayload* constructResponseOfDevConf()
+OCRepPayload* constructResponseOfDevConf(char *interface)
 {
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
@@ -584,8 +689,40 @@ OCRepPayload* constructResponseOfDevConf()
 
     OIC_LOG(INFO, ES_RH_TAG, "constructResponse devconf res");
     OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_DEVCONF);
-    OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
-    OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_DEVCONF);
+
+    OCRepPayload* repPayload = NULL;
+    OCRepPayload* tempPayload = NULL;
+    if(!strcmp(interface, OC_RSRVD_INTERFACE_BATCH))
+    {
+        repPayload = OCRepPayloadCreate();
+        if (!repPayload)
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+            return NULL;
+        }
+
+        tempPayload = payload;
+        payload = repPayload;
+
+        size_t interfacesDimensions[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
+        char **interfaces = (char **)OICMalloc(3 * sizeof(char*));
+
+        interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
+
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_INTERFACE, (char **)interfaces, interfacesDimensions);
+
+        size_t resourceTypesDimensions[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
+        char **resourceTypes = (char **)OICMalloc(2 * sizeof(char*));
+
+        resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_DEVCONF);
+
+        OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_RES_TYPE, (char **)resourceTypes, resourceTypesDimensions);
+    }
+    else
+    {
+        OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
+        OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_DEVCONF);
+    }
 
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_DEVNAME, gDevConfResource.devName);
     OCRepPayloadSetPropString(payload, OC_RSRVD_ES_MODELNUMBER, gDevConfResource.modelNumber);
@@ -596,6 +733,12 @@ OCRepPayload* constructResponseOfDevConf()
     if(gWriteUserdataCb)
     {
         gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_DEVCONF);
+    }
+
+    if(!strcmp(interface, OC_RSRVD_INTERFACE_BATCH))
+    {
+        payload = tempPayload;
+        OCRepPayloadSetPropObject(payload, OC_RSRVD_REPRESENTATION, repPayload);
     }
 
     return payload;
@@ -652,6 +795,26 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             OCRepPayloadSetStringArray(add, OC_RSRVD_INTERFACE,
                                             (const char **)resourceInterface, dimensions);
 
+            OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)gWiFiResource.handle);
+            OCRepPayload *policy = OCRepPayloadCreate();
+            if (!policy)
+            {
+                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+                return NULL;
+            }
+
+            OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP,
+                                    ((p & OC_DISCOVERABLE) | (p & OC_OBSERVABLE)));
+            if (p & OC_SECURE)
+            {
+                OCRepPayloadSetPropBool(policy, OC_RSRVD_SECURE, p & OC_SECURE);
+                uint16_t securePort = CAGetAssignedPortNumber(ehRequest->devAddr.adapter,
+                                                                    ehRequest->devAddr.flags);
+                OCRepPayloadSetPropInt(policy, OC_RSRVD_HOSTING_PORT, securePort);
+            }
+
+            OCRepPayloadSetPropObject(add, OC_RSRVD_POLICY, policy);
+
             arrayPayload[childResCnt++] = add;
         }
 
@@ -685,6 +848,26 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
                                             (const char **)resourceType, dimensions);
             OCRepPayloadSetStringArray(add, OC_RSRVD_INTERFACE,
                                             (const char **)resourceInterface, dimensions);
+
+            OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)gDevConfResource.handle);
+            OCRepPayload *policy = OCRepPayloadCreate();
+            if (!policy)
+            {
+                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+                return NULL;
+            }
+
+            OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP,
+                                    ((p & OC_DISCOVERABLE) | (p & OC_OBSERVABLE)));
+            if (p & OC_SECURE)
+            {
+                OCRepPayloadSetPropBool(policy, OC_RSRVD_SECURE, p & OC_SECURE);
+                uint16_t securePort = CAGetAssignedPortNumber(ehRequest->devAddr.adapter,
+                                                                    ehRequest->devAddr.flags);
+                OCRepPayloadSetPropInt(policy, OC_RSRVD_HOSTING_PORT, securePort);
+            }
+
+            OCRepPayloadSetPropObject(add, OC_RSRVD_POLICY, policy);
 
             arrayPayload[childResCnt++] = add;
         }
@@ -720,6 +903,26 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             OCRepPayloadSetStringArray(add, OC_RSRVD_INTERFACE,
                                             (const char **)resourceInterface, dimensions);
 
+            OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)gCloudResource.handle);
+            OCRepPayload *policy = OCRepPayloadCreate();
+            if (!policy)
+            {
+                OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+                return NULL;
+            }
+
+            OCRepPayloadSetPropInt(policy, OC_RSRVD_BITMAP,
+                                    ((p & OC_DISCOVERABLE) | (p & OC_OBSERVABLE)));
+            if (p & OC_SECURE)
+            {
+                OCRepPayloadSetPropBool(policy, OC_RSRVD_SECURE, p & OC_SECURE);
+                uint16_t securePort = CAGetAssignedPortNumber(ehRequest->devAddr.adapter,
+                                                                    ehRequest->devAddr.flags);
+                OCRepPayloadSetPropInt(policy, OC_RSRVD_HOSTING_PORT, securePort);
+            }
+
+            OCRepPayloadSetPropObject(add, OC_RSRVD_POLICY, policy);
+
             arrayPayload[childResCnt++] = add;
         }
 
@@ -735,6 +938,7 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_LL);
             OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_BATCH);
             OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_PROV);
+            OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_COL);
 
             OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PROVSTATUS, gProvResource.status);
             OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_LAST_ERRORCODE, gProvResource.lastErrCode);
@@ -743,26 +947,7 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
         }
         else    // link list interface
         {
-            OCRepPayload* head = payload;
-            OCRepPayload* nextPayload = NULL;
-
-            for(int i = 0 ; i < childResCnt ; ++i)
-            {
-                nextPayload = arrayPayload[i];
-                if(nextPayload != NULL)
-                {
-                    payload->next = nextPayload;
-                    payload = payload->next;
-                }
-            }
-            if(head->next != NULL)
-            {
-                payload = head->next;
-            }
-            else
-            {
-                payload = head;
-            }
+            OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_ES_LINKS, arrayPayload, dimensions);
         }
     } else if (
         ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_BATCH))
@@ -770,13 +955,47 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
     {
         OIC_LOG(INFO, ES_RH_TAG, "constructResponse prov res");
         OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_PROV);
-        OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
-        OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_LL);
-        OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_BATCH);
-        OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_PROV);
 
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PROVSTATUS, gProvResource.status);
-        OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_LAST_ERRORCODE, gProvResource.lastErrCode);
+        OCRepPayload* repPayload = NULL;
+
+        repPayload = OCRepPayloadCreate();
+        if (!repPayload)
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+            return NULL;
+        }
+
+        size_t interfacesDimensions[MAX_REP_ARRAY_DEPTH] = {3, 0, 0};
+        char **interfaces = (char **)OICMalloc(3 * sizeof(char*));
+        if(!interfaces)
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+            return NULL;
+        }
+
+        interfaces[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
+        interfaces[1] = OICStrdup(OC_RSRVD_INTERFACE_LL);
+        interfaces[2] = OICStrdup(OC_RSRVD_INTERFACE_BATCH);
+
+        OCRepPayloadSetStringArray(repPayload, OC_RSRVD_ES_INTERFACE, (char **)interfaces, interfacesDimensions);
+
+        size_t resourceTypesDimensions[MAX_REP_ARRAY_DEPTH] = {2, 0, 0};
+        char **resourceTypes = (char **)OICMalloc(2 * sizeof(char*));
+        if(!resourceTypes)
+        {
+            OIC_LOG(ERROR, ES_RH_TAG, "Failed to allocate Payload");
+            return NULL;
+        }
+
+        resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_PROV);
+        resourceTypes[1] = OICStrdup(OC_RSRVD_ES_RES_TYPE_COL);
+
+        OCRepPayloadSetStringArray(repPayload, OC_RSRVD_ES_RES_TYPE, (char **)resourceTypes, resourceTypesDimensions);
+
+        OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_PROVSTATUS, gProvResource.status);
+        OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_LAST_ERRORCODE, gProvResource.lastErrCode);
+
+        OCRepPayloadSetPropObject(payload, OC_RSRVD_REPRESENTATION, repPayload);
     }
 
     if(gWriteUserdataCb)
@@ -791,25 +1010,24 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             OCRepPayload* head = payload;
             OCRepPayload* nextPayload = NULL;
 
-            nextPayload = constructResponseOfWiFi();
+            nextPayload = constructResponseOfWiFi(OC_RSRVD_INTERFACE_BATCH);
             if(nextPayload != NULL)
             {
                 payload->next = nextPayload;
                 payload = payload->next;
             }
 
-            nextPayload = constructResponseOfCloud();
+            nextPayload = constructResponseOfCloud(OC_RSRVD_INTERFACE_BATCH);
             if(nextPayload != NULL)
             {
                 payload->next = nextPayload;
                 payload = payload->next;
             }
 
-            nextPayload = constructResponseOfDevConf();
+            nextPayload = constructResponseOfDevConf(OC_RSRVD_INTERFACE_BATCH);
             if(nextPayload != NULL)
             {
                 payload->next = nextPayload;
-                payload = payload->next;
             }
 
             payload = head;
@@ -1022,7 +1240,7 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
         }
         else
         {
-            getResp = constructResponseOfWiFi();
+            getResp = constructResponseOfWiFi(OC_RSRVD_INTERFACE_DEFAULT);
         }
     }
     else if(ehRequest->resource == gCloudResource.handle)
@@ -1034,7 +1252,7 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
         }
         else
         {
-            getResp = constructResponseOfCloud();
+            getResp = constructResponseOfCloud(OC_RSRVD_INTERFACE_DEFAULT);
         }
     }
     else if(ehRequest->resource == gDevConfResource.handle)
@@ -1046,7 +1264,7 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
         }
         else
         {
-            getResp = constructResponseOfDevConf();
+            getResp = constructResponseOfDevConf(OC_RSRVD_INTERFACE_DEFAULT);
         }
     }
 
@@ -1138,15 +1356,15 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
     }
     else if(ehRequest->resource == gWiFiResource.handle)
     {
-        getResp = constructResponseOfWiFi();
+        getResp = constructResponseOfWiFi(OC_RSRVD_INTERFACE_DEFAULT);
     }
     else if(ehRequest->resource == gCloudResource.handle)
     {
-        getResp = constructResponseOfCloud();
+        getResp = constructResponseOfCloud(OC_RSRVD_INTERFACE_DEFAULT);
     }
     else if(ehRequest->resource == gDevConfResource.handle)
     {
-        getResp = constructResponseOfDevConf();
+        getResp = constructResponseOfDevConf(OC_RSRVD_INTERFACE_DEFAULT);
     }
 
     if (!getResp)

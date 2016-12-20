@@ -150,6 +150,10 @@ namespace OC
             const QueryParamsMap& queryParams, const HeaderOptions& headerOptions,
             MQTopicCallback& callback, QualityOfService QoS) = 0;
 #endif
+        virtual OCStackResult stop() = 0;
+
+        virtual OCStackResult start() = 0;
+
         virtual ~IClientWrapper(){}
     };
 }

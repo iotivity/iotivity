@@ -75,6 +75,7 @@ namespace OC
                 OC_STACK_INCONSISTENT_DB,
                 OC_STACK_AUTHENTICATION_FAILURE,
                 OC_STACK_NOT_ALLOWED_OXM,
+                OC_STACK_USER_DENIED_REQ,
                 OC_STACK_FORBIDDEN_REQ,
                 OC_STACK_INTERNAL_SERVER_ERROR
             };
@@ -123,6 +124,7 @@ namespace OC
                 OC::Exception::INCONSISTENT_DB,
                 OC::Exception::AUTHENTICATION_FAILURE,
                 OC::Exception::NOT_ALLOWED_OXM,
+                OC::Exception::USER_DENIED_REQ,
                 OC::Exception::FORBIDDEN_REQ,
                 OC::Exception::INTERNAL_SERVER_ERROR
             };

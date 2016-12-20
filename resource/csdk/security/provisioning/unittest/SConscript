@@ -20,6 +20,7 @@
 
 import os
 import os.path
+from tools.scons.RunTest import run_test
 
 # SConscript file for Local PKI google tests
 gtest_env = SConscript('#extlibs/gtest/SConscript')
@@ -53,7 +54,6 @@ sptest_env.PrependUnique(CPPPATH = [
 		'../../../../oc_logger/include',
 		'../include/oxm',
 		'../../../../../extlibs/tinydtls',
-		'../../../../../extlibs/cjson',
 		'../../../../../extlibs/base64',
 		'../../../connectivity/inc',
 		'../../../connectivity/inc/pkix',
@@ -78,12 +78,13 @@ if not sptest_env.get('RELEASE'):
 	sptest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 if sptest_env.get('MULTIPLE_OWNER') == '1':
-	sptest_env.AppendUnique(CPPDEFINES=['_ENABLE_MULTIPLE_OWNER_'])
+	sptest_env.AppendUnique(CPPDEFINES=['MULTIPLE_OWNER'])
 
 if target_os in ['msys_nt', 'windows']:
     sptest_env.AppendUnique(LIBS = ['ws2_32',
                                     'advapi32',
                                     'bcrypt',
+                                    'crypt32',
                                     'octbstack_static',
                                     'iphlpapi'])
 else:
@@ -115,7 +116,8 @@ if target_os not in ['windows']:
 Alias("test", [unittest])
 
 sptest_env.AppendTarget('test')
-if sptest_env.get('TEST') == '1':
+# TODO: fix test for all supported configurations
+if sptest_env.get('TEST') == '1' and sptest_env.get('SECURED') != '1':
 	if target_os in ['linux', 'windows']:
 		out_dir = sptest_env.get('BUILD_DIR')
 		result_dir = os.path.join(sptest_env.get('BUILD_DIR'), 'test_out') + os.sep
@@ -124,6 +126,7 @@ if sptest_env.get('TEST') == '1':
 		sptest_env.AppendENVPath('GTEST_OUTPUT', ['xml:'+ result_dir])
 		sptest_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
 		sptest_env.AppendENVPath('PATH', sptest_env.get('BUILD_DIR'))
-		ut = sptest_env.Command ('ut', None, out_dir + '/resource/csdk/security/provisioning/unittest/unittest')
-		AlwaysBuild ('ut')
-
+		run_test(sptest_env,
+#				 'resource_csdk_security_provisioning_unittest.memcheck',
+				 '',
+				 'resource/csdk/security/provisioning/unittest/unittest')

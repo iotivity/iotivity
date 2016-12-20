@@ -44,7 +44,10 @@
 #include "OCUtilities.h"
 #include "ocpayload.h"
 
+#include "logger.h"
 #include "oc_logger.hpp"
+
+#define TAG "OIC_PLATFORM"
 
 namespace OC
 {
@@ -67,22 +70,105 @@ namespace OC
         return platform;
     }
 
+    OCStackResult OCPlatform_impl::start()
+    {
+        OIC_LOG(INFO, TAG, "start");
+
+        OCStackResult res = OC_STACK_OK;
+        if (OC_CLIENT == m_modeType)
+        {
+            if (OC_STACK_OK != checked_guard(m_client, &IClientWrapper::start))
+            {
+                res = OC_STACK_ERROR;
+            }
+        }
+        else if (OC_SERVER == m_modeType)
+        {
+            if (OC_STACK_OK != checked_guard(m_server, &IServerWrapper::start))
+            {
+                res = OC_STACK_ERROR;
+            }
+        }
+        else if (OC_CLIENT_SERVER == m_modeType || OC_GATEWAY == m_modeType)
+        {
+            if (OC_STACK_OK != checked_guard(m_client, &IClientWrapper::start))
+            {
+                res = OC_STACK_ERROR;
+            }
+
+            if (OC_STACK_OK != checked_guard(m_server, &IServerWrapper::start))
+            {
+                res = OC_STACK_ERROR;
+            }
+        }
+        else
+        {
+            res = OC_STACK_ERROR;
+        }
+
+        return res;
+    }
+
+    OCStackResult OCPlatform_impl::stop()
+    {
+        OIC_LOG(INFO, TAG, "stop");
+
+        OCStackResult res = OC_STACK_OK;
+        if (OC_CLIENT == m_modeType)
+        {
+            if (OC_STACK_OK != checked_guard(m_client, &IClientWrapper::stop))
+            {
+                res = OC_STACK_ERROR;
+            }
+        }
+        else if (OC_SERVER == m_modeType)
+        {
+            if (OC_STACK_OK != checked_guard(m_server, &IServerWrapper::stop))
+            {
+                res = OC_STACK_ERROR;
+            }
+        }
+        else if (OC_CLIENT_SERVER == m_modeType)
+        {
+            if (OC_STACK_OK != checked_guard(m_client, &IClientWrapper::stop))
+            {
+                res = OC_STACK_ERROR;
+            }
+
+            if (OC_STACK_OK != checked_guard(m_server, &IServerWrapper::stop))
+            {
+                res = OC_STACK_ERROR;
+            }
+        }
+        else
+        {
+            res = OC_STACK_ERROR;
+        }
+
+        return res;
+    }
+
     void OCPlatform_impl::init(const PlatformConfig& config)
     {
+        OIC_LOG(INFO, TAG, "init");
+
         switch(config.mode)
         {
             case ModeType::Server:
                 m_server = m_WrapperInstance->CreateServerWrapper(m_csdkLock, config);
+                m_modeType = OC_SERVER;
                 break;
 
             case ModeType::Client:
                 m_client = m_WrapperInstance->CreateClientWrapper(m_csdkLock, config);
+                m_modeType = OC_CLIENT;
                 break;
 
             case ModeType::Both:
             case ModeType::Gateway:
                 m_server = m_WrapperInstance->CreateServerWrapper(m_csdkLock, config);
                 m_client = m_WrapperInstance->CreateClientWrapper(m_csdkLock, config);
+                m_modeType = OC_CLIENT_SERVER;
                 break;
          }
     }
@@ -277,6 +363,32 @@ namespace OC
     OCStackResult OCPlatform_impl::registerPlatformInfo(const OCPlatformInfo platformInfo)
     {
         return checked_guard(m_server, &IServerWrapper::registerPlatformInfo, platformInfo);
+    }
+
+    OCStackResult OCPlatform_impl::setPropertyValue(OCPayloadType type, const std::string& tag, const std::string& value)
+    {
+
+        return checked_guard(m_server, &IServerWrapper::setPropertyValue, type, tag, value);
+    }
+
+    OCStackResult OCPlatform_impl::setPropertyValue(OCPayloadType type, const std::string& tag, const std::vector<std::string>& value)
+    {
+        for (const auto& h : value)
+        {
+           OCStackResult r;
+
+           if (OC_STACK_OK != (r = result_guard(setPropertyValue(type, tag, h))))
+           {
+               return r;
+           }
+        }
+
+        return OC_STACK_OK;
+    }
+
+    OCStackResult OCPlatform_impl::getPropertyValue(OCPayloadType type, const std::string& tag, std::string& value)
+    {
+        return checked_guard(m_server, &IServerWrapper::getPropertyValue, type, tag, value);
     }
 
     OCStackResult OCPlatform_impl::registerResource(OCResourceHandle& resourceHandle,

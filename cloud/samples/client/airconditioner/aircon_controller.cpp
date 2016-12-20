@@ -366,7 +366,6 @@ int main(int argc, char *argv[])
 
             case 'q':
                 goto exit;
-                break;
         }
     }
 

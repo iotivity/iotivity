@@ -169,8 +169,7 @@ static void provisionAclCB(void* ctx, int nOfRes, OCProvisionResult_t* arr, bool
 }
 
 // response handler for LED requests.
-static void LedCB(void *ctx, OCDoHandle UNUSED,
-                                                    OCClientResponse *clientResponse)
+static OCStackApplicationResult LedCB(void *ctx, OCDoHandle UNUSED, OCClientResponse *clientResponse)
 {
     if(clientResponse)
     {
@@ -197,6 +196,7 @@ static void LedCB(void *ctx, OCDoHandle UNUSED,
     }
 
     g_doneCB = true;
+    return OC_STACK_OK;
 }
 
 static void inputPinCB(char* pin, size_t len)
@@ -321,7 +321,7 @@ static int multipleOwnershipTransfer(void)
     // for error checking, the return value saved and printed
     g_doneCB = false;
 
-#ifdef _ENABLE_MULTIPLE_OWNER_
+#ifdef MULTIPLE_OWNER
     OCProvisionDev_t* dev = NULL;
     LL_FOREACH(g_motdev_list, dev)
     {
@@ -337,7 +337,7 @@ static int multipleOwnershipTransfer(void)
             }
         }
     }
-#endif //_ENABLE_MULTIPLE_OWNER_
+#endif //MULTIPLE_OWNER
 
     if(OC_STACK_OK != OCDoMultipleOwnershipTransfer(g_ctx, g_motdev_list, multipleOwnershipTransferCB))
     {

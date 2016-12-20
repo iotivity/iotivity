@@ -27,8 +27,6 @@
 
 #include <pthread.h>
 
-#define NS_QUERY_CONSUMER_ID "consumerId"
-
 static bool NSIsExtraValue(const char * name);
 static void NSCopyPayloadValueArray(OCRepPayloadValue* dest, OCRepPayloadValue* source);
 static OCRepPayloadValue * NSCopyPayloadValue(OCRepPayloadValue * value);

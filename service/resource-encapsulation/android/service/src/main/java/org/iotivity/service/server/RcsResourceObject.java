@@ -137,9 +137,9 @@ public final class RcsResourceObject extends RcsObject {
         /**
          * Register a resource and returns a RCSResourceObject.
          *
-         * @throws RcsPlatformException
+         * throws RcsPlatformException
          *             If registering a resource is failed.
-         *
+         * (TODO check)
          */
         public RcsResourceObject build() {
             return nativeBuild(mUri, mType, mInterface, mIsObservable,
@@ -224,7 +224,7 @@ public final class RcsResourceObject extends RcsObject {
          *
          * @throws RcsIllegalStateException
          *             if not in locked state
-         * @throws RcsPlatformException
+         * or RcsPlatformException
          *             if auto notify failed
          */
         public void apply() throws RcsIllegalStateException {

@@ -38,7 +38,6 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "logger.h"
-#include "cJSON.h"
 #include "utlist.h"
 #include "ocpayload.h"
 #include "payload_logging.h"
@@ -260,6 +259,7 @@ bool DPGenerateQuery(bool isSecure,
 #ifndef WITH_ARDUINO
         case CT_ADAPTER_TCP:
             prefix = (isSecure == true) ? QPREFIX_COAPS_TCP : QPREFIX_COAP_TCP;
+            // intentional fall through don't add break
 #endif
 #endif
         case CT_ADAPTER_IP:

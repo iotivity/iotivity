@@ -9,7 +9,6 @@ SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
 notification_sample_env = lib_env.Clone()
 
 target_os = env.get('TARGET_OS')
-rd_mode = env.get('RD_MODE')
 ######################################################################
 # Build flags
 ######################################################################
@@ -78,9 +77,6 @@ if 'PUB' in with_mq:
 if 'BROKER' in with_mq:
     notification_sample_env.AppendUnique(CPPDEFINES = ['MQ_BROKER', 'WITH_MQ'])
     print "MQ Broker support"
-
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-    notification_sample_env.AppendUnique(LIBS = ['resource_directory'])
 
 ####################################################################
 # Source files and Targets

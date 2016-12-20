@@ -42,7 +42,7 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
         OIC_LOG(INFO, TAG, "Invalid params");
         return OC_STACK_INVALID_PARAM;
     }
-    if(!(keySize == OWNER_PSK_LENGTH_128 || keySize == OWNER_PSK_LENGTH_256))
+    if (!(keySize == OWNER_PSK_LENGTH_128 || keySize == OWNER_PSK_LENGTH_256))
     {
         OIC_LOG(INFO, TAG, "Invalid key size");
         return OC_STACK_INVALID_PARAM;
@@ -57,7 +57,12 @@ OCStackResult PMGeneratePairWiseCredentials(OicSecCredType_t type, size_t keySiz
     VERIFY_NON_NULL(TAG, privData, ERROR);
     OicSecKey_t privKey = {privData, keySize};
 
-    OCFillRandomMem(privData, privDataKeySize);
+    if (!OCGetRandomBytes(privData, privDataKeySize))
+    {
+        OIC_LOG(ERROR, TAG, "Failed to generate private key");
+        res = OC_STACK_ERROR;
+        goto exit;
+    }
 
     // TODO: currently owner array is 1. only provisioning tool's id.
     tempFirstCred =  GenerateCredential(secondDeviceId, type, NULL, &privKey, ptDeviceId, NULL);
@@ -75,7 +80,7 @@ exit:
     OICClearMemory(privData, privDataKeySize);
     OICFree(privData);
 
-    if(res != OC_STACK_OK)
+    if (res != OC_STACK_OK)
     {
         OICFree(tempFirstCred);
         OICFree(tempSecondCred);

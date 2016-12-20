@@ -118,7 +118,7 @@ if target_os == 'android':
 	Import('notificationJniCommonSharedObjs')
 
 	notification_jni_consumer_env.AppendUnique(CPPPATH = ['../../../../extlibs/boost/boost_1_58_0'])
-	notification_jni_consumer_env.AppendUnique(CPPPATH = ['../../../../android/android_api/base/jni'])
+	notification_jni_consumer_env.AppendUnique(CPPPATH = ['../../../../java/jni'])
 	notification_jni_consumer_env.AppendUnique(CPPPATH = ['../../android/notification-service/src/main/jni/common'])
 	notification_jni_consumer_env.AppendUnique(CPPPATH = ['../../android/notification-service/src/main/jni/consumer'])
 

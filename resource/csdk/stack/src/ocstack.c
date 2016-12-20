@@ -60,6 +60,7 @@
 #include "ocpayloadcbor.h"
 #include "cautilinterface.h"
 #include "oicgroup.h"
+#include "ocendpoint.h"
 
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
 #include "routingutility.h"
@@ -484,6 +485,7 @@ void CopyDevAddrToEndpoint(const OCDevAddr *in, CAEndpoint_t *out)
     out->adapter = (CATransportAdapter_t)in->adapter;
     out->flags = OCToCATransportFlags(in->flags);
     OICStrcpy(out->addr, sizeof(out->addr), in->addr);
+    OICStrcpy(out->deviceId, sizeof(out->deviceId), in->deviceId);
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     /* This assert is to prevent accidental mismatch between address size macros defined in
      * RI and CA and cause crash here. */
@@ -751,6 +753,8 @@ CAResponseResult_t OCToCAStackResult(OCStackResult ocCode, OCMethod method)
         case OC_STACK_INTERNAL_SERVER_ERROR:
             ret = CA_INTERNAL_SERVER_ERROR;
             break;
+        case OC_STACK_BAD_ENDPOINT:
+            ret = CA_BAD_REQ;
         default:
             break;
     }
@@ -1224,6 +1228,11 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
     if(cbNode)
     {
         OIC_LOG(INFO, TAG, "There is a cbNode associated with the response token");
+        uint32_t obsHeaderOpt = OC_OBSERVE_NO_OPTION;
+        uint8_t tempNumOpt = responseInfo->info.numOptions;
+        GetObserveHeaderOption(&obsHeaderOpt, responseInfo->info.options,
+                               &tempNumOpt);
+
         if(responseInfo->result == CA_EMPTY)
         {
             OIC_LOG(INFO, TAG, "Receiving A ACK/RESET for this token");
@@ -1253,6 +1262,25 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             response.result = CAResponseToOCStackResult(responseInfo->result);
             cbNode->callBack(cbNode->context,
                     cbNode->handle, &response);
+            FindAndDeleteClientCB(cbNode);
+        }
+        else if ((cbNode->method == OC_REST_OBSERVE || cbNode->method == OC_REST_OBSERVE_ALL)
+                && (responseInfo->result == CA_CONTENT)
+                && (obsHeaderOpt == OC_OBSERVE_NO_OPTION))
+        {
+            OCClientResponse response =
+                {.devAddr = {.adapter = OC_DEFAULT_ADAPTER}};
+            CopyEndpointToDevAddr(endPoint, &response.devAddr);
+            FixUpClientResponse(&response);
+            response.resourceUri = responseInfo->info.resourceUri;
+            memcpy(response.identity.id, responseInfo->info.identity.id,
+                                    sizeof (response.identity.id));
+            response.identity.id_length = responseInfo->info.identity.id_length;
+            response.result = OC_STACK_UNAUTHORIZED_REQ;
+
+            cbNode->callBack(cbNode->context,
+                             cbNode->handle,
+                             &response);
             FindAndDeleteClientCB(cbNode);
         }
         else
@@ -1296,12 +1324,13 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 #endif
                     else if (strcmp(cbNode->requestUri, OC_RSRVD_DEVICE_URI) == 0)
                     {
-                        type = PAYLOAD_TYPE_DEVICE;
+                        type = PAYLOAD_TYPE_REPRESENTATION;
                     }
                     else if (strcmp(cbNode->requestUri, OC_RSRVD_PLATFORM_URI) == 0)
                     {
-                        type = PAYLOAD_TYPE_PLATFORM;
+                        type = PAYLOAD_TYPE_REPRESENTATION;
                     }
+
 #ifdef ROUTING_GATEWAY
                     else if (strcmp(cbNode->requestUri, OC_RSRVD_GATEWAY_URI) == 0)
                     {
@@ -1310,10 +1339,10 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
 #endif
                     else if (strcmp(cbNode->requestUri, OC_RSRVD_RD_URI) == 0)
                     {
-                        type = PAYLOAD_TYPE_REPRESENTATION ;
+                        type = PAYLOAD_TYPE_REPRESENTATION;
                     }
 #ifdef TCP_ADAPTER
-                    else if (strcmp(cbNode->requestUri, KEEPALIVE_RESOURCE_URI) == 0)
+                    else if (strcmp(cbNode->requestUri, OC_RSRVD_KEEPALIVE_URI) == 0)
                     {
                         type = PAYLOAD_TYPE_REPRESENTATION;
                     }
@@ -1334,13 +1363,13 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                 {
                     if (cbNode->requestUri)
                     {
-                        if (strcmp(OC_RSRVD_PLATFORM_URI, cbNode->requestUri) == 0)
+                        if (0 == strcmp(OC_RSRVD_PLATFORM_URI, cbNode->requestUri))
                         {
-                            type = PAYLOAD_TYPE_PLATFORM;
+                            type = PAYLOAD_TYPE_REPRESENTATION;
                         }
-                        else if (strcmp(OC_RSRVD_DEVICE_URI, cbNode->requestUri) == 0)
+                        else if (0 == strcmp(OC_RSRVD_DEVICE_URI, cbNode->requestUri))
                         {
-                            type = PAYLOAD_TYPE_DEVICE;
+                            type = PAYLOAD_TYPE_REPRESENTATION;
                         }
                         if (type == PAYLOAD_TYPE_INVALID)
                         {
@@ -1374,7 +1403,7 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
             }
 
             response.numRcvdVendorSpecificHeaderOptions = 0;
-            if(responseInfo->info.numOptions > 0)
+            if((responseInfo->info.numOptions > 0) && (responseInfo->info.options != NULL))
             {
                 int start = 0;
                 //First option always with option ID is COAP_OPTION_OBSERVE if it is available.
@@ -1431,6 +1460,22 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     OCUpdateResourceInsWithResponse(cbNode->requestUri, &response);
                 }
 #endif
+                // set deviceId into OCClientResponse callback parameter
+                if (OC_REST_DISCOVER == cbNode->method)
+                {
+                    OCDiscoveryPayload *payload = (OCDiscoveryPayload*) response.payload;
+                    if (!payload)
+                    {
+                        OIC_LOG(INFO, TAG, "discovery payload is invalid");
+                        return;
+                    }
+
+                    OICStrcpy(response.devAddr.deviceId, sizeof(response.devAddr.deviceId),
+                              payload->sid);
+                    OIC_LOG_V(INFO, TAG, "Device ID of response : %s",
+                              response.devAddr.deviceId);
+                }
+
                 OCStackApplicationResult appFeedback = cbNode->callBack(cbNode->context,
                                                                         cbNode->handle,
                                                                         &response);
@@ -1953,7 +1998,7 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         return;
     }
     serverRequest.numRcvdVendorSpecificHeaderOptions = tempNum;
-    if (serverRequest.numRcvdVendorSpecificHeaderOptions)
+    if (serverRequest.numRcvdVendorSpecificHeaderOptions && requestInfo->info.options)
     {
         memcpy (&(serverRequest.rcvdVendorSpecificHeaderOptions), requestInfo->info.options,
             sizeof(CAHeaderOption_t)*tempNum);
@@ -1961,9 +2006,8 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
 
     requestResult = HandleStackRequests (&serverRequest);
 
-    // Send ACK to client as precursor to slow response
     if (requestResult == OC_STACK_SLOW_RESOURCE)
-    {
+    {   // Send ACK to client as precursor to slow response
         if (requestInfo->info.type == CA_MSG_CONFIRM)
         {
             SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_EMPTY,
@@ -2063,42 +2107,6 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         OCHandleRequests(endPoint, requestInfo);
     }
     OIC_LOG(INFO, TAG, "Exit HandleCARequests");
-}
-
-bool validatePlatformInfo(OCPlatformInfo info)
-{
-
-    if (!info.platformID)
-    {
-        OIC_LOG(ERROR, TAG, "No platform ID found.");
-        return false;
-    }
-
-    if (info.manufacturerName)
-    {
-        size_t lenManufacturerName = strlen(info.manufacturerName);
-
-        if(lenManufacturerName == 0 || lenManufacturerName > MAX_MANUFACTURER_NAME_LENGTH)
-        {
-            OIC_LOG(ERROR, TAG, "Manufacturer name fails length requirements.");
-            return false;
-        }
-    }
-    else
-    {
-        OIC_LOG(ERROR, TAG, "No manufacturer name present");
-        return false;
-    }
-
-    if (info.manufacturerUrl)
-    {
-        if(strlen(info.manufacturerUrl) > MAX_MANUFACTURER_URL_LENGTH)
-        {
-            OIC_LOG(ERROR, TAG, "Manufacturer url fails length requirements.");
-            return false;
-        }
-    }
-    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -2289,7 +2297,7 @@ OCStackResult OCStop()
     }
     else if (stackState != OC_STACK_INITIALIZED)
     {
-        OIC_LOG(ERROR, TAG, "Stack not initialized");
+        OIC_LOG(INFO, TAG, "Stack not initialized");
         return OC_STACK_ERROR;
     }
 
@@ -2322,8 +2330,6 @@ OCStackResult OCStop()
 
     // Free memory dynamically allocated for resources
     deleteAllResources();
-    DeleteDeviceInfo();
-    DeletePlatformInfo();
     CATerminate();
     TerminateScheduleResourceList();
     // Remove all observers
@@ -2705,6 +2711,7 @@ OCStackResult OCDoResource(OCDoHandle *handle,
         requestInfo.method = CA_DELETE;
         break;
     case OC_REST_DISCOVER:
+        // intentional fall through don't add break
 #ifdef WITH_PRESENCE
     case OC_REST_PRESENCE:
 #endif
@@ -2746,7 +2753,13 @@ OCStackResult OCDoResource(OCDoHandle *handle,
             result = OC_STACK_NO_MEMORY;
             goto exit;
         }
+        OIC_LOG(DEBUG, TAG, "devAddr is set as destination");
         *devAddr = *destination;
+    }
+
+    if (devAddr)
+    {
+        OIC_LOG_V(DEBUG, TAG, "DeviceID of devAddr : %s", devAddr->deviceId);
     }
 
     resHandle = GenerateInvocationHandle();
@@ -3227,61 +3240,34 @@ OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandle
     return OC_STACK_OK;
 }
 
-OCStackResult OCSetPlatformInfo(OCPlatformInfo platformInfo)
+OCTpsSchemeFlags OCGetSupportedEndpointTpsFlags()
 {
-    OIC_LOG(INFO, TAG, "Entering OCSetPlatformInfo");
-
-    if(myStackMode ==  OC_SERVER || myStackMode == OC_CLIENT_SERVER || myStackMode == OC_GATEWAY)
-    {
-        if (validatePlatformInfo(platformInfo))
-        {
-            return SavePlatformInfo(platformInfo);
-        }
-        else
-        {
-            return OC_STACK_INVALID_PARAM;
-        }
-    }
-    else
-    {
-        return OC_STACK_ERROR;
-    }
-}
-
-OCStackResult OCSetDeviceInfo(OCDeviceInfo deviceInfo)
-{
-    OIC_LOG(INFO, TAG, "Entering OCSetDeviceInfo");
-
-    if (!deviceInfo.deviceName || deviceInfo.deviceName[0] == '\0')
-    {
-        OIC_LOG(ERROR, TAG, "Null or empty device name.");
-        return OC_STACK_INVALID_PARAM;
-    }
-
-    if (deviceInfo.types)
-    {
-        OCStringLL *type =  deviceInfo.types;
-        OCResource *resource = findResource((OCResource *) deviceResource);
-        if (!resource)
-        {
-            return OC_STACK_INVALID_PARAM;
-        }
-
-        while (type)
-        {
-            OCBindResourceTypeToResource(deviceResource, type->value);
-            type = type->next;
-        }
-    }
-    return SaveDeviceInfo(deviceInfo);
+    return OCGetSupportedTpsFlags();
 }
 
 OCStackResult OCCreateResource(OCResourceHandle *handle,
         const char *resourceTypeName,
         const char *resourceInterfaceName,
         const char *uri, OCEntityHandler entityHandler,
-        void* callbackParam,
+        void *callbackParam,
         uint8_t resourceProperties)
+{
+    return OCCreateResourceWithEp(handle,
+                                  resourceTypeName,
+                                  resourceInterfaceName,
+                                  uri, entityHandler,
+                                  callbackParam,
+                                  resourceProperties,
+                                  OC_ALL);
+}
+
+OCStackResult OCCreateResourceWithEp(OCResourceHandle *handle,
+        const char *resourceTypeName,
+        const char *resourceInterfaceName,
+        const char *uri, OCEntityHandler entityHandler,
+        void *callbackParam,
+        uint8_t resourceProperties,
+        OCTpsSchemeFlags resourceTpsTypes)
 {
 
     OCResource *pointer = NULL;
@@ -3327,6 +3313,26 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
                ))
     {
         OIC_LOG(ERROR, TAG, "Invalid property");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    // Checking resourceTpsTypes param
+    OCTpsSchemeFlags validTps = OC_NO_TPS;
+    validTps = (OCTpsSchemeFlags)(validTps | OC_COAP | OC_COAPS);
+#ifdef TCP_ADAPTER
+    validTps = (OCTpsSchemeFlags)(validTps | OC_COAP_TCP | OC_COAPS_TCP);
+#endif
+#ifdef HTTP_ADAPTER
+    validTps = (OCTpsSchemeFlags)(validTps | OC_HTTP | OC_HTTP);
+#endif
+#ifdef EDR_ADAPTER
+    validTps = (OCTpsSchemeFlags)(validTps | OC_COAP_RFCOMM);
+#endif
+
+    if ((resourceTpsTypes < OC_COAP) || ((resourceTpsTypes != OC_ALL) &&
+                                         (resourceTpsTypes > validTps)))
+    {
+        OIC_LOG(ERROR, TAG, "Invalid TPS Types OC_ALL");
         return OC_STACK_INVALID_PARAM;
     }
 
@@ -3382,6 +3388,13 @@ OCStackResult OCCreateResource(OCResourceHandle *handle,
     if (result != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "Error adding resourceinterface");
+        goto exit;
+    }
+
+    result = BindTpsTypeToResource(pointer, resourceTpsTypes);
+    if (result != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "Error adding resource TPS types");
         goto exit;
     }
 
@@ -3710,6 +3723,37 @@ OCStackResult BindResourceInterfaceToResource(OCResource* resource,
         OICFree(str);
     }
 
+    return result;
+}
+
+OCStackResult BindTpsTypeToResource(OCResource* resource,
+                                    OCTpsSchemeFlags resourceTpsTypes)
+{
+    if (!resource)
+    {
+        OIC_LOG(ERROR, TAG, "Resource pointer is NULL!!!");
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    OCTpsSchemeFlags supportedTps = OC_NO_TPS;
+    OCStackResult result = OCGetSupportedEndpointFlags(resourceTpsTypes,
+                                                       &supportedTps);
+
+    if (result != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "Failed at get supported endpoint flags");
+        return result;
+    }
+
+    // If there isn`t any enabled flag, return error for notify to user.
+    if (OC_NO_TPS == supportedTps)
+    {
+        OIC_LOG_V(ERROR, TAG, "There isn`t any enabled flag on resource %s", resource->uri);
+        return OC_STACK_BAD_ENDPOINT;
+    }
+
+    OIC_LOG_V(INFO, TAG, "Binding %d TPS flags to %s", supportedTps, resource->uri);
+    resource->endpointType = supportedTps;
     return result;
 }
 
@@ -4184,7 +4228,11 @@ static OCDoHandle GenerateInvocationHandle()
     handle = (OCDoHandle) OICMalloc(sizeof(uint8_t[CA_MAX_TOKEN_LEN]));
     if (handle)
     {
-        OCFillRandomMem((uint8_t*)handle, sizeof(uint8_t[CA_MAX_TOKEN_LEN]));
+        if (!OCGetRandomBytes((uint8_t*)handle, sizeof(uint8_t[CA_MAX_TOKEN_LEN])))
+        {
+            OICFree(handle);
+            return NULL;
+        }
     }
 
     return handle;
@@ -4424,6 +4472,7 @@ void deleteResourceElements(OCResource *resource)
     OICFree(resource->uri);
     deleteResourceType(resource->rsrcType);
     deleteResourceInterface(resource->rsrcInterface);
+    OCDeleteResourceAttributes(resource->rsrcAttributes);
 }
 
 void deleteResourceType(OCResourceType *resourceType)
@@ -4451,6 +4500,25 @@ void deleteResourceInterface(OCResourceInterface *resourceInterface)
         OICFree(pointer->name);
         OICFree(pointer);
         pointer = next;
+    }
+}
+
+void OCDeleteResourceAttributes(OCAttribute *rsrcAttributes)
+{
+    OCAttribute *next = NULL;
+    for (OCAttribute *pointer = rsrcAttributes; pointer; pointer = next)
+    {
+        next = pointer->next;
+        if (pointer->attrName && 0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, pointer->attrName))
+        {
+            OCFreeOCStringLL((OCStringLL *)pointer->attrValue);
+        }
+        else
+        {
+            OICFree(pointer->attrValue);
+        }
+        OICFree(pointer->attrName);
+        OICFree(pointer);
     }
 }
 
@@ -4732,13 +4800,13 @@ const char* OCGetServerInstanceIDString(void)
     static bool generated = false;
     static char sidStr[UUID_STRING_SIZE];
 
-    if(generated)
+    if (generated)
     {
         return sidStr;
     }
 
     const OicUuid_t *sid = OCGetServerInstanceID();
-    if(OCConvertUuidToString(sid->id, sidStr) != RAND_UUID_OK)
+    if(sid && !OCConvertUuidToString(sid->id, sidStr))
     {
         OIC_LOG(FATAL, TAG, "Generate UUID String for Server Instance failed!");
         return NULL;
@@ -5112,6 +5180,21 @@ void OCDefaultConnectionStateChangedHandler(const CAEndpoint_t *info, bool isCon
     {
        g_connectionHandler(info, isConnected);
     }
+
+    /*
+     * If the client observes one or more resources over a reliable connection,
+     * then the CoAP server (or intermediary in the role of the CoAP server)
+     * MUST remove all entries associated with the client endpoint from the lists
+     * of observers when the connection is either closed or times out.
+     */
+    if (!isConnected)
+    {
+        OCDevAddr devAddr = { OC_DEFAULT_ADAPTER };
+        CopyEndpointToDevAddr(info, &devAddr);
+
+        // remove observer list with remote device address.
+        DeleteObserverUsingDevAddr(&devAddr);
+    }
 }
 
 void OCSetNetworkMonitorHandler(CAAdapterStateChangedCB adapterHandler,
@@ -5152,3 +5235,21 @@ OCStackResult OCSetDeviceId(const OCUUIdentity *deviceId)
     ret = SetDoxmDeviceID(&oicUuid);
     return ret;
 }
+
+OCStackResult OCGetDeviceOwnedState(bool *isOwned)
+{
+    bool isDeviceOwned = true;
+    OCStackResult ret = OC_STACK_ERROR;
+
+    ret = GetDoxmIsOwned(&isDeviceOwned);
+    if (OC_STACK_OK == ret)
+    {
+        *isOwned = isDeviceOwned;
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Device Owned State Get error");
+    }
+    return ret;
+}
+

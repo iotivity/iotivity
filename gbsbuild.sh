@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash -e
 
 spec=`ls tools/tizen/*.spec`
 version=`rpm --query --queryformat '%{version}\n' --specfile $spec`
@@ -55,39 +55,27 @@ cp -R $sourcedir/iotivity.pc.in $sourcedir/tmp
 
 cd $sourcedir/tmp
 
-withtcp=0
-withcloud=0
-withproxy=0
-withmq=OFF
-rdmode=CLIENT
 secured=0
+gbscommand="gbs build -A armv7l "
+
 for ARGUMENT_VALUE in $*
 do
    echo $ARGUMENT_VALUE
-   if [ "WITH_TCP" = $ARGUMENT_VALUE ];then
-       withtcp=1
-   fi
+   if [[ "$ARGUMENT_VALUE" = *"="* ]]; then
+      optionname=$(echo $ARGUMENT_VALUE | cut -f1 -d=)
+      optionvalue=$(echo $ARGUMENT_VALUE | cut -f2 -d=)
+      echo -- "# $optionname $optionvalue"
+      gbscommand=${gbscommand}" --define '$optionname $optionvalue'"
 
-   if [ "WITH_CLOUD" = $ARGUMENT_VALUE ];then
-       withcloud=1
-   fi
-
-   if [ "WITH_PROXY" = $ARGUMENT_VALUE ];then
-       withproxy=1
-   fi
-
-   if [ "WITH_MQ" = $ARGUMENT_VALUE ];then
-       withmq=PUB,SUB,BROKER
-   fi
-
-   if [ "RD_MODE" = $ARGUMENT_VALUE ];then
-       rdmode=CLIENT,SERVER
-   fi
-
-   if [ "SECURED" = $ARGUMENT_VALUE ];then
-       secured=1
+      if [ "SECURED" = "$optionname" ]; then
+         secured=$optionvalue
+      fi
+   else
+      echo "'$ARGUMENT_VALUE' does not contain '='";
    fi
 done
+
+gbscommand="${gbscommand} -B ~/GBS-ROOT-OIC --include-all --repository ./"
 
 if [ $secured -eq 1 ];then
   echo `pwd`
@@ -108,7 +96,6 @@ if [ ! -d .git ]; then
 fi
 
 echo "Calling core gbs build command"
-gbscommand="gbs build -A armv7l --define 'WITH_TCP $withtcp' --define 'WITH_CLOUD $withcloud' --define 'WITH_PROXY $withproxy' --define 'WITH_MQ $withmq' --define 'RD_MODE $rdmode' --define 'SECURED $secured' -B ~/GBS-ROOT-OIC --include-all --repository ./"
 echo $gbscommand
 if eval $gbscommand; then
     echo "Build is successful"

@@ -135,11 +135,6 @@ OCEntityHandlerResult NSEntityHandlerMessageCb(OCEntityHandlerFlag flag,
             NSPushQueue(SUBSCRIPTION_SCHEDULER, TASK_RECV_SUBSCRIPTION,
                     NSCopyOCEntityHandlerRequest(entityHandlerRequest));
             ehResult = OC_EH_OK;
-
-            if (NSGetPolicy() == NS_POLICY_CONSUMER)
-            {
-                return ehResult;
-            }
         }
         else if (ocObAction == OC_OBSERVE_DEREGISTER)
         {

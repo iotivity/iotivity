@@ -28,7 +28,6 @@ lib_env = env.Clone()
 SConscript('#service/third_party_libs.scons', 'lib_env')
 
 sample_env = lib_env.Clone()
-rd_mode = lib_env.get('RD_MODE')
 
 sample_env.AppendUnique(CXXFLAGS = ['-Wall', '-std=c++0x'])
 sample_env.AppendUnique(LIBS = [
@@ -47,9 +46,6 @@ if env.get('SECURED') == '1':
 
 if 'rt' in sample_env.get('LIBS'):
     sample_env.Append(LIBS = ['rt'])
-
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-	sample_env.AppendUnique(LIBS = ['resource_directory'])
 
 ######################################################################
 # ##### Client #####

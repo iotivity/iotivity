@@ -23,9 +23,8 @@ package org.iotivity.service.ns.common;
 import android.util.Log;
 
 /**
-  * @class   SyncInfo
-  * @brief   This class provides implementation of Notification SyncInfo object.
-  */
+ * Implementation of Notification SyncInfo object.
+ */
 public class SyncInfo
 {
     private static final String LOG_TAG = "NotificationService_SyncInfo";

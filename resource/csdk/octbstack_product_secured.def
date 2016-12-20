@@ -3,6 +3,8 @@
 
 CreateJustWorksOwnerTransferPayload
 CreateJustWorksSelectOxmPayload
+CreateMVJustWorksSelectOxmPayload
+CreateConMCertificateBasedSelectOxmPayload
 CreatePinBasedSelectOxmPayload
 CreatePinBasedOwnerTransferPayload
 CreateSecureSessionJustWorksCallback
@@ -30,6 +32,7 @@ OCProvisionPairwiseDevices
 OCRemoveDevice
 OCRemoveDeviceWithUuid
 OCResetDevice
+OCResetSVRDB
 OCSetOwnerTransferCallbackData
 OCUnlinkDevices
 OCSetOxmAllowStatus
@@ -37,6 +40,12 @@ OCSetOxmAllowStatus
 SetGeneratePinCB
 SetInputPinCB
 SetRandomPinPolicy
+SetDisplayNumCB
+UnsetDisplayNumCB
+SetUserConfirmCB
+UnsetUserConfirmCB
+SetVerifyOption
+VerifyOwnershipTransfer
 
 registerTimer
 unregisterTimer

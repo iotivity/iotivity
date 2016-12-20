@@ -142,6 +142,10 @@ namespace OC
         OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
                     FindPlatformCallback platformInfoHandler, QualityOfService QoS);
 
+        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag, const std::string& value);
+        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag, const std::vector<std::string>& value);
+        OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag, std::string& value);
+
         /**
         * This API registers a resource with the server
         * @note This API applies to server side only.
@@ -265,8 +269,11 @@ namespace OC
 
         OCStackResult setDeviceId(const OCUUIdentity *myUuid);
 
+        OCStackResult stop();
+        OCStackResult start();
     private:
         PlatformConfig m_cfg;
+        OCMode m_modeType;
 
     private:
         std::unique_ptr<WrapperFactory> m_WrapperInstance;

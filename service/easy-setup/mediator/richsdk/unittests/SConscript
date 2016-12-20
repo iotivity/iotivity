@@ -40,11 +40,10 @@ SConscript(env.get('SRC_DIR') + '/service/third_party_libs.scons', 'lib_env')
 #unit test setting
 ######################################################################
 src_dir = lib_env.get('SRC_DIR')
-gtest_dir = src_dir + '/extlibs/gtest/gtest-1.7.0'
+gtest_dir = src_dir + '/extlibs/gtest/googletest-release-1.7.0'
 
 easysetup_test_env = lib_env.Clone()
 target_os = env.get('TARGET_OS')
-rd_mode = env.get('RD_MODE')
 
 ######################################################################
 # Build flags
@@ -74,14 +73,6 @@ easysetup_test_env.AppendUnique(CPPPATH = [ src_dir + '/resource/include',
 if env.get('SECURED') == '1':
 	if env.get('WITH_TCP') == True:
 		easysetup_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
-
-if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
-    if 'CLIENT' in rd_mode:
-        easysetup_test_env.AppendUnique(CPPDEFINES = ['RD_CLIENT'])
-    if 'SERVER' in rd_mode:
-        easysetup_test_env.AppendUnique(CPPDEFINES = ['RD_SERVER'])
-    easysetup_test_env.AppendUnique(LIBS = ['resource_directory'])
-
 ######################################################################
 # Build Test
 ######################################################################
@@ -94,7 +85,11 @@ easysetup_mediator_test = easysetup_mediator_test_env.Program('easysetup_mediato
 Alias("easysetup_mediator_test", easysetup_mediator_test)
 env.AppendTarget('easysetup_mediator_test')
 
+# TODO: fix this test for linux on supported configurations
 if env.get('TEST') == '1':
-    if target_os == 'linux':
-            from tools.scons.RunTest import *
-            run_test(easysetup_mediator_test_env, '', 'service/easy-setup/mediator/richsdk/unittests/easysetup_mediator_test')
+    if target_os in []:
+        from tools.scons.RunTest import run_test
+        run_test(easysetup_mediator_test_env,
+#                'service_easy-setup_mediator_richsdk_unittests_easysetup_mediator_test.memcheck',
+                 '',
+                 'service/easy-setup/mediator/richsdk/unittests/easysetup_mediator_test')

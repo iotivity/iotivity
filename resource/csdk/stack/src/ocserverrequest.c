@@ -97,11 +97,6 @@ static OCStackResult AddServerResponse (OCServerResponse ** response, OCRequestH
     return OC_STACK_OK;
 
 exit:
-    if (serverResponse)
-    {
-        OICFree(serverResponse);
-        serverResponse = NULL;
-    }
     *response = NULL;
     return OC_STACK_NO_MEMORY;
 }
@@ -770,7 +765,7 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
             goto exit;
         }
 
-        OCRepPayload *newPayload = OCRepPayloadClone((OCRepPayload *)ehResponse->payload);
+        OCRepPayload *newPayload = OCRepPayloadBatchClone((OCRepPayload *)ehResponse->payload);
 
         if(!serverResponse->payload)
         {
@@ -788,6 +783,7 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
         {
             OIC_LOG(INFO, TAG, "This is the last response fragment");
             ehResponse->payload = serverResponse->payload;
+            ehResponse->ehResult = OC_EH_OK;
             stackRet = HandleSingleResponse(ehResponse);
             //Delete the request and response
             FindAndDeleteServerRequest(serverRequest);
@@ -800,5 +796,6 @@ OCStackResult HandleAggregateResponse(OCEntityHandlerResponse * ehResponse)
         }
     }
 exit:
+
     return stackRet;
 }

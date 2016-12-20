@@ -52,7 +52,6 @@ else:
 	liboctbstack_env.PrependUnique(CPPPATH = ['connectivity/lib/libcoap-4.1.1/include'])
 
 liboctbstack_env.PrependUnique(CPPPATH = [
-		'../../extlibs/cjson/',
 		'../../extlibs/timer/',
 		'logger/include',
 		'stack/include',
@@ -120,7 +119,7 @@ if target_os in ['windows', 'msys_nt']:
 	else:
 		liboctbstack_env.Textfile(target = 'octbstack.def', source = [File('octbstack_product.def')])
 
-	liboctbstack_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi', 'bcrypt'])
+	liboctbstack_env.AppendUnique(LIBS = ['ws2_32', 'advapi32', 'iphlpapi', 'bcrypt', 'crypt32'])
 else:
 	liboctbstack_env.AppendUnique(LIBS = ['m'])
 
@@ -165,7 +164,6 @@ if 'CLIENT' in rd_mode or 'SERVER' in rd_mode:
 ######################################################################
 OCTBSTACK_SRC = 'stack/src/'
 liboctbstack_src = [
-	'../../extlibs/cjson/cJSON.c',
 	'../../extlibs/timer/timer.c',
 	OCTBSTACK_SRC + 'ocstack.c',
 	OCTBSTACK_SRC + 'ocpayload.c',
@@ -185,7 +183,7 @@ if with_tcp == True:
 
 if 'SERVER' in rd_mode:
     liboctbstack_src.append(OCTBSTACK_SRC + 'oicresourcedirectory.c')
-    if target_os not in ['tizen']:
+    if target_os not in ['linux', 'tizen']:
         liboctbstack_src.append('#extlibs/sqlite3/sqlite3.c')
 
 if target_os in ['linux']:

@@ -68,7 +68,7 @@ RCSResourceContainer *g_pResourceContainer = nullptr;
 
 void getCurrentPath(std::string *pPath)
 {
-    char buffer[MAX_PATH];
+    char buffer[MAX_PATH] = {0,};
 
     if (!pPath->empty())
     {
@@ -95,7 +95,7 @@ void getCurrentPath(std::string *pPath)
 
 int processUserInput(int min, int max)
 {
-    int input;
+    int input = 0;
 
     std::cin >> input;
 

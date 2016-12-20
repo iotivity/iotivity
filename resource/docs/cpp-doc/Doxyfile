@@ -661,12 +661,13 @@ WARN_LOGFILE           = ./doxygen.log
 
 INPUT                  = . \
                          ../../include/OCApi.h \
+                         ../../include/OCException.h \
                          ../../include/OCPlatform.h \
                          ../../include/OCRepresentation.h \
                          ../../include/OCResourceRequest.h \
                          ../../include/OCResourceResponse.h \
                          ../../include/OCResource.h \
-                         ../../include/OCProvisioningManager.h \
+                         ../../include/OCProvisioningManager.hpp \
                          ../../csdk/stack/include/octypes.h \
                          ../../csdk/stack/include/ocstackconfig.h \
                          guides \

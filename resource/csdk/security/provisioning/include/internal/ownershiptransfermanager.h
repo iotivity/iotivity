@@ -36,6 +36,21 @@ extern "C" {
 typedef struct OTMCallbackData OTMCallbackData_t;
 typedef struct OTMContext OTMContext_t;
 
+
+typedef enum OxmAllowTableIdx {
+    OXM_IDX_JUST_WORKS = 0,
+    OXM_IDX_MV_JUST_WORKS,
+#ifdef MULTIPLE_OWNER
+    OXM_IDX_PRECONFIG_PIN,
+#endif
+    OXM_IDX_RANDOM_DEVICE_PIN,
+    OXM_IDX_MANUFACTURER_CERTIFICATE,
+    OXM_IDX_CON_MFG_CERT,
+    OXM_IDX_DECENTRALIZED_PUBLIC_KEY,
+    OXM_IDX_COUNT,
+    OXM_IDX_UNKNOWN
+}OxmAllowTableIdx_t;
+
 /**
  * Do ownership transfer for the unowned devices.
  *

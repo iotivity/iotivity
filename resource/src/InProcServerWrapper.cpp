@@ -38,6 +38,9 @@
 #include <oic_malloc.h>
 #include <OCPlatform.h>
 #include <OCUtilities.h>
+#include "logger.h"
+
+#define TAG "OIC_SERVER_WRAPPER"
 
 using namespace std;
 using namespace OC;
@@ -254,19 +257,27 @@ namespace OC
 {
     InProcServerWrapper::InProcServerWrapper(
         std::weak_ptr<std::recursive_mutex> csdkLock, PlatformConfig cfg)
-     : m_csdkLock(csdkLock)
+     : m_threadRun(false), m_csdkLock(csdkLock),
+       m_cfg { cfg }
     {
+        start();
+    }
+
+    OCStackResult InProcServerWrapper::start()
+    {
+        OIC_LOG(INFO, TAG, "start");
+
         OCMode initType;
 
-        if(cfg.mode == ModeType::Server)
+        if(m_cfg.mode == ModeType::Server)
         {
             initType = OC_SERVER;
         }
-        else if (cfg.mode == ModeType::Both)
+        else if (m_cfg.mode == ModeType::Both)
         {
             initType = OC_CLIENT_SERVER;
         }
-        else if (cfg.mode == ModeType::Gateway)
+        else if (m_cfg.mode == ModeType::Gateway)
         {
             initType = OC_GATEWAY;
         }
@@ -277,9 +288,9 @@ namespace OC
         }
 
         OCTransportFlags serverFlags =
-                            static_cast<OCTransportFlags>(cfg.serverConnectivity & CT_MASK_FLAGS);
+                            static_cast<OCTransportFlags>(m_cfg.serverConnectivity & CT_MASK_FLAGS);
         OCTransportFlags clientFlags =
-                            static_cast<OCTransportFlags>(cfg.clientConnectivity & CT_MASK_FLAGS);
+                            static_cast<OCTransportFlags>(m_cfg.clientConnectivity & CT_MASK_FLAGS);
         OCStackResult result = OCInit1(initType, serverFlags, clientFlags);
 
         if(OC_STACK_OK != result)
@@ -287,8 +298,32 @@ namespace OC
             throw InitializeException(OC::InitException::STACK_INIT_ERROR, result);
         }
 
-        m_threadRun = true;
-        m_processThread = std::thread(&InProcServerWrapper::processFunc, this);
+        if (false == m_threadRun)
+        {
+            m_threadRun = true;
+            m_processThread = std::thread(&InProcServerWrapper::processFunc, this);
+        }
+        return OC_STACK_OK;
+    }
+
+    OCStackResult InProcServerWrapper::stop()
+    {
+        OIC_LOG(INFO, TAG, "stop");
+
+        if(m_processThread.joinable())
+        {
+            m_threadRun = false;
+            m_processThread.join();
+        }
+
+        OCStackResult res = OCStop();
+
+        if (OC_STACK_OK != res)
+        {
+           throw InitializeException(OC::InitException::STACK_TERMINATE_ERROR, res);
+        }
+
+        return OC_STACK_OK;
     }
 
     void InProcServerWrapper::processFunc()
@@ -333,6 +368,32 @@ namespace OC
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
             result = OCSetPlatformInfo(platformInfo);
+        }
+        return result;
+    }
+
+    OCStackResult InProcServerWrapper::setPropertyValue(OCPayloadType type, const std::string& propName,
+        const std::string& propValue)
+    {
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result = OC_STACK_ERROR;
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCSetPropertyValue(type, propName.c_str(), (void *)propValue.c_str());
+        }
+        return result;
+    }
+
+    OCStackResult InProcServerWrapper::getPropertyValue(OCPayloadType type, const std::string& propName,
+        std::string& propValue)
+    {
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result = OC_STACK_ERROR;
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCGetPropertyValue(type, propName.c_str(), (void **)propValue.c_str());
         }
         return result;
     }
@@ -600,12 +661,13 @@ namespace OC
 
     InProcServerWrapper::~InProcServerWrapper()
     {
-        if(m_processThread.joinable())
+        try
         {
-            m_threadRun = false;
-            m_processThread.join();
+            stop();
         }
-
-        OCStop();
+        catch (InitializeException &e)
+        {
+            oclog() << "Exception in stop"<< e.what() << std::flush;
+        }
     }
 }

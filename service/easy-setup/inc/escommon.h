@@ -30,6 +30,12 @@ extern "C"
 #endif
 
 // Defines
+#define OC_RSRVD_ES_RES_TYPE_COL          "oic.wk.col"
+#define OC_RSRVD_ES_INTERFACE             "if"
+#define OC_RSRVD_ES_RES_TYPE              "rt"
+
+
+
 #define OIC_STRING_MAX_VALUE    64
 #define MAX_WEBLINKLEN          3
 #define NUM_WIFIMODE            5
@@ -47,6 +53,8 @@ extern "C"
 #define OC_RSRVD_ES_AUTHTYPE               "wat"
 #define OC_RSRVD_ES_ENCTYPE                "wet"
 #define OC_RSRVD_ES_AUTHCODE               "ac"
+#define OC_RSRVD_ES_ACCESSTOKEN            "at"
+#define OC_RSRVD_ES_ACCESSTOKEN_TYPE       "att"
 #define OC_RSRVD_ES_AUTHPROVIDER           "apn"
 #define OC_RSRVD_ES_CISERVER               "cis"
 #define OC_RSRVD_ES_SERVERID               "sid"
@@ -120,6 +128,16 @@ typedef enum
 } WIFI_ENCTYPE;
 
 /**
+ * @brief OAuth Access Token Types. "bearer" and "mac" types are supported.
+ */
+typedef enum
+{
+    NONE_OAUTH_TOKENTYPE = 0,
+    OAUTH_TOKENTYPE_BEARER,
+    OAUTH_TOKENTYPE_MAC
+} OAUTH_TOKENTYPE;
+
+/**
  * @brief A result of Easy Setup
  */
 typedef enum
@@ -128,6 +146,11 @@ typedef enum
      * Provisioning succeeds.
      */
     ES_OK = 0,
+
+    /**
+     * Secure resource is discovered.
+     */
+    ES_SECURE_RESOURCE_IS_DISCOVERED = 1,
 
     /**
      * Enrollee discovery fails in cloud provisioning
@@ -168,6 +191,16 @@ typedef enum
      * Or any response for the provisioning request is not arrived at Mediator
      */
     ES_CERT_PROVISIONING_FAILURE,
+
+    /**
+     * MOT method selection is failed
+     */
+    ES_MOT_METHOD_SELECTION_FAILURE,
+
+    /**
+     * A provisioning of Pre-configured pin number for MOT is failed
+     */
+    ES_PRE_CONFIG_PIN_PROVISIONING_FAILURE,
 
     /**
      * Provisioning fails for some reason.

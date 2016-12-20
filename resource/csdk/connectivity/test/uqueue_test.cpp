@@ -22,6 +22,8 @@
 
 #include "uqueue.h"
 
+#include "oic_malloc.h"
+
 class UQueueF : public testing::Test {
 public:
     UQueueF() :
@@ -47,7 +49,7 @@ protected:
 
 u_queue_message_t *CreateQueueMessage(void *data, uint32_t size)
 {
-    u_queue_message_t *message = (u_queue_message_t *) malloc(sizeof(u_queue_message_t));
+    u_queue_message_t *message = (u_queue_message_t *) OICMalloc(sizeof(u_queue_message_t));
     if (NULL == message)
     {
         return NULL;

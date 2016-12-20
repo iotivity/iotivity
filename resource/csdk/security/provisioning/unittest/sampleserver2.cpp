@@ -345,7 +345,7 @@ OCEntityHandlerResult ProcessPostRequest (OCEntityHandlerRequest *ehRequest,
                 gLedInstance[gCurrLedInstance].state = 0;
                 gLedInstance[gCurrLedInstance].power = 0;
                 gCurrLedInstance++;
-                strncpy ((char *)response->resourceUri, newLedUri, MAX_URI_LENGTH);
+                strncpy ((char *)response->resourceUri, newLedUri, sizeof(response->resourceUri));
                 ehResult = OC_EH_RESOURCE_CREATED;
             }
         }

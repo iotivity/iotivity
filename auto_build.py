@@ -53,6 +53,8 @@ def build_all(flag, extra_option_str):
         build_linux_unsecured_with_mq(flag, extra_option_str)
         build_linux_unsecured_with_tcp(flag, extra_option_str)
         build_linux_secured_with_tcp(flag, extra_option_str)
+        build_linux_unsecured_with_java(flag, extra_option_str)
+        build_linux_secured_with_java(flag, extra_option_str)
         build_simulator(flag, extra_option_str)
 
         build_android(flag, extra_option_str)
@@ -83,6 +85,25 @@ def build_linux_secured_with_tcp(flag, extra_option_str):
                         'WITH_TCP': 1,
                         'WITH_CLOUD':1,
                         'SECURED':1,
+                    }
+    call_scons(build_options, extra_option_str)
+
+def build_linux_unsecured_with_java(flag, extra_option_str):
+    print ("*********** Build for linux with Java support ************")
+    build_options = {
+                        'RELEASE':flag,
+                        'BUILD_JAVA': 1,
+                        'TARGET_TRANSPORT': 'IP',
+                    }
+    call_scons(build_options, extra_option_str)
+
+def build_linux_secured_with_java(flag, extra_option_str):
+    print ("*********** Build for linux with Java support and secured ************")
+    build_options = {
+                        'RELEASE':flag,
+                        'BUILD_JAVA': 1,
+                        'TARGET_TRANSPORT': 'IP',
+                        'SECURED': 1,
                     }
     call_scons(build_options, extra_option_str)
 
@@ -469,21 +490,21 @@ def unit_tests():
     build_options = {
                         'RELEASE':'false',
                     }
-    extra_option_str = "resource -c"
-    call_scons(build_options, extra_option_str)
-
-    build_options = {
-                        'LOGGING':'false',
-                        'RELEASE':'false',
-                    }
-    extra_option_str = "resource"
+    extra_option_str = "-c ."
     call_scons(build_options, extra_option_str)
 
     build_options = {
                         'TEST':1,
                         'RELEASE':'false',
                     }
-    extra_option_str = "resource"
+    extra_option_str = ""
+    call_scons(build_options, extra_option_str)
+
+    build_options = {
+                        'TEST':1,
+                        'SECURED':1,
+                        'RELEASE':'false',
+                    }
     call_scons(build_options, extra_option_str)
 
     print ("*********** Unit test Stop *************")
@@ -554,6 +575,14 @@ elif arg_num == 2:
     elif str(sys.argv[1]) == "linux_secured_with_tcp":
         build_linux_secured_with_tcp("false", "")
         build_linux_secured_with_tcp("true", "")
+
+    elif str(sys.argv[1]) == "linux_unsecured_with_java":
+        build_linux_unsecured_with_java("false", "")
+        build_linux_unsecured_with_java("true", "")
+
+    elif str(sys.argv[1]) == "linux_secured_with_java":
+        build_linux_secured_with_java("false", "")
+        build_linux_secured_with_java("true", "")
 
     elif str(sys.argv[1]) == "android":
         build_android("true", "")
