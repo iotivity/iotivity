@@ -66,7 +66,7 @@ if target_os != 'tizen':
 
 # Apply ocf patch on git revision
 if os.path.exists('.git/HEAD'):
-    cmd = 'git checkout development && git reset --hard ' + mbedtls_revision + ' && git apply --whitespace=fix ../ocf.patch'
+    cmd = 'git checkout development && git reset --hard ' + mbedtls_revision + ' && git clean -f && git apply --whitespace=fix ../ocf.patch'
     os.system(cmd)
 else:
     print 'mbedtls: Assume ocf.patch (TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256) was applied in %s' % mbedtls_dir
