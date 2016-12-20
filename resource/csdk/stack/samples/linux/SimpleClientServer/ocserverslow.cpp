@@ -149,7 +149,7 @@ void ProcessGetPutRequest (OCEntityHandlerRequest *ehRequest)
         OIC_LOG(ERROR, TAG, "Error sending response");
     }
 
-    free(getResp);
+    OCRepPayloadDestroy(getResp);
 }
 
 OCEntityHandlerRequest *CopyRequest(OCEntityHandlerRequest *entityHandlerRequest)
