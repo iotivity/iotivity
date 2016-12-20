@@ -636,7 +636,7 @@ struct OicSecDpairing
     OicUuid_t           rownerID;          // 2:R:S:Y:oic.uuid
 };
 
-#define MAX_VERSION_LEN 16 // Security Version length. i.e., 00.00.000 + reserved space
+#define OIC_SEC_MAX_VER_LEN 16 // Security Version length. i.e., 00.00.000 + reserved space
 
 /**
  * @brief   security version data type
@@ -649,7 +649,7 @@ typedef struct OicSecVer OicSecVer_t;
 struct OicSecVer
 {
     // <Attribute ID>:<Read/Write>:<Multiple/Single>:<Mandatory?>:<Type>
-    char              secv[MAX_VERSION_LEN];          // 0:R:S:Y:String
+    char              secv[OIC_SEC_MAX_VER_LEN];          // 0:R:S:Y:String
     OicUuid_t       deviceID;     // 1:R:S:Y:oic.uuid
 };
 

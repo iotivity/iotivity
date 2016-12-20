@@ -182,7 +182,7 @@ OCStackResult AddDevice(OCProvisionDev_t **ppDevicesList, OCDevAddr* endpoint,
         ptr->next = NULL;
         ptr->connType = connType;
         ptr->devStatus = DEV_STATUS_ON; //AddDevice is called when discovery(=alive)
-        OICStrcpy(ptr->secVer, MAX_VERSION_LEN, DEFAULT_SEC_VERSION); // version initialization
+        OICStrcpy(ptr->secVer, OIC_SEC_MAX_VER_LEN, DEFAULT_SEC_VERSION); // version initialization
         ptr->handle = NULL;
 
         LL_PREPEND(*ppDevicesList, ptr);
@@ -280,7 +280,7 @@ OCStackResult UpdateSecVersionOfDevice(OCProvisionDev_t **ppDevicesList, const c
         return OC_STACK_ERROR;
     }
 
-    OICStrcpy(ptr->secVer, MAX_VERSION_LEN, secVer);
+    OICStrcpy(ptr->secVer, OIC_SEC_MAX_VER_LEN, secVer);
 
     return OC_STACK_OK;
 }
@@ -345,11 +345,11 @@ OCProvisionDev_t* PMCloneOCProvisionDev(const OCProvisionDev_t* src)
 
     if (0 == strlen(src->secVer))
     {
-        OICStrcpy(newDev->secVer, MAX_VERSION_LEN, DEFAULT_SEC_VERSION);
+        OICStrcpy(newDev->secVer, OIC_SEC_MAX_VER_LEN, DEFAULT_SEC_VERSION);
     }
     else
     {
-        OICStrcpy(newDev->secVer, MAX_VERSION_LEN, src->secVer);
+        OICStrcpy(newDev->secVer, OIC_SEC_MAX_VER_LEN, src->secVer);
     }
 
     newDev->securePort = src->securePort;
