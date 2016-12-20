@@ -70,7 +70,7 @@ typedef struct OCProvisionDev
 #ifdef WITH_TCP
     uint16_t        tcpPort;         /**< tcp port **/
 #endif
-    char             secVer[MAX_VERSION_LEN];         /**< security version **/
+    char             secVer[OIC_SEC_MAX_VER_LEN];         /**< security version **/
     DeviceStatus    devStatus;       /**< status of device **/
     OCDoHandle    handle;
     struct OCProvisionDev  *next;    /**< Next pointer. **/
