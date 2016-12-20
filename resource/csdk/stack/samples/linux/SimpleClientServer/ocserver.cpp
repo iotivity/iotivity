@@ -524,6 +524,7 @@ OCDeviceEntityHandlerCb (OCEntityHandlerFlag flag,
         }
     }
 
+    OCPayloadDestroy(response.payload);
     return ehResult;
 }
 

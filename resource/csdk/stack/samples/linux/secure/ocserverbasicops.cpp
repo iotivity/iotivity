@@ -301,7 +301,7 @@ OCEntityHandlerCb (OCEntityHandlerFlag flag,
         }
     }
 
-    OCPayloadDestroy(response.payload);
+    OCRepPayloadDestroy(payload);
     return ehResult;
 }
 
