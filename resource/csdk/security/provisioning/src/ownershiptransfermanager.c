@@ -630,19 +630,29 @@ void DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
                             newDevDoxm->owned = false;
                             otmCtx->attemptCnt++;
 
-                            if(WRONG_PIN_MAX_ATTEMP > otmCtx->attemptCnt)
+                            // In order to re-start ownership transfer, device information should be deleted from PDM.
+                            res = PDMDeleteDevice(&(otmCtx->selectedDeviceInfo->doxm->deviceID));
+                            if (OC_STACK_OK != res)
                             {
-                                res = StartOwnershipTransfer(otmCtx, otmCtx->selectedDeviceInfo);
-                                if(OC_STACK_OK != res)
-                                {
-                                    SetResult(otmCtx, res);
-                                    OIC_LOG(ERROR, TAG, "Failed to Re-StartOwnershipTransfer");
-                                }
+                                SetResult(otmCtx, res);
+                                OIC_LOG(ERROR, TAG, "Failed to PDMDeleteDevice");
                             }
                             else
                             {
-                                OIC_LOG(ERROR, TAG, "User has exceeded the number of authentication attempts.");
-                                SetResult(otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
+                                if(WRONG_PIN_MAX_ATTEMP > otmCtx->attemptCnt)
+                                {
+                                    res = StartOwnershipTransfer(otmCtx, otmCtx->selectedDeviceInfo);
+                                    if(OC_STACK_OK != res)
+                                    {
+                                        SetResult(otmCtx, res);
+                                        OIC_LOG(ERROR, TAG, "Failed to Re-StartOwnershipTransfer");
+                                    }
+                                }
+                                else
+                                {
+                                    OIC_LOG(ERROR, TAG, "User has exceeded the number of authentication attempts.");
+                                    SetResult(otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
+                                }
                             }
                         }
                         else

@@ -995,6 +995,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
     OCEntityHandlerResult ehRet = OC_EH_ERROR;
     OicUuid_t emptyOwner = {.id = {0} };
     static uint16_t previousMsgId = 0;
+    bool isDuplicatedMsg = false;
 
     /*
      * Convert CBOR Doxm data into binary. This will also validate
@@ -1010,6 +1011,17 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
         OCStackResult res = CBORPayloadToDoxmBin(payload, size, &newDoxm, &roParsed);
         if (newDoxm && OC_STACK_OK == res)
         {
+            /*
+             * message ID is supported for CoAP over UDP only according to RFC 7252
+             * So we should check message ID to prevent duplicate request handling in case of OC_ADAPTER_IP.
+             * In case of other transport adapter, duplicate message check is not required.
+             */
+            if (OC_ADAPTER_IP == ehRequest->devAddr.adapter &&
+                 previousMsgId == ehRequest->messageID)
+            {
+                isDuplicatedMsg = true;
+            }
+
             // Check request on RO property
             if (true == roParsed)
             {
@@ -1168,7 +1180,7 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
 
                         //In case of Mutual Verified Just-Works, verify mutualVerifNum
                         if (OIC_MV_JUST_WORKS == newDoxm->oxmSel && false == newDoxm->owned &&
-                                        previousMsgId != ehRequest->messageID)
+                            false == isDuplicatedMsg)
                         {
                             uint8_t preMutualVerifNum[OWNER_PSK_LENGTH_128] = {0};
                             uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN] = {0};
@@ -1250,11 +1262,10 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                                                     ehRequest->devAddr.adapter);
                         VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
 
-                        char ranPin[OXM_RANDOM_PIN_MAX_SIZE + 1] = {0};
-                         //TODO ehRequest->messageID for copa over TCP always is null. Find reason why.
-                        if(ehRequest->devAddr.adapter == OC_ADAPTER_IP && previousMsgId != ehRequest->messageID)
+                        if (!isDuplicatedMsg)
                         {
-                            if(OC_STACK_OK == GeneratePin(ranPin, sizeof(ranPin)))
+                            char ranPin[OXM_RANDOM_PIN_MAX_SIZE + 1] = {0};
+                            if (OC_STACK_OK == GeneratePin(ranPin, sizeof(ranPin)))
                             {
                                 //Set the device id to derive temporal PSK
                                 SetUuidForPinBasedOxm(&gDoxm->deviceID);
@@ -1273,29 +1284,6 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                                 OIC_LOG(ERROR, TAG, "Failed to generate random PIN");
                                 ehRet = OC_EH_ERROR;
                             }
-                        }
-                        else if(OC_ADAPTER_TCP == ehRequest->devAddr.adapter)
-                        {
-                            if(OC_STACK_OK == GeneratePin(ranPin, sizeof(ranPin)))
-                            {
-                                //Set the device id to derive temporal PSK
-                                SetUuidForPinBasedOxm(&gDoxm->deviceID);
-
-                                /**
-                                 * Since PSK will be used directly by DTLS layer while PIN based ownership transfer,
-                                 * Credential should not be saved into SVR.
-                                 * For this reason, use a temporary get_psk_info callback to random PIN OxM.
-                                 */
-                                caRes = CAregisterPskCredentialsHandler(GetDtlsPskForRandomPinOxm);
-                                VERIFY_SUCCESS(TAG, caRes == CA_STATUS_OK, ERROR);
-                                ehRet = OC_EH_OK;
-                            }
-                            else
-                            {
-                                OIC_LOG(ERROR, TAG, "Failed to generate random PIN");
-                                ehRet = OC_EH_ERROR;
-                            }
-
                         }
 #endif // __WITH_DTLS__ or __WITH_TLS__
                     }
@@ -1343,8 +1331,8 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
 
                     //In case of Confirm Manufacturer Cert, get user confirmation
                     if (OIC_CON_MFG_CERT == newDoxm->oxmSel && false == newDoxm->owned &&
-                                    previousMsgId != ehRequest->messageID &&
-                                    memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) != 0)
+                        false == isDuplicatedMsg &&
+                        memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) != 0)
                     {
                         if (OC_STACK_OK != VerifyOwnershipTransfer(NULL, USER_CONFIRM))
                         {
@@ -1455,8 +1443,7 @@ exit:
             {
                 OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request");
 
-                if((OC_ADAPTER_IP == ehRequest->devAddr.adapter && previousMsgId != ehRequest->messageID)
-                   || OC_ADAPTER_TCP == ehRequest->devAddr.adapter)
+                if (!isDuplicatedMsg)
                 {
                     RestoreDoxmToInitState();
                     RestorePstatToInitState();
@@ -1471,7 +1458,7 @@ exit:
     }
     else
     {
-        previousMsgId = ehRequest->messageID++;
+        previousMsgId = ehRequest->messageID;
     }
 
     //Send payload to request originator
