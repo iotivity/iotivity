@@ -48,6 +48,7 @@ static bool AddRTSBaslinePayload(OCRepPayload **linkArray, int size, OCRepPayloa
         {
             OICFree(rt[l]);
         }
+        OICFree(rt);
     }
 
     for (OCStringLL *rsrcType = (*colPayload)->types; rsrcType; rsrcType = rsrcType->next, arraySize++);
@@ -71,6 +72,7 @@ static bool AddRTSBaslinePayload(OCRepPayload **linkArray, int size, OCRepPayloa
             rts[k++] = OICStrdup(rt[l]);
             OICFree(rt[l]);
         }
+        OICFree(rt);
     }
     for (OCStringLL *rsrcType = (*colPayload)->types; rsrcType; rsrcType = rsrcType->next, size++)
     {
@@ -173,7 +175,7 @@ exit:
     }
     ret = SendResponse(colPayload, ehRequest, collResource, ehResult);
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *)colPayload);
-
+    OCRepPayloadDestroy(colPayload);
     return ret;
 }
 
@@ -186,16 +188,14 @@ static OCStackResult HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
 
     OCStackResult stackRet = OC_STACK_OK;
     char *storeQuery = NULL;
-    OCRepPayload *payload = OCRepPayloadCreate();
     OCResource *collResource = (OCResource *)ehRequest->resource;
-    VERIFY_PARAM_NON_NULL(TAG, payload, "Failed creating RepPayload");
 
     if (stackRet == OC_STACK_OK)
     {
 
         if (collResource->rsrcChildResourcesHead)
         {
-            storeQuery = OICStrdup(ehRequest->query);
+            storeQuery = ehRequest->query;
             ehRequest->query = NULL;
             OIC_LOG_V(DEBUG, TAG, "Query : %s", ehRequest->query);
         }
@@ -235,12 +235,8 @@ static OCStackResult HandleBatchInterface(OCEntityHandlerRequest *ehRequest)
         }
         ehRequest->resource = (OCResourceHandle) collResource;
     }
-    ehRequest->query = OICStrdup(storeQuery);
-    OICFree(storeQuery);
+    ehRequest->query = storeQuery;
     return stackRet;
-exit:
-    OICFree(storeQuery);
-    return OC_STACK_NO_MEMORY;
 }
 
 OCStackResult DefaultCollectionEntityHandler(OCEntityHandlerFlag flag, OCEntityHandlerRequest *ehRequest)
