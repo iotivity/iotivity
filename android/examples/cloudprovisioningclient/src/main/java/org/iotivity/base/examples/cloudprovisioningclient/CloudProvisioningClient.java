@@ -182,9 +182,9 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
     OcCloudProvisioning.GetIndividualAclInfoListener getIndividualAclInfoListener =
         new OcCloudProvisioning.GetIndividualAclInfoListener() {
             @Override
-                public void getIndividualAclInfoListener(boolean result) {
+                public void getIndividualAclInfoListener(int result) {
                     Log.d(TAG, "Inside getIndividualAclInfoListener ");
-                    if (!result) {
+                    if (result == 0) {
                         logMessage("Individual ACL Info Successfull !!");
                     } else {
                         logMessage("Error: Individual ACL Info failed !!");
@@ -194,9 +194,9 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
     OcCloudProvisioning.RequestCertificateListener requestCertificateListener =
         new OcCloudProvisioning.RequestCertificateListener() {
             @Override
-                public void requestCertificateListener(boolean result) {
+                public void requestCertificateListener(int result) {
                     Log.d(TAG, "Inside requestCertificateListener ");
-                    if (!result) {
+                    if (result == 0) {
                         logMessage("Request certificate Successfull !!");
                     } else {
                         logMessage("Error: Request certificate failed !!");
@@ -206,9 +206,9 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
     OcCloudProvisioning.GetCRLListener getCRLListener =
         new OcCloudProvisioning.GetCRLListener() {
             @Override
-                public void getCRLListener(boolean result) {
+                public void getCRLListener(int result) {
                     Log.d(TAG, "Inside getCRLListener ");
-                    if (!result) {
+                    if (result == 0) {
                         logMessage("Get CRL Successfull !!");
                     } else {
                         logMessage("Error: Get CRL failed !!");
@@ -218,9 +218,9 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
     OcCloudProvisioning.PostCRLListener postCRLListener =
         new OcCloudProvisioning.PostCRLListener() {
             @Override
-                public void postCRLListener(boolean result) {
+                public void postCRLListener(int result) {
                     Log.d(TAG, "Inside postCRLListener ");
-                    if (!result) {
+                    if (result == 4) {
                         logMessage("Post CRL Successfull !!");
                     } else {
                         logMessage("Error: Post CRL failed !!");
@@ -239,9 +239,9 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
     OcCloudProvisioning.GetAclIdByDeviceListener getAclIdByDeviceListener =
         new OcCloudProvisioning.GetAclIdByDeviceListener() {
             @Override
-                public void getAclIdByDeviceListener(boolean result, String aclId) {
+                public void getAclIdByDeviceListener(int result, String aclId) {
                     Log.d(TAG, "Inside getAclIdByDeviceListener ");
-                    if (!result) {
+                    if (result == 0) {
                         acl_Id = aclId;
                         logMessage("Acl Id by device !!" + acl_Id);
                     } else {
@@ -288,6 +288,7 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
                 editor.putString("IP", StringConstants.DEFAULT_COAP_DERVER_IP);
                 editor.putString("PORT", StringConstants.DEFAULT_COAP_DERVER_PORT);
                 editor.putString("DEVICEID", StringConstants.DEFAULT_DEVICE_ID);
+                editor.putString("SERIALNUMBER", StringConstants.DEFAULT_SERIAL_NUMBER);
                 editor.commit();
             }
             if (settingPreference.getString("useruuid", "").equals("")) {
@@ -455,7 +456,7 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
         try {
             logMessage("postCrl");
             ArrayList<String> arrayList = new ArrayList<>();
-            arrayList.add("1234");
+            arrayList.add(settingPreference.getString("SERIALNUMBER", "1234"));
 
             ocCloudProvisioning.postCRL("20160727000000", "20161027000000", null, arrayList, postCRLListener);
 
@@ -623,10 +624,12 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
         final EditText ip = (EditText) setingLayout.findViewById(R.id.ip);
         final EditText port = (EditText) setingLayout.findViewById(R.id.port);
         final EditText deviceId = (EditText) setingLayout.findViewById(R.id.deviceId);
+        final EditText serialNum = (EditText) setingLayout.findViewById(R.id.serialNum);
 
         ip.setText(settingPreference.getString("IP", ""));
         port.setText(settingPreference.getString("PORT", ""));
         deviceId.setText(settingPreference.getString("DEVICEID", ""));
+        serialNum.setText(settingPreference.getString("SERIALNUMBER", "1234"));
 
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(CloudProvisioningClient.this);
@@ -647,12 +650,14 @@ public class CloudProvisioningClient extends Activity implements OcAccountManage
                 String ip_address = ip.getText().toString();
                 String port_num = port.getText().toString();
                 String deviceId_val = deviceId.getText().toString();
+                String serialNum_val = serialNum.getText().toString();
 
                 SharedPreferences.Editor editor = settingPreference.edit();
 
                 editor.putString("IP", ip_address);
                 editor.putString("PORT", port_num);
                 editor.putString("DEVICEID", deviceId_val);
+                editor.putString("SERIALNUMBER", serialNum_val);
                 editor.commit();
 
                 alertDialog.cancel();

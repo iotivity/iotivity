@@ -146,10 +146,10 @@ extern "C" {
     /*
     * Class:     org_iotivity_base_OcAccountManager
     * Method:    signOut0
-    * Signature: (Lorg/iotivity/base/OcAccountManager/OnPostListener;)V
+    * Signature: (Ljava/lang/String;Lorg/iotivity/base/OcAccountManager/OnPostListener;)V
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcAccountManager_signOut0
-        (JNIEnv *, jobject, jobject);
+        (JNIEnv *, jobject, jstring, jobject);
 
     /*
     * Class:     org_iotivity_base_OcAccountManager

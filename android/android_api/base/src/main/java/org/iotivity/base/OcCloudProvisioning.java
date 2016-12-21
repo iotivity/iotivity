@@ -42,7 +42,7 @@ public class  OcCloudProvisioning {
    /**
     * API to construct the CloudProvisioning
     *
-    * @param ip address of the cloud server
+    * @param ipAddr address of the cloud server
     * @param port port of the cloud server
     */
     public OcCloudProvisioning(String ip, int port) {
@@ -63,23 +63,23 @@ public class  OcCloudProvisioning {
     }
 
     public interface RequestCertificateListener {
-        public void requestCertificateListener(boolean result);
+        public void requestCertificateListener(int result);
     }
 
     public interface GetAclIdByDeviceListener {
-        public void getAclIdByDeviceListener(boolean result,String aclId);
+        public void getAclIdByDeviceListener(int result, String aclId);
     }
 
     public interface GetIndividualAclInfoListener {
-        public void getIndividualAclInfoListener(boolean result);
+        public void getIndividualAclInfoListener(int result);
     }
 
     public interface GetCRLListener {
-        public void getCRLListener(boolean result);
+        public void getCRLListener(int result);
     }
 
     public interface PostCRLListener  {
-        public void postCRLListener(boolean result);
+        public void postCRLListener(int result);
     }
 
    /**

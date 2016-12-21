@@ -24,6 +24,8 @@ package org.iotivity.base.examples.cloudprovisioningclient;
 public interface StringConstants {
 
     public static final String DEFAULT_DEVICE_ID = "9cfbeb8e-5a1e-4d1c-9d01-2ae6fdb";
+    public static final String DEFAULT_SERIAL_NUMBER = "1234";
+
     public static final String COAP_TCP = "coap+tcp://";
     public static final String DEFAULT_COAP_DERVER_IP = "107.109.229.111";
     public static final String DEFAULT_COAP_DERVER_PORT = "5684";
