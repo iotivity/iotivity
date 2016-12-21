@@ -25,7 +25,6 @@ Import('env')
 import os
 
 lib_env = env.Clone()
-SConscript('#resource/third_party_libs.scons', 'lib_env')
 
 libocsrm_env = lib_env.Clone()
 

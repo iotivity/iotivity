@@ -58,7 +58,7 @@ elif target_os in ['darwin']:
     tools_env.AppendUnique(LIBS = ['coap', 'tinydtls', 'mbedtls', 'mbedx509', 'mbedcrypto',
                                    'octbstack', 'ocsrm', 'connectivity_abstraction'])
 else:
-    tools_env.PrependUnique(LIBS = ['oc', 'octbstack', 'm'])
+    tools_env.PrependUnique(LIBS = ['octbstack', 'm'])
 
 ######################################################################
 # Source files and Targets

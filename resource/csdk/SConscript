@@ -24,7 +24,6 @@
 Import('env')
 
 lib_env = env.Clone()
-SConscript('#resource/third_party_libs.scons', 'lib_env')
 
 liboctbstack_env = lib_env.Clone()
 
