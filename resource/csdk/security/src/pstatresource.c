@@ -517,6 +517,7 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
     OIC_LOG(INFO, TAG, "HandlePstatPostRequest  processing POST request");
     OicSecPstat_t *pstat = NULL;
     static uint16_t previousMsgId = 0;
+    bool isDuplicatedMsg = false;
 
     if (ehRequest->payload && NULL != gPstat)
     {
@@ -530,6 +531,17 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
         if (OC_STACK_OK == ret)
         {
             bool validReq = false;
+
+            /*
+             * message ID is supported for CoAP over UDP only according to RFC 7252
+             * So we should check message ID to prevent duplicate request handling in case of OC_ADAPTER_IP.
+             * In case of other transport adapter, duplicate message check is not required.
+             */
+            if (OC_ADAPTER_IP == ehRequest->devAddr.adapter &&
+                 previousMsgId == ehRequest->messageID)
+            {
+                isDuplicatedMsg = true;
+            }
 
             if (true == roParsed)
             {
@@ -641,8 +653,7 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
              {
                 OIC_LOG(WARNING, TAG, "The operation failed during handle DOXM request");
 
-                if((OC_ADAPTER_IP == ehRequest->devAddr.adapter && previousMsgId != ehRequest->messageID)
-                   || OC_ADAPTER_TCP == ehRequest->devAddr.adapter)
+                if (!isDuplicatedMsg)
                 {
                     RestoreDoxmToInitState();
                     RestorePstatToInitState();
@@ -659,7 +670,7 @@ static OCEntityHandlerResult HandlePstatPostRequest(OCEntityHandlerRequest *ehRe
      {
         if(ehRequest->devAddr.adapter == OC_ADAPTER_IP)
         {
-            previousMsgId = ehRequest->messageID++;
+            previousMsgId = ehRequest->messageID;
         }
      }
 
