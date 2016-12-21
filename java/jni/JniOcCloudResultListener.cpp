@@ -114,7 +114,7 @@ void JniOcCloudResultListener::CloudResultListenerCB(int result, void *data,
             }
     }
 
-    jmethodID midL = env->GetMethodID(clsL, calledFunc.c_str(), "(Z)V");
+    jmethodID midL = env->GetMethodID(clsL, calledFunc.c_str(), "(I)V");
     if (!midL)
     {
         checkExAndRemoveListener(env);
@@ -125,7 +125,7 @@ void JniOcCloudResultListener::CloudResultListenerCB(int result, void *data,
         return;
     }
 
-    env->CallVoidMethod(jListener, midL, (jboolean)result);
+    env->CallVoidMethod(jListener, midL, result);
     if (env->ExceptionCheck())
     {
         LOGE("Java exception is thrown");

@@ -79,7 +79,7 @@ void JniGetAclIdByDeviceListener::GetAclIdByDeviceListenerCB(int result, std::st
         return;
     }
 
-    jmethodID midL = env->GetMethodID(clsL, "getAclIdByDeviceListener", "(ZLjava/lang/String;)V");
+    jmethodID midL = env->GetMethodID(clsL, "getAclIdByDeviceListener", "(ILjava/lang/String;)V");
     if (!midL)
     {
         checkExAndRemoveListener(env);
@@ -100,7 +100,7 @@ void JniGetAclIdByDeviceListener::GetAclIdByDeviceListenerCB(int result, std::st
         return;
 
     }
-    env->CallVoidMethod(jListener, midL, (jboolean)result, jStr);
+    env->CallVoidMethod(jListener, midL, (jint)result, jStr);
     if (env->ExceptionCheck())
     {
         LOGE("Java exception is thrown");
