@@ -82,11 +82,12 @@ jclass g_cls_OcOicSecAcl_resr = nullptr;
 jclass g_cls_OcOicSecAcl_validity = nullptr;
 jclass g_cls_OcOicSecPdAcl = nullptr;
 jclass g_cls_OcDirectPairDevice = nullptr;
+
+#ifdef WITH_CLOUD
+jclass g_cls_OcAccountManager = nullptr;
 #ifdef __WITH_TLS__
 jclass g_cls_OcCloudProvisioning = nullptr;
 #endif
-#ifdef WITH_CLOUD
-jclass g_cls_OcAccountManager = nullptr;
 #endif
 
 jmethodID g_mid_Integer_ctor = nullptr;
@@ -150,9 +151,11 @@ jmethodID g_mid_OcOicSecAcl_validity_get_recurrenceLen = nullptr;
 jmethodID g_mid_OcOicSecAcl_resr_get_interfaceLen = nullptr;
 jmethodID g_mid_OcOicSecAcl_get_rownerID = nullptr;
 
+#ifdef WITH_CLOUD
 #ifdef __WITH_TLS__
 jmethodID g_mid_OcCloudProvisioning_getIP = nullptr;
 jmethodID g_mid_OcCloudProvisioning_getPort = nullptr;
+#endif
 #endif
 
 jobject getOcException(JNIEnv* env, const char* file, const char* functionName,
@@ -613,6 +616,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
 
     g_mid_OcOicSecPdAcl_get_recurrences = env->GetMethodID(g_cls_OcOicSecPdAcl, "getRecurrences", "(I)Ljava/lang/String;");
     VERIFY_VARIABLE_NULL(g_mid_OcOicSecPdAcl_get_recurrences);
+#ifdef WITH_CLOUD
 #ifdef __WITH_TLS__
     //OcCloudProvisioning
     clazz = env->FindClass("org/iotivity/base/OcCloudProvisioning");
@@ -625,6 +629,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
 
     g_mid_OcCloudProvisioning_getPort = env->GetMethodID(g_cls_OcCloudProvisioning, "getPort", "()I");
     VERIFY_VARIABLE_NULL(g_mid_OcCloudProvisioning_getPort);
+#endif
 #endif
     return JNI_CURRENT_VERSION;
 }
@@ -682,9 +687,9 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
         env->DeleteGlobalRef(g_cls_byte3DArray);
 #ifdef WITH_CLOUD
         env->DeleteGlobalRef(g_cls_OcAccountManager);
-#endif
 #ifdef __WITH_TLS__
         env->DeleteGlobalRef(g_cls_OcCloudProvisioning);
+#endif
 #endif
         env->DeleteGlobalRef(g_cls_OcOicSecAcl);
         env->DeleteGlobalRef(g_cls_OcOicSecAcl_ace);

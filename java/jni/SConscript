@@ -69,8 +69,9 @@ if env.get('SECURED') == '1':
 #    jni_env.AppendUnique(CPPDEFINES= ['__WITH_TLS__'])
     jni_env.PrependUnique(LIBS = ['tinydtls', 'ocprovision', 'ocpmapi'])
     jni_env.AppendUnique(CPPPATH = ['#resource/csdk/security/include/internal',
-                                    '#extlibs/cjson',
-                                    '#resource/csdk/security/provisioning/include/cloud'])
+                                    '#extlibs/cjson'])
+    if env.get('WITH_CLOUD') == '1':
+        jni_env.AppendUnique(CPPPATH = ['#resource/csdk/security/provisioning/include/cloud'])
 
 if target_os == 'android':
 	jni_env.AppendUnique(CXXFLAGS = ['-frtti', '-fexceptions'])
@@ -149,15 +150,15 @@ if env.get('SECURED') == '1':
 			]
 if env.get('WITH_CLOUD'):
 	ocstack_files += [
-				'JniOcAccountManager.cpp'
-			]
-if env.get('WITH_TCP') or env.get('SECURED') == '1':
-	ocstack_files += [
+				'JniOcAccountManager.cpp',
 				'JniOcCloudResultListener.cpp',
 				'JniGetAclIdByDeviceListener.cpp'
 			]
-if env.get('WITH_TCP'):
-    ocstack_files += ['JniOcCloudProvisioning.cpp']
+	if env.get('SECURED') == '1':
+		ocstack_files += [
+					'JniOcCloudProvisioning.cpp'
+				]
+
 ocstack_jni = jni_env.SharedLibrary('ocstack-jni', ocstack_files)
 
 jni_env.InstallTarget(ocstack_jni, 'ocstack-jni')
