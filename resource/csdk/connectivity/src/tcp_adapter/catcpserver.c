@@ -780,10 +780,10 @@ static void CAReceiveMessage(int fd)
     }
     else
     {
-        unsigned char buffer[65535] = {0,}; // 65535 is the maximum size of ip packet
         svritem->protocol = COAP;
 
-        len = recv(fd, buffer, sizeof(buffer), 0);
+        // svritem->tlsdata can also be used as receiving buffer in case of raw tcp
+        len = recv(fd, svritem->tlsdata, sizeof(svritem->tlsdata), 0);
         if (len < 0)
         {
             OIC_LOG_V(ERROR, TAG, "recv failed %s", strerror(errno));
@@ -800,7 +800,7 @@ static void CAReceiveMessage(int fd)
             //when successfully read data - pass them to callback.
             if (g_packetReceivedCallback)
             {
-                g_packetReceivedCallback(&svritem->sep, buffer, len);
+                g_packetReceivedCallback(&svritem->sep, svritem->tlsdata, len);
             }
         }
     }
