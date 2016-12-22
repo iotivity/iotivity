@@ -62,7 +62,7 @@ public class CaLeServerInterface {
             BluetoothDevice device, byte[] data);
 
     private native static void caLeGattServerCharacteristicWriteRequestCallback(
-            BluetoothDevice device, byte[] data);
+            BluetoothDevice device, byte[] data, int id, int offset, byte[] value);
 
     private native static void caLeGattServerNotificationSentCallback(BluetoothDevice device,
                                                                      int status);
@@ -108,7 +108,8 @@ public class CaLeServerInterface {
             super.onCharacteristicWriteRequest(device, requestId, characteristic,
                     preparedWrite, responseNeeded, offset, value);
 
-            caLeGattServerCharacteristicWriteRequestCallback(device, value);
+            caLeGattServerCharacteristicWriteRequestCallback(device, value, requestId,
+                                                             offset, value);
         }
 
         @Override

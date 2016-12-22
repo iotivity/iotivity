@@ -109,6 +109,7 @@ static CALEScanState_t g_nextScanningStep = BLE_SCAN_ENABLE;
 
 static CABLEDataReceivedCallback g_CABLEClientDataReceivedCallback = NULL;
 
+static bool g_setHighQoS = true;
 /**
  * check if retry logic for connection routine has to be stopped or not.
  * in case of error value including this method, connection routine has to be stopped.
@@ -2625,31 +2626,39 @@ jobject CALEClientCreateGattCharacteristic(JNIEnv *env, jobject bluetoothGatt, j
         goto error_exit;
     }
 
-    // set Write Type
-    jmethodID jni_mid_setWriteType = (*env)->GetMethodID(env, jni_cid_BTGattCharacteristic,
-                                                         "setWriteType", "(I)V");
-    if (!jni_mid_setWriteType)
+    if (!g_setHighQoS)
     {
-        OIC_LOG(ERROR, TAG, "jni_mid_setWriteType is null");
-        goto error_exit;
+        OIC_LOG(DEBUG, TAG, "setWriteType with WRITE_TYPE_NO_RESPONSE");
+        // set Write Type
+        jmethodID jni_mid_setWriteType = (*env)->GetMethodID(env, jni_cid_BTGattCharacteristic,
+                                                             "setWriteType", "(I)V");
+        if (!jni_mid_setWriteType)
+        {
+            OIC_LOG(ERROR, TAG, "jni_mid_setWriteType is null");
+            goto error_exit;
+        }
+
+        jfieldID jni_fid_no_response = (*env)->GetStaticFieldID(env, jni_cid_BTGattCharacteristic,
+                                                                "WRITE_TYPE_NO_RESPONSE", "I");
+        if (!jni_fid_no_response)
+        {
+            OIC_LOG(ERROR, TAG, "jni_fid_no_response is not available");
+            goto error_exit;
+        }
+
+        jint jni_int_val = (*env)->GetStaticIntField(env, jni_cid_BTGattCharacteristic,
+                                                     jni_fid_no_response);
+        CACheckJNIException(env);
+
+        (*env)->CallVoidMethod(env, jni_obj_GattCharacteristic, jni_mid_setWriteType, jni_int_val);
+        if (CACheckJNIException(env))
+        {
+            OIC_LOG(ERROR, TAG, "setWriteType has failed");
+        }
     }
-
-    jfieldID jni_fid_no_response = (*env)->GetStaticFieldID(env, jni_cid_BTGattCharacteristic,
-                                                            "WRITE_TYPE_NO_RESPONSE", "I");
-    if (!jni_fid_no_response)
+    else
     {
-        OIC_LOG(ERROR, TAG, "jni_fid_no_response is not available");
-        goto error_exit;
-    }
-
-    jint jni_int_val = (*env)->GetStaticIntField(env, jni_cid_BTGattCharacteristic,
-                                                 jni_fid_no_response);
-    CACheckJNIException(env);
-
-    (*env)->CallVoidMethod(env, jni_obj_GattCharacteristic, jni_mid_setWriteType, jni_int_val);
-    if (CACheckJNIException(env))
-    {
-        OIC_LOG(ERROR, TAG, "setWriteType has failed");
+        OIC_LOG(DEBUG, TAG, "It will run with response property");
     }
 
     return jni_obj_GattCharacteristic;
@@ -2812,15 +2821,29 @@ CAResult_t CALEClientSetUUIDToDescriptor(JNIEnv *env, jobject bluetoothGatt,
         goto error_exit;
     }
 
-    jfieldID jni_fid_NotiValue = (*env)->GetStaticFieldID(env, jni_cid_descriptor,
-                                                          "ENABLE_NOTIFICATION_VALUE", "[B");
-    if (!jni_fid_NotiValue)
+    jfieldID jni_fid_NotiValue;
+    if (g_setHighQoS)
     {
-        OIC_LOG(ERROR, TAG, "jni_fid_NotiValue is null");
-        goto error_exit;
+        OIC_LOG(DEBUG, TAG, "get ENABLE_INDICATION_VALUE");
+        jni_fid_NotiValue = (*env)->GetStaticFieldID(env, jni_cid_descriptor,
+                                                     "ENABLE_INDICATION_VALUE", "[B");
+        if (!jni_fid_NotiValue)
+        {
+            OIC_LOG(ERROR, TAG, "jni_fid_NotiValue is null");
+            goto error_exit;
+        }
     }
-
-    OIC_LOG(DEBUG, TAG, "get ENABLE_NOTIFICATION_VALUE");
+    else
+    {
+        OIC_LOG(DEBUG, TAG, "get ENABLE_NOTIFICATION_VALUE");
+        jni_fid_NotiValue = (*env)->GetStaticFieldID(env, jni_cid_descriptor,
+                                                     "ENABLE_NOTIFICATION_VALUE", "[B");
+        if (!jni_fid_NotiValue)
+        {
+            OIC_LOG(ERROR, TAG, "jni_fid_NotiValue is null");
+            goto error_exit;
+        }
+    }
 
     jboolean jni_setvalue = (*env)->CallBooleanMethod(
             env, jni_obj_descriptor, jni_mid_setValue,

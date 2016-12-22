@@ -85,11 +85,11 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerCharacteristicReadRequest
 /*
  * Class:     org_iotivity_ca_CaLeServerInterface
  * Method:    caLeGattServerCharacteristicWriteRequestCallback
- * Signature: (Landroid/bluetooth/BluetoothDevice;[B)V
+ * Signature: (Landroid/bluetooth/BluetoothDevice;[BII[B)V
  */
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerCharacteristicWriteRequestCallback
-(JNIEnv *, jobject, jobject, jbyteArray);
+(JNIEnv *, jobject, jobject, jbyteArray, jint, jint, jbyteArray);
 
 /*
  * Class:     org_iotivity_ca_CaLeServerInterface

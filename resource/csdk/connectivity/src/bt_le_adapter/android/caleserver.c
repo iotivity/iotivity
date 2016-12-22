@@ -74,6 +74,8 @@ static jint g_state_disconnected = INVALID_STATE;
 static const char CLASSPATH_BT_ADVERTISE_CB[] = "android/bluetooth/le/AdvertiseCallback";
 static const char CLASSPATH_BT_GATTSERVER[] = "android/bluetooth/BluetoothGattServer";
 
+static bool g_setHighQoS = true;
+
 void CALEServerJNISetContext()
 {
     OIC_LOG(DEBUG, TAG, "CALEServerJNISetContext");
@@ -1011,22 +1013,47 @@ jobject CALEServerCreateGattService(JNIEnv *env)
         goto error_exit;
     }
 
-    jfieldID jni_fid_readProperties = (*env)->GetStaticFieldID(env,
-                                                               jni_cid_bluetoothGattCharacteristic,
-                                                               "PROPERTY_NOTIFY", "I");
-    if (!jni_fid_readProperties)
+    jfieldID jni_fid_readProperties;
+    jfieldID jni_fid_writeProperties;
+    if (g_setHighQoS)
     {
-        OIC_LOG(ERROR, TAG, "jni_fid_readProperties is null");
-        goto error_exit;
-    }
+        jni_fid_readProperties = (*env)->GetStaticFieldID(env,
+                                                          jni_cid_bluetoothGattCharacteristic,
+                                                          "PROPERTY_INDICATE", "I");
+        if (!jni_fid_readProperties)
+        {
+            OIC_LOG(ERROR, TAG, "jni_fid_readProperties is null");
+            goto error_exit;
+        }
 
-    jfieldID jni_fid_writeProperties = (*env)->GetStaticFieldID(env,
-                                                                jni_cid_bluetoothGattCharacteristic,
-                                                                "PROPERTY_WRITE_NO_RESPONSE", "I");
-    if (!jni_fid_writeProperties)
+        jni_fid_writeProperties = (*env)->GetStaticFieldID(env,
+                                                           jni_cid_bluetoothGattCharacteristic,
+                                                           "PROPERTY_WRITE", "I");
+        if (!jni_fid_writeProperties)
+        {
+            OIC_LOG(ERROR, TAG, "jni_fid_writeProperties is null");
+            goto error_exit;
+        }
+    }
+    else
     {
-        OIC_LOG(ERROR, TAG, "jni_fid_writeProperties is null");
-        goto error_exit;
+        jni_fid_readProperties = (*env)->GetStaticFieldID(env,
+                                                          jni_cid_bluetoothGattCharacteristic,
+                                                          "PROPERTY_NOTIFY", "I");
+        if (!jni_fid_readProperties)
+        {
+            OIC_LOG(ERROR, TAG, "jni_fid_readProperties is null");
+            goto error_exit;
+        }
+
+        jni_fid_writeProperties = (*env)->GetStaticFieldID(env,
+                                                           jni_cid_bluetoothGattCharacteristic,
+                                                           "PROPERTY_WRITE_NO_RESPONSE", "I");
+        if (!jni_fid_writeProperties)
+        {
+            OIC_LOG(ERROR, TAG, "jni_fid_writeProperties is null");
+            goto error_exit;
+        }
     }
 
     jfieldID jni_fid_readPermissions = (*env)->GetStaticFieldID(env,
@@ -2351,13 +2378,25 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerCharacteristicReadRequest
 
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerCharacteristicWriteRequestCallback(
-        JNIEnv *env, jobject obj, jobject device, jbyteArray data)
+        JNIEnv *env, jobject obj, jobject device, jbyteArray data,
+        jint requestId, jint offset, jbyteArray value)
 {
     OIC_LOG_V(DEBUG, TAG, "Gatt Server Characteristic Write Request Callback");
     VERIFY_NON_NULL_VOID(env, TAG, "env");
     VERIFY_NON_NULL_VOID(obj, TAG, "obj");
     VERIFY_NON_NULL_VOID(device, TAG, "device");
     VERIFY_NON_NULL_VOID(data, TAG, "data");
+
+    if (g_setHighQoS)
+    {
+        CALEServerSendResponse(env, device, requestId, 0, offset, value);
+    }
+    else
+    {
+        (void)requestId;
+        (void)offset;
+        (void)value;
+    }
 
     // get Byte Array and covert to uint8_t*
     jint length = (*env)->GetArrayLength(env, data);
