@@ -542,6 +542,7 @@ static int SendCallBack(void * tep, const unsigned char * data, size_t dataLen)
     else
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Unsupported adapter");
+        return -1;
     }
 
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
