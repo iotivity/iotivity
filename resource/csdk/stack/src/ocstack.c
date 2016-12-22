@@ -1274,6 +1274,43 @@ exit:
     return result;
 }
 
+OCStackResult HandleBatchResponse(char *requestUri, OCRepPayload **payload)
+{
+    if (requestUri && *payload)
+    {
+        char *interfaceName = NULL;
+        char *rtTypeName = NULL;
+        char *uriQuery = NULL;
+        char *uriWithoutQuery = NULL;
+        if (OC_STACK_OK == getQueryFromUri(requestUri, &uriQuery, &uriWithoutQuery))
+        {
+            if (OC_STACK_OK == ExtractFiltersFromQuery(uriQuery, &interfaceName, &rtTypeName))
+            {
+                if (0 == strcmp(OC_RSRVD_INTERFACE_BATCH, interfaceName))
+                {
+                    char *uri = (*payload)->uri;
+                    if (uri && 0 != strcmp(uriWithoutQuery, uri))
+                    {
+                        OCRepPayload *newPayload = OCRepPayloadCreate();
+                        if (newPayload)
+                        {
+                            OCRepPayloadSetUri(newPayload, uri);
+                            newPayload->next = *payload;
+                            *payload = newPayload;
+                        }
+                    }
+                }
+            }
+        }
+        OICFree(interfaceName);
+        OICFree(rtTypeName);
+        OICFree(uriQuery);
+        OICFree(uriWithoutQuery);
+        return OC_STACK_OK;
+    }
+    return OC_STACK_INVALID_PARAM;
+}
+
 void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* responseInfo)
 {
     OIC_LOG(DEBUG, TAG, "Enter OCHandleResponse");
@@ -1606,6 +1643,10 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                         OCCMDiscoveryResource(response);
 #endif
                     }
+                }
+                if (response->payload && response->payload->type == PAYLOAD_TYPE_REPRESENTATION)
+                {
+                    HandleBatchResponse(cbNode->requestUri, (OCRepPayload **)&response->payload);
                 }
 
                 OCStackApplicationResult appFeedback = cbNode->callBack(cbNode->context,
