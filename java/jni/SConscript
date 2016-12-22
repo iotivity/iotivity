@@ -130,7 +130,7 @@ ocstack_files = [
 			'JniOnDeleteResourceListener.cpp',
 			'JniOcRDClient.cpp',
 		]
-if ['SUB', 'PUB', 'BROKER'] in with_mq:
+if ('PUB' in with_mq) or ('SUB' in with_mq) or ('BROKER' in with_mq):
 	ocstack_files += [
 				'JniOnMQTopicFoundListener.cpp',
 				'JniOnMQSubscribeListener.cpp'
