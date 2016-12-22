@@ -1781,7 +1781,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
 {
     OIC_LOG(INFO, TAG, "Entering HandleStackRequests (OCStack Layer)");
     OCStackResult result = OC_STACK_ERROR;
-    if(!protocolRequest)
+    if (!protocolRequest)
     {
         OIC_LOG(ERROR, TAG, "protocolRequest is NULL");
         return OC_STACK_INVALID_PARAM;
@@ -1789,7 +1789,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
 
     OCServerRequest * request = GetServerRequestUsingToken(protocolRequest->requestToken,
             protocolRequest->tokenLength);
-    if(!request)
+    if (!request)
     {
         OIC_LOG(INFO, TAG, "This is a new Server Request");
         result = AddServerRequest(&request, protocolRequest->coapID,
@@ -1823,7 +1823,7 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
         OIC_LOG(INFO, TAG, "This is either a repeated or blocked Server Request");
     }
 
-    if(request->requestComplete)
+    if (request->requestComplete)
     {
         OIC_LOG(INFO, TAG, "This Server Request is complete");
         ResourceHandling resHandling = OC_RESOURCE_VIRTUAL;
@@ -1845,21 +1845,23 @@ OCStackResult HandleStackRequests(OCServerProtocolRequest * protocolRequest)
 void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* requestInfo)
 {
     OIC_LOG(DEBUG, TAG, "Enter OCHandleRequests");
+    OIC_LOG_V(INFO, TAG, "Endpoint URI : %s", requestInfo->info.resourceUri);
 
-    OCStackResult requestResult = OC_STACK_ERROR;
-
-    if(myStackMode == OC_CLIENT)
+    if (myStackMode == OC_CLIENT)
     {
         //TODO: should the client be responding to requests?
         return;
     }
 
-    OCServerProtocolRequest serverRequest = {0};
-
-    OIC_LOG_V(INFO, TAG, "Endpoint URI : %s", requestInfo->info.resourceUri);
+    // If the request message is Confirmable,
+    // then the response SHOULD be returned in an Acknowledgement message.
+    CAMessageType_t directResponseType = requestInfo->info.type;
+    directResponseType = (directResponseType == CA_MSG_CONFIRM)
+            ? CA_MSG_ACKNOWLEDGE : CA_MSG_NONCONFIRM;
 
     char * uriWithoutQuery = NULL;
-    char * query  = NULL;
+    char * query = NULL;
+    OCStackResult requestResult = OC_STACK_ERROR;
 
     requestResult = getQueryFromUri(requestInfo->info.resourceUri, &query, &uriWithoutQuery);
 
@@ -1871,7 +1873,8 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     OIC_LOG_V(INFO, TAG, "URI without query: %s", uriWithoutQuery);
     OIC_LOG_V(INFO, TAG, "Query : %s", query);
 
-    if(strlen(uriWithoutQuery) < MAX_URI_LENGTH)
+    OCServerProtocolRequest serverRequest = { 0 };
+    if (strlen(uriWithoutQuery) < MAX_URI_LENGTH)
     {
         OICStrcpy(serverRequest.resourceUrl, sizeof(serverRequest.resourceUrl), uriWithoutQuery);
         OICFree(uriWithoutQuery);
@@ -1884,9 +1887,9 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         return;
     }
 
-    if(query)
+    if (query)
     {
-        if(strlen(query) < MAX_QUERY_LENGTH)
+        if (strlen(query) < MAX_QUERY_LENGTH)
         {
             OICStrcpy(serverRequest.query, sizeof(serverRequest.query), query);
             OICFree(query);
@@ -1933,19 +1936,20 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         default:
             OIC_LOG_V(ERROR, TAG, "Received CA method %d not supported", requestInfo->method);
             SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_BAD_REQ,
-                        requestInfo->info.type, requestInfo->info.numOptions,
-                        requestInfo->info.options, requestInfo->info.token,
-                        requestInfo->info.tokenLength, requestInfo->info.resourceUri,
-                        CA_RESPONSE_DATA);
+                                    directResponseType, requestInfo->info.numOptions,
+                                    requestInfo->info.options, requestInfo->info.token,
+                                    requestInfo->info.tokenLength, requestInfo->info.resourceUri,
+                                    CA_RESPONSE_DATA);
             OICFree(serverRequest.payload);
             return;
     }
 
     OIC_LOG_BUFFER(INFO, TAG, (const uint8_t *)requestInfo->info.token,
-            requestInfo->info.tokenLength);
+                   requestInfo->info.tokenLength);
 
     serverRequest.tokenLength = requestInfo->info.tokenLength;
-    if (serverRequest.tokenLength) {
+    if (serverRequest.tokenLength)
+    {
         // Non empty token
         serverRequest.requestToken = (CAToken_t)OICMalloc(requestInfo->info.tokenLength);
 
@@ -1953,10 +1957,10 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         {
             OIC_LOG(FATAL, TAG, "Allocation for token failed.");
             SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_INTERNAL_SERVER_ERROR,
-                    requestInfo->info.type, requestInfo->info.numOptions,
-                    requestInfo->info.options, requestInfo->info.token,
-                    requestInfo->info.tokenLength, requestInfo->info.resourceUri,
-                    CA_RESPONSE_DATA);
+                                    directResponseType, requestInfo->info.numOptions,
+                                    requestInfo->info.options, requestInfo->info.token,
+                                    requestInfo->info.tokenLength, requestInfo->info.resourceUri,
+                                    CA_RESPONSE_DATA);
             OICFree(serverRequest.payload);
             return;
         }
@@ -2005,10 +2009,10 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         OIC_LOG(ERROR, TAG,
                 "The request info numOptions is greater than MAX_HEADER_OPTIONS");
         SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_BAD_OPT,
-                requestInfo->info.type, requestInfo->info.numOptions,
-                requestInfo->info.options, requestInfo->info.token,
-                requestInfo->info.tokenLength, requestInfo->info.resourceUri,
-                CA_RESPONSE_DATA);
+                                directResponseType, requestInfo->info.numOptions,
+                                requestInfo->info.options, requestInfo->info.token,
+                                requestInfo->info.tokenLength, requestInfo->info.resourceUri,
+                                CA_RESPONSE_DATA);
         OICFree(serverRequest.payload);
         OICFree(serverRequest.requestToken);
         return;
@@ -2016,14 +2020,15 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     serverRequest.numRcvdVendorSpecificHeaderOptions = tempNum;
     if (serverRequest.numRcvdVendorSpecificHeaderOptions && requestInfo->info.options)
     {
-        memcpy (&(serverRequest.rcvdVendorSpecificHeaderOptions), requestInfo->info.options,
-            sizeof(CAHeaderOption_t)*tempNum);
+        memcpy(&(serverRequest.rcvdVendorSpecificHeaderOptions), requestInfo->info.options,
+               sizeof(CAHeaderOption_t) * tempNum);
     }
 
     requestResult = HandleStackRequests (&serverRequest);
 
     if (requestResult == OC_STACK_SLOW_RESOURCE)
-    {   // Send ACK to client as precursor to slow response
+    {
+        // Send ACK to client as precursor to slow response
         if (requestInfo->info.type == CA_MSG_CONFIRM)
         {
             SendDirectStackResponse(endPoint, requestInfo->info.messageId, CA_EMPTY,
@@ -2036,18 +2041,17 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     {
         OIC_LOG_V(ERROR, TAG, "Observe Registration failed due to resource error");
     }
-    else if(!OCResultToSuccess(requestResult))
+    else if (!OCResultToSuccess(requestResult))
     {
         OIC_LOG_V(ERROR, TAG, "HandleStackRequests failed. error: %d", requestResult);
 
-        CAResponseResult_t stackResponse =
-            OCToCAStackResult(requestResult, serverRequest.method);
+        CAResponseResult_t stackResponse = OCToCAStackResult(requestResult, serverRequest.method);
 
         SendDirectStackResponse(endPoint, requestInfo->info.messageId, stackResponse,
-                requestInfo->info.type, requestInfo->info.numOptions,
-                requestInfo->info.options, requestInfo->info.token,
-                requestInfo->info.tokenLength, requestInfo->info.resourceUri,
-                CA_RESPONSE_DATA);
+                                directResponseType, requestInfo->info.numOptions,
+                                requestInfo->info.options, requestInfo->info.token,
+                                requestInfo->info.tokenLength, requestInfo->info.resourceUri,
+                                CA_RESPONSE_DATA);
     }
     // requestToken is fed to HandleStackRequests, which then goes to AddServerRequest.
     // The token is copied in there, and is thus still owned by this function.
@@ -2060,13 +2064,13 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
 void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* requestInfo)
 {
     OIC_LOG(INFO, TAG, "Enter HandleCARequests");
-    if(!endPoint)
+    if (!endPoint)
     {
         OIC_LOG(ERROR, TAG, "endPoint is NULL");
         return;
     }
 
-    if(!requestInfo)
+    if (!requestInfo)
     {
         OIC_LOG(ERROR, TAG, "requestInfo is NULL");
         return;
@@ -2085,7 +2089,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
      */
     OCStackResult ret = RMHandleRequest((CARequestInfo_t *)requestInfo, (CAEndpoint_t *)endPoint,
                                         &needRIHandling, &isEmptyMsg);
-    if(OC_STACK_OK != ret || !needRIHandling)
+    if (OC_STACK_OK != ret || !needRIHandling)
     {
         OIC_LOG_V(INFO, TAG, "Routing status![%d]. Not forwarding to RI", ret);
         return;
