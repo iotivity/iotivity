@@ -146,7 +146,7 @@
         { \
             NS_LOG_V(ERROR, "%s : %s is null", __func__, #obj); \
             NS_LOG(ERROR, "execute deletion"); \
-            (func); \
+            func; \
             return; \
         } \
     }
@@ -157,7 +157,7 @@
         { \
             NS_LOG_V(ERROR, "%s : %s is null", __func__, #obj); \
             NS_LOG(ERROR, "execute deletion"); \
-            (func); \
+            func; \
             return (retVal); \
         } \
     }
@@ -188,7 +188,7 @@
         if ( _ret != true) \
         { \
             NS_LOG_V(ERROR, "%s : %s is not OC_STACK_OK : %d", __func__, #obj, _ret); \
-            (func); \
+            func; \
             return (retVal); \
         } \
     }

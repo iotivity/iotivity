@@ -26,26 +26,14 @@ extern "C" {
 #endif // __cplusplus
 
 #include <stdbool.h>
-
-typedef enum
-{
-    pthread
-} NS_THREAD_MODEL;
-
-#define NS_THREAD pthread
-
-#if (NS_THREAD == pthread)
-#include <pthread.h>
+#include "octhread.h"
 
 typedef struct
 {
     bool isStarted;
-    pthread_t thread_id;
-    pthread_mutex_t mutex;
-    pthread_mutexattr_t mutex_attr;
+    oc_thread thread_id;
+    oc_mutex mutex;
 } NSConsumerThread;
-
-#endif
 
 typedef void *(*NSThreadFunc)(void *);
 
@@ -60,8 +48,6 @@ void NSThreadJoin(NSConsumerThread *);
 void NSThreadStop(NSConsumerThread *);
 
 void NSDestroyThreadHandle(NSConsumerThread *);
-
-void NSThreadDetach();
 
 #ifdef __cplusplus
 }

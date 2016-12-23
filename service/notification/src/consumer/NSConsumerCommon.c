@@ -25,20 +25,19 @@
 #include "oic_string.h"
 #include "ocpayload.h"
 
-#include <pthread.h>
+#include "octhread.h"
 
 static bool NSIsExtraValue(const char * name);
 static void NSCopyPayloadValueArray(OCRepPayloadValue* dest, OCRepPayloadValue* source);
 static OCRepPayloadValue * NSCopyPayloadValue(OCRepPayloadValue * value);
 
-pthread_mutex_t ** NSGetStackMutex()
+oc_mutex * NSGetStackMutex()
 {
-    static pthread_mutex_t * g_stackMutext = NULL;
+    static oc_mutex g_stackMutext = NULL;
     if (g_stackMutext == NULL)
     {
-        g_stackMutext = (pthread_mutex_t *)OICMalloc(sizeof(pthread_mutex_t));
+        g_stackMutext = oc_mutex_new();
         NS_VERIFY_NOT_NULL(g_stackMutext, NULL);
-        pthread_mutex_init(g_stackMutext, NULL);
     }
 
     return & g_stackMutext;
@@ -104,8 +103,7 @@ void NSSetIsStartedConsumer(bool setValue)
 
     if (setValue == false)
     {
-        pthread_mutex_destroy(*NSGetStackMutex());
-        NSOICFree(*NSGetStackMutex());
+        oc_mutex_free(*NSGetStackMutex());
         *NSGetStackMutex() = NULL;
 
         NSOICFree(*NSGetConsumerId());
@@ -791,8 +789,7 @@ OCStackResult NSInvokeRequest(OCDoHandle * handle,
         void * callbackFunc, void * callbackData,
         OCClientContextDeleter cd, OCConnectivityType type)
 {
-    int mutexRet = pthread_mutex_lock(*(NSGetStackMutex()));
-    NS_VERIFY_NOT_NULL(mutexRet != 0 ? NULL : (void *)1, OC_STACK_ERROR);
+    oc_mutex_lock(*NSGetStackMutex());
 
     OCCallbackData cbdata = { NULL, NULL, NULL };
 
@@ -803,8 +800,7 @@ OCStackResult NSInvokeRequest(OCDoHandle * handle,
     OCStackResult ret = OCDoResource(handle, method, queryUrl, addr,
                                      payload, type, NS_QOS, &cbdata, NULL, 0);
 
-    mutexRet = pthread_mutex_unlock(*(NSGetStackMutex()));
-    NS_VERIFY_NOT_NULL(mutexRet != 0 ? NULL : (void *)1, OC_STACK_ERROR);
+    oc_mutex_unlock(*NSGetStackMutex());
 
     return ret;
 }

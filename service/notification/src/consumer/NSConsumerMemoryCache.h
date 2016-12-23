@@ -27,7 +27,7 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdbool.h>
-#include <pthread.h>
+#include "octhread.h"
 #include "NSConsumerCommon.h"
 
 NSCacheList * NSConsumerStorageCreate();
@@ -36,7 +36,7 @@ NSResult NSConsumerStorageWrite(NSCacheList * list, NSCacheElement * newObj);
 NSResult NSConsumerStorageDelete(NSCacheList * list, const char * delId);
 NSResult NSConsumerStorageDestroy(NSCacheList * list);
 
-pthread_mutex_t * NSGetCacheMutex();
+oc_mutex * NSGetCacheMutex();
 
 bool NSConsumerCompareIdCacheData(NSCacheType type, void * data, const char * id);
 

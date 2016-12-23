@@ -37,10 +37,6 @@ if target_os not in ['arduino','darwin', 'ios', 'windows']:
     if target_os in ['linux']:
         SConscript('scene-manager/SConscript')
 
-    # Build notification-service project
-    if target_os in ['linux','android','tizen']:
-        SConscript('notification/SConscript')
-
     # Build simulator module
     if target_os in ['linux'] and env.get('SIMULATOR', False):
         SConscript('simulator/SConscript')
@@ -52,3 +48,7 @@ if target_os not in ['arduino','darwin', 'ios', 'windows']:
 # Build EasySetup module
 if target_os in ['arduino', 'android', 'linux','tizen']:
     SConscript('easy-setup/SConscript')
+
+# Build notification-service project
+if target_os in ['linux', 'android', 'windows', 'tizen']:
+    SConscript('notification/SConscript')

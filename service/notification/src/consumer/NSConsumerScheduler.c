@@ -22,7 +22,12 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+
+#ifdef SYSTEM_WINDOWS
+#include "win_sleep.h"
+#else
 #include <unistd.h>
+#endif
 
 #include "oic_malloc.h"
 #include "oic_string.h"
@@ -147,7 +152,6 @@ void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
         if (!queue)
         {
             queue = *(NSGetMsgHandleQueue());
-            usleep(2000);
             continue;
         }
 

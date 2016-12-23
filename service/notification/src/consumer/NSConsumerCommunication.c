@@ -224,7 +224,7 @@ NSSyncInfo * NSGetSyncInfoc(OCClientResponse * clientResponse)
     OCRepPayload * payload = (OCRepPayload *)clientResponse->payload;
 
     NS_LOG(DEBUG, "get msg id");
-    uint64_t id = NULL;
+    uint64_t id = 0;
     bool getResult = OCRepPayloadGetPropInt(payload, NS_ATTRIBUTE_MESSAGE_ID, (int64_t *)&id);
     NS_VERIFY_NOT_NULL(getResult == true ? (void *) 1 : NULL, NULL);
 

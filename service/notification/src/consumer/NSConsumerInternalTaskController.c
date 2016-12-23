@@ -25,6 +25,7 @@
 
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "octhread.h"
 
 #define NS_RESERVED_MESSAGEID 10
 
@@ -45,7 +46,7 @@ typedef struct
 } NSMessageStateList;
 
 // Mutex of MessageState storage
-pthread_mutex_t ** NSGetMessageListMutex();
+oc_mutex * NSGetMessageListMutex();
 void NSLockMessageListMutex();
 void NSUnlockMessageListMutex();
 
@@ -79,8 +80,8 @@ void NSDestroyInternalCachedList()
     NSSetProviderCacheList(NULL);
 
     NSDestroyMessageStateList();
-    pthread_mutex_destroy(*NSGetMessageListMutex());
-    NSOICFree(*NSGetMessageListMutex());
+    oc_mutex_free(*NSGetMessageListMutex());
+    *NSGetMessageListMutex() = NULL;
 }
 
 NSProvider_internal * NSProviderCacheFind(const char * providerId)
@@ -304,8 +305,8 @@ void NSConsumerHandleSubscribeSucceed(NSProvider_internal * provider)
     NSCacheElement * cacheElement = NSConsumerStorageRead(ProviderCache, provider->providerId);
     NS_VERIFY_NOT_NULL_V(cacheElement);
 
-    pthread_mutex_t * mutex = NSGetCacheMutex();
-    pthread_mutex_lock(mutex);
+    oc_mutex * mutex = NSGetCacheMutex();
+    oc_mutex_lock(*mutex);
 
     NS_VERIFY_NOT_NULL_V(cacheElement);
     NSProvider_internal * prov = (NSProvider_internal *)cacheElement->data;
@@ -316,7 +317,7 @@ void NSConsumerHandleSubscribeSucceed(NSProvider_internal * provider)
         infos = infos->next;
     }
 
-    pthread_mutex_unlock(mutex);
+    oc_mutex_unlock(*mutex);
 }
 
 void NSConsumerHandleRecvProviderChanged(NSMessage * msg)
@@ -330,14 +331,14 @@ void NSConsumerHandleRecvProviderChanged(NSMessage * msg)
     NSCacheElement * cacheElement = NSConsumerStorageRead(ProviderCache, msg->providerId);
     NS_VERIFY_NOT_NULL_V(cacheElement);
 
-    pthread_mutex_t * mutex = NSGetCacheMutex();
-    pthread_mutex_lock(mutex);
-    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(cacheElement, pthread_mutex_unlock(mutex));
+    oc_mutex * mutex = NSGetCacheMutex();
+    oc_mutex_lock(*mutex);
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(cacheElement, oc_mutex_unlock(*mutex));
     NSProvider_internal * provider = (NSProvider_internal *) cacheElement->data;
     if (provider->state == (NSProviderState) msg->messageId)
     {
         NS_LOG_V(DEBUG, "Already receive message(ALLOW/DENY) : %d", (int) msg->messageId);
-        pthread_mutex_unlock(mutex);
+        oc_mutex_unlock(*mutex);
         return;
     }
 
@@ -348,7 +349,7 @@ void NSConsumerHandleRecvProviderChanged(NSMessage * msg)
 
     NSProvider * prov = NSCopyProvider(provider);
 
-    pthread_mutex_unlock(mutex);
+    oc_mutex_unlock(*mutex);
     NSProviderChanged(prov, (NSProviderState) msg->messageId);
     NSRemoveProvider(prov);
 }
@@ -522,16 +523,13 @@ void NSConsumerInternalTaskProcessing(NSTask * task)
     NSOICFree(task);
 }
 
-// implements of MessageState function
-pthread_mutex_t ** NSGetMessageListMutex()
+oc_mutex * NSGetMessageListMutex()
 {
-    static pthread_mutex_t * g_mutex = NULL;
+    static oc_mutex g_mutex = NULL;
     if (g_mutex == NULL)
     {
-        g_mutex = (pthread_mutex_t *) OICMalloc(sizeof(pthread_mutex_t));
+        g_mutex = oc_mutex_new();
         NS_VERIFY_NOT_NULL(g_mutex, NULL);
-
-        pthread_mutex_init(g_mutex, NULL);
     }
     return & g_mutex;
 }
@@ -539,13 +537,13 @@ pthread_mutex_t ** NSGetMessageListMutex()
 void NSLockMessageListMutex()
 {
     NS_LOG_V(DEBUG, "%s", __func__);
-    pthread_mutex_lock(*NSGetMessageListMutex());
+    oc_mutex_lock(*NSGetMessageListMutex());
 }
 
 void NSUnlockMessageListMutex()
 {
     NS_LOG_V(DEBUG, "%s", __func__);
-    pthread_mutex_unlock(*NSGetMessageListMutex());
+    oc_mutex_unlock(*NSGetMessageListMutex());
 }
 
 NSMessageStateList ** NSGetMessageStateListAddr()
@@ -711,9 +709,7 @@ void NSDestroyMessageStateList()
 
     NSUnlockMessageListMutex();
 
-    pthread_mutex_t * mu = *NSGetMessageListMutex();
-    pthread_mutex_destroy(mu);
-    NSOICFree(mu);
+    oc_mutex_free(*NSGetMessageListMutex());
     *NSGetMessageListMutex() = NULL;
 
     NSMessageStateList * list = NSGetMessageStateList();
