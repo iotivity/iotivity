@@ -21,7 +21,7 @@
 #ifndef _NS_CONSTANTS_H_
 #define _NS_CONSTANTS_H_
 
-#define __PRINTLOG 0
+#define __PRINTLOG 1
 #define __NS_FILE__ ( strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__ )
 
 #include "logger.h"
@@ -122,11 +122,17 @@
 #define NS_ATTIRBUTE_MQ_TOPICLIST "topiclist"
 #endif
 
+#ifdef SYSTEM_WINDOWS
+#define NS_FUNCTION __FUNCTION__
+#else
+#define NS_FUNCTION __func__
+#endif
+
 #define NS_VERIFY_NOT_NULL_V(obj) \
     { \
         if ((obj) == NULL) \
         { \
-            NS_LOG_V(ERROR, "%s : %s is null", __func__, #obj); \
+            NS_LOG_V(ERROR, "%s : %s is null", NS_FUNCTION, #obj); \
             return; \
         } \
     }
@@ -135,7 +141,7 @@
     { \
         if ((obj) == NULL) \
         { \
-            NS_LOG_V(ERROR, "%s : %s is null", __func__, #obj); \
+            NS_LOG_V(ERROR, "%s : %s is null", NS_FUNCTION, #obj); \
             return (retVal); \
         } \
     }
@@ -144,7 +150,7 @@
     { \
         if ((obj) == NULL) \
         { \
-            NS_LOG_V(ERROR, "%s : %s is null", __func__, #obj); \
+            NS_LOG_V(ERROR, "%s : %s is null", NS_FUNCTION, #obj); \
             NS_LOG(ERROR, "execute deletion"); \
             func; \
             return; \
@@ -155,7 +161,7 @@
     { \
         if ((obj) == NULL) \
         { \
-            NS_LOG_V(ERROR, "%s : %s is null", __func__, #obj); \
+            NS_LOG_V(ERROR, "%s : %s is null", NS_FUNCTION, #obj); \
             NS_LOG(ERROR, "execute deletion"); \
             func; \
             return (retVal); \
@@ -167,7 +173,7 @@
         bool _ret = (obj); \
         if ( _ret != true) \
         { \
-            NS_LOG_V(ERROR, "%s : %s is not OC_STACK_OK : %d", __func__, #obj, _ret); \
+            NS_LOG_V(ERROR, "%s : %s is not OC_STACK_OK : %d", NS_FUNCTION, #obj, _ret); \
             return; \
         } \
     }
@@ -177,7 +183,7 @@
         bool _ret = (obj); \
         if ( _ret != true) \
         { \
-            NS_LOG_V(ERROR, "%s : %s is not OC_STACK_OK : %d", __func__, #obj, _ret); \
+            NS_LOG_V(ERROR, "%s : %s is not OC_STACK_OK : %d", NS_FUNCTION, #obj, _ret); \
             return (retVal); \
         } \
     }
@@ -187,7 +193,7 @@
         bool _ret = (obj); \
         if ( _ret != true) \
         { \
-            NS_LOG_V(ERROR, "%s : %s is not OC_STACK_OK : %d", __func__, #obj, _ret); \
+            NS_LOG_V(ERROR, "%s : %s is not OC_STACK_OK : %d", NS_FUNCTION, #obj, _ret); \
             func; \
             return (retVal); \
         } \
@@ -199,7 +205,7 @@
         { \
             OICFree((obj)); \
             (obj) = NULL; \
-            NS_LOG_V(DEBUG, "%s : %s Removed", __func__, #obj); \
+            NS_LOG_V(DEBUG, "%s : %s Removed", NS_FUNCTION, #obj); \
         } \
     }
 

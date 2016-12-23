@@ -116,27 +116,27 @@ notification_consumer_src = [
 notification_consumer_env.UserInstallTargetHeader('include/NSConsumerInterface.h',\
     'service/notification', 'NSConsumerInterface.h')
 
+notification_provider_src = [
+    env.Glob('src/provider/*.c'), env.Glob('src/common/*.c')]
+notification_provider_env.UserInstallTargetHeader('include/NSProviderInterface.h',\
+    'service/notification', 'NSProviderInterface.h')
+
+consumersdk = notification_consumer_env.StaticLibrary('notification_consumer', notification_consumer_src)
+notification_consumer_env.InstallTarget(consumersdk, 'libnotification_consumer')
+notification_consumer_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer')
+
+providersdk = notification_provider_env.StaticLibrary('notification_provider', notification_provider_src)
+notification_provider_env.InstallTarget(providersdk, 'libnotification_provider')
+notification_provider_env.UserInstallTargetLib(providersdk, 'libnotification_provider')
+
 if target_os not in ['windows', 'winrt', 'msys_nt']:
-    notification_provider_src = [
-        env.Glob('src/provider/*.c'), env.Glob('src/common/*.c')]
-    notification_provider_env.UserInstallTargetHeader('include/NSProviderInterface.h',\
-        'service/notification', 'NSProviderInterface.h')
-        
     providersdk = notification_provider_env.SharedLibrary('notification_provider', notification_provider_src)
-    notification_provider_env.InstallTarget(providersdk, 'libnotification_provider')
-    notification_provider_env.UserInstallTargetLib(providersdk, 'libnotification_provider')
-    
-    providersdk = notification_provider_env.StaticLibrary('notification_provider', notification_provider_src)
     notification_provider_env.InstallTarget(providersdk, 'libnotification_provider')
     notification_provider_env.UserInstallTargetLib(providersdk, 'libnotification_provider')
 
     consumersdk = notification_consumer_env.SharedLibrary('notification_consumer', notification_consumer_src)
     notification_consumer_env.InstallTarget(consumersdk, 'libnotification_consumer')
     notification_consumer_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer')
-
-consumersdk = notification_consumer_env.StaticLibrary('notification_consumer', notification_consumer_src)
-notification_consumer_env.InstallTarget(consumersdk, 'libnotification_consumer')
-notification_consumer_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer')
 
 # Go to build Unit test
 if target_os == 'linux':

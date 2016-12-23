@@ -22,8 +22,6 @@
 #define _PROVIDER_SCHEDULER_H_
 
 #include <stdio.h>
-#include <pthread.h>
-#include <semaphore.h>
 #include <stdbool.h>
 #include "ocstack.h"
 #include "NSCommon.h"
@@ -32,13 +30,20 @@
 #include "logger.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "octhread.h"
 #include "NSUtil.h"
+
+#ifdef SYSTEM_WINDOWS
+#include "NSSemaphore_windows.h"
+#else
+#include <semaphore.h>
+#endif
 
 extern NSTask* NSHeadMsg[THREAD_COUNT]; // Current MSG;
 extern NSTask* NSTailMsg[THREAD_COUNT]; // Recently MSG;
 
-extern pthread_t NSThread[THREAD_COUNT];
-extern pthread_mutex_t NSMutex[THREAD_COUNT];
+extern oc_thread NSThread[THREAD_COUNT];
+extern oc_mutex NSMutex[THREAD_COUNT];
 extern sem_t NSSemaphore[THREAD_COUNT];
 extern bool NSIsRunning[THREAD_COUNT];
 

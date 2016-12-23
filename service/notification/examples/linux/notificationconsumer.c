@@ -19,13 +19,18 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
-#include "pthread.h"
+#include "octhread.h"
 
 #include "ocstack.h"
 #include "NSCommon.h"
 #include "NSConsumerInterface.h"
+
+#ifdef SYSTEM_WINDOWS
+#include "win_sleep.h"
+#else
+#include <unistd.h>
+#endif
 
 #ifdef WITH_CLOUD
 #include "NSConstants.h"
@@ -49,7 +54,7 @@ NSTopicLL * g_topicLL = NULL;
 FILE* server_fopen(const char *path, const char *mode)
 {
     (void)path;
-    return fopen("oic_ns_provider_db.dat", mode);
+    return fopen("oic_ns_consumer_db.dat", mode);
 }
 
 void printProviderTopicList(NSTopicLL * topics)
@@ -137,7 +142,7 @@ void input(char * buffer)
 int main(void)
 {
     bool isExit = false;
-    pthread_t OCThread = NULL;
+    oc_thread OCThread = NULL;
 
     printf("start Iotivity\n");
 
@@ -156,7 +161,8 @@ int main(void)
     cfg.messageCb = onNotificationPosted;
     cfg.syncInfoCb = onNotificationSync;
 
-    pthread_create(&OCThread, NULL, OCProcessThread, NULL);
+    OCThreadResult_t ret = oc_thread_new(&OCThread, OCProcessThread, NULL);
+    printf("create thread result : %d\n", ret);
 
     printf("start notification consumer service\n");
     while (!isExit)

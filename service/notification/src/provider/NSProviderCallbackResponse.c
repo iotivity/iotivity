@@ -27,14 +27,17 @@
 #include "NSProviderCallbackResponse.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
-#include "cautilinterface.h"
 #include "NSProviderSystem.h"
 #include "oic_time.h"
+
+#ifdef SYSTEM_WINDOWS
+#include "NSSemaphore_windows.h"
+#endif
 
 static NSSubscribeRequestCallback g_subscribeRequestCb = NULL;
 static NSProviderSyncInfoCallback g_syncCb = NULL;
 
-pthread_mutex_t nsInitMutex;
+oc_mutex nsInitMutex;
 
 void NSRegisterSubscribeRequestCb(NSSubscribeRequestCallback subscribeRequestCb)
 {
@@ -74,7 +77,7 @@ void * NSCallbackResponseSchedule(void * ptr)
     while (NSIsRunning[CALLBACK_RESPONSE_SCHEDULER])
     {
         sem_wait(&NSSemaphore[CALLBACK_RESPONSE_SCHEDULER]);
-        pthread_mutex_lock(&NSMutex[CALLBACK_RESPONSE_SCHEDULER]);
+        oc_mutex_lock(NSMutex[CALLBACK_RESPONSE_SCHEDULER]);
 
         if (NSHeadMsg[CALLBACK_RESPONSE_SCHEDULER] != NULL)
         {
@@ -120,7 +123,7 @@ void * NSCallbackResponseSchedule(void * ptr)
             OICFree(node);
         }
 
-        pthread_mutex_unlock(&NSMutex[CALLBACK_RESPONSE_SCHEDULER]);
+        oc_mutex_unlock(NSMutex[CALLBACK_RESPONSE_SCHEDULER]);
     }
 
     NS_LOG(DEBUG, "Destroy NSResponseSchedule");

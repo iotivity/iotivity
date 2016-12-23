@@ -20,8 +20,10 @@
 
 #include "NSProviderScheduler.h"
 
-pthread_t NSThread[THREAD_COUNT];
-pthread_mutex_t NSMutex[THREAD_COUNT];
+#include "octhread.h"
+
+oc_thread NSThread[THREAD_COUNT];
+oc_mutex NSMutex[THREAD_COUNT];
 sem_t NSSemaphore[THREAD_COUNT];
 bool NSIsRunning[THREAD_COUNT] = { false, };
 
@@ -42,7 +44,7 @@ bool NSInitScheduler()
 
     for (i = 0; i < THREAD_COUNT; i++)
     {
-        pthread_mutex_init(&NSMutex[i], NULL);
+        NSMutex[i] = oc_mutex_new();
         NSIsRunning[i] = true;
         sem_init(&(NSSemaphore[i]), 0, 0);
     }
@@ -58,42 +60,42 @@ bool NSStartScheduler()
 
     for (i = 0; i < THREAD_COUNT; i++)
     {
-        pthread_mutex_lock(&NSMutex[i]);
+        oc_mutex_lock(NSMutex[i]);
 
         switch (i)
         {
             case CALLBACK_RESPONSE_SCHEDULER:
             {
                 NS_LOG(DEBUG, "CASE RESPONSE_SCHEDULER :");
-                pthread_create(&NSThread[i], NULL, NSCallbackResponseSchedule, NULL);
+                oc_thread_new(& NSThread[i], NSCallbackResponseSchedule, NULL);
             }
                 break;
 
             case DISCOVERY_SCHEDULER:
             {
                 NS_LOG(DEBUG, "CASE DISCOVERY_SCHEDULER :");
-                pthread_create(&NSThread[i], NULL, NSDiscoverySchedule, NULL);
+                oc_thread_new(& NSThread[i], NSDiscoverySchedule, NULL);
             }
                 break;
 
             case SUBSCRIPTION_SCHEDULER:
             {
                 NS_LOG(DEBUG, "CASE SUBSCRIPTION_SCHEDULER :");
-                pthread_create(&NSThread[i], NULL, NSSubScriptionSchedule, NULL);
+                oc_thread_new(& NSThread[i], NSSubScriptionSchedule, NULL);
             }
                 break;
 
             case NOTIFICATION_SCHEDULER:
             {
                 NS_LOG(DEBUG, "CASE NOTIFICATION_SCHEDULER :");
-                pthread_create(&NSThread[i], NULL, NSNotificationSchedule, NULL);
+                oc_thread_new(& NSThread[i], NSNotificationSchedule, NULL);
             }
                 break;
 
             case TOPIC_SCHEDULER:
             {
                 NS_LOG(DEBUG, "CASE TOPIC_SCHEDULER :");
-                pthread_create(&NSThread[i], NULL, NSTopicSchedule, NULL);
+                oc_thread_new(& NSThread[i], NSTopicSchedule, NULL);
             }
                 break;
             default:
@@ -103,7 +105,7 @@ bool NSStartScheduler()
 
         NSHeadMsg[i] = NSTailMsg[i] = NULL;
 
-        pthread_mutex_unlock(&NSMutex[i]);
+        oc_mutex_unlock(NSMutex[i]);
 
     }
 
@@ -117,16 +119,14 @@ bool NSStopScheduler()
 
     for (i = THREAD_COUNT - 1; i >= 0; --i)
     {
-        int status = -1;
-
         NSIsRunning[i] = false;
 
         sem_post(&(NSSemaphore[i]));
-        pthread_join(NSThread[i], (void **) &status);
+        oc_thread_wait(NSThread[i]);
 
         NSThread[i] = 0;
 
-        pthread_mutex_lock(&NSMutex[i]);
+        oc_mutex_lock(NSMutex[i]);
 
         while (NSHeadMsg[i] != NULL)
         {
@@ -138,8 +138,8 @@ bool NSStopScheduler()
 
         NSTailMsg[i] = NSHeadMsg[i] = NULL;
 
-        pthread_mutex_unlock(&NSMutex[i]);
-        pthread_mutex_destroy(&NSMutex[i]);
+        oc_mutex_unlock(NSMutex[i]);
+        oc_mutex_free(NSMutex[i]);
     }
 
     NS_LOG(DEBUG, "NSStopScheduler - OUT");
@@ -155,7 +155,7 @@ void NSPushQueue(NSSchedulerType schedulerType, NSTaskType taskType, void* data)
         return;
     }
 
-    pthread_mutex_lock(&NSMutex[schedulerType]);
+    oc_mutex_lock(NSMutex[schedulerType]);
 
     NS_LOG(DEBUG, "NSPushQueue - IN");
     NS_LOG_V(DEBUG, "NSSchedulerType = %d", schedulerType);
@@ -189,7 +189,7 @@ void NSPushQueue(NSSchedulerType schedulerType, NSTaskType taskType, void* data)
 
     sem_post(&(NSSemaphore[schedulerType]));
     NS_LOG(DEBUG, "NSPushQueue - OUT");
-    pthread_mutex_unlock(&NSMutex[schedulerType]);
+    oc_mutex_unlock(NSMutex[schedulerType]);
 }
 
 void NSFreeData(NSSchedulerType type, NSTask * task)

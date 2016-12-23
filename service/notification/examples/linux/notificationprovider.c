@@ -21,17 +21,22 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <ctype.h>
 
 #include "NSProviderInterface.h"
 #include "NSCommon.h"
 #include "logger.h"
 #include "octypes.h"
-#include "pthread.h"
+#include "octhread.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
 #include "ocstack.h"
+
+#ifdef SYSTEM_WINDOWS
+#include "win_sleep.h"
+#else
+#include <unistd.h>
+#endif
 
 #define TAG "NSProviderExample"
 
@@ -155,7 +160,7 @@ void input(char * buffer)
 int main()
 {
     int num;
-    pthread_t processThread;
+    oc_thread processThread;
 
     printf("NSStartProvider()\n\n");
 
@@ -169,7 +174,8 @@ int main()
         return 0;
     }
 
-    pthread_create(&processThread, NULL, OCProcessThread, unlink);
+    OCThreadResult_t ret = oc_thread_new(&processThread, OCProcessThread, unlink);
+    printf("create thread result : %d\n", ret);
 
     while (!isExit)
     {

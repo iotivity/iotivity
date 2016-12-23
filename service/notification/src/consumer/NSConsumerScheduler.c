@@ -151,6 +151,7 @@ void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
     {
         if (!queue)
         {
+            usleep(2000);
             queue = *(NSGetMsgHandleQueue());
             continue;
         }

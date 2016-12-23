@@ -21,7 +21,7 @@
 #include "NSProviderTopic.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
-#include <pthread.h>
+#include "octhread.h"
 
 NSResult NSSendTopicUpdation();
 
@@ -440,7 +440,7 @@ void * NSTopicSchedule(void * ptr)
     while (NSIsRunning[TOPIC_SCHEDULER])
     {
         sem_wait(&NSSemaphore[TOPIC_SCHEDULER]);
-        pthread_mutex_lock(&NSMutex[TOPIC_SCHEDULER]);
+        oc_mutex_lock(NSMutex[TOPIC_SCHEDULER]);
 
         if (NSHeadMsg[TOPIC_SCHEDULER] != NULL)
         {
@@ -458,7 +458,7 @@ void * NSTopicSchedule(void * ptr)
                 {
                     NS_LOG(DEBUG, "CASE TASK_SUBSCRIBE_TOPIC : ");
                     NSTopicSyncResult * topicSyncResult = (NSTopicSyncResult *) node->taskData;
-                    pthread_mutex_lock(topicSyncResult->mutex);
+                    oc_mutex_lock(topicSyncResult->mutex);
                     NSCacheElement * newObj = (NSCacheElement *) OICMalloc(sizeof(NSCacheElement));
                     NSCacheTopicSubData * subData =
                             (NSCacheTopicSubData *) topicSyncResult->topicData;
@@ -466,8 +466,8 @@ void * NSTopicSchedule(void * ptr)
                     {
                         OICFree(subData->topicName);
                         OICFree(subData);
-                        pthread_cond_signal(topicSyncResult->condition);
-                        pthread_mutex_unlock(topicSyncResult->mutex);
+                        oc_cond_signal(topicSyncResult->condition);
+                        oc_mutex_unlock(topicSyncResult->mutex);
                     }
                     else
                     {
@@ -489,15 +489,15 @@ void * NSTopicSchedule(void * ptr)
                             OICFree(newObj);
                         }
                     }
-                    pthread_cond_signal(topicSyncResult->condition);
-                    pthread_mutex_unlock(topicSyncResult->mutex);
+                    oc_cond_signal(topicSyncResult->condition);
+                    oc_mutex_unlock(topicSyncResult->mutex);
                 }
                     break;
                 case TASK_UNSUBSCRIBE_TOPIC:
                 {
                     NS_LOG(DEBUG, "CASE TASK_UNSUBSCRIBE_TOPIC : ");
                     NSTopicSyncResult * topicSyncResult = (NSTopicSyncResult *) node->taskData;
-                    pthread_mutex_lock(topicSyncResult->mutex);
+                    oc_mutex_lock(topicSyncResult->mutex);
                     NSCacheTopicSubData * topicSubData =
                             (NSCacheTopicSubData *) topicSyncResult->topicData;
 
@@ -509,8 +509,8 @@ void * NSTopicSchedule(void * ptr)
 
                     OICFree(topicSubData->topicName);
                     OICFree(topicSubData);
-                    pthread_cond_signal(topicSyncResult->condition);
-                    pthread_mutex_unlock(topicSyncResult->mutex);
+                    oc_cond_signal(topicSyncResult->condition);
+                    oc_mutex_unlock(topicSyncResult->mutex);
 
                 }
                     break;
@@ -519,22 +519,22 @@ void * NSTopicSchedule(void * ptr)
                     NS_LOG(DEBUG, "CASE TASK_ADD_TOPIC : ");
                     NSTopicSyncResult * topicSyncResult = (NSTopicSyncResult *) node->taskData;
 
-                    pthread_mutex_lock(topicSyncResult->mutex);
+                    oc_mutex_lock(topicSyncResult->mutex);
                     topicSyncResult->result = NSRegisterTopic(
                             (const char *) topicSyncResult->topicData);
-                    pthread_cond_signal(topicSyncResult->condition);
-                    pthread_mutex_unlock(topicSyncResult->mutex);
+                    oc_cond_signal(topicSyncResult->condition);
+                    oc_mutex_unlock(topicSyncResult->mutex);
                 }
                     break;
                 case TASK_UNREGISTER_TOPIC:
                 {
                     NS_LOG(DEBUG, "CASE_TASK_DELETE_TOPIC : ");
                     NSTopicSyncResult * topicSyncResult = (NSTopicSyncResult *) node->taskData;
-                    pthread_mutex_lock(topicSyncResult->mutex);
+                    oc_mutex_lock(topicSyncResult->mutex);
                     topicSyncResult->result = NSUnregisterTopic(
                             (const char *) topicSyncResult->topicData);
-                    pthread_cond_signal(topicSyncResult->condition);
-                    pthread_mutex_unlock(topicSyncResult->mutex);
+                    oc_cond_signal(topicSyncResult->condition);
+                    oc_mutex_unlock(topicSyncResult->mutex);
                 }
                     break;
                 case TASK_POST_TOPIC:
@@ -548,23 +548,23 @@ void * NSTopicSchedule(void * ptr)
                 {
                     NS_LOG(DEBUG, "TASK_GET_TOPICS : ");
                     NSTopicSync * topicSync = (NSTopicSync *) node->taskData;
-                    pthread_mutex_lock(topicSync->mutex);
+                    oc_mutex_lock(topicSync->mutex);
                     NSTopicLL * topics = NSProviderGetTopicsCacheData(registeredTopicList);
                     topicSync->topics = topics;
-                    pthread_cond_signal(topicSync->condition);
-                    pthread_mutex_unlock(topicSync->mutex);
+                    oc_cond_signal(topicSync->condition);
+                    oc_mutex_unlock(topicSync->mutex);
                 }
                     break;
                 case TAST_GET_CONSUMER_TOPICS:
                 {
                     NS_LOG(DEBUG, "TASK_GET_CONSUMER_TOPICS : ");
                     NSTopicSync * topicSync = (NSTopicSync *) node->taskData;
-                    pthread_mutex_lock(topicSync->mutex);
+                    oc_mutex_lock(topicSync->mutex);
                     NSTopicLL * topics = NSProviderGetConsumerTopicsCacheData(registeredTopicList,
                             consumerTopicList, topicSync->consumerId);
                     topicSync->topics = topics;
-                    pthread_cond_signal(topicSync->condition);
-                    pthread_mutex_unlock(topicSync->mutex);
+                    oc_cond_signal(topicSync->condition);
+                    oc_mutex_unlock(topicSync->mutex);
                 }
                     break;
                 default:
@@ -574,7 +574,7 @@ void * NSTopicSchedule(void * ptr)
             OICFree(node);
         }
 
-        pthread_mutex_unlock(&NSMutex[TOPIC_SCHEDULER]);
+        oc_mutex_unlock(NSMutex[TOPIC_SCHEDULER]);
     }
 
     NS_LOG(DEBUG, "Destroy NSTopicSchedule");

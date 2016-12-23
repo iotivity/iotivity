@@ -21,6 +21,7 @@
 #include "NSProviderMemoryCache.h"
 #include <string.h>
 
+
 #define NS_PROVIDER_DELETE_REGISTERED_TOPIC_DATA(it, topicData, newObj) \
     { \
         if (it) \
@@ -29,25 +30,25 @@
             OICFree(topicData->topicName); \
             OICFree(topicData); \
             OICFree(newObj); \
-            pthread_mutex_unlock(&NSCacheMutex); \
+            oc_mutex_unlock(NSCacheMutex); \
             return NS_FAIL; \
         } \
     }
 
 NSCacheList * NSProviderStorageCreate()
 {
-    pthread_mutex_lock(&NSCacheMutex);
+    oc_mutex_lock(NSCacheMutex);
     NSCacheList * newList = (NSCacheList *) OICMalloc(sizeof(NSCacheList));
 
     if (!newList)
     {
-        pthread_mutex_unlock(&NSCacheMutex);
+        oc_mutex_unlock(NSCacheMutex);
         return NULL;
     }
 
     newList->head = newList->tail = NULL;
 
-    pthread_mutex_unlock(&NSCacheMutex);
+    oc_mutex_unlock(NSCacheMutex);
     NS_LOG(DEBUG, "NSCacheCreate");
 
     return newList;
@@ -55,7 +56,7 @@ NSCacheList * NSProviderStorageCreate()
 
 NSCacheElement * NSProviderStorageRead(NSCacheList * list, const char * findId)
 {
-    pthread_mutex_lock(&NSCacheMutex);
+    oc_mutex_lock(NSCacheMutex);
 
     NS_LOG(DEBUG, "NSCacheRead - IN");
 
@@ -72,7 +73,7 @@ NSCacheElement * NSProviderStorageRead(NSCacheList * list, const char * findId)
         if (NSProviderCompareIdCacheData(type, iter->data, findId))
         {
             NS_LOG(DEBUG, "Found in Cache");
-            pthread_mutex_unlock(&NSCacheMutex);
+            oc_mutex_unlock(NSCacheMutex);
             return iter;
         }
 
@@ -81,21 +82,21 @@ NSCacheElement * NSProviderStorageRead(NSCacheList * list, const char * findId)
 
     NS_LOG(DEBUG, "Not found in Cache");
     NS_LOG(DEBUG, "NSCacheRead - OUT");
-    pthread_mutex_unlock(&NSCacheMutex);
+    oc_mutex_unlock(NSCacheMutex);
 
     return NULL;
 }
 
 NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, char * id, bool state)
 {
-    pthread_mutex_lock(&NSCacheMutex);
+    oc_mutex_lock(NSCacheMutex);
 
     NS_LOG(DEBUG, "NSCacheUpdateSubScriptionState - IN");
 
     if (id == NULL)
     {
         NS_LOG(DEBUG, "id is NULL");
-        pthread_mutex_unlock(&NSCacheMutex);
+        oc_mutex_unlock(NSCacheMutex);
         return NS_ERROR;
     }
 
@@ -120,7 +121,7 @@ NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, char * id, bool stat
             itData->isWhite = state;
 
             NS_LOG(DEBUG, "Update Data - OUT");
-            pthread_mutex_unlock(&NSCacheMutex);
+            oc_mutex_unlock(NSCacheMutex);
             return NS_OK;
         }
     }
@@ -130,13 +131,13 @@ NSResult NSCacheUpdateSubScriptionState(NSCacheList * list, char * id, bool stat
     }
 
     NS_LOG(DEBUG, "NSCacheUpdateSubScriptionState - OUT");
-    pthread_mutex_unlock(&NSCacheMutex);
+    oc_mutex_unlock(NSCacheMutex);
     return NS_ERROR;
 }
 
 NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj)
 {
-    pthread_mutex_lock(&NSCacheMutex);
+    oc_mutex_lock(NSCacheMutex);
 
     NSCacheType type = list->cacheType;
 
@@ -145,7 +146,7 @@ NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj)
     if (newObj == NULL)
     {
         NS_LOG(DEBUG, "newObj is NULL - IN");
-        pthread_mutex_unlock(&NSCacheMutex);
+        oc_mutex_unlock(NSCacheMutex);
         return NS_ERROR;
     }
 
@@ -202,7 +203,7 @@ NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj)
                 NS_LOG(DEBUG, "Update Data - OUT");
                 OICFree(subData);
                 OICFree(newObj);
-                pthread_mutex_unlock(&NSCacheMutex);
+                oc_mutex_unlock(NSCacheMutex);
                 return NS_OK;
             }
         }
@@ -240,13 +241,13 @@ NSResult NSProviderStorageWrite(NSCacheList * list, NSCacheElement * newObj)
     {
         NS_LOG(DEBUG, "list->head is NULL, Insert First Data");
         list->head = list->tail = newObj;
-        pthread_mutex_unlock(&NSCacheMutex);
+        oc_mutex_unlock(NSCacheMutex);
         return NS_OK;
     }
 
     list->tail = list->tail->next = newObj;
     NS_LOG(DEBUG, "list->head is not NULL");
-    pthread_mutex_unlock(&NSCacheMutex);
+    oc_mutex_unlock(NSCacheMutex);
     return NS_OK;
 }
 
@@ -411,7 +412,7 @@ NSResult NSProviderDeleteCacheData(NSCacheType type, void * data)
 
 NSResult NSProviderStorageDelete(NSCacheList * list, const char * delId)
 {
-    pthread_mutex_lock(&NSCacheMutex);
+    oc_mutex_lock(NSCacheMutex);
     NSCacheElement * prev = list->head;
     NSCacheElement * del = list->head;
 
@@ -420,7 +421,7 @@ NSResult NSProviderStorageDelete(NSCacheList * list, const char * delId)
     if (!del)
     {
         NS_LOG(DEBUG, "list head is NULL");
-        pthread_mutex_unlock(&NSCacheMutex);
+        oc_mutex_unlock(NSCacheMutex);
         return NS_FAIL;
     }
 
@@ -436,7 +437,7 @@ NSResult NSProviderStorageDelete(NSCacheList * list, const char * delId)
             list->head = del->next;
             NSProviderDeleteCacheData(type, del->data);
             OICFree(del);
-            pthread_mutex_unlock(&NSCacheMutex);
+            oc_mutex_unlock(NSCacheMutex);
             return NS_OK;
         }
     }
@@ -455,7 +456,7 @@ NSResult NSProviderStorageDelete(NSCacheList * list, const char * delId)
             prev->next = del->next;
             NSProviderDeleteCacheData(type, del->data);
             OICFree(del);
-            pthread_mutex_unlock(&NSCacheMutex);
+            oc_mutex_unlock(NSCacheMutex);
             return NS_OK;
         }
 
@@ -463,20 +464,20 @@ NSResult NSProviderStorageDelete(NSCacheList * list, const char * delId)
         del = del->next;
     }
 
-    pthread_mutex_unlock(&NSCacheMutex);
+    oc_mutex_unlock(NSCacheMutex);
     return NS_FAIL;
 }
 
 NSTopicLL * NSProviderGetTopicsCacheData(NSCacheList * regTopicList)
 {
     NS_LOG(DEBUG, "NSProviderGetTopicsCache - IN");
-    pthread_mutex_lock(&NSCacheMutex);
+    oc_mutex_lock(NSCacheMutex);
 
     NSCacheElement * iter = regTopicList->head;
 
     if (!iter)
     {
-        pthread_mutex_unlock(&NSCacheMutex);
+        oc_mutex_unlock(NSCacheMutex);
         return NULL;
     }
 
@@ -491,7 +492,7 @@ NSTopicLL * NSProviderGetTopicsCacheData(NSCacheList * regTopicList)
 
         if (!newTopic)
         {
-            pthread_mutex_unlock(&NSCacheMutex);
+            oc_mutex_unlock(NSCacheMutex);
             return NULL;
         }
 
@@ -512,7 +513,7 @@ NSTopicLL * NSProviderGetTopicsCacheData(NSCacheList * regTopicList)
         iter = iter->next;
     }
 
-    pthread_mutex_unlock(&NSCacheMutex);
+    oc_mutex_unlock(NSCacheMutex);
     NS_LOG(DEBUG, "NSProviderGetTopicsCache - OUT");
 
     return topics;
@@ -523,12 +524,12 @@ NSTopicLL * NSProviderGetConsumerTopicsCacheData(NSCacheList * regTopicList,
 {
     NS_LOG(DEBUG, "NSProviderGetConsumerTopicsCacheData - IN");
 
-    pthread_mutex_lock(&NSCacheMutex);
+    oc_mutex_lock(NSCacheMutex);
     NSTopicLL * topics = NSProviderGetTopicsCacheData(regTopicList);
 
     if (!topics)
     {
-        pthread_mutex_unlock(&NSCacheMutex);
+        oc_mutex_unlock(NSCacheMutex);
         return NULL;
     }
 
@@ -561,7 +562,7 @@ NSTopicLL * NSProviderGetConsumerTopicsCacheData(NSCacheList * regTopicList,
     }
 
     conTopicList->cacheType = NS_PROVIDER_CACHE_CONSUMER_TOPIC_NAME;
-    pthread_mutex_unlock(&NSCacheMutex);
+    oc_mutex_unlock(NSCacheMutex);
     NS_LOG(DEBUG, "NSProviderGetConsumerTopics - OUT");
 
     return topics;
@@ -569,11 +570,11 @@ NSTopicLL * NSProviderGetConsumerTopicsCacheData(NSCacheList * regTopicList,
 
 bool NSProviderIsTopicSubScribed(NSCacheElement * conTopicList, char * cId, char * topicName)
 {
-    pthread_mutex_lock(&NSCacheMutex);
+    oc_mutex_lock(NSCacheMutex);
 
     if (!conTopicList || !cId || !topicName)
     {
-        pthread_mutex_unlock(&NSCacheMutex);
+        oc_mutex_unlock(NSCacheMutex);
         return false;
     }
 
@@ -585,28 +586,28 @@ bool NSProviderIsTopicSubScribed(NSCacheElement * conTopicList, char * cId, char
 
         if ( (strcmp(curr->id, cId) == 0) && (strcmp(curr->topicName, topicName) == 0) )
         {
-            pthread_mutex_unlock(&NSCacheMutex);
+            oc_mutex_unlock(NSCacheMutex);
             return true;
         }
 
         iter = iter->next;
     }
 
-    pthread_mutex_unlock(&NSCacheMutex);
+    oc_mutex_unlock(NSCacheMutex);
     return false;
 }
 
 NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,
         NSCacheTopicSubData * topicSubData)
 {
-    pthread_mutex_lock(&NSCacheMutex);
+    oc_mutex_lock(NSCacheMutex);
 
     char * cId = topicSubData->id;
     char * topicName = topicSubData->topicName;
 
     if (!conTopicList || !cId || !topicName)
     {
-        pthread_mutex_unlock(&NSCacheMutex);
+        oc_mutex_unlock(NSCacheMutex);
         return NS_ERROR;
     }
 
@@ -618,7 +619,7 @@ NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,
     if (!del)
     {
         NS_LOG(DEBUG, "list head is NULL");
-        pthread_mutex_unlock(&NSCacheMutex);
+        oc_mutex_unlock(NSCacheMutex);
         return NS_FAIL;
     }
 
@@ -641,7 +642,7 @@ NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,
             conTopicList->head = del->next;
             NSProviderDeleteCacheData(type, del->data);
             OICFree(del);
-            pthread_mutex_unlock(&NSCacheMutex);
+            oc_mutex_unlock(NSCacheMutex);
             return NS_OK;
         }
     }
@@ -663,7 +664,7 @@ NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,
             prev->next = del->next;
             NSProviderDeleteCacheData(type, del->data);
             OICFree(del);
-            pthread_mutex_unlock(&NSCacheMutex);
+            oc_mutex_unlock(NSCacheMutex);
             return NS_OK;
         }
 
@@ -671,6 +672,6 @@ NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,
         del = del->next;
     }
 
-    pthread_mutex_unlock(&NSCacheMutex);
+    oc_mutex_unlock(NSCacheMutex);
     return NS_FAIL;
 }

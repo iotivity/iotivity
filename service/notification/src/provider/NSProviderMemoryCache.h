@@ -21,7 +21,6 @@
 #ifndef _NS_PROVIDER_CACHEADAPTER__H_
 #define _NS_PROVIDER_CACHEADAPTER__H_
 
-#include <pthread.h>
 #include <stdbool.h>
 
 #include "NSCommon.h"
@@ -29,6 +28,7 @@
 #include "NSStructs.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "octhread.h"
 #include "NSUtil.h"
 
 NSCacheList * NSProviderStorageCreate();
@@ -57,7 +57,6 @@ bool NSProviderIsTopicSubScribed(NSCacheElement * conTopicList, char * cId, char
 NSResult NSProviderDeleteConsumerTopic(NSCacheList * conTopicList,
         NSCacheTopicSubData * topicSubData);
 
-pthread_mutex_t NSCacheMutex;
-pthread_mutexattr_t NSCacheMutexAttr;
+oc_mutex NSCacheMutex;
 
 #endif /* _NS_PROVIDER_CACHEADAPTER__H_ */

@@ -20,6 +20,10 @@
 
 #include "NSProviderDiscovery.h"
 
+#ifdef SYSTEM_WINDOWS
+#include "NSSemaphore_windows.h"
+#endif
+
 NSResult NSStartPresence()
 {
     NS_LOG(DEBUG, "NSStartPresence()");
@@ -58,7 +62,7 @@ void * NSDiscoverySchedule(void * ptr)
     while (NSIsRunning[DISCOVERY_SCHEDULER])
     {
         sem_wait(&NSSemaphore[DISCOVERY_SCHEDULER]);
-        pthread_mutex_lock(&NSMutex[DISCOVERY_SCHEDULER]);
+        oc_mutex_lock(NSMutex[DISCOVERY_SCHEDULER]);
 
         if (NSHeadMsg[DISCOVERY_SCHEDULER] != NULL)
         {
@@ -92,7 +96,7 @@ void * NSDiscoverySchedule(void * ptr)
             OICFree(node);
         }
 
-        pthread_mutex_unlock(&NSMutex[DISCOVERY_SCHEDULER]);
+        oc_mutex_unlock(NSMutex[DISCOVERY_SCHEDULER]);
     }
 
     NS_LOG(DEBUG, "Destroy NSDiscoverySchedule");

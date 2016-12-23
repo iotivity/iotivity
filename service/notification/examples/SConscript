@@ -4,9 +4,7 @@
 Import('env')
 
 target_os = env.get('TARGET_OS')
-if target_os == 'linux':
+if target_os in ['linux', 'windows', 'winrt', 'msys_nt']:
     SConscript('linux/SConscript')
 elif target_os == 'android':
     SConscript('android/SConscript')
-elif target_os == 'windows':
-    SConscript('windows/SConscript')

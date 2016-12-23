@@ -390,7 +390,7 @@ void * NSSubScriptionSchedule(void *ptr)
     while (NSIsRunning[SUBSCRIPTION_SCHEDULER])
     {
         sem_wait(&NSSemaphore[SUBSCRIPTION_SCHEDULER]);
-        pthread_mutex_lock(&NSMutex[SUBSCRIPTION_SCHEDULER]);
+        oc_mutex_lock(NSMutex[SUBSCRIPTION_SCHEDULER]);
 
         if (NSHeadMsg[SUBSCRIPTION_SCHEDULER] != NULL)
         {
@@ -454,7 +454,7 @@ void * NSSubScriptionSchedule(void *ptr)
             OICFree(node);
         }
 
-        pthread_mutex_unlock(&NSMutex[SUBSCRIPTION_SCHEDULER]);
+        oc_mutex_unlock(NSMutex[SUBSCRIPTION_SCHEDULER]);
 
     }
     NS_LOG(INFO, "Destroy NSSubScriptionSchedule");

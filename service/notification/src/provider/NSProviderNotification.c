@@ -329,7 +329,7 @@ void * NSNotificationSchedule(void *ptr)
     while (NSIsRunning[NOTIFICATION_SCHEDULER])
     {
         sem_wait(&NSSemaphore[NOTIFICATION_SCHEDULER]);
-        pthread_mutex_lock(&NSMutex[NOTIFICATION_SCHEDULER]);
+        oc_mutex_lock(NSMutex[NOTIFICATION_SCHEDULER]);
 
         if (NSHeadMsg[NOTIFICATION_SCHEDULER] != NULL)
         {
@@ -363,7 +363,7 @@ void * NSNotificationSchedule(void *ptr)
             OICFree(node);
         }
 
-        pthread_mutex_unlock(&NSMutex[NOTIFICATION_SCHEDULER]);
+        oc_mutex_unlock(NSMutex[NOTIFICATION_SCHEDULER]);
     }
 
     NS_LOG(INFO, "Destroy NSNotificationSchedule");
