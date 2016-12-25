@@ -112,11 +112,12 @@ if target_os == 'android':
 if target_os == 'android':
 	notification_consumer_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libnotification_consumer.so'])
 
-notification_provider_src = [
-	env.Glob('src/provider/*.c'), env.Glob('src/common/*.c')]
-notification_consumer_src = [
-	env.Glob('src/consumer/*.c'), env.Glob('src/common/*.c')]
+notification_common_obj = notification_provider_env.SharedObject(env.Glob('src/common/*.c'))
 
+notification_provider_src = [
+	env.Glob('src/provider/*.c'), notification_common_obj]
+notification_consumer_src = [
+	env.Glob('src/consumer/*.c'), notification_common_obj]
 
 providersdk = notification_provider_env.SharedLibrary('notification_provider', notification_provider_src)
 notification_provider_env.InstallTarget(providersdk, 'libnotification_provider')
