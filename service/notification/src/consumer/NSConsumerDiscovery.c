@@ -22,6 +22,7 @@
 
 #include <string.h>
 #include "NSCommon.h"
+#include "NSUtil.h"
 #include "NSConsumerCommon.h"
 #include "NSConstants.h"
 #include "ocpayload.h"

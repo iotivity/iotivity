@@ -111,15 +111,17 @@ if target_os == 'android':
     notification_provider_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libnotification_provider.so'])
     notification_consumer_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libnotification_consumer.so'])
 
-notification_consumer_src = [
-    env.Glob('src/consumer/*.c'), env.Glob('src/common/*.c')]
-notification_consumer_env.UserInstallTargetHeader('include/NSConsumerInterface.h',\
-    'service/notification', 'NSConsumerInterface.h')
+notification_common_obj = notification_provider_env.SharedObject(env.Glob('src/common/*.c'))
 
 notification_provider_src = [
-    env.Glob('src/provider/*.c'), env.Glob('src/common/*.c')]
+    env.Glob('src/provider/*.c'), notification_common_obj]
+notification_consumer_src = [
+    env.Glob('src/consumer/*.c'), notification_common_obj]
+    
 notification_provider_env.UserInstallTargetHeader('include/NSProviderInterface.h',\
     'service/notification', 'NSProviderInterface.h')
+notification_consumer_env.UserInstallTargetHeader('include/NSConsumerInterface.h',\
+    'service/notification', 'NSConsumerInterface.h')
 
 consumersdk = notification_consumer_env.StaticLibrary('notification_consumer', notification_consumer_src)
 notification_consumer_env.InstallTarget(consumersdk, 'libnotification_consumer')
