@@ -302,7 +302,7 @@ TEST_F(SRPTest, SRPSaveOwnCertChainTest)
 {
     int result;
     uint16_t credId;
-    OicSecCert_t cert;
+    OicSecKey_t cert;
     OicSecKey_t key;
 
     cert.data = certData;
@@ -334,7 +334,7 @@ TEST_F(SRPTest, SRPSaveOwnCertChainTestNullCertData)
 {
     int result;
     uint16_t credId;
-    OicSecCert_t cert;
+    OicSecKey_t cert;
     OicSecKey_t key;
 
     cert.data = NULL;
@@ -351,7 +351,7 @@ TEST_F(SRPTest, SRPSaveOwnCertChainTestNullKey)
 {
     int result;
     uint16_t credId;
-    OicSecCert_t cert;
+    OicSecKey_t cert;
 
     cert.data = certData;
     cert.len = sizeof(certData);
@@ -365,7 +365,7 @@ TEST_F(SRPTest, SRPSaveOwnCertChainTestNullKeyData)
 {
     int result;
     uint16_t credId;
-    OicSecCert_t cert;
+    OicSecKey_t cert;
     OicSecKey_t key;
 
     cert.data = certData;
@@ -381,7 +381,7 @@ TEST_F(SRPTest, SRPSaveOwnCertChainTestNullKeyData)
 TEST_F(SRPTest, SRPSaveOwnCertChainTestNullCredId)
 {
     int result;
-    OicSecCert_t cert;
+    OicSecKey_t cert;
     OicSecKey_t key;
 
     cert.data = certData;

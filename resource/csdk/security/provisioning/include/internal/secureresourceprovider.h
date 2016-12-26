@@ -111,7 +111,7 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
  * @param[out] credId CredId of saved trust certificate chain in Cred of SVR.
  * @return  OC_STACK_OK in case of success and other value otherwise.
  */
-OCStackResult SRPSaveOwnCertChain(OicSecCert_t * cert, OicSecKey_t * key, uint16_t *credId);
+OCStackResult SRPSaveOwnCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16_t *credId);
 
 /**
  * function to register callback, for getting notification for TrustCertChain change.

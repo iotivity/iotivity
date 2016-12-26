@@ -838,9 +838,11 @@ static OCStackResult PostSubOwnerCredential(OTMContext_t* motCtx)
         newCredential.privateData.data = "";
         newCredential.privateData.len = 0;
         newCredential.privateData.encoding = ownerCredential->privateData.encoding;
-#ifdef __WITH_X509__
+
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         newCredential.publicData.data = NULL;
         newCredential.publicData.len = 0;
+        newCredential.publicData.encoding = ownerCredential->publicData.encoding;
 #endif
         //Send owner credential to new device : POST /oic/sec/cred [ owner credential ]
         if (OC_STACK_OK != CredToCBORPayload(&newCredential, &secPayload->securityData,

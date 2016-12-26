@@ -455,7 +455,7 @@ struct OicSecCred
     //OicSecRole_t        *roleIds;       // 2:R:M:N:oic.sec.role
     OicSecCredType_t    credType;       // 3:R:S:Y:oic.sec.credtype
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
-    OicSecCert_t        publicData;     // own cerificate chain
+    OicSecKey_t         publicData;     // own cerificate chain
     char            *credUsage;            // 4:R:S:N:String
     OicSecOpt_t        optionalData;   // CA's cerificate chain
 #endif /* __WITH_DTLS__  or __WITH_TLS__*/

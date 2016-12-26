@@ -609,7 +609,7 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
 }
 
 
-OCStackResult SRPSaveOwnCertChain(OicSecCert_t * cert, OicSecKey_t * key, uint16_t *credId)
+OCStackResult SRPSaveOwnCertChain(OicSecKey_t * cert, OicSecKey_t * key, uint16_t *credId)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(TAG, cert, ERROR,  OC_STACK_INVALID_PARAM);
@@ -636,11 +636,12 @@ OCStackResult SRPSaveOwnCertChain(OicSecCert_t * cert, OicSecKey_t * key, uint16
 
     cred->credType = SIGNED_ASYMMETRIC_KEY;
 
-    OicSecCert_t *publicData = &cred->publicData;
+    OicSecKey_t *publicData = &cred->publicData;
     publicData->data = (uint8_t *)OICCalloc(1, cert->len);
     VERIFY_NON_NULL_RET(TAG, publicData->data, ERROR, OC_STACK_NO_MEMORY);
     memcpy(publicData->data, cert->data, cert->len);
     publicData->len = cert->len;
+    publicData->encoding = cert->encoding;
 
     OicSecKey_t *privateData = &cred->privateData;
     privateData->data = (uint8_t *)OICCalloc(1, key->len);
