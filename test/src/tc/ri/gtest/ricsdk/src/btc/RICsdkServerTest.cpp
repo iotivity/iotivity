@@ -294,7 +294,8 @@ TEST_F(RICsdkServerTest_btc, OCSetDeviceInfo_SRC_FSV_P)
 
     try
     {
-        m_result = OCSetDeviceInfo(m_pRICsdkHelper->getDeviceInfo());
+        IOTIVITYTEST_LOG(DEBUG, "got deviceinfo");
+        m_result = OCSetDeviceInfo(m_pRICsdkHelper->s_deviceInfo);
         ASSERT_EQ(OC_STACK_OK,m_result) << "OCSetDeviceInfo failed. Actual result : " << CommonUtil::s_OCStackResultString.at(m_result);
     }
     catch(exception &e)

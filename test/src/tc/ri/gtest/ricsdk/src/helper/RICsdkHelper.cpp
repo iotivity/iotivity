@@ -41,6 +41,7 @@ int64_t RICsdkHelper::s_temp = 10;
 char* RICsdkHelper::s_units = "C";
 int64_t RICsdkHelper::s_hour = 5;
 bool RICsdkHelper::s_isBtc = false;
+OCDeviceInfo RICsdkHelper::s_deviceInfo;
 
 RICsdkHelper::RICsdkHelper()
 {
@@ -54,6 +55,11 @@ RICsdkHelper::RICsdkHelper()
     s_remoteAddr = nullptr;
     m_targetPayload = nullptr;
     s_isResourceFound = false;
+
+    duplicateString(&s_deviceInfo.deviceName, DEVICE_NAME);
+    duplicateString(&s_deviceInfo.specVersion, SPEC_VERSION);
+    OCResourcePayloadAddStringLL(&s_deviceInfo.dataModelVersions, DATA_MODEL_VERSION);
+    OCResourcePayloadAddStringLL(&s_deviceInfo.types, DEVICE_TYPE);
 }
 
 RICsdkHelper::~RICsdkHelper()
@@ -137,6 +143,8 @@ OCDeviceInfo RICsdkHelper::getDeviceInfo()
 
     duplicateString(&deviceInfo.deviceName, DEVICE_NAME);
     duplicateString(&deviceInfo.specVersion, SPEC_VERSION);
+    OCResourcePayloadAddStringLL(&deviceInfo.dataModelVersions, DATA_MODEL_VERSION);
+    OCResourcePayloadAddStringLL(&deviceInfo.types, DEVICE_TYPE);
 
     return deviceInfo;
 }

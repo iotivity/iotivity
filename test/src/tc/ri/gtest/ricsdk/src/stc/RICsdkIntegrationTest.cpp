@@ -320,7 +320,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoNON_CV_P)
 
     try
     {
-        m_result = OCSetDeviceInfo(m_pRICsdkHelper->getDeviceInfo());
+        m_result = OCSetDeviceInfo(m_pRICsdkHelper->s_deviceInfo);
         ASSERT_EQ(OC_STACK_OK,m_result) << "OCSetDeviceInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
     }
     catch(exception &e)
@@ -382,7 +382,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoCON_CV_P)
 
     try
     {
-        m_result = OCSetDeviceInfo(m_pRICsdkHelper->getDeviceInfo());
+        m_result = OCSetDeviceInfo(m_pRICsdkHelper->s_deviceInfo);
         ASSERT_EQ(OC_STACK_OK,m_result) << "OCSetDeviceInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
     }
     catch(exception &e)
@@ -445,7 +445,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoPayloadCheckNON_SQV_P)
 
     try
     {
-        m_result = OCSetDeviceInfo(m_pRICsdkHelper->getDeviceInfo());
+        m_result = OCSetDeviceInfo(m_pRICsdkHelper->s_deviceInfo);
         ASSERT_EQ(OC_STACK_OK,m_result) << "OCSetDeviceInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
     }
     catch(exception &e)
@@ -508,7 +508,7 @@ TEST_F(RICsdkIntegrationTest_stc, SetAndGetDeviceInfoPayloadCheckCON_SQV_P)
 
     try
     {
-        m_result = OCSetDeviceInfo(m_pRICsdkHelper->getDeviceInfo());
+        m_result = OCSetDeviceInfo(m_pRICsdkHelper->s_deviceInfo);
         ASSERT_EQ(OC_STACK_OK,m_result) << "OCSetDeviceInfo failed. Actual m_result : " << CommonUtil::s_OCStackResultString.at(m_result);
     }
     catch(exception &e)

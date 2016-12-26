@@ -68,8 +68,9 @@ namespace PH = std::placeholders;
 
 //Set of strings for each of platform info fields
 #define DEVICE_NAME "TestName"
-#define SPEC_VERSION "myDeviceSpecVersion"
-#define DATA_MODEL_VERSION "myDeviceModelVersions"
+#define SPEC_VERSION "core.1.1.0"
+#define DATA_MODEL_VERSION "res.1.1.0"
+#define DEVICE_TYPE "oic.d.tv"
 
 //Context value set
 #define DEFAULT_CONTEXT_VALUE 0x99
@@ -165,6 +166,7 @@ private:
     OCPayload* m_targetPayload;
 
 public:
+    static OCDeviceInfo s_deviceInfo;
     static bool s_quitFlag;
     static bool s_isCallback;
     static bool s_isPayloadCorrect;
@@ -173,7 +175,6 @@ public:
     static bool s_isResourceFound;
     static OCEntityHandlerResult s_responseErrorCode;
     static int s_unicastDiscovery;
-
     static char s_szQueryUri[100];
     static char s_discoveryAddr[100];
     static string s_coapQuery;
@@ -182,8 +183,8 @@ public:
     static int64_t s_temp;
     static char* s_units;
     static int64_t s_hour;
-
     static bool s_isBtc;
+
     OCStackResult m_result;
 
 public:
