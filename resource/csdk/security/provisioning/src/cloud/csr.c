@@ -346,17 +346,11 @@ static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCCli
             OIC_ENCODING_DER
         };
 
-        OicSecCert_t cert1 =
-        {
-            cert.data,
-            cert.len,
-        };
-
         uint16_t credId;
-        result = SRPSaveOwnCertChain(&cert1, &key, &credId);
+        result = SRPSaveOwnCertChain(&cert, &key, &credId);
         if (result != OC_STACK_OK)
         {
-            OIC_LOG(ERROR, TAG, "Cann't add cert");
+            OIC_LOG(ERROR, TAG, "Can't add cert");
         }
     }
 
@@ -365,7 +359,7 @@ static OCStackResult HandleCertificateIssueRequest(void *ctx, void **data, OCCli
     if (!OCRepPayloadGetPropPubDataType((OCRepPayload *)response->payload,
                                    OC_RSRVD_CACERT, &caCert))
     {
-        OIC_LOG_V(ERROR, TAG, "Cann't get: %s", OC_RSRVD_CACERT);
+        OIC_LOG_V(ERROR, TAG, "Can't get: %s", OC_RSRVD_CACERT);
         result = OC_STACK_ERROR;
     }
     else

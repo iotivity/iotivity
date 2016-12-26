@@ -109,7 +109,7 @@ bool IsValidCredentialAccessForSubOwner(const OicUuid_t* uuid, const uint8_t *cb
 
  */
 OicSecCred_t * GenerateCredential(const OicUuid_t* subject, OicSecCredType_t credType,
-                     const OicSecCert_t * publicData, const OicSecKey_t * privateData,
+                     const OicSecKey_t * publicData, const OicSecKey_t * privateData,
                      const OicUuid_t * rownerID, const OicUuid_t * eownerID);
 
 /**

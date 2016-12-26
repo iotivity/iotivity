@@ -1408,6 +1408,7 @@ static OCStackResult PostOwnerCredential(OTMContext_t* otmCtx)
 
         newCredential.publicData.data = NULL;
         newCredential.publicData.len = 0;
+        newCredential.publicData.encoding = ownerCredential->publicData.encoding;
 
         int secureFlag = 0;
         //Send owner credential to new device : POST /oic/sec/cred [ owner credential ]
