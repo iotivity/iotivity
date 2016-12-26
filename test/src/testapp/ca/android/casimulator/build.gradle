@@ -57,7 +57,7 @@ android {
         main {
             manifest.srcFile 'src/main/AndroidManifest.xml'
             jniLibs.srcDir 'libs'
-            jni.srcDirs = [] //disable automatic ndk-build call            
+            jni.srcDirs = [] //disable automatic ndk-build call
         }
     }
     productFlavors {
@@ -97,5 +97,5 @@ tasks.withType(com.android.build.gradle.tasks.PackageApplication) { pkgTask ->
 task buildNative(type: Exec) {
         def ndkBuild = new File("${ANDROID_NDK}", 'ndk-build')
         commandLine ndkBuild, "-C", file("src/main"), "-B", "-j", Runtime.runtime.availableProcessors(),
-                              "APP_ABI=${TARGET_ARCH}", "APP_OPTIM=${RELEASE}"
+                              "APP_ABI=${TARGET_ARCH}", "APP_OPTIM=${RELEASE}", "DEVICE_ARCH=${TARGET_ARCH}"
 }

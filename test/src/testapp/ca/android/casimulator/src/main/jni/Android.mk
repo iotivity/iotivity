@@ -1,5 +1,5 @@
 APP_PATH := $(call my-dir)
-PROJECT_LIB_PATH	= ../../../../../../../extlibs/android/ca/armeabi
+PROJECT_LIB_PATH    = ../../../../../../../extlibs/android/ca/$(DEVICE_ARCH)
 
 include $(CLEAR_VARS)
 LOCAL_PATH = $(PROJECT_LIB_PATH)

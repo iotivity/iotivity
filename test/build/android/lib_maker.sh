@@ -151,7 +151,7 @@ hue_bundle_mvn_build()
 		else
 			echo "Fail to execute $hueCompileCommand at $hueSampleDir...!!!"
 		fi
-		
+
 		# Go to build directory
 		cd $currentDir
 	fi
