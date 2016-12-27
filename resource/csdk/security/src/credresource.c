@@ -438,7 +438,7 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
         if (SIGNED_ASYMMETRIC_KEY == cred->credType && cred->optionalData.data)
         {
             CborEncoder optionalMap;
-            const size_t optionalMapSize = 2;
+            const size_t optionalMapSize = 3;
 
             cborEncoderResult = cbor_encode_text_string(&credMap, OIC_JSON_OPTDATA_NAME,
                 strlen(OIC_JSON_OPTDATA_NAME));
@@ -517,6 +517,12 @@ OCStackResult CredToCBORPayload(const OicSecCred_t *credS, uint8_t **cborPayload
                 OIC_LOG(ERROR, TAG, "Unknown encoding type for optional data.");
                 VERIFY_CBOR_SUCCESS(TAG, CborErrorUnknownType, "Failed Adding optional Encoding Value.");
             }
+
+            cborEncoderResult = cbor_encode_text_string(&optionalMap, OIC_JSON_REVOCATION_STATUS_NAME,
+                strlen(OIC_JSON_REVOCATION_STATUS_NAME));
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional revstat Tag.");
+            cborEncoderResult = cbor_encode_boolean(&optionalMap, cred->optionalData.revstat);
+            VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding optional revstat Value.");
 
             cborEncoderResult = cbor_encoder_close_container(&credMap, &optionalMap);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Closing OptionalData Map.");
@@ -970,7 +976,8 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                             {
                                 CborValue optMap = { .parser = NULL };
                                 cborFindResult = cbor_value_enter_container(&credMap, &optMap);
-
+                                //The default status of revocation is false.
+                                cred->optionalData.revstat = false;
                                 while (cbor_value_is_valid(&optMap))
                                 {
                                     char* optname = NULL;
@@ -985,6 +992,12 @@ OCStackResult CBORPayloadToCred(const uint8_t *cborPayload, size_t size,
                                     }
                                     if (optname)
                                     {
+                                        // OptionalData::revstat -- Mandatory
+                                        if (strcmp(optname, OIC_JSON_REVOCATION_STATUS_NAME) == 0)
+                                        {
+                                            cborFindResult = cbor_value_get_boolean(&optMap, &cred->optionalData.revstat);
+                                            VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding revstat Value.")
+                                        }
                                         // OptionalData::optdata -- Mandatory
                                         if (strcmp(optname, OIC_JSON_DATA_NAME) == 0)
                                         {
@@ -1262,7 +1275,7 @@ OicSecCred_t * GenerateCredential(const OicUuid_t * subject, OicSecCredType_t cr
     {
         OIC_LOG_V(DEBUG, TAG, "GenerateCredential : optionalData len: %d", cred->optionalData.len);
         OIC_LOG_BUFFER(DEBUG, TAG, cred->optionalData.data, cred->optionalData.len);
-
+        OIC_LOG_V(DEBUG, TAG, "GenerateCredential : optionalData revstat: %d", cred->optionalData.revstat);
     }
 #endif //defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 
@@ -1459,6 +1472,19 @@ static OicSecCred_t* GetCredDefault()
     return NULL;
 }
 
+static bool IsSameSecOpt(const OicSecOpt_t* sk1, const OicSecOpt_t* sk2)
+{
+    VERIFY_NON_NULL(TAG, sk1, WARNING);
+    VERIFY_NON_NULL(TAG, sk2, WARNING);
+
+    VERIFY_SUCCESS(TAG, (sk1->len == sk2->len), INFO);
+    VERIFY_SUCCESS(TAG, (sk1->encoding == sk2->encoding), INFO);
+    VERIFY_SUCCESS(TAG, (0 == memcmp(sk1->data, sk2->data, sk1->len)), INFO);
+    return true;
+exit:
+    return false;
+}
+
 static bool IsSameSecKey(const OicSecKey_t* sk1, const OicSecKey_t* sk2)
 {
     VERIFY_NON_NULL(TAG, sk1, WARNING);
@@ -1533,7 +1559,7 @@ static CredCompareResult_t CompareCredential(const OicSecCred_t * l, const OicSe
 
             if(l->optionalData.data && r->optionalData.data)
             {
-                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->optionalData, &r->optionalData), INFO);
+                VERIFY_SUCCESS(TAG, IsSameSecOpt(&l->optionalData, &r->optionalData), INFO);
                 isCompared = true;
             }
 
@@ -1561,7 +1587,7 @@ static CredCompareResult_t CompareCredential(const OicSecCred_t * l, const OicSe
 
             if(l->optionalData.data && r->optionalData.data)
             {
-                VERIFY_SUCCESS(TAG, IsSameSecKey(&l->optionalData, &r->optionalData), INFO);
+                VERIFY_SUCCESS(TAG, IsSameSecOpt(&l->optionalData, &r->optionalData), INFO);
                 isCompared = true;
             }
 
@@ -2454,6 +2480,7 @@ OicSecCred_t* GetCredEntryByCredId(const uint16_t credId)
                 memcpy(cred->optionalData.data, tmpCred->optionalData.data, tmpCred->optionalData.len);
                 cred->optionalData.len = tmpCred->optionalData.len;
                 cred->optionalData.encoding = tmpCred->optionalData.encoding;
+                cred->optionalData.revstat= tmpCred->optionalData.revstat;
             }
 
             if (tmpCred->credUsage)
@@ -2781,12 +2808,12 @@ void GetDerCaCert(ByteArray_t * crt, const char * usage)
         return;
     }
     crt->len = 0;
-    OicSecCred_t * temp = NULL;
+    OicSecCred_t* temp = NULL;
 
     LL_FOREACH(gCred, temp)
     {
-        if (SIGNED_ASYMMETRIC_KEY == temp->credType &&
-            0 == strcmp(temp->credUsage, usage))
+        if ((SIGNED_ASYMMETRIC_KEY == temp->credType) &&
+            (0 == strcmp(temp->credUsage, usage)) && (false == temp->optionalData.revstat))
         {
             if(OIC_ENCODING_BASE64 == temp->optionalData.encoding)
             {

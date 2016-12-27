@@ -896,6 +896,10 @@ OicSecCred_t * JSONToCredBin(const char * jsonStr)
                 cJSON *jsonEncoding = cJSON_GetObjectItem(jsonObj, OIC_JSON_ENCODING_NAME);
                 VERIFY_NON_NULL(TAG, jsonEncoding, ERROR);
                 cred->optionalData.encoding = GetEncodingTypeFromStr(jsonEncoding->valuestring);
+
+                cJSON *jsonRevstat = cJSON_GetObjectItem(jsonObj, OIC_JSON_REVOCATION_STATUS_NAME);
+                VERIFY_NON_NULL(TAG, jsonRevstat, ERROR);
+                cred->optionalData.revstat = jsonObj->valueint;
             }
 
             //CredUsage

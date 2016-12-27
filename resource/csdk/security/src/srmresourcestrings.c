@@ -123,6 +123,7 @@ const char * OIC_JSON_PUBDATA_NAME = "pubdata";
 const char * OIC_JSON_PRIVDATA_NAME = "privdata";
 const char * OIC_JSON_OPTDATA_NAME = "optionaldata";
 const char * OIC_JSON_CREDUSAGE_NAME = "credusage";
+const char * OIC_JSON_REVOCATION_STATUS_NAME = "revstat";
 const char * OIC_JSON_SERVICE_DEVICE_ID = "svcdid";
 const char * OIC_JSON_SERVICE_TYPE = "svct";
 const char* OIC_JSON_VALIDITY_NAME = "validity";
