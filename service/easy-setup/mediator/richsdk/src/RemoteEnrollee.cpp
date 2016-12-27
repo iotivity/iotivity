@@ -425,6 +425,17 @@ namespace OIC
         void RemoteEnrollee::provisionCloudProperties(const CloudProp& cloudProp,
                                                             const CloudPropProvStatusCb callback)
         {
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "provisionCloudProperties w/o OCResource IN");
+
+            provisionCloudProperties(NULL, cloudProp, callback);
+
+            OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "provisionCloudProperties w/o OCResource OUT");
+        }
+
+        void RemoteEnrollee::provisionCloudProperties(const std::shared_ptr< OC::OCResource > resource,
+                                                        const CloudProp& cloudProp,
+                                                        const CloudPropProvStatusCb callback)
+        {
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "provisionCloudProperties IN");
 
             if(!callback)
@@ -441,11 +452,49 @@ namespace OIC
                 throw ESBadRequestException ("Invalid Cloud Provisiong Info.");
             }
 
-            try
+            if(resource)
             {
-                initCloudResource();
+                if(resource->getResourceTypes().at(0) != OC_RSRVD_ES_RES_TYPE_PROV ||
+                                resource->connectivityType() & CT_ADAPTER_TCP)
+                {
+                    OIC_LOG (ERROR, ES_REMOTE_ENROLLEE_TAG, "Given resource is not valid due to wrong rt or conntype");
+                    throw ESInvalidParameterException("A given OCResource is wrong");
+                }
+
+                auto interfaces = resource->getResourceInterfaces();
+                bool isFound = false;
+                for(auto interface : interfaces)
+                {
+                    if(interface.compare(BATCH_INTERFACE) == 0)
+                    {
+                        OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_TAG, "RemoteEnrollee object is succeessfully created");
+                        OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "HOST: %s", resource->host().c_str());
+                        OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "URI: %s", resource->uri().c_str());
+                        OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "SID: %s", resource->sid().c_str());
+                        OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "CONNECTIVITY: %d", resource->connectivityType());
+                        isFound = true;
+                    }
+                }
+
+                if(!isFound)
+                {
+                    throw ESInvalidParameterException("A given OCResource has no batch interface");
+                }
             }
 
+            try
+            {
+                if(resource == NULL)
+                {
+                    initCloudResource();
+                }
+                else
+                {
+                    OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "Skip to find a provisioning resource");
+                    m_ocResource = resource;
+                    m_cloudResource = std::make_shared<CloudResource>(m_ocResource);
+                }
+            }
             catch (const std::exception& e)
             {
                 OIC_LOG_V(ERROR, ES_REMOTE_ENROLLEE_TAG,

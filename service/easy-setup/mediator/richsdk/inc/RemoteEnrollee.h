@@ -59,6 +59,7 @@ namespace OIC
              *
              * @param callback will give the requested status
              *
+             * @throws ESInvalidParameterException If callback is null.
              * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
              *
              * @see GetStatusCb
@@ -70,6 +71,7 @@ namespace OIC
              *
              * @param callback will give the requested configuration
              *
+             * @throws ESInvalidParameterException If callback is null.
              * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
              *
              * @see GetConfigurationStatusCb
@@ -81,6 +83,7 @@ namespace OIC
              *
              * @param callback will give the result if the security provisioning succeeds or fails for some reasons
              *
+             * @throws ESInvalidParameterException If callback is null.
              * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
              *
              * @see SecurityProvStatusCb
@@ -94,6 +97,7 @@ namespace OIC
              *
              * @param callback will give the result if the security provisioning succeeds or fails for some reasons.
              *
+             * @throws ESInvalidParameterException If callback is null.
              * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
              *
              * @see SecurityProvStatusCb
@@ -108,6 +112,7 @@ namespace OIC
              * @param devProp a data structure storing the above information to be delivered
              * @param callback will give the result if the provisioning succeeds or fails
              *
+             * @throws ESInvalidParameterException If callback is null.
              * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
              *
              * @see DeviceProp
@@ -127,6 +132,7 @@ namespace OIC
              * @param cloudProp a data structure storing the above information to be delivered
              * @param callback will give the result if the provisioning succeeds or fails
              *
+             * @throws ESInvalidParameterException If callback is null.
              * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
              *
              * @see CloudProp
@@ -134,6 +140,26 @@ namespace OIC
              */
             void provisionCloudProperties(const CloudProp& cloudProp,
                                               const CloudPropProvStatusCb callback);
+
+            /**
+             * Provision Cloud information to Enrollee, which includes Auth code, auth provider,
+             * Cloud interface server URL, and etc.
+             * Note that, this API is skipping finding Enrollee in a given network. Instead, an OCResource
+             * given as a first parameter will be considered to the Enrollee for cloud provisioning.
+             *
+             * @param resource an OCResource corresponding to a target Enrollee for cloud provisioning
+             * @param cloudProp a data structure storing the above information to be delivered
+             * @param callback will give the result if the provisioning succeeds or fails
+             *
+             * @throws ESInvalidParameterException If callback is null.
+             * @throws ESBadRequestException If RemoteEnrollee device not created prior to this call.
+             *
+             * @see CloudProp
+             * @see CloudPropProvStatusCb
+             */
+            void provisionCloudProperties(const std::shared_ptr< OC::OCResource > resource,
+                                            const CloudProp& cloudProp,
+                                            const CloudPropProvStatusCb callback);
 
         private:
             RemoteEnrollee(const std::shared_ptr< OC::OCResource > resource);
