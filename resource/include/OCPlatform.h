@@ -192,6 +192,10 @@ namespace OC
                     OCConnectivityType connectivityType, FindResListCallback resourceHandler,
                     QualityOfService QoS = QualityOfService::LowQos);
 
+        OCStackResult findResourceList(const std::string& host, const std::string& resourceURI,
+                    OCConnectivityType connectivityType, FindResListCallback resourceHandler,
+                    FindErrorCallback errorHandler, QualityOfService QoS = QualityOfService::LowQos);
+
         OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag, const std::string& value);
         OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag, const std::vector<std::string>& value);
         OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag, std::string& value);

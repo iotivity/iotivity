@@ -56,15 +56,6 @@ namespace OC
                 : callback(cb), clientWrapper(cw){}
         };
 
-        struct ListenContext2
-        {
-            FindResListCallback callback;
-            std::weak_ptr<IClientWrapper> clientWrapper;
-
-            ListenContext2(FindResListCallback cb, std::weak_ptr<IClientWrapper> cw)
-                : callback(cb), clientWrapper(cw){}
-        };
-
         struct ListenErrorContext
         {
             FindCallback callback;
@@ -72,6 +63,26 @@ namespace OC
             std::weak_ptr<IClientWrapper> clientWrapper;
 
             ListenErrorContext(FindCallback cb1, FindErrorCallback cb2,
+                               std::weak_ptr<IClientWrapper> cw)
+                : callback(cb1), errorCallback(cb2), clientWrapper(cw){}
+        };
+
+        struct ListenResListContext
+        {
+            FindResListCallback callback;
+            std::weak_ptr<IClientWrapper> clientWrapper;
+
+            ListenResListContext(FindResListCallback cb, std::weak_ptr<IClientWrapper> cw)
+                : callback(cb), clientWrapper(cw){}
+        };
+
+        struct ListenResListWithErrorContext
+        {
+            FindResListCallback callback;
+            FindErrorCallback errorCallback;
+            std::weak_ptr<IClientWrapper> clientWrapper;
+
+            ListenResListWithErrorContext(FindResListCallback cb1, FindErrorCallback cb2,
                                std::weak_ptr<IClientWrapper> cw)
                 : callback(cb1), errorCallback(cb2), clientWrapper(cw){}
         };
@@ -133,9 +144,14 @@ namespace OC
             const std::string& resourceType, OCConnectivityType transportFlags,
             FindCallback& callback, QualityOfService QoS);
 
-        virtual OCStackResult ListenForResource2(const std::string& serviceUrl,
+        virtual OCStackResult ListenForResourceList(const std::string& serviceUrl,
             const std::string& resourceType, OCConnectivityType transportFlags,
             FindResListCallback& callback, QualityOfService QoS);
+
+        virtual OCStackResult ListenForResourceListWithError(const std::string& serviceUrl,
+            const std::string& resourceType, OCConnectivityType connectivityType,
+            FindResListCallback& callback, FindErrorCallback& errorCallback,
+            QualityOfService QoS);
 
         virtual OCStackResult ListenErrorForResource(const std::string& serviceUrl,
             const std::string& resourceType, OCConnectivityType transportFlags,

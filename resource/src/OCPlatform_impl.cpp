@@ -301,8 +301,20 @@ namespace OC
                                             FindResListCallback resourceHandler,
                                             QualityOfService QoS)
     {
-        return checked_guard(m_client, &IClientWrapper::ListenForResource2,
+        return checked_guard(m_client, &IClientWrapper::ListenForResourceList,
                              host, resourceName, connectivityType, resourceHandler, QoS);
+    }
+
+    OCStackResult OCPlatform_impl::findResourceList(const std::string& host,
+                                            const std::string& resourceName,
+                                            OCConnectivityType connectivityType,
+                                            FindResListCallback resourceHandler,
+                                            FindErrorCallback errorHandler,
+                                            QualityOfService Qos)
+    {
+        return checked_guard(m_client, &IClientWrapper::ListenForResourceListWithError,
+                             host, resourceName, connectivityType, resourceHandler,
+                             errorHandler, Qos);
     }
 
     OCStackResult OCPlatform_impl::getDeviceInfo(const std::string& host,

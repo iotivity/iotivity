@@ -96,6 +96,10 @@ namespace OC
                     OCConnectivityType connectivityType, FindResListCallback resourceHandler,
                     QualityOfService QoS);
 
+        OCStackResult findResourceList(const std::string& host, const std::string& resourceURI,
+                    OCConnectivityType connectivityType, FindResListCallback resourceHandler,
+                    FindErrorCallback errorHandler, QualityOfService Qos);
+
         OCStackResult getDeviceInfo(const std::string& host, const std::string& deviceURI,
                     OCConnectivityType connectivityType, FindDeviceCallback deviceInfoHandler);
 

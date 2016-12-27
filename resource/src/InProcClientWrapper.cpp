@@ -168,6 +168,11 @@ namespace OC
     OCStackApplicationResult listenCallback(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse* clientResponse)
     {
+        if (!ctx || !clientResponse)
+        {
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
         ClientCallbackContext::ListenContext* context =
             static_cast<ClientCallbackContext::ListenContext*>(ctx);
 
@@ -228,10 +233,6 @@ namespace OC
 
         ClientCallbackContext::ListenErrorContext* context =
             static_cast<ClientCallbackContext::ListenErrorContext*>(ctx);
-        if (!context)
-        {
-            return OC_STACK_KEEP_TRANSACTION;
-        }
 
         OCStackResult result = clientResponse->result;
         if (result == OC_STACK_OK)
@@ -359,15 +360,20 @@ namespace OC
         return result;
     }
 
-    OCStackApplicationResult listenCallback2(void* ctx, OCDoHandle /*handle*/,
+    OCStackApplicationResult listenResListCallback(void* ctx, OCDoHandle /*handle*/,
         OCClientResponse* clientResponse)
     {
-        ClientCallbackContext::ListenContext2* context =
-            static_cast<ClientCallbackContext::ListenContext2*>(ctx);
+        if (!ctx || !clientResponse)
+        {
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
+        ClientCallbackContext::ListenResListContext* context =
+            static_cast<ClientCallbackContext::ListenResListContext*>(ctx);
 
         if (clientResponse->result != OC_STACK_OK)
         {
-            oclog() << "listenCallback2(): failed to create resource. clientResponse: "
+            oclog() << "listenResListCallback(): failed to create resource. clientResponse: "
                     << clientResponse->result
                     << std::flush;
 
@@ -376,7 +382,7 @@ namespace OC
 
         if (!clientResponse->payload || clientResponse->payload->type != PAYLOAD_TYPE_DISCOVERY)
         {
-            oclog() << "listenCallback2(): clientResponse payload was null or the wrong type"
+            oclog() << "listenResListCallback(): clientResponse payload was null or the wrong type"
                 << std::flush;
             return OC_STACK_KEEP_TRANSACTION;
         }
@@ -385,7 +391,7 @@ namespace OC
 
         if (!clientWrapper)
         {
-            oclog() << "listenCallback2(): failed to get a shared_ptr to the client wrapper"
+            oclog() << "listenResListCallback(): failed to get a shared_ptr to the client wrapper"
                     << std::flush;
             return OC_STACK_KEEP_TRANSACTION;
         }
@@ -400,15 +406,14 @@ namespace OC
         }
         catch (std::exception &e)
         {
-            oclog() << "Exception in listCallback2, ignoring response: "
+            oclog() << "Exception in listenResListCallback(), ignoring response: "
                     << e.what() << std::flush;
         }
-
 
         return OC_STACK_KEEP_TRANSACTION;
     }
 
-    OCStackResult InProcClientWrapper::ListenForResource2(
+    OCStackResult InProcClientWrapper::ListenForResourceList(
             const std::string& serviceUrl,
             const std::string& resourceType,
             OCConnectivityType connectivityType,
@@ -423,12 +428,116 @@ namespace OC
         ostringstream resourceUri;
         resourceUri << serviceUrl << resourceType;
 
-        ClientCallbackContext::ListenContext2* context =
-            new ClientCallbackContext::ListenContext2(callback, shared_from_this());
+        ClientCallbackContext::ListenResListContext* context =
+            new ClientCallbackContext::ListenResListContext(callback, shared_from_this());
         OCCallbackData cbdata;
         cbdata.context = static_cast<void*>(context),
-        cbdata.cb      = listenCallback2;
-        cbdata.cd      = [](void* c){delete (ClientCallbackContext::ListenContext2*)c;};
+        cbdata.cb      = listenResListCallback;
+        cbdata.cd      = [](void* c){delete (ClientCallbackContext::ListenResListContext*)c;};
+
+        auto cLock = m_csdkLock.lock();
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCDoResource(nullptr, OC_REST_DISCOVER,
+                                  resourceUri.str().c_str(),
+                                  nullptr, nullptr, connectivityType,
+                                  static_cast<OCQualityOfService>(QoS),
+                                  &cbdata,
+                                  nullptr, 0);
+        }
+        else
+        {
+            delete context;
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
+    OCStackApplicationResult listenResListWithErrorCallback(void* ctx, OCDoHandle /*handle*/,
+        OCClientResponse* clientResponse)
+    {
+        if (!ctx || !clientResponse)
+        {
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
+        ClientCallbackContext::ListenResListWithErrorContext* context =
+                static_cast<ClientCallbackContext::ListenResListWithErrorContext*>(ctx);
+
+        OCStackResult result = clientResponse->result;
+        if (result != OC_STACK_OK)
+        {
+            oclog() << "listenResListWithErrorCallback(): failed to create resource. clientResponse: "
+                    << result << std::flush;
+
+             //send the error callback
+            std::thread exec(context->errorCallback, clientResponse->resourceUri, result);
+            exec.detach();
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
+        if (!clientResponse->payload || clientResponse->payload->type != PAYLOAD_TYPE_DISCOVERY)
+        {
+            oclog() << "listenResListWithErrorCallback(): clientResponse payload was null or the wrong type"
+                << std::flush;
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
+        auto clientWrapper = context->clientWrapper.lock();
+
+        if (!clientWrapper)
+        {
+            oclog() << "listenResListWithErrorCallback(): failed to get a shared_ptr to the client wrapper"
+                    << std::flush;
+            return OC_STACK_KEEP_TRANSACTION;
+        }
+
+        try
+        {
+            ListenOCContainer container(clientWrapper, clientResponse->devAddr,
+                            reinterpret_cast<OCDiscoveryPayload*>(clientResponse->payload));
+
+            std::thread exec(context->callback, container.Resources());
+            exec.detach();
+        }
+        catch (std::exception &e)
+        {
+            oclog() << "Exception in listenResListWithErrorCallback(), ignoring response: "
+            << e.what() << std::flush;
+        }
+
+        return OC_STACK_KEEP_TRANSACTION;
+    }
+
+    OCStackResult InProcClientWrapper::ListenForResourceListWithError(
+            const std::string& serviceUrl,
+            const std::string& resourceType,
+            OCConnectivityType connectivityType,
+            FindResListCallback& callback,
+            FindErrorCallback& errorCallback, QualityOfService QoS)
+    {
+        if (!callback)
+        {
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        OCStackResult result;
+        ostringstream resourceUri;
+        resourceUri << serviceUrl << resourceType;
+
+        ClientCallbackContext::ListenResListWithErrorContext* context =
+            new ClientCallbackContext::ListenResListWithErrorContext(callback, errorCallback,
+                                                          shared_from_this());
+        if (!context)
+        {
+            return OC_STACK_ERROR;
+        }
+
+        OCCallbackData cbdata;
+        cbdata.context = static_cast<void*>(context),
+        cbdata.cb      = listenResListWithErrorCallback;
+        cbdata.cd      = [](void* c){delete (ClientCallbackContext::ListenResListWithErrorContext*)c;};
 
         auto cLock = m_csdkLock.lock();
         if (cLock)
