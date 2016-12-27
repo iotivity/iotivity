@@ -121,6 +121,7 @@ extern const char * OIC_JSON_PRIVATEDATA_NAME;
 extern const char * OIC_JSON_PUBDATA_NAME;
 extern const char * OIC_JSON_PRIVDATA_NAME;
 extern const char * OIC_JSON_OPTDATA_NAME;
+extern const char * OIC_JSON_REVOCATION_STATUS_NAME;
 extern const char * OIC_JSON_CREDUSAGE_NAME;
 extern const char * OIC_JSON_CRMS_NAME;
 extern const char * OIC_JSON_VALIDITY_NAME;

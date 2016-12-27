@@ -645,6 +645,7 @@ OCStackResult SRPSaveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
     }
     memcpy(cred->optionalData.data, trustCertChain, chainSize);
     cred->optionalData.encoding = encodingType;
+    cred->optionalData.revstat = false;
 
     res = AddCredential(cred);
     if(res != OC_STACK_OK)

@@ -315,6 +315,8 @@ typedef enum
 
 typedef struct OicSecKey OicSecKey_t;
 
+typedef struct OicSecOpt OicSecOpt_t;
+
 typedef struct OicSecPstat OicSecPstat_t;
 
 typedef struct OicSecRole OicSecRole_t;
@@ -369,6 +371,15 @@ struct OicSecKey
     // TODO: This field added as workaround. Will be replaced soon.
     OicEncodingType_t encoding;
 
+};
+
+struct OicSecOpt
+{
+    uint8_t                *data;
+    size_t                  len;
+
+    OicEncodingType_t encoding;
+    bool                revstat;
 };
 
 struct OicSecRsrc
@@ -446,7 +457,7 @@ struct OicSecCred
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     OicSecCert_t        publicData;     // own cerificate chain
     char            *credUsage;            // 4:R:S:N:String
-    OicSecKey_t        optionalData;   // CA's cerificate chain
+    OicSecOpt_t        optionalData;   // CA's cerificate chain
 #endif /* __WITH_DTLS__  or __WITH_TLS__*/
     OicSecKey_t         privateData;    // 6:R:S:N:oic.sec.key
     char                *period;        // 7:R:S:N:String
