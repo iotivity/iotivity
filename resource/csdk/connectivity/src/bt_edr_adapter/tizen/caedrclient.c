@@ -356,13 +356,13 @@ void CAEDRDeviceDiscoveryCallback(int result, bt_adapter_device_discovery_state_
                 }
                 else
                 {
-                    OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Device does not support OIC service!");
+                    OIC_LOG(INFO, EDR_ADAPTER_TAG, "Device does not support OIC service!");
                 }
             }
             break;
 
         default:
-            OIC_LOG(ERROR, EDR_ADAPTER_TAG, "Unknown Bluetooth Adapter device discovery state");
+            OIC_LOG(INFO, EDR_ADAPTER_TAG, "Unknown Bluetooth Adapter device discovery state");
     }
 
     OIC_LOG(DEBUG, EDR_ADAPTER_TAG, "OUT");
