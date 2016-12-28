@@ -1430,7 +1430,8 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
                     ehRet = OC_EH_ERROR;
                 }
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
-                if (OIC_MANUFACTURER_CERTIFICATE == gDoxm->oxmSel)
+                if (OIC_MANUFACTURER_CERTIFICATE == gDoxm->oxmSel ||
+                                            OIC_CON_MFG_CERT== gDoxm->oxmSel)
                 {
                     CAregisterPkixInfoHandler(GetPkixInfo);
                     CAregisterGetCredentialTypesHandler(InitCipherSuiteList);

@@ -442,7 +442,8 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
         OicUuid_t emptyUuid = { .id={0}};
         SetUuidForPinBasedOxm(&emptyUuid);
     }
-    else if(OIC_MANUFACTURER_CERTIFICATE == otmCtx->selectedDeviceInfo->doxm->oxmSel)
+    else if(OIC_MANUFACTURER_CERTIFICATE == otmCtx->selectedDeviceInfo->doxm->oxmSel ||
+                        OIC_CON_MFG_CERT == otmCtx->selectedDeviceInfo->doxm->oxmSel)
     {
         //Revert back certificate related callbacks.
         if(CA_STATUS_OK != CAregisterPkixInfoHandler(GetPkixInfo))
