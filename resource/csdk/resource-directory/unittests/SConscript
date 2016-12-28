@@ -60,6 +60,7 @@ rd_test_env.AppendUnique(
                 src_dir + '/extlibs/hippomocks-master',
                 '../include',
                 src_dir + '/resource/include',
+                src_dir + '/resource/csdk/include',
                 src_dir + '/resource/csdk/stack/include',
                 src_dir + '/resource/csdk/stack/test/',
                 src_dir + '/resource/oc_logger/include',])

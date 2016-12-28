@@ -33,6 +33,7 @@ LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/service/resource-container/bundle-api/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/service/resource-container/src
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/service/resource-encapsulation/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/service/resource-encapsulation/src/serverBuilder/include
+LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/csdk/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/csdk/stack/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/csdk/logger/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/oc_logger/include

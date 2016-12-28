@@ -36,6 +36,7 @@ else:
     tools_env.AppendUnique(CPPPATH = ['../../connectivity/lib/libcoap-4.1.1/include'])
 
 tools_env.PrependUnique(CPPPATH = ['../../../../extlibs/cjson',
+                                  '../../include',
                                   '../../stack/include',
                                   '../../stack/include/internal',
                                   '../../logger/include',

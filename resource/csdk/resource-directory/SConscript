@@ -37,6 +37,7 @@ rd_mode = env.get('RD_MODE')
 ######################################################################
 rd_env.AppendUnique(CPPPATH = ['include',
                                 'src/internal',
+                                '../include',
                                 '../stack/include',
                                 '../../include',
                                 '../logger/include',

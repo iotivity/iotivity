@@ -45,7 +45,7 @@ sptest_env.PrependUnique(CPPPATH = [
 		'../include',
 		'../../include',
 		'../include/internal',
-		'../../../stack/include',
+		'../../../include',
 		'../../../ocrandom/include',
 		'../../../logger/include',
 		'../../../stack/include',

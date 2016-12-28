@@ -259,6 +259,7 @@ cp ./resource/csdk/security/provisioning/sample/oic_svr_db_server_randompin.dat 
 %endif
 
 cp resource/c_common/*.h %{buildroot}%{_includedir}
+cp resource/csdk/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
 

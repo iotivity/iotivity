@@ -34,6 +34,7 @@ cc_sample_app_env = lib_env.Clone()
 cc_sample_app_env.AppendUnique(CPPPATH = [
         '../../../resource/include/',
         '../../../resource/csdk/resource-directory/include',
+        '../../../resource/csdk/include',
         '../../../resource/csdk/stack/include',
         '../../../resource/c_common/ocrandom/include',
         '../../../resource/csdk/logger/include',

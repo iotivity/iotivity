@@ -35,6 +35,7 @@ else:
 
 ocprovision_env.AppendUnique(CPPPATH = [
 		'../include/',
+		'../csdk/include',
 		'../csdk/stack/include',
 		'../csdk/logger/include',
 		'../oc_logger/include',

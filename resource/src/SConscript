@@ -47,6 +47,7 @@ else:
 
 oclib_env.AppendUnique(CPPPATH = [
 		'../include/',
+		'../csdk/include',
 		'../csdk/stack/include',
 		'../c_common/ocrandom/include',
 		'../csdk/logger/include',

@@ -40,6 +40,7 @@ target_os = env.get('TARGET_OS')
 simulator_env.AppendUnique(CPPPATH = ['inc', 'src/client', 'src/server', 'src/common'])
 simulator_env.AppendUnique(CPPPATH = [
 		'../../resource/include/',
+		'../../resource/csdk/include',
 		'../../resource/csdk/stack/include',
 		'../../resource/c_common/ocrandom/include',
 		'../../resource/csdk/logger/include',

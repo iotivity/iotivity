@@ -37,6 +37,7 @@ stacktest_env.PrependUnique(CPPPATH = [
 		'../../ocsocket/include',
 		'../../logger/include',
 		'../../../c_common/ocrandom/include',
+		'../../include',
 		'../../stack/include',
 		'../../stack/include/internal',
 		'../../connectivity/api',

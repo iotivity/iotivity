@@ -14,6 +14,7 @@ local_env = env.Clone()
 
 if env.get('ROUTING') == 'GW':
 	local_env.AppendUnique(CPPPATH = [
+				os.path.join(Dir('.').abspath, './../include'),
 				os.path.join(Dir('.').abspath, './../stack/include'),
 				os.path.join(Dir('.').abspath, './../stack/include/internal'),
 				os.path.join(Dir('.').abspath, './../logger'),
@@ -26,6 +27,7 @@ if env.get('ROUTING') == 'GW':
 			])
 elif env.get('ROUTING') == 'EP':
 	local_env.AppendUnique(CPPPATH = [
+				os.path.join(Dir('.').abspath, './../include'),
 				os.path.join(Dir('.').abspath, './../stack/include'),
 				os.path.join(Dir('.').abspath, './../stack/include/internal'),
 				os.path.join(Dir('.').abspath, './../logger'),

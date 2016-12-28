@@ -35,6 +35,7 @@ rd_mode = catest_env.get('RD_MODE')
 ######################################################################
 catest_env.PrependUnique(CPPPATH = [
                 '../../logger/include',
+                '../../include',
                 '../../stack/include',
                 '../../../oc_logger/include',
                ])

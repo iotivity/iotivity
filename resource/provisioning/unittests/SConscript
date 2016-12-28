@@ -37,6 +37,7 @@ with_ra_ibb = provisiontests_env.get('WITH_RA_IBB')
 provisiontests_env.PrependUnique(CPPPATH = [
 		'../../include',
 		'../../oc_logger/include',
+		'../../csdk/include',
 		'../../csdk/stack/include',
 		'../../csdk/security/include',
 		'../../csdk/security/provisioning/include',

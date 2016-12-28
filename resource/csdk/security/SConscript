@@ -51,6 +51,7 @@ libocsrm_env.PrependUnique(CPPPATH = [
 		'../../../extlibs/tinydtls/',
 		'../logger/include',
 		'../../c_common/ocrandom/include',
+		'../include',
 		'../stack/include',
 		'../stack/include/internal',
 		'../../oc_logger/include',

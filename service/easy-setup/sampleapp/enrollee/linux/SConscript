@@ -48,6 +48,7 @@ enrollee_env.PrependUnique(CPPPATH = [
 		env.get('SRC_DIR') + '/resource/include',
         env.get('SRC_DIR') + '/resource/oc_logger/include',
         env.get('SRC_DIR') + '/resource/csdk/logger/include',
+        env.get('SRC_DIR') + '/resource/csdk/include',
         env.get('SRC_DIR') + '/resource/csdk/stack/include',
         env.get('SRC_DIR') + '/extlibs/cjson',
         env.get('SRC_DIR') + '/service/easy-setup/inc',

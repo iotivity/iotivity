@@ -28,6 +28,7 @@ arduino_simplecs_env = env.Clone()
 ######################################################################
 arduino_simplecs_env.PrependUnique(CPPPATH = [
 		'../../../../../logger/include',
+		'../../../../../include',
 		'../../../../../stack/include',
 		'../../../../../../oc_logger/include'
 		])

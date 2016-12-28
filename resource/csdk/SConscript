@@ -54,6 +54,7 @@ else:
 liboctbstack_env.PrependUnique(CPPPATH = [
 		'../../extlibs/timer/',
 		'logger/include',
+		'include',
 		'stack/include',
 		'stack/include/internal',
 		'../oc_logger/include',
@@ -212,5 +213,5 @@ liboctbstack_env.InstallTarget(octbstack_libs, 'octbstack')
 liboctbstack_env.UserInstallTargetLib(octbstack_libs, 'octbstack')
 
 liboctbstack_env.UserInstallTargetHeader('stack/include/ocstackconfig.h', 'resource', 'ocstackconfig.h')
-liboctbstack_env.UserInstallTargetHeader('stack/include/octypes.h', 'resource', 'octypes.h')
+liboctbstack_env.UserInstallTargetHeader('include/octypes.h', 'resource', 'octypes.h')
 liboctbstack_env.UserInstallTargetHeader('stack/include/ocpayload.h', 'resource', 'ocpayload.h')

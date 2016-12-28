@@ -25,6 +25,7 @@ csdktest_env = env.Clone()
 # Build flags
 ######################################################################
 csdktest_env.PrependUnique(CPPPATH = [
+    '../../../include',
     '../../../stack/include',
 ])
 

@@ -36,6 +36,7 @@ with_mq = unittests_env.get('WITH_MQ')
 unittests_env.PrependUnique(CPPPATH = [
 		'../include',
 		'../oc_logger/include',
+		'../csdk/include',
 		'../csdk/stack/include',
 		'../csdk/security/include',
 		'../csdk/stack/include/internal',

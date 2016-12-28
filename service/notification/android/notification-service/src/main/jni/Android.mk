@@ -1,16 +1,19 @@
 LOCAL_PATH := $(call my-dir)
 
 ROOT_PATH := ../../../../../../..
+OIC_SRC_DIR := ../../../../../..
 
 include $(CLEAR_VARS)
 OIC_LIB_PATH := $(ROOT_PATH)/out/android/$(TARGET_ARCH_ABI)/$(APP_OPTIM)
 LOCAL_MODULE := notification_consumer
+LOCAL_C_INCLUDES := $(OIC_SRC_DIR)/resource/csdk/include
 LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libnotification_consumer.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 OIC_LIB_PATH := $(ROOT_PATH)/out/android/$(TARGET_ARCH_ABI)/$(APP_OPTIM)
 LOCAL_MODULE := notification_consumer_wrapper
+LOCAL_C_INCLUDES := $(OIC_SRC_DIR)/resource/csdk/include
 LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libnotification_consumer_wrapper.so
 include $(PREBUILT_SHARED_LIBRARY)
 
@@ -35,9 +38,8 @@ LOCAL_SHARED_LIBRARIES += android-ocstack
 LOCAL_SHARED_LIBRARIES += notification_consumer
 LOCAL_SHARED_LIBRARIES += notification_consumer_wrapper
 
-OIC_SRC_DIR := ../../../../../..
-
-LOCAL_C_INCLUDES := $(OIC_SRC_DIR)/resource/csdk/stack/include
+LOCAL_C_INCLUDES := $(OIC_SRC_DIR)/resource/csdk/include
+LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/csdk/stack/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/csdk/logger/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/c_common
@@ -61,12 +63,14 @@ include $(BUILD_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 OIC_LIB_PATH := $(ROOT_PATH)/out/android/$(TARGET_ARCH_ABI)/$(APP_OPTIM)
 LOCAL_MODULE := notification_provider_wrapper
+LOCAL_C_INCLUDES := $(OIC_SRC_DIR)/resource/csdk/include
 LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libnotification_provider_wrapper.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 OIC_LIB_PATH := $(ROOT_PATH)/out/android/$(TARGET_ARCH_ABI)/$(APP_OPTIM)
 LOCAL_MODULE := notification_provider
+LOCAL_C_INCLUDES := $(OIC_SRC_DIR)/resource/csdk/include
 LOCAL_SRC_FILES := $(OIC_LIB_PATH)/libnotification_provider.so
 include $(PREBUILT_SHARED_LIBRARY)
 
@@ -87,7 +91,8 @@ LOCAL_SHARED_LIBRARIES += notification_provider_wrapper
 
 OIC_SRC_DIR := ../../../../../..
 
-LOCAL_C_INCLUDES := $(OIC_SRC_DIR)/resource/csdk/stack/include
+LOCAL_C_INCLUDES := $(OIC_SRC_DIR)/resource/csdk/include
+LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/csdk/stack/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/csdk/logger/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/include
 LOCAL_C_INCLUDES += $(OIC_SRC_DIR)/resource/c_common

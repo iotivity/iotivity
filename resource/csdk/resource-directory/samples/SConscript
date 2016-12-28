@@ -36,6 +36,7 @@ src_dir = env.get('SRC_DIR')
 ######################################################################
 rd_sample_app_env.AppendUnique(CPPPATH = ['../include',
                                           '../src/internal',
+                                          src_dir + '/resource/csdk/include',
                                           src_dir + '/resource/csdk/stack/include',
                                           src_dir + '/resource/include',
                                           src_dir + '/resource/oc_logger/include',])

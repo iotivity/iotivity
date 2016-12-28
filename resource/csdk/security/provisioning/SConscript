@@ -36,6 +36,7 @@ else:
 	provisioning_env.AppendUnique(CPPPATH = ['../../connectivity/lib/libcoap-4.1.1/include'])
 
 provisioning_env.AppendUnique(CPPPATH = [
+		'../../include',
 		'../../stack/include',
 		'../../stack/include/internal',
 		'../../../c_common/ocrandom/include',
