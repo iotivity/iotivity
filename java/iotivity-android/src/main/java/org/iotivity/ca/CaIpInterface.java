@@ -27,6 +27,7 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 
 public class CaIpInterface {
@@ -64,6 +65,7 @@ public class CaIpInterface {
         intentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         intentFilter.addAction("android.net.wifi.WIFI_AP_STATE_CHANGED");
+        intentFilter.addAction("android.net.wifi.p2p.CONNECTION_STATE_CHANGE");
 
         mContext.registerReceiver(mReceiver, intentFilter);
     }
@@ -105,6 +107,20 @@ public class CaIpInterface {
                         e.printStackTrace();
                     }
                     caIpStateEnabled();
+                }
+           }
+
+           if (intent.getAction().equals("android.net.wifi.p2p.CONNECTION_STATE_CHANGE"))
+           {
+                NetworkInfo p2pInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
+
+                if (p2pInfo != null && p2pInfo.isConnected())
+                {
+                    caIpStateEnabled();
+                }
+                else
+                {
+                    caIpStateDisabled();
                 }
            }
         }
