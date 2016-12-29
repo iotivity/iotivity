@@ -58,6 +58,7 @@ namespace PH = std::placeholders;
 
 #define Device_TYPE_TV "oic.d.tv"
 #define Device_TYPE_AC "oic.d.airconditioner"
+#define Device_TYPE_VENDOR "x.com.vendor.device.partial"
 #define SWITCH_RESOURCE_TYPE "oic.r.switch.binary"
 #define AUDIO_RESOURCE_TYPE "oic.r.audio"
 #define MEDIA_SOURCE_LIST_RESOURCE_TYPE "oic.r.mediasourcelist"
@@ -169,6 +170,7 @@ const int SUCCESS_RESPONSE = 0;
 #define SUPPORT_URL "support.default-vendor.com"
 #define SYSTEM_TIME "2016-06-20T10:10:10Z"
 #define DEVICE_NAME "IotivitySmartRoom"
+#define DEFAULT_DEVIE_TYPE "oic.wk.d"
 
 #define CORE_SPEC_VERSION "core.1.1.0"
 #define RESOURCE_TYPE_SPEC_VERSION "res.1.1.0"
@@ -241,7 +243,7 @@ public:
      * @param   timeOut - Time limit for waiting
      * @return  bool - Returns true if the Resource is not found within timeOut otherwise false
      */
-    bool waitForResourceFound(std::vector< std::shared_ptr< OCResource > > &foundResourceList,
+    bool waitForResourceFound(vector< shared_ptr< OCResource > > &foundResourceList,
             int timeOut);
 
     /**

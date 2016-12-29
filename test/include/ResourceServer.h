@@ -60,9 +60,9 @@ protected:
     bool m_isServerRunning;
     bool m_isSlowResource;
     uint8_t m_resourceProperty;
-    static bool m_isServerConstructed;
-    static OCPlatformInfo m_platformInfo;
-    static OCDeviceInfo m_deviceInfo;
+    static bool s_isServerConstructed;
+    static OCPlatformInfo s_platformInfo;
+    static OCDeviceInfo s_deviceInfo;
     static ResourceHelper* p_resourceHelper;
 
 public:

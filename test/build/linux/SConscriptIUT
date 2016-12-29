@@ -78,7 +78,7 @@ IUT_CINCLUDE = [
                             PROJECT_HOME + '/include',
                             PROJECT_HOME + '/../resource/include', 
                             PROJECT_HOME + '/../resource/csdk/connectivity/api', 
-                            PROJECT_HOME + '/../resource/csdk/stack/include', 
+                            PROJECT_HOME + '/../resource/csdk/stack/include',
                             PROJECT_HOME + '/../resource/csdk/security/include',
                             PROJECT_HOME + '/../resource/csdk/ocsocket/include',
                             PROJECT_HOME + '/../resource/csdk/ocrandom/include',
@@ -88,7 +88,8 @@ IUT_CINCLUDE = [
                             PROJECT_HOME + '/../extlibs/cereal/include/',
                             PROJECT_HOME + '/../extlibs/timer/',
                             PROJECT_HOME + '/../extlibs/tinycbor/tinycbor/src/',
-                            PROJECT_HOME + '/../extlibs/timer/' 
+                            PROJECT_HOME + '/../extlibs/timer/',
+                            PROJECT_HOME + '/../extlibs/mbedtls'
               ]
 
 COMMON_LIB_LOCATION = [RESOURCE_LIB_DIR]

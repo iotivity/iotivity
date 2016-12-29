@@ -30,6 +30,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <iomanip>
 #include "SampleResource.h"
 #include "ResourceHelper.h"
 #include "OCPlatform.h"
@@ -121,6 +122,7 @@ void selectMenu(int choice);
 void createTvDevice(bool isSecured = false);
 void createAirConDevice(bool isSecured = false);
 void createSingleAirConResource(bool isSecured = false);
+void createVendorDefinedDevice(bool isSecured = false);
 void createResource(void);
 void createSecuredResource(void);
 void createInvisibleResource(void);
@@ -156,7 +158,7 @@ void updateGroup(void);
 void updateLocalResource(void);
 void sendSpecialPost(void);
 vector< OCRepresentation > createLinkRepresentation();
-void addIntoLinksArray(vector<OCRepresentation>& childrenList, SampleResource* resource);
+void addIntoLinksArray(vector< OCRepresentation >& childrenList, SampleResource* resource);
 string getHost();
 FILE* server_fopen(const char*, const char*);
 FILE* client_fopen(const char*, const char*);
@@ -174,7 +176,7 @@ void handler(int sig)
     // print out all the frames to stderr
     fprintf(stderr, "Error: signal %d:\n", sig);
 
-#ifdef __LINUX__    
+#ifdef __LINUX__
     backtrace_symbols_fd(array, size, STDERR_FILENO);
 #endif
 
@@ -381,13 +383,14 @@ int main(int argc, char* argv[])
         PlatformConfig cfg
         { OC::ServiceType::InProc, OC::ModeType::Both, g_ipVer, g_ipVer, g_qos, &ps };
         result = SampleResource::constructServer(cfg);
+        SampleResource::setDeviceInfo("Smart Home Client Device", DEFAULT_DEVIE_TYPE);
     }
     else if (g_isSecuredServer)
     {
         OCPersistentStorage ps =
         { server_fopen, fread, fwrite, fclose, unlink };
         PlatformConfig cfg
-        { OC::ServiceType::InProc, OC::ModeType::Server, g_ipVer, g_ipVer, g_qos, &ps };
+        { OC::ServiceType::InProc, OC::ModeType::Both, g_ipVer, g_ipVer, g_qos, &ps };
         result = SampleResource::constructServer(cfg);
     }
     else
@@ -424,7 +427,8 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-void addIntoLinksArray(vector<OCRepresentation>& childrenList, SampleResource* resource){
+void addIntoLinksArray(vector< OCRepresentation >& childrenList, SampleResource* resource)
+{
     OCRepresentation interimRep;
     OCRepresentation pRep;
 
@@ -435,16 +439,16 @@ void addIntoLinksArray(vector<OCRepresentation>& childrenList, SampleResource* r
 
     if (g_isSecuredServer)
     {
-        flag = (CATransportFlags_t) ( flag | CA_SECURE );
+        flag = (CATransportFlags_t)(flag | CA_SECURE);
     }
 
     if (g_ipVer == CT_IP_USE_V4)
     {
-        flag =  (CATransportFlags_t) ( flag | CA_IPV4 );
+        flag = (CATransportFlags_t)(flag | CA_IPV4);
     }
     else
     {
-        flag =  (CATransportFlags_t) ( flag | CA_IPV6 );
+        flag = (CATransportFlags_t)(flag | CA_IPV6);
     }
     pRep.setValue(PORT_KEY, CAGetAssignedPortNumber(CA_ADAPTER_IP, flag));
 
@@ -452,10 +456,8 @@ void addIntoLinksArray(vector<OCRepresentation>& childrenList, SampleResource* r
     vector< OCRepresentation > allChildren;
     interimRep.setValue(URI_KEY, resource->getUri());
     interimRep.setValue(DEVICE_ID_KEY, g_di);
-    interimRep.setValue(RESOURCE_TYPE_KEY,
-            resource->getResourceTypes());
-    interimRep.setValue(INTERFACE_KEY,
-            resource->getResourceInterfaces());
+    interimRep.setValue(RESOURCE_TYPE_KEY, resource->getResourceTypes());
+    interimRep.setValue(INTERFACE_KEY, resource->getResourceInterfaces());
     interimRep.setValue(POLICY_KEY, pRep);
     childrenList.push_back(interimRep);
 }
@@ -574,14 +576,17 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                         else if (key.compare(RESOURCE_TYPE_KEY) == 0)
                         {
                             vector< string > resourceTypeList;
+
                             if (queryValue.compare(SWITCH_RESOURCE_TYPE) == 0)
                             {
                                 vector< OCRepresentation > requiredChild;
                                 OCRepresentation requiredResponse;
                                 addIntoLinksArray(requiredChild, g_acSwitchResourceHidden);
-                                cout << "The resource type  used in query is " << SWITCH_RESOURCE_TYPE << endl;
+                                cout << "The resource type  used in query is "
+                                        << SWITCH_RESOURCE_TYPE << endl;
                                 requiredResponse.setValue(LINKS_KEY, requiredChild);
-                                pResponse->setResourceRepresentation(requiredResponse, responseInterface);
+                                pResponse->setResourceRepresentation(requiredResponse,
+                                        responseInterface);
 
                             }
                             else if (queryValue.compare(TEMPERATURE_RESOURCE_TYPE) == 0)
@@ -589,9 +594,11 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                                 vector< OCRepresentation > requiredChild;
                                 OCRepresentation requiredResponse;
                                 addIntoLinksArray(requiredChild, g_acTemperatureResourceHidden);
-                                cout << "The resource type  used in query is " << TEMPERATURE_RESOURCE_TYPE << endl;
+                                cout << "The resource type  used in query is "
+                                        << TEMPERATURE_RESOURCE_TYPE << endl;
                                 requiredResponse.setValue(LINKS_KEY, requiredChild);
-                                pResponse->setResourceRepresentation(requiredResponse, responseInterface);
+                                pResponse->setResourceRepresentation(requiredResponse,
+                                        responseInterface);
 
                             }
                             else if (queryValue.compare(AIR_FLOW_RESOURCE_TYPE) == 0)
@@ -599,9 +606,11 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                                 vector< OCRepresentation > requiredChild;
                                 OCRepresentation requiredResponse;
                                 addIntoLinksArray(requiredChild, g_acAirFlowResourceHidden);
-                                cout << "The resource type  used in query is " << AIR_FLOW_RESOURCE_TYPE << endl;
+                                cout << "The resource type  used in query is "
+                                        << AIR_FLOW_RESOURCE_TYPE << endl;
                                 requiredResponse.setValue(LINKS_KEY, requiredChild);
-                                pResponse->setResourceRepresentation(requiredResponse, responseInterface);
+                                pResponse->setResourceRepresentation(requiredResponse,
+                                        responseInterface);
 
                             }
                             else
@@ -853,7 +862,6 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                     cerr << "Unable to send response for GET Request" << endl;
                 }
 
-//                handlePostRequest(queryParamsMap, incomingRepresentation, request, pResponse); // Process query params and do required operations ..
             }
             else if (requestType == "DELETE")
             {
@@ -862,7 +870,6 @@ OCEntityHandlerResult entityHandlerCollection(std::shared_ptr< OCResourceRequest
                 // Check for query params (if any)
                 QueryParamsMap queryParamsMap = request->getQueryParameters();
 
-//                handleDeleteRequest(queryParamsMap, incomingRepresentation, request, pResponse); // Process query params and do required operations ..
             }
         }
 
@@ -1482,7 +1489,7 @@ void createAirConDevice(bool isSecured)
         OCRepresentation swingRep;
         swingRep.setValue("x.com.vendor.swing.on", false);
         value = "horizontal";
-        swingRep.setValue("x.com.vendor.swing.direction", value);
+        swingRep.setValue("x.com.vendor.swing.blade.movement.direction", value);
         string supportedDirection[2] =
         { "horizontal", "vertical" };
         swingRep.setValue("x.com.vendor.swing.supported.direction", supportedDirection);
@@ -1506,6 +1513,102 @@ void createAirConDevice(bool isSecured)
         else
         {
             cout << "Unable to create Air Conditioner Swing resource" << endl;
+        }
+    }
+    else
+    {
+        cout << "Already Smart Home AirCon Device Resources are  created!!" << endl;
+    }
+}
+
+void createVendorDefinedDevice(bool isSecured)
+{
+    OCStackResult result = OC_STACK_ERROR;
+    cout << "Creating AirCon Device Resources!!" << endl;
+    uint8_t resourceProperty = OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE;
+    uint8_t resourcePropertyHidden = OC_ACTIVE | OC_OBSERVABLE;
+    if (isSecured)
+    {
+        resourceProperty = resourceProperty | OC_SECURE;
+        resourcePropertyHidden = resourcePropertyHidden | OC_SECURE;
+    }
+    if (g_isAirConDeviceCreated == false)
+    {
+        SampleResource::setDeviceInfo("Vendor Defined System Server", Device_TYPE_VENDOR);
+
+        string value = "";
+        vector< int > range;
+        vector< double > rangeTemperature;
+
+        g_acTimerResource = new SampleResource();
+        g_acTimerResourceHidden = new SampleResource();
+        setlocale(LC_ALL, "");
+        g_acTimerResource->setResourceProperties(AC_TIMER_URI, TIMER_RESOURCE_TYPE,
+        TIMER_RESOURCE_INTERFACE);
+        g_acTimerResourceHidden->setResourceProperties(AC_TIMER_URI_CHILD, TIMER_RESOURCE_TYPE,
+        TIMER_RESOURCE_INTERFACE);
+
+        OCRepresentation clockRep;
+        int time = 10;
+        clockRep.setValue("x.com.vendor.timer.hour", time);
+        time = 30;
+        clockRep.setValue("x.com.vendor.timer.minute", time);
+        clockRep.setValue("x.com.vendor.timer.second", time);
+        clockRep.setValue("x.com.vendor.timer.reset", false);
+
+        g_acTimerResource->setResourceRepresentation(clockRep);
+        g_acTimerResourceHidden->setResourceRepresentation(clockRep);
+
+        result = g_acTimerResource->startResource(resourceProperty);
+        result = g_acTimerResourceHidden->startResource(resourcePropertyHidden);
+        g_acTimerResource->setAsSlowResource();
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "Vendor Device Timer Resource created successfully" << endl;
+            g_createdResourceList.push_back(g_acTimerResource);
+            g_createdResourceList.push_back(g_acTimerResourceHidden);
+            g_isAirConDeviceCreated = true;
+        }
+        else
+        {
+            cout << "Unable to create Vendor Device Timer resource" << endl;
+        }
+
+        g_acSwingResource = new SampleResource();
+        g_acSwingResourceHidden = new SampleResource();
+        g_acSwingResource->setResourceProperties(AC_SWING_URI, SWING_RESOURCE_TYPE,
+        SWING_RESOURCE_INTERFACE);
+        g_acSwingResourceHidden->setResourceProperties(AC_SWING_URI_CHILD, SWING_RESOURCE_TYPE,
+        SWING_RESOURCE_INTERFACE);
+
+        OCRepresentation swingRep;
+        swingRep.setValue("x.com.vendor.swing.on", false);
+        value = "horizontal";
+        swingRep.setValue("x.com.vendor.swing.blade.movement.direction", value);
+        string supportedDirection[2] =
+        { "horizontal", "vertical" };
+        swingRep.setValue("x.com.vendor.swing.supported.direction", supportedDirection);
+
+        g_acSwingResource->setResourceRepresentation(swingRep);
+        g_acSwingResourceHidden->setResourceRepresentation(swingRep);
+
+        g_acSwingResource->setAsReadOnly("x.com.vendor.swing.supported.direction");
+        g_acSwingResourceHidden->setAsReadOnly("x.com.vendor.swing.supported.direction");
+
+        result = g_acSwingResource->startResource(resourceProperty);
+        result = g_acSwingResourceHidden->startResource(resourcePropertyHidden);
+
+        if (result == OC_STACK_OK)
+        {
+            cout << "Vendor Device Swing Resource created successfully" << endl;
+            g_createdResourceList.push_back(g_acSwingResource);
+            g_createdResourceList.push_back(g_acSwingResourceHidden);
+            g_isAirConDeviceCreated = true;
+        }
+        else
+        {
+            cout << "Unable to create Vendor Device Swing resource" << endl;
         }
     }
     else
@@ -1760,12 +1863,14 @@ void createGroup(string groupType)
                 {
                     if (resource->getUri().find("Children") != string::npos)
                     {
-                        cout << "Joining resource " << resource->getUri() << " to iotivity handled group" << endl;
+                        cout << "Joining resource " << resource->getUri()
+                                << " to iotivity handled group" << endl;
                         joinGroup(g_collectionHandle, resource->getResourceHandle());
                     }
                     else if (resource->getUri().find("Child") != string::npos)
                     {
-                        cout << "Joining resource " << resource->getUri() << " to vendor handled group" << endl;
+                        cout << "Joining resource " << resource->getUri()
+                                << " to vendor handled group" << endl;
                         joinGroup(g_collectionHandleVendor, resource->getResourceHandle());
                     }
                 }
@@ -2421,6 +2526,8 @@ void updateLocalResourceAutomatically()
     static bool binaryValue = false;
     static double temperatureValue = 25;
     static string directionValue = "left";
+    static int hourValue = 1;
+    static bool swingerValue = true;
 
     int selection = selectLocalResource();
     if (selection != -1)
@@ -2430,21 +2537,31 @@ void updateLocalResourceAutomatically()
 
         string uri = g_createdResourceList.at(selection)->getUri();
 
-        if (!uri.compare(AC_SWITCH_URI))
+        if (!uri.compare(AC_SWITCH_URI) || !uri.compare(AC_SWITCH_URI_CHILD))
         {
             key = string(ON_OFF_KEY);
             value = binaryValue = !binaryValue;
         }
-        else if (!uri.compare(AC_TEMPERATURE_URI))
+        else if (!uri.compare(AC_TEMPERATURE_URI) || !uri.compare(AC_TEMPERATURE_URI_CHILD))
         {
             key = string(TEMPERATURE_KEY);
             value = temperatureValue =
                     temperatureValue > 0 ? (temperatureValue - 26) : (temperatureValue + 26);
         }
-        else if (!uri.compare(AC_AIR_FLOW_URI))
+        else if (!uri.compare(AC_AIR_FLOW_URI) || !uri.compare(AC_AIR_FLOW_URI_CHILD))
         {
             key = string(DIRECTION_KEY);
             value = directionValue = directionValue.compare("left") ? "left" : "right";
+        }
+        else if (!uri.compare(AC_TIMER_URI) || !uri.compare(AC_TIMER_URI_CHILD))
+        {
+            key = string("x.com.vendor.timer.hour");
+            value = (hourValue % 2) ? (hourValue * 2) : (hourValue / 2);
+        }
+        else if (!uri.compare(AC_SWING_URI) || !uri.compare(AC_SWING_URI_CHILD))
+        {
+            key = string("x.com.vendor.swing.on");
+            value = swingerValue = !swingerValue;
         }
 
         OCRepresentation rep = g_createdResourceList.at(selection)->getRepresentation();
@@ -2694,16 +2811,17 @@ int selectResource()
     {
         cout << "\t" << "Please select your desired resource no. to send request and press Enter:"
                 << endl;
+        cout << "\t\t" << "0. Cancel send request" << endl;
 
         for (int i = 1; i <= totalResource; i++)
         {
             cout << "\t\t" << i << ". " << g_foundResourceList.at(i - 1)->uniqueIdentifier()
-                    << endl;
+                    << "    (" << g_foundResourceList.at(i - 1)->host() << ")" << endl;
         }
 
         cin >> selection;
 
-        while (selection < 1 || selection > totalResource)
+        while (selection < 0 || selection > totalResource)
         {
             cout << "Invalid selection of resource. Please select a resource no. between 1 & "
                     << totalResource << endl;
@@ -2794,7 +2912,10 @@ void showMenu(int argc, char* argv[])
     cout << "\t\t 103. Create Secured Smart TV Device" << endl;
     cout << "\t\t 104. Create Secured Air Conditioner Device" << endl;
     cout << "\t\t 105. Create Secured Air Conditioner Single Resource" << endl;
+    cout << "\t\t 106. Create Secured Vendor Defined Resource" << endl;
 #endif
+    cout << "\t\t 107. Create Air Conditioner Single Resource" << endl;
+    cout << "\t\t 108. Create  Vendor Defined Resource" << endl;
 
     g_hasCallbackArrived = false;
     handleMenu(argc, argv);
@@ -2814,11 +2935,11 @@ void selectMenu(int choice)
 
     int totalSecuredMenu = 0;
 #ifdef __SECURED__
-    totalSecuredMenu = 3;
+    totalSecuredMenu = 4;
 #endif
 
     if ((choice > 38 && choice < 101) || choice < 0 || (choice > 8 && choice < 10)
-            || (choice > 102 + totalSecuredMenu))
+            || ((choice > 102 + totalSecuredMenu) && (choice < 107 || choice > 108)))
     {
         cout << "Invalid Input. Please input your choice again" << endl;
         return;
@@ -3084,6 +3205,18 @@ void selectMenu(int choice)
 
         case 105:
             createSingleAirConResource(true);
+            break;
+
+        case 106:
+            createVendorDefinedDevice(true);
+            break;
+
+        case 107:
+            createSingleAirConResource();
+            break;
+
+        case 108:
+            createVendorDefinedDevice();
             break;
 
         case 0:

@@ -24,9 +24,9 @@
 
 namespace PH = std::placeholders;
 
-bool ResourceServer::m_isServerConstructed = false;
-OCPlatformInfo ResourceServer::m_platformInfo;
-OCDeviceInfo ResourceServer::m_deviceInfo;
+bool ResourceServer::s_isServerConstructed = false;
+OCPlatformInfo ResourceServer::s_platformInfo;
+OCDeviceInfo ResourceServer::s_deviceInfo;
 ResourceHelper* ResourceServer::p_resourceHelper = ResourceHelper::getInstance();
 
 ResourceServer::ResourceServer(void) :
@@ -38,7 +38,7 @@ ResourceServer::ResourceServer(void) :
     m_resourceTypeName = "core.mock";
     m_resourceInterface = DEFAULT_INTERFACE;
     m_isServerRunning = false;
-    m_isServerConstructed = false;
+    s_isServerConstructed = false;
     m_isRegisteredForPresence = false;
     m_isSlowResource = false;
     m_resourceProperty = OC_ACTIVE;
@@ -61,20 +61,20 @@ OCStackResult ResourceServer::constructServer(PlatformConfig &cfg)
     try
     {
         OCPlatform::Configure(cfg);
-        m_isServerConstructed = true;
+        s_isServerConstructed = true;
 
         setPlatformInfo(PLATFORM_ID, MANUFACTURER_NAME, MANUFACTURER_URL, MODEL_NUMBER,
         DATE_OF_MANUFACTURE, PLATFORM_VERSION, OPERATING_SYSTEM_VERSION,
         HARDWARE_VERSION, FIRMWARE_VERSION, SUPPORT_URL, SYSTEM_TIME);
 
-        OCResourcePayloadAddStringLL(&m_deviceInfo.types, "oic.wk.d");
-        OCSetDeviceInfo(m_deviceInfo);
+        OCResourcePayloadAddStringLL(&s_deviceInfo.types, "oic.wk.d");
+        OCSetDeviceInfo(s_deviceInfo);
 
         setDeviceInfo(DEVICE_NAME);
 
-        result = OCPlatform::registerPlatformInfo(m_platformInfo);
+        result = OCPlatform::registerPlatformInfo(s_platformInfo);
 
-        result = OCPlatform::registerDeviceInfo(m_deviceInfo);
+        result = OCPlatform::registerDeviceInfo(s_deviceInfo);
 
         cout << "Server Created..." << endl;
     }
@@ -307,18 +307,18 @@ OCStackResult ResourceServer::setPlatformInfo(string platformID, string manufact
         string platformVersion, string operatingSystemVersion, string hardwareVersion,
         string firmwareVersion, string supportUrl, string systemTime)
 {
-    p_resourceHelper->duplicateString(&m_platformInfo.platformID, platformID);
-    p_resourceHelper->duplicateString(&m_platformInfo.manufacturerName, manufacturerName);
-    p_resourceHelper->duplicateString(&m_platformInfo.manufacturerUrl, manufacturerUrl);
-    p_resourceHelper->duplicateString(&m_platformInfo.modelNumber, modelNumber);
-    p_resourceHelper->duplicateString(&m_platformInfo.dateOfManufacture, dateOfManufacture);
-    p_resourceHelper->duplicateString(&m_platformInfo.platformVersion, platformVersion);
-    p_resourceHelper->duplicateString(&m_platformInfo.operatingSystemVersion,
+    p_resourceHelper->duplicateString(&s_platformInfo.platformID, platformID);
+    p_resourceHelper->duplicateString(&s_platformInfo.manufacturerName, manufacturerName);
+    p_resourceHelper->duplicateString(&s_platformInfo.manufacturerUrl, manufacturerUrl);
+    p_resourceHelper->duplicateString(&s_platformInfo.modelNumber, modelNumber);
+    p_resourceHelper->duplicateString(&s_platformInfo.dateOfManufacture, dateOfManufacture);
+    p_resourceHelper->duplicateString(&s_platformInfo.platformVersion, platformVersion);
+    p_resourceHelper->duplicateString(&s_platformInfo.operatingSystemVersion,
             operatingSystemVersion);
-    p_resourceHelper->duplicateString(&m_platformInfo.hardwareVersion, hardwareVersion);
-    p_resourceHelper->duplicateString(&m_platformInfo.firmwareVersion, firmwareVersion);
-    p_resourceHelper->duplicateString(&m_platformInfo.supportUrl, supportUrl);
-    p_resourceHelper->duplicateString(&m_platformInfo.systemTime, systemTime);
+    p_resourceHelper->duplicateString(&s_platformInfo.hardwareVersion, hardwareVersion);
+    p_resourceHelper->duplicateString(&s_platformInfo.firmwareVersion, firmwareVersion);
+    p_resourceHelper->duplicateString(&s_platformInfo.supportUrl, supportUrl);
+    p_resourceHelper->duplicateString(&s_platformInfo.systemTime, systemTime);
     return OC_STACK_OK;
 }
 
@@ -334,16 +334,22 @@ void ResourceServer::setAsNormalResource()
 
 OCStackResult ResourceServer::setDeviceInfo(string deviceName, string deviceType)
 {
-    p_resourceHelper->duplicateString(&m_deviceInfo.deviceName, deviceName);
+    p_resourceHelper->duplicateString(&s_deviceInfo.deviceName, deviceName);
     if (deviceType.compare("") != 0)
     {
-        OCResourcePayloadAddStringLL(&m_deviceInfo.types, deviceType.c_str());
-        p_resourceHelper->duplicateString(&m_deviceInfo.specVersion, CORE_SPEC_VERSION);
-        OCResourcePayloadAddStringLL(&m_deviceInfo.dataModelVersions, RESOURCE_TYPE_SPEC_VERSION);
-        OCResourcePayloadAddStringLL(&m_deviceInfo.dataModelVersions, SMART_HOME_SPEC_VERSION);
+        OCResourcePayloadAddStringLL(&s_deviceInfo.types, deviceType.c_str());
+        p_resourceHelper->duplicateString(&s_deviceInfo.specVersion, CORE_SPEC_VERSION);
+        OCResourcePayloadAddStringLL(&s_deviceInfo.dataModelVersions, RESOURCE_TYPE_SPEC_VERSION);
+        if (!((deviceName.find("Client") == string::npos)
+                || (deviceName.find("client") == string::npos)
+                || (deviceName.find("System") == string::npos)
+                || (deviceName.find("system") == string::npos)))
+        {
+            OCResourcePayloadAddStringLL(&s_deviceInfo.dataModelVersions, SMART_HOME_SPEC_VERSION);
+        }
     }
 
-    OCSetDeviceInfo(m_deviceInfo);
+    OCSetDeviceInfo(s_deviceInfo);
     return OC_STACK_OK;
 }
 

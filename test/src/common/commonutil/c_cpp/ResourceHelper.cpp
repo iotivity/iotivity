@@ -211,13 +211,13 @@ void ResourceHelper::printRepresentation(OCRepresentation rep)
             {
 #ifdef __LINUX__
                 value = to_string(repValue->i);
-#endif        
-        
-#ifdef __ANDROID__
+#endif
+
+#if defined(__ANDROID__) || defined(__TIZEN__)
                 std::stringstream strstream;
                 strstream << repValue->i;
                 strstream >> value;
-#endif                
+#endif
             }
             if (repValue->type == OCRepPayloadPropType::OCREP_PROP_DOUBLE)
             {

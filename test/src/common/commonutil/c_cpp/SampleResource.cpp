@@ -92,7 +92,7 @@ void SampleResource::handleObserveRequest(QueryParamsMap &queryParamsMap,
     if (ObserveAction::ObserveRegister == observationInfo.action)
     {
         cout << "Adding new observer to observer list" << endl;
-        cout << "Observe Info:" << observationInfo.obsId << endl;
+        cout << "Observe Info: address: " << observationInfo.address << " , id: " << (int) observationInfo.obsId << endl;
         m_listOfObservers.push_back(observationInfo.obsId);
         m_isObserveRegistered = true;
         cout << "Sending notification from from register observer - for the first time" << endl;
@@ -100,7 +100,15 @@ void SampleResource::handleObserveRequest(QueryParamsMap &queryParamsMap,
         response->setErrorCode(COAP_RESPONSE_CODE_SUCCESS);
         response->setResponseResult(OCEntityHandlerResult::OC_EH_OK);
         response->setResourceRepresentation(getRepresentation(), DEFAULT_INTERFACE);
-        result = OCPlatform::sendResponse(response);
+        try
+        {
+            result = OCPlatform::sendResponse(response);
+        }
+        catch(exception& e)
+        {
+            cerr << "Exception Occurred while sending observe response" << endl;
+        }
+
         if (result != OC_STACK_OK)
         {
             cerr << "Unable to register observe" << endl;
@@ -111,7 +119,7 @@ void SampleResource::handleObserveRequest(QueryParamsMap &queryParamsMap,
         if (m_listOfObservers.size() > 0)
         {
             cout << "Removing observer from observer list" << endl;
-            cout << "Observe Info: " << observationInfo.address << endl;
+            cout << "Observe Info: address: " << observationInfo.address << " , id: " << (int) observationInfo.obsId << endl;
             m_listOfObservers.erase(
                     remove(m_listOfObservers.begin(), m_listOfObservers.end(),
                             observationInfo.obsId), m_listOfObservers.end());
