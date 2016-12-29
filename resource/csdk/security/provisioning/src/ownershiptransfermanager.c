@@ -517,6 +517,138 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
     OIC_LOG(DEBUG, TAG, "OUT SetResult");
 }
 
+static void OwnershipTransferSessionEstablished(const CAEndpoint_t *endpoint,
+        OicSecDoxm_t *newDevDoxm, OTMContext_t *otmCtx)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+
+    //In case of Mutual Verified Just-Works, display mutualVerifNum
+    if (OIC_MV_JUST_WORKS == newDevDoxm->oxmSel)
+    {
+        uint8_t preMutualVerifNum[OWNER_PSK_LENGTH_128] = {0};
+        uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN] = {0};
+        OicUuid_t deviceID = {.id = {0}};
+
+        if (OC_STACK_OK != GetDoxmDeviceID(&deviceID))
+        {
+            OIC_LOG(ERROR, TAG, "Error while retrieving Owner's device ID");
+            goto exit;
+        }
+
+        //Generate mutualVerifNum
+        char label[LABEL_LEN] = {0};
+        snprintf(label, LABEL_LEN, "%s%s", MUTUAL_VERIF_NUM, OXM_MV_JUST_WORKS);
+
+        CAResult_t pskRet = CAGenerateOwnerPSK(endpoint,
+                (uint8_t *)label,
+                strlen(label),
+                deviceID.id, sizeof(deviceID.id),
+                newDevDoxm->deviceID.id, sizeof(newDevDoxm->deviceID.id),
+                preMutualVerifNum, sizeof(preMutualVerifNum));
+
+        if (CA_STATUS_OK != pskRet)
+        {
+            OIC_LOG(WARNING, TAG, "CAGenerateOwnerPSK failed");
+            goto exit;
+        }
+
+        memcpy(mutualVerifNum, preMutualVerifNum + sizeof(preMutualVerifNum) - sizeof(mutualVerifNum),
+                sizeof(mutualVerifNum));
+        if (OC_STACK_OK != VerifyOwnershipTransfer(mutualVerifNum, DISPLAY_NUM))
+        {
+            OIC_LOG(ERROR, TAG, "Error while displaying mutualVerifNum");
+            goto exit;
+        }
+    }
+    //In case of confirmed manufacturer cert, display message
+    else if (OIC_CON_MFG_CERT == newDevDoxm->oxmSel)
+    {
+        if (OC_STACK_OK != VerifyOwnershipTransfer(NULL, DISPLAY_NUM))
+        {
+            OIC_LOG(ERROR, TAG, "Error while displaying message");
+            goto exit;
+        }
+    }
+
+    //Send request : POST /oic/sec/doxm [{... , "devowner":"PT's UUID"}]
+    OCStackResult res = PostOwnerUuid(otmCtx);
+    if(OC_STACK_OK != res)
+    {
+        OIC_LOG(ERROR, TAG, "Failed to send owner information");
+        SetResult(otmCtx, res);
+    }
+
+exit:
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
+}
+
+static void OwnershipTransferSessionFailed(const CAEndpoint_t *endpoint,
+        const CAErrorInfo_t *info, OicSecDoxm_t *newDevDoxm, OTMContext_t *otmCtx, bool emptyOwnerUuid)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+
+    if (CA_DTLS_AUTHENTICATION_FAILURE != info->result)
+    {
+        OIC_LOG_V(ERROR, TAG, "Ownership Transfer session establishment failed, error %u", info->result);
+        goto exit;
+    }
+
+    //in case of error from owner credential
+    if (!emptyOwnerUuid && newDevDoxm->owned)
+    {
+        OIC_LOG(ERROR, TAG, "The local copy of the owner credential may be incorrect - removing it.");
+        if (OC_STACK_OK != RemoveCredential(&(newDevDoxm->deviceID)))
+        {
+            OIC_LOG(WARNING, TAG, "Failed to remove the invalid owner credential");
+        }
+        SetResult(otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
+        goto exit;
+    }
+
+    //in case of error from wrong PIN, re-start the ownership transfer
+    if (OIC_RANDOM_DEVICE_PIN == newDevDoxm->oxmSel)
+    {
+        OIC_LOG(ERROR, TAG, "The PIN number may be incorrect.");
+
+        OicUuid_t emptyUuid = {.id={0}};
+        memcpy(&(newDevDoxm->owner), &emptyUuid, sizeof(OicUuid_t));
+        newDevDoxm->owned = false;
+        otmCtx->attemptCnt++;
+
+        // In order to re-start ownership transfer, device information should be deleted from PDM.
+        OCStackResult res = PDMDeleteDevice(&(otmCtx->selectedDeviceInfo->doxm->deviceID));
+        if (OC_STACK_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "Failed to PDMDeleteDevice");
+            SetResult(otmCtx, res);
+        }
+        else
+        {
+            if(WRONG_PIN_MAX_ATTEMP > otmCtx->attemptCnt)
+            {
+                res = StartOwnershipTransfer(otmCtx, otmCtx->selectedDeviceInfo);
+                if(OC_STACK_OK != res)
+                {
+                    OIC_LOG(ERROR, TAG, "Failed to Re-StartOwnershipTransfer");
+                    SetResult(otmCtx, res);
+                }
+            }
+            else
+            {
+                OIC_LOG(ERROR, TAG, "User has exceeded the number of authentication attempts.");
+                SetResult(otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
+            }
+        }
+        goto exit;
+    }
+
+    OIC_LOG(ERROR, TAG, "Failed to establish secure session.");
+    SetResult(otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
+
+exit:
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
+}
+
 /**
  * Function to handle the handshake result in OTM.
  * This function will be invoked after DTLS handshake
@@ -526,149 +658,57 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
  */
 void DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
-    if(NULL != endpoint && NULL != info)
+    OIC_LOG_V(DEBUG, TAG, "In %s(endpoint = %p, info = %p)", __func__, endpoint, info);
+
+    if (NULL == endpoint || NULL == info)
     {
-        OIC_LOG_V(INFO, TAG, "Received status from remote device(%s:%d) : %d",
-                 endpoint->addr, endpoint->port, info->result);
-
-        OTMContext_t* otmCtx = GetOTMContext(endpoint->addr, endpoint->port);
-        if(otmCtx)
-        {
-            OicSecDoxm_t* newDevDoxm = otmCtx->selectedDeviceInfo->doxm;
-            if(NULL != newDevDoxm)
-            {
-                OicUuid_t emptyUuid = {.id={0}};
-
-                //Make sure the address matches.
-                if(strncmp(otmCtx->selectedDeviceInfo->endpoint.addr,
-                   endpoint->addr,
-                   sizeof(endpoint->addr)) == 0 &&
-                   otmCtx->selectedDeviceInfo->securePort == endpoint->port)
-                {
-                    OCStackResult res = OC_STACK_ERROR;
-
-                    //If temporal secure sesstion established successfully
-                    if(CA_STATUS_OK == info->result &&
-                       false == newDevDoxm->owned &&
-                       memcmp(&(newDevDoxm->owner), &emptyUuid, sizeof(OicUuid_t)) == 0)
-                    {
-                        //In case of Mutual Verified Just-Works, display mutualVerifNum
-                        if (OIC_MV_JUST_WORKS == newDevDoxm->oxmSel)
-                        {
-                            uint8_t preMutualVerifNum[OWNER_PSK_LENGTH_128] = {0};
-                            uint8_t mutualVerifNum[MUTUAL_VERIF_NUM_LEN] = {0};
-                            OicUuid_t deviceID = {.id = {0}};
-
-                            //Generate mutualVerifNum
-                            char label[LABEL_LEN] = {0};
-                            snprintf(label, LABEL_LEN, "%s%s", MUTUAL_VERIF_NUM, OXM_MV_JUST_WORKS);
-                            if (OC_STACK_OK != GetDoxmDeviceID(&deviceID))
-                            {
-                                OIC_LOG(ERROR, TAG, "Error while retrieving Owner's device ID");
-                                return;
-                            }
-
-                            CAResult_t pskRet = CAGenerateOwnerPSK(endpoint,
-                                    (uint8_t *)label,
-                                    strlen(label),
-                                    deviceID.id, sizeof(deviceID.id),
-                                    newDevDoxm->deviceID.id, sizeof(newDevDoxm->deviceID.id),
-                                    preMutualVerifNum, OWNER_PSK_LENGTH_128);
-                            if (CA_STATUS_OK != pskRet)
-                            {
-                                OIC_LOG(WARNING, TAG, "Failed to remove the invaild owner credential");
-                                return;
-                            }
-
-                            memcpy(mutualVerifNum, preMutualVerifNum + OWNER_PSK_LENGTH_128 - sizeof(mutualVerifNum),
-                                    sizeof(mutualVerifNum));
-                            if (OC_STACK_OK != VerifyOwnershipTransfer(mutualVerifNum, DISPLAY_NUM))
-                            {
-                                OIC_LOG(ERROR, TAG, "Error while displaying mutualVerifNum");
-                                return;
-                            }
-                        }
-                        //In case of confirmed manufacturer cert, display message
-                        else if (OIC_CON_MFG_CERT == newDevDoxm->oxmSel)
-                        {
-                            if (OC_STACK_OK != VerifyOwnershipTransfer(NULL, DISPLAY_NUM))
-                            {
-                                OIC_LOG(ERROR, TAG, "Error while displaying message");
-                                return;
-                            }
-                        }
-
-                        //Send request : POST /oic/sec/doxm [{... , "devowner":"PT's UUID"}]
-                        res = PostOwnerUuid(otmCtx);
-                        if(OC_STACK_OK != res)
-                        {
-                            OIC_LOG(ERROR, TAG, "OperationModeUpdate : Failed to send owner information");
-                            SetResult(otmCtx, res);
-                        }
-                    }
-                    //In case of authentication failure
-                    else if(CA_DTLS_AUTHENTICATION_FAILURE == info->result)
-                    {
-                        //in case of error from owner credential
-                        if(memcmp(&(newDevDoxm->owner), &emptyUuid, sizeof(OicUuid_t)) != 0 &&
-                            true == newDevDoxm->owned)
-                        {
-                            OIC_LOG(ERROR, TAG, "The owner credential may incorrect.");
-
-                            if(OC_STACK_OK != RemoveCredential(&(newDevDoxm->deviceID)))
-                            {
-                                OIC_LOG(WARNING, TAG, "Failed to remove the invaild owner credential");
-                            }
-                            SetResult(otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
-                        }
-                        //in case of error from wrong PIN, re-start the ownership transfer
-                        else if(OIC_RANDOM_DEVICE_PIN == newDevDoxm->oxmSel)
-                        {
-                            OIC_LOG(ERROR, TAG, "The PIN number may incorrect.");
-
-                            memcpy(&(newDevDoxm->owner), &emptyUuid, sizeof(OicUuid_t));
-                            newDevDoxm->owned = false;
-                            otmCtx->attemptCnt++;
-
-                            // In order to re-start ownership transfer, device information should be deleted from PDM.
-                            res = PDMDeleteDevice(&(otmCtx->selectedDeviceInfo->doxm->deviceID));
-                            if (OC_STACK_OK != res)
-                            {
-                                SetResult(otmCtx, res);
-                                OIC_LOG(ERROR, TAG, "Failed to PDMDeleteDevice");
-                            }
-                            else
-                            {
-                                if(WRONG_PIN_MAX_ATTEMP > otmCtx->attemptCnt)
-                                {
-                                    res = StartOwnershipTransfer(otmCtx, otmCtx->selectedDeviceInfo);
-                                    if(OC_STACK_OK != res)
-                                    {
-                                        SetResult(otmCtx, res);
-                                        OIC_LOG(ERROR, TAG, "Failed to Re-StartOwnershipTransfer");
-                                    }
-                                }
-                                else
-                                {
-                                    OIC_LOG(ERROR, TAG, "User has exceeded the number of authentication attempts.");
-                                    SetResult(otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            OIC_LOG(ERROR, TAG, "Failed to establish secure session.");
-                            SetResult(otmCtx, OC_STACK_AUTHENTICATION_FAILURE);
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            OIC_LOG(ERROR, TAG, "Can not find the OTM Context.");
-        }
+        goto exit;
     }
+
+    OIC_LOG_V(INFO, TAG, "Received status from remote device(%s:%d) : %d",
+              endpoint->addr, endpoint->port, info->result);
+
+    OTMContext_t* otmCtx = GetOTMContext(endpoint->addr, endpoint->port);
+    if (NULL == otmCtx)
+    {
+        OIC_LOG(ERROR, TAG, "OTM context not found!");
+        goto exit;
+    }
+
+    OicSecDoxm_t* newDevDoxm = otmCtx->selectedDeviceInfo->doxm;
+    if (NULL == newDevDoxm)
+    {
+        OIC_LOG(ERROR, TAG, "New device doxm not found!");
+        goto exit;
+    }
+
+    //Make sure the address matches.
+    bool matching = (0 == strncmp(otmCtx->selectedDeviceInfo->endpoint.addr,
+                                  endpoint->addr, sizeof(endpoint->addr)));
+    matching = (matching && (otmCtx->selectedDeviceInfo->securePort == endpoint->port));
+
+    if (!matching)
+    {
+        OIC_LOG_V(ERROR, TAG, "Mismatched: expected address %s:%u",
+                  otmCtx->selectedDeviceInfo->endpoint.addr, otmCtx->selectedDeviceInfo->securePort);
+        goto exit;
+    }
+
+    OicUuid_t emptyUuid = {.id={0}};
+    bool emptyOwnerUuid = (memcmp(&(newDevDoxm->owner), &emptyUuid, sizeof(OicUuid_t)) == 0);
+
+    //If temporal secure sesstion established successfully
+    if ((CA_STATUS_OK == info->result) && !newDevDoxm->owned && emptyOwnerUuid)
+    {
+        OwnershipTransferSessionEstablished(endpoint, newDevDoxm, otmCtx);
+    }
+    else
+    {
+        OwnershipTransferSessionFailed(endpoint, info, newDevDoxm, otmCtx, emptyOwnerUuid);
+    }
+
+exit:
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
 }
 
 /**
