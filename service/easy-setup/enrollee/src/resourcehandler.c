@@ -35,14 +35,13 @@
 //-----------------------------------------------------------------------------
 
 /**
- * @var gProvResource
- * @brief Structure for holding the Provisioning status and target information required to
- * connect to the target network
+ * @var g_ESProvResource
+ * @brief Structure for holding the Provisioning status
  */
-static ProvResource gProvResource;
-static WiFiResource gWiFiResource;
-static CloudResource gCloudResource;
-static DevConfResource gDevConfResource;
+ProvResource g_ESProvResource;
+WiFiResource g_ESWiFiResource;
+CloudResource g_ESCloudResource;
+DevConfResource g_ESDevConfResource;
 
 //-----------------------------------------------------------------------------
 // Private internal function prototypes
@@ -139,19 +138,19 @@ void UnRegisterResourceEventCallBack()
 
 OCStackResult initProvResource(bool isSecured)
 {
-    gProvResource.status = ES_STATE_INIT;
-    gProvResource.lastErrCode = ES_ERRCODE_NO_ERROR;
+    g_ESProvResource.status = ES_STATE_INIT;
+    g_ESProvResource.lastErrCode = ES_ERRCODE_NO_ERROR;
 
     OCStackResult res = OC_STACK_ERROR;
     if (isSecured)
     {
-        res = OCCreateResource(&gProvResource.handle, OC_RSRVD_ES_RES_TYPE_PROV,
+        res = OCCreateResource(&g_ESProvResource.handle, OC_RSRVD_ES_RES_TYPE_PROV,
         OC_RSRVD_INTERFACE_DEFAULT,
         OC_RSRVD_ES_URI_PROV, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
     }else
     {
-        res = OCCreateResource(&gProvResource.handle, OC_RSRVD_ES_RES_TYPE_PROV,
+        res = OCCreateResource(&g_ESProvResource.handle, OC_RSRVD_ES_RES_TYPE_PROV,
         OC_RSRVD_INTERFACE_DEFAULT,
         OC_RSRVD_ES_URI_PROV, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
@@ -162,20 +161,20 @@ OCStackResult initProvResource(bool isSecured)
         return res;
     }
 
-    res = OCBindResourceTypeToResource(gProvResource.handle, OC_RSRVD_ES_RES_TYPE_COL);
+    res = OCBindResourceTypeToResource(g_ESProvResource.handle, OC_RSRVD_ES_RES_TYPE_COL);
     if(res)
     {
         OIC_LOG_V(INFO, ES_RH_TAG, "Binding Resource type with result: %s", getResult(res));
         return res;
     }
 
-    res = OCBindResourceInterfaceToResource(gProvResource.handle, OC_RSRVD_INTERFACE_LL);
+    res = OCBindResourceInterfaceToResource(g_ESProvResource.handle, OC_RSRVD_INTERFACE_LL);
     if(res)
     {
         OIC_LOG_V(INFO, ES_RH_TAG, "Binding Resource interface with result: %s", getResult(res));
         return res;
     }
-    res = OCBindResourceInterfaceToResource(gProvResource.handle, OC_RSRVD_INTERFACE_BATCH);
+    res = OCBindResourceInterfaceToResource(g_ESProvResource.handle, OC_RSRVD_INTERFACE_BATCH);
     if(res)
     {
         OIC_LOG_V(INFO, ES_RH_TAG, "Binding Resource interface with result: %s", getResult(res));
@@ -190,26 +189,26 @@ OCStackResult initWiFiResource(bool isSecured)
 {
     OCStackResult res = OC_STACK_ERROR;
 
-    gWiFiResource.supportedFreq = WIFI_BOTH;
-    gWiFiResource.supportedMode[0] = WIFI_11A;
-    gWiFiResource.supportedMode[1] = WIFI_11B;
-    gWiFiResource.supportedMode[2] = WIFI_11G;
-    gWiFiResource.supportedMode[3] = WIFI_11N;
-    gWiFiResource.numMode = 4;
-    gWiFiResource.authType = NONE_AUTH;
-    gWiFiResource.encType = NONE_ENC;
-    OICStrcpy(gWiFiResource.ssid, sizeof(gWiFiResource.ssid), "");
-    OICStrcpy(gWiFiResource.cred, sizeof(gWiFiResource.cred), "");
+    g_ESWiFiResource.supportedFreq = WIFI_BOTH;
+    g_ESWiFiResource.supportedMode[0] = WIFI_11A;
+    g_ESWiFiResource.supportedMode[1] = WIFI_11B;
+    g_ESWiFiResource.supportedMode[2] = WIFI_11G;
+    g_ESWiFiResource.supportedMode[3] = WIFI_11N;
+    g_ESWiFiResource.numMode = 4;
+    g_ESWiFiResource.authType = NONE_AUTH;
+    g_ESWiFiResource.encType = NONE_ENC;
+    OICStrcpy(g_ESWiFiResource.ssid, sizeof(g_ESWiFiResource.ssid), "");
+    OICStrcpy(g_ESWiFiResource.cred, sizeof(g_ESWiFiResource.cred), "");
 
     if (isSecured)
     {
-        res = OCCreateResource(&gWiFiResource.handle, OC_RSRVD_ES_RES_TYPE_WIFI,
+        res = OCCreateResource(&g_ESWiFiResource.handle, OC_RSRVD_ES_RES_TYPE_WIFI,
         OC_RSRVD_INTERFACE_DEFAULT,
         OC_RSRVD_ES_URI_WIFI, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
     }else
     {
-        res = OCCreateResource(&gWiFiResource.handle, OC_RSRVD_ES_RES_TYPE_WIFI,
+        res = OCCreateResource(&g_ESWiFiResource.handle, OC_RSRVD_ES_RES_TYPE_WIFI,
         OC_RSRVD_INTERFACE_DEFAULT,
         OC_RSRVD_ES_URI_WIFI, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
@@ -224,21 +223,21 @@ OCStackResult initCloudServerResource(bool isSecured)
 {
     OCStackResult res = OC_STACK_ERROR;
 
-    OICStrcpy(gCloudResource.authCode, sizeof(gCloudResource.authCode), "");
-    OICStrcpy(gCloudResource.accessToken, sizeof(gCloudResource.accessToken), "");
-    gCloudResource.accessTokenType = NONE_OAUTH_TOKENTYPE;
-    OICStrcpy(gCloudResource.authProvider, sizeof(gCloudResource.authProvider), "");
-    OICStrcpy(gCloudResource.ciServer, sizeof(gCloudResource.ciServer), "");
+    OICStrcpy(g_ESCloudResource.authCode, sizeof(g_ESCloudResource.authCode), "");
+    OICStrcpy(g_ESCloudResource.accessToken, sizeof(g_ESCloudResource.accessToken), "");
+    g_ESCloudResource.accessTokenType = NONE_OAUTH_TOKENTYPE;
+    OICStrcpy(g_ESCloudResource.authProvider, sizeof(g_ESCloudResource.authProvider), "");
+    OICStrcpy(g_ESCloudResource.ciServer, sizeof(g_ESCloudResource.ciServer), "");
 
     if (isSecured)
     {
-        res = OCCreateResource(&gCloudResource.handle, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER,
+        res = OCCreateResource(&g_ESCloudResource.handle, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER,
         OC_RSRVD_INTERFACE_DEFAULT,
         OC_RSRVD_ES_URI_CLOUDSERVER, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
     }else
     {
-        res = OCCreateResource(&gCloudResource.handle, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER,
+        res = OCCreateResource(&g_ESCloudResource.handle, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER,
         OC_RSRVD_INTERFACE_DEFAULT,
         OC_RSRVD_ES_URI_CLOUDSERVER, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
@@ -253,21 +252,21 @@ OCStackResult initDevConfResource(bool isSecured)
 {
     OCStackResult res = OC_STACK_ERROR;
 
-    OICStrcpy(gDevConfResource.devName, sizeof(gDevConfResource.devName), "");
-    OICStrcpy(gDevConfResource.modelNumber, sizeof(gDevConfResource.modelNumber), "");
-    OICStrcpy(gDevConfResource.location, sizeof(gDevConfResource.location), "");
-    OICStrcpy(gDevConfResource.country, sizeof(gDevConfResource.country), "");
-    OICStrcpy(gDevConfResource.language, sizeof(gDevConfResource.language), "");
+    OICStrcpy(g_ESDevConfResource.devName, sizeof(g_ESDevConfResource.devName), "");
+    OICStrcpy(g_ESDevConfResource.modelNumber, sizeof(g_ESDevConfResource.modelNumber), "");
+    OICStrcpy(g_ESDevConfResource.location, sizeof(g_ESDevConfResource.location), "");
+    OICStrcpy(g_ESDevConfResource.country, sizeof(g_ESDevConfResource.country), "");
+    OICStrcpy(g_ESDevConfResource.language, sizeof(g_ESDevConfResource.language), "");
 
     if (isSecured)
     {
-        res = OCCreateResource(&gDevConfResource.handle, OC_RSRVD_ES_RES_TYPE_DEVCONF,
+        res = OCCreateResource(&g_ESDevConfResource.handle, OC_RSRVD_ES_RES_TYPE_DEVCONF,
         OC_RSRVD_INTERFACE_DEFAULT,
         OC_RSRVD_ES_URI_DEVCONF, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
     }else
     {
-        res = OCCreateResource(&gDevConfResource.handle, OC_RSRVD_ES_RES_TYPE_DEVCONF,
+        res = OCCreateResource(&g_ESDevConfResource.handle, OC_RSRVD_ES_RES_TYPE_DEVCONF,
         OC_RSRVD_INTERFACE_DEFAULT,
         OC_RSRVD_ES_URI_DEVCONF, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
@@ -280,7 +279,7 @@ OCStackResult initDevConfResource(bool isSecured)
 
 void updateProvResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input)
 {
-    OIC_LOG_V(INFO, ES_RH_TAG, "gProvResource.status %d", gProvResource.status);
+    OIC_LOG_V(INFO, ES_RH_TAG, "g_ESProvResource.status %d", g_ESProvResource.status);
 
     if(ehRequest->query)
     {
@@ -313,33 +312,33 @@ void updateWiFiResource(OCRepPayload* input)
     char* ssid = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_SSID, &ssid))
     {
-        OICStrcpy(gWiFiResource.ssid, sizeof(gWiFiResource.ssid), ssid);
+        OICStrcpy(g_ESWiFiResource.ssid, sizeof(g_ESWiFiResource.ssid), ssid);
         OICStrcpy(wiFiData->ssid, sizeof(wiFiData->ssid), ssid);
-        OIC_LOG_V(INFO, ES_RH_TAG, "gWiFiResource.ssid : %s", gWiFiResource.ssid);
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESWiFiResource.ssid : %s", g_ESWiFiResource.ssid);
     }
 
     char* cred = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CRED, &cred))
     {
-        OICStrcpy(gWiFiResource.cred, sizeof(gWiFiResource.cred), cred);
+        OICStrcpy(g_ESWiFiResource.cred, sizeof(g_ESWiFiResource.cred), cred);
         OICStrcpy(wiFiData->pwd, sizeof(wiFiData->pwd), cred);
-        OIC_LOG_V(INFO, ES_RH_TAG, "gWiFiResource.cred %s", gWiFiResource.cred);
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESWiFiResource.cred %s", g_ESWiFiResource.cred);
     }
 
     int64_t authType = -1;
     if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_AUTHTYPE, &authType))
     {
-        gWiFiResource.authType = authType;
-        wiFiData->authtype = gWiFiResource.authType;
-        OIC_LOG_V(INFO, ES_RH_TAG, "gWiFiResource.authType %u", gWiFiResource.authType);
+        g_ESWiFiResource.authType = authType;
+        wiFiData->authtype = g_ESWiFiResource.authType;
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESWiFiResource.authType %u", g_ESWiFiResource.authType);
     }
 
     int64_t encType = -1;
     if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_ENCTYPE, &encType))
     {
-        gWiFiResource.encType = encType;
-        wiFiData->enctype = gWiFiResource.encType;
-        OIC_LOG_V(INFO, ES_RH_TAG, "gWiFiResource.encType %u", gWiFiResource.encType);
+        g_ESWiFiResource.encType = encType;
+        wiFiData->enctype = g_ESWiFiResource.encType;
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESWiFiResource.encType %u", g_ESWiFiResource.encType);
     }
 
     if(gReadUserdataCb)
@@ -362,7 +361,7 @@ void updateWiFiResource(OCRepPayload* input)
         }
     }
 
-    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(gWiFiResource.handle, OC_HIGH_QOS))
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESWiFiResource.handle, OC_HIGH_QOS))
     {
         OIC_LOG(INFO, ES_RH_TAG, "Enrollee doesn't have any observers.");
     }
@@ -382,7 +381,7 @@ void updateCloudResource(OCRepPayload* input)
 
     memset(cloudData->authCode, 0, OIC_STRING_MAX_VALUE);
     memset(cloudData->accessToken, 0, OIC_STRING_MAX_VALUE);
-    gCloudResource.accessTokenType = NONE_OAUTH_TOKENTYPE;
+    g_ESCloudResource.accessTokenType = NONE_OAUTH_TOKENTYPE;
     memset(cloudData->authProvider, 0, OIC_STRING_MAX_VALUE);
     memset(cloudData->ciServer, 0, OIC_STRING_MAX_VALUE);
     cloudData->userdata = NULL;
@@ -390,41 +389,41 @@ void updateCloudResource(OCRepPayload* input)
     char *authCode = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHCODE, &authCode))
     {
-        OICStrcpy(gCloudResource.authCode, sizeof(gCloudResource.authCode), authCode);
+        OICStrcpy(g_ESCloudResource.authCode, sizeof(g_ESCloudResource.authCode), authCode);
         OICStrcpy(cloudData->authCode, sizeof(cloudData->authCode), authCode);
-        OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.authCode %s", gCloudResource.authCode);
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESCloudResource.authCode %s", g_ESCloudResource.authCode);
     }
 
     char *accessToken = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_ACCESSTOKEN, &accessToken))
     {
-        OICStrcpy(gCloudResource.accessToken, sizeof(gCloudResource.accessToken), accessToken);
+        OICStrcpy(g_ESCloudResource.accessToken, sizeof(g_ESCloudResource.accessToken), accessToken);
         OICStrcpy(cloudData->accessToken, sizeof(cloudData->accessToken), accessToken);
-        OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.accessToken %s", gCloudResource.accessToken);
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESCloudResource.accessToken %s", g_ESCloudResource.accessToken);
     }
 
     int64_t accessTokenType = -1;
     if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_ACCESSTOKEN_TYPE, &accessTokenType))
     {
-        gCloudResource.accessTokenType = accessTokenType;
-        cloudData->accessTokenType = gCloudResource.accessTokenType;
-        OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.accessTokenType %d", gCloudResource.accessTokenType);
+        g_ESCloudResource.accessTokenType = accessTokenType;
+        cloudData->accessTokenType = g_ESCloudResource.accessTokenType;
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESCloudResource.accessTokenType %d", g_ESCloudResource.accessTokenType);
     }
 
     char *authProvider = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHPROVIDER, &authProvider))
     {
-        OICStrcpy(gCloudResource.authProvider, sizeof(gCloudResource.authProvider), authProvider);
+        OICStrcpy(g_ESCloudResource.authProvider, sizeof(g_ESCloudResource.authProvider), authProvider);
         OICStrcpy(cloudData->authProvider, sizeof(cloudData->authProvider), authProvider);
-        OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.authServerUrl %s", gCloudResource.authProvider);
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESCloudResource.authServerUrl %s", g_ESCloudResource.authProvider);
     }
 
     char *ciServer = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CISERVER, &ciServer))
     {
-        OICStrcpy(gCloudResource.ciServer, sizeof(gCloudResource.ciServer), ciServer);
+        OICStrcpy(g_ESCloudResource.ciServer, sizeof(g_ESCloudResource.ciServer), ciServer);
         OICStrcpy(cloudData->ciServer, sizeof(cloudData->ciServer), ciServer);
-        OIC_LOG_V(INFO, ES_RH_TAG, "gCloudResource.ciServer %s", gCloudResource.ciServer);
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESCloudResource.ciServer %s", g_ESCloudResource.ciServer);
     }
 
     if(gReadUserdataCb)
@@ -447,7 +446,7 @@ void updateCloudResource(OCRepPayload* input)
         }
     }
 
-    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(gCloudResource.handle, OC_HIGH_QOS))
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESCloudResource.handle, OC_HIGH_QOS))
     {
         OIC_LOG(INFO, ES_RH_TAG, "cloudResource doesn't have any observers.");
     }
@@ -471,25 +470,25 @@ void updateDevConfResource(OCRepPayload* input)
     char *location = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_LOCATION, &location))
     {
-        OICStrcpy(gDevConfResource.location, sizeof(gDevConfResource.location), location);
+        OICStrcpy(g_ESDevConfResource.location, sizeof(g_ESDevConfResource.location), location);
         OICStrcpy(devConfData->location, sizeof(devConfData->location), location);
-        OIC_LOG_V(INFO, ES_RH_TAG, "gDevConfResource.location %s", gDevConfResource.location);
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESDevConfResource.location %s", g_ESDevConfResource.location);
     }
 
     char *country = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_COUNTRY, &country))
     {
-        OICStrcpy(gDevConfResource.country, sizeof(gDevConfResource.country), country);
+        OICStrcpy(g_ESDevConfResource.country, sizeof(g_ESDevConfResource.country), country);
         OICStrcpy(devConfData->country, sizeof(devConfData->country), country);
-        OIC_LOG_V(INFO, ES_RH_TAG, "gDevConfResource.country %s", gDevConfResource.country);
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESDevConfResource.country %s", g_ESDevConfResource.country);
     }
 
     char *language = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_LANGUAGE, &language))
     {
-        OICStrcpy(gDevConfResource.language, sizeof(gDevConfResource.language), language);
+        OICStrcpy(g_ESDevConfResource.language, sizeof(g_ESDevConfResource.language), language);
         OICStrcpy(devConfData->language, sizeof(devConfData->language), language);
-        OIC_LOG_V(INFO, ES_RH_TAG, "gDevConfResource.language %s", gDevConfResource.language);
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESDevConfResource.language %s", g_ESDevConfResource.language);
     }
 
     if(gReadUserdataCb)
@@ -512,7 +511,7 @@ void updateDevConfResource(OCRepPayload* input)
         }
     }
 
-    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(gDevConfResource.handle, OC_HIGH_QOS))
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESDevConfResource.handle, OC_HIGH_QOS))
     {
         OIC_LOG(INFO, ES_RH_TAG, "devConfResource doesn't have any observers.");
     }
@@ -529,7 +528,7 @@ OCRepPayload* constructResponseOfWiFi(char *interface)
         return NULL;
     }
 
-    if(gWiFiResource.handle == NULL)
+    if(g_ESWiFiResource.handle == NULL)
     {
         OIC_LOG(ERROR, ES_RH_TAG, "WiFi resource is not created");
         return NULL;
@@ -572,19 +571,19 @@ OCRepPayload* constructResponseOfWiFi(char *interface)
         OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_WIFI);
     }
 
-    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {gWiFiResource.numMode, 0, 0};
-    int64_t *modes_64 = (int64_t *)OICMalloc(gWiFiResource.numMode * sizeof(int64_t));
-    for(int i = 0 ; i < gWiFiResource.numMode ; ++i)
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {g_ESWiFiResource.numMode, 0, 0};
+    int64_t *modes_64 = (int64_t *)OICMalloc(g_ESWiFiResource.numMode * sizeof(int64_t));
+    for(int i = 0 ; i < g_ESWiFiResource.numMode ; ++i)
     {
-        modes_64[i] = gWiFiResource.supportedMode[i];
+        modes_64[i] = g_ESWiFiResource.supportedMode[i];
     }
     OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIMODE, (int64_t *)modes_64, dimensions);
 
-    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_SUPPORTEDWIFIFREQ, gWiFiResource.supportedFreq);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_SSID, gWiFiResource.ssid);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CRED, gWiFiResource.cred);
-    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_AUTHTYPE, (int) gWiFiResource.authType);
-    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_ENCTYPE, (int) gWiFiResource.encType);
+    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_SUPPORTEDWIFIFREQ, g_ESWiFiResource.supportedFreq);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_SSID, g_ESWiFiResource.ssid);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CRED, g_ESWiFiResource.cred);
+    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_AUTHTYPE, (int) g_ESWiFiResource.authType);
+    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_ENCTYPE, (int) g_ESWiFiResource.encType);
 
     if(gWriteUserdataCb)
     {
@@ -609,7 +608,7 @@ OCRepPayload* constructResponseOfCloud(char *interface)
         return NULL;
     }
 
-    if(gCloudResource.handle == NULL)
+    if(g_ESCloudResource.handle == NULL)
     {
         OIC_LOG(ERROR, ES_RH_TAG, "CloudServer resource is not created");
         return NULL;
@@ -652,11 +651,11 @@ OCRepPayload* constructResponseOfCloud(char *interface)
         OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER);
     }
 
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHCODE, gCloudResource.authCode);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_ACCESSTOKEN, gCloudResource.accessToken);
-    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_ACCESSTOKEN_TYPE, (int)gCloudResource.accessTokenType);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHPROVIDER, gCloudResource.authProvider);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CISERVER, gCloudResource.ciServer);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHCODE, g_ESCloudResource.authCode);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_ACCESSTOKEN, g_ESCloudResource.accessToken);
+    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_ACCESSTOKEN_TYPE, (int)g_ESCloudResource.accessTokenType);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHPROVIDER, g_ESCloudResource.authProvider);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CISERVER, g_ESCloudResource.ciServer);
 
     if(gWriteUserdataCb)
     {
@@ -681,7 +680,7 @@ OCRepPayload* constructResponseOfDevConf(char *interface)
         return NULL;
     }
 
-    if(gDevConfResource.handle == NULL)
+    if(g_ESDevConfResource.handle == NULL)
     {
         OIC_LOG(ERROR, ES_RH_TAG, "DevConf resource is not created");
         return NULL;
@@ -724,11 +723,11 @@ OCRepPayload* constructResponseOfDevConf(char *interface)
         OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_DEVCONF);
     }
 
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_DEVNAME, gDevConfResource.devName);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_MODELNUMBER, gDevConfResource.modelNumber);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LOCATION, gDevConfResource.location);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LANGUAGE, gDevConfResource.language);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_COUNTRY, gDevConfResource.country);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_DEVNAME, g_ESDevConfResource.devName);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_MODELNUMBER, g_ESDevConfResource.modelNumber);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LOCATION, g_ESDevConfResource.location);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_LANGUAGE, g_ESDevConfResource.language);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_COUNTRY, g_ESDevConfResource.country);
 
     if(gWriteUserdataCb)
     {
@@ -764,7 +763,7 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
 
         int childResCnt = 0;
 
-        if(gWiFiResource.handle != NULL)
+        if(g_ESWiFiResource.handle != NULL)
         {
             OCRepPayload *add = OCRepPayloadCreate();
             if(!add)
@@ -795,7 +794,7 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             OCRepPayloadSetStringArray(add, OC_RSRVD_INTERFACE,
                                             (const char **)resourceInterface, dimensions);
 
-            OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)gWiFiResource.handle);
+            OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)g_ESWiFiResource.handle);
             OCRepPayload *policy = OCRepPayloadCreate();
             if (!policy)
             {
@@ -818,7 +817,7 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             arrayPayload[childResCnt++] = add;
         }
 
-        if(gDevConfResource.handle != NULL)
+        if(g_ESDevConfResource.handle != NULL)
         {
             OCRepPayload *add = OCRepPayloadCreate();
             if(!add)
@@ -849,7 +848,7 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             OCRepPayloadSetStringArray(add, OC_RSRVD_INTERFACE,
                                             (const char **)resourceInterface, dimensions);
 
-            OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)gDevConfResource.handle);
+            OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)g_ESDevConfResource.handle);
             OCRepPayload *policy = OCRepPayloadCreate();
             if (!policy)
             {
@@ -872,7 +871,7 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             arrayPayload[childResCnt++] = add;
         }
 
-        if(gCloudResource.handle != NULL)
+        if(g_ESCloudResource.handle != NULL)
         {
             OCRepPayload *add = OCRepPayloadCreate();
             if(!add)
@@ -903,7 +902,7 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             OCRepPayloadSetStringArray(add, OC_RSRVD_INTERFACE,
                                             (const char **)resourceInterface, dimensions);
 
-            OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)gCloudResource.handle);
+            OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)g_ESCloudResource.handle);
             OCRepPayload *policy = OCRepPayloadCreate();
             if (!policy)
             {
@@ -940,8 +939,8 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_PROV);
             OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_COL);
 
-            OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PROVSTATUS, gProvResource.status);
-            OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_LAST_ERRORCODE, gProvResource.lastErrCode);
+            OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PROVSTATUS, g_ESProvResource.status);
+            OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_LAST_ERRORCODE, g_ESProvResource.lastErrCode);
 
             OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_ES_LINKS, arrayPayload, dimensions);
         }
@@ -992,8 +991,8 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
 
         OCRepPayloadSetStringArray(repPayload, OC_RSRVD_ES_RES_TYPE, (char **)resourceTypes, resourceTypesDimensions);
 
-        OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_PROVSTATUS, gProvResource.status);
-        OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_LAST_ERRORCODE, gProvResource.lastErrCode);
+        OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_PROVSTATUS, g_ESProvResource.status);
+        OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_LAST_ERRORCODE, g_ESProvResource.lastErrCode);
 
         OCRepPayloadSetPropObject(payload, OC_RSRVD_REPRESENTATION, repPayload);
     }
@@ -1062,7 +1061,7 @@ OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMa
             return res;
         }
 
-        res = OCBindResource(gProvResource.handle, gWiFiResource.handle);
+        res = OCBindResource(g_ESProvResource.handle, g_ESWiFiResource.handle);
         if(res != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, ES_RH_TAG, "Bind WiFiResource result: %s", getResult(res));
@@ -1081,7 +1080,7 @@ OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMa
             return res;
         }
 
-        res = OCBindResource(gProvResource.handle, gCloudResource.handle);
+        res = OCBindResource(g_ESProvResource.handle, g_ESCloudResource.handle);
         if(res != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, ES_RH_TAG, "Bind CloudResource result: %s", getResult(res));
@@ -1099,7 +1098,7 @@ OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMa
             return res;
         }
 
-        res = OCBindResource(gProvResource.handle, gDevConfResource.handle);
+        res = OCBindResource(g_ESProvResource.handle, g_ESDevConfResource.handle);
         if(res != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, ES_RH_TAG, "Bind DevConfResource result: %s", getResult(res));
@@ -1122,7 +1121,7 @@ OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMa
 
 OCStackResult DeleteProvisioningResource()
 {
-    OCStackResult res = OCDeleteResource(gProvResource.handle);
+    OCStackResult res = OCDeleteResource(g_ESProvResource.handle);
     if (res != OC_STACK_OK)
     {
         OIC_LOG_V(INFO, ES_RH_TAG, "Deleting Prov resource error with result: %s", getResult(res));
@@ -1134,61 +1133,61 @@ OCStackResult DeleteProvisioningResource()
 OCStackResult DeleteEasySetupResources()
 {
     OCStackResult res = OC_STACK_ERROR;
-    if (gWiFiResource.handle != NULL)
+    if (g_ESWiFiResource.handle != NULL)
     {
-        res = OCUnBindResource(gProvResource.handle, gWiFiResource.handle);
+        res = OCUnBindResource(g_ESProvResource.handle, g_ESWiFiResource.handle);
         if(res != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, ES_RH_TAG, "Unbind WiFi resource error with result: %s", getResult(res));
         }
     }
-    if (gCloudResource.handle != NULL)
+    if (g_ESCloudResource.handle != NULL)
     {
-        res = OCUnBindResource(gProvResource.handle, gCloudResource.handle);
+        res = OCUnBindResource(g_ESProvResource.handle, g_ESCloudResource.handle);
         if(res != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, ES_RH_TAG, "Unbind CloudServer resource error with result: %s", getResult(res));
         }
     }
-    if (gDevConfResource.handle != NULL)
+    if (g_ESDevConfResource.handle != NULL)
     {
-        res = OCUnBindResource(gProvResource.handle, gDevConfResource.handle);
+        res = OCUnBindResource(g_ESProvResource.handle, g_ESDevConfResource.handle);
         if(res != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, ES_RH_TAG, "Unbind DevConf resource error with result: %s", getResult(res));
         }
     }
 
-    if (gWiFiResource.handle != NULL)
+    if (g_ESWiFiResource.handle != NULL)
     {
-        res = OCDeleteResource(gWiFiResource.handle);
+        res = OCDeleteResource(g_ESWiFiResource.handle);
         if (res != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting WiFi resource error with result: %s", getResult(res));
         }
     }
 
-    if(gCloudResource.handle != NULL)
+    if(g_ESCloudResource.handle != NULL)
     {
-        res = OCDeleteResource(gCloudResource.handle);
+        res = OCDeleteResource(g_ESCloudResource.handle);
         if (res != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting CloudServer resource error with result: %s", getResult(res));
         }
     }
 
-    if(gDevConfResource.handle != NULL)
+    if(g_ESDevConfResource.handle != NULL)
     {
-        res = OCDeleteResource(gDevConfResource.handle);
+        res = OCDeleteResource(g_ESDevConfResource.handle);
         if (res != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting DevConf resource error with result: %s", getResult(res));
         }
     }
 
-    if(gProvResource.handle != NULL)
+    if(g_ESProvResource.handle != NULL)
     {
-        res = OCDeleteResource(gProvResource.handle);
+        res = OCDeleteResource(g_ESProvResource.handle);
         if (res != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting Prov resource error with result: %s", getResult(res));
@@ -1215,7 +1214,7 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
     OCRepPayload *getResp = NULL;
     *payload = NULL;
 
-    if(ehRequest->resource == gProvResource.handle)
+    if(ehRequest->resource == g_ESProvResource.handle)
     {
         if(ehRequest->query &&
             strcmp(ehRequest->query, "") &&
@@ -1231,7 +1230,7 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
             getResp = constructResponseOfProv(ehRequest);
         }
     }
-    else if(ehRequest->resource == gWiFiResource.handle)
+    else if(ehRequest->resource == g_ESWiFiResource.handle)
     {
         if(CheckEhRequestPayload(ehRequest) != OC_EH_OK)
         {
@@ -1243,7 +1242,7 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
             getResp = constructResponseOfWiFi(OC_RSRVD_INTERFACE_DEFAULT);
         }
     }
-    else if(ehRequest->resource == gCloudResource.handle)
+    else if(ehRequest->resource == g_ESCloudResource.handle)
     {
         if(CheckEhRequestPayload(ehRequest) != OC_EH_OK)
         {
@@ -1255,7 +1254,7 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
             getResp = constructResponseOfCloud(OC_RSRVD_INTERFACE_DEFAULT);
         }
     }
-    else if(ehRequest->resource == gDevConfResource.handle)
+    else if(ehRequest->resource == g_ESDevConfResource.handle)
     {
         if(CheckEhRequestPayload(ehRequest) != OC_EH_OK)
         {
@@ -1297,7 +1296,7 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
         return ehResult;
     }
 
-    if(ehRequest->resource == gProvResource.handle)
+    if(ehRequest->resource == g_ESProvResource.handle)
     {
         if(ehRequest->query &&
             strcmp(ehRequest->query, "") &&
@@ -1312,7 +1311,7 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
             updateProvResource(ehRequest, input);
         }
     }
-    else if(ehRequest->resource == gWiFiResource.handle)
+    else if(ehRequest->resource == g_ESWiFiResource.handle)
     {
         if(CheckEhRequestPayload(ehRequest) != OC_EH_OK)
         {
@@ -1324,7 +1323,7 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
             updateWiFiResource(input);
         }
     }
-    else if(ehRequest->resource == gCloudResource.handle)
+    else if(ehRequest->resource == g_ESCloudResource.handle)
     {
         if(CheckEhRequestPayload(ehRequest) != OC_EH_OK)
         {
@@ -1336,7 +1335,7 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
             updateCloudResource(input);
         }
     }
-    else if(ehRequest->resource == gDevConfResource.handle)
+    else if(ehRequest->resource == g_ESDevConfResource.handle)
     {
         if(CheckEhRequestPayload(ehRequest) != OC_EH_OK)
         {
@@ -1350,19 +1349,19 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
     }
 
     OCRepPayload *getResp = NULL;
-    if(ehRequest->resource == gProvResource.handle)
+    if(ehRequest->resource == g_ESProvResource.handle)
     {
         getResp = constructResponseOfProv(ehRequest);
     }
-    else if(ehRequest->resource == gWiFiResource.handle)
+    else if(ehRequest->resource == g_ESWiFiResource.handle)
     {
         getResp = constructResponseOfWiFi(OC_RSRVD_INTERFACE_DEFAULT);
     }
-    else if(ehRequest->resource == gCloudResource.handle)
+    else if(ehRequest->resource == g_ESCloudResource.handle)
     {
         getResp = constructResponseOfCloud(OC_RSRVD_INTERFACE_DEFAULT);
     }
-    else if(ehRequest->resource == gDevConfResource.handle)
+    else if(ehRequest->resource == g_ESDevConfResource.handle)
     {
         getResp = constructResponseOfDevConf(OC_RSRVD_INTERFACE_DEFAULT);
     }
@@ -1415,7 +1414,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
             OIC_LOG(INFO, ES_RH_TAG, "Received PUT request");
 
             //PUT request will be handled in the internal implementation
-            if (gProvResource.handle != NULL)
+            if (g_ESProvResource.handle != NULL)
             {
                 ehRet = ProcessPutRequest(entityHandlerRequest, &payload);
             }
@@ -1428,7 +1427,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
             OIC_LOG(INFO, ES_RH_TAG, "Received OC_REST_POST from client");
-            if (gProvResource.handle != NULL)
+            if (g_ESProvResource.handle != NULL)
             {
                 ehRet = ProcessPostRequest(entityHandlerRequest, &payload);
             }
@@ -1479,31 +1478,31 @@ OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty)
 {
     OIC_LOG(INFO, ES_RH_TAG, "SetDeviceProperty IN");
 
-    gWiFiResource.supportedFreq = (deviceProperty->WiFi).freq;
-    OIC_LOG_V(INFO, ES_RH_TAG, "WiFi Freq : %d", gWiFiResource.supportedFreq);
+    g_ESWiFiResource.supportedFreq = (deviceProperty->WiFi).freq;
+    OIC_LOG_V(INFO, ES_RH_TAG, "WiFi Freq : %d", g_ESWiFiResource.supportedFreq);
 
     int modeIdx = 0;
     while((deviceProperty->WiFi).mode[modeIdx] != WiFi_EOF)
     {
-        gWiFiResource.supportedMode[modeIdx] = (deviceProperty->WiFi).mode[modeIdx];
-        OIC_LOG_V(INFO, ES_RH_TAG, "WiFi Mode : %d", gWiFiResource.supportedMode[modeIdx]);
+        g_ESWiFiResource.supportedMode[modeIdx] = (deviceProperty->WiFi).mode[modeIdx];
+        OIC_LOG_V(INFO, ES_RH_TAG, "WiFi Mode : %d", g_ESWiFiResource.supportedMode[modeIdx]);
         modeIdx ++;
     }
-    gWiFiResource.numMode = modeIdx;
+    g_ESWiFiResource.numMode = modeIdx;
 
-    OICStrcpy(gDevConfResource.devName, OIC_STRING_MAX_VALUE, (deviceProperty->DevConf).deviceName);
-    OIC_LOG_V(INFO, ES_RH_TAG, "Device Name : %s", gDevConfResource.devName);
+    OICStrcpy(g_ESDevConfResource.devName, OIC_STRING_MAX_VALUE, (deviceProperty->DevConf).deviceName);
+    OIC_LOG_V(INFO, ES_RH_TAG, "Device Name : %s", g_ESDevConfResource.devName);
 
-    OICStrcpy(gDevConfResource.modelNumber, OIC_STRING_MAX_VALUE,
+    OICStrcpy(g_ESDevConfResource.modelNumber, OIC_STRING_MAX_VALUE,
                                                             (deviceProperty->DevConf).modelNumber);
-    OIC_LOG_V(INFO, ES_RH_TAG, "Model Number : %s", gDevConfResource.modelNumber);
+    OIC_LOG_V(INFO, ES_RH_TAG, "Model Number : %s", g_ESDevConfResource.modelNumber);
 
-    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(gWiFiResource.handle, OC_HIGH_QOS))
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESWiFiResource.handle, OC_HIGH_QOS))
     {
         OIC_LOG(INFO, ES_RH_TAG, "wifiResource doesn't have any observers.");
     }
 
-    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(gDevConfResource.handle, OC_HIGH_QOS))
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESDevConfResource.handle, OC_HIGH_QOS))
     {
         OIC_LOG(INFO, ES_RH_TAG, "devConfResource doesn't have any observers.");
     }
@@ -1516,10 +1515,10 @@ OCStackResult SetEnrolleeState(ESEnrolleeState esState)
 {
     OIC_LOG(INFO, ES_RH_TAG, "SetEnrolleeState IN");
 
-    gProvResource.status = esState;
-    OIC_LOG_V(INFO, ES_RH_TAG, "Enrollee Status : %d", gProvResource.status);
+    g_ESProvResource.status = esState;
+    OIC_LOG_V(INFO, ES_RH_TAG, "Enrollee Status : %d", g_ESProvResource.status);
 
-    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(gProvResource.handle, OC_HIGH_QOS))
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESProvResource.handle, OC_HIGH_QOS))
     {
         OIC_LOG(INFO, ES_RH_TAG, "provResource doesn't have any observers.");
     }
@@ -1532,10 +1531,10 @@ OCStackResult SetEnrolleeErrCode(ESErrorCode esErrCode)
 {
     OIC_LOG(INFO, ES_RH_TAG, "SetEnrolleeErrCode IN");
 
-    gProvResource.lastErrCode = esErrCode;
-    OIC_LOG_V(INFO, ES_RH_TAG, "Enrollee ErrorCode : %d", gProvResource.lastErrCode);
+    g_ESProvResource.lastErrCode = esErrCode;
+    OIC_LOG_V(INFO, ES_RH_TAG, "Enrollee ErrorCode : %d", g_ESProvResource.lastErrCode);
 
-    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(gProvResource.handle, OC_HIGH_QOS))
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESProvResource.handle, OC_HIGH_QOS))
     {
         OIC_LOG(INFO, ES_RH_TAG, "provResource doesn't have any observers.");
     }

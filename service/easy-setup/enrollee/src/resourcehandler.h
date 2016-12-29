@@ -81,6 +81,12 @@ typedef struct
     char country[OIC_STRING_MAX_VALUE];
 } DevConfResource;
 
+/* Note: These values of structures are not thread-safety */
+extern ProvResource g_ESProvResource;
+extern WiFiResource g_ESWiFiResource;
+extern CloudResource g_ESCloudResource;
+extern DevConfResource g_ESDevConfResource;
+
 OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMask);
 OCStackResult DeleteEasySetupResources();
 
