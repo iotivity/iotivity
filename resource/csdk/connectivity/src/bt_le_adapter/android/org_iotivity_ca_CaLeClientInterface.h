@@ -180,6 +180,16 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeClientInterface_caManagerLeRemoteRssiCallback
 (JNIEnv *, jobject, jobject, jint, jint);
 
+/*
+ * Class:     org_iotivity_ca_CaLeClientInterface
+ * Method:    caLeGattMtuChangedCallback
+ * Signature: (Landroid/bluetooth/BluetoothGatt;II)V
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaLeClientInterface_caLeGattMtuChangedCallback
+(JNIEnv *, jobject, jobject, jint, jint);
+
+
 #ifdef __cplusplus
 }
 #endif

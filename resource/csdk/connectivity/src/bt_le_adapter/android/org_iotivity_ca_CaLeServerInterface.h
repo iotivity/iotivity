@@ -118,6 +118,14 @@ JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeServerInterface_caLeAdvertiseStartFailureCallback
 (JNIEnv *, jobject, jint);
 
+/*
+ * Class:     org_iotivity_ca_CaLeServerInterface
+ * Method:    caLeGattServerMtuChangedCallback
+ * Signature: (Landroid/bluetooth/BluetoothDevice;I)V
+ */
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerMtuChangedCallback
+(JNIEnv *, jobject, jobject, jint);
 
 #ifdef __cplusplus
 }

@@ -67,6 +67,8 @@ public class CaLeServerInterface {
     private native static void caLeGattServerNotificationSentCallback(BluetoothDevice device,
                                                                      int status);
 
+    private native static void caLeGattServerMtuChangedCallback(BluetoothDevice gatt, int mtu);
+
     // AdvertiseCallback
     private native static void caLeAdvertiseStartSuccessCallback(
             AdvertiseSettings settingsInEffect);

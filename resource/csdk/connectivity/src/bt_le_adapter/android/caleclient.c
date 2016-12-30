@@ -110,6 +110,7 @@ static CALEScanState_t g_nextScanningStep = BLE_SCAN_ENABLE;
 static CABLEDataReceivedCallback g_CABLEClientDataReceivedCallback = NULL;
 
 static bool g_setHighQoS = true;
+
 /**
  * check if retry logic for connection routine has to be stopped or not.
  * in case of error value including this method, connection routine has to be stopped.
@@ -687,6 +688,14 @@ void CALEClientSendFinish(JNIEnv *env, jobject gatt)
     CALEClientUpdateSendCnt(env);
 }
 
+CAResult_t CALEClientSendNegotiationMessage(const char* address)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALEClientSendNegotiationMessage(%s)", address);
+    VERIFY_NON_NULL(address, TAG, "address is null");
+
+    return CALEClientSendUnicastMessageImpl(address, NULL, 0);
+}
+
 CAResult_t CALEClientSendUnicastMessage(const char* address,
                                         const uint8_t* data,
                                         const uint32_t dataLen)
@@ -876,7 +885,6 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
     OIC_LOG_V(DEBUG, TAG, "CALEClientSendUnicastMessageImpl, address: %s, data: %p", address,
               data);
     VERIFY_NON_NULL(address, TAG, "address is null");
-    VERIFY_NON_NULL(data, TAG, "data is null");
 
     if (!g_jvm)
     {
@@ -949,12 +957,16 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
                     (*env)->DeleteGlobalRef(env, g_sendBuffer);
                     g_sendBuffer = NULL;
                 }
-                jbyteArray jni_arr = (*env)->NewByteArray(env, dataLen);
-                CACheckJNIException(env);
-                (*env)->SetByteArrayRegion(env, jni_arr, 0, dataLen, (jbyte*) data);
-                CACheckJNIException(env);
-                g_sendBuffer = (jbyteArray)(*env)->NewGlobalRef(env, jni_arr);
-                CACheckJNIException(env);
+
+                if (data && dataLen > 0)
+                {
+                    jbyteArray jni_arr = (*env)->NewByteArray(env, dataLen);
+                    CACheckJNIException(env);
+                    (*env)->SetByteArrayRegion(env, jni_arr, 0, dataLen, (jbyte*) data);
+                    CACheckJNIException(env);
+                    g_sendBuffer = (jbyteArray)(*env)->NewGlobalRef(env, jni_arr);
+                    CACheckJNIException(env);
+                }
 
                 // Target device to send message is just one.
                 g_targetCnt = 1;
@@ -998,6 +1010,12 @@ CAResult_t CALEClientSendUnicastMessageImpl(const char* address, const uint8_t* 
                                STATE_SEND_SUCCESS))
     {
         OIC_LOG(INFO, TAG, "send success");
+        ret = CA_STATUS_OK;
+    }
+    else if (CALEClientIsValidState(address, CA_LE_SEND_STATE,
+                                    STATE_SEND_MTU_NEGO_SUCCESS))
+    {
+        OIC_LOG(INFO, TAG, "mtu nego success");
         ret = CA_STATUS_OK;
     }
     else
@@ -1958,6 +1976,18 @@ jobject CALEClientGattConnect(JNIEnv *env, jobject bluetoothDevice, jboolean aut
     return jni_obj_connectGatt;
 }
 
+bool CALEClientIsConnected(const char* address)
+{
+    if (CALEClientIsValidState(address, CA_LE_CONNECTION_STATE,
+                               STATE_SERVICE_CONNECTED))
+    {
+        OIC_LOG(DEBUG, TAG, "current state is connected");
+        return true;
+    }
+    OIC_LOG(DEBUG, TAG, "current state is not connected");
+    return false;
+}
+
 CAResult_t CALEClientCloseProfileProxy(JNIEnv *env, jobject gatt)
 {
     OIC_LOG(DEBUG, TAG, "IN - CALEClientCloseProfileProxy");
@@ -2167,6 +2197,40 @@ CAResult_t CALEClientDisconnectforAddress(JNIEnv *env, jstring remote_address)
     (*env)->ReleaseStringUTFChars(env, remote_address, address);
 
     OIC_LOG(DEBUG, TAG, "OUT-CALEClientDisconnectforAddress");
+    return CA_STATUS_OK;
+}
+
+CAResult_t CALEClientRequestMTU(JNIEnv *env, jobject bluetoothGatt, jint size)
+{
+    VERIFY_NON_NULL(env, TAG, "env is null");
+    VERIFY_NON_NULL(bluetoothGatt, TAG, "bluetoothGatt is null");
+
+    if (!CALEIsEnableBTAdapter(env))
+    {
+        OIC_LOG(INFO, TAG, "BT adapter is not enabled");
+        return CA_ADAPTER_NOT_ENABLED;
+    }
+
+    // get BluetoothGatt.requestMtu method
+    OIC_LOG(DEBUG, TAG, "get BluetoothGatt.requestMtu method");
+    jmethodID jni_mid_requestMtu = CAGetJNIMethodID(env, CLASSPATH_BT_GATT,
+                                                    "requestMtu", "(I)Z");
+    if (!jni_mid_requestMtu)
+    {
+        OIC_LOG(ERROR, TAG, "jni_mid_requestMtu is null");
+        return CA_STATUS_FAILED;
+    }
+
+    // call requestMtu
+    OIC_LOG(INFO, TAG, "CALL API - requestMtu");
+    jboolean ret = (*env)->CallBooleanMethod(env, bluetoothGatt, jni_mid_requestMtu, size);
+    if (!ret)
+    {
+        OIC_LOG(ERROR, TAG, "requestMtu has failed");
+        CACheckJNIException(env);
+        return CA_STATUS_FAILED;
+    }
+
     return CA_STATUS_OK;
 }
 
@@ -3622,6 +3686,58 @@ CAResult_t CALEClientUpdateDeviceStateWithBtDevice(JNIEnv *env,
     return res;
 }
 
+CAResult_t CALEClientSetMtuSize(const char* address, uint16_t mtuSize)
+{
+    VERIFY_NON_NULL(address, TAG, "address is null");
+
+    oc_mutex_lock(g_deviceStateListMutex);
+    if (CALEClientIsDeviceInList(address))
+    {
+        CALEState_t* curState = CALEClientGetStateInfo(address);
+        if(!curState)
+        {
+            OIC_LOG(ERROR, TAG, "curState is null");
+            oc_mutex_unlock(g_deviceStateListMutex);
+            return CA_STATUS_FAILED;
+        }
+
+        curState->mtuSize = mtuSize;
+        OIC_LOG_V(INFO, TAG, "update state - addr: %s, mtu: %d",
+                  curState->address, curState->mtuSize);
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "there is no state info in the list");
+    }
+    oc_mutex_unlock(g_deviceStateListMutex);
+    return CA_STATUS_OK;
+}
+
+uint16_t CALEClientGetMtuSize(const char* address)
+{
+    VERIFY_NON_NULL_RET(address, TAG, "address is null", CA_DEFAULT_BLE_MTU_SIZE);
+
+    oc_mutex_lock(g_deviceStateListMutex);
+    if (CALEClientIsDeviceInList(address))
+    {
+        CALEState_t* curState = CALEClientGetStateInfo(address);
+        if(!curState)
+        {
+            OIC_LOG(ERROR, TAG, "curState is null");
+            oc_mutex_unlock(g_deviceStateListMutex);
+            return CA_DEFAULT_BLE_MTU_SIZE;
+        }
+
+        OIC_LOG_V(INFO, TAG, "state - addr: %s, mtu: %d",
+                  curState->address, curState->mtuSize);
+        oc_mutex_unlock(g_deviceStateListMutex);
+        return curState->mtuSize;
+    }
+
+    oc_mutex_unlock(g_deviceStateListMutex);
+    return CA_DEFAULT_BLE_MTU_SIZE;
+}
+
 CAResult_t CALEClientUpdateDeviceState(const char* address, uint16_t state_type,
                                        uint16_t target_state)
 {
@@ -3656,9 +3772,9 @@ CAResult_t CALEClientUpdateDeviceState(const char* address, uint16_t state_type,
             default:
                 break;
         }
-        OIC_LOG_V(INFO, TAG, "update state - addr : %s, conn : %d, send : %d, ACFlag : %d",
+        OIC_LOG_V(INFO, TAG, "update state - addr: %s, conn: %d, send: %d, ACFlag: %d, mtu: %d",
                   curState->address, curState->connectedState, curState->sendState,
-                  curState->autoConnectFlag);
+                  curState->autoConnectFlag, curState->mtuSize);
     }
     else /** state is added newly **/
     {
@@ -3678,7 +3794,7 @@ CAResult_t CALEClientUpdateDeviceState(const char* address, uint16_t state_type,
         }
 
         OICStrcpy(newstate->address, sizeof(newstate->address), address);
-
+        newstate->mtuSize = CA_DEFAULT_BLE_MTU_SIZE;
         switch(state_type)
         {
             case CA_LE_CONNECTION_STATE:
@@ -4294,7 +4410,6 @@ CAResult_t CAUpdateCharacteristicsToGattServer(const char *remoteAddress, const 
                                                int32_t position)
 {
     OIC_LOG(DEBUG, TAG, "call CALEClientSendUnicastMessage");
-    VERIFY_NON_NULL(data, TAG, "data is null");
     VERIFY_NON_NULL(remoteAddress, TAG, "remoteAddress is null");
 
     if (LE_UNICAST != type || position < 0)
@@ -4579,14 +4694,11 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeGattServicesDiscoveredCallback(JNIE
             goto error_exit;
         }
 
-        if (g_sendBuffer)
+        res = CALEClientRequestMTU(env, gatt, CA_SUPPORTED_BLE_MTU_SIZE);
+        if (CA_STATUS_OK != res)
         {
-            CAResult_t res = CALEClientWriteCharacteristic(env, gatt);
-            if (CA_STATUS_OK != res)
-            {
-                OIC_LOG(ERROR, TAG, "CALEClientWriteCharacteristic has failed");
-                goto error_exit;
-            }
+            OIC_LOG(ERROR, TAG, "CALEClientRequestMTU has failed");
+            goto error_exit;
         }
     }
     else
@@ -4830,4 +4942,65 @@ error_exit:
 
     CALEClientSendFinish(env, gatt);
     return;
+}
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaLeClientInterface_caLeGattMtuChangedCallback(JNIEnv *env,
+                                                                    jobject obj,
+                                                                    jobject gatt,
+                                                                    jint mtu,
+                                                                    jint status)
+{
+    OIC_LOG_V(INFO, TAG, "caLeGattMtuChangedCallback - mtu[%d-including Header size 3 byte)", mtu);
+    OIC_LOG_V(INFO, TAG, "caLeGattMtuChangedCallback - status %d", status);
+
+    (void)obj;
+
+    if (0 == status)
+    {
+        if (g_sendBuffer)
+        {
+            CAResult_t res = CALEClientWriteCharacteristic(env, gatt);
+            if (CA_STATUS_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "CALEClientWriteCharacteristic has failed");
+            }
+        }
+        else
+        {
+            OIC_LOG(INFO, TAG, "mtu nego is done");
+            jstring jni_address = CALEClientGetAddressFromGattObj(env, gatt);
+            if (!jni_address)
+            {
+                CALEClientSendFinish(env, gatt);
+                return;
+            }
+
+            const char* address = (*env)->GetStringUTFChars(env, jni_address, NULL);
+            if (!address)
+            {
+                CACheckJNIException(env);
+                (*env)->DeleteLocalRef(env, jni_address);
+                CALEClientSendFinish(env, gatt);
+                return;
+            }
+
+            // update mtu size
+            CAResult_t res = CALEClientSetMtuSize(address, mtu - CA_BLE_MTU_HEADER_SIZE);
+            if (CA_STATUS_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "CALEClientSetMtuSize has failed");
+            }
+
+            res = CALEClientUpdateDeviceState(address, CA_LE_SEND_STATE,
+                                              STATE_SEND_MTU_NEGO_SUCCESS);
+            if (CA_STATUS_OK != res)
+            {
+                OIC_LOG(ERROR, TAG, "CALEClientUpdateDeviceState has failed");
+            }
+            CALEClientUpdateSendCnt(env);
+            (*env)->ReleaseStringUTFChars(env, jni_address, address);
+            (*env)->DeleteLocalRef(env, jni_address);
+        }
+    }
 }

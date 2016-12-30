@@ -26,8 +26,12 @@
 #include "oic_string.h"
 #include "oic_malloc.h"
 #include "cafragmentation.h"
+#include "caleinterface.h"
 
 #define CA_TRANSPORT_ADAPTER_SCOPE  1000
+#define CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE (((CA_DEFAULT_BLE_MTU_SIZE) - (CA_BLE_HEADER_SIZE)) \
+                                           - (CA_BLE_LENGTH_HEADER_SIZE))
+
 
 class CATests : public testing::Test {
     protected:
@@ -560,7 +564,8 @@ TEST(CAfragmentationTest, FragmentTest)
     EXPECT_EQ(CA_STATUS_OK, CAGenerateVariableForFragmentation(dataLen,
                                                                &midPacketCount,
                                                                &remainingLen,
-                                                               &totalLength));
+                                                               &totalLength,
+                                                               CA_DEFAULT_BLE_MTU_SIZE));
 
     uint8_t dataHeader[CA_BLE_HEADER_SIZE] = {0};
     const uint8_t tmpSourcePort = 1;
@@ -601,7 +606,8 @@ TEST(CAfragmentationTest, FragmentTest)
                                                     data,
                                                     dataLen,
                                                     0,
-                                                    dataHeader));
+                                                    dataHeader,
+                                                    CA_DEFAULT_BLE_MTU_SIZE));
     EXPECT_TRUE(dataSegment != NULL);
 
     free(data);
@@ -622,7 +628,8 @@ TEST(CAfragmentationTest, DefragmentTest)
     EXPECT_EQ(CA_STATUS_OK, CAGenerateVariableForFragmentation(dataLen,
                                                                &midPacketCount,
                                                                &remainingLen,
-                                                               &totalLength));
+                                                               &totalLength,
+                                                               CA_SUPPORTED_BLE_MTU_SIZE));
 
     uint8_t dataHeader[CA_BLE_HEADER_SIZE] = {0};
     const uint8_t tmpSourcePort = 1;

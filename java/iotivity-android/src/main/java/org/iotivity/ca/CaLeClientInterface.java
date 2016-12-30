@@ -132,6 +132,9 @@ public class CaLeClientInterface {
     private native static void caManagerLeRemoteRssiCallback(BluetoothGatt gatt, int rssi,
                                                              int status);
 
+    private native static void caLeGattMtuChangedCallback(BluetoothGatt gatt, int mtu,
+                                                          int status);
+
     // Callback
     private static BluetoothAdapter.LeScanCallback mLeScanCallback =
                    new BluetoothAdapter.LeScanCallback() {
@@ -270,6 +273,12 @@ public class CaLeClientInterface {
             super.onReadRemoteRssi(gatt, rssi, status);
             caManagerLeRemoteRssiCallback(gatt, rssi, status);
         }
+
+        @Override
+        public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
+            super.onMtuChanged(gatt, mtu, status);
+            caLeGattMtuChangedCallback(gatt, mtu, status);
+        }
     };
 
     private static final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -311,5 +320,4 @@ public class CaLeClientInterface {
         }
     };
 }
-
 

@@ -324,6 +324,19 @@ CAResult_t CALEServerInitConditionVaraibles();
  */
 void CALEServerTerminateConditionVaraibles();
 
+/**
+ * check connection status.
+ * @param[in] address      the address of the remote device.
+ * @return  true or false.
+ */
+bool CALEServerIsConnected(const char* address);
+
+/**
+ * get MTU size.
+ * @param[in] address      the address of the remote device.
+ * @return  mtu size negotiated from remote device.
+ */
+uint16_t CALEServerGetMtuSize(const char* address);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

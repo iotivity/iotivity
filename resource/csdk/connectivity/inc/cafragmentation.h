@@ -33,11 +33,6 @@
 #include "logger.h"
 
 /**
- * The MTU supported for BLE adapter
- */
-#define CA_SUPPORTED_BLE_MTU_SIZE  20
-
-/**
  * The maximum port value for BLE packet format
  */
 #define CA_SUPPORTED_BLE_MAX_PORT  127
@@ -63,18 +58,6 @@
  * Length header is embedded in first packet of entire CoAP PDU.
  */
 #define CA_BLE_LENGTH_HEADER_SIZE 4
-
-/**
- * The length payload size of the normal data segment (after first segment) for ble fragmentation.
- */
-#define CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE ((CA_SUPPORTED_BLE_MTU_SIZE) \
-                                            - (CA_BLE_HEADER_SIZE))
-
-/**
- * The length payload size of the first data segment for ble fragmentation.
- */
-#define CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE ((CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE) \
-                                           - (CA_BLE_LENGTH_HEADER_SIZE))
 
 /**
  * Current Header version.
@@ -130,6 +113,7 @@ typedef enum {
  *                              packet.
  * @param[out]  remainingLen    Size of last packet before adding header.
  * @param[out]  totalLengh      The total length of the data.
+ * @param[in]   mtuSize         MTU size.
  *
  * @return ::CA_STATUS_OK on success. One of the CA_STATUS_FAILED
  *           or other error values on error.
@@ -139,7 +123,8 @@ typedef enum {
 CAResult_t CAGenerateVariableForFragmentation(size_t dataLength,
                                               uint32_t *midPacketCount,
                                               size_t *remainingLen,
-                                              size_t *totalLength);
+                                              size_t *totalLength,
+                                              uint16_t mtuSize);
 
 /**
  * This function is used to generate the CA BLE header to
@@ -237,6 +222,7 @@ CAResult_t CAMakeFirstDataSegment(uint8_t *dataSegment,
  *                                     total data
  * @param[in]   dataHeader             Pointer to the octet array that contain
  *                                     data header.
+ * @param[in]   mtuSize                MTU size.
  *
  * @return ::CA_STATUS_OK on success. One of the CA_STATUS_FAILED
  *           or other error values on error.
@@ -249,7 +235,8 @@ CAResult_t CAMakeRemainDataSegment(uint8_t *dataSegment,
                                    const uint8_t *sourceData,
                                    const uint32_t sourceDataLength,
                                    const uint32_t segmentNum,
-                                   const uint8_t *dataHeader);
+                                   const uint8_t *dataHeader,
+                                   uint16_t mtuSize);
 
 /**
  * This function is used to parse the header in the receiver end. This

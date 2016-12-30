@@ -70,6 +70,11 @@ typedef enum
 } CABLEAdapter_t;
 
 /**
+ * mtu size to use in fragmentation logic.
+ * default value is 20 byte.
+ */
+static uint16_t g_mtuSize = CA_DEFAULT_BLE_MTU_SIZE;
+/**
  * Callback to provide the status of the network change to CA layer.
  */
 static CAAdapterChangeCallback g_networkCallback = NULL;
@@ -1222,6 +1227,18 @@ static void CALEServerSendDataThread(void *threadData)
         return;
     }
 
+    if (!bleData->remoteEndpoint)
+    {
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "Invalid endpoint of bledata!");
+        return;
+    }
+
+#if defined(__TIZEN__) || defined(__ANDROID__)
+    // get MTU size
+    g_mtuSize = CALEServerGetMtuSize(bleData->remoteEndpoint->addr);
+#endif
+    OIC_LOG_V(INFO, CALEADAPTER_TAG, "MTU size [%d]", g_mtuSize);
+
     uint32_t midPacketCount = 0;
     size_t remainingLen = 0;
     size_t totalLength = 0;
@@ -1230,7 +1247,8 @@ static void CALEServerSendDataThread(void *threadData)
     CAResult_t result = CAGenerateVariableForFragmentation(bleData->dataLen,
                                                            &midPacketCount,
                                                            &remainingLen,
-                                                           &totalLength);
+                                                           &totalLength,
+                                                           g_mtuSize);
 
     if (CA_STATUS_OK != result)
     {
@@ -1296,15 +1314,15 @@ static void CALEServerSendDataThread(void *threadData)
 
     uint32_t length = 0;
     uint32_t dataLen = 0;
-    if (CA_SUPPORTED_BLE_MTU_SIZE > totalLength)
+    if (g_mtuSize > totalLength)
     {
         length = totalLength;
         dataLen = bleData->dataLen;
     }
     else
     {
-        length = CA_SUPPORTED_BLE_MTU_SIZE;
-        dataLen = CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE;
+        length = g_mtuSize;
+        dataLen = g_mtuSize - CA_BLE_HEADER_SIZE - CA_BLE_LENGTH_HEADER_SIZE;
     }
 
     result = CAMakeFirstDataSegment(dataSegment,
@@ -1367,11 +1385,12 @@ static void CALEServerSendDataThread(void *threadData)
         {
             // Send the remaining header.
             result = CAMakeRemainDataSegment(dataSegment,
-                                             CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE,
+                                             g_mtuSize - CA_BLE_HEADER_SIZE,
                                              bleData->data,
                                              bleData->dataLen,
                                              index,
-                                             dataHeader);
+                                             dataHeader,
+                                             g_mtuSize);
 
             if (CA_STATUS_OK != result)
             {
@@ -1385,7 +1404,7 @@ static void CALEServerSendDataThread(void *threadData)
                 CAUpdateCharacteristicsToGattClient(
                     bleData->remoteEndpoint->addr,
                     dataSegment,
-                    CA_SUPPORTED_BLE_MTU_SIZE);
+                    g_mtuSize);
 
             if (CA_STATUS_OK != result)
             {
@@ -1394,14 +1413,11 @@ static void CALEServerSendDataThread(void *threadData)
                 g_errorHandler(bleData->remoteEndpoint, bleData->data, bleData->dataLen, result);
                 return;
             }
-            OIC_LOG_V(DEBUG,
-                      CALEADAPTER_TAG,
-                      "Server Sent Unicast %d Data - data length [%zu]",
-                      index + 1,
-                      CA_SUPPORTED_BLE_MTU_SIZE);
+            OIC_LOG_V(DEBUG, CALEADAPTER_TAG, "Server Sent data length [%d]",
+                                               g_mtuSize);
         }
 
-        if (remainingLen && (totalLength > CA_SUPPORTED_BLE_MTU_SIZE))
+        if (remainingLen && (totalLength > g_mtuSize))
         {
             // send the last segment of the data (Ex: 22 bytes of 622
             // bytes of data when MTU is 200)
@@ -1410,7 +1426,8 @@ static void CALEServerSendDataThread(void *threadData)
                                              bleData->data,
                                              bleData->dataLen,
                                              index,
-                                             dataHeader);
+                                             dataHeader,
+                                             g_mtuSize);
 
             if (CA_STATUS_OK != result)
             {
@@ -1566,6 +1583,38 @@ static void CALEClientSendDataThread(void *threadData)
         return;
     }
 
+    if (!bleData->remoteEndpoint)
+    {
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "Invalid endpoint of bledata!");
+        return;
+    }
+
+#if defined(__TIZEN__) || defined(__ANDROID__)
+    // get MTU size
+    if (false == CALEClientIsConnected(bleData->remoteEndpoint->addr))
+    {
+        // triggering to gatt connect and MTU negotiation
+        CAResult_t res = CALEClientSendNegotiationMessage(
+                bleData->remoteEndpoint->addr);
+
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG_V(ERROR,
+                      CALEADAPTER_TAG,
+                      "CALEClientSendNegotiationMessage has failed, result [%d]",
+                      res);
+
+            g_errorHandler(bleData->remoteEndpoint,
+                           bleData->data,
+                           bleData->dataLen,
+                           res);
+            return;
+        }
+    }
+    g_mtuSize = CALEClientGetMtuSize(bleData->remoteEndpoint->addr);
+#endif
+    OIC_LOG_V(INFO, CALEADAPTER_TAG, "MTU size [%d]", g_mtuSize);
+
     uint32_t midPacketCount = 0;
     size_t remainingLen = 0;
     size_t totalLength = 0;
@@ -1574,7 +1623,8 @@ static void CALEClientSendDataThread(void *threadData)
     CAResult_t result = CAGenerateVariableForFragmentation(bleData->dataLen,
                                                            &midPacketCount,
                                                            &remainingLen,
-                                                           &totalLength);
+                                                           &totalLength,
+                                                           g_mtuSize);
 
     if (CA_STATUS_OK != result)
     {
@@ -1635,15 +1685,15 @@ static void CALEClientSendDataThread(void *threadData)
 
     uint32_t length = 0;
     uint32_t dataLen = 0;
-    if (CA_SUPPORTED_BLE_MTU_SIZE > totalLength)
+    if (g_mtuSize > totalLength)
     {
         length = totalLength;
         dataLen = bleData->dataLen;
     }
     else
     {
-        length = CA_SUPPORTED_BLE_MTU_SIZE;
-        dataLen = CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE;
+        length = g_mtuSize;
+        dataLen = g_mtuSize - CA_BLE_HEADER_SIZE - CA_BLE_LENGTH_HEADER_SIZE;
     }
 
     result = CAMakeFirstDataSegment(dataSegment,
@@ -1662,7 +1712,7 @@ static void CALEClientSendDataThread(void *threadData)
     uint32_t index = 0;
     if (NULL != bleData->remoteEndpoint) //Sending Unicast Data
     {
-        OIC_LOG(DEBUG, CALEADAPTER_TAG, "Client Sending Unicast Data");
+        OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending Unicast Data");
         // Send the first segment with the header.
         result =
             CAUpdateCharacteristicsToGattServer(
@@ -1706,11 +1756,12 @@ static void CALEClientSendDataThread(void *threadData)
         for (index = 0; index < iter; index++)
         {
             result = CAMakeRemainDataSegment(dataSegment,
-                                             CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE,
+                                             g_mtuSize - CA_BLE_HEADER_SIZE,
                                              bleData->data,
                                              bleData->dataLen,
                                              index,
-                                             dataHeader);
+                                             dataHeader,
+                                             g_mtuSize);
 
             if (CA_STATUS_OK != result)
             {
@@ -1724,7 +1775,7 @@ static void CALEClientSendDataThread(void *threadData)
             result = CAUpdateCharacteristicsToGattServer(
                      bleData->remoteEndpoint->addr,
                      dataSegment,
-                     CA_SUPPORTED_BLE_MTU_SIZE,
+                     g_mtuSize,
                      LE_UNICAST, 0);
 
             if (CA_STATUS_OK != result)
@@ -1738,12 +1789,12 @@ static void CALEClientSendDataThread(void *threadData)
             }
             OIC_LOG_V(DEBUG,
                       CALEADAPTER_TAG,
-                      "Client Sent Unicast %d Data - data length [%zu]",
+                      "Client Sent Unicast %d Data - data(mtu) length [%zu]",
                       index + 1,
-                      CA_SUPPORTED_BLE_MTU_SIZE);
+                      g_mtuSize);
         }
 
-        if (remainingLen && (totalLength > CA_SUPPORTED_BLE_MTU_SIZE))
+        if (remainingLen && (totalLength > g_mtuSize))
         {
             // send the last segment of the data (Ex: 22 bytes of 622
             // bytes of data when MTU is 200)
@@ -1752,7 +1803,8 @@ static void CALEClientSendDataThread(void *threadData)
                                              bleData->data,
                                              bleData->dataLen,
                                              index,
-                                             dataHeader);
+                                             dataHeader,
+                                             g_mtuSize);
 
             if (CA_STATUS_OK != result)
             {
@@ -2085,7 +2137,8 @@ static CAResult_t CALEServerSendDataSingleThread(const uint8_t *data,
     CAResult_t result = CAGenerateVariableForFragmentation(dataLen,
                                                            &midPacketCount,
                                                            &remainingLen,
-                                                           &totalLength);
+                                                           &totalLength,
+                                                           g_mtuSize);
 
     if (CA_STATUS_OK != result)
     {
@@ -2133,15 +2186,15 @@ static CAResult_t CALEServerSendDataSingleThread(const uint8_t *data,
 
     uint32_t length = 0;
     uint32_t dataOnlyLen = 0;
-    if (CA_SUPPORTED_BLE_MTU_SIZE > totalLength)
+    if (g_mtuSize > totalLength)
     {
         length = totalLength;
         dataOnlyLen = dataLen;
     }
     else
     {
-        length = CA_SUPPORTED_BLE_MTU_SIZE;
-        dataOnlyLen = CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE;
+        length = g_mtuSize;
+        dataOnlyLen = g_mtuSize - CA_BLE_HEADER_SIZE - CA_BLE_LENGTH_HEADER_SIZE;
     }
 
     result = CAMakeFirstDataSegment(dataSegment,
@@ -2185,11 +2238,12 @@ static CAResult_t CALEServerSendDataSingleThread(const uint8_t *data,
     for (uint32_t iter = 0; iter < dataLimit; iter++)
     {
         result = CAMakeRemainDataSegment(dataSegment,
-                                         CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE,
+                                         g_mtuSize - CA_BLE_HEADER_SIZE,
                                          data,
                                          dataLen,
                                          iter,
-                                         dataHeader);
+                                         dataHeader,
+                                         g_mtuSize);
 
         if (CA_STATUS_OK != result)
         {
@@ -2200,7 +2254,7 @@ static CAResult_t CALEServerSendDataSingleThread(const uint8_t *data,
 
         result = CAUpdateCharacteristicsToAllGattClients(
                      dataSegment,
-                     CA_SUPPORTED_BLE_MTU_SIZE);
+                     g_mtuSize);
 
         if (CA_STATUS_OK != result)
         {
@@ -2211,7 +2265,7 @@ static CAResult_t CALEServerSendDataSingleThread(const uint8_t *data,
         CALEDoEvents();
     }
 
-    if (remainingLen && (totalLength > CA_SUPPORTED_BLE_MTU_SIZE))
+    if (remainingLen && (totalLength > g_mtuSize))
     {
         // send the last segment of the data
         OIC_LOG(DEBUG, CALEADAPTER_TAG, "Sending the last chunk");
@@ -2221,7 +2275,8 @@ static CAResult_t CALEServerSendDataSingleThread(const uint8_t *data,
                                          data,
                                          dataLen,
                                          dataLimit,
-                                         dataHeader);
+                                         dataHeader,
+                                         g_mtuSize);
 
         if (CA_STATUS_OK != result)
         {

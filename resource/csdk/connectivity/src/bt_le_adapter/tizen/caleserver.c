@@ -895,3 +895,28 @@ void CASetBLEServerErrorHandleCallback(CABLEErrorHandleCallback callback)
 {
     g_serverErrorCallback = callback;
 }
+
+bool CALEServerIsConnected(const char* address)
+{
+    //@Todo
+    return true;
+}
+
+uint16_t CALEServerGetMtuSize(const char* address)
+{
+    OIC_LOG(DEBUG, TAG, "IN");
+    VERIFY_NON_NULL_RET(address, TAG, "address is null", CA_DEFAULT_BLE_MTU_SIZE);
+
+    unsigned int mtu = CA_DEFAULT_BLE_MTU_SIZE + CA_BLE_MTU_HEADER_SIZE;
+    int ret = bt_device_get_att_mtu(address, &mtu);
+    if (0 != ret)
+    {
+        OIC_LOG_V(ERROR, TAG,
+                  "bt_device_get_att_mtu failed with return [%s]", CALEGetErrorMsg(ret));
+        return CA_DEFAULT_BLE_MTU_SIZE;
+    }
+    OIC_LOG_V(INFO, TAG, "mtu size(including header) from bt_device_get_att_mtu is %d", mtu);
+    OIC_LOG(DEBUG, TAG, "OUT");
+    return mtu - CA_BLE_MTU_HEADER_SIZE;
+}
+

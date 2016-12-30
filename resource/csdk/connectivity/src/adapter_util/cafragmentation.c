@@ -24,6 +24,7 @@
 #include "cacommon.h"
 #include "caadapterutils.h"
 #include "cafragmentation.h"
+#include "caleinterface.h"
 
 /**
  * Debugging tag for fragmentation module.
@@ -82,13 +83,14 @@ static uint8_t CAGetBits(uint8_t x, unsigned p, unsigned n)
 CAResult_t CAGenerateVariableForFragmentation(size_t dataLength,
                                               uint32_t *midPacketCount,
                                               size_t *remainingLen,
-                                              size_t *totalLength)
+                                              size_t *totalLength,
+                                              uint16_t mtuSize)
 {
-    OIC_LOG_V(DEBUG, TAG, "IN, dataLength = %zu", dataLength);
+    OIC_LOG_V(DEBUG, TAG, "IN, dataLength = %zu, mtu = %zu", dataLength, mtuSize);
 
     size_t remainDataSize = 0;
     size_t dataOnlyLen =
-        CA_SUPPORTED_BLE_MTU_SIZE - (CA_BLE_HEADER_SIZE + CA_BLE_LENGTH_HEADER_SIZE);
+            mtuSize - (CA_BLE_HEADER_SIZE + CA_BLE_LENGTH_HEADER_SIZE);
     //total data size is smaller than 14 byte case.
     if (dataLength < dataOnlyLen)
     {
@@ -99,14 +101,14 @@ CAResult_t CAGenerateVariableForFragmentation(size_t dataLength,
         remainDataSize = dataLength - dataOnlyLen;
     }
 
-    if (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE <= 0)
+    if (mtuSize - CA_BLE_HEADER_SIZE <= 0)
     {
         OIC_LOG_V(ERROR, TAG, "BLE header size shouldn't be bigger than BLE MTU size.");
         return CA_STATUS_FAILED;
     }
 
-    *midPacketCount = (uint32_t)remainDataSize / (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE);
-    *remainingLen = (uint32_t)remainDataSize % (CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_HEADER_SIZE);
+    *midPacketCount = (uint32_t)remainDataSize / (mtuSize - CA_BLE_HEADER_SIZE);
+    *remainingLen = (uint32_t)remainDataSize % (mtuSize - CA_BLE_HEADER_SIZE);
     uint32_t remainHeaderSize = CA_BLE_HEADER_SIZE * (*midPacketCount + (*remainingLen == 0 ? 0:1));
     *totalLength = dataLength + (CA_BLE_HEADER_SIZE + CA_BLE_LENGTH_HEADER_SIZE) + remainHeaderSize;
 
@@ -189,15 +191,16 @@ CAResult_t CAMakeRemainDataSegment(uint8_t *dataSegment,
                                    const uint8_t *sourceData,
                                    const uint32_t sourceDataLength,
                                    const uint32_t segmentNum,
-                                   const uint8_t *dataHeader)
+                                   const uint8_t *dataHeader,
+                                   uint16_t mtuSize)
 {
     OIC_LOG(DEBUG, TAG, "IN");
 
     VERIFY_NON_NULL(dataSegment, TAG, "dataSegment is NULL");
     VERIFY_NON_NULL(dataHeader, TAG, "dataHeader is NULL");
 
-    uint32_t index = CA_BLE_FIRST_SEGMENT_PAYLOAD_SIZE +
-            (segmentNum * CA_BLE_NORMAL_SEGMENT_PAYLOAD_SIZE);
+    uint32_t index = (mtuSize - CA_BLE_HEADER_SIZE - CA_BLE_LENGTH_HEADER_SIZE) +
+            (segmentNum * (mtuSize - CA_BLE_HEADER_SIZE));
     if (sourceDataLength < index + segmentPayloadLength)
     {
         OIC_LOG(DEBUG, TAG, "dataSegment will exceed");

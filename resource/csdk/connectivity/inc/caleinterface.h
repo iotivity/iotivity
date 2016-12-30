@@ -72,6 +72,21 @@ typedef struct
 } CALEData_t;
 
 /**
+ * The MTU supported for BLE adapter
+ */
+#define CA_DEFAULT_BLE_MTU_SIZE  20
+
+/**
+ * The MTU supported for BLE spec
+ */
+#define CA_SUPPORTED_BLE_MTU_SIZE  517
+
+/**
+ * The Header of the MTU supported for BLE spec
+ */
+#define CA_BLE_MTU_HEADER_SIZE  3
+
+/**
  * This will be used to notify device status changes to the LE adapter layer.
  * @param[in]  adapter_state State of the adapter.
  */

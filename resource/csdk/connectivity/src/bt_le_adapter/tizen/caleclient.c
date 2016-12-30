@@ -1191,4 +1191,25 @@ exit:
     return CA_STATUS_OK;
 }
 
+bool CALEClientIsConnected(const char* address)
+{
+    //@Todo
+    //it should be implemented after update Tizen 3.0
+    return true;
+}
 
+uint16_t CALEClientGetMtuSize(const char* address)
+{
+    VERIFY_NON_NULL_RET(address, TAG, "address is null", CA_DEFAULT_BLE_MTU_SIZE);
+    //@Todo
+    //it should be implemented after update Tizen 3.0
+    return CA_DEFAULT_BLE_MTU_SIZE;
+}
+
+CAResult_t CALEClientSetMtuSize(const char* address, uint16_t mtuSize)
+{
+    VERIFY_NON_NULL(address, TAG, "address is null");
+    //@Todo
+    //it should be implemented after update Tizen 3.0
+    return CA_STATUS_OK;
+}

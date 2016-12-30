@@ -155,5 +155,19 @@ void CALEGattRemoteCharacteristicWriteCb(char *remoteAddress, bt_gatt_server_h s
  */
 void CASetLEConnectionStateChangedCallback(CALEConnectionStateChangedCallback connStateCb);
 
+/**
+ * check connection status.
+ * @param[in] address      the address of the remote device.
+ * @return  true or false.
+ */
+bool CALEServerIsConnected(const char* address);
+
+/**
+ * get MTU size.
+ * @param[in] address      the address of the remote device.
+ * @return  mtu size negotiated from remote device.
+ */
+uint16_t CALEServerGetMtuSize(const char* address);
+
 #endif /* TZ_BLE_SERVER_H_ */
 

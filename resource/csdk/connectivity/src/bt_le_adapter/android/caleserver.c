@@ -2582,6 +2582,19 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeAdvertiseStartFailureCallback(JNIEn
     }
 }
 
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerMtuChangedCallback(JNIEnv * env,
+                                                                          jobject obj,
+                                                                          jobject device,
+                                                                          jint mtu)
+{
+    VERIFY_NON_NULL_VOID(env, TAG, "env");
+    VERIFY_NON_NULL_VOID(obj, TAG, "obj");
+    VERIFY_NON_NULL_VOID(device, TAG, "device");
+
+    OIC_LOG_V(INFO, TAG, "gatt MTU size is changed (%d byte)", mtu);
+}
+
 /**
  * adapter common
  */
@@ -2816,3 +2829,20 @@ void CALEServerTerminateConditionVaraibles()
 {
     OIC_LOG(DEBUG, TAG, "this method is not supported");
 }
+
+bool CALEServerIsConnected(const char* address)
+{
+    //@Todo
+    //it will be implemented next patch.
+    return true;
+}
+
+uint16_t CALEServerGetMtuSize(const char* address)
+{
+    VERIFY_NON_NULL_RET(address, TAG, "address is null", CA_DEFAULT_BLE_MTU_SIZE);
+
+    //@Todo
+    //it will be implemented next patch.
+    return CA_SUPPORTED_BLE_MTU_SIZE - CA_BLE_MTU_HEADER_SIZE;
+}
+
