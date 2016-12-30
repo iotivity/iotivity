@@ -214,7 +214,7 @@ if (g_sslCallback)                                                              
  * @param[in] msg allert message
  */
 #define SSL_CHECK_FAIL(peer, ret, str, mutex, error, msg)                                          \
-if (MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY != (int) (ret) &&                                            \
+if (0 != (ret) && MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY != (int) (ret) &&                              \
     MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED != (int) (ret) &&                                        \
     MBEDTLS_ERR_SSL_WANT_READ != (int) (ret) &&                                                    \
     MBEDTLS_ERR_SSL_WANT_WRITE != (int) (ret) &&                                                   \
@@ -973,6 +973,15 @@ static void DeletePeerList()
         if (NULL == tep)
         {
             continue;
+        }
+        if (MBEDTLS_SSL_HANDSHAKE_OVER == tep->ssl.state)
+        {
+            int ret = 0;
+            do
+            {
+                ret = mbedtls_ssl_close_notify(&tep->ssl);
+            }
+            while (MBEDTLS_ERR_SSL_WANT_WRITE == ret);
         }
         DeleteSslEndPoint(tep);
     }
@@ -1861,7 +1870,6 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
              MBEDTLS_SSL_ALERT_MSG_CLOSE_NOTIFY == peer->ssl.in_msg[1]))
         {
             OIC_LOG(INFO, NET_SSL_TAG, "Connection was closed gracefully");
-            SSL_CLOSE_NOTIFY(peer, ret);
             RemovePeerFromList(&peer->sep.endpoint);
             oc_mutex_unlock(g_sslContextMutex);
             return CA_STATUS_OK;
