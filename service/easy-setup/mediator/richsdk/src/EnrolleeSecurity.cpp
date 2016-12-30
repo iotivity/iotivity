@@ -195,6 +195,9 @@ namespace OIC
         void EnrolleeSecurity::MultipleOwnershipTransferCb(OC::PMResultList_t *result, int hasError)
         {
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "MultipleOwnershipTransferCb IN");
+
+            OTMResult = false;
+
             if (hasError)
             {
                 OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "MultipleOwnershipTransferCb is failed with code(%d)", hasError);
@@ -203,14 +206,27 @@ namespace OIC
             }
             else
             {
-                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "MultipleOwnershipTransfer is succeeded");
                 for (unsigned int i = 0; i < result->size(); i++)
                 {
-                    OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d for device", result->at(i).res);
-                }
+                    std::string uuid;
+                    convertUUIDToString(result->at(i).deviceId.id, uuid);
 
+                    if(m_ocResource != NULL && m_ocResource->sid() == uuid)
+                    {
+                        if( OC_STACK_OK == result->at(i).res )
+                        {
+                            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "MultipleOwnershipTransferCb is succeeded");
+                            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d for device %s", result->at(i).res, uuid.c_str());
+                            OTMResult = true;
+                        }
+                        else
+                        {
+                            OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "OwnershipTransfer is failed with code(%d)", hasError);
+                            OTMResult = false;
+                        }
+                    }
+                }
                 delete result;
-                OTMResult = true;
                 m_cond.notify_all();
             }
         }
@@ -219,6 +235,9 @@ namespace OIC
         void EnrolleeSecurity::ownershipTransferCb(OC::PMResultList_t *result, int hasError)
         {
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "ownershipTransferCb IN");
+
+            OTMResult = false;
+
             if (hasError)
             {
                 OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "OwnershipTransfer is failed with code(%d)", hasError);
@@ -226,12 +245,26 @@ namespace OIC
             }
             else
             {
-                OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "OwnershipTransfer is succeeded");
                 for (unsigned int i = 0; i < result->size(); i++)
                 {
-                    OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d for device", result->at(i).res);
+                    std::string uuid;
+                    convertUUIDToString(result->at(i).deviceId.id, uuid);
+
+                    if(m_ocResource != NULL && m_ocResource->sid() == uuid)
+                    {
+                        if( OC_STACK_OK == result->at(i).res )
+                        {
+                            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "OwnershipTransfer is succeeded");
+                            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Result is = %d for device %s", result->at(i).res, uuid.c_str());
+                            OTMResult = true;
+                        }
+                        else
+                        {
+                            OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "OwnershipTransfer is failed with code(%d)", hasError);
+                            OTMResult = false;
+                        }
+                    }
                 }
-                OTMResult = true;
             }
 
             delete result;
