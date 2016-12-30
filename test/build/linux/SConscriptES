@@ -44,6 +44,11 @@ if env_linux.get('RELEASE'):
 else:
 	target_release = 'debug'
 
+if env_linux.get('SECURED') == '1':
+    SECURED = True
+else:
+    SECURED = False
+
 print "target build is --------------------------------" + target_release
 
 ORG_SRC = env_linux['ORG_SRC']
@@ -215,13 +220,36 @@ ES_ENROLLEE_BTC_CPP = Glob(ENROLLEE_BTC_DIR + '/*.cpp')
 
 
 ES_MEDIATOR_STC_CPP = Glob(MEDIATOR_STC_DIR + '/*.cpp')
-ES_MEDIATOR_BTC_CPP = Glob(MEDIATOR_BTC_DIR + '/*.cpp')
+
+if SECURED:
+    ES_MEDIATOR_BTC_CPP = [
+                            MEDIATOR_BTC_DIR + '/ESCloudResourceTest.cpp',
+                            MEDIATOR_BTC_DIR + '/ESEasySetupTest.cpp',
+                            MEDIATOR_BTC_DIR + '/ESEnrolleeResourceTest.cpp',
+                            MEDIATOR_BTC_DIR + '/ESEnrolleeSecurityTest.cpp',
+                            MEDIATOR_BTC_DIR + '/ESRemoteEnrolleeTest.cpp',
+                            MEDIATOR_BTC_DIR + '/ESRichCommonTest.cpp',
+
+                       ]
+else:
+    ES_MEDIATOR_BTC_CPP = [
+                            MEDIATOR_BTC_DIR + '/ESCloudResourceTest.cpp',
+                            MEDIATOR_BTC_DIR + '/ESEasySetupTest.cpp',
+                            MEDIATOR_BTC_DIR + '/ESEnrolleeResourceTest.cpp',
+                            MEDIATOR_BTC_DIR + '/ESRemoteEnrolleeTest.cpp',
+                            MEDIATOR_BTC_DIR + '/ESRichCommonTest.cpp',
+
+                       ]
 
 ES_ENROLLEE_CPP = [TEST_MAIN, COMMON_UTIL_CPP, CALL_GRAPH_CPP, ES_ENROLLEE_HELPER_CPP]
 ES_MEDIATOR_CPP = [TEST_MAIN, COMMON_UTIL_CPP, CALL_GRAPH_CPP, ES_MEDIATOR_HELPER_CPP]
 
 ES_ENROLLEE_TC_SRC = [ES_ENROLLEE_CPP, ES_ENROLLEE_STC_CPP, ES_ENROLLEE_BTC_CPP, COMMON_STATIC_LIBS, ES_ENROLLEE_LIB, ES_STATIC_RESOURCE_LIBS]
-ES_MEDIATOR_TC_SRC = [ES_MEDIATOR_CPP, ES_MEDIATOR_STC_CPP, ES_MEDIATOR_BTC_CPP, COMMON_STATIC_LIBS, ES_MEDIATOR_LIB, ES_MEDIATOR_SECURED_LIB]
+
+if SECURED:
+    ES_MEDIATOR_TC_SRC = [ES_MEDIATOR_CPP, ES_MEDIATOR_STC_CPP, ES_MEDIATOR_BTC_CPP, COMMON_STATIC_LIBS, ES_MEDIATOR_LIB, ES_MEDIATOR_SECURED_LIB]
+else:
+    ES_MEDIATOR_TC_SRC = [ES_MEDIATOR_CPP, ES_MEDIATOR_STC_CPP, ES_MEDIATOR_BTC_CPP, COMMON_STATIC_LIBS, ES_MEDIATOR_LIB]
 
 ######################################################################
 
