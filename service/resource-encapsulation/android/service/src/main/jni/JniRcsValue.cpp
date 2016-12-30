@@ -56,6 +56,7 @@ namespace
     jobject g_obj_TypeId_Integer;
     jobject g_obj_TypeId_Double;
     jobject g_obj_TypeId_String;
+    jobject g_obj_TypeId_ByteString;
     jobject g_obj_TypeId_Attributes;
     jobject g_obj_TypeId_Array;
 
@@ -189,6 +190,68 @@ namespace
         static constexpr char className[] = "L" CLS_NAME_STRING ";";
     };
     constexpr char JniTypeTrait< std::string >::className[];
+    template< typename ENV >
+    inline RCSByteString invoke_ByteString_byteStringValue(JNIEnvWrapper *env, jobject byteStringObj)
+    {
+        EXPECT_RET(byteStringObj, "byteStringObj is null!", { });
+
+        jclass g_cls_RCSByteString = env->FindClassAsGlobalRef(CLS_NAME_RESOURCEBYTESTRING);
+
+        static jfieldID field_data = env->GetFieldID(g_cls_RCSByteString, "mData", "[B");
+        static jfieldID field_length = env->GetFieldID(g_cls_RCSByteString, "mSize", "J");
+
+        jbyteArray jDataInfo = (jbyteArray)env->GetObjectField(byteStringObj, field_data);
+        jlong jDataLength = env->GetLongField(byteStringObj, field_length);
+
+        jbyte *byteStringData = env->GetByteArrayElements(jDataInfo, NULL);
+
+        RCSByteString byteString((uint8_t *)byteStringData, (size_t)jDataLength);
+
+        env->ReleaseByteArrayElements(jDataInfo, (jbyte*) byteStringData, JNI_ABORT);
+        env->DeleteGlobalRef(g_cls_RCSByteString);
+
+        return byteString;
+    }
+
+    template< typename ENV >
+    inline jobject newRCSByteStringObject(ENV* env, const RCSByteString& value)
+    {
+        jsize jSize = (jsize)value.size();
+
+        jbyteArray jData = env->NewByteArray(jSize);
+
+        std::vector<uint8_t> byteString = value.getByteString();
+
+        env->SetByteArrayRegion(jData, 0, jSize, (const jbyte*)&byteString[0]);
+
+        jclass g_cls_RCSByteString = env->FindClassAsGlobalRef(CLS_NAME_RESOURCEBYTESTRING);
+        jmethodID g_ctor_RCSByteString = env->GetConstructorID(g_cls_RCSByteString, "([BJ)V");
+
+        EXPECT_RET(g_ctor_RCSByteString, "g_ctor_RCSByteString is null!", { });
+
+        jobject jObj = (jobject)env->NewObject(g_cls_RCSByteString, g_ctor_RCSByteString, jData,
+                                               (jlong)jSize);
+
+        EXPECT_RET(jObj, "jObj is null!", { });
+
+        return jObj;
+    }
+
+    template<>
+    struct JniTypeTrait< RCSByteString >: public ObjectType
+    {
+        static decltype(&invoke_ByteString_byteStringValue<JNIEnvWrapper>) converter;
+
+        static decltype(&newRCSByteStringObject<JNIEnvWrapper>) newObjectFunc;
+
+        static constexpr char className[] = CLS_NAME_RESOURCEBYTESTRING;
+    };
+    constexpr char JniTypeTrait< RCSByteString >::className[];
+    decltype(&invoke_ByteString_byteStringValue<JNIEnvWrapper>) JniTypeTrait< RCSByteString >::converter =
+        &invoke_ByteString_byteStringValue<JNIEnvWrapper>;
+
+    decltype(&newRCSByteStringObject<JNIEnvWrapper>) JniTypeTrait< RCSByteString >::newObjectFunc =
+        &newRCSByteStringObject<JNIEnvWrapper>;
 
     template<>
     struct JniTypeTrait< RCSResourceAttributes >: public ObjectType
@@ -316,6 +379,9 @@ namespace
              case RCSResourceAttributes::TypeId::STRING:
                  return toNativeValue< std::string >(env, val, depth);
 
+            case RCSResourceAttributes::TypeId::BYTESTRING:
+                return toNativeValue< RCSByteString >(env, val, depth);
+
              case RCSResourceAttributes::TypeId::ATTRIBUTES:
                  return toNativeValue< RCSResourceAttributes >(env, val, depth);
          }
@@ -414,6 +480,11 @@ namespace
                         value.get< typename SeqType< DEPTH, std::string >::type >(),
                         Int2Type< DEPTH >{ });
 
+            case RCSResourceAttributes::TypeId::BYTESTRING:
+                return createJavaObject(env,
+                                        value.get< typename SeqType< DEPTH, RCSByteString >::type >(),
+                                        Int2Type< DEPTH > { });
+
             case RCSResourceAttributes::TypeId::ATTRIBUTES:
                 return createJavaObject(env,
                         value.get< typename SeqType< DEPTH, RCSResourceAttributes >::type >(),
@@ -452,6 +523,7 @@ namespace
         if (env->IsSameObject(g_obj_TypeId_Integer, typeIdObj)) return TypeId::INT;
         if (env->IsSameObject(g_obj_TypeId_Double, typeIdObj)) return TypeId::DOUBLE;
         if (env->IsSameObject(g_obj_TypeId_String, typeIdObj)) return TypeId::STRING;
+        if (env->IsSameObject(g_obj_TypeId_ByteString, typeIdObj)) return TypeId::BYTESTRING;
         if (env->IsSameObject(g_obj_TypeId_Attributes, typeIdObj)) return TypeId::ATTRIBUTES;
         if (env->IsSameObject(g_obj_TypeId_Array, typeIdObj)) return TypeId::VECTOR;
 
@@ -494,6 +566,7 @@ void initRCSValue(JNIEnvWrapper* env)
     g_obj_TypeId_Integer = getTypeIdObj(env, "INTEGER");
     g_obj_TypeId_Double = getTypeIdObj(env, "DOUBLE");
     g_obj_TypeId_String = getTypeIdObj(env, "STRING");
+    g_obj_TypeId_ByteString = getTypeIdObj(env, "BYTESTRING");
     g_obj_TypeId_Attributes = getTypeIdObj(env, "ATTRIBUTES");
     g_obj_TypeId_Array = getTypeIdObj(env, "ARRAY");
 }
@@ -509,6 +582,7 @@ void clearRCSValue(JNIEnvWrapper* env)
     env->DeleteGlobalRef(g_obj_TypeId_Integer);
     env->DeleteGlobalRef(g_obj_TypeId_Double);
     env->DeleteGlobalRef(g_obj_TypeId_String);
+    env->DeleteGlobalRef(g_obj_TypeId_ByteString);
     env->DeleteGlobalRef(g_obj_TypeId_Attributes);
     env->DeleteGlobalRef(g_obj_TypeId_Array);
 }

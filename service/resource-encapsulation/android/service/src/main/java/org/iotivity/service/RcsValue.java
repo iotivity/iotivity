@@ -47,7 +47,7 @@ public final class RcsValue {
      * @see Type
      */
     public static enum TypeId {
-        NULL, BOOLEAN, INTEGER, DOUBLE, STRING, ATTRIBUTES, ARRAY;
+        NULL, BOOLEAN, INTEGER, DOUBLE, STRING, BYTESTRING, ATTRIBUTES, ARRAY;
     }
 
     /**
@@ -189,12 +189,14 @@ public final class RcsValue {
         types.put(Integer.class, new Type(TypeId.INTEGER));
         types.put(Double.class, new Type(TypeId.DOUBLE));
         types.put(String.class, new Type(TypeId.STRING));
+        types.put(RcsByteString.class, new Type(TypeId.BYTESTRING));
         types.put(RcsResourceAttributes.class, new Type(TypeId.ATTRIBUTES));
 
         types.put(boolean[].class, new ArrayType(TypeId.BOOLEAN, 1));
         types.put(int[].class, new ArrayType(TypeId.INTEGER, 1));
         types.put(double[].class, new ArrayType(TypeId.DOUBLE, 1));
         types.put(String[].class, new ArrayType(TypeId.STRING, 1));
+        types.put(RcsByteString[].class, new ArrayType(TypeId.BYTESTRING, 1));
         types.put(RcsResourceAttributes[].class,
                 new ArrayType(TypeId.ATTRIBUTES, 1));
 
@@ -202,6 +204,7 @@ public final class RcsValue {
         types.put(int[][].class, new ArrayType(TypeId.INTEGER, 2));
         types.put(double[][].class, new ArrayType(TypeId.DOUBLE, 2));
         types.put(String[][].class, new ArrayType(TypeId.STRING, 2));
+        types.put(RcsByteString[][].class, new ArrayType(TypeId.BYTESTRING, 2));
         types.put(RcsResourceAttributes[][].class,
                 new ArrayType(TypeId.ATTRIBUTES, 2));
 
@@ -209,6 +212,7 @@ public final class RcsValue {
         types.put(int[][][].class, new ArrayType(TypeId.INTEGER, 3));
         types.put(double[][][].class, new ArrayType(TypeId.DOUBLE, 3));
         types.put(String[][][].class, new ArrayType(TypeId.STRING, 3));
+        types.put(RcsByteString[][][].class, new ArrayType(TypeId.BYTESTRING, 3));
         types.put(RcsResourceAttributes[][][].class,
                 new ArrayType(TypeId.ATTRIBUTES, 3));
 
@@ -469,8 +473,35 @@ public final class RcsValue {
     /**
      * Constructs a new value that holds a RcsResourceAttributes array.
      *
-     * @param value
-     *            a RcsResourceAttributes array
+     * @param value a RcsByteString array
+     * @throws NullPointerException if value is null.
+     */
+    public RcsValue(RcsByteString[] value) {
+        this((Object) value);
+    }
+
+    /**
+     * Constructs a new value that holds a two-dimensional RcsByteString array.
+     *
+     * @param value a two-dimensional RcsByteString array
+     * @throws NullPointerException if value is null.
+     */
+    public RcsValue(RcsByteString[][] value) {
+        this((Object) value);
+    }
+
+    /**
+     * Constructs a new value that holds a three-dimensional RcsByteString array.
+     *
+     * @param value a three-dimensional RcsByteString array
+     * @throws NullPointerException if value is null.
+     */
+    public RcsValue(RcsByteString[][][] value) {
+        this((Object) value);
+    }
+
+    /**
+     * Constructs a new value that holds a RcsResourceAttributes array.
      *
      * @throws NullPointerException
      *             if value is null.
@@ -818,6 +849,36 @@ public final class RcsValue {
      *
      */
     public String[][][] asString3DArray() {
+        return getOrNull();
+    }
+
+    /**
+     * Returns the value as an RcsByteString array, null if the value is not the
+     * desired type.
+     *
+     * @return an RcsByteString array
+     */
+    public RcsByteString[] asByteStringArray() {
+        return getOrNull();
+    }
+
+    /**
+     * Returns the value as a two-dimensional RcsByteString array, null if the
+     * value is not the desired type.
+     *
+     * @return a two-dimensional RcsByteString array
+     */
+    public RcsByteString[][] asByteString2DArray() {
+        return getOrNull();
+    }
+
+    /**
+     * Returns the value as a three-dimensional RcsByteString array, null if the
+     * value is not the desired type.
+     *
+     * @return a three-dimensional RcsByteString array
+     */
+    public RcsByteString[][][] asByteString3DArray() {
         return getOrNull();
     }
 

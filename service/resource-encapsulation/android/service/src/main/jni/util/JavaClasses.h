@@ -31,6 +31,7 @@
 
 #define CLS_NAME_RESOURCEATTRIBUTES PACKAGE_NAME "/RcsResourceAttributes"
 #define CLS_NAME_REMOTERESOURCEOBJECT PACKAGE_NAME "/client/RcsRemoteResourceObject"
+#define CLS_NAME_RESOURCEBYTESTRING PACKAGE_NAME "/RcsByteString"
 
 #define CLS_NAME_OBJECT "java/lang/Object"
 #define CLS_NAME_STRING "java/lang/String"
