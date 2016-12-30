@@ -111,6 +111,20 @@ notificationCommonSharedObjs = [
 notification_provider_src = [
 	env.Glob('src/*.cpp'),notificationCommonSharedObjs]
 
+notification_env.UserInstallTargetHeader('inc/NSProviderService.h',\
+    'service/notification', 'NSProviderService.h')
+notification_env.UserInstallTargetHeader('inc/NSConsumer.h',\
+    'service/notification', 'NSConsumer.h')
+
+notification_env.UserInstallTargetHeader('../common/NSMediaContents.h',\
+    'service/notification', 'NSMediaContents.h')
+notification_env.UserInstallTargetHeader('../common/NSMessage.h',\
+    'service/notification', 'NSMessage.h')
+notification_env.UserInstallTargetHeader('../common/NSSyncInfo.h',\
+    'service/notification', 'NSSyncInfo.h')
+notification_env.UserInstallTargetHeader('../common/NSTopicsList.h',\
+    'service/notification', 'NSTopicsList.h')
+
 providersdk = notification_env.SharedLibrary('notification_provider_wrapper', notification_provider_src)
 notification_env.InstallTarget(providersdk, 'libnotification_provider_wrapper')
 notification_env.UserInstallTargetLib(providersdk, 'libnotification_provider_wrapper')

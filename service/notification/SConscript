@@ -120,6 +120,8 @@ notification_consumer_src = [
     
 notification_provider_env.UserInstallTargetHeader('include/NSProviderInterface.h',\
     'service/notification', 'NSProviderInterface.h')
+notification_provider_env.UserInstallTargetHeader('include/NSCommon.h',\
+    'service/notification', 'NSCommon.h')
 notification_consumer_env.UserInstallTargetHeader('include/NSConsumerInterface.h',\
     'service/notification', 'NSConsumerInterface.h')
 
@@ -148,9 +150,9 @@ if target_os == 'linux':
 if target_os not in ['windows', 'msys_nt']:
     SConscript('cpp-wrapper/SConscript')
 
-
 if target_os == 'android':
     SConscript('android/SConscript')
+    SConscript('examples/android/SConscript')
 
-# Go to build sample apps
-SConscript('examples/SConscript')
+if target_os not in ['android']:
+    SConscript('examples/SConscript')

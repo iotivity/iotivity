@@ -54,6 +54,11 @@ notification_env.PrependUnique(LIBS = [
 	'oc',
 	'notification_consumer'
 	])
+	
+notification_env.UserInstallTargetHeader('inc/NSConsumerService.h',\
+    'service/notification', 'NSProviderService.h')
+notification_env.UserInstallTargetHeader('inc/NSProvider.h',\
+    'service/notification', 'NSConsumer.h')
 
 notification_env.AppendUnique(CXXFLAGS = ['-std=c++0x','-frtti'])
 
@@ -99,6 +104,11 @@ Import('notificationCommonSharedObjs')
 
 notification_consumer_src = [
 	env.Glob('src/*.cpp'),notificationCommonSharedObjs]
+
+notification_env.UserInstallTargetHeader('inc/NSConsumerService.h',\
+    'service/notification', 'NSConsumerService.h')
+notification_env.UserInstallTargetHeader('inc/NSProvider.h',\
+    'service/notification', 'NSProvider.h')
 
 consumersdk = notification_env.SharedLibrary('notification_consumer_wrapper', notification_consumer_src)
 notification_env.InstallTarget(consumersdk, 'libnotification_consumer_wrapper')
