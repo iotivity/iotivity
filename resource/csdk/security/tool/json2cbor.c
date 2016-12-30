@@ -670,7 +670,7 @@ exit:
         DeleteDoxmBinData(doxm);
         doxm = NULL;
     }
-    printf("OUT JSONToDoxmBin\n");
+    printf("OUT %s: %s\n", __func__, (doxm != NULL) ? "success" : "failure");
     return doxm;
 }
 
@@ -740,9 +740,10 @@ exit:
     cJSON_Delete(jsonRoot);
     if (OC_STACK_OK != ret)
     {
-        OIC_LOG(ERROR, TAG, "JSONToPstatBin failed");
+        DeletePstatBinData(pstat);
+        pstat = NULL;
     }
-    printf("OUT JSONToPstatBin\n");
+    printf("OUT %s: %s\n", __func__, (pstat != NULL) ? "success" : "failure");
     return pstat;
 }
 

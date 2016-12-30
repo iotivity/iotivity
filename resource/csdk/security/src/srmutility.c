@@ -140,6 +140,24 @@ exit:
 
 OCStackResult ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid)
 {
-    bool result = OCConvertStringToUuid(strUuid, uuid->id);
-    return (result) ? OC_STACK_OK : OC_STACK_INVALID_PARAM;
+    bool result = true;
+    size_t strUuidLen = strlen(strUuid);
+
+    if (0 == strUuidLen)
+    {
+        OIC_LOG(INFO, TAG, "Converting empty UUID string to 00000000-0000-0000-0000-000000000000");
+        memset(uuid->id, 0, sizeof(uuid->id));
+    }
+    else
+    {
+        result = OCConvertStringToUuid(strUuid, uuid->id);
+    }
+
+    if (!result)
+    {
+        OIC_LOG_V(ERROR, TAG, "%s: Invalid parameter '%s'", __func__, strUuid);
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    return OC_STACK_OK;
 }
