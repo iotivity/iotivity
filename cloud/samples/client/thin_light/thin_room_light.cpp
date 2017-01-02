@@ -36,6 +36,12 @@
 #include "rd_client.h"
 #include "OCPlatform.h"
 
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+#include "ocprovisioningmanager.h"
+#include "mbedtls/ssl_ciphersuites.h"
+#include <ca_adapter_net_ssl.h>
+#endif // WITH_DTLS__ or __WITH_TLS__
+
 using namespace std;
 
 #define VERIFY_SUCCESS(op)                          \
@@ -562,7 +568,9 @@ void printRepresentation(OCRepPayloadValue *value)
     }
 }
 
-string g_host = "coap+tcp://";
+
+
+string g_host;
 
 OCStackApplicationResult handleLoginoutCB(void *ctx, OCDoHandle /*handle*/,
         OCClientResponse *clientResponse)
@@ -636,6 +644,51 @@ void PrintUsage()
 
 }
 
+int saveTrustCert(void)
+{
+    OCStackResult res = OC_STACK_ERROR;
+    uint16_t g_credId = 0;
+
+    cout << "Save Trust Cert. Chain into Cred of SVR" <<endl;
+
+    ByteArray trustCertChainArray = {0, 0};
+
+    FILE *fp = fopen("rootca.crt", "rb+");
+
+    if (fp)
+    {
+        size_t fsize;
+        if (fseeko(fp, 0, SEEK_END) == 0 && (fsize = ftello(fp)) > 0)
+        {
+            trustCertChainArray.data = (uint8_t *)malloc(fsize);
+            trustCertChainArray.len = fsize;
+            if (NULL == trustCertChainArray.data)
+            {
+                cout << "Failed to allocate memory" << endl;
+                fclose(fp);
+                return res;
+            }
+            rewind(fp);
+            if (fsize != fread(trustCertChainArray.data, 1, fsize, fp))
+            {
+                 cout << "Certiface not read completely" << endl;
+            }
+            fclose(fp);
+        }
+    }
+
+    res = OCSaveTrustCertChain(trustCertChainArray.data, trustCertChainArray.len, OIC_ENCODING_PEM,&g_credId);
+
+    if(OC_STACK_OK != res)
+    {
+        cout << "OCSaveTrustCertChainBin API error" << endl;
+        return res;
+    }
+    cout << "CredId of Saved Trust Cert. Chain into Cred of SVR : " << g_credId << endl;
+
+    return res;
+}
+
 static FILE *client_open(const char *path, const char *mode)
 {
     if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
@@ -650,29 +703,41 @@ static FILE *client_open(const char *path, const char *mode)
 
 int main(int argc, char *argv[])
 {
+	if (argc < 3)
+	{
+		cout << "Put \"[host-ipaddress:port] [tls mode(0,1)] \" for sign-up"
+			<< endl;
+		cout << "Put \"[host-ipaddress:port] [uid] [accessToken] [tls mode(0,1)]\" for sign-in and publish resources" <<
+			endl;
+		cout << "Put \"[host-ipaddress:port] [uid] [refreshToken] refresh [tls mode(0,1)]\" for accessToken to refresh" <<
+			endl;
+		return 0;
+	}
+
     string uId;
     string accessToken;
     string refreshToken;
     string authProvider;
     string authCode;
-
-    OCMode stackMode = OC_CLIENT_SERVER;
-
+	string tlsMode;
+    
+	OCMode stackMode = OC_CLIENT_SERVER;
+	tlsMode = argv[argc - 1];
     switch (argc)
     {
-        case 2:
+        case 3:
             cout << "Put auth provider name(ex: github)" << endl;
             cin >> authProvider;
             cout << "Put auth code(provided by auth provider)" << endl;
             cin >> authCode;
             break;
 
-        case 4:
+        case 5:
             uId = argv[2];
             accessToken = argv[3];
             break;
 
-        case 5:
+        case 6:
             uId = argv[2];
             refreshToken = argv[3];
             break;
@@ -682,7 +747,16 @@ int main(int argc, char *argv[])
             return 0;
     }
 
-    g_host += argv[1];
+	g_host = "coap+tcp://";
+
+	if (tlsMode == "1")
+	{
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+		g_host = "coaps+tcp://";
+#endif
+	}
+
+	g_host += argv[1];
 
     cout << "Host " << g_host.c_str() << endl;
 
@@ -702,23 +776,40 @@ int main(int argc, char *argv[])
 
     OCStackResult res = OC_STACK_ERROR;
 
+	if (tlsMode == "1")
+	{
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+		cout << "Security Mode" << endl;
+		if (CA_STATUS_OK != saveTrustCert())
+		{
+			cout << "saveTrustCert returned an error" << endl;
+		}
+
+		uint16_t cipher = MBEDTLS_TLS_RSA_WITH_AES_128_GCM_SHA256;
+		if (CA_STATUS_OK != CASelectCipherSuite(cipher, CA_ADAPTER_TCP))
+		{
+			cout << "CASelectCipherSuite returned an error" << endl;
+		}
+#endif
+	}
+
     switch (argc)
     {
-        case 2:
+        case 3:
             cout << "Sign-Up to cloud using " << authProvider << " " << authCode << endl;
             res = OCCloudSignup(g_host.c_str(), OCGetServerInstanceIDString(), authProvider.c_str(),
                                 authCode.c_str(), handleRegisterCB);
             cout << "OCCloudSignup return " << res << endl;
             break;
 
-        case 4:
+        case 5:
             cout << "Sign-In to cloud using " << accessToken << endl;
             res = OCCloudLogin(g_host.c_str(), uId.c_str(), OCGetServerInstanceIDString(),
                                accessToken.c_str(), handleLoginoutCB);
             cout << "OCCloudLogin return " << res << endl;
             break;
 
-        case 5:
+        case 6:
             cout << "Token refresh to cloud using the refresh token " << refreshToken << endl;
             res = OCCloudRefresh(g_host.c_str(), DEFAULT_AUTH_REFRESH, uId.c_str(),
                                  OCGetServerInstanceIDString(), refreshToken.c_str(), handleRegisterCB);
