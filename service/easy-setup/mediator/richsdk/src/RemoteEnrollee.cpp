@@ -244,17 +244,16 @@ namespace OIC
                     this,
                     std::placeholders::_1);
             //TODO : DBPath is passed empty as of now. Need to take dbpath from application.
-            if(!m_enrolleeSecurity.get())
+            if(!m_localEnrolleeSecurity.get())
             {
-                m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+                m_localEnrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
             }
 
-            res = m_enrolleeSecurity->provisionOwnership(NULL);
+            res = m_localEnrolleeSecurity->provisionOwnership(NULL);
 
             std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
-                            std::make_shared< SecProvisioningStatus >(m_enrolleeSecurity->getUUID(), res);
+                            std::make_shared< SecProvisioningStatus >(m_localEnrolleeSecurity->getUUID(), res);
             securityProvStatusCb(securityProvisioningStatus);
-            m_enrolleeSecurity.reset();
 #else
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG,"Mediator is unsecured built.");
 
@@ -286,17 +285,16 @@ namespace OIC
                                     this,
                                     std::placeholders::_1);
 
-            if(!m_enrolleeSecurity.get())
+            if(!m_localEnrolleeSecurity.get())
             {
-                m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+                m_localEnrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
             }
 
-            res = m_enrolleeSecurity->provisionOwnership(securityProvStatusCbWithOption);
+            res = m_localEnrolleeSecurity->provisionOwnership(securityProvStatusCbWithOption);
 
             std::shared_ptr< SecProvisioningStatus > securityProvisioningStatus =
-                            std::make_shared< SecProvisioningStatus >(m_enrolleeSecurity->getUUID(), res);
+                            std::make_shared< SecProvisioningStatus >(m_localEnrolleeSecurity->getUUID(), res);
             securityProvStatusCbWithOption(securityProvisioningStatus);
-            m_enrolleeSecurity.reset();
 #else
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG,"Mediator is unsecured built.");
 
@@ -509,15 +507,15 @@ namespace OIC
             if(!(cloudProp.getCloudID().empty() && cloudProp.getCredID() <= 0))
             {
                 ESResult res = ESResult::ES_ERROR;
-                if(!m_enrolleeSecurity.get())
+                if(!m_cloudEnrolleeSecurity.get())
                 {
-                    m_enrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
+                    m_cloudEnrolleeSecurity = std::make_shared <EnrolleeSecurity> (m_ocResource, "");
                 }
 
 
-                res = m_enrolleeSecurity->provisionSecurityForCloudServer(cloudProp.getCloudID(),
+                res = m_cloudEnrolleeSecurity->provisionSecurityForCloudServer(cloudProp.getCloudID(),
                                                                           cloudProp.getCredID());
-                m_enrolleeSecurity.reset();
+
                 if(res != ESResult::ES_OK)
                 {
                     m_cloudResource = nullptr;
@@ -549,3 +547,5 @@ namespace OIC
         }
     }
 }
+
+

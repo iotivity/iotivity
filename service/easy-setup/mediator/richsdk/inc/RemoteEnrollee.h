@@ -188,7 +188,8 @@ namespace OIC
         private:
             std::shared_ptr< OC::OCResource > m_ocResource;
             std::shared_ptr< EnrolleeResource > m_enrolleeResource;
-            std::shared_ptr< EnrolleeSecurity > m_enrolleeSecurity;
+            std::shared_ptr< EnrolleeSecurity > m_localEnrolleeSecurity;
+            std::shared_ptr< EnrolleeSecurity > m_cloudEnrolleeSecurity;
             std::shared_ptr< CloudResource > m_cloudResource;
 
             std::string  m_deviceId;
