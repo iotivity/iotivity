@@ -69,6 +69,19 @@ namespace OIC
             m_ownershipTransferData = {};
         }
 
+        void EnrolleeSecurity::onEnrolleeSecuritySafetyCB(OC::PMResultList_t *result,
+                                                        int hasError,
+                                                        ESSecurityCb cb,
+                                                        std::weak_ptr<EnrolleeSecurity> this_ptr)
+        {
+            OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "onEnrolleeSecuritySafetyCB");
+            std::shared_ptr<EnrolleeSecurity> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                cb(result, hasError);
+            }
+        }
+
         void EnrolleeSecurity::convertUUIDToString(const uint8_t uuid[UUID_SIZE],
                                                               std::string& uuidString)
         {
@@ -362,8 +375,11 @@ namespace OIC
                             "Found Unowned device's DevID at DB of ownedDevices list");
 
                         OC::ResultCallBack removeDeviceWithUuidCB = std::bind(
-                                &EnrolleeSecurity::removeDeviceWithUuidCB,
-                                this, std::placeholders::_1, std::placeholders::_2);
+                                &EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
+                                std::placeholders::_1, std::placeholders::_2,
+                                static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::removeDeviceWithUuidCB,
+                                this, std::placeholders::_1, std::placeholders::_2)),
+                                shared_from_this());
 
                         result = OCSecure::removeDeviceWithUuid(ES_SEC_DISCOVERY_TIMEOUT,
                                                                 m_ocResource->sid(),
@@ -413,8 +429,11 @@ namespace OIC
                                 !m_ownershipTransferData.getPreConfiguredPin().empty())
                         {
                             OC::ResultCallBack preconfigPinProvCB = std::bind(
-                                    &EnrolleeSecurity::PreconfigPinProvCB, this, std::placeholders::_1,
-                                    std::placeholders::_2);
+                                    &EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
+                                    std::placeholders::_1, std::placeholders::_2,
+                                    static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::PreconfigPinProvCB,
+                                    this, std::placeholders::_1, std::placeholders::_2)),
+                                    shared_from_this());
 
                             std::string pin = m_ownershipTransferData.getPreConfiguredPin();
 
@@ -441,10 +460,12 @@ namespace OIC
                             OIC_PRECONFIG_PIN == m_ownershipTransferData.getMOTMethod() ||
                             OIC_RANDOM_DEVICE_PIN == m_ownershipTransferData.getMOTMethod())
                         {
-
                             OC::ResultCallBack selectMOTMethodCB = std::bind(
-                                &EnrolleeSecurity::SelectMOTMethodCB, this, std::placeholders::_1,
-                                std::placeholders::_2);
+                                    &EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
+                                    std::placeholders::_1, std::placeholders::_2,
+                                    static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::SelectMOTMethodCB,
+                                    this, std::placeholders::_1, std::placeholders::_2)),
+                                    shared_from_this());
 
                             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "selectMOTMethod is called.");
                             if(OC_STACK_OK != m_securedResource->selectMOTMethod(
@@ -515,9 +536,13 @@ namespace OIC
             OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Transfering ownership for : %s ",
                     m_securedResource->getDeviceID().c_str());
 
-            OC::ResultCallBack ownershipTransferCb = std::bind(
-                    &EnrolleeSecurity::ownershipTransferCb, this, std::placeholders::_1,
-                    std::placeholders::_2);
+            OC::ResultCallBack ownershipTransferCb =
+                std::bind(&EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
+                          std::placeholders::_1, std::placeholders::_2,
+                          static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::ownershipTransferCb,
+                          this, std::placeholders::_1, std::placeholders::_2)),
+                          shared_from_this());
+
 
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "doOwnershipTransfer is excuted");
             result = m_securedResource->doOwnershipTransfer(ownershipTransferCb);
@@ -555,9 +580,12 @@ namespace OIC
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Preconfig PIN : %s", pin.c_str());
             }
 
-            OC::ResultCallBack multipleOwnershipTransferCb = std::bind(
-                        &EnrolleeSecurity::MultipleOwnershipTransferCb, this, std::placeholders::_1,
-                        std::placeholders::_2);
+            OC::ResultCallBack multipleOwnershipTransferCb =
+                std::bind(&EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
+                          std::placeholders::_1, std::placeholders::_2,
+                          static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::MultipleOwnershipTransferCb,
+                          this, std::placeholders::_1, std::placeholders::_2)),
+                          shared_from_this());
 
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "doMultipleOwnershipTransfer is excuted");
 
@@ -769,9 +797,13 @@ namespace OIC
 
             OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Given CredId: %d", credId);
 
-            OC::ResultCallBack CertProvisioningCb = std::bind(
-                            &EnrolleeSecurity::CertProvisioningCb, this, std::placeholders::_1,
-                            std::placeholders::_2);
+            OC::ResultCallBack CertProvisioningCb =
+                std::bind(&EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
+                          std::placeholders::_1, std::placeholders::_2,
+                          static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::CertProvisioningCb,
+                          this, std::placeholders::_1, std::placeholders::_2)),
+                          shared_from_this());
+
             OCStackResult rst = ownedDevice->provisionTrustCertChain(SIGNED_ASYMMETRIC_KEY,
                                                                     static_cast<uint16_t>(credId),
                                                                     CertProvisioningCb);
@@ -823,9 +855,13 @@ namespace OIC
                 return res;
             }
 
-            OC::ResultCallBack aclProvisioningCb = std::bind(
-                            &EnrolleeSecurity::ACLProvisioningCb, this, std::placeholders::_1,
-                            std::placeholders::_2);
+            OC::ResultCallBack aclProvisioningCb =
+                std::bind(&EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
+                          std::placeholders::_1, std::placeholders::_2,
+                          static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::ACLProvisioningCb,
+                          this, std::placeholders::_1, std::placeholders::_2)),
+                          shared_from_this());
+
             // ACL provisioning to Enrollee
             OCStackResult rst = ownedDevice->provisionACL(acl, aclProvisioningCb);
             if(OC_STACK_OK != rst)

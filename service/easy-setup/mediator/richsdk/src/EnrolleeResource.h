@@ -37,12 +37,15 @@ namespace OIC
         class OCResource;
         class EnrolleeSecurity;
 
+        typedef std::function<void(const HeaderOptions& headerOptions,
+                                   const OCRepresentation& rep,
+                                   const int eCode)> ESEnrolleeResourceCb;
         /**
          * This class contains the resource discovery methods.
          *
          * @see EnrolleeResource
          */
-        class EnrolleeResource
+        class EnrolleeResource : public std::enable_shared_from_this<EnrolleeResource>
         {
             friend class EnrolleeSecurity;
 
@@ -70,6 +73,13 @@ namespace OIC
             DevicePropProvStatusCb m_devicePropProvStatusCb;
 
         private:
+            static void onEnrolleeResourceSafetyCB(const HeaderOptions& headerOptions,
+                                    const OCRepresentation& rep,
+                                    const int eCode,
+                                    ESEnrolleeResourceCb cb,
+                                    std::weak_ptr<EnrolleeResource> this_ptr);
+
+
             void onGetStatusResponse(const HeaderOptions& headerOptions,
                                                 const OCRepresentation& rep,
                                                 const int eCode);

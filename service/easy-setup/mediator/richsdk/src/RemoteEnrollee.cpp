@@ -53,6 +53,18 @@ namespace OIC
             m_deviceId = resource->sid();
         }
 
+        void RemoteEnrollee::onSecurityStatusHandlerCallback(
+                const std::shared_ptr< SecProvisioningStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr)
+        {
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"onSecurityStatusHandlerCallback");
+            std::shared_ptr<RemoteEnrollee> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                Ptr->securityStatusHandler(status);
+            }
+        }
+
         void RemoteEnrollee::securityStatusHandler(
                 const std::shared_ptr< SecProvisioningStatus > status) const
         {
@@ -73,6 +85,19 @@ namespace OIC
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "securityStatusHandlr OUT");
         }
 
+        ESOwnershipTransferData RemoteEnrollee::onSecurityStatusWithOptionHandlerCallback(
+                const std::shared_ptr< SecProvisioningStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr)
+        {
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"onSecurityStatusWithOptionHandlerCallback");
+            std::shared_ptr<RemoteEnrollee> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                return Ptr->securityStatusWithOptionHandler(status);
+            }
+            return ESOwnershipTransferData();
+        }
+
         ESOwnershipTransferData RemoteEnrollee::securityStatusWithOptionHandler(
                 const std::shared_ptr< SecProvisioningStatus > status) const
         {
@@ -82,6 +107,18 @@ namespace OIC
 
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "securityStatusWithOptionHandler OUT");
             return m_securityProvStatusCbWithOption(status);
+        }
+
+        void RemoteEnrollee::onGetStatusHandlerCallback(
+                const std::shared_ptr< GetEnrolleeStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr)
+        {
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"onGetStatusHandlerCallback");
+            std::shared_ptr<RemoteEnrollee> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                Ptr->getStatusHandler(status);
+            }
         }
 
         void RemoteEnrollee::getStatusHandler(
@@ -96,6 +133,18 @@ namespace OIC
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "getStatusHandler OUT");
         }
 
+        void RemoteEnrollee::onGetConfigurationStatusHandlerCallback(
+                const std::shared_ptr< GetConfigurationStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr)
+        {
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"onGetConfigurationStatusHandlerCallback");
+            std::shared_ptr<RemoteEnrollee> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                Ptr->getConfigurationStatusHandler(status);
+            }
+        }
+
         void RemoteEnrollee::getConfigurationStatusHandler (
                 const std::shared_ptr< GetConfigurationStatus > status) const
         {
@@ -108,6 +157,18 @@ namespace OIC
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "getConfigurationStatusHandler OUT");
         }
 
+        void RemoteEnrollee::onDevicePropProvisioningStatusHandlerCallback(
+                const std::shared_ptr< DevicePropProvisioningStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr)
+        {
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"onDevicePropProvisioningStatusHandlerCallback");
+            std::shared_ptr<RemoteEnrollee> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                Ptr->devicePropProvisioningStatusHandler(status);
+            }
+        }
+
         void RemoteEnrollee::devicePropProvisioningStatusHandler(
                 const std::shared_ptr< DevicePropProvisioningStatus > status) const
         {
@@ -117,6 +178,18 @@ namespace OIC
             m_devicePropProvStatusCb(status);
 
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "devicePropProvisioningStatusHandler OUT");
+        }
+
+        void RemoteEnrollee::onCloudPropProvisioningStatusHandlerCallback(
+                const std::shared_ptr< CloudPropProvisioningStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr)
+        {
+            OIC_LOG_V(DEBUG,ES_REMOTE_ENROLLEE_TAG,"onCloudPropProvisioningStatusHandlerCallback");
+            std::shared_ptr<RemoteEnrollee> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                Ptr->cloudPropProvisioningStatusHandler(status);
+            }
         }
 
         void RemoteEnrollee::cloudPropProvisioningStatusHandler (
@@ -240,9 +313,9 @@ namespace OIC
             m_securityProvStatusCb = callback;
 
             SecurityProvStatusCb securityProvStatusCb = std::bind(
-                    &RemoteEnrollee::securityStatusHandler,
-                    this,
-                    std::placeholders::_1);
+                    &RemoteEnrollee::onSecurityStatusHandlerCallback,
+                    std::placeholders::_1,
+                    shared_from_this());
             //TODO : DBPath is passed empty as of now. Need to take dbpath from application.
             if(!m_localEnrolleeSecurity.get())
             {
@@ -281,9 +354,9 @@ namespace OIC
             m_securityProvStatusCbWithOption = callback;
 
             SecurityProvStatusCbWithOption securityProvStatusCbWithOption = std::bind(
-                                    &RemoteEnrollee::securityStatusWithOptionHandler,
-                                    this,
-                                    std::placeholders::_1);
+                                    &RemoteEnrollee::onSecurityStatusWithOptionHandlerCallback,
+                                    std::placeholders::_1,
+                                    shared_from_this());
 
             if(!m_localEnrolleeSecurity.get())
             {
@@ -327,7 +400,10 @@ namespace OIC
             m_getStatusCb = callback;
 
             GetStatusCb getStatusCb = std::bind(
-                &RemoteEnrollee::getStatusHandler, this, std::placeholders::_1);
+                &RemoteEnrollee::onGetStatusHandlerCallback,
+                std::placeholders::_1,
+                shared_from_this());
+
             m_enrolleeResource->registerGetStatusCallback(getStatusCb);
             m_enrolleeResource->getStatus();
 
@@ -351,7 +427,10 @@ namespace OIC
             m_getConfigurationStatusCb = callback;
 
             GetConfigurationStatusCb getConfigurationStatusCb = std::bind(
-                    &RemoteEnrollee::getConfigurationStatusHandler, this, std::placeholders::_1);
+                    &RemoteEnrollee::onGetConfigurationStatusHandlerCallback,
+                    std::placeholders::_1,
+                    shared_from_this());
+
             m_enrolleeResource->registerGetConfigurationStatusCallback(getConfigurationStatusCb);
             m_enrolleeResource->getConfiguration();
 
@@ -381,8 +460,9 @@ namespace OIC
             }
 
             DevicePropProvStatusCb devicePropProvStatusCb = std::bind(
-                    &RemoteEnrollee::devicePropProvisioningStatusHandler,
-                    this, std::placeholders::_1);
+                    &RemoteEnrollee::onDevicePropProvisioningStatusHandlerCallback,
+                    std::placeholders::_1,
+                    shared_from_this());
 
             m_enrolleeResource->registerDevicePropProvStatusCallback(devicePropProvStatusCb);
             m_enrolleeResource->provisionProperties(deviceProp);
@@ -537,8 +617,9 @@ namespace OIC
             }
 
             CloudPropProvStatusCb cloudPropProvStatusCb = std::bind(
-                    &RemoteEnrollee::cloudPropProvisioningStatusHandler,
-                                    this, std::placeholders::_1);
+                    &RemoteEnrollee::onCloudPropProvisioningStatusHandlerCallback,
+                    std::placeholders::_1,
+                    shared_from_this());
 
             m_cloudResource->registerCloudPropProvisioningStatusCallback(cloudPropProvStatusCb);
             m_cloudResource->provisionProperties(cloudProp);

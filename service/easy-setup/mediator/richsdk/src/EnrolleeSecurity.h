@@ -25,6 +25,7 @@
 #include <atomic>
 #include <condition_variable>
 
+
 #include "ESRichCommon.h"
 #include "OCProvisioningManager.hpp"
 
@@ -41,13 +42,14 @@ namespace OIC
         class OCSecureResource;
 
         typedef std::vector<OCProvisionResult_t> PMResultList_t;
+        typedef std::function<void(OC::PMResultList_t *result, int hasError)> ESSecurityCb;
 
         /**
          * This class contains the methods needed for security  layer interaction.
          *
          * @see EnrolleeSecurity
          */
-        class EnrolleeSecurity
+        class EnrolleeSecurity : public std::enable_shared_from_this<EnrolleeSecurity>
         {
         public:
             EnrolleeSecurity(std::shared_ptr< OC::OCResource > resource,
@@ -74,6 +76,11 @@ namespace OIC
 
             ESOwnershipTransferData m_ownershipTransferData;
 
+            static void onEnrolleeSecuritySafetyCB(OC::PMResultList_t *result,
+                                    int hasError,
+                                    ESSecurityCb cb,
+                                    std::weak_ptr<EnrolleeSecurity> this_ptr);
+
             ESResult performOwnershipTransfer();
             bool isOwnedDeviceRegisteredInSVRDB();
             void removeDeviceWithUuidCB(OC::PMResultList_t *result, int hasError);
@@ -83,6 +90,9 @@ namespace OIC
             void PreconfigPinProvCB(PMResultList_t *result, int hasError);
             void MultipleOwnershipTransferCb(OC::PMResultList_t *result, int hasError);
 #endif
+            static void onOwnershipTransferCb(PMResultList_t *result,
+                                                        int hasError,
+                                                        std::weak_ptr<EnrolleeSecurity> this_ptr);
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError);
             void convertUUIDToString(const uint8_t uuid[UUID_SIZE],
                                                 std::string& uuidString);

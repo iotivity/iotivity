@@ -40,20 +40,36 @@ namespace OIC
             m_ocResource = resource;
         }
 
+        void CloudResource::onCloudProvResponseSafetyCb(const HeaderOptions& headerOptions,
+                                                                const OCRepresentation& rep,
+                                                                const int eCode,
+                                                                ESCloudResourceCb cb,
+                                                                std::weak_ptr<CloudResource> this_ptr)
+        {
+            OIC_LOG_V(DEBUG, ES_CLOUD_RES_TAG, "onCloudProvResponseSafetyCb");
+            std::shared_ptr<CloudResource> Ptr = this_ptr.lock();
+            if(Ptr)
+            {
+                cb(headerOptions, rep, eCode);
+            }
+        }
+
+
         void CloudResource::provisionProperties(const CloudProp& cloudProp)
         {
             OIC_LOG (DEBUG, ES_CLOUD_RES_TAG, "provisionProperties IN");
 
             OCRepresentation provisioningRepresentation = cloudProp.toOCRepresentation();
 
+            ESCloudResourceCb cb = std::bind(&CloudResource::onCloudProvResponseSafetyCb,
+                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                            static_cast<ESCloudResourceCb>(
+                            std::bind(&CloudResource::onCloudProvResponse, this,
+                            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
+                            shared_from_this());
+
             m_ocResource->post(OC_RSRVD_ES_RES_TYPE_PROV, BATCH_INTERFACE,
-                        provisioningRepresentation, QueryParamsMap(),
-                        std::function<
-                                void(const HeaderOptions& headerOptions,
-                                        const OCRepresentation& rep, const int eCode) >(
-                        std::bind(&CloudResource::onCloudProvResponse, this,
-                        std::placeholders::_1, std::placeholders::_2,
-                        std::placeholders::_3)), OC::QualityOfService::HighQos);
+                        provisioningRepresentation, QueryParamsMap(), cb, OC::QualityOfService::HighQos);
 
             OIC_LOG (DEBUG, ES_CLOUD_RES_TAG, "provisionProperties OUT");
         }

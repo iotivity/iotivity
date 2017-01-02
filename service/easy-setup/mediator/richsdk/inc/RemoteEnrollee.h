@@ -167,7 +167,31 @@ namespace OIC
             ESResult discoverResource();
 
             static void onDiscoveredCallback(const std::shared_ptr<OC::OCResource> resource,
-            std::weak_ptr<RemoteEnrollee> this_ptr);
+                std::weak_ptr<RemoteEnrollee> this_ptr);
+
+            static void onGetStatusHandlerCallback(
+                const std::shared_ptr< GetEnrolleeStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr);
+
+            static void onGetConfigurationStatusHandlerCallback(
+                const std::shared_ptr< GetConfigurationStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr);
+
+            static void onDevicePropProvisioningStatusHandlerCallback(
+                const std::shared_ptr< DevicePropProvisioningStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr);
+
+            static void onCloudPropProvisioningStatusHandlerCallback(
+                const std::shared_ptr< CloudPropProvisioningStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr);
+
+            static void onSecurityStatusHandlerCallback(
+                const std::shared_ptr< SecProvisioningStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr);
+
+            static ESOwnershipTransferData onSecurityStatusWithOptionHandlerCallback(
+                const std::shared_ptr< SecProvisioningStatus > status,
+                std::weak_ptr<RemoteEnrollee> this_ptr);
 
             void onDeviceDiscovered(const std::shared_ptr<OC::OCResource> resource);
             void initCloudResource();
