@@ -421,6 +421,7 @@ static int64_t OCConvertDiscoveryPayload(OCDiscoveryPayload *payload, uint8_t *o
 
                     err |= AddTextStringToMap(&endpointMap, OC_RSRVD_ENDPOINT,
                                               sizeof(OC_RSRVD_ENDPOINT) - 1, endpointStr);
+                    OICFree(endpointStr);
                     VERIFY_CBOR_SUCCESS(TAG, err, "Failed adding endpoint to endpoint map");
 
                     err |= cbor_encode_text_string(&endpointMap, OC_RSRVD_PRIORITY,
