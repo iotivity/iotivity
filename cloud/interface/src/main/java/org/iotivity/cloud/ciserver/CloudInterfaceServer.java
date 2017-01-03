@@ -43,12 +43,6 @@ import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourceFind;
 import org.iotivity.cloud.ciserver.resources.proxy.rd.ResourcePresence;
 import org.iotivity.cloud.util.Log;
 
-/**
- *
- * This class is in charge of running of cloud interface server
- *
- */
-
 public class CloudInterfaceServer {
 
     public static void main(String[] args) throws Exception {
