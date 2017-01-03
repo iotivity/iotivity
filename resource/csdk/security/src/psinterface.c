@@ -448,6 +448,7 @@ OCStackResult ResetSecureResourceInPS(void)
     uint8_t *outPayload = NULL;
 
     uint8_t *aclCbor = NULL;
+    uint8_t *credCbor = NULL;
     uint8_t *pstatCbor = NULL;
     uint8_t *doxmCbor = NULL;
     uint8_t *resetPfCbor = NULL;
@@ -458,6 +459,7 @@ OCStackResult ResetSecureResourceInPS(void)
     if(dbData && dbSize)
     {
         size_t aclCborLen = 0;
+        size_t credCborLen = 0;
         size_t pstatCborLen = 0;
         size_t doxmCborLen = 0;
         size_t resetPfCborLen = 0;
@@ -490,6 +492,12 @@ OCStackResult ResetSecureResourceInPS(void)
                 cborFindResult = cbor_value_dup_byte_string(&curVal, &aclCbor, &aclCborLen, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding ACL Name Value.");
             }
+            cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_CRED_NAME, &curVal);
+            if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
+            {
+                cborFindResult = cbor_value_dup_byte_string(&curVal, &credCbor, &credCborLen, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding ACL Name Value.");
+            }
             cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_PSTAT_NAME, &curVal);
             if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
             {
@@ -505,7 +513,7 @@ OCStackResult ResetSecureResourceInPS(void)
         }
 
         {
-            size_t size = aclCborLen + pstatCborLen + doxmCborLen + resetPfCborLen + 255;
+            size_t size = aclCborLen + credCborLen + pstatCborLen + doxmCborLen + resetPfCborLen + 255;
             // This added '255' is arbitrary value added to cover the name of the resource, map addition, and ending
 
             outPayload = (uint8_t *) OICCalloc(1, size);
@@ -519,6 +527,14 @@ OCStackResult ResetSecureResourceInPS(void)
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ACL Name.");
             cborEncoderResult |= cbor_encode_byte_string(&secRsrc, aclCbor, aclCborLen);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ACL Value.");
+
+            if (credCborLen)
+            {
+                cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_CRED_NAME, strlen(OIC_JSON_CRED_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CRED Name.");
+                cborEncoderResult |= cbor_encode_byte_string(&secRsrc, credCbor, credCborLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CRED Value.");
+            }
 
             cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_PSTAT_NAME, strlen(OIC_JSON_PSTAT_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PSTAT Name.");
@@ -578,6 +594,7 @@ exit:
     OICFree(dbData);
     OICFree(outPayload);
     OICFree(aclCbor);
+    OICFree(credCbor);
     OICFree(pstatCbor);
     OICFree(doxmCbor);
     OICFree(resetPfCbor);
@@ -600,6 +617,7 @@ OCStackResult CreateResetProfile(void)
     uint8_t *dbData = NULL;
 
     uint8_t *aclCbor = NULL;
+    uint8_t *credCbor = NULL;
     uint8_t *pstatCbor = NULL;
     uint8_t *doxmCbor = NULL;
     uint8_t *resetPfCbor = NULL;
@@ -610,6 +628,7 @@ OCStackResult CreateResetProfile(void)
     if (dbData && dbSize)
     {
         size_t aclCborLen = 0;
+        size_t credCborLen = 0;
         size_t pstatCborLen = 0;
         size_t doxmCborLen = 0;
         size_t resetPfCborLen = 0;
@@ -626,6 +645,12 @@ OCStackResult CreateResetProfile(void)
                 cborFindResult = cbor_value_dup_byte_string(&curVal, &aclCbor, &aclCborLen, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding ACL Name Value.");
             }
+            cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_CRED_NAME, &curVal);
+            if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
+            {
+                cborFindResult = cbor_value_dup_byte_string(&curVal, &credCbor, &credCborLen, NULL);
+                VERIFY_CBOR_SUCCESS(TAG, cborFindResult, "Failed Finding CRED Name Value.");
+            }
             cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_PSTAT_NAME, &curVal);
             if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
             {
@@ -641,7 +666,7 @@ OCStackResult CreateResetProfile(void)
         }
 
         {
-            size_t size = aclCborLen + pstatCborLen + doxmCborLen + 255;
+            size_t size = aclCborLen + credCborLen + pstatCborLen + doxmCborLen + 255;
             resetPfCbor = (uint8_t *) OICCalloc(1, size);
             VERIFY_NON_NULL(TAG, resetPfCbor, ERROR);
             CborEncoder encoder;  // will be initialized in |cbor_parser_init|
@@ -653,6 +678,14 @@ OCStackResult CreateResetProfile(void)
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ACL Name.");
             cborEncoderResult |= cbor_encode_byte_string(&secRsrc, aclCbor, aclCborLen);
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding ACL Value.");
+
+            if (credCborLen)
+            {
+                cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_CRED_NAME, strlen(OIC_JSON_CRED_NAME));
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CRED Name.");
+                cborEncoderResult |= cbor_encode_byte_string(&secRsrc, credCbor, credCborLen);
+                VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding CRED Value.");
+            }
 
             cborEncoderResult |= cbor_encode_text_string(&secRsrc, OIC_JSON_PSTAT_NAME, strlen(OIC_JSON_PSTAT_NAME));
             VERIFY_CBOR_SUCCESS(TAG, cborEncoderResult, "Failed Adding PSTAT Name.");
@@ -677,6 +710,7 @@ OCStackResult CreateResetProfile(void)
 exit:
     OICFree(dbData);
     OICFree(aclCbor);
+    OICFree(credCbor);
     OICFree(pstatCbor);
     OICFree(doxmCbor);
     OICFree(resetPfCbor);
