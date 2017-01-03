@@ -49,241 +49,198 @@ import java.util.concurrent.TimeUnit;
  * To work on unit tests, switch the Test Artifact in the Build Variants view.
  */
 @RunWith(AndroidJUnit4.class)
-public class ExampleUnitTest extends ApplicationTestCase<Application>
-{
-    public ExampleUnitTest()
-    {
+public class ExampleUnitTest extends ApplicationTestCase<Application> {
+    public ExampleUnitTest() {
         super(Application.class);
     }
 
-    private static Context mContext = null;
-    private ProviderService gProviderRes;
-    private ProviderSimulator gProviderSimul;
-    private static ConsumerService gConsumerRes;
-    private static DiscoveryCallbackListener disCb ;
-    private static ProviderCallbackListener provCb ;
-    CountDownLatch lockObject;
-    Response response;
-    private static String TAG = "ConsumerExample UnitTest";
+    private static Context                   mContext = null;
+    private ProviderService                  gProviderRes;
+    private ProviderSimulator                gProviderSimul;
+    private static ConsumerService           gConsumerRes;
+    private static DiscoveryCallbackListener disCb;
+    private static ProviderCallbackListener  provCb;
+    CountDownLatch                           lockObject;
+    Response                                 response;
+    private static String                    TAG      = "ConsumerExample UnitTest";
 
-    public void startBefore(boolean subControllability)
-    {
-        try
-        {
+    public void startBefore(boolean subControllability) {
+        Log.i(TAG, "startConsumerBefore - IN");
+        try {
             gConsumerRes.start(disCb);
-            gProviderRes.start(gProviderSimul, gProviderSimul, subControllability, "nothing", false);
+            gProviderRes.start(gProviderSimul, gProviderSimul,
+                    subControllability, "nothing", false);
             lockObject.await(4000, TimeUnit.MILLISECONDS);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
+        Log.i(TAG, "startConsumerBefore - OUT");
     }
 
-    public void startAfter(boolean subControllability)
-    {
-        try
-        {
-            gProviderRes.start(gProviderSimul, gProviderSimul, subControllability, "nothing", false);
+    public void startAfter(boolean subControllability) {
+        Log.i(TAG, "startConsumerAfter - IN");
+        try {
+            gProviderRes.start(gProviderSimul, gProviderSimul,
+                    subControllability, "nothing", false);
             gConsumerRes.start(disCb);
             lockObject.await(4000, TimeUnit.MILLISECONDS);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
+        Log.i(TAG, "startConsumerAfter - OUT");
     }
 
-    public void setListener(Provider mProvider)
-    {
-        try
-        {
+    public void setListener(Provider mProvider) {
+        try {
             mProvider.setListener(provCb, provCb, provCb);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void subscribe(Provider.ProviderState state)
-    {
+    public void subscribe(Provider.ProviderState state) {
         lockObject = new CountDownLatch(1);
         response = new Response();
         provCb.set(lockObject, response);
         provCb.setState(state);
         Provider mProvider = disCb.getProvider();
         setListener(mProvider);
-        try
-        {
-            if (!mProvider.isSubscribed())
-            {
+        try {
+            if (!mProvider.isSubscribed()) {
                 Log.i(TAG, "not subscribed");
                 mProvider.subscribe();
             }
             lockObject.await(4000, TimeUnit.MILLISECONDS);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public long sendMessage()
-    {
+    public long sendMessage() {
         lockObject = new CountDownLatch(1);
         response = new Response();
         provCb.set(lockObject, response);
-        org.iotivity.service.ns.common.Message msg =  gProviderSimul.getMessage();
+        org.iotivity.service.ns.common.Message msg = gProviderSimul
+                .getMessage();
         long Id = msg.getMessageId();
         provCb.setId(Id);
-        try
-        {
+        try {
             gProviderRes.sendMessage(msg);
-            lockObject.await(4000, TimeUnit.SECONDS);
-        }
-        catch (Exception e)
-        {
+            lockObject.await(4000, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return Id;
     }
 
-    public void sendSyncInfo(long id, SyncInfo.SyncType type)
-    {
-        try
-        {
+    public void sendSyncInfo(long id, SyncInfo.SyncType type) {
+        try {
             lockObject = new CountDownLatch(1);
             response = new Response();
             provCb.set(lockObject, response);
             provCb.setType(type);
             gProviderRes.sendSyncInfo(id, type);
-            lockObject.await(4000, TimeUnit.SECONDS);
-        }
-        catch (Exception e)
-        {
+            lockObject.await(4000, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void providerSendSyncInfo(Provider provider, long id, SyncInfo.SyncType type)
-    {
-        try
-        {
+    public void providerSendSyncInfo(Provider provider, long id,
+            SyncInfo.SyncType type) {
+        try {
             lockObject = new CountDownLatch(1);
             response = new Response();
             provCb.set(lockObject, response);
             provCb.setType(type);
             provider.sendSyncInfo(id, type);
-            lockObject.await(4000, TimeUnit.SECONDS);
-        }
-        catch (Exception e)
-        {
+            lockObject.await(4000, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void registerTopic(String topic)
-    {
+    public void registerTopic(String topic) {
         lockObject = new CountDownLatch(1);
         response = new Response();
         provCb.set(lockObject, response);
         provCb.setState(Provider.ProviderState.TOPIC);
-        try
-        {
+        try {
             gProviderRes.registerTopic(topic);
-            lockObject.await(4000, TimeUnit.SECONDS);
-        }
-        catch (Exception e)
-        {
+            lockObject.await(4000, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
     @BeforeClass
-    public static void Initialize()
-    {
-        PlatformConfig platformConfig = new PlatformConfig(
-                mContext,
-                ServiceType.IN_PROC,
-                ModeType.CLIENT_SERVER,
-                "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
-                0,         // Uses randomly available port
-                QualityOfService.LOW
-        );
+    public static void Initialize() {
+        PlatformConfig platformConfig = new PlatformConfig(mContext,
+                ServiceType.IN_PROC, ModeType.CLIENT_SERVER, "0.0.0.0",
+                0, // Uses randomly available port
+                QualityOfService.LOW);
 
         OcPlatform.Configure(platformConfig);
-        try
-        {
+        try {
             OcPlatform.stopPresence(); // Initialize OcPlatform
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Before
-    public void SetUp()
-    {
+    public void SetUp() {
+        Log.i(TAG, "SetUp - IN");
         disCb = new DiscoveryCallbackListener();
         provCb = new ProviderCallbackListener();
-        gConsumerRes =  ConsumerService.getInstance();
-        gProviderRes =  ProviderService.getInstance();
+        gConsumerRes = ConsumerService.getInstance();
+        gProviderRes = ProviderService.getInstance();
         gProviderSimul = new ProviderSimulator();
         lockObject = new CountDownLatch(1);
         response = new Response();
         disCb.set(lockObject, response);
+        Log.i(TAG, "SetUp - OUT");
     }
 
     @After
-    public void TearDown()
-    {
-        try
-        {
+    public void TearDown() {
+        Log.i(TAG, "TearDown - IN");
+        try {
             gConsumerRes.stop();
             gProviderRes.stop();
             lockObject = new CountDownLatch(1);
             lockObject.await(2000, TimeUnit.MILLISECONDS);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
+        Log.i(TAG, "TearDown - OUT");
     }
 
     @Test
-    public void DiscoverProviderWithNonAccepterWhenStartedConsumerFirst()
-    {
+    public void DiscoverProviderWithNonAccepterWhenStartedConsumerFirst() {
         startBefore(false);
         assertEquals(true, response.get());
     }
 
     @Test
-    public void DiscoverProviderWithNonAccepterWhenStartedConsumerAfter()
-    {
+    public void DiscoverProviderWithNonAccepterWhenStartedConsumerAfter() {
         startAfter(false);
         assertEquals(true, response.get());
     }
 
     @Test
-    public void DiscoverProviderWithNonAccepterWhenRescan()
-    {
+    public void DiscoverProviderWithNonAccepterWhenRescan() {
         startAfter(false);
         assertEquals(true, response.get());
-        try
-        {
+        try {
             gConsumerRes.rescanProvider();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Test
-    public void ExpectSubscribeSuccess()
-    {
+    public void ExpectSubscribeSuccess() {
         startAfter(false);
         assertEquals(true, response.get());
 
@@ -293,8 +250,7 @@ public class ExampleUnitTest extends ApplicationTestCase<Application>
     }
 
     @Test
-    public void ExpectReceiveNotification()
-    {
+    public void ExpectReceiveNotification() {
         startAfter(false);
         assertEquals(true, response.get());
 
@@ -308,15 +264,13 @@ public class ExampleUnitTest extends ApplicationTestCase<Application>
     }
 
     @Test
-    public void DiscoverProviderWithAccepterisProvider()
-    {
+    public void DiscoverProviderWithAccepterisProvider() {
         startAfter(true);
         assertEquals(true, response.get());
     }
 
     @Test
-    public void ExpectReceiveNotificationWithAccepterisProvider()
-    {
+    public void ExpectReceiveNotificationWithAccepterisProvider() {
         startAfter(true);
         assertEquals(true, response.get());
 
@@ -328,8 +282,7 @@ public class ExampleUnitTest extends ApplicationTestCase<Application>
     }
 
     @Test
-    public void ExpectCallbackReadCheckWhenProviderNotifySync()
-    {
+    public void ExpectCallbackReadCheckWhenProviderNotifySync() {
         startAfter(true);
         assertEquals(true, response.get());
 
@@ -344,8 +297,7 @@ public class ExampleUnitTest extends ApplicationTestCase<Application>
     }
 
     @Test
-    public void ExpectCallbackDismissCheckWhenProviderNotifySync()
-    {
+    public void ExpectCallbackDismissCheckWhenProviderNotifySync() {
         startAfter(true);
         assertEquals(true, response.get());
 
@@ -360,8 +312,7 @@ public class ExampleUnitTest extends ApplicationTestCase<Application>
     }
 
     @Test
-    public void ExpectCallbackReadCheckWhenConsumerPostSync()
-    {
+    public void ExpectCallbackReadCheckWhenConsumerPostSync() {
         startAfter(true);
         assertEquals(true, response.get());
 
@@ -376,8 +327,7 @@ public class ExampleUnitTest extends ApplicationTestCase<Application>
     }
 
     @Test
-    public void ExpectCallbackDismissCheckWhenConsumerPostSync()
-    {
+    public void ExpectCallbackDismissCheckWhenConsumerPostSync() {
         startAfter(true);
         assertEquals(true, response.get());
 
@@ -392,8 +342,7 @@ public class ExampleUnitTest extends ApplicationTestCase<Application>
     }
 
     @Test
-    public void ExpectCallbackTopicUpdated()
-    {
+    public void ExpectCallbackTopicUpdated() {
         startAfter(true);
         assertEquals(true, response.get());
 
@@ -405,16 +354,14 @@ public class ExampleUnitTest extends ApplicationTestCase<Application>
     }
 
     @Test
-    public void ExpectEQTopicList()
-    {
+    public void ExpectEQTopicList() {
         startAfter(true);
         assertEquals(true, response.get());
 
         Provider mProvider = disCb.getProvider();
         setListener(mProvider);
 
-        try
-        {
+        try {
             registerTopic("OIC_TOPIC1");
             assertEquals(true, response.get());
             registerTopic("OIC_TOPIC2");
@@ -423,31 +370,28 @@ public class ExampleUnitTest extends ApplicationTestCase<Application>
             assertEquals(true, response.get());
 
             response = new Response();
-            Iterator<Topic> it = mProvider.getTopicList().getTopicsList().iterator();
-            Iterator<Topic> it2 = gProviderRes.getRegisteredTopicList().getTopicsList().iterator();
-            while (it.hasNext())
-            {
+            Iterator<Topic> it = mProvider.getTopicList().getTopicsList()
+                    .iterator();
+            Iterator<Topic> it2 = gProviderRes.getRegisteredTopicList()
+                    .getTopicsList().iterator();
+            while (it.hasNext()) {
                 Topic element = it.next();
                 Topic element2 = it2.next();
                 Log.i(TAG, element2.getTopicName());
-                if (!element.getTopicName().equals(element2.getTopicName()))
-                {
+                if (!element.getTopicName().equals(element2.getTopicName())) {
                     response.set(false);
                     break;
                 }
                 response.set(true);
             }
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         assertEquals(true, response.get());
     }
 
     @Test
-    public void ExpectFailUpdateTopicOnConsumer()
-    {
+    public void ExpectFailUpdateTopicOnConsumer() {
         startAfter(true);
         assertEquals(true, response.get());
 
@@ -459,27 +403,22 @@ public class ExampleUnitTest extends ApplicationTestCase<Application>
 
         int result = 0;
 
-        try
-        {
+        try {
             TopicsList list = mProvider.getTopicList();
             Iterator<Topic> it = list.getTopicsList().iterator();
-            while (it.hasNext())
-            {
+            while (it.hasNext()) {
                 Topic element = it.next();
                 element.setState(Topic.TopicState.SUBSCRIBED);
             }
             result = mProvider.updateTopicList(list);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         assertEquals(200, result);
     }
 
     @Test
-    public void ExpectCallbackStoppedProvider()
-    {
+    public void ExpectCallbackStoppedProvider() {
         startAfter(true);
         assertEquals(true, response.get());
 
@@ -491,13 +430,10 @@ public class ExampleUnitTest extends ApplicationTestCase<Application>
         provCb.set(lockObject, response);
         provCb.setState(Provider.ProviderState.STOPPED);
 
-        try
-        {
+        try {
             gProviderRes.stop();
             lockObject.await(4000, TimeUnit.MILLISECONDS);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -507,106 +443,104 @@ public class ExampleUnitTest extends ApplicationTestCase<Application>
 }
 
 class DiscoveryCallbackListener
-        implements ConsumerService.OnProviderDiscoveredListener
-{
+        implements ConsumerService.OnProviderDiscoveredListener {
     private CountDownLatch mLockObject;
-    private Response mResponse;
-    private Provider mProvider;
-    private static String TAG = "UnitTest DiscoveryCallbackListener";
+    private Response       mResponse;
+    private Provider       mProvider;
+    private static String  TAG = "UnitTest DiscoveryCallbackListener";
 
-    public void set(CountDownLatch lockObject , Response response)
-    {
+    public void set(CountDownLatch lockObject, Response response) {
         mLockObject = lockObject;
         mResponse = response;
     }
 
-    public Provider getProvider()
-    {
+    public Provider getProvider() {
         return mProvider;
     }
+
     @Override
-    public void onProviderDiscovered(Provider provider)
-    {
+    public void onProviderDiscovered(Provider provider) {
         Log.i(TAG, provider.getProviderId());
         mProvider = provider;
-        if (mResponse != null)
-        {
+        if (mResponse != null) {
+            Log.i(TAG, "onProviderDiscovered: Lock released");
             mResponse.set(true);
             mLockObject.countDown();
         }
     }
 }
 
-class ProviderCallbackListener
-        implements Provider.OnProviderStateListener,
-        Provider.OnMessageReceivedListner, Provider.OnSyncInfoReceivedListner
-{
+class ProviderCallbackListener implements Provider.OnProviderStateListener,
+        Provider.OnMessageReceivedListener, Provider.OnSyncInfoReceivedListener {
 
-    private CountDownLatch mLockObject;
-    private Response mResponse;
+    private CountDownLatch         mLockObject;
+    private Response               mResponse;
     private Provider.ProviderState mState;
-    private SyncInfo.SyncType mType;
-    private long mId;
-    private static String TAG = "UnitTest ProviderCallbackListener";
+    private SyncInfo.SyncType      mType;
+    private long                   mId;
+    private static String          TAG = "UnitTest ProviderCallbackListener";
 
-    public void set(CountDownLatch lockObject , Response response)
-    {
+    public void set(CountDownLatch lockObject, Response response) {
         mLockObject = lockObject;
         mResponse = response;
     }
 
-    public void setState(Provider.ProviderState state)
-    {
+    public void setState(Provider.ProviderState state) {
         mState = state;
     }
-    public void setId(long id)
-    {
+
+    public void setId(long id) {
         mId = id;
     }
-    void setType(SyncInfo.SyncType type)
-    {
+
+    void setType(SyncInfo.SyncType type) {
         mType = type;
     }
+
     @Override
-    public void onProviderStateReceived(Provider.ProviderState state)
-    {
+    public void onProviderStateReceived(Provider.ProviderState state) {
         Log.i(TAG, "onProviderStateReceived: " + state);
-        if (mState == state) mResponse.set(true);
-        mLockObject.countDown();
+        if (mState == state) {
+            Log.i(TAG, "onProviderStateReceived: Lock released");
+            mResponse.set(true);
+            mLockObject.countDown();
+        }
+
     }
 
     @Override
-    public void onMessageReceived(org.iotivity.service.ns.common.Message msg)
-    {
+    public void onMessageReceived(org.iotivity.service.ns.common.Message msg) {
         Log.i(TAG, "onMessageReceived: " + msg.getMessageId());
-        if (mId == msg.getMessageId()) mResponse.set(true);
-        mLockObject.countDown();
+        if (mId == msg.getMessageId()) {
+            Log.i(TAG, "onMessageReceived: Lock released");
+            mResponse.set(true);
+            mLockObject.countDown();
+        }
     }
 
     @Override
-    public void onSyncInfoReceived(SyncInfo syncInfo)
-    {
+    public void onSyncInfoReceived(SyncInfo syncInfo) {
         Log.i(TAG, "onSyncInfoReceived: " + syncInfo.getState());
-        if (mType == syncInfo.getState()) mResponse.set(true);
-        mLockObject.countDown();
+        if (mType == syncInfo.getState()) {
+            Log.i(TAG, "onSyncInfoReceived: Lock released");
+            mResponse.set(true);
+            mLockObject.countDown();
+        }
     }
 }
 
-class Response
-{
+class Response {
     private boolean state;
-    Response()
-    {
+
+    Response() {
         state = false;
     }
-    public void set(boolean val)
-    {
+
+    public void set(boolean val) {
         state = val;
     }
 
-    public boolean get()
-    {
+    public boolean get() {
         return state;
     }
 }
-

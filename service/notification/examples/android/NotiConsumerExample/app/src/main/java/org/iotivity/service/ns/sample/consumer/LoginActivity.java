@@ -21,7 +21,10 @@
  */
 
 package org.iotivity.service.ns.sample.consumer;
+
 import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
 import android.net.UrlQuerySanitizer;
 import android.os.Bundle;
@@ -29,33 +32,55 @@ import android.util.Log;
 import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-
+import android.widget.Button;
+import android.widget.EditText;
 
 /**
- * This class is for login to the provider.
- * Can be get auth code via web page.
+ * This class is for login to the provider. Can be get auth code via web page.
  */
 public class LoginActivity extends Activity {
-    private static final String TAG = "OIC_SIMPLE_LOGIN";
+    private static final String TAG           = "OIC_SIMPLE_LOGIN";
 
-    private WebView mWebView = null;
-    private final String samsungAccount = "https://account.samsung.com/mobile/account/check.do?serviceID=166135d296&actionID=StartOAuth2&countryCode="+ "US" + "&languageCode=" + "en";
-    private final String mAuthProvider = "samsung-us";
+    private final Context       context       = this;
+    private WebView             mWebView      = null;
+    private static String       loginAccount  = null;
+    private static String       mAuthProvider = null;
 
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_login);
 
-    @Override
-        protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setContentView(R.layout.activity_login);
-
-            mWebView = (WebView) findViewById(R.id.webView);
-            mWebView.setInitialScale(200);
-            mWebView.getSettings().setJavaScriptEnabled(true);
-            mWebView.getSettings().setBuiltInZoomControls(true);
-            mWebView.setWebViewClient(new WebViewClientClass());
-
-            mWebView.loadUrl(samsungAccount);
+        final Dialog dialog = new Dialog(context);
+        dialog.setContentView(R.layout.dialog_auth);
+        dialog.setTitle("Login Details");
+        final EditText auth = (EditText) dialog.findViewById(R.id.EditTextAuth);
+        final EditText url = (EditText) dialog.findViewById(R.id.EditTextUrl);
+        if (loginAccount != null && mAuthProvider != null) {
+            url.setText(loginAccount);
+            auth.setText(mAuthProvider);
         }
+
+        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonOK);
+        dialog.setCanceledOnTouchOutside(false);
+        dialogButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+                loginAccount = url.getText().toString();
+                mAuthProvider = auth.getText().toString();
+
+                mWebView = (WebView) findViewById(R.id.webView);
+                mWebView.setInitialScale(200);
+                mWebView.getSettings().setJavaScriptEnabled(true);
+                mWebView.getSettings().setBuiltInZoomControls(true);
+                mWebView.setWebViewClient(new WebViewClientClass());
+
+                mWebView.loadUrl(loginAccount);
+            }
+        });
+        dialog.show();
+    }
+
     public void onDestroy() {
         super.onDestroy();
     }
@@ -63,28 +88,29 @@ public class LoginActivity extends Activity {
     private class WebViewClientClass extends WebViewClient {
 
         @Override
-            public void onPageFinished(WebView view, String url) {
-                Log.i(TAG, "onPageFinished!!! Response received: called url=" + url);
+        public void onPageFinished(WebView view, String url) {
+            Log.i(TAG,
+                    "onPageFinished!!! Response received: called url=" + url);
 
-                    if (url.contains("code") && url.contains("code_expires_in")) {
+            if (url.contains("code") && url.contains("code_expires_in")) {
 
-                    mWebView.setVisibility(View.INVISIBLE);
+                mWebView.setVisibility(View.INVISIBLE);
 
-                    // parsing url
-                    UrlQuerySanitizer sanitizer = new UrlQuerySanitizer();
-                    sanitizer.setAllowUnregisteredParamaters(true);
-                    sanitizer.parseUrl(url);
+                // parsing url
+                UrlQuerySanitizer sanitizer = new UrlQuerySanitizer();
+                sanitizer.setAllowUnregisteredParamaters(true);
+                sanitizer.parseUrl(url);
 
-                    String mAuthCode = sanitizer.getValue("code");
-                    Log.i(TAG, "onPageFinished!!! authCode=" + mAuthCode);
+                String mAuthCode = sanitizer.getValue("code");
+                Log.i(TAG, "onPageFinished!!! authCode=" + mAuthCode);
 
-                    Intent intent = getIntent();
-                    intent.putExtra("authCode", mAuthCode);
-                    intent.putExtra("authProvider", mAuthProvider);
-                    setResult(RESULT_OK, intent);
+                Intent intent = getIntent();
+                intent.putExtra("authCode", mAuthCode);
+                intent.putExtra("authProvider", mAuthProvider);
+                setResult(RESULT_OK, intent);
 
-                    finish();
-                }
+                finish();
             }
+        }
     }
 }

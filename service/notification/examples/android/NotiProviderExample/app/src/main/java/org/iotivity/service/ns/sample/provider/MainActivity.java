@@ -22,8 +22,10 @@
 
 package org.iotivity.service.ns.sample.provider;
 
+import android.app.Dialog;
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -50,66 +52,70 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class MainActivity extends Activity  implements OcAccountManager.OnPostListener {
+public class MainActivity extends Activity
+        implements OcAccountManager.OnPostListener {
 
-    private final String TAG = "NS_MAIN_ACTIVITY";
-    private static final int CONSUMER_SUBSCRIBED = 1;
-    private static final int MESSAGE_SYNC = 2;
-    private final int REQUEST_LOGIN = 1;
+    private final String        TAG                 = "NS_MAIN_ACTIVITY";
+    private static final int    CONSUMER_SUBSCRIBED = 1;
+    private static final int    MESSAGE_SYNC        = 2;
+    private final int           REQUEST_LOGIN       = 1;
+    private static final String CI_SERVER_PREFIX    = "coap+tcp://";
+    private final Context       context             = this;
 
-    public static final String deviceID = "9E09F4FE-978A-4BC3-B356-1F93BCA37829";
-    public static final String CIServer = "coap+tcp://52.40.216.160:5683";
-    public static final String RemoteAddress = "52.40.216.160:5683";
-    public static final String MQCloudAddress = "52.78.151.180:5683";
-    public static final String MQCloudTopic = "/oic/ps/notification";
+    public static String        deviceID            = null;
+    public static String        CIServer            = null;
+    public static String        RemoteAddress       = null;
+    public static String        MQCloudAddress      = null;
+    public static String        MQCloudTopic        = null;
 
-    private Button btnTitle;
-    private Button btnBody;
-    private Button btnTopic;
-    private Button btnSend;
-    private Button btnStart;
-    private Button btnRegister;
-    private Button btnSet;
-    private Button btnStop;
-    private Button btnLog;
-    private Button signUp, signIn, signOut;
-    private Button remoteService, subscribeMQ;
-    private EditText editTextTitle;
-    private EditText editTextBody;
-    private EditText editTextTopic;
-    private RadioButton radioProvider;
-    private RadioButton radioConsumer;
-    private static TextView TvLog;
+    private Button              btnTitle;
+    private Button              btnBody;
+    private Button              btnTopic;
+    private Button              btnSend;
+    private Button              btnStart;
+    private Button              btnRegister;
+    private Button              btnSet;
+    private Button              btnStop;
+    private Button              btnLog;
+    private Button              signUp, signIn, signOut;
+    private Button              remoteService, subscribeMQ;
+    private EditText            editTextTitle;
+    private EditText            editTextBody;
+    private EditText            editTextTopic;
+    private RadioButton         radioProvider;
+    private RadioButton         radioConsumer;
+    private static TextView     TvLog;
 
-    private OcAccountManager mAccountManager;
-    String mAuthCode;
-    String mAuthProvider;
-    String mRefreshtoken;
-    String mUserID;
-    String mAccessToken;
+    private OcAccountManager    mAccountManager;
+    String                      mAuthCode;
+    String                      mAuthProvider;
+    String                      mRefreshtoken;
+    String                      mUserID;
+    String                      mAccessToken;
 
-    private static int notiId = 100;
-    private boolean isStarted = false;
-    private boolean gAcceptor = true;
-    private boolean gRemoteService = true;
+    private static int          notiId              = 100;
+    private boolean             isStarted           = false;
+    private boolean             gAcceptor           = true;
+    private boolean             gRemoteService      = true;
 
-    private NotiListener mNotiListener = null;
-    private ProviderSample mProviderSample = null;
+    private NotiListener        mNotiListener       = null;
+    private ProviderSample      mProviderSample     = null;
 
-    public static Handler mHandler = new Handler() {
+    public static Handler       mHandler            = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case CONSUMER_SUBSCRIBED:
                     String ConsumerId = (String) msg.obj;
-                    if(ConsumerId != null)
+                    if (ConsumerId != null)
                         TvLog.append("Consumer Subscibed: " + ConsumerId + "\n");
                     break;
 
                 case MESSAGE_SYNC:
                     String sync = (String) msg.obj;
-                    if(sync != null)
+                    if (sync != null)
                         TvLog.append("SyncInfo Received :" + sync + "\n");
                     break;
 
@@ -117,14 +123,15 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
                     break;
             }
         }
+
     };
 
-    public void showToast(final String toast)
-    {
+    public void showToast(final String toast) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(getApplicationContext(), toast, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), toast,
+                        Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -188,7 +195,8 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
         mProviderSample.setHandler(mHandler);
 
         mNotiListener = new NotiListener(this);
-        Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+        Intent intent = new Intent(
+                "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
         startActivity(intent);
     }
 
@@ -197,8 +205,7 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
         super.onDestroy();
     }
 
-    public ProviderSample getProviderSample()
-    {
+    public ProviderSample getProviderSample() {
         return mProviderSample;
     }
 
@@ -209,36 +216,38 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
                     if (isStarted == false) {
                         gAcceptor = true;
                         showToast("Provider as acceptor is " + gAcceptor);
-                    }
-                    else
-                        showToast("Start ProviderService again to change acceptor as provider");
+                    } else
+                        showToast(
+                                "Start ProviderService again to change acceptor as provider");
                 }
-                break;
+                    break;
 
                 case R.id.RadioConsumer: {
                     if (isStarted == false) {
                         gAcceptor = false;
-                        showToast("Provider as acceptor is "+ gAcceptor);
-                    }
-                    else
-                        showToast("Start ProviderService again to change acceptor as consumer");
+                        showToast("Provider as acceptor is " + gAcceptor);
+                    } else
+                        showToast(
+                                "Start ProviderService again to change acceptor as consumer");
                 }
-                break;
+                    break;
 
                 case R.id.BtnStart: {
                     if (isStarted == false) {
                         Log.i(TAG, "Start  Provider Service");
                         TvLog.setText("Start Provider Service\n");
-                        mProviderSample.Start(gAcceptor);
+                        mProviderSample.start(gAcceptor);
                         isStarted = true;
                         radioProvider.setEnabled(false);
                         radioConsumer.setEnabled(false);
+                        // refreshToken();
+
                     } else {
                         Log.e(TAG, " Provider Service had already started");
                         showToast(" Provider Service had already started");
                     }
                 }
-                break;
+                    break;
 
                 case R.id.BtnRegister: {
                     if (isStarted == false) {
@@ -250,10 +259,10 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
                         showToast("Start Provider Service First");
                         break;
                     }
-                    mProviderSample.RegisterTopic();
+                    mProviderSample.registerTopic();
 
                 }
-                break;
+                    break;
 
                 case R.id.BtnSet: {
                     if (isStarted == false) {
@@ -265,68 +274,72 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
                         showToast("Start Provider Service First");
                         break;
                     }
-                    if(gAcceptor == false){
-                        showToast("Operation Not Permitted: \nStart Provider Service with provider as acceptor");
+                    if (gAcceptor == false) {
+                        showToast(
+                                "Operation Not Permitted: \nStart Provider Service with provider as acceptor");
                         break;
                     }
-                    mProviderSample.SetTopic();
+                    mProviderSample.setTopic();
 
                 }
-                break;
+                    break;
 
                 case R.id.BtnCreateNoti: {
 
-                    String id = Integer.toString(notiId); // generate notificaion ID
+                    String id = Integer.toString(notiId); // generate
+                                                          // notificaion ID
                     String title = editTextTitle.getText().toString();
                     String body = editTextBody.getText().toString();
-                    String topic  = editTextTopic.getText().toString();
+                    String topic = editTextTopic.getText().toString();
 
-                    if(isStarted == false)
-                    {
+                    if (isStarted == false) {
                         Log.e(TAG, "Fail to send NSMessage");
                         showToast("Start ProviderService First");
                         break;
                     }
 
-                    // Build android noti object and send it to Notification service receiver
-                    Notification.Builder notiBuilder = new Notification.Builder(getApplicationContext());
+                    // Build android noti object and send it to Notification
+                    // service receiver
+                    Notification.Builder notiBuilder = new Notification.Builder(
+                            getApplicationContext());
                     notiBuilder.setContentTitle(title);
                     notiBuilder.setContentText(body);
                     notiBuilder.setPriority(Notification.PRIORITY_MAX);
                     notiBuilder.setDefaults(Notification.DEFAULT_ALL);
                     notiBuilder.setSmallIcon(R.mipmap.ic_launcher);
-                    NotificationManager notiMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                    NotificationManager notiMgr = (NotificationManager) getSystemService(
+                            NOTIFICATION_SERVICE);
                     notiMgr.notify(notiId, notiBuilder.build());
 
                     Log.i(TAG, "#" + notiId + " notified ..");
                     TvLog.append("Send Notitication(Msg ID: " + notiId + ")\n");
                     notiId++;
                 }
-                break;
+                    break;
 
                 case R.id.BtnStop: {
-                    if(isStarted == false) {
+                    if (isStarted == false) {
                         Log.e(TAG, "Fail to stop service");
                         showToast("Already Stopped");
                         break;
                     }
 
-                    mProviderSample.Stop();
+                    mProviderSample.stop();
                     isStarted = false;
                     radioProvider.setEnabled(true);
                     radioConsumer.setEnabled(true);
-                    showToast("Stopped ProviderService"+ isStarted);
+                    showToast("Stopped ProviderService" + isStarted);
                     TvLog.append("Stop Provider Service\n");
                 }
-                break;
+                    break;
 
                 case R.id.BtnLog: {
 
                     TvLog.setText("");
                 }
-                break;
+                    break;
                 case R.id.signup: {
-                    if(isStarted == false) {
+                    if (isStarted == false) {
                         Log.e(TAG, "Fail to Sign Up");
                         showToast("Start ProviderService First");
                         break;
@@ -334,9 +347,9 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
                     TvLog.append("Initiating SignUp\n");
                     signUp();
                 }
-                break;
+                    break;
                 case R.id.signin: {
-                    if(isStarted == false) {
+                    if (isStarted == false) {
                         Log.e(TAG, "Fail to Sign In");
                         showToast("Start ProviderService First");
                         break;
@@ -344,9 +357,9 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
                     TvLog.append("Initiating SignIn\n");
                     signIn();
                 }
-                break;
+                    break;
                 case R.id.signout: {
-                    if(isStarted == false) {
+                    if (isStarted == false) {
                         Log.e(TAG, "Fail to Sign out");
                         showToast("Start ProviderService First");
                         break;
@@ -354,45 +367,76 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
                     TvLog.append("Initiating SignOut\n");
                     signOut();
                 }
-                break;
+                    break;
                 case R.id.remoteService: {
                     remoteService.setEnabled(false);
-                    if(isStarted == false) {
+                    if (isStarted == false) {
                         Log.e(TAG, "Fail to Enable/Disable RemoteService");
                         showToast("Start ProviderService First");
                         break;
                     }
-                    if(gRemoteService){
+                    if (gRemoteService) {
                         TvLog.append("Enable Remote Service\n");
-                        int result = mProviderSample.EnableRemoteService(RemoteAddress);
+                        int result = mProviderSample
+                                .enableRemoteService(RemoteAddress);
                         remoteService.setText(R.string.disableRemoteService);
                         gRemoteService = false;
                         remoteService.setEnabled(true);
-                        TvLog.append("EnableRemoteService Result : " + result + "\n");
-                    }
-                    else {
+                        TvLog.append("EnableRemoteService Result : " + result
+                                + "\n");
+                    } else {
                         TvLog.append("Disable Remote Service\n");
-                        int result = mProviderSample.DisableRemoteService(RemoteAddress);
+                        int result = mProviderSample
+                                .disableRemoteService(RemoteAddress);
                         remoteService.setText(R.string.enableRemoteService);
                         gRemoteService = true;
                         remoteService.setEnabled(true);
-                        TvLog.append("DisableRemoteService Result : " + result + "\n");
+                        TvLog.append("DisableRemoteService Result : " + result
+                                + "\n");
                     }
                 }
-                break;
+                    break;
                 case R.id.subscribeMQService: {
-                    if(isStarted == false) {
+                    if (isStarted == false) {
                         Log.e(TAG, "Fail to SubscribeMQService");
                         showToast("Start ProviderService First");
                         break;
                     }
-                    int result = mProviderSample.subscribeMQService(MQCloudAddress, MQCloudTopic);
-                    TvLog.append("SubscribeMQService Result : " + result + "\n");
+                    final Dialog dialog = new Dialog(context);
+                    dialog.setContentView(R.layout.dialog_mq);
+                    dialog.setTitle("MQ Cloud Service Details");
+
+                    final EditText ip = (EditText) dialog
+                            .findViewById(R.id.EditTextIp);
+                    final EditText mqTopic = (EditText) dialog
+                            .findViewById(R.id.EditTextMqTopic);
+                    if (MQCloudAddress != null && MQCloudTopic != null) {
+                        ip.setText(MQCloudAddress);
+                        mqTopic.setText(MQCloudTopic);
+                    }
+
+                    Button dialogButton = (Button) dialog
+                            .findViewById(R.id.mqButtonOK);
+
+                    dialogButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            dialog.dismiss();
+                            MQCloudAddress = ip.getText().toString();
+                            MQCloudTopic = mqTopic.getText().toString();
+                            int result = mProviderSample.subscribeMQService(
+                                    MQCloudAddress, MQCloudTopic);
+                            TvLog.append("SubscribeMQService Result : " + result
+                                    + "\n");
+                        }
+                    });
+                    dialog.show();
                 }
-                break;
+                    break;
             }
         }
     };
+
     public void logMessage(final String text) {
         runOnUiThread(new Runnable() {
             public void run() {
@@ -403,10 +447,11 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
         });
         Log.i(TAG, text);
     }
-    OcAccountManager.OnPostListener onSignUp = new OcAccountManager.OnPostListener() {
+
+    OcAccountManager.OnPostListener onSignUp  = new OcAccountManager.OnPostListener() {
         @Override
         public synchronized void onPostCompleted(List<OcHeaderOption> list,
-                                                 OcRepresentation ocRepresentation) {
+                OcRepresentation ocRepresentation) {
             logMessage("signUp was successful");
             runOnUiThread(new Runnable() {
                 public void run() {
@@ -432,7 +477,6 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
             }
         }
 
-
         @Override
         public synchronized void onPostFailed(Throwable throwable) {
             logMessage("Failed to signUp");
@@ -444,10 +488,11 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
             }
         }
     };
-    OcAccountManager.OnPostListener onSignIn = new OcAccountManager.OnPostListener() {
+
+    OcAccountManager.OnPostListener onSignIn  = new OcAccountManager.OnPostListener() {
         @Override
         public synchronized void onPostCompleted(List<OcHeaderOption> list,
-                                                 OcRepresentation ocRepresentation) {
+                OcRepresentation ocRepresentation) {
             logMessage("signIn was successful");
             runOnUiThread(new Runnable() {
                 public void run() {
@@ -456,7 +501,6 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
                     remoteService.setEnabled(true);
                 }
             });
-
         }
 
         @Override
@@ -468,15 +512,16 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
                 ErrorCode errCode = ocEx.getErrorCode();
                 logMessage("Error code: " + errCode);
                 if (ErrorCode.UNAUTHORIZED_REQ != errCode) {
-                    RefreshToken();
+                    refreshToken();
                 }
             }
         }
     };
+
     OcAccountManager.OnPostListener onSignOut = new OcAccountManager.OnPostListener() {
         @Override
         public synchronized void onPostCompleted(List<OcHeaderOption> list,
-                                                 OcRepresentation ocRepresentation) {
+                OcRepresentation ocRepresentation) {
             logMessage("signOut was successful");
             runOnUiThread(new Runnable() {
                 public void run() {
@@ -497,13 +542,15 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
                 ErrorCode errCode = ocEx.getErrorCode();
                 logMessage("Error code: " + errCode);
                 if (ErrorCode.UNAUTHORIZED_REQ != errCode) {
-                    RefreshToken();
+                    refreshToken();
                 }
             }
         }
     };
+
     @Override
-    public void onPostCompleted(List<OcHeaderOption> ocHeaderOptions, OcRepresentation ocRepresentation) {
+    public void onPostCompleted(List<OcHeaderOption> ocHeaderOptions,
+            OcRepresentation ocRepresentation) {
 
     }
 
@@ -511,11 +558,12 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
     public void onPostFailed(Throwable throwable) {
 
     }
+
     private void signIn() {
         try {
-            if(mAccountManager==null)
-            {
-                mAccountManager = OcPlatform.constructAccountManagerObject(CIServer,
+            if (mAccountManager == null) {
+                mAccountManager = OcPlatform.constructAccountManagerObject(
+                        CIServer,
                         EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP));
             }
 
@@ -528,10 +576,10 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
     private void signOut() {
         try {
             logMessage("signOut");
-            if(mAccountManager==null)
-            {
+            if (mAccountManager == null) {
                 try {
-                    mAccountManager = OcPlatform.constructAccountManagerObject(CIServer,
+                    mAccountManager = OcPlatform.constructAccountManagerObject(
+                            CIServer,
                             EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP));
                 } catch (OcException e) {
                     e.printStackTrace();
@@ -548,16 +596,10 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
     }
 
     private void signUp() {
-        try {
-            mAccountManager = OcPlatform.constructAccountManagerObject(CIServer,
-                    EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP));
-        } catch (OcException e) {
-            e.printStackTrace();
-        }
-
         Intent intentLogin = new Intent(this, LoginActivity.class);
         startActivityForResult(intentLogin, REQUEST_LOGIN);
     }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -567,28 +609,63 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
             logMessage("authCode: " + mAuthCode);
             logMessage("authProvider: " + mAuthProvider);
 
-            try {
-                mAccountManager = OcPlatform.constructAccountManagerObject(CIServer,
-                        EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP));
-                logMessage("Calling signup API");
-
-                mAccountManager.signUp(mAuthProvider, mAuthCode, onSignUp);
-            } catch (OcException e) {
-                e.printStackTrace();
+            final Dialog dialog = new Dialog(context);
+            dialog.setContentView(R.layout.dialog_entry);
+            dialog.setTitle("SignUp Acccount IP Address");
+            final EditText ip = (EditText) dialog
+                    .findViewById(R.id.EditTextEntry);
+            if (RemoteAddress != null) {
+                ip.setText(RemoteAddress);
             }
+            Button dialogButton = (Button) dialog
+                    .findViewById(R.id.entryButtonOK);
+            dialogButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                    RemoteAddress = ip.getText().toString();
+                    CIServer = CI_SERVER_PREFIX + RemoteAddress;
+                    logMessage("server address for signup is: \n" + CIServer);
+                    try {
+                        mAccountManager = OcPlatform
+                                .constructAccountManagerObject(CIServer, EnumSet
+                                        .of(OcConnectivityType.CT_ADAPTER_TCP));
+                        logMessage("Calling signup API");
+
+                        if (mAuthProvider.equals("samsung")
+                                || mAuthProvider.equals("samsung-us"))
+
+                        {
+                            logMessage("Auth provider is samsung");
+                            Map<String, String> options = new HashMap<>();
+                            options.put("auth_server_url",
+                                    "us-auth2.samsungosp.com");
+                            options.put("api_server_url",
+                                    "us-auth2.samsungosp.com");
+                            mAccountManager.signUp(mAuthProvider, mAuthCode,
+                                    options, onSignUp);
+                        } else {
+                            mAccountManager.signUp(mAuthProvider, mAuthCode,
+                                    onSignUp);
+                        }
+                    } catch (OcException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            dialog.show();
         }
     }
 
     OcResource.OnPostListener onRefreshTokenPost = new OcResource.OnPostListener() {
         @Override
-        public void onPostCompleted(List<OcHeaderOption> list, OcRepresentation ocRepresentation) {
+        public void onPostCompleted(List<OcHeaderOption> list,
+                OcRepresentation ocRepresentation) {
             logMessage("RefreshToken Completed.");
             try {
                 mAccessToken = ocRepresentation.getValue("accesstoken");
                 mRefreshtoken = ocRepresentation.getValue("refreshtoken");
-            }
-            catch (OcException e)
-            {
+            } catch (OcException e) {
                 e.printStackTrace();
             }
             signIn();
@@ -600,11 +677,35 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
             Log.d(TAG, "onRefreshTokenPost failed.");
         }
     };
-    public void RefreshToken() {
+
+    public void refreshToken() {
+
+        if (deviceID == null) {
+            final Dialog dialog = new Dialog(context);
+            dialog.setContentView(R.layout.dialog_entry);
+            dialog.setTitle("Enter Device Id");
+            dialog.setCanceledOnTouchOutside(false);
+            final EditText id = (EditText) dialog
+                    .findViewById(R.id.EditTextEntry);
+
+            Button dialogButton = (Button) dialog
+                    .findViewById(R.id.entryButtonOK);
+            dialogButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                    deviceID = id.getText().toString();
+                }
+            });
+            dialog.show();
+        }
         try {
-            OcResource authResource = OcPlatform.constructResourceObject(CIServer, "/.well-known/ocf/account/tokenrefresh",
-                    EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP, OcConnectivityType.CT_IP_USE_V4),
-                    false, Arrays.asList("oic.wk.account"), Arrays.asList(OcPlatform.DEFAULT_INTERFACE));
+            OcResource authResource = OcPlatform.constructResourceObject(
+                    CIServer, "/.well-known/ocf/account/tokenrefresh",
+                    EnumSet.of(OcConnectivityType.CT_ADAPTER_TCP,
+                            OcConnectivityType.CT_IP_USE_V4),
+                    false, Arrays.asList("oic.wk.account"),
+                    Arrays.asList(OcPlatform.DEFAULT_INTERFACE));
             OcRepresentation rep = new OcRepresentation();
 
             showToast("RefreshToken in progress..");
@@ -613,14 +714,12 @@ public class MainActivity extends Activity  implements OcAccountManager.OnPostLi
             rep.setValue("granttype", "refresh_token");
             rep.setValue("refreshtoken", mRefreshtoken);
             rep.setValue("uid", mUserID);
-            authResource.post(rep, new HashMap<String, String>(), onRefreshTokenPost);
-        }
-        catch(OcException e)
-        {
+            authResource.post(rep, new HashMap<String, String>(),
+                    onRefreshTokenPost);
+        } catch (OcException e) {
             e.printStackTrace();
         }
 
         Log.d(TAG, "No error while executing login");
     }
 }
-

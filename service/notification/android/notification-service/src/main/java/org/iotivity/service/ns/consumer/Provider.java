@@ -134,11 +134,11 @@ public class Provider {
      *            OnSyncInfoReceivedListner callback Interface
      */
     public void setListener(OnProviderStateListener onProviderStateListener,
-            OnMessageReceivedListner onMessageReceivedListner,
-            OnSyncInfoReceivedListner onSyncInfoReceivedListner)
+            OnMessageReceivedListener onMessageReceivedListener,
+            OnSyncInfoReceivedListener onSyncInfoReceivedListener)
             throws NSException {
-        nativeSetListener(onProviderStateListener, onMessageReceivedListner,
-                onSyncInfoReceivedListner);
+        nativeSetListener(onProviderStateListener, onMessageReceivedListener,
+                onSyncInfoReceivedListener);
     }
 
     /**
@@ -171,7 +171,7 @@ public class Provider {
     /**
      * Interface to implement callback function to receive Notification Message
      */
-    public interface OnMessageReceivedListner {
+    public interface OnMessageReceivedListener {
 
         /**
          * Callback function to receive Notification Message.
@@ -186,7 +186,7 @@ public class Provider {
      * Interface to implement callback function to receive message read
      * synchronization
      */
-    public interface OnSyncInfoReceivedListner {
+    public interface OnSyncInfoReceivedListener {
 
         /**
          * Callback function to receive message read synchronization
@@ -204,8 +204,8 @@ public class Provider {
 
     private native void nativeSetListener(
             OnProviderStateListener onProviderStateListener,
-            OnMessageReceivedListner onMessageReceivedListner,
-            OnSyncInfoReceivedListner onSyncInfoReceivedListner)
+            OnMessageReceivedListener onMessageReceivedListener,
+            OnSyncInfoReceivedListener onSyncInfoReceivedListener)
             throws NSException;
 
     public native TopicsList nativeGetTopicList() throws NSException;

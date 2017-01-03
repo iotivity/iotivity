@@ -30,17 +30,15 @@ import org.iotivity.service.ns.consumer.Provider;
 import java.util.concurrent.CountDownLatch;
 
 class ConsumerSimulator implements ConsumerService.OnProviderDiscoveredListener,
-        Provider.OnProviderStateListener , Provider.OnMessageReceivedListner,
-        Provider.OnSyncInfoReceivedListner
-{
-    private String TAG = "Consumer Simulator" ;
-    private Provider mProvider;
+        Provider.OnProviderStateListener, Provider.OnMessageReceivedListener,
+        Provider.OnSyncInfoReceivedListener {
+    private String         TAG = "Consumer Simulator";
+    private Provider       mProvider;
     private CountDownLatch mLockObject;
-    private Response mResponse;
-    private String mExpectCb;
+    private Response       mResponse;
+    private String         mExpectCb;
 
-    public void set(CountDownLatch lockObject , Response response , String name)
-    {
+    public void set(CountDownLatch lockObject, Response response, String name) {
         Log.i(TAG, "Setting lock Simulator: ");
         mLockObject = lockObject;
         mResponse = response;
@@ -48,54 +46,43 @@ class ConsumerSimulator implements ConsumerService.OnProviderDiscoveredListener,
     }
 
     @Override
-    public void onProviderDiscovered(Provider provider)
-    {
+    public void onProviderDiscovered(Provider provider) {
         mProvider = provider;
-        try
-        {
+        try {
             provider.setListener(this, this, this);
-            if (!provider.isSubscribed()) provider.subscribe();
-        }
-        catch (Exception e)
-        {
+            if (!provider.isSubscribed()) {
+                provider.subscribe();
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
 
     @Override
-    public void onProviderStateReceived(Provider.ProviderState providerState)
-    {
+    public void onProviderStateReceived(Provider.ProviderState providerState) {
     }
 
     @Override
-    public void onMessageReceived(Message message)
-    {
-        if (mExpectCb == "msg")
-        {
+    public void onMessageReceived(Message message) {
+        if (mExpectCb == "msg") {
             mResponse.set(true);
             mLockObject.countDown();
         }
     }
 
     @Override
-    public void onSyncInfoReceived(SyncInfo syncInfo)
-    {
-        if (mExpectCb == "sync")
-        {
+    public void onSyncInfoReceived(SyncInfo syncInfo) {
+        if (mExpectCb == "sync") {
             mResponse.set(true);
             mLockObject.countDown();
         }
     }
 
-    public void sendSyncInfo(long id , SyncInfo.SyncType type)
-    {
-        try
-        {
+    public void sendSyncInfo(long id, SyncInfo.SyncType type) {
+        try {
             mProvider.sendSyncInfo(id, type);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

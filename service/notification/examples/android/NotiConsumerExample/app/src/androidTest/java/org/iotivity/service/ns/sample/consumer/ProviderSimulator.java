@@ -28,38 +28,30 @@ import org.iotivity.service.ns.common.SyncInfo;
 import org.iotivity.service.ns.provider.Consumer;
 import org.iotivity.service.ns.provider.ProviderService;
 
-
-class ProviderSimulator implements ProviderService.OnMessageSynchronizedListener,
-        ProviderService.OnConsumerSubscribedListener
-{
-    private String TAG = "Provider Simulator" ;
+class ProviderSimulator
+        implements ProviderService.OnMessageSynchronizedListener,
+        ProviderService.OnConsumerSubscribedListener {
+    private String   TAG = "Provider Simulator";
     private Consumer gConsumer;
 
     @Override
-    public void onMessageSynchronized(SyncInfo syncInfo)
-    {
-        Log.i(TAG, "Notification onMessageSynchronized: " );
+    public void onMessageSynchronized(SyncInfo syncInfo) {
+        Log.i(TAG, "Notification onMessageSynchronized: ");
     }
 
     @Override
-    public void onConsumerSubscribed(Consumer consumer)
-    {
+    public void onConsumerSubscribed(Consumer consumer) {
         gConsumer = consumer;
-        try
-        {
+        try {
             int result = gConsumer.acceptSubscription(true);
             Log.i(TAG, "Notification AcceptSubscription: " + result);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
 
         }
     }
 
-    public Message getMessage()
-    {
-        try
-        {
+    public Message getMessage() {
+        try {
             Message msg = ProviderService.getInstance().createMessage();
             msg.setTitle("Title");
             msg.setSourceName("provider");
@@ -67,9 +59,7 @@ class ProviderSimulator implements ProviderService.OnMessageSynchronizedListener
             MediaContents media = new MediaContents("new");
             msg.setMediaContents(media);
             return msg;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;

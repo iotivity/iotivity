@@ -89,7 +89,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSend
 /*
  * Class:     org_iotivity_service_ns_consumer_Provider
  * Method:    nativeSetListener
- * Signature: (Lorg/iotivity/service/ns/consumer/Provider/OnProviderStateListener;Lorg/iotivity/service/ns/consumer/Provider/OnMessageReceivedListner;Lorg/iotivity/service/ns/consumer/Provider/OnSyncInfoReceivedListner;)V
+ * Signature: (Lorg/iotivity/service/ns/consumer/Provider/OnProviderStateListener;Lorg/iotivity/service/ns/consumer/Provider/OnMessageReceivedListener;Lorg/iotivity/service/ns/consumer/Provider/OnSyncInfoReceivedListener;)V
  */
 JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSetListener
 (JNIEnv *, jobject, jobject, jobject, jobject);

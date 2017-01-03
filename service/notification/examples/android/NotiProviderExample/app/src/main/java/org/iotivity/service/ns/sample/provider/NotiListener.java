@@ -33,10 +33,10 @@ import java.util.ArrayList;
 
 public class NotiListener extends NotificationListenerService {
 
-    private final String TAG = "NS_JNI_NOTI_LISTENER";
-    private static ProviderSample mProviderSample = null;
-    private MainActivity mActivity = null;
-    ArrayList mBlackSourceList = new ArrayList<String>();
+    private final String          TAG              = "NS_JNI_NOTI_LISTENER";
+    private static ProviderSample mProviderSample  = null;
+    private MainActivity          mActivity        = null;
+    ArrayList                     mBlackSourceList = new ArrayList<String>();
 
     public NotiListener() {
 
@@ -52,7 +52,7 @@ public class NotiListener extends NotificationListenerService {
 
         setBlackSourceList();
 
-        if(mProviderSample == null) {
+        if (mProviderSample == null) {
             Log.i(TAG, "Fail to get providerProxy instance");
         }
     }
@@ -67,30 +67,34 @@ public class NotiListener extends NotificationListenerService {
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
         super.onNotificationPosted(sbn);
+        Log.i(TAG, "Notification posted By package" + sbn.getPackageName());
 
         Bundle bundle = sbn.getNotification().extras;
         String source = null;
 
         // prevent not to send notification
-        for(int i = 0; i < mBlackSourceList.size(); ++i)
-        {
-            if (sbn.getPackageName().equals(mBlackSourceList.get(i)))
-            {
+        for (int i = 0; i < mBlackSourceList.size(); ++i) {
+            if (sbn.getPackageName().equals(mBlackSourceList.get(i))) {
                 return;
             }
         }
 
         // filter exception case : Some notification are generated twice
-        if(sbn.getId() > 10000 || sbn.getId() < 0)
+        if (sbn.getId() > 10000 || sbn.getId() < 0) {
             return;
+        }
 
         // Temporary protocol code to display ICON on consumer app.
-        // For example, consumer app shows KAKAOTALK Icon when receiving Notification with SOURCE
-        // that is set to KAKAO, otherwise it displays OCF Icon on current sample app.
-        if(sbn.getPackageName().equals("com.kakao.talk"))
+        // For example, consumer app shows KAKAOTALK Icon when receiving
+        // Notification with SOURCE
+        // that is set to KAKAO, otherwise it displays OCF Icon on current
+        // sample app.
+        if (sbn.getPackageName().equals("com.kakao.talk")) {
             source = "KAKAO";
-        else
+        }
+        else {
             source = "OCF";
+        }
 
         Log.i(TAG, "Noti. Package Name : " + sbn.getPackageName());
         Log.i(TAG, "Noti. ID : " + sbn.getId());
@@ -105,13 +109,13 @@ public class NotiListener extends NotificationListenerService {
         Log.i(TAG, "Title : " + title);
         Log.i(TAG, "Body : " + body);
 
-        Message notiMessage = new Message(title,body,source);
+        Message notiMessage = new Message(title, body, source);
         notiMessage.setTTL(10);
         notiMessage.setTime("12:10");
         MediaContents media = new MediaContents("daasd");
         notiMessage.setMediaContents(media);
         if (mProviderSample != null) {
-            mProviderSample.SendMessage(notiMessage);
+            mProviderSample.sendMessage(notiMessage);
         } else {
             Log.i(TAG, "providerExample is NULL");
         }
@@ -123,18 +127,17 @@ public class NotiListener extends NotificationListenerService {
 
         Bundle bundle = sbn.getNotification().extras;
 
-        if (sbn.getPackageName().equals("android"))
+        if (sbn.getPackageName().equals("android")) {
             return;
+        }
 
         Log.i(TAG, "Noti. Package Name : " + sbn.getPackageName());
         Log.i(TAG, "Noti. ID : " + sbn.getId());
 
-        if(mProviderSample.getMsgMap().containsKey(sbn.getId()))
-        {
-            if(mProviderSample.getMsgMap().get(sbn.getId()) == 2)
-            {
+        if (mProviderSample.getMsgMap().containsKey(sbn.getId())) {
+            if (mProviderSample.getMsgMap().get(sbn.getId()) == 2) {
                 org.iotivity.service.ns.common.SyncInfo.SyncType type = org.iotivity.service.ns.common.SyncInfo.SyncType.READ;
-                mProviderSample.SendSyncInfo(1,type);
+                mProviderSample.sendSyncInfo(1, type);
             }
         }
     }
