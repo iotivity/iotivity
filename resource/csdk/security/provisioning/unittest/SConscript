@@ -52,14 +52,12 @@ sptest_env.PrependUnique(CPPPATH = [
 		'../../../security/provisioning/include/internal',
 		'../../../../oc_logger/include',
 		'../include/oxm',
-		'../../../../../extlibs/tinydtls',
 		'../../../../../extlibs/cjson',
 		'../../../../../extlibs/base64',
 		'../../../connectivity/inc',
 		'../../../connectivity/inc/pkix',
 		'../../../connectivity/common/inc',
-		'../../../connectivity/api',
-		'../../../../../extlibs/tinydtls'
+		'../../../connectivity/api'
 		])
 sptest_env.AppendUnique(LIBPATH = [sptest_env.get('BUILD_DIR')])
 sptest_env.PrependUnique(LIBS = [   'ocpmapi',
@@ -71,7 +69,6 @@ sptest_env.PrependUnique(LIBS = [   'ocpmapi',
 
 if sptest_env.get('SECURED') == '1':
     sptest_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509','mbedcrypto'])
-    sptest_env.AppendUnique(LIBS = ['tinydtls'])
 
 if not sptest_env.get('RELEASE'):
 	sptest_env.AppendUnique(CPPDEFINES = ['TB_LOG'])

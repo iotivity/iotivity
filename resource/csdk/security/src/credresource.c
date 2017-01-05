@@ -60,10 +60,6 @@
 #include <unistd.h>
 #endif
 
-#ifdef __WITH_DTLS__
-#include "global.h"
-#endif
-
 #define TAG  "OIC_SRM_CREDL"
 
 #ifdef HAVE_WINDOWS_H
@@ -2792,7 +2788,7 @@ void GetDerCaCert(ByteArray_t * crt, const char * usage)
             if(OIC_ENCODING_BASE64 == temp->optionalData.encoding)
             {
                 size_t bufSize = B64DECODE_OUT_SAFESIZE((temp->optionalData.len + 1));
-                uint8 * buf = OICCalloc(1, bufSize);
+                uint8_t * buf = OICCalloc(1, bufSize);
                 if(NULL == buf)
                 {
                     OIC_LOG(ERROR, TAG, "Failed to allocate memory");

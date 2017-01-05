@@ -58,9 +58,6 @@ if target_os not in ['arduino', 'windows', 'darwin', 'ios', 'msys_nt']:
 if target_os not in ['windows']:
 	samples_env.PrependUnique(LIBS = ['m'])
 
-if samples_env.get('SECURED') == '1':
-    samples_env.AppendUnique(LIBS = ['tinydtls'])
-
 samples_env.AppendUnique(CPPDEFINES = ['TB_LOG'])
 
 ######################################################################

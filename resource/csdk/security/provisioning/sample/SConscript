@@ -49,7 +49,6 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../include/oxm',
 		'../include/cloud',
 		'../../include',
-		'../../../../../extlibs/tinydtls',
 		'../../../../../extlibs/cjson',
 		'../../../../../extlibs/base64',
 		'../../../connectivity/inc',

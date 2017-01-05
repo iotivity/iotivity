@@ -18,9 +18,6 @@ CC=gcc
 LIBCOAP=./lib/libcoap-4.1.1/
 LIBCOAP_OBJ_DIR=./lib/libcoap-4.1.1/obj
 
-TINYDTLS=./lib/extlibs/tinydtls
-TINYDTLS_OBJ_DIR=./lib/extlibs/tinydtls/obj
-
 # TODO : Currently Hardcoded WIFI_ADAPTER. Change it to generic
 CFLAGS.debug = -DWITH_POSIX -D__TIZEN__ -Wall -std=c99 -DSLP_SDK_LOG -g -D_GNU_SOURCE -DTIZEN_DEBUG_ENABLE -DTB_LOG $(ADAPTER_MACRO)
 CFLAGS.release = -DWITH_POSIX -D__TIZEN__ -Wall -std=c99 -DSLP_SDK_LOG -D_GNU_SOURCE -DTIZEN_DEBUG_ENABLE -DTB_LOG $(ADAPTER_MACRO)

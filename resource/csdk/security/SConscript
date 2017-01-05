@@ -49,7 +49,6 @@ else:
 
 libocsrm_env.PrependUnique(CPPPATH = [
 		'../../../extlibs/cjson/',
-		'../../../extlibs/tinydtls/',
 		'../logger/include',
 		'../../c_common/ocrandom/include',
 		'../stack/include',

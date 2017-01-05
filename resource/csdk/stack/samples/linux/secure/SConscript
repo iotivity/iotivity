@@ -29,7 +29,6 @@ samples_env.PrependUnique(CPPPATH = [
 		'../../../../stack/include',
 		'../../../../security/include',
 		'../../../../../../extlibs/cjson',
-		'../../../../../../extlibs/tinydtls',
 		'../../../../../oc_logger/include'
 		])
 

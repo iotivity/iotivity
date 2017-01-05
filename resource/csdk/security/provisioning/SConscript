@@ -48,7 +48,6 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'include/oxm',
 		'../../resource/csdk/security/include',
 		'../../../../extlibs/cjson/',
-		'../../../../extlibs/tinydtls/',
 		'../../connectivity/inc',
 		'../../connectivity/inc/pkix',
 		'../../connectivity/external/inc',
@@ -56,8 +55,6 @@ provisioning_env.AppendUnique(CPPPATH = [
 		'../../connectivity/api',
 		'../include',
 		'../include/internal',
-		'../../../../extlibs/tinydtls/ecc',
-		'../../../../extlibs/tinydtls/sha2',
 		'../../../../extlibs/asn1cert',
 		'ck_manager/include'
 		])

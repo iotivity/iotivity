@@ -80,7 +80,7 @@ if target_os in ['linux']:
 
 
 if CoAP_test_env.get('SECURED') == '1':
-    CoAP_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto','tinydtls'])
+    CoAP_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 ######################################################################
 # Build Test
 ######################################################################
