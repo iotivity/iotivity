@@ -129,13 +129,14 @@ void CALEGattServerConnectionStateChanged(bool connected, const char *remoteAddr
 {
     VERIFY_NON_NULL_VOID(remoteAddress, TAG, "remote address");
 
+    CAResult_t res = CA_STATUS_OK;
     if (connected)
     {
         OIC_LOG_V(DEBUG, TAG, "Connected to [%s]", remoteAddress);
         char *addr = OICStrdup(remoteAddress);
         oc_mutex_lock(g_LEClientListMutex);
-        CAResult_t result  = CAAddLEClientInfoToList(&g_LEClientList, addr);
-        if (CA_STATUS_OK != result)
+        res  = CAAddLEClientInfoToList(&g_LEClientList, addr);
+        if (CA_STATUS_OK != res)
         {
             OIC_LOG(ERROR, TAG, "CAAddLEClientInfoToList failed");
             oc_mutex_unlock(g_LEClientListMutex);
@@ -143,6 +144,13 @@ void CALEGattServerConnectionStateChanged(bool connected, const char *remoteAddr
             return;
         }
         oc_mutex_unlock(g_LEClientListMutex);
+
+        res = CALEStopAdvertise();
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to stop advertising [%d]", res);
+            return;
+        }
     }
     else
     {
@@ -150,6 +158,13 @@ void CALEGattServerConnectionStateChanged(bool connected, const char *remoteAddr
         oc_mutex_lock(g_LEClientListMutex);
         CARemoveLEClientInfoFromList(&g_LEClientList, remoteAddress);
         oc_mutex_unlock(g_LEClientListMutex);
+
+        res = CALEStartAdvertise(CA_GATT_SERVICE_UUID);
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to start advertising [%d]", res);
+            return;
+        }
     }
 }
 

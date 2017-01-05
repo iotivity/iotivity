@@ -411,7 +411,7 @@ CAResult_t CALEServerSendResponse(JNIEnv *env, jobject device, jint requestId, j
     return CA_STATUS_OK;
 }
 
-CAResult_t CALEStartAdvertise()
+CAResult_t CALEServerStartAdvertise()
 {
     if (!g_jvm)
     {
@@ -436,10 +436,10 @@ CAResult_t CALEStartAdvertise()
     }
 
     // start advertise
-    CAResult_t ret = CALEServerStartAdvertise(env, g_leAdvertiseCallback);
+    CAResult_t ret = CALEServerStartAdvertiseImpl(env, g_leAdvertiseCallback);
     if (CA_STATUS_OK != ret)
     {
-        OIC_LOG(ERROR, TAG, "CALEServerStartAdvertise has failed");
+        OIC_LOG(ERROR, TAG, "CALEServerStartAdvertiseImpl has failed");
     }
 
     if (isAttached)
@@ -449,9 +449,9 @@ CAResult_t CALEStartAdvertise()
     return ret;
 }
 
-CAResult_t CALEServerStartAdvertise(JNIEnv *env, jobject advertiseCallback)
+CAResult_t CALEServerStartAdvertiseImpl(JNIEnv *env, jobject advertiseCallback)
 {
-    OIC_LOG(DEBUG, TAG, "IN - CALEServerStartAdvertise");
+    OIC_LOG(DEBUG, TAG, "IN - CALEServerStartAdvertiseImpl");
     VERIFY_NON_NULL(env, TAG, "env is null");
     VERIFY_NON_NULL(advertiseCallback, TAG, "advertiseCallback is null");
 
@@ -752,9 +752,47 @@ error_exit:
     return CA_STATUS_FAILED;
 }
 
-CAResult_t CALEServerStopAdvertise(JNIEnv *env, jobject advertiseCallback)
+CAResult_t CALEServerStopAdvertise()
 {
-    OIC_LOG(DEBUG, TAG, "LEServerStopAdvertise");
+    if (!g_jvm)
+    {
+        OIC_LOG(ERROR, TAG, "g_jvm is null");
+        return CA_STATUS_FAILED;
+    }
+
+    bool isAttached = false;
+    JNIEnv* env = NULL;
+    jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
+    if (JNI_OK != res)
+    {
+        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
+        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+
+        if (JNI_OK != res)
+        {
+            OIC_LOG(ERROR, TAG, "AttachCurrentThread has failed");
+            return CA_STATUS_FAILED;
+        }
+        isAttached = true;
+    }
+
+    CAResult_t ret = CALEServerStopAdvertiseImpl(env, g_leAdvertiseCallback);
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "CALEServerStopAdvertise has failed");
+    }
+
+    if (isAttached)
+    {
+        (*g_jvm)->DetachCurrentThread(g_jvm);
+    }
+
+    return ret;
+}
+
+CAResult_t CALEServerStopAdvertiseImpl(JNIEnv *env, jobject advertiseCallback)
+{
+    OIC_LOG(DEBUG, TAG, "CALEServerStopAdvertiseImpl");
     VERIFY_NON_NULL(env, TAG, "env is null");
     VERIFY_NON_NULL(advertiseCallback, TAG, "advertiseCallback is null");
 
@@ -1789,40 +1827,13 @@ CAResult_t CALEServerStopMulticastServer()
         return CA_STATUS_FAILED;
     }
 
-    if (!g_jvm)
-    {
-        OIC_LOG(ERROR, TAG, "g_jvm is null");
-        return CA_STATUS_FAILED;
-    }
-
-    bool isAttached = false;
-    JNIEnv* env = NULL;
-    jint res = (*g_jvm)->GetEnv(g_jvm, (void**) &env, JNI_VERSION_1_6);
-    if (JNI_OK != res)
-    {
-        OIC_LOG(INFO, TAG, "Could not get JNIEnv pointer");
-        res = (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
-
-        if (JNI_OK != res)
-        {
-            OIC_LOG(ERROR, TAG, "AttachCurrentThread has failed");
-            return CA_STATUS_FAILED;
-        }
-        isAttached = true;
-    }
-
-    CAResult_t ret = CALEServerStopAdvertise(env, g_leAdvertiseCallback);
+    CAResult_t ret = CALEServerStopAdvertise();
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "CALEServerStopAdvertise has failed");
     }
 
     g_isStartServer = false;
-
-    if (isAttached)
-    {
-        (*g_jvm)->DetachCurrentThread(g_jvm);
-    }
 
     OIC_LOG(DEBUG, TAG, "OUT - CALEServerStopMulticastServer");
     return ret;
@@ -2320,6 +2331,13 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
             OIC_LOG(DEBUG, TAG, "add connected device to cache");
             CALEServerAddDeviceToList(env, device);
         }
+
+        CAResult_t res = CALEServerStopAdvertise();
+        if (CA_STATUS_OK != res)
+        {
+            OIC_LOG(DEBUG, TAG, "CALEServerStopAdvertise has failed");
+        }
+
         (*env)->ReleaseStringUTFChars(env, jni_remoteAddress, remoteAddress);
     }
     else if (newState == g_state_disconnected)
@@ -2334,7 +2352,7 @@ Java_org_iotivity_ca_CaLeServerInterface_caLeGattServerConnectionStateChangeCall
         }
 
         // start advertise
-        ret = CALEServerStartAdvertise(env, g_leAdvertiseCallback);
+        ret = CALEServerStartAdvertise();
         if (CA_STATUS_OK != ret)
         {
             OIC_LOG(ERROR, TAG, "CALEServerStartAdvertise has failed");
