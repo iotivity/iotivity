@@ -85,7 +85,8 @@ public class  OcCloudProvisioning {
    /**
     * Method to Request a certificate from the cloud
     * @param certificateIssueRequestListener function called by the stack on completion of request.
-    * @throws OcException
+    * @throws OcException Indicates failure requesting the certificate from the cloud.
+    *                     Use OcException.GetErrorCode() for more details.
     */
     public native void requestCertificate(
             RequestCertificateListener certificateIssueRequestListener) throws OcException;
@@ -94,7 +95,8 @@ public class  OcCloudProvisioning {
     * Method to get ACL ID for the device
     * @param deviceId device ID for which the Acl ID is requested
     * @param cloudAclIdGetByDeviceHandler function called by the stack on completion of request.
-    * @throws OcException
+    * @throws OcException Indicates failure getting ACL ID for the device.
+    *                     Use OcException.GetErrorCode() for more details.
     */
     public native void getAclIdByDevice(String deviceId,
             GetAclIdByDeviceListener cloudAclIdGetByDeviceHandler) throws OcException;
@@ -103,7 +105,8 @@ public class  OcCloudProvisioning {
     * Method to get ACL information about the given Acl ID
     * @param aclId ACL ID for which the Acl information is requested
     * @param cloudAclIndividualGetInfoHandler function called by the stack on completion of request.
-    * @throws OcException
+    * @throws OcException Indicates failure to get ACL information.
+    *                     Use OcException.GetErrorCode() for more details.
     */
     public native void getIndividualAclInfo(String aclId,
             GetIndividualAclInfoListener cloudAclIndividualGetInfoHandler) throws OcException;
@@ -111,7 +114,8 @@ public class  OcCloudProvisioning {
    /**
     * Method to get certificate revocation list
     * @param cloudGetCRLHandler function called by the stack on completion of request.
-    * @throws OcException
+    * @throws OcException Indicates failure to get certificate revocation list.
+    *                     Use OcException.GetErrorCode() for more details.
     */
     public native void getCRL(GetCRLListener cloudGetCRLHandler)
             throws OcException;
@@ -123,7 +127,8 @@ public class  OcCloudProvisioning {
     * @param crl revocation list [optional].
     * @param serialNumbers [optional].
     * @param cloudPostCRLHandler function called by the stack on completion of request.
-    * @throws OcException
+    * @throws OcException Indicates failure posting the certificate revocation list to cloud.
+    *                     Use OcException.GetErrorCode() for more details.
     */
     public void postCRL(String thisUpdate, String nextUpdate, String crl, ArrayList<String> serialNumbers,
                                     PostCRLListener cloudPostCRLHandler) throws OcException
