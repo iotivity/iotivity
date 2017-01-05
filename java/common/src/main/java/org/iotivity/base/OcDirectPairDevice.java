@@ -81,7 +81,8 @@ public class OcDirectPairDevice {
      *  Method to get list of all paired devices for a given device.
      *
      *  @param getDirectPairedListener Callback function, which will receive the list of direct paired devices.
-     *  @throws OcException
+     *  @throws OcException Indicate failure to list paired devices.
+     *                      Use OcException.GetErrorCode() for more details.
      */
 
     public native void getDirectPairedDevices(GetDirectPairedListener getDirectPairedListener) throws OcException;
@@ -93,9 +94,13 @@ public class OcDirectPairDevice {
     /**
      *  Method to perform direct pairing between two devices.
      *
+     *  @param peer the peer device
+     *  @param pmSel direct pairing Method Type ( DP_NOT_ALLOWED, DP_PRE_CONFIGURED, DP_RANDOM_PIN )
+     *  @param pinNumber pairing pin number
      *  @param directPairingListener Callback function, which will be called after
-     *                                      completion of direct pairing.
-     *  @throws OcException
+     *                               completion of direct pairing.
+     *  @throws OcException Indicate failure to perform direct pairing between devices.
+     *                      Use OcException.GetErrorCode() for more details.
      */
     public native void doDirectPairing(OcDirectPairDevice peer,
             OcPrmType pmSel, String pinNumber,
