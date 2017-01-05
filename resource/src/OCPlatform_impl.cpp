@@ -377,30 +377,41 @@ namespace OC
         return checked_guard(m_server, &IServerWrapper::registerPlatformInfo, platformInfo);
     }
 
-    OCStackResult OCPlatform_impl::setPropertyValue(OCPayloadType type, const std::string& tag, const std::string& value)
+    OCStackResult OCPlatform_impl::setPropertyValue(OCPayloadType type, const std::string& tag,
+                                                    const std::string& value)
     {
-
         return checked_guard(m_server, &IServerWrapper::setPropertyValue, type, tag, value);
     }
 
-    OCStackResult OCPlatform_impl::setPropertyValue(OCPayloadType type, const std::string& tag, const std::vector<std::string>& value)
+    OCStackResult OCPlatform_impl::setPropertyValue(OCPayloadType type, const std::string& tag,
+                                                    const std::vector<std::string>& value)
     {
+        std::string concatString = "";
         for (const auto& h : value)
         {
-           OCStackResult r;
-
-           if (OC_STACK_OK != (r = result_guard(setPropertyValue(type, tag, h))))
-           {
-               return r;
-           }
+            if (std::string::npos == h.find(","))
+            {
+                concatString += h + ",";
+            }
+            else
+            {
+                return OC_STACK_INVALID_PARAM;
+            }
         }
 
-        return OC_STACK_OK;
+        return checked_guard(m_server, &IServerWrapper::setPropertyValue, type, tag, concatString);
     }
 
-    OCStackResult OCPlatform_impl::getPropertyValue(OCPayloadType type, const std::string& tag, std::string& value)
+    OCStackResult OCPlatform_impl::getPropertyValue(OCPayloadType type, const std::string& tag,
+                                                    std::string& value)
     {
         return checked_guard(m_server, &IServerWrapper::getPropertyValue, type, tag, value);
+    }
+
+    OCStackResult OCPlatform_impl::getPropertyList(OCPayloadType type, const std::string& tag,
+                                                    std::vector<std::string>& value)
+    {
+        return checked_guard(m_server, &IServerWrapper::getPropertyList, type, tag, value);
     }
 
     OCStackResult OCPlatform_impl::registerResource(OCResourceHandle& resourceHandle,

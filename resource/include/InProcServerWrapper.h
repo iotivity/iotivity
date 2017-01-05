@@ -69,9 +69,12 @@ namespace OC
 
         virtual OCStackResult sendResponse(const std::shared_ptr<OCResourceResponse> pResponse);
 
-        virtual OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag, const std::string& value);
-        virtual OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag, std::string& value);
-
+        virtual OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag,
+                    const std::string& value);
+        virtual OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag,
+                    std::string& value);
+        virtual OCStackResult getPropertyList(OCPayloadType type, const std::string& tag,
+                    std::vector<std::string>& value);
         virtual OCStackResult stop();
 
         virtual OCStackResult start();

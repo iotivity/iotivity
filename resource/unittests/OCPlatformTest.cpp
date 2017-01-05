@@ -442,7 +442,7 @@ namespace OCPlatformTest
             BATCH_INTERFACE);
         EXPECT_EQ(OC_STACK_OK, result);
     }
-    
+
 #if defined (_MSC_VER)
     TEST(BindInterfaceToResourceTest, DISABLED_BindZeroResourceInterface)
 #else
@@ -463,7 +463,7 @@ namespace OCPlatformTest
             "core.brightlight");
         EXPECT_EQ(OC_STACK_OK, result);
     }
-    
+
 #if defined (_MSC_VER)
     TEST(BindTypeToResourceTest, DISABLED_BindZeroResourceType)
 #else
@@ -817,6 +817,52 @@ namespace OCPlatformTest
         EXPECT_ANY_THROW(OCPlatform::registerDeviceInfo(di));
     }
 
+    TEST(RegisterDeviceInfoTest, RegisterDeviceInfoWithSetPropertyValue)
+    {
+        std::string deviceName = "myDeviceName";
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
+            deviceName));
+        std::string specVersion = "mySpecVersion";
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION,
+            specVersion));
+        std::vector<std::string> dmv;
+        dmv.push_back("myDataModelVersions");
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+            dmv));
+        OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+        ASSERT_TRUE(NULL != handle);
+        EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "oic.wk.tv"));
+    }
+
+
+    TEST(RegisterDeviceInfoTest, RegisterDeviceInfoWithGetPropertyValue)
+    {
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
+            "myDeviceName"));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION,
+            "mySpecVersion"));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+            "myDataModelVersions"));
+        OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+        ASSERT_TRUE(NULL != handle);
+        EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "oic.wk.tv"));
+
+        std::string value;
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::getPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
+            value));
+        EXPECT_STREQ("myDeviceName", value.c_str());
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::getPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION,
+            value));
+        EXPECT_STREQ("mySpecVersion", value.c_str());
+        std::vector<std::string> dmv;
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::getPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+            dmv));
+        EXPECT_STREQ("myDataModelVersions", dmv[0].c_str());
+
+        EXPECT_STREQ("oic.wk.d", OCGetResourceTypeName(handle, 0));
+        EXPECT_STREQ("oic.d.tv", OCGetResourceTypeName(handle, 1));
+        EXPECT_STREQ("oic.wk.tv", OCGetResourceTypeName(handle, 2));
+    }
     //SubscribePresence Test
     TEST(SubscribePresenceTest, DISABLED_SubscribePresenceWithValidParameters)
     {

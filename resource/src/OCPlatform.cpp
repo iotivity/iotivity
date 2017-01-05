@@ -215,19 +215,28 @@ namespace OC
             return OCPlatform_impl::Instance().registerPlatformInfo(platformInfo);
         }
 
-        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag, const std::string& value)
+        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag,
+                                       const std::string& value)
         {
             return OCPlatform_impl::Instance().setPropertyValue(type, tag, value);
         }
 
-        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag, const std::vector<std::string>& value)
+        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag,
+                                       const std::vector<std::string>& value)
         {
             return OCPlatform_impl::Instance().setPropertyValue(type, tag, value);
         }
 
-        OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag, std::string& value)
+        OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag,
+                                       std::string& value)
         {
             return OCPlatform_impl::Instance().getPropertyValue(type, tag, value);
+        }
+
+        OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag,
+                                       std::vector<std::string>& value)
+        {
+            return OCPlatform_impl::Instance().getPropertyList(type, tag, value);
         }
 
         OCStackResult unregisterResource(const OCResourceHandle& resourceHandle)

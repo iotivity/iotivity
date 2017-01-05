@@ -306,11 +306,12 @@ TEST(StackStart, SetPlatformInfoWithBadPlatformID)
     itst::DeadmanTimer killSwitch(SHORT_TEST_TIMEOUT);
     EXPECT_EQ(OC_STACK_OK, OCInit("127.0.0.1", 5683, OC_SERVER));
 
+    char invalidId[] = "myDeviceUUID";
     OCPlatformInfo info =
      {
-         "myDeviceUUID",
-         gManufacturerName,
-         0, 0, 0, 0, 0, 0, 0, 0, 0
+        invalidId,
+        gManufacturerName,
+        0, 0, 0, 0, 0, 0, 0, 0, 0
      };
 
     EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSetPlatformInfo(info));
@@ -512,10 +513,8 @@ TEST(StackStart, SetDeviceInfoAPI)
     EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, "Sample"));
     EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, "specVersion"));
     EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, "x.org.iotivity.newproperty", "value"));
-    OCStringLL *dataModelVersions = OCCreateOCStringLL("Data Model Version");
-    EXPECT_TRUE(dataModelVersions != NULL);
-    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, dataModelVersions));
-    OCFreeOCStringLL(dataModelVersions);
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+        "Data Model Version"));
     OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
     EXPECT_TRUE(handle != NULL);
     EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "oic.wk.tv"));
@@ -531,10 +530,8 @@ TEST(StackStart, GetDeviceInfoAPI)
     EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, "Sample"));
     EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, "specVersion"));
     EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, "x.org.iotivity.newproperty", "value"));
-    OCStringLL *dataModelVersions = OCCreateOCStringLL("Data Model Version");
-    EXPECT_TRUE(dataModelVersions != NULL);
-    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, dataModelVersions));
-    OCFreeOCStringLL(dataModelVersions);
+    EXPECT_EQ(OC_STACK_OK, OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+        "Data Model Version"));
     OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
     EXPECT_TRUE(handle != NULL);
     EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "oic.wk.tv"));

@@ -1469,7 +1469,6 @@ exit:
 
 OCStackResult OCSetDeviceInfo(OCDeviceInfo info)
 {
-    OCStringLL *dataModelVersion = NULL;
     OCResource *resource = FindResourceByUri(OC_RSRVD_DEVICE_URI);
     if (!resource)
     {
@@ -1498,23 +1497,24 @@ OCStackResult OCSetDeviceInfo(OCDeviceInfo info)
     }
     VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, info.specVersion ?
         info.specVersion: OC_SPEC_VERSION));
+
     if (info.dataModelVersions)
     {
-        VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, info.dataModelVersions));
+        char *dmv = OCCreateString(info.dataModelVersions);
+        VERIFY_PARAM_NON_NULL(TAG, dmv, "Failed allocating dataModelVersions");
+        OCStackResult r = OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, dmv);
+        OICFree(dmv);
+        VERIFY_SUCCESS(r);
     }
     else
     {
-        dataModelVersion = OCCreateOCStringLL(OC_DATA_MODEL_VERSION);
-        VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION, dataModelVersion));
+        VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+            OC_DATA_MODEL_VERSION));
     }
     OIC_LOG(INFO, TAG, "Device parameter initialized successfully.");
     return OC_STACK_OK;
 
 exit:
-    if (dataModelVersion)
-    {
-        OCFreeOCStringLL(dataModelVersion);
-    }
     return OC_STACK_ERROR;
 }
 
@@ -1550,13 +1550,17 @@ OCStackResult OCGetAttribute(const OCResource *resource, const char *attribute, 
 
 OCStackResult OCGetPropertyValue(OCPayloadType type, const char *prop, void **value)
 {
-    if (!prop || *value)
+    if (!prop)
     {
         return OC_STACK_INVALID_PARAM;
     }
     if (strlen(prop) == 0)
     {
         return OC_STACK_INVALID_PARAM;
+    }
+    if (*value)
+    {
+        *value = NULL;
     }
     OCStackResult res =  OC_STACK_NO_RESOURCE;
     if (PAYLOAD_TYPE_DEVICE == type || PAYLOAD_TYPE_PLATFORM == type)
@@ -1608,7 +1612,7 @@ OCStackResult OCSetAttribute(OCResource* resource, const char* attribute, const 
     // Fill in the new value.
     if (0 == strcmp(OC_RSRVD_DATA_MODEL_VERSION, attribute))
     {
-        resAttrib->attrValue = CloneOCStringLL((OCStringLL *)value);
+        resAttrib->attrValue = OCCreateOCStringLL((char *)value);
     }
     else
     {

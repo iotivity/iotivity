@@ -508,13 +508,6 @@ void DeletePlatformInfo()
     delete[] platformInfo.systemTime;
 }
 
-void DeleteDeviceInfo()
-{
-    delete[] deviceInfo.deviceName;
-    delete[] deviceInfo.specVersion;
-    OCFreeOCStringLL(deviceInfo.dataModelVersions);
-}
-
 void DuplicateString(char ** targetString, std::string sourceString)
 {
     *targetString = new char[sourceString.length() + 1];
@@ -538,23 +531,6 @@ OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerNa
     DuplicateString(&platformInfo.firmwareVersion, firmwareVersion);
     DuplicateString(&platformInfo.supportUrl, supportUrl);
     DuplicateString(&platformInfo.systemTime, systemTime);
-
-    return OC_STACK_OK;
-}
-
-OCStackResult SetDeviceInfo(std::string deviceName, std::string specVersion, std::string dataModelVersions)
-{
-    DuplicateString(&deviceInfo.deviceName, deviceName);
-
-    if (!specVersion.empty())
-    {
-        DuplicateString(&deviceInfo.specVersion, specVersion);
-    }
-
-    if (!dataModelVersions.empty())
-    {
-        OCResourcePayloadAddStringLL(&deviceInfo.dataModelVersions, dataModelVersions.c_str());
-    }
 
     return OC_STACK_OK;
 }
@@ -660,10 +636,15 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    result = SetDeviceInfo(deviceName, specVersion, dataModelVersions);
-    OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.wk.d");
-
-    result = OCPlatform::registerDeviceInfo(deviceInfo);
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, deviceName);
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion);
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+        dataModelVersions);
+    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    if (handle)
+    {
+        OCBindResourceTypeToResource(handle, "oic.wk.tv");
+    }
 
     if (result != OC_STACK_OK)
     {
@@ -686,7 +667,6 @@ int main(int argc, char* argv[])
         std::cout << "Added Interface and Type" << std::endl;
 
         DeletePlatformInfo();
-        DeleteDeviceInfo();
 
         // A condition variable will free the mutex it is given, then do a non-
         // intensive block until 'notify' is called on it.  In this case, since we

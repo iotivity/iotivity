@@ -146,9 +146,14 @@ namespace OC
         OCStackResult getPlatformInfo(const std::string& host, const std::string& platformURI,
                     FindPlatformCallback platformInfoHandler, QualityOfService QoS);
 
-        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag, const std::string& value);
-        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag, const std::vector<std::string>& value);
-        OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag, std::string& value);
+        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag,
+            const std::string& value);
+        OCStackResult setPropertyValue(OCPayloadType type, const std::string& tag,
+            const std::vector<std::string>& value);
+        OCStackResult getPropertyValue(OCPayloadType type, const std::string& tag,
+            std::string& value);
+        OCStackResult getPropertyList(OCPayloadType type, const std::string& tag,
+            std::vector<std::string>& value);
 
         /**
         * This API registers a resource with the server

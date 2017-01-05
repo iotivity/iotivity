@@ -36,6 +36,7 @@
 
 #include <OCApi.h>
 #include <oic_malloc.h>
+#include <oic_string.h>
 #include <OCPlatform.h>
 #include <OCUtilities.h>
 #include "logger.h"
@@ -385,15 +386,44 @@ namespace OC
         return result;
     }
 
-    OCStackResult InProcServerWrapper::getPropertyValue(OCPayloadType type, const std::string& propName,
-        std::string& propValue)
+    OCStackResult InProcServerWrapper::getPropertyValue(OCPayloadType type,
+        const std::string& propName, std::string& propValue)
     {
         auto cLock = m_csdkLock.lock();
         OCStackResult result = OC_STACK_ERROR;
         if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-            result = OCGetPropertyValue(type, propName.c_str(), (void **)propValue.c_str());
+            void *value = NULL;
+            result = OCGetPropertyValue(type, propName.c_str(), &value);
+            if (value && OC_STACK_OK == result)
+            {
+                propValue.assign((const char *)value);
+                OICFree(value);
+            }
+        }
+        return result;
+    }
+
+    OCStackResult InProcServerWrapper::getPropertyList(OCPayloadType type,
+        const std::string& propName, std::vector<std::string>& propValue)
+    {
+        auto cLock = m_csdkLock.lock();
+        OCStackResult result = OC_STACK_ERROR;
+        void *value = NULL;
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = OCGetPropertyValue(type, propName.c_str(), &value);
+        }
+
+        if (OC_STACK_OK == result)
+        {
+            for (OCStringLL *tmp = (OCStringLL *)value; tmp; tmp = tmp->next)
+            {
+                propValue.push_back(tmp->value);
+            }
+            OCFreeOCStringLL((OCStringLL *)value);
         }
         return result;
     }
