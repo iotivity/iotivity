@@ -72,10 +72,16 @@ namespace OC
         /**
          * Select the cipher suite for TLS/DTLS handshake.
          * @param cipher  cipher suite (Note : Make sure endianness).
-         *                    0x35   : TLS_RSA_WITH_AES_256_CBC_SHA
-         *                    0xC018 : TLS_ECDH_anon_WITH_AES_128_CBC_SHA
-         *                    0xC037 : TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256
-         *                    0xC0AE : TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8
+         *                        TLS_RSA_WITH_AES_256_CBC_SHA256          0x3D
+         *                        TLS_RSA_WITH_AES_128_GCM_SHA256          0x009C
+         *                        TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256  0xC02B
+         *                        TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8       0xC0AE
+         *                        TLS_ECDHE_ECDSA_WITH_AES_128_CCM         0xC0AC
+         *                        TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256  0xC023
+         *                        TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384  0xC024
+         *                        TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384  0xC02C
+         *                        TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256    0xC037
+         *                        TLS_ECDH_anon_WITH_AES_128_CBC_SHA       0xC018
          * @param adapter transport adapter type.
          * @return Returns ::OC_STACK_OK if success.
          */

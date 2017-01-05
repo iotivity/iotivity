@@ -509,8 +509,7 @@ CAResult_t CAEnableAnonECDHCipherSuite(const bool enable)
     CAResult_t res = CA_STATUS_FAILED;
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
     // TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256    0xFF00 replaces 0xC018
-    // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256    0xC037
-    res = CAsetTlsCipherSuite(enable ? 0xFF00 : 0xC037);
+    res = CAsetTlsCipherSuite(enable ? 0xFF00 : 0x00);
     if (CA_STATUS_OK != res)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to CAsetTlsCipherSuite : %d", res);

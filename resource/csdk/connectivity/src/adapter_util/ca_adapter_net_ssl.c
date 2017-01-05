@@ -18,6 +18,8 @@
  *
  ******************************************************************/
 
+#define MBEDTLS_SSL_SRV_RESPECT_CLIENT_PREFERENCE
+
 #define _GNU_SOURCE
 
 #include <stddef.h>
@@ -123,10 +125,51 @@
  */
 #define RANDOM_LEN (32)
 /**
- * @def RANDOM_LEN
- * @brief PSK generated keyblock length
+ * @def SHA384_MAC_KEY_LENGTH
+ * @brief MAC key length for SHA384 cipher suites
  */
-#define KEY_BLOCK_LEN (96)
+#define SHA384_MAC_KEY_LENGTH (48)
+/**
+ * @def SHA256_MAC_KEY_LENGTH
+ * @brief MAC key length for SHA256 cipher suites
+ */
+#define SHA256_MAC_KEY_LENGTH (32)
+/**
+ * @def CCM_MAC_KEY_LENGTH
+ * @brief MAC key length for CCM cipher suites
+ */
+#define CCM_MAC_KEY_LENGTH (0)
+/**
+ * @def AES256_KEY_LENGTH
+ * @brief key material length for AES256 cipher suites
+ */
+#define AES256_KEY_LENGTH (32)
+/**
+ * @def AES128_KEY_LENGTH
+ * @brief key material length for AES128 cipher suites
+ */
+#define AES128_KEY_LENGTH (16)
+/**
+ * @def GCM_IV_LENGTH
+ * @brief length of nonce for GCM cipher suites
+ */
+#define GCM_IV_LENGTH (12)
+/**
+ * @def CCM_IV_LENGTH
+ * @brief length of nonce for CCM cipher suites
+ */
+#define CCM_IV_LENGTH (4)
+/**
+ * @def CBC_IV_LENGTH
+ * @brief length of nonce for CBC cipher suites
+ */
+#define CBC_IV_LENGTH (0)
+
+/**
+ * @var RETRANSMISSION_TIME
+ * @brief Maximum timeout value (in seconds) to start DTLS retransmission.
+ */
+#define RETRANSMISSION_TIME 1
 
 /**@def SSL_CLOSE_NOTIFY(peer, ret)
  *
@@ -135,13 +178,6 @@
  * @param[in] peer remote peer
  * @param[in] ret used internaly
  */
-
-/**
- * @var RETRANSMISSION_TIME
- * @brief Maximum timeout value (in seconds) to start DTLS retransmission.
- */
-#define RETRANSMISSION_TIME 1
-
 #define SSL_CLOSE_NOTIFY(peer, ret)                                                                \
 do                                                                                                 \
 {                                                                                                  \
@@ -210,6 +246,16 @@ if (0 != (ret) && MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY != (int) (ret) &&           
         return (error);                                                                            \
     }                                                                                              \
 }
+/**@def CONF_SSL(clientConf, serverConf, fn, ...)
+ *
+ * Calls \a fn for \a clientConf and \a serverConf.
+ *
+ */
+#define CONF_SSL(clientConf, serverConf, fn, ...) do {                                             \
+fn((clientConf), __VA_ARGS__);                                                                     \
+fn((serverConf), __VA_ARGS__);                                                                     \
+} while (0)
+
 /** @def CHECK_MBEDTLS_RET(f, ...)
  * A macro that checks \a f function return code
  *
@@ -222,18 +268,23 @@ int ret = (f)(__VA_ARGS__);                                                     
 if (0 != ret) {                                                                                    \
     OIC_LOG_V(ERROR, NET_SSL_TAG, "%s returned -0x%04x\n", __func__, -(ret));                      \
     goto exit;                                                                                     \
-} } while(0)
+} } while (0)
 
 typedef enum
 {
-    ADAPTER_TLS_RSA_WITH_AES_256_CBC_SHA,
-    ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
-    ADAPTER_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA_256,
-    ADAPTER_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256,
-    ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM,
-    ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
-    ADAPTER_CIPHER_MAX
-} AdapterCipher_t;
+    SSL_RSA_WITH_AES_256_CBC_SHA256,
+    SSL_RSA_WITH_AES_128_GCM_SHA256,
+    SSL_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+    SSL_ECDHE_ECDSA_WITH_AES_128_CCM_8,
+    SSL_ECDHE_ECDSA_WITH_AES_128_CCM,
+    SSL_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
+    SSL_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,
+    SSL_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+    SSL_ECDHE_PSK_WITH_AES_128_CBC_SHA256,
+    SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
+    SSL_ECDH_ANON_WITH_AES_128_CBC_SHA256,
+    SSL_CIPHER_MAX
+} SslCipher_t;
 
 typedef enum
 {
@@ -241,17 +292,22 @@ typedef enum
     ADAPTER_CURVE_MAX
 } AdapterCurve_t;
 
-int tlsCipher[ADAPTER_CIPHER_MAX][2] =
+static const int tlsCipher[SSL_CIPHER_MAX][2] =
 {
-    {MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA, 0},
+    {MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA256, 0},
+    {MBEDTLS_TLS_RSA_WITH_AES_128_GCM_SHA256, 0},
+    {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, 0},
     {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8, 0},
-    {MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256, 0},
-    {MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, 0},
     {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM, 0},
-    {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, 0}
+    {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, 0},
+    {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384, 0},
+    {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, 0},
+    {MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, 0},
+    {MBEDTLS_TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256, 0},
+    {MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256, 0}
 };
 
-static int g_cipherSuitesList[ADAPTER_CIPHER_MAX];
+static int g_cipherSuitesList[SSL_CIPHER_MAX];
 
 mbedtls_ecp_group_id curve[ADAPTER_CURVE_MAX][2] =
 {
@@ -394,7 +450,7 @@ typedef struct SslContext
     mbedtls_ssl_config clientDtlsConf;
     mbedtls_ssl_config serverDtlsConf;
 
-    AdapterCipher_t cipher;
+    SslCipher_t cipher;
     SslCallbacks_t adapterCallbacks[MAX_SUPPORTED_ADAPTERS];
     mbedtls_x509_crl crl;
     bool cipherFlag[2];
@@ -746,13 +802,12 @@ static int InitPKIX(CATransportAdapter_t adapter)
     if(0 != ret)
     {
         OIC_LOG(WARNING, NET_SSL_TAG, "CRL parsing error");
-        mbedtls_ssl_conf_ca_chain(clientConf, &g_caSslContext->ca, NULL);
-        mbedtls_ssl_conf_ca_chain(serverConf, &g_caSslContext->ca, NULL);
+        CONF_SSL(clientConf, serverConf, mbedtls_ssl_conf_ca_chain, &g_caSslContext->ca, NULL);
     }
     else
     {
-        mbedtls_ssl_conf_ca_chain(clientConf, &g_caSslContext->ca, &g_caSslContext->crl);
-        mbedtls_ssl_conf_ca_chain(serverConf, &g_caSslContext->ca, &g_caSslContext->crl);
+        CONF_SSL(clientConf, serverConf, mbedtls_ssl_conf_ca_chain,
+                 &g_caSslContext->ca, &g_caSslContext->crl);
     }
 
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
@@ -1167,14 +1222,13 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
 
     g_getCredentialTypesCallback(g_caSslContext->cipherFlag);
     // Retrieve the PSK credential from SRM
-    // PIN OTM if (true == g_caSslContext->cipherFlag[0] && 0 != InitPskIdentity(config))
     if (0 != InitPskIdentity(config))
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "PSK identity initialization failed!");
     }
 
-    // Retrieve the ECC credential from SRM
-    if (true == g_caSslContext->cipherFlag[1] || ADAPTER_TLS_RSA_WITH_AES_256_CBC_SHA == g_caSslContext->cipher)
+    // Retrieve the Cert credential from SRM
+    if (true == g_caSslContext->cipherFlag[1])
     {
         int ret = InitPKIX(adapter);
         if (0 != ret)
@@ -1184,19 +1238,24 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
     }
 
     memset(g_cipherSuitesList, 0, sizeof(g_cipherSuitesList));
-    if (ADAPTER_CIPHER_MAX != g_caSslContext->cipher)
+    if (SSL_CIPHER_MAX != g_caSslContext->cipher)
     {
         g_cipherSuitesList[index] = tlsCipher[g_caSslContext->cipher][0];
-        index ++;
     }
+    else
+    {
     if (true == g_caSslContext->cipherFlag[1])
     {
-        g_cipherSuitesList[index] = MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
-        index ++;
-    }
-    if (true == g_caSslContext->cipherFlag[0])
-    {
-       g_cipherSuitesList[index] = MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256;
+        for (int i = 2; i < SSL_CIPHER_MAX - 2; i++)
+            {
+                g_cipherSuitesList[index] = tlsCipher[i][0];
+                index ++;
+            }
+        }
+        if (true == g_caSslContext->cipherFlag[0])
+        {
+           g_cipherSuitesList[index] = MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256;
+        }
     }
 
     mbedtls_ssl_conf_ciphersuites(config, g_cipherSuitesList);
@@ -1496,7 +1555,7 @@ CAResult_t CAinitSslAdapter()
 #endif // __WITH_DTLS__
 
     // set default cipher
-    g_caSslContext->cipher = ADAPTER_CIPHER_MAX;
+    g_caSslContext->cipher = SSL_CIPHER_MAX;
 
     // init X.509
     mbedtls_x509_crt_init(&g_caSslContext->ca);
@@ -1790,8 +1849,8 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
                 SendCacheMessages(peer);
             }
 
-            if (MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 == g_caSslContext->selectedCipher ||
-                MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA == g_caSslContext->selectedCipher)
+            if (MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 != g_caSslContext->selectedCipher &&
+                MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256 != g_caSslContext->selectedCipher)
             {
                 char uuid[UUID_LENGTH * 2 + 5] = {0};
                 void * uuidPos = NULL;
@@ -1902,167 +1961,109 @@ void CAsetSslAdapterCallbacks(CAPacketReceivedCallback recvCallback,
         return;
     }
 
-//    if (MAX_SUPPORTED_ADAPTERS > type)
+    switch (type)
     {
-        switch (type)
-        {
-            case CA_ADAPTER_IP:
-                g_caSslContext->adapterCallbacks[0].recvCallback = recvCallback;
-                g_caSslContext->adapterCallbacks[0].sendCallback = sendCallback;
-                break;
-            case CA_ADAPTER_TCP:
-                g_caSslContext->adapterCallbacks[1].recvCallback = recvCallback;
-                g_caSslContext->adapterCallbacks[1].sendCallback = sendCallback;
-                break;
-            default:
-                OIC_LOG_V(ERROR, NET_SSL_TAG, "Unsupported adapter: %d", type);
-        }
+        case CA_ADAPTER_IP:
+            g_caSslContext->adapterCallbacks[0].recvCallback = recvCallback;
+            g_caSslContext->adapterCallbacks[0].sendCallback = sendCallback;
+            break;
+        case CA_ADAPTER_TCP:
+            g_caSslContext->adapterCallbacks[1].recvCallback = recvCallback;
+            g_caSslContext->adapterCallbacks[1].sendCallback = sendCallback;
+            break;
+        default:
+            OIC_LOG_V(ERROR, NET_SSL_TAG, "Unsupported adapter: %d", type);
     }
 
     ca_mutex_unlock(g_sslContextMutex);
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
 }
+/**
+ * Gets index of the TLS ciphersuite in the SslCipher_t enum.
+ *
+ * @param[in]  cipher    TLS chiphersuite code
+ *
+ * @return   corresponding enum
+ */
+
+static SslCipher_t GetCipherIndex(const uint32_t cipher)
+{
+    switch(cipher)
+    {
+        case MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA256:
+        {
+            return SSL_RSA_WITH_AES_256_CBC_SHA256;
+        }
+        case MBEDTLS_TLS_RSA_WITH_AES_128_GCM_SHA256:
+        {
+            return SSL_RSA_WITH_AES_128_GCM_SHA256;
+        }
+        case MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256:
+        {
+            return SSL_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256;
+        }
+        case MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8:
+        {
+            return SSL_ECDHE_ECDSA_WITH_AES_128_CCM_8;
+        }
+        case MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM:
+        {
+            return SSL_ECDHE_ECDSA_WITH_AES_128_CCM;
+        }
+        case MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256:
+        {
+            return SSL_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
+        }
+        case MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384:
+        {
+            return SSL_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384;
+        }
+        case MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384:
+        {
+            return SSL_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384;
+        }
+        case MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256:
+        {
+            return SSL_ECDHE_PSK_WITH_AES_128_CBC_SHA256;
+        }
+        case MBEDTLS_TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256:
+        {
+            return SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA256;
+        }
+        case MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256:
+        {
+            return SSL_ECDH_ANON_WITH_AES_128_CBC_SHA256;
+        }
+        default:
+        {
+            return SSL_CIPHER_MAX;
+        }
+    }
+}
 
 CAResult_t CAsetTlsCipherSuite(const uint32_t cipher)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
-    VERIFY_NON_NULL_RET(g_getCredentialTypesCallback, NET_SSL_TAG, "Param callback is null", CA_STATUS_FAILED);
-    g_getCredentialTypesCallback(g_caSslContext->cipherFlag);
-    switch(cipher)
+    CAResult_t res = CA_STATUS_FAILED;
+    SslCipher_t index = GetCipherIndex(cipher);
+    if (SSL_CIPHER_MAX == index)
     {
-        case MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA:
-        {
-#ifdef __WITH_TLS__
-            //todo check that Cred with RSA cert exists
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientTlsConf,
-                                         tlsCipher[ADAPTER_TLS_RSA_WITH_AES_256_CBC_SHA]);
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverTlsConf,
-                                         tlsCipher[ADAPTER_TLS_RSA_WITH_AES_256_CBC_SHA]);
-#endif
-#ifdef __WITH_DTLS__
-            //todo check that Cred with RSA cert exists
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientDtlsConf,
-                                         tlsCipher[ADAPTER_TLS_RSA_WITH_AES_256_CBC_SHA]);
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverDtlsConf,
-                                         tlsCipher[ADAPTER_TLS_RSA_WITH_AES_256_CBC_SHA]);
-#endif
-            g_caSslContext->cipher = ADAPTER_TLS_RSA_WITH_AES_256_CBC_SHA;
-            break;
-        }
-        case MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8:
-        {
-            if (false == g_caSslContext->cipherFlag[1])
-            {
-                OIC_LOG(ERROR, NET_SSL_TAG, "No Credential for ECC");
-                return CA_STATUS_FAILED;
-            }
-#ifdef __WITH_TLS__
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientTlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8]);
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverTlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8]);
-#endif
-#ifdef __WITH_DTLS__
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientDtlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8]);
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverDtlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8]);
-#endif
-            g_caSslContext->cipher = ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
-            break;
-        }
-        case MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256:
-        {
-#ifdef __WITH_TLS__
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientTlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA_256]);
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverTlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA_256]);
-#endif
-#ifdef __WITH_DTLS__
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientDtlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA_256]);
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverDtlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA_256]);
-#endif
-            g_caSslContext->cipher = ADAPTER_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA_256;
-            break;
-        }
-        case MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256:
-        {
-#if 0 // PIN OTM
-            if (false == g_caSslContext->cipherFlag[0])
-            {
-                OIC_LOG(ERROR, NET_SSL_TAG, "No Credential for PSK");
-                return CA_STATUS_FAILED;
-            }
-#endif
-#ifdef __WITH_TLS__
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientTlsConf,
-                                          tlsCipher[ADAPTER_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256]);
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverTlsConf,
-                                          tlsCipher[ADAPTER_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256]);
-#endif
-#ifdef __WITH_DTLS__
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientDtlsConf,
-                                          tlsCipher[ADAPTER_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256]);
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverDtlsConf,
-                                          tlsCipher[ADAPTER_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256]);
-#endif
-            g_caSslContext->cipher = ADAPTER_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256;
-            break;
-        }
-        case MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM:
-        {
-            if (false == g_caSslContext->cipherFlag[1])
-            {
-                OIC_LOG(ERROR, NET_SSL_TAG, "No Credential for ECC");
-                return CA_STATUS_FAILED;
-            }
-#ifdef __WITH_TLS__
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientTlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM]);
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverTlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM]);
-#endif
-#ifdef __WITH_DTLS__
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientDtlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM]);
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverDtlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM]);
-#endif
-            g_caSslContext->cipher = ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CCM;
-            break;
-        }
-        case MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256:
-        {
-            if (false == g_caSslContext->cipherFlag[1])
-            {
-                OIC_LOG(ERROR, NET_SSL_TAG, "No Credential for ECC");
-                return CA_STATUS_FAILED;
-            }
-#ifdef __WITH_TLS__
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientTlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256]);
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverTlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256]);
-#endif
-#ifdef __WITH_DTLS__
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->clientDtlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256]);
-            mbedtls_ssl_conf_ciphersuites(&g_caSslContext->serverDtlsConf,
-                                         tlsCipher[ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256]);
-#endif
-            g_caSslContext->cipher = ADAPTER_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
-            break;
-        }
-        default:
-        {
-            OIC_LOG(ERROR, NET_SSL_TAG, "Unknown cipher");
-            return CA_STATUS_FAILED;
-        }
+        OIC_LOG(WARNING, NET_SSL_TAG, "Unknown cipher");
     }
-    OIC_LOG_V(DEBUG, NET_SSL_TAG, "Selected cipher: 0x%x", cipher);
+    else
+    {
+#ifdef __WITH_TLS__
+        CONF_SSL(&g_caSslContext->clientTlsConf, &g_caSslContext->serverTlsConf,
+        mbedtls_ssl_conf_ciphersuites, tlsCipher[index]);
+#endif
+#ifdef __WITH_DTLS__
+        CONF_SSL(&g_caSslContext->clientDtlsConf, &g_caSslContext->serverDtlsConf,
+        mbedtls_ssl_conf_ciphersuites, tlsCipher[index]);
+#endif
+        OIC_LOG_V(DEBUG, NET_SSL_TAG, "Selected cipher: 0x%x", cipher);
+    }
+    g_caSslContext->cipher = index;
+
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
     return CA_STATUS_OK;
 }
@@ -2213,19 +2214,87 @@ CAResult_t CAsslGenerateOwnerPsk(const CAEndpoint_t *endpoint,
         return CA_STATUS_FAILED;
     }
 
-    uint8_t keyblock[KEY_BLOCK_LEN] = {0};
+    // keyBlockLen set up according to OIC 1.1 Security Specification Section 7.3.2
+    int macKeyLen;
+    int ivSize;
+    int keySize;
+    int keyBlockLen = 0;
+    if (MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256 == g_caSslContext->selectedCipher ||
+        MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 == g_caSslContext->selectedCipher ||
+        MBEDTLS_TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256 == g_caSslContext->selectedCipher ||
+        MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256 == g_caSslContext->selectedCipher)
+    {
+        // 2 * ( 32 + 0 + 16 ) = 96
+        macKeyLen = SHA256_MAC_KEY_LENGTH;
+        ivSize = CBC_IV_LENGTH;
+        keySize = AES128_KEY_LENGTH;
+    }
+    else if (MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM == g_caSslContext->selectedCipher ||
+             MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 == g_caSslContext->selectedCipher)
+    {
+        // 2 * ( 0 + 4 + 16 ) = 40
+        macKeyLen = CCM_MAC_KEY_LENGTH;
+        ivSize = CCM_IV_LENGTH;
+        keySize = AES128_KEY_LENGTH;
+    }
+    else if (MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 == g_caSslContext->selectedCipher)
+    {
+        // 2 * ( 32 + 12 + 16 ) = 120
+        macKeyLen = SHA256_MAC_KEY_LENGTH;
+        ivSize = GCM_IV_LENGTH;
+        keySize = AES128_KEY_LENGTH;
+    }
+    else if (MBEDTLS_TLS_RSA_WITH_AES_256_CBC_SHA256 == g_caSslContext->selectedCipher)
+    {
+        // 2 * ( 32 + 0 + 32 ) = 128
+        macKeyLen = SHA256_MAC_KEY_LENGTH;
+        ivSize = CBC_IV_LENGTH;
+        keySize = AES256_KEY_LENGTH;
+    }
+    else if (MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384 == g_caSslContext->selectedCipher)
+    {
+        // 2 * ( 48 + 0 + 32 ) = 160
+        macKeyLen = SHA384_MAC_KEY_LENGTH;
+        ivSize = CBC_IV_LENGTH;
+        keySize = AES256_KEY_LENGTH;
+    }
+    else if (MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 == g_caSslContext->selectedCipher)
+    {
+        // 2 * ( 48 + 12 + 32 ) = 184
+        macKeyLen = SHA384_MAC_KEY_LENGTH;
+        ivSize = GCM_IV_LENGTH;
+        keySize = AES256_KEY_LENGTH;
+    }
+    else if (MBEDTLS_TLS_RSA_WITH_AES_128_GCM_SHA256 == g_caSslContext->selectedCipher)
+    {
+        // 2 * ( 48 + 12 + 32 ) = 184
+        macKeyLen = SHA256_MAC_KEY_LENGTH;
+        ivSize = GCM_IV_LENGTH;
+        keySize = AES128_KEY_LENGTH;
+    }
+    keyBlockLen = 2 * (macKeyLen + keySize + ivSize);
+
+    uint8_t * keyblock = (uint8_t *)OICMalloc(keyBlockLen);
+    if (NULL == keyblock)
+    {
+        OIC_LOG(ERROR, NET_SSL_TAG, "Failed to OICMalloc for keyblock");
+        ca_mutex_unlock(g_sslContextMutex);
+        return CA_STATUS_FAILED;
+    }
+
     // "key expansion"
     uint8_t lab[] = {0x6b, 0x65, 0x79, 0x20, 0x65, 0x78, 0x70, 0x61, 0x6e, 0x73, 0x69, 0x6f, 0x6e};
     int ret = pHash(tep->master, sizeof(tep->master), lab, sizeof(lab),
                     (tep->random) + RANDOM_LEN, RANDOM_LEN, tep->random, RANDOM_LEN,
-                    keyblock, KEY_BLOCK_LEN);
+                    keyblock, keyBlockLen);
     if (-1 == ret)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "PSK not generated");
         ca_mutex_unlock(g_sslContextMutex);
         return CA_STATUS_FAILED;
     }
-    ret = pHash(keyblock, sizeof(keyblock), label, labelLen,
+
+    ret = pHash(keyblock, keyBlockLen, label, labelLen,
                 rsrcServerDeviceId, rsrcServerDeviceIdLen,
                 provServerDeviceId, provServerDeviceIdLen,
                 ownerPsk, ownerPskSize);
@@ -2236,6 +2305,7 @@ CAResult_t CAsslGenerateOwnerPsk(const CAEndpoint_t *endpoint,
         return CA_STATUS_FAILED;
     }
 
+    OICFree(keyblock);
     ca_mutex_unlock(g_sslContextMutex);
 
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);

@@ -1094,7 +1094,6 @@ static OCStackApplicationResult OwnerCredentialHandler(void *ctx, OCDoHandle UNU
              */
             // TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256 = 0xC037, /**< see RFC 5489 */
             caResult = CASelectCipherSuite(0xC037, endpoint->adapter);
-
             if(CA_STATUS_OK != caResult)
             {
                 OIC_LOG(ERROR, TAG, "Failed to select TLS_NULL_WITH_NULL_NULL");
