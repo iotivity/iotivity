@@ -41,8 +41,10 @@ public class OcPlatformInfo {
 
     /**
      * construct OcPlatformInfo with mandatory fields which cannot be null
-     * manufacturerName cannot be greater than 16 chars
-     * manufacturerUrl cannot be greater than 32 chars
+     *
+     * @param platformId the platform ID
+     * @param manufacturerName manufacturer name cannot be greater than 16 chars
+     * @param manufacturerUrl manufacturer URL cannot be greater than 32 chars
      */
     public OcPlatformInfo(String platformId, String manufacturerName,
                           String manufacturerUrl) {
