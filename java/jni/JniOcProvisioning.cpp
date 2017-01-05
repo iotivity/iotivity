@@ -385,7 +385,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_unsetConfirmNumList
 
     if (OC_STACK_OK != result)
     {
-        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Failed to unser Listener");
+        ThrowOcException(OC_STACK_INVALID_CALLBACK, "Failed to unset Listener");
     }
 
     return result;

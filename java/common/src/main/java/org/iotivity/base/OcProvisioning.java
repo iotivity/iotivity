@@ -34,11 +34,13 @@ import java.util.EnumSet;
 public class OcProvisioning {
 
     /**
-     * Method to Intialize Provisioning Manager.This will load the provisioning
+     * Method to Initialize Provisioning Manager.This will load the provisioning
      * Manager's persistent database.
      *
      * @param dbPath     dbPath file path of the sqlite3 db.
-     * @throws OcException
+     *
+     * @throws OcException Indicate initialization failure.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public static native void provisionInit(String dbPath) throws OcException;
 
@@ -48,8 +50,11 @@ public class OcProvisioning {
      *
      * @param timeout     Timeout in sec.Time to listen for responses before
      *                    returining the Array.
+     *
      * @return            Array of OcSecureResource class objects.
-     * @throws OcException
+     *
+     * @throws OcException Indicate discovery failure.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public  static List<OcSecureResource> discoverUnownedDevices(int timeout) throws OcException {
         return Arrays.asList(OcProvisioning.discoverUnownedDevices1(timeout));
@@ -61,8 +66,11 @@ public class OcProvisioning {
      *
      * @param timeout     Timeout in sec.Time to listen for responses before
      *                    returining the Array.
+     *
      * @return            Array of OcSecureResource class objects.
-     * @throws OcException
+     *
+     * @throws OcException Indicate discovery failure.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public static List<OcSecureResource> discoverOwnedDevices(int timeout) throws OcException {
         return Arrays.asList(OcProvisioning.discoverOwnedDevices1(timeout));
@@ -74,7 +82,10 @@ public class OcProvisioning {
      *  transfer Type
      *
      * @param type     OxmType ownership transfer type.
-     * @throws OcException
+     * @param pinCallbackListener Pin callback Listener.
+     *
+     * @throws OcException Indicate failure registering ownership transfer.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public static void SetownershipTransferCBdata(OxmType type,
             PinCallbackListener pinCallbackListener) throws OcException
@@ -92,7 +103,9 @@ public class OcProvisioning {
      * Server API to set Callback for Displaying stack generated PIN.
      *
      * @param displayPinListener Pin callback Listener to be registered.
-     * @throws OcException
+     *
+     * @throws OcException Indicate failure setting the pin listener callback.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public static native void setDisplayPinListener(DisplayPinListener displayPinListener)
         throws OcException;
@@ -104,9 +117,11 @@ public class OcProvisioning {
     /**
      * API to Set callback for displaying verifNum in verified Just-Works.
      *
-     *@param DisplayNumListener callback Listener to be registered for
-                                            displaying VerifyNUm.
-     *@throws OcException
+     * @param displayNumListener callback Listener to be registered for
+     *                          displaying VerifyNUm.
+     *
+     * @throws OcException Indicate failure setting the DisplayNumListener.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public static native void setDisplayNumListener(
             DisplayNumListener displayNumListener) throws OcException;
@@ -118,8 +133,10 @@ public class OcProvisioning {
     /**
      * API to unregister DisplayNumListener Listener
      *
-     *@return  0 on success, 1 on failure
-     *@throws OcException
+     *@return 0 on success, 1 on failure
+     *
+     *@throws OcException Indicate failure to unregister the DisplayNumListener Listener.
+     *                    Use OcException.GetErrorCode() for more details.
      */
     public static native int unsetDisplayNumListener() throws OcException;
 
@@ -127,8 +144,10 @@ public class OcProvisioning {
      * API to Set callback for getting user confirmation in verified
      * Just-Works
      *
-     *@param ConfirmNumListener callback Listener to be registered for getting user confirmation.
-     *@throws OcException
+     *@param confirmNumListener callback Listener to be registered for getting user confirmation.
+     *
+     *@throws OcException Indicate failure setting the confirmation number Just-Works listener.
+     *                    Use OcException.GetErrorCode() for more details.
      */
     public static native void setConfirmNumListener(ConfirmNumListener
             confirmNumListener) throws OcException;
@@ -141,7 +160,9 @@ public class OcProvisioning {
      * API to unregister ConfirmMutualVerifyNum Listener
      *
      *@return  0 on success, 1 on failure
-     *@throws OcException
+     *
+     *@throws OcException Indicate failure unregistering the ConfirmMutualVerifyNum Listener
+     *                    Use OcException.GetErrorCode() for more details.
      */
     public static native int unsetConfirmNumListener() throws OcException;
 
@@ -149,6 +170,12 @@ public class OcProvisioning {
      * API to set options for Mutual Verified Just-works
      * Default is  for both screen PIN display and get user confirmation.
      *
+     * @param optionMask Verification Method Options
+     *
+     * @return 0 on success
+     *
+     * @throws OcException Indicate failure to set the Mutual Verified Just-works options.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public static int setMVJustWorksOptions(EnumSet<MVJustWorksOptionMask> optionMask) throws OcException {
 
@@ -169,7 +196,9 @@ public class OcProvisioning {
      * @param timeout    timeout in sec for the API to return.
      * @return           Array of OcSecureResource class objects.
      *                   be provisioned.
-     * @throws OcException
+     * @throws OcException Indicate failure to get array of devices.
+     *                     Use OcException.GetErrorCode() for more details.
+     * 
      */
     public static List<OcSecureResource> getDeviceStatusList(int timeout) throws OcException {
         return Arrays.asList(OcProvisioning.getDeviceStatusList1(timeout));
@@ -177,11 +206,15 @@ public class OcProvisioning {
     private static native OcSecureResource[] getDeviceStatusList1(int timeout) throws OcException;
 
     /**
-     *  Method to save the Trust certificate chain to SVR.
+     * Method to save the Trust certificate chain to SVR.
      *
-     *  @param trustCertChain
-     *  @param encodingType
-     *  @throws OcException
+     * @param trustCertChain Trust certificate chain to be saved in Cred of SVR.
+     * @param encodingType Encoding type of trust certificate chain to be saved in Cred of SVR
+     *
+     * @return CredId of saved trust certificate chain in Cred of SVR.
+     *
+     * @throws OcException Indicate failure to save the trust certificate chain.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public static int saveTrustCertChain(byte[] trustCertChain, EncodingType encodingType) throws OcException {
         return saveTrustCertChain1(trustCertChain,encodingType.getValue());
