@@ -1874,13 +1874,6 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
                         {
                             OIC_LOG(INFO, TAG, "Anonymous cipher suite is DISABLED");
                         }
-
-                        if(CA_STATUS_OK !=
-                           CASelectCipherSuite(TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA_256, ehRequest->devAddr.adapter))
-                        {
-                            OIC_LOG(ERROR, TAG, "Failed to select cipher suite");
-                            ret = OC_EH_ERROR;
-                        }
                     }
 
                     break;
