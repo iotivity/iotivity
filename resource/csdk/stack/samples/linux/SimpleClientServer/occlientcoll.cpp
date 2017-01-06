@@ -270,9 +270,9 @@ int InitGetRequestToUnavailableResource(OCClientResponse * clientResponse)
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    ret = OCDoResource(NULL, OC_REST_GET, getQuery.str().c_str(),
-                       &clientResponse->devAddr, 0, ConnType, OC_LOW_QOS,
-                       &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_GET, getQuery.str().c_str(),
+                      &clientResponse->devAddr, 0, ConnType, OC_LOW_QOS,
+                      &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -296,9 +296,9 @@ int InitObserveRequest(OCClientResponse * clientResponse)
     OIC_LOG_PAYLOAD(INFO, payload);
     OCPayloadDestroy(payload);
 
-    ret = OCDoResource(&handle, OC_REST_OBSERVE, obsReg.str().c_str(),
-                       &clientResponse->devAddr, 0, ConnType,
-                       OC_LOW_QOS, &cbData, NULL, 0);
+    ret = OCDoRequest(&handle, OC_REST_OBSERVE, obsReg.str().c_str(),
+                      &clientResponse->devAddr, 0, ConnType,
+                      OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -326,11 +326,13 @@ int InitPutRequest(OCClientResponse * clientResponse)
     OIC_LOG_V(INFO, TAG, "PUT payload from client = ");
     OCPayload* payload = putPayload();
     OIC_LOG_PAYLOAD(INFO, payload);
+
+    ret = OCDoRequest(NULL, OC_REST_PUT, getQuery.str().c_str(),
+                      &clientResponse->devAddr, payload, ConnType,
+                      OC_LOW_QOS, &cbData, NULL, 0);
+
     OCPayloadDestroy(payload);
 
-    ret = OCDoResource(NULL, OC_REST_PUT, getQuery.str().c_str(),
-                       &clientResponse->devAddr, putPayload(), ConnType,
-                       OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -353,9 +355,9 @@ int InitGetRequest(OCClientResponse * clientResponse)
     cbData.cb = getReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    ret = OCDoResource(NULL, OC_REST_GET, getQuery.str().c_str(),
-                       &clientResponse->devAddr, 0, ConnType, OC_LOW_QOS,
-                       &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_GET, getQuery.str().c_str(),
+                      &clientResponse->devAddr, 0, ConnType, OC_LOW_QOS,
+                      &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -375,9 +377,9 @@ int InitDiscovery()
     cbData.cb = discoveryReqCB;
     cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, ConnType,
-                        OC_LOW_QOS,
-            &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, ConnType,
+                      OC_LOW_QOS,
+                      &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");

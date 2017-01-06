@@ -335,8 +335,8 @@ int DeviceDiscovery()
     /* Start a discovery query*/
     OIC_LOG_V(INFO, TAG, "Resource Discovery : %s\n", queryUri);
 
-    ret = OCDoResource(NULL, OC_REST_DISCOVER, queryUri, 0, 0, CT_DEFAULT,
-                       OC_LOW_QOS, &cbData, NULL, 0);
+    ret = OCDoRequest(NULL, OC_REST_DISCOVER, queryUri, 0, 0, CT_DEFAULT,
+                      OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack resource error");
@@ -400,8 +400,8 @@ OCStackResult SendGetRequest(OCDPDev_t* peer)
     cbData.cd = NULL;
 
     OIC_LOG(INFO, TAG, "Request to /a/light ");
-    ret = OCDoResource(&handle, OC_REST_GET, szQueryUri,
-               &endpoint, NULL, peer->connType, OC_LOW_QOS, &cbData, NULL, 0);
+    ret = OCDoRequest(&handle, OC_REST_GET, szQueryUri,
+                      &endpoint, NULL, peer->connType, OC_LOW_QOS, &cbData, NULL, 0);
     if (ret != OC_STACK_OK)
     {
         OIC_LOG_V(ERROR, TAG, "OCDoResource returns error %d with method %d", ret, OC_REST_GET);
