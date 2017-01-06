@@ -37,7 +37,8 @@ public class OcSecureResource {
      *
      *  @param doOwnershipTransferListener  Callback function, which will be called after
      *                                      completion of ownership Transfer.
-     *  @throws OcException
+     *  @throws OcException Failed transfer ownership.
+     *                      Use OcException.GetErrorCode() for more details.
      */
     public native void doOwnershipTransfer(DoOwnershipTransferListener doOwnershipTransferListener)
         throws OcException;
@@ -45,10 +46,11 @@ public class OcSecureResource {
     /**
      *  Method removes device credential from all devices in subnet
      *
-     *  @param timeout
-     *  @param removeDeviceListener         Callback function, which will be called after
-     *                                      completion of removing device.
-     *  @throws OcException
+     *  @param timeout               Maximum wait time for owned device discovery in seconds.
+     *  @param removeDeviceListener  Callback function, which will be called after
+     *                               completion of removing device.
+     *  @throws OcException Failed to remove credential.
+     *                      Use OcException.GetErrorCode() for more details.
      */
     public native void removeDevice(int timeout,  RemoveDeviceListener removeDeviceListener)
         throws OcException;
@@ -59,7 +61,8 @@ public class OcSecureResource {
      *  @param device2                      Second device
      *  @param unlinkDevicesListener        Callback function, which will be called after
      *                                      completion of removing device.
-     *  @throws OcException
+     *  @throws OcException Failed to remove credential.
+     *                      Use OcException.GetErrorCode() for more details.
      */
     public native void unlinkDevices(Object device2, UnlinkDevicesListener unlinkDevicesListener)
         throws OcException;
@@ -68,11 +71,12 @@ public class OcSecureResource {
      *  Method removes the credential and relationship between the two devices.
      *
      *  @param credTypeSet OR'ed Cred Types
-     *  @param keysize
+     *  @param keysize key size
      *  @param device2 Second device
      *  @param provisionCredentialsListener Callback function, which will be called after
      *                                      completion of removing device.
-     *  @throws OcException
+     *  @throws OcException Failed to remove the credential.
+     *                      Use OcException.GetErrorCode() for more details.
      */
     public void provisionCredentials(EnumSet<CredType> credTypeSet, KeySize keysize, Object device2,
             ProvisionCredentialsListener provisionCredentialsListener) throws OcException {
@@ -93,10 +97,11 @@ public class OcSecureResource {
      *  Method to provision the Trust certificate chain to secured device.
      *
      *  @param credTypeSet           OR'ed Cred Types
-     *  @param credId
+     *  @param credId                id of cert
      *  @param provisionTrustCertChainListener Callback function, which will be called after
      *                                      proviosion trust certificate chain.
-     *  @throws OcException
+     *  @throws OcException Failed to provision the Trust certificate chain.
+     *                      Use OcException.GetErrorCode() for more details.
      */
     public void provisionTrustCertChain(EnumSet<CredType> credTypeSet, int credId,
             ProvisionTrustCertChainListener provisionTrustCertChainListener) throws OcException {
@@ -119,7 +124,8 @@ public class OcSecureResource {
      *  @param acl object
      *  @param provisionACLListener         Callback function, which will be called after
      *                                      completion of removing device.
-     *  @throws OcException
+     *  @throws OcException Failed to send ACL information.
+     *                      Use OcException.GetErrorCode() for more details.
      */
     public native void provisionACL(Object acl, ProvisionAclListener provisionACLListener)
         throws OcException;
@@ -136,7 +142,8 @@ public class OcSecureResource {
      *  @param acl2 Second acl
      *  @param provisionPairwiseDevicesListener Callback function, which will be called after
      *                                      completion of removing device.
-     *  @throws OcException
+     *  @throws OcException Failed to provision credentials.
+     *                      Use OcException.GetErrorCode() for more details.
      */
     public void provisionPairwiseDevices(EnumSet<CredType> credTypeSet, KeySize keysize, Object acl1,
             Object device2, Object acl2,
@@ -163,7 +170,8 @@ public class OcSecureResource {
      *  @param edp                      enable (1) / disable (0)
      *  @param provisionDirectPairingListener   Callback function, which will be called after completion
      *                                  of Direct Pairing.
-     *  @throws OcException
+     *  @throws OcException Failed to configure resource.
+     *                      Use OcException.GetErrorCode() for more details.
      */
 
     public void doProvisionDirectPairing(String pin, OicSecPdAcl[] pdacls, List<OcPrmType> type,
@@ -285,6 +293,8 @@ public class OcSecureResource {
     /**
      * Method to get device status (ON/OFF) of a device.
      * @return      ON/OFF
+     * @throws OcException Failed to get device status.
+     *                     Use OcException.GetErrorCode() for more details.
      */
 
     public DeviceStatus getDeviceStatus() throws OcException {
@@ -295,6 +305,8 @@ public class OcSecureResource {
     /**
      * Method to get device  ownership (OWNED/UNOWNED) status.
      * @return      OWNED/UNOWNED
+     * @throws OcException Failed to get ownership status.
+     *                     Use OcException.GetErrorCode() for more details.
      */
 
     public OwnedStatus getOwnedStatus() throws OcException {
