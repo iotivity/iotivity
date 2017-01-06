@@ -337,7 +337,8 @@ public class OcResource {
      * @param onPostListener    event handler The event handler will be invoked with a map of
      *                          attribute name and values.
      * @param qualityOfService  the quality of communication
-     * @throws OcException
+     * @throws OcException Failed to POST.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public void post(String resourceType,
                      String resourceInterface,
@@ -370,6 +371,9 @@ public class OcResource {
      * Method to perform DELETE operation
      *
      * @param onDeleteListener event handler The event handler will have headerOptionList
+     *
+     * @throws OcException Failed to perform DELETE operation.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public native void deleteResource(OnDeleteListener onDeleteListener) throws OcException;
 
@@ -378,6 +382,9 @@ public class OcResource {
      *
      * @param onDeleteListener event handler The event handler will have headerOptionList
      * @param qualityOfService the quality of communication
+     *
+     * @throws OcException Failed to perform DELETE operation.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public void deleteResource(OnDeleteListener onDeleteListener,
                                QualityOfService qualityOfService) throws OcException {
@@ -400,7 +407,8 @@ public class OcResource {
      * @param queryParamsMap    map which can have the query parameter name and value
      * @param onObserveListener event handler The handler method will be invoked with a map
      *                          of attribute name and values.
-     * @throws OcException
+     * @throws OcException Failed to set observation.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public void observe(ObserveType observeType,
                         Map<String, String> queryParamsMap,
@@ -428,7 +436,8 @@ public class OcResource {
      * @param onObserveListener event handler The handler method will be invoked with a map
      *                          of attribute name and values.
      * @param qualityOfService  the quality of communication
-     * @throws OcException
+     * @throws OcException Failed to set observation.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public void observe(ObserveType observeType,
                         Map<String, String> queryParamsMap,
@@ -458,7 +467,8 @@ public class OcResource {
     /**
      * Method to cancel the observation on the resource
      *
-     * @throws OcException
+     * @throws OcException Failed to cancel observation.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public void cancelObserve() throws OcException{
         this.cancelObserve(OcPlatform.getPlatformQualityOfService());
@@ -468,7 +478,8 @@ public class OcResource {
      * Method to cancel the observation on the resource
      *
      * @param qualityOfService the quality of communication
-     * @throws OcException
+     * @throws OcException Failed to cancel observation.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public void cancelObserve(QualityOfService qualityOfService) throws OcException {
 
@@ -486,7 +497,8 @@ public class OcResource {
      *
      * @param headerOptionList List OcHeaderOption where header information(header optionID and
      *                         optionData is passed
-     * @throws OcException
+     * @throws OcException Failed to set header options.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public void setHeaderOptions(List<OcHeaderOption> headerOptionList) throws OcException {
 
@@ -659,7 +671,8 @@ public class OcResource {
      * @param onTopicFoundListener    event handler The handler method will be invoked with a map
      *                                of attribute name and values.
      * @param qualityOfService the quality of communication.
-     * @throws OcException
+     * @throws OcException Failed to discover Topic.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public void discoveryMQTopics(Map<String, String> queryParamsMap,
                                   OnMQTopicFoundListener onTopicFoundListener,
@@ -679,7 +692,7 @@ public class OcResource {
             int qualityOfService) throws OcException;
 
     /**
-     * Method to create Topic into MQ Brober.
+     * Method to create Topic into MQ Broker.
      *
      * @param ocRepresentation  representation of the MQ Broker.
      * @param uri               new MQ Topic uri which want to create.
@@ -687,7 +700,8 @@ public class OcResource {
      * @param onTopicCreatedListener    event handler The handler method will be invoked with a map
      *                                  of attribute name and values.
      * @param qualityOfService the quality of communication.
-     * @throws OcException
+     * @throws OcException Failed to create Topic.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public void createMQTopic(OcRepresentation ocRepresentation,
                               String uri,
@@ -717,7 +731,9 @@ public class OcResource {
      * @param onObserveListener event handler The handler method will be invoked with a map
      *                          of attribute name and values.
      * @param qualityOfService the quality of communication.
-     * @throws OcException
+     * @throws OcException Failed to subscribe on the Topic.
+     *                     Use OcException.GetErrorCode() for more details.
+     * 
      */
     public void subscribeMQTopic(Map<String, String> queryParamsMap,
                                  OnObserveListener onObserveListener,
@@ -740,7 +756,8 @@ public class OcResource {
      * Method to cancel the observation on the Topic.
      *
      * @param qualityOfService the quality of communication.
-     * @throws OcException
+     * @throws OcException Failed to cancel MQTopic subscription.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public void unsubscribeMQTopic(QualityOfService qualityOfService) throws OcException{
 
@@ -761,7 +778,8 @@ public class OcResource {
      * @param onPostListener   event handler The event handler will be invoked with a map of
      *                         attribute name and values.
      * @param qualityOfService the quality of communication.
-     * @throws OcException
+     * @throws OcException Request failure.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public void requestMQPublish(Map<String, String> queryParamsMap,
                      OnPostListener onPostListener,
@@ -788,7 +806,8 @@ public class OcResource {
      * @param onPostListener   event handler The event handler will be invoked with a map of
      *                         attribute name and values.
      * @param qualityOfService the quality of communication.
-     * @throws OcException
+     * @throws OcException Failed to publish MQTopic.
+     *                     Use OcException.GetErrorCode() for more details.
      */
     public void publishMQTopic(OcRepresentation ocRepresentation,
                      Map<String, String> queryParamsMap,
