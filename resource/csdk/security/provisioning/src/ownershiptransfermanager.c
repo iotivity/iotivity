@@ -534,6 +534,7 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
  */
 void DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
 {
+    OIC_LOG(DEBUG, TAG, "IN DTLSHandshakeCB");
     if(NULL != endpoint && NULL != info)
     {
         OIC_LOG_V(INFO, TAG, "Received status from remote device(%s:%d) : %d",
@@ -687,6 +688,7 @@ void DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
             OIC_LOG(ERROR, TAG, "Can not find the OTM Context.");
         }
     }
+    OIC_LOG(DEBUG, TAG, "OUT DTLSHandshakeCB");
 }
 
 /**

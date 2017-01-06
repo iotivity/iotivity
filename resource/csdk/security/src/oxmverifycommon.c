@@ -35,6 +35,7 @@ static UserConfirmContext_t gUserConfirmContext = { .callback = NULL, .context =
 
 void SetDisplayNumCB(void * ptr, DisplayNumCallback displayNumCB)
 {
+    OIC_LOG(DEBUG, TAG, "IN SetDisplayNumCB");
     if (NULL == displayNumCB)
     {
         OIC_LOG(ERROR, TAG, "Failed to set callback for displaying mutualVerifNum");
@@ -42,18 +43,22 @@ void SetDisplayNumCB(void * ptr, DisplayNumCallback displayNumCB)
     }
     gDisplayNumContext.callback = displayNumCB;
     gDisplayNumContext.context = ptr;
+    OIC_LOG(DEBUG, TAG, "OUT SetDisplayNumCB");
 }
 
 void* UnsetDisplayNumCB()
 {
+    OIC_LOG(DEBUG, TAG, "IN UnsetDisplayNumCB");
     void *prevctx = gDisplayNumContext.context;
     gDisplayNumContext.callback = NULL;
     gDisplayNumContext.context= NULL;
+    OIC_LOG(DEBUG, TAG, "OUT UnsetDisplayNumCB");
     return prevctx;
 }
 
 void SetUserConfirmCB(void * ptr, UserConfirmCallback userConfirmCB)
 {
+    OIC_LOG(DEBUG, TAG, "IN SetUserConfirmCB");
     if (NULL == userConfirmCB)
     {
         OIC_LOG(ERROR, TAG, "Failed to set callback to confirm mutualVerifNum");
@@ -61,24 +66,32 @@ void SetUserConfirmCB(void * ptr, UserConfirmCallback userConfirmCB)
     }
     gUserConfirmContext.callback = userConfirmCB;
     gUserConfirmContext.context = ptr;
+    OIC_LOG(DEBUG, TAG, "OUT SetUserConfirmCB");
 }
 
 void* UnsetUserConfirmCB()
 {
+    OIC_LOG(DEBUG, TAG, "IN UnsetUserConfirmCB");
     void *prevctx = gUserConfirmContext.context;
     gUserConfirmContext.callback = NULL;
     gUserConfirmContext.context = NULL;
+    OIC_LOG(DEBUG, TAG, "OUT UnsetUserConfirmCB");
     return prevctx;
 }
 
 void SetVerifyOption(VerifyOptionBitmask_t verifyOption)
 {
+    OIC_LOG(DEBUG, TAG, "IN SetVerifyOption");
     gVerifyOption = verifyOption;
+    OIC_LOG_V(DEBUG, TAG, "VerifyOption set to %d", (int) gVerifyOption);
+    OIC_LOG(DEBUG, TAG, "OUT SetVerifyOption");
 }
 
 OCStackResult VerifyOwnershipTransfer(uint8_t mutualVerifNum [MUTUAL_VERIF_NUM_LEN],
                                     VerifyOptionBitmask_t verifyOption)
 {
+    OIC_LOG(DEBUG, TAG, "IN VerifyOwnershipTransfer");
+    OIC_LOG_V(DEBUG, TAG, "gVerifyOption: %d", (int) gVerifyOption);
     verifyOption = (VerifyOptionBitmask_t)(verifyOption & gVerifyOption);
     if (verifyOption & DISPLAY_NUM)
     {
@@ -87,6 +100,7 @@ OCStackResult VerifyOwnershipTransfer(uint8_t mutualVerifNum [MUTUAL_VERIF_NUM_L
             OIC_LOG(ERROR, TAG, "Callback for displaying verification PIN not registered");
             return OC_STACK_ERROR;
         }
+        OIC_LOG(DEBUG, TAG, "calling displayNumCallback");
         if (OC_STACK_OK != gDisplayNumContext.callback(gDisplayNumContext.context, mutualVerifNum))
         {
             OIC_LOG(ERROR, TAG, "Failed to display verification PIN");
@@ -100,11 +114,13 @@ OCStackResult VerifyOwnershipTransfer(uint8_t mutualVerifNum [MUTUAL_VERIF_NUM_L
             OIC_LOG(ERROR, TAG, "Callback to get user confirmation not registered");
             return OC_STACK_ERROR;
         }
+        OIC_LOG(DEBUG, TAG, "calling userConfirmCallback");
         if (OC_STACK_OK != gUserConfirmContext.callback(gUserConfirmContext.context))
         {
             OIC_LOG(ERROR, TAG, "Failed to get user confirmation");
             return OC_STACK_USER_DENIED_REQ;
         }
     }
+    OIC_LOG(DEBUG, TAG, "OUT VerifyOwnershipTransfer");
     return OC_STACK_OK;
 }
