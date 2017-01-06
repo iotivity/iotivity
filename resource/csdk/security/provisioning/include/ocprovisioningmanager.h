@@ -45,6 +45,14 @@ extern "C" {
 OCStackResult OCInitPM(const char* dbPath);
 
 /**
+ * API to cleanup PDM in case of timeout.
+ * It will remove the PDM_DEVICE_INIT state devices from PDM.
+ *
+ * @return OC_STACK_OK in case of success and other value otherwise.
+ */
+OCStackResult OCPDMCleanupForTimeout();
+
+/**
  * The function is responsible for discovery of owned/unowned device is specified endpoint/deviceID.
  * It will return the found device even though timeout is not exceeded.
  *

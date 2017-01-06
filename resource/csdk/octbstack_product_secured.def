@@ -25,6 +25,7 @@ OCGetCredResource
 OCGetDevInfoFromNetwork
 OCGetLinkedStatus
 OCInitPM
+OCPDMCleanupForTimeout
 OCProvisionACL
 OCSaveACL
 OCProvisionCredentials

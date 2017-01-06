@@ -309,6 +309,14 @@ static void SelectOperationMode(const OCProvisionDev_t *selectedDeviceInfo,
  */
 static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selectedDevice);
 
+/*
+ * Internal function to setup & cleanup PDM to performing provisioning.
+ *
+ * @param[in] selectedDevice   selected device information to performing provisioning.
+ * @return  OC_STACK_OK on success
+ */
+static OCStackResult SetupPDM(const OCProvisionDev_t* selectedDevice);
+
 /**
  * Function to update owner transfer mode
  *
@@ -636,6 +644,9 @@ void DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
                             memcpy(&(newDevDoxm->owner), &emptyUuid, sizeof(OicUuid_t));
                             newDevDoxm->owned = false;
                             otmCtx->attemptCnt++;
+
+                            RemoveOTMContext(otmCtx->selectedDeviceInfo->endpoint.addr,
+                                             otmCtx->selectedDeviceInfo->securePort);
 
                             // In order to re-start ownership transfer, device information should be deleted from PDM.
                             res = PDMDeleteDevice(&(otmCtx->selectedDeviceInfo->doxm->deviceID));
@@ -1871,6 +1882,116 @@ static OCStackResult PostUpdateOperationMode(OTMContext_t* otmCtx)
     return res;
 }
 
+static OCStackResult SetupPDM(const OCProvisionDev_t* selectedDevice)
+{
+    OIC_LOG_V(DEBUG, TAG, "IN %s", __func__);
+
+    PdmDeviceState_t pdmState = PDM_DEVICE_UNKNOWN;
+    OCStackResult res = PDMGetDeviceState(&selectedDevice->doxm->deviceID, &pdmState);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Internal error in PDMGetDeviceState : %d", res);
+        return res;
+    }
+
+    char* strUuid = NULL;
+    bool removeCredReq = false;
+    res = ConvertUuidToStr(&selectedDevice->doxm->deviceID, &strUuid);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG(WARNING, TAG, "Failed to covert uuid to string");
+        return res;
+    }
+
+    if (PDM_DEVICE_UNKNOWN == pdmState && !selectedDevice->doxm->owned)
+    {
+        removeCredReq = true;
+    }
+    else if (PDM_DEVICE_ACTIVE == pdmState && !selectedDevice->doxm->owned)
+    {
+        OIC_LOG_V(WARNING, TAG, "Unowned device[%s] dectected from PDM.", strUuid);
+        OIC_LOG_V(WARNING, TAG, "[%s] will be removed from PDM.", strUuid);
+        res = PDMDeleteDevice(&selectedDevice->doxm->deviceID);
+        if(OC_STACK_OK != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to remove [%s] information from PDM.", strUuid);
+            goto exit;
+        }
+
+        removeCredReq = true;
+    }
+
+    if (removeCredReq)
+    {
+        OIC_LOG_V(WARNING, TAG, "[%s]'s credential will be removed.", strUuid);
+        res = RemoveCredential(&selectedDevice->doxm->deviceID);
+        if (OC_STACK_RESOURCE_DELETED != res)
+        {
+            OIC_LOG_V(WARNING, TAG, "Can not find [%s]'s credential.", strUuid);
+        }
+    }
+
+    //Checking duplication of Device ID.
+    bool isDuplicate = true;
+    res = PDMIsDuplicateDevice(&selectedDevice->doxm->deviceID, &isDuplicate);
+    if (OC_STACK_OK != res)
+    {
+        OIC_LOG_V(ERROR, TAG, "Internal error in PDMIsDuplicateDevice : %d", res);
+        goto exit;
+    }
+
+    if (isDuplicate)
+    {
+        char* strUuid = NULL;
+        res = ConvertUuidToStr(&selectedDevice->doxm->deviceID, &strUuid);
+        if (OC_STACK_OK != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "Failed to convert UUID to str : %d", res);
+            goto exit;
+        }
+
+        if (PDM_DEVICE_STALE == pdmState)
+        {
+            OIC_LOG(INFO, TAG, "Detected duplicated UUID in stale status, "
+                               "device status will revert back to initial status.");
+            res = PDMSetDeviceState(&selectedDevice->doxm->deviceID, PDM_DEVICE_INIT);
+            if (OC_STACK_OK != res)
+            {
+                OIC_LOG_V(ERROR, TAG, "Internal error in PDMSetDeviceState : %d", res);
+                goto exit;
+            }
+        }
+        else if (PDM_DEVICE_INIT == pdmState)
+        {
+            OIC_LOG_V(ERROR, TAG, "[%s]'s ownership transfer process is already started.", strUuid);
+            OICFree(strUuid);
+            res = OC_STACK_DUPLICATE_REQUEST;
+            goto exit;
+        }
+        else
+        {
+            OIC_LOG(ERROR, TAG, "Unknow device status while OTM.");
+            OICFree(strUuid);
+            res = OC_STACK_ERROR;
+            goto exit;
+        }
+    }
+    else
+    {
+        res = PDMAddDevice(&selectedDevice->doxm->deviceID);
+        if (OC_STACK_OK != res)
+        {
+            OIC_LOG_V(ERROR, TAG, "Internal error in PDMAddDevice : %d", res);
+            goto exit;
+        }
+    }
+
+exit:
+    OICFree(strUuid);
+    OIC_LOG_V(DEBUG, TAG, "OUT %s", __func__);
+    return res;
+}
+
 static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selectedDevice)
 {
     OIC_LOG(INFO, TAG, "IN StartOwnershipTransfer");
@@ -1882,71 +2003,14 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
     OTMContext_t* otmCtx = (OTMContext_t*)ctx;
     otmCtx->selectedDeviceInfo = selectedDevice;
 
-    //Checking duplication of Device ID.
-    bool isDuplicate = true;
-    res = PDMIsDuplicateDevice(&selectedDevice->doxm->deviceID, &isDuplicate);
-    if (OC_STACK_OK != res)
+
+    //Setup PDM to perform the OTM, PDM will be cleanup if necessary.
+    res = SetupPDM(selectedDevice);
+    if(OC_STACK_OK != res)
     {
-        OIC_LOG(ERROR, TAG, "Internal error in PDMIsDuplicateDevice");
+        OIC_LOG_V(ERROR, TAG, "SetupPDM error : %d", res);
+        SetResult(otmCtx, res);
         return res;
-    }
-    if (isDuplicate)
-    {
-        PdmDeviceState_t state = PDM_DEVICE_UNKNOWN;
-        res = PDMGetDeviceState(&selectedDevice->doxm->deviceID, &state);
-        if(OC_STACK_OK != res)
-        {
-            OIC_LOG(ERROR, TAG, "Internal error in PDMGetDeviceState");
-            SetResult(otmCtx, res);
-            return res;
-        }
-
-        char* strUuid = NULL;
-        res = ConvertUuidToStr(&selectedDevice->doxm->deviceID, &strUuid);
-        if(OC_STACK_OK != res)
-        {
-            OIC_LOG(ERROR, TAG, "Failed to convert UUID to str");
-            SetResult(otmCtx, res);
-            return res;
-        }
-
-        if(PDM_DEVICE_STALE == state)
-        {
-            OIC_LOG(INFO, TAG, "Detected duplicated UUID in stale status, "
-                               "device status will revert back to initial status.");
-            res = PDMSetDeviceState(&selectedDevice->doxm->deviceID, PDM_DEVICE_INIT);
-            if(OC_STACK_OK != res)
-            {
-                OIC_LOG(ERROR, TAG, "Internal error in PDMSetDeviceState");
-                OICFree(strUuid);
-                SetResult(otmCtx, res);
-                return res;
-            }
-        }
-        else if(PDM_DEVICE_INIT == state)
-        {
-            OIC_LOG_V(ERROR, TAG, "[%s]'s ownership transfer process is already started.", strUuid);
-            OICFree(strUuid);
-            SetResult(otmCtx, OC_STACK_DUPLICATE_REQUEST);
-            return OC_STACK_OK;
-        }
-        else
-        {
-            OIC_LOG(ERROR, TAG, "Unknow device status while OTM.");
-            OICFree(strUuid);
-            SetResult(otmCtx, OC_STACK_ERROR);
-            return OC_STACK_ERROR;
-        }
-    }
-    else
-    {
-        res = PDMAddDevice(&selectedDevice->doxm->deviceID);
-        if(OC_STACK_OK != res)
-        {
-            OIC_LOG(ERROR, TAG, "Internal error in PDMAddDevice");
-            SetResult(otmCtx, res);
-            return res;
-        }
     }
 
     //Select the OxM to performing ownership transfer
@@ -1956,7 +2020,7 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
                                           SUPER_OWNER);
     if(OC_STACK_OK != res)
     {
-        OIC_LOG(ERROR, TAG, "Failed to select the provisioning method");
+        OIC_LOG_V(ERROR, TAG, "Failed to select the provisioning method : %d", res);
         SetResult(otmCtx, res);
         return res;
     }
@@ -1973,7 +2037,7 @@ static OCStackResult StartOwnershipTransfer(void* ctx, OCProvisionDev_t* selecte
     res = PostOwnerTransferModeToResource(otmCtx);
     if(OC_STACK_OK != res)
     {
-        OIC_LOG(WARNING, TAG, "Failed to select the provisioning method");
+        OIC_LOG_V(WARNING, TAG, "Failed to select the provisioning method : %d", res);
         SetResult(otmCtx, res);
         return res;
     }
