@@ -161,11 +161,14 @@ namespace OIC
             }
             inline RCSByteString& operator=(const RCSByteString& rhs)
             {
-                if (!m_data.empty())
+                if(&rhs != this)
                 {
-                    m_data.clear();
+                    if (!m_data.empty())
+                    {
+                        m_data.clear();
+                    }
+                    m_data = DataType{rhs.getByteString()};
                 }
-                m_data = DataType{rhs.getByteString()};
                 return *this;
             }
         private:
