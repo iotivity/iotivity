@@ -1489,7 +1489,7 @@ jobject jListener, jint jResourceProperty)
 /*
 * Class:     org_iotivity_base_OcPlatform
 * Method:    registerDeviceInfo0
-* Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+* Signature: (Ljava/lang/String;[Ljava/lang/String;)V
 */
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerDeviceInfo0(
     JNIEnv *env,
@@ -1693,6 +1693,11 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_registerPlatformInfo0(
         }
 }
 
+/*
+* Class:     org_iotivity_base_OcPlatform
+* Method:    setPropertyValue0
+* Signature: (ILjava/lang/String;[Ljava/lang/String;)V
+*/
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setPropertyValue0
     (JNIEnv *env, jclass clazz, jint jType, jstring jPropName, jobjectArray jPropValue)
 {
@@ -1727,7 +1732,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setPropertyValue0
 /*
 * Class:     org_iotivity_base_OcPlatform
 * Method:    setPropertyValue0
-* Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+* Signature: (ILjava/lang/String;Ljava/lang/String;)V
 */
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setPropertyValue1
     (JNIEnv *env, jclass clazz, jint jType, jstring jPropName, jstring jPropValue)
@@ -1762,10 +1767,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setPropertyValue1
 /*
 * Class:     org_iotivity_base_OcPlatform
 * Method:    getPropertyValue
-* Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+* Signature: (ILjava/lang/String;)Ljava/lang/String;
 */
-JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPropertyValue0
-    (JNIEnv *env, jclass clazz, jint jType, jstring jPropName, jstring jPropValue)
+JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcPlatform_getPropertyValue0
+    (JNIEnv *env, jclass clazz, jint jType, jstring jPropName)
 {
     try
     {
@@ -1781,14 +1786,16 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPropertyValue0
         if (OC_STACK_OK != result)
         {
             ThrowOcException(result, "Failed to get property value.");
-            return;
+            return nullptr;
         }
+        return env->NewStringUTF(propValue.c_str());
     }
     catch (OCException& e)
     {
         LOGE("Error is due to %s", e.reason().c_str());
         ThrowOcException(e.code(), e.reason().c_str());
     }
+    return nullptr;
 }
 
 /*

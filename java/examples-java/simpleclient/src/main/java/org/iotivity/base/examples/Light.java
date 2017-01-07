@@ -64,7 +64,7 @@ public class Light {
     }
 
     public void setName(String name) {
-        this.mName = mName;
+        this.mName = name;
     }
 
     public boolean getState() {

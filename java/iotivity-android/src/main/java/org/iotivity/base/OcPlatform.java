@@ -23,7 +23,6 @@
 package org.iotivity.base;
 
 import org.iotivity.ca.CaInterface;
-import org.iotivity.base.*;
 
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -572,9 +571,12 @@ public final class OcPlatform {
     /**
      * Register Device Info
      *
+     * @deprecated use setPropertyValue instead
+     *
      * @param ocDeviceInfo object containing all the device specific information
      * @throws OcException if failure
      */
+    @Deprecated
     public static void registerDeviceInfo(
             OcDeviceInfo ocDeviceInfo) throws OcException {
         OcPlatform.initCheck();
@@ -592,9 +594,12 @@ public final class OcPlatform {
     ) throws OcException;
 
     /**
-     * Set param Info
+     * Set Property Value (to a single value)
      *
-     * @throws OcException on failure
+     * @param path value from PayloadType
+     * @param propName property name
+     * @param propValue new property value
+     * @throws OcException if failure
      */
     public static void setPropertyValue(
             int path, String propName, String propValue) throws OcException {
@@ -602,16 +607,31 @@ public final class OcPlatform {
         OcPlatform.setPropertyValue1(path, propName, propValue);
     }
 
+    /**
+     * Set Property Value (to a list of values)
+     *
+     * @param path value from PayloadType
+     * @param propName property name
+     * @param propValue new property value
+     * @throws OcException if failure
+     */
     public static void setPropertyValue(
             int path, String propName, List<String> propValue) throws OcException {
         OcPlatform.initCheck();
         OcPlatform.setPropertyValue0(path, propName, propValue.toArray(new String[propValue.size()]));
     }
 
-    public static void getPropertyValue(
-            int path, String propName, String propValue) throws OcException {
+    /**
+     * Get Property Value
+     *
+     * @param path value from PayloadType
+     * @param propName property name
+     * @return the property value, or null if property name is not found
+     * @throws OcException if failure
+     */
+    public static String getPropertyValue(int path, String propName) throws OcException {
         OcPlatform.initCheck();
-        OcPlatform.getPropertyValue0(path, propName, propValue);
+        return OcPlatform.getPropertyValue0(path, propName);
     }
 
     private static native void setPropertyValue1(
@@ -627,10 +647,9 @@ public final class OcPlatform {
             String[] propValue
     ) throws OcException;
 
-    private static native void getPropertyValue0(
+    private static native String getPropertyValue0(
             int path,
-            String propName,
-            String propValue
+            String propName
     ) throws OcException;
 
     /**
@@ -1173,10 +1192,10 @@ public final class OcPlatform {
      * You can only create this object if OCPlatform was initialized to be a Client or
      * Client/Server. Otherwise, this will return an empty shared ptr.
      *
-     * Nnote For now, OCPlatform SHOULD be initialized to be a Client/Server(Both) for the
+     * Note: For now, OCPlatform SHOULD be initialized to be a Client/Server(Both) for the
      *       methods of this object to work since device id is not generated on Client mode.
      *
-     * @param host                Host IP Address of a account server.
+     * @param host Host IP Address of a account server.
      * @param connectivityTypeSet Set of types of connectivity. Example: CT_ADAPTER_IP
      * @return new AccountManager object
      * @throws OcException if failure

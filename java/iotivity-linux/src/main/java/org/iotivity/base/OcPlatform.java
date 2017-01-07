@@ -195,6 +195,10 @@ public final class OcPlatform {
             OcResourceResponse ocResourceResponse) throws OcException {
         OcPlatform.initCheck();
 
+        if (ocObservationIdList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "ocObservationIdList cannot be null");
+        }
+
         byte[] idArr = new byte[ocObservationIdList.size()];
         Iterator<Byte> it = ocObservationIdList.iterator();
         int i = 0;
@@ -233,6 +237,10 @@ public final class OcPlatform {
             OcResourceResponse ocResourceResponse,
             QualityOfService qualityOfService) throws OcException {
         OcPlatform.initCheck();
+
+        if (ocObservationIdList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "ocObservationIdList cannot be null");
+        }
 
         byte[] idArr = new byte[ocObservationIdList.size()];
         Iterator<Byte> it = ocObservationIdList.iterator();
@@ -494,8 +502,8 @@ public final class OcPlatform {
 
     /**
      * This API registers a resource with the server
-     * <p/>
-     * Note: This API applies to server & client side.
+     * <p>
+     * Note: This API applies to server and client side.
      * </P>
      *
      * @param ocResource The instance of OcResource with all data filled
@@ -513,7 +521,7 @@ public final class OcPlatform {
 
     /**
      * This API registers a resource with the server NOTE: This API applies to server side only.
-     * <p/>
+     * <p>
      * Note: This API applies to server side only.
      * </P>
      *
@@ -557,19 +565,85 @@ public final class OcPlatform {
     /**
      * Register Device Info
      *
+     * @deprecated use setPropertyValue instead
+     *
      * @param ocDeviceInfo object containing all the device specific information
      * @throws OcException if failure
      */
+    @Deprecated
     public static void registerDeviceInfo(
             OcDeviceInfo ocDeviceInfo) throws OcException {
         OcPlatform.initCheck();
         OcPlatform.registerDeviceInfo0(
-                ocDeviceInfo.getDeviceName()
+                ocDeviceInfo.getDeviceName(),
+                ocDeviceInfo.getDeviceTypes().toArray(
+                        new String[ocDeviceInfo.getDeviceTypes().size()]
+                )
         );
     }
 
     private static native void registerDeviceInfo0(
-            String deviceName
+            String deviceName,
+            String[] deviceTypes
+    ) throws OcException;
+
+    /**
+     * Set Property Value (to a single value)
+     *
+     * @param path value from PayloadType
+     * @param propName property name
+     * @param propValue new property value
+     * @throws OcException if failure
+     */
+    public static void setPropertyValue(
+            int path, String propName, String propValue) throws OcException {
+        OcPlatform.initCheck();
+        OcPlatform.setPropertyValue1(path, propName, propValue);
+    }
+
+    /**
+     * Set Property Value (to a list of values)
+     *
+     * @param path value from PayloadType
+     * @param propName property name
+     * @param propValue new property value
+     * @throws OcException if failure
+     */
+    public static void setPropertyValue(
+            int path, String propName, List<String> propValue) throws OcException {
+        OcPlatform.initCheck();
+        OcPlatform.setPropertyValue0(path, propName, propValue.toArray(new String[propValue.size()]));
+    }
+
+    /**
+     * Get Property Value
+     *
+     * @param path value from PayloadType
+     * @param propName property name
+     * @return the property value, or null if property name is not found
+     * @throws OcException if failure
+     */
+    public static String getPropertyValue(int path, String propName) throws OcException {
+        OcPlatform.initCheck();
+        return OcPlatform.getPropertyValue0(path, propName);
+    }
+
+    private static native void setPropertyValue1(
+            int path,
+            String propName,
+            String propValue
+    ) throws OcException;
+
+
+    private static native void setPropertyValue0(
+            int path,
+            String propName,
+            String[] propValue
+    ) throws OcException;
+
+    private static native String getPropertyValue0(
+            int path,
+            String propName
     ) throws OcException;
 
     /**
@@ -650,6 +724,11 @@ public final class OcPlatform {
             OcResourceHandle ocResourceCollectionHandle,
             List<OcResourceHandle> ocResourceHandleList) throws OcException {
         OcPlatform.initCheck();
+
+        if (ocResourceHandleList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "ocResourceHandleList cannot be null");
+        }
+
         OcPlatform.bindResources0(
                 ocResourceCollectionHandle,
                 ocResourceHandleList.toArray(
@@ -691,6 +770,11 @@ public final class OcPlatform {
             OcResourceHandle ocResourceCollectionHandle,
             List<OcResourceHandle> ocResourceHandleList) throws OcException {
         OcPlatform.initCheck();
+
+        if (ocResourceHandleList == null) {
+            throw new OcException(ErrorCode.INVALID_PARAM, "ocResourceHandleList cannot be null");
+        }
+
         OcPlatform.unbindResources0(
                 ocResourceCollectionHandle,
                 ocResourceHandleList.toArray(
@@ -853,6 +937,43 @@ public final class OcPlatform {
             OcPresenceHandle ocPresenceHandle) throws OcException;
 
     /**
+     * Subscribes to a server's device presence change events.
+     *
+     * @param host                The IP address/addressable name of the server to subscribe to.
+     * @param di                  Vector which can have the devices id.
+     * @param connectivityTypeSet Set of connectivity types, e.g. IP.
+     * @param onObserveListener   The handler method will be invoked with a map
+     *                            of attribute name and values.
+     * @return a handle object that can be used to identify this subscription request.
+     *         It can be used to unsubscribe from these events in the future.
+     * @throws OcException if failure.
+     */
+    public static OcPresenceHandle subscribeDevicePresence(
+            String host,
+            List<String> di,
+            EnumSet<OcConnectivityType> connectivityTypeSet,
+            OcResource.OnObserveListener onObserveListener) throws OcException {
+        OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+                connTypeInt |= connType.getValue();
+        }
+        return OcPlatform.subscribeDevicePresence0(
+                host,
+                di.toArray(new String[di.size()]),
+                connTypeInt,
+                onObserveListener);
+    }
+
+    private static native OcPresenceHandle subscribeDevicePresence0(
+            String host,
+            String[] di,
+            int connectivityType,
+            OcResource.OnObserveListener onObserveListener) throws OcException;
+
+    /**
      * Creates a resource proxy object so that get/put/observe functionality can be used without
      * discovering the object in advance. Note that the consumer of this method needs to provide
      * all of the details required to correctly contact and observe the object. If the consumer
@@ -920,11 +1041,87 @@ public final class OcPlatform {
             throws OcException;
 
     /**
+     *  Method to find all devices which are eligible for direct pairing and return the list.
+     *
+     *  @param timeout timeout for discovering direct pair devices.
+     *  @param onFindDirectPairingListener Callback function, which will receive the list of direct
+     *                                  pairable devices.
+     *  @throws OcException
+     */
+   public static native void findDirectPairingDevices(int timeout,
+            FindDirectPairingListener onFindDirectPairingListener) throws OcException;
+
+    /**
+     *  Method to get list of all paired devices for a given device.
+     *
+     *  @param onGetDirectPairedListener Callback function, which will receive the list of direct
+     *                                 paired devices.
+     *  @throws OcException
+     */
+    public native void getDirectPairedDevices(GetDirectPairedListener onGetDirectPairedListener)
+        throws OcException;
+
+    /**
+     *  Method to perform direct pairing between two devices.
+     *
+     *  @param peer  Target peer
+     *  @param prmType Pairing Method to be used for Pairing
+     *  @param pin pin
+     *  @param onDirectPairingListener Callback function, which will be called after
+     *                                      completion of direct pairing.
+     *  @throws OcException
+     */
+    public static void doDirectPairing(
+            OcDirectPairDevice peer,
+            OcPrmType prmType,
+            String pin,
+            DirectPairingListener onDirectPairingListener) throws OcException {
+
+        OcPlatform.doDirectPairing0(
+                peer,
+                prmType.getValue(),
+                pin,
+                onDirectPairingListener
+                );
+    }
+
+    private static native void doDirectPairing0(OcDirectPairDevice peer,
+            int pmSel, String pinNumber, DirectPairingListener onDirectPairingListener)
+    throws OcException;
+
+    /**
+     * An FindDirectPairingListener can be registered via the OcPlatform.findDirectPairingDevices call.
+     * Event listeners are notified asynchronously
+     */
+    public interface FindDirectPairingListener {
+        public void onFindDirectPairingListener(List<OcDirectPairDevice> ocPairedDeviceList);
+    }
+
+    /**
+     * Listerner to Get List of already Direct Paired devices.
+     * An GetDirectPairedListener can be registered via the OcPlatform.getDirectPairedDevices call.
+     * Event listeners are notified asynchronously
+     */
+    public interface GetDirectPairedListener {
+        public void onGetDirectPairedListener(List<OcDirectPairDevice> ocPairedDeviceList);
+    }
+
+    /**
+     * Listner to get result of doDirectPairing.
+     * An DirectPairingListener can be registered via the OcPlatform.doDirectPairing call.
+     * Event listeners are notified asynchronously
+     */
+    public interface DirectPairingListener {
+        public void onDirectPairingListener(String devId, int result);
+    }
+
+    /**
      * An OnResourceFoundListener can be registered via the OcPlatform.findResource call.
      * Event listeners are notified asynchronously
      */
     public interface OnResourceFoundListener {
         public void onResourceFound(OcResource resource);
+        public void onFindResourceFailed(Throwable ex, String uri);
     }
 
     /**
@@ -954,6 +1151,14 @@ public final class OcPlatform {
     /**
      * An EntityHandler can be registered via the OcPlatform.registerResource call.
      * Event listeners are notified asynchronously
+     *
+     * Note: entityhandler callback :
+     * When you set specific return value like EntityHandlerResult.OK, SLOW
+     * and etc in entity handler callback,
+     * ocstack will be not send response automatically to client
+     * except for error return value like EntityHandlerResult.ERROR
+     * If you want to send response to client with specific result,
+     * sendResponse API should be called with the result value.
      */
     public interface EntityHandler {
         public EntityHandlerResult handleEntity(OcResourceRequest ocResourceRequest);
@@ -975,4 +1180,49 @@ public final class OcPlatform {
         OcPlatform.initCheck();
         return sPlatformQualityOfService;
     }
+
+    /**
+     * Create an account manager object that can be used for doing request to account server.
+     * You can only create this object if OCPlatform was initialized to be a Client or
+     * Client/Server. Otherwise, this will return an empty shared ptr.
+     *
+     * Note: For now, OCPlatform SHOULD be initialized to be a Client/Server(Both) for the
+     *       methods of this object to work since device id is not generated on Client mode.
+     *
+     * @param host Host IP Address of a account server.
+     * @param connectivityTypeSet Set of types of connectivity. Example: CT_ADAPTER_IP
+     * @return new AccountManager object
+     * @throws OcException if failure
+     */
+    public static OcAccountManager constructAccountManagerObject(
+            String host,
+            EnumSet<OcConnectivityType> connectivityTypeSet) throws OcException {
+        OcPlatform.initCheck();
+        int connTypeInt = 0;
+
+        for (OcConnectivityType connType : OcConnectivityType.values()) {
+            if (connectivityTypeSet.contains(connType))
+            {
+                connTypeInt |= connType.getValue();
+            }
+        }
+        return OcPlatform.constructAccountManagerObject0(
+                host,
+                connTypeInt
+                );
+    }
+
+    private static native OcAccountManager constructAccountManagerObject0(
+            String host,
+            int connectivityType) throws OcException;
+    /**
+     * Method to get device Id in byte array.
+     * @return My DeviceId.
+     */
+    public static native byte[] getDeviceId();
+
+    /**
+     * Method to set DeviceId.
+     */
+    public static native void setDeviceId(byte[] deviceId) throws OcException;
 }

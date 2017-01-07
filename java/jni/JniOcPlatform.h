@@ -214,7 +214,7 @@ extern "C" {
     /*
     * Class:     org_iotivity_base_OcPlatform
     * Method:    setPropertyValue0
-    * Signature: (Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)V
+    * Signature: (ILjava/lang/String;[Ljava/lang/String;)V
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setPropertyValue0
         (JNIEnv *, jclass, jint, jstring, jobjectArray);
@@ -222,7 +222,7 @@ extern "C" {
     /*
     * Class:     org_iotivity_base_OcPlatform
     * Method:    setPropertyValue1
-    * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+    * Signature: (ILjava/lang/String;Ljava/lang/String;)V
     */
     JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setPropertyValue1
         (JNIEnv *, jclass, jint, jstring, jstring);
@@ -230,10 +230,10 @@ extern "C" {
     /*
     * Class:     org_iotivity_base_OcPlatform
     * Method:    getPropertyValue0
-    * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+    * Signature: (ILjava/lang/String;)Ljava/lang/String;
     */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_getPropertyValue0
-        (JNIEnv *, jint, jstring, jstring);
+    JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcPlatform_getPropertyValue0
+        (JNIEnv *, jclass, jint, jstring);
 
     /*
     * Class:     org_iotivity_base_OcPlatform
