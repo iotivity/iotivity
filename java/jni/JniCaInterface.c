@@ -411,6 +411,24 @@ Java_org_iotivity_ca_CaInterface_stopLeScanImpl(JNIEnv *env, jclass clazz)
     CAUtilStopLEScan();
 }
 
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaInterface_startLeAdvertisingImpl(JNIEnv *env, jclass clazz)
+{
+    LOGI("startLeAdvertising");
+    (void)env;
+    (void)clazz;
+    CAUtilStartLEAdvertising();
+}
+
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaInterface_stopLeAdvertisingImpl(JNIEnv *env, jclass clazz)
+{
+    LOGI("stopLeAdvertising");
+    (void)env;
+    (void)clazz;
+    CAUtilStopLEAdvertising();
+}
+
 JNIEXPORT jint JNICALL Java_org_iotivity_ca_CaInterface_setCipherSuiteImpl
   (JNIEnv *env, jclass clazz, jint cipherSuite, jint adapter)
 {

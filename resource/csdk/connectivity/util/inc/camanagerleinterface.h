@@ -78,8 +78,19 @@ void CAManagerLESetScanInterval(jint intervalTime, jint workingCount);
  * stop BLE scan.
  */
 void CAManagerLEStopScan();
-
 #endif
+
+/**
+ * start BLE advertising.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAManagerLEStartAdvertising();
+
+/**
+ * stop BLE advertising.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAManagerLEStopAdvertising();
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -312,4 +312,28 @@ CAResult_t CAUtilStopLEScan()
     return CA_NOT_SUPPORTED;
 #endif
 }
+#endif // __JAVA__
+
+#if defined(LE_ADAPTER)
+CAResult_t CAUtilStartLEAdvertising()
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilStartLEAdvertising");
+#if defined(__ANDROID__) || defined(__TIZEN__)
+    return CAManagerLEStartAdvertising();
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
+#endif
+}
+
+CAResult_t CAUtilStopLEAdvertising()
+{
+    OIC_LOG(DEBUG, TAG, "CAUtilStopLEAdvertising");
+#if defined(__ANDROID__) || defined(__TIZEN__)
+    return CAManagerLEStopAdvertising();
+#else
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
+#endif
+}
 #endif

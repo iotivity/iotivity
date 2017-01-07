@@ -218,6 +218,22 @@ public class CaInterface {
     }
     private static native void stopLeScanImpl();
 
+    /**
+     *  start BLE Advertising.
+     */
+    public synchronized static void startLeAdvertising(){
+        CaInterface.startLeAdvertisingImpl();
+    }
+    private static native void startLeAdvertisingImpl();
+
+    /**
+     *  stop BLE Advertising.
+     */
+    public synchronized static void stopLeAdvertising(){
+        CaInterface.stopLeAdvertisingImpl();
+    }
+    private static native void stopLeAdvertisingImpl();
+
     public synchronized static int setCipherSuite(OicCipher cipher, OcConnectivityType connType){
         return CaInterface.setCipherSuiteImpl(cipher.getValue(), connType.getValue());
     }

@@ -196,6 +196,21 @@ CAResult_t CAUtilSetLEScanInterval(jint intervalTime, jint workingCount);
 CAResult_t CAUtilStopLEScan();
 #endif //__JAVA__
 
+#if defined(LE_ADAPTER)
+// BLE util
+/**
+ * start BLE advertising.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAUtilStartLEAdvertising();
+
+/**
+ * stop BLE advertising.
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAUtilStopLEAdvertising();
+#endif // LE_ADAPTER
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif //__cplusplus

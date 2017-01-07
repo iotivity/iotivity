@@ -292,6 +292,26 @@ void CAManagerLEStopScan()
     CALERestartScanWithInterval(0, 0, BLE_SCAN_DISABLE);
 }
 
+CAResult_t CAManagerLEStartAdvertising()
+{
+    CAResult_t ret = CALEServerStartAdvertise();
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "CALEServerStartAdvertise has failed");
+    }
+    return ret;
+}
+
+CAResult_t CAManagerLEStopAdvertising()
+{
+    CAResult_t ret = CALEServerStopAdvertise();
+    if (CA_STATUS_OK != ret)
+    {
+        OIC_LOG(ERROR, TAG, "CALEServerStopAdvertise has failed");
+    }
+    return ret;
+}
+
 JNIEXPORT void JNICALL
 Java_org_iotivity_ca_CaLeClientInterface_caManagerAdapterStateChangedCallback(
         JNIEnv *env, jobject obj, jint state)
