@@ -50,28 +50,30 @@ void CASetLENetworkMonitorCallbacks(CAAdapterStateChangedCB adapterStateCB,
     CASetLEConnectionStateChangedCallback(CAManagerConnectionMonitorHandler);
 }
 
-void CAStartServerLEAdvertising()
+CAResult_t CAManagerLEStartAdvertising()
 {
-    OIC_LOG(DEBUG, TAG, "CAStartServerLEAdvertising");
+    OIC_LOG(DEBUG, TAG, "CAManagerLEStartAdvertising");
 
-    CAResult_t res = CALEStartAdvertise(CA_GATT_SERVICE_UUID);
+    CAResult_t res = CALEStartAdvertise();
     if (CA_STATUS_OK != res)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to start le advertising [%d]", res);
-        return;
+        return res;
     }
+    return res;
 }
 
-void CAStopServerLEAdvertising()
+CAResult_t CAManagerLEStopAdvertising()
 {
-    OIC_LOG(DEBUG, TAG, "CAStopServerLEAdvertising");
+    OIC_LOG(DEBUG, TAG, "CAManagerLEStopAdvertising");
 
     CAResult_t res = CALEStopAdvertise();
     if (CA_STATUS_OK != res)
     {
         OIC_LOG_V(ERROR, TAG, "Failed to stop le advertising [%d]", res);
-        return;
+        return res;
     }
+    return res;
 }
 
 CAResult_t CASetLEClientAutoConnectionDeviceInfo(const char * address)

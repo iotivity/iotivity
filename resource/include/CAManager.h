@@ -74,6 +74,18 @@ namespace OC
         */
         uint16_t getAssignedPortNumber(OCTransportAdapter adapter, OCTransportFlags flag);
 
+        /**
+         * start BLE advertising.
+        * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult startLEAdvertising();
+
+        /**
+         * stop BLE advertising.
+        * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult stopLEAdvertising();
+
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         /**
          * Select the cipher suite for TLS/DTLS handshake.

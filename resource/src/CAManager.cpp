@@ -134,3 +134,17 @@ OCStackResult CAManager::setCipherSuite(const uint16_t cipher, OCTransportAdapte
     return convertCAResultToOCResult(ret);
 }
 #endif // defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+
+OCStackResult CAManager::startLEAdvertising()
+{
+    CAResult_t ret = CAUtilStartLEAdvertising();
+
+    return convertCAResultToOCResult(ret);
+}
+
+OCStackResult CAManager::stopLEAdvertising()
+{
+    CAResult_t ret = CAUtilStopLEAdvertising();
+
+    return convertCAResultToOCResult(ret);
+}
