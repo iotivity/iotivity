@@ -493,6 +493,53 @@ namespace OIC
 #ifdef MULTIPLE_OWNER
                     else
                     {
+                        OCUUIdentity* mediatorDevId = (OCUUIdentity* )OICMalloc(sizeof(OCUUIdentity));
+
+                        if(!mediatorDevId)
+                        {
+                            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "provisionOwnership: OICMalloc error return");
+                            res = ESResult::ES_OWNERSHIP_TRANSFER_FAILURE;
+                            return res;
+                        }
+
+                        if(OC::OCPlatform::getDeviceId(mediatorDevId) != OC_STACK_OK)
+                        {
+                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "getDeviceId is failed.");
+                            res = ESResult::ES_OWNERSHIP_TRANSFER_FAILURE;
+                            OICFree(mediatorDevId);
+                            return res;
+                        }
+
+                        if(!memcmp(m_securedResource->getDevPtr()->doxm->owner.id,
+                                   mediatorDevId->id, UUID_IDENTITY_SIZE * sizeof(uint8_t)))
+                        {
+                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,
+                                "The found device's owner ID is same as Mediator's ID but Meditor does not know it");
+                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Only Mediator would be reset");
+                            res = ESResult::ES_OWNERSHIP_IS_NOT_SYNCHRONIZED;
+                            OICFree(mediatorDevId);
+                            return res;
+                        }
+
+                        OicSecSubOwner_t* subOwnerList = m_securedResource->getDevPtr()->doxm->subOwners;
+
+                        while(subOwnerList)
+                        {
+                            if(!memcmp(subOwnerList->uuid.id, mediatorDevId->id,
+                                UUID_IDENTITY_SIZE * sizeof(uint8_t)))
+                            {
+                                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,
+                                    "The found device's subOwner ID is same as Mediator's ID but Meditor does not know it");
+                                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Only Mediator would be reset");
+                                res = ESResult::ES_OWNERSHIP_IS_NOT_SYNCHRONIZED;
+                                OICFree(mediatorDevId);
+                                return res;
+                            }
+                            subOwnerList = subOwnerList->next;
+                        }
+
+                        OICFree(mediatorDevId);
+
                         res = performMultipleOwnershipTransfer();
 
                         if(res != ESResult::ES_OK)

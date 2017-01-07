@@ -174,7 +174,10 @@ typedef enum
     ES_SECURE_RESOURCE_DISCOVERY_FAILURE,
 
     /**
-     * Ownership transfer fails because DTLS handshake failure happens
+     * Ownership transfer fails due to one of unexpected reasons.
+     * E.g. A packet loss even with retransmission happens during ownership transfer.
+     * E.g. Mediator's owned status is 'unowned'
+     * E.g. A user confirmation for random pin-based or certificate-based OT fails
      */
     ES_OWNERSHIP_TRANSFER_FAILURE,
 
@@ -201,6 +204,14 @@ typedef enum
      * A provisioning of Pre-configured pin number for MOT is failed
      */
     ES_PRE_CONFIG_PIN_PROVISIONING_FAILURE,
+
+    /**
+     * The found enrollee's owner ID indicates a same ID of mediator.
+     * However, a list of owned devices managed in mediator's PMD db has no element for the found enrollee.
+     * That can happen where only mediator is reset without any inform to the enrollee.
+     * To proceed an ownership transfer to the enrollee, it needs to reset the enrollee's SVR DB for its owner, i.e. the mediator
+     */
+    ES_OWNERSHIP_IS_NOT_SYNCHRONIZED,
 
     /**
      * Provisioning fails for some reason.
