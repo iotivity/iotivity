@@ -1368,9 +1368,13 @@ CAResult_t CAinitSslAdapter()
     /* Initialize TLS library
      */
 #if !defined(NDEBUG) || defined(TB_LOG)
+#ifdef MBEDTLS_VERSION_C
     char version[MBED_TLS_VERSION_LEN];
     mbedtls_version_get_string(version);
     OIC_LOG_V(INFO, NET_SSL_TAG, "mbed TLS version: %s", version);
+#else
+    OIC_LOG_V(INFO, NET_SSL_TAG, "mbed TLS version: %s", MBEDTLS_VERSION_STRING);
+#endif
 #endif
 
     /* Entropy settings
