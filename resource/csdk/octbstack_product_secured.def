@@ -48,6 +48,7 @@ OCSetOxmAllowStatus
 
 SetDisplayPinWithContextCB
 UnsetDisplayPinWithContextCB
+SetDeviceIdSeed
 SetGeneratePinCB
 UnsetGeneratePinCB
 SetInputPinCB

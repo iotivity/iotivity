@@ -158,3 +158,25 @@ TEST(ConvertStrToUuidTest, EmptyStringConversion)
         EXPECT_EQ((uint8_t)0, uuid.id[i]);
     }
 }
+
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+TEST(SetUuidSeedTest, NullParam)
+{
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SetDeviceIdSeed(NULL, 0));
+}
+
+TEST(SetUuidSeedTest, InvalidParam)
+{
+    uint8_t seed[1024] = {0};
+
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SetDeviceIdSeed(seed, 0));
+    EXPECT_EQ(OC_STACK_INVALID_PARAM, SetDeviceIdSeed(seed, sizeof(seed)));
+}
+
+TEST(SetUuidSeedTest, ValidValue)
+{
+    uint8_t seed[16] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+                        0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10};
+    EXPECT_EQ(OC_STACK_OK, SetDeviceIdSeed(seed, sizeof(seed)));
+}
+#endif

@@ -122,6 +122,19 @@ OCStackResult ConvertUuidToStr(const OicUuid_t* uuid, char** strUuid);
 OCStackResult ConvertStrToUuid(const char* strUuid, OicUuid_t* uuid);
 
 
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+/**
+ * API to save the seed value to generate device UUID.
+ * Seed value MUST be unique per device (e.g. MAC address)
+ *
+ * @param seed buffer of seed value.
+ * @param seedSize byte length of seed
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult SetDeviceIdSeed(const uint8_t* seed, size_t seedSize);
+#endif
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
