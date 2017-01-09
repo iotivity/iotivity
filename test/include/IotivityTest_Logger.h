@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  ******************************************************************/
-#pragma GCC diagnostic ignored "-Wformat-zero-length"
+#pragma GCC diagnostic ignored "-Wformat"
 #ifndef INCLUDE_IOTIVITYTEST_LOGGER_H_
 #define INCLUDE_IOTIVITYTEST_LOGGER_H_
 
@@ -25,9 +25,17 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <ctime>
+#include <iostream>
+#define BOOST_NO_CXX11_SCOPED_ENUMS
+#include <boost/filesystem.hpp>
+#undef BOOST_NO_CXX11_SCOPED_ENUMS
+#include "boost/assign.hpp"
 
+#ifdef __GNUC__
+#pragma GCC system_header
+#endif
 #include <logger.h>
-#include "CommonUtil.h"
 
 //if ISLOG is 0, log will be not printed
 #ifndef ISLOG
@@ -38,11 +46,50 @@
 #define LOG_LEVEL 0
 #endif
 
+#ifdef __TIZEN__
+#define INIT_LEVEL -3
+/*calibrating log level of tizen to linux (see enum LogLevel in logger.h and enum log_priority in dlog.h)*/
+#else
+#define INIT_LEVEL 0
+#endif
+
 // Max buffer size used in variable argument log function
 #define MAX_LOG_BUFFER_SIZE (8192)
 static const char * LEVEL[] __attribute__ ((unused)) =
 { "DEBUG", "INFO", "WARNING", "ERROR", "FATAL" };
 static const char * envLogWriteFile = "NOLOGFILE";
+
+static const char* GetTimeStampString()
+{
+    static char time_string[128] = "";
+
+    time_t now = time(0);
+    struct tm* now_tm = localtime(&now);
+
+    snprintf(time_string, sizeof(time_string), "%d-%02d-%02d %02d:%02d:%02d",
+            now_tm->tm_year + 1900, now_tm->tm_mon + 1, now_tm->tm_mday, now_tm->tm_hour,
+            now_tm->tm_min, now_tm->tm_sec);
+
+    return time_string;
+}
+
+static void mkDir(std::string dir)
+{
+#ifdef __LINUX__
+    try
+    {
+        boost::filesystem::create_directories(dir);
+    }
+    catch (std::exception const& e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+
+#endif
+#ifdef __TIZEN__
+    boost::filesystem::create_directories(dir);
+#endif
+}
 
 #define __DEFAULT_LOG__
 
@@ -61,16 +108,17 @@ static const char * envLogWriteFile = "NOLOGFILE";
 #ifdef __DEFAULT_LOG__
 
 static FILE* g_logfile_out = NULL;
+
 #define IOTIVITYTEST_LOG(level,format,...) do{ \
-        if(level!=DEBUG||ISLOG){ \
-            if(level >= LOG_LEVEL && LOG_LEVEL>-1) { \
+        if(INIT_LEVEL+level!=DEBUG||ISLOG){ \
+            if(INIT_LEVEL+level >= LOG_LEVEL && LOG_LEVEL>-1) { \
                 char buffer[MAX_LOG_BUFFER_SIZE]; \
                 char start_color[5][20] = {"", "", "", "\033[1;31m", ""}; \
                 char end_color[] = "\033[0m"; \
-                if(level==INFO) { \
-                    sprintf(buffer,""); \
+                if(INIT_LEVEL+level==INFO) { \
+                    buffer[0] = 0; \
                 } else { \
-                    sprintf(buffer,"%s[%s][%s][%s:%d]%s: ", start_color[level], CommonUtil::GetTimeStampString(), LEVEL[level], __FILE__,__LINE__, end_color); \
+                    sprintf(buffer,"%s[%s][%s][%s:%d]%s: ", start_color[INIT_LEVEL+level], GetTimeStampString(), LEVEL[INIT_LEVEL+level], __FILE__,__LINE__, end_color); \
                 } \
                 vPrintf(buffer,format,##__VA_ARGS__); \
             }} \
@@ -88,20 +136,20 @@ static FILE* _initLogFile()
 {
     if (g_logfile_out == NULL)
     {
-        const char* timestamp = CommonUtil::GetTimeStampString();
+        const char* timestamp = GetTimeStampString();
         std::string dirName = "log";
         std::string filename = "";
 
 #ifdef __LINUX__
         std::string appName;
         std::string fullpath = splitFilename(std::string(getenv("_")), appName);
-        CommonUtil::mkDir(fullpath + "/" + dirName);
+        mkDir(fullpath + "/" + dirName);
 
         filename = (fullpath + "/" + dirName + "/" + appName + "_" + timestamp + ".log");
 #endif
 
 #ifdef __TIZEN__
-        CommonUtil::mkDir(dirName);
+        mkDir(dirName);
         extern char *__progname;
         filename = (dirName + "/" + std::string(__progname) + "_" + timestamp + ".log");
 #endif
