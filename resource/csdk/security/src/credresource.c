@@ -1867,6 +1867,17 @@ static OCEntityHandlerResult HandlePostRequest(OCEntityHandlerRequest * ehReques
                         {
                             OIC_LOG(INFO, TAG, "Anonymous cipher suite is DISABLED");
                         }
+
+                        if(CA_STATUS_OK != CASelectCipherSuite(
+                                    MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256, CA_ADAPTER_IP))
+                        {
+                            OIC_LOG(ERROR, TAG, "Failed to enable PSK cipher suite");
+                            ret = OC_EH_ERROR;
+                        }
+                        else
+                        {
+                            OIC_LOG(INFO, TAG, "PSK cipher suite is ENABLED");
+                        }
                     }
 
                     break;
