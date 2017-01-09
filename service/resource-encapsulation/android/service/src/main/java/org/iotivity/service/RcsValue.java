@@ -88,6 +88,8 @@ public final class RcsValue {
          *
          * For non sequence types, it is equivalent to calling {@link #getId()}.
          *
+         * @param t type to get the TypeId for
+         *
          * @return identifier of type
          *
          * @see getDepth
@@ -100,7 +102,9 @@ public final class RcsValue {
         /**
          * Returns the depth of a type.
          *
-         * The return will be zero for non sequence types.
+         * @param t the type to return the depth
+         *
+         * @return will be zero for non sequence types.
          *
          * @see getBaseTypeId
          */
@@ -112,13 +116,14 @@ public final class RcsValue {
          * Factory method to create Type instance from an object.
          * Note that object must be a supported type by RcsValue.
          *
+         * @param obj object used to create Type instance from
+         *
          * @return An instance that has TypeId for obj.
          *
          * @throws NullPointerException
          *             if obj is null.
          * @throws IllegalArgumentException
          *             if obj is not supported type.
-         *
          */
         public static Type typeOf(Object obj) {
             if (obj == null) {
@@ -132,13 +137,14 @@ public final class RcsValue {
          * Factory method to create Type instance from a class.
          * Note that class must be a supported type by RcsValue.
          *
+         * @param cls class to make Type instance from
+         *
          * @return An instance that has TypeId for class.
          *
          * @throws NullPointerException
          *             if cls is null.
          * @throws IllegalArgumentException
          *             if cls is not supported type.
-         *
          */
         public static Type typeOf(Class<?> cls) {
             if (cls == null) {
@@ -502,7 +508,7 @@ public final class RcsValue {
 
     /**
      * Constructs a new value that holds a RcsResourceAttributes array.
-     *
+     * @param value RcsResourceAttributes array
      * @throws NullPointerException
      *             if value is null.
      */
@@ -571,7 +577,7 @@ public final class RcsValue {
 
     /**
      * Returns the value as T.
-     *
+     * @param <T> the value type
      * @return a value as T
      *
      * @throws ClassCastException
