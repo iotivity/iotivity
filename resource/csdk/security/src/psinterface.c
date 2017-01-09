@@ -639,6 +639,15 @@ OCStackResult CreateResetProfile(void)
             cbor_parser_init(dbData, dbSize, 0, &parser, &cbor);
             CborValue curVal = {0};
             CborError cborFindResult = CborNoError;
+
+            // abort if reset profile exists
+            cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_RESET_PF_NAME, &curVal);
+            if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
+            {
+                OIC_LOG(DEBUG, TAG, "Reset Profile already exists!!");
+                return ret;
+            }
+
             cborFindResult = cbor_value_map_find_value(&cbor, OIC_JSON_ACL_NAME, &curVal);
             if (CborNoError == cborFindResult && cbor_value_is_byte_string(&curVal))
             {
