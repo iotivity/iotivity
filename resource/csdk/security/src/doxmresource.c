@@ -50,6 +50,7 @@
 #include "oxmverifycommon.h"
 
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+#include "mbedtls/md.h"
 #include "pkix_interface.h"
 #endif
 
@@ -62,6 +63,17 @@ static const uint16_t CBOR_SIZE = 512;
 
 /** Max cbor size payload. */
 static const uint16_t CBOR_MAX_SIZE = 4400;
+
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+/** MAX uuid seed size */
+#define MAX_UUID_SEED_SIZE (64)
+/** MIN uuid seed size */
+#define MIN_UUID_SEED_SIZE (8)
+
+/** Buffer to save the seed of device UUID */
+static uint8_t gUuidSeed[MAX_UUID_SEED_SIZE];
+static size_t gUuidSeedSize = 0;
+#endif
 
 static OicSecDoxm_t        *gDoxm = NULL;
 static OCResourceHandle    gDoxmHandle = NULL;
@@ -1535,6 +1547,7 @@ static OCStackResult CheckDeviceID()
 {
     OCStackResult ret = OC_STACK_ERROR;
     bool validId = false;
+
     for (uint8_t i = 0; i < UUID_LENGTH; i++)
     {
         if (gDoxm->deviceID.id[i] != 0)
@@ -1546,12 +1559,65 @@ static OCStackResult CheckDeviceID()
 
     if (!validId)
     {
+        char* strUuid = NULL;
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+        //If seed value is exists, generate UUID using seed with SHA256
+        if (0 != gUuidSeedSize)
+        {
+            uint8_t hashVal[MBEDTLS_MD_MAX_SIZE] = {0};
+            int mbedret = 0;
+
+            OIC_LOG(DEBUG, TAG, "UUID will be generated using seed w/ SHA256");
+            OIC_LOG(DEBUG, TAG, "Seed value : ");
+            OIC_LOG_BUFFER(DEBUG, TAG, gUuidSeed, gUuidSeedSize);
+
+            mbedret = mbedtls_md(mbedtls_md_info_from_type(MBEDTLS_MD_SHA256),
+                                 gUuidSeed, gUuidSeedSize, hashVal);
+            if(0 == mbedret)
+            {
+                memcpy(gDoxm->deviceID.id, hashVal, sizeof(gDoxm->deviceID.id));
+                ret = OC_STACK_OK;
+            }
+            else
+            {
+                OIC_LOG_V(ERROR, TAG, "mbedtls_md error : %d", mbedret);
+                ret = OC_STACK_ERROR;
+            }
+        }
+        else
+        {
+            if (!OCGenerateUuid(gDoxm->deviceID.id))
+            {
+                OIC_LOG(FATAL, TAG, "Generate UUID for Server Instance failed!");
+                ret = OC_STACK_ERROR;
+            }
+            else
+            {
+                ret = OC_STACK_OK;
+            }
+        }
+#else
         if (!OCGenerateUuid(gDoxm->deviceID.id))
         {
             OIC_LOG(FATAL, TAG, "Generate UUID for Server Instance failed!");
-            return OC_STACK_ERROR;
+            ret = OC_STACK_ERROR;
         }
-        ret = OC_STACK_OK;
+        else
+        {
+            ret = OC_STACK_OK;
+        }
+#endif
+
+        if (OC_STACK_OK == ConvertUuidToStr(&gDoxm->deviceID, &strUuid))
+        {
+            OIC_LOG_V(DEBUG, TAG, "Generated device UUID is [%s]", strUuid);
+            OICFree(strUuid);
+        }
+        else
+        {
+            OIC_LOG(WARNING, TAG, "Failed to convert UUID to string");
+        }
+
 
         if (!UpdatePersistentStorage(gDoxm))
         {
@@ -1563,6 +1629,7 @@ static OCStackResult CheckDeviceID()
     {
         ret = OC_STACK_OK;
     }
+
     return ret;
 }
 
@@ -1727,6 +1794,36 @@ OCStackResult GetDoxmIsOwned(bool *isOwned)
     }
     return OC_STACK_ERROR;
 }
+
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+OCStackResult SetDoxmDeviceIDSeed(const uint8_t* seed, size_t seedSize)
+{
+    OIC_LOG_V(INFO, TAG, "In %s", __func__);
+
+    if (NULL == seed)
+    {
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (MAX_UUID_SEED_SIZE < seedSize)
+    {
+        OIC_LOG_V(ERROR, TAG, "Seed size is too long (MAX size is %d bytes)", MAX_UUID_SEED_SIZE);
+        return OC_STACK_INVALID_PARAM;
+    }
+    if (MIN_UUID_SEED_SIZE > seedSize)
+    {
+        OIC_LOG_V(ERROR, TAG, "Seed size is too small (MIN size is %d bytes)", MIN_UUID_SEED_SIZE);
+        return OC_STACK_INVALID_PARAM;
+    }
+
+    memset(gUuidSeed, 0x00, sizeof(gUuidSeed));
+    memcpy(gUuidSeed, seed, seedSize);
+    gUuidSeedSize = seedSize;
+
+    OIC_LOG_V(INFO, TAG, "Out %s", __func__);
+
+    return OC_STACK_OK;
+}
+#endif
 
 OCStackResult SetDoxmDeviceID(const OicUuid_t *deviceID)
 {

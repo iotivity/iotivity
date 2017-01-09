@@ -82,6 +82,18 @@ OCStackResult CBORPayloadToDoxm(const uint8_t *cborPayload, size_t size,
 OCStackResult DoxmToCBORPayload(const OicSecDoxm_t * doxm, uint8_t **cborPayload,
                                 size_t *cborSize, bool rwOnly);
 
+#if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
+/**
+ * API to save the seed value to generate device UUID.
+ *
+ * @param seed buffer of seed value.
+ * @param seedSize byte length of seed
+ *
+ * @return ::OC_STACK_OK for Success, otherwise some error value.
+ */
+OCStackResult SetDoxmDeviceIDSeed(const uint8_t* seed, size_t seedSize);
+#endif
+
 /**
  * This method returns the SRM device ID for this device.
  *
