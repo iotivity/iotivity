@@ -942,6 +942,11 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PROVSTATUS, g_ESProvResource.status);
             OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_LAST_ERRORCODE, g_ESProvResource.lastErrCode);
 
+            if(gWriteUserdataCb)
+            {
+                gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_PROV);
+            }
+
             OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_ES_LINKS, arrayPayload, dimensions);
         }
         else    // link list interface
@@ -994,12 +999,12 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
         OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_PROVSTATUS, g_ESProvResource.status);
         OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_LAST_ERRORCODE, g_ESProvResource.lastErrCode);
 
-        OCRepPayloadSetPropObject(payload, OC_RSRVD_REPRESENTATION, repPayload);
-    }
+        if(gWriteUserdataCb)
+        {
+            gWriteUserdataCb(repPayload, OC_RSRVD_ES_RES_TYPE_PROV);
+        }
 
-    if(gWriteUserdataCb)
-    {
-        gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_PROV);
+        OCRepPayloadSetPropObject(payload, OC_RSRVD_REPRESENTATION, repPayload);
     }
 
     if(ehRequest->query)
