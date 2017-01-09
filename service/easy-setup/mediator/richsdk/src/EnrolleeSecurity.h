@@ -90,9 +90,6 @@ namespace OIC
             void PreconfigPinProvCB(PMResultList_t *result, int hasError);
             void MultipleOwnershipTransferCb(OC::PMResultList_t *result, int hasError);
 #endif
-            static void onOwnershipTransferCb(PMResultList_t *result,
-                                                        int hasError,
-                                                        std::weak_ptr<EnrolleeSecurity> this_ptr);
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError);
             void convertUUIDToString(const uint8_t uuid[UUID_SIZE],
                                                 std::string& uuidString);
