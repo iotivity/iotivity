@@ -22,7 +22,7 @@ apply from: "../../../../build/android/build.gradle"
 project.buildDir = "${binDirectory}/es"
 def esAARFileDir = "${iotivityRootDirectoryFromModules}/service/easy-setup/mediator/richsdk/android/EasySetupCore/build/outputs/aar"
 def esAARFile = "EasySetupCore-${buildmode}"
-def esSoFileDir = "${iotivityRootDirectoryFromModules}/android/android_api/base/libs/armeabi"
+
 
 buildscript {
     repositories { 
@@ -39,7 +39,6 @@ repositories {
         }
 }
 
-print("${baseAARFileDirFromModules}")
 apply plugin: 'com.android.application'
 
 android {
@@ -51,7 +50,6 @@ android {
         main {
               manifest.srcFile 'AndroidManifest.xml'
               java.srcDirs 'src'
-              jniLibs.srcDir "${esSoFileDir}"
               jni.srcDirs = [] //disable automatic ndk-build 
               assets.srcDirs = ['./assets'] 
         }

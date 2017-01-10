@@ -22,7 +22,7 @@ apply from: "../../../../build/android/build.gradle"
 
 project.buildDir = "${binDirectory}/ns"
 def nsAARFileDir = "${iotivityRootDirectoryFromModules}/service/notification/android/notification-service/build/outputs/aar"
-def nsAARFile = "iotivity-armeabi-notification-service-${buildmode}"
+def nsAARFile = "iotivity-${architecture}-notification-service-${buildmode}"
 
 buildscript {
     repositories {

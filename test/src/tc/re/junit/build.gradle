@@ -22,7 +22,7 @@ apply from: "../../../../build/android/build.gradle"
 
 project.buildDir = "${binDirectory}/re"
 def reAARFileDir = "${iotivityRootDirectoryFromModules}/service/resource-encapsulation/android/service/build/outputs/aar"
-def reAARFile = "iotivity-armeabi-service-${buildmode}"
+def reAARFile = "iotivity-${architecture}-service-${buildmode}"
 
 buildscript {
     repositories { 

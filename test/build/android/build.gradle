@@ -29,13 +29,14 @@ buildscript {
 
 import de.undercouch.gradle.tasks.download.Download
 
-
 /*
  *Variable Initialization
 */
 def rootDirectory = project.projectDir
 def moduleName = project.gradle.startParameter.taskNames[0]
 def caModuleArgs= []
+ext.isFirstTime = 'true'
+
 ext.buildmode="release"
 ext.gradleAbsolutePath=""
 ext.iotivityRootDirectoryFromModules = "../../../../.."
@@ -44,21 +45,8 @@ ext.secTestRootDirectoryFromBuild = "../.."
 ext.secTestRootDirectoryFromModules = "../../../.."
 ext.binDirectory ="${secTestRootDirectoryFromModules}/bin/android"
 ext.commonText = "${moduleName}"
+ext.testAppFrameworkSrcDir = "../../../common/android" 
 
-if(project.hasProperty('app')){
-    ext.iotivityRootDirectoryFromModules = "../../../../../.."
-    ext.secTestRootDirectoryFromModules = "../../../../.."
-    ext.testAppFrameworkSrcDir = "../../../common/android"
-}
-
-/*
- *Set IoTivity library type from cmd arguments if provided
- *Value can be debug or release
- *default mode is release
-*/
-if(project.hasProperty('m')){
-    buildmode = "${m}"
-}
 
 /*
  *Set IoTivity source folder name from cmd arguments if provided
@@ -68,20 +56,6 @@ if(project.hasProperty('t')){
     iotivityRootDirectoryFromModules = "${iotivityRootDirectoryFromModules}/IotivityOrgSource/${t}/iotivity"
     iotivityRootDirectoryFromBuild = "${iotivityRootDirectoryFromBuild}/IotivityOrgSource/${t}/iotivity"
     caModuleArgs.add("source=${t}")
-}
-
-
-if(project.hasProperty('c')){
-    println("C arguments: ${c}")
-    def tempArgs = c.split()
-    for (tempArg in tempArgs) {
-        caModuleArgs.add(tempArg)
-    }
-}
-
-if(project.hasProperty('p')){
-    println("P arguments: ${p}")
-    gradleAbsolutePath="${p}"
 }
 
 /*
@@ -100,11 +74,71 @@ def dexmakermockitoJarFile = "${androidLibFileDirFromMainBuild}/dexmaker-mockito
 */
 
 def baseAAROutDirectory = "android/android_api/base/build/outputs/aar"
-ext.baseAARFileDirFromModules = "${iotivityRootDirectoryFromModules}/${baseAAROutDirectory}"
-ext.baseAARFile ="iotivity-base-armeabi-${buildmode}"
+ext.architecture = "armeabi"
 
+
+ /*
+  *Set property value from CLI
+  *Default is armeabi
+ */
+
+task settingPropertyValue {
+        /*
+         *Set architecture from cmd arguments if provided
+         *Default is armeabi
+        */
+        if(project.hasProperty('arc')) {
+            def tempArch = arc.toString()
+
+            if (tempArch.equals("armeabi") || tempArch.equals("x86") || tempArch.equals("x86_64")) {
+                architecture ="${arc}"
+            }
+        }
+
+       /*
+        *Set IoTivity library type from cmd arguments if provided
+        *Value can be debug or release
+        *Default mode is release
+       */
+        if(project.hasProperty('m')) {
+            def tempMode = m.toString()
+            if (tempMode.equals("debug") || tempMode.equals("release")) {
+                 buildmode = "${m}"
+            }
+       }
+
+       /*
+       *Set arguments for interop test app
+       *If provided interop test app will be built
+       *Default API test app will be built
+       */
+       if(project.hasProperty('app')) {
+           iotivityRootDirectoryFromModules = "../../../../../.."
+           ext.secTestRootDirectoryFromModules = "../../../../.."
+           testAppFrameworkSrcDir = "../../../common/android" 
+        }
+
+       /*
+        *Set arguments for ca module build only 
+        *Value can be debug or release
+        *default mode is release
+       */
+       if(project.hasProperty('c')){
+           def tempArgs = c.split()
+           for (tempArg in tempArgs) {
+               caModuleArgs.add(tempArg)
+           }
+       }  
+      
+       if(project.hasProperty('p')){
+           gradleAbsolutePath="${p}"
+       }
+}
+
+ext.baseAARFileDirFromModules = "${iotivityRootDirectoryFromModules}/${baseAAROutDirectory}"
+ext.baseAARFile ="iotivity-base-${architecture}-${buildmode}"
 def baseAARFileDirFromMainBuild = "${iotivityRootDirectoryFromBuild}/${baseAAROutDirectory}"
-def baseAARFileFromMainBuild = "${baseAARFileDirFromMainBuild}/iotivity-base-armeabi-${buildmode}"
+def baseAARFileFromMainBuild = "${baseAARFileDirFromMainBuild}/${baseAARFile}"
 
 /*
  *Module gradle build file path definition
@@ -117,6 +151,7 @@ def pmModuleBuildFileDir = "${moduleBuildFileDir}/pm/junit/build.gradle"
 def caModuleBuildFileDir = "${moduleBuildFileDir}/ca/junit/build.gradle"
 def riModuleBuildFileDir = "${moduleBuildFileDir}/ri/junit/build.gradle"
 def nsModuleBuildFileDir = "${moduleBuildFileDir}/ns/junit/build.gradle"
+def icModuleBuildFileDir = "${moduleBuildFileDir}/ic/junit/build.gradle"
 
 if(project.hasProperty('app')){
     def testAppBaseDirectory = "${secTestRootDirectoryFromBuild}/src/iBtestapp/modules"
@@ -127,6 +162,7 @@ if(project.hasProperty('app')){
     caModuleBuildFileDir = "${testAppBaseDirectory}/ca/android/build.gradle"
     riModuleBuildFileDir = "${testAppBaseDirectory}/ri/android/build.gradle"
     nsModuleBuildFileDir = "${testAppBaseDirectory}/ns/android/build.gradle"
+    icModuleBuildFileDir = "${moduleBuildFileDir}/ic/junit/build.gradle"
 }
 
 ext.easySetupNDkBuildDir = "${iotivityRootDirectoryFromBuild}/service/easy-setup/mediator/richsdk/android"
@@ -142,7 +178,7 @@ ext.dependenciesText = "dependencies {\n    compile(name:\"${baseAARFile}\", ext
 
 /*
  *task to download junit library
- *if not exist download
+ *if not exist download 
 */
 task checkCommonLibFiles(type:Download) {
 
@@ -156,36 +192,29 @@ task checkCommonLibFiles(type:Download) {
 }
 
 /*
- * task to check iotivity base library file
+ * task to check iotivity base library file  
 */
 task checkBaseAARFile {
 
     doFirst {
+        
+        println("\n*************************Build Infortmation***************************\n")
+
+        if(project.hasProperty('app')) {
+            println("Building Interoperability Test App for ${moduleName} module")
+        }
+        else {
+            println("Building API Test App for ${moduleName} module")
+        }
+
+        println("Architecture : ${architecture}")
+        println("Mode : ${buildmode}")
+        println("\n**********************************************************************\n")
 
         if( !file(baseAARFileFromMainBuild+".aar").exists() ) {
             throw new GradleException("${baseAARFileFromMainBuild}.aar File  Doesn't Exist")
         }
     }
-}
-
-/*
- * create library jar for phy module
-*/
-task createPhyLibrary(type: Exec) {
-    doFirst {
-        writeToFile()
-    }
-    workingDir "${easySetupCoreDir}"
-    commandLine 'gradle'
-    args 'build'
-}
-
-/*
- * task to perform ndk build for easy setup
-*/
-task esNDKBuild(type: Exec){
-     workingDir "${easySetupNDkBuildDir}"
-     commandLine 'ndk-build'
 }
 
 /*
@@ -198,22 +227,12 @@ public void writeToFile() {
          f.append("\n${repoText}")
          f.append("\n${dependenciesText}")
     }
-
 }
 
 /*
- * task to build phy
+ * task to build phy 
 */
 task es(type: GradleBuild, dependsOn: [checkCommonLibFiles, 'checkBaseAARFile'])  {
-    buildFile = esModuleBuildFileDir
-    tasks = ['esbuild']
-    startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
-}
-
-/*
- * task to build phy  without make library
-*/
-task esWL(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile'])  {
     buildFile = esModuleBuildFileDir
     tasks = ['esbuild']
     startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
@@ -229,7 +248,7 @@ task pm(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile'
 }
 
 /*
- * task to build re utc
+ * task to build re
 */
 task re(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile']) {
     buildFile = reModuleBuildFileDir
@@ -246,41 +265,14 @@ task ns(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile'
     startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
 }
 
-task checkRCLibFiles {
-
-    doFirst {
-
-        if( !file(rcHueBandleJar).exists() ) {
-            throw new GradleException("RC Jar file does not exist in ${rcHueBandleJar}")
-        }
-    }
-}
-
 /*
- * create library jar for rc module
+ * task to build rc 
 */
-task createRCLibrary(type: Exec) {
-    commandLine './lib_maker.sh'
-    def argsList = ["rc", "${buildmode}","${iotivityRootDirectoryFromBuild}"]
-    args = argsList
-}
-
-/*
- * task to build rc
-*/
-task rc(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile', 'createRCLibrary']) {
+task rc(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile']) {
     buildFile = rcModuleBuildFileDir
     tasks = ['rcbuild']
     startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
 }
-
-task rcWL(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile']) {
-    buildFile = rcModuleBuildFileDir
-    tasks = ['rcbuild']
-    startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
-}
-
-checkRCLibFiles.mustRunAfter(createRCLibrary)
 
 /*
  * create library jar for rc module
@@ -309,9 +301,19 @@ task ri(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile'
     startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
 }
 
+
+/*
+ * task to build ic
+*/
+task ic(type: GradleBuild, dependsOn: ['checkCommonLibFiles', 'checkBaseAARFile']) {
+    buildFile = icModuleBuildFileDir
+    tasks = ['icbuild']
+    startParameter.projectProperties = project.getGradle().getStartParameter().getProjectProperties()
+}
+
 /*
  * task to build all modules
 */
-task all(dependsOn:['phy', 'pm', 're', 'rc', 'ca', 'ns']){
+task all(dependsOn:['es', 'pm', 're', 'rc', 'ca', 'ns']){
 
 }
