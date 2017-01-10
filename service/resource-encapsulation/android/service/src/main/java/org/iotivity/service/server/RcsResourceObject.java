@@ -106,7 +106,7 @@ public final class RcsResourceObject extends RcsObject {
          *
          * @param isDiscoverable
          *            whether to be discoverable or not
-         *
+         * @return the Builder
          */
         public Builder setDiscoverable(boolean isDiscoverable) {
             mIsDiscovervable = isDiscoverable;
@@ -118,6 +118,7 @@ public final class RcsResourceObject extends RcsObject {
          *
          * @param isObservable
          *            whether to be observable or not
+         * @return the Builder
          *
          */
         public Builder setObservable(boolean isObservable) {
@@ -126,8 +127,9 @@ public final class RcsResourceObject extends RcsObject {
         }
 
         /**
-         * Sets attributes foe the resource.
-         *
+         * Sets attributes for the resource.
+         * @param attributes the attributes to set for the resource
+         * @return the Builder
          */
         public Builder setAttributes(RcsResourceAttributes attributes) {
             mAttributes = attributes;
@@ -135,7 +137,9 @@ public final class RcsResourceObject extends RcsObject {
         }
 
         /**
-         * Register a resource and returns a RCSResourceObject.
+         * Register a resource
+         * 
+         * @return a RCSResourceObject.
          *
          * throws RcsPlatformException
          *             If registering a resource is failed.
@@ -490,8 +494,10 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * Returns a copied attributes of the RCSResourceObject.
+     * Returns a copied attributes of the RcsResourceObject.
      * To modify the attributes, use {@link AttributesLock}.
+     *
+     * @return copied attributes of the RcsResourceObject
      *
      * @throws RcsDestroyedObjectException
      *             if the object is destroyed
@@ -505,7 +511,9 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * Returns an AttributesLock for this RcsResourceObject.
+     * Get AttributesLock for this RcsResourceObject.
+     *
+     * @return an AttributesLock for this RcsResourceObject.
      *
      * @throws RcsDestroyedObjectException
      *             if the object is destroyed
@@ -519,6 +527,8 @@ public final class RcsResourceObject extends RcsObject {
     /**
      * Checks whether the resource is observable or not.
      *
+     * @return true if the resource is observable.
+     *
      * @throws RcsDestroyedObjectException
      *             if the object is destroyed
      */
@@ -530,6 +540,8 @@ public final class RcsResourceObject extends RcsObject {
 
     /**
      * Checks whether the resource is discoverable or not.
+     *
+     * @return true is the resource is discoverable.
      *
      * @throws RcsDestroyedObjectException
      *             if the object is destroyed
@@ -545,6 +557,7 @@ public final class RcsResourceObject extends RcsObject {
      *
      * Default behavior is {@link RcsGetResponse#defaultAction()}.
      *
+     * @param handler the GetRequestHandler. Pass null to remove handler.
      * @throws RcsDestroyedObjectException
      *             if the object is destroyed
      */
@@ -559,6 +572,8 @@ public final class RcsResourceObject extends RcsObject {
      * Sets the set request handler. To remove handler, pass null.
      *
      * Default behavior is {@link RcsSetResponse#defaultAction()}.
+     *
+     * @param handler the SetRequestHandler. Pass null to remove handler.
      *
      * @throws RcsDestroyedObjectException
      *             if the object is destroyed
@@ -652,7 +667,9 @@ public final class RcsResourceObject extends RcsObject {
     }
 
     /**
-     * Returns the current policy
+     * Get the current policy
+     *
+     * @return the current policy
      *
      * @throws RcsDestroyedObjectException
      *             if the object is destroyed
@@ -684,6 +701,8 @@ public final class RcsResourceObject extends RcsObject {
 
     /**
      * Returns the current policy.
+     *
+     * @return the current request handler policy
      *
      * @throws RcsDestroyedObjectException
      *             if the object is destroyed
