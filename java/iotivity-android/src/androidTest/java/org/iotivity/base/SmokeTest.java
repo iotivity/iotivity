@@ -1072,7 +1072,7 @@ public class SmokeTest extends InstrumentationTestCase {
             @Override
             public void onDeviceFound(OcRepresentation ocRepresentation) {
                 try {
-                    Log.i(TAG, "Device Name: " + ocRepresentation.getValue("n"));
+                    Log.i(TAG, "Device Name (callback): " + ocRepresentation.getValue("n"));
                 } catch (OcException e) {
                     Log.e(TAG, e.toString());
                     assertTrue(false);
@@ -1093,7 +1093,12 @@ public class SmokeTest extends InstrumentationTestCase {
 
         try {
             //server
-            OcPlatform.registerDeviceInfo(devInfo);
+//            OcPlatform.registerDeviceInfo(devInfo); // deprecated (use setPropertyValue)
+            OcPlatform.setPropertyValue(PayloadType.DEVICE.getValue(), "n", "myTestDeviceName");
+            String deviceName = OcPlatform.getPropertyValue(PayloadType.DEVICE.getValue(), "n");
+            Log.i(TAG, "Device Name (propertyValue): " + deviceName);
+            assertTrue("myTestDeviceName".equals(deviceName));
+
             //client
             OcPlatform.getDeviceInfo(
                     "",
