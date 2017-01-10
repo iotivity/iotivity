@@ -71,6 +71,8 @@ public class EasySetup {
 
     /**
      * Gives a singleton instance of Easy setup and initialize the easy setup
+     * @param context android context
+     * @return a initialized singleton instance of EasySetup
      */
     public synchronized static EasySetup getInstance(Context context) {
         if (sInstance == null) {
