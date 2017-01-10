@@ -62,13 +62,10 @@ std::string  systemTime = "2016-01-15T11.01";
 // Set of strings for each of device info fields
 std::string  deviceName = "IoTivity Fridge Server";
 std::string  specVersion = "core.1.1.0";
-std::string  dataModelVersions = "res.1.1.0";
+std::vector<std::string> dataModelVersions = {"res.1.1.0"};
 
 // OCPlatformInfo Contains all the platform info to be stored
 OCPlatformInfo platformInfo;
-
-// OCDeviceInfo Contains all the device info to be stored
-OCDeviceInfo deviceInfo;
 
 class Resource
 {
@@ -504,13 +501,6 @@ void DeletePlatformInfo()
     delete[] platformInfo.systemTime;
 }
 
-void DeleteDeviceInfo()
-{
-    delete[] deviceInfo.deviceName;
-    delete[] deviceInfo.specVersion;
-    OCFreeOCStringLL(deviceInfo.dataModelVersions);
-}
-
 void DuplicateString(char ** targetString, std::string sourceString)
 {
     *targetString = new char[sourceString.length() + 1];
@@ -537,18 +527,29 @@ OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerNa
     return OC_STACK_OK;
 }
 
-OCStackResult SetDeviceInfo(std::string deviceName, std::string specVersion, std::string dataModelVersions)
+OCStackResult SetDeviceInfo()
 {
-    DuplicateString(&deviceInfo.deviceName, deviceName);
-
-    if (!specVersion.empty())
+    OCStackResult result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
+                                                        deviceName);
+    if (result != OC_STACK_OK)
     {
-        DuplicateString(&deviceInfo.specVersion, specVersion);
+        std::cout << "Failed to set device name" << std::endl;
+        return result;
     }
 
-    if (!dataModelVersions.empty())
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+                                          dataModelVersions);
+    if (result != OC_STACK_OK)
     {
-        OCResourcePayloadAddStringLL(&deviceInfo.dataModelVersions, dataModelVersions.c_str());
+        std::cout << "Failed to set data model versions" << std::endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion);
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Failed to set spec version" << std::endl;
+        return result;
     }
 
     return OC_STACK_OK;
@@ -582,10 +583,7 @@ int main ()
         return -1;
     }
 
-    result = SetDeviceInfo(deviceName, specVersion, dataModelVersions);
-    OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.wk.d");
-
-    result = OCPlatform::registerDeviceInfo(deviceInfo);
+    result = SetDeviceInfo();
 
     if (result != OC_STACK_OK)
     {
@@ -594,7 +592,6 @@ int main ()
     }
 
     DeletePlatformInfo();
-    DeleteDeviceInfo();
     // we will keep the server alive for at most 30 minutes
     std::this_thread::sleep_for(std::chrono::minutes(30));
     return 0;

@@ -113,12 +113,7 @@ public:
         std::string resourceInterface = DEFAULT_INTERFACE;
 
         /* Device Information */
-        char* deviceName = "IoTivity Media Server";
-        char* specVersion = "core.1.1.0";
-        OCStringLL types{ nullptr, const_cast<char*>(resourceTypeName.c_str()) };
-        OCDeviceInfo deviceInfo{ deviceName, &types, specVersion, nullptr };
-
-        result = OCPlatform::registerDeviceInfo(deviceInfo);
+        result = SetDeviceInfo();
         if (OC_STACK_OK != result)
         {
             cout << "Device information registration was unsuccessful\n";
@@ -407,6 +402,26 @@ OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
     }
 
     return ehResult;
+}
+
+OCStackResult SetDeviceInfo()
+{
+    OCStackResult result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
+                                                        "IoTivity Media Server");
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set device name" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, "core.1.1.0");
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set spec version" << endl;
+        return result;
+    }
+
+    return OC_STACK_OK;
 }
 
 };

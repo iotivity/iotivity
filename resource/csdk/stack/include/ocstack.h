@@ -238,6 +238,8 @@ OCStackResult OCSetDefaultDeviceEntityHandler(OCDeviceEntityHandler entityHandle
  * list. The default Device Type is mandatory and always specified by this Device as the first
  * Device Type.
  *
+ * @deprecated Use OCSetPropertyValue instead.
+ *
  * @param deviceInfo   Structure passed by the server application containing the device
  *                     information.
  *

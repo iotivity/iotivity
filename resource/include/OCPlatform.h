@@ -328,6 +328,8 @@ namespace OC
         /**
         * Register Device Info
         *
+        * @deprecated: Use setPropertyValue instead.
+        *
         * @param deviceInfo structure containing all the device specific information
         * @return Returns ::OC_STACK_OK  if no errors and ::OC_STACK_ERROR in case of stack process error
         */

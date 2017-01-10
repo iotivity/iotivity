@@ -44,6 +44,7 @@ namespace OC
                     EntityHandler& entityHandler,
                     uint8_t resourceProperty);
 
+        // @deprecated: Use setPropertyValue instead.
         virtual OCStackResult registerDeviceInfo(
                     const OCDeviceInfo deviceInfo);
 

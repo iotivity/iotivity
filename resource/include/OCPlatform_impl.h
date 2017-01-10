@@ -195,6 +195,8 @@ namespace OC
         /**
          * This API registers all the device specific information
          *
+         * @deprecated: Use setPropertyValue instead.
+         *
          * @param deviceInfo Structure containing all the device related information
          *
          * @return Returns ::OC_STACK_OK if success

@@ -500,6 +500,37 @@ static FILE *client_open(const char * /*path*/, const char *mode)
     return fopen("./aircon_controlee.dat", mode);
 }
 
+OCStackResult SetDeviceInfo()
+{
+    OCStackResult result = OC_STACK_ERROR;
+
+    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+
+    if (handle == NULL)
+    {
+        cout << "Failed to find resource " << OC_RSRVD_DEVICE_URI << endl;
+        return result;
+    }
+
+    result = OCBindResourceTypeToResource(handle, "oic.d.airconditioner");
+
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to add device type" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, "FAC_2016");
+
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set device name" << endl;
+        return result;
+    }
+
+    return OC_STACK_OK;
+}
+
 int main(int argc, char *argv[])
 {
     if (argc != 4 && argc != 5)
@@ -606,6 +637,11 @@ int main(int argc, char *argv[])
                                                   , &binarySwitch, placeholders::_1),
                                           OC_OBSERVABLE);
 
+    if (result != OC_STACK_OK)
+    {
+        exit(EXIT_FAILURE);
+    }
+
     uri = temperature.getResourceUri();
     rt = temperature.getResourceType()[0];
     itf = temperature.getInterfaces()[0];
@@ -618,26 +654,35 @@ int main(int argc, char *argv[])
                                                   , &temperature, placeholders::_1),
                                           OC_OBSERVABLE);
 
+    if (result != OC_STACK_OK)
+    {
+        exit(EXIT_FAILURE);
+    }
+
     result = airConditioner.addChildResource(&binarySwitch);
+
+    if (result != OC_STACK_OK)
+    {
+        exit(EXIT_FAILURE);
+    }
 
     result = airConditioner.addChildResource(&temperature);
 
+    if (result != OC_STACK_OK)
+    {
+        exit(EXIT_FAILURE);
+    }
+
     cout << "Publishing resources to cloud ";
 
+    result = SetDeviceInfo();
+
+    if (result != OC_STACK_OK)
+    {
+        exit(EXIT_FAILURE);
+    }
 
     ResourceHandles resourceHandles;
-
-    OCDeviceInfo        devInfoAirConditioner;
-    OCStringLL          deviceType;
-
-    deviceType.value = "oic.d.airconditioner";
-    deviceType.next = NULL;
-    devInfoAirConditioner.deviceName = "FAC_2016";
-    devInfoAirConditioner.types = &deviceType;
-    devInfoAirConditioner.specVersion = NULL;
-    devInfoAirConditioner.dataModelVersions = NULL;
-
-    OCPlatform::registerDeviceInfo(devInfoAirConditioner);
 
     result = RDClient::Instance().publishResourceToRD(host, OCConnectivityType::CT_ADAPTER_TCP,
              resourceHandles,

@@ -66,14 +66,12 @@ std::string  systemTime = "2016-01-15T11.01";
 
 // Set of strings for each of device info fields
 std::string  deviceName = "IoTivity Simple Server";
+std::string  deviceType = "oic.wk.tv";
 std::string  specVersion = "core.1.1.0";
-std::string  dataModelVersions = "res.1.1.0,sh.1.1.0";
+std::vector<std::string> dataModelVersions = {"res.1.1.0", "sh.1.1.0"};
 
 // OCPlatformInfo Contains all the platform info to be stored
 OCPlatformInfo platformInfo;
-
-// OCDeviceInfo Contains all the device info to be stored
-OCDeviceInfo deviceInfo;
 
 // Specifies where to notify all observers or list of observers
 // false: notifies all observers
@@ -535,6 +533,49 @@ OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerNa
     return OC_STACK_OK;
 }
 
+OCStackResult SetDeviceInfo()
+{
+    OCStackResult result = OC_STACK_ERROR;
+
+    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    if (handle == NULL)
+    {
+        cout << "Failed to find resource " << OC_RSRVD_DEVICE_URI << endl;
+        return result;
+    }
+
+    result = OCBindResourceTypeToResource(handle, deviceType.c_str());
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to add device type" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, deviceName);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set device name" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+                                          dataModelVersions);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set data model versions" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set spec version" << endl;
+        return result;
+    }
+
+    return OC_STACK_OK;
+}
+
 void * handleSlowResponse (void *param, std::shared_ptr<OCResourceRequest> pRequest)
 {
     // This function handles slow response case
@@ -636,16 +677,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, deviceName);
-    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion);
-    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
-        dataModelVersions);
-    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
-    if (handle)
-    {
-        OCBindResourceTypeToResource(handle, "oic.wk.tv");
-    }
-
+    result = SetDeviceInfo();
     if (result != OC_STACK_OK)
     {
         std::cout << "Device Registration failed\n";

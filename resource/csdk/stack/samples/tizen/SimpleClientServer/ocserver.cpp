@@ -36,6 +36,15 @@
 #include "ocserver.h"
 using namespace std;
 
+#define VERIFY_SUCCESS(op)                          \
+{                                                   \
+    if (op != OC_STACK_OK)                          \
+    {                                               \
+        cout << #op << " failed!!" << endl;         \
+        goto exit;                                  \
+    }                                               \
+}
+
 //string length of "/a/light/" + std::numeric_limits<int>::digits10 + '\0'"
 // 9 + 9 + 1 = 19
 const int URI_MAXSIZE = 19;
@@ -79,6 +88,7 @@ const char *version = "myVersion";
 const char *systemTime = "2015-05-15T11.04";
 const char *specVersion = "core.1.1.0";
 const char *dataModelVersions = "res.1.1.0,sh.1.1.0";
+const char *deviceType = "oic.d.tv";
 
 // Entity handler should check for resourceTypeName and ResourceInterface in order to GET
 // the existence of a known resource
@@ -86,7 +96,6 @@ const char *resourceTypeName = "core.light";
 const char *resourceInterface = OC_RSRVD_INTERFACE_DEFAULT;
 
 OCPlatformInfo platformInfo;
-OCDeviceInfo deviceInfo;
 
 OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
 {
@@ -808,13 +817,6 @@ void DeletePlatformInfo()
     free (platformInfo.systemTime);
 }
 
-void DeleteDeviceInfo()
-{
-    free (deviceInfo.deviceName);
-    free (deviceInfo.specVersion);
-    OCFreeOCStringLL (deviceInfo.dataModelVersions);
-}
-
 bool DuplicateString(char** targetString, const char* sourceString)
 {
     if(!sourceString)
@@ -916,23 +918,26 @@ OCStackResult SetPlatformInfo(const char* platformID, const char *manufacturerNa
     return OC_STACK_ERROR;
 }
 
-OCStackResult SetDeviceInfo(const char* deviceName, const char* specVersion, const char* dataModelVersions)
+OCStackResult SetDeviceInfo()
 {
-    if(!DuplicateString(&deviceInfo.deviceName, deviceName))
+    OCResourceHandle resourceHandle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    if (resourceHandle == NULL)
     {
-        return OC_STACK_ERROR;
+        OIC_LOG(ERROR, TAG, "Device Resource does not exist.");
+        goto exit;
     }
-    if(!DuplicateString(&deviceInfo.specVersion, specVersion))
-    {
-        return OC_STACK_ERROR;
-    }
-    OCFreeOCStringLL(deviceInfo.dataModelVersions);
-    deviceInfo.dataModelVersions = OCCreateOCStringLL(dataModelVersions);
-    if (!deviceInfo.dataModelVersions)
-    {
-        return OC_STACK_ERROR;
-    }
+
+    VERIFY_SUCCESS(OCBindResourceTypeToResource(resourceHandle, deviceType));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, deviceName));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+                                      dataModelVersions));
+
+    OIC_LOG(INFO, TAG, "Device information initialized successfully.");
     return OC_STACK_OK;
+
+exit:
+    return OC_STACK_ERROR;
 }
 
 static void PrintUsage()
@@ -1033,17 +1038,7 @@ int main(int argc, char* argv[])
         exit (EXIT_FAILURE);
     }
 
-    registrationResult = SetDeviceInfo(deviceName, specVersion, dataModelVersions);
-
-    if (registrationResult != OC_STACK_OK)
-    {
-        cout << "\nDevice info setting failed locally!";
-        exit (EXIT_FAILURE);
-    }
-
-    OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.d.tv");
-
-    registrationResult = OCSetDeviceInfo(deviceInfo);
+    registrationResult = SetDeviceInfo();
 
     if (registrationResult != OC_STACK_OK)
     {
@@ -1080,7 +1075,6 @@ int main(int argc, char* argv[])
     cout << "\nEntering ocserver main loop...";
 
     DeletePlatformInfo();
-    DeleteDeviceInfo();
 
     signal(SIGINT, handleSigInt);
 

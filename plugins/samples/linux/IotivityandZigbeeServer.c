@@ -27,6 +27,16 @@
 
 #define TAG "IoTivityZigbeeServer"
 #define defaultComPort "/dev/ttyUSB0"
+
+#define VERIFY_SUCCESS(op)                          \
+{                                                   \
+    if (op !=  OC_STACK_OK)                         \
+    {                                               \
+        OIC_LOG_V(FATAL, TAG, "%s failed!!", #op);  \
+        goto exit;                                  \
+    }                                               \
+}
+
 int main()
 {
     OIC_LOG(INFO, TAG, "Initializing IoTivity...");
@@ -136,18 +146,21 @@ OCStackResult SetPlatformInfo()
 
 OCStackResult SetDeviceInfo()
 {
-    static OCDeviceInfo deviceInfo =
-        {
-            .deviceName = "IoTivity/Zigbee Server Sample",
-            .specVersion = "IoTivity/Zigbee Device Spec Version",
-        };
-    char *dmv = OICStrdup("IoTivity/Zigbee Data Model Version");
-    deviceInfo.dataModelVersions = (OCStringLL *)OICCalloc(1, sizeof(OCStringLL));
-    deviceInfo.dataModelVersions->value = dmv;
-    char *dup = OICStrdup("oic.wk.d");
-    deviceInfo.types = (OCStringLL *)OICCalloc(1, sizeof(OCStringLL));
-    deviceInfo.types->value = dup;
-    return OCSetDeviceInfo(deviceInfo);
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME,
+                                      "IoTivity/Zigbee Server Sample"));
+
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION,
+                                      "IoTivity/Zigbee Device Spec Version"));
+
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+                                      "IoTivity/Zigbee Data Model Version"));
+
+    OIC_LOG(INFO, TAG, "Device information initialized successfully.");
+    return OC_STACK_OK;
+
+exit:
+    return OC_STACK_ERROR;
+
 }
 
 bool processSignal(bool set)

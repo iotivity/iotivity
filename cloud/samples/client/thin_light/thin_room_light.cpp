@@ -34,8 +34,18 @@
 #include "ocstack.h"
 #include "ocpayload.h"
 #include "rd_client.h"
+#include "OCPlatform.h"
 
 using namespace std;
+
+#define VERIFY_SUCCESS(op)                          \
+{                                                   \
+    if (op != OC_STACK_OK)                          \
+    {                                               \
+        cout << #op << " failed!!" << endl;         \
+        goto exit;                                  \
+    }                                               \
+}
 
 #define DEFAULT_CONTEXT_VALUE 0x99
 #define DEFAULT_AUTH_SIGNUP "/oic/account"
@@ -447,6 +457,32 @@ OCStackApplicationResult handlePublishCB(void *ctx, OCDoHandle /*handle*/,
     return OC_STACK_KEEP_TRANSACTION;
 }
 
+OCStackResult SetDeviceInfo()
+{
+    OCResourceHandle resourceHandle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    if (resourceHandle == NULL)
+    {
+        cout << "Device Resource does not exist." << endl;
+        goto exit;
+    }
+
+    VERIFY_SUCCESS(OCBindResourceTypeToResource(resourceHandle, "oic.d.light"));
+
+    if (OCGetServerInstanceIDString() == NULL)
+    {
+        cout << "Device ID generation failed"  << endl;
+        goto exit;
+    }
+
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, "Living Room Light"));
+
+    cout << "Device information published successfully." << endl;
+    return OC_STACK_OK;
+
+exit:
+    return OC_STACK_ERROR;
+}
+
 void PublishResources(string host)
 {
     cout << "Publishing resources..." << endl;
@@ -463,23 +499,13 @@ void PublishResources(string host)
     cbData.context = (void *) DEFAULT_CONTEXT_VALUE;
     cbData.cd = NULL;
 
-    cout << "Publish default resources" << endl;
+    cout << "Publishing default resources" << endl;
 
-    OCDeviceInfo devInfoRoomLight;
-    OCStringLL deviceType;
-
-    deviceType.value = "oic.d.light";
-    deviceType.next = NULL;
-    devInfoRoomLight.deviceName = "Living Room Light";
-    devInfoRoomLight.types = &deviceType;
-    devInfoRoomLight.specVersion = NULL;
-    devInfoRoomLight.dataModelVersions = NULL;
-
-    OCStackResult res = OCSetDeviceInfo(devInfoRoomLight);
+    OCStackResult res = SetDeviceInfo();
 
     if (res != OC_STACK_OK)
     {
-        cout << "Setting device info failed" << endl;
+        cout << "Publishing device info failed" << endl;
     }
 
     res = OCRDPublish(host.c_str(), CT_ADAPTER_TCP, NULL, 0, &cbData, OC_LOW_QOS);
@@ -488,7 +514,7 @@ void PublishResources(string host)
         cout << "Unable to publish default resources to cloud" << endl;
     }
 
-    cout << "Publish user resources" << endl;
+    cout << "Publishing user resources" << endl;
 
     res = OCRDPublish(host.c_str(), CT_ADAPTER_TCP, resourceHandles, 1, &cbData, OC_LOW_QOS);
     if (res != OC_STACK_OK)
