@@ -212,4 +212,6 @@ TEST(CAProtocolMessage, CAGetTokenFromPDU)
     outData.type = CA_MSG_NONCONFIRM;
 
     EXPECT_EQ(CA_STATUS_OK, CAGetTokenFromPDU(pdu->transport_hdr, &outData, &tempRep));
+    coap_delete_list(options);
+    coap_delete_pdu(pdu);
 }
