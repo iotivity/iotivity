@@ -562,9 +562,11 @@ void DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
                             //Generate mutualVerifNum
                             char label[LABEL_LEN] = {0};
                             snprintf(label, LABEL_LEN, "%s%s", MUTUAL_VERIF_NUM, OXM_MV_JUST_WORKS);
-                            if (OC_STACK_OK != GetDoxmDeviceID(&deviceID))
+                            res = GetDoxmDeviceID(&deviceID);
+                            if (OC_STACK_OK != res)
                             {
                                 OIC_LOG(ERROR, TAG, "Error while retrieving Owner's device ID");
+                                SetResult(otmCtx, res);
                                 return;
                             }
 
@@ -577,23 +579,28 @@ void DTLSHandshakeCB(const CAEndpoint_t *endpoint, const CAErrorInfo_t *info)
                             if (CA_STATUS_OK != pskRet)
                             {
                                 OIC_LOG(WARNING, TAG, "Failed to remove the invaild owner credential");
+                                SetResult(otmCtx, OC_STACK_ERROR);
                                 return;
                             }
 
                             memcpy(mutualVerifNum, preMutualVerifNum + OWNER_PSK_LENGTH_128 - sizeof(mutualVerifNum),
                                     sizeof(mutualVerifNum));
-                            if (OC_STACK_OK != VerifyOwnershipTransfer(mutualVerifNum, DISPLAY_NUM))
+                            res = VerifyOwnershipTransfer(mutualVerifNum, DISPLAY_NUM);
+                            if (OC_STACK_OK != res)
                             {
                                 OIC_LOG(ERROR, TAG, "Error while displaying mutualVerifNum");
+                                SetResult(otmCtx, res);
                                 return;
                             }
                         }
                         //In case of confirmed manufacturer cert, display message
                         else if (OIC_CON_MFG_CERT == newDevDoxm->oxmSel)
                         {
-                            if (OC_STACK_OK != VerifyOwnershipTransfer(NULL, DISPLAY_NUM))
+                            res = VerifyOwnershipTransfer(NULL, DISPLAY_NUM);
+                            if (OC_STACK_OK != res)
                             {
                                 OIC_LOG(ERROR, TAG, "Error while displaying message");
+                                SetResult(otmCtx, res);
                                 return;
                             }
                         }
@@ -943,6 +950,7 @@ static OCStackApplicationResult OwnerUuidUpdateHandler(void *ctx, OCDoHandle UNU
                     {
                         OIC_LOG(WARNING, TAG, "OwnerUuidUpdateHandler : SRPResetDevice error");
                     }
+                    SetResult(otmCtx, res);
                 }
             }
 
@@ -967,7 +975,15 @@ static OCStackApplicationResult OwnerUuidUpdateHandler(void *ctx, OCDoHandle UNU
     }
     else
     {
-        res = clientResponse->result;
+        if (OIC_CON_MFG_CERT == otmCtx->selectedDeviceInfo->doxm->oxmSel &&
+                    OC_STACK_NOT_ACCEPTABLE == clientResponse->result)
+        {
+            res = OC_STACK_USER_DENIED_REQ;
+        }
+        else
+        {
+            res = clientResponse->result;
+        }
         OIC_LOG_V(ERROR, TAG, "OwnerUuidHandler : Unexpected result %d", res);
         SetResult(otmCtx, res);
     }

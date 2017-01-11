@@ -1311,6 +1311,22 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
 #if defined(__WITH_DTLS__) || defined (__WITH_TLS__)
                 else if (OIC_MANUFACTURER_CERTIFICATE ==  newDoxm->oxmSel || OIC_CON_MFG_CERT == newDoxm->oxmSel)
                 {
+                    //In case of Confirm Manufacturer Cert, get user confirmation
+                    if (OIC_CON_MFG_CERT == newDoxm->oxmSel && false == newDoxm->owned &&
+                        false == isDuplicatedMsg &&
+                        memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) != 0)
+                    {
+                        if (OC_STACK_OK != VerifyOwnershipTransfer(NULL, USER_CONFIRM))
+                        {
+                            ehRet = OC_EH_NOT_ACCEPTABLE;
+                            goto exit;
+                        }
+                        else
+                        {
+                            ehRet = OC_EH_OK;
+                        }
+                    }
+
                     //Save the owner's UUID to derive owner credential
                     memcpy(&(gDoxm->owner), &(newDoxm->owner), sizeof(OicUuid_t));
                     gDoxm->oxmSel = newDoxm->oxmSel;
@@ -1330,23 +1346,6 @@ static OCEntityHandlerResult HandleDoxmPostRequest(OCEntityHandlerRequest * ehRe
 
                     VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterPkixInfoHandler(GetManufacturerPkixInfo), ERROR);
                     VERIFY_SUCCESS(TAG, CA_STATUS_OK == CAregisterGetCredentialTypesHandler(InitManufacturerCipherSuiteList), ERROR);
-
-                    //In case of Confirm Manufacturer Cert, get user confirmation
-                    if (OIC_CON_MFG_CERT == newDoxm->oxmSel && false == newDoxm->owned &&
-                        false == isDuplicatedMsg &&
-                        memcmp(&(newDoxm->owner), &emptyOwner, sizeof(OicUuid_t)) != 0)
-                    {
-                        if (OC_STACK_OK != VerifyOwnershipTransfer(NULL, USER_CONFIRM))
-                        {
-                            ehRet = OC_EH_NOT_ACCEPTABLE;
-                        }
-                        else
-                        {
-                            ehRet = OC_EH_OK;
-                        }
-                    }
-
-
                 }
 #endif // __WITH_DTLS__ or __WITH_TLS__
             }

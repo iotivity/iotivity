@@ -126,6 +126,7 @@ namespace OC
         static const char AUTHENTICATION_FAILURE[]     = "Authentication failure";
         static const char NOT_ALLOWED_OXM[]            = "Not allowed ownership transfer method";
         static const char USER_DENIED_REQ[]            = "Request denied by User";
+        static const char NOT_ACCEPTABLE[]             = "Request not acceptable";
         static const char PUBLISH_RESOURCE_FAILED[]    = "Publish Resource failure";
         static const char FORBIDDEN_REQ[]              = "Forbidden request";
         static const char INTERNAL_SERVER_ERROR[]      = "Internal server error";
