@@ -1302,7 +1302,7 @@ static int StartRetransmit()
         {
             tep = (SslEndPoint_t *) u_arraylist_get(g_caSslContext->peerList, listIndex);
             if (NULL == tep
-                || MBEDTLS_SSL_TRANSPORT_STREAM == tep->ssl.conf->transport
+                || (tep->ssl.conf && MBEDTLS_SSL_TRANSPORT_STREAM == tep->ssl.conf->transport)
                 || MBEDTLS_SSL_HANDSHAKE_OVER == tep->ssl.state)
             {
                 continue;
@@ -1383,7 +1383,7 @@ CAResult_t CAinitSslAdapter()
     mbedtls_ctr_drbg_init(&g_caSslContext->rnd);
 
     if(0 != mbedtls_ctr_drbg_seed(&g_caSslContext->rnd, mbedtls_entropy_func,
-                                  &g_caSslContext->entropy, 
+                                  &g_caSslContext->entropy,
                                   (const unsigned char*) PERSONALIZATION_STRING, sizeof(PERSONALIZATION_STRING)))
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Seed initialization failed!");
