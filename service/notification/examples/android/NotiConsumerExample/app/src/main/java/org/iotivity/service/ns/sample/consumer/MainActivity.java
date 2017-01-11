@@ -65,6 +65,8 @@ public class MainActivity extends Activity
     private Button              btnStart;
     private Button              btnStop;
     private Button              btnRescan;
+    private Button              btnSubscribe;
+    private Button              btnUnsubscribe;
     private Button              btnEnableRemoteService;
     private Button              btnGetTopicList;
     private Button              btnUpdateTopicList;
@@ -152,6 +154,8 @@ public class MainActivity extends Activity
         btnStart = (Button) findViewById(R.id.BtnStart);
         btnStop = (Button) findViewById(R.id.BtnStop);
         btnRescan = (Button) findViewById(R.id.BtnRescan);
+        btnSubscribe = (Button) findViewById(R.id.BtnSubscribe);
+        btnUnsubscribe = (Button) findViewById(R.id.BtnUnsubscribe);
         btnEnableRemoteService = (Button) findViewById(
                 R.id.BtnEnableRemoteService);
         btnGetTopicList = (Button) findViewById(R.id.BtnGetTopicList);
@@ -176,6 +180,8 @@ public class MainActivity extends Activity
         signOut.setEnabled(false);
         btnEnableRemoteService.setEnabled(false);
 
+        btnSubscribe.setOnClickListener(mClickListener);
+        btnUnsubscribe.setOnClickListener(mClickListener);
         signUp.setOnClickListener(mClickListener);
         signIn.setOnClickListener(mClickListener);
         signOut.setOnClickListener(mClickListener);
@@ -232,6 +238,28 @@ public class MainActivity extends Activity
                     mConsumerSample.rescanProvider();
                 }
                     break;
+                case R.id.BtnSubscribe: {
+                    if (!isStarted) {
+                        Log.e(TAG,
+                                "Fail to Subscribe. Service has not been started");
+                        showToast("Error : Service has not been started");
+                        break;
+                    }
+                    TvLog.append("Subscribe NS-Consumer\n");
+                    mConsumerSample.subscribe();
+                }
+                break;
+                case R.id.BtnUnsubscribe: {
+                    if (!isStarted) {
+                        Log.e(TAG,
+                                "Fail to Unsubscribe. Service has not been started");
+                        showToast("Error : Service has not been started");
+                        break;
+                    }
+                    TvLog.append("Unsubscribe NS-Consumer\n");
+                    mConsumerSample.unsubscribe();
+                }
+                break;
                 case R.id.BtnEnableRemoteService: {
                     if (!isStarted) {
                         Log.e(TAG,

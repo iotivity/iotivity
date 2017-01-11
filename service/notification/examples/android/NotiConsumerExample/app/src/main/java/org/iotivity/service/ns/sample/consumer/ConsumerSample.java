@@ -134,6 +134,23 @@ public class ConsumerSample
         }
     }
 
+    public void subscribe() {
+        try {
+            mProvider.subscribe();
+            Log.i(TAG, "Notification consumer subscribe: " );
+        } catch (Exception e) {
+            Log.e(TAG, "Exception: subscribe : " + e);
+        }
+    }
+
+    public void unsubscribe() {
+        try {
+            mProvider.unsubscribe();
+            Log.i(TAG, "Notification consumer unsubscribe: ");
+        } catch (Exception e) {
+            Log.e(TAG, "Exception: unsubscribe : " + e);
+        }
+    }
     public void getTopicsList() {
         if (mProvider != null) {
             try {

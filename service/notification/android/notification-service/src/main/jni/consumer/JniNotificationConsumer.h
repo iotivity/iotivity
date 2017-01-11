@@ -78,6 +78,15 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_nat
 JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSubscribe
 (JNIEnv *, jobject);
 
+
+/*
+ * Class:     org_iotivity_service_ns_consumer_Provider
+ * Method:    nativeUnsubscribe
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeUnsubscribe
+(JNIEnv *, jobject);
+
 /*
  * Class:     org_iotivity_service_ns_consumer_Provider
  * Method:    nativeSendSyncInfo

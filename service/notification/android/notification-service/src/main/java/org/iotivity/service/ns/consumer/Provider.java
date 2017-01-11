@@ -109,6 +109,14 @@ public class Provider {
     }
 
     /**
+     * API for for requesting unsubscription of Notification service
+     * @throws NSException failure to subscribe
+     */
+    public void unsubscribe() throws NSException {
+        nativeUnsubscribe();
+    }
+
+    /**
      * API for for requesting subscription status from Provider of Notification
      * service
      *
@@ -212,6 +220,7 @@ public class Provider {
     }
 
     private native void nativeSubscribe() throws NSException;
+    private native void nativeUnsubscribe() throws NSException;
 
     private native void nativeSendSyncInfo(long messageId, int syncType)
             throws NSException;

@@ -194,11 +194,20 @@ namespace OIC
             return m_subscribedState;
         }
 
-        void NSProvider::subscribe()
+        NSResult NSProvider::subscribe()
         {
             NS_LOG(DEBUG, "Subscribe - IN");
-            NSSubscribe(getProviderId().c_str());
+            NSResult result = (NSResult) NSSubscribe(getProviderId().c_str());
             NS_LOG(DEBUG, "Subscribe - OUT");
+            return result;
+        }
+
+        NSResult NSProvider::unsubscribe()
+        {
+            NS_LOG(DEBUG, "unsubscribe - IN");
+            NSResult result = (NSResult) NSUnsubscribe(getProviderId().c_str());
+            NS_LOG(DEBUG, "unsubscribe - OUT");
+            return result;
         }
 
         bool NSProvider::isSubscribed()
@@ -212,12 +221,13 @@ namespace OIC
             return false;
         }
 
-        void NSProvider::sendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type)
+        NSResult NSProvider::sendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type)
         {
             NS_LOG(DEBUG, "SendSyncInfo - IN");
-            NSConsumerSendSyncInfo(m_providerId.c_str(), messageId, (::NSSyncType)type);
+            NSResult result = (NSResult) NSConsumerSendSyncInfo(m_providerId.c_str(), messageId,
+                              (::NSSyncType)type);
             NS_LOG(DEBUG, "SendSyncInfo - OUT");
-            return;
+            return result;
         }
 
         void NSProvider::setListener(NSProvider::ProviderStateCallback stateHandle,

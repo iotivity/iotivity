@@ -49,12 +49,12 @@ namespace OIC
             return m_consumerId;
         }
 
-        int NSConsumer::acceptSubscription(bool accepted)
+        NSResult NSConsumer::acceptSubscription(bool accepted)
         {
             NS_LOG(DEBUG, "acceptSubscription - IN");
             NSResult result = (NSResult) NSAcceptSubscription(getConsumerId().c_str(), accepted);
             NS_LOG(DEBUG, "acceptSubscription - OUT");
-            return (int) result;
+            return result;
         }
 
         NSResult NSConsumer::setTopic(const std::string &topicName)

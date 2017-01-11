@@ -143,6 +143,7 @@ namespace OIC
                         NS_LOG(DEBUG, "initiating the callback for Response : NS_STOPPED");
                         changeCallback((NSProviderState)state);
                     }
+                    delete oldProvider;
                 }
             }
             NS_LOG(DEBUG, "onNSProviderStateChanged - OUT");
@@ -159,6 +160,7 @@ namespace OIC
                      NSConsumerService::getInstance()->getAcceptedProviders().size());
             for (auto it : NSConsumerService::getInstance()->getAcceptedProviders())
             {
+                NS_LOG_V(DEBUG, "it->getProviderId : %s", it->getProviderId().c_str());
                 if (it->getProviderId() == nsMessage->getProviderId())
                 {
                     NS_LOG(DEBUG, "Found Provider with given ID");
@@ -178,9 +180,13 @@ namespace OIC
         void onNSSyncInfoReceived(::NSSyncInfo *syncInfo)
         {
             NS_LOG(DEBUG, "onNSSyncInfoReceived - IN");
+            NS_LOG_V(DEBUG, "syncInfo->providerId : %s", syncInfo->providerId);
+
             NSSyncInfo *nsSyncInfo = new NSSyncInfo(syncInfo);
+
             for (auto it : NSConsumerService::getInstance()->getAcceptedProviders())
             {
+                NS_LOG_V(DEBUG, "it->getProviderId : %s", it->getProviderId().c_str());
                 if (it->getProviderId() == nsSyncInfo->getProviderId())
                 {
                     NS_LOG(DEBUG, "Found Provider with given ID");
@@ -217,31 +223,39 @@ namespace OIC
             return &s_instance;
         }
 
-        void NSConsumerService::start(NSConsumerService::ProviderDiscoveredCallback providerDiscovered)
+        NSResult NSConsumerService::start(NSConsumerService::ProviderDiscoveredCallback providerDiscovered)
         {
             NS_LOG(DEBUG, "start - IN");
+            for (auto it : getAcceptedProviders())
+            {
+                delete it;
+            }
+            getAcceptedProviders().clear();
+
             m_providerDiscoveredCb = providerDiscovered;
             NSConsumerConfig nsConfig;
             nsConfig.changedCb = onProviderStateReceived;
             nsConfig.messageCb = onNSMessageReceived;
             nsConfig.syncInfoCb = onNSSyncInfoReceived;
 
-            NSStartConsumer(nsConfig);
+            NSResult result = (NSResult) NSStartConsumer(nsConfig);
             NS_LOG(DEBUG, "start - OUT");
-            return;
+            return result;
         }
 
-        void NSConsumerService::stop()
+        NSResult NSConsumerService::stop()
         {
             NS_LOG(DEBUG, "stop - IN");
-            NSStopConsumer();
+            m_providerDiscoveredCb = NULL;
             for (auto it : getAcceptedProviders())
             {
                 delete it;
             }
             getAcceptedProviders().clear();
+
+            NSResult result = (NSResult) NSStopConsumer();
             NS_LOG(DEBUG, "stop - OUT");
-            return;
+            return result;
         }
 
         NSResult NSConsumerService::enableRemoteService(const std::string &serverAddress)
@@ -277,12 +291,12 @@ namespace OIC
             return result;
         }
 
-        void NSConsumerService::rescanProvider()
+        NSResult NSConsumerService::rescanProvider()
         {
             NS_LOG(DEBUG, "rescanProvider - IN");
-            NSRescanProvider();
+            NSResult result = (NSResult) NSRescanProvider();
             NS_LOG(DEBUG, "rescanProvider - OUT");
-            return;
+            return result;
         }
 
         NSConsumerService::ProviderDiscoveredCallback NSConsumerService::getProviderDiscoveredCb()
@@ -292,8 +306,11 @@ namespace OIC
 
         NSProvider *NSConsumerService::getProvider(const std::string &id)
         {
+            NS_LOG_V(DEBUG, "getAcceptedProviders size  : %d", (int) getAcceptedProviders().size());
             for (auto it : getAcceptedProviders())
             {
+                NS_LOG_V(DEBUG, "getProvider  stored providerId : %s", it->getProviderId().c_str());
+                NS_LOG_V(DEBUG, "getProvider  requesting providerId : %s", id.c_str());
                 if (it->getProviderId() == id)
                 {
                     NS_LOG(DEBUG, "getProvider : Found Provider with given ID");

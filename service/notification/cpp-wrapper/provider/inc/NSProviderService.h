@@ -137,8 +137,9 @@ namespace OIC
                       * Send read-check to provider in order to synchronize notification status with other consumers
                       * @param[in]  messageId  ID of Notification message to synchronize the status
                       * @param[in]  type  NotificationSyncType of the SyncInfo message
+                      * @return :: OK or result code of NSResult
                       */
-                void sendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type);
+                NSResult sendSyncInfo(uint64_t messageId, NSSyncInfo::NSSyncType type);
 
                 /**
                      * Initialize NSMessage class, This function is valid only when subControllability is set true.

@@ -115,6 +115,23 @@ public class ExampleUnitTest extends ApplicationTestCase<Application> {
             e.printStackTrace();
         }
     }
+    public void unsubscribe() {
+        lockObject = new CountDownLatch(1);
+        response = new Response();
+        provCb.set(lockObject, response);
+        provCb.setState(Provider.ProviderState.STOPPED);
+        Provider mProvider = disCb.getProvider();
+        setListener(mProvider);
+        try {
+            if (mProvider.isSubscribed()) {
+                Log.i(TAG, "subscribed");
+                mProvider.unsubscribe();
+            }
+            lockObject.await(4000, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public long sendMessage() {
         lockObject = new CountDownLatch(1);
@@ -237,6 +254,7 @@ public class ExampleUnitTest extends ApplicationTestCase<Application> {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        assertEquals(true, response.get());
     }
 
     @Test
@@ -248,7 +266,17 @@ public class ExampleUnitTest extends ApplicationTestCase<Application> {
         subscribe(state);
         assertEquals(true, response.get());
     }
+    @Test
+    public void ExpectUnSubscribeSuccess() {
+        startAfter(false);
+        assertEquals(true, response.get());
 
+        Provider.ProviderState state = Provider.ProviderState.ALLOW;
+        subscribe(state);
+        assertEquals(true, response.get());
+        unsubscribe();
+        assertEquals(true, response.get());
+    }
     @Test
     public void ExpectReceiveNotification() {
         startAfter(false);

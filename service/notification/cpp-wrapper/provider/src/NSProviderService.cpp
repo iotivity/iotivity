@@ -89,6 +89,8 @@ namespace OIC
 
         NSProviderService::~NSProviderService()
         {
+            m_config.m_subscribeRequestCb = NULL;
+            m_config.m_syncInfoCb = NULL;
             for (auto it : getAcceptedConsumers())
             {
                 delete it;
@@ -105,6 +107,12 @@ namespace OIC
         NSResult NSProviderService::start(NSProviderService::ProviderConfig config)
         {
             NS_LOG(DEBUG, "start - IN");
+
+            for (auto it : getAcceptedConsumers())
+            {
+                delete it;
+            }
+            getAcceptedConsumers().clear();
 
             m_config = config;
             NSProviderConfig nsConfig;
@@ -123,6 +131,15 @@ namespace OIC
         NSResult NSProviderService::stop()
         {
             NS_LOG(DEBUG, "stop - IN");
+
+            m_config.m_subscribeRequestCb = NULL;
+            m_config.m_syncInfoCb = NULL;
+            for (auto it : getAcceptedConsumers())
+            {
+                delete it;
+            }
+            getAcceptedConsumers().clear();
+
             NSResult result = (NSResult) NSStopProvider();
             NS_LOG(DEBUG, "stop - OUT");
             return result;
@@ -210,13 +227,13 @@ namespace OIC
             return result;
         }
 
-        void NSProviderService::sendSyncInfo(uint64_t messageId,
-                                             NSSyncInfo::NSSyncType type)
+        NSResult NSProviderService::sendSyncInfo(uint64_t messageId,
+                NSSyncInfo::NSSyncType type)
         {
             NS_LOG(DEBUG, "sendSyncInfo - IN");
-            NSProviderSendSyncInfo(messageId, (NSSyncType)type);
+            NSResult result = (NSResult) NSProviderSendSyncInfo(messageId, (NSSyncType)type);
             NS_LOG(DEBUG, "sendSyncInfo - OUT");
-            return;
+            return result;
         }
 
         NSMessage *NSProviderService::createMessage()
@@ -267,8 +284,11 @@ namespace OIC
 
         NSConsumer *NSProviderService::getConsumer(const std::string &id)
         {
+            NS_LOG_V(DEBUG, "getAcceptedConsumers size  : %d", (int) getAcceptedConsumers().size());
             for (auto it : getAcceptedConsumers())
             {
+                NS_LOG_V(DEBUG, "getConsumer  stored consumerId : %s", it->getConsumerId().c_str());
+                NS_LOG_V(DEBUG, "getConsumer  requesting consumerId : %s", id.c_str());
                 if (it->getConsumerId() == id)
                 {
                     NS_LOG(DEBUG, "getConsumer : Found Consumer with given ID");

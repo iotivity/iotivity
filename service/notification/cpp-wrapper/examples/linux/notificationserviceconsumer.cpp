@@ -185,10 +185,13 @@ int main(void)
         std::cout << "3. SendSyncInfo" << std::endl;
         std::cout << "4. GetTopicList" << std::endl;
         std::cout << "5. UpdateTopicList" << std::endl;
+        std::cout << "6. Subscribe provider" << std::endl;
+        std::cout << "7. UnSubscribe provider" << std::endl;
+        std::cout << "8. Rescan provider" << std::endl;
 #ifdef WITH_CLOUD
-        std::cout << "6. Enable  NS Consumer RemoteService" << std::endl;
+        std::cout << "9. Enable  NS Consumer RemoteService" << std::endl;
 #endif
-        std::cout << "7. Exit" << std::endl;
+        std::cout << "10. Exit" << std::endl;
 
         std::cout << "Input: " << std::endl;
         std::cin >> num;
@@ -235,8 +238,8 @@ int main(void)
                                     provider->sendSyncInfo(mainMessageId,
                                                            OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_READ);
                                 }
+                                break;
                             }
-                            break;
                         case 2:
                             {
                                 std::cout << "Sending Delete Sync" << std::endl;
@@ -247,8 +250,8 @@ int main(void)
                                     provider->sendSyncInfo(mainMessageId,
                                                            OIC::Service::NSSyncInfo::NSSyncType::NS_SYNC_DELETED);
                                 }
+                                break;
                             }
-                            break;
                         default:
                             {
                                 cout << "Invalid Input!. sending default Read Sync";
@@ -282,8 +285,8 @@ int main(void)
                             }
                         }
                     }
+                    break;
                 }
-                break;
             case 5:
                 {
                     std::cout <<  "UpdateTopicList" << std::endl;
@@ -299,10 +302,55 @@ int main(void)
                         delete topicList;
                         delete provider;
                     }
+                    break;
                 }
-                break;
-#ifdef WITH_CLOUD
             case 6:
+                {
+                    std::cout << "Subscribe provider" << std::endl;
+                    if (!mainProvider.empty())
+                    {
+                        OIC::Service::NSProvider *provider =
+                            NSConsumerService::getInstance()->getProvider(mainProvider);
+                        if (provider != nullptr )
+                        {
+                            std::cout << "calling Subscribe on discovered mainProvider" << std::endl;
+                            if (!provider->isSubscribed())
+                            {
+                                std::cout << "start Subscribing" << std::endl;
+                                provider->subscribe();
+                            }
+                        }
+                    }
+                    break;
+                }
+            case 7:
+                {
+                    std::cout << "UnSubscribe provider" << std::endl;
+                    if (!mainProvider.empty())
+                    {
+                        OIC::Service::NSProvider *provider =
+                            NSConsumerService::getInstance()->getProvider(mainProvider);
+                        if (provider != nullptr )
+                        {
+                            std::cout << "calling UnSubscribe on discovered mainProvider" << std::endl;
+                            if (provider->isSubscribed())
+                            {
+                                std::cout << "start UnSubscribing" << std::endl;
+                                provider->unsubscribe();
+                            }
+                        }
+                    }
+                    break;
+                }
+            case 8:
+                {
+                    std::cout << "Rescan Provider" << std::endl;
+                    NSConsumerService::getInstance()->rescanProvider();
+                    break;
+                }
+
+#ifdef WITH_CLOUD
+            case 9:
                 {
                     std::cout << "Enable NS Consumer RemoteService" << std::endl;
                     std::cout << "Input the Server Address :";
@@ -311,7 +359,7 @@ int main(void)
                     break;
                 }
 #endif
-            case 7:
+            case 10:
                 {
                     std::cout << "Exit" << std::endl;
                     NSConsumerService::getInstance()->stop();

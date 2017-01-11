@@ -62,13 +62,15 @@ namespace OIC
                 /**
                       * Initialize notification service for consumer
                       * @param providerDiscovered Callback function pointers to ProviderDiscoveredCallback,
+                      * @return ::NS_OK or result code of NSResult
                       */
-                void start(ProviderDiscoveredCallback providerDiscovered);
+                NSResult start(ProviderDiscoveredCallback providerDiscovered);
 
                 /**
                       * Terminate notification service for consumer
+                      * @return ::NS_OK or result code of NSResult
                       */
-                void stop();
+                NSResult stop();
 
                 /**
                      * Request to discover to remote address as parameter.
@@ -87,8 +89,9 @@ namespace OIC
 
                 /**
                       * Request discovery manually
+                      * @return ::NS_OK or result code of NSResult
                       */
-                void rescanProvider();
+                NSResult rescanProvider();
 
                 /**
                       *  get the callback for ProviderDiscovered

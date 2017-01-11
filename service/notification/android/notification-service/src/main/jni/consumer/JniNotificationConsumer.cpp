@@ -1116,6 +1116,45 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSubs
     return;
 }
 
+JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeUnsubscribe
+(JNIEnv *env, jobject jObj)
+{
+    LOGD ("Provider_UnSubscribe -IN");
+    jclass providerClass = env->GetObjectClass(jObj);
+    if (!providerClass)
+    {
+        ThrowNSException(NS_ERROR, "Failed to Get ObjectClass for Provider");
+        return ;
+    }
+
+    jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
+    if (!nativeHandle)
+    {
+        ThrowNSException(NS_ERROR, "Failed to get nativeHandle for Provider");
+        return ;
+    }
+    jlong jProvider = env->GetLongField(jObj, nativeHandle);
+    if (jProvider)
+    {
+        LOGD ("calling subscribe on mNativeHandle");
+        OIC::Service::NSProvider *provider = (OIC::Service::NSProvider *) (jProvider);
+        provider->unsubscribe();
+    }
+    else
+    {
+        OIC::Service::NSProvider *provider = getNativeProvider(env, jObj);
+        if (provider == nullptr)
+        {
+            ThrowNSException(NS_ERROR, "Provider with Given Id doesn't exist");
+            return;
+        }
+        LOGD ("calling subscribe on ProviderID");
+        provider->unsubscribe();
+    }
+    LOGD ("Provider_UnSubscribe -OUT");
+    return;
+}
+
 JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSendSyncInfo
 (JNIEnv *env, jobject jObj, jlong jMessageId, jint jSyncType)
 {
