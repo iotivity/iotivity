@@ -742,7 +742,7 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
     // Get my device ID from doxm resource
     OicUuid_t myId;
     memset(&myId, 0, sizeof(myId));
-    res = GetDoxmDevOwnerId(&myId);
+    res = GetDoxmDeviceID(&myId);
     if(OC_STACK_OK != res)
     {
         OIC_LOG(ERROR, TAG, "Error while getting my device ID.");
@@ -759,13 +759,6 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
         return OC_STACK_KEEP_TRANSACTION;
     }
 
-    res = GetDoxmDeviceID(&myId);
-    if(OC_STACK_OK != res)
-    {
-        OIC_LOG(ERROR, TAG, "Error while getting my UUID.");
-        DeleteDoxmBinData(ptrDoxm);
-        return OC_STACK_KEEP_TRANSACTION;
-    }
     //if targetId and discovered deviceID are different, discard it
     if ((pDInfo->isSingleDiscovery) &&
         (0 != memcmp(&ptrDoxm->deviceID.id, &pDInfo->targetId->id, sizeof(pDInfo->targetId->id))) )
@@ -774,9 +767,8 @@ static OCStackApplicationResult DeviceDiscoveryHandler(void *ctx, OCDoHandle UNU
         DeleteDoxmBinData(ptrDoxm);
         return OC_STACK_KEEP_TRANSACTION;
     }
-    //if this is owned discovery and this is PT's reply, discard it
-    if (((pDInfo->isSingleDiscovery) || (pDInfo->isOwnedDiscovery)) &&
-            (0 == memcmp(&ptrDoxm->deviceID.id, &myId.id, sizeof(myId.id))) )
+    //If self reply, discard it
+    if (0 == memcmp(&ptrDoxm->deviceID.id, &myId.id, sizeof(myId.id)))
     {
         OIC_LOG(DEBUG, TAG, "discarding provision tool's reply");
         DeleteDoxmBinData(ptrDoxm);
