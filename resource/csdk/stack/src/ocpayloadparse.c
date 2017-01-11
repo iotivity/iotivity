@@ -224,7 +224,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
             // BaseURI - Not a mandatory field
             err = cbor_value_map_find_value(&rootMap, OC_RSRVD_BASE_URI, &curVal);
             VERIFY_CBOR_SUCCESS(TAG, err, "to find uri tag");
-            if (cbor_value_is_valid(&curVal))
+            if (cbor_value_is_text_string(&curVal))
             {
                 err = cbor_value_dup_text_string(&curVal, &(temp->baseURI), &len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find base uri value");
@@ -232,7 +232,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
 
             // HREF - Not a mandatory field
             err = cbor_value_map_find_value(&rootMap, OC_RSRVD_HREF, &curVal);
-            if (cbor_value_is_valid(&curVal))
+            if (cbor_value_is_text_string(&curVal))
             {
                 err = cbor_value_dup_text_string(&curVal, &(temp->uri), &len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find uri value");
@@ -262,7 +262,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
 
             // Name - Not a mandatory field
             err = cbor_value_map_find_value(&rootMap, OC_RSRVD_DEVICE_NAME, &curVal);
-            if (cbor_value_is_valid(&curVal))
+            if (cbor_value_is_text_string(&curVal))
             {
                 err = cbor_value_dup_text_string(&curVal, &temp->name, &len, NULL);
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find device name");
@@ -322,7 +322,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
                 // Secure Flag
                 err = cbor_value_map_find_value(&policyMap, OC_RSRVD_SECURE, &curVal);
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find secure tag");
-                if (cbor_value_is_valid(&curVal))
+                if (cbor_value_is_boolean(&curVal))
                 {
                     err = cbor_value_get_boolean(&curVal, &(resource->secure));
                     VERIFY_CBOR_SUCCESS(TAG, err, "to find secure value");
@@ -331,7 +331,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
                 // Port
                 err = cbor_value_map_find_value(&policyMap, OC_RSRVD_HOSTING_PORT, &curVal);
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find port tag");
-                if (cbor_value_is_valid(&curVal))
+                if (cbor_value_is_integer(&curVal))
                 {
                     int port;
 
@@ -343,7 +343,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
 #ifdef TCP_ADAPTER
                 // TCP Port
                 err = cbor_value_map_find_value(&policyMap, OC_RSRVD_TCP_PORT, &curVal);
-                if (cbor_value_is_valid(&curVal))
+                if (cbor_value_is_integer(&curVal))
                 {
                     int tcpPort;
 
@@ -355,7 +355,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
 #ifdef __WITH_TLS__
                 // TLS Port
                 err = cbor_value_map_find_value(&policyMap, OC_RSRVD_TLS_PORT, &curVal);
-                if (cbor_value_is_valid(&curVal))
+                if (cbor_value_is_integer(&curVal))
                 {
                     int tlsPort;
 
@@ -370,7 +370,7 @@ static OCStackResult OCParseDiscoveryPayload(OCPayload **outPayload, CborValue *
                 err = cbor_value_map_find_value(&resourceMap, OC_RSRVD_ENDPOINTS, &epsMap);
                 VERIFY_CBOR_SUCCESS(TAG, err, "to find eps tag");
 
-                if (cbor_value_is_valid(&epsMap))
+                if (cbor_value_is_array(&epsMap))
                 {
                     CborValue epMap;
                     err = cbor_value_enter_container(&epsMap, &epMap);
@@ -1005,7 +1005,7 @@ static OCStackResult OCParseRepPayload(OCPayload **outPayload, CborValue *root)
         {
             err = cbor_value_map_find_value(&rootMap, OC_RSRVD_HREF, &curVal);
             VERIFY_CBOR_SUCCESS(TAG, err, "to find href tag");
-            if (cbor_value_is_valid(&curVal))
+            if (cbor_value_is_text_string(&curVal))
             {
                 size_t len = 0;
                 err = cbor_value_dup_text_string(&curVal, &temp->uri, &len, NULL);
@@ -1111,7 +1111,7 @@ static OCStackResult OCParsePresencePayload(OCPayload **outPayload, CborValue *r
         // Resource type name
         err = cbor_value_map_find_value(rootValue, OC_RSRVD_RESOURCE_TYPE, &curVal);
         VERIFY_CBOR_SUCCESS(TAG, err, "to find res type tag");
-        if (cbor_value_is_valid(&curVal))
+        if (cbor_value_is_text_string(&curVal))
         {
             size_t len = 0;
             err = cbor_value_dup_text_string(&curVal, &payload->resourceType, &len, NULL);
