@@ -50,6 +50,7 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 #include "logger.h"
+#include "trace.h"
 #include "ocserverrequest.h"
 #include "secureresourcemanager.h"
 #include "psinterface.h"
@@ -1649,7 +1650,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
     VERIFY_NON_NULL_NR(responseInfo, FATAL);
 
     OIC_LOG(INFO, TAG, "Enter HandleCAResponses");
-
+    OIC_TRACE_BEGIN(%s:HandleCAResponses, TAG);
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
 #ifdef ROUTING_GATEWAY
     bool needRIHandling = false;
@@ -1664,6 +1665,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
     if(ret != OC_STACK_OK || !needRIHandling)
     {
         OIC_LOG_V(INFO, TAG, "Routing status![%d]. Not forwarding to RI", ret);
+        OIC_TRACE_END();
         return;
     }
 #endif
@@ -1681,6 +1683,7 @@ void HandleCAResponses(const CAEndpoint_t* endPoint, const CAResponseInfo_t* res
     OCHandleResponse(endPoint, responseInfo);
 
     OIC_LOG(INFO, TAG, "Exit HandleCAResponses");
+    OIC_TRACE_END();
 }
 
 /*
@@ -1693,6 +1696,7 @@ void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *er
     VERIFY_NON_NULL_NR(errorInfo, FATAL);
 
     OIC_LOG(INFO, TAG, "Enter HandleCAErrorResponse");
+    OIC_TRACE_BEGIN(%s:HandleCAErrorResponse, TAG);
 
     ClientCB *cbNode = GetClientCB(errorInfo->info.token,
                                    errorInfo->info.tokenLength, NULL, NULL);
@@ -1734,6 +1738,7 @@ void HandleCAErrorResponse(const CAEndpoint_t *endPoint, const CAErrorInfo_t *er
     }
 
     OIC_LOG(INFO, TAG, "Exit HandleCAErrorResponse");
+    OIC_TRACE_END();
 }
 
 /*
@@ -2130,15 +2135,18 @@ void OCHandleRequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
 void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* requestInfo)
 {
     OIC_LOG(INFO, TAG, "Enter HandleCARequests");
+    OIC_TRACE_BEGIN(%s:HandleCARequests, TAG);
     if (!endPoint)
     {
         OIC_LOG(ERROR, TAG, "endPoint is NULL");
+        OIC_TRACE_END();
         return;
     }
 
     if (!requestInfo)
     {
         OIC_LOG(ERROR, TAG, "requestInfo is NULL");
+        OIC_TRACE_END();
         return;
     }
 
@@ -2158,6 +2166,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
     if (OC_STACK_OK != ret || !needRIHandling)
     {
         OIC_LOG_V(INFO, TAG, "Routing status![%d]. Not forwarding to RI", ret);
+        OIC_TRACE_END();
         return;
     }
 #endif
@@ -2193,6 +2202,7 @@ void HandleCARequests(const CAEndpoint_t* endPoint, const CARequestInfo_t* reque
         OCHandleRequests(endPoint, requestInfo);
     }
     OIC_LOG(INFO, TAG, "Exit HandleCARequests");
+    OIC_TRACE_END();
 }
 
 //-----------------------------------------------------------------------------

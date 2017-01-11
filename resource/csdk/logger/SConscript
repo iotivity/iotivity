@@ -28,7 +28,7 @@ if env.get('TARGET_OS') in ['arduino']:
 	Command("./src/logger.cpp", "./src/logger.c", Copy("$TARGET", "$SOURCE"))
 	logger_src = ['./src/logger.cpp']
 else:
-	logger_src = ['./src/logger.c']
+	logger_src = ['./src/logger.c', './src/trace.c']
 
 loggerlib = local_env.StaticLibrary('logger', logger_src)
 local_env.InstallTarget(loggerlib, 'logger')

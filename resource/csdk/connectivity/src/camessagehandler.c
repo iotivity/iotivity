@@ -28,6 +28,7 @@
 #include "caremotehandler.h"
 #include "caprotocolmessage.h"
 #include "logger.h"
+#include "trace.h"
 #ifndef WITH_UPSTREAM_LIBCOAP
 #include "coap/config.h"
 #endif
@@ -499,6 +500,8 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
     VERIFY_NON_NULL(data, TAG, "data");
     VERIFY_NON_NULL(data->remoteEndpoint, TAG, "remoteEndpoint");
 
+    OIC_TRACE_BEGIN(%s:CAProcessSendData, TAG);
+
     CAResult_t res = CA_STATUS_FAILED;
 
     CASendDataType_t type = data->type;
@@ -545,6 +548,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
         else
         {
             OIC_LOG(DEBUG, TAG, "request info, response info is empty");
+            OIC_TRACE_END();
             return CA_STATUS_INVALID_PARAM;
         }
 
@@ -566,6 +570,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                         CAErrorHandler(data->remoteEndpoint, pdu->transport_hdr, pdu->length, res);
                         coap_delete_list(options);
                         coap_delete_pdu(pdu);
+                        OIC_TRACE_END();
                         return res;
                     }
                 }
@@ -581,6 +586,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                 CAErrorHandler(data->remoteEndpoint, pdu->transport_hdr, pdu->length, res);
                 coap_delete_list(options);
                 coap_delete_pdu(pdu);
+                OIC_TRACE_END();
                 return res;
             }
 
@@ -606,6 +612,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
                     OIC_LOG_V(INFO, TAG, "retransmission is not enabled due to error, res : %d", res);
                     coap_delete_list(options);
                     coap_delete_pdu(pdu);
+                    OIC_TRACE_END();
                     return res;
                 }
             }
@@ -617,6 +624,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
         {
             OIC_LOG(ERROR,TAG,"Failed to generate unicast PDU");
             CASendErrorInfo(data->remoteEndpoint, info, CA_SEND_FAILED);
+            OIC_TRACE_END();
             return CA_SEND_FAILED;
         }
     }
@@ -654,7 +662,7 @@ static CAResult_t CAProcessSendData(const CAData_t *data)
         CAProcessMulticastData(data);
 #endif
     }
-
+    OIC_TRACE_END();
     return CA_STATUS_OK;
 }
 
@@ -737,9 +745,12 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
     VERIFY_NON_NULL_VOID(sep, TAG, "remoteEndpoint");
     VERIFY_NON_NULL_VOID(data, TAG, "data");
 
+    OIC_TRACE_BEGIN(%s:CAReceivedPacketCallback, TAG);
+
     if (0 == dataLen)
     {
         OIC_LOG(ERROR, TAG, "dataLen is zero");
+        OIC_TRACE_END();
         return;
     }
 
@@ -841,6 +852,8 @@ static void CAReceivedPacketCallback(const CASecureEndpoint_t *sep,
 exit:
     OIC_LOG(DEBUG, TAG, "received pdu data :");
     OIC_LOG_BUFFER(DEBUG, TAG,  data, dataLen);
+
+    OIC_TRACE_END();
 }
 
 void CAHandleRequestResponseCallbacks()

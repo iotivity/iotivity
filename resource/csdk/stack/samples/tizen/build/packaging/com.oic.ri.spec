@@ -32,6 +32,7 @@ Source0: http://mirrors.kernel.org/%{name}/%{version}/%{name}-%{version}.tar.gz
 %{!?WITH_TCP: %define WITH_TCP 0}
 
 BuildRequires: pkgconfig(dlog)
+BuildRequires: pkgconfig(ttrace)
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(capi-network-connection)
 BuildRequires: pkgconfig(capi-network-wifi)
