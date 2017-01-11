@@ -321,6 +321,24 @@ namespace OC
         return result;
     }
 
+    OCStackResult OCSecure::setRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType)
+    {
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = SetRandomPinPolicy(pinSize, pinType);
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
+
     OCStackResult OCSecure::getDevInfoFromNetwork(unsigned short timeout,
             DeviceList_t &ownedDevList,
             DeviceList_t &unownedDevList)

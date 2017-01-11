@@ -232,7 +232,7 @@ namespace OC
             /**
              * API for registering Pin Callback.
              *
-             * @param InputPinCallback inputPin caaback function.
+             * @param InputPinCallback inputPin callback function.
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */
             static OCStackResult setInputPinCallback(InputPinCallback inputPin);
@@ -243,6 +243,15 @@ namespace OC
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */
             static OCStackResult unsetInputPinCallback();
+
+            /**
+             * API to set Pin Type policy.
+             *
+             * @param  pinSize pin Size
+             * @param  pinType Type of the pin.
+             * @return OC_STACK_OK in case of success and other value otherwise.
+             */
+            static OCStackResult setRandomPinPolicy(size_t pinSize, OicSecPinType_t pinType);
 
             /**
              * API to get status of all the devices in current subnet. The status include endpoint
