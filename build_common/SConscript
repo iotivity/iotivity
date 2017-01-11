@@ -111,8 +111,6 @@ else:
     help_vars.Add(ListVariable('TARGET_TRANSPORT', 'Target transport', 'ALL', ['ALL', 'BT', 'BLE', 'IP', 'NFC']))
 
 help_vars.Add(EnumVariable('TARGET_ARCH', 'Target architecture', default_arch, os_arch_map[target_os]))
-# TODO remove darwin from list once IOT-1684 is closed
-targets_without_dtls_support.append('darwin')
 if target_os in targets_without_dtls_support:
     help_vars.Add(EnumVariable('SECURED', 'Build with DTLS', '0', allowed_values=('0', '1')))
 else:
