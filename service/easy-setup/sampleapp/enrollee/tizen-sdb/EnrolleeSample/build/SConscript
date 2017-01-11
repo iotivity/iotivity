@@ -118,7 +118,7 @@ env.AppendUnique(CPPDEFINES = ['-D__OIC_DEVICE_NAME__=' + "\'\"" + device_name +
 
 tc_set_msg = '''
 ************************************ Warning **********************************
-*   Enviornment variable TC_PREFIX/TC_PATH is set. It will change the default *
+*   Environment variable TC_PREFIX/TC_PATH is set. It will change the default *
 * toolchain, if it isn't what you expect you should unset it, otherwise it may*
 * cause inexplicable errors.                                                  *
 *******************************************************************************
