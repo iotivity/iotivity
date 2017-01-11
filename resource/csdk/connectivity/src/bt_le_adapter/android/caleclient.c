@@ -809,6 +809,7 @@ CAResult_t CALEClientIsThereScannedDevices(JNIEnv *env, const char* address)
                                  g_threadSendMutex,
                                  TIMEOUT) == OC_WAIT_SUCCESS)
             {
+                OIC_LOG(DEBUG, TAG, "time out");
                 oc_mutex_lock(g_deviceListMutex);
                 size_t scannedDeviceLen = u_arraylist_length(g_deviceList);
                 oc_mutex_unlock(g_deviceListMutex);
@@ -4234,6 +4235,11 @@ void CAStopLEGattClient()
     oc_cond_signal(g_threadCond);
     CALEClientSetSendFinishFlag(true);
     oc_mutex_unlock(g_threadMutex);
+
+    oc_mutex_lock(g_threadSendMutex);
+    OIC_LOG(DEBUG, TAG, "signal - g_deviceDesc cond");
+    oc_cond_signal(g_deviceDescCond);
+    oc_mutex_unlock(g_threadSendMutex);
 
     oc_mutex_lock(g_threadWriteCharacteristicMutex);
     OIC_LOG(DEBUG, TAG, "signal - WriteCharacteristic cond");

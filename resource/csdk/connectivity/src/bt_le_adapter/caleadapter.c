@@ -2618,15 +2618,21 @@ static CAResult_t CALEAdapterGattServerStop()
 #ifndef SINGLE_THREAD
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALEAdapterGattServerStop");
 
-    CAResult_t result = CAStopLEGattServer();
-    oc_mutex_lock(g_bleServerSendDataMutex);
-    if (CA_STATUS_OK == result)
+    CAResult_t res = CAStopLEGattServer();
+    if (CA_STATUS_OK != res)
     {
-        result = CAQueueingThreadStop(g_bleServerSendQueueHandle);
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "CAStopLEGattServer has failed");
+    }
+
+    oc_mutex_lock(g_bleServerSendDataMutex);
+    res = CAQueueingThreadStop(g_bleServerSendQueueHandle);
+    if (CA_STATUS_OK != res)
+    {
+        OIC_LOG(ERROR, CALEADAPTER_TAG, "CAQueueingThreadStop has failed");
     }
     oc_mutex_unlock(g_bleServerSendDataMutex);
 
-    return result;
+    return res;
 #else
     return CAStopLEGattServer();
 #endif
@@ -2880,7 +2886,7 @@ static CAResult_t CAStopLE()
 
 static void CATerminateLE()
 {
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CATerminateLE");
 
     CASetLEReqRespServerCallback(NULL);
     CASetLEReqRespClientCallback(NULL);
@@ -2917,7 +2923,7 @@ static void CATerminateLE()
 
     CATerminateLEAdapterMutex();
 
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT");
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "OUT - CATerminateLE");
 }
 
 static CAResult_t CAStartLEListeningServer()
