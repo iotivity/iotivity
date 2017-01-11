@@ -182,7 +182,7 @@ Ignore("./TestBundleJava/hue-0.1-jar-with-dependencies.jar", "./TestBundleJava/h
 
 # TODO: fix this test and edit commented lines
 if container_gtest_env.get('TEST') == '1':
-    if target_os in ['linux'] and container_gtest_env.get('SECURED') != '1':
+    if target_os in ['TODO/linux'] and container_gtest_env.get('SECURED') != '1':
         from tools.scons.RunTest import run_test
         run_test(container_gtest_env,
 #                'service_resource-container_unittests_container_test.memcheck',
