@@ -152,6 +152,12 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
     }
 
     //Check the URI has the query and skip it before checking the permission
+    if (NULL == requestInfo->info.resourceUri)
+    {
+        OIC_LOG(ERROR, TAG, "Invalid resourceUri");
+        return;
+    }
+
     char *uri = strstr(requestInfo->info.resourceUri, "?");
     int position = 0;
     if (uri)
