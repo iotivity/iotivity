@@ -81,6 +81,8 @@ public class Provider {
      * API for getting for getting Topic List
      *
      * @return TopicsList
+     *
+     * @throws NSException failure to get Topic List
      */
     public TopicsList getTopicList() throws NSException {
         return nativeGetTopicList();
@@ -90,6 +92,8 @@ public class Provider {
      * API for getting for getting ProviderState
      *
      * @return ProviderState
+     *
+     * @throws NSException failure to get ProviderState
      */
     public ProviderState getProviderState() throws NSException {
         return nativeGetProviderState();
@@ -97,6 +101,8 @@ public class Provider {
 
     /**
      * API for for requesting subscription of Notification service
+     *
+     * @throws NSException failure to subscribe
      */
     public void subscribe() throws NSException {
         nativeSubscribe();
@@ -105,6 +111,10 @@ public class Provider {
     /**
      * API for for requesting subscription status from Provider of Notification
      * service
+     *
+     * @return true if the notification service is subscribed to
+     *
+     * @throws NSException if unable to obtain subscription status
      */
     public boolean isSubscribed() throws NSException {
         return nativeIsSubscribed();
@@ -117,6 +127,7 @@ public class Provider {
      *            unique Id of message
      * @param syncType
      *            SyncType of Notification service
+     * @throws NSException failure to send SyncInfo
      */
     public void sendSyncInfo(long messageId, SyncInfo.SyncType syncType)
             throws NSException {
@@ -128,10 +139,11 @@ public class Provider {
      *
      * @param onProviderStateListener
      *            OnProviderStateListener callback Interface
-     * @param onMessageReceivedListner
-     *            OnMessageReceivedListner callback Interface
-     * @param onSyncInfoReceivedListner
-     *            OnSyncInfoReceivedListner callback Interface
+     * @param onMessageReceivedListener
+     *            OnMessageReceivedListener callback Interface
+     * @param onSyncInfoReceivedListener
+     *            OnSyncInfoReceivedListener callback Interface
+     * @throws NSException failure to register listeners.
      */
     public void setListener(OnProviderStateListener onProviderStateListener,
             OnMessageReceivedListener onMessageReceivedListener,
@@ -148,6 +160,8 @@ public class Provider {
      *            TopicsList of interested Topics
      *
      * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     *
+     * @throws NSException failure to update topic list. 
      */
     public int updateTopicList(TopicsList topicsList) throws NSException {
         return nativeUpdateTopicList(topicsList);
