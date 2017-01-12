@@ -386,7 +386,9 @@ def build_tizen(flag, extra_option_str):
     print ("*********** Build for Tizen *************")
     cmd_line = "/bin/sh " + os.getcwd() + "/gbsbuild.sh"
     print ("Running : " + cmd_line)
-    subprocess.Popen([cmd_line], shell=True).wait()
+    exit_code = subprocess.Popen([cmd_line], shell=True).wait()
+    if exit_code != 0:
+        exit(exit_code)
 
     print ("*********** Build for Tizen octbstack lib and sample with security *************")
     extra_option_str = "-f resource/csdk/stack/samples/tizen/build/SConscript " + extra_option_str
