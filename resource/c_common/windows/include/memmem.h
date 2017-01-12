@@ -20,6 +20,9 @@
 #ifndef MEMMEM_H__
 #define MEMMEM_H__
 
+// crtdefs.h is required for size_t
+#include <crtdefs.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
