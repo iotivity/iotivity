@@ -246,9 +246,8 @@ CAResult_t CAQueueingThreadDestroy(CAQueueingThread_t *thread)
 
     OIC_LOG(DEBUG, TAG, "thread destroy..");
 
-    oc_mutex_free(thread->threadMutex);
-    thread->threadMutex = NULL;
-    oc_cond_free(thread->threadCond);
+    // mutex lock
+    oc_mutex_lock(thread->threadMutex);
 
     // remove all remained list data.
     while (u_queue_get_size(thread->dataQueue) > 0)
@@ -274,6 +273,13 @@ CAResult_t CAQueueingThreadDestroy(CAQueueingThread_t *thread)
 
     u_queue_delete(thread->dataQueue);
     thread->dataQueue = NULL;
+
+    // mutex unlock
+    oc_mutex_unlock(thread->threadMutex);
+
+    oc_mutex_free(thread->threadMutex);
+    thread->threadMutex = NULL;
+    oc_cond_free(thread->threadCond);
 
     return CA_STATUS_OK;
 }
