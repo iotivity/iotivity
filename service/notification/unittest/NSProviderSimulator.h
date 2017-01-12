@@ -23,6 +23,7 @@
 
 #include <iostream>
 #include <memory>
+#include <list>
 
 #include "OCPlatform.h"
 #include "OCApi.h"
@@ -79,7 +80,7 @@ public:
     NSProviderSimulator()
     : m_notificationHandle(), m_messageHandle(), m_syncHandle(), m_topicHandle(),
       m_syncRep(), m_messageRep(), m_accepter(0),
-      m_notificationUri(std::string("/notification")),
+      m_notificationUri(std::string("/notificationTest")),
       m_messageUri(std::string("/message")),
       m_syncUri(std::string("/sync")),
       m_topicUri(std::string("/topic")),
@@ -324,9 +325,9 @@ public:
     {
         std::string providerId = "123456789012345678901234567890123456";
         m_messageRep.setValue<int>("messageid", id);
-        m_messageRep.setValue("title", title);
-        m_messageRep.setValue("contenttext", content);
-        m_messageRep.setValue("providerid", providerId);
+        m_messageRep.setValue<std::string>("title", title);
+        m_messageRep.setValue<std::string>("contenttext", content);
+        m_messageRep.setValue<std::string>("providerid", providerId);
     }
 
     void setTopics(const NS_TopicList & topics)

@@ -106,7 +106,6 @@ void NSSetIsStartedConsumer(bool setValue)
     {
         pthread_mutex_destroy(*NSGetStackMutex());
         NSOICFree(*NSGetStackMutex());
-        *NSGetStackMutex() = NULL;
 
         NSOICFree(*NSGetConsumerId());
         *NSGetConsumerId() = NULL;
@@ -139,7 +138,14 @@ typedef struct
 void * NSProviderChangedFunc(void * obj)
 {
     NSProviderChangedData * data = (NSProviderChangedData *) obj;
-    (*(NSGetProviderChangedCb()))(data->provider, data->state);
+    NSProviderStateCallback cb = *(NSGetProviderChangedCb());
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(cb, NULL,
+    {
+        NSRemoveProvider(data->provider);
+        NSOICFree(data);
+    });
+    cb(data->provider, data->state);
+
     NSOICFree(data);
     return NULL;
 }
@@ -183,7 +189,14 @@ void NSSetNotificationSyncCb(NSSyncInfoReceivedCallback cb)
 
 void * NSNotificationSyncFunc(void * obj)
 {
-    (* NSGetBoneNotificationSyncCb())((NSSyncInfo *) obj);
+    NSSyncInfoReceivedCallback cb = * NSGetBoneNotificationSyncCb();
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(cb, NULL,
+    {
+        NSOICFree(obj);
+    });
+
+    cb((NSSyncInfo *) obj);
+
     return NULL;
 }
 
@@ -221,7 +234,13 @@ NSMessageReceivedCallback  NSGetMessagePostedCb()
 
 void * NSMessagePostFunc(void * obj)
 {
-    NSGetMessagePostedCb()((NSMessage *) obj);
+    NSMessageReceivedCallback cb = NSGetMessagePostedCb();
+    NS_VERIFY_NOT_NULL_WITH_POST_CLEANING(cb, NULL,
+    {
+        NSRemoveMessage((NSMessage *) obj);
+    });
+    cb((NSMessage *) obj);
+
     return NULL;
 }
 
@@ -791,6 +810,12 @@ OCStackResult NSInvokeRequest(OCDoHandle * handle,
         void * callbackFunc, void * callbackData,
         OCClientContextDeleter cd, OCConnectivityType type)
 {
+    if (!NSIsStartedConsumer())
+    {
+        NS_LOG(ERROR, "Consumer service maybe terminated : Ignore request");
+        return OC_STACK_ERROR;
+    }
+
     int mutexRet = pthread_mutex_lock(*(NSGetStackMutex()));
     NS_VERIFY_NOT_NULL(mutexRet != 0 ? NULL : (void *)1, OC_STACK_ERROR);
 

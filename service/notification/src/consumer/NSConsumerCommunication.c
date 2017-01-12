@@ -27,7 +27,11 @@
 #include "oic_string.h"
 #include "ocpayload.h"
 
+#ifdef LOCAL_RUNNING
 #define NS_SYNC_URI "/notification/sync"
+#else
+#define NS_SYNC_URI "/notificationTest/sync"
+#endif
 
 NSSyncInfo * NSCreateSyncInfo_consumer(uint64_t msgId, const char * providerId, NSSyncType state);
 
@@ -316,11 +320,15 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
     NS_LOG_V(DEBUG, "Receive Event : %d", (int)task->taskType);
     if (task->taskType == TASK_CONSUMER_REQ_SUBSCRIBE)
     {
-        NS_VERIFY_NOT_NULL_V(task->taskData);
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(task->taskData, NSOICFree(task));
         NS_LOG(DEBUG, "Request Subscribe");
         NSResult ret = NSConsumerSubscribeProvider((NSProvider *)task->taskData);
         NSRemoveProvider_internal((void *) task->taskData);
-        NS_VERIFY_NOT_NULL_V(ret == NS_OK ? (void *)1 : NULL);
+        NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(ret == NS_OK ? (void *)1 : NULL,
+        {
+                NSOICFree(task->taskData);
+                NSOICFree(task);
+        });
     }
     else if (task->taskType == TASK_SEND_SYNCINFO)
     {
@@ -412,6 +420,7 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(query,
         {
             NSRemoveProvider_internal((void *) provider);
+            NSOICFree(topicUri);
             NSOICFree(task);
         });
         NS_LOG_V(DEBUG, "topic query : %s", query);
@@ -422,6 +431,8 @@ void NSConsumerCommunicationTaskProcessing(NSTask * task)
         NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(NSOCResultToSuccess(ret) == true ? (void *) 1 : NULL,
         {
             NSRemoveProvider_internal((void *) provider);
+            NSOICFree(query);
+            NSOICFree(topicUri);
             NSOICFree(task);
         });
 

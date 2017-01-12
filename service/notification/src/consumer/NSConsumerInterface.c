@@ -58,13 +58,13 @@ NSResult NSStopConsumer()
     bool isStartedConsumer = NSIsStartedConsumer();
     NS_VERIFY_NOT_NULL(isStartedConsumer == true ? (void *) 1 : NULL, NS_ERROR);
 
-    NSSetMessagePostedCb(NULL);
-    NSSetNotificationSyncCb(NULL);
-    NSSetProviderChangedCb(NULL);
     NSSetIsStartedConsumer(false);
 
     NSConsumerMessageHandlerExit();
 
+    NSSetMessagePostedCb(NULL);
+    NSSetNotificationSyncCb(NULL);
+    NSSetProviderChangedCb(NULL);
     return NS_OK;
 }
 
