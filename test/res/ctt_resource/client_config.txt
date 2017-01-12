@@ -1,0 +1,76 @@
+<configuration>
+  <endpoint>
+    <ip>%IP%</ip>
+    <port>%PORT%</port>
+  </endpoint>
+  <uuid></uuid>
+  <deviceClass>OCFClient</deviceClass>
+  <profiles>
+    <profile>OCF Client</profile>
+  </profiles>
+  <testCases>
+    <testCase>CT2.1.1</testCase>
+    <testCase>CT2.2.2</testCase>
+    <testCase>CT2.2.3</testCase>
+    <testCase>CT2.2.4</testCase>
+    <testCase>CT2.2.6</testCase>
+    <testCase>CT1.7.2.1</testCase>
+    <testCase>CT1.7.2.2</testCase>
+    <testCase>CT1.7.2.3</testCase>
+  </testCases>
+  <pics>{
+        "role": "Client",
+        "supportedVerticalProfile": ["Smart Home"],
+        "supportedDeviceTypes": ["oic.d.LIGHT"],
+        "icv": "core.1.1.0",
+        "dmv": "res.1.1.0",
+        "network": {
+               "IPv4": {
+                       "supported": true
+               },
+               "IPv6": {
+                       "supported": true
+               }
+        },
+        "messaging": {
+               "coap": {
+                       "supported": true
+               },
+               "coaps": {
+                       "supported": true
+               }
+        },
+        "encoding": {
+               "CBOR": {
+                       "supported": true
+               },
+               "JSON": {
+                       "supported": false
+               }
+        },
+        "coreResources": [{
+               "name": "oic/res",
+               "supported": true
+        },
+        {
+               "name": "oic/p",
+               "supported": true
+        },
+        {
+               "name": "oic/d",
+               "supported": true
+        }],
+        "deviceSpecificResources": [
+    ],
+        "CRUDN": {
+               "notify": {
+                       "supported": true,
+                       "resources": ["/switch"]
+               }
+        },
+    "jurisdictionSwitch": false,
+    "OTM":["oic.sec.doxm.rdp"]
+}</pics>
+</configuration>
+
+

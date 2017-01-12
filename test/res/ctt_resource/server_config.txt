@@ -1,0 +1,90 @@
+<configuration>
+  <endpoint>
+    <ip>%IP%</ip>
+    <port>%PORT%</port>
+  </endpoint>
+  <uuid></uuid>
+  <deviceClass>OCFServer</deviceClass>
+  <profiles>
+    <profile>OCF Server</profile>
+  </profiles>
+  <testCases>
+    <testCase>CT2.2.6</testCase>
+  </testCases>
+  <pics>{
+        "role": "Client",
+        "supportedVerticalProfile": ["Smart Home"],
+        "supportedDeviceTypes": ["oic.d.airconditioner"],
+        "icv": "core.1.1.0",
+        "dmv": "res.1.1.0",
+        "network": {
+               "IPv4": {
+                       "supported": true
+               },
+               "IPv6": {
+                       "supported": true
+               }
+        },
+        "messaging": {
+               "coap": {
+                       "supported": true
+               },
+               "coaps": {
+                       "supported": true
+               }
+        },
+        "encoding": {
+               "CBOR": {
+                       "supported": true
+               },
+               "JSON": {
+                       "supported": false
+               }
+        },
+        "coreResources": [{
+		"name": "oic/res",
+		"supported": true
+	},
+	{
+		"name": "oic/p",
+		"supported": true
+	},
+	{
+		"name": "oic/d",
+		"supported": true
+	}],
+        "deviceSpecificResources": [{
+   "name": "oic.r.temperature",
+			"supported": true
+		},
+		{
+			"name": "oic.r.doxm",
+			"supported": true
+		},
+		{
+			"name": "oic.r.switch.binary",
+			"supported": true
+		},
+		{
+			"name": "oic.r.airflow",
+			"supported": true
+		},
+		{
+			"name": "oic.r.pstat",
+			"supported": true
+		},
+		{
+			"name": "x.com.vendor.timer",
+			"supported": true
+		}
+		],
+                "CRUDN": {
+               "notify": {
+                       "supported": true,
+                       "resources": ["/switch"]
+               }
+        },
+    "jurisdictionSwitch": false,
+    "OTM":["oic.sec.doxm.jw","oic.sec.doxm.rdp"]
+}</pics>
+</configuration>

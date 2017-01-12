@@ -51,4 +51,23 @@ else:
 	])
     default_targets+=gtest
 
+if os.path.isfile("taf/lib/unix/libuv.a"):
+    print "Libuv library exists"
+else:
+    print "Libuv does not exists, starts Downloding..."
+
+    libuv = Command("Libuv", [],
+	[
+		'pwd',
+		'export https_proxy=' + https_proxy + ' && wget http://dist.libuv.org/dist/v1.9.1/libuv-v1.9.1.tar.gz --no-check-certificate',
+		'tar -xf libuv-v1.9.1.tar.gz',
+		'cd libuv-v1.9.1 && git clone https://chromium.googlesource.com/external/gyp.git build/gyp',
+		'cd libuv-v1.9.1 && ./gyp_uv.py -f make',
+		'cd libuv-v1.9.1 && BUILDTYPE=Release make -C out',
+		'mkdir -p extlibs/taf/include/libuv && cp libuv-v1.9.1/include/* extlibs/taf/include/libuv/',
+		'mkdir -p extlibs/taf/lib/unix && cp libuv-v1.9.1/out/Release/libuv.a extlibs/taf/lib/unix/',
+		'pwd && rm -rf libuv-v1.9.1*',
+	])
+    default_targets+=libuv
+
 env.Default(default_targets)
