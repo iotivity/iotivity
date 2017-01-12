@@ -642,21 +642,17 @@ static int RecvCallBack(void * tep, unsigned char * data, size_t dataLen)
  *
  * @param[out] crt     container for X.509 certificates
  * @param[in]  data    buffer with X.509 certificates. Certificates may be in either in PEM
-                       or DER format in a jumble. Each PEM certificate must be NULL-terminated.
+                       or DER format in a jumble, delimiting symbols does not matter.
  * @param[in]  bufLen  buffer length
+ * @param[in]  errNum  number certificates that failed to parse
  *
- * @return  0 on success, -1 on error
+ * @return  number of successfully parsed certificates or -1 on error
  */
-static int ParseChain(mbedtls_x509_crt * crt, const unsigned char * buf, int bufLen)
+static int ParseChain(mbedtls_x509_crt * crt, unsigned char * buf, int bufLen, int * errNum)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(crt, NET_SSL_TAG, "Param crt is NULL" , -1);
     VERIFY_NON_NULL_RET(buf, NET_SSL_TAG, "Param buf is NULL" , -1);
-
-    int pos = 0;
-    int ret = 0;
-    size_t len = 0;
-    unsigned char * tmp = NULL;
 
     char pemCertHeader[] = {
         0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x42, 0x45, 0x47, 0x49, 0x4e, 0x20, 0x43, 0x45, 0x52,
@@ -669,6 +665,13 @@ static int ParseChain(mbedtls_x509_crt * crt, const unsigned char * buf, int buf
     size_t pemCertHeaderLen = sizeof(pemCertHeader);
     size_t pemCertFooterLen = sizeof(pemCertFooter);
 
+    size_t len = 0;
+    unsigned char * tmp = NULL;
+    int count = 0;
+    int ret = 0;
+    int pos = 0;
+
+    *errNum = 0;
     while (pos < bufLen)
     {
         if (buf[pos] == 0x30 && buf[pos + 1] == 0x82)
@@ -677,11 +680,21 @@ static int ParseChain(mbedtls_x509_crt * crt, const unsigned char * buf, int buf
             CHECK_MBEDTLS_RET(mbedtls_asn1_get_len, &tmp, buf + bufLen, &len);
             if (pos + len < bufLen)
             {
-                CHECK_MBEDTLS_RET(mbedtls_x509_crt_parse_der, crt, buf + pos, len + 4);
+                ret = mbedtls_x509_crt_parse_der(crt, buf + pos, len + 4);
+                if (0 == ret)
+                {
+                    count++;
+                }
+                else
+                {
+                    (*errNum)++;
+                    OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedtls_x509_crt_parse_der returned -0x%04x\n", -(ret));
+                }
             }
             pos += len + 4;
         }
-        else if (0 == memcmp(buf + pos, pemCertHeader, pemCertHeaderLen))
+        else if ((buf + pos + pemCertHeaderLen < buf + bufLen) &&
+                 (0 == memcmp(buf + pos, pemCertHeader, pemCertHeaderLen)))
         {
             void * endPos = NULL;
             endPos = memmem(&(buf[pos]), bufLen - pos, pemCertFooter, pemCertFooterLen);
@@ -691,36 +704,50 @@ static int ParseChain(mbedtls_x509_crt * crt, const unsigned char * buf, int buf
                 OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
                 return -1;
             }
-            if ((*((char*)endPos + pemCertFooterLen + 0) == 0x0d) &&
-                (*((char*)endPos + pemCertFooterLen + 1) == 0x0a) &&
-                (*((char*)endPos + pemCertFooterLen + 2) == 0x00))
+            len = (char*)endPos - ((char*)buf + pos) + pemCertFooterLen;
+            if (pos + len + 1 <= bufLen)
             {
-                len = (char*)endPos - ((char*)buf + pos) + pemCertFooterLen + 3;
-            }
-            else if ((*((char*)endPos + pemCertFooterLen + 0) == 0x0a) &&
-                     (*((char*)endPos + pemCertFooterLen + 1) == 0x00))
-            {
-                len = (char*)endPos - ((char*)buf + pos) + pemCertFooterLen + 2;
+                char con = buf[pos + len];
+                buf[pos + len] = 0x00;
+                ret = mbedtls_x509_crt_parse(crt, buf + pos, len + 1);
+                if (0 == ret)
+                {
+                    count++;
+                }
+                else
+                {
+                    (*errNum)++;
+                    OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedtls_x509_crt_parse returned -0x%04x\n", -(ret));
+                }
+                buf[pos + len] = con;
             }
             else
             {
-                OIC_LOG_V(ERROR, NET_SSL_TAG, "Incorrect PEM certificate ending");
-                OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
-                return -1;
+                unsigned char * lastCert = (unsigned char *)OICMalloc((len + 1) * sizeof(unsigned char));
+                memcpy(lastCert, buf + pos, len);
+                lastCert[len] = 0x00;
+                ret = mbedtls_x509_crt_parse(crt, lastCert, len + 1);
+                if (0 == ret)
+                {
+                    count++;
+                }
+                else
+                {
+                    (*errNum)++;
+                    OIC_LOG_V(ERROR, NET_SSL_TAG, "mbedtls_x509_crt_parse returned -0x%04x\n", -(ret));
+                }
+                OICFree(lastCert);
             }
-            CHECK_MBEDTLS_RET(mbedtls_x509_crt_parse, crt, buf + pos, len);
             pos += len;
         }
         else
         {
-             OIC_LOG_BUFFER(DEBUG, NET_SSL_TAG, buf, bufLen);
-             OIC_LOG_V(ERROR, NET_SSL_TAG, "parseChain returned -0x%x", -ret);
-             OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
-             return -1;
+            pos++;
         }
     }
+    OIC_LOG_V(DEBUG, NET_SSL_TAG, "%s successfully parsed %d certificates", __func__, count);
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
-    return 0;
+    return count;
 
 exit:
     return -1;
@@ -751,10 +778,17 @@ static int InitPKIX(CATransportAdapter_t adapter)
     g_getPkixInfoCallback(&g_pkiInfo);
 
     // parse own certficate (optional)
-    int ret = ParseChain(&g_caSslContext->crt, g_pkiInfo.crt.data, g_pkiInfo.crt.len);
-    if (0 != ret)
+    int ret;
+    int errNum;
+    int count = ParseChain(&g_caSslContext->crt, g_pkiInfo.crt.data, g_pkiInfo.crt.len, &errNum);
+    if (0 >= count)
     {
         OIC_LOG(WARNING, NET_SSL_TAG, "Own certificate chain parsing error");
+        goto required;
+    }
+    if (0 != errNum)
+    {
+        OIC_LOG_V(WARNING, NET_SSL_TAG, "Own certificate chain parsing error: %d certs failed to parse", errNum);
         goto required;
     }
 
@@ -790,12 +824,16 @@ static int InitPKIX(CATransportAdapter_t adapter)
     }
 
     required:
-    ret = ParseChain(&g_caSslContext->ca, g_pkiInfo.ca.data, g_pkiInfo.ca.len);
-    if(0 != ret)
+    count = ParseChain(&g_caSslContext->ca, g_pkiInfo.ca.data, g_pkiInfo.ca.len, &errNum);
+    if(0 >= count)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "CA chain parsing error");
         OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);
         return -1;
+    }
+    if(0 != errNum)
+    {
+        OIC_LOG_V(WARNING, NET_SSL_TAG, "CA chain parsing warning: %d certs failed to parse", errNum);
     }
 
     ret = mbedtls_x509_crl_parse_der(&g_caSslContext->crl, g_pkiInfo.crl.data, g_pkiInfo.crl.len);
