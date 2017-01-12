@@ -1473,7 +1473,10 @@ static int StartRetransmit()
 
             if (MBEDTLS_ERR_SSL_CONN_EOF != ret)
             {
-                SSL_CHECK_FAIL(tep, ret, "Retransmission", NULL, -1,
+                //start new timer
+                registerTimer(RETRANSMISSION_TIME, &g_caSslContext->timerId, (void *) StartRetransmit);
+                //unlock & return
+                SSL_CHECK_FAIL(tep, ret, "Retransmission", 1, CA_STATUS_FAILED,
                 MBEDTLS_SSL_ALERT_MSG_HANDSHAKE_FAILURE);
             }
         }
