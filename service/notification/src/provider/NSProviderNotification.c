@@ -100,7 +100,8 @@ NSResult NSSendNotification(NSMessage *msg)
 
     if (NSSetMessagePayload(msg, &payload) != NS_OK)
     {
-        NS_LOG(ERROR, "fail to Get message payload");
+        NS_LOG(ERROR, "SubList->head is NULL, empty SubList");
+        OCRepPayloadDestroy(payload);
         return NS_ERROR;
     }
 
@@ -167,6 +168,7 @@ NSResult NSSendNotification(NSMessage *msg)
     if (!obCount)
     {
         NS_LOG(ERROR, "observer count is zero");
+        OCRepPayloadDestroy(payload);
         return NS_ERROR;
     }
 

@@ -118,20 +118,40 @@ void NSConsumerMessageHandlerExit()
     NSConsumerListenerTermiate();
     NSCancelAllSubscription();
 
-    NSConsumerThread * thread = *(NSGetMsgHandleThreadHandle());
-    NSThreadStop(thread);
-    NSSetMsgHandleThreadHandle(NULL);
 
     NSConsumerQueue * queue = *(NSGetMsgHandleQueue());
+    NSConsumerThread * thread = *(NSGetMsgHandleThreadHandle());
+
+    NSThreadLock(thread);
+    NS_LOG(DEBUG, "Execute remaining task");
+    while (!NSIsQueueEmpty(queue))
+    {
+        NSConsumerQueueObject * obj = NSPopQueue(queue);
+        NS_LOG_V(DEBUG, "Execute remaining task type : %d", ((NSTask *)(obj->data))->taskType);
+
+        if (obj)
+        {
+            NSConsumerTaskProcessing((NSTask *)(obj->data));
+            NSOICFree(obj);
+        }
+    }
+    NSThreadUnlock(thread);
+
     NSDestroyQueue(queue);
+    NSOICFree(queue);
     NSSetMsgHandleQueue(NULL);
+
+    NSThreadLock(thread);
+    NSThreadStop(thread);
+    NSSetMsgHandleThreadHandle(NULL);
+    NSThreadUnlock(thread);
+    NSOICFree(thread);
 
     NSDestroyInternalCachedList();
 }
 
 void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
 {
-    NSConsumerQueue * queue = *(NSGetMsgHandleQueue());;
     NSConsumerQueueObject * obj = NULL;
 
     NS_LOG(DEBUG, "create thread for consumer message handle");
@@ -140,10 +160,17 @@ void * NSConsumerMsgHandleThreadFunc(void * threadHandle)
 
     while (true)
     {
+        queueHandleThread = *(NSGetMsgHandleThreadHandle());
+        if (NULL == queueHandleThread)
+        {
+            break;
+        }
+
+        NSConsumerQueue * queue = *(NSGetMsgHandleQueue());;
         if (!queue)
         {
-            queue = *(NSGetMsgHandleQueue());
             usleep(2000);
+            queue = *(NSGetMsgHandleQueue());
             continue;
         }
 
@@ -319,7 +346,10 @@ void NSConsumerTaskProcessing(NSTask * task)
         {
             NSTask * getTopicTask = (NSTask *)OICMalloc(sizeof(NSTask));
             NS_VERIFY_NOT_NULL_WITH_POST_CLEANING_V(getTopicTask,
-                        NSRemoveProvider_internal((void *) task->taskData));
+            {
+                NSRemoveProvider_internal((void *) task->taskData);
+                NSOICFree(task);
+            });
             getTopicTask->nextTask = NULL;
             getTopicTask->taskData =
                     (void *) NSCopyProvider_internal((NSProvider_internal *) task->taskData);

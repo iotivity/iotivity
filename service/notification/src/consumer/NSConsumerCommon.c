@@ -102,7 +102,6 @@ void NSSetIsStartedConsumer(bool setValue)
     {
         pthread_mutex_destroy(*NSGetStackMutex());
         NSOICFree(*NSGetStackMutex());
-        *NSGetStackMutex() = NULL;
 
         NSOICFree(*NSGetConsumerId());
         *NSGetConsumerId() = NULL;

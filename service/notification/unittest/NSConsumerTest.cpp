@@ -19,7 +19,6 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <gtest/gtest.h>
-#include <HippoMocks/hippomocks.h>
 #include <atomic>
 #include <functional>
 #include <condition_variable>
@@ -33,14 +32,16 @@
 
 #include "NSProviderSimulator.h"
 
+#include "ocpayload.h"
+
 namespace
 {
     NSProviderSimulator g_providerSimul;
-    NSProvider * g_provider;
+    NSProvider * g_provider = NULL;
 
     std::atomic_bool g_isStartedStack(false);
 
-    std::chrono::milliseconds g_waitForResponse(500);
+    std::chrono::milliseconds g_waitForResponse(1000);
 
     std::condition_variable responseCon;
     std::mutex mutexForCondition;
@@ -54,13 +55,75 @@ namespace
     NSConsumerConfig cfg;
 
     NSProviderSimulator::NS_TopicStateList g_topicStateList;
+
+    NSProviderState revState = NS_STOPPED;
+    NSProviderState expectedState = NS_STOPPED;
+    uint64_t revId = 0;
+    NSSyncType type = NS_SYNC_DELETED;
+    NSSyncType expectedType = NS_SYNC_DELETED;
+
+    bool isSendSync = false;
+    NSSyncType directSyncType = NS_SYNC_DELETED;
+
+    void removeMessage(NSMessage * msg)
+    {
+        if (msg == NULL)
+        {
+            return;
+        }
+
+        msg->messageId = 0;
+        if (msg->title != NULL)
+        {
+            free(msg->title);
+        }
+        if (msg->contentText != NULL)
+        {
+            free(msg->contentText);
+        }
+        if (msg->sourceName != NULL)
+        {
+            free(msg->sourceName);
+        }
+        if (msg->dateTime != NULL)
+        {
+            free(msg->dateTime);
+        }
+        if (msg->topic != NULL)
+        {
+            free(msg->topic);
+        }
+
+        if (msg->mediaContents != NULL)
+        {
+            free(msg->mediaContents->iconImage);
+            free(msg->mediaContents);
+        }
+
+        if (msg->extraInfo != NULL)
+        {
+            OCRepPayloadDestroy(msg->extraInfo);
+            msg->extraInfo = NULL;
+        }
+
+        free(msg);
+    }
+
+    static FILE* client_open(const char * /*path*/, const char *mode)
+    {
+        const static char * SVR_DB_FILE_NAME = "./oic_svr_db_ns.dat";
+        std::string file_name = SVR_DB_FILE_NAME;
+#ifndef LOCAL_RUNNING
+        file_name = "./service/notification/unittest/oic_svr_db_ns.dat";
+#endif
+
+        return fopen(file_name.c_str(), mode);
+    }
+
 }
 
 class TestWithMock: public testing::Test
 {
-public:
-    MockRepository mocks;
-
 protected:
     virtual ~TestWithMock() noexcept(noexcept(std::declval<Test>().~Test()))
     {
@@ -69,15 +132,7 @@ protected:
 
     virtual void TearDown()
     {
-        try
-        {
-            mocks.VerifyAll();
-        }
-        catch (...)
-        {
-            mocks.reset();
-            throw;
-        }
+
     }
 };
 
@@ -87,24 +142,86 @@ public:
     NotificationConsumerTest() = default;
     ~NotificationConsumerTest() = default;
 
-    static void NSNotificationReceivedCallbackEmpty(NSMessage *)
+    static void NSNotificationReceivedCallback(NSMessage * message)
     {
+        if (0 != std::string("123456789012345678901234567890123456").compare(message->providerId))
+        {
+            removeMessage(message);
+            return;
+        }
+
         std::cout << __func__ << std::endl;
+        std::cout << "Income Notification : " << message->messageId << std::endl;
+        revId = message->messageId;
+
+        char * providerId = strdup(message->providerId);
+        removeMessage(message);
+
+        if (isSendSync)
+        {
+            NSConsumerSendSyncInfo(providerId, revId, directSyncType);
+            std::unique_lock< std::mutex > lock{ mutexForCondition };
+            responseCon.wait_for(lock, g_waitForResponse);
+        }
+        free(providerId);
+
+        responseCon.notify_all();
     }
 
-    static void NSSyncCallbackEmpty(NSSyncInfo *)
+    static void NSSyncCallback(NSSyncInfo * sync)
     {
+        if (0 != std::string("123456789012345678901234567890123456").compare(sync->providerId))
+        {
+            free(sync);
+            return;
+        }
+
         std::cout << __func__ << std::endl;
+        std::cout << "Income SyncInfo : " << sync->messageId
+                << ", State : " << sync->state << std::endl;
+        type = sync->state;
+
+        free(sync);
+
+        if (expectedType == type)
+        {
+            std::cout << "[Expected]" << __func__ << " " << type << std::endl;
+            responseCon.notify_all();
+        }
     }
 
-    static void NSFoundResourceEmpty(std::shared_ptr< OC::OCResource >)
+    static void NSProviderChangedCallback(NSProvider * provider,  NSProviderState state)
     {
+        if (0 != std::string("123456789012345678901234567890123456").compare(provider->providerId))
+        {
+            free(provider);
+            return;
+        }
+
         std::cout << __func__ << std::endl;
+        if (g_provider)
+        {
+            free(g_provider);
+            g_provider = NULL;
+        }
+        g_provider = provider;
+        std::cout << g_provider->providerId << std::endl;
+
+        if (expectedState == state)
+        {
+            std::cout << "[Expected]" << __func__ << " " << state << std::endl;
+            revState = state;
+            responseCon.notify_all();
+        }
     }
 
-    static void NSProviderChangedCallback(NSProvider *,  NSProviderState)
+    void wait(unsigned int t)
     {
-        std::cout << __func__ << std::endl;
+        wait(std::chrono::milliseconds(t));
+    }
+    void wait(std::chrono::milliseconds t)
+    {
+        std::this_thread::sleep_for(t);
     }
 
 protected:
@@ -115,13 +232,15 @@ protected:
 
         if (g_isStartedStack == false)
         {
+            static OCPersistentStorage gps {client_open, fread, fwrite, fclose, unlink };
             OC::PlatformConfig occfg
             {
                 OC::ServiceType::InProc,
                 OC::ModeType::Both,
                 "0.0.0.0",
                 0,
-                OC::QualityOfService::LowQos
+                OC::QualityOfService::LowQos,
+                &gps
             };
             OC::OCPlatform::Configure(occfg);
 
@@ -137,8 +256,8 @@ protected:
             g_isStartedStack = true;
 
             cfg.changedCb = NSProviderChangedCallback;
-            cfg.messageCb = NSNotificationReceivedCallbackEmpty;
-            cfg.syncInfoCb = NSSyncCallbackEmpty;
+            cfg.messageCb = NSNotificationReceivedCallback;
+            cfg.syncInfoCb = NSSyncCallback;
         }
 
     }
@@ -153,154 +272,132 @@ protected:
 TEST_F(NotificationConsumerTest, StartConsumerNegativeNonSetChangedCB)
 {
     cfg.changedCb = NULL;
-    cfg.messageCb = NSNotificationReceivedCallbackEmpty;
-    cfg.syncInfoCb = NSSyncCallbackEmpty;
+    cfg.messageCb = NSNotificationReceivedCallback;
+    cfg.syncInfoCb = NSSyncCallback;
 
     EXPECT_EQ(NS_ERROR, NSStartConsumer(cfg));
-    std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, g_waitForResponse);
+    wait(50);
 }
 
 TEST_F(NotificationConsumerTest, StartConsumerNegativeNonSetNotiReceiveCB)
 {
     cfg.changedCb = NSProviderChangedCallback;
     cfg.messageCb = NULL;
-    cfg.syncInfoCb = NSSyncCallbackEmpty;
+    cfg.syncInfoCb = NSSyncCallback;
 
     EXPECT_EQ(NS_ERROR, NSStartConsumer(cfg));
-    std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, g_waitForResponse);
+    wait(50);
 }
 
 TEST_F(NotificationConsumerTest, StartConsumerNegativeNonSetSyncCB)
 {
     cfg.changedCb = NSProviderChangedCallback;
-    cfg.messageCb = NSNotificationReceivedCallbackEmpty;
+    cfg.messageCb = NSNotificationReceivedCallback;
     cfg.syncInfoCb = NULL;
 
     EXPECT_EQ(NS_ERROR, NSStartConsumer(cfg));
-    std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, g_waitForResponse);
+    wait(50);
 }
 
 TEST_F(NotificationConsumerTest, StartConsumerPositive)
 {
     cfg.changedCb = NSProviderChangedCallback;
-    cfg.messageCb = NSNotificationReceivedCallbackEmpty;
-    cfg.syncInfoCb = NSSyncCallbackEmpty;
+    cfg.messageCb = NSNotificationReceivedCallback;
+    cfg.syncInfoCb = NSSyncCallback;
 
     EXPECT_EQ(NS_OK, NSStartConsumer(cfg));
-    std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, g_waitForResponse);
+    wait(50);
 }
 
 TEST_F(NotificationConsumerTest, StopConsumerPositive)
 {
     EXPECT_EQ(NSStopConsumer(), NS_OK);
+    wait(50);
 }
 
 TEST_F(NotificationConsumerTest, StopConsumerNegative)
 {
     EXPECT_EQ(NSStopConsumer(), NS_ERROR);
+    wait(50);
 }
 
 TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsumerFirst)
 {
-    NSProviderState revState = NS_STOPPED;
-    mocks.OnCallFunc(NSProviderChangedCallback).Do(
-            [this, & revState](NSProvider *, NSProviderState state)
-            {
-                std::cout << "Call Discovered" << std::endl;
-                revState = state;
-                responseCon.notify_all();
-            });
+    revState = NS_STOPPED;
+
+    cfg.changedCb = NSProviderChangedCallback;
+    cfg.messageCb = NSNotificationReceivedCallback;
+    cfg.syncInfoCb = NSSyncCallback;
 
     NSStartConsumer(cfg);
+    wait(50);
 
     g_providerSimul.setAccepter((int)NSSelector::NS_SELECTION_CONSUMER);
     g_providerSimul.createNotificationResource();
 
+    expectedState = NS_DISCOVERED;
     std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, g_waitForResponse);
+    responseCon.wait_for(lock, std::chrono::milliseconds(1000));
 
     NSStopConsumer();
     g_providerSimul.deleteNotificationResource();
+    wait(50);
 
     EXPECT_EQ(NS_DISCOVERED, revState);
+    expectedState = NS_STOPPED;
 }
 
 TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenStartedConsumerAfter)
 {
     g_providerSimul.setAccepter((int)NSSelector::NS_SELECTION_CONSUMER);
     g_providerSimul.createNotificationResource();
-    {
-        std::unique_lock< std::mutex > lock{ mutexForCondition };
-        responseCon.wait_for(lock, g_waitForResponse);
-    }
+    wait(500);
 
-    NSProviderState revState = NS_STOPPED;
-    mocks.OnCallFunc(NSProviderChangedCallback).Do(
-            [this, & revState](NSProvider * provider, NSProviderState state)
-            {
-                std::cout << "Call Discovered" << std::endl;
-
-                g_provider = provider;
-                revState = state;
-                responseCon.notify_all();
-            });
+    revState = NS_STOPPED;
 
     NSStartConsumer(cfg);
 
+    expectedState = NS_DISCOVERED;
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
     EXPECT_EQ(NS_DISCOVERED, revState);
 
     ASSERT_NE(nullptr, g_provider) << "error: discovery failure";
+    expectedState = NS_STOPPED;
 }
 
 TEST_F(NotificationConsumerTest, DiscoverProviderWithNonAccepterWhenRescan)
 {
     g_providerSimul.setAccepter((int)NSSelector::NS_SELECTION_CONSUMER);
-    NSProviderState revState = NS_STOPPED;
-    mocks.OnCallFunc(NSProviderChangedCallback).Do(
-            [this, &revState](NSProvider * provider, NSProviderState state)
-            {
-                std::cout << "Call Discovered" << std::endl;
-                revState = state;
-                g_provider = provider;
-                std::cout << g_provider->providerId << std::endl;
-                responseCon.notify_all();
-            });
+    revState = NS_STOPPED;
 
     NSRescanProvider();
 
+    expectedState = NS_DISCOVERED;
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
     EXPECT_EQ(NS_DISCOVERED, revState);
+    expectedState = NS_STOPPED;
 }
 
 TEST_F(NotificationConsumerTest, ExpectSubscribeSuccess)
 {
-    NSProviderState revState = NS_DENY;
+    revState = NS_DENY;
 
     ASSERT_NE(nullptr, g_provider) << "error: discovery failure";
 
-    mocks.OnCallFunc(NSProviderChangedCallback).Do(
-            [this, & revState](NSProvider * , NSProviderState state)
-            {
-                std::cout << "Income Changed Callback : " << state << std::endl;
-                revState = state;
-                responseCon.notify_all();
-            });
-
     NSResult ret = NSSubscribe(g_provider->providerId);
+
+    expectedState = NS_ALLOW;
     std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, g_waitForResponse);
+    responseCon.wait_for(lock, std::chrono::milliseconds(1000));
 
     EXPECT_EQ(NS_ALLOW, revState);
     EXPECT_EQ(NS_OK, ret);
+
+    expectedState = NS_STOPPED;
 }
 
 TEST_F(NotificationConsumerTest, ExpectReceiveNotification)
@@ -308,57 +405,36 @@ TEST_F(NotificationConsumerTest, ExpectReceiveNotification)
     uint64_t id = 10;
     std::string title = "title";
     std::string msg = "msg";
-    uint64_t revId = 0;
-
-    mocks.OnCallFunc(NSNotificationReceivedCallbackEmpty).Do(
-            [this, & revId](NSMessage * message)
-            {
-                std::cout << "Income Notification : " << message->messageId << std::endl;
-                revId = message->messageId;
-                responseCon.notify_all();
-            });
+    revId = 0;
 
     g_providerSimul.notifyMessage(id, title, msg);
 
+    expectedState = NS_ALLOW;
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
     EXPECT_EQ(id, revId);
     NSStopConsumer();
     g_providerSimul.deleteNotificationResource();
+    wait(50);
+    expectedState = NS_STOPPED;
 }
 
 TEST_F(NotificationConsumerTest, ExpectReceiveSubAllowWithAccepterisProvider)
 {
     g_providerSimul.setAccepter((int)NSSelector::NS_SELECTION_PROVIDER);
-    NSProviderState revState = NS_DENY;
+    revState = NS_DENY;
     g_providerSimul.createNotificationResource();
-    {
-        std::unique_lock< std::mutex > lock{ mutexForCondition };
-        responseCon.wait_for(lock, g_waitForResponse);
-    }
-
-    mocks.OnCallFunc(NSProviderChangedCallback).Do(
-            [this, & revState](NSProvider * provider, NSProviderState state)
-            {
-                std::cout << "Income Changed Callback : " << state << std::endl;
-                revState = state;
-                g_provider = provider;
-                responseCon.notify_all();
-            });
-    mocks.OnCallFunc(NSProviderChangedCallback).Do(
-            [this, & revState](NSProvider *, NSProviderState state)
-            {
-                std::cout << "Income Changed Callback : " << state << std::endl;
-                revState = state;
-                responseCon.notify_all();
-            });
+    wait(500);
 
     NSStartConsumer(cfg);
+
+    expectedState = NS_ALLOW;
     std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, g_waitForResponse);
+    responseCon.wait_for(lock, std::chrono::milliseconds(1000));
 
     EXPECT_EQ(NS_ALLOW, revState);
+    expectedState = NS_STOPPED;
 }
 
 TEST_F(NotificationConsumerTest, ExpectReceiveNotificationWithAccepterisProvider)
@@ -366,15 +442,7 @@ TEST_F(NotificationConsumerTest, ExpectReceiveNotificationWithAccepterisProvider
     uint64_t id = 11;
     std::string title = "title";
     std::string msg = "msg";
-    uint64_t revId = 1;
-
-    mocks.OnCallFunc(NSNotificationReceivedCallbackEmpty).Do(
-            [this, & id, & revId](NSMessage * message)
-            {
-                std::cout << "Income Notification : " << message->messageId << std::endl;
-                revId = message->messageId;
-                responseCon.notify_all();
-            });
+    revId = 1;
 
     g_providerSimul.notifyMessage(id, title, msg);
 
@@ -386,26 +454,11 @@ TEST_F(NotificationConsumerTest, ExpectReceiveNotificationWithAccepterisProvider
 
 TEST_F(NotificationConsumerTest, ExpectCallbackReadCheckWhenProviderNotifySync)
 {
+    expectedType = NS_SYNC_READ;
     uint64_t id = 12;
     std::string title = "title";
     std::string msg = "msg";
-    NSSyncType type = NS_SYNC_DELETED;
-
-    mocks.OnCallFunc(NSNotificationReceivedCallbackEmpty).Do(
-            [this](NSMessage * message)
-            {
-                std::cout << "Income Notification : " << message->messageId << std::endl;
-                responseCon.notify_all();
-            });
-
-    mocks.OnCallFunc(NSSyncCallbackEmpty).Do(
-            [& type, this](NSSyncInfo * sync)
-            {
-                std::cout << "Income SyncInfo : " << sync->messageId
-                        << ", State : " << sync->state << std::endl;
-                type = sync->state;
-                responseCon.notify_all();
-            });
+    type = NS_SYNC_DELETED;
 
     g_providerSimul.notifyMessage(id, title, msg);
     {
@@ -420,30 +473,16 @@ TEST_F(NotificationConsumerTest, ExpectCallbackReadCheckWhenProviderNotifySync)
     }
 
     EXPECT_EQ(NS_SYNC_READ, type);
+    expectedType = NS_SYNC_DELETED;
 }
 
 TEST_F(NotificationConsumerTest, ExpectCallbackDismissCheckWhenProviderNotifySync)
 {
+    expectedType = NS_SYNC_DELETED;
     uint64_t id = 13;
     std::string title = "title";
     std::string msg = "msg";
-    NSSyncType type = NS_SYNC_READ;
-
-    mocks.OnCallFunc(NSNotificationReceivedCallbackEmpty).Do(
-            [this](NSMessage * message)
-            {
-                std::cout << "Income Notification : " << message->messageId << std::endl;
-                responseCon.notify_all();
-            });
-
-    mocks.OnCallFunc(NSSyncCallbackEmpty).Do(
-            [& type, this](NSSyncInfo * sync)
-            {
-                std::cout << "Income Notification : " << sync->messageId
-                        << ", State : " << sync->state << std::endl;
-                type = sync->state;
-                responseCon.notify_all();
-            });
+    type = NS_SYNC_READ;
 
     g_providerSimul.notifyMessage(id, title, msg);
     {
@@ -458,32 +497,19 @@ TEST_F(NotificationConsumerTest, ExpectCallbackDismissCheckWhenProviderNotifySyn
     }
 
     EXPECT_EQ(NS_SYNC_DELETED, type);
+    expectedType = NS_SYNC_READ;
 }
 
 TEST_F(NotificationConsumerTest, ExpectCallbackReadCheckWhenConsumerPostSync)
 {
+    expectedType = NS_SYNC_READ;
     uint64_t id = 14;
     std::string title = "title";
     std::string msg = "msg";
-    NSSyncType type = NS_SYNC_DELETED;
+    type = NS_SYNC_DELETED;
 
-    mocks.OnCallFunc(NSNotificationReceivedCallbackEmpty).Do(
-            [this](NSMessage * message)
-            {
-                std::cout << "Income Notification : " << message->messageId << std::endl;
-                NSConsumerSendSyncInfo(message->providerId, message->messageId, NS_SYNC_READ);
-                std::unique_lock< std::mutex > lock{ mutexForCondition };
-                responseCon.wait_for(lock, g_waitForResponse);
-            });
-
-    mocks.OnCallFunc(NSSyncCallbackEmpty).Do(
-            [& type, this](NSSyncInfo * sync)
-            {
-                std::cout << "Income Notification : " << sync->messageId
-                        << ", State : " << sync->state << std::endl;
-                type = sync->state;
-                responseCon.notify_all();
-            });
+    isSendSync = true;
+    directSyncType = NS_SYNC_READ;
 
     g_providerSimul.notifyMessage(id, title, msg);
     {
@@ -492,32 +518,22 @@ TEST_F(NotificationConsumerTest, ExpectCallbackReadCheckWhenConsumerPostSync)
     }
 
     EXPECT_EQ(NS_SYNC_READ, type);
+    isSendSync = false;
+
+    expectedType = NS_SYNC_DELETED;
+    wait(50);
 }
 
 TEST_F(NotificationConsumerTest, ExpectCallbackDismissCheckWhenConsumerPostSync)
 {
+    expectedType = NS_SYNC_DELETED;
     uint64_t id = 15;
     std::string title = "title";
     std::string msg = "msg";
-    NSSyncType state = NS_SYNC_READ;
+    type = NS_SYNC_READ;
 
-    mocks.OnCallFunc(NSNotificationReceivedCallbackEmpty).Do(
-            [this](NSMessage * message)
-            {
-                std::cout << "Income Notification : " << message->messageId << std::endl;
-                NSConsumerSendSyncInfo(message->providerId, message->messageId, NS_SYNC_DELETED);
-                std::unique_lock< std::mutex > lock{ mutexForCondition };
-                responseCon.wait_for(lock, g_waitForResponse);
-            });
-
-    mocks.OnCallFunc(NSSyncCallbackEmpty).Do(
-            [& state, this](NSSyncInfo * sync)
-            {
-                std::cout << "Income Notification : " << sync->messageId
-                        << ", State : " << sync->state << std::endl;
-                state = sync->state;
-                responseCon.notify_all();
-            });
+    isSendSync = true;
+    directSyncType = NS_SYNC_DELETED;
 
     g_providerSimul.notifyMessage(id, title, msg);
     {
@@ -525,7 +541,8 @@ TEST_F(NotificationConsumerTest, ExpectCallbackDismissCheckWhenConsumerPostSync)
         responseCon.wait_for(lock, g_waitForResponse);
     }
 
-    EXPECT_EQ(NS_SYNC_DELETED, state);
+    EXPECT_EQ(NS_SYNC_DELETED, type);
+    isSendSync = false;
 }
 
 TEST_F(NotificationConsumerTest, ExpectGetProviderSuccessWithValidProviderId)
@@ -556,18 +573,12 @@ TEST_F(NotificationConsumerTest, ExpectGetTopicListIsNULL)
 
     NSTopicLL * currentTopics = NSConsumerGetTopicList(g_provider->providerId);
     EXPECT_EQ(NULL, currentTopics);
+    wait(50);
 }
 
 TEST_F(NotificationConsumerTest, ExpectCallbackTopicUpdated)
 {
-    NSProviderState revState = NS_STOPPED;
-    mocks.OnCallFunc(NSProviderChangedCallback).Do(
-        [this, & revState](NSProvider * , NSProviderState state)
-        {
-            std::cout << "Income Changed Callback : " << state << std::endl;
-            revState = state;
-            responseCon.notify_all();
-        });
+    revState = NS_STOPPED;
 
     NSProviderSimulator::NS_TopicList topics;
     topics.push_back("1");
@@ -576,10 +587,13 @@ TEST_F(NotificationConsumerTest, ExpectCallbackTopicUpdated)
 
     g_providerSimul.setTopics(topics);
 
+    expectedState = NS_TOPIC;
     std::unique_lock< std::mutex > lock{ mutexForCondition };
     responseCon.wait_for(lock, g_waitForResponse);
 
     EXPECT_EQ(NS_TOPIC, revState);
+
+    expectedState = NS_STOPPED;
 }
 
 TEST_F(NotificationConsumerTest, ExpectEQTopicList)
@@ -594,12 +608,29 @@ TEST_F(NotificationConsumerTest, ExpectEQTopicList)
     ASSERT_NE(nullptr, g_provider) << "error: discovery failure";
 
     NSTopicLL * retTopic = NSConsumerGetTopicList(g_provider->providerId);
+
+    NSTopicLL * iter = retTopic;
     std::for_each (topics.begin(), topics.end(),
-            [this, & retTopic, & isSame](const std::string & str)
+            [this, & iter, & isSame](const std::string & str)
             {
-                isSame = (str == std::string(retTopic->topicName));
-                retTopic = retTopic->next;
+                isSame = (str == std::string(iter->topicName));
+                iter = iter->next;
             });
+
+    iter = retTopic;
+    NSTopicLL * following = NULL;
+
+    while (iter)
+    {
+        following = iter->next;
+
+        free(iter->topicName);
+        iter->next = NULL;
+
+        free(iter);
+
+        iter = following;
+    }
 
     EXPECT_EQ(true, isSame);
 }
@@ -609,31 +640,47 @@ TEST_F(NotificationConsumerTest, ExpectFailUpdateTopicOnConsumer)
     ASSERT_NE(nullptr, g_provider) << "error: discovery failure";
 
     NSTopicLL * retTopic = NSConsumerGetTopicList(g_provider->providerId);
-    for (; retTopic; retTopic = retTopic->next)
+
+    NSTopicLL * iter = retTopic;
+    for (; iter; iter = iter->next)
     {
-        retTopic->state = NS_TOPIC_SUBSCRIBED;
+        iter->state = NS_TOPIC_SUBSCRIBED;
     }
     NSResult ret = NSConsumerUpdateTopicList(g_provider->providerId, retTopic);
+
+    iter = retTopic;
+    NSTopicLL * following = NULL;
+
+    while (iter)
+    {
+        following = iter->next;
+
+        free(iter->topicName);
+        iter->next = NULL;
+
+        free(iter);
+
+        iter = following;
+    }
 
     EXPECT_EQ(NS_ERROR, ret);
 }
 
 TEST_F(NotificationConsumerTest, ExpectCallbackDeletedProvider)
 {
-    NSProviderState type = NS_ALLOW;
-    mocks.OnCallFunc(NSProviderChangedCallback).Do(
-            [& type, this](NSProvider * , NSProviderState state)
-            {
-                std::cout << "Income Changed Callback : " << state << std::endl;
-                type = state;
-                responseCon.notify_all();
-            });
+    revState = NS_ALLOW;
 
     g_providerSimul.deleteNotificationResource();
 
+    expectedState = NS_STOPPED;
     std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, std::chrono::milliseconds(2000));
+    responseCon.wait_for(lock, std::chrono::milliseconds(1000));
 
-    EXPECT_EQ(type, NS_STOPPED);
+    EXPECT_EQ(revState, NS_STOPPED);
     NSStopConsumer();
+
+    wait(1500);
+    free(g_provider);
+    OCStop();
+    wait(1000);
 }

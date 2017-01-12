@@ -24,6 +24,8 @@
 from tools.scons.RunTest import run_test
 Import('env')
 
+import os
+
 if env.get('RELEASE'):
 	env.AppendUnique(CCFLAGS = ['-Os'])
 	env.AppendUnique(CPPDEFINES = ['NDEBUG'])
@@ -69,8 +71,8 @@ notification_test_env.AppendUnique(CPPPATH = ['../include'])
 
 if env.get('WITH_TCP') == True:
 	notification_test_env.AppendUnique(CPPDEFINES = ['WITH_TCP'])
-	if env.get('SECURED') == '1':
-		notification_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
+if env.get('SECURED') == '1':
+	notification_test_env.AppendUnique(LIBS = ['mbedtls', 'mbedx509', 'mbedcrypto'])
 
 ######################################################################
 # Build Test
@@ -92,9 +94,9 @@ notification_provider_test = notification_provider_test_env.Program('notificatio
 Alias("notification_provider_test", notification_provider_test)
 env.AppendTarget('notification_provider_test')
 
-# TODO: Fix this test on linux and remove commented lines
+# TODO: Fix this test for MLK and remove commented lines
 if env.get('TEST') == '1':
-    if target_os in [] and env.get('SECURED') != '1':
+    if target_os in ['linux'] and env.get('SECURED') != '1':
         run_test(notification_consumer_test_env,
 #                'service_notification_unittest_notification_consumer_test.memcheck',
                  '',
@@ -103,3 +105,14 @@ if env.get('TEST') == '1':
 #                'service_notification_unittest_notification_provider_test.memcheck',
                  '',
                  'service/notification/unittest/notification_provider_test')
+else:
+    notification_consumer_test_env.AppendUnique(CPPDEFINES = ['LOCAL_RUNNING'])
+    notification_provider_test_env.AppendUnique(CPPDEFINES = ['LOCAL_RUNNING'])
+    src_dir = notification_consumer_test_env.get('SRC_DIR')
+    svr_db_src_dir = os.path.join(src_dir, 'service/notification/unittest/')
+    svr_db_build_dir = os.path.join(notification_consumer_test_env.get('BUILD_DIR'),
+        'service', 'notification', 'unittest') + os.sep
+    notification_consumer_test_env.Alias("install",
+        notification_consumer_test_env.Install(svr_db_build_dir,
+              os.path.join(svr_db_src_dir,
+                           'oic_svr_db_ns.dat')))

@@ -19,7 +19,6 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #include <gtest/gtest.h>
-#include <HippoMocks/hippomocks.h>
 #include <atomic>
 #include <functional>
 #include <condition_variable>
@@ -34,36 +33,43 @@ namespace
 {
     std::atomic_bool g_isStartedStack(false);
 
-    std::chrono::milliseconds g_waitForResponse(500);
+    std::chrono::milliseconds g_waitForResponse(1000);
 
     std::condition_variable responseCon;
     std::mutex mutexForCondition;
 
     NSConsumerSimulator g_consumerSimul;
-    char * g_consumerID;
+    char * g_consumerID = NULL;
     char g_title[100];
     char g_body[100];
     char g_sourceName[100];
+
+    int expectedMsgId;
+    int expectedSyncType = NS_SYNC_READ;
+
+    static FILE* server_open(const char * /*path*/, const char *mode)
+    {
+        const static char * SVR_DB_FILE_NAME = "./oic_svr_db_ns.dat";
+        std::string file_name = SVR_DB_FILE_NAME;
+#ifndef LOCAL_RUNNING
+        file_name = "./service/notification/unittest/oic_svr_db_ns.dat";
+#endif
+
+        return fopen(file_name.c_str(), mode);
+    }
 }
 
 class TestWithMock: public testing::Test
 {
-public:
-    MockRepository mocks;
-
 protected:
-    virtual ~TestWithMock() noexcept(noexcept(std::declval<Test>().~Test())) {}
+    virtual ~TestWithMock() noexcept(noexcept(std::declval<Test>().~Test()))
+    {
 
-    virtual void TearDown() {
-        try
-        {
-            mocks.VerifyAll();
-        }
-        catch (...)
-        {
-            mocks.reset();
-            throw;
-        }
+    }
+
+    virtual void TearDown()
+    {
+
     }
 };
 
@@ -73,21 +79,37 @@ public:
     NotificationProviderTest() = default;
     ~NotificationProviderTest() = default;
 
-    static void NSRequestedSubscribeCallbackEmpty(NSConsumer *)
+    static void NSRequestedSubscribeCallback(NSConsumer * consumer)
     {
+        if (g_consumerID)
+        {
+            free(g_consumerID);
+        }
+        g_consumerID = strdup(consumer->consumerId);
+
+        responseCon.notify_all();
     }
 
-    static void NSSyncCallbackEmpty(NSSyncInfo *)
+    static void NSSyncCallback(NSSyncInfo * sync)
     {
+        expectedSyncType = sync->state;
+        expectedMsgId = sync->messageId;
+        free(sync);
+        responseCon.notify_all();
     }
 
-    static void NSMessageCallbackFromConsumerEmpty(
-            const int &, const std::string &, const std::string &, const std::string &)
+    static void NSMessageCallbackFromConsumer(
+            const int & id, const std::string &, const std::string &, const std::string &)
     {
+        expectedMsgId = id;
+        responseCon.notify_all();
     }
 
-    static void NSSyncCallbackFromConsumerEmpty(int, int)
+    static void NSSyncCallbackFromConsumer(const int type, const int syncId)
     {
+        expectedSyncType = type;
+        expectedMsgId = syncId;
+        responseCon.notify_all();
     }
 
 protected:
@@ -98,13 +120,16 @@ protected:
 
         if (g_isStartedStack == false)
         {
+            static OCPersistentStorage gps {server_open, fread, fwrite, fclose, unlink };
+
             OC::PlatformConfig cfg
             {
                 OC::ServiceType::InProc,
                 OC::ModeType::Both,
                 "0.0.0.0",
                 0,
-                OC::QualityOfService::HighQos
+                OC::QualityOfService::HighQos,
+                &gps
             };
             OC::OCPlatform::Configure(cfg);
 
@@ -136,10 +161,11 @@ protected:
 TEST_F(NotificationProviderTest, StartProviderPositiveWithNSPolicyTrue)
 {
     NSProviderConfig config;
-    config.subRequestCallback = NSRequestedSubscribeCallbackEmpty;
-    config.syncInfoCallback = NSSyncCallbackEmpty;
+    config.subRequestCallback = NSRequestedSubscribeCallback;
+    config.syncInfoCallback = NSSyncCallback;
     config.subControllability = true;
     config.userInfo = strdup("user1");
+    config.resourceSecurity = false;
 
     NSResult ret = NSStartProvider(config);
 
@@ -147,6 +173,8 @@ TEST_F(NotificationProviderTest, StartProviderPositiveWithNSPolicyTrue)
     responseCon.wait_for(lock, g_waitForResponse);
 
     EXPECT_EQ(ret, NS_OK);
+    free(config.userInfo);
+    config.userInfo = NULL;
 }
 
 TEST_F(NotificationProviderTest, StopProviderPositive)
@@ -162,10 +190,11 @@ TEST_F(NotificationProviderTest, StopProviderPositive)
 TEST_F(NotificationProviderTest, StartProviderPositiveWithNSPolicyFalse)
 {
     NSProviderConfig config;
-    config.subRequestCallback = NSRequestedSubscribeCallbackEmpty;
-    config.syncInfoCallback = NSSyncCallbackEmpty;
+    config.subRequestCallback = NSRequestedSubscribeCallback;
+    config.syncInfoCallback = NSSyncCallback;
     config.subControllability = false;
     config.userInfo = NULL;
+    config.resourceSecurity = false;
 
     NSResult ret = NSStartProvider(config);
 
@@ -180,19 +209,12 @@ TEST_F(NotificationProviderTest, StartProviderPositiveWithNSPolicyFalse)
 
 TEST_F(NotificationProviderTest, ExpectCallbackWhenReceiveSubscribeRequestWithAccepterProvider)
 {
-    g_consumerID = NULL;
-    mocks.OnCallFunc(NSRequestedSubscribeCallbackEmpty).Do(
-            [](NSConsumer * consumer)
-            {
-                g_consumerID = strdup(consumer->consumerId);
-                responseCon.notify_all();
-            });
-
     NSProviderConfig config;
-    config.subRequestCallback = NSRequestedSubscribeCallbackEmpty;
-    config.syncInfoCallback = NSSyncCallbackEmpty;
+    config.subRequestCallback = NSRequestedSubscribeCallback;
+    config.syncInfoCallback = NSSyncCallback;
     config.subControllability = true;
     config.userInfo = NULL;
+    config.resourceSecurity = false;
 
     NSStartProvider(config);
 
@@ -201,8 +223,8 @@ TEST_F(NotificationProviderTest, ExpectCallbackWhenReceiveSubscribeRequestWithAc
         responseCon.wait_for(lock, g_waitForResponse);
     }
 
-    g_consumerSimul.setCallback(NSMessageCallbackFromConsumerEmpty,
-            NSSyncCallbackFromConsumerEmpty);
+    g_consumerSimul.setCallback(NSMessageCallbackFromConsumer,
+            NSSyncCallbackFromConsumer);
     g_consumerSimul.findProvider();
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
@@ -213,19 +235,9 @@ TEST_F(NotificationProviderTest, ExpectCallbackWhenReceiveSubscribeRequestWithAc
 
 TEST_F(NotificationProviderTest, NeverCallNotifyOnConsumerByAcceptIsFalse)
 {
-    bool expectTrue = true;
     int msgID;
 
     ASSERT_NE(nullptr, g_consumerID) << "error: discovery failure";
-
-    mocks.OnCallFunc(NSMessageCallbackFromConsumerEmpty).Do(
-            [& expectTrue, &msgID](const int &id, const std::string&, const std::string&, const std::string&)
-            {
-                if (id == msgID)
-                {
-                    expectTrue = false;
-                }
-            });
 
     NSAcceptSubscription(g_consumerID, false);
 
@@ -241,15 +253,17 @@ TEST_F(NotificationProviderTest, NeverCallNotifyOnConsumerByAcceptIsFalse)
         std::unique_lock< std::mutex > lock{ mutexForCondition };
         responseCon.wait_for(lock, g_waitForResponse);
 
-        EXPECT_EQ(expectTrue, true);
+        EXPECT_NE(expectedMsgId, msgID);
 
         NSAcceptSubscription(g_consumerID, true);
         responseCon.wait_for(lock, g_waitForResponse);
     }
     else
     {
-        EXPECT_EQ(expectTrue, false);
+        EXPECT_EQ(expectedMsgId, msgID);
     }
+
+    free(msg);
 }
 
 TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
@@ -257,15 +271,6 @@ TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
     int msgID;
 
     ASSERT_NE(nullptr, g_consumerID) << "error: discovery failure";
-
-    mocks.ExpectCallFunc(NSMessageCallbackFromConsumerEmpty).Do(
-            [&msgID](const int &id, const std::string&, const std::string&, const std::string&)
-            {
-                if (id == msgID)
-                {
-                    responseCon.notify_all();
-                }
-            });
 
     NSMessage * msg = NSCreateMessage();
     if(msg)
@@ -278,23 +283,18 @@ TEST_F(NotificationProviderTest, ExpectCallNotifyOnConsumerByAcceptIsTrue)
 
         std::unique_lock< std::mutex > lock{ mutexForCondition };
         responseCon.wait(lock);
+        EXPECT_EQ(expectedMsgId, msgID);
     }
+
+    free(msg);
 }
 
 TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadToConsumer)
 {
     int id;
+    int type = NS_SYNC_READ;
 
     ASSERT_NE(nullptr, g_consumerID) << "error: discovery failure";
-
-    mocks.ExpectCallFunc(NSSyncCallbackFromConsumerEmpty).Do(
-            [& id](int & type, int &syncId)
-            {
-                if (syncId == id && type == NS_SYNC_READ)
-                {
-                    responseCon.notify_all();
-                }
-            });
 
     NSMessage * msg = NSCreateMessage();
     if(msg)
@@ -307,24 +307,20 @@ TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadToConsumer)
         NSProviderSendSyncInfo(msg->messageId, NS_SYNC_READ);
         std::unique_lock< std::mutex > lock{ mutexForCondition };
         responseCon.wait(lock);
+
+        EXPECT_EQ(expectedMsgId, id);
+        EXPECT_EQ(expectedSyncType, type);
     }
+
+    free(msg);
 }
 
 TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadFromConsumer)
 {
-    int type = NS_SYNC_READ;
     int id;
+    int type = NS_SYNC_READ;
 
     ASSERT_NE(nullptr, g_consumerID) << "error: discovery failure";
-
-    mocks.ExpectCallFunc(NSSyncCallbackEmpty).Do(
-            [& id](NSSyncInfo * sync)
-            {
-                if ((int)sync->messageId == id && sync->state == NS_SYNC_READ)
-                {
-                    responseCon.notify_all();
-                }
-            });
 
     NSMessage * msg = NSCreateMessage();
     if(msg)
@@ -337,7 +333,12 @@ TEST_F(NotificationProviderTest, ExpectCallbackSyncOnReadFromConsumer)
         g_consumerSimul.syncToProvider(type, id, msg->providerId);
         std::unique_lock< std::mutex > lock{ mutexForCondition };
         responseCon.wait(lock);
+
+        EXPECT_EQ(expectedMsgId, id);
+        EXPECT_EQ(expectedSyncType, type);
     }
+
+    free(msg);
 }
 
 TEST_F(NotificationProviderTest, ExpectEqualAddedTopicsAndRegisteredTopics)
@@ -364,6 +365,21 @@ TEST_F(NotificationProviderTest, ExpectEqualAddedTopicsAndRegisteredTopics)
         {
             isSame = true;
         }
+    }
+
+    NSTopicLL * iter = topics;
+    NSTopicLL * following = NULL;
+
+    while (iter)
+    {
+        following = iter->next;
+
+        free(iter->topicName);
+        iter->next = NULL;
+
+        free(iter);
+
+        iter = following;
     }
 
     NSProviderUnregisterTopic(str.c_str());
@@ -395,6 +411,21 @@ TEST_F(NotificationProviderTest, ExpectEqualUnregisteredTopicsAndRegisteredTopic
         {
             isSame = true;
         }
+    }
+
+    NSTopicLL * iter = topics;
+    NSTopicLL * following = NULL;
+
+    while (iter)
+    {
+        following = iter->next;
+
+        free(iter->topicName);
+        iter->next = NULL;
+
+        free(iter);
+
+        iter = following;
     }
 
     NSProviderUnregisterTopic(str.c_str());
@@ -429,6 +460,21 @@ TEST_F(NotificationProviderTest, ExpectEqualSetConsumerTopicsAndGetConsumerTopic
         {
             isSame = true;
         }
+    }
+
+    NSTopicLL * iter = topics;
+    NSTopicLL * following = NULL;
+
+    while (iter)
+    {
+        following = iter->next;
+
+        free(iter->topicName);
+        iter->next = NULL;
+
+        free(iter);
+
+        iter = following;
     }
 
     NSProviderUnregisterTopic(str.c_str());
@@ -469,6 +515,21 @@ TEST_F(NotificationProviderTest, ExpectEqualUnSetConsumerTopicsAndGetConsumerTop
         {
             isSame = true;
         }
+    }
+
+    NSTopicLL * iter = topics;
+    NSTopicLL * following = NULL;
+
+    while (iter)
+    {
+        following = iter->next;
+
+        free(iter->topicName);
+        iter->next = NULL;
+
+        free(iter);
+
+        iter = following;
     }
 
     NSProviderUnregisterTopic(str.c_str());
@@ -563,7 +624,8 @@ TEST_F(NotificationProviderTest, CancelObserves)
     bool ret = g_consumerSimul.cancelObserves();
 
     std::unique_lock< std::mutex > lock{ mutexForCondition };
-    responseCon.wait_for(lock, std::chrono::milliseconds(3000));
+    responseCon.wait_for(lock, g_waitForResponse);
 
     EXPECT_EQ(ret, true);
+    OCStop();
 }

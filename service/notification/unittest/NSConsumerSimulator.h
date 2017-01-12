@@ -42,7 +42,9 @@ private:
 public:
     NSConsumerSimulator()
     : m_messageFunc(), m_syncFunc(),
-      m_syncResource(), isTopicPost(false) { };
+      m_syncResource(), isTopicPost(false)
+    {
+    };
     ~NSConsumerSimulator() = default;
 
     NSConsumerSimulator(const NSConsumerSimulator &) = delete;
@@ -76,9 +78,11 @@ public:
 
     bool cancelObserves()
     {
-        if(!msgResourceCancelObserve(OC::QualityOfService::HighQos) &&
-                !syncResourceCancelObserve(OC::QualityOfService::HighQos))
+        if(OC_STACK_OK == msgResourceCancelObserve(OC::QualityOfService::HighQos) &&
+                OC_STACK_OK == syncResourceCancelObserve(OC::QualityOfService::HighQos))
+        {
             return true;
+        }
         return false;
     }
 
@@ -99,8 +103,7 @@ private:
     {
         if(resource->uri() == "/notification")
         {
-            resource->get(std::string("oic.wk.notification"), std::string("oic.if.baseline"),
-                    OC::QueryParamsMap(), std::bind(&NSConsumerSimulator::onGet, this,
+            resource->get(OC::QueryParamsMap(), std::bind(&NSConsumerSimulator::onGet, this,
                             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                             resource), OC::QualityOfService::LowQos);
         }

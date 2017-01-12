@@ -413,6 +413,10 @@ NSResult NSProviderSetConsumerTopic(const char * consumerId, const char * topicN
         NS_LOG(DEBUG, "provider is not started or "
                 "consumer id should be set for topic subscription or "
                 "Configuration must set to true.");
+        if (topicSubData)
+        {
+            OICFree(topicSubData);
+        }
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
@@ -448,6 +452,10 @@ NSResult NSProviderUnsetConsumerTopic(const char * consumerId, const char * topi
         NS_LOG(DEBUG, "provider is not started or "
                 "consumer id should be set for topic subscription or "
                 "Configuration must set to true.");
+        if (topicSubData)
+        {
+            OICFree(topicSubData);
+        }
         pthread_mutex_unlock(&nsInitMutex);
         return NS_FAIL;
     }
