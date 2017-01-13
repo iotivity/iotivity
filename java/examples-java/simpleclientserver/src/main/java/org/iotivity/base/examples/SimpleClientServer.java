@@ -29,6 +29,7 @@ import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
 
+import java.net.URISyntaxException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -43,9 +44,18 @@ public class SimpleClientServer {
     private static final String TAG = SimpleClientServer.class.getSimpleName();
 
     public static void main(String[] args) {
+        String path = "";
+        // This assumes the oic_svr_db_server.dat file is in the same location as the SimpleServer.jar file
+        try {
+            path = SimpleServer.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+            path = path.substring(0, path.lastIndexOf('/'));
+        } catch (URISyntaxException e) {
+            msg(TAG, e.getMessage() + " unable to find local file path.");
+        }
 
         PlatformConfig platformConfig = new PlatformConfig(ServiceType.IN_PROC, ModeType.CLIENT_SERVER, "0.0.0.0", 0,
-                QualityOfService.LOW);
+                QualityOfService.LOW,
+                path + "/oic_svr_db_server.dat");
         msg(TAG, "Configuring platform.");
         OcPlatform.Configure(platformConfig);
 
