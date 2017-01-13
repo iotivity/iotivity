@@ -525,9 +525,16 @@ void PrintUsage()
     cout << "    4 - Non-secure resource, GET slow response, notify all observers\n";
 }
 
-static FILE* client_open(const char* /*path*/, const char* mode)
+static FILE* client_open(const char* path, const char* mode)
 {
-    return fopen("./oic_svr_db_server.dat", mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen("./oic_svr_db_server.dat", mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 void playPause()

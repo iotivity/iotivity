@@ -70,10 +70,16 @@ static int transferDevIdx, ask = 1;
 static OicSecPconf_t g_pconf;
 static uint16_t g_credId = 0;
 
-static FILE* client_open(const char *UNUSED_PARAM, const char *mode)
+static FILE* client_open(const char *path, const char *mode)
 {
-    (void)UNUSED_PARAM;
-    return fopen(DAT_DB_PATH, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(DAT_DB_PATH, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 void printMenu()

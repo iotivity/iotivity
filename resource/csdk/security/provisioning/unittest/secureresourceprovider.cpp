@@ -174,9 +174,16 @@ TEST(SRPProvisionDirectPairingTest, Nullcallback)
 const char *SECURE_RESOURCE_PROVIDER_TEST_FILE_NAME = "secureresourceprovider.dat";
 OCPersistentStorage ps = { NULL, NULL, NULL, NULL, NULL};
 
-static FILE* TestFopen(const char * /*path*/, const char *mode)
+static FILE* TestFopen(const char *path, const char *mode)
 {
-    return fopen(SECURE_RESOURCE_PROVIDER_TEST_FILE_NAME, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(SECURE_RESOURCE_PROVIDER_TEST_FILE_NAME, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 void SetPersistentHandler(OCPersistentStorage *ps)

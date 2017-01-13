@@ -319,12 +319,19 @@ void handleLoginoutCB(const HeaderOptions &, const OCRepresentation &rep, const 
 
 string g_option;
 
-static FILE *client_open(const char * /*path*/, const char *mode)
+static FILE *client_open(const char *path, const char *mode)
 {
-    string option = "./";
-    option += g_option;
-    option += ".dat";
-    return fopen(option.c_str(), mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        string option = "./";
+        option += g_option;
+        option += ".dat";
+        return fopen(option.c_str(), mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int main(int argc, char **argv)

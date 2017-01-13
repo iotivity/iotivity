@@ -75,6 +75,11 @@ extern "C" {
 /** KeepAlive URI.*/
 #define OC_RSRVD_KEEPALIVE_URI                "/oic/ping"
 
+/** Introspection URI.*/
+#define OC_RSRVD_INTROSPECTION_URI            "/oic/introspection"
+
+/** Introspection payload URI.*/
+#define OC_RSRVD_INTROSPECTION_PAYLOAD_URI    "/oic/introspection/payload"
 
 /** Presence */
 
@@ -167,6 +172,11 @@ extern "C" {
 /** To represent content type with MQ Topic.*/
 #define OC_RSRVD_RESOURCE_TYPE_MQ_TOPIC  "oic.wk.ps.topic"
 
+/** To represent resource type with introspection.*/
+#define OC_RSRVD_RESOURCE_TYPE_INTROSPECTION "oic.wk.introspection"
+
+/** To represent resource type with introspection payload.*/
+#define OC_RSRVD_RESOURCE_TYPE_INTROSPECTION_PAYLOAD "oic.wk.introspection.payload"
 
 /** To represent interface.*/
 #define OC_RSRVD_INTERFACE              "if"
@@ -224,6 +234,12 @@ extern "C" {
 
 /** For security.*/
 #define OC_RSRVD_SECURE                 "sec"
+
+/** Security Database persistent store name(json).*/
+#define OC_SECURITY_DB_FILE_NAME        "oic_svr_db.json"
+
+/** Security Database persistent store name(dat).*/
+#define OC_SECURITY_DB_DAT_FILE_NAME    "oic_svr_db.dat"
 
 /** Port. */
 #define OC_RSRVD_HOSTING_PORT           "port"
@@ -309,6 +325,42 @@ extern "C" {
 
 /** Protocol-Independent ID.*/
 #define OC_RSRVD_PROTOCOL_INDEPENDENT_ID "piid"
+
+/**
+*  Introspection.
+*/
+/** Name.*/
+#define OC_RSRVD_INTROSPECTION_NAME     "name"
+
+/** Value of name.*/
+#define OC_RSRVD_INTROSPECTION_NAME_VALUE "Introspection"
+
+/** Url info Object.*/
+#define OC_RSRVD_INTROSPECTION_URL_INFO "urlInfo"
+
+/** Url property.*/
+#define OC_RSRVD_INTROSPECTION_URL      "url"
+
+/** Protocol property.*/
+#define OC_RSRVD_INTROSPECTION_PROTOCOL    "protocol"
+
+/** Content-Type property.*/
+#define OC_RSRVD_INTROSPECTION_CONTENT_TYPE "content-type"
+
+/** Content-Type property value.*/
+#define OC_RSRVD_INTROSPECTION_CONTENT_TYPE_VALUE "application/cbor"
+
+/** Version property.*/
+#define OC_RSRVD_INTROSPECTION_VERSION    "version"
+
+/** Version property value.*/
+#define OC_RSRVD_INTROSPECTION_VERSION_VALUE 1
+
+/** Introspection payload data property name.*/
+#define OC_RSRVD_INTROSPECTION_DATA_NAME  "data"
+
+/** Introspection persistent store name.*/
+#define OC_INTROSPECTION_FILE_NAME      "introspection.json"
 
 /**
  *  These provide backward compatibility - their use is deprecated.

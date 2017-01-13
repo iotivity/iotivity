@@ -778,6 +778,14 @@ OCStackResult OCSetPropertyValue(OCPayloadType type, const char *propName, const
  */
 OCStackResult OCGetPropertyValue(OCPayloadType type, const char *propName, void **value);
 
+/**
+* Get the registered persistent storage handler. All modules must use this to obtain access to 
+* persistent storage.
+*
+* @return pointer to OCPersistentStorage structure on success and NULL otherwise.
+*/
+OCPersistentStorage *OCGetPersistentStorageHandler();
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

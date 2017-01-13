@@ -122,6 +122,9 @@ clientjson = examples_env.Install(examples_env.get('BUILD_DIR') + '/resource/exa
 				examples_env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client.dat')
 serverjson = examples_env.Install(examples_env.get('BUILD_DIR') + '/resource/examples/',
 				examples_env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_server.dat')
+light_introspection_json = examples_env.Install(examples_env.get('BUILD_DIR') + '/resource/examples/',
+				examples_env.get('SRC_DIR') + '/resource/examples/' + 'light_introspection.json')
+
 directpairingdat = examples_env.Install(examples_env.get('BUILD_DIR') + '/resource/examples/',
 				examples_env.get('SRC_DIR') + '/resource/examples/' + 'oic_svr_db_client_directpairing.dat')
 

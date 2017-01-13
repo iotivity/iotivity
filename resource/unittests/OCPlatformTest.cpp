@@ -35,11 +35,18 @@ namespace OCPlatformTest
     OCResourceHandle resourceHandle;
 
     //OCPersistent Storage Handlers
-    static FILE* client_open(const char * /*path*/, const char *mode)
+    static FILE* client_open(const char *path, const char *mode)
     {
-        std::cout << "<===Opening SVR DB file = './oic_svr_db_client.dat' with mode = '" << mode
+        if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+        {
+            std::cout << "<===Opening SVR DB file = './oic_svr_db_client.dat' with mode = '" << mode
                 << "' " << std::endl;
-        return fopen(SVR_DB_FILE_NAME, mode);
+            return fopen(SVR_DB_FILE_NAME, mode);
+        }
+        else
+        {
+            return fopen(path, mode);
+        }
     }
     OCPersistentStorage gps {client_open, fread, fwrite, fclose, unlink };
 

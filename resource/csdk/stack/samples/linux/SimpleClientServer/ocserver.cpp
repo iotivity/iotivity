@@ -119,6 +119,12 @@ OCRepPayload* getPayload(const char* uri, int64_t power, bool state)
     return payload;
 }
 
+static FILE* server_fopen(const char* path, const char* mode)
+{
+    OIC_LOG_V(DEBUG, TAG, "Got file open call for %s",path);
+    return fopen(path, mode);
+}
+
 //This function takes the request as an input and returns the response
 OCRepPayload* constructResponse(OCEntityHandlerRequest *ehRequest)
 {
@@ -1116,7 +1122,20 @@ int main(int argc, char* argv[])
     OCSetRAInfo(&rainfo);
 #endif
 
+    
     OIC_LOG(DEBUG, TAG, "OCServer is starting...");
+    OCPersistentStorage pstStr {
+        server_fopen,
+        fread,
+        fwrite,
+        fclose,
+        unlink
+    };
+    if (OC_STACK_OK != OCRegisterPersistentStorageHandler(&pstStr))
+    {
+        OIC_LOG(ERROR, TAG, "OCRegisterPersistentStorageHandler error");
+        return -1;
+    }
 
     if (OCInit(NULL, 0, OC_SERVER) != OC_STACK_OK)
     {

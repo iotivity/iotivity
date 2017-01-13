@@ -499,12 +499,18 @@ static void GetCurrentWorkingDirectory(char* buf, size_t bufsize)
 
 FILE* server_fopen(const char *path, const char *mode)
 {
-    (void)path;
-    char cwd[1024] = {0};
-    char cred_path[1024] = {0};
-    GetCurrentWorkingDirectory(cwd, sizeof(cwd));
-    snprintf(cred_path, sizeof(cred_path), "%s%s", cwd, CRED_FILE);
-    return fopen(cred_path, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        char cwd[1024] = { 0 };
+        char cred_path[1024] = { 0 };
+        GetCurrentWorkingDirectory(cwd, sizeof(cwd));
+        snprintf(cred_path, sizeof(cred_path), "%s%s", cwd, CRED_FILE);
+        return fopen(cred_path, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int main()

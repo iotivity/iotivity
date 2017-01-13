@@ -617,9 +617,16 @@ void PrintUsage()
     std::cout << "    4 - Non-secure resource, GET slow response, notify all observers\n";
 }
 
-static FILE* client_open(const char* /*path*/, const char *mode)
+static FILE* client_open(const char* path, const char* mode)
 {
-    return fopen(SVR_DB_FILE_NAME, mode);
+    if (strcmp(path, OC_INTROSPECTION_FILE_NAME) == 0)
+    {
+        return fopen("light_introspection.json", mode);
+    }
+    else
+    {
+        return fopen(SVR_DB_FILE_NAME, mode);
+    }
 }
 
 int main(int argc, char* argv[])

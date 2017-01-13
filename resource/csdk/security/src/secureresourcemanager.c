@@ -45,8 +45,6 @@ static CARequestCallback gRequestHandler = NULL;
 static CAResponseCallback gResponseHandler = NULL;
 //Error Callback handler
 static CAErrorCallback gErrorHandler = NULL;
-//Persistent Storage callback handler for open/read/write/close/unlink
-static OCPersistentStorage *gPersistentStorageHandler =  NULL;
 //Provisioning response callback
 static SPResponseCallback gSPResponseHandler = NULL;
 
@@ -342,18 +340,12 @@ OCStackResult SRMRegisterHandler(CARequestCallback reqHandler,
 OCStackResult SRMRegisterPersistentStorageHandler(OCPersistentStorage* persistentStorageHandler)
 {
     OIC_LOG(DEBUG, TAG, "SRMRegisterPersistentStorageHandler !!");
-    if(!persistentStorageHandler)
-    {
-        OIC_LOG(ERROR, TAG, "The persistent storage handler is invalid");
-        return OC_STACK_INVALID_PARAM;
-    }
-    gPersistentStorageHandler = persistentStorageHandler;
-    return OC_STACK_OK;
+    return OCRegisterPersistentStorageHandler(persistentStorageHandler);
 }
 
 OCPersistentStorage* SRMGetPersistentStorageHandler()
 {
-    return gPersistentStorageHandler;
+    return OCGetPersistentStorageHandler();
 }
 
 OCStackResult SRMInitSecureResources()

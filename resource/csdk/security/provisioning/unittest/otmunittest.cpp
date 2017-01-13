@@ -272,16 +272,21 @@ static void GetCurrentWorkingDirectory(char* buf, size_t bufsize)
 
 static FILE* fopen_prvnMng(const char* path, const char* mode)
 {
-    (void)path;  // unused |path| parameter
-
-    // input |g_svr_db_fname| internally by force, not using |path| parameter
-    // because |OCPersistentStorage::open| is called |OCPersistentStorage| internally
-    // with its own |SVR_DB_FILE_NAME|
-    char cwd[1024] = {0};
-    char svr_db_path[1024] = {0};
-    GetCurrentWorkingDirectory(cwd, sizeof(cwd));
-    snprintf(svr_db_path, sizeof(svr_db_path), "%s%s", cwd, SVR_DB_PATH);
-    return fopen(svr_db_path, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        // input |g_svr_db_fname| internally by force, not using |path| parameter
+        // because |OCPersistentStorage::open| is called |OCPersistentStorage| internally
+        // with its own |SVR_DB_FILE_NAME|
+        char cwd[1024] = { 0 };
+        char svr_db_path[1024] = { 0 };
+        GetCurrentWorkingDirectory(cwd, sizeof(cwd));
+        snprintf(svr_db_path, sizeof(svr_db_path), "%s%s", cwd, SVR_DB_PATH);
+        return fopen(svr_db_path, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 // callback function(s) for provisioning client using C-level provisioning API

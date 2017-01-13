@@ -25,7 +25,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-
+#include <payload_logging.h>
 #include "utlist.h"
 #include "logger.h"
 #include "oic_malloc.h"
@@ -73,6 +73,8 @@ extern "C"
 #endif //MULTIPLE_OWNER
 #define _80_SELECT_PROTOCOL_        80
 #define _81_SELECT_VERIF_METHOD_    81
+#define _91_SELECT_INTROSPECTION_METHOD_    91
+#define _92_SELECT_INTROSPECTION_PAYLOAD_METHOD_    92
 #define _99_EXIT_PRVN_CLT_          99
 
 #define ACL_RESRC_MAX_NUM   16
@@ -1992,6 +1994,218 @@ static int printResultList(const OCProvisionResult_t* rslt_lst, const int rslt_c
     return lst_cnt;
 }
 
+const char* getResult(OCStackResult result)
+{
+    switch (result)
+    {
+    case OC_STACK_OK:
+        return "OC_STACK_OK";
+    case OC_STACK_RESOURCE_CREATED:
+        return "OC_STACK_RESOURCE_CREATED";
+    case OC_STACK_RESOURCE_DELETED:
+        return "OC_STACK_RESOURCE_DELETED";
+    case OC_STACK_RESOURCE_CHANGED:
+        return "OC_STACK_RESOURCE_CHANGED";
+    case OC_STACK_INVALID_URI:
+        return "OC_STACK_INVALID_URI";
+    case OC_STACK_INVALID_QUERY:
+        return "OC_STACK_INVALID_QUERY";
+    case OC_STACK_INVALID_IP:
+        return "OC_STACK_INVALID_IP";
+    case OC_STACK_INVALID_PORT:
+        return "OC_STACK_INVALID_PORT";
+    case OC_STACK_INVALID_CALLBACK:
+        return "OC_STACK_INVALID_CALLBACK";
+    case OC_STACK_INVALID_METHOD:
+        return "OC_STACK_INVALID_METHOD";
+    case OC_STACK_NO_MEMORY:
+        return "OC_STACK_NO_MEMORY";
+    case OC_STACK_COMM_ERROR:
+        return "OC_STACK_COMM_ERROR";
+    case OC_STACK_INVALID_PARAM:
+        return "OC_STACK_INVALID_PARAM";
+    case OC_STACK_NOTIMPL:
+        return "OC_STACK_NOTIMPL";
+    case OC_STACK_NO_RESOURCE:
+        return "OC_STACK_NO_RESOURCE";
+    case OC_STACK_RESOURCE_ERROR:
+        return "OC_STACK_RESOURCE_ERROR";
+    case OC_STACK_SLOW_RESOURCE:
+        return "OC_STACK_SLOW_RESOURCE";
+    case OC_STACK_NO_OBSERVERS:
+        return "OC_STACK_NO_OBSERVERS";
+    case OC_STACK_UNAUTHORIZED_REQ:
+        return "OC_STACK_UNAUTHORIZED_REQ";
+    case OC_STACK_ERROR:
+        return "OC_STACK_ERROR";
+    default:
+        return "UNKNOWN";
+    }
+}
+
+OCStackApplicationResult getReqCB(void* ctx, OCDoHandle handle,
+    OCClientResponse* clientResponse)
+{
+    if (clientResponse == NULL)
+    {
+        OIC_LOG(INFO, TAG, "getReqCB received NULL clientResponse");
+        return OC_STACK_DELETE_TRANSACTION;
+    }
+
+    OIC_LOG_V(INFO, TAG, "StackResult: %s", getResult(clientResponse->result));
+    OIC_LOG_V(INFO, TAG, "SEQUENCE NUMBER: %d", clientResponse->sequenceNumber);
+    OIC_LOG_V(INFO, TAG, "Payload Size: %d", 
+              ((OCRepPayload*)clientResponse->payload)->values->str);
+    OIC_LOG_PAYLOAD(INFO, clientResponse->payload);
+    OIC_LOG(INFO, TAG, ("=============> Get Response"));
+
+    if (clientResponse->numRcvdVendorSpecificHeaderOptions > 0)
+    {
+        OIC_LOG(INFO, TAG, "Received vendor specific options");
+        uint8_t i = 0;
+        OCHeaderOption* rcvdOptions = clientResponse->rcvdVendorSpecificHeaderOptions;
+        for (i = 0; i < clientResponse->numRcvdVendorSpecificHeaderOptions; i++)
+        {
+            if ((rcvdOptions[i]).protocolID == OC_COAP_ID)
+            {
+                OIC_LOG_V(INFO, TAG, "Received option with OC_COAP_ID and ID %u with",
+                    (rcvdOptions[i]).optionID);
+
+                OIC_LOG_BUFFER(INFO, TAG, rcvdOptions[i].optionData,
+                    MAX_HEADER_OPTION_DATA_LENGTH);
+            }
+        }
+    }
+    g_doneCB = true; // flag done
+    return OC_STACK_DELETE_TRANSACTION;
+}
+
+int obtainUserSelectionForDeviceNumber(int numDevices)
+{
+    int dev_num = -1;
+    for (; ; )
+    {
+        printf("   > Enter Device Number: ");
+        for (int ret = 0; 1 != ret; )
+        {
+            ret = scanf("%d", &dev_num);
+            for (; 0x20 <= getchar(); );  // for removing overflow garbages
+                                          // '0x20<=code' is character region
+        }
+        if ((0 < dev_num) && (numDevices >= dev_num))
+        {
+            break;
+        }
+        printf("     Entered Wrong Number. Please Enter Again\n");
+    }
+    return dev_num;
+}
+
+void selectIntrospectionMethod()
+{
+    OCStackResult ret;
+    OCCallbackData cbData;
+    OCDoHandle handle;
+    static OCDevAddr serverAddr;
+    cbData.cb = &getReqCB;
+    int dev_num = 1;
+    OCProvisionDev_t *device = NULL;
+
+    // check |own_list| for devices that can be used for introspection
+    if (!g_own_list || (1 > g_own_cnt))
+    {
+        printf("   > Owned Device List, to do introspection, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return;
+    }
+
+    if (g_own_cnt != 1)
+    {
+        // we have more than one option - ask user to select one
+        printf("   > Multiple devices found - select a device for Introspection\n");
+        dev_num = obtainUserSelectionForDeviceNumber(g_own_cnt);
+    }
+
+    device = getDevInst(g_own_list, dev_num); 
+    if (device)
+    {
+        serverAddr = device->endpoint;
+        cbData.context = NULL;
+        cbData.cd = NULL;
+        OIC_LOG_V(INFO, TAG, "Performing Introspection");
+        g_doneCB = false;
+
+        ret = OCDoResource(&handle, OC_REST_GET, OC_RSRVD_INTROSPECTION_URI, &serverAddr,
+            NULL,
+            CT_ADAPTER_IP, OC_LOW_QOS, &cbData, NULL, 0);
+
+        if (ret != OC_STACK_OK)
+        {
+            OIC_LOG_V(ERROR, TAG, "OCDoResource returned error %d with method", ret);
+        }
+        if (waitCallbackRet())  // input |g_doneCB| flag implicitly
+        {
+            OIC_LOG(ERROR, TAG, "selectIntrospectionMethod callback error");
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Selected device does not exist");
+    }
+}
+
+void selectIntrospectionPayloadMethod()
+{
+    OCStackResult ret;
+    OCCallbackData cbData;
+    OCDoHandle handle;
+    static OCDevAddr serverAddr;
+    cbData.cb = &getReqCB;
+    int dev_num = 1;
+    OCProvisionDev_t *device = NULL;
+
+    // check |own_list| for devices that can be used for introspection payload
+    if (!g_own_list || (1 > g_own_cnt))
+    {
+        printf("   > Owned Device List, to get introspection payload, is Empty\n");
+        printf("   > Please Register Unowned Devices first, with [20] Menu\n");
+        return;
+    }
+
+    if (g_own_cnt != 1)
+    {
+        // we have more than one option - ask user to select one
+        printf("   > Multiple devices found - select a device for Introspection payload\n");
+        dev_num = obtainUserSelectionForDeviceNumber(g_own_cnt);
+    }
+
+    device = getDevInst(g_own_list, dev_num);
+    if (device)
+    {
+        serverAddr = device->endpoint;
+        cbData.context = g_ctx;
+        cbData.cd = NULL;
+        OIC_LOG_V(INFO, TAG, "Performing Introspection Payload");
+        g_doneCB = false;
+        ret = OCDoResource(&handle, OC_REST_GET, OC_RSRVD_INTROSPECTION_PAYLOAD_URI, &serverAddr,
+            NULL,
+            CT_ADAPTER_IP, OC_LOW_QOS, &cbData, NULL, 0);
+
+        if (ret != OC_STACK_OK)
+        {
+            OIC_LOG_V(ERROR, TAG, "OCDoResource returned error %d with method", ret);
+        }
+        if (waitCallbackRet())  // input |g_doneCB| flag implicitly
+        {
+            OIC_LOG(ERROR, TAG, "selectIntrospectionPayloadMethod callback error");
+        }
+    }
+    else
+    {
+        OIC_LOG(ERROR, TAG, "Selected device does not exist");
+    }
+}
+
 static void printUuid(const OicUuid_t* uid)
 {
     for(int i=0; i<UUID_LENGTH; )
@@ -2006,12 +2220,17 @@ static void printUuid(const OicUuid_t* uid)
 
 static FILE* fopen_prvnMng(const char* path, const char* mode)
 {
-    (void)path;  // unused |path| parameter
-
-    // input |g_svr_db_fname| internally by force, not using |path| parameter
-    // because |OCPersistentStorage::open| is called |OCPersistentStorage| internally
-    // with its own |SVR_DB_FILE_NAME|
-    return fopen(SVR_DB_FILE_NAME, mode);
+    if (0 == strncmp(path, OC_SECURITY_DB_DAT_FILE_NAME, strlen(OC_SECURITY_DB_DAT_FILE_NAME)))
+    {
+        // input |g_svr_db_fname| internally by force, not using |path| parameter
+        // because |OCPersistentStorage::open| is called |OCPersistentStorage| internally
+        // with its own |SVR_DB_FILE_NAME|
+        return fopen(SVR_DB_FILE_NAME, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 static int waitCallbackRet(void)
@@ -2194,8 +2413,12 @@ static void printMenu(void)
     printf("** [H] SELECT VERIFICATION OPTION\n");
     printf("** 81. Select verification method\n\n");
 #endif
-    printf("** [I] EXIT PROVISIONING CLIENT\n");
 
+    printf("** [I] SELECT INTROSPECTION OPTION\n");
+    printf("** 91. Select Get Introspection Resource\n");
+    printf("** 92. Select Get Introspection Payload\n\n");
+
+    printf("** [J] EXIT PROVISIONING CLIENT\n");
     printf("** 99. Exit Provisionong Client\n\n");
 
     printf("************************************************************\n\n");
@@ -2404,6 +2627,12 @@ int main()
 #endif
         case _81_SELECT_VERIF_METHOD_:
             selectVerifMethod();
+            break;
+        case _91_SELECT_INTROSPECTION_METHOD_:
+            selectIntrospectionMethod();
+            break;
+        case _92_SELECT_INTROSPECTION_PAYLOAD_METHOD_:
+            selectIntrospectionPayloadMethod();
             break;
         case _99_EXIT_PRVN_CLT_:
             goto PMCLT_ERROR;

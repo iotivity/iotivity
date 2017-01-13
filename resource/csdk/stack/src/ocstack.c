@@ -120,6 +120,8 @@ OCResource *headResource = NULL;
 static OCResource *tailResource = NULL;
 static OCResourceHandle platformResource = {0};
 static OCResourceHandle deviceResource = {0};
+static OCResourceHandle introspectionResource = {0};
+static OCResourceHandle introspectionPayloadResource = {0};
 #ifdef MQ_BROKER
 static OCResourceHandle brokerResource = {0};
 #endif
@@ -144,6 +146,8 @@ static const char CORESPEC[] = "core";
 
 CAAdapterStateChangedCB g_adapterHandler = NULL;
 CAConnectionStateChangedCB g_connectionHandler = NULL;
+// Persistent Storage callback handler for open/read/write/close/unlink
+static OCPersistentStorage *g_PersistentStorageHandler = NULL;
 
 //-----------------------------------------------------------------------------
 // Macros
@@ -1346,7 +1350,14 @@ void OCHandleResponse(const CAEndpoint_t* endPoint, const CAResponseInfo_t* resp
                     {
                         type = PAYLOAD_TYPE_REPRESENTATION;
                     }
-
+                    else if (strcmp(cbNode->requestUri, OC_RSRVD_INTROSPECTION_URI) == 0)
+                    {
+                        type = PAYLOAD_TYPE_REPRESENTATION;
+                    }
+                    else if (strcmp(cbNode->requestUri, OC_RSRVD_INTROSPECTION_PAYLOAD_URI) == 0)
+                    {
+                        type = PAYLOAD_TYPE_REPRESENTATION;
+                    }
 #ifdef ROUTING_GATEWAY
                     else if (strcmp(cbNode->requestUri, OC_RSRVD_GATEWAY_URI) == 0)
                     {
@@ -3054,7 +3065,13 @@ OCStackResult OCRegisterPersistentStorageHandler(OCPersistentStorage* persistent
             return OC_STACK_INVALID_PARAM;
         }
     }
-    return SRMRegisterPersistentStorageHandler(persistentStorageHandler);
+    g_PersistentStorageHandler = persistentStorageHandler;
+    return OC_STACK_OK;
+}
+
+OCPersistentStorage *OCGetPersistentStorageHandler()
+{
+    return g_PersistentStorageHandler;
 }
 
 #ifdef WITH_PRESENCE
@@ -4342,6 +4359,38 @@ OCStackResult initResources()
         if(result == OC_STACK_OK)
         {
             result = BindResourceInterfaceToResource((OCResource *)platformResource,
+                                                     OC_RSRVD_INTERFACE_READ);
+        }
+    }
+
+    if (result == OC_STACK_OK)
+    {
+        result = OCCreateResource(&introspectionResource,
+                                  OC_RSRVD_RESOURCE_TYPE_INTROSPECTION,
+                                  OC_RSRVD_INTERFACE_DEFAULT,
+                                  OC_RSRVD_INTROSPECTION_URI,
+                                  NULL,
+                                  NULL,
+                                  OC_DISCOVERABLE);
+        if (result == OC_STACK_OK)
+        {
+            result = BindResourceInterfaceToResource((OCResource *)introspectionResource,
+                                                     OC_RSRVD_INTERFACE_READ);
+        }
+    }
+
+    if (result == OC_STACK_OK)
+    {
+        result = OCCreateResource(&introspectionPayloadResource,
+                                  OC_RSRVD_RESOURCE_TYPE_INTROSPECTION_PAYLOAD,
+                                  OC_RSRVD_INTERFACE_DEFAULT,
+                                  OC_RSRVD_INTROSPECTION_PAYLOAD_URI,
+                                  NULL,
+                                  NULL,
+                                  OC_OBSERVABLE);
+        if (result == OC_STACK_OK)
+        {
+            result = BindResourceInterfaceToResource((OCResource *)introspectionPayloadResource,
                                                      OC_RSRVD_INTERFACE_READ);
         }
     }

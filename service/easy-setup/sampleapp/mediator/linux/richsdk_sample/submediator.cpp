@@ -418,10 +418,16 @@ void DisplayMenu()
     };
 }
 
-static FILE* client_open(const char *UNUSED_PARAM, const char *mode)
+static FILE* client_open(const char *path, const char *mode)
 {
-    (void)UNUSED_PARAM;
-    return fopen(JSON_DB_PATH, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(JSON_DB_PATH, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int main()

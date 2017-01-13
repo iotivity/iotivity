@@ -598,8 +598,14 @@ static void userRequests(void *data)
 
 FILE* server_fopen(const char *path, const char *mode)
 {
-    OC_UNUSED(path);
-    return fopen(fname, mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen(fname, mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 /**

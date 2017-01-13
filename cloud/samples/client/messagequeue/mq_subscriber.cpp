@@ -157,9 +157,16 @@ void handleLoginoutCB(const HeaderOptions &,
     g_callbackLock.notify_all();
 }
 
-static FILE *client_open(const char * /*path*/, const char *mode)
+static FILE *client_open(const char *path, const char *mode)
 {
-    return fopen("./mq_subscriber.dat", mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen("./mq_subscriber.dat", mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int main(int argc, char *argv[])

@@ -267,9 +267,16 @@ void presenceDevice(OCStackResult , const unsigned int i, const string &str)
     cout << "Presence received, i=" << i << " str=" << str << endl;
 }
 
-static FILE *client_open(const char * /*path*/, const char *mode)
+static FILE *client_open(const char *path, const char *mode)
 {
-    return fopen("./aircon_controller.dat", mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen("./aircon_controller.dat", mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 int main(int argc, char *argv[])

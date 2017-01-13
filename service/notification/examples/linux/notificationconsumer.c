@@ -48,8 +48,14 @@ NSTopicLL * g_topicLL = NULL;
 
 FILE* server_fopen(const char *path, const char *mode)
 {
-    (void)path;
-    return fopen("oic_ns_provider_db.dat", mode);
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+    {
+        return fopen("oic_ns_provider_db.dat", mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
 }
 
 void printProviderTopicList(NSTopicLL * topics)

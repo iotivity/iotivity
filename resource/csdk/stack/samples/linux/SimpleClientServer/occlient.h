@@ -68,6 +68,7 @@ typedef enum {
     TEST_DISCOVER_REQ_SHOW_EPS,
     TEST_GET_REQ_UDP,
     TEST_GET_REQ_TCP,
+    TEST_INTROSPECTION,
     MAX_TESTS
 } CLIENT_TEST;
 
@@ -116,6 +117,7 @@ int InitDeviceDiscovery(OCQualityOfService qos);
 int InitPlatformDiscovery(OCQualityOfService qos);
 int InitDiscovery(OCQualityOfService qos);
 int InitGetRequestWithCoap(OCDiscoveryPayload* dis, bool isUdp);
+int InitIntrospection(OCDiscoveryPayload* dis);
 
 /* Call delete operation on already deleted resource */
 void* RequestDeleteDeathResourceTask(void* myqos);

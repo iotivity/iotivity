@@ -86,6 +86,12 @@ typedef enum
     OC_KEEPALIVE_RESOURCE_URI,
 #endif
 
+    /** "/oic/introspection" .*/
+    OC_INTROSPECTION_URI,
+
+    /** "/oic/introspection/payload" .*/
+    OC_INTROSPECTION_PAYLOAD_URI,
+
     /** Max items in the list */
     OC_MAX_VIRTUAL_RESOURCES    //<s Max items in the list
 

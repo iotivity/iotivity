@@ -54,7 +54,14 @@ namespace OC {
 
     FILE* JniOcSecurity::client_open(const char *path, const char *mode)
     {
-        LOGI("Opening SVR Database file '%s' with mode '%s'\n", store_path().c_str(), mode);
-        return fopen(store_path().c_str(), mode);
+        if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
+        {
+            LOGI("Opening SVR Database file '%s' with mode '%s'\n", store_path().c_str(), mode);
+            return fopen(store_path().c_str(), mode); 
+        }
+        else
+        {
+            return fopen(path, mode);
+        }
     }
 }

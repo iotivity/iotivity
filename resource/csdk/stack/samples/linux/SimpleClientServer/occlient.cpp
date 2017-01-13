@@ -54,10 +54,12 @@
 static int UnicastDiscovery = 0;
 static int TestCase = 0;
 static int Connectivity = 0;
+static int Introspection = 0;
 
 static const char *DEVICE_DISCOVERY_QUERY = "%s/oic/d";
 static const char *PLATFORM_DISCOVERY_QUERY = "%s/oic/p";
 static const char *RESOURCE_DISCOVERY_QUERY = "%s/oic/res";
+static const char *INTROSPECTION_DISCOVERY_QUERY = "%s" OC_RSRVD_INTROSPECTION_URI;
 
 //The following variable determines the interface protocol (IPv4, IPv6, etc)
 //to be used for sending unicast messages. Default set to IP dual stack.
@@ -65,6 +67,7 @@ static OCConnectivityType ConnType = CT_ADAPTER_IP;
 static OCDevAddr serverAddr;
 static char discoveryAddr[100];
 static std::string coapServerResource = "/a/light";
+static std::string coapIntrospectionResource = OC_RSRVD_INTROSPECTION_URI;
 
 #ifdef WITH_PRESENCE
 // The handle for observe registration
@@ -105,7 +108,7 @@ OCPayload* putPayload()
 
 static void PrintUsage()
 {
-    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..20> -c <0|1>");
+    OIC_LOG(INFO, TAG, "Usage : occlient -u <0|1> -t <1..20> -c <0|1> -i<0|1>");
     OIC_LOG(INFO, TAG, "-u <0|1> : Perform multicast/unicast discovery of resources");
     OIC_LOG(INFO, TAG, "-c 0 : Use Default connectivity(IP)");
     OIC_LOG(INFO, TAG, "-c 1 : IP Connectivity Type");
@@ -145,7 +148,7 @@ static void PrintUsage()
             "using server's endpoints information");
     OIC_LOG(INFO, TAG, "-t 23 :  Discover Resources and Perform Get Requests by IPv4 + COAP + TCP "\
             "using server's endpoints information");
-
+    OIC_LOG(INFO, TAG, "-t 24 :  Discover Introspection Resources and Perform Get Request");
 }
 
 OCStackResult InvokeOCDoResource(std::ostringstream &query,
@@ -492,6 +495,9 @@ OCStackApplicationResult discoveryReqCB(void* ctx, OCDoHandle /*handle*/,
             case TEST_GET_REQ_TCP:
                 InitGetRequestWithCoap(payload, false);
                 break;
+            case TEST_INTROSPECTION:
+                InitIntrospection(payload);
+                break;
             default:
                 PrintUsage();
                 break;
@@ -598,13 +604,22 @@ int InitGetRequestToUnavailableResource(OCQualityOfService qos)
             getReqCB, NULL, 0));
 }
 
+int InitIntrospection(OCDiscoveryPayload* dis)
+{
+    std::ostringstream query;
+    query << coapIntrospectionResource;
+    OIC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
+    return (InvokeOCDoResource(query, &serverAddr, OC_REST_GET, OC_LOW_QOS,
+            getReqCB, NULL, 0));
+}
+
 int InitObserveRequest(OCQualityOfService qos)
 {
     std::ostringstream query;
     query << coapServerResource;
     OIC_LOG_V(INFO, TAG, "\nExecuting %s with query %s", __func__, query.str().c_str());
     return (InvokeOCDoResource(query, &serverAddr, OC_REST_OBSERVE,
-              (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS, obsReqCB, NULL, 0));
+            (qos == OC_HIGH_QOS)? OC_HIGH_QOS:OC_LOW_QOS, obsReqCB, NULL, 0));
 }
 
 int InitPutRequest(OCQualityOfService qos)
@@ -809,6 +824,31 @@ int InitDeviceDiscovery(OCQualityOfService qos)
     return ret;
 }
 
+int InitIntrospectionDiscovery(OCQualityOfService qos)
+{
+    OIC_LOG_V(INFO, TAG, "\n\nExecuting %s", __func__);
+
+    OCStackResult ret;
+    OCCallbackData cbData;
+    char szQueryUri[MAX_QUERY_LENGTH] = { 0 };
+
+    snprintf(szQueryUri, sizeof(szQueryUri) - 1, INTROSPECTION_DISCOVERY_QUERY, discoveryAddr);
+
+    cbData.cb = DeviceDiscoveryReqCB;
+    cbData.context = (void*)DEFAULT_CONTEXT_VALUE;
+    cbData.cd = NULL;
+
+    ret = OCDoResource(NULL, OC_REST_DISCOVER, szQueryUri, NULL, 0, CT_DEFAULT,
+        (qos == OC_HIGH_QOS) ? OC_HIGH_QOS : OC_LOW_QOS,
+        &cbData, NULL, 0);
+    if (ret != OC_STACK_OK)
+    {
+        OIC_LOG(ERROR, TAG, "OCStack device error");
+    }
+
+    return ret;
+}
+
 int InitDiscovery(OCQualityOfService qos)
 {
     OCStackResult ret;
@@ -923,11 +963,17 @@ void showEndpointsInfo(OCResourcePayload* res)
     }
 }
 
+static FILE* server_fopen(const char* path, const char* mode)
+{
+    return fopen(path, mode);
+}
+
 int main(int argc, char* argv[])
 {
     int opt;
+    OCPersistentStorage ps{ server_fopen, fread, fwrite, fclose, unlink };
 
-    while ((opt = getopt(argc, argv, "u:t:c:")) != -1)
+    while ((opt = getopt(argc, argv, "u:t:c:i:")) != -1)
     {
         switch(opt)
         {
@@ -939,6 +985,9 @@ int main(int argc, char* argv[])
                 break;
             case 'c':
                 Connectivity = atoi(optarg);
+                break;
+            case 'i':
+                Introspection = atoi(optarg);
                 break;
             default:
                 PrintUsage();
@@ -954,10 +1003,18 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    if (OCInit1(OC_CLIENT, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS) != OC_STACK_OK)
+    if (OCInit1(OC_CLIENT_SERVER, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS) != OC_STACK_OK)
     {
         OIC_LOG(ERROR, TAG, "OCStack init error");
         return 0;
+    }
+
+    if (Introspection != 0)
+    {
+        if (OC_STACK_OK != OCRegisterPersistentStorageHandler(&ps))
+        {
+            OIC_LOG(ERROR, TAG, "OCRegisterPersistentStorageHandler");
+        }
     }
 
 #ifdef ROUTING_GATEWAY

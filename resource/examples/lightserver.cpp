@@ -387,15 +387,31 @@ OCStackResult SetDeviceInfo()
     return OC_STACK_OK;
 }
 
+FILE* server_fopen(const char* path, const char* mode)
+{
+    if (0 == strcmp(path, OC_INTROSPECTION_FILE_NAME))
+    {
+        return fopen("light_introspection.json", mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
+}
+
+
 int main(int /*argc*/, char** /*argv[]*/)
 {
+    // Create persistent storage handlers
+    OCPersistentStorage ps{server_fopen, fread, fwrite, fclose, unlink};
     // Create PlatformConfig object
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Server,
         "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
         0,         // Uses randomly available port
-        OC::QualityOfService::LowQos
+        OC::QualityOfService::LowQos,
+        &ps
     };
 
     OCPlatform::Configure(cfg);

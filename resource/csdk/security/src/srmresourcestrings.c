@@ -22,8 +22,8 @@
 #include "securevirtualresourcetypes.h"
 #include "octypes.h"
 
-const char * SVR_DB_FILE_NAME = "oic_svr_db.json";
-const char * SVR_DB_DAT_FILE_NAME = "oic_svr_db.dat";
+const char * SVR_DB_FILE_NAME = OC_SECURITY_DB_FILE_NAME;
+const char * SVR_DB_DAT_FILE_NAME = OC_SECURITY_DB_DAT_FILE_NAME;
 
 //AMACL
 const char * OIC_RSRC_TYPE_SEC_AMACL = "oic.r.amacl";
