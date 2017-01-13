@@ -119,7 +119,7 @@ public class RcsResourceContainer implements RcsResourceContainerBundleAPI {
      * @param configFile
      *            configuration File that contains the Bundle/Bundles
      *            information.
-     *
+     * @return collection of container bundles
      */
     public List<RcsBundleInfo> startContainer(String configFile) {
         if(configFile == null || configFile.isEmpty()){

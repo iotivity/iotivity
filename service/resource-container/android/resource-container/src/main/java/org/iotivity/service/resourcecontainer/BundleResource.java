@@ -135,6 +135,8 @@ public abstract class BundleResource {
 
     /**
      * Retrieve the attribute (map to read command)
+     * 
+     * @return RcsResourceAttributes containing the attributes
      */
     public abstract RcsResourceAttributes handleGetAttributesRequest();
 
