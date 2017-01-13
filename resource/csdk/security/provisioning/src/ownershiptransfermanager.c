@@ -984,6 +984,9 @@ static OCStackApplicationResult OwnerUuidUpdateHandler(void *ctx, OCDoHandle UNU
                     {
                         OIC_LOG(WARNING, TAG, "OwnerUuidUpdateHandler : SRPResetDevice error");
                     }
+                    OIC_LOG(ERROR, TAG, "OwnerUuidUpdateHandler:Failed to verify user confirm");
+                    SetResult(otmCtx, res);
+                    return OC_STACK_DELETE_TRANSACTION;
                 }
             }
 
