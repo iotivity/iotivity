@@ -235,21 +235,22 @@ if (0 != (ret) && MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY != (int) (ret) &&           
     MBEDTLS_SSL_ALERT_MSG_NO_APPLICATION_PROTOCOL != (int) (ret))                                  \
 {                                                                                                  \
     OIC_LOG_V(ERROR, NET_SSL_TAG, "%s: -0x%x", (str), -(ret));                                     \
-    if ((int) MBEDTLS_ERR_SSL_FATAL_ALERT_MESSAGE != (int) (ret))                                  \
+    if ((int) MBEDTLS_ERR_SSL_FATAL_ALERT_MESSAGE != (int) (ret) &&                                \
+        (int) MBEDTLS_ERR_SSL_BAD_HS_CLIENT_HELLO != (int) (ret))                                  \
     {                                                                                              \
         mbedtls_ssl_send_alert_message(&(peer)->ssl, MBEDTLS_SSL_ALERT_LEVEL_FATAL, (msg));        \
     }                                                                                              \
-    SSL_RES((peer), CA_DTLS_AUTHENTICATION_FAILURE);                                               \
     RemovePeerFromList(&(peer)->sep.endpoint);                                                     \
     if (mutex)                                                                                     \
     {                                                                                              \
         oc_mutex_unlock(g_sslContextMutex);                                                        \
     }                                                                                              \
+    SSL_RES((peer), CA_DTLS_AUTHENTICATION_FAILURE);                                               \
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);                                             \
     if (-1 != error)                                                                               \
     {                                                                                              \
         return (error);                                                                            \
-    }                                                                                              \
+    }                                                                                             \
 }
 /**@def CONF_SSL(clientConf, serverConf, fn, ...)
  *
@@ -1841,7 +1842,6 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
 
         if (MBEDTLS_SSL_HANDSHAKE_OVER == peer->ssl.state)
         {
-            SSL_RES(peer, CA_STATUS_OK);
             if (MBEDTLS_SSL_IS_CLIENT == peer->ssl.conf->endpoint)
             {
                 SendCacheMessages(peer);
