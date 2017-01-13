@@ -113,4 +113,5 @@ if target_os in ['linux']:
 # TODO: fix this test on linux and remove commented lines
 			'',
 #			'service_resource-encapsulation_src_serverBuilder_rcs_server_test.memcheck',
-			'service/resource-encapsulation/src/serverBuilder/rcs_server_test')
+			'service/resource-encapsulation/src/serverBuilder/rcs_server_test',
+			server_builder_test)

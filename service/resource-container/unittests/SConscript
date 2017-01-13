@@ -186,4 +186,5 @@ if container_gtest_env.get('TEST') == '1':
         run_test(container_gtest_env,
 #                'service_resource-container_unittests_container_test.memcheck',
                  '',
-                 'service/resource-container/unittests/container_test')
+                 'service/resource-container/unittests/container_test',
+                 container_test)

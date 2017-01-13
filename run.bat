@@ -33,6 +33,7 @@ if "%RELEASE%" == "" (
   set RELEASE=0
 )
 
+set THREAD_COUNT=%NUMBER_OF_PROCESSORS%
 set SECURED=1
 set ROUTING=EP
 set WITH_TCP=1
@@ -49,6 +50,10 @@ set DEBUG=
 IF NOT "%1"=="" (
   IF "%1"=="-arch" (
     SET TARGET_ARCH=%2
+    SHIFT
+  )
+  IF "%1"=="-threads" (
+    SET THREAD_COUNT=%2
     SHIFT
   )
   IF "%1"=="-noTest" (
@@ -81,7 +86,7 @@ IF "%BUILD_MSYS%" == "" (
   set PATH=!PATH!;!BUILD_DIR!;C:\msys64\mingw64\bin
 )
 
-set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% RD_MODE=CLIENT ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER%
+set BUILD_OPTIONS= TARGET_OS=%TARGET_OS% TARGET_ARCH=%TARGET_ARCH% RELEASE=%RELEASE% WITH_RA=0 TARGET_TRANSPORT=IP SECURED=%SECURED% WITH_TCP=%WITH_TCP% BUILD_SAMPLE=ON LOGGING=%LOGGING% TEST=%TEST% RD_MODE=CLIENT ROUTING=%ROUTING% WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP% MULTIPLE_OWNER=%MULTIPLE_OWNER% -j %THREAD_COUNT%
 
 REM Use MSVC_VERSION=12.0 for VS2013, or MSVC_VERSION=14.0 for VS2015.
 REM If MSVC_VERSION has not been defined here, SCons chooses automatically a VS version.
@@ -148,6 +153,7 @@ if "!RUN_ARG!"=="server" (
   echo   WITH_UPSTREAM_LIBCOAP=%WITH_UPSTREAM_LIBCOAP%
   echo   MULTIPLE_OWNER=%MULTIPLE_OWNER%
   echo   MSVC_VERSION=%MSVC_VERSION%
+  echo   THREAD_COUNT=%THREAD_COUNT%
   echo.scons VERBOSE=1 %BUILD_OPTIONS%
   scons VERBOSE=1 %BUILD_OPTIONS%
 ) else if "!RUN_ARG!"=="clean" (
@@ -183,15 +189,17 @@ echo. Default build settings are: debug binaries run unittests and no logging
 echo.
 echo. Default build parameters can be overridden using the following arguments
 echo. 
-echo   -arch [x86 ^| amd64]    - Build either amd64 or x86 architecture binaries
+echo   -arch [x86 ^| amd64]         - Build either amd64 or x86 architecture binaries
 echo.
-echo   -noTest                - Don't run the unittests after building the binaries
+echo   -noTest                      - Don't run the unittests after building the binaries
 echo.
-echo   -logging               - Enable logging while building the binaries
+echo   -logging                     - Enable logging while building the binaries
 echo.
-echo   -debugger              - Debug the requested application
+echo   -debugger                    - Debug the requested application
 echo.
-echo   -release               - Build release binaries
+echo   -release                     - Build release binaries
+echo.
+echo   -threads [NUMBER_OF_THREADS] - Build in parallel using [NUMBER_OF_THREADS] threads. Default: %NUMBER_OF_PROCESSORS%.
 echo.
 echo. Usage examples:
 echo   Launch SimpleClient with debugger:
@@ -214,6 +222,9 @@ echo      %0 build -arch x86
 echo.
 echo   Build amd64 release binaries with logging enabled:
 echo      %0 build -arch amd64 -release -logging
+echo.
+echo   Build using only one thread:
+echo      %0 build -threads 1
 echo.
 echo   Run all tests:
 echo      %0 test

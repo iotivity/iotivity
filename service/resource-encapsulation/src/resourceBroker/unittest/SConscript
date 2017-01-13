@@ -89,4 +89,5 @@ if broker_test_env.get('TEST') == '1':
 # TODO: fix this test on linux and remove commented lines
 #                'service_resource-encapsulation_src_resourceBroker_unittest_broker_test.memcheck',
                  '',
-                 'service/resource-encapsulation/src/resourceBroker/unittest/broker_test')
+                 'service/resource-encapsulation/src/resourceBroker/unittest/broker_test',
+                 broker_test)

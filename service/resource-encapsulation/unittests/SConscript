@@ -93,4 +93,5 @@ if rcs_test_env.get('TEST') == '1':
         run_test(rcs_test_env,
 #                'service_resource-encapsulation_unittests_rcs_client_test.memcheck',
                  '',
-                 'service/resource-encapsulation/unittests/rcs_client_test')
+                 'service/resource-encapsulation/unittests/rcs_client_test',
+                 rcs_client_test)

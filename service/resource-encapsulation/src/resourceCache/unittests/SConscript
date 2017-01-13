@@ -79,4 +79,5 @@ if cache_test_env.get('TEST') == '1':
         from tools.scons.RunTest import run_test
         run_test(cache_test_env,
                  'service_resource-encapsulation_src_resourceCache_unittests_cache_test.memtest',
-                 'service/resource-encapsulation/src/resourceCache/unittests/cache_test')
+                 'service/resource-encapsulation/src/resourceCache/unittests/cache_test',
+                 cache_test)

@@ -30,10 +30,12 @@ if env['CC'] == 'cl':
         env.AppendUnique(CCFLAGS = ['/MD', '/O2', '/GF'])
         env.AppendUnique(CPPDEFINES = ['NDEBUG'])
     else:
-        env.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/Zi', '/RTC1', '/Gm'])
+        env.AppendUnique(CCFLAGS = ['/MDd', '/Od', '/RTC1'])
         env.AppendUnique(LINKFLAGS = ['/debug'])
     env.AppendUnique(LIBPATH = [env.get('BUILD_DIR')])
     env.AppendUnique(PATH = os.environ['PATH'])
+    env['PDB'] = '${TARGET.base}.pdb'
+    env.Append(LINKFLAGS=['/PDB:${TARGET.base}.pdb'])
 
     # Add Windows-specific libraries
     env.AppendUnique(LIBS = ['bcrypt', 'ws2_32', 'advapi32', 'iphlpapi', 'crypt32', 'kernel32'])

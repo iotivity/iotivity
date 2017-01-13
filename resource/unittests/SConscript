@@ -114,7 +114,8 @@ if unittests_env.get('TEST') == '1':
 	if target_os in ['linux', 'windows']:
                 run_test(unittests_env,
                          'resource_unittests_unittests.memcheck',
-                         'resource/unittests/unittests')
+                         'resource/unittests/unittests',
+                         unittests)
 
 src_dir = unittests_env.get('SRC_DIR')
 svr_db_src_dir = os.path.join(src_dir, 'resource/examples/')

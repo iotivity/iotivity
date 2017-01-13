@@ -16,7 +16,7 @@
 
 import os
 
-def run_test(env, xml_file, test):
+def run_test(env, xml_file, test, test_targets = ['test']):
     """
     Run test with the given SCons Environment, dumping Valgrind
     results to the given XML file.  If no Valgrind run is desired
@@ -65,4 +65,5 @@ def run_test(env, xml_file, test):
     if env.get('TARGET_OS') in ['linux']:
         env.Depends('ut' + test , os.path.join(build_dir, test))
     ut = env.Command('ut' + test, None, test_cmd)
-    env.AlwaysBuild('ut' + test)
+    env.Depends(ut, test_targets)
+    env.AlwaysBuild(ut)

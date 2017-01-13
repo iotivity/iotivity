@@ -106,8 +106,10 @@ if env.get('TEST') == '1':
                      '',
 #                    'service_notification_cpp-wrapper_unittest_notification_consumer_wrapper_test.memcheck',
 
-                     'service/notification/cpp-wrapper/unittest/notification_consumer_wrapper_test')
+                     'service/notification/cpp-wrapper/unittest/notification_consumer_wrapper_test',
+                     notification_consumer_wrapper_test)
             run_test(notification_provider_wrapper_test_env, 
                      '',
 #                    'service_notification_cpp-wrapper_unittest_notification_provider_wrapper_test.memcheck',
-                     'service/notification/cpp-wrapper/unittest/notification_provider_wrapper_test')
+                     'service/notification/cpp-wrapper/unittest/notification_provider_wrapper_test',
+                     notification_provider_wrapper_test)

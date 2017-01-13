@@ -110,7 +110,8 @@ if provisiontests_env.get('TEST') == '1':
 		provisiontests_env.AppendENVPath('LD_LIBRARY_PATH', [out_dir])
 		run_test(provisiontests_env,
 				 'resource/provisioning/unittests/provisiontests.memcheck',
-				 'resource/provisioning/unittests/provisiontests')
+				 'resource/provisioning/unittests/provisiontests',
+				 unittests)
 
 src_dir = provisiontests_env.get('SRC_DIR')
 svr_db_src_dir = src_dir + '/resource/provisioning/examples/'

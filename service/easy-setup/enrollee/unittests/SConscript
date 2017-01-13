@@ -94,4 +94,5 @@ if env.get('TEST') == '1':
     if target_os in []:
         run_test(easysetup_enrollee_test_env,
                  'service_easy-setup_enrollee_unittests_easysetup_enrollee_test.memcheck',
-                 'service/easy-setup/enrollee/unittests/easysetup_enrollee_test')
+                 'service/easy-setup/enrollee/unittests/easysetup_enrollee_test',
+                 easysetup_enrollee_test)

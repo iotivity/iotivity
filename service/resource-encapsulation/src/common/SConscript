@@ -123,4 +123,5 @@ if target_os in ['linux']:
 		run_test(rcs_common_test_env,
 #			'service_resource-encapsulation_src_common_rcs_common_test.memcheck',
 			'',
-			'service/resource-encapsulation/src/common/rcs_common_test')
+			'service/resource-encapsulation/src/common/rcs_common_test',
+			rcs_common_test)

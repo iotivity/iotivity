@@ -100,8 +100,10 @@ if env.get('TEST') == '1':
             run_test(notification_consumer_test_env,
 #                    'service_notification_unittest_notification_consumer_test.memcheck',
                      '', 
-                     'service/notification/unittest/notification_consumer_test')
+                     'service/notification/unittest/notification_consumer_test',
+                     notification_consumer_test)
             run_test(notification_provider_test_env,
 #                    'service_notification_unittest_notification_provider_test.memcheck',
                      '',
-                     'service/notification/unittest/notification_provider_test')
+                     'service/notification/unittest/notification_provider_test',
+                     notification_provider_test)

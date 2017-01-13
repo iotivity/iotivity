@@ -124,4 +124,5 @@ scene_test_env.AppendTarget('remote_scene_action_test')
 #        from tools.scons.RunTest import *
 #        run_test(scene_test_env,
 #                 '',
-#                 'service/scene-manager/unittest/scene_test')
+#                 'service/scene-manager/unittest/scene_test',
+#                 remote_scene_action_test)
