@@ -477,14 +477,21 @@ namespace OC
     OCStackResult OCSecure::displayNumCallbackWrapper(void* ctx,
             uint8_t verifNum[MUTUAL_VERIF_NUM_LEN])
     {
-        OCStackResult result;
+        uint8_t *number = NULL;
 
         DisplayNumContext* context = static_cast<DisplayNumContext*>(ctx);
-        uint8_t *number = new uint8_t[MUTUAL_VERIF_NUM_LEN];
-        memcpy(number, verifNum, MUTUAL_VERIF_NUM_LEN);
-        result = context->callback(number);
-        delete context;
-        return result;
+        if (!context)
+        {
+            oclog() << "Invalid context";
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        if (NULL != verifNum) {
+            number = new uint8_t[MUTUAL_VERIF_NUM_LEN];
+            memcpy(number, verifNum, MUTUAL_VERIF_NUM_LEN);
+        }
+
+        return context->callback(number);
     }
 
     OCStackResult OCSecure::registerDisplayNumCallback(DisplayNumCB displayNumCB)
@@ -495,9 +502,14 @@ namespace OC
             return OC_STACK_INVALID_CALLBACK;
         }
 
-        OCStackResult result;
-        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+        OCStackResult result = OCSecure::deregisterDisplayNumCallback();
+        if (OC_STACK_OK != result)
+        {
+            oclog() << "Failed to de-register callback for display."<<std::endl;
+            return result;
+        }
 
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
         if (cLock)
         {
             DisplayNumContext* context = new DisplayNumContext(displayNumCB);
@@ -521,7 +533,12 @@ namespace OC
         if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-            UnsetDisplayNumCB();
+            DisplayNumContext* context = static_cast<DisplayNumContext*>(UnsetDisplayNumCB());
+            if (context)
+            {
+                oclog() << "Delete registered display num context"<<std::endl;
+                delete context;
+            }
             result = OC_STACK_OK;
         }
         else
@@ -534,12 +551,14 @@ namespace OC
 
     OCStackResult OCSecure::confirmUserCallbackWrapper(void* ctx)
     {
-        OCStackResult result;
-
         UserConfirmNumContext* context = static_cast<UserConfirmNumContext*>(ctx);
-        result = context->callback();
-        delete context;
-        return result;
+        if (!context)
+        {
+            oclog() << "Invalid context";
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        return context->callback();
     }
 
     OCStackResult OCSecure::registerUserConfirmCallback(UserConfirmNumCB userConfirmCB)
@@ -550,7 +569,13 @@ namespace OC
             return OC_STACK_INVALID_CALLBACK;
         }
 
-        OCStackResult result;
+        OCStackResult result = OCSecure::deregisterUserConfirmCallback();
+        if (OC_STACK_OK != result)
+        {
+            oclog() << "Failed to de-register callback for comfirm."<<std::endl;
+            return result;
+        }
+
         auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
         if (cLock)
         {
@@ -575,7 +600,12 @@ namespace OC
         if (cLock)
         {
             std::lock_guard<std::recursive_mutex> lock(*cLock);
-            UnsetUserConfirmCB();
+            UserConfirmNumContext* context = static_cast<UserConfirmNumContext*>(UnsetUserConfirmCB());
+            if (context)
+            {
+                oclog() << "Delete registered user confirm context"<<std::endl;
+                delete context;
+            }
             result = OC_STACK_OK;
         }
         else

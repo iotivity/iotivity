@@ -44,9 +44,12 @@ void SetDisplayNumCB(void * ptr, DisplayNumCallback displayNumCB)
     gDisplayNumContext.context = ptr;
 }
 
-void UnsetDisplayNumCB()
+void* UnsetDisplayNumCB()
 {
+    void *prevctx = gDisplayNumContext.context;
     gDisplayNumContext.callback = NULL;
+    gDisplayNumContext.context= NULL;
+    return prevctx;
 }
 
 void SetUserConfirmCB(void * ptr, UserConfirmCallback userConfirmCB)
@@ -60,9 +63,12 @@ void SetUserConfirmCB(void * ptr, UserConfirmCallback userConfirmCB)
     gUserConfirmContext.context = ptr;
 }
 
-void UnsetUserConfirmCB()
+void* UnsetUserConfirmCB()
 {
+    void *prevctx = gUserConfirmContext.context;
     gUserConfirmContext.callback = NULL;
+    gUserConfirmContext.context = NULL;
+    return prevctx;
 }
 
 void SetVerifyOption(VerifyOptionBitmask_t verifyOption)
