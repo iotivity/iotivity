@@ -421,6 +421,14 @@ OCStackResult SetDeviceInfo()
         return result;
     }
 
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                          "9f9752ed-b4ab-4662-af22-7e541bbee2fb");
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set piid" << endl;
+        return result;
+    }
+
     return OC_STACK_OK;
 }
 

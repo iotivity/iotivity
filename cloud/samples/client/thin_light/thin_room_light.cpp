@@ -475,6 +475,8 @@ OCStackResult SetDeviceInfo()
     }
 
     VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, "Living Room Light"));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                      "91debd4b-c875-47e1-9e1d-b1cd32baeb01"));
 
     cout << "Device information published successfully." << endl;
     return OC_STACK_OK;

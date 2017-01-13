@@ -60,6 +60,7 @@ std::string  systemTime = "2016-01-15T11.01";
 std::string  deviceName = "IoTivity Room Server";
 std::string  specVersion = "core.1.1.0";
 std::vector<std::string> dataModelVersions = {"res.1.1.0"};
+std::string  protocolIndependentID = "ac1b42a7-0518-448f-9b11-bfe328837bbf";
 
 // OCPlatformInfo Contains all the platform info to be stored
 OCPlatformInfo platformInfo;
@@ -615,6 +616,14 @@ OCStackResult SetDeviceInfo()
     if (result != OC_STACK_OK)
     {
         cout << "Failed to set spec version" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                          protocolIndependentID);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set piid" << endl;
         return result;
     }
 

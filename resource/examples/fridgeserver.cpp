@@ -63,6 +63,7 @@ std::string  systemTime = "2016-01-15T11.01";
 std::string  deviceName = "IoTivity Fridge Server";
 std::string  specVersion = "core.1.1.0";
 std::vector<std::string> dataModelVersions = {"res.1.1.0"};
+std::string  protocolIndependentID = "054718eb-b1e7-4e9e-9892-30e718a6a8f3";
 
 // OCPlatformInfo Contains all the platform info to be stored
 OCPlatformInfo platformInfo;
@@ -549,6 +550,14 @@ OCStackResult SetDeviceInfo()
     if (result != OC_STACK_OK)
     {
         std::cout << "Failed to set spec version" << std::endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                          protocolIndependentID);
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Failed to set piid" << std::endl;
         return result;
     }
 

@@ -155,6 +155,9 @@ OCStackResult SetDeviceInfo()
     VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
                                       "IoTivity/Zigbee Data Model Version"));
 
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                      "4ea65ac9-59a3-4eb8-8d77-76c3ee72c250"));
+
     OIC_LOG(INFO, TAG, "Device information initialized successfully.");
     return OC_STACK_OK;
 

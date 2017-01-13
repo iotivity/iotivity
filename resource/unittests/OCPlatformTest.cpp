@@ -802,12 +802,15 @@ namespace OCPlatformTest
         OCDeviceInfo deviceInfo;
         DuplicateString(&deviceInfo.deviceName, "myDeviceName");
         deviceInfo.types = NULL;
-        OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.wk.d");
+        OCResourcePayloadAddStringLL(&deviceInfo.types, OC_RSRVD_RESOURCE_TYPE_DEVICE);
         OCResourcePayloadAddStringLL(&deviceInfo.types, "oic.d.tv");
         DuplicateString(&deviceInfo.specVersion, "mySpecVersion");
         deviceInfo.dataModelVersions = nullptr;
         OCResourcePayloadAddStringLL(&deviceInfo.dataModelVersions, "myDataModelVersions");
         EXPECT_EQ(OC_STACK_OK, OCPlatform::registerDeviceInfo(deviceInfo));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(
+            PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+            "bda0e016-fe64-41dc-871e-c7e94cc143b9"));
         EXPECT_NO_THROW(DeleteDeviceInfo(deviceInfo));
     }
 
@@ -829,6 +832,8 @@ namespace OCPlatformTest
         dmv.push_back("myDataModelVersions");
         EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
             dmv));
+        EXPECT_EQ(OC_STACK_OK, OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+            "99a74220-73d3-426f-8397-3c06d586a865"));
         OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
         ASSERT_TRUE(NULL != handle);
         EXPECT_EQ(OC_STACK_OK, OCBindResourceTypeToResource(handle, "oic.wk.tv"));

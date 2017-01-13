@@ -306,6 +306,10 @@ extern "C" {
 
 /** Device Data Model version.*/
 #define OC_DATA_MODEL_VERSION           "res.1.1.0,sh.1.1.0"
+
+/** Protocol-Independent ID.*/
+#define OC_RSRVD_PROTOCOL_INDEPENDENT_ID "piid"
+
 /**
  *  These provide backward compatibility - their use is deprecated.
  */

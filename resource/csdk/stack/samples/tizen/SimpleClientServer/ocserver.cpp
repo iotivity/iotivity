@@ -80,6 +80,7 @@ const char *manufacturerName = "myName";
 const char *operatingSystemVersion = "myOS";
 const char *hardwareVersion = "myHardwareVersion";
 const char *platformID = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+const char *protocolIndependentID = "45a908e9-c06c-4935-b2dd-4195da863a11";
 const char *manufacturerLink = "https://www.iotivity.org";
 const char *modelNumber = "myModelNumber";
 const char *platformVersion = "myPlatformVersion";
@@ -932,6 +933,8 @@ OCStackResult SetDeviceInfo()
     VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion));
     VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
                                       dataModelVersions));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                      protocolIndependentID));
 
     OIC_LOG(INFO, TAG, "Device information initialized successfully.");
     return OC_STACK_OK;

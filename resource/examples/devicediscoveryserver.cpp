@@ -50,6 +50,7 @@ std::string  systemTime = "2016-01-15T11.01";
 std::string  deviceName = "Bill's Battlestar";
 std::string  specVersion = "core.1.1.0";
 std::vector<std::string> dataModelVersions = {"res.1.1.0", "sh.1.1.0"};
+std::string  protocolIndependentID = "4cae60c1-48cb-47dc-882e-dedec114f45c";
 
 // Device type
 std::string  deviceType = "oic.d.tv";
@@ -135,6 +136,14 @@ OCStackResult SetDeviceInfo()
     if (result != OC_STACK_OK)
     {
         std::cout << "Failed to set spec version" << std::endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                          protocolIndependentID);
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Failed to set piid" << std::endl;
         return result;
     }
 

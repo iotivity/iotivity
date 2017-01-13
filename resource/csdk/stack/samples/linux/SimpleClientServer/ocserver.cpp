@@ -90,6 +90,7 @@ const char *manufacturerName = "myName";
 const char *operatingSystemVersion = "myOS";
 const char *hardwareVersion = "myHardwareVersion";
 const char *platformID = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+const char *protocolIndependentID = "6ef9211d-2d5c-401e-8e5d-4b3af48a054f";
 const char *manufacturerLink = "https://www.iotivity.org";
 const char *modelNumber = "myModelNumber";
 const char *platformVersion = "myPlatformVersion";
@@ -1006,6 +1007,8 @@ OCStackResult SetDeviceInfo()
     VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion));
     VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
                                       dataModelVersions));
+    VERIFY_SUCCESS(OCSetPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                      protocolIndependentID));
 
     OIC_LOG(INFO, TAG, "Device information initialized successfully.");
     return OC_STACK_OK;
@@ -1189,7 +1192,7 @@ int main(int argc, char* argv[])
         OIC_LOG(INFO, TAG, "Device Registration failed!");
         exit (EXIT_FAILURE);
     }
-  
+
     /*
      * Declare and create the example resource: Light
      */

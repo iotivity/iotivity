@@ -64,6 +64,7 @@ namespace OCRepresentationEncodingTest
     TEST(DeviceDiscoveryEncoding, Normal)
     {
         sid1 = OCGetServerInstanceIDString();
+        static const char piid1[] = "e987b8f5-527a-454e-98c1-1eef2e5f1cf5";
         const char devicename1[] = "device name";
         OCRepPayload *device = OCRepPayloadCreate();
         EXPECT_TRUE(device);
@@ -72,6 +73,7 @@ namespace OCRepresentationEncodingTest
         EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_DEVICE_ID, sid1));
         EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_DEVICE_NAME, devicename1));
         EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_SPEC_VERSION, OC_SPEC_VERSION));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, piid1));
         EXPECT_TRUE(OCRepPayloadSetPropString(device, "x.org.iotivity.newproperty", "value"));
 
         size_t dim[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
@@ -94,6 +96,9 @@ namespace OCRepresentationEncodingTest
         EXPECT_TRUE(OCRepPayloadGetPropString(parsedRep, OC_RSRVD_DEVICE_ID, &value));
         EXPECT_STREQ(sid1, value);
         OICFree(value);
+        EXPECT_TRUE(OCRepPayloadGetPropString(parsedRep, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, &value));
+        EXPECT_STREQ(piid1, value);
+        OICFree(value);
         EXPECT_TRUE(OCRepPayloadGetPropString(parsedRep, OC_RSRVD_DEVICE_NAME, &value));
         EXPECT_STREQ(devicename1, value);
         OICFree(value);
@@ -108,7 +113,7 @@ namespace OCRepresentationEncodingTest
         EXPECT_STREQ(OC_DATA_MODEL_VERSION, dmv[0]);
         OICFree(dmv[0]);
         OICFree(dmv);
-        EXPECT_STREQ("oic.wk.d", parsedRep->types->value);
+        EXPECT_STREQ(OC_RSRVD_RESOURCE_TYPE_DEVICE, parsedRep->types->value);
         EXPECT_STREQ("oic.d.tv", parsedRep->types->next->value);
         EXPECT_EQ(device->base.type, parsedRep->base.type);
 
@@ -133,6 +138,7 @@ namespace OCRepresentationEncodingTest
         EXPECT_TRUE(OCRepPayloadAddResourceType(device, "oic.d.tv"));
         EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_DEVICE_NAME, devicename1));
         EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_DEVICE_ID, sid1));
+        EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_PROTOCOL_INDEPENDENT_ID, piid1));
         EXPECT_TRUE(OCRepPayloadSetPropString(device, OC_RSRVD_SPEC_VERSION, OC_SPEC_VERSION));
         size_t dim1[MAX_REP_ARRAY_DEPTH] = {2, 0, 0};
         char **dt1 = (char **)OICMalloc(sizeof(char *) * 2);

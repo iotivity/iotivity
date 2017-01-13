@@ -65,6 +65,7 @@ std::string  systemTime = "2016-01-15T11.01";
 std::string  deviceName = "IoTivity Simple Server HQ";
 std::string  specVersion = "core.1.1.0";
 std::vector<std::string> dataModelVersions = {"res.1.1.0"};
+std::string  protocolIndependentID = "88b3584f-d7bc-4e56-9210-0e8b305202c3";
 
 // OCPlatformInfo Contains all the platform info to be stored
 OCPlatformInfo platformInfo;
@@ -500,6 +501,14 @@ OCStackResult SetDeviceInfo()
         return result;
     }
 
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                          protocolIndependentID);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set piid" << endl;
+        return result;
+    }
+
     return OC_STACK_OK;
 }
 
@@ -558,6 +567,7 @@ int main(int argc, char* argv[])
     }
 
     result = SetDeviceInfo();
+
     if (result != OC_STACK_OK)
     {
         std::cout << "Device Registration failed\n";
