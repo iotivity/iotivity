@@ -463,9 +463,9 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
                 {
                     OIC_LOG(WARNING, TAG, "Internal error in PDMDeleteDevice");
                 }
-                CAEndpoint_t* endpoint = (CAEndpoint_t *)&otmCtx->selectedDeviceInfo->endpoint;
-                endpoint->port = otmCtx->selectedDeviceInfo->securePort;
-                if (CA_STATUS_OK != CAcloseSslConnection(endpoint))
+                CAEndpoint_t endpoint;
+                memcpy(&endpoint, &(otmCtx->selectedDeviceInfo->endpoint), sizeof(CAEndpoint_t));
+                if (CA_STATUS_OK != CAcloseSslConnection(&endpoint))
                 {
                     OIC_LOG(WARNING, TAG, "Failed to close Secure session");
                 }
