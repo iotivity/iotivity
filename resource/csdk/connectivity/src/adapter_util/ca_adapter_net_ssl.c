@@ -245,12 +245,15 @@ if (0 != (ret) && MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY != (int) (ret) &&           
     {                                                                                              \
         oc_mutex_unlock(g_sslContextMutex);                                                        \
     }                                                                                              \
-    SSL_RES((peer), CA_DTLS_AUTHENTICATION_FAILURE);                                               \
+    if ((int) MBEDTLS_ERR_SSL_BAD_HS_CLIENT_HELLO != (int)(ret))                                   \
+    {                                                                                              \
+        SSL_RES((peer), CA_DTLS_AUTHENTICATION_FAILURE);                                           \
+    }                                                                                              \
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Out %s", __func__);                                             \
     if (-1 != error)                                                                               \
     {                                                                                              \
         return (error);                                                                            \
-    }                                                                                             \
+    }                                                                                              \
 }
 /**@def CONF_SSL(clientConf, serverConf, fn, ...)
  *
