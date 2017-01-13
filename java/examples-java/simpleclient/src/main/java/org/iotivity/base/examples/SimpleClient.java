@@ -66,7 +66,7 @@ public class SimpleClient implements
 
         PlatformConfig platformConfig = new PlatformConfig(
                 ServiceType.IN_PROC,
-                ModeType.CLIENT,
+                ModeType.CLIENT_SERVER,
                 "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
                 0,         // Uses randomly available port
                 QualityOfService.LOW

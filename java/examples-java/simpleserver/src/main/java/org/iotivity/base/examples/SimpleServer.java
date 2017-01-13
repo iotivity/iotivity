@@ -29,6 +29,7 @@ import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
 
+import java.net.URISyntaxException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -47,13 +48,22 @@ public class SimpleServer {
      * A local method to configure and initialize platform, and then create a light resource.
      */
     private static void startSimpleServer() {
+        String path = "";
+        // This assumes the oic_svr_db_server.dat file is in the same location as the SimpleServer.jar file
+        try {
+            path = SimpleServer.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+            path = path.substring(0, path.lastIndexOf('/'));
+        } catch (URISyntaxException e) {
+            msg(e.getMessage() + " unable to find local file path.");
+        }
 
         PlatformConfig platformConfig = new PlatformConfig(
                 ServiceType.IN_PROC,
                 ModeType.SERVER,
                 "0.0.0.0", // By setting to "0.0.0.0", it binds to all available interfaces
                 0,         // Uses randomly available port
-                QualityOfService.LOW
+                QualityOfService.LOW,
+                path + "/oic_svr_db_server.dat"
         );
 
         msg("Configuring platform.");

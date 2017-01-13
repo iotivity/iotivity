@@ -101,5 +101,9 @@ jdk_env['BUILDERS']['Gradle'] = Builder(action = env.get('ANDROID_GRADLE') + ' b
 #cmdBuildExamples=jdk_env.Gradle(target="../examples-%s/devicediscoveryclient/apk" % (examples_target, ), source="examples-%s/devicediscoveryclient/src/main/java/org/iotivity/base/examples/DeviceDiscoveryClient.java" % (examples_target, ))
 cmdBuildExamples=jdk_env.Gradle(target="examples-%s/simpleclient/jar" % (examples_target, ), source="examples-%s/simpleclient/src/main/java/org/iotivity/base/examples/SimpleClient.java" % (examples_target, ))
 
+exampleAclFiles = jdk_env.Install('#java/examples-java/simpleserver/build/libs/', 'examples-java/simpleserver/src/main/assets/oic_svr_db_server.dat')
+
+Depends(cmdBuildExamples, exampleAclFiles)
 Depends(cmdBuildExamples, cmdBuildApi)
+
 env.AppendUnique(baseAAR = cmdBuildApi)
