@@ -473,6 +473,7 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
                 }
                 CAEndpoint_t endpoint;
                 memcpy(&endpoint, &(otmCtx->selectedDeviceInfo->endpoint), sizeof(CAEndpoint_t));
+                endpoint.port = otmCtx->selectedDeviceInfo->securePort;
                 if (CA_STATUS_OK != CAcloseSslConnection(&endpoint))
                 {
                     OIC_LOG(WARNING, TAG, "Failed to close Secure session");
@@ -508,6 +509,24 @@ static void SetResult(OTMContext_t* otmCtx, const OCStackResult res)
     //If all OTM process is complete, invoke the user callback.
     if(IsComplete(otmCtx))
     {
+        if(OC_STACK_OK != res && OC_STACK_CONTINUE != res && OC_STACK_DUPLICATE_REQUEST != res)
+        {
+            // Reset doxm and pstat properties to pre-Ownership Transfer state
+            if (otmCtx->selectedDeviceInfo->doxm)
+            {
+                OIC_LOG(DEBUG, TAG, "Resetting doxm and pstat properties");
+                OicUuid_t emptyUuid = {.id = {0}};
+                memcpy(&(otmCtx->selectedDeviceInfo->doxm->owner), &emptyUuid, sizeof(OicUuid_t));
+                otmCtx->selectedDeviceInfo->doxm->owned = false;
+            }
+
+            if (otmCtx->selectedDeviceInfo->pstat)
+            {
+                otmCtx->selectedDeviceInfo->pstat->isOp = false;
+                otmCtx->selectedDeviceInfo->pstat->cm |= TAKE_OWNER;
+            }
+        }
+
         otmCtx->ctxResultCallback(otmCtx->userCtx, otmCtx->ctxResultArraySize,
                                    otmCtx->ctxResultArray, otmCtx->ctxHasError);
         OICFree(otmCtx->ctxResultArray);
