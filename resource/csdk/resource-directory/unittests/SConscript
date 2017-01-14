@@ -87,8 +87,7 @@ rd_client_test = rd_test_env.Program('rdtests', rd_test_src)
 Alias("rd_client_test", rd_client_test)
 rd_test_env.AppendTarget('rd_client_test')
 
-# TODO: fix test for all supported configurations
-if rd_test_env.get('TEST') == '1' and rd_test_env.get('SECURED') != '1':
+if rd_test_env.get('TEST') == '1':
     target_os = rd_test_env.get('TARGET_OS')
     if target_os in ['linux']:
         run_test(rd_test_env,
