@@ -54,7 +54,7 @@ static JNIEnv *GetJNIEnv(jint *ret)
         case JNI_EDETACHED:
             if (g_jvm_consumer->AttachCurrentThread(&env, NULL) != JNI_OK)
             {
-                LOGE ("Failed to get the environment");
+                LOGE (TAG,"Failed to get the environment");
                 return NULL;
             }
             else
@@ -62,17 +62,17 @@ static JNIEnv *GetJNIEnv(jint *ret)
                 return env;
             }
         case JNI_EVERSION:
-            LOGE ("JNI version is not supported");
+            LOGE (TAG,"JNI version is not supported");
             return NULL;
         default:
-            LOGE ("Failed to get the environment");
+            LOGE (TAG,"Failed to get the environment");
             return NULL;
     }
 }
 
 jobject getJavaProviderState(JNIEnv *env, OIC::Service::NSProviderState state)
 {
-    LOGD ("ConsumerService_getJavaProviderState - IN");
+    LOGD (TAG,"ConsumerService_getJavaProviderState - IN");
     jobject providerState = NULL;
     switch (state)
     {
@@ -110,19 +110,19 @@ jobject getJavaProviderState(JNIEnv *env, OIC::Service::NSProviderState state)
                 break;
             }
     }
-    LOGD ("ConsumerService_getJavaProviderState - OUT");
+    LOGD (TAG,"ConsumerService_getJavaProviderState - OUT");
     return providerState;
 }
 
 jobject getJavaSyncType(JNIEnv *env, OIC::Service::NSSyncInfo::NSSyncType nsType)
 {
-    LOGD ("ConsumerService_getJavaSyncType - IN");
+    LOGD (TAG,"ConsumerService_getJavaSyncType - IN");
 
     // SyncType
     jclass cls_SyncType = (jclass) (env->NewLocalRef(g_cls_SyncType));
     if (!cls_SyncType)
     {
-        LOGE ("Failed to Get ObjectClass for SyncType");
+        LOGE (TAG,"Failed to Get ObjectClass for SyncType");
         return NULL;
     }
     jobject syncType = NULL;
@@ -156,19 +156,19 @@ jobject getJavaSyncType(JNIEnv *env, OIC::Service::NSSyncInfo::NSSyncType nsType
             }
     }
 
-    LOGD ("ConsumerService_getJavaSyncType - OUT");
+    LOGD (TAG,"ConsumerService_getJavaSyncType - OUT");
     return syncType;
 }
 
 jobject getJavaTopicState(JNIEnv *env, OIC::Service::NSTopic::NSTopicState nsState)
 {
-    LOGD ("ConsumerService_getJavaTopicState - IN");
+    LOGD (TAG,"ConsumerService_getJavaTopicState - IN");
 
     // TopicState
     jclass cls_topicState = (jclass) (env->NewLocalRef(g_cls_TopicState));
     if (!cls_topicState)
     {
-        LOGE ("Failed to Get ObjectClass for TopicState Type");
+        LOGE (TAG,"Failed to Get ObjectClass for TopicState Type");
         return NULL;
     }
     jobject topicState = NULL;
@@ -196,36 +196,36 @@ jobject getJavaTopicState(JNIEnv *env, OIC::Service::NSTopic::NSTopicState nsSta
             }
     }
 
-    LOGD ("ConsumerService_getJavaTopicState - OUT");
+    LOGD (TAG,"ConsumerService_getJavaTopicState - OUT");
     return topicState;
 }
 
 jobject getJavaTopicsList(JNIEnv *env, OIC::Service::NSTopicsList *topicList)
 {
-    LOGD ("ConsumerService_getJavaTopicsList - IN");
+    LOGD (TAG,"ConsumerService_getJavaTopicsList - IN");
     jclass cls_topicList = (jclass) (env->NewLocalRef(g_cls_TopicsList));
     if (!cls_topicList)
     {
-        LOGE ("Failed to Get ObjectClass for TopicsList");
+        LOGE (TAG,"Failed to Get ObjectClass for TopicsList");
         return NULL;
     }
     jmethodID mid_topicList = env->GetMethodID(cls_topicList, "<init>", "()V");
     if (!mid_topicList)
     {
-        LOGE ("Failed to Get MethodID for TopicsList<init>");
+        LOGE (TAG,"Failed to Get MethodID for TopicsList<init>");
         return NULL;
     }
     jobject obj_topicList = env->NewObject(cls_topicList, mid_topicList);
     if (!obj_topicList)
     {
-        LOGE ("Failed to Get object for TopicsList");
+        LOGE (TAG,"Failed to Get object for TopicsList");
         return NULL;
     }
     jmethodID mid_addTopic = env->GetMethodID(cls_topicList, "addTopic",
                              "(Ljava/lang/String;Lorg/iotivity/service/ns/common/Topic$TopicState;)V");
     if (!mid_addTopic)
     {
-        LOGE ("Failed to Get MethodID for addTopic");
+        LOGE (TAG,"Failed to Get MethodID for addTopic");
         return NULL;
     }
     for (auto it : topicList->getTopicsList())
@@ -236,20 +236,20 @@ jobject getJavaTopicsList(JNIEnv *env, OIC::Service::NSTopicsList *topicList)
         env->CallVoidMethod(obj_topicList, mid_addTopic, jTopicName, jState);
     }
     env->DeleteLocalRef(cls_topicList);
-    LOGD ("ConsumerService_getJavaTopicsList - OUT");
+    LOGD (TAG,"ConsumerService_getJavaTopicsList - OUT");
     return obj_topicList;
 }
 
 bool getNativeTopicState(JNIEnv *env,  jobject jTopic , OIC::Service::NSTopic::NSTopicState &state )
 {
-    LOGD ("ConsumerService_getNativeTopicState - IN");
+    LOGD (TAG,"ConsumerService_getNativeTopicState - IN");
 
     jclass cls_topic = env->GetObjectClass( jTopic);
     // TopicState
     jclass cls_TopicState = (jclass) (env->NewLocalRef(g_cls_TopicState));
     if (!cls_TopicState)
     {
-        LOGE ("Failed to Get ObjectClass for cls_TopicState Type");
+        LOGE (TAG,"Failed to Get ObjectClass for cls_TopicState Type");
         return false;
     }
     jmethodID mid = env->GetMethodID(cls_TopicState, "ordinal", "()I");
@@ -257,35 +257,35 @@ bool getNativeTopicState(JNIEnv *env,  jobject jTopic , OIC::Service::NSTopic::N
                                           "Lorg/iotivity/service/ns/common/Topic$TopicState;");
     if (fid_state == NULL)
     {
-        LOGE("Error: jfieldID for state type  is null");
+        LOGE (TAG,"Error: jfieldID for state type  is null");
         return false;
     }
     jobject jobj = env->GetObjectField( jTopic, fid_state);
     if (jobj == NULL)
     {
-        LOGE("Error: object of field  state Type is null");
+        LOGE (TAG,"Error: object of field  state Type is null");
         return false;
     }
     jint jState = env->CallIntMethod(jobj, mid);
     state = (OIC::Service::NSTopic::NSTopicState) jState;
-    LOGD ("ConsumerService_getNativeTopicState - OUT");
+    LOGD (TAG,"ConsumerService_getNativeTopicState - OUT");
     return true;
 
 }
 
 const char *getNativeTopicName(JNIEnv *env,  jobject jTopic)
 {
-    LOGD ("ConsumerService_getNativeTopicName - IN");
+    LOGD (TAG,"ConsumerService_getNativeTopicName - IN");
     jclass cls_topic = env->GetObjectClass( jTopic);
     if (cls_topic == NULL)
     {
-        LOGE("Error: Class for Topic is null");
+        LOGE (TAG,"Error: Class for Topic is null");
         return nullptr;
     }
     jfieldID fid_name = env->GetFieldID( cls_topic, "mTopicName", "Ljava/lang/String;");
     if (fid_name == NULL)
     {
-        LOGE("Error: jfieldID for Topic Name  is null");
+        LOGE (TAG,"Error: jfieldID for Topic Name  is null");
         return nullptr;
     }
     jstring jTopicName = (jstring) env->GetObjectField( jTopic, fid_name);
@@ -296,52 +296,52 @@ const char *getNativeTopicName(JNIEnv *env,  jobject jTopic)
     }
     else
     {
-        LOGI("Info: topicName is null");
+        LOGI(TAG, "Info: topicName is null");
     }
-    LOGD ("ConsumerService_getNativeTopicName - OUT");
+    LOGD (TAG,"ConsumerService_getNativeTopicName - OUT");
     return topicName;
 
 }
 
 OIC::Service::NSTopicsList *getNativeTopicsList(JNIEnv *env, jobject jTopicList)
 {
-    LOGD ("ConsumerService_getNativeTopicsList - IN");
+    LOGD (TAG,"ConsumerService_getNativeTopicsList - IN");
 
     jclass cls_topicList = env->GetObjectClass( jTopicList);
     if (cls_topicList == NULL)
     {
-        LOGE("Error: Class for Topic List  is null");
+        LOGE (TAG,"Error: Class for Topic List  is null");
         return nullptr;
     }
     jfieldID fid_list = env->GetFieldID( cls_topicList, "mTopicsList", "Ljava/util/Vector;");
     if (fid_list == NULL)
     {
-        LOGE("Error: jfieldID for Topic List  is null");
+        LOGE (TAG,"Error: jfieldID for Topic List  is null");
         return nullptr;
     }
     jobject jobj = env->GetObjectField( jTopicList, fid_list);
     if (jobj == NULL)
     {
-        LOGE("Error: object of field  Topic List is null");
+        LOGE (TAG,"Error: object of field  Topic List is null");
         return nullptr;
     }
     jclass cls_vec = env->FindClass("java/util/Vector");
     if (cls_vec == NULL)
     {
-        LOGE("Error: Class for Vector not found");
+        LOGE (TAG,"Error: Class for Vector not found");
         return nullptr;
     }
     jmethodID sizeMethod = env->GetMethodID(cls_vec,  "size", "()I");
     if (sizeMethod == NULL)
     {
-        LOGE("Error: MethodId for Vector Size  not found");
+        LOGE (TAG,"Error: MethodId for Vector Size  not found");
         return nullptr;
     }
     int size = env->CallIntMethod(jobj, sizeMethod);
     jmethodID getMethod = env->GetMethodID(cls_vec,  "get", "(I)Ljava/lang/Object;");
     if (getMethod == NULL)
     {
-        LOGE("Error: MethodId for Vector get  not found");
+        LOGE (TAG,"Error: MethodId for Vector get  not found");
         return nullptr;
     }
     OIC::Service::NSTopicsList *nsTopicList = new OIC::Service::NSTopicsList();
@@ -350,14 +350,14 @@ OIC::Service::NSTopicsList *getNativeTopicsList(JNIEnv *env, jobject jTopicList)
         jobject topicObj = env->CallObjectMethod(jobj, getMethod, index);
         if (topicObj == NULL)
         {
-            LOGE("Error: object of field  Topic  is null");
+            LOGE (TAG,"Error: object of field  Topic  is null");
             delete nsTopicList;
             return nullptr;
         }
         const char *name =  getNativeTopicName(env, topicObj);
         if (name == nullptr)
         {
-            LOGE("Error: Couldn't find topic Name");
+            LOGE (TAG,"Error: Couldn't find topic Name");
             delete nsTopicList;
             return nullptr;
         }
@@ -373,51 +373,51 @@ OIC::Service::NSTopicsList *getNativeTopicsList(JNIEnv *env, jobject jTopicList)
 
     env->DeleteLocalRef(cls_vec);
     env->DeleteLocalRef(cls_topicList);
-    LOGD ("ConsumerService_getNativeTopicsList - OUT");
+    LOGD (TAG,"ConsumerService_getNativeTopicsList - OUT");
     return nsTopicList;
 }
 
 OIC::Service::NSProvider *getNativeProvider(JNIEnv *env, jobject jObj)
 {
-    LOGD ("ConsumerService_getNativeProvider - IN");
+    LOGD (TAG,"ConsumerService_getNativeProvider - IN");
     jclass providerClass = env->GetObjectClass(jObj);
     if (!providerClass)
     {
-        ThrowNSException(NS_ERROR, "Failed to Get ObjectClass for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
         return NULL;
     }
     jfieldID jproviderId = env->GetFieldID(providerClass, "mProviderId", "Ljava/lang/String;");
     if (!jproviderId)
     {
-        ThrowNSException(NS_ERROR, "Failed to get providerId for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to get providerId for Provider");
         return NULL;
     }
     jstring jprovider_id = (jstring) env->GetObjectField(jObj, jproviderId);
     if (!jprovider_id)
     {
-        ThrowNSException(NS_ERROR, "ProviderId cannot be null");
+        ThrowNSException(JNI_INVALID_VALUE, "ProviderId cannot be null");
         return NULL;
     }
 
     const char *providerId = env->GetStringUTFChars(jprovider_id, 0);
-    LOGD ("ProviderId : %s\n", providerId);
+    LOGD (TAG,"ProviderId : %s\n", providerId);
 
     OIC::Service::NSProvider *provider =
         OIC::Service::NSConsumerService::getInstance()->getProvider(std::string(providerId));
     if (provider == nullptr)
     {
-        ThrowNSException(NS_ERROR, "Provider with Given Id doesn't exist");
+        ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
         return NULL;
     }
     env->ReleaseStringUTFChars(jprovider_id, providerId);
-    LOGD ("ConsumerService_getNativeProvider - OUT");
+    LOGD (TAG,"ConsumerService_getNativeProvider - OUT");
     return provider;
 }
 
 jobject getJavaProvider(JNIEnv *env, OIC::Service::NSProvider *provider)
 {
-    LOGD ("ConsumerService_getJavaProvider - IN");
-    LOGD ("ProviderId : %s\n", provider->getProviderId().c_str());
+    LOGD (TAG,"ConsumerService_getJavaProvider - IN");
+    LOGD (TAG,"ProviderId : %s\n", provider->getProviderId().c_str());
 
     jstring jProviderId = env->NewStringUTF(provider->getProviderId().c_str());
     jlong pProvider = (long)provider;
@@ -425,39 +425,39 @@ jobject getJavaProvider(JNIEnv *env, OIC::Service::NSProvider *provider)
     jclass cls_provider = (jclass) (env->NewLocalRef(g_cls_Provider));
     if (!cls_provider)
     {
-        LOGE ("Failed to Get ObjectClass for Provider");
+        LOGE (TAG,"Failed to Get ObjectClass for Provider");
         return NULL;
     }
     jmethodID mid_provider = env->GetMethodID(
                                  cls_provider, "<init>", "(Ljava/lang/String;)V");
     if (!mid_provider)
     {
-        LOGE ("Failed to Get MethodID for Provider<init>");
+        LOGE (TAG,"Failed to Get MethodID for Provider<init>");
         return NULL;
     }
     jobject obj_provider = env->NewObject(cls_provider, mid_provider, jProviderId);
     if (!obj_provider)
     {
-        LOGE("Failed to create new Object for Provider");
+        LOGE (TAG,"Failed to create new Object for Provider");
         return NULL;
     }
 
     jfieldID nativeHandle = env->GetFieldID(cls_provider, "mNativeHandle", "J");
     if (!nativeHandle)
     {
-        LOGE("Failed to get nativeHandle for Provider");
+        LOGE (TAG,"Failed to get nativeHandle for Provider");
         return NULL;
     }
     env->SetLongField(obj_provider, nativeHandle, pProvider);
 
     env->DeleteLocalRef(cls_provider);
-    LOGD ("ConsumerService_getJavaProvider - OUT");
+    LOGD (TAG,"ConsumerService_getJavaProvider - OUT");
     return obj_provider;
 }
 
 jobject getJavaMessageType(JNIEnv *env, OIC::Service::NSMessage::NSMessageType type)
 {
-    LOGD ("ConsumerService_getJavaMessageType - IN");
+    LOGD (TAG,"ConsumerService_getJavaMessageType - IN");
     jobject messageType = NULL;
     switch (type)
     {
@@ -495,18 +495,18 @@ jobject getJavaMessageType(JNIEnv *env, OIC::Service::NSMessage::NSMessageType t
                 break;
             }
     }
-    LOGD ("ConsumerService_getJavaMessageType - OUT");
+    LOGD (TAG,"ConsumerService_getJavaMessageType - OUT");
     return messageType;
 }
 
 jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
 {
-    LOGD ("ConsumerService_getJavaMessage - IN");
+    LOGD (TAG,"ConsumerService_getJavaMessage - IN");
 
-    LOGD ("id : %llu\n", message->getMessageId());
-    LOGD ("title : %s\n", message->getTitle().c_str());
-    LOGD ("content : %s\n", message->getContentText().c_str());
-    LOGD ("source : %s\n", message->getSourceName().c_str());
+    LOGD (TAG,"id : %llu\n", message->getMessageId());
+    LOGD (TAG,"title : %s\n", message->getTitle().c_str());
+    LOGD (TAG,"content : %s\n", message->getContentText().c_str());
+    LOGD (TAG,"source : %s\n", message->getSourceName().c_str());
 
     jlong jMessageId = (jlong) message->getMessageId();
     jstring jProviderId = env->NewStringUTF(message->getProviderId().c_str());
@@ -523,7 +523,7 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
     jclass cls_message = (jclass) (env->NewLocalRef(g_cls_Message));
     if (!cls_message)
     {
-        LOGE ("Failed to Get ObjectClass for Message");
+        LOGE (TAG,"Failed to Get ObjectClass for Message");
         return NULL ;
     }
     jmethodID mid_message = env->GetMethodID(
@@ -531,20 +531,20 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
                                 "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
     if (!mid_message)
     {
-        LOGE ("Failed to Get MethodID for Message<init>");
+        LOGE (TAG,"Failed to Get MethodID for Message<init>");
         return NULL;
     }
     jobject obj_message = env->NewObject(cls_message, mid_message,
                                          jTitle, jContentText, jSourceName);
     if (!obj_message)
     {
-        LOGE ("Failed to Get Java Object for Message");
+        LOGE (TAG,"Failed to Get Java Object for Message");
         return NULL;
     }
     jfieldID fid_nativeHandle = env->GetFieldID(cls_message, "mNativeHandle", "J");
     if (!fid_nativeHandle)
     {
-        LOGE("Failed to get nativeHandle for Message");
+        LOGE (TAG,"Failed to get nativeHandle for Message");
         return NULL;
     }
     env->SetLongField(obj_message, fid_nativeHandle, pMessage);
@@ -552,7 +552,7 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
     jfieldID fid_messageId = env->GetFieldID(cls_message, "mMessageId", "J");
     if (!fid_messageId)
     {
-        LOGE("Failed to get field MessageID for Message");
+        LOGE (TAG,"Failed to get field MessageID for Message");
         return NULL;
     }
     env->SetLongField(obj_message, fid_messageId, jMessageId);
@@ -560,7 +560,7 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
     jfieldID fid_providerId = env->GetFieldID(cls_message, "mProviderId", "Ljava/lang/String;");
     if (!fid_providerId)
     {
-        LOGE("Failed to get field ProviderID for Message");
+        LOGE (TAG,"Failed to get field ProviderID for Message");
         return NULL;
     }
     env->SetObjectField(obj_message, fid_providerId, jProviderId);
@@ -568,7 +568,7 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
     jfieldID fid_time = env->GetFieldID(cls_message, "mTime", "Ljava/lang/String;");
     if (!fid_time)
     {
-        LOGE("Failed to get field Time for Message");
+        LOGE (TAG,"Failed to get field Time for Message");
         return NULL;
     }
     env->SetObjectField(obj_message, fid_time, jTime);
@@ -576,7 +576,7 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
     jfieldID fid_ttl = env->GetFieldID(cls_message, "mTTL", "J");
     if (!fid_ttl)
     {
-        LOGE("Failed to get field TTL for Message");
+        LOGE (TAG,"Failed to get field TTL for Message");
         return NULL;
     }
     env->SetLongField(obj_message, fid_ttl, jTTL);
@@ -584,7 +584,7 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
     jfieldID fid_topic = env->GetFieldID(cls_message, "mTopic", "Ljava/lang/String;");
     if (!fid_topic)
     {
-        LOGE("Failed to get mTopic for Message");
+        LOGE (TAG,"Failed to get mTopic for Message");
         return NULL;
     }
     env->SetObjectField(obj_message, fid_topic, jTopic);
@@ -596,14 +596,14 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
         jclass cls_mediaContents = (jclass) (env->NewLocalRef(g_cls_MediaContents));
         if (!cls_mediaContents)
         {
-            LOGE ("Failed to Get ObjectClass for MediaContents");
+            LOGE (TAG,"Failed to Get ObjectClass for MediaContents");
             return NULL;
         }
         jmethodID mid_mediaContents = env->GetMethodID(
                                           cls_mediaContents, "<init>", "(Ljava/lang/String;)V");
         if (!mid_mediaContents)
         {
-            LOGE ("Failed to Get MethodID for MediaContents<init>");
+            LOGE (TAG,"Failed to Get MethodID for MediaContents<init>");
             return NULL;
         }
         jobject obj_mediaContents = env->NewObject(cls_mediaContents, mid_mediaContents,
@@ -613,7 +613,7 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
                                      "Lorg/iotivity/service/ns/common/MediaContents;");
         if (!fid_mediaContents)
         {
-            LOGE("Failed to get field mediaContents for Message");
+            LOGE (TAG,"Failed to get field mediaContents for Message");
             return NULL;
         }
         env->SetObjectField(obj_message, fid_mediaContents, obj_mediaContents);
@@ -627,13 +627,13 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
                                             "Lorg/iotivity/service/ns/common/Message$MessageType;");
         if (!fid_type)
         {
-            LOGE("Failed to get field Type for Message");
+            LOGE (TAG,"Failed to get field Type for Message");
             return NULL;
         }
         env->SetObjectField(obj_message, fid_type, jType);
     }
 
-    LOGD("Reading OCRepresentation Object from Native");
+    LOGD (TAG,"Reading OCRepresentation Object from Native");
 
     OC::OCRepresentation *ocRepresentation = new OC::OCRepresentation(message->getExtraInfo());
     jlong handle = reinterpret_cast<jlong>(ocRepresentation);
@@ -641,32 +641,32 @@ jobject getJavaMessage(JNIEnv *env, OIC::Service::NSMessage *message)
                               handle, true);
     if (!jRepresentation)
     {
-        LOGE("Failed to create OcRepresentation");
+        LOGE (TAG,"Failed to create OcRepresentation");
         delete ocRepresentation;
     }
     else
     {
-        LOGD("Created OCRepresentation Object from Native");
+        LOGD (TAG,"Created OCRepresentation Object from Native");
     }
     jfieldID fid_extraInfo = env->GetFieldID(cls_message, "mExtraInfo",
                              "Lorg/iotivity/base/OcRepresentation;");
     if (!fid_extraInfo)
     {
-        LOGE("Failed to get mExtraInfo for Message");
+        LOGE (TAG,"Failed to get mExtraInfo for Message");
         delete ocRepresentation;
         return NULL;
     }
-    LOGD ("setting extraInfo field");
+    LOGD (TAG,"setting extraInfo field");
     env->SetObjectField(obj_message, fid_extraInfo, jRepresentation);
 
     env->DeleteLocalRef(cls_message);
-    LOGD ("ConsumerService_getJavaMessage - OUT");
+    LOGD (TAG,"ConsumerService_getJavaMessage - OUT");
     return obj_message;
 }
 
 void onDiscoverProvider(OIC::Service::NSProvider *provider)
 {
-    LOGD ("ConsumerService_onDiscoverProvider - IN");
+    LOGD (TAG,"ConsumerService_onDiscoverProvider - IN");
 
     jint envRet = 0;;
     JNIEnv *env = GetJNIEnv(&envRet);
@@ -678,7 +678,7 @@ void onDiscoverProvider(OIC::Service::NSProvider *provider)
     jobject jDiscoverListener = (jobject) env->NewLocalRef(g_obj_discoverListener);
     if (!jDiscoverListener)
     {
-        LOGE ("Failed to Get jDiscoverListener");
+        LOGE (TAG,"Failed to Get jDiscoverListener");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -689,7 +689,7 @@ void onDiscoverProvider(OIC::Service::NSProvider *provider)
     jobject obj_provider = getJavaProvider(env, provider);
     if (!obj_provider)
     {
-        LOGE ("Failed to Get Provider Object");
+        LOGE (TAG,"Failed to Get Provider Object");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -700,7 +700,7 @@ void onDiscoverProvider(OIC::Service::NSProvider *provider)
     jclass cls = env->GetObjectClass(jDiscoverListener);
     if (!cls)
     {
-        LOGE ("Failed to Get ObjectClass for jDiscoverListener");
+        LOGE (TAG,"Failed to Get ObjectClass for jDiscoverListener");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -713,7 +713,7 @@ void onDiscoverProvider(OIC::Service::NSProvider *provider)
                         "(Lorg/iotivity/service/ns/consumer/Provider;)V");
     if (!mid)
     {
-        LOGE ("Failed to Get MethodID for onProviderDiscovered");
+        LOGE (TAG,"Failed to Get MethodID for onProviderDiscovered");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -728,13 +728,13 @@ void onDiscoverProvider(OIC::Service::NSProvider *provider)
     {
         g_jvm_consumer->DetachCurrentThread();
     }
-    LOGD ("ConsumerService_onDiscoverProvider - OUT");
+    LOGD (TAG,"ConsumerService_onDiscoverProvider - OUT");
     return ;
 }
 
 void onProviderState( OIC::Service::NSProviderState state)
 {
-    LOGD ("ConsumerService_onProviderState -IN");
+    LOGD (TAG,"ConsumerService_onProviderState -IN");
 
     jint envRet = 0;;
     JNIEnv *env = GetJNIEnv(&envRet);
@@ -746,7 +746,7 @@ void onProviderState( OIC::Service::NSProviderState state)
     jobject jAcceptListener = (jobject) env->NewLocalRef(g_obj_acceptListener);
     if (!jAcceptListener)
     {
-        LOGE ("Failed to Get jAcceptListener");
+        LOGE (TAG,"Failed to Get jAcceptListener");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -756,7 +756,7 @@ void onProviderState( OIC::Service::NSProviderState state)
     jobject obj_state = getJavaProviderState(env, state);
     if (!obj_state)
     {
-        LOGE ("Failed to Get ProviderState Object");
+        LOGE (TAG,"Failed to Get ProviderState Object");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -767,7 +767,7 @@ void onProviderState( OIC::Service::NSProviderState state)
     jclass cls = env->GetObjectClass(jAcceptListener);
     if (!cls)
     {
-        LOGE ("Failed to Get ObjectClass for jAcceptListener");
+        LOGE (TAG,"Failed to Get ObjectClass for jAcceptListener");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -780,7 +780,7 @@ void onProviderState( OIC::Service::NSProviderState state)
                         "(Lorg/iotivity/service/ns/consumer/Provider$ProviderState;)V");
     if (!mid)
     {
-        LOGE ("Failed to Get MethodID for onProviderState");
+        LOGE (TAG,"Failed to Get MethodID for onProviderState");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -794,14 +794,14 @@ void onProviderState( OIC::Service::NSProviderState state)
     {
         g_jvm_consumer->DetachCurrentThread();
     }
-    LOGD ("ConsumerService_onProviderState -OUT");
+    LOGD (TAG,"ConsumerService_onProviderState -OUT");
     return ;
 
 }
 
 void onMessagePosted(OIC::Service::NSMessage *message)
 {
-    LOGD ("ConsumerService_onMessagePosted -IN");
+    LOGD (TAG,"ConsumerService_onMessagePosted -IN");
 
     jint envRet=0;;
     JNIEnv *env = GetJNIEnv(&envRet);
@@ -813,7 +813,7 @@ void onMessagePosted(OIC::Service::NSMessage *message)
     jobject jPostListener = (jobject) env->NewLocalRef(g_obj_postListener);
     if (!jPostListener)
     {
-        LOGE ("Failed to Get jPostListener");
+        LOGE (TAG,"Failed to Get jPostListener");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -824,7 +824,7 @@ void onMessagePosted(OIC::Service::NSMessage *message)
     jobject obj_message = getJavaMessage( env, message);
     if (!obj_message)
     {
-        LOGE ("Failed to Get Message Object");
+        LOGE (TAG,"Failed to Get Message Object");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -834,7 +834,7 @@ void onMessagePosted(OIC::Service::NSMessage *message)
     jclass cls = env->GetObjectClass(jPostListener);
     if (!cls)
     {
-        LOGE ("Failed to Get ObjectClass for jPostListener");
+        LOGE (TAG,"Failed to Get ObjectClass for jPostListener");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -847,7 +847,7 @@ void onMessagePosted(OIC::Service::NSMessage *message)
                         "(Lorg/iotivity/service/ns/common/Message;)V");
     if (!mid)
     {
-        LOGE ("Failed to Get MethodID for onMessageReceived");
+        LOGE (TAG,"Failed to Get MethodID for onMessageReceived");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -862,13 +862,13 @@ void onMessagePosted(OIC::Service::NSMessage *message)
     {
         g_jvm_consumer->DetachCurrentThread();
     }
-    LOGD ("ConsumerService_onMessagePosted -OUT");
+    LOGD (TAG,"ConsumerService_onMessagePosted -OUT");
     return ;
 }
 
 void onSyncInfoReceived(OIC::Service::NSSyncInfo *sync)
 {
-    LOGD ("ConsumerService_onSyncInfoReceived - IN");
+    LOGD (TAG,"ConsumerService_onSyncInfoReceived - IN");
 
     jint envRet=0;;
     JNIEnv *env = GetJNIEnv(&envRet);
@@ -880,7 +880,7 @@ void onSyncInfoReceived(OIC::Service::NSSyncInfo *sync)
     jobject jSyncListener = (jobject) env->NewLocalRef(g_obj_syncListener);
     if (!jSyncListener)
     {
-        LOGE ("Failed to Get jSyncListener");
+        LOGE (TAG,"Failed to Get jSyncListener");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -888,16 +888,16 @@ void onSyncInfoReceived(OIC::Service::NSSyncInfo *sync)
         return ;
     }
 
-    LOGD ("Sync ID : %llu\n", sync->getMessageId());
-    LOGD ("Sync ProviderId : %s\n", sync->getProviderId().c_str());
-    LOGD ("Sync STATE : %d\n", (int) sync->getState());
+    LOGD (TAG,"Sync ID : %llu\n", sync->getMessageId());
+    LOGD (TAG,"Sync ProviderId : %s\n", sync->getProviderId().c_str());
+    LOGD (TAG,"Sync STATE : %d\n", (int) sync->getState());
 
     jlong jMessageId = (jlong) sync->getMessageId();
     jstring jProviderId = env->NewStringUTF(sync->getProviderId().c_str());
     jobject syncType = getJavaSyncType(env, sync->getState());
     if (!syncType)
     {
-        LOGE ("Failed to Get syncType for SyncInfo");
+        LOGE (TAG,"Failed to Get syncType for SyncInfo");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -907,7 +907,7 @@ void onSyncInfoReceived(OIC::Service::NSSyncInfo *sync)
     jclass cls_SyncInfo = (jclass) (env->NewLocalRef(g_cls_SyncInfo));
     if (!cls_SyncInfo)
     {
-        LOGE ("Failed to Get ObjectClass for SyncInfo");
+        LOGE (TAG,"Failed to Get ObjectClass for SyncInfo");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -920,7 +920,7 @@ void onSyncInfoReceived(OIC::Service::NSSyncInfo *sync)
                                  "(JLjava/lang/String;Lorg/iotivity/service/ns/common/SyncInfo$SyncType;)V");
     if (!mid_syncInfo)
     {
-        LOGE ("Failed to Get MethodID for SyncInfo");
+        LOGE (TAG,"Failed to Get MethodID for SyncInfo");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -932,7 +932,7 @@ void onSyncInfoReceived(OIC::Service::NSSyncInfo *sync)
                                            jMessageId, jProviderId, syncType);
     if (!obj_syncInfo)
     {
-        LOGE ("Failed to Get Object for SyncInfo");
+        LOGE (TAG,"Failed to Get Object for SyncInfo");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -943,7 +943,7 @@ void onSyncInfoReceived(OIC::Service::NSSyncInfo *sync)
     jclass cls = env->GetObjectClass(jSyncListener);
     if (!cls)
     {
-        LOGE ("Failed to Get ObjectClass for jSyncListener");
+        LOGE (TAG,"Failed to Get ObjectClass for jSyncListener");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -956,7 +956,7 @@ void onSyncInfoReceived(OIC::Service::NSSyncInfo *sync)
                         "(Lorg/iotivity/service/ns/common/SyncInfo;)V");
     if (!mid)
     {
-        LOGE ("Failed to Get MethodID for onSyncInfoReceived");
+        LOGE (TAG,"Failed to Get MethodID for onSyncInfoReceived");
         if (JNI_EDETACHED == envRet)
         {
             g_jvm_consumer->DetachCurrentThread();
@@ -972,18 +972,18 @@ void onSyncInfoReceived(OIC::Service::NSSyncInfo *sync)
     {
         g_jvm_consumer->DetachCurrentThread();
     }
-    LOGD ("ConsumerService_onSyncInfoReceived - OUT");
+    LOGD (TAG,"ConsumerService_onSyncInfoReceived - OUT");
     return ;
 }
 
 JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_nativeStart
 (JNIEnv *env, jobject jObj, jobject jDiscoverListener)
 {
-    LOGD ("ConsumerService_StartConsumer - IN");
+    LOGD (TAG,"ConsumerService_StartConsumer - IN");
     if (!jDiscoverListener)
     {
-        ThrowNSException(NS_ERROR, "Listener cannot be null");
-        return ;
+        ThrowNSException(JNI_INVALID_VALUE, "Listener cannot be null");
+        return;
     }
     if (g_obj_discoverListener != NULL)
     {
@@ -991,8 +991,14 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_nat
     }
     g_obj_discoverListener = (jobject) env->NewGlobalRef(jDiscoverListener);
 
-    OIC::Service::NSConsumerService::getInstance()->start(onDiscoverProvider);
-    LOGD ("ConsumerService_StartConsumer - OUT");
+    OIC::Service::NSResult result  = OIC::Service::NSConsumerService::getInstance()->start(onDiscoverProvider);
+
+    if (result !=  OIC::Service::NSResult::OK)
+    {
+        ThrowNSException((int) result, "Fail to start ConsumerService");
+        return;
+    }
+    LOGD (TAG,"ConsumerService_StartConsumer - OUT");
     return;
 
 }
@@ -1000,7 +1006,7 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_nat
 JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_nativeStop
 (JNIEnv *env, jobject jObj)
 {
-    LOGD ("ConsumerService_StopConsumer - IN");
+    LOGD (TAG,"ConsumerService_StopConsumer - IN");
 
     env->DeleteGlobalRef(g_obj_postListener);
     env->DeleteGlobalRef(g_obj_syncListener);
@@ -1010,8 +1016,14 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_nat
     g_obj_syncListener = NULL;
     g_obj_discoverListener = NULL;
     g_obj_acceptListener = NULL;
-    OIC::Service::NSConsumerService::getInstance()->stop();
-    LOGD ("ConsumerService_StopConsumer - OUT");
+    OIC::Service::NSResult result  = OIC::Service::NSConsumerService::getInstance()->stop();
+
+    if (result !=  OIC::Service::NSResult::OK)
+    {
+        ThrowNSException((int) result, "Fail to Stop ConsumerService");
+        return;
+    }
+    LOGD (TAG,"ConsumerService_StopConsumer - OUT");
     return;
 }
 
@@ -1019,33 +1031,39 @@ JNIEXPORT jint JNICALL
 Java_org_iotivity_service_ns_consumer_ConsumerService_nativeEnableRemoteService
 (JNIEnv *env, jobject jObj, jstring jServerAddress)
 {
-    LOGD ("ConsumerService_EnableRemoteService - IN");
+    LOGD (TAG,"ConsumerService_EnableRemoteService - IN");
     if (!jServerAddress)
     {
-        ThrowNSException(NS_ERROR, "EnableRemoteService server address NULL");
+        ThrowNSException(JNI_INVALID_VALUE, "EnableRemoteService server address NULL");
         return (jint) OIC::Service::NSResult::ERROR;
     }
     const char *serverAddress = env->GetStringUTFChars(jServerAddress, 0);
-    OIC::Service::NSResult res =
+    OIC::Service::NSResult result =
         OIC::Service::NSConsumerService::getInstance()->enableRemoteService(std::string(serverAddress));
+
+    if (result !=  OIC::Service::NSResult::OK)
+    {
+        ThrowNSException((int) result, "Fail to EnableRemoteService");
+        return (jint) result;
+    }
     env->ReleaseStringUTFChars(jServerAddress, serverAddress);
-    LOGD ("ConsumerService_EnableRemoteService - OUT");
-    return (jint) res;
+    LOGD (TAG,"ConsumerService_EnableRemoteService - OUT");
+    return (jint) result;
 }
 
 JNIEXPORT jint JNICALL
 Java_org_iotivity_service_ns_consumer_ConsumerService_nativeSubscribeMQService
 (JNIEnv *env, jobject jObj, jstring jserverAddress, jstring jTopicName)
 {
-    LOGD("ConsumerService: nativeSubscribeMQService - IN");
+    LOGD (TAG,"ConsumerService: nativeSubscribeMQService - IN");
     if (!jserverAddress)
     {
-        ThrowNSException(NS_ERROR, "Server Address Can't be NULL");
+        ThrowNSException(JNI_INVALID_VALUE, "Server Address Can't be NULL");
         return (jint) OIC::Service::NSResult::ERROR;
     }
     if (!jTopicName)
     {
-        ThrowNSException(NS_ERROR, "TopicName Can't be NULL");
+        ThrowNSException(JNI_INVALID_VALUE, "TopicName Can't be NULL");
         return (jint) OIC::Service::NSResult::ERROR;
     }
 
@@ -1059,20 +1077,26 @@ Java_org_iotivity_service_ns_consumer_ConsumerService_nativeSubscribeMQService
             servAddress, topicName);
     if (result !=  OIC::Service::NSResult::OK)
     {
-        LOGE("Fail to Subscribe to MQ Service");
+        ThrowNSException((int) result, "Fail to Subscribe to MQ Service");
+        return (jint) result;
     }
     env->ReleaseStringUTFChars(jserverAddress, address);
     env->ReleaseStringUTFChars(jTopicName, topic);
-    LOGD("ConsumerService: nativeSubscribeMQService - OUT");
+    LOGD (TAG,"ConsumerService: nativeSubscribeMQService - OUT");
     return (jint) result;
 }
 
 JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_nativeRescanProvider
 (JNIEnv *env, jobject jObj)
 {
-    LOGD ("ConsumerService_RescanProvider - IN");
-    OIC::Service::NSConsumerService::getInstance()->rescanProvider();
-    LOGD ("ConsumerService_RescanProvider - OUT");
+    LOGD (TAG,"ConsumerService_RescanProvider - IN");
+    OIC::Service::NSResult result  = OIC::Service::NSConsumerService::getInstance()->rescanProvider();
+    if (result !=  OIC::Service::NSResult::OK)
+    {
+        ThrowNSException((int) result, "Fail to RescanProvider");
+        return;
+    }
+    LOGD (TAG,"ConsumerService_RescanProvider - OUT");
     return;
 
 }
@@ -1080,128 +1104,146 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_ConsumerService_nat
 JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSubscribe
 (JNIEnv *env, jobject jObj)
 {
-    LOGD ("Provider_Subscribe -IN");
+    LOGD (TAG,"Provider_Subscribe -IN");
+    OIC::Service::NSResult result  = OIC::Service::NSResult::ERROR;
     jclass providerClass = env->GetObjectClass(jObj);
     if (!providerClass)
     {
-        ThrowNSException(NS_ERROR, "Failed to Get ObjectClass for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
         return ;
     }
 
     jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
     if (!nativeHandle)
     {
-        ThrowNSException(NS_ERROR, "Failed to get nativeHandle for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to get nativeHandle for Provider");
         return ;
     }
     jlong jProvider = env->GetLongField(jObj, nativeHandle);
     if (jProvider)
     {
-        LOGD ("calling subscribe on mNativeHandle");
+        LOGD (TAG,"calling subscribe on mNativeHandle");
         OIC::Service::NSProvider *provider = (OIC::Service::NSProvider *) (jProvider);
-        provider->subscribe();
+        result  = provider->subscribe();
     }
     else
     {
         OIC::Service::NSProvider *provider = getNativeProvider(env, jObj);
         if (provider == nullptr)
         {
-            ThrowNSException(NS_ERROR, "Provider with Given Id doesn't exist");
+            ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
             return;
         }
-        LOGD ("calling subscribe on ProviderID");
-        provider->subscribe();
+        LOGD (TAG,"calling subscribe on ProviderID");
+        result  = provider->subscribe();
     }
-    LOGD ("Provider_Subscribe -OUT");
+    if (result !=  OIC::Service::NSResult::OK)
+    {
+        ThrowNSException((int) result, "Fail to Subscribe Provider");
+        return;
+    }
+    LOGD (TAG,"Provider_Subscribe -OUT");
     return;
 }
 
 JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeUnsubscribe
 (JNIEnv *env, jobject jObj)
 {
-    LOGD ("Provider_UnSubscribe -IN");
+    LOGD (TAG,"Provider_UnSubscribe -IN");
+    OIC::Service::NSResult result  = OIC::Service::NSResult::ERROR;
     jclass providerClass = env->GetObjectClass(jObj);
     if (!providerClass)
     {
-        ThrowNSException(NS_ERROR, "Failed to Get ObjectClass for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
         return ;
     }
 
     jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
     if (!nativeHandle)
     {
-        ThrowNSException(NS_ERROR, "Failed to get nativeHandle for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to get nativeHandle for Provider");
         return ;
     }
     jlong jProvider = env->GetLongField(jObj, nativeHandle);
     if (jProvider)
     {
-        LOGD ("calling subscribe on mNativeHandle");
+        LOGD (TAG,"calling subscribe on mNativeHandle");
         OIC::Service::NSProvider *provider = (OIC::Service::NSProvider *) (jProvider);
-        provider->unsubscribe();
+        result  = provider->unsubscribe();
     }
     else
     {
         OIC::Service::NSProvider *provider = getNativeProvider(env, jObj);
         if (provider == nullptr)
         {
-            ThrowNSException(NS_ERROR, "Provider with Given Id doesn't exist");
+            ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
             return;
         }
-        LOGD ("calling subscribe on ProviderID");
-        provider->unsubscribe();
+        LOGD (TAG,"calling subscribe on ProviderID");
+        result  = provider->unsubscribe();
     }
-    LOGD ("Provider_UnSubscribe -OUT");
+    if (result !=  OIC::Service::NSResult::OK)
+    {
+        ThrowNSException((int) result, "Fail to UnSubscribe Provider");
+        return;
+    }
+    LOGD (TAG,"Provider_UnSubscribe -OUT");
     return;
 }
 
 JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSendSyncInfo
 (JNIEnv *env, jobject jObj, jlong jMessageId, jint jSyncType)
 {
-    LOGD ("Provider_SendSyncInfo - IN");
+    LOGD (TAG,"Provider_SendSyncInfo - IN");
+    OIC::Service::NSResult result  = OIC::Service::NSResult::ERROR;
     if (!jMessageId)
     {
-        ThrowNSException(NS_ERROR, "MessageId cannot be 0");
+        ThrowNSException(JNI_INVALID_VALUE, "MessageId cannot be 0");
         return ;
     }
 
     jclass providerClass = env->GetObjectClass(jObj);
     if (!providerClass)
     {
-        ThrowNSException(NS_ERROR, "Failed to Get ObjectClass for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
         return ;
     }
 
     jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
     if (!nativeHandle)
     {
-        ThrowNSException(NS_ERROR, "Failed to get nativeHandle for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to get nativeHandle for Provider");
         return ;
     }
     uint64_t messageId = (uint64_t) jMessageId;
 
-    LOGD("!!!!!!jMessageId: %lld", jMessageId);
-    LOGD("!!!!!!messageId: %lld", messageId);
+    LOGD (TAG,"!!!!!!jMessageId: %lld", jMessageId);
+    LOGD (TAG,"!!!!!!messageId: %lld", messageId);
 
     jlong jProvider = env->GetLongField(jObj, nativeHandle);
     if (jProvider)
     {
-        LOGD ("calling SendSyncInfo on mNativeHandle");
+        LOGD (TAG,"calling SendSyncInfo on mNativeHandle");
         OIC::Service::NSProvider *provider = (OIC::Service::NSProvider *) (jProvider);
-        provider->sendSyncInfo(messageId, (OIC::Service::NSSyncInfo::NSSyncType)jSyncType);
+        result  = provider->sendSyncInfo(messageId, (OIC::Service::NSSyncInfo::NSSyncType)jSyncType);
     }
     else
     {
         OIC::Service::NSProvider *provider = getNativeProvider(env, jObj);
         if (provider == nullptr)
         {
-            ThrowNSException(NS_ERROR, "Provider with Given Id doesn't exist");
+            ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
             return;
         }
-        LOGD ("calling SendSyncInfo on ProviderID");
-        provider->sendSyncInfo(messageId, (OIC::Service::NSSyncInfo::NSSyncType)jSyncType);
+        LOGD (TAG,"calling SendSyncInfo on ProviderID");
+        result  = provider->sendSyncInfo(messageId, (OIC::Service::NSSyncInfo::NSSyncType)jSyncType);
     }
-    LOGD ("Provider_SendSyncInfo - OUT");
+    if (result !=  OIC::Service::NSResult::OK)
+    {
+        ThrowNSException((int) result, "Fail to Send sync info");
+        return;
+    }
+    LOGD (TAG,"Provider_SendSyncInfo - OUT");
     return;
 }
 
@@ -1209,30 +1251,30 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSend
 JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSetListener
 (JNIEnv *env, jobject jObj, jobject jAcceptListener, jobject jPostListener, jobject jSyncListener)
 {
-    LOGD ("Provider_SetListener - IN");
+    LOGD (TAG,"Provider_SetListener - IN");
     if (!jPostListener || !jSyncListener || !jAcceptListener)
     {
-        ThrowNSException(NS_ERROR, "Listener cannot be null");
+        ThrowNSException(JNI_INVALID_VALUE, "Listener cannot be null");
         return ;
     }
 
     jclass providerClass = env->GetObjectClass(jObj);
     if (!providerClass)
     {
-        ThrowNSException(NS_ERROR, "Failed to Get ObjectClass for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
         return ;
     }
 
     jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
     if (!nativeHandle)
     {
-        ThrowNSException(NS_ERROR, "Failed to get nativeHandle for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to get nativeHandle for Provider");
         return ;
     }
     jlong jProvider = env->GetLongField(jObj, nativeHandle);
     if (jProvider)
     {
-        LOGD ("calling SetListener on mNativeHandle");
+        LOGD (TAG,"calling SetListener on mNativeHandle");
         if (g_obj_acceptListener != NULL)
         {
             env->DeleteGlobalRef(g_obj_acceptListener);
@@ -1257,10 +1299,10 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSetL
         OIC::Service::NSProvider *provider = getNativeProvider(env, jObj);
         if (provider == nullptr)
         {
-            ThrowNSException(NS_ERROR, "Provider with Given Id doesn't exist");
+            ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
             return;
         }
-        LOGD ("calling SetListener on ProviderID");
+        LOGD (TAG,"calling SetListener on ProviderID");
         if (g_obj_acceptListener != NULL)
         {
             env->DeleteGlobalRef(g_obj_acceptListener);
@@ -1279,32 +1321,32 @@ JNIEXPORT void JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeSetL
 
         provider->setListener(onProviderState, onMessagePosted, onSyncInfoReceived);
     }
-    LOGD ("Provider_SetListener - OUT");
+    LOGD (TAG,"Provider_SetListener - OUT");
     return;
 }
 
 JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeGetTopicList
 (JNIEnv *env, jobject jObj)
 {
-    LOGD("Provider_nativeGetTopicList - IN");
+    LOGD (TAG,"Provider_nativeGetTopicList - IN");
     jclass providerClass = env->GetObjectClass(jObj);
     if (!providerClass)
     {
-        ThrowNSException(NS_ERROR, "Failed to Get ObjectClass for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
         return NULL;
     }
 
     jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
     if (!nativeHandle)
     {
-        ThrowNSException(NS_ERROR, "Failed to get nativeHandle for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to get nativeHandle for Provider");
         return NULL;
     }
     jlong jProvider = env->GetLongField(jObj, nativeHandle);
     OIC::Service::NSTopicsList *topicList = nullptr;
     if (jProvider)
     {
-        LOGD ("calling subscribe on mNativeHandle");
+        LOGD (TAG,"calling subscribe on mNativeHandle");
         OIC::Service::NSProvider *provider = (OIC::Service::NSProvider *) (jProvider);
         topicList = provider->getTopicList();
     }
@@ -1313,59 +1355,58 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeG
         OIC::Service::NSProvider *provider = getNativeProvider(env, jObj);
         if (provider == nullptr)
         {
-            ThrowNSException(NS_ERROR, "Provider with Given Id doesn't exist");
+            ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
             return NULL;
         }
-        LOGD ("calling subscribe on ProviderID");
+        LOGD (TAG,"calling subscribe on ProviderID");
         topicList = provider->getTopicList();
     }
     if (topicList == nullptr)
     {
-        ThrowNSException(NS_ERROR, "Topic List doesn't exist");
+        ThrowNSException(JNI_INVALID_VALUE, "Topic List doesn't exist");
         return NULL;
     }
 
     jobject obj_topicList = getJavaTopicsList(env, topicList);
 
-    LOGD("Provider_nativeGetTopicList - OUT");
+    LOGD (TAG,"Provider_nativeGetTopicList - OUT");
     return obj_topicList;
 }
 
 JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeUpdateTopicList
 (JNIEnv *env, jobject jObj, jobject jTopicsList)
 {
-    LOGD("Provider_nativeUpdateTopicList -IN");
+    LOGD (TAG,"Provider_nativeUpdateTopicList -IN");
     if (!jTopicsList)
     {
-        LOGI("Fail to update Interest Topics - Topic List is null");
-        ThrowNSException(NS_ERROR, "TopicList cannot be null");
+        ThrowNSException(JNI_INVALID_VALUE, "TopicList cannot be null");
         return (jint) OIC::Service::NSResult::ERROR;
     }
     OIC::Service::NSTopicsList *nsTopicsList = getNativeTopicsList(env, jTopicsList);
     if (nsTopicsList == nullptr)
     {
-        ThrowNSException(NS_ERROR, "NSTopicList cannot be created ");
+        ThrowNSException(JNI_INVALID_VALUE, "NSTopicList cannot be created ");
         return (jint) OIC::Service::NSResult::ERROR;
     }
 
     jclass providerClass = env->GetObjectClass(jObj);
     if (!providerClass)
     {
-        ThrowNSException(NS_ERROR, "Failed to Get ObjectClass for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
         return  (jint) OIC::Service::NSResult::ERROR;
     }
 
     jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
     if (!nativeHandle)
     {
-        ThrowNSException(NS_ERROR, "Failed to get nativeHandle for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to get nativeHandle for Provider");
         return  (jint) OIC::Service::NSResult::ERROR;
     }
     jlong jProvider = env->GetLongField(jObj, nativeHandle);
-    OIC::Service::NSResult result = OIC::Service::NSResult::FAIL;
+    OIC::Service::NSResult result = OIC::Service::NSResult::ERROR;
     if (jProvider)
     {
-        LOGD ("calling subscribe on mNativeHandle");
+        LOGD (TAG,"calling subscribe on mNativeHandle");
         OIC::Service::NSProvider *provider = (OIC::Service::NSProvider *) (jProvider);
         result = provider->updateTopicList(nsTopicsList);
     }
@@ -1374,42 +1415,43 @@ JNIEXPORT jint JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeUpda
         OIC::Service::NSProvider *provider = getNativeProvider(env, jObj);
         if (provider == nullptr)
         {
-            ThrowNSException(NS_ERROR, "Provider with Given Id doesn't exist");
+            ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
             return (jint) OIC::Service::NSResult::ERROR;
         }
-        LOGD ("calling subscribe on ProviderID");
+        LOGD (TAG,"calling subscribe on ProviderID");
         result = provider->updateTopicList(nsTopicsList);
     }
     if (result !=  OIC::Service::NSResult::OK)
     {
-        LOGI("Fail to Update Interest Topics");
+        ThrowNSException((int) result, "Fail to Update Interest Topics");
+        return (jint) result;
     }
-    LOGD("Provider_nativeUpdateTopicList -OUT");
+    LOGD (TAG,"Provider_nativeUpdateTopicList -OUT");
     return (jint) result;
 }
 
 JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeGetProviderState
 (JNIEnv *env, jobject jObj)
 {
-    LOGD("Provider_nativeGetProviderState - IN");
+    LOGD (TAG,"Provider_nativeGetProviderState - IN");
     jclass providerClass = env->GetObjectClass(jObj);
     if (!providerClass)
     {
-        ThrowNSException(NS_ERROR, "Failed to Get ObjectClass for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
         return NULL;
     }
 
     jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
     if (!nativeHandle)
     {
-        ThrowNSException(NS_ERROR, "Failed to get nativeHandle for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to get nativeHandle for Provider");
         return NULL;
     }
     jlong jProvider = env->GetLongField(jObj, nativeHandle);
     OIC::Service::NSProviderState state = OIC::Service::NSProviderState::DENY;
     if (jProvider)
     {
-        LOGD ("calling getProviderState on mNativeHandle");
+        LOGD (TAG,"calling getProviderState on mNativeHandle");
         OIC::Service::NSProvider *provider = (OIC::Service::NSProvider *) (jProvider);
         state = provider->getProviderState();
     }
@@ -1418,39 +1460,39 @@ JNIEXPORT jobject JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeG
         OIC::Service::NSProvider *provider = getNativeProvider(env, jObj);
         if (provider == nullptr)
         {
-            ThrowNSException(NS_ERROR, "Provider with Given Id doesn't exist");
+            ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
             return NULL;
         }
-        LOGD ("calling getProviderState on ProviderID");
+        LOGD (TAG,"calling getProviderState on ProviderID");
         state = provider->getProviderState();
     }
     jobject obj_state = getJavaProviderState(env, state);
 
-    LOGD("Provider_nativeGetProviderState - OUT");
+    LOGD (TAG,"Provider_nativeGetProviderState - OUT");
     return obj_state;
 }
 
 JNIEXPORT jboolean JNICALL Java_org_iotivity_service_ns_consumer_Provider_nativeIsSubscribed
 (JNIEnv *env, jobject jObj)
 {
-    LOGD("nativeIsSubscribed - IN");
+    LOGD (TAG,"nativeIsSubscribed - IN");
     jclass providerClass = env->GetObjectClass(jObj);
     if (!providerClass)
     {
-        ThrowNSException(NS_ERROR, "Failed to Get ObjectClass for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to Get ObjectClass for Provider");
         return (jboolean)false;
     }
 
     jfieldID nativeHandle = env->GetFieldID(providerClass, "mNativeHandle", "J");
     if (!nativeHandle)
     {
-        ThrowNSException(NS_ERROR, "Failed to get nativeHandle for Provider");
+        ThrowNSException(JNI_INVALID_VALUE, "Failed to get nativeHandle for Provider");
         return (jboolean)false;
     }
     jlong jProvider = env->GetLongField(jObj, nativeHandle);
     if (jProvider)
     {
-        LOGD ("calling isSubscribe on mNativeHandle");
+        LOGD (TAG,"calling isSubscribe on mNativeHandle");
         OIC::Service::NSProvider *provider = (OIC::Service::NSProvider *) (jProvider);
         return (jboolean) provider->isSubscribed();
     }
@@ -1459,10 +1501,10 @@ JNIEXPORT jboolean JNICALL Java_org_iotivity_service_ns_consumer_Provider_native
         OIC::Service::NSProvider *provider = getNativeProvider(env, jObj);
         if (provider == nullptr)
         {
-            ThrowNSException(NS_ERROR, "Provider with Given Id doesn't exist");
+            ThrowNSException(JNI_INVALID_VALUE, "Provider with Given Id doesn't exist");
             return (jboolean)false;
         }
-        LOGD ("calling isSubscribe on ProviderID");
+        LOGD (TAG,"calling isSubscribe on ProviderID");
         return (jboolean) provider->isSubscribed();
     }
 }
@@ -1470,13 +1512,13 @@ JNIEXPORT jboolean JNICALL Java_org_iotivity_service_ns_consumer_Provider_native
 // JNI OnLoad
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 {
-    LOGD("ConsumerService_JNI_OnLoad");
+    LOGD (TAG,"ConsumerService_JNI_OnLoad");
     g_jvm_consumer = jvm;
 
     JNIEnv *env = NULL;
     if (jvm->GetEnv((void **)&env, JNI_CURRENT_VERSION) != JNI_OK)
     {
-        LOGE("Failed to get the environment using GetEnv()");
+        LOGE (TAG,"Failed to get the environment using GetEnv()");
         return JNI_ERR;
     }
 
@@ -1484,13 +1526,13 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
                               "org/iotivity/service/ns/common/Message");
     if (!localMessage)
     {
-        LOGE("Failed to get local Message class");
+        LOGE (TAG,"Failed to get local Message class");
         return JNI_ERR;
     }
     g_cls_Message = (jclass) (env->NewGlobalRef(localMessage));
     if (!g_cls_Message)
     {
-        LOGE("Failed to set Global Message reference");
+        LOGE (TAG,"Failed to set Global Message reference");
         return JNI_ERR;
     }
 
@@ -1498,13 +1540,13 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
                                "org/iotivity/service/ns/consumer/Provider");
     if (!localProvider)
     {
-        LOGE("Failed to get local Provider class");
+        LOGE (TAG,"Failed to get local Provider class");
         return JNI_ERR;
     }
     g_cls_Provider = (jclass) (env->NewGlobalRef(localProvider));
     if (!g_cls_Provider)
     {
-        LOGE("Failed to set Global Provider reference");
+        LOGE (TAG,"Failed to set Global Provider reference");
         return JNI_ERR;
     }
 
@@ -1512,13 +1554,13 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
                                "org/iotivity/service/ns/common/SyncInfo");
     if (!localSyncInfo)
     {
-        LOGE("Failed to get local SyncInfo class");
+        LOGE (TAG,"Failed to get local SyncInfo class");
         return JNI_ERR;
     }
     g_cls_SyncInfo = (jclass) (env->NewGlobalRef(localSyncInfo));
     if (!g_cls_SyncInfo)
     {
-        LOGE("Failed to set Global NSSyncInfo reference");
+        LOGE (TAG,"Failed to set Global NSSyncInfo reference");
         return JNI_ERR;
     }
 
@@ -1526,13 +1568,13 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
                                "org/iotivity/service/ns/common/SyncInfo$SyncType");
     if (!localSyncType)
     {
-        LOGE("Failed to get local SyncType enum");
+        LOGE (TAG,"Failed to get local SyncType enum");
         return JNI_ERR;
     }
     g_cls_SyncType = (jclass) (env->NewGlobalRef(localSyncType));
     if (!g_cls_SyncType)
     {
-        LOGE("Failed to set Global SyncType reference");
+        LOGE (TAG,"Failed to set Global SyncType reference");
         return JNI_ERR;
     }
 
@@ -1540,26 +1582,26 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
                                     "org/iotivity/service/ns/common/MediaContents");
     if (!localMediaContents)
     {
-        LOGE("Failed to get local MediaContents class");
+        LOGE (TAG,"Failed to get local MediaContents class");
         return JNI_ERR;
     }
     g_cls_MediaContents = (jclass) (env->NewGlobalRef(localMediaContents));
     if (!g_cls_MediaContents)
     {
-        LOGE("Failed to set Global MediaContents reference");
+        LOGE (TAG,"Failed to set Global MediaContents reference");
         return JNI_ERR;
     }
     jclass localTopicState = env->FindClass(
                                  "org/iotivity/service/ns/common/Topic$TopicState");
     if (!localTopicState)
     {
-        LOGE("Failed to get local TopicState enum");
+        LOGE (TAG,"Failed to get local TopicState enum");
         return JNI_ERR;
     }
     g_cls_TopicState = (jclass) (env->NewGlobalRef(localTopicState));
     if (!g_cls_TopicState)
     {
-        LOGE("Failed to set Global TopicState reference");
+        LOGE (TAG,"Failed to set Global TopicState reference");
         return JNI_ERR;
     }
 
@@ -1567,13 +1609,13 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
                             "org/iotivity/service/ns/common/Topic");
     if (!localTopic)
     {
-        LOGE("Failed to get local TopicState enum");
+        LOGE (TAG,"Failed to get local TopicState enum");
         return JNI_ERR;
     }
     g_cls_Topic = (jclass) (env->NewGlobalRef(localTopic));
     if (!g_cls_Topic)
     {
-        LOGE("Failed to set Global Topic reference");
+        LOGE (TAG,"Failed to set Global Topic reference");
         return JNI_ERR;
     }
 
@@ -1581,13 +1623,13 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
                                   "org/iotivity/service/ns/common/Message$MessageType");
     if (!localMessageType)
     {
-        LOGE("Failed to get local Message Type class");
+        LOGE (TAG,"Failed to get local Message Type class");
         return JNI_ERR;
     }
     g_cls_Message_Type = (jclass) (env->NewGlobalRef(localMessageType));
     if (!g_cls_Message_Type)
     {
-        LOGE("Failed to set Global Message Type reference");
+        LOGE (TAG,"Failed to set Global Message Type reference");
         return JNI_ERR;
     }
 
@@ -1595,13 +1637,13 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
                                     "org/iotivity/service/ns/consumer/Provider$ProviderState");
     if (!localProviderState)
     {
-        LOGE("Failed to get localProviderState  Type class");
+        LOGE (TAG,"Failed to get localProviderState  Type class");
         return JNI_ERR;
     }
     g_cls_ProviderState = (jclass) (env->NewGlobalRef(localProviderState));
     if (!g_cls_ProviderState)
     {
-        LOGE("Failed to set Global ProviderState Type reference");
+        LOGE (TAG,"Failed to set Global ProviderState Type reference");
         return JNI_ERR;
     }
 
@@ -1609,33 +1651,33 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
                                  "org/iotivity/service/ns/common/TopicsList");
     if (!localTopicsList)
     {
-        LOGE("Failed to get local Topic class");
+        LOGE (TAG,"Failed to get local Topic class");
         return JNI_ERR;
     }
     g_cls_TopicsList = (jclass) (env->NewGlobalRef(localTopicsList));
     if (!g_cls_TopicsList)
     {
-        LOGE("Failed to set Global TopicsList reference");
+        LOGE (TAG,"Failed to set Global TopicsList reference");
         return JNI_ERR;
     }
     //OcRepresentation
     jclass localOcRepresentation = env->FindClass("org/iotivity/base/OcRepresentation");
     if (!localOcRepresentation)
     {
-        LOGE("Failed to get local OcRepresentation class");
+        LOGE (TAG,"Failed to get local OcRepresentation class");
         return JNI_ERR;
     }
     g_cls_OcRepresentation = (jclass) env->NewGlobalRef(localOcRepresentation);
     if (!g_cls_OcRepresentation)
     {
-        LOGE("Failed to set Global OcRepresentation reference");
+        LOGE (TAG,"Failed to set Global OcRepresentation reference");
         return JNI_ERR;
     }
 
     g_mid_OcRepresentation_N_ctor_bool = env->GetMethodID(g_cls_OcRepresentation, "<init>", "(JZ)V");
     if (!g_mid_OcRepresentation_N_ctor_bool)
     {
-        LOGE("Failed to get Global OcRepresentation Constructor reference");
+        LOGE (TAG,"Failed to get Global OcRepresentation Constructor reference");
         return JNI_ERR;
     }
 
@@ -1656,12 +1698,12 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved)
 {
-    LOGI("ConsumerService_JNI_OnUnload");
+    LOGI (TAG,"ConsumerService_JNI_OnUnload");
     JNIEnv *env = NULL;
 
     if (jvm->GetEnv((void **)&env, JNI_CURRENT_VERSION) != JNI_OK)
     {
-        LOGE("Failed to get the environment using GetEnv()");
+        LOGE (TAG,"Failed to get the environment using GetEnv()");
         return ;
     }
 

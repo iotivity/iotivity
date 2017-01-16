@@ -25,7 +25,7 @@
 #include <android/log.h>
 
 
-#define  LOG_TAG    "Notification_Common"
+#define  TAG    "NotificationService_JNI"
 
 #define JNI_CURRENT_VERSION JNI_VERSION_1_6
 
