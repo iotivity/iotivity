@@ -1,6 +1,6 @@
 #******************************************************************
 #
-# Copyright 2016 Samsung Electronics All Rights Reserved.
+# Copyright 2017 Samsung Electronics All Rights Reserved.
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
@@ -18,21 +18,18 @@
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+##
+# Notification Service c++ wrapper build script
+##
+
+import platform
 Import('env')
-target_os = env.get('TARGET_OS')
 
-SConscript('common/SConscript')
+lib_env = env.Clone()
+SConscript('#service/third_party_libs.scons', 'lib_env')
+notification_env = lib_env.Clone()
 
-# build producer notification wrapper
-SConscript('provider/SConscript')
+list = [ "NSMessage.h", "NSSyncInfo.h", "NSTopicsList.h", "NSUtils.h"]
 
-# build producer notification wrapper
-SConscript('consumer/SConscript')
-
-# Go to build sample apps using wrapper
-if target_os == 'linux':
-    SConscript('examples/linux/SConscript')
-
-# Go to build c++ wrapper unittest
-if target_os == 'linux':
-    SConscript('unittest/SConscript')
+for filename in list:
+    notification_env.UserInstallTargetHeader(filename , 'service/notification', filename)

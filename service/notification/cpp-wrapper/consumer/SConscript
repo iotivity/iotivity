@@ -111,6 +111,9 @@ consumersdk = notification_env.StaticLibrary('notification_consumer_wrapper', no
 notification_env.InstallTarget(consumersdk, 'libnotification_consumer_wrapper')
 notification_env.UserInstallTargetLib(consumersdk, 'libnotification_consumer_wrapper')
 
+notification_env.UserInstallTargetHeader("inc/NSProvider.h", 'service/notification', 'NSProvider.h')
+notification_env.UserInstallTargetHeader("inc/NSConsumerService.h", 'service/notification', 'NSConsumerService.h')
+
 ######################################################################
 # Source files and Targets for Consumer Jni
 ######################################################################
