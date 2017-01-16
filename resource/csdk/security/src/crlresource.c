@@ -807,11 +807,12 @@ void GetDerCrl(ByteArray_t* out)
         {
             OIC_LOG (ERROR, TAG, "Base64 decoding failed.");
         }
+        OICFree(out);
     }
 
     out->len = 0;
 
-    out->data = OICMalloc(crl->len);
+    out->data = OICRealloc(out->data, crl->len);
     if (out->data)
     {
         memcpy(out->data, crl->data, crl->len);
