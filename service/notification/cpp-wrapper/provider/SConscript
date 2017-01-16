@@ -53,7 +53,8 @@ notification_env.PrependUnique(LIBS = [
 	'oc_logger',
 	'oc',
 	'octbstack',
-	'notification_provider'
+	'notification_provider',
+        'resource_directory'
 	])
 notification_env.AppendUnique(CXXFLAGS = ['-std=c++0x','-frtti'])
 

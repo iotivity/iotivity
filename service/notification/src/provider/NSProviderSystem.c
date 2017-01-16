@@ -19,7 +19,7 @@
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include "NSProviderSystem.h"
 
-#if (defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD)
 #define MAX_SERVER_ADDRESS 32
 static char NSRemoteServerAddress[MAX_SERVER_ADDRESS] = {0,};
 #endif
@@ -48,7 +48,7 @@ NSConnectionState NSGetProviderConnectionState()
     return NSProviderConnectionState;
 }
 
-#if (defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD)
 void NSSetRemoteServerAddress(char *serverAddress)
 {
 

@@ -142,7 +142,7 @@ NSResult NSStopProvider()
 
 NSResult NSProviderEnableRemoteService(char *serverAddress)
 {
-#if (defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD)
     NS_LOG(DEBUG, "NSProviderEnableRemoteService - IN");
     pthread_mutex_lock(&nsInitMutex);
 
@@ -169,7 +169,7 @@ NSResult NSProviderEnableRemoteService(char *serverAddress)
 
 NSResult NSProviderDisableRemoteService(char *serverAddress)
 {
-#if (defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD)
     NS_LOG(DEBUG, "NSProviderDisableRemoteService - IN");
     pthread_mutex_lock(&nsInitMutex);
 

@@ -169,7 +169,7 @@ NSResult NSSendNotification(NSMessage *msg)
                 }
             }
 
-#if (defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD)
             if (subData->remote_messageObId != 0)
             {
                 if (msg->topic && (msg->topic)[0] != '\0')
@@ -258,7 +258,7 @@ NSResult NSSendSync(NSSyncInfo *sync)
                 obArray[obCount++] = subData->syncObId;
             }
 
-#if (defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD)
             if (subData->remote_syncObId != 0)
             {
                 obArray[obCount++] = subData->remote_syncObId;

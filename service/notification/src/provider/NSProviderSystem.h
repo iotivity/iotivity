@@ -46,7 +46,7 @@ void NSSetMQServerInfo(const char * serverUri, OCDevAddr * devAddr);
 NSMQServerInfo * NSGetMQServerInfo();
 #endif
 
-#if (defined WITH_CLOUD && defined RD_CLIENT)
+#if (defined WITH_CLOUD)
 void NSSetRemoteServerAddress(char *serverAddress);
 void NSDeleteRemoteServerAddress(char *serverAddress);
 bool NSIsRemoteServerAddress(char *serverAddress);

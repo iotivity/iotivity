@@ -53,7 +53,7 @@ GTest_Main = File(gtest_dir + '/lib/.libs/libgtest_main.a')
 
 notification_wrapper_test_env.AppendUnique(LIBPATH = [lib_env.get('BUILD_DIR')])
 notification_wrapper_test_env.AppendUnique(LIBS = [
-    'connectivity_abstraction', 'oc', 'octbstack', 'oc_logger', 'coap',
+    'connectivity_abstraction', 'oc', 'octbstack', 'oc_logger', 'coap', 'resource_directory',
     GTest_Main, GTest])
 
 if env.get('WITH_TCP') == True:
