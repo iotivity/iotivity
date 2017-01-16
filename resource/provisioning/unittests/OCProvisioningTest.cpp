@@ -250,4 +250,25 @@ namespace OCProvisioningTest
         OCSecureResource device;
         EXPECT_EQ(OC_STACK_INVALID_PARAM, device.provisionDirectPairing(nullptr, nullptr));
     }
+#if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
+    TEST(setDeviceIdSeed, NullParam)
+    {
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::setDeviceIdSeed(NULL, 0));
+    }
+
+    TEST(setDeviceIdSeed, InvalidParam)
+    {
+        uint8_t seed[1024] = {0};
+
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::setDeviceIdSeed(seed, 0));
+        EXPECT_EQ(OC_STACK_INVALID_PARAM, OCSecure::setDeviceIdSeed(seed, sizeof(seed)));
+    }
+
+    TEST(setDeviceIdSeed, ValidValue)
+    {
+        uint8_t seed[16] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+                            0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10};
+        EXPECT_EQ(OC_STACK_OK, OCSecure::setDeviceIdSeed(seed, sizeof(seed)));
+    }
+#endif // __WITH_DTLS__ || __WITH_TLS__
 }

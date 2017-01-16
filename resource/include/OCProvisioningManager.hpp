@@ -521,6 +521,14 @@ namespace OC
              */
             static void certCallbackWrapper(void* ctx, uint16_t credId, uint8_t *trustCertChain,
                                 size_t chainSize);
+
+            /**
+             * Wrapper to save the seed value to generate device UUID
+             *
+             * @param[in] seed  buffer of seed value
+             * @param[in] seedSize byte length of seed
+             */
+             static OCStackResult setDeviceIdSeed(const uint8_t* seed, size_t seedSize);
 #endif // __WITH_DTLS__ || __WITH_TLS__
 
 
