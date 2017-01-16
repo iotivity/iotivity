@@ -110,6 +110,8 @@ notification_provider_src = [
 providersdk = notification_env.StaticLibrary('notification_provider_wrapper', notification_provider_src)
 notification_env.InstallTarget(providersdk, 'libnotification_provider_wrapper')
 notification_env.UserInstallTargetLib(providersdk, 'libnotification_provider_wrapper')
+notification_env.UserInstallTargetHeader('inc/NSConsumer.h', 'service/notification', 'NSConsumer.h')
+notification_env.UserInstallTargetHeader('inc/NSProviderService.h', 'service/notification', 'NSProviderService.h')
 
 Export('notificationCommonStaticObjs')
 Export('notificationCommonSharedObjs')
