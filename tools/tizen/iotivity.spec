@@ -267,9 +267,6 @@ cp resource/csdk/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/stack/include/*.h %{buildroot}%{_includedir}
 cp resource/csdk/logger/include/*.h %{buildroot}%{_includedir}
 
-cp service/easy-setup/inc/*.h %{buildroot}%{_includedir}
-cp service/easy-setup/enrollee/inc/*.h %{buildroot}%{_includedir}
-
 install -d %{buildroot}%{_includedir}/iotivity
 ln -fs ../resource %{buildroot}%{_includedir}/iotivity/
 ln -fs ../service %{buildroot}%{_includedir}/iotivity/
