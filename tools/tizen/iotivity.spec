@@ -76,7 +76,7 @@ BuildRequires: python-accel-aarch64-cross-aarch64
 %{!?SECURED: %define SECURED 0}
 %{!?TARGET_ARCH: %define TARGET_ARCH %{_arch}}
 %{!?TARGET_OS: %define TARGET_OS tizen}
-%{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP,BT}
+%{!?TARGET_TRANSPORT: %define TARGET_TRANSPORT IP}
 %{!?VERBOSE: %define VERBOSE 1}
 %{!?WITH_CLOUD: %define WITH_CLOUD 0}
 %{!?WITH_MQ: %define WITH_MQ OFF}
