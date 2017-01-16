@@ -214,6 +214,21 @@ typedef enum
     ES_OWNERSHIP_IS_NOT_SYNCHRONIZED,
 
     /**
+     * Ownership transfer which is cert-based method fails due to user confirmation is denied.
+     */
+    ES_USER_DENIED_CONFIRMATION_REQ,
+
+    /**
+     * Ownership transfer which is cert-based method fails due to wrong certificate.
+     */
+    ES_AUTHENTICATION_FAILURE_WITH_WRONG_CERT,
+
+    /**
+     * Ownership transfer which is random-pin method fails due to wrong pin.
+     */
+    ES_AUTHENTICATION_FAILURE_WITH_WRONG_PIN,
+
+    /**
      * Provisioning fails for some reason.
      */
     ES_ERROR = 255

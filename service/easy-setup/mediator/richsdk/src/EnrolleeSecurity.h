@@ -81,7 +81,7 @@ namespace OIC
                                     ESSecurityCb cb,
                                     std::weak_ptr<EnrolleeSecurity> this_ptr);
 
-            ESResult performOwnershipTransfer();
+            ESResult performOwnershipTransfer(ESResult& res);
             bool isOwnedDeviceRegisteredInSVRDB();
             void removeDeviceWithUuidCB(OC::PMResultList_t *result, int hasError);
 #ifdef MULTIPLE_OWNER
@@ -90,7 +90,7 @@ namespace OIC
             void PreconfigPinProvCB(PMResultList_t *result, int hasError);
             void MultipleOwnershipTransferCb(OC::PMResultList_t *result, int hasError);
 #endif
-            void ownershipTransferCb(OC::PMResultList_t *result, int hasError);
+            void ownershipTransferCb(OC::PMResultList_t *result, int hasError, ESResult& res);
             void convertUUIDToString(const uint8_t uuid[UUID_SIZE],
                                                 std::string& uuidString);
             std::string getResourceDeviceAddress(const std::string& host);

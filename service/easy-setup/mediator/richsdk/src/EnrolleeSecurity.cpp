@@ -245,7 +245,8 @@ namespace OIC
         }
 #endif
 
-        void EnrolleeSecurity::ownershipTransferCb(OC::PMResultList_t *result, int hasError)
+        void EnrolleeSecurity::ownershipTransferCb(OC::PMResultList_t *result, int hasError
+                                                   , ESResult& res)
         {
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "ownershipTransferCb IN");
 
@@ -253,7 +254,43 @@ namespace OIC
 
             if (hasError)
             {
-                OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "OwnershipTransfer is failed with code(%d)", hasError);
+                for (unsigned int i = 0; i < result->size(); i++)
+                {
+                    std::string uuid;
+                    convertUUIDToString(result->at(i).deviceId.id, uuid);
+
+                    if(m_ocResource != NULL && m_ocResource->sid() == uuid)
+                    {
+                        if(OC_STACK_USER_DENIED_REQ == result->at(i).res)
+                        {
+                            res = ESResult::ES_USER_DENIED_CONFIRMATION_REQ;
+                        }
+                        else if(OC_STACK_AUTHENTICATION_FAILURE  == result->at(i).res)
+                        {
+                            OicSecOxm_t oxm;
+                            if(OC_STACK_OK != m_securedResource->getOTMethod(&oxm))
+                            {
+                                OTMResult = false;
+                                return;
+                            }
+
+                            if(OIC_MANUFACTURER_CERTIFICATE == oxm)
+                            {
+                                res = ESResult::ES_AUTHENTICATION_FAILURE_WITH_WRONG_CERT;
+                            }
+                            else if(OIC_CON_MFG_CERT == oxm)
+                            {
+                                res = ESResult::ES_AUTHENTICATION_FAILURE_WITH_WRONG_CERT;
+                            }
+                            else if(OIC_RANDOM_DEVICE_PIN == oxm)
+                            {
+                                res = ESResult::ES_AUTHENTICATION_FAILURE_WITH_WRONG_PIN;
+                            }
+                        }
+                    }
+                }
+                OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "OwnershipTransfer is failed with ESResult(%d)", res);
+
                 OTMResult = false;
             }
             else
@@ -400,12 +437,13 @@ namespace OIC
                             res = ESResult::ES_OWNERSHIP_TRANSFER_FAILURE;
                             return res;
                         }
-                        OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Removing device is succeeded.");
+                        OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Removing device is succeeded.");
                     }
 
                     if(!m_securedResource->getOwnedStatus())
                     {
-                        res = performOwnershipTransfer();
+                        ESResult result = ESResult::ES_OWNERSHIP_TRANSFER_FAILURE;
+                        res = performOwnershipTransfer(result);
 
                         if(res != ESResult::ES_OK)
                         {
@@ -420,8 +458,7 @@ namespace OIC
                         if(!OTMResult)
                         {
                             OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Ownership-Transfer failed.");
-                            res = ESResult::ES_OWNERSHIP_TRANSFER_FAILURE;
-                            return res;
+                            return result;
                         }
 #ifdef MULTIPLE_OWNER
                         if( m_securedResource->isMOTSupported() &&
@@ -576,7 +613,7 @@ namespace OIC
             return res;
         }
 
-        ESResult EnrolleeSecurity::performOwnershipTransfer()
+        ESResult EnrolleeSecurity::performOwnershipTransfer(ESResult& res)
         {
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "performOwnershipTransfer IN.");
 
@@ -589,7 +626,7 @@ namespace OIC
                 std::bind(&EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
                           std::placeholders::_1, std::placeholders::_2,
                           static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::ownershipTransferCb,
-                          this, std::placeholders::_1, std::placeholders::_2)),
+                          this, std::placeholders::_1, std::placeholders::_2, std::ref(res))),
                           shared_from_this());
 
 
@@ -1071,3 +1108,4 @@ namespace OIC
 #endif //defined(__WITH_DTLS__) && defined(__WITH_TLS__)
     }
 }
+
