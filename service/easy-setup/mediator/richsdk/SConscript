@@ -145,6 +145,10 @@ if target_os in ['android','linux']:
 	easy_setup_env.InstallTarget([es_sdk_shared, es_sdk_static], 'libESMediatorRich')
 	easy_setup_env.AppendUnique(LINKFLAGS = ['-Wl,-soname,libESMediatorRich.so'])
 
+filenames = [ 'ESRichCommon.h', 'EasySetup.h', 'RemoteEnrollee.h' ]
+for filename in filenames:
+	easy_setup_env.UserInstallTargetHeader('inc/' + filename, "service/easy-setup", filename)
+
 print "Files path is %s" % env.get('es_src')
 
 ######################################################################

@@ -111,6 +111,8 @@ if target_os in ['linux', 'tizen']:
 	enrollee_sdk_static = enrollee_env.StaticLibrary('ESEnrolleeSDK', es_enrollee_common_src)
 	enrollee_env.InstallTarget([enrollee_sdk_shared, enrollee_sdk_static], 'libESEnrollee')
 	enrollee_env.UserInstallTargetLib([enrollee_sdk_shared, enrollee_sdk_static], 'libESEnrollee')
+	enrollee_env.UserInstallTargetHeader('inc/ESEnrolleeCommon.h', 'service/easy-setup', 'ESEnrolleeCommon.h')
+	enrollee_env.UserInstallTargetHeader('inc/easysetup.h', 'service/easy-setup', 'easysetup.h')
 
 if target_os == 'arduino':
 	es_enrollee_common_src = ['./src/easysetup.c','./src/resourcehandler.c']
