@@ -31,7 +31,7 @@ class CABlockTransferTests : public testing::Test {
     protected:
     virtual void SetUp()
     {
-        CAInitialize();
+        CAInitialize(CA_ADAPTER_IP);
     }
 
     virtual void TearDown()

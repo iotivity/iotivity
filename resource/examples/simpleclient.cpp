@@ -516,8 +516,9 @@ int main(int argc, char* argv[]) {
     PlatformConfig cfg {
         OC::ServiceType::InProc,
         OC::ModeType::Both,
-        "0.0.0.0",
-        0,
+        OCConnectivityType::CT_ADAPTER_IP,
+        OCConnectivityType::CT_ADAPTER_IP,
+        (OCTransportAdapter)(OCTransportAdapter::OC_ADAPTER_IP|OCTransportAdapter::OC_ADAPTER_TCP),
         OC::QualityOfService::HighQos,
         &ps
     };

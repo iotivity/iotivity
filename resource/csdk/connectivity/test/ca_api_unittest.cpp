@@ -33,7 +33,7 @@ class CATests : public testing::Test {
     protected:
     virtual void SetUp()
     {
-        CAInitialize();
+        CAInitialize(CA_DEFAULT_ADAPTER);
     }
 
     virtual void TearDown()
@@ -165,7 +165,7 @@ int32_t CAGetDtlsPskCredentials( CADtlsPskCredType_t type,
 // CAInitialize TC
 TEST(InitializeTest, CAInitializeTest)
 {
-    EXPECT_EQ(CA_STATUS_OK, CAInitialize());
+    EXPECT_EQ(CA_STATUS_OK, CAInitialize(CA_DEFAULT_ADAPTER));
     CATerminate();
 }
 
@@ -177,7 +177,7 @@ TEST_F(CATests, TerminateTest)
     char* check = (char *) "terminate success";
     EXPECT_STREQ(check, "terminate success");
 
-    CAInitialize();
+    CAInitialize(CA_DEFAULT_ADAPTER);
 }
 
 // CAStartListeningServer TC

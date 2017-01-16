@@ -288,39 +288,63 @@ static void CAAdapterErrorHandleCallback(const CAEndpoint_t *endpoint,
     }
 }
 
-void CAInitializeAdapters(ca_thread_pool_t handle)
+void CAInitializeAdapters(ca_thread_pool_t handle, CATransportAdapter_t transportType)
 {
-    OIC_LOG(DEBUG, TAG, "initialize adapters..");
+    OIC_LOG_V(DEBUG, TAG, "initialize adapters %d", transportType);
 
     // Initialize adapters and register callback.
 #ifdef IP_ADAPTER
-    CAInitializeIP(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
-                   CAAdapterErrorHandleCallback, handle);
+    if ((transportType & CA_ADAPTER_IP) || (CA_DEFAULT_ADAPTER == transportType)
+            || (transportType & CA_ALL_ADAPTERS))
+    {
+        CAInitializeIP(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
+                       CAAdapterErrorHandleCallback, handle);
+    }
 #endif /* IP_ADAPTER */
 
 #ifdef EDR_ADAPTER
-    CAInitializeEDR(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
-                    CAConnectionChangedCallback, CAAdapterErrorHandleCallback, handle);
+    if ((transportType & CA_ADAPTER_RFCOMM_BTEDR) || (CA_DEFAULT_ADAPTER == transportType)
+            || (transportType == CA_ALL_ADAPTERS))
+    {
+        CAInitializeEDR(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
+                        CAConnectionChangedCallback, CAAdapterErrorHandleCallback, handle);
+    }
 #endif /* EDR_ADAPTER */
 
 #ifdef LE_ADAPTER
-    CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
-                   CAConnectionChangedCallback, CAAdapterErrorHandleCallback, handle);
+    if ((transportType & CA_ADAPTER_GATT_BTLE) || (CA_DEFAULT_ADAPTER == transportType)
+            || (transportType == CA_ALL_ADAPTERS))
+    {
+        CAInitializeLE(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
+                       CAConnectionChangedCallback, CAAdapterErrorHandleCallback, handle);
+    }
 #endif /* LE_ADAPTER */
 
 #ifdef RA_ADAPTER
-    CAInitializeRA(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
-                   handle);
+    if ((transportType & CA_ADAPTER_REMOTE_ACCESS) || (CA_DEFAULT_ADAPTER == transportType)
+            || (transportType == CA_ALL_ADAPTERS))
+    {
+        CAInitializeRA(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
+                       handle);
+    }
 #endif /* RA_ADAPTER */
 
 #ifdef TCP_ADAPTER
-    CAInitializeTCP(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
-                    CAConnectionChangedCallback, CAAdapterErrorHandleCallback, handle);
+    if ((transportType & CA_ADAPTER_TCP) || (CA_DEFAULT_ADAPTER == transportType)
+            || (transportType == CA_ALL_ADAPTERS))
+    {
+        CAInitializeTCP(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
+                        CAConnectionChangedCallback, CAAdapterErrorHandleCallback, handle);
+    }
 #endif /* TCP_ADAPTER */
 
 #ifdef NFC_ADAPTER
-    CAInitializeNFC(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
-                    CAAdapterErrorHandleCallback, handle);
+    if ((transportType & CA_ADAPTER_NFC) || (CA_DEFAULT_ADAPTER == transportType)
+            || (transportType == CA_ALL_ADAPTERS))
+    {
+        CAInitializeNFC(CARegisterCallback, CAReceivedPacketCallback, CAAdapterChangedCallback,
+                        CAAdapterErrorHandleCallback, handle);
+    }
 #endif /* NFC_ADAPTER */
 }
 

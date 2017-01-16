@@ -76,9 +76,10 @@ void CASetInterfaceCallbacks(CARequestCallback ReqHandler, CAResponseCallback Re
 /**
  * Initialize the message handler by starting thread pool and initializing the
  * send and receive queue.
+ * @param[in]   transportType  transport type to initialize.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
-CAResult_t CAInitializeMessageHandler();
+CAResult_t CAInitializeMessageHandler(CATransportAdapter_t transportType);
 
 /**
  * Terminate the message handler by stopping  the thread pool and destroying the queues.

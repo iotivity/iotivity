@@ -57,14 +57,16 @@ namespace OC
 
     OCStackResult InProcClientWrapper::start()
     {
-        OIC_LOG(INFO, TAG, "start ocplatform");
+        OIC_LOG_V(INFO, TAG, "start ocplatform for client : %d", m_cfg.transportType);
+
         if (m_cfg.mode == ModeType::Client)
         {
             OCTransportFlags serverFlags =
                             static_cast<OCTransportFlags>(m_cfg.serverConnectivity & CT_MASK_FLAGS);
             OCTransportFlags clientFlags =
                             static_cast<OCTransportFlags>(m_cfg.clientConnectivity & CT_MASK_FLAGS);
-            OCStackResult result = OCInit1(OC_CLIENT, serverFlags, clientFlags);
+            OCStackResult result = OCInit2(OC_CLIENT, serverFlags, clientFlags,
+                                           m_cfg.transportType);
 
             if (OC_STACK_OK != result)
             {

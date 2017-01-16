@@ -85,10 +85,10 @@ void CARegisterKeepAliveHandler(CAKeepAliveConnectionCallback ConnHandler);
  * Initialize the connectivity abstraction module.
  * It will initialize adapters, thread pool and other modules based on the platform
  * compilation options.
- *
+ * @param[in]   transportType  transport type to initialize.
  * @return  ::CA_STATUS_OK or ::CA_STATUS_FAILED or ::CA_MEMORY_ALLOC_FAILED
  */
-CAResult_t CAInitialize();
+CAResult_t CAInitialize(CATransportAdapter_t transportType);
 
 /**
  * Terminate the connectivity abstraction module.

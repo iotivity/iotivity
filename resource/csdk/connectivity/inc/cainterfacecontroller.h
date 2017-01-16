@@ -50,8 +50,9 @@ void CAInitializeAdapters();
  * Initializes different adapters based on the compilation flags.
  * @param[in]   handle           thread pool handle created by message handler
  *                               for different adapters.
+ * @param[in]   transportType    transport type to initialize.
  */
-void CAInitializeAdapters(ca_thread_pool_t handle);
+void CAInitializeAdapters(ca_thread_pool_t handle, CATransportAdapter_t transportType);
 #endif
 
 /**

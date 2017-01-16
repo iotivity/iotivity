@@ -1052,7 +1052,7 @@ void CASetNetworkMonitorCallback(CANetworkMonitorCallback nwMonitorHandler)
     g_nwMonitorHandler = nwMonitorHandler;
 }
 
-CAResult_t CAInitializeMessageHandler()
+CAResult_t CAInitializeMessageHandler(CATransportAdapter_t transportType)
 {
     CASetPacketReceivedCallback(CAReceivedPacketCallback);
     CASetErrorHandleCallback(CAErrorHandler);
@@ -1130,7 +1130,7 @@ CAResult_t CAInitializeMessageHandler()
     }
 
     // initialize interface adapters by controller
-    CAInitializeAdapters(g_threadPoolHandle);
+    CAInitializeAdapters(g_threadPoolHandle, transportType);
 #else
     // retransmission initialize
     CAResult_t res = CARetransmissionInitialize(&g_retransmissionContext, NULL, CASendUnicastData,

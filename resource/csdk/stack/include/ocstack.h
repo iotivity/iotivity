@@ -57,6 +57,19 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
 /**
  * This function Initializes the OC Stack.  Must be called prior to starting the stack.
  *
+ * @param mode            OCMode Host device is client, server, or client-server.
+ * @param serverFlags     OCTransportFlags Default server transport flags.
+ * @param clientFlags     OCTransportFlags Default client transport flags.
+ * @param transportType   OCTransportAdapter value to initialize.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags, OCTransportFlags clientFlags,
+                      OCTransportAdapter transportType);
+
+/**
+ * This function Initializes the OC Stack.  Must be called prior to starting the stack.
+ *
  * @param ipAddr      IP Address of host device. Deprecated parameter.
  * @param port        Port of host device. Deprecated parameter.
  * @param mode        OCMode Host device is client, server, or client-server.

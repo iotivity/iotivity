@@ -55,14 +55,14 @@ extern void CAsetCredentialTypesCallback(CAgetCredentialTypesHandler credCallbac
 #endif // __WITH_DTLS__ or __WITH_TLS__
 
 
-CAResult_t CAInitialize()
+CAResult_t CAInitialize(CATransportAdapter_t transportType)
 {
     OIC_LOG_V(DEBUG, TAG, "IoTivity version is v%s", IOTIVITY_VERSION);
-    OIC_LOG(DEBUG, TAG, "CAInitialize");
+    OIC_LOG_V(DEBUG, TAG, "CAInitialize type : %d", transportType);
 
     if (!g_isInitialized)
     {
-        CAResult_t res = CAInitializeMessageHandler();
+        CAResult_t res = CAInitializeMessageHandler(transportType);
         if (res != CA_STATUS_OK)
         {
             OIC_LOG(ERROR, TAG, "CAInitialize has failed");

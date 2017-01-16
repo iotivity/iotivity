@@ -70,6 +70,7 @@ OCGetServerInstanceIDString
 OCGetSupportedEndpointTpsFlags
 OCInit
 OCInit1
+OCInit2
 OCNotifyAllObservers
 OCNotifyListOfObservers
 OCPayloadDestroy

@@ -296,10 +296,10 @@ static void incrementSequenceNumber(OCResource * resPtr);
  *
  * Note: At least one interface must succeed to initialize. If all calls to @ref CASelectNetwork
  * return something other than @ref CA_STATUS_OK, then this function fails.
- *
+ * @param transportType  OCTransportAdapter value to select.
  * @return ::CA_STATUS_OK on success, some other value upon failure.
  */
-static CAResult_t OCSelectNetwork();
+static CAResult_t OCSelectNetwork(OCTransportAdapter transportType);
 
 /**
  * Convert CAResponseResult_t to OCStackResult.
@@ -2176,6 +2176,13 @@ OCStackResult OCInit(const char *ipAddr, uint16_t port, OCMode mode)
 
 OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlags clientFlags)
 {
+    OIC_LOG(DEBUG, TAG, "call OCInit1");
+    return OCInit2(mode, OC_DEFAULT_FLAGS, OC_DEFAULT_FLAGS, OC_DEFAULT_ADAPTER);
+}
+
+OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags, OCTransportFlags clientFlags,
+                      OCTransportAdapter transportType)
+{
     if(stackState == OC_STACK_INITIALIZED)
     {
         OIC_LOG(INFO, TAG, "Subsequent calls to OCInit() without calling \
@@ -2237,10 +2244,10 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     result = InitializeScheduleResourceList();
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
-    result = CAResultToOCResult(CAInitialize());
+    result = CAResultToOCResult(CAInitialize((CATransportAdapter_t)transportType));
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
-    result = CAResultToOCResult(OCSelectNetwork());
+    result = CAResultToOCResult(OCSelectNetwork(transportType));
     VERIFY_SUCCESS(result, OC_STACK_OK);
 
     result = CAResultToOCResult(CARegisterNetworkMonitorHandler(
@@ -4891,8 +4898,9 @@ const char* OCGetServerInstanceIDString(void)
     return sidStr;
 }
 
-CAResult_t OCSelectNetwork()
+CAResult_t OCSelectNetwork(OCTransportAdapter transportType)
 {
+    OIC_LOG_V(DEBUG, TAG, "OCSelectNetwork [%d]", transportType);
     CAResult_t retResult = CA_STATUS_FAILED;
     CAResult_t caResult = CA_STATUS_OK;
 
@@ -4916,11 +4924,19 @@ CAResult_t OCSelectNetwork()
         // If CA status is not initialized, CASelectNetwork() will not be called.
         if (caResult != CA_STATUS_NOT_INITIALIZED)
         {
-           caResult = CASelectNetwork(connTypes[i]);
-           if (caResult == CA_STATUS_OK)
-           {
-               retResult = CA_STATUS_OK;
-           }
+            if ((connTypes[i] & transportType) || (OC_DEFAULT_ADAPTER == transportType))
+            {
+                OIC_LOG_V(DEBUG, TAG, "call CASelectNetwork [%d]", connTypes[i]);
+                caResult = CASelectNetwork(connTypes[i]);
+                if (caResult == CA_STATUS_OK)
+                {
+                    retResult = CA_STATUS_OK;
+                }
+            }
+            else
+            {
+                OIC_LOG_V(DEBUG, TAG, "there is no transport type [%d]", connTypes[i]);
+            }
         }
     }
 
