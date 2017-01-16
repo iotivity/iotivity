@@ -123,6 +123,9 @@ notification_provider_env.UserInstallTargetHeader('include/NSProviderInterface.h
 	'service/notification', 'NSProviderInterface.h')
 notification_consumer_env.UserInstallTargetHeader('include/NSConsumerInterface.h',\
 	'service/notification', 'NSConsumerInterface.h')
+notification_consumer_env.UserInstallTargetHeader('include/NSCommon.h',\
+	'service/notification', 'NSCommon.h')
+
 
 # Go to build Unit test
 if target_os == 'linux':
