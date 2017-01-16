@@ -759,6 +759,30 @@ namespace OC
         }
         return result;
     }
+
+    OCStackResult OCSecure::setDeviceIdSeed(const uint8_t* seed, size_t seedSize)
+    {
+        if (!seed)
+        {
+            oclog() <<"seed can not be null";
+            return OC_STACK_INVALID_PARAM;
+        }
+
+        OCStackResult result;
+        auto cLock = OCPlatform_impl::Instance().csdkLock().lock();
+
+        if (cLock)
+        {
+            std::lock_guard<std::recursive_mutex> lock(*cLock);
+            result = SetDeviceIdSeed(seed, seedSize);
+        }
+        else
+        {
+            oclog() <<"Mutex not found";
+            result = OC_STACK_ERROR;
+        }
+        return result;
+    }
 #endif // __WITH_DTLS__ || __WITH_TLS__
 
     void OCSecureResource::callbackWrapper(void* ctx, int nOfRes, OCProvisionResult_t *arr, bool hasError)
