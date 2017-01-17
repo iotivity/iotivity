@@ -107,32 +107,38 @@ OCStackApplicationResult NSProviderDiscoverListener(
         return OC_STACK_DELETE_TRANSACTION;
     }
 
-    OCResourcePayload * resource = ((OCDiscoveryPayload *)clientResponse->payload)->resources;
-    NS_LOG_V(DEBUG, "Discovered resource uri : %s",
-                        resource->uri);
-    while (resource)
+    OCDiscoveryPayload * discoveryPayload = (OCDiscoveryPayload *)clientResponse->payload;
+
+    while (discoveryPayload)
     {
-        NS_VERIFY_NOT_NULL(resource->uri, OC_STACK_KEEP_TRANSACTION);
-        if (strstr(resource->uri, NS_RESOURCE_URI))
+        OCResourcePayload * resource = discoveryPayload->resources;
+        NS_LOG_V(DEBUG, "Discovered resource uri : %s", resource->uri);
+        while (resource)
         {
-            OCConnectivityType type = CT_DEFAULT;
-            if (clientResponse->addr->adapter == OC_ADAPTER_TCP)
+            NS_VERIFY_NOT_NULL(resource->uri, OC_STACK_KEEP_TRANSACTION);
+            if (strstr(resource->uri, NS_RESOURCE_URI))
             {
-                type = CT_ADAPTER_TCP;
-            }
+                NS_LOG_V(DEBUG, "Request GET to provider : %s", resource->uri);
+                OCConnectivityType type = CT_DEFAULT;
+                if (clientResponse->addr->adapter == OC_ADAPTER_TCP)
+                {
+                    type = CT_ADAPTER_TCP;
+                }
 
-            OCDevAddr * addr = clientResponse->addr;
-            if (resource->secure)
-            {
-                addr->port = resource->port;
-                addr->flags |= OC_FLAG_SECURE;
-            }
+                OCDevAddr * addr = clientResponse->addr;
+                if (resource->secure)
+                {
+                    addr->port = resource->port;
+                    addr->flags |= OC_FLAG_SECURE;
+                }
 
-            NSInvokeRequest(NULL, OC_REST_GET, addr,
-                    resource->uri, NULL, NSIntrospectProvider, ctx,
-                    NULL, type);
+                NSInvokeRequest(NULL, OC_REST_GET, addr,
+                        resource->uri, NULL, NSIntrospectProvider, ctx,
+                        NULL, type);
+            }
+            resource = resource->next;
         }
-        resource = resource->next;
+        discoveryPayload = discoveryPayload->next;
     }
 
     return OC_STACK_KEEP_TRANSACTION;
