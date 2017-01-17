@@ -214,6 +214,16 @@ typedef enum
     CA_SCOPE_GLOBAL    = 0xE, // IPv6 Global scope
 } CATransportFlags_t;
 
+typedef enum
+{
+    CA_DEFAULT_BT_FLAGS = 0,
+    // flags for BLE transport
+    CA_LE_ADV_DISABLE   = 0x1,   // disable BLE advertisement
+    CA_LE_ADV_ENABLE    = 0x2,   // enable BLE advertisement
+    // flags for EDR transport
+    CA_EDR_SERVER_DISABLE = (1 << 7)
+} CATransportBTFlags_t;
+
 #define CA_IPFAMILY_MASK (CA_IPV6|CA_IPV4)
 #define CA_SCOPE_MASK 0xf     // mask scope bits above
 
@@ -619,6 +629,7 @@ typedef struct
         bool ipv6tcpenabled;    /**< IPv6 TCP enabled by OCInit flags */
     } tcp;
 #endif
+    CATransportBTFlags_t bleFlags;   /**< flags related BLE transport */
 } CAGlobals_t;
 
 extern CAGlobals_t caglobals;

@@ -2394,6 +2394,10 @@ OCStackResult OCStop()
         return OC_STACK_ERROR;
     }
 
+    // unset cautil config
+    CAUtilConfig_t configs = {(CATransportBTFlags_t)CA_DEFAULT_BT_FLAGS};
+    CAUtilSetBTConfigure(configs);
+
     stackState = OC_STACK_UNINIT_IN_PROGRESS;
 
 #ifdef WITH_PRESENCE

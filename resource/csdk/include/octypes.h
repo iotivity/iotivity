@@ -671,6 +671,16 @@ typedef enum
     OC_ADAPTER_NFC           = (1 << 5)
 } OCTransportAdapter;
 
+typedef enum
+{
+    OC_DEFAULT_BT_FLAGS = 0,
+    // flags for BLE transport
+    OC_LE_ADV_DISABLE   = 0x1,   // disable BLE advertisement
+    OC_LE_ADV_ENABLE    = 0x2,   // enable BLE advertisement
+    // flags for EDR transport
+    OC_EDR_SERVER_DISABLE = (1 << 7)
+} OCTransportBTFlags_t;
+
 /**
  *  Enum layout assumes some targets have 16-bit integer (e.g., Arduino).
  */
@@ -1821,7 +1831,6 @@ typedef OCEntityHandlerResult (*OCDeviceEntityHandler)
  */
 typedef void (*OCDirectPairingCB)(void *ctx, OCDPDev_t *peer, OCStackResult result);
 //#endif // DIRECT_PAIRING
-
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
 /**
  * Callback function definition for Change in TrustCertChain

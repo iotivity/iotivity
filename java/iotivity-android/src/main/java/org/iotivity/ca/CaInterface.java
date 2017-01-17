@@ -255,6 +255,14 @@ public class CaInterface {
     }
     private static native void stopLeAdvertisingImpl();
 
+    /**
+     *  set BT configure
+     */
+    public synchronized static void setBTConfigure(int flag){
+        CaInterface.setBTConfigureImpl(flag);
+    }
+    private static native void setBTConfigureImpl(int flag);
+
     public synchronized static int setCipherSuite(OicCipher cipher, OcConnectivityType connType){
         return CaInterface.setCipherSuiteImpl(cipher.getValue(), connType.getValue());
     }

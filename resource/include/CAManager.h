@@ -32,6 +32,23 @@ namespace OC
     */
     namespace CAManager
     {
+        /**
+         *  Data structure to provide the configuration for cautil.
+         */
+        struct CAUtilConfig
+        {
+            /** the flag for ble advertising. */
+            OCTransportBTFlags_t       bleFlag;
+
+            public:
+                CAUtilConfig()
+                    : bleFlag(OC_DEFAULT_BT_FLAGS)
+            {}
+                CAUtilConfig(OCTransportBTFlags_t bleFlag_)
+                    : bleFlag(bleFlag_)
+            {}
+        };
+
         // typedef to get adapter status changes from CA.
         typedef std::function<void(const std::string&, OCConnectivityType,
                                    bool)> ConnectionChangedCallback;
@@ -76,15 +93,22 @@ namespace OC
 
         /**
          * start BLE advertising.
-        * @return Returns ::OC_STACK_OK if success.
+         * @return Returns ::OC_STACK_OK if success.
          */
         OCStackResult startLEAdvertising();
 
         /**
          * stop BLE advertising.
-        * @return Returns ::OC_STACK_OK if success.
+         * @return Returns ::OC_STACK_OK if success.
          */
         OCStackResult stopLEAdvertising();
+
+        /**
+         * set BT configure.
+         * @param[in]  config       ::CAUtilConfig data
+         * @return Returns ::OC_STACK_OK if success.
+         */
+        OCStackResult setBTConfigure(const CAUtilConfig& config);
 
 #if defined(__WITH_DTLS__) || defined(__WITH_TLS__)
         /**

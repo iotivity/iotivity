@@ -413,6 +413,13 @@ CAResult_t CALEServerSendResponse(JNIEnv *env, jobject device, jint requestId, j
 
 CAResult_t CALEServerStartAdvertise()
 {
+    if ((caglobals.bleFlags & CA_LE_ADV_DISABLE) || CA_DEFAULT_BT_FLAGS == caglobals.bleFlags)
+    {
+        OIC_LOG_V(INFO, TAG, "the advertisement of the bleFlags is disable[%d]",
+                  caglobals.bleFlags);
+        return CA_STATUS_OK;
+    }
+
     if (!g_jvm)
     {
         OIC_LOG(ERROR, TAG, "g_jvm is null");
@@ -1798,7 +1805,7 @@ CAResult_t CALEServerStartMulticastServer()
     }
 
     // start advertise
-    ret = CALEServerStartAdvertise(env, g_leAdvertiseCallback);
+    ret = CALEServerStartAdvertise();
     if (CA_STATUS_OK != ret)
     {
         OIC_LOG(ERROR, TAG, "CALEServerStartAdvertise has failed");

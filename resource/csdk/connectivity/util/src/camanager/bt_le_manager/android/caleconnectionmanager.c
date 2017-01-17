@@ -292,6 +292,12 @@ void CAManagerLEStopScan()
     CALERestartScanWithInterval(0, 0, BLE_SCAN_DISABLE);
 }
 
+void CAManagerSetConfigure(CAUtilConfig_t config)
+{
+    OIC_LOG_V(INFO, TAG, "set configure for bleFlags : %d", config.bleFlags);
+    caglobals.bleFlags = config.bleFlags;
+}
+
 CAResult_t CAManagerLEStartAdvertising()
 {
     CAResult_t ret = CALEServerStartAdvertise();

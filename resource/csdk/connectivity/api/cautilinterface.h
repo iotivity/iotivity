@@ -52,6 +52,15 @@ typedef struct
     CMSpeedLevel_t level;
 } CMConfigureInfo_t;
 
+/*
+ * CAUtilConfig_t structure.
+ */
+typedef struct
+{
+    CATransportBTFlags_t bleFlags;
+    CMConfigureInfo_t cmInfo;
+} CAUtilConfig_t;
+
 /**
  * Callback function type for connection status changes delivery.
  * @param[out]   info           Remote endpoint information.
@@ -209,6 +218,12 @@ CAResult_t CAUtilStartLEAdvertising();
  */
 CAResult_t CAUtilStopLEAdvertising();
 
+/**
+ * set CAUtil BT configure.
+ * @param[in]  config       ::CAUtilConfig_t value
+ * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ */
+CAResult_t CAUtilSetBTConfigure(CAUtilConfig_t config);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif //__cplusplus

@@ -429,6 +429,16 @@ Java_org_iotivity_ca_CaInterface_stopLeAdvertisingImpl(JNIEnv *env, jclass clazz
     CAUtilStopLEAdvertising();
 }
 
+JNIEXPORT void JNICALL
+Java_org_iotivity_ca_CaInterface_setBTConfigureImpl(JNIEnv *env, jclass clazz, jint flag)
+{
+    LOGI("setConfigureImpl");
+    (void)env;
+    (void)clazz;
+    CAUtilConfig_t configs = {(CATransportBTFlags_t)flag};
+    CAUtilSetBTConfigure(configs);
+}
+
 JNIEXPORT jint JNICALL Java_org_iotivity_ca_CaInterface_setCipherSuiteImpl
   (JNIEnv *env, jclass clazz, jint cipherSuite, jint adapter)
 {

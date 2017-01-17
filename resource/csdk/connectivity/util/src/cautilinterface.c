@@ -335,3 +335,17 @@ CAResult_t CAUtilStopLEAdvertising()
     return CA_NOT_SUPPORTED;
 #endif
 }
+
+CAResult_t CAUtilSetBTConfigure(CAUtilConfig_t config)
+{
+    OIC_LOG_V(DEBUG, TAG, "CAUtilSetConfigure");
+    OIC_LOG_V(DEBUG, TAG, "bleFlag [%d]", config.bleFlags);
+#if (defined(__ANDROID__) && defined(LE_ADAPTER))
+    CAManagerSetConfigure(config);
+    return CA_STATUS_OK;
+#else
+    (void) config;
+    OIC_LOG(DEBUG, TAG, "it is not supported");
+    return CA_NOT_SUPPORTED;
+#endif
+}
