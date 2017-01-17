@@ -156,6 +156,7 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_saveTrustCertChain1
 JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setPinType0
   (JNIEnv *, jclass, jint, jint);
 
+
 /*
  * Class:     org_iotivity_base_OcProvisioning
  * Method:    saveACL
@@ -171,6 +172,14 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_saveACL
  */
 JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_doSelfOwnershiptransfer
   (JNIEnv *, jclass);
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    setDeviceIdSeed1
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setDeviceIdSeed1
+  (JNIEnv *, jobject, jbyteArray);
 #ifdef __cplusplus
 }
 #endif
