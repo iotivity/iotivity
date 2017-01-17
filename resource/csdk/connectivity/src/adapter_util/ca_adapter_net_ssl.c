@@ -1842,6 +1842,7 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
 
         if (MBEDTLS_SSL_HANDSHAKE_OVER == peer->ssl.state)
         {
+            SSL_RES(peer, CA_STATUS_OK);
             if (MBEDTLS_SSL_IS_CLIENT == peer->ssl.conf->endpoint)
             {
                 SendCacheMessages(peer);
