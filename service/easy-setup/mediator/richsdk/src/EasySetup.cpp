@@ -18,7 +18,7 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#include "EasySetup.h"
+#include "EasySetup.hpp"
 
 #include "OCPlatform.h"
 #include "logger.h"

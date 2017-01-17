@@ -28,7 +28,7 @@
 
 #include <jni.h>
 
-#include "EasySetup.h"
+#include "EasySetup.hpp"
 #include "RemoteEnrollee.h"
 #include "ESException.h"
 #include "oic_string.h"

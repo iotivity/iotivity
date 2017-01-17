@@ -18,8 +18,8 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-#ifndef EASYSETUP_H_
-#define EASYSETUP_H_
+#ifndef EASYSETUP_HPP_
+#define EASYSETUP_HPP_
 
 #include <memory>
 #include <vector>
@@ -75,4 +75,4 @@ namespace OIC
     }
 }
 
-#endif /* EASYSETUP_H_ */
+#endif /* EASYSETUP_HPP_ */
