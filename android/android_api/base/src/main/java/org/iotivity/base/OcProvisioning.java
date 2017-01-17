@@ -222,4 +222,16 @@ public class OcProvisioning {
      *@throws OcException
      */
     public static native void doSelfOwnershiptransfer() throws OcException;
+    
+    /**
+     *  Method to save the seed value to generate device UUID
+     *
+     *  @param seed   buffer of seed value
+     *  @throws OcException
+     */
+    public static int setDeviceIdSeed(byte[] seed) throws OcException {
+        return setDeviceIdSeed1(seed);
+    }
+    private static native int setDeviceIdSeed1(byte[] seed)
+        throws OcException;
 }
