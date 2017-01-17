@@ -556,6 +556,7 @@ static int SendCallBack(void * tep, const unsigned char * data, size_t dataLen)
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(tep, NET_SSL_TAG, "secure endpoint is NULL", -1);
     VERIFY_NON_NULL_RET(data, NET_SSL_TAG, "data is NULL", -1);
+    VERIFY_NON_NULL_RET(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL", -1);
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Data len: %zu", dataLen);
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "Adapter: %u", ((SslEndPoint_t * )tep)->sep.endpoint.adapter);
     ssize_t sentLen = 0;
@@ -727,7 +728,13 @@ static int InitPKIX(CATransportAdapter_t adapter)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(g_getPkixInfoCallback, NET_SSL_TAG, "PKIX info callback is NULL", -1);
-    g_getPkixInfoCallback(&g_pkiInfo);
+    // load pk key, cert, trust chain and crl
+    if (g_getPkixInfoCallback)
+    {
+        g_getPkixInfoCallback(&g_pkiInfo);
+    }
+
+    VERIFY_NON_NULL_RET(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL", -1);
 
     mbedtls_x509_crt_free(&g_caSslContext->ca);
     mbedtls_x509_crt_free(&g_caSslContext->crt);
@@ -862,6 +869,7 @@ static SslEndPoint_t *GetSslPeer(const CAEndpoint_t *peer)
     uint32_t listLength = 0;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(peer, NET_SSL_TAG, "TLS peer is NULL", NULL);
+    VERIFY_NON_NULL_RET(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL", NULL);
 
     SslEndPoint_t *tep = NULL;
     listLength = u_arraylist_length(g_caSslContext->peerList);
@@ -990,8 +998,9 @@ static void DeleteSslEndPoint(SslEndPoint_t * tep)
  */
 static void RemovePeerFromList(CAEndpoint_t * endpoint)
 {
-    uint32_t listLength = u_arraylist_length(g_caSslContext->peerList);
+    VERIFY_NON_NULL_VOID(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL");
     VERIFY_NON_NULL_VOID(endpoint, NET_SSL_TAG, "endpoint");
+    uint32_t listLength = u_arraylist_length(g_caSslContext->peerList);
     for (uint32_t listIndex = 0; listIndex < listLength; listIndex++)
     {
         SslEndPoint_t * tep = (SslEndPoint_t *)u_arraylist_get(g_caSslContext->peerList,listIndex);
@@ -1013,6 +1022,8 @@ static void RemovePeerFromList(CAEndpoint_t * endpoint)
  */
 static void DeletePeerList()
 {
+    VERIFY_NON_NULL_VOID(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL");
+
     uint32_t listLength = u_arraylist_length(g_caSslContext->peerList);
     for (uint32_t listIndex = 0; listIndex < listLength; listIndex++)
     {
@@ -1120,6 +1131,7 @@ static SslEndPoint_t * NewSslEndPoint(const CAEndpoint_t * endpoint, mbedtls_ssl
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(endpoint, NET_SSL_TAG, "endpoint", NULL);
     VERIFY_NON_NULL_RET(config, NET_SSL_TAG, "config", NULL);
+    VERIFY_NON_NULL_RET(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL", NULL);
 
     tep = (SslEndPoint_t *) OICCalloc(1, sizeof (SslEndPoint_t));
     if (NULL == tep)
@@ -1210,11 +1222,9 @@ static void SetupCipher(mbedtls_ssl_config * config, CATransportAdapter_t adapte
 {
     int index = 0;
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
-    if (NULL == g_getCredentialTypesCallback)
-    {
-        OIC_LOG(ERROR, NET_SSL_TAG, "Param callback is null");
-        return;
-    }
+    VERIFY_NON_NULL_VOID(config, NET_SSL_TAG, "Invaild param");
+    VERIFY_NON_NULL_VOID(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL");
+    VERIFY_NON_NULL_VOID(g_getCredentialTypesCallback, NET_SSL_TAG, "Param callback is null");
 
     g_getCredentialTypesCallback(g_caSslContext->cipherFlag);
     // Retrieve the PSK credential from SRM
@@ -1272,7 +1282,7 @@ static SslEndPoint_t * InitiateTlsHandshake(const CAEndpoint_t *endpoint)
 
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(endpoint, NET_SSL_TAG, "Param endpoint is NULL" , NULL);
-
+    VERIFY_NON_NULL_RET(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL", NULL);
 
     mbedtls_ssl_config * config = (endpoint->adapter == CA_ADAPTER_IP ||
                                    endpoint->adapter == CA_ADAPTER_GATT_BTLE ?
@@ -1372,6 +1382,7 @@ static int InitConfig(mbedtls_ssl_config * conf, int transport, int mode)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
     VERIFY_NON_NULL_RET(conf, NET_SSL_TAG, "Param conf is NULL" , -1);
+    VERIFY_NON_NULL_RET(g_caSslContext, NET_SSL_TAG, "SSL Context is NULL", -1);
     mbedtls_ssl_config_init(conf);
     if (mbedtls_ssl_config_defaults(conf, mode, transport, MBEDTLS_SSL_PRESET_DEFAULT) != 0)
     {
@@ -2062,6 +2073,8 @@ static SslCipher_t GetCipherIndex(const uint32_t cipher)
 CAResult_t CAsetTlsCipherSuite(const uint32_t cipher)
 {
     OIC_LOG_V(DEBUG, NET_SSL_TAG, "In %s", __func__);
+    VERIFY_NON_NULL_RET(g_caSslContext, NET_SSL_TAG, "SSL context is not initialized." , CA_STATUS_NOT_INITIALIZED);
+
     CAResult_t res = CA_STATUS_FAILED;
     SslCipher_t index = GetCipherIndex(cipher);
     if (SSL_CIPHER_MAX == index)
