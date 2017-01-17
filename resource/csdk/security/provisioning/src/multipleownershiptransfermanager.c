@@ -1005,6 +1005,15 @@ static OCStackResult StartMultipleOwnershipTransfer(OTMContext_t* motCtx,
         SetMOTResult(motCtx, res);
         return res;
     }
+    if (NULL == selectedDevice->doxm->mom ||
+        (selectedDevice->doxm->mom &&
+         OIC_MULTIPLE_OWNER_DISABLE == selectedDevice->doxm->mom->mode))
+    {
+        res = OC_STACK_NOT_ACCEPTABLE;
+        OIC_LOG(ERROR, TAG, "Selected device's MOT is disabled.");
+        SetMOTResult(motCtx, res);
+        return res;
+    }
 
     //Checking duplication of Device ID.
     char* strUuid = NULL;
