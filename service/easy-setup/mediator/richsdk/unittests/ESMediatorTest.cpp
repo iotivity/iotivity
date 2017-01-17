@@ -29,7 +29,7 @@
 #include "ESEnrolleeSimulator.h"
 #include "escommon.h"
 #include "ESRichCommon.h"
-#include "EasySetup.h"
+#include "EasySetup.hpp"
 #include "RemoteEnrollee.h"
 
 #include "ESEnrolleeCommon.h"

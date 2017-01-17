@@ -26,7 +26,7 @@
 #include "OCProvisioningManager.hpp"
 #include "securevirtualresourcetypes.h"
 
-#include "EasySetup.h"
+#include "EasySetup.hpp"
 #include "ESRichCommon.h"
 
 #define ES_SAMPLE_APP_TAG "ES_SAMPLE_APP_TAG"

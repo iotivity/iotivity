@@ -27,7 +27,7 @@
 #include "OCApi.h"
 #include "oic_malloc.h"
 
-#include "EasySetup.h"
+#include "EasySetup.hpp"
 #include "ESRichCommon.h"
 
 #include "ocrandom.h"
