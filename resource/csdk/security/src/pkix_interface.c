@@ -35,15 +35,9 @@ static HWPkixContext_t gHwPkixCtx = {
     .hwKeyCtx = NULL
 };
 
-void GetPkixInfo(PkiInfo_t * inf)
+static bool GetPkixInfoFromHw(PkiInfo_t * inf)
 {
     OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
-    if (NULL == inf)
-    {
-        OIC_LOG(ERROR, TAG, "NULL passed");
-        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-        return;
-    }
 
     if (!gHwPkixCtx.hwKeyCtx && gHwPkixCtx.getHwKeyContext)
     {
@@ -58,15 +52,34 @@ void GetPkixInfo(PkiInfo_t * inf)
 
     if (gHwPkixCtx.hwKeyCtx && gHwPkixCtx.getOwnCertCb)
     {
-        OIC_LOG(INFO, TAG, "H/W based PKI will be used.");
         if (0 != gHwPkixCtx.getOwnCertCb(gHwPkixCtx.hwKeyCtx,
                                          &inf->crt.data, &inf->crt.len))
         {
             OIC_LOG_V(ERROR, TAG, "gHwPkixCtx.getOwnCertCb failed");
             OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
-            return;
+            return false;
         }
         OIC_LOG_V(DEBUG, TAG, "Cert chain length = %d", inf->crt.len);
+        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+        return true;
+    }
+    OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+    return false;
+}
+
+void GetPkixInfo(PkiInfo_t * inf)
+{
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+    if (NULL == inf)
+    {
+        OIC_LOG(ERROR, TAG, "NULL passed");
+        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+        return;
+    }
+
+    if (GetPkixInfoFromHw(inf))
+    {
+        OIC_LOG(INFO, TAG, "H/W based PKI will be used.");
     }
     else
     {
@@ -88,8 +101,16 @@ void GetManufacturerPkixInfo(PkiInfo_t * inf)
         OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
         return;
     }
-    GetDerOwnCert(&inf->crt, MF_PRIMARY_CERT);
-    GetDerKey(&inf->key, MF_PRIMARY_CERT);
+
+    if (GetPkixInfoFromHw(inf))
+    {
+        OIC_LOG(INFO, TAG, "H/W based PKI will be used.");
+    }
+    else
+    {
+        GetDerOwnCert(&inf->crt, MF_PRIMARY_CERT);
+        GetDerKey(&inf->key, MF_PRIMARY_CERT);
+    }
     GetDerCaCert(&inf->ca, MF_TRUST_CA);
     // CRL not provided
     inf->crl.data = NULL;
