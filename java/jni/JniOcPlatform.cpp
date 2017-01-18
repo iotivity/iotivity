@@ -2762,3 +2762,15 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setDeviceId(
         ThrowOcException(e.code(), e.reason().c_str());
     }
 }
+
+/*
+* Class:     org_iotivity_base_OcPlatform
+* Method:    getIoTivityVersion
+* Signature: ()Ljava/lang/String;
+*/
+JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcPlatform_getIoTivityVersion(
+    JNIEnv *env, jclass thiz)
+{
+    LOGI("OcPlatform_getIoTivityVersion");
+    return env->NewStringUTF(IOTIVITY_VERSION);
+}

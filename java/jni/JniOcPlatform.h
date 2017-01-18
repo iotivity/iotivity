@@ -402,8 +402,16 @@ extern "C" {
      * Method:    setDeviceId
      * Signature: (Ljava/lang/byte;)V
      */
-    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setDeviceId(
-            JNIEnv *, jobject, jbyteArray);
+    JNIEXPORT void JNICALL Java_org_iotivity_base_OcPlatform_setDeviceId
+        (JNIEnv *, jobject, jbyteArray);
+
+    /*
+    * Class:     org_iotivity_base_OcPlatform
+    * Method:    getIoTivityVersion
+    * Signature: ()Ljava/lang/String;
+    */
+    JNIEXPORT jstring JNICALL Java_org_iotivity_base_OcPlatform_getIoTivityVersion
+        (JNIEnv *, jclass);
 
 #ifdef __cplusplus
 }

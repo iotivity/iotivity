@@ -1225,4 +1225,9 @@ public final class OcPlatform {
      * Method to set DeviceId.
      */
     public static native void setDeviceId(byte[] deviceId) throws OcException;
+
+    /**
+     * Method to get the version of IoTivity.
+     */
+    public static native String getIoTivityVersion();
 }

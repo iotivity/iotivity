@@ -2483,8 +2483,8 @@ OCStackResult OCInit1(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
     return OCInit2(mode, serverFlags, clientFlags, OC_DEFAULT_ADAPTER);
 }
 
-OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags,
-    OCTransportFlags clientFlags, OCTransportAdapter transportType)
+OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags, OCTransportFlags clientFlags,
+                      OCTransportAdapter transportType)
 {
     OIC_LOG(INFO, TAG, "Entering OCInit2");
 
@@ -2498,7 +2498,7 @@ OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags,
         // This is the first call to initialize the stack so it gets to do the real work.
         result = OCInitializeInternal(mode, serverFlags, clientFlags, transportType);
     }
-    
+
     if (result == OC_STACK_OK)
     {
         // Increment the start count since we're about to return success.
@@ -2512,7 +2512,7 @@ OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags,
 }
 
 OCStackResult OCInitializeInternal(OCMode mode, OCTransportFlags serverFlags,
-    OCTransportFlags clientFlags, OCTransportAdapter transportType)
+                                   OCTransportFlags clientFlags, OCTransportAdapter transportType)
 {
     if (stackState == OC_STACK_INITIALIZED)
     {
@@ -2537,6 +2537,7 @@ OCStackResult OCInitializeInternal(OCMode mode, OCTransportFlags serverFlags,
     }
 #endif
 
+    OIC_LOG_V(INFO, TAG, "IoTivity version is v%s", IOTIVITY_VERSION);
     OCStackResult result = OC_STACK_ERROR;
 
     // Validate mode

@@ -87,6 +87,9 @@ if ARGUMENTS.get('SECURED') == '1' and target_os in targets_without_dtls_support
 targets_disallow_multitransport = ['arduino']
 
 help_vars = Variables()
+
+help_vars.Add('PROJECT_VERSION', 'The version of IoTivity', project_version)
+
 help_vars.Add(BoolVariable('VERBOSE', 'Show compilation', False))
 help_vars.Add(BoolVariable('RELEASE', 'Build for release?', True)) # set to 'no', 'false' or 0 for debug
 help_vars.Add(EnumVariable('TARGET_OS', 'Target platform', host, host_target_map[host]))

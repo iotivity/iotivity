@@ -21,8 +21,6 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
-#define IOTIVITY_VERSION "1.3.0"
-
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
