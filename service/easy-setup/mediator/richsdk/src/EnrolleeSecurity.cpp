@@ -528,7 +528,7 @@ namespace OIC
 #endif
                     }
 #ifdef MULTIPLE_OWNER
-                    else
+                    else if(m_securedResource->isMOTSupported() && m_securedResource->isMOTEnabled())
                     {
                         OCUUIdentity* mediatorDevId = (OCUUIdentity* )OICMalloc(sizeof(OCUUIdentity));
 
@@ -596,13 +596,12 @@ namespace OIC
                             return res;
                         }
                     }
-#else
+#endif
                     else
                     {
                         OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "The found device is already owned by other PT");
                         res = ESResult::ES_ERROR;
                     }
-#endif
                 }
             }
             else
@@ -650,8 +649,7 @@ namespace OIC
             OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Transfering sub-ownership for : %s ",
                     m_securedResource->getDeviceID().c_str());
 
-            if( // m_securedResource->isMOTSupported() && //not provided, yet
-                    OIC_PRECONFIG_PIN == m_ownershipTransferData.getMOTMethod() &&
+            if(OIC_PRECONFIG_PIN == m_ownershipTransferData.getMOTMethod() &&
                         !m_ownershipTransferData.getPreConfiguredPin().empty())
             {
                 std::string pin = m_ownershipTransferData.getPreConfiguredPin();
