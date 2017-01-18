@@ -30,11 +30,9 @@ extern "C" {
 /**
  * Opens the RD publish database.
  *
- * @param path to the database file.
- *
  * @return ::OC_STACK_OK in case of success or else other value.
  */
-OCStackResult OCRDDatabaseInit(const char *path);
+OCStackResult OCRDDatabaseInit();
 
 /**
  * Stores in database the published resource.

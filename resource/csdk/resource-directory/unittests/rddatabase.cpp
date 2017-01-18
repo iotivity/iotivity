@@ -77,7 +77,7 @@ class RDDatabaseTests : public testing::Test {
     {
         remove("RD.db");
         OCInit("127.0.0.1", 5683, OC_CLIENT_SERVER);
-        EXPECT_EQ(OC_STACK_OK, OCRDDatabaseInit(NULL));
+        EXPECT_EQ(OC_STACK_OK, OCRDDatabaseInit());
     }
 
     virtual void TearDown()

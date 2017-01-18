@@ -27,11 +27,11 @@
 #include "octypes.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+#include "ocstackinternal.h"
 
 #ifdef RD_SERVER
 
 #define TAG "OIC_RD_DATABASE"
-#define RD_PATH "RD.db"
 
 static sqlite3 *gRDDB = NULL;
 
@@ -105,7 +105,7 @@ static void errorCallback(void *arg, int errCode, const char *errMsg)
     OIC_LOG_V(ERROR, TAG, "SQLLite Error: %s : %d", errMsg, errCode);
 }
 
-OCStackResult OCRDDatabaseInit(const char *path)
+OCStackResult OCRDDatabaseInit()
 {
     if (SQLITE_OK == sqlite3_config(SQLITE_CONFIG_LOG, errorCallback))
     {
@@ -113,12 +113,13 @@ OCStackResult OCRDDatabaseInit(const char *path)
     }
 
     int sqlRet;
-    sqlRet = sqlite3_open_v2(!path ? RD_PATH : path, &gRDDB, SQLITE_OPEN_READWRITE, NULL);
+    sqlRet = sqlite3_open_v2(OCRDDatabaseGetStorageFilename(), &gRDDB,
+                             SQLITE_OPEN_READWRITE, NULL);
     if (SQLITE_OK != sqlRet)
     {
         OIC_LOG(DEBUG, TAG, "RD database file did not open, as no table exists.");
         OIC_LOG(DEBUG, TAG, "RD creating new table.");
-        sqlRet = sqlite3_open_v2(!path ? RD_PATH : path, &gRDDB,
+        sqlRet = sqlite3_open_v2(OCRDDatabaseGetStorageFilename(), &gRDDB,
                                  SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
         if (SQLITE_OK == sqlRet)
         {

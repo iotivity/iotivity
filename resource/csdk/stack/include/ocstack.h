@@ -726,6 +726,14 @@ OCResourceHandle OCGetResourceHandleAtUri(const char *uri);
 
 #ifdef RD_SERVER
 /**
+ * Sets the filename to be used for database persistent storage.
+ * @param   filename            [IN] the filename.
+ *
+ * @return  ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCRDDatabaseSetStorageFilename(const char *filename);
+
+/**
 * Search the RD database for queries.
 *
 * @param interfaceType is the interface type that is queried.

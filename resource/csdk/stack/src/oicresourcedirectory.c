@@ -40,7 +40,7 @@
 
 #ifdef RD_SERVER
 
-#define RD_PATH "RD.db"
+static const char *gRDPath = "RD.db";
 
 static sqlite3 *gRDDB = NULL;
 
@@ -64,6 +64,22 @@ if (SQLITE_OK != (arg)) \
     return OC_STACK_ERROR; \
 }
 
+OCStackResult OCRDDatabaseSetStorageFilename(const char *filename)
+{
+    if(!filename)
+    {
+        OIC_LOG(ERROR, TAG, "The persistent storage filename is invalid");
+        return OC_STACK_INVALID_PARAM;
+    }
+    gRDPath = filename;
+    return OC_STACK_OK;
+}
+
+const char *OCRDDatabaseGetStorageFilename()
+{
+    return gRDPath;
+}
+
 static void errorCallback(void *arg, int errCode, const char *errMsg)
 {
     OC_UNUSED(arg);
@@ -72,14 +88,14 @@ static void errorCallback(void *arg, int errCode, const char *errMsg)
     OIC_LOG_V(ERROR, TAG, "SQLLite Error: %s : %d", errMsg, errCode);
 }
 
-static OCStackResult initializeDatabase(const char *path)
+static OCStackResult initializeDatabase()
 {
     if (SQLITE_OK == sqlite3_config(SQLITE_CONFIG_LOG, errorCallback))
     {
         OIC_LOG_V(INFO, TAG, "SQLite debugging log initialized.");
     }
 
-    sqlite3_open_v2(!path ? RD_PATH : path, &gRDDB, SQLITE_OPEN_READONLY, NULL);
+    sqlite3_open_v2(OCRDDatabaseGetStorageFilename(), &gRDDB, SQLITE_OPEN_READONLY, NULL);
     if (!gRDDB)
     {
         return OC_STACK_ERROR;
@@ -222,7 +238,7 @@ exit:
 static OCStackResult CheckResources(const char *interfaceType, const char *resourceType,
         OCDiscoveryPayload *discPayload)
 {
-    if (initializeDatabase(NULL) != OC_STACK_OK)
+    if (initializeDatabase() != OC_STACK_OK)
     {
         return OC_STACK_INTERNAL_SERVER_ERROR;
     }
@@ -313,7 +329,7 @@ OCStackResult OCRDDatabaseDiscoveryPayloadCreate(const char *interfaceType,
         OIC_LOG_V(ERROR, TAG, "Payload is already allocated");
         return OC_STACK_INTERNAL_SERVER_ERROR;
     }
-    if (initializeDatabase(NULL) != OC_STACK_OK)
+    if (initializeDatabase() != OC_STACK_OK)
     {
         goto exit;
     }

@@ -332,6 +332,15 @@ OCStackResult OCUpdateResourceInsWithResponse(const char *requestUri,
                                               const OCClientResponse *response);
 #endif
 
+#if defined(RD_SERVER)
+/**
+ * Returns the filename to be used for database persistent storage.
+ *
+ * @return the filename
+ */
+const char *OCRDDatabaseGetStorageFilename();
+#endif
+
 /**
  * Delete all of the dynamically allocated elements that were created for the resource attributes.
  *

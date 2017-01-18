@@ -21,6 +21,7 @@
 
 #include "rd_database.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include "payload_logging.h"
 #include "ocpayload.h"

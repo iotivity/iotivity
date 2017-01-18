@@ -39,9 +39,12 @@ rd_env.AppendUnique(CPPPATH = ['include',
                                 'src/internal',
                                 '../include',
                                 '../stack/include',
+                                '../stack/include/internal',
                                 '../../include',
                                 '../logger/include',
                                 '../../oc_logger/include',
+                                '../connectivity/api',
+                                '../security/include'
 ])
 
 if 'CLIENT' in rd_mode:
