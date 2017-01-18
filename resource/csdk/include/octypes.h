@@ -676,11 +676,15 @@ typedef enum
 
 typedef enum
 {
+    /** default flag is 0.*/
     OC_DEFAULT_BT_FLAGS = 0,
-    // flags for BLE transport
-    OC_LE_ADV_DISABLE   = 0x1,   // disable BLE advertisement
-    OC_LE_ADV_ENABLE    = 0x2,   // enable BLE advertisement
-    // flags for EDR transport
+    /** disable BLE advertisement.*/
+    OC_LE_ADV_DISABLE   = 0x1,
+    /** enable BLE advertisement.*/
+    OC_LE_ADV_ENABLE    = 0x2,
+    /** disable gatt server.*/
+    OC_LE_SERVER_DISABLE = (1 << 4),
+    /** disable rfcomm server.*/
     OC_EDR_SERVER_DISABLE = (1 << 7)
 } OCTransportBTFlags_t;
 

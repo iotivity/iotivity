@@ -231,8 +231,9 @@ typedef enum
 {
     CA_DEFAULT_BT_FLAGS = 0,
     // flags for BLE transport
-    CA_LE_ADV_DISABLE   = 0x1,   // disable BLE advertisement
-    CA_LE_ADV_ENABLE    = 0x2,   // enable BLE advertisement
+    CA_LE_ADV_DISABLE   = 0x1,   // disable BLE advertisement.
+    CA_LE_ADV_ENABLE    = 0x2,   // enable BLE advertisement.
+    CA_LE_SERVER_DISABLE = (1 << 4),   // disable gatt server.
     // flags for EDR transport
     CA_EDR_SERVER_DISABLE = (1 << 7)
 } CATransportBTFlags_t;

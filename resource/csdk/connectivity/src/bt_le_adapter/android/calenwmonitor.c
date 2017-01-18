@@ -312,7 +312,11 @@ Java_org_iotivity_ca_CaLeClientInterface_caLeStateChangedCallback(JNIEnv *env, j
     {
         CANetworkStatus_t newStatus = CA_INTERFACE_UP;
         CALEClientCreateDeviceList();
-        CALEServerCreateCachedDeviceList();
+
+        if (!(caglobals.bleFlags & CA_LE_SERVER_DISABLE))
+        {
+            CALEServerCreateCachedDeviceList();
+        }
 
         g_bleDeviceStateChangedCallback(newStatus);
     }

@@ -339,8 +339,8 @@ CAResult_t CAUtilStopLEAdvertising()
 CAResult_t CAUtilSetBTConfigure(CAUtilConfig_t config)
 {
     OIC_LOG_V(DEBUG, TAG, "CAUtilSetConfigure");
-    OIC_LOG_V(DEBUG, TAG, "bleFlag [%d]", config.bleFlags);
 #if (defined(__ANDROID__) && defined(LE_ADAPTER))
+    OIC_LOG_V(DEBUG, TAG, "bleFlag [%d]", config.bleFlags);
     CAManagerSetConfigure(config);
     return CA_STATUS_OK;
 #else

@@ -2642,6 +2642,13 @@ static CAResult_t CALEAdapterGattServerStart()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "Before CAStartLEGattServer");
 
+    if (caglobals.bleFlags & CA_LE_SERVER_DISABLE)
+    {
+        OIC_LOG_V(INFO, CALEADAPTER_TAG, "server's flag is disabled in configuration [%d]",
+                  caglobals.bleFlags);
+        return CA_STATUS_OK;
+    }
+
     CAResult_t result = CAStartLEGattServer();
 
 #ifndef SINGLE_THREAD
@@ -2670,8 +2677,16 @@ static CAResult_t CALEAdapterGattServerStart()
 
 static CAResult_t CALEAdapterGattServerStop()
 {
+    OIC_LOG(DEBUG, CALEADAPTER_TAG, "Server Stop");
+
+    if (caglobals.bleFlags & CA_LE_SERVER_DISABLE)
+    {
+        OIC_LOG_V(INFO, CALEADAPTER_TAG, "server flag of configure is disable [%d]",
+                  caglobals.bleFlags);
+        return CA_STATUS_OK;
+    }
+
 #ifndef SINGLE_THREAD
-    OIC_LOG(DEBUG, CALEADAPTER_TAG, "CALEAdapterGattServerStop");
 
     CAResult_t res = CAStopLEGattServer();
     if (CA_STATUS_OK != res)
@@ -2984,6 +2999,14 @@ static void CATerminateLE()
 static CAResult_t CAStartLEListeningServer()
 {
     OIC_LOG(DEBUG, CALEADAPTER_TAG, "IN - CAStartLEListeningServer");
+
+    if (caglobals.bleFlags & CA_LE_SERVER_DISABLE)
+    {
+        OIC_LOG_V(INFO, CALEADAPTER_TAG, "server flag of configure is disable [%d]",
+                  caglobals.bleFlags);
+        return CA_STATUS_OK;
+    }
+
 #ifndef ROUTING_GATEWAY
     CAResult_t result = CA_STATUS_OK;
 #ifndef SINGLE_THREAD
