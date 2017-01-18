@@ -141,6 +141,22 @@ JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_saveTrustCertChain1
  */
 JNIEXPORT jint JNICALL Java_org_iotivity_base_OcProvisioning_setPinType0
   (JNIEnv *, jclass, jint, jint);
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    saveACL
+ * Signature: (Ljava/lang/Object;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_saveACL
+  (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    doSelfOwnershiptransfer
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_doSelfOwnershiptransfer
+  (JNIEnv *, jclass);
 #ifdef __cplusplus
 }
 #endif

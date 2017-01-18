@@ -23,6 +23,8 @@
 #include "JniOcProvisioning.h"
 #include "JniPinCheckListener.h"
 #include "JniDisplayPinListener.h"
+#include "oic_malloc.h"
+#include "aclresource.h"
 #include "oxmverifycommon.h"
 #include "JniDisplayVerifyNumListener.h"
 #include "JniConfirmNumListener.h"
@@ -507,4 +509,75 @@ JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_setDisplayPinListen
     ThrowOcException(OC_STACK_INVALID_PARAM, "WITH_TLS not enabled");
     return -1;
 #endif // __WITH_DTLS__ || __WITH_TLS__
+}
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    saveACL
+ * Signature: (Ljava/lang/Object;)V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_saveACL
+  (JNIEnv *env , jclass thiz, jobject jacl)
+{
+    LOGD("OcProvisioning_saveACL");
+
+    if (!jacl)
+    {
+        ThrowOcException(OC_STACK_INVALID_PARAM, "acl can't be null");
+    }
+
+    OicSecAcl_t *acl = (OicSecAcl_t*)OICCalloc(1, sizeof(OicSecAcl_t));
+    if (!acl)
+    {
+        ThrowOcException(OC_STACK_NO_MEMORY, "acl allocation failed");
+        return;
+    }
+
+    if (OC_STACK_OK != JniSecureUtils::convertJavaACLToOCAcl(env, jacl, acl))
+    {
+        DeleteACLList(acl);
+        ThrowOcException(OC_STACK_INVALID_PARAM, "Failed to convert Java acl to OC acl");
+        return ;
+    }
+
+    try
+    {
+        OCStackResult result = OCSecure::saveACL(acl);
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OCSecure::saveACL Failed");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+    }
+}
+
+/*
+ * Class:     org_iotivity_base_OcProvisioning
+ * Method:    doSelfOwnershiptransfer
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_iotivity_base_OcProvisioning_doSelfOwnershiptransfer
+  (JNIEnv *env, jclass thiz)
+{
+
+    LOGD("OcProvisioning_doSelfOwnershiptransfer");
+    try
+    {
+        OCStackResult result = OCSecure::configSelfOwnership();
+        if (OC_STACK_OK != result)
+        {
+            ThrowOcException(result, "OCSecure::configSelfOwnership Failed");
+            return;
+        }
+    }
+    catch (OCException& e)
+    {
+        LOGE("%s", e.reason().c_str());
+        ThrowOcException(OC_STACK_ERROR, e.reason().c_str());
+    }
 }

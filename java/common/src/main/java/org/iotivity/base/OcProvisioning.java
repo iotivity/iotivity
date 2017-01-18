@@ -222,7 +222,7 @@ public class OcProvisioning {
     private static native int saveTrustCertChain1(byte[] trustCertChain, int encodingType)
         throws OcException;
 
-   /**
+    /**
      *  Method to save pin type.
      *
      *  @param pinSize Byte Len of Random pin.
@@ -240,4 +240,19 @@ public class OcProvisioning {
         return setPinType0(pinSize, pinTypeInt);
     }
     private static native int setPinType0(int pinSize, int pinType) throws OcException;
+
+    /**
+     * API to save ACL, having multiple ACE's
+     *
+     *@param acl object
+     *@throws OcException
+     */
+    public static native void saveACL(Object acl) throws OcException;
+
+    /**
+     * API to do self ownership transfer.
+     *
+     *@throws OcException
+     */
+    public static native void doSelfOwnershiptransfer() throws OcException;
 }
