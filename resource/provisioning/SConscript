@@ -80,6 +80,7 @@ if ocprovision_env.get('WITH_TCP') == True:
 	ocprovision_src = ocprovision_src + [
 	'src/OCCloudProvisioning.cpp'
 	]
+        ocprovision_env.UserInstallTargetHeader('../include/OCCloudProvisioning.hpp', 'resource', 'OCCloudProvisioning.hpp')
 
 if target_os not in ['ios']:
     ocprovision = ocprovision_env.SharedLibrary('ocprovision', ocprovision_src)
@@ -87,6 +88,7 @@ else:
     ocprovision = ocprovision_env.StaticLibrary('ocprovision', ocprovision_src)
 ocprovision_env.InstallTarget(ocprovision, 'libocprovision')
 ocprovision_env.UserInstallTargetLib(ocprovision, 'libocprovision')
+ocprovision_env.UserInstallTargetHeader('../include/OCProvisioningManager.hpp', 'resource', 'OCProvisioningManager.hpp')
 
 if target_os in ['linux', 'tizen']:
     SConscript('examples/SConscript')
