@@ -317,7 +317,7 @@ CAResult_t CAUtilStopLEScan()
 CAResult_t CAUtilStartLEAdvertising()
 {
     OIC_LOG(DEBUG, TAG, "CAUtilStartLEAdvertising");
-#if defined(__ANDROID__)
+#if defined(LE_ADAPTER) && defined(__ANDROID__)
     return CAManagerLEStartAdvertising();
 #else
     OIC_LOG(DEBUG, TAG, "it is not supported");
@@ -328,7 +328,7 @@ CAResult_t CAUtilStartLEAdvertising()
 CAResult_t CAUtilStopLEAdvertising()
 {
     OIC_LOG(DEBUG, TAG, "CAUtilStopLEAdvertising");
-#if defined(__ANDROID__)
+#if defined(LE_ADAPTER) && defined(__ANDROID__)
     return CAManagerLEStopAdvertising();
 #else
     OIC_LOG(DEBUG, TAG, "it is not supported");
