@@ -66,7 +66,6 @@ namespace OIC
         {
             (void) secDbPath;
             m_ocResource = resource;
-            m_ownershipTransferData = {};
         }
 
         void EnrolleeSecurity::onEnrolleeSecuritySafetyCB(OC::PMResultList_t *result,
@@ -328,6 +327,8 @@ namespace OIC
             ESResult res = ESResult::ES_ERROR;
 
             OCStackResult result = OC_STACK_ERROR;
+            ESOwnershipTransferData ownershipTransferData;
+
             OicUuid_t uuid;
             if(OC_STACK_OK != ConvertStrToUuid(m_ocResource->sid().c_str(), &uuid))
             {
@@ -381,18 +382,18 @@ namespace OIC
                              std::make_shared< SecProvisioningStatus >
                                            (m_securedResource,
                                            ESResult::ES_SECURE_RESOURCE_IS_DISCOVERED);
-                    m_ownershipTransferData = callback(securityProvisioningStatus);
+                    ownershipTransferData = callback(securityProvisioningStatus);
 
-                    if(OIC_RANDOM_DEVICE_PIN == m_ownershipTransferData.getMOTMethod())
+                    if(OIC_RANDOM_DEVICE_PIN == ownershipTransferData.getMOTMethod())
                     {
                         OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Selected MOT Method: OIC_RANDOM_DEVICE_PIN");
                     }
 #ifdef MULTIPLE_OWNER
-                    else if(OIC_PRECONFIG_PIN == m_ownershipTransferData.getMOTMethod())
+                    else if(OIC_PRECONFIG_PIN == ownershipTransferData.getMOTMethod())
                     {
                         OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Selected MOT Method: OIC_PRECONFIG_PIN");
                         OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Pre-configured PIN: %s",
-                                            m_ownershipTransferData.getPreConfiguredPin().c_str());
+                                            ownershipTransferData.getPreConfiguredPin().c_str());
                     }
 #endif
                 }
@@ -463,8 +464,8 @@ namespace OIC
 #ifdef MULTIPLE_OWNER
                         if( m_securedResource->isMOTSupported() &&
                             m_securedResource->isMOTEnabled() &&
-                            OIC_PRECONFIG_PIN == m_ownershipTransferData.getMOTMethod() &&
-                                !m_ownershipTransferData.getPreConfiguredPin().empty())
+                            OIC_PRECONFIG_PIN == ownershipTransferData.getMOTMethod() &&
+                                !ownershipTransferData.getPreConfiguredPin().empty())
                         {
                             OC::ResultCallBack preconfigPinProvCB = std::bind(
                                     &EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
@@ -473,7 +474,7 @@ namespace OIC
                                     this, std::placeholders::_1, std::placeholders::_2)),
                                     shared_from_this());
 
-                            std::string pin = m_ownershipTransferData.getPreConfiguredPin();
+                            std::string pin = ownershipTransferData.getPreConfiguredPin();
 
                             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "provisionPreconfPin is called.");
                             if(OC_STACK_OK != m_securedResource->provisionPreconfPin(
@@ -496,8 +497,8 @@ namespace OIC
 
                         if( m_securedResource->isMOTSupported() &&
                             m_securedResource->isMOTEnabled() &&
-                            (OIC_PRECONFIG_PIN == m_ownershipTransferData.getMOTMethod() ||
-                                OIC_RANDOM_DEVICE_PIN == m_ownershipTransferData.getMOTMethod()))
+                            (OIC_PRECONFIG_PIN == ownershipTransferData.getMOTMethod() ||
+                                OIC_RANDOM_DEVICE_PIN == ownershipTransferData.getMOTMethod()))
                         {
                             OC::ResultCallBack selectMOTMethodCB = std::bind(
                                     &EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
@@ -508,7 +509,7 @@ namespace OIC
 
                             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "selectMOTMethod is called.");
                             if(OC_STACK_OK != m_securedResource->selectMOTMethod(
-                                                    m_ownershipTransferData.getMOTMethod(),
+                                                    ownershipTransferData.getMOTMethod(),
                                                     selectMOTMethodCB))
                             {
                                 OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "selectMOTMethod API error");
@@ -528,7 +529,9 @@ namespace OIC
 #endif
                     }
 #ifdef MULTIPLE_OWNER
-                    else if(m_securedResource->isMOTSupported() && m_securedResource->isMOTEnabled())
+                    else if(m_securedResource->isMOTSupported() && m_securedResource->isMOTEnabled()
+                            && (ownershipTransferData.getMOTMethod() == OIC_RANDOM_DEVICE_PIN ||
+                                ownershipTransferData.getMOTMethod() == OIC_PRECONFIG_PIN))
                     {
                         OCUUIdentity* mediatorDevId = (OCUUIdentity* )OICMalloc(sizeof(OCUUIdentity));
 
@@ -577,7 +580,7 @@ namespace OIC
 
                         OICFree(mediatorDevId);
 
-                        res = performMultipleOwnershipTransfer();
+                        res = performMultipleOwnershipTransfer(ownershipTransferData);
 
                         if(res != ESResult::ES_OK)
                         {
@@ -640,7 +643,7 @@ namespace OIC
         }
 
 #ifdef MULTIPLE_OWNER
-        ESResult EnrolleeSecurity::performMultipleOwnershipTransfer()
+        ESResult EnrolleeSecurity::performMultipleOwnershipTransfer(const ESOwnershipTransferData& MOTdata)
         {
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "performMultipleOwnershipTransfer IN.");
 
@@ -649,10 +652,10 @@ namespace OIC
             OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Transfering sub-ownership for : %s ",
                     m_securedResource->getDeviceID().c_str());
 
-            if(OIC_PRECONFIG_PIN == m_ownershipTransferData.getMOTMethod() &&
-                        !m_ownershipTransferData.getPreConfiguredPin().empty())
+            if(OIC_PRECONFIG_PIN == MOTdata.getMOTMethod() &&
+               !MOTdata.getPreConfiguredPin().empty())
             {
-                std::string pin = m_ownershipTransferData.getPreConfiguredPin();
+                std::string pin = MOTdata.getPreConfiguredPin();
 
                 result = m_securedResource->addPreconfigPIN(pin.c_str(), pin.length());
                 if(OC_STACK_OK != result)

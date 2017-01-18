@@ -74,8 +74,6 @@ namespace OIC
 
             std::shared_ptr< OC::OCSecureResource > m_securedResource;
 
-            ESOwnershipTransferData m_ownershipTransferData;
-
             static void onEnrolleeSecuritySafetyCB(OC::PMResultList_t *result,
                                     int hasError,
                                     ESSecurityCb cb,
@@ -85,7 +83,7 @@ namespace OIC
             bool isOwnedDeviceRegisteredInSVRDB();
             void removeDeviceWithUuidCB(OC::PMResultList_t *result, int hasError);
 #ifdef MULTIPLE_OWNER
-            ESResult performMultipleOwnershipTransfer();
+            ESResult performMultipleOwnershipTransfer(const ESOwnershipTransferData& MOTdata);
             void SelectMOTMethodCB(PMResultList_t *result, int hasError);
             void PreconfigPinProvCB(PMResultList_t *result, int hasError);
             void MultipleOwnershipTransferCb(OC::PMResultList_t *result, int hasError);
