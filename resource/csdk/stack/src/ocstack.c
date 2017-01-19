@@ -3187,6 +3187,10 @@ exit:
 
 OCStackResult OCProcess()
 {
+    if (stackState == OC_STACK_UNINITIALIZED)
+    {
+        return OC_STACK_ERROR;
+    }
 #ifdef WITH_PRESENCE
     OCProcessPresence();
 #endif
