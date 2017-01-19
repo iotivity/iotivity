@@ -677,7 +677,6 @@ namespace OC
             }
             else
             {
-                OICFree(response.payload);
                 result = OC_STACK_ERROR;
             }
 
@@ -685,6 +684,7 @@ namespace OC
             {
                 oclog() << "Error sending response\n";
             }
+            OCPayloadDestroy(response.payload);
             return result;
         }
     }
