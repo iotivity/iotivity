@@ -1316,6 +1316,7 @@ static void StopRetransmit()
     if (g_caSslContext)
     {
         unregisterTimer(g_caSslContext->timerId);
+        g_caSslContext->timerId= -1;
     }
 }
 #endif
@@ -1399,12 +1400,15 @@ static int StartRetransmit()
     uint32_t listIndex = 0;
     uint32_t listLength = 0;
     SslEndPoint_t *tep = NULL;
+
+    oc_mutex_lock(g_sslContextMutex);
     if (NULL == g_caSslContext)
     {
         OIC_LOG(ERROR, NET_SSL_TAG, "Context is NULL. Stop retransmission");
+        oc_mutex_unlock(g_sslContextMutex);
         return -1;
     }
-    oc_mutex_lock(g_sslContextMutex);
+
     if (g_caSslContext->timerId != -1)
     {
         //clear previous timer
