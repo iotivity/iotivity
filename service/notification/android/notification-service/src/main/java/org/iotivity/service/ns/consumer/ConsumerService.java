@@ -76,6 +76,8 @@ public class ConsumerService {
 
     /**
      * This API will Stop ConsumerService
+     *
+     * @throws NSException failed to stop ConsumerService
      */
     public void stop() throws NSException {
         nativeStop();
@@ -87,6 +89,8 @@ public class ConsumerService {
      * @param serverAddress
      *            serverAddress combined with IP address and port number using
      *            delimiter
+     *
+     * @throws NSException failed publish resource request
      */
     public void enableRemoteService(String serverAddress) throws NSException {
         nativeEnableRemoteService(serverAddress);
@@ -102,6 +106,8 @@ public class ConsumerService {
      *            the interest Topic name for subscription
      *
      * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     *
+     * @throws NSException failed to subscribe to MQ server
      */
     public int subscribeMQService(String servAdd, String topicName)
             throws NSException {
@@ -110,6 +116,8 @@ public class ConsumerService {
 
     /**
      * This API is called to request discovery manually
+     *
+     * @throws NSException failed to call discovery request
      */
     public void rescanProvider() throws NSException {
         nativeRescanProvider();

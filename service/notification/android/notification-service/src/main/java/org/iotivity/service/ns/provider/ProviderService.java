@@ -93,6 +93,8 @@ public class ProviderService {
      * Stop ProviderService
      *
      * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     *
+     * @throws NSException failed to stop ProviderService
      */
     public int stop() throws NSException {
         return nativeStop();
@@ -105,6 +107,8 @@ public class ProviderService {
      *            Notification message including id, title, contentText
      *
      * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     *
+     * @throws NSException failed to send notification message
      */
     public int sendMessage(Message message) throws NSException {
         return nativeSendMessage(message);
@@ -118,6 +122,7 @@ public class ProviderService {
      *            unique Id of Notification message to synchronize the status
      * @param syncType
      *            SyncType of the SyncInfo message
+     * @throws NSException failed to send read-check
      */
     public void sendSyncInfo(long messageId, SyncInfo.SyncType syncType)
             throws NSException {
@@ -126,9 +131,11 @@ public class ProviderService {
 
     /**
      * Initialize Message class, Mandatory fields which are messge id and
-     * provider(device) id are filled with
+     * provider(device) id are filled
      *
      * @return Message
+     *
+     * @throws NSException failed to initialized message class
      */
     public Message createMessage() throws NSException {
         return nativeCreateMessage();
@@ -142,6 +149,8 @@ public class ProviderService {
      *            delimiter
      *
      * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     *
+     * @throws NSException failed to publish resource
      */
     public int enableRemoteService(String servAdd) throws NSException {
         return nativeEnableRemoteService(servAdd);
@@ -155,6 +164,8 @@ public class ProviderService {
      *            delimiter
      *
      * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     *
+     * @throws NSException failed to publish resource
      */
     public int disableRemoteService(String servAdd) throws NSException {
         return nativeDisableRemoteService(servAdd);
@@ -170,6 +181,8 @@ public class ProviderService {
      *            the interest Topic name for subscription
      *
      * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     *
+     * @throws NSException failed to subscribe to MQ server
      */
     public int subscribeMQService(String servAdd, String topicName)
             throws NSException {
@@ -183,6 +196,8 @@ public class ProviderService {
      *            Topic name to add
      *
      * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     *
+     * @throws NSException failed to add topic
      */
     public int registerTopic(String topicName) throws NSException {
         return nativeRegisterTopic(topicName);
@@ -195,6 +210,8 @@ public class ProviderService {
      *            Topic name to add
      *
      * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     *
+     * @throws NSException failed to delete topic
      */
     public int unregisterTopic(String topicName) throws NSException {
         return nativeUnregisterTopic(topicName);
@@ -205,6 +222,8 @@ public class ProviderService {
      *
      * 
      * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     *
+     * @throws NSException failed to get topics list
      */
     public TopicsList getRegisteredTopicList() throws NSException {
         return nativeGetRegisteredTopicList();

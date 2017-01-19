@@ -33,6 +33,8 @@ public class Consumer {
 
     /**
      * Constructor of Consumer
+     *
+     * @param consumerId ConsumerId as a string
      */
     public Consumer(final String consumerId) {
         mConsumerId = consumerId;
@@ -56,6 +58,8 @@ public class Consumer {
      *            TRUE/FALSE.
      *
      * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     *
+     * @throws NSException failure accepting subscription request
      */
     public int acceptSubscription(boolean accepted) throws NSException {
         return nativeAcceptSubscription(mConsumerId, accepted);
@@ -68,6 +72,8 @@ public class Consumer {
      *            Topic name to select
      *
      * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     *
+     * @throws NSException failure selecting a topic
      */
     public int setTopic(String topicName) throws NSException {
         return nativeSetConsumerTopic(mConsumerId, topicName);
@@ -80,6 +86,8 @@ public class Consumer {
      *            Topic name to Unselect
      *
      * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
+     *
+     * @throws NSException failure unselecting topic
      */
     public int unsetTopic(String topicName) throws NSException {
         return nativeUnsetConsumerTopic(mConsumerId, topicName);
@@ -89,6 +97,8 @@ public class Consumer {
      * Request topic list with selection state for the consumer
      *
      * @return Topic list
+     *
+     * @throws NSException failure to request topic list
      */
     public TopicsList getConsumerTopicList() throws NSException {
         return nativeGetConsumerTopicList(mConsumerId);
