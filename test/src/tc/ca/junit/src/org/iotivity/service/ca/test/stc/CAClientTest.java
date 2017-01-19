@@ -60,7 +60,8 @@ public class CAClientTest extends AndroidTestCase {
      * @objective Check the functionality of CASelectNetwork to receive response
      *            message when available network is selected
      * @target CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
-     * @test_data Response Messages
+     * @transport bt, ble
+     * @test_data Request Messages Response Messages
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -131,7 +132,8 @@ public class CAClientTest extends AndroidTestCase {
      *         interestedNetwork)
      * @target CAResult_t CAUnSelectNetwork(CATransportAdapter_t
      *         nonInterestedNetwork)
-     * @test_data Response Messages
+     * @transport bt, ble
+     * @test_data Request Messages Response Messages
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -212,7 +214,8 @@ public class CAClientTest extends AndroidTestCase {
      * @objective Check the functionality of CASelectNetwork to send message
      *            when available network is selected
      * @target CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
-     * @test_data Request Messages
+     * @transport bt, ble
+     * @test_data Request Messages Request Messages
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -280,7 +283,8 @@ public class CAClientTest extends AndroidTestCase {
      * @target CAResult_t CASelectNetwork(const uint32_t interestedNetwork)
      * @target CAResult_t CAUnSelectNetwork(CATransportAdapter_t
      *         nonInterestedNetwork)
-     * @test_data Response Messages
+     * @transport bt, ble
+     * @test_data Request Messages Response Messages
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -371,7 +375,8 @@ public class CAClientTest extends AndroidTestCase {
      * @target void CADestroyEndpoint(CAEndpoint_t *object)
      * @target void CADestroyToken(CAToken_t token)
      * @target CAResult_t CAHandleRequestResponse()
-     * @test_data Response Messages
+     * @transport bt, ble
+     * @test_data Request Messages Response Messages
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -452,7 +457,8 @@ public class CAClientTest extends AndroidTestCase {
      *            request messages
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request Messages
+     * @transport bt, ble
+     * @test_data Request Messages Request Messages
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -528,7 +534,8 @@ public class CAClientTest extends AndroidTestCase {
      *            request messages without header option
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request Messages
+     * @transport bt, ble
+     * @test_data Request Messages Request Messages
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -598,7 +605,8 @@ public class CAClientTest extends AndroidTestCase {
      *            request messages with header option
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request Messages
+     * @transport bt, ble
+     * @test_data Request Messages Request Messages
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -669,7 +677,8 @@ public class CAClientTest extends AndroidTestCase {
      *            request messages with header options
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request Messages
+     * @transport bt, ble
+     * @test_data Request Messages Request Messages
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -741,7 +750,8 @@ public class CAClientTest extends AndroidTestCase {
      *            request messages with empty payloads
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Empty Payloads
+     * @transport bt, ble
+     * @test_data Request Messages Empty Payloads
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -812,7 +822,8 @@ public class CAClientTest extends AndroidTestCase {
      *            request messages with null payloads
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data NULL Payloads
+     * @transport bt, ble
+     * @test_data Request Messages NULL Payloads
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -883,7 +894,8 @@ public class CAClientTest extends AndroidTestCase {
      *            message type CA_MSG_CONFIRM
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request message of type CA_MSG_CONFIRM
+     * @transport bt, ble
+     * @test_data Request Messages Request message of type CA_MSG_CONFIRM
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -953,7 +965,8 @@ public class CAClientTest extends AndroidTestCase {
      *            endpoint
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Wrong endpoint URI
+     * @transport bt, ble
+     * @test_data Request Messages Wrong endpoint URI
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -1022,7 +1035,8 @@ public class CAClientTest extends AndroidTestCase {
      *            invalid method
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request message of invalid method
+     * @transport bt, ble
+     * @test_data Request Messages Request message of invalid method
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -1092,7 +1106,8 @@ public class CAClientTest extends AndroidTestCase {
      *            request messages
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request messages with method GET
+     * @transport bt, ble
+     * @test_data Request Messages Request messages with method GET
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -1163,7 +1178,8 @@ public class CAClientTest extends AndroidTestCase {
      *            request messages
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request messages with method PUT
+     * @transport bt, ble
+     * @test_data Request Messages Request messages with method PUT
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -1234,7 +1250,8 @@ public class CAClientTest extends AndroidTestCase {
      *            request messages
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request messages with method POST
+     * @transport bt, ble
+     * @test_data Request Messages Request messages with method POST
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -1305,7 +1322,8 @@ public class CAClientTest extends AndroidTestCase {
      *            DELETE request messages
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request messages with method DELETE
+     * @transport bt, ble
+     * @test_data Request Messages Request messages with method DELETE
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -1375,7 +1393,8 @@ public class CAClientTest extends AndroidTestCase {
      * @objective Test 'CARegisterHandler' by registering null response handler
      * @target void CARegisterHandler(CARequestCallback ReqHandler,
      *         CAResponseCallback RespHandler, CAErrorCallback ErrorHandler)
-     * @test_data null response handler
+     * @transport bt, ble
+     * @test_data Request Messages null response handler
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -1443,7 +1462,8 @@ public class CAClientTest extends AndroidTestCase {
      * @objective Test the impact or consequence of not calling
      *            CARegisterHandler Test in receiving response
      * @target CAResult_t CAHandleRequestResponse()
-     * @test_data none
+     * @transport bt, ble
+     * @test_data Request Messages none
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -1512,7 +1532,8 @@ public class CAClientTest extends AndroidTestCase {
      *            using two different response handler
      * @target void CARegisterHandler(CARequestCallback ReqHandler,
      *         CAResponseCallback RespHandler, CAErrorCallback ErrorHandler)
-     * @test_data two different response handler
+     * @transport bt, ble
+     * @test_data Request Messages two different response handler
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -1591,7 +1612,8 @@ public class CAClientTest extends AndroidTestCase {
      *            first a valid response handler then a null response handler
      * @target void CARegisterHandler(CARequestCallback ReqHandler,
      *         CAResponseCallback RespHandler, CAErrorCallback ErrorHandler)
-     * @test_data valid response handler & null response handler
+     * @transport bt, ble
+     * @test_data Request Messages valid response handler & null response handler
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call

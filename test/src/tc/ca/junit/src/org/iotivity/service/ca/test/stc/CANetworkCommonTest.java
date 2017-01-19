@@ -60,7 +60,8 @@ public class CANetworkCommonTest extends AndroidTestCase {
      * @target CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t
      *         *size)
      * @target CAResult_t CAHandleRequestResponse()
-     * @test_data none
+     * @transport bt, ble
+     * @test_data Request Messages none
      * @pre_condition Do not call CAInitialize
      * @procedure call 1. Call CAStartListeningServer 2. Check it's return value
      *            3. Call CAStopListeningServer 4. Check it's return value 5.
@@ -112,7 +113,8 @@ public class CANetworkCommonTest extends AndroidTestCase {
      * @objective Test 'CAInitialize', 'CATerminate' and other CA API in loops
      * @target CAResult_t CAInitialize()
      * @target void CATerminate()
-     * @test_data none
+     * @transport bt, ble
+     * @test_data Request Messages none
      * @pre_condition none
      * @procedure 1. Call CAInitialize API 2. Check it's return value 1. Call
      *            CASelectNetwork API 3. Check it's return value 4. Call
@@ -150,7 +152,8 @@ public class CANetworkCommonTest extends AndroidTestCase {
      *         interestedNetwork)
      * @target CAResult_t CAUnSelectNetwork(CATransportAdapter_t
      *         nonInterestedNetwork)
-     * @test_data try to unselect-select-unselect network
+     * @transport bt, ble
+     * @test_data Request Messages try to unselect-select-unselect network
      * @pre_condition call CAinitialize
      * @procedure 1. Call CAUnSelectNetwork 2. Check it's return value as
      *            CA_STATUS_FAILED 3. Call CASelectNetwork 4. Check it's return
@@ -190,7 +193,8 @@ public class CANetworkCommonTest extends AndroidTestCase {
      *            network [ITLC]
      * @target CAResult_t CAUnSelectNetwork(CATransportAdapter_t
      *         nonInterestedNetwork)
-     * @test_data try to unselect network multiple times
+     * @transport bt, ble
+     * @test_data Request Messages try to unselect network multiple times
      * @pre_condition do not call CASelectNetwork
      * @procedure 1. Call CAInitialize 2. Check it's return value 3. Call
      *            CAUnSelectNetwork 4. Check it's return value as
@@ -225,7 +229,8 @@ public class CANetworkCommonTest extends AndroidTestCase {
      *         interestedNetwork)
      * @target CAResult_t CAUnSelectNetwork(CATransportAdapter_t
      *         nonInterestedNetwork)
-     * @test_data try to unselect network
+     * @transport bt, ble
+     * @test_data Request Messages try to unselect network
      * @pre_condition call CAinitialize
      * @procedure 1. Call CASelectNetwork 2. Check it's return value 3. Call
      *            CAUnSelectNetwork with another network type that is not
@@ -272,7 +277,8 @@ public class CANetworkCommonTest extends AndroidTestCase {
      *         interestedNetwork)
      * @target CAResult_t CAUnSelectNetwork(CATransportAdapter_t
      *         nonInterestedNetwork)
-     * @test_data none
+     * @transport bt, ble
+     * @test_data Request Messages none
      * @pre_condition Initialize CA using CAInitialize
      * @procedure 1. Call CASelectNetwork 2. Call CAStartListeningServer 3.
      *            Check its return value 4. Call CAUnSelectNetwork 5. Call
@@ -309,7 +315,8 @@ public class CANetworkCommonTest extends AndroidTestCase {
      *         interestedNetwork)
      * @target CAResult_t CAUnSelectNetwork(CATransportAdapter_t
      *         nonInterestedNetwork)
-     * @test_data none
+     * @transport bt, ble
+     * @test_data Request Messages none
      * @pre_condition Initialize CA using CAInitialize
      * @procedure 1. Call CASelectNetwork 2. Call CAUnselectNetwork 3. Repeat
      *            Steps 1~2 for multiple times
@@ -347,7 +354,8 @@ public class CANetworkCommonTest extends AndroidTestCase {
      *         interestedNetwork)
      * @target CAResult_t CAStartListeningServer()
      * @target CAResult_t CAStopListeningServer()
-     * @test_data none
+     * @transport bt, ble
+     * @test_data Request Messages none
      * @pre_condition Initialize CA using CAInitialize
      * @procedure 1. Select one of the available networks 2. Start the listening
      *            server 3. Call the CAStopListeningServer API 4. Check it's
@@ -381,7 +389,8 @@ public class CANetworkCommonTest extends AndroidTestCase {
      * @objective Test 'CAStartDiscoveryServer' positively to start the
      *            discovery service in a loop [VLCC]
      * @target CAResult_t CAStartDiscoveryServer()
-     * @test_data none
+     * @transport bt, ble
+     * @test_data Request Messages none
      * @pre_condition 1. Initialize CA using CAInitialize 2. Select network
      * @procedure 1. Call the CAStartDiscoveryServer API 2. Check it's return
      *            value 3. Repeat Steps 1~2 for multiple times
@@ -412,7 +421,8 @@ public class CANetworkCommonTest extends AndroidTestCase {
      *         CATransportAdapter_t adapter, const char *addr, uint16_t port,
      *         CAEndpoint_t **object)
      * @target void CADestroyToken(CAToken_t token)
-     * @test_data none
+     * @transport bt, ble
+     * @test_data Request Messages none
      * @pre_condition Initialize CA using CAInitialize
      * @procedure 1. Select network 2. Call CACreateEndpoint API 3. Check it's
      *            return value 4. Call CADestroyEndpoint API 5. Repeat Steps 1~4

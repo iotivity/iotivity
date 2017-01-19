@@ -49,7 +49,8 @@ public class CANetworkTest extends AndroidTestCase {
      * @objective Test 'CAStartListeningServer' positively to start the
      *            listening service
      * @target CAResult_t CAStartListeningServer()
-     * @test_data none
+     * @transport bt, ble
+     * @test_data Request Messages none
      * @pre_condition 1. Initialize CA using CAInitialize 2. Select IP as
      *                network
      * @procedure 1. Call the CAStartListeningServer API 2. Check it's return
@@ -74,7 +75,8 @@ public class CANetworkTest extends AndroidTestCase {
      * @objective Test 'CAStopListeningServer' positively to stop the listening
      *            service [SRC]
      * @target CAResult_t CAStopListeningServer()
-     * @test_data none
+     * @transport bt, ble
+     * @test_data Request Messages none
      * @pre_condition 1. Initialize CA using CAInitialize 2. Call
      *                CASelectNetwork to select network 3. Call
      *                CAStartListeningServer to start server
@@ -102,7 +104,8 @@ public class CANetworkTest extends AndroidTestCase {
      * @objective Test 'CAStartDiscoveryServer' positively to start the
      *            discovery service
      * @target CAResult_t CAStartDiscoveryServer()
-     * @test_data none
+     * @transport bt, ble
+     * @test_data Request Messages none
      * @pre_condition 1. Initialize CA using CAInitialize 2. Select IP as
      *                network
      * @procedure 1. Call the CAStartDiscoveryServer API 2. Check it's return
@@ -126,7 +129,8 @@ public class CANetworkTest extends AndroidTestCase {
      * @target CAResult_t CACreateEndpoint(CATransportFlags_t flags,
      *         CATransportAdapter_t adapter, const char *addr, uint16_t port,
      *         CAEndpoint_t **object)
-     * @test_data none
+     * @transport bt, ble
+     * @test_data Request Messages none
      * @pre_condition none
      * @procedure call the CACreateEndpoint API and pass the valid flags,
      *            adapter, addr, port & endpoint reference as arguments
@@ -151,7 +155,8 @@ public class CANetworkTest extends AndroidTestCase {
      * @target CAResult_t CACreateEndpoint(CATransportFlags_t flags,
      *         CATransportAdapter_t adapter, const char *addr, uint16_t port,
      *         CAEndpoint_t **object)
-     * @test_data Invalid flags
+     * @transport bt, ble
+     * @test_data Request Messages Invalid flags
      * @pre_condition none
      * @procedure 1. call the CACreateEndpoint API and pass the invalid value as
      *            flags arguments 2. Check it's return value
@@ -173,7 +178,8 @@ public class CANetworkTest extends AndroidTestCase {
      * @target CAResult_t CACreateEndpoint(CATransportFlags_t flags,
      *         CATransportAdapter_t adapter, const char *addr, uint16_t port,
      *         CAEndpoint_t **object)
-     * @test_data NULL address
+     * @transport bt, ble
+     * @test_data Request Messages NULL address
      * @pre_condition none
      * @procedure 1. call the CACreateEndpoint API and pass the NULL as address
      *            arguments 2. Check it's return value
@@ -195,7 +201,8 @@ public class CANetworkTest extends AndroidTestCase {
      * @target CAResult_t CACreateEndpoint(CATransportFlags_t flags,
      *         CATransportAdapter_t adapter, const char *addr, uint16_t port,
      *         CAEndpoint_t **object)
-     * @test_data NULL endpoint reference
+     * @transport bt, ble
+     * @test_data Request Messages NULL endpoint reference
      * @pre_condition none
      * @procedure 1. call the CACreateEndpoint API and pass the NULL as endpoint
      *            arguments 2. Check it's return value
@@ -218,7 +225,8 @@ public class CANetworkTest extends AndroidTestCase {
      * @target CAResult_t CACreateEndpoint(CATransportFlags_t flags,
      *         CATransportAdapter_t adapter, const char *addr, uint16_t port,
      *         CAEndpoint_t **object)
-     * @test_data Adress value with empty string
+     * @transport bt, ble
+     * @test_data Request Messages Adress value with empty string
      * @pre_condition none
      * @procedure 1. call the CACreateEndpoint API and pass the empty string as
      *            address arguments 2. Check it's return value
@@ -240,7 +248,8 @@ public class CANetworkTest extends AndroidTestCase {
      * @target CAResult_t CACreateEndpoint(CATransportFlags_t flags,
      *         CATransportAdapter_t adapter, const char *addr, uint16_t port,
      *         CAEndpoint_t **object);
-     * @test_data Unformated Reference sample value in endpoint
+     * @transport bt, ble
+     * @test_data Request Messages Unformated Reference sample value in endpoint
      * @pre_condition none
      * @procedure 1. call the CACreateEndpoint API and pass the unformated
      *            reference sample value in endpoint 2. Check it's return value
@@ -260,7 +269,8 @@ public class CANetworkTest extends AndroidTestCase {
      * @objective Test 'CADestroyEndpoint' negatively to check with NULL value
      *            [NV]
      * @target void CADestroyEndpoint(CAEndpoint_t *object)
-     * @test_data NULL value in endpoint
+     * @transport bt, ble
+     * @test_data Request Messages NULL value in endpoint
      * @pre_condition none
      * @procedure 1. call the CADestroyEndpoint API and pass the NULL value 2.
      *            Check it's return value
@@ -280,7 +290,8 @@ public class CANetworkTest extends AndroidTestCase {
      * @objective Test 'CASelectNetwork' positively to select IP as network
      * @target CAResult_t CASelectNetwork(CATransportAdapter_t
      *         interestedNetwork)
-     * @test_data valid IP Adapter
+     * @transport bt, ble
+     * @test_data Request Messages valid IP Adapter
      * @pre_condition Initialize CA using CAInitialize
      * @procedure 1. Call CASelectNetowrk to select IP as network 2. Check it's
      *            return value
@@ -308,7 +319,8 @@ public class CANetworkTest extends AndroidTestCase {
      * @objective Test 'CAUnSelectNetwork' positively to un-select IP as network
      * @target CAResult_t CAUnSelectNetwork(CATransportAdapter_t
      *         nonInterestedNetwork)
-     * @test_data valid IP Adapter
+     * @transport bt, ble
+     * @test_data Request Messages valid IP Adapter
      * @pre_condition 1. Initialize CA using CAInitialize 2. Call
      *                CASelectNetwork with IP as network
      * @procedure 1. Call CAUnSelectNetwork with IP as network 2. Check it's
@@ -349,7 +361,8 @@ public class CANetworkTest extends AndroidTestCase {
      * @objective Test CASendRequest positively with valid information
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data none
+     * @transport bt, ble
+     * @test_data Request Messages none
      * @pre_condition 1. Initialize CA using CAInitialize 2. Call
      *                CASelectNetwork to select the network 3. Call
      *                CAStartDiscoveryServer 4. Create endpoint 5. Generate
@@ -385,7 +398,8 @@ public class CANetworkTest extends AndroidTestCase {
      *            token.
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Empty Request Info & Token
+     * @transport bt, ble
+     * @test_data Request Messages Empty Request Info & Token
      * @pre_condition 1. Initialize CA using CAInitialize 2. Call
      *                CASelectNetwork to select the network 3. Call
      *                CAStartDiscoveryServer
@@ -424,7 +438,8 @@ public class CANetworkTest extends AndroidTestCase {
      * @objective Test CASendResponse positively with valid information
      * @target CAResult_t CASendResponse(const CAEndpoint_t *object, const
      *         CAResponseInfo_t *responseInfo)
-     * @test_data none
+     * @transport bt, ble
+     * @test_data Request Messages none
      * @pre_condition 1. Initialize CA using CAInitialize 2. Call
      *                CASelectNetwork to select the network 3. Start server
      *                using CAStartListeningServer 4. Create endpoint 5.
@@ -458,7 +473,8 @@ public class CANetworkTest extends AndroidTestCase {
      * @objective Test CASendResponse with empty response info.
      * @target CAResult_t CASendResponse(const CAEndpoint_t *object, const
      *         CAResponseInfo_t *responseInfo)
-     * @test_data Empty Request Info
+     * @transport bt, ble
+     * @test_data Request Messages Empty Request Info
      * @pre_condition 1. Initialize CA using CAInitialize 2. Call
      *                CASelectNetwork to select the network 3. Start server
      *                using CAStartListeningServer
@@ -490,7 +506,8 @@ public class CANetworkTest extends AndroidTestCase {
      * @objective Test CAGetNetworkInformation positively with valid value
      * @target CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t
      *         *size)
-     * @test_data none
+     * @transport bt, ble
+     * @test_data Request Messages none
      * @pre_condition 1. Initialize CA using CAInitialize 2. Call
      *                CASelectNetwork to select network
      * @procedure 1. Call CAGetNetworkInformation 2. Check it's return value
@@ -519,7 +536,8 @@ public class CANetworkTest extends AndroidTestCase {
      * @objective Test CAGetNetworkInformation negatively with invalid value
      * @target CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t
      *         *size)
-     * @test_data Pass NULL value as endpoint and size argument
+     * @transport bt, ble
+     * @test_data Request Messages Pass NULL value as endpoint and size argument
      * @pre_condition Initialize CA using CAInitialize
      * @procedure call CAGetNetworkInformation with NULL
      * @post_condition Terminate CA using CATerminate
@@ -548,7 +566,8 @@ public class CANetworkTest extends AndroidTestCase {
      *            value in Info parameter [Info_USV]
      * @target CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t
      *         *size)
-     * @test_data unformated sample value as tempInfo argument
+     * @transport bt, ble
+     * @test_data Request Messages unformated sample value as tempInfo argument
      * @pre_condition 1. Initialize CA using CAInitialize 2. Call
      *                CASelectNetwork to select the network
      * @procedure 1. Call CAGetNetworkInformation with inavlid info value 2.
@@ -579,7 +598,8 @@ public class CANetworkTest extends AndroidTestCase {
      *            value in size parameter [Size_USV]
      * @target CAResult_t CAGetNetworkInformation(CAEndpoint_t **info, uint32_t
      *         *size)
-     * @test_data unformated sample value as size argument
+     * @transport bt, ble
+     * @test_data Request Messages unformated sample value as size argument
      * @pre_condition 1. Initialize CA using CAInitialize 2. Call
      *                CASelectNetwork to select the network
      * @procedure 1. Call CAGetNetworkInformation with inavlid size value 2.

@@ -66,6 +66,7 @@ public class CAJavaAPINetworkTest extends AndroidTestCase {
    *            manager service
    * @target void startManagerService(Context context,
    *         OnConnectionManagerStateListener onConnectionManagerStateListener)
+   * @transport none
    * @test_data none
    * @pre_condition Do Initialize initialize(Activity activity, Context context)
    * @procedure Call the startManagerService
@@ -98,6 +99,7 @@ public class CAJavaAPINetworkTest extends AndroidTestCase {
    * @objective Test 'setAutoConnectionDevice' positively to set device
    *            information for Auto-Connection
    * @target void setAutoConnectionDevice(String address)
+   * @transport none
    * @test_data none
    * @pre_condition 1. Do Initialize initialize(Activity activity, Context
    *                context) 2. Call the startManagerService
@@ -136,6 +138,7 @@ public class CAJavaAPINetworkTest extends AndroidTestCase {
    * @objective Test 'setAutoConnectionDevice' negatively with empty string as
    *            address
    * @target void setAutoConnectionDevice(String address)
+   * @transport none
    * @test_data Empty string as address
    * @pre_condition 1. Do Initialize initialize(Activity activity, Context
    *                context) 2. Call the startManagerService
@@ -173,6 +176,7 @@ public class CAJavaAPINetworkTest extends AndroidTestCase {
    * @objective Test 'setAutoConnectionDevice' negatively with NULL value as
    *            address
    * @target void setAutoConnectionDevice(String address)
+   * @transport none
    * @test_data NULL as address
    * @pre_condition 1. Do Initialize initialize(Activity activity, Context
    *                context) 2. Call the startManagerService
@@ -210,6 +214,7 @@ public class CAJavaAPINetworkTest extends AndroidTestCase {
    * @objective Test 'unsetAutoConnectionDevice' negatively with empty string
    *            value as address
    * @target void unsetAutoConnectionDevice(String address)
+   * @transport none
    * @test_data Empty String as address
    * @pre_condition 1. Do Initialize initialize(Activity activity, Context
    *                context) 2. Call the startManagerService
@@ -247,6 +252,7 @@ public class CAJavaAPINetworkTest extends AndroidTestCase {
    * @objective Test 'unsetAutoConnectionDevice' negatively with NULL value as
    *            address
    * @target void unsetAutoConnectionDevice(String address)
+   * @transport none
    * @test_data NULL as address
    * @pre_condition 1. Do Initialize initialize(Activity activity, Context
    *                context) 2. Call the startManagerService
@@ -282,6 +288,7 @@ public class CAJavaAPINetworkTest extends AndroidTestCase {
    *            pairing service
    * @target void startBtPairingService(Context context, OnBtDeviceFoundListener
    *         listener)
+   * @transport bt
    * @test_data none
    * @pre_condition none
    * @procedure Call startBtPairingService API
@@ -309,6 +316,7 @@ public class CAJavaAPINetworkTest extends AndroidTestCase {
    * @see void void stopBtPairingService()
    * @objective Test 'startScan' positively to start bluetooth device scan
    * @target void startScan()
+   * @transport bt
    * @test_data none
    * @pre_condition Call startBtPairingService API
    * @procedure 1. Call startScan API 2. Call stopScan API
@@ -335,6 +343,7 @@ public class CAJavaAPINetworkTest extends AndroidTestCase {
    * @objective Test 'setLeScanIntervalTime' positively to set BLE scan interval
    *            time and working count
    * @target void startScan()
+   * @transport ble
    * @test_data none
    * @pre_condition none
    * @procedure Call setLeScanIntervalTime API
@@ -359,6 +368,7 @@ public class CAJavaAPINetworkTest extends AndroidTestCase {
    * @objective Test 'setLeScanIntervalTime' negatively as negative value in
    *            interval time
    * @target void startScan()
+   * @transport ble
    * @test_data Negative value in interval time
    * @pre_condition none
    * @procedure Call setLeScanIntervalTime API
@@ -384,6 +394,7 @@ public class CAJavaAPINetworkTest extends AndroidTestCase {
    * @see void void stopBtPairingService()
    * @objective Test 'createBond' positively to create bond
    * @target void createBond(BluetoothDevice device)
+   * @transport bt
    * @test_data none
    * @pre_condition Call startBtPairingService API
    * @procedure Call createBond API
@@ -414,6 +425,7 @@ public class CAJavaAPINetworkTest extends AndroidTestCase {
    * @see void void stopBtPairingService()
    * @objective Test 'createBond' negatively with no device address
    * @target void createBond(BluetoothDevice device)
+   * @transport bt
    * @test_data Empty string in device address
    * @pre_condition Call startBtPairingService API
    * @procedure Call createBond API

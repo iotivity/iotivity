@@ -43,7 +43,6 @@ public class CAMulticastTest extends AndroidTestCase {
     }
 
     /**
-     *         2015-09-18
      * @since 2015-09-18
      * @see CAResult_t CAInitialize()
      * @see void CARegisterHandler(CARequestCallback ReqHandler,
@@ -61,7 +60,8 @@ public class CAMulticastTest extends AndroidTestCase {
      *            GET request messages
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request messages with method GET
+     * @transport bt, ble
+     * @test_data Request Messages Request messages with method GET
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -124,7 +124,8 @@ public class CAMulticastTest extends AndroidTestCase {
      *            POST request messages
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request messages with method POST
+     * @transport bt, ble
+     * @test_data Request Messages Request messages with method POST
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -187,7 +188,8 @@ public class CAMulticastTest extends AndroidTestCase {
      *            PUT request messages
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request messages with method PUT
+     * @transport bt, ble
+     * @test_data Request Messages Request messages with method PUT
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -250,7 +252,8 @@ public class CAMulticastTest extends AndroidTestCase {
      *            DELETE request messages
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request messages with method DELETE
+     * @transport bt, ble
+     * @test_data Request Messages Request messages with method DELETE
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -313,7 +316,8 @@ public class CAMulticastTest extends AndroidTestCase {
      *            request messages without header option
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request Messages
+     * @transport bt, ble
+     * @test_data Request Messages Request Messages
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -376,7 +380,8 @@ public class CAMulticastTest extends AndroidTestCase {
      *            request messages with header option
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request Messages
+     * @transport bt, ble
+     * @test_data Request Messages Request Messages
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -439,7 +444,8 @@ public class CAMulticastTest extends AndroidTestCase {
      *            request messages with header options
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request Messages
+     * @transport bt, ble
+     * @test_data Request Messages Request Messages
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -502,7 +508,8 @@ public class CAMulticastTest extends AndroidTestCase {
      *            request messages with empty payloads
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Empty Payloads
+     * @transport bt, ble
+     * @test_data Request Messages Empty Payloads
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -565,7 +572,8 @@ public class CAMulticastTest extends AndroidTestCase {
      *            request messages with null payloads
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data NULL Payloads
+     * @transport bt, ble
+     * @test_data Request Messages NULL Payloads
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
@@ -628,7 +636,8 @@ public class CAMulticastTest extends AndroidTestCase {
      *            invalid method
      * @target CAResult_t CASendRequest(const CAEndpoint_t *object, const
      *         CARequestInfo_t *requestInfo)
-     * @test_data Request message of invalid method
+     * @transport bt, ble
+     * @test_data Request Messages Request message of invalid method
      * @pre_condition 1. [Server] Call CAInitialize to initialize CA 2. [Server]
      *                Select Network by CASelectNetwork API 3. [Server] Call
      *                CARegisterHandler to register handler 4. [Server] Call
