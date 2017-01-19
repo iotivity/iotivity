@@ -30,7 +30,7 @@ import org.iotivity.base.OcConnectivityType;
 import org.iotivity.base.OcException;
 import org.iotivity.base.ErrorCode;
 import org.iotivity.base.OcPresenceHandle;
-
+import org.iotivity.base.OcRDClient;
 import android.content.Context;
 import android.test.InstrumentationTestCase;
 
@@ -68,10 +68,10 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      * @post_condition none
      * @expected It will Publish Virtual Resource to Resource Directory & return
      *           OK
-     */
+     **/
     public void testPublishResourceToRD_SRC_FSV_P() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS,
+        	OcRDClient.publishResourceToRD(IC_HOST_ADDRESS,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     m_ICDesourceDirectoryAdapter);
         } catch (OcException ex) {
@@ -98,7 +98,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
 
     public void testPublishResourceToRDwithInvalidHost_USV_N() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS_INVALID,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS_INVALID,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     m_ICDesourceDirectoryAdapter);
             fail(IC_INVALID_PARAM_MSG);
@@ -125,7 +125,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testPublishResourceToRDwithEmptyHost_ESV_N() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS_EMPTY,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS_EMPTY,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     m_ICDesourceDirectoryAdapter);
             fail(IC_INVALID_PARAM_MSG);
@@ -152,7 +152,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testPublishResourceToRDwithNullHost_NV_N() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS_NULL,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS_NULL,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     m_ICDesourceDirectoryAdapter);
             fail(IC_INVALID_PARAM_MSG);
@@ -177,7 +177,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testPublishResourceToRDwithNullCallback_NV_N() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     IC_ON_PUBLISHED_CALLBACK_HANDLER_NULL);
             fail(IC_INVALID_PARAM_MSG);
@@ -206,7 +206,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testPublishResourceToRDWithQOS_SRC_FSV_P() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     m_ICDesourceDirectoryAdapter, IC_OC_QUALITY_OF_SERVICE);
         } catch (OcException ex) {
@@ -235,7 +235,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
 
     public void testPublishResourceToRDWithQOSwithInvalidHost_USV_N() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS_INVALID,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS_INVALID,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     m_ICDesourceDirectoryAdapter, IC_OC_QUALITY_OF_SERVICE);
             fail(IC_INVALID_PARAM_MSG);
@@ -264,7 +264,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testPublishResourceToRDWithQOSWithEmptyHost_ESV_N() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS_EMPTY,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS_EMPTY,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     m_ICDesourceDirectoryAdapter, IC_OC_QUALITY_OF_SERVICE);
             fail(IC_INVALID_PARAM_MSG);
@@ -293,7 +293,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testPublishResourceToRDWithQOSWithNullHost_NV_N() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS_NULL,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS_NULL,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     m_ICDesourceDirectoryAdapter, IC_OC_QUALITY_OF_SERVICE);
             fail(IC_INVALID_PARAM_MSG);
@@ -321,7 +321,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testPublishResourceToRDWithQOSWithNullCallback_NV_N() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     IC_ON_PUBLISHED_CALLBACK_HANDLER_NULL,
                     IC_OC_QUALITY_OF_SERVICE);
@@ -351,7 +351,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testPublishResourceToRDWithResourceHandle_SRC_FSV_P() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     m_ICDesourceDirectoryAdapter);
         } catch (OcException ex) {
@@ -379,7 +379,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testPublishResourceToRDWithResourceHandleWithInvalidHost_USV_N() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS_INVALID,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS_INVALID,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     m_ICDesourceDirectoryAdapter);
             fail(IC_INVALID_PARAM_MSG);
@@ -408,7 +408,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testPublishResourceToRDWithResourceHandleWithEmptyHost_ESV_N() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS_EMPTY,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS_EMPTY,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     m_ICDesourceDirectoryAdapter);
             fail(IC_INVALID_PARAM_MSG);
@@ -437,7 +437,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testPublishResourceToRDWithResourceHandleWithNullHost_NV_N() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS_NULL,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS_NULL,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     m_ICDesourceDirectoryAdapter);
             fail(IC_INVALID_PARAM_MSG);
@@ -465,7 +465,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testPublishResourceToRDWithResourceHandleWithNullCallback_NV_N() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     IC_ON_PUBLISHED_CALLBACK_HANDLER_NULL);
             fail(IC_INVALID_PARAM_MSG);
@@ -496,7 +496,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testPublishResourceToRDWithResourceHandleAndQOS_SRC_FSV_P() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     m_ICDesourceDirectoryAdapter, IC_OC_QUALITY_OF_SERVICE);
         } catch (OcException ex) {
@@ -526,7 +526,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testPublishResourceToRDWithResourceHandleAndQOS_USV_N() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS_INVALID,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS_INVALID,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     m_ICDesourceDirectoryAdapter, IC_OC_QUALITY_OF_SERVICE);
             fail(IC_INVALID_PARAM_MSG);
@@ -556,7 +556,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testPublishResourceToRDWithResourceHandleAndQOS_ESV_N() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS_EMPTY,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS_EMPTY,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     m_ICDesourceDirectoryAdapter, IC_OC_QUALITY_OF_SERVICE);
             fail(IC_INVALID_PARAM_MSG);
@@ -586,7 +586,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testPublishResourceToRDWithResourceHandleAndQOSWithAddressNull_NV_N() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS_NULL,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS_NULL,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     m_ICDesourceDirectoryAdapter, IC_OC_QUALITY_OF_SERVICE);
             fail(IC_INVALID_PARAM_MSG);
@@ -616,7 +616,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testPublishResourceToRDWithResourceHandleAndQOSWithNullCallback_NV_N() {
         try {
-            OcPlatform.publishResourceToRD(IC_HOST_ADDRESS,
+            OcRDClient.publishResourceToRD(IC_HOST_ADDRESS,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     IC_ON_PUBLISHED_CALLBACK_HANDLER_NULL,
                     IC_OC_QUALITY_OF_SERVICE);
@@ -645,7 +645,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testDeleteResourceFromRD_SRC_FSV_P() {
         try {
-            OcPlatform.deleteResourceFromRD(IC_HOST_ADDRESS,
+        	OcRDClient.deleteResourceFromRD(IC_HOST_ADDRESS,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     m_ICDesourceDirectoryAdapter);
 
@@ -671,7 +671,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testDeleteResourceFromRDWithInvalidHost_USV_N() {
         try {
-            OcPlatform.deleteResourceFromRD(IC_HOST_ADDRESS_INVALID,
+            OcRDClient.deleteResourceFromRD(IC_HOST_ADDRESS_INVALID,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     m_ICDesourceDirectoryAdapter);
 
@@ -698,7 +698,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testDeleteResourceFromRDWithEmptyHost_ESV_N() {
         try {
-            OcPlatform.deleteResourceFromRD(IC_HOST_ADDRESS_EMPTY,
+            OcRDClient.deleteResourceFromRD(IC_HOST_ADDRESS_EMPTY,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     m_ICDesourceDirectoryAdapter);
 
@@ -725,7 +725,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testDeleteResourceFromRDDWithNullCallback_NV_N() {
         try {
-            OcPlatform.deleteResourceFromRD(IC_HOST_ADDRESS,
+            OcRDClient.deleteResourceFromRD(IC_HOST_ADDRESS,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     IC_ON_DELETE_CALLBACK_HANDLER_NULL);
 
@@ -756,7 +756,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testDeleteResourceFromRDWithQOS_SRC_FSV_P() {
         try {
-            OcPlatform.deleteResourceFromRD(IC_HOST_ADDRESS,
+            OcRDClient.deleteResourceFromRD(IC_HOST_ADDRESS,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     m_ICDesourceDirectoryAdapter, IC_OC_QUALITY_OF_SERVICE);
 
@@ -784,7 +784,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testDeleteResourceFromRDWithQOSWithInvalidHost_USV_N() {
         try {
-            OcPlatform.deleteResourceFromRD(IC_HOST_ADDRESS_INVALID,
+            OcRDClient.deleteResourceFromRD(IC_HOST_ADDRESS_INVALID,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     m_ICDesourceDirectoryAdapter, IC_OC_QUALITY_OF_SERVICE);
 
@@ -813,7 +813,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testDeleteResourceFromRDWithQOSWithEmptyHost_ESV_N() {
         try {
-            OcPlatform.deleteResourceFromRD(IC_HOST_ADDRESS_EMPTY,
+            OcRDClient.deleteResourceFromRD(IC_HOST_ADDRESS_EMPTY,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     m_ICDesourceDirectoryAdapter, IC_OC_QUALITY_OF_SERVICE);
 
@@ -843,7 +843,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
 
     public void testDeleteResourceFromRDWithQOSWithNullCallback_NV_N() {
         try {
-            OcPlatform.deleteResourceFromRD(IC_HOST_ADDRESS,
+            OcRDClient.deleteResourceFromRD(IC_HOST_ADDRESS,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     IC_ON_DELETE_CALLBACK_HANDLER_NULL,
                     IC_OC_QUALITY_OF_SERVICE);
@@ -875,7 +875,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testDeleteResourceFromRDWithResourceHandler_SRC_FSV_P() {
         try {
-            OcPlatform.deleteResourceFromRD(IC_HOST_ADDRESS,
+            OcRDClient.deleteResourceFromRD(IC_HOST_ADDRESS,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     m_ICDesourceDirectoryAdapter);
 
@@ -903,7 +903,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testDeleteResourceFromRDWithResourceHandler_USV_N() {
         try {
-            OcPlatform.deleteResourceFromRD(IC_HOST_ADDRESS_INVALID,
+            OcRDClient.deleteResourceFromRD(IC_HOST_ADDRESS_INVALID,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     m_ICDesourceDirectoryAdapter);
 
@@ -932,7 +932,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testDeleteResourceFromRDWithResourceHandler_ESV_N() {
         try {
-            OcPlatform.deleteResourceFromRD(IC_HOST_ADDRESS_EMPTY,
+            OcRDClient.deleteResourceFromRD(IC_HOST_ADDRESS_EMPTY,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     m_ICDesourceDirectoryAdapter);
 
@@ -961,7 +961,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testDeleteResourceFromRDWithResourceHandlerWithNullCallback_NV_N() {
         try {
-            OcPlatform.deleteResourceFromRD(IC_HOST_ADDRESS,
+            OcRDClient.deleteResourceFromRD(IC_HOST_ADDRESS,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     IC_ON_DELETE_CALLBACK_HANDLER_NULL);
 
@@ -994,7 +994,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testDeleteResourceFromRDWithResourceHanlderAndQOS_SRC_FSV_P() {
         try {
-            OcPlatform.deleteResourceFromRD(IC_HOST_ADDRESS,
+            OcRDClient.deleteResourceFromRD(IC_HOST_ADDRESS,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     m_ICDesourceDirectoryAdapter, IC_OC_QUALITY_OF_SERVICE);
 
@@ -1024,7 +1024,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testDeleteResourceFromRDWithResourceHanlderAndQOS_USV_N() {
         try {
-            OcPlatform.deleteResourceFromRD(IC_HOST_ADDRESS_INVALID,
+            OcRDClient.deleteResourceFromRD(IC_HOST_ADDRESS_INVALID,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     m_ICDesourceDirectoryAdapter, IC_OC_QUALITY_OF_SERVICE);
 
@@ -1055,7 +1055,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
      */
     public void testDeleteResourceFromRDWithResourceHanlderAndQOSWithEmptyHost_ESV_N() {
         try {
-            OcPlatform.deleteResourceFromRD(IC_HOST_ADDRESS_EMPTY,
+            OcRDClient.deleteResourceFromRD(IC_HOST_ADDRESS_EMPTY,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     m_ICDesourceDirectoryAdapter, IC_OC_QUALITY_OF_SERVICE);
 
@@ -1087,7 +1087,7 @@ public class ICResourceDirectory extends InstrumentationTestCase {
 
     public void testDeleteResourceFromRDWithResourceHanlderAndQOSWithNullCallback_NV_N() {
         try {
-            OcPlatform.deleteResourceFromRD(IC_HOST_ADDRESS,
+            OcRDClient.deleteResourceFromRD(IC_HOST_ADDRESS,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT), ocResourceList,
                     IC_ON_DELETE_CALLBACK_HANDLER_NULL,
                     IC_OC_QUALITY_OF_SERVICE);
@@ -1177,7 +1177,6 @@ public class ICResourceDirectory extends InstrumentationTestCase {
             OcPlatform.subscribeDevicePresence(IC_HOST_ADDRESS, deviceIdList,
                     EnumSet.of(OcConnectivityType.CT_DEFAULT),
                     IC_ON_OBSERVE_CALLBACK_HANDLER_NULL);
-
             fail(IC_INVALID_PARAM_MSG);
         } catch (OcException ex) {
             ex.printStackTrace();

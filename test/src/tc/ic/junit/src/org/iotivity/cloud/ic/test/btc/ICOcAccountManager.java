@@ -20,30 +20,48 @@
 
 package org.iotivity.cloud.ic.test.btc;
 
-import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.*;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.ACCESS_TOKEN;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.AUTH_CODE;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.AUTH_PROVIDER;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.EMPTY_MY_MAP;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.EMPTY_VALUE;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.GROUP_ID;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.IC_HOST_ADDRESS;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.IC_OcAccountManager_OnDeleteListener_NULL;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.IC_OcAccountManager_OnGetListener_NULL;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.IC_OcAccountManager_OnObserveListener_NULL;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.IC_OcAccountManager_OnPostListener_NULL;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.INVALID_PARAMETER;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.MY_MAP;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.NULL_VAL;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.REFRESH_TOKEN;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.USER_ID;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.USER_UUID;
+import static org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil.DEVICE_ID;
 
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.iotivity.base.AclGroupType;
-import org.iotivity.base.ErrorCode;
-import org.iotivity.base.OcPlatform;
+import org.iotivity.cloud.ic.test.helper.ICHelper;
+import org.iotivity.cloud.ic.test.helper.ICHelperStaticUtil;
+import org.iotivity.cloud.ic.test.helper.OcAccountManagerAdapter;
 import org.iotivity.base.OcAccountManager;
-import org.iotivity.base.OcAccountManager.OnObserveListener;
-import org.iotivity.base.OcResource;
+import org.iotivity.base.OcPlatform;
 import org.iotivity.base.OcConnectivityType;
 import org.iotivity.base.OcException;
-import org.iotivity.base.ModeType;
-import org.iotivity.cloud.ic.test.helper.ICHelper;
-import org.iotivity.cloud.ic.test.helper.OcAccountManagerAdapter;
+import org.iotivity.base.ErrorCode;
+import org.iotivity.base.OcResource.*;
 
 import android.content.Context;
 import android.test.InstrumentationTestCase;
+import android.util.Log;
+//import org.iotivity.base.AclGroupType;
 
 
 public class ICOcAccountManager extends InstrumentationTestCase {
 
     public OcAccountManager m_accountManager;
-    
     private OcAccountManagerAdapter m_OcAccountManagerAdapter;
     private Context                          m_Context;
 
@@ -52,16 +70,13 @@ public class ICOcAccountManager extends InstrumentationTestCase {
         m_Context = getInstrumentation().getTargetContext();
 
         ICHelper.icConfigurePlatform(m_Context);
-        
         m_OcAccountManagerAdapter = new OcAccountManagerAdapter();
-        
         m_accountManager = OcPlatform.constructAccountManagerObject(IC_HOST_ADDRESS, EnumSet.of(OcConnectivityType.CT_DEFAULT));
     }
 
     protected void tearDown() throws Exception {
         super.tearDown();
     }
-    
 
     /**
      * @since 2016-08-29
@@ -374,48 +389,7 @@ public class ICOcAccountManager extends InstrumentationTestCase {
             assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
         }
     }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'signOut' function with valid OnPostListener
-	 * @target void signOut(OnPostListener onPostListener)
-	 * @test_data OnPostListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform signOut(OnPostListener onPostListener) API
-	 * @post_condition None
-	 * @expected signOut throws OcException if failure.
-     */
-    public void testSignOut_SRC_P() {
-        try {
-            m_accountManager.signOut(m_OcAccountManagerAdapter);
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            fail("SignOut API Exception occurred: " + ex.getLocalizedMessage());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'signOut' function with NULL OnPostListener
-	 * @target void signOut(OnPostListener onPostListener)
-	 * @test_data OnPostListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform signOut(OnPostListener onPostListener) API
-	 * @post_condition None
-	 * @expected signOut throws OcException if failure.
-     */
-    public void testSignOut_NV_N() {
-        try {
-            m_accountManager.signOut(IC_OcAccountManager_OnPostListener_NULL);
-            fail("SignOut does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
+
     /**
      * @since 2016-08-29
 	 * @see None
@@ -520,110 +494,7 @@ public class ICOcAccountManager extends InstrumentationTestCase {
         }
    }
     
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'searchUser' function with valid userId and OnGetListener
-	 * @target void searchUser(String userUuid, OnGetListener)
-	 * @test_data queryMap and OnGetListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform searchUser(String userUuid, OnGetListener) API
-	 * @post_condition None
-	 * @expected searchUser throws OcException if failure.
-     */
-    public void testSearchUser_SRC_P() {
-        try {
-            m_accountManager.searchUser(USER_ID, m_OcAccountManagerAdapter);
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            fail("SearchUser API Exception occurred: " + ex.getLocalizedMessage());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'searchUser' function with empty userId and valid OnGetListener
-	 * @target void searchUser(String userUuid, OnGetListener)
-	 * @test_data queryMap and OnGetListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform searchUser(String userUuid, OnGetListener) API
-	 * @post_condition None
-	 * @expected searchUser throws OcException.
-     */
-    public void testSearchUser_ESV_N() {
-        try {
-            m_accountManager.searchUser(EMPTY_VALUE, m_OcAccountManagerAdapter);
-            fail("searchUser does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'searchUser' function with invalid userId and valid OnGetListener
-	 * @target void searchUser(String userUuid, OnGetListener)
-	 * @test_data queryMap and OnGetListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform searchUser(String userUuid, OnGetListener) API
-	 * @post_condition None
-	 * @expected searchUser throws OcException.
-     */
-    public void testSearchUser_USV_N() {
-        try {
-            m_accountManager.searchUser(INVALID_PARAMETER, m_OcAccountManagerAdapter);
-            fail("searchUser does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'searchUser' function with NULL userId and valid OnGetListener
-	 * @target void searchUser(String userUuid, OnGetListener)
-	 * @test_data queryMap and OnGetListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform searchUser(String userUuid, OnGetListener) API
-	 * @post_condition None
-	 * @expected searchUser throws OcException.
-     */
-    public void testSearchUser_NV_N() {
-        try {
-            m_accountManager.searchUser(NULL_VAL, m_OcAccountManagerAdapter);
-            fail("searchUser does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'searchUser' function with valid userId and NULL OnGetListener
-	 * @target void searchUser(String userUuid, OnGetListener)
-	 * @test_data queryMap and OnGetListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform searchUser(String userUuid, OnGetListener) API
-	 * @post_condition None
-	 * @expected searchUser throws OcException.
-     */
-    public void testSearchUserNULLCallback_NV_N() {
-        try {
-            m_accountManager.searchUser(USER_ID, IC_OcAccountManager_OnGetListener_NULL);
-            fail("searchUser does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
+ 
     /**
      * @since 2016-08-29
 	 * @see None
@@ -644,6 +515,7 @@ public class ICOcAccountManager extends InstrumentationTestCase {
         }
     }
     
+
     /**
      * @since 2016-08-29
 	 * @see None
@@ -686,6 +558,7 @@ public class ICOcAccountManager extends InstrumentationTestCase {
         }
     }
     
+
     /**
      * @since 2016-08-29
 	 * @see None
@@ -699,13 +572,14 @@ public class ICOcAccountManager extends InstrumentationTestCase {
      */
     public void testDeleteDevice_SRC_P() {
         try {
-            m_accountManager.deleteDevice(DEVICE_ID, m_OcAccountManagerAdapter);
+            m_accountManager.deleteDevice(ACCESS_TOKEN, DEVICE_ID, m_OcAccountManagerAdapter);
         } catch (OcException ex) {
             ex.printStackTrace();
             fail("deleteDevice API Exception occurred: " + ex.getLocalizedMessage());
         }
     }
     
+
     /**
      * @since 2016-08-29
 	 * @see None
@@ -719,7 +593,7 @@ public class ICOcAccountManager extends InstrumentationTestCase {
      */
     public void testDeleteDevice_USV_N() {
         try {
-            m_accountManager.deleteDevice(INVALID_PARAMETER, m_OcAccountManagerAdapter);
+            m_accountManager.deleteDevice(INVALID_PARAMETER, INVALID_PARAMETER, m_OcAccountManagerAdapter);
             fail("deleteDevice does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -727,6 +601,7 @@ public class ICOcAccountManager extends InstrumentationTestCase {
         }
     }
     
+
     /**
      * @since 2016-08-29
 	 * @see None
@@ -740,7 +615,7 @@ public class ICOcAccountManager extends InstrumentationTestCase {
      */
     public void testDeleteDevice_ESV_N() {
         try {
-            m_accountManager.deleteDevice(EMPTY_VALUE, m_OcAccountManagerAdapter);
+            m_accountManager.deleteDevice(EMPTY_VALUE, EMPTY_VALUE, m_OcAccountManagerAdapter);
             fail("deleteDevice does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -748,6 +623,7 @@ public class ICOcAccountManager extends InstrumentationTestCase {
         }
     }
     
+
     /**
      * @since 2016-08-29
 	 * @see None
@@ -761,7 +637,7 @@ public class ICOcAccountManager extends InstrumentationTestCase {
      */
     public void testDeleteDevice_NV_N() {
         try {
-            m_accountManager.deleteDevice(NULL_VAL, m_OcAccountManagerAdapter);
+            m_accountManager.deleteDevice(NULL_VAL,NULL_VAL, m_OcAccountManagerAdapter);
             fail("deleteDevice does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -769,6 +645,7 @@ public class ICOcAccountManager extends InstrumentationTestCase {
         }
     }
     
+
     /**
      * @since 2016-08-29
 	 * @see None
@@ -782,7 +659,7 @@ public class ICOcAccountManager extends InstrumentationTestCase {
      */
     public void testDeleteDeviceNULLCallback_NV_N() {
         try {
-            m_accountManager.deleteDevice(DEVICE_ID, IC_OcAccountManager_OnDeleteListener_NULL);
+            m_accountManager.deleteDevice(ACCESS_TOKEN,DEVICE_ID, IC_OcAccountManager_OnDeleteListener_NULL);
             fail("deleteDevice does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -794,36 +671,37 @@ public class ICOcAccountManager extends InstrumentationTestCase {
      * @since 2016-08-29
 	 * @see None
 	 * @objective Test 'createGroup' function with valid deviceId and OnPostListener
-	 * @target void createGroup(AclGroupType groupType, OnPostListener onPostListener)
-	 * @test_data grouptype and onPostListener
+	 * @target void createGroup(OnPostListener onPostListener)
+	 * @test_data  onPostListener
 	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform createGroup(AclGroupType groupType, OnPostListener onPostListener) API
+	 * @procedure Perform createGroup(OnPostListener onPostListener) API
 	 * @post_condition None
 	 * @expected searchUser throws OcException if failure.
      */
     public void testCreateGroup_SRC_P() {
         try {
-            m_accountManager.createGroup(AclGroupType.PUBLIC, m_OcAccountManagerAdapter);
+            m_accountManager.createGroup(m_OcAccountManagerAdapter);
         } catch (OcException ex) {
             ex.printStackTrace();
             fail("deleteDevice API Exception occurred: " + ex.getLocalizedMessage());
         }
     }
     
+
     /**
      * @since 2016-08-29
 	 * @see None
 	 * @objective Test 'createGroup' function with valid deviceId and NULL OnPostListener
-	 * @target void createGroup(AclGroupType groupType, OnPostListener onPostListener)
-	 * @test_data grouptype and onPostListener
+	 * @target void createGroup(OnPostListener onPostListener)
+	 * @test_data onPostListener
 	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform createGroup(AclGroupType groupType, OnPostListener onPostListener) API
+	 * @procedure Perform createGroup(OnPostListener onPostListener) API with null listener
 	 * @post_condition None
 	 * @expected searchUser throws OcException.
      */
     public void testCreateGroup_NV_N() {
         try {
-            m_accountManager.createGroup(AclGroupType.PUBLIC, IC_OcAccountManager_OnPostListener_NULL);
+            m_accountManager.createGroup(IC_OcAccountManager_OnPostListener_NULL);
             fail("createGroup does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -832,46 +710,49 @@ public class ICOcAccountManager extends InstrumentationTestCase {
     }
     
     /**
-     * @since 2016-08-29
+     * @since 2017-01-19
 	 * @see None
-	 * @objective Test 'getGroupList' function with onGetListener
-	 * @target void getGroupList(OnGetListener onGetListener)
-	 * @test_data onGetListener
+	 * @objective Test 'createGroup' function with valid deviceId and OnPostListener
+	 * @target void createGroup(Map<String, String> queryMap,OnPostListener onPostListener)
+	 * @test_data  queryMap, onPostListener
 	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform getGroupList(OnGetListener onGetListener) API
+	 * @procedure Perform createGroup(Map<String, String> queryMap,OnPostListener onPostListener) API
 	 * @post_condition None
 	 * @expected searchUser throws OcException if failure.
      */
-    public void testGetGroupList_SRC_P() {
+    public void testCreateGroupWithQueryMap_SRC_P() {
         try {
-            m_accountManager.getGroupList(m_OcAccountManagerAdapter);
+            m_accountManager.createGroup(MY_MAP, m_OcAccountManagerAdapter);
         } catch (OcException ex) {
             ex.printStackTrace();
-            fail("getGroupList API Exception occurred: " + ex.getLocalizedMessage());
+            fail("deleteDevice API Exception occurred: " + ex.getLocalizedMessage());
         }
     }
     
+
     /**
-     * @since 2016-08-29
+     * @since 2017-01-19
 	 * @see None
-	 * @objective Test 'getGroupList' function with NULL onGetListener
-	 * @target void getGroupList(OnGetListener onGetListener)
-	 * @test_data onGetListener
+	 * @objective Test 'createGroup' function with valid deviceId and NULL OnPostListener
+	 * @target void createGroup(Map<String, String> queryMap,OnPostListener onPostListener)
+	 * @test_data queryMap, onPostListener
 	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform getGroupList(OnGetListener onGetListener) API
+	 * @procedure Perform createGroup(Map<String, String> queryMap,OnPostListener onPostListener) API with null queryMap
 	 * @post_condition None
 	 * @expected searchUser throws OcException.
      */
-    public void testGetGroupList_NV_N() {
+    public void testCreateGroupWithQueryMap_NV_N() {
         try {
-            m_accountManager.getGroupList(IC_OcAccountManager_OnGetListener_NULL);
-            fail("getGroupList does not throw exception!");
+            m_accountManager.createGroup(EMPTY_MY_MAP, IC_OcAccountManager_OnPostListener_NULL);
+            fail("createGroup does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
             assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
         }
     }
     
+
+
     /**
      * @since 2016-08-29
 	 * @see None
@@ -976,214 +857,7 @@ public class ICOcAccountManager extends InstrumentationTestCase {
         }
     }
     
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'joinGroup' function with groupId and onPostListener
-	 * @target void joinGroup(String groupId, OnPostListener onPostListener)
-	 * @test_data groupI and onPostListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform joinGroup(String groupId, OnPostListener onPostListener) API
-	 * @post_condition None
-	 * @expected joinGroup throws OcException if fail.
-     */
-    public void testJoinGroup_SRC_P() {
-        try {
-            m_accountManager.joinGroup(GROUP_ID, m_OcAccountManagerAdapter);
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            fail("joinGroup API Exception occurred: " + ex.getLocalizedMessage());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'joinGroup' function with invalid groupId and valid onPostListener
-	 * @target void joinGroup(String groupId, OnPostListener onPostListener)
-	 * @test_data groupI and onPostListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform joinGroup(String groupId, OnPostListener onPostListener) API
-	 * @post_condition None
-	 * @expected joinGroup throws OcException.
-     */
-    public void testJoinGroup_USV_N() {
-        try {
-            m_accountManager.joinGroup(INVALID_PARAMETER, m_OcAccountManagerAdapter);
-            fail("joinGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'joinGroup' function with enpty groupId and valid onPostListener
-	 * @target void joinGroup(String groupId, OnPostListener onPostListener)
-	 * @test_data groupI and onPostListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform joinGroup(String groupId, OnPostListener onPostListener) API
-	 * @post_condition None
-	 * @expected joinGroup throws OcException.
-     */
-    public void testJoinGroup_ESV_N() {
-        try {
-            m_accountManager.deleteGroup(EMPTY_VALUE, m_OcAccountManagerAdapter);
-            fail("joinGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'joinGroup' function with NULL groupId and valid onPostListener
-	 * @target void joinGroup(String groupId, OnPostListener onPostListener)
-	 * @test_data groupI and onPostListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform joinGroup(String groupId, OnPostListener onPostListener) API
-	 * @post_condition None
-	 * @expected joinGroup throws OcException.
-     */
-    public void testJoinGroup_NV_N() {
-        try {
-            m_accountManager.deleteGroup(NULL_VAL, m_OcAccountManagerAdapter);
-            fail("joinGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'joinGroup' function with groupId and NULL onPostListener
-	 * @target void joinGroup(String groupId, OnPostListener onPostListener)
-	 * @test_data groupI and onPostListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform joinGroup(String groupId, OnPostListener onPostListener) API
-	 * @post_condition None
-	 * @expected joinGroup throws OcException.
-     */
-    public void testJoinGroupNULLCallback_NV_N() {
-        try {
-            m_accountManager.joinGroup(GROUP_ID, IC_OcAccountManager_OnPostListener_NULL);
-            fail("deleteGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'addDeviceToGroup' function with groupId, deviceId and onPostListener
-	 * @target void addDeviceToGroup(String groupId, List<String> deviceId, OnPostListener onPostListener)
-	 * @test_data groupId, deviceId and onPostListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform addDeviceToGroup(String groupId, List<String> deviceId, OnPostListener onPostListener) API
-	 * @post_condition None
-	 * @expected addDeviceToGroup throws OcException if fail.
-     */
-    public void testaddDeviceToGroup_SRC_P() {
-        try {
-            m_accountManager.addDeviceToGroup(GROUP_ID, LIST_DEVICE_ID, m_OcAccountManagerAdapter);
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            fail("addDeviceToGroup API Exception occurred: " + ex.getLocalizedMessage());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'addDeviceToGroup' function with invalid groupId, valid deviceId and onPostListener
-	 * @target void addDeviceToGroup(String groupId, List<String> deviceId, OnPostListener onPostListener)
-	 * @test_data groupId, deviceId and onPostListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform addDeviceToGroup(String groupId, List<String> deviceId, OnPostListener onPostListener) API
-	 * @post_condition None
-	 * @expected addDeviceToGroup throws OcException.
-     */
-    public void testaddDeviceToGroup_USV_N() {
-        try {
-            m_accountManager.addDeviceToGroup(INVALID_PARAMETER, LIST_DEVICE_ID, m_OcAccountManagerAdapter);
-            fail("addDeviceToGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'addDeviceToGroup' function with empty groupId, deviceId and valid onPostListener
-	 * @target void addDeviceToGroup(String groupId, List<String> deviceId, OnPostListener onPostListener)
-	 * @test_data groupId, deviceId and onPostListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform addDeviceToGroup(String groupId, List<String> deviceId, OnPostListener onPostListener) API
-	 * @post_condition None
-	 * @expected addDeviceToGroup throws OcException.
-     */
-    public void testaddDeviceToGroup_ESV_N() {
-        try {
-            m_accountManager.addDeviceToGroup(EMPTY_VALUE, EMPTY_LIST_DEVICE_ID, m_OcAccountManagerAdapter);
-            fail("addDeviceToGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'addDeviceToGroup' function with NULL groupId, valid deviceId and valid onPostListener
-	 * @target void addDeviceToGroup(String groupId, List<String> deviceId, OnPostListener onPostListener)
-	 * @test_data groupId, deviceId and onPostListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform addDeviceToGroup(String groupId, List<String> deviceId, OnPostListener onPostListener) API
-	 * @post_condition None
-	 * @expected addDeviceToGroup throws OcException.
-     */
-    public void testaddDeviceToGroup_NV_N() {
-        try {
-            m_accountManager.addDeviceToGroup(NULL_VAL, LIST_DEVICE_ID, m_OcAccountManagerAdapter);
-            fail("addDeviceToGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'addDeviceToGroup' function with NULL groupId, valid deviceId and valid onPostListener
-	 * @target void addDeviceToGroup(String groupId, List<String> deviceId, OnPostListener onPostListener)
-	 * @test_data groupId, deviceId and onPostListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform addDeviceToGroup(String groupId, List<String> deviceId, OnPostListener onPostListener) API
-	 * @post_condition None
-	 * @expected addDeviceToGroup throws OcException.
-     */
-    public void testaddDeviceToGroupNULLCallback_NV_N() {
-        try {
-            m_accountManager.addDeviceToGroup(GROUP_ID, LIST_DEVICE_ID, IC_OcAccountManager_OnPostListener_NULL);
-            fail("addDeviceToGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
+        
     /**
      * @since 2016-08-29
 	 * @see None
@@ -1289,40 +963,40 @@ public class ICOcAccountManager extends InstrumentationTestCase {
     }
     
     /**
-     * @since 2016-08-29
+     * @since 2017-01-19
 	 * @see None
-	 * @objective Test 'leaveGroup' function with groupId and onDeleteListener
-	 * @target void leaveGroup(String groupId, OnDeleteListener onDeleteListener)
-	 * @test_data groupId and onDeleteListener
+	 * @objective Test 'getGroupInfo' function with onGetListener
+	 * @target void getGroupInfoAll(OnGetListener onGetListener)
+	 * @test_data onGetListener
 	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform leaveGroup(String groupId, OnDeleteListener onDeleteListener) API
+	 * @procedure Perform getGroupInfo(OnGetListener onGetListener) API
 	 * @post_condition None
-	 * @expected leaveGroup throws OcException if fail.
+	 * @expected getGroupInfo throws OcException if fail.
      */
-    public void testLeaveGroup_SRC_P() {
+    public void testGetGroupInfoWithListener_SRC_P() {
         try {
-            m_accountManager.leaveGroup(GROUP_ID, m_OcAccountManagerAdapter);
+            m_accountManager.getGroupInfoAll(m_OcAccountManagerAdapter);
         } catch (OcException ex) {
             ex.printStackTrace();
-            fail("leaveGroup API Exception occurred: " + ex.getLocalizedMessage());
+            fail("getGroupInfo API Exception occurred: " + ex.getLocalizedMessage());
         }
     }
     
     /**
-     * @since 2016-08-29
+     * @since 2017-01-19
 	 * @see None
-	 * @objective Test 'leaveGroup' function with invalid groupId and valid onDeleteListener
-	 * @target void leaveGroup(String groupId, OnDeleteListener onDeleteListener)
-	 * @test_data groupId and onDeleteListener
+	 * @objective Test 'getGroupInfo' function with onGetListener null
+	 * @target void getGroupInfoAll(OnGetListener onGetListener)
+	 * @test_data onGetListener
 	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform leaveGroup(String groupId, OnDeleteListener onDeleteListener) API
+	 * @procedure Perform getGroupInfo(OnGetListener onGetListener) API where OnGetListener is null
 	 * @post_condition None
-	 * @expected leaveGroup throws OcException.
+	 * @expected getGroupInfo throws OcException if fail.
      */
-    public void testLeaveGroup_USV_N() {
+    public void testGetGroupInfoWithListener_NV_N() {
         try {
-            m_accountManager.leaveGroup(INVALID_PARAMETER, m_OcAccountManagerAdapter);
-            fail("leaveGroup does not throw exception!");
+            m_accountManager.getGroupInfoAll(null);
+            fail("getGroupInfoAll does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
             assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
@@ -1330,173 +1004,27 @@ public class ICOcAccountManager extends InstrumentationTestCase {
     }
     
     /**
-     * @since 2016-08-29
+     * @since 2017-01-19
 	 * @see None
-	 * @objective Test 'leaveGroup' function with empty groupId and valid onDeleteListener
-	 * @target void leaveGroup(String groupId, OnDeleteListener onDeleteListener)
-	 * @test_data groupId and onDeleteListener
+	 * @objective Test 'getGroupInfo' function with onGetListener e
+	 * @target void getGroupInfoAll(OnGetListener onGetListener)
+	 * @test_data onGetListener
 	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform leaveGroup(String groupId, OnDeleteListener onDeleteListener) API
+	 * @procedure Perform getGroupInfo(OnGetListener onGetListener) API where OnGetListener is null
 	 * @post_condition None
-	 * @expected leaveGroup throws OcException.
+	 * @expected getGroupInfo throws OcException if fail.
      */
-    public void testLeaveGroup_ESV_N() {
+    public void testGetGroupInfoWithListener_EMV_N() {
         try {
-            m_accountManager.leaveGroup(EMPTY_VALUE, m_OcAccountManagerAdapter);
-            fail("leaveGroup does not throw exception!");
+        	OcAccountManagerAdapter ocAccountManagerAdapter=null;
+            m_accountManager.getGroupInfoAll(ocAccountManagerAdapter);
+            fail("getGroupInfoAll does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
             assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
         }
     }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'leaveGroup' function with NULL groupId and valid onDeleteListener
-	 * @target void leaveGroup(String groupId, OnDeleteListener onDeleteListener)
-	 * @test_data groupId and onDeleteListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform leaveGroup(String groupId, OnDeleteListener onDeleteListener) API
-	 * @post_condition None
-	 * @expected leaveGroup throws OcException.
-     */
-    public void testLeaveGroup_NV_N() {
-        try {
-            m_accountManager.leaveGroup(NULL_VAL, m_OcAccountManagerAdapter);
-            fail("leaveGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'leaveGroup' function with groupId and NULL onDeleteListener
-	 * @target void leaveGroup(String groupId, OnDeleteListener onDeleteListener)
-	 * @test_data groupId and onDeleteListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform leaveGroup(String groupId, OnDeleteListener onDeleteListener) API
-	 * @post_condition None
-	 * @expected leaveGroup throws OcException.
-     */
-    public void testLeaveGroupNULLCallback_NV_N() {
-        try {
-            m_accountManager.leaveGroup(GROUP_ID, IC_OcAccountManager_OnDeleteListener_NULL);
-            fail("leaveGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'deleteDeviceFromGroup' function with groupId, deviceId and onDeleteListener
-	 * @target void deleteDeviceFromGroup(String groupId, List<String> deviceId, OnDeleteListener onDeleteListener)
-	 * @test_data groupId and onDeleteListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform deleteDeviceFromGroup(String groupId, List<String> deviceId, OnDeleteListener onDeleteListener) API
-	 * @post_condition None
-	 * @expected deleteDeviceFromGroup throws OcException if fail.
-     */
-    public void testDeleteDeviceFromGroup_SRC_P() {
-        try {
-            m_accountManager.deleteDeviceFromGroup(GROUP_ID, LIST_DEVICE_ID, m_OcAccountManagerAdapter);
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            fail("deleteDeviceFromGroup API Exception occurred: " + ex.getLocalizedMessage());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'deleteDeviceFromGroup' function with invalid groupId, valid deviceId and onDeleteListener
-	 * @target void deleteDeviceFromGroup(String groupId, List<String> deviceId, OnDeleteListener onDeleteListener)
-	 * @test_data groupId and onDeleteListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform deleteDeviceFromGroup(String groupId, List<String> deviceId, OnDeleteListener onDeleteListener) API
-	 * @post_condition None
-	 * @expected deleteDeviceFromGroup throws OcException.
-     */
-    public void testDeleteDeviceFromGroup_USV_N() {
-        try {
-            m_accountManager.deleteDeviceFromGroup(INVALID_PARAMETER, LIST_DEVICE_ID, m_OcAccountManagerAdapter);
-            fail("deleteDeviceFromGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'deleteDeviceFromGroup' function with empty groupId, deviceId and valid onDeleteListener
-	 * @target void deleteDeviceFromGroup(String groupId, List<String> deviceId, OnDeleteListener onDeleteListener)
-	 * @test_data groupId and onDeleteListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform deleteDeviceFromGroup(String groupId, List<String> deviceId, OnDeleteListener onDeleteListener) API
-	 * @post_condition None
-	 * @expected deleteDeviceFromGroup throws OcException.
-     */
-    public void testDeleteDeviceFromGroup_ESV_N() {
-        try {
-            m_accountManager.deleteDeviceFromGroup(EMPTY_VALUE, EMPTY_LIST_DEVICE_ID, m_OcAccountManagerAdapter);
-            fail("deleteDeviceFromGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'deleteDeviceFromGroup' function with NULL groupId, valid deviceId and valid onDeleteListener
-	 * @target void deleteDeviceFromGroup(String groupId, List<String> deviceId, OnDeleteListener onDeleteListener)
-	 * @test_data groupId and onDeleteListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform deleteDeviceFromGroup(String groupId, List<String> deviceId, OnDeleteListener onDeleteListener) API
-	 * @post_condition None
-	 * @expected deleteDeviceFromGroup throws OcException.
-     */
-    public void testDeleteDeviceFromGroup_NV_N() {
-        try {
-            m_accountManager.deleteDeviceFromGroup(NULL_VAL, LIST_DEVICE_ID, m_OcAccountManagerAdapter);
-            fail("deleteDeviceFromGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'deleteDeviceFromGroup' function with NULL groupId, valid deviceId and valid onDeleteListener
-	 * @target void deleteDeviceFromGroup(String groupId, List<String> deviceId, OnDeleteListener onDeleteListener)
-	 * @test_data groupId and onDeleteListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform deleteDeviceFromGroup(String groupId, List<String> deviceId, OnDeleteListener onDeleteListener) API
-	 * @post_condition None
-	 * @expected deleteDeviceFromGroup throws OcException.
-     */
-    public void testDeleteDeviceFromGroupNULLCallback_NV_N() {
-        try {
-           
-            m_accountManager.deleteDeviceFromGroup(GROUP_ID, LIST_DEVICE_ID, IC_OcAccountManager_OnDeleteListener_NULL);
-            fail("deleteDeviceFromGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
+        
     /**
      * @since 2016-08-29
 	 * @see None
@@ -1510,76 +1038,17 @@ public class ICOcAccountManager extends InstrumentationTestCase {
      */
     public void testObserveGroup_SRC_P() {
         try {
-            m_accountManager.observeGroup(GROUP_ID, m_OcAccountManagerAdapter);
+            m_accountManager.observeGroup(m_OcAccountManagerAdapter);
         } catch (OcException ex) {
             ex.printStackTrace();
+            System.out.println("####Error Message:"+ex.getMessage());
+            System.out.println("####Error Message:"+ex.getErrorCode());
+            System.out.println("####Error Message:"+ex.getLocalizedMessage());
             fail("observeGroup API Exception occurred: " + ex.getLocalizedMessage());
         }
     }
     
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'observeGroup' function with invalid groupId and valid onObserveListener
-	 * @target void observeGroup(String groupId, OnObserveListener onObserveListener)
-	 * @test_data groupId and onDeleteListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform observeGroup(String groupId, OnObserveListener onObserveListener) API
-	 * @post_condition None
-	 * @expected observeGroup throws OcException.
-     */
-    public void testObserveGroup_USV_N() {
-        try {
-            m_accountManager.observeGroup(INVALID_PARAMETER, m_OcAccountManagerAdapter);
-            fail("observeGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'observeGroup' function with empty groupId and valid onObserveListener
-	 * @target void observeGroup(String groupId, OnObserveListener onObserveListener)
-	 * @test_data groupId and onDeleteListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform observeGroup(String groupId, OnObserveListener onObserveListener) API
-	 * @post_condition None
-	 * @expected observeGroup throws OcException.
-     */
-    public void testObserveGroup_ESV_N() {
-        try {
-            m_accountManager.observeGroup(EMPTY_VALUE, m_OcAccountManagerAdapter);
-            fail("observeGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'observeGroup' function with NULL groupId and valid onObserveListener
-	 * @target void observeGroup(String groupId, OnObserveListener onObserveListener)
-	 * @test_data groupId and onDeleteListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform observeGroup(String groupId, OnObserveListener onObserveListener) API
-	 * @post_condition None
-	 * @expected observeGroup throws OcException.
-     */
-    public void testObserveGroup_NV_N() {
-        try {
-            m_accountManager.observeGroup(NULL_VAL, m_OcAccountManagerAdapter);
-            fail("observeGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
+   
     /**
      * @since 2016-08-29
 	 * @see None
@@ -1593,7 +1062,7 @@ public class ICOcAccountManager extends InstrumentationTestCase {
      */
     public void testObserveGroupNULLCallback_NV_N() {
         try {
-            m_accountManager.observeGroup(GROUP_ID, (OnObserveListener)IC_OcAccountManager_OnObserveListener_NULL);
+            m_accountManager.observeGroup(null);
             fail("observeGroup does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -1605,17 +1074,17 @@ public class ICOcAccountManager extends InstrumentationTestCase {
      * @since 2016-08-29
 	 * @see None
 	 * @objective Test 'cancelObserveGroup' function with groupId
-	 * @target void cancelObserveGroup(String groupId)
+	 * @target void cancelObserveGroup()
 	 * @test_data groupId
 	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform cancelObserveGroup(String groupId) API
+	 * @procedure Perform cancelObserveGroup() API
 	 * @post_condition None
 	 * @expected cancelObserveGroup throws OcException if fail.
      */
     public void testCancelObserveGroup_SRC_P() {
         try {
-	    m_accountManager.observeGroup(GROUP_ID, m_OcAccountManagerAdapter);
-            m_accountManager.cancelObserveGroup(GROUP_ID);
+        	m_accountManager.observeGroup(m_OcAccountManagerAdapter);
+            m_accountManager.cancelObserveGroup();
         } catch (OcException ex) {
             ex.printStackTrace();
             fail("cancelObserveGroup API Exception occurred: " + ex.getLocalizedMessage());
@@ -1635,56 +1104,18 @@ public class ICOcAccountManager extends InstrumentationTestCase {
      */
     public void testCancelObserveGroup_USV_N() {
         try {
-            m_accountManager.cancelObserveGroup(INVALID_PARAMETER);
+            m_accountManager.cancelObserveGroup();
             fail("cancelObserveGroup does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
+            System.out.println("####Error Message:"+ex.getMessage());
+            System.out.println("####Error Code:"+ex.getErrorCode());
+            System.out.println("####Error Localize Message:"+ex.getLocalizedMessage());
+            assertEquals(ErrorCode.ERROR, ex.getErrorCode());
         }
     }
     
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'cancelObserveGroup' function with invalid groupId
-	 * @target void cancelObserveGroup(String groupId)
-	 * @test_data groupId
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform cancelObserveGroup(String groupId) API
-	 * @post_condition None
-	 * @expected cancelObserveGroup throws OcException.
-     */
-    public void testCancelObserveGroup_ESV_N() {
-        try {
-            m_accountManager.cancelObserveGroup(EMPTY_VALUE);
-            fail("cancelObserveGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'cancelObserveGroup' function with NULL groupId
-	 * @target void cancelObserveGroup(String groupId)
-	 * @test_data groupId
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform cancelObserveGroup(String groupId) API
-	 * @post_condition None
-	 * @expected cancelObserveGroup throws OcException.
-     */
-    public void testCancelObserveGroup_NV_N() {
-        try {
-            m_accountManager.cancelObserveGroup(NULL_VAL);
-            fail("cancelObserveGroup does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
+   
     /**
      * @since 2016-08-29
 	 * @see None
@@ -1718,7 +1149,7 @@ public class ICOcAccountManager extends InstrumentationTestCase {
      */
     public void testObserveInvitation_NV_N() {
         try {
-            m_accountManager.observeInvitation((OnObserveListener) IC_OcAccountManager_OnObserveListener_NULL);
+            m_accountManager.observeInvitation(null);
             fail("observeInvitation does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
@@ -1764,6 +1195,9 @@ public class ICOcAccountManager extends InstrumentationTestCase {
             m_accountManager.sendInvitation(GROUP_ID, USER_UUID, m_OcAccountManagerAdapter);
         } catch (OcException ex) {
             ex.printStackTrace();
+            System.out.println("####Error Message:"+ex.getMessage());
+            System.out.println("####Error Code:"+ex.getErrorCode());
+            System.out.println("####Error Localize Message:"+ex.getLocalizedMessage());
             fail("sendInvitation API Exception occurred: " + ex.getLocalizedMessage());
         }
     }
@@ -1785,6 +1219,9 @@ public class ICOcAccountManager extends InstrumentationTestCase {
             fail("observeInvitation does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
+            System.out.println("####Error Message:"+ex.getMessage());
+            System.out.println("####Error Code:"+ex.getErrorCode());
+            System.out.println("####Error Localize Message:"+ex.getLocalizedMessage());
             assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
         }
     }
@@ -1806,6 +1243,9 @@ public class ICOcAccountManager extends InstrumentationTestCase {
             fail("observeInvitation does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
+            System.out.println("####Error Message:"+ex.getMessage());
+            System.out.println("####Error Code:"+ex.getErrorCode());
+            System.out.println("####Error Localize Message:"+ex.getLocalizedMessage());
             assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
         }
     }
@@ -1848,6 +1288,7 @@ public class ICOcAccountManager extends InstrumentationTestCase {
             fail("observeInvitation does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
+            
             assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
         }
     }
@@ -1889,6 +1330,9 @@ public class ICOcAccountManager extends InstrumentationTestCase {
             fail("cancelInvitation does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
+            System.out.println("####Error Message:"+ex.getMessage());
+            System.out.println("####Error Code:"+ex.getErrorCode());
+            System.out.println("####Error Localize Message:"+ex.getLocalizedMessage());
             assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
         }
     }
@@ -1910,6 +1354,9 @@ public class ICOcAccountManager extends InstrumentationTestCase {
             fail("cancelInvitation does not throw exception!");
         } catch (OcException ex) {
             ex.printStackTrace();
+            System.out.println("####Error Message:"+ex.getMessage());
+            System.out.println("####Error Code:"+ex.getErrorCode());
+            System.out.println("####Error Localize Message:"+ex.getLocalizedMessage());
             assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
         }
     }
@@ -1956,107 +1403,4 @@ public class ICOcAccountManager extends InstrumentationTestCase {
         }
     }
     
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'deleteInvitation' function with groupId and onDeleteListener
-	 * @target void deleteInvitation(String groupId, OnDeleteListener onDeleteListener)
-	 * @test_data groupId and onDeleteListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform deleteInvitation(String groupId, OnDeleteListener onDeleteListener) API
-	 * @post_condition None
-	 * @expected deleteInvitation throws OcException if fail.
-     */
-    public void testDeleteInvitation_SRC_P() {
-        try {
-            m_accountManager.deleteInvitation(GROUP_ID, m_OcAccountManagerAdapter);
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            fail("deleteInvitation API Exception occurred: " + ex.getLocalizedMessage());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'deleteInvitation' function with invalid groupId and onDeleteListener
-	 * @target void deleteInvitation(String groupId, OnDeleteListener onDeleteListener)
-	 * @test_data groupId and onDeleteListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform deleteInvitation(String groupId, OnDeleteListener onDeleteListener) API
-	 * @post_condition None
-	 * @expected deleteInvitation throws OcException.
-     */
-    public void testDeleteInvitation_USV_N() {
-        try {
-            m_accountManager.deleteInvitation(INVALID_PARAMETER, m_OcAccountManagerAdapter);
-            fail("cancelInvitation does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'deleteInvitation' function with empty groupId and valid onDeleteListener
-	 * @target void deleteInvitation(String groupId, OnDeleteListener onDeleteListener)
-	 * @test_data groupId and onDeleteListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform deleteInvitation(String groupId, OnDeleteListener onDeleteListener) API
-	 * @post_condition None
-	 * @expected deleteInvitation throws OcException.
-     */
-    public void testDeleteInvitation_ESV_N() {
-        try {
-            m_accountManager.deleteInvitation(EMPTY_VALUE, m_OcAccountManagerAdapter);
-            fail("cancelInvitation does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'deleteInvitation' function with NULL groupId and valid onDeleteListener
-	 * @target void deleteInvitation(String groupId, OnDeleteListener onDeleteListener)
-	 * @test_data groupId and onDeleteListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform deleteInvitation(String groupId, OnDeleteListener onDeleteListener) API
-	 * @post_condition None
-	 * @expected deleteInvitation throws OcException.
-     */
-    public void testDeleteInvitation_NV_N() {
-        try {
-            m_accountManager.deleteInvitation(NULL_VAL, m_OcAccountManagerAdapter);
-            fail("cancelInvitation does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
-    
-    /**
-     * @since 2016-08-29
-	 * @see None
-	 * @objective Test 'deleteInvitation' function with valid groupId and NULL onDeleteListener
-	 * @target void deleteInvitation(String groupId, OnDeleteListener onDeleteListener)
-	 * @test_data groupId and onDeleteListener
-	 * @pre_condition constructAccountManagerObject(host, connectivity_type) API
-	 * @procedure Perform deleteInvitation(String groupId, OnDeleteListener onDeleteListener) API
-	 * @post_condition None
-	 * @expected deleteInvitation throws OcException.
-     */
-    public void testDeleteInvitationNULLCallback_NV_N() {
-        try {
-            m_accountManager.deleteInvitation(GROUP_ID, IC_OcAccountManager_OnDeleteListener_NULL);
-            fail("cancelInvitation does not throw exception!");
-        } catch (OcException ex) {
-            ex.printStackTrace();
-            assertEquals(ErrorCode.INVALID_PARAM, ex.getErrorCode());
-        }
-    }
 }

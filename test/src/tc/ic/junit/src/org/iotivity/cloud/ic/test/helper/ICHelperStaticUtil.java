@@ -20,8 +20,8 @@ public final class ICHelperStaticUtil {
 	public static final QualityOfService IC_OC_QUALITY_OF_SERVICE = QualityOfService.HIGH;
 	public static final String IC_OC_QUALITY_OF_SERVICE_NULL = null;
 	
-	public static final OcPlatform.OnPublishResourceListener IC_ON_PUBLISHED_CALLBACK_HANDLER_NULL = null;
-	public static final OcPlatform.OnDeleteResourceListener IC_ON_DELETE_CALLBACK_HANDLER_NULL = null;
+	public static final OcRDClient.OnPublishResourceListener IC_ON_PUBLISHED_CALLBACK_HANDLER_NULL = null;
+	public static final OcRDClient.OnDeleteResourceListener IC_ON_DELETE_CALLBACK_HANDLER_NULL = null;
 	public static final OcResource.OnObserveListener IC_ON_OBSERVE_CALLBACK_HANDLER_NULL = null;
 		
 	public static List<OcResourceHandle> ocResourceList = new ArrayList<OcResourceHandle>();

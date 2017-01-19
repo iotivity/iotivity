@@ -6,10 +6,11 @@ import org.iotivity.base.OcHeaderOption;
 import org.iotivity.base.OcRepresentation;
 import org.iotivity.base.OcResource;
 import org.iotivity.base.OcPlatform;
+import org.iotivity.base.OcRDClient;
 
 public class ICResourceDirectoryCommonAdapter implements
-        OcPlatform.OnPublishResourceListener,
-        OcPlatform.OnDeleteResourceListener, OcResource.OnObserveListener {
+	OcRDClient.OnPublishResourceListener,
+	OcRDClient.OnDeleteResourceListener, OcResource.OnObserveListener {
 
     public ICResourceDirectoryCommonAdapter() {
 
