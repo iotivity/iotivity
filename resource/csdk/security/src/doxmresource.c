@@ -1951,6 +1951,51 @@ bool IsSubOwner(const OicUuid_t* uuid)
     }
     return retVal;
 }
+
+OCStackResult SetMOTStatus(bool enable)
+{
+    OCStackResult ret = OC_STACK_NO_MEMORY;
+    uint8_t *cborPayload = NULL;
+    size_t size = 0;
+    bool isDeallocateRequired = false;
+
+    OIC_LOG_V(DEBUG, TAG, "In %s", __func__);
+
+    if (NULL == gDoxm->mom && !enable)
+    {
+        OIC_LOG_V(DEBUG, TAG, "Out %s", __func__);
+        return OC_STACK_OK;
+    }
+
+    if (NULL == gDoxm->mom)
+    {
+        gDoxm->mom = (OicSecMom_t*)OICCalloc(1, sizeof(OicSecMom_t));
+        VERIFY_NON_NULL(TAG, gDoxm->mom, ERROR);
+        isDeallocateRequired = true;
+    }
+
+    gDoxm->mom->mode = (enable ? OIC_MULTIPLE_OWNER_ENABLE : OIC_MULTIPLE_OWNER_DISABLE);
+
+    ret = DoxmToCBORPayload(gDoxm, &cborPayload, &size, false);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+    ret = UpdateSecureResourceInPS(OIC_JSON_DOXM_NAME, cborPayload, size);
+    VERIFY_SUCCESS(TAG, OC_STACK_OK == ret, ERROR);
+
+    OICFree(cborPayload);
+
+    isDeallocateRequired = false;
+
+exit:
+    if (isDeallocateRequired)
+    {
+        OICFree(gDoxm->mom);
+    }
+    OICFree(cborPayload);
+    OIC_LOG_V(DEBUG, TAG, "Out %s : %d", __func__, ret);
+    return ret;
+}
+
 #endif //MULTIPLE_OWNER
 
 /**
