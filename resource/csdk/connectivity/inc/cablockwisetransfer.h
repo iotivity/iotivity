@@ -493,6 +493,15 @@ uint8_t CAGetBlockOptionType(const CABlockDataID_t *blockID);
 CAData_t *CAGetDataSetFromBlockDataList(const CABlockDataID_t *blockID);
 
 /**
+ * Update the block data from block-wise transfer list.
+ * @param[in]   blockID     ID set of CABlockData.
+ * @param[in]   sendData    New block date should be sent.
+ * @return CABlockData_t structure.
+ */
+CABlockData_t *CAUpdateDataSetFromBlockDataList(const CABlockDataID_t *blockID,
+                                                const CAData_t *sendData);
+
+/**
  * Get token from block-wise transfer list.
  * @param[in]   pdu    received pdu binary data.
  * @param[in]   endpoint    remote endpoint information.

@@ -2194,7 +2194,7 @@ CAPayload_t CAGetPayloadInfo(const CAData_t *data, size_t *payloadLen)
             return data->requestInfo->info.payload;
         }
     }
-    else
+    else if (data->responseInfo)
     {
         if (data->responseInfo->info.payload)
         {
@@ -2304,6 +2304,31 @@ CAData_t *CAGetDataSetFromBlockDataList(const CABlockDataID_t *blockID)
     return NULL;
 }
 
+CABlockData_t *CAUpdateDataSetFromBlockDataList(const CABlockDataID_t *blockID,
+                                                const CAData_t *sendData)
+{
+    VERIFY_NON_NULL_RET(blockID, TAG, "blockID", NULL);
+    VERIFY_NON_NULL_RET(sendData, TAG, "sendData", NULL);
+
+    ca_mutex_lock(g_context.blockDataListMutex);
+
+    size_t len = u_arraylist_length(g_context.dataList);
+    for (size_t i = 0; i < len; i++)
+    {
+        CABlockData_t *currData = (CABlockData_t *) u_arraylist_get(g_context.dataList, i);
+        if (CABlockidMatches(currData, blockID))
+        {
+            CADestroyDataSet(currData->sentData);
+            currData->sentData = CACloneCAData(sendData);
+            ca_mutex_unlock(g_context.blockDataListMutex);
+            return currData;
+        }
+    }
+    ca_mutex_unlock(g_context.blockDataListMutex);
+
+    return NULL;
+}
+
 CAResult_t CAGetTokenFromBlockDataList(const coap_pdu_t *pdu, const CAEndpoint_t *endpoint,
                                        CAResponseInfo_t *responseInfo)
 {
@@ -2374,17 +2399,11 @@ CAResult_t CACheckBlockDataValidation(const CAData_t *sendData, CABlockData_t **
             return CA_STATUS_FAILED;
         }
 
-        CABlockData_t *storedData = CAGetBlockDataFromBlockDataList(blockDataID);
-        if (storedData)
+        CABlockData_t *updatedData = CAUpdateDataSetFromBlockDataList(blockDataID, sendData);
+        if (updatedData)
         {
             OIC_LOG(DEBUG, TAG, "Send response about the received block request.");
-            if (storedData->sentData)
-            {
-                OIC_LOG(DEBUG, TAG, "init block number");
-                CADestroyDataSet(storedData->sentData);
-            }
-            storedData->sentData = CACloneCAData(sendData);
-            *blockData = storedData;
+            *blockData = updatedData;
             CADestroyBlockID(blockDataID);
             return CA_STATUS_OK;
         }
@@ -2570,10 +2589,10 @@ CAResult_t CARemoveBlockDataFromList(const CABlockDataID_t *blockID)
             }
 
             // destroy memory
-            CADestroyDataSet(currData->sentData);
-            CADestroyBlockID(currData->blockDataId);
-            OICFree(currData->payload);
-            OICFree(currData);
+            CADestroyDataSet(removedData->sentData);
+            CADestroyBlockID(removedData->blockDataId);
+            OICFree(removedData->payload);
+            OICFree(removedData);
             ca_mutex_unlock(g_context.blockDataListMutex);
             return CA_STATUS_OK;
         }
@@ -2614,14 +2633,20 @@ void CADestroyDataSet(CAData_t* data)
 {
     VERIFY_NON_NULL_VOID(data, TAG, "data");
 
-    CAFreeEndpoint(data->remoteEndpoint);
+    if (data->remoteEndpoint)
+    {
+        CAFreeEndpoint(data->remoteEndpoint);
+        data->remoteEndpoint = NULL;
+    }
     if (data->requestInfo)
     {
         CADestroyRequestInfoInternal(data->requestInfo);
+        data->requestInfo = NULL;
     }
     if (data->responseInfo)
     {
         CADestroyResponseInfoInternal(data->responseInfo);
+        data->responseInfo = NULL;
     }
     OICFree(data);
 }
@@ -2709,18 +2734,12 @@ CAResult_t CARemoveBlockDataFromListWithSeed(const CAToken_t token, uint8_t toke
         return CA_STATUS_FAILED;
     }
 
-    CAResult_t res = CA_STATUS_OK;
-
-    if (NULL != CAGetBlockDataFromBlockDataList(blockDataID))
+    CAResult_t res = CARemoveBlockDataFromList(blockDataID);
+    if (CA_STATUS_OK != res)
     {
-        res = CARemoveBlockDataFromList(blockDataID);
-        if (CA_STATUS_OK != res)
-        {
-            OIC_LOG(ERROR, TAG, "CARemoveBlockDataFromList failed");
-        }
+        OIC_LOG(ERROR, TAG, "CARemoveBlockDataFromList failed");
     }
 
     CADestroyBlockID(blockDataID);
-
     return res;
 }
