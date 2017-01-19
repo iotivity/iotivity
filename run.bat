@@ -19,7 +19,7 @@ set TARGET_OS=windows
 
 if "%TARGET_ARCH%" == "" (
   set TARGET_ARCH=amd64
-) 
+)
 
 if "%TEST%" == "" (
   set TEST=1
@@ -33,10 +33,13 @@ if "%RELEASE%" == "" (
   set RELEASE=0
 )
 
+if "%WITH_TCP%" == "" (
+  set WITH_TCP=1
+)
+
 set THREAD_COUNT=%NUMBER_OF_PROCESSORS%
 set SECURED=1
 set ROUTING=EP
-set WITH_TCP=1
 set WITH_UPSTREAM_LIBCOAP=1
 set BINDIR=debug
 set MULTIPLE_OWNER=1
@@ -61,12 +64,15 @@ IF NOT "%1"=="" (
   )
   IF "%1"=="-logging" (
     SET LOGGING=1
-  )    
+  )
   IF "%1"=="-debugger" (
-    set DEBUG="%ProgramFiles(x86)%\Windows Kits\10\Debuggers\x64\cdb.exe" -2 -c "g" 
+    set DEBUG="%ProgramFiles(x86)%\Windows Kits\10\Debuggers\x64\cdb.exe" -2 -c "g"
   )
   IF "%1"=="-release" (
     SET RELEASE=1
+  )
+  IF "%1"=="-noTCP" (
+    SET WITH_TCP=0
   )
 
   SHIFT
@@ -188,8 +194,12 @@ echo.
 echo. Default build settings are: debug binaries run unittests and no logging
 echo.
 echo. Default build parameters can be overridden using the following arguments
-echo. 
-echo   -arch [x86 ^| amd64]         - Build either amd64 or x86 architecture binaries
+echo.
+REM At a quick look, the "Build either amd64 or x86 architecture binaries" message
+REM below seems out of alignment with the other messages underneath it. But, "^|"
+REM gets echoed as a single character, so the messages are actually aligned correctly
+REM in the output of "run.bat".
+echo   -arch [x86 ^| amd64]          - Build either amd64 or x86 architecture binaries
 echo.
 echo   -noTest                      - Don't run the unittests after building the binaries
 echo.
@@ -201,7 +211,10 @@ echo   -release                     - Build release binaries
 echo.
 echo   -threads [NUMBER_OF_THREADS] - Build in parallel using [NUMBER_OF_THREADS] threads. Default: %NUMBER_OF_PROCESSORS%.
 echo.
+echo   -noTCP                       - Build with the TCP adapter disabled
+echo.
 echo. Usage examples:
+echo.
 echo   Launch SimpleClient with debugger:
 echo      %0 client -debugger
 echo.
@@ -225,6 +238,9 @@ echo      %0 build -arch amd64 -release -logging
 echo.
 echo   Build using only one thread:
 echo      %0 build -threads 1
+echo.
+echo   Build with TCP adapter disabled and run unit tests:
+echo      %0 build -noTCP
 echo.
 echo   Run all tests:
 echo      %0 test
