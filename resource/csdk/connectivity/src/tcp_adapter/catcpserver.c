@@ -59,11 +59,13 @@
 
 #include "catcpinterface.h"
 #include "caipnwmonitor.h"
-#include <coap/pdu.h>
 #include "caadapterutils.h"
 #include "octhread.h"
 #include "oic_malloc.h"
 #include "oic_string.h"
+
+#include <coap/pdu.h>
+#include <coap/utlist.h>
 
 #ifdef __WITH_TLS__
 #include "ca_adapter_net_ssl.h"
@@ -109,6 +111,11 @@ static CATCPErrorHandleCallback g_tcpErrorHandler = NULL;
  * Connected Callback to pass the connection information to RI.
  */
 static CATCPConnectionHandleCallback g_connectionCallback = NULL;
+
+/**
+ * Store the connected TCP session information.
+ */
+static CATCPSessionInfo_t *g_sessionList = NULL;
 
 static CAResult_t CATCPCreateMutex();
 static void CATCPDestroyMutex();
@@ -233,14 +240,12 @@ static void CAFindReadyMessage()
         FD_SET(caglobals.tcp.connectionFds[0], &readFds);
     }
 
-    uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);
-    for (size_t i = 0; i < length; i++)
+    CATCPSessionInfo_t *session = NULL;
+    LL_FOREACH(g_sessionList, session)
     {
-        CATCPSessionInfo_t *svritem =
-                (CATCPSessionInfo_t *) u_arraylist_get(caglobals.tcp.svrlist, i);
-        if (svritem && 0 <= svritem->fd && CONNECTED == svritem->state)
+        if (session && session->fd != OC_INVALID_SOCKET && session->state == CONNECTED)
         {
-            FD_SET(svritem->fd, &readFds);
+            FD_SET(session->fd, &readFds);
         }
     }
 
@@ -307,16 +312,14 @@ static void CASelectReturned(fd_set *readFds)
     }
     else
     {
-        uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);
-        for (size_t i = 0; i < length; i++)
+        CATCPSessionInfo_t *session = NULL;
+        LL_FOREACH(g_sessionList, session)
         {
-            CATCPSessionInfo_t *svritem =
-                    (CATCPSessionInfo_t *) u_arraylist_get(caglobals.tcp.svrlist, i);
-            if (svritem && svritem->fd >= 0)
+            if (session && session->fd != OC_INVALID_SOCKET)
             {
-                if (FD_ISSET(svritem->fd, readFds))
+                if (FD_ISSET(session->fd, readFds))
                 {
-                    CAReceiveMessage(svritem->fd);
+                    CAReceiveMessage(session->fd);
                 }
             }
         }
@@ -422,14 +425,12 @@ static void CAFindReadyMessage()
 
     while (!caglobals.tcp.terminate)
     {
-        uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);
-        for (size_t i = 0; (i < length) && (arraySize < EVENT_ARRAY_SIZE); i++)
+        CATCPSessionInfo_t *session = NULL;
+        LL_FOREACH(g_sessionList, session);
         {
-            CATCPSessionInfo_t *svritem =
-                    (CATCPSessionInfo_t *) u_arraylist_get(caglobals.tcp.svrlist, i);
-            if (svritem && OC_INVALID_SOCKET != svritem->fd)
+            if (session && OC_INVALID_SOCKET != session->fd && (arraySize < EVENT_ARRAY_SIZE))
             {
-                CAPushSocket(svritem->fd, socketArray, eventArray, &arraySize, _countof(socketArray));
+                 CAPushSocket(session->fd, socketArray, eventArray, &arraySize, _countof(socketArray));
             }
         }
 
@@ -547,15 +548,7 @@ static void CAAcceptConnection(CATransportFlags_t flag, CASocket_t *sock)
                             svritem->sep.endpoint.addr, &svritem->sep.endpoint.port);
 
         oc_mutex_lock(g_mutexObjectList);
-        bool result = u_arraylist_add(caglobals.tcp.svrlist, svritem);
-        if (!result)
-        {
-            OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
-            OC_CLOSE_SOCKET(sockfd);
-            OICFree(svritem);
-            oc_mutex_unlock(g_mutexObjectList);
-            return;
-        }
+        LL_APPEND(g_sessionList, svritem);
         oc_mutex_unlock(g_mutexObjectList);
 
         CHECKFD(sockfd);
@@ -735,8 +728,7 @@ static void CAReceiveMessage(CASocketFd_t fd)
     CAResult_t res = CA_STATUS_OK;
 
     //get remote device information from file descriptor.
-    size_t index = 0;
-    CATCPSessionInfo_t *svritem = CAGetSessionInfoFromFD(fd, &index);
+    CATCPSessionInfo_t *svritem = CAGetSessionInfoFromFD(fd);
     if (!svritem)
     {
         OIC_LOG(ERROR, TAG, "there is no connection information in list");
@@ -872,47 +864,6 @@ static void CAWakeUpForReadFdsUpdate()
     }
 }
 #endif
-
-static CAResult_t CATCPConvertNameToAddr(int family, const char *host, uint16_t port,
-                                         struct sockaddr_storage *sockaddr)
-{
-    struct addrinfo *addrs = NULL;
-    struct addrinfo hints = { .ai_family = family,
-                              .ai_protocol   = IPPROTO_TCP,
-                              .ai_socktype = SOCK_STREAM,
-                              .ai_flags = AI_NUMERICHOST };
-
-    int r = getaddrinfo(host, NULL, &hints, &addrs);
-    if (r)
-    {
-#ifdef EAI_SYSTEM
-        if (EAI_SYSTEM == r)
-        {
-            OIC_LOG_V(ERROR, TAG, "getaddrinfo failed: errno %s", strerror(errno));
-        }
-        else
-#endif
-        {
-            OIC_LOG_V(ERROR, TAG, "getaddrinfo failed: %s", gai_strerror(r));
-        }
-        freeaddrinfo(addrs);
-        return CA_STATUS_FAILED;
-    }
-    // assumption: in this case, getaddrinfo will only return one addrinfo
-    // or first is the one we want.
-    if (addrs[0].ai_family == AF_INET6)
-    {
-        memcpy(sockaddr, addrs[0].ai_addr, sizeof (struct sockaddr_in6));
-        ((struct sockaddr_in6 *)sockaddr)->sin6_port = htons(port);
-    }
-    else
-    {
-        memcpy(sockaddr, addrs[0].ai_addr, sizeof (struct sockaddr_in));
-        ((struct sockaddr_in *)sockaddr)->sin_port = htons(port);
-    }
-    freeaddrinfo(addrs);
-    return CA_STATUS_OK;
-}
 
 static CAResult_t CATCPCreateSocket(int family, CATCPSessionInfo_t *svritem)
 {
@@ -1124,13 +1075,6 @@ CAResult_t CATCPStartServer(const ca_thread_pool_t threadPool)
         OIC_LOG(ERROR, TAG, "failed to create mutex/cond");
         return res;
     }
-
-    oc_mutex_lock(g_mutexObjectList);
-    if (!caglobals.tcp.svrlist)
-    {
-        caglobals.tcp.svrlist = u_arraylist_create();
-    }
-    oc_mutex_unlock(g_mutexObjectList);
 
     if (caglobals.server)
     {
@@ -1430,18 +1374,7 @@ CASocketFd_t CAConnectTCPSession(const CAEndpoint_t *endpoint)
 
     // #2. add TCP connection info to list
     oc_mutex_lock(g_mutexObjectList);
-    if (caglobals.tcp.svrlist)
-    {
-        bool res = u_arraylist_add(caglobals.tcp.svrlist, svritem);
-        if (!res)
-        {
-            OIC_LOG(ERROR, TAG, "u_arraylist_add failed.");
-            OC_CLOSE_SOCKET(svritem->fd);
-            OICFree(svritem);
-            oc_mutex_unlock(g_mutexObjectList);
-            return OC_INVALID_SOCKET;
-        }
-    }
+    LL_APPEND(g_sessionList, svritem);
     oc_mutex_unlock(g_mutexObjectList);
 
     // #3. create the socket and connect to TCP server
@@ -1460,16 +1393,11 @@ CASocketFd_t CAConnectTCPSession(const CAEndpoint_t *endpoint)
     return svritem->fd;
 }
 
-CAResult_t CADisconnectTCPSession(size_t index)
+CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *removedData)
 {
     OIC_LOG_V(DEBUG, TAG, "%s", __func__);
 
-    CATCPSessionInfo_t *removedData = u_arraylist_remove(caglobals.tcp.svrlist, index);
-    if (!removedData)
-    {
-        OIC_LOG(DEBUG, TAG, "there is no data to be removed");
-        return CA_STATUS_OK;
-    }
+    VERIFY_NON_NULL(removedData, TAG, "removedData is NULL");
 
     // close the socket and remove session info in list.
     if (removedData->fd != OC_INVALID_SOCKET)
@@ -1500,17 +1428,19 @@ CAResult_t CADisconnectTCPSession(size_t index)
 void CATCPDisconnectAll()
 {
     oc_mutex_lock(g_mutexObjectList);
-
-    uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);
-    for (ssize_t index = length; index > 0; index--)
+    CATCPSessionInfo_t *session = NULL;
+    CATCPSessionInfo_t *tmp = NULL;
+    LL_FOREACH_SAFE(g_sessionList, session, tmp);
     {
-        // disconnect session from remote device.
-        CADisconnectTCPSession(index - 1);
+        if (session)
+        {
+            LL_DELETE(g_sessionList, session);
+            // disconnect session from remote device.
+            CADisconnectTCPSession(session);
+        }
     }
 
-    u_arraylist_destroy(caglobals.tcp.svrlist);
-    caglobals.tcp.svrlist = NULL;
-
+    g_sessionList = NULL;
     oc_mutex_unlock(g_mutexObjectList);
 
 #ifdef __WITH_TLS__
@@ -1519,35 +1449,29 @@ void CATCPDisconnectAll()
 
 }
 
-CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint, size_t *index)
+CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint)
 {
     VERIFY_NON_NULL_RET(endpoint, TAG, "endpoint is NULL", NULL);
-    VERIFY_NON_NULL_RET(index, TAG, "index is NULL", NULL);
 
     OIC_LOG_V(DEBUG, TAG, "Looking for [%s:%d]", endpoint->addr, endpoint->port);
 
     // get connection info from list
-    uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);
-    for (size_t i = 0; i < length; i++)
+    oc_mutex_lock(g_mutexObjectList);
+    CATCPSessionInfo_t *session = NULL;
+    LL_FOREACH(g_sessionList, session)
     {
-        CATCPSessionInfo_t *svritem = (CATCPSessionInfo_t *) u_arraylist_get(
-                caglobals.tcp.svrlist, i);
-        if (!svritem)
+        if (!strncmp(session->sep.endpoint.addr, endpoint->addr,
+                     sizeof(session->sep.endpoint.addr))
+                && (session->sep.endpoint.port == endpoint->port)
+                && (session->sep.endpoint.flags & endpoint->flags))
         {
-            continue;
-        }
-
-        if (!strncmp(svritem->sep.endpoint.addr, endpoint->addr,
-                     sizeof(svritem->sep.endpoint.addr))
-                && (svritem->sep.endpoint.port == endpoint->port)
-                && (svritem->sep.endpoint.flags & endpoint->flags))
-        {
+            oc_mutex_unlock(g_mutexObjectList);
             OIC_LOG(DEBUG, TAG, "Found in session list");
-            *index = i;
-            return svritem;
+            return session;
         }
     }
 
+    oc_mutex_unlock(g_mutexObjectList);
     OIC_LOG(DEBUG, TAG, "Session not found");
     return NULL;
 }
@@ -1560,24 +1484,17 @@ CASocketFd_t CAGetSocketFDFromEndpoint(const CAEndpoint_t *endpoint)
 
     // get connection info from list.
     oc_mutex_lock(g_mutexObjectList);
-    uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);
-    for (size_t i = 0; i < length; i++)
+    CATCPSessionInfo_t *session = NULL;
+    LL_FOREACH(g_sessionList, session)
     {
-        CATCPSessionInfo_t *svritem = (CATCPSessionInfo_t *) u_arraylist_get(
-                caglobals.tcp.svrlist, i);
-        if (!svritem)
-        {
-            continue;
-        }
-
-        if (!strncmp(svritem->sep.endpoint.addr, endpoint->addr,
-                     sizeof(svritem->sep.endpoint.addr))
-                && (svritem->sep.endpoint.port == endpoint->port)
-                && (svritem->sep.endpoint.flags & endpoint->flags))
+        if (!strncmp(session->sep.endpoint.addr, endpoint->addr,
+                     sizeof(session->sep.endpoint.addr))
+                && (session->sep.endpoint.port == endpoint->port)
+                && (session->sep.endpoint.flags & endpoint->flags))
         {
             oc_mutex_unlock(g_mutexObjectList);
             OIC_LOG(DEBUG, TAG, "Found in session list");
-            return svritem->fd;
+            return session->fd;
         }
     }
 
@@ -1586,48 +1503,53 @@ CASocketFd_t CAGetSocketFDFromEndpoint(const CAEndpoint_t *endpoint)
     return OC_INVALID_SOCKET;
 }
 
-CATCPSessionInfo_t *CAGetSessionInfoFromFD(CASocketFd_t fd, size_t *index)
+CATCPSessionInfo_t *CAGetSessionInfoFromFD(CASocketFd_t fd)
 {
     oc_mutex_lock(g_mutexObjectList);
 
-    // check from the last item.
-    CATCPSessionInfo_t *svritem = NULL;
-    uint32_t length = u_arraylist_length(caglobals.tcp.svrlist);
-    for (size_t i = 0; i < length; i++)
+    CATCPSessionInfo_t *session = NULL;
+    LL_FOREACH(g_sessionList, session)
     {
-        svritem = (CATCPSessionInfo_t *) u_arraylist_get(caglobals.tcp.svrlist, i);
-
-        if (svritem && svritem->fd == fd)
+        if (session && session->fd == fd)
         {
-            *index = i;
             oc_mutex_unlock(g_mutexObjectList);
-            return svritem;
+            return session;
         }
     }
 
     oc_mutex_unlock(g_mutexObjectList);
-
     return NULL;
 }
 
 CAResult_t CASearchAndDeleteTCPSession(const CAEndpoint_t *endpoint)
 {
-    oc_mutex_lock(g_mutexObjectList);
+    VERIFY_NON_NULL(endpoint, TAG, "endpoint is NULL");
 
-    CAResult_t result = CA_STATUS_OK;
-    size_t index = 0;
-    CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(endpoint, &index);
-    if (svritem)
+    OIC_LOG_V(DEBUG, TAG, "Looking for [%s:%d]", endpoint->addr, endpoint->port);
+
+    // get connection info from list
+    CATCPSessionInfo_t *session = NULL;
+    CATCPSessionInfo_t *tmp = NULL;
+
+    oc_mutex_lock(g_mutexObjectList);
+    LL_FOREACH_SAFE(g_sessionList, session, tmp)
     {
-        result = CADisconnectTCPSession(index);
-        if (CA_STATUS_OK != result)
+        if (!strncmp(session->sep.endpoint.addr, endpoint->addr,
+                     sizeof(session->sep.endpoint.addr))
+                && (session->sep.endpoint.port == endpoint->port)
+                && (session->sep.endpoint.flags & endpoint->flags))
         {
-            OIC_LOG_V(ERROR, TAG, "CADisconnectTCPSession failed, result[%d]", result);
+            OIC_LOG(DEBUG, TAG, "Found in session list");
+            LL_DELETE(g_sessionList, session);
+            CADisconnectTCPSession(session);
+            oc_mutex_unlock(g_mutexObjectList);
+            return CA_STATUS_OK;
         }
     }
-
     oc_mutex_unlock(g_mutexObjectList);
-    return result;
+
+    OIC_LOG(DEBUG, TAG, "Session not found");
+    return CA_STATUS_OK;
 }
 
 size_t CAGetTotalLengthFromHeader(const unsigned char *recvBuffer)

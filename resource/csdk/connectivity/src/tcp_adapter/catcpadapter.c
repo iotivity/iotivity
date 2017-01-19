@@ -172,10 +172,9 @@ void CATCPPacketReceivedCB(const CASecureEndpoint_t *sep, const void *data,
 #else
     unsigned char *buffer = (unsigned char*)data;
     size_t bufferLen = dataLength;
-    size_t index = 0;
 
     //get remote device information from file descriptor.
-    CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(&sep->endpoint, &index);
+    CATCPSessionInfo_t *svritem = CAGetTCPSessionInfoFromEndpoint(&sep->endpoint);
     if (!svritem)
     {
         OIC_LOG(ERROR, TAG, "there is no connection information in list");
@@ -307,7 +306,6 @@ static void CAInitializeTCPGlobals()
 
     caglobals.tcp.selectTimeout = CA_TCP_SELECT_TIMEOUT;
     caglobals.tcp.listenBacklog = CA_TCP_LISTEN_BACKLOG;
-    caglobals.tcp.svrlist = NULL;
 
     CATransportFlags_t flags = 0;
     if (caglobals.client)

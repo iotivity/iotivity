@@ -177,10 +177,10 @@ CASocketFd_t CAConnectTCPSession(const CAEndpoint_t *endpoint);
 /**
  * Disconnect from TCP Server.
  *
- * @param[in]   index       current session index in list.
+ * @param[in]   removedData       removed session information from list.
  * @return  ::CA_STATUS_OK or Appropriate error code.
  */
-CAResult_t CADisconnectTCPSession(size_t index);
+CAResult_t CADisconnectTCPSession(CATCPSessionInfo_t *removedData);
 
 /**
  * Disconnect all connection from TCP Server.
@@ -191,11 +191,9 @@ void CATCPDisconnectAll();
  * Get TCP connection information from list.
  *
  * @param[in]   endpoint    remote endpoint information.
- * @param[out]  index   index of array list.
  * @return  TCP Session Information structure.
  */
-CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint,
-                                                    size_t *index);
+CATCPSessionInfo_t *CAGetTCPSessionInfoFromEndpoint(const CAEndpoint_t *endpoint);
 
 /**
  * Get total length from CoAP over TCP header.
@@ -209,10 +207,9 @@ size_t CAGetTotalLengthFromHeader(const unsigned char *recvBuffer);
  * Get session information from socket file descriptor.
  *
  * @param[in]   fd      socket file descriptor.
- * @param[out]  index   index of array list
  * @return  TCP Server Information structure.
  */
-CATCPSessionInfo_t *CAGetSessionInfoFromFD(CASocketFd_t fd, size_t *index);
+CATCPSessionInfo_t *CAGetSessionInfoFromFD(CASocketFd_t fd);
 
 /**
  * Get socket file descriptor from remote device information.

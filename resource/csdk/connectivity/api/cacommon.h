@@ -613,7 +613,6 @@ typedef struct
         CASocket_t ipv4s;       /**< IPv4 accept socket secure */
         CASocket_t ipv6;        /**< IPv6 accept socket */
         CASocket_t ipv6s;       /**< IPv6 accept socket secure */
-        void *svrlist;          /**< unicast IPv4 TCP server information*/
         int selectTimeout;      /**< in seconds */
         int listenBacklog;      /**< backlog counts*/
 #if defined(_WIN32)
