@@ -1894,8 +1894,10 @@ CAResult_t CAdecryptSsl(const CASecureEndpoint_t *sep, uint8_t *data, uint32_t d
                 SendCacheMessages(peer);
             }
 
-            if (MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 != g_caSslContext->selectedCipher &&
-                MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256 != g_caSslContext->selectedCipher)
+            int selectedCipher = peer->ssl.session->ciphersuite;
+            OIC_LOG_V(DEBUG, NET_SSL_TAG, "(D)TLS Session is connected via ciphersuite [0x%x]", selectedCipher);
+            if (MBEDTLS_TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 != selectedCipher &&
+                MBEDTLS_TLS_ECDH_ANON_WITH_AES_128_CBC_SHA256 != selectedCipher)
             {
                 char uuid[UUID_LENGTH * 2 + 5] = {0};
                 void * uuidPos = NULL;
