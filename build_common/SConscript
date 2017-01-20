@@ -358,7 +358,7 @@ if env.get('WITH_TCP'):
 
 if env.get('SECURED') == '1':
     defines.append('-D__WITH_DTLS__=1')
-    if not env.get('EXC_PROV_SUPPORT'):
+    if env.get('EXC_PROV_SUPPORT') == '0':
         libs.append('-locpmapi')
 
 pc_vars = {
