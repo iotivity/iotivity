@@ -124,6 +124,7 @@ namespace OIC
         {
             OIC_LOG(INFO, CONTAINER_TAG, "Stopping resource container.");
 
+            activationLock.lock();
             for (std::map< std::string, shared_ptr<BundleInfoInternal> >::iterator it = m_bundles.begin();
                  it != m_bundles.end(); ++it)
             {
@@ -148,6 +149,7 @@ namespace OIC
             {
                 delete m_config;
             }
+            activationLock.unlock();
         }
 
         void ResourceContainerImpl::activateBundle(shared_ptr<RCSBundleInfo> bundleInfo)
