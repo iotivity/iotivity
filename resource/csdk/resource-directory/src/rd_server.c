@@ -21,6 +21,7 @@
 
 #include "rd_database.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include "payload_logging.h"
@@ -83,7 +84,7 @@ static OCEntityHandlerResult handleGetRequest(const OCEntityHandlerRequest *ehRe
 
     OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) rdPayload);
 
-    if (sendResponse(ehRequest, rdPayload, OC_EH_OK) != OC_STACK_OK)
+    if (OC_STACK_OK != sendResponse(ehRequest, rdPayload, OC_EH_OK))
     {
         OIC_LOG(ERROR, TAG, "Sending response failed.");
         ehResult = OC_EH_ERROR;
@@ -113,9 +114,9 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
     if (payload)
     {
         OIC_LOG_PAYLOAD(DEBUG, (OCPayload *) payload);
-        if (OCRDDatabaseInit(NULL) == OC_STACK_OK)
+        if (OC_STACK_OK == OCRDDatabaseInit(NULL))
         {
-            if (OCRDDatabaseStoreResources(payload, &ehRequest->devAddr) == OC_STACK_OK)
+            if (OC_STACK_OK == OCRDDatabaseStoreResources(payload, &ehRequest->devAddr))
             {
                 OIC_LOG_V(DEBUG, TAG, "Stored resources.");
                 resPayload = payload;
@@ -129,9 +130,20 @@ static OCEntityHandlerResult handlePublishRequest(const OCEntityHandlerRequest *
         }
 
         // Send Response
-        if (sendResponse(ehRequest, resPayload, ehResult) != OC_STACK_OK)
+        if (OC_STACK_OK != sendResponse(ehRequest, resPayload, ehResult))
         {
             OIC_LOG(ERROR, TAG, "Sending response failed.");
+        }
+
+        if (OC_EH_OK == ehResult)
+        {
+            OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_WELL_KNOWN_URI);
+            assert(handle);
+            OCStackResult result = OCNotifyAllObservers(handle, OC_NA_QOS);
+            if (OC_STACK_NO_OBSERVERS != result && OC_STACK_OK != result)
+            {
+                OIC_LOG(ERROR, TAG, "Notifying observers failed.");
+            }
         }
     }
 
@@ -158,7 +170,7 @@ static OCEntityHandlerResult handleDeleteRequest(const OCEntityHandlerRequest *e
 
     OIC_LOG_V(DEBUG, TAG, "Received OC_REST_DELETE from client with query: %s.", ehRequest->query);
 
-    if (OCRDDatabaseInit(NULL) != OC_STACK_OK)
+    if (OC_STACK_OK != OCRDDatabaseInit(NULL))
     {
         goto exit;
     }
@@ -196,15 +208,15 @@ static OCEntityHandlerResult handleDeleteRequest(const OCEntityHandlerRequest *e
             OIC_LOG_V(ERROR, TAG, "Invalid query parameter!");
             goto exit;
         }
-        else if (strncasecmp(key, OC_RSRVD_DEVICE_ID, sizeof(OC_RSRVD_DEVICE_ID) - 1) == 0)
+        else if (0 == strncasecmp(key, OC_RSRVD_DEVICE_ID, sizeof(OC_RSRVD_DEVICE_ID) - 1))
         {
             di = value;
         }
-        else if (strncasecmp(key, OC_RSRVD_INS, sizeof(OC_RSRVD_INS) - 1) == 0)
+        else if (0 == strncasecmp(key, OC_RSRVD_INS, sizeof(OC_RSRVD_INS) - 1))
         {
             char *endptr = NULL;
             long int i = strtol(value, &endptr, 0);
-            if (*endptr != '\0' || i < 0 || i > UINT8_MAX)
+            if ( '\0' != *endptr || i < 0 || i > UINT8_MAX)
             {
                 OIC_LOG_V(ERROR, TAG, "Invalid ins query parameter: %s", value);
                 goto exit;
@@ -220,16 +232,27 @@ static OCEntityHandlerResult handleDeleteRequest(const OCEntityHandlerRequest *e
         goto exit;
     }
 
-    if (OCRDDatabaseDeleteResources(di, ins, nIns) == OC_STACK_OK)
+    if (OC_STACK_OK == OCRDDatabaseDeleteResources(di, ins, nIns))
     {
         OIC_LOG_V(DEBUG, TAG, "Deleted resource(s).");
         ehResult = OC_EH_OK;
     }
 
+    if (OC_EH_OK == ehResult)
+    {
+        OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_WELL_KNOWN_URI);
+        assert(handle);
+        OCStackResult result = OCNotifyAllObservers(handle, OC_NA_QOS);
+        if (OC_STACK_NO_OBSERVERS != result && OC_STACK_OK != result)
+        {
+            OIC_LOG(ERROR, TAG, "Notifying observers failed.");
+        }
+    }
+
 exit:
     OICFree(ins);
     OICFree(queryDup);
-    if (sendResponse(ehRequest, NULL, ehResult) != OC_STACK_OK)
+    if (OC_STACK_OK != sendResponse(ehRequest, NULL, ehResult))
     {
         OIC_LOG(ERROR, TAG, "Sending response failed.");
     }
@@ -290,7 +313,7 @@ OCStackResult OCRDStart()
                                 NULL,
                                 (OC_ACTIVE | OC_DISCOVERABLE | OC_OBSERVABLE));
 
-    if (result == OC_STACK_OK)
+    if (OC_STACK_OK == result)
     {
         OIC_LOG(DEBUG, TAG, "Resource Directory resource created.");
     }
@@ -301,7 +324,7 @@ OCStackResult OCRDStart()
     }
     result = OCBindResourceTypeToResource(rdHandle,
                     OC_RSRVD_RESOURCE_TYPE_RDPUBLISH);
-    if (result == OC_STACK_OK)
+    if (OC_STACK_OK == result)
     {
         OIC_LOG(DEBUG, TAG, "Resource Directory resource Publish created.");
     }
@@ -326,7 +349,7 @@ OCStackResult OCRDStop()
 
     OCStackResult result = OCDeleteResource(rdHandle);
 
-    if (result == OC_STACK_OK)
+    if (OC_STACK_OK == result)
     {
       OIC_LOG(DEBUG, TAG, "Resource Directory resource deleted.");
     }
