@@ -1922,23 +1922,20 @@ void CAsetSslAdapterCallbacks(CAPacketReceivedCallback recvCallback,
 
     switch (type)
     {
-        switch (type)
-        {
-            case CA_ADAPTER_IP:
-                g_caSslContext->adapterCallbacks[0].recvCallback = recvCallback;
-                g_caSslContext->adapterCallbacks[0].sendCallback = sendCallback;
-                break;
-            case CA_ADAPTER_TCP:
-                g_caSslContext->adapterCallbacks[1].recvCallback = recvCallback;
-                g_caSslContext->adapterCallbacks[1].sendCallback = sendCallback;
-                break;
-            case CA_ADAPTER_GATT_BTLE:
-                g_caSslContext->adapterCallbacks[2].recvCallback = recvCallback;
-                g_caSslContext->adapterCallbacks[2].sendCallback = sendCallback;
-                break;
-            default:
-                OIC_LOG_V(ERROR, NET_SSL_TAG, "Unsupported adapter: %d", type);
-        }
+        case CA_ADAPTER_IP:
+            g_caSslContext->adapterCallbacks[0].recvCallback = recvCallback;
+            g_caSslContext->adapterCallbacks[0].sendCallback = sendCallback;
+            break;
+        case CA_ADAPTER_TCP:
+            g_caSslContext->adapterCallbacks[1].recvCallback = recvCallback;
+            g_caSslContext->adapterCallbacks[1].sendCallback = sendCallback;
+            break;
+        case CA_ADAPTER_GATT_BTLE:
+            g_caSslContext->adapterCallbacks[2].recvCallback = recvCallback;
+            g_caSslContext->adapterCallbacks[2].sendCallback = sendCallback;
+            break;
+        default:
+            OIC_LOG_V(ERROR, NET_SSL_TAG, "Unsupported adapter: %d", type);
     }
 
     oc_mutex_unlock(g_sslContextMutex);
