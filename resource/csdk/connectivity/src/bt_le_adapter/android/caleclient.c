@@ -2886,7 +2886,7 @@ CAResult_t CALEClientSetUUIDToDescriptor(JNIEnv *env, jobject bluetoothGatt,
         goto error_exit;
     }
 
-    jfieldID jni_fid_NotiValue;
+    jfieldID jni_fid_NotiValue = NULL;
     if (g_setHighQoS)
     {
         OIC_LOG(DEBUG, TAG, "get ENABLE_INDICATION_VALUE");

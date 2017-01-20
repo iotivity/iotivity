@@ -1051,8 +1051,8 @@ jobject CALEServerCreateGattService(JNIEnv *env)
         goto error_exit;
     }
 
-    jfieldID jni_fid_readProperties;
-    jfieldID jni_fid_writeProperties;
+    jfieldID jni_fid_readProperties = NULL;
+    jfieldID jni_fid_writeProperties = NULL;
     if (g_setHighQoS)
     {
         jni_fid_readProperties = (*env)->GetStaticFieldID(env,
