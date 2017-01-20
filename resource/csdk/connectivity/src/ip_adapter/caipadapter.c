@@ -206,11 +206,14 @@ static void CAUpdateStoredIPAddressInfo(CANetworkStatus_t status)
     {
         OIC_LOG(DEBUG, TAG, "IP adapter status is off. Remove the own IP address info");
 
+        CAEndpoint_t *headEp = u_arraylist_get(g_ownIpEndpointList, 0);
+        OICFree(headEp);
+        headEp = NULL;
+
         uint32_t len = u_arraylist_length(g_ownIpEndpointList);
         for (uint32_t i = len; i > 0; i--)
         {
-            CAEndpoint_t *ep = u_arraylist_remove(g_ownIpEndpointList, i - 1);
-            OICFree(ep);
+            u_arraylist_remove(g_ownIpEndpointList, i - 1);
         }
     }
 }
