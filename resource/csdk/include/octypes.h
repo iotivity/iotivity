@@ -1085,6 +1085,7 @@ typedef enum
 
     /** Request is denied by the user*/
     OC_STACK_USER_DENIED_REQ,
+    OC_STACK_NOT_ACCEPTABLE,
 
     /** ERROR code from server */
     OC_STACK_FORBIDDEN_REQ,          /** 403*/

@@ -207,6 +207,8 @@ public:
             case OC_STACK_INVALID_JSON:
                 return "INVALID_JSON";
             /** Request is not authorized by Resource Server. */
+            case OC_STACK_NOT_ACCEPTABLE:
+                return "NOT_ACCEPTABLE";
             case OC_STACK_UNAUTHORIZED_REQ:
                 return "UNAUTHORIZED_REQ";
             /** Error code from PDM */

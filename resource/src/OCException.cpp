@@ -113,6 +113,8 @@ std::string OC::OCException::reason(const OCStackResult sr)
             return OC::Exception::NOT_ALLOWED_OXM;
         case OC_STACK_USER_DENIED_REQ:
             return OC::Exception::USER_DENIED_REQ;
+        case OC_STACK_NOT_ACCEPTABLE:
+            return OC::Exception::NOT_ACCEPTABLE;
         case OC_STACK_FORBIDDEN_REQ:
             return OC::Exception::FORBIDDEN_REQ;
         case OC_STACK_INTERNAL_SERVER_ERROR:
