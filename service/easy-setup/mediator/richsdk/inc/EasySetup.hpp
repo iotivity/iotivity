@@ -53,8 +53,8 @@ namespace OIC
              * @param enrolleeResource an OCResource object corresponding to enrollee resource
              *        discovered in a network. The OCResource object can be obtained by calling
              *        OCPlatform.findResource() API. What resource you have to discover with
-             *        the OCPlatform.findResource() API is a "provisioning" resource with a certain
-             *        resource type, i.e. oic.wk.prov
+             *        the OCPlatform.findResource() API is a "easysetup" resource with a certain
+             *        resource type, i.e. oic.r.easysetup
              *
              * @throws ESBadRequestException If createEnrolleeDevice is invoked with the same
              *         provisioning information.

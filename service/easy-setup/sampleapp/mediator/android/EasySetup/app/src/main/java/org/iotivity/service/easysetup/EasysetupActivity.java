@@ -472,7 +472,7 @@ public class EasysetupActivity extends Activity
                         });
 
                         try {
-                            String requestUri = OcPlatform.WELL_KNOWN_QUERY + "?rt=" + ESConstants.OC_RSRVD_ES_RES_TYPE_PROV;
+                            String requestUri = OcPlatform.WELL_KNOWN_QUERY + "?rt=" + ESConstants.OC_RSRVD_ES_RES_TYPE_EASYSETUP;
                             OcPlatform.findResource("",
                                     requestUri,
                                     EnumSet.of(OcConnectivityType.CT_DEFAULT),

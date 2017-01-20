@@ -48,13 +48,13 @@ public class ESConstants {
 /**
 * Easysetup defined resoruce types and uris
 */
-    public static final String OC_RSRVD_ES_RES_TYPE_PROV = "oic.wk.prov";
-    public static final String OC_RSRVD_ES_URI_PROV = "/ProvisioningResURI";
-    public static final String OC_RSRVD_ES_RES_TYPE_WIFI = "oic.wk.wifi";
-    public static final String OC_RSRVD_ES_URI_WIFI = "/WiFiProvisioningResURI";
-    public static final String OC_RSRVD_ES_RES_TYPE_CLOUDSERVER = "oic.wk.cloudserver";
-    public static final String OC_RSRVD_ES_URI_CLOUDSERVER = "/CloudServerProvisioningResURI";
-    public static final String OC_RSRVD_ES_RES_TYPE_DEVCONF = "oic.wk.devconf";
-    public static final String OC_RSRVD_ES_URI_DEVCONF = "/DevConfProvisioningResURI";
+    public static final String OC_RSRVD_ES_RES_TYPE_EASYSETUP = "oic.r.easysetup";
+    public static final String OC_RSRVD_ES_URI_EASYSETUP = "/EasySetupResURI";
+    public static final String OC_RSRVD_ES_RES_TYPE_WIFICONF = "oic.r.wificonf";
+    public static final String OC_RSRVD_ES_URI_WIFICONF = "/WiFiConfResURI";
+    public static final String OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF = "oic.r.coapcloudconf";
+    public static final String OC_RSRVD_ES_URI_COAPCLOUDCONF = "/CoapCloudConfResURI";
+    public static final String OC_RSRVD_ES_RES_TYPE_DEVCONF = "oic.r.devconf";
+    public static final String OC_RSRVD_ES_URI_DEVCONF = "/DevConfResURI";
 
 }

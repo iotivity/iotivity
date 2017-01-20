@@ -48,7 +48,7 @@ void ReadUserdataCb(OCRepPayload* payload, char* resourceType, void** userdata)
 
     if(payload != NULL)
     {
-        if(strstr(resourceType, OC_RSRVD_ES_RES_TYPE_WIFI))
+        if(strstr(resourceType, OC_RSRVD_ES_RES_TYPE_WIFICONF))
         {
             int64_t value = -1;
             if (OCRepPayloadGetPropInt(payload, USERPROPERTY_KEY_INT, &value))
@@ -74,7 +74,7 @@ void WriteUserdataCb(OCRepPayload* payload, char* resourceType)
 
     if(payload != NULL)
     {
-        if(strstr(resourceType, OC_RSRVD_ES_RES_TYPE_WIFI))
+        if(strstr(resourceType, OC_RSRVD_ES_RES_TYPE_WIFICONF))
         {
             OCRepPayloadSetPropInt(payload, USERPROPERTY_KEY_INT, g_userProperties.userValue_int);
         }

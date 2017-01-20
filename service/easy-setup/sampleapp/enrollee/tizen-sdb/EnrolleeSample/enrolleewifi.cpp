@@ -70,16 +70,16 @@ void PrintMenu()
     cout << "========================" << endl;
 }
 
-void WiFiProvCbInApp(ESWiFiProvData *eventData)
+void WiFiConfProvCbInApp(ESWiFiConfData *eventData)
 {
-    cout << "WiFiProvCbInApp IN" << endl;
+    cout << "WiFiConfProvCbInApp IN" << endl;
     gWiFiCBflag = true;
 
     ESSetState(ES_STATE_CONNECTING_TO_ENROLLER);
 
     if(eventData == NULL)
     {
-        cout << "ESWiFiProvData is NULL" << endl;
+        cout << "ESWiFiConfData is NULL" << endl;
         return ;
     }
 
@@ -100,17 +100,17 @@ void WiFiProvCbInApp(ESWiFiProvData *eventData)
         strncpy(gPasswd, eventData->pwd, strlen(eventData->pwd));
     }
 
-    cout << "WiFiProvCbInApp OUT" << endl;
+    cout << "WiFiConfProvCbInApp OUT" << endl;
     PrintMenu();
 }
 
-void DevConfProvCbInApp(ESDevConfProvData *eventData)
+void DevConfProvCbInApp(ESDevConfData *eventData)
 {
     cout << "DevConfProvCbInApp IN" << endl;
 
     if(eventData == NULL)
     {
-        cout << "ESDevConfProvData is NULL" << endl;
+        cout << "ESDevConfData is NULL" << endl;
         return ;
     }
 
@@ -120,27 +120,27 @@ void DevConfProvCbInApp(ESDevConfProvData *eventData)
     PrintMenu();
 }
 
-void CloudDataProvCbInApp(ESCloudProvData *eventData)
+void CoapCloudConfProvCbInApp(ESCoapCloudConfData *eventData)
 {
-    cout << "CloudDataProvCbInApp IN" << endl;
+    cout << "CoapCloudConfProvCbInApp IN" << endl;
 
     if(eventData == NULL)
     {
-        cout << "ESCloudProvData is NULL" << endl;
+        cout << "ESCoapCloudConfData is NULL" << endl;
         return ;
     }
 
     cout << "AuthCode : " << eventData->authCode << endl;
     cout << "AuthProvider : " << eventData->authProvider << endl;
     cout << "CI Server : " << eventData->ciServer << endl;
-    cout << "CloudDataProvCbInApp OUT" << endl;
+    cout << "CoapCloudConfProvCbInApp OUT" << endl;
     PrintMenu();
 }
 
 ESProvisioningCallbacks gCallbacks = {
-    .WiFiProvCb = &WiFiProvCbInApp,
+    .WiFiConfProvCb = &WiFiConfProvCbInApp,
     .DevConfProvCb = &DevConfProvCbInApp,
-    .CloudDataProvCb = &CloudDataProvCbInApp
+    .CoapCloudConfProvCb = &CoapCloudConfProvCbInApp
 };
 
 FILE* server_fopen(const char *path, const char *mode)
@@ -176,7 +176,7 @@ void StartEasySetup()
         return;
     }
 
-    ESResourceMask resourcemMask = (ESResourceMask) (ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE);
+    ESResourceMask resourcemMask = (ESResourceMask) (ES_WIFICONF_RESOURCE | ES_COAPCLOUDCONF_RESOURCE | ES_DEVCONF_RESOURCE);
     cout << "resourcemMask : " << resourcemMask << endl;
     if(ESInitEnrollee(gIsSecured, resourcemMask, gCallbacks) != ES_OK)
     {

@@ -67,13 +67,13 @@ void PrintMenu()
     printf("============\n");
 }
 
-void WiFiProvCbInApp(ESWiFiProvData *eventData)
+void WiFiConfProvCbInApp(ESWiFiConfData *eventData)
 {
-    printf("WiFiProvCbInApp IN\n");
+    printf("WiFiConfProvCbInApp IN\n");
 
     if(eventData == NULL)
     {
-        printf("ESWiFiProvData is NULL\n");
+        printf("ESWiFiConfData is NULL\n");
         return ;
     }
 
@@ -87,16 +87,16 @@ void WiFiProvCbInApp(ESWiFiProvData *eventData)
         printf("userValue : %d\n", ((UserProperties *)(eventData->userdata))->userValue_int);
     }
 
-    printf("WiFiProvCbInApp OUT\n");
+    printf("WiFiConfProvCbInApp OUT\n");
 }
 
-void DevConfProvCbInApp(ESDevConfProvData *eventData)
+void DevConfProvCbInApp(ESDevConfData *eventData)
 {
     printf("DevConfProvCbInApp IN\n");
 
     if(eventData == NULL)
     {
-        printf("ESDevConfProvData is NULL\n");
+        printf("ESDevConfData is NULL\n");
         return ;
     }
 
@@ -106,13 +106,13 @@ void DevConfProvCbInApp(ESDevConfProvData *eventData)
     printf("DevConfProvCbInApp OUT\n");
 }
 
-void CloudDataProvCbInApp(ESCloudProvData *eventData)
+void CoapCloudConfProvCbInApp(ESCoapCloudConfData *eventData)
 {
-    printf("CloudDataProvCbInApp IN\n");
+    printf("CoapCloudConfProvCbInApp IN\n");
 
     if(eventData == NULL)
     {
-        printf("ESCloudProvData is NULL\n");
+        printf("ESCoapCloudConfData is NULL\n");
         return ;
     }
 
@@ -122,13 +122,13 @@ void CloudDataProvCbInApp(ESCloudProvData *eventData)
     printf("AuthProvider : %s\n", eventData->authProvider);
     printf("CI Server : %s\n", eventData->ciServer);
 
-    printf("CloudDataProvCbInApp OUT\n");
+    printf("CoapCloudConfProvCbInApp OUT\n");
 }
 
 ESProvisioningCallbacks gCallbacks = {
-    .WiFiProvCb = &WiFiProvCbInApp,
+    .WiFiConfProvCb = &WiFiConfProvCbInApp,
     .DevConfProvCb = &DevConfProvCbInApp,
-    .CloudDataProvCb = &CloudDataProvCbInApp
+    .CoapCloudConfProvCb = &CoapCloudConfProvCbInApp
 };
 
 FILE* server_fopen(const char *path, const char *mode)
@@ -164,7 +164,7 @@ void StartEasySetup()
         return;
     }
 
-    ESResourceMask resourcemMask = ES_WIFI_RESOURCE | ES_CLOUD_RESOURCE | ES_DEVCONF_RESOURCE;
+    ESResourceMask resourcemMask = ES_WIFICONF_RESOURCE | ES_COAPCLOUDCONF_RESOURCE | ES_DEVCONF_RESOURCE;
     if(ESInitEnrollee(gIsSecured, resourcemMask, gCallbacks) != ES_OK)
     {
         printf("OCStack init error!!\n");

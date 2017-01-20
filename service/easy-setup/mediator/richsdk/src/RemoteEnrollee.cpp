@@ -174,7 +174,7 @@ namespace OIC
         {
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "devicePropProvisioningStatusHandler IN");
 
-            OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_TAG, "ProvStatus = %d", status->getESResult());
+            OIC_LOG_V(DEBUG, ES_REMOTE_ENROLLEE_TAG, "DeviceProvStatus = %d", status->getESResult());
             m_devicePropProvStatusCb(status);
 
             OIC_LOG(DEBUG, ES_REMOTE_ENROLLEE_TAG, "devicePropProvisioningStatusHandler OUT");
@@ -269,7 +269,7 @@ namespace OIC
             std::string query("");
             query.append(ES_BASE_RES_URI);
             query.append("?rt=");
-            query.append(OC_RSRVD_ES_RES_TYPE_PROV);
+            query.append(OC_RSRVD_ES_RES_TYPE_EASYSETUP);
 
             OIC_LOG_V (DEBUG, ES_REMOTE_ENROLLEE_TAG, "query = %s", query.c_str());
 
@@ -532,7 +532,7 @@ namespace OIC
 
             if(resource)
             {
-                if(resource->getResourceTypes().at(0) != OC_RSRVD_ES_RES_TYPE_PROV ||
+                if(resource->getResourceTypes().at(0) != OC_RSRVD_ES_RES_TYPE_EASYSETUP ||
                                 resource->connectivityType() & CT_ADAPTER_TCP)
                 {
                     OIC_LOG (ERROR, ES_REMOTE_ENROLLEE_TAG, "Given resource is not valid due to wrong rt or conntype");

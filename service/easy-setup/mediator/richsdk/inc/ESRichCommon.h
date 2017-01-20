@@ -47,7 +47,7 @@ namespace OIC
     namespace Service
     {
         /**
-         * @brief Properties of provisioning resource. It includes a provisioning status and last
+         * @brief Properties of easysetup resource. It includes a provisioning status and last
          *        error code.
          */
         class EnrolleeStatus
@@ -116,7 +116,7 @@ namespace OIC
         };
 
         /**
-         * @brief Data class stored for Cloud server property provisioning
+         * @brief Data class stored for provisioning of coap cloud server properties
          */
         class CloudProp
         {
@@ -156,7 +156,7 @@ namespace OIC
             }
 
             /**
-             * Set CloudServer resource properties to be delivered to Enrollee
+             * Set CoapCloudConf resource properties to be delivered to Enrollee
              *
              * @param authCode  Auth code issued by OAuth2.0-compatible account server
              * @param authProvider Auth provider ID
@@ -170,7 +170,7 @@ namespace OIC
             }
 
             /**
-             * Set CloudServer resource properties with Access token to be delivered to Enrollee
+             * Set CoapCloudConf resource properties with Access token to be delivered to Enrollee
              *
              * @param accessToken  Access token which is given in a return of auth code issued by
              *                     OAuth2.0-compatible account server
@@ -317,8 +317,8 @@ namespace OIC
         };
 
         /**
-         * @brief Data class stored for Device property provisioning which includes a WiFi
-         *        and device configuration provisioning
+         * @brief Data class stored for provisioning of Device properties which includes
+         *        properties of WiFiConf resource and DevConf resource
          */
         class DeviceProp
         {
@@ -350,7 +350,7 @@ namespace OIC
             }
 
             /**
-             * Set WiFi resource properties to be delivered to Enrollee
+             * Set WiFiConf resource properties to be delivered to Enrollee
              *
              * @param ssid Ssid of the Enroller
              * @param pwd Pwd of the Enrolle
@@ -588,21 +588,21 @@ namespace OIC
             /**
              * Constructor
              * The expected OCRepresentation is one for collection resource and has several child
-             * OCRepresentation object corresponding to WiFi, DevConf, and CloudServer resource's
-             * representation.
+             * OCRepresentation object corresponding to WiFiConf, DevConf, and CoapCloudConf
+             * resources' representations.
              */
             EnrolleeConf(const OCRepresentation& rep) :
-                m_ProvRep(rep)
+                m_EasySetupRep(rep)
             {
             }
 
             EnrolleeConf(const EnrolleeConf& enrolleeConf) :
-                m_ProvRep(enrolleeConf.getProvResRep())
+                m_EasySetupRep(enrolleeConf.getEasySetupRep())
             {
             }
 
             EnrolleeConf(const EnrolleeConf&& enrolleeConf) :
-                m_ProvRep(std::move(enrolleeConf.getProvResRep()))
+                m_EasySetupRep(std::move(enrolleeConf.getEasySetupRep()))
             {
             }
 
@@ -614,7 +614,7 @@ namespace OIC
              */
             std::string getDeviceName() const
             {
-                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                std::vector<OCRepresentation> children = m_EasySetupRep.getChildren();
                 for(auto child = children.begin(); child != children.end(); ++child)
                 {
                     if(child->getUri().find(OC_RSRVD_ES_URI_DEVCONF) != std::string::npos)
@@ -645,7 +645,7 @@ namespace OIC
              */
             std::string getModelNumber() const
             {
-                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                std::vector<OCRepresentation> children = m_EasySetupRep.getChildren();
                 for(auto child = children.begin(); child != children.end(); ++child)
                 {
                     if(child->getUri().find(OC_RSRVD_ES_URI_DEVCONF) != std::string::npos)
@@ -681,10 +681,10 @@ namespace OIC
                 vector<WIFI_MODE> modes;
                 modes.clear();
 
-                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                std::vector<OCRepresentation> children = m_EasySetupRep.getChildren();
                 for(auto child = children.begin(); child != children.end(); ++child)
                 {
-                    if(child->getUri().find(OC_RSRVD_ES_URI_WIFI) != std::string::npos)
+                    if(child->getUri().find(OC_RSRVD_ES_URI_WIFICONF) != std::string::npos)
                     {
                         OCRepresentation rep;
                         if(child->hasAttribute(OC_RSRVD_REPRESENTATION))
@@ -718,10 +718,10 @@ namespace OIC
              */
             WIFI_FREQ getWiFiFreq() const
             {
-                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                std::vector<OCRepresentation> children = m_EasySetupRep.getChildren();
                 for(auto child = children.begin(); child != children.end(); ++child)
                 {
-                    if(child->getUri().find(OC_RSRVD_ES_URI_WIFI) != std::string::npos)
+                    if(child->getUri().find(OC_RSRVD_ES_URI_WIFICONF) != std::string::npos)
                     {
                         OCRepresentation rep;
                         if(child->hasAttribute(OC_RSRVD_REPRESENTATION))
@@ -750,12 +750,12 @@ namespace OIC
              */
             bool isCloudAccessible() const
             {
-                std::vector<OCRepresentation> children = m_ProvRep.getChildren();
+                std::vector<OCRepresentation> children = m_EasySetupRep.getChildren();
                 for(auto child = children.begin(); child != children.end(); ++child)
                 {
                     for(auto rt : child->getResourceTypes())
                     {
-                        if(0 == rt.compare(OC_RSRVD_ES_RES_TYPE_CLOUDSERVER))
+                        if(0 == rt.compare(OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF))
                         {
                             return true;
                         }
@@ -769,13 +769,13 @@ namespace OIC
              *
              * @return OCRepresentation object
              */
-            const OCRepresentation& getProvResRep() const
+            const OCRepresentation& getEasySetupRep() const
             {
-                return m_ProvRep;
+                return m_EasySetupRep;
             }
 
         protected:
-            OCRepresentation m_ProvRep;
+            OCRepresentation m_EasySetupRep;
         };
 
         /**

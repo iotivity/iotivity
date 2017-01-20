@@ -272,7 +272,7 @@ namespace OIC
                             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)),
                             shared_from_this());
 
-            m_ocResource->post(OC_RSRVD_ES_RES_TYPE_PROV, BATCH_INTERFACE,
+            m_ocResource->post(OC_RSRVD_ES_RES_TYPE_EASYSETUP, BATCH_INTERFACE,
                     provisioningRepresentation, QueryParamsMap(), cb, OC::QualityOfService::HighQos);
 
             OIC_LOG (DEBUG, ES_REMOTE_ENROLLEE_RES_TAG, "provisionProperties OUT");

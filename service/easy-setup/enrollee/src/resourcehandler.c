@@ -35,12 +35,12 @@
 //-----------------------------------------------------------------------------
 
 /**
- * @var g_ESProvResource
+ * @var g_ESEasySetupResource
  * @brief Structure for holding the Provisioning status
  */
-ProvResource g_ESProvResource;
-WiFiResource g_ESWiFiResource;
-CloudResource g_ESCloudResource;
+EasySetupResource g_ESEasySetupResource;
+WiFiConfResource g_ESWiFiConfResource;
+CoapCloudConfResource g_ESCoapCloudConfResource;
 DevConfResource g_ESDevConfResource;
 
 //-----------------------------------------------------------------------------
@@ -51,14 +51,14 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag, OCEntityHandle
 OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
 OCEntityHandlerResult ProcessPutRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
 OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRepPayload** payload);
-void updateProvResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input);
-void updateWiFiResource(OCRepPayload* input);
-void updateCloudResource(OCRepPayload* input);
+void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input);
+void updateWiFiConfResource(OCRepPayload* input);
+void updateCoapCloudConfResource(OCRepPayload* input);
 void updateDevConfResource(OCRepPayload* input);
 const char *getResult(OCStackResult result);
 
-ESWiFiCB gWifiRsrcEvtCb = NULL;
-ESCloudCB gCloudRsrcEvtCb = NULL;
+ESWiFiConfCB gWifiConfRsrcEvtCb = NULL;
+ESCoapCloudConfCB gCoapCloudConfRsrcEvtCb = NULL;
 ESDevConfCB gDevConfRsrcEvtCb = NULL;
 
 ESReadUserdataCb gReadUserdataCb = NULL;
@@ -105,14 +105,14 @@ ESResult SetCallbackForUserData(ESReadUserdataCb readCb, ESWriteUserdataCb write
     return ES_OK;
 }
 
-void RegisterWifiRsrcEventCallBack(ESWiFiCB cb)
+void RegisterWifiRsrcEventCallBack(ESWiFiConfCB cb)
 {
-    gWifiRsrcEvtCb = cb;
+    gWifiConfRsrcEvtCb = cb;
 }
 
-void RegisterCloudRsrcEventCallBack(ESCloudCB cb)
+void RegisterCloudRsrcEventCallBack(ESCoapCloudConfCB cb)
 {
-    gCloudRsrcEvtCb = cb;
+    gCoapCloudConfRsrcEvtCb = cb;
 }
 
 void RegisterDevConfRsrcEventCallBack(ESDevConfCB cb)
@@ -122,13 +122,13 @@ void RegisterDevConfRsrcEventCallBack(ESDevConfCB cb)
 
 void UnRegisterResourceEventCallBack()
 {
-    if (gWifiRsrcEvtCb)
+    if (gWifiConfRsrcEvtCb)
     {
-        gWifiRsrcEvtCb = NULL;
+        gWifiConfRsrcEvtCb = NULL;
     }
-    if (gCloudRsrcEvtCb)
+    if (gCoapCloudConfRsrcEvtCb)
     {
-        gCloudRsrcEvtCb = NULL;
+        gCoapCloudConfRsrcEvtCb = NULL;
     }
     if (gDevConfRsrcEvtCb)
     {
@@ -136,114 +136,114 @@ void UnRegisterResourceEventCallBack()
     }
 }
 
-OCStackResult initProvResource(bool isSecured)
+OCStackResult initEasySetupResource(bool isSecured)
 {
-    g_ESProvResource.status = ES_STATE_INIT;
-    g_ESProvResource.lastErrCode = ES_ERRCODE_NO_ERROR;
+    g_ESEasySetupResource.status = ES_STATE_INIT;
+    g_ESEasySetupResource.lastErrCode = ES_ERRCODE_NO_ERROR;
 
     OCStackResult res = OC_STACK_ERROR;
     if (isSecured)
     {
-        res = OCCreateResource(&g_ESProvResource.handle, OC_RSRVD_ES_RES_TYPE_PROV,
+        res = OCCreateResource(&g_ESEasySetupResource.handle, OC_RSRVD_ES_RES_TYPE_EASYSETUP,
         OC_RSRVD_INTERFACE_DEFAULT,
-        OC_RSRVD_ES_URI_PROV, OCEntityHandlerCb,
+        OC_RSRVD_ES_URI_EASYSETUP, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
     }else
     {
-        res = OCCreateResource(&g_ESProvResource.handle, OC_RSRVD_ES_RES_TYPE_PROV,
+        res = OCCreateResource(&g_ESEasySetupResource.handle, OC_RSRVD_ES_RES_TYPE_EASYSETUP,
         OC_RSRVD_INTERFACE_DEFAULT,
-        OC_RSRVD_ES_URI_PROV, OCEntityHandlerCb,
+        OC_RSRVD_ES_URI_EASYSETUP, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
     }
     if(res)
     {
-        OIC_LOG_V(INFO, ES_RH_TAG, "Created Prov resource with result: %s", getResult(res));
+        OIC_LOG_V(INFO, ES_RH_TAG, "Created EasySetup resource with result: %s", getResult(res));
         return res;
     }
 
-    res = OCBindResourceTypeToResource(g_ESProvResource.handle, OC_RSRVD_ES_RES_TYPE_COL);
+    res = OCBindResourceTypeToResource(g_ESEasySetupResource.handle, OC_RSRVD_ES_RES_TYPE_COL);
     if(res)
     {
         OIC_LOG_V(INFO, ES_RH_TAG, "Binding Resource type with result: %s", getResult(res));
         return res;
     }
 
-    res = OCBindResourceInterfaceToResource(g_ESProvResource.handle, OC_RSRVD_INTERFACE_LL);
+    res = OCBindResourceInterfaceToResource(g_ESEasySetupResource.handle, OC_RSRVD_INTERFACE_LL);
     if(res)
     {
         OIC_LOG_V(INFO, ES_RH_TAG, "Binding Resource interface with result: %s", getResult(res));
         return res;
     }
-    res = OCBindResourceInterfaceToResource(g_ESProvResource.handle, OC_RSRVD_INTERFACE_BATCH);
+    res = OCBindResourceInterfaceToResource(g_ESEasySetupResource.handle, OC_RSRVD_INTERFACE_BATCH);
     if(res)
     {
         OIC_LOG_V(INFO, ES_RH_TAG, "Binding Resource interface with result: %s", getResult(res));
         return res;
     }
 
-    OIC_LOG_V(INFO, ES_RH_TAG, "Created Prov resource with result: %s", getResult(res));
+    OIC_LOG_V(INFO, ES_RH_TAG, "Created EasySetup resource with result: %s", getResult(res));
     return res;
 }
 
-OCStackResult initWiFiResource(bool isSecured)
+OCStackResult initWiFiConfResource(bool isSecured)
 {
     OCStackResult res = OC_STACK_ERROR;
 
-    g_ESWiFiResource.supportedFreq = WIFI_BOTH;
-    g_ESWiFiResource.supportedMode[0] = WIFI_11A;
-    g_ESWiFiResource.supportedMode[1] = WIFI_11B;
-    g_ESWiFiResource.supportedMode[2] = WIFI_11G;
-    g_ESWiFiResource.supportedMode[3] = WIFI_11N;
-    g_ESWiFiResource.numMode = 4;
-    g_ESWiFiResource.authType = NONE_AUTH;
-    g_ESWiFiResource.encType = NONE_ENC;
-    OICStrcpy(g_ESWiFiResource.ssid, sizeof(g_ESWiFiResource.ssid), "");
-    OICStrcpy(g_ESWiFiResource.cred, sizeof(g_ESWiFiResource.cred), "");
+    g_ESWiFiConfResource.supportedFreq = WIFI_BOTH;
+    g_ESWiFiConfResource.supportedMode[0] = WIFI_11A;
+    g_ESWiFiConfResource.supportedMode[1] = WIFI_11B;
+    g_ESWiFiConfResource.supportedMode[2] = WIFI_11G;
+    g_ESWiFiConfResource.supportedMode[3] = WIFI_11N;
+    g_ESWiFiConfResource.numMode = 4;
+    g_ESWiFiConfResource.authType = NONE_AUTH;
+    g_ESWiFiConfResource.encType = NONE_ENC;
+    OICStrcpy(g_ESWiFiConfResource.ssid, sizeof(g_ESWiFiConfResource.ssid), "");
+    OICStrcpy(g_ESWiFiConfResource.cred, sizeof(g_ESWiFiConfResource.cred), "");
 
     if (isSecured)
     {
-        res = OCCreateResource(&g_ESWiFiResource.handle, OC_RSRVD_ES_RES_TYPE_WIFI,
+        res = OCCreateResource(&g_ESWiFiConfResource.handle, OC_RSRVD_ES_RES_TYPE_WIFICONF,
         OC_RSRVD_INTERFACE_DEFAULT,
-        OC_RSRVD_ES_URI_WIFI, OCEntityHandlerCb,
+        OC_RSRVD_ES_URI_WIFICONF, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
     }else
     {
-        res = OCCreateResource(&g_ESWiFiResource.handle, OC_RSRVD_ES_RES_TYPE_WIFI,
+        res = OCCreateResource(&g_ESWiFiConfResource.handle, OC_RSRVD_ES_RES_TYPE_WIFICONF,
         OC_RSRVD_INTERFACE_DEFAULT,
-        OC_RSRVD_ES_URI_WIFI, OCEntityHandlerCb,
+        OC_RSRVD_ES_URI_WIFICONF, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
     }
 
-    OIC_LOG_V(INFO, ES_RH_TAG, "Created WiFi resource with result: %s", getResult(res));
+    OIC_LOG_V(INFO, ES_RH_TAG, "Created WiFiConf resource with result: %s", getResult(res));
     return res;
 
 }
 
-OCStackResult initCloudServerResource(bool isSecured)
+OCStackResult initCoapCloudConfResource(bool isSecured)
 {
     OCStackResult res = OC_STACK_ERROR;
 
-    OICStrcpy(g_ESCloudResource.authCode, sizeof(g_ESCloudResource.authCode), "");
-    OICStrcpy(g_ESCloudResource.accessToken, sizeof(g_ESCloudResource.accessToken), "");
-    g_ESCloudResource.accessTokenType = NONE_OAUTH_TOKENTYPE;
-    OICStrcpy(g_ESCloudResource.authProvider, sizeof(g_ESCloudResource.authProvider), "");
-    OICStrcpy(g_ESCloudResource.ciServer, sizeof(g_ESCloudResource.ciServer), "");
+    OICStrcpy(g_ESCoapCloudConfResource.authCode, sizeof(g_ESCoapCloudConfResource.authCode), "");
+    OICStrcpy(g_ESCoapCloudConfResource.accessToken, sizeof(g_ESCoapCloudConfResource.accessToken), "");
+    g_ESCoapCloudConfResource.accessTokenType = NONE_OAUTH_TOKENTYPE;
+    OICStrcpy(g_ESCoapCloudConfResource.authProvider, sizeof(g_ESCoapCloudConfResource.authProvider), "");
+    OICStrcpy(g_ESCoapCloudConfResource.ciServer, sizeof(g_ESCoapCloudConfResource.ciServer), "");
 
     if (isSecured)
     {
-        res = OCCreateResource(&g_ESCloudResource.handle, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER,
+        res = OCCreateResource(&g_ESCoapCloudConfResource.handle, OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF,
         OC_RSRVD_INTERFACE_DEFAULT,
-        OC_RSRVD_ES_URI_CLOUDSERVER, OCEntityHandlerCb,
+        OC_RSRVD_ES_URI_COAPCLOUDCONF, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
     }else
     {
-        res = OCCreateResource(&g_ESCloudResource.handle, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER,
+        res = OCCreateResource(&g_ESCoapCloudConfResource.handle, OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF,
         OC_RSRVD_INTERFACE_DEFAULT,
-        OC_RSRVD_ES_URI_CLOUDSERVER, OCEntityHandlerCb,
+        OC_RSRVD_ES_URI_COAPCLOUDCONF, OCEntityHandlerCb,
         NULL, OC_DISCOVERABLE | OC_OBSERVABLE);
     }
 
-    OIC_LOG_V(INFO, ES_RH_TAG, "Created CloudServer resource with result: %s", getResult(res));
+    OIC_LOG_V(INFO, ES_RH_TAG, "Created CoapCloudConf resource with result: %s", getResult(res));
     return res;
 
 }
@@ -277,25 +277,25 @@ OCStackResult initDevConfResource(bool isSecured)
 
 }
 
-void updateProvResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input)
+void updateEasySetupResource(OCEntityHandlerRequest* ehRequest, OCRepPayload* input)
 {
-    OIC_LOG_V(INFO, ES_RH_TAG, "g_ESProvResource.status %d", g_ESProvResource.status);
+    OIC_LOG_V(INFO, ES_RH_TAG, "g_ESEasySetupResource.status %d", g_ESEasySetupResource.status);
 
     if(ehRequest->query)
     {
         if(CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_BATCH))
         {
             // When Provisioning resource has a POST with BatchInterface
-            updateCloudResource(input);
-            updateWiFiResource(input);
+            updateCoapCloudConfResource(input);
+            updateWiFiConfResource(input);
             updateDevConfResource(input);
         }
     }
 }
 
-void updateWiFiResource(OCRepPayload* input)
+void updateWiFiConfResource(OCRepPayload* input)
 {
-    ESWiFiProvData* wiFiData = (ESWiFiProvData*)OICMalloc(sizeof(ESWiFiProvData));
+    ESWiFiConfData* wiFiData = (ESWiFiConfData*)OICMalloc(sizeof(ESWiFiConfData));
 
     if(wiFiData == NULL)
     {
@@ -312,66 +312,66 @@ void updateWiFiResource(OCRepPayload* input)
     char* ssid = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_SSID, &ssid))
     {
-        OICStrcpy(g_ESWiFiResource.ssid, sizeof(g_ESWiFiResource.ssid), ssid);
+        OICStrcpy(g_ESWiFiConfResource.ssid, sizeof(g_ESWiFiConfResource.ssid), ssid);
         OICStrcpy(wiFiData->ssid, sizeof(wiFiData->ssid), ssid);
-        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESWiFiResource.ssid : %s", g_ESWiFiResource.ssid);
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESWiFiConfResource.ssid : %s", g_ESWiFiConfResource.ssid);
     }
 
     char* cred = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CRED, &cred))
     {
-        OICStrcpy(g_ESWiFiResource.cred, sizeof(g_ESWiFiResource.cred), cred);
+        OICStrcpy(g_ESWiFiConfResource.cred, sizeof(g_ESWiFiConfResource.cred), cred);
         OICStrcpy(wiFiData->pwd, sizeof(wiFiData->pwd), cred);
-        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESWiFiResource.cred %s", g_ESWiFiResource.cred);
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESWiFiConfResource.cred %s", g_ESWiFiConfResource.cred);
     }
 
     int64_t authType = -1;
     if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_AUTHTYPE, &authType))
     {
-        g_ESWiFiResource.authType = authType;
-        wiFiData->authtype = g_ESWiFiResource.authType;
-        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESWiFiResource.authType %u", g_ESWiFiResource.authType);
+        g_ESWiFiConfResource.authType = authType;
+        wiFiData->authtype = g_ESWiFiConfResource.authType;
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESWiFiConfResource.authType %u", g_ESWiFiConfResource.authType);
     }
 
     int64_t encType = -1;
     if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_ENCTYPE, &encType))
     {
-        g_ESWiFiResource.encType = encType;
-        wiFiData->enctype = g_ESWiFiResource.encType;
-        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESWiFiResource.encType %u", g_ESWiFiResource.encType);
+        g_ESWiFiConfResource.encType = encType;
+        wiFiData->enctype = g_ESWiFiConfResource.encType;
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESWiFiConfResource.encType %u", g_ESWiFiConfResource.encType);
     }
 
     if(gReadUserdataCb)
     {
-        gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_WIFI, &wiFiData->userdata);
+        gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_WIFICONF, &wiFiData->userdata);
     }
 
     if(ssid || cred || authType!= -1 || encType != -1)
     {
-        OIC_LOG(INFO, ES_RH_TAG, "Send WiFiRsrc Callback To ES");
+        OIC_LOG(INFO, ES_RH_TAG, "Send WiFiConfRsrc Callback To ES");
 
         // TODO : Need to check appropriateness of gWiFiData
-        if(gWifiRsrcEvtCb != NULL)
+        if(gWifiConfRsrcEvtCb != NULL)
         {
-            gWifiRsrcEvtCb(ES_OK, wiFiData);
+            gWifiConfRsrcEvtCb(ES_OK, wiFiData);
         }
         else
         {
-            OIC_LOG(ERROR, ES_RH_TAG, "gWifiRsrcEvtCb is NULL");
+            OIC_LOG(ERROR, ES_RH_TAG, "gWifiConfRsrcEvtCb is NULL");
         }
     }
 
-    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESWiFiResource.handle, OC_HIGH_QOS))
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESWiFiConfResource.handle, OC_HIGH_QOS))
     {
-        OIC_LOG(INFO, ES_RH_TAG, "Enrollee doesn't have any observers.");
+        OIC_LOG(INFO, ES_RH_TAG, "Enrollee doesn't have any observer.");
     }
 
     OICFree(wiFiData);
 }
 
-void updateCloudResource(OCRepPayload* input)
+void updateCoapCloudConfResource(OCRepPayload* input)
 {
-    ESCloudProvData* cloudData = (ESCloudProvData*)OICMalloc(sizeof(ESCloudProvData));
+    ESCoapCloudConfData* cloudData = (ESCoapCloudConfData*)OICMalloc(sizeof(ESCoapCloudConfData));
 
     if(cloudData == NULL)
     {
@@ -381,7 +381,7 @@ void updateCloudResource(OCRepPayload* input)
 
     memset(cloudData->authCode, 0, OIC_STRING_MAX_VALUE);
     memset(cloudData->accessToken, 0, OIC_STRING_MAX_VALUE);
-    g_ESCloudResource.accessTokenType = NONE_OAUTH_TOKENTYPE;
+    g_ESCoapCloudConfResource.accessTokenType = NONE_OAUTH_TOKENTYPE;
     memset(cloudData->authProvider, 0, OIC_STRING_MAX_VALUE);
     memset(cloudData->ciServer, 0, OIC_STRING_MAX_VALUE);
     cloudData->userdata = NULL;
@@ -389,66 +389,66 @@ void updateCloudResource(OCRepPayload* input)
     char *authCode = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHCODE, &authCode))
     {
-        OICStrcpy(g_ESCloudResource.authCode, sizeof(g_ESCloudResource.authCode), authCode);
+        OICStrcpy(g_ESCoapCloudConfResource.authCode, sizeof(g_ESCoapCloudConfResource.authCode), authCode);
         OICStrcpy(cloudData->authCode, sizeof(cloudData->authCode), authCode);
-        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESCloudResource.authCode %s", g_ESCloudResource.authCode);
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESCoapCloudConfResource.authCode %s", g_ESCoapCloudConfResource.authCode);
     }
 
     char *accessToken = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_ACCESSTOKEN, &accessToken))
     {
-        OICStrcpy(g_ESCloudResource.accessToken, sizeof(g_ESCloudResource.accessToken), accessToken);
+        OICStrcpy(g_ESCoapCloudConfResource.accessToken, sizeof(g_ESCoapCloudConfResource.accessToken), accessToken);
         OICStrcpy(cloudData->accessToken, sizeof(cloudData->accessToken), accessToken);
-        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESCloudResource.accessToken %s", g_ESCloudResource.accessToken);
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESCoapCloudConfResource.accessToken %s", g_ESCoapCloudConfResource.accessToken);
     }
 
     int64_t accessTokenType = -1;
     if (OCRepPayloadGetPropInt(input, OC_RSRVD_ES_ACCESSTOKEN_TYPE, &accessTokenType))
     {
-        g_ESCloudResource.accessTokenType = accessTokenType;
-        cloudData->accessTokenType = g_ESCloudResource.accessTokenType;
-        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESCloudResource.accessTokenType %d", g_ESCloudResource.accessTokenType);
+        g_ESCoapCloudConfResource.accessTokenType = accessTokenType;
+        cloudData->accessTokenType = g_ESCoapCloudConfResource.accessTokenType;
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESCoapCloudConfResource.accessTokenType %d", g_ESCoapCloudConfResource.accessTokenType);
     }
 
     char *authProvider = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_AUTHPROVIDER, &authProvider))
     {
-        OICStrcpy(g_ESCloudResource.authProvider, sizeof(g_ESCloudResource.authProvider), authProvider);
+        OICStrcpy(g_ESCoapCloudConfResource.authProvider, sizeof(g_ESCoapCloudConfResource.authProvider), authProvider);
         OICStrcpy(cloudData->authProvider, sizeof(cloudData->authProvider), authProvider);
-        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESCloudResource.authServerUrl %s", g_ESCloudResource.authProvider);
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESCoapCloudConfResource.authServerUrl %s", g_ESCoapCloudConfResource.authProvider);
     }
 
     char *ciServer = NULL;
     if (OCRepPayloadGetPropString(input, OC_RSRVD_ES_CISERVER, &ciServer))
     {
-        OICStrcpy(g_ESCloudResource.ciServer, sizeof(g_ESCloudResource.ciServer), ciServer);
+        OICStrcpy(g_ESCoapCloudConfResource.ciServer, sizeof(g_ESCoapCloudConfResource.ciServer), ciServer);
         OICStrcpy(cloudData->ciServer, sizeof(cloudData->ciServer), ciServer);
-        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESCloudResource.ciServer %s", g_ESCloudResource.ciServer);
+        OIC_LOG_V(INFO, ES_RH_TAG, "g_ESCoapCloudConfResource.ciServer %s", g_ESCoapCloudConfResource.ciServer);
     }
 
     if(gReadUserdataCb)
     {
-        gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER, &cloudData->userdata);
+        gReadUserdataCb(input, OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF, &cloudData->userdata);
     }
 
     if(authCode || accessToken || authProvider || ciServer)
     {
-        OIC_LOG(INFO, ES_RH_TAG, "Send CloudRsrc Callback To ES");
+        OIC_LOG(INFO, ES_RH_TAG, "Send CoapCloudConfRsrc Callback To ES");
 
         // TODO : Need to check appropriateness of gCloudData
-        if(gCloudRsrcEvtCb != NULL)
+        if(gCoapCloudConfRsrcEvtCb != NULL)
         {
-            gCloudRsrcEvtCb(ES_OK, cloudData);
+            gCoapCloudConfRsrcEvtCb(ES_OK, cloudData);
         }
         else
         {
-            OIC_LOG(ERROR, ES_RH_TAG, "gCloudRsrcEvtCb is NULL");
+            OIC_LOG(ERROR, ES_RH_TAG, "gCoapCloudConfRsrcEvtCb is NULL");
         }
     }
 
-    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESCloudResource.handle, OC_HIGH_QOS))
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESCoapCloudConfResource.handle, OC_HIGH_QOS))
     {
-        OIC_LOG(INFO, ES_RH_TAG, "cloudResource doesn't have any observers.");
+        OIC_LOG(INFO, ES_RH_TAG, "CoapCloudConf resource doesn't have any observer.");
     }
 
     OICFree(cloudData);
@@ -456,7 +456,7 @@ void updateCloudResource(OCRepPayload* input)
 
 void updateDevConfResource(OCRepPayload* input)
 {
-    ESDevConfProvData* devConfData = (ESDevConfProvData*)OICMalloc(sizeof(ESDevConfProvData));
+    ESDevConfData* devConfData = (ESDevConfData*)OICMalloc(sizeof(ESDevConfData));
 
     if(devConfData == NULL)
     {
@@ -513,13 +513,13 @@ void updateDevConfResource(OCRepPayload* input)
 
     if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESDevConfResource.handle, OC_HIGH_QOS))
     {
-        OIC_LOG(INFO, ES_RH_TAG, "devConfResource doesn't have any observers.");
+        OIC_LOG(INFO, ES_RH_TAG, "devConfResource doesn't have any observer.");
     }
 
     OICFree(devConfData);
 }
 
-OCRepPayload* constructResponseOfWiFi(char *interface)
+OCRepPayload* constructResponseOfWiFiConf(char *interface)
 {
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
@@ -528,14 +528,14 @@ OCRepPayload* constructResponseOfWiFi(char *interface)
         return NULL;
     }
 
-    if(g_ESWiFiResource.handle == NULL)
+    if(g_ESWiFiConfResource.handle == NULL)
     {
-        OIC_LOG(ERROR, ES_RH_TAG, "WiFi resource is not created");
+        OIC_LOG(ERROR, ES_RH_TAG, "WiFiConf resource is not created");
         return NULL;
     }
 
-    OIC_LOG(INFO, ES_RH_TAG, "constructResponse wifi res");
-    OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_WIFI);
+    OIC_LOG(INFO, ES_RH_TAG, "constructResponse WiFiConf res");
+    OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_WIFICONF);
 
     OCRepPayload* repPayload = NULL;
     OCRepPayload* tempPayload = NULL;
@@ -561,33 +561,33 @@ OCRepPayload* constructResponseOfWiFi(char *interface)
         size_t resourceTypesDimensions[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
         char **resourceTypes = (char **)OICMalloc(2 * sizeof(char*));
 
-        resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_WIFI);
+        resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_WIFICONF);
 
         OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_RES_TYPE, (char **)resourceTypes, resourceTypesDimensions);
     }
     else
     {
         OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
-        OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_WIFI);
+        OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_WIFICONF);
     }
 
-    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {g_ESWiFiResource.numMode, 0, 0};
-    int64_t *modes_64 = (int64_t *)OICMalloc(g_ESWiFiResource.numMode * sizeof(int64_t));
-    for(int i = 0 ; i < g_ESWiFiResource.numMode ; ++i)
+    size_t dimensions[MAX_REP_ARRAY_DEPTH] = {g_ESWiFiConfResource.numMode, 0, 0};
+    int64_t *modes_64 = (int64_t *)OICMalloc(g_ESWiFiConfResource.numMode * sizeof(int64_t));
+    for(int i = 0 ; i < g_ESWiFiConfResource.numMode ; ++i)
     {
-        modes_64[i] = g_ESWiFiResource.supportedMode[i];
+        modes_64[i] = g_ESWiFiConfResource.supportedMode[i];
     }
     OCRepPayloadSetIntArray(payload, OC_RSRVD_ES_SUPPORTEDWIFIMODE, (int64_t *)modes_64, dimensions);
 
-    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_SUPPORTEDWIFIFREQ, g_ESWiFiResource.supportedFreq);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_SSID, g_ESWiFiResource.ssid);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CRED, g_ESWiFiResource.cred);
-    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_AUTHTYPE, (int) g_ESWiFiResource.authType);
-    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_ENCTYPE, (int) g_ESWiFiResource.encType);
+    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_SUPPORTEDWIFIFREQ, g_ESWiFiConfResource.supportedFreq);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_SSID, g_ESWiFiConfResource.ssid);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CRED, g_ESWiFiConfResource.cred);
+    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_AUTHTYPE, (int) g_ESWiFiConfResource.authType);
+    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_ENCTYPE, (int) g_ESWiFiConfResource.encType);
 
     if(gWriteUserdataCb)
     {
-        gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_WIFI);
+        gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_WIFICONF);
     }
 
     if(!strcmp(interface, OC_RSRVD_INTERFACE_BATCH))
@@ -599,7 +599,7 @@ OCRepPayload* constructResponseOfWiFi(char *interface)
     return payload;
 }
 
-OCRepPayload* constructResponseOfCloud(char *interface)
+OCRepPayload* constructResponseOfCoapCloudConf(char *interface)
 {
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
@@ -608,14 +608,14 @@ OCRepPayload* constructResponseOfCloud(char *interface)
         return NULL;
     }
 
-    if(g_ESCloudResource.handle == NULL)
+    if(g_ESCoapCloudConfResource.handle == NULL)
     {
-        OIC_LOG(ERROR, ES_RH_TAG, "CloudServer resource is not created");
+        OIC_LOG(ERROR, ES_RH_TAG, "CoapCloudConf resource is not created");
         return NULL;
     }
 
-    OIC_LOG(INFO, ES_RH_TAG, "constructResponse cloudserver res");
-    OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_CLOUDSERVER);
+    OIC_LOG(INFO, ES_RH_TAG, "constructResponse CoapCloudConf res");
+    OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_COAPCLOUDCONF);
 
     OCRepPayload* repPayload = NULL;
     OCRepPayload* tempPayload = NULL;
@@ -641,25 +641,25 @@ OCRepPayload* constructResponseOfCloud(char *interface)
         size_t resourceTypesDimensions[MAX_REP_ARRAY_DEPTH] = {1, 0, 0};
         char **resourceTypes = (char **)OICMalloc(2 * sizeof(char*));
 
-        resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_CLOUDSERVER);
+        resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF);
 
         OCRepPayloadSetStringArray(payload, OC_RSRVD_ES_RES_TYPE, (char **)resourceTypes, resourceTypesDimensions);
     }
     else
     {
         OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
-        OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER);
+        OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF);
     }
 
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHCODE, g_ESCloudResource.authCode);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_ACCESSTOKEN, g_ESCloudResource.accessToken);
-    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_ACCESSTOKEN_TYPE, (int)g_ESCloudResource.accessTokenType);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHPROVIDER, g_ESCloudResource.authProvider);
-    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CISERVER, g_ESCloudResource.ciServer);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHCODE, g_ESCoapCloudConfResource.authCode);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_ACCESSTOKEN, g_ESCoapCloudConfResource.accessToken);
+    OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_ACCESSTOKEN_TYPE, (int)g_ESCoapCloudConfResource.accessTokenType);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_AUTHPROVIDER, g_ESCoapCloudConfResource.authProvider);
+    OCRepPayloadSetPropString(payload, OC_RSRVD_ES_CISERVER, g_ESCoapCloudConfResource.ciServer);
 
     if(gWriteUserdataCb)
     {
-        gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_CLOUDSERVER);
+        gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF);
     }
 
     if(!strcmp(interface, OC_RSRVD_INTERFACE_BATCH))
@@ -686,7 +686,7 @@ OCRepPayload* constructResponseOfDevConf(char *interface)
         return NULL;
     }
 
-    OIC_LOG(INFO, ES_RH_TAG, "constructResponse devconf res");
+    OIC_LOG(INFO, ES_RH_TAG, "constructResponse DevConf res");
     OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_DEVCONF);
 
     OCRepPayload* repPayload = NULL;
@@ -743,7 +743,7 @@ OCRepPayload* constructResponseOfDevConf(char *interface)
     return payload;
 }
 
-OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
+OCRepPayload* constructResponseOfEasySetup(OCEntityHandlerRequest *ehRequest)
 {
     OCRepPayload* payload = OCRepPayloadCreate();
     if (!payload)
@@ -763,7 +763,7 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
 
         int childResCnt = 0;
 
-        if(g_ESWiFiResource.handle != NULL)
+        if(g_ESWiFiConfResource.handle != NULL)
         {
             OCRepPayload *add = OCRepPayloadCreate();
             if(!add)
@@ -784,17 +784,17 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
                 return NULL;
             }
 
-            resourceType[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_WIFI);
+            resourceType[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_WIFICONF);
             resourceInterface[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
 
             add->base.type = PAYLOAD_TYPE_REPRESENTATION;
-            OCRepPayloadSetPropString(add, OC_RSRVD_HREF, OC_RSRVD_ES_URI_WIFI);
+            OCRepPayloadSetPropString(add, OC_RSRVD_HREF, OC_RSRVD_ES_URI_WIFICONF);
             OCRepPayloadSetStringArray(add, OC_RSRVD_RESOURCE_TYPE,
                                             (const char **)resourceType, dimensions);
             OCRepPayloadSetStringArray(add, OC_RSRVD_INTERFACE,
                                             (const char **)resourceInterface, dimensions);
 
-            OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)g_ESWiFiResource.handle);
+            OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)g_ESWiFiConfResource.handle);
             OCRepPayload *policy = OCRepPayloadCreate();
             if (!policy)
             {
@@ -871,7 +871,7 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             arrayPayload[childResCnt++] = add;
         }
 
-        if(g_ESCloudResource.handle != NULL)
+        if(g_ESCoapCloudConfResource.handle != NULL)
         {
             OCRepPayload *add = OCRepPayloadCreate();
             if(!add)
@@ -892,17 +892,17 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
                 return NULL;
             }
 
-            resourceType[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_CLOUDSERVER);
+            resourceType[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF);
             resourceInterface[0] = OICStrdup(OC_RSRVD_INTERFACE_DEFAULT);
 
             add->base.type = PAYLOAD_TYPE_REPRESENTATION;
-            OCRepPayloadSetPropString(add, OC_RSRVD_HREF, OC_RSRVD_ES_URI_CLOUDSERVER);
+            OCRepPayloadSetPropString(add, OC_RSRVD_HREF, OC_RSRVD_ES_URI_COAPCLOUDCONF);
             OCRepPayloadSetStringArray(add, OC_RSRVD_RESOURCE_TYPE,
                                             (const char **)resourceType, dimensions);
             OCRepPayloadSetStringArray(add, OC_RSRVD_INTERFACE,
                                             (const char **)resourceInterface, dimensions);
 
-            OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)g_ESCloudResource.handle);
+            OCResourceProperty p = OCGetResourceProperties((OCResourceHandle *)g_ESCoapCloudConfResource.handle);
             OCRepPayload *policy = OCRepPayloadCreate();
             if (!policy)
             {
@@ -931,20 +931,20 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             (ehRequest->query && !strcmp(ehRequest->query, "")) ||
             (ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_DEFAULT)))
         {
-            OIC_LOG(INFO, ES_RH_TAG, "constructResponse prov res");
-            OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_PROV);
+            OIC_LOG(INFO, ES_RH_TAG, "constructResponse EasySetup res");
+            OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_EASYSETUP);
             OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_DEFAULT);
             OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_LL);
             OCRepPayloadAddInterface(payload, OC_RSRVD_INTERFACE_BATCH);
-            OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_PROV);
+            OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_EASYSETUP);
             OCRepPayloadAddResourceType(payload, OC_RSRVD_ES_RES_TYPE_COL);
 
-            OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PROVSTATUS, g_ESProvResource.status);
-            OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_LAST_ERRORCODE, g_ESProvResource.lastErrCode);
+            OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_PROVSTATUS, g_ESEasySetupResource.status);
+            OCRepPayloadSetPropInt(payload, OC_RSRVD_ES_LAST_ERRORCODE, g_ESEasySetupResource.lastErrCode);
 
             if(gWriteUserdataCb)
             {
-                gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_PROV);
+                gWriteUserdataCb(payload, OC_RSRVD_ES_RES_TYPE_EASYSETUP);
             }
 
             OCRepPayloadSetPropObjectArray(payload, OC_RSRVD_ES_LINKS, arrayPayload, dimensions);
@@ -957,8 +957,8 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
         ehRequest->query && CompareResourceInterface(ehRequest->query, OC_RSRVD_INTERFACE_BATCH))
 
     {
-        OIC_LOG(INFO, ES_RH_TAG, "constructResponse prov res");
-        OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_PROV);
+        OIC_LOG(INFO, ES_RH_TAG, "constructResponse EasySetup res");
+        OCRepPayloadSetUri(payload, OC_RSRVD_ES_URI_EASYSETUP);
 
         OCRepPayload* repPayload = NULL;
 
@@ -991,17 +991,17 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             return NULL;
         }
 
-        resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_PROV);
+        resourceTypes[0] = OICStrdup(OC_RSRVD_ES_RES_TYPE_EASYSETUP);
         resourceTypes[1] = OICStrdup(OC_RSRVD_ES_RES_TYPE_COL);
 
         OCRepPayloadSetStringArray(repPayload, OC_RSRVD_ES_RES_TYPE, (char **)resourceTypes, resourceTypesDimensions);
 
-        OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_PROVSTATUS, g_ESProvResource.status);
-        OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_LAST_ERRORCODE, g_ESProvResource.lastErrCode);
+        OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_PROVSTATUS, g_ESEasySetupResource.status);
+        OCRepPayloadSetPropInt(repPayload, OC_RSRVD_ES_LAST_ERRORCODE, g_ESEasySetupResource.lastErrCode);
 
         if(gWriteUserdataCb)
         {
-            gWriteUserdataCb(repPayload, OC_RSRVD_ES_RES_TYPE_PROV);
+            gWriteUserdataCb(repPayload, OC_RSRVD_ES_RES_TYPE_EASYSETUP);
         }
 
         OCRepPayloadSetPropObject(payload, OC_RSRVD_REPRESENTATION, repPayload);
@@ -1014,14 +1014,14 @@ OCRepPayload* constructResponseOfProv(OCEntityHandlerRequest *ehRequest)
             OCRepPayload* head = payload;
             OCRepPayload* nextPayload = NULL;
 
-            nextPayload = constructResponseOfWiFi(OC_RSRVD_INTERFACE_BATCH);
+            nextPayload = constructResponseOfWiFiConf(OC_RSRVD_INTERFACE_BATCH);
             if(nextPayload != NULL)
             {
                 payload->next = nextPayload;
                 payload = payload->next;
             }
 
-            nextPayload = constructResponseOfCloud(OC_RSRVD_INTERFACE_BATCH);
+            nextPayload = constructResponseOfCoapCloudConf(OC_RSRVD_INTERFACE_BATCH);
             if(nextPayload != NULL)
             {
                 payload->next = nextPayload;
@@ -1047,48 +1047,48 @@ OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMa
     OCStackResult res = OC_STACK_ERROR;
     bool maskFlag = false;
 
-    res = initProvResource(isSecured);
+    res = initEasySetupResource(isSecured);
     if(res != OC_STACK_OK)
     {
         // TODO: destroy logic will be added
-        OIC_LOG_V(ERROR, ES_RH_TAG, "initProvResource result: %s", getResult(res));
+        OIC_LOG_V(ERROR, ES_RH_TAG, "initEasySetupResource result: %s", getResult(res));
 
         return res;
     }
 
-    if((resourceMask & ES_WIFI_RESOURCE) == ES_WIFI_RESOURCE)
+    if((resourceMask & ES_WIFICONF_RESOURCE) == ES_WIFICONF_RESOURCE)
     {
         maskFlag = true;
-        res = initWiFiResource(isSecured);
+        res = initWiFiConfResource(isSecured);
         if(res != OC_STACK_OK)
         {
-            OIC_LOG_V(ERROR, ES_RH_TAG, "initWiFiResource result: %s", getResult(res));
+            OIC_LOG_V(ERROR, ES_RH_TAG, "initWiFiConfResource result: %s", getResult(res));
             return res;
         }
 
-        res = OCBindResource(g_ESProvResource.handle, g_ESWiFiResource.handle);
+        res = OCBindResource(g_ESEasySetupResource.handle, g_ESWiFiConfResource.handle);
         if(res != OC_STACK_OK)
         {
-            OIC_LOG_V(ERROR, ES_RH_TAG, "Bind WiFiResource result: %s", getResult(res));
+            OIC_LOG_V(ERROR, ES_RH_TAG, "Bind WiFiConfResource result: %s", getResult(res));
             return res;
         }
 
     }
 
-    if((resourceMask & ES_CLOUD_RESOURCE) == ES_CLOUD_RESOURCE)
+    if((resourceMask & ES_COAPCLOUDCONF_RESOURCE) == ES_COAPCLOUDCONF_RESOURCE)
     {
         maskFlag = true;
-        res = initCloudServerResource(isSecured);
+        res = initCoapCloudConfResource(isSecured);
         if(res != OC_STACK_OK)
         {
-            OIC_LOG_V(ERROR, ES_RH_TAG, "initCloudResource result: %s", getResult(res));
+            OIC_LOG_V(ERROR, ES_RH_TAG, "initCoapCloudConfResource result: %s", getResult(res));
             return res;
         }
 
-        res = OCBindResource(g_ESProvResource.handle, g_ESCloudResource.handle);
+        res = OCBindResource(g_ESEasySetupResource.handle, g_ESCoapCloudConfResource.handle);
         if(res != OC_STACK_OK)
         {
-            OIC_LOG_V(ERROR, ES_RH_TAG, "Bind CloudResource result: %s", getResult(res));
+            OIC_LOG_V(ERROR, ES_RH_TAG, "Bind CoapCloudConfResource result: %s", getResult(res));
             return res;
         }
     }
@@ -1103,14 +1103,13 @@ OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMa
             return res;
         }
 
-        res = OCBindResource(g_ESProvResource.handle, g_ESDevConfResource.handle);
+        res = OCBindResource(g_ESEasySetupResource.handle, g_ESDevConfResource.handle);
         if(res != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, ES_RH_TAG, "Bind DevConfResource result: %s", getResult(res));
             return res;
         }
     }
-
 
     if(maskFlag == false)
     {
@@ -1124,31 +1123,20 @@ OCStackResult CreateEasySetupResources(bool isSecured, ESResourceMask resourceMa
     return res;
 }
 
-OCStackResult DeleteProvisioningResource()
-{
-    OCStackResult res = OCDeleteResource(g_ESProvResource.handle);
-    if (res != OC_STACK_OK)
-    {
-        OIC_LOG_V(INFO, ES_RH_TAG, "Deleting Prov resource error with result: %s", getResult(res));
-    }
-
-    return res;
-}
-
 OCStackResult DeleteEasySetupResources()
 {
     OCStackResult res = OC_STACK_ERROR;
-    if (g_ESWiFiResource.handle != NULL)
+    if (g_ESWiFiConfResource.handle != NULL)
     {
-        res = OCUnBindResource(g_ESProvResource.handle, g_ESWiFiResource.handle);
+        res = OCUnBindResource(g_ESEasySetupResource.handle, g_ESWiFiConfResource.handle);
         if(res != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, ES_RH_TAG, "Unbind WiFi resource error with result: %s", getResult(res));
         }
     }
-    if (g_ESCloudResource.handle != NULL)
+    if (g_ESCoapCloudConfResource.handle != NULL)
     {
-        res = OCUnBindResource(g_ESProvResource.handle, g_ESCloudResource.handle);
+        res = OCUnBindResource(g_ESEasySetupResource.handle, g_ESCoapCloudConfResource.handle);
         if(res != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, ES_RH_TAG, "Unbind CloudServer resource error with result: %s", getResult(res));
@@ -1156,25 +1144,25 @@ OCStackResult DeleteEasySetupResources()
     }
     if (g_ESDevConfResource.handle != NULL)
     {
-        res = OCUnBindResource(g_ESProvResource.handle, g_ESDevConfResource.handle);
+        res = OCUnBindResource(g_ESEasySetupResource.handle, g_ESDevConfResource.handle);
         if(res != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, ES_RH_TAG, "Unbind DevConf resource error with result: %s", getResult(res));
         }
     }
 
-    if (g_ESWiFiResource.handle != NULL)
+    if (g_ESWiFiConfResource.handle != NULL)
     {
-        res = OCDeleteResource(g_ESWiFiResource.handle);
+        res = OCDeleteResource(g_ESWiFiConfResource.handle);
         if (res != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting WiFi resource error with result: %s", getResult(res));
         }
     }
 
-    if(g_ESCloudResource.handle != NULL)
+    if(g_ESCoapCloudConfResource.handle != NULL)
     {
-        res = OCDeleteResource(g_ESCloudResource.handle);
+        res = OCDeleteResource(g_ESCoapCloudConfResource.handle);
         if (res != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting CloudServer resource error with result: %s", getResult(res));
@@ -1190,9 +1178,9 @@ OCStackResult DeleteEasySetupResources()
         }
     }
 
-    if(g_ESProvResource.handle != NULL)
+    if(g_ESEasySetupResource.handle != NULL)
     {
-        res = OCDeleteResource(g_ESProvResource.handle);
+        res = OCDeleteResource(g_ESEasySetupResource.handle);
         if (res != OC_STACK_OK)
         {
             OIC_LOG_V(ERROR, ES_RH_TAG, "Deleting Prov resource error with result: %s", getResult(res));
@@ -1219,7 +1207,7 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
     OCRepPayload *getResp = NULL;
     *payload = NULL;
 
-    if(ehRequest->resource == g_ESProvResource.handle)
+    if(ehRequest->resource == g_ESEasySetupResource.handle)
     {
         if(ehRequest->query &&
             strcmp(ehRequest->query, "") &&
@@ -1232,10 +1220,10 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
         }
         else
         {
-            getResp = constructResponseOfProv(ehRequest);
+            getResp = constructResponseOfEasySetup(ehRequest);
         }
     }
-    else if(ehRequest->resource == g_ESWiFiResource.handle)
+    else if(ehRequest->resource == g_ESWiFiConfResource.handle)
     {
         if(CheckEhRequestPayload(ehRequest) != OC_EH_OK)
         {
@@ -1244,10 +1232,10 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
         }
         else
         {
-            getResp = constructResponseOfWiFi(OC_RSRVD_INTERFACE_DEFAULT);
+            getResp = constructResponseOfWiFiConf(OC_RSRVD_INTERFACE_DEFAULT);
         }
     }
-    else if(ehRequest->resource == g_ESCloudResource.handle)
+    else if(ehRequest->resource == g_ESCoapCloudConfResource.handle)
     {
         if(CheckEhRequestPayload(ehRequest) != OC_EH_OK)
         {
@@ -1256,7 +1244,7 @@ OCEntityHandlerResult ProcessGetRequest(OCEntityHandlerRequest *ehRequest, OCRep
         }
         else
         {
-            getResp = constructResponseOfCloud(OC_RSRVD_INTERFACE_DEFAULT);
+            getResp = constructResponseOfCoapCloudConf(OC_RSRVD_INTERFACE_DEFAULT);
         }
     }
     else if(ehRequest->resource == g_ESDevConfResource.handle)
@@ -1301,7 +1289,7 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
         return ehResult;
     }
 
-    if(ehRequest->resource == g_ESProvResource.handle)
+    if(ehRequest->resource == g_ESEasySetupResource.handle)
     {
         if(ehRequest->query &&
             strcmp(ehRequest->query, "") &&
@@ -1313,10 +1301,10 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
         }
         else
         {
-            updateProvResource(ehRequest, input);
+            updateEasySetupResource(ehRequest, input);
         }
     }
-    else if(ehRequest->resource == g_ESWiFiResource.handle)
+    else if(ehRequest->resource == g_ESWiFiConfResource.handle)
     {
         if(CheckEhRequestPayload(ehRequest) != OC_EH_OK)
         {
@@ -1325,10 +1313,10 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
         }
         else
         {
-            updateWiFiResource(input);
+            updateWiFiConfResource(input);
         }
     }
-    else if(ehRequest->resource == g_ESCloudResource.handle)
+    else if(ehRequest->resource == g_ESCoapCloudConfResource.handle)
     {
         if(CheckEhRequestPayload(ehRequest) != OC_EH_OK)
         {
@@ -1337,7 +1325,7 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
         }
         else
         {
-            updateCloudResource(input);
+            updateCoapCloudConfResource(input);
         }
     }
     else if(ehRequest->resource == g_ESDevConfResource.handle)
@@ -1354,17 +1342,17 @@ OCEntityHandlerResult ProcessPostRequest(OCEntityHandlerRequest *ehRequest, OCRe
     }
 
     OCRepPayload *getResp = NULL;
-    if(ehRequest->resource == g_ESProvResource.handle)
+    if(ehRequest->resource == g_ESEasySetupResource.handle)
     {
-        getResp = constructResponseOfProv(ehRequest);
+        getResp = constructResponseOfEasySetup(ehRequest);
     }
-    else if(ehRequest->resource == g_ESWiFiResource.handle)
+    else if(ehRequest->resource == g_ESWiFiConfResource.handle)
     {
-        getResp = constructResponseOfWiFi(OC_RSRVD_INTERFACE_DEFAULT);
+        getResp = constructResponseOfWiFiConf(OC_RSRVD_INTERFACE_DEFAULT);
     }
-    else if(ehRequest->resource == g_ESCloudResource.handle)
+    else if(ehRequest->resource == g_ESCoapCloudConfResource.handle)
     {
-        getResp = constructResponseOfCloud(OC_RSRVD_INTERFACE_DEFAULT);
+        getResp = constructResponseOfCoapCloudConf(OC_RSRVD_INTERFACE_DEFAULT);
     }
     else if(ehRequest->resource == g_ESDevConfResource.handle)
     {
@@ -1419,7 +1407,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
             OIC_LOG(INFO, ES_RH_TAG, "Received PUT request");
 
             //PUT request will be handled in the internal implementation
-            if (g_ESProvResource.handle != NULL)
+            if (g_ESEasySetupResource.handle != NULL)
             {
                 ehRet = ProcessPutRequest(entityHandlerRequest, &payload);
             }
@@ -1432,7 +1420,7 @@ OCEntityHandlerResult OCEntityHandlerCb(OCEntityHandlerFlag flag,
         else if (OC_REST_POST == entityHandlerRequest->method)
         {
             OIC_LOG(INFO, ES_RH_TAG, "Received OC_REST_POST from client");
-            if (g_ESProvResource.handle != NULL)
+            if (g_ESEasySetupResource.handle != NULL)
             {
                 ehRet = ProcessPostRequest(entityHandlerRequest, &payload);
             }
@@ -1483,17 +1471,17 @@ OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty)
 {
     OIC_LOG(INFO, ES_RH_TAG, "SetDeviceProperty IN");
 
-    g_ESWiFiResource.supportedFreq = (deviceProperty->WiFi).freq;
-    OIC_LOG_V(INFO, ES_RH_TAG, "WiFi Freq : %d", g_ESWiFiResource.supportedFreq);
+    g_ESWiFiConfResource.supportedFreq = (deviceProperty->WiFi).freq;
+    OIC_LOG_V(INFO, ES_RH_TAG, "WiFi Freq : %d", g_ESWiFiConfResource.supportedFreq);
 
     int modeIdx = 0;
     while((deviceProperty->WiFi).mode[modeIdx] != WiFi_EOF)
     {
-        g_ESWiFiResource.supportedMode[modeIdx] = (deviceProperty->WiFi).mode[modeIdx];
-        OIC_LOG_V(INFO, ES_RH_TAG, "WiFi Mode : %d", g_ESWiFiResource.supportedMode[modeIdx]);
+        g_ESWiFiConfResource.supportedMode[modeIdx] = (deviceProperty->WiFi).mode[modeIdx];
+        OIC_LOG_V(INFO, ES_RH_TAG, "WiFi Mode : %d", g_ESWiFiConfResource.supportedMode[modeIdx]);
         modeIdx ++;
     }
-    g_ESWiFiResource.numMode = modeIdx;
+    g_ESWiFiConfResource.numMode = modeIdx;
 
     OICStrcpy(g_ESDevConfResource.devName, OIC_STRING_MAX_VALUE, (deviceProperty->DevConf).deviceName);
     OIC_LOG_V(INFO, ES_RH_TAG, "Device Name : %s", g_ESDevConfResource.devName);
@@ -1502,7 +1490,7 @@ OCStackResult SetDeviceProperty(ESDeviceProperty *deviceProperty)
                                                             (deviceProperty->DevConf).modelNumber);
     OIC_LOG_V(INFO, ES_RH_TAG, "Model Number : %s", g_ESDevConfResource.modelNumber);
 
-    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESWiFiResource.handle, OC_HIGH_QOS))
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESWiFiConfResource.handle, OC_HIGH_QOS))
     {
         OIC_LOG(INFO, ES_RH_TAG, "wifiResource doesn't have any observers.");
     }
@@ -1520,10 +1508,10 @@ OCStackResult SetEnrolleeState(ESEnrolleeState esState)
 {
     OIC_LOG(INFO, ES_RH_TAG, "SetEnrolleeState IN");
 
-    g_ESProvResource.status = esState;
-    OIC_LOG_V(INFO, ES_RH_TAG, "Enrollee Status : %d", g_ESProvResource.status);
+    g_ESEasySetupResource.status = esState;
+    OIC_LOG_V(INFO, ES_RH_TAG, "Enrollee Status : %d", g_ESEasySetupResource.status);
 
-    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESProvResource.handle, OC_HIGH_QOS))
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESEasySetupResource.handle, OC_HIGH_QOS))
     {
         OIC_LOG(INFO, ES_RH_TAG, "provResource doesn't have any observers.");
     }
@@ -1536,10 +1524,10 @@ OCStackResult SetEnrolleeErrCode(ESErrorCode esErrCode)
 {
     OIC_LOG(INFO, ES_RH_TAG, "SetEnrolleeErrCode IN");
 
-    g_ESProvResource.lastErrCode = esErrCode;
-    OIC_LOG_V(INFO, ES_RH_TAG, "Enrollee ErrorCode : %d", g_ESProvResource.lastErrCode);
+    g_ESEasySetupResource.lastErrCode = esErrCode;
+    OIC_LOG_V(INFO, ES_RH_TAG, "Enrollee ErrorCode : %d", g_ESEasySetupResource.lastErrCode);
 
-    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESProvResource.handle, OC_HIGH_QOS))
+    if(OC_STACK_NO_OBSERVERS == OCNotifyAllObservers(g_ESEasySetupResource.handle, OC_HIGH_QOS))
     {
         OIC_LOG(INFO, ES_RH_TAG, "provResource doesn't have any observers.");
     }

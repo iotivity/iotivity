@@ -307,7 +307,7 @@ void foundResource(std::shared_ptr<OC::OCResource> resource)
         // Do some operations with resource object.
         if(resource &&
            !curResource &&
-           resource->getResourceTypes().at(0) == OC_RSRVD_ES_RES_TYPE_PROV)
+           resource->getResourceTypes().at(0) == OC_RSRVD_ES_RES_TYPE_EASYSETUP)
         {
             std::cout<<"DISCOVERED Resource:"<<std::endl;
             // Get the resource URI
@@ -359,7 +359,7 @@ void discoveryEnrolleeResource()
 	try
 	{
 	    std::ostringstream requestURI;
-        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=" << OC_RSRVD_ES_RES_TYPE_PROV;
+        requestURI << OC_RSRVD_WELL_KNOWN_URI << "?rt=" << OC_RSRVD_ES_RES_TYPE_EASYSETUP;
         OCPlatform::findResource("", requestURI.str(), CT_DEFAULT, &foundResource);
         std::cout<< "Finding Resource... " <<std::endl;
 

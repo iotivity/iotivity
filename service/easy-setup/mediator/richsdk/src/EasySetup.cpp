@@ -31,7 +31,7 @@ namespace OIC
 {
     namespace Service
     {
-        #define EASYSETUP_TAG "EASY_SETUP"
+        #define EASYSETUP_TAG "ES_EASY_SETUP"
 
         EasySetup * EasySetup::s_instance = nullptr;
 
@@ -54,7 +54,7 @@ namespace OIC
 
             if(resource)
             {
-                if(resource->getResourceTypes().at(0) != OC_RSRVD_ES_RES_TYPE_PROV ||
+                if(resource->getResourceTypes().at(0) != OC_RSRVD_ES_RES_TYPE_EASYSETUP ||
                    resource->connectivityType() & CT_ADAPTER_TCP)
                 {
                     OIC_LOG (ERROR, EASYSETUP_TAG, "Given resource is not valid due to wrong rt or conntype");

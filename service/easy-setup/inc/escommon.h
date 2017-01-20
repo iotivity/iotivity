@@ -68,14 +68,14 @@ extern "C"
 /**
  * Easysetup defined resoruce types and uris.
  */
-#define OC_RSRVD_ES_RES_TYPE_PROV         "oic.wk.prov"
-#define OC_RSRVD_ES_URI_PROV              "/ProvisioningResURI"
-#define OC_RSRVD_ES_RES_TYPE_WIFI         "oic.wk.wifi"
-#define OC_RSRVD_ES_URI_WIFI              "/WiFiProvisioningResURI"
-#define OC_RSRVD_ES_RES_TYPE_CLOUDSERVER  "oic.wk.cloudserver"
-#define OC_RSRVD_ES_URI_CLOUDSERVER       "/CloudServerProvisioningResURI"
-#define OC_RSRVD_ES_RES_TYPE_DEVCONF      "oic.wk.devconf"
-#define OC_RSRVD_ES_URI_DEVCONF           "/DevConfProvisioningResURI"
+#define OC_RSRVD_ES_RES_TYPE_EASYSETUP          "oic.r.easysetup"
+#define OC_RSRVD_ES_URI_EASYSETUP               "/EasySetupResURI"
+#define OC_RSRVD_ES_RES_TYPE_WIFICONF           "oic.r.wificonf"
+#define OC_RSRVD_ES_URI_WIFICONF                "/WiFiConfResURI"
+#define OC_RSRVD_ES_RES_TYPE_COAPCLOUDCONF      "oic.r.coapcloudconf"
+#define OC_RSRVD_ES_URI_COAPCLOUDCONF           "/CoapCloudConfResURI"
+#define OC_RSRVD_ES_RES_TYPE_DEVCONF            "oic.r.devconf"
+#define OC_RSRVD_ES_URI_DEVCONF                 "/DevConfResURI"
 
 
 /**
@@ -239,14 +239,14 @@ typedef enum
  */
 typedef enum
 {
-    ES_WIFI_RESOURCE = 0x01,
-    ES_CLOUD_RESOURCE = 0x02,
+    ES_WIFICONF_RESOURCE = 0x01,
+    ES_COAPCLOUDCONF_RESOURCE = 0x02,
     ES_DEVCONF_RESOURCE = 0x04
 } ESResourceMask;
 
 /**
  * @brief Indicate enrollee and provisioning status. Provisioning status is shown in "provisioning
- *        status" property in provisioning resource.
+ *        status" property in easysetup resource.
  */
 typedef enum
 {
