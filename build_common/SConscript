@@ -53,6 +53,8 @@ if target_os == 'android':
     default_arch = 'x86'
 else:
     default_arch = platform.machine()
+    if target_os == 'windows':
+        default_arch = default_arch.lower()
 
 target_arch = ARGUMENTS.get('TARGET_ARCH', default_arch) # target arch
 
