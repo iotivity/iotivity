@@ -106,7 +106,12 @@ namespace OIC
         NSTopicsList *NSProvider::getTopicList() const
         {
             NS_LOG(DEBUG, "getTopicList - IN");
-            return m_topicList;
+            NSTopicsList * topicList = new NSTopicsList();
+            for (auto it : m_topicList->getTopicsList())
+            {
+                topicList->addTopic(it->getTopicName(), it->getState());
+            }
+            return topicList;
         }
 
         NSResult NSProvider::updateTopicList(NSTopicsList *topicList)
