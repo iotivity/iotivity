@@ -71,6 +71,7 @@ namespace OIC
             std::atomic<bool> removeDeviceResult;
             std::atomic<bool> aclResult;
             std::atomic<bool> certResult;
+            std::string m_mediatorID;
 
             std::shared_ptr< OC::OCSecureResource > m_securedResource;
 
@@ -87,11 +88,13 @@ namespace OIC
             void SelectMOTMethodCB(PMResultList_t *result, int hasError);
             void PreconfigPinProvCB(PMResultList_t *result, int hasError);
             void MultipleOwnershipTransferCb(OC::PMResultList_t *result, int hasError);
+            bool isSubOwnerIDMatched(std::shared_ptr< OC::OCSecureResource > foundDevice);
 #endif
             void ownershipTransferCb(OC::PMResultList_t *result, int hasError, ESResult& res);
             void convertUUIDToString(const uint8_t uuid[UUID_SIZE],
                                                 std::string& uuidString);
             std::string getResourceDeviceAddress(const std::string& host);
+            bool isOwnerIDMatched(std::shared_ptr< OC::OCSecureResource > foundDevice);
 
 #if defined(__WITH_DTLS__) && defined(__WITH_TLS__)
         public:

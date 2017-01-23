@@ -102,6 +102,10 @@ ESOwnershipTransferData provisionSecurityStatusCallback(std::shared_ptr<SecProvi
     {
 #ifdef __WITH_DTLS__
         cout << "Owned Status : " << secProvisioningStatus->isOwnedDevice() << std::endl;
+        if(secProvisioningStatus->isOwnedDevice())
+        {
+            cout << "Owner ID : " << secProvisioningStatus->getOwnerID() << std::endl;
+        }
         cout << "OT Method : " << secProvisioningStatus->getSelectedOTMethod() << std::endl;
 #ifdef MULTIPLE_OWNER
         cout << "MOT Enabled : " << secProvisioningStatus->isMOTEnabled() << std::endl;

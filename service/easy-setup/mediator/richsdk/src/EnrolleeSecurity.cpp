@@ -33,6 +33,7 @@
 #include "srmutility.h"
 #include "aclresource.h"
 #include "internal/doxmresource.h"
+#include "ocrandom.h"
 
 namespace OIC
 {
@@ -66,6 +67,31 @@ namespace OIC
         {
             (void) secDbPath;
             m_ocResource = resource;
+
+            OCUUIdentity* mediatorDevId = (OCUUIdentity* )OICMalloc(sizeof(OCUUIdentity));
+
+            if(!mediatorDevId)
+            {
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "provisionOwnership: OICMalloc error return");
+                m_mediatorID = {};
+            }
+
+            if(OC::OCPlatform::getDeviceId(mediatorDevId) != OC_STACK_OK)
+            {
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "getDeviceId is failed.");
+                OICFree(mediatorDevId);
+                m_mediatorID = {};
+            }
+
+            char uuidString[UUID_STRING_SIZE];
+            if(OCConvertUuidToString(mediatorDevId->id, uuidString))
+            {
+                m_mediatorID = uuidString;
+            }
+            else
+            {
+                m_mediatorID = {};
+            }
         }
 
         void EnrolleeSecurity::onEnrolleeSecuritySafetyCB(OC::PMResultList_t *result,
@@ -165,7 +191,95 @@ namespace OIC
             }
         }
 
+        bool EnrolleeSecurity::isOwnerIDMatched(std::shared_ptr< OC::OCSecureResource > foundDevice)
+        {
+            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "isOwnerIDMatched IN");
+
+            if(foundDevice.get() == nullptr)
+            {
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "foundDevice is NULL ptr");
+                return false;
+            }
+
+            bool ret = false;
+            std::string ownerID;
+            char uuidString[UUID_STRING_SIZE];
+            if(OCConvertUuidToString(foundDevice->getDevPtr()->doxm->owner.id, uuidString))
+            {
+                ownerID = uuidString;
+            }
+            else
+            {
+                ownerID = {};
+            }
+
+            if(ownerID == m_mediatorID)
+            {
+                OIC_LOG(INFO, ENROLEE_SECURITY_TAG,
+                    "The found device's first owner ID is matched with Mediator's ID");
+                ret = true;
+            }
+            else
+            {
+                OIC_LOG(INFO, ENROLEE_SECURITY_TAG,
+                    "The found device's first owner ID is NOT matched with Mediator's ID");
+            }
+
+            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "isOwnerIDMatched OUT");
+
+            return ret;
+        }
+
 #ifdef MULTIPLE_OWNER
+        bool EnrolleeSecurity::isSubOwnerIDMatched(std::shared_ptr< OC::OCSecureResource > foundDevice)
+        {
+            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "isSubOwnerIDMatched IN");
+
+            if(foundDevice.get() == nullptr)
+            {
+                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,
+                    "The found device's sub owner ID is NOT matched with Mediator's ID");
+
+                return false;
+            }
+
+            bool ret = false;
+            std::string subOwnerID;
+            char uuidString[UUID_STRING_SIZE];
+
+            OicSecSubOwner_t* subOwnerList = foundDevice->getDevPtr()->doxm->subOwners;
+
+            while(subOwnerList)
+            {
+                if(OCConvertUuidToString(subOwnerList->uuid.id, uuidString))
+                {
+                    subOwnerID = uuidString;
+                }
+                else
+                {
+                    subOwnerID = {};
+                }
+
+                if(subOwnerID == m_mediatorID)
+                {
+                    OIC_LOG(INFO, ENROLEE_SECURITY_TAG,
+                    "The found device's owner ID is matched with Mediator's ID as a second owner");
+                    ret = true;
+                    break;
+                }
+                subOwnerList = subOwnerList->next;
+            }
+
+            if(!ret)
+            {
+                OIC_LOG(INFO, ENROLEE_SECURITY_TAG,
+                    "The found device's sub owner ID is NOT matched with Mediator's ID");
+            }
+
+            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "isSubOwnerIDMatched OUT");
+            return ret;
+        }
+
         void EnrolleeSecurity::SelectMOTMethodCB(PMResultList_t *result, int hasError)
         {
             OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "SelectMOTMethodCB IN");
@@ -375,6 +489,18 @@ namespace OIC
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "HOST: %s", m_securedResource->getDevAddr().c_str());
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "SID: %s", m_securedResource->getDeviceID().c_str());
                 OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Owned status: %d", m_securedResource->getOwnedStatus());
+                if(m_securedResource->getOwnedStatus())
+                {
+                    char uuidString[UUID_STRING_SIZE];
+                    if(OCConvertUuidToString(m_securedResource->getDevPtr()->doxm->owner.id, uuidString))
+                    {
+                        OIC_LOG_V(DEBUG, ENROLEE_SECURITY_TAG, "Owner ID: %s", uuidString);
+                    }
+                    else
+                    {
+                        OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "OCConvertUuidToString is failed");
+                    }
+                }
 
                 if(callback != NULL)
                 {
@@ -384,11 +510,11 @@ namespace OIC
                                            ESResult::ES_SECURE_RESOURCE_IS_DISCOVERED);
                     ownershipTransferData = callback(securityProvisioningStatus);
 
+#ifdef MULTIPLE_OWNER
                     if(OIC_RANDOM_DEVICE_PIN == ownershipTransferData.getMOTMethod())
                     {
                         OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Selected MOT Method: OIC_RANDOM_DEVICE_PIN");
                     }
-#ifdef MULTIPLE_OWNER
                     else if(OIC_PRECONFIG_PIN == ownershipTransferData.getMOTMethod())
                     {
                         OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Selected MOT Method: OIC_PRECONFIG_PIN");
@@ -398,14 +524,60 @@ namespace OIC
 #endif
                 }
 
-                if(m_securedResource->getOwnedStatus() && isOwnedDeviceRegisteredInSVRDB()) // owned check logic
+                if(m_securedResource->getOwnedStatus())
                 {
-                    OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
+#ifdef MULTIPLE_OWNER
+                    if(isOwnedDeviceRegisteredInSVRDB() &&
+                        (isOwnerIDMatched(m_securedResource) ||
+                            isSubOwnerIDMatched(m_securedResource)))
+#else
+                    if(isOwnedDeviceRegisteredInSVRDB() &&
+                            isOwnerIDMatched(m_securedResource))
+#endif
+                    {
+                        OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG,
                             "The found device is already owned by Mediator.(SUCCESS)");
-                    res = ESResult::ES_OK;
-                    return res;
+                        res = ESResult::ES_OK;
+                        return res;
+                    }
+#ifdef MULTIPLE_OWNER
+                    else if(!isOwnedDeviceRegisteredInSVRDB() &&
+                                !isOwnerIDMatched(m_securedResource) &&
+                                !isSubOwnerIDMatched(m_securedResource) &&
+                                m_securedResource->isMOTSupported() && m_securedResource->isMOTEnabled()
+                                && (ownershipTransferData.getMOTMethod() == OIC_RANDOM_DEVICE_PIN ||
+                                    ownershipTransferData.getMOTMethod() == OIC_PRECONFIG_PIN))
+                    {
+                        // MOT case;
+                        res = performMultipleOwnershipTransfer(ownershipTransferData);
+
+                        if(res != ESResult::ES_OK)
+                        {
+                            OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "Multiple Ownership-Transfer failed. (%d)", res);
+                            res = ESResult::ES_OWNERSHIP_TRANSFER_FAILURE;
+                            return res;
+                        }
+
+                        std::unique_lock<std::mutex> lck(m_mtx);
+                        m_cond.wait(lck);
+
+                        if(!OTMResult)
+                        {
+                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Multiple Ownership-Transfer failed.");
+                            res = ESResult::ES_OWNERSHIP_TRANSFER_FAILURE;
+                            return res;
+                        }
+                    }
+#endif
+                    else
+                    {
+                        OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,
+                            "The found device is already owned by Other Mediator.(FAILED)");
+                        res = ESResult::ES_OWNERSHIP_IS_NOT_SYNCHRONIZED;
+                        return res;
+                    }
                 }
-                else // unowned check logic
+                else
                 {
                     if(isOwnedDeviceRegisteredInSVRDB())
                     {
@@ -441,170 +613,90 @@ namespace OIC
                         OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "Removing device is succeeded.");
                     }
 
-                    if(!m_securedResource->getOwnedStatus())
+                    ESResult result = ESResult::ES_OWNERSHIP_TRANSFER_FAILURE;
+                    res = performOwnershipTransfer(result);
+
+                    if(res != ESResult::ES_OK)
                     {
-                        ESResult result = ESResult::ES_OWNERSHIP_TRANSFER_FAILURE;
-                        res = performOwnershipTransfer(result);
+                        OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "Ownership-Transfer failed. (%d)", res);
+                        res = ESResult::ES_OWNERSHIP_TRANSFER_FAILURE;
+                        return res;
+                    }
 
-                        if(res != ESResult::ES_OK)
-                        {
-                            OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "Ownership-Transfer failed. (%d)", res);
-                            res = ESResult::ES_OWNERSHIP_TRANSFER_FAILURE;
-                            return res;
-                        }
+                    std::unique_lock<std::mutex> lck(m_mtx);
+                    m_cond.wait(lck);
 
-                        std::unique_lock<std::mutex> lck(m_mtx);
-                        m_cond.wait(lck);
-
-                        if(!OTMResult)
-                        {
-                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Ownership-Transfer failed.");
-                            return result;
-                        }
-#ifdef MULTIPLE_OWNER
-                        if( m_securedResource->isMOTSupported() &&
-                            m_securedResource->isMOTEnabled() &&
-                            OIC_PRECONFIG_PIN == ownershipTransferData.getMOTMethod() &&
-                                !ownershipTransferData.getPreConfiguredPin().empty())
-                        {
-                            OC::ResultCallBack preconfigPinProvCB = std::bind(
-                                    &EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
-                                    std::placeholders::_1, std::placeholders::_2,
-                                    static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::PreconfigPinProvCB,
-                                    this, std::placeholders::_1, std::placeholders::_2)),
-                                    shared_from_this());
-
-                            std::string pin = ownershipTransferData.getPreConfiguredPin();
-
-                            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "provisionPreconfPin is called.");
-                            if(OC_STACK_OK != m_securedResource->provisionPreconfPin(
-                                                    pin.c_str(), pin.length(), preconfigPinProvCB))
-                            {
-                                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "provisionPreconfPin API error");
-                                res = ESResult:: ES_PRE_CONFIG_PIN_PROVISIONING_FAILURE;
-                                return res;
-                            }
-
-                            m_cond.wait(lck);
-
-                            if(!PreConfigPinProvResult)
-                            {
-                                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "provisionPreconfPin is failed.");
-                                res = ESResult:: ES_PRE_CONFIG_PIN_PROVISIONING_FAILURE;
-                                return res;
-                            }
-                        }
-
-                        if( m_securedResource->isMOTSupported() &&
-                            m_securedResource->isMOTEnabled() &&
-                            (OIC_PRECONFIG_PIN == ownershipTransferData.getMOTMethod() ||
-                                OIC_RANDOM_DEVICE_PIN == ownershipTransferData.getMOTMethod()))
-                        {
-                            OC::ResultCallBack selectMOTMethodCB = std::bind(
-                                    &EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
-                                    std::placeholders::_1, std::placeholders::_2,
-                                    static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::SelectMOTMethodCB,
-                                    this, std::placeholders::_1, std::placeholders::_2)),
-                                    shared_from_this());
-
-                            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "selectMOTMethod is called.");
-                            if(OC_STACK_OK != m_securedResource->selectMOTMethod(
-                                                    ownershipTransferData.getMOTMethod(),
-                                                    selectMOTMethodCB))
-                            {
-                                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "selectMOTMethod API error");
-                                res = ESResult:: ES_MOT_METHOD_SELECTION_FAILURE;
-                                return res;
-                            }
-
-                            m_cond.wait(lck);
-
-                            if(!MOTMethodProvResult)
-                            {
-                                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "selectMOTMethod is failed.");
-                                res = ESResult:: ES_MOT_METHOD_SELECTION_FAILURE;
-                                return res;
-                            }
-                        }
-#endif
+                    if(!OTMResult)
+                    {
+                        OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Ownership-Transfer failed.");
+                        return result;
                     }
 #ifdef MULTIPLE_OWNER
-                    else if(m_securedResource->isMOTSupported() && m_securedResource->isMOTEnabled()
-                            && (ownershipTransferData.getMOTMethod() == OIC_RANDOM_DEVICE_PIN ||
-                                ownershipTransferData.getMOTMethod() == OIC_PRECONFIG_PIN))
+                    if( m_securedResource->isMOTSupported() &&
+                        m_securedResource->isMOTEnabled() &&
+                        OIC_PRECONFIG_PIN == ownershipTransferData.getMOTMethod() &&
+                            !ownershipTransferData.getPreConfiguredPin().empty())
                     {
-                        OCUUIdentity* mediatorDevId = (OCUUIdentity* )OICMalloc(sizeof(OCUUIdentity));
+                        OC::ResultCallBack preconfigPinProvCB = std::bind(
+                                &EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
+                                std::placeholders::_1, std::placeholders::_2,
+                                static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::PreconfigPinProvCB,
+                                this, std::placeholders::_1, std::placeholders::_2)),
+                                shared_from_this());
 
-                        if(!mediatorDevId)
+                        std::string pin = ownershipTransferData.getPreConfiguredPin();
+
+                        OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "provisionPreconfPin is called.");
+                        if(OC_STACK_OK != m_securedResource->provisionPreconfPin(
+                                                pin.c_str(), pin.length(), preconfigPinProvCB))
                         {
-                            OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "provisionOwnership: OICMalloc error return");
-                            res = ESResult::ES_OWNERSHIP_TRANSFER_FAILURE;
+                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "provisionPreconfPin API error");
+                            res = ESResult:: ES_PRE_CONFIG_PIN_PROVISIONING_FAILURE;
                             return res;
                         }
 
-                        if(OC::OCPlatform::getDeviceId(mediatorDevId) != OC_STACK_OK)
-                        {
-                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "getDeviceId is failed.");
-                            res = ESResult::ES_OWNERSHIP_TRANSFER_FAILURE;
-                            OICFree(mediatorDevId);
-                            return res;
-                        }
-
-                        if(!memcmp(m_securedResource->getDevPtr()->doxm->owner.id,
-                                   mediatorDevId->id, UUID_IDENTITY_SIZE * sizeof(uint8_t)))
-                        {
-                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,
-                                "The found device's owner ID is same as Mediator's ID but Meditor does not know it");
-                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Only Mediator would be reset");
-                            res = ESResult::ES_OWNERSHIP_IS_NOT_SYNCHRONIZED;
-                            OICFree(mediatorDevId);
-                            return res;
-                        }
-
-                        OicSecSubOwner_t* subOwnerList = m_securedResource->getDevPtr()->doxm->subOwners;
-
-                        while(subOwnerList)
-                        {
-                            if(!memcmp(subOwnerList->uuid.id, mediatorDevId->id,
-                                UUID_IDENTITY_SIZE * sizeof(uint8_t)))
-                            {
-                                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG,
-                                    "The found device's subOwner ID is same as Mediator's ID but Meditor does not know it");
-                                OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Only Mediator would be reset");
-                                res = ESResult::ES_OWNERSHIP_IS_NOT_SYNCHRONIZED;
-                                OICFree(mediatorDevId);
-                                return res;
-                            }
-                            subOwnerList = subOwnerList->next;
-                        }
-
-                        OICFree(mediatorDevId);
-
-                        res = performMultipleOwnershipTransfer(ownershipTransferData);
-
-                        if(res != ESResult::ES_OK)
-                        {
-                            OIC_LOG_V(ERROR, ENROLEE_SECURITY_TAG, "Multiple Ownership-Transfer failed. (%d)", res);
-                            res = ESResult::ES_OWNERSHIP_TRANSFER_FAILURE;
-                            return res;
-                        }
-
-                        std::unique_lock<std::mutex> lck(m_mtx);
                         m_cond.wait(lck);
 
-                        if(!OTMResult)
+                        if(!PreConfigPinProvResult)
                         {
-                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "Multiple Ownership-Transfer failed.");
-                            res = ESResult::ES_OWNERSHIP_TRANSFER_FAILURE;
+                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "provisionPreconfPin is failed.");
+                            res = ESResult:: ES_PRE_CONFIG_PIN_PROVISIONING_FAILURE;
+                            return res;
+                        }
+                    }
+
+                    if( m_securedResource->isMOTSupported() &&
+                        m_securedResource->isMOTEnabled() &&
+                        (OIC_PRECONFIG_PIN == ownershipTransferData.getMOTMethod() ||
+                            OIC_RANDOM_DEVICE_PIN == ownershipTransferData.getMOTMethod()))
+                    {
+                        OC::ResultCallBack selectMOTMethodCB = std::bind(
+                                &EnrolleeSecurity::onEnrolleeSecuritySafetyCB,
+                                std::placeholders::_1, std::placeholders::_2,
+                                static_cast<ESSecurityCb>(std::bind(&EnrolleeSecurity::SelectMOTMethodCB,
+                                this, std::placeholders::_1, std::placeholders::_2)),
+                                shared_from_this());
+
+                        OIC_LOG(DEBUG, ENROLEE_SECURITY_TAG, "selectMOTMethod is called.");
+                        if(OC_STACK_OK != m_securedResource->selectMOTMethod(
+                                                ownershipTransferData.getMOTMethod(),
+                                                selectMOTMethodCB))
+                        {
+                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "selectMOTMethod API error");
+                            res = ESResult:: ES_MOT_METHOD_SELECTION_FAILURE;
+                            return res;
+                        }
+
+                        m_cond.wait(lck);
+
+                        if(!MOTMethodProvResult)
+                        {
+                            OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "selectMOTMethod is failed.");
+                            res = ESResult:: ES_MOT_METHOD_SELECTION_FAILURE;
                             return res;
                         }
                     }
 #endif
-                    else
-                    {
-                        OIC_LOG(ERROR, ENROLEE_SECURITY_TAG, "The found device is already owned by other PT");
-                        res = ESResult::ES_ERROR;
-                    }
                 }
             }
             else

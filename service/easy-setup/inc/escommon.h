@@ -206,9 +206,12 @@ typedef enum
     ES_PRE_CONFIG_PIN_PROVISIONING_FAILURE,
 
     /**
-     * The found enrollee's owner ID indicates a same ID of mediator.
-     * However, a list of owned devices managed in mediator's PMD db has no element for the found enrollee.
-     * That can happen where only mediator is reset without any inform to the enrollee.
+     * Ownership information is not synchronized between Mediator and Enrollee.
+     * e.g. A mediator's PDM DB has an ownership information to the found enrollee
+     *      but it is actually owned by other mediator.
+     *      That can happen where the found enrollee is reset and performed in easy setup without any inform to the first mediator.
+     * e.g. A list of owned devices managed in mediator's PMD db has no element for the found enrollee.
+     *      That can happen where only mediator is reset without any inform to the enrollee.
      * To proceed an ownership transfer to the enrollee, it needs to reset the enrollee's SVR DB for its owner, i.e. the mediator
      */
     ES_OWNERSHIP_IS_NOT_SYNCHRONIZED,

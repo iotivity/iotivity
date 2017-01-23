@@ -34,6 +34,7 @@
 #ifdef __WITH_DTLS__
 #include "securevirtualresourcetypes.h"
 #include "OCProvisioningManager.hpp"
+#include "ocrandom.h"
 #endif
 
 #include "escommon.h"
@@ -512,6 +513,7 @@ namespace OIC
                 m_selectedOTMethod = OIC_JUST_WORKS;
                 m_isMOTEnabled = false;
                 m_isOwned = false;
+                m_ownerID = {};
 #endif
             }
 #ifdef __WITH_DTLS__
@@ -531,6 +533,19 @@ namespace OIC
                     {
                         m_selectedOTMethod = OIC_OXM_COUNT; // Out-of-range
                     }
+
+                    if(resource->getOwnedStatus())
+                    {
+                        char uuidString[UUID_STRING_SIZE];
+                        if(OCConvertUuidToString(resource->getDevPtr()->doxm->owner.id, uuidString))
+                        {
+                            m_ownerID = uuidString;
+                        }
+                        else
+                        {
+                            m_ownerID = {};
+                        }
+                    }
                 }
             }
 
@@ -547,6 +562,11 @@ namespace OIC
             bool isOwnedDevice() const
             {
                 return m_isOwned;
+            }
+
+            const std::string getOwnerID()
+            {
+                return m_ownerID;
             }
 #endif
             const std::string getDeviceUUID()
@@ -573,6 +593,7 @@ namespace OIC
             OicSecOxm_t m_selectedOTMethod;
             bool m_isMOTEnabled;
             bool m_isOwned;
+            std::string m_ownerID;
 #endif
         };
 
