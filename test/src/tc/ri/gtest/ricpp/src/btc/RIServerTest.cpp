@@ -389,6 +389,7 @@ TEST_F(RIServerTest_btc, UnregisterResource_SRC_P)
 
 /**
  * @since 2016-06-27
+ * @see None
  * @objective Test unregisterResource() with null resource handle
  * @target OCStackResult unregisterResource(const OCResourceHandle& resourceHandle)
  * @test_data OCResourceHandle
@@ -466,6 +467,7 @@ TEST_F(RIServerTest_btc, BindTypeToResource_ESV_N)
 
 /**
  * @since 2016-06-27
+ * @see None
  * @objective Test bindTypeToResource() with empty resourceType
  * @target OCStackResult bindTypeToResource(const OCResourceHandle& resourceHandle,
  *                       const std::string& resourceTypeName)
