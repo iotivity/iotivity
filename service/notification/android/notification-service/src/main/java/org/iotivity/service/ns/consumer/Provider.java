@@ -100,7 +100,13 @@ public class Provider {
     }
 
     /**
-     * API for for requesting subscription of Notification service
+     * API for requesting subscription of Notification service
+     * This API should be called with a valid Provider object obtained from Discovery callback.
+     * The API should not be called when the Provider is in STOPPED state.
+     *
+     * Discovery APIs to discover Providers are as below.
+     * Start/rescanProvider for D2D,
+     * enableRemoteService for D2S,
      *
      * @throws NSException failure to subscribe
      */
@@ -109,7 +115,11 @@ public class Provider {
     }
 
     /**
-     * API for for requesting unsubscription of Notification service
+     * API for requesting unsubscription of Notification service
+     *
+     * This API should be called with a valid Provider object obtained from Discovery callback.
+     * The API should not be called when the Provider is in STOPPED state.
+     *
      * @throws NSException failure to subscribe
      */
     public void unsubscribe() throws NSException {
@@ -117,7 +127,7 @@ public class Provider {
     }
 
     /**
-     * API for for requesting subscription status from Provider of Notification
+     * API for requesting subscription status from Provider of Notification
      * service
      *
      * @return true if the notification service is subscribed to

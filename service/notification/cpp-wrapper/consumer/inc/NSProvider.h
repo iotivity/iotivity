@@ -165,12 +165,23 @@ namespace OIC
 
                 /**
                       * This method is for requesting subscription of Notification service.
+                      * This API should be called with a valid Provider object obtained from Discovery callback.
+                      * The API should not be called when the Provider is in STOPPED state.
+                      *
+                      * Discovery APIs to discover Providers are as below.
+                      * Start/rescanProvider for D2D,
+                      * enableRemoteService for D2S,
+                      *
                       * @return ::NS_OK or result code of NSResult
                       */
                 NSResult subscribe();
 
                 /**
                       * Request to unsubscribe in order not to receive notification message from provider
+                      *
+                      * This API should be called with a valid Provider object obtained from Discovery callback.
+                      * The API should not be called when the Provider is in STOPPED state.
+                      *
                       * @return ::NS_OK or result code of NSResult
                      */
                 NSResult unsubscribe();
