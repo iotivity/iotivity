@@ -130,13 +130,13 @@ dependencies {
 
 task copyNativeLibs(type: Copy) {
     String[] libraries = [
-        'libca-interface.so',
-        'libconnectivity_abstraction.so',
         'libgnustl_shared.so',
+        'libconnectivity_abstraction.so',
+        'libca-interface.so',
         'liboc_logger.so',
+        'liboctbstack.so',
         'liboc.so',
-        'libocstack-jni.so',
-        'liboctbstack.so'
+        'libocstack-jni.so'
     ]
     if ("$SECURED" == '1')
         libraries += [
