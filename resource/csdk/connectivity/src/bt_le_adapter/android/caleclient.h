@@ -25,6 +25,7 @@
 #ifndef CA_LECLIENT_H_
 #define CA_LECLIENT_H_
 
+#include "calestate.h"
 #include "cacommon.h"
 #include "cathreadpool.h"
 #include "uarraylist.h"
@@ -34,25 +35,6 @@
 extern "C"
 {
 #endif
-
-static const uint16_t GATT_ERROR = 133;
-
-static const uint16_t STATE_SEND_NONE = 1;
-static const uint16_t STATE_SEND_SUCCESS = 2;
-static const uint16_t STATE_SEND_FAIL = 3;
-static const uint16_t STATE_SENDING = 4;
-static const uint16_t STATE_SEND_PREPARING = 5;
-static const uint16_t STATE_SEND_MTU_NEGO_SUCCESS = 6;
-
-typedef struct le_state_info
-{
-    char address[CA_MACADDR_SIZE];
-    uint16_t connectedState;
-    uint16_t sendState;
-    jboolean autoConnectFlag;
-    jboolean isDescriptorFound;
-    uint16_t mtuSize;
-} CALEState_t;
 
 /**
  * BLE Scanning State.
@@ -274,25 +256,6 @@ CAResult_t CALEClientStopScan();
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEClientStopScanImpl(JNIEnv *env, jobject callback);
-
-/**
- * set flag into State List.
- * @param[in]   env                   JNI interface pointer.
- * @param[in]   jni_address           remote address.
- * @param[in]   state_idx             state index.
- * @param[in]   flag                  auto connect flag.
- */
-CAResult_t CALEClientSetFlagToState(JNIEnv *env, jstring jni_address,
-                                    jint state_idx, jboolean flag);
-
-/**
- * get flag from State List.
- * @param[in]   env                   JNI interface pointer.
- * @param[in]   jni_address           remote address.
- * @param[in]   state_idx             state index.
- * @return  current flag;
- */
-jboolean CALEClientGetFlagFromState(JNIEnv *env, jstring jni_address, jint state_idx);
 
 /**
  * connect to gatt server hosted.
@@ -531,23 +494,23 @@ CAResult_t CALEClientUpdateDeviceStateWithBtDevice(JNIEnv *env,
                                                    uint16_t target_state);
 
 /**
- * update new state information.
- * @param[in]   address               remote address.
- * @param[in]   state_type            state type.
- * @param[in]   target_state          state index to update.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ * set flag into State List.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   jni_address           remote address.
+ * @param[in]   state_idx             state index.
+ * @param[in]   flag                  auto connect flag.
  */
-CAResult_t CALEClientUpdateDeviceState(const char* address, uint16_t state_type,
-                                       uint16_t target_state);
+CAResult_t CALEClientSetFlagToState(JNIEnv *env, jstring jni_address,
+                                    jint state_idx, jboolean flag);
 
 /**
- * This function is used to set MTU size
- * which negotiated between client and server device.
- * @param[in]   address               remote address.
- * @param[in]   mtuSize               MTU size.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
+ * get flag from State List.
+ * @param[in]   env                   JNI interface pointer.
+ * @param[in]   jni_address           remote address.
+ * @param[in]   state_idx             state index.
+ * @return  current flag;
  */
-CAResult_t CALEClientSetMtuSize(const char* address, uint16_t mtuSize);
+jboolean CALEClientGetFlagFromState(JNIEnv *env, jstring jni_address, jint state_idx);
 
 /**
  * get MTU size.
@@ -557,48 +520,11 @@ CAResult_t CALEClientSetMtuSize(const char* address, uint16_t mtuSize);
 uint16_t CALEClientGetMtuSize(const char* address);
 
 /**
- * check whether the remote address is existed or not.
- * @param[in]   address               remote address.
- * @return  true or false.
- */
-bool CALEClientIsDeviceInList(const char *remoteAddress);
-
-/**
- * remove all device states.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CALEClientRemoveAllDeviceState();
-
-/**
  * Reset values of device state for all of devices.
  * this method has to be invoked when BT adapter is disabled.
  * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
  */
 CAResult_t CALEClientResetDeviceStateForAll();
-
-/**
- * remove the device state for a remote device.
- * @param[in]   remoteAddress         remote address.
- * @return  ::CA_STATUS_OK or ERROR CODES (::CAResult_t error codes in cacommon.h).
- */
-CAResult_t CALEClientRemoveDeviceState(const char* remoteAddress);
-
-/**
- * get state information for a remote device.
- * @param[in]   remoteAddress         remote address.
- * @return  CALEState_t.
- */
-CALEState_t* CALEClientGetStateInfo(const char* remoteAddress);
-
-/**
- * check whether the remote address has same state with target state.
- * @param[in]   remoteAddress         remote address.
- * @param[in]   state_type            state_type.
- * @param[in]   target_state          state index to check.
- * @return  true or false.
- */
-bool CALEClientIsValidState(const char* remoteAddress, uint16_t state_type,
-                            uint16_t target_state);
 
 /**
  * create scan device list.

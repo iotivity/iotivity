@@ -10,6 +10,7 @@ env.PrependUnique(CPPPATH = [ os.path.join(src_dir, 'android') ])
 src_files = [ 'caleclient.c',
               'caleserver.c',
               'calenwmonitor.c',
-              'caleutils.c' ]
+              'caleutils.c',
+              'calestate.c' ]
 
 Return('src_files')

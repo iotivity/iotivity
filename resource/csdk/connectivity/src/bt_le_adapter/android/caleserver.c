@@ -51,6 +51,7 @@ static CAPacketReceiveCallback g_packetReceiveCallback = NULL;
 static CABLEErrorHandleCallback g_serverErrorCallback;
 
 static u_arraylist_t *g_connectedDeviceList = NULL;
+static u_arraylist_t *g_deviceStateList = NULL;
 
 static bool g_isStartServer = false;
 static bool g_isInitializedServer = false;
@@ -67,6 +68,8 @@ static oc_mutex g_threadSendMutex = NULL;
 static oc_mutex g_threadSendNotifyMutex = NULL;
 static oc_cond g_threadSendNotifyCond = NULL;
 static bool g_isSignalSetFlag = false;
+
+static oc_mutex g_deviceStateListMutex = NULL;
 
 static jint g_state_connected = INVALID_STATE;
 static jint g_state_disconnected = INVALID_STATE;

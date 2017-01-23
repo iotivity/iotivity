@@ -69,6 +69,15 @@ static const uint16_t STATE_CONNECTED = 3;
 static const uint16_t STATE_SERVICE_CONNECTED = 2;
 static const uint16_t STATE_DISCONNECTED = 1;
 
+static const uint16_t GATT_ERROR = 133;
+
+static const uint16_t STATE_SEND_NONE = 1;
+static const uint16_t STATE_SEND_SUCCESS = 2;
+static const uint16_t STATE_SEND_FAIL = 3;
+static const uint16_t STATE_SENDING = 4;
+static const uint16_t STATE_SEND_PREPARING = 5;
+static const uint16_t STATE_SEND_MTU_NEGO_SUCCESS = 6;
+
 /**
  * get uuid(jni object) from uuid(character).
  * @param[in]   env              JNI interface pointer.
