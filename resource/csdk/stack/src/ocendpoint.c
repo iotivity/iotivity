@@ -65,6 +65,24 @@ OCStackResult OCGetSupportedEndpointFlags(const OCTpsSchemeFlags givenFlags, OCT
         *out = (OCTpsSchemeFlags)(*out | OC_COAP_RFCOMM);
     }
 #endif
+#ifdef LE_ADAPTER
+    if ((givenFlags & OC_COAP_GATT) && (SelectedNetwork & CA_ADAPTER_GATT_BTLE))
+    {
+        *out = (OCTpsSchemeFlags)(*out | OC_COAP_GATT);
+    }
+#endif
+#ifdef NFC_ADAPTER
+    if ((givenFlags & OC_COAP_NFC) && (SelectedNetwork & CA_ADAPTER_NFC))
+    {
+        *out = (OCTpsSchemeFlags)(*out | OC_COAP_NFC);
+    }
+#endif
+#ifdef RA_ADAPTER
+    if ((givenFlags & OC_COAP_RA) && (SelectedNetwork & CA_ADAPTER_REMOTE_ACCESS))
+    {
+        *out = (OCTpsSchemeFlags)(*out | OC_COAP_RA);
+    }
+#endif
 
     return OC_STACK_OK;
 }
@@ -121,13 +139,36 @@ OCStackResult OCGetMatchedTpsFlags(const CATransportAdapter_t adapter,
 #endif
 #ifdef EDR_ADAPTER
     // OC_COAP_RFCOMM
-    if ((adapter & OC_ADAPTER_RFCOMM_BTEDR) && (flags == OC_DEFAULT_FLAGS))
+    if (adapter & OC_ADAPTER_RFCOMM_BTEDR)
     {
         // typecasting to support C90(arduino)
         *out = (OCTpsSchemeFlags)(*out | OC_COAP_RFCOMM);
     }
 #endif
-
+#ifdef LE_ADAPTER
+    // OC_COAP_GATT
+    if (adapter & CA_ADAPTER_GATT_BTLE)
+    {
+        // typecasting to support C90(arduino)
+        *out = (OCTpsSchemeFlags)(*out | OC_COAP_GATT);
+    }
+#endif
+#ifdef NFC_ADAPTER
+    // OC_COAP_NFC
+    if (adapter & CA_ADAPTER_NFC)
+    {
+        // typecasting to support C90(arduino)
+        *out = (OCTpsSchemeFlags)(*out | OC_COAP_NFC);
+    }
+#endif
+#ifdef RA_ADAPTER
+    // OC_COAP_RA
+    if (adapter & CA_ADAPTER_REMOTE_ACCESS)
+    {
+        // typecasting to support C90(arduino)
+        *out = (OCTpsSchemeFlags)(*out | OC_COAP_RA);
+    }
+#endif
     return OC_STACK_OK;
 }
 
@@ -419,6 +460,23 @@ OCTpsSchemeFlags OCGetSupportedTpsFlags()
         ret = (OCTpsSchemeFlags)(ret | OC_COAP_RFCOMM);
     }
 #endif
-
+#ifdef LE_ADAPTER
+    if (SelectedNetwork & CA_ADAPTER_GATT_BTLE)
+    {
+        ret = (OCTpsSchemeFlags)(ret | OC_COAP_GATT);
+    }
+#endif
+#ifdef NFC_ADAPTER
+    if (SelectedNetwork & CA_ADAPTER_NFC)
+    {
+        ret = (OCTpsSchemeFlags)(ret | OC_COAP_NFC);
+    }
+#endif
+#ifdef RA_ADAPTER
+    if (SelectedNetwork & CA_ADAPTER_REMOTE_ACCESS)
+    {
+        ret = (OCTpsSchemeFlags)(ret | OC_COAP_RA);
+    }
+#endif
     return ret;
 }

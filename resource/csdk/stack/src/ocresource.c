@@ -886,7 +886,7 @@ OCStackResult BuildVirtualResourceResponse(const OCResource *resourcePtr,
                                            CAEndpoint_t *networkInfo,
                                            uint32_t infoSize)
 {
-    if (!resourcePtr || !payload || !networkInfo)
+    if (!resourcePtr || !payload)
     {
         return OC_STACK_INVALID_PARAM;
     }
@@ -1394,7 +1394,7 @@ static OCStackResult HandleVirtualResource (OCServerRequest *request, OCResource
         uint32_t infoSize = 0;
 
         CAResult_t caResult = CAGetNetworkInformation(&networkInfo, &infoSize);
-        if (CA_STATUS_OK != caResult || !networkInfo || infoSize == 0)
+        if (CA_STATUS_FAILED == caResult)
         {
             OIC_LOG(ERROR, TAG, "CAGetNetworkInformation has error on parsing network infomation");
             return OC_STACK_ERROR;

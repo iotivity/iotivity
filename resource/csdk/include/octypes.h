@@ -1346,6 +1346,18 @@ typedef enum
     /** coap + rfcomm */
     OC_COAP_RFCOMM    = (1 << 6),
 #endif
+#ifdef LE_ADAPTER
+    /** coap + gatt */
+    OC_COAP_GATT      = (1 << 7),
+#endif
+#ifdef NFC_ADAPTER
+    /** coap + nfc */
+    OC_COAP_NFC       = (1 << 8),
+#endif
+#ifdef RA_ADAPTER
+    /** coap + remote_access */
+    OC_COAP_RA        = (1 << 9),
+#endif
     /** Allow all endpoint.*/
     OC_ALL       = 0xffff
 } OCTpsSchemeFlags;

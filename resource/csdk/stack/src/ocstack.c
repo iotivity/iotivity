@@ -3465,6 +3465,15 @@ OCStackResult OCCreateResourceWithEp(OCResourceHandle *handle,
 #ifdef EDR_ADAPTER
     validTps = (OCTpsSchemeFlags)(validTps | OC_COAP_RFCOMM);
 #endif
+#ifdef LE_ADAPTER
+    validTps = (OCTpsSchemeFlags)(validTps | OC_COAP_GATT);
+#endif
+#ifdef NFC_ADAPTER
+    validTps = (OCTpsSchemeFlags)(validTps | OC_COAP_NFC);
+#endif
+#ifdef RA_ADAPTER
+    validTps = (OCTpsSchemeFlags)(validTps | OC_COAP_RA);
+#endif
 
     if ((resourceTpsTypes < OC_COAP) || ((resourceTpsTypes != OC_ALL) &&
                                          (resourceTpsTypes > validTps)))
