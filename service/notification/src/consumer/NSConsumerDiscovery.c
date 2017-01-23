@@ -29,8 +29,8 @@
 #include "oic_malloc.h"
 #include "oic_string.h"
 
-#define NS_DISCOVER_QUERY "/oic/res?rt=oic.wk.notification"
-#define NS_PRESENCE_SUBSCRIBE_QUERY_TCP "/oic/ad?rt=oic.wk.notification"
+#define NS_DISCOVER_QUERY "/oic/res?rt=x.org.iotivity.notification"
+#define NS_PRESENCE_SUBSCRIBE_QUERY_TCP "/oic/ad?rt=x.org.iotivity.notification"
 
 OCStackApplicationResult NSConsumerPresenceListener(
         void * ctx, OCDoHandle handle, OCClientResponse * clientResponse)

@@ -53,7 +53,7 @@ public:
 
     void findProvider()
     {
-        OC::OCPlatform::findResource("", std::string("/oic/res?rt=oic.wk.notification"),
+        OC::OCPlatform::findResource("", std::string("/oic/res?rt=x.org.iotivity.notification"),
                 OCConnectivityType::CT_DEFAULT,
                 std::bind(&NSConsumerSimulator::findResultCallback, this, std::placeholders::_1),
                 OC::QualityOfService::LowQos);
@@ -99,7 +99,7 @@ private:
     {
         if(resource->uri() == "/notification")
         {
-            resource->get(std::string("oic.wk.notification"), std::string("oic.if.baseline"),
+            resource->get(std::string("x.org.iotivity.notification"), std::string("oic.if.baseline"),
                     OC::QueryParamsMap(), std::bind(&NSConsumerSimulator::onGet, this,
                             std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                             resource), OC::QualityOfService::LowQos);
@@ -115,7 +115,7 @@ private:
 
         try
         {
-            std::vector<std::string> rts{"oic.wk.notification"};
+            std::vector<std::string> rts{"x.org.iotivity.notification"};
 
             m_msgResource
                 = OC::OCPlatform::constructResourceObject(
@@ -165,7 +165,7 @@ private:
 
             if(rep.getValue<int>("messageid") == 3)
             {
-                m_topicResource->get(std::string("oic.wk.notification"),
+                m_topicResource->get(std::string("x.org.iotivity.notification"),
                         std::string("oic.if.baseline"), OC::QueryParamsMap(),
                         std::bind(&NSConsumerSimulator::onTopicGet, this, std::placeholders::_1,
                                 std::placeholders::_2, std::placeholders::_3, m_topicResource),

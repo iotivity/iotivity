@@ -89,10 +89,10 @@
 #define RESOURCE_TAG               "NS_PROVIDER_RESOURCE"
 #define TOPIC_TAG                  "NS_PROVIDER_TOPIC"
 
-#define NS_ROOT_TYPE               "oic.wk.notification"
-#define NS_COLLECTION_MESSAGE_TYPE "oic.wk.notification.message"
-#define NS_COLLECTION_SYNC_TYPE    "oic.wk.notification.sync"
-#define NS_COLLECTION_TOPIC_TYPE   "oic.wk.notification.topic"
+#define NS_ROOT_TYPE               "x.org.iotivity.notification"
+#define NS_COLLECTION_MESSAGE_TYPE "x.org.iotivity.notification.message"
+#define NS_COLLECTION_SYNC_TYPE    "x.org.iotivity.notification.sync"
+#define NS_COLLECTION_TOPIC_TYPE   "x.org.iotivity.notification.topic"
 
 #define NS_INTERFACE_READ          "oic.if.r"
 #define NS_INTERFACE_READWRITE     "oic.if.rw"

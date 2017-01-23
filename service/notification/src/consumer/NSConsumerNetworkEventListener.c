@@ -30,7 +30,7 @@
 #include "NSConsumerDiscovery.h"
 #include "NSConsumerNetworkEventListener.h"
 
-#define NS_PRESENCE_SUBSCRIBE_QUERY "/oic/ad?rt=oic.wk.notification"
+#define NS_PRESENCE_SUBSCRIBE_QUERY "/oic/ad?rt=x.org.iotivity.notification"
 
 void NSConnectionStateListener(const CAEndpoint_t * info, bool isConnected);
 

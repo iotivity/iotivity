@@ -53,7 +53,7 @@ class NSConsumerSimulator
 
         void findProvider()
         {
-            OC::OCPlatform::findResource("", std::string("/oic/res?rt=oic.wk.notification"),
+            OC::OCPlatform::findResource("", std::string("/oic/res?rt=x.org.iotivity.notification"),
                                          OCConnectivityType::CT_DEFAULT,
                                          std::bind(&NSConsumerSimulator::findResultCallback, this, std::placeholders::_1),
                                          OC::QualityOfService::LowQos);
@@ -121,7 +121,7 @@ class NSConsumerSimulator
             try
             {
 
-                std::vector<std::string> rts{"oic.wk.notification"};
+                std::vector<std::string> rts{"x.org.iotivity.notification"};
 
                 m_msgResource
                     = OC::OCPlatform::constructResourceObject(

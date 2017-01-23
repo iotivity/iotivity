@@ -398,7 +398,7 @@ public:
         OC::OCPlatform::startPresence(30);
 
         std::string notificationUri = m_notificationUri;
-        std::string resourceTypeName = "oic.wk.notification.topic";
+        std::string resourceTypeName = "x.org.iotivity.notification.topic";
         std::string resourceInterface = OC::DEFAULT_INTERFACE;
 
         uint8_t resourceProperty = OC_OBSERVABLE;
@@ -418,7 +418,7 @@ public:
         }
 
         //resourceProperty |= OC_OBSERVABLE;
-        resourceTypeName = "oic.wk.notification.message";
+        resourceTypeName = "x.org.iotivity.notification.message";
         childUri = uri + m_messageUri;
         try
         {
@@ -434,7 +434,7 @@ public:
             std::cout << e.what() << std::endl;
         }
 
-        resourceTypeName = "oic.wk.notification.sync";
+        resourceTypeName = "x.org.iotivity.notification.sync";
         childUri = uri + m_syncUri;
         try
         {
@@ -451,7 +451,7 @@ public:
         }
 
         resourceProperty |= OC_DISCOVERABLE;
-        resourceTypeName = "oic.wk.notification";
+        resourceTypeName = "x.org.iotivity.notification";
         try
         {
             OC::OCPlatform::registerResource(
