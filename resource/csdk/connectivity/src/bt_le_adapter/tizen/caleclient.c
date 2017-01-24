@@ -1211,5 +1211,13 @@ CAResult_t CALEClientSetMtuSize(const char* address, uint16_t mtuSize)
     VERIFY_NON_NULL(address, TAG, "address is null");
     //@Todo
     //it should be implemented after update Tizen 3.0
-    return CA_STATUS_OK;
+    return CA_NOT_SUPPORTED;
+}
+
+CAResult_t CALEClientSendNegotiationMessage(const char* address)
+{
+    OIC_LOG_V(DEBUG, TAG, "CALEClientSendNegotiationMessage(%s)", address);
+    //@Todo
+    //it will be implemented when tizen public 3.0 is released.
+    return CA_NOT_SUPPORTED;
 }
