@@ -33,7 +33,7 @@ public class TopicsList {
 
     private static final String LOG_TAG     = "NotificationService_TopicList";
 
-    public Vector<Topic>        mTopicsList = new Vector<Topic>();
+    private Vector<Topic>        mTopicsList = new Vector<Topic>();
 
     public void addTopic(String topicname, Topic.TopicState state) {
         mTopicsList.add(new Topic(topicname, state));

@@ -371,10 +371,9 @@ public class MainActivity extends Activity
                             dialog.dismiss();
                             MQCloudAddress = ip.getText().toString();
                             MQCloudTopic = mqTopic.getText().toString();
-                            int result = mConsumerSample.subscribeMQService(
+                            mConsumerSample.subscribeMQService(
                                     MQCloudAddress, MQCloudTopic);
-                            TvLog.append("SubscribeMQService Result : " + result
-                                    + "\n");
+                            TvLog.append("SubscribeMQService success\n");
                         }
                     });
                     dialog.show();

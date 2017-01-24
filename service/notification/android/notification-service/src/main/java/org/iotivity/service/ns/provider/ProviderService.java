@@ -76,28 +76,24 @@ public class ProviderService {
      * @param resourceSecurity
      *            Set on/off for secure resource channel setting
      *
-     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
-     *
      * @throws NSException
      *             if any callback parameter passed is null
      */
-    public int start(OnConsumerSubscribedListener subscribedListener,
+    public void start(OnConsumerSubscribedListener subscribedListener,
             OnMessageSynchronizedListener messageSynchronized,
             boolean subControllability, String userInfo,
             boolean resourceSecurity) throws NSException {
-        return nativeStart(subscribedListener, messageSynchronized,
+        nativeStart(subscribedListener, messageSynchronized,
                 subControllability, userInfo, resourceSecurity);
     }
 
     /**
      * Stop ProviderService
      *
-     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
-     *
      * @throws NSException failed to stop ProviderService
      */
-    public int stop() throws NSException {
-        return nativeStop();
+    public void stop() throws NSException {
+        nativeStop();
     }
 
     /**
@@ -106,12 +102,10 @@ public class ProviderService {
      * @param message
      *            Notification message including id, title, contentText
      *
-     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
-     *
      * @throws NSException failed to send notification message
      */
-    public int sendMessage(Message message) throws NSException {
-        return nativeSendMessage(message);
+    public void sendMessage(Message message) throws NSException {
+        nativeSendMessage(message);
     }
 
     /**
@@ -148,12 +142,10 @@ public class ProviderService {
      *            servAdd combined with IP address and port number using
      *            delimiter
      *
-     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
-     *
      * @throws NSException failed to publish resource
      */
-    public int enableRemoteService(String servAdd) throws NSException {
-        return nativeEnableRemoteService(servAdd);
+    public void enableRemoteService(String servAdd) throws NSException {
+        nativeEnableRemoteService(servAdd);
     }
 
     /**
@@ -163,12 +155,10 @@ public class ProviderService {
      *            servAdd combined with IP address and port number using
      *            delimiter
      *
-     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
-     *
      * @throws NSException failed to publish resource
      */
-    public int disableRemoteService(String servAdd) throws NSException {
-        return nativeDisableRemoteService(servAdd);
+    public void disableRemoteService(String servAdd) throws NSException {
+        nativeDisableRemoteService(servAdd);
     }
 
     /**
@@ -180,13 +170,11 @@ public class ProviderService {
      * @param topicName
      *            the interest Topic name for subscription
      *
-     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
-     *
      * @throws NSException failed to subscribe to MQ server
      */
-    public int subscribeMQService(String servAdd, String topicName)
+    public void subscribeMQService(String servAdd, String topicName)
             throws NSException {
-        return nativeSubscribeMQService(servAdd, topicName);
+        nativeSubscribeMQService(servAdd, topicName);
     }
 
     /**
@@ -195,12 +183,10 @@ public class ProviderService {
      * @param topicName
      *            Topic name to add
      *
-     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
-     *
      * @throws NSException failed to add topic
      */
-    public int registerTopic(String topicName) throws NSException {
-        return nativeRegisterTopic(topicName);
+    public void registerTopic(String topicName) throws NSException {
+        nativeRegisterTopic(topicName);
     }
 
     /**
@@ -209,19 +195,15 @@ public class ProviderService {
      * @param topicName
      *            Topic name to add
      *
-     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
-     *
      * @throws NSException failed to delete topic
      */
-    public int unregisterTopic(String topicName) throws NSException {
-        return nativeUnregisterTopic(topicName);
+    public void unregisterTopic(String topicName) throws NSException {
+        nativeUnregisterTopic(topicName);
     }
 
     /**
      * Request topics list already registered by provider user
      *
-     * 
-     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
      *
      * @throws NSException failed to get topics list
      */
@@ -260,33 +242,33 @@ public class ProviderService {
         public void onMessageSynchronized(SyncInfo syncInfo);
     }
 
-    public native int nativeStart(
+    public native void nativeStart(
             OnConsumerSubscribedListener subscribedListener,
             OnMessageSynchronizedListener messageSynchronized,
             boolean subControllability, String userInfo,
             boolean resourceSecurity) throws NSException;
 
-    public native int nativeStop() throws NSException;
+    public native void nativeStop() throws NSException;
 
-    public native int nativeSendMessage(Message message) throws NSException;
+    public native void nativeSendMessage(Message message) throws NSException;
 
     public native void nativeSendSyncInfo(long messageId, int type)
             throws NSException;
 
     public native Message nativeCreateMessage() throws NSException;
 
-    public native int nativeEnableRemoteService(String servAdd)
+    public native void nativeEnableRemoteService(String servAdd)
             throws NSException;
 
-    public native int nativeDisableRemoteService(String servAdd)
+    public native void nativeDisableRemoteService(String servAdd)
             throws NSException;
 
-    public native int nativeSubscribeMQService(String servAdd, String topicName)
+    public native void nativeSubscribeMQService(String servAdd, String topicName)
             throws NSException;
 
-    public native int nativeRegisterTopic(String topicName) throws NSException;
+    public native void nativeRegisterTopic(String topicName) throws NSException;
 
-    public native int nativeUnregisterTopic(String topicName)
+    public native void nativeUnregisterTopic(String topicName)
             throws NSException;
 
     public native TopicsList nativeGetRegisteredTopicList() throws NSException;

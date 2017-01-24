@@ -53,18 +53,18 @@ public class Message {
         }
     };
 
-    public long             mMessageId     = 0;
-    public String           mProviderId    = null;
+    private long             mMessageId     = 0;
+    private String           mProviderId    = null;
 
-    public String           mSourceName    = null;
-    public MessageType      mType          = MessageType.ALERT;
-    public String           mTime          = null;
-    public long             mTTL           = 0;
-    public String           mTitle         = null;
-    public String           mContentText   = null;
-    public MediaContents    mMediaContents = null;
-    public String           mTopic         = null;
-    public OcRepresentation mExtraInfo     = null;
+    private String           mSourceName    = null;
+    private MessageType      mType          = MessageType.ALERT;
+    private String           mTime          = null;
+    private long             mTTL           = 0;
+    private String           mTitle         = null;
+    private String           mContentText   = null;
+    private MediaContents    mMediaContents = null;
+    private String           mTopic         = null;
+    private OcRepresentation mExtraInfo     = null;
 
     private long            mNativeHandle  = 0;
 

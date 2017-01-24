@@ -43,10 +43,10 @@ class ProviderSimulator
     public void onConsumerSubscribed(Consumer consumer) {
         gConsumer = consumer;
         try {
-            int result = gConsumer.acceptSubscription(true);
-            Log.i(TAG, "Notification AcceptSubscription: " + result);
+            gConsumer.acceptSubscription(true);
+            Log.i(TAG, "Notification AcceptSubscription" );
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
     }
 

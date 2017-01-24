@@ -51,8 +51,8 @@ public class Topic {
 
     };
 
-    public String     mTopicName = null;
-    public TopicState mState     = TopicState.UNSUBSCRIBED;
+    private String     mTopicName = null;
+    private TopicState mState     = TopicState.UNSUBSCRIBED;
 
     public Topic(String topicName, TopicState state) {
         Log.i(LOG_TAG, "Topic()");

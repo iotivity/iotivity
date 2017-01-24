@@ -377,22 +377,18 @@ public class MainActivity extends Activity
                     }
                     if (gRemoteService) {
                         TvLog.append("Enable Remote Service\n");
-                        int result = mProviderSample
-                                .enableRemoteService(RemoteAddress);
+                        mProviderSample.enableRemoteService(RemoteAddress);
                         remoteService.setText(R.string.disableRemoteService);
                         gRemoteService = false;
                         remoteService.setEnabled(true);
-                        TvLog.append("EnableRemoteService Result : " + result
-                                + "\n");
+                        TvLog.append("EnableRemoteService success \n");
                     } else {
                         TvLog.append("Disable Remote Service\n");
-                        int result = mProviderSample
-                                .disableRemoteService(RemoteAddress);
+                        mProviderSample.disableRemoteService(RemoteAddress);
                         remoteService.setText(R.string.enableRemoteService);
                         gRemoteService = true;
                         remoteService.setEnabled(true);
-                        TvLog.append("DisableRemoteService Result : " + result
-                                + "\n");
+                        TvLog.append("DisableRemoteService success\n");
                     }
                 }
                     break;
@@ -424,10 +420,9 @@ public class MainActivity extends Activity
                             dialog.dismiss();
                             MQCloudAddress = ip.getText().toString();
                             MQCloudTopic = mqTopic.getText().toString();
-                            int result = mProviderSample.subscribeMQService(
+                            mProviderSample.subscribeMQService(
                                     MQCloudAddress, MQCloudTopic);
-                            TvLog.append("SubscribeMQService Result : " + result
-                                    + "\n");
+                            TvLog.append("SubscribeMQService success\n");
                         }
                     });
                     dialog.show();

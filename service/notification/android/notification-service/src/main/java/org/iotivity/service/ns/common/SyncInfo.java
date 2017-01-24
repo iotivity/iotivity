@@ -50,9 +50,9 @@ public class SyncInfo {
         }
     };
 
-    public long     mMessageId  = 0;
-    public String   mProviderId = null;
-    public SyncType mState      = SyncType.UNREAD;
+    private long     mMessageId  = 0;
+    private String   mProviderId = null;
+    private SyncType mState      = SyncType.UNREAD;
 
     public SyncInfo(long messageId, String providerId, SyncType state) {
         Log.i(LOG_TAG, "SyncInfo()");

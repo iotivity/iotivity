@@ -96,54 +96,43 @@ public class ProviderSample
         configurePlatform();
         gAcceptor = policy;
         try {
-            int result = ioTNotification.start(this, this, policy, "Info",
-                    false);
-            Log.i(TAG, "Notification Start: " + result);
+            ioTNotification.start(this, this, policy, "Info", false);
         } catch (Exception e) {
-
+            Log.e(TAG, "Exception: start : " + e);
         }
-
         Log.i(TAG, "Start ProviderService - OUT");
     }
 
     public void registerTopic() {
         Log.i(TAG, "Register Topics -IN");
         try {
-            int result = ioTNotification.registerTopic("OCF_TOPIC1");
-            Log.i(TAG, " RegisterTopic: " + result);
-            result = ioTNotification.registerTopic("OCF_TOPIC2");
-            Log.i(TAG, " RegisterTopic: " + result);
-            result = ioTNotification.registerTopic("OCF_TOPIC3");
-            Log.i(TAG, " RegisterTopic: " + result);
-            result = ioTNotification.registerTopic("OCF_TOPIC4");
-            Log.i(TAG, " RegisterTopic: " + result);
+            ioTNotification.registerTopic("OCF_TOPIC1");
+            ioTNotification.registerTopic("OCF_TOPIC2");
+            ioTNotification.registerTopic("OCF_TOPIC3");
+            ioTNotification.registerTopic("OCF_TOPIC4");
         } catch (Exception e) {
-
+            Log.e(TAG, "Exception: registerTopic  : "+ e);
         }
 
         Log.i(TAG, "Start ProviderService - OUT");
     }
 
-    public int setTopic() {
+    public void setTopic() {
         Log.i(TAG, "Set Topic -IN");
         if (gConsumer == null) {
-            return 0;
+            return;
         }
         try {
-            int result = gConsumer.setTopic("OCF_TOPIC1");
-            Log.i(TAG, " Set Topic : " + result);
-            result = gConsumer.setTopic("OCF_TOPIC2");
-            Log.i(TAG, " Set Topic : " + result);
-            result = gConsumer.setTopic("OCF_TOPIC3");
-            Log.i(TAG, " Set Topic : " + result);
-            result = gConsumer.setTopic("OCF_TOPIC4");
-            Log.i(TAG, " Set Topic : " + result);
+            gConsumer.setTopic("OCF_TOPIC1");
+            gConsumer.setTopic("OCF_TOPIC2");
+            gConsumer.setTopic("OCF_TOPIC3");
+            gConsumer.setTopic("OCF_TOPIC4");
         } catch (Exception e) {
-
+            Log.e(TAG, "Exception: setTopic : " + e);
         }
 
-        Log.i(TAG, "Start ProviderService - OUT");
-        return 1;
+        Log.i(TAG, "setTopic ProviderService - OUT");
+        return;
     }
 
     public void stop() {
@@ -151,15 +140,12 @@ public class ProviderSample
         try {
             OcPlatform.stopPresence();
         } catch (Exception e) {
-            Log.e(TAG,
-                    "Exception: stopping presence when terminating NS server: "
-                            + e);
+            Log.e(TAG,"Exception: stopping presence when terminating NS server: "+ e);
         }
         try {
-            int result = ioTNotification.stop();
-            Log.i(TAG, "Notification Stop: " + result);
+            ioTNotification.stop();
         } catch (Exception e) {
-
+            Log.e(TAG, "Exception: stop : " + e);
         }
 
         Log.i(TAG, "Stop ProviderService - OUT");
@@ -169,10 +155,9 @@ public class ProviderSample
         Log.i(TAG, "SendMessage ProviderService - IN");
 
         try {
-            int result = ioTNotification.sendMessage(notiMessage);
-            Log.i(TAG, "Notification Send Message: " + result);
+            ioTNotification.sendMessage(notiMessage);
         } catch (Exception e) {
-
+            Log.e(TAG, "Exception: sendMessage : " + e);
         }
 
         Log.i(TAG, "SendMessage ProviderService - OUT");
@@ -193,7 +178,7 @@ public class ProviderSample
                     ioTNotification.sendSyncInfo(messageId, syncType);
                     Log.i(TAG, "Notification Sync ");
                 } catch (Exception e) {
-
+                    Log.e(TAG, "Exception: sendSyncInfo : " + e);
                 }
                 Log.i(TAG, "SendSyncInfo ProviderService - OUT");
                 msgMap.put("ID: " + messageId, SYNC_READ);
@@ -201,52 +186,45 @@ public class ProviderSample
         }
     }
 
-    public int enableRemoteService(String servAdd) {
+    public void enableRemoteService(String servAdd) {
         Log.i(TAG, "EnableRemoteService ProviderService - IN");
-        int result = 0;
         try {
-            result = ioTNotification.enableRemoteService(servAdd);
-            Log.i(TAG, "Notification EnableRemoteService: " + result);
+            ioTNotification.enableRemoteService(servAdd);
         } catch (Exception e) {
-
+            Log.e(TAG, "Exception: enableRemoteService : " + e);
         }
         Log.i(TAG, "EnableRemoteService ProviderService - OUT");
-        return result;
+        return;
     }
 
-    public int disableRemoteService(String servAdd) {
+    public void disableRemoteService(String servAdd) {
         Log.i(TAG, "DisableRemoteService ProviderService - IN");
-        int result = 0;
         try {
-            result = ioTNotification.disableRemoteService(servAdd);
-            Log.i(TAG, "Notification DisableRemoteService: " + result);
+            ioTNotification.disableRemoteService(servAdd);
         } catch (Exception e) {
-
+            Log.e(TAG, "Exception: disableRemoteService : " + e);
         }
         Log.i(TAG, "DisableRemoteService ProviderService - OUT");
-        return result;
+        return;
     }
 
-    public int subscribeMQService(String servAdd, String topicName) {
+    public void subscribeMQService(String servAdd, String topicName) {
         Log.i(TAG, "SubscribeMQService ProviderService - IN");
-        int result = 0;
         try {
-            result = ioTNotification.subscribeMQService(servAdd, topicName);
-            Log.i(TAG, "Notification SubscribeMQService: " + result);
+            ioTNotification.subscribeMQService(servAdd, topicName);
         } catch (Exception e) {
             Log.e(TAG, "Exception: subscribeMQService : " + e);
         }
         Log.i(TAG, "SubscribeMQService ProviderService - OUT");
-        return result;
+        return;
     }
 
     public void acceptSubscription(Consumer consumer, boolean accepted) {
         Log.i(TAG, "AcceptSubscription ProviderService - IN");
         try {
-            int result = consumer.acceptSubscription(accepted);
-            Log.i(TAG, "Notification AcceptSubscription: " + result);
+            consumer.acceptSubscription(accepted);
         } catch (Exception e) {
-
+            Log.e(TAG, "Exception: acceptSubscription : " + e);
         }
         Log.i(TAG, "AcceptSubscription ProviderService - OUT");
     }

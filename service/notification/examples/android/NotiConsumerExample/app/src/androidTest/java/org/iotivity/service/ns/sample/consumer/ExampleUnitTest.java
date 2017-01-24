@@ -28,6 +28,8 @@ import org.iotivity.base.PlatformConfig;
 import org.iotivity.base.QualityOfService;
 import org.iotivity.base.ServiceType;
 import org.iotivity.service.ns.common.Message;
+import org.iotivity.service.ns.common.NSException;
+import org.iotivity.service.ns.common.NSErrorCode;
 import org.iotivity.service.ns.common.Topic;
 import org.iotivity.service.ns.common.TopicsList;
 import org.iotivity.service.ns.common.SyncInfo;
@@ -429,8 +431,6 @@ public class ExampleUnitTest extends ApplicationTestCase<Application> {
         registerTopic("OIC_TOPIC1");
         assertEquals(true, response.get());
 
-        int result = 0;
-
         try {
             TopicsList list = mProvider.getTopicList();
             Iterator<Topic> it = list.getTopicsList().iterator();
@@ -438,11 +438,11 @@ public class ExampleUnitTest extends ApplicationTestCase<Application> {
                 Topic element = it.next();
                 element.setState(Topic.TopicState.SUBSCRIBED);
             }
-            result = mProvider.updateTopicList(list);
-        } catch (Exception e) {
+            mProvider.updateTopicList(list);
+        } catch (NSException e) {
             e.printStackTrace();
+            assertEquals(NSErrorCode.ERROR, e.getErrorCode());
         }
-        assertEquals(200, result);
     }
 
     @Test

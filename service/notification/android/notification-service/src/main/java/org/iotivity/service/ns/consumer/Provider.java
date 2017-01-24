@@ -53,7 +53,7 @@ public class Provider {
         }
     };
 
-    public String mProviderId   = null;
+    private String mProviderId   = null;
     private long  mNativeHandle = 0;
 
     /**
@@ -167,12 +167,10 @@ public class Provider {
      * @param topicsList
      *            TopicsList of interested Topics
      *
-     * @return result code 100 = OK , 200 = ERROR , 300 = SUCCESS , 400 = FAIL
-     *
      * @throws NSException failure to update topic list. 
      */
-    public int updateTopicList(TopicsList topicsList) throws NSException {
-        return nativeUpdateTopicList(topicsList);
+    public void updateTopicList(TopicsList topicsList) throws NSException {
+        nativeUpdateTopicList(topicsList);
     }
 
     /**
@@ -233,7 +231,7 @@ public class Provider {
 
     public native TopicsList nativeGetTopicList() throws NSException;
 
-    private native int nativeUpdateTopicList(TopicsList topicsList)
+    private native void nativeUpdateTopicList(TopicsList topicsList)
             throws NSException;
 
     private native ProviderState nativeGetProviderState() throws NSException;
