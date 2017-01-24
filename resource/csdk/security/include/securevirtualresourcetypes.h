@@ -57,20 +57,20 @@ extern "C" {
  * Values used to create bit-maskable enums for single-value response with
  * embedded code.
  */
-#define ACCESS_GRANTED_DEF            (1 << 0)
-#define ACCESS_DENIED_DEF             (1 << 1)
-#define INSUFFICIENT_PERMISSION_DEF   (1 << 2)
-#define SUBJECT_NOT_FOUND_DEF         (1 << 3)
-#define RESOURCE_NOT_FOUND_DEF        (1 << 4)
-#define POLICY_ENGINE_ERROR_DEF       (1 << 5)
-#define INVALID_PERIOD_DEF            (1 << 6)
-#define ACCESS_WAITING_DEF            (1 << 7)
-#define AMS_SERVICE_DEF               (1 << 8)
+#define ACCESS_GRANTED_DEF                      (1 << 0)
+#define ACCESS_DENIED_DEF                       (1 << 1)
+#define INSUFFICIENT_PERMISSION_DEF             (1 << 2)
+#define SUBJECT_NOT_FOUND_DEF                   (1 << 3)
+#define RESOURCE_NOT_FOUND_DEF                  (1 << 4)
+#define POLICY_ENGINE_ERROR_DEF                 (1 << 5)
+#define INVALID_PERIOD_DEF                      (1 << 6)
+#define SEC_RESOURCE_OVER_UNSECURE_CHANNEL_DEF  (1 << 7)
 #define REASON_MASK_DEF               (INSUFFICIENT_PERMISSION_DEF | \
                                        INVALID_PERIOD_DEF | \
                                        SUBJECT_NOT_FOUND_DEF | \
                                        RESOURCE_NOT_FOUND_DEF | \
-                                       POLICY_ENGINE_ERROR_DEF)
+                                       POLICY_ENGINE_ERROR_DEF | \
+                                       SEC_RESOURCE_OVER_UNSECURE_CHANNEL_DEF)
 
 
 /**
@@ -81,6 +81,7 @@ extern "C" {
  * 4th lsb:  D (Delete)
  * 5th lsb:  N (Notify)
  */
+#define PERMISSION_ERROR        (0x0)
 #define PERMISSION_CREATE       (1 << 0)
 #define PERMISSION_READ         (1 << 1)
 #define PERMISSION_WRITE        (1 << 2)
@@ -121,10 +122,8 @@ typedef enum
         | RESOURCE_NOT_FOUND_DEF,
     ACCESS_DENIED_POLICY_ENGINE_ERROR = ACCESS_DENIED_DEF
         | POLICY_ENGINE_ERROR_DEF,
-    ACCESS_WAITING_FOR_AMS = ACCESS_WAITING_DEF
-        | AMS_SERVICE_DEF,
-    ACCESS_DENIED_AMS_SERVICE_ERROR = ACCESS_DENIED
-        | AMS_SERVICE_DEF
+    ACCESS_DENIED_SEC_RESOURCE_OVER_UNSECURE_CHANNEL = ACCESS_DENIED_DEF
+        | SEC_RESOURCE_OVER_UNSECURE_CHANNEL_DEF,
 } SRMAccessResponse_t;
 
 /**
@@ -252,7 +251,8 @@ typedef enum
 
 typedef enum
 {
-    OIC_R_ACL_TYPE = 0,
+    OIC_RESOURCE_TYPE_ERROR = 0,
+    OIC_R_ACL_TYPE,
     OIC_R_AMACL_TYPE,
     OIC_R_CRED_TYPE,
     OIC_R_CRL_TYPE,

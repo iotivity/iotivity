@@ -22,10 +22,46 @@
 #define SECURITYRESOURCEMANAGER_H_
 
 #include "securevirtualresourcetypes.h"
+#include "cainterface.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef enum SubjectIdentityType
+{
+    SUBJECT_ID_TYPE_ERROR = 0,
+    SUBJECT_ID_TYPE_UUID,     // Subject refers to a UUID
+    SUBJECT_ID_TYPE_ROLE,     // Subject refers to a Role
+} SubjectIdentityType_t;
+
+/**
+ * The context for a single request to be processed by the Security
+ * Resource Manager.
+ */
+typedef struct SRMRequestContext
+{
+    const CAEndpoint_t      *endPoint;                          // ptr to the Endpoint for this request
+    OicSecSvrType_t         resourceType;                       // SVR type (or "not an SVR")
+    char                    resourceUri[MAX_URI_LENGTH + 1];    // URI of the requested resource
+    uint16_t                requestedPermission;                // bitmask permissions of request
+    CAResponseInfo_t        responseInfo;                       // The response for this request
+    bool                    responseSent;                       // Is servicing this request complete?
+    SRMAccessResponse_t     responseVal;                        // The SRM internal response code
+    const CARequestInfo_t   *requestInfo;                       // ptr to info for this request
+    bool                    secureChannel;                      // Was request recv'd over secure channel?
+    bool                    slowResponseSent;                   // Is a full response still needed?
+    SubjectIdentityType_t   subjectIdType;                      // The type of Subject ID in this
+                                                                // request.
+    OicUuid_t               subjectUuid;                        // The UUID of the Subject (valid
+                                                                // iff IdType is UUID_TYPE).
+    // Developer note: when adding support for an additional type (e.g.
+    // ROLE_TYPE) suggest adding a new var to hold the Subject ID for that type.
+#ifdef MULTIPLE_OWNER
+    uint8_t*                payload;
+    size_t                  payloadSize;
+#endif //MULTIPLE_OWNER
+} SRMRequestContext_t;
 
 /**
  * Register Persistent storage callback.
@@ -68,18 +104,6 @@ OCStackResult SRMInitSecureResources();
 void SRMDeInitSecureResources();
 
 /**
- * Initialize Policy Engine context.
- *
- * @return ::OC_STACK_OK for Success, otherwise some error value.
- */
-OCStackResult SRMInitPolicyEngine();
-
-/**
- * Cleanup Policy Engine context.
- */
-void SRMDeInitPolicyEngine();
-
-/**
  * Provisioning API response callback.
  *
  * @param object endpoint instance.
@@ -110,14 +134,6 @@ bool SRMIsSecurityResourceURI(const char* uri);
  * @return  SVR type (note that "NOT_A_SVR_RESOURCE" is returned if not a SVR)
  */
 OicSecSvrType_t GetSvrTypeFromUri(const char* uri);
-
-/**
- * Sends Response
- * @param   resposeVal       SRMAccessResponse_t value
- * @return  NONE
- */
-void SRMSendResponse(SRMAccessResponse_t responseVal);
-
 
 #ifdef __cplusplus
 }

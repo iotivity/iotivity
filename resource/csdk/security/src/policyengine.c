@@ -22,7 +22,6 @@
 #include "utlist.h"
 #include "oic_malloc.h"
 #include "policyengine.h"
-#include "amsmgr.h"
 #include "resourcemanager.h"
 #include "securevirtualresourcetypes.h"
 #include "srmresourcestrings.h"
@@ -93,40 +92,12 @@ static bool UuidCmp(OicUuid_t *firstId, OicUuid_t *secondId)
     return true;
 }
 
-void SetPolicyEngineState(PEContext_t *context, const PEState_t state)
-{
-    if (NULL == context)
-    {
-        return;
-    }
-
-    // Clear stateful context variables.
-    memset(&context->subject, 0, sizeof(context->subject));
-    memset(&context->resource, 0, sizeof(context->resource));
-    context->permission = 0x0;
-    context->amsProcessing = false;
-    context->retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
-
-    if (context->amsMgrContext)
-    {
-        if (context->amsMgrContext->requestInfo)
-        {
-            FreeCARequestInfo(context->amsMgrContext->requestInfo);
-        }
-        OICFree(context->amsMgrContext->endpoint);
-        memset(context->amsMgrContext, 0, sizeof(AmsMgrContext_t));
-    }
-
-    // Set state.
-    context->state = state;
-}
-
 /**
  * Compare the request's subject to DevOwner.
  *
  * @return true if context->subjectId == GetDoxmDevOwner(), else false.
  */
-static bool IsRequestFromDevOwner(PEContext_t *context)
+static bool IsRequestFromDevOwner(SRMRequestContext_t *context)
 {
     bool retVal = false;
 
@@ -146,7 +117,7 @@ static bool IsRequestFromDevOwner(PEContext_t *context)
     OicSecDoxm_t* doxm = (OicSecDoxm_t*) GetDoxmResourceData();
     if (doxm)
     {
-        retVal = UuidCmp(&doxm->owner, &context->subject);
+        retVal = UuidCmp(&doxm->owner, &context->subjectUuid);
     }
     return retVal;
 }
@@ -158,7 +129,7 @@ static bool IsRequestFromDevOwner(PEContext_t *context)
  *
  * @return true if context->subjectId exist subowner list, else false.
  */
-static bool IsRequestFromSubOwner(PEContext_t *context)
+static bool IsRequestFromSubOwner(SRMRequestContext_t *context)
 {
     bool retVal = false;
 
@@ -167,7 +138,7 @@ static bool IsRequestFromSubOwner(PEContext_t *context)
         return retVal;
     }
 
-    if(IsSubOwner(&context->subject))
+    if(IsSubOwner(&context->subjectUuid))
     {
         retVal = true;
     }
@@ -190,7 +161,7 @@ static bool IsRequestFromSubOwner(PEContext_t *context)
  *
  * @return true if request is valid, else false.
  */
-static bool IsValidRequestFromSubOwner(PEContext_t *context)
+static bool IsValidRequestFromSubOwner(SRMRequestContext_t *context)
 {
     bool isValidRequest = false;
 
@@ -203,7 +174,7 @@ static bool IsValidRequestFromSubOwner(PEContext_t *context)
     {
         case OIC_R_DOXM_TYPE:
             //SubOwner has READ permission only for DOXM
-            if(PERMISSION_READ == context->permission)
+            if(PERMISSION_READ == context->requestedPermission)
             {
                 isValidRequest = true;
             }
@@ -214,11 +185,13 @@ static bool IsValidRequestFromSubOwner(PEContext_t *context)
             break;
         case OIC_R_CRED_TYPE:
             //SubOwner can only access the credential which is registered as the eowner.
-            isValidRequest = IsValidCredentialAccessForSubOwner(&context->subject, context->payload, context->payloadSize);
+            isValidRequest = IsValidCredentialAccessForSubOwner(&context->subjectUuid,
+             context->payload, context->payloadSize);
             break;
         case OIC_R_ACL_TYPE:
             //SubOwner can only access the ACL which is registered as the eowner.
-            isValidRequest = IsValidAclAccessForSubOwner(&context->subject, context->payload, context->payloadSize);
+            isValidRequest = IsValidAclAccessForSubOwner(&context->subjectUuid,
+                context->payload, context->payloadSize);
             break;
         default:
             //SubOwner has full permission for all resource except the security resource
@@ -287,7 +260,7 @@ static GetSvrRownerId_t GetSvrRownerId[OIC_SEC_SVR_TYPE_COUNT] = {
  *
  * @return true if context->subjectId equals SVR rowner id, else return false
  */
-bool IsRequestFromResourceOwner(PEContext_t *context)
+bool IsRequestFromResourceOwner(SRMRequestContext_t *context)
 {
     bool retVal = false;
     OicUuid_t resourceOwner;
@@ -302,7 +275,7 @@ bool IsRequestFromResourceOwner(PEContext_t *context)
     {
         if(OC_STACK_OK == GetSvrRownerId[(int)context->resourceType](&resourceOwner))
         {
-            retVal = UuidCmp(&context->subject, &resourceOwner);
+            retVal = UuidCmp(&context->subjectUuid, &resourceOwner);
         }
     }
 
@@ -316,19 +289,6 @@ bool IsRequestFromResourceOwner(PEContext_t *context)
     }
 
     return retVal;
-}
-
-INLINE_API bool IsRequestSubjectEmpty(PEContext_t *context)
-{
-    OicUuid_t emptySubject = {.id={0}};
-
-    if(NULL == context)
-    {
-        return false;
-    }
-
-    return (memcmp(&context->subject, &emptySubject, sizeof(OicUuid_t)) == 0) ?
-            true : false;
 }
 
 /**
@@ -376,33 +336,6 @@ INLINE_API bool IsWildCardSubject(OicUuid_t *subject)
 }
 
 /**
- * Copy the subject, resource and permission into the context fields.
- */
-static void CopyParamsToContext(PEContext_t     *context,
-                                const OicUuid_t *subjectId,
-                                const char      *resource,
-                                const uint16_t  requestedPermission)
-{
-    size_t length = 0;
-
-    if (NULL == context || NULL == subjectId || NULL == resource)
-    {
-        return;
-    }
-
-    memcpy(&context->subject, subjectId, sizeof(OicUuid_t));
-
-    // Copy the resource string into context.
-    length = sizeof(context->resource) - 1;
-    strncpy(context->resource, resource, length);
-    context->resource[length] = '\0';
-
-
-    // Assign the permission field.
-    context->permission = requestedPermission;
-}
-
-/**
  * Check whether 'resource' is getting accessed within the valid time period.
  *
  * @param acl is the ACL to check.
@@ -430,7 +363,7 @@ static bool IsAccessWithinValidTime(const OicSecAce_t *ace)
     {
         for(size_t i = 0; i < validity->recurrenceLen; i++)
         {
-            if (IOTVTICAL_VALID_ACCESS ==  IsRequestWithinValidTime(validity->period,
+            if (IOTVTICAL_VALID_ACCESS == IsRequestWithinValidTime(validity->period,
                 validity->recurrences[i]))
             {
                 OIC_LOG(INFO, TAG, "Access request is in allowed time period");
@@ -454,7 +387,7 @@ static bool IsAccessWithinValidTime(const OicSecAce_t *ace)
  *
  * @return true if 'resource' found, otherwise false.
  */
- static bool IsResourceInAce(const char *resource, const OicSecAce_t *ace)
+static bool IsResourceInAce(const char *resource, const OicSecAce_t *ace)
 {
     if (NULL== ace || NULL == resource)
     {
@@ -483,24 +416,27 @@ static bool IsAccessWithinValidTime(const OicSecAce_t *ace)
  * Set context->retVal to result from first ACL found which contains
  * correct subject AND resource.
  */
-static void ProcessAccessRequest(PEContext_t *context)
+static void ProcessAccessRequest(SRMRequestContext_t *context)
 {
+    OIC_LOG(DEBUG, TAG, "Entering ProcessAccessRequest().");
+
     if (NULL != context)
     {
         const OicSecAce_t *currentAce = NULL;
-        OicSecAce_t *savePtr = NULL;
+        OicSecAce_t *aceSavePtr = NULL;
 
-        OIC_LOG_V(DEBUG, TAG, "Entering ProcessAccessRequest(%s)", context->resource);
+        OIC_LOG_V(DEBUG, TAG, "Entering ProcessAccessRequest(%s)",
+            context->resourceUri);
 
         // Start out assuming subject not found.
-        context->retVal = ACCESS_DENIED_SUBJECT_NOT_FOUND;
+        context->responseVal = ACCESS_DENIED_SUBJECT_NOT_FOUND;
 
         // Loop through all ACLs with a matching Subject searching for the right
         // ACL for this request.
         do
         {
             OIC_LOG_V(DEBUG, TAG, "%s: getting ACE..." ,__func__);
-            currentAce = GetACLResourceData(&context->subject, &savePtr);
+            currentAce = GetACLResourceData(&context->subjectUuid, &aceSavePtr);
 
             if (NULL != currentAce)
             {
@@ -508,31 +444,34 @@ static void ProcessAccessRequest(PEContext_t *context)
                 OIC_LOG_V(DEBUG, TAG, "%s:found ACE matching subject" ,__func__);
 
                 // Subject was found, so err changes to Rsrc not found for now.
-                context->retVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
+                context->responseVal = ACCESS_DENIED_RESOURCE_NOT_FOUND;
                 OIC_LOG_V(DEBUG, TAG, "%s:Searching for resource..." ,__func__);
-                if (IsResourceInAce(context->resource, currentAce))
+                if (IsResourceInAce(context->resourceUri, currentAce))
                 {
                     OIC_LOG_V(INFO, TAG, "%s:found matching resource in ACE" ,__func__);
 
                     // Found the resource, so it's down to valid period & permission.
-                    context->retVal = ACCESS_DENIED_INVALID_PERIOD;
+                    context->responseVal = ACCESS_DENIED_INVALID_PERIOD;
                     if (IsAccessWithinValidTime(currentAce))
                     {
-                        context->retVal = ACCESS_DENIED_INSUFFICIENT_PERMISSION;
-                        if (IsPermissionAllowingRequest(currentAce->permission, context->permission))
+                        context->responseVal = ACCESS_DENIED_INSUFFICIENT_PERMISSION;
+                        if (IsPermissionAllowingRequest(currentAce->permission,
+                            context->requestedPermission))
                         {
-                            context->retVal = ACCESS_GRANTED;
+                            context->responseVal = ACCESS_GRANTED;
                         }
                     }
                 }
             }
             else
             {
-                OIC_LOG_V(INFO, TAG, "%s:no ACL found matching subject for resource %s",__func__, context->resource);
+                OIC_LOG_V(INFO, TAG, "%s:no ACL found matching subject for resource %s",
+                    __func__, context->resourceUri);
             }
-        } while ((NULL != currentAce) && (ACCESS_GRANTED != context->retVal));
+        } while ((NULL != currentAce)
+            && (false == IsAccessGranted(context->responseVal)));
 
-        if (IsAccessGranted(context->retVal))
+        if (IsAccessGranted(context->responseVal))
         {
             OIC_LOG_V(INFO, TAG, "%s:Leaving ProcessAccessRequest(ACCESS_GRANTED)", __func__);
         }
@@ -545,152 +484,89 @@ static void ProcessAccessRequest(PEContext_t *context)
     {
         OIC_LOG_V(ERROR, TAG, "%s:Leaving ProcessAccessRequest(context is NULL)", __func__);
     }
+
+    return;
 }
 
-SRMAccessResponse_t CheckPermission(PEContext_t     *context,
-                                    const OicUuid_t *subjectId,
-                                    const char      *resource,
-                                    const uint16_t  requestedPermission)
+void CheckPermission(SRMRequestContext_t *context)
 {
-    SRMAccessResponse_t retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
+    bool isDeviceOwned = false;
 
-    VERIFY_NOT_NULL(TAG, context, ERROR);
-    VERIFY_NOT_NULL(TAG, subjectId, ERROR);
-    VERIFY_NOT_NULL(TAG, resource, ERROR);
-
-    // Each state machine context can only be processing one request at a time.
-    // Therefore if the context is not in AWAITING_REQUEST or AWAITING_AMS_RESPONSE
-    // state, return error. Otherwise, change to BUSY state and begin processing request.
-    if (AWAITING_REQUEST == context->state || AWAITING_AMS_RESPONSE == context->state)
-    {
-        if (AWAITING_REQUEST == context->state)
-        {
-            SetPolicyEngineState(context, BUSY);
-            CopyParamsToContext(context, subjectId, resource, requestedPermission);
-        }
-
-        // Before doing any ACL processing, check if request a) coming
-        // from DevOwner AND b) the device is in Ready for OTM or Reset state
-        // (which in IoTivity is equivalent to isOp == false && owned == false)
-        // AND c) the request is for a SVR resource.
-        // If all 3 conditions are met, grant request.
-        bool isDeviceOwned = true; // default to value that will not grant access
-        if (OC_STACK_OK != GetDoxmIsOwned(&isDeviceOwned)) // if runtime error, don't grant
-        {
-            context->retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
-        }
-        // If we were able to get the value of doxm->isOwned, proceed with
-        // test for implicit access...
-        else if (IsRequestFromDevOwner(context) // if from DevOwner
-        && (GetPstatIsop() == false) // AND if pstat->isOp == false
-        && (isDeviceOwned == false) // AND if doxm->isOwned == false
-        && (context->resourceType != NOT_A_SVR_RESOURCE)) // AND if SVR type
-        {
-            context->retVal = ACCESS_GRANTED;
-        }
-        // If not granted via DevOwner status and not a subowner,
-        // then check if request is for a SVR and coming from rowner
-        else if (IsRequestFromResourceOwner(context))
-        {
-            context->retVal = ACCESS_GRANTED;
-        }
-#ifdef MULTIPLE_OWNER
-        //Then check if request from SubOwner
-        else if(IsRequestFromSubOwner(context))
-        {
-            if(IsValidRequestFromSubOwner(context))
-            {
-                context->retVal = ACCESS_GRANTED;
-            }
-        }
-#endif //MULTIPLE_OWNER
-        // Else request is a "normal" request that must be tested against ACL
-        else
-        {
-            OicUuid_t saveSubject = {.id={0}};
-            bool isSubEmpty = IsRequestSubjectEmpty(context);
-
-            ProcessAccessRequest(context);
-
-            // If access not already granted, and requested subject != wildcard,
-            // try looking for a wildcard ACE that grants access.
-            if ((ACCESS_GRANTED != context->retVal) && \
-              (false == IsWildCardSubject(&context->subject)))
-            {
-                //Saving subject for Amacl check
-                memcpy(&saveSubject, &context->subject,sizeof(OicUuid_t));
-
-                //Setting context subject to WILDCARD_SUBJECT_ID
-                //TODO: change ProcessAccessRequest method signature to
-                //ProcessAccessRequest(context, subject) so that context
-                //subject is not tempered.
-                memset(&context->subject, 0, sizeof(context->subject));
-                memcpy(&context->subject, &WILDCARD_SUBJECT_ID,sizeof(OicUuid_t));
-                ProcessAccessRequest(context); // TODO anonymous subj can result
-                                               // in confusing err code return.
-            }
-
-            //No local ACE found for the request so checking Amacl resource
-            if (ACCESS_GRANTED != context->retVal)
-            {
-                //If subject is not empty then restore the original subject
-                //else keep the subject to WILDCARD_SUBJECT_ID
-                if(!isSubEmpty)
-                {
-                    memcpy(&context->subject, &saveSubject, sizeof(OicUuid_t));
-                }
-
-                //FoundAmaclForRequest method checks for Amacl and fills up
-                //context->amsMgrContext->amsDeviceId with the AMS deviceId
-                //if Amacl was found for the requested resource.
-                if(FoundAmaclForRequest(context))
-                {
-                    ProcessAMSRequest(context);
-                }
-            }
-        }
-    }
-    else
-    {
-        context->retVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
-    }
-
-    // Capture retVal before resetting state for next request.
-    retVal = context->retVal;
-
-   if (!context->amsProcessing)
-    {
-        OIC_LOG(INFO, TAG, "Resetting PE context and PE State to AWAITING_REQUEST");
-        SetPolicyEngineState(context, AWAITING_REQUEST);
-    }
-
-exit:
-    return retVal;
-}
-
-OCStackResult InitPolicyEngine(PEContext_t *context)
-{
     if(NULL == context)
     {
-        return OC_STACK_ERROR;
+        OIC_LOG_V(ERROR, TAG, "NULL context; access denied.");
+        context->responseVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
+        return;
     }
 
-    context->amsMgrContext = (AmsMgrContext_t *)OICCalloc(1, sizeof(AmsMgrContext_t));
-    if(NULL == context->amsMgrContext)
+    // Before doing any ACL processing, check if request is a) coming
+    // from DevOwner AND b) the device is in Ready for OTM or Reset state
+    // (which in IoTivity is equivalent to isOp == false && owned == false)
+    // AND c) the request is for a SVR resource.
+    // If all 3 conditions are met, grant request.
+    // TODO_IoTivity_1.3: use pstat.dos instead of these two checks.
+    isDeviceOwned = true; // default to value that will NOT grant access
+    if (OC_STACK_OK != GetDoxmIsOwned(&isDeviceOwned)) // if runtime error, don't grant
     {
-        return OC_STACK_ERROR;
+        OIC_LOG_V(ERROR, TAG, "GetDoxmIsOwned() call failed.");
+        context->responseVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
     }
-
-    SetPolicyEngineState(context, AWAITING_REQUEST);
-    return OC_STACK_OK;
-}
-
-void DeInitPolicyEngine(PEContext_t *context)
-{
-    if(NULL != context)
+    // If we were able to get the value of doxm->isOwned, proceed with
+    // test for implicit access.
+    else if (IsRequestFromDevOwner(context) &&  // if from DevOwner
+            !GetPstatIsop() &&                  // AND if pstat->isOp == false
+            !isDeviceOwned &&                   // AND if doxm->isOwned == false
+            (NOT_A_SVR_RESOURCE != context->resourceType)) // AND if is SVR type
     {
-        SetPolicyEngineState(context, STOPPED);
-        OICFree(context->amsMgrContext);
+        context->responseVal = ACCESS_GRANTED;
     }
+    // If not granted via DevOwner status and not a subowner,
+    // then check if request is for a SVR and coming from rowner
+    else if (IsRequestFromResourceOwner(context))
+    {
+        context->responseVal = ACCESS_GRANTED;
+    }
+#ifdef MULTIPLE_OWNER // TODO Samsung reviewer: per above comment, should this
+                      // go above IsRequestFromResourceOwner() call, or here?
+    // Then check if request from SubOwner.
+    else if(IsRequestFromSubOwner(context))
+    {
+        if(IsValidRequestFromSubOwner(context))
+        {
+            context->responseVal = ACCESS_GRANTED;
+        }
+    }
+#endif //MULTIPLE_OWNER
+    // Else request is a "normal" request that must be tested against ACL.
+    else
+    {
+        OicUuid_t saveSubjectUuid = {.id={0}};
+        // bool isSubEmpty = IsRequestSubjectEmpty(context);
+
+        ProcessAccessRequest(context);
+
+        // TODO_IoTivity_1.3: ensure check order results in Union permissions
+        // If access not already granted, and requested subject != wildcard,
+        // try looking for a wildcard ACE that grants access.
+        // See JIRA ticket 1795 (https://jira.iotivity.org/browse/IOT-1795)
+        if (ACCESS_GRANTED != context->responseVal &&
+            !IsWildCardSubject(&context->subjectUuid))
+        {
+            // Save subject to restore context after wildcard subject check.
+            memcpy(&saveSubjectUuid, &context->subjectUuid,
+                sizeof(context->subjectUuid));
+
+            // Set context->subjectUuid to WILDCARD_SUBJECT_ID.
+            memset(&context->subjectUuid, 0, sizeof(context->subjectUuid));
+            memcpy(&context->subjectUuid,
+                &WILDCARD_SUBJECT_ID, sizeof(context->subjectUuid));
+            ProcessAccessRequest(context);
+
+            // Restore subjectUuid.
+            memcpy(&context->subjectUuid,
+                &saveSubjectUuid, sizeof(context->subjectUuid));
+        }
+    }
+
     return;
 }

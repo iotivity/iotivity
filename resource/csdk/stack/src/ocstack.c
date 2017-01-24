@@ -2402,12 +2402,6 @@ OCStackResult OCInit2(OCMode mode, OCTransportFlags serverFlags, OCTransportFlag
         result = initResources();
     }
 
-    // Initialize the SRM Policy Engine
-    if(result == OC_STACK_OK)
-    {
-        result = SRMInitPolicyEngine();
-        // TODO after BeachHead delivery: consolidate into single SRMInit()
-    }
 #if defined (ROUTING_GATEWAY) || defined (ROUTING_EP)
     RMSetStackMode(mode);
 #ifdef ROUTING_GATEWAY
@@ -2492,10 +2486,6 @@ OCStackResult OCStop()
     DeleteClientCBList();
     // Terminate connectivity-abstraction layer.
     CATerminate();
-
-    // De-init the SRM Policy Engine
-    // TODO after BeachHead delivery: consolidate into single SRMDeInit()
-    SRMDeInitPolicyEngine();
 
     stackState = OC_STACK_UNINITIALIZED;
     return OC_STACK_OK;

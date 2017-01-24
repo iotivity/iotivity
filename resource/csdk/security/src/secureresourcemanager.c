@@ -26,7 +26,6 @@
 #include "credresource.h"
 #include "policyengine.h"
 #include "srmutility.h"
-#include "amsmgr.h"
 #include "oic_string.h"
 #include "oic_malloc.h"
 #include "securevirtualresourcetypes.h"
@@ -49,39 +48,10 @@ static CAErrorCallback gErrorHandler = NULL;
 static SPResponseCallback gSPResponseHandler = NULL;
 
 /**
- * A single global Policy Engine context will suffice as long
+ * A single global Request context will suffice as long
  * as SRM is single-threaded.
  */
-PEContext_t g_policyEngineContext;
-
-
-/**
- * Function to retrieve the length of the resource URI address part.
- *
- * @param resourceUri   A null-terminated string representing the resource URI.
- *
- * @return  Length of the resource URI address or -1, if failed.
- */
-static int GetResourceUriAddressLength(CAURI_t resourceUri)
-{
-    if (!resourceUri)
-    {
-        OIC_LOG(ERROR, TAG, "Missing resource URI");
-        return -1;
-    }
-
-    size_t resourceUriLength = strlen(resourceUri);
-    if (resourceUriLength > MAX_URI_LENGTH)
-    {
-        OIC_LOG(ERROR, TAG, "Invalid resource URI length");
-        return -1;
-    }
-
-    //Check the URI has the query and skip it before checking the permission
-    char *uri = strstr(resourceUri, "?");
-
-    return uri ? (int)(uri - resourceUri) : (int)resourceUriLength;
-}
+SRMRequestContext_t g_requestContext;
 
 /**
  * Function to register provisoning API's response callback.
@@ -92,68 +62,192 @@ void SRMRegisterProvisioningResponseHandler(SPResponseCallback respHandler)
     gSPResponseHandler = respHandler;
 }
 
-void SetResourceRequestType(PEContext_t *context, const char *resourceUri)
+void SetRequestedResourceType(SRMRequestContext_t *context)
 {
-    context->resourceType = GetSvrTypeFromUri(resourceUri);
+    context->resourceType = GetSvrTypeFromUri(context->resourceUri);
 }
 
-static void SRMSendUnAuthorizedAccessresponse(PEContext_t *context)
+// Send the response (context->responseInfo) to the requester
+// (context->endPoint).
+static void SRMSendResponse(SRMRequestContext_t *context)
 {
-    CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
+    if (NULL != context
+        && NULL != context->requestInfo
+        && NULL != context->endPoint)
+    {
 
-    if (NULL == context ||
-       NULL == context->amsMgrContext->requestInfo)
+        if (CA_STATUS_OK == CASendResponse(context->endPoint,
+            &(context->responseInfo)))
+        {
+            OIC_LOG_V(DEBUG, TAG, "SRM response sent.");
+            context->responseSent = true;
+        }
+        else
+        {
+            OIC_LOG_V(ERROR, TAG, "SRM response failed.");
+        }
+    }
+    else
     {
         OIC_LOG_V(ERROR, TAG, "%s : NULL Parameter(s)",__func__);
-        return;
     }
 
-    memcpy(&responseInfo.info, &(context->amsMgrContext->requestInfo->info),
-            sizeof(responseInfo.info));
-    responseInfo.info.payload = NULL;
-    responseInfo.result = CA_UNAUTHORIZED_REQ;
-    responseInfo.info.dataType = CA_RESPONSE_DATA;
-
-    if (CA_STATUS_OK == CASendResponse(context->amsMgrContext->endpoint, &responseInfo))
-    {
-        OIC_LOG(DEBUG, TAG, "Succeed in sending response to a unauthorized request!");
-    }
-    else
-    {
-        OIC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
-    }
+    return;
 }
 
-void SRMSendResponse(SRMAccessResponse_t responseVal)
+// Based on the context->responseVal, either call the entity handler for the
+// request (which must send the response), or send an ACCESS_DENIED response.
+void SRMGenerateResponse(SRMRequestContext_t *context)
 {
-    OIC_LOG(DEBUG, TAG, "Sending response to remote device");
+    OIC_LOG_V(INFO, TAG, "%s : entering function.", __func__);
 
-    if (IsAccessGranted(responseVal) && gRequestHandler)
+    // If Access Granted, validate parameters and then pass request
+    // on to resource endpoint.
+    if (IsAccessGranted(context->responseVal))
     {
-        OIC_LOG_V(INFO, TAG, "%s : Access granted. Passing Request to RI layer", __func__);
-        if (!g_policyEngineContext.amsMgrContext->endpoint ||
-            !g_policyEngineContext.amsMgrContext->requestInfo)
+        if(NULL != gRequestHandler
+            && NULL != context->endPoint
+            && NULL != context->requestInfo)
         {
-            OIC_LOG_V(ERROR, TAG, "%s : Invalid arguments", __func__);
-            SRMSendUnAuthorizedAccessresponse(&g_policyEngineContext);
-            goto exit;
+            OIC_LOG_V(INFO, TAG, "%s : Access granted, passing req to endpoint.",
+             __func__);
+            gRequestHandler(context->endPoint, context->requestInfo);
+            context->responseSent = true; // SRM counts on the endpoint to send
+                                          // a response.
         }
-        gRequestHandler(g_policyEngineContext.amsMgrContext->endpoint,
-                g_policyEngineContext.amsMgrContext->requestInfo);
+        else // error condition; log relevant msg then send DENIED response
+        {
+            OIC_LOG_V(ERROR, TAG, "%s : Null values in context.", __func__);
+            context->responseVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
+            context->responseInfo.result = CA_INTERNAL_SERVER_ERROR;
+            SRMSendResponse(context);
+        }
+    }
+    else // Access Denied
+    {
+        OIC_LOG_V(INFO, TAG, "%s : Access Denied; sending CA_UNAUTHORIZED_REQ.",
+         __func__);
+        // TODO: in future version, differentiate between types of DENIED.
+        // See JIRA issue 1796 (https://jira.iotivity.org/browse/IOT-1796)
+        context->responseInfo.result = CA_UNAUTHORIZED_REQ;
+        SRMSendResponse(context);
+    }
+    return;
+}
+
+// Set the value of context->resourceUri, based on the context->requestInfo.
+void SetResourceUriAndType(SRMRequestContext_t *context)
+{
+    char *uri = strstr(context->requestInfo->info.resourceUri, "?");
+    size_t position = 0;
+
+    if (uri)
+    {
+        //Skip query and pass the resource uri
+        position = uri - context->requestInfo->info.resourceUri;
     }
     else
     {
-        OIC_LOG_V(INFO, TAG, "%s : ACCESS_DENIED.", __func__);
-        SRMSendUnAuthorizedAccessresponse(&g_policyEngineContext);
+        position = strlen(context->requestInfo->info.resourceUri);
+    }
+    if (MAX_URI_LENGTH < position  || 0 > position)
+    {
+        OIC_LOG_V(ERROR, TAG, "Incorrect URI length.");
+        return;
+    }
+    OICStrcpyPartial(context->resourceUri, MAX_URI_LENGTH + 1,
+        context->requestInfo->info.resourceUri, position);
+
+    // Set the resource type.
+    context->resourceType = GetSvrTypeFromUri(context->resourceUri);
+
+    return;
+}
+
+// Check if this request is asking to access a "sec" = true resource
+// over an unsecure channel.  This type of request is forbidden with
+// the exception of a few SVRs (see Security Specification).
+void CheckRequestForSecResourceOverUnsecureChannel(SRMRequestContext_t *context)
+{
+    // if request is over unsecure channel, check resource type
+    if(false == context->secureChannel)
+    {
+        OCResource *resPtr = FindResourceByUri(context->resourceUri);
+        if (NULL != resPtr)
+        {
+            // All vertical secure resources and SVR resources other than
+            // DOXM & PSTAT should reject requests over unsecure channel.
+            if ((((resPtr->resourceProperties) & OC_SECURE)
+                && (context->resourceType == NOT_A_SVR_RESOURCE))
+                || ((context->resourceType < OIC_SEC_SVR_TYPE_COUNT)
+                    && (context->resourceType != OIC_R_DOXM_TYPE)
+                    && (context->resourceType != OIC_R_PSTAT_TYPE)))
+            {
+                // Reject all the requests over coap for secure resource.
+                context->responseVal = ACCESS_DENIED_SEC_RESOURCE_OVER_UNSECURE_CHANNEL;
+                context->responseInfo.result = CA_FORBIDDEN_REQ;
+                SRMSendResponse(context);
+            }
+        }
     }
 
-exit:
-    //Resetting PE state to AWAITING_REQUEST
-    SetPolicyEngineState(&g_policyEngineContext, AWAITING_REQUEST);
+    return;
+}
+
+void ClearRequestContext(SRMRequestContext_t *context)
+{
+    if (NULL == context)
+    {
+
+        OIC_LOG(ERROR, TAG, "Null context.");
+    }
+    else
+    {
+        // Clear context variables.
+        context->endPoint = NULL;
+        context->resourceType = OIC_RESOURCE_TYPE_ERROR;
+        memset(&context->resourceUri, 0, sizeof(context->resourceUri));
+        context->requestedPermission = PERMISSION_ERROR;
+        memset(&context->responseInfo, 0, sizeof(context->responseInfo));
+        context->responseSent = false;
+        context->responseVal = ACCESS_DENIED_POLICY_ENGINE_ERROR;
+        context->requestInfo = NULL;
+        context->secureChannel = false;
+        context->slowResponseSent = false;
+        context->subjectIdType = SUBJECT_ID_TYPE_ERROR;
+        memset(&context->subjectUuid, 0, sizeof(context->subjectUuid));
+#ifdef MULTIPLE_OWNER
+        memset(&context->payload, 0, context->payloadSize); // TODO Samsung reviewer: please confirm
+        context->payloadSize = 0; // TODO Samsung reviewer: please confirm
+#endif //MULTIPLE_OWNER
+    }
+
+    return;
+}
+
+// Returns true iff Request arrived over secure channel
+bool isRequestOverSecureChannel(SRMRequestContext_t *context)
+{
+    OicUuid_t nullSubjectId = {.id = {0}};
+
+    // if flag set, return true
+    if(context->endPoint->flags & CA_SECURE)
+    {
+        return true;
+    }
+    // a null subject ID indicates CoAP, so if non-null, also return true
+    else if(memcmp(context->requestInfo->info.identity.id,
+        nullSubjectId.id, sizeof(context->requestInfo->info.identity.id)) != 0)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 /**
- * Handle the request from the SRM.
+ * Entry point into SRM, called by lower layer to determine whether an incoming
+ * request should be GRANTED or DENIED.
  *
  * @param endPoint object from which the response is received.
  * @param requestInfo contains information for the request.
@@ -162,131 +256,70 @@ void SRMRequestHandler(const CAEndpoint_t *endPoint, const CARequestInfo_t *requ
 {
     OIC_LOG(DEBUG, TAG, "Received request from remote device");
 
-    bool isRequestOverSecureChannel = false;
+    SRMRequestContext_t *ctx = &g_requestContext; // Always use our single ctx for now.
+
+    ClearRequestContext(ctx);
+
     if (!endPoint || !requestInfo)
     {
-        OIC_LOG(ERROR, TAG, "Invalid arguments");
-        return;
+        OIC_LOG(ERROR, TAG, "Invalid endPoint or requestInfo; can't process.");
     }
-
-    // Copy the subjectID
-    OicUuid_t subjectId = {.id = {0}};
-    OicUuid_t nullSubjectId = {.id = {0}};
-    memcpy(subjectId.id, requestInfo->info.identity.id, sizeof(subjectId.id));
-
-    //If subject id is null that means request is sent thru coap.
-    if ( (endPoint->flags & CA_SECURE)
-         || (memcmp(subjectId.id, nullSubjectId.id, sizeof(subjectId.id)) != 0))
+    else
     {
-        OIC_LOG(INFO, TAG, "request over secure channel");
-        isRequestOverSecureChannel = true;
-    }
+        // Store the endpoint and requestinfo params.
+        ctx->endPoint = endPoint;
+        ctx->requestInfo = requestInfo;
 
-    CAURI_t resourceUri = requestInfo->info.resourceUri;
-    int resourceUriAddressLength = GetResourceUriAddressLength(resourceUri);
+        // Copy the subjectID.
+        memcpy(ctx->subjectUuid.id,
+            requestInfo->info.identity.id, sizeof(ctx->subjectUuid.id));
+        ctx->subjectIdType = SUBJECT_ID_TYPE_UUID; // only supported type for now
 
-    if (resourceUriAddressLength < 0)
-    {
-        return;
-    }
+        // Set secure channel boolean.
+        ctx->secureChannel = isRequestOverSecureChannel(ctx);
 
-    SRMAccessResponse_t response = ACCESS_DENIED;
-    char newUri[MAX_URI_LENGTH + 1];
-    OICStrcpyPartial(newUri, MAX_URI_LENGTH + 1, resourceUri, resourceUriAddressLength);
+        // Set resource URI and type.
+        SetResourceUriAndType(ctx);
 
-    SetResourceRequestType(&g_policyEngineContext, newUri);
+        // Initialize responseInfo.
+        memcpy(&(ctx->responseInfo.info), &(requestInfo->info),
+            sizeof(ctx->responseInfo.info));
+        ctx->responseInfo.info.payload = NULL;
+        ctx->responseInfo.result = CA_INTERNAL_SERVER_ERROR;
+        ctx->responseInfo.info.dataType = CA_RESPONSE_DATA;
 
-     // Form a 'Error', 'slow response' or 'access deny' response and send to peer
-    CAResponseInfo_t responseInfo = {.result = CA_EMPTY};
-    memcpy(&responseInfo.info, &(requestInfo->info), sizeof(responseInfo.info));
-    responseInfo.info.payload = NULL;
-    responseInfo.info.dataType = CA_RESPONSE_DATA;
+        // Before consulting ACL, check if this is a forbidden request type.
+        CheckRequestForSecResourceOverUnsecureChannel(ctx);
 
-    OCResource *resPtr = FindResourceByUri(newUri);
-    if (NULL != resPtr)
-    {
-        // All vertical secure resources and SVR resources other than DOXM & PSTAT should reject request
-        // over coap.
-        if ((((resPtr->resourceProperties) & OC_SECURE)
-                            && (g_policyEngineContext.resourceType == NOT_A_SVR_RESOURCE))
-                            || ((g_policyEngineContext.resourceType < OIC_SEC_SVR_TYPE_COUNT)
-                            &&  (g_policyEngineContext.resourceType != OIC_R_DOXM_TYPE)
-                            &&  (g_policyEngineContext.resourceType != OIC_R_PSTAT_TYPE)))
+        // If DENIED response wasn't sent already, then it's time to check ACL.
+        if(false == ctx->responseSent)
         {
-           // if resource is secure and request is over insecure channel
-            if (!isRequestOverSecureChannel)
-            {
-                // Reject all the requests over coap for secure resource.
-                responseInfo.result = CA_FORBIDDEN_REQ;
-                if (CA_STATUS_OK != CASendResponse(endPoint, &responseInfo))
-                {
-                    OIC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
-                }
-                return;
-            }
-        }
-    }
-#ifdef MULTIPLE_OWNER
-    /*
-     * In case of ACL and CRED, The payload required to verify the payload.
-     * Payload information will be used for subowner's permission verification.
-     */
-    g_policyEngineContext.payload = (uint8_t*)requestInfo->info.payload;
-    g_policyEngineContext.payloadSize = requestInfo->info.payloadSize;
+#ifdef MULTIPLE_OWNER // TODO Samsung: please verify that these two calls belong
+                      // here inside this conditional statement.
+            // In case of ACL and CRED, The payload required to verify the payload.
+            // Payload information will be used for subowner's permission verification.
+            ctx->payload = (uint8_t*)requestInfo->info.payload;
+            ctx->payloadSize = requestInfo->info.payloadSize;
 #endif //MULTIPLE_OWNER
 
-    //New request are only processed if the policy engine state is AWAITING_REQUEST.
-    if (AWAITING_REQUEST == g_policyEngineContext.state)
-    {
-        OIC_LOG_V(DEBUG, TAG, "Processing request with uri, %s for method, %d",
-                resourceUri, requestInfo->method);
-        response = CheckPermission(&g_policyEngineContext, &subjectId, newUri,
-                GetPermissionFromCAMethod_t(requestInfo->method));
-    }
-    else
-    {
-        OIC_LOG_V(INFO, TAG, "PE state %d. Ignoring request with uri, %s for method, %d",
-                g_policyEngineContext.state, resourceUri, requestInfo->method);
+            OIC_LOG_V(DEBUG, TAG, "Processing request with uri, %s for method, %d",
+                ctx->requestInfo->info.resourceUri, ctx->requestInfo->method);
+            CheckPermission(ctx);
+            OIC_LOG_V(DEBUG, TAG, "Request for permission %d received responseVal %d.",
+                ctx->requestedPermission, ctx->responseVal);
+
+            // Now that we have determined the correct response and set responseVal,
+            // we generate and send the response to the requester.
+            SRMGenerateResponse(ctx);
+        }
     }
 
-    if (IsAccessGranted(response) && gRequestHandler)
+    if(false == ctx->responseSent)
     {
-        gRequestHandler(endPoint, requestInfo);
-        return;
+        OIC_LOG(ERROR, TAG, "Exiting SRM without responding to requester!");
     }
 
-    VERIFY_NOT_NULL(TAG, gRequestHandler, ERROR);
-
-    if (ACCESS_WAITING_FOR_AMS == response)
-    {
-        OIC_LOG(INFO, TAG, "Sending slow response");
-
-        UpdateAmsMgrContext(&g_policyEngineContext, endPoint, requestInfo);
-        responseInfo.result = CA_EMPTY;
-        responseInfo.info.type = CA_MSG_ACKNOWLEDGE;
-    }
-    else
-    {
-        /*
-         * TODO Enhance this logic more to decide between
-         * CA_UNAUTHORIZED_REQ or CA_FORBIDDEN_REQ depending
-         * upon SRMAccessResponseReasonCode_t
-         */
-        OIC_LOG(INFO, TAG, "Sending for regular response");
-        responseInfo.result = CA_UNAUTHORIZED_REQ;
-    }
-
-    if (CA_STATUS_OK != CASendResponse(endPoint, &responseInfo))
-    {
-        OIC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
-    }
     return;
-exit:
-    responseInfo.result = CA_INTERNAL_SERVER_ERROR;
-    if (CA_STATUS_OK != CASendResponse(endPoint, &responseInfo))
-    {
-        OIC_LOG(ERROR, TAG, "Failed in sending response to a unauthorized request!");
-    }
 }
 
 /**
@@ -325,7 +358,7 @@ void SRMResponseHandler(const CAEndpoint_t *endPoint, const CAResponseInfo_t *re
 void SRMErrorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t *errorInfo)
 {
     OIC_LOG_V(INFO, TAG, "Received error from remote device with result, %d for request uri, %s",
-            errorInfo->result, errorInfo->info.resourceUri);
+        errorInfo->result, errorInfo->info.resourceUri);
     if (gErrorHandler)
     {
         gErrorHandler(endPoint, errorInfo);
@@ -333,8 +366,7 @@ void SRMErrorHandler(const CAEndpoint_t *endPoint, const CAErrorInfo_t *errorInf
 }
 
 OCStackResult SRMRegisterHandler(CARequestCallback reqHandler,
-                                 CAResponseCallback respHandler,
-                                 CAErrorCallback errHandler)
+    CAResponseCallback respHandler, CAErrorCallback errHandler)
 {
     OIC_LOG(DEBUG, TAG, "SRMRegisterHandler !!");
     if( !reqHandler || !respHandler || !errHandler)
@@ -387,16 +419,6 @@ OCStackResult SRMInitSecureResources()
 void SRMDeInitSecureResources()
 {
     DestroySecureResources();
-}
-
-OCStackResult SRMInitPolicyEngine()
-{
-    return InitPolicyEngine(&g_policyEngineContext);
-}
-
-void SRMDeInitPolicyEngine()
-{
-    DeInitPolicyEngine(&g_policyEngineContext);
 }
 
 bool SRMIsSecurityResourceURI(const char* uri)
