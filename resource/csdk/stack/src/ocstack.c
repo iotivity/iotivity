@@ -2693,6 +2693,28 @@ OCStackResult OCDoResource(OCDoHandle *handle,
                             OCHeaderOption *options,
                             uint8_t numOptions)
 {
+    OCStackResult ret = OCDoRequest(handle, method, requestUri,destination, payload,
+                connectivityType, qos, cbData, options, numOptions);
+
+    // This is the owner of the payload object, so we free it
+    OCPayloadDestroy(payload);
+    return ret;
+}
+
+/**
+ * Discover or Perform requests on a specified resource
+ */
+OCStackResult OCDoRequest(OCDoHandle *handle,
+                            OCMethod method,
+                            const char *requestUri,
+                            const OCDevAddr *destination,
+                            OCPayload* payload,
+                            OCConnectivityType connectivityType,
+                            OCQualityOfService qos,
+                            OCCallbackData *cbData,
+                            OCHeaderOption *options,
+                            uint8_t numOptions)
+{
     OIC_LOG(INFO, TAG, "Entering OCDoResource");
 
     // Validate input parameters
@@ -2942,8 +2964,6 @@ exit:
         OICFree(resHandle);
     }
 
-    // This is the owner of the payload object, so we free it
-    OCPayloadDestroy(payload);
     OICFree(requestInfo.info.payload);
     OICFree(devAddr);
     OICFree(resourceUri);

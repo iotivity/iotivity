@@ -45,6 +45,7 @@ OCDiscoveryPayloadGetResourceCount
 OCDoDirectPairing
 OCDoResource
 OCDoResponse
+OCDoRequest
 OCEncodeAddressForRFC6874
 OCEndpointPayloadGetEndpoint
 OCEndpointPayloadGetEndpointCount

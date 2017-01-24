@@ -131,6 +131,8 @@ OCStackResult OCProcess();
  * This function discovers or Perform requests on a specified resource
  * (specified by that Resource's respective URI).
  *
+ * @deprecated: Use OCDoRequest instead which does not free given payload.
+ *
  * @param handle            To refer to the request sent out on behalf of
  *                          calling this API. This handle can be used to cancel this operation
  *                          via the OCCancel API.
@@ -138,10 +140,11 @@ OCStackResult OCProcess();
  *                          the consumer.  A NULL handle is permitted in the event where the caller
  *                          has no use for the return value.
  * @param method            To perform on the resource.
- * @param requestUri       URI of the resource to interact with. (Address prefix is deprecated in
+ * @param requestUri        URI of the resource to interact with. (Address prefix is deprecated in
  *                          favor of destination.)
  * @param destination       Complete description of destination.
- * @param payload           Encoded request payload.
+ * @param payload           Encoded request payload,
+                            OCDoResource will free given payload when return OC_STATUS_OK.
  * @param connectivityType  Modifier flags when destination is not given.
  * @param qos               Quality of service. Note that if this API is called on a uri with the
  *                          well-known multicast IP address, the qos will be forced to ::OC_LOW_QOS
@@ -170,6 +173,52 @@ OCStackResult OCDoResource(OCDoHandle *handle,
                            OCCallbackData *cbData,
                            OCHeaderOption *options,
                            uint8_t numOptions);
+
+/**
+ * This function discovers or Perform requests on a specified resource
+ * (specified by that Resource's respective URI).
+ *
+ * @param handle            To refer to the request sent out on behalf of
+ *                          calling this API. This handle can be used to cancel this operation
+ *                          via the OCCancel API.
+ *                          @note: This reference is handled internally, and should not be free'd by
+ *                          the consumer.  A NULL handle is permitted in the event where the caller
+ *                          has no use for the return value.
+ * @param method            To perform on the resource.
+ * @param requestUri        URI of the resource to interact with. (Address prefix is deprecated in
+ *                          favor of destination.)
+ * @param destination       Complete description of destination.
+ * @param payload           Encoded request payload.
+                            OCDoRequest does not free given payload.
+ * @param connectivityType  Modifier flags when destination is not given.
+ * @param qos               Quality of service. Note that if this API is called on a uri with the
+ *                          well-known multicast IP address, the qos will be forced to ::OC_LOW_QOS
+ *                          since it is impractical to send other QOS levels on such addresses.
+ * @param cbData            Asynchronous callback function that is invoked by the stack when
+ *                          discovery or resource interaction is received. The discovery could be
+ *                          related to filtered/scoped/particular resource. The callback is
+ *                          generated for each response received.
+ * @param options           The address of an array containing the vendor specific header options
+ *                          to be sent with the request.
+ * @param numOptions        Number of header options to be included.
+ *
+ * @note: Presence subscription amendments (i.e. adding additional resource type filters by calling
+ * this API again) require the use of the same base URI as the original request to successfully
+ * amend the presence filters.
+ *
+ * @return ::OC_STACK_OK on success, some other value upon failure.
+ */
+OCStackResult OCDoRequest(OCDoHandle *handle,
+                          OCMethod method,
+                          const char *requestUri,
+                          const OCDevAddr *destination,
+                          OCPayload* payload,
+                          OCConnectivityType connectivityType,
+                          OCQualityOfService qos,
+                          OCCallbackData *cbData,
+                          OCHeaderOption *options,
+                          uint8_t numOptions);
+
 /**
  * This function cancels a request associated with a specific @ref OCDoResource invocation.
  *
