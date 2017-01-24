@@ -180,7 +180,7 @@ OCStackResult AddTmpPskWithPIN(const OicUuid_t* tmpSubject, OicSecCredType_t cre
 /**
  * Function to getting credential list
  *
- * @return ::credential list
+ * @return instance of @ref OicSecCred_t
  */
 const OicSecCred_t* GetCredList();
 

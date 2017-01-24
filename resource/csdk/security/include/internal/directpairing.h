@@ -32,7 +32,7 @@ extern "C"
 #endif
 
 /**
- * Discover direct-pairing devices in the same IP subnet. .
+ * Discover direct-pairing devices in the same IP subnet.
  *
  * @param[in] waittime  Timeout in seconds.
  *

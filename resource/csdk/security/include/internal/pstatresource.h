@@ -44,8 +44,9 @@ OCStackResult DeInitPstatResource();
  *
  * @param pstat pointer to the initialized pstat structure.
  * @param cborPayload pointer to pstat cbor payload.
- * @param size of the cbor payload converted. It is 0 in case of error,
+ * @param cborSize of the cbor payload converted. It is 0 in case of error,
  * else a positive value if succcessful.
+ * @param writableOnly indicates whether it is writable only or not.
  *
  * @return ::OC_STACK_OK for Success, otherwise some error value.
  */
@@ -56,7 +57,7 @@ OCStackResult DeInitPstatResource();
  * This method converts cbor into PSTAT data.
  *
  * @param cborPayload is the pstat data in cbor format.
- * @param size of the cborPayload. In case 0 is provided it assigns CBOR_SIZE (255) value.
+ * @param cborSize of the cborPayload. In case 0 is provided it assigns CBOR_SIZE (255) value.
  * @param pstat pointer to @ref OicSecPstat_t.
   *
   * @return ::OC_STACK_OK for Success, otherwise some error value.

@@ -67,7 +67,7 @@ OCStackResult AmaclGetAmsDeviceId(const char *resource, OicUuid_t *amsId);
  * @param cborSize is the size of the cbor payload. This value is the size of the
  * cborPayload. It should not be NON-NULL value.
  *
- * @return ::OC_STACK_OK for Success. ::OC_STACK_INVALID in case of invalid parameters.
+ * @return ::OC_STACK_OK for Success. ::OC_STACK_INVALID_PARAM in case of invalid parameters.
  * ::OC_STACK_ERROR in case of error in converting to cbor.
  */
 OCStackResult AmaclToCBORPayload(const OicSecAmacl_t *amacl, uint8_t **cborPayload,

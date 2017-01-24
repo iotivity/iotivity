@@ -49,7 +49,7 @@ struct OCUuidList
     OCUuidList_t *next;
 };
 
-/*
+/**
  * Device's power on/off state.
  */
 typedef enum {
@@ -128,10 +128,10 @@ typedef enum OxmAllowTableIdx {
 /**
  * Callback function definition of provisioning API
  *
- * @param[OUT] ctx - If user set his/her context, it will be returned here.
- * @param[OUT] nOfRes - total number of results, it depends on using which provisioning API.
- * @param[OUT] arr - Array of OCPMResult_t, each OCPMResult_t contains result for target Device.
- * @param[OUT} hasError - If there is no error, it's returned with 'false' but if there is a single
+ * @param[in] ctx - If user set his/her context, it will be returned here.
+ * @param[in] nOfRes - total number of results, it depends on using which provisioning API.
+ * @param[in] arr - Array of OCPMResult_t, each OCPMResult_t contains result for target Device.
+ * @param[in] hasError - If there is no error, it's returned with 'false' but if there is a single
  *                        or more error is/are occured during operation, it will be 'true'.
  */
 typedef void (*OCProvisionResultCB)(void* ctx, size_t nOfRes, OCProvisionResult_t *arr, bool hasError);
@@ -140,9 +140,9 @@ typedef void (*OCProvisionResultCB)(void* ctx, size_t nOfRes, OCProvisionResult_
 /**
  * Callback function definition of direct-pairing
  *
- * @param[OUT] ctx - User context which will be returned wth callback
- * @param[OUT] peer - pairing device info.
- * @param[OUT} result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK'
+ * @param[in] ctx - User context which will be returned wth callback
+ * @param[in] peer - pairing device info.
+ * @param[in] result - It's returned with 'OC_STACK_XXX'. It will return 'OC_STACK_OK'
  *                                   if D2D pairing is success without error
  */
 typedef void (*OCDirectPairingResultCB)(void *ctx, OCDirectPairingDev_t *peer, OCStackResult result);

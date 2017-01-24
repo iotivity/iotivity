@@ -32,7 +32,7 @@ extern "C" {
  * Function to generate credentials according to the type.
  *
  * @param[in]  type           Type of credential.
- * @param[in]  keysize        size of key.
+ * @param[in]  keySize        size of key.
  * @param[in]  ptDeviceId     Device ID of provisioning tool.
  * @param[in]  firstDeviceId  DeviceID of the first device.
  * @param[in]  secondDeviceId DeviceID of the second device.

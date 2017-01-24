@@ -49,7 +49,7 @@ OCStackResult SetDefaultACL(OicSecAcl_t *acl);
  * Converts CBOR payload to SVC.
  *
  * @param cborPayload is the svc payload cbor value that neds to be converted.
- * @param cborSize of the cborPayload. In case size is not known, it is 0.
+ * @param size of the cborPayload. In case size is not known, it is 0.
  * @param svc is the value that is initialized. It is NULL in case of error.
  *
  * @return ::OC_STACK_OK in case successful. ::OC_STACK_INVALID_PARAM if one of

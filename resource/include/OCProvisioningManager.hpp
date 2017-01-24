@@ -271,14 +271,10 @@ namespace OC
 
              * @deprecated Use registerInputPinCallback instead.
              *
-             * @param InputPinCallback inputPin callback function.
+             * @param inputPin inputPin callback function.
              * @return OC_STACK_OK in case of success and other value otherwise.
              *         OC_STACK_INVALID_CALLBACK if inputPin is invalid.
              *         OC_STACK_DUPLICATE_REQUEST if an input pin callback has already been set.
-
-
-
-
              */
             static OCStackResult setInputPinCallback(InputPinCallback inputPin);
 
@@ -445,7 +441,7 @@ namespace OC
              */
             static OCStackResult deregisterUserConfirmCallback();
 
-             /*
+             /**
              * Set option for Mutual Verified Just-Works
              * The default is both display PIN and get user confirmation.
              */
@@ -671,7 +667,7 @@ namespace OC
 
             /**
              * API to get the information of device for provisioning.
-             * @return  @ref OCProvisionDev_t Reference provides information of device for provisioning.
+             * @return OCProvisionDev_t Reference provides information of device for provisioning.
              */
             OCProvisionDev_t* getDevPtr()const;
 
