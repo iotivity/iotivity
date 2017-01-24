@@ -107,13 +107,13 @@ OCStackResult AddUuidArray(const cJSON* jsonRoot, const char* arrayItem,
 /**
  * Function to getting string of ownership transfer method
  *
- * @prarm oxmType ownership transfer method
+ * @param oxmType ownership transfer method
  *
  * @return string value of ownership transfer method
  */
 const char* GetOxmString(OicSecOxm_t oxmType);
 
-/*
+/**
  * This method converts UUID to canonical format string.
  *
  * @param uuid Device UUID
@@ -125,7 +125,7 @@ const char* GetOxmString(OicSecOxm_t oxmType);
 OCStackResult ConvertUuidToStr(const OicUuid_t* uuid, char** strUuid);
 
 
-/*
+/**
  * This method converts string UUID to OicUuid_t.
  *
  * @param strUuid Device UUID in string format

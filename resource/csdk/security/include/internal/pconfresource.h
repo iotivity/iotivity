@@ -42,7 +42,7 @@ OCStackResult InitPconfResource();
 OCStackResult DeInitPconfResource();
 
 /**
- * This method is used by SRM to retrieve PCONF resource data..
+ * This method is used by SRM to retrieve PCONF resource data.
  *
  * @retval  reference to @ref OicSecPconf_t, binary format of Pconf resource data
  */

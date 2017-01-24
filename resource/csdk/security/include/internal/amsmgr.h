@@ -74,6 +74,8 @@ OCStackResult DiscoverAmsService(PEContext_t *context);
  * /oic/res?rt="oic.sec.doxm" to the discovered AMS service.
  *
  * @param context is the policy engine context.
+ * @param devAddr is the device address.
+ * @param connType is the connectivity type.
  *
  * @return ::OC_STACK_OK,If able to successfully send unicast discovery request.
  * else ::OC_STACK_ERROR, If unable to successfully send unicast discovery request
@@ -90,6 +92,9 @@ OCStackResult SendUnicastSecurePortDiscovery(PEContext_t *context,
  * the subject & resource.
  *
  * @param context is the policy engine context.
+ * @param devAddr is the device address.
+ * @param connType is the connectivity type.
+ * @param securedPort is the secured port number.
  *
  * @return ::OC_STACK_OK, If able to successfully send unicast ACL request.
  * ::OC_STACK_ERROR, If unable to successfully send unicast ACL request due to error.
@@ -100,7 +105,7 @@ OCStackResult SendAclReq(PEContext_t *context,
                          OCConnectivityType connType,
                          uint16_t securedPort);
 
-/*
+/**
  * This method is used by Policy engine to checks Amacl resource.
  * If Amacl is found then it fills up context->amsMgrContext->amsDeviceId
  * with amsID of the Amacl else leaves it empty.
@@ -112,14 +117,14 @@ OCStackResult SendAclReq(PEContext_t *context,
  */
 bool FoundAmaclForRequest(PEContext_t *context);
 
-/*
+/**
  * This method is used by Policy engine to process AMS request.
  *
  * @param context is the policy engine context.
  */
 void ProcessAMSRequest(PEContext_t *context);
 
-/*
+/**
  * This method is used by Policy engine to free AMS context requestInfo/
  *
  * @param requestInfo is the pointer to @ref CARequestInfo_t.

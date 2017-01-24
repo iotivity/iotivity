@@ -679,11 +679,8 @@ INPUT                  = . \
              ../../csdk/connectivity/api \
              guides \
              ../../csdk/security/include \
-             ../../csdk/security/include\internal \
+             ../../csdk/security/include/internal \
              ../../csdk/security/provisioning/include \
-             ../../csdk/security/provisioning/include/ocprovisioningmanager.h \
-             ../../csdk/security/provisioning/include/pmtypes.h \
-             ../../csdk/security/provisioning/include/pmutility.h \
              ../../csdk/security/provisioning/include/internal \
              ../../csdk/security/provisioning/include/oxm \
              ../../csdk/security/provisioning/include/cloud \

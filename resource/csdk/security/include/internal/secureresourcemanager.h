@@ -113,7 +113,7 @@ OicSecSvrType_t GetSvrTypeFromUri(const char* uri);
 
 /**
  * Sends Response
- * @param   resposeVal       SRMAccessResponse_t value
+ * @param   responseVal       SRMAccessResponse_t value
  * @return  NONE
  */
 void SRMSendResponse(SRMAccessResponse_t responseVal);

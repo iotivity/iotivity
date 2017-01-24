@@ -159,7 +159,7 @@ OCStackResult PDMSetLinkStale(const OicUuid_t* uuidOfDevice1, const OicUuid_t* u
  *
  * @note in case of sqllite, the caller should set NULL for parameters.
  *
- * @param[out] staleDevices information about the list of "To be Removed" devices' uuid.
+ * @param[out] staleDevList information about the list of "To be Removed" devices' uuid.
  * @param[out] numOfDevices total number of devices to be removed.
  *
  * @return OC_STACK_OK in case of success and other value otherwise.

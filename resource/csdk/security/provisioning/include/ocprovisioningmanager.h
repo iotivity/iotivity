@@ -87,7 +87,7 @@ OCStackResult OCDiscoverSingleDeviceInUnicast(unsigned short timeout, const OicU
  * all the device in subnet which are not yet owned. Please call OCInit with OC_CLIENT_SERVER as
  * OCMode.
  *
- * @param[in] timeout Timeout in seconds, value till which function will listen to responses from
+ * @param[in] waittime Timeout in seconds, value till which function will listen to responses from
  *                    server before returning the list of devices.
  * @param[out] ppList List of candidate devices to be provisioned
  * @return OTM_SUCCESS in case of success and other value otherwise.
@@ -133,8 +133,8 @@ OCStackResult OCDoMultipleOwnershipTransfer(void* ctx,
 /**
  * API to register for particular OxM.
  *
- * @param[in] Ownership transfer method.
- * @param[in] Implementation of callback functions for owership transfer.
+ * @param[in] oxm transfer method.
+ * @param[in] callbackData of callback functions for owership transfer.
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult OCSetOwnerTransferCallbackData(OicSecOxm_t oxm, OTMCallbackData_t* callbackData);
@@ -177,10 +177,11 @@ OCStackResult OCDiscoverMultipleOwnedDevices(unsigned short timeout, OCProvision
  *
  * @param[in] ctx Application context would be returned in result callback.
  * @param[in] type Type of credentials to be provisioned to the device.
+ * @param[in] keySize size of key
  * @param[in] pDev1 Pointer to OCProvisionDev_t instance,respresenting device to be provisioned.
- * @param[in] acl ACL for device 1. If this is not required set NULL.
+ * @param[in] pDev1Acl ACL for device 1. If this is not required set NULL.
  * @param[in] pDev2 Pointer to OCProvisionDev_t instance,respresenting device to be provisioned.
- * @param[in] acl ACL for device 2. If this is not required set NULL.
+ * @param[in] pDev2Acl ACL for device 2. If this is not required set NULL.
  * @param[in] resultCallback callback provided by API user, callback will be called when
  *            provisioning request recieves a response from first resource server.
  * @return OC_STACK_OK in case of success and other value otherwise.
@@ -253,6 +254,7 @@ OCStackResult OCProvisionDirectPairing(void* ctx, const OCProvisionDev_t *select
  *
  * @param[in] ctx Application context would be returned in result callback.
  * @param[in] type Type of credentials to be provisioned to the device.
+ * @param[in] keySize size of key
  * @param[in] pDev1 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
    @param[in] pDev2 Pointer to OCProvisionDev_t instance,respresenting resource to be provsioned.
  * @param[in] resultCallback callback provided by API user, callback will be called when
@@ -356,13 +358,13 @@ OCStackResult OCRemoveDevice(void* ctx,
                              const OCProvisionDev_t* pTargetDev,
                              OCProvisionResultCB resultCallback);
 
-/*
+/**
 * Function to device revocation
 * This function will remove credential of target device from all devices in subnet.
 *
 * @param[in] ctx Application context would be returned in result callback
 * @param[in] waitTimeForOwnedDeviceDiscovery Maximum wait time for owned device discovery.(seconds)
-* @param[in] pTargetDev Device information to be revoked.
+* @param[in] pTargetUuid Device information to be revoked.
 * @param[in] resultCallback callback provided by API user, callback will be called when
 *            credential revocation is finished.
  * @return  OC_STACK_OK in case of success and other value otherwise.
@@ -372,7 +374,7 @@ OCStackResult OCRemoveDeviceWithUuid(void* ctx,
                                      const OicUuid_t* pTargetUuid,
                                      OCProvisionResultCB resultCallback);
 
-/*
+/**
  * Function to reset the target device.
  * This function will remove credential and ACL of target device from all devices in subnet.
  *
@@ -411,7 +413,7 @@ OCStackResult OCConfigSelfOwnership(void);
  * NOTE: Caller need to call OCDeleteDiscoveredDevices to delete memory allocated by this API for out
  * variables pOwnedDevList and pUnownedDevList.
  *
- * @param[in] waitime Wait time for the API. The wait time will be divided by 2, and half of wait time
+ * @param[in] waittime Wait time for the API. The wait time will be divided by 2, and half of wait time
  * will be used for unowned discovery and remaining half for owned discovery. So the wait time should be
  * equal to or more than 2.
  * @param[out] pOwnedDevList  list of owned devices.
@@ -513,7 +515,7 @@ OCStackResult OCRegisterTrustCertChainNotifier(void *cb, TrustCertChainChangeCB 
  */
 void OCRemoveTrustCertChainNotifier(void);
 
-/*
+/**
  * Function to read Trust certificate chain from SVR.
  * Caller must free when done using the returned trust certificate
  * @param[in] credId CredId of trust certificate chain in SVR.

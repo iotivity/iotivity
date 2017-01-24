@@ -36,7 +36,7 @@ extern "C" {
 /**
  * In case of just works OxM, no need to implement.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult LoadSecretJustWorksCallback(OTMContext_t* UNUSED_PARAM);
 
@@ -45,7 +45,7 @@ OCStackResult LoadSecretJustWorksCallback(OTMContext_t* UNUSED_PARAM);
  *
  * @param otmCtx Context of OTM, It includes current device information.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx);
 
@@ -57,7 +57,7 @@ OCStackResult CreateSecureSessionJustWorksCallback(OTMContext_t* otmCtx);
  * @note Returned memory should be deallocated by caller.
  * @param cborSize is the size of the cborPayload.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult CreateJustWorksSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
                                              size_t *cborSize);
@@ -70,7 +70,7 @@ OCStackResult CreateJustWorksSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **cb
  * @note Returned memory should be deallocated by caller.
  * @param cborSize is the size of the cborPayload.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult CreateJustWorksOwnerTransferPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
                                                   size_t *cborSize);
@@ -83,7 +83,7 @@ OCStackResult CreateJustWorksOwnerTransferPayload(OTMContext_t *otmCtx, uint8_t 
  * @note Returned memory should be deallocated by caller.
  * @param cborSize is the size of the cborPayload.
  *
- * @return ::OC_STACK_SUCCESS in case of success and other value otherwise.
+ * @return ::OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult CreateMVJustWorksSelectOxmPayload(OTMContext_t *otmCtx, uint8_t **cborPayload,
                                              size_t *cborSize);

@@ -232,7 +232,7 @@ namespace OC
             /**
              * API for registering Pin Callback.
              *
-             * @param InputPinCallback inputPin callback function.
+             * @param inputPin inputPin callback function.
              * @return ::OC_STACK_OK in case of success and other value otherwise.
              */
             static OCStackResult setInputPinCallback(InputPinCallback inputPin);
@@ -328,7 +328,7 @@ namespace OC
              */
             static OCStackResult deregisterUserConfirmCallback();
 
-             /*
+             /**
              * Set option for Mutual Verified Just-Works
              * The default is both display PIN and get user confirmation.
              */
@@ -373,7 +373,7 @@ namespace OC
             static OCStackResult saveTrustCertChain(uint8_t *trustCertChain, size_t chainSize,
                                         OicEncodingType_t encodingType, uint16_t *credId);
 
-            /*
+            /**
             * API to read Trust certificate chain from SVR.
             * Caller must free when done using the returned trust certificate
             * @param[in] credId CredId of trust certificate chain in SVR.
@@ -561,7 +561,7 @@ namespace OC
 
             /**
              * API to get the information of device for provisioning.
-             * @return  @ref OCProvisionDev_t Reference provides information of device for provisioning.
+             * @return OCProvisionDev_t Reference provides information of device for provisioning.
              */
             OCProvisionDev_t* getDevPtr()const;
 

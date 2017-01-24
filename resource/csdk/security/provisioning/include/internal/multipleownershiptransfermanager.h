@@ -37,6 +37,7 @@ extern "C" {
 /**
  * API to add 'doxm.oxms' to resource server.
  *
+ * @param[in] ctx Application context would be returned in result callback
  * @param[in] targetDeviceInfo Selected target device.
  * @param[in] newOxm  OxMs to be added (ref. oic.sec.oxm)
  * @param[in] resultCallback callback provided by API user, callback will be called when
@@ -49,6 +50,7 @@ OCStackResult MOTAddMOTMethod(void *ctx, OCProvisionDev_t *targetDeviceInfo,
 /**
  * API to update 'doxm.oxmsel' to resource server.
  *
+ * @param[in] ctx Application context would be returned in result callback
  * @param[in] targetDeviceInfo Selected target device.
  * @param[in] oxmSelValue Method of multiple ownership transfer (ref. oic.sec.oxm)
  * @param[in] resultCallback callback provided by API user, callback will be called when
@@ -61,6 +63,7 @@ OCStackResult MOTSelectMOTMethod(void *ctx, const OCProvisionDev_t *targetDevice
 /**
  * API to update 'doxm.mom' to resource server.
  *
+ * @param[in] ctx Application context would be returned in result callback
  * @param[in] targetDeviceInfo Selected target device.
  * @param[in] momType Mode of multiple ownership transfer (ref. oic.sec.mom)
  * @param[in] resultCallback callback provided by API user, callback will be called when
@@ -73,6 +76,7 @@ OCStackResult MOTChangeMode(void *ctx, const OCProvisionDev_t *targetDeviceInfo,
 /**
  * API to provision preconfigured PIN to resource server.
  *
+ * @param[in] ctx Application context would be returned in result callback
  * @param[in] targetDeviceInfo Selected target device.
  * @param[in] preconfPIN Preconfig PIN which is used while multiple owner authentication
  * @param[in] preconfPINLen Byte length of preconfig PIN
@@ -91,8 +95,8 @@ OCStackResult MOTProvisionPreconfigPIN(void *ctx, const OCProvisionDev_t *target
  * API to perform the multiple ownership transfer.
  *
  * @param[in] ctx Application context would be returned in result callback
- * @param[in] selectedDeviceList linked list of multiple ownership transfer candidate devices.
- * @param[in] resultCB Result callback function to be invoked when multiple ownership transfer finished.
+ * @param[in] selectedDevicelist linked list of multiple ownership transfer candidate devices.
+ * @param[in] resultCallback Result callback function to be invoked when multiple ownership transfer finished.
  * @return OC_STACK_OK in case of success and other value otherwise.
  */
 OCStackResult MOTDoOwnershipTransfer(void* ctx,

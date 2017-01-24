@@ -62,7 +62,7 @@ typedef struct PEContext
  * @param context is the pointer to Policy Engine context to use.
  * @param subjectId is the pointer to Id of the requesting entity.
  * @param resource is the pointer to URI of Resource being requested.
- * @param permission is the requested permission.
+ * @param requestedPermission is the requested permission.
  *
  * @return ::ACCESS_GRANTED if request should go through, otherwise some flavor of ACCESS_DENIED.
  */
@@ -99,9 +99,9 @@ void DeInitPolicyEngine(PEContext_t *context);
  */
 uint16_t GetPermissionFromCAMethod_t(const CAMethod_t method);
 
-/*
+/**
  * This method reset Policy Engine context to default state and update
- * it's state to @param state.
+ * it's state to @a state.
  *
  * @param context is the policy engine context.
  * @param state set Policy engine state to this.
